@@ -1,0 +1,270 @@
+#include <string>
+#include "Math.h"
+
+AE_NS_BEGIN
+
+const f32 Math::F32_TOLERANCE = 2e-37f;
+const f64 Math::PI = 3.14159265358979323846;
+const f64 Math::PI_2 = PI * .5;
+const f64 Math::PI_4 = PI * .25;
+const f64 Math::PI2 = PI * 2.;
+const f64 Math::F64_DEG = 180. / PI;
+const f32 Math::F32_DEG = (f32)F64_DEG;
+const f64 Math::F64_RAD = PI / 180.;
+const f32 Math::F32_RAD = (f32)F64_RAD;
+
+void Math::slerpQuat(const f32* from, const f32* to, f32 t, f32* dst) {
+	auto x = to[0], y = to[1], z = to[2], w = to[3];
+	auto cos = from[0] * x + from[1] * y + from[2] * z + from[3] * w;
+	if (cos < 0.f) {//shortest path
+		x = -x;
+		y = -y;
+		z = -z;
+		w = -w;
+		cos = -cos;
+	}
+	f32 k0, k1;
+	if (cos > .9999f) {
+		k0 = 1 - t;
+		k1 = t;
+	} else {
+		auto a = std::acos(cos);
+		auto s = std::sin(a);
+		auto ta = t * a;
+		k0 = std::sin(a - ta) / s;
+		k1 = std::sin(ta) / s;
+	}
+
+	x = from[0] * k0 + x * k1;
+	y = from[1] * k0 + y * k1;
+	z = from[2] * k0 + z * k1;
+
+	dst[0] = x;
+	dst[1] = y;
+	dst[2] = z;
+	dst[3] = from[3] * k0 + w * k1;
+}
+
+void Math::transposeMat(const f32(&m)[3][4], f32(&dst)[4][4]) {
+	f32 d[4][4];
+
+	for (ui8 c = 0; c < 4; ++c) {
+		for (ui8 r = 0; r < 3; ++r) d[c][r] = m[r][c];
+	}
+	d[0][3] = 0.f;
+	d[1][3] = 0.f;
+	d[2][3] = 0.f;
+	d[3][3] = 1.f;
+
+	memcpy(dst, d, sizeof(dst));
+}
+
+void Math::transposeMat(const f32(&m)[4][4], f32(&dst)[4][4]) {
+	f32 d[4][4];
+
+	for (ui8 c = 0; c < 4; ++c) {
+		for (ui8 r = 0; r < 4; ++r) d[c][r] = m[r][c];
+	}
+
+	memcpy(dst, d, sizeof(dst));
+}
+
+void Math::appendMat(const f32(&lhs)[3][4], const f32(&rhs)[3][4], f32(&dst)[3][4]) {
+	f32 m[3][4];
+
+	for (ui8 c = 0; c < 3; ++c) {
+		auto& mc = m[c];
+		auto& rc = rhs[c];
+		mc[0] = lhs[0][0] * rc[0] + lhs[1][0] * rc[1] + lhs[2][0] * rc[2];
+		mc[1] = lhs[0][1] * rc[0] + lhs[1][1] * rc[1] + lhs[2][1] * rc[2];
+		mc[2] = lhs[0][2] * rc[0] + lhs[1][2] * rc[1] + lhs[2][2] * rc[2];
+		mc[3] = lhs[0][3] * rc[0] + lhs[1][3] * rc[1] + lhs[2][3] * rc[2] + rc[3];
+	}
+
+	memcpy(dst, m, sizeof(m));
+}
+
+void Math::appendMat(const f32(&lhs)[3][4], const f32(&rhs)[3][4], f32(&dst)[4][4]) {
+	appendMat(lhs, rhs, (f32(&)[3][4])dst);
+
+	dst[3][0] = 0.f;
+	dst[3][1] = 0.f;
+	dst[3][2] = 0.f;
+	dst[3][3] = 1.f;
+}
+
+void Math::appendMat(const f32(&lhs)[3][4], const f32(&rhs)[4][4], f32(&dst)[3][4]) {
+	appendMat(lhs, (f32(&)[3][4])rhs, (f32(&)[3][4])dst);
+}
+
+void Math::appendMat(const f32(&lhs)[3][4], const f32(&rhs)[4][4], f32(&dst)[4][4]) {
+	f32 m[4][4];
+
+	for (ui8 c = 0; c < 4; ++c) {
+		auto& mc = m[c];
+		auto& rc = rhs[c];
+		mc[0] = lhs[0][0] * rc[0] + lhs[1][0] * rc[1] + lhs[2][0] * rc[2];
+		mc[1] = lhs[0][1] * rc[0] + lhs[1][1] * rc[1] + lhs[2][1] * rc[2];
+		mc[2] = lhs[0][2] * rc[0] + lhs[1][2] * rc[1] + lhs[2][2] * rc[2];
+		mc[3] = lhs[0][3] * rc[0] + lhs[1][3] * rc[1] + lhs[2][3] * rc[2] + rc[3];
+	}
+
+	memcpy(dst, m, sizeof(m));
+}
+
+void Math::appendMat(const f32(&lhs)[4][4], const f32(&rhs)[3][4], f32(&dst)[3][4]) {
+	f32 m[3][4];
+
+	for (ui8 c = 0; c < 3; ++c) {
+		auto& mc = m[c];
+		auto& rc = rhs[c];
+		mc[0] = lhs[0][0] * rc[0] + lhs[1][0] * rc[1] + lhs[2][0] * rc[2] + lhs[3][0] * rc[3];
+		mc[1] = lhs[0][1] * rc[0] + lhs[1][1] * rc[1] + lhs[2][1] * rc[2] + lhs[3][1] * rc[3];
+		mc[2] = lhs[0][2] * rc[0] + lhs[1][2] * rc[1] + lhs[2][2] * rc[2] + lhs[3][2] * rc[3];
+		mc[3] = lhs[0][3] * rc[0] + lhs[1][3] * rc[1] + lhs[2][3] * rc[2] + lhs[3][3] * rc[3];
+	}
+
+	memcpy(dst, m, sizeof(m));
+}
+
+void Math::appendMat(const f32(&lhs)[4][4], const f32(&rhs)[3][4], f32(&dst)[4][4]) {
+	appendMat(lhs, rhs, (f32(&)[3][4])dst);
+
+	dst[3][0] = lhs[3][0];
+	dst[3][1] = lhs[3][1];
+	dst[3][2] = lhs[3][2];
+	dst[3][3] = lhs[3][3];
+}
+
+void Math::appendMat(const f32(&lhs)[4][4], const f32(&rhs)[4][4], f32(&dst)[3][4]) {
+	appendMat(lhs, (f32(&)[3][4])rhs, dst);
+}
+
+void Math::appendMat(const f32(&lhs)[4][4], const f32(&rhs)[4][4], f32(&dst)[4][4]) {
+	f32 m[4][4];
+
+	for (ui8 c = 0; c < 4; ++c) {
+		auto& mc = m[c];
+		auto& rc = rhs[c];
+		mc[0] = lhs[0][0] * rc[0] + lhs[1][0] * rc[1] + lhs[2][0] * rc[2] + lhs[3][0] * rc[3];
+		mc[1] = lhs[0][1] * rc[0] + lhs[1][1] * rc[1] + lhs[2][1] * rc[2] + lhs[3][1] * rc[3];
+		mc[2] = lhs[0][2] * rc[0] + lhs[1][2] * rc[1] + lhs[2][2] * rc[2] + lhs[3][2] * rc[3];
+		mc[3] = lhs[0][3] * rc[0] + lhs[1][3] * rc[1] + lhs[2][3] * rc[2] + lhs[3][3] * rc[3];
+	}
+
+	memcpy(dst, m, sizeof(dst));
+}
+
+bool Math::invertMat(const f32(&m)[3][4], f32(&dst)[3][4]) {
+	auto tmp0 = m[2][2] * m[1][1] - m[2][1] * m[1][2];
+	auto tmp1 = m[2][0] * m[1][2] - m[2][2] * m[1][0];
+	auto tmp2 = m[2][1] * m[1][0] - m[2][0] * m[1][1];
+
+	auto det = m[0][0] * tmp0 + m[0][1] * tmp1 + m[0][2] * tmp2;
+	if (abs(det) > Math::F32_TOLERANCE) {
+		det = 1.f / det;
+
+		f32 d[3][4];
+
+		d[0][0] = tmp0 * det;
+		d[1][0] = tmp1 * det;
+		d[2][0] = tmp2 * det;
+
+		d[0][1] = (m[2][1] * m[0][2] - m[2][2] * m[0][1]) * det;
+		d[1][1] = (m[2][2] * m[0][0] - m[2][0] * m[0][2]) * det;
+		d[2][1] = (m[2][0] * m[0][1] - m[2][1] * m[0][0]) * det;
+
+		tmp0 = m[0][2] * m[1][3];
+		tmp1 = m[0][3] * m[1][2];
+		tmp2 = m[0][1] * m[1][3];
+		auto tmp3 = m[0][3] * m[1][1];
+		auto tmp4 = m[0][1] * m[1][2];
+		auto tmp5 = m[0][2] * m[1][1];
+		auto tmp6 = m[0][0] * m[1][3];
+		auto tmp7 = m[0][3] * m[1][0];
+		auto tmp8 = m[0][0] * m[1][2];
+		auto tmp9 = m[0][2] * m[1][0];
+		auto tmp10 = m[0][0] * m[1][1];
+		auto tmp11 = m[0][1] * m[1][0];
+
+		d[0][2] = (tmp4 - tmp5) * det;
+		d[1][0] = (tmp9 - tmp8) * det;
+		d[2][2] = (tmp10 - tmp11) * det;
+		d[0][3] = (tmp2 * m[2][2] + tmp5 * m[2][3] + tmp1 * m[2][1] - tmp4 * m[2][3] - tmp0 * m[2][1] - tmp3 * m[2][2]) * det;
+		d[1][3] = (tmp8 * m[2][3] + tmp0 * m[2][0] + tmp7 * m[2][2] - tmp6 * m[2][2] - tmp9 * m[2][3] - tmp1 * m[2][0]) * det;
+		d[2][3] = (tmp6 * m[2][1] + tmp11 * m[2][3] + tmp3 * m[2][0] - tmp10 * m[2][3] - tmp2 * m[2][0] - tmp7 * m[2][1]) * det;
+
+		memcpy(dst, d, sizeof(dst));
+
+		return true;
+	} else {
+		return false;
+	}
+}
+
+bool Math::invertMat(const f32(&m)[4][4], f32(&dst)[4][4]) {
+	auto tmp0 = m[2][2] * m[3][3];
+	auto tmp1 = m[2][3] * m[3][2];
+	auto tmp2 = m[2][1] * m[3][3];
+	auto tmp3 = m[2][3] * m[3][1];
+	auto tmp4 = m[2][1] * m[3][2];
+	auto tmp5 = m[2][2] * m[3][1];
+	auto tmp6 = m[2][0] * m[3][3];
+	auto tmp7 = m[2][3] * m[3][0];
+	auto tmp8 = m[2][0] * m[3][2];
+	auto tmp9 = m[2][2] * m[3][0];
+	auto tmp10 = m[2][0] * m[3][1];
+	auto tmp11 = m[2][1] * m[3][0];
+
+	auto d00 = tmp0 * m[1][1] + tmp3 * m[1][2] + tmp4 * m[1][3] - tmp1 * m[1][1] - tmp2 * m[1][2] - tmp5 * m[1][3];
+	auto d10 = tmp1 * m[1][0] + tmp6 * m[1][2] + tmp9 * m[1][3] - tmp0 * m[1][0] - tmp7 * m[1][2] - tmp8 * m[1][3];
+	auto d20 = tmp2 * m[1][0] + tmp7 * m[1][1] + tmp10 * m[1][3] - tmp3 * m[1][0] - tmp6 * m[1][1] - tmp11 * m[1][3];
+	auto d30 = tmp5 * m[1][0] + tmp8 * m[1][1] + tmp11 * m[1][2] - tmp4 * m[1][0] - tmp9 * m[1][1] - tmp10 * m[1][2];
+
+	auto det = m[0][0] * d00 + m[0][1] * d10 + m[0][2] * d20 + m[0][3] * d30;
+	if (abs(det) > Math::F32_TOLERANCE) {
+		det = 1.f / det;
+
+		f32 d[4][4];
+
+		d[0][0] = d00 * det;
+		d[1][0] = d10 * det;
+		d[2][0] = d20 * det;
+		d[3][0] = d30 * det;
+
+		d[0][1] = (tmp1 * m[0][1] + tmp2 * m[0][2] + tmp5 * m[0][3] - tmp0 * m[0][1] - tmp3 * m[0][2] - tmp4 * m[0][3]) * det;
+		d[1][1] = (tmp0 * m[0][0] + tmp7 * m[0][2] + tmp8 * m[0][3] - tmp1 * m[0][0] - tmp6 * m[0][2] - tmp9 * m[0][3]) * det;
+		d[2][1] = (tmp3 * m[0][0] + tmp6 * m[0][1] + tmp11 * m[0][3] - tmp2 * m[0][0] - tmp7 * m[0][1] - tmp10 * m[0][3]) * det;
+		d[3][1] = (tmp4 * m[0][0] + tmp9 * m[0][1] + tmp10 * m[0][2] - tmp5 * m[0][0] - tmp8 * m[0][1] - tmp11 * m[0][2]) * det;
+
+		tmp0 = m[0][2] * m[1][3];
+		tmp1 = m[0][3] * m[1][2];
+		tmp2 = m[0][1] * m[1][3];
+		tmp3 = m[0][3] * m[1][1];
+		tmp4 = m[0][1] * m[1][2];
+		tmp5 = m[0][2] * m[1][1];
+		tmp6 = m[0][0] * m[1][3];
+		tmp7 = m[0][3] * m[1][0];
+		tmp8 = m[0][0] * m[1][2];
+		tmp9 = m[0][2] * m[1][0];
+		tmp10 = m[0][0] * m[1][1];
+		tmp11 = m[0][1] * m[1][0];
+
+		d[0][2] = (tmp0 * m[3][1] + tmp3 * m[3][2] + tmp4 * m[3][3] - tmp1 * m[3][1] - tmp2 * m[3][2] - tmp5 * m[3][3]) * det;
+		d[1][2] = (tmp1 * m[3][0] + tmp6 * m[3][2] + tmp9 * m[3][3] - tmp0 * m[3][0] - tmp7 * m[3][2] - tmp8 * m[3][3]) * det;
+		d[2][2] = (tmp2 * m[3][0] + tmp7 * m[3][1] + tmp10 * m[3][3] - tmp3 * m[3][0] - tmp6 * m[3][1] - tmp11 * m[3][3]) * det;
+		d[3][2] = (tmp5 * m[3][0] + tmp8 * m[3][1] + tmp11 * m[3][2] - tmp4 * m[3][0] - tmp9 * m[3][1] - tmp10 * m[3][2]) * det;
+		d[0][3] = (tmp2 * m[2][2] + tmp5 * m[2][3] + tmp1 * m[2][1] - tmp4 * m[2][3] - tmp0 * m[2][1] - tmp3 * m[2][2]) * det;
+		d[1][3] = (tmp8 * m[2][3] + tmp0 * m[2][0] + tmp7 * m[2][2] - tmp6 * m[2][2] - tmp9 * m[2][3] - tmp1 * m[2][0]) * det;
+		d[2][3] = (tmp6 * m[2][1] + tmp11 * m[2][3] + tmp3 * m[2][0] - tmp10 * m[2][3] - tmp2 * m[2][0] - tmp7 * m[2][1]) * det;
+		d[3][3] = (tmp10 * m[2][2] + tmp4 * m[2][0] + tmp9 * m[2][1] - tmp8 * m[2][1] - tmp11 * m[2][2] - tmp5 * m[2][0]) * det;
+
+		memcpy(dst, d, sizeof(dst));
+
+		return true;
+	} else {
+		return false;
+	}
+}
+
+AE_NS_END

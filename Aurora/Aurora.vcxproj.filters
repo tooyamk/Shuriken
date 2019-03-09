@@ -1,0 +1,105 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{e9f2b3dd-679e-4d29-8ec6-b36b2b5548db}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\math">
+      <UniqueIdentifier>{19950809-ef33-4d9d-a663-6288de09571b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\nodes">
+      <UniqueIdentifier>{b01f5786-b72d-43c7-b8a7-bccbdc39e59b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\base">
+      <UniqueIdentifier>{323507d3-64e3-4b6c-907d-a1802741e8eb}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\math\Matrix44.h">
+      <Filter>src\math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\nodes\Node.h">
+      <Filter>src\nodes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\math\Quaternion.h">
+      <Filter>src\math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\math\Vector3.h">
+      <Filter>src\math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\math\Math.h">
+      <Filter>src\math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\math\Vector4.h">
+      <Filter>src\math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\math\Matrix34.h">
+      <Filter>src\math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\Aurora.h">
+      <Filter>src\base</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\Console.h">
+      <Filter>src\base</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\Ref.h">
+      <Filter>src\base</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\DynamicLib.h">
+      <Filter>src\base</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\math\Matrix44.cpp">
+      <Filter>src\math</Filter>
+    </ClCompile>
+    <ClCompile Include="src\nodes\Node.cpp">
+      <Filter>src\nodes</Filter>
+    </ClCompile>
+    <ClCompile Include="src\math\Quaternion.cpp">
+      <Filter>src\math</Filter>
+    </ClCompile>
+    <ClCompile Include="src\math\Vector3.cpp">
+      <Filter>src\math</Filter>
+    </ClCompile>
+    <ClCompile Include="src\math\Math.cpp">
+      <Filter>src\math</Filter>
+    </ClCompile>
+    <ClCompile Include="src\math\Vector4.cpp">
+      <Filter>src\math</Filter>
+    </ClCompile>
+    <ClCompile Include="src\math\Matrix34.cpp">
+      <Filter>src\math</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\DynamicLib.cpp">
+      <Filter>src\base</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\math\Matrix44.inl">
+      <Filter>src\math</Filter>
+    </None>
+    <None Include="src\math\Vector3.inl">
+      <Filter>src\math</Filter>
+    </None>
+    <None Include="src\math\Quaternion.inl">
+      <Filter>src\math</Filter>
+    </None>
+    <None Include="src\math\Math.inl">
+      <Filter>src\math</Filter>
+    </None>
+    <None Include="src\math\Vector4.inl">
+      <Filter>src\math</Filter>
+    </None>
+    <None Include="src\nodes\Node.inl">
+      <Filter>src\nodes</Filter>
+    </None>
+    <None Include="src\math\Matrix34.inl">
+      <Filter>src\math</Filter>
+    </None>
+  </ItemGroup>
+</Project>
