@@ -9,7 +9,7 @@
 
 AE_NS_BEGIN
 
-class AE_DLL Node : Ref {
+class AE_DLL Node : public Ref {
 public:
 	Node();
 	virtual ~Node();
