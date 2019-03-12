@@ -159,11 +159,13 @@
     <ClInclude Include="src\math\Matrix34.h" />
     <ClInclude Include="src\math\Matrix44.h" />
     <ClInclude Include="src\math\Quaternion.h" />
+    <ClInclude Include="src\math\Rect.h" />
     <ClInclude Include="src\math\Vector3.h" />
     <ClInclude Include="src\math\Vector4.h" />
     <ClInclude Include="src\modules\GraphicsModule.h" />
     <ClInclude Include="src\modules\Module.h" />
     <ClInclude Include="src\nodes\Node.h" />
+    <ClInclude Include="src\utils\String.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\base\DynamicLib.cpp" />
@@ -177,6 +179,7 @@
     <ClCompile Include="src\modules\GraphicsModule.cpp" />
     <ClCompile Include="src\modules\Module.cpp" />
     <ClCompile Include="src\nodes\Node.cpp" />
+    <ClCompile Include="src\utils\String.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="src\math\Math.inl" />
@@ -186,6 +189,7 @@
     <None Include="src\math\Vector3.inl" />
     <None Include="src\math\Vector4.inl" />
     <None Include="src\nodes\Node.inl" />
+    <None Include="src\utils\String.inl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

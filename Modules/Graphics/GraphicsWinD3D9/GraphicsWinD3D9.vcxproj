@@ -19,27 +19,27 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Test.cpp" />
-    <ClCompile Include="WindowDX.cpp" />
+    <ClInclude Include="src\GraphicsWinD3D9.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="WindowDX.h" />
+    <ClCompile Include="src\GraphicsWinD3D9.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{8BC3F596-EE87-44DC-9904-BBEED742E86D}</ProjectGuid>
+    <ProjectGuid>{82F31C71-0691-45BC-BA30-BEC19197C88C}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>Test</RootNamespace>
+    <RootNamespace>GraphicsWinDX</RootNamespace>
+    <ProjectName>GraphicsWinD3D9</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -78,12 +78,14 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)$(Configuration)\modules\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)$(Configuration)\modules\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -94,16 +96,15 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;AE_MODULE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>$(SolutionDir)Aurora\src</AdditionalIncludeDirectories>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>Aurora.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -124,26 +125,25 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ConformanceMode>true</ConformanceMode>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;AE_MODULE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>false</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalIncludeDirectories>$(SolutionDir)Aurora\src</AdditionalIncludeDirectories>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>Aurora.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
