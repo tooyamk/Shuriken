@@ -6,9 +6,8 @@ AE_NS_BEGIN
 
 class AE_DLL Ref {
 public:
-	Ref() :
-		_rc(0) {
-	}
+	Ref();
+	virtual ~Ref();
 
 	inline void AE_CALL retain() {
 		++_rc;

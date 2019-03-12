@@ -4,11 +4,12 @@
 
 AE_NS_BEGIN
 
-class DynamicLib {
+class AE_DLL DynamicLib {
 public:
 	DynamicLib();
-	~DynamicLib();
+	virtual ~DynamicLib();
 
+	inline bool isLoaded() const { return _lib; }
 	bool load(const i8* path);
 	void free();
 	void* getSymbolAddress(const i8* name) const;

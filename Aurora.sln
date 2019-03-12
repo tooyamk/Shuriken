@@ -10,6 +10,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test", "Test\Test.vcxproj",
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Aurora", "Aurora\Aurora.vcxproj", "{972C829A-FE33-48D8-A1E1-CC7457FED993}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GraphicsWinDX", "Modules\Graphics\GraphicsWinDX\GraphicsWinDX.vcxproj", "{82F31C71-0691-45BC-BA30-BEC19197C88C}"
+	ProjectSection(ProjectDependencies) = postProject
+		{972C829A-FE33-48D8-A1E1-CC7457FED993} = {972C829A-FE33-48D8-A1E1-CC7457FED993}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -34,6 +39,14 @@ Global
 		{972C829A-FE33-48D8-A1E1-CC7457FED993}.Release|x64.Build.0 = Release|x64
 		{972C829A-FE33-48D8-A1E1-CC7457FED993}.Release|x86.ActiveCfg = Release|Win32
 		{972C829A-FE33-48D8-A1E1-CC7457FED993}.Release|x86.Build.0 = Release|Win32
+		{82F31C71-0691-45BC-BA30-BEC19197C88C}.Debug|x64.ActiveCfg = Debug|x64
+		{82F31C71-0691-45BC-BA30-BEC19197C88C}.Debug|x64.Build.0 = Debug|x64
+		{82F31C71-0691-45BC-BA30-BEC19197C88C}.Debug|x86.ActiveCfg = Debug|Win32
+		{82F31C71-0691-45BC-BA30-BEC19197C88C}.Debug|x86.Build.0 = Debug|Win32
+		{82F31C71-0691-45BC-BA30-BEC19197C88C}.Release|x64.ActiveCfg = Release|x64
+		{82F31C71-0691-45BC-BA30-BEC19197C88C}.Release|x64.Build.0 = Release|x64
+		{82F31C71-0691-45BC-BA30-BEC19197C88C}.Release|x86.ActiveCfg = Release|Win32
+		{82F31C71-0691-45BC-BA30-BEC19197C88C}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
