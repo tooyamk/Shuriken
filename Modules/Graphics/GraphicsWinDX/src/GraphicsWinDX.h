@@ -3,18 +3,16 @@
 #include "modules/GraphicsModule.h"
 
 AE_NS_BEGIN
-#ifdef AE_EXPORTS
-#define AE_DLL AE_DLL_EXPORT 
-#else
-#define AE_DLL AE_DLL_IMPORT 
-#endif
-class GraphicsWinDX : public GraphicsModule {
+
+class AE_MODULE_DLL GraphicsWinDX : public GraphicsModule {
 public:
-	virtual void AE_CALL aaa();
+	virtual void AE_CALL createView(void* style, const i8* windowTitle, i32 x, i32 y, i32 w, i32 h);
 };
 
 AE_NS_END
 
-extern "C" __declspec(dllexport) void* createModule() {
+#ifdef AE_MODULE_EXPORTS
+extern "C" AE_MODULE_DLL_EXPORT void* createModule() {
 	return new AE_NS::GraphicsWinDX();
 }
+#endif
