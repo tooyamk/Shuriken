@@ -152,7 +152,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\base\Aurora.h" />
-    <ClInclude Include="src\base\Console.h" />
     <ClInclude Include="src\base\DynamicLib.h" />
     <ClInclude Include="src\base\Ref.h" />
     <ClInclude Include="src\math\Math.h" />

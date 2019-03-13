@@ -1,12 +1,12 @@
 #pragma once
 
-#include "modules/GraphicsModule.h"
+#include "modules/graphics/GraphicsModule.h"
 #include "math/Rect.h"
 
 #include <GL/GL.h>
 #pragma comment (lib, "opengl32.lib")
 
-AE_NS_BEGIN
+AE_MODULE_GRAPHICS_NS_BEGIN
 
 class AE_MODULE_DLL GraphicsWinGL : public GraphicsModule {
 public:
@@ -25,10 +25,10 @@ private:
 	Rect<i32> _rect;
 };
 
-AE_NS_END
+AE_MODULE_GRAPHICS_NS_END
 
 #ifdef AE_MODULE_EXPORTS
 extern "C" AE_MODULE_DLL_EXPORT void* createModule() {
-	return new AE_NS::GraphicsWinGL();
+	return new AE_MODULE_GRAPHICS_NS::GraphicsWinGL();
 }
 #endif

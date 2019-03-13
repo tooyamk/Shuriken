@@ -54,9 +54,6 @@
     <ClInclude Include="src\base\Aurora.h">
       <Filter>src\base</Filter>
     </ClInclude>
-    <ClInclude Include="src\base\Console.h">
-      <Filter>src\base</Filter>
-    </ClInclude>
     <ClInclude Include="src\base\Ref.h">
       <Filter>src\base</Filter>
     </ClInclude>

@@ -9,10 +9,10 @@ public:
 	DynamicLib();
 	virtual ~DynamicLib();
 
-	inline bool isLoaded() const { return _lib; }
-	bool load(const i8* path);
-	void free();
-	void* getSymbolAddress(const i8* name) const;
+	inline bool AE_CALL isLoaded() const { return _lib; }
+	bool AE_CALL load(const i8* path);
+	void AE_CALL free();
+	void* AE_CALL getSymbolAddress(const i8* name) const;
 
 private:
 	void* _lib;

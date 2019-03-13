@@ -1,5 +1,4 @@
 #include "GraphicsWinD3D9.h"
-#include "base/Console.h"
 #include "utils/String.h"
 
 AE_MODULE_GRAPHICS_NS_BEGIN
