@@ -1,4 +1,4 @@
-AE_NS_BEGIN
+AE_NODE_NS_BEGIN
 
 inline Node* Node::getRoot() const { 
 	return _root; 
@@ -57,6 +57,10 @@ inline const Matrix34& Node::getInverseWorldMatrix() const {
 	return _iwm;
 }
 
+inline const std::vector<AE_NODE_COMPONENT_NS::AbstractComponent*>& Node::getComponents() const {
+	return _components;
+}
+
 inline void Node::_localDecomposition() {
 	Matrix34 rot;
 	_lm.decomposition(&rot, &_ls);
@@ -71,4 +75,4 @@ inline void Node::_checkNoticeUpdate(ui32 appendDirty, ui32 sendDirty) {
 	_checkNoticeUpdateNow(_dirty | appendDirty, sendDirty);
 }
 
-AE_NS_END
+AE_NODE_NS_END

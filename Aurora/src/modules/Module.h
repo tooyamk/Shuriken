@@ -5,7 +5,7 @@
 
 typedef void*(*AE_CREATE_MODULE_FUN)();
 
-AE_NS_BEGIN
+AE_MODULE_NS_BEGIN
 
 class AE_DLL Module : public Ref {
 public:
@@ -42,4 +42,4 @@ private:
 	AE_CREATE_MODULE_FUN _createFn;
 };
 
-AE_NS_END
+AE_MODULE_NS_END

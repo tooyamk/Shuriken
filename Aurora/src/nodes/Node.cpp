@@ -1,6 +1,7 @@
 #include "Node.h"
+#include "nodes/components/AbstractComponent.h"
 
-AE_NS_BEGIN
+AE_NODE_NS_BEGIN
 
 Node::Node() :
 	name(),
@@ -16,10 +17,13 @@ Node::Node() :
 	_wr(),
 	_wm(),
 	_iwm(),
-	_dirty(0) {
+	_dirty(0),
+	_components(32){
 }
 
 Node::~Node() {
+	removeAllChildren();
+	removeAllComponents();
 }
 
 Node* Node::addChild(Node* child) {
@@ -79,8 +83,6 @@ bool Node::removeFromParent() {
 
 void Node::removeAllChildren() {
 	if (_childHead) {
-		for (auto& i : _traversingStack) i = nullptr;
-
 		auto child = _childHead;
 		do {
 			auto next = child->_next;
@@ -254,6 +256,59 @@ void Node::updateInverseWorldMatrix() {
 	}
 }
 
+void Node::addComponent(AE_NODE_COMPONENT_NS::AbstractComponent* component) {
+	if (component) {
+		auto node = component->getNode();
+		if (node != this) {
+			component->retain();
+			if (node) node->_removeComponent(component);
+			_components.push_back(component);
+			component->__setNode(this);
+		}
+	}
+}
+
+void Node::removeComponent(AE_NODE_COMPONENT_NS::AbstractComponent* component) {
+	if (component && component->getNode() == this) {
+		component->__setNode(nullptr);
+		_removeComponent(component);
+	}
+}
+
+void Node::removeAllComponents() {
+	for (auto c : _components) {
+		c->__setNode(nullptr);
+		c->release();
+	}
+	_components.clear();
+}
+
+AE_NODE_COMPONENT_NS::AbstractComponent* Node::getComponent(ui32 flag) const {
+	for (const auto c : _components) {
+		if ((c->flag & flag) == flag) return c;
+	}
+	return nullptr;
+}
+
+AE_NODE_COMPONENT_NS::AbstractComponent* Node::getComponentIf(const std::function<bool(AE_NODE_COMPONENT_NS::AbstractComponent*)>& func) const {
+	for (const auto c : _components) {
+		if (func(c)) return c;
+	}
+	return nullptr;
+}
+
+void Node::getComponents(ui32 flag, std::vector<AE_NODE_COMPONENT_NS::AbstractComponent*>& dst) const {
+	for (const auto c : _components) {
+		if ((c->flag & flag) == flag) dst.push_back(c);
+	}
+}
+
+void Node::getComponentsIf(const std::function<bool(AE_NODE_COMPONENT_NS::AbstractComponent*)>& func, std::vector<AE_NODE_COMPONENT_NS::AbstractComponent*>& dst) const {
+	for (const auto c : _components) {
+		if (func(c)) dst.push_back(c);
+	}
+}
+
 void Node::getLocalRotationFromWorld(const Node& node, const Quaternion& worldRot, Quaternion& dst) {
 	if (node._parent) {
 		auto q = node._parent->getWorldRotation();
@@ -295,10 +350,6 @@ void Node::_insertNode(Node* child, Node* before) {
 }
 
 void Node::_removeNode(Node* child) {
-	for (auto& i : _traversingStack) {
-		if (i == child) i = child->_next;
-	}
-
 	auto next = child->_next;
 
 	if (_childHead == child) {
@@ -393,4 +444,10 @@ void Node::_noticeUpdate(ui32 dirty) {
 	}
 }
 
-AE_NS_END
+void Node::_removeComponent(AE_NODE_COMPONENT_NS::AbstractComponent* component) {
+	auto itr = std::find(_components.begin(), _components.end(), component);
+	if (itr != _components.end()) _components.erase(itr);
+	component->release();
+}
+
+AE_NODE_NS_END

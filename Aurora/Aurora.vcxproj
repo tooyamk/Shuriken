@@ -162,8 +162,10 @@
     <ClInclude Include="src\math\Rect.h" />
     <ClInclude Include="src\math\Vector3.h" />
     <ClInclude Include="src\math\Vector4.h" />
-    <ClInclude Include="src\modules\GraphicsModule.h" />
+    <ClInclude Include="src\modules\graphics\GraphicsModule.h" />
     <ClInclude Include="src\modules\Module.h" />
+    <ClInclude Include="src\nodes\components\AbstractComponent.h" />
+    <ClInclude Include="src\nodes\components\Camera.h" />
     <ClInclude Include="src\nodes\Node.h" />
     <ClInclude Include="src\utils\String.h" />
   </ItemGroup>
@@ -176,8 +178,10 @@
     <ClCompile Include="src\math\Quaternion.cpp" />
     <ClCompile Include="src\math\Vector3.cpp" />
     <ClCompile Include="src\math\Vector4.cpp" />
-    <ClCompile Include="src\modules\GraphicsModule.cpp" />
+    <ClCompile Include="src\modules\graphics\GraphicsModule.cpp" />
     <ClCompile Include="src\modules\Module.cpp" />
+    <ClCompile Include="src\nodes\components\AbstractComponent.cpp" />
+    <ClCompile Include="src\nodes\components\Camera.cpp" />
     <ClCompile Include="src\nodes\Node.cpp" />
     <ClCompile Include="src\utils\String.cpp" />
   </ItemGroup>
@@ -188,6 +192,8 @@
     <None Include="src\math\Quaternion.inl" />
     <None Include="src\math\Vector3.inl" />
     <None Include="src\math\Vector4.inl" />
+    <None Include="src\nodes\components\AbstractComponent.inl" />
+    <None Include="src\nodes\components\Camera.inl" />
     <None Include="src\nodes\Node.inl" />
     <None Include="src\utils\String.inl" />
   </ItemGroup>

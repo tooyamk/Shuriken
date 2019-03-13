@@ -1,13 +1,20 @@
 #pragma once
 
-#include <list>
+#include <functional>
 #include <string>
+#include <vector>
 #include "base/Ref.h"
 #include "math/Matrix34.h"
 #include "math/Quaternion.h"
 #include "math/Vector3.h"
 
-AE_NS_BEGIN
+AE_NODE_COMPONENT_NS_BEGIN
+
+class AbstractComponent;
+
+AE_NODE_COMPONENT_NS_END
+
+AE_NODE_NS_BEGIN
 
 class AE_DLL Node : public Ref {
 public:
@@ -65,6 +72,15 @@ public:
 	void AE_CALL updateWorldMatrix();
 	void AE_CALL updateInverseWorldMatrix();
 
+	void AE_CALL addComponent(AE_NODE_COMPONENT_NS::AbstractComponent* component);
+	void AE_CALL removeComponent(AE_NODE_COMPONENT_NS::AbstractComponent* component);
+	void AE_CALL removeAllComponents();
+	AE_NODE_COMPONENT_NS::AbstractComponent* AE_CALL getComponent(ui32 flag) const;
+	AE_NODE_COMPONENT_NS::AbstractComponent* AE_CALL getComponentIf(const std::function<bool(AE_NODE_COMPONENT_NS::AbstractComponent*)>& func) const;
+	inline const std::vector<AE_NODE_COMPONENT_NS::AbstractComponent*>& AE_CALL getComponents() const;
+	void AE_CALL getComponents(ui32 flag, std::vector<AE_NODE_COMPONENT_NS::AbstractComponent*>& dst) const;
+	void AE_CALL getComponentsIf(const std::function<bool(AE_NODE_COMPONENT_NS::AbstractComponent*)>& func, std::vector<AE_NODE_COMPONENT_NS::AbstractComponent*>& dst) const;
+
 	/**
 	 * (node).setLocalRotation(dst)
 	 * (node).worldRotation = worldRot
@@ -89,6 +105,7 @@ protected:
 		static const ui32 LM_WMIM = LM | WMIM;
 	};
 
+
 	Node* _parent;
 	Node* _root;
 
@@ -107,8 +124,7 @@ protected:
 	Matrix34 _iwm;
 
 	ui32 _dirty;
-
-	std::list<Node*> _traversingStack;
+	std::vector<AE_NODE_COMPONENT_NS::AbstractComponent*> _components;
 
 	void AE_CALL _addNode(Node* child);
 	void AE_CALL _insertNode(Node* child, Node* before);
@@ -124,8 +140,10 @@ protected:
 	inline void AE_CALL _checkNoticeUpdate(ui32 appendDirty, ui32 sendDirty);
 	void AE_CALL _checkNoticeUpdateNow(ui32 nowDirty, ui32 sendDirty);
 	void AE_CALL _noticeUpdate(ui32 dirty);
+
+	void AE_CALL _removeComponent(AE_NODE_COMPONENT_NS::AbstractComponent* component);
 };
 
-AE_NS_END
+AE_NODE_NS_END
 
 #include "Node.inl"

@@ -20,10 +20,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Test.cpp" />
-    <ClCompile Include="WindowDX.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="WindowDX.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

@@ -2,9 +2,10 @@
 #include "base/Console.h"
 #include "utils/String.h"
 
-AE_NS_BEGIN
+AE_MODULE_GRAPHICS_NS_BEGIN
 
 GraphicsWinD3D9::GraphicsWinD3D9() :
+	_hIns(nullptr),
 	_d3d(nullptr),
 	_d3dDevice(nullptr),
 	_tpf(0.f) {
@@ -12,13 +13,15 @@ GraphicsWinD3D9::GraphicsWinD3D9() :
 	_d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD; // 帧缓冲区交换方式; 可能是COPY可能是FLIP，由设备来确定适合当前情况的方式
 }
 
+GraphicsWinD3D9::~GraphicsWinD3D9() {
+	_release();
+}
+
 void GraphicsWinD3D9::createView(void* style, const i8* windowTitle, const Rect<i32>& rect, bool fullscreen, f32 fps) {
 	_rect.set(rect);
 	_d3dpp.Windowed = !fullscreen;
 	_d3dpp.FullScreen_RefreshRateInHz = fullscreen ? D3DPRESENT_RATE_DEFAULT : 0;
 	setFPS(fps);
-
-	HINSTANCE hIns = GetModuleHandle(nullptr);
 
 	WNDCLASSEXW wnd = *(WNDCLASSEXW*)style;
 	if (!wnd.cbSize) wnd.cbSize = sizeof(WNDCLASSEXW);
@@ -34,12 +37,18 @@ void GraphicsWinD3D9::createView(void* style, const i8* windowTitle, const Rect<
 
 		return DefWindowProc(hWnd, msg, wParam, lParam);
 	};
-	if (!wnd.hInstance) wnd.hInstance = hIns;
+	if (wnd.hInstance) {
+		_hIns = wnd.hInstance;
+	} else {
+		_hIns = GetModuleHandle(nullptr);
+		wnd.hInstance = _hIns;
+	}
+	_className = wnd.lpszClassName;
 
 	RegisterClassExW(&wnd);
 
 	HWND hWnd = CreateWindowExW(0L, wnd.lpszClassName, String::UTF8ToUnicode(windowTitle).c_str(), WS_OVERLAPPEDWINDOW, 
-		_rect.left, _rect.top, _rect.getWidth(), _rect.getHeight(), GetDesktopWindow(), nullptr, hIns, nullptr);
+		_rect.left, _rect.top, _rect.getWidth(), _rect.getHeight(), GetDesktopWindow(), nullptr, _hIns, nullptr);
 	//HWND hWnd = CreateWindowExW(0L, wnd.lpszClassName, String::UTF8ToUnicode(windowTitle).c_str(), WS_EX_TOPMOST, x, y, w, h, nullptr, nullptr, hIns, nullptr);
 	if (hWnd && _init(hWnd)) {
 		ShowWindow(hWnd, SW_SHOWDEFAULT);
@@ -88,15 +97,7 @@ void GraphicsWinD3D9::createView(void* style, const i8* windowTitle, const Rect<
 		}
 	}
 
-	if (_d3dDevice) {
-		_d3dDevice->Release();
-		_d3dDevice = nullptr;
-	}
-	if (_d3d) {
-		_d3d->Release();
-		_d3d = nullptr;
-	}
-	UnregisterClassW(wnd.lpszClassName, wnd.hInstance);
+	_release();
 }
 
 void GraphicsWinD3D9::setFPS(f32 fps) {
@@ -190,4 +191,19 @@ bool GraphicsWinD3D9::_init(HWND hWnd) {
 	return true;
 }
 
-AE_NS_END
+void GraphicsWinD3D9::_release() {
+	if (_d3dDevice) {
+		_d3dDevice->Release();
+		_d3dDevice = nullptr;
+	}
+	if (_d3d) {
+		_d3d->Release();
+		_d3d = nullptr;
+	}
+	if (_hIns) {
+		UnregisterClassW(_className.c_str(), _hIns);
+		_hIns = nullptr;
+	}
+}
+
+AE_MODULE_GRAPHICS_NS_END

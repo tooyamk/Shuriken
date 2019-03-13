@@ -19,6 +19,15 @@
     <Filter Include="src\utils">
       <UniqueIdentifier>{1898d450-b8a5-403c-8f30-7addd738748f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\renderers">
+      <UniqueIdentifier>{37dbff01-797a-457f-9b12-ae695c3f6546}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\nodes\components">
+      <UniqueIdentifier>{9b970749-de96-40a2-a7c6-aa20a29e8718}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\modules\graphics">
+      <UniqueIdentifier>{fb124f4f-7652-406b-a093-b385460cd6ee}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\math\Matrix44.h">
@@ -57,14 +66,20 @@
     <ClInclude Include="src\modules\Module.h">
       <Filter>src\modules</Filter>
     </ClInclude>
-    <ClInclude Include="src\modules\GraphicsModule.h">
-      <Filter>src\modules</Filter>
-    </ClInclude>
     <ClInclude Include="src\utils\String.h">
       <Filter>src\utils</Filter>
     </ClInclude>
     <ClInclude Include="src\math\Rect.h">
       <Filter>src\math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\nodes\components\AbstractComponent.h">
+      <Filter>src\nodes\components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\nodes\components\Camera.h">
+      <Filter>src\nodes\components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\modules\graphics\GraphicsModule.h">
+      <Filter>src\modules\graphics</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -95,14 +110,20 @@
     <ClCompile Include="src\base\Ref.cpp">
       <Filter>src\base</Filter>
     </ClCompile>
-    <ClCompile Include="src\modules\GraphicsModule.cpp">
-      <Filter>src\modules</Filter>
-    </ClCompile>
     <ClCompile Include="src\modules\Module.cpp">
       <Filter>src\modules</Filter>
     </ClCompile>
     <ClCompile Include="src\utils\String.cpp">
       <Filter>src\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\nodes\components\AbstractComponent.cpp">
+      <Filter>src\nodes\components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\nodes\components\Camera.cpp">
+      <Filter>src\nodes\components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\modules\graphics\GraphicsModule.cpp">
+      <Filter>src\modules\graphics</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -129,6 +150,12 @@
     </None>
     <None Include="src\utils\String.inl">
       <Filter>src\utils</Filter>
+    </None>
+    <None Include="src\nodes\components\AbstractComponent.inl">
+      <Filter>src\nodes\components</Filter>
+    </None>
+    <None Include="src\nodes\components\Camera.inl">
+      <Filter>src\nodes\components</Filter>
     </None>
   </ItemGroup>
 </Project>
