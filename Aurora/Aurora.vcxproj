@@ -154,6 +154,7 @@
     <ClInclude Include="src\base\Aurora.h" />
     <ClInclude Include="src\base\DynamicLib.h" />
     <ClInclude Include="src\base\Ref.h" />
+    <ClInclude Include="src\events\EventDispatcher.h" />
     <ClInclude Include="src\math\Math.h" />
     <ClInclude Include="src\math\Matrix34.h" />
     <ClInclude Include="src\math\Matrix44.h" />
@@ -171,6 +172,7 @@
   <ItemGroup>
     <ClCompile Include="src\base\DynamicLib.cpp" />
     <ClCompile Include="src\base\Ref.cpp" />
+    <ClCompile Include="src\events\EventDispatcher.cpp" />
     <ClCompile Include="src\math\Math.cpp" />
     <ClCompile Include="src\math\Matrix34.cpp" />
     <ClCompile Include="src\math\Matrix44.cpp" />

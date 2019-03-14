@@ -23,17 +23,19 @@ public:
 	virtual void AE_CALL shutdown();
 
 private:
-	bool AE_CALL _init(HWND hWnd);
-	void AE_CALL _release();
-	void AE_CALL _toggleFullscreen();
-
 	std::wstring _className;
+	f32 _tpf; //timePreFrame
+	Rect<i32> _rect;
+
 	HINSTANCE _hIns;
 	PDIRECT3D9 _d3d; // D3D对象
 	PDIRECT3DDEVICE9 _d3dDevice; // D3D设备对象
 	D3DPRESENT_PARAMETERS _d3dpp;
-	f32 _tpf; //timePreFrame
-	Rect<i32> _rect;
+
+	bool AE_CALL _init(HWND hWnd);
+	void AE_CALL _release();
+	void AE_CALL _toggleFullscreen();
+	void AE_CALL _updateD3DParams();
 };
 
 AE_MODULE_GRAPHICS_NS_END

@@ -28,6 +28,9 @@
     <Filter Include="src\modules\graphics">
       <UniqueIdentifier>{fb124f4f-7652-406b-a093-b385460cd6ee}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\events">
+      <UniqueIdentifier>{6f758046-e6fd-4567-8012-e5ab6ef0d8eb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\math\Matrix44.h">
@@ -78,6 +81,9 @@
     <ClInclude Include="src\modules\graphics\GraphicsModule.h">
       <Filter>src\modules\graphics</Filter>
     </ClInclude>
+    <ClInclude Include="src\events\EventDispatcher.h">
+      <Filter>src\events</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\math\Matrix44.cpp">
@@ -121,6 +127,9 @@
     </ClCompile>
     <ClCompile Include="src\modules\graphics\GraphicsModule.cpp">
       <Filter>src\modules\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\events\EventDispatcher.cpp">
+      <Filter>src\events</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
