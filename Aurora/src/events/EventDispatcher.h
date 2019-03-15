@@ -44,7 +44,6 @@ using AE_EVENT_LISTENER = void(*)(Event<T>&);
 
 template<typename T, typename C>
 using AE_EVENT_CLASS_LISTENER = void(C::*)(Event<T>&);
-//using AE_EVENT_CALLBACK = std::function<void(Event<T>)>;
 
 
 template<typename T>
@@ -134,7 +133,17 @@ public:
 		}
 	}
 
-	void AE_CALL dispatch(Event<T>& e) {
+	bool AE_CALL hasEventListener(const T& name) {
+		auto itr = _listeners.find(e.getName());
+		if (itr == _listeners.end()) {
+			return false;
+		} else {
+			auto& list = itr->second;
+			return list.begin() != list.end();
+		}
+	}
+
+	void AE_CALL dispatchEvent(Event<T>& e) {
 		auto itr = _listeners.find(e.getName());
 		if (itr != _listeners.end()) {
 			auto& list = itr->second;
@@ -146,7 +155,7 @@ public:
 		}
 	}
 
-	void AE_CALL dispatch(const T& name, void* data = nullptr) {
+	void AE_CALL dispatchEvent(const T& name, void* data = nullptr) {
 		auto itr = _listeners.find(name);
 		if (itr != _listeners.end()) {
 			auto& list = itr->second;

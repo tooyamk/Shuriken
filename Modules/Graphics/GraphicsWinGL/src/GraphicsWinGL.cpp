@@ -1,5 +1,6 @@
 #include "GraphicsWinGL.h"
 #include "utils/String.h"
+#include <thread>
 
 AE_MODULE_GRAPHICS_NS_BEGIN
 
@@ -86,7 +87,7 @@ void GraphicsWinGL::createView(void* style, const i8* windowTitle, const Rect<i3
 				//DirectX_Render(hwnd);                          //directX渲染
 				f32 timePhase = f32(GetTickCount() - timeBegin); //循环耗费的时间
 				if (timePhase < _tpf) {                           //循环耗费的时间<每帧的时间
-					sleepms(DWORD(_tpf - timePhase));            //将剩余的时间等待
+					std::this_thread::sleep_for(std::chrono::milliseconds(DWORD(_tpf - timePhase))); //将剩余的时间等待
 				}
 			}
 		}

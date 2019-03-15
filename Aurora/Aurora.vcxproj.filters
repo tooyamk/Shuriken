@@ -84,6 +84,9 @@
     <ClInclude Include="src\events\EventDispatcher.h">
       <Filter>src\events</Filter>
     </ClInclude>
+    <ClInclude Include="src\base\AtomicLock.h">
+      <Filter>src\base</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\math\Matrix44.cpp">
@@ -113,9 +116,6 @@
     <ClCompile Include="src\base\Ref.cpp">
       <Filter>src\base</Filter>
     </ClCompile>
-    <ClCompile Include="src\modules\Module.cpp">
-      <Filter>src\modules</Filter>
-    </ClCompile>
     <ClCompile Include="src\utils\String.cpp">
       <Filter>src\utils</Filter>
     </ClCompile>
@@ -124,12 +124,6 @@
     </ClCompile>
     <ClCompile Include="src\nodes\components\Camera.cpp">
       <Filter>src\nodes\components</Filter>
-    </ClCompile>
-    <ClCompile Include="src\modules\graphics\GraphicsModule.cpp">
-      <Filter>src\modules\graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="src\events\EventDispatcher.cpp">
-      <Filter>src\events</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

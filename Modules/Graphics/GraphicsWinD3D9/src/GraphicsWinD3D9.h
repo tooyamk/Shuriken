@@ -14,23 +14,32 @@ public:
 	GraphicsWinD3D9();
 	virtual ~GraphicsWinD3D9();
 
-	virtual void AE_CALL createView(void* style, const i8* windowTitle, const Rect<i32>& rect, bool fullscreen, f32 fps);
-	virtual void AE_CALL setFPS(f32 fps);
+	virtual bool AE_CALL createView(void* style, const i8* windowTitle, const Rect<i32>& rect, bool fullscreen, f64 fps);
+	virtual void AE_CALL setFPS(f64 fps);
 	virtual bool AE_CALL isWindowed() const;
 	virtual void AE_CALL toggleFullscreen();
 	virtual void AE_CALL getViewRect(Rect<i32>& dst) const;
 	virtual void AE_CALL setViewRect(const Rect<i32>& rect);
 	virtual void AE_CALL shutdown();
+	virtual void AE_CALL run();
+
+	virtual void AE_CALL beginRender();
+	virtual void AE_CALL endRender();
+	virtual void AE_CALL present();
+
+	virtual void AE_CALL clear();
 
 private:
 	std::wstring _className;
-	f32 _tpf; //timePreFrame
 	Rect<i32> _rect;
+	HWND _hWnd;
 
 	HINSTANCE _hIns;
 	PDIRECT3D9 _d3d; // D3D对象
 	PDIRECT3DDEVICE9 _d3dDevice; // D3D设备对象
 	D3DPRESENT_PARAMETERS _d3dpp;
+
+	f64 _tpf; //timePreFrame
 
 	bool AE_CALL _init(HWND hWnd);
 	void AE_CALL _release();

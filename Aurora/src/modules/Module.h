@@ -7,7 +7,7 @@ typedef void*(*AE_CREATE_MODULE_FUN)();
 
 AE_MODULE_NS_BEGIN
 
-class AE_DLL Module : public Ref {
+class AE_TEMPLATE_DLL Module : public Ref {
 public:
 	Module() : _createFn(nullptr) {}
 	virtual ~Module() {}

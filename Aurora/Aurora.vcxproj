@@ -151,6 +151,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\base\AtomicLock.h" />
     <ClInclude Include="src\base\Aurora.h" />
     <ClInclude Include="src\base\DynamicLib.h" />
     <ClInclude Include="src\base\Ref.h" />
@@ -172,15 +173,12 @@
   <ItemGroup>
     <ClCompile Include="src\base\DynamicLib.cpp" />
     <ClCompile Include="src\base\Ref.cpp" />
-    <ClCompile Include="src\events\EventDispatcher.cpp" />
     <ClCompile Include="src\math\Math.cpp" />
     <ClCompile Include="src\math\Matrix34.cpp" />
     <ClCompile Include="src\math\Matrix44.cpp" />
     <ClCompile Include="src\math\Quaternion.cpp" />
     <ClCompile Include="src\math\Vector3.cpp" />
     <ClCompile Include="src\math\Vector4.cpp" />
-    <ClCompile Include="src\modules\graphics\GraphicsModule.cpp" />
-    <ClCompile Include="src\modules\Module.cpp" />
     <ClCompile Include="src\nodes\components\AbstractComponent.cpp" />
     <ClCompile Include="src\nodes\components\Camera.cpp" />
     <ClCompile Include="src\nodes\Node.cpp" />
