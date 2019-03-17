@@ -40,16 +40,29 @@ protected:
 
 
 template<typename T>
-using AE_EVENT_LISTENER = void(*)(Event<T>&);
-
-template<typename T, typename C>
-using AE_EVENT_CLASS_LISTENER = void(C::*)(Event<T>&);
-
-
-template<typename T>
 class AE_TEMPLATE_DLL EventDispatcher : public Ref {
 public:
-	typedef std::function<void(Event<T>&)> DelegateFunction;
+	typedef std::function<void(Event<T>&)> Function;
+	typedef void(*EVENT_LISTENER)(Event<T>&);
+
+	template<typename C>
+	using EVENT_CLASS_LISTENER = void(C::*)(Event<T>&);
+
+	
+	class FunctionListener {
+	public:
+		FunctionListener(const Function& listener) :
+			listener(listener) {
+		}
+
+		void operator()(Event<T>& e) {
+			return listener(e);
+		}
+
+	private:
+		Function listener;
+	};
+
 
 	EventDispatcher(void* target) :
 		_target(target) {
@@ -58,7 +71,7 @@ public:
 	virtual ~EventDispatcher() {
 	}
 
-	void AE_CALL addEventListener(const T& name, AE_EVENT_LISTENER<T> listener) {
+	void AE_CALL addEventListener(const T& name, EVENT_LISTENER listener) {
 		if (listener) {
 			auto itr = _listeners.find(name);
 			if (itr == _listeners.end()) {
@@ -66,7 +79,7 @@ public:
 			} else {
 				auto& list = itr->second;
 				for (auto& f : list) {
-					auto func = f.target<AE_EVENT_LISTENER<T>>();
+					auto func = f.target<EVENT_LISTENER>();
 					if (func && listener == *func) return;
 				}
 				list.emplace_back(listener);
@@ -75,18 +88,34 @@ public:
 	}
 
 	template<typename C>
-	void AE_CALL addEventListener(const T& name, C* c, AE_EVENT_CLASS_LISTENER<T, C> listener) {
+	void AE_CALL addEventListener(const T& name, C* c, EVENT_CLASS_LISTENER<C> listener) {
 		if (c && listener) {
 			auto itr = _listeners.find(name);
 			if (itr == _listeners.end()) {
-				_listeners.emplace(name, 0).first->second.emplace_back(DelagateClassListener<C>(c, listener));
+				_listeners.emplace(name, 0).first->second.emplace_back(DelagateMethodListener<C>(c, listener));
 			} else {
 				auto& list = itr->second;
 				for (auto& f : list) {
-					auto func = f.target<DelagateClassListener<C>>();
+					auto func = f.target<DelagateMethodListener<C>>();
 					if (func && func->c == c && func->listener == listener) return;
 				}
-				list.emplace_back(DelagateClassListener<C>(c, listener));
+				list.emplace_back(DelagateMethodListener<C>(c, listener));
+			}
+		}
+	}
+
+	void AE_CALL addEventListener(const T& name, FunctionListener* listener) {
+		if (listener) {
+			auto itr = _listeners.find(name);
+			if (itr == _listeners.end()) {
+				_listeners.emplace(name, 0).first->second.emplace_back(DelagateFunctionListener(listener));
+			} else {
+				auto& list = itr->second;
+				for (auto& f : list) {
+					auto func = f.target<DelagateFunctionListener>();
+					if (func && func->listener == listener) return;
+				}
+				list.emplace_back(DelagateFunctionListener(listener));
 			}
 		}
 	}
@@ -100,13 +129,13 @@ public:
 		if (itr != _listeners.end()) itr->second.clear();
 	}
 
-	void AE_CALL removeEventListener(const T& name, AE_EVENT_LISTENER<T> listener) {
+	void AE_CALL removeEventListener(const T& name, EVENT_LISTENER listener) {
 		if (listener) {
 			auto itr = _listeners.find(name);
 			if (itr != _listeners.end()) {
 				auto& list = itr->second;
 				for (auto itr = list.begin(); itr != list.end(); ++itr) {
-					auto func = (*itr).target<AE_EVENT_LISTENER<T>>();
+					auto func = (*itr).target<EVENT_LISTENER>();
 					if (func && listener == *func) {
 						list.erase(itr);
 						return;
@@ -117,14 +146,30 @@ public:
 	}
 
 	template<typename C>
-	void AE_CALL removeEventListener(const T& name, C* c, AE_EVENT_CLASS_LISTENER<T, C> listener) {
+	void AE_CALL removeEventListener(const T& name, C* c, EVENT_CLASS_LISTENER<C> listener) {
 		if (c && listener) {
 			auto itr = _listeners.find(name);
 			if (itr != _listeners.end()) {
 				auto& list = itr->second;
 				for (auto itr = list.begin(); itr != list.end(); ++itr) {
-					auto func = (*itr).target<DelagateClassListener<C>>();
+					auto func = (*itr).target<DelagateMethodListener<C>>();
 					if (func && func->c == c && func->listener == listener) {
+						list.erase(itr);
+						return;
+					}
+				}
+			}
+		}
+	}
+
+	void AE_CALL removeEventListener(const T& name, FunctionListener* listener) {
+		if (listener) {
+			auto itr = _listeners.find(name);
+			if (itr != _listeners.end()) {
+				auto& list = itr->second;
+				for (auto itr = list.begin(); itr != list.end(); ++itr) {
+					auto func = (*itr).target<DelagateFunctionListener>();
+					if (func && func->listener == listener) {
 						list.erase(itr);
 						return;
 					}
@@ -170,21 +215,35 @@ public:
 
 protected:
 	void* _target;
-	std::unordered_map<T, std::list<DelegateFunction>> _listeners;
+	std::unordered_map<T, std::list<Function>> _listeners;
 
 	template<typename C>
-	class DelagateClassListener {
+	class DelagateMethodListener {
 	public:
-		DelagateClassListener(C* c, AE_EVENT_CLASS_LISTENER<T, C> listener) :
+		DelagateMethodListener(C* c, EVENT_CLASS_LISTENER<C> listener) :
 			c(c),
 			listener(listener) {
 		}
 
 		C* c;
-		AE_EVENT_CLASS_LISTENER<T, C> listener;
+		EVENT_CLASS_LISTENER<C> listener;
 
 		void operator()(Event<T>& e) {
 			return (c->*listener)(e);
+		}
+	};
+
+
+	class DelagateFunctionListener {
+	public:
+		DelagateFunctionListener(FunctionListener* listener) :
+			listener(listener) {
+		}
+
+		FunctionListener* listener;
+
+		void operator()(Event<T>& e) {
+			return (*listener)(e);
 		}
 	};
 };

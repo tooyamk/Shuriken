@@ -151,6 +151,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\base\Application.h" />
     <ClInclude Include="src\base\AtomicLock.h" />
     <ClInclude Include="src\base\Aurora.h" />
     <ClInclude Include="src\base\DynamicLib.h" />
@@ -171,6 +172,7 @@
     <ClInclude Include="src\utils\String.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\base\Application.cpp" />
     <ClCompile Include="src\base\DynamicLib.cpp" />
     <ClCompile Include="src\base\Ref.cpp" />
     <ClCompile Include="src\math\Math.cpp" />

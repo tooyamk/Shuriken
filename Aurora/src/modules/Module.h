@@ -3,14 +3,13 @@
 #include "base/DynamicLib.h"
 #include "base/Ref.h"
 
-typedef void*(*AE_CREATE_MODULE_FUN)();
-
 AE_MODULE_NS_BEGIN
+
+typedef void*(*AE_CREATE_MODULE_FUN)();
 
 class AE_TEMPLATE_DLL Module : public Ref {
 public:
 	Module() : _createFn(nullptr) {}
-	virtual ~Module() {}
 
 	bool AE_CALL load(const i8* path) {
 		if (_lib.isLoaded()) _lib.free();
@@ -24,7 +23,7 @@ public:
 		return false;
 	}
 
-	void AE_CALLfree() {
+	void AE_CALL free() {
 		_lib.free();
 	}
 

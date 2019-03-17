@@ -1,11 +1,9 @@
 #include "GraphicsWinD3D9.h"
 #include "utils/String.h"
-#include <thread>
 
 AE_MODULE_GRAPHICS_NS_BEGIN
 
 GraphicsWinD3D9::GraphicsWinD3D9() :
-	_tpf(0.),
 	_hWnd(nullptr),
 	_hIns(nullptr),
 	_d3d(nullptr),
@@ -18,11 +16,10 @@ GraphicsWinD3D9::~GraphicsWinD3D9() {
 	_release();
 }
 
-bool GraphicsWinD3D9::createView(void* style, const i8* windowTitle, const Rect<i32>& rect, bool fullscreen, f64 fps) {
+bool GraphicsWinD3D9::createView(void* style, const i8* windowTitle, const Rect<i32>& rect, bool fullscreen) {
 	_rect.set(rect);
 	_d3dpp.Windowed = !fullscreen;
 	_updateD3DParams();
-	setFPS(fps);
 
 	WNDCLASSEXW wnd = *(WNDCLASSEXW*)style;
 	if (!wnd.cbSize) wnd.cbSize = sizeof(WNDCLASSEXW);
@@ -51,11 +48,14 @@ bool GraphicsWinD3D9::createView(void* style, const i8* windowTitle, const Rect<
 	_hWnd = CreateWindowExW(0L, wnd.lpszClassName, String::UTF8ToUnicode(windowTitle).c_str(), WS_OVERLAPPEDWINDOW,
 		_rect.left, _rect.top, _rect.getWidth(), _rect.getHeight(), GetDesktopWindow(), nullptr, _hIns, nullptr);
 	//HWND hWnd = CreateWindowExW(0L, wnd.lpszClassName, String::UTF8ToUnicode(windowTitle).c_str(), WS_EX_TOPMOST, x, y, w, h, nullptr, nullptr, hIns, nullptr);
-	return _init(_hWnd);
-}
+	if (_init(_hWnd)) {
+		ShowWindow(_hWnd, SW_SHOWDEFAULT);
+		UpdateWindow(_hWnd);
 
-void GraphicsWinD3D9::setFPS(f64 fps) {
-	_tpf = fps <= 0. ? 0. : 1000000. / fps;
+		return true;
+	}
+
+	return false;
 }
 
 bool GraphicsWinD3D9::isWindowed() const {
@@ -105,55 +105,6 @@ void GraphicsWinD3D9::setViewRect(const Rect<i32>& rect) {
 			_rect.set(rect);
 		}
 	}
-}
-
-void GraphicsWinD3D9::shutdown() {
-	PostQuitMessage(0);
-}
-
-void GraphicsWinD3D9::run() {
-	if (!_hWnd) return;
-
-	ShowWindow(_hWnd, SW_SHOWDEFAULT);
-	UpdateWindow(_hWnd);
-
-	MSG msg;
-	memset(&msg, 0, sizeof(msg));
-
-	auto t = getTimeNow<std::chrono::microseconds, std::chrono::steady_clock>();
-
-	while (msg.message != WM_QUIT) {
-		if (PeekMessage(
-			&msg,     // 存储消息的结构体指针
-			nullptr,  // 窗口消息和线程消息都会被处理 
-			0,        // 消息过滤最小值; 为0时返回所有可用信息
-			0,        // 消息过滤最大值; 为0时返回所有可用信息
-			PM_REMOVE // 指定消息如何处理; 消息在处理完后从队列中移除
-		)) {
-			TranslateMessage(&msg); // 变换虚拟键消息到字符消息，字符消息被发送到调用线程的消息队列
-			DispatchMessage(&msg);  // 派发消息到窗口过程
-		} else {
-			//if (++aa == 120) {
-				//PostQuitMessage(0);
-			//}
-
-			auto t0 = getTimeNow<std::chrono::microseconds, std::chrono::steady_clock>();
-			println("%lf", ((t0 - t) * 0.001));
-			this->dispatchEvent(Event::UPDATE);
-
-			auto t1 = getTimeNow<std::chrono::microseconds, std::chrono::steady_clock>();
-
-			f64 timePhase = f64(t1 - t0);						//循环耗费的时间
-			if (timePhase < _tpf) {                           //循环耗费的时间<每帧的时间
-				//println("sleep %f   %f", f32(timePhase * 0.001), f32((_tpf - timePhase) * 0.001));
-				std::this_thread::sleep_for(std::chrono::microseconds(i64(_tpf - timePhase))); //将剩余的时间等待
-			}
-
-			t = t0;
-		}
-	}
-
-	_release();
 }
 
 void GraphicsWinD3D9::_toggleFullscreen() {

@@ -87,6 +87,9 @@
     <ClInclude Include="src\base\AtomicLock.h">
       <Filter>src\base</Filter>
     </ClInclude>
+    <ClInclude Include="src\base\Application.h">
+      <Filter>src\base</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\math\Matrix44.cpp">
@@ -124,6 +127,9 @@
     </ClCompile>
     <ClCompile Include="src\nodes\components\Camera.cpp">
       <Filter>src\nodes\components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\Application.cpp">
+      <Filter>src\base</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
