@@ -1,27 +1,38 @@
 #pragma once
 
-#include "events/EventDispatcher.h"
+#include "base/Aurora.h"
 
-AE_NS_BEGIN
+namespace aurora {
+	namespace event {
+		template<typename T> class IEventDispatcher;
+	}
 
-enum class ApplicationEvent : ui8 {
-	ENTER_FRAME
-};
+	class AE_TEMPLATE_DLL Application {
+	public:
+		enum class Event : ui8 {
+			ENTER_FRAME
+		};
 
 
-class AE_TEMPLATE_DLL Application : public AE_EVENT_NS::EventDispatcher<ApplicationEvent> {
-public:
-	Application(f64 frameInterval);
+		Application(f64 frameInterval);
+		virtual ~Application();
 
-	void AE_CALL run();
-	void AE_CALL setFrameInterval(f64 frameInterval);
-	void AE_CALL resetDeltaRecord();
-	void AE_CALL update(bool autoSleep);
-	void AE_CALL shutdown();
+		inline event::IEventDispatcher<Event>* AE_CALL getEventDispatcher() const {
+			return _eventDispatcher;
+		}
 
-protected:
-	f64 _frameInterval; //microsecond
-	i64 _time;
-};
+		void AE_CALL setEventDispatcher(event::IEventDispatcher<Event>* eventDispatcher);
 
-AE_NS_END
+		void AE_CALL run();
+		void AE_CALL setFrameInterval(f64 frameInterval);
+		void AE_CALL resetDeltaRecord();
+		void AE_CALL update(bool autoSleep);
+		void AE_CALL shutdown();
+
+	protected:
+		event::IEventDispatcher<Event>* _eventDispatcher;
+
+		f64 _frameInterval; //microsecond
+		i64 _time;
+	};
+}

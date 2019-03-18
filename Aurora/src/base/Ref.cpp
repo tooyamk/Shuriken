@@ -1,12 +1,10 @@
 #include "Ref.h"
 
-AE_NS_BEGIN
+namespace aurora {
+	Ref::Ref() :
+		_refCount(0) {
+	}
 
-Ref::Ref() :
-	_rc(0) {
+	Ref::~Ref() {
+	}
 }
-
-Ref::~Ref() {
-}
-
-AE_NS_END

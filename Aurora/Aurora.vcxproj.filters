@@ -90,6 +90,9 @@
     <ClInclude Include="src\base\Application.h">
       <Filter>src\base</Filter>
     </ClInclude>
+    <ClInclude Include="src\events\IEventDispatcher.h">
+      <Filter>src\events</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\math\Matrix44.cpp">
@@ -153,9 +156,6 @@
     </None>
     <None Include="src\math\Matrix34.inl">
       <Filter>src\math</Filter>
-    </None>
-    <None Include="src\utils\String.inl">
-      <Filter>src\utils</Filter>
     </None>
     <None Include="src\nodes\components\AbstractComponent.inl">
       <Filter>src\nodes\components</Filter>
