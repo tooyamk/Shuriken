@@ -43,9 +43,9 @@ namespace aurora::module::graphics{
 		_className = wnd.lpszClassName;
 
 		RegisterClassExW(&wnd);
-
-		_hWnd = CreateWindowExW(0L, wnd.lpszClassName, String::UTF8ToUnicode(windowTitle).c_str(), WS_OVERLAPPEDWINDOW,
+		_hWnd = CreateWindowExW(0L, wnd.lpszClassName, String::Utf8ToUnicode(windowTitle).c_str(), WS_OVERLAPPEDWINDOW,
 			_rect.left, _rect.top, _rect.getWidth(), _rect.getHeight(), GetDesktopWindow(), nullptr, _hIns, nullptr);
+		//delete[] title;
 		//HWND hWnd = CreateWindowExW(0L, wnd.lpszClassName, String::UTF8ToUnicode(windowTitle).c_str(), WS_EX_TOPMOST, x, y, w, h, nullptr, nullptr, hIns, nullptr);
 		if (_init(_hWnd)) {
 			ShowWindow(_hWnd, SW_SHOWDEFAULT);

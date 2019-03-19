@@ -44,6 +44,6 @@ namespace aurora::module::graphics {
 
 #ifdef AE_MODULE_EXPORTS
 extern "C" AE_MODULE_DLL_EXPORT void* createModule() {
-	return new AE_MODULE_GRAPHICS_NS::GraphicsWinD3D9();
+	return new aurora::module::graphics::GraphicsWinD3D9();
 }
 #endif

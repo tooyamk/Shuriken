@@ -1,114 +1,155 @@
 #include "String.h"
 
 namespace aurora {
-	int String::UnicodeToUtf8(const wchar_t * in, ui32 inLen, char* out, ui32 outLen) {
-		if (out == nullptr || in == nullptr)return -1;
+	ui32 String::calcUnicodeToUtf8Length(const wchar_t* in, ui32 inLen) {
+		if (in == nullptr) return 0;
 
-		ui32 totalNum = 0;
-		for (ui32 i = 0; i < inLen; ++i) {//计算转换结果实际所需长度
-			wchar_t unicode = in[i];
-			if (unicode >= 0x0000 && unicode <= 0x007f) {
-				++totalNum;
-			} else if (unicode >= 0x0080 && unicode <= 0x07ff) {
-				totalNum += 2;
-			} else if (unicode >= 0x0800 && unicode <= 0xffff) {
-				totalNum += 3;
+		ui32 s = 0, d = 0;
+		while (s < inLen) {
+			wchar_t c = in[s++];
+			if (c < 0x80) {  //
+				//length = 1;
+				++d;
+			} else if (c < 0x800) {
+				//length = 2;
+				d += 2;
+			} else if (c < 0x10000) {
+				//length = 3;
+				d += 3;
+			} else if (c < 0x200000) {
+				//length = 4;
+				d += 4;
 			}
 		}
-		if (outLen < totalNum) return -1;//参数有效性判断！
-		//------------------------------------------------
 
-		ui32 resultSize = 0;//用来计数输出结果的实际大小！
-		auto tmp = out;
-		for (ui32 i = 0; i < inLen; ++i) {
-			if (resultSize > outLen) return -1;
-
-			wchar_t unicode = in[i];
-			if (unicode >= 0x0000 && unicode <= 0x007f) {
-				*tmp = (char)unicode;
-				++tmp;
-				++resultSize;
-			} else if (unicode >= 0x0080 && unicode <= 0x07ff) {
-				*tmp = 0xc0 | (unicode >> 6);
-				++tmp;
-				*tmp = 0x80 | (unicode & (0xff >> 2));
-				++tmp;
-				resultSize += 2;
-			} else if (unicode >= 0x0800 && unicode <= 0xffff) {
-				*tmp = 0xe0 | (unicode >> 12);
-				++tmp;
-				*tmp = 0x80 | (unicode >> 6 & 0x00ff);
-				++tmp;
-				*tmp = 0x80 | (unicode & (0xff >> 2));
-				++tmp;
-				resultSize += 3;
-			}
-		}
-		return resultSize;
+		return d;
 	}
 
-	int String::Utf8ToUnicode(const i8* in, ui32 inLen, wchar_t* out, ui32 outLen) {
-		if (out == nullptr || in == nullptr) return -1;
+	i32 String::UnicodeToUtf8(const wchar_t * in, ui32 inLen, char* out, ui32 outLen) {
+		if (out == nullptr || in == nullptr || outLen < calcUnicodeToUtf8Length(in, inLen)) return -1;
+		return _UnicodeToUtf8(in, inLen, out, outLen);
+	}
 
-		ui32 totalNum = 0;
-		auto p = in;
+	std::string String::UnicodeToUtf8(const std::wstring& in) {
+		ui32 outLen = calcUnicodeToUtf8Length(in.c_str(), in.size()) + 1;
+		i8* out = new i8[outLen];
+		auto len = _UnicodeToUtf8(in.c_str(), in.size(), out, outLen);
+		out[len] = 0;
+
+		std::string s(out);
+		delete[] out;
+
+		return std::move(s);
+	}
+
+	ui32 String::calcUtf8ToUnicodeLength(const i8* in, ui32 inLen) {
+		if (in == nullptr) return 0;
+
+		ui32 d = 0;
 		for (ui32 i = 0; i < inLen; ++i) {
-			if (*p >= 0x00 && *p <= 0x7f) {//说明最高位为'0'，这意味着utf8编码只有1个字节！
-				++p;
-				++totalNum;
-			} else if ((*p & (0xe0)) == 0xc0) {//只保留最高三位，看最高三位是不是110，如果是则意味着utf8编码有2个字节！
-				p += 2;
-				++totalNum;
-			} else if ((*p & (0xf0)) == 0xe0) {//只保留最高四位，看最高三位是不是1110，如果是则意味着utf8编码有3个字节！
-				p += 3;
-				++totalNum;
+			ui8 c = in[i];
+			if ((c & 0x80) == 0) {
+				++d;
+			} else if ((c & 0xE0) == 0xC0) {// 110x-xxxx 10xx-xxxx
+				d += 2;
+			} else if ((c & 0xF0) == 0xE0) {// 1110-xxxx 10xx-xxxx 10xx-xxxx
+				d += 3;
+			} else if ((c & 0xF8) == 0xF0) {// 1111-0xxx 10xx-xxxx 10xx-xxxx 10xx-xxxx 
+				d += 4;
+			} else {// 1111-10xx 10xx-xxxx 10xx-xxxx 10xx-xxxx 10xx-xxxx 
+				d += 5;
 			}
 		}
-		if (outLen < totalNum) return -1;//参数有效性判断！
-		//------------------------------------------------
-		i32 resultSize = 0;
-		p = in;
-		i8* tmp = (i8*)out;
-		while (*p) {
-			if (*p >= 0x00 && *p <= 0x7f) {//说明最高位为'0'，这意味着utf8编码只有1个字节！
-				*tmp = *p;
-				tmp += 2;
-				++resultSize;
-			} else if ((*p & 0xe0) == 0xc0) {//只保留最高三位，看最高三位是不是110，如果是则意味着utf8编码有2个字节！
-				wchar_t t = 0;
-				i8 t1 = 0, t2 = 0;
 
-				t1 = *p & (0x1f);//高位的后5位！（去除了头部的110这个标志位）
-				++p;
-				t2 = *p & (0x3f);//低位的后6位！（去除了头部的10这个标志位）
+		return d;
+	}
 
-				*tmp = t2 | ((t1 & (0x03)) << 6);
-				++tmp;
-				*tmp = t1 >> 2;//留下其保留的三位
-				++tmp;
-				++resultSize;
-			} else if ((*p & (0xf0)) == 0xe0) {//只保留最高四位，看最高三位是不是1110，如果是则意味着utf8编码有3个字节！
-				wchar_t t = 0, t1 = 0, t2 = 0, t3 = 0;
-				t1 = *p & (0x1f);
-				++p;
-				t2 = *p & (0x3f);
-				++p;
-				t3 = *p & (0x3f);
+	i32 String::Utf8ToUnicode(const i8* in, ui32 inLen, wchar_t* out, ui32 outLen) {
+		if (out == nullptr || in == nullptr || outLen < calcUtf8ToUnicodeLength(in, inLen)) return -1;
+		return _Utf8ToUnicode(in, inLen, out, outLen);
+	}
 
-				*tmp = ((t2 & (0x03)) << 6) | t3;
-				++tmp;
-				*tmp = (t1 << 4) | (t2 >> 2);
-				++tmp;
-				++resultSize;
+	std::wstring String::Utf8ToUnicode(const std::string& in) {
+		ui32 outLen = calcUtf8ToUnicodeLength(in.c_str(), in.size()) + 1;
+		wchar_t* out = new wchar_t[outLen];
+		auto len = _Utf8ToUnicode(in.c_str(), in.size(), out, outLen);
+		out[len] = 0;
+
+		std::wstring s(out);
+		delete[] out;
+
+		return std::move(s);
+	}
+
+	ui32 String::_UnicodeToUtf8(const wchar_t* in, ui32 inLen, char* out, ui32 outLen) {
+		ui32 s = 0, d = 0;
+		while (s < inLen) {
+			wchar_t c = in[s++];
+			if (c < 0x80) {  //
+				//length = 1;
+				out[d++] = (char)c;
+			} else if (c < 0x800) {
+				//length = 2;
+				out[d++] = 0xC0 | (c >> 6);
+				out[d++] = 0x80 | (c & 0x3F);
+			} else if (c < 0x10000) {
+				//length = 3;
+				out[d++] = 0xE0 | (c >> 12);
+				out[d++] = 0x80 | ((c >> 6) & 0x3F);
+				out[d++] = 0x80 | (c & 0x3F);
+			} else if (c < 0x200000) {
+				//length = 4;
+				out[d++] = 0xF0 | ((int)c >> 18);
+				out[d++] = 0x80 | ((c >> 12) & 0x3F);
+				out[d++] = 0x80 | ((c >> 6) & 0x3F);
+				out[d++] = 0x80 | (c & 0x3F);
 			}
-			++p;
 		}
-		/*不考虑结束符，如果考虑则打开此段！
-		*tmp = '/0';
-		tmp++;
-		*tmp = '/0';
-		resultsize += 2;
-		*/
-		return resultSize;
+
+		return d;
+	}
+
+	ui32 String::_Utf8ToUnicode(const i8* in, ui32 inLen, wchar_t* out, ui32 outLen) {
+		ui32 s = 0, d = 0;
+		while (s < inLen) {
+			ui8 c = in[s];
+			if ((c & 0x80) == 0) {
+				out[d++] = in[s++];
+			} else if ((c & 0xE0) == 0xC0) {// 110x-xxxx 10xx-xxxx
+				wchar_t& wideChar = out[d++];
+				wideChar = (in[s + 0] & 0x3F) << 6;
+				wideChar |= (in[s + 1] & 0x3F);
+
+				s += 2;
+			} else if ((c & 0xF0) == 0xE0) {// 1110-xxxx 10xx-xxxx 10xx-xxxx
+				wchar_t& wideChar = out[d++];
+
+				wideChar = (in[s + 0] & 0x1F) << 12;
+				wideChar |= (in[s + 1] & 0x3F) << 6;
+				wideChar |= (in[s + 2] & 0x3F);
+
+				s += 3;
+			} else if ((c & 0xF8) == 0xF0) {// 1111-0xxx 10xx-xxxx 10xx-xxxx 10xx-xxxx 
+				wchar_t& wideChar = out[d++];
+
+				//wideChar = (in[s + 0] & 0x0F) << 18;
+				wideChar = (in[s + 1] & 0x3F) << 12;
+				wideChar |= (in[s + 2] & 0x3F) << 6;
+				wideChar |= (in[s + 3] & 0x3F);
+
+				s += 4;
+			} else {// 1111-10xx 10xx-xxxx 10xx-xxxx 10xx-xxxx 10xx-xxxx 
+				wchar_t& wideChar = out[d++];
+
+				//wideChar = (in[s + 0] & 0x07) << 24;
+				//wideChar = (in[s + 1] & 0x3F) << 18;
+				wideChar = (in[s + 2] & 0x3F) << 12;
+				wideChar |= (in[s + 3] & 0x3F) << 6;
+				wideChar |= (in[s + 4] & 0x3F);
+				s += 5;
+			}
+		}
+
+		return d;
 	}
 }
