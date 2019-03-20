@@ -21,6 +21,9 @@
   <ItemGroup>
     <ClCompile Include="src\Test.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\FastDelegate.hpp" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{8BC3F596-EE87-44DC-9904-BBEED742E86D}</ProjectGuid>
@@ -121,7 +124,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>

@@ -4,23 +4,23 @@
 #include <functional>
 
 namespace aurora::event {
-	template<typename T>
+	template<typename EvtType>
 	class AE_TEMPLATE_DLL Event {
 	public:
-		Event(T name, void* data = nullptr) :
-			_name(name),
+		Event(const EvtType& type, void* data = nullptr) :
+			_type(type),
 			_data(data),
 			_target(nullptr) {
 		}
 
-		Event(void* target, T name, void* data = nullptr) :
-			_name(name),
+		Event(void* target, const EvtType& type, void* data = nullptr) :
+			_type(name),
 			_data(data),
 			_target(target) {
 		}
 
-		Event(void* target, const Event<T>&e) :
-			_name(e.getName()),
+		Event(void* target, const Event<EvtType>& e) :
+			_type(e.getType()),
 			_data(e.getData()),
 			_target(target) {
 		}
@@ -29,8 +29,8 @@ namespace aurora::event {
 			return _target;
 		}
 
-		inline const T& getName() const {
-			return _name;
+		inline const EvtType& getType() const {
+			return _type;
 		}
 
 		inline void* getData() const {
@@ -38,39 +38,93 @@ namespace aurora::event {
 		}
 
 	protected:
-		T _name;
+		EvtType _type;
 		void* _data;
 		void* _target;
 	};
 
 
-	template<typename T>
+	template<typename EvtType>
+	using EVENT_FN = void(*)(Event<EvtType>&);
+
+	template<typename EvtType, typename Class>
+	using EVENT_METHOD_FN = void(Class::*)(Event<EvtType>&);
+
+	template<typename EvtType>
+	using EVENT_FUNC = std::function<void(Event<EvtType>&)>;;
+
+
+	template<typename EvtType>
+	class AE_TEMPLATE_DLL IEventListener {
+	public:
+		virtual void onEvent(Event<EvtType>& e) = 0;
+	};
+
+
+	template<typename EvtType, typename T>
+	class AE_TEMPLATE_DLL EventListener : public IEventListener<EvtType> {};
+
+
+	template<typename EvtType>
+	class AE_TEMPLATE_DLL EventListener<EvtType, EVENT_FUNC<EvtType>> : public IEventListener<EvtType> {
+	public:
+		EventListener(EVENT_FN<EvtType> fn) :
+			_fn(fn) {
+		}
+
+		virtual void onEvent(Event<EvtType>& e) {
+			_fn(e);
+		}
+	private:
+		EVENT_FUNC<EvtType> _fn;
+	};
+
+
+	template<typename EvtType>
+	class AE_TEMPLATE_DLL EventListener<EvtType, EVENT_FN<EvtType>> : public IEventListener<EvtType> {
+	public:
+		EventListener(EVENT_FN<EvtType> fn) :
+			_fn(fn) {
+		}
+
+		virtual void onEvent(Event<EvtType>& e) {
+			_fn(e);
+		}
+	private:
+		EVENT_FN<EvtType> _fn;
+	};
+
+
+	template<typename EvtType, typename Class>
+	class AE_TEMPLATE_DLL EventListener<EvtType, EVENT_METHOD_FN<EvtType, Class>> : public IEventListener<EvtType> {
+	public:
+		EventListener(Class* target, EVENT_METHOD_FN<EvtType, Class> method) :
+			_target(target),
+			_method(method) {
+		}
+
+		virtual void onEvent(Event<EvtType>& e) {
+			(_target*->_method)(e);
+		}
+	private:
+		Class* _target;
+		EVENT_METHOD_FN<EvtType, Class> _method;
+	};
+
+
+	template<typename EvtType>
 	class AE_TEMPLATE_DLL IEventDispatcher : public Ref {
 	public:
-		typedef std::function<void(Event<T>&)> Function;
-		typedef void(*EVENT_LISTENER)(Event<T>&);
+		virtual void AE_CALL addEventListener(const EvtType& type, IEventListener<EvtType>& listener) = 0;
+		virtual bool AE_CALL hasEventListener(const EvtType& natypeme) const = 0;
+		virtual bool AE_CALL hasEventListener(const EvtType& type, const IEventListener<EvtType>& listener) const = 0;
+		virtual void AE_CALL removeEventListener(const EvtType& type, const IEventListener<EvtType>& listener) = 0;
+		virtual void AE_CALL removeEventListeners(const EvtType& type) = 0;
+		virtual void AE_CALL removeAllEventListeners() = 0;
 
-		template<typename C>
-		using EVENT_CLASS_LISTENER = void(C::*)(Event<T>&);
-
-
-		class FunctionListener {
-		public:
-			FunctionListener(const Function& listener) :
-				listener(listener) {
-			}
-
-			void operator()(Event<T>& e) {
-				return listener(e);
-			}
-
-		private:
-			Function listener;
-		};
-
-		virtual void AE_CALL dispatchEvent(const Event<T>& e) = 0;
-		virtual void AE_CALL dispatchEvent(void* target, const Event<T>& e) = 0;
-		virtual void AE_CALL dispatchEvent(const T& name, void* data = nullptr) = 0;
-		virtual void AE_CALL dispatchEvent(void* target, const T& name, void* data = nullptr) = 0;
+		virtual void AE_CALL dispatchEvent(const Event<EvtType>& e) = 0;
+		virtual void AE_CALL dispatchEvent(void* target, const Event<EvtType>& e) = 0;
+		virtual void AE_CALL dispatchEvent(const EvtType& type, void* data = nullptr) = 0;
+		virtual void AE_CALL dispatchEvent(void* target, const EvtType& type, void* data = nullptr) = 0;
 	};
 }
