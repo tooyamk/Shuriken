@@ -10,7 +10,7 @@ namespace aurora {
 	class AE_TEMPLATE_DLL Application {
 	public:
 		enum class Event : ui8 {
-			ENTER_FRAME
+			UPDATE
 		};
 
 

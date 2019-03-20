@@ -54,7 +54,7 @@ namespace aurora {
 		f64 dt = _time == 0 ? 0 : (t0 - _time) * 0.001;//ms
 		_time = t0;
 
-		if (_eventDispatcher) _eventDispatcher->dispatchEvent(this, Event::ENTER_FRAME);
+		if (_eventDispatcher) _eventDispatcher->dispatchEvent(this, Event::UPDATE);
 
 		if (autoSleep) {
 			auto t1 = getTimeNow<std::chrono::microseconds, std::chrono::steady_clock>();

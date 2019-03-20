@@ -4,8 +4,8 @@
 #include <unordered_map>
 
 namespace aurora::event {
-	template<typename T>
-	class AE_TEMPLATE_DLL EventDispatcher : public IEventDispatcher<T> {
+	template<typename EvtType>
+	class AE_TEMPLATE_DLL EventDispatcher : public IEventDispatcher<EvtType> {
 	public:
 		EventDispatcher(void* target = nullptr) :
 			_target(target) {
@@ -14,17 +14,17 @@ namespace aurora::event {
 		virtual ~EventDispatcher() {
 		}
 
-		void AE_CALL addEventListener(const T& name, IEventListener& listener) {
-			auto itr = _listeners.find(name);
+		virtual void AE_CALL addEventListener(const EvtType& type, IEventListener<EvtType>& listener) override {
+			auto itr = _listeners.find(type);
 			if (itr == _listeners.end()) {
-				_listeners.emplace(name, 0).first->second.emplace_back(listener);
+				_listeners.emplace(type, 0).first->second.emplace_back(&listener);
 			} else {
-				itr->second.emplace_back(listener);
+				itr->second.emplace_back(&listener);
 			}
 		}
 
-		bool AE_CALL hasEventListener(const T& name) const {
-			auto itr = _listeners.find(e.getName());
+		virtual bool AE_CALL hasEventListener(const EvtType& type) const  override {
+			auto itr = _listeners.find(type);
 			if (itr == _listeners.end()) {
 				return false;
 			} else {
@@ -33,25 +33,25 @@ namespace aurora::event {
 			}
 		}
 
-		bool AE_CALL hasEventListener(const T& name, const IEventListener& listener) const {
-			auto itr = _listeners.find(e.getName());
+		virtual bool AE_CALL hasEventListener(const EvtType& type, const IEventListener<EvtType>& listener) const override {
+			auto itr = _listeners.find(type);
 			if (itr == _listeners.end()) {
 				return false;
 			} else {
 				auto& list = itr->second;
 				for (auto& f : list) {
-					if (f == listener) return true;
+					if (f == &listener) return true;
 				}
 				return false;
 			}
 		}
 
-		void AE_CALL removeEventListener(const T& name, const IEventListener& listener) {
-			auto itr = _listeners.find(name);
+		virtual void AE_CALL removeEventListener(const EvtType& type, const IEventListener<EvtType>& listener) override {
+			auto itr = _listeners.find(type);
 			if (itr != _listeners.end()) {
 				auto& list = itr->second;
 				for (auto itr = list.begin(); itr != list.end(); ++itr) {
-					if (listener == *func) {
+					if (&listener == *itr) {
 						list.erase(itr);
 						return;
 					}
@@ -59,63 +59,62 @@ namespace aurora::event {
 			}
 		}
 
-		void AE_CALL removeEventListeners(const T& name) {
-			auto itr = _listeners.find(name);
+		virtual void AE_CALL removeEventListeners(const EvtType& type) override {
+			auto itr = _listeners.find(type);
 			if (itr != _listeners.end()) itr->second.clear();
 		}
 
-		void AE_CALL removeEventListeners() {
+		virtual void AE_CALL removeEventListeners() {
 			_listeners.clear();
 		}
 
-		virtual void AE_CALL dispatchEvent(const Event<T>& e) {
-			auto itr = _listeners.find(e.getName());
+		virtual void AE_CALL dispatchEvent(const Event<EvtType>& e) override {
+			auto itr = _listeners.find(e.getType());
 			if (itr != _listeners.end()) {
 				auto& list = itr->second;
 				if (list.begin() != list.end()) {
-					Event<T> evt(_target, e);
-					for (auto& f : list) f.onEvent(evt);
+					Event<EvtType> evt(_target, e);
+					for (auto& f : list) f->onEvent(evt);
 				}
 			}
 		}
 
-		virtual void AE_CALL dispatchEvent(void* target, const Event<T>& e) {
-			auto itr = _listeners.find(e.getName());
+		virtual void AE_CALL dispatchEvent(void* target, const Event<EvtType>& e) override {
+			auto itr = _listeners.find(e.getType());
 			if (itr != _listeners.end()) {
 				auto& list = itr->second;
 				if (list.begin() != list.end()) {
-					Event<T> evt(target, e);
-					for (auto& f : list) f.onEvent(evt);
+					Event<EvtType> evt(target, e);
+					for (auto& f : list) f->onEvent(evt);
 				}
 			}
 		}
 
-		virtual void AE_CALL dispatchEvent(const T& name, void* data = nullptr) {
-			auto itr = _listeners.find(name);
+		virtual void AE_CALL dispatchEvent(const EvtType& type, void* data = nullptr) override {
+			auto itr = _listeners.find(type);
 			if (itr != _listeners.end()) {
 				auto& list = itr->second;
 				if (list.begin() != list.end()) {
-					Event<T> e(_target, name, data);
-					for (auto& f : list) f.onEvent(evt);
+					Event<EvtType> evt(_target, type, data);
+					for (auto& f : list) f->onEvent(evt);
 				}
 
 			}
 		}
 
-		virtual void AE_CALL dispatchEvent(void* target, const T& name, void* data = nullptr) {
-			auto itr = _listeners.find(name);
+		virtual void AE_CALL dispatchEvent(void* target, const EvtType& type, void* data = nullptr) override {
+			auto itr = _listeners.find(type);
 			if (itr != _listeners.end()) {
 				auto& list = itr->second;
 				if (list.begin() != list.end()) {
-					Event<T> e(target, name, data);
-					for (auto& f : list) f.onEvent(evt);
+					Event<EvtType> evt(target, type, data);
+					for (auto& f : list) f->onEvent(evt);
 				}
-
 			}
 		}
 
 	protected:
 		void* _target;
-		std::unordered_map<T, std::list<IEventListener&>> _listeners;
+		std::unordered_map<EvtType, std::list<IEventListener<EvtType>*>> _listeners;
 	};
 }

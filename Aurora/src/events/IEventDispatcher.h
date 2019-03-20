@@ -14,7 +14,7 @@ namespace aurora::event {
 		}
 
 		Event(void* target, const EvtType& type, void* data = nullptr) :
-			_type(name),
+			_type(type),
 			_data(data),
 			_target(target) {
 		}
@@ -45,13 +45,13 @@ namespace aurora::event {
 
 
 	template<typename EvtType>
-	using EVENT_FN = void(*)(Event<EvtType>&);
+	using EVT_FN = void(*)(Event<EvtType>&);
 
 	template<typename EvtType, typename Class>
-	using EVENT_METHOD_FN = void(Class::*)(Event<EvtType>&);
+	using EVT_METHOD_FN = void(Class::*)(Event<EvtType>&);
 
 	template<typename EvtType>
-	using EVENT_FUNC = std::function<void(Event<EvtType>&)>;;
+	using EVT_FUNC = std::function<void(Event<EvtType>&)>;
 
 
 	template<typename EvtType>
@@ -61,54 +61,50 @@ namespace aurora::event {
 	};
 
 
-	template<typename EvtType, typename T>
-	class AE_TEMPLATE_DLL EventListener : public IEventListener<EvtType> {};
-
-
 	template<typename EvtType>
-	class AE_TEMPLATE_DLL EventListener<EvtType, EVENT_FUNC<EvtType>> : public IEventListener<EvtType> {
+	class AE_TEMPLATE_DLL FnEventListener : public IEventListener<EvtType> {
 	public:
-		EventListener(EVENT_FN<EvtType> fn) :
+		FnEventListener(EVT_FN<EvtType> fn) :
 			_fn(fn) {
 		}
 
-		virtual void onEvent(Event<EvtType>& e) {
+		virtual void onEvent(Event<EvtType>& e) override {
 			_fn(e);
 		}
 	private:
-		EVENT_FUNC<EvtType> _fn;
+		EVT_FN<EvtType> _fn;
 	};
 
 
 	template<typename EvtType>
-	class AE_TEMPLATE_DLL EventListener<EvtType, EVENT_FN<EvtType>> : public IEventListener<EvtType> {
+	class AE_TEMPLATE_DLL FuncEventListener : public IEventListener<EvtType> {
 	public:
-		EventListener(EVENT_FN<EvtType> fn) :
+		FuncEventListener(const EVT_FUNC<EvtType>& fn) :
 			_fn(fn) {
 		}
 
-		virtual void onEvent(Event<EvtType>& e) {
+		virtual void onEvent(Event<EvtType>& e) override {
 			_fn(e);
 		}
 	private:
-		EVENT_FN<EvtType> _fn;
+		EVT_FUNC<EvtType> _fn;
 	};
 
 
 	template<typename EvtType, typename Class>
-	class AE_TEMPLATE_DLL EventListener<EvtType, EVENT_METHOD_FN<EvtType, Class>> : public IEventListener<EvtType> {
+	class AE_TEMPLATE_DLL MethodEventListener : public IEventListener<EvtType> {
 	public:
-		EventListener(Class* target, EVENT_METHOD_FN<EvtType, Class> method) :
+		MethodEventListener(Class* target, EVT_METHOD_FN<EvtType, Class> method) :
 			_target(target),
 			_method(method) {
 		}
 
-		virtual void onEvent(Event<EvtType>& e) {
+		virtual void onEvent(Event<EvtType>& e) override {
 			(_target*->_method)(e);
 		}
 	private:
 		Class* _target;
-		EVENT_METHOD_FN<EvtType, Class> _method;
+		EVT_METHOD_FN<EvtType, Class> _method;
 	};
 
 
@@ -116,11 +112,11 @@ namespace aurora::event {
 	class AE_TEMPLATE_DLL IEventDispatcher : public Ref {
 	public:
 		virtual void AE_CALL addEventListener(const EvtType& type, IEventListener<EvtType>& listener) = 0;
-		virtual bool AE_CALL hasEventListener(const EvtType& natypeme) const = 0;
+		virtual bool AE_CALL hasEventListener(const EvtType& type) const = 0;
 		virtual bool AE_CALL hasEventListener(const EvtType& type, const IEventListener<EvtType>& listener) const = 0;
 		virtual void AE_CALL removeEventListener(const EvtType& type, const IEventListener<EvtType>& listener) = 0;
 		virtual void AE_CALL removeEventListeners(const EvtType& type) = 0;
-		virtual void AE_CALL removeAllEventListeners() = 0;
+		virtual void AE_CALL removeEventListeners() = 0;
 
 		virtual void AE_CALL dispatchEvent(const Event<EvtType>& e) = 0;
 		virtual void AE_CALL dispatchEvent(void* target, const Event<EvtType>& e) = 0;

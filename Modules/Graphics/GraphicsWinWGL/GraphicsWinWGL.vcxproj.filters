@@ -6,13 +6,13 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\GraphicsWinGL.h">
-      <Filter>src</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="src\GraphicsWinGL.cpp">
+    <ClCompile Include="src\GraphicsWinWGL.cpp">
       <Filter>src</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\GraphicsWinWGL.h">
+      <Filter>src</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

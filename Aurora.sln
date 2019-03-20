@@ -17,10 +17,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GraphicsWinD3D9", "Modules\
 		{972C829A-FE33-48D8-A1E1-CC7457FED993} = {972C829A-FE33-48D8-A1E1-CC7457FED993}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GraphicsWinGL", "Modules\Graphics\GraphicsWinGL\GraphicsWinGL.vcxproj", "{A65BE382-CCAE-473B-94D8-9F224C5AF736}"
-	ProjectSection(ProjectDependencies) = postProject
-		{972C829A-FE33-48D8-A1E1-CC7457FED993} = {972C829A-FE33-48D8-A1E1-CC7457FED993}
-	EndProjectSection
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GraphicsWinWGL", "Modules\Graphics\GraphicsWinWGL\GraphicsWinWGL.vcxproj", "{A65BE382-CCAE-473B-94D8-9F224C5AF736}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
