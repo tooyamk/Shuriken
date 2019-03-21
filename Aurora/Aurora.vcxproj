@@ -154,10 +154,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\base\Application.h" />
-    <ClInclude Include="src\base\AtomicLock.h" />
+    <ClInclude Include="src\base\Lock.h" />
     <ClInclude Include="src\base\Aurora.h" />
     <ClInclude Include="src\base\DynamicLib.h" />
     <ClInclude Include="src\base\Ref.h" />
+    <ClInclude Include="src\base\Time.h" />
     <ClInclude Include="src\events\EventDispatcher.h" />
     <ClInclude Include="src\events\IEventDispatcher.h" />
     <ClInclude Include="src\math\Math.h" />

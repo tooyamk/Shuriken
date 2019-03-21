@@ -27,6 +27,7 @@ namespace aurora::node::component {
 		void AE_CALL setEnabled(bool b);
 		inline Node* AE_CALL getNode() const;
 
+	ae_internal_public:
 		void AE_CALL __setNode(Node* node);
 
 	protected:

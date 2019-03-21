@@ -5,11 +5,18 @@
 #include <thread>
 
 namespace aurora {
-	class Mutex {
+	class EmptyLock {
 	public:
-		Mutex() = default;
-		Mutex(const Mutex&) = delete;
-		Mutex& operator= (const Mutex&) = delete;
+		inline void AE_CALL lock() {};
+		inline void AE_CALL unlock() {};
+	};
+
+
+	class AtomicLock {
+	public:
+		AtomicLock() = default;
+		AtomicLock(const AtomicLock&) = delete;
+		AtomicLock& operator= (const AtomicLock&) = delete;
 
 		inline void AE_CALL lock() {
 			while (_flag.test_and_set(std::memory_order_acquire)) std::this_thread::yield();
@@ -24,11 +31,11 @@ namespace aurora {
 	};
 
 
-	class SpinMutex {
+	class SpinAtomicLock {
 	public:
-		SpinMutex() = default;
-		SpinMutex(const SpinMutex&) = delete;
-		SpinMutex& operator= (const SpinMutex&) = delete;
+		SpinAtomicLock() = default;
+		SpinAtomicLock(const SpinAtomicLock&) = delete;
+		SpinAtomicLock& operator= (const SpinAtomicLock&) = delete;
 
 		inline void AE_CALL lock() {
 			while (_flag.test_and_set(std::memory_order_acquire));
@@ -43,11 +50,11 @@ namespace aurora {
 	};
 
 
-	class RecursiveMutex {
+	class RecursiveAtomicLock {
 	public:
-		RecursiveMutex() = default;
-		RecursiveMutex(const RecursiveMutex&) = delete;
-		RecursiveMutex& operator= (const RecursiveMutex&) = delete;
+		RecursiveAtomicLock() = default;
+		RecursiveAtomicLock(const RecursiveAtomicLock&) = delete;
+		RecursiveAtomicLock& operator= (const RecursiveAtomicLock&) = delete;
 
 		void AE_CALL lock() {
 			auto cur = std::this_thread::get_id();
@@ -108,11 +115,11 @@ namespace aurora {
 	};
 
 
-	class RecursiveSpinMutex {
+	class RecursiveSpinAtomicLock {
 	public:
-		RecursiveSpinMutex() = default;
-		RecursiveSpinMutex(const RecursiveSpinMutex&) = delete;
-		RecursiveSpinMutex& operator= (const RecursiveSpinMutex&) = delete;
+		RecursiveSpinAtomicLock() = default;
+		RecursiveSpinAtomicLock(const RecursiveSpinAtomicLock&) = delete;
+		RecursiveSpinAtomicLock& operator= (const RecursiveSpinAtomicLock&) = delete;
 
 		void AE_CALL lock() {
 			auto cur = std::this_thread::get_id();

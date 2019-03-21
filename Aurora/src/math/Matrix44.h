@@ -1,8 +1,7 @@
 #pragma once
 
-#include <initializer_list>
 #include "base/Aurora.h"
-//#include <xmmintrin.h>
+#include <initializer_list>
 
 namespace aurora {
 	class Matrix34;

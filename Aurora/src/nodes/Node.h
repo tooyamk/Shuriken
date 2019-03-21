@@ -64,10 +64,10 @@ namespace aurora::node {
 
 		void AE_CALL setIdentity();
 
-		void AE_CALL updateLocalMatrix();
-		void AE_CALL updateWorldRotation();
-		void AE_CALL updateWorldMatrix();
-		void AE_CALL updateInverseWorldMatrix();
+		void AE_CALL updateLocalMatrix() const;
+		void AE_CALL updateWorldRotation() const;
+		void AE_CALL updateWorldMatrix() const;
+		void AE_CALL updateInverseWorldMatrix() const;
 
 		void AE_CALL addComponent(component::AbstractComponent* component);
 		void AE_CALL removeComponent(component::AbstractComponent* component);
@@ -112,15 +112,15 @@ namespace aurora::node {
 		Node* _childHead;
 		ui32 _numChildren;
 
-		Quaternion _lr;
-		Vector3 _ls;
-		Matrix34 _lm;
+		mutable Quaternion _lr;
+		mutable Vector3 _ls;
+		mutable Matrix34 _lm;
 
-		Quaternion _wr;
-		Matrix34 _wm;
-		Matrix34 _iwm;
+		mutable Quaternion _wr;
+		mutable Matrix34 _wm;
+		mutable Matrix34 _iwm;
 
-		ui32 _dirty;
+		mutable ui32 _dirty;
 		std::vector<component::AbstractComponent*> _components;
 
 		void AE_CALL _addNode(Node* child);

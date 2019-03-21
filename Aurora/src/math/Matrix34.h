@@ -1,8 +1,7 @@
 #pragma once
 
-#include <initializer_list>
 #include "base/Aurora.h"
-//#include <xmmintrin.h>
+#include <initializer_list>
 
 namespace aurora {
 	class Matrix44;
@@ -12,10 +11,10 @@ namespace aurora {
 	/**
 	 * column major matrix.
 	 *
-	 * m00 m10 m20 m30 xaxis
-	 * m01 m11 m21 m31 yaxis
-	 * m02 m12 m22 m32 zaxis
-	 * m03 m13 m23 m33
+	 * m00 m10 m20 xaxis
+	 * m01 m11 m21 yaxis
+	 * m02 m12 m22 zaxis
+	 * m03 m13 m23
 	 * tx  ty  tz
 	 */
 	class AE_DLL Matrix34 {

@@ -84,14 +84,17 @@
     <ClInclude Include="src\events\EventDispatcher.h">
       <Filter>src\events</Filter>
     </ClInclude>
-    <ClInclude Include="src\base\AtomicLock.h">
-      <Filter>src\base</Filter>
-    </ClInclude>
     <ClInclude Include="src\base\Application.h">
       <Filter>src\base</Filter>
     </ClInclude>
     <ClInclude Include="src\events\IEventDispatcher.h">
       <Filter>src\events</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\Time.h">
+      <Filter>src\base</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\Lock.h">
+      <Filter>src\base</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

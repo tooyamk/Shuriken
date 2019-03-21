@@ -32,27 +32,27 @@ namespace aurora::node {
 	}
 
 	inline const Quaternion& Node::getWorldRotation() const {
-		((Node*)this)->updateWorldRotation();
+		updateWorldRotation();
 		return _wr;
 	}
 
 	inline Vector3 Node::getWorldPosition() const {
-		((Node*)this)->updateWorldMatrix();
+		updateWorldMatrix();
 		return std::move(Vector3(_wm.m34[0][3], _wm.m34[1][3], _wm.m34[2][3]));
 	}
 
 	inline void Node::getWorldPosition(Vector3& dst) const {
-		((Node*)this)->updateWorldMatrix();
+		updateWorldMatrix();
 		dst.set(_lm.m34[0][3], _lm.m34[1][3], _lm.m34[2][3]);
 	}
 
 	inline const Matrix34& Node::getWorldMatrix() const {
-		((Node*)this)->updateWorldMatrix();
+		updateWorldMatrix();
 		return _wm;
 	}
 
 	inline const Matrix34& Node::getInverseWorldMatrix() const {
-		((Node*)this)->updateInverseWorldMatrix();
+		updateInverseWorldMatrix();
 		return _iwm;
 	}
 

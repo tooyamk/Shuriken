@@ -1,4 +1,5 @@
 #include "Application.h"
+#include "base/Time.h"
 #include "events/IEventDispatcher.h"
 #include <thread>
 
@@ -18,7 +19,7 @@ namespace aurora {
 	}
 
 	void Application::setFrameInterval(f64 frameInterval) {
-		_frameInterval = frameInterval <= 0 ? 0 : frameInterval;
+		_frameInterval = frameInterval <= 0. ? 0. : frameInterval;
 	}
 
 	void Application::resetDeltaRecord() {
@@ -50,17 +51,19 @@ namespace aurora {
 	}
 
 	void Application::update(bool autoSleep) {
-		auto t0 = getTimeNow<std::chrono::microseconds, std::chrono::steady_clock>();
-		f64 dt = _time == 0 ? 0 : (t0 - _time) * 0.001;//ms
+		auto t0 = Time::now<std::chrono::nanoseconds, std::chrono::steady_clock>();
+		auto dt = _time == 0 ? 0 : (t0 - _time);
 		_time = t0;
 
-		if (_eventDispatcher) _eventDispatcher->dispatchEvent(this, Event::UPDATE);
+		if (_eventDispatcher) {
+			_eventDispatcher->dispatchEvent(this, Event::UPDATE, &dt);
+		}
 
 		if (autoSleep) {
-			auto t1 = getTimeNow<std::chrono::microseconds, std::chrono::steady_clock>();
+			auto t1 = Time::now<std::chrono::nanoseconds, std::chrono::steady_clock>();
 
 			f64 timePhase = f64(t1 - t0);
-			if (timePhase < _frameInterval) std::this_thread::sleep_for(std::chrono::microseconds(i64(_frameInterval - timePhase)));
+			if (timePhase < _frameInterval) std::this_thread::sleep_for(std::chrono::nanoseconds(i64(_frameInterval - timePhase)));
 		}
 	}
 

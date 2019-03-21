@@ -208,7 +208,7 @@ namespace aurora::node {
 		}
 	}
 
-	void Node::updateLocalMatrix() {
+	void Node::updateLocalMatrix() const {
 		if (_dirty & DirtyFlag::LM) {
 			_dirty &= DirtyFlag::NOT_LM;
 
@@ -217,7 +217,7 @@ namespace aurora::node {
 		}
 	}
 
-	void Node::updateWorldRotation() {
+	void Node::updateWorldRotation() const {
 		if (_dirty & DirtyFlag::WR) {
 			_dirty &= DirtyFlag::NOT_WR;
 
@@ -231,7 +231,7 @@ namespace aurora::node {
 		}
 	}
 
-	void Node::updateWorldMatrix() {
+	void Node::updateWorldMatrix() const {
 		if (_dirty & DirtyFlag::WM) {
 			_dirty &= DirtyFlag::NOT_WM;
 
@@ -246,7 +246,7 @@ namespace aurora::node {
 		}
 	}
 
-	void Node::updateInverseWorldMatrix() {
+	void Node::updateInverseWorldMatrix() const {
 		if (_dirty & DirtyFlag::WIM) {
 			_dirty &= DirtyFlag::NOT_WIM;
 

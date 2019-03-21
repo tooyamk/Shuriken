@@ -61,21 +61,21 @@ namespace aurora {
 	}
 
 	void Matrix44::set33(const Matrix34& m) {
-		memcpy(&m44[0][0], &m.m34[0][0], nsizeof<f32>(3));
-		memcpy(&m44[1][0], &m.m34[1][0], nsizeof<f32>(3));
-		memcpy(&m44[2][0], &m.m34[2][0], nsizeof<f32>(3));
+		memcpy(&m44[0][0], &m.m34[0][0], sizeof(f32) * 3);
+		memcpy(&m44[1][0], &m.m34[1][0], sizeof(f32) * 3);
+		memcpy(&m44[2][0], &m.m34[2][0], sizeof(f32) * 3);
 	}
 
 	void Matrix44::set33(const Matrix44& m) {
-		memcpy(&m44[0][0], &m.m44[0][0], nsizeof<f32>(3));
-		memcpy(&m44[1][0], &m.m44[1][0], nsizeof<f32>(3));
-		memcpy(&m44[2][0], &m.m44[2][0], nsizeof<f32>(3));
+		memcpy(&m44[0][0], &m.m44[0][0], sizeof(f32) * 3);
+		memcpy(&m44[1][0], &m.m44[1][0], sizeof(f32) * 3);
+		memcpy(&m44[2][0], &m.m44[2][0], sizeof(f32) * 3);
 	}
 
 	void Matrix44::set33(const f32(&m)[3][3]) {
-		memcpy(&m44[0][0], &m[0][0], nsizeof<f32>(3));
-		memcpy(&m44[1][0], &m[1][0], nsizeof<f32>(3));
-		memcpy(&m44[2][0], &m[2][0], nsizeof<f32>(3));
+		memcpy(&m44[0][0], &m[0][0], sizeof(f32) * 3);
+		memcpy(&m44[1][0], &m[1][0], sizeof(f32) * 3);
+		memcpy(&m44[2][0], &m[2][0], sizeof(f32) * 3);
 	}
 
 	void Matrix44::set33(
@@ -96,11 +96,11 @@ namespace aurora {
 	}
 
 	void Matrix44::set34(const Matrix34& m) {
-		memcpy(m44, m.m34, nsizeof<f32>(12));
+		memcpy(m44, m.m34, sizeof(m.m34));
 	}
 
 	void Matrix44::set34(const Matrix44& m) {
-		memcpy(m44, m.m44, nsizeof<f32>(12));
+		memcpy(m44, m.m44, sizeof(Matrix34));
 	}
 
 	void Matrix44::set34(
@@ -124,7 +124,7 @@ namespace aurora {
 	}
 
 	void Matrix44::set44(const Matrix34& m) {
-		memcpy(m44, m.m34, nsizeof<f32>(12));
+		memcpy(m44, m.m34, sizeof(m.m34));
 
 		m44[3][0] = 0.f;
 		m44[3][1] = 0.f;
