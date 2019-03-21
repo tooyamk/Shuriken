@@ -10,15 +10,15 @@ namespace aurora {
 		Math(const Math&) = delete;
 		Math(Math&&) = delete;
 
-		static const f32 F32_TOLERANCE;
-		static const f64 PI;
-		static const f64 PI_2;
-		static const f64 PI_4;
-		static const f64 PI2;
-		static const f64 F64_DEG;
-		static const f32 F32_DEG;
-		static const f64 F64_RAD;
-		static const f32 F32_RAD;
+		inline static const f32 F32_TOLERANCE = 2e-37f;
+		inline static const f64 PI = 3.14159265358979323846;
+		inline static const f64 PI_2 = PI * .5;
+		inline static const f64 PI_4 = PI * .25;
+		inline static const f64 PI2 = PI * 2.;
+		inline static const f64 F64_DEG = 180. / PI;
+		inline static const f32 F32_DEG = (f32)F64_DEG;
+		inline static const f64 F64_RAD = PI / 180.;
+		inline static const f32 F32_RAD = (f32)F64_RAD;
 
 		inline static void AE_CALL crossVec3(const f32* v1, const f32* v2, f32* dst);
 		inline static void AE_CALL lerpVec3(const f32* from, const f32* to, f32 t, f32* dst);

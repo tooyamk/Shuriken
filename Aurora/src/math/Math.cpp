@@ -2,16 +2,6 @@
 #include "Math.h"
 
 namespace aurora {
-	const f32 Math::F32_TOLERANCE = 2e-37f;
-	const f64 Math::PI = 3.14159265358979323846;
-	const f64 Math::PI_2 = PI * .5;
-	const f64 Math::PI_4 = PI * .25;
-	const f64 Math::PI2 = PI * 2.;
-	const f64 Math::F64_DEG = 180. / PI;
-	const f32 Math::F32_DEG = (f32)F64_DEG;
-	const f64 Math::F64_RAD = PI / 180.;
-	const f32 Math::F32_RAD = (f32)F64_RAD;
-
 	void Math::slerpQuat(const f32* from, const f32* to, f32 t, f32* dst) {
 		auto x = to[0], y = to[1], z = to[2], w = to[3];
 		auto cos = from[0] * x + from[1] * y + from[2] * z + from[3] * w;
