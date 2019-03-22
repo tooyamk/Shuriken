@@ -20,9 +20,6 @@
     <ClInclude Include="include\GL\glew.h">
       <Filter>include\GL</Filter>
     </ClInclude>
-    <ClInclude Include="include\GL\glxew.h">
-      <Filter>include\GL</Filter>
-    </ClInclude>
     <ClInclude Include="include\GL\wglew.h">
       <Filter>include\GL</Filter>
     </ClInclude>

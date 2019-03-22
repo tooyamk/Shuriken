@@ -168,12 +168,13 @@ namespace aurora::module::graphics{
 
 	bool GraphicsWinD3D9::_init(HWND hWnd) {
 		if (!hWnd) return false;
-		// 显示模式 （以像素为单位的屏幕宽高，刷新频率，surface formt）
-		D3DDISPLAYMODE displayMode;
-
+		
 		// 创建D3D对象 获取主显卡硬件信息  最先被创建，最后被释放
 		_d3d = Direct3DCreate9(D3D_SDK_VERSION);
 		if (!_d3d) return false;
+
+		// 显示模式 （以像素为单位的屏幕宽高，刷新频率，surface formt）
+		D3DDISPLAYMODE displayMode;
 
 		// 获取显示模式
 		if (FAILED(_d3d->GetAdapterDisplayMode(D3DADAPTER_DEFAULT/*查询主显卡*/, &displayMode))) return false;

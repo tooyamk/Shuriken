@@ -92,7 +92,8 @@
       <AdditionalIncludeDirectories>$(ProjectDir)src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4244;4251</DisableSpecificWarnings>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <ExceptionHandling>false</ExceptionHandling>
+      <ExceptionHandling>
+      </ExceptionHandling>
       <BufferSecurityCheck>false</BufferSecurityCheck>
     </ClCompile>
     <Link>
@@ -128,7 +129,8 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <DisableSpecificWarnings>4244;4251</DisableSpecificWarnings>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <ExceptionHandling>false</ExceptionHandling>
+      <ExceptionHandling>
+      </ExceptionHandling>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
     </ClCompile>

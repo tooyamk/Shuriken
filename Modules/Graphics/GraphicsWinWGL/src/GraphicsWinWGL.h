@@ -4,6 +4,9 @@
 #include "modules/graphics/GraphicsModule.h"
 #include "math/Rect.h"
 
+#include "GL/glew.h"
+#pragma comment (lib, "glew.lib")
+
 #include <GL/GL.h>
 #pragma comment (lib, "opengl32.lib")
 
@@ -30,6 +33,8 @@ namespace aurora::module::graphics{
 		std::wstring _className;
 		Rect<i32> _rect;
 
+		ui32 _dwStyle;
+
 		HINSTANCE _hIns;
 		HWND _hWnd;
 
@@ -38,6 +43,7 @@ namespace aurora::module::graphics{
 
 		bool AE_CALL _init(HWND hWnd);
 		void AE_CALL _release();
+		void AE_CALL _updateWndParams();
 	};
 }
 #ifdef AE_MODULE_EXPORTS
