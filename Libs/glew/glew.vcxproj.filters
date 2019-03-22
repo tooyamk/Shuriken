@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{71d66de1-369b-4a3d-bb76-4a1f9e0175a8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{30210697-ff82-421a-958e-ee8d7873ba51}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\GL">
+      <UniqueIdentifier>{9dec7dd8-2cce-4cb5-a6dc-438f59800e0d}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\glew.c">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\GL\glew.h">
+      <Filter>include\GL</Filter>
+    </ClInclude>
+    <ClInclude Include="include\GL\glxew.h">
+      <Filter>include\GL</Filter>
+    </ClInclude>
+    <ClInclude Include="include\GL\wglew.h">
+      <Filter>include\GL</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

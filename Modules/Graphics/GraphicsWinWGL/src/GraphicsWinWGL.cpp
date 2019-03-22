@@ -30,7 +30,7 @@ namespace aurora::module::graphics{
 			default:
 				break;
 			}
-
+			
 			return DefWindowProc(hWnd, msg, wParam, lParam);
 		};
 		if (wnd.hInstance) {
