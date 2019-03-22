@@ -129,7 +129,7 @@ namespace aurora {
 		auto dot = x * x + y * y + z * z;
 		if (dot != 1.f) {
 			dot = std::sqrt(dot);
-			if (dot > Math::F32_TOLERANCE) {
+			if (dot > Math::TOLERANCE<f32>) {
 				dot = 1.f / dot;
 
 				d[0][0] *= dot;
@@ -151,7 +151,7 @@ namespace aurora {
 		dot = x * x + y * y + z * z;
 		if (dot != 1.f) {
 			dot = std::sqrt(dot);
-			if (dot > Math::F32_TOLERANCE) {
+			if (dot > Math::TOLERANCE<f32>) {
 				dot = 1.f / dot;
 
 				d[0][1] *= dot;
@@ -174,7 +174,7 @@ namespace aurora {
 		dot = d[0][2] * x + d[1][2] * y + d[2][2] * z;
 		if (dot != 1.f) {
 			dot = std::sqrt(dot);
-			if (dot > Math::F32_TOLERANCE) {
+			if (dot > Math::TOLERANCE<f32>) {
 				dot = 1.f / dot;
 
 				d[0][2] *= dot;

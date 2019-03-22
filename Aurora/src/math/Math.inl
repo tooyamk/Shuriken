@@ -52,12 +52,4 @@ namespace aurora {
 		dst[1] = y;
 		dst[2] = z;
 	}
-
-	inline constexpr f32 Math::deg(f32 rad) {
-		return rad * F32_DEG;
-	}
-
-	inline constexpr f32 Math::rad(f32 deg) {
-		return deg * F32_RAD;
-	}
 }

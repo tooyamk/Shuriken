@@ -10,15 +10,16 @@ namespace aurora {
 		Math(const Math&) = delete;
 		Math(Math&&) = delete;
 
-		inline static const f32 F32_TOLERANCE = 2e-37f;
-		inline static const f64 PI = 3.14159265358979323846;
-		inline static const f64 PI_2 = PI * .5;
-		inline static const f64 PI_4 = PI * .25;
-		inline static const f64 PI2 = PI * 2.;
-		inline static const f64 F64_DEG = 180. / PI;
-		inline static const f32 F32_DEG = (f32)F64_DEG;
-		inline static const f64 F64_RAD = PI / 180.;
-		inline static const f32 F32_RAD = (f32)F64_RAD;
+		template<typename T>
+		using FLOATING_POINT_TYPE = typename std::enable_if_t<std::is_floating_point_v<T>, T>;
+
+		template<typename T> inline static const FLOATING_POINT_TYPE<T> TOLERANCE = T(2e-37);
+		template<typename T> inline static const FLOATING_POINT_TYPE<T> PI = T(3.14159265358979323846);
+		template<typename T> inline static const FLOATING_POINT_TYPE<T> PI_2 = PI<T> * T(.5);
+		template<typename T> inline static const FLOATING_POINT_TYPE<T> PI_4 = PI<T> * T(.25);
+		template<typename T> inline static const FLOATING_POINT_TYPE<T> PI2 = PI<T> * T(2.);
+		template<typename T> inline static const FLOATING_POINT_TYPE<T> DEG = T(180.) / PI<T>;
+		template<typename T> inline static const FLOATING_POINT_TYPE<T> RAD = PI<T> / T(180.);
 
 		inline static void AE_CALL crossVec3(const f32* v1, const f32* v2, f32* dst);
 		inline static void AE_CALL lerpVec3(const f32* from, const f32* to, f32 t, f32* dst);
@@ -44,8 +45,15 @@ namespace aurora {
 
 		inline static void AE_CALL matTransformPoint(const f32(&m)[3][4], const f32(&p)[3], f32(&dst)[3]);
 
-		inline static constexpr f32 AE_CALL deg(f32 rad);
-		inline static constexpr f32 AE_CALL rad(f32 deg);
+		template<typename T>
+		inline static constexpr FLOATING_POINT_TYPE<T> AE_CALL deg(T rad) {
+			return rad * DEG<T>;
+		}
+
+		template<typename T>
+		inline static constexpr FLOATING_POINT_TYPE<T> AE_CALL rad(T deg) {
+			return deg * RAD<T>;
+		}
 	};
 }
 

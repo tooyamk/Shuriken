@@ -4,7 +4,7 @@
 #include "base/Ref.h"
 
 namespace aurora::module {
-	typedef void*(*AE_CREATE_MODULE_FUN)();
+	using AE_CREATE_MODULE_FUN = void*(*)();
 
 	class AE_TEMPLATE_DLL Module : public Ref {
 	public:

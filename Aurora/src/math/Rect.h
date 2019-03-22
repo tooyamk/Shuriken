@@ -7,7 +7,7 @@ namespace aurora {
 	class AE_TEMPLATE_DLL Rect {
 	public:
 		Rect() {
-			memset(this, 0, sizeof(Rect<T>));
+			memset(&left, 0, sizeof(T) << 2);
 		}
 
 		Rect(const Rect<T>& rect) :

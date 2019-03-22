@@ -43,7 +43,7 @@ namespace aurora {
 		if (n == 1.f) return;
 
 		n = std::sqrt(n);
-		if (n < Math::F32_TOLERANCE) return;
+		if (n < Math::TOLERANCE<f32>) return;
 
 		n = 1.f / n;
 

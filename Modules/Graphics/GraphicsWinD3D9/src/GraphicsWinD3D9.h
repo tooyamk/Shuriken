@@ -29,9 +29,9 @@ namespace aurora::module::graphics {
 		std::wstring _className;
 		Rect<i32> _rect;
 
-		HWND _hWnd;
-
 		HINSTANCE _hIns;
+		HWND _hWnd;
+		
 		PDIRECT3D9 _d3d; // D3D对象
 		PDIRECT3DDEVICE9 _d3dDevice; // D3D设备对象
 		D3DPRESENT_PARAMETERS _d3dpp;

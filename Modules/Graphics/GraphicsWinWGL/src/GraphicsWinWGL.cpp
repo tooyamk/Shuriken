@@ -4,7 +4,9 @@
 
 namespace aurora::module::graphics{
 	GraphicsWinWGL::GraphicsWinWGL() :
-		_isWIndowed(true),
+		_hIns(nullptr),
+		_hWnd(nullptr),
+		_isWindowed(true),
 		_dc(nullptr),
 		_rc(nullptr) {
 	}
@@ -15,7 +17,7 @@ namespace aurora::module::graphics{
 
 	bool GraphicsWinWGL::createView(void* style, const i8* windowTitle, const Rect<i32>& rect, bool fullscreen) {
 		_rect.set(rect);
-		_isWIndowed = fullscreen;
+		_isWindowed = !fullscreen;
 
 		WNDCLASSEXW wnd = *(WNDCLASSEXW*)style;
 		if (!wnd.cbSize) wnd.cbSize = sizeof(WNDCLASSEXW);
@@ -31,13 +33,17 @@ namespace aurora::module::graphics{
 
 			return DefWindowProc(hWnd, msg, wParam, lParam);
 		};
-		if (!wnd.hInstance) wnd.hInstance = GetModuleHandle(nullptr);
-
+		if (wnd.hInstance) {
+			_hIns = wnd.hInstance;
+		} else {
+			_hIns = GetModuleHandle(nullptr);
+			wnd.hInstance = _hIns;
+		}
 		_className = wnd.lpszClassName;
 
 		RegisterClassExW(&wnd);
 		_hWnd = CreateWindowExW(0L, wnd.lpszClassName, String::Utf8ToUnicode(windowTitle).c_str(), WS_OVERLAPPEDWINDOW,
-			_rect.left, _rect.top, _rect.getWidth(), _rect.getHeight(), GetDesktopWindow(), nullptr, wnd.hInstance, nullptr);
+			_rect.left, _rect.top, _rect.getWidth(), _rect.getHeight(), GetDesktopWindow(), nullptr, _hIns, nullptr);
 		//HWND hWnd = CreateWindowExW(0L, wnd.lpszClassName, String::UTF8ToUnicode(windowTitle).c_str(), WS_EX_TOPMOST, x, y, w, h, nullptr, nullptr, hIns, nullptr);
 		if (_init(_hWnd)) {
 			ShowWindow(_hWnd, SW_SHOWDEFAULT);
@@ -50,7 +56,7 @@ namespace aurora::module::graphics{
 	}
 
 	bool GraphicsWinWGL::isWindowed() const {
-		return _isWIndowed;
+		return _isWindowed;
 	}
 
 	void GraphicsWinWGL::toggleFullscreen() {
@@ -120,32 +126,54 @@ namespace aurora::module::graphics{
 
 		int pf = ChoosePixelFormat(_dc, &pfd);
 		SetPixelFormat(_dc, pf, &pfd);
+
 		_rc = wglCreateContext(_dc);
 
+		/*
 		long style = GetWindowLong(hWnd, GWL_STYLE);
 
 		DEVMODE dmScreenSettings;	 // Device Mode
 		memset(&dmScreenSettings, 0, sizeof(dmScreenSettings));	// Makes Sure Memory's Cleared
 		dmScreenSettings.dmSize = sizeof(dmScreenSettings);	 // Size Of The Devmode Structure
-		dmScreenSettings.dmPelsWidth = GetSystemMetrics(SM_CXSCREEN);	 // Selected Screen Width
-		dmScreenSettings.dmPelsHeight = GetSystemMetrics(SM_CYSCREEN);	 // Selected Screen Height
+		dmScreenSettings.dmPelsWidth = _rect.getWidth();// GetSystemMetrics(SM_CXSCREEN);	 // Selected Screen Width
+		dmScreenSettings.dmPelsHeight = _rect.getHeight();// GetSystemMetrics(SM_CYSCREEN);	 // Selected Screen Height
 		dmScreenSettings.dmBitsPerPel = 32;	 // Selected Bits Per Pixel
 		dmScreenSettings.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
 		ChangeDisplaySettings(&dmScreenSettings, CDS_FULLSCREEN);
 		SetWindowLong(hWnd, GWL_STYLE, style&(~WS_OVERLAPPEDWINDOW));
 		SetWindowPos(hWnd,
-			HWND_TOPMOST, 0, 0,
-			GetSystemMetrics(SM_CXSCREEN),
-			GetSystemMetrics(SM_CYSCREEN),
+			HWND_TOPMOST,
+			_rect.left,//0, 
+			_rect.top,//0,
+			_rect.getWidth(),//GetSystemMetrics(SM_CXSCREEN),
+			_rect.getHeight(),//GetSystemMetrics(SM_CYSCREEN),
 			SWP_SHOWWINDOW);
+		*/
 
 		return true;
 	}
 
 	void GraphicsWinWGL::_release() {
+		wglMakeCurrent(nullptr, nullptr);
+
 		if (_rc) {
 			wglDeleteContext(_rc);
 			_rc = nullptr;
+		}
+
+		if (_dc) {
+			ReleaseDC(_hWnd, _dc);
+			_dc = nullptr;
+		}
+
+		if (_hWnd) {
+			DestroyWindow(_hWnd);
+			_hWnd = nullptr;
+		}
+
+		if (_hIns) {
+			UnregisterClass(_className.c_str(), _hIns);
+			_hIns = nullptr;
 		}
 	}
 }

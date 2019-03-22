@@ -51,7 +51,7 @@ namespace aurora {
 		};
 	};
 
-	typedef Vector4 Vec4;
+	using Vec4 = Vector4;
 }
 
 #include "Vector4.inl"

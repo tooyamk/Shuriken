@@ -61,40 +61,10 @@ namespace aurora::event {
 	};
 
 
-	template<typename EvtType>
-	class AE_TEMPLATE_DLL FnEventListener : public IEventListener<EvtType> {
-	public:
-		FnEventListener(EVT_FN<EvtType> fn) :
-			_fn(fn) {
-		}
-
-		virtual void onEvent(Event<EvtType>& e) override {
-			if (_fn) _fn(e);
-		}
-	private:
-		EVT_FN<EvtType> _fn;
-	};
-
-
-	template<typename EvtType>
-	class AE_TEMPLATE_DLL FuncEventListener : public IEventListener<EvtType> {
-	public:
-		FuncEventListener(const EVT_FUNC<EvtType>& fn) :
-			_fn(fn) {
-		}
-
-		virtual void onEvent(Event<EvtType>& e) override {
-			if (_fn) _fn(e);
-		}
-	private:
-		EVT_FUNC<EvtType> _fn;
-	};
-
-
 	template<typename EvtType, typename Class>
-	class AE_TEMPLATE_DLL MethodEventListener : public IEventListener<EvtType> {
+	class AE_TEMPLATE_DLL EventListener : public IEventListener<EvtType> {
 	public:
-		MethodEventListener(Class* target, EVT_METHOD<EvtType, Class> method) :
+		EventListener(Class* target, EVT_METHOD<EvtType, Class> method) :
 			_target(target),
 			_method(method) {
 		}
@@ -106,6 +76,40 @@ namespace aurora::event {
 		Class* _target;
 		EVT_METHOD<EvtType, Class> _method;
 	};
+
+
+	template<typename EvtType>
+	class AE_TEMPLATE_DLL EventListener<EvtType, EVT_FN<EvtType>> : public IEventListener<EvtType> {
+	public:
+		EventListener(EVT_FN<EvtType> fn) :
+			_fn(fn) {
+		}
+
+		virtual void onEvent(Event<EvtType>& e) override {
+			if (_fn) _fn(e);
+		}
+	private:
+		EVT_FN<EvtType> _fn;
+	};
+	template<typename EvtType>
+	using EventListenerFn = EventListener<EvtType, EVT_FN<EvtType>>;
+
+
+	template<typename EvtType>
+	class AE_TEMPLATE_DLL EventListener<EvtType, EVT_FUNC<EvtType>> : public IEventListener<EvtType> {
+	public:
+		EventListener(const EVT_FUNC<EvtType>& fn) :
+			_fn(fn) {
+		}
+
+		virtual void onEvent(Event<EvtType>& e) override {
+			if (_fn) _fn(e);
+		}
+	private:
+		EVT_FUNC<EvtType> _fn;
+	};
+	template<typename EvtType>
+	using EventListenerFunc = EventListener<EvtType, EVT_FUNC<EvtType>>;
 
 
 	template<typename EvtType>

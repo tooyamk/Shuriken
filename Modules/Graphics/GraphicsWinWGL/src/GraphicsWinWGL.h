@@ -26,10 +26,11 @@ namespace aurora::module::graphics{
 		virtual void AE_CALL clear() override;
 
 	private:
-		bool _isWIndowed;
+		bool _isWindowed;
 		std::wstring _className;
 		Rect<i32> _rect;
 
+		HINSTANCE _hIns;
 		HWND _hWnd;
 
 		HDC _dc;

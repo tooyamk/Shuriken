@@ -3,8 +3,8 @@
 
 namespace aurora::module::graphics{
 	GraphicsWinD3D9::GraphicsWinD3D9() :
-		_hWnd(nullptr),
 		_hIns(nullptr),
+		_hWnd(nullptr),
 		_d3d(nullptr),
 		_d3dDevice(nullptr) {
 		memset(&_d3dpp, 0, sizeof(_d3dpp));
@@ -50,6 +50,18 @@ namespace aurora::module::graphics{
 		if (_init(_hWnd)) {
 			ShowWindow(_hWnd, SW_SHOWDEFAULT);
 			UpdateWindow(_hWnd);
+
+			/*
+			D3DVERTEXELEMENT9 elelemt;
+			elelemt.Stream = 0;
+			elelemt.Offset = 0;
+			elelemt.Type = D3DDECLTYPE_FLOAT1;//
+			elelemt.Method = D3DDECLMETHOD_DEFAULT;
+			elelemt.Usage = D3DDECLUSAGE_POSITION;
+			elelemt.UsageIndex = 0;
+			IDirect3DVertexDeclaration9 * decl = nullptr;
+			_d3dDevice->CreateVertexDeclaration(&elelemt, &decl);
+			*/
 
 			return true;
 		}
@@ -179,15 +191,20 @@ namespace aurora::module::graphics{
 			_d3dDevice->Release();
 			_d3dDevice = nullptr;
 		}
+
 		if (_d3d) {
 			_d3d->Release();
 			_d3d = nullptr;
 		}
-		if (_hIns) {
-			UnregisterClassW(_className.c_str(), _hIns);
-			_hIns = nullptr;
+
+		if (_hWnd) {
+			DestroyWindow(_hWnd);
+			_hWnd = nullptr;
 		}
 
-		_hWnd = nullptr;
+		if (_hIns) {
+			UnregisterClass(_className.c_str(), _hIns);
+			_hIns = nullptr;
+		}
 	}
 }
