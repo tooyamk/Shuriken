@@ -7,17 +7,17 @@
 #include <d3d9.h>
 #pragma comment(lib, "d3d9.lib")
 
-namespace aurora::module::graphics {
-	class AE_MODULE_DLL GraphicsWinD3D9 : public GraphicsModule {
+namespace aurora::modules::graphics::win::d3d9 {
+	class AE_MODULE_DLL Graphics : public GraphicsModule {
 	public:
-		GraphicsWinD3D9();
-		virtual ~GraphicsWinD3D9();
+		Graphics();
+		virtual ~Graphics();
 
-		virtual bool AE_CALL createView(void* style, const i8* windowTitle, const Rect<i32>& rect, bool fullscreen) override;
+		virtual bool AE_CALL createView(void* style, const i8* windowTitle, const Rect<i32>& windowedRect, bool fullscreen) override;
 		virtual bool AE_CALL isWindowed() const override;
 		virtual void AE_CALL toggleFullscreen() override;
-		virtual void AE_CALL getViewRect(Rect<i32>& dst) const override;
-		virtual void AE_CALL setViewRect(const Rect<i32>& rect) override;
+		virtual void AE_CALL getWindowedRect(Rect<i32>& dst) const override;
+		virtual void AE_CALL setWindowedRect(const Rect<i32>& rect) override;
 
 		virtual void AE_CALL beginRender() override;
 		virtual void AE_CALL endRender() override;
@@ -27,7 +27,7 @@ namespace aurora::module::graphics {
 
 	private:
 		std::wstring _className;
-		Rect<i32> _rect;
+		mutable Rect<i32> _windowedRect;
 
 		HINSTANCE _hIns;
 		HWND _hWnd;
@@ -40,11 +40,12 @@ namespace aurora::module::graphics {
 		void AE_CALL _release();
 		void AE_CALL _toggleFullscreen();
 		void AE_CALL _updateD3DParams();
+		void AE_CALL _updateWindowedRect() const;
 	};
 }
 
 #ifdef AE_MODULE_EXPORTS
 extern "C" AE_MODULE_DLL_EXPORT void* createModule() {
-	return new aurora::module::graphics::GraphicsWinD3D9();
+	return new aurora::modules::graphics::win::d3d9::Graphics();
 }
 #endif

@@ -1,6 +1,6 @@
 #include "AbstractComponent.h"
 
-namespace aurora::node::component {
+namespace aurora::nodes::component {
 	AbstractComponent::AbstractComponent() :
 		_enabled(true),
 		flag(0),

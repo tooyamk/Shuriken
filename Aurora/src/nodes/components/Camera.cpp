@@ -1,6 +1,6 @@
 #include "Camera.h"
 
-namespace aurora::node::component {
+namespace aurora::nodes::component {
 	Camera::Camera() :
 		cullingMask(0xFFFFFFFF),
 		_aspectRatio(0.f),

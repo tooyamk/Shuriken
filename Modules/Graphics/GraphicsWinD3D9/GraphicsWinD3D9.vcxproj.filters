@@ -4,15 +4,21 @@
     <Filter Include="src">
       <UniqueIdentifier>{fcbabe63-c24b-4e4f-8aaa-578b7ba9f25e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\win">
+      <UniqueIdentifier>{a328dac5-350a-446d-bdd2-27ac3871ff07}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\win\d3d9">
+      <UniqueIdentifier>{6980fd81-e4af-48d1-bc2c-9507a9687cd1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\GraphicsWinD3D9.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="src\GraphicsWinD3D9.h">
-      <Filter>src</Filter>
+    <ClInclude Include="src\win\d3d9\Graphics.h">
+      <Filter>src\win\d3d9</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\win\d3d9\Graphics.cpp">
+      <Filter>src\win\d3d9</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

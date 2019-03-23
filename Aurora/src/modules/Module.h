@@ -3,7 +3,7 @@
 #include "base/DynamicLib.h"
 #include "base/Ref.h"
 
-namespace aurora::module {
+namespace aurora::modules {
 	using AE_CREATE_MODULE_FUN = void*(*)();
 
 	class AE_TEMPLATE_DLL Module : public Ref {

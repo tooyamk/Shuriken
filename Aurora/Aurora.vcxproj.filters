@@ -31,6 +31,9 @@
     <Filter Include="src\events">
       <UniqueIdentifier>{6f758046-e6fd-4567-8012-e5ab6ef0d8eb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\renderers\commands">
+      <UniqueIdentifier>{6e2ba37f-6a4f-4e90-aee3-b3d7e2d21b2d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\math\Matrix44.h">
@@ -96,6 +99,15 @@
     <ClInclude Include="src\base\Lock.h">
       <Filter>src\base</Filter>
     </ClInclude>
+    <ClInclude Include="src\renderers\commands\IRenderCommand.h">
+      <Filter>src\renderers\commands</Filter>
+    </ClInclude>
+    <ClInclude Include="src\renderers\commands\BaseRenderCommand.h">
+      <Filter>src\renderers\commands</Filter>
+    </ClInclude>
+    <ClInclude Include="src\modules\graphics\VertexBuffer.h">
+      <Filter>src\modules\graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\math\Matrix44.cpp">
@@ -136,6 +148,9 @@
     </ClCompile>
     <ClCompile Include="src\base\Application.cpp">
       <Filter>src\base</Filter>
+    </ClCompile>
+    <ClCompile Include="src\renderers\commands\IRenderCommand.cpp">
+      <Filter>src\renderers\commands</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

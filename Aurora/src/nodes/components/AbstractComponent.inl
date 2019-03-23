@@ -1,4 +1,4 @@
-namespace aurora::node::component {
+namespace aurora::nodes::component {
 	inline bool AbstractComponent::getEnalbed() const {
 		return _enabled;
 	}

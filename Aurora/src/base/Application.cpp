@@ -14,7 +14,7 @@ namespace aurora {
 		AE_FREE_REF(_eventDispatcher);
 	}
 
-	void Application::setEventDispatcher(event::IEventDispatcher<Event>* eventDispatcher) {
+	void Application::setEventDispatcher(events::IEventDispatcher<Event>* eventDispatcher) {
 		if (_eventDispatcher != eventDispatcher) AE_SET_REF(_eventDispatcher, eventDispatcher);
 	}
 

@@ -1,4 +1,4 @@
-namespace aurora::node {
+namespace aurora::nodes {
 	inline Node* Node::getRoot() const {
 		return _root;
 	}

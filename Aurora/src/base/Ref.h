@@ -25,14 +25,14 @@ namespace aurora {
 		virtual ~Ref();
 
 		inline void AE_CALL ref() {
-			++_refCount;
+			_refCount.fetch_add(1, std::memory_order_relaxed);
 		}
 		inline void AE_CALL unref() {
-			if (--_refCount == 0) delete this;
+			if (_refCount.fetch_sub(1, std::memory_order_acquire) <= 1) delete this;
 		}
 
 		inline ui32 AE_CALL getReferenceCount() const {
-			return _refCount;
+			return _refCount.load(std::memory_order_acquire);
 		}
 
 	protected:

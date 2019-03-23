@@ -2,11 +2,11 @@
 
 #include "base/Ref.h"
 
-namespace aurora::node {
+namespace aurora::nodes {
 	class Node;
 }
 
-namespace aurora::node::component {
+namespace aurora::nodes::component {
 	class AE_DLL ComponentFlag {
 	public:
 		ComponentFlag() = delete;

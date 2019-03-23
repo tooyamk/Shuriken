@@ -1,9 +1,10 @@
-#include "GraphicsWinWGL.h"
+#include "Graphics.h"
 #include "utils/String.h"
+#include "VertexBuffer.h"
 #include <thread>
 
-namespace aurora::module::graphics{
-	GraphicsWinWGL::GraphicsWinWGL() :
+namespace aurora::modules::graphics::win::glew {
+	Graphics::Graphics() :
 		_isWindowed(true),
 		_hIns(nullptr),
 		_hWnd(nullptr),
@@ -12,12 +13,12 @@ namespace aurora::module::graphics{
 		_rc(nullptr) {
 	}
 
-	GraphicsWinWGL::~GraphicsWinWGL() {
+	Graphics::~Graphics() {
 		_release();
 	}
 
-	bool GraphicsWinWGL::createView(void* style, const i8* windowTitle, const Rect<i32>& rect, bool fullscreen) {
-		_rect.set(rect);
+	bool Graphics::createView(void* style, const i8* windowTitle, const Rect<i32>& windowedRect, bool fullscreen) {
+		_windowedRect.set(windowedRect);
 		_isWindowed = !fullscreen;
 		_updateWndParams();
 
@@ -45,7 +46,7 @@ namespace aurora::module::graphics{
 
 		RegisterClassExW(&wnd);
 		_hWnd = CreateWindowExW(0L, wnd.lpszClassName, String::Utf8ToUnicode(windowTitle).c_str(), _dwStyle,
-			_rect.left, _rect.top, _rect.getWidth(), _rect.getHeight(), GetDesktopWindow(), nullptr, _hIns, nullptr);
+			_curRect.left, _curRect.top, _curRect.getWidth(), _curRect.getHeight(), GetDesktopWindow(), nullptr, _hIns, nullptr);
 		//HWND hWnd = CreateWindowExW(0L, wnd.lpszClassName, String::UTF8ToUnicode(windowTitle).c_str(), WS_EX_TOPMOST, x, y, w, h, nullptr, nullptr, hIns, nullptr);
 		if (_init(_hWnd)) {
 			ShowWindow(_hWnd, SW_SHOWDEFAULT);
@@ -57,27 +58,50 @@ namespace aurora::module::graphics{
 		return false;
 	}
 
-	bool GraphicsWinWGL::isWindowed() const {
+	bool Graphics::isWindowed() const {
 		return _isWindowed;
 	}
 
-	void GraphicsWinWGL::toggleFullscreen() {
+	void Graphics::toggleFullscreen() {
+		_isWindowed = !_isWindowed;
+		if (!_isWindowed) _updateWindowedRect();
+
+		_updateWndParams();
+		_changeWnd();
 	}
 
-	void GraphicsWinWGL::getViewRect(Rect<i32>& dst) const {
-		dst.set(_rect);
+	void Graphics::getWindowedRect(Rect<i32>& dst) const {
+		if (_isWindowed) _updateWindowedRect();
+		dst.set(_windowedRect);
 	}
 
-	void GraphicsWinWGL::setViewRect(const Rect<i32>& rect) {
-		if (!_rect.isEqual(rect)) {
+	void Graphics::setWindowedRect(const Rect<i32>& rect) {
+		if (!_windowedRect.isEqual(rect)) {
+			_windowedRect.set(rect);
+			if (_isWindowed) {
+				_updateWndParams();
+				_changeWnd();
+			}
 		}
 	}
 
-	void GraphicsWinWGL::beginRender() {
+	aurora::modules::graphics::VertexBuffer* Graphics::createVertexBuffer() {
+		ui32 buf = 0;
+		glGenBuffers(1, &buf);
+
+		if (buf) {
+			this->ref();
+			return new VertexBuffer(this);
+		}
+
+		return nullptr;
+	}
+
+	void Graphics::beginRender() {
 		wglMakeCurrent(_dc, _rc);
 	}
 
-	void GraphicsWinWGL::endRender() {
+	void Graphics::endRender() {
 		//交换当前缓冲区和后台缓冲区
 		SwapBuffers(_dc);
 
@@ -85,23 +109,36 @@ namespace aurora::module::graphics{
 		wglMakeCurrent(nullptr, nullptr);
 	}
 
-	void GraphicsWinWGL::present() {
+	void Graphics::present() {
 	}
 
-	void GraphicsWinWGL::clear() {
+	void Graphics::clear() {
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 	}
 
-	void GraphicsWinWGL::_updateWndParams() {
+	void Graphics::_updateWndParams() {
 		if (_isWindowed) {
 			_dwStyle |= WS_OVERLAPPEDWINDOW;
+			_curRect.set(_windowedRect);
 		} else {
 			_dwStyle &= ~WS_OVERLAPPEDWINDOW;
+			_curRect.set(0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
 		}
 	}
 
-	bool GraphicsWinWGL::_init(HWND hWnd) {
+	void Graphics::_changeWnd() {
+		SetWindowLong(_hWnd, GWL_STYLE, _dwStyle);
+		SetWindowPos(_hWnd, HWND_NOTOPMOST, _curRect.left, _curRect.top, _curRect.getWidth(), _curRect.getHeight(), SWP_SHOWWINDOW);
+	}
+
+	void Graphics::_updateWindowedRect() const {
+		RECT rect;
+		GetWindowRect(_hWnd, &rect);
+		_windowedRect.set(rect.left, rect.top, rect.right, rect.bottom);
+	}
+
+	bool Graphics::_init(HWND hWnd) {
 		if (!hWnd) return false;
 
 		_dc = GetDC(hWnd);
@@ -145,7 +182,7 @@ namespace aurora::module::graphics{
 		wglMakeCurrent(_dc, _rc);
 		if (glewInit() != GLEW_OK) return false;
 
-		
+		/*
 		long style = GetWindowLong(hWnd, GWL_STYLE);
 
 		DEVMODE dmScreenSettings;	 // Device Mode
@@ -165,11 +202,12 @@ namespace aurora::module::graphics{
 			GetSystemMetrics(SM_CXSCREEN),
 			GetSystemMetrics(SM_CYSCREEN),
 			SWP_SHOWWINDOW);
+			*/
 
 		return true;
 	}
 
-	void GraphicsWinWGL::_release() {
+	void Graphics::_release() {
 		wglMakeCurrent(nullptr, nullptr);
 
 		if (_rc) {

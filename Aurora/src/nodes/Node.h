@@ -8,11 +8,11 @@
 #include "math/Quaternion.h"
 #include "math/Vector3.h"
 
-namespace aurora::node::component {
+namespace aurora::nodes::component {
 	class AbstractComponent;
 }
 
-namespace aurora::node {
+namespace aurora::nodes {
 	class AE_DLL Node : public Ref {
 	public:
 		Node();

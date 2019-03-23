@@ -1,8 +1,8 @@
-#include "GraphicsWinD3D9.h"
+#include "Graphics.h"
 #include "utils/String.h"
 
-namespace aurora::module::graphics{
-	GraphicsWinD3D9::GraphicsWinD3D9() :
+namespace aurora::modules::graphics::win::d3d9 {
+	Graphics::Graphics() :
 		_hIns(nullptr),
 		_hWnd(nullptr),
 		_d3d(nullptr),
@@ -11,12 +11,12 @@ namespace aurora::module::graphics{
 		_d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD; // 帧缓冲区交换方式; 可能是COPY可能是FLIP，由设备来确定适合当前情况的方式
 	}
 
-	GraphicsWinD3D9::~GraphicsWinD3D9() {
+	Graphics::~Graphics() {
 		_release();
 	}
 
-	bool GraphicsWinD3D9::createView(void* style, const i8* windowTitle, const Rect<i32>& rect, bool fullscreen) {
-		_rect.set(rect);
+	bool Graphics::createView(void* style, const i8* windowTitle, const Rect<i32>& windowedRect, bool fullscreen) {
+		_windowedRect.set(windowedRect);
 		_d3dpp.Windowed = !fullscreen;
 		_updateD3DParams();
 
@@ -44,7 +44,7 @@ namespace aurora::module::graphics{
 
 		RegisterClassExW(&wnd);
 		_hWnd = CreateWindowExW(0L, wnd.lpszClassName, String::Utf8ToUnicode(windowTitle).c_str(), WS_OVERLAPPEDWINDOW,
-			_rect.left, _rect.top, _rect.getWidth(), _rect.getHeight(), GetDesktopWindow(), nullptr, _hIns, nullptr);
+			_windowedRect.left, _windowedRect.top, _windowedRect.getWidth(), _windowedRect.getHeight(), GetDesktopWindow(), nullptr, _hIns, nullptr);
 		//delete[] title;
 		//HWND hWnd = CreateWindowExW(0L, wnd.lpszClassName, String::UTF8ToUnicode(windowTitle).c_str(), WS_EX_TOPMOST, x, y, w, h, nullptr, nullptr, hIns, nullptr);
 		if (_init(_hWnd)) {
@@ -69,11 +69,11 @@ namespace aurora::module::graphics{
 		return false;
 	}
 
-	bool GraphicsWinD3D9::isWindowed() const {
+	bool Graphics::isWindowed() const {
 		return _d3dpp.Windowed;
 	}
 
-	void GraphicsWinD3D9::toggleFullscreen() {
+	void Graphics::toggleFullscreen() {
 		//OnDeviceLost();
 
 		_toggleFullscreen();
@@ -85,58 +85,55 @@ namespace aurora::module::graphics{
 		}
 
 		if (_d3dpp.Windowed) {
-			SetWindowPos(_d3dpp.hDeviceWindow, HWND_TOP, _rect.left, _rect.top, _rect.getWidth(), _rect.getHeight(), SWP_NOZORDER | SWP_DRAWFRAME | SWP_SHOWWINDOW);
+			SetWindowPos(_d3dpp.hDeviceWindow, HWND_TOP, _windowedRect.left, _windowedRect.top, _windowedRect.getWidth(), _windowedRect.getHeight(), SWP_NOZORDER | SWP_DRAWFRAME | SWP_SHOWWINDOW);
 		}
 
 		//OnDeviceRestore();
 	}
 
-	void GraphicsWinD3D9::getViewRect(Rect<i32>& dst) const {
-		dst.set(_rect);
+	void Graphics::getWindowedRect(Rect<i32>& dst) const {
+		if (_d3dpp.Windowed) _updateWindowedRect();
+		dst.set(_windowedRect);
 	}
 
-	void GraphicsWinD3D9::setViewRect(const Rect<i32>& rect) {
-		if (!_rect.isEqual(rect)) {
+	void Graphics::setWindowedRect(const Rect<i32>& rect) {
+		if (!_windowedRect.isEqual(rect)) {
 			if (_d3dpp.Windowed) {
-				if (_rect.getWidth() == rect.getWidth() && _rect.getWidth() == rect.getHeight()) {
-					_rect.set(rect);
-					SetWindowPos(_d3dpp.hDeviceWindow, HWND_TOP, _rect.left, _rect.top, _rect.getWidth(), _rect.getHeight(), SWP_NOZORDER | SWP_DRAWFRAME | SWP_SHOWWINDOW);
+				if (_windowedRect.getWidth() == rect.getWidth() && _windowedRect.getWidth() == rect.getHeight()) {
+					_windowedRect.set(rect);
+					SetWindowPos(_d3dpp.hDeviceWindow, HWND_TOP, _windowedRect.left, _windowedRect.top, _windowedRect.getWidth(), _windowedRect.getHeight(), SWP_NOZORDER | SWP_DRAWFRAME | SWP_SHOWWINDOW);
 				} else {
 					//OnDeviceLost();
 
 					HRESULT rst = _d3dDevice->Reset(&_d3dpp);
 					if (SUCCEEDED(rst)) {
-						_rect.set(rect);
-						SetWindowPos(_d3dpp.hDeviceWindow, HWND_TOP, _rect.left, _rect.top, _rect.getWidth(), _rect.getHeight(), SWP_NOZORDER | SWP_DRAWFRAME | SWP_SHOWWINDOW);
+						_windowedRect.set(rect);
+						SetWindowPos(_d3dpp.hDeviceWindow, HWND_TOP, _windowedRect.left, _windowedRect.top, _windowedRect.getWidth(), _windowedRect.getHeight(), SWP_NOZORDER | SWP_DRAWFRAME | SWP_SHOWWINDOW);
 					}
 
 					//OnDeviceRestore();
 				}
 			} else {
-				_rect.set(rect);
+				_windowedRect.set(rect);
 			}
 		}
 	}
 
-	void GraphicsWinD3D9::_toggleFullscreen() {
+	void Graphics::_toggleFullscreen() {
 		_d3dpp.Windowed = !_d3dpp.Windowed;
-		if (!_d3dpp.Windowed) {
-			RECT rect;
-			GetWindowRect(_d3dpp.hDeviceWindow, &rect);
-			_rect.set(rect.left, rect.top, rect.right, rect.bottom);
-		}
+		if (!_d3dpp.Windowed) _updateWindowedRect();
 		_updateD3DParams();
 	}
 
-	void GraphicsWinD3D9::beginRender() {
+	void Graphics::beginRender() {
 		_d3dDevice->BeginScene();
 	}
 
-	void GraphicsWinD3D9::endRender() {
+	void Graphics::endRender() {
 		_d3dDevice->EndScene();
 	}
 
-	void GraphicsWinD3D9::present() {
+	void Graphics::present() {
 		if (FAILED(_d3dDevice->Present(nullptr, nullptr, nullptr, nullptr))) {
 			HRESULT hr = _d3dDevice->TestCooperativeLevel();
 			if (SUCCEEDED(hr) || hr == D3DERR_DEVICENOTRESET) {
@@ -152,11 +149,11 @@ namespace aurora::module::graphics{
 		}
 	}
 
-	void GraphicsWinD3D9::clear() {
+	void Graphics::clear() {
 		_d3dDevice->Clear(0, nullptr, D3DCLEAR_TARGET, D3DCOLOR_XRGB(_d3dpp.Windowed ? 0xFF : 0, 0, 0), 1.0f, 0);
 	}
 
-	void GraphicsWinD3D9::_updateD3DParams() {
+	void Graphics::_updateD3DParams() {
 		if (_d3dpp.Windowed) {
 			_d3dpp.FullScreen_RefreshRateInHz = 0;
 		} else {
@@ -166,7 +163,13 @@ namespace aurora::module::graphics{
 		}
 	}
 
-	bool GraphicsWinD3D9::_init(HWND hWnd) {
+	void Graphics::_updateWindowedRect() const {
+		RECT rect;
+		GetWindowRect(_hWnd, &rect);
+		_windowedRect.set(rect.left, rect.top, rect.right, rect.bottom);
+	}
+
+	bool Graphics::_init(HWND hWnd) {
 		if (!hWnd) return false;
 		
 		// 创建D3D对象 获取主显卡硬件信息  最先被创建，最后被释放
@@ -187,7 +190,7 @@ namespace aurora::module::graphics{
 		return true;
 	}
 
-	void GraphicsWinD3D9::_release() {
+	void Graphics::_release() {
 		if (_d3dDevice) {
 			_d3dDevice->Release();
 			_d3dDevice = nullptr;

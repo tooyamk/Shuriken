@@ -4,7 +4,7 @@
 #include <mutex>
 #include <unordered_map>
 
-namespace aurora::event {
+namespace aurora::events {
 	template<typename EvtType, typename Lock>
 	class AE_TEMPLATE_DLL EventDispatcher : public IEventDispatcher<EvtType> {
 	public:

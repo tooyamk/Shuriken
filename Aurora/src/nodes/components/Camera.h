@@ -3,7 +3,7 @@
 #include "nodes/components/AbstractComponent.h"
 #include "math/Matrix44.h"
 
-namespace aurora::node::component {
+namespace aurora::nodes::component {
 	class Camera : public AbstractComponent {
 	public:
 		Camera();

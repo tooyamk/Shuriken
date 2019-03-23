@@ -1,7 +1,7 @@
 #include "Node.h"
 #include "nodes/components/AbstractComponent.h"
 
-namespace aurora::node {
+namespace aurora::nodes {
 	Node::Node() :
 		name(),
 		_parent(nullptr),

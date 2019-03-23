@@ -3,7 +3,7 @@
 #include "base/Ref.h"
 #include <functional>
 
-namespace aurora::event {
+namespace aurora::events {
 	template<typename EvtType>
 	class AE_TEMPLATE_DLL Event {
 	public:

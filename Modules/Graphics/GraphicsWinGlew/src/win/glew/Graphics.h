@@ -10,17 +10,19 @@
 #include <GL/GL.h>
 #pragma comment (lib, "opengl32.lib")
 
-namespace aurora::module::graphics{
-	class AE_MODULE_DLL GraphicsWinWGL : public GraphicsModule {
+namespace aurora::modules::graphics::win::glew {
+	class AE_MODULE_DLL Graphics : public GraphicsModule {
 	public:
-		GraphicsWinWGL();
-		virtual ~GraphicsWinWGL();
+		Graphics();
+		virtual ~Graphics();
 
-		virtual bool AE_CALL createView(void* style, const i8* windowTitle, const Rect<i32>& rect, bool fullscreen) override;
+		virtual bool AE_CALL createView(void* style, const i8* windowTitle, const Rect<i32>& windowedRect, bool fullscreen) override;
 		virtual bool AE_CALL isWindowed() const override;
 		virtual void AE_CALL toggleFullscreen() override;
-		virtual void AE_CALL getViewRect(Rect<i32>& dst) const override;
-		virtual void AE_CALL setViewRect(const Rect<i32>& rect) override;
+		virtual void AE_CALL getWindowedRect(Rect<i32>& dst) const override;
+		virtual void AE_CALL setWindowedRect(const Rect<i32>& rect) override;
+
+		virtual aurora::modules::graphics::VertexBuffer* AE_CALL createVertexBuffer() override;
 		
 		virtual void AE_CALL beginRender() override;
 		virtual void AE_CALL endRender() override;
@@ -31,7 +33,8 @@ namespace aurora::module::graphics{
 	private:
 		bool _isWindowed;
 		std::wstring _className;
-		Rect<i32> _rect;
+		mutable Rect<i32> _windowedRect;
+		Rect<i32> _curRect;
 
 		ui32 _dwStyle;
 
@@ -44,10 +47,12 @@ namespace aurora::module::graphics{
 		bool AE_CALL _init(HWND hWnd);
 		void AE_CALL _release();
 		void AE_CALL _updateWndParams();
+		void AE_CALL _changeWnd();
+		void AE_CALL _updateWindowedRect() const;
 	};
 }
 #ifdef AE_MODULE_EXPORTS
 extern "C" AE_MODULE_DLL_EXPORT void* createModule() {
-	return new aurora::module::graphics::GraphicsWinWGL();
+	return new aurora::modules::graphics::win::glew::Graphics();
 }
 #endif

@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{7b20a8b2-2a9f-4f4c-a078-edd2f17e2c0f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\win">
+      <UniqueIdentifier>{7f5cb3f3-6f80-490a-8614-359087853a50}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\win\glew">
+      <UniqueIdentifier>{dc57c8b1-cce9-474b-8ba7-519b8348ee25}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\win\glew\Graphics.h">
+      <Filter>src\win\glew</Filter>
+    </ClInclude>
+    <ClInclude Include="src\win\glew\VertexBuffer.h">
+      <Filter>src\win\glew</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\win\glew\Graphics.cpp">
+      <Filter>src\win\glew</Filter>
+    </ClCompile>
+    <ClCompile Include="src\win\glew\VertexBuffer.cpp">
+      <Filter>src\win\glew</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
