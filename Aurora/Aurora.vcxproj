@@ -178,6 +178,7 @@
     <ClInclude Include="src\math\Rect.h" />
     <ClInclude Include="src\math\Vector3.h" />
     <ClInclude Include="src\math\Vector4.h" />
+    <ClInclude Include="src\modules\graphics\GObject.h" />
     <ClInclude Include="src\modules\graphics\GraphicsModule.h" />
     <ClInclude Include="src\modules\graphics\VertexBuffer.h" />
     <ClInclude Include="src\modules\Module.h" />
@@ -198,6 +199,11 @@
     <ClCompile Include="src\math\Quaternion.cpp" />
     <ClCompile Include="src\math\Vector3.cpp" />
     <ClCompile Include="src\math\Vector4.cpp" />
+    <ClCompile Include="src\modules\graphics\GObject.cpp" />
+    <ClCompile Include="src\modules\graphics\GraphicsModule.cpp" />
+    <ClCompile Include="src\modules\graphics\Program.cpp" />
+    <ClCompile Include="src\modules\graphics\Program.h" />
+    <ClCompile Include="src\modules\graphics\VertexBuffer.cpp" />
     <ClCompile Include="src\nodes\components\AbstractComponent.cpp" />
     <ClCompile Include="src\nodes\components\Camera.cpp" />
     <ClCompile Include="src\nodes\Node.cpp" />

@@ -1,12 +1,18 @@
 #pragma once
 
-#include "base/Ref.h"
+#include "modules/graphics/GObject.h"
 
 namespace aurora::modules::graphics {
-	class VertexBuffer : public Ref {
+	class AE_DLL VertexBuffer : public GObject {
 	public:
-		virtual ~VertexBuffer() {}
+		virtual ~VertexBuffer();
 
-		virtual bool stroage(ui32 size, const void* data = nullptr) = 0;
+		virtual bool AE_CALL stroage(ui32 size, const void* data = nullptr) = 0;
+		virtual void AE_CALL write(ui32 offset, const void* data, ui32 length) = 0;
+		virtual void AE_CALL flush() = 0;
+		virtual void AE_CALL use() = 0;
+
+	protected:
+		VertexBuffer(GraphicsModule& graphics);
 	};
 }

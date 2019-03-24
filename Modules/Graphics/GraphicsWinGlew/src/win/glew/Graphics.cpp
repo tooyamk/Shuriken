@@ -1,5 +1,7 @@
 #include "Graphics.h"
+#include "Module.h"
 #include "utils/String.h"
+#include "Program.h"
 #include "VertexBuffer.h"
 #include <thread>
 
@@ -86,15 +88,11 @@ namespace aurora::modules::graphics::win::glew {
 	}
 
 	aurora::modules::graphics::VertexBuffer* Graphics::createVertexBuffer() {
-		ui32 buf = 0;
-		glGenBuffers(1, &buf);
+		return new VertexBuffer(*this);
+	}
 
-		if (buf) {
-			this->ref();
-			return new VertexBuffer(this);
-		}
-
-		return nullptr;
+	aurora::modules::graphics::Program* Graphics::createProgram() {
+		return new Program(*this);
 	}
 
 	void Graphics::beginRender() {

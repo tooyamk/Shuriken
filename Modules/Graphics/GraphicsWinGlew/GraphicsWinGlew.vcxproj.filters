@@ -18,12 +18,21 @@
     <ClInclude Include="src\win\glew\VertexBuffer.h">
       <Filter>src\win\glew</Filter>
     </ClInclude>
+    <ClInclude Include="src\win\glew\Module.h">
+      <Filter>src\win\glew</Filter>
+    </ClInclude>
+    <ClInclude Include="src\win\glew\Program.h">
+      <Filter>src\win\glew</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\win\glew\Graphics.cpp">
       <Filter>src\win\glew</Filter>
     </ClCompile>
     <ClCompile Include="src\win\glew\VertexBuffer.cpp">
+      <Filter>src\win\glew</Filter>
+    </ClCompile>
+    <ClCompile Include="src\win\glew\Program.cpp">
       <Filter>src\win\glew</Filter>
     </ClCompile>
   </ItemGroup>

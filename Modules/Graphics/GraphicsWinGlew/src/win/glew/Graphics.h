@@ -23,6 +23,7 @@ namespace aurora::modules::graphics::win::glew {
 		virtual void AE_CALL setWindowedRect(const Rect<i32>& rect) override;
 
 		virtual aurora::modules::graphics::VertexBuffer* AE_CALL createVertexBuffer() override;
+		virtual aurora::modules::graphics::Program* AE_CALL createProgram() override;
 		
 		virtual void AE_CALL beginRender() override;
 		virtual void AE_CALL endRender() override;
@@ -51,8 +52,3 @@ namespace aurora::modules::graphics::win::glew {
 		void AE_CALL _updateWindowedRect() const;
 	};
 }
-#ifdef AE_MODULE_EXPORTS
-extern "C" AE_MODULE_DLL_EXPORT void* createModule() {
-	return new aurora::modules::graphics::win::glew::Graphics();
-}
-#endif
