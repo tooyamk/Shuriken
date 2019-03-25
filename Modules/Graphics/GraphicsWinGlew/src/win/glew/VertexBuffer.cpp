@@ -30,9 +30,11 @@ namespace aurora::modules::graphics::win::glew {
 			glBindBuffer(GL_ARRAY_BUFFER, _handle);
 			glBufferStorage(GL_ARRAY_BUFFER, size, data, flags);
 			_mapData = glMapBufferRange(GL_ARRAY_BUFFER, 0, size, flags);
+
+			return true;
 		}
 
-		return true;
+		return false;
 	}
 
 	void VertexBuffer::write(ui32 offset, const void* data, ui32 length) {
@@ -55,6 +57,7 @@ namespace aurora::modules::graphics::win::glew {
 			_waitServerSync();
 
 			glBindBuffer(GL_ARRAY_BUFFER, _handle);
+			glEnableVertexAttribArray(0);
 			glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
 		}
 	}

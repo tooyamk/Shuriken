@@ -9,6 +9,8 @@ namespace aurora::modules::graphics {
 	public:
 		virtual ~Program();
 
+		virtual void AE_CALL use() = 0;
+
 	protected:
 		Program(GraphicsModule& graphics);
 	};

@@ -11,6 +11,8 @@ namespace aurora::modules::graphics::win::glew {
 		Program(Graphics& graphics);
 		virtual ~Program();
 
+		virtual void AE_CALL use() override;
+
 	protected:
 		ui32 _handle;
 

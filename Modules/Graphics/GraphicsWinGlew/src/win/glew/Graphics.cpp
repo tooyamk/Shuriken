@@ -66,7 +66,11 @@ namespace aurora::modules::graphics::win::glew {
 			_rc = wglCreateContext(_dc);
 			if (_rc) {
 				wglMakeCurrent(_dc, _rc);
-				if (glewInit() == GLEW_OK) return true;
+				if (glewInit() == GLEW_OK) {
+					glFrontFace(GL_CW);
+
+					return true;
+				}
 			}
 		}
 
