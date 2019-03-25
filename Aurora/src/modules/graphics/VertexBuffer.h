@@ -3,6 +3,8 @@
 #include "modules/graphics/GObject.h"
 
 namespace aurora::modules::graphics {
+	class GraphicsModule;
+
 	class AE_DLL VertexBuffer : public GObject {
 	public:
 		virtual ~VertexBuffer();

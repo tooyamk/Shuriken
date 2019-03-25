@@ -55,7 +55,7 @@ namespace aurora::events {
 
 
 	template<typename EvtType>
-	class AE_TEMPLATE_DLL IEventListener {
+	class AE_TEMPLATE_DLL IEventListener : public Ref {
 	public:
 		virtual void onEvent(Event<EvtType>& e) = 0;
 	};
@@ -115,12 +115,12 @@ namespace aurora::events {
 	template<typename EvtType>
 	class AE_TEMPLATE_DLL IEventDispatcher : public Ref {
 	public:
-		virtual void AE_CALL addEventListener(const EvtType& type, IEventListener<EvtType>& listener) = 0;
-		virtual bool AE_CALL hasEventListener(const EvtType& type) const = 0;
+		virtual bool AE_CALL addEventListener(const EvtType& type, IEventListener<EvtType>& listener, bool ref) = 0;
+		virtual ui32 AE_CALL hasEventListener(const EvtType& type) const = 0;
 		virtual bool AE_CALL hasEventListener(const EvtType& type, const IEventListener<EvtType>& listener) const = 0;
-		virtual void AE_CALL removeEventListener(const EvtType& type, const IEventListener<EvtType>& listener) = 0;
-		virtual void AE_CALL removeEventListeners(const EvtType& type) = 0;
-		virtual void AE_CALL removeEventListeners() = 0;
+		virtual bool AE_CALL removeEventListener(const EvtType& type, const IEventListener<EvtType>& listener) = 0;
+		virtual ui32 AE_CALL removeEventListeners(const EvtType& type) = 0;
+		virtual ui32 AE_CALL removeEventListeners() = 0;
 
 		virtual void AE_CALL dispatchEvent(const Event<EvtType>& e) const = 0;
 		virtual void AE_CALL dispatchEvent(void* target, const Event<EvtType>& e) const = 0;

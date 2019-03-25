@@ -15,21 +15,28 @@ namespace aurora::events {
 		virtual ~EventDispatcher() {
 		}
 
-		virtual void AE_CALL addEventListener(const EvtType& type, IEventListener<EvtType>& listener) override {
+		virtual bool AE_CALL addEventListener(const EvtType& type, IEventListener<EvtType>& listener, bool ref) override {
 			std::lock_guard<Lock> lck(_lock);
 
+			bool rst = true;
 			auto itr = _listeners.find(type);
 			if (itr == _listeners.end()) {
-				_listeners.emplace(type, &listener);
+				if (ref) listener.ref();
+				_listeners.emplace(std::piecewise_construct,
+					std::forward_as_tuple(type),
+					std::forward_as_tuple(&listener, ref));
 			} else {
 				auto& tl = itr->second;
 				auto& list = tl.listeners;
+				bool oldRef = false;
 				if (tl.numValidListeners) {
 					if (tl.dispatching) {
 						for (auto& f : list) {
 							if (f.rawListener == &listener) {
 								if (f.valid) {
 									f.valid = false;
+									rst = false;
+									oldRef = f.ref;
 									--tl.numValidListeners;
 								}
 								break;
@@ -38,7 +45,10 @@ namespace aurora::events {
 					} else {
 						for (auto itr = list.begin(); itr != list.end(); ++itr) {
 							if (&listener == (*itr).rawListener) {
-								if ((*itr).valid) --tl.numValidListeners;
+								rst = false;
+								oldRef = (*itr).ref;
+								--tl.numValidListeners;
+
 								list.erase(itr);
 								--tl.numTotalListeners;
 								break;
@@ -47,20 +57,28 @@ namespace aurora::events {
 					}
 				}
 
-				list.emplace_back(&listener);
+				list.emplace_back(&listener, ref);
 				++tl.numValidListeners;
 				++tl.numTotalListeners;
+
+				if (oldRef) {
+					if (!ref) listener.unref();
+				} else if (ref) {
+					listener.ref();
+				}
 			}
+
+			return rst;
 		}
 
-		virtual bool AE_CALL hasEventListener(const EvtType& type) const  override {
+		virtual ui32 AE_CALL hasEventListener(const EvtType& type) const  override {
 			std::lock_guard<Lock> lck(_lock);
 
 			auto itr = _listeners.find(type);
 			if (itr == _listeners.end()) {
-				return false;
+				return 0;
 			} else {
-				return itr->second.numValidListeners > 0;
+				return itr->second.numValidListeners;
 			}
 		}
 
@@ -74,8 +92,14 @@ namespace aurora::events {
 				auto& tl = itr->second;
 				if (tl.numValidListeners) {
 					auto& list = tl.listeners;
-					for (auto& f : list) {
-						if (f.rawListener == &listener) return f.valid;
+					if (tl.dispatching) {
+						for (auto& f : list) {
+							if (f.valid && f.rawListener == &listener) return true;
+						}
+					} else {
+						for (auto& f : list) {
+							if (f.rawListener == &listener) return true;
+						}
 					}
 				}
 
@@ -83,9 +107,10 @@ namespace aurora::events {
 			}
 		}
 
-		virtual void AE_CALL removeEventListener(const EvtType& type, const IEventListener<EvtType>& listener) override {
+		virtual bool AE_CALL removeEventListener(const EvtType& type, const IEventListener<EvtType>& listener) override {
 			std::lock_guard<Lock> lck(_lock);
 
+			bool rst = false;
 			auto itr = _listeners.find(type);
 			if (itr != _listeners.end()) {
 				auto& tl = itr->second;
@@ -96,36 +121,46 @@ namespace aurora::events {
 							if (f.rawListener == &listener) {
 								if (f.valid) {
 									f.valid = false;
+									rst = true;
+									if (f.ref) f.rawListener->unref();
 									--tl.numValidListeners;
 								}
-								return;
+								break;
 							}
 						}
 					} else {
 						for (auto itr = list.begin(); itr != list.end(); ++itr) {
 							if (&listener == (*itr).rawListener) {
+								rst = true;
+								if ((*itr).ref) (*itr).rawListener->unref();
+
 								list.erase(itr);
 								--tl.numValidListeners;
 								--tl.numTotalListeners;
-								return;
+								break;
 							}
 						}
 					}
 				}
 			}
+
+			return rst;
 		}
 
-		virtual void AE_CALL removeEventListeners(const EvtType& type) override {
+		virtual ui32 AE_CALL removeEventListeners(const EvtType& type) override {
 			std::lock_guard<Lock> lck(_lock);
 
 			auto itr = _listeners.find(type);
-			if (itr != _listeners.end()) _removeEventListeners(itr->second);
+			if (itr != _listeners.end()) return _removeEventListeners(itr->second);
+			return 0;
 		}
 
-		virtual void AE_CALL removeEventListeners() {
+		virtual ui32 AE_CALL removeEventListeners() {
 			std::lock_guard<Lock> lck(_lock);
 
-			for (auto& itr : _listeners) _removeEventListeners(itr.second);
+			ui32 n = 0;
+			for (auto& itr : _listeners)  n += _removeEventListeners(itr.second);
+			return n;
 		}
 
 		virtual void AE_CALL dispatchEvent(const Event<EvtType>& e) const override {
@@ -174,21 +209,23 @@ namespace aurora::events {
 
 	protected:
 		struct Listener {
-			Listener(IEventListener<EvtType>* rawListener) :
+			Listener(IEventListener<EvtType>* rawListener, bool ref) :
 				valid(true),
+				ref(ref),
 				rawListener(rawListener) {
 			}
 			bool valid;
+			bool ref;
 			IEventListener<EvtType>* rawListener;
 		};
 
 
 		struct TypeListeners {
-			TypeListeners(IEventListener<EvtType>* rawListener) :
+			TypeListeners(IEventListener<EvtType>* rawListener, bool ref) :
 				dispatching(false),
 				numValidListeners(1),
 				numTotalListeners(1) {
-				listeners.emplace_back(rawListener);
+				listeners.emplace_back(rawListener, ref);
 			}
 			ui32 dispatching;
 			ui32 numValidListeners;
@@ -201,22 +238,29 @@ namespace aurora::events {
 		mutable Lock _lock;
 		mutable std::unordered_map<EvtType, TypeListeners> _listeners;
 
-		void AE_CALL _removeEventListeners(TypeListeners& typeListeners) {
+		ui32 AE_CALL _removeEventListeners(TypeListeners& typeListeners) {
+			ui32 n = typeListeners.numValidListeners;
 			if (typeListeners.numValidListeners) {
 				auto& list = typeListeners.listeners;
 				if (typeListeners.dispatching) {
 					for (auto& f : list) {
 						if (f.valid) {
 							f.valid = false;
+							if (f.ref) f.rawListener->unref();
 							--typeListeners.numValidListeners;
 						}
 					}
 				} else {
+					for (auto& f : list) {
+						if (f.ref) f.rawListener->unref();
+					}
 					list.clear();
 					typeListeners.numValidListeners = 0;
 					typeListeners.numTotalListeners = 0;
 				}
 			}
+
+			return n;
 		}
 	};
 }

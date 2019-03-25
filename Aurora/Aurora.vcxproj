@@ -91,7 +91,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_USRDLL;AE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <DisableSpecificWarnings>4244;4251</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4244;4251;4275</DisableSpecificWarnings>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <ExceptionHandling>Sync</ExceptionHandling>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -130,7 +130,7 @@
       <ConformanceMode>false</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <DisableSpecificWarnings>4244;4251</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4244;4251;4275</DisableSpecificWarnings>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <ExceptionHandling>Sync</ExceptionHandling>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -180,6 +180,7 @@
     <ClInclude Include="src\math\Vector4.h" />
     <ClInclude Include="src\modules\graphics\GObject.h" />
     <ClInclude Include="src\modules\graphics\GraphicsModule.h" />
+    <ClInclude Include="src\modules\graphics\Program.h" />
     <ClInclude Include="src\modules\graphics\VertexBuffer.h" />
     <ClInclude Include="src\modules\Module.h" />
     <ClInclude Include="src\nodes\components\AbstractComponent.h" />
@@ -192,7 +193,6 @@
   <ItemGroup>
     <ClCompile Include="src\base\Application.cpp" />
     <ClCompile Include="src\base\DynamicLib.cpp" />
-    <ClCompile Include="src\base\Ref.cpp" />
     <ClCompile Include="src\math\Math.cpp" />
     <ClCompile Include="src\math\Matrix34.cpp" />
     <ClCompile Include="src\math\Matrix44.cpp" />
@@ -202,7 +202,6 @@
     <ClCompile Include="src\modules\graphics\GObject.cpp" />
     <ClCompile Include="src\modules\graphics\GraphicsModule.cpp" />
     <ClCompile Include="src\modules\graphics\Program.cpp" />
-    <ClCompile Include="src\modules\graphics\Program.h" />
     <ClCompile Include="src\modules\graphics\VertexBuffer.cpp" />
     <ClCompile Include="src\nodes\components\AbstractComponent.cpp" />
     <ClCompile Include="src\nodes\components\Camera.cpp" />

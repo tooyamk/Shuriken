@@ -16,11 +16,7 @@ namespace aurora::modules::graphics::win::glew {
 		Graphics();
 		virtual ~Graphics();
 
-		virtual bool AE_CALL createView(void* style, const i8* windowTitle, const Rect<i32>& windowedRect, bool fullscreen) override;
-		virtual bool AE_CALL isWindowed() const override;
-		virtual void AE_CALL toggleFullscreen() override;
-		virtual void AE_CALL getWindowedRect(Rect<i32>& dst) const override;
-		virtual void AE_CALL setWindowedRect(const Rect<i32>& rect) override;
+		virtual bool AE_CALL createDevice(Application* app) override;
 
 		virtual aurora::modules::graphics::VertexBuffer* AE_CALL createVertexBuffer() override;
 		virtual aurora::modules::graphics::Program* AE_CALL createProgram() override;
@@ -32,23 +28,11 @@ namespace aurora::modules::graphics::win::glew {
 		virtual void AE_CALL clear() override;
 
 	private:
-		bool _isWindowed;
-		std::wstring _className;
-		mutable Rect<i32> _windowedRect;
-		Rect<i32> _curRect;
-
-		ui32 _dwStyle;
-
-		HINSTANCE _hIns;
-		HWND _hWnd;
+		Application* _app;
 
 		HDC _dc;
 		HGLRC _rc;
 
-		bool AE_CALL _init(HWND hWnd);
 		void AE_CALL _release();
-		void AE_CALL _updateWndParams();
-		void AE_CALL _changeWnd();
-		void AE_CALL _updateWindowedRect() const;
 	};
 }

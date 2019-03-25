@@ -46,22 +46,51 @@ namespace aurora {
 		if (in == nullptr) return 0;
 
 		ui32 d = 0;
-		for (ui32 i = 0; i < inLen; ++i) {
+		for (ui32 i = 0; i < inLen;) {
 			ui8 c = in[i];
-			if ((c & 0x80) == 0) {
-				++d;
+			if (c == 0) {
+				break;
+			} else if ((c & 0x80) == 0) {
+				++i;
 			} else if ((c & 0xE0) == 0xC0) {// 110x-xxxx 10xx-xxxx
-				d += 2;
+				i += 2;
 			} else if ((c & 0xF0) == 0xE0) {// 1110-xxxx 10xx-xxxx 10xx-xxxx
-				d += 3;
+				i += 3;
 			} else if ((c & 0xF8) == 0xF0) {// 1111-0xxx 10xx-xxxx 10xx-xxxx 10xx-xxxx 
-				d += 4;
+				i += 4;
 			} else {// 1111-10xx 10xx-xxxx 10xx-xxxx 10xx-xxxx 10xx-xxxx 
-				d += 5;
+				i += 5;
 			}
+			++d;
 		}
 
 		return d;
+	}
+
+	void String::calcUtf8ToUnicodeLength(const i8* in, ui32& utf8Len, ui32& unicodeLen) {
+		ui32 s = 0, d = 0;
+		if (in) {
+			do {
+				ui8 c = in[s];
+				if (c == 0) {
+					break;
+				} else if ((c & 0x80) == 0) {
+					++s;
+				} else if ((c & 0xE0) == 0xC0) {// 110x-xxxx 10xx-xxxx
+					s += 2;
+				} else if ((c & 0xF0) == 0xE0) {// 1110-xxxx 10xx-xxxx 10xx-xxxx
+					s += 3;
+				} else if ((c & 0xF8) == 0xF0) {// 1111-0xxx 10xx-xxxx 10xx-xxxx 10xx-xxxx 
+					s += 4;
+				} else {// 1111-10xx 10xx-xxxx 10xx-xxxx 10xx-xxxx 10xx-xxxx 
+					s += 5;
+				}
+				++d;
+			} while (true);
+		}
+
+		utf8Len = s;
+		unicodeLen = d;
 	}
 
 	i32 String::Utf8ToUnicode(const i8* in, ui32 inLen, wchar_t* out, ui32 outLen) {
@@ -79,6 +108,18 @@ namespace aurora {
 		delete[] out;
 
 		return std::move(s);
+	}
+
+	i32 String::Utf8ToUnicode(const i8* in, wchar_t*& out) {
+		if (in == nullptr) return -1;
+
+		ui32 inLen, outLen;
+		calcUtf8ToUnicodeLength(in, inLen, outLen);
+		out = new wchar_t[outLen + 1];
+		auto len = _Utf8ToUnicode(in, inLen, out, outLen);
+		out[len] = 0;
+
+		return len;
 	}
 
 	ui32 String::_UnicodeToUtf8(const wchar_t* in, ui32 inLen, char* out, ui32 outLen) {

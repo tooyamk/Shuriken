@@ -111,6 +111,9 @@
     <ClInclude Include="src\modules\graphics\GObject.h">
       <Filter>src\modules\graphics</Filter>
     </ClInclude>
+    <ClInclude Include="src\modules\graphics\Program.h">
+      <Filter>src\modules\graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\math\Matrix44.cpp">
@@ -137,9 +140,6 @@
     <ClCompile Include="src\base\DynamicLib.cpp">
       <Filter>src\base</Filter>
     </ClCompile>
-    <ClCompile Include="src\base\Ref.cpp">
-      <Filter>src\base</Filter>
-    </ClCompile>
     <ClCompile Include="src\utils\String.cpp">
       <Filter>src\utils</Filter>
     </ClCompile>
@@ -155,19 +155,16 @@
     <ClCompile Include="src\renderers\commands\IRenderCommand.cpp">
       <Filter>src\renderers\commands</Filter>
     </ClCompile>
-    <ClCompile Include="src\modules\graphics\Program.h">
-      <Filter>src\modules\graphics</Filter>
-    </ClCompile>
     <ClCompile Include="src\modules\graphics\VertexBuffer.cpp">
       <Filter>src\modules\graphics</Filter>
     </ClCompile>
     <ClCompile Include="src\modules\graphics\GraphicsModule.cpp">
       <Filter>src\modules\graphics</Filter>
     </ClCompile>
-    <ClCompile Include="src\modules\graphics\Program.cpp">
+    <ClCompile Include="src\modules\graphics\GObject.cpp">
       <Filter>src\modules\graphics</Filter>
     </ClCompile>
-    <ClCompile Include="src\modules\graphics\GObject.cpp">
+    <ClCompile Include="src\modules\graphics\Program.cpp">
       <Filter>src\modules\graphics</Filter>
     </ClCompile>
   </ItemGroup>

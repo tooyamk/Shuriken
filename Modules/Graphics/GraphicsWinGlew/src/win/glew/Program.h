@@ -13,5 +13,7 @@ namespace aurora::modules::graphics::win::glew {
 
 	protected:
 		ui32 _handle;
+
+		GLuint _compileShader(const GLchar* source, GLenum type);
 	};
 }
