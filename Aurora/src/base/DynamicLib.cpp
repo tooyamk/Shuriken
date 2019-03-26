@@ -17,7 +17,7 @@ namespace aurora {
 	bool DynamicLib::load(const i8* path) {
 #if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
 		wchar_t* out = nullptr;
-		auto len = String::Utf8ToUnicode(path, out);
+		auto len = String::Utf8ToUnicode(path, 0xFFFFFFFFui32, out);
 		if (len < 0) return false;
 		_lib = LoadLibraryW(out);
 		delete[] out;

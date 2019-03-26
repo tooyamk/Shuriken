@@ -37,6 +37,10 @@ namespace aurora {
 		void AE_CALL toggleFullscreen();
 		void AE_CALL getWindowedRect(Rect<i32>& dst) const;
 		void AE_CALL setWindowedRect(const Rect<i32>& rect);
+		bool AE_CALL getThickFrameEnable() const;
+		void AE_CALL setThickFrameEnable(bool b);
+		bool AE_CALL getMaximizeEnable() const;
+		void AE_CALL setMaximizeEnable(bool b);
 
 		void AE_CALL setVisible(bool b);
 		void AE_CALL run();
@@ -53,6 +57,8 @@ namespace aurora {
 
 	protected:
 		bool _isWindowed;
+		bool _thickFrameEnabled;
+		bool _maximizeEnabled;
 		std::string _appId;
 		Style _style;
 
@@ -69,9 +75,11 @@ namespace aurora {
 		HWND _hWnd;
 		ui32 _dwStyle;
 
+		DWORD AE_CALL _getWindowStyle() const;
+		DWORD AE_CALL _getWindowExStyle() const;
 		void AE_CALL _updateWindowParams();
 		void AE_CALL _updateWindowedRect() const;
-		void AE_CALL _changeWindow();
+		void AE_CALL _changeWindow(bool style, bool pos);
 #endif
 	};
 }

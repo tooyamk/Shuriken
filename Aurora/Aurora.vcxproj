@@ -163,10 +163,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\Aurora.h" />
     <ClInclude Include="src\base\Application.h" />
     <ClInclude Include="src\base\Lock.h" />
-    <ClInclude Include="src\base\Aurora.h" />
+    <ClInclude Include="src\base\LowLevel.h" />
     <ClInclude Include="src\base\DynamicLib.h" />
+    <ClInclude Include="src\base\Monitor.h" />
     <ClInclude Include="src\base\Ref.h" />
     <ClInclude Include="src\base\Time.h" />
     <ClInclude Include="src\events\EventDispatcher.h" />
@@ -182,7 +184,7 @@
     <ClInclude Include="src\modules\graphics\GraphicsModule.h" />
     <ClInclude Include="src\modules\graphics\Program.h" />
     <ClInclude Include="src\modules\graphics\VertexBuffer.h" />
-    <ClInclude Include="src\modules\Module.h" />
+    <ClInclude Include="src\modules\ModuleLoader.h" />
     <ClInclude Include="src\nodes\components\AbstractComponent.h" />
     <ClInclude Include="src\nodes\components\Camera.h" />
     <ClInclude Include="src\nodes\Node.h" />
@@ -193,6 +195,7 @@
   <ItemGroup>
     <ClCompile Include="src\base\Application.cpp" />
     <ClCompile Include="src\base\DynamicLib.cpp" />
+    <ClCompile Include="src\base\Monitor.cpp" />
     <ClCompile Include="src\math\Math.cpp" />
     <ClCompile Include="src\math\Matrix34.cpp" />
     <ClCompile Include="src\math\Matrix44.cpp" />

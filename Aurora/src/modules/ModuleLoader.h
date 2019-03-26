@@ -6,9 +6,9 @@
 namespace aurora::modules {
 	using AE_CREATE_MODULE_FUN = void*(*)();
 
-	class AE_TEMPLATE_DLL Module : public Ref {
+	class AE_TEMPLATE_DLL ModuleLoader : public Ref {
 	public:
-		Module() : _createFn(nullptr) {}
+		ModuleLoader() : _createFn(nullptr) {}
 
 		bool AE_CALL load(const i8* path) {
 			if (_lib.isLoaded()) _lib.free();

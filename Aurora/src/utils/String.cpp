@@ -1,39 +1,49 @@
 #include "String.h"
 
 namespace aurora {
-	ui32 String::calcUnicodeToUtf8Length(const wchar_t* in, ui32 inLen) {
-		if (in == nullptr) return 0;
-
+	void String::calcUnicodeToUtf8Length(const wchar_t* in, ui32 inLen, ui32& unicodeLen, ui32& utf8Len) {
 		ui32 s = 0, d = 0;
-		while (s < inLen) {
-			wchar_t c = in[s++];
-			if (c < 0x80) {  //
-				//length = 1;
-				++d;
-			} else if (c < 0x800) {
-				//length = 2;
-				d += 2;
-			} else if (c < 0x10000) {
-				//length = 3;
-				d += 3;
-			} else if (c < 0x200000) {
-				//length = 4;
-				d += 4;
+		if (in) {
+			while (s < inLen) {
+				wchar_t c = in[s++];
+				if (c == 0) {
+					break;
+				} else if (c < 0x80) {  //
+					//length = 1;
+					++d;
+				} else if (c < 0x800) {
+					//length = 2;
+					d += 2;
+				} else if (c < 0x10000) {
+					//length = 3;
+					d += 3;
+				} else if (c < 0x200000) {
+					//length = 4;
+					d += 4;
+				}
 			}
 		}
 
-		return d;
+		unicodeLen = s;
+		utf8Len = d;
 	}
 
 	i32 String::UnicodeToUtf8(const wchar_t * in, ui32 inLen, char* out, ui32 outLen) {
-		if (out == nullptr || in == nullptr || outLen < calcUnicodeToUtf8Length(in, inLen)) return -1;
-		return _UnicodeToUtf8(in, inLen, out, outLen);
+		if (!in || !out) return -1;
+
+		ui32 unicodeLen, utf8Len;
+		calcUnicodeToUtf8Length(in, inLen, unicodeLen, utf8Len);
+		if (outLen < unicodeLen) return -1;
+
+		return _UnicodeToUtf8(in, unicodeLen, out);
 	}
 
 	std::string String::UnicodeToUtf8(const std::wstring& in) {
-		ui32 outLen = calcUnicodeToUtf8Length(in.c_str(), in.size()) + 1;
-		i8* out = new i8[outLen];
-		auto len = _UnicodeToUtf8(in.c_str(), in.size(), out, outLen);
+		ui32 unicodeLen, utf8Len;
+		calcUnicodeToUtf8Length(in.c_str(), in.size(), unicodeLen, utf8Len);
+		++utf8Len;
+		auto out = new i8[utf8Len];
+		auto len = _UnicodeToUtf8(in.c_str(), unicodeLen, out);
 		out[len] = 0;
 
 		std::string s(out);
@@ -42,35 +52,10 @@ namespace aurora {
 		return std::move(s);
 	}
 
-	ui32 String::calcUtf8ToUnicodeLength(const i8* in, ui32 inLen) {
-		if (in == nullptr) return 0;
-
-		ui32 d = 0;
-		for (ui32 i = 0; i < inLen;) {
-			ui8 c = in[i];
-			if (c == 0) {
-				break;
-			} else if ((c & 0x80) == 0) {
-				++i;
-			} else if ((c & 0xE0) == 0xC0) {// 110x-xxxx 10xx-xxxx
-				i += 2;
-			} else if ((c & 0xF0) == 0xE0) {// 1110-xxxx 10xx-xxxx 10xx-xxxx
-				i += 3;
-			} else if ((c & 0xF8) == 0xF0) {// 1111-0xxx 10xx-xxxx 10xx-xxxx 10xx-xxxx 
-				i += 4;
-			} else {// 1111-10xx 10xx-xxxx 10xx-xxxx 10xx-xxxx 10xx-xxxx 
-				i += 5;
-			}
-			++d;
-		}
-
-		return d;
-	}
-
-	void String::calcUtf8ToUnicodeLength(const i8* in, ui32& utf8Len, ui32& unicodeLen) {
+	void String::calcUtf8ToUnicodeLength(const i8* in, ui32 inLen, ui32& utf8Len, ui32& unicodeLen) {
 		ui32 s = 0, d = 0;
 		if (in) {
-			do {
+			for (; s < inLen;) {
 				ui8 c = in[s];
 				if (c == 0) {
 					break;
@@ -86,7 +71,7 @@ namespace aurora {
 					s += 5;
 				}
 				++d;
-			} while (true);
+			}
 		}
 
 		utf8Len = s;
@@ -94,14 +79,21 @@ namespace aurora {
 	}
 
 	i32 String::Utf8ToUnicode(const i8* in, ui32 inLen, wchar_t* out, ui32 outLen) {
-		if (out == nullptr || in == nullptr || outLen < calcUtf8ToUnicodeLength(in, inLen)) return -1;
-		return _Utf8ToUnicode(in, inLen, out, outLen);
+		if (!in || !out) return -1;
+
+		ui32 utf8Len, unicodeLen;
+		calcUtf8ToUnicodeLength(in, inLen, utf8Len, unicodeLen);
+		if (outLen < unicodeLen) return -1;
+
+		return _Utf8ToUnicode(in, utf8Len, out);
 	}
 
 	std::wstring String::Utf8ToUnicode(const std::string& in) {
-		ui32 outLen = calcUtf8ToUnicodeLength(in.c_str(), in.size()) + 1;
-		wchar_t* out = new wchar_t[outLen];
-		auto len = _Utf8ToUnicode(in.c_str(), in.size(), out, outLen);
+		ui32 utf8Len, unicodeLen;
+		calcUtf8ToUnicodeLength(in.c_str(), in.size(), utf8Len, unicodeLen);
+		++unicodeLen;
+		auto out = new wchar_t[unicodeLen];
+		auto len = _Utf8ToUnicode(in.c_str(), utf8Len, out);
 		out[len] = 0;
 
 		std::wstring s(out);
@@ -110,19 +102,20 @@ namespace aurora {
 		return std::move(s);
 	}
 
-	i32 String::Utf8ToUnicode(const i8* in, wchar_t*& out) {
-		if (in == nullptr) return -1;
+	i32 String::Utf8ToUnicode(const i8* in, ui32 inLen, wchar_t*& out) {
+		if (!in) return -1;
 
-		ui32 inLen, outLen;
-		calcUtf8ToUnicodeLength(in, inLen, outLen);
-		out = new wchar_t[outLen + 1];
-		auto len = _Utf8ToUnicode(in, inLen, out, outLen);
+		ui32 utf8Len, unicodeLen;
+		calcUtf8ToUnicodeLength(in, inLen, utf8Len, unicodeLen);
+		++unicodeLen;
+		out = new wchar_t[unicodeLen];
+		auto len = _Utf8ToUnicode(in, utf8Len, out);
 		out[len] = 0;
 
 		return len;
 	}
 
-	ui32 String::_UnicodeToUtf8(const wchar_t* in, ui32 inLen, char* out, ui32 outLen) {
+	ui32 String::_UnicodeToUtf8(const wchar_t* in, ui32 inLen, char* out) {
 		ui32 s = 0, d = 0;
 		while (s < inLen) {
 			wchar_t c = in[s++];
@@ -150,7 +143,7 @@ namespace aurora {
 		return d;
 	}
 
-	ui32 String::_Utf8ToUnicode(const i8* in, ui32 inLen, wchar_t* out, ui32 outLen) {
+	ui32 String::_Utf8ToUnicode(const i8* in, ui32 inLen, wchar_t* out) {
 		ui32 s = 0, d = 0;
 		while (s < inLen) {
 			ui8 c = in[s];

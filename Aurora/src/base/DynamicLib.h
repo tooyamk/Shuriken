@@ -1,6 +1,6 @@
 #pragma once
 
-#include "base/Aurora.h"
+#include "base/LowLevel.h"
 
 namespace aurora {
 	class AE_DLL DynamicLib {

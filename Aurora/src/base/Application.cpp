@@ -18,6 +18,8 @@ namespace aurora {
 		_dwStyle(0),
 #endif
 		_isWindowed(true),
+		_thickFrameEnabled(false),
+		_maximizeEnabled(false),
 		_eventDispatcher(nullptr),
 		_time(0) {
 		setFrameInterval(frameInterval);
@@ -105,7 +107,7 @@ namespace aurora {
 		if (!_isWindowed) _updateWindowedRect();
 
 		_updateWindowParams();
-		_changeWindow();
+		_changeWindow(true, true);
 #endif
 		if (_eventDispatcher) _eventDispatcher->dispatchEvent(this, Event::RESIZE);
 	}
@@ -125,10 +127,40 @@ namespace aurora {
 			if (_isWindowed) {
 #if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
 				_updateWindowParams();
-				_changeWindow();
+				_changeWindow(false, true);
 #endif
 				if (_eventDispatcher && isResize) _eventDispatcher->dispatchEvent(this, Event::RESIZE);
 			}
+		}
+	}
+
+	bool Application::getThickFrameEnable() const {
+		return _thickFrameEnabled;
+	}
+
+	void Application::setThickFrameEnable(bool b) {
+		if (_thickFrameEnabled != b) {
+			_thickFrameEnabled = b;
+
+#if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
+			_updateWindowParams();
+			_changeWindow(true, false);
+#endif
+		}
+	}
+
+	bool Application::getMaximizeEnable() const {
+		return _maximizeEnabled;
+	}
+
+	void Application::setMaximizeEnable(bool b) {
+		if (_maximizeEnabled != b) {
+			_maximizeEnabled = b;
+
+#if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
+			_updateWindowParams();
+			_changeWindow(true, false);
+#endif
 		}
 	}
 
@@ -200,12 +232,36 @@ namespace aurora {
 	}
 
 #if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
+	DWORD Application::_getWindowStyle() const {
+		DWORD style = WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
+
+		if (_isWindowed) {
+			style |= WS_POPUP;
+		} else {
+		}
+
+		return style;
+	}
+
+	DWORD Application::_getWindowExStyle() const {
+		DWORD style = WS_EX_APPWINDOW;
+
+		if (_isWindowed) {
+			style |= WS_EX_TOPMOST;
+		}
+
+		return style;
+	}
+
 	void Application::_updateWindowParams() {
 		if (_isWindowed) {
 			_dwStyle |= WS_OVERLAPPEDWINDOW;
+			if (!_thickFrameEnabled) _dwStyle ^= WS_THICKFRAME;
+			if (!_maximizeEnabled) _dwStyle ^= WS_MAXIMIZEBOX;
+
 			_curRect.set(_windowedRect);
 		} else {
-			_dwStyle &= ~WS_OVERLAPPEDWINDOW;
+			_dwStyle ^= WS_OVERLAPPEDWINDOW;
 			_curRect.set(0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
 		}
 	}
@@ -216,9 +272,13 @@ namespace aurora {
 		_windowedRect.set(rect.left, rect.top, rect.right, rect.bottom);
 	}
 
-	void Application::_changeWindow() {
-		SetWindowLong(_hWnd, GWL_STYLE, _dwStyle);
-		SetWindowPos(_hWnd, HWND_NOTOPMOST, _curRect.left, _curRect.top, _curRect.getWidth(), _curRect.getHeight(), SWP_SHOWWINDOW);
+	void Application::_changeWindow(bool style, bool pos) {
+		if (style) SetWindowLong(_hWnd, GWL_STYLE, _dwStyle);
+		if (pos) {
+			RECT rect = { _curRect.left, _curRect.top, _curRect.right, _curRect.bottom };
+			AdjustWindowRect(&rect, _dwStyle, FALSE);
+			SetWindowPos(_hWnd, HWND_NOTOPMOST, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, SWP_SHOWWINDOW);
+		}
 	}
 #endif
 }

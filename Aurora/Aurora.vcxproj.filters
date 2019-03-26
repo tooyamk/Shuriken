@@ -57,17 +57,11 @@
     <ClInclude Include="src\math\Matrix34.h">
       <Filter>src\math</Filter>
     </ClInclude>
-    <ClInclude Include="src\base\Aurora.h">
-      <Filter>src\base</Filter>
-    </ClInclude>
     <ClInclude Include="src\base\Ref.h">
       <Filter>src\base</Filter>
     </ClInclude>
     <ClInclude Include="src\base\DynamicLib.h">
       <Filter>src\base</Filter>
-    </ClInclude>
-    <ClInclude Include="src\modules\Module.h">
-      <Filter>src\modules</Filter>
     </ClInclude>
     <ClInclude Include="src\utils\String.h">
       <Filter>src\utils</Filter>
@@ -113,6 +107,18 @@
     </ClInclude>
     <ClInclude Include="src\modules\graphics\Program.h">
       <Filter>src\modules\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\modules\ModuleLoader.h">
+      <Filter>src\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\LowLevel.h">
+      <Filter>src\base</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Aurora.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\Monitor.h">
+      <Filter>src\base</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -166,6 +172,9 @@
     </ClCompile>
     <ClCompile Include="src\modules\graphics\Program.cpp">
       <Filter>src\modules\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\Monitor.cpp">
+      <Filter>src\base</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
