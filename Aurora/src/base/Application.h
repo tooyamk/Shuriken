@@ -13,7 +13,9 @@ namespace aurora {
 	public:
 		class AE_DLL Style {
 		public:
-			Style();
+			bool maximizeButton = false;
+			bool minimizeButton = true;
+			bool thickFrame = false;
 		};
 
 
@@ -32,15 +34,14 @@ namespace aurora {
 
 		void AE_CALL setEventDispatcher(events::IEventDispatcher<Event>* eventDispatcher);
 
-		bool AE_CALL createWindow(const Style& style, const i8* title, const Rect<i32>& windowedRect, bool fullscreen);
+		bool AE_CALL createWindow(const Style& style, const std::string& title, const Rect<i32>& windowedRect, bool fullscreen);
 		bool AE_CALL isWindowed() const;
 		void AE_CALL toggleFullscreen();
+		void AE_CALL getInnerSize(i32& w, i32& h);
 		void AE_CALL getWindowedRect(Rect<i32>& dst) const;
 		void AE_CALL setWindowedRect(const Rect<i32>& rect);
-		bool AE_CALL getThickFrameEnable() const;
-		void AE_CALL setThickFrameEnable(bool b);
-		bool AE_CALL getMaximizeEnable() const;
-		void AE_CALL setMaximizeEnable(bool b);
+		void AE_CALL setWindowTitle(const std::string& title);
+		void AE_CALL setCursorVisible(bool isVisible);
 
 		void AE_CALL setVisible(bool b);
 		void AE_CALL run();
@@ -57,8 +58,6 @@ namespace aurora {
 
 	protected:
 		bool _isWindowed;
-		bool _thickFrameEnabled;
-		bool _maximizeEnabled;
 		std::string _appId;
 		Style _style;
 
@@ -70,16 +69,19 @@ namespace aurora {
 		f64 _frameInterval; //microsecond
 		i64 _time;
 
+		void AE_CALL _adjustWindowRect(const Rect<i32>& in, Rect<i32>& out);
+		void AE_CALL _recordWindowedRect() const;
+
 #if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
 		HINSTANCE _hIns;
 		HWND _hWnd;
-		ui32 _dwStyle;
 
 		DWORD AE_CALL _getWindowStyle() const;
 		DWORD AE_CALL _getWindowExStyle() const;
-		void AE_CALL _updateWindowParams();
-		void AE_CALL _updateWindowedRect() const;
-		void AE_CALL _changeWindow(bool style, bool pos);
+		void AE_CALL _updateWindowRectValue();
+		void AE_CALL _changeWindow(bool style, bool posOrSize);
+
+		LRESULT AE_CALL _wndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 #endif
 	};
 }

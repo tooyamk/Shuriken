@@ -70,9 +70,7 @@ namespace aurora {
 		std::vector<Monitor> monitors;
 		
 #if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
-		DWORD primaryIdx = 10;
 		DISPLAY_DEVICEW adapter, display;
-		bool hasDisplays = false;
 
 		const ui32 strBufLen = sizeof(display.DeviceString) << 2;
 		i8 strBuf[strBufLen];
