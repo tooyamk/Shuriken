@@ -6,10 +6,12 @@
 
 namespace aurora::events {
 	template<typename EvtType, typename Lock>
+	class DefaultEventDispatcherAllocator;
+
+	template<typename EvtType, typename Lock>
 	class AE_TEMPLATE_DLL EventDispatcher : public IEventDispatcher<EvtType> {
 	public:
-		EventDispatcher(void* target = nullptr) :
-			_target(target) {
+		EventDispatcher() {
 		}
 
 		virtual ~EventDispatcher() {
@@ -164,15 +166,11 @@ namespace aurora::events {
 		}
 
 		virtual void AE_CALL dispatchEvent(const Event<EvtType>& e) const override {
-			dispatchEvent(_target, e.getType(), e.getData());
+			dispatchEvent(e.getTarget(), e.getType(), e.getData());
 		}
 
 		virtual void AE_CALL dispatchEvent(void* target, const Event<EvtType>& e) const override {
 			dispatchEvent(target, e.getType(), e.getData());
-		}
-
-		virtual void AE_CALL dispatchEvent(const EvtType& type, void* data = nullptr) const override {
-			dispatchEvent(_target, type, data);
 		}
 
 		virtual void AE_CALL dispatchEvent(void* target, const EvtType& type, void* data = nullptr) const override {
@@ -207,6 +205,8 @@ namespace aurora::events {
 			}
 		}
 
+		static const DefaultEventDispatcherAllocator<EvtType, Lock> DEFAULT_ALLOCATOR;
+
 	protected:
 		struct Listener {
 			Listener(IEventListener<EvtType>* rawListener, bool ref) :
@@ -234,7 +234,6 @@ namespace aurora::events {
 		};
 
 
-		void* _target;
 		mutable Lock _lock;
 		mutable std::unordered_map<EvtType, TypeListeners> _listeners;
 
@@ -263,4 +262,22 @@ namespace aurora::events {
 			return n;
 		}
 	};
+
+
+	template<typename EvtType, typename Lock>
+	class DefaultEventDispatcherAllocator : public IEventDispatcherAllocator<EvtType> {
+	public:
+		virtual IEventDispatcher<EvtType>* AE_CALL create() const override {
+			auto ed = new EventDispatcher<EvtType, Lock>();
+			ed->ref();
+			return ed;
+		}
+		virtual void AE_CALL release(IEventDispatcher<EvtType>* eventDispatcher) const override {
+			eventDispatcher->unref();
+		}
+	};
+
+
+	template<typename EvtType, typename Lock>
+	const DefaultEventDispatcherAllocator<EvtType, Lock> EventDispatcher<EvtType, Lock>::DEFAULT_ALLOCATOR;
 }

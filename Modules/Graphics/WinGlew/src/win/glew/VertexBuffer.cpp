@@ -3,7 +3,7 @@
 #include <algorithm>
 
 namespace aurora::modules::graphics::win::glew {
-	VertexBuffer::VertexBuffer(Graphics& graphics) : aurora::modules::graphics::VertexBuffer(graphics),
+	VertexBuffer::VertexBuffer(Graphics& graphics) : aurora::modules::GraphicsModule::VertexBuffer(graphics),
 		_dirty(false),
 		_size(0),
 		_handle(0),

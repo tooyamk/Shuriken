@@ -2,9 +2,6 @@
 #include "base/Application.h"
 #include "Module.h"
 #include "utils/String.h"
-#include "Program.h"
-#include "VertexBuffer.h"
-#include <thread>
 
 namespace aurora::modules::graphics::win::glew {
 	Graphics::Graphics() :
@@ -60,9 +57,9 @@ namespace aurora::modules::graphics::win::glew {
 			pfd.dwVisibleMask = 0;
 			pfd.dwDamageMask = 0;
 
-			int pf = ChoosePixelFormat(_dc, &pfd);
-			SetPixelFormat(_dc, pf, &pfd);
-
+			auto pf = ChoosePixelFormat(_dc, &pfd);
+			if (!SetPixelFormat(_dc, pf, &pfd)) return false;
+			
 			_rc = wglCreateContext(_dc);
 			if (_rc) {
 				wglMakeCurrent(_dc, _rc);
@@ -100,24 +97,27 @@ namespace aurora::modules::graphics::win::glew {
 			*/
 	}
 
-	aurora::modules::graphics::VertexBuffer* Graphics::createVertexBuffer() {
-		return new VertexBuffer(*this);
+	aurora::modules::GraphicsModule::VertexBuffer* Graphics::createVertexBuffer() {
+		return new aurora::modules::graphics::win::glew::VertexBuffer(*this);
 	}
 
-	aurora::modules::graphics::Program* Graphics::createProgram() {
-		return new Program(*this);
+	aurora::modules::GraphicsModule::Program* Graphics::createProgram() {
+		return new aurora::modules::graphics::win::glew::Program(*this);
 	}
 
 	void Graphics::beginRender() {
 		wglMakeCurrent(_dc, _rc);
+
+		i32 w, h;
+		_app->getInnerSize(w, h);
+		glViewport(0, 0, w, h);
 	}
 
 	void Graphics::endRender() {
 		//交换当前缓冲区和后台缓冲区
 		SwapBuffers(_dc);
 
-		//取消当前线程选中的RC
-		wglMakeCurrent(nullptr, nullptr);
+		if (wglGetCurrentContext() == _rc) wglMakeCurrent(nullptr, nullptr);
 	}
 
 	void Graphics::present() {
@@ -129,7 +129,7 @@ namespace aurora::modules::graphics::win::glew {
 	}
 
 	void Graphics::_release() {
-		wglMakeCurrent(nullptr, nullptr);
+		if (wglGetCurrentContext() == _rc) wglMakeCurrent(nullptr, nullptr);
 
 		if (_rc) {
 			wglDeleteContext(_rc);

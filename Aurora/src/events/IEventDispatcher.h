@@ -25,15 +25,15 @@ namespace aurora::events {
 			_target(target) {
 		}
 
-		inline void* getTarget() const {
+		inline void* AE_CALL getTarget() const {
 			return _target;
 		}
 
-		inline const EvtType& getType() const {
+		inline const EvtType& AE_CALL getType() const {
 			return _type;
 		}
 
-		inline void* getData() const {
+		inline void* AE_CALL getData() const {
 			return _data;
 		}
 
@@ -57,7 +57,7 @@ namespace aurora::events {
 	template<typename EvtType>
 	class AE_TEMPLATE_DLL IEventListener : public Ref {
 	public:
-		virtual void onEvent(Event<EvtType>& e) = 0;
+		virtual void AE_CALL onEvent(Event<EvtType>& e) = 0;
 	};
 
 
@@ -69,7 +69,7 @@ namespace aurora::events {
 			_method(method) {
 		}
 
-		virtual void onEvent(Event<EvtType>& e) override {
+		virtual void AE_CALL onEvent(Event<EvtType>& e) override {
 			if (_target && _method) (_target->*_method)(e);
 		}
 	private:
@@ -85,7 +85,7 @@ namespace aurora::events {
 			_fn(fn) {
 		}
 
-		virtual void onEvent(Event<EvtType>& e) override {
+		virtual void AE_CALL onEvent(Event<EvtType>& e) override {
 			if (_fn) _fn(e);
 		}
 	private:
@@ -102,7 +102,7 @@ namespace aurora::events {
 			_fn(fn) {
 		}
 
-		virtual void onEvent(Event<EvtType>& e) override {
+		virtual void AE_CALL onEvent(Event<EvtType>& e) override {
 			if (_fn) _fn(e);
 		}
 	private:
@@ -124,7 +124,14 @@ namespace aurora::events {
 
 		virtual void AE_CALL dispatchEvent(const Event<EvtType>& e) const = 0;
 		virtual void AE_CALL dispatchEvent(void* target, const Event<EvtType>& e) const = 0;
-		virtual void AE_CALL dispatchEvent(const EvtType& type, void* data = nullptr) const = 0;
 		virtual void AE_CALL dispatchEvent(void* target, const EvtType& type, void* data = nullptr) const = 0;
+	};
+
+
+	template<typename EvtType>
+	class IEventDispatcherAllocator {
+	public:
+		virtual IEventDispatcher<EvtType>* AE_CALL create() const = 0;
+		virtual void AE_CALL release(IEventDispatcher<EvtType>* eventDispatcher) const = 0;
 	};
 }

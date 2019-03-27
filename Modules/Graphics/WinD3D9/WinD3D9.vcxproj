@@ -24,12 +24,17 @@
   <ItemGroup>
     <ClInclude Include="src\win\d3d9\Graphics.h" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Aurora\Aurora.vcxproj">
+      <Project>{972c829a-fe33-48d8-a1e1-cc7457fed993}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{82F31C71-0691-45BC-BA30-BEC19197C88C}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>GraphicsWinDX</RootNamespace>
-    <ProjectName>GraphicsWinD3D9</ProjectName>
+    <ProjectName>WinD3D9</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

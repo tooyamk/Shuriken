@@ -24,6 +24,9 @@
     <ClInclude Include="src\win\glew\Program.h">
       <Filter>src\win\glew</Filter>
     </ClInclude>
+    <ClInclude Include="src\win\glew\Base.h">
+      <Filter>src\win\glew</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\win\glew\Graphics.cpp">

@@ -1,19 +1,23 @@
 #pragma once
 
 #include "base/DynamicLib.h"
-#include "base/Ref.h"
+#include "modules/GraphicsModule.h"
+#include "modules/InputModule.h"
+
+namespace aurora::events {
+	template<typename EvtType> class IEventDispatcherAllocator;
+}
 
 namespace aurora::modules {
-	using AE_CREATE_MODULE_FUN = void*(*)();
-
+	template<typename CreateFn>
 	class AE_TEMPLATE_DLL ModuleLoader : public Ref {
 	public:
-		ModuleLoader() : _createFn(nullptr) {}
+		virtual ~ModuleLoader() {}
 
 		bool AE_CALL load(const i8* path) {
 			if (_lib.isLoaded()) _lib.free();
 			if (_lib.load(path)) {
-				_createFn = (AE_CREATE_MODULE_FUN)_lib.getSymbolAddress("createModule");
+				_createFn = (CreateFn)_lib.getSymbolAddress(AE_TO_STRING(AE_CREATE_MODULE_FN_NAME));
 				return _createFn;
 			} else {
 				_createFn = nullptr;
@@ -26,17 +30,34 @@ namespace aurora::modules {
 			_lib.free();
 		}
 
-		template<class T>
-		T* AE_CALL create() const {
+	protected:
+		ModuleLoader() : _createFn(nullptr) {}
+
+		DynamicLib _lib;
+		CreateFn _createFn;
+	};
+
+
+	class GraphicsModuleLoader : public ModuleLoader<GraphicsModule::CREATE_MODULE_FN> {
+	public:
+		GraphicsModule* AE_CALL create() const {
 			if (_createFn && _lib.isLoaded()) {
-				return (T*)_createFn();
+				return (GraphicsModule*)_createFn();
 			} else {
 				return nullptr;
 			}
 		}
+	};
 
-	private:
-		DynamicLib _lib;
-		AE_CREATE_MODULE_FUN _createFn;
+
+	class InputModuleLoader : public ModuleLoader<InputModule::CREATE_MODULE_FN> {
+	public:
+		InputModule* AE_CALL create(InputModule::EVENT_DISPATCHER_ALLOCATOR allocator) const {
+			if (_createFn && _lib.isLoaded()) {
+				return (InputModule*)_createFn(allocator);
+			} else {
+				return nullptr;
+			}
+		}
 	};
 }

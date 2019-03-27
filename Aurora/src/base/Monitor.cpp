@@ -53,7 +53,7 @@ namespace aurora {
 
 			if (_modesPruned) {
 				// Skip modes not supported by the connected displays
-				mode._supported = ChangeDisplaySettingsExW(wadpName, &dm, NULL, CDS_TEST, NULL) == DISP_CHANGE_SUCCESSFUL;
+				mode._supported = ChangeDisplaySettingsExW(wadpName, &dm, nullptr, CDS_TEST, nullptr) == DISP_CHANGE_SUCCESSFUL;
 			} else {
 				mode._supported = true;
 			}

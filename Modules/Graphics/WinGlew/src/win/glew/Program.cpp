@@ -2,7 +2,7 @@
 #include "Graphics.h"
 
 namespace aurora::modules::graphics::win::glew {
-	Program::Program(Graphics& graphics) : aurora::modules::graphics::Program(graphics),
+	Program::Program(Graphics& graphics) : aurora::modules::GraphicsModule::Program(graphics),
 		_handle(glCreateProgram()) {
 
 		const char* vert = "#version 420 core\n"

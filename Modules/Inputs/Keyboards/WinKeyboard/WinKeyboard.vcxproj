@@ -19,22 +19,16 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\win\glew\Graphics.cpp" />
-    <ClCompile Include="src\win\glew\Program.cpp" />
-    <ClCompile Include="src\win\glew\VertexBuffer.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="src\win\glew\Graphics.h" />
-    <ClInclude Include="src\win\glew\Module.h" />
-    <ClInclude Include="src\win\glew\Program.h" />
-    <ClInclude Include="src\win\glew\VertexBuffer.h" />
+    <ProjectReference Include="..\..\..\..\Aurora\Aurora.vcxproj">
+      <Project>{972c829a-fe33-48d8-a1e1-cc7457fed993}</Project>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{A65BE382-CCAE-473B-94D8-9F224C5AF736}</ProjectGuid>
+    <ProjectGuid>{61EA4E59-553E-40AF-A294-D4A84B959DD8}</ProjectGuid>
     <RootNamespace>GraphicsWinGL</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
-    <ProjectName>GraphicsWinGlew</ProjectName>
+    <ProjectName>WinKeyboard</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -106,7 +100,7 @@
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(SolutionDir)$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Aurora.lib;glew.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Aurora.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>

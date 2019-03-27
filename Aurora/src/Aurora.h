@@ -15,9 +15,6 @@
 #include "math/Vector4.h"
 
 #include "modules/ModuleLoader.h"
-#include "modules/graphics/GraphicsModule.h"
-#include "modules/graphics/Program.h"
-#include "modules/graphics/VertexBuffer.h"
 
 #include "nodes/Node.h"
 #include "nodes/components/Camera.h"

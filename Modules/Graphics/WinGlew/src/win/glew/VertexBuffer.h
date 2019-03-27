@@ -1,12 +1,11 @@
 #pragma once
 
-#include "modules/graphics/VertexBuffer.h"
-#include "GL/glew.h"
+#include "Base.h"
 
 namespace aurora::modules::graphics::win::glew {
 	class Graphics;
 
-	class AE_MODULE_DLL VertexBuffer : public aurora::modules::graphics::VertexBuffer {
+	class AE_MODULE_DLL VertexBuffer : public aurora::modules::GraphicsModule::VertexBuffer {
 	public:
 		VertexBuffer(Graphics& graphics);
 		virtual ~VertexBuffer();

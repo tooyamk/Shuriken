@@ -2,26 +2,24 @@
 #include "base/Time.h"
 #include "events/IEventDispatcher.h"
 #include "utils/String.h"
-#include "nodes/Node.h"
 #include <thread>
 
 namespace aurora {
-	Application::Application(const i8* appId, f64 frameInterval) :
+	Application::Application(const i8* appId, f64 frameInterval, const events::IEventDispatcherAllocator<Event>& eventDispatcherAllocator) :
 		_appId(appId),
+		_isClosing(false),
+		_eventDispatcherAllocator(eventDispatcherAllocator),
 #if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
 		_hIns(nullptr),
 		_hWnd(nullptr),
 #endif
 		_isWindowed(true),
-		_eventDispatcher(nullptr),
 		_time(0) {
+		_eventDispatcher = _eventDispatcherAllocator.create();
 		setFrameInterval(frameInterval);
 	}
 
 	Application::~Application() {
-		Ref::checkSetNull(_eventDispatcher);
-		//Ref::aaa<std::string>(&_appId);
-
 #if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
 		if (_hWnd) {
 			DestroyWindow(_hWnd);
@@ -33,11 +31,9 @@ namespace aurora {
 			UnregisterClass(appIdW.c_str(), _hIns);
 			_hIns = nullptr;
 		}
-	}
 #endif
 
-	void Application::setEventDispatcher(events::IEventDispatcher<Event>* eventDispatcher) {
-		Ref::set(_eventDispatcher, eventDispatcher);
+		_eventDispatcherAllocator.release(_eventDispatcher);
 	}
 
 	bool Application::createWindow(const Style& style, const std::string& title, const Rect<i32>& windowedRect, bool fullscreen) {
@@ -52,29 +48,7 @@ namespace aurora {
 		memset(&wnd, 0, sizeof(WNDCLASSEXW));
 		wnd.cbSize = sizeof(WNDCLASSEXW);
 		wnd.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
-		wnd.lpfnWndProc = [](HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-			auto app = (Application*)GetWindowLongPtr(hWnd, GWL_USERDATA);
-			switch (msg) {
-			case WM_DESTROY:
-			{
-				PostQuitMessage(0);
-				return (LRESULT)0;
-
-				break;
-			}
-			case WM_SIZE:
-			{
-				println("change size");
-
-				break;
-			}
-			default:
-				break;
-			}
-
-			return DefWindowProc(hWnd, msg, wParam, lParam);
-		};
-
+		wnd.lpfnWndProc = Application::_wndProc;
 		auto appIdW = String::Utf8ToUnicode(_appId);
 		wnd.cbClsExtra = 0;
 		wnd.cbWndExtra = 0;
@@ -92,7 +66,7 @@ namespace aurora {
 		_updateWindowRectValue();
 
 		_hWnd = CreateWindowExW(_getWindowExStyle(), wnd.lpszClassName, String::Utf8ToUnicode(title).c_str(), _getWindowStyle(),
-			_curRect.left, _curRect.top, _curRect.getWidth(), _curRect.getHeight(),
+			_wndRect.left, _wndRect.top, _wndRect.getWidth(), _wndRect.getHeight(),
 			GetDesktopWindow(), nullptr, _hIns, nullptr);
 		SetWindowLongPtr(_hWnd, GWL_USERDATA, (LONG_PTR)this);
 
@@ -149,7 +123,6 @@ namespace aurora {
 				_updateWindowRectValue();
 				_changeWindow(false, true);
 #endif
-				if (_eventDispatcher && isResize) _eventDispatcher->dispatchEvent(this, Event::RESIZE);
 			}
 		}
 	}
@@ -162,8 +135,51 @@ namespace aurora {
 
 	void Application::setCursorVisible(bool isVisible) {
 #if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
-		//setCursorVisible(isVisible);
+		ShowCursor(isVisible);
 #endif
+	}
+
+	bool Application::hasFocus() const {
+#if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
+		return GetForegroundWindow() == _hWnd;
+#endif
+	}
+
+	void Application::pollEvents() {
+#if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
+		MSG msg;
+		memset(&msg, 0, sizeof(msg));
+
+		while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
+			if (msg.message == WM_QUIT) {
+				_isClosing = true;
+			} else {
+				switch (msg.message) {
+				case WM_KEYDOWN:
+				{
+					println("loop down %d  %d", msg.lParam, msg.wParam);
+
+					break;
+				}
+				case WM_SYSKEYDOWN:
+				{
+					println("loop sys down %d  %d", msg.lParam, msg.wParam);
+
+					break;
+				}
+				default:
+					break;
+				}
+
+				TranslateMessage(&msg);
+				DispatchMessage(&msg);
+			}
+		}
+#endif
+	}
+
+	f64 Application::getFrameInterval() const {
+		return _frameInterval;
 	}
 
 	void Application::setFrameInterval(f64 frameInterval) {
@@ -187,29 +203,7 @@ namespace aurora {
 	}
 
 	void Application::run() {
-#if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
-		MSG msg;
-		memset(&msg, 0, sizeof(msg));
-
-		while (msg.message != WM_QUIT) {
-			if (PeekMessage(
-				&msg,     // 存储消息的结构体指针
-				nullptr,  // 窗口消息和线程消息都会被处理 
-				0,        // 消息过滤最小值; 为0时返回所有可用信息
-				0,        // 消息过滤最大值; 为0时返回所有可用信息
-				PM_REMOVE // 指定消息如何处理; 消息在处理完后从队列中移除
-			)) {
-				TranslateMessage(&msg); // 变换虚拟键消息到字符消息，字符消息被发送到调用线程的消息队列
-				DispatchMessage(&msg);  // 派发消息到窗口过程
-			} else {
-				//if (++aa == 120) {
-					//PostQuitMessage(0);
-				//}
-
-				update(true);
-			}
-		}
-#endif
+		while (!_isClosing) update(true);
 	}
 
 	void Application::update(bool autoSleep) {
@@ -279,9 +273,9 @@ namespace aurora {
 
 	void Application::_updateWindowRectValue() {
 		if (_isWindowed) {
-			_curRect.set(_windowedRect);
+			_wndRect.set(_windowedRect);
 		} else {
-			_curRect.set(0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
+			_wndRect.set(0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
 		}
 	}
 
@@ -294,12 +288,53 @@ namespace aurora {
 			} else {
 				flags |= SWP_NOCOPYBITS;
 			}
-			SetWindowPos(_hWnd, HWND_NOTOPMOST, _curRect.left, _curRect.top, _curRect.getWidth(), _curRect.getHeight(), flags);
+			SetWindowPos(_hWnd, HWND_NOTOPMOST, _wndRect.left, _wndRect.top, _wndRect.getWidth(), _wndRect.getHeight(), flags);
 		}
 	}
 
 	LRESULT Application::_wndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-		return 0;
+		auto app = (Application*)GetWindowLongPtr(hWnd, GWL_USERDATA);
+
+		switch (msg) {
+		case WM_CLOSE:
+		{
+			if (app && app->_eventDispatcher) {
+				bool isCanceled = false;
+				app->_eventDispatcher->dispatchEvent(app, Event::CLOSING, &isCanceled);
+				if (isCanceled) return 0;
+			}
+
+			break;
+		}
+		case WM_DESTROY:
+		{
+			PostQuitMessage(0);
+			
+			return 0;
+		}
+		case WM_SIZE:
+		{
+			if (app && app->_eventDispatcher) app->_eventDispatcher->dispatchEvent(app, Event::RESIZE);
+
+			break;
+		}
+		case WM_SETFOCUS:
+		{
+			if (app && app->_eventDispatcher) app->_eventDispatcher->dispatchEvent(app, Event::FOCUS_IN);
+
+			break;
+		}
+		case WM_KILLFOCUS:
+		{
+			if (app && app->_eventDispatcher) app->_eventDispatcher->dispatchEvent(app, Event::FOCUS_OUT);
+
+			break;
+		}
+		default:
+			break;
+		}
+
+		return DefWindowProc(hWnd, msg, wParam, lParam);
 	}
 #endif
 }

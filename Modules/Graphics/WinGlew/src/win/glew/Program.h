@@ -1,12 +1,11 @@
 #pragma once
 
-#include "modules/graphics/Program.h"
-#include "GL/glew.h"
+#include "Base.h"
 
 namespace aurora::modules::graphics::win::glew {
 	class Graphics;
 
-	class AE_MODULE_DLL Program : public aurora::modules::graphics::Program {
+	class AE_MODULE_DLL Program : public aurora::modules::GraphicsModule::Program {
 	public:
 		Program(Graphics& graphics);
 		virtual ~Program();

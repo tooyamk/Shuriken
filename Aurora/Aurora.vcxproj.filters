@@ -25,9 +25,6 @@
     <Filter Include="src\nodes\components">
       <UniqueIdentifier>{9b970749-de96-40a2-a7c6-aa20a29e8718}</UniqueIdentifier>
     </Filter>
-    <Filter Include="src\modules\graphics">
-      <UniqueIdentifier>{fb124f4f-7652-406b-a093-b385460cd6ee}</UniqueIdentifier>
-    </Filter>
     <Filter Include="src\events">
       <UniqueIdentifier>{6f758046-e6fd-4567-8012-e5ab6ef0d8eb}</UniqueIdentifier>
     </Filter>
@@ -75,9 +72,6 @@
     <ClInclude Include="src\nodes\components\Camera.h">
       <Filter>src\nodes\components</Filter>
     </ClInclude>
-    <ClInclude Include="src\modules\graphics\GraphicsModule.h">
-      <Filter>src\modules\graphics</Filter>
-    </ClInclude>
     <ClInclude Include="src\events\EventDispatcher.h">
       <Filter>src\events</Filter>
     </ClInclude>
@@ -99,15 +93,6 @@
     <ClInclude Include="src\renderers\commands\BaseRenderCommand.h">
       <Filter>src\renderers\commands</Filter>
     </ClInclude>
-    <ClInclude Include="src\modules\graphics\VertexBuffer.h">
-      <Filter>src\modules\graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="src\modules\graphics\GObject.h">
-      <Filter>src\modules\graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="src\modules\graphics\Program.h">
-      <Filter>src\modules\graphics</Filter>
-    </ClInclude>
     <ClInclude Include="src\modules\ModuleLoader.h">
       <Filter>src\modules</Filter>
     </ClInclude>
@@ -119,6 +104,15 @@
     </ClInclude>
     <ClInclude Include="src\base\Monitor.h">
       <Filter>src\base</Filter>
+    </ClInclude>
+    <ClInclude Include="src\modules\Module.h">
+      <Filter>src\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="src\modules\GraphicsModule.h">
+      <Filter>src\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="src\modules\InputModule.h">
+      <Filter>src\modules</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -161,20 +155,11 @@
     <ClCompile Include="src\renderers\commands\IRenderCommand.cpp">
       <Filter>src\renderers\commands</Filter>
     </ClCompile>
-    <ClCompile Include="src\modules\graphics\VertexBuffer.cpp">
-      <Filter>src\modules\graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="src\modules\graphics\GraphicsModule.cpp">
-      <Filter>src\modules\graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="src\modules\graphics\GObject.cpp">
-      <Filter>src\modules\graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="src\modules\graphics\Program.cpp">
-      <Filter>src\modules\graphics</Filter>
-    </ClCompile>
     <ClCompile Include="src\base\Monitor.cpp">
       <Filter>src\base</Filter>
+    </ClCompile>
+    <ClCompile Include="src\modules\GraphicsModule.cpp">
+      <Filter>src\modules</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
