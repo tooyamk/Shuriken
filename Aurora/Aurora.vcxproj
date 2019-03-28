@@ -165,6 +165,7 @@
   <ItemGroup>
     <ClInclude Include="src\Aurora.h" />
     <ClInclude Include="src\base\Application.h" />
+    <ClInclude Include="src\base\List.h" />
     <ClInclude Include="src\base\Lock.h" />
     <ClInclude Include="src\base\LowLevel.h" />
     <ClInclude Include="src\base\DynamicLib.h" />
