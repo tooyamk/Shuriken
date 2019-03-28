@@ -19,24 +19,24 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\win\glew\Graphics.cpp" />
-    <ClCompile Include="src\win\glew\Program.cpp" />
-    <ClCompile Include="src\win\glew\VertexBuffer.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="src\win\glew\Base.h" />
-    <ClInclude Include="src\win\glew\Graphics.h" />
-    <ClInclude Include="src\win\glew\Module.h" />
-    <ClInclude Include="src\win\glew\Program.h" />
-    <ClInclude Include="src\win\glew\VertexBuffer.h" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\..\..\Aurora\Aurora.vcxproj">
       <Project>{972c829a-fe33-48d8-a1e1-cc7457fed993}</Project>
     </ProjectReference>
     <ProjectReference Include="..\..\..\Libs\glew\glew.vcxproj">
       <Project>{b3077269-6c95-3456-a3e7-bb246fad0156}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\Base.h" />
+    <ClInclude Include="src\Graphics.h" />
+    <ClInclude Include="src\Module.h" />
+    <ClInclude Include="src\Program.h" />
+    <ClInclude Include="src\VertexBuffer.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\Graphics.cpp" />
+    <ClCompile Include="src\Program.cpp" />
+    <ClCompile Include="src\VertexBuffer.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

@@ -1,8 +1,8 @@
 #include "Program.h"
 #include "Graphics.h"
 
-namespace aurora::modules::graphics::win::glew {
-	Program::Program(Graphics& graphics) : aurora::modules::GraphicsModule::Program(graphics),
+namespace aurora::modules::graphics_win_glew {
+	Program::Program(Graphics& graphics) : GraphicsModule::Program(graphics),
 		_handle(glCreateProgram()) {
 
 		const char* vert = "#version 420 core\n"

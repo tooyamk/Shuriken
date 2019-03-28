@@ -5,7 +5,7 @@
 #include <thread>
 
 namespace aurora {
-	Application::Application(const i8* appId, f64 frameInterval, const events::IEventDispatcherAllocator<Event>& eventDispatcherAllocator) :
+	Application::Application(const i8* appId, f64 frameInterval, const events::IEventDispatcherAllocator<ApplicationEvent>& eventDispatcherAllocator) :
 		_appId(appId),
 		_isClosing(false),
 		_eventDispatcherAllocator(eventDispatcherAllocator),
@@ -49,7 +49,6 @@ namespace aurora {
 		wnd.cbSize = sizeof(WNDCLASSEXW);
 		wnd.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
 		wnd.lpfnWndProc = Application::_wndProc;
-		auto appIdW = String::Utf8ToUnicode(_appId);
 		wnd.cbClsExtra = 0;
 		wnd.cbWndExtra = 0;
 		wnd.hInstance = _hIns;
@@ -57,6 +56,7 @@ namespace aurora {
 		wnd.hCursor = nullptr;//LoadCursor(NULL, IDC_ARROW);
 		wnd.hbrBackground = nullptr;//static_cast<HBRUSH>(GetStockObject(WHITE_BRUSH));
 		wnd.lpszMenuName = nullptr;//NULL;
+		auto appIdW = String::Utf8ToUnicode(_appId);
 		wnd.lpszClassName = appIdW.c_str();
 		wnd.hIconSm = nullptr;
 
@@ -88,7 +88,7 @@ namespace aurora {
 		_updateWindowRectValue();
 		_changeWindow(true, true);
 #endif
-		if (_eventDispatcher) _eventDispatcher->dispatchEvent(this, Event::RESIZE);
+		if (_eventDispatcher) _eventDispatcher->dispatchEvent(this, ApplicationEvent::RESIZE);
 	}
 
 	void Application::getInnerSize(i32& w, i32& h) {
@@ -156,14 +156,16 @@ namespace aurora {
 			} else {
 				switch (msg.message) {
 				case WM_KEYDOWN:
+				case WM_SYSKEYDOWN:
 				{
-					println("loop down %d  %d", msg.lParam, msg.wParam);
+					_eventDispatcher->dispatchEvent(this, ApplicationEvent::SYS_KEY_DOWN, &msg);
 
 					break;
 				}
-				case WM_SYSKEYDOWN:
+				case WM_KEYUP:
+				case WM_SYSKEYUP:
 				{
-					println("loop sys down %d  %d", msg.lParam, msg.wParam);
+					_eventDispatcher->dispatchEvent(this, ApplicationEvent::SYS_KEY_UP, &msg);
 
 					break;
 				}
@@ -211,7 +213,7 @@ namespace aurora {
 		auto dt = _time == 0 ? 0 : (t0 - _time);
 		_time = t0;
 
-		if (_eventDispatcher) _eventDispatcher->dispatchEvent(this, Event::UPDATE, &dt);
+		if (_eventDispatcher) _eventDispatcher->dispatchEvent(this, ApplicationEvent::UPDATE, &dt);
 
 		if (autoSleep) {
 			auto t1 = Time::now<std::chrono::nanoseconds, std::chrono::steady_clock>();
@@ -300,7 +302,7 @@ namespace aurora {
 		{
 			if (app && app->_eventDispatcher) {
 				bool isCanceled = false;
-				app->_eventDispatcher->dispatchEvent(app, Event::CLOSING, &isCanceled);
+				app->_eventDispatcher->dispatchEvent(app, ApplicationEvent::CLOSING, &isCanceled);
 				if (isCanceled) return 0;
 			}
 
@@ -314,19 +316,19 @@ namespace aurora {
 		}
 		case WM_SIZE:
 		{
-			if (app && app->_eventDispatcher) app->_eventDispatcher->dispatchEvent(app, Event::RESIZE);
+			if (app && app->_eventDispatcher) app->_eventDispatcher->dispatchEvent(app, ApplicationEvent::RESIZE);
 
 			break;
 		}
 		case WM_SETFOCUS:
 		{
-			if (app && app->_eventDispatcher) app->_eventDispatcher->dispatchEvent(app, Event::FOCUS_IN);
+			if (app && app->_eventDispatcher) app->_eventDispatcher->dispatchEvent(app, ApplicationEvent::FOCUS_IN);
 
 			break;
 		}
 		case WM_KILLFOCUS:
 		{
-			if (app && app->_eventDispatcher) app->_eventDispatcher->dispatchEvent(app, Event::FOCUS_OUT);
+			if (app && app->_eventDispatcher) app->_eventDispatcher->dispatchEvent(app, ApplicationEvent::FOCUS_OUT);
 
 			break;
 		}

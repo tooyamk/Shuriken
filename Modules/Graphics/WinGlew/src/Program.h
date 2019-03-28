@@ -2,10 +2,10 @@
 
 #include "Base.h"
 
-namespace aurora::modules::graphics::win::glew {
+namespace aurora::modules::graphics_win_glew {
 	class Graphics;
 
-	class AE_MODULE_DLL Program : public aurora::modules::GraphicsModule::Program {
+	class AE_MODULE_DLL Program : public GraphicsModule::Program {
 	public:
 		Program(Graphics& graphics);
 		virtual ~Program();

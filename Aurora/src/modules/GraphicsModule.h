@@ -3,15 +3,12 @@
 #include "modules/Module.h"
 
 namespace aurora {
-	class Application;
 	template<typename T> class Rect;
 }
 
 namespace aurora::modules {
-	class AE_DLL GraphicsModule : public Module {
+	class AE_DLL GraphicsModule : public Module<void> {
 	public:
-		using CREATE_MODULE_FN = GraphicsModule*(*)();
-
 		class AE_DLL Object : public Ref {
 		public:
 			virtual ~Object();
@@ -50,7 +47,11 @@ namespace aurora::modules {
 
 		virtual ~GraphicsModule();
 
-		virtual bool AE_CALL createDevice(Application* app) = 0;
+		virtual ui32 AE_CALL getType() const override {
+			return ModuleType::GRAPHICS;
+		}
+
+		virtual bool AE_CALL createDevice() = 0;
 
 		virtual VertexBuffer* AE_CALL createVertexBuffer() = 0;
 		virtual Program* AE_CALL createProgram() = 0;

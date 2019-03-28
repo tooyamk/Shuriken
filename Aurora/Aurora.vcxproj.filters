@@ -161,6 +161,9 @@
     <ClCompile Include="src\modules\GraphicsModule.cpp">
       <Filter>src\modules</Filter>
     </ClCompile>
+    <ClCompile Include="src\modules\InputModule.cpp">
+      <Filter>src\modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="src\math\Matrix44.inl">

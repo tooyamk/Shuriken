@@ -9,15 +9,18 @@ namespace aurora::events {
 }
 
 namespace aurora::modules {
-	template<typename CreateFn>
+	template<typename EvtType, typename RetType>
 	class AE_TEMPLATE_DLL ModuleLoader : public Ref {
 	public:
+		using CREATE_MODULE_FN = RetType*(*)(const ModuleCreateParams<EvtType>*);
+
+		ModuleLoader() : _createFn(nullptr) {}
 		virtual ~ModuleLoader() {}
 
 		bool AE_CALL load(const i8* path) {
 			if (_lib.isLoaded()) _lib.free();
 			if (_lib.load(path)) {
-				_createFn = (CreateFn)_lib.getSymbolAddress(AE_TO_STRING(AE_CREATE_MODULE_FN_NAME));
+				_createFn = (CREATE_MODULE_FN)_lib.getSymbolAddress(AE_TO_STRING(AE_CREATE_MODULE_FN_NAME));
 				return _createFn;
 			} else {
 				_createFn = nullptr;
@@ -30,34 +33,23 @@ namespace aurora::modules {
 			_lib.free();
 		}
 
+		RetType* AE_CALL create(const ModuleCreateParams<EvtType>* params) const {
+			if (_createFn && _lib.isLoaded()) {
+				return (RetType*)_createFn(params);
+			} else {
+				return nullptr;
+			}
+		}
+
+		RetType* AE_CALL create(const ModuleCreateParams<EvtType>& params) const {
+			return create(&params);
+		}
+
 	protected:
-		ModuleLoader() : _createFn(nullptr) {}
-
 		DynamicLib _lib;
-		CreateFn _createFn;
+		CREATE_MODULE_FN _createFn;
 	};
 
-
-	class GraphicsModuleLoader : public ModuleLoader<GraphicsModule::CREATE_MODULE_FN> {
-	public:
-		GraphicsModule* AE_CALL create() const {
-			if (_createFn && _lib.isLoaded()) {
-				return (GraphicsModule*)_createFn();
-			} else {
-				return nullptr;
-			}
-		}
-	};
-
-
-	class InputModuleLoader : public ModuleLoader<InputModule::CREATE_MODULE_FN> {
-	public:
-		InputModule* AE_CALL create(InputModule::EVENT_DISPATCHER_ALLOCATOR allocator) const {
-			if (_createFn && _lib.isLoaded()) {
-				return (InputModule*)_createFn(allocator);
-			} else {
-				return nullptr;
-			}
-		}
-	};
+	using GraphicsModuleLoader = ModuleLoader<GraphicsModule::EVENT, GraphicsModule>;
+	using InputModuleLoader = ModuleLoader<InputModule::EVENT, InputModule>;
 }

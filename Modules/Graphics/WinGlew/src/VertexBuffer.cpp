@@ -2,8 +2,8 @@
 #include "Graphics.h"
 #include <algorithm>
 
-namespace aurora::modules::graphics::win::glew {
-	VertexBuffer::VertexBuffer(Graphics& graphics) : aurora::modules::GraphicsModule::VertexBuffer(graphics),
+namespace aurora::modules::graphics_win_glew {
+	VertexBuffer::VertexBuffer(Graphics& graphics) : GraphicsModule::VertexBuffer(graphics),
 		_dirty(false),
 		_size(0),
 		_handle(0),

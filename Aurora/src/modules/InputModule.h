@@ -3,18 +3,51 @@
 #include "modules/Module.h"
 
 namespace aurora::modules {
-	class AE_DLL InputModule : public Module {
+	enum class InputEvent : ui8 {
+		DOWN,
+		UP
+	};
+
+
+	class AE_DLL InputKey {
 	public:
-		enum class Event : ui8 {
-			DOWN,
-			UP
-		};
+		i32 code;
+		f32 value;
+		i64 timestamp;
+	};
 
 
-		using EVENT_DISPATCHER_ALLOCATOR = const events::IEventDispatcherAllocator<Event>&;
-		using CREATE_MODULE_FN = InputModule*(*)(EVENT_DISPATCHER_ALLOCATOR);
+	class AE_DLL InputModule : public Module<InputEvent> {
+	public:
+		virtual ~InputModule();
+
+		virtual ui32 AE_CALL getType() const override {
+			return ModuleType::INPUT;
+		}
+
+		virtual bool AE_CALL isEnabled() const = 0;
+		virtual void AE_CALL setEnabled(bool isEnabled) = 0;
+		virtual void AE_CALL pollEvents() = 0;
+		virtual InputModule::CREATE_PARAMS::EVENT_DISPATCHER* AE_CALL getEventDispatcher() const = 0;
+	};
 
 
-		virtual ~InputModule() {}
+	class AE_DLL InputCenter : public InputModule {
+	public:
+		InputCenter(const InputModule::CREATE_PARAMS::EVENT_DISPATCHER_ALLOCATOR& eventDispatcherAllocator);
+		virtual ~InputCenter();
+
+		//void AE_CALL addInput(InputModule& input);
+
+		virtual bool AE_CALL isEnabled() const override;
+		virtual void AE_CALL setEnabled(bool isEnabled) override;
+		virtual void AE_CALL pollEvents() override;
+		virtual InputModule::CREATE_PARAMS::EVENT_DISPATCHER* AE_CALL getEventDispatcher() const override;
+
+	protected:
+		bool _isEnabled;
+
+		const InputModule::CREATE_PARAMS::EVENT_DISPATCHER_ALLOCATOR& _eventDispatcherAllocator;
+		InputModule::CREATE_PARAMS::EVENT_DISPATCHER* _eventDispatcher;
 	};
 }

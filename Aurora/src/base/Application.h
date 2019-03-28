@@ -10,6 +10,19 @@ namespace aurora {
 		template<typename EvtType> class IEventDispatcherAllocator;
 	}
 
+
+	enum class ApplicationEvent : ui8 {
+		UPDATE,
+		RESIZE,
+		FOCUS_IN,
+		FOCUS_OUT,
+		CLOSING,
+
+		SYS_KEY_DOWN,
+		SYS_KEY_UP
+	};
+
+
 	class AE_DLL Application : public Ref {
 	public:
 		class AE_DLL Style {
@@ -19,20 +32,10 @@ namespace aurora {
 			bool thickFrame = false;
 		};
 
-
-		enum class Event : ui8 {
-			UPDATE,
-			RESIZE,
-			FOCUS_IN,
-			FOCUS_OUT,
-			CLOSING
-		};
-
-
-		Application(const i8* appId, f64 frameInterval, const events::IEventDispatcherAllocator<Event>& eventDispatcherAllocator);
+		Application(const i8* appId, f64 frameInterval, const events::IEventDispatcherAllocator<ApplicationEvent>& eventDispatcherAllocator);
 		virtual ~Application();
 
-		inline events::IEventDispatcher<Event>* AE_CALL getEventDispatcher() const {
+		inline events::IEventDispatcher<ApplicationEvent>* AE_CALL getEventDispatcher() const {
 			return _eventDispatcher;
 		}
 
@@ -67,8 +70,8 @@ namespace aurora {
 		std::string _appId;
 		Style _style;
 
-		const events::IEventDispatcherAllocator<Event>& _eventDispatcherAllocator;
-		events::IEventDispatcher<Event>* _eventDispatcher;
+		const events::IEventDispatcherAllocator<ApplicationEvent>& _eventDispatcherAllocator;
+		events::IEventDispatcher<ApplicationEvent>* _eventDispatcher;
 
 		mutable Rect<i32> _windowedRect;
 		Rect<i32> _wndRect;

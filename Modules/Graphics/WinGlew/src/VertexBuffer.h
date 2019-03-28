@@ -2,10 +2,10 @@
 
 #include "Base.h"
 
-namespace aurora::modules::graphics::win::glew {
+namespace aurora::modules::graphics_win_glew {
 	class Graphics;
 
-	class AE_MODULE_DLL VertexBuffer : public aurora::modules::GraphicsModule::VertexBuffer {
+	class AE_MODULE_DLL VertexBuffer : public GraphicsModule::VertexBuffer {
 	public:
 		VertexBuffer(Graphics& graphics);
 		virtual ~VertexBuffer();

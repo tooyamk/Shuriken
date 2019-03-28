@@ -3,25 +3,23 @@
 #include "Module.h"
 #include "utils/String.h"
 
-namespace aurora::modules::graphics::win::glew {
-	Graphics::Graphics() :
-		_app(nullptr),
+namespace aurora::modules::graphics_win_glew {
+	Graphics::Graphics(Graphics::CREATE_PARAMS_REF params) :
+		_app(params.application->ref<Application>()),
 		_dc(nullptr),
 		_rc(nullptr) {
+		_app->ref();
 	}
 
 	Graphics::~Graphics() {
 		_release();
+		Ref::setNull(_app);
 	}
 
-	bool Graphics::createDevice(Application* app) {
-		if (_app) return false;
-		if (!app) return false;
+	bool Graphics::createDevice() {
+		if (_dc) return false;
 
-		_app = app;
-		_app->ref();
-
-		HWND hWnd = app->getHWND();
+		HWND hWnd = _app->getHWND();
 		if (!hWnd) return false;
 
 		_dc = GetDC(hWnd);
@@ -97,12 +95,12 @@ namespace aurora::modules::graphics::win::glew {
 			*/
 	}
 
-	aurora::modules::GraphicsModule::VertexBuffer* Graphics::createVertexBuffer() {
-		return new aurora::modules::graphics::win::glew::VertexBuffer(*this);
+	GraphicsModule::VertexBuffer* Graphics::createVertexBuffer() {
+		return new graphics_win_glew::VertexBuffer(*this);
 	}
 
-	aurora::modules::GraphicsModule::Program* Graphics::createProgram() {
-		return new aurora::modules::graphics::win::glew::Program(*this);
+	GraphicsModule::Program* Graphics::createProgram() {
+		return new graphics_win_glew::Program(*this);
 	}
 
 	void Graphics::beginRender() {

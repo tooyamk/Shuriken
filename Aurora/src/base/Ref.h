@@ -17,7 +17,13 @@ namespace aurora {
 		}
 
 		inline ui32 AE_CALL getReferenceCount() const {
-			return _refCount.load(std::memory_order_acquire);
+			return _refCount.load(std::memory_order_relaxed);
+		}
+
+		template<typename T>
+		inline std::enable_if_t<std::is_base_of_v<Ref, T>, T> * ref() {
+			ref();
+			return (T*)this;
 		}
 
 		template<typename P1, typename P2>
