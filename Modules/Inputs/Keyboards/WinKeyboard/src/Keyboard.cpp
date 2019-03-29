@@ -5,15 +5,13 @@
 
 namespace aurora::modules::input_win_kb {
 	Keyboard::Keyboard(Keyboard::CREATE_PARAMS_REF params) :
-		_isEnabled(true),
+		_isDispatching(false),
 		_app(params.application->ref<Application>()),
 		_eventDispatcherAllocator(*params.eventDispatcherAllocator),
 		_downListener(this, &Keyboard::_downHandler),
 		_upListener(this, &Keyboard::_upHandler) {
 		_eventDispatcher = _eventDispatcherAllocator.create();
 		auto appEvtDspt = _app->getEventDispatcher();
-		appEvtDspt->addEventListener(ApplicationEvent::SYS_KEY_DOWN, _downListener, false);
-		appEvtDspt->addEventListener(ApplicationEvent::SYS_KEY_UP, _upListener, false);
 	}
 
 	Keyboard::~Keyboard() {
@@ -24,10 +22,6 @@ namespace aurora::modules::input_win_kb {
 
 	ui32 Keyboard::getType() const {
 		return ModuleType::KEYBOARD | InputModule::getType();
-	}
-
-	bool Keyboard::isEnabled() const {
-		return _isEnabled;
 	}
 
 	void Keyboard::setEnabled(bool isEnabled) {
@@ -47,17 +41,16 @@ namespace aurora::modules::input_win_kb {
 	}
 
 	void Keyboard::pollEvents() {
+		if (_isDispatching) return;
+		_isDispatching = true;
+
 		for (ui32 i = 0; i < _keys.size(); ++i) {
-			auto& info = _keys[i];
-			if (info.state) {
-				InputKey key{info.code, 1.f, info.timestamp};
-				_eventDispatcher->dispatchEvent(this, InputEvent::DOWN, &key);
-			} else {
-				InputKey key{ info.code, 0.f, info.timestamp };
-				_eventDispatcher->dispatchEvent(this, InputEvent::UP, &key);
-			}
+			auto& buf = _keys[i];
+			_eventDispatcher->dispatchEvent(this, _getWritableEventType(buf), &_getWritableKey(buf));
 		}
+
 		_keys.clear();
+		_isDispatching = false;
 	}
 
 	InputModule::CREATE_PARAMS::EVENT_DISPATCHER* Keyboard::getEventDispatcher() const {
@@ -65,20 +58,21 @@ namespace aurora::modules::input_win_kb {
 	}
 
 	void Keyboard::_downHandler(events::Event<ApplicationEvent>& e) {
-		auto msg = (MSG*)e.getData();
-
-		auto& info = _keys.emplace_back();
-		info.code = msg->wParam;
-		info.state = 1;
-		info.timestamp = Time::now();
+		_writeKeyInfo(InputEvent::DOWN, *((MSG*)e.getData()), 0.f);
 	}
 
 	void Keyboard::_upHandler(events::Event<ApplicationEvent>& e) {
-		auto msg = (MSG*)e.getData();
+		_writeKeyInfo(InputEvent::UP, *((MSG*)e.getData()), 0.f);
+	}
 
-		auto& info = _keys.emplace_back();
-		info.code = msg->wParam;
-		info.state = 0;
-		info.timestamp = Time::now();
+	void Keyboard::_writeKeyInfo(InputEvent type, const MSG& msg, f32 value) {
+		auto& buf = _keys.emplace_back();
+
+		_getWritableEventType(buf) = type;
+
+		auto& key = _getWritableKey(buf);
+		key.code = msg.wParam;
+		key.value = value;
+		key.timestamp = Time::now();
 	}
 }
