@@ -182,7 +182,6 @@
     <ClInclude Include="src\math\Vector3.h" />
     <ClInclude Include="src\math\Vector4.h" />
     <ClInclude Include="src\modules\GraphicsModule.h" />
-    <ClInclude Include="src\modules\InputCenter.h" />
     <ClInclude Include="src\modules\InputModule.h" />
     <ClInclude Include="src\modules\Module.h" />
     <ClInclude Include="src\modules\ModuleLoader.h" />
@@ -204,7 +203,6 @@
     <ClCompile Include="src\math\Vector3.cpp" />
     <ClCompile Include="src\math\Vector4.cpp" />
     <ClCompile Include="src\modules\GraphicsModule.cpp" />
-    <ClCompile Include="src\modules\InputCenter.cpp" />
     <ClCompile Include="src\modules\InputModule.cpp" />
     <ClCompile Include="src\nodes\components\AbstractComponent.cpp" />
     <ClCompile Include="src\nodes\components\Camera.cpp" />

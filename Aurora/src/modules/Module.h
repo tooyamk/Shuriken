@@ -7,7 +7,6 @@ namespace aurora {
 
 	namespace events {
 		template<typename EvtType> class IEventDispatcher;
-		template<typename EvtType> class IEventDispatcherAllocator;
 	}
 }
 
@@ -28,11 +27,7 @@ namespace aurora::modules {
 	template<typename EvtType>
 	class AE_TEMPLATE_DLL ModuleCreateParams {
 	public:
-		using EVENT_DISPATCHER = aurora::events::IEventDispatcher<EvtType>;
-		using EVENT_DISPATCHER_ALLOCATOR = aurora::events::IEventDispatcherAllocator<EvtType>;
-
 		Application* application = nullptr;
-		const EVENT_DISPATCHER_ALLOCATOR* eventDispatcherAllocator = nullptr;
 	};
 
 

@@ -5,21 +5,17 @@
 #include <unordered_map>
 
 namespace aurora::events {
-	template<typename EvtType, typename Lock>
-	class DefaultEventDispatcherAllocator;
-
-	template<typename EvtType, typename Lock>
+	template<typename EvtType>
 	class AE_TEMPLATE_DLL EventDispatcher : public IEventDispatcher<EvtType> {
 	public:
 		EventDispatcher() {
 		}
+		EventDispatcher(const EventDispatcher&) = delete;
 
 		virtual ~EventDispatcher() {
 		}
 
 		virtual bool AE_CALL addEventListener(const EvtType& type, IEventListener<EvtType>& listener, bool ref) override {
-			std::lock_guard<Lock> lck(_lock);
-
 			bool rst = true;
 			auto itr = _listeners.find(type);
 			if (itr == _listeners.end()) {
@@ -74,8 +70,6 @@ namespace aurora::events {
 		}
 
 		virtual ui32 AE_CALL hasEventListener(const EvtType& type) const  override {
-			std::lock_guard<Lock> lck(_lock);
-
 			auto itr = _listeners.find(type);
 			if (itr == _listeners.end()) {
 				return 0;
@@ -85,8 +79,6 @@ namespace aurora::events {
 		}
 
 		virtual bool AE_CALL hasEventListener(const EvtType& type, const IEventListener<EvtType>& listener) const override {
-			std::lock_guard<Lock> lck(_lock);
-
 			auto itr = _listeners.find(type);
 			if (itr == _listeners.end()) {
 				return false;
@@ -110,8 +102,6 @@ namespace aurora::events {
 		}
 
 		virtual bool AE_CALL removeEventListener(const EvtType& type, const IEventListener<EvtType>& listener) override {
-			std::lock_guard<Lock> lck(_lock);
-
 			bool rst = false;
 			auto itr = _listeners.find(type);
 			if (itr != _listeners.end()) {
@@ -150,16 +140,12 @@ namespace aurora::events {
 		}
 
 		virtual ui32 AE_CALL removeEventListeners(const EvtType& type) override {
-			std::lock_guard<Lock> lck(_lock);
-
 			auto itr = _listeners.find(type);
 			if (itr != _listeners.end()) return _removeEventListeners(itr->second);
 			return 0;
 		}
 
 		virtual ui32 AE_CALL removeEventListeners() {
-			std::lock_guard<Lock> lck(_lock);
-
 			ui32 n = 0;
 			for (auto& itr : _listeners)  n += _removeEventListeners(itr.second);
 			return n;
@@ -174,8 +160,6 @@ namespace aurora::events {
 		}
 
 		virtual void AE_CALL dispatchEvent(void* target, const EvtType& type, void* data = nullptr) const override {
-			std::lock_guard<Lock> lck(_lock);
-
 			auto itr = _listeners.find(type);
 			if (itr != _listeners.end()) {
 				auto& tl = itr->second;
@@ -205,8 +189,6 @@ namespace aurora::events {
 			}
 		}
 
-		static const DefaultEventDispatcherAllocator<EvtType, Lock> DEFAULT_ALLOCATOR;
-
 	protected:
 		struct Listener {
 			Listener(IEventListener<EvtType>* rawListener, bool ref) :
@@ -234,7 +216,6 @@ namespace aurora::events {
 		};
 
 
-		mutable Lock _lock;
 		mutable std::unordered_map<EvtType, TypeListeners> _listeners;
 
 		ui32 AE_CALL _removeEventListeners(TypeListeners& typeListeners) {
@@ -262,22 +243,4 @@ namespace aurora::events {
 			return n;
 		}
 	};
-
-
-	template<typename EvtType, typename Lock>
-	class DefaultEventDispatcherAllocator : public IEventDispatcherAllocator<EvtType> {
-	public:
-		virtual IEventDispatcher<EvtType>* AE_CALL create() const override {
-			auto ed = new EventDispatcher<EvtType, Lock>();
-			ed->ref();
-			return ed;
-		}
-		virtual void AE_CALL release(IEventDispatcher<EvtType>* eventDispatcher) const override {
-			eventDispatcher->unref();
-		}
-	};
-
-
-	template<typename EvtType, typename Lock>
-	const DefaultEventDispatcherAllocator<EvtType, Lock> EventDispatcher<EvtType, Lock>::DEFAULT_ALLOCATOR;
 }

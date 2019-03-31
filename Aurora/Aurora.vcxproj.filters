@@ -117,9 +117,6 @@
     <ClInclude Include="src\base\TSList.h">
       <Filter>src\base</Filter>
     </ClInclude>
-    <ClInclude Include="src\modules\InputCenter.h">
-      <Filter>src\modules</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\math\Matrix44.cpp">
@@ -168,9 +165,6 @@
       <Filter>src\modules</Filter>
     </ClCompile>
     <ClCompile Include="src\modules\InputModule.cpp">
-      <Filter>src\modules</Filter>
-    </ClCompile>
-    <ClCompile Include="src\modules\InputCenter.cpp">
       <Filter>src\modules</Filter>
     </ClCompile>
   </ItemGroup>

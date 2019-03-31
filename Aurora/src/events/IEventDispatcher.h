@@ -126,12 +126,4 @@ namespace aurora::events {
 		virtual void AE_CALL dispatchEvent(void* target, const Event<EvtType>& e) const = 0;
 		virtual void AE_CALL dispatchEvent(void* target, const EvtType& type, void* data = nullptr) const = 0;
 	};
-
-
-	template<typename EvtType>
-	class IEventDispatcherAllocator {
-	public:
-		virtual IEventDispatcher<EvtType>* AE_CALL create() const = 0;
-		virtual void AE_CALL release(IEventDispatcher<EvtType>* eventDispatcher) const = 0;
-	};
 }

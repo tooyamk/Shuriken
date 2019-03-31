@@ -6,12 +6,27 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\DirectInput.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
     <ClCompile Include="src\Keyboard.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DeviceBase.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\DirectInput.h">
+      <Filter>src</Filter>
+    </ClInclude>
     <ClInclude Include="src\Keyboard.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DeviceBase.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Base.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

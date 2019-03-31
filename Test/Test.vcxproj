@@ -31,7 +31,7 @@
     <ProjectReference Include="..\Modules\Graphics\WinGlew\WinGlew.vcxproj">
       <Project>{a65be382-ccae-473b-94d8-9f224c5af736}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\Modules\Inputs\Keyboards\WinKeyboard\WinKeyboard.vcxproj">
+    <ProjectReference Include="..\Modules\Inputs\WinDirectInput\WinDirectInput.vcxproj">
       <Project>{61ea4e59-553e-40af-a294-d4a84b959dd8}</Project>
     </ProjectReference>
   </ItemGroup>

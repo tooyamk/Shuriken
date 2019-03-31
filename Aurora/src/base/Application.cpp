@@ -1,21 +1,18 @@
 #include "Application.h"
 #include "base/Time.h"
-#include "events/IEventDispatcher.h"
 #include "utils/String.h"
 #include <thread>
 
 namespace aurora {
-	Application::Application(const i8* appId, f64 frameInterval, const events::IEventDispatcherAllocator<ApplicationEvent>& eventDispatcherAllocator) :
+	Application::Application(const i8* appId, f64 frameInterval) :
 		_appId(appId),
 		_isClosing(false),
-		_eventDispatcherAllocator(eventDispatcherAllocator),
 #if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
 		_hIns(nullptr),
 		_hWnd(nullptr),
 #endif
 		_isWindowed(true),
 		_time(0) {
-		_eventDispatcher = _eventDispatcherAllocator.create();
 		setFrameInterval(frameInterval);
 	}
 
@@ -32,8 +29,6 @@ namespace aurora {
 			_hIns = nullptr;
 		}
 #endif
-
-		_eventDispatcherAllocator.release(_eventDispatcher);
 	}
 
 	bool Application::createWindow(const Style& style, const std::string& title, const Rect<i32>& windowedRect, bool fullscreen) {
@@ -88,7 +83,7 @@ namespace aurora {
 		_updateWindowRectValue();
 		_changeWindow(true, true);
 #endif
-		if (_eventDispatcher) _eventDispatcher->dispatchEvent(this, ApplicationEvent::RESIZE);
+		_eventDispatcher.dispatchEvent(this, ApplicationEvent::RESIZE);
 	}
 
 	void Application::getInnerSize(i32& w, i32& h) {
@@ -154,25 +149,6 @@ namespace aurora {
 			if (msg.message == WM_QUIT) {
 				_isClosing = true;
 			} else {
-				switch (msg.message) {
-				case WM_KEYDOWN:
-				case WM_SYSKEYDOWN:
-				{
-					_eventDispatcher->dispatchEvent(this, ApplicationEvent::SYS_KEY_DOWN, &msg);
-
-					break;
-				}
-				case WM_KEYUP:
-				case WM_SYSKEYUP:
-				{
-					_eventDispatcher->dispatchEvent(this, ApplicationEvent::SYS_KEY_UP, &msg);
-
-					break;
-				}
-				default:
-					break;
-				}
-
 				TranslateMessage(&msg);
 				DispatchMessage(&msg);
 			}
@@ -205,7 +181,10 @@ namespace aurora {
 	}
 
 	void Application::run() {
-		while (!_isClosing) update(true);
+		while (!_isClosing) {
+			pollEvents();
+			update(true);
+		}
 	}
 
 	void Application::update(bool autoSleep) {
@@ -213,7 +192,7 @@ namespace aurora {
 		auto dt = _time == 0 ? 0 : (t0 - _time);
 		_time = t0;
 
-		if (_eventDispatcher) _eventDispatcher->dispatchEvent(this, ApplicationEvent::UPDATE, &dt);
+		_eventDispatcher.dispatchEvent(this, ApplicationEvent::UPDATE, &dt);
 
 		if (autoSleep) {
 			auto t1 = Time::now<std::chrono::nanoseconds, std::chrono::steady_clock>();
@@ -300,9 +279,9 @@ namespace aurora {
 		switch (msg) {
 		case WM_CLOSE:
 		{
-			if (app && app->_eventDispatcher) {
+			if (app) {
 				bool isCanceled = false;
-				app->_eventDispatcher->dispatchEvent(app, ApplicationEvent::CLOSING, &isCanceled);
+				app->_eventDispatcher.dispatchEvent(app, ApplicationEvent::CLOSING, &isCanceled);
 				if (isCanceled) return 0;
 			}
 
@@ -316,20 +295,24 @@ namespace aurora {
 		}
 		case WM_SIZE:
 		{
-			if (app && app->_eventDispatcher) app->_eventDispatcher->dispatchEvent(app, ApplicationEvent::RESIZE);
+			if (app) app->_eventDispatcher.dispatchEvent(app, ApplicationEvent::RESIZE);
 
 			break;
 		}
 		case WM_SETFOCUS:
 		{
-			if (app && app->_eventDispatcher) app->_eventDispatcher->dispatchEvent(app, ApplicationEvent::FOCUS_IN);
+			if (app) app->_eventDispatcher.dispatchEvent(app, ApplicationEvent::FOCUS_IN);
 
 			break;
 		}
 		case WM_KILLFOCUS:
 		{
-			if (app && app->_eventDispatcher) app->_eventDispatcher->dispatchEvent(app, ApplicationEvent::FOCUS_OUT);
+			if (app) app->_eventDispatcher.dispatchEvent(app, ApplicationEvent::FOCUS_OUT);
 
+			break;
+		}
+		case WM_DEVICECHANGE:
+		{
 			break;
 		}
 		default:

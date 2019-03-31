@@ -24,9 +24,14 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\DeviceBase.cpp" />
+    <ClCompile Include="src\DirectInput.cpp" />
     <ClCompile Include="src\Keyboard.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Base.h" />
+    <ClInclude Include="src\DeviceBase.h" />
+    <ClInclude Include="src\DirectInput.h" />
     <ClInclude Include="src\Keyboard.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -34,7 +39,7 @@
     <ProjectGuid>{61EA4E59-553E-40AF-A294-D4A84B959DD8}</ProjectGuid>
     <RootNamespace>GraphicsWinGL</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
-    <ProjectName>WinKeyboard</ProjectName>
+    <ProjectName>WinDirectInput</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

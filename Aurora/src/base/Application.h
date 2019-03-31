@@ -2,24 +2,16 @@
 
 #include "base/Ref.h"
 #include "math/Rect.h"
+#include "events/EventDispatcher.h"
 #include <string>
 
 namespace aurora {
-	namespace events {
-		template<typename EvtType> class IEventDispatcher;
-		template<typename EvtType> class IEventDispatcherAllocator;
-	}
-
-
 	enum class ApplicationEvent : ui8 {
 		UPDATE,
 		RESIZE,
 		FOCUS_IN,
 		FOCUS_OUT,
-		CLOSING,
-
-		SYS_KEY_DOWN,
-		SYS_KEY_UP
+		CLOSING
 	};
 
 
@@ -32,10 +24,10 @@ namespace aurora {
 			bool thickFrame = false;
 		};
 
-		Application(const i8* appId, f64 frameInterval, const events::IEventDispatcherAllocator<ApplicationEvent>& eventDispatcherAllocator);
+		Application(const i8* appId, f64 frameInterval);
 		virtual ~Application();
 
-		inline events::IEventDispatcher<ApplicationEvent>* AE_CALL getEventDispatcher() const {
+		inline events::IEventDispatcher<ApplicationEvent>& AE_CALL getEventDispatcher() {
 			return _eventDispatcher;
 		}
 
@@ -59,7 +51,7 @@ namespace aurora {
 		void AE_CALL shutdown();
 
 #if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
-		inline HWND AE_CALL getHWND() const {
+		inline HWND AE_CALL $Win$_getHWND() const {
 			return _hWnd;
 		}
 #endif
@@ -70,8 +62,7 @@ namespace aurora {
 		std::string _appId;
 		Style _style;
 
-		const events::IEventDispatcherAllocator<ApplicationEvent>& _eventDispatcherAllocator;
-		events::IEventDispatcher<ApplicationEvent>* _eventDispatcher;
+		events::EventDispatcher<ApplicationEvent> _eventDispatcher;
 
 		mutable Rect<i32> _windowedRect;
 		Rect<i32> _wndRect;
