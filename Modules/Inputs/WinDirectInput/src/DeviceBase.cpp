@@ -1,17 +1,24 @@
 #include "DeviceBase.h"
+#include "DirectInput.h"
 
 namespace aurora::modules::win_direct_input {
-	DeviceBase::DeviceBase(LPDIRECTINPUTDEVICE8 dev, const InputDeviceGUID& guid, ui32 type) :
+	DeviceBase::DeviceBase(DirectInput* input, LPDIRECTINPUTDEVICE8 dev, const InputDeviceInfo& info) :
+		_input(input->ref<DirectInput>()),
 		_dev(dev),
-		_guid(guid),
-		_type(type) {
+		_info(info) {
 	}
 
-	const InputDeviceGUID& DeviceBase::getGUID() const {
-		return _guid;
+	DeviceBase::~DeviceBase() {
+		_dev->Unacquire();
+		_dev->Release();
+		Ref::setNull(_input);
 	}
 
-	ui32 DeviceBase::getType() const {
-		return _type;
+	events::IEventDispatcher<InputDeviceEvent>& DeviceBase::getEventDispatcher() {
+		return _eventDispatcher;
+	}
+
+	const InputDeviceInfo& DeviceBase::getInfo() const {
+		return _info;
 	}
 }

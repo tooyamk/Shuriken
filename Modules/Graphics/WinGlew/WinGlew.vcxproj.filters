@@ -12,13 +12,13 @@
     <ClInclude Include="src\Graphics.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\Module.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="src\Program.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\VertexBuffer.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\CreateModule.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

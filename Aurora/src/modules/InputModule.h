@@ -2,6 +2,10 @@
 
 #include "modules/Module.h"
 
+namespace aurora::events {
+	template<typename EvtType> class IEventDispatcher;
+}
+
 namespace aurora::modules {
 	enum class InputModuleEvent : ui8 {
 		CONNECTED,
@@ -11,15 +15,16 @@ namespace aurora::modules {
 
 	enum class InputDeviceEvent : ui8 {
 		DOWN,
-		UP
+		UP,
+		MOVE
 	};
 
 
 	class AE_DLL InputKey {
 	public:
-		i32 code;
-		f32 value;
-		i64 timestamp;
+		ui32 code;
+		ui32 count;
+		f32* value;
 	};
 
 
@@ -78,16 +83,18 @@ namespace aurora::modules {
 	};
 
 
-	class AE_DLL InputDevice {
+	class AE_DLL InputDevice : public Ref {
 	public:
 		virtual ~InputDevice();
 
-		virtual const InputDeviceGUID& AE_CALL getGUID() const = 0;
-		virtual ui32 AE_CALL getType() const = 0;
+		virtual events::IEventDispatcher<InputDeviceEvent>& AE_CALL getEventDispatcher() = 0;
+		virtual const InputDeviceInfo& AE_CALL getInfo() const = 0;
+		virtual ui32 AE_CALL getKeyState(ui32 keyCode, f32* data, ui32 count) const = 0;
+		virtual void AE_CALL poll() = 0;
 	};
 
 
-	class AE_DLL InputModule : public Module<InputModuleEvent> {
+	class AE_DLL InputModule : public Module {
 	public:
 		InputModule();
 		virtual ~InputModule();
@@ -98,7 +105,7 @@ namespace aurora::modules {
 
 		virtual events::IEventDispatcher<InputModuleEvent>& AE_CALL getEventDispatcher() = 0;
 		virtual void AE_CALL poll() = 0;
-		virtual InputDevice* AE_CALL createDevice(const InputDeviceGUID& guid) const = 0;
+		virtual InputDevice* AE_CALL createDevice(const InputDeviceGUID& guid) = 0;
 
 	protected:
 	};

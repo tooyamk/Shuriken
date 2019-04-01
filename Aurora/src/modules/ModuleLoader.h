@@ -4,15 +4,15 @@
 #include "modules/GraphicsModule.h"
 #include "modules/InputModule.h"
 
-namespace aurora::events {
-	template<typename EvtType> class IEventDispatcherAllocator;
+namespace aurora {
+	class Application;
 }
 
 namespace aurora::modules {
-	template<typename EvtType, typename RetType>
+	template<typename RetType>
 	class AE_TEMPLATE_DLL ModuleLoader : public Ref {
 	public:
-		using CREATE_MODULE_FN = RetType*(*)(const ModuleCreateParams<EvtType>*);
+		using CREATE_MODULE_FN = RetType*(*)(Application*);
 
 		ModuleLoader() : _createFn(nullptr) {}
 		virtual ~ModuleLoader() {}
@@ -33,16 +33,12 @@ namespace aurora::modules {
 			_lib.free();
 		}
 
-		RetType* AE_CALL create(const ModuleCreateParams<EvtType>* params) const {
+		RetType* AE_CALL create(Application* app) const {
 			if (_createFn && _lib.isLoaded()) {
-				return (RetType*)_createFn(params);
+				return (RetType*)_createFn(app);
 			} else {
 				return nullptr;
 			}
-		}
-
-		RetType* AE_CALL create(const ModuleCreateParams<EvtType>& params) const {
-			return create(&params);
 		}
 
 	protected:
@@ -50,6 +46,6 @@ namespace aurora::modules {
 		CREATE_MODULE_FN _createFn;
 	};
 
-	using GraphicsModuleLoader = ModuleLoader<GraphicsModule::EVENT, GraphicsModule>;
-	using InputModuleLoader = ModuleLoader<InputModule::EVENT, InputModule>;
+	using GraphicsModuleLoader = ModuleLoader<GraphicsModule>;
+	using InputModuleLoader = ModuleLoader<InputModule>;
 }

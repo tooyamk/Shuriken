@@ -22,7 +22,8 @@ namespace aurora {
 		template<typename T> inline static const FLOATING_POINT_TYPE<T> RAD = PI<T> / T(180.);
 
 		inline static void AE_CALL crossVec3(const f32* v1, const f32* v2, f32* dst);
-		inline static void AE_CALL lerpVec3(const f32* from, const f32* to, f32 t, f32* dst);
+		inline static void AE_CALL lerpVec(const f32(&from)[2], const f32(&to)[2], f32 t, f32(&dst)[2]);
+		inline static void AE_CALL lerpVec(const f32(&from)[3], const f32(&to)[3], f32 t, f32(&dst)[3]);
 
 		static void AE_CALL slerpQuat(const f32* from, const f32* to, f32 t, f32* dst);
 		inline static void AE_CALL appendQuat(const f32* lhs, const f32* rhs, f32* dst);

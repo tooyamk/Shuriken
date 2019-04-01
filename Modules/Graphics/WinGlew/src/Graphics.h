@@ -7,7 +7,7 @@
 namespace aurora::modules::graphics_win_glew {
 	class AE_MODULE_DLL Graphics : public GraphicsModule {
 	public:
-		Graphics(Graphics::CREATE_PARAMS_REF params);
+		Graphics(Application* app);
 		virtual ~Graphics();
 
 		virtual bool AE_CALL createDevice() override;

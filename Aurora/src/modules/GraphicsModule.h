@@ -7,7 +7,7 @@ namespace aurora {
 }
 
 namespace aurora::modules {
-	class AE_DLL GraphicsModule : public Module<void> {
+	class AE_DLL GraphicsModule : public Module {
 	public:
 		class AE_DLL Object : public Ref {
 		public:

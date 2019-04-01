@@ -19,20 +19,25 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\Aurora\Aurora.vcxproj">
-      <Project>{972c829a-fe33-48d8-a1e1-cc7457fed993}</Project>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="src\DeviceBase.cpp" />
     <ClCompile Include="src\DirectInput.cpp" />
+    <ClCompile Include="src\Gamepad.cpp" />
     <ClCompile Include="src\Keyboard.cpp" />
+    <ClCompile Include="src\Mouse.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Base.h" />
+    <ClInclude Include="src\CreateModule.h" />
     <ClInclude Include="src\DeviceBase.h" />
     <ClInclude Include="src\DirectInput.h" />
+    <ClInclude Include="src\Gamepad.h" />
     <ClInclude Include="src\Keyboard.h" />
+    <ClInclude Include="src\Mouse.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Aurora\Aurora.vcxproj">
+      <Project>{972c829a-fe33-48d8-a1e1-cc7457fed993}</Project>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

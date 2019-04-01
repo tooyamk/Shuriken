@@ -1,11 +1,11 @@
 #include "Graphics.h"
 #include "base/Application.h"
-#include "Module.h"
+#include "CreateModule.h"
 #include "utils/String.h"
 
 namespace aurora::modules::graphics_win_glew {
-	Graphics::Graphics(Graphics::CREATE_PARAMS_REF params) :
-		_app(params.application->ref<Application>()),
+	Graphics::Graphics(Application* app) :
+		_app(app->ref<Application>()),
 		_dc(nullptr),
 		_rc(nullptr) {
 		_app->ref();

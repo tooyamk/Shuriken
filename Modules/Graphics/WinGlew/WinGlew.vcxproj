@@ -29,7 +29,7 @@
   <ItemGroup>
     <ClInclude Include="src\Base.h" />
     <ClInclude Include="src\Graphics.h" />
-    <ClInclude Include="src\Module.h" />
+    <ClInclude Include="src\CreateModule.h" />
     <ClInclude Include="src\Program.h" />
     <ClInclude Include="src\VertexBuffer.h" />
   </ItemGroup>

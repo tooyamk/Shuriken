@@ -179,6 +179,7 @@
     <ClInclude Include="src\math\Matrix44.h" />
     <ClInclude Include="src\math\Quaternion.h" />
     <ClInclude Include="src\math\Rect.h" />
+    <ClInclude Include="src\math\Vector2.h" />
     <ClInclude Include="src\math\Vector3.h" />
     <ClInclude Include="src\math\Vector4.h" />
     <ClInclude Include="src\modules\GraphicsModule.h" />
@@ -200,6 +201,7 @@
     <ClCompile Include="src\math\Matrix34.cpp" />
     <ClCompile Include="src\math\Matrix44.cpp" />
     <ClCompile Include="src\math\Quaternion.cpp" />
+    <ClCompile Include="src\math\Vector2.cpp" />
     <ClCompile Include="src\math\Vector3.cpp" />
     <ClCompile Include="src\math\Vector4.cpp" />
     <ClCompile Include="src\modules\GraphicsModule.cpp" />
@@ -215,6 +217,7 @@
     <None Include="src\math\Matrix34.inl" />
     <None Include="src\math\Matrix44.inl" />
     <None Include="src\math\Quaternion.inl" />
+    <None Include="src\math\Vector2.inl" />
     <None Include="src\math\Vector3.inl" />
     <None Include="src\math\Vector4.inl" />
     <None Include="src\nodes\components\AbstractComponent.inl" />

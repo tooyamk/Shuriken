@@ -15,6 +15,12 @@
     <ClCompile Include="src\DeviceBase.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\Mouse.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Gamepad.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\DirectInput.h">
@@ -27,6 +33,15 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\Base.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\CreateModule.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Mouse.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Gamepad.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

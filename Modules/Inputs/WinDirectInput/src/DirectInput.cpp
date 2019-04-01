@@ -1,14 +1,20 @@
 #include "DirectInput.h"
+#include "base/Application.h"
+#include "Gamepad.h"
 #include "Keyboard.h"
+#include "Mouse.h"
+#include "CreateModule.h"
 #include <algorithm>
 
 namespace aurora::modules::win_direct_input {
-	DirectInput::DirectInput() :
+	DirectInput::DirectInput(Application* app) :
+		_app(app->ref<Application>()),
 		_di(nullptr) {
 	}
 
 	DirectInput::~DirectInput() {
 		if (_di) _di->Release();
+		Ref::setNull(_app);
 	}
 
 	events::IEventDispatcher<InputModuleEvent>& DirectInput::getEventDispatcher() {
@@ -61,7 +67,7 @@ namespace aurora::modules::win_direct_input {
 		for (ui32 i = connectedIdx, n = changed.size(); i < n; ++i) _eventDispatcher.dispatchEvent(this, InputModuleEvent::CONNECTED, &changed[i]);
 	}
 
-	InputDevice* DirectInput::createDevice(const InputDeviceGUID& guid) const {
+	InputDevice* DirectInput::createDevice(const InputDeviceGUID& guid) {
 		for (auto& info : _devices) {
 			if (info.guid == guid) {
 				LPDIRECTINPUTDEVICE8 dev = nullptr;
@@ -69,9 +75,14 @@ namespace aurora::modules::win_direct_input {
 
 
 				switch (info.type) {
+				case InputDeviceType::GAMEPAD:
+					return new Gamepad(this, dev, info);
 				case InputDeviceType::KEYBOARD:
-					return new Keyboard(guid);
+					return new Keyboard(this, dev, info);
+				case InputDeviceType::MOUSE:
+					return new Mouse(this, dev, info);
 				default:
+					dev->Release();
 					return nullptr;
 				}
 			}
@@ -80,9 +91,13 @@ namespace aurora::modules::win_direct_input {
 		return nullptr;
 	}
 
+	HWND DirectInput::getHWND() const {
+		return _app->$Win$_getHWND();
+	}
+
 	BOOL DirectInput::_enumDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, LPVOID pContext) {
 		ui32 type = pdidInstance->dwDevType & 0xFF;
-		if (type == DI8DEVTYPE_MOUSE || type == DI8DEVTYPE_KEYBOARD || type == DI8DEVTYPE_JOYSTICK) {
+		if (type == DI8DEVTYPE_MOUSE || type == DI8DEVTYPE_KEYBOARD || type == DI8DEVTYPE_GAMEPAD) {
 			auto im = (DirectInput*)pContext;
 
 			for (ui32 i = 0, n = im->_devices.size(); i < n; ++i) {
@@ -101,7 +116,7 @@ namespace aurora::modules::win_direct_input {
 			case DI8DEVTYPE_KEYBOARD:
 				info.type |= InputDeviceType::KEYBOARD;
 				break;
-			case DI8DEVTYPE_JOYSTICK:
+			case DI8DEVTYPE_GAMEPAD:
 				info.type |= InputDeviceType::GAMEPAD;
 				break;
 			default:

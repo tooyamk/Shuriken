@@ -117,6 +117,9 @@
     <ClInclude Include="src\base\TSList.h">
       <Filter>src\base</Filter>
     </ClInclude>
+    <ClInclude Include="src\math\Vector2.h">
+      <Filter>src\math</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\math\Matrix44.cpp">
@@ -167,6 +170,9 @@
     <ClCompile Include="src\modules\InputModule.cpp">
       <Filter>src\modules</Filter>
     </ClCompile>
+    <ClCompile Include="src\math\Vector2.cpp">
+      <Filter>src\math</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="src\math\Matrix44.inl">
@@ -195,6 +201,9 @@
     </None>
     <None Include="src\nodes\components\Camera.inl">
       <Filter>src\nodes\components</Filter>
+    </None>
+    <None Include="src\math\Vector2.inl">
+      <Filter>src\math</Filter>
     </None>
   </ItemGroup>
 </Project>

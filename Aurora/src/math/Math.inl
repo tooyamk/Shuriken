@@ -9,13 +9,22 @@ namespace aurora {
 		dst[2] = z;
 	}
 
-	inline void Math::lerpVec3(const f32* from, const f32* to, f32 t, f32* dst) {
+	inline void Math::lerpVec(const f32(&from)[2], const f32(&to)[2], f32 t, f32(&dst)[2]) {
 		auto x = from[0] + (to[0] - from[0]) * t;
 		auto y = from[1] + (to[1] - from[1]) * t;
 
 		dst[0] = x;
 		dst[1] = y;
-		dst[2] = from[2] + (to[2] - from[2]) * t;
+	}
+
+	inline void Math::lerpVec(const f32(&from)[3], const f32(&to)[3], f32 t, f32(&dst)[3]) {
+		auto x = from[0] + (to[0] - from[0]) * t;
+		auto y = from[1] + (to[1] - from[1]) * t;
+		auto z = from[2] + (to[2] - from[2]) * t;
+
+		dst[0] = x;
+		dst[1] = y;
+		dst[2] = z;
 	}
 
 	inline void Math::appendQuat(const f32* lhs, const f32* rhs, f32* dst) {
