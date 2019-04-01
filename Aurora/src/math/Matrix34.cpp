@@ -224,7 +224,7 @@ namespace aurora {
 		auto tr = m[0][0] + m[1][1] + m[2][2];
 		if (tr > 0.f) {
 			auto s = std::sqrt(tr + 1.f);
-			dst.w = s * .5f;;
+			dst.w = s * .5f;
 			s = .5f / s;
 			dst.x = (m[2][1] - m[1][2]) * s;
 			dst.y = (m[0][2] - m[2][0]) * s;
@@ -233,7 +233,7 @@ namespace aurora {
 			if (m[1][1] > m[0][0]) {
 				if (m[2][2] > m[1][1]) {//2
 					auto s = std::sqrt(m[2][2] - m[0][0] - m[1][1] + 1.f);
-					dst.z = s * 0.5;
+					dst.z = s * 0.5f;
 					s = .5f / s;
 					dst.x = (m[0][2] + m[2][0]) * s;
 					dst.y = (m[1][2] + m[2][1]) * s;

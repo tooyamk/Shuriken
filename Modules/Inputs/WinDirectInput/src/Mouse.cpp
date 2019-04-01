@@ -19,8 +19,8 @@ namespace aurora::modules::win_direct_input {
 			{
 				auto p = _getClientPos();
 				ui32 c = 0;
-				data[c++] = p.x;
-				if (count > 1) data[c++] = p.y;
+				data[c++] = f32(p.x);
+				if (count > 1) data[c++] = f32(p.y);
 
 				return c;
 			}

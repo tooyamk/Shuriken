@@ -171,13 +171,13 @@ namespace aurora {
 
 	void Matrix44::createOrthoOffCenterLH(f32 left, f32 right, f32 bottom, f32 top, f32 zNear, f32 zFar, Matrix44& dst) {
 		dst.set44(
-			2.f / (right - 1.f), 0.f, 0.f, (1 + right) / (1 - right),
+			2.f / (right - 1.f), 0.f, 0.f, (1.f + right) / (1.f - right),
 			0.f, 2.f / (top - bottom), 0.f, (top + bottom) / (bottom - top),
 			0.f, 0.f, 1.f / (zFar - zNear), zNear / (zNear - zFar));
 	}
 
 	void Matrix44::createPerspectiveFovLH(f32 fieldOfViewY, f32 aspectRatio, f32 zNear, f32 zFar, Matrix44& dst) {
-		f32 yScale = 1.f / std::tan(fieldOfViewY * .5);
+		f32 yScale = 1.f / std::tan(fieldOfViewY * .5f);
 		dst.set44(
 			yScale / aspectRatio, 0.f, 0.f, 0.f,
 			0.f, yScale, 0.f, 0.f,
