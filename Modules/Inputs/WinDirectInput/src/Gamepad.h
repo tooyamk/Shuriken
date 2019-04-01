@@ -12,6 +12,9 @@ namespace aurora::modules::win_direct_input {
 
 	private:
 		DIJOYSTATE2 _state;
-		DIJOYSTATE2 _pollState;
+
+		static f32 _transformStick(LONG value);
+		static f32 _transformTrigger(LONG value);
+		static f32 _transformAngle(DWORD value);
 	};
 }

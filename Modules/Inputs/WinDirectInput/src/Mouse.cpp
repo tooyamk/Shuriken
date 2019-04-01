@@ -18,8 +18,8 @@ namespace aurora::modules::win_direct_input {
 			case 0:
 			{
 				auto p = _getClientPos();
-				ui32 c = 0;
-				data[c++] = f32(p.x);
+				data[0] = f32(p.x);
+				ui32 c = 1;
 				if (count > 1) data[c++] = f32(p.y);
 
 				return c;
@@ -30,6 +30,7 @@ namespace aurora::modules::win_direct_input {
 			{
 				if (keyCode > 9 && keyCode < 18) {
 					data[0] = _state.rgbButtons[keyCode - (ui32)10] & 0x80 ? 1.f : 0.f;
+
 					return 1;
 				}
 
@@ -47,17 +48,15 @@ namespace aurora::modules::win_direct_input {
 			if (FAILED(_dev->Poll())) return;
 		}
 
-		hr = _dev->GetDeviceState(sizeof(DIMOUSESTATE2), &_pollState);
+		DIMOUSESTATE2 state;
+		hr = _dev->GetDeviceState(sizeof(DIMOUSESTATE2), &state);
 		if (SUCCEEDED(hr)) {
-			f32 z = _pollState.lZ > 0 ? 1.f : (_pollState.lZ < 0 ? -1.f : 0.f);
-
-			ui16 changeBtns[sizeof(DIMOUSESTATE2::rgbButtons)];
+			ui8 changeBtns[sizeof(DIMOUSESTATE2::rgbButtons)];
 			ui8 len = 0;
 			for (ui8 i = 0; i < sizeof(DIMOUSESTATE2::rgbButtons); ++i) {
-				if (_state.rgbButtons[i] != _pollState.rgbButtons[i]) {
-					_state.rgbButtons[i] = _pollState.rgbButtons[i];
-					auto& kv = changeBtns[len++];
-					kv = (_state.rgbButtons[i] << 8) | i;
+				if (_state.rgbButtons[i] != state.rgbButtons[i]) {
+					_state.rgbButtons[i] = state.rgbButtons[i];
+					changeBtns[len++] = i;
 				}
 			}
 
@@ -65,27 +64,27 @@ namespace aurora::modules::win_direct_input {
 			GetCursorPos(&p);
 			i32 ox = p.x - _pos.x, oy = p.y - _pos.y;
 			if (ox < 0) {
-				if (p.x == 0 && _pollState.lX < ox) ox = _pollState.lX;
+				if (p.x == 0 && state.lX < ox) ox = state.lX;
 			} else if (ox == 0) {
 				if (p.x == 0) {
-					if (_pollState.lX < 0) ox = _pollState.lX;
+					if (state.lX < 0) ox = state.lX;
 				} else if (p.x == GetSystemMetrics(SM_CXSCREEN) - 1) {
-					if (_pollState.lX > 0) ox = _pollState.lX;
+					if (state.lX > 0) ox = state.lX;
 				}
 			} else if (ox > 0) {
-				if (p.x == GetSystemMetrics(SM_CXSCREEN) - 1 && _pollState.lX > ox) ox = _pollState.lX;
+				if (p.x == GetSystemMetrics(SM_CXSCREEN) - 1 && state.lX > ox) ox = state.lX;
 			}
 
 			if (oy < 0) {
-				if (p.y == 0 && _pollState.lY < oy) oy = _pollState.lY;
+				if (p.y == 0 && state.lY < oy) oy = state.lY;
 			} else if (oy == 0) {
 				if (p.y == 0) {
-					if (_pollState.lY < 0) oy = _pollState.lY;
+					if (state.lY < 0) oy = state.lY;
 				} else if (p.x == GetSystemMetrics(SM_CYSCREEN) - 1) {
-					if (_pollState.lY > 0) oy = _pollState.lY;
+					if (state.lY > 0) oy = state.lY;
 				}
 			} else if (oy > 0) {
-				if (p.y == GetSystemMetrics(SM_CYSCREEN) - 1 && _pollState.lY > oy) oy = _pollState.lY;
+				if (p.y == GetSystemMetrics(SM_CYSCREEN) - 1 && state.lY > oy) oy = state.lY;
 			}
 			_pos = p;
 
@@ -95,12 +94,14 @@ namespace aurora::modules::win_direct_input {
 				_eventDispatcher.dispatchEvent(this, InputDeviceEvent::MOVE, &InputKey({ 0, 2, value }));
 			}
 
-			if (z != 0.f) _eventDispatcher.dispatchEvent(this, InputDeviceEvent::MOVE, &InputKey({ 1, 1, &z }));
+			if (state.lZ != 0) {
+				f32 value = state.lZ > 0 ? 1.f : -1.f;
+				_eventDispatcher.dispatchEvent(this, InputDeviceEvent::MOVE, &InputKey({ 1, 1, &value }));
+			}
 
 			for (ui8 i = 0; i < len; ++i) {
-				auto& kv = changeBtns[i];
-				ui8 key = kv & 0xFF;
-				f32 value = (kv >> 8 & 0x80) > 0 ? 1.f : 0.f;
+				ui8 key = changeBtns[i];
+				f32 value = (state.rgbButtons[key] & 0x80) > 0 ? 1.f : 0.f;
 				_eventDispatcher.dispatchEvent(this, value > 0 ? InputDeviceEvent::DOWN : InputDeviceEvent::UP, &InputKey({ key + (ui32)10, 1, &value }));
 			}
 		}

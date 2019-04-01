@@ -14,6 +14,5 @@ namespace aurora::modules::win_direct_input {
 		using StateBuffer = ui8[256];
 
 		StateBuffer _state;
-		StateBuffer _pollState;
 	};
 }

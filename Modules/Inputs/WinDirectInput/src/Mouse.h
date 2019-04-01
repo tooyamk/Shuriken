@@ -12,7 +12,6 @@ namespace aurora::modules::win_direct_input {
 
 	private:
 		DIMOUSESTATE2 _state;
-		DIMOUSESTATE2 _pollState;
 
 		POINT _pos;
 

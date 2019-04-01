@@ -13,6 +13,7 @@ namespace aurora::modules::win_direct_input {
 			ui32 key = MapVirtualKeyEx(keyCode, MAPVK_VK_TO_VSC, GetKeyboardLayout(0));
 			if (key < 256) {
 				data[0] = _state[key] & 0x80 ? 1.f : 0.f;
+
 				return 1;
 			}
 		}
@@ -26,25 +27,24 @@ namespace aurora::modules::win_direct_input {
 			if (FAILED(_dev->Poll())) return;
 		}
 
-		hr = _dev->GetDeviceState(sizeof(StateBuffer), _pollState);
+		StateBuffer state;
+		hr = _dev->GetDeviceState(sizeof(StateBuffer), state);
 		if (SUCCEEDED(hr)) {
-			ui16 changeBuffer[sizeof(StateBuffer)];
+			StateBuffer changedBtns;
 			ui16 len = 0;
 			for (ui16 i = 0; i < sizeof(StateBuffer); ++i) {
-				if (_state[i] != _pollState[i]) {
-					_state[i] = _pollState[i];
-					auto& kv = changeBuffer[len++];
-					kv = (_state[i] << 8) | i;
+				if (_state[i] != state[i]) {
+					_state[i] = state[i];
+					changedBtns[len++] = i;
 				}
 			}
 
 			if (len > 0) {
 				auto layout = GetKeyboardLayout(0);
 				for (ui16 i = 0; i < len; ++i) {
-					auto& data = changeBuffer[i];
-					ui8 key = data & 0xFF;
-					f32 value = (data >> 8 & 0x80) > 0 ? 1.f : 0.f;
-					_eventDispatcher.dispatchEvent(this, value > 0 ? InputDeviceEvent::DOWN : InputDeviceEvent::UP, &InputKey({ MapVirtualKeyEx(key, MAPVK_VSC_TO_VK, layout), 1, &value }));
+					ui8 key = changedBtns[i];
+					f32 value = (state[key] & 0x80) > 0 ? 1.f : 0.f;
+					_eventDispatcher.dispatchEvent(this, value > 0.f ? InputDeviceEvent::DOWN : InputDeviceEvent::UP, &InputKey({ MapVirtualKeyEx(key, MAPVK_VSC_TO_VK, layout), 1, &value }));
 				}
 			}
 		}
