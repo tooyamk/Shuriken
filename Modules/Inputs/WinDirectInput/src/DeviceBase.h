@@ -6,7 +6,7 @@
 namespace aurora::modules::win_direct_input {
 	class DirectInput;
 
-	class AE_MODULE_DLL DeviceBase : public InputDevice {
+	class AE_MODULE_DLL DeviceBase : public IInputDevice {
 	public:
 		DeviceBase(DirectInput* input, LPDIRECTINPUTDEVICE8 dev, const InputDeviceInfo& info);
 		virtual ~DeviceBase();

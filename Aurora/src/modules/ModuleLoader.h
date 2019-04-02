@@ -1,8 +1,8 @@
 #pragma once
 
 #include "base/DynamicLib.h"
-#include "modules/GraphicsModule.h"
-#include "modules/InputModule.h"
+#include "modules/IGraphicsModule.h"
+#include "modules/IInputModule.h"
 
 namespace aurora {
 	class Application;
@@ -46,6 +46,6 @@ namespace aurora::modules {
 		CREATE_MODULE_FN _createFn;
 	};
 
-	using GraphicsModuleLoader = ModuleLoader<GraphicsModule>;
-	using InputModuleLoader = ModuleLoader<InputModule>;
+	using GraphicsModuleLoader = ModuleLoader<IGraphicsModule>;
+	using InputModuleLoader = ModuleLoader<IInputModule>;
 }

@@ -2,45 +2,57 @@
 #include "Graphics.h"
 
 namespace aurora::modules::graphics_win_glew {
-	Program::Program(Graphics& graphics) : GraphicsModule::Program(graphics),
-		_handle(glCreateProgram()) {
-
-		const char* vert = "#version 420 core\n"
-			"attribute vec2 position;\n"
-			"void main(void)\n"
-			"{\n"
-			"  gl_Position = vec4(position, 0.0, 1.0);\n"
-			"}\n";
-		const char* frag = "#version 420 core\n"
-			"void main(void)\n"
-			"{\n"
-			"  gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);\n"
-			"}\n";
-
-		auto vertexShader = _compileShader(vert, GL_VERTEX_SHADER);
-		auto fragmentShader = _compileShader(frag, GL_FRAGMENT_SHADER);
-
-		if (vertexShader && fragmentShader) {
-			glAttachShader(_handle, vertexShader);
-			glAttachShader(_handle, fragmentShader);
-			glLinkProgram(_handle);
-		}
-
-		glDeleteShader(vertexShader);
-		glDeleteShader(fragmentShader);
+	Program::Program(Graphics& graphics) : IGraphicsProgram(graphics),
+		_handle(0) {
 	}
 
 	Program::~Program() {
-		glDeleteProgram(_handle);
+		_release();
+	}
+
+	bool Program::upload(const i8* vert, const i8* frag) {
+		_release();
+
+		if (!vert || !frag) return false;
+
+		_handle = glCreateProgram();
+		if (!_handle) return false;
+
+		auto vertexShader = _compileShader(vert, GL_VERTEX_SHADER);
+		if (!vertexShader) return false;
+
+		auto fragmentShader = _compileShader(frag, GL_FRAGMENT_SHADER);
+		if (!fragmentShader) {
+			glDeleteShader(vertexShader);
+			return false;
+		}
+
+		glAttachShader(_handle, vertexShader);
+		glAttachShader(_handle, fragmentShader);
+		glLinkProgram(_handle);
+
+		glDeleteShader(vertexShader);
+		glDeleteShader(fragmentShader);
+
+		return true;
 	}
 
 	void Program::use() {
-		if (_handle) glUseProgram(_handle);
-		
-		glEnable(GL_CULL_FACE);
-		glCullFace(GL_BACK);
-		glDisable(GL_DEPTH_TEST);
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+		if (_handle) {
+			glUseProgram(_handle);
+
+			glEnable(GL_CULL_FACE);
+			glCullFace(GL_BACK);
+			glDisable(GL_DEPTH_TEST);
+			glDrawArrays(GL_TRIANGLES, 0, 3);
+		}
+	}
+
+	void Program::_release() {
+		if (_handle) {
+			glDeleteProgram(_handle);
+			_handle = 0;
+		}
 	}
 
 	GLuint Program::_compileShader(const GLchar* source, GLenum type) {

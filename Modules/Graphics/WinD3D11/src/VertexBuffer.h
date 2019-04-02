@@ -2,7 +2,7 @@
 
 #include "Base.h"
 
-namespace aurora::modules::graphics_win_glew {
+namespace aurora::modules::graphics_win_d3d11 {
 	class Graphics;
 
 	class AE_MODULE_DLL VertexBuffer : public IGraphicsVertexBuffer {
@@ -16,14 +16,9 @@ namespace aurora::modules::graphics_win_glew {
 		virtual void AE_CALL use() override;
 
 	protected:
-		bool _dirty;
-		ui32 _size;
-		GLuint _handle;
-		void* _mapData;
+		ID3D11Buffer* _handle;
 
-		GLsync _sync;
-
-		void _release();
+		void _delBuffer();
 		void _waitServerSync();
 		void _delSync();
 	};

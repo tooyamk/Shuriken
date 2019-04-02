@@ -4,14 +4,14 @@
 #include "events/EventDispatcher.h"
 
 namespace aurora::modules::win_direct_input {
-	class AE_MODULE_DLL DirectInput : public InputModule {
+	class AE_MODULE_DLL DirectInput : public IInputModule {
 	public:
 		DirectInput(Application* app);
 		virtual ~DirectInput();
 
 		virtual events::IEventDispatcher<InputModuleEvent>& AE_CALL getEventDispatcher() override;
 		virtual void AE_CALL poll() override;
-		virtual InputDevice* AE_CALL createDevice(const InputDeviceGUID& guid) override;
+		virtual IInputDevice* AE_CALL createDevice(const InputDeviceGUID& guid) override;
 
 		HWND AE_CALL getHWND() const;
 

@@ -5,10 +5,10 @@
 namespace aurora::modules::graphics_win_glew {
 	class Graphics;
 
-	class AE_MODULE_DLL VertexBuffer : public IGraphicsVertexBuffer {
+	class AE_MODULE_DLL BaseBuffer : public IGraphicsVertexBuffer {
 	public:
-		VertexBuffer(Graphics& graphics);
-		virtual ~VertexBuffer();
+		BaseBuffer(Graphics& graphics);
+		virtual ~BaseBuffer();
 
 		virtual bool AE_CALL stroage(ui32 size, const void* data = nullptr) override;
 		virtual void AE_CALL write(ui32 offset, const void* data, ui32 length) override;
@@ -23,7 +23,7 @@ namespace aurora::modules::graphics_win_glew {
 
 		GLsync _sync;
 
-		void _release();
+		void _delBuffer();
 		void _waitServerSync();
 		void _delSync();
 	};

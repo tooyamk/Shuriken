@@ -105,20 +105,20 @@
     <ClInclude Include="src\base\Monitor.h">
       <Filter>src\base</Filter>
     </ClInclude>
-    <ClInclude Include="src\modules\Module.h">
-      <Filter>src\modules</Filter>
-    </ClInclude>
-    <ClInclude Include="src\modules\GraphicsModule.h">
-      <Filter>src\modules</Filter>
-    </ClInclude>
-    <ClInclude Include="src\modules\InputModule.h">
-      <Filter>src\modules</Filter>
-    </ClInclude>
     <ClInclude Include="src\base\TSList.h">
       <Filter>src\base</Filter>
     </ClInclude>
     <ClInclude Include="src\math\Vector2.h">
       <Filter>src\math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\modules\IModule.h">
+      <Filter>src\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="src\modules\IInputModule.h">
+      <Filter>src\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="src\modules\IGraphicsModule.h">
+      <Filter>src\modules</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -164,14 +164,14 @@
     <ClCompile Include="src\base\Monitor.cpp">
       <Filter>src\base</Filter>
     </ClCompile>
-    <ClCompile Include="src\modules\GraphicsModule.cpp">
-      <Filter>src\modules</Filter>
-    </ClCompile>
-    <ClCompile Include="src\modules\InputModule.cpp">
-      <Filter>src\modules</Filter>
-    </ClCompile>
     <ClCompile Include="src\math\Vector2.cpp">
       <Filter>src\math</Filter>
+    </ClCompile>
+    <ClCompile Include="src\modules\IInputModule.cpp">
+      <Filter>src\modules</Filter>
+    </ClCompile>
+    <ClCompile Include="src\modules\IGraphicsModule.cpp">
+      <Filter>src\modules</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

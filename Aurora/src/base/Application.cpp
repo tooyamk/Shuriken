@@ -48,7 +48,7 @@ namespace aurora {
 		wnd.cbWndExtra = 0;
 		wnd.hInstance = _hIns;
 		wnd.hIcon = nullptr;//LoadIcon(NULL, IDI_APPLICATION);
-		wnd.hCursor = nullptr;//LoadCursor(NULL, IDC_ARROW);
+		wnd.hCursor = LoadCursor(nullptr, IDC_ARROW);
 		wnd.hbrBackground = nullptr;//static_cast<HBRUSH>(GetStockObject(WHITE_BRUSH));
 		wnd.lpszMenuName = nullptr;//NULL;
 		auto appIdW = String::Utf8ToUnicode(_appId);

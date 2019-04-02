@@ -1,10 +1,9 @@
 #pragma once
 
-#include "IndexBuffer.h"
 #include "Program.h"
 #include "VertexBuffer.h"
 
-namespace aurora::modules::graphics_win_glew {
+namespace aurora::modules::graphics_win_d3d11 {
 	class AE_MODULE_DLL Graphics : public IGraphicsModule {
 	public:
 		Graphics(Application* app);
@@ -22,11 +21,23 @@ namespace aurora::modules::graphics_win_glew {
 
 		virtual void AE_CALL clear() override;
 
+		inline ID3D11Device* AE_CALL getDevice() const {
+			return _device;
+		}
+
+		inline ID3D11DeviceContext* AE_CALL getContext() const {
+			return _context;
+		}
+
 	private:
 		Application* _app;
 
-		HDC _dc;
-		HGLRC _rc;
+		D3D_DRIVER_TYPE _driverType;
+		D3D_FEATURE_LEVEL _featureLevel;
+		ID3D11Device* _device;
+		ID3D11DeviceContext* _context;
+		IDXGISwapChain* _swapChain;
+		ID3D11RenderTargetView* _backBufferTarget;
 
 		void AE_CALL _release();
 	};

@@ -1,4 +1,4 @@
-#include "InputModule.h"
+#include "IInputModule.h"
 #include "events/IEventDispatcher.h"
 
 namespace aurora::modules {
@@ -98,13 +98,13 @@ namespace aurora::modules {
 	}
 
 
-	InputDevice::~InputDevice() {
+	IInputDevice::~IInputDevice() {
 	}
 
 
-	InputModule::InputModule() {
+	IInputModule::IInputModule() {
 	}
 
-	InputModule::~InputModule() {
+	IInputModule::~IInputModule() {
 	}
 }

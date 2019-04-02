@@ -18,29 +18,29 @@ namespace aurora::modules::win_direct_input {
 			switch (keyCode) {
 			case 0:
 			{
-				data[0] = _transformStick(_state.lX);
+				data[0] = _translateStick(_state.lX);
 				ui32 c = 1;
-				if (count > 1) data[c++] = _transformStick(_state.lY);
+				if (count > 1) data[c++] = _translateStick(_state.lY);
 
 				return c;
 			}
 			case 1:
 			{
-				data[0] = _transformStick(_state.lZ);
+				data[0] = _translateStick(_state.lZ);
 				ui32 c = 1;
-				if (count > 1) data[c++] = _transformStick(_state.lRz);
+				if (count > 1) data[c++] = _translateStick(_state.lRz);
 
 				return c;
 			}
 			case 2:
 			{
-				data[0] = _transformTrigger(_state.lRx);
+				data[0] = _translateTrigger(_state.lRx);
 
 				return 1;
 			}
 			case 3:
 			{
-				data[0] = _transformTrigger(_state.lRy);
+				data[0] = _translateTrigger(_state.lRy);
 
 				return 1;
 			}
@@ -48,7 +48,7 @@ namespace aurora::modules::win_direct_input {
 			{
 				if (keyCode >= 10 && keyCode < 14) {
 					ui32 value = _state.rgdwPOV[keyCode - (ui32)10];
-					data[0] = _transformAngle(_state.rgdwPOV[keyCode - (ui32)10]);
+					data[0] = _translateAngle(_state.rgdwPOV[keyCode - (ui32)10]);
 
 					return 1;
 				} else if (keyCode >= 20 && keyCode < 148) {
@@ -64,11 +64,16 @@ namespace aurora::modules::win_direct_input {
 		return 0;
 	}
 
-	void Gamepad::poll() {
+	void Gamepad::poll(bool dispatchEvent) {
 		HRESULT hr = _dev->Poll();
 		if (hr == DIERR_NOTACQUIRED || DIERR_INPUTLOST) {
 			if (FAILED(_dev->Acquire())) return;
 			if (FAILED(_dev->Poll())) return;
+		}
+
+		if (!dispatchEvent) {
+			_dev->GetDeviceState(sizeof(DIJOYSTATE2), &_state);
+			return;
 		}
 
 		DIJOYSTATE2 state;
@@ -144,29 +149,29 @@ namespace aurora::modules::win_direct_input {
 			*/
 
 			if (l) {
-				f32 value[2] = { _transformStick(state.lX) , _transformStick(state.lY) };
+				f32 value[] = { _translateStick(state.lX) , _translateStick(state.lY) };
 				_eventDispatcher.dispatchEvent(this, InputDeviceEvent::MOVE, &InputKey({ 0, 2, value }));
 			}
 
 			if (r) {
-				f32 value[2] = { _transformStick(state.lZ) , _transformStick(state.lRz) };
+				f32 value[] = { _translateStick(state.lZ) , _translateStick(state.lRz) };
 				_eventDispatcher.dispatchEvent(this, InputDeviceEvent::MOVE, &InputKey({ 1, 2, value }));
 			}
 
 			if (lt) {
-				f32 value = _transformTrigger(state.lRx);
+				f32 value = _translateTrigger(state.lRx);
 				_eventDispatcher.dispatchEvent(this, InputDeviceEvent::MOVE, &InputKey({ 2, 1, &value }));
 			}
 
 			if (rt) {
-				f32 value = _transformTrigger(state.lRy);
+				f32 value = _translateTrigger(state.lRy);
 				_eventDispatcher.dispatchEvent(this, InputDeviceEvent::MOVE, &InputKey({ 3, 1, &value }));
 			}
 
 			if (changedPovLen) {
 				for (ui8 i = 0; i < changedPovLen; ++i) {
 					ui8 key = changedPov[i];
-					f32 value = _transformAngle(state.rgdwPOV[key]);
+					f32 value = _translateAngle(state.rgdwPOV[key]);
 					_eventDispatcher.dispatchEvent(this, value >= 0.f ? InputDeviceEvent::DOWN : InputDeviceEvent::UP, &InputKey({ key + ui32(10), 1, &value }));
 				}
 			}
@@ -181,7 +186,7 @@ namespace aurora::modules::win_direct_input {
 		}
 	}
 
-	f32 Gamepad::_transformStick(LONG value) {
+	f32 Gamepad::_translateStick(LONG value) {
 		auto v = f32(value - 32767);
 		if (v < 0.f) {
 			v /= 32767.f;
@@ -191,11 +196,11 @@ namespace aurora::modules::win_direct_input {
 		return v;
 	}
 
-	f32 Gamepad::_transformTrigger(LONG value) {
+	f32 Gamepad::_translateTrigger(LONG value) {
 		return f32(value) / 65535.f;
 	}
 
-	f32 Gamepad::_transformAngle(DWORD value) {
+	f32 Gamepad::_translateAngle(DWORD value) {
 		return (value == 0xFFFFFFFFui32) ? -1.f : f32(value) * .01f;
 	}
 }

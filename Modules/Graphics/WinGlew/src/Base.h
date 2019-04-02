@@ -1,6 +1,6 @@
 #pragma once
 
-#include "modules/GraphicsModule.h"
+#include "modules/IGraphicsModule.h"
 
 #include "GL/glew.h"
 #pragma comment (lib, "glew.lib")

@@ -1,14 +1,12 @@
 #include "Graphics.h"
 #include "base/Application.h"
 #include "CreateModule.h"
-#include "utils/String.h"
 
 namespace aurora::modules::graphics_win_glew {
 	Graphics::Graphics(Application* app) :
 		_app(app->ref<Application>()),
 		_dc(nullptr),
 		_rc(nullptr) {
-		_app->ref();
 	}
 
 	Graphics::~Graphics() {
@@ -95,12 +93,16 @@ namespace aurora::modules::graphics_win_glew {
 			*/
 	}
 
-	GraphicsModule::VertexBuffer* Graphics::createVertexBuffer() {
-		return new graphics_win_glew::VertexBuffer(*this);
+	IGraphicsIndexBuffer* Graphics::createIndexBuffer() {
+		return new IndexBuffer(*this);
 	}
 
-	GraphicsModule::Program* Graphics::createProgram() {
-		return new graphics_win_glew::Program(*this);
+	IGraphicsProgram* Graphics::createProgram() {
+		return new Program(*this);
+	}
+
+	IGraphicsVertexBuffer* Graphics::createVertexBuffer() {
+		return new VertexBuffer(*this);
 	}
 
 	void Graphics::beginRender() {
@@ -137,11 +139,6 @@ namespace aurora::modules::graphics_win_glew {
 		if (_dc) {
 			ReleaseDC(_app->$Win$_getHWND(), _dc);
 			_dc = nullptr;
-		}
-
-		if (_app) {
-			_app->unref();
-			_app = nullptr;
 		}
 	}
 }

@@ -41,11 +41,16 @@ namespace aurora::modules::win_direct_input {
 		return 0;
 	}
 
-	void Mouse::poll() {
+	void Mouse::poll(bool dispatchEvent) {
 		HRESULT hr = _dev->Poll();
 		if (hr == DIERR_NOTACQUIRED || DIERR_INPUTLOST) {
 			if (FAILED(_dev->Acquire())) return;
 			if (FAILED(_dev->Poll())) return;
+		}
+
+		if (!dispatchEvent) {
+			_dev->GetDeviceState(sizeof(DIJOYSTATE2), &_state);
+			return;
 		}
 
 		DIMOUSESTATE2 state;
@@ -90,7 +95,7 @@ namespace aurora::modules::win_direct_input {
 
 			if (ox || oy) {
 				//increment, right bottom positive orientation.
-				f32 value[2] = { (f32)ox, (f32)oy };
+				f32 value[] = { (f32)ox, (f32)oy };
 				_eventDispatcher.dispatchEvent(this, InputDeviceEvent::MOVE, &InputKey({ 0, 2, value }));
 			}
 

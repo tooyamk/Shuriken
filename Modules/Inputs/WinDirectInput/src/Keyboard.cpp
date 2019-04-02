@@ -20,11 +20,16 @@ namespace aurora::modules::win_direct_input {
 		return 0;
 	}
 
-	void Keyboard::poll() {
+	void Keyboard::poll(bool dispatchEvent) {
 		HRESULT hr = _dev->Poll();
 		if (hr == DIERR_NOTACQUIRED || DIERR_INPUTLOST) {
 			if (FAILED(_dev->Acquire())) return;
 			if (FAILED(_dev->Poll())) return;
+		}
+
+		if (!dispatchEvent) {
+			_dev->GetDeviceState(sizeof(DIJOYSTATE2), _state);
+			return;
 		}
 
 		StateBuffer state;
@@ -35,7 +40,7 @@ namespace aurora::modules::win_direct_input {
 			for (ui16 i = 0; i < sizeof(StateBuffer); ++i) {
 				if (_state[i] != state[i]) {
 					_state[i] = state[i];
-					changedBtns[len++] = i;
+					changedBtns[len++] = ui8(i);
 				}
 			}
 

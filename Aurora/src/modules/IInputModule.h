@@ -1,6 +1,6 @@
 #pragma once
 
-#include "modules/Module.h"
+#include "modules/IModule.h"
 
 namespace aurora::events {
 	template<typename EvtType> class IEventDispatcher;
@@ -83,21 +83,21 @@ namespace aurora::modules {
 	};
 
 
-	class AE_DLL InputDevice : public Ref {
+	class AE_DLL IInputDevice : public Ref {
 	public:
-		virtual ~InputDevice();
+		virtual ~IInputDevice();
 
 		virtual events::IEventDispatcher<InputDeviceEvent>& AE_CALL getEventDispatcher() = 0;
 		virtual const InputDeviceInfo& AE_CALL getInfo() const = 0;
 		virtual ui32 AE_CALL getKeyState(ui32 keyCode, f32* data, ui32 count) const = 0;
-		virtual void AE_CALL poll() = 0;
+		virtual void AE_CALL poll(bool dispatchEvent) = 0;
 	};
 
 
-	class AE_DLL InputModule : public Module {
+	class AE_DLL IInputModule : public IModule {
 	public:
-		InputModule();
-		virtual ~InputModule();
+		IInputModule();
+		virtual ~IInputModule();
 
 		virtual ui32 AE_CALL getType() const override {
 			return ModuleType::INPUT;
@@ -105,7 +105,7 @@ namespace aurora::modules {
 
 		virtual events::IEventDispatcher<InputModuleEvent>& AE_CALL getEventDispatcher() = 0;
 		virtual void AE_CALL poll() = 0;
-		virtual InputDevice* AE_CALL createDevice(const InputDeviceGUID& guid) = 0;
+		virtual IInputDevice* AE_CALL createDevice(const InputDeviceGUID& guid) = 0;
 
 	protected:
 	};

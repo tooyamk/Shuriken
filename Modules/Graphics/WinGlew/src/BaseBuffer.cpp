@@ -1,9 +1,9 @@
-#include "VertexBuffer.h"
+#include "BaseBuffer.h"
 #include "Graphics.h"
 #include <algorithm>
 
 namespace aurora::modules::graphics_win_glew {
-	VertexBuffer::VertexBuffer(Graphics& graphics) : IGraphicsVertexBuffer(graphics),
+	BaseBuffer::BaseBuffer(Graphics& graphics) : IGraphicsVertexBuffer(graphics),
 		_dirty(false),
 		_size(0),
 		_handle(0),
@@ -11,12 +11,12 @@ namespace aurora::modules::graphics_win_glew {
 		_sync(nullptr) {
 	}
 
-	VertexBuffer::~VertexBuffer() {
-		_release();
+	BaseBuffer::~BaseBuffer() {
+		_delBuffer();
 	}
 
-	bool VertexBuffer::stroage(ui32 size, const void* data) {
-		_release();
+	bool BaseBuffer::stroage(ui32 size, const void* data) {
+		_delBuffer();
 
 		glGenBuffers(1, &_handle);
 
@@ -37,14 +37,14 @@ namespace aurora::modules::graphics_win_glew {
 		return false;
 	}
 
-	void VertexBuffer::write(ui32 offset, const void* data, ui32 length) {
+	void BaseBuffer::write(ui32 offset, const void* data, ui32 length) {
 		if (_handle && _mapData && data && length && offset < _size) {
 			_dirty = true;
 			memcpy((i8*)_mapData + offset, data, std::min<ui32>(length, _size - offset));
 		}
 	}
 
-	void VertexBuffer::flush() {
+	void BaseBuffer::flush() {
 		if (_dirty) {
 			_waitServerSync();
 			_sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
@@ -52,7 +52,7 @@ namespace aurora::modules::graphics_win_glew {
 		}
 	}
 
-	void VertexBuffer::use() {
+	void BaseBuffer::use() {
 		if (_handle) {
 			_waitServerSync();
 
@@ -62,7 +62,7 @@ namespace aurora::modules::graphics_win_glew {
 		}
 	}
 
-	void VertexBuffer::_release() {
+	void BaseBuffer::_delBuffer() {
 		if (_handle) {
 			_delSync();
 
@@ -79,7 +79,7 @@ namespace aurora::modules::graphics_win_glew {
 		}
 	}
 
-	void VertexBuffer::_waitServerSync() {
+	void BaseBuffer::_waitServerSync() {
 		if (_sync) {
 			do {
 				auto rst = glClientWaitSync(_sync, GL_SYNC_FLUSH_COMMANDS_BIT, 1);
@@ -87,12 +87,12 @@ namespace aurora::modules::graphics_win_glew {
 					_delSync();
 					return;
 				}
-					
+
 			} while (true);
 		}
 	}
 
-	void VertexBuffer::_delSync() {
+	void BaseBuffer::_delSync() {
 		if (_sync) {
 			glDeleteSync(_sync);
 			_sync = nullptr;

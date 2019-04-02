@@ -18,9 +18,9 @@ namespace aurora::modules {
 	};
 
 
-	class AE_DLL Module : public Ref {
+	class AE_DLL IModule : public Ref {
 	public:
-		virtual ~Module() {}
+		virtual ~IModule() {}
 
 		virtual ui32 AE_CALL getType() const = 0;
 	};

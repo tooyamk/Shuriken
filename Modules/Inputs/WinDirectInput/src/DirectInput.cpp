@@ -67,7 +67,7 @@ namespace aurora::modules::win_direct_input {
 		for (ui32 i = connectedIdx, n = changed.size(); i < n; ++i) _eventDispatcher.dispatchEvent(this, InputModuleEvent::CONNECTED, &changed[i]);
 	}
 
-	InputDevice* DirectInput::createDevice(const InputDeviceGUID& guid) {
+	IInputDevice* DirectInput::createDevice(const InputDeviceGUID& guid) {
 		for (auto& info : _devices) {
 			if (info.guid == guid) {
 				LPDIRECTINPUTDEVICE8 dev = nullptr;
