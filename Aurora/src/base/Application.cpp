@@ -63,7 +63,7 @@ namespace aurora {
 		_hWnd = CreateWindowExW(_getWindowExStyle(), wnd.lpszClassName, String::Utf8ToUnicode(title).c_str(), _getWindowStyle(),
 			_wndRect.left, _wndRect.top, _wndRect.getWidth(), _wndRect.getHeight(),
 			GetDesktopWindow(), nullptr, _hIns, nullptr);
-		SetWindowLongPtr(_hWnd, GWL_USERDATA, (LONG_PTR)this);
+		SetWindowLongPtr(_hWnd, GWLP_USERDATA, (LONG_PTR)this);
 
 		return _hWnd;
 #endif
@@ -274,7 +274,7 @@ namespace aurora {
 	}
 
 	LRESULT Application::_wndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-		auto app = (Application*)GetWindowLongPtr(hWnd, GWL_USERDATA);
+		auto app = (Application*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
 
 		switch (msg) {
 		case WM_CLOSE:

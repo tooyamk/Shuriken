@@ -145,7 +145,7 @@ namespace aurora::events {
 			return 0;
 		}
 
-		virtual ui32 AE_CALL removeEventListeners() {
+		virtual ui32 AE_CALL removeEventListeners() override {
 			ui32 n = 0;
 			for (auto& itr : _listeners)  n += _removeEventListeners(itr.second);
 			return n;
