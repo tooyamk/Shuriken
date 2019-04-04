@@ -19,11 +19,7 @@ namespace shader_translator {
 
 	void ShaderTranslator::translate(char* src) {
 		std::wstring shaderProfile;
-		shaderProfile = L"vs";
-		shaderProfile.push_back(L'_');
-		shaderProfile.push_back(L'0' + '4');
-		shaderProfile.push_back(L'_');
-		shaderProfile.push_back(L'0' + '0');
+		shaderProfile = L"vs_4_0";
 
 		std::vector<DxcDefine> dxcDefines;
 
@@ -60,6 +56,7 @@ namespace shader_translator {
 		IFT(compileResult->GetErrorBuffer(&errors));
 		if (errors != nullptr) {
 			if (errors->GetBufferSize() > 0) {
+				OutputDebugStringA((char*)errors->GetBufferPointer());
 				int a = 1;
 				//ret.errorWarningMsg = CreateBlob(errors->GetBufferPointer(), static_cast<uint32_t>(errors->GetBufferSize()));
 			}
