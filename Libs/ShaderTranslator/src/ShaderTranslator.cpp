@@ -1,7 +1,14 @@
 #include "ShaderTranslator.h"
 #include <vector>
 
-namespace shader_translator {
+namespace aurora::shader_translator {
+	ShaderSource::ShaderSource() :
+		language(ShaderLanguage::UNKNOWN),
+		data(nullptr),
+		dataSize(0) {
+	}
+
+
 	ShaderTranslator::ShaderTranslator() :
 		_dxcll(nullptr),
 		_dxCreateInsFn(nullptr),
@@ -17,7 +24,7 @@ namespace shader_translator {
 		}
 	}
 
-	void ShaderTranslator::translate(char* src) {
+	void ShaderTranslator::translate(const ShaderSource& source) {
 		std::wstring shaderProfile;
 		shaderProfile = L"vs_4_0";
 
@@ -104,7 +111,7 @@ char* readFile(char* path) {
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
 	auto data = readFile("../../Resources/vert.hlsl");
 
-	shader_translator::ShaderTranslator st;
+	aurora::shader_translator::ShaderTranslator st;
 	st.translate(data);
 
 	return 0;

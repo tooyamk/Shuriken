@@ -1,7 +1,5 @@
 #pragma once
 
-#include <windows.h>
-
 #include <dxc/Support/Global.h>
 #include <dxc/Support/Unicode.h>
 //#include <dxc/Support/WinAdapter.h>
@@ -9,12 +7,33 @@
 
 #include "dxc/dxcapi.h"
 
-namespace shader_translator {
+namespace aurora::shader_translator {
+	enum class ShaderLanguage : unsigned char {
+		UNKNOWN,
+		HLSL,
+		DXIL,
+		SPIRV,
+		GLSL,
+		GSSL,
+		MSL
+	};
+
+
+	class ShaderSource {
+	public:
+		ShaderSource();
+
+		ShaderLanguage language;
+		char* data;
+		unsigned int dataSize;
+	};
+
+
 	class ShaderTranslator {
 	public:
 		ShaderTranslator();
 		
-		void translate(char* src);
+		void translate(const ShaderSource& source);
 
 	private:
 		HMODULE _dxcll;
