@@ -50,6 +50,8 @@ namespace aurora {
 		void AE_CALL update(bool autoSleep);
 		void AE_CALL shutdown();
 
+		const std::string& getAppPath() const;
+
 #if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
 		inline HWND AE_CALL $Win$_getHWND() const {
 			return _hWnd;
@@ -66,6 +68,8 @@ namespace aurora {
 
 		mutable Rect<i32> _windowedRect;
 		Rect<i32> _wndRect;
+
+		mutable std::string _appPath;
 
 		f64 _frameInterval; //microsecond
 		i64 _time;

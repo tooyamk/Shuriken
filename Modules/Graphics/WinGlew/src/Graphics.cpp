@@ -1,16 +1,21 @@
 #include "Graphics.h"
 #include "base/Application.h"
+#include "base/String.h"
 #include "CreateModule.h"
 
-namespace aurora::modules::graphics_win_glew {
-	Graphics::Graphics(Application* app) :
+namespace aurora::modules::graphics::win_glew {
+	Graphics::Graphics(Application* app, IProgramSourceTranslator* trans) :
 		_app(app->ref<Application>()),
+		_trans(trans ? trans->ref<IProgramSourceTranslator>() : nullptr),
 		_dc(nullptr),
-		_rc(nullptr) {
+		_rc(nullptr),
+		_majorVer(0),
+		_minorVer(0) {
 	}
 
 	Graphics::~Graphics() {
 		_release();
+		Ref::setNull(_trans);
 		Ref::setNull(_app);
 	}
 
@@ -62,6 +67,11 @@ namespace aurora::modules::graphics_win_glew {
 				if (glewInit() == GLEW_OK) {
 					glFrontFace(GL_CW);
 
+					glGetIntegerv(GL_MAJOR_VERSION, &_majorVer);
+					glGetIntegerv(GL_MINOR_VERSION, &_minorVer);
+
+					_strVer = String::toString(_majorVer * 100 + _minorVer * 10);
+
 					return true;
 				}
 			}
@@ -93,15 +103,15 @@ namespace aurora::modules::graphics_win_glew {
 			*/
 	}
 
-	IGraphicsIndexBuffer* Graphics::createIndexBuffer() {
+	IIndexBuffer* Graphics::createIndexBuffer() {
 		return new IndexBuffer(*this);
 	}
 
-	IGraphicsProgram* Graphics::createProgram() {
+	IProgram* Graphics::createProgram() {
 		return new Program(*this);
 	}
 
-	IGraphicsVertexBuffer* Graphics::createVertexBuffer() {
+	IVertexBuffer* Graphics::createVertexBuffer() {
 		return new VertexBuffer(*this);
 	}
 

@@ -1,5 +1,5 @@
 #include "Monitor.h"
-#include "utils/String.h"
+#include "base/String.h"
 
 namespace aurora {
 	Monitor::Monitor() :

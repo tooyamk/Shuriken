@@ -4,15 +4,11 @@
 #include "modules/IGraphicsModule.h"
 #include "modules/IInputModule.h"
 
-namespace aurora {
-	class Application;
-}
-
 namespace aurora::modules {
 	template<typename RetType>
 	class AE_TEMPLATE_DLL ModuleLoader : public Ref {
 	public:
-		using CREATE_MODULE_FN = RetType*(*)(Application*);
+		using CREATE_MODULE_FN = RetType*(*)(const ModuleArgs*);
 
 		ModuleLoader() : _createFn(nullptr) {}
 		virtual ~ModuleLoader() {}
@@ -33,9 +29,9 @@ namespace aurora::modules {
 			_lib.free();
 		}
 
-		RetType* AE_CALL create(Application* app) const {
+		RetType* AE_CALL create(const ModuleArgs* args) const {
 			if (_createFn && _lib.isLoaded()) {
-				return (RetType*)_createFn(app);
+				return (RetType*)_createFn(args);
 			} else {
 				return nullptr;
 			}
@@ -46,6 +42,6 @@ namespace aurora::modules {
 		CREATE_MODULE_FN _createFn;
 	};
 
-	using GraphicsModuleLoader = ModuleLoader<IGraphicsModule>;
+	using GraphicsModuleLoader = ModuleLoader<graphics::IGraphicsModule>;
 	using InputModuleLoader = ModuleLoader<IInputModule>;
 }

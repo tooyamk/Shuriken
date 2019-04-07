@@ -2,21 +2,21 @@
 
 #include "Base.h"
 
-namespace aurora::modules::graphics_win_glew {
+namespace aurora::modules::graphics::win_glew {
 	class Graphics;
 
-	class AE_MODULE_DLL Program : public IGraphicsProgram {
+	class AE_MODULE_DLL Program : public IProgram {
 	public:
 		Program(Graphics& graphics);
 		virtual ~Program();
 
-		virtual bool AE_CALL upload(const i8* vert, const i8* frag) override;
+		virtual bool AE_CALL upload(const ProgramSource& vert, const ProgramSource& frag) override;
 		virtual void AE_CALL use() override;
 
 	protected:
 		GLuint _handle;
 
 		void AE_CALL _release();
-		GLuint AE_CALL _compileShader(const GLchar* source, GLenum type);
+		GLuint AE_CALL _compileShader(const ProgramSource& source, GLenum type);
 	};
 }

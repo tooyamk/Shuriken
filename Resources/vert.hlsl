@@ -1,8 +1,8 @@
 struct VS_INPUT
 {
-    float2 position : POSITION;
-    float3 ccc : COLOR0;
-    float2 cdddcc : COLOR1;
+    float2 position : POSITION0;
+    float3 ccc : ATTRIBUTE1;
+    float2 cdddcc : ATTRIBUTE2;
 };
 
 struct VS_OUTPUT

@@ -2,8 +2,8 @@
 #include "Graphics.h"
 #include <algorithm>
 
-namespace aurora::modules::graphics_win_d3d11 {
-	VertexBuffer::VertexBuffer(Graphics& graphics) : IGraphicsVertexBuffer(graphics),
+namespace aurora::modules::graphics::win_d3d11 {
+	VertexBuffer::VertexBuffer(Graphics& graphics) : IVertexBuffer(graphics),
 		_handle(nullptr) {
 	}
 
@@ -48,7 +48,15 @@ namespace aurora::modules::graphics_win_d3d11 {
 
 			UINT stride = 8;
 			UINT offset = 0;
-			context->IASetVertexBuffers(0, 1, &_handle, &stride, &offset);
+
+			UINT aaa = 12;
+			UINT bbb = 0;
+			//context->IASetVertexBuffers(0, 1, &_handle, &aaa, &bbb);
+			context->IASetVertexBuffers(1, 1, &_handle, &stride, &offset);
+
+			UINT ccc = 8;
+			UINT ddd = 0;
+			//context->IASetVertexBuffers(2, 1, &_handle, &ccc, &ddd);
 		}
 	}
 

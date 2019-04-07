@@ -1,6 +1,7 @@
 #pragma once
 
 #include "modules/IInputModule.h"
+#include "base/Application.h"
 
 #ifndef DIRECTINPUT_VERSION
 #define DIRECTINPUT_VERSION 0x800

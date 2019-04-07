@@ -1,5 +1,5 @@
 #include "DynamicLib.h"
-#include "utils/String.h"
+#include "base/String.h"
 
 #if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_MAC
 #include <dlfcn.h>

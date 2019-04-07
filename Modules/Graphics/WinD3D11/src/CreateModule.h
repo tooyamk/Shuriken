@@ -3,11 +3,17 @@
 #include "Graphics.h"
 
 #ifdef AE_MODULE_EXPORTS
-extern "C" AE_MODULE_DLL_EXPORT aurora::modules::IGraphicsModule* AE_CREATE_MODULE_FN_NAME(aurora::Application* app) {
-	if (!app) {
-		aurora::println("Module create err, app is null");
-		return nullptr;
+namespace aurora::modules::graphics {
+	extern "C" AE_MODULE_DLL_EXPORT void* AE_CREATE_MODULE_FN_NAME(const ModuleArgs* args) {
+		if (!args) {
+			println("Module create err, no args");
+			return nullptr;
+		}
+
+		auto app = args->get<Application*>("app", nullptr);
+		if (!app) println("Module create err, no app");
+
+		return new win_d3d11::Graphics(app);
 	}
-	return new aurora::modules::graphics_win_d3d11::Graphics(app);
 }
 #endif

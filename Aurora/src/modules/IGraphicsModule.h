@@ -1,51 +1,127 @@
 #pragma once
 
 #include "modules/IModule.h"
+#include "base/ByteArray.h"
 
 namespace aurora {
 	template<typename T> class Rect;
 }
 
-namespace aurora::modules {
+namespace aurora::modules::graphics {
 	class IGraphicsModule;
 
-	class AE_DLL IGraphicsObject : public Ref {
+	class AE_DLL IObject : public Ref {
 	public:
-		virtual ~IGraphicsObject();
+		virtual ~IObject();
 
 	protected:
-		IGraphicsObject(IGraphicsModule& graphics);
+		IObject(IGraphicsModule& graphics);
 
 		IGraphicsModule* _graphics;
 	};
 
 
-	class AE_DLL IGraphicsIndexBuffer : public IGraphicsObject {
+	class AE_DLL IVertexBuffer : public IObject {
 	public:
-		IGraphicsIndexBuffer(IGraphicsModule& graphics);
-		virtual ~IGraphicsIndexBuffer();
-	};
-
-
-	class AE_DLL IGraphicsProgram : public IGraphicsObject {
-	public:
-		IGraphicsProgram(IGraphicsModule& graphics);
-		virtual ~IGraphicsProgram();
-
-		virtual bool AE_CALL upload(const i8* vert, const i8* frag) = 0;
-		virtual void AE_CALL use() = 0;
-	};
-
-
-	class AE_DLL IGraphicsVertexBuffer : public IGraphicsObject {
-	public:
-		IGraphicsVertexBuffer(IGraphicsModule& graphics);
-		virtual ~IGraphicsVertexBuffer();
+		IVertexBuffer(IGraphicsModule& graphics);
+		virtual ~IVertexBuffer();
 
 		virtual bool AE_CALL stroage(ui32 size, const void* data = nullptr) = 0;
 		virtual void AE_CALL write(ui32 offset, const void* data, ui32 length) = 0;
 		virtual void AE_CALL flush() = 0;
 		virtual void AE_CALL use() = 0;
+	};
+
+
+	class AE_DLL VertexBufferFactory {
+	public:
+		~VertexBufferFactory();
+
+		IVertexBuffer* AE_CALL get(const std::string& name) const;
+		void AE_CALL add(const std::string& name, IVertexBuffer* buffer);
+		void AE_CALL remove(const std::string& name);
+		void AE_CALL clear();
+
+	private:
+		std::unordered_map<std::string, IVertexBuffer*> _buffers;
+	};
+
+
+	class AE_DLL IIndexBuffer : public IObject {
+	public:
+		IIndexBuffer(IGraphicsModule& graphics);
+		virtual ~IIndexBuffer();
+	};
+
+
+	enum class ProgramLanguage : ui8 {
+		UNKNOWN,
+		HLSL,
+		DXIL,
+		SPIRV,
+		GLSL,
+		GSSL,
+		MSL
+	};
+
+
+	enum class ProgramStage : ui8 {
+		UNKNOWN,
+		VS,//VertexShader
+		PS,//PixelShader
+		GS,//GeomtryShader
+		CS,//ComputeShader
+		HS,//HullShader
+		DS //DomainShader
+	};
+
+
+	class AE_DLL ProgramSource {
+	public:
+		ProgramSource();
+		ProgramSource(ProgramSource&& value);
+
+		ProgramLanguage language;
+		ProgramStage stage;
+		std::string version;
+		std::string entryPoint;
+		ByteArray data;
+
+		ProgramSource& operator=(ProgramSource&& value);
+
+		bool isValid() const;
+
+		inline static std::string toHLSLShaderModeel(const ProgramSource& source) {
+			return toHLSLShaderModeel(source.stage, source.version);
+		}
+
+		static std::string toHLSLShaderModeel(ProgramStage stage, const std::string& version);
+
+		inline static std::string getEntryPoint(const ProgramSource& source) {
+			return getEntryPoint(source.entryPoint);
+		}
+
+		inline static std::string getEntryPoint(const std::string& entryPoint) {
+			return entryPoint.empty() ? "main" : entryPoint;
+		}
+	};
+
+
+	class AE_DLL IProgramSourceTranslator : public IModule {
+	public:
+		virtual ui32 AE_CALL getType() const { return 0; }
+		virtual ProgramSource AE_CALL translate(const ProgramSource& source, ProgramLanguage targetLanguage, const std::string& targetVersion) = 0;
+	};
+
+
+	class AE_DLL IProgram : public IObject {
+	public:
+		IProgram(IGraphicsModule& graphics);
+		virtual ~IProgram();
+
+		virtual bool AE_CALL upload(const ProgramSource& vert, const ProgramSource& frag) = 0;
+		virtual void AE_CALL use() = 0;
+		//virtual void AE_CALL useVertexBuffers() = 0;
 	};
 
 
@@ -59,9 +135,9 @@ namespace aurora::modules {
 
 		virtual bool AE_CALL createDevice() = 0;
 
-		virtual IGraphicsIndexBuffer* AE_CALL createIndexBuffer() = 0;
-		virtual IGraphicsProgram* AE_CALL createProgram() = 0;
-		virtual IGraphicsVertexBuffer* AE_CALL createVertexBuffer() = 0;
+		virtual IIndexBuffer* AE_CALL createIndexBuffer() = 0;
+		virtual IProgram* AE_CALL createProgram() = 0;
+		virtual IVertexBuffer* AE_CALL createVertexBuffer() = 0;
 
 		virtual void AE_CALL beginRender() = 0;
 		virtual void AE_CALL endRender() = 0;

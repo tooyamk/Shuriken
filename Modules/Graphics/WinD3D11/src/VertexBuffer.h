@@ -2,10 +2,10 @@
 
 #include "Base.h"
 
-namespace aurora::modules::graphics_win_d3d11 {
+namespace aurora::modules::graphics::win_d3d11 {
 	class Graphics;
 
-	class AE_MODULE_DLL VertexBuffer : public IGraphicsVertexBuffer {
+	class AE_MODULE_DLL VertexBuffer : public IVertexBuffer {
 	public:
 		VertexBuffer(Graphics& graphics);
 		virtual ~VertexBuffer();

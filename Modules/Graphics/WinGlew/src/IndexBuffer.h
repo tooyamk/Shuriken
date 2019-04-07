@@ -2,10 +2,10 @@
 
 #include "Base.h"
 
-namespace aurora::modules::graphics_win_glew {
+namespace aurora::modules::graphics::win_glew {
 	class Graphics;
 
-	class AE_MODULE_DLL IndexBuffer : public IGraphicsIndexBuffer {
+	class AE_MODULE_DLL IndexBuffer : public IIndexBuffer {
 	public:
 		IndexBuffer(Graphics& graphics);
 		virtual ~IndexBuffer();

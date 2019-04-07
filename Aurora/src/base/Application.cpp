@@ -1,6 +1,6 @@
 #include "Application.h"
+#include "base/String.h"
 #include "base/Time.h"
-#include "utils/String.h"
 #include <thread>
 
 namespace aurora {
@@ -206,6 +206,25 @@ namespace aurora {
 #if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
 		PostQuitMessage(0);
 #endif
+	}
+
+	const std::string& Application::getAppPath() const {
+#if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
+		if (_appPath.empty()) {
+			WCHAR wpath[1024];
+			GetModuleFileNameW(nullptr, wpath, sizeof(wpath));
+			std::string path = String::UnicodeToUtf8(wpath);
+			i8 cDir[500] = "";
+			i8 cDrive[100] = "";
+			i8 cf[100] = "";
+			i8 cExt[50] = "";
+			_splitpath_s(path.c_str(), cDrive, cDir, cf, cExt);
+
+			_appPath = cDrive;
+			_appPath += cDir;
+		}
+#endif
+		return _appPath;
 	}
 
 	void Application::_adjustWindowRect(const Rect<i32>& in, Rect<i32>& out) {

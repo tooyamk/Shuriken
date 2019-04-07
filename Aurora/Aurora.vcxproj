@@ -23,6 +23,7 @@
     <ProjectGuid>{972C829A-FE33-48D8-A1E1-CC7457FED993}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>Aurora</RootNamespace>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -71,12 +72,16 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -178,13 +183,15 @@
       </SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\Aurora.h" />
     <ClInclude Include="src\base\Application.h" />
-    <ClInclude Include="src\base\TSList.h" />
+    <ClInclude Include="src\base\ByteArray.h" />
+    <ClInclude Include="src\base\String.h" />
+    <ClInclude Include="src\base\STList.h" />
     <ClInclude Include="src\base\Lock.h" />
     <ClInclude Include="src\base\LowLevel.h" />
     <ClInclude Include="src\base\DynamicLib.h" />
@@ -210,12 +217,13 @@
     <ClInclude Include="src\nodes\Node.h" />
     <ClInclude Include="src\renderers\commands\BaseRenderCommand.h" />
     <ClInclude Include="src\renderers\commands\IRenderCommand.h" />
-    <ClInclude Include="src\utils\String.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\base\Application.cpp" />
+    <ClCompile Include="src\base\ByteArray.cpp" />
     <ClCompile Include="src\base\DynamicLib.cpp" />
     <ClCompile Include="src\base\Monitor.cpp" />
+    <ClCompile Include="src\base\String.cpp" />
     <ClCompile Include="src\math\Math.cpp" />
     <ClCompile Include="src\math\Matrix34.cpp" />
     <ClCompile Include="src\math\Matrix44.cpp" />
@@ -229,9 +237,9 @@
     <ClCompile Include="src\nodes\components\Camera.cpp" />
     <ClCompile Include="src\nodes\Node.cpp" />
     <ClCompile Include="src\renderers\commands\IRenderCommand.cpp" />
-    <ClCompile Include="src\utils\String.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="src\base\ByteArray.inl" />
     <None Include="src\math\Math.inl" />
     <None Include="src\math\Matrix34.inl" />
     <None Include="src\math\Matrix44.inl" />

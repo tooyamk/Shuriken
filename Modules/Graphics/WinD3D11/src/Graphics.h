@@ -3,7 +3,7 @@
 #include "Program.h"
 #include "VertexBuffer.h"
 
-namespace aurora::modules::graphics_win_d3d11 {
+namespace aurora::modules::graphics::win_d3d11 {
 	class AE_MODULE_DLL Graphics : public IGraphicsModule {
 	public:
 		Graphics(Application* app);
@@ -11,9 +11,9 @@ namespace aurora::modules::graphics_win_d3d11 {
 
 		virtual bool AE_CALL createDevice() override;
 
-		virtual IGraphicsIndexBuffer* AE_CALL createIndexBuffer() override;
-		virtual IGraphicsProgram* AE_CALL createProgram() override;
-		virtual IGraphicsVertexBuffer* AE_CALL createVertexBuffer() override;
+		virtual IIndexBuffer* AE_CALL createIndexBuffer() override;
+		virtual IProgram* AE_CALL createProgram() override;
+		virtual IVertexBuffer* AE_CALL createVertexBuffer() override;
 		
 		virtual void AE_CALL beginRender() override;
 		virtual void AE_CALL endRender() override;

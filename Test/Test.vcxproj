@@ -22,6 +22,9 @@
     <ProjectReference Include="..\Aurora\Aurora.vcxproj">
       <Project>{972c829a-fe33-48d8-a1e1-cc7457fed993}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\Modules\Graphics\ProgramSourceTranslator\ProgramSourceTranslator.vcxproj">
+      <Project>{9848492c-031a-4924-a610-88139f2ca4ce}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\Modules\Graphics\WinD3D11\WinD3D11.vcxproj">
       <Project>{a3d58001-9a8b-4f70-a59b-8a4c0d4b0e10}</Project>
     </ProjectReference>
@@ -92,12 +95,16 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>true</LinkIncremental>

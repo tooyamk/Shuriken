@@ -2,7 +2,7 @@
 #include "base/Application.h"
 #include "CreateModule.h"
 
-namespace aurora::modules::graphics_win_d3d11 {
+namespace aurora::modules::graphics::win_d3d11 {
 	Graphics::Graphics(Application* app) :
 		_app(app->ref<Application>()),
 		_driverType(D3D_DRIVER_TYPE_NULL),
@@ -109,15 +109,15 @@ namespace aurora::modules::graphics_win_d3d11 {
 		return true;
 	}
 
-	IGraphicsIndexBuffer* Graphics::createIndexBuffer() {
+	IIndexBuffer* Graphics::createIndexBuffer() {
 		return nullptr;
 	}
 
-	IGraphicsProgram* Graphics::createProgram() {
+	IProgram* Graphics::createProgram() {
 		return new Program(*this);
 	}
 
-	IGraphicsVertexBuffer* Graphics::createVertexBuffer() {
+	IVertexBuffer* Graphics::createVertexBuffer() {
 		return new VertexBuffer(*this);
 	}
 
