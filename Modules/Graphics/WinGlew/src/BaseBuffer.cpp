@@ -3,8 +3,9 @@
 #include <algorithm>
 
 namespace aurora::modules::graphics::win_glew {
-	BaseBuffer::BaseBuffer(Graphics& graphics) : IVertexBuffer(graphics),
+	BaseBuffer::BaseBuffer(GLenum target) :
 		_dirty(false),
+		_target(target),
 		_size(0),
 		_handle(0),
 		_mapData(nullptr),
@@ -15,7 +16,7 @@ namespace aurora::modules::graphics::win_glew {
 		_delBuffer();
 	}
 
-	bool BaseBuffer::stroage(ui32 size, const void* data) {
+	bool BaseBuffer::_stroage(ui32 size, const void* data) {
 		_delBuffer();
 
 		glGenBuffers(1, &_handle);
@@ -27,9 +28,9 @@ namespace aurora::modules::graphics::win_glew {
 				| GL_MAP_PERSISTENT_BIT //在被映射状态下不同步
 				| GL_MAP_COHERENT_BIT;  //数据对GPU立即可见
 
-			glBindBuffer(GL_ARRAY_BUFFER, _handle);
-			glBufferStorage(GL_ARRAY_BUFFER, size, data, flags);
-			_mapData = glMapBufferRange(GL_ARRAY_BUFFER, 0, size, flags);
+			glBindBuffer(_target, _handle);
+			glBufferStorage(_target, size, data, flags);
+			_mapData = glMapBufferRange(_target, 0, size, flags);
 
 			return true;
 		}
@@ -37,28 +38,18 @@ namespace aurora::modules::graphics::win_glew {
 		return false;
 	}
 
-	void BaseBuffer::write(ui32 offset, const void* data, ui32 length) {
+	void BaseBuffer::_write(ui32 offset, const void* data, ui32 length) {
 		if (_handle && _mapData && data && length && offset < _size) {
 			_dirty = true;
 			memcpy((i8*)_mapData + offset, data, std::min<ui32>(length, _size - offset));
 		}
 	}
 
-	void BaseBuffer::flush() {
+	void BaseBuffer::_flush() {
 		if (_dirty) {
 			_waitServerSync();
 			_sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 			_dirty = false;
-		}
-	}
-
-	void BaseBuffer::use() {
-		if (_handle) {
-			_waitServerSync();
-
-			glBindBuffer(GL_ARRAY_BUFFER, _handle);
-			glEnableVertexAttribArray(0);
-			glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
 		}
 	}
 
@@ -67,8 +58,8 @@ namespace aurora::modules::graphics::win_glew {
 			_delSync();
 
 			if (_mapData) {
-				glBindBuffer(GL_ARRAY_BUFFER, _handle);
-				glUnmapBuffer(GL_ARRAY_BUFFER);
+				glBindBuffer(_target, _handle);
+				glUnmapBuffer(_target);
 				_mapData = nullptr;
 			}
 
@@ -77,6 +68,7 @@ namespace aurora::modules::graphics::win_glew {
 
 			_dirty = false;
 		}
+		_size = 0;
 	}
 
 	void BaseBuffer::_waitServerSync() {

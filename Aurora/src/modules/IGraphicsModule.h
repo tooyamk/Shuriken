@@ -21,6 +21,25 @@ namespace aurora::modules::graphics {
 	};
 
 
+	enum class VertexSize {
+		ONE,
+		TWO,
+		THREE,
+		FOUR
+	};
+
+
+	enum class VertexType {
+		I8,
+		UI8,
+		I16,
+		UI16,
+		I32,
+		UI32,
+		F32
+	};
+
+
 	class AE_DLL IVertexBuffer : public IObject {
 	public:
 		IVertexBuffer(IGraphicsModule& graphics);
@@ -28,8 +47,8 @@ namespace aurora::modules::graphics {
 
 		virtual bool AE_CALL stroage(ui32 size, const void* data = nullptr) = 0;
 		virtual void AE_CALL write(ui32 offset, const void* data, ui32 length) = 0;
+		virtual void AE_CALL setFormat(VertexSize size, VertexType type) = 0;
 		virtual void AE_CALL flush() = 0;
-		virtual void AE_CALL use() = 0;
 	};
 
 
@@ -47,10 +66,22 @@ namespace aurora::modules::graphics {
 	};
 
 
+	enum class IndexType {
+		UI8,
+		UI16,
+		UI32
+	};
+
+
 	class AE_DLL IIndexBuffer : public IObject {
 	public:
 		IIndexBuffer(IGraphicsModule& graphics);
 		virtual ~IIndexBuffer();
+
+		virtual bool AE_CALL stroage(ui32 size, const void* data = nullptr) = 0;
+		virtual void AE_CALL write(ui32 offset, const void* data, ui32 length) = 0;
+		virtual void AE_CALL setFormat(IndexType type) = 0;
+		virtual void AE_CALL flush() = 0;
 	};
 
 
@@ -120,8 +151,9 @@ namespace aurora::modules::graphics {
 		virtual ~IProgram();
 
 		virtual bool AE_CALL upload(const ProgramSource& vert, const ProgramSource& frag) = 0;
-		virtual void AE_CALL use() = 0;
-		//virtual void AE_CALL useVertexBuffers() = 0;
+		virtual bool AE_CALL use() = 0;
+		virtual void AE_CALL useVertexBuffers(const VertexBufferFactory& factory) = 0;
+		virtual void AE_CALL draw(const IIndexBuffer& indexBuffer, ui32 count = 0xFFFFFFFFui32, ui32 offset = 0) = 0;
 	};
 
 

@@ -10,7 +10,8 @@ namespace aurora::modules::graphics::win_glew {
 		_dc(nullptr),
 		_rc(nullptr),
 		_majorVer(0),
-		_minorVer(0) {
+		_minorVer(0),
+		_intVer(0) {
 	}
 
 	Graphics::~Graphics() {
@@ -70,7 +71,8 @@ namespace aurora::modules::graphics::win_glew {
 					glGetIntegerv(GL_MAJOR_VERSION, &_majorVer);
 					glGetIntegerv(GL_MINOR_VERSION, &_minorVer);
 
-					_strVer = String::toString(_majorVer * 100 + _minorVer * 10);
+					_intVer = _majorVer * 100 + _minorVer * 10;
+					_strVer = String::toString(_intVer);
 
 					return true;
 				}

@@ -47,20 +47,37 @@ namespace aurora::modules::graphics::win_glew {
 			GLint size;
 			GLenum type;
 			glGetActiveAttrib(_handle, i, sizeof(buf), &len, &size, &type, buf);
-			int a = 1;
+			
+			auto& info = _inVerBufInfos.emplace_back();
+			info.name = buf + 7;
+			info.index = i;
 		}
 
 		return true;
 	}
 
-	void Program::use() {
+	bool Program::use() {
 		if (_handle) {
 			glUseProgram(_handle);
+			return true;
+		}
+		return false;
+	}
 
+	void Program::useVertexBuffers(const VertexBufferFactory& factory) {
+		for (auto& info : _inVerBufInfos) {
+			auto vb = (VertexBuffer*)factory.get(info.name);
+			if (vb) vb->use(info.index);
+		}
+	}
+
+	void Program::draw(const IIndexBuffer& indexBuffer, ui32 count, ui32 offset) {
+		if (_handle) {
 			glEnable(GL_CULL_FACE);
 			glCullFace(GL_BACK);
 			glDisable(GL_DEPTH_TEST);
-			glDrawArrays(GL_TRIANGLES, 0, 3);
+
+			((IndexBuffer&)indexBuffer).draw(count, offset);
 		}
 	}
 

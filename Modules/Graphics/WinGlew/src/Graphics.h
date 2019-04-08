@@ -36,6 +36,10 @@ namespace aurora::modules::graphics::win_glew {
 			}
 		}
 
+		inline ui32 getIntVersion() const {
+			return _intVer;
+		}
+
 		inline const std::string& getStringVersion() const {
 			return _strVer;
 		}
@@ -49,6 +53,7 @@ namespace aurora::modules::graphics::win_glew {
 
 		GLint _majorVer;
 		GLint _minorVer;
+		ui32 _intVer;
 		std::string _strVer;
 
 		void AE_CALL _release();

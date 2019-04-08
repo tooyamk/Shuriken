@@ -1,6 +1,6 @@
 struct VS_INPUT
 {
-    float2 position : POSITION0;
+    uint2 position : POSITION0;
     float3 ccc : ATTRIBUTE1;
     float2 cdddcc : ATTRIBUTE2;
 };
@@ -13,7 +13,7 @@ struct VS_OUTPUT
 VS_OUTPUT main(VS_INPUT input)
 {
     VS_OUTPUT output = (VS_OUTPUT)0;
-    output.position = float4(input.position, 0.0f, 1.0f);
+    output.position = float4(input.position.x / 10.0f, input.position.y / 10.0f, 0.0f, 1.0f);
 
     return output;
 }

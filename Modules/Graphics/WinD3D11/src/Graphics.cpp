@@ -110,7 +110,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	IIndexBuffer* Graphics::createIndexBuffer() {
-		return nullptr;
+		return new IndexBuffer(*this);
 	}
 
 	IProgram* Graphics::createProgram() {

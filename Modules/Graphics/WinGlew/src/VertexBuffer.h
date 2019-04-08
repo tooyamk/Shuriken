@@ -1,30 +1,23 @@
 #pragma once
 
-#include "Base.h"
+#include "BaseBuffer.h"
 
 namespace aurora::modules::graphics::win_glew {
-	class Graphics;
-
-	class AE_MODULE_DLL VertexBuffer : public IVertexBuffer {
+	class AE_MODULE_DLL VertexBuffer : private BaseBuffer, public IVertexBuffer {
 	public:
 		VertexBuffer(Graphics& graphics);
 		virtual ~VertexBuffer();
 
 		virtual bool AE_CALL stroage(ui32 size, const void* data = nullptr) override;
 		virtual void AE_CALL write(ui32 offset, const void* data, ui32 length) override;
+		virtual void AE_CALL setFormat(VertexSize size, VertexType type) override;
 		virtual void AE_CALL flush() override;
-		virtual void AE_CALL use() override;
+
+		bool AE_CALL use(GLuint index);
 
 	protected:
-		bool _dirty;
-		ui32 _size;
-		GLuint _handle;
-		void* _mapData;
-
-		GLsync _sync;
-
-		void _release();
-		void _waitServerSync();
-		void _delSync();
+		ui8 _vertexSize;
+		bool _validVertexFormat;
+		GLenum _vertexType;
 	};
 }

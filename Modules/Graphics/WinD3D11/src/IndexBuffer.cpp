@@ -1,19 +1,16 @@
 #include "IndexBuffer.h"
 #include "Graphics.h"
 
-namespace aurora::modules::graphics::win_glew {
-	IndexBuffer::IndexBuffer(Graphics& graphics) : BaseBuffer(GL_ELEMENT_ARRAY_BUFFER), IIndexBuffer(graphics),
-		_indexType(0),
-		_numElements(0) {
+namespace aurora::modules::graphics::win_d3d11 {
+	IndexBuffer::IndexBuffer(Graphics& graphics) : BaseBuffer(graphics, D3D11_BIND_INDEX_BUFFER), IIndexBuffer(graphics),
+		_indexType(DXGI_FORMAT_UNKNOWN) {
 	}
 
 	IndexBuffer::~IndexBuffer() {
 	}
 
 	bool IndexBuffer::stroage(ui32 size, const void* data) {
-		auto rst = _stroage(size, data);
-		_calcNumElements();
-		return rst;
+		return _stroage(size, data);
 	}
 
 	void IndexBuffer::write(ui32 offset, const void* data, ui32 length) {
@@ -27,16 +24,20 @@ namespace aurora::modules::graphics::win_glew {
 	void IndexBuffer::setFormat(IndexType type) {
 		switch (type) {
 		case IndexType::UI8:
-			_indexType = GL_UNSIGNED_BYTE;
+		{
+			println("IndexBuffer.setFormat error : not supprot ui8 type");
+			_indexType = DXGI_FORMAT_UNKNOWN;
+
 			break;
+		}
 		case IndexType::UI16:
-			_indexType = GL_UNSIGNED_SHORT;
+			_indexType = DXGI_FORMAT_R16_UINT;
 			break;
 		case IndexType::UI32:
-			_indexType = GL_UNSIGNED_INT;
+			_indexType = DXGI_FORMAT_R32_UINT;
 			break;
 		default:
-			_indexType = 0;
+			_indexType = DXGI_FORMAT_UNKNOWN;
 			break;
 		}
 
@@ -49,21 +50,20 @@ namespace aurora::modules::graphics::win_glew {
 			if (count > _numElements) count = _numElements;
 			if (count > last) count = last;
 
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _handle);
-			glDrawRangeElements(GL_TRIANGLES, offset, _numElements, count, _indexType, nullptr);
+			auto context = _grap->getContext();
+			context->IASetIndexBuffer(_handle, _indexType, 0);
+			context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+			context->DrawIndexed(count, offset, 0);
 		}
 	}
 
 	void IndexBuffer::_calcNumElements() {
-		if (_size && _indexType) {
+		if (_size && _indexType != DXGI_FORMAT_UNKNOWN) {
 			switch (_indexType) {
-			case GL_UNSIGNED_BYTE:
-				_numElements = _size;
-				break;
-			case GL_UNSIGNED_SHORT:
+			case DXGI_FORMAT_R16_UINT:
 				_numElements = _size >> 1;
 				break;
-			case GL_UNSIGNED_INT:
+			case DXGI_FORMAT_R32_UINT:
 				_numElements = _size >> 2;
 				break;
 			default:

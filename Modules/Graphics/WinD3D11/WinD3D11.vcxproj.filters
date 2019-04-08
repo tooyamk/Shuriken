@@ -21,6 +21,12 @@
     <ClInclude Include="src\Program.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\BaseBuffer.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\IndexBuffer.h">
+      <Filter>src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Graphics.cpp">
@@ -30,6 +36,12 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\Program.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\BaseBuffer.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\IndexBuffer.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
