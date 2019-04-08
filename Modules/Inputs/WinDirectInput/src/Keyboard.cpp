@@ -9,12 +9,28 @@ namespace aurora::modules::win_direct_input {
 	}
 
 	ui32 Keyboard::getKeyState(ui32 keyCode, f32* data, ui32 count) const {
-		if (data && count) {
-			ui32 key = MapVirtualKeyEx(keyCode, MAPVK_VK_TO_VSC, GetKeyboardLayout(0));
-			if (key < 256) {
-				data[0] = _state[key] & 0x80 ? 1.f : 0.f;
-
+		if (data && count && keyCode < 256) {
+			switch (keyCode) {
+			case VK_SHIFT:
+				data[0] = (_state[VK_SK[VK_LSHIFT]] & 0x80) || (_state[VK_SK[VK_RSHIFT]] & 0x80) ? 1.f : 0.f;
 				return 1;
+			case VK_CONTROL:
+				data[0] = (_state[VK_SK[VK_LCONTROL]] & 0x80) || (_state[VK_SK[VK_RCONTROL]] & 0x80) ? 1.f : 0.f;
+				return 1;
+			case VK_MENU:
+				data[0] = (_state[VK_SK[VK_LMENU]] & 0x80) || (_state[VK_SK[VK_RMENU]] & 0x80) ? 1.f : 0.f;
+				return 1;
+			default:
+			{
+				auto key = VK_SK[keyCode];
+				if (key) {
+					data[0] = _state[key] & 0x80 ? 1.f : 0.f;
+
+					return 1;
+				} else {
+					return 0;
+				}
+			}
 			}
 		}
 		return 0;
@@ -45,11 +61,12 @@ namespace aurora::modules::win_direct_input {
 			}
 
 			if (len > 0) {
-				auto layout = GetKeyboardLayout(0);
+				//MapVirtualKeyEx(DIK_RCONTROL, MAPVK_VSC_TO_VK_EX, GetKeyboardLayout(0));
+				//auto layout = GetKeyboardLayout(0);
 				for (ui16 i = 0; i < len; ++i) {
 					ui8 key = changedBtns[i];
 					f32 value = (state[key] & 0x80) > 0 ? 1.f : 0.f;
-					_eventDispatcher.dispatchEvent(this, value > 0.f ? InputDeviceEvent::DOWN : InputDeviceEvent::UP, &InputKey({ MapVirtualKeyEx(key, MAPVK_VSC_TO_VK, layout), 1, &value }));
+					_eventDispatcher.dispatchEvent(this, value > 0.f ? InputDeviceEvent::DOWN : InputDeviceEvent::UP, &InputKey({ SK_VK[key], 1, &value }));
 				}
 			}
 		}
