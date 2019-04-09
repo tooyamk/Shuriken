@@ -31,8 +31,13 @@ namespace aurora::modules::graphics::win_d3d11 {
 		}
 
 	private:
+		bool _isFullscreen;
+		UINT _width;
+		UINT _height;
+
 		Application* _app;
 
+		DXGI_RATIONAL _refreshRate;
 		D3D_DRIVER_TYPE _driverType;
 		D3D_FEATURE_LEVEL _featureLevel;
 		ID3D11Device* _device;
@@ -40,6 +45,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 		IDXGISwapChain* _swapChain;
 		ID3D11RenderTargetView* _backBufferTarget;
 
+		events::EventListener<ApplicationEvent, Graphics> _resizedListener;
+		void AE_CALL _resizedHandler(events::Event<ApplicationEvent>& e);
+
 		void AE_CALL _release();
+		void AE_CALL _resize(bool fullscreen, UINT w, UINT h);
 	};
 }

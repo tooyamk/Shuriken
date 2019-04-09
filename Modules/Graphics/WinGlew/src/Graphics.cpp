@@ -23,7 +23,7 @@ namespace aurora::modules::graphics::win_glew {
 	bool Graphics::createDevice() {
 		if (_dc) return false;
 
-		HWND hWnd = _app->$Win$_getHWND();
+		HWND hWnd = _app->Win_getHWND();
 		if (!hWnd) return false;
 
 		_dc = GetDC(hWnd);
@@ -149,7 +149,7 @@ namespace aurora::modules::graphics::win_glew {
 		}
 
 		if (_dc) {
-			ReleaseDC(_app->$Win$_getHWND(), _dc);
+			ReleaseDC(_app->Win_getHWND(), _dc);
 			_dc = nullptr;
 		}
 	}

@@ -5,15 +5,21 @@
 namespace aurora::modules::graphics::win_d3d11 {
 	Graphics::Graphics(Application* app) :
 		_app(app->ref<Application>()),
+		_isFullscreen(false),
+		_width(0),
+		_height(0),
 		_driverType(D3D_DRIVER_TYPE_NULL),
 		_featureLevel(D3D_FEATURE_LEVEL_11_0),
 		_device(nullptr),
 		_context(nullptr),
 		_swapChain(nullptr),
-		_backBufferTarget(nullptr) {
+		_backBufferTarget(nullptr),
+		_resizedListener(this, &Graphics::_resizedHandler) {
+		_app->getEventDispatcher().addEventListener(ApplicationEvent::RESIZED, _resizedListener, false);
 	}
 
 	Graphics::~Graphics() {
+		_app->getEventDispatcher().removeEventListener(ApplicationEvent::RESIZED, _resizedListener);
 		_release();
 		Ref::setNull(_app);
 	}
@@ -45,13 +51,16 @@ namespace aurora::modules::graphics::win_d3d11 {
 		swapChainDesc.BufferDesc.Width = w;
 		swapChainDesc.BufferDesc.Height = h;
 		swapChainDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-		swapChainDesc.BufferDesc.RefreshRate.Numerator = 60;
+		swapChainDesc.BufferDesc.RefreshRate.Numerator = 0;
 		swapChainDesc.BufferDesc.RefreshRate.Denominator = 1;
+		swapChainDesc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+		swapChainDesc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
 		swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-		swapChainDesc.OutputWindow = _app->$Win$_getHWND();
-		swapChainDesc.Windowed = true;
+		swapChainDesc.OutputWindow = _app->Win_getHWND();
+		swapChainDesc.Windowed = _app->isWindowed();
 		swapChainDesc.SampleDesc.Count = 1;
 		swapChainDesc.SampleDesc.Quality = 0;
+		swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
 		ui32 creationFlags = 0;
 #ifdef AE_DEBUG
@@ -77,34 +86,45 @@ namespace aurora::modules::graphics::win_d3d11 {
 			return false;
 		}
 
-		ID3D11Texture2D* backBufferTexture;
-
-		hr = _swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&backBufferTexture);
-
-		if (FAILED(hr)) {
+		///*
+		IDXGIOutput* output = nullptr;
+		if (FAILED(_swapChain->GetContainingOutput(&output))) {
 			_release();
 			return false;
 		}
 
-		hr = _device->CreateRenderTargetView(backBufferTexture, 0, &_backBufferTarget);
-		if (backBufferTexture) backBufferTexture->Release();
-
-		if (FAILED(hr)) {
+		ui32 numSupportedModes = 0;
+		if (FAILED(output->GetDisplayModeList(swapChainDesc.BufferDesc.Format, 0, &numSupportedModes, nullptr))) {
+			output->Release();
 			_release();
 			return false;
 		}
 
-		_context->OMSetRenderTargets(1, &_backBufferTarget, 0);
+		auto supportedModes = new DXGI_MODE_DESC[numSupportedModes];
+		memset(supportedModes, 0, sizeof(DXGI_MODE_DESC) * numSupportedModes);
+		if (FAILED(output->GetDisplayModeList(swapChainDesc.BufferDesc.Format, 0, &numSupportedModes, supportedModes))) {
+			output->Release();
+			_release();
+			return false;
+		}
+		output->Release();
 
-		D3D11_VIEWPORT vp;
-		vp.Width = f32(w);
-		vp.Height = f32(h);
-		vp.MinDepth = 0.0f;
-		vp.MaxDepth = 1.0f;
-		vp.TopLeftX = 0.0f;
-		vp.TopLeftY = 0.0f;
+		f32 maxRefreshRate = 0.f;
+		for (ui32 i = 0; i < numSupportedModes; ++i) {
+			auto& m = supportedModes[i];
+			f32 rr = (f32)m.RefreshRate.Numerator / (f32)m.RefreshRate.Denominator;
+			if (rr > maxRefreshRate) {
+				maxRefreshRate = rr;
+				_refreshRate.Numerator = m.RefreshRate.Numerator;
+				_refreshRate.Denominator = m.RefreshRate.Denominator;
+			}
+			//println("%d  %d  %d  %d", m->Width, m->Height, m->RefreshRate.Numerator, m->RefreshRate.Denominator);
+		}
 
-		_context->RSSetViewports(1, &vp);
+		delete[] supportedModes;
+
+		_isFullscreen = _app->isWindowed();
+		_resize(!_app->isWindowed(), w, h);
 
 		return true;
 	}
@@ -136,6 +156,16 @@ namespace aurora::modules::graphics::win_d3d11 {
 	void Graphics::clear() {
 	}
 
+	void Graphics::_resizedHandler(events::Event<ApplicationEvent>& e) {
+		if (*(bool*)e.getData()) {
+			//_resize();
+		}
+
+		i32 w, h;
+		_app->getInnerSize(w, h);
+		_resize(!_app->isWindowed(), w, h);
+	}
+
 	void Graphics::_release() {
 		if (_backBufferTarget) {
 			_backBufferTarget->Release();
@@ -153,5 +183,73 @@ namespace aurora::modules::graphics::win_d3d11 {
 			_device->Release();
 			_device = nullptr;
 		}
+	}
+
+	void Graphics::_resize(bool fullscreen, UINT w, UINT h) {
+		if (!_swapChain) return;
+
+		bool fullscreenChange = _isFullscreen != fullscreen;
+		if (!fullscreenChange && _width == w && _height == h) return;
+		_isFullscreen = fullscreen;
+		_width = w;
+		_height = h;
+
+		DXGI_SWAP_CHAIN_DESC swapChainDesc;
+		_swapChain->GetDesc(&swapChainDesc);
+
+		if (fullscreenChange) {
+			DXGI_MODE_DESC mode;
+			memset(&mode, 0, sizeof(mode));
+
+			mode.Format = swapChainDesc.BufferDesc.Format;
+			mode.Width = w;
+			mode.Height = h;
+			mode.RefreshRate.Numerator = _refreshRate.Numerator;
+			mode.RefreshRate.Denominator = _refreshRate.Denominator;
+			mode.ScanlineOrdering = swapChainDesc.BufferDesc.ScanlineOrdering;
+			mode.Scaling = swapChainDesc.BufferDesc.Scaling;
+			println("1");
+			_swapChain->ResizeTarget(&mode);
+
+			println("2");
+			auto hr = _swapChain->SetFullscreenState(fullscreen, nullptr);
+
+			_swapChain->ResizeTarget(&mode);
+		}
+
+		if (_backBufferTarget) {
+			_backBufferTarget->Release();
+			_backBufferTarget = nullptr;
+		}
+
+		auto hr = _swapChain->ResizeBuffers(swapChainDesc.BufferCount, w, h, swapChainDesc.BufferDesc.Format, swapChainDesc.Flags);
+
+		ID3D11Texture2D* backBufferTexture;
+		hr = _swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&backBufferTexture);
+
+		if (FAILED(hr)) {
+			println("errr  1");
+		}
+
+		hr = _device->CreateRenderTargetView(backBufferTexture, 0, &_backBufferTarget);
+		if (backBufferTexture) backBufferTexture->Release();
+
+		if (FAILED(hr)) {
+			println("errr  2");
+		}
+
+		_context->OMSetRenderTargets(1, &_backBufferTarget, nullptr);
+
+		D3D11_VIEWPORT vp;
+		vp.Width = f32(w);
+		vp.Height = f32(h);
+		vp.MinDepth = 0.0f;
+		vp.MaxDepth = 1.0f;
+		vp.TopLeftX = 0.0f;
+		vp.TopLeftY = 0.0f;
+
+		_context->RSSetViewports(1, &vp);
+
+		println("fuckkkkkkkkkkkkkkkk  full  %d   %d    %d", fullscreen, w, h);
 	}
 }

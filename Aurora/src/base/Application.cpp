@@ -77,13 +77,18 @@ namespace aurora {
 	void Application::toggleFullscreen() {
 		_isWindowed = !_isWindowed;
 
+		bool visibled = isVisible();
+
 		if (!_isWindowed) _recordWindowedRect();
 
 #if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
 		_updateWindowRectValue();
 		_changeWindow(true, true);
+		if (visibled) ShowWindow(_hWnd, SW_SHOWDEFAULT);
 #endif
-		_eventDispatcher.dispatchEvent(this, ApplicationEvent::RESIZE);
+
+		bool fullscreenChange = true;
+		_eventDispatcher.dispatchEvent(this, ApplicationEvent::RESIZED, &fullscreenChange);
 	}
 
 	void Application::getInnerSize(i32& w, i32& h) {
@@ -168,7 +173,15 @@ namespace aurora {
 		_time = 0;
 	}
 
+	bool Application::isVisible() const {
+#if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
+		return _hWnd ? IsWindowVisible(_hWnd) : false;
+#endif
+		return false;
+	}
+
 	void Application::setVisible(bool b) {
+#if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
 		if (_hWnd) {
 			if (b) {
 				ShowWindow(_hWnd, SW_SHOWDEFAULT);
@@ -178,6 +191,7 @@ namespace aurora {
 
 			UpdateWindow(_hWnd);
 		}
+#endif
 	}
 
 	void Application::run() {
@@ -284,7 +298,7 @@ namespace aurora {
 		if (posOrSize) {
 			ui32 flags = SWP_NOACTIVATE;
 			if (_isWindowed) {
-				flags |= SWP_NOOWNERZORDER | SWP_NOMOVE | SWP_NOZORDER;
+				flags |= SWP_NOOWNERZORDER | SWP_NOZORDER;
 			} else {
 				flags |= SWP_NOCOPYBITS;
 			}
@@ -314,7 +328,10 @@ namespace aurora {
 		}
 		case WM_SIZE:
 		{
-			if (app) app->_eventDispatcher.dispatchEvent(app, ApplicationEvent::RESIZE);
+			if (app) {
+				bool fullscreenChange = false;
+				app->_eventDispatcher.dispatchEvent(app, ApplicationEvent::RESIZED, &fullscreenChange);
+			}
 
 			break;
 		}

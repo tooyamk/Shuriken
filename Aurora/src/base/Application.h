@@ -8,7 +8,7 @@
 namespace aurora {
 	enum class ApplicationEvent : ui8 {
 		UPDATE,
-		RESIZE,
+		RESIZED,
 		FOCUS_IN,
 		FOCUS_OUT,
 		CLOSING
@@ -42,6 +42,7 @@ namespace aurora {
 		bool AE_CALL hasFocus() const;
 		void AE_CALL pollEvents();
 
+		bool AE_CALL isVisible() const;
 		void AE_CALL setVisible(bool b);
 		void AE_CALL run();
 		f64 AE_CALL getFrameInterval() const;
@@ -53,7 +54,7 @@ namespace aurora {
 		const std::string& getAppPath() const;
 
 #if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
-		inline HWND AE_CALL $Win$_getHWND() const {
+		inline HWND AE_CALL Win_getHWND() const {
 			return _hWnd;
 		}
 #endif
