@@ -32,6 +32,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 	private:
 		bool _isFullscreen;
+		bool _sizeChanging = false;
 		UINT _width;
 		UINT _height;
 
@@ -48,7 +49,11 @@ namespace aurora::modules::graphics::win_d3d11 {
 		events::EventListener<ApplicationEvent, Graphics> _resizedListener;
 		void AE_CALL _resizedHandler(events::Event<ApplicationEvent>& e);
 
+		events::EventListener<ApplicationEvent, Graphics> _fullscreenTogglingListener;
+		void AE_CALL _fullscreenTogglingHandler(events::Event<ApplicationEvent>& e);
+
 		void AE_CALL _release();
-		void AE_CALL _resize(bool fullscreen, UINT w, UINT h);
+		void AE_CALL _toggleFullscreen(bool fullscreen, UINT w, UINT h);
+		void AE_CALL _resize(UINT w, UINT h);
 	};
 }

@@ -10,6 +10,7 @@ namespace aurora {
 #if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
 		_hIns(nullptr),
 		_hWnd(nullptr),
+		_lastWndInnerRect({0, 0, 0, 0}),
 #endif
 		_isWindowed(true),
 		_time(0) {
@@ -64,6 +65,7 @@ namespace aurora {
 			_wndRect.left, _wndRect.top, _wndRect.getWidth(), _wndRect.getHeight(),
 			GetDesktopWindow(), nullptr, _hIns, nullptr);
 		SetWindowLongPtr(_hWnd, GWLP_USERDATA, (LONG_PTR)this);
+		if (_hWnd) GetClientRect(_hWnd, &_lastWndInnerRect);
 
 		return _hWnd;
 #endif
@@ -75,20 +77,35 @@ namespace aurora {
 	}
 
 	void Application::toggleFullscreen() {
-		_isWindowed = !_isWindowed;
+		if (_hWnd) {
+			_isWindowed = !_isWindowed;
 
-		bool visibled = isVisible();
+			bool visibled = isVisible();
 
-		if (!_isWindowed) _recordWindowedRect();
+			if (!_isWindowed) {
+				GetClientRect(_hWnd, &_lastWndInnerRect);
+				_recordWindowedRect();
+			}
 
 #if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
-		_updateWindowRectValue();
-		_changeWindow(true, true);
-		if (visibled) ShowWindow(_hWnd, SW_SHOWDEFAULT);
+			_updateWindowRectValue();
+
+			i32 wh[2];
+			if (_isWindowed) {
+				wh[0] = _lastWndInnerRect.right - _lastWndInnerRect.left;
+				wh[1] = _lastWndInnerRect.bottom - _lastWndInnerRect.top;
+			} else {
+				wh[0] = _wndRect.right - _wndRect.left;
+				wh[1] = _wndRect.bottom - _wndRect.top;
+			}
+			_eventDispatcher.dispatchEvent(this, ApplicationEvent::FULLSCREEN_TOGGLING, wh);
+
+			_changeWindow(true, true);
+			if (visibled) ShowWindow(_hWnd, SW_SHOWDEFAULT);
 #endif
 
-		bool fullscreenChange = true;
-		_eventDispatcher.dispatchEvent(this, ApplicationEvent::RESIZED, &fullscreenChange);
+			_eventDispatcher.dispatchEvent(this, ApplicationEvent::RESIZED);
+		}
 	}
 
 	void Application::getInnerSize(i32& w, i32& h) {
@@ -112,17 +129,22 @@ namespace aurora {
 
 	void Application::setWindowedRect(const Rect<i32>& rect) {
 		Rect<i32> out;
-		_adjustWindowRect(rect, out);
+		if (_adjustWindowRect(rect, out)) {
+			_lastWndInnerRect.left = rect.left;
+			_lastWndInnerRect.right = rect.right;
+			_lastWndInnerRect.top = rect.top;
+			_lastWndInnerRect.bottom = rect.bottom;
 
-		if (!_windowedRect.isEqual(out)) {
-			bool isResize = _windowedRect.getWidth() != rect.getWidth() || _windowedRect.getHeight() != rect.getHeight();
-			_windowedRect.set(rect);
+			if (!_windowedRect.isEqual(out)) {
+				bool isResize = _windowedRect.getWidth() != rect.getWidth() || _windowedRect.getHeight() != rect.getHeight();
+				_windowedRect.set(rect);
 
-			if (_isWindowed) {
+				if (_isWindowed) {
 #if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
-				_updateWindowRectValue();
-				_changeWindow(false, true);
+					_updateWindowRectValue();
+					_changeWindow(false, true);
 #endif
+				}
 			}
 		}
 	}
@@ -241,11 +263,12 @@ namespace aurora {
 		return _appPath;
 	}
 
-	void Application::_adjustWindowRect(const Rect<i32>& in, Rect<i32>& out) {
+	bool Application::_adjustWindowRect(const Rect<i32>& in, Rect<i32>& out) {
 #if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
 		RECT rect = { in.left, in.top, in.right, in.bottom };
-		AdjustWindowRectEx(&rect, _getWindowStyle(), FALSE, _getWindowExStyle());
+		auto rst = AdjustWindowRectEx(&rect, _getWindowStyle(), FALSE, _getWindowExStyle());
 		out.set(rect.left, rect.top, rect.right, rect.bottom);
+		return rst;
 #elif
 		out.set(in);
 #endif
@@ -328,10 +351,7 @@ namespace aurora {
 		}
 		case WM_SIZE:
 		{
-			if (app) {
-				bool fullscreenChange = false;
-				app->_eventDispatcher.dispatchEvent(app, ApplicationEvent::RESIZED, &fullscreenChange);
-			}
+			if (app) app->_eventDispatcher.dispatchEvent(app, ApplicationEvent::RESIZED);
 
 			break;
 		}

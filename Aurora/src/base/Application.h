@@ -8,6 +8,7 @@
 namespace aurora {
 	enum class ApplicationEvent : ui8 {
 		UPDATE,
+		FULLSCREEN_TOGGLING,
 		RESIZED,
 		FOCUS_IN,
 		FOCUS_OUT,
@@ -69,18 +70,20 @@ namespace aurora {
 
 		mutable Rect<i32> _windowedRect;
 		Rect<i32> _wndRect;
-
+		
 		mutable std::string _appPath;
 
 		f64 _frameInterval; //microsecond
 		i64 _time;
 
-		void AE_CALL _adjustWindowRect(const Rect<i32>& in, Rect<i32>& out);
+		bool AE_CALL _adjustWindowRect(const Rect<i32>& in, Rect<i32>& out);
 		void AE_CALL _recordWindowedRect() const;
 
 #if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
 		HINSTANCE _hIns;
 		HWND _hWnd;
+
+		RECT _lastWndInnerRect;
 
 		DWORD AE_CALL _getWindowStyle() const;
 		DWORD AE_CALL _getWindowExStyle() const;
