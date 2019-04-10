@@ -10,6 +10,23 @@ namespace aurora {
 namespace aurora::modules::graphics {
 	class IGraphicsModule;
 
+	
+	class AE_DLL GraphicsAdapter {
+	public:
+		GraphicsAdapter();
+
+		ui32 vendorId;
+		ui32 deviceId;
+		ui64 dedicatedSystemMemory;
+		ui64 dedicatedVideoMemory;
+		ui64 sharedSystemMemory;
+		std::string description;
+
+		static void query(std::vector<GraphicsAdapter>& adapters);
+		static GraphicsAdapter* autoChoose(std::vector<GraphicsAdapter>& adapters);
+	};
+
+
 	class AE_DLL IObject : public Ref {
 	public:
 		virtual ~IObject();
@@ -165,7 +182,7 @@ namespace aurora::modules::graphics {
 			return ModuleType::GRAPHICS;
 		}
 
-		virtual bool AE_CALL createDevice() = 0;
+		virtual bool AE_CALL createDevice(const GraphicsAdapter* adapter) = 0;
 
 		virtual IIndexBuffer* AE_CALL createIndexBuffer() = 0;
 		virtual IProgram* AE_CALL createProgram() = 0;

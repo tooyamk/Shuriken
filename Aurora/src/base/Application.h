@@ -8,7 +8,6 @@
 namespace aurora {
 	enum class ApplicationEvent : ui8 {
 		UPDATE,
-		FULLSCREEN_TOGGLING,
 		RESIZED,
 		FOCUS_IN,
 		FOCUS_OUT,

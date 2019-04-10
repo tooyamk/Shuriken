@@ -10,7 +10,7 @@ namespace aurora::modules::graphics::win_glew {
 		Graphics(Application* app, IProgramSourceTranslator* trans);
 		virtual ~Graphics();
 
-		virtual bool AE_CALL createDevice() override;
+		virtual bool AE_CALL createDevice(const GraphicsAdapter* adapter) override;
 
 		virtual IIndexBuffer* AE_CALL createIndexBuffer() override;
 		virtual IProgram* AE_CALL createProgram() override;
@@ -56,6 +56,7 @@ namespace aurora::modules::graphics::win_glew {
 		ui32 _intVer;
 		std::string _strVer;
 
+		bool AE_CALL _createDevice(const GraphicsAdapter& adapter);
 		void AE_CALL _release();
 	};
 }

@@ -1,7 +1,58 @@
 #include "IGraphicsModule.h"
 #include "base/String.h"
 
+#if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
+#include <dxgi.h>
+#pragma comment(lib,"dxgi.lib")
+#endif
+
 namespace aurora::modules::graphics {
+	GraphicsAdapter::GraphicsAdapter() :
+		vendorId(0),
+		deviceId(0),
+		dedicatedSystemMemory(0),
+		dedicatedVideoMemory(0),
+		sharedSystemMemory(0) {
+	}
+
+	void GraphicsAdapter::query(std::vector<GraphicsAdapter>& adapters) {
+#if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
+		IDXGIFactory* factory = nullptr;
+		if (FAILED(CreateDXGIFactory1(__uuidof(IDXGIFactory), (void**)&factory))) return;
+
+		for (UINT i = 0;; ++i) {
+			IDXGIAdapter* adapter = nullptr;
+			if (factory->EnumAdapters(i, &adapter) == DXGI_ERROR_NOT_FOUND) break;
+
+			DXGI_ADAPTER_DESC desc;
+			memset(&desc, 0, sizeof(DXGI_ADAPTER_DESC));
+			
+			if (FAILED(adapter->GetDesc(&desc))) {
+				adapter->Release();
+				continue;
+			}
+
+			auto& ga = adapters.emplace_back();
+			ga.vendorId = desc.VendorId;
+			ga.deviceId = desc.DeviceId;
+			ga.dedicatedSystemMemory = desc.DedicatedSystemMemory;
+			ga.dedicatedVideoMemory = desc.DedicatedVideoMemory;
+			ga.sharedSystemMemory = desc.SharedSystemMemory;
+			ga.description = String::UnicodeToUtf8(desc.Description);
+			
+			adapter->Release();
+		}
+		
+		factory->Release();
+#endif
+	}
+
+	GraphicsAdapter* GraphicsAdapter::autoChoose(std::vector<GraphicsAdapter>& adapters) {
+		for (auto& ga : adapters) return &ga;
+		return nullptr;
+	}
+
+
 	IGraphicsModule::~IGraphicsModule() {
 	}
 

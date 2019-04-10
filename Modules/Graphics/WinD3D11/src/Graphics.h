@@ -10,7 +10,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		Graphics(Application* app);
 		virtual ~Graphics();
 
-		virtual bool AE_CALL createDevice() override;
+		virtual bool AE_CALL createDevice(const GraphicsAdapter* adapter) override;
 
 		virtual IIndexBuffer* AE_CALL createIndexBuffer() override;
 		virtual IProgram* AE_CALL createProgram() override;
@@ -31,11 +31,6 @@ namespace aurora::modules::graphics::win_d3d11 {
 		}
 
 	private:
-		bool _isFullscreen;
-		bool _sizeChanging = false;
-		UINT _width;
-		UINT _height;
-
 		Application* _app;
 
 		DXGI_RATIONAL _refreshRate;
@@ -49,11 +44,9 @@ namespace aurora::modules::graphics::win_d3d11 {
 		events::EventListener<ApplicationEvent, Graphics> _resizedListener;
 		void AE_CALL _resizedHandler(events::Event<ApplicationEvent>& e);
 
-		events::EventListener<ApplicationEvent, Graphics> _fullscreenTogglingListener;
-		void AE_CALL _fullscreenTogglingHandler(events::Event<ApplicationEvent>& e);
+		bool AE_CALL _createDevice(const GraphicsAdapter& adapter);
 
 		void AE_CALL _release();
-		void AE_CALL _toggleFullscreen(bool fullscreen, UINT w, UINT h);
 		void AE_CALL _resize(UINT w, UINT h);
 	};
 }

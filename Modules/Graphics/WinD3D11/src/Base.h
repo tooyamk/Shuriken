@@ -11,5 +11,5 @@
 #include <d3dcompiler.h>
 #pragma  comment(lib,"d3dcompiler.lib")
 
-//#pragma  comment(lib,"dxgi.lib")
+#pragma  comment(lib,"dxgi.lib")
 #pragma  comment(lib,"dxguid.lib")

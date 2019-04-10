@@ -89,21 +89,10 @@ namespace aurora {
 
 #if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
 			_updateWindowRectValue();
-
-			i32 wh[2];
-			if (_isWindowed) {
-				wh[0] = _lastWndInnerRect.right - _lastWndInnerRect.left;
-				wh[1] = _lastWndInnerRect.bottom - _lastWndInnerRect.top;
-			} else {
-				wh[0] = _wndRect.right - _wndRect.left;
-				wh[1] = _wndRect.bottom - _wndRect.top;
-			}
-			_eventDispatcher.dispatchEvent(this, ApplicationEvent::FULLSCREEN_TOGGLING, wh);
-
 			_changeWindow(true, true);
 			if (visibled) ShowWindow(_hWnd, SW_SHOWDEFAULT);
 #endif
-
+			
 			_eventDispatcher.dispatchEvent(this, ApplicationEvent::RESIZED);
 		}
 	}
@@ -317,7 +306,10 @@ namespace aurora {
 	}
 
 	void Application::_changeWindow(bool style, bool posOrSize) {
-		if (style) SetWindowLongPtr(_hWnd, GWL_STYLE, _getWindowStyle());
+		if (style) {
+			SetWindowLongPtr(_hWnd, GWL_STYLE, _getWindowStyle());
+			SetWindowLongPtr(_hWnd, GWL_EXSTYLE, _getWindowExStyle());
+		}
 		if (posOrSize) {
 			ui32 flags = SWP_NOACTIVATE;
 			if (_isWindowed) {

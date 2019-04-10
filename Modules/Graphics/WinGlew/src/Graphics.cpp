@@ -20,11 +20,61 @@ namespace aurora::modules::graphics::win_glew {
 		Ref::setNull(_app);
 	}
 
-	bool Graphics::createDevice() {
-		if (_dc) return false;
+	bool Graphics::createDevice(const GraphicsAdapter* adapter) {
+		if (_dc || !_app->Win_getHWND()) return false;
+
+		if (adapter) {
+			return _createDevice(*adapter);
+		} else {
+			std::vector<GraphicsAdapter> adapters;
+			GraphicsAdapter::query(adapters);
+			adapter = GraphicsAdapter::autoChoose(adapters);
+			if (adapter) return _createDevice(*adapter);
+			return false;
+		}
+	}
+
+	bool Graphics::_createDevice(const GraphicsAdapter& adapter) {
+		const auto VEN = L"VEN_";
+		const auto VEN_LEN = wcslen(VEN);
+		const auto DEV = L"DEV_";
+		const auto DEV_LEN = wcslen(DEV);
+		const auto END = L"&";
+
+		DISPLAY_DEVICEW dd;
+		bool findAdapter = false;
+		for (ui32 i = 0; ; ++i) {
+			memset(&dd, 0, sizeof(DISPLAY_DEVICEW));
+			dd.cb = sizeof(DISPLAY_DEVICEW);
+
+			if (!EnumDisplayDevicesW(nullptr, i, &dd, 0)) break;
+			if (!(dd.StateFlags & DISPLAY_DEVICE_ACTIVE)) continue;
+
+			auto begin = wcsstr(dd.DeviceID, VEN);
+			if (!begin) continue;
+
+			auto end = wcsstr(begin, END);
+			if (!end) continue;
+
+			if (adapter.vendorId != wcstoul(begin + VEN_LEN, &end, 16)) continue;
+
+			begin = wcsstr(dd.DeviceID, DEV);
+			if (!begin) continue;
+
+			end = wcsstr(begin, END);
+			if (!end) continue;
+
+			if (adapter.deviceId != wcstoul(begin + DEV_LEN, &end, 16)) continue;
+
+			findAdapter = true;
+			break;
+		}
+
+		if (!findAdapter) return false;
+
+		auto dcw = CreateDCW(nullptr, dd.DeviceName, nullptr, nullptr);
 
 		HWND hWnd = _app->Win_getHWND();
-		if (!hWnd) return false;
 
 		_dc = GetDC(hWnd);
 		if (_dc) {
@@ -61,7 +111,7 @@ namespace aurora::modules::graphics::win_glew {
 
 			auto pf = ChoosePixelFormat(_dc, &pfd);
 			if (!SetPixelFormat(_dc, pf, &pfd)) return false;
-			
+
 			_rc = wglCreateContext(_dc);
 			if (_rc) {
 				wglMakeCurrent(_dc, _rc);
