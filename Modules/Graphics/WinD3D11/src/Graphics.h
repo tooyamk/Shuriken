@@ -22,24 +22,34 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		virtual void AE_CALL clear() override;
 
-		inline ID3D11Device* AE_CALL getDevice() const {
+		inline ID3D11Device5* AE_CALL getDevice() const {
 			return _device;
 		}
 
-		inline ID3D11DeviceContext* AE_CALL getContext() const {
+		inline ID3D11DeviceContext4* AE_CALL getContext() const {
 			return _context;
 		}
 
 	private:
+		class DXObjGuard {
+		public:
+			~DXObjGuard();
+
+			void add(IUnknown* obj);
+			void clear();
+		private:
+			std::vector<IUnknown*> _objs;
+		};
+
+
 		Application* _app;
 
 		DXGI_RATIONAL _refreshRate;
-		D3D_DRIVER_TYPE _driverType;
-		D3D_FEATURE_LEVEL _featureLevel;
-		ID3D11Device* _device;
-		ID3D11DeviceContext* _context;
-		IDXGISwapChain* _swapChain;
-		ID3D11RenderTargetView* _backBufferTarget;
+		//D3D_DRIVER_TYPE _driverType;
+		ID3D11Device5* _device;
+		ID3D11DeviceContext4* _context;
+		IDXGISwapChain4* _swapChain;
+		ID3D11RenderTargetView1* _backBufferTarget;
 
 		events::EventListener<ApplicationEvent, Graphics> _resizedListener;
 		void AE_CALL _resizedHandler(events::Event<ApplicationEvent>& e);

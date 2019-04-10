@@ -56,7 +56,6 @@ namespace aurora::modules::graphics::win_glew {
 		ui32 _intVer;
 		std::string _strVer;
 
-		bool AE_CALL _createDevice(const GraphicsAdapter& adapter);
 		void AE_CALL _release();
 	};
 }

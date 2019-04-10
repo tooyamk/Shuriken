@@ -1,13 +1,27 @@
 #include "Graphics.h"
 #include "base/Application.h"
 #include "CreateModule.h"
+#include <d3d11shader.h>
 
 namespace aurora::modules::graphics::win_d3d11 {
+	Graphics::DXObjGuard::~DXObjGuard() {
+		clear();
+	}
+
+	void Graphics::DXObjGuard::add(IUnknown* obj) {
+		if (obj) _objs.emplace_back(obj);
+	}
+
+	void Graphics::DXObjGuard::clear() {
+		for (auto obj : _objs) obj->Release();
+		_objs.clear();
+	}
+
+
 	Graphics::Graphics(Application* app) :
 		_app(app->ref<Application>()),
 		_refreshRate({0, 1}),
-		_driverType(D3D_DRIVER_TYPE_NULL),
-		_featureLevel(D3D_FEATURE_LEVEL_11_0),
+		//_driverType(D3D_DRIVER_TYPE_NULL),
 		_device(nullptr),
 		_context(nullptr),
 		_swapChain(nullptr),
@@ -30,25 +44,36 @@ namespace aurora::modules::graphics::win_d3d11 {
 		} else {
 			std::vector<GraphicsAdapter> adapters;
 			GraphicsAdapter::query(adapters);
-			adapter = GraphicsAdapter::autoChoose(adapters);
-			if (adapter) return _createDevice(*adapter);
+			std::vector<ui32> indices;
+			GraphicsAdapter::autoSort(adapters, indices);
+
+			for (auto& idx : indices) {
+				if (_createDevice(adapters[idx])) return true;
+			}
 			return false;
 		}
 	}
 
 	bool Graphics::_createDevice(const GraphicsAdapter& adapter) {
-		IDXGIFactory * dxgFctory = nullptr;
-		if (FAILED(CreateDXGIFactory1(__uuidof(IDXGIFactory), (void**)&dxgFctory))) return false;
+		DXObjGuard objs;
+
+		IDXGIFactory6* dxgFctory = nullptr;
+		UINT flags = 0;
+#ifdef AE_DEBUG
+		flags |= DXGI_CREATE_FACTORY_DEBUG;
+#endif
+		if (FAILED(CreateDXGIFactory2(flags, __uuidof(IDXGIFactory6), (void**)&dxgFctory))) return false;
+		objs.add(dxgFctory);
 		dxgFctory->MakeWindowAssociation(_app->Win_getHWND(), DXGI_MWA_NO_WINDOW_CHANGES | DXGI_MWA_NO_ALT_ENTER);
 
-		IDXGIAdapter* dxgAdapter = nullptr;
+		IDXGIAdapter3* dxgAdapter = nullptr;
 		for (UINT i = 0;; ++i) {
-			if (dxgFctory->EnumAdapters(i, &dxgAdapter) == DXGI_ERROR_NOT_FOUND) break;
+			if (dxgFctory->EnumAdapters1(i, (IDXGIAdapter1**)&dxgAdapter) == DXGI_ERROR_NOT_FOUND) break;
+			objs.add(dxgAdapter);
 
 			DXGI_ADAPTER_DESC desc;
 			memset(&desc, 0, sizeof(DXGI_ADAPTER_DESC));
 			if (FAILED(dxgAdapter->GetDesc(&desc)) || desc.DeviceId != adapter.deviceId || desc.VendorId != adapter.vendorId) {
-				dxgAdapter->Release();
 				dxgAdapter = nullptr;
 				continue;
 			} else {
@@ -64,30 +89,31 @@ namespace aurora::modules::graphics::win_d3d11 {
 		f32 maxRefreshRate = 0.f;
 		for (UINT i = 0;; ++i) {
 			IDXGIOutput* output = nullptr;
+			auto fiwehfoew = dxgAdapter->EnumOutputs(i, &output);
 			if (dxgAdapter->EnumOutputs(i, &output) == DXGI_ERROR_NOT_FOUND) break;
+			objs.add(output);
 
 			ui32 numSupportedModes = 0;
-			if (FAILED(output->GetDisplayModeList(fmt, 0, &numSupportedModes, nullptr))) {
-				output->Release();
-				continue;
-			}
+			if (FAILED(output->GetDisplayModeList(fmt, 0, &numSupportedModes, nullptr))) continue;
 
 			auto supportedModes = new DXGI_MODE_DESC[numSupportedModes];
 			memset(supportedModes, 0, sizeof(DXGI_MODE_DESC) * numSupportedModes);
 			if (FAILED(output->GetDisplayModeList(fmt, 0, &numSupportedModes, supportedModes))) {
 				delete[] supportedModes;
-				output->Release();
-
 				continue;
 			}
 
 			for (ui32 i = 0; i < numSupportedModes; ++i) {
 				auto& m = supportedModes[i];
 				ui32 area = m.Width * m.Height;
-				if (maxResolutionArea <= area) {
+				if (maxResolutionArea < area) {
+					maxResolutionArea = area;
+					_refreshRate.Numerator = 0;
+					_refreshRate.Denominator = 1;
+					maxRefreshRate = (f32)m.RefreshRate.Numerator / (f32)m.RefreshRate.Denominator;
+				} else if (maxResolutionArea == area) {
 					f32 rr = (f32)m.RefreshRate.Numerator / (f32)m.RefreshRate.Denominator;
 					if (rr > maxRefreshRate) {
-						maxResolutionArea = area;
 						maxRefreshRate = rr;
 
 						_refreshRate.Numerator = m.RefreshRate.Numerator;
@@ -97,21 +123,25 @@ namespace aurora::modules::graphics::win_d3d11 {
 			}
 
 			delete[] supportedModes;
-			output->Release();
 		}
 
+		if (maxResolutionArea == 0) return false;
+
+		/*
 		D3D_DRIVER_TYPE driverTypes[] =
 		{
 		   D3D_DRIVER_TYPE_HARDWARE, D3D_DRIVER_TYPE_WARP,
 		   D3D_DRIVER_TYPE_REFERENCE, D3D_DRIVER_TYPE_SOFTWARE
 		};
 		ui32 totalDriverTypes = ARRAYSIZE(driverTypes);
+		*/
 
 		D3D_FEATURE_LEVEL featureLevels[] =
 		{
-		   D3D_FEATURE_LEVEL_11_0,
-		   D3D_FEATURE_LEVEL_10_1,
-		   D3D_FEATURE_LEVEL_10_0
+			D3D_FEATURE_LEVEL_11_1,
+			D3D_FEATURE_LEVEL_11_0,
+			D3D_FEATURE_LEVEL_10_1,
+			D3D_FEATURE_LEVEL_10_0
 		};
 		ui32 totalFeatureLevels = ARRAYSIZE(featureLevels);
 
@@ -119,22 +149,29 @@ namespace aurora::modules::graphics::win_d3d11 {
 #ifdef AE_DEBUG
 		creationFlags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
-
-		HRESULT hr;
-
+		/*
 		for (ui32 i = 0; i < totalDriverTypes; ++i) {
-			auto hr = D3D11CreateDevice(0, driverTypes[i], 0, creationFlags,
+			auto hr = D3D11CreateDevice(dxgAdapter, D3D_DRIVER_TYPE_UNKNOWN, nullptr, creationFlags,
 				featureLevels, totalFeatureLevels,
-				D3D11_SDK_VERSION, &_device, &_featureLevel, &_context);
+				D3D11_SDK_VERSION, (ID3D11Device**)&_device, &_featureLevel, (ID3D11DeviceContext**)&_context);
 
 			if (SUCCEEDED(hr)) {
 				_driverType = driverTypes[i];
 				break;
 			}
 		}
+		*/
 
-		if (FAILED(hr)) {
-			dxgFctory->Release();
+		if (FAILED(D3D11CreateDevice(dxgAdapter, D3D_DRIVER_TYPE_UNKNOWN, nullptr, creationFlags,
+			featureLevels, totalFeatureLevels,
+			D3D11_SDK_VERSION, (ID3D11Device**)&_device, nullptr, (ID3D11DeviceContext**)&_context))) {
+			_release();
+			return false;
+		}
+
+		//_driverType = D3D_DRIVER_TYPE_UNKNOWN;
+
+		if (!_device) {
 			_release();
 			return false;
 		}
@@ -160,13 +197,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 		swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 		swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
-		if (FAILED(dxgFctory->CreateSwapChain(_device, &swapChainDesc, &_swapChain))) {
-			dxgFctory->Release();
+		if (FAILED(dxgFctory->CreateSwapChain(_device, &swapChainDesc, (IDXGISwapChain**)&_swapChain))) {
 			_release();
 			return false;
 		}
-
-		dxgFctory->Release();
 
 		_resize(w, h);
 
@@ -256,13 +290,13 @@ namespace aurora::modules::graphics::win_d3d11 {
 				println("swap chain GetBuffer error");
 			}
 
-			if (FAILED(_device->CreateRenderTargetView(backBufferTexture, nullptr, &_backBufferTarget))) {
+			if (FAILED(_device->CreateRenderTargetView(backBufferTexture, nullptr, (ID3D11RenderTargetView**)&_backBufferTarget))) {
 				if (backBufferTexture) backBufferTexture->Release();
 				println("swap chain CreateRenderTargetView error");
 			}
 			backBufferTexture->Release();
 
-			_context->OMSetRenderTargets(1, &_backBufferTarget, nullptr);
+			_context->OMSetRenderTargets(1, (ID3D11RenderTargetView**)&_backBufferTarget, nullptr);
 
 			D3D11_VIEWPORT vp;
 			vp.Width = f32(w);

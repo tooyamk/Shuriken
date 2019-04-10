@@ -22,8 +22,12 @@ namespace aurora::modules::graphics {
 		ui64 sharedSystemMemory;
 		std::string description;
 
-		static void query(std::vector<GraphicsAdapter>& adapters);
+		static void query(std::vector<GraphicsAdapter>& dst);
 		static GraphicsAdapter* autoChoose(std::vector<GraphicsAdapter>& adapters);
+		static void autoSort(const std::vector<GraphicsAdapter>& adapters, std::vector<ui32>& dst);
+
+	private:
+		static f64 _calcScore(const GraphicsAdapter& adapter);
 	};
 
 

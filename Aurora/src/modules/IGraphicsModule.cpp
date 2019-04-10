@@ -15,7 +15,7 @@ namespace aurora::modules::graphics {
 		sharedSystemMemory(0) {
 	}
 
-	void GraphicsAdapter::query(std::vector<GraphicsAdapter>& adapters) {
+	void GraphicsAdapter::query(std::vector<GraphicsAdapter>& dst) {
 #if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
 		IDXGIFactory* factory = nullptr;
 		if (FAILED(CreateDXGIFactory1(__uuidof(IDXGIFactory), (void**)&factory))) return;
@@ -32,7 +32,7 @@ namespace aurora::modules::graphics {
 				continue;
 			}
 
-			auto& ga = adapters.emplace_back();
+			auto& ga = dst.emplace_back();
 			ga.vendorId = desc.VendorId;
 			ga.deviceId = desc.DeviceId;
 			ga.dedicatedSystemMemory = desc.DedicatedSystemMemory;
@@ -48,8 +48,56 @@ namespace aurora::modules::graphics {
 	}
 
 	GraphicsAdapter* GraphicsAdapter::autoChoose(std::vector<GraphicsAdapter>& adapters) {
-		for (auto& ga : adapters) return &ga;
-		return nullptr;
+		GraphicsAdapter* p = nullptr;
+		f64 highestScore = -1.;
+		for (auto& adapter : adapters) {
+			f64 score = _calcScore(adapter);
+
+			if (highestScore < score) {
+				highestScore = score;
+				p = &adapter;
+			}
+		}
+		return p;
+	}
+
+	void GraphicsAdapter::autoSort(const std::vector<GraphicsAdapter>& adapters, std::vector<ui32>& dst) {
+		std::vector<f64> scores;
+		dst.clear();
+		for (ui32 i = 0, n = adapters.size(); i < n; ++i) {
+			scores.emplace_back(_calcScore(adapters[i]));
+			dst.emplace_back(i);
+		}
+
+		std::sort(dst.begin(), dst.end(), [&scores](const ui32 idx1, const ui32 idx2) {
+			return scores[idx1] > scores[idx2];
+		});
+	}
+
+	f64 GraphicsAdapter::_calcScore(const GraphicsAdapter& adapter) {
+		const auto K2G = f64(1024 * 1024 * 1024);
+
+		f64 score = 0.;
+
+		score += adapter.dedicatedVideoMemory / K2G * 0.2;
+		score += adapter.dedicatedSystemMemory / K2G * 0.1;
+		score += adapter.sharedSystemMemory / K2G * 0.075;
+
+		switch (adapter.vendorId) {
+		case 0x10DE://nvidia
+			score += 1.0;
+			break;
+		case 0x1002://amd
+			score += 1.0;
+			break;
+		case 0x8086://intel
+			score += 0.5;
+			break;
+		default:
+			break;
+		}
+
+		return score;
 	}
 
 
