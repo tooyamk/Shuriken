@@ -13,3 +13,15 @@
 #pragma  comment(lib,"dxgi.lib")
 
 #pragma  comment(lib,"dxguid.lib")
+
+namespace aurora::modules::graphics::win_d3d11 {
+	class DXObjGuard {
+	public:
+		~DXObjGuard();
+
+		void add(IUnknown* obj);
+		void clear();
+	private:
+		std::vector<IUnknown*> _objs;
+	};
+}

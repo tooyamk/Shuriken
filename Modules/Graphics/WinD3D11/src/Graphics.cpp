@@ -4,23 +4,10 @@
 #include <d3d11shader.h>
 
 namespace aurora::modules::graphics::win_d3d11 {
-	Graphics::DXObjGuard::~DXObjGuard() {
-		clear();
-	}
-
-	void Graphics::DXObjGuard::add(IUnknown* obj) {
-		if (obj) _objs.emplace_back(obj);
-	}
-
-	void Graphics::DXObjGuard::clear() {
-		for (auto obj : _objs) obj->Release();
-		_objs.clear();
-	}
-
-
 	Graphics::Graphics(Application* app) :
 		_app(app->ref<Application>()),
 		_refreshRate({0, 1}),
+		_featureLevel(D3D_FEATURE_LEVEL_9_1),
 		//_driverType(D3D_DRIVER_TYPE_NULL),
 		_device(nullptr),
 		_context(nullptr),
@@ -57,18 +44,15 @@ namespace aurora::modules::graphics::win_d3d11 {
 	bool Graphics::_createDevice(const GraphicsAdapter& adapter) {
 		DXObjGuard objs;
 
-		IDXGIFactory6* dxgFctory = nullptr;
-		UINT flags = 0;
-#ifdef AE_DEBUG
-		flags |= DXGI_CREATE_FACTORY_DEBUG;
-#endif
-		if (FAILED(CreateDXGIFactory2(flags, __uuidof(IDXGIFactory6), (void**)&dxgFctory))) return false;
+		IDXGIFactory2* dxgFctory = nullptr;
+
+		if (FAILED(CreateDXGIFactory1(__uuidof(IDXGIFactory2), (void**)&dxgFctory))) return false;
 		objs.add(dxgFctory);
 		dxgFctory->MakeWindowAssociation(_app->Win_getHWND(), DXGI_MWA_NO_WINDOW_CHANGES | DXGI_MWA_NO_ALT_ENTER);
 
-		IDXGIAdapter3* dxgAdapter = nullptr;
+		IDXGIAdapter* dxgAdapter = nullptr;
 		for (UINT i = 0;; ++i) {
-			if (dxgFctory->EnumAdapters1(i, (IDXGIAdapter1**)&dxgAdapter) == DXGI_ERROR_NOT_FOUND) break;
+			if (dxgFctory->EnumAdapters(i, &dxgAdapter) == DXGI_ERROR_NOT_FOUND) break;
 			objs.add(dxgAdapter);
 
 			DXGI_ADAPTER_DESC desc;
@@ -169,11 +153,32 @@ namespace aurora::modules::graphics::win_d3d11 {
 			return false;
 		}
 
+
 		//_driverType = D3D_DRIVER_TYPE_UNKNOWN;
 
 		if (!_device) {
 			_release();
 			return false;
+		}
+
+		_featureLevel = _device->GetFeatureLevel();
+		switch (_featureLevel) {
+		case D3D_FEATURE_LEVEL_9_1:
+		case D3D_FEATURE_LEVEL_9_2:
+			_shaderModel = "4.0.level.9.1";
+			break;
+		case D3D_FEATURE_LEVEL_9_3:
+			_shaderModel = "4.0.level.9.3";//??
+			break;
+		case D3D_FEATURE_LEVEL_10_0:
+			_shaderModel = "4.0";
+			break;
+		case D3D_FEATURE_LEVEL_10_1:
+			_shaderModel = "4.1";
+			break;
+		default:
+			_shaderModel = "5.0";
+			break;
 		}
 
 		i32 w, h;
@@ -260,6 +265,9 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		_refreshRate.Numerator = 0;
 		_refreshRate.Denominator = 1;
+
+		_featureLevel = D3D_FEATURE_LEVEL_9_1;
+		_shaderModel = "";
 	}
 
 	void Graphics::_resize(UINT w, UINT h) {

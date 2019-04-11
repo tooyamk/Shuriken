@@ -45,6 +45,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 		std::vector<InVertexBufferInfo> _inVerBufInfos;
 		std::vector<InLayout> _inLayouts;
 
+		ui32 _numConstBuffers;
+
 		void AE_CALL _release();
 		ID3DBlob* AE_CALL _compileShader(const ProgramSource& source, const i8* target);
 		ID3D11InputLayout* _getOrCreateInputLayout();

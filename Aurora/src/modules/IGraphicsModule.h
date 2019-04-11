@@ -143,11 +143,11 @@ namespace aurora::modules::graphics {
 
 		bool isValid() const;
 
-		inline static std::string toHLSLShaderModeel(const ProgramSource& source) {
-			return toHLSLShaderModeel(source.stage, source.version);
+		inline static std::string toHLSLShaderModel(const ProgramSource& source) {
+			return toHLSLShaderModel(source.stage, source.version);
 		}
 
-		static std::string toHLSLShaderModeel(ProgramStage stage, const std::string& version);
+		static std::string toHLSLShaderModel(ProgramStage stage, const std::string& version);
 
 		inline static std::string getEntryPoint(const ProgramSource& source) {
 			return getEntryPoint(source.entryPoint);

@@ -37,7 +37,7 @@ namespace aurora::modules::graphics::program_source_translator {
 		}
 
 		if (source.language == ProgramLanguage::HLSL) {
-			std::wstring profile = String::Utf8ToUnicode(ProgramSource::toHLSLShaderModeel(source.stage, source.version));
+			std::wstring profile = String::Utf8ToUnicode(ProgramSource::toHLSLShaderModel(source.stage, source.version));
 
 			std::vector<DxcDefine> dxcDefines;
 

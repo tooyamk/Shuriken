@@ -24,7 +24,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_ps(nullptr),
 		_inElements(nullptr),
 		_numInElements(0),
-		_curInLayout(nullptr) {
+		_curInLayout(nullptr),
+		_numConstBuffers(0) {
 	}
 
 	Program::~Program() {
@@ -34,20 +35,26 @@ namespace aurora::modules::graphics::win_d3d11 {
 	bool Program::upload(const ProgramSource& vert, const ProgramSource& frag) {
 		_release();
 
-		_vertBlob = _compileShader(vert, "vs_5_0");
+		DXObjGuard objs;
+
+		auto g = (Graphics*)_graphics;
+
+		auto& sm = g->getSupportShaderModel();
+
+		_vertBlob = _compileShader(vert, ProgramSource::toHLSLShaderModel(ProgramStage::VS, vert.version.empty() ? sm : vert.version).c_str());
 		if (!_vertBlob) return false;
 
-		auto fragBuffer = _compileShader(frag, "ps_5_0");
+		auto fragBuffer = _compileShader(frag, ProgramSource::toHLSLShaderModel(ProgramStage::PS, frag.version.empty() ? sm : frag.version).c_str());
 		if (!fragBuffer) {
 			_release();
 			return false;
 		}
+		objs.add(fragBuffer);
 
-		auto device = ((Graphics*)_graphics)->getDevice();
+		auto device = g->getDevice();
 
 		HRESULT hr = device->CreateVertexShader(_vertBlob->GetBufferPointer(), _vertBlob->GetBufferSize(), 0, &_vs);
 		if (FAILED(hr)) {
-			fragBuffer->Release();
 			_release();
 			return false;
 		}
@@ -55,12 +62,12 @@ namespace aurora::modules::graphics::win_d3d11 {
 		ID3D11ShaderReflection* sr = nullptr;
 		hr = D3DReflect(_vertBlob->GetBufferPointer(), _vertBlob->GetBufferSize(), IID_ID3D11ShaderReflection, (void**)&sr);
 		if (FAILED(hr)) {
-			fragBuffer->Release();
 			_release();
 			return false;
 		}
 
 		D3D11_SHADER_DESC sDesc;
+		objs.add(sr);
 		sr->GetDesc(&sDesc);
 		_numInElements = sDesc.InputParameters;
 		if (_numInElements > 0) {
@@ -130,26 +137,23 @@ namespace aurora::modules::graphics::win_d3d11 {
 				}
 			}
 		}
-		sr->Release();
 
 		_curInLayout = _getOrCreateInputLayout();
 		_inElementsDirty = false;
 		
 		if (FAILED(hr)) {
-			fragBuffer->Release();
 			_release();
 			return false;
 		}
+
+		_numConstBuffers = sDesc.ConstantBuffers;
 
 		ID3D11PixelShader* fs = nullptr;
 		hr = device->CreatePixelShader(fragBuffer->GetBufferPointer(), fragBuffer->GetBufferSize(), 0, &_ps);
 		if (FAILED(hr)) {
-			fragBuffer->Release();
 			_release();
 			return false;
 		}
-
-		fragBuffer->Release();
 
 		return true;
 	}
@@ -238,7 +242,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 	ID3DBlob* Program::_compileShader(const ProgramSource& source, const i8* target) {
 		DWORD shaderFlags = D3DCOMPILE_ENABLE_STRICTNESS;
 
-#ifdef AE_DEBUG1
+#ifdef AE_DEBUG
 		shaderFlags |= D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
 #else
 		shaderFlags |= D3DCOMPILE_OPTIMIZATION_LEVEL3;

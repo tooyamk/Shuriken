@@ -198,7 +198,7 @@ namespace aurora::modules::graphics {
 			data.isValid();
 	}
 
-	std::string ProgramSource::toHLSLShaderModeel(ProgramStage stage, const std::string& version) {
+	std::string ProgramSource::toHLSLShaderModel(ProgramStage stage, const std::string& version) {
 		std::string sm;
 		switch (stage) {
 		case ProgramStage::VS:
@@ -225,13 +225,13 @@ namespace aurora::modules::graphics {
 		sm.push_back('_');
 
 		if (version.empty()) {
-			sm += "6_0";
+			sm += "5_0";
 		} else {
 			std::vector<std::string> vers;
 			String::split(version, ".", vers);
 			ui32 n = vers.size();
 			for (ui32 i = 0; i < n; ++i) {
-				if (i != 0) sm.push_back(L'_');
+				if (i != 0) sm.push_back('_');
 				sm += vers[i];
 			}
 		}

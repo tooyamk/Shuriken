@@ -44,5 +44,8 @@
     <ClCompile Include="src\IndexBuffer.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\Base.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

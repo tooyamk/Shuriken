@@ -30,21 +30,20 @@ namespace aurora::modules::graphics::win_d3d11 {
 			return _context;
 		}
 
+		inline D3D_FEATURE_LEVEL AE_CALL getFeatureLevel() const {
+			return _featureLevel;
+		}
+
+		inline const std::string& AE_CALL getSupportShaderModel() const {
+			return _shaderModel;
+		}
+
 	private:
-		class DXObjGuard {
-		public:
-			~DXObjGuard();
-
-			void add(IUnknown* obj);
-			void clear();
-		private:
-			std::vector<IUnknown*> _objs;
-		};
-
-
 		Application* _app;
 
 		DXGI_RATIONAL _refreshRate;
+		D3D_FEATURE_LEVEL _featureLevel;
+		std::string _shaderModel;
 		//D3D_DRIVER_TYPE _driverType;
 		ID3D11Device5* _device;
 		ID3D11DeviceContext4* _context;
