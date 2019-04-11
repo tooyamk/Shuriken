@@ -4,6 +4,7 @@
 
 namespace aurora::modules::graphics::win_d3d11 {
 	class Graphics;
+	class ConstantBuffer;
 
 	class AE_MODULE_DLL Program : public IProgram {
 	public:
@@ -45,7 +46,11 @@ namespace aurora::modules::graphics::win_d3d11 {
 		std::vector<InVertexBufferInfo> _inVerBufInfos;
 		std::vector<InLayout> _inLayouts;
 
+
+		//test
 		ui32 _numConstBuffers;
+		ConstantBuffer* _cb;
+
 
 		void AE_CALL _release();
 		ID3DBlob* AE_CALL _compileShader(const ProgramSource& source, const i8* target);

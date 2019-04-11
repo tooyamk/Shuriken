@@ -170,6 +170,13 @@ namespace aurora::modules::graphics {
 	}
 
 
+	IConstantBuffer::IConstantBuffer(IGraphicsModule& graphics) : IObject(graphics) {
+	}
+
+	IConstantBuffer::~IConstantBuffer() {
+	}
+
+
 	ProgramSource::ProgramSource() :
 		language(ProgramLanguage::UNKNOWN),
 		stage(ProgramStage::UNKNOWN),

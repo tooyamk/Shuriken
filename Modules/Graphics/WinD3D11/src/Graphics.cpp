@@ -212,6 +212,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return true;
 	}
 
+	IConstantBuffer* Graphics::createConstantBuffer() {
+		return new ConstantBuffer(*this);
+	}
+
 	IIndexBuffer* Graphics::createIndexBuffer() {
 		return new IndexBuffer(*this);
 	}

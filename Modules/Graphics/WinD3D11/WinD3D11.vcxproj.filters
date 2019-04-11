@@ -27,6 +27,9 @@
     <ClInclude Include="src\IndexBuffer.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\ConstantBuffer.h">
+      <Filter>src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Graphics.cpp">
@@ -45,6 +48,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\Base.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ConstantBuffer.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

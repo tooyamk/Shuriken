@@ -26,6 +26,9 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_numInElements(0),
 		_curInLayout(nullptr),
 		_numConstBuffers(0) {
+		_cb = (ConstantBuffer*)_graphics->createConstantBuffer();
+		f32 c[] = {1.0f, 0.0f, 0.0f};
+		_cb->stroage(16, &c);
 	}
 
 	Program::~Program() {
@@ -44,12 +47,12 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_vertBlob = _compileShader(vert, ProgramSource::toHLSLShaderModel(ProgramStage::VS, vert.version.empty() ? sm : vert.version).c_str());
 		if (!_vertBlob) return false;
 
-		auto fragBuffer = _compileShader(frag, ProgramSource::toHLSLShaderModel(ProgramStage::PS, frag.version.empty() ? sm : frag.version).c_str());
-		if (!fragBuffer) {
+		auto pixelBlob = _compileShader(frag, ProgramSource::toHLSLShaderModel(ProgramStage::PS, frag.version.empty() ? sm : frag.version).c_str());
+		if (!pixelBlob) {
 			_release();
 			return false;
 		}
-		objs.add(fragBuffer);
+		objs.add(pixelBlob);
 
 		auto device = g->getDevice();
 
@@ -59,23 +62,22 @@ namespace aurora::modules::graphics::win_d3d11 {
 			return false;
 		}
 
-		ID3D11ShaderReflection* sr = nullptr;
-		hr = D3DReflect(_vertBlob->GetBufferPointer(), _vertBlob->GetBufferSize(), IID_ID3D11ShaderReflection, (void**)&sr);
-		if (FAILED(hr)) {
+		ID3D11ShaderReflection* vsr = nullptr;
+		if (FAILED(D3DReflect(_vertBlob->GetBufferPointer(), _vertBlob->GetBufferSize(), IID_ID3D11ShaderReflection, (void**)&vsr))) {
 			_release();
 			return false;
 		}
+		objs.add(vsr);
 
 		D3D11_SHADER_DESC sDesc;
-		objs.add(sr);
-		sr->GetDesc(&sDesc);
+		vsr->GetDesc(&sDesc);
 		_numInElements = sDesc.InputParameters;
 		if (_numInElements > 0) {
 			ui32 offset = 0;
 			_inElements = new D3D11_INPUT_ELEMENT_DESC[sDesc.InputParameters];
 			for (ui32 i = 0; i < _numInElements; ++i) {
 				D3D11_SIGNATURE_PARAMETER_DESC spDesc;
-				sr->GetInputParameterDesc(i, &spDesc);
+				vsr->GetInputParameterDesc(i, &spDesc);
 
 				auto& ieDesc = _inElements[i];
 				ui32 len = strlen(spDesc.SemanticName);
@@ -140,19 +142,65 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		_curInLayout = _getOrCreateInputLayout();
 		_inElementsDirty = false;
-		
-		if (FAILED(hr)) {
+
+		for (ui32 i = 0; i < sDesc.BoundResources; ++i) {
+			D3D11_SHADER_INPUT_BIND_DESC desc;
+			vsr->GetResourceBindingDesc(i, &desc);
+			int a = 1;
+		}
+
+		_numConstBuffers = sDesc.ConstantBuffers;
+		if (_numConstBuffers > 0) {
+			for (ui32 i = 0; i < _numInElements; ++i) {
+				auto cb = vsr->GetConstantBufferByIndex(i);
+				D3D11_SHADER_BUFFER_DESC desc;
+				cb->GetDesc(&desc);
+				for (ui32 j = 0; j < desc.Variables; ++j) {
+					auto var = cb->GetVariableByIndex(j);
+					
+					D3D11_SHADER_VARIABLE_DESC vDesc;
+					var->GetDesc(&vDesc);
+					auto type = var->GetType();
+					int a = 1;
+				}
+			}
+		}
+
+		ID3D11PixelShader* fs = nullptr;
+		if (FAILED(device->CreatePixelShader(pixelBlob->GetBufferPointer(), pixelBlob->GetBufferSize(), 0, &_ps))) {
 			_release();
 			return false;
 		}
 
-		_numConstBuffers = sDesc.ConstantBuffers;
-
-		ID3D11PixelShader* fs = nullptr;
-		hr = device->CreatePixelShader(fragBuffer->GetBufferPointer(), fragBuffer->GetBufferSize(), 0, &_ps);
-		if (FAILED(hr)) {
+		ID3D11ShaderReflection* psr = nullptr;
+		if (FAILED(D3DReflect(pixelBlob->GetBufferPointer(), pixelBlob->GetBufferSize(), IID_ID3D11ShaderReflection, (void**)&psr))) {
 			_release();
 			return false;
+		}
+		objs.add(psr);
+
+		psr->GetDesc(&sDesc);
+
+		for (ui32 i = 0; i < sDesc.BoundResources; ++i) {
+			D3D11_SHADER_INPUT_BIND_DESC desc;
+			psr->GetResourceBindingDesc(i, &desc);
+			int a = 1;
+		}
+
+		if (sDesc.ConstantBuffers > 0) {
+			for (ui32 i = 0; i < sDesc.ConstantBuffers; ++i) {
+				auto cb = psr->GetConstantBufferByIndex(i);
+				D3D11_SHADER_BUFFER_DESC desc;
+				cb->GetDesc(&desc);
+				for (ui32 j = 0; j < desc.Variables; ++j) {
+					auto var = cb->GetVariableByIndex(j);
+
+					D3D11_SHADER_VARIABLE_DESC vDesc;
+					var->GetDesc(&vDesc);
+					auto type = var->GetType();
+					int a = 1;
+				}
+			}
 		}
 
 		return true;
@@ -199,6 +247,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 			}
 
 			if (_curInLayout) {
+				_cb->use(0);
+
 				context->IASetInputLayout(_curInLayout);
 				((IndexBuffer&)indexBuffer).draw(count, offset);
 			}

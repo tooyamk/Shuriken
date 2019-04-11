@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ConstantBuffer.h"
 #include "IndexBuffer.h"
 #include "Program.h"
 #include "VertexBuffer.h"
@@ -12,6 +13,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		virtual bool AE_CALL createDevice(const GraphicsAdapter* adapter) override;
 
+		virtual IConstantBuffer* AE_CALL createConstantBuffer() override;
 		virtual IIndexBuffer* AE_CALL createIndexBuffer() override;
 		virtual IProgram* AE_CALL createProgram() override;
 		virtual IVertexBuffer* AE_CALL createVertexBuffer() override;

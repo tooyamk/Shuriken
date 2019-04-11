@@ -106,6 +106,17 @@ namespace aurora::modules::graphics {
 	};
 
 
+	class AE_DLL IConstantBuffer : public IObject {
+	public:
+		IConstantBuffer(IGraphicsModule& graphics);
+		virtual ~IConstantBuffer();
+
+		virtual bool AE_CALL stroage(ui32 size, const void* data = nullptr) = 0;
+		virtual void AE_CALL write(ui32 offset, const void* data, ui32 length) = 0;
+		virtual void AE_CALL flush() = 0;
+	};
+
+
 	enum class ProgramLanguage : ui8 {
 		UNKNOWN,
 		HLSL,
@@ -188,6 +199,7 @@ namespace aurora::modules::graphics {
 
 		virtual bool AE_CALL createDevice(const GraphicsAdapter* adapter) = 0;
 
+		virtual IConstantBuffer* AE_CALL createConstantBuffer() = 0;
 		virtual IIndexBuffer* AE_CALL createIndexBuffer() = 0;
 		virtual IProgram* AE_CALL createProgram() = 0;
 		virtual IVertexBuffer* AE_CALL createVertexBuffer() = 0;
