@@ -25,7 +25,7 @@ float aabbcc11;
 VS_OUTPUT main(VS_INPUT input)
 {
     VS_OUTPUT output = (VS_OUTPUT)0;
-    output.position = float4(input.position.x / 10.0f, input.position.y / 10.0f, 0.0f, 1.0f;
+    output.position = float4(input.position.x / 10.0f, input.position.y / 10.0f, 0.0f, 1.0f);
     //output.position = mul(float4(input.position.x / 10.0f, input.position.y / 10.0f, 0.0f, 1.0f * aabbcc * fff3 * aabbcc11), matWorld);
 
     return output;

@@ -27,8 +27,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_curInLayout(nullptr),
 		_numConstBuffers(0) {
 		_cb = (ConstantBuffer*)_graphics->createConstantBuffer();
-		f32 c[] = {1.0f, 0.0f, 0.0f};
-		_cb->stroage(16, &c);
+		f32 c[] = {0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
+		_cb->stroage(64, &c);
 	}
 
 	Program::~Program() {
