@@ -33,6 +33,30 @@ namespace aurora::modules::graphics::win_d3d11 {
 		};
 
 
+		struct ConstantLayout {
+			struct Buffer {
+				struct Var {
+					std::string name;
+					ui32 offset;
+					ui32 size;
+				};
+
+				std::string name;
+				ui32 bindPoint;
+				std::vector<Var> vars;
+				ui32 size;
+			};
+
+			std::vector<Buffer> buffers;
+			std::unordered_map<std::string, i16> bufferIndicesMappingByVarNames;
+
+			void clear() {
+				buffers.clear();
+				bufferIndicesMappingByVarNames.clear();
+			}
+		};
+
+
 		bool _inElementsDirty;
 
 		ID3DBlob* _vertBlob;
@@ -48,12 +72,16 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 
 		//test
-		ui32 _numConstBuffers;
 		ConstantBuffer* _cb;
+
+		ConstantLayout _vsConstLayout;
+		ConstantLayout _psConstLayout;
 
 
 		void AE_CALL _release();
 		ID3DBlob* AE_CALL _compileShader(const ProgramSource& source, const i8* target);
 		ID3D11InputLayout* _getOrCreateInputLayout();
+		void AE_CALL _parseInLayout(const D3D11_SHADER_DESC& desc, ID3D11ShaderReflection& ref);
+		void AE_CALL _parseConstantLayout(const D3D11_SHADER_DESC& desc, ID3D11ShaderReflection& ref, ConstantLayout& dst);
 	};
 }

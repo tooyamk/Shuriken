@@ -24,10 +24,9 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_ps(nullptr),
 		_inElements(nullptr),
 		_numInElements(0),
-		_curInLayout(nullptr),
-		_numConstBuffers(0) {
+		_curInLayout(nullptr) {
 		_cb = (ConstantBuffer*)_graphics->createConstantBuffer();
-		f32 c[] = {0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
+		f32 c[] = {0.0f, 1.0f, 0.3f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
 		_cb->stroage(64, &c);
 	}
 
@@ -71,100 +70,13 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		D3D11_SHADER_DESC sDesc;
 		vsr->GetDesc(&sDesc);
-		_numInElements = sDesc.InputParameters;
-		if (_numInElements > 0) {
-			ui32 offset = 0;
-			_inElements = new D3D11_INPUT_ELEMENT_DESC[sDesc.InputParameters];
-			for (ui32 i = 0; i < _numInElements; ++i) {
-				D3D11_SIGNATURE_PARAMETER_DESC spDesc;
-				vsr->GetInputParameterDesc(i, &spDesc);
-
-				auto& ieDesc = _inElements[i];
-				ui32 len = strlen(spDesc.SemanticName);
-				i8* name = new i8[len + 1];
-				ieDesc.SemanticName = name;
-				name[len] = 0;
-				memcpy(name, spDesc.SemanticName, len);
-				//ieDesc.SemanticName = spDesc.SemanticName;
-				ieDesc.SemanticIndex = spDesc.SemanticIndex;
-				ieDesc.InputSlot = i;
-				ieDesc.AlignedByteOffset = 0;
-				ieDesc.InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-				ieDesc.InstanceDataStepRate = 0;
-
-				auto& info = _inVerBufInfos.emplace_back();
-				info.name = spDesc.SemanticName + String::toString(spDesc.SemanticIndex);
-				info.slot = i;
-
-				if (spDesc.Mask == 1) {
-					if (spDesc.ComponentType == D3D_REGISTER_COMPONENT_UINT32) {
-						ieDesc.Format = DXGI_FORMAT_R32_UINT;
-					} else if (spDesc.ComponentType == D3D_REGISTER_COMPONENT_SINT32) {
-						ieDesc.Format = DXGI_FORMAT_R32_SINT;
-					} else if (spDesc.ComponentType == D3D_REGISTER_COMPONENT_FLOAT32) {
-						ieDesc.Format = DXGI_FORMAT_R32_FLOAT;
-					}
-					offset += 4;
-				} else if (spDesc.Mask <= 3) {
-					if (spDesc.ComponentType == D3D_REGISTER_COMPONENT_UINT32) {
-						ieDesc.Format = DXGI_FORMAT_R32G32_UINT;
-					} else if (spDesc.ComponentType == D3D_REGISTER_COMPONENT_SINT32) {
-						ieDesc.Format = DXGI_FORMAT_R32G32_SINT;
-					} else if (spDesc.ComponentType == D3D_REGISTER_COMPONENT_FLOAT32) {
-						ieDesc.Format = DXGI_FORMAT_R32G32_FLOAT;
-					}
-					offset += 8;
-				} else if (spDesc.Mask <= 7) {
-					if (spDesc.ComponentType == D3D_REGISTER_COMPONENT_UINT32) {
-						ieDesc.Format = DXGI_FORMAT_R32G32B32_UINT;
-					} else if (spDesc.ComponentType == D3D_REGISTER_COMPONENT_SINT32) {
-						ieDesc.Format = DXGI_FORMAT_R32G32B32_SINT;
-					} else if (spDesc.ComponentType == D3D_REGISTER_COMPONENT_FLOAT32) {
-						ieDesc.Format = DXGI_FORMAT_R32G32B32_FLOAT;
-					}
-					offset += 12;
-				} else if (spDesc.Mask <= 15) {
-					if (spDesc.ComponentType == D3D_REGISTER_COMPONENT_UINT32) {
-						ieDesc.Format = DXGI_FORMAT_R32G32B32A32_UINT;
-					} else if (spDesc.ComponentType == D3D_REGISTER_COMPONENT_SINT32) {
-						ieDesc.Format = DXGI_FORMAT_R32G32B32A32_SINT;
-					} else if (spDesc.ComponentType == D3D_REGISTER_COMPONENT_FLOAT32) {
-						ieDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-					}
-					offset += 16;
-				}
-
-				if (i == 0) {
-					ieDesc.Format = DXGI_FORMAT_R8G8_UINT;
-				}
-			}
-		}
+		
+		_parseInLayout(sDesc, *vsr);
 
 		_curInLayout = _getOrCreateInputLayout();
 		_inElementsDirty = false;
 
-		for (ui32 i = 0; i < sDesc.BoundResources; ++i) {
-			D3D11_SHADER_INPUT_BIND_DESC desc;
-			vsr->GetResourceBindingDesc(i, &desc);
-			int a = 1;
-		}
-
-		_numConstBuffers = sDesc.ConstantBuffers;
-		if (_numConstBuffers > 0) {
-			for (ui32 i = 0; i < _numInElements; ++i) {
-				auto cb = vsr->GetConstantBufferByIndex(i);
-				D3D11_SHADER_BUFFER_DESC desc;
-				cb->GetDesc(&desc);
-				for (ui32 j = 0; j < desc.Variables; ++j) {
-					auto var = cb->GetVariableByIndex(j);
-					
-					D3D11_SHADER_VARIABLE_DESC vDesc;
-					var->GetDesc(&vDesc);
-					auto type = var->GetType();
-					int a = 1;
-				}
-			}
-		}
+		_parseConstantLayout(sDesc, *vsr, _vsConstLayout);
 
 		ID3D11PixelShader* fs = nullptr;
 		if (FAILED(device->CreatePixelShader(pixelBlob->GetBufferPointer(), pixelBlob->GetBufferSize(), 0, &_ps))) {
@@ -181,27 +93,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		psr->GetDesc(&sDesc);
 
-		for (ui32 i = 0; i < sDesc.BoundResources; ++i) {
-			D3D11_SHADER_INPUT_BIND_DESC desc;
-			psr->GetResourceBindingDesc(i, &desc);
-			int a = 1;
-		}
-
-		if (sDesc.ConstantBuffers > 0) {
-			for (ui32 i = 0; i < sDesc.ConstantBuffers; ++i) {
-				auto cb = psr->GetConstantBufferByIndex(i);
-				D3D11_SHADER_BUFFER_DESC desc;
-				cb->GetDesc(&desc);
-				for (ui32 j = 0; j < desc.Variables; ++j) {
-					auto var = cb->GetVariableByIndex(j);
-
-					D3D11_SHADER_VARIABLE_DESC vDesc;
-					var->GetDesc(&vDesc);
-					auto type = var->GetType();
-					int a = 1;
-				}
-			}
-		}
+		_parseConstantLayout(sDesc, *psr, _psConstLayout);
 
 		return true;
 	}
@@ -287,6 +179,9 @@ namespace aurora::modules::graphics::win_d3d11 {
 			_vertBlob->Release();
 			_vertBlob = nullptr;
 		}
+
+		_vsConstLayout.clear();
+		_psConstLayout.clear();
 	}
 
 	ID3DBlob* Program::_compileShader(const ProgramSource& source, const i8* target) {
@@ -327,5 +222,127 @@ namespace aurora::modules::graphics::win_d3d11 {
 		for (ui32 i = 0; i < _numInElements; ++i) il.formats[i] = _inElements[i].Format;
 		auto hr = ((Graphics*)_graphics)->getDevice()->CreateInputLayout(_inElements, _numInElements, _vertBlob->GetBufferPointer(), _vertBlob->GetBufferSize(), &il.layout);
 		return il.layout;
+	}
+
+	void Program::_parseInLayout(const D3D11_SHADER_DESC& desc, ID3D11ShaderReflection& ref) {
+		_numInElements = desc.InputParameters;
+		if (_numInElements > 0) {
+			ui32 offset = 0;
+			_inElements = new D3D11_INPUT_ELEMENT_DESC[desc.InputParameters];
+			D3D11_SIGNATURE_PARAMETER_DESC pDesc;
+			for (ui32 i = 0; i < _numInElements; ++i) {
+				ref.GetInputParameterDesc(i, &pDesc);
+
+				auto& ieDesc = _inElements[i];
+				ui32 len = strlen(pDesc.SemanticName);
+				i8* name = new i8[len + 1];
+				ieDesc.SemanticName = name;
+				name[len] = 0;
+				memcpy(name, pDesc.SemanticName, len);
+				//ieDesc.SemanticName = spDesc.SemanticName;
+				ieDesc.SemanticIndex = pDesc.SemanticIndex;
+				ieDesc.InputSlot = i;
+				ieDesc.AlignedByteOffset = 0;
+				ieDesc.InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+				ieDesc.InstanceDataStepRate = 0;
+
+				auto& info = _inVerBufInfos.emplace_back();
+				info.name = pDesc.SemanticName + String::toString(pDesc.SemanticIndex);
+				info.slot = i;
+
+				if (pDesc.Mask == 1) {
+					if (pDesc.ComponentType == D3D_REGISTER_COMPONENT_UINT32) {
+						ieDesc.Format = DXGI_FORMAT_R32_UINT;
+					} else if (pDesc.ComponentType == D3D_REGISTER_COMPONENT_SINT32) {
+						ieDesc.Format = DXGI_FORMAT_R32_SINT;
+					} else if (pDesc.ComponentType == D3D_REGISTER_COMPONENT_FLOAT32) {
+						ieDesc.Format = DXGI_FORMAT_R32_FLOAT;
+					}
+					offset += 4;
+				} else if (pDesc.Mask <= 3) {
+					if (pDesc.ComponentType == D3D_REGISTER_COMPONENT_UINT32) {
+						ieDesc.Format = DXGI_FORMAT_R32G32_UINT;
+					} else if (pDesc.ComponentType == D3D_REGISTER_COMPONENT_SINT32) {
+						ieDesc.Format = DXGI_FORMAT_R32G32_SINT;
+					} else if (pDesc.ComponentType == D3D_REGISTER_COMPONENT_FLOAT32) {
+						ieDesc.Format = DXGI_FORMAT_R32G32_FLOAT;
+					}
+					offset += 8;
+				} else if (pDesc.Mask <= 7) {
+					if (pDesc.ComponentType == D3D_REGISTER_COMPONENT_UINT32) {
+						ieDesc.Format = DXGI_FORMAT_R32G32B32_UINT;
+					} else if (pDesc.ComponentType == D3D_REGISTER_COMPONENT_SINT32) {
+						ieDesc.Format = DXGI_FORMAT_R32G32B32_SINT;
+					} else if (pDesc.ComponentType == D3D_REGISTER_COMPONENT_FLOAT32) {
+						ieDesc.Format = DXGI_FORMAT_R32G32B32_FLOAT;
+					}
+					offset += 12;
+				} else if (pDesc.Mask <= 15) {
+					if (pDesc.ComponentType == D3D_REGISTER_COMPONENT_UINT32) {
+						ieDesc.Format = DXGI_FORMAT_R32G32B32A32_UINT;
+					} else if (pDesc.ComponentType == D3D_REGISTER_COMPONENT_SINT32) {
+						ieDesc.Format = DXGI_FORMAT_R32G32B32A32_SINT;
+					} else if (pDesc.ComponentType == D3D_REGISTER_COMPONENT_FLOAT32) {
+						ieDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+					}
+					offset += 16;
+				}
+
+				if (i == 0) {
+					ieDesc.Format = DXGI_FORMAT_R8G8_UINT;
+				}
+			}
+		}
+	}
+
+	void Program::_parseConstantLayout(const D3D11_SHADER_DESC& desc, ID3D11ShaderReflection& ref, ConstantLayout& dst) {
+		D3D11_SHADER_INPUT_BIND_DESC ibDesc;
+		for (ui32 i = 0; i < desc.BoundResources; ++i) {
+			ref.GetResourceBindingDesc(i, &ibDesc);
+
+			auto& buffer = dst.buffers.emplace_back();
+			buffer.name = ibDesc.Name;
+			buffer.bindPoint = ibDesc.BindPoint;
+			buffer.size = 0;
+		}
+
+		D3D11_SHADER_BUFFER_DESC bDesc;
+		D3D11_SHADER_VARIABLE_DESC vDesc;
+		for (ui32 i = 0; i < desc.ConstantBuffers; ++i) {
+			auto cb = ref.GetConstantBufferByIndex(i);
+			cb->GetDesc(&bDesc);
+
+			ConstantLayout::Buffer* buffer = nullptr;
+			i16 idx = -1;
+			for (i16 j = 0, n = dst.buffers.size(); j < n;  ++j) {
+				if (strcmp(dst.buffers[j].name.c_str(), bDesc.Name) == 0) {
+					idx = j;
+					buffer = &dst.buffers[j];
+					break;
+				}
+			}
+
+			if (buffer) {
+				for (ui32 j = 0; j < bDesc.Variables; ++j) {
+					auto var = cb->GetVariableByIndex(j);
+					var->GetDesc(&vDesc);
+
+					auto& v = buffer->vars.emplace_back();
+					v.name = vDesc.Name;
+					v.offset = vDesc.StartOffset;
+					v.size = vDesc.Size;
+					buffer->size += v.size;
+
+					dst.bufferIndicesMappingByVarNames.emplace(v.name, idx);
+				}
+
+				if (bDesc.Variables > 0) {
+					auto& v = buffer->vars[bDesc.Variables - 1];
+					auto len = v.offset + v.size;
+					auto remainder = len & 0b1111;
+					buffer->size = remainder ? len + 16 - remainder : len;
+				}
+			}
+		}
 	}
 }
