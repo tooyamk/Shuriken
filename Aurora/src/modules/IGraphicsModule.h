@@ -117,6 +117,41 @@ namespace aurora::modules::graphics {
 	};
 
 
+	enum class ConstantUsage {
+		AUTO,
+		SHARE,
+		EXCLUSIVE
+	};
+
+
+	class AE_DLL Constant : public Ref {
+	public:
+		Constant() : _usage(ConstantUsage::EXCLUSIVE) {}
+
+		inline ConstantUsage getUsage() const {
+			return _usage;
+		}
+
+	private:
+		ConstantUsage _usage;
+	};
+
+
+	class AE_DLL ConstantFactory {
+	public:
+		~ConstantFactory();
+
+		Constant* AE_CALL get(const std::string& name) const;
+		void AE_CALL add(const std::string& name, Constant* buffer);
+		void AE_CALL remove(const std::string& name);
+		void AE_CALL clear();
+
+	private:
+		std::unordered_map<std::string, Constant*> _buffers;
+	};
+
+
+
 	enum class ProgramLanguage : ui8 {
 		UNKNOWN,
 		HLSL,
@@ -185,6 +220,7 @@ namespace aurora::modules::graphics {
 		virtual bool AE_CALL upload(const ProgramSource& vert, const ProgramSource& frag) = 0;
 		virtual bool AE_CALL use() = 0;
 		virtual void AE_CALL useVertexBuffers(const VertexBufferFactory& factory) = 0;
+		virtual void AE_CALL useConstants(const ConstantFactory& factory) = 0;
 		virtual void AE_CALL draw(const IIndexBuffer& indexBuffer, ui32 count = 0xFFFFFFFFui32, ui32 offset = 0) = 0;
 	};
 

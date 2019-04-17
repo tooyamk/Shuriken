@@ -19,8 +19,4 @@ namespace aurora::modules::graphics::win_d3d11 {
 	void ConstantBuffer::flush() {
 		_flush();
 	}
-
-	void ConstantBuffer::use(UINT slot) {
-		((Graphics*)_graphics)->getContext()->PSSetConstantBuffers(slot, 1, &_handle);
-	}
 }

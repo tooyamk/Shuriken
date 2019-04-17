@@ -1,11 +1,10 @@
 #pragma once
 
-#include "ConstantBuffer.h"
-#include "IndexBuffer.h"
-#include "Program.h"
-#include "VertexBuffer.h"
+#include "Base.h"
 
 namespace aurora::modules::graphics::win_d3d11 {
+	class ConstantBuffer;
+
 	class AE_MODULE_DLL Graphics : public IGraphicsModule {
 	public:
 		Graphics(Application* app);
@@ -40,6 +39,11 @@ namespace aurora::modules::graphics::win_d3d11 {
 			return _shaderModel;
 		}
 
+		void AE_CALL refShareConstantBuffer(ui32 size);
+		void AE_CALL unrefShareConstantBuffer(ui32 size);
+		ConstantBuffer* AE_CALL popShareConstantBuffer(ui32 size);
+		void AE_CALL pushShareConstantBuffer(ui32 size, ConstantBuffer* cb);
+
 	private:
 		Application* _app;
 
@@ -51,6 +55,17 @@ namespace aurora::modules::graphics::win_d3d11 {
 		ID3D11DeviceContext4* _context;
 		IDXGISwapChain4* _swapChain;
 		ID3D11RenderTargetView1* _backBufferTarget;
+
+		struct ShareConstBufferPool {
+			//ConstantBuffer* pop();
+			void push(ConstantBuffer* cb) {}
+
+			ui32 rc;
+			ui32 idleIndex;
+			std::vector<ConstantBuffer*> buffers;
+		};
+
+		std::unordered_map<ui32, ShareConstBufferPool> _sharedConstBufferPool;
 
 		events::EventListener<ApplicationEvent, Graphics> _resizedListener;
 		void AE_CALL _resizedHandler(events::Event<ApplicationEvent>& e);

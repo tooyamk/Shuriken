@@ -1,10 +1,10 @@
 #pragma once
 
-#include "Base.h"
+#include "ConstantBuffer.h"
 
 namespace aurora::modules::graphics::win_d3d11 {
 	class Graphics;
-	class ConstantBuffer;
+	//class ConstantBuffer;
 
 	class AE_MODULE_DLL Program : public IProgram {
 	public:
@@ -14,6 +14,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual bool AE_CALL upload(const ProgramSource& vert, const ProgramSource& frag) override;
 		virtual bool AE_CALL use() override;
 		virtual void AE_CALL useVertexBuffers(const VertexBufferFactory& factory) override;
+		virtual void AE_CALL useConstants(const ConstantFactory& factory) override;
 		virtual void AE_CALL draw(const IIndexBuffer& indexBuffer, ui32 count = 0xFFFFFFFFui32, ui32 offset = 0) override;
 
 	protected:
@@ -83,5 +84,15 @@ namespace aurora::modules::graphics::win_d3d11 {
 		ID3D11InputLayout* _getOrCreateInputLayout();
 		void AE_CALL _parseInLayout(const D3D11_SHADER_DESC& desc, ID3D11ShaderReflection& ref);
 		void AE_CALL _parseConstantLayout(const D3D11_SHADER_DESC& desc, ID3D11ShaderReflection& ref, ConstantLayout& dst);
+
+		ConstantBuffer* _getConstantBuffer(const ConstantLayout::Buffer& buffer, const ConstantFactory& factory);
+
+		template<ProgramStage stage>
+		void AE_CALL _useConstants(const ConstantLayout& layout, const ConstantFactory& factory) {
+			for (auto& buffer : layout.buffers) {
+				auto cb = _getConstantBuffer(buffer, factory);
+				if (cb) cb->use<stage>(buffer.bindPoint);
+			}
+		}
 	};
 }

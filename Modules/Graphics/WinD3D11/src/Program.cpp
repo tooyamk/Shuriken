@@ -1,5 +1,7 @@
 #include "Program.h"
 #include "Graphics.h"
+#include "IndexBuffer.h"
+#include "VertexBuffer.h"
 #include "base/String.h"
 #include <vector>
 
@@ -127,6 +129,36 @@ namespace aurora::modules::graphics::win_d3d11 {
 		}
 	}
 
+	void Program::useConstants(const ConstantFactory& factory) {
+		_useConstants<ProgramStage::VS>(_vsConstLayout, factory);
+		_useConstants<ProgramStage::PS>(_psConstLayout, factory);
+	}
+
+	ConstantBuffer* Program::_getConstantBuffer(const ConstantLayout::Buffer& buffer, const ConstantFactory& factory) {
+		std::vector<Constant*> constants;
+
+		ui32 exclusiveCount = 0, autoCount = 0;
+		for (auto& var : buffer.vars) {
+			auto c = factory.get(var.name);
+			if (c) {
+				if (c->getUsage() == ConstantUsage::EXCLUSIVE) {
+					++exclusiveCount;
+				} else if (c->getUsage() == ConstantUsage::AUTO) {
+					++autoCount;
+				}
+			} else {
+				++autoCount;
+			}
+			constants.emplace_back(c);
+		}
+
+		if (exclusiveCount > 0 && exclusiveCount + autoCount == buffer.vars.size()) {
+			return nullptr;
+		} else {
+			return nullptr;
+		}
+	}
+
 	void Program::draw(const IIndexBuffer& indexBuffer, ui32 count, ui32 offset) {
 		if (_vs) {
 			auto g = (Graphics*)_graphics;
@@ -139,7 +171,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			}
 
 			if (_curInLayout) {
-				_cb->use(0);
+				//_cb->use(0);
 
 				context->IASetInputLayout(_curInLayout);
 				((IndexBuffer&)indexBuffer).draw(count, offset);
