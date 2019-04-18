@@ -132,8 +132,18 @@ namespace aurora::modules::graphics {
 			return _usage;
 		}
 
+		inline void* getData() const {
+			return _data;
+		}
+
+		inline ui32 getSize() const {
+			return _size;
+		}
+
 	private:
 		ConstantUsage _usage;
+		void* _data;
+		ui32 _size;
 	};
 
 

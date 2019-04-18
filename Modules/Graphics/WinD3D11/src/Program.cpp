@@ -152,11 +152,24 @@ namespace aurora::modules::graphics::win_d3d11 {
 			constants.emplace_back(c);
 		}
 
+		ConstantBuffer* cb;
 		if (exclusiveCount > 0 && exclusiveCount + autoCount == buffer.vars.size()) {
-			return nullptr;
+			cb = nullptr;
 		} else {
-			return nullptr;
+			cb =((Graphics*)_graphics)->popShareConstantBuffer(buffer.size);
 		}
+
+		if (cb) {
+			for (ui32 i = 0, n = buffer.vars.size(); i < n; ++i) {
+				auto c = constants[i];
+				if (c) {
+					auto& var = buffer.vars[i];
+					cb->write(var.offset,c->getData(), c->getSize());
+				}
+			}
+		}
+
+		return cb;
 	}
 
 	void Program::draw(const IIndexBuffer& indexBuffer, ui32 count, ui32 offset) {

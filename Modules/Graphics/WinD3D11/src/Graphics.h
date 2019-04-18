@@ -42,7 +42,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		void AE_CALL refShareConstantBuffer(ui32 size);
 		void AE_CALL unrefShareConstantBuffer(ui32 size);
 		ConstantBuffer* AE_CALL popShareConstantBuffer(ui32 size);
-		void AE_CALL pushShareConstantBuffer(ui32 size, ConstantBuffer* cb);
+		void AE_CALL pushShareConstantBuffer(ui32 size, ConstantBuffer& cb);
 
 	private:
 		Application* _app;
@@ -57,11 +57,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		ID3D11RenderTargetView1* _backBufferTarget;
 
 		struct ShareConstBufferPool {
-			//ConstantBuffer* pop();
-			void push(ConstantBuffer* cb) {}
-
 			ui32 rc;
-			ui32 idleIndex;
 			std::vector<ConstantBuffer*> buffers;
 		};
 

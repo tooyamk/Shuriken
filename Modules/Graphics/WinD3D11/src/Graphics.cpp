@@ -249,9 +249,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 	void Graphics::refShareConstantBuffer(ui32 size) {
 		auto itr = _sharedConstBufferPool.find(size);
 		if (itr == _sharedConstBufferPool.end()) {
-			auto& pool = _sharedConstBufferPool.emplace(std::piecewise_construct, std::forward_as_tuple(size), std::forward_as_tuple()).first->second;
-			pool.rc = 1;
-			pool.idleIndex = 0;
+			_sharedConstBufferPool.emplace(std::piecewise_construct, std::forward_as_tuple(size), std::forward_as_tuple()).first->second.rc = 1;
 		} else {
 			++itr->second.rc;
 		}
@@ -267,30 +265,26 @@ namespace aurora::modules::graphics::win_d3d11 {
 	ConstantBuffer* Graphics::popShareConstantBuffer(ui32 size) {
 		auto itr = _sharedConstBufferPool.find(size);
 		if (itr != _sharedConstBufferPool.end()) {
-			auto& pool = itr->second;
-			auto& buffers = pool.buffers;
+			auto& buffers = itr->second.buffers;
 			auto len = buffers.size();
 			ConstantBuffer* cb;
-			if (pool.idleIndex == len) {
+			if (len == 0) {
 				cb = new ConstantBuffer(*this);
 				cb->ref();
-				buffers.emplace_back(cb);
 				cb->stroage(size);
 			} else {
-				cb = buffers[pool.idleIndex];
+				cb = buffers[len - 1];
+				buffers.pop_back();
 			}
 
-			++pool.idleIndex;
 			return cb;
 		}
 		return nullptr;
 	}
 
-	void Graphics::pushShareConstantBuffer(ui32 size, ConstantBuffer* cb) {
+	void Graphics::pushShareConstantBuffer(ui32 size, ConstantBuffer& cb) {
 		auto itr = _sharedConstBufferPool.find(size);
-		if (itr != _sharedConstBufferPool.end()) {
-			itr->second.buffers.emplace_back(cb);
-		}
+		if (itr != _sharedConstBufferPool.end()) itr->second.buffers.emplace_back(&cb);
 	}
 
 	void Graphics::_resizedHandler(events::Event<ApplicationEvent>& e) {
