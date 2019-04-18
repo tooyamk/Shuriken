@@ -9,12 +9,24 @@ namespace aurora::modules::graphics::win_d3d11 {
 	IndexBuffer::~IndexBuffer() {
 	}
 
-	bool IndexBuffer::stroage(ui32 size, const void* data) {
-		return _stroage(size, data);
+	bool IndexBuffer::stroage(ui32 size, ui32 bufferUsage, const void* data) {
+		return _stroage(size, bufferUsage,  data);
 	}
 
-	void IndexBuffer::write(ui32 offset, const void* data, ui32 length) {
-		_write(offset, data, length);
+	bool IndexBuffer::map(ui32 mapUsage) {
+		return _map(mapUsage);
+	}
+
+	void IndexBuffer::unmap() {
+		_unmap();
+	}
+
+	i32 IndexBuffer::read(ui32 offset, void* dst, ui32 dstLen, i32 readLen) {
+		return _read(offset, dst, dstLen, readLen);
+	}
+
+	i32 IndexBuffer::write(ui32 offset, const void* data, ui32 length) {
+		return _write(offset, data, length);
 	}
 
 	void IndexBuffer::flush() {

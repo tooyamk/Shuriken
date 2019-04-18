@@ -10,12 +10,24 @@ namespace aurora::modules::graphics::win_d3d11 {
 	VertexBuffer::~VertexBuffer() {
 	}
 
-	bool VertexBuffer::stroage(ui32 size, const void* data) {
-		return _stroage(size, data);
+	bool VertexBuffer::stroage(ui32 size, ui32 bufferUsage, const void* data) {
+		return _stroage(size, bufferUsage, data);
 	}
 
-	void VertexBuffer::write(ui32 offset, const void* data, ui32 length) {
-		_write(offset, data, length);
+	bool VertexBuffer::map(ui32 mapUsage) {
+		return _map(mapUsage);
+	}
+
+	void VertexBuffer::unmap() {
+		_unmap();
+	}
+
+	i32 VertexBuffer::read(ui32 offset, void* dst, ui32 dstLen, i32 readLen) {
+		return _read(offset, dst, dstLen, readLen);
+	}
+
+	i32 VertexBuffer::write(ui32 offset, const void* data, ui32 length) {
+		return _write(offset, data, length);
 	}
 
 	void VertexBuffer::flush() {

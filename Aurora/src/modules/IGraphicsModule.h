@@ -5,6 +5,9 @@
 
 namespace aurora {
 	template<typename T> class Rect;
+	class Vector2;
+	class Vector3;
+	class Vector4;
 }
 
 namespace aurora::modules::graphics {
@@ -42,7 +45,46 @@ namespace aurora::modules::graphics {
 	};
 
 
-	enum class VertexSize {
+	class AE_DLL BufferUsage {
+	public:
+		BufferUsage() = delete;
+		BufferUsage(const BufferUsage&) = delete;
+		BufferUsage(BufferUsage&&) = delete;
+
+		static const ui32 CPU_READ = 0b1;
+		static const ui32 CPU_WRITE = 0b10;
+		static const ui32 GPU_WRITE = 0b100;
+		static const ui32 CPU_READ_WRITE = CPU_READ | CPU_WRITE;
+		static const ui32 CPU_GPU_WRITE = CPU_WRITE | GPU_WRITE;
+	};
+
+
+	class AE_DLL BufferMapUsage {
+	public:
+		BufferMapUsage() = delete;
+		BufferMapUsage(const BufferMapUsage&) = delete;
+		BufferMapUsage(BufferMapUsage&&) = delete;
+
+		static const ui32 READ = 0b1;
+		static const ui32 WRITE = 0b10;
+	};
+
+
+	class AE_DLL IBuffer : public IObject {
+	public:
+		IBuffer(IGraphicsModule& graphics);
+		virtual ~IBuffer();
+
+		virtual bool AE_CALL stroage(ui32 size, ui32 bufferUsage, const void* data = nullptr) = 0;
+		virtual bool AE_CALL map(ui32 mapUsage) = 0;
+		virtual void AE_CALL unmap() = 0;
+		virtual i32 AE_CALL read(ui32 offset, void* dst, ui32 dstLen, i32 readLen = -1) = 0;
+		virtual i32 AE_CALL write(ui32 offset, const void* data, ui32 length) = 0;
+		virtual void AE_CALL flush() = 0;
+	};
+
+
+	enum class VertexSize : ui8 {
 		ONE,
 		TWO,
 		THREE,
@@ -50,7 +92,7 @@ namespace aurora::modules::graphics {
 	};
 
 
-	enum class VertexType {
+	enum class VertexType : ui8 {
 		I8,
 		UI8,
 		I16,
@@ -61,15 +103,12 @@ namespace aurora::modules::graphics {
 	};
 
 
-	class AE_DLL IVertexBuffer : public IObject {
+	class AE_DLL IVertexBuffer : public IBuffer {
 	public:
 		IVertexBuffer(IGraphicsModule& graphics);
 		virtual ~IVertexBuffer();
 
-		virtual bool AE_CALL stroage(ui32 size, const void* data = nullptr) = 0;
-		virtual void AE_CALL write(ui32 offset, const void* data, ui32 length) = 0;
 		virtual void AE_CALL setFormat(VertexSize size, VertexType type) = 0;
-		virtual void AE_CALL flush() = 0;
 	};
 
 
@@ -87,37 +126,30 @@ namespace aurora::modules::graphics {
 	};
 
 
-	enum class IndexType {
+	enum class IndexType : ui8 {
 		UI8,
 		UI16,
 		UI32
 	};
 
 
-	class AE_DLL IIndexBuffer : public IObject {
+	class AE_DLL IIndexBuffer : public IBuffer {
 	public:
 		IIndexBuffer(IGraphicsModule& graphics);
 		virtual ~IIndexBuffer();
 
-		virtual bool AE_CALL stroage(ui32 size, const void* data = nullptr) = 0;
-		virtual void AE_CALL write(ui32 offset, const void* data, ui32 length) = 0;
 		virtual void AE_CALL setFormat(IndexType type) = 0;
-		virtual void AE_CALL flush() = 0;
 	};
 
 
-	class AE_DLL IConstantBuffer : public IObject {
+	class AE_DLL IConstantBuffer : public IBuffer {
 	public:
 		IConstantBuffer(IGraphicsModule& graphics);
 		virtual ~IConstantBuffer();
-
-		virtual bool AE_CALL stroage(ui32 size, const void* data = nullptr) = 0;
-		virtual void AE_CALL write(ui32 offset, const void* data, ui32 length) = 0;
-		virtual void AE_CALL flush() = 0;
 	};
 
 
-	enum class ConstantUsage {
+	enum class ConstantUsage : ui8 {
 		AUTO,
 		SHARE,
 		EXCLUSIVE
@@ -126,23 +158,52 @@ namespace aurora::modules::graphics {
 
 	class AE_DLL Constant : public Ref {
 	public:
-		Constant() : _usage(ConstantUsage::EXCLUSIVE) {}
+		Constant(ConstantUsage usage = ConstantUsage::AUTO);
+		~Constant();
 
 		inline ConstantUsage getUsage() const {
 			return _usage;
 		}
 
 		inline void* getData() const {
-			return _data;
+			return _dataPtr;
 		}
 
 		inline ui32 getSize() const {
 			return _size;
 		}
 
+		void set(f32 value);
+		void set(const Vector2& value);
+		void set(const Vector3& value);
+		void set(const Vector4& value);
+
 	private:
+		enum class Type : ui8 {
+			DEFAULT,
+			INTERNAL,
+			EXTERNAL
+		};
+
+
 		ConstantUsage _usage;
-		void* _data;
+		Type _type;
+		union {
+			struct {
+				f32 x;
+				f32 y;
+				f32 z;
+				f32 w;
+			};
+
+			struct {
+				void* internalData;
+				ui32 internalSize;
+			};
+
+			void* externalData;
+		} _data;
+		void* _dataPtr;
 		ui32 _size;
 	};
 
@@ -152,7 +213,7 @@ namespace aurora::modules::graphics {
 		~ConstantFactory();
 
 		Constant* AE_CALL get(const std::string& name) const;
-		void AE_CALL add(const std::string& name, Constant* buffer);
+		Constant* AE_CALL add(const std::string& name, Constant* buffer);
 		void AE_CALL remove(const std::string& name);
 		void AE_CALL clear();
 
@@ -229,9 +290,8 @@ namespace aurora::modules::graphics {
 
 		virtual bool AE_CALL upload(const ProgramSource& vert, const ProgramSource& frag) = 0;
 		virtual bool AE_CALL use() = 0;
-		virtual void AE_CALL useVertexBuffers(const VertexBufferFactory& factory) = 0;
-		virtual void AE_CALL useConstants(const ConstantFactory& factory) = 0;
-		virtual void AE_CALL draw(const IIndexBuffer& indexBuffer, ui32 count = 0xFFFFFFFFui32, ui32 offset = 0) = 0;
+		virtual void AE_CALL draw(const VertexBufferFactory* vertexFactory, const ConstantFactory* constantFactory,
+			const IIndexBuffer* indexBuffer, ui32 count = 0xFFFFFFFFui32, ui32 offset = 0) = 0;
 	};
 
 

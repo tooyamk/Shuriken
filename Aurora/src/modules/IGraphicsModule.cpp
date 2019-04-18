@@ -1,5 +1,8 @@
 #include "IGraphicsModule.h"
 #include "base/String.h"
+#include "math/Vector2.h"
+#include "math/Vector3.h"
+#include "math/Vector4.h"
 
 #if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
 #include <dxgi.h>
@@ -114,7 +117,14 @@ namespace aurora::modules::graphics {
 	}
 
 
-	IVertexBuffer::IVertexBuffer(IGraphicsModule& graphics) : IObject(graphics) {
+	IBuffer::IBuffer(IGraphicsModule& graphics) : IObject(graphics) {
+	}
+
+	IBuffer::~IBuffer() {
+	}
+
+
+	IVertexBuffer::IVertexBuffer(IGraphicsModule& graphics) : IBuffer(graphics) {
 	}
 
 	IVertexBuffer::~IVertexBuffer() {
@@ -163,17 +173,64 @@ namespace aurora::modules::graphics {
 	}
 
 
-	IIndexBuffer::IIndexBuffer(IGraphicsModule& graphics) : IObject(graphics) {
+	IIndexBuffer::IIndexBuffer(IGraphicsModule& graphics) : IBuffer(graphics) {
 	}
 
 	IIndexBuffer::~IIndexBuffer() {
 	}
 
 
-	IConstantBuffer::IConstantBuffer(IGraphicsModule& graphics) : IObject(graphics) {
+	IConstantBuffer::IConstantBuffer(IGraphicsModule& graphics) : IBuffer(graphics) {
 	}
 
 	IConstantBuffer::~IConstantBuffer() {
+	}
+
+
+	Constant::Constant(ConstantUsage usage) :
+		_usage(usage),
+		_type(Type::DEFAULT),
+		_data(),
+		_dataPtr(&_data),
+		_size(0) {
+		memset(&_data, 0, sizeof(_data));
+	}
+
+	Constant::~Constant() {
+		if (_type == Type::INTERNAL) delete[] _data.internalData;
+	}
+
+	void Constant::set(f32 value) {
+		if (_type == Type::INTERNAL) delete[] _data.internalData;
+		_type = Type::DEFAULT;
+		_dataPtr = &_data;
+		_size = sizeof(f32);
+		_data.x = value;
+	}
+
+	void Constant::set(const Vector2& value) {
+		if (_type == Type::INTERNAL) delete[] _data.internalData;
+		_type = Type::DEFAULT;
+		_dataPtr = &_data;
+		_size = sizeof(f32) << 1;
+		memcpy(_dataPtr, &value.x, _size);
+	}
+
+	void Constant::set(const Vector3& value) {
+		if (_type == Type::INTERNAL) delete[] _data.internalData;
+		_type = Type::DEFAULT;
+		_dataPtr = &_data;
+		_size = sizeof(f32) * 3;
+		memcpy(_dataPtr, &value.x, _size);
+		
+	}
+
+	void Constant::set(const Vector4& value) {
+		if (_type == Type::INTERNAL) delete[] _data.internalData;
+		_type = Type::DEFAULT;
+		_dataPtr = &_data;
+		_size = sizeof(f32) << 2;
+		memcpy(_dataPtr, &value.x, _size);
 	}
 
 
@@ -186,7 +243,7 @@ namespace aurora::modules::graphics {
 		return itr == _buffers.end() ? nullptr : itr->second;
 	}
 
-	void ConstantFactory::add(const std::string& name, Constant* buffer) {
+	Constant* ConstantFactory::add(const std::string& name, Constant* buffer) {
 		auto itr = _buffers.find(name);
 		if (buffer) {
 			if (itr == _buffers.end()) {
@@ -203,6 +260,8 @@ namespace aurora::modules::graphics {
 				_buffers.erase(itr);
 			}
 		}
+
+		return buffer;
 	}
 
 	void ConstantFactory::remove(const std::string& name) {

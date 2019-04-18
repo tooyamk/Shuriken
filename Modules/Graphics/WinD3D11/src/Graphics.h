@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Base.h"
+#include <unordered_set>
 
 namespace aurora::modules::graphics::win_d3d11 {
 	class ConstantBuffer;
@@ -39,10 +40,14 @@ namespace aurora::modules::graphics::win_d3d11 {
 			return _shaderModel;
 		}
 
+		inline const D3D11_FEATURE_DATA_D3D11_OPTIONS& AE_CALL getFeatureOptions() const {
+			return _featureOptions;
+		}
+
 		void AE_CALL refShareConstantBuffer(ui32 size);
 		void AE_CALL unrefShareConstantBuffer(ui32 size);
 		ConstantBuffer* AE_CALL popShareConstantBuffer(ui32 size);
-		void AE_CALL pushShareConstantBuffer(ui32 size, ConstantBuffer& cb);
+		void AE_CALL releaseUsedShareConstantBuffers();
 
 	private:
 		Application* _app;
@@ -55,13 +60,16 @@ namespace aurora::modules::graphics::win_d3d11 {
 		ID3D11DeviceContext4* _context;
 		IDXGISwapChain4* _swapChain;
 		ID3D11RenderTargetView1* _backBufferTarget;
+		D3D11_FEATURE_DATA_D3D11_OPTIONS _featureOptions;
 
 		struct ShareConstBufferPool {
 			ui32 rc;
+			ui32 idleIndex;
 			std::vector<ConstantBuffer*> buffers;
 		};
 
-		std::unordered_map<ui32, ShareConstBufferPool> _sharedConstBufferPool;
+		std::unordered_map<ui32, ShareConstBufferPool> _shareConstBufferPool;
+		std::unordered_set<ui32> _usedShareConstBufferPool;
 
 		events::EventListener<ApplicationEvent, Graphics> _resizedListener;
 		void AE_CALL _resizedHandler(events::Event<ApplicationEvent>& e);

@@ -13,9 +13,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		virtual bool AE_CALL upload(const ProgramSource& vert, const ProgramSource& frag) override;
 		virtual bool AE_CALL use() override;
-		virtual void AE_CALL useVertexBuffers(const VertexBufferFactory& factory) override;
-		virtual void AE_CALL useConstants(const ConstantFactory& factory) override;
-		virtual void AE_CALL draw(const IIndexBuffer& indexBuffer, ui32 count = 0xFFFFFFFFui32, ui32 offset = 0) override;
+		virtual void AE_CALL draw(const VertexBufferFactory* vertexFactory, const ConstantFactory* constantFactory,
+			const IIndexBuffer* indexBuffer, ui32 count = 0xFFFFFFFFui32, ui32 offset = 0) override;
 
 	protected:
 		struct InVertexBufferInfo {
@@ -49,16 +48,11 @@ namespace aurora::modules::graphics::win_d3d11 {
 			};
 
 			std::vector<Buffer> buffers;
-			std::unordered_map<std::string, i16> bufferIndicesMappingByVarNames;
+			//std::unordered_map<std::string, i16> bufferIndicesMappingByVarNames;
 
-			void clear() {
-				buffers.clear();
-				bufferIndicesMappingByVarNames.clear();
-			}
+			void clear(Graphics& g);
 		};
 
-
-		bool _inElementsDirty;
 
 		ID3DBlob* _vertBlob;
 		ID3D11VertexShader* _vs;
@@ -71,13 +65,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 		std::vector<InVertexBufferInfo> _inVerBufInfos;
 		std::vector<InLayout> _inLayouts;
 
-
-		//test
-		ConstantBuffer* _cb;
-
 		ConstantLayout _vsConstLayout;
 		ConstantLayout _psConstLayout;
 
+		std::vector<ConstantBuffer*> _usingShareConstBuffers;
 
 		void AE_CALL _release();
 		ID3DBlob* AE_CALL _compileShader(const ProgramSource& source, const i8* target);

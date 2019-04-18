@@ -19,17 +19,21 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 
+	void Program::ConstantLayout::clear(Graphics& g) {
+		for (auto& buffer : buffers) {
+			g.unrefShareConstantBuffer(buffer.size);
+		}
+		buffers.clear();
+	}
+
+
 	Program::Program(Graphics& graphics) : IProgram(graphics),
-		_inElementsDirty(false),
 		_vertBlob(nullptr),
 		_vs(nullptr),
 		_ps(nullptr),
 		_inElements(nullptr),
 		_numInElements(0),
 		_curInLayout(nullptr) {
-		_cb = (ConstantBuffer*)_graphics->createConstantBuffer();
-		f32 c[] = {0.0f, 1.0f, 0.3f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
-		_cb->stroage(64, &c);
 	}
 
 	Program::~Program() {
@@ -76,7 +80,6 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_parseInLayout(sDesc, *vsr);
 
 		_curInLayout = _getOrCreateInputLayout();
-		_inElementsDirty = false;
 
 		_parseConstantLayout(sDesc, *vsr, _vsConstLayout);
 
@@ -112,32 +115,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return false;
 	}
 
-	void Program::useVertexBuffers(const VertexBufferFactory& factory) {
-		for (ui32 i = 0, n = _inVerBufInfos.size(); i < n; ++i) {
-			auto& info = _inVerBufInfos[i];
-			auto vb = (VertexBuffer*)factory.get(info.name);
-			if (vb) {
-				auto& ie = _inElements[i];
-				DXGI_FORMAT fmt;
-				if (vb->use(info.slot, fmt)) {
-					if (ie.Format != fmt) {
-						_inElementsDirty = true;
-						ie.Format = fmt;
-					}
-				}
-			}
-		}
-	}
-
-	void Program::useConstants(const ConstantFactory& factory) {
-		_useConstants<ProgramStage::VS>(_vsConstLayout, factory);
-		_useConstants<ProgramStage::PS>(_psConstLayout, factory);
-	}
-
 	ConstantBuffer* Program::_getConstantBuffer(const ConstantLayout::Buffer& buffer, const ConstantFactory& factory) {
 		std::vector<Constant*> constants;
 
-		ui32 exclusiveCount = 0, autoCount = 0;
+		ui32 exclusiveCount = 0, autoCount = 0, unknownCount = 0;
 		for (auto& var : buffer.vars) {
 			auto c = factory.get(var.name);
 			if (c) {
@@ -147,47 +128,70 @@ namespace aurora::modules::graphics::win_d3d11 {
 					++autoCount;
 				}
 			} else {
-				++autoCount;
+				++unknownCount;
 			}
 			constants.emplace_back(c);
 		}
 
+		ui32 numVars = buffer.vars.size();
+		if (unknownCount >= numVars) return nullptr;
+
 		ConstantBuffer* cb;
-		if (exclusiveCount > 0 && exclusiveCount + autoCount == buffer.vars.size()) {
+		if (exclusiveCount > 0 && exclusiveCount + autoCount == numVars) {
 			cb = nullptr;
 		} else {
 			cb =((Graphics*)_graphics)->popShareConstantBuffer(buffer.size);
 		}
 
-		if (cb) {
-			for (ui32 i = 0, n = buffer.vars.size(); i < n; ++i) {
+		if (cb && cb->map(BufferMapUsage::WRITE)) {
+			for (ui32 i = 0; i < numVars; ++i) {
 				auto c = constants[i];
 				if (c) {
 					auto& var = buffer.vars[i];
-					cb->write(var.offset,c->getData(), c->getSize());
+					cb->write(var.offset, c->getData(), std::min<ui32>(c->getSize(), var.size));
 				}
 			}
+
+			cb->unmap();
 		}
 
 		return cb;
 	}
 
-	void Program::draw(const IIndexBuffer& indexBuffer, ui32 count, ui32 offset) {
-		if (_vs) {
+	void Program::draw(const VertexBufferFactory* vertexFactory, const ConstantFactory* constantFactory,
+		const IIndexBuffer* indexBuffer, ui32 count, ui32 offset) {
+		if (_vs && vertexFactory && indexBuffer, count > 0) {
 			auto g = (Graphics*)_graphics;
 			auto context = g->getContext();
 
-			if (_inElementsDirty) {
-				_inElementsDirty = false;
-
-				_curInLayout = _getOrCreateInputLayout();
+			bool inElementsDirty = false;
+			for (ui32 i = 0, n = _inVerBufInfos.size(); i < n; ++i) {
+				auto& info = _inVerBufInfos[i];
+				auto vb = (VertexBuffer*)vertexFactory->get(info.name);
+				if (vb) {
+					auto& ie = _inElements[i];
+					DXGI_FORMAT fmt;
+					if (vb->use(info.slot, fmt)) {
+						if (ie.Format != fmt) {
+							inElementsDirty = true;
+							ie.Format = fmt;
+						}
+					}
+				}
 			}
 
+			if (inElementsDirty) _curInLayout = _getOrCreateInputLayout();
+
 			if (_curInLayout) {
-				//_cb->use(0);
+				if (constantFactory) {
+					_useConstants<ProgramStage::VS>(_vsConstLayout, *constantFactory);
+					_useConstants<ProgramStage::PS>(_psConstLayout, *constantFactory);
+				}
 
 				context->IASetInputLayout(_curInLayout);
-				((IndexBuffer&)indexBuffer).draw(count, offset);
+				((IndexBuffer*)indexBuffer)->draw(count, offset);
+
+				((Graphics*)_graphics)->releaseUsedShareConstantBuffers();
 			}
 		}
 	}
@@ -208,8 +212,6 @@ namespace aurora::modules::graphics::win_d3d11 {
 			_curInLayout = nullptr;
 		}
 
-		_inElementsDirty = false;
-
 		if (_vs) {
 			_vs->Release();
 			_vs = nullptr;
@@ -225,8 +227,9 @@ namespace aurora::modules::graphics::win_d3d11 {
 			_vertBlob = nullptr;
 		}
 
-		_vsConstLayout.clear();
-		_psConstLayout.clear();
+		auto& g = *(Graphics*)_graphics;
+		_vsConstLayout.clear(g);
+		_psConstLayout.clear(g);
 	}
 
 	ID3DBlob* Program::_compileShader(const ProgramSource& source, const i8* target) {
@@ -378,7 +381,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 					v.size = vDesc.Size;
 					buffer->size += v.size;
 
-					dst.bufferIndicesMappingByVarNames.emplace(v.name, idx);
+					//dst.bufferIndicesMappingByVarNames.emplace(v.name, idx);
 				}
 
 				if (bDesc.Variables > 0) {
@@ -386,6 +389,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 					auto len = v.offset + v.size;
 					auto remainder = len & 0b1111;
 					buffer->size = remainder ? len + 16 - remainder : len;
+
+					((Graphics*)_graphics)->refShareConstantBuffer(buffer->size);
 				}
 			}
 		}

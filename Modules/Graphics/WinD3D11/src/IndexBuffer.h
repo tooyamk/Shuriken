@@ -8,8 +8,11 @@ namespace aurora::modules::graphics::win_d3d11 {
 		IndexBuffer(Graphics& graphics);
 		virtual ~IndexBuffer();
 
-		virtual bool AE_CALL stroage(ui32 size, const void* data = nullptr) override;
-		virtual void AE_CALL write(ui32 offset, const void* data, ui32 length) override;
+		virtual bool AE_CALL stroage(ui32 size, ui32 bufferUsage, const void* data = nullptr) override;
+		virtual bool AE_CALL map(ui32 mapUsage) override;
+		virtual void AE_CALL unmap() override;
+		virtual i32 AE_CALL read(ui32 offset, void* dst, ui32 dstLen, i32 readLen = -1) override;
+		virtual i32 AE_CALL write(ui32 offset, const void* data, ui32 length) override;
 		virtual void AE_CALL setFormat(IndexType type) override;
 		virtual void AE_CALL flush() override;
 

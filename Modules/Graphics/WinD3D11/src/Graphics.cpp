@@ -210,6 +210,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 			return false;
 		}
 
+		_device->CheckFeatureSupport(D3D11_FEATURE_D3D11_OPTIONS, &_featureOptions, sizeof(_featureOptions));
+
 		_resize(w, h);
 
 		return true;
@@ -247,44 +249,55 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	void Graphics::refShareConstantBuffer(ui32 size) {
-		auto itr = _sharedConstBufferPool.find(size);
-		if (itr == _sharedConstBufferPool.end()) {
-			_sharedConstBufferPool.emplace(std::piecewise_construct, std::forward_as_tuple(size), std::forward_as_tuple()).first->second.rc = 1;
+		auto itr = _shareConstBufferPool.find(size);
+		if (itr == _shareConstBufferPool.end()) {
+			auto& pool = _shareConstBufferPool.emplace(std::piecewise_construct, std::forward_as_tuple(size), std::forward_as_tuple()).first->second;
+			pool.rc = 1;
+			pool.idleIndex = 0;
 		} else {
 			++itr->second.rc;
 		}
 	}
 
 	void Graphics::unrefShareConstantBuffer(ui32 size) {
-		auto itr = _sharedConstBufferPool.find(size);
-		if (itr != _sharedConstBufferPool.end()) {
-			if (itr->second.rc == 1) _sharedConstBufferPool.erase(itr);
+		auto itr = _shareConstBufferPool.find(size);
+		if (itr != _shareConstBufferPool.end()) {
+			if (itr->second.rc == 1) {
+				for (auto cb : itr->second.buffers) cb->unref();
+				_shareConstBufferPool.erase(itr);
+			}
 		}
 	}
 
 	ConstantBuffer* Graphics::popShareConstantBuffer(ui32 size) {
-		auto itr = _sharedConstBufferPool.find(size);
-		if (itr != _sharedConstBufferPool.end()) {
-			auto& buffers = itr->second.buffers;
+		auto itr = _shareConstBufferPool.find(size);
+		if (itr != _shareConstBufferPool.end()) {
+			auto& pool = itr->second;
+			auto& buffers = pool.buffers;
 			auto len = buffers.size();
 			ConstantBuffer* cb;
-			if (len == 0) {
+			if (pool.idleIndex == len) {
 				cb = new ConstantBuffer(*this);
 				cb->ref();
-				cb->stroage(size);
+				cb->stroage(size, BufferUsage::CPU_WRITE);
+				buffers.emplace_back(cb);
 			} else {
-				cb = buffers[len - 1];
-				buffers.pop_back();
+				cb = buffers[pool.idleIndex];
 			}
 
+			_usedShareConstBufferPool.emplace(size);
+			++pool.idleIndex;
 			return cb;
 		}
 		return nullptr;
 	}
 
-	void Graphics::pushShareConstantBuffer(ui32 size, ConstantBuffer& cb) {
-		auto itr = _sharedConstBufferPool.find(size);
-		if (itr != _sharedConstBufferPool.end()) itr->second.buffers.emplace_back(&cb);
+	void Graphics::releaseUsedShareConstantBuffers() {
+		for (auto size : _usedShareConstBufferPool) {
+			auto itr = _shareConstBufferPool.find(size);
+			if (itr != _shareConstBufferPool.end()) itr->second.idleIndex = 0;
+		}
+		_usedShareConstBufferPool.clear();
 	}
 
 	void Graphics::_resizedHandler(events::Event<ApplicationEvent>& e) {
@@ -294,6 +307,12 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	void Graphics::_release() {
+		for (auto& pool : _shareConstBufferPool) {
+			for (auto cb : pool.second.buffers) cb->unref();
+		}
+		_shareConstBufferPool.clear();
+		_usedShareConstBufferPool.clear();
+
 		if (_backBufferTarget) {
 			_backBufferTarget->Release();
 			_backBufferTarget = nullptr;
@@ -316,6 +335,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		_featureLevel = D3D_FEATURE_LEVEL_9_1;
 		_shaderModel = "";
+
+		memset(&_featureOptions, 0, sizeof(_featureOptions));
 	}
 
 	void Graphics::_resize(UINT w, UINT h) {
