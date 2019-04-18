@@ -263,8 +263,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 		auto itr = _shareConstBufferPool.find(size);
 		if (itr != _shareConstBufferPool.end()) {
 			if (itr->second.rc == 1) {
+				this->ref();
 				for (auto cb : itr->second.buffers) cb->unref();
 				_shareConstBufferPool.erase(itr);
+				this->unref();
 			}
 		}
 	}

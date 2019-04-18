@@ -1,7 +1,6 @@
 #pragma once
 
 #include "IEventDispatcher.h"
-#include <mutex>
 #include <unordered_map>
 
 namespace aurora::events {
