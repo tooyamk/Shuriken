@@ -45,6 +45,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 				ui32 bindPoint;
 				std::vector<Var> vars;
 				ui32 size;
+				ui32 sameId;
 			};
 
 			std::vector<Buffer> buffers;
@@ -67,14 +68,16 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		ConstantLayout _vsConstLayout;
 		ConstantLayout _psConstLayout;
+		std::vector<ConstantLayout*> _constLayouts;
 
-		std::vector<ConstantBuffer*> _usingShareConstBuffers;
+		std::vector<ConstantBuffer*> _usingSameBuffers;
 
 		void AE_CALL _release();
 		ID3DBlob* AE_CALL _compileShader(const ProgramSource& source, const i8* target);
 		ID3D11InputLayout* _getOrCreateInputLayout();
 		void AE_CALL _parseInLayout(const D3D11_SHADER_DESC& desc, ID3D11ShaderReflection& ref);
 		void AE_CALL _parseConstantLayout(const D3D11_SHADER_DESC& desc, ID3D11ShaderReflection& ref, ConstantLayout& dst);
+		void AE_CALL _calcConstantLayoutSameBuffers();
 
 		ConstantBuffer* _getConstantBuffer(const ConstantLayout::Buffer& buffer, const ConstantFactory& factory);
 

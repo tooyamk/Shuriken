@@ -363,4 +363,14 @@ namespace aurora {
 			_position += len;
 		}
 	}
+
+	bool ByteArray::isEqual(const i8* data1, ui32 data1Len, const i8* data2, ui32 data2Len) {
+		if (data1Len != data2Len) return false;
+
+		for (ui32 i = 0; i < data1Len; ++i) {
+			if (data1[i] != data2[i]) return false;
+		}
+
+		return true;
+	}
 }

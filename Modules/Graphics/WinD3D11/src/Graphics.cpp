@@ -302,6 +302,42 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_usedShareConstBufferPool.clear();
 	}
 
+	ConstantBuffer* Graphics::getExcLusiveConstantBuffer(const std::vector<Constant*>& constants) {
+		return _getExcLusiveConstantBuffer(constants, 0, constants.size() - 1, nullptr);
+	}
+
+	ConstantBuffer* Graphics::_getExcLusiveConstantBuffer(const std::vector<Constant*>& constants, ui32 cur, ui32 max, ExcLusiveConstNode* prev) {
+		auto constant = constants[cur];
+
+		ExcLusiveConstNode* node = nullptr;
+		auto itr = _excLusiveConstBufferPool.find(constant);
+		if (prev) {
+			if (prev->next.find(constant) == prev->next.end()) {
+				prev->next.emplace(constant);
+				if (itr == _excLusiveConstBufferPool.end()) {
+					node = &_excLusiveConstBufferPool.emplace(std::piecewise_construct, std::forward_as_tuple(constant), std::forward_as_tuple()).first->second;
+				} else {
+					node = &itr->second;
+				}
+			} else {
+				node = &itr->second;
+			}
+		} else {
+			if (itr == _excLusiveConstBufferPool.end()) {
+				node = &_excLusiveConstBufferPool.emplace(std::piecewise_construct, std::forward_as_tuple(constant), std::forward_as_tuple()).first->second;
+			} else {
+				node = &itr->second;
+			}
+		}
+
+		if (cur == max) {
+			//todo
+			return nullptr;
+		} else {
+			return _getExcLusiveConstantBuffer(constants, cur + 1, max, node);
+		}
+	}
+
 	void Graphics::_resizedHandler(events::Event<ApplicationEvent>& e) {
 		i32 w, h;
 		_app->getInnerSize(w, h);

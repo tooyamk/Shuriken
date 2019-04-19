@@ -100,6 +100,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		_parseConstantLayout(sDesc, *psr, _psConstLayout);
 
+		_calcConstantLayoutSameBuffers();
+
 		return true;
 	}
 
@@ -116,6 +118,11 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	ConstantBuffer* Program::_getConstantBuffer(const ConstantLayout::Buffer& buffer, const ConstantFactory& factory) {
+		if (buffer.sameId) {
+			auto cb = _usingSameBuffers[buffer.sameId - 1];
+			if (cb) return cb;
+		}
+
 		std::vector<Constant*> constants;
 
 		ui32 exclusiveCount = 0, autoCount = 0, unknownCount = 0;
@@ -144,6 +151,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 		}
 
 		if (cb && cb->map(BufferMapUsage::WRITE)) {
+			if (buffer.sameId) _usingSameBuffers[buffer.sameId - 1] = cb;
+
 			for (ui32 i = 0; i < numVars; ++i) {
 				auto c = constants[i];
 				if (c) {
@@ -191,6 +200,9 @@ namespace aurora::modules::graphics::win_d3d11 {
 				context->IASetInputLayout(_curInLayout);
 				((IndexBuffer*)indexBuffer)->draw(count, offset);
 
+				if (constantFactory) {
+					for (ui32 i = 0, n = _usingSameBuffers.size(); i < n; ++i) _usingSameBuffers[i] = nullptr;
+				}
 				((Graphics*)_graphics)->releaseUsedShareConstantBuffers();
 			}
 		}
@@ -230,6 +242,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 		auto& g = *(Graphics*)_graphics;
 		_vsConstLayout.clear(g);
 		_psConstLayout.clear(g);
+		_constLayouts.clear();
+		_usingSameBuffers.clear();
 	}
 
 	ID3DBlob* Program::_compileShader(const ProgramSource& source, const i8* target) {
@@ -352,6 +366,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			buffer.name = ibDesc.Name;
 			buffer.bindPoint = ibDesc.BindPoint;
 			buffer.size = 0;
+			buffer.sameId = 0;
 		}
 
 		D3D11_SHADER_BUFFER_DESC bDesc;
@@ -391,6 +406,51 @@ namespace aurora::modules::graphics::win_d3d11 {
 					buffer->size = remainder ? len + 16 - remainder : len;
 
 					((Graphics*)_graphics)->refShareConstantBuffer(buffer->size);
+				}
+			}
+		}
+
+		_constLayouts.emplace_back(&dst);
+	}
+
+	void Program::_calcConstantLayoutSameBuffers() {
+		ui32 sameId = 0;
+		i32 n = (i32)_constLayouts.size();
+		for (i32 i = 0; i < n; ++i) {
+			auto& buffers0 = _constLayouts[i]->buffers;
+			for (i32 j = 0; j < n; ++j) {
+				if (i == j) continue;
+
+				auto& buffers1 = _constLayouts[j]->buffers;
+				
+				for (auto& buffer0 : buffers0) {
+					auto& vars0 = buffer0.vars;
+					ui32 numVars0 = vars0.size();
+
+					for (auto& buffer1 : buffers1) {
+						if (buffer0.size != buffer1.size) continue;
+						auto& vars1 = buffer1.vars;
+						if (numVars0 != vars1.size()) continue;
+
+						bool isVarsSame = true;
+						for (ui32 k = 0; k < numVars0; ++k) {
+							auto& var0 = vars0[k];
+							auto& var1 = vars1[k];
+							if (var0.name != var1.name || var0.offset != var1.offset || var0.size != var1.size) {
+								isVarsSame = false;
+								break;
+							}
+						}
+
+						if (isVarsSame) {
+							if (buffer0.sameId == 0) {
+								buffer0.sameId = ++sameId;
+								_usingSameBuffers.emplace_back(nullptr);
+							}
+							buffer1.sameId = buffer0.sameId;
+							break;
+						}
+					}
 				}
 			}
 		}

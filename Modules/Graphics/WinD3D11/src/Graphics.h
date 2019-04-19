@@ -71,6 +71,14 @@ namespace aurora::modules::graphics::win_d3d11 {
 		std::unordered_map<ui32, ShareConstBufferPool> _shareConstBufferPool;
 		std::unordered_set<ui32> _usedShareConstBufferPool;
 
+		struct ExcLusiveConstNode {
+			std::unordered_set<Constant*> prev;
+			std::unordered_set<Constant*> next;
+		};
+		std::unordered_map<Constant*, ExcLusiveConstNode> _excLusiveConstBufferPool;
+		ConstantBuffer* AE_CALL getExcLusiveConstantBuffer(const std::vector<Constant*>& constants);
+		ConstantBuffer* AE_CALL _getExcLusiveConstantBuffer(const std::vector<Constant*>& constants, ui32 cur, ui32 max, ExcLusiveConstNode* prev);
+
 		events::EventListener<ApplicationEvent, Graphics> _resizedListener;
 		void AE_CALL _resizedHandler(events::Event<ApplicationEvent>& e);
 

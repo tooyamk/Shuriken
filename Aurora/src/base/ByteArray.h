@@ -115,6 +115,8 @@ namespace aurora {
 		void AE_CALL popBack(ui32 len);
 		void AE_CALL insert(ui32 len);
 
+		static bool isEqual(const i8* data1, ui32 data1Len, const i8* data2, ui32 data2Len);
+
 	private:
 		enum class Mode : ui8 {
 			MEM,
