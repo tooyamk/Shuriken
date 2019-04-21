@@ -22,3 +22,5 @@
 
 #include "nodes/Node.h"
 #include "nodes/components/Camera.h"
+
+#include "utils/hash/CRC.h"

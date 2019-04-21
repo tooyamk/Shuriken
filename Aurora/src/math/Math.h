@@ -6,10 +6,8 @@
 namespace aurora {
 	class AE_DLL Math {
 	public:
-		Math() = delete;
-		Math(const Math&) = delete;
-		Math(Math&&) = delete;
-
+		AE_DECLA_CANNOT_INSTANTIATE(Math);
+		
 		template<typename T>
 		using FLOATING_POINT_TYPE = typename std::enable_if_t<std::is_floating_point_v<T>, T>;
 

@@ -2,9 +2,11 @@
 
 #include "Base.h"
 #include <unordered_set>
+#include <bitset>
 
 namespace aurora::modules::graphics::win_d3d11 {
 	class ConstantBuffer;
+	struct ConstantBufferLayout;
 
 	class AE_MODULE_DLL Graphics : public IGraphicsModule {
 	public:
@@ -16,6 +18,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual IConstantBuffer* AE_CALL createConstantBuffer() override;
 		virtual IIndexBuffer* AE_CALL createIndexBuffer() override;
 		virtual IProgram* AE_CALL createProgram() override;
+		virtual ITexture2D* AE_CALL createTexture2D() override;
 		virtual IVertexBuffer* AE_CALL createVertexBuffer() override;
 		
 		virtual void AE_CALL beginRender() override;
@@ -44,10 +47,13 @@ namespace aurora::modules::graphics::win_d3d11 {
 			return _featureOptions;
 		}
 
-		void AE_CALL refShareConstantBuffer(ui32 size);
-		void AE_CALL unrefShareConstantBuffer(ui32 size);
+		void AE_CALL registerConstantLayout(ConstantBufferLayout& layout);
+		void AE_CALL unregisterConstantLayout(ConstantBufferLayout& layout);
 		ConstantBuffer* AE_CALL popShareConstantBuffer(ui32 size);
-		void AE_CALL releaseUsedShareConstantBuffers();
+		void AE_CALL resetUsedShareConstantBuffers();
+		ConstantBuffer* AE_CALL getExclusiveConstantBuffer(const std::vector<Constant*>& constants, const ConstantBufferLayout& layout);
+
+		static DXGI_FORMAT AE_CALL getDXGIFormat(TextureFormat fmt);
 
 	private:
 		Application* _app;
@@ -71,13 +77,40 @@ namespace aurora::modules::graphics::win_d3d11 {
 		std::unordered_map<ui32, ShareConstBufferPool> _shareConstBufferPool;
 		std::unordered_set<ui32> _usedShareConstBufferPool;
 
-		struct ExcLusiveConstNode {
-			std::unordered_set<Constant*> prev;
-			std::unordered_set<Constant*> next;
+		void AE_CALL _registerShareConstantLayout(ui32 size);
+		void AE_CALL _unregisterShareConstantLayout(ui32 size);
+
+		struct ExclusiveConstNode {
+			ExclusiveConstNode() :
+				numAssociativeBuffers(0),
+				constant(nullptr),
+				parent(nullptr) {
+			}
+
+			ui32 numAssociativeBuffers;
+			std::unordered_map<const Constant*, ExclusiveConstNode> children;
+			std::unordered_map<ui64, ConstantBuffer*> buffers;
+			Constant* constant;
+			ExclusiveConstNode* parent;
 		};
-		std::unordered_map<Constant*, ExcLusiveConstNode> _excLusiveConstBufferPool;
-		ConstantBuffer* AE_CALL getExcLusiveConstantBuffer(const std::vector<Constant*>& constants);
-		ConstantBuffer* AE_CALL _getExcLusiveConstantBuffer(const std::vector<Constant*>& constants, ui32 cur, ui32 max, ExcLusiveConstNode* prev);
+		std::unordered_map<const Constant*, ExclusiveConstNode> _exclusiveConstRoots;
+		std::unordered_map<const Constant*, std::unordered_set<ExclusiveConstNode*>> _exclusiveConstNodes;
+
+		struct ExcLusiveConsts {
+			ui32 rc;
+			std::unordered_set<ExclusiveConstNode*> nodes;
+		};
+		std::unordered_map<ui64, ExcLusiveConsts> _exclusiveConstPool;
+
+		ConstantBuffer* AE_CALL _getExclusiveConstantBuffer(const ConstantBufferLayout& layout, const std::vector<Constant*>& constants,
+			ui32 cur, ui32 max, ExclusiveConstNode* parent, std::unordered_map <const Constant*, ExclusiveConstNode>& chindrenContainer);
+		void AE_CALL _registerExclusiveConstantLayout(ConstantBufferLayout& layout);
+		void AE_CALL _unregisterExclusiveConstantLayout(ConstantBufferLayout& layout);
+		static void _releaseExclusiveConstant(void* graphics, const Constant& constant);
+		void _releaseExclusiveConstant(const Constant& constant);
+		void _releaseExclusiveConstantToRoot(ExclusiveConstNode* parent, ExclusiveConstNode* releaseChild, ui32 releaseNumAssociativeBuffers, bool releaseConstant);
+		void _releaseExclusiveConstantToLeaf(ExclusiveConstNode& node, bool releaseConstant);
+		void _releaseExclusiveConstantSelf(ExclusiveConstNode& node, bool releaseConstant);
 
 		events::EventListener<ApplicationEvent, Graphics> _resizedListener;
 		void AE_CALL _resizedHandler(events::Event<ApplicationEvent>& e);

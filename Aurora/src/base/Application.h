@@ -62,8 +62,8 @@ namespace aurora {
 	protected:
 		bool _isWindowed;
 		bool _isClosing;
-		std::string _appId;
 		Style _style;
+		std::string _appId;
 
 		events::EventDispatcher<ApplicationEvent> _eventDispatcher;
 

@@ -9,8 +9,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 		ConstantBuffer(Graphics& graphics);
 		virtual ~ConstantBuffer();
 
-		virtual bool AE_CALL stroage(ui32 size, ui32 bufferUsage, const void* data = nullptr) override;
-		virtual bool AE_CALL map(ui32 mapUsage) override;
+		ui32* recordUpdateIds;
+
+		virtual bool AE_CALL allocate(ui32 size, ui32 bufferUsage, const void* data = nullptr) override;
+		virtual ui32 AE_CALL map(ui32 mapUsage) override;
 		virtual void AE_CALL unmap() override;
 		virtual i32 AE_CALL read(ui32 offset, void* dst, ui32 dstLen, i32 readLen = -1) override;
 		virtual i32 AE_CALL write(ui32 offset, const void* data, ui32 length) override;
@@ -22,12 +24,12 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		template<>
 		void AE_CALL use<ProgramStage::VS>(UINT slot) {
-			((Graphics*)_graphics)->getContext()->VSSetConstantBuffers(slot, 1, &_handle);
+			((Graphics*)_graphics)->getContext()->VSSetConstantBuffers(slot, 1, (ID3D11Buffer**)&_handle);
 		}
 
 		template<>
 		void AE_CALL use<ProgramStage::PS>(UINT slot) {
-			((Graphics*)_graphics)->getContext()->PSSetConstantBuffers(slot, 1, &_handle);
+			((Graphics*)_graphics)->getContext()->PSSetConstantBuffers(slot, 1, (ID3D11Buffer**)&_handle);
 		}
 
 	protected:

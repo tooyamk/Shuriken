@@ -217,6 +217,7 @@
     <ClInclude Include="src\nodes\Node.h" />
     <ClInclude Include="src\renderers\commands\BaseRenderCommand.h" />
     <ClInclude Include="src\renderers\commands\IRenderCommand.h" />
+    <ClInclude Include="src\utils\hash\CRC.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\base\Application.cpp" />
@@ -237,6 +238,7 @@
     <ClCompile Include="src\nodes\components\Camera.cpp" />
     <ClCompile Include="src\nodes\Node.cpp" />
     <ClCompile Include="src\renderers\commands\IRenderCommand.cpp" />
+    <ClCompile Include="src\utils\hash\CRC.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="src\base\ByteArray.inl" />

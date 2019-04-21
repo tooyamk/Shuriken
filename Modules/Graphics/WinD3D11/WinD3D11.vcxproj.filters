@@ -21,13 +21,19 @@
     <ClInclude Include="src\Program.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\BaseBuffer.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="src\IndexBuffer.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\ConstantBuffer.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\BaseResource.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\BaseBuffer.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Texture2D.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
@@ -41,9 +47,6 @@
     <ClCompile Include="src\Program.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\BaseBuffer.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\IndexBuffer.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -51,6 +54,15 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\ConstantBuffer.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\BaseResource.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\BaseBuffer.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Texture2D.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

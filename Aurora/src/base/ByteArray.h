@@ -115,6 +115,7 @@ namespace aurora {
 		void AE_CALL popBack(ui32 len);
 		void AE_CALL insert(ui32 len);
 
+		inline static bool isEqual(const ByteArray& data1, const ByteArray& data2);
 		static bool isEqual(const i8* data1, ui32 data1Len, const i8* data2, ui32 data2Len);
 
 	private:

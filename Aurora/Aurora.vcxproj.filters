@@ -28,6 +28,12 @@
     <Filter Include="src\renderers\commands">
       <UniqueIdentifier>{6e2ba37f-6a4f-4e90-aee3-b3d7e2d21b2d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\utils">
+      <UniqueIdentifier>{ae82d87e-d35d-4023-8108-c001a2b13ac4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\utils\hash">
+      <UniqueIdentifier>{bd1a3dcd-1c7f-4aa0-afd9-52bb9b056fdc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\math\Matrix44.h">
@@ -120,6 +126,9 @@
     <ClInclude Include="src\base\STList.h">
       <Filter>src\base</Filter>
     </ClInclude>
+    <ClInclude Include="src\utils\hash\CRC.h">
+      <Filter>src\utils\hash</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\math\Matrix44.cpp">
@@ -175,6 +184,9 @@
     </ClCompile>
     <ClCompile Include="src\base\ByteArray.cpp">
       <Filter>src\base</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\hash\CRC.cpp">
+      <Filter>src\utils\hash</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

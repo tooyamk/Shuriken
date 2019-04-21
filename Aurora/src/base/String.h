@@ -105,6 +105,8 @@ namespace aurora {
 		}
 		*/
 
+		static bool isEqual(const i8* str1, const i8* str2);
+
 	private:
 		inline static std::regex _trimFloatZero = std::regex("0+?$");
 		inline static std::regex _trimFloatPoint = std::regex("[.]$");

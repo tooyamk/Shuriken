@@ -203,6 +203,10 @@ namespace aurora {
 		writeTwoUInt12(value1 < 0 ? INT12 + value1 : value1, value2 < 0 ? INT12 + value2 : value2);
 	}
 
+	inline bool ByteArray::isEqual(const ByteArray& data1, const ByteArray& data2) {
+		return isEqual(data1.getBytes(), data1.getLength(), data2.getBytes(), data2.getLength());
+	}
+
 	inline void ByteArray::_read(i8* p, ui32 len) {
 		if (_position + len > _length) memset(p, 0, len);
 

@@ -9,9 +9,7 @@ namespace aurora::nodes {
 namespace aurora::nodes::component {
 	class AE_DLL ComponentFlag {
 	public:
-		ComponentFlag() = delete;
-		ComponentFlag(const ComponentFlag&) = delete;
-		ComponentFlag(ComponentFlag&&) = delete;
+		AE_DECLA_CANNOT_INSTANTIATE(ComponentFlag);
 
 		static const ui32 CAMERA = 0b1;
 		static const ui32 RENDERABLE = 0b10;

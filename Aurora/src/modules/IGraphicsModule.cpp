@@ -180,6 +180,20 @@ namespace aurora::modules::graphics {
 	}
 
 
+	ITexture::ITexture(IGraphicsModule& graphics) : IObject(graphics) {
+	}
+
+	ITexture::~ITexture() {
+	}
+
+
+	ITexture2D::ITexture2D(IGraphicsModule& graphics) : ITexture(graphics) {
+	}
+
+	ITexture2D::~ITexture2D() {
+	}
+
+
 	IConstantBuffer::IConstantBuffer(IGraphicsModule& graphics) : IBuffer(graphics) {
 	}
 
@@ -190,47 +204,142 @@ namespace aurora::modules::graphics {
 	Constant::Constant(ConstantUsage usage) :
 		_usage(usage),
 		_type(Type::DEFAULT),
+		_updateId(0),
 		_data(),
-		_dataPtr(&_data),
-		_size(0) {
+		_size(0),
+		_exclusiveRc(0),
+		_exclusiveFnTarget(nullptr),
+		_exclusiveFn(nullptr){
 		memset(&_data, 0, sizeof(_data));
 	}
 
 	Constant::~Constant() {
+		releaseExclusiveBuffers();
 		if (_type == Type::INTERNAL) delete[] _data.internalData;
 	}
 
-	void Constant::set(f32 value) {
-		if (_type == Type::INTERNAL) delete[] _data.internalData;
-		_type = Type::DEFAULT;
-		_dataPtr = &_data;
-		_size = sizeof(f32);
-		_data.x = value;
+	void Constant::releaseExclusiveBuffers() {
+		auto t = _exclusiveFnTarget;
+		auto f = _exclusiveFn;
+		_exclusiveRc = 0;
+		_exclusiveFnTarget = nullptr;
+		_exclusiveFn = nullptr;
+
+		if (f) f(t, *this);
 	}
 
-	void Constant::set(const Vector2& value) {
-		if (_type == Type::INTERNAL) delete[] _data.internalData;
-		_type = Type::DEFAULT;
-		_dataPtr = &_data;
-		_size = sizeof(f32) << 1;
-		memcpy(_dataPtr, &value.x, _size);
+	void Constant::setUsage(ConstantUsage usage) {
+		if (_usage != usage) {
+			if (usage == ConstantUsage::SHARE) releaseExclusiveBuffers();
+			_usage = usage;
+		}
 	}
 
-	void Constant::set(const Vector3& value) {
-		if (_type == Type::INTERNAL) delete[] _data.internalData;
-		_type = Type::DEFAULT;
-		_dataPtr = &_data;
-		_size = sizeof(f32) * 3;
-		memcpy(_dataPtr, &value.x, _size);
-		
+	void Constant::__setExclusive(void* callTarget, EXCLUSIVE_FN callback) {
+		if (_exclusiveFnTarget != callTarget || _exclusiveFn != callback) {
+			releaseExclusiveBuffers();
+
+			_exclusiveFnTarget = callTarget;
+			_exclusiveFn = callback;
+		}
+		++_exclusiveRc;
 	}
 
-	void Constant::set(const Vector4& value) {
-		if (_type == Type::INTERNAL) delete[] _data.internalData;
-		_type = Type::DEFAULT;
-		_dataPtr = &_data;
-		_size = sizeof(f32) << 2;
-		memcpy(_dataPtr, &value.x, _size);
+	void Constant::__releaseExclusive(void* callTarget, EXCLUSIVE_FN callback) {
+		if (_exclusiveFnTarget == callTarget && _exclusiveFn == callback && !--_exclusiveRc) {
+			_exclusiveFnTarget = nullptr;
+			_exclusiveFn = nullptr;
+		}
+	}
+
+	Constant& Constant::set(f32 value) {
+		set(&value, sizeof(value), sizeof(value), true);
+		return *this;
+	}
+
+	Constant& Constant::set(const Vector2& value) {
+		set(&value, sizeof(value), sizeof(value), true);
+		return *this;
+	}
+
+	Constant& Constant::set(const Vector3& value) {
+		set(&value, sizeof(value), sizeof(value), true);
+		return *this;
+	}
+
+	Constant& Constant::set(const Vector4& value) {
+		set(&value, sizeof(value), sizeof(value), true);
+		return *this;
+	}
+
+	Constant& Constant::set(const void* data, ui32 size, ui16 perElementSize, bool copy) {
+		switch (_type) {
+		case Type::DEFAULT:
+		{
+			if (copy) {
+				if (size <= DEFAULT_DATA_SIZE) {
+					memcpy(&_data, data, size);
+				} else {
+					_type = Type::INTERNAL;
+					_data.internalData = new i8[size];
+					_data.internalSize = size;
+					memcpy(&_data.internalData, data, size);
+				}
+			} else {
+				_type = Type::EXTERNAL;
+				_data.externalData = data;
+			}
+
+			break;
+		}
+		case Type::INTERNAL:
+		{
+			if (copy) {
+				if (size <= DEFAULT_DATA_SIZE) {
+					delete[] _data.internalData;
+					_type = Type::DEFAULT;
+					memcpy(&_data, data, size);
+				} else {
+					if (_data.internalSize < size) {
+						delete[] _data.internalData;
+						_data.internalData = new i8[size];
+						_data.internalSize = size;
+					}
+					memcpy(&_data.internalData, data, size);
+				}
+			} else {
+				delete[] _data.internalData;
+				_type = Type::EXTERNAL;
+				_data.externalData = data;
+			}
+
+			break;
+		}
+		case Type::EXTERNAL:
+		{
+			if (copy) {
+				if (size <= DEFAULT_DATA_SIZE) {
+					_type = Type::DEFAULT;
+					memcpy(&_data, data, size);
+				} else {
+					_type = Type::INTERNAL;
+					_data.internalData = new i8[size];
+					_data.internalSize = size;
+					memcpy(&_data.internalData, data, size);
+				}
+			} else {
+				_data.externalData = data;
+			}
+
+			break;
+		}
+		default:
+			break;
+		}
+		_size = size;
+		_perElementSize = perElementSize;
+
+		return *this;
 	}
 
 

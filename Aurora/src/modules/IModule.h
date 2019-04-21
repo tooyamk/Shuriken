@@ -8,9 +8,7 @@
 namespace aurora::modules {
 	class AE_DLL ModuleType {
 	public:
-		ModuleType() = delete;
-		ModuleType(const ModuleType&) = delete;
-		ModuleType(ModuleType&&) = delete;
+		AE_DECLA_CANNOT_INSTANTIATE(ModuleType);
 
 		static const ui32 GRAPHICS = 0b1;
 		static const ui32 INPUT = 0b10;

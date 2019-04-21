@@ -30,9 +30,7 @@ namespace aurora::modules {
 
 	class AE_DLL InputDeviceType {
 	public:
-		InputDeviceType() = delete;
-		InputDeviceType(const InputDeviceType&) = delete;
-		InputDeviceType(InputDeviceType&&) = delete;
+		AE_DECLA_CANNOT_INSTANTIATE(InputDeviceType);
 
 		static const ui32 KEYBOARD = 0b1;
 		static const ui32 MOUSE = 0b10;

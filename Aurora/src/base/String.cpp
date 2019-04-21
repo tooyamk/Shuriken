@@ -192,4 +192,15 @@ namespace aurora {
 		std::sregex_token_iterator end;
 		while (itr != end) dst.emplace_back(*itr++);
 	}
+
+	bool String::isEqual(const i8* str1, const i8* str2) {
+		if (str1 == str2) return true;
+		
+		ui32 i = 0;
+		do {
+			if (str1[i] != str2[i]) return false;
+			if (str1[i] == 0) return true;
+			++i;
+		} while(true);
+	}
 }

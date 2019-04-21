@@ -6,9 +6,7 @@
 namespace aurora {
 	class AE_TEMPLATE_DLL Time {
 	public:
-		Time() = delete;
-		Time(const Time&) = delete;
-		Time(Time&&) = delete;
+		AE_DECLA_CANNOT_INSTANTIATE(Time);
 
 		/**
 		 * system_clock : utc time.

@@ -9,11 +9,11 @@ namespace aurora::modules::graphics::win_d3d11 {
 	IndexBuffer::~IndexBuffer() {
 	}
 
-	bool IndexBuffer::stroage(ui32 size, ui32 bufferUsage, const void* data) {
-		return _stroage(size, bufferUsage,  data);
+	bool IndexBuffer::allocate(ui32 size, ui32 bufferUsage, const void* data) {
+		return _allocate(size, bufferUsage,  data);
 	}
 
-	bool IndexBuffer::map(ui32 mapUsage) {
+	ui32 IndexBuffer::map(ui32 mapUsage) {
 		return _map(mapUsage);
 	}
 
@@ -63,7 +63,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			if (count > last) count = last;
 
 			auto context = _grap->getContext();
-			context->IASetIndexBuffer(_handle, _indexType, 0);
+			context->IASetIndexBuffer((ID3D11Buffer*)_handle, _indexType, 0);
 			context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 			context->DrawIndexed(count, offset, 0);
 		}

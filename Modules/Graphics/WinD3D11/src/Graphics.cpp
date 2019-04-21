@@ -1,6 +1,7 @@
 #include "Graphics.h"
 #include "IndexBuffer.h"
 #include "Program.h"
+#include "Texture2D.h"
 #include "VertexBuffer.h"
 #include "base/Application.h"
 #include "CreateModule.h"
@@ -229,6 +230,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return new Program(*this);
 	}
 
+	ITexture2D* Graphics::createTexture2D() {
+		return new Texture2D(*this);
+	}
+
 	IVertexBuffer* Graphics::createVertexBuffer() {
 		return new VertexBuffer(*this);
 	}
@@ -248,7 +253,17 @@ namespace aurora::modules::graphics::win_d3d11 {
 	void Graphics::clear() {
 	}
 
-	void Graphics::refShareConstantBuffer(ui32 size) {
+	void Graphics::registerConstantLayout(ConstantBufferLayout& layout) {
+		_registerShareConstantLayout(layout.size);
+		_registerExclusiveConstantLayout(layout);
+	}
+
+	void Graphics::unregisterConstantLayout(ConstantBufferLayout& layout) {
+		_unregisterShareConstantLayout(layout.size);
+		_unregisterExclusiveConstantLayout(layout);
+	}
+
+	void Graphics::_registerShareConstantLayout(ui32 size) {
 		auto itr = _shareConstBufferPool.find(size);
 		if (itr == _shareConstBufferPool.end()) {
 			auto& pool = _shareConstBufferPool.emplace(std::piecewise_construct, std::forward_as_tuple(size), std::forward_as_tuple()).first->second;
@@ -259,7 +274,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		}
 	}
 
-	void Graphics::unrefShareConstantBuffer(ui32 size) {
+	void Graphics::_unregisterShareConstantLayout(ui32 size) {
 		auto itr = _shareConstBufferPool.find(size);
 		if (itr != _shareConstBufferPool.end()) {
 			if (itr->second.rc == 1) {
@@ -281,7 +296,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			if (pool.idleIndex == len) {
 				cb = new ConstantBuffer(*this);
 				cb->ref();
-				cb->stroage(size, BufferUsage::CPU_WRITE);
+				cb->allocate(size, BufferUsage::CPU_WRITE);
 				buffers.emplace_back(cb);
 			} else {
 				cb = buffers[pool.idleIndex];
@@ -294,7 +309,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return nullptr;
 	}
 
-	void Graphics::releaseUsedShareConstantBuffers() {
+	void Graphics::resetUsedShareConstantBuffers() {
 		for (auto size : _usedShareConstBufferPool) {
 			auto itr = _shareConstBufferPool.find(size);
 			if (itr != _shareConstBufferPool.end()) itr->second.idleIndex = 0;
@@ -302,40 +317,127 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_usedShareConstBufferPool.clear();
 	}
 
-	ConstantBuffer* Graphics::getExcLusiveConstantBuffer(const std::vector<Constant*>& constants) {
-		return _getExcLusiveConstantBuffer(constants, 0, constants.size() - 1, nullptr);
+	ConstantBuffer* Graphics::getExclusiveConstantBuffer(const std::vector<Constant*>& constants, const ConstantBufferLayout& layout) {
+		return _getExclusiveConstantBuffer(layout, constants, 0, constants.size() - 1, nullptr, _exclusiveConstRoots);
 	}
 
-	ConstantBuffer* Graphics::_getExcLusiveConstantBuffer(const std::vector<Constant*>& constants, ui32 cur, ui32 max, ExcLusiveConstNode* prev) {
+	void Graphics::_registerExclusiveConstantLayout(ConstantBufferLayout& layout) {
+		auto itr = _exclusiveConstPool.find(layout.featureCode);
+		if (itr == _exclusiveConstPool.end()) {
+			_exclusiveConstPool.emplace(std::piecewise_construct, std::forward_as_tuple(layout.featureCode), std::forward_as_tuple()).first->second.rc = 1;
+		} else {
+			++itr->second.rc;
+		}
+	}
+
+	void Graphics::_unregisterExclusiveConstantLayout(ConstantBufferLayout& layout) {
+		auto itr = _exclusiveConstPool.find(layout.featureCode);
+		if (itr != _exclusiveConstPool.end() && !--itr->second.rc) {
+			for (auto node : itr->second.nodes) {
+				_releaseExclusiveConstantToLeaf(*node, true);
+				_releaseExclusiveConstantToRoot(node->parent, nullptr, node->numAssociativeBuffers, true);
+			}
+
+			_exclusiveConstPool.erase(itr);
+		}
+	}
+
+	ConstantBuffer* Graphics::_getExclusiveConstantBuffer(const ConstantBufferLayout& layout, const std::vector<Constant*>& constants,
+		ui32 cur, ui32 max, ExclusiveConstNode* parent, std::unordered_map <const Constant*, ExclusiveConstNode>& chindrenContainer) {
 		auto constant = constants[cur];
 
-		ExcLusiveConstNode* node = nullptr;
-		auto itr = _excLusiveConstBufferPool.find(constant);
-		if (prev) {
-			if (prev->next.find(constant) == prev->next.end()) {
-				prev->next.emplace(constant);
-				if (itr == _excLusiveConstBufferPool.end()) {
-					node = &_excLusiveConstBufferPool.emplace(std::piecewise_construct, std::forward_as_tuple(constant), std::forward_as_tuple()).first->second;
-				} else {
-					node = &itr->second;
-				}
+		ExclusiveConstNode* node = nullptr;
+
+		auto itr = chindrenContainer.find(constant);
+		if (itr == chindrenContainer.end()) {
+			node = &chindrenContainer.emplace(std::piecewise_construct, std::forward_as_tuple(constant), std::forward_as_tuple()).first->second;
+			node->constant = constant;
+			node->parent = parent;
+
+			auto itr2 = _exclusiveConstNodes.find(constant);
+			if (itr2 == _exclusiveConstNodes.end()) {
+				_exclusiveConstNodes.emplace(std::piecewise_construct, std::forward_as_tuple(constant), std::forward_as_tuple()).first->second.emplace(node);
 			} else {
-				node = &itr->second;
+				itr2->second.emplace(node);
 			}
+
+			constant->__setExclusive(this, &Graphics::_releaseExclusiveConstant);
 		} else {
-			if (itr == _excLusiveConstBufferPool.end()) {
-				node = &_excLusiveConstBufferPool.emplace(std::piecewise_construct, std::forward_as_tuple(constant), std::forward_as_tuple()).first->second;
-			} else {
-				node = &itr->second;
-			}
+			node = &itr->second;
 		}
 
 		if (cur == max) {
-			//todo
-			return nullptr;
+			auto itr = node->buffers.find(layout.featureCode);
+			ConstantBuffer* cb = nullptr;
+			if (itr == node->buffers.end()) {
+				cb = node->buffers.emplace(layout.featureCode, new ConstantBuffer(*this)).first->second;
+				cb->ref();
+				cb->recordUpdateIds = new ui32[cur + 1];
+				memset(cb->recordUpdateIds, 0, sizeof(ui32) * (cur + 1));
+				cb->allocate(layout.size, BufferUsage::CPU_WRITE);
+
+				_exclusiveConstPool.find(layout.featureCode)->second.nodes.emplace(node);
+
+				do {
+					++node->numAssociativeBuffers;
+					node = node->parent;
+				} while (node);
+			} else {
+				cb = itr->second;
+			}
+			
+			return cb;
 		} else {
-			return _getExcLusiveConstantBuffer(constants, cur + 1, max, node);
+			return _getExclusiveConstantBuffer(layout, constants, cur + 1, max, node, node->children);
 		}
+	}
+
+	void Graphics::_releaseExclusiveConstant(void* graphics, const Constant& constant) {
+		if (graphics) ((Graphics*)graphics)->_releaseExclusiveConstant(constant);
+	}
+
+	void Graphics::_releaseExclusiveConstant(const Constant& constant) {
+		auto itr = _exclusiveConstNodes.find(&constant);
+		if (itr != _exclusiveConstNodes.end()) {
+			auto& nodes = itr->second;
+			for (auto node : nodes) {
+				_releaseExclusiveConstantToLeaf(*node, false);
+				_releaseExclusiveConstantToRoot(node->parent, nullptr, node->numAssociativeBuffers, false);
+			}
+
+			_exclusiveConstNodes.erase(itr);
+		}
+	}
+
+	void Graphics::_releaseExclusiveConstantToRoot(ExclusiveConstNode* parent, ExclusiveConstNode* releaseChild, ui32 releaseNumAssociativeBuffers, bool releaseConstant) {
+		if (parent) {
+			if (parent->numAssociativeBuffers <= releaseNumAssociativeBuffers) {
+				if (releaseChild) _releaseExclusiveConstantSelf(*releaseChild, releaseConstant);
+				_releaseExclusiveConstantToRoot(parent->parent, parent, releaseNumAssociativeBuffers, releaseConstant);
+			} else {
+				parent->numAssociativeBuffers -= releaseNumAssociativeBuffers;
+				if (releaseChild) {
+					_releaseExclusiveConstantSelf(*releaseChild, releaseConstant);
+					parent->children.erase(parent->children.find(releaseChild->constant));
+				}
+				_releaseExclusiveConstantToRoot(parent->parent, nullptr, releaseNumAssociativeBuffers, releaseConstant);
+			}
+		} else {
+			if (releaseChild) {
+				_releaseExclusiveConstantSelf(*releaseChild, releaseConstant);
+				_exclusiveConstRoots.erase(_exclusiveConstRoots.find(releaseChild->constant));
+			}
+		}
+	}
+
+	void Graphics::_releaseExclusiveConstantToLeaf(ExclusiveConstNode& node, bool releaseConstant) {
+		_releaseExclusiveConstantSelf(node, releaseConstant);
+		for (auto& itr : node.children) _releaseExclusiveConstantToLeaf(itr.second, releaseConstant);
+	}
+
+	void Graphics::_releaseExclusiveConstantSelf(ExclusiveConstNode& node, bool releaseConstant) {
+		for (auto& itr : node.buffers) itr.second->unref();
+		if (releaseConstant) node.constant->__releaseExclusive(this, &Graphics::_releaseExclusiveConstant);
 	}
 
 	void Graphics::_resizedHandler(events::Event<ApplicationEvent>& e) {
@@ -424,6 +526,15 @@ namespace aurora::modules::graphics::win_d3d11 {
 			_context->RSSetViewports(1, &vp);
 
 			InvalidateRect(nullptr, nullptr, TRUE);
+		}
+	}
+
+	DXGI_FORMAT Graphics::getDXGIFormat(TextureFormat fmt) {
+		switch (fmt) {
+		case TextureFormat::R8G8B8A8:
+			return DXGI_FORMAT_R8G8B8A8_UNORM;
+		default:
+			return DXGI_FORMAT_UNKNOWN;
 		}
 	}
 }

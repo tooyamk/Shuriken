@@ -10,11 +10,11 @@ namespace aurora::modules::graphics::win_d3d11 {
 	VertexBuffer::~VertexBuffer() {
 	}
 
-	bool VertexBuffer::stroage(ui32 size, ui32 bufferUsage, const void* data) {
-		return _stroage(size, bufferUsage, data);
+	bool VertexBuffer::allocate(ui32 size, ui32 bufferUsage, const void* data) {
+		return _allocate(size, bufferUsage, data);
 	}
 
-	bool VertexBuffer::map(ui32 mapUsage) {
+	ui32 VertexBuffer::map(ui32 mapUsage) {
 		return _map(mapUsage);
 	}
 
@@ -294,7 +294,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		if (_handle && _internalFormat != DXGI_FORMAT_UNKNOWN) {
 			auto context = _grap->getContext();
 			UINT offset = 0;
-			context->IASetVertexBuffers(slot, 1, &_handle, &_stride, &offset);
+			context->IASetVertexBuffers(slot, 1, (ID3D11Buffer**)&_handle, &_stride, &offset);
 
 			fmt = _internalFormat;
 

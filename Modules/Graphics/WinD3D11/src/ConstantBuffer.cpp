@@ -2,17 +2,19 @@
 #include "Graphics.h"
 
 namespace aurora::modules::graphics::win_d3d11 {
-	ConstantBuffer::ConstantBuffer(Graphics& graphics) : BaseBuffer(graphics, D3D11_BIND_CONSTANT_BUFFER), IConstantBuffer(graphics) {
+	ConstantBuffer::ConstantBuffer(Graphics& graphics) : BaseBuffer(graphics, D3D11_BIND_CONSTANT_BUFFER), IConstantBuffer(graphics),
+		recordUpdateIds(nullptr) {
 	}
 
 	ConstantBuffer::~ConstantBuffer() {
+		if (recordUpdateIds) delete[] recordUpdateIds;
 	}
 
-	bool ConstantBuffer::stroage(ui32 size, ui32 bufferUsage, const void* data) {
-		return _stroage(size, bufferUsage, data);
+	bool ConstantBuffer::allocate(ui32 size, ui32 bufferUsage, const void* data) {
+		return _allocate(size, bufferUsage, data);
 	}
 
-	bool ConstantBuffer::map(ui32 mapUsage) {
+	ui32 ConstantBuffer::map(ui32 mapUsage) {
 		return _map(mapUsage);
 	}
 

@@ -47,26 +47,17 @@ namespace aurora::modules::graphics {
 
 	class AE_DLL BufferUsage {
 	public:
-		BufferUsage() = delete;
-		BufferUsage(const BufferUsage&) = delete;
-		BufferUsage(BufferUsage&&) = delete;
+		AE_DECLA_CANNOT_INSTANTIATE(BufferUsage);
 
-		static const ui32 CPU_READ = 0b1;
-		static const ui32 CPU_WRITE = 0b10;
-		static const ui32 GPU_WRITE = 0b100;
+		static const ui32 CPU_READ = 1;
+		static const ui32 CPU_WRITE = 1 << 1;
+		static const ui32 GPU_WRITE = 1 << 2;
+
+		static const ui32 CPU_WRITE_DISCARD = 1 << 3;
+		static const ui32 CPU_WRITE_NO_OVERWRITE = 1 << 4;
+
 		static const ui32 CPU_READ_WRITE = CPU_READ | CPU_WRITE;
 		static const ui32 CPU_GPU_WRITE = CPU_WRITE | GPU_WRITE;
-	};
-
-
-	class AE_DLL BufferMapUsage {
-	public:
-		BufferMapUsage() = delete;
-		BufferMapUsage(const BufferMapUsage&) = delete;
-		BufferMapUsage(BufferMapUsage&&) = delete;
-
-		static const ui32 READ = 0b1;
-		static const ui32 WRITE = 0b10;
 	};
 
 
@@ -75,8 +66,8 @@ namespace aurora::modules::graphics {
 		IBuffer(IGraphicsModule& graphics);
 		virtual ~IBuffer();
 
-		virtual bool AE_CALL stroage(ui32 size, ui32 bufferUsage, const void* data = nullptr) = 0;
-		virtual bool AE_CALL map(ui32 mapUsage) = 0;
+		virtual bool AE_CALL allocate(ui32 size, ui32 bufferUsage, const void* data = nullptr) = 0;
+		virtual ui32 AE_CALL map(ui32 mapUsage) = 0;
 		virtual void AE_CALL unmap() = 0;
 		virtual i32 AE_CALL read(ui32 offset, void* dst, ui32 dstLen, i32 readLen = -1) = 0;
 		virtual i32 AE_CALL write(ui32 offset, const void* data, ui32 length) = 0;
@@ -142,6 +133,36 @@ namespace aurora::modules::graphics {
 	};
 
 
+	enum class TextureType : ui8 {
+		TEX1D,
+		TEX2D,
+		TEX3D
+	};
+
+
+	enum class TextureFormat : ui8 {
+		R8G8B8A8
+	};
+
+
+	class AE_DLL ITexture : public IObject {
+	public:
+		ITexture(IGraphicsModule& graphics);
+		virtual ~ITexture();
+
+		virtual TextureType AE_CALL getType() const = 0;
+	};
+
+
+	class AE_DLL ITexture2D : public ITexture {
+	public:
+		ITexture2D(IGraphicsModule& graphics);
+		virtual ~ITexture2D();
+
+		virtual bool AE_CALL allocate(ui32 width, ui32 height, TextureFormat format, ui32 bufferUsage, const void* data = nullptr) = 0;
+	};
+
+
 	class AE_DLL IConstantBuffer : public IBuffer {
 	public:
 		IConstantBuffer(IGraphicsModule& graphics);
@@ -161,22 +182,45 @@ namespace aurora::modules::graphics {
 		Constant(ConstantUsage usage = ConstantUsage::AUTO);
 		~Constant();
 
-		inline ConstantUsage getUsage() const {
+		void releaseExclusiveBuffers();
+
+		inline ConstantUsage AE_CALL getUsage() const {
 			return _usage;
 		}
 
-		inline void* getData() const {
-			return _dataPtr;
+		void setUsage(ConstantUsage usage);
+
+		inline const void* AE_CALL getData() const {
+			return &_data;
 		}
 
-		inline ui32 getSize() const {
+		inline ui16 AE_CALL getPerElementSize() const {
+			return _perElementSize;
+		}
+
+		inline ui32 AE_CALL getSize() const {
 			return _size;
 		}
 
-		void set(f32 value);
-		void set(const Vector2& value);
-		void set(const Vector3& value);
-		void set(const Vector4& value);
+		inline ui32 AE_CALL getUpdateId() const {
+			return _updateId;
+		}
+
+		inline Constant& AE_CALL setUpdated() {
+			++_updateId;
+			return *this;
+		}
+
+		Constant& AE_CALL set(f32 value);
+		Constant& AE_CALL set(const Vector2& value);
+		Constant& AE_CALL set(const Vector3& value);
+		Constant& AE_CALL set(const Vector4& value);
+		Constant& AE_CALL set(const void* data, ui32 size, ui16 perElementSize, bool copy);
+
+	ae_internal_public:
+		using EXCLUSIVE_FN = void(*)(void* callTarget, const Constant& constant);
+		void AE_CALL __setExclusive(void* callTarget, EXCLUSIVE_FN callback);
+		void AE_CALL __releaseExclusive(void* callTarget, EXCLUSIVE_FN callback);
 
 	private:
 		enum class Type : ui8 {
@@ -188,23 +232,24 @@ namespace aurora::modules::graphics {
 
 		ConstantUsage _usage;
 		Type _type;
-		union {
-			struct {
-				f32 x;
-				f32 y;
-				f32 z;
-				f32 w;
-			};
+		ui16 _perElementSize;
+		ui32 _updateId;
+		ui32 _size;
+		union Data {
+			i8 data[sizeof(f32) << 2];
 
 			struct {
-				void* internalData;
+				i8* internalData;
 				ui32 internalSize;
 			};
-
-			void* externalData;
+			
+			const void* externalData;
 		} _data;
-		void* _dataPtr;
-		ui32 _size;
+		static const ui32 DEFAULT_DATA_SIZE = sizeof(Data);
+		
+		ui32 _exclusiveRc;
+		void* _exclusiveFnTarget;
+		EXCLUSIVE_FN _exclusiveFn;
 	};
 
 
@@ -308,6 +353,7 @@ namespace aurora::modules::graphics {
 		virtual IConstantBuffer* AE_CALL createConstantBuffer() = 0;
 		virtual IIndexBuffer* AE_CALL createIndexBuffer() = 0;
 		virtual IProgram* AE_CALL createProgram() = 0;
+		virtual ITexture2D* AE_CALL createTexture2D() = 0;
 		virtual IVertexBuffer* AE_CALL createVertexBuffer() = 0;
 
 		virtual void AE_CALL beginRender() = 0;
