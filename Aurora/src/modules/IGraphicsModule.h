@@ -2,6 +2,7 @@
 
 #include "modules/IModule.h"
 #include "base/ByteArray.h"
+#include <unordered_map>
 
 namespace aurora {
 	template<typename T> class Rect;
@@ -148,8 +149,24 @@ namespace aurora::modules::graphics {
 	};
 
 
-	enum class SamplerAddressMode : ui8 {
+	enum class SamplerComparisonFunc : ui8 {
+		NEVER,
+		LESS,
+		EQUAL,
+		LESS_EQUAL,
+		GREATER,
+		NOT_EQUAL,
+		GREATER_EQUAL,
+		ALWAYS
+	};
 
+
+	enum class SamplerAddressMode : ui8 {
+		WRAP,
+		MIRROR,
+		CLAMP,
+		BORDER,
+		MIRROR_ONCE
 	};
 
 
@@ -162,13 +179,36 @@ namespace aurora::modules::graphics {
 	};
 
 
+	struct AE_DLL SamplerAddress {
+		SamplerAddress(SamplerAddressMode u = SamplerAddressMode::WRAP, SamplerAddressMode v = SamplerAddressMode::WRAP, SamplerAddressMode w = SamplerAddressMode::WRAP);
+
+		SamplerAddressMode u;
+		SamplerAddressMode v;
+		SamplerAddressMode w;
+	};
+
+
 	class AE_DLL ISampler : public IObject {
 	public:
 		ISampler(IGraphicsModule& graphics);
 		virtual ~ISampler();
 
 		virtual void AE_CALL setFilter(SamplerFilterOperation op, SamplerFilterMode min, SamplerFilterMode mag, SamplerFilterMode mipmap) = 0;
-		virtual void AE_CALL setFilter(const SamplerFilter& filter) = 0;
+		inline void AE_CALL setFilter(const SamplerFilter& filter) {
+			setFilter(filter.operation, filter.minification, filter.magnification, filter.mipmap);
+		}
+
+		virtual void AE_CALL setComparisonFunc(SamplerComparisonFunc func) = 0;
+
+		virtual void AE_CALL setAddress(SamplerAddressMode u, SamplerAddressMode v, SamplerAddressMode w) = 0;
+		inline void AE_CALL setAddress(const SamplerAddress& address) {
+			setAddress(address.u, address.v, address.w);
+		}
+
+		virtual void AE_CALL setMipLOD(f32 min, f32 max, f32 bias) = 0;
+		virtual void AE_CALL setMaxAnisotropy(ui32 max) = 0;
+
+		virtual void AE_CALL setBorderColor(const Vector4& color) = 0;
 	};
 
 
@@ -256,7 +296,7 @@ namespace aurora::modules::graphics {
 		ShaderParameter& AE_CALL set(const Vector2& value);
 		ShaderParameter& AE_CALL set(const Vector3& value);
 		ShaderParameter& AE_CALL set(const Vector4& value);
-		ShaderParameter& AE_CALL set(const void* data, ui32 size, ui16 perElementSize, bool copy);
+		ShaderParameter& AE_CALL set(const void* data, ui32 size, ui16 perElementSize, bool copy, bool ref);
 
 	ae_internal_public:
 		using EXCLUSIVE_FN = void(*)(void* callTarget, const ShaderParameter& param);
@@ -284,7 +324,10 @@ namespace aurora::modules::graphics {
 				ui32 internalSize;
 			};
 			
-			const void* externalData;
+			struct {
+				bool externalRef;
+				const void* externalData;
+			};
 		} _data;
 		static const ui32 DEFAULT_DATA_SIZE = sizeof(Data);
 		

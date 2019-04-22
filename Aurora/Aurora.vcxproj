@@ -189,7 +189,9 @@
   <ItemGroup>
     <ClInclude Include="src\Aurora.h" />
     <ClInclude Include="src\base\Application.h" />
+    <ClInclude Include="src\base\Args.h" />
     <ClInclude Include="src\base\ByteArray.h" />
+    <ClInclude Include="src\base\Image.h" />
     <ClInclude Include="src\base\String.h" />
     <ClInclude Include="src\base\STList.h" />
     <ClInclude Include="src\base\Lock.h" />
@@ -208,6 +210,7 @@
     <ClInclude Include="src\math\Vector2.h" />
     <ClInclude Include="src\math\Vector3.h" />
     <ClInclude Include="src\math\Vector4.h" />
+    <ClInclude Include="src\modules\FileModule.h" />
     <ClInclude Include="src\modules\IGraphicsModule.h" />
     <ClInclude Include="src\modules\IInputModule.h" />
     <ClInclude Include="src\modules\IModule.h" />
@@ -223,6 +226,7 @@
     <ClCompile Include="src\base\Application.cpp" />
     <ClCompile Include="src\base\ByteArray.cpp" />
     <ClCompile Include="src\base\DynamicLib.cpp" />
+    <ClCompile Include="src\base\Image.cpp" />
     <ClCompile Include="src\base\Monitor.cpp" />
     <ClCompile Include="src\base\String.cpp" />
     <ClCompile Include="src\math\Math.cpp" />

@@ -4,7 +4,7 @@
 
 #ifdef AE_MODULE_EXPORTS
 namespace aurora::modules {
-	extern "C" AE_MODULE_DLL_EXPORT void* AE_CREATE_MODULE_FN_NAME(const ModuleArgs* args) {
+	extern "C" AE_MODULE_DLL_EXPORT void* AE_CREATE_MODULE_FN_NAME(const Args* args) {
 		if (!args) {
 			println("Module create err, no args");
 			return nullptr;

@@ -129,6 +129,15 @@
     <ClInclude Include="src\utils\hash\CRC.h">
       <Filter>src\utils\hash</Filter>
     </ClInclude>
+    <ClInclude Include="src\base\Image.h">
+      <Filter>src\base</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\Args.h">
+      <Filter>src\base</Filter>
+    </ClInclude>
+    <ClInclude Include="src\modules\FileModule.h">
+      <Filter>src\modules</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\math\Matrix44.cpp">
@@ -187,6 +196,9 @@
     </ClCompile>
     <ClCompile Include="src\utils\hash\CRC.cpp">
       <Filter>src\utils\hash</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\Image.cpp">
+      <Filter>src\base</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

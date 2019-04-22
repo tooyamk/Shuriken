@@ -188,6 +188,13 @@ namespace aurora::modules::graphics {
 	}
 
 
+	SamplerAddress::SamplerAddress(SamplerAddressMode u, SamplerAddressMode v, SamplerAddressMode w) :
+		u(u),
+		v(v),
+		w(w) {
+	}
+
+
 	ISampler::ISampler(IGraphicsModule& graphics) : IObject(graphics) {
 	}
 
@@ -230,7 +237,11 @@ namespace aurora::modules::graphics {
 
 	ShaderParameter::~ShaderParameter() {
 		releaseExclusiveBuffers();
-		if (_type == Type::INTERNAL) delete[] _data.internalData;
+		if (_type == Type::INTERNAL) {
+			delete[] _data.internalData;
+		} else if (_type == Type::EXTERNAL && _data.externalRef && _data.externalData) {
+			((Ref*)_data.externalData)->unref();
+		}
 	}
 
 	void ShaderParameter::releaseExclusiveBuffers() {
@@ -268,36 +279,36 @@ namespace aurora::modules::graphics {
 	}
 
 	ShaderParameter& ShaderParameter::set(const ISampler* value) {
-		set(value, sizeof(value), sizeof(value), false);
+		set(value, sizeof(value), sizeof(value), false, true);
 		return *this;
 	}
 
 	ShaderParameter& ShaderParameter::set(const ITexture* value) {
-		set(value, sizeof(value), sizeof(value), false);
+		set(value, sizeof(value), sizeof(value), false, true);
 		return *this;
 	}
 
 	ShaderParameter& ShaderParameter::set(f32 value) {
-		set(&value, sizeof(value), sizeof(value), true);
+		set(&value, sizeof(value), sizeof(value), true, false);
 		return *this;
 	}
 
 	ShaderParameter& ShaderParameter::set(const Vector2& value) {
-		set(&value, sizeof(value), sizeof(value), true);
+		set(&value, sizeof(value), sizeof(value), true, false);
 		return *this;
 	}
 
 	ShaderParameter& ShaderParameter::set(const Vector3& value) {
-		set(&value, sizeof(value), sizeof(value), true);
+		set(&value, sizeof(value), sizeof(value), true, false);
 		return *this;
 	}
 
 	ShaderParameter& ShaderParameter::set(const Vector4& value) {
-		set(&value, sizeof(value), sizeof(value), true);
+		set(&value, sizeof(value), sizeof(value), true, false);
 		return *this;
 	}
 
-	ShaderParameter& ShaderParameter::set(const void* data, ui32 size, ui16 perElementSize, bool copy) {
+	ShaderParameter& ShaderParameter::set(const void* data, ui32 size, ui16 perElementSize, bool copy, bool ref) {
 		switch (_type) {
 		case Type::DEFAULT:
 		{
@@ -313,6 +324,7 @@ namespace aurora::modules::graphics {
 			} else {
 				_type = Type::EXTERNAL;
 				_data.externalData = data;
+				if (ref && data) ((Ref*)data)->ref();
 			}
 
 			break;
@@ -336,6 +348,7 @@ namespace aurora::modules::graphics {
 				delete[] _data.internalData;
 				_type = Type::EXTERNAL;
 				_data.externalData = data;
+				if (ref && data) ((Ref*)data)->ref();
 			}
 
 			break;
@@ -343,6 +356,8 @@ namespace aurora::modules::graphics {
 		case Type::EXTERNAL:
 		{
 			if (copy) {
+				if (_data.externalRef && _data.externalData) ((Ref*)data)->unref();
+
 				if (size <= DEFAULT_DATA_SIZE) {
 					_type = Type::DEFAULT;
 					memcpy(&_data, data, size);
@@ -353,7 +368,12 @@ namespace aurora::modules::graphics {
 					memcpy(&_data.internalData, data, size);
 				}
 			} else {
-				_data.externalData = data;
+				if (_data.externalData != data) {
+					if (ref && data) ((Ref*)data)->ref();
+					if (_data.externalRef && _data.externalData) ((Ref*)data)->unref();
+					_data.externalData = data;
+					_data.externalRef = ref;
+				}
 			}
 
 			break;
