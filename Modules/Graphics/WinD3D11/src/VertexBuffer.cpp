@@ -2,36 +2,38 @@
 #include "Graphics.h"
 
 namespace aurora::modules::graphics::win_d3d11 {
-	VertexBuffer::VertexBuffer(Graphics& graphics) : BaseBuffer(graphics, D3D11_BIND_VERTEX_BUFFER), IVertexBuffer(graphics),
+	VertexBuffer::VertexBuffer(Graphics& graphics) : IVertexBuffer(graphics),
 		_internalFormat(DXGI_FORMAT_UNKNOWN),
-		_stride(0) {
+		_stride(0),
+		_baseBuffer(D3D11_BIND_VERTEX_BUFFER) {
 	}
 
 	VertexBuffer::~VertexBuffer() {
+		_baseBuffer.releaseRes((Graphics*)_graphics);
 	}
 
 	bool VertexBuffer::allocate(ui32 size, ui32 bufferUsage, const void* data) {
-		return _allocate(size, bufferUsage, data);
+		return _baseBuffer.allocate((Graphics*)_graphics, size, bufferUsage, data);
 	}
 
 	ui32 VertexBuffer::map(ui32 mapUsage) {
-		return _map(mapUsage);
+		return _baseBuffer.map((Graphics*)_graphics, mapUsage);
 	}
 
 	void VertexBuffer::unmap() {
-		_unmap();
+		_baseBuffer.unmap((Graphics*)_graphics);
 	}
 
 	i32 VertexBuffer::read(ui32 offset, void* dst, ui32 dstLen, i32 readLen) {
-		return _read(offset, dst, dstLen, readLen);
+		return _baseBuffer.read(offset, dst, dstLen, readLen);
 	}
 
 	i32 VertexBuffer::write(ui32 offset, const void* data, ui32 length) {
-		return _write(offset, data, length);
+		return _baseBuffer.write((Graphics*)_graphics, offset, data, length);
 	}
 
 	void VertexBuffer::flush() {
-		_flush();
+		_baseBuffer.flush();
 	}
 
 	void VertexBuffer::setFormat(VertexSize size, VertexType type) {
@@ -291,10 +293,9 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	bool VertexBuffer::use(UINT slot, DXGI_FORMAT& fmt) {
-		if (_handle && _internalFormat != DXGI_FORMAT_UNKNOWN) {
-			auto context = _grap->getContext();
+		if (_baseBuffer.handle && _internalFormat != DXGI_FORMAT_UNKNOWN) {
 			UINT offset = 0;
-			context->IASetVertexBuffers(slot, 1, (ID3D11Buffer**)&_handle, &_stride, &offset);
+			((Graphics*)_graphics)->getContext()->IASetVertexBuffers(slot, 1, (ID3D11Buffer**)&_baseBuffer.handle, &_stride, &offset);
 
 			fmt = _internalFormat;
 

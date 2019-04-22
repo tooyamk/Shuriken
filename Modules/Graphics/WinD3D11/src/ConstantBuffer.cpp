@@ -2,35 +2,37 @@
 #include "Graphics.h"
 
 namespace aurora::modules::graphics::win_d3d11 {
-	ConstantBuffer::ConstantBuffer(Graphics& graphics) : BaseBuffer(graphics, D3D11_BIND_CONSTANT_BUFFER), IConstantBuffer(graphics),
+	ConstantBuffer::ConstantBuffer(Graphics& graphics) : IConstantBuffer(graphics),
+		_baseBuffer(D3D11_BIND_CONSTANT_BUFFER),
 		recordUpdateIds(nullptr) {
 	}
 
 	ConstantBuffer::~ConstantBuffer() {
 		if (recordUpdateIds) delete[] recordUpdateIds;
+		_baseBuffer.releaseRes((Graphics*)_graphics);
 	}
 
 	bool ConstantBuffer::allocate(ui32 size, ui32 bufferUsage, const void* data) {
-		return _allocate(size, bufferUsage, data);
+		return _baseBuffer.allocate((Graphics*)_graphics, size, bufferUsage, data);
 	}
 
 	ui32 ConstantBuffer::map(ui32 mapUsage) {
-		return _map(mapUsage);
+		return _baseBuffer.map((Graphics*)_graphics, mapUsage);
 	}
 
 	void ConstantBuffer::unmap() {
-		_unmap();
+		_baseBuffer.unmap((Graphics*)_graphics);
 	}
 
 	i32 ConstantBuffer::read(ui32 offset, void* dst, ui32 dstLen, i32 readLen) {
-		return _read(offset, dst, dstLen, readLen);
+		return _baseBuffer.read(offset, dst, dstLen, readLen);
 	}
 
 	i32 ConstantBuffer::write(ui32 offset, const void* data, ui32 length) {
-		return _write(offset, data, length);
+		return _baseBuffer.write((Graphics*)_graphics, offset, data, length);
 	}
 
 	void ConstantBuffer::flush() {
-		_flush();
+		_baseBuffer.flush();
 	}
 }

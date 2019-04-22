@@ -1,6 +1,7 @@
 #include "Graphics.h"
 #include "IndexBuffer.h"
 #include "Program.h"
+#include "Sampler.h"
 #include "Texture2D.h"
 #include "VertexBuffer.h"
 #include "base/Application.h"
@@ -230,6 +231,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return new Program(*this);
 	}
 
+	ISampler* Graphics::createSampler() {
+		return new Sampler(*this);
+	}
+
 	ITexture2D* Graphics::createTexture2D() {
 		return new Texture2D(*this);
 	}
@@ -317,7 +322,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_usedShareConstBufferPool.clear();
 	}
 
-	ConstantBuffer* Graphics::getExclusiveConstantBuffer(const std::vector<Constant*>& constants, const ConstantBufferLayout& layout) {
+	ConstantBuffer* Graphics::getExclusiveConstantBuffer(const std::vector<ShaderParameter*>& constants, const ConstantBufferLayout& layout) {
 		return _getExclusiveConstantBuffer(layout, constants, 0, constants.size() - 1, nullptr, _exclusiveConstRoots);
 	}
 
@@ -342,26 +347,26 @@ namespace aurora::modules::graphics::win_d3d11 {
 		}
 	}
 
-	ConstantBuffer* Graphics::_getExclusiveConstantBuffer(const ConstantBufferLayout& layout, const std::vector<Constant*>& constants,
-		ui32 cur, ui32 max, ExclusiveConstNode* parent, std::unordered_map <const Constant*, ExclusiveConstNode>& chindrenContainer) {
-		auto constant = constants[cur];
+	ConstantBuffer* Graphics::_getExclusiveConstantBuffer(const ConstantBufferLayout& layout, const std::vector<ShaderParameter*>& params,
+		ui32 cur, ui32 max, ExclusiveConstNode* parent, std::unordered_map <const ShaderParameter*, ExclusiveConstNode>& chindrenContainer) {
+		auto param = params[cur];
 
 		ExclusiveConstNode* node = nullptr;
 
-		auto itr = chindrenContainer.find(constant);
+		auto itr = chindrenContainer.find(param);
 		if (itr == chindrenContainer.end()) {
-			node = &chindrenContainer.emplace(std::piecewise_construct, std::forward_as_tuple(constant), std::forward_as_tuple()).first->second;
-			node->constant = constant;
+			node = &chindrenContainer.emplace(std::piecewise_construct, std::forward_as_tuple(param), std::forward_as_tuple()).first->second;
+			node->parameter = param;
 			node->parent = parent;
 
-			auto itr2 = _exclusiveConstNodes.find(constant);
+			auto itr2 = _exclusiveConstNodes.find(param);
 			if (itr2 == _exclusiveConstNodes.end()) {
-				_exclusiveConstNodes.emplace(std::piecewise_construct, std::forward_as_tuple(constant), std::forward_as_tuple()).first->second.emplace(node);
+				_exclusiveConstNodes.emplace(std::piecewise_construct, std::forward_as_tuple(param), std::forward_as_tuple()).first->second.emplace(node);
 			} else {
 				itr2->second.emplace(node);
 			}
 
-			constant->__setExclusive(this, &Graphics::_releaseExclusiveConstant);
+			param->__setExclusive(this, &Graphics::_releaseExclusiveConstant);
 		} else {
 			node = &itr->second;
 		}
@@ -388,16 +393,16 @@ namespace aurora::modules::graphics::win_d3d11 {
 			
 			return cb;
 		} else {
-			return _getExclusiveConstantBuffer(layout, constants, cur + 1, max, node, node->children);
+			return _getExclusiveConstantBuffer(layout, params, cur + 1, max, node, node->children);
 		}
 	}
 
-	void Graphics::_releaseExclusiveConstant(void* graphics, const Constant& constant) {
-		if (graphics) ((Graphics*)graphics)->_releaseExclusiveConstant(constant);
+	void Graphics::_releaseExclusiveConstant(void* graphics, const ShaderParameter& param) {
+		if (graphics) ((Graphics*)graphics)->_releaseExclusiveConstant(param);
 	}
 
-	void Graphics::_releaseExclusiveConstant(const Constant& constant) {
-		auto itr = _exclusiveConstNodes.find(&constant);
+	void Graphics::_releaseExclusiveConstant(const ShaderParameter& param) {
+		auto itr = _exclusiveConstNodes.find(&param);
 		if (itr != _exclusiveConstNodes.end()) {
 			auto& nodes = itr->second;
 			for (auto node : nodes) {
@@ -409,35 +414,35 @@ namespace aurora::modules::graphics::win_d3d11 {
 		}
 	}
 
-	void Graphics::_releaseExclusiveConstantToRoot(ExclusiveConstNode* parent, ExclusiveConstNode* releaseChild, ui32 releaseNumAssociativeBuffers, bool releaseConstant) {
+	void Graphics::_releaseExclusiveConstantToRoot(ExclusiveConstNode* parent, ExclusiveConstNode* releaseChild, ui32 releaseNumAssociativeBuffers, bool releaseParam) {
 		if (parent) {
 			if (parent->numAssociativeBuffers <= releaseNumAssociativeBuffers) {
-				if (releaseChild) _releaseExclusiveConstantSelf(*releaseChild, releaseConstant);
-				_releaseExclusiveConstantToRoot(parent->parent, parent, releaseNumAssociativeBuffers, releaseConstant);
+				if (releaseChild) _releaseExclusiveConstantSelf(*releaseChild, releaseParam);
+				_releaseExclusiveConstantToRoot(parent->parent, parent, releaseNumAssociativeBuffers, releaseParam);
 			} else {
 				parent->numAssociativeBuffers -= releaseNumAssociativeBuffers;
 				if (releaseChild) {
-					_releaseExclusiveConstantSelf(*releaseChild, releaseConstant);
-					parent->children.erase(parent->children.find(releaseChild->constant));
+					_releaseExclusiveConstantSelf(*releaseChild, releaseParam);
+					parent->children.erase(parent->children.find(releaseChild->parameter));
 				}
-				_releaseExclusiveConstantToRoot(parent->parent, nullptr, releaseNumAssociativeBuffers, releaseConstant);
+				_releaseExclusiveConstantToRoot(parent->parent, nullptr, releaseNumAssociativeBuffers, releaseParam);
 			}
 		} else {
 			if (releaseChild) {
-				_releaseExclusiveConstantSelf(*releaseChild, releaseConstant);
-				_exclusiveConstRoots.erase(_exclusiveConstRoots.find(releaseChild->constant));
+				_releaseExclusiveConstantSelf(*releaseChild, releaseParam);
+				_exclusiveConstRoots.erase(_exclusiveConstRoots.find(releaseChild->parameter));
 			}
 		}
 	}
 
-	void Graphics::_releaseExclusiveConstantToLeaf(ExclusiveConstNode& node, bool releaseConstant) {
-		_releaseExclusiveConstantSelf(node, releaseConstant);
-		for (auto& itr : node.children) _releaseExclusiveConstantToLeaf(itr.second, releaseConstant);
+	void Graphics::_releaseExclusiveConstantToLeaf(ExclusiveConstNode& node, bool releaseParam) {
+		_releaseExclusiveConstantSelf(node, releaseParam);
+		for (auto& itr : node.children) _releaseExclusiveConstantToLeaf(itr.second, releaseParam);
 	}
 
-	void Graphics::_releaseExclusiveConstantSelf(ExclusiveConstNode& node, bool releaseConstant) {
+	void Graphics::_releaseExclusiveConstantSelf(ExclusiveConstNode& node, bool releaseParam) {
 		for (auto& itr : node.buffers) itr.second->unref();
-		if (releaseConstant) node.constant->__releaseExclusive(this, &Graphics::_releaseExclusiveConstant);
+		if (releaseParam) node.parameter->__releaseExclusive(this, &Graphics::_releaseExclusiveConstant);
 	}
 
 	void Graphics::_resizedHandler(events::Event<ApplicationEvent>& e) {

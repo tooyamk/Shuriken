@@ -32,6 +32,7 @@
     <ClInclude Include="src\Graphics.h" />
     <ClInclude Include="src\IndexBuffer.h" />
     <ClInclude Include="src\Program.h" />
+    <ClInclude Include="src\Sampler.h" />
     <ClInclude Include="src\Texture2D.h" />
     <ClInclude Include="src\VertexBuffer.h" />
   </ItemGroup>
@@ -43,6 +44,7 @@
     <ClCompile Include="src\Graphics.cpp" />
     <ClCompile Include="src\IndexBuffer.cpp" />
     <ClCompile Include="src\Program.cpp" />
+    <ClCompile Include="src\Sampler.cpp" />
     <ClCompile Include="src\Texture2D.cpp" />
     <ClCompile Include="src\VertexBuffer.cpp" />
   </ItemGroup>

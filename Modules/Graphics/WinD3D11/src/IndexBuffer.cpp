@@ -2,35 +2,38 @@
 #include "Graphics.h"
 
 namespace aurora::modules::graphics::win_d3d11 {
-	IndexBuffer::IndexBuffer(Graphics& graphics) : BaseBuffer(graphics, D3D11_BIND_INDEX_BUFFER), IIndexBuffer(graphics),
-		_indexType(DXGI_FORMAT_UNKNOWN) {
+	IndexBuffer::IndexBuffer(Graphics& graphics) : IIndexBuffer(graphics),
+		_indexType(DXGI_FORMAT_UNKNOWN),
+		_numElements(0),
+		_baseBuffer(D3D11_BIND_INDEX_BUFFER) {
 	}
 
 	IndexBuffer::~IndexBuffer() {
+		_baseBuffer.releaseRes((Graphics*)_graphics);
 	}
 
 	bool IndexBuffer::allocate(ui32 size, ui32 bufferUsage, const void* data) {
-		return _allocate(size, bufferUsage,  data);
+		return _baseBuffer.allocate((Graphics*)_graphics, size, bufferUsage,  data);
 	}
 
 	ui32 IndexBuffer::map(ui32 mapUsage) {
-		return _map(mapUsage);
+		return _baseBuffer.map((Graphics*)_graphics, mapUsage);
 	}
 
 	void IndexBuffer::unmap() {
-		_unmap();
+		_baseBuffer.unmap((Graphics*)_graphics);
 	}
 
 	i32 IndexBuffer::read(ui32 offset, void* dst, ui32 dstLen, i32 readLen) {
-		return _read(offset, dst, dstLen, readLen);
+		return _baseBuffer.read(offset, dst, dstLen, readLen);
 	}
 
 	i32 IndexBuffer::write(ui32 offset, const void* data, ui32 length) {
-		return _write(offset, data, length);
+		return _baseBuffer.write((Graphics*)_graphics, offset, data, length);
 	}
 
 	void IndexBuffer::flush() {
-		_flush();
+		_baseBuffer.flush();
 	}
 
 	void IndexBuffer::setFormat(IndexType type) {
@@ -62,21 +65,21 @@ namespace aurora::modules::graphics::win_d3d11 {
 			if (count > _numElements) count = _numElements;
 			if (count > last) count = last;
 
-			auto context = _grap->getContext();
-			context->IASetIndexBuffer((ID3D11Buffer*)_handle, _indexType, 0);
+			auto context = ((Graphics*)_graphics)->getContext();
+			context->IASetIndexBuffer((ID3D11Buffer*)_baseBuffer.handle, _indexType, 0);
 			context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 			context->DrawIndexed(count, offset, 0);
 		}
 	}
 
 	void IndexBuffer::_calcNumElements() {
-		if (_size && _indexType != DXGI_FORMAT_UNKNOWN) {
+		if (_baseBuffer.size && _indexType != DXGI_FORMAT_UNKNOWN) {
 			switch (_indexType) {
 			case DXGI_FORMAT_R16_UINT:
-				_numElements = _size >> 1;
+				_numElements = _baseBuffer.size >> 1;
 				break;
 			case DXGI_FORMAT_R32_UINT:
-				_numElements = _size >> 2;
+				_numElements = _baseBuffer.size >> 2;
 				break;
 			default:
 				_numElements = 0;

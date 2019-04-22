@@ -4,7 +4,7 @@
 #include "Graphics.h"
 
 namespace aurora::modules::graphics::win_d3d11 {
-	class AE_MODULE_DLL ConstantBuffer : private BaseBuffer, public IConstantBuffer {
+	class AE_MODULE_DLL ConstantBuffer : public IConstantBuffer {
 	public:
 		ConstantBuffer(Graphics& graphics);
 		virtual ~ConstantBuffer();
@@ -19,20 +19,20 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual void AE_CALL flush() override;
 
 		template<ProgramStage stage>
-		void AE_CALL use(UINT slot) {
+		inline void AE_CALL use(UINT slot) {
 		}
 
 		template<>
-		void AE_CALL use<ProgramStage::VS>(UINT slot) {
-			((Graphics*)_graphics)->getContext()->VSSetConstantBuffers(slot, 1, (ID3D11Buffer**)&_handle);
+		inline void AE_CALL use<ProgramStage::VS>(UINT slot) {
+			((Graphics*)_graphics)->getContext()->VSSetConstantBuffers(slot, 1, (ID3D11Buffer**)&_baseBuffer.handle);
 		}
 
 		template<>
-		void AE_CALL use<ProgramStage::PS>(UINT slot) {
-			((Graphics*)_graphics)->getContext()->PSSetConstantBuffers(slot, 1, (ID3D11Buffer**)&_handle);
+		inline void AE_CALL use<ProgramStage::PS>(UINT slot) {
+			((Graphics*)_graphics)->getContext()->PSSetConstantBuffers(slot, 1, (ID3D11Buffer**)&_baseBuffer.handle);
 		}
 
 	protected:
-		UINT _stride;
+		BaseBuffer _baseBuffer;
 	};
 }

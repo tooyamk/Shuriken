@@ -1,6 +1,8 @@
 #pragma once
 
 #include "ConstantBuffer.h"
+#include "Sampler.h"
+#include "Texture2D.h"
 
 namespace aurora::modules::graphics::win_d3d11 {
 	class Graphics;
@@ -29,7 +31,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		virtual bool AE_CALL upload(const ProgramSource& vert, const ProgramSource& frag) override;
 		virtual bool AE_CALL use() override;
-		virtual void AE_CALL draw(const VertexBufferFactory* vertexFactory, const ConstantFactory* constantFactory,
+		virtual void AE_CALL draw(const VertexBufferFactory* vertexFactory, const ShaderParameterFactory* paramFactory,
 			const IIndexBuffer* indexBuffer, ui32 count = 0xFFFFFFFFui32, ui32 offset = 0) override;
 
 	protected:
@@ -67,35 +69,58 @@ namespace aurora::modules::graphics::win_d3d11 {
 		};
 
 
-		struct ResourceLayout {
+		struct SamplerLayout {
+			std::string name;
+			ui32 bindPoint;
+		};
+
+
+		struct ParameterLayout {
 			std::vector<ConstantBufferLayout> constantBuffers;
 			std::vector<TextureLayout> textures;
+			std::vector<SamplerLayout> samplers;
 
 			void clear(Graphics& g);
 		};
 
-		ResourceLayout _vsResLayout;
-		ResourceLayout _psResLayout;
+		ParameterLayout _vsParamLayout;
+		ParameterLayout _psParamLayout;
 
-		std::vector<ConstantBuffer*> _usingSameBuffers;
-		std::vector<Constant*> _tempConstants;
+		std::vector<ConstantBuffer*> _usingSameConstBuffers;
+		std::vector<ShaderParameter*> _tempParams;
 
 		void AE_CALL _release();
 		ID3DBlob* AE_CALL _compileShader(const ProgramSource& source, const i8* target);
 		ID3D11InputLayout* _getOrCreateInputLayout();
 		void AE_CALL _parseInLayout(const D3D11_SHADER_DESC& desc, ID3D11ShaderReflection& ref);
-		void AE_CALL _parseResourceLayout(const D3D11_SHADER_DESC& desc, ID3D11ShaderReflection& ref, ResourceLayout& dst);
+		void AE_CALL _parseParameterLayout(const D3D11_SHADER_DESC& desc, ID3D11ShaderReflection& ref, ParameterLayout& dst);
 		void AE_CALL _calcConstantLayoutSameBuffers(std::vector<std::vector<ConstantBufferLayout>*>& constBufferLayouts);
 
-		ConstantBuffer* _getConstantBuffer(const ConstantBufferLayout& constantLayout, const ConstantFactory& factory);
-		void _updateConstantBuffer(ConstantBuffer* cb, const Constant& c, const ConstantBufferLayout::Var& vars);
+		ConstantBuffer* _getConstantBuffer(const ConstantBufferLayout& cbLayout, const ShaderParameterFactory& factory);
+		void _updateConstantBuffer(ConstantBuffer* cb, const ShaderParameter& param, const ConstantBufferLayout::Var& vars);
 		void _constantBufferUpdateAll(ConstantBuffer* cb, const std::vector<ConstantBufferLayout::Var>& var);
 
 		template<ProgramStage stage>
-		void AE_CALL _useConstants(const ResourceLayout& layout, const ConstantFactory& factory) {
-			for (auto& buffer : layout.constantBuffers) {
-				auto cb = _getConstantBuffer(buffer, factory);
-				if (cb) cb->use<stage>(buffer.bindPoint);
+		void AE_CALL _useParameters(const ParameterLayout& layout, const ShaderParameterFactory& factory) {
+			for (auto& info : layout.constantBuffers) {
+				auto cb = _getConstantBuffer(info, factory);
+				if (cb) cb->use<stage>(info.bindPoint);
+			}
+
+			for (auto& info : layout.textures) {
+				auto c = factory.get(info.name);
+				if (c) {
+					auto data = c->getData();
+					if (data) ((Texture2D*)data)->use<stage>(info.bindPoint);
+				}
+			}
+
+			for (auto& info : layout.samplers) {
+				auto c = factory.get(info.name);
+				if (c) {
+					auto data = c->getData();
+					if (data) ((Sampler*)data)->use<stage>(info.bindPoint);
+				}
 			}
 		}
 	};

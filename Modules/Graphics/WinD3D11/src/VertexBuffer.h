@@ -3,7 +3,7 @@
 #include "BaseBuffer.h"
 
 namespace aurora::modules::graphics::win_d3d11 {
-	class AE_MODULE_DLL VertexBuffer : private BaseBuffer, public IVertexBuffer {
+	class AE_MODULE_DLL VertexBuffer : public IVertexBuffer {
 	public:
 		VertexBuffer(Graphics& graphics);
 		virtual ~VertexBuffer();
@@ -21,5 +21,6 @@ namespace aurora::modules::graphics::win_d3d11 {
 	protected:
 		DXGI_FORMAT _internalFormat;
 		UINT _stride;
+		BaseBuffer _baseBuffer;
 	};
 }

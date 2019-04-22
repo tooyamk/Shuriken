@@ -3,7 +3,7 @@
 #include "BaseBuffer.h"
 
 namespace aurora::modules::graphics::win_d3d11 {
-	class AE_MODULE_DLL IndexBuffer : private BaseBuffer, public IIndexBuffer {
+	class AE_MODULE_DLL IndexBuffer : public IIndexBuffer {
 	public:
 		IndexBuffer(Graphics& graphics);
 		virtual ~IndexBuffer();
@@ -21,6 +21,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 	protected:
 		DXGI_FORMAT _indexType;
 		ui32 _numElements;
+		BaseBuffer _baseBuffer;
 
 		void _calcNumElements();
 	};

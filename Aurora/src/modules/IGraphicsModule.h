@@ -133,6 +133,45 @@ namespace aurora::modules::graphics {
 	};
 
 
+	enum class SamplerFilterMode : ui8 {
+		NEAREST,
+		LINEAR,
+		ANISOTROPIC
+	};
+
+
+	enum class SamplerFilterOperation : ui8 {
+		NORMAL,
+		COMPARISON,
+		MINIMUM,
+		MAXIMUM
+	};
+
+
+	enum class SamplerAddressMode : ui8 {
+
+	};
+
+
+	struct AE_DLL SamplerFilter {
+		SamplerFilter();
+		SamplerFilterOperation operation;
+		SamplerFilterMode minification;
+		SamplerFilterMode magnification;
+		SamplerFilterMode mipmap;
+	};
+
+
+	class AE_DLL ISampler : public IObject {
+	public:
+		ISampler(IGraphicsModule& graphics);
+		virtual ~ISampler();
+
+		virtual void AE_CALL setFilter(SamplerFilterOperation op, SamplerFilterMode min, SamplerFilterMode mag, SamplerFilterMode mipmap) = 0;
+		virtual void AE_CALL setFilter(const SamplerFilter& filter) = 0;
+	};
+
+
 	enum class TextureType : ui8 {
 		TEX1D,
 		TEX2D,
@@ -170,28 +209,28 @@ namespace aurora::modules::graphics {
 	};
 
 
-	enum class ConstantUsage : ui8 {
+	enum class ShaderParameterUsage : ui8 {
 		AUTO,
 		SHARE,
 		EXCLUSIVE
 	};
 
 
-	class AE_DLL Constant : public Ref {
+	class AE_DLL ShaderParameter : public Ref {
 	public:
-		Constant(ConstantUsage usage = ConstantUsage::AUTO);
-		~Constant();
+		ShaderParameter(ShaderParameterUsage usage = ShaderParameterUsage::AUTO);
+		~ShaderParameter();
 
 		void releaseExclusiveBuffers();
 
-		inline ConstantUsage AE_CALL getUsage() const {
+		inline ShaderParameterUsage AE_CALL getUsage() const {
 			return _usage;
 		}
 
-		void setUsage(ConstantUsage usage);
+		void setUsage(ShaderParameterUsage usage);
 
 		inline const void* AE_CALL getData() const {
-			return &_data;
+			return _type == Type::DEFAULT ? &_data : _data.externalData;
 		}
 
 		inline ui16 AE_CALL getPerElementSize() const {
@@ -206,19 +245,21 @@ namespace aurora::modules::graphics {
 			return _updateId;
 		}
 
-		inline Constant& AE_CALL setUpdated() {
+		inline ShaderParameter& AE_CALL setUpdated() {
 			++_updateId;
 			return *this;
 		}
 
-		Constant& AE_CALL set(f32 value);
-		Constant& AE_CALL set(const Vector2& value);
-		Constant& AE_CALL set(const Vector3& value);
-		Constant& AE_CALL set(const Vector4& value);
-		Constant& AE_CALL set(const void* data, ui32 size, ui16 perElementSize, bool copy);
+		ShaderParameter& AE_CALL set(f32 value);
+		ShaderParameter& AE_CALL set(const ISampler* value);
+		ShaderParameter& AE_CALL set(const ITexture* value);
+		ShaderParameter& AE_CALL set(const Vector2& value);
+		ShaderParameter& AE_CALL set(const Vector3& value);
+		ShaderParameter& AE_CALL set(const Vector4& value);
+		ShaderParameter& AE_CALL set(const void* data, ui32 size, ui16 perElementSize, bool copy);
 
 	ae_internal_public:
-		using EXCLUSIVE_FN = void(*)(void* callTarget, const Constant& constant);
+		using EXCLUSIVE_FN = void(*)(void* callTarget, const ShaderParameter& param);
 		void AE_CALL __setExclusive(void* callTarget, EXCLUSIVE_FN callback);
 		void AE_CALL __releaseExclusive(void* callTarget, EXCLUSIVE_FN callback);
 
@@ -230,7 +271,7 @@ namespace aurora::modules::graphics {
 		};
 
 
-		ConstantUsage _usage;
+		ShaderParameterUsage _usage;
 		Type _type;
 		ui16 _perElementSize;
 		ui32 _updateId;
@@ -253,19 +294,18 @@ namespace aurora::modules::graphics {
 	};
 
 
-	class AE_DLL ConstantFactory {
+	class AE_DLL ShaderParameterFactory {
 	public:
-		~ConstantFactory();
+		~ShaderParameterFactory();
 
-		Constant* AE_CALL get(const std::string& name) const;
-		Constant* AE_CALL add(const std::string& name, Constant* buffer);
+		ShaderParameter* AE_CALL get(const std::string& name) const;
+		ShaderParameter* AE_CALL add(const std::string& name, ShaderParameter* buffer);
 		void AE_CALL remove(const std::string& name);
 		void AE_CALL clear();
 
 	private:
-		std::unordered_map<std::string, Constant*> _buffers;
+		std::unordered_map<std::string, ShaderParameter*> _parameters;
 	};
-
 
 
 	enum class ProgramLanguage : ui8 {
@@ -335,7 +375,7 @@ namespace aurora::modules::graphics {
 
 		virtual bool AE_CALL upload(const ProgramSource& vert, const ProgramSource& frag) = 0;
 		virtual bool AE_CALL use() = 0;
-		virtual void AE_CALL draw(const VertexBufferFactory* vertexFactory, const ConstantFactory* constantFactory,
+		virtual void AE_CALL draw(const VertexBufferFactory* vertexFactory, const ShaderParameterFactory* paramFactory,
 			const IIndexBuffer* indexBuffer, ui32 count = 0xFFFFFFFFui32, ui32 offset = 0) = 0;
 	};
 
@@ -353,6 +393,7 @@ namespace aurora::modules::graphics {
 		virtual IConstantBuffer* AE_CALL createConstantBuffer() = 0;
 		virtual IIndexBuffer* AE_CALL createIndexBuffer() = 0;
 		virtual IProgram* AE_CALL createProgram() = 0;
+		virtual ISampler* AE_CALL createSampler() = 0;
 		virtual ITexture2D* AE_CALL createTexture2D() = 0;
 		virtual IVertexBuffer* AE_CALL createVertexBuffer() = 0;
 

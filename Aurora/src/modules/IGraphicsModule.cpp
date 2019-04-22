@@ -180,6 +180,21 @@ namespace aurora::modules::graphics {
 	}
 
 
+	SamplerFilter::SamplerFilter() :
+		operation(SamplerFilterOperation::NORMAL),
+		minification(SamplerFilterMode::LINEAR),
+		magnification(SamplerFilterMode::LINEAR),
+		mipmap(SamplerFilterMode::LINEAR) {
+	}
+
+
+	ISampler::ISampler(IGraphicsModule& graphics) : IObject(graphics) {
+	}
+
+	ISampler::~ISampler() {
+	}
+
+
 	ITexture::ITexture(IGraphicsModule& graphics) : IObject(graphics) {
 	}
 
@@ -201,7 +216,7 @@ namespace aurora::modules::graphics {
 	}
 
 
-	Constant::Constant(ConstantUsage usage) :
+	ShaderParameter::ShaderParameter(ShaderParameterUsage usage) :
 		_usage(usage),
 		_type(Type::DEFAULT),
 		_updateId(0),
@@ -213,12 +228,12 @@ namespace aurora::modules::graphics {
 		memset(&_data, 0, sizeof(_data));
 	}
 
-	Constant::~Constant() {
+	ShaderParameter::~ShaderParameter() {
 		releaseExclusiveBuffers();
 		if (_type == Type::INTERNAL) delete[] _data.internalData;
 	}
 
-	void Constant::releaseExclusiveBuffers() {
+	void ShaderParameter::releaseExclusiveBuffers() {
 		auto t = _exclusiveFnTarget;
 		auto f = _exclusiveFn;
 		_exclusiveRc = 0;
@@ -228,14 +243,14 @@ namespace aurora::modules::graphics {
 		if (f) f(t, *this);
 	}
 
-	void Constant::setUsage(ConstantUsage usage) {
+	void ShaderParameter::setUsage(ShaderParameterUsage usage) {
 		if (_usage != usage) {
-			if (usage == ConstantUsage::SHARE) releaseExclusiveBuffers();
+			if (usage == ShaderParameterUsage::SHARE) releaseExclusiveBuffers();
 			_usage = usage;
 		}
 	}
 
-	void Constant::__setExclusive(void* callTarget, EXCLUSIVE_FN callback) {
+	void ShaderParameter::__setExclusive(void* callTarget, EXCLUSIVE_FN callback) {
 		if (_exclusiveFnTarget != callTarget || _exclusiveFn != callback) {
 			releaseExclusiveBuffers();
 
@@ -245,34 +260,44 @@ namespace aurora::modules::graphics {
 		++_exclusiveRc;
 	}
 
-	void Constant::__releaseExclusive(void* callTarget, EXCLUSIVE_FN callback) {
+	void ShaderParameter::__releaseExclusive(void* callTarget, EXCLUSIVE_FN callback) {
 		if (_exclusiveFnTarget == callTarget && _exclusiveFn == callback && !--_exclusiveRc) {
 			_exclusiveFnTarget = nullptr;
 			_exclusiveFn = nullptr;
 		}
 	}
 
-	Constant& Constant::set(f32 value) {
+	ShaderParameter& ShaderParameter::set(const ISampler* value) {
+		set(value, sizeof(value), sizeof(value), false);
+		return *this;
+	}
+
+	ShaderParameter& ShaderParameter::set(const ITexture* value) {
+		set(value, sizeof(value), sizeof(value), false);
+		return *this;
+	}
+
+	ShaderParameter& ShaderParameter::set(f32 value) {
 		set(&value, sizeof(value), sizeof(value), true);
 		return *this;
 	}
 
-	Constant& Constant::set(const Vector2& value) {
+	ShaderParameter& ShaderParameter::set(const Vector2& value) {
 		set(&value, sizeof(value), sizeof(value), true);
 		return *this;
 	}
 
-	Constant& Constant::set(const Vector3& value) {
+	ShaderParameter& ShaderParameter::set(const Vector3& value) {
 		set(&value, sizeof(value), sizeof(value), true);
 		return *this;
 	}
 
-	Constant& Constant::set(const Vector4& value) {
+	ShaderParameter& ShaderParameter::set(const Vector4& value) {
 		set(&value, sizeof(value), sizeof(value), true);
 		return *this;
 	}
 
-	Constant& Constant::set(const void* data, ui32 size, ui16 perElementSize, bool copy) {
+	ShaderParameter& ShaderParameter::set(const void* data, ui32 size, ui16 perElementSize, bool copy) {
 		switch (_type) {
 		case Type::DEFAULT:
 		{
@@ -343,47 +368,47 @@ namespace aurora::modules::graphics {
 	}
 
 
-	ConstantFactory::~ConstantFactory() {
+	ShaderParameterFactory::~ShaderParameterFactory() {
 		clear();
 	}
 
-	Constant* ConstantFactory::get(const std::string& name) const {
-		auto itr = _buffers.find(name);
-		return itr == _buffers.end() ? nullptr : itr->second;
+	ShaderParameter* ShaderParameterFactory::get(const std::string& name) const {
+		auto itr = _parameters.find(name);
+		return itr == _parameters.end() ? nullptr : itr->second;
 	}
 
-	Constant* ConstantFactory::add(const std::string& name, Constant* buffer) {
-		auto itr = _buffers.find(name);
+	ShaderParameter* ShaderParameterFactory::add(const std::string& name, ShaderParameter* buffer) {
+		auto itr = _parameters.find(name);
 		if (buffer) {
-			if (itr == _buffers.end()) {
+			if (itr == _parameters.end()) {
 				buffer->ref();
-				_buffers.emplace(name, buffer);
+				_parameters.emplace(name, buffer);
 			} else if (itr->second != buffer) {
 				buffer->ref();
 				itr->second->unref();
 				itr->second = buffer;
 			}
 		} else {
-			if (itr != _buffers.end()) {
+			if (itr != _parameters.end()) {
 				itr->second->unref();
-				_buffers.erase(itr);
+				_parameters.erase(itr);
 			}
 		}
 
 		return buffer;
 	}
 
-	void ConstantFactory::remove(const std::string& name) {
-		auto itr = _buffers.find(name);
-		if (itr != _buffers.end()) {
+	void ShaderParameterFactory::remove(const std::string& name) {
+		auto itr = _parameters.find(name);
+		if (itr != _parameters.end()) {
 			itr->second->unref();
-			_buffers.erase(itr);
+			_parameters.erase(itr);
 		}
 	}
 
-	void ConstantFactory::clear() {
-		for (auto& itr : _buffers) itr.second->unref();
-		_buffers.clear();
+	void ShaderParameterFactory::clear() {
+		for (auto& itr : _parameters) itr.second->unref();
+		_parameters.clear();
 	}
 
 

@@ -1,20 +1,17 @@
-struct VS_INPUT
-{
+struct VS_INPUT {
     uint2 position : POSITION0;
     float3 ccc : ATTRIBUTE1;
     float2 cdddcc : ATTRIBUTE2;
 };
 
-struct VS_OUTPUT
-{
+struct VS_OUTPUT {
     float4 position : SV_POSITION;
 };
 
 float4x4 matWorld;
 float aabbcc;
 
-cbuffer MyBuffer : register(b3)
-{
+cbuffer MyBuffer : register(b3) {
 float4 eee1 : packoffset(c0);
 float1 ddd2 : packoffset(c1);
 float1 fff3 : packoffset(c1.y);

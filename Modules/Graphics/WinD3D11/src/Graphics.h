@@ -2,7 +2,6 @@
 
 #include "Base.h"
 #include <unordered_set>
-#include <bitset>
 
 namespace aurora::modules::graphics::win_d3d11 {
 	class ConstantBuffer;
@@ -18,6 +17,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual IConstantBuffer* AE_CALL createConstantBuffer() override;
 		virtual IIndexBuffer* AE_CALL createIndexBuffer() override;
 		virtual IProgram* AE_CALL createProgram() override;
+		virtual ISampler* AE_CALL createSampler() override;
 		virtual ITexture2D* AE_CALL createTexture2D() override;
 		virtual IVertexBuffer* AE_CALL createVertexBuffer() override;
 		
@@ -51,7 +51,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		void AE_CALL unregisterConstantLayout(ConstantBufferLayout& layout);
 		ConstantBuffer* AE_CALL popShareConstantBuffer(ui32 size);
 		void AE_CALL resetUsedShareConstantBuffers();
-		ConstantBuffer* AE_CALL getExclusiveConstantBuffer(const std::vector<Constant*>& constants, const ConstantBufferLayout& layout);
+		ConstantBuffer* AE_CALL getExclusiveConstantBuffer(const std::vector<ShaderParameter*>& constants, const ConstantBufferLayout& layout);
 
 		static DXGI_FORMAT AE_CALL getDXGIFormat(TextureFormat fmt);
 
@@ -83,18 +83,18 @@ namespace aurora::modules::graphics::win_d3d11 {
 		struct ExclusiveConstNode {
 			ExclusiveConstNode() :
 				numAssociativeBuffers(0),
-				constant(nullptr),
+				parameter(nullptr),
 				parent(nullptr) {
 			}
 
 			ui32 numAssociativeBuffers;
-			std::unordered_map<const Constant*, ExclusiveConstNode> children;
+			std::unordered_map<const ShaderParameter*, ExclusiveConstNode> children;
 			std::unordered_map<ui64, ConstantBuffer*> buffers;
-			Constant* constant;
+			ShaderParameter* parameter;
 			ExclusiveConstNode* parent;
 		};
-		std::unordered_map<const Constant*, ExclusiveConstNode> _exclusiveConstRoots;
-		std::unordered_map<const Constant*, std::unordered_set<ExclusiveConstNode*>> _exclusiveConstNodes;
+		std::unordered_map<const ShaderParameter*, ExclusiveConstNode> _exclusiveConstRoots;
+		std::unordered_map<const ShaderParameter*, std::unordered_set<ExclusiveConstNode*>> _exclusiveConstNodes;
 
 		struct ExcLusiveConsts {
 			ui32 rc;
@@ -102,15 +102,15 @@ namespace aurora::modules::graphics::win_d3d11 {
 		};
 		std::unordered_map<ui64, ExcLusiveConsts> _exclusiveConstPool;
 
-		ConstantBuffer* AE_CALL _getExclusiveConstantBuffer(const ConstantBufferLayout& layout, const std::vector<Constant*>& constants,
-			ui32 cur, ui32 max, ExclusiveConstNode* parent, std::unordered_map <const Constant*, ExclusiveConstNode>& chindrenContainer);
+		ConstantBuffer* AE_CALL _getExclusiveConstantBuffer(const ConstantBufferLayout& layout, const std::vector<ShaderParameter*>& params,
+			ui32 cur, ui32 max, ExclusiveConstNode* parent, std::unordered_map <const ShaderParameter*, ExclusiveConstNode>& chindrenContainer);
 		void AE_CALL _registerExclusiveConstantLayout(ConstantBufferLayout& layout);
 		void AE_CALL _unregisterExclusiveConstantLayout(ConstantBufferLayout& layout);
-		static void _releaseExclusiveConstant(void* graphics, const Constant& constant);
-		void _releaseExclusiveConstant(const Constant& constant);
-		void _releaseExclusiveConstantToRoot(ExclusiveConstNode* parent, ExclusiveConstNode* releaseChild, ui32 releaseNumAssociativeBuffers, bool releaseConstant);
-		void _releaseExclusiveConstantToLeaf(ExclusiveConstNode& node, bool releaseConstant);
-		void _releaseExclusiveConstantSelf(ExclusiveConstNode& node, bool releaseConstant);
+		static void _releaseExclusiveConstant(void* graphics, const ShaderParameter& param);
+		void _releaseExclusiveConstant(const ShaderParameter& param);
+		void _releaseExclusiveConstantToRoot(ExclusiveConstNode* parent, ExclusiveConstNode* releaseChild, ui32 releaseNumAssociativeBuffers, bool releaseParam);
+		void _releaseExclusiveConstantToLeaf(ExclusiveConstNode& node, bool releaseParam);
+		void _releaseExclusiveConstantSelf(ExclusiveConstNode& node, bool releaseParam);
 
 		events::EventListener<ApplicationEvent, Graphics> _resizedListener;
 		void AE_CALL _resizedHandler(events::Event<ApplicationEvent>& e);
