@@ -135,7 +135,7 @@
     <ClInclude Include="src\base\Args.h">
       <Filter>src\base</Filter>
     </ClInclude>
-    <ClInclude Include="src\modules\FileModule.h">
+    <ClInclude Include="src\modules\IFileModule.h">
       <Filter>src\modules</Filter>
     </ClInclude>
   </ItemGroup>
