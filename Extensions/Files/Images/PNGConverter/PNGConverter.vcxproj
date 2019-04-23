@@ -19,25 +19,25 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\PNG.cpp" />
+    <ClCompile Include="src\PNGConverter.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\PNG.h" />
+    <ClInclude Include="src\PNGConverter.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\Aurora\Aurora.vcxproj">
       <Project>{972c829a-fe33-48d8-a1e1-cc7457fed993}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\..\..\..\Libs\zlib\zlib.vcxproj">
-      <Project>{3637fba3-c6b2-44a5-b10a-f9bb239974e9}</Project>
+    <ProjectReference Include="..\..\..\..\Libs\libpng\libpng.vcxproj">
+      <Project>{202fe3a7-7731-478c-bbe5-035559b58a9b}</Project>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{202FE3A7-7731-478C-BBE5-035559B58A9B}</ProjectGuid>
+    <ProjectGuid>{25B69416-9B43-439E-B8DA-8D99D7F8AFF6}</ProjectGuid>
     <RootNamespace>GraphicsWinGL</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
-    <ProjectName>PNG</ProjectName>
+    <ProjectName>PNGConverter</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -105,7 +105,7 @@
       <SDLCheck>
       </SDLCheck>
       <ConformanceMode>false</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Aurora\src;$(SolutionDir)Libs\zlib\src</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Aurora\src;$(SolutionDir)Libs\libpng\src</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;AE_EXTENSION_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <ExceptionHandling>Sync</ExceptionHandling>
@@ -134,7 +134,7 @@
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)Aurora\src;$(SolutionDir)Libs\zlib\src</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Aurora\src;$(SolutionDir)Libs\libpng\src</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
@@ -149,7 +149,7 @@
       <SDLCheck>
       </SDLCheck>
       <ConformanceMode>false</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Aurora\src;$(SolutionDir)Libs\zlib\src</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Aurora\src;$(SolutionDir)Libs\libpng\src</AdditionalIncludeDirectories>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <PreprocessorDefinitions>WIN32;AE_EXTENSION_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -186,7 +186,7 @@
       <PreprocessorDefinitions>AE_EXTENSION_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)Aurora\src;$(SolutionDir)Libs\zlib\src</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Aurora\src;$(SolutionDir)Libs\libpng\src</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>

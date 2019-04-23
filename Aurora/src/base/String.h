@@ -68,7 +68,6 @@ namespace aurora {
 			return std::move(std::string(buf));
 		}
 
-		
 		inline static std::string AE_CALL toString(f32 value, const std::string& prec = "", bool trim = true) {
 			i8 buf[16];
 			if (prec.empty()) {
@@ -107,18 +106,15 @@ namespace aurora {
 		}
 		*/
 
-		static bool isEqual(const i8* str1, const i8* str2);
+		static bool AE_CALL isEqual(const i8* str1, const i8* str2);
 
 	private:
-		inline static std::regex _trimFloatZero = std::regex("0+?$");
-		inline static std::regex _trimFloatPoint = std::regex("[.]$");
-
 		static ui32 AE_CALL _UnicodeToUtf8(const wchar_t * in, ui32 inLen, i8* out);
 		static ui32 AE_CALL _Utf8ToUnicode(const i8* in, ui32 inLen, wchar_t* out);
 
 		inline static std::string AE_CALL _trimFloat(const std::string& value) {
 			if (value.find_first_of('.') > 0) {
-				return std::move(std::regex_replace(std::regex_replace(value, _trimFloatZero, ""), _trimFloatPoint, ""));
+				return std::move(std::regex_replace(std::regex_replace(value, std::regex("0+?$"), ""), std::regex("[.]$"), ""));
 			} else {
 				return value;
 			}
