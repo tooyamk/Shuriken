@@ -2,6 +2,7 @@
 
 #include "base/Application.h"
 #include "base/ByteArray.h"
+#include "base/Image.h"
 #include "base/Lock.h"
 #include "base/Monitor.h"
 #include "base/STList.h"

@@ -91,6 +91,8 @@ namespace aurora {
 			return trim ? _trimFloat(std::string(buf)) : std::move(std::string(buf));
 		}
 
+		static std::string AE_CALL toString(const ui8* value, ui32 size);
+
 		/*
 		inline static std::string AE_CALL toString(const unsigned char* value, unsigned int size) {
 			std::string str(size << 1, 0);

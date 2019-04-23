@@ -193,6 +193,18 @@ namespace aurora {
 		while (itr != end) dst.emplace_back(*itr++);
 	}
 
+	std::string String::toString(const ui8* value, ui32 size) {
+		std::string str(size << 1, 0);
+		i8 buf[3];
+		for (ui32 i = 0; i < size; ++i) {
+			snprintf(buf, sizeof(buf), "%02x", value[i]);
+			ui32 idx = i << 1;
+			str[idx++] = buf[0];
+			str[idx] = buf[1];
+		}
+		return std::move(str);
+	}
+
 	bool String::isEqual(const i8* str1, const i8* str2) {
 		if (str1 == str2) return true;
 		

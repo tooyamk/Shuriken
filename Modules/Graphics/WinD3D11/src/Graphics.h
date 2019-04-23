@@ -53,7 +53,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		void AE_CALL resetUsedShareConstantBuffers();
 		ConstantBuffer* AE_CALL getExclusiveConstantBuffer(const std::vector<ShaderParameter*>& constants, const ConstantBufferLayout& layout);
 
-		static DXGI_FORMAT AE_CALL getDXGIFormat(TextureFormat fmt);
+		static void AE_CALL convertDXGIFormat(TextureFormat fmt, DXGI_FORMAT& dxgiFmt, ui32& pixelSize);
 
 	private:
 		Application* _app;

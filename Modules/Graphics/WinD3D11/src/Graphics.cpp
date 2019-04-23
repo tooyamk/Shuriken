@@ -534,12 +534,22 @@ namespace aurora::modules::graphics::win_d3d11 {
 		}
 	}
 
-	DXGI_FORMAT Graphics::getDXGIFormat(TextureFormat fmt) {
+	void Graphics::convertDXGIFormat(TextureFormat fmt, DXGI_FORMAT& dxgiFmt, ui32& pixelSize) {
 		switch (fmt) {
 		case TextureFormat::R8G8B8A8:
-			return DXGI_FORMAT_R8G8B8A8_UNORM;
+		{
+			dxgiFmt = DXGI_FORMAT_R8G8B8A8_UNORM;
+			pixelSize = 4;
+
+			break;
+		}
 		default:
-			return DXGI_FORMAT_UNKNOWN;
+		{
+			dxgiFmt = DXGI_FORMAT_UNKNOWN;
+			pixelSize = 0;
+
+			break;
+		}
 		}
 	}
 }

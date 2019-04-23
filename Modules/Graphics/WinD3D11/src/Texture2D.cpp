@@ -17,7 +17,11 @@ namespace aurora::modules::graphics::win_d3d11 {
 	bool Texture2D::allocate(ui32 width, ui32 height, TextureFormat format, ui32 resUsage, const void* data) {
 		_delTex();
 
-		_baseRes.size = 4;
+		DXGI_FORMAT dxgiFmt;
+		ui32 pixelSize;
+		Graphics::convertDXGIFormat(format, dxgiFmt, pixelSize);
+
+		_baseRes.size = width * height * pixelSize;
 
 		D3D11_USAGE d3dUsage;
 		UINT cpuUsage;
@@ -30,7 +34,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		desc.BindFlags = _baseRes._bindType;
 		desc.Width = width;
 		desc.Height = height;
-		desc.Format = Graphics::getDXGIFormat(format);
+		desc.Format = dxgiFmt;
 		//
 		desc.ArraySize = 1;
 		desc.MipLevels = 1;
@@ -45,7 +49,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			D3D11_SUBRESOURCE_DATA res;
 			memset(&res, 0, sizeof(res));
 			res.pSysMem = data;
-			res.SysMemPitch = width << 2;// Specify the size of a row in bytes.
+			res.SysMemPitch = width * pixelSize;// Specify the size of a row in bytes.
 			res.SysMemSlicePitch = 0;// As this is not a texture array or 3D texture, this parameter is ignored.
 			hr = device->CreateTexture2D(&desc, &res, (ID3D11Texture2D**)&_baseRes.handle);
 		} else {

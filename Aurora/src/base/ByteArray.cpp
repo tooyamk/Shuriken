@@ -18,14 +18,14 @@ namespace aurora {
 		_position(0),
 		_mode(Mode::MEM),
 		_bytes(capacity > 0 ? new i8[capacity] : nullptr) {
-		setEndian(Endian::LITTLE);
+		setEndian(ByteArray::SYS_ENDIAN);
 	}
 
 	ByteArray::ByteArray(i8* bytes, ui32 size, ExtMemMode extMode) :
 		_capacity(size),
 		_length(size),
 		_position(0) {
-		setEndian(Endian::LITTLE);
+		setEndian(ByteArray::SYS_ENDIAN);
 		if (extMode == ExtMemMode::EXT) {
 			this->_bytes = bytes;
 			_mode = Mode::EXT;
@@ -43,7 +43,7 @@ namespace aurora {
 		_capacity(capacity),
 		_length(length),
 		_position(0) {
-		setEndian(Endian::LITTLE);
+		setEndian(ByteArray::SYS_ENDIAN);
 		if (extMode == ExtMemMode::EXT) {
 			this->_bytes = bytes;
 			_mode = Mode::EXT;

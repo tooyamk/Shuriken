@@ -220,6 +220,7 @@ namespace aurora::modules::graphics {
 
 
 	enum class TextureFormat : ui8 {
+		UNKNOWN,
 		R8G8B8A8
 	};
 

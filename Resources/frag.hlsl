@@ -1,4 +1,6 @@
 struct PS_INPUT {
+    float4 position : SV_POSITION;
+    float2 uv : TEXCOORD0;
 };
 
 float2 red[2];
@@ -14,7 +16,7 @@ float blue;
 }
 
 float4 main(PS_INPUT input) : SV_TARGET {
-    float4 c = texDiffuse.Sample(samLiner, float2(0.0, 0.0));
+    float4 c = texDiffuse.Sample(samLiner, input.uv);
     return c;
     //c.x = red;
     //return c;
