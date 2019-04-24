@@ -113,7 +113,7 @@ namespace aurora::modules::graphics {
 	}
 
 	IObject::~IObject() {
-		Ref::setNull(_graphics);
+		Ref::setNull<IGraphicsModule>(_graphics);
 	}
 
 

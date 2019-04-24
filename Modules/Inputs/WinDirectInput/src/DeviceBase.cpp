@@ -11,7 +11,7 @@ namespace aurora::modules::win_direct_input {
 	DeviceBase::~DeviceBase() {
 		_dev->Unacquire();
 		_dev->Release();
-		Ref::setNull(_input);
+		Ref::setNull<DirectInput>(_input);
 	}
 
 	events::IEventDispatcher<InputDeviceEvent>& DeviceBase::getEventDispatcher() {

@@ -14,7 +14,7 @@ namespace aurora::modules::win_direct_input {
 
 	DirectInput::~DirectInput() {
 		if (_di) _di->Release();
-		Ref::setNull(_app);
+		Ref::setNull<Application>(_app);
 	}
 
 	events::IEventDispatcher<InputModuleEvent>& DirectInput::getEventDispatcher() {

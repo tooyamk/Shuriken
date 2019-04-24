@@ -25,7 +25,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 	Graphics::~Graphics() {
 		_app->getEventDispatcher().removeEventListener(ApplicationEvent::RESIZED, _resizedListener);
 		_release();
-		Ref::setNull(_app);
+		Ref::setNull<Application>(_app);
 	}
 
 	bool Graphics::createDevice(const GraphicsAdapter* adapter) {

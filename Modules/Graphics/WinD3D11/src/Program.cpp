@@ -403,10 +403,6 @@ namespace aurora::modules::graphics::win_d3d11 {
 					}
 					offset += 16;
 				}
-
-				if (i == 0) {
-					ieDesc.Format = DXGI_FORMAT_R8G8_UINT;
-				}
 			}
 		}
 	}
