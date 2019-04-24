@@ -53,6 +53,10 @@ namespace aurora {
 		inline static constexpr FLOATING_POINT_TYPE<T> AE_CALL rad(T deg) {
 			return deg * RAD<T>;
 		}
+
+		inline static bool isPowOfTwo(ui32 n) {
+			return n < 1 ? false : !(n & (n - 1));
+		}
 	};
 }
 

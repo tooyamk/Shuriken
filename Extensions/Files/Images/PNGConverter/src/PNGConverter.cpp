@@ -85,10 +85,10 @@ namespace aurora::file {
 		case PNG_COLOR_TYPE_GRAY_ALPHA:
 			_renderFormat = Texture2D::PixelFormat::AI88;
 			break;
-		case PNG_COLOR_TYPE_RGB:
-			_renderFormat = Texture2D::PixelFormat::RGB888;
-			break;
 			*/
+		case PNG_COLOR_TYPE_RGB:
+			img->format = modules::graphics::TextureFormat::R8G8B8;
+			break;
 		case PNG_COLOR_TYPE_RGB_ALPHA:
 			img->format = modules::graphics::TextureFormat::R8G8B8A8;
 			break;

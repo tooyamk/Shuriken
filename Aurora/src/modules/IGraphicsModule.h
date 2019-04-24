@@ -135,7 +135,7 @@ namespace aurora::modules::graphics {
 
 
 	enum class SamplerFilterMode : ui8 {
-		NEAREST,
+		POINT,
 		LINEAR,
 		ANISOTROPIC
 	};
@@ -221,6 +221,7 @@ namespace aurora::modules::graphics {
 
 	enum class TextureFormat : ui8 {
 		UNKNOWN,
+		R8G8B8,
 		R8G8B8A8
 	};
 
@@ -239,7 +240,10 @@ namespace aurora::modules::graphics {
 		ITexture2D(IGraphicsModule& graphics);
 		virtual ~ITexture2D();
 
-		virtual bool AE_CALL allocate(ui32 width, ui32 height, TextureFormat format, ui32 bufferUsage, const void* data = nullptr) = 0;
+		/*
+		 * @mipLevels 1 = not use mipmap, 0 to generate a full set of subtextures. others eg. value is 3, source is 400*400, will generate 400*400, 200*200, 100*100.
+		 */
+		virtual bool AE_CALL allocate(ui32 width, ui32 height, TextureFormat format, ui32 mipLevels, ui32 bufferUsage, const void* data = nullptr) = 0;
 	};
 
 
