@@ -231,12 +231,6 @@ namespace aurora::modules::graphics {
 		virtual ~ITexture();
 
 		virtual TextureType AE_CALL getType() const = 0;
-
-		inline static ui32 AE_CALL calcMipLevels(ui32 n) {
-			return (ui32)std::floor(std::log2(n) + 1);
-		}
-
-		static std::vector<ui32> AE_CALL calcMipLevelsSize(ui32 n, ui32 mipLevels);
 	};
 
 
@@ -248,7 +242,7 @@ namespace aurora::modules::graphics {
 		/*
 		 * @mipLevels 1 = not use mipmap, 0 to generate a full set of subtextures. others eg. value is 3, source is 400*400, will generate 400*400, 200*200, 100*100.
 		 */
-		virtual bool AE_CALL allocate(ui32 width, ui32 height, TextureFormat format, ui32 mipLevels, Usage resUsage, const void* data = nullptr, ui32 dataSize = 0) = 0;
+		virtual bool AE_CALL allocate(ui32 width, ui32 height, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data = nullptr) = 0;
 	};
 
 

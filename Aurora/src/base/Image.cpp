@@ -37,25 +37,41 @@ namespace aurora {
 	}
 
 	ui32 Image::calcMipsByteSize(ui32 width, ui32 height, ui32 mipLevels, ui32 perPixelByteSize) {
-		auto widths = calcMipsPixelSize(width, mipLevels);
-		auto heights = calcMipsPixelSize(height, mipLevels);
-		ui32 pixels = 0;
-		for (ui32 i = 0; i < mipLevels; ++i) pixels += widths[i] * heights[i];
+		auto pixels = width * height;
+
+		for (ui32 i = 1; i < mipLevels; ++i) {
+			width = calcNextMipPixelSize(width);
+			height = calcNextMipPixelSize(height);
+			pixels += width * height;
+		}
 
 		return calcByteSize(pixels, perPixelByteSize);
 	}
 
-	void Image::convertFormat(ui32 width, ui32 height, TextureFormat srcFormat, const ui8* src, TextureFormat dstFormat, ui8* dst) {
+	bool Image::convertFormat(ui32 width, ui32 height, TextureFormat srcFormat, const ui8* src, TextureFormat dstFormat, ui8* dst) {
 		switch (dstFormat) {
+		case TextureFormat::R8G8B8:
+		{
+			switch (srcFormat) {
+			case TextureFormat::R8G8B8:
+				memcpy(dst, src, calcByteSize(width, height, dstFormat));
+				return true;
+			//case TextureFormat::R8G8B8A8:
+			//	memcpy(dst, src, calcByteSize(width, height, dstFormat));
+			//	break;
+			default:
+				break;
+			}
+		}
 		case TextureFormat::R8G8B8A8:
 		{
 			switch (srcFormat) {
 			case TextureFormat::R8G8B8:
 				_convertFormat_R8G8B8_R8G8B8A8(width, height, src, dst);
-				break;
+				return true;
 			case TextureFormat::R8G8B8A8:
 				memcpy(dst, src, calcByteSize(width, height, dstFormat));
-				break;
+				return true;
 			default:
 				break;
 			}
@@ -63,13 +79,15 @@ namespace aurora {
 		default:
 			break;
 		}
+
+		return false;
 	}
 
-	void Image::convertFormat(ui32 width, ui32 height, TextureFormat srcFormat, const ui8* src, ui32 mipLevels, TextureFormat dstFormat, ui8* dst) {
+	bool Image::convertFormat(ui32 width, ui32 height, TextureFormat srcFormat, const ui8* src, ui32 mipLevels, TextureFormat dstFormat, ui8* dst) {
 		auto srcPerPixelSize = calcPerPixelByteSize(srcFormat);
 		auto dstPerPixelSize = calcPerPixelByteSize(dstFormat);
 
-		convertFormat(width, height, srcFormat, src, dstFormat, dst);
+		if (!convertFormat(width, height, srcFormat, src, dstFormat, dst)) return false;
 
 		for (ui32 lv = 1; lv < mipLevels; ++lv) {
 			src += calcByteSize(width, height, srcPerPixelSize);
@@ -77,8 +95,9 @@ namespace aurora {
 			width = calcNextMipPixelSize(width);
 			height = calcNextMipPixelSize(height);
 
-			convertFormat(width, height, srcFormat, src, dstFormat, dst);
+			if (!convertFormat(width, height, srcFormat, src, dstFormat, dst)) return false;
 		}
+		return true;
 	}
 
 	void Image::_convertFormat_R8G8B8_R8G8B8A8(ui32 width, ui32 height, const ui8* src, ui8* dst) {
@@ -92,72 +111,90 @@ namespace aurora {
 		}
 	}
 
-	void Image::generateMips(TextureFormat format, ui32 mipLevels, ui8* dst) const {
+	bool Image::generateMips(TextureFormat format, ui32 mipLevels, ui8* dst, void** dstDataPtr) const {
 		switch (format) {
 		case TextureFormat::R8G8B8:
+		{
+			if (convertFormat(width, height, this->format, (const ui8*)source.getBytes(), format, dst)) {
+				generateMips_UInt8s(width, height, format, mipLevels, 3, dst, dstDataPtr);
+				return true;
+			}
+
+			break;
+		}
 		case TextureFormat::R8G8B8A8:
 		{
-			convertFormat(width, height, this->format, (const ui8*)source.getBytes(), format, dst);
-			generateMips_UInt8s(width, height, format, mipLevels, 4, dst + calcByteSize(width, height, format));
+			if (convertFormat(width, height, this->format, (const ui8*)source.getBytes(), format, dst)) {
+				generateMips_UInt8s(width, height, format, mipLevels, 4, dst, dstDataPtr);
+				return true;
+			}
 
 			break;
 		}
 		default:
 			break;
 		}
+
+		return false;
 	}
 
-	void Image::generateMips_UInt8s(ui32 width, ui32 height, modules::graphics::TextureFormat format, ui32 mipLevels, ui8 numChannels, ui8* data) {
+	void Image::generateMips_UInt8s(ui32 width, ui32 height, modules::graphics::TextureFormat format, ui32 mipLevels, ui8 numChannels, ui8* data, void** dataPtr) {
+		ui32 numChannels2 = numChannels << 1;
 		ui32 perPixelByteSize = calcPerPixelByteSize(format);
 		ui8* src = data;
 		ui8* dst = data;
 
+		if (dataPtr) dataPtr[0] = dst;
+
 		ui8 c[16];
 		for (ui32 lv = 1; lv < mipLevels; ++lv) {
 			dst += calcByteSize(width, height, perPixelByteSize);
-			ui32 srcRowByteSize = calcByteSize(width, perPixelByteSize);
+			if (dataPtr) dataPtr[lv] = dst;
 			auto w = calcNextMipPixelSize(width);
 			auto h = calcNextMipPixelSize(height);
+			ui32 srcRowByteSize = calcByteSize(width, perPixelByteSize);
+			ui32 dstRowByteSize = calcByteSize(w, perPixelByteSize);
 
 			if (w == width) {
-				for (ui32 y = 0; y < h; ++y) {
-					ui32 dstBegin = y * srcRowByteSize;
-					auto srcRow = src + (dstBegin << 1);
-					auto dstRow = dst + dstBegin;
-					for (ui32 x = 0; x < w; ++x) {
-						auto dstOffset = x * perPixelByteSize;
-						auto data = srcRow + (dstOffset << 1);
-						memcpy(c, data, 4);
-						memcpy(c, data + srcRowByteSize, 4);
-						_mipPixelsBlend(c, numChannels, 2);
-						memcpy(dstRow + dstOffset, c, 4);
+				if (h == height) {
+					memcpy(dst, src, w * h * perPixelByteSize);
+				} else {
+					for (ui32 y = 0; y < h; ++y) {
+						auto dstBegin = y * dstRowByteSize;
+						auto srcRow = src + (dstBegin << 1);
+						auto dstRow = dst + dstBegin;
+						for (ui32 x = 0; x < w; ++x) {
+							auto dstOffset = x * perPixelByteSize;
+							auto data = srcRow + dstOffset;
+							memcpy(c, data, numChannels);
+							memcpy(c + numChannels, data + dstRowByteSize, numChannels);
+							_mipPixelsBlend(c, numChannels, 2);
+							memcpy(dstRow + dstOffset, c, numChannels);
+						}
 					}
 				}
 			} else if (h == height) {
 				for (ui32 y = 0; y < h; ++y) {
-					ui32 dstBegin = y * srcRowByteSize;
-					auto srcRow = src + (dstBegin << 1);
-					auto dstRow = dst + dstBegin;
+					auto srcRow = src + y * srcRowByteSize;
+					auto dstRow = dst + y * dstRowByteSize;
 					for (ui32 x = 0; x < w; ++x) {
 						auto dstOffset = x * perPixelByteSize;
-						auto data = srcRow + (dstOffset << 1);
-						memcpy(c, data, 8);
+						memcpy(c, srcRow + (dstOffset << 1), numChannels2);
 						_mipPixelsBlend(c, numChannels, 2);
-						memcpy(dstRow + dstOffset, c, 4);
+						memcpy(dstRow + dstOffset, c, numChannels);
 					}
 				}
 			} else {
 				for (ui32 y = 0; y < h; ++y) {
-					ui32 dstBegin = y * srcRowByteSize;
-					auto srcRow = src + (dstBegin << 1);
-					auto dstRow = dst + dstBegin;
+					auto srcRow = src + (y << 1) * srcRowByteSize;
+					auto dstRow = dst + y * dstRowByteSize;
 					for (ui32 x = 0; x < w; ++x) {
 						auto dstOffset = x * perPixelByteSize;
 						auto data = srcRow + (dstOffset << 1);
-						memcpy(c, data, 8);
-						memcpy(c, data + srcRowByteSize, 8);
+						memcpy(c, data, numChannels2);
+						memcpy(c + numChannels2, data + srcRowByteSize, numChannels2);
 						_mipPixelsBlend(c, numChannels, 4);
-						memcpy(dstRow + dstOffset, c, 4);
+						memcpy(dstRow + dstOffset, c, numChannels);
 					}
 				}
 			}

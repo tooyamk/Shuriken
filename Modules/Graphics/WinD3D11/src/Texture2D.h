@@ -10,7 +10,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual ~Texture2D();
 
 		virtual TextureType AE_CALL getType() const override;
-		virtual bool AE_CALL allocate(ui32 width, ui32 height, TextureFormat format, ui32 mipLevels, Usage resUsage, const void* data = nullptr, ui32 dataSize = 0) override;
+		virtual bool AE_CALL allocate(ui32 width, ui32 height, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data = nullptr) override;
 
 		template<ProgramStage stage>
 		inline void AE_CALL use(UINT slot) {

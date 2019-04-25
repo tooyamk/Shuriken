@@ -13,18 +13,24 @@ namespace aurora {
 		ui32 height;
 		ByteArray source;
 
-		static void convertFormat(ui32 width, ui32 height, modules::graphics::TextureFormat srcFormat, const ui8* src, modules::graphics::TextureFormat dstFormat, ui8* dst);
-		static void convertFormat(ui32 width, ui32 height, modules::graphics::TextureFormat srcFormat, const ui8* src, ui32 mipLevels, modules::graphics::TextureFormat dstFormat, ui8* dst);
+		static bool convertFormat(ui32 width, ui32 height, modules::graphics::TextureFormat srcFormat, const ui8* src, modules::graphics::TextureFormat dstFormat, ui8* dst);
+		static bool convertFormat(ui32 width, ui32 height, modules::graphics::TextureFormat srcFormat, const ui8* src, ui32 mipLevels, modules::graphics::TextureFormat dstFormat, ui8* dst);
 
-		ByteArray generateMips(modules::graphics::TextureFormat format, ui32 mipLevels) const {
-			ByteArray bytes(calcMipsByteSize(width, height, mipLevels, format));
-			generateMips(format, mipLevels, (ui8*)bytes.getBytes());
-			return std::move(bytes);
+		inline bool generateMips(modules::graphics::TextureFormat format, ui32 mipLevels, ByteArray& dst, std::vector<void*>& dstDataPtr) const {
+			dst = ByteArray(calcMipsByteSize(width, height, mipLevels, format));
+			dstDataPtr.resize(mipLevels);
+			return generateMips(format, mipLevels, (ui8*)dst.getBytes(), dstDataPtr.data());
 		}
-		void generateMips(modules::graphics::TextureFormat format, ui32 mipLevels, ui8* dst) const;
+		bool generateMips(modules::graphics::TextureFormat format, ui32 mipLevels, ui8* dst, void** dstDataPtr) const;
 
 		static ui32 calcPerPixelByteSize(modules::graphics::TextureFormat format);
 
+		inline static ui32 AE_CALL calcMipLevels(const Image& img) {
+			return calcMipLevels(std::max<ui32>(img.width, img.height));
+		}
+		inline static ui32 AE_CALL calcMipLevels(ui32 width, ui32 height) {
+			return calcMipLevels(std::max<ui32>(width, height));
+		}
 		inline static ui32 AE_CALL calcMipLevels(ui32 n) {
 			return (ui32)std::floor(std::log2(n) + 1);
 		}
@@ -56,7 +62,7 @@ namespace aurora {
 		}
 		static ui32 calcMipsByteSize(ui32 width, ui32 height, ui32 mipLevels, ui32 perPixelByteSize);
 
-		static void generateMips_UInt8s(ui32 width, ui32 height, modules::graphics::TextureFormat format, ui32 mipLevels, ui8 numChannels, ui8* data);
+		static void generateMips_UInt8s(ui32 width, ui32 height, modules::graphics::TextureFormat format, ui32 mipLevels, ui8 numChannels, ui8* dst, void** dataPtr);
 
 	private:
 		static void _convertFormat_R8G8B8_R8G8B8A8(ui32 width, ui32 height, const ui8* src, ui8* dst);

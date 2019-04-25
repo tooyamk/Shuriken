@@ -80,7 +80,7 @@ namespace aurora {
 	const ByteArray::Endian ByteArray::SYS_ENDIAN = ((ui8*)(&TEST_ENDIAN_VALUE))[0] ? Endian::LITTLE : Endian::BIG;
 
 	void ByteArray::dispose(bool free) {
-		if (_bytes != nullptr) {
+		if (_bytes) {
 			if (free && _mode != Mode::EXT) delete[] _bytes;
 			_bytes = nullptr;
 		}

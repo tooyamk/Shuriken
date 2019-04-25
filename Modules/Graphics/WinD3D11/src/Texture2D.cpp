@@ -17,7 +17,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return TextureType::TEX2D;
 	}
 
-	bool Texture2D::allocate(ui32 width, ui32 height, TextureFormat format, ui32 mipLevels, Usage resUsage, const void* data, ui32 dataSize) {
+	bool Texture2D::allocate(ui32 width, ui32 height, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data) {
 		_delTex();
 		
 		if (mipLevels == 0) {
@@ -27,25 +27,29 @@ namespace aurora::modules::graphics::win_d3d11 {
 			if (mipLevels > maxLevels) mipLevels = maxLevels;
 		}
 
-		auto mipWidths = ITexture::calcMipLevelsSize(width, mipLevels);
-		auto mipHeights = ITexture::calcMipLevelsSize(height, mipLevels);
-
-		std::vector<ui32> mipPixels(mipLevels);
-		ui32 totalPixels = 0;
-		for (ui32 i = 0; i < mipLevels; ++i) {
-			auto pixels = mipWidths[i] * mipHeights[i];
-			mipPixels[i] = pixels;
-			totalPixels += pixels;
-		}
-
-		ByteArray texData;
-		//const void* texData = data;
+		ByteArray autoReleaseData;
+		std::vector<void*> texData(mipLevels);
 		switch (format) {
 		case TextureFormat::R8G8B8:
 		{
 			format = TextureFormat::R8G8B8A8;
 
-
+			if (data) {
+				auto srcPerPixelByteSize = Image::calcPerPixelByteSize(TextureFormat::R8G8B8);
+				auto dstPerPixelByteSize = Image::calcPerPixelByteSize(format);
+				auto dstByteSize = Image::calcMipsByteSize(width, height, mipLevels, dstPerPixelByteSize);
+				auto dst = new ui8[dstByteSize];
+				autoReleaseData = ByteArray((i8*)dst, dstByteSize, ByteArray::ExtMemMode::EXCLUSIVE);
+				auto w = width, h = height;
+				for (ui32 i = 0; i < mipLevels; ++i) {
+					texData[i] = dst;
+					Image::convertFormat(w, h, TextureFormat::R8G8B8, (ui8*)data[i], format, dst);
+					dst += w * h;
+					w = Image::calcNextMipPixelSize(w);
+					h = Image::calcNextMipPixelSize(h);
+				}
+				data = texData.data();
+			}
 
 			break;
 		}
@@ -53,18 +57,17 @@ namespace aurora::modules::graphics::win_d3d11 {
 			break;
 		}
 
-		DXGI_FORMAT dxgiFmt;
-		ui32 pixelSize;
-		Graphics::convertDXGIFormat(format, dxgiFmt, pixelSize);
+		DXGI_FORMAT dxgiFmt = Graphics::convertDXGIFormat(format);
+		if (dxgiFmt == DXGI_FORMAT_UNKNOWN) return false;
 
 		auto perPixelSize = Image::calcPerPixelByteSize(format);
 		auto mipsByteSize = Image::calcMipsByteSize(width, height, mipLevels, perPixelSize);
 
-		_baseRes.size = totalPixels * pixelSize;
+		_baseRes.size = mipsByteSize;
 
 		D3D11_USAGE d3dUsage;
 		UINT cpuUsage;
-		_baseRes.calcAllocateUsage(resUsage, _baseRes.size, dataSize, cpuUsage, d3dUsage);
+		_baseRes.calcAllocateUsage(resUsage, _baseRes.size, data ? _baseRes.size : 0, cpuUsage, d3dUsage);
 
 		D3D11_TEXTURE2D_DESC desc;
 		memset(&desc, 0, sizeof(desc));
@@ -85,23 +88,23 @@ namespace aurora::modules::graphics::win_d3d11 {
 		auto device = ((Graphics*)_graphics)->getDevice();
 
 		HRESULT hr;
-		if (texData) {
+		if (data) {
 			if (mipLevels == 1) {
 				D3D11_SUBRESOURCE_DATA res;
-				res.pSysMem = texData.getBytes();
-				res.SysMemPitch = width * pixelSize;// Specify the size of a row in bytes.
+				res.pSysMem = data[0];
+				res.SysMemPitch = width * perPixelSize;// Specify the size of a row in bytes.
 				res.SysMemSlicePitch = 0;// As this is not a texture array or 3D texture, this parameter is ignored.
 				hr = device->CreateTexture2D(&desc, &res, (ID3D11Texture2D**)&_baseRes.handle);
 			} else {
 				std::vector<D3D11_SUBRESOURCE_DATA> resArr(mipLevels);
-				auto offset = 0;
+				auto w = width;
 				for (ui32 i = 0; i < mipLevels; ++i) {
 					auto& res = resArr[i];
-					res.pSysMem = (i8*)texData + offset;
-					res.SysMemPitch = mipWidths[i] * pixelSize;
+					res.pSysMem = data[i];
+					res.SysMemPitch = w * perPixelSize;
 					res.SysMemSlicePitch = 0;
 					
-					offset += mipPixels[i] * pixelSize;
+					w = Image::calcNextMipPixelSize(w);
 				}
 				hr = device->CreateTexture2D(&desc, resArr.data(), (ID3D11Texture2D**)&_baseRes.handle);
 			}
