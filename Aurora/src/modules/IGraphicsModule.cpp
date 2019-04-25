@@ -208,6 +208,29 @@ namespace aurora::modules::graphics {
 	ITexture::~ITexture() {
 	}
 
+	std::vector<ui32> ITexture::calcMipLevelsSize(ui32 n, ui32 mipLevels) {
+		if (!n) return std::move(std::vector<ui32>(0));
+		if (!mipLevels) mipLevels = calcMipLevels(n);
+
+		std::vector<ui32> levels(mipLevels);
+		levels[0] = n;
+
+		for (ui32 i = 1; i < mipLevels; ++i) {
+			if (n > 1) {
+				if (n & 0b1) {
+					n >>= 1;
+					++n;
+				} else {
+					n >>= 1;
+				}
+			} else {
+				levels[i] = n;
+			}
+		}
+
+		return std::move(levels);
+	}
+
 
 	ITexture2D::ITexture2D(IGraphicsModule& graphics) : ITexture(graphics) {
 	}

@@ -97,7 +97,7 @@ namespace aurora::modules {
 		IInputModule();
 		virtual ~IInputModule();
 
-		virtual ui32 AE_CALL getType() const override {
+		virtual ModuleType AE_CALL getType() const override {
 			return ModuleType::INPUT;
 		}
 

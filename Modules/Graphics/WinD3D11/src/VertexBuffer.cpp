@@ -12,11 +12,11 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_baseBuffer.releaseRes((Graphics*)_graphics);
 	}
 
-	bool VertexBuffer::allocate(ui32 size, ui32 bufferUsage, const void* data) {
-		return _baseBuffer.allocate((Graphics*)_graphics, size, bufferUsage, data);
+	bool VertexBuffer::allocate(ui32 size, Usage bufferUsage, const void* data, ui32 dataSize) {
+		return _baseBuffer.allocate((Graphics*)_graphics, size, bufferUsage, data, dataSize);
 	}
 
-	ui32 VertexBuffer::map(ui32 mapUsage) {
+	Usage VertexBuffer::map(Usage mapUsage) {
 		return _baseBuffer.map((Graphics*)_graphics, mapUsage);
 	}
 

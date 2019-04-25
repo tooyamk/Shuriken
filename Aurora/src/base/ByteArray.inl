@@ -1,4 +1,8 @@
 namespace aurora {
+	inline ByteArray::operator bool() const {
+		return _length > 0;
+	}
+
 	inline void ByteArray::clear() {
 		_position = 0;
 		_length = 0;
@@ -23,6 +27,14 @@ namespace aurora {
 
 	inline const i8* ByteArray::getBytes() const {
 		return _bytes;
+	}
+
+	inline ByteArray ByteArray::slice(ui32 start, ui32 length) const {
+		if (start >= _length) {
+			return std::move(ByteArray(nullptr, 0, ExtMemMode::EXT));
+		} else {
+			return std::move(ByteArray(_bytes + start, std::min<ui32>(length, _length - start), ExtMemMode::EXT));
+		}
 	}
 
 	inline ui32 ByteArray::getCapacity() const {

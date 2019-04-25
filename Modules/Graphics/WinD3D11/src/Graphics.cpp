@@ -301,7 +301,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			if (pool.idleIndex == len) {
 				cb = new ConstantBuffer(*this);
 				cb->ref();
-				cb->allocate(size, BufferUsage::CPU_WRITE);
+				cb->allocate(size, Usage::CPU_WRITE);
 				buffers.emplace_back(cb);
 			} else {
 				cb = buffers[pool.idleIndex];
@@ -379,7 +379,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 				cb->ref();
 				cb->recordUpdateIds = new ui32[cur + 1];
 				memset(cb->recordUpdateIds, 0, sizeof(ui32) * (cur + 1));
-				cb->allocate(layout.size, BufferUsage::CPU_WRITE);
+				cb->allocate(layout.size, Usage::CPU_WRITE);
 
 				_exclusiveConstPool.find(layout.featureCode)->second.nodes.emplace(node);
 

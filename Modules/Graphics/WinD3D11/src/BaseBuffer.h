@@ -8,6 +8,6 @@ namespace aurora::modules::graphics::win_d3d11 {
 		BaseBuffer(UINT bufferType);
 		virtual ~BaseBuffer();
 
-		bool AE_CALL allocate(Graphics* graphics, ui32 size, ui32 resUsage, const void* data = nullptr);
+		bool AE_CALL allocate(Graphics* graphics, ui32 size, Usage resUsage, const void* data = nullptr, ui32 dataSize = 0);
 	};
 }

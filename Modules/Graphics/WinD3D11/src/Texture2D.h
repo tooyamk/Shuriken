@@ -2,7 +2,6 @@
 
 #include "BaseResource.h"
 #include "Graphics.h"
-#include <algorithm>
 
 namespace aurora::modules::graphics::win_d3d11 {
 	class AE_MODULE_DLL Texture2D : public ITexture2D {
@@ -11,7 +10,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual ~Texture2D();
 
 		virtual TextureType AE_CALL getType() const override;
-		virtual bool AE_CALL allocate(ui32 width, ui32 height, TextureFormat format, ui32 mipLevels, ui32 bufferUsage, const void* data = nullptr) override;
+		virtual bool AE_CALL allocate(ui32 width, ui32 height, TextureFormat format, ui32 mipLevels, Usage resUsage, const void* data = nullptr, ui32 dataSize = 0) override;
 
 		template<ProgramStage stage>
 		inline void AE_CALL use(UINT slot) {
@@ -32,8 +31,5 @@ namespace aurora::modules::graphics::win_d3d11 {
 		ID3D11ShaderResourceView* _view;
 
 		void AE_CALL _delTex();
-		inline static ui32 AE_CALL _calcMipLevels(ui32 width, ui32 height) {
-			return (ui32)std::floor(std::log2(std::max<ui32>(width, height)) + 1);
-		}
 	};
 }

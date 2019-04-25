@@ -1,5 +1,7 @@
 #include "Texture2D.h"
 #include "math/Math.h"
+#include <algorithm>
+#include "base/Image.h"
 
 namespace aurora::modules::graphics::win_d3d11 {
 	Texture2D::Texture2D(Graphics& graphics) : ITexture2D(graphics),
@@ -15,42 +17,35 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return TextureType::TEX2D;
 	}
 
-	bool Texture2D::allocate(ui32 width, ui32 height, TextureFormat format, ui32 mipLevels, ui32 resUsage, const void* data) {
+	bool Texture2D::allocate(ui32 width, ui32 height, TextureFormat format, ui32 mipLevels, Usage resUsage, const void* data, ui32 dataSize) {
 		_delTex();
 		
 		if (mipLevels == 0) {
-			mipLevels = _calcMipLevels(width, height);
+			mipLevels = Image::calcMipLevels(std::max<ui32>(width, height));
 		} else if (mipLevels > 1) {
-			auto maxLevels = _calcMipLevels(width, height);
+			auto maxLevels = Image::calcMipLevels(std::max<ui32>(width, height));
 			if (mipLevels > maxLevels) mipLevels = maxLevels;
 		}
 
-		const void* texData = data;
+		auto mipWidths = ITexture::calcMipLevelsSize(width, mipLevels);
+		auto mipHeights = ITexture::calcMipLevelsSize(height, mipLevels);
+
+		std::vector<ui32> mipPixels(mipLevels);
+		ui32 totalPixels = 0;
+		for (ui32 i = 0; i < mipLevels; ++i) {
+			auto pixels = mipWidths[i] * mipHeights[i];
+			mipPixels[i] = pixels;
+			totalPixels += pixels;
+		}
+
+		ByteArray texData;
+		//const void* texData = data;
 		switch (format) {
-		case TextureFormat::UNKNOWN:
-			return false;
 		case TextureFormat::R8G8B8:
 		{
 			format = TextureFormat::R8G8B8A8;
 
-			if (data) {
-				ui32 mipPixels = width * height;
-				ui32 numPixels = mipPixels;
-				for (ui32 i = 1; i < mipLevels; ++i) {
-					mipPixels >>= 2;
-					numPixels += mipPixels;
-				}
-				auto genData = new ui8[numPixels << 2];
 
-				ui32 srcIdx = 0, dstIdx = 0;
-				for (ui32 i = 0; i < numPixels; ++i) {
-					memcpy(genData + dstIdx, (ui8*)data + srcIdx, 3);
-					srcIdx += 3;
-					dstIdx += 3;
-					genData[dstIdx++] = 255;
-				}
-				texData = genData;
-			}
 
 			break;
 		}
@@ -62,17 +57,14 @@ namespace aurora::modules::graphics::win_d3d11 {
 		ui32 pixelSize;
 		Graphics::convertDXGIFormat(format, dxgiFmt, pixelSize);
 
-		ui32 mip0Size = width * height * pixelSize;
-		ui32 mipSize = mip0Size;
-		_baseRes.size = mipSize;
-		for (ui32 i = 1; i < mipLevels; ++i) {
-			mipSize >>= 2;
-			_baseRes.size += mipSize;
-		}
+		auto perPixelSize = Image::calcPerPixelByteSize(format);
+		auto mipsByteSize = Image::calcMipsByteSize(width, height, mipLevels, perPixelSize);
+
+		_baseRes.size = totalPixels * pixelSize;
 
 		D3D11_USAGE d3dUsage;
 		UINT cpuUsage;
-		_baseRes.calcAllocateUsage(resUsage, data, cpuUsage, d3dUsage);
+		_baseRes.calcAllocateUsage(resUsage, _baseRes.size, dataSize, cpuUsage, d3dUsage);
 
 		D3D11_TEXTURE2D_DESC desc;
 		memset(&desc, 0, sizeof(desc));
@@ -96,24 +88,20 @@ namespace aurora::modules::graphics::win_d3d11 {
 		if (texData) {
 			if (mipLevels == 1) {
 				D3D11_SUBRESOURCE_DATA res;
-				res.pSysMem = texData;
+				res.pSysMem = texData.getBytes();
 				res.SysMemPitch = width * pixelSize;// Specify the size of a row in bytes.
 				res.SysMemSlicePitch = 0;// As this is not a texture array or 3D texture, this parameter is ignored.
 				hr = device->CreateTexture2D(&desc, &res, (ID3D11Texture2D**)&_baseRes.handle);
 			} else {
 				std::vector<D3D11_SUBRESOURCE_DATA> resArr(mipLevels);
 				auto offset = 0;
-				auto rowSize = width * pixelSize;
-				ui32 mipSize = mip0Size;
 				for (ui32 i = 0; i < mipLevels; ++i) {
 					auto& res = resArr[i];
 					res.pSysMem = (i8*)texData + offset;
-					res.SysMemPitch = rowSize;
+					res.SysMemPitch = mipWidths[i] * pixelSize;
 					res.SysMemSlicePitch = 0;
 					
-					offset += mipSize;
-					mipSize >>= 2;
-					rowSize >>= 1;
+					offset += mipPixels[i] * pixelSize;
 				}
 				hr = device->CreateTexture2D(&desc, resArr.data(), (ID3D11Texture2D**)&_baseRes.handle);
 			}
@@ -122,7 +110,6 @@ namespace aurora::modules::graphics::win_d3d11 {
 		}
 
 		if (FAILED(hr)) {
-			if (texData != data) delete[] texData;
 			_delTex();
 			return false;
 		}
@@ -137,12 +124,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 		vDesc.Texture2D.MipLevels = -1;
 		hr = device->CreateShaderResourceView(_baseRes.handle, &vDesc, &_view);
 		if (FAILED(hr)) {
-			if (texData != data) delete[] texData;
 			_delTex();
 			return false;
 		}
-		((Graphics*)_graphics)->getContext()->GenerateMips(_view);
-		if (texData != data) delete[] texData;
+		//((Graphics*)_graphics)->getContext()->GenerateMips(_view);
 
 		return true;
 	}

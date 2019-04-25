@@ -154,7 +154,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 							auto& var = cbLayout.vars[i];
 
 							if (!isMaping) {
-								if (!cb->map(BufferUsage::CPU_WRITE)) break;
+								if (cb->map(Usage::CPU_WRITE) == Usage::NONE) break;
 								isMaping = true;
 							}
 							cb->recordUpdateIds[i] = param->getUpdateId();
@@ -212,7 +212,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	void Program::_constantBufferUpdateAll(ConstantBuffer* cb, const std::vector<ConstantBufferLayout::Var>& vars) {
-		if (cb->map(BufferUsage::CPU_WRITE)) {
+		if (cb->map(Usage::CPU_WRITE) != Usage::NONE) {
 			for (ui32 i = 0, n = _tempParams.size(); i < n; ++i) {
 				auto param = _tempParams[i];
 				if (param) _updateConstantBuffer(cb, *param, vars[i]);

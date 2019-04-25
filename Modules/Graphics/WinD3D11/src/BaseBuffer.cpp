@@ -8,14 +8,14 @@ namespace aurora::modules::graphics::win_d3d11 {
 	BaseBuffer::~BaseBuffer() {
 	}
 
-	bool BaseBuffer::allocate(Graphics* graphics, ui32 size, ui32 resUsage, const void* data) {
+	bool BaseBuffer::allocate(Graphics* graphics, ui32 size, Usage resUsage, const void* data, ui32 dataSize) {
 		releaseRes(graphics);
 
 		this->size = size;
 
 		D3D11_USAGE d3dUsage;
 		UINT cpuUsage;
-		calcAllocateUsage(resUsage, data, cpuUsage, d3dUsage);
+		calcAllocateUsage(resUsage, size, dataSize, cpuUsage, d3dUsage);
 
 		D3D11_BUFFER_DESC desc;
 		memset(&desc, 0, sizeof(desc));
@@ -25,7 +25,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		desc.ByteWidth = size;
 
 		HRESULT hr;
-		if (data) {
+		if (dataSize >= size) {
 			D3D11_SUBRESOURCE_DATA res;
 			memset(&res, 0, sizeof(res));
 			res.pSysMem = data;

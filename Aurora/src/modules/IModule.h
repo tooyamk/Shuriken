@@ -4,12 +4,10 @@
 #include "base/Ref.h"
 
 namespace aurora::modules {
-	class AE_DLL ModuleType {
-	public:
-		AE_DECLA_CANNOT_INSTANTIATE(ModuleType);
-
-		static const ui32 GRAPHICS = 0b1;
-		static const ui32 INPUT = 0b10;
+	enum class ModuleType : ui32 {
+		UNKNOWN = 0,
+		GRAPHICS = 0b1,
+		INPUT = 0b10
 	};
 
 
@@ -17,6 +15,6 @@ namespace aurora::modules {
 	public:
 		virtual ~IModule() {}
 
-		virtual ui32 AE_CALL getType() const = 0;
+		virtual ModuleType AE_CALL getType() const = 0;
 	};
 }

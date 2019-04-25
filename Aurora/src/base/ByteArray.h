@@ -1,6 +1,7 @@
 #pragma once
 
 #include "base/LowLevel.h"
+#include <algorithm>
 #include <string>
 
 namespace aurora {
@@ -33,6 +34,8 @@ namespace aurora {
 		ByteArray& operator=(ByteArray&& value);
 		~ByteArray();
 
+		inline operator bool() const;
+
 		void AE_CALL dispose(bool free = true);
 
 		inline void AE_CALL clear();
@@ -44,6 +47,8 @@ namespace aurora {
 		inline void AE_CALL setEndian(Endian endian);
 
 		inline const i8* AE_CALL getBytes() const;
+
+		inline ByteArray AE_CALL slice(ui32 start, ui32 length) const;
 
 		inline ui32 AE_CALL getCapacity() const;
 		inline void AE_CALL setCapacity(ui32 capacity);

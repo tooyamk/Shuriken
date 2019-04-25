@@ -46,20 +46,19 @@ namespace aurora::modules::graphics {
 	};
 
 
-	class AE_DLL BufferUsage {
-	public:
-		AE_DECLA_CANNOT_INSTANTIATE(BufferUsage);
+	enum class Usage : ui32 {
+		NONE = 0,
+		CPU_READ = 1,
+		CPU_WRITE = 1 << 1,
+		GPU_WRITE = 1 << 2,
 
-		static const ui32 CPU_READ = 1;
-		static const ui32 CPU_WRITE = 1 << 1;
-		static const ui32 GPU_WRITE = 1 << 2;
+		CPU_WRITE_DISCARD = 1 << 3,
+		CPU_WRITE_NO_OVERWRITE = 1 << 4,
 
-		static const ui32 CPU_WRITE_DISCARD = 1 << 3;
-		static const ui32 CPU_WRITE_NO_OVERWRITE = 1 << 4;
-
-		static const ui32 CPU_READ_WRITE = CPU_READ | CPU_WRITE;
-		static const ui32 CPU_GPU_WRITE = CPU_WRITE | GPU_WRITE;
+		CPU_READ_WRITE = CPU_READ | CPU_WRITE,
+		CPU_GPU_WRITE = CPU_WRITE | GPU_WRITE
 	};
+	AE_DEFINE_ENUM_BIT_OPERATIION(Usage);
 
 
 	class AE_DLL IBuffer : public IObject {
@@ -67,8 +66,8 @@ namespace aurora::modules::graphics {
 		IBuffer(IGraphicsModule& graphics);
 		virtual ~IBuffer();
 
-		virtual bool AE_CALL allocate(ui32 size, ui32 bufferUsage, const void* data = nullptr) = 0;
-		virtual ui32 AE_CALL map(ui32 mapUsage) = 0;
+		virtual bool AE_CALL allocate(ui32 size, Usage bufferUsage, const void* data = nullptr, ui32 dataSize = 0) = 0;
+		virtual Usage AE_CALL map(Usage mapUsage) = 0;
 		virtual void AE_CALL unmap() = 0;
 		virtual i32 AE_CALL read(ui32 offset, void* dst, ui32 dstLen, i32 readLen = -1) = 0;
 		virtual i32 AE_CALL write(ui32 offset, const void* data, ui32 length) = 0;
@@ -232,6 +231,12 @@ namespace aurora::modules::graphics {
 		virtual ~ITexture();
 
 		virtual TextureType AE_CALL getType() const = 0;
+
+		inline static ui32 AE_CALL calcMipLevels(ui32 n) {
+			return (ui32)std::floor(std::log2(n) + 1);
+		}
+
+		static std::vector<ui32> AE_CALL calcMipLevelsSize(ui32 n, ui32 mipLevels);
 	};
 
 
@@ -243,7 +248,7 @@ namespace aurora::modules::graphics {
 		/*
 		 * @mipLevels 1 = not use mipmap, 0 to generate a full set of subtextures. others eg. value is 3, source is 400*400, will generate 400*400, 200*200, 100*100.
 		 */
-		virtual bool AE_CALL allocate(ui32 width, ui32 height, TextureFormat format, ui32 mipLevels, ui32 bufferUsage, const void* data = nullptr) = 0;
+		virtual bool AE_CALL allocate(ui32 width, ui32 height, TextureFormat format, ui32 mipLevels, Usage resUsage, const void* data = nullptr, ui32 dataSize = 0) = 0;
 	};
 
 
@@ -411,7 +416,7 @@ namespace aurora::modules::graphics {
 
 	class AE_DLL IProgramSourceTranslator : public IModule {
 	public:
-		virtual ui32 AE_CALL getType() const { return 0; }
+		virtual ModuleType AE_CALL getType() const override { return ModuleType::UNKNOWN; }
 		virtual ProgramSource AE_CALL translate(const ProgramSource& source, ProgramLanguage targetLanguage, const std::string& targetVersion) = 0;
 	};
 
@@ -432,7 +437,7 @@ namespace aurora::modules::graphics {
 	public:
 		virtual ~IGraphicsModule();
 
-		virtual ui32 AE_CALL getType() const override {
+		virtual ModuleType AE_CALL getType() const override {
 			return ModuleType::GRAPHICS;
 		}
 
