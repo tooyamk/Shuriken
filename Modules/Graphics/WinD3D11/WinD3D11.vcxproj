@@ -34,6 +34,7 @@
     <ClInclude Include="src\Program.h" />
     <ClInclude Include="src\Sampler.h" />
     <ClInclude Include="src\Texture2D.h" />
+    <ClInclude Include="src\Texture3D.h" />
     <ClInclude Include="src\VertexBuffer.h" />
   </ItemGroup>
   <ItemGroup>
@@ -46,6 +47,7 @@
     <ClCompile Include="src\Program.cpp" />
     <ClCompile Include="src\Sampler.cpp" />
     <ClCompile Include="src\Texture2D.cpp" />
+    <ClCompile Include="src\Texture3D.cpp" />
     <ClCompile Include="src\VertexBuffer.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

@@ -41,6 +41,19 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return true;
 	}
 
+	i32 BaseBuffer::read(ui32 offset, void* dst, ui32 dstLen, i32 readLen) {
+		if ((mapUsage & Usage::CPU_READ) == Usage::CPU_READ) {
+			if (dstLen == 0 || readLen == 0 || offset >= size) return 0;
+			if (dst) {
+				if (readLen < 0) readLen = size - offset;
+				if ((ui32)readLen > dstLen) readLen = dstLen;
+				memcpy(dst, (i8*)mappedRes.pData + offset, readLen);
+				return readLen;
+			}
+		}
+		return -1;
+	}
+
 	i32 BaseBuffer::write(Graphics* graphics, ui32 offset, const void* data, ui32 length) {
 		if ((mapUsage & Usage::CPU_WRITE) == Usage::CPU_WRITE) {
 			if (data && length && offset < size) {

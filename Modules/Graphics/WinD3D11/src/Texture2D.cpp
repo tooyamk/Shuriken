@@ -97,7 +97,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			if (mipLevels == 1) {
 				D3D11_SUBRESOURCE_DATA res;
 				res.pSysMem = data[0];
-				res.SysMemPitch = width * perPixelSize;// Specify the size of a row in bytes.
+				res.SysMemPitch = width * perPixelSize;
 				res.SysMemSlicePitch = 0;// As this is not a texture array or 3D texture, this parameter is ignored.
 				hr = device->CreateTexture2D(&desc, &res, (ID3D11Texture2D**)&_baseRes.handle);
 			} else {
@@ -148,12 +148,26 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return true;
 	}
 
-	Usage Texture2D::map(Usage mapUsage) {
+	Usage Texture2D::map(Usage mapUsage, ui32 mipLeve) {
 		return _baseRes.map((Graphics*)_graphics, mapUsage);
 	}
 
-	void Texture2D::unmap() {
+	void Texture2D::unmap(ui32 mipLeve) {
 		_baseRes.unmap((Graphics*)_graphics);
+	}
+
+	i32 Texture2D::read(ui32 mipLevel, ui32 offset, void* dst, ui32 dstLen, i32 readLen) {
+		if ((_baseRes.mapUsage & Usage::CPU_READ) == Usage::CPU_READ) {
+			if (!dst || !dstLen || !readLen) return 0;
+			if (mipLevel > 0) offset += Image::calcMipsByteSize(_width, _height, mipLevel, _perPixelSize);
+			if (offset < _baseRes.size) {
+				if (readLen < 0) readLen = _baseRes.size - offset;
+				if ((ui32)readLen > dstLen) readLen = dstLen;
+				memcpy(dst, (i8*)_baseRes.mappedRes.pData + offset, readLen);
+				return readLen;
+			}
+		}
+		return -1;
 	}
 
 	i32 Texture2D::write(ui32 mipLevel, ui32 offset, const void* data, ui32 length) {
@@ -167,33 +181,30 @@ namespace aurora::modules::graphics::win_d3d11 {
 				}
 			}
 			return 0;
-		} else if ((_baseRes.resUsage & Usage::GPU_WRITE) == Usage::GPU_WRITE) {
-			if (data && length && mipLevel < _mipLevels) {
+		}
+		return -1;
+	}
+
+	bool Texture2D::write(ui32 mipLevel, ui32 x, ui32 y, ui32 width, ui32 height, const void* data) {
+		if ((_baseRes.resUsage & Usage::GPU_WRITE) == Usage::GPU_WRITE) {
+			if (data && mipLevel < _mipLevels) {
 				ui32 w, h;
 				Image::calcMipWH(_width, _height, mipLevel, w, h);
 				auto rowByteSize = w * h * _perPixelSize;
 				auto size = rowByteSize * h;
-				if (offset < size) {
-					auto context = ((Graphics*)_graphics)->getContext();
-					length = std::min<ui32>(length, size - offset);
-					if (length == size) {
-						context->UpdateSubresource(_baseRes.handle, mipLevel, nullptr, data, rowByteSize, 0);
-					} else {
-						D3D11_BOX box;
-						box.back = 1;
-						box.front = 0;
-						box.top = 1;
-						box.bottom = 2;
-						box.left = 0;
-						box.right = 2;
-						context->UpdateSubresource(_baseRes.handle, mipLevel, &box, data, rowByteSize, 0);
-					}
-					return length;
-				}
+
+				D3D11_BOX box;
+				box.back = 1;
+				box.front = 0;
+				box.top = y;
+				box.bottom = y + height;
+				box.left = x;
+				box.right = x + width;
+				((Graphics*)_graphics)->getContext()->UpdateSubresource(_baseRes.handle, mipLevel, &box, data, rowByteSize, 0);
 			}
-			return 0;
+			return true;
 		}
-		return -1;
+		return false;
 	}
 
 	void Texture2D::_delTex() {
