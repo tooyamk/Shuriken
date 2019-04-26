@@ -1,4 +1,5 @@
 #include "Image.h"
+#include "modules/IGraphicsModule.h"
 
 namespace aurora {
 	//using namespace modules;
@@ -19,6 +20,15 @@ namespace aurora {
 		default:
 			return 0;
 		}
+	}
+
+	void Image::calcMipWH(ui32 width, ui32 height, ui32 mipLevel, ui32& w, ui32& h) {
+		for (ui32 i = 0; i < mipLevel; ++i) {
+			width = calcNextMipPixelSize(width);
+			height = calcNextMipPixelSize(height);
+		}
+		w = width;
+		h = height;
 	}
 
 	std::vector<ui32> Image::calcMipsPixelSize(ui32 n, ui32 mipLevels) {
@@ -56,9 +66,9 @@ namespace aurora {
 			case TextureFormat::R8G8B8:
 				memcpy(dst, src, calcByteSize(width, height, dstFormat));
 				return true;
-			//case TextureFormat::R8G8B8A8:
-			//	memcpy(dst, src, calcByteSize(width, height, dstFormat));
-			//	break;
+			case TextureFormat::R8G8B8A8:
+				_convertFormat_R8G8B8A8_R8G8B8(width, height, src, dst);
+				return true;
 			default:
 				break;
 			}
@@ -101,13 +111,23 @@ namespace aurora {
 	}
 
 	void Image::_convertFormat_R8G8B8_R8G8B8A8(ui32 width, ui32 height, const ui8* src, ui8* dst) {
-		ui32 numPixels = width * height;
+		auto numPixels = width * height;
 		ui32 srcIdx = 0, dstIdx = 0;
 		for (ui32 i = 0; i < numPixels; ++i) {
 			memcpy(dst + dstIdx, src + srcIdx, 3);
 			srcIdx += 3;
 			dstIdx += 3;
 			dst[dstIdx++] = 255;
+		}
+	}
+
+	void Image::_convertFormat_R8G8B8A8_R8G8B8(ui32 width, ui32 height, const ui8* src, ui8* dst) {
+		auto numPixels = width * height;
+		ui32 srcIdx = 0, dstIdx = 0;
+		for (ui32 i = 0; i < numPixels; ++i) {
+			memcpy(dst + dstIdx, src + srcIdx, 3);
+			srcIdx += 4;
+			dstIdx += 3;
 		}
 	}
 
@@ -140,9 +160,9 @@ namespace aurora {
 
 	void Image::generateMips_UInt8s(ui32 width, ui32 height, modules::graphics::TextureFormat format, ui32 mipLevels, ui8 numChannels, ui8* data, void** dataPtr) {
 		ui32 numChannels2 = numChannels << 1;
-		ui32 perPixelByteSize = calcPerPixelByteSize(format);
-		ui8* src = data;
-		ui8* dst = data;
+		auto perPixelByteSize = calcPerPixelByteSize(format);
+		auto src = data;
+		auto dst = data;
 
 		if (dataPtr) dataPtr[0] = dst;
 
@@ -212,6 +232,6 @@ namespace aurora {
 			for (ui8 j = 0; j < numChannels; ++j) c1[j] += c0[j];
 			c0 += numChannels;
 		}
-		for (ui8 i = 0; i < numChannels; ++i) c[i] = (ui8)(c1[i] / numChannels);
+		for (ui8 i = 0; i < numChannels; ++i) c[i] = (ui8)(c1[i] / numPixels);
 	}
 }

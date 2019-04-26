@@ -134,12 +134,12 @@ namespace aurora {
 		static const i16 INT12_MAX = (INT12 >> 1) - 1;
 		static const i32 INT24 = 1 << 24;
 		static const i32 INT24_MAX = (INT24 >> 1) - 1;
-		static const ui64 INT40 = (ui64)1 << 40;
-		static const ui64 INT40_MAX = (INT40 >> 1) - 1;
-		static const ui64 INT48 = (ui64)1 << 48;
-		static const ui64 INT48_MAX = (INT48 >> 1) - 1;
-		static const ui64 INT56 = (ui64)1 << 56;
-		static const ui64 INT56_MAX = (INT56 >> 1) - 1;
+		static const ui64 INT40 = 0x10000000000ui64;//1 << 40
+		static const ui64 INT40_MAX = (INT40 / 2) - 1;
+		static const ui64 INT48 = 0x1000000000000ui64;//1 << 48
+		static const ui64 INT48_MAX = (INT48 / 2) - 1;
+		static const ui64 INT56 = 0x100000000000000ui64;//1 << 56
+		static const ui64 INT56_MAX = (INT56 / 2) - 1;
 
 		static const ui16 TEST_ENDIAN_VALUE = 0x00FF;
 
@@ -152,7 +152,7 @@ namespace aurora {
 		ui32 _capacity;
 
 		template<typename K>
-		inline K AE_CALL _read() {
+		K AE_CALL _read() {
 			const ui32 len = sizeof(K);
 			if (_position + len > _length) return (K)0;
 

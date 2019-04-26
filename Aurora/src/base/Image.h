@@ -1,9 +1,14 @@
 #pragma once
 
 #include "base/ByteArray.h"
-#include "modules/IGraphicsModule.h"
+#include "base/Ref.h"
+#include <vector>
 
 namespace aurora {
+	namespace modules::graphics {
+		enum class TextureFormat : ui8;
+	}
+
 	class AE_DLL Image : public Ref {
 	public:
 		Image();
@@ -34,6 +39,8 @@ namespace aurora {
 		inline static ui32 AE_CALL calcMipLevels(ui32 n) {
 			return (ui32)std::floor(std::log2(n) + 1);
 		}
+
+		static void AE_CALL calcMipWH(ui32 width, ui32 height, ui32 mipLevel, ui32& w, ui32& h);
 
 		static std::vector<ui32> AE_CALL calcMipsPixelSize(ui32 n, ui32 mipLevels);
 		inline static ui32 calcNextMipPixelSize(ui32 n) {
@@ -66,6 +73,7 @@ namespace aurora {
 
 	private:
 		static void _convertFormat_R8G8B8_R8G8B8A8(ui32 width, ui32 height, const ui8* src, ui8* dst);
+		static void _convertFormat_R8G8B8A8_R8G8B8(ui32 width, ui32 height, const ui8* src, ui8* dst);
 
 		static void _mipPixelsBlend(ui8* c, ui8 numChannels, ui8 numPixels);
 	};

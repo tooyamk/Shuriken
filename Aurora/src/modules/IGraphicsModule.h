@@ -243,6 +243,11 @@ namespace aurora::modules::graphics {
 		 * @mipLevels 1 = not use mipmap, 0 to generate a full set of subtextures. others eg. value is 3, source is 400*400, will generate 400*400, 200*200, 100*100.
 		 */
 		virtual bool AE_CALL allocate(ui32 width, ui32 height, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data = nullptr) = 0;
+
+		virtual Usage AE_CALL map(Usage mapUsage) = 0;
+		virtual void AE_CALL unmap() = 0;
+		//virtual i32 AE_CALL read(ui32 offset, void* dst, ui32 dstLen, i32 readLen = -1) = 0;
+		virtual i32 AE_CALL write(ui32 mipLevel, ui32 offset, const void* data, ui32 length) = 0;
 	};
 
 

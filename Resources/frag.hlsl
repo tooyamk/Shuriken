@@ -21,4 +21,5 @@ float4 main(PS_INPUT input) : SV_TARGET {
     //c.x = red;
     //return c;
     //return float4(red[1].x, green.x, 0.0, 1.0);
+    //return float4(1.0, 0.0, 0.0, 1.0);
 }

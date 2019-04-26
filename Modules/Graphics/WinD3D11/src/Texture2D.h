@@ -11,6 +11,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		virtual TextureType AE_CALL getType() const override;
 		virtual bool AE_CALL allocate(ui32 width, ui32 height, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data = nullptr) override;
+		virtual Usage AE_CALL map(Usage mapUsage) override;
+		virtual void AE_CALL unmap() override;
+		//virtual i32 AE_CALL read(ui32 offset, void* dst, ui32 dstLen, i32 readLen = -1) override;
+		virtual i32 AE_CALL write(ui32 mipLevel, ui32 offset, const void* data, ui32 length) override;
 
 		template<ProgramStage stage>
 		inline void AE_CALL use(UINT slot) {
@@ -27,6 +31,12 @@ namespace aurora::modules::graphics::win_d3d11 {
 		}
 
 	protected:
+		TextureFormat _format;
+		ui16 _perPixelSize;
+		ui32 _width;
+		ui32 _height;
+		ui32 _mipLevels;
+
 		BaseResource _baseRes;
 		ID3D11ShaderResourceView* _view;
 

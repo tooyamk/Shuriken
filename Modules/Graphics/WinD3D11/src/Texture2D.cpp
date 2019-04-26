@@ -5,6 +5,11 @@
 
 namespace aurora::modules::graphics::win_d3d11 {
 	Texture2D::Texture2D(Graphics& graphics) : ITexture2D(graphics),
+		_format(TextureFormat::UNKNOWN),
+		_perPixelSize(0),
+		_width(0),
+		_height(0),
+		_mipLevels(0),
 		_baseRes(D3D11_BIND_SHADER_RESOURCE),
 		_view(nullptr) {
 	}
@@ -67,13 +72,13 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		D3D11_USAGE d3dUsage;
 		UINT cpuUsage;
-		_baseRes.calcAllocateUsage(resUsage, _baseRes.size, data ? _baseRes.size : 0, cpuUsage, d3dUsage);
+		_baseRes.calcAllocateUsage(resUsage, _baseRes.size, data ? _baseRes.size : 0, mipLevels, cpuUsage, d3dUsage);
 
 		D3D11_TEXTURE2D_DESC desc;
 		memset(&desc, 0, sizeof(desc));
 		desc.CPUAccessFlags = cpuUsage;
 		desc.Usage = d3dUsage;
-		desc.BindFlags = _baseRes._bindType;
+		desc.BindFlags = _baseRes.bindType;
 		desc.Width = width;
 		desc.Height = height;
 		desc.Format = dxgiFmt;
@@ -119,20 +124,76 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		((ID3D11Texture2D*)_baseRes.handle)->GetDesc(&desc);
 		
-		D3D11_SHADER_RESOURCE_VIEW_DESC vDesc;
-		memset(&vDesc, 0, sizeof(vDesc));
-		vDesc.Format = desc.Format;
-		vDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-		vDesc.Texture2D.MostDetailedMip = 0;
-		vDesc.Texture2D.MipLevels = -1;
-		hr = device->CreateShaderResourceView(_baseRes.handle, &vDesc, &_view);
-		if (FAILED(hr)) {
-			_delTex();
-			return false;
+		if (desc.BindFlags) {
+			D3D11_SHADER_RESOURCE_VIEW_DESC vDesc;
+			memset(&vDesc, 0, sizeof(vDesc));
+			vDesc.Format = desc.Format;
+			vDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+			vDesc.Texture2D.MostDetailedMip = 0;
+			vDesc.Texture2D.MipLevels = -1;
+			hr = device->CreateShaderResourceView(_baseRes.handle, &vDesc, &_view);
+			if (FAILED(hr)) {
+				_delTex();
+				return false;
+			}
 		}
+
+		_format = format;
+		_perPixelSize = perPixelSize;
+		_width = width;
+		_height = height;
+		_mipLevels = desc.MipLevels;
 		//((Graphics*)_graphics)->getContext()->GenerateMips(_view);
 
 		return true;
+	}
+
+	Usage Texture2D::map(Usage mapUsage) {
+		return _baseRes.map((Graphics*)_graphics, mapUsage);
+	}
+
+	void Texture2D::unmap() {
+		_baseRes.unmap((Graphics*)_graphics);
+	}
+
+	i32 Texture2D::write(ui32 mipLevel, ui32 offset, const void* data, ui32 length) {
+		if ((_baseRes.mapUsage & Usage::CPU_WRITE) == Usage::CPU_WRITE) {
+			if (data && length && mipLevel < _mipLevels) {
+				if (mipLevel > 0) offset += Image::calcMipsByteSize(_width, _height, mipLevel, _perPixelSize);
+				if (offset < _baseRes.size) {
+					length = std::min<ui32>(length, _baseRes.size - offset);
+					memcpy((i8*)_baseRes.mappedRes.pData + offset, data, length);
+					return length;
+				}
+			}
+			return 0;
+		} else if ((_baseRes.resUsage & Usage::GPU_WRITE) == Usage::GPU_WRITE) {
+			if (data && length && mipLevel < _mipLevels) {
+				ui32 w, h;
+				Image::calcMipWH(_width, _height, mipLevel, w, h);
+				auto rowByteSize = w * h * _perPixelSize;
+				auto size = rowByteSize * h;
+				if (offset < size) {
+					auto context = ((Graphics*)_graphics)->getContext();
+					length = std::min<ui32>(length, size - offset);
+					if (length == size) {
+						context->UpdateSubresource(_baseRes.handle, mipLevel, nullptr, data, rowByteSize, 0);
+					} else {
+						D3D11_BOX box;
+						box.back = 1;
+						box.front = 0;
+						box.top = 1;
+						box.bottom = 2;
+						box.left = 0;
+						box.right = 2;
+						context->UpdateSubresource(_baseRes.handle, mipLevel, &box, data, rowByteSize, 0);
+					}
+					return length;
+				}
+			}
+			return 0;
+		}
+		return -1;
 	}
 
 	void Texture2D::_delTex() {
@@ -142,5 +203,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 		}
 
 		_baseRes.releaseRes((Graphics*)_graphics);
+		_format = TextureFormat::UNKNOWN;
+		_perPixelSize = 0;
+		_width = 0;
+		_height = 0;
+		_mipLevels = 0;
 	}
 }

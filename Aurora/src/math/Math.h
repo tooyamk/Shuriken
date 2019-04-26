@@ -54,9 +54,7 @@ namespace aurora {
 			return deg * RAD<T>;
 		}
 
-		inline static bool isPowOfTwo(ui32 n) {
-			return n < 1 ? false : !(n & (n - 1));
-		}
+		inline static bool AE_CALL isPowOfTwo(ui32 n);
 	};
 }
 

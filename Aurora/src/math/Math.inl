@@ -61,4 +61,8 @@ namespace aurora {
 		dst[1] = y;
 		dst[2] = z;
 	}
+
+	inline bool Math::isPowOfTwo(ui32 n) {
+		return n < 1 ? false : !(n & (n - 1));
+	}
 }
