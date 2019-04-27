@@ -2,14 +2,15 @@
 #include "Graphics.h"
 
 namespace aurora::modules::graphics::win_d3d11 {
-	BaseBuffer::BaseBuffer(UINT bufferType) : BaseResource(bufferType) {
+	BaseBuffer::BaseBuffer(UINT bufferType) : BaseResource(bufferType),
+		mapUsage(Usage::NONE) {
 	}
 
 	BaseBuffer::~BaseBuffer() {
 	}
 
 	bool BaseBuffer::allocate(Graphics* graphics, ui32 size, Usage resUsage, const void* data, ui32 dataSize) {
-		releaseRes(graphics);
+		releaseBuffer(graphics);
 
 		this->size = size;
 
@@ -34,11 +35,19 @@ namespace aurora::modules::graphics::win_d3d11 {
 			hr = graphics->getDevice()->CreateBuffer(&desc, nullptr, (ID3D11Buffer**)&handle);
 		}
 		if (FAILED(hr)) {
-			releaseRes(graphics);
+			releaseBuffer(graphics);
 			return false;
 		}
 
 		return true;
+	}
+
+	Usage BaseBuffer::map(Graphics* graphics, Usage expectMapUsage) {
+		return BaseResource::map(graphics, expectMapUsage, mapUsage, 0, mappedRes);
+	}
+
+	void BaseBuffer::unmap(Graphics* graphics) {
+		BaseResource::unmap(graphics, mapUsage, 0);
 	}
 
 	i32 BaseBuffer::read(ui32 offset, void* dst, ui32 dstLen, i32 readLen) {
@@ -82,5 +91,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 			return 0;
 		}
 		return -1;
+	}
+
+	void BaseBuffer::releaseBuffer(Graphics* graphics) {
+		unmap(graphics);
+		releaseRes(graphics);
 	}
 }

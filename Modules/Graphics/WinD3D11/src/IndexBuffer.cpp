@@ -9,7 +9,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	IndexBuffer::~IndexBuffer() {
-		_baseBuffer.releaseRes((Graphics*)_graphics);
+		_baseBuffer.releaseBuffer((Graphics*)_graphics);
 	}
 
 	bool IndexBuffer::allocate(ui32 size, Usage bufferUsage, const void* data, ui32 dataSize) {

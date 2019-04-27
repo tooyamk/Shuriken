@@ -8,7 +8,6 @@ namespace aurora::modules::graphics::win_d3d11 {
 		resType(resType),
 		bindType(0),
 		resUsage(Usage::NONE),
-		mapUsage(Usage::NONE),
 		handle(nullptr) {
 	}
 
@@ -42,21 +41,21 @@ namespace aurora::modules::graphics::win_d3d11 {
 		if (d3dUsage != D3D11_USAGE_STAGING) bindType = resType;
 	}
 
-	Usage BaseResource::map(Graphics* graphics, Usage mapUsage) {
+	Usage BaseResource::map(Graphics* graphics, Usage expectMapUsage, Usage& mapUsage, UINT subresource, D3D11_MAPPED_SUBRESOURCE& mappedRes) {
 		Usage ret = Usage::NONE;
 
-		mapUsage &= Usage::CPU_READ | Usage::CPU_WRITE;
-		if (handle && mapUsage != Usage::NONE) {
-			unmap(graphics);
+		expectMapUsage &= Usage::CPU_READ | Usage::CPU_WRITE;
+		if (handle && expectMapUsage != Usage::NONE) {
+			unmap(graphics, mapUsage, subresource);
 
 			UINT mapType = 0;
-			if (((mapUsage & Usage::CPU_READ) == Usage::CPU_READ) && ((resUsage & Usage::CPU_READ) == Usage::CPU_READ)) {
+			if (((expectMapUsage & Usage::CPU_READ) == Usage::CPU_READ) && ((resUsage & Usage::CPU_READ) == Usage::CPU_READ)) {
 				mapType |= D3D11_MAP_READ;
 				ret |= Usage::CPU_READ;
 			} else {
-				mapUsage &= ~Usage::CPU_READ;
+				expectMapUsage &= ~Usage::CPU_READ;
 			}
-			if ((mapUsage & Usage::CPU_WRITE) == Usage::CPU_WRITE) {
+			if ((expectMapUsage & Usage::CPU_WRITE) == Usage::CPU_WRITE) {
 				if ((resUsage & Usage::CPU_WRITE) == Usage::CPU_WRITE && ((resUsage & (Usage::CPU_READ | Usage::GPU_WRITE)) == Usage::NONE)) {
 					ret |= Usage::CPU_WRITE;
 					if (bindType == D3D11_BIND_CONSTANT_BUFFER) {
@@ -78,12 +77,12 @@ namespace aurora::modules::graphics::win_d3d11 {
 					ret |= Usage::GPU_WRITE;
 				}
 			} else {
-				mapUsage &= ~Usage::CPU_WRITE;
+				expectMapUsage &= ~Usage::CPU_WRITE;
 			}
 
 			if (mapType) {
-				if (SUCCEEDED(graphics->getContext()->Map(handle, 0, (D3D11_MAP)mapType, 0, &mappedRes))) {
-					this->mapUsage = mapUsage;
+				if (SUCCEEDED(graphics->getContext()->Map(handle, subresource, (D3D11_MAP)mapType, 0, &mappedRes))) {
+					mapUsage = expectMapUsage;
 				} else {
 					ret = (resUsage & Usage::GPU_WRITE) == Usage::GPU_WRITE ? Usage::GPU_WRITE : Usage::NONE;
 				}
@@ -93,11 +92,11 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return ret;
 	}
 
-	void BaseResource::unmap(Graphics* graphics) {
-		if (mapUsage != Usage::NONE) {
-			graphics->getContext()->Unmap(handle, 0);
-			mapUsage = Usage::NONE;
+	void BaseResource::unmap(Graphics* graphics, Usage& mapUsage, UINT subresource) {
+		if ((mapUsage & Usage::CPU_READ_WRITE) != Usage::NONE) {
+			graphics->getContext()->Unmap(handle, subresource);
 		}
+		mapUsage = Usage::NONE;
 	}
 
 	void BaseResource::flush() {
@@ -108,8 +107,6 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 	void BaseResource::releaseRes(Graphics* graphics) {
 		if (handle) {
-			unmap(graphics);
-
 			handle->Release();
 			handle = nullptr;
 		}

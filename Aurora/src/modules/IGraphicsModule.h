@@ -244,11 +244,11 @@ namespace aurora::modules::graphics {
 		 */
 		virtual bool AE_CALL allocate(ui32 width, ui32 height, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data = nullptr) = 0;
 
-		virtual Usage AE_CALL map(Usage mapUsage, ui32 mipLevel) = 0;
+		virtual Usage AE_CALL map(ui32 mipLevel, Usage mapUsage) = 0;
 		virtual void AE_CALL unmap(ui32 mipLevel) = 0;
 		virtual i32 AE_CALL read(ui32 mipLevel, ui32 offset, void* dst, ui32 dstLen, i32 readLen = -1) = 0;
 		virtual i32 AE_CALL write(ui32 mipLevel, ui32 offset, const void* data, ui32 length) = 0;
-		virtual bool AE_CALL write(ui32 mipLevel, ui32 x, ui32 y, ui32 width, ui32 height, const void* data) = 0;
+		virtual bool AE_CALL write(ui32 mipLevel, const Rect<ui32>& range, const void* data) = 0;
 	};
 
 

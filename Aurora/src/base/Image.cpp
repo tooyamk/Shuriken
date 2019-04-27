@@ -22,13 +22,15 @@ namespace aurora {
 		}
 	}
 
-	void Image::calcMipWH(ui32 width, ui32 height, ui32 mipLevel, ui32& w, ui32& h) {
+	void Image::calcSpecificMipPixelSize(ui32& size, ui32 mipLevel) {
+		for (ui32 i = 0; i < mipLevel; ++i) size = calcNextMipPixelSize(size);
+	}
+
+	void Image::calcSpecificMipPixelSize(ui32& size1, ui32& size2, ui32 mipLevel) {
 		for (ui32 i = 0; i < mipLevel; ++i) {
-			width = calcNextMipPixelSize(width);
-			height = calcNextMipPixelSize(height);
+			size1 = calcNextMipPixelSize(size1);
+			size2 = calcNextMipPixelSize(size2);
 		}
-		w = width;
-		h = height;
 	}
 
 	std::vector<ui32> Image::calcMipsPixelSize(ui32 n, ui32 mipLevels) {
@@ -53,6 +55,19 @@ namespace aurora {
 			width = calcNextMipPixelSize(width);
 			height = calcNextMipPixelSize(height);
 			pixels += width * height;
+		}
+
+		return calcByteSize(pixels, perPixelByteSize);
+	}
+
+	ui32 Image::calcMipsByteSize(ui32 width, ui32 height, ui32 depth, ui32 mipLevels, ui32 perPixelByteSize) {
+		auto pixels = width * height * depth;
+
+		for (ui32 i = 1; i < mipLevels; ++i) {
+			width = calcNextMipPixelSize(width);
+			height = calcNextMipPixelSize(height);
+			depth = calcNextMipPixelSize(depth);
+			pixels += width * height * depth;
 		}
 
 		return calcByteSize(pixels, perPixelByteSize);

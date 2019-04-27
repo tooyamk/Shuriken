@@ -11,8 +11,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual ~BaseResource();
 
 		void AE_CALL calcAllocateUsage(Usage resUsage, ui32 resSize, ui32 dataSize, UINT mipLevels, UINT& cpuUsage, D3D11_USAGE& d3dUsage);
-		Usage AE_CALL map(Graphics* graphics, Usage mapUsage);
-		void AE_CALL unmap(Graphics* graphics);
+		Usage AE_CALL map(Graphics* graphics, Usage expectMapUsage, Usage& mapUsage, UINT subresource, D3D11_MAPPED_SUBRESOURCE& mappedRes);
+		void AE_CALL unmap(Graphics* graphics, Usage& mapUsage, UINT subresource);
 		void AE_CALL flush();
 
 		ui32 size;
@@ -21,9 +21,6 @@ namespace aurora::modules::graphics::win_d3d11 {
 		UINT bindType;
 		
 		Usage resUsage;
-
-		Usage mapUsage;
-		D3D11_MAPPED_SUBRESOURCE mappedRes;
 
 		ID3D11Resource* handle;
 

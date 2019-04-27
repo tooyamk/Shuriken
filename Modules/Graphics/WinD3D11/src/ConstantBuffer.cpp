@@ -9,7 +9,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 	ConstantBuffer::~ConstantBuffer() {
 		if (recordUpdateIds) delete[] recordUpdateIds;
-		_baseBuffer.releaseRes((Graphics*)_graphics);
+		_baseBuffer.releaseBuffer((Graphics*)_graphics);
 	}
 
 	bool ConstantBuffer::allocate(ui32 size, Usage bufferUsage, const void* data, ui32 dataSize) {

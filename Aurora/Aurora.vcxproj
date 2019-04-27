@@ -202,6 +202,7 @@
     <ClInclude Include="src\base\Time.h" />
     <ClInclude Include="src\events\EventDispatcher.h" />
     <ClInclude Include="src\events\IEventDispatcher.h" />
+    <ClInclude Include="src\math\Box.h" />
     <ClInclude Include="src\math\Math.h" />
     <ClInclude Include="src\math\Matrix34.h" />
     <ClInclude Include="src\math\Matrix44.h" />

@@ -22,7 +22,8 @@ namespace aurora {
 		static bool convertFormat(ui32 width, ui32 height, modules::graphics::TextureFormat srcFormat, const ui8* src, ui32 mipLevels, modules::graphics::TextureFormat dstFormat, ui8* dst);
 
 		inline bool generateMips(modules::graphics::TextureFormat format, ui32 mipLevels, ByteArray& dst, std::vector<void*>& dstDataPtr) const {
-			dst = ByteArray(calcMipsByteSize(width, height, mipLevels, format));
+			auto w = width, h = height;
+			dst = ByteArray(calcMipsByteSize(w, h, mipLevels, format));
 			dstDataPtr.resize(mipLevels);
 			return generateMips(format, mipLevels, (ui8*)dst.getBytes(), dstDataPtr.data());
 		}
@@ -40,12 +41,13 @@ namespace aurora {
 			return (ui32)std::floor(std::log2(n) + 1);
 		}
 
-		static void AE_CALL calcMipWH(ui32 width, ui32 height, ui32 mipLevel, ui32& w, ui32& h);
+		static void AE_CALL calcSpecificMipPixelSize(ui32& size, ui32 mipLevel);
+		static void AE_CALL calcSpecificMipPixelSize(ui32& size1, ui32& size2, ui32 mipLevel);
 
 		static std::vector<ui32> AE_CALL calcMipsPixelSize(ui32 n, ui32 mipLevels);
 		inline static ui32 calcNextMipPixelSize(ui32 n) {
 			if (n > 1) {
-				if (n & 0b1) ++n;
+				if (n & 0b1) --n;
 				n >>= 1;
 			}
 			return n;
@@ -64,10 +66,8 @@ namespace aurora {
 			return numPixels * perPixelByteSize;
 		}
 
-		inline static ui32 calcMipsByteSize(ui32 width, ui32 height, ui32 mipLevels, modules::graphics::TextureFormat format) {
-			return calcMipsByteSize(width, height, mipLevels, calcPerPixelByteSize(format));
-		}
 		static ui32 calcMipsByteSize(ui32 width, ui32 height, ui32 mipLevels, ui32 perPixelByteSize);
+		static ui32 calcMipsByteSize(ui32 width, ui32 height, ui32 depth, ui32 mipLevels, ui32 perPixelByteSize);
 
 		static void generateMips_UInt8s(ui32 width, ui32 height, modules::graphics::TextureFormat format, ui32 mipLevels, ui8 numChannels, ui8* dst, void** dataPtr);
 

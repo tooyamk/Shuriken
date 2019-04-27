@@ -11,6 +11,7 @@
 
 #include "events/EventDispatcher.h"
 
+#include "math/Box.h"
 #include "math/Matrix34.h"
 #include "math/Matrix44.h"
 #include "math/Quaternion.h"
