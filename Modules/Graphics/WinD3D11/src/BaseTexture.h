@@ -9,7 +9,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 		BaseTexture(UINT resType);
 		virtual ~BaseTexture();
 
-		bool AE_CALL allocate(Graphics* graphics, TextureType texType, ui32 width, ui32 height, ui32 depth, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data = nullptr);
+		bool AE_CALL allocate(Graphics* graphics, TextureType texType, ui32 width, ui32 height, ui32 depth, i32 arraySize, 
+			TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data = nullptr);
 		Usage AE_CALL map(Graphics* graphics, ui32 mipLevel, Usage expectMapUsage);
 		void AE_CALL unmap(Graphics* graphics, ui32 mipLevel);
 		i32 AE_CALL read(ui32 mipLevel, ui32 offset, void* dst, ui32 dstLen, i32 readLen = -1);
@@ -22,6 +23,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		ui32 width;
 		ui32 height;
 		ui32 depth;
+		ui32 arraySize;
 		ui32 mipLevels;
 
 		struct MappedRes {

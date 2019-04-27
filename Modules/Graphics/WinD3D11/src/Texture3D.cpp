@@ -14,13 +14,13 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return TextureType::TEX3D;
 	}
 
-	void* Texture3D::getNative() const {
-		return nullptr;
+	const void* Texture3D::getNative() const {
+		return &_baseTex;
 	}
 
 	bool Texture3D::allocate(ui32 width, ui32 height, ui32 depth, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data) {
 		_baseTex.releaseTex((Graphics*)_graphics);
-		return _baseTex.allocate((Graphics*)_graphics, TextureType::TEX3D, width, height, 1, format, mipLevels, resUsage, data);
+		return _baseTex.allocate((Graphics*)_graphics, TextureType::TEX3D, width, height, depth, -1, format, mipLevels, resUsage, data);
 	}
 
 	Usage Texture3D::map(ui32 mipLevel, Usage expectMapUsage) {

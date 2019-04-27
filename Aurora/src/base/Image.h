@@ -46,11 +46,7 @@ namespace aurora {
 
 		static std::vector<ui32> AE_CALL calcMipsPixelSize(ui32 n, ui32 mipLevels);
 		inline static ui32 calcNextMipPixelSize(ui32 n) {
-			if (n > 1) {
-				if (n & 0b1) --n;
-				n >>= 1;
-			}
-			return n;
+			return n > 1 ? n >> 1 : 1;
 		}
 
 		inline static ui32 calcByteSize(ui32 width, ui32 height, modules::graphics::TextureFormat format) {

@@ -232,7 +232,7 @@ namespace aurora::modules::graphics {
 		virtual ~ITexture();
 
 		virtual TextureType AE_CALL getType() const = 0;
-		virtual void* AE_CALL getNative() const = 0;
+		virtual const void* AE_CALL getNative() const = 0;
 	};
 
 

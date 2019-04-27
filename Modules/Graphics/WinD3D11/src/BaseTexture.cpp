@@ -8,6 +8,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		width(0),
 		height(0),
 		depth(0),
+		arraySize(0),
 		mipLevels(0),
 		view(nullptr) {
 	}
@@ -15,7 +16,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 	BaseTexture::~BaseTexture() {
 	}
 
-	bool BaseTexture::allocate(Graphics* graphics, TextureType texType, ui32 width, ui32 height, ui32 depth, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data) {
+	bool BaseTexture::allocate(Graphics* graphics, TextureType texType, ui32 width, ui32 height, ui32 depth, i32 arraySize, 
+		TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data) {
 		releaseTex(graphics);
 
 		if (mipLevels == 0) {
@@ -24,6 +26,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 			auto maxLevels = Image::calcMipLevels(std::max<ui32>(std::max<ui32>(width, height), depth));
 			if (mipLevels > maxLevels) mipLevels = maxLevels;
 		}
+
+		ui32 arrayCount = arraySize < 0 ? 1 : arraySize;
 
 		ByteArray autoReleaseData;
 		std::vector<void*> texData(mipLevels);
@@ -69,7 +73,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		auto perPixelSize = Image::calcPerPixelByteSize(format);
 		auto mipsByteSize = Image::calcMipsByteSize(width, height, depth, mipLevels, perPixelSize);
 
-		this->size = mipsByteSize;
+		this->size = mipsByteSize * arrayCount;
 
 		D3D11_USAGE d3dUsage;
 		UINT cpuUsage;
@@ -134,7 +138,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		}
 
 		HRESULT hr;
-		if (data) {
+		if (false) {
 			if (mipLevels == 1) {
 				D3D11_SUBRESOURCE_DATA res;
 				res.pSysMem = data[0];
@@ -185,6 +189,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 				vDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 				vDesc.Texture2D.MostDetailedMip = 0;
 				vDesc.Texture2D.MipLevels = -1;
+				//vDesc.Texture2DArray.ArraySize = 0;
+				//vDesc.Texture2DArray.FirstArraySlice = 0;
+				//vDesc.Texture2DArray.MostDetailedMip = 0;
+				//vDesc.Texture2DArray.MipLevels = -1;
 
 				break;
 			}
@@ -225,6 +233,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		this->width = width;
 		this->height = height;
 		this->depth = depth;
+		this->arraySize = arraySize;
 		this->mipLevels = mipLevels;
 		//((Graphics*)_graphics)->getContext()->GenerateMips(_view);
 
@@ -318,6 +327,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		width = 0;
 		height = 0;
 		depth = 0;
+		arraySize = 0;
 		mipLevels = 0;
 		mappedRes.clear();
 	}
