@@ -5,7 +5,7 @@
 namespace aurora::modules::graphics::win_d3d11 {
 	class Graphics;
 
-	class AE_MODULE_DLL BaseResource {
+	class BaseResource {
 	public:
 		BaseResource(UINT resType);
 		virtual ~BaseResource();

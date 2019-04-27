@@ -2,7 +2,7 @@
 
 #include "ConstantBuffer.h"
 #include "Sampler.h"
-#include "Texture2D.h"
+#include "BaseTexture.h"
 
 namespace aurora::modules::graphics::win_d3d11 {
 	class Graphics;
@@ -111,7 +111,12 @@ namespace aurora::modules::graphics::win_d3d11 {
 				auto c = factory.get(info.name);
 				if (c) {
 					auto data = c->getData();
-					if (data) ((Texture2D*)data)->use<stage>(info.bindPoint);
+					if (data) {
+						auto itex = (ITexture*)data;
+						auto baseTex = (BaseTexture*)itex->getNative();
+						baseTex->use<stage>((Graphics*)_graphics, info.bindPoint);
+					}
+					//if (data) (BaseTexture*)(((ITexture*)data)->getNative())->use<stage>((Graphics*)_graphics, info.bindPoint);
 				}
 			}
 

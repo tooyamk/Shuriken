@@ -209,10 +209,24 @@ namespace aurora::modules::graphics {
 	}
 
 
+	ITexture1D::ITexture1D(IGraphicsModule& graphics) : ITexture(graphics) {
+	}
+
+	ITexture1D::~ITexture1D() {
+	}
+
+
 	ITexture2D::ITexture2D(IGraphicsModule& graphics) : ITexture(graphics) {
 	}
 
 	ITexture2D::~ITexture2D() {
+	}
+
+
+	ITexture3D::ITexture3D(IGraphicsModule& graphics) : ITexture(graphics) {
+	}
+
+	ITexture3D::~ITexture3D() {
 	}
 
 

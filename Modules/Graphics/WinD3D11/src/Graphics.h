@@ -18,7 +18,9 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual IIndexBuffer* AE_CALL createIndexBuffer() override;
 		virtual IProgram* AE_CALL createProgram() override;
 		virtual ISampler* AE_CALL createSampler() override;
+		virtual ITexture1D* AE_CALL createTexture1D() override;
 		virtual ITexture2D* AE_CALL createTexture2D() override;
+		virtual ITexture3D* AE_CALL createTexture3D() override;
 		virtual IVertexBuffer* AE_CALL createVertexBuffer() override;
 		
 		virtual void AE_CALL beginRender() override;

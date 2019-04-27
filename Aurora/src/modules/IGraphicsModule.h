@@ -5,6 +5,7 @@
 #include <unordered_map>
 
 namespace aurora {
+	template<typename T> class Box;
 	template<typename T> class Rect;
 	class Vector2;
 	class Vector3;
@@ -231,6 +232,21 @@ namespace aurora::modules::graphics {
 		virtual ~ITexture();
 
 		virtual TextureType AE_CALL getType() const = 0;
+		virtual void* AE_CALL getNative() const = 0;
+	};
+
+
+	class AE_DLL ITexture1D : public ITexture {
+	public:
+		ITexture1D(IGraphicsModule& graphics);
+		virtual ~ITexture1D();
+
+		virtual bool AE_CALL allocate(ui32 width, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data = nullptr) = 0;
+		virtual Usage AE_CALL map(ui32 mipLevel, Usage expectMapUsage) = 0;
+		virtual void AE_CALL unmap(ui32 mipLevel) = 0;
+		virtual i32 AE_CALL read(ui32 mipLevel, ui32 offset, void* dst, ui32 dstLen, i32 readLen = -1) = 0;
+		virtual i32 AE_CALL write(ui32 mipLevel, ui32 offset, const void* data, ui32 length) = 0;
+		virtual bool AE_CALL write(ui32 mipLevel, ui32 left, ui32 right, const void* data) = 0;
 	};
 
 
@@ -239,16 +255,26 @@ namespace aurora::modules::graphics {
 		ITexture2D(IGraphicsModule& graphics);
 		virtual ~ITexture2D();
 
-		/*
-		 * @mipLevels 1 = not use mipmap, 0 to generate a full set of subtextures. others eg. value is 3, source is 400*400, will generate 400*400, 200*200, 100*100.
-		 */
 		virtual bool AE_CALL allocate(ui32 width, ui32 height, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data = nullptr) = 0;
-
-		virtual Usage AE_CALL map(ui32 mipLevel, Usage mapUsage) = 0;
+		virtual Usage AE_CALL map(ui32 mipLevel, Usage expectMapUsage) = 0;
 		virtual void AE_CALL unmap(ui32 mipLevel) = 0;
 		virtual i32 AE_CALL read(ui32 mipLevel, ui32 offset, void* dst, ui32 dstLen, i32 readLen = -1) = 0;
 		virtual i32 AE_CALL write(ui32 mipLevel, ui32 offset, const void* data, ui32 length) = 0;
 		virtual bool AE_CALL write(ui32 mipLevel, const Rect<ui32>& range, const void* data) = 0;
+	};
+
+
+	class AE_DLL ITexture3D : public ITexture {
+	public:
+		ITexture3D(IGraphicsModule& graphics);
+		virtual ~ITexture3D();
+
+		virtual bool AE_CALL allocate(ui32 width, ui32 height, ui32 depth, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data = nullptr) = 0;
+		virtual Usage AE_CALL map(ui32 mipLevel, Usage expectMapUsage) = 0;
+		virtual void AE_CALL unmap(ui32 mipLevel) = 0;
+		virtual i32 AE_CALL read(ui32 mipLevel, ui32 offset, void* dst, ui32 dstLen, i32 readLen = -1) = 0;
+		virtual i32 AE_CALL write(ui32 mipLevel, ui32 offset, const void* data, ui32 length) = 0;
+		virtual bool AE_CALL write(ui32 mipLevel, const Box<ui32>& range, const void* data) = 0;
 	};
 
 
@@ -447,7 +473,9 @@ namespace aurora::modules::graphics {
 		virtual IIndexBuffer* AE_CALL createIndexBuffer() = 0;
 		virtual IProgram* AE_CALL createProgram() = 0;
 		virtual ISampler* AE_CALL createSampler() = 0;
+		virtual ITexture1D* AE_CALL createTexture1D() = 0;
 		virtual ITexture2D* AE_CALL createTexture2D() = 0;
+		virtual ITexture3D* AE_CALL createTexture3D() = 0;
 		virtual IVertexBuffer* AE_CALL createVertexBuffer() = 0;
 
 		virtual void AE_CALL beginRender() = 0;
