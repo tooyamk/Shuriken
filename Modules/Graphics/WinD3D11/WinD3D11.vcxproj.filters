@@ -33,19 +33,22 @@
     <ClInclude Include="src\BaseBuffer.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\Texture2D.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="src\Sampler.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\Texture3D.h">
+    <ClInclude Include="src\BaseTextureResource.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\BaseTexture.h">
+    <ClInclude Include="src\Texture1DResource.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\Texture1D.h">
+    <ClInclude Include="src\Texture2DResource.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Texture3DResource.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\TextureView.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
@@ -74,19 +77,22 @@
     <ClCompile Include="src\BaseBuffer.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\Texture2D.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\Sampler.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\Texture3D.cpp">
+    <ClCompile Include="src\BaseTextureResource.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\BaseTexture.cpp">
+    <ClCompile Include="src\Texture1DResource.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\Texture1D.cpp">
+    <ClCompile Include="src\Texture2DResource.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Texture3DResource.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\TextureView.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

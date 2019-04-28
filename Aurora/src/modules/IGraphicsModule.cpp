@@ -109,25 +109,7 @@ namespace aurora::modules::graphics {
 
 
 	IObject::IObject(IGraphicsModule& graphics) :
-		_graphics(graphics.ref<IGraphicsModule>()) {
-	}
-
-	IObject::~IObject() {
-		Ref::setNull<IGraphicsModule>(_graphics);
-	}
-
-
-	IBuffer::IBuffer(IGraphicsModule& graphics) : IObject(graphics) {
-	}
-
-	IBuffer::~IBuffer() {
-	}
-
-
-	IVertexBuffer::IVertexBuffer(IGraphicsModule& graphics) : IBuffer(graphics) {
-	}
-
-	IVertexBuffer::~IVertexBuffer() {
+		_graphics(&graphics) {
 	}
 
 
@@ -173,13 +155,6 @@ namespace aurora::modules::graphics {
 	}
 
 
-	IIndexBuffer::IIndexBuffer(IGraphicsModule& graphics) : IBuffer(graphics) {
-	}
-
-	IIndexBuffer::~IIndexBuffer() {
-	}
-
-
 	SamplerFilter::SamplerFilter() :
 		operation(SamplerFilterOperation::NORMAL),
 		minification(SamplerFilterMode::LINEAR),
@@ -192,48 +167,6 @@ namespace aurora::modules::graphics {
 		u(u),
 		v(v),
 		w(w) {
-	}
-
-
-	ISampler::ISampler(IGraphicsModule& graphics) : IObject(graphics) {
-	}
-
-	ISampler::~ISampler() {
-	}
-
-
-	ITexture::ITexture(IGraphicsModule& graphics) : IObject(graphics) {
-	}
-
-	ITexture::~ITexture() {
-	}
-
-
-	ITexture1D::ITexture1D(IGraphicsModule& graphics) : ITexture(graphics) {
-	}
-
-	ITexture1D::~ITexture1D() {
-	}
-
-
-	ITexture2D::ITexture2D(IGraphicsModule& graphics) : ITexture(graphics) {
-	}
-
-	ITexture2D::~ITexture2D() {
-	}
-
-
-	ITexture3D::ITexture3D(IGraphicsModule& graphics) : ITexture(graphics) {
-	}
-
-	ITexture3D::~ITexture3D() {
-	}
-
-
-	IConstantBuffer::IConstantBuffer(IGraphicsModule& graphics) : IBuffer(graphics) {
-	}
-
-	IConstantBuffer::~IConstantBuffer() {
 	}
 
 
@@ -297,7 +230,7 @@ namespace aurora::modules::graphics {
 		return *this;
 	}
 
-	ShaderParameter& ShaderParameter::set(const ITexture* value) {
+	ShaderParameter& ShaderParameter::set(const ITextureViewBase* value) {
 		set(value, sizeof(value), sizeof(value), false, true);
 		return *this;
 	}
@@ -513,12 +446,5 @@ namespace aurora::modules::graphics {
 		}
 
 		return std::move(sm);
-	}
-
-
-	IProgram::IProgram(IGraphicsModule& graphics) : IObject(graphics) {
-	}
-
-	IProgram::~IProgram() {
 	}
 }

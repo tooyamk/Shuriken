@@ -9,14 +9,14 @@ namespace aurora::modules::graphics::win_d3d11 {
 	BaseBuffer::~BaseBuffer() {
 	}
 
-	bool BaseBuffer::allocate(Graphics* graphics, ui32 size, Usage resUsage, const void* data, ui32 dataSize) {
+	bool BaseBuffer::create(Graphics* graphics, ui32 size, Usage resUsage, const void* data, ui32 dataSize) {
 		releaseBuffer(graphics);
 
 		this->size = size;
 
 		D3D11_USAGE d3dUsage;
 		UINT cpuUsage;
-		calcAllocateUsage(resUsage, size, dataSize, 0, cpuUsage, d3dUsage);
+		createInit(resUsage, size, dataSize, 0, cpuUsage, d3dUsage);
 
 		D3D11_BUFFER_DESC desc;
 		memset(&desc, 0, sizeof(desc));

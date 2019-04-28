@@ -44,7 +44,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		DXObjGuard objs;
 
-		auto g = (Graphics*)_graphics;
+		auto g = _graphics.get<Graphics>();
 
 		auto& sm = g->getSupportShaderModel();
 
@@ -106,7 +106,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 	bool Program::use() {
 		if (_vs) {
-			auto context = ((Graphics*)_graphics)->getContext();
+			auto context = _graphics.get<Graphics>()->getContext();
 
 			context->VSSetShader(_vs, 0, 0);
 			context->PSSetShader(_ps, 0, 0);
@@ -142,7 +142,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		ConstantBuffer* cb;
 		if (exclusiveCount > 0 && exclusiveCount + autoCount == numVars) {
-			auto g = (Graphics*)_graphics;
+			auto g = _graphics.get<Graphics>();
 			cb = g->getExclusiveConstantBuffer(_tempParams, cbLayout);
 
 			if (cb) {
@@ -176,7 +176,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 				}
 			}
 		} else {
-			cb = ((Graphics*)_graphics)->popShareConstantBuffer(cbLayout.size);
+			cb = _graphics.get<Graphics>()->popShareConstantBuffer(cbLayout.size);
 			if (cb) _constantBufferUpdateAll(cb, cbLayout.vars);
 		}
 
@@ -225,7 +225,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 	void Program::draw(const VertexBufferFactory* vertexFactory, const ShaderParameterFactory* paramFactory,
 		const IIndexBuffer* indexBuffer, ui32 count, ui32 offset) {
 		if (_vs && vertexFactory && indexBuffer, count > 0) {
-			auto g = (Graphics*)_graphics;
+			auto g = _graphics.get<Graphics>();
 			auto context = g->getContext();
 
 			bool inElementsDirty = false;
@@ -258,7 +258,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 				if (paramFactory) {
 					for (ui32 i = 0, n = _usingSameConstBuffers.size(); i < n; ++i) _usingSameConstBuffers[i] = nullptr;
 				}
-				((Graphics*)_graphics)->resetUsedShareConstantBuffers();
+				g->resetUsedShareConstantBuffers();
 			}
 		}
 	}
@@ -294,7 +294,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			_vertBlob = nullptr;
 		}
 
-		auto& g = *(Graphics*)_graphics;
+		auto& g = *_graphics.get<Graphics>();
 		_vsParamLayout.clear(g);
 		_psParamLayout.clear(g);
 		_usingSameConstBuffers.clear();
@@ -336,7 +336,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		auto& il = _inLayouts.emplace_back();
 		il.formats = new ui32[_numInElements];
 		for (ui32 i = 0; i < _numInElements; ++i) il.formats[i] = _inElements[i].Format;
-		auto hr = ((Graphics*)_graphics)->getDevice()->CreateInputLayout(_inElements, _numInElements, _vertBlob->GetBufferPointer(), _vertBlob->GetBufferSize(), &il.layout);
+		auto hr = _graphics.get<Graphics>()->getDevice()->CreateInputLayout(_inElements, _numInElements, _vertBlob->GetBufferPointer(), _vertBlob->GetBufferSize(), &il.layout);
 		return il.layout;
 	}
 
@@ -489,7 +489,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 				hash::CRC::CRC64StreamIteration(buffer->featureCode, (i8*)&buffer->size, sizeof(buffer->size));
 				hash::CRC::CRC64StreamEnd(buffer->featureCode);
 
-				((Graphics*)_graphics)->registerConstantLayout(*buffer);
+				_graphics.get<Graphics>()->registerConstantLayout(*buffer);
 			}
 		}
 	}

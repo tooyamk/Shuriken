@@ -133,7 +133,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 	void Sampler::_update() {
 		if (_dirty) {
 			_releaseRes();
-			if (SUCCEEDED(((Graphics*)_graphics)->getDevice()->CreateSamplerState(&_desc, &_samplerState))) _dirty = false;
+			if (SUCCEEDED(_graphics.get<Graphics>()->getDevice()->CreateSamplerState(&_desc, &_samplerState))) _dirty = false;
 		}
 	}
 

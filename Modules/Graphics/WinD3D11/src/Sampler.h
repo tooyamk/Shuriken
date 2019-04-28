@@ -23,13 +23,13 @@ namespace aurora::modules::graphics::win_d3d11 {
 		template<>
 		inline void AE_CALL use<ProgramStage::VS>(UINT slot) {
 			_update();
-			((Graphics*)_graphics)->getContext()->VSSetSamplers(slot, 1, &_samplerState);
+			_graphics.get<Graphics>()->getContext()->VSSetSamplers(slot, 1, &_samplerState);
 		}
 
 		template<>
 		inline void AE_CALL use<ProgramStage::PS>(UINT slot) {
 			_update();
-			((Graphics*)_graphics)->getContext()->PSSetSamplers(slot, 1, &_samplerState);
+			_graphics.get<Graphics>()->getContext()->PSSetSamplers(slot, 1, &_samplerState);
 		}
 
 	protected:

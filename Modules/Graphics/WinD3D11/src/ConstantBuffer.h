@@ -11,7 +11,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		ui32* recordUpdateIds;
 
-		virtual bool AE_CALL allocate(ui32 size, Usage bufferUsage, const void* data = nullptr, ui32 dataSize = 0) override;
+		virtual bool AE_CALL create(ui32 size, Usage bufferUsage, const void* data = nullptr, ui32 dataSize = 0) override;
 		virtual Usage AE_CALL map(Usage mapUsage) override;
 		virtual void AE_CALL unmap() override;
 		virtual i32 AE_CALL read(ui32 offset, void* dst, ui32 dstLen, i32 readLen = -1) override;
@@ -24,12 +24,12 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		template<>
 		inline void AE_CALL use<ProgramStage::VS>(UINT slot) {
-			((Graphics*)_graphics)->getContext()->VSSetConstantBuffers(slot, 1, (ID3D11Buffer**)&_baseBuffer.handle);
+			_graphics.get<Graphics>()->getContext()->VSSetConstantBuffers(slot, 1, (ID3D11Buffer**)&_baseBuffer.handle);
 		}
 
 		template<>
 		inline void AE_CALL use<ProgramStage::PS>(UINT slot) {
-			((Graphics*)_graphics)->getContext()->PSSetConstantBuffers(slot, 1, (ID3D11Buffer**)&_baseBuffer.handle);
+			_graphics.get<Graphics>()->getContext()->PSSetConstantBuffers(slot, 1, (ID3D11Buffer**)&_baseBuffer.handle);
 		}
 
 	protected:

@@ -21,6 +21,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual ITexture1D* AE_CALL createTexture1D() override;
 		virtual ITexture2D* AE_CALL createTexture2D() override;
 		virtual ITexture3D* AE_CALL createTexture3D() override;
+		virtual ITexture1DResource* AE_CALL createTexture1DResource() override;
+		virtual ITexture2DResource* AE_CALL createTexture2DResource() override;
+		virtual ITexture3DResource* AE_CALL createTexture3DResource() override;
+		virtual ITextureView* AE_CALL createTextureView() override;
 		virtual IVertexBuffer* AE_CALL createVertexBuffer() override;
 		
 		virtual void AE_CALL beginRender() override;
@@ -54,6 +58,20 @@ namespace aurora::modules::graphics::win_d3d11 {
 		ConstantBuffer* AE_CALL popShareConstantBuffer(ui32 size);
 		void AE_CALL resetUsedShareConstantBuffers();
 		ConstantBuffer* AE_CALL getExclusiveConstantBuffer(const std::vector<ShaderParameter*>& constants, const ConstantBufferLayout& layout);
+
+		template<ProgramStage stage>
+		inline void AE_CALL useShaderResources(UINT slot, UINT numViews, ID3D11ShaderResourceView*const* views) {
+		}
+
+		template<>
+		inline void AE_CALL useShaderResources<ProgramStage::VS>(UINT slot, UINT numViews, ID3D11ShaderResourceView*const* views) {
+			_context->VSSetShaderResources(slot, numViews, views);
+		}
+
+		template<>
+		inline void AE_CALL useShaderResources<ProgramStage::PS>(UINT slot, UINT numViews, ID3D11ShaderResourceView*const* views) {
+			_context->PSSetShaderResources(slot, numViews, views);
+		}
 
 		static DXGI_FORMAT AE_CALL convertDXGIFormat(TextureFormat fmt);
 

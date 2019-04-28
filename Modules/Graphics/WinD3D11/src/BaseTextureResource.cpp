@@ -1,22 +1,23 @@
-#include "BaseTexture.h"
+#include "BaseTextureResource.h"
+#include "Graphics.h"
 #include "base/Image.h"
 
 namespace aurora::modules::graphics::win_d3d11 {
-	BaseTexture::BaseTexture(UINT resType) : BaseResource(resType),
+	BaseTextureResource::BaseTextureResource(UINT resType) : BaseResource(resType),
 		format(TextureFormat::UNKNOWN),
+		internalFormat(DXGI_FORMAT_UNKNOWN),
 		perPixelSize(0),
 		width(0),
 		height(0),
 		depth(0),
 		arraySize(0),
-		mipLevels(0),
-		view(nullptr) {
+		mipLevels(0) {
 	}
 
-	BaseTexture::~BaseTexture() {
+	BaseTextureResource::~BaseTextureResource() {
 	}
 
-	bool BaseTexture::allocate(Graphics* graphics, TextureType texType, ui32 width, ui32 height, ui32 depth, i32 arraySize, 
+	bool BaseTextureResource::create(Graphics* graphics, TextureType texType, ui32 width, ui32 height, ui32 depth, i32 arraySize, 
 		TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data) {
 		releaseTex(graphics);
 
@@ -67,8 +68,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 			break;
 		}
 
-		DXGI_FORMAT dxgiFmt = Graphics::convertDXGIFormat(format);
-		if (dxgiFmt == DXGI_FORMAT_UNKNOWN) return false;
+		DXGI_FORMAT internalFormat = Graphics::convertDXGIFormat(format);
+		if (internalFormat == DXGI_FORMAT_UNKNOWN) return _createDone(false);
 
 		auto perPixelSize = Image::calcPerPixelByteSize(format);
 		auto mipsByteSize = Image::calcMipsByteSize(width, height, depth, mipLevels, perPixelSize);
@@ -77,7 +78,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		D3D11_USAGE d3dUsage;
 		UINT cpuUsage;
-		calcAllocateUsage(resUsage, this->size, data ? this->size : 0, mipLevels, cpuUsage, d3dUsage);
+		createInit(resUsage, this->size, data ? this->size : 0, mipLevels, cpuUsage, d3dUsage);
 
 		TexDesc texDesc;
 		memset(&texDesc, 0, sizeof(texDesc));
@@ -90,7 +91,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			desc.Usage = d3dUsage;
 			desc.BindFlags = bindType;
 			desc.Width = width;
-			desc.Format = dxgiFmt;
+			desc.Format = internalFormat;
 			desc.MipLevels = mipLevels;
 			desc.MiscFlags = 0;
 			//desc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;//D3D11_RESOURCE_MISC_TEXTURECUBE
@@ -107,7 +108,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			desc.BindFlags = bindType;
 			desc.Width = width;
 			desc.Height = height;
-			desc.Format = dxgiFmt;
+			desc.Format = internalFormat;
 			desc.MipLevels = mipLevels;
 			desc.MiscFlags = 0;
 			//desc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;//D3D11_RESOURCE_MISC_TEXTURECUBE
@@ -127,7 +128,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			desc.Width = width;
 			desc.Height = height;
 			desc.Depth = depth;
-			desc.Format = dxgiFmt;
+			desc.Format = internalFormat;
 			desc.MipLevels = mipLevels;
 			desc.MiscFlags = 0;
 
@@ -138,13 +139,13 @@ namespace aurora::modules::graphics::win_d3d11 {
 		}
 
 		HRESULT hr;
-		if (false) {
+		if (data) {
 			if (mipLevels == 1) {
 				D3D11_SUBRESOURCE_DATA res;
 				res.pSysMem = data[0];
 				res.SysMemPitch = width * perPixelSize;
 				res.SysMemSlicePitch = res.SysMemPitch * height;
-				hr = create(graphics, texType, texDesc, &res);
+				hr = _createInternalTexture(graphics, texType, texDesc, &res);
 			} else {
 				std::vector<D3D11_SUBRESOURCE_DATA> resArr(mipLevels);
 				auto w = width, h = height;
@@ -157,63 +158,18 @@ namespace aurora::modules::graphics::win_d3d11 {
 					w = Image::calcNextMipPixelSize(w);
 					h = Image::calcNextMipPixelSize(h);
 				}
-				hr = create(graphics, texType, texDesc, resArr.data());
+				hr = _createInternalTexture(graphics, texType, texDesc, resArr.data());
 			}
 		} else {
-			hr = create(graphics, texType, texDesc, nullptr);
+			hr = _createInternalTexture(graphics, texType, texDesc, nullptr);
 		}
 
 		if (FAILED(hr)) {
 			releaseTex(graphics);
-			return false;
+			return _createDone(false);
 		}
 
 		//((ID3D11Texture2D*)_baseRes.handle)->GetDesc(&desc);
-
-		if (bindType) {
-			D3D11_SHADER_RESOURCE_VIEW_DESC vDesc;
-			memset(&vDesc, 0, sizeof(vDesc));
-			vDesc.Format = dxgiFmt;
-
-			switch (texType) {
-			case TextureType::TEX1D:
-			{
-				vDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE1D;
-				vDesc.Texture1D.MostDetailedMip = 0;
-				vDesc.Texture1D.MipLevels = -1;
-
-				break;
-			}
-			case TextureType::TEX2D:
-			{
-				vDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-				vDesc.Texture2D.MostDetailedMip = 0;
-				vDesc.Texture2D.MipLevels = -1;
-				//vDesc.Texture2DArray.ArraySize = 0;
-				//vDesc.Texture2DArray.FirstArraySlice = 0;
-				//vDesc.Texture2DArray.MostDetailedMip = 0;
-				//vDesc.Texture2DArray.MipLevels = -1;
-
-				break;
-			}
-			case TextureType::TEX3D:
-			{
-				vDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE3D;
-				vDesc.Texture3D.MostDetailedMip = 0;
-				vDesc.Texture3D.MipLevels = -1;
-
-				break;
-			}
-			default:
-				break;
-			}
-
-			hr = graphics->getDevice()->CreateShaderResourceView(handle, &vDesc, &view);
-			if (FAILED(hr)) {
-				releaseTex(graphics);
-				return false;
-			}
-		}
 
 		if ((this->resUsage & Usage::CPU_READ_WRITE) != Usage::NONE) {
 			mappedRes.resize(mipLevels);
@@ -229,6 +185,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		}
 
 		this->format = format;
+		this->internalFormat = internalFormat;
 		this->perPixelSize = perPixelSize;
 		this->width = width;
 		this->height = height;
@@ -237,10 +194,16 @@ namespace aurora::modules::graphics::win_d3d11 {
 		this->mipLevels = mipLevels;
 		//((Graphics*)_graphics)->getContext()->GenerateMips(_view);
 
-		return true;
+		return _createDone(true);
 	}
 
-	HRESULT BaseTexture::create(Graphics* graphics, TextureType texType, const TexDesc& desc, const D3D11_SUBRESOURCE_DATA* pInitialData) {
+	bool BaseTextureResource::_createDone(bool succeeded) {
+		for (auto& itr : views) itr.second();
+
+		return succeeded;
+	}
+
+	HRESULT BaseTextureResource::_createInternalTexture(Graphics* graphics, TextureType texType, const TexDesc& desc, const D3D11_SUBRESOURCE_DATA* pInitialData) {
 		switch (texType) {
 		case TextureType::TEX1D:
 			return graphics->getDevice()->CreateTexture1D(&desc.dsec1D, pInitialData, (ID3D11Texture1D**)&handle);
@@ -253,7 +216,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		}
 	}
 
-	Usage BaseTexture::map(Graphics* graphics, ui32 mipLevel, Usage expectMapUsage) {
+	Usage BaseTextureResource::map(Graphics* graphics, ui32 mipLevel, Usage expectMapUsage) {
 		if (mipLevel < mappedRes.size()) {
 			auto& mapped = mappedRes[mipLevel];
 			return BaseResource::map(graphics, expectMapUsage, mapped.usage, mipLevel, mapped.res);
@@ -261,11 +224,11 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return Usage::NONE;
 	}
 
-	void BaseTexture::unmap(Graphics* graphics, ui32 mipLevel) {
+	void BaseTextureResource::unmap(Graphics* graphics, ui32 mipLevel) {
 		if (mipLevel < mappedRes.size()) BaseResource::unmap(graphics, mappedRes[mipLevel].usage, mipLevel);
 	}
 
-	i32 BaseTexture::read(ui32 mipLevel, ui32 offset, void* dst, ui32 dstLen, i32 readLen) {
+	i32 BaseTextureResource::read(ui32 mipLevel, ui32 offset, void* dst, ui32 dstLen, i32 readLen) {
 		if (mipLevel < mappedRes.size()) {
 			auto& mapped = mappedRes[mipLevel];
 			if ((mapped.usage & Usage::CPU_READ) == Usage::CPU_READ) {
@@ -281,7 +244,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return -1;
 	}
 
-	i32 BaseTexture::write(ui32 mipLevel, ui32 offset, const void* data, ui32 length) {
+	i32 BaseTextureResource::write(ui32 mipLevel, ui32 offset, const void* data, ui32 length) {
 		if (mipLevel < mappedRes.size()) {
 			auto& mapped = mappedRes[mipLevel];
 			if ((mapped.usage & Usage::CPU_WRITE) == Usage::CPU_WRITE) {
@@ -296,7 +259,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return -1;
 	}
 
-	bool BaseTexture::write(Graphics* graphics, ui32 mipLevel, const D3D11_BOX& range, const void* data) {
+	bool BaseTextureResource::write(Graphics* graphics, ui32 mipLevel, const D3D11_BOX& range, const void* data) {
 		if ((resUsage & Usage::GPU_WRITE) == Usage::GPU_WRITE) {
 			if (data && mipLevel < mipLevels) {
 				ui32 w = width, h = height;
@@ -310,19 +273,15 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return false;
 	}
 
-	void BaseTexture::releaseTex(Graphics* graphics) {
+	void BaseTextureResource::releaseTex(Graphics* graphics) {
 		if (!mappedRes.empty()) {
 			for (ui32 i = 0, n = mappedRes.size(); i < n; ++i) BaseResource::unmap(graphics, mappedRes[i].usage, i);
 			mappedRes.clear();
 		}
 
-		if (view) {
-			view->Release();
-			view = nullptr;
-		}
-
 		releaseRes(graphics);
 		format = TextureFormat::UNKNOWN;
+		internalFormat = DXGI_FORMAT_UNKNOWN,
 		perPixelSize = 0;
 		width = 0;
 		height = 0;
@@ -330,5 +289,15 @@ namespace aurora::modules::graphics::win_d3d11 {
 		arraySize = 0;
 		mipLevels = 0;
 		mappedRes.clear();
+	}
+
+	void BaseTextureResource::addView(ITextureView& view, const std::function<void()>& onRecreated) {
+		auto itr = views.find(&view);
+		if (itr == views.end()) views.emplace(&view, onRecreated);
+	}
+
+	void BaseTextureResource::removeView(ITextureView& view) {
+		auto itr = views.find(&view);
+		if (itr != views.end()) views.erase(itr);
 	}
 }

@@ -27,31 +27,33 @@
     <ClInclude Include="src\Base.h" />
     <ClInclude Include="src\BaseBuffer.h" />
     <ClInclude Include="src\BaseResource.h" />
-    <ClInclude Include="src\BaseTexture.h" />
+    <ClInclude Include="src\BaseTextureResource.h" />
     <ClInclude Include="src\ConstantBuffer.h" />
     <ClInclude Include="src\CreateModule.h" />
     <ClInclude Include="src\Graphics.h" />
     <ClInclude Include="src\IndexBuffer.h" />
     <ClInclude Include="src\Program.h" />
     <ClInclude Include="src\Sampler.h" />
-    <ClInclude Include="src\Texture1D.h" />
-    <ClInclude Include="src\Texture2D.h" />
-    <ClInclude Include="src\Texture3D.h" />
+    <ClInclude Include="src\Texture1DResource.h" />
+    <ClInclude Include="src\Texture2DResource.h" />
+    <ClInclude Include="src\TextureView.h" />
+    <ClInclude Include="src\Texture3DResource.h" />
     <ClInclude Include="src\VertexBuffer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Base.cpp" />
     <ClCompile Include="src\BaseBuffer.cpp" />
     <ClCompile Include="src\BaseResource.cpp" />
-    <ClCompile Include="src\BaseTexture.cpp" />
+    <ClCompile Include="src\BaseTextureResource.cpp" />
     <ClCompile Include="src\ConstantBuffer.cpp" />
     <ClCompile Include="src\Graphics.cpp" />
     <ClCompile Include="src\IndexBuffer.cpp" />
     <ClCompile Include="src\Program.cpp" />
     <ClCompile Include="src\Sampler.cpp" />
-    <ClCompile Include="src\Texture1D.cpp" />
-    <ClCompile Include="src\Texture2D.cpp" />
-    <ClCompile Include="src\Texture3D.cpp" />
+    <ClCompile Include="src\Texture1DResource.cpp" />
+    <ClCompile Include="src\Texture2DResource.cpp" />
+    <ClCompile Include="src\TextureView.cpp" />
+    <ClCompile Include="src\Texture3DResource.cpp" />
     <ClCompile Include="src\VertexBuffer.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

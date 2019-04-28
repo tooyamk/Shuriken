@@ -8,7 +8,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		BaseBuffer(UINT bufferType);
 		virtual ~BaseBuffer();
 
-		bool AE_CALL allocate(Graphics* graphics, ui32 size, Usage resUsage, const void* data = nullptr, ui32 dataSize = 0);
+		bool AE_CALL create(Graphics* graphics, ui32 size, Usage resUsage, const void* data = nullptr, ui32 dataSize = 0);
 		Usage AE_CALL map(Graphics* graphics, Usage expectMapUsage);
 		void AE_CALL unmap(Graphics* graphics);
 		i32 AE_CALL read(ui32 offset, void* dst, ui32 dstLen, i32 readLen = -1);

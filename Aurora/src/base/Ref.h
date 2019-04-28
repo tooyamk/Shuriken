@@ -7,7 +7,8 @@ namespace aurora {
 	class AE_TEMPLATE_DLL Ref {
 	public:
 		template<typename T>
-		using RefType = std::enable_if_t<std::is_base_of_v<Ref, T>, T>;
+		//using RefType = std::enable_if_t<std::is_base_of_v<Ref, T>, T>;
+		using RefType = T;
 
 		Ref() :
 			_refCount(0) {
@@ -98,8 +99,33 @@ namespace aurora {
 			set(ptr._target);
 		}
 
+		bool operator==(const T* target) const {
+			return _target == target;
+		}
+
+		bool operator==(const RefPtr<T>* ptr) const {
+			return this == ptr;
+		}
+
+		bool operator!=(const T* target) const {
+			return _target != target;
+		}
+
+		bool operator!=(const RefPtr<T>* ptr) const {
+			return this != ptr;
+		}
+
+		inline operator bool() const {
+			return _target;
+		}
+
 		inline T* AE_CALL get() const {
 			return _target;
+		}
+
+		template<typename S>
+		inline S* AE_CALL get() const {
+			return (S*)_target;
 		}
 
 		inline void AE_CALL set(T* target) {
