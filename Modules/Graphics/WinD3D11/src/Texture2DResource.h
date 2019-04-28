@@ -11,7 +11,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual TextureType AE_CALL getType() const override;
 		virtual const void* AE_CALL getNative() const override;
 		virtual ui32 AE_CALL getMipLevels() const override;
-		virtual bool AE_CALL create(ui32 width, ui32 height, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data = nullptr) override;
+		virtual bool AE_CALL create(const Size2<ui32>& size, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data = nullptr) override;
 		virtual Usage AE_CALL map(ui32 mipLevel, Usage expectMapUsage) override;
 		virtual void AE_CALL unmap(ui32 mipLevel) override;
 		virtual i32 AE_CALL read(ui32 mipLevel, ui32 offset, void* dst, ui32 dstLen, i32 readLen = -1) override;

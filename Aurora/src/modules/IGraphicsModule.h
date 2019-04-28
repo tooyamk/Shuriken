@@ -7,6 +7,8 @@
 namespace aurora {
 	template<typename T> class Box;
 	template<typename T> class Rect;
+	template<typename T> class Size2;
+	template<typename T> class Size3;
 	class Vector2;
 	class Vector3;
 	class Vector4;
@@ -264,7 +266,7 @@ namespace aurora::modules::graphics {
 		ITexture2DResource(IGraphicsModule& graphics) : ITextureResource(graphics) {}
 		virtual ~ITexture2DResource() {}
 
-		virtual bool AE_CALL create(ui32 width, ui32 height, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data = nullptr) = 0;
+		virtual bool AE_CALL create(const Size2<ui32>& size, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data = nullptr) = 0;
 
 		using ITextureResource::write;
 		virtual bool AE_CALL write(ui32 mipLevel, const Rect<ui32>& range, const void* data) = 0;
@@ -276,7 +278,7 @@ namespace aurora::modules::graphics {
 		ITexture3DResource(IGraphicsModule& graphics) : ITextureResource(graphics) {}
 		virtual ~ITexture3DResource() {}
 
-		virtual bool AE_CALL create(ui32 width, ui32 height, ui32 depth, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data = nullptr) = 0;
+		virtual bool AE_CALL create(const Size3<ui32>& size, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data = nullptr) = 0;
 
 		using ITextureResource::write;
 		virtual bool AE_CALL write(ui32 mipLevel, const Box<ui32>& range, const void* data) = 0;
@@ -290,6 +292,7 @@ namespace aurora::modules::graphics {
 
 		//virtual TextureType AE_CALL getType() const = 0;
 		virtual const void* AE_CALL getNative() const = 0;
+		virtual ui32 AE_CALL getMipLevels() const = 0;
 	};
 
 
@@ -323,7 +326,7 @@ namespace aurora::modules::graphics {
 		ITexture2D(IGraphicsModule& graphics) : ITexture(graphics) {}
 		virtual ~ITexture2D() {}
 
-		virtual bool AE_CALL create(ui32 width, ui32 height, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data = nullptr) = 0;
+		virtual bool AE_CALL create(const Size2<ui32>& size, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data = nullptr) = 0;
 		virtual bool AE_CALL write(ui32 mipLevel, const Rect<ui32>& range, const void* data) = 0;
 	};
 
@@ -333,7 +336,7 @@ namespace aurora::modules::graphics {
 		ITexture3D(IGraphicsModule& graphics) : ITexture(graphics) {}
 		virtual ~ITexture3D() {}
 
-		virtual bool AE_CALL create(ui32 width, ui32 height, ui32 depth, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data = nullptr) = 0;
+		virtual bool AE_CALL create(const Size3<ui32>& size, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data = nullptr) = 0;
 		virtual bool AE_CALL write(ui32 mipLevel, const Box<ui32>& range, const void* data) = 0;
 	};
 
@@ -346,7 +349,6 @@ namespace aurora::modules::graphics {
 		//virtual TextureType AE_CALL getType() const = 0;
 		virtual ITextureResource* AE_CALL getResource() const = 0;
 		virtual const void* AE_CALL getNative() const = 0;
-		virtual ui32 AE_CALL getMipLevels() const = 0;
 		virtual bool AE_CALL create(ITextureResource* res, ui32 mipBegin, ui32 mipLevels) = 0;
 	};
 

@@ -138,6 +138,15 @@
     <ClInclude Include="src\math\Box.h">
       <Filter>src\math</Filter>
     </ClInclude>
+    <ClInclude Include="src\math\Size2.h">
+      <Filter>src\math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\math\Size3.h">
+      <Filter>src\math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utils\hash\MD5.h">
+      <Filter>src\utils\hash</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\math\Matrix44.cpp">
@@ -199,6 +208,9 @@
     </ClCompile>
     <ClCompile Include="src\base\Image.cpp">
       <Filter>src\base</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\hash\MD5.cpp">
+      <Filter>src\utils\hash</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

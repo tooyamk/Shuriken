@@ -7,7 +7,7 @@ namespace aurora {
 	class AE_TEMPLATE_DLL Box {
 	public:
 		Box() {
-			memset(&left, 0, sizeof(T) << 2);
+			memset(&left, 0, sizeof(T) * 6);
 		}
 
 		Box(const Box<T>& box) :

@@ -2,10 +2,9 @@
 #include "IndexBuffer.h"
 #include "Program.h"
 #include "Sampler.h"
-#include "Texture1DResource.h"
-#include "Texture2DResource.h"
-#include "Texture3DResource.h"
-#include "TextureView.h"
+#include "Texture1D.h"
+#include "Texture2D.h"
+#include "Texture3D.h"
 #include "VertexBuffer.h"
 #include "base/Application.h"
 #include "CreateModule.h"
@@ -239,15 +238,15 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	ITexture1D* Graphics::createTexture1D() {
-		return nullptr;
+		return new Texture1D(*this);
 	}
 
 	ITexture2D* Graphics::createTexture2D() {
-		return nullptr;
+		return new Texture2D(*this);
 	}
 
 	ITexture3D* Graphics::createTexture3D() {
-		return nullptr;
+		return new Texture3D(*this);
 	}
 
 	ITexture1DResource* Graphics::createTexture1DResource() {

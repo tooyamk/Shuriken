@@ -36,6 +36,12 @@ namespace aurora {
 		z = v[2];
 	}
 
+	inline void Vector3::setRGB(ui32 c) {
+		r = (f32)(c >> 24 & 0xFF) / 255.f;
+		g = (f32)(c >> 16 & 0xFF) / 255.f;
+		b = (f32)(c >> 8 & 0xFF) / 255.f;
+	}
+
 	inline void Vector3::normalize(const Vector3& v, Vector3& dst) {
 		dst.set(v);
 		dst.setNormalize();

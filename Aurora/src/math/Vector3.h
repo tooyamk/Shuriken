@@ -23,6 +23,7 @@ namespace aurora {
 		inline void AE_CALL set(const Vector3& v);
 		inline void AE_CALL set(f32 x = 0.f, f32 y = 0.f, f32 z = 0.f);
 		inline void AE_CALL set(const f32* v);
+		inline void AE_CALL setRGB(ui32 c);
 
 		void AE_CALL setNormalize();
 
@@ -41,6 +42,12 @@ namespace aurora {
 				f32 x;
 				f32 y;
 				f32 z;
+			};
+
+			struct {
+				f32 r;
+				f32 g;
+				f32 b;
 			};
 		};
 	};

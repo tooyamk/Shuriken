@@ -208,6 +208,8 @@
     <ClInclude Include="src\math\Matrix44.h" />
     <ClInclude Include="src\math\Quaternion.h" />
     <ClInclude Include="src\math\Rect.h" />
+    <ClInclude Include="src\math\Size2.h" />
+    <ClInclude Include="src\math\Size3.h" />
     <ClInclude Include="src\math\Vector2.h" />
     <ClInclude Include="src\math\Vector3.h" />
     <ClInclude Include="src\math\Vector4.h" />
@@ -221,6 +223,7 @@
     <ClInclude Include="src\renderers\commands\BaseRenderCommand.h" />
     <ClInclude Include="src\renderers\commands\IRenderCommand.h" />
     <ClInclude Include="src\utils\hash\CRC.h" />
+    <ClInclude Include="src\utils\hash\MD5.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\base\Application.cpp" />
@@ -243,6 +246,7 @@
     <ClCompile Include="src\nodes\Node.cpp" />
     <ClCompile Include="src\renderers\commands\IRenderCommand.cpp" />
     <ClCompile Include="src\utils\hash\CRC.cpp" />
+    <ClCompile Include="src\utils\hash\MD5.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="src\base\ByteArray.inl" />

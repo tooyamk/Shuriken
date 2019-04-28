@@ -40,7 +40,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 			if (data) {
 				auto srcPerPixelByteSize = Image::calcPerPixelByteSize(TextureFormat::R8G8B8);
 				auto dstPerPixelByteSize = Image::calcPerPixelByteSize(format);
-				auto dstByteSize = Image::calcMipsByteSize(width, height, depth, mipLevels, dstPerPixelByteSize);
+				Size3<ui32> size(width, height, depth);
+				auto dstByteSize = Image::calcMipsByteSize(size, mipLevels, dstPerPixelByteSize);
 				auto dst = new ui8[dstByteSize];
 				autoReleaseData = ByteArray((i8*)dst, dstByteSize, ByteArray::ExtMemMode::EXCLUSIVE);
 				auto w = width, h = height, d = depth;
@@ -51,7 +52,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 					auto srcPitch = numPixels * srcPerPixelByteSize;
 					auto dstPitch = numPixels * dstPerPixelByteSize;
 					for (ui32 j = 0; j < d; ++j) {
-						Image::convertFormat(w, h, TextureFormat::R8G8B8, src, format, dst);
+						Image::convertFormat((Size2<ui32>&)size, TextureFormat::R8G8B8, src, format, dst);
 						src += srcPitch;
 						dst += dstPitch;
 					}
@@ -72,7 +73,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		if (internalFormat == DXGI_FORMAT_UNKNOWN) return _createDone(false);
 
 		auto perPixelSize = Image::calcPerPixelByteSize(format);
-		auto mipsByteSize = Image::calcMipsByteSize(width, height, depth, mipLevels, perPixelSize);
+		auto mipsByteSize = Image::calcMipsByteSize(Size3<ui32>(width, height, depth), mipLevels, perPixelSize);
 
 		this->size = mipsByteSize * arrayCount;
 

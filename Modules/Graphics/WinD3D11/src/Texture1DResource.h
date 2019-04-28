@@ -18,13 +18,6 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual i32 AE_CALL write(ui32 mipLevel, ui32 offset, const void* data, ui32 length) override;
 		virtual bool AE_CALL write(ui32 mipLevel, ui32 left, ui32 right, const void* data) override;
 
-		inline DXGI_FORMAT  AE_CALL getInternalFormat() const {
-			return _baseTexRes.internalFormat;
-		}
-		inline ID3D11Resource* AE_CALL getInternalResource() const {
-			return _baseTexRes.handle;
-		}
-
 	protected:
 		BaseTextureResource _baseTexRes;
 	};

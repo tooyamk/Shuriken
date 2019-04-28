@@ -57,6 +57,11 @@ namespace aurora::modules::graphics::win_d3d11 {
 					desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 					desc.Texture2D.MostDetailedMip = mipBegin;
 					desc.Texture2D.MipLevels = createMipLevels;
+					//desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
+					//desc.Texture2DArray.MostDetailedMip = mipBegin;
+					//desc.Texture2DArray.MipLevels = createMipLevels;
+					//desc.Texture2DArray.FirstArraySlice = 0;
+					//desc.Texture2DArray.ArraySize = 1;
 
 					break;
 				}

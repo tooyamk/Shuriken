@@ -1,6 +1,7 @@
 #include "Texture3DResource.h"
 #include "Graphics.h"
 #include "math/Box.h"
+#include "math/Size3.h"
 
 namespace aurora::modules::graphics::win_d3d11 {
 	Texture3DResource::Texture3DResource(Graphics& graphics) : ITexture3DResource(graphics),
@@ -23,9 +24,9 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return _baseTexRes.mipLevels;
 	}
 
-	bool Texture3DResource::create(ui32 width, ui32 height, ui32 depth, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data) {
+	bool Texture3DResource::create(const Size3<ui32>& size, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data) {
 		_baseTexRes.releaseTex(_graphics.get<Graphics>());
-		return _baseTexRes.create(_graphics.get<Graphics>(), TextureType::TEX3D, width, height, depth, -1, format, mipLevels, resUsage, data);
+		return _baseTexRes.create(_graphics.get<Graphics>(), TextureType::TEX3D, size.width, size.height, size.depth, -1, format, mipLevels, resUsage, data);
 	}
 
 	Usage Texture3DResource::map(ui32 mipLevel, Usage expectMapUsage) {
@@ -33,7 +34,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	void Texture3DResource::unmap(ui32 mipLevel) {
-		return _baseTexRes.unmap(_graphics.get<Graphics>(), mipLevel);
+		_baseTexRes.unmap(_graphics.get<Graphics>(), mipLevel);
 	}
 
 	i32 Texture3DResource::read(ui32 mipLevel, ui32 offset, void* dst, ui32 dstLen, i32 readLen) {

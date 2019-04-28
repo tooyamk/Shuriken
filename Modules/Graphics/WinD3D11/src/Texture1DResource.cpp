@@ -32,7 +32,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	void Texture1DResource::unmap(ui32 mipLevel) {
-		return _baseTexRes.unmap(_graphics.get<Graphics>(), mipLevel);
+		_baseTexRes.unmap(_graphics.get<Graphics>(), mipLevel);
 	}
 
 	i32 Texture1DResource::read(ui32 mipLevel, ui32 offset, void* dst, ui32 dstLen, i32 readLen) {

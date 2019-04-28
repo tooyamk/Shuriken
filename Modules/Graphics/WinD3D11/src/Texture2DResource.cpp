@@ -1,6 +1,7 @@
 #include "Texture2DResource.h"
 #include "Graphics.h"
 #include "math/Rect.h"
+#include "math/Size2.h"
 
 namespace aurora::modules::graphics::win_d3d11 {
 	Texture2DResource::Texture2DResource(Graphics& graphics) : ITexture2DResource(graphics),
@@ -23,9 +24,9 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return _baseTexRes.mipLevels;
 	}
 
-	bool Texture2DResource::create(ui32 width, ui32 height, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data) {
+	bool Texture2DResource::create(const Size2<ui32>& size, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data) {
 		_baseTexRes.releaseTex(_graphics.get<Graphics>());
-		return _baseTexRes.create(_graphics.get<Graphics>(), TextureType::TEX2D, width, height, 1, -1, format, mipLevels, resUsage, data);
+		return _baseTexRes.create(_graphics.get<Graphics>(), TextureType::TEX2D, size.width, size.height, 1, -1, format, mipLevels, resUsage, data);
 	}
 
 	Usage Texture2DResource::map(ui32 mipLevel, Usage expectMapUsage) {
@@ -33,7 +34,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	void Texture2DResource::unmap(ui32 mipLevel) {
-		return _baseTexRes.unmap(_graphics.get<Graphics>(), mipLevel);
+		_baseTexRes.unmap(_graphics.get<Graphics>(), mipLevel);
 	}
 
 	i32 Texture2DResource::read(ui32 mipLevel, ui32 offset, void* dst, ui32 dstLen, i32 readLen) {
