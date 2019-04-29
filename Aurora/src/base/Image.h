@@ -31,9 +31,6 @@ namespace aurora {
 
 		static ui32 calcPerPixelByteSize(modules::graphics::TextureFormat format);
 
-		inline static ui32 AE_CALL calcMipLevels(const Image& img) {
-			return calcMipLevels(img.size);
-		}
 		inline static ui32 AE_CALL calcMipLevels(const Size2<ui32>& size) {
 			return calcMipLevels(size.getMax());
 		}
@@ -42,11 +39,21 @@ namespace aurora {
 		}
 
 		static void AE_CALL calcSpecificMipPixelSize(ui32& size, ui32 mipLevel);
-		static void AE_CALL calcSpecificMipPixelSize(ui32& size1, ui32& size2, ui32 mipLevel);
+		static void AE_CALL calcSpecificMipPixelSize(Size2<ui32>& size, ui32 mipLevel);
 
 		static std::vector<ui32> AE_CALL calcMipsPixelSize(ui32 n, ui32 mipLevels);
+
 		inline static ui32 calcNextMipPixelSize(ui32 n) {
 			return n > 1 ? n >> 1 : 1;
+		}
+		inline static void calcNextMipPixelSize(Size2<ui32>& size) {
+			size.width = calcNextMipPixelSize(size.width);
+			size.height = calcNextMipPixelSize(size.height);
+		}
+		inline static void calcNextMipPixelSize(Size3<ui32>& size) {
+			size.width = calcNextMipPixelSize(size.width);
+			size.height = calcNextMipPixelSize(size.height);
+			size.depth = calcNextMipPixelSize(size.depth);
 		}
 
 		inline static ui32 calcByteSize(const Size2<ui32>& size, modules::graphics::TextureFormat format) {

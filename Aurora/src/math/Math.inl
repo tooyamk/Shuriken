@@ -1,32 +1,4 @@
 namespace aurora {
-	inline void Math::crossVec3(const f32* v1, const f32* v2, f32* dst) {
-		auto x = (v1[1] * v2[2]) - (v1[2] * v2[1]);
-		auto y = (v1[2] * v2[0]) - (v1[0] * v2[2]);
-		auto z = (v1[0] * v2[1]) - (v1[1] * v2[0]);
-
-		dst[0] = x;
-		dst[1] = y;
-		dst[2] = z;
-	}
-
-	inline void Math::lerpVec(const f32(&from)[2], const f32(&to)[2], f32 t, f32(&dst)[2]) {
-		auto x = from[0] + (to[0] - from[0]) * t;
-		auto y = from[1] + (to[1] - from[1]) * t;
-
-		dst[0] = x;
-		dst[1] = y;
-	}
-
-	inline void Math::lerpVec(const f32(&from)[3], const f32(&to)[3], f32 t, f32(&dst)[3]) {
-		auto x = from[0] + (to[0] - from[0]) * t;
-		auto y = from[1] + (to[1] - from[1]) * t;
-		auto z = from[2] + (to[2] - from[2]) * t;
-
-		dst[0] = x;
-		dst[1] = y;
-		dst[2] = z;
-	}
-
 	inline void Math::appendQuat(const f32* lhs, const f32* rhs, f32* dst) {
 		auto w = lhs[3] * rhs[3] - lhs[0] * rhs[0] - lhs[1] * rhs[1] - lhs[2] * rhs[2];
 		auto x = lhs[0] * rhs[3] + lhs[3] * rhs[0] + lhs[2] * rhs[1] - lhs[1] * rhs[2];
@@ -62,7 +34,7 @@ namespace aurora {
 		dst[2] = z;
 	}
 
-	inline bool Math::isPowOfTwo(ui32 n) {
+	inline bool Math::isPOT(ui32 n) {
 		return n < 1 ? false : !(n & (n - 1));
 	}
 }

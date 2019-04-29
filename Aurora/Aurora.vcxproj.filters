@@ -147,6 +147,9 @@
     <ClInclude Include="src\utils\hash\MD5.h">
       <Filter>src\utils\hash</Filter>
     </ClInclude>
+    <ClInclude Include="src\math\Vec.h">
+      <Filter>src\math</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\math\Matrix44.cpp">

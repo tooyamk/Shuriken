@@ -62,7 +62,7 @@ namespace aurora {
 		_updateWindowRectValue();
 
 		_hWnd = CreateWindowExW(_getWindowExStyle(), wnd.lpszClassName, String::Utf8ToUnicode(title).c_str(), _getWindowStyle(),
-			_wndRect.left, _wndRect.top, _wndRect.getWidth(), _wndRect.getHeight(),
+			_wndRect.left, _wndRect.top, _wndRect.size.width, _wndRect.size.height,
 			GetDesktopWindow(), nullptr, _hIns, nullptr);
 		SetWindowLongPtr(_hWnd, GWLP_USERDATA, (LONG_PTR)this);
 		if (_hWnd) GetClientRect(_hWnd, &_lastWndInnerRect);
@@ -120,12 +120,12 @@ namespace aurora {
 		Rect<i32> out;
 		if (_adjustWindowRect(rect, out)) {
 			_lastWndInnerRect.left = rect.left;
-			_lastWndInnerRect.right = rect.right;
+			_lastWndInnerRect.right = rect.left + rect.size.width;
 			_lastWndInnerRect.top = rect.top;
-			_lastWndInnerRect.bottom = rect.bottom;
+			_lastWndInnerRect.bottom = rect.top + rect.size.height;
 
 			if (!_windowedRect.isEqual(out)) {
-				bool isResize = _windowedRect.getWidth() != rect.getWidth() || _windowedRect.getHeight() != rect.getHeight();
+				bool isResize = _windowedRect.size != rect.size;
 				_windowedRect.set(rect);
 
 				if (_isWindowed) {
@@ -254,9 +254,9 @@ namespace aurora {
 
 	bool Application::_adjustWindowRect(const Rect<i32>& in, Rect<i32>& out) {
 #if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
-		RECT rect = { in.left, in.top, in.right, in.bottom };
+		RECT rect = { in.left, in.top, in.left + in.size.width, in.top + in.size.height };
 		auto rst = AdjustWindowRectEx(&rect, _getWindowStyle(), FALSE, _getWindowExStyle());
-		out.set(rect.left, rect.top, rect.right, rect.bottom);
+		out.set(rect.left, rect.top, Size2<i32>(rect.right - rect.left, rect.bottom - rect.top));
 		return rst;
 #elif
 		out.set(in);
@@ -267,7 +267,7 @@ namespace aurora {
 #if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
 		RECT rect;
 		GetWindowRect(_hWnd, &rect);
-		_windowedRect.set(rect.left, rect.top, rect.right, rect.bottom);
+		_windowedRect.set(rect.left, rect.top, Size2<i32>(rect.right - rect.left, rect.bottom - rect.top));
 #endif
 	}
 
@@ -301,7 +301,7 @@ namespace aurora {
 		if (_isWindowed) {
 			_wndRect.set(_windowedRect);
 		} else {
-			_wndRect.set(0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
+			_wndRect.set(0, 0, Size2<i32>(GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN)));
 		}
 	}
 
@@ -317,7 +317,7 @@ namespace aurora {
 			} else {
 				flags |= SWP_NOCOPYBITS;
 			}
-			SetWindowPos(_hWnd, HWND_NOTOPMOST, _wndRect.left, _wndRect.top, _wndRect.getWidth(), _wndRect.getHeight(), flags);
+			SetWindowPos(_hWnd, HWND_NOTOPMOST, _wndRect.left, _wndRect.top, _wndRect.size.width, _wndRect.size.height, flags);
 		}
 	}
 

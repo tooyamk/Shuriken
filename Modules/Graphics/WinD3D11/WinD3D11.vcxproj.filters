@@ -51,15 +51,6 @@
     <ClInclude Include="src\TextureView.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\Texture2D.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Texture1D.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Texture3D.h">
-      <Filter>src</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Graphics.cpp">
@@ -102,15 +93,6 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\TextureView.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Texture2D.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Texture1D.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Texture3D.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

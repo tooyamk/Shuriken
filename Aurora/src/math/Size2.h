@@ -25,6 +25,14 @@ namespace aurora {
 			height(height) {
 		}
 
+		inline bool operator==(const Size2<T>& size) const {
+			return width == size.width && height == size.height;
+		}
+
+		inline bool operator!=(const Size2<T>& size) const {
+			return width != size.width || height != size.height;
+		}
+
 		inline void AE_CALL set(const Size2<T>& size) {
 			width = size.width;
 			height = size.height;

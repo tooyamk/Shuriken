@@ -112,8 +112,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 				if (c) {
 					auto data = c->getData();
 					if (data) {
-						auto itex = (ITextureViewBase*)data;
-						auto view = (ID3D11ShaderResourceView*)itex->getNative();
+						auto view = (ID3D11ShaderResourceView*)((ITextureViewBase*)data)->getNativeView();
 						_graphics.get<Graphics>()->useShaderResources<stage>(info.bindPoint, 1, &view);
 					}
 					//if (data) (BaseTexture*)(((ITexture*)data)->getNative())->use<stage>((Graphics*)_graphics, info.bindPoint);

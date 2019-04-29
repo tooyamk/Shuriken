@@ -52,7 +52,7 @@ namespace aurora {
 	}
 
 	inline void Vector3::cross(const Vector3& v1, const Vector3& v2, Vector3& dst) {
-		Math::crossVec3(&v1.x, &v2.x, &dst.x);
+		Math::cross(v1.pos, v2.pos, dst.pos);
 	}
 
 	inline f32 Vector3::distance(const Vector3& v1, const Vector3& v2) {
@@ -72,6 +72,6 @@ namespace aurora {
 	}
 
 	inline void Vector3::lerp(const Vector3& from, const Vector3& to, f32 t, Vector3& dst) {
-		Math::lerpVec(from.pos, to.pos, t, dst.pos);
+		Math::lerp<3>(from.pos, to.pos, t, dst.pos);
 	}
 }

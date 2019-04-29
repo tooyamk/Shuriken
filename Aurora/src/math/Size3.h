@@ -28,6 +28,14 @@ namespace aurora {
 			depth(depth) {
 		}
 
+		inline bool operator==(const Size3<T>& size) const {
+			return width == size.width && height == size.height && depth == size.depth;
+		}
+
+		inline bool operator!=(const Size3<T>& size) const {
+			return width != size.width || height != size.height || depth != size.depth;
+		}
+
 		inline void AE_CALL set(const Size3<T>& size) {
 			width = size.width;
 			height = size.height;

@@ -57,6 +57,6 @@ namespace aurora {
 	}
 
 	inline void Vector2::lerp(const Vector2& from, const Vector2& to, f32 t, Vector2& dst) {
-		Math::lerpVec(from.pos, to.pos, t, dst.pos);
+		Math::lerp<2>(from.pos, to.pos, t, dst.pos);
 	}
 }

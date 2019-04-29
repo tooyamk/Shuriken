@@ -34,11 +34,8 @@
     <ClInclude Include="src\IndexBuffer.h" />
     <ClInclude Include="src\Program.h" />
     <ClInclude Include="src\Sampler.h" />
-    <ClInclude Include="src\Texture1D.h" />
     <ClInclude Include="src\Texture1DResource.h" />
-    <ClInclude Include="src\Texture2D.h" />
     <ClInclude Include="src\Texture2DResource.h" />
-    <ClInclude Include="src\Texture3D.h" />
     <ClInclude Include="src\TextureView.h" />
     <ClInclude Include="src\Texture3DResource.h" />
     <ClInclude Include="src\VertexBuffer.h" />
@@ -53,11 +50,8 @@
     <ClCompile Include="src\IndexBuffer.cpp" />
     <ClCompile Include="src\Program.cpp" />
     <ClCompile Include="src\Sampler.cpp" />
-    <ClCompile Include="src\Texture1D.cpp" />
     <ClCompile Include="src\Texture1DResource.cpp" />
-    <ClCompile Include="src\Texture2D.cpp" />
     <ClCompile Include="src\Texture2DResource.cpp" />
-    <ClCompile Include="src\Texture3D.cpp" />
     <ClCompile Include="src\TextureView.cpp" />
     <ClCompile Include="src\Texture3DResource.cpp" />
     <ClCompile Include="src\VertexBuffer.cpp" />

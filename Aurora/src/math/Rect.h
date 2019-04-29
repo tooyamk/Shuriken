@@ -1,6 +1,7 @@
 #pragma once
 
 #include "base/LowLevel.h"
+#include "math/Size2.h"
 
 namespace aurora {
 	template<typename T>
@@ -13,53 +14,47 @@ namespace aurora {
 		Rect(const Rect<T>& rect) :
 			left(rect.left),
 			top(rect.top),
-			right(rect.right),
-			bottom(rect.bottom) {
+			size(rect.size) {
 		}
 
 		Rect(Rect<T>&& rect) :
 			left(rect.left),
 			top(rect.top),
-			right(rect.right),
-			bottom(rect.bottom) {
+			size(rect.size) {
 		}
 
-		Rect(T left, T top, T right, T bottom) :
+		Rect(T left, T top, const Size2<T>& size) :
 			left(left),
 			top(top),
-			right(right),
-			bottom(bottom) {
+			size(size) {
 		}
 
-		inline T AE_CALL getWidth() const {
-			return right - left;
+		inline bool operator==(const Rect<T>& rect) const {
+			return left == rect.left && top == rect.top && size == rect.size;
 		}
 
-		inline T AE_CALL getHeight() const {
-			return bottom - top;
+		inline bool operator!=(const Rect<T>& rect) const {
+			return left != rect.left || top != rect.top || size != rect.size;
 		}
 
 		inline void AE_CALL set(const Rect<T>& rect) {
 			left = rect.left;
-			right = rect.right;
 			top = rect.top;
-			bottom = rect.bottom;
+			size.set(rect.size);
 		}
 
-		inline void AE_CALL set(T left, T top, T right, T bottom) {
+		inline void AE_CALL set(T left, T top, const Size2<T>& size) {
 			this->left = left;
 			this->top = top;
-			this->right = right;
-			this->bottom = bottom;
+			this->size.set(size);
 		}
 
 		inline bool AE_CALL isEqual(const Rect<T> rect) const {
-			return left == rect.left && right == rect.right && top == rect.top && bottom == rect.bottom;
+			return left == rect.left && top == rect.top && size == rect.size;
 		}
 
 		T left;
 		T top;
-		T right;
-		T bottom;
+		Size2<T> size;
 	};
 }

@@ -6,7 +6,7 @@ struct PS_INPUT {
 float2 red[2];
 float3 green;
 
-Texture2D texDiffuse;
+Texture2DArray texDiffuse;
 SamplerState samLiner {
     Filter = MIN_MAG_MIP_LINEAR;
 };
@@ -16,7 +16,7 @@ float blue;
 }
 
 float4 main(PS_INPUT input) : SV_TARGET {
-    float4 c = texDiffuse.Sample(samLiner, input.uv);
+    float4 c = texDiffuse.Sample(samLiner, float3(input.uv, 3.5));
     return c;
     //c.x = red;
     //return c;

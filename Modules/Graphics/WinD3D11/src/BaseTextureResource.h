@@ -1,6 +1,7 @@
 #pragma once
 
 #include "BaseResource.h"
+#include "math/Size3.h"
 
 namespace aurora::modules::graphics::win_d3d11 {
 	class BaseTextureResource : public BaseResource {
@@ -8,23 +9,25 @@ namespace aurora::modules::graphics::win_d3d11 {
 		BaseTextureResource(UINT resType);
 		virtual ~BaseTextureResource();
 
-		bool AE_CALL create(Graphics* graphics, TextureType texType, ui32 width, ui32 height, ui32 depth, i32 arraySize, 
+		bool AE_CALL create(Graphics* graphics, TextureType texType, const Size3<ui32>& size, ui32 arraySize, 
 			TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data = nullptr);
-		Usage AE_CALL map(Graphics* graphics, ui32 mipLevel, Usage expectMapUsage);
-		void AE_CALL unmap(Graphics* graphics, ui32 mipLevel);
-		i32 AE_CALL read(ui32 mipLevel, ui32 offset, void* dst, ui32 dstLen, i32 readLen = -1);
-		i32 AE_CALL write(ui32 mipLevel, ui32 offset, const void* data, ui32 length);
-		bool AE_CALL write(Graphics* graphics, ui32 mipLevel, const D3D11_BOX& range, const void* data);
+		Usage AE_CALL map(Graphics* graphics, ui32 arraySlice, ui32 mipSlice, Usage expectMapUsage);
+		void AE_CALL unmap(Graphics* graphics, ui32 arraySlice, ui32 mipSlice);
+		i32 AE_CALL read(ui32 arraySlice, ui32 mipSlice, ui32 offset, void* dst, ui32 dstLen, i32 readLen = -1);
+		i32 AE_CALL write(ui32 arraySlice, ui32 mipSlice, ui32 offset, const void* data, ui32 length);
+		bool AE_CALL write(Graphics* graphics, ui32 arraySlice, ui32 mipSlice, const D3D11_BOX& range, const void* data);
 		void AE_CALL releaseTex(Graphics* graphics);
 		void AE_CALL addView(ITextureView& view, const std::function<void()>& onRecreated);
 		void AE_CALL removeView(ITextureView& view);
 
+		inline static constexpr UINT calcSubresource(UINT mipSlice, UINT arraySlice, UINT mipLevels) {
+			return mipSlice + arraySlice * mipLevels;
+		}
+
 		TextureFormat format;
 		DXGI_FORMAT internalFormat;
 		ui16 perPixelSize;
-		ui32 width;
-		ui32 height;
-		ui32 depth;
+		Size3<ui32> texSize;
 		ui32 arraySize;
 		ui32 mipLevels;
 

@@ -24,10 +24,10 @@ namespace aurora {
 		for (ui32 i = 0; i < mipLevel; ++i) size = calcNextMipPixelSize(size);
 	}
 
-	void Image::calcSpecificMipPixelSize(ui32& size1, ui32& size2, ui32 mipLevel) {
+	void Image::calcSpecificMipPixelSize(Size2<ui32>& size, ui32 mipLevel) {
 		for (ui32 i = 0; i < mipLevel; ++i) {
-			size1 = calcNextMipPixelSize(size1);
-			size2 = calcNextMipPixelSize(size2);
+			size.width = calcNextMipPixelSize(size.width);
+			size.height = calcNextMipPixelSize(size.height);
 		}
 	}
 

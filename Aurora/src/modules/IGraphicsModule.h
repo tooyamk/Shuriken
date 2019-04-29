@@ -234,18 +234,29 @@ namespace aurora::modules::graphics {
 	};
 
 
-	class AE_DLL ITextureResource : public IObject {
+	class AE_DLL ITextureViewBase : public IObject {
 	public:
-		ITextureResource(IGraphicsModule& graphics) : IObject(graphics) {}
+		ITextureViewBase(IGraphicsModule& graphics) : IObject(graphics) {}
+		virtual ~ITextureViewBase() {}
+
+		//virtual TextureType AE_CALL getType() const = 0;
+		virtual const void* AE_CALL getNativeView() const = 0;
+		virtual ui32 AE_CALL getArraySize() const = 0;
+		virtual ui32 AE_CALL getMipLevels() const = 0;
+	};
+
+
+	class AE_DLL ITextureResource : public ITextureViewBase {
+	public:
+		ITextureResource(IGraphicsModule& graphics) : ITextureViewBase(graphics) {}
 		virtual ~ITextureResource() {}
 
 		virtual TextureType AE_CALL getType() const = 0;
-		virtual const void* AE_CALL getNative() const = 0;
-		virtual ui32 AE_CALL getMipLevels() const = 0;
-		virtual Usage AE_CALL map(ui32 mipLevel, Usage expectMapUsage) = 0;
-		virtual void AE_CALL unmap(ui32 mipLevel) = 0;
-		virtual i32 AE_CALL read(ui32 mipLevel, ui32 offset, void* dst, ui32 dstLen, i32 readLen = -1) = 0;
-		virtual i32 AE_CALL write(ui32 mipLevel, ui32 offset, const void* data, ui32 length) = 0;
+		virtual const void* AE_CALL getNativeResource() const = 0;
+		virtual Usage AE_CALL map(ui32 arraySlice, ui32 mipSlice, Usage expectMapUsage) = 0;
+		virtual void AE_CALL unmap(ui32 arraySlice, ui32 mipSlice) = 0;
+		virtual i32 AE_CALL read(ui32 arraySlice, ui32 mipSlice, ui32 offset, void* dst, ui32 dstLen, i32 readLen = -1) = 0;
+		virtual i32 AE_CALL write(ui32 arraySlice, ui32 mipSlice, ui32 offset, const void* data, ui32 length) = 0;
 	};
 
 
@@ -254,10 +265,10 @@ namespace aurora::modules::graphics {
 		ITexture1DResource(IGraphicsModule& graphics) : ITextureResource(graphics) {}
 		virtual ~ITexture1DResource() {}
 
-		virtual bool AE_CALL create(ui32 width, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data = nullptr) = 0;
+		virtual bool AE_CALL create(ui32 width, ui32 arraySize, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data = nullptr) = 0;
 
 		using ITextureResource::write;
-		virtual bool AE_CALL write(ui32 mipLevel, ui32 left, ui32 right, const void* data) = 0;
+		virtual bool AE_CALL write(ui32 arraySlice, ui32 mipSlice, ui32 left, ui32 right, const void* data) = 0;
 	};
 
 
@@ -266,10 +277,10 @@ namespace aurora::modules::graphics {
 		ITexture2DResource(IGraphicsModule& graphics) : ITextureResource(graphics) {}
 		virtual ~ITexture2DResource() {}
 
-		virtual bool AE_CALL create(const Size2<ui32>& size, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data = nullptr) = 0;
+		virtual bool AE_CALL create(const Size2<ui32>& size, ui32 arraySize, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data = nullptr) = 0;
 
 		using ITextureResource::write;
-		virtual bool AE_CALL write(ui32 mipLevel, const Rect<ui32>& range, const void* data) = 0;
+		virtual bool AE_CALL write(ui32 arraySlice, ui32 mipSlice, const Rect<ui32>& range, const void* data) = 0;
 	};
 
 
@@ -278,66 +289,10 @@ namespace aurora::modules::graphics {
 		ITexture3DResource(IGraphicsModule& graphics) : ITextureResource(graphics) {}
 		virtual ~ITexture3DResource() {}
 
-		virtual bool AE_CALL create(const Size3<ui32>& size, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data = nullptr) = 0;
+		virtual bool AE_CALL create(const Size3<ui32>& size, ui32 arraySize, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data = nullptr) = 0;
 
 		using ITextureResource::write;
-		virtual bool AE_CALL write(ui32 mipLevel, const Box<ui32>& range, const void* data) = 0;
-	};
-
-
-	class AE_DLL ITextureViewBase : public IObject {
-	public:
-		ITextureViewBase(IGraphicsModule& graphics) : IObject(graphics) {}
-		virtual ~ITextureViewBase() {}
-
-		//virtual TextureType AE_CALL getType() const = 0;
-		virtual const void* AE_CALL getNative() const = 0;
-		virtual ui32 AE_CALL getMipLevels() const = 0;
-	};
-
-
-	class AE_DLL ITexture : public ITextureViewBase {
-	public:
-		ITexture(IGraphicsModule& graphics) : ITextureViewBase(graphics) {}
-		virtual ~ITexture() {}
-
-		virtual Usage AE_CALL map(ui32 mipLevel, Usage expectMapUsage) = 0;
-		virtual void AE_CALL unmap(ui32 mipLevel) = 0;
-		virtual i32 AE_CALL read(ui32 mipLevel, ui32 offset, void* dst, ui32 dstLen, i32 readLen = -1) = 0;
-		virtual i32 AE_CALL write(ui32 mipLevel, ui32 offset, const void* data, ui32 length) = 0;
-
-		//virtual TextureType AE_CALL getType() const = 0;
-		//virtual const void* AE_CALL getNative() const = 0;
-	};
-
-
-	class AE_DLL ITexture1D : public ITexture {
-	public:
-		ITexture1D(IGraphicsModule& graphics) : ITexture(graphics) {}
-		virtual ~ITexture1D() {}
-
-		virtual bool AE_CALL create(ui32 width, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data = nullptr) = 0;
-		virtual bool AE_CALL write(ui32 mipLevel, ui32 left, ui32 right, const void* data) = 0;
-	};
-
-
-	class AE_DLL ITexture2D : public ITexture {
-	public:
-		ITexture2D(IGraphicsModule& graphics) : ITexture(graphics) {}
-		virtual ~ITexture2D() {}
-
-		virtual bool AE_CALL create(const Size2<ui32>& size, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data = nullptr) = 0;
-		virtual bool AE_CALL write(ui32 mipLevel, const Rect<ui32>& range, const void* data) = 0;
-	};
-
-
-	class AE_DLL ITexture3D : public ITexture {
-	public:
-		ITexture3D(IGraphicsModule& graphics) : ITexture(graphics) {}
-		virtual ~ITexture3D() {}
-
-		virtual bool AE_CALL create(const Size3<ui32>& size, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data = nullptr) = 0;
-		virtual bool AE_CALL write(ui32 mipLevel, const Box<ui32>& range, const void* data) = 0;
+		virtual bool AE_CALL write(ui32 arraySlice, ui32 mipSlice, const Box<ui32>& range, const void* data) = 0;
 	};
 
 
@@ -348,8 +303,7 @@ namespace aurora::modules::graphics {
 
 		//virtual TextureType AE_CALL getType() const = 0;
 		virtual ITextureResource* AE_CALL getResource() const = 0;
-		virtual const void* AE_CALL getNative() const = 0;
-		virtual bool AE_CALL create(ITextureResource* res, ui32 mipBegin, ui32 mipLevels) = 0;
+		virtual bool AE_CALL create(ITextureResource* res, ui32 mipBegin, ui32 mipLevels, ui32 arrayBegin, ui32 arraySize) = 0;
 	};
 
 
@@ -548,9 +502,6 @@ namespace aurora::modules::graphics {
 		virtual IIndexBuffer* AE_CALL createIndexBuffer() = 0;
 		virtual IProgram* AE_CALL createProgram() = 0;
 		virtual ISampler* AE_CALL createSampler() = 0;
-		virtual ITexture1D* AE_CALL createTexture1D() = 0;
-		virtual ITexture2D* AE_CALL createTexture2D() = 0;
-		virtual ITexture3D* AE_CALL createTexture3D() = 0;
 		virtual ITexture1DResource* AE_CALL createTexture1DResource() = 0;
 		virtual ITexture2DResource* AE_CALL createTexture2DResource() = 0;
 		virtual ITexture3DResource* AE_CALL createTexture3DResource() = 0;
