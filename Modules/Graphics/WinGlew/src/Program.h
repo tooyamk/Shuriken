@@ -12,8 +12,8 @@ namespace aurora::modules::graphics::win_glew {
 
 		virtual bool AE_CALL upload(const ProgramSource& vert, const ProgramSource& frag) override;
 		virtual bool AE_CALL use() override;
-		virtual void AE_CALL useVertexBuffers(const VertexBufferFactory& factory) override;
-		virtual void AE_CALL draw(const IIndexBuffer& indexBuffer, ui32 count = 0xFFFFFFFFui32, ui32 offset = 0) override;
+		virtual void AE_CALL draw(const VertexBufferFactory* vertexFactory, const ShaderParameterFactory* paramFactory,
+			const IIndexBuffer* indexBuffer, ui32 count = 0xFFFFFFFFui32, ui32 offset = 0) override;
 
 	protected:
 		struct InVertexBufferInfo {

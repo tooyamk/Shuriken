@@ -37,8 +37,22 @@ namespace aurora {
 			return (ui32)std::floor(std::log2(n) + 1);
 		}
 
-		static void AE_CALL calcSpecificMipPixelSize(ui32& size, ui32 mipLevel);
-		static void AE_CALL calcSpecificMipPixelSize(Vec2ui32& size, ui32 mipLevel);
+		inline static void AE_CALL calcSpecificMipPixelSize(ui32& size, ui32 mipLevel) {
+			for (ui32 i = 0; i < mipLevel; ++i) size = calcNextMipPixelSize(size);
+		}
+		inline static void AE_CALL calcSpecificMipPixelSize(Vec2ui32& size, ui32 mipLevel) {
+			for (ui32 i = 0; i < mipLevel; ++i) {
+				size[0] = calcNextMipPixelSize(size[0]);
+				size[1] = calcNextMipPixelSize(size[1]);
+			}
+		}
+		inline static void AE_CALL calcSpecificMipPixelSize(Vec3ui32& size, ui32 mipLevel) {
+			for (ui32 i = 0; i < mipLevel; ++i) {
+				size[0] = calcNextMipPixelSize(size[0]);
+				size[1] = calcNextMipPixelSize(size[1]);
+				size[2] = calcNextMipPixelSize(size[2]);
+			}
+		}
 
 		static std::vector<ui32> AE_CALL calcMipsPixelSize(ui32 n, ui32 mipLevels);
 

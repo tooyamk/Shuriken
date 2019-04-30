@@ -7,26 +7,28 @@ namespace aurora::modules::graphics::win_glew {
 
 	class AE_MODULE_DLL BaseBuffer {
 	public:
+		BaseBuffer(GLenum bufferType);
 		virtual ~BaseBuffer();
 
-	protected:
-		BaseBuffer(GLenum target);
+		bool AE_CALL create(ui32 size, Usage resUsage, const void* data = nullptr);
+		Usage AE_CALL map(Usage expectMapUsage);
+		void AE_CALL unmap();
+		i32 AE_CALL read(ui32 offset, void* dst, ui32 dstLen, i32 readLen = -1);
+		i32 AE_CALL write(ui32 offset, const void* data, ui32 length);
+		i32 AE_CALL update(ui32 offset, const void* data, ui32 length);
+		void AE_CALL flush();
+		void AE_CALL releaseBuffer();
+		void AE_CALL waitServerSync();
+		void AE_CALL releaseSync();
 
-		bool AE_CALL _stroage(ui32 size, const void* data = nullptr);
-		void AE_CALL _write(ui32 offset, const void* data, ui32 length);
-		void AE_CALL _flush();
+		bool dirty;
+		Usage resUsage;
+		Usage mapUsage;
+		GLenum bufferType;
+		ui32 size;
+		GLuint handle;
+		void* mapData;
 
-	protected:
-		bool _dirty;
-		GLenum _target;
-		ui32 _size;
-		GLuint _handle;
-		void* _mapData;
-
-		GLsync _sync;
-
-		void _delBuffer();
-		void _waitServerSync();
-		void _delSync();
+		GLsync sync;
 	};
 }

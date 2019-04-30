@@ -31,8 +31,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return _baseTexRes.mipLevels;
 	}
 
-	bool Texture3DResource::create(const Vec3ui32& size, ui32 arraySize, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data) {
-		auto rst = _baseTexRes.create(_graphics.get<Graphics>(), TextureType::TEX3D, size, arraySize, format, mipLevels, resUsage, data);
+	bool Texture3DResource::create(const Vec3ui32& size, ui32 arraySize, ui32 mipLevels, TextureFormat format, Usage resUsage, const void*const* data) {
+		auto rst = _baseTexRes.create(_graphics.get<Graphics>(), TextureType::TEX3D, size, arraySize, mipLevels, format, resUsage, data);
 		_view.create(this, 0, -1, 0, _baseTexRes.arraySize);
 		return rst;
 	}
@@ -53,7 +53,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return _baseTexRes.write(arraySlice, mipSlice, offset, data, length);
 	}
 
-	bool Texture3DResource::write(ui32 arraySlice, ui32 mipSlice, const Box3ui32& range, const void* data) {
+	bool Texture3DResource::update(ui32 arraySlice, ui32 mipSlice, const Box3ui32& range, const void* data) {
 		D3D11_BOX box;
 		box.left = range.pos[0];
 		box.right = range.pos[0] + range.size[0];
@@ -62,6 +62,6 @@ namespace aurora::modules::graphics::win_d3d11 {
 		box.front = range.pos[2];
 		box.back = range.pos[2] + range.size[2];
 		
-		return _baseTexRes.write(_graphics.get<Graphics>(), arraySlice, mipSlice, box, data);
+		return _baseTexRes.update(_graphics.get<Graphics>(), arraySlice, mipSlice, box, data);
 	}
 }

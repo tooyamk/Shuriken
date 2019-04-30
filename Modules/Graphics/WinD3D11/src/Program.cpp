@@ -224,7 +224,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 	void Program::draw(const VertexBufferFactory* vertexFactory, const ShaderParameterFactory* paramFactory,
 		const IIndexBuffer* indexBuffer, ui32 count, ui32 offset) {
-		if (_vs && vertexFactory && indexBuffer, count > 0) {
+		if (_vs && vertexFactory && indexBuffer && count > 0) {
 			auto g = _graphics.get<Graphics>();
 			auto context = g->getContext();
 

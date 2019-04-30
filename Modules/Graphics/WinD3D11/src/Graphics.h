@@ -70,10 +70,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 			_context->PSSetShaderResources(slot, numViews, views);
 		}
 
-		static DXGI_FORMAT AE_CALL convertDXGIFormat(TextureFormat fmt);
+		static DXGI_FORMAT AE_CALL convertInternalFormat(TextureFormat fmt);
 
 	private:
-		Application* _app;
+		RefPtr<Application> _app;
 
 		DXGI_RATIONAL _refreshRate;
 		D3D_FEATURE_LEVEL _featureLevel;

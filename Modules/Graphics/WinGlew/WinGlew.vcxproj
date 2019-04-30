@@ -29,6 +29,7 @@
   <ItemGroup>
     <ClInclude Include="src\Base.h" />
     <ClInclude Include="src\BaseBuffer.h" />
+    <ClInclude Include="src\BaseTexture.h" />
     <ClInclude Include="src\Graphics.h" />
     <ClInclude Include="src\CreateModule.h" />
     <ClInclude Include="src\IndexBuffer.h" />
@@ -37,6 +38,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\BaseBuffer.cpp" />
+    <ClCompile Include="src\BaseTexture.cpp" />
     <ClCompile Include="src\Graphics.cpp" />
     <ClCompile Include="src\IndexBuffer.cpp" />
     <ClCompile Include="src\Program.cpp" />

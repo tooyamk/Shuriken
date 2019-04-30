@@ -67,10 +67,11 @@ namespace aurora::modules::graphics {
 		virtual ~IBuffer() {}
 
 		virtual bool AE_CALL create(ui32 size, Usage bufferUsage, const void* data = nullptr, ui32 dataSize = 0) = 0;
-		virtual Usage AE_CALL map(Usage mapUsage) = 0;
+		virtual Usage AE_CALL map(Usage expectMapUsage) = 0;
 		virtual void AE_CALL unmap() = 0;
 		virtual i32 AE_CALL read(ui32 offset, void* dst, ui32 dstLen, i32 readLen = -1) = 0;
 		virtual i32 AE_CALL write(ui32 offset, const void* data, ui32 length) = 0;
+		virtual i32 AE_CALL update(ui32 offset, const void* data, ui32 length) = 0;
 		virtual void AE_CALL flush() = 0;
 	};
 
@@ -256,10 +257,8 @@ namespace aurora::modules::graphics {
 		ITexture1DResource(IGraphicsModule& graphics) : ITextureResource(graphics) {}
 		virtual ~ITexture1DResource() {}
 
-		virtual bool AE_CALL create(ui32 width, ui32 arraySize, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data = nullptr) = 0;
-
-		using ITextureResource::write;
-		virtual bool AE_CALL write(ui32 arraySlice, ui32 mipSlice, const Box1ui32& range, const void* data) = 0;
+		virtual bool AE_CALL create(ui32 width, ui32 arraySize, ui32 mipLevels, TextureFormat format, Usage resUsage, const void*const* data = nullptr) = 0;
+		virtual bool AE_CALL update(ui32 arraySlice, ui32 mipSlice, const Box1ui32& range, const void* data) = 0;
 	};
 
 
@@ -268,10 +267,8 @@ namespace aurora::modules::graphics {
 		ITexture2DResource(IGraphicsModule& graphics) : ITextureResource(graphics) {}
 		virtual ~ITexture2DResource() {}
 
-		virtual bool AE_CALL create(const Vec2ui32& size, ui32 arraySize, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data = nullptr) = 0;
-
-		using ITextureResource::write;
-		virtual bool AE_CALL write(ui32 arraySlice, ui32 mipSlice, const Box2ui32& range, const void* data) = 0;
+		virtual bool AE_CALL create(const Vec2ui32& size, ui32 arraySize, ui32 mipLevels, TextureFormat format, Usage resUsage, const void*const* data = nullptr) = 0;
+		virtual bool AE_CALL update(ui32 arraySlice, ui32 mipSlice, const Box2ui32& range, const void* data) = 0;
 	};
 
 
@@ -280,10 +277,8 @@ namespace aurora::modules::graphics {
 		ITexture3DResource(IGraphicsModule& graphics) : ITextureResource(graphics) {}
 		virtual ~ITexture3DResource() {}
 
-		virtual bool AE_CALL create(const Vec3ui32& size, ui32 arraySize, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data = nullptr) = 0;
-
-		using ITextureResource::write;
-		virtual bool AE_CALL write(ui32 arraySlice, ui32 mipSlice, const Box3ui32& range, const void* data) = 0;
+		virtual bool AE_CALL create(const Vec3ui32& size, ui32 arraySize, ui32 mipLevels, TextureFormat format, Usage resUsage, const void*const* data = nullptr) = 0;
+		virtual bool AE_CALL update(ui32 arraySlice, ui32 mipSlice, const Box3ui32& range, const void* data) = 0;
 	};
 
 

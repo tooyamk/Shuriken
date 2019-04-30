@@ -20,17 +20,6 @@ namespace aurora {
 		}
 	}
 
-	void Image::calcSpecificMipPixelSize(ui32& size, ui32 mipLevel) {
-		for (ui32 i = 0; i < mipLevel; ++i) size = calcNextMipPixelSize(size);
-	}
-
-	void Image::calcSpecificMipPixelSize(Vec2ui32& size, ui32 mipLevel) {
-		for (ui32 i = 0; i < mipLevel; ++i) {
-			size[0] = calcNextMipPixelSize(size[0]);
-			size[1] = calcNextMipPixelSize(size[1]);
-		}
-	}
-
 	std::vector<ui32> Image::calcMipsPixelSize(ui32 n, ui32 mipLevels) {
 		if (!n) return std::move(std::vector<ui32>(0));
 		if (!mipLevels) mipLevels = calcMipLevels(n);

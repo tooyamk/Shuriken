@@ -71,7 +71,12 @@ namespace aurora::modules::graphics::win_d3d11 {
 				return length;
 			}
 			return 0;
-		} else if ((resUsage & Usage::GPU_WRITE) == Usage::GPU_WRITE) {
+		}
+		return -1;
+	}
+
+	i32 BaseBuffer::update(Graphics* graphics, ui32 offset, const void* data, ui32 length) {
+		if ((resUsage & Usage::GPU_WRITE) == Usage::GPU_WRITE) {
 			if (data && length && offset < size) {
 				length = std::min<ui32>(length, size - offset);
 				if (length == size) {
@@ -95,6 +100,6 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 	void BaseBuffer::releaseBuffer(Graphics* graphics) {
 		unmap(graphics);
-		releaseRes(graphics);
+		releaseRes();
 	}
 }

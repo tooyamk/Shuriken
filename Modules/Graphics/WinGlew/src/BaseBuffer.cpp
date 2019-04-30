@@ -3,34 +3,35 @@
 #include <algorithm>
 
 namespace aurora::modules::graphics::win_glew {
-	BaseBuffer::BaseBuffer(GLenum target) :
-		_dirty(false),
-		_target(target),
-		_size(0),
-		_handle(0),
-		_mapData(nullptr),
-		_sync(nullptr) {
+	BaseBuffer::BaseBuffer(GLenum bufferType) :
+		dirty(false),
+		bufferType(bufferType),
+		size(0),
+		handle(0),
+		mapData(nullptr),
+		sync(nullptr) {
 	}
 
 	BaseBuffer::~BaseBuffer() {
-		_delBuffer();
+		releaseBuffer();
 	}
 
-	bool BaseBuffer::_stroage(ui32 size, const void* data) {
-		_delBuffer();
+	bool BaseBuffer::create(ui32 size, Usage resUsage, const void* data) {
+		releaseBuffer();
 
-		glGenBuffers(1, &_handle);
+		glGenBuffers(1, &handle);
 
-		if (_handle) {
-			_size = size;
+		if (handle) {
+			this->resUsage = resUsage & (Usage::CPU_READ_WRITE | Usage::GPU_WRITE);
+			this->size = size;
 
 			GLbitfield flags = GL_MAP_WRITE_BIT
 				| GL_MAP_PERSISTENT_BIT //在被映射状态下不同步
 				| GL_MAP_COHERENT_BIT;  //数据对GPU立即可见
 
-			glBindBuffer(_target, _handle);
-			glBufferStorage(_target, size, data, flags);
-			_mapData = glMapBufferRange(_target, 0, size, flags);
+			glBindBuffer(bufferType, handle);
+			glBufferStorage(bufferType, size, data, flags);
+			mapData = glMapBufferRange(bufferType, 0, size, flags);
 
 			return true;
 		}
@@ -38,45 +39,86 @@ namespace aurora::modules::graphics::win_glew {
 		return false;
 	}
 
-	void BaseBuffer::_write(ui32 offset, const void* data, ui32 length) {
-		if (_handle && _mapData && data && length && offset < _size) {
-			_dirty = true;
-			memcpy((i8*)_mapData + offset, data, std::min<ui32>(length, _size - offset));
-		}
-	}
+	Usage BaseBuffer::map(Usage expectMapUsage) {
+		Usage ret = Usage::NONE;
 
-	void BaseBuffer::_flush() {
-		if (_dirty) {
-			_waitServerSync();
-			_sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
-			_dirty = false;
-		}
-	}
-
-	void BaseBuffer::_delBuffer() {
-		if (_handle) {
-			_delSync();
-
-			if (_mapData) {
-				glBindBuffer(_target, _handle);
-				glUnmapBuffer(_target);
-				_mapData = nullptr;
+		expectMapUsage &= Usage::CPU_READ_WRITE;
+		if (handle && expectMapUsage != Usage::NONE) {
+			if (((expectMapUsage & Usage::CPU_READ) == Usage::CPU_READ) && ((resUsage & Usage::CPU_READ) == Usage::CPU_READ)) {
+				ret |= Usage::CPU_READ;
+			} else {
+				expectMapUsage &= ~Usage::CPU_READ;
+			}
+			if ((expectMapUsage & Usage::CPU_WRITE) == Usage::CPU_WRITE) {
+				if ((resUsage & Usage::CPU_WRITE) == Usage::CPU_WRITE) {
+					ret |= Usage::CPU_WRITE | Usage::CPU_WRITE_NO_OVERWRITE;
+				}
+			} else {
+				expectMapUsage &= ~Usage::CPU_WRITE;
 			}
 
-			glDeleteBuffers(1, &_handle);
-			_handle = 0;
-
-			_dirty = false;
+			mapUsage = expectMapUsage;
 		}
-		_size = 0;
+
+		return ret;
 	}
 
-	void BaseBuffer::_waitServerSync() {
-		if (_sync) {
+	void BaseBuffer::unmap() {
+		mapUsage = Usage::NONE;
+	}
+
+	i32 BaseBuffer::read(ui32 offset, void* dst, ui32 dstLen, i32 readLen) {
+		return -1;
+	}
+
+	i32 BaseBuffer::write(ui32 offset, const void* data, ui32 length) {
+		if ((mapUsage & Usage::CPU_WRITE) == Usage::CPU_WRITE) {
+			if (data && length && offset < size) {
+				length = std::min<ui32>(length, size - offset);
+				memcpy((i8*)mapData + offset, data, length);
+				return length;
+			}
+			return 0;
+		}
+		return -1;
+	}
+
+	i32 BaseBuffer::update(ui32 offset, const void* data, ui32 length) {
+		return -1;
+	}
+
+	void BaseBuffer::flush() {
+		if (dirty) {
+			waitServerSync();
+			sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+			dirty = false;
+		}
+	}
+
+	void BaseBuffer::releaseBuffer() {
+		if (handle) {
+			releaseSync();
+
+			if (mapData) {
+				glBindBuffer(bufferType, handle);
+				glUnmapBuffer(bufferType);
+				mapData = nullptr;
+			}
+
+			glDeleteBuffers(1, &handle);
+			handle = 0;
+
+			dirty = false;
+		}
+		size = 0;
+	}
+
+	void BaseBuffer::waitServerSync() {
+		if (sync) {
 			do {
-				auto rst = glClientWaitSync(_sync, GL_SYNC_FLUSH_COMMANDS_BIT, 1);
+				auto rst = glClientWaitSync(sync, GL_SYNC_FLUSH_COMMANDS_BIT, 1);
 				if (rst == GL_ALREADY_SIGNALED || rst == GL_CONDITION_SATISFIED) {
-					_delSync();
+					releaseSync();
 					return;
 				}
 
@@ -84,10 +126,10 @@ namespace aurora::modules::graphics::win_glew {
 		}
 	}
 
-	void BaseBuffer::_delSync() {
-		if (_sync) {
-			glDeleteSync(_sync);
-			_sync = nullptr;
+	void BaseBuffer::releaseSync() {
+		if (sync) {
+			glDeleteSync(sync);
+			sync = nullptr;
 		}
 	}
 }

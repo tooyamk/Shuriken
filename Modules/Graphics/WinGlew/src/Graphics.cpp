@@ -3,10 +3,12 @@
 #include "base/String.h"
 #include "CreateModule.h"
 
+#include "BaseTexture.h"
+
 namespace aurora::modules::graphics::win_glew {
 	Graphics::Graphics(Application* app, IProgramSourceTranslator* trans) :
-		_app(app->ref<Application>()),
-		_trans(trans ? trans->ref<IProgramSourceTranslator>() : nullptr),
+		_app(app),
+		_trans(trans),
 		_dc(nullptr),
 		_rc(nullptr),
 		_majorVer(0),
@@ -16,14 +18,12 @@ namespace aurora::modules::graphics::win_glew {
 
 	Graphics::~Graphics() {
 		_release();
-		Ref::setNull(_trans);
-		Ref::setNull(_app);
 	}
 
 	bool Graphics::createDevice(const GraphicsAdapter* adapter) {
-		if (_dc || !_app->Win_getHWND()) return false;
+		if (_dc || !_app.get()->Win_getHWND()) return false;
 
-		_dc = GetDC(_app->Win_getHWND());
+		_dc = GetDC(_app.get()->Win_getHWND());
 		if (!_dc) return false;
 
 		PIXELFORMATDESCRIPTOR pfd;
@@ -83,7 +83,14 @@ namespace aurora::modules::graphics::win_glew {
 		_intVer = _majorVer * 100 + _minorVer * 10;
 		_strVer = String::toString(_intVer);
 
+		auto tex = new BaseTexture(TextureType::TEX2D);
+		tex->create(this, Vec3ui32(), 1, 1, TextureFormat::R8G8B8, Usage::NONE, nullptr);
+
 		return true;
+	}
+
+	IConstantBuffer* Graphics::createConstantBuffer() {
+		return nullptr;
 	}
 
 	IIndexBuffer* Graphics::createIndexBuffer() {
@@ -94,6 +101,26 @@ namespace aurora::modules::graphics::win_glew {
 		return new Program(*this);
 	}
 
+	ISampler* Graphics::createSampler() {
+		return nullptr;
+	}
+
+	ITexture1DResource* Graphics::createTexture1DResource() {
+		return nullptr;
+	}
+
+	ITexture2DResource* Graphics::createTexture2DResource() {
+		return nullptr;
+	}
+
+	ITexture3DResource* Graphics::createTexture3DResource() {
+		return nullptr;
+	}
+
+	ITextureView* Graphics::createTextureView() {
+		return nullptr;
+	}
+
 	IVertexBuffer* Graphics::createVertexBuffer() {
 		return new VertexBuffer(*this);
 	}
@@ -102,7 +129,7 @@ namespace aurora::modules::graphics::win_glew {
 		wglMakeCurrent(_dc, _rc);
 
 		i32 w, h;
-		_app->getInnerSize(w, h);
+		_app.get()->getInnerSize(w, h);
 		glViewport(0, 0, w, h);
 	}
 
@@ -130,8 +157,19 @@ namespace aurora::modules::graphics::win_glew {
 		}
 
 		if (_dc) {
-			ReleaseDC(_app->Win_getHWND(), _dc);
+			ReleaseDC(_app.get()->Win_getHWND(), _dc);
 			_dc = nullptr;
+		}
+	}
+
+	GLenum Graphics::convertInternalFormat(TextureFormat fmt) {
+		switch (fmt) {
+		case TextureFormat::R8G8B8:
+			return GL_RGB8;
+		case TextureFormat::R8G8B8A8:
+			return GL_RGBA8;
+		default:
+			return 0;
 		}
 	}
 }

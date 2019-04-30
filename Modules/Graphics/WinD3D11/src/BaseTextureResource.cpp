@@ -14,8 +14,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 	BaseTextureResource::~BaseTextureResource() {
 	}
 
-	bool BaseTextureResource::create(Graphics* graphics, TextureType texType, const Vec3ui32& size, ui32 arraySize,
-		TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data) {
+	bool BaseTextureResource::create(Graphics* graphics, TextureType texType, const Vec3ui32& size, ui32 arraySize, ui32 mipLevels,
+		TextureFormat format, Usage resUsage, const void*const* data) {
 		releaseTex(graphics);
 
 		if (mipLevels == 0) {
@@ -67,7 +67,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			break;
 		}
 
-		DXGI_FORMAT internalFormat = Graphics::convertDXGIFormat(format);
+		DXGI_FORMAT internalFormat = Graphics::convertInternalFormat(format);
 		if (internalFormat == DXGI_FORMAT_UNKNOWN) return _createDone(false);
 
 		auto perPixelSize = Image::calcPerPixelByteSize(format);
@@ -272,7 +272,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return -1;
 	}
 
-	bool BaseTextureResource::write(Graphics* graphics, ui32 arraySlice, ui32 mipSlice, const D3D11_BOX& range, const void* data) {
+	bool BaseTextureResource::update(Graphics* graphics, ui32 arraySlice, ui32 mipSlice, const D3D11_BOX& range, const void* data) {
 		if ((resUsage & Usage::GPU_WRITE) == Usage::GPU_WRITE) {
 			if (data && !arraySlice && mipSlice < mipLevels) {
 				Vec2ui32 size((ui32(&)[2])texSize);
@@ -292,7 +292,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			mappedRes.clear();
 		}
 
-		releaseRes(graphics);
+		releaseRes();
 
 		format = TextureFormat::UNKNOWN;
 		internalFormat = DXGI_FORMAT_UNKNOWN,

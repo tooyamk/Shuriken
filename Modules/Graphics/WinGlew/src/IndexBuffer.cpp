@@ -2,26 +2,43 @@
 #include "Graphics.h"
 
 namespace aurora::modules::graphics::win_glew {
-	IndexBuffer::IndexBuffer(Graphics& graphics) : BaseBuffer(GL_ELEMENT_ARRAY_BUFFER), IIndexBuffer(graphics),
+	IndexBuffer::IndexBuffer(Graphics& graphics) : IIndexBuffer(graphics),
 		_indexType(0),
-		_numElements(0) {
+		_numElements(0),
+		_baseBuffer(GL_ELEMENT_ARRAY_BUFFER) {
 	}
 
 	IndexBuffer::~IndexBuffer() {
 	}
 
-	bool IndexBuffer::stroage(ui32 size, const void* data) {
-		auto rst = _stroage(size, data);
+	bool IndexBuffer::create(ui32 size, Usage bufferUsage, const void* data, ui32 dataSize) {
+		auto rst = _baseBuffer.create(size, bufferUsage, data);
 		_calcNumElements();
 		return rst;
 	}
 
-	void IndexBuffer::write(ui32 offset, const void* data, ui32 length) {
-		_write(offset, data, length);
+	Usage IndexBuffer::map(Usage expectMapUsage) {
+		return _baseBuffer.map(expectMapUsage);
+	}
+
+	void IndexBuffer::unmap() {
+		_baseBuffer.unmap();
+	}
+
+	i32 IndexBuffer::read(ui32 offset, void* dst, ui32 dstLen, i32 readLen) {
+		return _baseBuffer.read(offset, dst, dstLen, readLen);
+	}
+
+	i32 IndexBuffer::write(ui32 offset, const void* data, ui32 length) {
+		return _baseBuffer.write(offset, data, length);
+	}
+
+	i32 IndexBuffer::update(ui32 offset, const void* data, ui32 length) {
+		return _baseBuffer.update(offset, data, length);
 	}
 
 	void IndexBuffer::flush() {
-		_flush();
+		_baseBuffer.flush();
 	}
 
 	void IndexBuffer::setFormat(IndexType type) {
@@ -49,22 +66,22 @@ namespace aurora::modules::graphics::win_glew {
 			if (count > _numElements) count = _numElements;
 			if (count > last) count = last;
 
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _handle);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _baseBuffer.handle);
 			glDrawRangeElements(GL_TRIANGLES, offset, _numElements, count, _indexType, nullptr);
 		}
 	}
 
 	void IndexBuffer::_calcNumElements() {
-		if (_size && _indexType) {
+		if (_baseBuffer.size && _indexType) {
 			switch (_indexType) {
 			case GL_UNSIGNED_BYTE:
-				_numElements = _size;
+				_numElements = _baseBuffer.size;
 				break;
 			case GL_UNSIGNED_SHORT:
-				_numElements = _size >> 1;
+				_numElements = _baseBuffer.size >> 1;
 				break;
 			case GL_UNSIGNED_INT:
-				_numElements = _size >> 2;
+				_numElements = _baseBuffer.size >> 2;
 				break;
 			default:
 				_numElements = 0;

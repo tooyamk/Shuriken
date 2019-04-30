@@ -64,20 +64,19 @@ namespace aurora::modules::graphics::win_glew {
 		return false;
 	}
 
-	void Program::useVertexBuffers(const VertexBufferFactory& factory) {
-		for (auto& info : _inVerBufInfos) {
-			auto vb = (VertexBuffer*)factory.get(info.name);
-			if (vb) vb->use(info.index);
-		}
-	}
+	void Program::draw(const VertexBufferFactory* vertexFactory, const ShaderParameterFactory* paramFactory, 
+		const IIndexBuffer* indexBuffer, ui32 count, ui32 offset) {
+		if (_handle && vertexFactory && indexBuffer && count > 0) {
+			for (auto& info : _inVerBufInfos) {
+				auto vb = (VertexBuffer*)vertexFactory->get(info.name);
+				if (vb) vb->use(info.index);
+			}
 
-	void Program::draw(const IIndexBuffer& indexBuffer, ui32 count, ui32 offset) {
-		if (_handle) {
 			glEnable(GL_CULL_FACE);
 			glCullFace(GL_BACK);
 			glDisable(GL_DEPTH_TEST);
 
-			((IndexBuffer&)indexBuffer).draw(count, offset);
+			((IndexBuffer*)indexBuffer)->draw(count, offset);
 		}
 	}
 
@@ -92,7 +91,7 @@ namespace aurora::modules::graphics::win_glew {
 		if (!source.isValid()) return 0;
 
 		if (source.language != ProgramLanguage::GLSL) {
-			auto g = (Graphics*)_graphics;
+			auto g = _graphics.get<Graphics>();
 			auto translator = g->getProgramSourceTranslator();
 			if (translator) {
 				return _compileShader(g->getProgramSourceTranslator()->translate(source, ProgramLanguage::GLSL, g->getStringVersion()), type);

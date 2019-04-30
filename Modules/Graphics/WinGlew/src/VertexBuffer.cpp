@@ -2,25 +2,42 @@
 #include "Graphics.h"
 
 namespace aurora::modules::graphics::win_glew {
-	VertexBuffer::VertexBuffer(Graphics& graphics) : BaseBuffer(GL_ARRAY_BUFFER), IVertexBuffer(graphics),
+	VertexBuffer::VertexBuffer(Graphics& graphics) : IVertexBuffer(graphics),
 		_validVertexFormat(false),
 		_vertexSize(0),
-		_vertexType(0) {
+		_vertexType(0),
+		_baseBuffer(GL_ARRAY_BUFFER) {
 	}
 
 	VertexBuffer::~VertexBuffer() {
 	}
 
-	bool VertexBuffer::stroage(ui32 size, const void* data) {
-		return _stroage(size, data);
+	bool VertexBuffer::create(ui32 size, Usage bufferUsage, const void* data, ui32 dataSize) {
+		return _baseBuffer.create(size, bufferUsage, data);
 	}
 
-	void VertexBuffer::write(ui32 offset, const void* data, ui32 length) {
-		_write(offset, data, length);
+	Usage VertexBuffer::map(Usage expectMapUsage) {
+		return _baseBuffer.map(expectMapUsage);
+	}
+
+	void VertexBuffer::unmap() {
+		_baseBuffer.unmap();
+	}
+
+	i32 VertexBuffer::read(ui32 offset, void* dst, ui32 dstLen, i32 readLen) {
+		return _baseBuffer.read(offset, dst, dstLen, readLen);
+	}
+
+	i32 VertexBuffer::write(ui32 offset, const void* data, ui32 length) {
+		return _baseBuffer.write(offset, data, length);
+	}
+
+	i32 VertexBuffer::update(ui32 offset, const void* data, ui32 length) {
+		return _baseBuffer.update(offset, data, length);
 	}
 
 	void VertexBuffer::flush() {
-		_flush();
+		_baseBuffer.flush();
 	}
 
 	void VertexBuffer::setFormat(VertexSize size, VertexType type) {
@@ -73,11 +90,11 @@ namespace aurora::modules::graphics::win_glew {
 	}
 
 	bool VertexBuffer::use(GLuint index) {
-		if (_handle && _validVertexFormat) {
-			_waitServerSync();
+		if (_baseBuffer.handle && _validVertexFormat) {
+			_baseBuffer.waitServerSync();
 
 			glEnableVertexAttribArray(index);
-			glBindBuffer(GL_ARRAY_BUFFER, _handle);
+			glBindBuffer(GL_ARRAY_BUFFER, _baseBuffer.handle);
 			glVertexAttribPointer(index, _vertexSize, _vertexType, GL_FALSE, 0, 0);
 		}
 		return false;
