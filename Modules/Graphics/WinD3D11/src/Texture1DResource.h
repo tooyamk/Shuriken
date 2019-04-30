@@ -19,7 +19,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual void AE_CALL unmap(ui32 arraySlice, ui32 mipSlice) override;
 		virtual i32 AE_CALL read(ui32 arraySlice, ui32 mipSlice, ui32 offset, void* dst, ui32 dstLen, i32 readLen = -1) override;
 		virtual i32 AE_CALL write(ui32 arraySlice, ui32 mipSlice, ui32 offset, const void* data, ui32 length) override;
-		virtual bool AE_CALL write(ui32 arraySlice, ui32 mipSlice, ui32 left, ui32 right, const void* data) override;
+		virtual bool AE_CALL write(ui32 arraySlice, ui32 mipSlice, const Box1ui32& range, const void* data) override;
 
 	protected:
 		BaseTextureResource _baseTexRes;

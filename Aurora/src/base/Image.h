@@ -2,8 +2,7 @@
 
 #include "base/ByteArray.h"
 #include "base/Ref.h"
-#include "math/Size2.h"
-#include "math/Size3.h"
+#include "math/Vector.h"
 #include <vector>
 
 namespace aurora {
@@ -16,11 +15,11 @@ namespace aurora {
 		Image();
 
 		modules::graphics::TextureFormat format;
-		Size2<ui32> size;
+		Vec2ui32 size;
 		ByteArray source;
 
-		static bool convertFormat(const Size2<ui32>& size, modules::graphics::TextureFormat srcFormat, const ui8* src, modules::graphics::TextureFormat dstFormat, ui8* dst);
-		static bool convertFormat(const Size2<ui32>& size, modules::graphics::TextureFormat srcFormat, const ui8* src, ui32 mipLevels, modules::graphics::TextureFormat dstFormat, ui8* dst);
+		static bool convertFormat(const Vec2ui32& size, modules::graphics::TextureFormat srcFormat, const ui8* src, modules::graphics::TextureFormat dstFormat, ui8* dst);
+		static bool convertFormat(const Vec2ui32& size, modules::graphics::TextureFormat srcFormat, const ui8* src, ui32 mipLevels, modules::graphics::TextureFormat dstFormat, ui8* dst);
 
 		inline bool generateMips(modules::graphics::TextureFormat format, ui32 mipLevels, ByteArray& dst, std::vector<void*>& dstDataPtr) const {
 			dst = ByteArray(calcMipsByteSize(size, mipLevels, calcPerPixelByteSize(format)));
@@ -31,7 +30,7 @@ namespace aurora {
 
 		static ui32 calcPerPixelByteSize(modules::graphics::TextureFormat format);
 
-		inline static ui32 AE_CALL calcMipLevels(const Size2<ui32>& size) {
+		inline static ui32 AE_CALL calcMipLevels(const Vec2ui32& size) {
 			return calcMipLevels(size.getMax());
 		}
 		inline static ui32 AE_CALL calcMipLevels(ui32 n) {
@@ -39,28 +38,28 @@ namespace aurora {
 		}
 
 		static void AE_CALL calcSpecificMipPixelSize(ui32& size, ui32 mipLevel);
-		static void AE_CALL calcSpecificMipPixelSize(Size2<ui32>& size, ui32 mipLevel);
+		static void AE_CALL calcSpecificMipPixelSize(Vec2ui32& size, ui32 mipLevel);
 
 		static std::vector<ui32> AE_CALL calcMipsPixelSize(ui32 n, ui32 mipLevels);
 
 		inline static ui32 calcNextMipPixelSize(ui32 n) {
 			return n > 1 ? n >> 1 : 1;
 		}
-		inline static void calcNextMipPixelSize(Size2<ui32>& size) {
-			size.width = calcNextMipPixelSize(size.width);
-			size.height = calcNextMipPixelSize(size.height);
+		inline static void calcNextMipPixelSize(Vec2ui32& size) {
+			size[0] = calcNextMipPixelSize(size[0]);
+			size[1] = calcNextMipPixelSize(size[1]);
 		}
-		inline static void calcNextMipPixelSize(Size3<ui32>& size) {
-			size.width = calcNextMipPixelSize(size.width);
-			size.height = calcNextMipPixelSize(size.height);
-			size.depth = calcNextMipPixelSize(size.depth);
+		inline static void calcNextMipPixelSize(Vec3ui32& size) {
+			size[0] = calcNextMipPixelSize(size[0]);
+			size[1] = calcNextMipPixelSize(size[1]);
+			size[2] = calcNextMipPixelSize(size[2]);
 		}
 
-		inline static ui32 calcByteSize(const Size2<ui32>& size, modules::graphics::TextureFormat format) {
-			return calcByteSize(size.getArea(), format);
+		inline static ui32 calcByteSize(const Vec2ui32& size, modules::graphics::TextureFormat format) {
+			return calcByteSize(size.getCumprod(), format);
 		}
-		inline constexpr static ui32 calcByteSize(const Size2<ui32>& size, ui32 perPixelByteSize) {
-			return calcByteSize(size.getArea(), perPixelByteSize);
+		inline constexpr static ui32 calcByteSize(const Vec2ui32& size, ui32 perPixelByteSize) {
+			return calcByteSize(size.getCumprod(), perPixelByteSize);
 		}
 		inline static ui32 calcByteSize(ui32 numPixels, modules::graphics::TextureFormat format) {
 			return calcByteSize(numPixels, calcPerPixelByteSize(format));
@@ -69,14 +68,14 @@ namespace aurora {
 			return numPixels * perPixelByteSize;
 		}
 
-		static ui32 calcMipsByteSize(const Size2<ui32>& size, ui32 mipLevels, ui32 perPixelByteSize);
-		static ui32 calcMipsByteSize(const Size3<ui32>& size, ui32 mipLevels, ui32 perPixelByteSize);
+		static ui32 calcMipsByteSize(const Vec2ui32& size, ui32 mipLevels, ui32 perPixelByteSize);
+		static ui32 calcMipsByteSize(const Vec3ui32& size, ui32 mipLevels, ui32 perPixelByteSize);
 
-		static void generateMips_UInt8s(const Size2<ui32>& size, modules::graphics::TextureFormat format, ui32 mipLevels, ui8 numChannels, ui8* dst, void** dataPtr);
+		static void generateMips_UInt8s(const Vec2ui32& size, modules::graphics::TextureFormat format, ui32 mipLevels, ui8 numChannels, ui8* dst, void** dataPtr);
 
 	private:
-		static void _convertFormat_R8G8B8_R8G8B8A8(const Size2<ui32>& size, const ui8* src, ui8* dst);
-		static void _convertFormat_R8G8B8A8_R8G8B8(const Size2<ui32>& size, const ui8* src, ui8* dst);
+		static void _convertFormat_R8G8B8_R8G8B8A8(const Vec2ui32& size, const ui8* src, ui8* dst);
+		static void _convertFormat_R8G8B8A8_R8G8B8(const Vec2ui32& size, const ui8* src, ui8* dst);
 
 		static void _mipPixelsBlend(ui8* c, ui8 numChannels, ui8 numPixels);
 	};

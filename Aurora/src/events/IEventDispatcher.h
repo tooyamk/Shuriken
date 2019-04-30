@@ -45,13 +45,13 @@ namespace aurora::events {
 
 
 	template<typename EvtType>
-	using EVT_FN = void(*)(Event<EvtType>&);
+	using EvtFn = void(*)(Event<EvtType>&);
 
 	template<typename EvtType, typename Class>
-	using EVT_METHOD = void(Class::*)(Event<EvtType>&);
+	using EvtMethod = void(Class::*)(Event<EvtType>&);
 
 	template<typename EvtType>
-	using EVT_FUNC = std::function<void(Event<EvtType>&)>;
+	using EvtFunc = std::function<void(Event<EvtType>&)>;
 
 
 	template<typename EvtType>
@@ -64,7 +64,7 @@ namespace aurora::events {
 	template<typename EvtType, typename Class>
 	class AE_TEMPLATE_DLL EventListener : public IEventListener<EvtType> {
 	public:
-		EventListener(Class* target, EVT_METHOD<EvtType, Class> method) :
+		EventListener(Class* target, EvtMethod<EvtType, Class> method) :
 			_target(target),
 			_method(method) {
 		}
@@ -74,14 +74,14 @@ namespace aurora::events {
 		}
 	private:
 		Class* _target;
-		EVT_METHOD<EvtType, Class> _method;
+		EvtMethod<EvtType, Class> _method;
 	};
 
 
 	template<typename EvtType>
-	class AE_TEMPLATE_DLL EventListener<EvtType, EVT_FN<EvtType>> : public IEventListener<EvtType> {
+	class AE_TEMPLATE_DLL EventListener<EvtType, EvtFn<EvtType>> : public IEventListener<EvtType> {
 	public:
-		EventListener(EVT_FN<EvtType> fn) :
+		EventListener(EvtFn<EvtType> fn) :
 			_fn(fn) {
 		}
 
@@ -89,16 +89,16 @@ namespace aurora::events {
 			if (_fn) _fn(e);
 		}
 	private:
-		EVT_FN<EvtType> _fn;
+		EvtFn<EvtType> _fn;
 	};
 	template<typename EvtType>
-	using EventListenerFn = EventListener<EvtType, EVT_FN<EvtType>>;
+	using EventListenerFn = EventListener<EvtType, EvtFn<EvtType>>;
 
 
 	template<typename EvtType>
-	class AE_TEMPLATE_DLL EventListener<EvtType, EVT_FUNC<EvtType>> : public IEventListener<EvtType> {
+	class AE_TEMPLATE_DLL EventListener<EvtType, EvtFunc<EvtType>> : public IEventListener<EvtType> {
 	public:
-		EventListener(const EVT_FUNC<EvtType>& fn) :
+		EventListener(const EvtFunc<EvtType>& fn) :
 			_fn(fn) {
 		}
 
@@ -106,10 +106,10 @@ namespace aurora::events {
 			if (_fn) _fn(e);
 		}
 	private:
-		EVT_FUNC<EvtType> _fn;
+		EvtFunc<EvtType> _fn;
 	};
 	template<typename EvtType>
-	using EventListenerFunc = EventListener<EvtType, EVT_FUNC<EvtType>>;
+	using EventListenerFunc = EventListener<EvtType, EvtFunc<EvtType>>;
 
 
 	template<typename EvtType>

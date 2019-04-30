@@ -1,6 +1,5 @@
 #include "Mouse.h"
 #include "DirectInput.h"
-#include "math/Vector2.h"
 #include <algorithm>
 
 namespace aurora::modules::win_direct_input {

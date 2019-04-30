@@ -14,7 +14,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual void AE_CALL setAddress(SamplerAddressMode u, SamplerAddressMode v, SamplerAddressMode w) override;
 		virtual void AE_CALL setMipLOD(f32 min, f32 max, f32 bias) override;
 		virtual void AE_CALL setMaxAnisotropy(ui32 max) override;
-		virtual void AE_CALL setBorderColor(const Vector4& color) override;
+		virtual void AE_CALL setBorderColor(const Vec4f32& color) override;
 
 		template<ProgramStage stage>
 		inline void AE_CALL use(UINT slot) {

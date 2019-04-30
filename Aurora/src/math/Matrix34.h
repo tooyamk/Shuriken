@@ -6,7 +6,6 @@
 namespace aurora {
 	class Matrix44;
 	class Quaternion;
-	class Vector3;
 
 	/**
 	 * column major matrix.
@@ -51,7 +50,7 @@ namespace aurora {
 		inline bool AE_CALL invert(Matrix34& dst) const;
 		inline bool AE_CALL invert(Matrix44& dst) const;
 
-		void AE_CALL decomposition(Matrix34* dstRot, Vector3* dstScale = nullptr) const;
+		void AE_CALL decomposition(Matrix34* dstRot, f32(dstScale[3]) = nullptr) const;
 
 		void AE_CALL toQuaternion(Quaternion& dst) const;
 
@@ -62,17 +61,17 @@ namespace aurora {
 		inline void AE_CALL append(const Matrix44& rhs, Matrix34& dst) const;
 		inline void AE_CALL append(const Matrix44& rhs, Matrix44& dst) const;
 
-		inline void AE_CALL appendTranslate(const Vector3& t);
-		inline void AE_CALL prependTranslate(const Vector3& t);
-		inline void AE_CALL setPosition(const Vector3& p);
-		inline void AE_CALL setPosition(const f32* p);
+		inline void AE_CALL appendTranslate(const f32(&t)[3]);
+		inline void AE_CALL prependTranslate(const f32(&t)[3]);
+		inline void AE_CALL setPosition(const f32(&p)[3]);
 		inline void AE_CALL setPosition(const Matrix34& m);
 		inline void AE_CALL setPosition(const Matrix44& m);
+		inline void AE_CALL setPosition(f32 x, f32 y, f32 z);
 
-		inline void AE_CALL prependScale(const Vector3& t);
+		inline void AE_CALL prependScale(const f32(&s)[3]);
 
-		static void AE_CALL createLookAt(const Vector3& forward, const Vector3& upward, Matrix34& dst);
-		static void AE_CALL createRotationAxis(const Vector3& axis, f32 radian, Matrix34& dst);
+		static void AE_CALL createLookAt(const f32(&forward)[3], const f32(&upward)[3], Matrix34& dst);
+		static void AE_CALL createRotationAxis(const f32(&axis)[3], f32 radian, Matrix34& dst);
 
 		/**
 		 * direction(LH):(0, 1, 0) to (0, 0, 1)
@@ -89,13 +88,13 @@ namespace aurora {
 		 */
 		static void AE_CALL createRotationZ(f32 radian, Matrix34& dst);
 
-		static void AE_CALL createScale(const Vector3& scale, Matrix34& dst);
-		static void AE_CALL createTranslation(const Vector3& trans, Matrix34& dst);
-		static void AE_CALL createTRS(const Vector3* trans, const Quaternion* rot, const Vector3* scale, Matrix34& dst);
+		static void AE_CALL createScale(const f32(&scale)[3], Matrix34& dst);
+		static void AE_CALL createTranslation(const f32(&trans)[3], Matrix34& dst);
+		static void AE_CALL createTRS(const f32(&trans)[3], const Quaternion* rot, const f32(&scale)[3], Matrix34& dst);
 
 		union {
 			//__m128 col[4];
-			f32 m34[3][4];
+			f32 data[3][4];
 		};
 	};
 }

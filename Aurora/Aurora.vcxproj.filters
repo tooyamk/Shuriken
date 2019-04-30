@@ -45,13 +45,7 @@
     <ClInclude Include="src\math\Quaternion.h">
       <Filter>src\math</Filter>
     </ClInclude>
-    <ClInclude Include="src\math\Vector3.h">
-      <Filter>src\math</Filter>
-    </ClInclude>
     <ClInclude Include="src\math\Math.h">
-      <Filter>src\math</Filter>
-    </ClInclude>
-    <ClInclude Include="src\math\Vector4.h">
       <Filter>src\math</Filter>
     </ClInclude>
     <ClInclude Include="src\math\Matrix34.h">
@@ -62,9 +56,6 @@
     </ClInclude>
     <ClInclude Include="src\base\DynamicLib.h">
       <Filter>src\base</Filter>
-    </ClInclude>
-    <ClInclude Include="src\math\Rect.h">
-      <Filter>src\math</Filter>
     </ClInclude>
     <ClInclude Include="src\nodes\components\AbstractComponent.h">
       <Filter>src\nodes\components</Filter>
@@ -105,9 +96,6 @@
     <ClInclude Include="src\base\Monitor.h">
       <Filter>src\base</Filter>
     </ClInclude>
-    <ClInclude Include="src\math\Vector2.h">
-      <Filter>src\math</Filter>
-    </ClInclude>
     <ClInclude Include="src\modules\IModule.h">
       <Filter>src\modules</Filter>
     </ClInclude>
@@ -138,16 +126,10 @@
     <ClInclude Include="src\math\Box.h">
       <Filter>src\math</Filter>
     </ClInclude>
-    <ClInclude Include="src\math\Size2.h">
-      <Filter>src\math</Filter>
-    </ClInclude>
-    <ClInclude Include="src\math\Size3.h">
-      <Filter>src\math</Filter>
-    </ClInclude>
     <ClInclude Include="src\utils\hash\MD5.h">
       <Filter>src\utils\hash</Filter>
     </ClInclude>
-    <ClInclude Include="src\math\Vec.h">
+    <ClInclude Include="src\math\Vector.h">
       <Filter>src\math</Filter>
     </ClInclude>
   </ItemGroup>
@@ -161,13 +143,7 @@
     <ClCompile Include="src\math\Quaternion.cpp">
       <Filter>src\math</Filter>
     </ClCompile>
-    <ClCompile Include="src\math\Vector3.cpp">
-      <Filter>src\math</Filter>
-    </ClCompile>
     <ClCompile Include="src\math\Math.cpp">
-      <Filter>src\math</Filter>
-    </ClCompile>
-    <ClCompile Include="src\math\Vector4.cpp">
       <Filter>src\math</Filter>
     </ClCompile>
     <ClCompile Include="src\math\Matrix34.cpp">
@@ -190,9 +166,6 @@
     </ClCompile>
     <ClCompile Include="src\base\Monitor.cpp">
       <Filter>src\base</Filter>
-    </ClCompile>
-    <ClCompile Include="src\math\Vector2.cpp">
-      <Filter>src\math</Filter>
     </ClCompile>
     <ClCompile Include="src\modules\IInputModule.cpp">
       <Filter>src\modules</Filter>
@@ -220,16 +193,10 @@
     <None Include="src\math\Matrix44.inl">
       <Filter>src\math</Filter>
     </None>
-    <None Include="src\math\Vector3.inl">
-      <Filter>src\math</Filter>
-    </None>
     <None Include="src\math\Quaternion.inl">
       <Filter>src\math</Filter>
     </None>
     <None Include="src\math\Math.inl">
-      <Filter>src\math</Filter>
-    </None>
-    <None Include="src\math\Vector4.inl">
       <Filter>src\math</Filter>
     </None>
     <None Include="src\nodes\Node.inl">
@@ -243,9 +210,6 @@
     </None>
     <None Include="src\nodes\components\Camera.inl">
       <Filter>src\nodes\components</Filter>
-    </None>
-    <None Include="src\math\Vector2.inl">
-      <Filter>src\math</Filter>
     </None>
     <None Include="src\base\ByteArray.inl">
       <Filter>src\base</Filter>

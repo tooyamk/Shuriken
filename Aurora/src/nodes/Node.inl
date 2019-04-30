@@ -11,19 +11,18 @@ namespace aurora::nodes {
 		return _numChildren;
 	}
 
-	inline Vector3 Node::getLocalPosition() const {
-		return std::move(Vector3(_lm.m34[0][3], _lm.m34[1][3], _lm.m34[2][3]));
-	}
-
-	inline void Node::getLocalPosition(Vector3& dst) const {
-		dst.set(_lm.m34[0][3], _lm.m34[1][3], _lm.m34[2][3]);
+	inline void Node::getLocalPosition(f32(&dst)[3]) const {
+		auto x = _lm.data[0][3], y = _lm.data[1][3], z = _lm.data[2][3];
+		dst[0] = x;
+		dst[1] = y;
+		dst[2] = z;
 	}
 
 	inline const Quaternion& Node::getLocalRotation() const {
 		return _lr;
 	}
 
-	inline const Vector3& Node::getLocalScale() const {
+	inline const Vec3f32& Node::getLocalScale() const {
 		return _ls;
 	}
 
@@ -36,14 +35,13 @@ namespace aurora::nodes {
 		return _wr;
 	}
 
-	inline Vector3 Node::getWorldPosition() const {
+	inline void Node::getWorldPosition(f32(&dst)[3]) const {
 		updateWorldMatrix();
-		return std::move(Vector3(_wm.m34[0][3], _wm.m34[1][3], _wm.m34[2][3]));
-	}
 
-	inline void Node::getWorldPosition(Vector3& dst) const {
-		updateWorldMatrix();
-		dst.set(_lm.m34[0][3], _lm.m34[1][3], _lm.m34[2][3]);
+		auto x = _wm.data[0][3], y = _wm.data[1][3], z = _wm.data[2][3];
+		dst[0] = x;
+		dst[1] = y;
+		dst[2] = z;
 	}
 
 	inline const Matrix34& Node::getWorldMatrix() const {
@@ -62,7 +60,7 @@ namespace aurora::nodes {
 
 	inline void Node::_localDecomposition() {
 		Matrix34 rot;
-		_lm.decomposition(&rot, &_ls);
+		_lm.decomposition(&rot, _ls);
 		rot.toQuaternion(_lr);
 	}
 

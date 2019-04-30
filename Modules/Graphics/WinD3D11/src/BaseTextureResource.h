@@ -1,7 +1,6 @@
 #pragma once
 
 #include "BaseResource.h"
-#include "math/Size3.h"
 
 namespace aurora::modules::graphics::win_d3d11 {
 	class BaseTextureResource : public BaseResource {
@@ -9,7 +8,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		BaseTextureResource(UINT resType);
 		virtual ~BaseTextureResource();
 
-		bool AE_CALL create(Graphics* graphics, TextureType texType, const Size3<ui32>& size, ui32 arraySize, 
+		bool AE_CALL create(Graphics* graphics, TextureType texType, const Vec3ui32& size, ui32 arraySize, 
 			TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data = nullptr);
 		Usage AE_CALL map(Graphics* graphics, ui32 arraySlice, ui32 mipSlice, Usage expectMapUsage);
 		void AE_CALL unmap(Graphics* graphics, ui32 arraySlice, ui32 mipSlice);
@@ -27,7 +26,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		TextureFormat format;
 		DXGI_FORMAT internalFormat;
 		ui16 perPixelSize;
-		Size3<ui32> texSize;
+		Vec3ui32 texSize;
 		ui32 arraySize;
 		ui32 mipLevels;
 

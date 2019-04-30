@@ -1,7 +1,5 @@
 #include "Texture3DResource.h"
 #include "Graphics.h"
-#include "math/Box.h"
-#include "math/Size3.h"
 
 namespace aurora::modules::graphics::win_d3d11 {
 	Texture3DResource::Texture3DResource(Graphics& graphics) : ITexture3DResource(graphics),
@@ -33,7 +31,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return _baseTexRes.mipLevels;
 	}
 
-	bool Texture3DResource::create(const Size3<ui32>& size, ui32 arraySize, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data) {
+	bool Texture3DResource::create(const Vec3ui32& size, ui32 arraySize, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data) {
 		auto rst = _baseTexRes.create(_graphics.get<Graphics>(), TextureType::TEX3D, size, arraySize, format, mipLevels, resUsage, data);
 		_view.create(this, 0, -1, 0, _baseTexRes.arraySize);
 		return rst;
@@ -55,15 +53,15 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return _baseTexRes.write(arraySlice, mipSlice, offset, data, length);
 	}
 
-	bool Texture3DResource::write(ui32 arraySlice, ui32 mipSlice, const Box<ui32>& range, const void* data) {
+	bool Texture3DResource::write(ui32 arraySlice, ui32 mipSlice, const Box3ui32& range, const void* data) {
 		D3D11_BOX box;
-		box.front = range.front;
-		box.back = range.front + range.size.depth;
-		box.top = range.top;
-		box.bottom = range.top + range.size.height;
-		box.left = range.left;
-		box.right = range.left + range.size.width;
-
+		box.left = range.pos[0];
+		box.right = range.pos[0] + range.size[0];
+		box.top = range.pos[1];
+		box.bottom = range.pos[1] + range.size[1];
+		box.front = range.pos[2];
+		box.back = range.pos[2] + range.size[2];
+		
 		return _baseTexRes.write(_graphics.get<Graphics>(), arraySlice, mipSlice, box, data);
 	}
 }

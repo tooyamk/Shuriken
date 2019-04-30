@@ -14,7 +14,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 	BaseTextureResource::~BaseTextureResource() {
 	}
 
-	bool BaseTextureResource::create(Graphics* graphics, TextureType texType, const Size3<ui32>& size, ui32 arraySize,
+	bool BaseTextureResource::create(Graphics* graphics, TextureType texType, const Vec3ui32& size, ui32 arraySize,
 		TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data) {
 		releaseTex(graphics);
 
@@ -41,17 +41,17 @@ namespace aurora::modules::graphics::win_d3d11 {
 				auto dstByteSize = Image::calcMipsByteSize(size, mipLevels, dstPerPixelByteSize) * arraySize;
 				auto dst = new ui8[dstByteSize];
 				autoReleaseData = ByteArray((i8*)dst, dstByteSize, ByteArray::ExtMemMode::EXCLUSIVE);
-				Size3<ui32> size3;
+				Vec3ui32 size3;
 				for (ui32 i = 0; i < arraySize; ++i) {
 					size3.set(size);
 					for (ui32 j = 0; j < mipLevels; ++j) {
 						texData[j] = dst;
 						auto src = (ui8*)data[j];
-						auto numPixels = size3.width * size3.height;
+						auto numPixels = size3[0] * size3[1];
 						auto srcPitch = numPixels * srcPerPixelByteSize;
 						auto dstPitch = numPixels * dstPerPixelByteSize;
-						for (ui32 k = 0; k < size3.depth; ++k) {
-							Image::convertFormat((Size2<ui32>&)size, TextureFormat::R8G8B8, src, format, dst);
+						for (ui32 k = 0; k < size3[2]; ++k) {
+							Image::convertFormat((Vec2ui32&)size, TextureFormat::R8G8B8, src, format, dst);
 							src += srcPitch;
 							dst += dstPitch;
 						}
@@ -89,7 +89,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			desc.CPUAccessFlags = cpuUsage;
 			desc.Usage = d3dUsage;
 			desc.BindFlags = bindType;
-			desc.Width = size.width;
+			desc.Width = size[0];
 			desc.Format = internalFormat;
 			desc.MipLevels = mipLevels;
 			desc.MiscFlags = 0;
@@ -105,8 +105,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 			desc.CPUAccessFlags = cpuUsage;
 			desc.Usage = d3dUsage;
 			desc.BindFlags = bindType;
-			desc.Width = size.width;
-			desc.Height = size.height;
+			desc.Width = size[0];
+			desc.Height = size[1];
 			desc.Format = internalFormat;
 			desc.MipLevels = mipLevels;
 			desc.MiscFlags = 0;
@@ -124,9 +124,9 @@ namespace aurora::modules::graphics::win_d3d11 {
 			desc.CPUAccessFlags = cpuUsage;
 			desc.Usage = d3dUsage;
 			desc.BindFlags = bindType;
-			desc.Width = size.width;
-			desc.Height = size.height;
-			desc.Depth = size.depth;
+			desc.Width = size[0];
+			desc.Height = size[1];
+			desc.Depth = size[2];
 			desc.Format = internalFormat;
 			desc.MipLevels = mipLevels;
 			desc.MiscFlags = 0;
@@ -142,17 +142,17 @@ namespace aurora::modules::graphics::win_d3d11 {
 			if (mipLevels == 1) {
 				D3D11_SUBRESOURCE_DATA res;
 				res.pSysMem = data[0];
-				res.SysMemPitch = size.width * perPixelSize;
-				res.SysMemSlicePitch = res.SysMemPitch * size.height;
+				res.SysMemPitch = size[0] * perPixelSize;
+				res.SysMemSlicePitch = res.SysMemPitch * size[1];
 				hr = _createInternalTexture(graphics, texType, texDesc, &res);
 			} else {
 				std::vector<D3D11_SUBRESOURCE_DATA> resArr(mipLevels * arraySize);
-				Size2<ui32> size2(size.width, size.height);
+				Vec2ui32 size2((ui32(&)[2])size);
 				for (ui32 i = 0; i < mipLevels; ++i) {
 					auto& res = resArr[i];
 					res.pSysMem = data[i];
-					res.SysMemPitch = size2.width * perPixelSize;
-					res.SysMemSlicePitch = res.SysMemPitch * size2.height;
+					res.SysMemPitch = size2[0] * perPixelSize;
+					res.SysMemSlicePitch = res.SysMemPitch * size2[1];
 
 					Image::calcNextMipPixelSize(size2);
 
@@ -179,10 +179,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		if ((this->resUsage & Usage::CPU_READ_WRITE) != Usage::NONE) {
 			mappedRes.resize(mipLevels * arraySize);
-			Size3<ui32> size3(size);
+			Vec3ui32 size3(size);
 			for (ui32 i = 0; i < mipLevels; ++i) {
 				auto& mapped = mappedRes[i];
-				mapped.size = size3.getVolume()* perPixelSize;
+				mapped.size = size3.getCumprod()* perPixelSize;
 				mapped.usage = Usage::NONE;
 
 				Image::calcNextMipPixelSize(size3);
@@ -275,11 +275,11 @@ namespace aurora::modules::graphics::win_d3d11 {
 	bool BaseTextureResource::write(Graphics* graphics, ui32 arraySlice, ui32 mipSlice, const D3D11_BOX& range, const void* data) {
 		if ((resUsage & Usage::GPU_WRITE) == Usage::GPU_WRITE) {
 			if (data && !arraySlice && mipSlice < mipLevels) {
-				Size2<ui32> size(texSize.width, texSize.height);
+				Vec2ui32 size((ui32(&)[2])texSize);
 				Image::calcSpecificMipPixelSize(size, mipSlice);
-				auto rowByteSize = size.width * perPixelSize;
+				auto rowByteSize = size[0] * perPixelSize;
 
-				graphics->getContext()->UpdateSubresource(handle, mipSlice, &range, data, rowByteSize, rowByteSize * size.height);
+				graphics->getContext()->UpdateSubresource(handle, mipSlice, &range, data, rowByteSize, rowByteSize * size[1]);
 			}
 			return true;
 		}
@@ -297,7 +297,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		format = TextureFormat::UNKNOWN;
 		internalFormat = DXGI_FORMAT_UNKNOWN,
 		perPixelSize = 0;
-		texSize.set(0, 0, 0);
+		texSize.set(0);
 		arraySize = 0;
 		mipLevels = 0;
 		mappedRes.clear();

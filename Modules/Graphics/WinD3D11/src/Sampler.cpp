@@ -64,7 +64,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		}
 	}
 
-	void Sampler::setBorderColor(const Vector4& color) {
+	void Sampler::setBorderColor(const Vec4f32& color) {
 		if (!ByteArray::isEqual((i8*)_desc.BorderColor, sizeof(_desc.BorderColor), (const i8*)&color, sizeof(_desc.BorderColor))) {
 			memcpy(_desc.BorderColor, &color, sizeof(_desc.BorderColor));
 			_dirty = true;

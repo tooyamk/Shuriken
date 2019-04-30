@@ -3,11 +3,9 @@
 #include "Matrix44.h"
 #include "math/Matrix34.h"
 #include "math/Quaternion.h"
-#include "math/Vector3.h"
-
 namespace aurora {
 	Matrix44::Matrix44() :
-		m44{ {1.f, 0.f, 0.f, 0.f},
+		data{ {1.f, 0.f, 0.f, 0.f},
 			 {0.f, 1.f, 0.f, 0.f},
 			 {0.f, 0.f, 1.f, 0.f},
 			 {0.f, 0.f, 0.f, 1.f} } {
@@ -18,16 +16,16 @@ namespace aurora {
 		f32 m10, f32 m11, f32 m12, f32 m13,
 		f32 m20, f32 m21, f32 m22, f32 m23,
 		f32 m30, f32 m31, f32 m32, f32 m33) :
-		m44{ {m00, m01, m02, m03},
+		data{ {m00, m01, m02, m03},
 			 {m10, m11, m12, m13},
 			 {m20, m21, m22, m23},
 			 {m30, m31, m32, m33} } {
 	}
 
-	Matrix44::Matrix44(const Matrix34& m) : Matrix44(m.m34) {
+	Matrix44::Matrix44(const Matrix34& m) : Matrix44(m.data) {
 	}
 
-	Matrix44::Matrix44(const Matrix44& m) : Matrix44(m.m44) {
+	Matrix44::Matrix44(const Matrix44& m) : Matrix44(m.data) {
 	}
 
 	Matrix44::Matrix44(const std::initializer_list<f32>& m) {
@@ -35,105 +33,105 @@ namespace aurora {
 		ui32 size = m.size();
 		if (size >= 16) {
 			auto p = m.begin();
-			for (auto e : m44) *e = *(p++);
+			for (auto e : data) *e = *(p++);
 		} else {
-			auto m0 = (f32*)m44;
+			auto m0 = (f32*)data;
 			for (ui8 i = 0; i < size; ++i) m0[i] = *(p++);
 
 			size *= sizeof(f32);
-			memset(((i8*)m44) + size, 0, sizeof(m) - size);
+			memset(((i8*)data) + size, 0, sizeof(m) - size);
 		}
 	}
 
 	Matrix44::Matrix44(const f32(&m)[3][4]) {
-		memcpy(m44, m, sizeof(m));
-		m44[3][0] = 0.f;
-		m44[3][1] = 0.f;
-		m44[3][2] = 0.f;
-		m44[3][3] = 1.f;
+		memcpy(data, m, sizeof(m));
+		data[3][0] = 0.f;
+		data[3][1] = 0.f;
+		data[3][2] = 0.f;
+		data[3][3] = 1.f;
 	}
 
 	Matrix44::Matrix44(const f32(&m)[4][4]) {
-		memcpy(m44, m, sizeof(m));
+		memcpy(data, m, sizeof(m));
 	}
 
 	Matrix44::~Matrix44() {
 	}
 
 	void Matrix44::set33(const Matrix34& m) {
-		memcpy(&m44[0][0], &m.m34[0][0], sizeof(f32) * 3);
-		memcpy(&m44[1][0], &m.m34[1][0], sizeof(f32) * 3);
-		memcpy(&m44[2][0], &m.m34[2][0], sizeof(f32) * 3);
+		memcpy(&data[0][0], &m.data[0][0], sizeof(f32) * 3);
+		memcpy(&data[1][0], &m.data[1][0], sizeof(f32) * 3);
+		memcpy(&data[2][0], &m.data[2][0], sizeof(f32) * 3);
 	}
 
 	void Matrix44::set33(const Matrix44& m) {
-		memcpy(&m44[0][0], &m.m44[0][0], sizeof(f32) * 3);
-		memcpy(&m44[1][0], &m.m44[1][0], sizeof(f32) * 3);
-		memcpy(&m44[2][0], &m.m44[2][0], sizeof(f32) * 3);
+		memcpy(&data[0][0], &m.data[0][0], sizeof(f32) * 3);
+		memcpy(&data[1][0], &m.data[1][0], sizeof(f32) * 3);
+		memcpy(&data[2][0], &m.data[2][0], sizeof(f32) * 3);
 	}
 
 	void Matrix44::set33(const f32(&m)[3][3]) {
-		memcpy(&m44[0][0], &m[0][0], sizeof(f32) * 3);
-		memcpy(&m44[1][0], &m[1][0], sizeof(f32) * 3);
-		memcpy(&m44[2][0], &m[2][0], sizeof(f32) * 3);
+		memcpy(&data[0][0], &m[0][0], sizeof(f32) * 3);
+		memcpy(&data[1][0], &m[1][0], sizeof(f32) * 3);
+		memcpy(&data[2][0], &m[2][0], sizeof(f32) * 3);
 	}
 
 	void Matrix44::set33(
 		f32 m00, f32 m01, f32 m02,
 		f32 m10, f32 m11, f32 m12,
 		f32 m20, f32 m21, f32 m22) {
-		m44[0][0] = m00;
-		m44[0][1] = m01;
-		m44[0][2] = m02;
+		data[0][0] = m00;
+		data[0][1] = m01;
+		data[0][2] = m02;
 
-		m44[1][0] = m10;
-		m44[1][1] = m11;
-		m44[1][2] = m12;
+		data[1][0] = m10;
+		data[1][1] = m11;
+		data[1][2] = m12;
 
-		m44[2][0] = m20;
-		m44[2][1] = m21;
-		m44[2][2] = m22;
+		data[2][0] = m20;
+		data[2][1] = m21;
+		data[2][2] = m22;
 	}
 
 	void Matrix44::set34(const Matrix34& m) {
-		memcpy(m44, m.m34, sizeof(m.m34));
+		memcpy(data, m.data, sizeof(m.data));
 	}
 
 	void Matrix44::set34(const Matrix44& m) {
-		memcpy(m44, m.m44, sizeof(Matrix34));
+		memcpy(data, m.data, sizeof(Matrix34));
 	}
 
 	void Matrix44::set34(
 		f32 m00, f32 m01, f32 m02, f32 m03,
 		f32 m10, f32 m11, f32 m12, f32 m13,
 		f32 m20, f32 m21, f32 m22, f32 m23) {
-		m44[0][0] = m00;
-		m44[0][1] = m01;
-		m44[0][2] = m02;
-		m44[0][3] = m03;
+		data[0][0] = m00;
+		data[0][1] = m01;
+		data[0][2] = m02;
+		data[0][3] = m03;
 
-		m44[1][0] = m10;
-		m44[1][1] = m11;
-		m44[1][2] = m12;
-		m44[1][3] = m13;
+		data[1][0] = m10;
+		data[1][1] = m11;
+		data[1][2] = m12;
+		data[1][3] = m13;
 
-		m44[2][0] = m20;
-		m44[2][1] = m21;
-		m44[2][2] = m22;
-		m44[2][3] = m23;
+		data[2][0] = m20;
+		data[2][1] = m21;
+		data[2][2] = m22;
+		data[2][3] = m23;
 	}
 
 	void Matrix44::set44(const Matrix34& m) {
-		memcpy(m44, m.m34, sizeof(m.m34));
+		memcpy(data, m.data, sizeof(m.data));
 
-		m44[3][0] = 0.f;
-		m44[3][1] = 0.f;
-		m44[3][2] = 0.f;
-		m44[3][3] = 1.f;
+		data[3][0] = 0.f;
+		data[3][1] = 0.f;
+		data[3][2] = 0.f;
+		data[3][3] = 1.f;
 	}
 
 	void Matrix44::set44(const Matrix44& m) {
-		memcpy(m44, m.m44, sizeof(m));
+		memcpy(data, m.data, sizeof(m));
 	}
 
 	void Matrix44::set44(
@@ -141,25 +139,25 @@ namespace aurora {
 		f32 m10, f32 m11, f32 m12, f32 m13,
 		f32 m20, f32 m21, f32 m22, f32 m23,
 		f32 m30, f32 m31, f32 m32, f32 m33) {
-		m44[0][0] = m00;
-		m44[0][1] = m01;
-		m44[0][2] = m02;
-		m44[0][3] = m03;
+		data[0][0] = m00;
+		data[0][1] = m01;
+		data[0][2] = m02;
+		data[0][3] = m03;
 
-		m44[1][0] = m10;
-		m44[1][1] = m11;
-		m44[1][2] = m12;
-		m44[1][3] = m13;
+		data[1][0] = m10;
+		data[1][1] = m11;
+		data[1][2] = m12;
+		data[1][3] = m13;
 
-		m44[2][0] = m20;
-		m44[2][1] = m21;
-		m44[2][2] = m22;
-		m44[2][3] = m23;
+		data[2][0] = m20;
+		data[2][1] = m21;
+		data[2][2] = m22;
+		data[2][3] = m23;
 
-		m44[3][0] = m30;
-		m44[3][1] = m31;
-		m44[3][2] = m32;
-		m44[3][3] = m33;
+		data[3][0] = m30;
+		data[3][1] = m31;
+		data[3][2] = m32;
+		data[3][3] = m33;
 	}
 
 	void Matrix44::createOrthoLH(f32 width, f32 height, f32 zNear, f32 zFar, Matrix44& dst) {

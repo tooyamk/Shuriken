@@ -24,10 +24,10 @@ namespace aurora {
 		for (ui32 i = 0; i < mipLevel; ++i) size = calcNextMipPixelSize(size);
 	}
 
-	void Image::calcSpecificMipPixelSize(Size2<ui32>& size, ui32 mipLevel) {
+	void Image::calcSpecificMipPixelSize(Vec2ui32& size, ui32 mipLevel) {
 		for (ui32 i = 0; i < mipLevel; ++i) {
-			size.width = calcNextMipPixelSize(size.width);
-			size.height = calcNextMipPixelSize(size.height);
+			size[0] = calcNextMipPixelSize(size[0]);
+			size[1] = calcNextMipPixelSize(size[1]);
 		}
 	}
 
@@ -46,8 +46,8 @@ namespace aurora {
 		return std::move(levels);
 	}
 
-	ui32 Image::calcMipsByteSize(const Size2<ui32>& size, ui32 mipLevels, ui32 perPixelByteSize) {
-		auto w = size.width, h = size.height;
+	ui32 Image::calcMipsByteSize(const Vec2ui32& size, ui32 mipLevels, ui32 perPixelByteSize) {
+		auto w = size[0], h = size[1];
 		auto pixels = w * h;
 
 		for (ui32 i = 1; i < mipLevels; ++i) {
@@ -59,8 +59,8 @@ namespace aurora {
 		return calcByteSize(pixels, perPixelByteSize);
 	}
 
-	ui32 Image::calcMipsByteSize(const Size3<ui32>& size, ui32 mipLevels, ui32 perPixelByteSize) {
-		auto w = size.width, h = size.height, d = size.depth;
+	ui32 Image::calcMipsByteSize(const Vec3ui32& size, ui32 mipLevels, ui32 perPixelByteSize) {
+		auto w = size[0], h = size[1], d = size[2];
 		auto pixels = w * h * d;
 
 		for (ui32 i = 1; i < mipLevels; ++i) {
@@ -73,7 +73,7 @@ namespace aurora {
 		return calcByteSize(pixels, perPixelByteSize);
 	}
 
-	bool Image::convertFormat(const Size2<ui32>& size, TextureFormat srcFormat, const ui8* src, TextureFormat dstFormat, ui8* dst) {
+	bool Image::convertFormat(const Vec2ui32& size, TextureFormat srcFormat, const ui8* src, TextureFormat dstFormat, ui8* dst) {
 		switch (dstFormat) {
 		case TextureFormat::R8G8B8:
 		{
@@ -108,7 +108,7 @@ namespace aurora {
 		return false;
 	}
 
-	bool Image::convertFormat(const Size2<ui32>& size, TextureFormat srcFormat, const ui8* src, ui32 mipLevels, TextureFormat dstFormat, ui8* dst) {
+	bool Image::convertFormat(const Vec2ui32& size, TextureFormat srcFormat, const ui8* src, ui32 mipLevels, TextureFormat dstFormat, ui8* dst) {
 		auto srcPerPixelSize = calcPerPixelByteSize(srcFormat);
 		auto dstPerPixelSize = calcPerPixelByteSize(dstFormat);
 
@@ -119,16 +119,16 @@ namespace aurora {
 		for (ui32 lv = 1; lv < mipLevels; ++lv) {
 			src += calcByteSize(s, srcPerPixelSize);
 			dst += calcByteSize(s, dstPerPixelSize);
-			s.width = calcNextMipPixelSize(s.width);
-			s.height = calcNextMipPixelSize(s.height);
+			s[0] = calcNextMipPixelSize(s[0]);
+			s[1] = calcNextMipPixelSize(s[1]);
 
 			if (!convertFormat(s, srcFormat, src, dstFormat, dst)) return false;
 		}
 		return true;
 	}
 
-	void Image::_convertFormat_R8G8B8_R8G8B8A8(const Size2<ui32>& size, const ui8* src, ui8* dst) {
-		auto numPixels = size.getArea();
+	void Image::_convertFormat_R8G8B8_R8G8B8A8(const Vec2ui32& size, const ui8* src, ui8* dst) {
+		auto numPixels = size.getCumprod();
 		ui32 srcIdx = 0, dstIdx = 0;
 		for (ui32 i = 0; i < numPixels; ++i) {
 			memcpy(dst + dstIdx, src + srcIdx, 3);
@@ -138,8 +138,8 @@ namespace aurora {
 		}
 	}
 
-	void Image::_convertFormat_R8G8B8A8_R8G8B8(const Size2<ui32>& size, const ui8* src, ui8* dst) {
-		auto numPixels = size.getArea();
+	void Image::_convertFormat_R8G8B8A8_R8G8B8(const Vec2ui32& size, const ui8* src, ui8* dst) {
+		auto numPixels = size.getCumprod();
 		ui32 srcIdx = 0, dstIdx = 0;
 		for (ui32 i = 0; i < numPixels; ++i) {
 			memcpy(dst + dstIdx, src + srcIdx, 3);
@@ -175,7 +175,7 @@ namespace aurora {
 		return false;
 	}
 
-	void Image::generateMips_UInt8s(const Size2<ui32>& size, modules::graphics::TextureFormat format, ui32 mipLevels, ui8 numChannels, ui8* data, void** dataPtr) {
+	void Image::generateMips_UInt8s(const Vec2ui32& size, modules::graphics::TextureFormat format, ui32 mipLevels, ui8 numChannels, ui8* data, void** dataPtr) {
 		ui32 numChannels2 = numChannels << 1;
 		auto perPixelByteSize = calcPerPixelByteSize(format);
 		auto src = data;
@@ -188,13 +188,13 @@ namespace aurora {
 		for (ui32 lv = 1; lv < mipLevels; ++lv) {
 			dst += calcByteSize(s, perPixelByteSize);
 			if (dataPtr) dataPtr[lv] = dst;
-			auto w = calcNextMipPixelSize(s.width);
-			auto h = calcNextMipPixelSize(s.height);
-			ui32 srcRowByteSize = calcByteSize(s.width, perPixelByteSize);
+			auto w = calcNextMipPixelSize(s[0]);
+			auto h = calcNextMipPixelSize(s[1]);
+			ui32 srcRowByteSize = calcByteSize(s[0], perPixelByteSize);
 			ui32 dstRowByteSize = calcByteSize(w, perPixelByteSize);
 
-			if (w == s.width) {
-				if (h == s.height) {
+			if (w == s[0]) {
+				if (h == s[1]) {
 					memcpy(dst, src, w * h * perPixelByteSize);
 				} else {
 					for (ui32 y = 0; y < h; ++y) {
@@ -211,7 +211,7 @@ namespace aurora {
 						}
 					}
 				}
-			} else if (h == s.height) {
+			} else if (h == s[1]) {
 				for (ui32 y = 0; y < h; ++y) {
 					auto srcRow = src + y * srcRowByteSize;
 					auto dstRow = dst + y * dstRowByteSize;
@@ -238,7 +238,8 @@ namespace aurora {
 			}
 
 			src = dst;
-			s.set(w, h);
+			s[0] = w;
+			s[1] = h;
 		}
 	}
 

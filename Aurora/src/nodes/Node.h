@@ -6,7 +6,7 @@
 #include "base/Ref.h"
 #include "math/Matrix34.h"
 #include "math/Quaternion.h"
-#include "math/Vector3.h"
+#include "math/Vector.h"
 
 namespace aurora::nodes::component {
 	class AbstractComponent;
@@ -30,28 +30,26 @@ namespace aurora::nodes {
 		bool AE_CALL removeFromParent();
 		void AE_CALL removeAllChildren();
 
-		inline Vector3 AE_CALL getLocalPosition() const;
-		inline void AE_CALL getLocalPosition(Vector3& dst) const;
-		void AE_CALL setLocalPosition(const Vector3& p);
-		void AE_CALL localTranslate(const Vector3& p);
+		inline void AE_CALL getLocalPosition(f32(&dst)[3]) const;
+		void AE_CALL setLocalPosition(const f32(&p)[3]);
+		void AE_CALL localTranslate(const f32(&p)[3]);
 
 		inline const Quaternion& AE_CALL getLocalRotation() const;
 		void AE_CALL setLocalRotation(const Quaternion& q);
 		void AE_CALL localRotate(const Quaternion& q);
 
-		inline const Vector3& AE_CALL getLocalScale() const;
-		void AE_CALL setLocalScale(const Vector3& s);
+		inline const Vec3f32& AE_CALL getLocalScale() const;
+		void AE_CALL setLocalScale(const f32(&s)[3]);
 
 		inline const Matrix34& AE_CALL getLocalMatrix() const;
 		void AE_CALL setLocalMatrix(const Matrix34& m);
-		void AE_CALL setLocalTRS(const Vector3& pos, const Quaternion& rot, const Vector3& scale);
+		void AE_CALL setLocalTRS(const f32(&pos)[3], const Quaternion& rot, const f32(&scale)[3]);
 
 		void AE_CALL parentRotate(const Quaternion& q);
 
-		inline Vector3 AE_CALL getWorldPosition() const;
-		inline void AE_CALL getWorldPosition(Vector3& dst) const;
-		void AE_CALL setWorldPosition(const Vector3& p);
-		void AE_CALL worldTranslate(const Vector3& p);
+		inline void AE_CALL getWorldPosition(f32(&dst)[3]) const;
+		void AE_CALL setWorldPosition(const f32(&p)[3]);
+		void AE_CALL worldTranslate(const f32(&p)[3]);
 
 		inline const Quaternion& AE_CALL getWorldRotation() const;
 		void AE_CALL setWorldRotation(const Quaternion& q);
@@ -113,7 +111,7 @@ namespace aurora::nodes {
 		ui32 _numChildren;
 
 		mutable Quaternion _lr;
-		mutable Vector3 _ls;
+		mutable Vec3f32 _ls;
 		mutable Matrix34 _lm;
 
 		mutable Quaternion _wr;

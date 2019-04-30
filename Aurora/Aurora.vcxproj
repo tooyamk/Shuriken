@@ -207,13 +207,7 @@
     <ClInclude Include="src\math\Matrix34.h" />
     <ClInclude Include="src\math\Matrix44.h" />
     <ClInclude Include="src\math\Quaternion.h" />
-    <ClInclude Include="src\math\Rect.h" />
-    <ClInclude Include="src\math\Size2.h" />
-    <ClInclude Include="src\math\Size3.h" />
-    <ClInclude Include="src\math\Vec.h" />
-    <ClInclude Include="src\math\Vector2.h" />
-    <ClInclude Include="src\math\Vector3.h" />
-    <ClInclude Include="src\math\Vector4.h" />
+    <ClInclude Include="src\math\Vector.h" />
     <ClInclude Include="src\modules\IGraphicsModule.h" />
     <ClInclude Include="src\modules\IInputModule.h" />
     <ClInclude Include="src\modules\IModule.h" />
@@ -237,9 +231,6 @@
     <ClCompile Include="src\math\Matrix34.cpp" />
     <ClCompile Include="src\math\Matrix44.cpp" />
     <ClCompile Include="src\math\Quaternion.cpp" />
-    <ClCompile Include="src\math\Vector2.cpp" />
-    <ClCompile Include="src\math\Vector3.cpp" />
-    <ClCompile Include="src\math\Vector4.cpp" />
     <ClCompile Include="src\modules\IGraphicsModule.cpp" />
     <ClCompile Include="src\modules\IInputModule.cpp" />
     <ClCompile Include="src\nodes\components\AbstractComponent.cpp" />
@@ -255,9 +246,6 @@
     <None Include="src\math\Matrix34.inl" />
     <None Include="src\math\Matrix44.inl" />
     <None Include="src\math\Quaternion.inl" />
-    <None Include="src\math\Vector2.inl" />
-    <None Include="src\math\Vector3.inl" />
-    <None Include="src\math\Vector4.inl" />
     <None Include="src\nodes\components\AbstractComponent.inl" />
     <None Include="src\nodes\components\Camera.inl" />
     <None Include="src\nodes\Node.inl" />

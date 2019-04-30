@@ -252,7 +252,7 @@ namespace aurora {
 
 		_checkLength(length);
 
-		memcpy(_bytes + _position, baBytes + offset, length);
+		memmove(_bytes + _position, baBytes + offset, length);
 		_position += length;
 	}
 

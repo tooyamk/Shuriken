@@ -3,19 +3,19 @@
 
 namespace aurora {
 	inline void Matrix44::transpose() {
-		Math::transposeMat(m44, this->m44);
+		Math::transposeMat(data, this->data);
 	}
 
 	inline void Matrix44::transpose(Matrix44& dst) const {
-		Math::transposeMat(m44, dst.m44);
+		Math::transposeMat(data, dst.data);
 	}
 
 	inline bool Matrix44::invert() {
-		return Math::invertMat(m44, m44);
+		return Math::invertMat(data, data);
 	}
 
 	inline bool Matrix44::invert(Matrix44& dst) const {
-		return Math::invertMat(m44, dst.m44);
+		return Math::invertMat(data, dst.data);
 	}
 
 	inline void Matrix44::append(const Matrix34& rhs) {
@@ -27,18 +27,18 @@ namespace aurora {
 	}
 
 	inline void Matrix44::append(const Matrix34& rhs, Matrix34& dst) const {
-		Math::appendMat(m44, rhs.m34, dst.m34);
+		Math::appendMat(data, rhs.data, dst.data);
 	}
 
 	inline void Matrix44::append(const Matrix34& rhs, Matrix44& dst) const {
-		Math::appendMat(m44, rhs.m34, dst.m44);
+		Math::appendMat(data, rhs.data, dst.data);
 	}
 
 	inline void Matrix44::append(const Matrix44& rhs, Matrix34& dst) const {
-		Math::appendMat(m44, rhs.m44, dst.m34);
+		Math::appendMat(data, rhs.data, dst.data);
 	}
 
 	inline void Matrix44::append(const Matrix44& rhs, Matrix44& dst) const {
-		Math::appendMat(m44, rhs.m44, dst.m44);
+		Math::appendMat(data, rhs.data, dst.data);
 	}
 }

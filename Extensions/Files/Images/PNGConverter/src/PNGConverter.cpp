@@ -74,7 +74,7 @@ namespace aurora::file {
 		png_destroy_read_struct(&png, &info, 0);
 
 		auto img = new Image();
-		img->size.set(width, height);
+		img->size.set({ width, height });
 		img->source = ByteArray((i8*)data, dataLen, ByteArray::ExtMemMode::EXCLUSIVE);
 
 		switch (colorType) {

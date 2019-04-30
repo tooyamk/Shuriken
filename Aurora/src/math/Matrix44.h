@@ -6,7 +6,6 @@
 namespace aurora {
 	class Matrix34;
 	class Quaternion;
-	class Vector3;
 
 	/**
 	 * column major matrix.
@@ -95,7 +94,7 @@ namespace aurora {
 
 		union {
 			//__m128 col[4];
-			f32 m44[4][4];
+			f32 data[4][4];
 		};
 	};
 }

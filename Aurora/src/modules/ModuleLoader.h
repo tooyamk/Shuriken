@@ -8,7 +8,7 @@ namespace aurora::modules {
 	template<typename RetType>
 	class AE_TEMPLATE_DLL ModuleLoader : public Ref {
 	public:
-		using CREATE_MODULE_FN = RetType*(*)(const Args*);
+		using CreateModuleFn = RetType*(*)(const Args*);
 
 		ModuleLoader() : _createFn(nullptr) {}
 		virtual ~ModuleLoader() {}
@@ -16,7 +16,7 @@ namespace aurora::modules {
 		bool AE_CALL load(const i8* path) {
 			if (_lib.isLoaded()) _lib.free();
 			if (_lib.load(path)) {
-				_createFn = (CREATE_MODULE_FN)_lib.getSymbolAddress(AE_TO_STRING(AE_CREATE_MODULE_FN_NAME));
+				_createFn = (CreateModuleFn)_lib.getSymbolAddress(AE_TO_STRING(AE_CREATE_MODULE_FN_NAME));
 				return _createFn;
 			} else {
 				_createFn = nullptr;
@@ -39,7 +39,7 @@ namespace aurora::modules {
 
 	protected:
 		DynamicLib _lib;
-		CREATE_MODULE_FN _createFn;
+		CreateModuleFn _createFn;
 	};
 
 	using GraphicsModuleLoader = ModuleLoader<graphics::IGraphicsModule>;

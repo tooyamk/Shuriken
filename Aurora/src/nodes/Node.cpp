@@ -11,7 +11,7 @@ namespace aurora::nodes {
 		_childHead(nullptr),
 		_numChildren(0),
 		_lr(),
-		_ls(Vector3::ONE),
+		_ls(1.f),
 		_lm(),
 		_wr(),
 		_wm(),
@@ -100,13 +100,13 @@ namespace aurora::nodes {
 		}
 	}
 
-	void Node::setLocalPosition(const Vector3& p) {
+	void Node::setLocalPosition(const f32(&p)[3]) {
 		_lm.setPosition(p);
 
 		_checkNoticeUpdate(DirtyFlag::WMIM);
 	}
 
-	void Node::localTranslate(const Vector3& p) {
+	void Node::localTranslate(const f32(&p)[3]) {
 		updateLocalMatrix();
 		_lm.prependTranslate(p);
 
@@ -125,7 +125,7 @@ namespace aurora::nodes {
 		_checkNoticeUpdate(DirtyFlag::LM_WRMIM, DirtyFlag::WRMIM);
 	}
 
-	void Node::setLocalScale(const Vector3& s) {
+	void Node::setLocalScale(const f32(&s)[3]) {
 		_ls.set(s);
 
 		_checkNoticeUpdate(DirtyFlag::LM_WMIM, DirtyFlag::WMIM);
@@ -138,7 +138,7 @@ namespace aurora::nodes {
 		_checkNoticeUpdateNow(_dirty & DirtyFlag::NOT_LM | DirtyFlag::WRMIM, DirtyFlag::WRMIM);
 	}
 
-	void Node::setLocalTRS(const Vector3& pos, const Quaternion& rot, const Vector3& scale) {
+	void Node::setLocalTRS(const f32(&pos)[3], const Quaternion& rot, const f32(&scale)[3]) {
 		_lm.setPosition(pos);
 		_lr.set(rot);
 		_ls.set(scale);
@@ -152,7 +152,7 @@ namespace aurora::nodes {
 		_checkNoticeUpdate(DirtyFlag::LM_WRMIM, DirtyFlag::WRMIM);
 	}
 
-	void Node::setWorldPosition(const Vector3& p) {
+	void Node::setWorldPosition(const f32(&p)[3]) {
 		auto old = _dirty;
 		updateWorldMatrix();
 		_wm.setPosition(p);
@@ -160,7 +160,7 @@ namespace aurora::nodes {
 		_worldPositionChanged(old);
 	}
 
-	void Node::worldTranslate(const Vector3& p) {
+	void Node::worldTranslate(const f32(&p)[3]) {
 		auto old = _dirty;
 		updateWorldMatrix();
 		_wm.prependTranslate(p);
@@ -199,10 +199,10 @@ namespace aurora::nodes {
 	}
 
 	void Node::setIdentity() {
-		if (!_lr.isIdentity() || !_ls.isOne() || _lm.m34[0][3] != 0.f || _lm.m34[1][3] != 0.f || _lm.m34[2][3] != 0.f) {
+		if (!_lr.isIdentity() || !_ls.isEqual(1.f) || _lm.data[0][3] != 0.f || _lm.data[1][3] != 0.f || _lm.data[2][3] != 0.f) {
 			_lm.set34();
 			_lr.set();
-			_ls.set(Vector3::ONE);
+			_ls.set(1.f);
 
 			_checkNoticeUpdate(DirtyFlag::LM_WRMIM, DirtyFlag::WRMIM);
 		}
@@ -400,8 +400,8 @@ namespace aurora::nodes {
 		if (p) {
 			p->updateInverseWorldMatrix();
 
-			f32 tmp[3] = { _wm.m34[0][3], _wm.m34[1][3], _wm.m34[2][3] };
-			Math::matTransformPoint(p->_iwm.m34, tmp, tmp);
+			f32 tmp[3] = { _wm.data[0][3], _wm.data[1][3], _wm.data[2][3] };
+			Math::matTransformPoint(p->_iwm.data, tmp, tmp);
 
 			_lm.setPosition(tmp);
 		} else {

@@ -32,7 +32,7 @@ namespace aurora {
 #endif
 	}
 
-	bool Application::createWindow(const Style& style, const std::string& title, const Rect<i32>& windowedRect, bool fullscreen) {
+	bool Application::createWindow(const Style& style, const std::string& title, const Box2i32& windowedRect, bool fullscreen) {
 		_windowedRect.set(windowedRect);
 		_isWindowed = !fullscreen;
 		_style = style;
@@ -62,7 +62,7 @@ namespace aurora {
 		_updateWindowRectValue();
 
 		_hWnd = CreateWindowExW(_getWindowExStyle(), wnd.lpszClassName, String::Utf8ToUnicode(title).c_str(), _getWindowStyle(),
-			_wndRect.left, _wndRect.top, _wndRect.size.width, _wndRect.size.height,
+			_wndRect.pos[0], _wndRect.pos[1], _wndRect.size[0], _wndRect.size[1],
 			GetDesktopWindow(), nullptr, _hIns, nullptr);
 		SetWindowLongPtr(_hWnd, GWLP_USERDATA, (LONG_PTR)this);
 		if (_hWnd) GetClientRect(_hWnd, &_lastWndInnerRect);
@@ -109,20 +109,20 @@ namespace aurora {
 #endif
 	}
 
-	void Application::getWindowedRect(Rect<i32>& dst) const {
+	void Application::getWindowedRect(Box2i32& dst) const {
 #if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
 		if (_isWindowed) _recordWindowedRect();
 #endif
 		dst.set(_windowedRect);
 	}
 
-	void Application::setWindowedRect(const Rect<i32>& rect) {
-		Rect<i32> out;
+	void Application::setWindowedRect(const Box2i32& rect) {
+		Box2i32 out;
 		if (_adjustWindowRect(rect, out)) {
-			_lastWndInnerRect.left = rect.left;
-			_lastWndInnerRect.right = rect.left + rect.size.width;
-			_lastWndInnerRect.top = rect.top;
-			_lastWndInnerRect.bottom = rect.top + rect.size.height;
+			_lastWndInnerRect.left = rect.pos[0];
+			_lastWndInnerRect.right = rect.pos[0] + rect.size[0];
+			_lastWndInnerRect.top = rect.pos[1];
+			_lastWndInnerRect.bottom = rect.pos[1] + rect.size[1];
 
 			if (!_windowedRect.isEqual(out)) {
 				bool isResize = _windowedRect.size != rect.size;
@@ -252,11 +252,11 @@ namespace aurora {
 		return _appPath;
 	}
 
-	bool Application::_adjustWindowRect(const Rect<i32>& in, Rect<i32>& out) {
+	bool Application::_adjustWindowRect(const Box2i32& in, Box2i32& out) {
 #if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
-		RECT rect = { in.left, in.top, in.left + in.size.width, in.top + in.size.height };
+		RECT rect = { in.pos[0], in.pos[1], in.pos[0] + in.size[0], in.pos[1] + in.size[1] };
 		auto rst = AdjustWindowRectEx(&rect, _getWindowStyle(), FALSE, _getWindowExStyle());
-		out.set(rect.left, rect.top, Size2<i32>(rect.right - rect.left, rect.bottom - rect.top));
+		out.set(Vec2i32({ rect.left, rect.top }), Vec2i32({ rect.right - rect.left, rect.bottom - rect.top }));
 		return rst;
 #elif
 		out.set(in);
@@ -267,7 +267,7 @@ namespace aurora {
 #if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
 		RECT rect;
 		GetWindowRect(_hWnd, &rect);
-		_windowedRect.set(rect.left, rect.top, Size2<i32>(rect.right - rect.left, rect.bottom - rect.top));
+		_windowedRect.set(Vec2i32({ rect.left, rect.top }), Vec2i32({ rect.right - rect.left, rect.bottom - rect.top }));
 #endif
 	}
 
@@ -301,7 +301,7 @@ namespace aurora {
 		if (_isWindowed) {
 			_wndRect.set(_windowedRect);
 		} else {
-			_wndRect.set(0, 0, Size2<i32>(GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN)));
+			_wndRect.set(Vec2i32::ZERO, Vec2i32({ GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN) }));
 		}
 	}
 
@@ -317,7 +317,7 @@ namespace aurora {
 			} else {
 				flags |= SWP_NOCOPYBITS;
 			}
-			SetWindowPos(_hWnd, HWND_NOTOPMOST, _wndRect.left, _wndRect.top, _wndRect.size.width, _wndRect.size.height, flags);
+			SetWindowPos(_hWnd, HWND_NOTOPMOST, _wndRect.pos[0], _wndRect.pos[1], _wndRect.size[0], _wndRect.size[1], flags);
 		}
 	}
 

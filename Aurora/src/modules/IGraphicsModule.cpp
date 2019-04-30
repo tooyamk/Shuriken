@@ -1,8 +1,5 @@
 #include "IGraphicsModule.h"
 #include "base/String.h"
-#include "math/Vector2.h"
-#include "math/Vector3.h"
-#include "math/Vector4.h"
 
 #if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
 #include <dxgi.h>
@@ -223,36 +220,6 @@ namespace aurora::modules::graphics {
 			_exclusiveFnTarget = nullptr;
 			_exclusiveFn = nullptr;
 		}
-	}
-
-	ShaderParameter& ShaderParameter::set(const ISampler* value) {
-		set(value, sizeof(value), sizeof(value), false, true);
-		return *this;
-	}
-
-	ShaderParameter& ShaderParameter::set(const ITextureViewBase* value) {
-		set(value, sizeof(value), sizeof(value), false, true);
-		return *this;
-	}
-
-	ShaderParameter& ShaderParameter::set(f32 value) {
-		set(&value, sizeof(value), sizeof(value), true, false);
-		return *this;
-	}
-
-	ShaderParameter& ShaderParameter::set(const Vector2& value) {
-		set(&value, sizeof(value), sizeof(value), true, false);
-		return *this;
-	}
-
-	ShaderParameter& ShaderParameter::set(const Vector3& value) {
-		set(&value, sizeof(value), sizeof(value), true, false);
-		return *this;
-	}
-
-	ShaderParameter& ShaderParameter::set(const Vector4& value) {
-		set(&value, sizeof(value), sizeof(value), true, false);
-		return *this;
 	}
 
 	ShaderParameter& ShaderParameter::set(const void* data, ui32 size, ui16 perElementSize, bool copy, bool ref) {

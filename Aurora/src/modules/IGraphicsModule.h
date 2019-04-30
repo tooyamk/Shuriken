@@ -2,17 +2,8 @@
 
 #include "modules/IModule.h"
 #include "base/ByteArray.h"
+#include "math/Box.h"
 #include <unordered_map>
-
-namespace aurora {
-	template<typename T> class Box;
-	template<typename T> class Rect;
-	template<typename T> class Size2;
-	template<typename T> class Size3;
-	class Vector2;
-	class Vector3;
-	class Vector4;
-}
 
 namespace aurora::modules::graphics {
 	class IGraphicsModule;
@@ -216,7 +207,7 @@ namespace aurora::modules::graphics {
 		virtual void AE_CALL setMipLOD(f32 min, f32 max, f32 bias) = 0;
 		virtual void AE_CALL setMaxAnisotropy(ui32 max) = 0;
 
-		virtual void AE_CALL setBorderColor(const Vector4& color) = 0;
+		virtual void AE_CALL setBorderColor(const Vec4f32& color) = 0;
 	};
 
 
@@ -268,7 +259,7 @@ namespace aurora::modules::graphics {
 		virtual bool AE_CALL create(ui32 width, ui32 arraySize, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data = nullptr) = 0;
 
 		using ITextureResource::write;
-		virtual bool AE_CALL write(ui32 arraySlice, ui32 mipSlice, ui32 left, ui32 right, const void* data) = 0;
+		virtual bool AE_CALL write(ui32 arraySlice, ui32 mipSlice, const Box1ui32& range, const void* data) = 0;
 	};
 
 
@@ -277,10 +268,10 @@ namespace aurora::modules::graphics {
 		ITexture2DResource(IGraphicsModule& graphics) : ITextureResource(graphics) {}
 		virtual ~ITexture2DResource() {}
 
-		virtual bool AE_CALL create(const Size2<ui32>& size, ui32 arraySize, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data = nullptr) = 0;
+		virtual bool AE_CALL create(const Vec2ui32& size, ui32 arraySize, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data = nullptr) = 0;
 
 		using ITextureResource::write;
-		virtual bool AE_CALL write(ui32 arraySlice, ui32 mipSlice, const Rect<ui32>& range, const void* data) = 0;
+		virtual bool AE_CALL write(ui32 arraySlice, ui32 mipSlice, const Box2ui32& range, const void* data) = 0;
 	};
 
 
@@ -289,10 +280,10 @@ namespace aurora::modules::graphics {
 		ITexture3DResource(IGraphicsModule& graphics) : ITextureResource(graphics) {}
 		virtual ~ITexture3DResource() {}
 
-		virtual bool AE_CALL create(const Size3<ui32>& size, ui32 arraySize, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data = nullptr) = 0;
+		virtual bool AE_CALL create(const Vec3ui32& size, ui32 arraySize, TextureFormat format, ui32 mipLevels, Usage resUsage, const void*const* data = nullptr) = 0;
 
 		using ITextureResource::write;
-		virtual bool AE_CALL write(ui32 arraySlice, ui32 mipSlice, const Box<ui32>& range, const void* data) = 0;
+		virtual bool AE_CALL write(ui32 arraySlice, ui32 mipSlice, const Box3ui32& range, const void* data) = 0;
 	};
 
 
@@ -355,12 +346,28 @@ namespace aurora::modules::graphics {
 			return *this;
 		}
 
-		ShaderParameter& AE_CALL set(f32 value);
-		ShaderParameter& AE_CALL set(const ISampler* value);
-		ShaderParameter& AE_CALL set(const ITextureViewBase* value);
-		ShaderParameter& AE_CALL set(const Vector2& value);
-		ShaderParameter& AE_CALL set(const Vector3& value);
-		ShaderParameter& AE_CALL set(const Vector4& value);
+		template<typename T>
+		inline ShaderParameter& AE_CALL set(Math::NumberType<T> value) {
+			return set(&value, sizeof(value), sizeof(value), true, false);
+		}
+		inline ShaderParameter& AE_CALL set(const ISampler* value) {
+			return set(value, sizeof(value), sizeof(value), false, true);
+		}
+		inline ShaderParameter& AE_CALL set(const ITextureViewBase* value) {
+			return set(value, sizeof(value), sizeof(value), false, true);
+		}
+		template<typename T>
+		inline ShaderParameter& AE_CALL set(const Vec2<T>& value) {
+			return set(&value, sizeof(value), sizeof(value), true, false);
+		}
+		template<typename T>
+		inline ShaderParameter& AE_CALL set(const Vec3<T>& value) {
+			return set(&value, sizeof(value), sizeof(value), true, false);
+		}
+		template<typename T>
+		inline ShaderParameter& AE_CALL set(const Vec4<T>& value) {
+			return set(&value, sizeof(value), sizeof(value), true, false);
+		}
 		ShaderParameter& AE_CALL set(const void* data, ui32 size, ui16 perElementSize, bool copy, bool ref);
 
 	ae_internal_public:

@@ -11,7 +11,7 @@ namespace aurora::nodes::component {
 
 	void Camera::setProjectionMatrix(const Matrix44& pm) {
 		_pm.set44(pm);
-		auto& m = _pm.m44;
+		auto& m = _pm.data;
 
 		_zNear = -m[2][3] / m[2][2];
 

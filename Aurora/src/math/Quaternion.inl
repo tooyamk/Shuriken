@@ -1,4 +1,4 @@
-#include "math/Vector3.h"
+#include "Quaternion.h"
 #include "math/Matrix34.h"
 
 namespace aurora {
@@ -24,7 +24,7 @@ namespace aurora {
 		this->w = w;
 	}
 
-	inline void Quaternion::set(const f32* q) {
+	inline void Quaternion::set(const f32(&q)[4]) {
 		x = q[0];
 		y = q[1];
 		z = q[2];
@@ -73,8 +73,8 @@ namespace aurora {
 		Math::appendQuat(&x, &q.x, &dst.x);
 	}
 
-	inline void Quaternion::rotate(const Vector3& p, Vector3& dst) const {
-		Math::quatRotateVec3(&x, &p.x, &dst.x);
+	inline void Quaternion::rotate(const f32(&p)[3], f32(&dst)[3]) const {
+		Math::quatRotate<f32>(data, p, dst);
 	}
 
 	inline void Quaternion::toMatrix(Matrix34& dst) const {
@@ -89,7 +89,7 @@ namespace aurora {
 		auto wy = w * y2;
 		auto wz = w * z2;
 
-		auto& m = dst.m34;
+		auto& m = dst.data;
 		m[0][0] = 1.f - yy - zz;
 		m[1][0] = xy + wz;
 		m[2][0] = xz - wy;

@@ -1,66 +1,66 @@
 #pragma once
 
 #include "base/LowLevel.h"
-#include "math/Size3.h"
+#include "math/Vector.h"
 
 namespace aurora {
-	template<typename T>
+	template<ui32 N, typename T>
 	class AE_TEMPLATE_DLL Box {
 	public:
 		Box() {
-			memset(&left, 0, sizeof(T) * 6);
 		}
 
-		Box(const Box<T>& box) :
-			left(box.left),
-			top(box.top),
-			front(box.front),
+		Box(const Box<N, T>& box) :
+			pos(box.pos),
 			size(box.size) {
 		}
 
-		Box(Box<T>&& box) :
-			left(box.left),
-			top(box.top),
-			front(box.front),
+		Box(Box<N, T>&& box) :
+			pos(box.pos),
 			size(box.size) {
 		}
 
-		Box(T left, T top, T front, const Size3<T>& size) :
-			left(left),
-			top(top),
-			front(box.front),
+		Box(const Vec<N, T>&pos, const Vec<N, T>& size) :
+			pos(pos),
 			size(size) {
 		}
 
-		inline bool operator==(const Box<T> box) const {
-			return left == box.left && top == box.top && front == box.front && size == rect.size;
+		inline bool operator==(const Box<N, T>& box) {
+			return pos == box.pos && size == box.size;
 		}
 
-		inline bool operator!=(const Box<T> box) const {
-			return left != box.left || top != box.top || front != box.front || size != rect.size;
+		inline bool operator!=(const Box<N, T>& box) {
+			return pos != box.pos || size != box.size;
 		}
 
-		inline void AE_CALL set(const Box<T>& box) {
-			left = box.left;
-			top = box.top;
-			front = box.front;
-			size.set(rect.size);
+		inline void AE_CALL set(const Box<N, T>& box) {
+			pos.set(box.pos);
+			size.set(box.size);
 		}
 
-		inline void AE_CALL set(T left, T top, T front, const Size3<T>& size) {
-			this->left = left;
-			this->top = top;
-			this->front = front;
+		inline void AE_CALL set(const Vec<N, T>&pos, const Vec<N, T>& size) {
+			this->pos.set(pos);
 			this->size.set(size);
 		}
 
-		inline bool AE_CALL isEqual(const Box<T> box) const {
-			return left == box.left && top == box.top && front == box.front && size == rect.size;
+		inline bool AE_CALL isEqual(const Box<N, T>& box) const {
+			return pos == box.pos && size == box.size;
 		}
 
-		T left;
-		T top;
-		T front;
-		Size3<T> size;
+		Vec<N, T> pos;
+		Vec<N, T> size;
 	};
+
+	template<typename T> using Box1 = Box<1, T>;
+	using Box1f32 = Box1<f32>;
+	using Box1i32 = Box1<i32>;
+	using Box1ui32 = Box1<ui32>;
+	template<typename T> using Box2 = Box<2, T>;
+	using Box2f32 = Box2<f32>;
+	using Box2i32 = Box2<i32>;
+	using Box2ui32 = Box2<ui32>;
+	template<typename T> using Box3 = Box<3, T>;
+	using Box3f32 = Box3<f32>;
+	using Box3i32 = Box3<i32>;
+	using Box3ui32 = Box3<ui32>;
 }

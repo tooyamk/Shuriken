@@ -2,7 +2,6 @@
 #include "math/Math.h"
 #include "math/Matrix34.h"
 #include "math/Matrix44.h"
-#include "math/Vector3.h"
 
 namespace aurora {
 	Quaternion::Quaternion() :
@@ -53,11 +52,14 @@ namespace aurora {
 		w *= n;
 	}
 
-	void Quaternion::toEuler(Vector3& dst) const {
+	void Quaternion::toEuler(f32(&dst)[3]) const {
 		auto y2 = y * y;
-		dst.x = std::atan2(2.f * (w * x + y * z), (1.f - 2.f * (x * x + y2)));
-		dst.y = std::asin(2.f * (w * y - z * x));
-		dst.z = std::atan2(2.f * (w * z + x * y), (1.f - 2.f * (y2 + z * z)));
+		auto ex = std::atan2(2.f * (w * x + y * z), (1.f - 2.f * (x * x + y2)));
+		auto ey = std::asin(2.f * (w * y - z * x));
+		auto ez = std::atan2(2.f * (w * z + x * y), (1.f - 2.f * (y2 + z * z)));
+		dst[0] = ex;
+		dst[1] = ey;
+		dst[2] = ez;
 	}
 
 	void Quaternion::createFromEulerX(f32 radian, Quaternion& dst) {
@@ -84,10 +86,10 @@ namespace aurora {
 		dst.set(0.f, 0.f, z, w);
 	}
 
-	void Quaternion::createFromEuler(const Vector3& radians, Quaternion& dst) {
-		auto x = radians.x * .5f;
-		auto y = radians.y * .5f;
-		auto z = radians.z * .5f;
+	void Quaternion::createFromEuler(const f32(&radians)[3], Quaternion& dst) {
+		auto x = radians[0] * .5f;
+		auto y = radians[1] * .5f;
+		auto z = radians[2] * .5f;
 
 		auto sx = std::sin(x);
 		auto cx = std::cos(x);
@@ -104,23 +106,23 @@ namespace aurora {
 		dst.set(sxcy * cz - cxsy * sz, cxsy * cz + sxcy * sz, cxcy * sz - sxsy * cz, cxcy * cz + sxsy * sz);
 	}
 
-	void Quaternion::createFromAxis(const Vector3& axis, f32 radian, Quaternion& dst) {
+	void Quaternion::createFromAxis(const f32(&axis)[3], f32 radian, Quaternion& dst) {
 		radian *= .5f;
 		auto s = std::sin(radian);
 
-		dst.set(-axis.x * s, -axis.y * s, -axis.z * s, std::cos(radian));
+		dst.set(-axis[0] * s, -axis[1] * s, -axis[2] * s, std::cos(radian));
 	}
 
-	void Quaternion::createLookAt(const Vector3& forward, const Vector3& upward, Quaternion& dst) {
+	void Quaternion::createLookAt(const f32(&forward)[3], const f32(&upward)[3], Quaternion& dst) {
 		auto& zaxis = forward;
-		Vector3 xaxis, yaxis;
-		Vector3::cross(upward, zaxis, xaxis);
-		xaxis.setNormalize();
-		Vector3::cross(zaxis, xaxis, yaxis);
+		f32 xaxis[3], yaxis[3];
+		Math::cross<f32, f32>(upward, zaxis, xaxis);
+		Math::normalize<3, f32, f32>(xaxis, xaxis);
+		Math::cross<f32, f32>(zaxis, xaxis, yaxis);
 
-		auto w = std::sqrt(1.f + xaxis.x + yaxis.y + zaxis.z) * .5f;
+		auto w = std::sqrt(1.f + xaxis[0] + yaxis[1] + zaxis[2]) * .5f;
 		auto recip = .25f / w;
 
-		dst.set((yaxis.z - zaxis.y) * recip, (zaxis.x - xaxis.z) * recip, (xaxis.y - yaxis.x) * recip, w);
+		dst.set((yaxis[2] - zaxis[1]) * recip, (zaxis[0] - xaxis[2]) * recip, (xaxis[1] - yaxis[0]) * recip, w);
 	}
 }
