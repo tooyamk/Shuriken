@@ -57,7 +57,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 				if ((resUsage & Usage::CPU_WRITE) == Usage::CPU_WRITE && ((resUsage & Usage::CPU_READ) == Usage::NONE)) {
 					ret |= Usage::CPU_WRITE;
 					if (bindType == D3D11_BIND_CONSTANT_BUFFER) {
-						if (graphics->getFeatureOptions().MapNoOverwriteOnDynamicConstantBuffer) {
+						if (graphics->getInternalFeatures().MapNoOverwriteOnDynamicConstantBuffer) {
 							mapType |= D3D11_MAP_WRITE_NO_OVERWRITE;
 							ret |= Usage::CPU_WRITE_NO_OVERWRITE;
 						} else {

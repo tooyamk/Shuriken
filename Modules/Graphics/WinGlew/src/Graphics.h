@@ -1,8 +1,6 @@
 #pragma once
 
-#include "IndexBuffer.h"
-#include "Program.h"
-#include "VertexBuffer.h"
+#include "Base.h"
 
 namespace aurora::modules::graphics::win_glew {
 	class AE_MODULE_DLL Graphics : public IGraphicsModule {
@@ -12,6 +10,8 @@ namespace aurora::modules::graphics::win_glew {
 
 		virtual bool AE_CALL createDevice(const GraphicsAdapter* adapter) override;
 
+		virtual const std::string& AE_CALL getVersion() const override;
+		virtual const GraphicsFeatures& AE_CALL getFeatures() const override;
 		virtual IConstantBuffer* AE_CALL createConstantBuffer() override;
 		virtual IIndexBuffer* AE_CALL createIndexBuffer() override;
 		virtual IProgram* AE_CALL createProgram() override;
@@ -56,6 +56,8 @@ namespace aurora::modules::graphics::win_glew {
 		RefPtr<Application> _app;
 		RefPtr<IProgramSourceTranslator> _trans;
 
+		GraphicsFeatures _features;
+
 		HDC _dc;
 		HGLRC _rc;
 
@@ -63,6 +65,7 @@ namespace aurora::modules::graphics::win_glew {
 		GLint _minorVer;
 		ui32 _intVer;
 		std::string _strVer;
+		std::string _fullVer;
 
 		void AE_CALL _release();
 	};

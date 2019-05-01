@@ -1,7 +1,12 @@
 #include "Graphics.h"
+#include "CreateModule.h"
+#include "IndexBuffer.h"
+#include "Program.h"
+#include "Texture2DResource.h"
+#include "VertexBuffer.h"
 #include "base/Application.h"
 #include "base/String.h"
-#include "CreateModule.h"
+
 
 #include "BaseTexture.h"
 
@@ -14,6 +19,7 @@ namespace aurora::modules::graphics::win_glew {
 		_majorVer(0),
 		_minorVer(0),
 		_intVer(0) {
+		_release();
 	}
 
 	Graphics::~Graphics() {
@@ -82,11 +88,23 @@ namespace aurora::modules::graphics::win_glew {
 
 		_intVer = _majorVer * 100 + _minorVer * 10;
 		_strVer = String::toString(_intVer);
+		_fullVer = "OpenGL " + String::toString(_majorVer) + "." + String::toString(_minorVer);
 
 		auto tex = new BaseTexture(TextureType::TEX2D);
 		tex->create(this, Vec3ui32(), 1, 1, TextureFormat::R8G8B8, Usage::NONE, nullptr);
 
+		_features.supportSampler = isGreatThanVersion(3, 2);
+		_features.supportTextureView = false;
+
 		return true;
+	}
+
+	const std::string& Graphics::getVersion() const {
+		return _fullVer;
+	}
+
+	const GraphicsFeatures& Graphics::getFeatures() const {
+		return _features;
 	}
 
 	IConstantBuffer* Graphics::createConstantBuffer() {
@@ -110,7 +128,7 @@ namespace aurora::modules::graphics::win_glew {
 	}
 
 	ITexture2DResource* Graphics::createTexture2DResource() {
-		return nullptr;
+		return new Texture2DResource(*this);
 	}
 
 	ITexture3DResource* Graphics::createTexture3DResource() {
@@ -160,6 +178,9 @@ namespace aurora::modules::graphics::win_glew {
 			ReleaseDC(_app.get()->Win_getHWND(), _dc);
 			_dc = nullptr;
 		}
+
+		memset(&_features, 0, sizeof(_features));
+		_fullVer = "OpenGL Unknown";
 	}
 
 	GLenum Graphics::convertInternalFormat(TextureFormat fmt) {

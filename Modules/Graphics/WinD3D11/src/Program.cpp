@@ -146,7 +146,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			cb = g->getExclusiveConstantBuffer(_tempParams, cbLayout);
 
 			if (cb) {
-				if (g->getFeatureOptions().MapNoOverwriteOnDynamicConstantBuffer) {
+				if (g->getInternalFeatures().MapNoOverwriteOnDynamicConstantBuffer) {
 					bool isMaping = false;
 					for (ui32 i = 0; i < numVars; ++i) {
 						auto param = _tempParams[i];
@@ -224,18 +224,18 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 	void Program::draw(const VertexBufferFactory* vertexFactory, const ShaderParameterFactory* paramFactory,
 		const IIndexBuffer* indexBuffer, ui32 count, ui32 offset) {
-		if (_vs && vertexFactory && indexBuffer && count > 0) {
+		if (_vs && vertexFactory && indexBuffer && _graphics == indexBuffer->getGraphics() && count > 0) {
 			auto g = _graphics.get<Graphics>();
 			auto context = g->getContext();
 
 			bool inElementsDirty = false;
 			for (ui32 i = 0, n = _inVerBufInfos.size(); i < n; ++i) {
 				auto& info = _inVerBufInfos[i];
-				auto vb = (VertexBuffer*)vertexFactory->get(info.name);
-				if (vb) {
+				auto vb = vertexFactory->get(info.name);
+				if (vb && _graphics == vb->getGraphics()) {
 					auto& ie = _inElements[i];
 					DXGI_FORMAT fmt;
-					if (vb->use(info.slot, fmt)) {
+					if (((VertexBuffer*)vb)->use(info.slot, fmt)) {
 						if (ie.Format != fmt) {
 							inElementsDirty = true;
 							ie.Format = fmt;

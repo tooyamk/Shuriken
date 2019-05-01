@@ -1,4 +1,5 @@
 #include "Graphics.h"
+#include "CreateModule.h"
 #include "IndexBuffer.h"
 #include "Program.h"
 #include "Sampler.h"
@@ -7,8 +8,6 @@
 #include "Texture3DResource.h"
 #include "VertexBuffer.h"
 #include "base/Application.h"
-#include "CreateModule.h"
-#include <d3d11shader.h>
 
 namespace aurora::modules::graphics::win_d3d11 {
 	Graphics::Graphics(Application* app) :
@@ -22,6 +21,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_backBufferTarget(nullptr),
 		_resizedListener(this, &Graphics::_resizedHandler) {
 		_app.get()->getEventDispatcher().addEventListener(ApplicationEvent::RESIZED, _resizedListener, false);
+		memset(&_features, 0, sizeof(_features));
 	}
 
 	Graphics::~Graphics() {
@@ -167,24 +167,58 @@ namespace aurora::modules::graphics::win_d3d11 {
 			return false;
 		}
 
+		_fullVer = "D3D ";
 		_featureLevel = _device->GetFeatureLevel();
 		switch (_featureLevel) {
 		case D3D_FEATURE_LEVEL_9_1:
-		case D3D_FEATURE_LEVEL_9_2:
+		{
+			_fullVer += "9.1";
 			_shaderModel = "4.0.level.9.1";
+
 			break;
+		}
+		case D3D_FEATURE_LEVEL_9_2:
+		{
+			_fullVer += "9.2";
+			_shaderModel = "4.0.level.9.1";
+
+			break;
+		}
 		case D3D_FEATURE_LEVEL_9_3:
+		{
+			_fullVer += "9.3";
 			_shaderModel = "4.0.level.9.3";//??
+
 			break;
+		}
 		case D3D_FEATURE_LEVEL_10_0:
+		{
+			_fullVer += "10.0";
 			_shaderModel = "4.0";
+
 			break;
+		}
 		case D3D_FEATURE_LEVEL_10_1:
+		{
+			_fullVer += "10.1";
 			_shaderModel = "4.1";
+
 			break;
-		default:
+		}
+		case D3D_FEATURE_LEVEL_11_0:
+		{
+			_fullVer += "11.0";
 			_shaderModel = "5.0";
+
 			break;
+		}
+		default:
+		{
+			_fullVer += "11.1";
+			_shaderModel = "5.0";
+
+			break;
+		}
 		}
 
 		i32 w, h;
@@ -213,11 +247,22 @@ namespace aurora::modules::graphics::win_d3d11 {
 			return false;
 		}
 
-		_device->CheckFeatureSupport(D3D11_FEATURE_D3D11_OPTIONS, &_featureOptions, sizeof(_featureOptions));
+		_device->CheckFeatureSupport(D3D11_FEATURE_D3D11_OPTIONS, &_internalFeatures, sizeof(_internalFeatures));
+
+		_features.supportSampler = true;
+		_features.supportTextureView = true;
 
 		_resize(w, h);
 
 		return true;
+	}
+
+	const std::string& Graphics::getVersion() const {
+		return _fullVer;
+	}
+
+	const GraphicsFeatures& Graphics::getFeatures() const {
+		return _features;
 	}
 
 	IConstantBuffer* Graphics::createConstantBuffer() {
@@ -494,7 +539,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_featureLevel = D3D_FEATURE_LEVEL_9_1;
 		_shaderModel = "";
 
-		memset(&_featureOptions, 0, sizeof(_featureOptions));
+		memset(&_internalFeatures, 0, sizeof(_internalFeatures));
+		memset(&_features, 0, sizeof(_features));
+
+		_fullVer = "D3D Unknown";
 	}
 
 	void Graphics::_resize(UINT w, UINT h) {

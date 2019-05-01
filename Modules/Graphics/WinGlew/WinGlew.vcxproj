@@ -34,6 +34,7 @@
     <ClInclude Include="src\CreateModule.h" />
     <ClInclude Include="src\IndexBuffer.h" />
     <ClInclude Include="src\Program.h" />
+    <ClInclude Include="src\Texture2DResource.h" />
     <ClInclude Include="src\VertexBuffer.h" />
   </ItemGroup>
   <ItemGroup>
@@ -42,6 +43,7 @@
     <ClCompile Include="src\Graphics.cpp" />
     <ClCompile Include="src\IndexBuffer.cpp" />
     <ClCompile Include="src\Program.cpp" />
+    <ClCompile Include="src\Texture2DResource.cpp" />
     <ClCompile Include="src\VertexBuffer.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

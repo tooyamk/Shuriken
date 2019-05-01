@@ -111,7 +111,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 				auto c = factory.get(info.name);
 				if (c) {
 					auto data = c->getData();
-					if (data) {
+					if (data && _graphics == ((ITextureViewBase*)data)->getGraphics()) {
 						auto view = (ID3D11ShaderResourceView*)((ITextureViewBase*)data)->getNativeView();
 						_graphics.get<Graphics>()->useShaderResources<stage>(info.bindPoint, 1, &view);
 					}
@@ -123,7 +123,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 				auto c = factory.get(info.name);
 				if (c) {
 					auto data = c->getData();
-					if (data) ((Sampler*)data)->use<stage>(info.bindPoint);
+					if (data && _graphics == ((ISampler*)data)->getGraphics()) ((Sampler*)data)->use<stage>(info.bindPoint);
 				}
 			}
 		}

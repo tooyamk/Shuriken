@@ -67,6 +67,7 @@ namespace aurora::modules::graphics {
 		virtual ~IBuffer() {}
 
 		virtual bool AE_CALL create(ui32 size, Usage bufferUsage, const void* data = nullptr, ui32 dataSize = 0) = 0;
+		virtual Usage AE_CALL getUsage() const = 0;
 		virtual Usage AE_CALL map(Usage expectMapUsage) = 0;
 		virtual void AE_CALL unmap() = 0;
 		virtual i32 AE_CALL read(ui32 offset, void* dst, ui32 dstLen, i32 readLen = -1) = 0;
@@ -245,6 +246,7 @@ namespace aurora::modules::graphics {
 
 		virtual TextureType AE_CALL getType() const = 0;
 		virtual const void* AE_CALL getNativeResource() const = 0;
+		virtual Usage AE_CALL getUsage() const = 0;
 		virtual Usage AE_CALL map(ui32 arraySlice, ui32 mipSlice, Usage expectMapUsage) = 0;
 		virtual void AE_CALL unmap(ui32 arraySlice, ui32 mipSlice) = 0;
 		virtual i32 AE_CALL read(ui32 arraySlice, ui32 mipSlice, ui32 offset, void* dst, ui32 dstLen, i32 readLen = -1) = 0;
@@ -490,6 +492,12 @@ namespace aurora::modules::graphics {
 	};
 
 
+	struct AE_DLL GraphicsFeatures {
+		bool supportSampler;
+		bool supportTextureView;
+	};
+
+
 	class AE_DLL IGraphicsModule : public IModule {
 	public:
 		virtual ~IGraphicsModule();
@@ -500,6 +508,8 @@ namespace aurora::modules::graphics {
 
 		virtual bool AE_CALL createDevice(const GraphicsAdapter* adapter) = 0;
 
+		virtual const std::string& AE_CALL getVersion() const = 0;
+		virtual const GraphicsFeatures& AE_CALL getFeatures() const = 0;
 		virtual IConstantBuffer* AE_CALL createConstantBuffer() = 0;
 		virtual IIndexBuffer* AE_CALL createIndexBuffer() = 0;
 		virtual IProgram* AE_CALL createProgram() = 0;

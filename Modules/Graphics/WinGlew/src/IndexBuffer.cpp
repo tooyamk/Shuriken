@@ -17,6 +17,10 @@ namespace aurora::modules::graphics::win_glew {
 		return rst;
 	}
 
+	Usage IndexBuffer::getUsage() const {
+		return _baseBuffer.resUsage;
+	}
+
 	Usage IndexBuffer::map(Usage expectMapUsage) {
 		return _baseBuffer.map(expectMapUsage);
 	}

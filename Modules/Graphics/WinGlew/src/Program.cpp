@@ -1,5 +1,7 @@
 #include "Program.h"
 #include "Graphics.h"
+#include "IndexBuffer.h"
+#include "VertexBuffer.h"
 
 namespace aurora::modules::graphics::win_glew {
 	Program::Program(Graphics& graphics) : IProgram(graphics),
@@ -66,10 +68,10 @@ namespace aurora::modules::graphics::win_glew {
 
 	void Program::draw(const VertexBufferFactory* vertexFactory, const ShaderParameterFactory* paramFactory, 
 		const IIndexBuffer* indexBuffer, ui32 count, ui32 offset) {
-		if (_handle && vertexFactory && indexBuffer && count > 0) {
+		if (_handle && vertexFactory && indexBuffer && _graphics == indexBuffer->getGraphics() && count > 0) {
 			for (auto& info : _inVerBufInfos) {
-				auto vb = (VertexBuffer*)vertexFactory->get(info.name);
-				if (vb) vb->use(info.index);
+				auto vb = vertexFactory->get(info.name);
+				if (vb && _graphics == vb->getGraphics()) ((VertexBuffer*)vb)->use(info.index);
 			}
 
 			glEnable(GL_CULL_FACE);

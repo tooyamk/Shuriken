@@ -16,6 +16,10 @@ namespace aurora::modules::graphics::win_glew {
 		return _baseBuffer.create(size, bufferUsage, data);
 	}
 
+	Usage VertexBuffer::getUsage() const {
+		return _baseBuffer.resUsage;
+	}
+
 	Usage VertexBuffer::map(Usage expectMapUsage) {
 		return _baseBuffer.map(expectMapUsage);
 	}

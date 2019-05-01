@@ -5,6 +5,8 @@
 namespace aurora::modules::graphics::win_glew {
 	BaseBuffer::BaseBuffer(GLenum bufferType) :
 		dirty(false),
+		resUsage(Usage::NONE),
+		mapUsage(Usage::NONE),
 		bufferType(bufferType),
 		size(0),
 		handle(0),
@@ -36,6 +38,7 @@ namespace aurora::modules::graphics::win_glew {
 			return true;
 		}
 
+		releaseBuffer();
 		return false;
 	}
 
@@ -110,7 +113,10 @@ namespace aurora::modules::graphics::win_glew {
 
 			dirty = false;
 		}
+
 		size = 0;
+		resUsage = Usage::NONE;
+		mapUsage = Usage::NONE;
 	}
 
 	void BaseBuffer::waitServerSync() {

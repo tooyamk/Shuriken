@@ -30,6 +30,9 @@
     <ClInclude Include="src\BaseTexture.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\Texture2DResource.h">
+      <Filter>src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Graphics.cpp">
@@ -48,6 +51,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\BaseTexture.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Texture2DResource.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

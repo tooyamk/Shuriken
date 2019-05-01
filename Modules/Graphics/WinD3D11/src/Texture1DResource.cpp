@@ -37,6 +37,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return rst;
 	}
 
+	Usage Texture1DResource::getUsage() const {
+		return _baseTexRes.resUsage;
+	}
+
 	Usage Texture1DResource::map(ui32 arraySlice, ui32 mipSlice, Usage expectMapUsage) {
 		return _baseTexRes.map(_graphics.get<Graphics>(), arraySlice, mipSlice, expectMapUsage);
 	}

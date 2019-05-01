@@ -16,6 +16,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return _baseBuffer.create(_graphics.get<Graphics>(), size, bufferUsage, data, dataSize);
 	}
 
+	Usage IndexBuffer::getUsage() const {
+		return _baseBuffer.resUsage;
+	}
+
 	Usage IndexBuffer::map(Usage expectMapUsage) {
 		return _baseBuffer.map(_graphics.get<Graphics>(), expectMapUsage);
 	}
