@@ -17,13 +17,17 @@ namespace aurora::modules::graphics::win_glew {
 
 	protected:
 		struct InVertexBufferInfo {
-			GLuint index;
+			GLuint location;
+			GLenum type;
+			GLint size;
 			std::string name;
 		};
+		using UniformInfo = InVertexBufferInfo;
 
 
 		GLuint _handle;
-		std::vector<InVertexBufferInfo> _inVerBufInfos;
+		std::vector<InVertexBufferInfo> _inVertexBufferLayouts;
+		std::vector<UniformInfo> _uniformLayouts;
 
 		void AE_CALL _release();
 		GLuint AE_CALL _compileShader(const ProgramSource& source, GLenum type);

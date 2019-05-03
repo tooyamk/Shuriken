@@ -7,8 +7,11 @@
 #include <vector>
 
 namespace aurora::modules::graphics::win_d3d11 {
+	Program::InLayout::InLayout(ui32 numInElements) :
+		formats(numInElements) {
+	}
+
 	Program::InLayout::~InLayout() {
-		delete[] formats;
 		if (layout) layout->Release();
 	}
 
@@ -193,14 +196,14 @@ namespace aurora::modules::graphics::win_d3d11 {
 		ui16 pes = param.getPerElementSize();
 		if (pes < size) {
 			auto remainder = pes & 0b1111;
-			auto offset = remainder ? 16 - remainder : 0;
-			if (offset) {
+			if (remainder) {
+				auto offset = pes + 16 - remainder;
 				auto max = std::min<ui32>(size, var.size);
 				ui32 cur = 0, cbOffset = var.offset;
 				auto data = param.getData();
 				do {
 					cb->write(cbOffset, data, pes);
-					cbOffset += pes + offset;
+					cbOffset += offset;
 					cur += pes;
 				} while (cur < max);
 			} else {
@@ -333,8 +336,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			if (il.isEqual(_inElements, _numInElements)) return il.layout;
 		}
 
-		auto& il = _inLayouts.emplace_back();
-		il.formats = new ui32[_numInElements];
+		auto& il = _inLayouts.emplace_back(_numInElements);
 		for (ui32 i = 0; i < _numInElements; ++i) il.formats[i] = _inElements[i].Format;
 		auto hr = _graphics.get<Graphics>()->getDevice()->CreateInputLayout(_inElements, _numInElements, _vertBlob->GetBufferPointer(), _vertBlob->GetBufferSize(), &il.layout);
 		return il.layout;
@@ -456,6 +458,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 				if (String::isEqual(dst.constantBuffers[j].name.c_str(), bDesc.Name)) {
 					idx = j;
 					buffer = &dst.constantBuffers[j];
+					buffer->size = bDesc.Size;
 					break;
 				}
 			}
@@ -463,33 +466,53 @@ namespace aurora::modules::graphics::win_d3d11 {
 			if (buffer) {
 				i8 end = 0;
 				buffer->featureCode = hash::CRC::CRC64StreamBegin();
+				hash::CRC::CRC64StreamIteration(buffer->featureCode, (i8*)&buffer->size, sizeof(buffer->size));
 				hash::CRC::CRC64StreamIteration(buffer->featureCode, (i8*)&bDesc.Variables, sizeof(bDesc.Variables));
 
 				for (ui32 j = 0; j < bDesc.Variables; ++j) {
 					auto var = cb->GetVariableByIndex(j);
 					var->GetDesc(&vDesc);
 
-					auto& v = buffer->vars.emplace_back();
-					v.name = vDesc.Name;
-					v.offset = vDesc.StartOffset;
-					v.size = vDesc.Size;
-					buffer->size += v.size;
+					if (vDesc.uFlags & D3D_SVF_USED) {
+						auto& v = buffer->vars.emplace_back();
+						v.name = vDesc.Name;
+						v.offset = vDesc.StartOffset;
+						v.size = vDesc.Size;
 
-					hash::CRC::CRC64StreamIteration(buffer->featureCode, v.name.c_str(), v.name.size());
-					hash::CRC::CRC64StreamIteration(buffer->featureCode, (i8*)&end, sizeof(end));
-					hash::CRC::CRC64StreamIteration(buffer->featureCode, (i8*)&v.offset, sizeof(v.offset));
-					hash::CRC::CRC64StreamIteration(buffer->featureCode, (i8*)&v.size, sizeof(v.size));
+						_parseConstantVar(v, var->GetType());
+
+						hash::CRC::CRC64StreamIteration(buffer->featureCode, v.name.c_str(), v.name.size());
+						hash::CRC::CRC64StreamIteration(buffer->featureCode, (i8*)&end, sizeof(end));
+						hash::CRC::CRC64StreamIteration(buffer->featureCode, (i8*)&v.offset, sizeof(v.offset));
+						hash::CRC::CRC64StreamIteration(buffer->featureCode, (i8*)&v.size, sizeof(v.size));
+					}
 				}
 
-				auto& v = buffer->vars[bDesc.Variables - 1];
-				auto len = v.offset + v.size;
-				auto remainder = len & 0b1111;
-				buffer->size = remainder ? len + 16 - remainder : len;
-
-				hash::CRC::CRC64StreamIteration(buffer->featureCode, (i8*)&buffer->size, sizeof(buffer->size));
+				//auto remainder = buffer->size & 0b1111;
+				//if (remainder) buffer->size += 16 - remainder;
+				
 				hash::CRC::CRC64StreamEnd(buffer->featureCode);
 
 				_graphics.get<Graphics>()->registerConstantLayout(*buffer);
+			}
+		}
+	}
+
+	void Program::_parseConstantVar(ConstantBufferLayout::Var& var, ID3D11ShaderReflectionType* type) {
+		D3D11_SHADER_TYPE_DESC desc;
+		type->GetDesc(&desc);
+		var.offset += desc.Offset;
+		if (desc.Class == D3D_SVC_STRUCT) {
+			var.structMembers.resize(desc.Members);
+			for (ui32 i = 0; i < desc.Members; ++i) {
+				auto& memberVar = var.structMembers[i];
+				memberVar.name = type->GetMemberTypeName(i);
+				memberVar.offset = 0;
+				memberVar.size = 0;
+				
+				_parseConstantVar(memberVar, type->GetMemberTypeByIndex(i));
+				
+				int a = 1;
 			}
 		}
 	}

@@ -13,6 +13,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			std::string name;
 			ui32 offset;
 			ui32 size;
+			std::vector<Var> structMembers;
 		};
 
 		std::string name;
@@ -42,9 +43,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 
 		struct InLayout {
+			InLayout(ui32 numInElements);
 			~InLayout();
 
-			ui32* formats;
+			std::vector<ui32> formats;
 			ID3D11InputLayout* layout;
 
 			bool isEqual(const D3D11_INPUT_ELEMENT_DESC* inElements, ui32 num) const;
@@ -94,6 +96,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		ID3D11InputLayout* _getOrCreateInputLayout();
 		void AE_CALL _parseInLayout(const D3D11_SHADER_DESC& desc, ID3D11ShaderReflection& ref);
 		void AE_CALL _parseParameterLayout(const D3D11_SHADER_DESC& desc, ID3D11ShaderReflection& ref, ParameterLayout& dst);
+		void AE_CALL _parseConstantVar(ConstantBufferLayout::Var& var, ID3D11ShaderReflectionType* type);
 		void AE_CALL _calcConstantLayoutSameBuffers(std::vector<std::vector<ConstantBufferLayout>*>& constBufferLayouts);
 
 		ConstantBuffer* _getConstantBuffer(const ConstantBufferLayout& cbLayout, const ShaderParameterFactory& factory);
@@ -109,7 +112,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 			for (auto& info : layout.textures) {
 				auto c = factory.get(info.name);
-				if (c) {
+				if (c && c->getType() == ShaderParameterType::TEXTURE) {
 					auto data = c->getData();
 					if (data && _graphics == ((ITextureViewBase*)data)->getGraphics()) {
 						auto view = (ID3D11ShaderResourceView*)((ITextureViewBase*)data)->getNativeView();
@@ -121,7 +124,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 			for (auto& info : layout.samplers) {
 				auto c = factory.get(info.name);
-				if (c) {
+				if (c && c->getType() == ShaderParameterType::SAMPLER) {
 					auto data = c->getData();
 					if (data && _graphics == ((ISampler*)data)->getGraphics()) ((Sampler*)data)->use<stage>(info.bindPoint);
 				}

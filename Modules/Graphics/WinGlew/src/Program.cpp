@@ -40,20 +40,90 @@ namespace aurora::modules::graphics::win_glew {
 			return false;
 		}
 
+		GLchar charBuffer[512];
+		GLsizei len;
+
 		GLint atts;
 		glGetProgramiv(_handle, GL_ACTIVE_ATTRIBUTES, &atts);
-
-		GLchar buf[1024];
+		_inVertexBufferLayouts.resize(atts);
 		for (GLint i = 0; i < atts; ++i) {
-			GLsizei len;
+			auto& info = _inVertexBufferLayouts[i];
+			glGetActiveAttrib(_handle, i, sizeof(charBuffer), &len, &info.size, &info.type, charBuffer);
+			
+			info.name = charBuffer + 7;
+			info.location = glGetAttribLocation(_handle, charBuffer);
+		}
+
+		GLint uniforms;
+		glGetProgramiv(_handle, GL_ACTIVE_UNIFORMS, &uniforms);
+		for (GLint i = 0; i < uniforms; ++i) {
 			GLint size;
 			GLenum type;
-			glGetActiveAttrib(_handle, i, sizeof(buf), &len, &size, &type, buf);
+			glGetActiveUniform(_handle, i, sizeof(charBuffer), &len, &size, &type, charBuffer);
 			
-			auto& info = _inVerBufInfos.emplace_back();
-			info.name = buf + 7;
-			info.index = i;
+			auto location = glGetUniformLocation(_handle, charBuffer);
+			if (location < 0) continue;
+
+			auto& info = _uniformLayouts.emplace_back();
+			info.name = charBuffer + 5;// 20;
+			info.location = location;
+			info.size = size;
+			info.type = type;
+
+			switch (info.type) {
+			case GL_SAMPLER_1D:
+			case GL_SAMPLER_2D:
+			case GL_SAMPLER_3D:
+			{
+
+			}
+			}
 		}
+
+		if (_graphics.get()->getDeviceFeatures().supportConstantBuffer) {
+			GLint uniformBlocks;
+			glGetProgramiv(_handle, GL_ACTIVE_UNIFORM_BLOCKS, &uniformBlocks);
+			std::vector<GLint> indices;
+			std::vector<GLint> offsets;
+			std::vector<GLint> types;
+			std::vector<GLint> sizes;
+			for (GLint i = 0; i < uniforms; ++i) {
+				GLint location;
+				glGetActiveUniformBlockiv(_handle, i, GL_UNIFORM_BLOCK_BINDING, &location);
+
+				GLint dataSize;
+				glGetActiveUniformBlockiv(_handle, i, GL_UNIFORM_BLOCK_DATA_SIZE, &dataSize);
+
+				//GLint nameLen;
+				//glGetActiveUniformBlockiv(_handle, i, GL_UNIFORM_BLOCK_NAME_LENGTH, &nameLen);
+
+				GLint nameLen;
+				glGetActiveUniformBlockName(_handle, i, sizeof(charBuffer), &nameLen, charBuffer);
+				std::string n = charBuffer;
+
+				GLint numUniforms;
+				glGetActiveUniformBlockiv(_handle, i, GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS, &numUniforms);//Block中有多少个Uniform变量
+				indices.resize(numUniforms);
+				offsets.resize(numUniforms);
+				types.resize(numUniforms);
+				sizes.resize(numUniforms);
+
+				glGetActiveUniformBlockiv(_handle, i, GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES, indices.data());//获取Block中uniform的索引值
+
+				glGetActiveUniformsiv(_handle, numUniforms, (GLuint*)indices.data(), GL_UNIFORM_OFFSET, offsets.data());
+				glGetActiveUniformsiv(_handle, numUniforms, (GLuint*)indices.data(), GL_UNIFORM_TYPE, types.data());
+				glGetActiveUniformsiv(_handle, numUniforms, (GLuint*)indices.data(), GL_UNIFORM_SIZE, sizes.data());
+
+				for (GLint j = 0; j < numUniforms; ++j) {
+					glGetActiveUniformName(_handle, indices[j], sizeof(charBuffer), &nameLen, charBuffer);
+					int a = 1;
+				}
+
+				int a = 1;
+			}
+			int a = 1;
+		}
+		
 
 		return true;
 	}
@@ -69,9 +139,9 @@ namespace aurora::modules::graphics::win_glew {
 	void Program::draw(const VertexBufferFactory* vertexFactory, const ShaderParameterFactory* paramFactory, 
 		const IIndexBuffer* indexBuffer, ui32 count, ui32 offset) {
 		if (_handle && vertexFactory && indexBuffer && _graphics == indexBuffer->getGraphics() && count > 0) {
-			for (auto& info : _inVerBufInfos) {
+			for (auto& info : _inVertexBufferLayouts) {
 				auto vb = vertexFactory->get(info.name);
-				if (vb && _graphics == vb->getGraphics()) ((VertexBuffer*)vb)->use(info.index);
+				if (vb && _graphics == vb->getGraphics()) ((VertexBuffer*)vb)->use(info.location);
 			}
 
 			glEnable(GL_CULL_FACE);
@@ -87,6 +157,8 @@ namespace aurora::modules::graphics::win_glew {
 			glDeleteProgram(_handle);
 			_handle = 0;
 		}
+		_inVertexBufferLayouts.clear();
+		_uniformLayouts.clear();
 	}
 
 	GLuint Program::_compileShader(const ProgramSource& source, GLenum type) {

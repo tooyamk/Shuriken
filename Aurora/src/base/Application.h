@@ -51,10 +51,14 @@ namespace aurora {
 		void AE_CALL update(bool autoSleep);
 		void AE_CALL shutdown();
 
+		inline const std::string& getAppId() const {
+			return _appId;
+		}
+
 		const std::string& getAppPath() const;
 
 #if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
-		inline HWND AE_CALL Win_getHWND() const {
+		inline HWND AE_CALL Win_getHWnd() const {
 			return _hWnd;
 		}
 #endif

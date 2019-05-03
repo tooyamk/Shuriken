@@ -169,7 +169,8 @@ namespace aurora::modules::graphics {
 
 	ShaderParameter::ShaderParameter(ShaderParameterUsage usage) :
 		_usage(usage),
-		_type(Type::DEFAULT),
+		_type(ShaderParameterType::OTHER),
+		_storageType(StorageType::DEFAULT),
 		_updateId(0),
 		_data(),
 		_size(0),
@@ -181,9 +182,9 @@ namespace aurora::modules::graphics {
 
 	ShaderParameter::~ShaderParameter() {
 		releaseExclusiveBuffers();
-		if (_type == Type::INTERNAL) {
+		if (_storageType == StorageType::INTERNAL) {
 			delete[] _data.internalData;
-		} else if (_type == Type::EXTERNAL && _data.externalRef && _data.externalData) {
+		} else if (_storageType == StorageType::EXTERNAL && _data.externalRef && _data.externalData) {
 			((Ref*)_data.externalData)->unref();
 		}
 	}
@@ -222,33 +223,36 @@ namespace aurora::modules::graphics {
 		}
 	}
 
-	ShaderParameter& ShaderParameter::set(const void* data, ui32 size, ui16 perElementSize, bool copy, bool ref) {
-		switch (_type) {
-		case Type::DEFAULT:
+	ShaderParameter& ShaderParameter::set(const void* data, ui32 size, ui16 perElementSize, ShaderParameterType type, bool copy) {
+		if (type >= ShaderParameterType::SAMPLER) copy = false;
+		bool isRefObj = type >= ShaderParameterType::SAMPLER;
+
+		switch (_storageType) {
+		case StorageType::DEFAULT:
 		{
 			if (copy) {
 				if (size <= DEFAULT_DATA_SIZE) {
 					memcpy(&_data, data, size);
 				} else {
-					_type = Type::INTERNAL;
+					_storageType = StorageType::INTERNAL;
 					_data.internalData = new i8[size];
 					_data.internalSize = size;
 					memcpy(&_data.internalData, data, size);
 				}
 			} else {
-				_type = Type::EXTERNAL;
+				_storageType = StorageType::EXTERNAL;
 				_data.externalData = data;
-				if (ref && data) ((Ref*)data)->ref();
+				if (isRefObj && data) ((Ref*)data)->ref();
 			}
 
 			break;
 		}
-		case Type::INTERNAL:
+		case StorageType::INTERNAL:
 		{
 			if (copy) {
 				if (size <= DEFAULT_DATA_SIZE) {
 					delete[] _data.internalData;
-					_type = Type::DEFAULT;
+					_storageType = StorageType::DEFAULT;
 					memcpy(&_data, data, size);
 				} else {
 					if (_data.internalSize < size) {
@@ -260,33 +264,33 @@ namespace aurora::modules::graphics {
 				}
 			} else {
 				delete[] _data.internalData;
-				_type = Type::EXTERNAL;
+				_storageType = StorageType::EXTERNAL;
 				_data.externalData = data;
-				if (ref && data) ((Ref*)data)->ref();
+				if (isRefObj && data) ((Ref*)data)->ref();
 			}
 
 			break;
 		}
-		case Type::EXTERNAL:
+		case StorageType::EXTERNAL:
 		{
 			if (copy) {
 				if (_data.externalRef && _data.externalData) ((Ref*)data)->unref();
 
 				if (size <= DEFAULT_DATA_SIZE) {
-					_type = Type::DEFAULT;
+					_storageType = StorageType::DEFAULT;
 					memcpy(&_data, data, size);
 				} else {
-					_type = Type::INTERNAL;
+					_storageType = StorageType::INTERNAL;
 					_data.internalData = new i8[size];
 					_data.internalSize = size;
 					memcpy(&_data.internalData, data, size);
 				}
 			} else {
 				if (_data.externalData != data) {
-					if (ref && data) ((Ref*)data)->ref();
-					if (_data.externalRef && _data.externalData) ((Ref*)data)->unref();
+					if (isRefObj && data) ((Ref*)data)->ref();
+					if (_data.externalRef && _data.externalData) ((Ref*)_data.externalData)->unref();
 					_data.externalData = data;
-					_data.externalRef = ref;
+					_data.externalRef = isRefObj;
 				}
 			}
 
@@ -295,10 +299,24 @@ namespace aurora::modules::graphics {
 		default:
 			break;
 		}
+
+		_type = type;
 		_size = size;
 		_perElementSize = perElementSize;
 
 		return *this;
+	}
+
+	void ShaderParameter::clear() {
+		if (_storageType == StorageType::EXTERNAL && _data.externalData) {
+			if (_data.externalRef) ((Ref*)_data.externalData)->unref();
+			_data.externalData = nullptr;
+			_data.externalRef = false;
+		}
+
+		_type = ShaderParameterType::OTHER;
+		_size = 0;
+		_perElementSize = 0;
 	}
 
 
@@ -311,16 +329,16 @@ namespace aurora::modules::graphics {
 		return itr == _parameters.end() ? nullptr : itr->second;
 	}
 
-	ShaderParameter* ShaderParameterFactory::add(const std::string& name, ShaderParameter* buffer) {
+	ShaderParameter* ShaderParameterFactory::add(const std::string& name, ShaderParameter* parameter) {
 		auto itr = _parameters.find(name);
-		if (buffer) {
+		if (parameter) {
 			if (itr == _parameters.end()) {
-				buffer->ref();
-				_parameters.emplace(name, buffer);
-			} else if (itr->second != buffer) {
-				buffer->ref();
+				parameter->ref();
+				_parameters.emplace(name, parameter);
+			} else if (itr->second != parameter) {
+				parameter->ref();
 				itr->second->unref();
-				itr->second = buffer;
+				itr->second = parameter;
 			}
 		} else {
 			if (itr != _parameters.end()) {
@@ -329,7 +347,7 @@ namespace aurora::modules::graphics {
 			}
 		}
 
-		return buffer;
+		return parameter;
 	}
 
 	void ShaderParameterFactory::remove(const std::string& name) {

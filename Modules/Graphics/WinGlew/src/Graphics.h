@@ -10,8 +10,9 @@ namespace aurora::modules::graphics::win_glew {
 
 		virtual bool AE_CALL createDevice(const GraphicsAdapter* adapter) override;
 
-		virtual const std::string& AE_CALL getVersion() const override;
-		virtual const GraphicsFeatures& AE_CALL getFeatures() const override;
+		virtual const std::string& AE_CALL getModuleVersion() const override;
+		virtual const std::string& AE_CALL getDeviceVersion() const override;
+		virtual const GraphicsDeviceFeatures& AE_CALL getDeviceFeatures() const override;
 		virtual IConstantBuffer* AE_CALL createConstantBuffer() override;
 		virtual IIndexBuffer* AE_CALL createIndexBuffer() override;
 		virtual IProgram* AE_CALL createProgram() override;
@@ -50,13 +51,13 @@ namespace aurora::modules::graphics::win_glew {
 			return _strVer;
 		}
 
-		static GLenum AE_CALL convertInternalFormat(TextureFormat fmt);
+		static void AE_CALL convertFormat(TextureFormat fmt, GLenum& internalFormat, GLenum& format, GLenum& type);
 
 	private:
 		RefPtr<Application> _app;
 		RefPtr<IProgramSourceTranslator> _trans;
 
-		GraphicsFeatures _features;
+		GraphicsDeviceFeatures _deviceFeatures;
 
 		HDC _dc;
 		HGLRC _rc;
@@ -65,8 +66,12 @@ namespace aurora::modules::graphics::win_glew {
 		GLint _minorVer;
 		ui32 _intVer;
 		std::string _strVer;
-		std::string _fullVer;
+		std::string _moduleVersion;
+		std::string _deviceVersion;
 
+		bool AE_CALL _glInit();
 		void AE_CALL _release();
+
+		static void GLAPIENTRY _debugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam);
 	};
 }

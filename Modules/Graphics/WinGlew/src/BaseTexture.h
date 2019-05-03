@@ -28,8 +28,14 @@ namespace aurora::modules::graphics::win_glew {
 		Vec3ui32 texSize;
 		ui32 arraySize;
 		ui32 mipLevels;
-		GLenum internalTexType;
-		GLenum internalFormat;
+
+		struct {
+			GLenum target;
+			GLenum internalFormat;
+			GLenum format;
+			GLenum type;
+		} glTexInfo;
+
 		Usage resUsage;
 		Usage mapUsage;
 		ui32 size;

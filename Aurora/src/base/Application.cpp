@@ -41,8 +41,8 @@ namespace aurora {
 		_hIns = GetModuleHandle(nullptr);
 
 		WNDCLASSEXW wnd;
-		memset(&wnd, 0, sizeof(WNDCLASSEXW));
-		wnd.cbSize = sizeof(WNDCLASSEXW);
+		memset(&wnd, 0, sizeof(wnd));
+		wnd.cbSize = sizeof(wnd);
 		wnd.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
 		wnd.lpfnWndProc = Application::_wndProc;
 		wnd.cbClsExtra = 0;

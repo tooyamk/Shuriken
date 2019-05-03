@@ -19,9 +19,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_context(nullptr),
 		_swapChain(nullptr),
 		_backBufferTarget(nullptr),
+		_deviceFeatures({ 0 }),
+		_moduleVersion("0.1.0"),
 		_resizedListener(this, &Graphics::_resizedHandler) {
 		_app.get()->getEventDispatcher().addEventListener(ApplicationEvent::RESIZED, _resizedListener, false);
-		memset(&_features, 0, sizeof(_features));
 	}
 
 	Graphics::~Graphics() {
@@ -30,7 +31,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	bool Graphics::createDevice(const GraphicsAdapter* adapter) {
-		if (_device || !_app.get()->Win_getHWND()) return false;
+		if (_device || !_app.get()->Win_getHWnd()) return false;
 
 		if (adapter) {
 			return _createDevice(*adapter);
@@ -54,7 +55,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		if (FAILED(CreateDXGIFactory1(__uuidof(IDXGIFactory2), (void**)&dxgFctory))) return false;
 		objs.add(dxgFctory);
-		dxgFctory->MakeWindowAssociation(_app.get()->Win_getHWND(), DXGI_MWA_NO_WINDOW_CHANGES | DXGI_MWA_NO_ALT_ENTER);
+		dxgFctory->MakeWindowAssociation(_app.get()->Win_getHWnd(), DXGI_MWA_NO_WINDOW_CHANGES | DXGI_MWA_NO_ALT_ENTER);
 
 		IDXGIAdapter* dxgAdapter = nullptr;
 		for (UINT i = 0;; ++i) {
@@ -167,54 +168,54 @@ namespace aurora::modules::graphics::win_d3d11 {
 			return false;
 		}
 
-		_fullVer = "D3D ";
+		_deviceVersion = "D3D ";
 		_featureLevel = _device->GetFeatureLevel();
 		switch (_featureLevel) {
 		case D3D_FEATURE_LEVEL_9_1:
 		{
-			_fullVer += "9.1";
+			_deviceVersion += "9.1";
 			_shaderModel = "4.0.level.9.1";
 
 			break;
 		}
 		case D3D_FEATURE_LEVEL_9_2:
 		{
-			_fullVer += "9.2";
+			_deviceVersion += "9.2";
 			_shaderModel = "4.0.level.9.1";
 
 			break;
 		}
 		case D3D_FEATURE_LEVEL_9_3:
 		{
-			_fullVer += "9.3";
+			_deviceVersion += "9.3";
 			_shaderModel = "4.0.level.9.3";//??
 
 			break;
 		}
 		case D3D_FEATURE_LEVEL_10_0:
 		{
-			_fullVer += "10.0";
+			_deviceVersion += "10.0";
 			_shaderModel = "4.0";
 
 			break;
 		}
 		case D3D_FEATURE_LEVEL_10_1:
 		{
-			_fullVer += "10.1";
+			_deviceVersion += "10.1";
 			_shaderModel = "4.1";
 
 			break;
 		}
 		case D3D_FEATURE_LEVEL_11_0:
 		{
-			_fullVer += "11.0";
+			_deviceVersion += "11.0";
 			_shaderModel = "5.0";
 
 			break;
 		}
 		default:
 		{
-			_fullVer += "11.1";
+			_deviceVersion += "11.1";
 			_shaderModel = "5.0";
 
 			break;
@@ -235,7 +236,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		swapChainDesc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
 		swapChainDesc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
 		swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-		swapChainDesc.OutputWindow = _app.get()->Win_getHWND();
+		swapChainDesc.OutputWindow = _app.get()->Win_getHWnd();
 		swapChainDesc.Windowed = true;
 		swapChainDesc.SampleDesc.Count = 1;
 		swapChainDesc.SampleDesc.Quality = 0;
@@ -249,20 +250,25 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		_device->CheckFeatureSupport(D3D11_FEATURE_D3D11_OPTIONS, &_internalFeatures, sizeof(_internalFeatures));
 
-		_features.supportSampler = true;
-		_features.supportTextureView = true;
+		_deviceFeatures.supportSampler = true;
+		_deviceFeatures.supportTextureView = true;
+		_deviceFeatures.supportConstantBuffer = true;
 
 		_resize(w, h);
 
 		return true;
 	}
 
-	const std::string& Graphics::getVersion() const {
-		return _fullVer;
+	const std::string& Graphics::getModuleVersion() const {
+		return _moduleVersion;
 	}
 
-	const GraphicsFeatures& Graphics::getFeatures() const {
-		return _features;
+	const std::string& Graphics::getDeviceVersion() const {
+		return _deviceVersion;
+	}
+
+	const GraphicsDeviceFeatures& Graphics::getDeviceFeatures() const {
+		return _deviceFeatures;
 	}
 
 	IConstantBuffer* Graphics::createConstantBuffer() {
@@ -540,9 +546,9 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_shaderModel = "";
 
 		memset(&_internalFeatures, 0, sizeof(_internalFeatures));
-		memset(&_features, 0, sizeof(_features));
+		memset(&_deviceFeatures, 0, sizeof(_deviceFeatures));
 
-		_fullVer = "D3D Unknown";
+		_deviceVersion = "D3D Unknown";
 	}
 
 	void Graphics::_resize(UINT w, UINT h) {

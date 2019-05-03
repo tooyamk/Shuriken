@@ -14,8 +14,9 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		virtual bool AE_CALL createDevice(const GraphicsAdapter* adapter) override;
 
-		virtual const std::string& AE_CALL getVersion() const override;
-		virtual const GraphicsFeatures& AE_CALL getFeatures() const override;
+		virtual const std::string& AE_CALL getModuleVersion() const override;
+		virtual const std::string& AE_CALL getDeviceVersion() const override;
+		virtual const GraphicsDeviceFeatures& AE_CALL getDeviceFeatures() const override;
 		virtual IConstantBuffer* AE_CALL createConstantBuffer() override;
 		virtual IIndexBuffer* AE_CALL createIndexBuffer() override;
 		virtual IProgram* AE_CALL createProgram() override;
@@ -87,8 +88,9 @@ namespace aurora::modules::graphics::win_d3d11 {
 		ID3D11RenderTargetView1* _backBufferTarget;
 		D3D11_FEATURE_DATA_D3D11_OPTIONS _internalFeatures;
 
-		GraphicsFeatures _features;
-		std::string _fullVer;
+		GraphicsDeviceFeatures _deviceFeatures;
+		std::string _moduleVersion;
+		std::string _deviceVersion;
 
 		struct ShareConstBufferPool {
 			ui32 rc;

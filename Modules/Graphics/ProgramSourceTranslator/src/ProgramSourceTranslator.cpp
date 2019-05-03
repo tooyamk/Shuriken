@@ -52,12 +52,13 @@ namespace aurora::modules::graphics::program_source_translator {
 			//Unicode::UTF8ToUTF16String("main", &entryPointUtf16);
 
 			std::vector<std::wstring> dxcArgStrings;
-			dxcArgStrings.push_back(L"-O3");
-			if (targetLanguage != ProgramLanguage::DXIL) dxcArgStrings.push_back(L"-spirv");
+			dxcArgStrings.emplace_back(L"-O3");
+			dxcArgStrings.emplace_back(L"-fvk-use-gl-layout");
+			if (targetLanguage != ProgramLanguage::DXIL) dxcArgStrings.emplace_back(L"-spirv");
 
 			std::vector<const wchar_t*> dxcArgs;
 			dxcArgs.reserve(dxcArgStrings.size());
-			for (const auto& arg : dxcArgStrings) dxcArgs.push_back(arg.c_str());
+			for (const auto& arg : dxcArgStrings) dxcArgs.emplace_back(arg.c_str());
 
 			//CComPtr<IDxcIncludeHandler> includeHandler = new ScIncludeHandler(std::move(source.loadIncludeCallback));
 			CComPtr<IDxcOperationResult> compileResult;
@@ -72,7 +73,7 @@ namespace aurora::modules::graphics::program_source_translator {
 			IFT(compileResult->GetErrorBuffer(&errors));
 			if (errors != nullptr) {
 				if (errors->GetBufferSize() > 0) {
-					println("%s", errors->GetBufferPointer());
+					println("hlsl to spirv error : %s", errors->GetBufferPointer());
 					//ret.errorWarningMsg = CreateBlob(errors->GetBufferPointer(), static_cast<uint32_t>(errors->GetBufferSize()));
 				}
 				errors = nullptr;
@@ -156,9 +157,14 @@ namespace aurora::modules::graphics::program_source_translator {
 				compiler.set_decoration(sampler, spv::DecorationBinding, 0);
 			}
 
+			//auto sr = compiler.get_shader_resources();
+			//for (auto& in : sr.stage_inputs) compiler.set_name(in.id, in.name.substr(7));
+			//for (auto& in : sr.stage_outputs) compiler.set_name(in.id, in.name.substr(8));
+
 			compiler.build_combined_image_samplers();
 			for (auto& remap : compiler.get_combined_image_samplers()) {
-				compiler.set_name(remap.combined_id, "SPIRV_Cross_Combined" + compiler.get_name(remap.image_id) + compiler.get_name(remap.sampler_id));
+				auto& texName = compiler.get_name(remap.image_id);
+				compiler.set_name(remap.combined_id, "_Combined_1_" + String::toString(texName.size()) + "_" + texName + compiler.get_name(remap.sampler_id));
 			}
 
 			try {
@@ -170,7 +176,7 @@ namespace aurora::modules::graphics::program_source_translator {
 				dst.data.setCapacity(str.size());
 				dst.data.writeBytes(str.c_str(), 0, str.size());
 			} catch (spirv_cross::CompilerError& error) {
-				println("%s", error.what());
+				println("spirv to glsl/gssl error : %s", error.what());
 			}
 
 			break;

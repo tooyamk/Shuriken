@@ -3,23 +3,31 @@ struct PS_INPUT {
     float2 uv : TEXCOORD0;
 };
 
-float2 red[2];
+//float2 red[2];
 float3 green;
 
-Texture2DArray texDiffuse;
-SamplerState samLiner {
-    Filter = MIN_MAG_MIP_LINEAR;
+Texture2D texDiffuse : register(t3);
+SamplerState samLiner;
+
+struct aabbcc {
+    float val1;
+    float val2[2];
+    float val3;
 };
 
 cbuffer buf1 {
-float blue;
+    float red;
+aabbcc blue;
+//Texture2D texDiffuse;
+//SamplerState samLiner;
 }
 
 float4 main(PS_INPUT input) : SV_TARGET {
-    float4 c = texDiffuse.Sample(samLiner, float3(input.uv, 3.5));
+    float4 c = texDiffuse.Sample(samLiner, input.uv);
+    c.x *= blue.val1 * red * green.x;
     return c;
     //c.x = red;
     //return c;
-    //return float4(red[1].x, green.x, 0.0, 1.0);
+    //return float4(blue.val1, red, 0.0, 1.0);
     //return float4(1.0, 0.0, 0.0, 1.0);
 }

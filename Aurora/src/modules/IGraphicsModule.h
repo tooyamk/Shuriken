@@ -22,12 +22,12 @@ namespace aurora::modules::graphics {
 		ui64 sharedSystemMemory;
 		std::string description;
 
-		static void query(std::vector<GraphicsAdapter>& dst);
-		static GraphicsAdapter* autoChoose(std::vector<GraphicsAdapter>& adapters);
-		static void autoSort(const std::vector<GraphicsAdapter>& adapters, std::vector<ui32>& dst);
+		static void AE_CALL query(std::vector<GraphicsAdapter>& dst);
+		static GraphicsAdapter* AE_CALL autoChoose(std::vector<GraphicsAdapter>& adapters);
+		static void AE_CALL autoSort(const std::vector<GraphicsAdapter>& adapters, std::vector<ui32>& dst);
 
 	private:
-		static f64 _calcScore(const GraphicsAdapter& adapter);
+		static f64 AE_CALL _calcScore(const GraphicsAdapter& adapter);
 	};
 
 
@@ -309,21 +309,32 @@ namespace aurora::modules::graphics {
 	};
 
 
+	enum class ShaderParameterType : ui8 {
+		OTHER,
+		SAMPLER,
+		TEXTURE
+	};
+
+
 	class AE_DLL ShaderParameter : public Ref {
 	public:
 		ShaderParameter(ShaderParameterUsage usage = ShaderParameterUsage::AUTO);
 		~ShaderParameter();
 
-		void releaseExclusiveBuffers();
+		void AE_CALL releaseExclusiveBuffers();
 
 		inline ShaderParameterUsage AE_CALL getUsage() const {
 			return _usage;
 		}
 
-		void setUsage(ShaderParameterUsage usage);
+		void AE_CALL setUsage(ShaderParameterUsage usage);
+
+		inline ShaderParameterType AE_CALL getType() const {
+			return _type;
+		}
 
 		inline const void* AE_CALL getData() const {
-			return _type == Type::DEFAULT ? &_data : _data.externalData;
+			return _storageType == StorageType::DEFAULT ? &_data : _data.externalData;
 		}
 
 		inline ui16 AE_CALL getPerElementSize() const {
@@ -345,27 +356,29 @@ namespace aurora::modules::graphics {
 
 		template<typename T>
 		inline ShaderParameter& AE_CALL set(Math::NumberType<T> value) {
-			return set(&value, sizeof(value), sizeof(value), true, false);
+			return set(&value, sizeof(value), sizeof(value), ShaderParameterType::OTHER, true);
 		}
 		inline ShaderParameter& AE_CALL set(const ISampler* value) {
-			return set(value, sizeof(value), sizeof(value), false, true);
+			return set(value, sizeof(value), sizeof(value), ShaderParameterType::SAMPLER, false);
 		}
 		inline ShaderParameter& AE_CALL set(const ITextureViewBase* value) {
-			return set(value, sizeof(value), sizeof(value), false, true);
+			return set(value, sizeof(value), sizeof(value), ShaderParameterType::TEXTURE, false);
 		}
 		template<typename T>
 		inline ShaderParameter& AE_CALL set(const Vec2<T>& value) {
-			return set(&value, sizeof(value), sizeof(value), true, false);
+			return set(&value, sizeof(value), sizeof(value), ShaderParameterType::OTHER, true);
 		}
 		template<typename T>
 		inline ShaderParameter& AE_CALL set(const Vec3<T>& value) {
-			return set(&value, sizeof(value), sizeof(value), true, false);
+			return set(&value, sizeof(value), sizeof(value), ShaderParameterType::OTHER, true);
 		}
 		template<typename T>
 		inline ShaderParameter& AE_CALL set(const Vec4<T>& value) {
-			return set(&value, sizeof(value), sizeof(value), true, false);
+			return set(&value, sizeof(value), sizeof(value), ShaderParameterType::OTHER,  true);
 		}
-		ShaderParameter& AE_CALL set(const void* data, ui32 size, ui16 perElementSize, bool copy, bool ref);
+		ShaderParameter& AE_CALL set(const void* data, ui32 size, ui16 perElementSize, ShaderParameterType type, bool copy);
+
+		void AE_CALL clear();
 
 	ae_internal_public:
 		using EXCLUSIVE_FN = void(*)(void* callTarget, const ShaderParameter& param);
@@ -373,7 +386,7 @@ namespace aurora::modules::graphics {
 		void AE_CALL __releaseExclusive(void* callTarget, EXCLUSIVE_FN callback);
 
 	private:
-		enum class Type : ui8 {
+		enum class StorageType : ui8 {
 			DEFAULT,
 			INTERNAL,
 			EXTERNAL
@@ -381,7 +394,8 @@ namespace aurora::modules::graphics {
 
 
 		ShaderParameterUsage _usage;
-		Type _type;
+		ShaderParameterType _type;
+		StorageType _storageType;
 		ui16 _perElementSize;
 		ui32 _updateId;
 		ui32 _size;
@@ -411,7 +425,7 @@ namespace aurora::modules::graphics {
 		~ShaderParameterFactory();
 
 		ShaderParameter* AE_CALL get(const std::string& name) const;
-		ShaderParameter* AE_CALL add(const std::string& name, ShaderParameter* buffer);
+		ShaderParameter* AE_CALL add(const std::string& name, ShaderParameter* parameter);
 		void AE_CALL remove(const std::string& name);
 		void AE_CALL clear();
 
@@ -455,19 +469,18 @@ namespace aurora::modules::graphics {
 
 		ProgramSource& operator=(ProgramSource&& value);
 
-		bool isValid() const;
+		bool AE_CALL isValid() const;
 
-		inline static std::string toHLSLShaderModel(const ProgramSource& source) {
+		inline static std::string AE_CALL toHLSLShaderModel(const ProgramSource& source) {
 			return toHLSLShaderModel(source.stage, source.version);
 		}
 
-		static std::string toHLSLShaderModel(ProgramStage stage, const std::string& version);
+		static std::string AE_CALL toHLSLShaderModel(ProgramStage stage, const std::string& version);
 
-		inline static std::string getEntryPoint(const ProgramSource& source) {
+		inline static std::string AE_CALL getEntryPoint(const ProgramSource& source) {
 			return getEntryPoint(source.entryPoint);
 		}
-
-		inline static std::string getEntryPoint(const std::string& entryPoint) {
+		inline static std::string AE_CALL getEntryPoint(const std::string& entryPoint) {
 			return entryPoint.empty() ? "main" : entryPoint;
 		}
 	};
@@ -492,9 +505,10 @@ namespace aurora::modules::graphics {
 	};
 
 
-	struct AE_DLL GraphicsFeatures {
+	struct AE_DLL GraphicsDeviceFeatures {
 		bool supportSampler;
 		bool supportTextureView;
+		bool supportConstantBuffer;
 	};
 
 
@@ -508,8 +522,9 @@ namespace aurora::modules::graphics {
 
 		virtual bool AE_CALL createDevice(const GraphicsAdapter* adapter) = 0;
 
-		virtual const std::string& AE_CALL getVersion() const = 0;
-		virtual const GraphicsFeatures& AE_CALL getFeatures() const = 0;
+		virtual const std::string& AE_CALL getModuleVersion() const = 0;
+		virtual const std::string& AE_CALL getDeviceVersion() const = 0;
+		virtual const GraphicsDeviceFeatures& AE_CALL getDeviceFeatures() const = 0;
 		virtual IConstantBuffer* AE_CALL createConstantBuffer() = 0;
 		virtual IIndexBuffer* AE_CALL createIndexBuffer() = 0;
 		virtual IProgram* AE_CALL createProgram() = 0;
