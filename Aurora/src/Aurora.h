@@ -18,6 +18,12 @@
 #include "math/Vector.h"
 
 #include "modules/ModuleLoader.h"
+#include "modules/graphics/GraphicsAdapter.h"
+#include "modules/graphics/IProgramSourceTranslator.h"
+#include "modules/graphics/ProgramSource.h"
+#include "modules/graphics/ShaderParameter.h"
+#include "modules/graphics/ShaderParameterFactory.h"
+#include "modules/graphics/VertexBufferFactory.h"
 
 #include "nodes/Node.h"
 #include "nodes/components/Camera.h"

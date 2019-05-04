@@ -8,6 +8,7 @@
 #include "Texture3DResource.h"
 #include "VertexBuffer.h"
 #include "base/Application.h"
+#include "modules/graphics/GraphicsAdapter.h"
 
 namespace aurora::modules::graphics::win_d3d11 {
 	Graphics::Graphics(Application* app) :
@@ -21,8 +22,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_backBufferTarget(nullptr),
 		_deviceFeatures({ 0 }),
 		_moduleVersion("0.1.0"),
+		_constantBufferManager(this),
 		_resizedListener(this, &Graphics::_resizedHandler) {
 		_app.get()->getEventDispatcher().addEventListener(ApplicationEvent::RESIZED, _resizedListener, false);
+		_constantBufferManager.createdExclusiveConstantBufferCallback = std::bind(&Graphics::_createdExclusiveConstantBuffer, this, std::placeholders::_1, std::placeholders::_2);
 	}
 
 	Graphics::~Graphics() {
@@ -322,191 +325,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 	void Graphics::clear() {
 	}
 
-	void Graphics::registerConstantLayout(ConstantBufferLayout& layout) {
-		_registerShareConstantLayout(layout.size);
-		_registerExclusiveConstantLayout(layout);
-	}
-
-	void Graphics::unregisterConstantLayout(ConstantBufferLayout& layout) {
-		_unregisterShareConstantLayout(layout.size);
-		_unregisterExclusiveConstantLayout(layout);
-	}
-
-	void Graphics::_registerShareConstantLayout(ui32 size) {
-		auto itr = _shareConstBufferPool.find(size);
-		if (itr == _shareConstBufferPool.end()) {
-			auto& pool = _shareConstBufferPool.emplace(std::piecewise_construct, std::forward_as_tuple(size), std::forward_as_tuple()).first->second;
-			pool.rc = 1;
-			pool.idleIndex = 0;
-		} else {
-			++itr->second.rc;
-		}
-	}
-
-	void Graphics::_unregisterShareConstantLayout(ui32 size) {
-		auto itr = _shareConstBufferPool.find(size);
-		if (itr != _shareConstBufferPool.end()) {
-			if (itr->second.rc == 1) {
-				this->ref();
-				for (auto cb : itr->second.buffers) cb->unref();
-				_shareConstBufferPool.erase(itr);
-				this->unref();
-			}
-		}
-	}
-
-	ConstantBuffer* Graphics::popShareConstantBuffer(ui32 size) {
-		auto itr = _shareConstBufferPool.find(size);
-		if (itr != _shareConstBufferPool.end()) {
-			auto& pool = itr->second;
-			auto& buffers = pool.buffers;
-			auto len = buffers.size();
-			ConstantBuffer* cb;
-			if (pool.idleIndex == len) {
-				cb = new ConstantBuffer(*this);
-				cb->ref();
-				cb->create(size, Usage::CPU_WRITE);
-				buffers.emplace_back(cb);
-			} else {
-				cb = buffers[pool.idleIndex];
-			}
-
-			_usedShareConstBufferPool.emplace(size);
-			++pool.idleIndex;
-			return cb;
-		}
-		return nullptr;
-	}
-
-	void Graphics::resetUsedShareConstantBuffers() {
-		for (auto size : _usedShareConstBufferPool) {
-			auto itr = _shareConstBufferPool.find(size);
-			if (itr != _shareConstBufferPool.end()) itr->second.idleIndex = 0;
-		}
-		_usedShareConstBufferPool.clear();
-	}
-
-	ConstantBuffer* Graphics::getExclusiveConstantBuffer(const std::vector<ShaderParameter*>& constants, const ConstantBufferLayout& layout) {
-		return _getExclusiveConstantBuffer(layout, constants, 0, constants.size() - 1, nullptr, _exclusiveConstRoots);
-	}
-
-	void Graphics::_registerExclusiveConstantLayout(ConstantBufferLayout& layout) {
-		auto itr = _exclusiveConstPool.find(layout.featureCode);
-		if (itr == _exclusiveConstPool.end()) {
-			_exclusiveConstPool.emplace(std::piecewise_construct, std::forward_as_tuple(layout.featureCode), std::forward_as_tuple()).first->second.rc = 1;
-		} else {
-			++itr->second.rc;
-		}
-	}
-
-	void Graphics::_unregisterExclusiveConstantLayout(ConstantBufferLayout& layout) {
-		auto itr = _exclusiveConstPool.find(layout.featureCode);
-		if (itr != _exclusiveConstPool.end() && !--itr->second.rc) {
-			for (auto node : itr->second.nodes) {
-				_releaseExclusiveConstantToLeaf(*node, true);
-				_releaseExclusiveConstantToRoot(node->parent, nullptr, node->numAssociativeBuffers, true);
-			}
-
-			_exclusiveConstPool.erase(itr);
-		}
-	}
-
-	ConstantBuffer* Graphics::_getExclusiveConstantBuffer(const ConstantBufferLayout& layout, const std::vector<ShaderParameter*>& params,
-		ui32 cur, ui32 max, ExclusiveConstNode* parent, std::unordered_map <const ShaderParameter*, ExclusiveConstNode>& chindrenContainer) {
-		auto param = params[cur];
-
-		ExclusiveConstNode* node = nullptr;
-
-		auto itr = chindrenContainer.find(param);
-		if (itr == chindrenContainer.end()) {
-			node = &chindrenContainer.emplace(std::piecewise_construct, std::forward_as_tuple(param), std::forward_as_tuple()).first->second;
-			node->parameter = param;
-			node->parent = parent;
-
-			auto itr2 = _exclusiveConstNodes.find(param);
-			if (itr2 == _exclusiveConstNodes.end()) {
-				_exclusiveConstNodes.emplace(std::piecewise_construct, std::forward_as_tuple(param), std::forward_as_tuple()).first->second.emplace(node);
-			} else {
-				itr2->second.emplace(node);
-			}
-
-			param->__setExclusive(this, &Graphics::_releaseExclusiveConstant);
-		} else {
-			node = &itr->second;
-		}
-
-		if (cur == max) {
-			auto itr = node->buffers.find(layout.featureCode);
-			ConstantBuffer* cb = nullptr;
-			if (itr == node->buffers.end()) {
-				cb = node->buffers.emplace(layout.featureCode, new ConstantBuffer(*this)).first->second;
-				cb->ref();
-				cb->recordUpdateIds = new ui32[cur + 1];
-				memset(cb->recordUpdateIds, 0, sizeof(ui32) * (cur + 1));
-				cb->create(layout.size, Usage::CPU_WRITE);
-
-				_exclusiveConstPool.find(layout.featureCode)->second.nodes.emplace(node);
-
-				do {
-					++node->numAssociativeBuffers;
-					node = node->parent;
-				} while (node);
-			} else {
-				cb = itr->second;
-			}
-			
-			return cb;
-		} else {
-			return _getExclusiveConstantBuffer(layout, params, cur + 1, max, node, node->children);
-		}
-	}
-
-	void Graphics::_releaseExclusiveConstant(void* graphics, const ShaderParameter& param) {
-		if (graphics) ((Graphics*)graphics)->_releaseExclusiveConstant(param);
-	}
-
-	void Graphics::_releaseExclusiveConstant(const ShaderParameter& param) {
-		auto itr = _exclusiveConstNodes.find(&param);
-		if (itr != _exclusiveConstNodes.end()) {
-			auto& nodes = itr->second;
-			for (auto node : nodes) {
-				_releaseExclusiveConstantToLeaf(*node, false);
-				_releaseExclusiveConstantToRoot(node->parent, nullptr, node->numAssociativeBuffers, false);
-			}
-
-			_exclusiveConstNodes.erase(itr);
-		}
-	}
-
-	void Graphics::_releaseExclusiveConstantToRoot(ExclusiveConstNode* parent, ExclusiveConstNode* releaseChild, ui32 releaseNumAssociativeBuffers, bool releaseParam) {
-		if (parent) {
-			if (parent->numAssociativeBuffers <= releaseNumAssociativeBuffers) {
-				if (releaseChild) _releaseExclusiveConstantSelf(*releaseChild, releaseParam);
-				_releaseExclusiveConstantToRoot(parent->parent, parent, releaseNumAssociativeBuffers, releaseParam);
-			} else {
-				parent->numAssociativeBuffers -= releaseNumAssociativeBuffers;
-				if (releaseChild) {
-					_releaseExclusiveConstantSelf(*releaseChild, releaseParam);
-					parent->children.erase(parent->children.find(releaseChild->parameter));
-				}
-				_releaseExclusiveConstantToRoot(parent->parent, nullptr, releaseNumAssociativeBuffers, releaseParam);
-			}
-		} else {
-			if (releaseChild) {
-				_releaseExclusiveConstantSelf(*releaseChild, releaseParam);
-				_exclusiveConstRoots.erase(_exclusiveConstRoots.find(releaseChild->parameter));
-			}
-		}
-	}
-
-	void Graphics::_releaseExclusiveConstantToLeaf(ExclusiveConstNode& node, bool releaseParam) {
-		_releaseExclusiveConstantSelf(node, releaseParam);
-		for (auto& itr : node.children) _releaseExclusiveConstantToLeaf(itr.second, releaseParam);
-	}
-
-	void Graphics::_releaseExclusiveConstantSelf(ExclusiveConstNode& node, bool releaseParam) {
-		for (auto& itr : node.buffers) itr.second->unref();
-		if (releaseParam) node.parameter->__releaseExclusive(this, &Graphics::_releaseExclusiveConstant);
+	void Graphics::_createdExclusiveConstantBuffer(IConstantBuffer* buffer, ui32 numParameters) {
+		auto ids = new ui32[numParameters];
+		memset(ids, 0, sizeof(ui32) * numParameters);
+		((ConstantBuffer*)buffer)->recordUpdateIds = ids;
 	}
 
 	void Graphics::_resizedHandler(events::Event<ApplicationEvent>& e) {
@@ -516,12 +338,6 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	void Graphics::_release() {
-		for (auto& pool : _shareConstBufferPool) {
-			for (auto cb : pool.second.buffers) cb->unref();
-		}
-		_shareConstBufferPool.clear();
-		_usedShareConstBufferPool.clear();
-
 		if (_backBufferTarget) {
 			_backBufferTarget->Release();
 			_backBufferTarget = nullptr;

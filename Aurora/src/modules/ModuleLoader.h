@@ -1,7 +1,7 @@
 #pragma once
 
 #include "base/DynamicLib.h"
-#include "modules/IGraphicsModule.h"
+#include "modules/graphics/IGraphicsModule.h"
 #include "modules/IInputModule.h"
 
 namespace aurora::modules {

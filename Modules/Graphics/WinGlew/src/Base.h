@@ -1,6 +1,7 @@
 #pragma once
 
-#include "modules/IGraphicsModule.h"
+#include "modules/graphics/IGraphicsModule.h"
+#include "modules/graphics/IProgramSourceTranslator.h"
 #include "base/Application.h"
 
 #include "GL/glew.h"

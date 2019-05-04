@@ -3,6 +3,8 @@
 #include "IndexBuffer.h"
 #include "VertexBuffer.h"
 #include "base/String.h"
+#include "modules/graphics/ShaderParameterFactory.h"
+#include "modules/graphics/VertexBufferFactory.h"
 #include "utils/hash/CRC.h"
 #include <vector>
 
@@ -24,7 +26,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 
 	void Program::ParameterLayout::clear(Graphics& g) {
-		for (auto& buffer : constantBuffers) g.unregisterConstantLayout(buffer);
+		for (auto& buffer : constantBuffers) g.getConstantBufferManager().unregisterConstantLayout(buffer);
 		constantBuffers.clear();
 	}
 
@@ -102,7 +104,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		_parseParameterLayout(sDesc, *psr, _psParamLayout);
 
-		_calcConstantLayoutSameBuffers(std::vector<std::vector<ConstantBufferLayout>*>({ &_vsParamLayout.constantBuffers, &_psParamLayout.constantBuffers }));
+		_calcConstantLayoutSameBuffers(std::vector<std::vector<MyConstantBufferLayout>*>({ &_vsParamLayout.constantBuffers, &_psParamLayout.constantBuffers }));
 
 		return true;
 	}
@@ -119,34 +121,48 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return false;
 	}
 
-	ConstantBuffer* Program::_getConstantBuffer(const ConstantBufferLayout& cbLayout, const ShaderParameterFactory& factory) {
+	void Program::_collectParameters(const ConstantBufferLayout::Variables& var, const ShaderParameterFactory& factory, ParameterUsageStatistics& statistics) {
+		auto p = factory.get(var.name);
+		if (var.structMembers.size()) {
+			if (p && p->getType() == ShaderParameterType::FACTORY) {
+				auto data = p->getData();
+				if (data) {
+					for (auto& memVar : var.structMembers) _collectParameters(memVar, *(const ShaderParameterFactory*)data, statistics);
+				}
+			}
+		} else {
+			if (p) {
+				if (p->getUsage() == ShaderParameterUsage::EXCLUSIVE) {
+					++statistics.exclusiveCount;
+				} else if (p->getUsage() == ShaderParameterUsage::AUTO) {
+					++statistics.autoCount;
+				} else {
+					++statistics.shareCount;
+				}
+			} else {
+				++statistics.unknownCount;
+			}
+			_tempParams.emplace_back(p);
+			_tempVars.emplace_back(&var);
+		}
+	}
+
+	ConstantBuffer* Program::_getConstantBuffer(const MyConstantBufferLayout& cbLayout, const ShaderParameterFactory& factory) {
 		if (cbLayout.sameId) {
 			auto cb = _usingSameConstBuffers[cbLayout.sameId - 1];
 			if (cb) return cb;
 		}
 
-		ui32 exclusiveCount = 0, autoCount = 0, unknownCount = 0;
-		for (auto& var : cbLayout.vars) {
-			auto c = factory.get(var.name);
-			if (c) {
-				if (c->getUsage() == ShaderParameterUsage::EXCLUSIVE) {
-					++exclusiveCount;
-				} else if (c->getUsage() == ShaderParameterUsage::AUTO) {
-					++autoCount;
-				}
-			} else {
-				++unknownCount;
-			}
-			_tempParams.emplace_back(c);
-		}
+		ParameterUsageStatistics statistics;
+		for (auto& var : cbLayout.variables) _collectParameters(var, factory, statistics);
 
-		ui32 numVars = cbLayout.vars.size();
-		if (unknownCount >= numVars) return nullptr;
+		ui32 numVars = _tempVars.size();
+		if (statistics.unknownCount >= numVars) return nullptr;
 
 		ConstantBuffer* cb;
-		if (exclusiveCount > 0 && exclusiveCount + autoCount == numVars) {
+		if (statistics.exclusiveCount > 0 && !statistics.shareCount) {
 			auto g = _graphics.get<Graphics>();
-			cb = g->getExclusiveConstantBuffer(_tempParams, cbLayout);
+			cb = (ConstantBuffer*)g->getConstantBufferManager().getExclusiveConstantBuffer(_tempParams, cbLayout);
 
 			if (cb) {
 				if (g->getInternalFeatures().MapNoOverwriteOnDynamicConstantBuffer) {
@@ -154,14 +170,12 @@ namespace aurora::modules::graphics::win_d3d11 {
 					for (ui32 i = 0; i < numVars; ++i) {
 						auto param = _tempParams[i];
 						if (param && param->getUpdateId() != cb->recordUpdateIds[i]) {
-							auto& var = cbLayout.vars[i];
-
 							if (!isMaping) {
 								if (cb->map(Usage::CPU_WRITE) == Usage::NONE) break;
 								isMaping = true;
 							}
 							cb->recordUpdateIds[i] = param->getUpdateId();
-							_updateConstantBuffer(cb, *param, var);
+							_updateConstantBuffer(cb, *param, *_tempVars[i]);
 						}
 					}
 
@@ -169,27 +183,28 @@ namespace aurora::modules::graphics::win_d3d11 {
 				} else {
 					bool needUpdate = false;
 					for (ui32 i = 0; i < numVars; ++i) {
-						auto c = _tempParams[i];
-						if (c && c->getUpdateId() != cb->recordUpdateIds[i]) {
+						auto param = _tempParams[i];
+						if (param && param->getUpdateId() != cb->recordUpdateIds[i]) {
 							needUpdate = true;
-							cb->recordUpdateIds[i] = c->getUpdateId();
+							cb->recordUpdateIds[i] = param->getUpdateId();
 						}
 					}
-					if (needUpdate) _constantBufferUpdateAll(cb, cbLayout.vars);
+					if (needUpdate) _constantBufferUpdateAll(cb, cbLayout.variables);
 				}
 			}
 		} else {
-			cb = _graphics.get<Graphics>()->popShareConstantBuffer(cbLayout.size);
-			if (cb) _constantBufferUpdateAll(cb, cbLayout.vars);
+			cb = (ConstantBuffer*)_graphics.get<Graphics>()->getConstantBufferManager().popShareConstantBuffer(cbLayout.size);
+			if (cb) _constantBufferUpdateAll(cb, cbLayout.variables);
 		}
 
 		_tempParams.clear();
+		_tempVars.clear();
 		if (cb && cbLayout.sameId) _usingSameConstBuffers[cbLayout.sameId - 1] = cb;
 
 		return cb;
 	}
 
-	void Program::_updateConstantBuffer(ConstantBuffer* cb, const ShaderParameter& param, const ConstantBufferLayout::Var& var) {
+	void Program::_updateConstantBuffer(ConstantBuffer* cb, const ShaderParameter& param, const ConstantBufferLayout::Variables& var) {
 		ui32 size = param.getSize();
 		if (!size) return;
 
@@ -199,13 +214,13 @@ namespace aurora::modules::graphics::win_d3d11 {
 			if (remainder) {
 				auto offset = pes + 16 - remainder;
 				auto max = std::min<ui32>(size, var.size);
-				ui32 cur = 0, cbOffset = var.offset;
-				auto data = param.getData();
+				ui32 cur = 0, fillSize = 0;
+				auto data = (const i8*)param.getData();
 				do {
-					cb->write(cbOffset, data, pes);
-					cbOffset += offset;
+					cb->write(var.offset + fillSize, data + cur, pes);
 					cur += pes;
-				} while (cur < max);
+					fillSize += offset;
+				} while (cur < max && fillSize < var.size);
 			} else {
 				cb->write(var.offset, param.getData(), std::min<ui32>(size, var.size));
 			}
@@ -214,11 +229,11 @@ namespace aurora::modules::graphics::win_d3d11 {
 		}
 	}
 
-	void Program::_constantBufferUpdateAll(ConstantBuffer* cb, const std::vector<ConstantBufferLayout::Var>& vars) {
+	void Program::_constantBufferUpdateAll(ConstantBuffer* cb, const std::vector<ConstantBufferLayout::Variables>& vars) {
 		if (cb->map(Usage::CPU_WRITE) != Usage::NONE) {
-			for (ui32 i = 0, n = _tempParams.size(); i < n; ++i) {
+			for (ui32 i = 0, n = _tempVars.size(); i < n; ++i) {
 				auto param = _tempParams[i];
-				if (param) _updateConstantBuffer(cb, *param, vars[i]);
+				if (param) _updateConstantBuffer(cb, *param, *_tempVars[i]);
 			}
 
 			cb->unmap();
@@ -261,7 +276,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 				if (paramFactory) {
 					for (ui32 i = 0, n = _usingSameConstBuffers.size(); i < n; ++i) _usingSameConstBuffers[i] = nullptr;
 				}
-				g->resetUsedShareConstantBuffers();
+				g->getConstantBufferManager().resetUsedShareConstantBuffers();
 			}
 		}
 	}
@@ -452,7 +467,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			auto cb = ref.GetConstantBufferByIndex(i);
 			cb->GetDesc(&bDesc);
 
-			ConstantBufferLayout* buffer = nullptr;
+			MyConstantBufferLayout* buffer = nullptr;
 			i16 idx = -1;
 			for (i16 j = 0, n = dst.constantBuffers.size(); j < n;  ++j) {
 				if (String::isEqual(dst.constantBuffers[j].name.c_str(), bDesc.Name)) {
@@ -474,7 +489,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 					var->GetDesc(&vDesc);
 
 					if (vDesc.uFlags & D3D_SVF_USED) {
-						auto& v = buffer->vars.emplace_back();
+						auto& v = buffer->variables.emplace_back();
 						v.name = vDesc.Name;
 						v.offset = vDesc.StartOffset;
 						v.size = vDesc.Size;
@@ -493,12 +508,12 @@ namespace aurora::modules::graphics::win_d3d11 {
 				
 				hash::CRC::CRC64StreamEnd(buffer->featureCode);
 
-				_graphics.get<Graphics>()->registerConstantLayout(*buffer);
+				_graphics.get<Graphics>()->getConstantBufferManager().registerConstantLayout(*buffer);
 			}
 		}
 	}
 
-	void Program::_parseConstantVar(ConstantBufferLayout::Var& var, ID3D11ShaderReflectionType* type) {
+	void Program::_parseConstantVar(ConstantBufferLayout::Variables& var, ID3D11ShaderReflectionType* type) {
 		D3D11_SHADER_TYPE_DESC desc;
 		type->GetDesc(&desc);
 		var.offset += desc.Offset;
@@ -507,17 +522,33 @@ namespace aurora::modules::graphics::win_d3d11 {
 			for (ui32 i = 0; i < desc.Members; ++i) {
 				auto& memberVar = var.structMembers[i];
 				memberVar.name = type->GetMemberTypeName(i);
-				memberVar.offset = 0;
+				memberVar.offset = var.offset;
 				memberVar.size = 0;
 				
 				_parseConstantVar(memberVar, type->GetMemberTypeByIndex(i));
-				
-				int a = 1;
+			}
+		} else if (!var.size) {
+			switch (desc.Type) {
+			case D3D_SVT_INT:
+			case D3D_SVT_FLOAT:
+			{
+				var.size = desc.Columns << 2;
+
+				break;
+			}
+			default:
+				break;
+			}
+
+			if (desc.Elements > 1 && var.size) {
+				auto size = var.size & 0b1111;
+				if (size) size = 16 - size;
+				var.size += (var.size + size) * (desc.Elements - 1);
 			}
 		}
 	}
 
-	void Program::_calcConstantLayoutSameBuffers(std::vector<std::vector<ConstantBufferLayout>*>& constBufferLayouts) {
+	void Program::_calcConstantLayoutSameBuffers(std::vector<std::vector<MyConstantBufferLayout>*>& constBufferLayouts) {
 		ui32 sameId = 0;
 		i32 n = (i32)constBufferLayouts.size();
 		for (i32 i = 0; i < n; ++i) {

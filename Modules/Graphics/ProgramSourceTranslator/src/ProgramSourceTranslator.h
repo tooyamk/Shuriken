@@ -7,7 +7,7 @@
 
 #include "dxc/dxcapi.h"
 
-#include "modules/IGraphicsModule.h"
+#include "modules/graphics/IProgramSourceTranslator.h"
 #include "base/DynamicLib.h"
 
 #ifdef AE_X64

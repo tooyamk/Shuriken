@@ -1,12 +1,10 @@
 #pragma once
 
 #include "Base.h"
-#include <unordered_set>
+#include "modules/graphics/ConstantBufferManager.h"
+#include "modules/graphics/ProgramSource.h"
 
 namespace aurora::modules::graphics::win_d3d11 {
-	class ConstantBuffer;
-	struct ConstantBufferLayout;
-
 	class AE_MODULE_DLL Graphics : public IGraphicsModule {
 	public:
 		Graphics(Application* app);
@@ -53,11 +51,9 @@ namespace aurora::modules::graphics::win_d3d11 {
 			return _internalFeatures;
 		}
 
-		void AE_CALL registerConstantLayout(ConstantBufferLayout& layout);
-		void AE_CALL unregisterConstantLayout(ConstantBufferLayout& layout);
-		ConstantBuffer* AE_CALL popShareConstantBuffer(ui32 size);
-		void AE_CALL resetUsedShareConstantBuffers();
-		ConstantBuffer* AE_CALL getExclusiveConstantBuffer(const std::vector<ShaderParameter*>& constants, const ConstantBufferLayout& layout);
+		inline ConstantBufferManager& AE_CALL getConstantBufferManager() {
+			return _constantBufferManager;
+		}
 
 		template<ProgramStage stage>
 		inline void AE_CALL useShaderResources(UINT slot, UINT numViews, ID3D11ShaderResourceView*const* views) {
@@ -92,49 +88,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		std::string _moduleVersion;
 		std::string _deviceVersion;
 
-		struct ShareConstBufferPool {
-			ui32 rc;
-			ui32 idleIndex;
-			std::vector<ConstantBuffer*> buffers;
-		};
-
-		std::unordered_map<ui32, ShareConstBufferPool> _shareConstBufferPool;
-		std::unordered_set<ui32> _usedShareConstBufferPool;
-
-		void AE_CALL _registerShareConstantLayout(ui32 size);
-		void AE_CALL _unregisterShareConstantLayout(ui32 size);
-
-		struct ExclusiveConstNode {
-			ExclusiveConstNode() :
-				numAssociativeBuffers(0),
-				parameter(nullptr),
-				parent(nullptr) {
-			}
-
-			ui32 numAssociativeBuffers;
-			std::unordered_map<const ShaderParameter*, ExclusiveConstNode> children;
-			std::unordered_map<ui64, ConstantBuffer*> buffers;
-			ShaderParameter* parameter;
-			ExclusiveConstNode* parent;
-		};
-		std::unordered_map<const ShaderParameter*, ExclusiveConstNode> _exclusiveConstRoots;
-		std::unordered_map<const ShaderParameter*, std::unordered_set<ExclusiveConstNode*>> _exclusiveConstNodes;
-
-		struct ExcLusiveConsts {
-			ui32 rc;
-			std::unordered_set<ExclusiveConstNode*> nodes;
-		};
-		std::unordered_map<ui64, ExcLusiveConsts> _exclusiveConstPool;
-
-		ConstantBuffer* AE_CALL _getExclusiveConstantBuffer(const ConstantBufferLayout& layout, const std::vector<ShaderParameter*>& params,
-			ui32 cur, ui32 max, ExclusiveConstNode* parent, std::unordered_map <const ShaderParameter*, ExclusiveConstNode>& chindrenContainer);
-		void AE_CALL _registerExclusiveConstantLayout(ConstantBufferLayout& layout);
-		void AE_CALL _unregisterExclusiveConstantLayout(ConstantBufferLayout& layout);
-		static void _releaseExclusiveConstant(void* graphics, const ShaderParameter& param);
-		void _releaseExclusiveConstant(const ShaderParameter& param);
-		void _releaseExclusiveConstantToRoot(ExclusiveConstNode* parent, ExclusiveConstNode* releaseChild, ui32 releaseNumAssociativeBuffers, bool releaseParam);
-		void _releaseExclusiveConstantToLeaf(ExclusiveConstNode& node, bool releaseParam);
-		void _releaseExclusiveConstantSelf(ExclusiveConstNode& node, bool releaseParam);
+		ConstantBufferManager _constantBufferManager;
 
 		events::EventListener<ApplicationEvent, Graphics> _resizedListener;
 		void AE_CALL _resizedHandler(events::Event<ApplicationEvent>& e);
@@ -143,5 +97,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		void AE_CALL _release();
 		void AE_CALL _resize(UINT w, UINT h);
+
+		void AE_CALL _createdExclusiveConstantBuffer(IConstantBuffer* buffer, ui32 numParameters);
 	};
 }

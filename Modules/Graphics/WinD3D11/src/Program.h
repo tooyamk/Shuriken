@@ -2,27 +2,10 @@
 
 #include "ConstantBuffer.h"
 #include "Sampler.h"
-#include "BaseTextureResource.h"
+#include "modules/graphics/ConstantBufferManager.h"
 
 namespace aurora::modules::graphics::win_d3d11 {
 	class Graphics;
-	//class ConstantBuffer;
-
-	struct ConstantBufferLayout {
-		struct Var {
-			std::string name;
-			ui32 offset;
-			ui32 size;
-			std::vector<Var> structMembers;
-		};
-
-		std::string name;
-		ui32 bindPoint;
-		std::vector<Var> vars;
-		ui32 size;
-		ui32 sameId;
-		ui64 featureCode;
-	};
 
 
 	class AE_MODULE_DLL Program : public IProgram {
@@ -36,6 +19,11 @@ namespace aurora::modules::graphics::win_d3d11 {
 			const IIndexBuffer* indexBuffer, ui32 count = 0xFFFFFFFFui32, ui32 offset = 0) override;
 
 	protected:
+		struct MyConstantBufferLayout : public ConstantBufferLayout {
+			ui32 sameId;
+		};
+
+
 		struct InVertexBufferInfo {
 			std::string name;
 			ui32 slot;
@@ -78,30 +66,41 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 
 		struct ParameterLayout {
-			std::vector<ConstantBufferLayout> constantBuffers;
+			std::vector<MyConstantBufferLayout> constantBuffers;
 			std::vector<TextureLayout> textures;
 			std::vector<SamplerLayout> samplers;
 
 			void clear(Graphics& g);
 		};
 
+
+		struct ParameterUsageStatistics {
+			ui16 exclusiveCount = 0;
+			ui16 autoCount = 0;
+			ui16 shareCount = 0;
+			ui16 unknownCount = 0;
+		};
+
+
 		ParameterLayout _vsParamLayout;
 		ParameterLayout _psParamLayout;
 
 		std::vector<ConstantBuffer*> _usingSameConstBuffers;
 		std::vector<ShaderParameter*> _tempParams;
+		std::vector<const ConstantBufferLayout::Variables*> _tempVars;
 
 		void AE_CALL _release();
 		ID3DBlob* AE_CALL _compileShader(const ProgramSource& source, const i8* target);
 		ID3D11InputLayout* _getOrCreateInputLayout();
 		void AE_CALL _parseInLayout(const D3D11_SHADER_DESC& desc, ID3D11ShaderReflection& ref);
 		void AE_CALL _parseParameterLayout(const D3D11_SHADER_DESC& desc, ID3D11ShaderReflection& ref, ParameterLayout& dst);
-		void AE_CALL _parseConstantVar(ConstantBufferLayout::Var& var, ID3D11ShaderReflectionType* type);
-		void AE_CALL _calcConstantLayoutSameBuffers(std::vector<std::vector<ConstantBufferLayout>*>& constBufferLayouts);
+		void AE_CALL _parseConstantVar(ConstantBufferLayout::Variables& var, ID3D11ShaderReflectionType* type);
+		void AE_CALL _calcConstantLayoutSameBuffers(std::vector<std::vector<MyConstantBufferLayout>*>& constBufferLayouts);
 
-		ConstantBuffer* _getConstantBuffer(const ConstantBufferLayout& cbLayout, const ShaderParameterFactory& factory);
-		void _updateConstantBuffer(ConstantBuffer* cb, const ShaderParameter& param, const ConstantBufferLayout::Var& vars);
-		void _constantBufferUpdateAll(ConstantBuffer* cb, const std::vector<ConstantBufferLayout::Var>& var);
+		ConstantBuffer* _getConstantBuffer(const MyConstantBufferLayout& cbLayout, const ShaderParameterFactory& factory);
+		void _collectParameters(const ConstantBufferLayout::Variables& var, const ShaderParameterFactory& factory, ParameterUsageStatistics& statistics);
+		void _updateConstantBuffer(ConstantBuffer* cb, const ShaderParameter& param, const ConstantBufferLayout::Variables& vars);
+		void _constantBufferUpdateAll(ConstantBuffer* cb, const std::vector<ConstantBufferLayout::Variables>& var);
 
 		template<ProgramStage stage>
 		void AE_CALL _useParameters(const ParameterLayout& layout, const ShaderParameterFactory& factory) {
@@ -111,8 +110,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 			}
 
 			for (auto& info : layout.textures) {
-				auto c = factory.get(info.name);
-				if (c && c->getType() == ShaderParameterType::TEXTURE) {
+				auto c = factory.get(info.name, ShaderParameterType::TEXTURE);
+				if (c) {
 					auto data = c->getData();
 					if (data && _graphics == ((ITextureViewBase*)data)->getGraphics()) {
 						auto view = (ID3D11ShaderResourceView*)((ITextureViewBase*)data)->getNativeView();
@@ -123,8 +122,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 			}
 
 			for (auto& info : layout.samplers) {
-				auto c = factory.get(info.name);
-				if (c && c->getType() == ShaderParameterType::SAMPLER) {
+				auto c = factory.get(info.name, ShaderParameterType::SAMPLER);
+				if (c) {
 					auto data = c->getData();
 					if (data && _graphics == ((ISampler*)data)->getGraphics()) ((Sampler*)data)->use<stage>(info.bindPoint);
 				}

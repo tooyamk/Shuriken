@@ -1,6 +1,6 @@
 #pragma once
 
-#include "modules/IGraphicsModule.h"
+#include "modules/graphics/IGraphicsModule.h"
 #include "base/Application.h"
 
 #include <d3d11_4.h>

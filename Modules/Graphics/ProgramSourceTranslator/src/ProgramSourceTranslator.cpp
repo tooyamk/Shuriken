@@ -4,7 +4,7 @@
 //#include "spirv_cross.hpp"
 #include "spirv_msl.hpp"
 #include "base/String.h"
-#include <vector>
+#include "modules/graphics/IGraphicsModule.h"
 
 namespace aurora::modules::graphics::program_source_translator {
 	ProgramSourceTranslator::ProgramSourceTranslator(const i8* dxc) :

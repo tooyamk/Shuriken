@@ -24,7 +24,7 @@ aabbcc blue;
 
 float4 main(PS_INPUT input) : SV_TARGET {
     float4 c = texDiffuse.Sample(samLiner, input.uv);
-    c.x *= blue.val1 * red * green.x;
+    c.x *= blue.val2[1] * red * green.x;
     return c;
     //c.x = red;
     //return c;

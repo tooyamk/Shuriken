@@ -34,6 +34,9 @@
     <Filter Include="src\utils\hash">
       <UniqueIdentifier>{bd1a3dcd-1c7f-4aa0-afd9-52bb9b056fdc}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\modules\graphics">
+      <UniqueIdentifier>{6f176c1c-0319-4952-bdc3-838ad7e4fce9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\math\Matrix44.h">
@@ -102,9 +105,6 @@
     <ClInclude Include="src\modules\IInputModule.h">
       <Filter>src\modules</Filter>
     </ClInclude>
-    <ClInclude Include="src\modules\IGraphicsModule.h">
-      <Filter>src\modules</Filter>
-    </ClInclude>
     <ClInclude Include="src\base\String.h">
       <Filter>src\base</Filter>
     </ClInclude>
@@ -131,6 +131,30 @@
     </ClInclude>
     <ClInclude Include="src\math\Vector.h">
       <Filter>src\math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\modules\graphics\IGraphicsModule.h">
+      <Filter>src\modules\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\modules\graphics\ShaderParameter.h">
+      <Filter>src\modules\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\modules\graphics\ShaderParameterFactory.h">
+      <Filter>src\modules\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\modules\graphics\ProgramSource.h">
+      <Filter>src\modules\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\modules\graphics\IProgramSourceTranslator.h">
+      <Filter>src\modules\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\modules\graphics\GraphicsAdapter.h">
+      <Filter>src\modules\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\modules\graphics\VertexBufferFactory.h">
+      <Filter>src\modules\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\modules\graphics\ConstantBufferManager.h">
+      <Filter>src\modules\graphics</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -170,9 +194,6 @@
     <ClCompile Include="src\modules\IInputModule.cpp">
       <Filter>src\modules</Filter>
     </ClCompile>
-    <ClCompile Include="src\modules\IGraphicsModule.cpp">
-      <Filter>src\modules</Filter>
-    </ClCompile>
     <ClCompile Include="src\base\String.cpp">
       <Filter>src\base</Filter>
     </ClCompile>
@@ -187,6 +208,27 @@
     </ClCompile>
     <ClCompile Include="src\utils\hash\MD5.cpp">
       <Filter>src\utils\hash</Filter>
+    </ClCompile>
+    <ClCompile Include="src\modules\graphics\IGraphicsModule.cpp">
+      <Filter>src\modules\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\modules\graphics\ShaderParameter.cpp">
+      <Filter>src\modules\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\modules\graphics\ShaderParameterFactory.cpp">
+      <Filter>src\modules\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\modules\graphics\ProgramSource.cpp">
+      <Filter>src\modules\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\modules\graphics\GraphicsAdapter.cpp">
+      <Filter>src\modules\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\modules\graphics\VertexBufferFactory.cpp">
+      <Filter>src\modules\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\modules\graphics\ConstantBufferManager.cpp">
+      <Filter>src\modules\graphics</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

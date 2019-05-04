@@ -2,6 +2,7 @@
 #include "Graphics.h"
 #include "IndexBuffer.h"
 #include "VertexBuffer.h"
+#include "modules/graphics/VertexBufferFactory.h"
 
 namespace aurora::modules::graphics::win_glew {
 	Program::Program(Graphics& graphics) : IProgram(graphics),
@@ -87,7 +88,7 @@ namespace aurora::modules::graphics::win_glew {
 			std::vector<GLint> offsets;
 			std::vector<GLint> types;
 			std::vector<GLint> sizes;
-			for (GLint i = 0; i < uniforms; ++i) {
+			for (GLint i = 0; i < uniformBlocks; ++i) {
 				GLint location;
 				glGetActiveUniformBlockiv(_handle, i, GL_UNIFORM_BLOCK_BINDING, &location);
 
@@ -102,17 +103,18 @@ namespace aurora::modules::graphics::win_glew {
 				std::string n = charBuffer;
 
 				GLint numUniforms;
-				glGetActiveUniformBlockiv(_handle, i, GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS, &numUniforms);//Block中有多少个Uniform变量
+				glGetActiveUniformBlockiv(_handle, i, GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS, &numUniforms);
 				indices.resize(numUniforms);
 				offsets.resize(numUniforms);
 				types.resize(numUniforms);
 				sizes.resize(numUniforms);
 
-				glGetActiveUniformBlockiv(_handle, i, GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES, indices.data());//获取Block中uniform的索引值
+				auto indicesData = indices.data();
+				glGetActiveUniformBlockiv(_handle, i, GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES, indicesData);
 
-				glGetActiveUniformsiv(_handle, numUniforms, (GLuint*)indices.data(), GL_UNIFORM_OFFSET, offsets.data());
-				glGetActiveUniformsiv(_handle, numUniforms, (GLuint*)indices.data(), GL_UNIFORM_TYPE, types.data());
-				glGetActiveUniformsiv(_handle, numUniforms, (GLuint*)indices.data(), GL_UNIFORM_SIZE, sizes.data());
+				glGetActiveUniformsiv(_handle, numUniforms, (GLuint*)indicesData, GL_UNIFORM_OFFSET, offsets.data());
+				glGetActiveUniformsiv(_handle, numUniforms, (GLuint*)indicesData, GL_UNIFORM_TYPE, types.data());
+				glGetActiveUniformsiv(_handle, numUniforms, (GLuint*)indicesData, GL_UNIFORM_SIZE, sizes.data());
 
 				for (GLint j = 0; j < numUniforms; ++j) {
 					glGetActiveUniformName(_handle, indices[j], sizeof(charBuffer), &nameLen, charBuffer);
