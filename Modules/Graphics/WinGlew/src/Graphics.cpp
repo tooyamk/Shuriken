@@ -23,8 +23,7 @@ namespace aurora::modules::graphics::win_glew {
 		_majorVer(0),
 		_minorVer(0),
 		_intVer(0),
-		_deviceFeatures({ 0 }),
-		_moduleVersion("0.1.0") {
+		_deviceFeatures({ 0 }) {
 	}
 
 	Graphics::~Graphics() {
@@ -196,9 +195,9 @@ namespace aurora::modules::graphics::win_glew {
 	void Graphics::beginRender() {
 		wglMakeCurrent(_dc, _rc);
 
-		i32 w, h;
-		_app.get()->getInnerSize(w, h);
-		glViewport(0, 0, w, h);
+		Vec2i32 size;
+		_app.get()->getInnerSize(size);
+		glViewport(0, 0, size[0], size[1]);
 	}
 
 	void Graphics::endRender() {

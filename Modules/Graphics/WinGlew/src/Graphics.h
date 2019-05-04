@@ -66,7 +66,7 @@ namespace aurora::modules::graphics::win_glew {
 		GLint _minorVer;
 		ui32 _intVer;
 		std::string _strVer;
-		std::string _moduleVersion;
+		inline static const std::string _moduleVersion = "0.1.0";
 		std::string _deviceVersion;
 
 		bool AE_CALL _glInit();

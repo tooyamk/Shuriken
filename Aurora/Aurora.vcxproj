@@ -241,6 +241,7 @@
     <ClCompile Include="src\modules\graphics\ConstantBufferManager.cpp" />
     <ClCompile Include="src\modules\graphics\GraphicsAdapter.cpp" />
     <ClCompile Include="src\modules\graphics\IGraphicsModule.cpp" />
+    <ClCompile Include="src\modules\graphics\IProgramSourceTranslator.cpp" />
     <ClCompile Include="src\modules\graphics\ProgramSource.cpp" />
     <ClCompile Include="src\modules\graphics\ShaderParameter.cpp" />
     <ClCompile Include="src\modules\graphics\ShaderParameterFactory.cpp" />

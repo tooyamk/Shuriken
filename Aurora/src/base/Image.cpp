@@ -1,5 +1,5 @@
 #include "Image.h"
-#include "modules/IGraphicsModule.h"
+#include "modules/graphics/IGraphicsModule.h"
 
 namespace aurora {
 	//using namespace modules;

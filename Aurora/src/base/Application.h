@@ -34,7 +34,7 @@ namespace aurora {
 		bool AE_CALL createWindow(const Style& style, const std::string& title, const Box2i32& windowedRect, bool fullscreen);
 		bool AE_CALL isWindowed() const;
 		void AE_CALL toggleFullscreen();
-		void AE_CALL getInnerSize(i32& w, i32& h);
+		void AE_CALL getInnerSize(Vec2i32& size);
 		void AE_CALL getWindowedRect(Box2i32& dst) const;
 		void AE_CALL setWindowedRect(const Box2i32& rect);
 		void AE_CALL setWindowTitle(const std::string& title);

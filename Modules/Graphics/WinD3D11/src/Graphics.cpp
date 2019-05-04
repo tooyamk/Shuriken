@@ -21,7 +21,6 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_swapChain(nullptr),
 		_backBufferTarget(nullptr),
 		_deviceFeatures({ 0 }),
-		_moduleVersion("0.1.0"),
 		_constantBufferManager(this),
 		_resizedListener(this, &Graphics::_resizedHandler) {
 		_app.get()->getEventDispatcher().addEventListener(ApplicationEvent::RESIZED, _resizedListener, false);
@@ -225,14 +224,14 @@ namespace aurora::modules::graphics::win_d3d11 {
 		}
 		}
 
-		i32 w, h;
-		_app.get()->getInnerSize(w, h);
+		Vec2i32 size;
+		_app.get()->getInnerSize(size);
 
 		DXGI_SWAP_CHAIN_DESC swapChainDesc;
 		memset(&swapChainDesc, 0, sizeof(swapChainDesc));
 		swapChainDesc.BufferCount = 1;
-		swapChainDesc.BufferDesc.Width = w;
-		swapChainDesc.BufferDesc.Height = h;
+		swapChainDesc.BufferDesc.Width = (UINT)size[0];
+		swapChainDesc.BufferDesc.Height = (UINT)size[1];
 		swapChainDesc.BufferDesc.Format = fmt;
 		swapChainDesc.BufferDesc.RefreshRate.Numerator = _refreshRate.Numerator;
 		swapChainDesc.BufferDesc.RefreshRate.Denominator = _refreshRate.Denominator;
@@ -257,7 +256,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_deviceFeatures.supportTextureView = true;
 		_deviceFeatures.supportConstantBuffer = true;
 
-		_resize(w, h);
+		_resize((Vec2<UINT>&)size);
 
 		return true;
 	}
@@ -332,9 +331,9 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	void Graphics::_resizedHandler(events::Event<ApplicationEvent>& e) {
-		i32 w, h;
-		_app.get()->getInnerSize(w, h);
-		_resize(w, h);
+		Vec2i32 size;
+		_app.get()->getInnerSize(size);
+		_resize((Vec2<UINT>&)size);
 	}
 
 	void Graphics::_release() {
@@ -367,17 +366,17 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_deviceVersion = "D3D Unknown";
 	}
 
-	void Graphics::_resize(UINT w, UINT h) {
+	void Graphics::_resize(const Vec2<UINT>& size) {
 		if (!_swapChain) return;
 
 		DXGI_SWAP_CHAIN_DESC swapChainDesc;
 		_swapChain->GetDesc(&swapChainDesc);
 
-		bool sizeChange = swapChainDesc.BufferDesc.Width != w || swapChainDesc.BufferDesc.Height != h;
+		bool sizeChange = swapChainDesc.BufferDesc.Width != size[0] || swapChainDesc.BufferDesc.Height != size[1];
 
 		if (sizeChange || !_backBufferTarget) {
-			swapChainDesc.BufferDesc.Width = w;
-			swapChainDesc.BufferDesc.Height = h;
+			swapChainDesc.BufferDesc.Width = size[0];
+			swapChainDesc.BufferDesc.Height = size[1];
 
 			if (_backBufferTarget) {
 				_backBufferTarget->Release();
@@ -385,7 +384,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			}
 
 			if (sizeChange) {
-				if (FAILED(_swapChain->ResizeBuffers(swapChainDesc.BufferCount, w, h, swapChainDesc.BufferDesc.Format, swapChainDesc.Flags))) {
+				if (FAILED(_swapChain->ResizeBuffers(swapChainDesc.BufferCount, size[0], size[1], swapChainDesc.BufferDesc.Format, swapChainDesc.Flags))) {
 					println("swap chain ResizeBuffers error");
 				}
 			}
@@ -404,8 +403,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 			_context->OMSetRenderTargets(1, (ID3D11RenderTargetView**)&_backBufferTarget, nullptr);
 
 			D3D11_VIEWPORT vp;
-			vp.Width = f32(w);
-			vp.Height = f32(h);
+			vp.Width = (FLOAT)size[0];
+			vp.Height = (FLOAT)size[1];
 			vp.MinDepth = 0.0f;
 			vp.MaxDepth = 1.0f;
 			vp.TopLeftX = 0.0f;

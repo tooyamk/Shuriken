@@ -97,15 +97,15 @@ namespace aurora {
 		}
 	}
 
-	void Application::getInnerSize(i32& w, i32& h) {
+	void Application::getInnerSize(Vec2i32& size) {
 #if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
 		RECT rect;
 		GetClientRect(_hWnd, &rect);
-		w = rect.right - rect.left;
-		h = rect.bottom - rect.top;
+		size[0] = rect.right - rect.left;
+		size[1] = rect.bottom - rect.top;
 #elif
-		w = 0;
-		h = 0;
+		size[0] = 0;
+		size[1] = 0;
 #endif
 	}
 

@@ -1,9 +1,9 @@
 #pragma once
 
-#include <dxc/Support/Global.h>
-#include <dxc/Support/Unicode.h>
-//#include <dxc/Support/WinAdapter.h>
-#include <dxc/Support/WinIncludes.h>
+#include "dxc/Support/Global.h"
+#include "dxc/Support/Unicode.h"
+//#include "dxc/Support/WinAdapter.h"
+#include "dxc/Support/WinIncludes.h"
 
 #include "dxc/dxcapi.h"
 

@@ -13,8 +13,8 @@ namespace aurora::modules::graphics::program_source_translator {
 		if (_dxcDll.load(dxc)) {
 			auto fn = (DxcCreateInstanceProc)_dxcDll.getSymbolAddress("DxcCreateInstance");
 			if (fn) {
-				IFT(fn(CLSID_DxcLibrary, __uuidof(IDxcLibrary), (void**)(&_dxcLib)));
-				IFT(fn(CLSID_DxcCompiler, __uuidof(IDxcCompiler), (void**)(&_dxcompiler)));
+				IFT(fn(CLSID_DxcLibrary, __uuidof(IDxcLibrary), (void**)&_dxcLib));
+				IFT(fn(CLSID_DxcCompiler, __uuidof(IDxcCompiler), (void**)&_dxcompiler));
 			}
 		}
 	}

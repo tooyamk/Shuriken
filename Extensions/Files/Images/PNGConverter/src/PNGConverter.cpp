@@ -1,6 +1,6 @@
 #include "PNGConverter.h"
 #include "png.h"
-#include "modules/IGraphicsModule.h"
+#include "modules/graphics/IGraphicsModule.h"
 
 namespace aurora::file {
 	namespace png_private {

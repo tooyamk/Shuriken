@@ -85,7 +85,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		D3D11_FEATURE_DATA_D3D11_OPTIONS _internalFeatures;
 
 		GraphicsDeviceFeatures _deviceFeatures;
-		std::string _moduleVersion;
+		inline static const std::string _moduleVersion = "0.1.0";
 		std::string _deviceVersion;
 
 		ConstantBufferManager _constantBufferManager;
@@ -96,7 +96,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		bool AE_CALL _createDevice(const GraphicsAdapter& adapter);
 
 		void AE_CALL _release();
-		void AE_CALL _resize(UINT w, UINT h);
+		void AE_CALL _resize(const Vec2<UINT>& size);
 
 		void AE_CALL _createdExclusiveConstantBuffer(IConstantBuffer* buffer, ui32 numParameters);
 	};
