@@ -2,6 +2,7 @@
 #include "Graphics.h"
 #include "IndexBuffer.h"
 #include "VertexBuffer.h"
+#include "base/String.h"
 #include "modules/graphics/VertexBufferFactory.h"
 
 namespace aurora::modules::graphics::win_glew {
@@ -51,7 +52,7 @@ namespace aurora::modules::graphics::win_glew {
 			auto& info = _inVertexBufferLayouts[i];
 			glGetActiveAttrib(_handle, i, sizeof(charBuffer), &len, &info.size, &info.type, charBuffer);
 			
-			info.name = charBuffer + 7;
+			info.name = charBuffer + 7;//in_var_
 			info.location = glGetAttribLocation(_handle, charBuffer);
 		}
 
@@ -66,7 +67,7 @@ namespace aurora::modules::graphics::win_glew {
 			if (location < 0) continue;
 
 			auto& info = _uniformLayouts.emplace_back();
-			info.name = charBuffer + 5;// 20;
+			info.name = charBuffer + 5;//type_ ;20;
 			info.location = location;
 			info.size = size;
 			info.type = type;
@@ -88,19 +89,21 @@ namespace aurora::modules::graphics::win_glew {
 			std::vector<GLint> offsets;
 			std::vector<GLint> types;
 			std::vector<GLint> sizes;
-			for (GLint i = 0; i < uniformBlocks; ++i) {
-				GLint location;
-				glGetActiveUniformBlockiv(_handle, i, GL_UNIFORM_BLOCK_BINDING, &location);
 
-				GLint dataSize;
-				glGetActiveUniformBlockiv(_handle, i, GL_UNIFORM_BLOCK_DATA_SIZE, &dataSize);
+			std::vector<std::string_view> varNames;
+			std::unordered_map<std::string_view, ConstantBufferLayout::Variables*> vars;
+			for (GLint i = 0; i < uniformBlocks; ++i) {
+				auto& blockInfo = _uniformBlockLayouts.emplace_back();
+
+				glGetActiveUniformBlockiv(_handle, i, GL_UNIFORM_BLOCK_BINDING, (GLint*)&blockInfo.bindPoint);
+				glGetActiveUniformBlockiv(_handle, i, GL_UNIFORM_BLOCK_DATA_SIZE, (GLint*)&blockInfo.size);
 
 				//GLint nameLen;
 				//glGetActiveUniformBlockiv(_handle, i, GL_UNIFORM_BLOCK_NAME_LENGTH, &nameLen);
 
 				GLint nameLen;
 				glGetActiveUniformBlockName(_handle, i, sizeof(charBuffer), &nameLen, charBuffer);
-				std::string n = charBuffer;
+				blockInfo.name = charBuffer;
 
 				GLint numUniforms;
 				glGetActiveUniformBlockiv(_handle, i, GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS, &numUniforms);
@@ -116,16 +119,45 @@ namespace aurora::modules::graphics::win_glew {
 				glGetActiveUniformsiv(_handle, numUniforms, (GLuint*)indicesData, GL_UNIFORM_TYPE, types.data());
 				glGetActiveUniformsiv(_handle, numUniforms, (GLuint*)indicesData, GL_UNIFORM_SIZE, sizes.data());
 
+				vars.clear();
 				for (GLint j = 0; j < numUniforms; ++j) {
 					glGetActiveUniformName(_handle, indices[j], sizeof(charBuffer), &nameLen, charBuffer);
-					int a = 1;
-				}
+					
+					auto rootOffset = String::findFirst(charBuffer, nameLen, '.') + 1;
+					std::string_view child(charBuffer + rootOffset, nameLen - rootOffset);
 
-				int a = 1;
+					ConstantBufferLayout::Variables* foundVar = nullptr;
+					auto itr = vars.find(child);
+					if (itr == vars.end()) {
+						auto parentVars = &blockInfo.variables;
+						ui32 fullNameLen = 0;
+						varNames.clear();
+						String::split(child, std::string_view("."), varNames);
+						for (auto& sv : varNames) {
+							fullNameLen += fullNameLen ? sv.size() + 1 : sv.size();
+							std::string_view fullName(child.data(), fullNameLen);
+
+							auto itr2 = vars.find(fullName);
+							if (itr2 == vars.end()) {
+								auto& var = parentVars->emplace_back();
+								var.name = sv;
+								parentVars = &var.structMembers;
+								foundVar = &var;
+								vars.emplace(fullName, foundVar);
+							} else {
+								foundVar = itr2->second;
+								parentVars = &foundVar->structMembers;
+							}
+						}
+					} else {
+						foundVar = itr->second;
+					}
+
+					foundVar->size = Graphics::getGLTypeSize(types[j]) * sizes[j];
+					foundVar->offset = offsets[j];
+				}
 			}
-			int a = 1;
 		}
-		
 
 		return true;
 	}
@@ -161,6 +193,7 @@ namespace aurora::modules::graphics::win_glew {
 		}
 		_inVertexBufferLayouts.clear();
 		_uniformLayouts.clear();
+		_uniformBlockLayouts.clear();
 	}
 
 	GLuint Program::_compileShader(const ProgramSource& source, GLenum type) {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Base.h"
+#include "modules/graphics/ConstantBufferManager.h"
 
 namespace aurora::modules::graphics::win_glew {
 	class AE_MODULE_DLL Graphics : public IGraphicsModule {
@@ -33,6 +34,10 @@ namespace aurora::modules::graphics::win_glew {
 			return _trans.get();
 		}
 
+		inline ConstantBufferManager& AE_CALL getConstantBufferManager() {
+			return _constantBufferManager;
+		}
+
 		inline bool AE_CALL isGreatThanVersion(GLint major, GLint minor) const {
 			if (_majorVer > major) {
 				return true;
@@ -52,6 +57,7 @@ namespace aurora::modules::graphics::win_glew {
 		}
 
 		static void AE_CALL convertFormat(TextureFormat fmt, GLenum& internalFormat, GLenum& format, GLenum& type);
+		static ui32 AE_CALL getGLTypeSize(GLenum type);
 
 	private:
 		RefPtr<Application> _app;
@@ -69,8 +75,12 @@ namespace aurora::modules::graphics::win_glew {
 		inline static const std::string _moduleVersion = "0.1.0";
 		std::string _deviceVersion;
 
+		ConstantBufferManager _constantBufferManager;
+
 		bool AE_CALL _glInit();
 		void AE_CALL _release();
+
+		void AE_CALL _createdExclusiveConstantBuffer(IConstantBuffer* buffer, ui32 numParameters);
 
 		static void GLAPIENTRY _debugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam);
 	};

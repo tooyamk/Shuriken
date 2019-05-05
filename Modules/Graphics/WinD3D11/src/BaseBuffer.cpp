@@ -1,5 +1,6 @@
 #include "BaseBuffer.h"
 #include "Graphics.h"
+#include <algorithm>
 
 namespace aurora::modules::graphics::win_d3d11 {
 	BaseBuffer::BaseBuffer(UINT bufferType) : BaseResource(bufferType),

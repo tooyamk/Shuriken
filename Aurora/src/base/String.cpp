@@ -187,10 +187,20 @@ namespace aurora {
 		return d;
 	}
 
-	void String::split(const std::string& input, const std::regex& par, std::vector<std::string>& dst) {
-		std::sregex_token_iterator itr(input.begin(), input.end(), par, -1);
+	void String::split(const std::string& input, const std::regex& separator, std::vector<std::string>& dst) {
+		std::sregex_token_iterator itr(input.begin(), input.end(), separator, -1);
 		std::sregex_token_iterator end;
 		while (itr != end) dst.emplace_back(*itr++);
+	}
+
+	void String::split(const std::string_view& input, const std::string_view& separator, std::vector<std::string_view>& dst) {
+		size_t first = 0, size = input.size();
+		while (first < size) {
+			auto second = input.find_first_of(separator, first);
+			if (first != second) dst.emplace_back(input.substr(first, second - first));
+			if (second == std::string_view::npos) break;
+			first = second + 1;
+		}
 	}
 
 	std::string String::toString(const ui8* value, ui32 size) {

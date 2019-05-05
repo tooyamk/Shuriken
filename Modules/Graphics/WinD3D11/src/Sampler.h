@@ -1,7 +1,6 @@
 #pragma once
 
 #include "BaseResource.h"
-#include "Graphics.h"
 
 namespace aurora::modules::graphics::win_d3d11 {
 	class AE_MODULE_DLL Sampler : public ISampler {
@@ -16,20 +15,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual void AE_CALL setMaxAnisotropy(ui32 max) override;
 		virtual void AE_CALL setBorderColor(const Vec4f32& color) override;
 
-		template<ProgramStage stage>
-		inline void AE_CALL use(UINT slot) {
-		}
-
-		template<>
-		inline void AE_CALL use<ProgramStage::VS>(UINT slot) {
-			_update();
-			_graphics.get<Graphics>()->getContext()->VSSetSamplers(slot, 1, &_samplerState);
-		}
-
-		template<>
-		inline void AE_CALL use<ProgramStage::PS>(UINT slot) {
-			_update();
-			_graphics.get<Graphics>()->getContext()->PSSetSamplers(slot, 1, &_samplerState);
+		inline ID3D11SamplerState* AE_CALL getInternalSampler() const {
+			return _samplerState;
 		}
 
 	protected:

@@ -96,14 +96,15 @@ namespace aurora {
 		void AE_CALL writeInt(ui8 numBytes, i64 value);
 		inline void AE_CALL writeUInt(ui8 numBytes, ui64 value);
 
-		ui32 AE_CALL readBytes(i8* bytes, ui32 offset = 0, ui32 length = 0);
-		ui32 AE_CALL readBytes(ByteArray& ba, ui32 offset = 0, ui32 length = 0);
+		ui32 AE_CALL readBytes(i8* bytes, ui32 offset = 0, ui32 length = UINT_MAX);
+		ui32 AE_CALL readBytes(ByteArray& ba, ui32 offset = 0, ui32 length = UINT_MAX);
 		inline void AE_CALL writeBytes(const i8* bytes, ui32 offset, ui32 length);
-		void AE_CALL writeBytes(const ByteArray& ba, ui32 offset = 0, ui32 length = 0);
+		ui32 AE_CALL writeBytes(const ByteArray& ba, ui32 offset = 0, ui32 length = UINT_MAX);
 
-		const i8* AE_CALL readCString(bool chechBOM = false, ui32* size = nullptr);
+		ui32 AE_CALL readStringLength(ui32 begin, ui32 size, bool chechBOM = false) const;
+		inline ui32 AE_CALL readStringLength(ui32 size, bool chechBOM = false) const;
 		inline std::string AE_CALL readString(bool chechBOM = false);
-		std::string AE_CALL readString(ui32 start, ui32 size, bool chechBOM = false);
+		inline std::string_view AE_CALL readStringView(bool chechBOM = false);
 		inline void AE_CALL writeString(const std::string& str);
 		void AE_CALL writeString(const i8* str, ui32 size);
 
@@ -146,7 +147,7 @@ namespace aurora {
 		Endian _endian;
 		Mode _mode;
 		bool _needReverse;
-		i8* _bytes;
+		i8* _data;
 		ui32 _position;
 		ui32 _length;
 		ui32 _capacity;
@@ -159,10 +160,10 @@ namespace aurora {
 			if (_needReverse) {
 				K v;
 				i8* p = (i8*)&v;
-				for (i8 i = len - 1; i >= 0; --i) p[i] = _bytes[_position++];
+				for (i8 i = len - 1; i >= 0; --i) p[i] = _data[_position++];
 				return v;
 			} else {
-				K* p = (K*)&_bytes[_position];
+				K* p = (K*)&_data[_position];
 				_position += len;
 				return *p;
 			}
@@ -174,7 +175,7 @@ namespace aurora {
 		inline void AE_CALL _dilatation(ui32 size);
 		inline void AE_CALL _checkLength(ui32 len);
 
-		inline ui8 AE_CALL _bomOffset(ui32 pos);
+		inline ui8 AE_CALL _bomOffset(ui32 pos) const;
 
 	public:
 		static const Endian SYS_ENDIAN;

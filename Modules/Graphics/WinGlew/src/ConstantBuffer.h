@@ -2,7 +2,7 @@
 
 #include "BaseBuffer.h"
 
-namespace aurora::modules::graphics::win_d3d11 {
+namespace aurora::modules::graphics::win_glew {
 	class AE_MODULE_DLL ConstantBuffer : public IConstantBuffer {
 	public:
 		ConstantBuffer(Graphics& graphics);
@@ -18,10 +18,6 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual i32 AE_CALL write(ui32 offset, const void* data, ui32 length) override;
 		virtual i32 AE_CALL update(ui32 offset, const void* data, ui32 length) override;
 		virtual void AE_CALL flush() override;
-
-		inline ID3D11Buffer* AE_CALL getInternalBuffer() const {
-			return (ID3D11Buffer*)_baseBuffer.handle;
-		}
 
 	protected:
 		BaseBuffer _baseBuffer;

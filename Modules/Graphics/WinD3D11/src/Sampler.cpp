@@ -1,4 +1,5 @@
 #include "Sampler.h"
+#include "Graphics.h"
 #include "base/ByteArray.h"
 
 namespace aurora::modules::graphics::win_d3d11 {

@@ -2,7 +2,6 @@
 
 #include "Base.h"
 #include "modules/graphics/ConstantBufferManager.h"
-#include "modules/graphics/ProgramSource.h"
 
 namespace aurora::modules::graphics::win_d3d11 {
 	class AE_MODULE_DLL Graphics : public IGraphicsModule {
@@ -56,17 +55,36 @@ namespace aurora::modules::graphics::win_d3d11 {
 		}
 
 		template<ProgramStage stage>
-		inline void AE_CALL useShaderResources(UINT slot, UINT numViews, ID3D11ShaderResourceView*const* views) {
-		}
-
+		inline void AE_CALL useShaderResources(UINT slot, UINT numViews, ID3D11ShaderResourceView*const* views) {}
 		template<>
 		inline void AE_CALL useShaderResources<ProgramStage::VS>(UINT slot, UINT numViews, ID3D11ShaderResourceView*const* views) {
 			_context->VSSetShaderResources(slot, numViews, views);
 		}
-
 		template<>
 		inline void AE_CALL useShaderResources<ProgramStage::PS>(UINT slot, UINT numViews, ID3D11ShaderResourceView*const* views) {
 			_context->PSSetShaderResources(slot, numViews, views);
+		}
+
+		template<ProgramStage stage>
+		inline void AE_CALL useConstantBuffers(UINT slot, UINT numBuffers, ID3D11Buffer*const* buffers) {}
+		template<>
+		inline void AE_CALL useConstantBuffers<ProgramStage::VS>(UINT slot, UINT numBuffers, ID3D11Buffer*const* buffers) {
+			_context->VSSetConstantBuffers(slot, numBuffers, buffers);
+		}
+		template<>
+		inline void AE_CALL useConstantBuffers<ProgramStage::PS>(UINT slot, UINT numBuffers, ID3D11Buffer*const* buffers) {
+			_context->PSSetConstantBuffers(slot, numBuffers, buffers);
+		}
+
+		template<ProgramStage stage>
+		inline void AE_CALL useSamplers(UINT slot, UINT numSamplers, ID3D11SamplerState*const* samplers) {}
+		template<>
+		inline void AE_CALL useSamplers<ProgramStage::VS>(UINT slot, UINT numSamplers, ID3D11SamplerState*const* samplers) {
+			_context->VSSetSamplers(slot, numSamplers, samplers);
+		}
+		template<>
+		inline void AE_CALL useSamplers<ProgramStage::PS>(UINT slot, UINT numSamplers, ID3D11SamplerState*const* samplers) {
+			_context->PSSetSamplers(slot, numSamplers, samplers);
 		}
 
 		static DXGI_FORMAT AE_CALL convertInternalFormat(TextureFormat fmt);

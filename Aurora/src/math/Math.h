@@ -13,8 +13,8 @@ namespace aurora {
 		template<typename T> using IntType = typename std::enable_if_t<std::is_integral_v<T>, T>;
 		template<typename T> using UIntType = typename std::enable_if_t<std::is_integral_v<T> && std::is_unsigned_v<T>, T>;
 
-		template<typename T> inline static const T NUMBER_O = 0;
-		template<typename T> inline static const T NUMBER_1 = 1;
+		template<typename T> inline static const NumberType<T> NUMBER_0 = 0;
+		template<typename T> inline static const NumberType<T> NUMBER_1 = 1;
 		template<typename T> inline static const FloatType<T> TOLERANCE = T(2e-37);
 		template<typename T> inline static const FloatType<T> PI = T(3.14159265358979323846);
 		template<typename T> inline static const FloatType<T> PI_2 = PI<T> * T(.5);

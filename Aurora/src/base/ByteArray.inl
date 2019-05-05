@@ -13,7 +13,7 @@ namespace aurora {
 	}
 
 	inline bool ByteArray::isValid() const {
-		return _bytes != nullptr;
+		return _data != nullptr;
 	}
 
 	inline ByteArray::Endian ByteArray::getEndian() const {
@@ -26,14 +26,14 @@ namespace aurora {
 	}
 
 	inline const i8* ByteArray::getBytes() const {
-		return _bytes;
+		return _data;
 	}
 
 	inline ByteArray ByteArray::slice(ui32 start, ui32 length) const {
 		if (start >= _length) {
 			return std::move(ByteArray(nullptr, 0, ExtMemMode::EXT));
 		} else {
-			return std::move(ByteArray(_bytes + start, std::min<ui32>(length, _length - start), ExtMemMode::EXT));
+			return std::move(ByteArray(_data + start, std::min<ui32>(length, _length - start), ExtMemMode::EXT));
 		}
 	}
 
@@ -165,15 +165,27 @@ namespace aurora {
 		if (length > 0) {
 			_checkLength(length);
 
-			memcpy(_bytes + _position, bytes + offset, length);
+			memcpy(_data + _position, bytes + offset, length);
 			_position += length;
 		}
 	}
 
+	inline ui32 ByteArray::readStringLength(ui32 size, bool chechBOM) const {
+		return readStringLength(_position, size, chechBOM);
+	}
+
 	inline std::string ByteArray::readString(bool chechBOM) {
-		ui32 len;
-		const i8* s = readCString(chechBOM, &len);
-		return std::move(std::string(s, len));
+		auto len = readStringLength(UINT_MAX, chechBOM);
+		auto begin = _position;
+		_position += len;
+		return std::move(std::string(_data + begin, len));
+	}
+
+	inline std::string_view ByteArray::readStringView(bool chechBOM) {
+		auto len = readStringLength(UINT_MAX, chechBOM);
+		auto begin = _position;
+		_position += len;
+		return std::move(std::string_view(_data + begin, len));
 	}
 
 	inline void ByteArray::writeString(const std::string& str) {
@@ -223,9 +235,9 @@ namespace aurora {
 		if (_position + len > _length) memset(p, 0, len);
 
 		if (_needReverse) {
-			for (char i = len - 1; i >= 0; --i) p[i] = _bytes[_position++];
+			for (char i = len - 1; i >= 0; --i) p[i] = _data[_position++];
 		} else {
-			memcpy(p, _bytes + _position, len);
+			memcpy(p, _data + _position, len);
 			_position += len;
 		}
 	}
@@ -234,9 +246,9 @@ namespace aurora {
 		_checkLength(len);
 
 		if (_needReverse) {
-			for (int i = len - 1; i >= 0; --i) _bytes[_position++] = p[i];
+			for (int i = len - 1; i >= 0; --i) _data[_position++] = p[i];
 		} else {
-			memcpy(_bytes + _position, p, len);
+			memcpy(_data + _position, p, len);
 			_position += len;
 		}
 	}
@@ -253,12 +265,8 @@ namespace aurora {
 		}
 	}
 
-	inline ui8 ByteArray::_bomOffset(ui32 pos) {
-		ui32 len = _length - pos;
-		if (len >= 3 && (ui8)_bytes[pos] == 0xEF && (ui8)_bytes[pos + 1] == 0xBB && (ui8)_bytes[pos + 2] == 0xBF) {
-			return 3;
-		} else {
-			return 0;
-		}
+	inline ui8 ByteArray::_bomOffset(ui32 pos) const {
+		if (pos + 3 > _length) return 0;
+		return (ui8)_data[pos] == 0xEF && (ui8)_data[pos + 1] == 0xBB && (ui8)_data[pos + 2] == 0xBF ? 3 : 0;
 	}
 }

@@ -104,18 +104,23 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		template<ProgramStage stage>
 		void AE_CALL _useParameters(const ParameterLayout& layout, const ShaderParameterFactory& factory) {
+			auto g = _graphics.get<Graphics>();
+
 			for (auto& info : layout.constantBuffers) {
 				auto cb = _getConstantBuffer(info, factory);
-				if (cb) cb->use<stage>(info.bindPoint);
+				if (cb && g == cb->getGraphics()) {
+					auto buffer = cb->getInternalBuffer();
+					g->useConstantBuffers<stage>(info.bindPoint, 1, &buffer);
+				}
 			}
 
 			for (auto& info : layout.textures) {
 				auto c = factory.get(info.name, ShaderParameterType::TEXTURE);
 				if (c) {
 					auto data = c->getData();
-					if (data && _graphics == ((ITextureViewBase*)data)->getGraphics()) {
+					if (data && g == ((ITextureViewBase*)data)->getGraphics()) {
 						auto view = (ID3D11ShaderResourceView*)((ITextureViewBase*)data)->getNativeView();
-						_graphics.get<Graphics>()->useShaderResources<stage>(info.bindPoint, 1, &view);
+						g->useShaderResources<stage>(info.bindPoint, 1, &view);
 					}
 					//if (data) (BaseTexture*)(((ITexture*)data)->getNative())->use<stage>((Graphics*)_graphics, info.bindPoint);
 				}
@@ -125,7 +130,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 				auto c = factory.get(info.name, ShaderParameterType::SAMPLER);
 				if (c) {
 					auto data = c->getData();
-					if (data && _graphics == ((ISampler*)data)->getGraphics()) ((Sampler*)data)->use<stage>(info.bindPoint);
+					if (data && g == ((ISampler*)data)->getGraphics()) {
+						auto sampler = ((Sampler*)data)->getInternalSampler();
+						g->useSamplers<stage>(info.bindPoint, 1, &sampler);
+					}
 				}
 			}
 		}

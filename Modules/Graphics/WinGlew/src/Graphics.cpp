@@ -23,7 +23,9 @@ namespace aurora::modules::graphics::win_glew {
 		_majorVer(0),
 		_minorVer(0),
 		_intVer(0),
-		_deviceFeatures({ 0 }) {
+		_deviceFeatures({ 0 }),
+		_constantBufferManager(this) {
+		_constantBufferManager.createdExclusiveConstantBufferCallback = std::bind(&Graphics::_createdExclusiveConstantBuffer, this, std::placeholders::_1, std::placeholders::_2);
 	}
 
 	Graphics::~Graphics() {
@@ -300,6 +302,75 @@ namespace aurora::modules::graphics::win_glew {
 			break;
 		}
 		}
+	}
+
+	ui32 Graphics::getGLTypeSize(GLenum type) {
+		switch (type) {
+		case GL_BOOL:
+		case GL_BYTE:
+		case GL_UNSIGNED_BYTE:
+			return 1;
+		case GL_SHORT:
+		case GL_BOOL_VEC2:
+			return 2;
+		case GL_BOOL_VEC3:
+			return 3;
+		case GL_FLOAT:
+		case GL_INT:
+		case GL_UNSIGNED_INT:
+		case GL_BOOL_VEC4:
+			return 4;
+		case GL_DOUBLE:
+		case GL_FLOAT_VEC2:
+		case GL_INT_VEC2:
+		case GL_UNSIGNED_INT_VEC2:
+			return 8;
+		case GL_FLOAT_VEC3:
+		case GL_INT_VEC3:
+		case GL_UNSIGNED_INT_VEC3:
+			return 12;
+		case GL_DOUBLE_VEC2:
+		case GL_FLOAT_VEC4:
+		case GL_INT_VEC4:
+		case GL_UNSIGNED_INT_VEC4:
+		case GL_FLOAT_MAT2:
+			return 16;
+		case GL_DOUBLE_VEC3:
+		case GL_FLOAT_MAT2x3:
+		case GL_FLOAT_MAT3x2:
+			return 24;
+		case GL_DOUBLE_VEC4:
+		case GL_FLOAT_MAT2x4:
+		case GL_FLOAT_MAT4x2:
+		case GL_DOUBLE_MAT2:
+			return 32;
+		case GL_FLOAT_MAT3:
+			return 36;
+		case GL_FLOAT_MAT3x4:
+		case GL_FLOAT_MAT4x3:
+		case GL_DOUBLE_MAT2x3:
+		case GL_DOUBLE_MAT3x2:
+			return 48;
+		case GL_FLOAT_MAT4:
+		case GL_DOUBLE_MAT2x4:
+		case GL_DOUBLE_MAT4x2:
+			return 64;
+		case GL_DOUBLE_MAT3:
+			return 72;
+		case GL_DOUBLE_MAT3x4:
+		case GL_DOUBLE_MAT4x3:
+			return 96;
+		case GL_DOUBLE_MAT4:
+			return 128;
+		default:
+			return 0;
+		}
+	}
+
+	void Graphics::_createdExclusiveConstantBuffer(IConstantBuffer* buffer, ui32 numParameters) {
+		//auto ids = new ui32[numParameters];
+		//memset(ids, 0, sizeof(ui32) * numParameters);
+		//((ConstantBuffer*)buffer)->recordUpdateIds = ids;
 	}
 
 	void Graphics::_debugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam) {

@@ -15,10 +15,11 @@ namespace aurora {
 		static std::wstring AE_CALL Utf8ToUnicode(const std::string& in);
 		static i32 AE_CALL Utf8ToUnicode(const i8* in, ui32 inLen, wchar_t*& out);
 
-		inline static void AE_CALL split(const std::string& input, const std::string& par, std::vector<std::string>& dst) {
-			split(input, std::regex("\\" + par), dst);
+		inline static void AE_CALL split(const std::string& input, const std::string& separator, std::vector<std::string>& dst) {
+			split(input, std::regex("\\" + separator), dst);
 		}
-		static void AE_CALL split(const std::string& input, const std::regex& par, std::vector<std::string>& dst);
+		static void AE_CALL split(const std::string& input, const std::regex& separator, std::vector<std::string>& dst);
+		static void AE_CALL split(const std::string_view& input, const std::string_view& separator, std::vector<std::string_view>& dst);
 
 		inline static std::string AE_CALL toString(i8 value) {
 			i8 buf[5];
@@ -76,7 +77,7 @@ namespace aurora {
 				std::string p = "%." + prec + "f";
 				snprintf(buf, sizeof(buf), p.c_str(), value);
 			}
-			return trim ? _trimFloat(std::string(buf)) : std::move(std::string(buf));
+			return trim ? std::move(std::string(buf, _trimFloat(buf, strlen(buf)))) : std::move(std::string(buf));
 		}
 
 		inline static std::string AE_CALL toString(const f64& value, const std::string& prec = "", bool trim = true) {
@@ -87,10 +88,17 @@ namespace aurora {
 				std::string p = "%." + prec + "lf";
 				snprintf(buf, sizeof(buf), p.c_str(), value);
 			}
-			return trim ? _trimFloat(std::string(buf)) : std::move(std::string(buf));
+			return trim ? std::move(std::string(buf, _trimFloat(buf, strlen(buf)))) : std::move(std::string(buf));
 		}
 
 		static std::string AE_CALL toString(const ui8* value, ui32 size);
+
+		inline static std::string::size_type AE_CALL findFirst(const i8* value, ui32 size, i8 c) {
+			for (ui32 i = 0; i < size; ++i) {
+				if (value[i] == c) return i;
+			}
+			return std::string::npos;
+		}
 
 		/*
 		inline static std::string AE_CALL toString(const unsigned char* value, unsigned int size) {
@@ -109,14 +117,22 @@ namespace aurora {
 		static bool AE_CALL isEqual(const i8* str1, const i8* str2);
 
 	private:
-		static ui32 AE_CALL _UnicodeToUtf8(const wchar_t * in, ui32 inLen, i8* out);
+		static ui32 AE_CALL _UnicodeToUtf8(const wchar_t* in, ui32 inLen, i8* out);
 		static ui32 AE_CALL _Utf8ToUnicode(const i8* in, ui32 inLen, wchar_t* out);
 
-		inline static std::string AE_CALL _trimFloat(const std::string& value) {
-			if (value.find_first_of('.') > 0) {
-				return std::move(std::regex_replace(std::regex_replace(value, std::regex("0+?$"), ""), std::regex("[.]$"), ""));
+		static std::string::size_type AE_CALL _trimFloat(const i8* buf, ui32 size) {
+			auto point = String::findFirst(buf, size, '.');
+			if (point != std::string::npos) {
+				ui32 end = point;
+				for (ui32 i = size - 1; i > point; --i) {
+					if (buf[i] != '0') {
+						end = i;
+						break;
+					}
+				}
+				return end == point ? end : end + 1;
 			} else {
-				return value;
+				return size;
 			}
 		}
 	};

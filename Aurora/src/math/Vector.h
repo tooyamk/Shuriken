@@ -159,7 +159,7 @@ namespace aurora {
 
 	template<ui32 N, typename T> using Vec = Vector<N, T>;
 
-	template<ui32 N, typename T> const Vec<N, T> Vector<N, T>::ZERO = Vector<N, T>(Math::NUMBER_O<T>);
+	template<ui32 N, typename T> const Vec<N, T> Vector<N, T>::ZERO = Vector<N, T>(Math::NUMBER_0<T>);
 	template<ui32 N, typename T> const Vec<N, T> Vector<N, T>::ONE = Vector<N, T>(Math::NUMBER_1<T>);
 
 	template<typename T> using Vec1 = Vec<1, T>;

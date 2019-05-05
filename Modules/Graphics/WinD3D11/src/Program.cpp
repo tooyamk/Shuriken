@@ -3,6 +3,7 @@
 #include "IndexBuffer.h"
 #include "VertexBuffer.h"
 #include "base/String.h"
+#include "modules/graphics/ProgramSource.h"
 #include "modules/graphics/ShaderParameterFactory.h"
 #include "modules/graphics/VertexBufferFactory.h"
 #include "utils/hash/CRC.h"

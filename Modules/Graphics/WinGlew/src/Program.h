@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Base.h"
+#include "modules/graphics/ConstantBufferManager.h"
 
 namespace aurora::modules::graphics::win_glew {
 	class Graphics;
@@ -28,6 +29,7 @@ namespace aurora::modules::graphics::win_glew {
 		GLuint _handle;
 		std::vector<InVertexBufferInfo> _inVertexBufferLayouts;
 		std::vector<UniformInfo> _uniformLayouts;
+		std::vector<ConstantBufferLayout> _uniformBlockLayouts;
 
 		void AE_CALL _release();
 		GLuint AE_CALL _compileShader(const ProgramSource& source, GLenum type);

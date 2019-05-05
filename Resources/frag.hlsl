@@ -11,7 +11,7 @@ SamplerState samLiner;
 
 struct aabbcc {
     float val1;
-    float val2[2];
+    float4 val2[12];
     float val3;
 };
 

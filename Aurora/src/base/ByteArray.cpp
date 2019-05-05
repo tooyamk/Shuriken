@@ -8,8 +8,8 @@ namespace aurora {
 		_length(bytes._length),
 		_position(bytes._position),
 		_mode(bytes._mode),
-		_bytes(bytes._bytes) {
-		bytes._bytes = nullptr;
+		_data(bytes._data) {
+		bytes._data = nullptr;
 	}
 
 	ByteArray::ByteArray(ui32 capacity, ui32 length) :
@@ -17,7 +17,7 @@ namespace aurora {
 		_length(length > capacity ? capacity : length),
 		_position(0),
 		_mode(Mode::MEM),
-		_bytes(capacity > 0 ? new i8[capacity] : nullptr) {
+		_data(capacity > 0 ? new i8[capacity] : nullptr) {
 		setEndian(ByteArray::SYS_ENDIAN);
 	}
 
@@ -27,14 +27,14 @@ namespace aurora {
 		_position(0) {
 		setEndian(ByteArray::SYS_ENDIAN);
 		if (extMode == ExtMemMode::EXT) {
-			this->_bytes = bytes;
+			this->_data = bytes;
 			_mode = Mode::EXT;
 		} else if (extMode == ExtMemMode::COPY) {
-			_bytes = new i8[size];
-			memcpy(_bytes, bytes, size);
+			_data = new i8[size];
+			memcpy(_data, bytes, size);
 			_mode = Mode::MEM;
 		} else {
-			this->_bytes = (i8*)bytes;
+			this->_data = (i8*)bytes;
 			_mode = Mode::MEM;
 		}
 	}
@@ -45,14 +45,14 @@ namespace aurora {
 		_position(0) {
 		setEndian(ByteArray::SYS_ENDIAN);
 		if (extMode == ExtMemMode::EXT) {
-			this->_bytes = bytes;
+			this->_data = bytes;
 			_mode = Mode::EXT;
 		} else if (extMode == ExtMemMode::COPY) {
-			_bytes = new i8[capacity];
-			memcpy(_bytes, bytes, length);
+			_data = new i8[capacity];
+			memcpy(_data, bytes, length);
 			_mode = Mode::MEM;
 		} else {
-			this->_bytes = (i8*)bytes;
+			this->_data = (i8*)bytes;
 			_mode = Mode::MEM;
 		}
 	}
@@ -66,9 +66,9 @@ namespace aurora {
 		_length = value._length;
 		_position = value._position;
 		_mode = value._mode;
-		_bytes = value._bytes;
+		_data = value._data;
 
-		value._bytes = nullptr;
+		value._data = nullptr;
 
 		return *this;
 	}
@@ -80,25 +80,25 @@ namespace aurora {
 	const ByteArray::Endian ByteArray::SYS_ENDIAN = ((ui8*)(&TEST_ENDIAN_VALUE))[0] ? Endian::LITTLE : Endian::BIG;
 
 	void ByteArray::dispose(bool free) {
-		if (_bytes) {
-			if (free && _mode != Mode::EXT) delete[] _bytes;
-			_bytes = nullptr;
+		if (_data) {
+			if (free && _mode != Mode::EXT) delete[] _data;
+			_data = nullptr;
 		}
 	}
 
 	void ByteArray::_resize(ui32 len) {
 		i8* newBytes = len > 0 ? new i8[len] : nullptr;
 
-		memcpy(newBytes, _bytes, len > _capacity ? _capacity : len);
+		memcpy(newBytes, _data, len > _capacity ? _capacity : len);
 		_capacity = len;
 
 		if (_mode == Mode::EXT) {
 			_mode = Mode::MEM;
 		} else {
-			if (_bytes != nullptr) delete[] _bytes;
+			if (_data != nullptr) delete[] _data;
 		}
 
-		_bytes = newBytes;
+		_data = newBytes;
 	}
 
 	i64 ByteArray::readInt(ui8 numBytes) {
@@ -207,107 +207,56 @@ namespace aurora {
 	}
 
 	ui32 ByteArray::readBytes(i8* bytes, ui32 offset, ui32 length) {
-		if (length == 0) {
-			if (_length <= _position) return 0;
+		ui32 len = _length - _position;
+		if (length > len) length = len;
 
-			length = _length - _position;
-		} else {
-			ui32 len = _length - _position;
-			if (length > len) length = len;
-		}
-
-		memcpy(bytes + offset, _bytes + _position, length);
+		memcpy(bytes + offset, _data + _position, length);
 		_position += length;
 
 		return length;
 	}
 
 	ui32 ByteArray::readBytes(ByteArray& ba, ui32 offset, ui32 length) {
-		if (length == 0) {
-			if (_length <= _position) return 0;
-
-			length = _length - _position;
-		} else {
-			ui32 len = _length - _position;
-			if (length > len) length = len;
-		}
+		ui32 len = _length - _position;
+		if (length > len) length = len;
 
 		ui32 pos = ba.getPosition();
 		ba.setPosition(offset);
-		ba.writeBytes((i8*)_bytes, _position, length);
+		ba.writeBytes((i8*)_data, _position, length);
 		ba.setPosition(pos);
 		_position += length;
 
 		return length;
 	}
 
-	void ByteArray::writeBytes(const ByteArray& ba, ui32 offset, ui32 length) {
-		if (length == 0) {
-			if (ba.getLength() <= offset) return;
+	ui32 ByteArray::writeBytes(const ByteArray& ba, ui32 offset, ui32 length) {
+		if (!length) return 0;
+		auto len = ba.getLength();
+		if (len <= offset) return 0;
 
-			length = ba.getLength() - offset;
-		}
-
+		len -= offset;
+		if (length > len) length = len;
 		const i8* baBytes = ba.getBytes();
 
 		_checkLength(length);
 
-		memmove(_bytes + _position, baBytes + offset, length);
+		memmove(_data + _position, baBytes + offset, length);
 		_position += length;
+		return length;
 	}
 
-	const i8* ByteArray::readCString(bool chechBOM, ui32* size) {
-		bool find = false;
-		ui32 pos = 0;
+	ui32 ByteArray::readStringLength(ui32 begin, ui32 size, bool chechBOM) const {
+		begin += _bomOffset(begin);
+		if (_length <= begin) return 0;
 
-		for (ui32 i = _position; i < _length; ++i) {
-			if (_bytes[i] == '\0') {
-				pos = i;
-				find = true;
-				break;
-			}
+		auto len = _length - begin;
+		if (size > len) size = len;
+		if (!size) return 0;
+
+		for (ui32 i = begin, n = begin + size; i < n; ++i) {
+			if (!_data[i]) return i - begin;
 		}
-
-		if (find) {
-			ui32 len = pos - _position;
-
-			if (chechBOM) {
-				ui8 offset = _bomOffset(_position);
-				len -= offset;
-				_position += offset;
-			}
-
-			ui32 offset = _position;
-			_position += len + 1;
-
-			if (size != nullptr) *size = len;
-			return _bytes + offset;
-		} else {
-			if (size != nullptr) *size = 0;
-			return nullptr;
-		}
-	}
-
-	std::string ByteArray::readString(ui32 start, ui32 size, bool chechBOM) {
-		if (chechBOM) start += _bomOffset(start);
-
-		if (_length == 0 || size == 0) {
-			return "";
-		} else {
-			if (start >= _length) return "";
-
-			ui32 checkSize = _length - start;
-			if (checkSize < size) size = checkSize;
-		}
-
-		for (ui32 i = 0; i < size; ++i) {
-			if (_bytes[start + i] == '\0') {
-				size = i;
-				break;
-			}
-		}
-
-		return std::move(std::string(_bytes + start, size));
+		return size;
 	}
 
 	void ByteArray::writeString(const i8* str, ui32 size) {
@@ -321,9 +270,9 @@ namespace aurora {
 
 		_checkLength(size + 1);
 
-		memcpy(_bytes + _position, str, size);
+		memcpy(_data + _position, str, size);
 		_position += size;
-		_bytes[_position++] = '\0';
+		_data[_position++] = '\0';
 	}
 
 	void ByteArray::popFront(ui32 len) {
@@ -332,7 +281,7 @@ namespace aurora {
 			_position = 0;
 		} else {
 			_length -= len;
-			for (ui32 i = 0; i < _length; ++i) _bytes[i] = _bytes[len + i];
+			for (ui32 i = 0; i < _length; ++i) _data[i] = _data[len + i];
 
 			if (_position <= len) {
 				_position = 0;
@@ -358,7 +307,7 @@ namespace aurora {
 
 			_checkLength(len);
 
-			for (i64 i = oldLen - 1; i >= _position; --i) _bytes[i + len] = _bytes[i];
+			for (i64 i = oldLen - 1; i >= _position; --i) _data[i + len] = _data[i];
 
 			_position += len;
 		}
