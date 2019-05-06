@@ -1,5 +1,6 @@
 #include "Graphics.h"
 #include "CreateModule.h"
+#include "ConstantBuffer.h"
 #include "IndexBuffer.h"
 #include "Program.h"
 #include "Texture2DResource.h"
@@ -20,7 +21,8 @@ namespace aurora::modules::graphics::win_glew {
 		_intVer(0),
 		_deviceFeatures({ 0 }),
 		_constantBufferManager(this) {
-		_constantBufferManager.createdExclusiveConstantBufferCallback = std::bind(&Graphics::_createdExclusiveConstantBuffer, this, std::placeholders::_1, std::placeholders::_2);
+		_constantBufferManager.createShareConstantBufferCallback = std::bind(&Graphics::_createdShareConstantBuffer, this);
+		_constantBufferManager.createExclusiveConstantBufferCallback = std::bind(&Graphics::_createdExclusiveConstantBuffer, this, std::placeholders::_1);
 	}
 
 	Graphics::~Graphics() {
@@ -150,7 +152,7 @@ namespace aurora::modules::graphics::win_glew {
 	}
 
 	IConstantBuffer* Graphics::createConstantBuffer() {
-		return nullptr;
+		return _deviceFeatures.supportConstantBuffer ? new ConstantBuffer(*this) : nullptr;
 	}
 
 	IIndexBuffer* Graphics::createIndexBuffer() {
@@ -358,10 +360,15 @@ namespace aurora::modules::graphics::win_glew {
 		}
 	}
 
-	void Graphics::_createdExclusiveConstantBuffer(IConstantBuffer* buffer, ui32 numParameters) {
-		//auto ids = new ui32[numParameters];
-		//memset(ids, 0, sizeof(ui32) * numParameters);
-		//((ConstantBuffer*)buffer)->recordUpdateIds = ids;
+	IConstantBuffer* Graphics::_createdShareConstantBuffer() {
+		return new ConstantBuffer(*this);
+	}
+
+	IConstantBuffer* Graphics::_createdExclusiveConstantBuffer(ui32 numParameters) {
+		auto cb = new ConstantBuffer(*this);
+		cb->recordUpdateIds = new ui32[numParameters];
+		memset(cb->recordUpdateIds, 0, sizeof(ui32) * numParameters);
+		return cb;
 	}
 
 	void Graphics::_debugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam) {

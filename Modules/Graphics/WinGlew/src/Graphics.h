@@ -79,7 +79,8 @@ namespace aurora::modules::graphics::win_glew {
 		bool AE_CALL _glInit();
 		void AE_CALL _release();
 
-		void AE_CALL _createdExclusiveConstantBuffer(IConstantBuffer* buffer, ui32 numParameters);
+		IConstantBuffer* AE_CALL _createdShareConstantBuffer();
+		IConstantBuffer* AE_CALL _createdExclusiveConstantBuffer(ui32 numParameters);
 
 		static void GLAPIENTRY _debugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam);
 	};

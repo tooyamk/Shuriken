@@ -67,19 +67,6 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_calcNumElements();
 	}
 
-	void IndexBuffer::draw(ui32 count, ui32 offset) {
-		if (_numElements > 0 && offset < _numElements) {
-			ui32 last = _numElements - offset;
-			if (count > _numElements) count = _numElements;
-			if (count > last) count = last;
-
-			auto context = _graphics.get<Graphics>()->getContext();
-			context->IASetIndexBuffer((ID3D11Buffer*)_baseBuffer.handle, _indexType, 0);
-			context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-			context->DrawIndexed(count, offset, 0);
-		}
-	}
-
 	void IndexBuffer::_calcNumElements() {
 		if (_baseBuffer.size && _indexType != DXGI_FORMAT_UNKNOWN) {
 			switch (_indexType) {

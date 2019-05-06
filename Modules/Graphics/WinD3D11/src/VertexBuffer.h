@@ -18,7 +18,17 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual void AE_CALL setFormat(VertexSize size, VertexType type) override;
 		virtual void AE_CALL flush() override;
 
-		bool AE_CALL use(UINT slot, DXGI_FORMAT& fmt);
+		inline ID3D11Buffer* AE_CALL getInternalBuffer() const {
+			return (ID3D11Buffer*)_baseBuffer.handle;
+		}
+
+		inline DXGI_FORMAT AE_CALL getInternalFormat() const {
+			return _internalFormat;
+		}
+
+		inline UINT AE_CALL getStride() const {
+			return _stride;
+		}
 
 	protected:
 		DXGI_FORMAT _internalFormat;

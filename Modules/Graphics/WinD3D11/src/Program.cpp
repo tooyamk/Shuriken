@@ -6,7 +6,6 @@
 #include "modules/graphics/ProgramSource.h"
 #include "modules/graphics/ShaderParameterFactory.h"
 #include "modules/graphics/VertexBufferFactory.h"
-#include "utils/hash/CRC.h"
 #include <vector>
 
 namespace aurora::modules::graphics::win_d3d11 {
@@ -112,10 +111,9 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 	bool Program::use() {
 		if (_vs) {
-			auto context = _graphics.get<Graphics>()->getContext();
-
-			context->VSSetShader(_vs, 0, 0);
-			context->PSSetShader(_ps, 0, 0);
+			auto g = _graphics.get<Graphics>();
+			g->useShader<ProgramStage::VS>(_vs, nullptr, 0);
+			g->useShader<ProgramStage::PS>(_ps, nullptr, 0);
 
 			return true;
 		}
@@ -244,6 +242,13 @@ namespace aurora::modules::graphics::win_d3d11 {
 	void Program::draw(const VertexBufferFactory* vertexFactory, const ShaderParameterFactory* paramFactory,
 		const IIndexBuffer* indexBuffer, ui32 count, ui32 offset) {
 		if (_vs && vertexFactory && indexBuffer && _graphics == indexBuffer->getGraphics() && count > 0) {
+			auto ib = (IndexBuffer*)indexBuffer;
+			auto internalIndexBuffer = ib->getInternalBuffer();
+			auto fmt = ib->getInternalFormat();
+			if (!internalIndexBuffer || fmt == DXGI_FORMAT_UNKNOWN) return;
+			auto numIndexElements = ib->getNumElements();
+			if (!numIndexElements || offset >= numIndexElements) return;
+
 			auto g = _graphics.get<Graphics>();
 			auto context = g->getContext();
 
@@ -253,11 +258,19 @@ namespace aurora::modules::graphics::win_d3d11 {
 				auto vb = vertexFactory->get(info.name);
 				if (vb && _graphics == vb->getGraphics()) {
 					auto& ie = _inElements[i];
-					DXGI_FORMAT fmt;
-					if (((VertexBuffer*)vb)->use(info.slot, fmt)) {
-						if (ie.Format != fmt) {
-							inElementsDirty = true;
-							ie.Format = fmt;
+					auto vb1 = (VertexBuffer*)vb;
+					auto buf = vb1->getInternalBuffer();
+					if (buf) {
+						auto fmt = vb1->getInternalFormat();
+						if (fmt != DXGI_FORMAT_UNKNOWN) {
+							auto stride = vb1->getStride();
+							UINT offset = 0;
+							g->useVertexBuffers(info.slot, 1, &buf, &stride, &offset);
+
+							if (ie.Format != fmt) {
+								inElementsDirty = true;
+								ie.Format = fmt;
+							}
 						}
 					}
 				}
@@ -272,7 +285,13 @@ namespace aurora::modules::graphics::win_d3d11 {
 				}
 
 				context->IASetInputLayout(_curInLayout);
-				((IndexBuffer*)indexBuffer)->draw(count, offset);
+
+				ui32 last = numIndexElements - offset;
+				if (count > numIndexElements) count = numIndexElements;
+				if (count > last) count = last;
+				context->IASetIndexBuffer(internalIndexBuffer, fmt, 0);
+				context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+				context->DrawIndexed(count, offset, 0);
 
 				if (paramFactory) {
 					for (ui32 i = 0, n = _usingSameConstBuffers.size(); i < n; ++i) _usingSameConstBuffers[i] = nullptr;
@@ -436,8 +455,6 @@ namespace aurora::modules::graphics::win_d3d11 {
 				auto& buffer = dst.constantBuffers.emplace_back();
 				buffer.name = ibDesc.Name;
 				buffer.bindPoint = ibDesc.BindPoint;
-				buffer.size = 0;
-				buffer.sameId = 0;
 
 				break;
 			}
@@ -480,11 +497,6 @@ namespace aurora::modules::graphics::win_d3d11 {
 			}
 
 			if (buffer) {
-				i8 end = 0;
-				buffer->featureCode = hash::CRC::CRC64StreamBegin();
-				hash::CRC::CRC64StreamIteration(buffer->featureCode, (i8*)&buffer->size, sizeof(buffer->size));
-				hash::CRC::CRC64StreamIteration(buffer->featureCode, (i8*)&bDesc.Variables, sizeof(bDesc.Variables));
-
 				for (ui32 j = 0; j < bDesc.Variables; ++j) {
 					auto var = cb->GetVariableByIndex(j);
 					var->GetDesc(&vDesc);
@@ -496,18 +508,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 						v.size = vDesc.Size;
 
 						_parseConstantVar(v, var->GetType());
-
-						hash::CRC::CRC64StreamIteration(buffer->featureCode, v.name.c_str(), v.name.size());
-						hash::CRC::CRC64StreamIteration(buffer->featureCode, (i8*)&end, sizeof(end));
-						hash::CRC::CRC64StreamIteration(buffer->featureCode, (i8*)&v.offset, sizeof(v.offset));
-						hash::CRC::CRC64StreamIteration(buffer->featureCode, (i8*)&v.size, sizeof(v.size));
 					}
 				}
 
-				//auto remainder = buffer->size & 0b1111;
-				//if (remainder) buffer->size += 16 - remainder;
-				
-				hash::CRC::CRC64StreamEnd(buffer->featureCode);
+				buffer->calcFeatureCode();
 
 				_graphics.get<Graphics>()->getConstantBufferManager().registerConstantLayout(*buffer);
 			}

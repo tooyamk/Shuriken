@@ -18,6 +18,18 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual void AE_CALL setFormat(IndexType type) override;
 		virtual void AE_CALL flush() override;
 
+		inline ID3D11Buffer* AE_CALL getInternalBuffer() const {
+			return (ID3D11Buffer*)_baseBuffer.handle;
+		}
+
+		inline DXGI_FORMAT AE_CALL getInternalFormat() const {
+			return _indexType;
+		}
+
+		inline ui32 AE_CALL getNumElements() const {
+			return _numElements;
+		}
+
 		void AE_CALL draw(ui32 count = 0xFFFFFFFFui32, ui32 offset = 0);
 
 	protected:

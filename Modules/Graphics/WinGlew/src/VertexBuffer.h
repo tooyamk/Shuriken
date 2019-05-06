@@ -21,7 +21,7 @@ namespace aurora::modules::graphics::win_glew {
 		bool AE_CALL use(GLuint index);
 
 	protected:
-		ui8 _vertexSize;
+		GLint _vertexSize;
 		bool _validVertexFormat;
 		GLenum _vertexType;
 		BaseBuffer _baseBuffer;

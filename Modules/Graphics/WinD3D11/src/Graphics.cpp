@@ -24,7 +24,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_constantBufferManager(this),
 		_resizedListener(this, &Graphics::_resizedHandler) {
 		_app.get()->getEventDispatcher().addEventListener(ApplicationEvent::RESIZED, _resizedListener, false);
-		_constantBufferManager.createdExclusiveConstantBufferCallback = std::bind(&Graphics::_createdExclusiveConstantBuffer, this, std::placeholders::_1, std::placeholders::_2);
+		_constantBufferManager.createShareConstantBufferCallback = std::bind(&Graphics::_createdShareConstantBuffer, this);
+		_constantBufferManager.createExclusiveConstantBufferCallback = std::bind(&Graphics::_createdExclusiveConstantBuffer, this, std::placeholders::_1);
 	}
 
 	Graphics::~Graphics() {
@@ -320,10 +321,15 @@ namespace aurora::modules::graphics::win_d3d11 {
 	void Graphics::clear() {
 	}
 
-	void Graphics::_createdExclusiveConstantBuffer(IConstantBuffer* buffer, ui32 numParameters) {
-		auto ids = new ui32[numParameters];
-		memset(ids, 0, sizeof(ui32) * numParameters);
-		((ConstantBuffer*)buffer)->recordUpdateIds = ids;
+	IConstantBuffer* Graphics::_createdShareConstantBuffer() {
+		return new ConstantBuffer(*this);
+	}
+
+	IConstantBuffer* Graphics::_createdExclusiveConstantBuffer(ui32 numParameters) {
+		auto cb = new ConstantBuffer(*this);
+		cb->recordUpdateIds = new ui32[numParameters];
+		memset(cb->recordUpdateIds, 0, sizeof(ui32) * numParameters);
+		return cb;
 	}
 
 	void Graphics::_resizedHandler(events::Event<ApplicationEvent>& e) {

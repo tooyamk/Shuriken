@@ -82,7 +82,8 @@ namespace aurora::modules::graphics::win_glew {
 			}
 		}
 
-		if (_graphics.get()->getDeviceFeatures().supportConstantBuffer) {
+		auto g = _graphics.get<Graphics>();
+		if (g->getDeviceFeatures().supportConstantBuffer) {
 			GLint uniformBlocks;
 			glGetProgramiv(_handle, GL_ACTIVE_UNIFORM_BLOCKS, &uniformBlocks);
 			std::vector<GLint> indices;
@@ -93,17 +94,17 @@ namespace aurora::modules::graphics::win_glew {
 			std::vector<std::string_view> varNames;
 			std::unordered_map<std::string_view, ConstantBufferLayout::Variables*> vars;
 			for (GLint i = 0; i < uniformBlocks; ++i) {
-				auto& blockInfo = _uniformBlockLayouts.emplace_back();
+				auto& layout = _uniformBlockLayouts.emplace_back();
 
-				glGetActiveUniformBlockiv(_handle, i, GL_UNIFORM_BLOCK_BINDING, (GLint*)&blockInfo.bindPoint);
-				glGetActiveUniformBlockiv(_handle, i, GL_UNIFORM_BLOCK_DATA_SIZE, (GLint*)&blockInfo.size);
+				glGetActiveUniformBlockiv(_handle, i, GL_UNIFORM_BLOCK_BINDING, (GLint*)&layout.bindPoint);
+				glGetActiveUniformBlockiv(_handle, i, GL_UNIFORM_BLOCK_DATA_SIZE, (GLint*)&layout.size);
 
 				//GLint nameLen;
 				//glGetActiveUniformBlockiv(_handle, i, GL_UNIFORM_BLOCK_NAME_LENGTH, &nameLen);
 
 				GLint nameLen;
 				glGetActiveUniformBlockName(_handle, i, sizeof(charBuffer), &nameLen, charBuffer);
-				blockInfo.name = charBuffer;
+				layout.name = charBuffer;
 
 				GLint numUniforms;
 				glGetActiveUniformBlockiv(_handle, i, GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS, &numUniforms);
@@ -129,7 +130,7 @@ namespace aurora::modules::graphics::win_glew {
 					ConstantBufferLayout::Variables* foundVar = nullptr;
 					auto itr = vars.find(child);
 					if (itr == vars.end()) {
-						auto parentVars = &blockInfo.variables;
+						auto parentVars = &layout.variables;
 						ui32 fullNameLen = 0;
 						varNames.clear();
 						String::split(child, std::string_view("."), varNames);
@@ -156,6 +157,10 @@ namespace aurora::modules::graphics::win_glew {
 					foundVar->size = Graphics::getGLTypeSize(types[j]) * sizes[j];
 					foundVar->offset = offsets[j];
 				}
+
+				layout.calcFeatureCode();
+
+				g->getConstantBufferManager().registerConstantLayout(layout);
 			}
 		}
 

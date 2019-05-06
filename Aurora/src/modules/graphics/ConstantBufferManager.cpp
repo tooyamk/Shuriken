@@ -1,8 +1,41 @@
 #include "ConstantBufferManager.h"
 #include "modules/graphics/IGraphicsModule.h"
 #include "modules/graphics/ShaderParameter.h"
+#include "utils/hash/CRC.h"
 
 namespace aurora::modules::graphics {
+	ConstantBufferLayout::ConstantBufferLayout() :
+		bindPoint(0),
+		size(0),
+		featureCode(0) {
+	}
+
+	void ConstantBufferLayout::calcFeatureCode() {
+		featureCode = hash::CRC::CRC64StreamBegin();
+		hash::CRC::CRC64StreamIteration(featureCode, (i8*)&size, sizeof(size));
+
+		ui16 numValidVars = 0;
+		for (auto& var : variables) _calcFeatureCode(var, numValidVars);
+
+		hash::CRC::CRC64StreamIteration(featureCode, (i8*)&numValidVars, sizeof(numValidVars));
+		hash::CRC::CRC64StreamEnd(featureCode);
+	}
+
+	void ConstantBufferLayout::_calcFeatureCode(const Variables& var, ui16& numValidVars) {
+		if (var.structMembers.empty()) {
+			auto nameLen = var.name.size();
+			hash::CRC::CRC64StreamIteration(featureCode, (i8*)&nameLen, sizeof(nameLen));
+			hash::CRC::CRC64StreamIteration(featureCode, var.name.c_str(), var.name.size());
+			hash::CRC::CRC64StreamIteration(featureCode, (i8*)&var.offset, sizeof(var.offset));
+			hash::CRC::CRC64StreamIteration(featureCode, (i8*)&var.size, sizeof(var.size));
+
+			++numValidVars;
+		} else {
+			for (auto& mvar : var.structMembers) _calcFeatureCode(mvar, numValidVars);
+		}
+	}
+
+
 	ConstantBufferManager::ConstantBufferManager(IGraphicsModule* graphics) :
 		_graphics(graphics) {
 	}
@@ -36,12 +69,12 @@ namespace aurora::modules::graphics {
 		auto itr = _shareConstBufferPool.find(size);
 		if (itr != _shareConstBufferPool.end()) {
 			if (itr->second.rc == 1) {
-				_graphics->ref();
+				//_graphics->ref();
 
 				for (auto cb : itr->second.buffers) cb->unref();
 				_shareConstBufferPool.erase(itr);
 
-				_graphics->unref();
+				//_graphics->unref();
 			}
 		}
 	}
@@ -54,7 +87,7 @@ namespace aurora::modules::graphics {
 			auto len = buffers.size();
 			IConstantBuffer* cb;
 			if (pool.idleIndex == len) {
-				cb = _graphics->createConstantBuffer();
+				cb = createShareConstantBufferCallback();
 				cb->ref();
 				cb->create(size, Usage::CPU_WRITE);
 				buffers.emplace_back(cb);
@@ -93,7 +126,7 @@ namespace aurora::modules::graphics {
 	void ConstantBufferManager::_unregisterExclusiveConstantLayout(ConstantBufferLayout& layout) {
 		auto itr = _exclusiveConstPool.find(layout.featureCode);
 		if (itr != _exclusiveConstPool.end() && !--itr->second.rc) {
-			_graphics->ref();
+			//_graphics->ref();
 
 			for (auto node : itr->second.nodes) {
 				_releaseExclusiveConstantToLeaf(*node, true);
@@ -102,7 +135,7 @@ namespace aurora::modules::graphics {
 
 			_exclusiveConstPool.erase(itr);
 
-			_graphics->unref();
+			//_graphics->unref();
 		}
 	}
 
@@ -138,9 +171,8 @@ namespace aurora::modules::graphics {
 			auto itr = node->buffers.find(layout.featureCode);
 			IConstantBuffer* cb = nullptr;
 			if (itr == node->buffers.end()) {
-				cb = node->buffers.emplace(layout.featureCode, _graphics->createConstantBuffer()).first->second;
+				cb = node->buffers.emplace(layout.featureCode, createExclusiveConstantBufferCallback(cur + 1)).first->second;
 				cb->ref();
-				if (createdExclusiveConstantBufferCallback) createdExclusiveConstantBufferCallback(cb, cur + 1);
 				cb->create(layout.size, Usage::CPU_WRITE);
 
 				_exclusiveConstPool.find(layout.featureCode)->second.nodes.emplace(node);

@@ -53,6 +53,19 @@ namespace aurora::modules::graphics::win_d3d11 {
 			return _constantBufferManager;
 		}
 
+		inline void AE_CALL useVertexBuffers(UINT slot, UINT numBuffers, ID3D11Buffer*const* buffers, const UINT* strides, const UINT* offsets) {
+			_context->IASetVertexBuffers(slot, numBuffers, buffers, strides, offsets);
+		}
+
+		template<ProgramStage stage>
+		inline void AE_CALL useShader(ID3D11DeviceChild* shader, ID3D11ClassInstance *const* classInstances, UINT numClassInstances) {
+			if constexpr (stage == ProgramStage::VS) {
+				_context->VSSetShader((ID3D11VertexShader*)shader, classInstances, numClassInstances);
+			} else if (stage == ProgramStage::PS) {
+				_context->PSSetShader((ID3D11PixelShader*)shader, classInstances, numClassInstances);
+			}
+		}
+
 		template<ProgramStage stage>
 		inline void AE_CALL useShaderResources(UINT slot, UINT numViews, ID3D11ShaderResourceView*const* views) {
 			if constexpr (stage == ProgramStage::VS) {
@@ -108,6 +121,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		void AE_CALL _release();
 		void AE_CALL _resize(const Vec2<UINT>& size);
 
-		void AE_CALL _createdExclusiveConstantBuffer(IConstantBuffer* buffer, ui32 numParameters);
+		IConstantBuffer* AE_CALL _createdShareConstantBuffer();
+		IConstantBuffer* AE_CALL _createdExclusiveConstantBuffer(ui32 numParameters);
 	};
 }

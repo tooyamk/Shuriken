@@ -19,7 +19,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 			const IIndexBuffer* indexBuffer, ui32 count = 0xFFFFFFFFui32, ui32 offset = 0) override;
 
 	protected:
-		struct MyConstantBufferLayout : public ConstantBufferLayout {
+		class MyConstantBufferLayout : public ConstantBufferLayout {
+		public:
+			MyConstantBufferLayout() : sameId(0) {}
+
 			ui32 sameId;
 		};
 

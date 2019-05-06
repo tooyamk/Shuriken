@@ -299,16 +299,4 @@ namespace aurora::modules::graphics::win_d3d11 {
 		}
 		}
 	}
-
-	bool VertexBuffer::use(UINT slot, DXGI_FORMAT& fmt) {
-		if (_baseBuffer.handle && _internalFormat != DXGI_FORMAT_UNKNOWN) {
-			UINT offset = 0;
-			_graphics.get<Graphics>()->getContext()->IASetVertexBuffers(slot, 1, (ID3D11Buffer**)&_baseBuffer.handle, &_stride, &offset);
-
-			fmt = _internalFormat;
-
-			return true;
-		}
-		return false;
-	}
 }

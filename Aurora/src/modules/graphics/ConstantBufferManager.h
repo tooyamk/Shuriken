@@ -11,7 +11,8 @@ namespace aurora::modules::graphics {
 	class ShaderParameter;
 
 
-	struct AE_DLL ConstantBufferLayout {
+	class AE_DLL ConstantBufferLayout {
+	public:
 		struct AE_DLL Variables {
 			std::string name;
 			ui32 offset;
@@ -19,20 +20,31 @@ namespace aurora::modules::graphics {
 			std::vector<Variables> structMembers;
 		};
 
+
+		ConstantBufferLayout();
+
 		std::string name;
 		ui32 bindPoint;
 		std::vector<Variables> variables;
 		ui32 size;
 		ui64 featureCode;
+
+		void AE_CALL calcFeatureCode();
+
+	private:
+		void AE_CALL _calcFeatureCode(const Variables& var, ui16& numValidVars);
 	};
 
 
 	class AE_DLL ConstantBufferManager {
 	public:
 		ConstantBufferManager(IGraphicsModule* graphics);
+		ConstantBufferManager(const ConstantBufferManager& manager) = delete;
+		ConstantBufferManager(ConstantBufferManager&& manager) = delete;
 		~ConstantBufferManager();
 
-		std::function<void(IConstantBuffer* buffer, ui32 numParameters)> createdExclusiveConstantBufferCallback = nullptr;
+		std::function<IConstantBuffer*()> createShareConstantBufferCallback = nullptr;
+		std::function<IConstantBuffer*(ui32 numParameters)> createExclusiveConstantBufferCallback = nullptr;
 
 		void AE_CALL registerConstantLayout(ConstantBufferLayout& layout);
 		void AE_CALL unregisterConstantLayout(ConstantBufferLayout& layout);
