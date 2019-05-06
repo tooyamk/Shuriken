@@ -117,7 +117,7 @@ namespace aurora {
 	}
 
 	void Image::_convertFormat_R8G8B8_R8G8B8A8(const Vec2ui32& size, const ui8* src, ui8* dst) {
-		auto numPixels = size.getCumprod();
+		auto numPixels = size.getMultiplies();
 		ui32 srcIdx = 0, dstIdx = 0;
 		for (ui32 i = 0; i < numPixels; ++i) {
 			memcpy(dst + dstIdx, src + srcIdx, 3);
@@ -128,7 +128,7 @@ namespace aurora {
 	}
 
 	void Image::_convertFormat_R8G8B8A8_R8G8B8(const Vec2ui32& size, const ui8* src, ui8* dst) {
-		auto numPixels = size.getCumprod();
+		auto numPixels = size.getMultiplies();
 		ui32 srcIdx = 0, dstIdx = 0;
 		for (ui32 i = 0; i < numPixels; ++i) {
 			memcpy(dst + dstIdx, src + srcIdx, 3);

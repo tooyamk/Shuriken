@@ -70,10 +70,10 @@ namespace aurora {
 		}
 
 		inline static ui32 calcByteSize(const Vec2ui32& size, modules::graphics::TextureFormat format) {
-			return calcByteSize(size.getCumprod(), format);
+			return calcByteSize(size.getMultiplies(), format);
 		}
 		inline constexpr static ui32 calcByteSize(const Vec2ui32& size, ui32 perPixelByteSize) {
-			return calcByteSize(size.getCumprod(), perPixelByteSize);
+			return calcByteSize(size.getMultiplies(), perPixelByteSize);
 		}
 		inline static ui32 calcByteSize(ui32 numPixels, modules::graphics::TextureFormat format) {
 			return calcByteSize(numPixels, calcPerPixelByteSize(format));

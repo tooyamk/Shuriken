@@ -62,7 +62,7 @@ namespace aurora {
 
 		template<ui32 N, typename In, typename Out>
 		inline static Out AE_CALL dot(const In(&v1)[N], const In(&v2)[N]) {
-			Out rst = 0;
+			Out rst(0);
 			for (ui32 i = 0; i < N; ++i) rst += v1[i] * v2[i];
 			return rst;
 		}
@@ -127,6 +127,17 @@ namespace aurora {
 		template<typename T>
 		inline static constexpr FloatType<T> AE_CALL rad(T deg) {
 			return deg * RAD<T>;
+		}
+
+		template<ui32 N, typename In, typename Out = In>
+		inline static constexpr Out AE_CALL multiplies(const In(&v)[N]) {
+			if constexpr (N == 0) {
+				return Out(0);
+			} else {
+				Out m = v[0];
+				for (ui32 i = 1; i < N; ++i) m *= v[i];
+				return m;
+			}
 		}
 
 		template<ui32 N, typename In, typename Out = In>

@@ -13,7 +13,13 @@ namespace aurora::modules::graphics {
 		auto app = args->get<Application*>("app", nullptr);
 		if (!app) println("Module create err, no app");
 
-		return new win_d3d11::Graphics(app);
+		auto g = new win_d3d11::Graphics(app);
+		if (!g->createDevice(args->get<const GraphicsAdapter*>("adapter", nullptr))) {
+			g->unref();
+			g = nullptr;
+		}
+
+		return g;
 	}
 }
 #endif

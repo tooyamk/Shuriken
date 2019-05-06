@@ -261,11 +261,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return true;
 	}
 
-	const std::string& Graphics::getModuleVersion() const {
-		return _moduleVersion;
-	}
-
-	const std::string& Graphics::getDeviceVersion() const {
+	const std::string& Graphics::getVersion() const {
 		return _deviceVersion;
 	}
 

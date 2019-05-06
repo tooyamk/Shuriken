@@ -7,12 +7,7 @@
 #include "base/Application.h"
 #include "base/String.h"
 #include "base/Time.h"
-
 #include "GL/wglew.h"
-
-
-
-#include "BaseTexture.h"
 
 namespace aurora::modules::graphics::win_glew {
 	Graphics::Graphics(Application* app, IProgramSourceTranslator* trans) :
@@ -146,11 +141,7 @@ namespace aurora::modules::graphics::win_glew {
 		return true;
 	}
 
-	const std::string& Graphics::getModuleVersion() const {
-		return _moduleVersion;
-	}
-
-	const std::string& Graphics::getDeviceVersion() const {
+	const std::string& Graphics::getVersion() const {
 		return _deviceVersion;
 	}
 

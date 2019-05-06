@@ -306,10 +306,7 @@ namespace aurora::modules::graphics {
 			return ModuleType::GRAPHICS;
 		}
 
-		virtual bool AE_CALL createDevice(const GraphicsAdapter* adapter) = 0;
-
-		virtual const std::string& AE_CALL getModuleVersion() const = 0;
-		virtual const std::string& AE_CALL getDeviceVersion() const = 0;
+		virtual const std::string& AE_CALL getVersion() const = 0;
 		virtual const GraphicsDeviceFeatures& AE_CALL getDeviceFeatures() const = 0;
 		virtual IConstantBuffer* AE_CALL createConstantBuffer() = 0;
 		virtual IIndexBuffer* AE_CALL createIndexBuffer() = 0;

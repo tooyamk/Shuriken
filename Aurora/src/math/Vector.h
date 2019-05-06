@@ -130,10 +130,8 @@ namespace aurora {
 		}
 
 		template<typename Ret = T>
-		inline Ret AE_CALL getCumprod() const {
-			Ret c = data[0];
-			for (ui32 i = 1; i < N; ++i) c *= data[i];
-			return c;
+		inline Ret AE_CALL getMultiplies() const {
+			return Math::multiplies<N, T, Ret>(data);
 		}
 
 		template<typename Ret = T>
