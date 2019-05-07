@@ -1,9 +1,11 @@
 #include "Program.h"
 #include "Graphics.h"
+#include "ConstantBuffer.h"
 #include "IndexBuffer.h"
 #include "VertexBuffer.h"
 #include "base/String.h"
 #include "modules/graphics/VertexBufferFactory.h"
+#include "modules/graphics/ShaderParameterFactory.h"
 
 namespace aurora::modules::graphics::win_glew {
 	Program::Program(Graphics& graphics) : IProgram(graphics),
@@ -71,30 +73,22 @@ namespace aurora::modules::graphics::win_glew {
 			info.location = location;
 			info.size = size;
 			info.type = type;
-
-			switch (info.type) {
-			case GL_SAMPLER_1D:
-			case GL_SAMPLER_2D:
-			case GL_SAMPLER_3D:
-			{
-
-			}
-			}
 		}
 
 		auto g = _graphics.get<Graphics>();
 		if (g->getDeviceFeatures().supportConstantBuffer) {
-			GLint uniformBlocks;
-			glGetProgramiv(_handle, GL_ACTIVE_UNIFORM_BLOCKS, &uniformBlocks);
+			GLint numUniformBlocks;
+			glGetProgramiv(_handle, GL_ACTIVE_UNIFORM_BLOCKS, &numUniformBlocks);
 			std::vector<GLint> indices;
 			std::vector<GLint> offsets;
 			std::vector<GLint> types;
 			std::vector<GLint> sizes;
 
 			std::vector<std::string_view> varNames;
-			std::unordered_map<std::string_view, ConstantBufferLayout::Variables*> vars;
-			for (GLint i = 0; i < uniformBlocks; ++i) {
-				auto& layout = _uniformBlockLayouts.emplace_back();
+
+			_uniformBlockLayouts.resize(numUniformBlocks);
+			for (GLint i = 0; i < numUniformBlocks; ++i) {
+				auto& layout = _uniformBlockLayouts[i];
 
 				glGetActiveUniformBlockiv(_handle, i, GL_UNIFORM_BLOCK_BINDING, (GLint*)&layout.bindPoint);
 				glGetActiveUniformBlockiv(_handle, i, GL_UNIFORM_BLOCK_DATA_SIZE, (GLint*)&layout.size);
@@ -104,7 +98,7 @@ namespace aurora::modules::graphics::win_glew {
 
 				GLint nameLen;
 				glGetActiveUniformBlockName(_handle, i, sizeof(charBuffer), &nameLen, charBuffer);
-				layout.name = charBuffer;
+				layout.name = charBuffer + 5;//type_
 
 				GLint numUniforms;
 				glGetActiveUniformBlockiv(_handle, i, GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS, &numUniforms);
@@ -120,7 +114,6 @@ namespace aurora::modules::graphics::win_glew {
 				glGetActiveUniformsiv(_handle, numUniforms, (GLuint*)indicesData, GL_UNIFORM_TYPE, types.data());
 				glGetActiveUniformsiv(_handle, numUniforms, (GLuint*)indicesData, GL_UNIFORM_SIZE, sizes.data());
 
-				vars.clear();
 				for (GLint j = 0; j < numUniforms; ++j) {
 					glGetActiveUniformName(_handle, indices[j], sizeof(charBuffer), &nameLen, charBuffer);
 					
@@ -128,30 +121,33 @@ namespace aurora::modules::graphics::win_glew {
 					std::string_view child(charBuffer + rootOffset, nameLen - rootOffset);
 
 					ConstantBufferLayout::Variables* foundVar = nullptr;
-					auto itr = vars.find(child);
-					if (itr == vars.end()) {
-						auto parentVars = &layout.variables;
-						ui32 fullNameLen = 0;
-						varNames.clear();
-						String::split(child, std::string_view("."), varNames);
-						for (auto& sv : varNames) {
-							fullNameLen += fullNameLen ? sv.size() + 1 : sv.size();
-							std::string_view fullName(child.data(), fullNameLen);
 
-							auto itr2 = vars.find(fullName);
-							if (itr2 == vars.end()) {
-								auto& var = parentVars->emplace_back();
-								var.name = sv;
-								parentVars = &var.structMembers;
-								foundVar = &var;
-								vars.emplace(fullName, foundVar);
-							} else {
-								foundVar = itr2->second;
-								parentVars = &foundVar->structMembers;
+					auto parentVars = &layout.variables;
+					varNames.clear();
+					String::split(child, std::string_view("."), varNames);
+					for (auto& sv : varNames) {
+						ConstantBufferLayout::Variables* foundMemVar = nullptr;
+						for (auto& memVar : *parentVars) {
+							if (memVar.name == sv) {
+								foundMemVar = &memVar;
+								break;
 							}
 						}
-					} else {
-						foundVar = itr->second;
+
+						if (foundMemVar) {
+							foundVar = foundMemVar;
+							parentVars = &foundMemVar->structMembers;
+						} else {
+							auto& var = parentVars->emplace_back();
+							auto svLen = sv.size();
+							if (svLen > 3 && sv[svLen - 3] == '[' && sv[svLen - 2] == '0' && sv[svLen - 1] == ']') {
+								var.name = sv.substr(0, svLen - 3);
+							} else {
+								var.name = sv;
+							}
+							parentVars = &var.structMembers;
+							foundVar = &var;
+						}
 					}
 
 					foundVar->size = Graphics::getGLTypeSize(types[j]) * sizes[j];
@@ -178,9 +174,49 @@ namespace aurora::modules::graphics::win_glew {
 	void Program::draw(const VertexBufferFactory* vertexFactory, const ShaderParameterFactory* paramFactory, 
 		const IIndexBuffer* indexBuffer, ui32 count, ui32 offset) {
 		if (_handle && vertexFactory && indexBuffer && _graphics == indexBuffer->getGraphics() && count > 0) {
+			auto g = _graphics.get<Graphics>();
+
 			for (auto& info : _inVertexBufferLayouts) {
 				auto vb = vertexFactory->get(info.name);
 				if (vb && _graphics == vb->getGraphics()) ((VertexBuffer*)vb)->use(info.location);
+			}
+
+			if (paramFactory) {
+				for (auto& layout : _uniformBlockLayouts) {
+					ShaderParameterUsageStatistics statistics;
+					layout.collectUsingInfo(*paramFactory, statistics, (std::vector<const ShaderParameter*>&)_tempParams, _tempVars);
+
+					ConstantBuffer* cb = nullptr;
+					ui32 numVars = _tempVars.size();
+					if (statistics.unknownCount < numVars) {
+						if (statistics.exclusiveCount > 0 && !statistics.shareCount) {
+							cb = (ConstantBuffer*)g->getConstantBufferManager().getExclusiveConstantBuffer(_tempParams, layout);
+
+							if (cb) {
+								bool isMaping = false;
+								for (ui32 i = 0; i < numVars; ++i) {
+									auto param = _tempParams[i];
+									if (param && param->getUpdateId() != cb->recordUpdateIds[i]) {
+										if (!isMaping) {
+											if (cb->map(Usage::CPU_WRITE) == Usage::NONE) break;
+											isMaping = true;
+										}
+										cb->recordUpdateIds[i] = param->getUpdateId();
+										_updateConstantBuffer(cb, *param, *_tempVars[i]);
+									}
+								}
+
+								if (isMaping) cb->unmap();
+							}
+						} else {
+							cb = (ConstantBuffer*)_graphics.get<Graphics>()->getConstantBufferManager().popShareConstantBuffer(layout.size);
+							if (cb) _constantBufferUpdateAll(cb, layout.variables);
+						}
+					}
+
+					_tempParams.clear();
+					_tempVars.clear();
+				}
 			}
 
 			glEnable(GL_CULL_FACE);
@@ -188,6 +224,23 @@ namespace aurora::modules::graphics::win_glew {
 			glDisable(GL_DEPTH_TEST);
 
 			((IndexBuffer*)indexBuffer)->draw(count, offset);
+
+			g->getConstantBufferManager().resetUsedShareConstantBuffers();
+		}
+	}
+
+	void Program::_updateConstantBuffer(ConstantBuffer* cb, const ShaderParameter& param, const ConstantBufferLayout::Variables& var) {
+
+	}
+
+	void Program::_constantBufferUpdateAll(ConstantBuffer* cb, const std::vector<ConstantBufferLayout::Variables>& vars) {
+		if (cb->map(Usage::CPU_WRITE) != Usage::NONE) {
+			for (ui32 i = 0, n = _tempVars.size(); i < n; ++i) {
+				auto param = _tempParams[i];
+				if (param) _updateConstantBuffer(cb, *param, *_tempVars[i]);
+			}
+
+			cb->unmap();
 		}
 	}
 
@@ -214,7 +267,8 @@ namespace aurora::modules::graphics::win_glew {
 			}
 		}
 
-		println(source.data.getBytes());
+		println("------ glsl shader code(", (type == GL_VERTEX_SHADER ? "vert" : "frag"), ") ------\n", 
+			std::string(source.data.getBytes(), source.data.getLength()), "\n------------------------------------");
 
 		GLuint shader = glCreateShader(type);
 		auto s = source.data.getBytes();

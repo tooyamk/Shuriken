@@ -1,6 +1,6 @@
 #include "ConstantBufferManager.h"
 #include "modules/graphics/IGraphicsModule.h"
-#include "modules/graphics/ShaderParameter.h"
+#include "modules/graphics/ShaderParameterFactory.h"
 #include "utils/hash/CRC.h"
 
 namespace aurora::modules::graphics {
@@ -32,6 +32,39 @@ namespace aurora::modules::graphics {
 			++numValidVars;
 		} else {
 			for (auto& mvar : var.structMembers) _calcFeatureCode(mvar, numValidVars);
+		}
+	}
+
+	void ConstantBufferLayout::collectUsingInfo(const ShaderParameterFactory& factory, ShaderParameterUsageStatistics& statistics,
+		std::vector<const ShaderParameter*>& usingParams, std::vector<const ConstantBufferLayout::Variables*>& usingVars) const {
+		for (auto& var : variables) _collectUsingInfo(var, factory, statistics, usingParams, usingVars);
+	}
+
+	void ConstantBufferLayout::_collectUsingInfo(const ConstantBufferLayout::Variables& var, const ShaderParameterFactory& factory, 
+		ShaderParameterUsageStatistics& statistics, std::vector<const ShaderParameter*>& usingParams, std::vector<const ConstantBufferLayout::Variables*>& usingVars) const {
+		auto p = factory.get(var.name);
+		if (var.structMembers.size()) {
+			if (p && p->getType() == ShaderParameterType::FACTORY) {
+				auto data = p->getData();
+				if (data) {
+					for (auto& memVar : var.structMembers) _collectUsingInfo(memVar, *(const ShaderParameterFactory*)data, statistics, usingParams, usingVars);
+				}
+			}
+		} else {
+			if (p) {
+				if (p->getUsage() == ShaderParameterUsage::EXCLUSIVE) {
+					++statistics.exclusiveCount;
+				} else if (p->getUsage() == ShaderParameterUsage::AUTO) {
+					++statistics.autoCount;
+				} else {
+					++statistics.shareCount;
+				}
+			} else {
+				++statistics.unknownCount;
+			}
+
+			usingParams.emplace_back(p);
+			usingVars.emplace_back(&var);
 		}
 	}
 

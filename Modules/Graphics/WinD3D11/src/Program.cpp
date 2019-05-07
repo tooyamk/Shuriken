@@ -120,80 +120,54 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return false;
 	}
 
-	void Program::_collectParameters(const ConstantBufferLayout::Variables& var, const ShaderParameterFactory& factory, ParameterUsageStatistics& statistics) {
-		auto p = factory.get(var.name);
-		if (var.structMembers.size()) {
-			if (p && p->getType() == ShaderParameterType::FACTORY) {
-				auto data = p->getData();
-				if (data) {
-					for (auto& memVar : var.structMembers) _collectParameters(memVar, *(const ShaderParameterFactory*)data, statistics);
-				}
-			}
-		} else {
-			if (p) {
-				if (p->getUsage() == ShaderParameterUsage::EXCLUSIVE) {
-					++statistics.exclusiveCount;
-				} else if (p->getUsage() == ShaderParameterUsage::AUTO) {
-					++statistics.autoCount;
-				} else {
-					++statistics.shareCount;
-				}
-			} else {
-				++statistics.unknownCount;
-			}
-			_tempParams.emplace_back(p);
-			_tempVars.emplace_back(&var);
-		}
-	}
-
 	ConstantBuffer* Program::_getConstantBuffer(const MyConstantBufferLayout& cbLayout, const ShaderParameterFactory& factory) {
 		if (cbLayout.sameId) {
 			auto cb = _usingSameConstBuffers[cbLayout.sameId - 1];
 			if (cb) return cb;
 		}
 
-		ParameterUsageStatistics statistics;
-		for (auto& var : cbLayout.variables) _collectParameters(var, factory, statistics);
+		ShaderParameterUsageStatistics statistics;
+		cbLayout.collectUsingInfo(factory, statistics, (std::vector<const ShaderParameter*>&)_tempParams, _tempVars);
 
+		ConstantBuffer* cb = nullptr;
 		ui32 numVars = _tempVars.size();
-		if (statistics.unknownCount >= numVars) return nullptr;
+		if (statistics.unknownCount < numVars) {
+			if (statistics.exclusiveCount > 0 && !statistics.shareCount) {
+				auto g = _graphics.get<Graphics>();
+				cb = (ConstantBuffer*)g->getConstantBufferManager().getExclusiveConstantBuffer(_tempParams, cbLayout);
 
-		ConstantBuffer* cb;
-		if (statistics.exclusiveCount > 0 && !statistics.shareCount) {
-			auto g = _graphics.get<Graphics>();
-			cb = (ConstantBuffer*)g->getConstantBufferManager().getExclusiveConstantBuffer(_tempParams, cbLayout);
-
-			if (cb) {
-				if (g->getInternalFeatures().MapNoOverwriteOnDynamicConstantBuffer) {
-					bool isMaping = false;
-					for (ui32 i = 0; i < numVars; ++i) {
-						auto param = _tempParams[i];
-						if (param && param->getUpdateId() != cb->recordUpdateIds[i]) {
-							if (!isMaping) {
-								if (cb->map(Usage::CPU_WRITE) == Usage::NONE) break;
-								isMaping = true;
+				if (cb) {
+					if (g->getInternalFeatures().MapNoOverwriteOnDynamicConstantBuffer) {
+						bool isMaping = false;
+						for (ui32 i = 0; i < numVars; ++i) {
+							auto param = _tempParams[i];
+							if (param && param->getUpdateId() != cb->recordUpdateIds[i]) {
+								if (!isMaping) {
+									if (cb->map(Usage::CPU_WRITE) == Usage::NONE) break;
+									isMaping = true;
+								}
+								cb->recordUpdateIds[i] = param->getUpdateId();
+								_updateConstantBuffer(cb, *param, *_tempVars[i]);
 							}
-							cb->recordUpdateIds[i] = param->getUpdateId();
-							_updateConstantBuffer(cb, *param, *_tempVars[i]);
 						}
-					}
 
-					if (isMaping) cb->unmap();
-				} else {
-					bool needUpdate = false;
-					for (ui32 i = 0; i < numVars; ++i) {
-						auto param = _tempParams[i];
-						if (param && param->getUpdateId() != cb->recordUpdateIds[i]) {
-							needUpdate = true;
-							cb->recordUpdateIds[i] = param->getUpdateId();
+						if (isMaping) cb->unmap();
+					} else {
+						bool needUpdate = false;
+						for (ui32 i = 0; i < numVars; ++i) {
+							auto param = _tempParams[i];
+							if (param && param->getUpdateId() != cb->recordUpdateIds[i]) {
+								needUpdate = true;
+								cb->recordUpdateIds[i] = param->getUpdateId();
+							}
 						}
+						if (needUpdate) _constantBufferUpdateAll(cb, cbLayout.variables);
 					}
-					if (needUpdate) _constantBufferUpdateAll(cb, cbLayout.variables);
 				}
+			} else {
+				cb = (ConstantBuffer*)_graphics.get<Graphics>()->getConstantBufferManager().popShareConstantBuffer(cbLayout.size);
+				if (cb) _constantBufferUpdateAll(cb, cbLayout.variables);
 			}
-		} else {
-			cb = (ConstantBuffer*)_graphics.get<Graphics>()->getConstantBufferManager().popShareConstantBuffer(cbLayout.size);
-			if (cb) _constantBufferUpdateAll(cb, cbLayout.variables);
 		}
 
 		_tempParams.clear();

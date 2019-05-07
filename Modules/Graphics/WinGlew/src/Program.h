@@ -5,6 +5,7 @@
 
 namespace aurora::modules::graphics::win_glew {
 	class Graphics;
+	class ConstantBuffer;
 
 	class AE_MODULE_DLL Program : public IProgram {
 	public:
@@ -30,6 +31,12 @@ namespace aurora::modules::graphics::win_glew {
 		std::vector<InVertexBufferInfo> _inVertexBufferLayouts;
 		std::vector<UniformInfo> _uniformLayouts;
 		std::vector<ConstantBufferLayout> _uniformBlockLayouts;
+
+		std::vector<ShaderParameter*> _tempParams;
+		std::vector<const ConstantBufferLayout::Variables*> _tempVars;
+
+		void _updateConstantBuffer(ConstantBuffer* cb, const ShaderParameter& param, const ConstantBufferLayout::Variables& vars);
+		void _constantBufferUpdateAll(ConstantBuffer* cb, const std::vector<ConstantBufferLayout::Variables>& vars);
 
 		void AE_CALL _release();
 		GLuint AE_CALL _compileShader(const ProgramSource& source, GLenum type);

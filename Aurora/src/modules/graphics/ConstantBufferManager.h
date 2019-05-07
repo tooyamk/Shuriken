@@ -8,6 +8,15 @@
 namespace aurora::modules::graphics {
 	class IConstantBuffer;
 	class ShaderParameter;
+	class ShaderParameterFactory;
+
+
+	struct AE_DLL ShaderParameterUsageStatistics {
+		ui16 exclusiveCount = 0;
+		ui16 autoCount = 0;
+		ui16 shareCount = 0;
+		ui16 unknownCount = 0;
+	};
 
 
 	class AE_DLL ConstantBufferLayout {
@@ -30,8 +39,14 @@ namespace aurora::modules::graphics {
 
 		void AE_CALL calcFeatureCode();
 
+		void AE_CALL collectUsingInfo(const ShaderParameterFactory& factory, ShaderParameterUsageStatistics& statistics,
+			std::vector<const ShaderParameter*>& usingParams, std::vector<const ConstantBufferLayout::Variables*>& usingVars) const;
+
 	private:
 		void AE_CALL _calcFeatureCode(const Variables& var, ui16& numValidVars);
+
+		void AE_CALL _collectUsingInfo(const ConstantBufferLayout::Variables& var, const ShaderParameterFactory& factory, ShaderParameterUsageStatistics& statistics,
+			std::vector<const ShaderParameter*>& usingParams, std::vector<const ConstantBufferLayout::Variables*>& usingVars) const;
 	};
 
 

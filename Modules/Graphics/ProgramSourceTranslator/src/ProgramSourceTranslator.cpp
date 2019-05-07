@@ -73,7 +73,7 @@ namespace aurora::modules::graphics::program_source_translator {
 			IFT(compileResult->GetErrorBuffer(&errors));
 			if (errors != nullptr) {
 				if (errors->GetBufferSize() > 0) {
-					println("hlsl to spirv error : ", errors->GetBufferPointer());
+					println("hlsl to spirv error or warning : ", std::string((i8*)errors->GetBufferPointer(), errors->GetBufferSize()));
 					//ret.errorWarningMsg = CreateBlob(errors->GetBufferPointer(), static_cast<uint32_t>(errors->GetBufferSize()));
 				}
 				errors = nullptr;

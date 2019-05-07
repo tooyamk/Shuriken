@@ -77,14 +77,6 @@ namespace aurora::modules::graphics::win_d3d11 {
 		};
 
 
-		struct ParameterUsageStatistics {
-			ui16 exclusiveCount = 0;
-			ui16 autoCount = 0;
-			ui16 shareCount = 0;
-			ui16 unknownCount = 0;
-		};
-
-
 		ParameterLayout _vsParamLayout;
 		ParameterLayout _psParamLayout;
 
@@ -101,9 +93,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 		void AE_CALL _calcConstantLayoutSameBuffers(std::vector<std::vector<MyConstantBufferLayout>*>& constBufferLayouts);
 
 		ConstantBuffer* _getConstantBuffer(const MyConstantBufferLayout& cbLayout, const ShaderParameterFactory& factory);
-		void _collectParameters(const ConstantBufferLayout::Variables& var, const ShaderParameterFactory& factory, ParameterUsageStatistics& statistics);
-		void _updateConstantBuffer(ConstantBuffer* cb, const ShaderParameter& param, const ConstantBufferLayout::Variables& vars);
-		void _constantBufferUpdateAll(ConstantBuffer* cb, const std::vector<ConstantBufferLayout::Variables>& var);
+		void _updateConstantBuffer(ConstantBuffer* cb, const ShaderParameter& param, const ConstantBufferLayout::Variables& var);
+		void _constantBufferUpdateAll(ConstantBuffer* cb, const std::vector<ConstantBufferLayout::Variables>& vars);
 
 		template<ProgramStage stage>
 		void AE_CALL _useParameters(const ParameterLayout& layout, const ShaderParameterFactory& factory) {
