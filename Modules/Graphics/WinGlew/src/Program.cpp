@@ -214,7 +214,7 @@ namespace aurora::modules::graphics::win_glew {
 			}
 		}
 
-		println("%s", source.data.getBytes());
+		println(source.data.getBytes());
 
 		GLuint shader = glCreateShader(type);
 		auto s = source.data.getBytes();
@@ -229,7 +229,7 @@ namespace aurora::modules::graphics::win_glew {
 			GLsizei logLen = 0;
 			GLchar log[1024];
 			glGetShaderInfoLog(shader, sizeof(log), &logLen, log);
-			println("compile shader error(%s) :\n %s", (type == GL_VERTEX_SHADER ? "vert" : "frag"), log);
+			println("compile shader error(", (type == GL_VERTEX_SHADER ? "vert" : "frag"), ") : \n", log);
 
 			glDeleteShader(shader);
 			return 0;

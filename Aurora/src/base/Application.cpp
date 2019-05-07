@@ -101,11 +101,9 @@ namespace aurora {
 #if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
 		RECT rect;
 		GetClientRect(_hWnd, &rect);
-		size[0] = rect.right - rect.left;
-		size[1] = rect.bottom - rect.top;
+		size.set(rect.right - rect.left, rect.bottom - rect.top);
 #elif
-		size[0] = 0;
-		size[1] = 0;
+		size.set(0);
 #endif
 	}
 

@@ -7,7 +7,6 @@
 
 namespace aurora::modules::graphics {
 	class IConstantBuffer;
-	class IGraphicsModule;
 	class ShaderParameter;
 
 
@@ -38,7 +37,7 @@ namespace aurora::modules::graphics {
 
 	class AE_DLL ConstantBufferManager {
 	public:
-		ConstantBufferManager(IGraphicsModule* graphics);
+		ConstantBufferManager();
 		ConstantBufferManager(const ConstantBufferManager& manager) = delete;
 		ConstantBufferManager(ConstantBufferManager&& manager) = delete;
 		~ConstantBufferManager();
@@ -55,9 +54,6 @@ namespace aurora::modules::graphics {
 		IConstantBuffer* AE_CALL getExclusiveConstantBuffer(const std::vector<ShaderParameter*>& parameters, const ConstantBufferLayout& layout);
 
 	private:
-		IGraphicsModule* _graphics;
-
-
 		struct ShareConstBuffers {
 			ui32 rc;
 			ui32 idleIndex;

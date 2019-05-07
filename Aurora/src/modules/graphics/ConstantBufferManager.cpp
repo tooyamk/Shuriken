@@ -36,8 +36,7 @@ namespace aurora::modules::graphics {
 	}
 
 
-	ConstantBufferManager::ConstantBufferManager(IGraphicsModule* graphics) :
-		_graphics(graphics) {
+	ConstantBufferManager::ConstantBufferManager() {
 	}
 
 	ConstantBufferManager::~ConstantBufferManager() {

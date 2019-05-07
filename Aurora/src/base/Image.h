@@ -41,17 +41,10 @@ namespace aurora {
 			for (ui32 i = 0; i < mipLevel; ++i) size = calcNextMipPixelSize(size);
 		}
 		inline static void AE_CALL calcSpecificMipPixelSize(Vec2ui32& size, ui32 mipLevel) {
-			for (ui32 i = 0; i < mipLevel; ++i) {
-				size[0] = calcNextMipPixelSize(size[0]);
-				size[1] = calcNextMipPixelSize(size[1]);
-			}
+			for (ui32 i = 0; i < mipLevel; ++i) calcNextMipPixelSize(size);
 		}
 		inline static void AE_CALL calcSpecificMipPixelSize(Vec3ui32& size, ui32 mipLevel) {
-			for (ui32 i = 0; i < mipLevel; ++i) {
-				size[0] = calcNextMipPixelSize(size[0]);
-				size[1] = calcNextMipPixelSize(size[1]);
-				size[2] = calcNextMipPixelSize(size[2]);
-			}
+			for (ui32 i = 0; i < mipLevel; ++i) calcNextMipPixelSize(size);
 		}
 
 		static std::vector<ui32> AE_CALL calcMipsPixelSize(ui32 n, ui32 mipLevels);
@@ -60,13 +53,10 @@ namespace aurora {
 			return n > 1 ? n >> 1 : 1;
 		}
 		inline static void calcNextMipPixelSize(Vec2ui32& size) {
-			size[0] = calcNextMipPixelSize(size[0]);
-			size[1] = calcNextMipPixelSize(size[1]);
+			size.set(calcNextMipPixelSize(size[0]), calcNextMipPixelSize(size[1]));
 		}
 		inline static void calcNextMipPixelSize(Vec3ui32& size) {
-			size[0] = calcNextMipPixelSize(size[0]);
-			size[1] = calcNextMipPixelSize(size[1]);
-			size[2] = calcNextMipPixelSize(size[2]);
+			size.set(calcNextMipPixelSize(size[0]), calcNextMipPixelSize(size[1]), calcNextMipPixelSize(size[2]));
 		}
 
 		inline static ui32 calcByteSize(const Vec2ui32& size, modules::graphics::TextureFormat format) {

@@ -21,7 +21,6 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_swapChain(nullptr),
 		_backBufferTarget(nullptr),
 		_deviceFeatures({ 0 }),
-		_constantBufferManager(this),
 		_resizedListener(this, &Graphics::_resizedHandler) {
 		_app.get()->getEventDispatcher().addEventListener(ApplicationEvent::RESIZED, _resizedListener, false);
 		_constantBufferManager.createShareConstantBufferCallback = std::bind(&Graphics::_createdShareConstantBuffer, this);

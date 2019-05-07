@@ -108,8 +108,7 @@ namespace aurora {
 		for (ui32 lv = 1; lv < mipLevels; ++lv) {
 			src += calcByteSize(s, srcPerPixelSize);
 			dst += calcByteSize(s, dstPerPixelSize);
-			s[0] = calcNextMipPixelSize(s[0]);
-			s[1] = calcNextMipPixelSize(s[1]);
+			s.set(calcNextMipPixelSize(s[0]), calcNextMipPixelSize(s[1]));
 
 			if (!convertFormat(s, srcFormat, src, dstFormat, dst)) return false;
 		}
@@ -227,8 +226,7 @@ namespace aurora {
 			}
 
 			src = dst;
-			s[0] = w;
-			s[1] = h;
+			s.set(w, h);
 		}
 	}
 

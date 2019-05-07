@@ -73,7 +73,7 @@ namespace aurora::modules::graphics::program_source_translator {
 			IFT(compileResult->GetErrorBuffer(&errors));
 			if (errors != nullptr) {
 				if (errors->GetBufferSize() > 0) {
-					println("hlsl to spirv error : %s", errors->GetBufferPointer());
+					println("hlsl to spirv error : ", errors->GetBufferPointer());
 					//ret.errorWarningMsg = CreateBlob(errors->GetBufferPointer(), static_cast<uint32_t>(errors->GetBufferSize()));
 				}
 				errors = nullptr;
@@ -176,7 +176,7 @@ namespace aurora::modules::graphics::program_source_translator {
 				dst.data.setCapacity(str.size());
 				dst.data.writeBytes(str.c_str(), 0, str.size());
 			} catch (spirv_cross::CompilerError& error) {
-				println("spirv to glsl/gssl error : %s", error.what());
+				println("spirv to glsl/gssl error : ", error.what());
 			}
 
 			break;
@@ -214,7 +214,7 @@ namespace aurora::modules::graphics::program_source_translator {
 				dst.data.setCapacity(str.size());
 				dst.data.writeBytes(str.c_str(), 0, str.size());
 			} catch (spirv_cross::CompilerError& error) {
-				println("%s", error.what());
+				println(error.what());
 			}
 
 			break;

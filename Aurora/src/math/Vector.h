@@ -38,6 +38,11 @@ namespace aurora {
 			set(list);
 		}
 
+		template<typename... Args, typename = typename std::enable_if_t<are_all_convertible_v<Args..., T>>>
+		Vec(Args... args) {
+			set(args...);
+		}
+
 		inline operator Data&() {
 			return data;
 		}
@@ -88,6 +93,15 @@ namespace aurora {
 
 		inline Vec& AE_CALL set(const std::initializer_list<const T>& list) {
 			return set(list.begin(), list.size());
+		}
+
+		template<typename... Args, typename = typename std::enable_if_t<are_all_convertible_v<Args..., T>>>
+		inline Vec& AE_CALL set(Args... args) {
+			if constexpr (N > 0) {
+				T values[] = { std::forward<Args>(args)... };
+				for (ui32 i = 0; i < std::min<ui32>(N, sizeof...(args)); ++i) data[i] = values[i];
+			}
+			return *this;
 		}
 
 		inline bool AE_CALL isEqual(const T value) const {

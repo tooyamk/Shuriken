@@ -19,8 +19,7 @@ namespace aurora::modules::graphics::win_glew {
 		_majorVer(0),
 		_minorVer(0),
 		_intVer(0),
-		_deviceFeatures({ 0 }),
-		_constantBufferManager(this) {
+		_deviceFeatures({ 0 }) {
 		_constantBufferManager.createShareConstantBufferCallback = std::bind(&Graphics::_createdShareConstantBuffer, this);
 		_constantBufferManager.createExclusiveConstantBufferCallback = std::bind(&Graphics::_createdExclusiveConstantBuffer, this, std::placeholders::_1);
 	}
@@ -372,6 +371,6 @@ namespace aurora::modules::graphics::win_glew {
 	}
 
 	void Graphics::_debugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam) {
-		println("gl message: %s", message);
+		println("gl message : ", message);
 	}
 }
