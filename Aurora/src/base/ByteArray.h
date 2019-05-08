@@ -2,7 +2,6 @@
 
 #include "base/LowLevel.h"
 #include <algorithm>
-#include <string>
 
 namespace aurora {
 	class AE_DLL ByteArray {

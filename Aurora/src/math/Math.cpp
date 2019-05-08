@@ -1,4 +1,3 @@
-#include <string>
 #include "Math.h"
 
 namespace aurora {

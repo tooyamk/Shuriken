@@ -1,7 +1,6 @@
 #pragma once
 
 #include "base/LowLevel.h"
-#include <string>
 #include <vector>
 
 namespace aurora {

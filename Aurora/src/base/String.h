@@ -2,7 +2,6 @@
 
 #include "base/LowLevel.h"
 #include <regex>
-#include <string>
 
 namespace aurora {
 	class AE_DLL String {
@@ -21,74 +20,20 @@ namespace aurora {
 		static void AE_CALL split(const std::string& input, const std::regex& separator, std::vector<std::string>& dst);
 		static void AE_CALL split(const std::string_view& input, const std::string_view& separator, std::vector<std::string_view>& dst);
 
-		inline static std::string AE_CALL toString(i8 value) {
-			i8 buf[5];
-			snprintf(buf, sizeof(buf), "%d", value);
-			return std::move(std::string(buf));
-		}
-
-		inline static std::string AE_CALL toString(ui8 value) {
-			i8 buf[4];
-			snprintf(buf, sizeof(buf), "%u", value);
-			return std::move(std::string(buf));
-		}
-
-		inline static std::string AE_CALL toString(i16 value) {
-			i8 buf[7];
-			snprintf(buf, sizeof(buf), "%d", value);
-			return std::move(std::string(buf));
-		}
-
-		inline static std::string AE_CALL toString(ui16 value) {
-			i8 buf[6];
-			snprintf(buf, sizeof(buf), "%u", value);
-			return std::move(std::string(buf));
-		}
-
-		inline static std::string AE_CALL toString(i32 value) {
-			i8 buf[12];
-			snprintf(buf, sizeof(buf), "%d", value);
-			return std::move(std::string(buf));
-		}
-
-		inline static std::string AE_CALL toString(ui32 value) {
-			i8 buf[11];
-			snprintf(buf, sizeof(buf), "%u", value);
-			return std::move(std::string(buf));
-		}
-
-		inline static std::string AE_CALL toString(const i64& value) {
+		template<typename T,
+		typename = typename std::enable_if_t<std::is_integral_v<T>, T>>
+		inline static std::string AE_CALL toString(T value) {
 			i8 buf[21];
-			snprintf(buf, sizeof(buf), "%lld", value);
-			return std::move(std::string(buf));
+			auto rst = std::to_chars(buf, buf + sizeof(buf), value);
+			return std::move(std::string(buf, rst.ec == std::errc() ? rst.ptr - buf : 0));
 		}
 
-		inline static std::string AE_CALL toString(const ui64& value) {
-			i8 buf[21];
-			snprintf(buf, sizeof(buf), "%llu", value);
-			return std::move(std::string(buf));
-		}
-
-		inline static std::string AE_CALL toString(f32 value, const std::string& prec = "", bool trim = true) {
-			i8 buf[16];
-			if (prec.empty()) {
-				snprintf(buf, sizeof(buf), "%.7f", value);
-			} else {
-				std::string p = "%." + prec + "f";
-				snprintf(buf, sizeof(buf), p.c_str(), value);
-			}
-			return trim ? std::move(std::string(buf, _trimFloat(buf, strlen(buf)))) : std::move(std::string(buf));
-		}
-
-		inline static std::string AE_CALL toString(const f64& value, const std::string& prec = "", bool trim = true) {
+		template<typename T,
+		typename = typename std::enable_if_t<std::is_floating_point_v<T>, T>>
+		inline static std::string AE_CALL toString(T value, std::chars_format fmt = std::chars_format::general) {
 			i8 buf[33];
-			if (prec.empty()) {
-				snprintf(buf, sizeof(buf), "%.15lf", value);
-			} else {
-				std::string p = "%." + prec + "lf";
-				snprintf(buf, sizeof(buf), p.c_str(), value);
-			}
-			return trim ? std::move(std::string(buf, _trimFloat(buf, strlen(buf)))) : std::move(std::string(buf));
+			auto rst = std::to_chars(buf, buf + sizeof(buf), value, fmt);
+			return std::move(std::string(buf, rst.ec == std::errc() ? rst.ptr - buf : 0));
 		}
 
 		static std::string AE_CALL toString(const ui8* value, ui32 size);
@@ -119,21 +64,5 @@ namespace aurora {
 	private:
 		static ui32 AE_CALL _UnicodeToUtf8(const wchar_t* in, ui32 inLen, i8* out);
 		static ui32 AE_CALL _Utf8ToUnicode(const i8* in, ui32 inLen, wchar_t* out);
-
-		static std::string::size_type AE_CALL _trimFloat(const i8* buf, ui32 size) {
-			auto point = String::findFirst(buf, size, '.');
-			if (point != std::string::npos) {
-				ui32 end = point;
-				for (ui32 i = size - 1; i > point; --i) {
-					if (buf[i] != '0') {
-						end = i;
-						break;
-					}
-				}
-				return end == point ? end : end + 1;
-			} else {
-				return size;
-			}
-		}
 	};
 }

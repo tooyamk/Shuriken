@@ -1,7 +1,6 @@
 #pragma once
 
 #include "base/LowLevel.h"
-#include <string>
 
 namespace aurora::hash {
 	class AE_DLL MD5 {

@@ -98,8 +98,12 @@ namespace aurora {
 		template<typename... Args, typename = typename std::enable_if_t<are_all_convertible_v<Args..., T>>>
 		inline Vec& AE_CALL set(Args... args) {
 			if constexpr (N > 0) {
-				T values[] = { std::forward<Args>(args)... };
-				for (ui32 i = 0; i < std::min<ui32>(N, sizeof...(args)); ++i) data[i] = values[i];
+				if constexpr (N >= sizeof...(args)) {
+					ui32 i = 0;
+					((data[i++] = args), ...);
+				} else {
+					_set(0, args...);
+				}
 			}
 			return *this;
 		}
@@ -167,6 +171,15 @@ namespace aurora {
 		static const Vec ONE;
 
 		Data data;
+
+	private:
+		inline void AE_CALL _set(ui32 i, T value) {}
+
+		template<typename... Args>
+		inline void AE_CALL _set(ui32 i, T value, Args... args) {
+			data[i] = value;
+			if (i++ < N) _set(i, args...);
+		}
 	};
 
 	template<ui32 N, typename T> using Vec = Vector<N, T>;

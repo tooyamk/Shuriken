@@ -1,5 +1,4 @@
 #include <cmath>
-#include <string>
 #include "Matrix44.h"
 #include "math/Matrix34.h"
 #include "math/Quaternion.h"

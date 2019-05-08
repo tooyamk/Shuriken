@@ -3,7 +3,6 @@
 #include "base/Ref.h"
 #include "math/Box.h"
 #include "events/EventDispatcher.h"
-#include <string>
 
 namespace aurora {
 	enum class ApplicationEvent : ui8 {

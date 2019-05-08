@@ -1,12 +1,11 @@
 #pragma once
 
-#include <functional>
-#include <string>
-#include <vector>
 #include "base/Ref.h"
 #include "math/Matrix34.h"
 #include "math/Quaternion.h"
 #include "math/Vector.h"
+#include <functional>
+#include <vector>
 
 namespace aurora::nodes::component {
 	class AbstractComponent;
