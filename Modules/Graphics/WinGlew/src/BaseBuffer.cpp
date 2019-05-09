@@ -18,7 +18,7 @@ namespace aurora::modules::graphics::win_glew {
 		releaseBuffer();
 	}
 
-	bool BaseBuffer::create(ui32 size, Usage resUsage, const void* data) {
+	bool BaseBuffer::create(Graphics* graphics, ui32 size, Usage resUsage, const void* data) {
 		releaseBuffer();
 
 		glGenBuffers(1, &handle);
@@ -27,11 +27,18 @@ namespace aurora::modules::graphics::win_glew {
 			this->resUsage = resUsage & (Usage::CPU_READ_WRITE | Usage::GPU_WRITE);
 			this->size = size;
 
+			glBindBuffer(bufferType, handle);
+
+			if ((resUsage & Usage::PERSISTENT_MAP) == Usage::PERSISTENT_MAP) {
+
+			}
+
 			GLbitfield flags = GL_MAP_WRITE_BIT
 				| GL_MAP_PERSISTENT_BIT //在被映射状态下不同步
 				| GL_MAP_COHERENT_BIT;  //数据对GPU立即可见
 
-			glBindBuffer(bufferType, handle);
+			
+			//glBufferData(bufferType, size, data, GL_DYNAMIC_DRAW);
 			glBufferStorage(bufferType, size, data, flags);
 			mapData = glMapBufferRange(bufferType, 0, size, flags);
 
@@ -54,7 +61,7 @@ namespace aurora::modules::graphics::win_glew {
 			}
 			if ((expectMapUsage & Usage::CPU_WRITE) == Usage::CPU_WRITE) {
 				if ((resUsage & Usage::CPU_WRITE) == Usage::CPU_WRITE) {
-					ret |= Usage::CPU_WRITE | Usage::CPU_WRITE_NO_OVERWRITE;
+					ret |= Usage::CPU_WRITE;
 				}
 			} else {
 				expectMapUsage &= ~Usage::CPU_WRITE;
@@ -67,7 +74,11 @@ namespace aurora::modules::graphics::win_glew {
 	}
 
 	void BaseBuffer::unmap() {
-		mapUsage = Usage::NONE;
+		if (mapUsage != Usage::NONE) {
+			mapUsage = Usage::NONE;
+
+			flush();
+		}
 	}
 
 	i32 BaseBuffer::read(ui32 offset, void* dst, ui32 dstLen, i32 readLen) {
@@ -77,6 +88,7 @@ namespace aurora::modules::graphics::win_glew {
 	i32 BaseBuffer::write(ui32 offset, const void* data, ui32 length) {
 		if ((mapUsage & Usage::CPU_WRITE) == Usage::CPU_WRITE) {
 			if (data && length && offset < size) {
+				dirty = true;
 				length = std::min<ui32>(length, size - offset);
 				memcpy((i8*)mapData + offset, data, length);
 				return length;
@@ -87,6 +99,16 @@ namespace aurora::modules::graphics::win_glew {
 	}
 
 	i32 BaseBuffer::update(ui32 offset, const void* data, ui32 length) {
+		if ((resUsage & Usage::GPU_WRITE) == Usage::GPU_WRITE) {
+			if (data && length && offset < size) {
+				length = std::min<ui32>(length, size - offset);
+
+				glBindBuffer(bufferType, handle);
+				glBufferSubData(bufferType, offset, length, data);
+				return length;
+			}
+			return 0;
+		}
 		return -1;
 	}
 

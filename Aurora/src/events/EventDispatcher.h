@@ -16,8 +16,8 @@ namespace aurora::events {
 
 		virtual bool AE_CALL addEventListener(const EvtType& type, IEventListener<EvtType>& listener, bool ref) override {
 			bool rst = true;
-			auto itr = _listeners.find(type);
-			if (itr == _listeners.end()) {
+
+			if (auto itr = _listeners.find(type); itr == _listeners.end()) {
 				if (ref) listener.ref();
 				_listeners.emplace(std::piecewise_construct,
 					std::forward_as_tuple(type),
@@ -70,22 +70,13 @@ namespace aurora::events {
 
 		virtual ui32 AE_CALL hasEventListener(const EvtType& type) const  override {
 			auto itr = _listeners.find(type);
-			if (itr == _listeners.end()) {
-				return 0;
-			} else {
-				return itr->second.numValidListeners;
-			}
+			return itr == _listeners.end() ? 0 : itr->second.numValidListeners;
 		}
 
 		virtual bool AE_CALL hasEventListener(const EvtType& type, const IEventListener<EvtType>& listener) const override {
-			auto itr = _listeners.find(type);
-			if (itr == _listeners.end()) {
-				return false;
-			} else {
-				auto& tl = itr->second;
-				if (tl.numValidListeners) {
-					auto& list = tl.listeners;
-					if (tl.dispatching) {
+			if (auto itr = _listeners.find(type); itr != _listeners.end()) {
+				if (auto& tl = itr->second; tl.numValidListeners) {
+					if (auto& list = tl.listeners; tl.dispatching) {
 						for (auto& f : list) {
 							if (f.valid && f.rawListener == &listener) return true;
 						}
@@ -95,53 +86,50 @@ namespace aurora::events {
 						}
 					}
 				}
-
-				return false;
 			}
+
+			return false;
 		}
 
 		virtual bool AE_CALL removeEventListener(const EvtType& type, const IEventListener<EvtType>& listener) override {
-			bool rst = false;
-			auto itr = _listeners.find(type);
-			if (itr != _listeners.end()) {
-				auto& tl = itr->second;
-				if (tl.numValidListeners) {
-					auto& list = tl.listeners;
-					if (tl.dispatching) {
+			if (auto itr = _listeners.find(type); itr != _listeners.end()) {
+				if (auto& tl = itr->second; tl.numValidListeners) {
+					if (auto& list = tl.listeners; tl.dispatching) {
 						for (auto& f : list) {
 							if (f.rawListener == &listener) {
 								if (f.valid) {
 									f.valid = false;
-									rst = true;
 									if (f.ref) f.rawListener->unref();
 									--tl.numValidListeners;
+
+									return true;
 								}
-								break;
+
+								return false;
 							}
 						}
 					} else {
 						for (auto itr = list.begin(); itr != list.end(); ++itr) {
 							if (&listener == (*itr).rawListener) {
-								rst = true;
 								if ((*itr).ref) (*itr).rawListener->unref();
 
 								list.erase(itr);
 								--tl.numValidListeners;
 								--tl.numTotalListeners;
-								break;
+
+								return true;
 							}
 						}
 					}
 				}
 			}
 
-			return rst;
+			return false;
 		}
 
 		virtual ui32 AE_CALL removeEventListeners(const EvtType& type) override {
 			auto itr = _listeners.find(type);
-			if (itr != _listeners.end()) return _removeEventListeners(itr->second);
-			return 0;
+			return itr == _listeners.end() ? 0 : _removeEventListeners(itr->second);
 		}
 
 		virtual ui32 AE_CALL removeEventListeners() override {
@@ -159,8 +147,7 @@ namespace aurora::events {
 		}
 
 		virtual void AE_CALL dispatchEvent(void* target, const EvtType& type, void* data = nullptr) const override {
-			auto itr = _listeners.find(type);
-			if (itr != _listeners.end()) {
+			if (auto itr = _listeners.find(type); itr != _listeners.end()) {
 				auto& tl = itr->second;
 				if (tl.numValidListeners) {
 					++tl.dispatching;
@@ -220,8 +207,7 @@ namespace aurora::events {
 		ui32 AE_CALL _removeEventListeners(TypeListeners& typeListeners) {
 			ui32 n = typeListeners.numValidListeners;
 			if (typeListeners.numValidListeners) {
-				auto& list = typeListeners.listeners;
-				if (typeListeners.dispatching) {
+				if (auto& list = typeListeners.listeners; typeListeners.dispatching) {
 					for (auto& f : list) {
 						if (f.valid) {
 							f.valid = false;

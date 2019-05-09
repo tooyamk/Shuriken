@@ -139,8 +139,7 @@ namespace aurora::modules::graphics::win_glew {
 							parentVars = &foundMemVar->structMembers;
 						} else {
 							auto& var = parentVars->emplace_back();
-							auto svLen = sv.size();
-							if (svLen > 3 && sv[svLen - 3] == '[' && sv[svLen - 2] == '0' && sv[svLen - 1] == ']') {
+							if (auto svLen = sv.size(); svLen > 3 && sv[svLen - 3] == '[' && sv[svLen - 2] == '0' && sv[svLen - 1] == ']') {
 								var.name = sv.substr(0, svLen - 3);
 							} else {
 								var.name = sv;
@@ -177,8 +176,7 @@ namespace aurora::modules::graphics::win_glew {
 			auto g = _graphics.get<Graphics>();
 
 			for (auto& info : _inVertexBufferLayouts) {
-				auto vb = vertexFactory->get(info.name);
-				if (vb && _graphics == vb->getGraphics()) ((VertexBuffer*)vb)->use(info.location);
+				if (auto vb = vertexFactory->get(info.name); vb && _graphics == vb->getGraphics()) ((VertexBuffer*)vb)->use(info.location);
 			}
 
 			if (paramFactory) {
@@ -195,8 +193,7 @@ namespace aurora::modules::graphics::win_glew {
 							if (cb) {
 								bool isMaping = false;
 								for (ui32 i = 0; i < numVars; ++i) {
-									auto param = _tempParams[i];
-									if (param && param->getUpdateId() != cb->recordUpdateIds[i]) {
+									if (auto param = _tempParams[i]; param && param->getUpdateId() != cb->recordUpdateIds[i]) {
 										if (!isMaping) {
 											if (cb->map(Usage::CPU_WRITE) == Usage::NONE) break;
 											isMaping = true;
@@ -230,7 +227,30 @@ namespace aurora::modules::graphics::win_glew {
 	}
 
 	void Program::_updateConstantBuffer(ConstantBuffer* cb, const ShaderParameter& param, const ConstantBufferLayout::Variables& var) {
+		ui32 size = param.getSize();
+		if (!size) return;
 
+		ui16 pes = param.getPerElementSize();
+		if (pes < size) {
+			/*
+			auto remainder = pes & 0b1111;
+			if (remainder) {
+				auto offset = pes + 16 - remainder;
+				auto max = std::min<ui32>(size, var.size);
+				ui32 cur = 0, fillSize = 0;
+				auto data = (const i8*)param.getData();
+				do {
+					cb->write(var.offset + fillSize, data + cur, pes);
+					cur += pes;
+					fillSize += offset;
+				} while (cur < max && fillSize < var.size);
+			} else {
+				cb->write(var.offset, param.getData(), std::min<ui32>(size, var.size));
+			}
+			*/
+		} else {
+			cb->write(var.offset, param.getData(), std::min<ui32>(size, var.size));
+		}
 	}
 
 	void Program::_constantBufferUpdateAll(ConstantBuffer* cb, const std::vector<ConstantBufferLayout::Variables>& vars) {
@@ -259,8 +279,7 @@ namespace aurora::modules::graphics::win_glew {
 
 		if (source.language != ProgramLanguage::GLSL) {
 			auto g = _graphics.get<Graphics>();
-			auto translator = g->getProgramSourceTranslator();
-			if (translator) {
+			if (auto translator = g->getProgramSourceTranslator(); translator) {
 				return _compileShader(g->getProgramSourceTranslator()->translate(source, ProgramLanguage::GLSL, g->getStringVersion()), type);
 			} else {
 				return 0;

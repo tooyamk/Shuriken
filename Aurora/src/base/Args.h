@@ -9,8 +9,7 @@ namespace aurora {
 	public:
 		template<typename T>
 		Args& add(const std::string& name, const T value) {
-			auto itr = _args.find(name);
-			if (itr == _args.end()) {
+			if (auto itr = _args.find(name); itr == _args.end()) {
 				_args.emplace(name, value);
 			} else {
 				itr->second.emplace<T>(value);

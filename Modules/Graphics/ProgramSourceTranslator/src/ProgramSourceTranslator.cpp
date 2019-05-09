@@ -11,8 +11,7 @@ namespace aurora::modules::graphics::program_source_translator {
 		_dxcLib(nullptr),
 		_dxcompiler(nullptr) {
 		if (_dxcDll.load(dxc)) {
-			auto fn = (DxcCreateInstanceProc)_dxcDll.getSymbolAddress("DxcCreateInstance");
-			if (fn) {
+			if (auto fn = (DxcCreateInstanceProc)_dxcDll.getSymbolAddress("DxcCreateInstance"); fn) {
 				IFT(fn(CLSID_DxcLibrary, __uuidof(IDxcLibrary), (void**)&_dxcLib));
 				IFT(fn(CLSID_DxcCompiler, __uuidof(IDxcCompiler), (void**)&_dxcompiler));
 			}
@@ -151,8 +150,7 @@ namespace aurora::modules::graphics::program_source_translator {
 			opts.vertex.support_nonzero_base_instance = true;
 			compiler.set_common_options(opts);
 
-			auto sampler = compiler.build_dummy_sampler_for_combined_images();
-			if (sampler != 0) {
+			if (auto sampler = compiler.build_dummy_sampler_for_combined_images(); sampler != 0) {
 				compiler.set_decoration(sampler, spv::DecorationDescriptorSet, 0);
 				compiler.set_decoration(sampler, spv::DecorationBinding, 0);
 			}

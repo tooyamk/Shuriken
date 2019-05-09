@@ -32,8 +32,9 @@ namespace aurora::modules::graphics {
 		CPU_WRITE = 1 << 1,
 		GPU_WRITE = 1 << 2,
 
-		CPU_WRITE_DISCARD = 1 << 3,
-		CPU_WRITE_NO_OVERWRITE = 1 << 4,
+		PERSISTENT_MAP = 1 << 3,
+
+		DISCARD = 1 << 4,
 
 		CPU_READ_WRITE = CPU_READ | CPU_WRITE,
 		CPU_GPU_WRITE = CPU_WRITE | GPU_WRITE
@@ -295,6 +296,7 @@ namespace aurora::modules::graphics {
 		bool supportSampler;
 		bool supportTextureView;
 		bool supportConstantBuffer;
+		bool supportPersisientMap;
 	};
 
 

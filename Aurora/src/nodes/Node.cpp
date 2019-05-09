@@ -236,10 +236,10 @@ namespace aurora::nodes {
 			_dirty &= DirtyFlag::NOT_WM;
 
 			updateLocalMatrix();
-			auto p = _parent;
-			if (p) {
-				p->updateWorldMatrix();
-				_lm.append(p->_wm, _wm);
+			
+			if (_parent) {
+				_parent->updateWorldMatrix();
+				_lm.append(_parent->_wm, _wm);
 			} else {
 				_wm.set34(_lm);
 			}
@@ -257,8 +257,7 @@ namespace aurora::nodes {
 
 	void Node::addComponent(component::AbstractComponent* component) {
 		if (component) {
-			auto node = component->getNode();
-			if (node != this) {
+			if (auto node = component->getNode(); node != this) {
 				component->ref();
 				if (node) node->_removeComponent(component);
 				_components.push_back(component);
@@ -396,12 +395,11 @@ namespace aurora::nodes {
 	}
 
 	void Node::_worldPositionChanged(ui32 oldDirty) {
-		auto p = _parent;
-		if (p) {
-			p->updateInverseWorldMatrix();
+		if (_parent) {
+			_parent->updateInverseWorldMatrix();
 
 			f32 tmp[3] = { _wm.data[0][3], _wm.data[1][3], _wm.data[2][3] };
-			Math::matTransformPoint(p->_iwm.data, tmp, tmp);
+			Math::matTransformPoint(_parent->_iwm.data, tmp, tmp);
 
 			_lm.setPosition(tmp);
 		} else {
@@ -413,10 +411,9 @@ namespace aurora::nodes {
 	}
 
 	void Node::_worldRotationChanged(ui32 oldDirty) {
-		auto p = _parent;
-		if (p) {
-			p->updateWorldRotation();
-			p->_wr.invert(_lr);
+		if (_parent) {
+			_parent->updateWorldRotation();
+			_parent->_wr.invert(_lr);
 			_wr.append(_lr, _lr);
 		} else {
 			_lr.set(_wr);
@@ -444,8 +441,7 @@ namespace aurora::nodes {
 	}
 
 	void Node::_removeComponent(component::AbstractComponent* component) {
-		auto itr = std::find(_components.begin(), _components.end(), component);
-		if (itr != _components.end()) _components.erase(itr);
+		if (auto itr = std::find(_components.begin(), _components.end(), component); itr != _components.end()) _components.erase(itr);
 		component->unref();
 	}
 }

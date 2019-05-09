@@ -25,11 +25,11 @@ namespace aurora {
 			size(size) {
 		}
 
-		inline bool operator==(const Box<N, T>& box) {
+		inline bool AE_CALL operator==(const Box<N, T>& box) {
 			return pos == box.pos && size == box.size;
 		}
 
-		inline bool operator!=(const Box<N, T>& box) {
+		inline bool AE_CALL operator!=(const Box<N, T>& box) {
 			return pos != box.pos || size != box.size;
 		}
 

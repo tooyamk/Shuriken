@@ -32,43 +32,94 @@ namespace aurora {
 
 		Vec(const T* values, ui32 len) {
 			set(values, len);
+			if (N > len) memset(data + len, 0, sizeof(T) * (N - len));
 		}
 
 		Vec(const std::initializer_list<const T>& list) {
 			set(list);
+			if (N > list.size()) memset(data + list.size(), 0, sizeof(T) * (N - list.size()));
 		}
 
 		template<typename... Args, typename = typename std::enable_if_t<are_all_convertible_v<Args..., T>>>
 		Vec(Args... args) {
 			set(args...);
+			if constexpr (N > sizeof...(args)) memset(data + sizeof...(args), 0, sizeof(T) * (N - sizeof...(args)));
 		}
 
-		inline operator Data&() {
+		inline AE_CALL operator Data&() {
 			return data;
 		}
 
-		inline  T& operator[](i32 i) {
+		inline  T& AE_CALL operator[](i32 i) {
 			return data[i];
 		}
 
-		inline const T& operator[](i32 i) const {
+		inline const T& AE_CALL operator[](i32 i) const {
 			return data[i];
 		}
 
-		inline bool operator==(const T value) const {
+		inline bool AE_CALL operator==(const T value) const {
 			return Math::isEqual<N, T>(data, value);
 		}
 
-		inline bool operator==(const Vec& value) const {
+		inline bool AE_CALL operator==(const Vec& value) const {
 			return Math::isEqual<N, T>(data, value.data);
 		}
 
-		inline bool operator!=(const T value) const {
+		inline bool AE_CALL operator!=(const T value) const {
 			return !Math::isEqual<N, T>(data, value);
 		}
 
-		inline bool operator!=(const Vec& value) const {
+		inline bool AE_CALL operator!=(const Vec& value) const {
 			return !Math::isEqual<N, T>(data, value.data);
+		}
+
+		inline void AE_CALL operator+=(const T value) {
+			add(value);
+		}
+
+		inline void AE_CALL operator+=(const T(&values)[N]) {
+			add(values);
+		}
+
+		inline void AE_CALL operator+=(const Vec& vec) {
+			add(vec);
+		}
+
+		inline void AE_CALL operator-=(const T value) {
+			sub(value);
+		}
+
+		inline void AE_CALL operator-=(const T(&values)[N]) {
+			sub(values);
+		}
+
+		inline void AE_CALL operator-=(const Vec& vec) {
+			sub(vec);
+		}
+
+		inline void AE_CALL operator*=(const T value) {
+			mul(value);
+		}
+
+		inline void AE_CALL operator*=(const T(&values)[N]) {
+			mul(values);
+		}
+
+		inline void AE_CALL operator*=(const Vec& vec) {
+			mul(vec);
+		}
+
+		inline void AE_CALL operator/=(const T value) {
+			div(value);
+		}
+
+		inline void AE_CALL operator/=(const T(&values)[N]) {
+			div(values);
+		}
+
+		inline void AE_CALL operator/=(const Vec& vec) {
+			div(vec);
 		}
 
 		inline Vec& AE_CALL set(const T value) {
@@ -77,7 +128,7 @@ namespace aurora {
 		}
 
 		inline Vec& AE_CALL set(const Vec& vec) {
-			return set(vec.data, N);
+			return set(vec.data);
 		}
 
 		inline Vec& AE_CALL set(const T(&values)[N]) {
@@ -86,8 +137,7 @@ namespace aurora {
 		}
 
 		inline Vec& AE_CALL set(const T* values, ui32 len) {
-			auto n = N > len ? len : N;
-			for (ui32 i = 0; i < n; ++i) data[i] = values[i];
+			for (ui32 i = 0, n = N > len ? len : N; i < n; ++i) data[i] = values[i];
 			return *this;
 		}
 
@@ -106,6 +156,62 @@ namespace aurora {
 				}
 			}
 			return *this;
+		}
+
+		inline Vec& AE_CALL add(const T value) {
+			for (ui32 i = 0; i < N; ++i) data[i] += value;
+			return *this;
+		}
+
+		inline Vec& AE_CALL add(const T(&values)[N]) {
+			for (ui32 i = 0; i < N; ++i) data[i] += values[i];
+			return *this;
+		}
+
+		inline Vec& AE_CALL add(const Vec& vec) {
+			return add(vec.data);
+		}
+
+		inline Vec& AE_CALL sub(const T value) {
+			for (ui32 i = 0; i < N; ++i) data[i] -= value;
+			return *this;
+		}
+
+		inline Vec& AE_CALL sub(const T(&values)[N]) {
+			for (ui32 i = 0; i < N; ++i) data[i] -= values[i];
+			return *this;
+		}
+
+		inline Vec& AE_CALL sub(const Vec& vec) {
+			return sub(vec.data);
+		}
+
+		inline Vec& AE_CALL mul(const T value) {
+			for (ui32 i = 0; i < N; ++i) data[i] *= value;
+			return *this;
+		}
+
+		inline Vec& AE_CALL mul(const T(&values)[N]) {
+			for (ui32 i = 0; i < N; ++i) data[i] *= values[i];
+			return *this;
+		}
+
+		inline Vec& AE_CALL mul(const Vec& vec) {
+			return mul(vec.data);
+		}
+
+		inline Vec& AE_CALL div(const T value) {
+			for (ui32 i = 0; i < N; ++i) data[i] /= value;
+			return *this;
+		}
+
+		inline Vec& AE_CALL div(const T(&values)[N]) {
+			for (ui32 i = 0; i < N; ++i) data[i] /= values[i];
+			return *this;
+		}
+
+		inline Vec& AE_CALL div(const Vec& vec) {
+			return div(vec.data);
 		}
 
 		inline bool AE_CALL isEqual(const T value) const {

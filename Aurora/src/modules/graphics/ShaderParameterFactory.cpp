@@ -7,8 +7,7 @@ namespace aurora::modules::graphics {
 	}
 
 	ShaderParameter* ShaderParameterFactory::add(const std::string& name, ShaderParameter* parameter) {
-		auto itr = _parameters.find(name);
-		if (parameter) {
+		if (auto itr = _parameters.find(name); parameter) {
 			if (itr == _parameters.end()) {
 				parameter->ref();
 				_parameters.emplace(name, parameter);
@@ -17,19 +16,16 @@ namespace aurora::modules::graphics {
 				itr->second->unref();
 				itr->second = parameter;
 			}
-		} else {
-			if (itr != _parameters.end()) {
-				itr->second->unref();
-				_parameters.erase(itr);
-			}
+		} else if (itr != _parameters.end()) {
+			itr->second->unref();
+			_parameters.erase(itr);
 		}
 
 		return parameter;
 	}
 
 	void ShaderParameterFactory::remove(const std::string& name) {
-		auto itr = _parameters.find(name);
-		if (itr != _parameters.end()) {
+		if (auto itr = _parameters.find(name); itr != _parameters.end()) {
 			itr->second->unref();
 			_parameters.erase(itr);
 		}

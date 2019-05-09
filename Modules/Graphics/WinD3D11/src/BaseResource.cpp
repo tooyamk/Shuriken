@@ -59,17 +59,15 @@ namespace aurora::modules::graphics::win_d3d11 {
 					if (bindType == D3D11_BIND_CONSTANT_BUFFER) {
 						if (graphics->getInternalFeatures().MapNoOverwriteOnDynamicConstantBuffer) {
 							mapType |= D3D11_MAP_WRITE_NO_OVERWRITE;
-							ret |= Usage::CPU_WRITE_NO_OVERWRITE;
 						} else {
 							mapType |= D3D11_MAP_WRITE_DISCARD;
-							ret |= Usage::CPU_WRITE_DISCARD;
+							ret |= Usage::DISCARD;
 						}
 					} else if (bindType & (D3D11_BIND_VERTEX_BUFFER | D3D11_BIND_INDEX_BUFFER)) {
 						mapType |= D3D11_MAP_WRITE_NO_OVERWRITE;
-						ret |= Usage::CPU_WRITE_NO_OVERWRITE;
 					} else {
 						mapType |= D3D11_MAP_WRITE_DISCARD;
-						ret |= Usage::CPU_WRITE_DISCARD;
+						ret |= Usage::DISCARD;
 					}
 				}
 			} else {

@@ -161,8 +161,7 @@ namespace aurora {
 
 		template<ui32 N, typename In, typename Out = In>
 		static void AE_CALL normalize(const In(&v)[N], Out(&dst)[N]) {
-			auto n = dot<N, In, f32>(v, v);
-			if (!isEqual<In>(n, 1, TOLERANCE<decltype(n)>)) {
+			if (auto n = dot<N, In, f32>(v, v); !isEqual<In>(n, 1, TOLERANCE<decltype(n)>)) {
 				n = std::sqrt(n);
 				if (n > TOLERANCE<decltype(n)>) {
 					n = NUMBER_1<decltype(n)> / n;

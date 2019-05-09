@@ -5,6 +5,6 @@
 namespace aurora::file {
 	class AE_EXTENSION_DLL PNGConverter {
 	public:
-		static Image* AE_CALL parse(ByteArray& source);
+		static Image* AE_CALL parse(const ByteArray& source);
 	};
 }

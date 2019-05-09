@@ -82,7 +82,6 @@ namespace aurora::modules::graphics::win_d3d11 {
 		f32 maxRefreshRate = 0.f;
 		for (UINT i = 0;; ++i) {
 			IDXGIOutput* output = nullptr;
-			auto fiwehfoew = dxgAdapter->EnumOutputs(i, &output);
 			if (dxgAdapter->EnumOutputs(i, &output) == DXGI_ERROR_NOT_FOUND) break;
 			objs.add(output);
 
@@ -98,8 +97,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 			for (ui32 i = 0; i < numSupportedModes; ++i) {
 				auto& m = supportedModes[i];
-				ui32 area = m.Width * m.Height;
-				if (maxResolutionArea < area) {
+				if (ui32 area = m.Width * m.Height; maxResolutionArea < area) {
 					maxResolutionArea = area;
 					_refreshRate.Numerator = 0;
 					_refreshRate.Denominator = 1;
@@ -255,6 +253,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_deviceFeatures.supportSampler = true;
 		_deviceFeatures.supportTextureView = true;
 		_deviceFeatures.supportConstantBuffer = true;
+		_deviceFeatures.supportPersisientMap = false;
 
 		_resize((Vec2<UINT>&)size);
 

@@ -56,9 +56,9 @@ namespace aurora::modules {
 		void AE_CALL set(ui8* data, ui32 len);
 		bool AE_CALL isEqual(ui8* data, ui32 len) const;
 
-		InputDeviceGUID& operator=(const InputDeviceGUID& value);
-		InputDeviceGUID& operator=(InputDeviceGUID&& value);
-		bool operator==(const InputDeviceGUID& right) const;
+		InputDeviceGUID& AE_CALL operator=(const InputDeviceGUID& value);
+		InputDeviceGUID& AE_CALL operator=(InputDeviceGUID&& value);
+		bool AE_CALL operator==(const InputDeviceGUID& right) const;
 
 	private:
 		ui8* _data;
@@ -76,8 +76,8 @@ namespace aurora::modules {
 		InputDeviceGUID guid;
 		ui32 type;
 
-		InputDeviceInfo& operator=(const InputDeviceInfo& value);
-		InputDeviceInfo& operator=(InputDeviceInfo&& value);
+		InputDeviceInfo& AE_CALL operator=(const InputDeviceInfo& value);
+		InputDeviceInfo& AE_CALL operator=(InputDeviceInfo&& value);
 	};
 
 

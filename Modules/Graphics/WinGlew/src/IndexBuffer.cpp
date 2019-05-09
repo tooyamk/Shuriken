@@ -12,7 +12,7 @@ namespace aurora::modules::graphics::win_glew {
 	}
 
 	bool IndexBuffer::create(ui32 size, Usage bufferUsage, const void* data, ui32 dataSize) {
-		auto rst = _baseBuffer.create(size, bufferUsage, data);
+		auto rst = _baseBuffer.create(_graphics.get<Graphics>(), size, bufferUsage, data);
 		_calcNumElements();
 		return rst;
 	}

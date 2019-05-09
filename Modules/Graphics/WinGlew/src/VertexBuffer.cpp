@@ -13,7 +13,7 @@ namespace aurora::modules::graphics::win_glew {
 	}
 
 	bool VertexBuffer::create(ui32 size, Usage bufferUsage, const void* data, ui32 dataSize) {
-		return _baseBuffer.create(size, bufferUsage, data);
+		return _baseBuffer.create(_graphics.get<Graphics>(), size, bufferUsage, data);
 	}
 
 	Usage VertexBuffer::getUsage() const {

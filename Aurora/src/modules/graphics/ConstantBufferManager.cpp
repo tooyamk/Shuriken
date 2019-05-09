@@ -42,11 +42,9 @@ namespace aurora::modules::graphics {
 
 	void ConstantBufferLayout::_collectUsingInfo(const ConstantBufferLayout::Variables& var, const ShaderParameterFactory& factory, 
 		ShaderParameterUsageStatistics& statistics, std::vector<const ShaderParameter*>& usingParams, std::vector<const ConstantBufferLayout::Variables*>& usingVars) const {
-		auto p = factory.get(var.name);
-		if (var.structMembers.size()) {
+		if (auto p = factory.get(var.name); var.structMembers.size()) {
 			if (p && p->getType() == ShaderParameterType::FACTORY) {
-				auto data = p->getData();
-				if (data) {
+				if (auto data = p->getData(); data) {
 					for (auto& memVar : var.structMembers) _collectUsingInfo(memVar, *(const ShaderParameterFactory*)data, statistics, usingParams, usingVars);
 				}
 			}
@@ -87,8 +85,7 @@ namespace aurora::modules::graphics {
 	}
 
 	void ConstantBufferManager::_registerShareConstantLayout(ui32 size) {
-		auto itr = _shareConstBufferPool.find(size);
-		if (itr == _shareConstBufferPool.end()) {
+		if (auto itr = _shareConstBufferPool.find(size); itr == _shareConstBufferPool.end()) {
 			auto& pool = _shareConstBufferPool.emplace(std::piecewise_construct, std::forward_as_tuple(size), std::forward_as_tuple()).first->second;
 			pool.rc = 1;
 			pool.idleIndex = 0;
@@ -98,27 +95,21 @@ namespace aurora::modules::graphics {
 	}
 
 	void ConstantBufferManager::_unregisterShareConstantLayout(ui32 size) {
-		auto itr = _shareConstBufferPool.find(size);
-		if (itr != _shareConstBufferPool.end()) {
-			if (itr->second.rc == 1) {
-				//_graphics->ref();
+		if (auto itr = _shareConstBufferPool.find(size); itr != _shareConstBufferPool.end() && !--itr->second.rc) {
+			//_graphics->ref();
 
-				for (auto cb : itr->second.buffers) cb->unref();
-				_shareConstBufferPool.erase(itr);
+			for (auto cb : itr->second.buffers) cb->unref();
+			_shareConstBufferPool.erase(itr);
 
-				//_graphics->unref();
-			}
+			//_graphics->unref();
 		}
 	}
 
 	IConstantBuffer* ConstantBufferManager::popShareConstantBuffer(ui32 size) {
-		auto itr = _shareConstBufferPool.find(size);
-		if (itr != _shareConstBufferPool.end()) {
+		if (auto itr = _shareConstBufferPool.find(size); itr != _shareConstBufferPool.end()) {
 			auto& pool = itr->second;
-			auto& buffers = pool.buffers;
-			auto len = buffers.size();
 			IConstantBuffer* cb;
-			if (pool.idleIndex == len) {
+			if (auto& buffers = pool.buffers; pool.idleIndex == buffers.size()) {
 				cb = createShareConstantBufferCallback();
 				cb->ref();
 				cb->create(size, Usage::CPU_WRITE);
@@ -136,8 +127,7 @@ namespace aurora::modules::graphics {
 
 	void ConstantBufferManager::resetUsedShareConstantBuffers() {
 		for (auto size : _usedShareConstBufferPool) {
-			auto itr = _shareConstBufferPool.find(size);
-			if (itr != _shareConstBufferPool.end()) itr->second.idleIndex = 0;
+			if (auto itr = _shareConstBufferPool.find(size); itr != _shareConstBufferPool.end()) itr->second.idleIndex = 0;
 		}
 		_usedShareConstBufferPool.clear();
 	}
@@ -147,8 +137,7 @@ namespace aurora::modules::graphics {
 	}
 
 	void ConstantBufferManager::_registerExclusiveConstantLayout(ConstantBufferLayout& layout) {
-		auto itr = _exclusiveConstPool.find(layout.featureCode);
-		if (itr == _exclusiveConstPool.end()) {
+		if (auto itr = _exclusiveConstPool.find(layout.featureCode); itr == _exclusiveConstPool.end()) {
 			_exclusiveConstPool.emplace(std::piecewise_construct, std::forward_as_tuple(layout.featureCode), std::forward_as_tuple()).first->second.rc = 1;
 		} else {
 			++itr->second.rc;
@@ -156,8 +145,7 @@ namespace aurora::modules::graphics {
 	}
 
 	void ConstantBufferManager::_unregisterExclusiveConstantLayout(ConstantBufferLayout& layout) {
-		auto itr = _exclusiveConstPool.find(layout.featureCode);
-		if (itr != _exclusiveConstPool.end() && !--itr->second.rc) {
+		if (auto itr = _exclusiveConstPool.find(layout.featureCode); itr != _exclusiveConstPool.end() && !--itr->second.rc) {
 			//_graphics->ref();
 
 			for (auto node : itr->second.nodes) {
@@ -177,14 +165,12 @@ namespace aurora::modules::graphics {
 		ExclusiveConstNode* node = nullptr;
 
 		if (param) {
-			auto itr = chindrenContainer.find(param);
-			if (itr == chindrenContainer.end()) {
+			if (auto itr = chindrenContainer.find(param); itr == chindrenContainer.end()) {
 				node = &chindrenContainer.emplace(std::piecewise_construct, std::forward_as_tuple(param), std::forward_as_tuple()).first->second;
 				node->parameter = param;
 				node->parent = parent;
 
-				auto itr2 = _exclusiveConstNodes.find(param);
-				if (itr2 == _exclusiveConstNodes.end()) {
+				if (auto itr2 = _exclusiveConstNodes.find(param); itr2 == _exclusiveConstNodes.end()) {
 					_exclusiveConstNodes.emplace(std::piecewise_construct, std::forward_as_tuple(param), std::forward_as_tuple()).first->second.emplace(node);
 				} else {
 					itr2->second.emplace(node);
@@ -200,9 +186,8 @@ namespace aurora::modules::graphics {
 			if (!param) node = parent;
 			if (!node) return nullptr;
 
-			auto itr = node->buffers.find(layout.featureCode);
 			IConstantBuffer* cb = nullptr;
-			if (itr == node->buffers.end()) {
+			if (auto itr = node->buffers.find(layout.featureCode); itr == node->buffers.end()) {
 				cb = node->buffers.emplace(layout.featureCode, createExclusiveConstantBufferCallback(cur + 1)).first->second;
 				cb->ref();
 				cb->create(layout.size, Usage::CPU_WRITE);
@@ -232,10 +217,8 @@ namespace aurora::modules::graphics {
 	}
 
 	void ConstantBufferManager::_releaseExclusiveConstant(const ShaderParameter& param) {
-		auto itr = _exclusiveConstNodes.find(&param);
-		if (itr != _exclusiveConstNodes.end()) {
-			auto& nodes = itr->second;
-			for (auto node : nodes) {
+		if (auto itr = _exclusiveConstNodes.find(&param); itr != _exclusiveConstNodes.end()) {
+			for (auto node : itr->second) {
 				_releaseExclusiveConstantToLeaf(*node, false);
 				_releaseExclusiveConstantToRoot(node->parent, nullptr, node->numAssociativeBuffers, false);
 			}
@@ -257,11 +240,9 @@ namespace aurora::modules::graphics {
 				}
 				_releaseExclusiveConstantToRoot(parent->parent, nullptr, releaseNumAssociativeBuffers, releaseParam);
 			}
-		} else {
-			if (releaseChild) {
-				_releaseExclusiveConstantSelf(*releaseChild, releaseParam);
-				_exclusiveConstRoots.erase(_exclusiveConstRoots.find(releaseChild->parameter));
-			}
+		} else if (releaseChild) {
+			_releaseExclusiveConstantSelf(*releaseChild, releaseParam);
+			_exclusiveConstRoots.erase(_exclusiveConstRoots.find(releaseChild->parameter));
 		}
 	}
 

@@ -11,6 +11,7 @@ namespace aurora {
 			w = -w;
 			cos = -cos;
 		}
+
 		f32 k0, k1;
 		if (cos > .9999f) {
 			k0 = 1 - t;
@@ -39,6 +40,7 @@ namespace aurora {
 		for (ui8 c = 0; c < 4; ++c) {
 			for (ui8 r = 0; r < 3; ++r) d[c][r] = m[r][c];
 		}
+
 		d[0][3] = 0.f;
 		d[1][3] = 0.f;
 		d[2][3] = 0.f;
@@ -148,8 +150,7 @@ namespace aurora {
 		auto tmp1 = m[2][0] * m[1][2] - m[2][2] * m[1][0];
 		auto tmp2 = m[2][1] * m[1][0] - m[2][0] * m[1][1];
 
-		auto det = m[0][0] * tmp0 + m[0][1] * tmp1 + m[0][2] * tmp2;
-		if (abs(det) > Math::TOLERANCE<f32>) {
+		if (auto det = m[0][0] * tmp0 + m[0][1] * tmp1 + m[0][2] * tmp2; abs(det) > Math::TOLERANCE<f32>) {
 			det = 1.f / det;
 
 			f32 d[3][4];
@@ -209,8 +210,7 @@ namespace aurora {
 		auto d20 = tmp2 * m[1][0] + tmp7 * m[1][1] + tmp10 * m[1][3] - tmp3 * m[1][0] - tmp6 * m[1][1] - tmp11 * m[1][3];
 		auto d30 = tmp5 * m[1][0] + tmp8 * m[1][1] + tmp11 * m[1][2] - tmp4 * m[1][0] - tmp9 * m[1][1] - tmp10 * m[1][2];
 
-		auto det = m[0][0] * d00 + m[0][1] * d10 + m[0][2] * d20 + m[0][3] * d30;
-		if (abs(det) > Math::TOLERANCE<f32>) {
+		if (auto det = m[0][0] * d00 + m[0][1] * d10 + m[0][2] * d20 + m[0][3] * d30; abs(det) > Math::TOLERANCE<f32>) {
 			det = 1.f / det;
 
 			f32 d[4][4];

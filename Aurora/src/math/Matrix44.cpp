@@ -29,8 +29,7 @@ namespace aurora {
 
 	Matrix44::Matrix44(const std::initializer_list<f32>& m) {
 		auto p = m.begin();
-		ui32 size = m.size();
-		if (size >= 16) {
+		if (ui32 size = m.size(); size >= 16) {
 			auto p = m.begin();
 			for (auto e : data) *e = *(p++);
 		} else {

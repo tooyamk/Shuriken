@@ -16,7 +16,7 @@ namespace aurora {
 	public:
 		AtomicLock() = default;
 		AtomicLock(const AtomicLock&) = delete;
-		AtomicLock& operator= (const AtomicLock&) = delete;
+		AtomicLock& operator=(const AtomicLock&) = delete;
 
 		inline void AE_CALL lock() {
 			while (_flag.test_and_set(std::memory_order_acquire)) std::this_thread::yield();
@@ -35,7 +35,7 @@ namespace aurora {
 	public:
 		SpinAtomicLock() = default;
 		SpinAtomicLock(const SpinAtomicLock&) = delete;
-		SpinAtomicLock& operator= (const SpinAtomicLock&) = delete;
+		SpinAtomicLock& operator=(const SpinAtomicLock&) = delete;
 
 		inline void AE_CALL lock() {
 			while (_flag.test_and_set(std::memory_order_acquire));
@@ -54,7 +54,7 @@ namespace aurora {
 	public:
 		RecursiveAtomicLock() = default;
 		RecursiveAtomicLock(const RecursiveAtomicLock&) = delete;
-		RecursiveAtomicLock& operator= (const RecursiveAtomicLock&) = delete;
+		RecursiveAtomicLock& operator=(const RecursiveAtomicLock&) = delete;
 
 		void AE_CALL lock() {
 			auto cur = std::this_thread::get_id();
@@ -101,7 +101,7 @@ namespace aurora {
 				_rc.fetch_sub(1, std::memory_order_relaxed);
 			}
 			*/
-			if (--_rc == 0) {
+			if (!--_rc) {
 				_owner.store(std::thread::id(), std::memory_order::memory_order_relaxed);
 				_lock.store(false, std::memory_order::memory_order_release);
 			}
@@ -119,7 +119,7 @@ namespace aurora {
 	public:
 		RecursiveSpinAtomicLock() = default;
 		RecursiveSpinAtomicLock(const RecursiveSpinAtomicLock&) = delete;
-		RecursiveSpinAtomicLock& operator= (const RecursiveSpinAtomicLock&) = delete;
+		RecursiveSpinAtomicLock& operator=(const RecursiveSpinAtomicLock&) = delete;
 
 		void AE_CALL lock() {
 			auto cur = std::this_thread::get_id();
@@ -137,8 +137,9 @@ namespace aurora {
 
 			++_rc;
 		}
+
 		inline void AE_CALL unlock() {
-			if (--_rc == 0) {
+			if (!--_rc) {
 				_owner.store(std::thread::id(), std::memory_order::memory_order_relaxed);
 				_lock.store(false, std::memory_order::memory_order_release);
 			}

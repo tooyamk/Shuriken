@@ -39,10 +39,9 @@ namespace aurora {
 
 	void Quaternion::normalize() {
 		auto n = x * x + y * y + z * z + w * w;
-		if (n == 1.f) return;
 
-		n = std::sqrt(n);
-		if (n < Math::TOLERANCE<f32>) return;
+		if (n == 1.f) return;
+		if (n = std::sqrt(n); n < Math::TOLERANCE<f32>) return;
 
 		n = 1.f / n;
 

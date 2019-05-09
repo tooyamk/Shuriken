@@ -67,8 +67,7 @@ namespace aurora {
 
 		iterator AE_CALL find(T& value) {
 			for (auto itr = _raw.begin(); itr != _raw.end(); ++itr) {
-				auto& e = *itr;
-				if (e._value == value && e._valid) return itr;
+				if (auto& e = *itr; e._value == value && e._valid) return itr;
 			}
 
 			return _raw.end();
@@ -90,60 +89,59 @@ namespace aurora {
 		}
 
 		void AE_CALL traverse(const std::function<bool(T&)>& fn) {
+			if (!fn) return;
+
 			for (auto itr = _raw.begin(); itr != _raw.end(); ++itr) {
-				auto& e = *itr;
-				if (e._valid) {
-					if (!fn(e._value)) break;
-				}
+				if (auto& e = *itr; e._valid && !fn(e._value)) break;
 			}
 		}
 
 		void AE_CALL traverse(const std::function<void(T&)>& fn) {
+			if (!fn) return;
+
 			for (auto itr = _raw.begin(); itr != _raw.end(); ++itr) {
-				auto& e = *itr;
-				if (e._valid) fn(e._value)
+				if (auto& e = *itr; e._valid) fn(e._value)
 			}
 		}
 
 		void AE_CALL traverse(bool(*fn)(T&)) {
+			if (!fn) return;
+
 			for (auto itr = _raw.begin(); itr != _raw.end(); ++itr) {
-				auto& e = *itr;
-				if (e._valid) {
-					if (!fn(e._value)) break;
-				}
+				if (auto& e = *itr; e._valid && !fn(e._value)) break;
 			}
 		}
 
 		void AE_CALL traverse(void(*fn)(T&)) {
+			if (!fn) return;
+
 			for (auto itr = _raw.begin(); itr != _raw.end(); ++itr) {
-				auto& e = *itr;
-				if (e._valid) fn(e._value)
+				if (auto& e = *itr; e._valid) fn(e._value)
 			}
 		}
 
 		template<typename Class>
 		void AE_CALL traverse(Class* target, bool(Class::*fn)(T&)) {
+			if (!target || !fn) return;
+
 			for (auto itr = _raw.begin(); itr != _raw.end(); ++itr) {
-				auto& e = *itr;
-				if (e._valid) {
-					if (!(target->*fn)(e._value)) break;
-				}
+				if (auto& e = *itr; e._valid && !(target->*fn)(e._value)) break;
 			}
 		}
 
 		template<typename Class>
 		void AE_CALL traverse(Class* target, void(Class::*fn)(T&)) {
+			if (!target || !fn) return;
+
 			for (auto itr = _raw.begin(); itr != _raw.end(); ++itr) {
-				auto& e = *itr;
-				if (e._valid) (target->*fn)(e._value);
+				if (auto& e = *itr; e._valid) (target->*fn)(e._value);
 			}
 		}
 
 		inline void AE_CALL endTraverse() {
 			if (--_traversing == 0 && _validCount != _totalCount) {
 				for (auto itr = _raw.begin(); itr != _raw.end();) {
-					auto& e = *itr;
-					if (e._valid) {
+					if (auto& e = *itr; e._valid) {
 						++itr;
 					} else {
 						itr = _raw.erase(itr);

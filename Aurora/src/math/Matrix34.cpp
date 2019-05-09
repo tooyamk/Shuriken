@@ -27,9 +27,7 @@ namespace aurora {
 
 	Matrix34::Matrix34(const std::initializer_list<f32>& m) {
 		auto p = m.begin();
-		auto size = m.size();
-		if (size >= 12) {
-			auto p = m.begin();
+		if (auto size = m.size(); size >= 12) {
 			for (auto e : data) *e = *(p++);
 		} else {
 			auto m0 = (f32*)data;
@@ -126,8 +124,7 @@ namespace aurora {
 
 		auto dot = x * x + y * y + z * z;
 		if (dot != 1.f) {
-			dot = std::sqrt(dot);
-			if (dot > Math::TOLERANCE<f32>) {
+			if (dot = std::sqrt(dot); dot > Math::TOLERANCE<f32>) {
 				dot = 1.f / dot;
 
 				d[0][0] *= dot;
@@ -148,8 +145,7 @@ namespace aurora {
 
 		dot = x * x + y * y + z * z;
 		if (dot != 1.f) {
-			dot = std::sqrt(dot);
-			if (dot > Math::TOLERANCE<f32>) {
+			if (dot = std::sqrt(dot); dot > Math::TOLERANCE<f32>) {
 				dot = 1.f / dot;
 
 				d[0][1] *= dot;
@@ -171,8 +167,7 @@ namespace aurora {
 
 		dot = d[0][2] * x + d[1][2] * y + d[2][2] * z;
 		if (dot != 1.f) {
-			dot = std::sqrt(dot);
-			if (dot > Math::TOLERANCE<f32>) {
+			if (dot = std::sqrt(dot); dot > Math::TOLERANCE<f32>) {
 				dot = 1.f / dot;
 
 				d[0][2] *= dot;
@@ -221,46 +216,43 @@ namespace aurora {
 	void Matrix34::toQuaternion(Quaternion& dst) const {
 		auto& m = data;
 
-		auto tr = m[0][0] + m[1][1] + m[2][2];
-		if (tr > 0.f) {
+		if (auto tr = m[0][0] + m[1][1] + m[2][2]; tr > 0.f) {
 			auto s = std::sqrt(tr + 1.f);
 			dst.w = s * .5f;
 			s = .5f / s;
 			dst.x = (m[2][1] - m[1][2]) * s;
 			dst.y = (m[0][2] - m[2][0]) * s;
 			dst.z = (m[1][0] - m[0][1]) * s;
-		} else {
-			if (m[1][1] > m[0][0]) {
-				if (m[2][2] > m[1][1]) {//2
-					auto s = std::sqrt(m[2][2] - m[0][0] - m[1][1] + 1.f);
-					dst.z = s * 0.5f;
-					s = .5f / s;
-					dst.x = (m[0][2] + m[2][0]) * s;
-					dst.y = (m[1][2] + m[2][1]) * s;
-					dst.w = (m[1][0] - m[0][1]) * s;
-				} else {//1
-					auto s = std::sqrt(m[1][1] - m[2][2] - m[0][0] + 1.f);
-					dst.y = s * .5f;
-					s = .5f / s;
-					dst.x = (m[0][1] + m[1][0]) * s;
-					dst.z = (m[2][1] + m[1][2]) * s;
-					dst.w = (m[0][2] - m[2][0]) * s;
-				}
-			} else if (m[2][2] > m[0][0]) {//2
+		} else if (m[1][1] > m[0][0]) {
+			if (m[2][2] > m[1][1]) {//2
 				auto s = std::sqrt(m[2][2] - m[0][0] - m[1][1] + 1.f);
-				dst.z = s * .5f;
+				dst.z = s * 0.5f;
 				s = .5f / s;
 				dst.x = (m[0][2] + m[2][0]) * s;
 				dst.y = (m[1][2] + m[2][1]) * s;
 				dst.w = (m[1][0] - m[0][1]) * s;
-			} else {//0
-				auto s = std::sqrt(m[0][0] - m[1][1] - m[2][2] + 1.f);
-				dst.x = s * .5f;
+			} else {//1
+				auto s = std::sqrt(m[1][1] - m[2][2] - m[0][0] + 1.f);
+				dst.y = s * .5f;
 				s = .5f / s;
-				dst.y = (m[1][0] + m[0][1]) * s;
-				dst.z = (m[2][0] + m[0][2]) * s;
-				dst.w = (m[2][1] - m[1][2]) * s;
+				dst.x = (m[0][1] + m[1][0]) * s;
+				dst.z = (m[2][1] + m[1][2]) * s;
+				dst.w = (m[0][2] - m[2][0]) * s;
 			}
+		} else if (m[2][2] > m[0][0]) {//2
+			auto s = std::sqrt(m[2][2] - m[0][0] - m[1][1] + 1.f);
+			dst.z = s * .5f;
+			s = .5f / s;
+			dst.x = (m[0][2] + m[2][0]) * s;
+			dst.y = (m[1][2] + m[2][1]) * s;
+			dst.w = (m[1][0] - m[0][1]) * s;
+		} else {//0
+			auto s = std::sqrt(m[0][0] - m[1][1] - m[2][2] + 1.f);
+			dst.x = s * .5f;
+			s = .5f / s;
+			dst.y = (m[1][0] + m[0][1]) * s;
+			dst.z = (m[2][0] + m[0][2]) * s;
+			dst.w = (m[2][1] - m[1][2]) * s;
 		}
 	}
 

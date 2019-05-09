@@ -12,8 +12,7 @@ namespace aurora::modules::graphics {
 	}
 
 	void VertexBufferFactory::add(const std::string& name, IVertexBuffer* buffer) {
-		auto itr = _buffers.find(name);
-		if (buffer) {
+		if (auto itr = _buffers.find(name); buffer) {
 			if (itr == _buffers.end()) {
 				buffer->ref();
 				_buffers.emplace(name, buffer);
@@ -22,17 +21,14 @@ namespace aurora::modules::graphics {
 				itr->second->unref();
 				itr->second = buffer;
 			}
-		} else {
-			if (itr != _buffers.end()) {
-				itr->second->unref();
-				_buffers.erase(itr);
-			}
+		} else if (itr != _buffers.end()) {
+			itr->second->unref();
+			_buffers.erase(itr);
 		}
 	}
 
 	void VertexBufferFactory::remove(const std::string& name) {
-		auto itr = _buffers.find(name);
-		if (itr != _buffers.end()) {
+		if (auto itr = _buffers.find(name); itr != _buffers.end()) {
 			itr->second->unref();
 			_buffers.erase(itr);
 		}

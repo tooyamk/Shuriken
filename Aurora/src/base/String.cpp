@@ -5,8 +5,7 @@ namespace aurora {
 		ui32 s = 0, d = 0;
 		if (in) {
 			while (s < inLen) {
-				wchar_t c = in[s++];
-				if (c == 0) {
+				if (wchar_t c = in[s++]; c == 0) {
 					break;
 				} else if (c < 0x80) {  //
 					//length = 1;
@@ -56,8 +55,7 @@ namespace aurora {
 		ui32 s = 0, d = 0;
 		if (in) {
 			for (; s < inLen;) {
-				ui8 c = in[s];
-				if (c == 0) {
+				if (ui8 c = in[s]; c == 0) {
 					break;
 				} else if ((c & 0x80) == 0) {
 					++s;
@@ -118,8 +116,7 @@ namespace aurora {
 	ui32 String::_UnicodeToUtf8(const wchar_t* in, ui32 inLen, char* out) {
 		ui32 s = 0, d = 0;
 		while (s < inLen) {
-			wchar_t c = in[s++];
-			if (c < 0x80) {  //
+			if (wchar_t c = in[s++]; c < 0x80) {  //
 				//length = 1;
 				out[d++] = (char)c;
 			} else if (c < 0x800) {
@@ -146,8 +143,7 @@ namespace aurora {
 	ui32 String::_Utf8ToUnicode(const i8* in, ui32 inLen, wchar_t* out) {
 		ui32 s = 0, d = 0;
 		while (s < inLen) {
-			ui8 c = in[s];
-			if ((c & 0x80) == 0) {
+			if (ui8 c = in[s]; (c & 0x80) == 0) {
 				out[d++] = in[s++];
 			} else if ((c & 0xE0) == 0xC0) {// 110x-xxxx 10xx-xxxx
 				wchar_t& wideChar = out[d++];

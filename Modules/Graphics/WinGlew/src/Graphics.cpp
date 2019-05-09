@@ -138,6 +138,7 @@ namespace aurora::modules::graphics::win_glew {
 		_deviceFeatures.supportSampler = isGreatThanVersion(3, 3);
 		_deviceFeatures.supportTextureView = false;
 		_deviceFeatures.supportConstantBuffer = isGreatThanVersion(3, 1);
+		_deviceFeatures.supportPersisientMap = isGreatThanVersion(4, 4);
 
 		return true;
 	}

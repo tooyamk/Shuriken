@@ -22,7 +22,7 @@ namespace aurora::file {
 		}
 	}
 
-	Image* PNGConverter::parse(ByteArray& source) {
+	Image* PNGConverter::parse(const ByteArray& source) {
 		if (source.getLength() < 8 || png_sig_cmp((png_byte*)source.getBytes(), 0, 8)) return nullptr;
 
 		auto png = png_create_read_struct(PNG_LIBPNG_VER_STRING, 0, 0, 0);

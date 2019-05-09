@@ -82,40 +82,39 @@ namespace aurora {
 			reset();
 		}
 
-		RefPtr<T>& operator=(RefPtr<T>&& ptr) {
-			auto target = ptr._target;
-			if (_target != target) {
+		RefPtr<T>& AE_CALL operator=(RefPtr<T>&& ptr) {
+			if (auto target = ptr._target; _target != target) {
 				if (_target) _target->unref();
 				_target = target;
 			}
 			ptr._target = nullptr;
 		}
 
-		inline void operator=(T* target) {
+		inline void AE_CALL operator=(T* target) {
 			set(target);
 		}
 
-		inline void operator=(const RefPtr<T>& ptr) {
+		inline void AE_CALL operator=(const RefPtr<T>& ptr) {
 			set(ptr._target);
 		}
 
-		bool operator==(const T* target) const {
+		bool AE_CALL operator==(const T* target) const {
 			return _target == target;
 		}
 
-		bool operator==(const RefPtr<T>* ptr) const {
+		bool AE_CALL operator==(const RefPtr<T>* ptr) const {
 			return this == ptr;
 		}
 
-		bool operator!=(const T* target) const {
+		bool AE_CALL operator!=(const T* target) const {
 			return _target != target;
 		}
 
-		bool operator!=(const RefPtr<T>* ptr) const {
+		bool AE_CALL operator!=(const RefPtr<T>* ptr) const {
 			return this != ptr;
 		}
 
-		inline operator bool() const {
+		inline AE_CALL operator bool() const {
 			return _target;
 		}
 

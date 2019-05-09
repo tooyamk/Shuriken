@@ -30,10 +30,10 @@ namespace aurora {
 		ByteArray(ui32 capacity = 0, ui32 length = 0);
 		ByteArray(i8* bytes, ui32 size, ExtMemMode extMode = ExtMemMode::EXT);
 		ByteArray(i8* bytes, ui32 length, ui32 capacity, ExtMemMode extMode = ExtMemMode::EXT);
-		ByteArray& operator=(ByteArray&& value);
+		ByteArray& AE_CALL operator=(ByteArray&& value);
 		~ByteArray();
 
-		inline operator bool() const;
+		inline AE_CALL operator bool() const;
 
 		void AE_CALL dispose(bool free = true);
 

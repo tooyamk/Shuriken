@@ -28,7 +28,7 @@ namespace aurora::modules::graphics {
 		std::string entryPoint;
 		ByteArray data;
 
-		ProgramSource& operator=(ProgramSource&& value);
+		ProgramSource& AE_CALL operator=(ProgramSource&& value);
 
 		bool AE_CALL isValid() const;
 
