@@ -50,7 +50,7 @@ namespace aurora {
 			return data;
 		}
 
-		inline  T& AE_CALL operator[](i32 i) {
+		inline T& AE_CALL operator[](i32 i) {
 			return data[i];
 		}
 

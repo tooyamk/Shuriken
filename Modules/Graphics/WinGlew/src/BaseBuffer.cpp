@@ -24,23 +24,30 @@ namespace aurora::modules::graphics::win_glew {
 		glGenBuffers(1, &handle);
 
 		if (handle) {
-			this->resUsage = resUsage & (Usage::CPU_READ_WRITE | Usage::GPU_WRITE);
+			this->resUsage = resUsage & (Usage::CPU_READ_WRITE | Usage::GPU_WRITE | (graphics->getDeviceFeatures().supportPersisientMap ? Usage::PERSISTENT_MAP : Usage::NONE));
 			this->size = size;
 
 			glBindBuffer(bufferType, handle);
 
-			if ((resUsage & Usage::PERSISTENT_MAP) == Usage::PERSISTENT_MAP) {
+			if ((this->resUsage & Usage::CPU_READ_WRITE) == Usage::NONE) {
+				if (data) {
+					glBufferData(bufferType, size, data, GL_STATIC_DRAW);
+				} else {
+					this->resUsage = Usage::GPU_WRITE;
+					glBufferData(bufferType, size, nullptr, GL_DYNAMIC_DRAW);
+				}
+			} else {
+				if ((this->resUsage & Usage::PERSISTENT_MAP) == Usage::PERSISTENT_MAP) {
+					GLbitfield flags = GL_MAP_WRITE_BIT
+						| GL_MAP_PERSISTENT_BIT //在被映射状态下不同步
+						| GL_MAP_COHERENT_BIT;  //数据对GPU立即可见
 
+					glBufferStorage(bufferType, size, data, flags);
+					mapData = glMapBufferRange(bufferType, 0, size, flags);
+				} else {
+					glBufferData(bufferType, size, data, GL_DYNAMIC_DRAW);
+				}
 			}
-
-			GLbitfield flags = GL_MAP_WRITE_BIT
-				| GL_MAP_PERSISTENT_BIT //在被映射状态下不同步
-				| GL_MAP_COHERENT_BIT;  //数据对GPU立即可见
-
-			
-			//glBufferData(bufferType, size, data, GL_DYNAMIC_DRAW);
-			glBufferStorage(bufferType, size, data, flags);
-			mapData = glMapBufferRange(bufferType, 0, size, flags);
 
 			return true;
 		}
@@ -52,22 +59,33 @@ namespace aurora::modules::graphics::win_glew {
 	Usage BaseBuffer::map(Usage expectMapUsage) {
 		Usage ret = Usage::NONE;
 
-		expectMapUsage &= Usage::CPU_READ_WRITE;
-		if (handle && expectMapUsage != Usage::NONE) {
-			if (((expectMapUsage & Usage::CPU_READ) == Usage::CPU_READ) && ((resUsage & Usage::CPU_READ) == Usage::CPU_READ)) {
-				ret |= Usage::CPU_READ;
-			} else {
-				expectMapUsage &= ~Usage::CPU_READ;
-			}
-			if ((expectMapUsage & Usage::CPU_WRITE) == Usage::CPU_WRITE) {
-				if ((resUsage & Usage::CPU_WRITE) == Usage::CPU_WRITE) {
-					ret |= Usage::CPU_WRITE;
-				}
-			} else {
-				expectMapUsage &= ~Usage::CPU_WRITE;
-			}
+		if (handle) {
+			expectMapUsage &= resUsage & Usage::CPU_READ_WRITE;
 
-			mapUsage = expectMapUsage;
+			if (expectMapUsage == Usage::NONE) {
+				unmap();
+			} else {
+				ret = expectMapUsage;
+
+				if (mapUsage != expectMapUsage) {
+					unmap();
+
+					mapUsage = expectMapUsage;
+					if ((this->resUsage & Usage::PERSISTENT_MAP) != Usage::PERSISTENT_MAP) {
+						GLenum access = 0;
+						if (expectMapUsage == Usage::CPU_READ_WRITE) {
+							access = GL_READ_WRITE;
+						} else if ((expectMapUsage & Usage::CPU_READ) != Usage::NONE) {
+							access = GL_READ_ONLY;
+						} else {
+							access = GL_WRITE_ONLY;
+						}
+
+						glBindBuffer(bufferType, handle);
+						mapData =  glMapBuffer(bufferType, access);
+					}
+				}
+			}
 		}
 
 		return ret;
@@ -77,7 +95,11 @@ namespace aurora::modules::graphics::win_glew {
 		if (mapUsage != Usage::NONE) {
 			mapUsage = Usage::NONE;
 
-			flush();
+			if ((this->resUsage & Usage::PERSISTENT_MAP) != Usage::PERSISTENT_MAP) {
+				glBindBuffer(bufferType, handle);
+				glUnmapBuffer(bufferType);
+				mapData = nullptr;
+			}
 		}
 	}
 
@@ -88,7 +110,7 @@ namespace aurora::modules::graphics::win_glew {
 	i32 BaseBuffer::write(ui32 offset, const void* data, ui32 length) {
 		if ((mapUsage & Usage::CPU_WRITE) == Usage::CPU_WRITE) {
 			if (data && length && offset < size) {
-				dirty = true;
+				if ((resUsage & Usage::PERSISTENT_MAP) == Usage::PERSISTENT_MAP) dirty = true;
 				length = std::min<ui32>(length, size - offset);
 				memcpy((i8*)mapData + offset, data, length);
 				return length;

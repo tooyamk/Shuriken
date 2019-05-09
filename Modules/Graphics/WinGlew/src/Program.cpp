@@ -213,6 +213,8 @@ namespace aurora::modules::graphics::win_glew {
 
 					_tempParams.clear();
 					_tempVars.clear();
+
+					glBindBufferBase(GL_UNIFORM_BUFFER, layout.bindPoint, cb->getInternalBuffer());
 				}
 			}
 

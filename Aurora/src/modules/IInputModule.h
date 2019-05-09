@@ -295,4 +295,13 @@ namespace aurora::modules {
 		KEY_PA1,
 		KEY_OEM_CLEAR
 	};
+
+
+	enum class MouseKeyCode : ui8 {
+		MOVE,
+		WHEEL,
+		LBUTTON,
+		RBUTTON,
+		MBUTTON
+	};
 }

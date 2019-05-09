@@ -19,6 +19,10 @@ namespace aurora::modules::graphics::win_glew {
 		virtual i32 AE_CALL update(ui32 offset, const void* data, ui32 length) override;
 		virtual void AE_CALL flush() override;
 
+		inline GLuint AE_CALL getInternalBuffer() const {
+			return _baseBuffer.handle;
+		}
+
 	protected:
 		BaseBuffer _baseBuffer;
 	};
