@@ -23,8 +23,9 @@ namespace aurora::modules::graphics {
 	public:
 		struct AE_DLL Variables {
 			std::string name;
-			ui32 offset;
-			ui32 size;
+			ui32 offset = 0;
+			ui32 size = 0;
+			ui32 stride = 0;
 			std::vector<Variables> structMembers;
 		};
 
@@ -67,6 +68,8 @@ namespace aurora::modules::graphics {
 		void AE_CALL resetUsedShareConstantBuffers();
 
 		IConstantBuffer* AE_CALL getExclusiveConstantBuffer(const std::vector<ShaderParameter*>& parameters, const ConstantBufferLayout& layout);
+
+		static void AE_CALL updateConstantBuffer(IConstantBuffer* cb, const ShaderParameter& param, const ConstantBufferLayout::Variables& var);
 
 	private:
 		struct ShareConstBuffers {

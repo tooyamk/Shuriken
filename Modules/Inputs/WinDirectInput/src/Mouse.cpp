@@ -14,7 +14,7 @@ namespace aurora::modules::win_direct_input {
 	ui32 Mouse::getKeyState(ui32 keyCode, f32* data, ui32 count) const {
 		if (data && count) {
 			switch (keyCode) {
-			case 0:
+			case (ui32)MouseKeyCode::POSITION:
 			{
 				auto p = _getClientPos();
 				data[0] = f32(p.x);
@@ -23,11 +23,11 @@ namespace aurora::modules::win_direct_input {
 
 				return c;
 			}
-			case 1:
+			case (ui32)MouseKeyCode::WHEEL:
 				return 0;
 			default:
 			{
-				if (keyCode > 9 && keyCode < 18) {
+				if (keyCode >= (ui32)MouseKeyCode::L_BUTTON && keyCode < (ui32)MouseKeyCode::L_BUTTON + sizeof(DIMOUSESTATE2::rgbButtons)) {
 					data[0] = _state.rgbButtons[keyCode - (ui32)10] & 0x80 ? 1.f : 0.f;
 
 					return 1;
@@ -95,18 +95,18 @@ namespace aurora::modules::win_direct_input {
 			if (ox || oy) {
 				//increment, right bottom positive orientation.
 				f32 value[] = { (f32)ox, (f32)oy };
-				_eventDispatcher.dispatchEvent(this, InputDeviceEvent::MOVE, &InputKey({ 0, 2, value }));
+				_eventDispatcher.dispatchEvent(this, InputDeviceEvent::MOVE, &InputKey({ (ui32)MouseKeyCode::POSITION, 2, value }));
 			}
 
 			if (state.lZ != 0) {
 				f32 value = state.lZ > 0 ? 1.f : -1.f;
-				_eventDispatcher.dispatchEvent(this, InputDeviceEvent::MOVE, &InputKey({ 1, 1, &value }));
+				_eventDispatcher.dispatchEvent(this, InputDeviceEvent::MOVE, &InputKey({ (ui32)MouseKeyCode::WHEEL, 1, &value }));
 			}
 
 			for (ui8 i = 0; i < len; ++i) {
 				ui8 key = changeBtns[i];
 				f32 value = (state.rgbButtons[key] & 0x80) > 0 ? 1.f : 0.f;
-				_eventDispatcher.dispatchEvent(this, value > 0 ? InputDeviceEvent::DOWN : InputDeviceEvent::UP, &InputKey({ key + (ui32)10, 1, &value }));
+				_eventDispatcher.dispatchEvent(this, value > 0 ? InputDeviceEvent::DOWN : InputDeviceEvent::UP, &InputKey({ key + (ui32)MouseKeyCode::L_BUTTON, 1, &value }));
 			}
 		}
 	}

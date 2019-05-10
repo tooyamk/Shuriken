@@ -11,7 +11,7 @@ SamplerState samLiner;
 
 struct aabbcc {
     float val1;
-    float4 val2[1];
+    float val2[3];
     float val3;
 };
 
@@ -24,7 +24,7 @@ aabbcc blue;
 
 float4 main(PS_INPUT input) : SV_TARGET {
     float4 c = texDiffuse.Sample(samLiner, input.uv);
-    c.x = red;
+    c.x = blue.val2[1];
     return c;
     //c.x = red;
     //return c;

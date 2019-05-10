@@ -147,7 +147,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 									isMaping = true;
 								}
 								cb->recordUpdateIds[i] = param->getUpdateId();
-								_updateConstantBuffer(cb, *param, *_tempVars[i]);
+								ConstantBufferManager::updateConstantBuffer(cb, *param, *_tempVars[i]);
 							}
 						}
 
@@ -177,36 +177,11 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return cb;
 	}
 
-	void Program::_updateConstantBuffer(ConstantBuffer* cb, const ShaderParameter& param, const ConstantBufferLayout::Variables& var) {
-		ui32 size = param.getSize();
-		if (!size) return;
-
-		ui16 pes = param.getPerElementSize();
-		if (pes < size) {
-			auto remainder = pes & 0b1111;
-			if (remainder) {
-				auto offset = pes + 16 - remainder;
-				auto max = std::min<ui32>(size, var.size);
-				ui32 cur = 0, fillSize = 0;
-				auto data = (const i8*)param.getData();
-				do {
-					cb->write(var.offset + fillSize, data + cur, pes);
-					cur += pes;
-					fillSize += offset;
-				} while (cur < max && fillSize < var.size);
-			} else {
-				cb->write(var.offset, param.getData(), std::min<ui32>(size, var.size));
-			}
-		} else {
-			cb->write(var.offset, param.getData(), std::min<ui32>(size, var.size));
-		}
-	}
-
 	void Program::_constantBufferUpdateAll(ConstantBuffer* cb, const std::vector<ConstantBufferLayout::Variables>& vars) {
 		if (cb->map(Usage::CPU_WRITE) != Usage::NONE) {
 			for (ui32 i = 0, n = _tempVars.size(); i < n; ++i) {
 				auto param = _tempParams[i];
-				if (param) _updateConstantBuffer(cb, *param, *_tempVars[i]);
+				if (param) ConstantBufferManager::updateConstantBuffer(cb, *param, *_tempVars[i]);
 			}
 
 			cb->unmap();
@@ -480,6 +455,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 						v.name = vDesc.Name;
 						v.offset = vDesc.StartOffset;
 						v.size = vDesc.Size;
+						v.stride = (1ui32 << 31) | 16;
 
 						_parseConstantVar(v, var->GetType());
 					}
@@ -503,6 +479,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 				memberVar.name = type->GetMemberTypeName(i);
 				memberVar.offset = var.offset;
 				memberVar.size = 0;
+				memberVar.stride = (1ui32 << 31) | 16;
 				
 				_parseConstantVar(memberVar, type->GetMemberTypeByIndex(i));
 			}
@@ -520,7 +497,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			}
 
 			if (desc.Elements > 1 && var.size) {
-				auto size = var.size & 0b1111;
+				auto size = var.size & 16;
 				if (size) size = 16 - size;
 				var.size += (var.size + size) * (desc.Elements - 1);
 			}

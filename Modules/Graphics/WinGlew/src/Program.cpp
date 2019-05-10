@@ -19,15 +19,23 @@ namespace aurora::modules::graphics::win_glew {
 	bool Program::upload(const ProgramSource& vert, const ProgramSource& frag) {
 		_release();
 
-		_handle = glCreateProgram();
-		if (!_handle) return false;
-
 		auto vertexShader = _compileShader(vert, GL_VERTEX_SHADER);
-		if (!vertexShader) return false;
+		if (!vertexShader) {
+			_release();
+			return false;
+		}
 
 		auto fragmentShader = _compileShader(frag, GL_FRAGMENT_SHADER);
 		if (!fragmentShader) {
 			glDeleteShader(vertexShader);
+			_release();
+			return false;
+		}
+
+		_handle = glCreateProgram();
+		if (!_handle) {
+			glDeleteShader(vertexShader);
+			glDeleteShader(fragmentShader);
 			return false;
 		}
 
@@ -44,7 +52,7 @@ namespace aurora::modules::graphics::win_glew {
 			return false;
 		}
 
-		GLchar charBuffer[512];
+		GLchar charBuffer[256];
 		GLsizei len;
 
 		GLint atts;
@@ -69,10 +77,36 @@ namespace aurora::modules::graphics::win_glew {
 			if (location < 0) continue;
 
 			auto& info = _uniformLayouts.emplace_back();
-			info.name = charBuffer + 5;//type_ ;20;
+			//info.name = charBuffer + 5;//type_ ;20;
 			info.location = location;
 			info.size = size;
 			info.type = type;
+
+			static const i8 TYPE[] = { "type_" };
+			static const i8 COMBINED_TEX[] = { "_CombinedTex" };
+			if (len > sizeof(TYPE) - 1) {
+				if (std::string_view(charBuffer, sizeof(TYPE) - 1) == TYPE) {
+					info.names.emplace_back(charBuffer + sizeof(TYPE) - 1);
+				} else if (len > sizeof(COMBINED_TEX) - 1 && std::string_view(charBuffer, sizeof(COMBINED_TEX) - 1) == COMBINED_TEX) {
+					auto offset = sizeof(COMBINED_TEX) - 1;
+					if (auto pos = String::findFirst(charBuffer + offset, len - offset, '_'); pos == std::string::npos || !pos) {
+						info.names.emplace_back(charBuffer);
+					} else {
+						ui32 texNameLen = 0;
+						if (auto rst = std::from_chars(charBuffer + offset, charBuffer + offset + pos, texNameLen); rst.ec == std::errc()) {
+							offset += pos + 1;
+							info.names.emplace_back(charBuffer + offset, texNameLen);
+							info.names.emplace_back(charBuffer + offset + texNameLen);
+						} else {
+							info.names.emplace_back(charBuffer);
+						}
+					}
+				} else {
+					info.names.emplace_back(charBuffer);
+				}
+			} else {
+				info.names.emplace_back(charBuffer);
+			}
 		}
 
 		auto g = _graphics.get<Graphics>();
@@ -83,6 +117,7 @@ namespace aurora::modules::graphics::win_glew {
 			std::vector<GLint> offsets;
 			std::vector<GLint> types;
 			std::vector<GLint> sizes;
+			std::vector<GLint> strides;
 
 			std::vector<std::string_view> varNames;
 
@@ -106,6 +141,7 @@ namespace aurora::modules::graphics::win_glew {
 				offsets.resize(numUniforms);
 				types.resize(numUniforms);
 				sizes.resize(numUniforms);
+				strides.resize(numUniforms);
 
 				auto indicesData = indices.data();
 				glGetActiveUniformBlockiv(_handle, i, GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES, indicesData);
@@ -113,6 +149,7 @@ namespace aurora::modules::graphics::win_glew {
 				glGetActiveUniformsiv(_handle, numUniforms, (GLuint*)indicesData, GL_UNIFORM_OFFSET, offsets.data());
 				glGetActiveUniformsiv(_handle, numUniforms, (GLuint*)indicesData, GL_UNIFORM_TYPE, types.data());
 				glGetActiveUniformsiv(_handle, numUniforms, (GLuint*)indicesData, GL_UNIFORM_SIZE, sizes.data());
+				glGetActiveUniformsiv(_handle, numUniforms, (GLuint*)indicesData, GL_UNIFORM_ARRAY_STRIDE, strides.data());
 
 				for (GLint j = 0; j < numUniforms; ++j) {
 					glGetActiveUniformName(_handle, indices[j], sizeof(charBuffer), &nameLen, charBuffer);
@@ -149,7 +186,16 @@ namespace aurora::modules::graphics::win_glew {
 						}
 					}
 
-					foundVar->size = Graphics::getGLTypeSize(types[j]) * sizes[j];
+					foundVar->stride = strides[j];
+					if (Math::isPOT(strides[j])) foundVar->stride |= 1ui32 << 31;
+					foundVar->size = Graphics::getGLTypeSize(types[j]);
+					if (sizes[j] > 1) {
+						if (auto remainder = foundVar->size % strides[j]; remainder) {
+							foundVar->size += (foundVar->size + strides[j] - remainder) * (sizes[j] - 1);
+						} else {
+							foundVar->size *= sizes[j];
+						}
+					}
 					foundVar->offset = offsets[j];
 				}
 
@@ -179,7 +225,31 @@ namespace aurora::modules::graphics::win_glew {
 				if (auto vb = vertexFactory->get(info.name); vb && _graphics == vb->getGraphics()) ((VertexBuffer*)vb)->use(info.location);
 			}
 
+			ui8 texIndex = 0;
+
 			if (paramFactory) {
+				for (auto& layout : _uniformLayouts) {
+					switch (layout.type) {
+					case GL_SAMPLER_2D:
+					{
+						if (auto p0 = paramFactory->get(layout.names[0], ShaderParameterType::TEXTURE); p0) {
+							if (auto data = p0->getData(); data && g == ((ITextureResource*)data)->getGraphics()) {
+								auto tex = *(GLuint*)((ITextureResource*)data)->getNativeResource();
+								auto idx = texIndex++;
+
+								glActiveTexture(GL_TEXTURE0 + idx);
+								glBindTexture(GL_TEXTURE_2D, tex);
+								glUniform1i(layout.location, idx);
+							}
+						}
+
+						break;
+					}
+					default:
+						break;
+					}
+				}
+
 				for (auto& layout : _uniformBlockLayouts) {
 					ShaderParameterUsageStatistics statistics;
 					layout.collectUsingInfo(*paramFactory, statistics, (std::vector<const ShaderParameter*>&)_tempParams, _tempVars);
@@ -199,7 +269,7 @@ namespace aurora::modules::graphics::win_glew {
 											isMaping = true;
 										}
 										cb->recordUpdateIds[i] = param->getUpdateId();
-										_updateConstantBuffer(cb, *param, *_tempVars[i]);
+										ConstantBufferManager::updateConstantBuffer(cb, *param, *_tempVars[i]);
 									}
 								}
 
@@ -228,38 +298,11 @@ namespace aurora::modules::graphics::win_glew {
 		}
 	}
 
-	void Program::_updateConstantBuffer(ConstantBuffer* cb, const ShaderParameter& param, const ConstantBufferLayout::Variables& var) {
-		ui32 size = param.getSize();
-		if (!size) return;
-
-		ui16 pes = param.getPerElementSize();
-		if (pes < size) {
-			/*
-			auto remainder = pes & 0b1111;
-			if (remainder) {
-				auto offset = pes + 16 - remainder;
-				auto max = std::min<ui32>(size, var.size);
-				ui32 cur = 0, fillSize = 0;
-				auto data = (const i8*)param.getData();
-				do {
-					cb->write(var.offset + fillSize, data + cur, pes);
-					cur += pes;
-					fillSize += offset;
-				} while (cur < max && fillSize < var.size);
-			} else {
-				cb->write(var.offset, param.getData(), std::min<ui32>(size, var.size));
-			}
-			*/
-		} else {
-			cb->write(var.offset, param.getData(), std::min<ui32>(size, var.size));
-		}
-	}
-
 	void Program::_constantBufferUpdateAll(ConstantBuffer* cb, const std::vector<ConstantBufferLayout::Variables>& vars) {
 		if (cb->map(Usage::CPU_WRITE) != Usage::NONE) {
 			for (ui32 i = 0, n = _tempVars.size(); i < n; ++i) {
 				auto param = _tempParams[i];
-				if (param) _updateConstantBuffer(cb, *param, *_tempVars[i]);
+				if (param) ConstantBufferManager::updateConstantBuffer(cb, *param, *_tempVars[i]);
 			}
 
 			cb->unmap();

@@ -24,7 +24,14 @@ namespace aurora::modules::graphics::win_glew {
 			GLint size;
 			std::string name;
 		};
-		using UniformInfo = InVertexBufferInfo;
+
+		
+		struct UniformInfo {
+			GLuint location;
+			GLenum type;
+			GLint size;
+			std::vector<std::string> names;
+		};
 
 
 		GLuint _handle;
@@ -35,7 +42,8 @@ namespace aurora::modules::graphics::win_glew {
 		std::vector<ShaderParameter*> _tempParams;
 		std::vector<const ConstantBufferLayout::Variables*> _tempVars;
 
-		void _updateConstantBuffer(ConstantBuffer* cb, const ShaderParameter& param, const ConstantBufferLayout::Variables& vars);
+		//void _getTexture(const ShaderParameterFactory& paramFactory, const ConstantBufferLayout& layout, );
+
 		void _constantBufferUpdateAll(ConstantBuffer* cb, const std::vector<ConstantBufferLayout::Variables>& vars);
 
 		void AE_CALL _release();

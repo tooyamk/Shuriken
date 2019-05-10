@@ -162,7 +162,7 @@ namespace aurora::modules::graphics::program_source_translator {
 			compiler.build_combined_image_samplers();
 			for (auto& remap : compiler.get_combined_image_samplers()) {
 				auto& texName = compiler.get_name(remap.image_id);
-				compiler.set_name(remap.combined_id, "_Combined_1_" + String::toString(texName.size()) + "_" + texName + compiler.get_name(remap.sampler_id));
+				compiler.set_name(remap.combined_id, "_CombinedTex" + String::toString(texName.size()) + "_" + texName + compiler.get_name(remap.sampler_id));
 			}
 
 			try {

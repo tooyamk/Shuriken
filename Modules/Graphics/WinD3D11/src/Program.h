@@ -93,7 +93,6 @@ namespace aurora::modules::graphics::win_d3d11 {
 		void AE_CALL _calcConstantLayoutSameBuffers(std::vector<std::vector<MyConstantBufferLayout>*>& constBufferLayouts);
 
 		ConstantBuffer* _getConstantBuffer(const MyConstantBufferLayout& cbLayout, const ShaderParameterFactory& factory);
-		void _updateConstantBuffer(ConstantBuffer* cb, const ShaderParameter& param, const ConstantBufferLayout::Variables& var);
 		void _constantBufferUpdateAll(ConstantBuffer* cb, const std::vector<ConstantBufferLayout::Variables>& vars);
 
 		template<ProgramStage stage>
@@ -109,10 +108,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 			}
 
 			for (auto& info : layout.textures) {
-				auto c = factory.get(info.name, ShaderParameterType::TEXTURE);
-				if (c) {
-					auto data = c->getData();
-					if (data && g == ((ITextureViewBase*)data)->getGraphics()) {
+				if (auto p = factory.get(info.name, ShaderParameterType::TEXTURE); p) {
+					if (auto data = p->getData(); data && g == ((ITextureViewBase*)data)->getGraphics()) {
 						auto view = (ID3D11ShaderResourceView*)((ITextureViewBase*)data)->getNativeView();
 						g->useShaderResources<stage>(info.bindPoint, 1, &view);
 					}
@@ -121,10 +118,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 			}
 
 			for (auto& info : layout.samplers) {
-				auto c = factory.get(info.name, ShaderParameterType::SAMPLER);
-				if (c) {
-					auto data = c->getData();
-					if (data && g == ((ISampler*)data)->getGraphics()) {
+				if (auto p = factory.get(info.name, ShaderParameterType::SAMPLER); p) {
+					if (auto data = p->getData(); data && g == ((ISampler*)data)->getGraphics()) {
 						auto sampler = ((Sampler*)data)->getInternalSampler();
 						g->useSamplers<stage>(info.bindPoint, 1, &sampler);
 					}

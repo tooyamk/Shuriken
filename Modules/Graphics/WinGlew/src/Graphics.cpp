@@ -101,7 +101,7 @@ namespace aurora::modules::graphics::win_glew {
 		}
 		
 		GLint attribs[] = {
-			//WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
+			//WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
 			//WGL_CONTEXT_MINOR_VERSION_ARB, 3,
 			WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB,//兼容模式环境
 			//WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,//核心功能环境
@@ -372,6 +372,6 @@ namespace aurora::modules::graphics::win_glew {
 	}
 
 	void Graphics::_debugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam) {
-		println("gl message : ", message);
+		if (type != GL_DEBUG_TYPE_OTHER_ARB) println("gl message : ", message);
 	}
 }

@@ -2,6 +2,7 @@
 #include "modules/graphics/IGraphicsModule.h"
 #include "modules/graphics/ShaderParameterFactory.h"
 #include "utils/hash/CRC.h"
+#include <algorithm>
 
 namespace aurora::modules::graphics {
 	ConstantBufferLayout::ConstantBufferLayout() :
@@ -254,5 +255,29 @@ namespace aurora::modules::graphics {
 	void ConstantBufferManager::_releaseExclusiveConstantSelf(ExclusiveConstNode& node, bool releaseParam) {
 		for (auto& itr : node.buffers) itr.second->unref();
 		if (releaseParam) node.parameter->__releaseExclusive(this, &ConstantBufferManager::_releaseExclusiveConstant);
+	}
+
+	void ConstantBufferManager::updateConstantBuffer(IConstantBuffer* cb, const ShaderParameter& param, const ConstantBufferLayout::Variables& var) {
+		ui32 size = param.getSize();
+		if (!size) return;
+
+		if (ui16 pes = param.getPerElementSize(); pes < size) {
+			auto stride = var.stride & 0x7FFFFFFFui32;
+			if (auto remainder = var.stride >= 0x80000000ui32 ? (pes & (stride - 1)) : pes % var.stride; remainder) {
+				auto offset = pes + stride - remainder;
+				auto max = std::min<ui32>(size, var.size);
+				ui32 cur = 0, fillSize = 0;
+				auto data = (const i8*)param.getData();
+				do {
+					cb->write(var.offset + fillSize, data + cur, pes);
+					cur += pes;
+					fillSize += offset;
+				} while (cur < max && fillSize < var.size);
+			} else {
+				cb->write(var.offset, param.getData(), std::min<ui32>(size, var.size));
+			}
+		} else {
+			cb->write(var.offset, param.getData(), std::min<ui32>(size, var.size));
+		}
 	}
 }

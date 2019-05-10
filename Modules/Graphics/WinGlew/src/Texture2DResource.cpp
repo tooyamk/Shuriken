@@ -18,7 +18,7 @@ namespace aurora::modules::graphics::win_glew {
 	}
 
 	const void* Texture2DResource::getNativeResource() const {
-		return nullptr;
+		return &_baseTex.handle;
 	}
 
 	ui32 Texture2DResource::getArraySize() const {
