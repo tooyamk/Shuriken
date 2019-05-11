@@ -48,10 +48,17 @@ namespace aurora::modules::graphics::win_d3d11 {
 		}
 	}
 
-	void Sampler::setMipLOD(f32 min, f32 max, f32 bias) {
-		if (_desc.MinLOD != min || _desc.MaxLOD != max || _desc.MipLODBias != bias) {
+	void Sampler::setMipLOD(f32 min, f32 max) {
+		if (_desc.MinLOD != min || _desc.MaxLOD != max) {
 			_desc.MinLOD = min;
 			_desc.MaxLOD = max;
+
+			_dirty = true;
+		}
+	}
+
+	void Sampler::setMipLODBias(f32 bias) {
+		if (_desc.MipLODBias != bias) {
 			_desc.MipLODBias = bias;
 
 			_dirty = true;
@@ -131,7 +138,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_desc.AddressW = _convertAddressMode(_address.w);
 	}
 
-	void Sampler::_update() {
+	void Sampler::update() {
 		if (_dirty) {
 			_releaseRes();
 			if (SUCCEEDED(_graphics.get<Graphics>()->getDevice()->CreateSamplerState(&_desc, &_samplerState))) _dirty = false;

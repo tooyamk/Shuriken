@@ -6,6 +6,11 @@
 namespace aurora::modules::graphics::win_glew {
 	class AE_MODULE_DLL Graphics : public IGraphicsModule {
 	public:
+		struct InternalFeatures {
+			GLfloat maxAnisotropy;
+		};
+
+
 		Graphics(Application* app, IProgramSourceTranslator* trans);
 		virtual ~Graphics();
 
@@ -55,6 +60,10 @@ namespace aurora::modules::graphics::win_glew {
 			return _strVer;
 		}
 
+		inline const InternalFeatures& AE_CALL getInternalFeatures() const {
+			return _internalFeatures;
+		}
+
 		static void AE_CALL convertFormat(TextureFormat fmt, GLenum& internalFormat, GLenum& format, GLenum& type);
 		static ui32 AE_CALL getGLTypeSize(GLenum type);
 
@@ -62,6 +71,7 @@ namespace aurora::modules::graphics::win_glew {
 		RefPtr<Application> _app;
 		RefPtr<IProgramSourceTranslator> _trans;
 
+		InternalFeatures _internalFeatures;
 		GraphicsDeviceFeatures _deviceFeatures;
 
 		HDC _dc;

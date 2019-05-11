@@ -32,7 +32,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	bool Texture1DResource::create(ui32 width, ui32 arraySize, ui32 mipLevels, TextureFormat format,  Usage resUsage, const void*const* data) {
-		auto rst = _baseTexRes.create(_graphics.get<Graphics>(), TextureType::TEX1D, Vec3ui32({ width, 1, 1 }), arraySize, mipLevels, format, resUsage, data);
+		auto rst = _baseTexRes.create(_graphics.get<Graphics>(), TextureType::TEX1D, Vec3ui32(width, 1, 1), arraySize, mipLevels, format, resUsage, data);
 		_view.create(this, 0, -1, 0, _baseTexRes.arraySize);
 		return rst;
 	}

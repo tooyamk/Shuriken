@@ -2,6 +2,7 @@
 #include "Graphics.h"
 #include "ConstantBuffer.h"
 #include "IndexBuffer.h"
+#include "Sampler.h"
 #include "VertexBuffer.h"
 #include "base/String.h"
 #include "modules/graphics/VertexBufferFactory.h"
@@ -237,11 +238,22 @@ namespace aurora::modules::graphics::win_glew {
 								auto tex = *(GLuint*)((ITextureResource*)data)->getNativeResource();
 								auto idx = texIndex++;
 
+								GLuint sampler = 0;
+								if (auto p1 = paramFactory->get(layout.names[1], ShaderParameterType::SAMPLER); p1) {
+									if (auto data = p1->getData(); data && g == ((ISampler*)data)->getGraphics()) {
+										((Sampler*)data)->update();
+										sampler = ((Sampler*)data)->getInternalSampler();
+									}
+								}
+
 								glActiveTexture(GL_TEXTURE0 + idx);
 								glBindTexture(GL_TEXTURE_2D, tex);
+								glBindSampler(idx, sampler);
 								glUniform1i(layout.location, idx);
 							}
 						}
+
+						
 
 						break;
 					}

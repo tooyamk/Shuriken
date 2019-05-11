@@ -305,4 +305,37 @@ namespace aurora::modules {
 		M_BUTTON,
 		FN_BUTTON_0
 	};
+
+
+	enum GamepadKeyCode : ui8 {
+		JOYSTICK_LEFT,
+		JOYSTICK_RIGHT,
+
+		DPAD_UP,
+		DPAD_DOWN,
+		DPAD_LEFT,
+		DPAD_RIGHT,
+		//DPAD_CENTER,
+
+		LEFT_SHOULDER,
+		RIGHT_SHOULDER,
+
+		LEFT_TRIGGER,
+		RIGHT_TRIGGER,
+
+		//LEFT_THUMBSTICK,
+		//RIGHT_THUMBSTICK,
+
+		START,
+		SELECT,
+
+		//BUTTON_PAUSE
+
+		A,
+		B,
+		//C,
+		X,
+		Y,
+		//Z,
+	};
 }

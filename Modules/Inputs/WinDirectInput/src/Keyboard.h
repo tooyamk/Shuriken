@@ -177,7 +177,7 @@ namespace aurora::modules::win_direct_input {
 			0,
 			0,///160/0x9F
 			VK_VOLUME_MUTE,
-			0,
+			0,//DIK_CALCULATOR
 			VK_MEDIA_PLAY_PAUSE,
 			0,
 			VK_MEDIA_STOP,

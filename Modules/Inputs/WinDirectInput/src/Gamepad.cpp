@@ -150,29 +150,29 @@ namespace aurora::modules::win_direct_input {
 
 			if (l) {
 				f32 value[] = { _translateStick(state.lX) , _translateStick(state.lY) };
-				_eventDispatcher.dispatchEvent(this, InputDeviceEvent::MOVE, &InputKey({ 0, 2, value }));
+				_eventDispatcher.dispatchEvent(this, InputDeviceEvent::MOVE, &InputKey({ GamepadKeyCode::JOYSTICK_LEFT, 2, value }));
 			}
 
 			if (r) {
 				f32 value[] = { _translateStick(state.lZ) , _translateStick(state.lRz) };
-				_eventDispatcher.dispatchEvent(this, InputDeviceEvent::MOVE, &InputKey({ 1, 2, value }));
+				_eventDispatcher.dispatchEvent(this, InputDeviceEvent::MOVE, &InputKey({ GamepadKeyCode::JOYSTICK_RIGHT, 2, value }));
 			}
 
 			if (lt) {
 				f32 value = _translateTrigger(state.lRx);
-				_eventDispatcher.dispatchEvent(this, InputDeviceEvent::MOVE, &InputKey({ 2, 1, &value }));
+				_eventDispatcher.dispatchEvent(this, InputDeviceEvent::MOVE, &InputKey({ GamepadKeyCode::LEFT_TRIGGER, 1, &value }));
 			}
 
 			if (rt) {
 				f32 value = _translateTrigger(state.lRy);
-				_eventDispatcher.dispatchEvent(this, InputDeviceEvent::MOVE, &InputKey({ 3, 1, &value }));
+				_eventDispatcher.dispatchEvent(this, InputDeviceEvent::MOVE, &InputKey({ GamepadKeyCode::RIGHT_TRIGGER, 1, &value }));
 			}
 
 			if (changedPovLen) {
 				for (ui8 i = 0; i < changedPovLen; ++i) {
 					ui8 key = changedPov[i];
 					f32 value = _translateAngle(state.rgdwPOV[key]);
-					_eventDispatcher.dispatchEvent(this, value >= 0.f ? InputDeviceEvent::DOWN : InputDeviceEvent::UP, &InputKey({ key + ui32(10), 1, &value }));
+					_eventDispatcher.dispatchEvent(this, value >= 0.f ? InputDeviceEvent::DOWN : InputDeviceEvent::UP, &InputKey({ key + (ui32)GamepadKeyCode::DPAD_UP, 1, &value }));
 				}
 			}
 
@@ -180,7 +180,7 @@ namespace aurora::modules::win_direct_input {
 				for (ui8 i = 0; i < changedBtnsLen; ++i) {
 					ui8 key = changedBtns[i];
 					f32 value = (state.rgbButtons[key] & 0x80) > 0 ? 1.f : 0.f;
-					_eventDispatcher.dispatchEvent(this, value > 0.f ? InputDeviceEvent::DOWN : InputDeviceEvent::UP, &InputKey({ key + ui32(20), 1, &value }));
+					_eventDispatcher.dispatchEvent(this, value > 0.f ? InputDeviceEvent::DOWN : InputDeviceEvent::UP, &InputKey({ key + (ui32)GamepadKeyCode::A, 1, &value }));
 				}
 			}
 		}

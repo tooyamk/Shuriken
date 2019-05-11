@@ -30,7 +30,7 @@ namespace aurora::modules::graphics::win_glew {
 	}
 
 	bool Texture2DResource::create(const Vec2ui32& size, ui32 arraySize, ui32 mipLevels, TextureFormat format, Usage resUsage, const void*const* data) {
-		return _baseTex.create(_graphics.get<Graphics>(), Vec3ui32({ size[0], size[1], 1 }), arraySize, mipLevels, format, resUsage, data);
+		return _baseTex.create(_graphics.get<Graphics>(), Vec3ui32(size[0], size[1], 1), arraySize, mipLevels, format, resUsage, data);
 	}
 
 	Usage Texture2DResource::getUsage() const {

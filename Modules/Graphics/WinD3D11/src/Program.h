@@ -5,9 +5,6 @@
 #include "modules/graphics/ConstantBufferManager.h"
 
 namespace aurora::modules::graphics::win_d3d11 {
-	class Graphics;
-
-
 	class AE_MODULE_DLL Program : public IProgram {
 	public:
 		Program(Graphics& graphics);
@@ -120,6 +117,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			for (auto& info : layout.samplers) {
 				if (auto p = factory.get(info.name, ShaderParameterType::SAMPLER); p) {
 					if (auto data = p->getData(); data && g == ((ISampler*)data)->getGraphics()) {
+						((Sampler*)data)->update();
 						auto sampler = ((Sampler*)data)->getInternalSampler();
 						g->useSamplers<stage>(info.bindPoint, 1, &sampler);
 					}

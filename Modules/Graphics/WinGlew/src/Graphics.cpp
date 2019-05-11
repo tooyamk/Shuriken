@@ -3,6 +3,7 @@
 #include "ConstantBuffer.h"
 #include "IndexBuffer.h"
 #include "Program.h"
+#include "Sampler.h"
 #include "Texture2DResource.h"
 #include "VertexBuffer.h"
 #include "base/Application.h"
@@ -22,6 +23,7 @@ namespace aurora::modules::graphics::win_glew {
 		_deviceFeatures({ 0 }) {
 		_constantBufferManager.createShareConstantBufferCallback = std::bind(&Graphics::_createdShareConstantBuffer, this);
 		_constantBufferManager.createExclusiveConstantBufferCallback = std::bind(&Graphics::_createdExclusiveConstantBuffer, this, std::placeholders::_1);
+		memset(&_internalFeatures, 0, sizeof(InternalFeatures));
 	}
 
 	Graphics::~Graphics() {
@@ -135,6 +137,9 @@ namespace aurora::modules::graphics::win_glew {
 		_strVer = String::toString(_intVer);
 		_deviceVersion = "OpenGL " + String::toString(_majorVer) + "." + String::toString(_minorVer);
 
+		_internalFeatures.maxAnisotropy = 1.f;
+		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &_internalFeatures.maxAnisotropy);
+
 		_deviceFeatures.supportSampler = isGreatThanVersion(3, 3);
 		_deviceFeatures.supportTextureView = false;
 		_deviceFeatures.supportConstantBuffer = isGreatThanVersion(3, 1);
@@ -164,7 +169,7 @@ namespace aurora::modules::graphics::win_glew {
 	}
 
 	ISampler* Graphics::createSampler() {
-		return nullptr;
+		return _deviceFeatures.supportSampler ? new Sampler(*this) : nullptr;
 	}
 
 	ITexture1DResource* Graphics::createTexture1DResource() {
@@ -264,6 +269,7 @@ namespace aurora::modules::graphics::win_glew {
 			_dc = nullptr;
 		}
 
+		memset(&_internalFeatures, 0, sizeof(InternalFeatures));
 		memset(&_deviceFeatures, 0, sizeof(_deviceFeatures));
 		_deviceVersion = "OpenGL Unknown";
 	}
@@ -372,6 +378,8 @@ namespace aurora::modules::graphics::win_glew {
 	}
 
 	void Graphics::_debugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam) {
-		if (type != GL_DEBUG_TYPE_OTHER_ARB) println("gl message : ", message);
+		if (type != GL_DEBUG_TYPE_OTHER_ARB) {
+			println("gl message : ", message);
+		}
 	}
 }

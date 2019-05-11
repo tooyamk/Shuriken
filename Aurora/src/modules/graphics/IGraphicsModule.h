@@ -173,7 +173,8 @@ namespace aurora::modules::graphics {
 			setAddress(address.u, address.v, address.w);
 		}
 
-		virtual void AE_CALL setMipLOD(f32 min, f32 max, f32 bias) = 0;
+		virtual void AE_CALL setMipLOD(f32 min, f32 max) = 0;
+		virtual void AE_CALL setMipLODBias(f32 bias) = 0;
 		virtual void AE_CALL setMaxAnisotropy(ui32 max) = 0;
 
 		virtual void AE_CALL setBorderColor(const Vec4f32& color) = 0;
