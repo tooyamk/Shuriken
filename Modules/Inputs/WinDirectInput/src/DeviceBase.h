@@ -13,6 +13,7 @@ namespace aurora::modules::win_direct_input {
 
 		virtual events::IEventDispatcher<InputDeviceEvent>& AE_CALL getEventDispatcher() override;
 		virtual const InputDeviceInfo& AE_CALL getInfo() const override;
+		virtual void AE_CALL setDeadZone(ui32 keyCode, f32 deadZone) override {}
 
 	protected:
 		DirectInput* _input;

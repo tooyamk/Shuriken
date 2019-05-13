@@ -61,7 +61,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		inline void AE_CALL useShader(ID3D11DeviceChild* shader, ID3D11ClassInstance *const* classInstances, UINT numClassInstances) {
 			if constexpr (stage == ProgramStage::VS) {
 				_context->VSSetShader((ID3D11VertexShader*)shader, classInstances, numClassInstances);
-			} else if (stage == ProgramStage::PS) {
+			} else if constexpr (stage == ProgramStage::PS) {
 				_context->PSSetShader((ID3D11PixelShader*)shader, classInstances, numClassInstances);
 			}
 		}
@@ -70,7 +70,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		inline void AE_CALL useShaderResources(UINT slot, UINT numViews, ID3D11ShaderResourceView*const* views) {
 			if constexpr (stage == ProgramStage::VS) {
 				_context->VSSetShaderResources(slot, numViews, views);
-			} else if (stage == ProgramStage::PS) {
+			} else if constexpr (stage == ProgramStage::PS) {
 				_context->PSSetShaderResources(slot, numViews, views);
 			}
 		}
@@ -79,7 +79,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		inline void AE_CALL useConstantBuffers(UINT slot, UINT numBuffers, ID3D11Buffer*const* buffers) {
 			if constexpr (stage == ProgramStage::VS) {
 				_context->VSSetConstantBuffers(slot, numBuffers, buffers);
-			} else if (stage == ProgramStage::PS) {
+			} else if constexpr (stage == ProgramStage::PS) {
 				_context->PSSetConstantBuffers(slot, numBuffers, buffers);
 			}
 		}
@@ -88,7 +88,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		inline void AE_CALL useSamplers(UINT slot, UINT numSamplers, ID3D11SamplerState*const* samplers) {
 			if constexpr (stage == ProgramStage::VS) {
 				_context->VSSetSamplers(slot, numSamplers, samplers);
-			} else if (stage == ProgramStage::PS) {
+			} else if constexpr (stage == ProgramStage::PS) {
 				_context->PSSetSamplers(slot, numSamplers, samplers);
 			}
 		}

@@ -65,10 +65,10 @@ namespace aurora::modules {
 
 
 	InputDeviceInfo::InputDeviceInfo() :
-		type(0) {
+		type(InputDeviceType::UNKNOWN) {
 	}
 
-	InputDeviceInfo::InputDeviceInfo(const InputDeviceGUID& guid, ui32 type) :
+	InputDeviceInfo::InputDeviceInfo(const InputDeviceGUID& guid, InputDeviceType type) :
 		guid(guid),
 		type(type) {
 	}

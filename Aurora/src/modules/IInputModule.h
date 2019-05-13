@@ -28,14 +28,13 @@ namespace aurora::modules {
 	};
 
 
-	class AE_DLL InputDeviceType {
-	public:
-		AE_DECLA_CANNOT_INSTANTIATE(InputDeviceType);
-
-		static const ui32 KEYBOARD = 0b1;
-		static const ui32 MOUSE = 0b10;
-		static const ui32 GAMEPAD = 0b100;
+	enum class InputDeviceType : ui8 {
+		UNKNOWN,
+		KEYBOARD = 0b1,
+		MOUSE = 0b10,
+		GAMEPAD = 0b100
 	};
+	AE_DEFINE_ENUM_BIT_OPERATIION(InputDeviceType);
 
 
 	class AE_DLL InputDeviceGUID {
@@ -69,12 +68,12 @@ namespace aurora::modules {
 	class AE_DLL InputDeviceInfo {
 	public:
 		InputDeviceInfo();
-		InputDeviceInfo(const InputDeviceGUID& guid, ui32 type);
+		InputDeviceInfo(const InputDeviceGUID& guid, InputDeviceType type);
 		InputDeviceInfo(const InputDeviceInfo& value);
 		InputDeviceInfo(InputDeviceInfo&& value);
 
 		InputDeviceGUID guid;
-		ui32 type;
+		InputDeviceType type;
 
 		InputDeviceInfo& AE_CALL operator=(const InputDeviceInfo& value);
 		InputDeviceInfo& AE_CALL operator=(InputDeviceInfo&& value);
@@ -89,6 +88,7 @@ namespace aurora::modules {
 		virtual const InputDeviceInfo& AE_CALL getInfo() const = 0;
 		virtual ui32 AE_CALL getKeyState(ui32 keyCode, f32* data, ui32 count) const = 0;
 		virtual void AE_CALL poll(bool dispatchEvent) = 0;
+		virtual void AE_CALL setDeadZone(ui32 keyCode, f32 deadZone) = 0;
 	};
 
 
@@ -307,14 +307,11 @@ namespace aurora::modules {
 	};
 
 
-	enum GamepadKeyCode : ui8 {
-		JOYSTICK_LEFT,
-		JOYSTICK_RIGHT,
+	enum class GamepadKeyCode : ui8 {
+		LEFT_STICK,
+		RIGHT_STICK,
 
-		DPAD_UP,
-		DPAD_DOWN,
-		DPAD_LEFT,
-		DPAD_RIGHT,
+		DPAD,
 		//DPAD_CENTER,
 
 		LEFT_SHOULDER,
@@ -326,16 +323,26 @@ namespace aurora::modules {
 		//LEFT_THUMBSTICK,
 		//RIGHT_THUMBSTICK,
 
-		START,
 		SELECT,
+		SHARE = SELECT,//DS4
+		START,
+		OPTIONS = START,//DS4
 
 		//BUTTON_PAUSE
 
 		A,
+		CROSS = A,//DS4
 		B,
+		CIRCLE = B,//DS4
 		//C,
 		X,
+		SQUARE = X,//DS4
 		Y,
+		TRIANGLE = Y,//DS4
 		//Z,
+
+		TOUCH_PAD,//DS4
+
+		UNDEFINED
 	};
 }
