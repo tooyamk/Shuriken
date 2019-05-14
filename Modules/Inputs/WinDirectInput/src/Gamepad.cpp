@@ -48,6 +48,8 @@ namespace aurora::modules::win_direct_input {
 		axis[_keyMapping->RSTICK_Y] = 32767;
 		if (_keyMapping->LTRIGGER == _keyMapping->RTRIGGER) axis[_keyMapping->LTRIGGER] = 32767;
 
+		if (_poll()) _dev->GetDeviceState(0, nullptr);
+
 		setDeadZone((ui8)GamepadKeyCode::LEFT_STICK, .05f);
 		setDeadZone((ui8)GamepadKeyCode::RIGHT_STICK, .05f);
 		setDeadZone((ui8)GamepadKeyCode::LEFT_TRIGGER, .05f);
@@ -102,11 +104,7 @@ namespace aurora::modules::win_direct_input {
 	}
 
 	void Gamepad::poll(bool dispatchEvent) {
-		HRESULT hr = _dev->Poll();
-		if (hr == DIERR_NOTACQUIRED || DIERR_INPUTLOST) {
-			if (FAILED(_dev->Acquire())) return;
-			if (FAILED(_dev->Poll())) return;
-		}
+		if (!_poll()) return;
 
 		if (!dispatchEvent) {
 			_dev->GetDeviceState(sizeof(_state), &_state);
@@ -114,20 +112,38 @@ namespace aurora::modules::win_direct_input {
 		}
 
 		DIJOYSTATE2 state;
-		hr = _dev->GetDeviceState(sizeof(state), &state);
-		if (SUCCEEDED(hr)) {
+		if (auto hr = _dev->GetDeviceState(sizeof(state), &state); SUCCEEDED(hr)) {
 			auto oriAxis = &_state.lX;
 			auto curAxis = &state.lX;
 
-			auto ls = oriAxis[_keyMapping->LSTICK_X] != curAxis[_keyMapping->LSTICK_X] || oriAxis[_keyMapping->LSTICK_Y] != curAxis[_keyMapping->LSTICK_Y];
-			auto rs = oriAxis[_keyMapping->RSTICK_X] != curAxis[_keyMapping->RSTICK_X] || oriAxis[_keyMapping->RSTICK_Y] != curAxis[_keyMapping->RSTICK_Y];
+			LONG oriLStickX, oriLStickY, oriRStickX, oriRStickY;
+			auto ls = false, rs = false;
+			if (oriAxis[_keyMapping->LSTICK_X] != curAxis[_keyMapping->LSTICK_X] || oriAxis[_keyMapping->LSTICK_Y] != curAxis[_keyMapping->LSTICK_Y]) {
+				oriLStickX = oriAxis[_keyMapping->LSTICK_X];
+				oriLStickY = oriAxis[_keyMapping->LSTICK_Y];
+				oriAxis[_keyMapping->LSTICK_X] = curAxis[_keyMapping->LSTICK_X];
+				oriAxis[_keyMapping->LSTICK_Y] = curAxis[_keyMapping->LSTICK_Y];
+				ls = true;
+			}
+			if (oriAxis[_keyMapping->RSTICK_X] != curAxis[_keyMapping->RSTICK_X] || oriAxis[_keyMapping->RSTICK_Y] != curAxis[_keyMapping->RSTICK_Y]) {
+				oriRStickX = oriAxis[_keyMapping->RSTICK_X];
+				oriRStickY = oriAxis[_keyMapping->RSTICK_Y];
+				oriAxis[_keyMapping->RSTICK_X] = curAxis[_keyMapping->RSTICK_X];
+				oriAxis[_keyMapping->RSTICK_Y] = curAxis[_keyMapping->RSTICK_Y];
+				rs = true;
+			}
 
-			bool lt, rt;
-			if (_keyMapping->LTRIGGER == _keyMapping->RTRIGGER) {
-				lt = oriAxis[_keyMapping->LTRIGGER] != curAxis[_keyMapping->LTRIGGER];
-			} else {
-				lt = oriAxis[_keyMapping->LTRIGGER] != curAxis[_keyMapping->LTRIGGER];
-				rt = oriAxis[_keyMapping->RTRIGGER] != curAxis[_keyMapping->RTRIGGER];
+			auto lt = false, rt = false;
+			LONG oriLT, oriRT;
+			if (oriAxis[_keyMapping->LTRIGGER] != curAxis[_keyMapping->LTRIGGER]) {
+				oriLT = oriAxis[_keyMapping->LTRIGGER];
+				oriAxis[_keyMapping->LTRIGGER] = curAxis[_keyMapping->LTRIGGER];
+				lt = true;
+			}
+			if (_keyMapping->LTRIGGER != _keyMapping->RTRIGGER && oriAxis[_keyMapping->RTRIGGER] != curAxis[_keyMapping->RTRIGGER]) {
+				oriRT = oriAxis[_keyMapping->RTRIGGER];
+				oriAxis[_keyMapping->RTRIGGER] = curAxis[_keyMapping->RTRIGGER];
+				rt = true;
 			}
 
 			ui8 changedBtns[sizeof(state.rgbButtons)];
@@ -148,42 +164,14 @@ namespace aurora::modules::win_direct_input {
 				}
 			}
 
-			/*
-			if (_state.lVX != state.lVX || _state.lVY != state.lVY || _state.lVZ != state.lVZ ||
-				_state.lVRx != state.lVRx || _state.lVRy != state.lVRy || _state.lVRz != state.lVRz ||
-				_state.lAX != state.lAX || _state.lAY != state.lAY || _state.lAZ != state.lAZ ||
-				_state.lARx != state.lARx || _state.lARy != state.lARy || _state.lARz != state.lARz ||
-				_state.lFX != state.lFX || _state.lFY != state.lFY || _state.lFZ != state.lFZ ||
-				_state.lFRx != state.lARx || _state.lFRy != state.lFRy || _state.lFRz != state.lFRz) {
-				_state.lVX = state.lVX;
-				_state.lVY = state.lVY;
-				_state.lVZ = state.lVZ;
-				_state.lVRx = state.lVRx;
-				_state.lVRy = state.lVRy;
-				_state.lVRz = state.lVRz;
-				_state.lAX = state.lAX;
-				_state.lAY = state.lAY;
-				_state.lAZ = state.lAZ;
-				_state.lARx = state.lARx;
-				_state.lARy = state.lARy;
-				_state.lARz = state.lARz;
-				_state.lFX = state.lFX;
-				_state.lFY = state.lFY;
-				_state.lFZ = state.lFZ;
-				_state.lFRx = state.lFRx;
-				_state.lFRy = state.lFRy;
-				_state.lFRz = state.lFRz;
-			}
-			*/
-
-			if (ls) _updateStick(oriAxis[_keyMapping->LSTICK_X], oriAxis[_keyMapping->LSTICK_Y], curAxis[_keyMapping->LSTICK_X], curAxis[_keyMapping->LSTICK_Y], GamepadKeyCode::LEFT_STICK);
-			if (rs) _updateStick(oriAxis[_keyMapping->RSTICK_X], oriAxis[_keyMapping->RSTICK_Y], curAxis[_keyMapping->RSTICK_X], curAxis[_keyMapping->RSTICK_Y], GamepadKeyCode::RIGHT_STICK);
+			if (ls) _updateStick(oriLStickX, oriLStickY, curAxis[_keyMapping->LSTICK_X], curAxis[_keyMapping->LSTICK_Y], GamepadKeyCode::LEFT_STICK);
+			if (rs) _updateStick(oriRStickX, oriRStickY, curAxis[_keyMapping->RSTICK_X], curAxis[_keyMapping->RSTICK_Y], GamepadKeyCode::RIGHT_STICK);
 
 			if (_keyMapping->LTRIGGER == _keyMapping->RTRIGGER) {
-				if (lt) _updateTrigger(oriAxis[_keyMapping->LTRIGGER], curAxis[_keyMapping->LTRIGGER], GamepadKeyCode::LEFT_TRIGGER, GamepadKeyCode::RIGHT_TRIGGER);
+				if (lt) _updateTrigger(oriLT, curAxis[_keyMapping->LTRIGGER], GamepadKeyCode::LEFT_TRIGGER, GamepadKeyCode::RIGHT_TRIGGER);
 			} else {
-				if (lt) _updateTriggerSeparate(oriAxis[_keyMapping->LTRIGGER], curAxis[_keyMapping->LTRIGGER], GamepadKeyCode::LEFT_TRIGGER);
-				if (rt) _updateTriggerSeparate(oriAxis[_keyMapping->RTRIGGER], curAxis[_keyMapping->RTRIGGER], GamepadKeyCode::RIGHT_TRIGGER);
+				if (lt) _updateTriggerSeparate(oriLT, curAxis[_keyMapping->LTRIGGER], GamepadKeyCode::LEFT_TRIGGER);
+				if (rt) _updateTriggerSeparate(oriRT, curAxis[_keyMapping->RTRIGGER], GamepadKeyCode::RIGHT_TRIGGER);
 			}
 
 			if (changedPovLen) {
@@ -220,6 +208,15 @@ namespace aurora::modules::win_direct_input {
 		}
 	}
 
+	bool Gamepad::_poll() {
+		if (auto hr = _dev->Poll(); hr == DIERR_NOTACQUIRED || DIERR_INPUTLOST) {
+			if (FAILED(_dev->Acquire())) return false;
+			if (FAILED(_dev->Poll())) return false;
+		}
+
+		return true;
+	}
+
 	f32 Gamepad::_translateStick(LONG value) {
 		auto v = f32(value - 32767);
 		if (v < 0.f) {
@@ -248,7 +245,7 @@ namespace aurora::modules::win_direct_input {
 	}
 
 	f32 Gamepad::_translateAngle(DWORD value) {
-		return (value == 0xFFFFFFFFui32) ? -1.f : f32(value) * .01f;
+		return (value == 0xFFFFFFFFui32) ? -1.f : Math::rad(f32(value) * .01f);
 	}
 
 	f32 Gamepad::_translateButton(DWORD value) {
@@ -256,14 +253,24 @@ namespace aurora::modules::win_direct_input {
 	}
 
 	ui32 Gamepad::_getStick(LONG x, LONG y, GamepadKeyCode key, f32* data, ui32 count) const {
-		auto dz = _getDeadZone(key);
-
-		data[0] = _translateStick(x);
-		_translateDeadZone_1_1(data[0], dz, Math::isEqual(data[0], 0.f, dz));
 		ui32 c = 1;
-		if (count > 1) {
-			data[c++] = _translateStick(y);
-			_translateDeadZone_1_1(data[1], dz, Math::isEqual(data[1], 0.f, dz));
+
+		auto dz = _getDeadZone(key);
+		auto dz2 = dz * dz;
+
+		auto dx = _translateStick(x);
+		auto dy = _translateStick(y);
+
+		auto d2 = dx * dx + dy * dy;
+		if (d2 > 1.f) d2 = 1.f;
+
+		if (d2 <= dz2) {
+			data[0] = -1.0f;
+			if (count > 1) data[c++] = 0.f;
+		} else {
+			data[0] = std::atan2(dy, dx) + Math::PI_2<f32>;
+			if (data[0] < 0.f) data[0] += Math::PI2<f32>;
+			if (count > 1) data[c++] = _translateDeadZone0_1(d2 < 1.f ? std::sqrt(d2) : 1.f, dz, false);
 		}
 
 		return c;
@@ -275,7 +282,7 @@ namespace aurora::modules::win_direct_input {
 		f32 values[2];
 		_translateTrigger(t, values[0], values[1]);
 		data = values[index];
-		_translateDeadZone0_1(data, dz, data <= dz);
+		data = _translateDeadZone0_1(data, dz, data <= dz);
 
 		return 1;
 	}
@@ -284,28 +291,34 @@ namespace aurora::modules::win_direct_input {
 		auto dz = _getDeadZone(key);
 
 		data = _translateTriggerSeparate(t);
-		_translateDeadZone0_1(data, dz, data <= dz);
+		data = _translateDeadZone0_1(_translateTriggerSeparate(t), dz, data <= dz);
 
 		return 1;
 	}
 
-	void Gamepad::_updateStick(LONG& oriX, LONG& oriY, LONG curX, LONG curY, GamepadKeyCode key) {
+	void Gamepad::_updateStick(LONG oriX, LONG oriY, LONG curX, LONG curY, GamepadKeyCode key) {
 		f32 value[] = { _translateStick(curX) , _translateStick(curY) };
 		auto dz = _getDeadZone(key);
-		auto oriXDz = Math::isEqual(_translateStick(oriX), 0.f, dz);
-		auto oriYDz = Math::isEqual(_translateStick(oriY), 0.f, dz);
-		auto curXDz = Math::isEqual(value[0], 0.f, dz);
-		auto curYDz = Math::isEqual(value[1], 0.f, dz);
-		oriX = curX;
-		oriY = curY;
-		if (!curXDz || !curYDz || oriXDz != curXDz || oriYDz != curYDz) {
-			_translateDeadZone_1_1(value[0], dz, curXDz);
-			_translateDeadZone_1_1(value[1], dz, curYDz);
+		auto dz2 = dz * dz;
+		auto x = _translateStick(oriX), y = _translateStick(oriY);
+		auto oriDz = x * x + y * y <= dz2;
+		auto d2 = value[0] * value[0] + value[1] * value[1];
+		if (d2 > 1.f) d2 = 1.f;
+		auto curDz = d2 <= dz2;
+		if (!oriDz || oriDz != curDz) {
+			if (curDz) {
+				value[0] = -1.f;
+				value[1] = 0.f;
+			} else {
+				value[0] = std::atan2(value[1], value[0]) + Math::PI_2<f32>;
+				if (value[0] < 0.f) value[0] += Math::PI2<f32>;
+				value[1] = _translateDeadZone0_1(d2 < 1.f ? std::sqrt(d2) : 1.f, dz, false);
+			}
 			_eventDispatcher.dispatchEvent(this, InputDeviceEvent::MOVE, &InputKey({ (ui8)key, 2, value }));
 		}
 	}
 
-	void Gamepad::_updateTrigger(LONG& ori, LONG cur, GamepadKeyCode lkey, GamepadKeyCode rkey) {
+	void Gamepad::_updateTrigger(LONG ori, LONG cur, GamepadKeyCode lkey, GamepadKeyCode rkey) {
 		f32 oriValues[2], curValues[2];
 		_translateTrigger(ori, oriValues[0], oriValues[1]);
 		_translateTrigger(cur, curValues[0], curValues[1]);
@@ -315,13 +328,12 @@ namespace aurora::modules::win_direct_input {
 		auto curLDz = curValues[0] <= ldz;
 		auto oriRDz = oriValues[1] <= rdz;
 		auto curRDz = curValues[1] <= rdz;
-		ori = cur;
 		if (!curLDz || oriLDz != curLDz) {
-			_translateDeadZone0_1(curValues[0], ldz, curLDz);
+			curValues[0] = _translateDeadZone0_1(curValues[0], ldz, curLDz);
 			_eventDispatcher.dispatchEvent(this, InputDeviceEvent::MOVE, &InputKey({ (ui8)lkey, 1, &curValues[0] }));
 		}
 		if (!curRDz || oriRDz != curRDz) {
-			_translateDeadZone0_1(curValues[1], rdz, curRDz);
+			curValues[1] = _translateDeadZone0_1(curValues[1], rdz, curRDz);
 			_eventDispatcher.dispatchEvent(this, InputDeviceEvent::MOVE, &InputKey({ (ui8)rkey, 1, &curValues[1] }));
 		}
 	}
@@ -333,7 +345,7 @@ namespace aurora::modules::win_direct_input {
 		auto curDz = value <= dz;
 		ori = cur;
 		if (!curDz || oriDz != curDz) {
-			_translateDeadZone0_1(value, dz, curDz);
+			value = _translateDeadZone0_1(value, dz, curDz);
 			_eventDispatcher.dispatchEvent(this, InputDeviceEvent::MOVE, &InputKey({ (ui8)key, 1, &value }));
 		}
 	}

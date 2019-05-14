@@ -19,11 +19,13 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\Gamepad.cpp" />
     <ClCompile Include="src\Input.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Base.h" />
     <ClInclude Include="src\CreateModule.h" />
+    <ClInclude Include="src\Gamepad.h" />
     <ClInclude Include="src\Input.h" />
   </ItemGroup>
   <ItemGroup>

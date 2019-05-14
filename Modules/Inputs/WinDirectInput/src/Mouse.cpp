@@ -114,7 +114,7 @@ namespace aurora::modules::win_direct_input {
 	POINT Mouse::_getClientPos() const {
 		POINT p;
 		GetCursorPos(&p);
-		ScreenToClient(_input->getHWND(), &p);
+		ScreenToClient(_input.get()->getHWND(), &p);
 		return p;
 	}
 }

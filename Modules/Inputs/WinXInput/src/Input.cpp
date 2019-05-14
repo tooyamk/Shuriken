@@ -1,7 +1,8 @@
 #include "Input.h"
-#include "base/Application.h"
-//#include "Gamepad.h"
+#include "Gamepad.h"
 #include "CreateModule.h"
+#include "base/Application.h"
+#include "base/ByteArray.h"
 #include <algorithm>
 
 namespace aurora::modules::win_xinput {
@@ -17,20 +18,30 @@ namespace aurora::modules::win_xinput {
 	}
 
 	void Input::poll() {
+		GUID guid;
+
 		XINPUT_CAPABILITIES caps;
 		for (ui32 i = 0; i < XUSER_MAX_COUNT; ++i) {
 			if (XInputGetCapabilities(i, XINPUT_FLAG_GAMEPAD, &caps) == ERROR_SUCCESS) {
+				guid.index = i + 1;
+
 				XINPUT_STATE state;
 				if (XInputGetState(i, &state) == ERROR_SUCCESS) {
+					bool found = false;
 					for (ui32 j = 0, n = _devices.size(); j < n; ++j) {
-						if (_devices[j].guid.isEqual((ui8*)&i, sizeof(ui32))) {
+						if (_devices[j].guid.isEqual((const i8*)&guid, sizeof(guid))) {
 							_keepDevices.emplace_back(j);
+							found = true;
 							break;
 						}
 					}
+
+					if (!found) {
+						auto& info = _connectedDevices.emplace_back();
+						info.guid.set((const i8*)&guid, sizeof(guid));
+						info.type = InputDeviceType::GAMEPAD;
+					}
 				}
-			} else {
-				break;
 			}
 		}
 
@@ -76,26 +87,9 @@ namespace aurora::modules::win_xinput {
 	}
 
 	IInputDevice* Input::createDevice(const InputDeviceGUID& guid) {
-		/*
 		for (auto& info : _devices) {
-			if (info.guid == guid) {
-				LPDIRECTINPUTDEVICE8 dev = nullptr;
-				if (FAILED(_di->CreateDevice(*(const GUID*)guid.getData(), &dev, nullptr))) return nullptr;
-
-				switch (info.type) {
-				case InputDeviceType::GAMEPAD:
-					return new Gamepad(this, dev, info);
-				case InputDeviceType::KEYBOARD:
-					return new Keyboard(this, dev, info);
-				case InputDeviceType::MOUSE:
-					return new Mouse(this, dev, info);
-				default:
-					dev->Release();
-					return nullptr;
-				}
-			}
+			if (info.guid == guid) return new Gamepad(this, info);
 		}
-		*/
 
 		return nullptr;
 	}

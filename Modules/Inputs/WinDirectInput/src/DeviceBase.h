@@ -16,7 +16,7 @@ namespace aurora::modules::win_direct_input {
 		virtual void AE_CALL setDeadZone(ui32 keyCode, f32 deadZone) override {}
 
 	protected:
-		Input* _input;
+		RefPtr<Input> _input;
 		events::EventDispatcher<InputDeviceEvent> _eventDispatcher;
 		InputDeviceInfo _info;
 

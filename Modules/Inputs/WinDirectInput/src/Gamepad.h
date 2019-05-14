@@ -30,7 +30,7 @@ namespace aurora::modules::win_direct_input {
 
 		std::unordered_map<ui32, f32> _deadZone;
 
-		inline f32 _getDeadZone(GamepadKeyCode key) const {
+		inline f32 AE_CALL _getDeadZone(GamepadKeyCode key) const {
 			if (auto itr = _deadZone.find((ui32)key); itr == _deadZone.end()) {
 				return 0.f;
 			} else {
@@ -38,28 +38,27 @@ namespace aurora::modules::win_direct_input {
 			}
 		}
 
-		ui32 _getStick(LONG x, LONG y, GamepadKeyCode key, f32* data, ui32 count) const;
-		ui32 _getTrigger(LONG t, GamepadKeyCode key, ui8 index, f32& data) const;
-		ui32 _getTriggerSeparate(LONG t, GamepadKeyCode key, f32& data) const;
+		bool AE_CALL _poll();
 
-		void _updateStick(LONG& oriX, LONG& oriY, LONG curX, LONG curY, GamepadKeyCode key);
-		void _updateTrigger(LONG& ori, LONG cur, GamepadKeyCode lkey, GamepadKeyCode rkey);
-		void _updateTriggerSeparate(LONG& ori, LONG cur, GamepadKeyCode key);
+		ui32 AE_CALL _getStick(LONG x, LONG y, GamepadKeyCode key, f32* data, ui32 count) const;
+		ui32 AE_CALL _getTrigger(LONG t, GamepadKeyCode key, ui8 index, f32& data) const;
+		ui32 AE_CALL _getTriggerSeparate(LONG t, GamepadKeyCode key, f32& data) const;
 
-		inline static void _translateDeadZone0_1(f32& value, f32 dz, bool inDz) {
-			value = inDz ? 0.f : (value - dz) / (1.f - dz);
+		void AE_CALL _updateStick(LONG oriX, LONG oriY, LONG curX, LONG curY, GamepadKeyCode key);
+		void AE_CALL _updateTrigger(LONG ori, LONG cur, GamepadKeyCode lkey, GamepadKeyCode rkey);
+		void AE_CALL _updateTriggerSeparate(LONG& ori, LONG cur, GamepadKeyCode key);
+
+		inline static f32 AE_CALL _translateDeadZone0_1(f32 value, f32 dz, bool inDz) {
+			return inDz ? 0.f : (value - dz) / (1.f - dz);
 		}
-		inline static void _translateDeadZone_1_1(f32& value, f32 dz, bool inDz) {
-			value = inDz ? 0.f : (value < 0.f ? dz + value : value - dz) / (1.f - dz);
-		}
 
-		static f32 _translateStick(LONG value);
-		static void _translateTrigger(LONG value, f32& l, f32& r);
-		static f32 _translateTriggerSeparate(LONG value);
-		static f32 _translateAngle(DWORD value);
-		static f32 _translateButton(DWORD value);
+		static f32 AE_CALL _translateStick(LONG value);
+		static void AE_CALL _translateTrigger(LONG value, f32& l, f32& r);
+		static f32 AE_CALL _translateTriggerSeparate(LONG value);
+		static f32 AE_CALL _translateAngle(DWORD value);
+		static f32 AE_CALL _translateButton(DWORD value);
 
-		static bool _isXInputDevice(const GUID& guid);
+		static bool AE_CALL _isXInputDevice(const GUID& guid);
 
 		inline static const KeyMapping DIRECT{
 			0, 1, 2, 5, 3, 4,

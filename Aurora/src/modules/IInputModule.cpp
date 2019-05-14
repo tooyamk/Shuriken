@@ -8,7 +8,7 @@ namespace aurora::modules {
 	}
 
 	InputDeviceGUID::InputDeviceGUID(const InputDeviceGUID& value) :
-		_data(new ui8[value._len]),
+		_data(new i8[value._len]),
 		_len(value._len) {
 		memcpy(_data, value._data, _len);
 	}
@@ -23,17 +23,17 @@ namespace aurora::modules {
 		if (_data) delete[] _data;
 	}
 
-	void InputDeviceGUID::set(ui8* data, ui32 len) {
+	void InputDeviceGUID::set(const i8* data, ui32 len) {
 		if (_len != len) {
 			_len = len;
 			delete[] _data;
-			_data = new ui8[_len];
+			_data = new i8[_len];
 		}
 
 		memcpy(_data, data, _len);
 	}
 
-	bool InputDeviceGUID::isEqual(ui8* data, ui32 len) const {
+	bool InputDeviceGUID::isEqual(const i8* data, ui32 len) const {
 		if (_len == len) {
 			for (ui32 i = 0; i < _len; ++i) {
 				if (_data[i] != data[i]) return false;
@@ -45,7 +45,7 @@ namespace aurora::modules {
 
 	InputDeviceGUID& InputDeviceGUID::operator=(const InputDeviceGUID& value) {
 		_len = value._len;
-		_data = new ui8[_len];
+		_data = new i8[_len];
 		memcpy(_data, value._data, _len);
 
 		return *this;

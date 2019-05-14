@@ -3,7 +3,7 @@
 
 namespace aurora::modules::win_direct_input {
 	DeviceBase::DeviceBase(Input* input, LPDIRECTINPUTDEVICE8 dev, const InputDeviceInfo& info) :
-		_input(input->ref<Input>()),
+		_input(input),
 		_dev(dev),
 		_info(info) {
 	}
@@ -11,7 +11,6 @@ namespace aurora::modules::win_direct_input {
 	DeviceBase::~DeviceBase() {
 		_dev->Unacquire();
 		_dev->Release();
-		Ref::setNull<Input>(_input);
 	}
 
 	events::IEventDispatcher<InputDeviceEvent>& DeviceBase::getEventDispatcher() {
