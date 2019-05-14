@@ -1,31 +1,39 @@
-#include "DirectInput.h"
+#include "Input.h"
 #include "base/Application.h"
-#include "Gamepad.h"
-#include "Keyboard.h"
-#include "Mouse.h"
+//#include "Gamepad.h"
 #include "CreateModule.h"
 #include <algorithm>
 
-namespace aurora::modules::win_direct_input {
-	DirectInput::DirectInput(Application* app) :
-		_app(app->ref<Application>()),
-		_di(nullptr) {
+namespace aurora::modules::win_xinput {
+	Input::Input(Application* app) :
+		_app(app) {
 	}
 
-	DirectInput::~DirectInput() {
-		if (_di) _di->Release();
-		Ref::setNull<Application>(_app);
+	Input::~Input() {
 	}
 
-	events::IEventDispatcher<InputModuleEvent>& DirectInput::getEventDispatcher() {
+	events::IEventDispatcher<InputModuleEvent>& Input::getEventDispatcher() {
 		return _eventDispatcher;
 	}
 
-	void DirectInput::poll() {
-		if (!_di && FAILED(DirectInput8Create(GetModuleHandle(nullptr), DIRECTINPUT_VERSION, IID_IDirectInput8, (LPVOID*)&_di, nullptr))) return;
+	void Input::poll() {
+		XINPUT_CAPABILITIES caps;
+		for (ui32 i = 0; i < XUSER_MAX_COUNT; ++i) {
+			if (XInputGetCapabilities(i, XINPUT_FLAG_GAMEPAD, &caps) == ERROR_SUCCESS) {
+				XINPUT_STATE state;
+				if (XInputGetState(i, &state) == ERROR_SUCCESS) {
+					for (ui32 j = 0, n = _devices.size(); j < n; ++j) {
+						if (_devices[j].guid.isEqual((ui8*)&i, sizeof(ui32))) {
+							_keepDevices.emplace_back(j);
+							break;
+						}
+					}
+				}
+			} else {
+				break;
+			}
+		}
 
-		_di->EnumDevices(DI8DEVCLASS_ALL, _enumDevicesCallback, this, DIEDFL_ATTACHEDONLY);
-		
 		std::vector<InputDeviceInfo> changed;
 		if (_keepDevices.size() < _devices.size()) {
 			ui32 size = _keepDevices.size();
@@ -67,7 +75,8 @@ namespace aurora::modules::win_direct_input {
 		for (ui32 i = connectedIdx, n = changed.size(); i < n; ++i) _eventDispatcher.dispatchEvent(this, InputModuleEvent::CONNECTED, &changed[i]);
 	}
 
-	IInputDevice* DirectInput::createDevice(const InputDeviceGUID& guid) {
+	IInputDevice* Input::createDevice(const InputDeviceGUID& guid) {
+		/*
 		for (auto& info : _devices) {
 			if (info.guid == guid) {
 				LPDIRECTINPUTDEVICE8 dev = nullptr;
@@ -86,43 +95,8 @@ namespace aurora::modules::win_direct_input {
 				}
 			}
 		}
+		*/
 
 		return nullptr;
-	}
-
-	HWND DirectInput::getHWND() const {
-		return _app->Win_getHWnd();
-	}
-
-	BOOL DirectInput::_enumDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, LPVOID pContext) {
-		ui32 type = pdidInstance->dwDevType & 0xFF;
-		if (type == DI8DEVTYPE_MOUSE || type == DI8DEVTYPE_KEYBOARD || type == DI8DEVTYPE_GAMEPAD) {
-			auto im = (DirectInput*)pContext;
-
-			for (ui32 i = 0, n = im->_devices.size(); i < n; ++i) {
-				if (im->_devices[i].guid.isEqual((ui8*)&pdidInstance->guidProduct, sizeof(GUID))) {
-					im->_keepDevices.emplace_back(i);
-					return DIENUM_CONTINUE;
-				}
-			}
-
-			auto& info = im->_connectedDevices.emplace_back();
-			info.guid.set((ui8*)&pdidInstance->guidProduct, sizeof(GUID));
-			switch (type) {
-			case DI8DEVTYPE_MOUSE:
-				info.type |= InputDeviceType::MOUSE;
-				break;
-			case DI8DEVTYPE_KEYBOARD:
-				info.type |= InputDeviceType::KEYBOARD;
-				break;
-			case DI8DEVTYPE_GAMEPAD:
-				info.type |= InputDeviceType::GAMEPAD;
-				break;
-			default:
-				break;
-			}
-		}
-
-		return DIENUM_CONTINUE;
 	}
 }

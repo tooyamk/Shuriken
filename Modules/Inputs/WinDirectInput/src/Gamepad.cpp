@@ -1,38 +1,52 @@
 #include "Gamepad.h"
-#include "DirectInput.h"
+#include "Input.h"
 #include "math/Math.h"
 
+#include <wbemidl.h>
+#include <oleauto.h>
+//#include <wmsstd.h>
+
+#ifndef SAFE_RELEASE
+#define SAFE_RELEASE(p)       { if (p) { (p)->Release();  (p) = nullptr; } }
+#endif // !SAFE_RELEASE
+
 namespace aurora::modules::win_direct_input {
-	Gamepad::Gamepad(DirectInput* input, LPDIRECTINPUTDEVICE8 dev, const InputDeviceInfo& info) : DeviceBase(input, dev, info),
-		_specifiedKeyToEnumMapping(nullptr) {
+	Gamepad::Gamepad(Input* input, LPDIRECTINPUTDEVICE8 dev, const InputDeviceInfo& info) : DeviceBase(input, dev, info),
+		_keyMapping(nullptr) {
 		_dev->SetDataFormat(&c_dfDIJoystick2);
 		_dev->SetCooperativeLevel(input->getHWND(), DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
+
+		if (_isXInputDevice(*(const GUID*)info.guid.getData())) {
+			_keyMapping = &XINPUT;
+		} else {
+			auto data = (const ui16*)info.guid.getData();
+			auto vender = data[0];
+			auto product = data[1];
+			switch (data[0]) {
+			case 0x054C:
+			{
+				if (product == 0x05C4 || product == 0x09CC) {
+					_keyMapping = &DS4;
+				}
+
+				break;
+			}
+			default:
+				break;
+			}
+		}
+
+		if (!_keyMapping) _keyMapping = &DIRECT;
+		for (auto& itr : _keyMapping->BUTTONS) _enumToKeyMapping.try_emplace(itr.second, itr.first);
+
 		memset(&_state, 0, sizeof(_state));
 		memset(&_state.rgdwPOV, 0xFF, sizeof(_state.rgdwPOV));
-		_state.lX = 32767;
-		_state.lY = 32767;
-		_state.lZ = 32767;
-		_state.lRz = 32767;
-
-		auto data = (const ui16*)info.guid.getData();
-		auto vender = data[0];
-		auto product = data[1];
-		switch (data[0]) {
-		case 0x054C:
-		{
-			if (product == 0x05C4 || product == 0x09CC) {
-				_specifiedKeyToEnumMapping = &Gamepad::DS4;
-			}
-
-			break;
-		}
-		default:
-			break;
-		}
-
-		if (_specifiedKeyToEnumMapping) {
-			for (auto& itr : *_specifiedKeyToEnumMapping) _specifiedEnumToKeyMapping.try_emplace(itr.second, itr.first);
-		}
+		auto axis = &_state.lX;
+		axis[_keyMapping->LSTICK_X] = 32767;
+		axis[_keyMapping->LSTICK_Y] = 32767;
+		axis[_keyMapping->RSTICK_X] = 32767;
+		axis[_keyMapping->RSTICK_Y] = 32767;
+		if (_keyMapping->LTRIGGER == _keyMapping->RTRIGGER) axis[_keyMapping->LTRIGGER] = 32767;
 
 		setDeadZone((ui8)GamepadKeyCode::LEFT_STICK, .05f);
 		setDeadZone((ui8)GamepadKeyCode::RIGHT_STICK, .05f);
@@ -44,53 +58,38 @@ namespace aurora::modules::win_direct_input {
 		if (data && count) {
 			switch ((GamepadKeyCode)keyCode) {
 			case GamepadKeyCode::LEFT_STICK:
-				return _getStick(_state.lX, _state.lY, (GamepadKeyCode)keyCode, data, count);
+			{
+				auto axis = &_state.lX;
+				return _getStick(axis[_keyMapping->LSTICK_X], axis[_keyMapping->LSTICK_Y], (GamepadKeyCode)keyCode, data, count);
+			}
 			case GamepadKeyCode::RIGHT_STICK:
-				return _getStick(_state.lZ, _state.lRz, (GamepadKeyCode)keyCode, data, count);
+			{
+				auto axis = &_state.lX;
+				return _getStick(axis[_keyMapping->RSTICK_X], axis[_keyMapping->RSTICK_Y], (GamepadKeyCode)keyCode, data, count);
+			}
 			case GamepadKeyCode::LEFT_TRIGGER:
-				return _getTrigger(_state.lRx, (GamepadKeyCode)keyCode, data[0]);
+			{
+				auto axis = &_state.lX;
+				return _keyMapping->LTRIGGER == _keyMapping->RTRIGGER ? _getTrigger(axis[_keyMapping->LTRIGGER], (GamepadKeyCode)keyCode, 0, data[0]) : _getTriggerSeparate(axis[_keyMapping->LTRIGGER], (GamepadKeyCode)keyCode, data[0]);
+			}
 			case GamepadKeyCode::RIGHT_TRIGGER:
-				return _getTrigger(_state.lRy, (GamepadKeyCode)keyCode, data[0]);
+			{
+				auto axis = &_state.lX;
+				return _keyMapping->LTRIGGER == _keyMapping->RTRIGGER ? _getTrigger(axis[_keyMapping->RTRIGGER], (GamepadKeyCode)keyCode, 1, data[0]) : _getTriggerSeparate(axis[_keyMapping->RTRIGGER], (GamepadKeyCode)keyCode, data[0]);
+			}
 			case GamepadKeyCode::DPAD:
 				data[0] = _translateAngle(_state.rgdwPOV[0]);
 				return 1;
-			case GamepadKeyCode::X:
-				data[0] = _translateButton(_state.rgbButtons[0]);
-				return 1;
-			case GamepadKeyCode::A:
-				data[0] = _translateButton(_state.rgbButtons[1]);
-				return 1;
-			case GamepadKeyCode::B:
-				data[0] = _translateButton(_state.rgbButtons[2]);
-				return 1;
-			case GamepadKeyCode::Y:
-				data[0] = _translateButton(_state.rgbButtons[3]);
-				return 1;
-			case GamepadKeyCode::LEFT_SHOULDER:
-				data[0] = _translateButton(_state.rgbButtons[4]);
-				return 1;
-			case GamepadKeyCode::RIGHT_SHOULDER:
-				data[0] = _translateButton(_state.rgbButtons[5]);
-				return 1;
-			case GamepadKeyCode::SELECT:
-				data[0] = _translateButton(_state.rgbButtons[8]);
-				return 1;
-			case GamepadKeyCode::START:
-				data[0] = _translateButton(_state.rgbButtons[9]);
-				return 1;
 			default:
 			{
-				if (_specifiedKeyToEnumMapping) {
-					auto itr = _specifiedEnumToKeyMapping.find((GamepadKeyCode)keyCode);
-					if (itr != _specifiedEnumToKeyMapping.end()) {
-						data[0] = _translateButton(_state.rgbButtons[itr->second]);
+				if (auto itr = _enumToKeyMapping.find((GamepadKeyCode)keyCode); itr != _enumToKeyMapping.end()) {
+					data[0] = _translateButton(_state.rgbButtons[itr->second]);
 
-						return 1;
-					}
+					return 1;
 				}
 
 				if (keyCode >= (ui8)GamepadKeyCode::UNDEFINED) {
-					data[0] = _translateButton(_state.rgbButtons[keyCode + 11 - (ui8)GamepadKeyCode::UNDEFINED]);
+					data[0] = _translateButton(_state.rgbButtons[keyCode - (ui8)GamepadKeyCode::UNDEFINED]);
 
 					return 1;
 				}
@@ -117,10 +116,19 @@ namespace aurora::modules::win_direct_input {
 		DIJOYSTATE2 state;
 		hr = _dev->GetDeviceState(sizeof(state), &state);
 		if (SUCCEEDED(hr)) {
-			auto ls = _state.lX != state.lX || _state.lY != state.lY;
-			auto rs = _state.lZ != state.lZ || _state.lRz != state.lRz;
-			auto lt = _state.lRx != state.lRx;
-			auto rt = _state.lRy != state.lRy;
+			auto oriAxis = &_state.lX;
+			auto curAxis = &state.lX;
+
+			auto ls = oriAxis[_keyMapping->LSTICK_X] != curAxis[_keyMapping->LSTICK_X] || oriAxis[_keyMapping->LSTICK_Y] != curAxis[_keyMapping->LSTICK_Y];
+			auto rs = oriAxis[_keyMapping->RSTICK_X] != curAxis[_keyMapping->RSTICK_X] || oriAxis[_keyMapping->RSTICK_Y] != curAxis[_keyMapping->RSTICK_Y];
+
+			bool lt, rt;
+			if (_keyMapping->LTRIGGER == _keyMapping->RTRIGGER) {
+				lt = oriAxis[_keyMapping->LTRIGGER] != curAxis[_keyMapping->LTRIGGER];
+			} else {
+				lt = oriAxis[_keyMapping->LTRIGGER] != curAxis[_keyMapping->LTRIGGER];
+				rt = oriAxis[_keyMapping->RTRIGGER] != curAxis[_keyMapping->RTRIGGER];
+			}
 
 			ui8 changedBtns[sizeof(state.rgbButtons)];
 			ui8 changedBtnsLen = 0;
@@ -168,10 +176,15 @@ namespace aurora::modules::win_direct_input {
 			}
 			*/
 
-			if (ls) _updateStick(_state.lX, _state.lY, state.lX, state.lY, GamepadKeyCode::LEFT_STICK);
-			if (rs) _updateStick(_state.lZ, _state.lRz, state.lZ, state.lRz, GamepadKeyCode::RIGHT_STICK);
-			if (lt) _updateTrigger(_state.lRx, state.lRx, GamepadKeyCode::LEFT_TRIGGER);
-			if (rt) _updateTrigger(_state.lRy, state.lRy, GamepadKeyCode::RIGHT_TRIGGER);
+			if (ls) _updateStick(oriAxis[_keyMapping->LSTICK_X], oriAxis[_keyMapping->LSTICK_Y], curAxis[_keyMapping->LSTICK_X], curAxis[_keyMapping->LSTICK_Y], GamepadKeyCode::LEFT_STICK);
+			if (rs) _updateStick(oriAxis[_keyMapping->RSTICK_X], oriAxis[_keyMapping->RSTICK_Y], curAxis[_keyMapping->RSTICK_X], curAxis[_keyMapping->RSTICK_Y], GamepadKeyCode::RIGHT_STICK);
+
+			if (_keyMapping->LTRIGGER == _keyMapping->RTRIGGER) {
+				if (lt) _updateTrigger(oriAxis[_keyMapping->LTRIGGER], curAxis[_keyMapping->LTRIGGER], GamepadKeyCode::LEFT_TRIGGER, GamepadKeyCode::RIGHT_TRIGGER);
+			} else {
+				if (lt) _updateTriggerSeparate(oriAxis[_keyMapping->LTRIGGER], curAxis[_keyMapping->LTRIGGER], GamepadKeyCode::LEFT_TRIGGER);
+				if (rt) _updateTriggerSeparate(oriAxis[_keyMapping->RTRIGGER], curAxis[_keyMapping->RTRIGGER], GamepadKeyCode::RIGHT_TRIGGER);
+			}
 
 			if (changedPovLen) {
 				for (ui8 i = 0; i < changedPovLen; ++i) {
@@ -187,58 +200,10 @@ namespace aurora::modules::win_direct_input {
 				for (ui8 i = 0; i < changedBtnsLen; ++i) {
 					ui8 key = changedBtns[i];
 					f32 value = _translateButton(state.rgbButtons[key]);
-					switch (key) {
-					case 0:
-						key = (ui8)GamepadKeyCode::X;
-						break;
-					case 1:
-						key = (ui8)GamepadKeyCode::A;
-						break;
-					case 2:
-						key = (ui8)GamepadKeyCode::B;
-						break;
-					case 3:
-						key = (ui8)GamepadKeyCode::Y;
-						break;
-					case 4:
-						key = (ui8)GamepadKeyCode::LEFT_SHOULDER;
-						break;
-					case 5:
-						key = (ui8)GamepadKeyCode::RIGHT_SHOULDER;
-						break;
-					case 6:
-						key = (ui8)GamepadKeyCode::LEFT_TRIGGER;
-						break;
-					case 7:
-						key = (ui8)GamepadKeyCode::RIGHT_TRIGGER;
-						break;
-					case 8:
-						key = (ui8)GamepadKeyCode::SELECT;
-						break;
-					case 9:
-						key = (ui8)GamepadKeyCode::START;
-						break;
-					case 10:
-						key = (ui8)GamepadKeyCode::LEFT_STICK;
-						break;
-					case 11:
-						key = (ui8)GamepadKeyCode::RIGHT_STICK;
-						break;
-					default:
-					{
-						if (_specifiedKeyToEnumMapping) {
-							auto itr = _specifiedKeyToEnumMapping->find(key);
-							if (itr != _specifiedKeyToEnumMapping->end()) {
-								key = (ui8)itr->second;
+					
+					auto itr = _keyMapping->BUTTONS.find(key);
+					key = itr == _keyMapping->BUTTONS.end() ? key + (ui8)GamepadKeyCode::UNDEFINED : (ui8)itr->second;
 
-								break;
-							}
-						}
-
-						key = key - 11 + (ui8)GamepadKeyCode::UNDEFINED;
-						break;
-					}
-					}
 					_eventDispatcher.dispatchEvent(this, value > 0.f ? InputDeviceEvent::DOWN : InputDeviceEvent::UP, &InputKey({ key, 1, &value }));
 				}
 			}
@@ -265,7 +230,20 @@ namespace aurora::modules::win_direct_input {
 		return v;
 	}
 
-	f32 Gamepad::_translateTrigger(LONG value) {
+	void Gamepad::_translateTrigger(LONG value, f32& l, f32& r) {
+		if (value < 32767) {
+			l = 0.f;
+			r = f32(32767 - value) / 32767.f;
+		} else if (value > 32767) {
+			l =  f32(value - 32767) / 32768.f;
+			r = 0.f;
+		} else {
+			l = 0.f;
+			r = 0.f;
+		}
+	}
+
+	f32 Gamepad::_translateTriggerSeparate(LONG value) {
 		return f32(value) / 65535.f;
 	}
 
@@ -291,10 +269,21 @@ namespace aurora::modules::win_direct_input {
 		return c;
 	}
 
-	ui32 Gamepad::_getTrigger(LONG t, GamepadKeyCode key, f32& data) const {
+	ui32 Gamepad::_getTrigger(LONG t, GamepadKeyCode key, ui8 index, f32& data) const {
 		auto dz = _getDeadZone(key);
 
-		data = _translateTrigger(t);
+		f32 values[2];
+		_translateTrigger(t, values[0], values[1]);
+		data = values[index];
+		_translateDeadZone0_1(data, dz, data <= dz);
+
+		return 1;
+	}
+
+	ui32 Gamepad::_getTriggerSeparate(LONG t, GamepadKeyCode key, f32& data) const {
+		auto dz = _getDeadZone(key);
+
+		data = _translateTriggerSeparate(t);
 		_translateDeadZone0_1(data, dz, data <= dz);
 
 		return 1;
@@ -307,20 +296,142 @@ namespace aurora::modules::win_direct_input {
 		auto oriYDz = Math::isEqual(_translateStick(oriY), 0.f, dz);
 		auto curXDz = Math::isEqual(value[0], 0.f, dz);
 		auto curYDz = Math::isEqual(value[1], 0.f, dz);
-		_translateDeadZone_1_1(value[0], dz, curXDz);
-		_translateDeadZone_1_1(value[1], dz, curYDz);
 		oriX = curX;
 		oriY = curY;
-		if (!curXDz || !curYDz || oriXDz != curXDz || oriYDz != curYDz) _eventDispatcher.dispatchEvent(this, InputDeviceEvent::MOVE, &InputKey({ (ui8)key, 2, value }));
+		if (!curXDz || !curYDz || oriXDz != curXDz || oriYDz != curYDz) {
+			_translateDeadZone_1_1(value[0], dz, curXDz);
+			_translateDeadZone_1_1(value[1], dz, curYDz);
+			_eventDispatcher.dispatchEvent(this, InputDeviceEvent::MOVE, &InputKey({ (ui8)key, 2, value }));
+		}
 	}
 
-	void Gamepad::_updateTrigger(LONG& ori, LONG cur, GamepadKeyCode key) {
-		f32 value = _translateTrigger(cur);
-		auto dz = _getDeadZone(key);
-		auto oriDz = _translateTrigger(ori) <= dz;
-		auto curDz = value <= dz;
-		_translateDeadZone0_1(value, dz, curDz);
+	void Gamepad::_updateTrigger(LONG& ori, LONG cur, GamepadKeyCode lkey, GamepadKeyCode rkey) {
+		f32 oriValues[2], curValues[2];
+		_translateTrigger(ori, oriValues[0], oriValues[1]);
+		_translateTrigger(cur, curValues[0], curValues[1]);
+		auto ldz = _getDeadZone(lkey);
+		auto rdz = _getDeadZone(rkey);
+		auto oriLDz = oriValues[0] <= ldz;
+		auto curLDz = curValues[0] <= ldz;
+		auto oriRDz = oriValues[1] <= rdz;
+		auto curRDz = curValues[1] <= rdz;
 		ori = cur;
-		if (!curDz || oriDz != curDz) _eventDispatcher.dispatchEvent(this, InputDeviceEvent::MOVE, &InputKey({ (ui8)key, 1, &value }));
+		if (!curLDz || oriLDz != curLDz) {
+			_translateDeadZone0_1(curValues[0], ldz, curLDz);
+			_eventDispatcher.dispatchEvent(this, InputDeviceEvent::MOVE, &InputKey({ (ui8)lkey, 1, &curValues[0] }));
+		}
+		if (!curRDz || oriRDz != curRDz) {
+			_translateDeadZone0_1(curValues[1], rdz, curRDz);
+			_eventDispatcher.dispatchEvent(this, InputDeviceEvent::MOVE, &InputKey({ (ui8)rkey, 1, &curValues[1] }));
+		}
+	}
+
+	void Gamepad::_updateTriggerSeparate(LONG& ori, LONG cur, GamepadKeyCode key) {
+		f32 value = _translateTriggerSeparate(cur);
+		auto dz = _getDeadZone(key);
+		auto oriDz = _translateTriggerSeparate(ori) <= dz;
+		auto curDz = value <= dz;
+		ori = cur;
+		if (!curDz || oriDz != curDz) {
+			_translateDeadZone0_1(value, dz, curDz);
+			_eventDispatcher.dispatchEvent(this, InputDeviceEvent::MOVE, &InputKey({ (ui8)key, 1, &value }));
+		}
+	}
+
+	bool Gamepad::_isXInputDevice(const GUID& guid) {
+		IWbemLocator*           pIWbemLocator = NULL;
+		IEnumWbemClassObject*   pEnumDevices = NULL;
+		IWbemClassObject*       pDevices[20] = { 0 };
+		IWbemServices*          pIWbemServices = NULL;
+		BSTR                    bstrNamespace = NULL;
+		BSTR                    bstrDeviceID = NULL;
+		BSTR                    bstrClassName = NULL;
+		DWORD                   uReturned = 0;
+		bool                    bIsXinputDevice = false;
+		UINT                    iDevice = 0;
+		VARIANT                 var;
+		HRESULT                 hr;
+
+		// CoInit if needed
+		hr = CoInitialize(NULL);
+		bool bCleanupCOM = SUCCEEDED(hr);
+
+		// Create WMI
+		hr = CoCreateInstance(__uuidof(WbemLocator),
+			NULL,
+			CLSCTX_INPROC_SERVER,
+			__uuidof(IWbemLocator),
+			(LPVOID*)&pIWbemLocator);
+		if (FAILED(hr) || pIWbemLocator == NULL)
+			goto LCleanup;
+
+		bstrNamespace = SysAllocString(L"\\\\.\\root\\cimv2"); if (bstrNamespace == NULL) goto LCleanup;
+		bstrClassName = SysAllocString(L"Win32_PNPEntity");   if (bstrClassName == NULL) goto LCleanup;
+		bstrDeviceID = SysAllocString(L"DeviceID");          if (bstrDeviceID == NULL)  goto LCleanup;
+
+		// Connect to WMI 
+		hr = pIWbemLocator->ConnectServer(bstrNamespace, NULL, NULL, 0L,
+			0L, NULL, NULL, &pIWbemServices);
+		if (FAILED(hr) || pIWbemServices == NULL)
+			goto LCleanup;
+
+		// Switch security level to IMPERSONATE. 
+		CoSetProxyBlanket(pIWbemServices, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL,
+			RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, EOAC_NONE);
+
+		hr = pIWbemServices->CreateInstanceEnum(bstrClassName, 0, NULL, &pEnumDevices);
+		if (FAILED(hr) || pEnumDevices == NULL)
+			goto LCleanup;
+
+		// Loop over all devices
+		for (;; ) {
+			// Get 20 at a time
+			hr = pEnumDevices->Next(10000, 20, pDevices, &uReturned);
+			if (FAILED(hr))
+				goto LCleanup;
+			if (uReturned == 0)
+				break;
+
+			for (iDevice = 0; iDevice < uReturned; iDevice++) {
+				// For each device, get its device ID
+				hr = pDevices[iDevice]->Get(bstrDeviceID, 0L, &var, NULL, NULL);
+				if (SUCCEEDED(hr) && var.vt == VT_BSTR && var.bstrVal != NULL) {
+					// Check if the device ID contains "IG_".  If it does, then it's an XInput device
+						// This information can not be found from DirectInput 
+					if (wcsstr(var.bstrVal, L"IG_")) {
+						// If it does, then get the VID/PID from var.bstrVal
+						DWORD dwPid = 0, dwVid = 0;
+						WCHAR* strVid = wcsstr(var.bstrVal, L"VID_");
+						if (strVid && swscanf(strVid, L"VID_%4X", &dwVid) != 1)
+							dwVid = 0;
+						WCHAR* strPid = wcsstr(var.bstrVal, L"PID_");
+						if (strPid && swscanf(strPid, L"PID_%4X", &dwPid) != 1)
+							dwPid = 0;
+
+						// Compare the VID/PID to the DInput device
+						DWORD dwVidPid = MAKELONG(dwVid, dwPid);
+						if (dwVidPid == guid.Data1) {
+							bIsXinputDevice = true;
+							goto LCleanup;
+						}
+					}
+				}
+				SAFE_RELEASE(pDevices[iDevice]);
+			}
+		}
+
+	LCleanup:
+		if (bstrNamespace) SysFreeString(bstrNamespace);
+		if (bstrDeviceID) SysFreeString(bstrDeviceID);
+		if (bstrClassName) SysFreeString(bstrClassName);
+		for (iDevice = 0; iDevice < 20; iDevice++) SAFE_RELEASE(pDevices[iDevice]);
+		SAFE_RELEASE(pEnumDevices);
+		SAFE_RELEASE(pIWbemLocator);
+		SAFE_RELEASE(pIWbemServices);
+		
+
+		if (bCleanupCOM) CoUninitialize();
+
+		return bIsXinputDevice;
 	}
 }

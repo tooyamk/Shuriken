@@ -6,14 +6,14 @@
 namespace aurora::modules {
 	extern "C" AE_MODULE_DLL_EXPORT void* AE_CREATE_MODULE_FN_NAME(const Args* args) {
 		if (!args) {
-			println("DirectInputModule create error : no args");
+			println("XInputModule create error : no args");
 			return nullptr;
 		}
 
 		auto app = args->get<Application*>("app", nullptr);
-		if (!app) println("DirectInputModule create error : no app");
+		if (!app) println("XInputModule create error : no app");
 
-		return new win_direct_input::Input(app);
+		return new win_xinput::Input(app);
 	}
 }
 #endif

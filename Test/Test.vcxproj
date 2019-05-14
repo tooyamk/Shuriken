@@ -37,6 +37,9 @@
     <ProjectReference Include="..\Modules\Inputs\WinDirectInput\WinDirectInput.vcxproj">
       <Project>{61ea4e59-553e-40af-a294-d4a84b959dd8}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\Modules\Inputs\WinXInput\WinXInput.vcxproj">
+      <Project>{2b1eb64b-e4d9-4104-9a59-f4c122c45d33}</Project>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Test.cpp" />

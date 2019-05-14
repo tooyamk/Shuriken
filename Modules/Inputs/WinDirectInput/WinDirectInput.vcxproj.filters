@@ -6,9 +6,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\DirectInput.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\Keyboard.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -21,11 +18,11 @@
     <ClCompile Include="src\Gamepad.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\Input.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\DirectInput.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="src\Keyboard.h">
       <Filter>src</Filter>
     </ClInclude>
@@ -42,6 +39,9 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\Gamepad.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Input.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

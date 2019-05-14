@@ -4,11 +4,11 @@
 #include "events/EventDispatcher.h"
 
 namespace aurora::modules::win_direct_input {
-	class DirectInput;
+	class Input;
 
 	class AE_MODULE_DLL DeviceBase : public IInputDevice {
 	public:
-		DeviceBase(DirectInput* input, LPDIRECTINPUTDEVICE8 dev, const InputDeviceInfo& info);
+		DeviceBase(Input* input, LPDIRECTINPUTDEVICE8 dev, const InputDeviceInfo& info);
 		virtual ~DeviceBase();
 
 		virtual events::IEventDispatcher<InputDeviceEvent>& AE_CALL getEventDispatcher() override;
@@ -16,7 +16,7 @@ namespace aurora::modules::win_direct_input {
 		virtual void AE_CALL setDeadZone(ui32 keyCode, f32 deadZone) override {}
 
 	protected:
-		DirectInput* _input;
+		Input* _input;
 		events::EventDispatcher<InputDeviceEvent> _eventDispatcher;
 		InputDeviceInfo _info;
 

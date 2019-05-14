@@ -1,8 +1,8 @@
 #include "Keyboard.h"
-#include "DirectInput.h"
+#include "Input.h"
 
 namespace aurora::modules::win_direct_input {
-	Keyboard::Keyboard(DirectInput* input, LPDIRECTINPUTDEVICE8 dev, const InputDeviceInfo& info) : DeviceBase(input, dev, info) {
+	Keyboard::Keyboard(Input* input, LPDIRECTINPUTDEVICE8 dev, const InputDeviceInfo& info) : DeviceBase(input, dev, info) {
 		_dev->SetDataFormat(&c_dfDIKeyboard);
 		_dev->SetCooperativeLevel(input->getHWND(), DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
 		memset(_state, 0, sizeof(StateBuffer));

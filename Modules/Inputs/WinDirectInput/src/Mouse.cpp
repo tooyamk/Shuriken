@@ -1,9 +1,9 @@
 #include "Mouse.h"
-#include "DirectInput.h"
+#include "Input.h"
 #include <algorithm>
 
 namespace aurora::modules::win_direct_input {
-	Mouse::Mouse(DirectInput* input, LPDIRECTINPUTDEVICE8 dev, const InputDeviceInfo& info) : DeviceBase(input, dev, info) {
+	Mouse::Mouse(Input* input, LPDIRECTINPUTDEVICE8 dev, const InputDeviceInfo& info) : DeviceBase(input, dev, info) {
 		_dev->SetDataFormat(&c_dfDIMouse2);
 		_dev->SetCooperativeLevel(input->getHWND(), DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
 		memset(&_state, 0, sizeof(DIMOUSESTATE2));

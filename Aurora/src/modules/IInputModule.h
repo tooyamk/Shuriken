@@ -311,6 +311,9 @@ namespace aurora::modules {
 		LEFT_STICK,
 		RIGHT_STICK,
 
+		LEFT_STICK_BUTTON,
+		RIGHT_STICK_BUTTON,
+
 		DPAD,
 		//DPAD_CENTER,
 
