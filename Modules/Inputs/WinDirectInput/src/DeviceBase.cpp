@@ -1,8 +1,8 @@
 #include "DeviceBase.h"
 #include "Input.h"
 
-namespace aurora::modules::win_direct_input {
-	DeviceBase::DeviceBase(Input* input, LPDIRECTINPUTDEVICE8 dev, const InputDeviceInfo& info) :
+namespace aurora::modules::inputs::win_direct_input {
+	DeviceBase::DeviceBase(Input& input, LPDIRECTINPUTDEVICE8 dev, const DeviceInfo& info) :
 		_input(input),
 		_dev(dev),
 		_info(info) {
@@ -13,11 +13,11 @@ namespace aurora::modules::win_direct_input {
 		_dev->Release();
 	}
 
-	events::IEventDispatcher<InputDeviceEvent>& DeviceBase::getEventDispatcher() {
+	events::IEventDispatcher<DeviceEvent>& DeviceBase::getEventDispatcher() {
 		return _eventDispatcher;
 	}
 
-	const InputDeviceInfo& DeviceBase::getInfo() const {
+	const DeviceInfo& DeviceBase::getInfo() const {
 		return _info;
 	}
 }

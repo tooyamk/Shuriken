@@ -60,6 +60,18 @@ namespace aurora {
 			return true;
 		}
 
+		template<typename In>
+		inline static constexpr In AE_CALL clamp(const In v, const In min, const In max) {
+			return v < min ? min : (v > max ? max : v);
+		}
+
+		template<ui32 N, typename In>
+		inline static constexpr void AE_CALL clamp(const In(&v)[N], const In min, const In max, In(&dst)[N]) {
+			In tmp[N];
+			for (ui32 i = 0; i < N; ++i) tmp[i] = v[i] < min ? min : (v[i] > max ? max : v[i]);
+			for (ui32 i = 0; i < N; ++i) dst[i] = tmp[i];
+		}
+
 		template<ui32 N, typename In, typename Out>
 		inline static Out AE_CALL dot(const In(&v1)[N], const In(&v2)[N]) {
 			Out rst(0);

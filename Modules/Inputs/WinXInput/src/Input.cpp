@@ -5,7 +5,7 @@
 #include "base/ByteArray.h"
 #include <algorithm>
 
-namespace aurora::modules::win_xinput {
+namespace aurora::modules::inputs::win_xinput {
 	Input::Input(Application* app) :
 		_app(app) {
 	}
@@ -13,12 +13,12 @@ namespace aurora::modules::win_xinput {
 	Input::~Input() {
 	}
 
-	events::IEventDispatcher<InputModuleEvent>& Input::getEventDispatcher() {
+	events::IEventDispatcher<ModuleEvent>& Input::getEventDispatcher() {
 		return _eventDispatcher;
 	}
 
 	void Input::poll() {
-		GUID guid;
+		InternalGUID guid;
 
 		XINPUT_CAPABILITIES caps;
 		for (ui32 i = 0; i < XUSER_MAX_COUNT; ++i) {
@@ -39,13 +39,13 @@ namespace aurora::modules::win_xinput {
 					if (!found) {
 						auto& info = _connectedDevices.emplace_back();
 						info.guid.set((const i8*)&guid, sizeof(guid));
-						info.type = InputDeviceType::GAMEPAD;
+						info.type = DeviceType::GAMEPAD;
 					}
 				}
 			}
 		}
 
-		std::vector<InputDeviceInfo> changed;
+		std::vector<DeviceInfo> changed;
 		if (_keepDevices.size() < _devices.size()) {
 			ui32 size = _keepDevices.size();
 			if (size == 0) {
@@ -82,13 +82,13 @@ namespace aurora::modules::win_xinput {
 			_connectedDevices.clear();
 		}
 
-		for (ui32 i = 0; i < connectedIdx; ++i) _eventDispatcher.dispatchEvent(this, InputModuleEvent::DISCONNECTED, &changed[i]);
-		for (ui32 i = connectedIdx, n = changed.size(); i < n; ++i) _eventDispatcher.dispatchEvent(this, InputModuleEvent::CONNECTED, &changed[i]);
+		for (ui32 i = 0; i < connectedIdx; ++i) _eventDispatcher.dispatchEvent(this, ModuleEvent::DISCONNECTED, &changed[i]);
+		for (ui32 i = connectedIdx, n = changed.size(); i < n; ++i) _eventDispatcher.dispatchEvent(this, ModuleEvent::CONNECTED, &changed[i]);
 	}
 
-	IInputDevice* Input::createDevice(const InputDeviceGUID& guid) {
+	IInputDevice* Input::createDevice(const GUID& guid) {
 		for (auto& info : _devices) {
-			if (info.guid == guid) return new Gamepad(this, info);
+			if (info.guid == guid) return new Gamepad(*this, info);
 		}
 
 		return nullptr;

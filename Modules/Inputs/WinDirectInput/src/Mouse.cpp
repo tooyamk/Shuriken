@@ -2,10 +2,10 @@
 #include "Input.h"
 #include <algorithm>
 
-namespace aurora::modules::win_direct_input {
-	Mouse::Mouse(Input* input, LPDIRECTINPUTDEVICE8 dev, const InputDeviceInfo& info) : DeviceBase(input, dev, info) {
+namespace aurora::modules::inputs::win_direct_input {
+	Mouse::Mouse(Input& input, LPDIRECTINPUTDEVICE8 dev, const DeviceInfo& info) : DeviceBase(input, dev, info) {
 		_dev->SetDataFormat(&c_dfDIMouse2);
-		_dev->SetCooperativeLevel(input->getHWND(), DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
+		_dev->SetCooperativeLevel(_input.get()->getHWND(), DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
 		memset(&_state, 0, sizeof(DIMOUSESTATE2));
 
 		GetCursorPos(&_pos);
@@ -95,18 +95,18 @@ namespace aurora::modules::win_direct_input {
 			if (ox || oy) {
 				//increment, right bottom positive orientation.
 				f32 value[] = { (f32)ox, (f32)oy };
-				_eventDispatcher.dispatchEvent(this, InputDeviceEvent::MOVE, &InputKey({ (ui32)MouseKeyCode::POSITION, 2, value }));
+				_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &Key({ (ui32)MouseKeyCode::POSITION, 2, value }));
 			}
 
 			if (state.lZ != 0) {
 				f32 value = state.lZ > 0 ? 1.f : -1.f;
-				_eventDispatcher.dispatchEvent(this, InputDeviceEvent::MOVE, &InputKey({ (ui32)MouseKeyCode::WHEEL, 1, &value }));
+				_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &Key({ (ui32)MouseKeyCode::WHEEL, 1, &value }));
 			}
 
 			for (ui8 i = 0; i < len; ++i) {
 				ui8 key = changeBtns[i];
 				f32 value = (state.rgbButtons[key] & 0x80) > 0 ? 1.f : 0.f;
-				_eventDispatcher.dispatchEvent(this, value > 0 ? InputDeviceEvent::DOWN : InputDeviceEvent::UP, &InputKey({ key + (ui32)MouseKeyCode::L_BUTTON, 1, &value }));
+				_eventDispatcher.dispatchEvent(this, value > 0 ? DeviceEvent::DOWN : DeviceEvent::UP, &Key({ key + (ui32)MouseKeyCode::L_BUTTON, 1, &value }));
 			}
 		}
 	}

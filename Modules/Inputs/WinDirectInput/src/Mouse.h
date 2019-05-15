@@ -2,10 +2,10 @@
 
 #include "DeviceBase.h"
 
-namespace aurora::modules::win_direct_input {
+namespace aurora::modules::inputs::win_direct_input {
 	class AE_MODULE_DLL Mouse : public DeviceBase {
 	public:
-		Mouse(Input* input, LPDIRECTINPUTDEVICE8 dev, const InputDeviceInfo& info);
+		Mouse(Input& input, LPDIRECTINPUTDEVICE8 dev, const DeviceInfo& info);
 
 		virtual ui32 AE_CALL getKeyState(ui32 keyCode, f32* data, ui32 count) const override;
 		virtual void AE_CALL poll(bool dispatchEvent) override;

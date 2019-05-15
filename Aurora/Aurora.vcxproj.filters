@@ -37,6 +37,9 @@
     <Filter Include="src\modules\graphics">
       <UniqueIdentifier>{6f176c1c-0319-4952-bdc3-838ad7e4fce9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\modules\inputs">
+      <UniqueIdentifier>{cef33d02-cae2-4576-b63a-65477ff5ba0a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\math\Matrix44.h">
@@ -102,9 +105,6 @@
     <ClInclude Include="src\modules\IModule.h">
       <Filter>src\modules</Filter>
     </ClInclude>
-    <ClInclude Include="src\modules\IInputModule.h">
-      <Filter>src\modules</Filter>
-    </ClInclude>
     <ClInclude Include="src\base\String.h">
       <Filter>src\base</Filter>
     </ClInclude>
@@ -156,6 +156,15 @@
     <ClInclude Include="src\modules\graphics\IProgramSourceTranslator.h">
       <Filter>src\modules\graphics</Filter>
     </ClInclude>
+    <ClInclude Include="src\modules\inputs\IInputModule.h">
+      <Filter>src\modules\inputs</Filter>
+    </ClInclude>
+    <ClInclude Include="src\modules\inputs\GUID.h">
+      <Filter>src\modules\inputs</Filter>
+    </ClInclude>
+    <ClInclude Include="src\modules\inputs\DeviceInfo.h">
+      <Filter>src\modules\inputs</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\math\Matrix44.cpp">
@@ -190,9 +199,6 @@
     </ClCompile>
     <ClCompile Include="src\base\Monitor.cpp">
       <Filter>src\base</Filter>
-    </ClCompile>
-    <ClCompile Include="src\modules\IInputModule.cpp">
-      <Filter>src\modules</Filter>
     </ClCompile>
     <ClCompile Include="src\base\String.cpp">
       <Filter>src\base</Filter>
@@ -232,6 +238,15 @@
     </ClCompile>
     <ClCompile Include="src\modules\graphics\IProgramSourceTranslator.cpp">
       <Filter>src\modules\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\modules\inputs\IInputModule.cpp">
+      <Filter>src\modules\inputs</Filter>
+    </ClCompile>
+    <ClCompile Include="src\modules\inputs\GUID.cpp">
+      <Filter>src\modules\inputs</Filter>
+    </ClCompile>
+    <ClCompile Include="src\modules\inputs\DeviceInfo.cpp">
+      <Filter>src\modules\inputs</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -1,26 +1,27 @@
 #pragma once
 
 #include "modules/IModule.h"
+#include "modules/inputs/DeviceInfo.h"
 
 namespace aurora::events {
 	template<typename EvtType> class IEventDispatcher;
 }
 
-namespace aurora::modules {
-	enum class InputModuleEvent : ui8 {
+namespace aurora::modules::inputs {
+	enum class ModuleEvent : ui8 {
 		CONNECTED,
 		DISCONNECTED
 	};
 
 
-	enum class InputDeviceEvent : ui8 {
+	enum class DeviceEvent : ui8 {
 		DOWN,
 		UP,
 		MOVE
 	};
 
 
-	class AE_DLL InputKey {
+	class AE_DLL Key {
 	public:
 		ui32 code;
 		ui32 count;
@@ -28,67 +29,25 @@ namespace aurora::modules {
 	};
 
 
-	enum class InputDeviceType : ui8 {
+	enum class DeviceType : ui8 {
 		UNKNOWN,
 		KEYBOARD = 0b1,
 		MOUSE = 0b10,
 		GAMEPAD = 0b100
 	};
-	AE_DEFINE_ENUM_BIT_OPERATIION(InputDeviceType);
-
-
-	class AE_DLL InputDeviceGUID {
-	public:
-		InputDeviceGUID();
-		InputDeviceGUID(const InputDeviceGUID& value);
-		InputDeviceGUID(InputDeviceGUID&& value);
-		~InputDeviceGUID();
-
-		inline const i8* AE_CALL getData() const {
-			return _data;
-		}
-
-		inline ui32 AE_CALL getDataLen() const {
-			return _len;
-		}
-
-		void AE_CALL set(const i8* data, ui32 len);
-		bool AE_CALL isEqual(const i8* data, ui32 len) const;
-
-		InputDeviceGUID& AE_CALL operator=(const InputDeviceGUID& value);
-		InputDeviceGUID& AE_CALL operator=(InputDeviceGUID&& value);
-		bool AE_CALL operator==(const InputDeviceGUID& right) const;
-
-	private:
-		i8* _data;
-		ui32 _len;
-	};
-
-
-	class AE_DLL InputDeviceInfo {
-	public:
-		InputDeviceInfo();
-		InputDeviceInfo(const InputDeviceGUID& guid, InputDeviceType type);
-		InputDeviceInfo(const InputDeviceInfo& value);
-		InputDeviceInfo(InputDeviceInfo&& value);
-
-		InputDeviceGUID guid;
-		InputDeviceType type;
-
-		InputDeviceInfo& AE_CALL operator=(const InputDeviceInfo& value);
-		InputDeviceInfo& AE_CALL operator=(InputDeviceInfo&& value);
-	};
+	AE_DEFINE_ENUM_BIT_OPERATIION(DeviceType);
 
 
 	class AE_DLL IInputDevice : public Ref {
 	public:
 		virtual ~IInputDevice();
 
-		virtual events::IEventDispatcher<InputDeviceEvent>& AE_CALL getEventDispatcher() = 0;
-		virtual const InputDeviceInfo& AE_CALL getInfo() const = 0;
+		virtual events::IEventDispatcher<DeviceEvent>& AE_CALL getEventDispatcher() = 0;
+		virtual const DeviceInfo& AE_CALL getInfo() const = 0;
 		virtual ui32 AE_CALL getKeyState(ui32 keyCode, f32* data, ui32 count) const = 0;
 		virtual void AE_CALL poll(bool dispatchEvent) = 0;
 		virtual void AE_CALL setDeadZone(ui32 keyCode, f32 deadZone) = 0;
+		virtual void AE_CALL setVibration(f32 left, f32 right) = 0;
 	};
 
 
@@ -101,9 +60,9 @@ namespace aurora::modules {
 			return ModuleType::INPUT;
 		}
 
-		virtual events::IEventDispatcher<InputModuleEvent>& AE_CALL getEventDispatcher() = 0;
+		virtual events::IEventDispatcher<ModuleEvent>& AE_CALL getEventDispatcher() = 0;
 		virtual void AE_CALL poll() = 0;
-		virtual IInputDevice* AE_CALL createDevice(const InputDeviceGUID& guid) = 0;
+		virtual IInputDevice* AE_CALL createDevice(const GUID& guid) = 0;
 	};
 
 
@@ -311,8 +270,8 @@ namespace aurora::modules {
 		LEFT_STICK,
 		RIGHT_STICK,
 
-		LEFT_STICK_BUTTON,
-		RIGHT_STICK_BUTTON,
+		LEFT_THUMB,
+		RIGHT_THUMB,
 
 		DPAD,
 		//DPAD_CENTER,
@@ -327,11 +286,12 @@ namespace aurora::modules {
 		//RIGHT_THUMBSTICK,
 
 		SELECT,
+		BACK = SELECT,//XBOX360
+		VIEW = SELECT,//XBOXONE
 		SHARE = SELECT,//DS4
 		START,
+		MENU = SELECT,//XBOXONE
 		OPTIONS = START,//DS4
-
-		//BUTTON_PAUSE
 
 		A,
 		CROSS = A,//DS4

@@ -5,7 +5,7 @@
 #include "CreateModule.h"
 #include <algorithm>
 
-namespace aurora::modules::win_direct_input {
+namespace aurora::modules::inputs::win_direct_input {
 	Input::Input(Application* app) :
 		_app(app),
 		_di(nullptr) {
@@ -15,7 +15,7 @@ namespace aurora::modules::win_direct_input {
 		if (_di) _di->Release();
 	}
 
-	events::IEventDispatcher<InputModuleEvent>& Input::getEventDispatcher() {
+	events::IEventDispatcher<ModuleEvent>& Input::getEventDispatcher() {
 		return _eventDispatcher;
 	}
 
@@ -24,7 +24,7 @@ namespace aurora::modules::win_direct_input {
 
 		_di->EnumDevices(DI8DEVCLASS_ALL, _enumDevicesCallback, this, DIEDFL_ATTACHEDONLY);
 		
-		std::vector<InputDeviceInfo> changed;
+		std::vector<DeviceInfo> changed;
 		if (_keepDevices.size() < _devices.size()) {
 			ui32 size = _keepDevices.size();
 			if (size == 0) {
@@ -61,23 +61,23 @@ namespace aurora::modules::win_direct_input {
 			_connectedDevices.clear();
 		}
 
-		for (ui32 i = 0; i < connectedIdx; ++i) _eventDispatcher.dispatchEvent(this, InputModuleEvent::DISCONNECTED, &changed[i]);
-		for (ui32 i = connectedIdx, n = changed.size(); i < n; ++i) _eventDispatcher.dispatchEvent(this, InputModuleEvent::CONNECTED, &changed[i]);
+		for (ui32 i = 0; i < connectedIdx; ++i) _eventDispatcher.dispatchEvent(this, ModuleEvent::DISCONNECTED, &changed[i]);
+		for (ui32 i = connectedIdx, n = changed.size(); i < n; ++i) _eventDispatcher.dispatchEvent(this, ModuleEvent::CONNECTED, &changed[i]);
 	}
 
-	IInputDevice* Input::createDevice(const InputDeviceGUID& guid) {
+	IInputDevice* Input::createDevice(const GUID& guid) {
 		for (auto& info : _devices) {
 			if (info.guid == guid) {
 				LPDIRECTINPUTDEVICE8 dev = nullptr;
-				if (FAILED(_di->CreateDevice(*(const GUID*)guid.getData(), &dev, nullptr))) return nullptr;
+				if (FAILED(_di->CreateDevice(*(const ::GUID*)guid.getData(), &dev, nullptr))) return nullptr;
 
 				switch (info.type) {
-				case InputDeviceType::GAMEPAD:
-					return new Gamepad(this, dev, info);
-				case InputDeviceType::KEYBOARD:
-					return new Keyboard(this, dev, info);
-				case InputDeviceType::MOUSE:
-					return new Mouse(this, dev, info);
+				case DeviceType::GAMEPAD:
+					return new Gamepad(*this, dev, info);
+				case DeviceType::KEYBOARD:
+					return new Keyboard(*this, dev, info);
+				case DeviceType::MOUSE:
+					return new Mouse(*this, dev, info);
 				default:
 					dev->Release();
 					return nullptr;
@@ -98,23 +98,23 @@ namespace aurora::modules::win_direct_input {
 			auto im = (Input*)pContext;
 
 			for (ui32 i = 0, n = im->_devices.size(); i < n; ++i) {
-				if (im->_devices[i].guid.isEqual((const i8*)&pdidInstance->guidProduct, sizeof(GUID))) {
+				if (im->_devices[i].guid.isEqual((const i8*)&pdidInstance->guidProduct, sizeof(::GUID))) {
 					im->_keepDevices.emplace_back(i);
 					return DIENUM_CONTINUE;
 				}
 			}
 
 			auto& info = im->_connectedDevices.emplace_back();
-			info.guid.set((const i8*)&pdidInstance->guidProduct, sizeof(GUID));
+			info.guid.set((const i8*)&pdidInstance->guidProduct, sizeof(::GUID));
 			switch (type) {
 			case DI8DEVTYPE_MOUSE:
-				info.type |= InputDeviceType::MOUSE;
+				info.type |= DeviceType::MOUSE;
 				break;
 			case DI8DEVTYPE_KEYBOARD:
-				info.type |= InputDeviceType::KEYBOARD;
+				info.type |= DeviceType::KEYBOARD;
 				break;
 			case DI8DEVTYPE_GAMEPAD:
-				info.type |= InputDeviceType::GAMEPAD;
+				info.type |= DeviceType::GAMEPAD;
 				break;
 			default:
 				break;

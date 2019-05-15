@@ -1,6 +1,5 @@
 #include "Gamepad.h"
 #include "Input.h"
-#include "math/Math.h"
 
 #include <wbemidl.h>
 #include <oleauto.h>
@@ -10,13 +9,13 @@
 #define SAFE_RELEASE(p)       { if (p) { (p)->Release();  (p) = nullptr; } }
 #endif // !SAFE_RELEASE
 
-namespace aurora::modules::win_direct_input {
-	Gamepad::Gamepad(Input* input, LPDIRECTINPUTDEVICE8 dev, const InputDeviceInfo& info) : DeviceBase(input, dev, info),
+namespace aurora::modules::inputs::win_direct_input {
+	Gamepad::Gamepad(Input& input, LPDIRECTINPUTDEVICE8 dev, const DeviceInfo& info) : DeviceBase(input, dev, info),
 		_keyMapping(nullptr) {
 		_dev->SetDataFormat(&c_dfDIJoystick2);
-		_dev->SetCooperativeLevel(input->getHWND(), DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
+		_dev->SetCooperativeLevel(_input.get()->getHWND(), DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
 
-		if (_isXInputDevice(*(const GUID*)info.guid.getData())) {
+		if (_isXInputDevice(*(const ::GUID*)info.guid.getData())) {
 			_keyMapping = &XINPUT;
 		} else {
 			auto data = (const ui16*)info.guid.getData();
@@ -80,7 +79,7 @@ namespace aurora::modules::win_direct_input {
 				return _keyMapping->LTRIGGER == _keyMapping->RTRIGGER ? _getTrigger(axis[_keyMapping->RTRIGGER], (GamepadKeyCode)keyCode, 1, data[0]) : _getTriggerSeparate(axis[_keyMapping->RTRIGGER], (GamepadKeyCode)keyCode, data[0]);
 			}
 			case GamepadKeyCode::DPAD:
-				data[0] = _translateAngle(_state.rgdwPOV[0]);
+				data[0] = _translateDpad(_state.rgdwPOV[0]);
 				return 1;
 			default:
 			{
@@ -178,8 +177,8 @@ namespace aurora::modules::win_direct_input {
 				for (ui8 i = 0; i < changedPovLen; ++i) {
 					ui8 key = changedPov[i];
 					if (key == 0) {
-						f32 value = _translateAngle(state.rgdwPOV[key]);
-						_eventDispatcher.dispatchEvent(this, value >= 0.f ? InputDeviceEvent::DOWN : InputDeviceEvent::UP, &InputKey({ (ui8)GamepadKeyCode::DPAD, 1, &value }));
+						f32 value = _translateDpad(state.rgdwPOV[key]);
+						_eventDispatcher.dispatchEvent(this, value >= 0.f ? DeviceEvent::DOWN : DeviceEvent::UP, &Key({ (ui8)GamepadKeyCode::DPAD, 1, &value }));
 					}
 				}
 			}
@@ -192,7 +191,7 @@ namespace aurora::modules::win_direct_input {
 					auto itr = _keyMapping->BUTTONS.find(key);
 					key = itr == _keyMapping->BUTTONS.end() ? key + (ui8)GamepadKeyCode::UNDEFINED : (ui8)itr->second;
 
-					_eventDispatcher.dispatchEvent(this, value > 0.f ? InputDeviceEvent::DOWN : InputDeviceEvent::UP, &InputKey({ key, 1, &value }));
+					_eventDispatcher.dispatchEvent(this, value > 0.f ? DeviceEvent::DOWN : DeviceEvent::UP, &Key({ key, 1, &value }));
 				}
 			}
 		}
@@ -240,18 +239,6 @@ namespace aurora::modules::win_direct_input {
 		}
 	}
 
-	f32 Gamepad::_translateTriggerSeparate(LONG value) {
-		return f32(value) / 65535.f;
-	}
-
-	f32 Gamepad::_translateAngle(DWORD value) {
-		return (value == 0xFFFFFFFFui32) ? -1.f : Math::rad(f32(value) * .01f);
-	}
-
-	f32 Gamepad::_translateButton(DWORD value) {
-		return value & 0x80 ? 1.f : 0.f;
-	}
-
 	ui32 Gamepad::_getStick(LONG x, LONG y, GamepadKeyCode key, f32* data, ui32 count) const {
 		ui32 c = 1;
 
@@ -291,7 +278,7 @@ namespace aurora::modules::win_direct_input {
 		auto dz = _getDeadZone(key);
 
 		data = _translateTriggerSeparate(t);
-		data = _translateDeadZone0_1(_translateTriggerSeparate(t), dz, data <= dz);
+		data = _translateDeadZone0_1(data, dz, data <= dz);
 
 		return 1;
 	}
@@ -314,7 +301,7 @@ namespace aurora::modules::win_direct_input {
 				if (value[0] < 0.f) value[0] += Math::PI2<f32>;
 				value[1] = _translateDeadZone0_1(d2 < 1.f ? std::sqrt(d2) : 1.f, dz, false);
 			}
-			_eventDispatcher.dispatchEvent(this, InputDeviceEvent::MOVE, &InputKey({ (ui8)key, 2, value }));
+			_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &Key({ (ui8)key, 2, value }));
 		}
 	}
 
@@ -330,15 +317,15 @@ namespace aurora::modules::win_direct_input {
 		auto curRDz = curValues[1] <= rdz;
 		if (!curLDz || oriLDz != curLDz) {
 			curValues[0] = _translateDeadZone0_1(curValues[0], ldz, curLDz);
-			_eventDispatcher.dispatchEvent(this, InputDeviceEvent::MOVE, &InputKey({ (ui8)lkey, 1, &curValues[0] }));
+			_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &Key({ (ui8)lkey, 1, &curValues[0] }));
 		}
 		if (!curRDz || oriRDz != curRDz) {
 			curValues[1] = _translateDeadZone0_1(curValues[1], rdz, curRDz);
-			_eventDispatcher.dispatchEvent(this, InputDeviceEvent::MOVE, &InputKey({ (ui8)rkey, 1, &curValues[1] }));
+			_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &Key({ (ui8)rkey, 1, &curValues[1] }));
 		}
 	}
 
-	void Gamepad::_updateTriggerSeparate(LONG& ori, LONG cur, GamepadKeyCode key) {
+	void Gamepad::_updateTriggerSeparate(LONG ori, LONG cur, GamepadKeyCode key) {
 		f32 value = _translateTriggerSeparate(cur);
 		auto dz = _getDeadZone(key);
 		auto oriDz = _translateTriggerSeparate(ori) <= dz;
@@ -346,11 +333,11 @@ namespace aurora::modules::win_direct_input {
 		ori = cur;
 		if (!curDz || oriDz != curDz) {
 			value = _translateDeadZone0_1(value, dz, curDz);
-			_eventDispatcher.dispatchEvent(this, InputDeviceEvent::MOVE, &InputKey({ (ui8)key, 1, &value }));
+			_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &Key({ (ui8)key, 1, &value }));
 		}
 	}
 
-	bool Gamepad::_isXInputDevice(const GUID& guid) {
+	bool Gamepad::_isXInputDevice(const ::GUID& guid) {
 		IWbemLocator*           pIWbemLocator = NULL;
 		IEnumWbemClassObject*   pEnumDevices = NULL;
 		IWbemClassObject*       pDevices[20] = { 0 };

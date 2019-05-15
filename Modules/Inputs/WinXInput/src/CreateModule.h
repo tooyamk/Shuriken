@@ -3,7 +3,7 @@
 #include "Input.h"
 
 #ifdef AE_MODULE_EXPORTS
-namespace aurora::modules {
+namespace aurora::modules::inputs {
 	extern "C" AE_MODULE_DLL_EXPORT void* AE_CREATE_MODULE_FN_NAME(const Args* args) {
 		if (!args) {
 			println("XInputModule create error : no args");

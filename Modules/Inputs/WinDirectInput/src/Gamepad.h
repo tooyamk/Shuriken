@@ -1,11 +1,12 @@
 #pragma once
 
 #include "DeviceBase.h"
+#include "math/Math.h"
 
-namespace aurora::modules::win_direct_input {
+namespace aurora::modules::inputs::win_direct_input {
 	class AE_MODULE_DLL Gamepad : public DeviceBase {
 	public:
-		Gamepad(Input* input, LPDIRECTINPUTDEVICE8 dev, const InputDeviceInfo& info);
+		Gamepad(Input& input, LPDIRECTINPUTDEVICE8 dev, const DeviceInfo& info);
 
 		virtual ui32 AE_CALL getKeyState(ui32 keyCode, f32* data, ui32 count) const override;
 		virtual void AE_CALL poll(bool dispatchEvent) override;
@@ -46,7 +47,7 @@ namespace aurora::modules::win_direct_input {
 
 		void AE_CALL _updateStick(LONG oriX, LONG oriY, LONG curX, LONG curY, GamepadKeyCode key);
 		void AE_CALL _updateTrigger(LONG ori, LONG cur, GamepadKeyCode lkey, GamepadKeyCode rkey);
-		void AE_CALL _updateTriggerSeparate(LONG& ori, LONG cur, GamepadKeyCode key);
+		void AE_CALL _updateTriggerSeparate(LONG ori, LONG cur, GamepadKeyCode key);
 
 		inline static f32 AE_CALL _translateDeadZone0_1(f32 value, f32 dz, bool inDz) {
 			return inDz ? 0.f : (value - dz) / (1.f - dz);
@@ -54,11 +55,17 @@ namespace aurora::modules::win_direct_input {
 
 		static f32 AE_CALL _translateStick(LONG value);
 		static void AE_CALL _translateTrigger(LONG value, f32& l, f32& r);
-		static f32 AE_CALL _translateTriggerSeparate(LONG value);
-		static f32 AE_CALL _translateAngle(DWORD value);
-		static f32 AE_CALL _translateButton(DWORD value);
+		inline static f32 AE_CALL _translateTriggerSeparate(LONG value) {
+			return f32(value) / 65535.f;
+		}
+		inline static f32 AE_CALL _translateDpad(DWORD value) {
+			return (value == 0xFFFFFFFFui32) ? -1.f : Math::rad(f32(value) * .01f);
+		}
+		inline static f32 AE_CALL _translateButton(DWORD value) {
+			return value & 0x80 ? 1.f : 0.f;
+		}
 
-		static bool AE_CALL _isXInputDevice(const GUID& guid);
+		static bool AE_CALL _isXInputDevice(const ::GUID& guid);
 
 		inline static const KeyMapping DIRECT{
 			0, 1, 2, 5, 3, 4,
@@ -73,8 +80,8 @@ namespace aurora::modules::win_direct_input {
 			{ 7, GamepadKeyCode::RIGHT_TRIGGER },
 			{ 8, GamepadKeyCode::SELECT },
 			{ 9, GamepadKeyCode::START },
-			{ 10, GamepadKeyCode::LEFT_STICK_BUTTON },
-			{ 11, GamepadKeyCode::RIGHT_STICK_BUTTON }
+			{ 10, GamepadKeyCode::LEFT_THUMB },
+			{ 11, GamepadKeyCode::RIGHT_THUMB }
 			}
 		};
 
@@ -89,8 +96,8 @@ namespace aurora::modules::win_direct_input {
 			{ 5, GamepadKeyCode::RIGHT_SHOULDER },
 			{ 6, GamepadKeyCode::SELECT },
 			{ 7, GamepadKeyCode::START },
-			{ 8, GamepadKeyCode::LEFT_STICK_BUTTON },
-			{ 9, GamepadKeyCode::RIGHT_STICK_BUTTON }
+			{ 8, GamepadKeyCode::LEFT_THUMB },
+			{ 9, GamepadKeyCode::RIGHT_THUMB }
 			}
 		};
 
@@ -107,8 +114,8 @@ namespace aurora::modules::win_direct_input {
 			{ 7, GamepadKeyCode::RIGHT_TRIGGER },
 			{ 8, GamepadKeyCode::SELECT },
 			{ 9, GamepadKeyCode::START },
-			{ 10, GamepadKeyCode::LEFT_STICK_BUTTON },
-			{ 11, GamepadKeyCode::RIGHT_STICK_BUTTON },
+			{ 10, GamepadKeyCode::LEFT_THUMB },
+			{ 11, GamepadKeyCode::RIGHT_THUMB },
 			{ 13, GamepadKeyCode::TOUCH_PAD }
 			}
 		};

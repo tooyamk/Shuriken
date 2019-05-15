@@ -1,6 +1,6 @@
 #pragma once
 
-#include "modules/IInputModule.h"
+#include "modules/inputs/IInputModule.h"
 #include "base/Application.h"
 
 #ifndef DIRECTINPUT_VERSION

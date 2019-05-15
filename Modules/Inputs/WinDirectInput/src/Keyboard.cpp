@@ -1,10 +1,10 @@
 #include "Keyboard.h"
 #include "Input.h"
 
-namespace aurora::modules::win_direct_input {
-	Keyboard::Keyboard(Input* input, LPDIRECTINPUTDEVICE8 dev, const InputDeviceInfo& info) : DeviceBase(input, dev, info) {
+namespace aurora::modules::inputs::win_direct_input {
+	Keyboard::Keyboard(Input& input, LPDIRECTINPUTDEVICE8 dev, const DeviceInfo& info) : DeviceBase(input, dev, info) {
 		_dev->SetDataFormat(&c_dfDIKeyboard);
-		_dev->SetCooperativeLevel(input->getHWND(), DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
+		_dev->SetCooperativeLevel(_input.get()->getHWND(), DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
 		memset(_state, 0, sizeof(StateBuffer));
 	}
 
@@ -66,7 +66,7 @@ namespace aurora::modules::win_direct_input {
 				for (ui16 i = 0; i < len; ++i) {
 					ui8 key = changedBtns[i];
 					f32 value = (state[key] & 0x80) > 0 ? 1.f : 0.f;
-					_eventDispatcher.dispatchEvent(this, value > 0.f ? InputDeviceEvent::DOWN : InputDeviceEvent::UP, &InputKey({ SK_VK[key], 1, &value }));
+					_eventDispatcher.dispatchEvent(this, value > 0.f ? DeviceEvent::DOWN : DeviceEvent::UP, &Key({ SK_VK[key], 1, &value }));
 				}
 			}
 		}

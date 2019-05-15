@@ -216,8 +216,10 @@
     <ClInclude Include="src\modules\graphics\ShaderParameter.h" />
     <ClInclude Include="src\modules\graphics\ShaderParameterFactory.h" />
     <ClInclude Include="src\modules\graphics\VertexBufferFactory.h" />
-    <ClInclude Include="src\modules\IInputModule.h" />
     <ClInclude Include="src\modules\IModule.h" />
+    <ClInclude Include="src\modules\inputs\DeviceInfo.h" />
+    <ClInclude Include="src\modules\inputs\IInputModule.h" />
+    <ClInclude Include="src\modules\inputs\GUID.h" />
     <ClInclude Include="src\modules\ModuleLoader.h" />
     <ClInclude Include="src\nodes\components\AbstractComponent.h" />
     <ClInclude Include="src\nodes\components\Camera.h" />
@@ -246,7 +248,9 @@
     <ClCompile Include="src\modules\graphics\ShaderParameter.cpp" />
     <ClCompile Include="src\modules\graphics\ShaderParameterFactory.cpp" />
     <ClCompile Include="src\modules\graphics\VertexBufferFactory.cpp" />
-    <ClCompile Include="src\modules\IInputModule.cpp" />
+    <ClCompile Include="src\modules\inputs\DeviceInfo.cpp" />
+    <ClCompile Include="src\modules\inputs\IInputModule.cpp" />
+    <ClCompile Include="src\modules\inputs\GUID.cpp" />
     <ClCompile Include="src\nodes\components\AbstractComponent.cpp" />
     <ClCompile Include="src\nodes\components\Camera.cpp" />
     <ClCompile Include="src\nodes\Node.cpp" />

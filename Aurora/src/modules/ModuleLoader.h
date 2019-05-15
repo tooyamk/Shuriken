@@ -2,7 +2,7 @@
 
 #include "base/DynamicLib.h"
 #include "modules/graphics/IGraphicsModule.h"
-#include "modules/IInputModule.h"
+#include "modules/inputs/IInputModule.h"
 
 namespace aurora::modules {
 	template<typename RetType>
@@ -43,5 +43,5 @@ namespace aurora::modules {
 	};
 
 	using GraphicsModuleLoader = ModuleLoader<graphics::IGraphicsModule>;
-	using InputModuleLoader = ModuleLoader<IInputModule>;
+	using InputModuleLoader = ModuleLoader<inputs::IInputModule>;
 }
