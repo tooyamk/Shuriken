@@ -39,7 +39,7 @@ namespace aurora::modules::inputs::win_direct_input {
 			}
 		}
 
-		bool AE_CALL _poll();
+		bool AE_CALL _checkInvalidData(const DIJOYSTATE2& state);
 
 		ui32 AE_CALL _getStick(LONG x, LONG y, GamepadKeyCode key, f32* data, ui32 count) const;
 		ui32 AE_CALL _getTrigger(LONG t, GamepadKeyCode key, ui8 index, f32& data) const;

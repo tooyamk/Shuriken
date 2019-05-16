@@ -3,11 +3,11 @@
 
 #include <wbemidl.h>
 #include <oleauto.h>
-//#include <wmsstd.h>
+#include <dinput.h>
 
 #ifndef SAFE_RELEASE
 #define SAFE_RELEASE(p)       { if (p) { (p)->Release();  (p) = nullptr; } }
-#endif // !SAFE_RELEASE
+#endif
 
 namespace aurora::modules::inputs::win_direct_input {
 	Gamepad::Gamepad(Input& input, LPDIRECTINPUTDEVICE8 dev, const DeviceInfo& info) : DeviceBase(input, dev, info),
@@ -46,8 +46,6 @@ namespace aurora::modules::inputs::win_direct_input {
 		axis[_keyMapping->RSTICK_X] = 32767;
 		axis[_keyMapping->RSTICK_Y] = 32767;
 		if (_keyMapping->LTRIGGER == _keyMapping->RTRIGGER) axis[_keyMapping->LTRIGGER] = 32767;
-
-		if (_poll()) _dev->GetDeviceState(0, nullptr);
 
 		setDeadZone((ui8)GamepadKeyCode::LEFT_STICK, .05f);
 		setDeadZone((ui8)GamepadKeyCode::RIGHT_STICK, .05f);
@@ -103,96 +101,100 @@ namespace aurora::modules::inputs::win_direct_input {
 	}
 
 	void Gamepad::poll(bool dispatchEvent) {
-		if (!_poll()) return;
-
-		if (!dispatchEvent) {
-			_dev->GetDeviceState(sizeof(_state), &_state);
-			return;
+		if (auto hr = _dev->Poll(); hr == DIERR_NOTACQUIRED || DIERR_INPUTLOST) {
+			if (FAILED(_dev->Acquire())) return;
+			if (FAILED(_dev->Poll())) return;
 		}
 
 		DIJOYSTATE2 state;
-		if (auto hr = _dev->GetDeviceState(sizeof(state), &state); SUCCEEDED(hr)) {
-			auto oriAxis = &_state.lX;
-			auto curAxis = &state.lX;
+		if (FAILED(_dev->GetDeviceState(sizeof(state), &state))) return;
+		if (_checkInvalidData(state)) return;
 
-			LONG oriLStickX, oriLStickY, oriRStickX, oriRStickY;
-			auto ls = false, rs = false;
-			if (oriAxis[_keyMapping->LSTICK_X] != curAxis[_keyMapping->LSTICK_X] || oriAxis[_keyMapping->LSTICK_Y] != curAxis[_keyMapping->LSTICK_Y]) {
-				oriLStickX = oriAxis[_keyMapping->LSTICK_X];
-				oriLStickY = oriAxis[_keyMapping->LSTICK_Y];
-				oriAxis[_keyMapping->LSTICK_X] = curAxis[_keyMapping->LSTICK_X];
-				oriAxis[_keyMapping->LSTICK_Y] = curAxis[_keyMapping->LSTICK_Y];
-				ls = true;
-			}
-			if (oriAxis[_keyMapping->RSTICK_X] != curAxis[_keyMapping->RSTICK_X] || oriAxis[_keyMapping->RSTICK_Y] != curAxis[_keyMapping->RSTICK_Y]) {
-				oriRStickX = oriAxis[_keyMapping->RSTICK_X];
-				oriRStickY = oriAxis[_keyMapping->RSTICK_Y];
-				oriAxis[_keyMapping->RSTICK_X] = curAxis[_keyMapping->RSTICK_X];
-				oriAxis[_keyMapping->RSTICK_Y] = curAxis[_keyMapping->RSTICK_Y];
-				rs = true;
-			}
+		if (!dispatchEvent) {
+			memcpy(&_state, &state, sizeof(_state));
+			return;
+		}
 
-			auto lt = false, rt = false;
-			LONG oriLT, oriRT;
-			if (oriAxis[_keyMapping->LTRIGGER] != curAxis[_keyMapping->LTRIGGER]) {
-				oriLT = oriAxis[_keyMapping->LTRIGGER];
-				oriAxis[_keyMapping->LTRIGGER] = curAxis[_keyMapping->LTRIGGER];
-				lt = true;
-			}
-			if (_keyMapping->LTRIGGER != _keyMapping->RTRIGGER && oriAxis[_keyMapping->RTRIGGER] != curAxis[_keyMapping->RTRIGGER]) {
-				oriRT = oriAxis[_keyMapping->RTRIGGER];
-				oriAxis[_keyMapping->RTRIGGER] = curAxis[_keyMapping->RTRIGGER];
-				rt = true;
-			}
+		auto oriAxis = &_state.lX;
+		auto curAxis = &state.lX;
 
-			ui8 changedBtns[sizeof(state.rgbButtons)];
-			ui8 changedBtnsLen = 0;
-			for (ui8 i = 0; i < sizeof(state.rgbButtons); ++i) {
-				if (_state.rgbButtons[i] != state.rgbButtons[i]) {
-					_state.rgbButtons[i] = state.rgbButtons[i];
-					changedBtns[changedBtnsLen++] = i;
+		LONG oriLStickX, oriLStickY, oriRStickX, oriRStickY;
+		auto ls = false, rs = false;
+		if (oriAxis[_keyMapping->LSTICK_X] != curAxis[_keyMapping->LSTICK_X] || oriAxis[_keyMapping->LSTICK_Y] != curAxis[_keyMapping->LSTICK_Y]) {
+			oriLStickX = oriAxis[_keyMapping->LSTICK_X];
+			oriLStickY = oriAxis[_keyMapping->LSTICK_Y];
+			oriAxis[_keyMapping->LSTICK_X] = curAxis[_keyMapping->LSTICK_X];
+			oriAxis[_keyMapping->LSTICK_Y] = curAxis[_keyMapping->LSTICK_Y];
+			ls = true;
+		}
+		if (oriAxis[_keyMapping->RSTICK_X] != curAxis[_keyMapping->RSTICK_X] || oriAxis[_keyMapping->RSTICK_Y] != curAxis[_keyMapping->RSTICK_Y]) {
+			oriRStickX = oriAxis[_keyMapping->RSTICK_X];
+			oriRStickY = oriAxis[_keyMapping->RSTICK_Y];
+			oriAxis[_keyMapping->RSTICK_X] = curAxis[_keyMapping->RSTICK_X];
+			oriAxis[_keyMapping->RSTICK_Y] = curAxis[_keyMapping->RSTICK_Y];
+			rs = true;
+		}
+
+		auto lt = false, rt = false;
+		LONG oriLT, oriRT;
+		if (oriAxis[_keyMapping->LTRIGGER] != curAxis[_keyMapping->LTRIGGER]) {
+			oriLT = oriAxis[_keyMapping->LTRIGGER];
+			oriAxis[_keyMapping->LTRIGGER] = curAxis[_keyMapping->LTRIGGER];
+			lt = true;
+		}
+		if (_keyMapping->LTRIGGER != _keyMapping->RTRIGGER && oriAxis[_keyMapping->RTRIGGER] != curAxis[_keyMapping->RTRIGGER]) {
+			oriRT = oriAxis[_keyMapping->RTRIGGER];
+			oriAxis[_keyMapping->RTRIGGER] = curAxis[_keyMapping->RTRIGGER];
+			rt = true;
+		}
+
+		ui8 changedBtns[sizeof(state.rgbButtons)];
+		ui8 changedBtnsLen = 0;
+		for (ui8 i = 0; i < sizeof(state.rgbButtons); ++i) {
+			if (_state.rgbButtons[i] != state.rgbButtons[i]) {
+				_state.rgbButtons[i] = state.rgbButtons[i];
+				changedBtns[changedBtnsLen++] = i;
+			}
+		}
+
+		ui8 changedPov[4];
+		ui8 changedPovLen = 0;
+		for (ui8 i = 0; i < sizeof(state.rgdwPOV); ++i) {
+			if (_state.rgdwPOV[i] != state.rgdwPOV[i]) {
+				_state.rgdwPOV[i] = state.rgdwPOV[i];
+				changedPov[changedPovLen++] = i;
+			}
+		}
+
+		if (ls) _updateStick(oriLStickX, oriLStickY, curAxis[_keyMapping->LSTICK_X], curAxis[_keyMapping->LSTICK_Y], GamepadKeyCode::LEFT_STICK);
+		if (rs) _updateStick(oriRStickX, oriRStickY, curAxis[_keyMapping->RSTICK_X], curAxis[_keyMapping->RSTICK_Y], GamepadKeyCode::RIGHT_STICK);
+
+		if (_keyMapping->LTRIGGER == _keyMapping->RTRIGGER) {
+			if (lt) _updateTrigger(oriLT, curAxis[_keyMapping->LTRIGGER], GamepadKeyCode::LEFT_TRIGGER, GamepadKeyCode::RIGHT_TRIGGER);
+		} else {
+			if (lt) _updateTriggerSeparate(oriLT, curAxis[_keyMapping->LTRIGGER], GamepadKeyCode::LEFT_TRIGGER);
+			if (rt) _updateTriggerSeparate(oriRT, curAxis[_keyMapping->RTRIGGER], GamepadKeyCode::RIGHT_TRIGGER);
+		}
+
+		if (changedPovLen) {
+			for (ui8 i = 0; i < changedPovLen; ++i) {
+				ui8 key = changedPov[i];
+				if (key == 0) {
+					f32 value = _translateDpad(state.rgdwPOV[key]);
+					_eventDispatcher.dispatchEvent(this, value >= 0.f ? DeviceEvent::DOWN : DeviceEvent::UP, &Key({ (ui8)GamepadKeyCode::DPAD, 1, &value }));
 				}
 			}
+		}
 
-			ui8 changedPov[4];
-			ui8 changedPovLen = 0;
-			for (ui8 i = 0; i < sizeof(state.rgdwPOV); ++i) {
-				if (_state.rgdwPOV[i] != state.rgdwPOV[i]) {
-					_state.rgdwPOV[i] = state.rgdwPOV[i];
-					changedPov[changedPovLen++] = i;
-				}
-			}
+		if (changedBtnsLen) {
+			for (ui8 i = 0; i < changedBtnsLen; ++i) {
+				ui8 key = changedBtns[i];
+				f32 value = _translateButton(state.rgbButtons[key]);
 
-			if (ls) _updateStick(oriLStickX, oriLStickY, curAxis[_keyMapping->LSTICK_X], curAxis[_keyMapping->LSTICK_Y], GamepadKeyCode::LEFT_STICK);
-			if (rs) _updateStick(oriRStickX, oriRStickY, curAxis[_keyMapping->RSTICK_X], curAxis[_keyMapping->RSTICK_Y], GamepadKeyCode::RIGHT_STICK);
+				auto itr = _keyMapping->BUTTONS.find(key);
+				key = itr == _keyMapping->BUTTONS.end() ? key + (ui8)GamepadKeyCode::UNDEFINED : (ui8)itr->second;
 
-			if (_keyMapping->LTRIGGER == _keyMapping->RTRIGGER) {
-				if (lt) _updateTrigger(oriLT, curAxis[_keyMapping->LTRIGGER], GamepadKeyCode::LEFT_TRIGGER, GamepadKeyCode::RIGHT_TRIGGER);
-			} else {
-				if (lt) _updateTriggerSeparate(oriLT, curAxis[_keyMapping->LTRIGGER], GamepadKeyCode::LEFT_TRIGGER);
-				if (rt) _updateTriggerSeparate(oriRT, curAxis[_keyMapping->RTRIGGER], GamepadKeyCode::RIGHT_TRIGGER);
-			}
-
-			if (changedPovLen) {
-				for (ui8 i = 0; i < changedPovLen; ++i) {
-					ui8 key = changedPov[i];
-					if (key == 0) {
-						f32 value = _translateDpad(state.rgdwPOV[key]);
-						_eventDispatcher.dispatchEvent(this, value >= 0.f ? DeviceEvent::DOWN : DeviceEvent::UP, &Key({ (ui8)GamepadKeyCode::DPAD, 1, &value }));
-					}
-				}
-			}
-
-			if (changedBtnsLen) {
-				for (ui8 i = 0; i < changedBtnsLen; ++i) {
-					ui8 key = changedBtns[i];
-					f32 value = _translateButton(state.rgbButtons[key]);
-					
-					auto itr = _keyMapping->BUTTONS.find(key);
-					key = itr == _keyMapping->BUTTONS.end() ? key + (ui8)GamepadKeyCode::UNDEFINED : (ui8)itr->second;
-
-					_eventDispatcher.dispatchEvent(this, value > 0.f ? DeviceEvent::DOWN : DeviceEvent::UP, &Key({ key, 1, &value }));
-				}
+				_eventDispatcher.dispatchEvent(this, value > 0.f ? DeviceEvent::DOWN : DeviceEvent::UP, &Key({ key, 1, &value }));
 			}
 		}
 	}
@@ -207,10 +209,15 @@ namespace aurora::modules::inputs::win_direct_input {
 		}
 	}
 
-	bool Gamepad::_poll() {
-		if (auto hr = _dev->Poll(); hr == DIERR_NOTACQUIRED || DIERR_INPUTLOST) {
-			if (FAILED(_dev->Acquire())) return false;
-			if (FAILED(_dev->Poll())) return false;
+	bool Gamepad::_checkInvalidData(const DIJOYSTATE2& state) {
+		auto axis = &state.lX;
+		for (ui32 i = 0; i < 6; ++i) {
+			if (axis[i] != 32767) return false;
+		}
+
+		const auto numButtons = sizeof(state.rgbButtons) / sizeof(state.rgbButtons[0]);
+		for (ui32 i = 0; i < numButtons; ++i) {
+			if (state.rgbButtons[i] != 0) return false;
 		}
 
 		return true;

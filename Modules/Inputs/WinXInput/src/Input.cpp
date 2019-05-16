@@ -20,27 +20,24 @@ namespace aurora::modules::inputs::win_xinput {
 	void Input::poll() {
 		InternalGUID guid;
 
-		XINPUT_CAPABILITIES caps;
+		XINPUT_STATE state;
 		for (ui32 i = 0; i < XUSER_MAX_COUNT; ++i) {
-			if (XInputGetCapabilities(i, XINPUT_FLAG_GAMEPAD, &caps) == ERROR_SUCCESS) {
-				guid.index = i + 1;
+			guid.index = i + 1;
 
-				XINPUT_STATE state;
-				if (XInputGetState(i, &state) == ERROR_SUCCESS) {
-					bool found = false;
-					for (ui32 j = 0, n = _devices.size(); j < n; ++j) {
-						if (_devices[j].guid.isEqual((const i8*)&guid, sizeof(guid))) {
-							_keepDevices.emplace_back(j);
-							found = true;
-							break;
-						}
+			if (XInputGetState(i, &state) == ERROR_SUCCESS) {
+				bool found = false;
+				for (ui32 j = 0, n = _devices.size(); j < n; ++j) {
+					if (_devices[j].guid.isEqual((const i8*)&guid, sizeof(guid))) {
+						_keepDevices.emplace_back(j);
+						found = true;
+						break;
 					}
+				}
 
-					if (!found) {
-						auto& info = _connectedDevices.emplace_back();
-						info.guid.set((const i8*)&guid, sizeof(guid));
-						info.type = DeviceType::GAMEPAD;
-					}
+				if (!found) {
+					auto& info = _connectedDevices.emplace_back();
+					info.guid.set((const i8*)&guid, sizeof(guid));
+					info.type = DeviceType::GAMEPAD;
 				}
 			}
 		}
