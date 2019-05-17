@@ -24,4 +24,9 @@ namespace aurora {
 	inline bool Math::isPOT(ui32 n) {
 		return n < 1 ? false : !(n & (n - 1));
 	}
+
+	inline constexpr ui32 Math::potLog2(ui32 pow) {
+		auto f = (f32)pow;
+		return ((((ui32&)f) >> 23) & 0xFF) - 127;
+	}
 }

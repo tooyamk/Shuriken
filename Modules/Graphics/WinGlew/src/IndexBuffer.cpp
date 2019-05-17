@@ -29,15 +29,15 @@ namespace aurora::modules::graphics::win_glew {
 		_baseBuffer.unmap();
 	}
 
-	i32 IndexBuffer::read(ui32 offset, void* dst, ui32 dstLen, i32 readLen) {
-		return _baseBuffer.read(offset, dst, dstLen, readLen);
+	ui32 IndexBuffer::read(ui32 offset, void* dst, ui32 dstLen) {
+		return _baseBuffer.read(offset, dst, dstLen);
 	}
 
-	i32 IndexBuffer::write(ui32 offset, const void* data, ui32 length) {
+	ui32 IndexBuffer::write(ui32 offset, const void* data, ui32 length) {
 		return _baseBuffer.write(offset, data, length);
 	}
 
-	i32 IndexBuffer::update(ui32 offset, const void* data, ui32 length) {
+	ui32 IndexBuffer::update(ui32 offset, const void* data, ui32 length) {
 		return _baseBuffer.update(offset, data, length);
 	}
 
@@ -70,7 +70,7 @@ namespace aurora::modules::graphics::win_glew {
 			if (count > _numElements) count = _numElements;
 			if (count > last) count = last;
 
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _baseBuffer.handle);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _baseBuffer.curHandle);
 			glDrawRangeElements(GL_TRIANGLES, offset, _numElements, count, _indexType, nullptr);
 		}
 	}

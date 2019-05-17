@@ -49,11 +49,11 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_baseTexRes.unmap(_graphics.get<Graphics>(), arraySlice, mipSlice);
 	}
 
-	i32 Texture2DResource::read(ui32 arraySlice, ui32 mipSlice, ui32 offset, void* dst, ui32 dstLen, i32 readLen) {
-		return _baseTexRes.read(arraySlice, mipSlice, offset, dst, dstLen, readLen);
+	ui32 Texture2DResource::read(ui32 arraySlice, ui32 mipSlice, ui32 offset, void* dst, ui32 dstLen) {
+		return _baseTexRes.read(arraySlice, mipSlice, offset, dst, dstLen);
 	}
 
-	i32 Texture2DResource::write(ui32 arraySlice, ui32 mipSlice, ui32 offset, const void* data, ui32 length) {
+	ui32 Texture2DResource::write(ui32 arraySlice, ui32 mipSlice, ui32 offset, const void* data, ui32 length) {
 		return _baseTexRes.write(arraySlice, mipSlice, offset, data, length);
 	}
 

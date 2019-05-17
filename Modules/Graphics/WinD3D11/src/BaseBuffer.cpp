@@ -51,12 +51,11 @@ namespace aurora::modules::graphics::win_d3d11 {
 		BaseResource::unmap(graphics, mapUsage, 0);
 	}
 
-	i32 BaseBuffer::read(ui32 offset, void* dst, ui32 dstLen, i32 readLen) {
-		if ((mapUsage & Usage::CPU_READ) == Usage::CPU_READ) {
-			if (dstLen == 0 || readLen == 0 || offset >= size) return 0;
+	ui32 BaseBuffer::read(ui32 offset, void* dst, ui32 dstLen) {
+		if ((mapUsage & Usage::MAP_READ) == Usage::MAP_READ) {
+			if (!dstLen || offset >= size) return 0;
 			if (dst) {
-				if (readLen < 0) readLen = size - offset;
-				if ((ui32)readLen > dstLen) readLen = dstLen;
+				auto readLen = std::min<ui32>(size - offset, dstLen);
 				memcpy(dst, (i8*)mappedRes.pData + offset, readLen);
 				return readLen;
 			}
@@ -64,8 +63,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return -1;
 	}
 
-	i32 BaseBuffer::write(Graphics* graphics, ui32 offset, const void* data, ui32 length) {
-		if ((mapUsage & Usage::CPU_WRITE) == Usage::CPU_WRITE) {
+	ui32 BaseBuffer::write(Graphics* graphics, ui32 offset, const void* data, ui32 length) {
+		if ((mapUsage & Usage::MAP_WRITE) == Usage::MAP_WRITE) {
 			if (data && length && offset < size) {
 				length = std::min<ui32>(length, size - offset);
 				memcpy((i8*)mappedRes.pData + offset, data, length);
@@ -76,8 +75,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return -1;
 	}
 
-	i32 BaseBuffer::update(Graphics* graphics, ui32 offset, const void* data, ui32 length) {
-		if ((resUsage & Usage::GPU_WRITE) == Usage::GPU_WRITE) {
+	ui32 BaseBuffer::update(Graphics* graphics, ui32 offset, const void* data, ui32 length) {
+		if ((resUsage & Usage::UPDATE) == Usage::UPDATE) {
 			if (data && length && offset < size) {
 				length = std::min<ui32>(length, size - offset);
 				if (length == size) {

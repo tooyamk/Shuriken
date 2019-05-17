@@ -113,7 +113,7 @@ namespace aurora::modules::graphics {
 			if (auto& buffers = pool.buffers; pool.idleIndex == buffers.size()) {
 				cb = createShareConstantBufferCallback();
 				cb->ref();
-				cb->create(size, Usage::CPU_WRITE);
+				cb->create(size, Usage::MAP_WRITE);
 				buffers.emplace_back(cb);
 			} else {
 				cb = buffers[pool.idleIndex];
@@ -191,7 +191,7 @@ namespace aurora::modules::graphics {
 			if (auto itr = node->buffers.find(layout.featureCode); itr == node->buffers.end()) {
 				cb = node->buffers.emplace(layout.featureCode, createExclusiveConstantBufferCallback(cur + 1)).first->second;
 				cb->ref();
-				cb->create(layout.size, Usage::CPU_WRITE);
+				cb->create(layout.size, Usage::MAP_WRITE);
 
 				_exclusiveConstPool.find(layout.featureCode)->second.nodes.emplace(node);
 

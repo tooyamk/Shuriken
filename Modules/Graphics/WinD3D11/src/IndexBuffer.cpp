@@ -28,20 +28,19 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_baseBuffer.unmap(_graphics.get<Graphics>());
 	}
 
-	i32 IndexBuffer::read(ui32 offset, void* dst, ui32 dstLen, i32 readLen) {
-		return _baseBuffer.read(offset, dst, dstLen, readLen);
+	ui32 IndexBuffer::read(ui32 offset, void* dst, ui32 dstLen) {
+		return _baseBuffer.read(offset, dst, dstLen);
 	}
 
-	i32 IndexBuffer::write(ui32 offset, const void* data, ui32 length) {
+	ui32 IndexBuffer::write(ui32 offset, const void* data, ui32 length) {
 		return _baseBuffer.write(_graphics.get<Graphics>(), offset, data, length);
 	}
 
-	i32 IndexBuffer::update(ui32 offset, const void* data, ui32 length) {
+	ui32 IndexBuffer::update(ui32 offset, const void* data, ui32 length) {
 		return _baseBuffer.update(_graphics.get<Graphics>(), offset, data, length);
 	}
 
 	void IndexBuffer::flush() {
-		_baseBuffer.flush();
 	}
 
 	void IndexBuffer::setFormat(IndexType type) {

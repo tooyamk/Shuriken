@@ -14,9 +14,9 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual Usage AE_CALL getUsage() const override;
 		virtual Usage AE_CALL map(Usage expectMapUsage) override;
 		virtual void AE_CALL unmap() override;
-		virtual i32 AE_CALL read(ui32 offset, void* dst, ui32 dstLen, i32 readLen = -1) override;
-		virtual i32 AE_CALL write(ui32 offset, const void* data, ui32 length) override;
-		virtual i32 AE_CALL update(ui32 offset, const void* data, ui32 length) override;
+		virtual ui32 AE_CALL read(ui32 offset, void* dst, ui32 dstLen) override;
+		virtual ui32 AE_CALL write(ui32 offset, const void* data, ui32 length) override;
+		virtual ui32 AE_CALL update(ui32 offset, const void* data, ui32 length) override;
 		virtual void AE_CALL flush() override;
 
 		inline ID3D11Buffer* AE_CALL getInternalBuffer() const {

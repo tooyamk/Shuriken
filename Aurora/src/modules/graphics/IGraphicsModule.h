@@ -26,18 +26,23 @@ namespace aurora::modules::graphics {
 	};
 
 
-	enum class Usage : ui32 {
-		NONE = 0,
-		CPU_READ = 1,
-		CPU_WRITE = 1 << 1,
-		GPU_WRITE = 1 << 2,
+	enum class Usage : ui8 {
+		NONE = 0,//create and map
+		MAP_READ = 1,//create and map
+		MAP_WRITE = 1 << 1,//create and map
+		UPDATE = 1 << 2,//create
 
-		PERSISTENT_MAP = 1 << 3,
+		PERSISTENT_MAP = 1 << 3,//create
+		PERSISTENT_MAP_DOUBLE_BUFFER = (1 << 4) | PERSISTENT_MAP,
+		PERSISTENT_MAP_TRIPLE_BUFFER = (1 << 5) | PERSISTENT_MAP,
 
-		DISCARD = 1 << 4,
+		MAP_SWAP = 1 << 6,//map
 
-		CPU_READ_WRITE = CPU_READ | CPU_WRITE,
-		CPU_GPU_WRITE = CPU_WRITE | GPU_WRITE
+		DISCARD = 1 << 7,//map return
+
+		MAP_READ_WRITE = MAP_READ | MAP_WRITE,
+		MAP_WRITE_UPDATE = MAP_WRITE | UPDATE,
+		PERSISTENT_MAP_MASK = PERSISTENT_MAP | PERSISTENT_MAP_DOUBLE_BUFFER | PERSISTENT_MAP_TRIPLE_BUFFER
 	};
 	AE_DEFINE_ENUM_BIT_OPERATIION(Usage);
 
@@ -51,9 +56,9 @@ namespace aurora::modules::graphics {
 		virtual Usage AE_CALL getUsage() const = 0;
 		virtual Usage AE_CALL map(Usage expectMapUsage) = 0;
 		virtual void AE_CALL unmap() = 0;
-		virtual i32 AE_CALL read(ui32 offset, void* dst, ui32 dstLen, i32 readLen = -1) = 0;
-		virtual i32 AE_CALL write(ui32 offset, const void* data, ui32 length) = 0;
-		virtual i32 AE_CALL update(ui32 offset, const void* data, ui32 length) = 0;
+		virtual ui32 AE_CALL read(ui32 offset, void* dst, ui32 dstLen) = 0;
+		virtual ui32 AE_CALL write(ui32 offset, const void* data, ui32 length) = 0;
+		virtual ui32 AE_CALL update(ui32 offset, const void* data, ui32 length) = 0;
 		virtual void AE_CALL flush() = 0;
 	};
 
@@ -217,8 +222,8 @@ namespace aurora::modules::graphics {
 		virtual Usage AE_CALL getUsage() const = 0;
 		virtual Usage AE_CALL map(ui32 arraySlice, ui32 mipSlice, Usage expectMapUsage) = 0;
 		virtual void AE_CALL unmap(ui32 arraySlice, ui32 mipSlice) = 0;
-		virtual i32 AE_CALL read(ui32 arraySlice, ui32 mipSlice, ui32 offset, void* dst, ui32 dstLen, i32 readLen = -1) = 0;
-		virtual i32 AE_CALL write(ui32 arraySlice, ui32 mipSlice, ui32 offset, const void* data, ui32 length) = 0;
+		virtual ui32 AE_CALL read(ui32 arraySlice, ui32 mipSlice, ui32 offset, void* dst, ui32 dstLen) = 0;
+		virtual ui32 AE_CALL write(ui32 arraySlice, ui32 mipSlice, ui32 offset, const void* data, ui32 length) = 0;
 	};
 
 

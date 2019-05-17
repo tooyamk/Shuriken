@@ -12,8 +12,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 			TextureFormat format, Usage resUsage, const void*const* data = nullptr);
 		Usage AE_CALL map(Graphics* graphics, ui32 arraySlice, ui32 mipSlice, Usage expectMapUsage);
 		void AE_CALL unmap(Graphics* graphics, ui32 arraySlice, ui32 mipSlice);
-		i32 AE_CALL read(ui32 arraySlice, ui32 mipSlice, ui32 offset, void* dst, ui32 dstLen, i32 readLen = -1);
-		i32 AE_CALL write(ui32 arraySlice, ui32 mipSlice, ui32 offset, const void* data, ui32 length);
+		ui32 AE_CALL read(ui32 arraySlice, ui32 mipSlice, ui32 offset, void* dst, ui32 dstLen);
+		ui32 AE_CALL write(ui32 arraySlice, ui32 mipSlice, ui32 offset, const void* data, ui32 length);
 		bool AE_CALL update(Graphics* graphics, ui32 arraySlice, ui32 mipSlice, const D3D11_BOX& range, const void* data);
 		void AE_CALL releaseTex(Graphics* graphics);
 		void AE_CALL addView(ITextureView& view, const std::function<void()>& onRecreated);

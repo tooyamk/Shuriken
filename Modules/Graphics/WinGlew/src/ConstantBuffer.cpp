@@ -27,15 +27,15 @@ namespace aurora::modules::graphics::win_glew {
 		_baseBuffer.unmap();
 	}
 
-	i32 ConstantBuffer::read(ui32 offset, void* dst, ui32 dstLen, i32 readLen) {
-		return _baseBuffer.read(offset, dst, dstLen, readLen);
+	ui32 ConstantBuffer::read(ui32 offset, void* dst, ui32 dstLen) {
+		return _baseBuffer.read(offset, dst, dstLen);
 	}
 
-	i32 ConstantBuffer::write(ui32 offset, const void* data, ui32 length) {
+	ui32 ConstantBuffer::write(ui32 offset, const void* data, ui32 length) {
 		return _baseBuffer.write(offset, data, length);
 	}
 
-	i32 ConstantBuffer::update(ui32 offset, const void* data, ui32 length) {
+	ui32 ConstantBuffer::update(ui32 offset, const void* data, ui32 length) {
 		return _baseBuffer.update(offset, data, length);
 	}
 

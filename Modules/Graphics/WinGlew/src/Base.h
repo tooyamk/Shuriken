@@ -9,3 +9,5 @@
 
 #include <GL/GL.h>
 #pragma comment (lib, "opengl32.lib")
+
+#include "GL/eglew.h"

@@ -177,7 +177,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		//((ID3D11Texture2D*)_baseRes.handle)->GetDesc(&desc);
 
-		if ((this->resUsage & Usage::CPU_READ_WRITE) != Usage::NONE) {
+		if ((this->resUsage & Usage::MAP_READ_WRITE) != Usage::NONE) {
 			mappedRes.resize(mipLevels * arraySize);
 			Vec3ui32 size3(size);
 			for (ui32 i = 0; i < mipLevels; ++i) {
@@ -239,14 +239,13 @@ namespace aurora::modules::graphics::win_d3d11 {
 		if (subresource < mappedRes.size()) BaseResource::unmap(graphics, mappedRes[subresource].usage, subresource);
 	}
 
-	i32 BaseTextureResource::read(ui32 arraySlice, ui32 mipSlice, ui32 offset, void* dst, ui32 dstLen, i32 readLen) {
+	ui32 BaseTextureResource::read(ui32 arraySlice, ui32 mipSlice, ui32 offset, void* dst, ui32 dstLen) {
 		ui32 subresource = calcSubresource(mipSlice, arraySlice, mipLevels);
 		if (subresource < mappedRes.size()) {
 			auto& mapped = mappedRes[subresource];
-			if ((mapped.usage & Usage::CPU_READ) == Usage::CPU_READ) {
-				if (dst && dstLen && readLen && offset < mapped.size) {
-					if (readLen < 0) readLen = mapped.size - offset;
-					if ((ui32)readLen > dstLen) readLen = dstLen;
+			if ((mapped.usage & Usage::MAP_READ) == Usage::MAP_READ) {
+				if (dst && dstLen && offset < mapped.size) {
+					auto readLen = std::min<ui32>(mapped.size - offset, dstLen);
 					memcpy(dst, (i8*)mapped.res.pData + offset, readLen);
 					return readLen;
 				}
@@ -256,11 +255,11 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return -1;
 	}
 
-	i32 BaseTextureResource::write(ui32 arraySlice, ui32 mipSlice, ui32 offset, const void* data, ui32 length) {
+	ui32 BaseTextureResource::write(ui32 arraySlice, ui32 mipSlice, ui32 offset, const void* data, ui32 length) {
 		ui32 subresource = calcSubresource(mipSlice, arraySlice, mipLevels);
 		if (subresource < mappedRes.size()) {
 			auto& mapped = mappedRes[subresource];
-			if ((mapped.usage & Usage::CPU_WRITE) == Usage::CPU_WRITE) {
+			if ((mapped.usage & Usage::MAP_WRITE) == Usage::MAP_WRITE) {
 				if (data && length && offset < mapped.size) {
 					length = std::min<ui32>(length, mapped.size - offset);
 					memcpy((i8*)mapped.res.pData + offset, data, length);
@@ -273,7 +272,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	bool BaseTextureResource::update(Graphics* graphics, ui32 arraySlice, ui32 mipSlice, const D3D11_BOX& range, const void* data) {
-		if ((resUsage & Usage::GPU_WRITE) == Usage::GPU_WRITE) {
+		if ((resUsage & Usage::UPDATE) == Usage::UPDATE) {
 			if (data && !arraySlice && mipSlice < mipLevels) {
 				Vec2ui32 size((ui32(&)[2])texSize);
 				Image::calcSpecificMipPixelSize(size, mipSlice);

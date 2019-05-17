@@ -38,7 +38,7 @@ namespace aurora::modules::graphics::win_glew {
 		glGenTextures(1, &handle);
 
 		if (handle) {
-			this->resUsage = resUsage & Usage::GPU_WRITE;
+			this->resUsage = resUsage & Usage::UPDATE;
 			//this->size = size;
 
 			GLbitfield flags = GL_MAP_WRITE_BIT
@@ -227,7 +227,7 @@ namespace aurora::modules::graphics::win_glew {
 	}
 
 	bool BaseTexture::update(ui32 arraySlice, ui32 mipSlice, const Box3ui32& range, const void* data) {
-		if (handle && (resUsage & Usage::GPU_WRITE) == Usage::GPU_WRITE && arraySlice < arraySize && mipSlice < mipLevels) {
+		if (handle && (resUsage & Usage::UPDATE) == Usage::UPDATE && arraySlice < arraySize && mipSlice < mipLevels) {
 			glBindTexture(glTexInfo.internalFormat, handle);
 			switch (glTexInfo.target) {
 			case GL_TEXTURE_1D:

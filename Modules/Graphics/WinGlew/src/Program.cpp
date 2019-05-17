@@ -277,7 +277,7 @@ namespace aurora::modules::graphics::win_glew {
 								for (ui32 i = 0; i < numVars; ++i) {
 									if (auto param = _tempParams[i]; param && param->getUpdateId() != cb->recordUpdateIds[i]) {
 										if (!isMaping) {
-											if (cb->map(Usage::CPU_WRITE) == Usage::NONE) break;
+											if (cb->map(Usage::MAP_WRITE) == Usage::NONE) break;
 											isMaping = true;
 										}
 										cb->recordUpdateIds[i] = param->getUpdateId();
@@ -311,7 +311,7 @@ namespace aurora::modules::graphics::win_glew {
 	}
 
 	void Program::_constantBufferUpdateAll(ConstantBuffer* cb, const std::vector<ConstantBufferLayout::Variables>& vars) {
-		if (cb->map(Usage::CPU_WRITE) != Usage::NONE) {
+		if (cb->map(Usage::MAP_WRITE) != Usage::NONE) {
 			for (ui32 i = 0, n = _tempVars.size(); i < n; ++i) {
 				auto param = _tempParams[i];
 				if (param) ConstantBufferManager::updateConstantBuffer(cb, *param, *_tempVars[i]);

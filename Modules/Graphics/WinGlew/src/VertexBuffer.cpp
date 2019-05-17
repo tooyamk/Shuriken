@@ -28,15 +28,15 @@ namespace aurora::modules::graphics::win_glew {
 		_baseBuffer.unmap();
 	}
 
-	i32 VertexBuffer::read(ui32 offset, void* dst, ui32 dstLen, i32 readLen) {
-		return _baseBuffer.read(offset, dst, dstLen, readLen);
+	ui32 VertexBuffer::read(ui32 offset, void* dst, ui32 dstLen) {
+		return _baseBuffer.read(offset, dst, dstLen);
 	}
 
-	i32 VertexBuffer::write(ui32 offset, const void* data, ui32 length) {
+	ui32 VertexBuffer::write(ui32 offset, const void* data, ui32 length) {
 		return _baseBuffer.write(offset, data, length);
 	}
 
-	i32 VertexBuffer::update(ui32 offset, const void* data, ui32 length) {
+	ui32 VertexBuffer::update(ui32 offset, const void* data, ui32 length) {
 		return _baseBuffer.update(offset, data, length);
 	}
 
@@ -94,11 +94,9 @@ namespace aurora::modules::graphics::win_glew {
 	}
 
 	bool VertexBuffer::use(GLuint index) {
-		if (_baseBuffer.handle && _validVertexFormat) {
-			_baseBuffer.waitServerSync();
-
+		if (_baseBuffer.curHandle && _validVertexFormat) {
 			glEnableVertexAttribArray(index);
-			glBindBuffer(GL_ARRAY_BUFFER, _baseBuffer.handle);
+			glBindBuffer(GL_ARRAY_BUFFER, _baseBuffer.curHandle);
 			glVertexAttribPointer(index, _vertexSize, _vertexType, GL_FALSE, 0, 0);
 		}
 		return false;
