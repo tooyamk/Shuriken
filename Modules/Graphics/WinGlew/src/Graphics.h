@@ -7,6 +7,7 @@ namespace aurora::modules::graphics::win_glew {
 	class AE_MODULE_DLL Graphics : public IGraphicsModule {
 	public:
 		struct InternalFeatures {
+			bool supportTexStorage;
 			GLfloat maxAnisotropy;
 		};
 
@@ -64,10 +65,16 @@ namespace aurora::modules::graphics::win_glew {
 			return _internalFeatures;
 		}
 
+		inline const Usage AE_CALL getCreateBufferMask() const {
+			return _createBufferMask;
+		}
+
 		static void AE_CALL convertFormat(TextureFormat fmt, GLenum& internalFormat, GLenum& format, GLenum& type);
 		static ui32 AE_CALL getGLTypeSize(GLenum type);
 
 	private:
+		Usage _createBufferMask;
+
 		RefPtr<Application> _app;
 		RefPtr<IProgramSourceTranslator> _trans;
 

@@ -10,7 +10,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 	BaseBuffer::~BaseBuffer() {
 	}
 
-	bool BaseBuffer::create(Graphics* graphics, ui32 size, Usage resUsage, const void* data, ui32 dataSize) {
+	bool BaseBuffer::create(Graphics& graphics, ui32 size, Usage resUsage, const void* data, ui32 dataSize) {
 		releaseBuffer(graphics);
 
 		this->size = size;
@@ -31,9 +31,9 @@ namespace aurora::modules::graphics::win_d3d11 {
 			D3D11_SUBRESOURCE_DATA res;
 			memset(&res, 0, sizeof(res));
 			res.pSysMem = data;
-			hr = graphics->getDevice()->CreateBuffer(&desc, &res, (ID3D11Buffer**)&handle);
+			hr = graphics.getDevice()->CreateBuffer(&desc, &res, (ID3D11Buffer**)&handle);
 		} else {
-			hr = graphics->getDevice()->CreateBuffer(&desc, nullptr, (ID3D11Buffer**)&handle);
+			hr = graphics.getDevice()->CreateBuffer(&desc, nullptr, (ID3D11Buffer**)&handle);
 		}
 		if (FAILED(hr)) {
 			releaseBuffer(graphics);
@@ -43,11 +43,11 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return true;
 	}
 
-	Usage BaseBuffer::map(Graphics* graphics, Usage expectMapUsage) {
+	Usage BaseBuffer::map(Graphics& graphics, Usage expectMapUsage) {
 		return BaseResource::map(graphics, expectMapUsage, mapUsage, 0, mappedRes);
 	}
 
-	void BaseBuffer::unmap(Graphics* graphics) {
+	void BaseBuffer::unmap(Graphics& graphics) {
 		BaseResource::unmap(graphics, mapUsage, 0);
 	}
 
@@ -63,7 +63,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return -1;
 	}
 
-	ui32 BaseBuffer::write(Graphics* graphics, ui32 offset, const void* data, ui32 length) {
+	ui32 BaseBuffer::write(Graphics& graphics, ui32 offset, const void* data, ui32 length) {
 		if ((mapUsage & Usage::MAP_WRITE) == Usage::MAP_WRITE) {
 			if (data && length && offset < size) {
 				length = std::min<ui32>(length, size - offset);
@@ -75,12 +75,12 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return -1;
 	}
 
-	ui32 BaseBuffer::update(Graphics* graphics, ui32 offset, const void* data, ui32 length) {
+	ui32 BaseBuffer::update(Graphics& graphics, ui32 offset, const void* data, ui32 length) {
 		if ((resUsage & Usage::UPDATE) == Usage::UPDATE) {
 			if (data && length && offset < size) {
 				length = std::min<ui32>(length, size - offset);
 				if (length == size) {
-					graphics->getContext()->UpdateSubresource(handle, 0, nullptr, data, 0, 0);
+					graphics.getContext()->UpdateSubresource(handle, 0, nullptr, data, 0, 0);
 				} else {
 					D3D11_BOX box;
 					box.back = 1;
@@ -89,7 +89,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 					box.bottom = 1;
 					box.left = offset;
 					box.right = offset + length;
-					graphics->getContext()->UpdateSubresource(handle, 0, &box, data, 0, 0);
+					graphics.getContext()->UpdateSubresource(handle, 0, &box, data, 0, 0);
 				}
 				return length;
 			}
@@ -98,7 +98,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return -1;
 	}
 
-	void BaseBuffer::releaseBuffer(Graphics* graphics) {
+	void BaseBuffer::releaseBuffer(Graphics& graphics) {
 		unmap(graphics);
 		releaseRes();
 	}

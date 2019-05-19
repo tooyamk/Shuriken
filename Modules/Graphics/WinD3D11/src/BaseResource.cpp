@@ -41,7 +41,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		if (d3dUsage != D3D11_USAGE_STAGING) bindType = resType;
 	}
 
-	Usage BaseResource::map(Graphics* graphics, Usage expectMapUsage, Usage& mapUsage, UINT subresource, D3D11_MAPPED_SUBRESOURCE& mappedRes) {
+	Usage BaseResource::map(Graphics& graphics, Usage expectMapUsage, Usage& mapUsage, UINT subresource, D3D11_MAPPED_SUBRESOURCE& mappedRes) {
 		Usage ret = Usage::NONE;
 
 		if (handle) {
@@ -59,7 +59,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 				if ((expectMapUsage & Usage::MAP_WRITE) == Usage::MAP_WRITE) {
 					ret |= Usage::MAP_WRITE;
 					if (bindType == D3D11_BIND_CONSTANT_BUFFER) {
-						if (graphics->getInternalFeatures().MapNoOverwriteOnDynamicConstantBuffer) {
+						if (graphics.getInternalFeatures().MapNoOverwriteOnDynamicConstantBuffer) {
 							mapType |= D3D11_MAP_WRITE_NO_OVERWRITE;
 						} else {
 							mapType |= D3D11_MAP_WRITE_DISCARD;
@@ -75,7 +75,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 				if (mapUsage != expectMapUsage) {
 					unmap(graphics, mapUsage, subresource);
-					if (SUCCEEDED(graphics->getContext()->Map(handle, subresource, (D3D11_MAP)mapType, 0, &mappedRes))) {
+					if (SUCCEEDED(graphics.getContext()->Map(handle, subresource, (D3D11_MAP)mapType, 0, &mappedRes))) {
 						mapUsage = expectMapUsage;
 					} else {
 						ret = Usage::NONE;
@@ -87,9 +87,9 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return ret;
 	}
 
-	void BaseResource::unmap(Graphics* graphics, Usage& mapUsage, UINT subresource) {
+	void BaseResource::unmap(Graphics& graphics, Usage& mapUsage, UINT subresource) {
 		if ((mapUsage & Usage::MAP_READ_WRITE) != Usage::NONE) {
-			graphics->getContext()->Unmap(handle, subresource);
+			graphics.getContext()->Unmap(handle, subresource);
 		}
 		mapUsage = Usage::NONE;
 	}

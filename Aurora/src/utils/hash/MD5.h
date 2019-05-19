@@ -41,16 +41,16 @@ namespace aurora::hash {
 		inline static ui32 rotate_left(ui32 x, i32 n) {
 			return (x << n) | (x >> (32 - n));
 		}
-		inline static void FF(ui32 &a, ui32 b, ui32 c, ui32 d, ui32 x, ui32 s, ui32 ac) {
+		inline static void FF(ui32& a, ui32 b, ui32 c, ui32 d, ui32 x, ui32 s, ui32 ac) {
 			a = rotate_left(a + F(b, c, d) + x + ac, s) + b;
 		}
-		inline static void GG(ui32 &a, ui32 b, ui32 c, ui32 d, ui32 x, ui32 s, ui32 ac) {
+		inline static void GG(ui32& a, ui32 b, ui32 c, ui32 d, ui32 x, ui32 s, ui32 ac) {
 			a = rotate_left(a + G(b, c, d) + x + ac, s) + b;
 		}
-		inline static void HH(ui32 &a, ui32 b, ui32 c, ui32 d, ui32 x, ui32 s, ui32 ac) {
+		inline static void HH(ui32& a, ui32 b, ui32 c, ui32 d, ui32 x, ui32 s, ui32 ac) {
 			a = rotate_left(a + H(b, c, d) + x + ac, s) + b;
 		}
-		inline static void II(ui32 &a, ui32 b, ui32 c, ui32 d, ui32 x, ui32 s, ui32 ac) {
+		inline static void II(ui32& a, ui32 b, ui32 c, ui32 d, ui32 x, ui32 s, ui32 ac) {
 			a = rotate_left(a + I(b, c, d) + x + ac, s) + b;
 		}
 	};

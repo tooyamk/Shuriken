@@ -10,7 +10,7 @@ namespace aurora::modules::graphics::win_glew {
 		BaseTexture(TextureType texType);
 		virtual ~BaseTexture();
 		
-		bool AE_CALL create(Graphics* graphics, const Vec3ui32& size, ui32 arraySize, ui32 mipLevels,
+		bool AE_CALL create(Graphics& graphics, const Vec3ui32& size, ui32 arraySize, ui32 mipLevels,
 			TextureFormat format, Usage resUsage, const void*const* data = nullptr);
 		Usage AE_CALL map(ui32 arraySlice, ui32 mipSlice, Usage expectMapUsage);
 		void AE_CALL unmap(ui32 arraySlice, ui32 mipSlice);

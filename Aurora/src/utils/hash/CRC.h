@@ -11,6 +11,7 @@ namespace aurora::hash {
 		static ui32 AE_CALL CRC32(const i8* data, ui32 len);
 
 		static ui64 AE_CALL CRC64(const i8* data, ui32 len);
+
 		inline static ui64 AE_CALL CRC64StreamBegin() {
 			return 0xFFFFFFFFFFFFFFFFui64;
 		}

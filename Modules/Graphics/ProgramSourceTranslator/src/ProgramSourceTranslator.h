@@ -10,7 +10,7 @@
 #include "modules/graphics/IProgramSourceTranslator.h"
 #include "base/DynamicLib.h"
 
-#ifdef AE_X64
+#ifdef AE_64BITS
 #ifdef AE_DEBUG
 #pragma comment(lib, "libs/spirv-cross/x64/spirv-cross-cored.lib")
 #pragma comment(lib, "libs/spirv-cross/x64/spirv-cross-glsld.lib")

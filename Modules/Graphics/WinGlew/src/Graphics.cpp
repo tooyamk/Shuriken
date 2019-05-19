@@ -13,17 +13,18 @@
 
 namespace aurora::modules::graphics::win_glew {
 	Graphics::Graphics(Application* app, IProgramSourceTranslator* trans) :
+		_createBufferMask(Usage::NONE),
 		_app(app),
 		_trans(trans),
 		_dc(nullptr),
 		_rc(nullptr),
 		_majorVer(0),
 		_minorVer(0),
-		_intVer(0),
-		_deviceFeatures({ 0 }) {
+		_intVer(0) {
 		_constantBufferManager.createShareConstantBufferCallback = std::bind(&Graphics::_createdShareConstantBuffer, this);
 		_constantBufferManager.createExclusiveConstantBufferCallback = std::bind(&Graphics::_createdExclusiveConstantBuffer, this, std::placeholders::_1);
 		memset(&_internalFeatures, 0, sizeof(InternalFeatures));
+		memset(&_deviceFeatures, 0, sizeof(_deviceFeatures));
 	}
 
 	Graphics::~Graphics() {
@@ -139,11 +140,14 @@ namespace aurora::modules::graphics::win_glew {
 
 		_internalFeatures.maxAnisotropy = 1.f;
 		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &_internalFeatures.maxAnisotropy);
+		_internalFeatures.supportTexStorage = false;// isGreatThanVersion(4, 2);
 
 		_deviceFeatures.supportSampler = isGreatThanVersion(3, 3);
 		_deviceFeatures.supportTextureView = false;
 		_deviceFeatures.supportConstantBuffer = isGreatThanVersion(3, 1);
 		_deviceFeatures.supportPersisientMap = isGreatThanVersion(4, 4);
+
+		_createBufferMask = Usage::MAP_READ_WRITE | Usage::UPDATE | (_deviceFeatures.supportPersisientMap ? Usage::PERSISTENT_MAP_MASK : Usage::NONE);
 
 		return true;
 	}
@@ -269,9 +273,10 @@ namespace aurora::modules::graphics::win_glew {
 			_dc = nullptr;
 		}
 
-		memset(&_internalFeatures, 0, sizeof(InternalFeatures));
+		memset(&_internalFeatures, 0, sizeof(_internalFeatures));
 		memset(&_deviceFeatures, 0, sizeof(_deviceFeatures));
 		_deviceVersion = "OpenGL Unknown";
+		_createBufferMask = Usage::NONE;
 	}
 
 	void Graphics::convertFormat(TextureFormat fmt, GLenum& internalFormat, GLenum& format, GLenum& type) {

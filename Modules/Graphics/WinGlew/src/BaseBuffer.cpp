@@ -18,10 +18,10 @@ namespace aurora::modules::graphics::win_glew {
 		releaseBuffer();
 	}
 
-	bool BaseBuffer::create(Graphics* graphics, ui32 size, Usage resUsage, const void* data) {
+	bool BaseBuffer::create(Graphics& graphics, ui32 size, Usage resUsage, const void* data) {
 		releaseBuffer();
 
-		this->resUsage = resUsage & (Usage::MAP_READ_WRITE | Usage::UPDATE | (graphics->getDeviceFeatures().supportPersisientMap ? Usage::PERSISTENT_MAP_MASK : Usage::NONE));
+		this->resUsage = resUsage & graphics.getCreateBufferMask();
 		this->size = size;
 
 		if ((this->resUsage & Usage::MAP_READ_WRITE) == Usage::NONE) {
@@ -102,12 +102,14 @@ namespace aurora::modules::graphics::win_glew {
 					mapUsage = usage;
 					if ((this->resUsage & Usage::PERSISTENT_MAP) == Usage::PERSISTENT_MAP) {
 						if (numBuffers > 1 && (expectMapUsage & Usage::MAP_SWAP) == Usage::MAP_SWAP) {
-							if (++bufferData.curIndex >= numBuffers) bufferData.curIndex = 0;
-							curHandle = bufferData.handles[bufferData.curIndex];
-							ret |= Usage::DISCARD;
+							if (auto& sync = _getCurSync(); sync && _isSyncing(sync)) {
+								if (++bufferData.curIndex >= numBuffers) bufferData.curIndex = 0;
+								curHandle = bufferData.handles[bufferData.curIndex];
+								ret |= Usage::DISCARD;
+							}
 						}
 
-						waitServerSync();
+						_waitServerSync();
 					} else {
 						GLenum access = 0;
 						if (usage == Usage::MAP_READ_WRITE) {
@@ -119,7 +121,7 @@ namespace aurora::modules::graphics::win_glew {
 						}
 
 						glBindBuffer(bufferType, curHandle);
-						bufferData.mapData =  glMapBuffer(bufferType, access);
+						bufferData.mapData = glMapBuffer(bufferType, access);
 					}
 				}
 			}
@@ -143,6 +145,14 @@ namespace aurora::modules::graphics::win_glew {
 	}
 
 	ui32 BaseBuffer::read(ui32 offset, void* dst, ui32 dstLen) {
+		if ((mapUsage & Usage::MAP_READ)== Usage::MAP_READ) {
+			if (dst && dstLen && offset < size) {
+				dstLen = std::min<ui32>(dstLen, size - offset);
+				memcpy(dst, (i8*)_getCurMapData() + offset, dstLen);
+				return dstLen;
+			}
+			return 0;
+		}
 		return -1;
 	}
 
@@ -175,7 +185,7 @@ namespace aurora::modules::graphics::win_glew {
 
 	void BaseBuffer::flush() {
 		if (dirty) {
-			waitServerSync();
+			_waitServerSync();
 			_getCurSync() = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 			dirty = false;
 		}
@@ -184,7 +194,7 @@ namespace aurora::modules::graphics::win_glew {
 	void BaseBuffer::releaseBuffer() {
 		if (numBuffers) {
 			if (numBuffers == 1) {
-				releaseSync(bufferData.sync);
+				_releaseSync(bufferData.sync);
 
 				if (bufferData.mapData) {
 					glBindBuffer(bufferType, curHandle);
@@ -194,7 +204,7 @@ namespace aurora::modules::graphics::win_glew {
 				glDeleteBuffers(1, &curHandle);
 			} else {
 				for (ui32 i = 0; i < numBuffers; ++i) {
-					releaseSync(bufferData.syncs[i]);
+					_releaseSync(bufferData.syncs[i]);
 
 					if (bufferData.mapDatas[i]) {
 						glBindBuffer(bufferType, bufferData.handles[i]);
@@ -218,25 +228,5 @@ namespace aurora::modules::graphics::win_glew {
 		resUsage = Usage::NONE;
 		mapUsage = Usage::NONE;
 		memset(&bufferData, 0, sizeof(bufferData));
-	}
-
-	void BaseBuffer::waitServerSync() {
-		auto& sync = _getCurSync();
-		if (sync) {
-			do {
-				if (auto rst = glClientWaitSync(sync, GL_SYNC_FLUSH_COMMANDS_BIT, 1); rst == GL_ALREADY_SIGNALED || rst == GL_CONDITION_SATISFIED) {
-					releaseSync(sync);
-					return;
-				}
-				println("wait");
-			} while (true);
-		}
-	}
-
-	void BaseBuffer::releaseSync(GLsync& sync) {
-		if (sync) {
-			glDeleteSync(sync);
-			sync = nullptr;
-		}
 	}
 }

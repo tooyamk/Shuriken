@@ -14,7 +14,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 	BaseTextureResource::~BaseTextureResource() {
 	}
 
-	bool BaseTextureResource::create(Graphics* graphics, TextureType texType, const Vec3ui32& size, ui32 arraySize, ui32 mipLevels,
+	bool BaseTextureResource::create(Graphics& graphics, TextureType texType, const Vec3ui32& size, ui32 arraySize, ui32 mipLevels,
 		TextureFormat format, Usage resUsage, const void*const* data) {
 		releaseTex(graphics);
 
@@ -212,20 +212,20 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return succeeded;
 	}
 
-	HRESULT BaseTextureResource::_createInternalTexture(Graphics* graphics, TextureType texType, const TexDesc& desc, const D3D11_SUBRESOURCE_DATA* pInitialData) {
+	HRESULT BaseTextureResource::_createInternalTexture(Graphics& graphics, TextureType texType, const TexDesc& desc, const D3D11_SUBRESOURCE_DATA* pInitialData) {
 		switch (texType) {
 		case TextureType::TEX1D:
-			return graphics->getDevice()->CreateTexture1D(&desc.dsec1D, pInitialData, (ID3D11Texture1D**)&handle);
+			return graphics.getDevice()->CreateTexture1D(&desc.dsec1D, pInitialData, (ID3D11Texture1D**)&handle);
 		case TextureType::TEX2D:
-			return graphics->getDevice()->CreateTexture2D(&desc.dsec2D, pInitialData, (ID3D11Texture2D**)&handle);
+			return graphics.getDevice()->CreateTexture2D(&desc.dsec2D, pInitialData, (ID3D11Texture2D**)&handle);
 		case TextureType::TEX3D:
-			return graphics->getDevice()->CreateTexture3D(&desc.dsec3D, pInitialData, (ID3D11Texture3D**)&handle);
+			return graphics.getDevice()->CreateTexture3D(&desc.dsec3D, pInitialData, (ID3D11Texture3D**)&handle);
 		default:
 			return -1;
 		}
 	}
 
-	Usage BaseTextureResource::map(Graphics* graphics, ui32 arraySlice, ui32 mipSlice, Usage expectMapUsage) {
+	Usage BaseTextureResource::map(Graphics& graphics, ui32 arraySlice, ui32 mipSlice, Usage expectMapUsage) {
 		ui32 subresource = calcSubresource(mipSlice, arraySlice, mipLevels);
 		if (subresource < mappedRes.size()) {
 			auto& mapped = mappedRes[subresource];
@@ -234,7 +234,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return Usage::NONE;
 	}
 
-	void BaseTextureResource::unmap(Graphics* graphics, ui32 arraySlice, ui32 mipSlice) {
+	void BaseTextureResource::unmap(Graphics& graphics, ui32 arraySlice, ui32 mipSlice) {
 		ui32 subresource = calcSubresource(mipSlice, arraySlice, mipLevels);
 		if (subresource < mappedRes.size()) BaseResource::unmap(graphics, mappedRes[subresource].usage, subresource);
 	}
@@ -271,21 +271,21 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return -1;
 	}
 
-	bool BaseTextureResource::update(Graphics* graphics, ui32 arraySlice, ui32 mipSlice, const D3D11_BOX& range, const void* data) {
+	bool BaseTextureResource::update(Graphics& graphics, ui32 arraySlice, ui32 mipSlice, const D3D11_BOX& range, const void* data) {
 		if ((resUsage & Usage::UPDATE) == Usage::UPDATE) {
 			if (data && !arraySlice && mipSlice < mipLevels) {
 				Vec2ui32 size((ui32(&)[2])texSize);
 				Image::calcSpecificMipPixelSize(size, mipSlice);
 				auto rowByteSize = size[0] * perPixelSize;
 
-				graphics->getContext()->UpdateSubresource(handle, mipSlice, &range, data, rowByteSize, rowByteSize * size[1]);
+				graphics.getContext()->UpdateSubresource(handle, mipSlice, &range, data, rowByteSize, rowByteSize * size[1]);
 			}
 			return true;
 		}
 		return false;
 	}
 
-	void BaseTextureResource::releaseTex(Graphics* graphics) {
+	void BaseTextureResource::releaseTex(Graphics& graphics) {
 		if (!mappedRes.empty()) {
 			for (ui32 i = 0, n = mappedRes.size(); i < n; ++i) BaseResource::unmap(graphics, mappedRes[i].usage, i);
 			mappedRes.clear();

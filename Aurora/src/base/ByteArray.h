@@ -33,6 +33,8 @@ namespace aurora {
 		ByteArray& AE_CALL operator=(ByteArray&& value);
 		~ByteArray();
 
+		inline static const Endian SYS_ENDIAN = *(ui16*)"\0\xFF" < 256 ? Endian::BIG : Endian::LITTLE;
+
 		inline AE_CALL operator bool() const;
 
 		void AE_CALL dispose(bool free = true);
@@ -141,8 +143,6 @@ namespace aurora {
 		static const ui64 INT56 = 0x100000000000000ui64;//1 << 56
 		static const ui64 INT56_MAX = (INT56 / 2) - 1;
 
-		static const ui16 TEST_ENDIAN_VALUE = 0x00FF;
-
 		Endian _endian;
 		Mode _mode;
 		bool _needReverse;
@@ -175,9 +175,6 @@ namespace aurora {
 		inline void AE_CALL _checkLength(ui32 len);
 
 		inline ui8 AE_CALL _bomOffset(ui32 pos) const;
-
-	public:
-		static const Endian SYS_ENDIAN;
 	};
 }
 

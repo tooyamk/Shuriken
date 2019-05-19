@@ -12,8 +12,8 @@ namespace aurora::hash {
 
 		// load magic initialization constants.
 		state[0] = 0x67452301;
-		state[1] = 0xefcdab89;
-		state[2] = 0x98badcfe;
+		state[1] = 0xEFCDAB89;
+		state[2] = 0x98BADCFE;
 		state[3] = 0x10325476;
 	}
 
@@ -28,10 +28,10 @@ namespace aurora::hash {
 	// a multiple of 4.
 	void MD5::encode(ui8 output[], const ui32 input[], ui32 len) {
 		for (ui32 i = 0, j = 0; j < len; ++i, j += 4) {
-			output[j] = input[i] & 0xff;
-			output[j + 1] = (input[i] >> 8) & 0xff;
-			output[j + 2] = (input[i] >> 16) & 0xff;
-			output[j + 3] = (input[i] >> 24) & 0xff;
+			output[j] = input[i] & 0xFF;
+			output[j + 1] = (input[i] >> 8) & 0xFF;
+			output[j + 2] = (input[i] >> 16) & 0xFF;
+			output[j + 3] = (input[i] >> 24) & 0xFF;
 		}
 	}
 
@@ -68,7 +68,7 @@ namespace aurora::hash {
 		FF(b, c, d, a, x[7], S14, 0xfd469501); /* 8 */
 		FF(a, b, c, d, x[8], S11, 0x698098d8); /* 9 */
 		FF(d, a, b, c, x[9], S12, 0x8b44f7af); /* 10 */
-		FF(c, d, a, b, x[10], S13, 0xffff5bb1); /* 11 */
+		FF(c, d, a, b, x[10], S13, 0xFFff5bb1); /* 11 */
 		FF(b, c, d, a, x[11], S14, 0x895cd7be); /* 12 */
 		FF(a, b, c, d, x[12], S11, 0x6b901122); /* 13 */
 		FF(d, a, b, c, x[13], S12, 0xfd987193); /* 14 */
@@ -94,7 +94,7 @@ namespace aurora::hash {
 		GG(b, c, d, a, x[12], S24, 0x8d2a4c8a); /* 32 */
 
 		/* Round 3 */
-		HH(a, b, c, d, x[5], S31, 0xfffa3942); /* 33 */
+		HH(a, b, c, d, x[5], S31, 0xFFfa3942); /* 33 */
 		HH(d, a, b, c, x[8], S32, 0x8771f681); /* 34 */
 		HH(c, d, a, b, x[11], S33, 0x6d9d6122); /* 35 */
 		HH(b, c, d, a, x[14], S34, 0xfde5380c); /* 36 */
@@ -118,7 +118,7 @@ namespace aurora::hash {
 		II(b, c, d, a, x[5], S44, 0xfc93a039); /* 52 */
 		II(a, b, c, d, x[12], S41, 0x655b59c3); /* 53 */
 		II(d, a, b, c, x[3], S42, 0x8f0ccc92); /* 54 */
-		II(c, d, a, b, x[10], S43, 0xffeff47d); /* 55 */
+		II(c, d, a, b, x[10], S43, 0xFFeff47d); /* 55 */
 		II(b, c, d, a, x[1], S44, 0x85845dd1); /* 56 */
 		II(a, b, c, d, x[8], S41, 0x6fa87e4f); /* 57 */
 		II(d, a, b, c, x[15], S42, 0xfe2ce6e0); /* 58 */
@@ -145,8 +145,7 @@ namespace aurora::hash {
 		ui32 index = count[0] / 8 % BLOCK_SIZE;
 
 		// Update number of bits
-		if ((count[0] += (length << 3)) < (length << 3))
-			++count[1];
+		if ((count[0] += (length << 3)) < (length << 3)) ++count[1];
 		count[1] += (length >> 29);
 
 		// number of bytes we need to fill in buffer
@@ -161,12 +160,12 @@ namespace aurora::hash {
 			transform(buffer);
 
 			// transform chunks of blocksize (64 bytes)
-			for (i = firstpart; i + BLOCK_SIZE <= length; i += BLOCK_SIZE)
-				transform(&input[i]);
+			for (i = firstpart; i + BLOCK_SIZE <= length; i += BLOCK_SIZE) transform(&input[i]);
 
 			index = 0;
-		} else
+		} else {
 			i = 0;
+		}
 
 		// buffer remaining input
 		memcpy(&buffer[index], &input[i], length - i);
