@@ -38,12 +38,14 @@ namespace aurora {
 
 		static std::string AE_CALL toString(const ui8* value, ui32 size);
 
-		inline static std::string::size_type AE_CALL findFirst(const i8* value, ui32 size, i8 c) {
-			for (ui32 i = 0; i < size; ++i) {
-				if (value[i] == c) return i;
+		inline static std::string::size_type AE_CALL findFirst(const i8* src, ui32 srcSize, i8 c) {
+			for (ui32 i = 0; i < srcSize; ++i) {
+				if (src[i] == c) return i;
 			}
 			return std::string::npos;
 		}
+
+		static std::string::size_type AE_CALL findFirst(const i8* src, ui32 srcSize, const i8* value, ui32 valueSize);
 
 		/*
 		inline static std::string AE_CALL toString(const unsigned char* value, unsigned int size) {

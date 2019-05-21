@@ -26,6 +26,7 @@ namespace aurora::modules::graphics::win_glew {
 		GLenum bufferType;
 		ui32 size;
 		GLuint curHandle;
+
 		union {
 			struct {
 				GLuint handle;
@@ -41,6 +42,8 @@ namespace aurora::modules::graphics::win_glew {
 		} bufferData;
 
 	private:
+		void AE_CALL _createPersistentMapBuffer(GLuint handle, void*& mapData, const void* data);
+
 		inline void*& _getCurMapData() {
 			return numBuffers > 1 ? bufferData.mapDatas[bufferData.curIndex] : bufferData.mapData;
 		}

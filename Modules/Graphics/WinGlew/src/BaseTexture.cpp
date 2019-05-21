@@ -3,6 +3,8 @@
 #include "base/Image.h"
 #include <algorithm>
 
+#include <thread>
+
 namespace aurora::modules::graphics::win_glew {
 	BaseTexture::BaseTexture(TextureType texType) :
 		dirty(false),
@@ -138,7 +140,7 @@ namespace aurora::modules::graphics::win_glew {
 						} else {
 							Vec2ui32 size2((ui32(&)[2])size);
 							for (ui32 i = 0; i < mipLevels; ++i) {
-								glTexImage2D(glTexInfo.target, i, glTexInfo.internalFormat, size2[0], size2[1], 0, glTexInfo.format, glTexInfo.type, data[i]);
+								//glTexImage2D(glTexInfo.target, i, glTexInfo.internalFormat, size2[0], size2[1], 0, glTexInfo.format, glTexInfo.type, data[i]);
 								Image::calcNextMipPixelSize(size2);
 
 								/*
@@ -151,17 +153,35 @@ namespace aurora::modules::graphics::win_glew {
 								*/
 							}
 
-							glBindTexture(glTexInfo.target, handle);
+
 							GLuint bufID = 0;
 							glGenBuffers(1, &bufID);
 							glBindBuffer(GL_PIXEL_UNPACK_BUFFER, bufID);
 							glBufferData(GL_PIXEL_UNPACK_BUFFER, this->size, nullptr, GL_STREAM_DRAW);
-							GLubyte* ptr = (GLubyte*)glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY);
-							memcpy(ptr, data[0], this->size);
-							glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+							glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+
 							
-							glTexSubImage2D(glTexInfo.target, 0, 0, 0, size2[0], size2[1], glTexInfo.format, glTexInfo.type, nullptr);
+							glBindTexture(glTexInfo.target, handle);
+							glTexImage2D(glTexInfo.target, 0, glTexInfo.internalFormat, size2[0], size2[1], 0, glTexInfo.format, glTexInfo.type, nullptr);
 							glBindTexture(glTexInfo.target, 0);
+
+							glBindTexture(glTexInfo.target, handle);
+							glBindBuffer(GL_PIXEL_UNPACK_BUFFER, bufID);
+							
+							void* ptr = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_READ_WRITE);
+							memcpy(ptr, data[0], this->size);
+							//glBindBuffer(GL_PIXEL_UNPACK_BUFFER, bufID);
+							glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+
+							glTexSubImage2D(glTexInfo.target, 0, 0, 0, size2[0], size2[1], glTexInfo.format, glTexInfo.type, nullptr);
+							//glActiveTexture(GL_TEXTURE0);
+							//glBindTexture(glTexInfo.target, handle);
+							//glPixelStorei(GL_UNPACK_ALIGNMENT, 4); // TODO
+							//glPixelStorei(GL_UNPACK_IMAGE_HEIGHT, size2[1]); // image height in client memory
+							//glPixelStorei(GL_UNPACK_ROW_LENGTH, size2[0] * 4); // pitch in client memory
+							//glTexImage2D(glTexInfo.target, 0, glTexInfo.internalFormat, size2[0], size2[1], 0, glTexInfo.format, glTexInfo.type, nullptr);
+							//glTexSubImage2D(glTexInfo.target, 0, 0, 0, size2[0], size2[1], glTexInfo.format, glTexInfo.type, nullptr);
+							//glBindTexture(glTexInfo.target, 0);
 							glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 						}
 					}
@@ -197,6 +217,7 @@ namespace aurora::modules::graphics::win_glew {
 				}
 
 				glTexParameteri(glTexInfo.target, GL_TEXTURE_MAX_LEVEL, mipLevels - 1);
+				glBindTexture(glTexInfo.target, 0);
 
 				this->arraySize = arraySize ? arraySize : 1;
 				this->mipLevels = mipLevels;

@@ -38,7 +38,15 @@ namespace aurora::modules::graphics::win_glew {
 				glBufferData(bufferType, size, nullptr, GL_DYNAMIC_DRAW);
 			}
 		} else {
-			if ((this->resUsage & Usage::PERSISTENT_MAP) != Usage::NONE) {
+			if ((this->resUsage & Usage::PERSISTENT_MAP) == Usage::NONE) {
+				numBuffers = 1;
+
+				glGenBuffers(1, &bufferData.handle);
+				curHandle = bufferData.handle;
+				glBindBuffer(bufferType, curHandle);
+
+				glBufferData(bufferType, size, data, GL_DYNAMIC_DRAW);
+			} else {
 				numBuffers = (((ui32)this->resUsage >> (Math::potLog2((ui32)Usage::PERSISTENT_MAP) + 1)) & 0b11) + 1;
 
 				GLbitfield flags =
@@ -65,20 +73,13 @@ namespace aurora::modules::graphics::win_glew {
 				glGenBuffers(numBuffers, handles);
 				curHandle = handles[0];
 
-				for (ui32 i = 0; i < numBuffers; ++i) {
-					glBindBuffer(bufferType, handles[i]);
-					glBufferStorage(bufferType, size, i == 0 ? data : nullptr, flags);
-					mapDatas[i] = glMapBufferRange(bufferType, 0, size, flags);
-					syncs[i] = nullptr;
+				_createPersistentMapBuffer(handles[0], mapDatas[0], data);
+				syncs[0] = nullptr;
+
+				for (ui32 i = 1; i < numBuffers; ++i) {
+					bufferData.mapDatas[i] = nullptr;
+					bufferData.syncs[i] = nullptr;
 				}
-			} else {
-				numBuffers = 1;
-
-				glGenBuffers(1, &bufferData.handle);
-				curHandle = bufferData.handle;
-				glBindBuffer(bufferType, curHandle);
-
-				glBufferData(bufferType, size, data, GL_DYNAMIC_DRAW);
 			}
 		}
 
@@ -105,6 +106,8 @@ namespace aurora::modules::graphics::win_glew {
 							if (auto& sync = _getCurSync(); sync && _isSyncing(sync)) {
 								if (++bufferData.curIndex >= numBuffers) bufferData.curIndex = 0;
 								curHandle = bufferData.handles[bufferData.curIndex];
+								if (!bufferData.mapDatas[bufferData.curIndex]) _createPersistentMapBuffer(bufferData.handles[bufferData.curIndex], bufferData.mapDatas[bufferData.curIndex], nullptr);
+
 								ret |= Usage::DISCARD;
 							}
 						}
@@ -228,5 +231,16 @@ namespace aurora::modules::graphics::win_glew {
 		resUsage = Usage::NONE;
 		mapUsage = Usage::NONE;
 		memset(&bufferData, 0, sizeof(bufferData));
+	}
+
+	void BaseBuffer::_createPersistentMapBuffer(GLuint handle, void*& mapData, const void* data) {
+		const GLbitfield flags =
+			GL_MAP_WRITE_BIT |
+			GL_MAP_PERSISTENT_BIT | //在被映射状态下不同步
+			GL_MAP_COHERENT_BIT;    //数据对GPU立即可见
+
+		glBindBuffer(bufferType, handle);
+		glBufferStorage(bufferType, size, data, flags);
+		mapData = glMapBufferRange(bufferType, 0, size, flags);
 	}
 }

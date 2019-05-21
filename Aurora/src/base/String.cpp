@@ -211,6 +211,26 @@ namespace aurora {
 		return std::move(str);
 	}
 
+	std::string::size_type String::findFirst(const i8* src, ui32 srcSize, const i8* value, ui32 valueSize) {
+		if (!value || !valueSize) return std::string::npos;
+
+		if (valueSize == std::string::npos) valueSize = strlen(value);
+
+		for (ui32 i = 0; i < srcSize; ++i) {
+			if (src[i] == value[0]) {
+				bool equal = true;
+				for (ui32 j = 1; j < valueSize; ++j) {
+					if (src[i + j] != value[j]) {
+						equal = false;
+						break;
+					}
+				}
+				if (equal) return i;
+			}
+		}
+		return std::string::npos;
+	}
+
 	bool String::isEqual(const i8* str1, const i8* str2) {
 		if (str1 == str2) return true;
 		
