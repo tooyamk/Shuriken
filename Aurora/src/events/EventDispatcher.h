@@ -138,14 +138,6 @@ namespace aurora::events {
 			return n;
 		}
 
-		virtual void AE_CALL dispatchEvent(const Event<EvtType>& e) const override {
-			dispatchEvent(e.getTarget(), e.getType(), e.getData());
-		}
-
-		virtual void AE_CALL dispatchEvent(void* target, const Event<EvtType>& e) const override {
-			dispatchEvent(target, e.getType(), e.getData());
-		}
-
 		virtual void AE_CALL dispatchEvent(void* target, const EvtType& type, void* data = nullptr) const override {
 			if (auto itr = _listeners.find(type); itr != _listeners.end()) {
 				auto& tl = itr->second;

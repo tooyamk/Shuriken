@@ -26,7 +26,7 @@ namespace aurora::modules::graphics {
 	};
 
 
-	enum class Usage : ui8 {
+	enum class Usage : ui16 {
 		NONE = 0,//create and map
 		MAP_READ = 1,//create and map
 		MAP_WRITE = 1 << 1,//create and map
