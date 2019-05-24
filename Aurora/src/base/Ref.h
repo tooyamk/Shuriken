@@ -20,18 +20,19 @@ namespace aurora {
 		inline void AE_CALL ref() {
 			_refCount.fetch_add(1, std::memory_order_release);
 		}
+
+		template<typename T>
+		inline RefType<T>* ref() {
+			ref();
+			return (T*)this;
+		}
+
 		inline void AE_CALL unref() {
 			if (_refCount.fetch_sub(1) <= 1) delete this;
 		}
 
 		inline ui32 AE_CALL getReferenceCount() const {
 			return _refCount.load(std::memory_order_acquire);
-		}
-
-		template<typename T>
-		inline RefType<T>* ref() {
-			ref();
-			return (T*)this;
 		}
 
 		template<typename P1, typename P2>
@@ -86,12 +87,11 @@ namespace aurora {
 			reset();
 		}
 
-		RefPtr<T>& AE_CALL operator=(RefPtr<T>&& ptr) {
-			if (auto target = ptr._target; _target != target) {
-				if (_target) _target->unref();
-				_target = target;
-			}
+		inline RefPtr<T>& AE_CALL operator=(RefPtr<T>&& ptr) {
+			if (_target) _target->unref();
+			_target = ptr._target;
 			ptr._target = nullptr;
+			return *this;
 		}
 
 		inline void AE_CALL operator=(T* target) {
@@ -134,11 +134,7 @@ namespace aurora {
 			return _target;
 		}
 
-		inline T* AE_CALL get() const {
-			return _target;
-		}
-
-		template<typename S>
+		template<typename S = T>
 		inline S* AE_CALL get() const {
 			return (S*)_target;
 		}

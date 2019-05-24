@@ -13,7 +13,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual bool AE_CALL upload(const ProgramSource& vert, const ProgramSource& frag) override;
 		virtual bool AE_CALL use() override;
 		virtual void AE_CALL draw(const VertexBufferFactory* vertexFactory, const ShaderParameterFactory* paramFactory,
-			const IIndexBuffer* indexBuffer, ui32 count = 0xFFFFFFFFui32, ui32 offset = 0) override;
+			const IIndexBuffer* indexBuffer, ui32 count = (std::numeric_limits<ui32>::max)(), ui32 offset = 0) override;
 
 	protected:
 		class MyConstantBufferLayout : public ConstantBufferLayout {

@@ -18,12 +18,6 @@ namespace aurora {
 		//};
 
 
-		enum class Endian : ui8 {
-			BIG,
-			LITTLE
-		};
-
-
 		ByteArray(const ByteArray&) = delete;
 		ByteArray& operator=(const ByteArray&) = delete;
 		ByteArray(ByteArray&& bytes);
@@ -32,8 +26,6 @@ namespace aurora {
 		ByteArray(i8* bytes, ui32 length, ui32 capacity, ExtMemMode extMode = ExtMemMode::EXT);
 		ByteArray& AE_CALL operator=(ByteArray&& value);
 		~ByteArray();
-
-		inline static const Endian SYS_ENDIAN = *(ui16*)"\0\xFF" < 256 ? Endian::BIG : Endian::LITTLE;
 
 		inline AE_CALL operator bool() const;
 
@@ -97,10 +89,10 @@ namespace aurora {
 		void AE_CALL writeInt(ui8 numBytes, i64 value);
 		inline void AE_CALL writeUInt(ui8 numBytes, ui64 value);
 
-		ui32 AE_CALL readBytes(i8* bytes, ui32 offset = 0, ui32 length = UINT_MAX);
-		ui32 AE_CALL readBytes(ByteArray& ba, ui32 offset = 0, ui32 length = UINT_MAX);
+		ui32 AE_CALL readBytes(i8* bytes, ui32 offset = 0, ui32 length = (std::numeric_limits<ui32>::max)());
+		ui32 AE_CALL readBytes(ByteArray& ba, ui32 offset = 0, ui32 length = (std::numeric_limits<ui32>::max)());
 		inline void AE_CALL writeBytes(const i8* bytes, ui32 offset, ui32 length);
-		ui32 AE_CALL writeBytes(const ByteArray& ba, ui32 offset = 0, ui32 length = UINT_MAX);
+		ui32 AE_CALL writeBytes(const ByteArray& ba, ui32 offset = 0, ui32 length = (std::numeric_limits<ui32>::max)());
 
 		ui32 AE_CALL readStringLength(ui32 begin, ui32 size, bool chechBOM = false) const;
 		inline ui32 AE_CALL readStringLength(ui32 size, bool chechBOM = false) const;

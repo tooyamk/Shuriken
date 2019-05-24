@@ -6,7 +6,7 @@
 namespace aurora::modules::inputs::win_xinput {
 	class AE_MODULE_DLL Input : public IInputModule {
 	public:
-		Input(Application* app);
+		Input(Ref* loader, Application* app);
 		virtual ~Input();
 
 		virtual events::IEventDispatcher<ModuleEvent>& AE_CALL getEventDispatcher() override;
@@ -14,6 +14,7 @@ namespace aurora::modules::inputs::win_xinput {
 		virtual IInputDevice* AE_CALL createDevice(const GUID& guid) override;
 
 	private:
+		RefPtr<Ref> _loader;
 		RefPtr<Application> _app;
 
 		std::vector<DeviceInfo> _devices;

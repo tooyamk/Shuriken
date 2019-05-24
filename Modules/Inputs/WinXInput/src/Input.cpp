@@ -6,7 +6,8 @@
 #include <algorithm>
 
 namespace aurora::modules::inputs::win_xinput {
-	Input::Input(Application* app) :
+	Input::Input(Ref* loader, Application* app) :
+		_loader(loader),
 		_app(app) {
 	}
 

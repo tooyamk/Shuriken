@@ -12,7 +12,7 @@ namespace aurora::modules::graphics::win_glew {
 		};
 
 
-		Graphics(Application* app, IProgramSourceTranslator* trans);
+		Graphics(Ref* loader, Application* app, IProgramSourceTranslator* trans);
 		virtual ~Graphics();
 
 		virtual const std::string& AE_CALL getVersion() const override;
@@ -75,6 +75,7 @@ namespace aurora::modules::graphics::win_glew {
 	private:
 		Usage _createBufferMask;
 
+		RefPtr<Ref> _loader;
 		RefPtr<Application> _app;
 		RefPtr<IProgramSourceTranslator> _trans;
 

@@ -8,7 +8,7 @@ namespace aurora::modules {
 	template<typename RetType>
 	class AE_TEMPLATE_DLL ModuleLoader : public Ref {
 	public:
-		using CreateModuleFn = RetType*(*)(const Args*);
+		using CreateModuleFn = RetType*(*)(Ref* loader, const Args*);
 
 		ModuleLoader() : _createFn(nullptr) {}
 		virtual ~ModuleLoader() {}
@@ -25,13 +25,13 @@ namespace aurora::modules {
 			return false;
 		}
 
-		void AE_CALL free() {
+		inline void AE_CALL free() {
 			_lib.free();
 		}
 
-		RetType* AE_CALL create(const Args* args) const {
+		RetType* AE_CALL create(const Args* args) {
 			if (_createFn && _lib.isLoaded()) {
-				return (RetType*)_createFn(args);
+				return (RetType*)_createFn(this, args);
 			} else {
 				return nullptr;
 			}

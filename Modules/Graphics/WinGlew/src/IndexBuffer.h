@@ -18,7 +18,7 @@ namespace aurora::modules::graphics::win_glew {
 		virtual void AE_CALL setFormat(IndexType type) override;
 		virtual void AE_CALL flush() override;
 
-		void AE_CALL draw(ui32 count = 0xFFFFFFFFui32, ui32 offset = 0);
+		void AE_CALL draw(ui32 count = (std::numeric_limits<ui32>::max)(), ui32 offset = 0);
 
 	protected:
 		GLenum _indexType;

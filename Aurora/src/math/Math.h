@@ -202,7 +202,7 @@ namespace aurora {
 		}
 
 		inline static bool AE_CALL isPOT(ui32 n);
-		inline static constexpr ui32 potLog2(ui32 pow);
+		inline static constexpr ui32 AE_CALL potLog2(ui32 pow);
 	};
 }
 

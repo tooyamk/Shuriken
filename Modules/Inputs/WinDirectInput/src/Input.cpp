@@ -6,7 +6,8 @@
 #include <algorithm>
 
 namespace aurora::modules::inputs::win_direct_input {
-	Input::Input(Application* app) :
+	Input::Input(Ref* loader, Application* app) :
+		_loader(loader),
 		_app(app),
 		_di(nullptr) {
 	}

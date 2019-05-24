@@ -294,7 +294,7 @@ namespace aurora::modules::graphics {
 		virtual bool AE_CALL upload(const ProgramSource& vert, const ProgramSource& frag) = 0;
 		virtual bool AE_CALL use() = 0;
 		virtual void AE_CALL draw(const VertexBufferFactory* vertexFactory, const ShaderParameterFactory* paramFactory,
-			const IIndexBuffer* indexBuffer, ui32 count = 0xFFFFFFFFui32, ui32 offset = 0) = 0;
+			const IIndexBuffer* indexBuffer, ui32 count = (std::numeric_limits<ui32>::max)(), ui32 offset = 0) = 0;
 	};
 
 

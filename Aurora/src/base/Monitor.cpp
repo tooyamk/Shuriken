@@ -18,7 +18,7 @@ namespace aurora {
 		DEVMODEW dm;
 
 		wchar_t* wadpName = nullptr;
-		String::Utf8ToUnicode(_adapterName.c_str(), 0xFFFFFFFFui32, wadpName);
+		String::Utf8ToUnicode(_adapterName.c_str(), (std::numeric_limits<ui32>::max)(), wadpName);
 
 		ui32 modeIdx = 0;
 

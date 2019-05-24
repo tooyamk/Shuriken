@@ -158,14 +158,9 @@ namespace aurora::modules::graphics::win_glew {
 							glGenBuffers(1, &bufID);
 							glBindBuffer(GL_PIXEL_UNPACK_BUFFER, bufID);
 							glBufferData(GL_PIXEL_UNPACK_BUFFER, this->size, nullptr, GL_STREAM_DRAW);
-							glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
-							
-							glBindTexture(glTexInfo.target, handle);
 							glTexImage2D(glTexInfo.target, 0, glTexInfo.internalFormat, size2[0], size2[1], 0, glTexInfo.format, glTexInfo.type, nullptr);
-							glBindTexture(glTexInfo.target, 0);
 
-							glBindTexture(glTexInfo.target, handle);
 							glBindBuffer(GL_PIXEL_UNPACK_BUFFER, bufID);
 							
 							void* ptr = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_READ_WRITE);

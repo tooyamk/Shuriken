@@ -10,6 +10,59 @@
 #endif
 
 namespace aurora::modules::inputs::win_direct_input {
+	const Gamepad::KeyMapping Gamepad::DIRECT{
+			0, 1, 2, 5, 3, 4,
+			{
+			{ 0, GamepadKeyCode::X },
+			{ 1, GamepadKeyCode::A },
+			{ 2, GamepadKeyCode::B },
+			{ 3, GamepadKeyCode::Y },
+			{ 4, GamepadKeyCode::LEFT_SHOULDER },
+			{ 5, GamepadKeyCode::RIGHT_SHOULDER },
+			{ 6, GamepadKeyCode::LEFT_TRIGGER },
+			{ 7, GamepadKeyCode::RIGHT_TRIGGER },
+			{ 8, GamepadKeyCode::SELECT },
+			{ 9, GamepadKeyCode::START },
+			{ 10, GamepadKeyCode::LEFT_THUMB },
+			{ 11, GamepadKeyCode::RIGHT_THUMB }
+			}
+	};
+
+	const Gamepad::KeyMapping Gamepad::XINPUT{
+			0, 1, 3, 4, 2, 2,
+			{
+			{ 0, GamepadKeyCode::A },
+			{ 1, GamepadKeyCode::B },
+			{ 2, GamepadKeyCode::X },
+			{ 3, GamepadKeyCode::Y },
+			{ 4, GamepadKeyCode::LEFT_SHOULDER },
+			{ 5, GamepadKeyCode::RIGHT_SHOULDER },
+			{ 6, GamepadKeyCode::SELECT },
+			{ 7, GamepadKeyCode::START },
+			{ 8, GamepadKeyCode::LEFT_THUMB },
+			{ 9, GamepadKeyCode::RIGHT_THUMB }
+			}
+	};
+
+	const Gamepad::KeyMapping Gamepad::DS4{
+			0, 1, 2, 5, 3, 4,
+			{
+			{ 0, GamepadKeyCode::X },
+			{ 1, GamepadKeyCode::A },
+			{ 2, GamepadKeyCode::B },
+			{ 3, GamepadKeyCode::Y },
+			{ 4, GamepadKeyCode::LEFT_SHOULDER },
+			{ 5, GamepadKeyCode::RIGHT_SHOULDER },
+			{ 6, GamepadKeyCode::LEFT_TRIGGER },
+			{ 7, GamepadKeyCode::RIGHT_TRIGGER },
+			{ 8, GamepadKeyCode::SELECT },
+			{ 9, GamepadKeyCode::START },
+			{ 10, GamepadKeyCode::LEFT_THUMB },
+			{ 11, GamepadKeyCode::RIGHT_THUMB },
+			{ 13, GamepadKeyCode::TOUCH_PAD }
+			}
+	};
+
 	Gamepad::Gamepad(Input& input, LPDIRECTINPUTDEVICE8 dev, const DeviceInfo& info) : DeviceBase(input, dev, info),
 		_keyMapping(nullptr) {
 		_dev->SetDataFormat(&c_dfDIJoystick2);

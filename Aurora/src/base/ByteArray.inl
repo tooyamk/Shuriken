@@ -16,13 +16,13 @@ namespace aurora {
 		return _data != nullptr;
 	}
 
-	inline ByteArray::Endian ByteArray::getEndian() const {
+	inline Endian ByteArray::getEndian() const {
 		return _endian;
 	}
 
-	inline void ByteArray::setEndian(ByteArray::Endian endian) {
+	inline void ByteArray::setEndian(Endian endian) {
 		_endian = endian;
-		_needReverse = _endian != SYS_ENDIAN;
+		_needReverse = _endian != NATIVE_ENDIAN;
 	}
 
 	inline const i8* ByteArray::getBytes() const {
@@ -175,14 +175,14 @@ namespace aurora {
 	}
 
 	inline std::string ByteArray::readString(bool chechBOM) {
-		auto len = readStringLength(UINT_MAX, chechBOM);
+		auto len = readStringLength((std::numeric_limits<ui32>::max)(), chechBOM);
 		auto begin = _position;
 		_position += len;
 		return std::move(std::string(_data + begin, len));
 	}
 
 	inline std::string_view ByteArray::readStringView(bool chechBOM) {
-		auto len = readStringLength(UINT_MAX, chechBOM);
+		auto len = readStringLength((std::numeric_limits<ui32>::max)(), chechBOM);
 		auto begin = _position;
 		_position += len;
 		return std::move(std::string_view(_data + begin, len));

@@ -25,16 +25,18 @@ namespace aurora::events {
 			_target(target) {
 		}
 
-		inline void* AE_CALL getTarget() const {
-			return _target;
+		template<typename T = void>
+		inline T* AE_CALL getTarget() const {
+			return (T*)_target;
 		}
 
 		inline const EvtType& AE_CALL getType() const {
 			return _type;
 		}
 
-		inline void* AE_CALL getData() const {
-			return _data;
+		template<typename T = void>
+		inline T* AE_CALL getData() const {
+			return (T*)_data;
 		}
 
 	protected:
@@ -65,12 +67,12 @@ namespace aurora::events {
 	class AE_TEMPLATE_DLL EventListener : public IEventListener<EvtType> {
 	public:
 		EventListener(Class* target, EvtMethod<EvtType, Class> method) :
-			_target(target),
+			_target(method ? target : nullptr),
 			_method(method) {
 		}
 
 		virtual void AE_CALL onEvent(Event<EvtType>& e) override {
-			if (_target && _method) (_target->*_method)(e);
+			if (_target) (_target->*_method)(e);
 		}
 	private:
 		Class* _target;

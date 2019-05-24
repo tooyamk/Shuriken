@@ -6,7 +6,7 @@
 namespace aurora::modules::graphics::win_d3d11 {
 	class AE_MODULE_DLL Graphics : public IGraphicsModule {
 	public:
-		Graphics(Application* app);
+		Graphics(Ref* loader, Application* app);
 		virtual ~Graphics();
 
 		virtual const std::string& AE_CALL getVersion() const override;
@@ -96,6 +96,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		static DXGI_FORMAT AE_CALL convertInternalFormat(TextureFormat fmt);
 
 	private:
+		RefPtr<Ref> _loader;
 		RefPtr<Application> _app;
 
 		DXGI_RATIONAL _refreshRate;

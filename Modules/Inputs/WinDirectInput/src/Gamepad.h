@@ -59,7 +59,7 @@ namespace aurora::modules::inputs::win_direct_input {
 			return f32(value) / 65535.f;
 		}
 		inline static f32 AE_CALL _translateDpad(DWORD value) {
-			return (value == 0xFFFFFFFFui32) ? -1.f : Math::rad(f32(value) * .01f);
+			return (value == (std::numeric_limits<ui32>::max)()) ? -1.f : Math::rad(f32(value) * .01f);
 		}
 		inline static f32 AE_CALL _translateButton(DWORD value) {
 			return value & 0x80 ? 1.f : 0.f;
@@ -67,57 +67,8 @@ namespace aurora::modules::inputs::win_direct_input {
 
 		static bool AE_CALL _isXInputDevice(const ::GUID& guid);
 
-		inline static const KeyMapping DIRECT{
-			0, 1, 2, 5, 3, 4,
-			{
-			{ 0, GamepadKeyCode::X },
-			{ 1, GamepadKeyCode::A },
-			{ 2, GamepadKeyCode::B },
-			{ 3, GamepadKeyCode::Y },
-			{ 4, GamepadKeyCode::LEFT_SHOULDER },
-			{ 5, GamepadKeyCode::RIGHT_SHOULDER },
-			{ 6, GamepadKeyCode::LEFT_TRIGGER },
-			{ 7, GamepadKeyCode::RIGHT_TRIGGER },
-			{ 8, GamepadKeyCode::SELECT },
-			{ 9, GamepadKeyCode::START },
-			{ 10, GamepadKeyCode::LEFT_THUMB },
-			{ 11, GamepadKeyCode::RIGHT_THUMB }
-			}
-		};
-
-		inline static const KeyMapping XINPUT{
-			0, 1, 3, 4, 2, 2,
-			{
-			{ 0, GamepadKeyCode::A },
-			{ 1, GamepadKeyCode::B },
-			{ 2, GamepadKeyCode::X },
-			{ 3, GamepadKeyCode::Y },
-			{ 4, GamepadKeyCode::LEFT_SHOULDER },
-			{ 5, GamepadKeyCode::RIGHT_SHOULDER },
-			{ 6, GamepadKeyCode::SELECT },
-			{ 7, GamepadKeyCode::START },
-			{ 8, GamepadKeyCode::LEFT_THUMB },
-			{ 9, GamepadKeyCode::RIGHT_THUMB }
-			}
-		};
-
-		inline static const KeyMapping DS4{
-			0, 1, 2, 5, 3, 4,
-			{
-			{ 0, GamepadKeyCode::X },
-			{ 1, GamepadKeyCode::A },
-			{ 2, GamepadKeyCode::B },
-			{ 3, GamepadKeyCode::Y },
-			{ 4, GamepadKeyCode::LEFT_SHOULDER },
-			{ 5, GamepadKeyCode::RIGHT_SHOULDER },
-			{ 6, GamepadKeyCode::LEFT_TRIGGER },
-			{ 7, GamepadKeyCode::RIGHT_TRIGGER },
-			{ 8, GamepadKeyCode::SELECT },
-			{ 9, GamepadKeyCode::START },
-			{ 10, GamepadKeyCode::LEFT_THUMB },
-			{ 11, GamepadKeyCode::RIGHT_THUMB },
-			{ 13, GamepadKeyCode::TOUCH_PAD }
-			}
-		};
+		static const KeyMapping DIRECT;
+		static const KeyMapping XINPUT;
+		static const KeyMapping DS4;
 	};
 }

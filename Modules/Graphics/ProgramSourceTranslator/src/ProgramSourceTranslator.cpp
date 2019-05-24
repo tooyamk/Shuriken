@@ -7,7 +7,8 @@
 #include "modules/graphics/IGraphicsModule.h"
 
 namespace aurora::modules::graphics::program_source_translator {
-	ProgramSourceTranslator::ProgramSourceTranslator(const i8* dxc) :
+	ProgramSourceTranslator::ProgramSourceTranslator(Ref* loader, const i8* dxc) :
+		_loader(loader),
 		_dxcLib(nullptr),
 		_dxcompiler(nullptr) {
 		if (_dxcDll.load(dxc)) {
@@ -36,7 +37,7 @@ namespace aurora::modules::graphics::program_source_translator {
 		}
 
 		if (source.language == ProgramLanguage::HLSL) {
-			std::wstring profile = String::Utf8ToUnicode(ProgramSource::toHLSLShaderModel(source.stage, source.version));
+			auto profile = String::Utf8ToUnicode(ProgramSource::toHLSLShaderModel(source.stage, source.version));
 
 			std::vector<DxcDefine> dxcDefines;
 

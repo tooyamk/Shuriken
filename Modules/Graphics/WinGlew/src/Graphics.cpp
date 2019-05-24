@@ -12,7 +12,8 @@
 #include "GL/wglew.h"
 
 namespace aurora::modules::graphics::win_glew {
-	Graphics::Graphics(Application* app, IProgramSourceTranslator* trans) :
+	Graphics::Graphics(Ref* loader, Application* app, IProgramSourceTranslator* trans) :
+		_loader(loader),
 		_createBufferMask(Usage::NONE),
 		_app(app),
 		_trans(trans),

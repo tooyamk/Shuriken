@@ -27,8 +27,8 @@ namespace aurora {
 		utf8Len = d;
 	}
 
-	i32 String::UnicodeToUtf8(const wchar_t * in, ui32 inLen, char* out, ui32 outLen) {
-		if (!in || !out) return -1;
+	std::string::size_type String::UnicodeToUtf8(const wchar_t * in, ui32 inLen, char* out, ui32 outLen) {
+		if (!in || !out) return std::string::npos;
 
 		ui32 unicodeLen, utf8Len;
 		calcUnicodeToUtf8Length(in, inLen, unicodeLen, utf8Len);
@@ -76,8 +76,8 @@ namespace aurora {
 		unicodeLen = d;
 	}
 
-	i32 String::Utf8ToUnicode(const i8* in, ui32 inLen, wchar_t* out, ui32 outLen) {
-		if (!in || !out) return -1;
+	std::string::size_type String::Utf8ToUnicode(const i8* in, ui32 inLen, wchar_t* out, ui32 outLen) {
+		if (!in || !out) return std::string::npos;
 
 		ui32 utf8Len, unicodeLen;
 		calcUtf8ToUnicodeLength(in, inLen, utf8Len, unicodeLen);
@@ -100,8 +100,8 @@ namespace aurora {
 		return std::move(s);
 	}
 
-	i32 String::Utf8ToUnicode(const i8* in, ui32 inLen, wchar_t*& out) {
-		if (!in) return -1;
+	std::string::size_type String::Utf8ToUnicode(const i8* in, ui32 inLen, wchar_t*& out) {
+		if (!in) return std::string::npos;
 
 		ui32 utf8Len, unicodeLen;
 		calcUtf8ToUnicodeLength(in, inLen, utf8Len, unicodeLen);
@@ -146,36 +146,29 @@ namespace aurora {
 			if (ui8 c = in[s]; (c & 0x80) == 0) {
 				out[d++] = in[s++];
 			} else if ((c & 0xE0) == 0xC0) {// 110x-xxxx 10xx-xxxx
-				wchar_t& wideChar = out[d++];
-				wideChar = (in[s + 0] & 0x3F) << 6;
-				wideChar |= (in[s + 1] & 0x3F);
-
+				out[d++] = ((c & 0x3F) << 6) | (in[s + 1] & 0x3F);
 				s += 2;
 			} else if ((c & 0xF0) == 0xE0) {// 1110-xxxx 10xx-xxxx 10xx-xxxx
-				wchar_t& wideChar = out[d++];
-
-				wideChar = (in[s + 0] & 0x1F) << 12;
-				wideChar |= (in[s + 1] & 0x3F) << 6;
-				wideChar |= (in[s + 2] & 0x3F);
-
+				out[d++] = ((c & 0x1F) << 12) | ((in[s + 1] & 0x3F) << 6) | (in[s + 2] & 0x3F);
 				s += 3;
 			} else if ((c & 0xF8) == 0xF0) {// 1111-0xxx 10xx-xxxx 10xx-xxxx 10xx-xxxx 
-				wchar_t& wideChar = out[d++];
-
+				out[d++] = ((in[s + 1] & 0x3F) << 12) | ((in[s + 2] & 0x3F) << 6) | (in[s + 3] & 0x3F);
+				/*
 				//wideChar = (in[s + 0] & 0x0F) << 18;
 				wideChar = (in[s + 1] & 0x3F) << 12;
 				wideChar |= (in[s + 2] & 0x3F) << 6;
 				wideChar |= (in[s + 3] & 0x3F);
-
+				*/
 				s += 4;
 			} else {// 1111-10xx 10xx-xxxx 10xx-xxxx 10xx-xxxx 10xx-xxxx 
-				wchar_t& wideChar = out[d++];
-
+				out[d++] = ((in[s + 2] & 0x3F) << 12) | ((in[s + 3] & 0x3F) << 6) | (in[s + 4] & 0x3F);
+				/*
 				//wideChar = (in[s + 0] & 0x07) << 24;
 				//wideChar = (in[s + 1] & 0x3F) << 18;
 				wideChar = (in[s + 2] & 0x3F) << 12;
 				wideChar |= (in[s + 3] & 0x3F) << 6;
 				wideChar |= (in[s + 4] & 0x3F);
+				*/
 				s += 5;
 			}
 		}

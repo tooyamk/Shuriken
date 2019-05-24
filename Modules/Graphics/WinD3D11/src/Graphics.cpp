@@ -11,7 +11,8 @@
 #include "modules/graphics/GraphicsAdapter.h"
 
 namespace aurora::modules::graphics::win_d3d11 {
-	Graphics::Graphics(Application* app) :
+	Graphics::Graphics(Ref* loader, Application* app) :
+		_loader(loader),
 		_app(app),
 		_refreshRate({0, 1}),
 		_featureLevel(D3D_FEATURE_LEVEL_9_1),
@@ -385,18 +386,18 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 			if (sizeChange) {
 				if (FAILED(_swapChain->ResizeBuffers(swapChainDesc.BufferCount, size[0], size[1], swapChainDesc.BufferDesc.Format, swapChainDesc.Flags))) {
-					println("swap chain ResizeBuffers error");
+					println("dx11 error : swap chain ResizeBuffers error");
 				}
 			}
 
 			ID3D11Texture2D* backBufferTexture = nullptr;
 			if (FAILED(_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&backBufferTexture))) {
-				println("swap chain GetBuffer error");
+				println("dx11 error : swap chain GetBuffer error");
 			}
 
 			if (FAILED(_device->CreateRenderTargetView(backBufferTexture, nullptr, (ID3D11RenderTargetView**)&_backBufferTarget))) {
 				if (backBufferTexture) backBufferTexture->Release();
-				println("swap chain CreateRenderTargetView error");
+				println("dx11 error : swap chain CreateRenderTargetView error");
 			}
 			backBufferTexture->Release();
 

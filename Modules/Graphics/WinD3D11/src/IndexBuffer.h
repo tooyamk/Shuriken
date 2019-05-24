@@ -30,7 +30,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			return _numElements;
 		}
 
-		void AE_CALL draw(ui32 count = 0xFFFFFFFFui32, ui32 offset = 0);
+		void AE_CALL draw(ui32 count = (std::numeric_limits<ui32>::max)(), ui32 offset = 0);
 
 	protected:
 		DXGI_FORMAT _indexType;
