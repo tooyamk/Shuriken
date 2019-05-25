@@ -49,11 +49,6 @@ namespace aurora::modules::graphics::win_glew {
 			} else {
 				numBuffers = (((ui32)this->resUsage >> (Math::potLog2((ui32)Usage::PERSISTENT_MAP) + 1)) & 0b11) + 1;
 
-				GLbitfield flags =
-					GL_MAP_WRITE_BIT |
-					GL_MAP_PERSISTENT_BIT | //在被映射状态下不同步
-					GL_MAP_COHERENT_BIT;  //数据对GPU立即可见
-
 				GLuint* handles = nullptr;
 				void** mapDatas = nullptr;
 				GLsync* syncs = nullptr;
