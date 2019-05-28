@@ -35,8 +35,9 @@ namespace aurora::modules::graphics {
 		PERSISTENT_MAP = 1 << 3,//create
 
 		MAP_SWAP = 1 << 4,//map
+		MAP_FORCE_SWAP = (1 << 5) | MAP_SWAP,//map
 
-		DISCARD = 1 << 5,//map return
+		DISCARD = 1 << 6,//map return
 
 		MAP_READ_WRITE = MAP_READ | MAP_WRITE,
 		MAP_WRITE_UPDATE = MAP_WRITE | UPDATE
@@ -95,6 +96,7 @@ namespace aurora::modules::graphics {
 
 
 	enum class IndexType : ui8 {
+		UNKNOWN,
 		UI8,
 		UI16,
 		UI32
@@ -106,6 +108,7 @@ namespace aurora::modules::graphics {
 		IIndexBuffer(IGraphicsModule& graphics) : IBuffer(graphics) {}
 		virtual ~IIndexBuffer() {}
 
+		virtual IndexType AE_CALL getFormat() const = 0;
 		virtual void AE_CALL setFormat(IndexType type) = 0;
 	};
 

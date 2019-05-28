@@ -63,36 +63,255 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	void VertexBuffer::setFormat(VertexSize size, VertexType type) {
-		_vertSize = size;
-		_vertType = type;
+		if (_vertSize != size || _vertType != type) {
+			_vertSize = size;
+			_vertType = type;
 
-		switch (type) {
-		case VertexType::I8:
-		{
-			switch (size) {
-			case VertexSize::ONE:
+			switch (type) {
+			case VertexType::I8:
 			{
-				_internalFormat = DXGI_FORMAT_R8_SINT;
-				_stride = 1;
-				return;
+				switch (size) {
+				case VertexSize::ONE:
+				{
+					_internalFormat = DXGI_FORMAT_R8_SINT;
+					_stride = 1;
+					return;
+				}
+				case VertexSize::TWO:
+				{
+					_internalFormat = DXGI_FORMAT_R8G8_SINT;
+					_stride = 2;
+					return;
+				}
+				case VertexSize::THREE:
+				{
+					_internalFormat = DXGI_FORMAT_UNKNOWN;
+					_stride = 0;
+					return;
+				}
+				case VertexSize::FOUR:
+				{
+					_internalFormat = DXGI_FORMAT_R8G8B8A8_SINT;
+					_stride = 4;
+					return;
+				}
+				default:
+				{
+					_internalFormat = DXGI_FORMAT_UNKNOWN;
+					_stride = 0;
+					return;
+				}
+				}
 			}
-			case VertexSize::TWO:
+			case VertexType::UI8:
 			{
-				_internalFormat = DXGI_FORMAT_R8G8_SINT;
-				_stride = 2;
-				return;
+				switch (size) {
+				case VertexSize::ONE:
+				{
+					_internalFormat = DXGI_FORMAT_R8_UINT;
+					_stride = 1;
+					return;
+				}
+				case VertexSize::TWO:
+				{
+					_internalFormat = DXGI_FORMAT_R8G8_UINT;
+					_stride = 2;
+					return;
+				}
+				case VertexSize::THREE:
+				{
+					_internalFormat = DXGI_FORMAT_UNKNOWN;
+					_stride = 0;
+					return;
+				}
+				case VertexSize::FOUR:
+				{
+					_internalFormat = DXGI_FORMAT_R8G8B8A8_UINT;
+					_stride = 4;
+					return;
+				}
+				default:
+				{
+					_internalFormat = DXGI_FORMAT_UNKNOWN;
+					_stride = 0;
+					return;
+				}
+				}
 			}
-			case VertexSize::THREE:
+			case VertexType::I16:
 			{
-				_internalFormat = DXGI_FORMAT_UNKNOWN;
-				_stride = 0;
-				return;
+				switch (size) {
+				case VertexSize::ONE:
+				{
+					_internalFormat = DXGI_FORMAT_R16_SINT;
+					_stride = 2;
+					return;
+				}
+				case VertexSize::TWO:
+				{
+					_internalFormat = DXGI_FORMAT_R16G16_SINT;
+					_stride = 4;
+					return;
+				}
+				case VertexSize::THREE:
+				{
+					_internalFormat = DXGI_FORMAT_UNKNOWN;
+					_stride = 0;
+					return;
+				}
+				case VertexSize::FOUR:
+				{
+					_internalFormat = DXGI_FORMAT_R16G16B16A16_SINT;
+					_stride = 8;
+					return;
+				}
+				default:
+				{
+					_internalFormat = DXGI_FORMAT_UNKNOWN;
+					_stride = 0;
+					return;
+				}
+				}
 			}
-			case VertexSize::FOUR:
+			case VertexType::UI16:
 			{
-				_internalFormat = DXGI_FORMAT_R8G8B8A8_SINT;
-				_stride = 4;
-				return;
+				switch (size) {
+				case VertexSize::ONE:
+				{
+					_internalFormat = DXGI_FORMAT_R16_UINT;
+					_stride = 2;
+					return;
+				}
+				case VertexSize::TWO:
+				{
+					_internalFormat = DXGI_FORMAT_R16G16_UINT;
+					_stride = 4;
+					return;
+				}
+				case VertexSize::THREE:
+				{
+					_internalFormat = DXGI_FORMAT_UNKNOWN;
+					_stride = 0;
+					return;
+				}
+				case VertexSize::FOUR:
+				{
+					_internalFormat = DXGI_FORMAT_R16G16B16A16_UINT;
+					_stride = 8;
+					return;
+				}
+				default:
+				{
+					_internalFormat = DXGI_FORMAT_UNKNOWN;
+					_stride = 0;
+					return;
+				}
+				}
+			}
+			case VertexType::I32:
+			{
+				switch (size) {
+				case VertexSize::ONE:
+				{
+					_internalFormat = DXGI_FORMAT_R32_SINT;
+					_stride = 4;
+					return;
+				}
+				case VertexSize::TWO:
+				{
+					_internalFormat = DXGI_FORMAT_R32G32_SINT;
+					_stride = 8;
+					return;
+				}
+				case VertexSize::THREE:
+				{
+					_internalFormat = DXGI_FORMAT_R32G32B32_SINT;
+					_stride = 12;
+					return;
+				}
+				case VertexSize::FOUR:
+				{
+					_internalFormat = DXGI_FORMAT_R32G32B32A32_SINT;
+					_stride = 16;
+					return;
+				}
+				default:
+				{
+					_internalFormat = DXGI_FORMAT_UNKNOWN;
+					_stride = 0;
+					return;
+				}
+				}
+			}
+			case VertexType::UI32:
+			{
+				switch (size) {
+				case VertexSize::ONE:
+				{
+					_internalFormat = DXGI_FORMAT_R32_UINT;
+					_stride = 4;
+					return;
+				}
+				case VertexSize::TWO:
+				{
+					_internalFormat = DXGI_FORMAT_R32G32_UINT;
+					_stride = 8;
+					return;
+				}
+				case VertexSize::THREE:
+				{
+					_internalFormat = DXGI_FORMAT_R32G32B32_UINT;
+					_stride = 12;
+					return;
+				}
+				case VertexSize::FOUR:
+				{
+					_internalFormat = DXGI_FORMAT_R32G32B32A32_UINT;
+					_stride = 16;
+					return;
+				}
+				default:
+				{
+					_internalFormat = DXGI_FORMAT_UNKNOWN;
+					_stride = 0;
+					return;
+				}
+				}
+			}
+			case VertexType::F32:
+			{
+				switch (size) {
+				case VertexSize::ONE:
+				{
+					_internalFormat = DXGI_FORMAT_R32_FLOAT;
+					_stride = 4;
+					return;
+				}
+				case VertexSize::TWO:
+				{
+					_internalFormat = DXGI_FORMAT_R32G32_FLOAT;
+					_stride = 8;
+					return;
+				}
+				case VertexSize::THREE:
+				{
+					_internalFormat = DXGI_FORMAT_R32G32B32_FLOAT;
+					_stride = 12;
+					return;
+				}
+				case VertexSize::FOUR:
+				{
+					_internalFormat = DXGI_FORMAT_R32G32B32A32_FLOAT;
+					_stride = 16;
+					return;
+				}
+				default:
+				{
+					_internalFormat = DXGI_FORMAT_UNKNOWN;
+					_stride = 0;
+					return;
+				}
+				}
 			}
 			default:
 			{
@@ -101,223 +320,6 @@ namespace aurora::modules::graphics::win_d3d11 {
 				return;
 			}
 			}
-		}
-		case VertexType::UI8:
-		{
-			switch (size) {
-			case VertexSize::ONE:
-			{
-				_internalFormat = DXGI_FORMAT_R8_UINT;
-				_stride = 1;
-				return;
-			}
-			case VertexSize::TWO:
-			{
-				_internalFormat = DXGI_FORMAT_R8G8_UINT;
-				_stride = 2;
-				return;
-			}
-			case VertexSize::THREE:
-			{
-				_internalFormat = DXGI_FORMAT_UNKNOWN;
-				_stride = 0;
-				return;
-			}
-			case VertexSize::FOUR:
-			{
-				_internalFormat = DXGI_FORMAT_R8G8B8A8_UINT;
-				_stride = 4;
-				return;
-			}
-			default:
-			{
-				_internalFormat = DXGI_FORMAT_UNKNOWN;
-				_stride = 0;
-				return;
-			}
-			}
-		}
-		case VertexType::I16:
-		{
-			switch (size) {
-			case VertexSize::ONE:
-			{
-				_internalFormat = DXGI_FORMAT_R16_SINT;
-				_stride = 2;
-				return;
-			}
-			case VertexSize::TWO:
-			{
-				_internalFormat = DXGI_FORMAT_R16G16_SINT;
-				_stride = 4;
-				return;
-			}
-			case VertexSize::THREE:
-			{
-				_internalFormat = DXGI_FORMAT_UNKNOWN;
-				_stride = 0;
-				return;
-			}
-			case VertexSize::FOUR:
-			{
-				_internalFormat = DXGI_FORMAT_R16G16B16A16_SINT;
-				_stride = 8;
-				return;
-			}
-			default:
-			{
-				_internalFormat = DXGI_FORMAT_UNKNOWN;
-				_stride = 0;
-				return;
-			}
-			}
-		}
-		case VertexType::UI16:
-		{
-			switch (size) {
-			case VertexSize::ONE:
-			{
-				_internalFormat = DXGI_FORMAT_R16_UINT;
-				_stride = 2;
-				return;
-			}
-			case VertexSize::TWO:
-			{
-				_internalFormat = DXGI_FORMAT_R16G16_UINT;
-				_stride = 4;
-				return;
-			}
-			case VertexSize::THREE:
-			{
-				_internalFormat = DXGI_FORMAT_UNKNOWN;
-				_stride = 0;
-				return;
-			}
-			case VertexSize::FOUR:
-			{
-				_internalFormat = DXGI_FORMAT_R16G16B16A16_UINT;
-				_stride = 8;
-				return;
-			}
-			default:
-			{
-				_internalFormat = DXGI_FORMAT_UNKNOWN;
-				_stride = 0;
-				return;
-			}
-			}
-		}
-		case VertexType::I32:
-		{
-			switch (size) {
-			case VertexSize::ONE:
-			{
-				_internalFormat = DXGI_FORMAT_R32_SINT;
-				_stride = 4;
-				return;
-			}
-			case VertexSize::TWO:
-			{
-				_internalFormat = DXGI_FORMAT_R32G32_SINT;
-				_stride = 8;
-				return;
-			}
-			case VertexSize::THREE:
-			{
-				_internalFormat = DXGI_FORMAT_R32G32B32_SINT;
-				_stride = 12;
-				return;
-			}
-			case VertexSize::FOUR:
-			{
-				_internalFormat = DXGI_FORMAT_R32G32B32A32_SINT;
-				_stride = 16;
-				return;
-			}
-			default:
-			{
-				_internalFormat = DXGI_FORMAT_UNKNOWN;
-				_stride = 0;
-				return;
-			}
-			}
-		}
-		case VertexType::UI32:
-		{
-			switch (size) {
-			case VertexSize::ONE:
-			{
-				_internalFormat = DXGI_FORMAT_R32_UINT;
-				_stride = 4;
-				return;
-			}
-			case VertexSize::TWO:
-			{
-				_internalFormat = DXGI_FORMAT_R32G32_UINT;
-				_stride = 8;
-				return;
-			}
-			case VertexSize::THREE:
-			{
-				_internalFormat = DXGI_FORMAT_R32G32B32_UINT;
-				_stride = 12;
-				return;
-			}
-			case VertexSize::FOUR:
-			{
-				_internalFormat = DXGI_FORMAT_R32G32B32A32_UINT;
-				_stride = 16;
-				return;
-			}
-			default:
-			{
-				_internalFormat = DXGI_FORMAT_UNKNOWN;
-				_stride = 0;
-				return;
-			}
-			}
-		}
-		case VertexType::F32:
-		{
-			switch (size) {
-			case VertexSize::ONE:
-			{
-				_internalFormat = DXGI_FORMAT_R32_FLOAT;
-				_stride = 4;
-				return;
-			}
-			case VertexSize::TWO:
-			{
-				_internalFormat = DXGI_FORMAT_R32G32_FLOAT;
-				_stride = 8;
-				return;
-			}
-			case VertexSize::THREE:
-			{
-				_internalFormat = DXGI_FORMAT_R32G32B32_FLOAT;
-				_stride = 12;
-				return;
-			}
-			case VertexSize::FOUR:
-			{
-				_internalFormat = DXGI_FORMAT_R32G32B32A32_FLOAT;
-				_stride = 16;
-				return;
-			}
-			default:
-			{
-				_internalFormat = DXGI_FORMAT_UNKNOWN;
-				_stride = 0;
-				return;
-			}
-			}
-		}
-		default:
-		{
-			_internalFormat = DXGI_FORMAT_UNKNOWN;
-			_stride = 0;
-			return;
-		}
 		}
 	}
 }

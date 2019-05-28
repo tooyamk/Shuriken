@@ -6,6 +6,12 @@ namespace aurora::modules::graphics {
 	template<typename T>
 	class AE_TEMPLATE_DLL MultipleBuffer : public IObject {
 	public:
+		struct Node {
+			RefPtr<T> target;
+			Node* next;
+		};
+
+
 		MultipleBuffer(IGraphicsModule& graphics, ui8 max) : IObject(graphics),
 			_count(0),
 			_max(max ? max : 1),
@@ -51,9 +57,11 @@ namespace aurora::modules::graphics {
 		Usage AE_CALL map(Usage expectMapUsage) {
 			if (_cur && expectMapUsage != Usage::NONE) {
 				if (auto buf = _cur->target.get(); _max > 1 && (expectMapUsage & Usage::MAP_SWAP) == Usage::MAP_SWAP) {
-					if (buf->isSyncing()) {
+					if (auto forceSwap = (expectMapUsage & Usage::MAP_FORCE_SWAP) == Usage::MAP_FORCE_SWAP; forceSwap || buf->isSyncing()) {
 						auto needCreate = true;
-						if (_count > 1) {
+						if (forceSwap) {
+							if (_count >= _max) needCreate = false;
+						} else if (_count > 1) {
 							if (_cur->next->target.get()->isSyncing()) {
 								if (_count >= _max) needCreate = false;
 							} else {
@@ -62,17 +70,24 @@ namespace aurora::modules::graphics {
 						}
 
 						if (needCreate) {
-							if (auto buf = _createBuffer(); buf) {
+							if (auto newBuf = _createBuffer(); newBuf) {
 								auto node = new Node();
-								node->target = buf;
+								node->target = newBuf;
 								node->next = _cur->next;
 								_cur->next = node;
 								_cur = node;
 								++_count;
 
-								_cur->target.get()->create(buf->getSize(), buf->getUsage());
+								newBuf->create(buf->getSize(), buf->getUsage());
 
-								auto usage = _cur->target.get()->map(expectMapUsage);
+								if constexpr (std::is_base_of_v<IVertexBuffer, T>) {
+									VertexSize size;
+									VertexType type;
+									buf->getFormat(&size, &type);
+									newBuf->setFormat(size, type);
+								}
+
+								auto usage = newBuf->map(expectMapUsage);
 								if (usage != Usage::NONE) usage |= Usage::DISCARD;
 								return usage;
 							} else {
@@ -94,7 +109,7 @@ namespace aurora::modules::graphics {
 			return Usage::NONE;
 		}
 
-		void AE_CALL unmap() {
+		inline void AE_CALL unmap() {
 			if (_cur) _cur->target.get()->unmap();
 		}
 
@@ -114,43 +129,34 @@ namespace aurora::modules::graphics {
 			return _cur ? _cur->target.get()->isSyncing() : false;
 		}
 
-		inline void AE_CALL getFormat(VertexSize* size, VertexType* type) const {
-			if constexpr (std::is_base_of_v<IVertexBuffer, T>) {
-				if (_cur) {
-					_cur->target.get()->getFormat(size, type);
-				} else {
-					if (size) *size = VertexSize::UNKNOWN;
-					if (type) *type = VertexType::UNKNOWN;
-				}
-			}
+		inline Node* getBegin() const {
+			return _head;
 		}
 
-		inline void AE_CALL setFormat(VertexSize size, VertexType type) {
-			if constexpr (std::is_base_of_v<IVertexBuffer, T>) {
-				if (_cur) _cur->target.get()->setFormat(size, type);
-			}
+		inline Node* getCurrent() const {
+			return _cur;
+		}
+
+		inline ui8 getCount() const {
+			return _count;
 		}
 
 	private:
-		struct Node {
-			RefPtr<T> target;
-			Node* next;
-		};
-
-
 		ui8 _count;
 		ui8 _max;
+
 		Node* _head;
 		Node* _cur;
 
 		void AE_CALL _release() {
 			if (_cur) {
 				auto node = _head;
+				auto n = _count;
 				do {
 					auto next = node->next;
 					delete node;
 					node = next;
-				} while (node);
+				} while (--n > 0);
 
 				_head = nullptr;
 				_cur = nullptr;
@@ -190,6 +196,57 @@ namespace aurora::modules::graphics {
 		virtual bool AE_CALL isSyncing() const override;
 
 	private:
+		VertexSize _vertSize;
+		VertexType _vertType;
+
 		MultipleBuffer<IVertexBuffer> _base;
+	};
+
+
+	class AE_DLL MultipleIndexBuffer : public IIndexBuffer {
+	public:
+		MultipleIndexBuffer(IGraphicsModule& graphics, ui8 max);
+		virtual ~MultipleIndexBuffer();
+
+		virtual const void* AE_CALL getNativeBuffer() const override;
+		virtual bool AE_CALL create(ui32 size, Usage bufferUsage, const void* data = nullptr, ui32 dataSize = 0) override;
+		virtual ui32 AE_CALL getSize() const override;
+		virtual Usage AE_CALL getUsage() const override;
+		virtual Usage AE_CALL map(Usage expectMapUsage) override;
+		virtual void AE_CALL unmap() override;
+		virtual ui32 AE_CALL read(ui32 offset, void* dst, ui32 dstLen) override;
+		virtual ui32 AE_CALL write(ui32 offset, const void* data, ui32 length) override;
+		virtual ui32 AE_CALL update(ui32 offset, const void* data, ui32 length) override;
+		virtual IndexType AE_CALL getFormat() const override;
+		virtual void AE_CALL setFormat(IndexType type) override;
+		virtual void AE_CALL flush() override;
+		virtual bool AE_CALL isSyncing() const override;
+
+	private:
+		IndexType _idxType;
+
+		MultipleBuffer<IIndexBuffer> _base;
+	};
+
+
+	class AE_DLL MultipleConstantBuffer : public IConstantBuffer {
+	public:
+		MultipleConstantBuffer(IGraphicsModule& graphics, ui8 max);
+		virtual ~MultipleConstantBuffer();
+
+		virtual const void* AE_CALL getNativeBuffer() const override;
+		virtual bool AE_CALL create(ui32 size, Usage bufferUsage, const void* data = nullptr, ui32 dataSize = 0) override;
+		virtual ui32 AE_CALL getSize() const override;
+		virtual Usage AE_CALL getUsage() const override;
+		virtual Usage AE_CALL map(Usage expectMapUsage) override;
+		virtual void AE_CALL unmap() override;
+		virtual ui32 AE_CALL read(ui32 offset, void* dst, ui32 dstLen) override;
+		virtual ui32 AE_CALL write(ui32 offset, const void* data, ui32 length) override;
+		virtual ui32 AE_CALL update(ui32 offset, const void* data, ui32 length) override;
+		virtual void AE_CALL flush() override;
+		virtual bool AE_CALL isSyncing() const override;
+
+	private:
+		MultipleBuffer<IConstantBuffer> _base;
 	};
 }

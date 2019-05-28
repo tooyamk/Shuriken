@@ -3,7 +3,8 @@
 
 namespace aurora::modules::graphics::win_glew {
 	IndexBuffer::IndexBuffer(Graphics& graphics) : IIndexBuffer(graphics),
-		_indexType(0),
+		_idxType(IndexType::UNKNOWN),
+		_internalType(0),
 		_numElements(0),
 		_baseBuffer(GL_ELEMENT_ARRAY_BUFFER) {
 	}
@@ -57,23 +58,31 @@ namespace aurora::modules::graphics::win_glew {
 		return _baseBuffer.isSyncing();
 	}
 
-	void IndexBuffer::setFormat(IndexType type) {
-		switch (type) {
-		case IndexType::UI8:
-			_indexType = GL_UNSIGNED_BYTE;
-			break;
-		case IndexType::UI16:
-			_indexType = GL_UNSIGNED_SHORT;
-			break;
-		case IndexType::UI32:
-			_indexType = GL_UNSIGNED_INT;
-			break;
-		default:
-			_indexType = 0;
-			break;
-		}
+	IndexType IndexBuffer::getFormat() const {
+		return _idxType;
+	}
 
-		_calcNumElements();
+	void IndexBuffer::setFormat(IndexType type) {
+		if (_idxType != type) {
+			_idxType = type;
+
+			switch (type) {
+			case IndexType::UI8:
+				_internalType = GL_UNSIGNED_BYTE;
+				break;
+			case IndexType::UI16:
+				_internalType = GL_UNSIGNED_SHORT;
+				break;
+			case IndexType::UI32:
+				_internalType = GL_UNSIGNED_INT;
+				break;
+			default:
+				_internalType = 0;
+				break;
+			}
+
+			_calcNumElements();
+		}
 	}
 
 	void IndexBuffer::draw(ui32 count, ui32 offset) {
@@ -83,13 +92,13 @@ namespace aurora::modules::graphics::win_glew {
 			if (count > last) count = last;
 
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _baseBuffer.handle);
-			glDrawRangeElements(GL_TRIANGLES, offset, _numElements, count, _indexType, nullptr);
+			glDrawRangeElements(GL_TRIANGLES, offset, _numElements, count, _internalType, nullptr);
 		}
 	}
 
 	void IndexBuffer::_calcNumElements() {
-		if (_baseBuffer.size && _indexType) {
-			switch (_indexType) {
+		if (_baseBuffer.size && _internalType) {
+			switch (_internalType) {
 			case GL_UNSIGNED_BYTE:
 				_numElements = _baseBuffer.size;
 				break;

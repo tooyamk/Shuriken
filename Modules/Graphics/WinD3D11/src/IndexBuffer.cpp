@@ -3,7 +3,8 @@
 
 namespace aurora::modules::graphics::win_d3d11 {
 	IndexBuffer::IndexBuffer(Graphics& graphics) : IIndexBuffer(graphics),
-		_indexType(DXGI_FORMAT_UNKNOWN),
+		_idxType(IndexType::UNKNOWN),
+		_internalFormat(DXGI_FORMAT_UNKNOWN),
 		_numElements(0),
 		_baseBuffer(D3D11_BIND_INDEX_BUFFER) {
 	}
@@ -55,32 +56,40 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return false;
 	}
 
+	IndexType IndexBuffer::getFormat() const {
+		return _idxType;
+	}
+
 	void IndexBuffer::setFormat(IndexType type) {
-		switch (type) {
-		case IndexType::UI8:
-		{
-			println("IndexBuffer.setFormat error : not supprot ui8 type");
-			_indexType = DXGI_FORMAT_UNKNOWN;
+		if (_idxType != type) {
+			_idxType = type;
 
-			break;
-		}
-		case IndexType::UI16:
-			_indexType = DXGI_FORMAT_R16_UINT;
-			break;
-		case IndexType::UI32:
-			_indexType = DXGI_FORMAT_R32_UINT;
-			break;
-		default:
-			_indexType = DXGI_FORMAT_UNKNOWN;
-			break;
-		}
+			switch (type) {
+			case IndexType::UI8:
+			{
+				println("IndexBuffer.setFormat error : not supprot ui8 type");
+				_internalFormat = DXGI_FORMAT_UNKNOWN;
 
-		_calcNumElements();
+				break;
+			}
+			case IndexType::UI16:
+				_internalFormat = DXGI_FORMAT_R16_UINT;
+				break;
+			case IndexType::UI32:
+				_internalFormat = DXGI_FORMAT_R32_UINT;
+				break;
+			default:
+				_internalFormat = DXGI_FORMAT_UNKNOWN;
+				break;
+			}
+
+			_calcNumElements();
+		}
 	}
 
 	void IndexBuffer::_calcNumElements() {
-		if (_baseBuffer.size && _indexType != DXGI_FORMAT_UNKNOWN) {
-			switch (_indexType) {
+		if (_baseBuffer.size && _internalFormat != DXGI_FORMAT_UNKNOWN) {
+			switch (_internalFormat) {
 			case DXGI_FORMAT_R16_UINT:
 				_numElements = _baseBuffer.size >> 1;
 				break;
