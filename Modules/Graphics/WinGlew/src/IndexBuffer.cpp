@@ -11,10 +11,18 @@ namespace aurora::modules::graphics::win_glew {
 	IndexBuffer::~IndexBuffer() {
 	}
 
+	const void* IndexBuffer::getNativeBuffer() const {
+		return this;
+	}
+
 	bool IndexBuffer::create(ui32 size, Usage bufferUsage, const void* data, ui32 dataSize) {
 		auto rst = _baseBuffer.create(*_graphics.get<Graphics>(), size, bufferUsage, data);
 		_calcNumElements();
 		return rst;
+	}
+
+	ui32 IndexBuffer::getSize() const {
+		return _baseBuffer.size;
 	}
 
 	Usage IndexBuffer::getUsage() const {
@@ -45,6 +53,10 @@ namespace aurora::modules::graphics::win_glew {
 		_baseBuffer.flush();
 	}
 
+	bool IndexBuffer::isSyncing() const {
+		return _baseBuffer.isSyncing();
+	}
+
 	void IndexBuffer::setFormat(IndexType type) {
 		switch (type) {
 		case IndexType::UI8:
@@ -70,7 +82,7 @@ namespace aurora::modules::graphics::win_glew {
 			if (count > _numElements) count = _numElements;
 			if (count > last) count = last;
 
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _baseBuffer.curHandle);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _baseBuffer.handle);
 			glDrawRangeElements(GL_TRIANGLES, offset, _numElements, count, _indexType, nullptr);
 		}
 	}

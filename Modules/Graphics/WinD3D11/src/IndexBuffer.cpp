@@ -12,8 +12,16 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_baseBuffer.releaseBuffer(*_graphics.get<Graphics>());
 	}
 
+	const void* IndexBuffer::getNativeBuffer() const {
+		return this;
+	}
+
 	bool IndexBuffer::create(ui32 size, Usage bufferUsage, const void* data, ui32 dataSize) {
 		return _baseBuffer.create(*_graphics.get<Graphics>(), size, bufferUsage, data, dataSize);
+	}
+
+	ui32 IndexBuffer::getSize() const {
+		return _baseBuffer.size;
 	}
 
 	Usage IndexBuffer::getUsage() const {
@@ -41,6 +49,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	void IndexBuffer::flush() {
+	}
+
+	bool IndexBuffer::isSyncing() const {
+		return false;
 	}
 
 	void IndexBuffer::setFormat(IndexType type) {

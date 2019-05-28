@@ -5,13 +5,13 @@
 namespace aurora::modules::graphics::win_glew {
 	BaseBuffer::BaseBuffer(GLenum bufferType) :
 		dirty(false),
-		numBuffers(0),
 		resUsage(Usage::NONE),
 		mapUsage(Usage::NONE),
 		bufferType(bufferType),
 		size(0),
-		curHandle(0) {
-		memset(&bufferData, 0, sizeof(bufferData));
+		handle(0),
+		mapData(nullptr),
+		sync(nullptr) {
 	}
 
 	BaseBuffer::~BaseBuffer() {
@@ -24,13 +24,10 @@ namespace aurora::modules::graphics::win_glew {
 		this->resUsage = resUsage & graphics.getCreateBufferMask();
 		this->size = size;
 
+		glGenBuffers(1, &handle);
+		glBindBuffer(bufferType, handle);
+
 		if ((this->resUsage & Usage::MAP_READ_WRITE) == Usage::NONE) {
-			numBuffers = 1;
-
-			glGenBuffers(1, &bufferData.handle);
-			curHandle = bufferData.handle;
-			glBindBuffer(bufferType, curHandle);
-
 			if (data) {
 				glBufferData(bufferType, size, data, GL_STATIC_DRAW);
 			} else {
@@ -39,44 +36,19 @@ namespace aurora::modules::graphics::win_glew {
 			}
 		} else {
 			if ((this->resUsage & Usage::PERSISTENT_MAP) == Usage::NONE) {
-				numBuffers = 1;
-
-				glGenBuffers(1, &bufferData.handle);
-				curHandle = bufferData.handle;
-				glBindBuffer(bufferType, curHandle);
-
 				glBufferData(bufferType, size, data, GL_DYNAMIC_DRAW);
 			} else {
-				numBuffers = (((ui32)this->resUsage >> (Math::potLog2((ui32)Usage::PERSISTENT_MAP) + 1)) & 0b11) + 1;
+				const GLbitfield flags =
+					GL_MAP_WRITE_BIT |
+					GL_MAP_PERSISTENT_BIT | //在被映射状态下不同步
+					GL_MAP_COHERENT_BIT;    //数据对GPU立即可见
 
-				GLuint* handles = nullptr;
-				void** mapDatas = nullptr;
-				GLsync* syncs = nullptr;
-				if (numBuffers == 1) {
-					handles = &bufferData.handle;
-					mapDatas = &bufferData.mapData;
-					syncs = &bufferData.sync;
-				} else {
-					handles = new GLuint[numBuffers];
-					mapDatas = new void*[numBuffers];
-					syncs = new GLsync[numBuffers];
-					bufferData.handles = handles;
-					bufferData.mapDatas = mapDatas;
-					bufferData.syncs = syncs;
-				}
-
-				glGenBuffers(numBuffers, handles);
-				curHandle = handles[0];
-
-				_createPersistentMapBuffer(handles[0], mapDatas[0], data);
-				syncs[0] = nullptr;
-
-				for (ui32 i = 1; i < numBuffers; ++i) {
-					bufferData.mapDatas[i] = nullptr;
-					bufferData.syncs[i] = nullptr;
-				}
+				glBufferStorage(bufferType, size, data, flags);
+				mapData = glMapBufferRange(bufferType, 0, size, flags);
 			}
 		}
+
+		glBindBuffer(bufferType, 0);
 
 		return true;
 	}
@@ -84,7 +56,7 @@ namespace aurora::modules::graphics::win_glew {
 	Usage BaseBuffer::map(Usage expectMapUsage) {
 		Usage ret = Usage::NONE;
 
-		if (numBuffers) {
+		if (handle) {
 			auto usage = expectMapUsage & resUsage & Usage::MAP_READ_WRITE;
 
 			if (usage == Usage::NONE) {
@@ -97,16 +69,6 @@ namespace aurora::modules::graphics::win_glew {
 
 					mapUsage = usage;
 					if ((this->resUsage & Usage::PERSISTENT_MAP) == Usage::PERSISTENT_MAP) {
-						if (numBuffers > 1 && (expectMapUsage & Usage::MAP_SWAP) == Usage::MAP_SWAP) {
-							if (auto& sync = _getCurSync(); sync && _isSyncing(sync)) {
-								if (++bufferData.curIndex >= numBuffers) bufferData.curIndex = 0;
-								curHandle = bufferData.handles[bufferData.curIndex];
-								if (!bufferData.mapDatas[bufferData.curIndex]) _createPersistentMapBuffer(bufferData.handles[bufferData.curIndex], bufferData.mapDatas[bufferData.curIndex], nullptr);
-
-								ret |= Usage::DISCARD;
-							}
-						}
-
 						_waitServerSync();
 					} else {
 						GLenum access = 0;
@@ -118,8 +80,9 @@ namespace aurora::modules::graphics::win_glew {
 							access = GL_WRITE_ONLY;
 						}
 
-						glBindBuffer(bufferType, curHandle);
-						bufferData.mapData = glMapBuffer(bufferType, access);
+						glBindBuffer(bufferType, handle);
+						mapData = glMapBuffer(bufferType, access);
+						glBindBuffer(bufferType, 0);
 					}
 				}
 			}
@@ -135,9 +98,10 @@ namespace aurora::modules::graphics::win_glew {
 			if ((this->resUsage & Usage::PERSISTENT_MAP) == Usage::PERSISTENT_MAP) {
 				flush();
 			} else {
-				glBindBuffer(bufferType, curHandle);
+				glBindBuffer(bufferType, handle);
 				glUnmapBuffer(bufferType);
-				bufferData.mapData = nullptr;
+				mapData = nullptr;
+				glBindBuffer(bufferType, 0);
 			}
 		}
 	}
@@ -146,7 +110,7 @@ namespace aurora::modules::graphics::win_glew {
 		if ((mapUsage & Usage::MAP_READ)== Usage::MAP_READ) {
 			if (dst && dstLen && offset < size) {
 				dstLen = std::min<ui32>(dstLen, size - offset);
-				memcpy(dst, (i8*)_getCurMapData() + offset, dstLen);
+				memcpy(dst, (i8*)mapData + offset, dstLen);
 				return dstLen;
 			}
 			return 0;
@@ -159,7 +123,7 @@ namespace aurora::modules::graphics::win_glew {
 			if (data && length && offset < size) {
 				if ((resUsage & Usage::PERSISTENT_MAP) == Usage::PERSISTENT_MAP) dirty = true;
 				length = std::min<ui32>(length, size - offset);
-				memcpy((i8*)_getCurMapData() + offset, data, length);
+				memcpy((i8*)mapData + offset, data, length);
 				return length;
 			}
 			return 0;
@@ -172,8 +136,9 @@ namespace aurora::modules::graphics::win_glew {
 			if (data && length && offset < size) {
 				length = std::min<ui32>(length, size - offset);
 
-				glBindBuffer(bufferType, curHandle);
+				glBindBuffer(bufferType, handle);
 				glBufferSubData(bufferType, offset, length, data);
+				glBindBuffer(bufferType, 0);
 				return length;
 			}
 			return 0;
@@ -184,58 +149,30 @@ namespace aurora::modules::graphics::win_glew {
 	void BaseBuffer::flush() {
 		if (dirty) {
 			_waitServerSync();
-			_getCurSync() = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+			sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 			dirty = false;
 		}
 	}
 
 	void BaseBuffer::releaseBuffer() {
-		if (numBuffers) {
-			if (numBuffers == 1) {
-				_releaseSync(bufferData.sync);
+		if (handle) {
+			releaseSync();
 
-				if (bufferData.mapData) {
-					glBindBuffer(bufferType, curHandle);
-					glUnmapBuffer(bufferType);
-				}
-
-				glDeleteBuffers(1, &curHandle);
-			} else {
-				for (ui32 i = 0; i < numBuffers; ++i) {
-					_releaseSync(bufferData.syncs[i]);
-
-					if (bufferData.mapDatas[i]) {
-						glBindBuffer(bufferType, bufferData.handles[i]);
-						glUnmapBuffer(bufferType);
-					}
-				}
-
-				glDeleteBuffers(numBuffers, bufferData.handles);
-
-				delete[] bufferData.handles;
-				delete[] bufferData.mapDatas;
-				delete[] bufferData.syncs;
+			if (mapData) {
+				glBindBuffer(bufferType, handle);
+				glUnmapBuffer(bufferType);
+				glBindBuffer(bufferType, 0);
+				mapData = nullptr;
 			}
 
+			glDeleteBuffers(1, &handle);
+
 			dirty = false;
-			numBuffers = 0;
-			curHandle = 0;
+			handle = 0;
 		}
 
 		size = 0;
 		resUsage = Usage::NONE;
 		mapUsage = Usage::NONE;
-		memset(&bufferData, 0, sizeof(bufferData));
-	}
-
-	void BaseBuffer::_createPersistentMapBuffer(GLuint handle, void*& mapData, const void* data) {
-		const GLbitfield flags =
-			GL_MAP_WRITE_BIT |
-			GL_MAP_PERSISTENT_BIT | //在被映射状态下不同步
-			GL_MAP_COHERENT_BIT;    //数据对GPU立即可见
-
-		glBindBuffer(bufferType, handle);
-		glBufferStorage(bufferType, size, data, flags);
-		mapData = glMapBufferRange(bufferType, 0, size, flags);
 	}
 }

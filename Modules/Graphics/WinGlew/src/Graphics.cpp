@@ -148,7 +148,7 @@ namespace aurora::modules::graphics::win_glew {
 		_deviceFeatures.supportConstantBuffer = isGreatThanVersion(3, 1);
 		_deviceFeatures.supportPersisientMap = isGreatThanVersion(4, 4);
 
-		_createBufferMask = Usage::MAP_READ_WRITE | Usage::UPDATE | (_deviceFeatures.supportPersisientMap ? Usage::PERSISTENT_MAP_MASK : Usage::NONE);
+		_createBufferMask = Usage::MAP_READ_WRITE | Usage::UPDATE | (_deviceFeatures.supportPersisientMap ? Usage::PERSISTENT_MAP : Usage::NONE);
 
 		return true;
 	}

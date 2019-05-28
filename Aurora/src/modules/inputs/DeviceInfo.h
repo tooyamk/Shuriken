@@ -22,7 +22,7 @@ namespace aurora::modules::inputs {
 
 			return *this;
 		}
-		inline DeviceInfo& AE_CALL operator=(DeviceInfo&& value) {
+		inline DeviceInfo& AE_CALL operator=(DeviceInfo&& value) noexcept {
 			guid = std::move(value.guid);
 			type = value.type;
 

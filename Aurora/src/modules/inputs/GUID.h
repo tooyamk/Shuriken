@@ -29,7 +29,7 @@ namespace aurora::modules::inputs {
 			return *this;
 		}
 
-		inline GUID& AE_CALL operator=(GUID&& value) {
+		inline GUID& AE_CALL operator=(GUID&& value) noexcept {
 			_data = value._data;
 			_len = value._len;
 			value._data = nullptr;

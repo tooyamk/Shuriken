@@ -3,6 +3,8 @@
 
 namespace aurora::modules::graphics::win_d3d11 {
 	VertexBuffer::VertexBuffer(Graphics& graphics) : IVertexBuffer(graphics),
+		_vertSize(VertexSize::UNKNOWN),
+		_vertType(VertexType::UNKNOWN),
 		_internalFormat(DXGI_FORMAT_UNKNOWN),
 		_stride(0),
 		_baseBuffer(D3D11_BIND_VERTEX_BUFFER) {
@@ -12,8 +14,16 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_baseBuffer.releaseBuffer(*_graphics.get<Graphics>());
 	}
 
+	const void* VertexBuffer::getNativeBuffer() const {
+		return this;
+	}
+
 	bool VertexBuffer::create(ui32 size, Usage bufferUsage, const void* data, ui32 dataSize) {
 		return _baseBuffer.create(*_graphics.get<Graphics>(), size, bufferUsage, data, dataSize);
+	}
+
+	ui32 VertexBuffer::getSize() const {
+		return _baseBuffer.size;
 	}
 
 	Usage VertexBuffer::getUsage() const {
@@ -43,7 +53,19 @@ namespace aurora::modules::graphics::win_d3d11 {
 	void VertexBuffer::flush() {
 	}
 
+	bool VertexBuffer::isSyncing() const {
+		return false;
+	}
+
+	void VertexBuffer::getFormat(VertexSize* size, VertexType* type) const {
+		if (size) *size = _vertSize;
+		if (type) *type = _vertType;
+	}
+
 	void VertexBuffer::setFormat(VertexSize size, VertexType type) {
+		_vertSize = size;
+		_vertType = type;
+
 		switch (type) {
 		case VertexType::I8:
 		{

@@ -210,6 +210,7 @@
     <ClInclude Include="src\math\Vector.h" />
     <ClInclude Include="src\modules\graphics\ConstantBufferManager.h" />
     <ClInclude Include="src\modules\graphics\GraphicsAdapter.h" />
+    <ClInclude Include="src\modules\graphics\GraphicsUtils.h" />
     <ClInclude Include="src\modules\graphics\IGraphicsModule.h" />
     <ClInclude Include="src\modules\graphics\IProgramSourceTranslator.h" />
     <ClInclude Include="src\modules\graphics\ProgramSource.h" />
@@ -242,6 +243,7 @@
     <ClCompile Include="src\math\Quaternion.cpp" />
     <ClCompile Include="src\modules\graphics\ConstantBufferManager.cpp" />
     <ClCompile Include="src\modules\graphics\GraphicsAdapter.cpp" />
+    <ClCompile Include="src\modules\graphics\GraphicsUtils.cpp" />
     <ClCompile Include="src\modules\graphics\IGraphicsModule.cpp" />
     <ClCompile Include="src\modules\graphics\IProgramSourceTranslator.cpp" />
     <ClCompile Include="src\modules\graphics\ProgramSource.cpp" />

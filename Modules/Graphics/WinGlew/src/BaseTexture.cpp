@@ -262,11 +262,11 @@ namespace aurora::modules::graphics::win_glew {
 		//mapUsage = Usage::NONE;
 	}
 
-	i32 BaseTexture::read(ui32 arraySlice, ui32 mipSlice, ui32 offset, void* dst, ui32 dstLen, i32 readLen) {
+	ui32 BaseTexture::read(ui32 arraySlice, ui32 mipSlice, ui32 offset, void* dst, ui32 dstLen) {
 		return -1;
 	}
 
-	i32 BaseTexture::write(ui32 arraySlice, ui32 mipSlice, ui32 offset, const void* data, ui32 length) {
+	ui32 BaseTexture::write(ui32 arraySlice, ui32 mipSlice, ui32 offset, const void* data, ui32 length) {
 		/*
 		if ((mapUsage & Usage::CPU_WRITE) == Usage::CPU_WRITE) {
 			if (data && length && offset < size) {

@@ -3,6 +3,8 @@
 
 namespace aurora::modules::graphics::win_glew {
 	VertexBuffer::VertexBuffer(Graphics& graphics) : IVertexBuffer(graphics),
+		_vertSize(VertexSize::UNKNOWN),
+		_vertType(VertexType::UNKNOWN),
 		_validVertexFormat(false),
 		_vertexSize(0),
 		_vertexType(0),
@@ -12,8 +14,16 @@ namespace aurora::modules::graphics::win_glew {
 	VertexBuffer::~VertexBuffer() {
 	}
 
+	const void* VertexBuffer::getNativeBuffer() const {
+		return this;
+	}
+
 	bool VertexBuffer::create(ui32 size, Usage bufferUsage, const void* data, ui32 dataSize) {
 		return _baseBuffer.create(*_graphics.get<Graphics>(), size, bufferUsage, data);
+	}
+
+	ui32 VertexBuffer::getSize() const {
+		return _baseBuffer.size;
 	}
 
 	Usage VertexBuffer::getUsage() const {
@@ -44,7 +54,19 @@ namespace aurora::modules::graphics::win_glew {
 		_baseBuffer.flush();
 	}
 
+	bool VertexBuffer::isSyncing() const {
+		return _baseBuffer.isSyncing();
+	}
+
+	void VertexBuffer::getFormat(VertexSize* size, VertexType* type) const {
+		if (size) *size = _vertSize;
+		if (type) *type = _vertType;
+	}
+
 	void VertexBuffer::setFormat(VertexSize size, VertexType type) {
+		_vertSize = size;
+		_vertType = type;
+
 		switch (size) {
 		case VertexSize::ONE:
 			_vertexSize = 1;
@@ -94,9 +116,9 @@ namespace aurora::modules::graphics::win_glew {
 	}
 
 	bool VertexBuffer::use(GLuint index) {
-		if (_baseBuffer.curHandle && _validVertexFormat) {
+		if (_baseBuffer.handle && _validVertexFormat) {
 			glEnableVertexAttribArray(index);
-			glBindBuffer(GL_ARRAY_BUFFER, _baseBuffer.curHandle);
+			glBindBuffer(GL_ARRAY_BUFFER, _baseBuffer.handle);
 			glVertexAttribPointer(index, _vertexSize, _vertexType, GL_FALSE, 0, 0);
 		}
 		return false;

@@ -12,8 +12,16 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_baseBuffer.releaseBuffer(*_graphics.get<Graphics>());
 	}
 
+	const void* ConstantBuffer::getNativeBuffer() const {
+		return this;
+	}
+
 	bool ConstantBuffer::create(ui32 size, Usage bufferUsage, const void* data, ui32 dataSize) {
 		return _baseBuffer.create(*_graphics.get<Graphics>(), size, bufferUsage, data, dataSize);
+	}
+
+	ui32 ConstantBuffer::getSize() const {
+		return _baseBuffer.size;
 	}
 
 	Usage ConstantBuffer::getUsage() const {
@@ -41,5 +49,9 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	void ConstantBuffer::flush() {
+	}
+
+	bool ConstantBuffer::isSyncing() const {
+		return false;
 	}
 }

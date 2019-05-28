@@ -26,23 +26,20 @@ namespace aurora::modules::graphics {
 	};
 
 
-	enum class Usage : ui16 {
+	enum class Usage : ui8 {
 		NONE = 0,//create and map
 		MAP_READ = 1,//create and map
 		MAP_WRITE = 1 << 1,//create and map
 		UPDATE = 1 << 2,//create
 
 		PERSISTENT_MAP = 1 << 3,//create
-		PERSISTENT_MAP_DOUBLE_BUFFER = (1 << 4) | PERSISTENT_MAP,
-		PERSISTENT_MAP_TRIPLE_BUFFER = (1 << 5) | PERSISTENT_MAP,
 
-		MAP_SWAP = 1 << 6,//map
+		MAP_SWAP = 1 << 4,//map
 
-		DISCARD = 1 << 7,//map return
+		DISCARD = 1 << 5,//map return
 
 		MAP_READ_WRITE = MAP_READ | MAP_WRITE,
-		MAP_WRITE_UPDATE = MAP_WRITE | UPDATE,
-		PERSISTENT_MAP_MASK = PERSISTENT_MAP | PERSISTENT_MAP_DOUBLE_BUFFER | PERSISTENT_MAP_TRIPLE_BUFFER
+		MAP_WRITE_UPDATE = MAP_WRITE | UPDATE
 	};
 	AE_DEFINE_ENUM_BIT_OPERATIION(Usage);
 
@@ -52,7 +49,9 @@ namespace aurora::modules::graphics {
 		IBuffer(IGraphicsModule& graphics) : IObject(graphics) {}
 		virtual ~IBuffer() {}
 
+		virtual const void* AE_CALL getNativeBuffer() const = 0;
 		virtual bool AE_CALL create(ui32 size, Usage bufferUsage, const void* data = nullptr, ui32 dataSize = 0) = 0;
+		virtual ui32 AE_CALL getSize() const = 0;
 		virtual Usage AE_CALL getUsage() const = 0;
 		virtual Usage AE_CALL map(Usage expectMapUsage) = 0;
 		virtual void AE_CALL unmap() = 0;
@@ -60,10 +59,12 @@ namespace aurora::modules::graphics {
 		virtual ui32 AE_CALL write(ui32 offset, const void* data, ui32 length) = 0;
 		virtual ui32 AE_CALL update(ui32 offset, const void* data, ui32 length) = 0;
 		virtual void AE_CALL flush() = 0;
+		virtual bool AE_CALL isSyncing() const = 0;
 	};
 
 
 	enum class VertexSize : ui8 {
+		UNKNOWN,
 		ONE,
 		TWO,
 		THREE,
@@ -72,6 +73,7 @@ namespace aurora::modules::graphics {
 
 
 	enum class VertexType : ui8 {
+		UNKNOWN,
 		I8,
 		UI8,
 		I16,
@@ -87,6 +89,7 @@ namespace aurora::modules::graphics {
 		IVertexBuffer(IGraphicsModule& graphics) : IBuffer(graphics) {}
 		virtual ~IVertexBuffer() {}
 
+		virtual void AE_CALL getFormat(VertexSize* size, VertexType* type) const = 0;
 		virtual void AE_CALL setFormat(VertexSize size, VertexType type) = 0;
 	};
 

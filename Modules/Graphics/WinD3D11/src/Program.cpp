@@ -10,7 +10,8 @@
 
 namespace aurora::modules::graphics::win_d3d11 {
 	Program::InLayout::InLayout(ui32 numInElements) :
-		formats(numInElements) {
+		formats(numInElements),
+		layout(nullptr) {
 	}
 
 	Program::InLayout::~InLayout() {
@@ -191,7 +192,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 	void Program::draw(const VertexBufferFactory* vertexFactory, const ShaderParameterFactory* paramFactory,
 		const IIndexBuffer* indexBuffer, ui32 count, ui32 offset) {
 		if (_vs && vertexFactory && indexBuffer && _graphics == indexBuffer->getGraphics() && count > 0) {
-			auto ib = (IndexBuffer*)indexBuffer;
+			auto ib = (IndexBuffer*)indexBuffer->getNativeBuffer();
+			if (!ib) return;
 			auto internalIndexBuffer = ib->getInternalBuffer();
 			auto fmt = ib->getInternalFormat();
 			if (!internalIndexBuffer || fmt == DXGI_FORMAT_UNKNOWN) return;
@@ -207,9 +209,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 				auto vb = vertexFactory->get(info.name);
 				if (vb && _graphics == vb->getGraphics()) {
 					auto& ie = _inElements[i];
-					auto vb1 = (VertexBuffer*)vb;
-					auto buf = vb1->getInternalBuffer();
-					if (buf) {
+					auto vb1 = (VertexBuffer*)vb->getNativeBuffer();
+					if (auto buf = vb1->getInternalBuffer(); buf) {
 						auto fmt = vb1->getInternalFormat();
 						if (fmt != DXGI_FORMAT_UNKNOWN) {
 							auto stride = vb1->getStride();
@@ -238,7 +239,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 				ui32 last = numIndexElements - offset;
 				if (count > numIndexElements) count = numIndexElements;
 				if (count > last) count = last;
-				context->IASetIndexBuffer(internalIndexBuffer, fmt, 0);
+				context->IASetIndexBuffer((ID3D11Buffer*)internalIndexBuffer, fmt, 0);
 				context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 				context->DrawIndexed(count, offset, 0);
 

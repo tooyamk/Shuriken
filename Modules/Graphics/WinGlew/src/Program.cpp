@@ -220,10 +220,15 @@ namespace aurora::modules::graphics::win_glew {
 	void Program::draw(const VertexBufferFactory* vertexFactory, const ShaderParameterFactory* paramFactory, 
 		const IIndexBuffer* indexBuffer, ui32 count, ui32 offset) {
 		if (_handle && vertexFactory && indexBuffer && _graphics == indexBuffer->getGraphics() && count > 0) {
+			auto ib = (IndexBuffer*)indexBuffer->getNativeBuffer();
+			if (!ib) return;
+
 			auto g = _graphics.get<Graphics>();
 
 			for (auto& info : _inVertexBufferLayouts) {
-				if (auto vb = vertexFactory->get(info.name); vb && _graphics == vb->getGraphics()) ((VertexBuffer*)vb)->use(info.location);
+				if (auto vb = vertexFactory->get(info.name); vb && _graphics == vb->getGraphics()) {
+					if (auto vb1 = (VertexBuffer*)vb->getNativeBuffer(); vb1) vb1->use(info.location);
+				}
 			}
 
 			ui8 texIndex = 0;
@@ -296,7 +301,7 @@ namespace aurora::modules::graphics::win_glew {
 					_tempParams.clear();
 					_tempVars.clear();
 
-					glBindBufferBase(GL_UNIFORM_BUFFER, layout.bindPoint, cb->getInternalBuffer());
+					if (auto cb1 = (ConstantBuffer*)cb->getNativeBuffer(); cb1) glBindBufferBase(GL_UNIFORM_BUFFER, layout.bindPoint, cb1->getInternalBuffer());
 				}
 			}
 
@@ -304,7 +309,7 @@ namespace aurora::modules::graphics::win_glew {
 			glCullFace(GL_BACK);
 			glDisable(GL_DEPTH_TEST);
 
-			((IndexBuffer*)indexBuffer)->draw(count, offset);
+			ib->draw(count, offset);
 
 			g->getConstantBufferManager().resetUsedShareConstantBuffers();
 		}

@@ -212,7 +212,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return succeeded;
 	}
 
-	HRESULT BaseTextureResource::_createInternalTexture(Graphics& graphics, TextureType texType, const TexDesc& desc, const D3D11_SUBRESOURCE_DATA* pInitialData) {
+	HRESULT BaseTextureResource::_createInternalTexture(Graphics& graphics, TextureType texType, const BaseTextureResource::TexDesc& desc, const D3D11_SUBRESOURCE_DATA* pInitialData) {
 		switch (texType) {
 		case TextureType::TEX1D:
 			return graphics.getDevice()->CreateTexture1D(&desc.dsec1D, pInitialData, (ID3D11Texture1D**)&handle);

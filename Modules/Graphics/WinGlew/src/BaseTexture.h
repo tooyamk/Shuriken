@@ -14,8 +14,8 @@ namespace aurora::modules::graphics::win_glew {
 			TextureFormat format, Usage resUsage, const void*const* data = nullptr);
 		Usage AE_CALL map(ui32 arraySlice, ui32 mipSlice, Usage expectMapUsage);
 		void AE_CALL unmap(ui32 arraySlice, ui32 mipSlice);
-		i32 AE_CALL read(ui32 arraySlice, ui32 mipSlice, ui32 offset, void* dst, ui32 dstLen, i32 readLen = -1);
-		i32 AE_CALL write(ui32 arraySlice, ui32 mipSlice, ui32 offset, const void* data, ui32 length);
+		ui32 AE_CALL read(ui32 arraySlice, ui32 mipSlice, ui32 offset, void* dst, ui32 dstLen);
+		ui32 AE_CALL write(ui32 arraySlice, ui32 mipSlice, ui32 offset, const void* data, ui32 length);
 		bool AE_CALL update(ui32 arraySlice, ui32 mipSlice, const Box3ui32& range, const void* data);
 		void AE_CALL flush();
 		void AE_CALL releaseTex();

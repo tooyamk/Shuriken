@@ -25,6 +25,11 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 
 		struct InVertexBufferInfo {
+			InVertexBufferInfo() :
+				name(),
+				slot(0) {
+			}
+
 			std::string name;
 			ui32 slot;
 		};
@@ -99,8 +104,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			for (auto& info : layout.constantBuffers) {
 				auto cb = _getConstantBuffer(info, factory);
 				if (cb && g == cb->getGraphics()) {
-					auto buffer = cb->getInternalBuffer();
-					g->useConstantBuffers<stage>(info.bindPoint, 1, &buffer);
+					if (auto buffer = ((ConstantBuffer*)cb->getNativeBuffer())->getInternalBuffer(); buffer) g->useConstantBuffers<stage>(info.bindPoint, 1, &buffer);
 				}
 			}
 

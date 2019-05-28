@@ -19,57 +19,41 @@ namespace aurora::modules::graphics::win_glew {
 		void AE_CALL flush();
 		void AE_CALL releaseBuffer();
 
+		inline bool AE_CALL isSyncing() const {
+			return sync ? _isSyncing() : false;
+		}
+
+		inline void AE_CALL releaseSync() {
+			if (sync) _releaseSync();
+		}
+
 		bool dirty;
-		ui8 numBuffers;
 		Usage resUsage;
 		Usage mapUsage;
 		GLenum bufferType;
 		ui32 size;
-		GLuint curHandle;
 
-		union {
-			struct {
-				GLuint handle;
-				void* mapData;
-				GLsync sync;
-			};
-			struct {
-				ui8 curIndex;
-				GLuint* handles;
-				void** mapDatas;
-				GLsync* syncs;
-			};
-		} bufferData;
+		GLuint handle;
+		void* mapData;
+		mutable GLsync sync;
 
 	private:
-		void AE_CALL _createPersistentMapBuffer(GLuint handle, void*& mapData, const void* data);
-
-		inline void*& _getCurMapData() {
-			return numBuffers > 1 ? bufferData.mapDatas[bufferData.curIndex] : bufferData.mapData;
+		inline void AE_CALL _releaseSync() const {
+			glDeleteSync(sync);
+			sync = nullptr;
 		}
 
-		inline GLsync& _getCurSync() {
-			return numBuffers > 1 ? bufferData.syncs[bufferData.curIndex] : bufferData.sync;
-		}
-
-		inline void AE_CALL _releaseSync(GLsync& sync) {
-			if (sync) {
-				glDeleteSync(sync);
-				sync = nullptr;
-			}
-		}
-
-		inline bool AE_CALL _isSyncing(GLsync& sync) {
+		inline bool AE_CALL _isSyncing() const {
 			if (auto rst = glClientWaitSync(sync, GL_SYNC_FLUSH_COMMANDS_BIT, 1); rst == GL_ALREADY_SIGNALED || rst == GL_CONDITION_SATISFIED) {
-				_releaseSync(sync);
+				_releaseSync();
 				return false;
 			}
 			return true;
 		}
 
 		inline void AE_CALL _waitServerSync() {
-			if (auto& sync = _getCurSync(); sync) {
-				do {} while (_isSyncing(sync));
+			if (sync) {
+				do {} while (_isSyncing());
 			}
 		}
 	};

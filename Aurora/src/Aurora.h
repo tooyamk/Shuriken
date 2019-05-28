@@ -19,6 +19,7 @@
 
 #include "modules/ModuleLoader.h"
 #include "modules/graphics/GraphicsAdapter.h"
+#include "modules/graphics/GraphicsUtils.h"
 #include "modules/graphics/IProgramSourceTranslator.h"
 #include "modules/graphics/ProgramSource.h"
 #include "modules/graphics/ShaderParameter.h"
