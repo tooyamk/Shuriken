@@ -113,6 +113,24 @@ namespace aurora::modules::graphics {
 	};
 
 
+	class AE_DLL IConstantBuffer : public IBuffer {
+	public:
+		virtual ~IConstantBuffer() {}
+
+	protected:
+		IConstantBuffer(IGraphicsModule& graphics) : IBuffer(graphics) {}
+	};
+
+
+	class AE_DLL IPixelBuffer : public IBuffer {
+	public:
+		virtual ~IPixelBuffer() {}
+
+	protected:
+		IPixelBuffer(IGraphicsModule& graphics) : IBuffer(graphics) {}
+	};
+
+
 	enum class SamplerFilterMode : ui8 {
 		POINT,
 		LINEAR,
@@ -225,6 +243,7 @@ namespace aurora::modules::graphics {
 
 		virtual TextureType AE_CALL getType() const = 0;
 		virtual const void* AE_CALL getNativeResource() const = 0;
+		virtual ui16 AE_CALL getPerPixelByteSize() const = 0;
 		virtual Usage AE_CALL getUsage() const = 0;
 		virtual Usage AE_CALL map(ui32 arraySlice, ui32 mipSlice, Usage expectMapUsage) = 0;
 		virtual void AE_CALL unmap(ui32 arraySlice, ui32 mipSlice) = 0;
@@ -240,6 +259,7 @@ namespace aurora::modules::graphics {
 
 		virtual bool AE_CALL create(ui32 width, ui32 arraySize, ui32 mipLevels, TextureFormat format, Usage resUsage, const void*const* data = nullptr) = 0;
 		virtual bool AE_CALL update(ui32 arraySlice, ui32 mipSlice, const Box1ui32& range, const void* data) = 0;
+		virtual bool AE_CALL copyFrom(ui32 arraySlice, ui32 mipSlice, const Box1ui32& range, const IPixelBuffer* pixelBuffer) = 0;
 	};
 
 
@@ -250,6 +270,7 @@ namespace aurora::modules::graphics {
 
 		virtual bool AE_CALL create(const Vec2ui32& size, ui32 arraySize, ui32 mipLevels, TextureFormat format, Usage resUsage, const void*const* data = nullptr) = 0;
 		virtual bool AE_CALL update(ui32 arraySlice, ui32 mipSlice, const Box2ui32& range, const void* data) = 0;
+		virtual bool AE_CALL copyFrom(ui32 arraySlice, ui32 mipSlice, const Box2ui32& range, const IPixelBuffer* pixelBuffer) = 0;
 	};
 
 
@@ -260,6 +281,7 @@ namespace aurora::modules::graphics {
 
 		virtual bool AE_CALL create(const Vec3ui32& size, ui32 arraySize, ui32 mipLevels, TextureFormat format, Usage resUsage, const void*const* data = nullptr) = 0;
 		virtual bool AE_CALL update(ui32 arraySlice, ui32 mipSlice, const Box3ui32& range, const void* data) = 0;
+		virtual bool AE_CALL copyFrom(ui32 arraySlice, ui32 mipSlice, const Box3ui32& range, const IPixelBuffer* pixelBuffer) = 0;
 	};
 
 
@@ -271,13 +293,6 @@ namespace aurora::modules::graphics {
 		//virtual TextureType AE_CALL getType() const = 0;
 		virtual ITextureResource* AE_CALL getResource() const = 0;
 		virtual bool AE_CALL create(ITextureResource* res, ui32 mipBegin, ui32 mipLevels, ui32 arrayBegin, ui32 arraySize) = 0;
-	};
-
-
-	class AE_DLL IConstantBuffer : public IBuffer {
-	public:
-		IConstantBuffer(IGraphicsModule& graphics) : IBuffer(graphics) {}
-		virtual ~IConstantBuffer() {}
 	};
 
 
@@ -307,6 +322,7 @@ namespace aurora::modules::graphics {
 	struct AE_DLL GraphicsDeviceFeatures {
 		bool supportSampler;
 		bool supportTextureView;
+		bool supportPixelBuffer;
 		bool supportConstantBuffer;
 		bool supportPersisientMap;
 	};
@@ -324,6 +340,7 @@ namespace aurora::modules::graphics {
 		virtual const GraphicsDeviceFeatures& AE_CALL getDeviceFeatures() const = 0;
 		virtual IConstantBuffer* AE_CALL createConstantBuffer() = 0;
 		virtual IIndexBuffer* AE_CALL createIndexBuffer() = 0;
+		virtual IPixelBuffer* AE_CALL createPixelBuffer() = 0;
 		virtual IProgram* AE_CALL createProgram() = 0;
 		virtual ISampler* AE_CALL createSampler() = 0;
 		virtual ITexture1DResource* AE_CALL createTexture1DResource() = 0;

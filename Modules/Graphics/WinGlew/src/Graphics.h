@@ -26,6 +26,7 @@ namespace aurora::modules::graphics::win_glew {
 		virtual ITexture3DResource* AE_CALL createTexture3DResource() override;
 		virtual ITextureView* AE_CALL createTextureView() override;
 		virtual IVertexBuffer* AE_CALL createVertexBuffer() override;
+		virtual IPixelBuffer* AE_CALL createPixelBuffer() override;
 		
 		virtual void AE_CALL beginRender() override;
 		virtual void AE_CALL endRender() override;

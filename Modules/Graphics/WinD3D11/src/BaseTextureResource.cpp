@@ -147,7 +147,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 				hr = _createInternalTexture(graphics, texType, texDesc, &res);
 			} else {
 				std::vector<D3D11_SUBRESOURCE_DATA> resArr(mipLevels * arraySize);
-				Vec2ui32 size2((ui32(&)[2])size);
+				Vec2ui32 size2(size.slice<2>());
 				for (ui32 i = 0; i < mipLevels; ++i) {
 					auto& res = resArr[i];
 					res.pSysMem = data[i];
@@ -208,7 +208,6 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 	bool BaseTextureResource::_createDone(bool succeeded) {
 		for (auto& itr : views) itr.second();
-
 		return succeeded;
 	}
 
@@ -226,8 +225,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	Usage BaseTextureResource::map(Graphics& graphics, ui32 arraySlice, ui32 mipSlice, Usage expectMapUsage) {
-		ui32 subresource = calcSubresource(mipSlice, arraySlice, mipLevels);
-		if (subresource < mappedRes.size()) {
+		if (ui32 subresource = calcSubresource(mipSlice, arraySlice, mipLevels); subresource < mappedRes.size()) {
 			auto& mapped = mappedRes[subresource];
 			return BaseResource::map(graphics, expectMapUsage, mapped.usage, subresource, mapped.res);
 		}
@@ -235,15 +233,12 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	void BaseTextureResource::unmap(Graphics& graphics, ui32 arraySlice, ui32 mipSlice) {
-		ui32 subresource = calcSubresource(mipSlice, arraySlice, mipLevels);
-		if (subresource < mappedRes.size()) BaseResource::unmap(graphics, mappedRes[subresource].usage, subresource);
+		if (ui32 subresource = calcSubresource(mipSlice, arraySlice, mipLevels); subresource < mappedRes.size()) BaseResource::unmap(graphics, mappedRes[subresource].usage, subresource);
 	}
 
 	ui32 BaseTextureResource::read(ui32 arraySlice, ui32 mipSlice, ui32 offset, void* dst, ui32 dstLen) {
-		ui32 subresource = calcSubresource(mipSlice, arraySlice, mipLevels);
-		if (subresource < mappedRes.size()) {
-			auto& mapped = mappedRes[subresource];
-			if ((mapped.usage & Usage::MAP_READ) == Usage::MAP_READ) {
+		if (ui32 subresource = calcSubresource(mipSlice, arraySlice, mipLevels); subresource < mappedRes.size()) {
+			if (auto& mapped = mappedRes[subresource]; (mapped.usage & Usage::MAP_READ) == Usage::MAP_READ) {
 				if (dst && dstLen && offset < mapped.size) {
 					auto readLen = std::min<ui32>(mapped.size - offset, dstLen);
 					memcpy(dst, (i8*)mapped.res.pData + offset, readLen);
@@ -256,10 +251,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	ui32 BaseTextureResource::write(ui32 arraySlice, ui32 mipSlice, ui32 offset, const void* data, ui32 length) {
-		ui32 subresource = calcSubresource(mipSlice, arraySlice, mipLevels);
-		if (subresource < mappedRes.size()) {
-			auto& mapped = mappedRes[subresource];
-			if ((mapped.usage & Usage::MAP_WRITE) == Usage::MAP_WRITE) {
+		if (ui32 subresource = calcSubresource(mipSlice, arraySlice, mipLevels); subresource < mappedRes.size()) {
+			if (auto& mapped = mappedRes[subresource]; (mapped.usage & Usage::MAP_WRITE) == Usage::MAP_WRITE) {
 				if (data && length && offset < mapped.size) {
 					length = std::min<ui32>(length, mapped.size - offset);
 					memcpy((i8*)mapped.res.pData + offset, data, length);
@@ -274,7 +267,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 	bool BaseTextureResource::update(Graphics& graphics, ui32 arraySlice, ui32 mipSlice, const D3D11_BOX& range, const void* data) {
 		if ((resUsage & Usage::UPDATE) == Usage::UPDATE) {
 			if (data && !arraySlice && mipSlice < mipLevels) {
-				Vec2ui32 size((ui32(&)[2])texSize);
+				Vec2ui32 size(texSize.slice<2>());
 				Image::calcSpecificMipPixelSize(size, mipSlice);
 				auto rowByteSize = size[0] * perPixelSize;
 
@@ -303,12 +296,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	void BaseTextureResource::addView(ITextureView& view, const std::function<void()>& onRecreated) {
-		auto itr = views.find(&view);
-		if (itr == views.end()) views.emplace(&view, onRecreated);
+		if (auto itr = views.find(&view); itr == views.end()) views.emplace(&view, onRecreated);
 	}
 
 	void BaseTextureResource::removeView(ITextureView& view) {
-		auto itr = views.find(&view);
-		if (itr != views.end()) views.erase(itr);
+		if (auto itr = views.find(&view); itr != views.end()) views.erase(itr);
 	}
 }

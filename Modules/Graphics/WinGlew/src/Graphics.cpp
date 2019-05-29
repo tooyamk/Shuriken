@@ -2,9 +2,11 @@
 #include "CreateModule.h"
 #include "ConstantBuffer.h"
 #include "IndexBuffer.h"
+#include "PixelBuffer.h"
 #include "Program.h"
 #include "Sampler.h"
 #include "Texture2DResource.h"
+#include "TextureView.h"
 #include "VertexBuffer.h"
 #include "base/Application.h"
 #include "base/String.h"
@@ -144,7 +146,8 @@ namespace aurora::modules::graphics::win_glew {
 		_internalFeatures.supportTexStorage = false;// isGreatThanVersion(4, 2);
 
 		_deviceFeatures.supportSampler = isGreatThanVersion(3, 3);
-		_deviceFeatures.supportTextureView = false;
+		_deviceFeatures.supportTextureView = isGreatThanVersion(4, 3);
+		_deviceFeatures.supportPixelBuffer = true;
 		_deviceFeatures.supportConstantBuffer = isGreatThanVersion(3, 1);
 		_deviceFeatures.supportPersisientMap = isGreatThanVersion(4, 4);
 
@@ -190,11 +193,15 @@ namespace aurora::modules::graphics::win_glew {
 	}
 
 	ITextureView* Graphics::createTextureView() {
-		return nullptr;
+		return _deviceFeatures.supportTextureView ? new TextureView(*this) : nullptr;
 	}
 
 	IVertexBuffer* Graphics::createVertexBuffer() {
 		return new VertexBuffer(*this);
+	}
+
+	IPixelBuffer* Graphics::createPixelBuffer() {
+		return new PixelBuffer(*this);
 	}
 
 	void Graphics::beginRender() {

@@ -10,8 +10,8 @@ namespace aurora::modules::graphics::win_glew {
 		BaseBuffer(GLenum bufferType);
 		virtual ~BaseBuffer();
 
-		bool AE_CALL create(Graphics& graphics, ui32 size, Usage resUsage, const void* data = nullptr);
-		Usage AE_CALL map(Usage expectMapUsage);
+		bool AE_CALL create(Graphics& graphics, ui32 size, Usage resUsage, const void* data = nullptr, GLenum internalUsage = 0);
+		Usage AE_CALL map(Usage expectMapUsage, GLenum access = 0);
 		void AE_CALL unmap();
 		ui32 AE_CALL read(ui32 offset, void* dst, ui32 dstLen);
 		ui32 AE_CALL write(ui32 offset, const void* data, ui32 length);

@@ -12,6 +12,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual TextureType AE_CALL getType() const override;
 		virtual const void* AE_CALL getNativeView() const override;
 		virtual const void* AE_CALL getNativeResource() const override;
+		virtual ui16 AE_CALL getPerPixelByteSize() const override;
 		virtual ui32 AE_CALL getArraySize() const override;
 		virtual ui32 AE_CALL getMipLevels() const override;
 		virtual bool AE_CALL create(ui32 width, ui32 arraySize, ui32 mipLevels, TextureFormat format, Usage resUsage, const void*const* data = nullptr) override;
@@ -21,6 +22,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual ui32 AE_CALL read(ui32 arraySlice, ui32 mipSlice, ui32 offset, void* dst, ui32 dstLen) override;
 		virtual ui32 AE_CALL write(ui32 arraySlice, ui32 mipSlice, ui32 offset, const void* data, ui32 length) override;
 		virtual bool AE_CALL update(ui32 arraySlice, ui32 mipSlice, const Box1ui32& range, const void* data) override;
+		virtual bool AE_CALL copyFrom(ui32 arraySlice, ui32 mipSlice, const Box1ui32& range, const IPixelBuffer* pixelBuffer) override;
 
 	protected:
 		BaseTextureResource _baseTexRes;

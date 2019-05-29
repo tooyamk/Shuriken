@@ -253,6 +253,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		_deviceFeatures.supportSampler = true;
 		_deviceFeatures.supportTextureView = true;
+		_deviceFeatures.supportPixelBuffer = false;
 		_deviceFeatures.supportConstantBuffer = true;
 		_deviceFeatures.supportPersisientMap = false;
 
@@ -303,6 +304,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 	IVertexBuffer* Graphics::createVertexBuffer() {
 		return new VertexBuffer(*this);
+	}
+
+	IPixelBuffer* Graphics::createPixelBuffer() {
+		return nullptr;
 	}
 
 	void Graphics::beginRender() {

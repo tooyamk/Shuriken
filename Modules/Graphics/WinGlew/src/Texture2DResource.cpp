@@ -14,11 +14,15 @@ namespace aurora::modules::graphics::win_glew {
 	}
 
 	const void* Texture2DResource::getNativeView() const {
-		return nullptr;
+		return &_baseTex.handle;
 	}
 
 	const void* Texture2DResource::getNativeResource() const {
-		return &_baseTex.handle;
+		return &_baseTex;
+	}
+
+	ui16 Texture2DResource::getPerPixelByteSize() const {
+		return _baseTex.perPixelSize;
 	}
 
 	ui32 Texture2DResource::getArraySize() const {
@@ -55,9 +59,17 @@ namespace aurora::modules::graphics::win_glew {
 
 	bool Texture2DResource::update(ui32 arraySlice, ui32 mipSlice, const Box2ui32& range, const void* data) {
 		Box3ui32 box;
-		((Vec2ui32&)box.pos).set((ui32(&)[2])range.pos);
-		((Vec2ui32&)box.size).set((ui32(&)[2])range.size);
+		((Vec2ui32&)box.pos).set(range.pos.slice<2>());
+		((Vec2ui32&)box.size).set(range.size.slice<2>());
 
 		return _baseTex.update(arraySlice, mipSlice, box, data);
+	}
+
+	bool Texture2DResource::copyFrom(ui32 arraySlice, ui32 mipSlice, const Box2ui32& range, const IPixelBuffer* pixelBuffer) {
+		Box3ui32 box;
+		((Vec2ui32&)box.pos).set(range.pos.slice<2>());
+		((Vec2ui32&)box.size).set(range.size.slice<2>());
+
+		return _baseTex.copyFrom(*_graphics.get<Graphics>(), arraySlice, mipSlice, box, pixelBuffer);
 	}
 }

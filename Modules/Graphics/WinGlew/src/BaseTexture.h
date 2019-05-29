@@ -17,8 +17,11 @@ namespace aurora::modules::graphics::win_glew {
 		ui32 AE_CALL read(ui32 arraySlice, ui32 mipSlice, ui32 offset, void* dst, ui32 dstLen);
 		ui32 AE_CALL write(ui32 arraySlice, ui32 mipSlice, ui32 offset, const void* data, ui32 length);
 		bool AE_CALL update(ui32 arraySlice, ui32 mipSlice, const Box3ui32& range, const void* data);
+		bool AE_CALL copyFrom(Graphics& graphics, ui32 arraySlice, ui32 mipSlice, const Box3ui32& range, const IPixelBuffer* pixelBuffer);
 		void AE_CALL flush();
 		void AE_CALL releaseTex();
+		void AE_CALL addView(ITextureView& view, const std::function<void()>& onRecreated);
+		void AE_CALL removeView(ITextureView& view);
 		void AE_CALL waitServerSync();
 		void AE_CALL releaseSync();
 
@@ -44,8 +47,12 @@ namespace aurora::modules::graphics::win_glew {
 
 		//TextureFormat format;
 		//GLenum internalFormat;
-		
+		std::unordered_map<ITextureView*, std::function<void()>> views;
 
 		GLsync sync;
+
+	private:
+		bool AE_CALL _update(ui32 arraySlice, ui32 mipSlice, const Box3ui32& range, const void* data);
+		bool AE_CALL _createDone(bool succeeded);
 	};
 }

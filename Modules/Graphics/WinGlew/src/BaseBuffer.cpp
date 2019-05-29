@@ -18,7 +18,7 @@ namespace aurora::modules::graphics::win_glew {
 		releaseBuffer();
 	}
 
-	bool BaseBuffer::create(Graphics& graphics, ui32 size, Usage resUsage, const void* data) {
+	bool BaseBuffer::create(Graphics& graphics, ui32 size, Usage resUsage, const void* data, GLenum internalUsage) {
 		releaseBuffer();
 
 		this->resUsage = resUsage & graphics.getCreateBufferMask();
@@ -36,12 +36,14 @@ namespace aurora::modules::graphics::win_glew {
 			}
 		} else {
 			if ((this->resUsage & Usage::PERSISTENT_MAP) == Usage::NONE) {
-				glBufferData(bufferType, size, data, GL_DYNAMIC_DRAW);
+				glBufferData(bufferType, size, data, internalUsage ? internalUsage : GL_DYNAMIC_DRAW);
 			} else {
-				const GLbitfield flags =
-					GL_MAP_WRITE_BIT |
+				GLbitfield flags =
 					GL_MAP_PERSISTENT_BIT | //在被映射状态下不同步
 					GL_MAP_COHERENT_BIT;    //数据对GPU立即可见
+
+				if ((this->resUsage & Usage::MAP_READ) == Usage::MAP_READ) flags |= GL_MAP_READ_BIT;
+				if ((this->resUsage & Usage::MAP_WRITE) == Usage::MAP_WRITE) flags |= GL_MAP_WRITE_BIT;
 
 				glBufferStorage(bufferType, size, data, flags);
 				mapData = glMapBufferRange(bufferType, 0, size, flags);
@@ -53,7 +55,7 @@ namespace aurora::modules::graphics::win_glew {
 		return true;
 	}
 
-	Usage BaseBuffer::map(Usage expectMapUsage) {
+	Usage BaseBuffer::map(Usage expectMapUsage, GLenum access) {
 		Usage ret = Usage::NONE;
 
 		if (handle) {
@@ -71,13 +73,14 @@ namespace aurora::modules::graphics::win_glew {
 					if ((this->resUsage & Usage::PERSISTENT_MAP) == Usage::PERSISTENT_MAP) {
 						_waitServerSync();
 					} else {
-						GLenum access = 0;
-						if (usage == Usage::MAP_READ_WRITE) {
-							access = GL_READ_WRITE;
-						} else if ((usage & Usage::MAP_READ) != Usage::NONE) {
-							access = GL_READ_ONLY;
-						} else {
-							access = GL_WRITE_ONLY;
+						if (!access) {
+							if (usage == Usage::MAP_READ_WRITE) {
+								access = GL_READ_WRITE;
+							} else if ((usage & Usage::MAP_READ) != Usage::NONE) {
+								access = GL_READ_ONLY;
+							} else {
+								access = GL_WRITE_ONLY;
+							}
 						}
 
 						glBindBuffer(bufferType, handle);
@@ -121,7 +124,7 @@ namespace aurora::modules::graphics::win_glew {
 	ui32 BaseBuffer::write(ui32 offset, const void* data, ui32 length) {
 		if ((mapUsage & Usage::MAP_WRITE) == Usage::MAP_WRITE) {
 			if (data && length && offset < size) {
-				if ((resUsage & Usage::PERSISTENT_MAP) == Usage::PERSISTENT_MAP) dirty = true;
+				dirty = true;
 				length = std::min<ui32>(length, size - offset);
 				memcpy((i8*)mapData + offset, data, length);
 				return length;
@@ -148,8 +151,10 @@ namespace aurora::modules::graphics::win_glew {
 
 	void BaseBuffer::flush() {
 		if (dirty) {
-			_waitServerSync();
-			sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+			if ((resUsage & Usage::PERSISTENT_MAP) == Usage::PERSISTENT_MAP) {
+				_waitServerSync();
+				sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+			}
 			dirty = false;
 		}
 	}

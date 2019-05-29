@@ -106,27 +106,27 @@ namespace aurora {
 			set(ptr._target);
 		}
 
-		bool AE_CALL operator==(const T* target) const {
+		inline bool AE_CALL operator==(const T* target) const {
 			return _target == target;
 		}
 
-		bool AE_CALL operator==(const T& target) const {
+		inline bool AE_CALL operator==(const T& target) const {
 			return _target == &target;
 		}
 
-		bool AE_CALL operator==(const RefPtr<T>* ptr) const {
+		inline bool AE_CALL operator==(const RefPtr<T>* ptr) const {
 			return this == ptr;
 		}
 
-		bool AE_CALL operator!=(const T* target) const {
+		inline bool AE_CALL operator!=(const T* target) const {
 			return _target != target;
 		}
 
-		bool AE_CALL operator!=(const T& target) const {
+		inline bool AE_CALL operator!=(const T& target) const {
 			return _target != &target;
 		}
 
-		bool AE_CALL operator!=(const RefPtr<T>* ptr) const {
+		inline bool AE_CALL operator!=(const RefPtr<T>* ptr) const {
 			return this != ptr;
 		}
 
@@ -169,4 +169,25 @@ namespace aurora {
 	private:
 		Ref::RefType<T>* _target;
 	};
+
+
+	template<typename T>
+	inline bool AE_CALL operator==(const T* lhs, const RefPtr<T>& rhs) {
+		return rhs == lhs;
+	}
+
+	template<typename T>
+	inline bool AE_CALL operator==(const T& lhs, const RefPtr<T>& rhs) {
+		return rhs == &lhs;
+	}
+
+	template<typename T>
+	inline bool AE_CALL operator!=(const T* lhs, const RefPtr<T>& rhs) {
+		return rhs != lhs;
+	}
+
+	template<typename T>
+	inline bool AE_CALL operator!=(const T& lhs, const RefPtr<T>& rhs) {
+		return rhs != &lhs;
+	}
 }

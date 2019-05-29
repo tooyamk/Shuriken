@@ -1,4 +1,5 @@
 #include "Program.h"
+#include "BaseTexture.h"
 #include "Graphics.h"
 #include "ConstantBuffer.h"
 #include "IndexBuffer.h"
@@ -240,21 +241,22 @@ namespace aurora::modules::graphics::win_glew {
 					{
 						if (auto p0 = paramFactory->get(layout.names[0], ShaderParameterType::TEXTURE); p0) {
 							if (auto data = p0->getData(); data && g == ((ITextureResource*)data)->getGraphics()) {
-								auto tex = *(GLuint*)((ITextureResource*)data)->getNativeResource();
-								auto idx = texIndex++;
+								if (auto native = (GLuint*)((ITextureViewBase*)data)->getNativeView(); native) {
+									auto idx = texIndex++;
 
-								GLuint sampler = 0;
-								if (auto p1 = paramFactory->get(layout.names[1], ShaderParameterType::SAMPLER); p1) {
-									if (auto data = p1->getData(); data && g == ((ISampler*)data)->getGraphics()) {
-										((Sampler*)data)->update();
-										sampler = ((Sampler*)data)->getInternalSampler();
+									GLuint sampler = 0;
+									if (auto p1 = paramFactory->get(layout.names[1], ShaderParameterType::SAMPLER); p1) {
+										if (auto data = p1->getData(); data && g == ((ISampler*)data)->getGraphics()) {
+											((Sampler*)data)->update();
+											sampler = ((Sampler*)data)->getInternalSampler();
+										}
 									}
-								}
 
-								glActiveTexture(GL_TEXTURE0 + idx);
-								glBindTexture(GL_TEXTURE_2D, tex);
-								glBindSampler(idx, sampler);
-								glUniform1i(layout.location, idx);
+									glActiveTexture(GL_TEXTURE0 + idx);
+									glBindTexture(GL_TEXTURE_2D, *native);
+									glBindSampler(idx, sampler);
+									glUniform1i(layout.location, idx);
+								}
 							}
 						}
 

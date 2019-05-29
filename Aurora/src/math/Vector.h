@@ -10,6 +10,9 @@ namespace aurora {
 		using Vec = Vector<N, T>;
 		using Data = T[N];
 
+		template<ui32 COUNT>
+		using SLICE_TYPE = T[COUNT];
+
 		Vec() {
 			memset(this, 0, sizeof(T) * N);
 		}
@@ -251,6 +254,16 @@ namespace aurora {
 				if (max < data[i]) max = data[i];
 			}
 			return max;
+		}
+
+		template<ui32 COUNT>
+		inline SLICE_TYPE<COUNT>& AE_CALL slice() const {
+			return (SLICE_TYPE<COUNT>&)data;
+		}
+
+		template<ui32 COUNT>
+		inline SLICE_TYPE<COUNT>& AE_CALL slice(ui32 start) const {
+			return (SLICE_TYPE<COUNT>&)*(data + start);
 		}
 
 		template<typename Ret = T>

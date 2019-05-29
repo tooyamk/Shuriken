@@ -23,6 +23,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return &_baseTexRes;
 	}
 
+	ui16 Texture1DResource::getPerPixelByteSize() const {
+		return _baseTexRes.perPixelSize;
+	}
+
 	ui32 Texture1DResource::getArraySize() const {
 		return _baseTexRes.arraySize;
 	}
@@ -67,5 +71,9 @@ namespace aurora::modules::graphics::win_d3d11 {
 		box.back = 1;
 
 		return _baseTexRes.update(*_graphics.get<Graphics>(), arraySlice, mipSlice, box, data);
+	}
+
+	bool Texture1DResource::copyFrom(ui32 arraySlice, ui32 mipSlice, const Box1ui32& range, const IPixelBuffer* pixelBuffer) {
+		return false;
 	}
 }
