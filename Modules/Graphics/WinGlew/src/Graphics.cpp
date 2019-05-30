@@ -143,7 +143,7 @@ namespace aurora::modules::graphics::win_glew {
 
 		_internalFeatures.maxAnisotropy = 1.f;
 		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &_internalFeatures.maxAnisotropy);
-		_internalFeatures.supportTexStorage = false;// isGreatThanVersion(4, 2);
+		_internalFeatures.supportTexStorage = isGreatThanVersion(4, 2);
 
 		_deviceFeatures.supportSampler = isGreatThanVersion(3, 3);
 		_deviceFeatures.supportTextureView = isGreatThanVersion(4, 3);

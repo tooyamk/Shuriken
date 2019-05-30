@@ -1,6 +1,7 @@
 #include "TextureView.h"
 #include "BaseTextureResource.h"
 #include "Graphics.h"
+#include <algorithm>
 
 namespace aurora::modules::graphics::win_d3d11 {
 	TextureView::TextureView(Graphics& graphics, bool internalView) : ITextureView(graphics),
@@ -44,8 +45,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_arraySize = arraySize;
 
 		if (res && res->getGraphics() == _graphics.get()) {
-			auto native = (BaseTextureResource*)res->getNativeResource();
-			if (native && native->handle && (native->bindType & D3D11_BIND_SHADER_RESOURCE) && mipBegin < native->mipLevels && arrayBegin <= native->arraySize) {
+			if (auto native = (BaseTextureResource*)res->getNativeResource(); native && native->handle && (native->bindType & D3D11_BIND_SHADER_RESOURCE) && mipBegin < native->mipLevels && arrayBegin < std::max<ui32>(native->arraySize, 1)) {
 				auto lastMipLevels = native->mipLevels - mipBegin;
 				auto createMipLevels = mipLevels > lastMipLevels ? lastMipLevels : mipLevels;
 
@@ -60,7 +60,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 				switch (res->getType()) {
 				case TextureType::TEX1D:
 				{
-					if (arraySize) {
+					if (arraySize && native->arraySize) {
 						desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE1DARRAY;
 						desc.Texture1DArray.MostDetailedMip = mipBegin;
 						desc.Texture1DArray.MipLevels = createMipLevels;
@@ -76,7 +76,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 				}
 				case TextureType::TEX2D:
 				{
-					if (arraySize) {
+					if (arraySize && native->arraySize) {
 						desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
 						desc.Texture2DArray.MostDetailedMip = mipBegin;
 						desc.Texture2DArray.MipLevels = createMipLevels;
@@ -133,7 +133,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			_res = res;
 			if (res) {
 				auto native = (BaseTextureResource*)res->getNativeResource();
-				native->addView(*this, std::bind(&TextureView::_onResRecreated, this));
+				native->addView(*this);
 			}
 		}
 	}
@@ -149,9 +149,5 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_arrayBegin = 0;
 		_arraySize = 0;
 		_createdArraySize = 0;
-	}
-
-	void TextureView::_onResRecreated() {
-		create(_res.get(), _mipBegin, _mipLevels, _arrayBegin, _arraySize);
 	}
 }

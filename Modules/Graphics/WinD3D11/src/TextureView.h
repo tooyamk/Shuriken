@@ -18,6 +18,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		void AE_CALL release();
 
+		inline void AE_CALL onResRecreated() {
+			create(_res.get(), _mipBegin, _mipLevels, _arrayBegin, _arraySize);
+		}
+
 	protected:
 		bool _internalView;
 		ui32 _mipBegin;
@@ -32,6 +36,5 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		bool AE_CALL _createDone(bool succeeded, ITextureResource* res);
 		void AE_CALL _setRes(ITextureResource* res);
-		void AE_CALL _onResRecreated();
 	};
 }

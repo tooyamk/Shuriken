@@ -1,5 +1,6 @@
 #include "BaseTextureResource.h"
 #include "Graphics.h"
+#include "TextureView.h"
 #include "base/Image.h"
 
 namespace aurora::modules::graphics::win_d3d11 {
@@ -207,7 +208,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	bool BaseTextureResource::_createDone(bool succeeded) {
-		for (auto& itr : views) itr.second();
+		for (auto& itr : views) itr->onResRecreated();
 		return succeeded;
 	}
 
@@ -295,11 +296,11 @@ namespace aurora::modules::graphics::win_d3d11 {
 		mappedRes.clear();
 	}
 
-	void BaseTextureResource::addView(ITextureView& view, const std::function<void()>& onRecreated) {
-		if (auto itr = views.find(&view); itr == views.end()) views.emplace(&view, onRecreated);
+	void BaseTextureResource::addView(TextureView& view) {
+		if (auto itr = views.find(&view); itr == views.end()) views.emplace(&view);
 	}
 
-	void BaseTextureResource::removeView(ITextureView& view) {
+	void BaseTextureResource::removeView(TextureView& view) {
 		if (auto itr = views.find(&view); itr != views.end()) views.erase(itr);
 	}
 }

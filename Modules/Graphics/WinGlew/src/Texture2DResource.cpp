@@ -26,7 +26,7 @@ namespace aurora::modules::graphics::win_glew {
 	}
 
 	ui32 Texture2DResource::getArraySize() const {
-		return _baseTex.arraySize;
+		return _baseTex.isArray ? _baseTex.arraySize : 0;
 	}
 
 	ui32 Texture2DResource::getMipLevels() const {

@@ -1,8 +1,12 @@
 #pragma once
 
 #include "BaseResource.h"
+#include <unordered_set>
 
 namespace aurora::modules::graphics::win_d3d11 {
+	class TextureView;
+
+
 	class BaseTextureResource : public BaseResource {
 	public:
 		BaseTextureResource(UINT resType);
@@ -16,8 +20,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 		ui32 AE_CALL write(ui32 arraySlice, ui32 mipSlice, ui32 offset, const void* data, ui32 length);
 		bool AE_CALL update(Graphics& graphics, ui32 arraySlice, ui32 mipSlice, const D3D11_BOX& range, const void* data);
 		void AE_CALL releaseTex(Graphics& graphics);
-		void AE_CALL addView(ITextureView& view, const std::function<void()>& onRecreated);
-		void AE_CALL removeView(ITextureView& view);
+		void AE_CALL addView(TextureView& view);
+		void AE_CALL removeView(TextureView& view);
 
 		inline static constexpr UINT calcSubresource(UINT mipSlice, UINT arraySlice, UINT mipLevels) {
 			return mipSlice + arraySlice * mipLevels;
@@ -44,7 +48,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		std::vector<MappedRes> mappedRes;
 
-		std::unordered_map<ITextureView*, std::function<void()>> views;
+		std::unordered_set<TextureView*> views;
 
 	private:
 		HRESULT AE_CALL _createInternalTexture(Graphics& graphics, TextureType texType, const TexDesc& desc, const D3D11_SUBRESOURCE_DATA* pInitialData);

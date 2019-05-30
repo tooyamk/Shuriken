@@ -18,6 +18,10 @@ namespace aurora::modules::graphics::win_glew {
 
 		void AE_CALL release();
 
+		inline void AE_CALL onResRecreated() {
+			create(_res.get(), _mipBegin, _mipLevels, _arrayBegin, _arraySize);
+		}
+
 	protected:
 		ui32 _mipBegin;
 		ui32 _mipLevels;
@@ -31,6 +35,5 @@ namespace aurora::modules::graphics::win_glew {
 
 		bool AE_CALL _createDone(bool succeeded, ITextureResource* res);
 		void AE_CALL _setRes(ITextureResource* res);
-		void AE_CALL _onResRecreated();
 	};
 }

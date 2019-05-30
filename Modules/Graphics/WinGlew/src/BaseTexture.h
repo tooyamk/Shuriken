@@ -1,9 +1,11 @@
 #pragma once
 
 #include "Base.h"
+#include <unordered_set>
 
 namespace aurora::modules::graphics::win_glew {
 	class Graphics;
+	class TextureView;
 
 	class AE_MODULE_DLL BaseTexture {
 	public:
@@ -20,13 +22,16 @@ namespace aurora::modules::graphics::win_glew {
 		bool AE_CALL copyFrom(Graphics& graphics, ui32 arraySlice, ui32 mipSlice, const Box3ui32& range, const IPixelBuffer* pixelBuffer);
 		void AE_CALL flush();
 		void AE_CALL releaseTex();
-		void AE_CALL addView(ITextureView& view, const std::function<void()>& onRecreated);
-		void AE_CALL removeView(ITextureView& view);
+		void AE_CALL addView(TextureView& view);
+		void AE_CALL removeView(TextureView& view);
 		void AE_CALL waitServerSync();
 		void AE_CALL releaseSync();
 
 		bool dirty;
+		bool isArray;
 		TextureType texType;
+		Usage resUsage;
+		Usage mapUsage;
 		ui16 perPixelSize;
 		Vec3ui32 texSize;
 		ui32 arraySize;
@@ -39,15 +44,13 @@ namespace aurora::modules::graphics::win_glew {
 			GLenum type;
 		} glTexInfo;
 
-		Usage resUsage;
-		Usage mapUsage;
 		ui32 size;
 		GLuint handle;
 		void* mapData;
 
 		//TextureFormat format;
 		//GLenum internalFormat;
-		std::unordered_map<ITextureView*, std::function<void()>> views;
+		std::unordered_set<TextureView*> views;
 
 		GLsync sync;
 

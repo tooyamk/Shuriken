@@ -44,7 +44,7 @@ namespace aurora::modules::graphics::win_glew {
 
 		if (res && res->getGraphics() == _graphics) {
 			auto native = (const BaseTexture*)res->getNativeResource();
-			if (native && native->handle && mipBegin < native->mipLevels && arrayBegin <= native->arraySize) {
+			if (native && native->handle && mipBegin < native->mipLevels && arrayBegin < native->arraySize) {
 				auto lastMipLevels = native->mipLevels - mipBegin;
 				auto createMipLevels = mipLevels > lastMipLevels ? lastMipLevels : mipLevels;
 
@@ -55,10 +55,10 @@ namespace aurora::modules::graphics::win_glew {
 				GLenum target = 0;
 				switch (res->getType()) {
 				case TextureType::TEX1D:
-					target = arraySize ? GL_TEXTURE_1D_ARRAY : GL_TEXTURE_1D;
+					target = arraySize && native->isArray ? GL_TEXTURE_1D_ARRAY : GL_TEXTURE_1D;
 					break;
 				case TextureType::TEX2D:
-					target = arraySize ? GL_TEXTURE_2D_ARRAY : GL_TEXTURE_2D;
+					target = arraySize && native->isArray ? GL_TEXTURE_2D_ARRAY : GL_TEXTURE_2D;
 					break;
 				case TextureType::TEX3D:
 					target = GL_TEXTURE_3D;
@@ -70,7 +70,7 @@ namespace aurora::modules::graphics::win_glew {
 				if (!target) return _createDone(false, res);
 
 				glGenTextures(1, &_handle);
-				glTextureView(_handle, target, native->handle, 1, mipBegin, createMipLevels, arrayBegin, createArraySize ? createArraySize : 1);
+				glTextureView(_handle, target, native->handle, native->glTexInfo.internalFormat, mipBegin, createMipLevels, arrayBegin, createArraySize ? createArraySize : 1);
 
 				_createdMipLevels = createMipLevels;
 				_createdArraySize = createArraySize;
@@ -96,7 +96,7 @@ namespace aurora::modules::graphics::win_glew {
 			_res = res;
 			if (res) {
 				auto native = (BaseTexture*)res->getNativeResource();
-				native->addView(*this, std::bind(&TextureView::_onResRecreated, this));
+				native->addView(*this);
 			}
 		}
 	}
@@ -106,15 +106,12 @@ namespace aurora::modules::graphics::win_glew {
 			glDeleteTextures(1, &_handle);
 			_handle = 0;
 		}
+
 		_mipBegin = 0;
 		_mipLevels = 0;
 		_createdMipLevels = 0;
 		_arrayBegin = 0;
 		_arraySize = 0;
 		_createdArraySize = 0;
-	}
-
-	void TextureView::_onResRecreated() {
-		create(_res.get(), _mipBegin, _mipLevels, _arrayBegin, _arraySize);
 	}
 }
