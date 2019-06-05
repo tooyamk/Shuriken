@@ -192,6 +192,7 @@
     <ClInclude Include="src\base\Args.h" />
     <ClInclude Include="src\base\ByteArray.h" />
     <ClInclude Include="src\base\Image.h" />
+    <ClInclude Include="src\base\SerializableObject.h" />
     <ClInclude Include="src\base\String.h" />
     <ClInclude Include="src\base\STList.h" />
     <ClInclude Include="src\base\Lock.h" />
@@ -236,6 +237,7 @@
     <ClCompile Include="src\base\DynamicLib.cpp" />
     <ClCompile Include="src\base\Image.cpp" />
     <ClCompile Include="src\base\Monitor.cpp" />
+    <ClCompile Include="src\base\SerializableObject.cpp" />
     <ClCompile Include="src\base\String.cpp" />
     <ClCompile Include="src\math\Math.cpp" />
     <ClCompile Include="src\math\Matrix34.cpp" />

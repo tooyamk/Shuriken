@@ -12,7 +12,7 @@ namespace aurora {
 		bytes._data = nullptr;
 	}
 
-	ByteArray::ByteArray(ui32 capacity, ui32 length) :
+	ByteArray::ByteArray(size_t capacity, size_t length) :
 		_endian(NATIVE_ENDIAN),
 		_needReverse(false),
 		_capacity(capacity),
@@ -22,7 +22,7 @@ namespace aurora {
 		_data(capacity > 0 ? new i8[capacity] : nullptr) {
 	}
 
-	ByteArray::ByteArray(i8* bytes, ui32 size, ExtMemMode extMode) :
+	ByteArray::ByteArray(i8* bytes, size_t size, ExtMemMode extMode) :
 		_endian(NATIVE_ENDIAN),
 		_needReverse(false),
 		_capacity(size),
@@ -41,7 +41,7 @@ namespace aurora {
 		}
 	}
 
-	ByteArray::ByteArray(i8* bytes, ui32 length, ui32 capacity, ExtMemMode extMode) :
+	ByteArray::ByteArray(i8* bytes, size_t length, size_t capacity, ExtMemMode extMode) :
 		_endian(NATIVE_ENDIAN),
 		_needReverse(false),
 		_capacity(capacity),
@@ -87,7 +87,7 @@ namespace aurora {
 		}
 	}
 
-	void ByteArray::_resize(ui32 len) {
+	void ByteArray::_resize(size_t len) {
 		i8* newBytes = len > 0 ? new i8[len] : nullptr;
 
 		memcpy(newBytes, _data, len > _capacity ? _capacity : len);
@@ -207,8 +207,8 @@ namespace aurora {
 		}
 	}
 
-	ui32 ByteArray::readBytes(i8* bytes, ui32 offset, ui32 length) {
-		ui32 len = _length - _position;
+	size_t ByteArray::readBytes(i8* bytes, size_t offset, size_t length) {
+		size_t len = _length - _position;
 		if (length > len) length = len;
 
 		memcpy(bytes + offset, _data + _position, length);
@@ -217,11 +217,11 @@ namespace aurora {
 		return length;
 	}
 
-	ui32 ByteArray::readBytes(ByteArray& ba, ui32 offset, ui32 length) {
-		ui32 len = _length - _position;
+	size_t ByteArray::readBytes(ByteArray& ba, size_t offset, size_t length) {
+		size_t len = _length - _position;
 		if (length > len) length = len;
 
-		ui32 pos = ba.getPosition();
+		auto pos = ba.getPosition();
 		ba.setPosition(offset);
 		ba.writeBytes((i8*)_data, _position, length);
 		ba.setPosition(pos);
@@ -230,7 +230,7 @@ namespace aurora {
 		return length;
 	}
 
-	ui32 ByteArray::writeBytes(const ByteArray& ba, ui32 offset, ui32 length) {
+	size_t ByteArray::writeBytes(const ByteArray& ba, size_t offset, size_t length) {
 		if (!length) return 0;
 		auto len = ba.getLength();
 		if (len <= offset) return 0;
@@ -246,7 +246,7 @@ namespace aurora {
 		return length;
 	}
 
-	ui32 ByteArray::readStringLength(ui32 begin, ui32 size, bool chechBOM) const {
+	size_t ByteArray::readStringLength(size_t begin, size_t size, bool chechBOM) const {
 		begin += _bomOffset(begin);
 		if (_length <= begin) return 0;
 
@@ -260,8 +260,8 @@ namespace aurora {
 		return size;
 	}
 
-	void ByteArray::writeString(const i8* str, ui32 size) {
-		for (ui32 i = 0; i < size; ++i) {
+	void ByteArray::writeString(const i8* str, size_t size) {
+		for (size_t i = 0; i < size; ++i) {
 			if (str[i] == '\0') {
 				size = i;
 
@@ -276,13 +276,13 @@ namespace aurora {
 		_data[_position++] = '\0';
 	}
 
-	void ByteArray::popFront(ui32 len) {
+	void ByteArray::popFront(size_t len) {
 		if (_length <= len) {
 			_length = 0;
 			_position = 0;
 		} else {
 			_length -= len;
-			for (ui32 i = 0; i < _length; ++i) _data[i] = _data[len + i];
+			for (size_t i = 0; i < _length; ++i) _data[i] = _data[len + i];
 
 			if (_position <= len) {
 				_position = 0;
@@ -292,7 +292,7 @@ namespace aurora {
 		}
 	}
 
-	void ByteArray::popBack(ui32 len) {
+	void ByteArray::popBack(size_t len) {
 		if (_length < len) {
 			_length = 0;
 			_position = 0;
@@ -302,22 +302,25 @@ namespace aurora {
 		}
 	}
 
-	void ByteArray::insert(ui32 len) {
+	void ByteArray::insert(size_t len) {
 		if (len > 0) {
-			ui32 oldLen = _length;
+			auto oldLen = _length;
 
 			_checkLength(len);
 
-			for (i64 i = oldLen - 1; i >= _position; --i) _data[i + len] = _data[i];
-
-			_position += len;
+			if (oldLen) {
+				for (size_t i = oldLen - 1; ; --i) {
+					_data[i + len] = _data[i];
+					if (i == _position) break;
+				}
+			}
 		}
 	}
 
-	bool ByteArray::isEqual(const i8* data1, ui32 data1Len, const i8* data2, ui32 data2Len) {
+	bool ByteArray::isEqual(const i8* data1, size_t data1Len, const i8* data2, size_t data2Len) {
 		if (data1Len != data2Len) return false;
 
-		for (ui32 i = 0; i < data1Len; ++i) {
+		for (size_t i = 0; i < data1Len; ++i) {
 			if (data1[i] != data2[i]) return false;
 		}
 

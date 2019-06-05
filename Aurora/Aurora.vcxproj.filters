@@ -168,6 +168,9 @@
     <ClInclude Include="src\modules\graphics\GraphicsUtils.h">
       <Filter>src\modules\graphics</Filter>
     </ClInclude>
+    <ClInclude Include="src\base\SerializableObject.h">
+      <Filter>src\base</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\math\Matrix44.cpp">
@@ -253,6 +256,9 @@
     </ClCompile>
     <ClCompile Include="src\modules\graphics\GraphicsUtils.cpp">
       <Filter>src\modules\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\SerializableObject.cpp">
+      <Filter>src\base</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

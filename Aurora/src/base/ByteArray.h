@@ -2,6 +2,7 @@
 
 #include "base/LowLevel.h"
 #include <algorithm>
+#include <string_view>
 
 namespace aurora {
 	class AE_DLL ByteArray {
@@ -21,9 +22,9 @@ namespace aurora {
 		ByteArray(const ByteArray&) = delete;
 		ByteArray& operator=(const ByteArray&) = delete;
 		ByteArray(ByteArray&& bytes);
-		ByteArray(ui32 capacity = 0, ui32 length = 0);
-		ByteArray(i8* bytes, ui32 size, ExtMemMode extMode = ExtMemMode::EXT);
-		ByteArray(i8* bytes, ui32 length, ui32 capacity, ExtMemMode extMode = ExtMemMode::EXT);
+		ByteArray(size_t capacity = 0, size_t length = 0);
+		ByteArray(i8* bytes, size_t size, ExtMemMode extMode = ExtMemMode::EXT);
+		ByteArray(i8* bytes, size_t length, size_t capacity, ExtMemMode extMode = ExtMemMode::EXT);
 		ByteArray& AE_CALL operator=(ByteArray&& value);
 		~ByteArray();
 
@@ -41,21 +42,21 @@ namespace aurora {
 
 		inline const i8* AE_CALL getBytes() const;
 
-		inline ByteArray AE_CALL slice(ui32 start, ui32 length) const;
+		inline ByteArray AE_CALL slice(size_t start, size_t length) const;
 
-		inline ui32 AE_CALL getCapacity() const;
-		inline void AE_CALL setCapacity(ui32 capacity);
+		inline size_t AE_CALL getCapacity() const;
+		inline void AE_CALL setCapacity(size_t capacity);
 
-		inline ui32 AE_CALL getLength() const;
-		inline void AE_CALL setLength(ui32 len);
+		inline size_t AE_CALL getLength() const;
+		inline void AE_CALL setLength(size_t len);
 
-		inline ui32 AE_CALL getPosition() const;
-		inline void AE_CALL setPosition(ui32 pos);
+		inline size_t AE_CALL getPosition() const;
+		inline void AE_CALL setPosition(size_t pos);
 
 		inline void AE_CALL seekBegin();
 		inline void AE_CALL seekEnd();
 
-		inline ui32 AE_CALL getBytesAvailable() const;
+		inline size_t AE_CALL getBytesAvailable() const;
 
 		inline i8 AE_CALL readInt8();
 		inline ui8 AE_CALL readUInt8();
@@ -89,17 +90,17 @@ namespace aurora {
 		void AE_CALL writeInt(ui8 numBytes, i64 value);
 		inline void AE_CALL writeUInt(ui8 numBytes, ui64 value);
 
-		ui32 AE_CALL readBytes(i8* bytes, ui32 offset = 0, ui32 length = (std::numeric_limits<ui32>::max)());
-		ui32 AE_CALL readBytes(ByteArray& ba, ui32 offset = 0, ui32 length = (std::numeric_limits<ui32>::max)());
-		inline void AE_CALL writeBytes(const i8* bytes, ui32 offset, ui32 length);
-		ui32 AE_CALL writeBytes(const ByteArray& ba, ui32 offset = 0, ui32 length = (std::numeric_limits<ui32>::max)());
+		size_t AE_CALL readBytes(i8* bytes, size_t offset = 0, size_t length = (std::numeric_limits<size_t>::max)());
+		size_t AE_CALL readBytes(ByteArray& ba, size_t offset = 0, size_t length = (std::numeric_limits<size_t>::max)());
+		inline void AE_CALL writeBytes(const i8* bytes, size_t offset, size_t length);
+		size_t AE_CALL writeBytes(const ByteArray& ba, size_t offset = 0, size_t length = (std::numeric_limits<size_t>::max)());
 
-		ui32 AE_CALL readStringLength(ui32 begin, ui32 size, bool chechBOM = false) const;
-		inline ui32 AE_CALL readStringLength(ui32 size, bool chechBOM = false) const;
+		size_t AE_CALL readStringLength(size_t begin, size_t size, bool chechBOM = false) const;
+		inline size_t AE_CALL readStringLength(size_t size, bool chechBOM = false) const;
 		inline std::string AE_CALL readString(bool chechBOM = false);
 		inline std::string_view AE_CALL readStringView(bool chechBOM = false);
 		inline void AE_CALL writeString(const std::string& str);
-		void AE_CALL writeString(const i8* str, ui32 size);
+		void AE_CALL writeString(const i8* str, size_t size);
 
 		inline bool AE_CALL readBool();
 		inline void AE_CALL writeBool(bool b);
@@ -110,12 +111,12 @@ namespace aurora {
 		inline void AE_CALL readTwoInt12(i16& value1, i16& value2);
 		inline void AE_CALL writeTwoInt12(i16 value1, i16 value2);
 
-		void AE_CALL popFront(ui32 len);
-		void AE_CALL popBack(ui32 len);
-		void AE_CALL insert(ui32 len);
+		void AE_CALL popFront(size_t len);
+		void AE_CALL popBack(size_t len);
+		void AE_CALL insert(size_t len);
 
 		inline static bool isEqual(const ByteArray& data1, const ByteArray& data2);
-		static bool isEqual(const i8* data1, ui32 data1Len, const i8* data2, ui32 data2Len);
+		static bool isEqual(const i8* data1, size_t data1Len, const i8* data2, size_t data2Len);
 
 	private:
 		enum class Mode : ui8 {
@@ -139,9 +140,9 @@ namespace aurora {
 		Mode _mode;
 		bool _needReverse;
 		i8* _data;
-		ui32 _position;
-		ui32 _length;
-		ui32 _capacity;
+		size_t _position;
+		size_t _length;
+		size_t _capacity;
 
 		template<typename K>
 		K AE_CALL _read() {
@@ -162,11 +163,11 @@ namespace aurora {
 		inline void AE_CALL _read(i8* p, ui32 len);
 		inline void AE_CALL _write(const i8* p, ui32 len);
 
-		void AE_CALL _resize(ui32 len);
-		inline void AE_CALL _dilatation(ui32 size);
-		inline void AE_CALL _checkLength(ui32 len);
+		void AE_CALL _resize(size_t len);
+		inline void AE_CALL _dilatation(size_t size);
+		inline void AE_CALL _checkLength(size_t len);
 
-		inline ui8 AE_CALL _bomOffset(ui32 pos) const;
+		inline ui8 AE_CALL _bomOffset(size_t pos) const;
 	};
 }
 

@@ -1,8 +1,8 @@
 #include "String.h"
 
 namespace aurora {
-	void String::calcUnicodeToUtf8Length(const wchar_t* in, ui32 inLen, ui32& unicodeLen, ui32& utf8Len) {
-		ui32 s = 0, d = 0;
+	void String::calcUnicodeToUtf8Length(const wchar_t* in, size_t inLen, size_t& unicodeLen, size_t& utf8Len) {
+		size_t s = 0, d = 0;
 		if (in) {
 			while (s < inLen) {
 				if (wchar_t c = in[s++]; c == 0) {
@@ -27,10 +27,10 @@ namespace aurora {
 		utf8Len = d;
 	}
 
-	std::string::size_type String::UnicodeToUtf8(const wchar_t * in, ui32 inLen, char* out, ui32 outLen) {
+	std::string::size_type String::UnicodeToUtf8(const wchar_t * in, size_t inLen, char* out, size_t outLen) {
 		if (!in || !out) return std::string::npos;
 
-		ui32 unicodeLen, utf8Len;
+		size_t unicodeLen, utf8Len;
 		calcUnicodeToUtf8Length(in, inLen, unicodeLen, utf8Len);
 		if (outLen < unicodeLen) return -1;
 
@@ -38,7 +38,7 @@ namespace aurora {
 	}
 
 	std::string String::UnicodeToUtf8(const std::wstring& in) {
-		ui32 unicodeLen, utf8Len;
+		size_t unicodeLen, utf8Len;
 		calcUnicodeToUtf8Length(in.c_str(), in.size(), unicodeLen, utf8Len);
 		++utf8Len;
 		auto out = new i8[utf8Len];
@@ -51,8 +51,8 @@ namespace aurora {
 		return std::move(s);
 	}
 
-	void String::calcUtf8ToUnicodeLength(const i8* in, ui32 inLen, ui32& utf8Len, ui32& unicodeLen) {
-		ui32 s = 0, d = 0;
+	void String::calcUtf8ToUnicodeLength(const i8* in, size_t inLen, size_t& utf8Len, size_t& unicodeLen) {
+		size_t s = 0, d = 0;
 		if (in) {
 			for (; s < inLen;) {
 				if (ui8 c = in[s]; c == 0) {
@@ -76,10 +76,10 @@ namespace aurora {
 		unicodeLen = d;
 	}
 
-	std::string::size_type String::Utf8ToUnicode(const i8* in, ui32 inLen, wchar_t* out, ui32 outLen) {
+	std::string::size_type String::Utf8ToUnicode(const i8* in, size_t inLen, wchar_t* out, size_t outLen) {
 		if (!in || !out) return std::string::npos;
 
-		ui32 utf8Len, unicodeLen;
+		size_t utf8Len, unicodeLen;
 		calcUtf8ToUnicodeLength(in, inLen, utf8Len, unicodeLen);
 		if (outLen < unicodeLen) return -1;
 
@@ -87,7 +87,7 @@ namespace aurora {
 	}
 
 	std::wstring String::Utf8ToUnicode(const std::string& in) {
-		ui32 utf8Len, unicodeLen;
+		size_t utf8Len, unicodeLen;
 		calcUtf8ToUnicodeLength(in.c_str(), in.size(), utf8Len, unicodeLen);
 		++unicodeLen;
 		auto out = new wchar_t[unicodeLen];
@@ -100,10 +100,10 @@ namespace aurora {
 		return std::move(s);
 	}
 
-	std::string::size_type String::Utf8ToUnicode(const i8* in, ui32 inLen, wchar_t*& out) {
+	std::string::size_type String::Utf8ToUnicode(const i8* in, size_t inLen, wchar_t*& out) {
 		if (!in) return std::string::npos;
 
-		ui32 utf8Len, unicodeLen;
+		size_t utf8Len, unicodeLen;
 		calcUtf8ToUnicodeLength(in, inLen, utf8Len, unicodeLen);
 		++unicodeLen;
 		out = new wchar_t[unicodeLen];
@@ -113,8 +113,8 @@ namespace aurora {
 		return len;
 	}
 
-	ui32 String::_UnicodeToUtf8(const wchar_t* in, ui32 inLen, char* out) {
-		ui32 s = 0, d = 0;
+	size_t String::_UnicodeToUtf8(const wchar_t* in, size_t inLen, char* out) {
+		size_t s = 0, d = 0;
 		while (s < inLen) {
 			if (wchar_t c = in[s++]; c < 0x80) {  //
 				//length = 1;
@@ -140,8 +140,8 @@ namespace aurora {
 		return d;
 	}
 
-	ui32 String::_Utf8ToUnicode(const i8* in, ui32 inLen, wchar_t* out) {
-		ui32 s = 0, d = 0;
+	size_t String::_Utf8ToUnicode(const i8* in, size_t inLen, wchar_t* out) {
+		size_t s = 0, d = 0;
 		while (s < inLen) {
 			if (ui8 c = in[s]; (c & 0x80) == 0) {
 				out[d++] = in[s++];
@@ -192,27 +192,27 @@ namespace aurora {
 		}
 	}
 
-	std::string String::toString(const ui8* value, ui32 size) {
+	std::string String::toString(const ui8* value, size_t size) {
 		std::string str(size << 1, 0);
 		i8 buf[3];
-		for (ui32 i = 0; i < size; ++i) {
+		for (size_t i = 0; i < size; ++i) {
 			snprintf(buf, sizeof(buf), "%02x", value[i]);
-			ui32 idx = i << 1;
+			size_t idx = i << 1;
 			str[idx++] = buf[0];
 			str[idx] = buf[1];
 		}
 		return std::move(str);
 	}
 
-	std::string::size_type String::findFirst(const i8* src, ui32 srcSize, const i8* value, ui32 valueSize) {
+	std::string::size_type String::findFirst(const i8* src, size_t srcSize, const i8* value, size_t valueSize) {
 		if (!value || !valueSize) return std::string::npos;
 
 		if (valueSize == std::string::npos) valueSize = strlen(value);
 
-		for (ui32 i = 0; i < srcSize; ++i) {
+		for (size_t i = 0; i < srcSize; ++i) {
 			if (src[i] == value[0]) {
 				bool equal = true;
-				for (ui32 j = 1; j < valueSize; ++j) {
+				for (size_t j = 1; j < valueSize; ++j) {
 					if (src[i + j] != value[j]) {
 						equal = false;
 						break;
@@ -227,7 +227,7 @@ namespace aurora {
 	bool String::isEqual(const i8* str1, const i8* str2) {
 		if (str1 == str2) return true;
 		
-		ui32 i = 0;
+		size_t i = 0;
 		do {
 			if (str1[i] != str2[i]) return false;
 			if (str1[i] == 0) return true;

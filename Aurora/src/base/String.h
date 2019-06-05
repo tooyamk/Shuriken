@@ -2,17 +2,18 @@
 
 #include "base/LowLevel.h"
 #include <regex>
+#include <string_view>
 
 namespace aurora {
 	class AE_DLL String {
 	public:
-		static void AE_CALL calcUnicodeToUtf8Length(const wchar_t* in, ui32 inLen, ui32& unicodeLen, ui32& utf8Len);
-		static std::string::size_type AE_CALL UnicodeToUtf8(const wchar_t* in, ui32 inLen, i8* out, ui32 outLen);
+		static void AE_CALL calcUnicodeToUtf8Length(const wchar_t* in, size_t inLen, size_t& unicodeLen, size_t& utf8Len);
+		static std::string::size_type AE_CALL UnicodeToUtf8(const wchar_t* in, size_t inLen, i8* out, size_t outLen);
 		static std::string AE_CALL UnicodeToUtf8(const std::wstring& in);
-		static void AE_CALL calcUtf8ToUnicodeLength(const i8* in, ui32 inLen, ui32& utf8Len, ui32& unicodeLen);
-		static std::string::size_type AE_CALL Utf8ToUnicode(const i8* in, ui32 inLen, wchar_t* out, ui32 outLen);
+		static void AE_CALL calcUtf8ToUnicodeLength(const i8* in, size_t inLen, size_t& utf8Len, size_t& unicodeLen);
+		static std::string::size_type AE_CALL Utf8ToUnicode(const i8* in, size_t inLen, wchar_t* out, size_t outLen);
 		static std::wstring AE_CALL Utf8ToUnicode(const std::string& in);
-		static std::string::size_type AE_CALL Utf8ToUnicode(const i8* in, ui32 inLen, wchar_t*& out);
+		static std::string::size_type AE_CALL Utf8ToUnicode(const i8* in, size_t inLen, wchar_t*& out);
 
 		inline static void AE_CALL split(const std::string& input, const std::string& separator, std::vector<std::string>& dst) {
 			split(input, std::regex("\\" + separator), dst);
@@ -36,16 +37,54 @@ namespace aurora {
 			return std::move(std::string(buf, rst.ec == std::errc() ? rst.ptr - buf : 0));
 		}
 
-		static std::string AE_CALL toString(const ui8* value, ui32 size);
+		static std::string AE_CALL toString(const ui8* value, size_t size);
 
-		inline static std::string::size_type AE_CALL findFirst(const i8* src, ui32 srcSize, i8 c) {
-			for (ui32 i = 0; i < srcSize; ++i) {
+		template<typename T,
+		typename = typename std::enable_if_t<std::is_integral_v<T>, T>>
+		inline static T toNumber(const i8* in, size_t size, const i32 base = 10) {
+			T value;
+			return std::from_chars(in, in + size, value, base).ec == std::errc() ? value : 0;
+		}
+
+		template<typename T,
+		typename = typename std::enable_if_t<std::is_integral_v<T>, T>>
+		inline static T toNumber(const std::string& in, const i32 base = 10) {
+			return toNumber<T>(in.c_str(), in.size(), base);
+		}
+
+		template<typename T,
+		typename = typename std::enable_if_t<std::is_integral_v<T>, T>>
+		inline static T toNumber(const std::string_view& in, const i32 base = 10) {
+			return toNumber<T>(in.data(), in.size(), base);
+		}
+
+		template<typename T,
+		typename = typename std::enable_if_t<std::is_floating_point_v<T>, T>>
+		inline static T toNumber(const i8* in, size_t size, std::chars_format fmt = std::chars_format::general) {
+			T value;
+			return std::from_chars(in, in + size, value, fmt).ec == std::errc() ? value : 0.;
+		}
+
+		template<typename T,
+		typename = typename std::enable_if_t<std::is_floating_point_v<T>, T>>
+		inline static T toNumber(const std::string& in, std::chars_format fmt = std::chars_format::general) {
+			return toNumber<T>(in.c_str(), in.size(), fmt);
+		}
+
+		template<typename T,
+		typename = typename std::enable_if_t<std::is_floating_point_v<T>, T>>
+		inline static T toNumber(const std::string_view& in, std::chars_format fmt = std::chars_format::general) {
+			return toNumber<T>(in.data(), in.size(), fmt);
+		}
+
+		inline static std::string::size_type AE_CALL findFirst(const i8* src, size_t srcSize, i8 c) {
+			for (size_t i = 0; i < srcSize; ++i) {
 				if (src[i] == c) return i;
 			}
 			return std::string::npos;
 		}
 
-		static std::string::size_type AE_CALL findFirst(const i8* src, ui32 srcSize, const i8* value, ui32 valueSize);
+		static std::string::size_type AE_CALL findFirst(const i8* src, size_t srcSize, const i8* value, size_t valueSize);
 
 		/*
 		inline static std::string AE_CALL toString(const unsigned char* value, unsigned int size) {
@@ -64,7 +103,7 @@ namespace aurora {
 		static bool AE_CALL isEqual(const i8* str1, const i8* str2);
 
 	private:
-		static ui32 AE_CALL _UnicodeToUtf8(const wchar_t* in, ui32 inLen, i8* out);
-		static ui32 AE_CALL _Utf8ToUnicode(const i8* in, ui32 inLen, wchar_t* out);
+		static size_t AE_CALL _UnicodeToUtf8(const wchar_t* in, size_t inLen, i8* out);
+		static size_t AE_CALL _Utf8ToUnicode(const i8* in, size_t inLen, wchar_t* out);
 	};
 }

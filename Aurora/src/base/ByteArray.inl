@@ -29,38 +29,38 @@ namespace aurora {
 		return _data;
 	}
 
-	inline ByteArray ByteArray::slice(ui32 start, ui32 length) const {
+	inline ByteArray ByteArray::slice(size_t start, size_t length) const {
 		if (start >= _length) {
 			return std::move(ByteArray(nullptr, 0, ExtMemMode::EXT));
 		} else {
-			return std::move(ByteArray(_data + start, std::min<ui32>(length, _length - start), ExtMemMode::EXT));
+			return std::move(ByteArray(_data + start, std::min<size_t>(length, _length - start), ExtMemMode::EXT));
 		}
 	}
 
-	inline ui32 ByteArray::getCapacity() const {
+	inline size_t ByteArray::getCapacity() const {
 		return _capacity;
 	}
 
-	inline void ByteArray::setCapacity(ui32 capacity) {
+	inline void ByteArray::setCapacity(size_t capacity) {
 		if (_capacity != capacity) _resize(capacity);
 	}
 
-	inline ui32 ByteArray::getLength() const {
+	inline size_t ByteArray::getLength() const {
 		return _length;
 	}
 
-	inline void ByteArray::setLength(ui32 len) {
+	inline void ByteArray::setLength(size_t len) {
 		if (len > _capacity) _dilatation(len);
 
 		_length = len;
 		if (_position > _length) _position = _length;
 	}
 
-	inline ui32 ByteArray::getPosition() const {
+	inline size_t ByteArray::getPosition() const {
 		return _position;
 	}
 
-	inline void ByteArray::setPosition(ui32 pos) {
+	inline void ByteArray::setPosition(size_t pos) {
 		if (pos > _length) pos = _length;
 		_position = pos;
 	}
@@ -73,7 +73,7 @@ namespace aurora {
 		_position = _length;
 	}
 
-	inline ui32 ByteArray::getBytesAvailable() const {
+	inline size_t ByteArray::getBytesAvailable() const {
 		return _length - _position;
 	}
 
@@ -161,7 +161,7 @@ namespace aurora {
 		_write((i8*)&value, numBytes > 8 ? 8 : numBytes);
 	}
 
-	inline void ByteArray::writeBytes(const i8* bytes, ui32 offset, ui32 length) {
+	inline void ByteArray::writeBytes(const i8* bytes, size_t offset, size_t length) {
 		if (length > 0) {
 			_checkLength(length);
 
@@ -170,7 +170,7 @@ namespace aurora {
 		}
 	}
 
-	inline ui32 ByteArray::readStringLength(ui32 size, bool chechBOM) const {
+	inline size_t ByteArray::readStringLength(size_t size, bool chechBOM) const {
 		return readStringLength(_position, size, chechBOM);
 	}
 
@@ -253,11 +253,11 @@ namespace aurora {
 		}
 	}
 
-	inline void ByteArray::_dilatation(ui32 size) {
+	inline void ByteArray::_dilatation(size_t size) {
 		_resize(size > 1 ? size + (size >> 1) : size + 1);
 	}
 
-	inline void ByteArray::_checkLength(ui32 len) {
+	inline void ByteArray::_checkLength(size_t len) {
 		len += _position;
 		if (len > _length) {
 			_length = len;
@@ -265,7 +265,7 @@ namespace aurora {
 		}
 	}
 
-	inline ui8 ByteArray::_bomOffset(ui32 pos) const {
+	inline ui8 ByteArray::_bomOffset(size_t pos) const {
 		if (pos + 3 > _length) return 0;
 		return (ui8)_data[pos] == 0xEF && (ui8)_data[pos + 1] == 0xBB && (ui8)_data[pos + 2] == 0xBF ? 3 : 0;
 	}
