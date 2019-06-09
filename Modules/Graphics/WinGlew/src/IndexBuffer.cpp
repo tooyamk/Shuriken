@@ -50,9 +50,9 @@ namespace aurora::modules::graphics::win_glew {
 		return _baseBuffer.update(offset, data, length);
 	}
 
-	void IndexBuffer::flush() {
-		_baseBuffer.flush();
-	}
+	//void IndexBuffer::flush() {
+	//	_baseBuffer.flush();
+	//}
 
 	bool IndexBuffer::isSyncing() const {
 		return _baseBuffer.isSyncing();

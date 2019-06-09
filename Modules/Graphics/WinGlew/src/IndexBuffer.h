@@ -19,7 +19,7 @@ namespace aurora::modules::graphics::win_glew {
 		virtual ui32 AE_CALL update(ui32 offset, const void* data, ui32 length) override;
 		virtual IndexType AE_CALL getFormat() const override;
 		virtual void AE_CALL setFormat(IndexType type) override;
-		virtual void AE_CALL flush() override;
+		//virtual void AE_CALL flush() override;
 		virtual bool AE_CALL isSyncing() const override;
 
 		void AE_CALL draw(ui32 count = (std::numeric_limits<ui32>::max)(), ui32 offset = 0);

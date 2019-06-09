@@ -67,8 +67,8 @@ namespace aurora::modules::graphics {
 		}
 	}
 
-	void MultipleVertexBuffer::flush() {
-	}
+	//void MultipleVertexBuffer::flush() {
+	//}
 
 	bool MultipleVertexBuffer::isSyncing() const {
 		return _base.isSyncing();
@@ -137,8 +137,8 @@ namespace aurora::modules::graphics {
 		}
 	}
 
-	void MultipleIndexBuffer::flush() {
-	}
+	//void MultipleIndexBuffer::flush() {
+	//}
 
 	bool MultipleIndexBuffer::isSyncing() const {
 		return _base.isSyncing();
@@ -188,8 +188,8 @@ namespace aurora::modules::graphics {
 		return _base.update(offset, data, length);
 	}
 
-	void MultipleConstantBuffer::flush() {
-	}
+	//void MultipleConstantBuffer::flush() {
+	//}
 
 	bool MultipleConstantBuffer::isSyncing() const {
 		return _base.isSyncing();

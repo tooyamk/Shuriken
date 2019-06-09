@@ -192,7 +192,7 @@ namespace aurora::modules::graphics {
 		virtual ui32 AE_CALL update(ui32 offset, const void* data, ui32 length) override;
 		virtual void AE_CALL getFormat(VertexSize* size, VertexType* type) const override;
 		virtual void AE_CALL setFormat(VertexSize size, VertexType type) override;
-		virtual void AE_CALL flush() override;
+		//virtual void AE_CALL flush() override;
 		virtual bool AE_CALL isSyncing() const override;
 
 	private:
@@ -219,7 +219,7 @@ namespace aurora::modules::graphics {
 		virtual ui32 AE_CALL update(ui32 offset, const void* data, ui32 length) override;
 		virtual IndexType AE_CALL getFormat() const override;
 		virtual void AE_CALL setFormat(IndexType type) override;
-		virtual void AE_CALL flush() override;
+		//virtual void AE_CALL flush() override;
 		virtual bool AE_CALL isSyncing() const override;
 
 	private:
@@ -243,7 +243,7 @@ namespace aurora::modules::graphics {
 		virtual ui32 AE_CALL read(ui32 offset, void* dst, ui32 dstLen) override;
 		virtual ui32 AE_CALL write(ui32 offset, const void* data, ui32 length) override;
 		virtual ui32 AE_CALL update(ui32 offset, const void* data, ui32 length) override;
-		virtual void AE_CALL flush() override;
+		//virtual void AE_CALL flush() override;
 		virtual bool AE_CALL isSyncing() const override;
 
 	private:

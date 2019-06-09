@@ -99,7 +99,7 @@ namespace aurora::modules::graphics::win_glew {
 			mapUsage = Usage::NONE;
 
 			if ((this->resUsage & Usage::PERSISTENT_MAP) == Usage::PERSISTENT_MAP) {
-				flush();
+				doSync<false>();
 			} else {
 				glBindBuffer(bufferType, handle);
 				glUnmapBuffer(bufferType);
@@ -147,16 +147,6 @@ namespace aurora::modules::graphics::win_glew {
 			return 0;
 		}
 		return -1;
-	}
-
-	void BaseBuffer::flush() {
-		if (dirty) {
-			if ((resUsage & Usage::PERSISTENT_MAP) == Usage::PERSISTENT_MAP) {
-				_waitServerSync();
-				sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
-			}
-			dirty = false;
-		}
 	}
 
 	void BaseBuffer::releaseBuffer() {

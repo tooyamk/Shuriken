@@ -16,8 +16,27 @@ namespace aurora::modules::graphics::win_glew {
 		ui32 AE_CALL read(ui32 offset, void* dst, ui32 dstLen);
 		ui32 AE_CALL write(ui32 offset, const void* data, ui32 length);
 		ui32 AE_CALL update(ui32 offset, const void* data, ui32 length);
-		void AE_CALL flush();
 		void AE_CALL releaseBuffer();
+
+		template<bool Force>
+		void AE_CALL doSync() {
+			if constexpr (Force) {
+				releaseSync();
+
+				if ((resUsage & Usage::PERSISTENT_MAP) == Usage::PERSISTENT_MAP) {
+					sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+				}
+				dirty = false;
+			} else {
+				if (dirty) {
+					if ((resUsage & Usage::PERSISTENT_MAP) == Usage::PERSISTENT_MAP) {
+						releaseSync();
+						sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+					}
+					dirty = false;
+				}
+			}
+		}
 
 		inline bool AE_CALL isSyncing() const {
 			return sync ? _isSyncing() : false;

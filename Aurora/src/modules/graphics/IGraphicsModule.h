@@ -59,7 +59,7 @@ namespace aurora::modules::graphics {
 		virtual ui32 AE_CALL read(ui32 offset, void* dst, ui32 dstLen) = 0;
 		virtual ui32 AE_CALL write(ui32 offset, const void* data, ui32 length) = 0;
 		virtual ui32 AE_CALL update(ui32 offset, const void* data, ui32 length) = 0;
-		virtual void AE_CALL flush() = 0;
+		//virtual void AE_CALL flush() = 0;
 		virtual bool AE_CALL isSyncing() const = 0;
 	};
 

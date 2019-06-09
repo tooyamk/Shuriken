@@ -50,8 +50,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return _baseBuffer.update(*_graphics.get<Graphics>(), offset, data, length);
 	}
 
-	void VertexBuffer::flush() {
-	}
+	//void VertexBuffer::flush() {
+	//}
 
 	bool VertexBuffer::isSyncing() const {
 		return false;

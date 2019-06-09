@@ -49,8 +49,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return _baseBuffer.update(*_graphics.get<Graphics>(), offset, data, length);
 	}
 
-	void IndexBuffer::flush() {
-	}
+	//void IndexBuffer::flush() {
+	//}
 
 	bool IndexBuffer::isSyncing() const {
 		return false;

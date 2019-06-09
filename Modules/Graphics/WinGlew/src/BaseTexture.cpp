@@ -300,12 +300,13 @@ namespace aurora::modules::graphics::win_glew {
 
 	bool BaseTexture::copyFrom(Graphics& graphics, ui32 arraySlice, ui32 mipSlice, const Box3ui32& range, const IPixelBuffer* pixelBuffer) {
 		if (pixelBuffer && &graphics == pixelBuffer->getGraphics()) {
-			if (auto pb = (const PixelBuffer*)pixelBuffer->getNativeBuffer(); pb) {
+			if (auto pb = (PixelBuffer*)pixelBuffer->getNativeBuffer(); pb) {
 				if (auto buf = pb->getInternalBuffer(); buf) {
 					if (auto pbType = pb->getInternalType(); pbType == GL_PIXEL_UNPACK_BUFFER) {
 						glBindBuffer(pbType, buf);
 						auto rst = _update(arraySlice, mipSlice, range, nullptr);
 						glBindBuffer(pbType, 0);
+						pb->baseBuffer.doSync<true>();
 
 						return rst;
 					}

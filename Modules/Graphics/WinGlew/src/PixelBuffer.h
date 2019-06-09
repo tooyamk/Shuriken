@@ -17,18 +17,17 @@ namespace aurora::modules::graphics::win_glew {
 		virtual ui32 AE_CALL read(ui32 offset, void* dst, ui32 dstLen) override;
 		virtual ui32 AE_CALL write(ui32 offset, const void* data, ui32 length) override;
 		virtual ui32 AE_CALL update(ui32 offset, const void* data, ui32 length) override;
-		virtual void AE_CALL flush() override;
+		//virtual void AE_CALL flush() override;
 		virtual bool AE_CALL isSyncing() const override;
 
 		inline GLenum AE_CALL getInternalType() const {
-			return _baseBuffer.bufferType;
+			return baseBuffer.bufferType;
 		}
 
 		inline GLuint AE_CALL getInternalBuffer() const {
-			return _baseBuffer.handle;
+			return baseBuffer.handle;
 		}
 
-	protected:
-		BaseBuffer _baseBuffer;
+		BaseBuffer baseBuffer;
 	};
 }

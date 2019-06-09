@@ -50,9 +50,9 @@ namespace aurora::modules::graphics::win_glew {
 		return _baseBuffer.update(offset, data, length);
 	}
 
-	void VertexBuffer::flush() {
-		_baseBuffer.flush();
-	}
+	//void VertexBuffer::flush() {
+	//	_baseBuffer.flush();
+	//}
 
 	bool VertexBuffer::isSyncing() const {
 		return _baseBuffer.isSyncing();

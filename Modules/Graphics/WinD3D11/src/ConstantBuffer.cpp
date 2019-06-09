@@ -48,8 +48,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return _baseBuffer.update(*_graphics.get<Graphics>(), offset, data, length);
 	}
 
-	void ConstantBuffer::flush() {
-	}
+	//void ConstantBuffer::flush() {
+	//}
 
 	bool ConstantBuffer::isSyncing() const {
 		return false;

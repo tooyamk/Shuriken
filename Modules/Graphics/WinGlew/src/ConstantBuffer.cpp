@@ -47,9 +47,9 @@ namespace aurora::modules::graphics::win_glew {
 		return _baseBuffer.update(offset, data, length);
 	}
 
-	void ConstantBuffer::flush() {
-		_baseBuffer.flush();
-	}
+	//void ConstantBuffer::flush() {
+	//	_baseBuffer.flush();
+	//}
 
 	bool ConstantBuffer::isSyncing() const {
 		return _baseBuffer.isSyncing();

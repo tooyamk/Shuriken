@@ -19,7 +19,7 @@ namespace aurora::modules::graphics::win_glew {
 		virtual ui32 AE_CALL read(ui32 offset, void* dst, ui32 dstLen) override;
 		virtual ui32 AE_CALL write(ui32 offset, const void* data, ui32 length) override;
 		virtual ui32 AE_CALL update(ui32 offset, const void* data, ui32 length) override;
-		virtual void AE_CALL flush() override;
+		//virtual void AE_CALL flush() override;
 		virtual bool AE_CALL isSyncing() const override;
 
 		inline GLuint AE_CALL getInternalBuffer() const {

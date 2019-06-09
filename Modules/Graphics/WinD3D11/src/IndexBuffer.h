@@ -19,7 +19,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual ui32 AE_CALL update(ui32 offset, const void* data, ui32 length) override;
 		virtual IndexType AE_CALL getFormat() const override;
 		virtual void AE_CALL setFormat(IndexType type) override;
-		virtual void AE_CALL flush() override;
+		//virtual void AE_CALL flush() override;
 		virtual bool AE_CALL isSyncing() const override;
 
 		inline ID3D11Buffer* AE_CALL getInternalBuffer() const {
