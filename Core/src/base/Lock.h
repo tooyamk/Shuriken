@@ -5,14 +5,14 @@
 #include <thread>
 
 namespace aurora {
-	class EmptyLock {
+	class AE_DLL EmptyLock {
 	public:
 		inline void AE_CALL lock() {};
 		inline void AE_CALL unlock() {};
 	};
 
 
-	class AtomicLock {
+	class AE_DLL AtomicLock {
 	public:
 		AtomicLock() = default;
 		AtomicLock(const AtomicLock&) = delete;
@@ -31,7 +31,7 @@ namespace aurora {
 	};
 
 
-	class SpinAtomicLock {
+	class AE_DLL SpinAtomicLock {
 	public:
 		SpinAtomicLock() = default;
 		SpinAtomicLock(const SpinAtomicLock&) = delete;
@@ -50,7 +50,7 @@ namespace aurora {
 	};
 
 
-	class RecursiveAtomicLock {
+	class AE_DLL RecursiveAtomicLock {
 	public:
 		RecursiveAtomicLock() = default;
 		RecursiveAtomicLock(const RecursiveAtomicLock&) = delete;
@@ -115,7 +115,7 @@ namespace aurora {
 	};
 
 
-	class RecursiveSpinAtomicLock {
+	class AE_DLL RecursiveSpinAtomicLock {
 	public:
 		RecursiveSpinAtomicLock() = default;
 		RecursiveSpinAtomicLock(const RecursiveSpinAtomicLock&) = delete;

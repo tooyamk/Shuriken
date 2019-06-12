@@ -19,7 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Aurora\Aurora.vcxproj">
+    <ProjectReference Include="..\..\..\Core\Core.vcxproj">
       <Project>{972c829a-fe33-48d8-a1e1-cc7457fed993}</Project>
     </ProjectReference>
   </ItemGroup>
@@ -132,7 +132,7 @@
       <SDLCheck>
       </SDLCheck>
       <ConformanceMode>false</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Aurora\src;$(WindowsSDK_IncludePath);$(DXSDK_DIR)Include\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Core\src</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;AE_MODULE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <ExceptionHandling>Sync</ExceptionHandling>
@@ -157,7 +157,7 @@
       </SDLCheck>
       <ConformanceMode>false</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)Aurora\src</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Core\src</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_DEBUG;AE_MODULE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -176,7 +176,7 @@
       <SDLCheck>
       </SDLCheck>
       <ConformanceMode>false</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Aurora\src</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Core\src</AdditionalIncludeDirectories>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <PreprocessorDefinitions>WIN32;AE_MODULE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -205,7 +205,7 @@
       <SDLCheck>
       </SDLCheck>
       <ConformanceMode>false</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Aurora\src</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Core\src</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <PreprocessorDefinitions>_CONSOLE;AE_MODULE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>

@@ -78,6 +78,8 @@ namespace aurora::events {
 		Class* _target;
 		EvtMethod<EvtType, Class> _method;
 	};
+	template<typename EvtType, typename Class>
+	using EventListenerMethod = EventListener<EvtType, Class>;
 
 
 	template<typename EvtType>
