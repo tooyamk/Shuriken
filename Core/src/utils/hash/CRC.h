@@ -7,21 +7,21 @@ namespace aurora::hash {
 	public:
 		AE_DECLA_CANNOT_INSTANTIATE(CRC);
 
-		static ui16 AE_CALL CRC16(const i8* data, ui16 len);
-		static ui32 AE_CALL CRC32(const i8* data, ui32 len);
+		static uint16_t AE_CALL CRC16(const uint8_t* data, uint16_t len);
+		static uint32_t AE_CALL CRC32(const uint8_t* data, uint32_t len);
 
-		static ui64 AE_CALL CRC64(const i8* data, ui32 len);
+		static uint64_t AE_CALL CRC64(const uint8_t* data, uint32_t len);
 
-		inline static ui64 AE_CALL CRC64StreamBegin() {
+		inline static uint64_t AE_CALL CRC64StreamBegin() {
 			return 0xFFFFFFFFFFFFFFFFui64;
 		}
-		static void AE_CALL CRC64StreamIteration(ui64& crc, const i8* data, ui32 len);
-		inline static void AE_CALL CRC64StreamEnd(ui64& crc) {
+		static void AE_CALL CRC64StreamIteration(uint64_t& crc, const uint8_t* data, uint32_t len);
+		inline static void AE_CALL CRC64StreamEnd(uint64_t& crc) {
 			crc ^= 0xFFFFFFFFFFFFFFFFui64;
 		}
 
 	private:
-		inline static const ui16 _table16[] = {
+		inline static const uint16_t _table16[] = {
 		0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50A5, 0x60C6, 0x70E7,
 		0x8108, 0x9129, 0xA14A, 0xB16B, 0xC18C, 0xD1AD, 0xE1CE, 0xF1EF,
 		0x1231, 0x0210, 0x3273, 0x2252, 0x52B5, 0x4294, 0x72F7, 0x62D6,
@@ -56,7 +56,7 @@ namespace aurora::hash {
 		0x6E17, 0x7E36, 0x4E55, 0x5E74, 0x2E93, 0x3EB2, 0x0ED1, 0x1EF0
 		};
 
-		inline static const ui32 _table32[256] = {
+		inline static const uint32_t _table32[256] = {
 			0x00000000ui32, 0x77073096ui32, 0xEE0E612Cui32,
 			0x990951BAui32, 0x076DC419ui32, 0x706AF48Fui32,
 			0xE963A535ui32, 0x9E6495A3ui32, 0x0EDB8832ui32,
@@ -145,7 +145,7 @@ namespace aurora::hash {
 			0x2D02EF8Dui32
 		};
 
-		inline static const ui64 _table64[256] = {
+		inline static const uint64_t _table64[256] = {
 			0x0000000000000000ui64, 0x42F0E1EBA9EA3693ui64,
 			0x85E1C3D753D46D26ui64, 0xC711223CFA3E5BB5ui64,
 			0x493366450E42ECDFui64, 0x0BC387AEA7A8DA4Cui64,

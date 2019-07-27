@@ -7,7 +7,7 @@ namespace aurora::nodes {
 		return _parent;
 	}
 
-	inline ui32 Node::getNumChildren() const {
+	inline uint32_t Node::getNumChildren() const {
 		return _numChildren;
 	}
 
@@ -64,11 +64,11 @@ namespace aurora::nodes {
 		rot.toQuaternion(_lr);
 	}
 
-	inline void Node::_checkNoticeUpdate(ui32 dirty) {
+	inline void Node::_checkNoticeUpdate (uint32_t dirty) {
 		_checkNoticeUpdateNow(_dirty | dirty, dirty);
 	}
 
-	inline void Node::_checkNoticeUpdate(ui32 appendDirty, ui32 sendDirty) {
+	inline void Node::_checkNoticeUpdate (uint32_t appendDirty, uint32_t sendDirty) {
 		_checkNoticeUpdateNow(_dirty | appendDirty, sendDirty);
 	}
 }

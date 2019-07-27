@@ -11,11 +11,13 @@ namespace aurora {
 
 	class AE_DLL SerializableObject {
 	public:
-		enum class ValueType : ui8 {
+		enum class Type : uint8_t {
 			INVALID,
 
 			BOOL,
-			INTEGET,
+
+			INT,
+			UINT,
 
 			FLOAT,
 			DOUBLE,
@@ -31,7 +33,7 @@ namespace aurora {
 		};
 
 
-		enum class ForEachOperation : ui8 {
+		enum class ForEachOperation : uint8_t {
 			CONTINUE,
 			BREAK,
 			ERASE
@@ -39,92 +41,88 @@ namespace aurora {
 
 
 		struct HashKey {
-			std::size_t operator()(const SerializableObject& value) const {
-				std::size_t key = 0;
-
+			size_t operator()(const SerializableObject& value) const {
 				switch (value._type) {
-				case ValueType::BOOL:
-					key = std::hash<bool>{}(value._value.boolean);
-					break;
-				case ValueType::BYTES:
-					key = std::hash<Bytes<false>*>{}(value._value.internalBytes);
-					break;
-				case ValueType::EXT_BYTES:
-					return std::hash<Bytes<true>*>{}(value._value.externalBytes);
-					break;
-				case ValueType::FLOAT:
-					return std::hash<float>{}(value._value.number32);
-					break;
-				case ValueType::DOUBLE:
-					return std::hash<double>{}(value._value.number64);
-					break;
-				case ValueType::INTEGET:
-					return std::hash<long long>{}(value._value.uint64);
-					break;
-				case ValueType::ARRAY:
-					return std::hash<Array*>{}(value._value.array);
-					break;
-				case ValueType::MAP:
-					return std::hash<Map*>{}(value._value.map);
-					break;
-				case ValueType::STRING:
-					return std::hash<std::string>{}(*value._value.string);
-					break;
-				case ValueType::SHORT_STRING:
-					return std::hash<std::string>{}(value._value.shortString);
-					break;
+				case Type::BOOL:
+					return std::hash<bool>{}(value._getValue<bool>());
+				case Type::BYTES:
+					return std::hash<Bytes<false>*>{}(value._getValue<Bytes<false>*>());
+				case Type::EXT_BYTES:
+					return std::hash<Bytes<true>*>{}(value._getValue<Bytes<true>*>());
+				case Type::FLOAT:
+					return std::hash<f32>{}(value._getValue<f32>());
+				case Type::DOUBLE:
+					return std::hash<f64>{}(value._getValue<f64>());
+				case Type::INT:
+				case Type::UINT:
+					return std::hash<uint64_t>{}(value._getValue<uint64_t>());
+				case Type::ARRAY:
+					return std::hash<Array*>{}(value._getValue<Array*>());
+				case Type::MAP:
+					return std::hash<Map*>{}(value._getValue<Map*>());
+				case Type::STRING:
+					return std::hash<std::string>{}(*value._getValue<std::string*>());
+				case Type::SHORT_STRING:
+					return std::hash<std::string>{}((char*)value._value);
 				default:
-					break;
+					return 0;
 				}
-
-				constexpr const i32 n = sizeof(std::size_t) / 8;
-				auto keys = (ui8*)&key;
-				auto idx = NATIVE_ENDIAN == Endian::LITTLE ? n - 1 : 0;
-				keys[idx] = ((ui32)value._type) | (keys[idx] & 0xF);
-
-				return key;
 			}
 		};
 
 
 		struct HashCompare {
 			bool operator()(const SerializableObject& value1, const SerializableObject& value2) const {
-				return value1 == value2;
+				return value1.isEqual(value2);
 			}
 		};
 
 
 		SerializableObject();
-		SerializableObject(ValueType value);
+		SerializableObject(Type value);
 		SerializableObject(bool value);
-		SerializableObject(i8 value);
-		SerializableObject(ui8 value);
-		SerializableObject(i16 value);
-		SerializableObject(ui16 value);
-		SerializableObject(i32 value);
-		SerializableObject(ui32 value);
-		SerializableObject(const i64& value);
-		SerializableObject(const ui64& value);
+		SerializableObject(int8_t value);
+		SerializableObject(uint8_t value);
+		SerializableObject(int16_t value);
+		SerializableObject(uint16_t value);
+		SerializableObject(int32_t value);
+		SerializableObject(uint32_t value);
+		SerializableObject(const int64_t& value);
+		SerializableObject(const uint64_t& value);
 		SerializableObject(f32 value);
 		SerializableObject(const f64& value);
-		SerializableObject(const i8* value);
+		SerializableObject(const char* value);
 		SerializableObject(const std::string& value);
 		SerializableObject(const std::string_view& value);
-		SerializableObject(const i8* value, ui32 size, bool copy);
+		SerializableObject(const uint8_t* value, size_t size, bool copy);
 		SerializableObject(ByteArray& ba, bool copy);
 		SerializableObject(const SerializableObject& key, const SerializableObject& value);
-		SerializableObject& operator=(const SerializableObject& value);
-		SerializableObject& operator=(SerializableObject&& value);
 		SerializableObject(const SerializableObject& value);
 		SerializableObject(const SerializableObject& value, bool copy);
 		SerializableObject(SerializableObject&& value);
 		~SerializableObject();
 
-		ValueType AE_CALL getType() const;
-		bool AE_CALL isValid() const;
+		inline SerializableObject& operator=(const SerializableObject& value) {
+			set(value);
+			return *this;
+		}
+		inline SerializableObject& operator=(SerializableObject&& value) {
+			_type = value._type;
+			memcpy(_value, value._value, VALUE_SIZE);
+			value._type = Type::INVALID;
 
-		ui32 getSize() const;
-		void clearValues();
+			return *this;
+		}
+
+		inline Type AE_CALL getType() const {
+			return _type == Type::SHORT_STRING ? Type::STRING : _type;
+		}
+		inline bool AE_CALL isValid() const {
+			return _type != Type::INVALID;
+		}
+
+		size_t getSize() const;
+		void clear();
 
 		bool AE_CALL setInvalid();
 		bool AE_CALL setArray();
@@ -133,24 +131,24 @@ namespace aurora {
 		template<bool Ext>
 		bool AE_CALL setBytes() {
 			if constexpr (Ext) {
-				if (_type == ValueType::EXT_BYTES) {
+				if (_type == Type::EXT_BYTES) {
 					return false;
 				} else {
 					_freeValue();
 
-					_value.externalBytes = new Bytes<Ext>();
-					_type = ValueType::EXT_BYTES;
+					_getValue<Bytes<true>*>() = new Bytes<Ext>();
+					_type = Type::EXT_BYTES;
 
 					return true;
 				}
 			} else {
-				if (_type == ValueType::BYTES) {
+				if (_type == Type::BYTES) {
 					return false;
 				} else {
 					_freeValue();
 
-					_value.internalBytes = new Bytes<Ext>();
-					_type = ValueType::BYTES;
+					_getValue<Bytes<false>*>() = new Bytes<Ext>();
+					_type = Type::BYTES;
 
 					return true;
 				}
@@ -163,56 +161,73 @@ namespace aurora {
 		typename = typename std::enable_if_t<std::is_arithmetic_v<T>, T>>
 		T AE_CALL toNumber(T defaultValue = 0) const {
 			switch (_type) {
-			case ValueType::BOOL:
-				return _value.boolean ? 1 : 0;
-				break;
-			case ValueType::INTEGET:
-				return _value.uint64;
-				break;
-			case ValueType::FLOAT:
-				return _value.number32;
-				break;
-			case ValueType::DOUBLE:
-				return _value.number64;
-				break;
-			case ValueType::STRING:
-				return String::toNumber<T>(*_value.string);
-				break;
-			case ValueType::SHORT_STRING:
-				return String::toNumber<T>(_value.shortString, strlen(_value.shortString));
-				break;
+			case Type::BOOL:
+				return _getValue<bool>()? 1 : 0;
+			case Type::INT:
+				return _getValue<int64_t>();
+			case Type::UINT:
+				return _getValue<uint64_t>();
+			case Type::FLOAT:
+				return _getValue<f32>();
+			case Type::DOUBLE:
+				return _getValue<f64>();
+			case Type::STRING:
+				return String::toNumber<T>(*_getValue<std::string*>());
+			case Type::SHORT_STRING:
+				return String::toNumber<T>((char*)_value, strlen((char*)_value));
 			default:
 				return defaultValue;
-				break;
 			}
 		}
 
 		std::string AE_CALL toString(const std::string& defaultValue = "") const;
-		const i8* AE_CALL toBytes() const;
+		const uint8_t* AE_CALL toBytes() const;
 
-		void AE_CALL set(bool value);
-		void AE_CALL set(i8 value);
-		void AE_CALL set(ui8 value);
-		void AE_CALL set(i16 value);
-		void AE_CALL set(ui16 value);
-		void AE_CALL set(i32 value);
-		void AE_CALL set(ui32 value);
-		void AE_CALL set(const i64& value);
-		void AE_CALL set(const ui64& value);
-		void AE_CALL set(f32 value);
-		void AE_CALL set(const f64& value);
-		void AE_CALL set(const i8* value);
+		inline void AE_CALL set(bool value) {
+			_set<bool, Type::BOOL>(value);
+		}
+		inline void AE_CALL set(int8_t value) {
+			_setInt(value);
+		}
+		inline void AE_CALL set(uint8_t value) {
+			_setUInt(value);
+		}
+		inline void AE_CALL set(int16_t value) {
+			_setInt(value);
+		}
+		inline void AE_CALL set(uint16_t value) {
+			_setUInt(value);
+		}
+		inline void AE_CALL set(int32_t value) {
+			_setInt(value);
+		}
+		inline void AE_CALL set(uint32_t value) {
+			_setUInt(value);
+		}
+		inline void AE_CALL set(const int64_t& value) {
+			_setInt(value);
+		}
+		inline void AE_CALL set(const uint64_t& value) {
+			_setUInt(value);
+		}
+		inline void AE_CALL set(f32 value) {
+			_set<f32, Type::FLOAT>(value);
+		}
+		inline void AE_CALL set(const f64& value) {
+			_set<f64, Type::DOUBLE>(value);
+		}
+		void AE_CALL set(const char* value);
 		void AE_CALL set(const std::string& value);
 		void AE_CALL set(const std::string_view& value);
-		void AE_CALL set(const i8* value, ui32 size, bool copy);
+		void AE_CALL set(const uint8_t* value, size_t size, bool copy);
 
 		void AE_CALL set(const SerializableObject& value, bool copy = false);
 
-		SerializableObject& AE_CALL at(ui32 index);
-		SerializableObject AE_CALL tryAt(ui32 index) const;
+		SerializableObject& AE_CALL at(size_t index);
+		SerializableObject AE_CALL tryAt(size_t index) const;
 		void AE_CALL push(const SerializableObject& value);
-		SerializableObject AE_CALL removeAt(ui32 index);
-		void AE_CALL insertAt(ui32 index, const SerializableObject& value);
+		SerializableObject AE_CALL removeAt(size_t index);
+		void AE_CALL insertAt(size_t index, const SerializableObject& value);
 
 		SerializableObject& AE_CALL get(const SerializableObject& key);
 		SerializableObject AE_CALL tryGet(const SerializableObject& key) const;
@@ -225,31 +240,34 @@ namespace aurora {
 		void AE_CALL pack(ByteArray& ba) const;
 		void AE_CALL unpack(ByteArray& ba);
 
-		bool AE_CALL isContentEqual(const SerializableObject& sv) const;
+		bool AE_CALL isEqual(const SerializableObject& target) const;
+		bool AE_CALL isContentEqual(const SerializableObject& target) const;
 
 		bool operator==(const SerializableObject& right) const;
 
 	private:
-		enum class InternalValueType : ui8 {
-			UNVALID = (ui8)ValueType::INVALID,
+		enum class InternalType : uint8_t {
+			UNVALID = (uint8_t)Type::INVALID,
 
-			BOOL = (ui8)ValueType::BOOL,
-			INTEGET = (ui8)ValueType::INTEGET,
+			BOOL = (uint8_t)Type::BOOL,
+			INT = (uint8_t)Type::INT,
+			UINT = (uint8_t)Type::UINT,
 
-			FLOAT = (ui8)ValueType::FLOAT,
-			DOUBLE = (ui8)ValueType::DOUBLE,
+			FLOAT = (uint8_t)Type::FLOAT,
+			DOUBLE = (uint8_t)Type::DOUBLE,
 
-			STRING = (ui8)ValueType::STRING,
-			ARRAY = (ui8)ValueType::ARRAY,
-			MAP = (ui8)ValueType::MAP,
+			STRING = (uint8_t)Type::STRING,
+			ARRAY = (uint8_t)Type::ARRAY,
+			MAP = (uint8_t)Type::MAP,
 
-			BYTES = (ui8)ValueType::BYTES,
-			EXT_BYTES = (ui8)ValueType::EXT_BYTES,
+			BYTES = (uint8_t)Type::BYTES,
+			EXT_BYTES = (uint8_t)Type::EXT_BYTES,
 
-			SHORT_STRING = (ui8)ValueType::SHORT_STRING,
+			SHORT_STRING = (uint8_t)Type::SHORT_STRING,
 
 			BOOL_TRUE = 18,
 			BOOL_FALSE,
+
 			N_INT_1 = 20,
 			N_INT_8BITS,
 			N_INT_16BITS,
@@ -272,12 +290,6 @@ namespace aurora {
 			FLOAT_0 = 60,
 			FLOAT_0_5,
 			FLOAT_1,
-			N_FLOAT_INT_8BITS,
-			N_FLOAT_INT_16BITS,
-			N_FLOAT_INT_24BITS,
-			U_FLOAT_INT_8BITS,
-			U_FLOAT_INT_16BITS,
-			U_FLOAT_INT_24BITS,
 			DOUBLE_0 = 80,
 			DOUBLE_0_5,
 			DOUBLE_1,
@@ -287,16 +299,28 @@ namespace aurora {
 			ARRAY_16BITS,
 			ARRAY_24BITS,
 			ARRAY_32BITS,
+			ARRAY_40BITS,
+			ARRAY_48BITS,
+			ARRAY_56BITS,
+			ARRAY_64BITS,
 			MAP_0 = 140,
 			MAP_8BITS,
 			MAP_16BITS,
 			MAP_24BITS,
 			MAP_32BITS,
+			MAP_40BITS,
+			MAP_48BITS,
+			MAP_56BITS,
+			MAP_64BITS,
 			BYTES_0 = 160,
 			BYTES_8BITS,
 			BYTES_16BITS,
 			BYTES_24BITS,
-			BYTES_32BITS
+			BYTES_32BITS,
+			BYTES_40BITS,
+			BYTES_48BITS,
+			BYTES_56BITS,
+			BYTES_64BITS
 		};
 
 
@@ -317,7 +341,7 @@ namespace aurora {
 
 			Map* AE_CALL copy() const;
 			bool AE_CALL isContentEqual(Map* data) const;
-			void AE_CALL unpack(ByteArray& ba, ui32 size);
+			void AE_CALL unpack(ByteArray& ba, uint32_t size);
 
 			std::unordered_map<SerializableObject, SerializableObject, HashKey, HashCompare> value;
 		};
@@ -332,13 +356,17 @@ namespace aurora {
 				ref();
 			}
 
-			Bytes(const i8* data, ui32 size) :
+			Bytes(const uint8_t* data, size_t size) :
 				_size(size) {
 				if constexpr (Ext) {
-					_data = (i8*)data;
+					_data = (uint8_t*)data;
 				} else {
-					_data = new i8[size];
-					if (data) memcpy(_data, data, size);
+					if (size) {
+						_data = new uint8_t[size];
+						memcpy(_data, data, size);
+					} else {
+						_data = nullptr;
+					}
 				}
 				ref();
 			}
@@ -361,9 +389,9 @@ namespace aurora {
 				return isContentEqual(data._data, _size);
 			}
 
-			bool AE_CALL isContentEqual(const i8* data, ui32 size) const {
+			bool AE_CALL isContentEqual(const uint8_t* data, size_t size) const {
 				if (_size == _size) {
-					for (ui32 i = 0; i < _size; ++i) {
+					for (size_t i = 0; i < _size; ++i) {
 						if (_data[i] != data[i]) return false;
 					}
 
@@ -373,27 +401,27 @@ namespace aurora {
 				}
 			}
 
-			inline const i8* AE_CALL getValue() const { return _data; }
-			inline ui32 AE_CALL getSize() const { return _size; }
+			inline const uint8_t* AE_CALL getValue() const { return _data; }
+			inline size_t AE_CALL getSize() const { return _size; }
 
-			void AE_CALL setValue(const i8* data, ui32 size) {
-				if (size == 0) {
+			void AE_CALL setValue(const uint8_t* data, size_t size) {
+				if (!size) {
 					clear();
 				} else {
 					if constexpr (Ext) {
-						_data = (i8*)data;
+						_data = (uint8_t*)data;
 						_size = size;
 					} else {
 						if (_data == nullptr) {
 							_size = size;
-							_data = new i8[_size];
+							_data = new uint8_t[_size];
 							if (data) memcpy(_data, data, _size);
 						} else if (_size == size) {
 							if (data) memcpy(_data, data, _size);
 						} else {
 							delete[] _data;
 							_size = size;
-							_data = new i8[_size];
+							_data = new uint8_t[_size];
 							if (data) memcpy(_data, data, size);
 						}
 					}
@@ -412,16 +440,18 @@ namespace aurora {
 			friend class Bytes<false>;
 			friend class Bytes<true>;
 		private:
-			i8* _data;
-			ui32 _size;
+			uint8_t* _data;
+			size_t _size;
 		};
 
-		static constexpr const ui8 SHORT_STRING_MAX_SIZE = (std::max<ui8>(sizeof(ui64), sizeof(uintptr_t)) << 1) - sizeof(ValueType);
+		static constexpr const uint8_t VALUE_SIZE = 8;
 
-		ValueType _type;
+		Type _type;
+		uint8_t _value[VALUE_SIZE];
 
+		/*
 		union {
-			ui64 uint64;
+			uint64_t uint64;
 			bool boolean;
 			Array* array;
 			Map* map;
@@ -432,45 +462,91 @@ namespace aurora {
 			f64 number64;
 			i8 shortString[SHORT_STRING_MAX_SIZE];
 		} _value;
+		*/
+
 
 		bool AE_CALL _freeValue();
 
-		inline void AE_CALL _setInteger(const unsigned long long& value) {
-			if (_type != ValueType::INTEGET) {
+		template<typename T>
+		inline T& AE_CALL _getValue() {
+			return *(T*)_value;
+		}
+
+		template<typename T>
+		inline const T& AE_CALL _getValue() const {
+			return *(T*)_value;
+		}
+
+		template<typename T, Type type>
+		inline void AE_CALL _set(const T& value) {
+			if (_type != type) {
 				_freeValue();
-				_type = ValueType::INTEGET;
+				_type = type;
 			}
-			_value.uint64 = value;
+			_getValue<T>() = value;
+		}
+
+		inline void AE_CALL _setInt(const int64_t& value) {
+			_set<int64_t, Type::INT>(value);
+		}
+
+		inline void AE_CALL _setUInt(const uint64_t& value) {
+			_set<uint64_t, Type::UINT>(value);
 		}
 
 		inline Array* AE_CALL _getArray() {
 			setArray();
-			return _value.array;
+			return _getValue<Array*>();
 		}
 
 		inline Map* AE_CALL _getMap() {
 			setMap();
-			return _value.map;
+			return _getValue<Map*>();
 		}
 
+		template<bool Ext>
+		inline Bytes<Ext>* AE_CALL _getBytes() {
+			setBytes<Ext>();
+			return _getValue<Bytes<Ext>*>();
+		}
+
+		template<typename T,
+		typename = typename std::enable_if_t<std::is_arithmetic_v<T>, T>>
+		inline bool AE_CALL _isEqual(const SerializableObject& target) const {
+			switch (target._type) {
+			case Type::INT:
+				return _getValue<T>() == target._getValue<int64_t>();
+			case Type::UINT:
+				return _getValue<T>() == target._getValue<uint64_t>();
+			case Type::FLOAT:
+				return _getValue<T>() == target._getValue<f32>();
+			case Type::DOUBLE:
+				return _getValue<T>() == target._getValue<f64>();
+			default:
+				return false;
+			}
+		}
+
+		/*
 		inline Bytes<false>* AE_CALL _getInternalBytes() {
 			setBytes<false>();
-			return _value.internalBytes;
+			return _getValue<Bytes<false>*>();
 		}
 
 		inline Bytes<true>* AE_CALL _getExternalBytes() {
 			setBytes<true>();
-			return _value.externalBytes;
+			return _getValue<Bytes<true>*>();
+		}
+		*/
+
+		inline void AE_CALL _writeShortString(const char* s, uint32_t size) {
+			memcpy(_value, s, size);
+			_value[size] = 0;
 		}
 
-		inline void AE_CALL _writeShortString(const i8* s, ui32 size) {
-			memcpy(_value.shortString, s, size);
-			_value.shortString[size] = 0;
-		}
-
-		inline bool AE_CALL _isContentEqual(const i8* s1, ui32 size1, const i8* s2, ui32 size2) const {
+		inline bool AE_CALL _isContentEqual(const uint8_t* s1, size_t size1, const uint8_t* s2, size_t size2) const {
 			if (size1 == size2) {
-				for (ui32 i = 0; i < size1; ++i) {
+				for (size_t i = 0; i < size1; ++i) {
 					if (s1[i] != s2[i]) return false;
 				}
 				return true;
@@ -479,17 +555,17 @@ namespace aurora {
 			}
 		}
 
-		inline bool AE_CALL _isContentEqual(const std::string& s1, const i8* s2) const {
-			return _isContentEqual(s1.c_str(), s1.size(), s2, strlen(s2));
+		inline bool AE_CALL _isContentEqual(const std::string& s1, const char* s2) const {
+			return _isContentEqual((uint8_t*)s1.c_str(), s1.size(), (uint8_t*)s2, strlen(s2));
 		}
 
-		inline bool AE_CALL _isContentEqual(const i8* s1, const i8* s2) const {
-			return _isContentEqual(s1, strlen(s1), s2, strlen(s2));
+		inline bool AE_CALL _isContentEqual(const char* s1, const char* s2) const {
+			return _isContentEqual((uint8_t*)s1, strlen(s1), (uint8_t*)s2, strlen(s2));
 		}
 
-		void AE_CALL _unpackArray(ByteArray& ba, ui32 size);
-		void AE_CALL _unpackMap(ByteArray& ba, ui32 size);
-		void AE_CALL _unpackBytes(ByteArray& ba, ui32 size);
+		void AE_CALL _unpackArray(ByteArray& ba, size_t size);
+		void AE_CALL _unpackMap(ByteArray& ba, size_t size);
+		void AE_CALL _unpackBytes(ByteArray& ba, size_t size);
 
 		//friend Hash;
 	};

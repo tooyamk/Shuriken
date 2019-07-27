@@ -11,24 +11,24 @@ namespace aurora::modules::inputs::win_direct_input {
 		GetCursorPos(&_pos);
 	}
 
-	ui32 Mouse::getKeyState(ui32 keyCode, f32* data, ui32 count) const {
+	uint32_t Mouse::getKeyState (uint32_t keyCode, f32* data, uint32_t count) const {
 		if (data && count) {
 			switch (keyCode) {
-			case (ui32)MouseKeyCode::POSITION:
+			case (uint32_t)MouseKeyCode::POSITION:
 			{
 				auto p = _getClientPos();
 				data[0] = f32(p.x);
-				ui32 c = 1;
+				uint32_t c = 1;
 				if (count > 1) data[c++] = f32(p.y);
 
 				return c;
 			}
-			case (ui32)MouseKeyCode::WHEEL:
+			case (uint32_t)MouseKeyCode::WHEEL:
 				return 0;
 			default:
 			{
-				if (keyCode >= (ui32)MouseKeyCode::L_BUTTON && keyCode < (ui32)MouseKeyCode::L_BUTTON + sizeof(DIMOUSESTATE2::rgbButtons)) {
-					data[0] = _state.rgbButtons[keyCode - (ui32)10] & 0x80 ? 1.f : 0.f;
+				if (keyCode >= (uint32_t)MouseKeyCode::L_BUTTON && keyCode < (uint32_t)MouseKeyCode::L_BUTTON + sizeof(DIMOUSESTATE2::rgbButtons)) {
+					data[0] = _state.rgbButtons[keyCode - (uint32_t)10] & 0x80 ? 1.f : 0.f;
 
 					return 1;
 				}
@@ -55,9 +55,9 @@ namespace aurora::modules::inputs::win_direct_input {
 		DIMOUSESTATE2 state;
 		hr = _dev->GetDeviceState(sizeof(DIMOUSESTATE2), &state);
 		if (SUCCEEDED(hr)) {
-			ui8 changeBtns[sizeof(DIMOUSESTATE2::rgbButtons)];
-			ui8 len = 0;
-			for (ui8 i = 0; i < sizeof(DIMOUSESTATE2::rgbButtons); ++i) {
+			uint8_t changeBtns[sizeof(DIMOUSESTATE2::rgbButtons)];
+			uint8_t len = 0;
+			for (uint8_t i = 0; i < sizeof(DIMOUSESTATE2::rgbButtons); ++i) {
 				if (_state.rgbButtons[i] != state.rgbButtons[i]) {
 					_state.rgbButtons[i] = state.rgbButtons[i];
 					changeBtns[len++] = i;
@@ -66,7 +66,7 @@ namespace aurora::modules::inputs::win_direct_input {
 
 			POINT p;
 			GetCursorPos(&p);
-			i32 ox = p.x - _pos.x, oy = p.y - _pos.y;
+			int32_t ox = p.x - _pos.x, oy = p.y - _pos.y;
 			if (ox < 0) {
 				if (p.x == 0 && state.lX < ox) ox = state.lX;
 			} else if (ox == 0) {
@@ -95,18 +95,18 @@ namespace aurora::modules::inputs::win_direct_input {
 			if (ox || oy) {
 				//increment, right bottom positive orientation.
 				f32 value[] = { (f32)ox, (f32)oy };
-				_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &Key({ (ui32)MouseKeyCode::POSITION, 2, value }));
+				_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &Key({ (uint32_t)MouseKeyCode::POSITION, 2, value }));
 			}
 
 			if (state.lZ != 0) {
 				f32 value = state.lZ > 0 ? 1.f : -1.f;
-				_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &Key({ (ui32)MouseKeyCode::WHEEL, 1, &value }));
+				_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &Key({ (uint32_t)MouseKeyCode::WHEEL, 1, &value }));
 			}
 
-			for (ui8 i = 0; i < len; ++i) {
-				ui8 key = changeBtns[i];
+			for (uint8_t i = 0; i < len; ++i) {
+				uint8_t key = changeBtns[i];
 				f32 value = (state.rgbButtons[key] & 0x80) > 0 ? 1.f : 0.f;
-				_eventDispatcher.dispatchEvent(this, value > 0 ? DeviceEvent::DOWN : DeviceEvent::UP, &Key({ key + (ui32)MouseKeyCode::L_BUTTON, 1, &value }));
+				_eventDispatcher.dispatchEvent(this, value > 0 ? DeviceEvent::DOWN : DeviceEvent::UP, &Key({ key + (uint32_t)MouseKeyCode::L_BUTTON, 1, &value }));
 			}
 		}
 	}

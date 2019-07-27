@@ -8,13 +8,13 @@ namespace aurora::events {
 }
 
 namespace aurora::modules::inputs {
-	enum class ModuleEvent : ui8 {
+	enum class ModuleEvent : uint8_t {
 		CONNECTED,
 		DISCONNECTED
 	};
 
 
-	enum class DeviceEvent : ui8 {
+	enum class DeviceEvent : uint8_t {
 		DOWN,
 		UP,
 		MOVE
@@ -23,13 +23,13 @@ namespace aurora::modules::inputs {
 
 	class AE_DLL Key {
 	public:
-		ui32 code;
-		ui32 count;
+		uint32_t code;
+		uint32_t count;
 		f32* value;
 	};
 
 
-	enum class DeviceType : ui8 {
+	enum class DeviceType : uint8_t {
 		UNKNOWN,
 		KEYBOARD = 0b1,
 		MOUSE = 0b10,
@@ -44,9 +44,9 @@ namespace aurora::modules::inputs {
 
 		virtual events::IEventDispatcher<DeviceEvent>& AE_CALL getEventDispatcher() = 0;
 		virtual const DeviceInfo& AE_CALL getInfo() const = 0;
-		virtual ui32 AE_CALL getKeyState(ui32 keyCode, f32* data, ui32 count) const = 0;
+		virtual uint32_t AE_CALL getKeyState (uint32_t keyCode, f32* data, uint32_t count) const = 0;
 		virtual void AE_CALL poll(bool dispatchEvent) = 0;
-		virtual void AE_CALL setDeadZone(ui32 keyCode, f32 deadZone) = 0;
+		virtual void AE_CALL setDeadZone (uint32_t keyCode, f32 deadZone) = 0;
 		virtual void AE_CALL setVibration(f32 left, f32 right) = 0;
 	};
 
@@ -66,7 +66,7 @@ namespace aurora::modules::inputs {
 	};
 
 
-	enum class KeyboardVirtualKeyCode : ui8 {
+	enum class KeyboardVirtualKeyCode : uint8_t {
 		KEY_BACKSPACE = 8,
 		KEY_TAB,
 		KEY_CLEAR = 12,
@@ -256,7 +256,7 @@ namespace aurora::modules::inputs {
 	};
 
 
-	enum class MouseKeyCode : ui8 {
+	enum class MouseKeyCode : uint8_t {
 		POSITION,
 		WHEEL,
 		L_BUTTON,
@@ -266,7 +266,7 @@ namespace aurora::modules::inputs {
 	};
 
 
-	enum class GamepadKeyCode : ui8 {
+	enum class GamepadKeyCode : uint8_t {
 		LEFT_STICK,
 		RIGHT_STICK,
 

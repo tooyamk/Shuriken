@@ -7,15 +7,15 @@ namespace aurora::modules::inputs::win_direct_input {
 	public:
 		Keyboard(Input& input, LPDIRECTINPUTDEVICE8 dev, const DeviceInfo& info);
 
-		virtual ui32 AE_CALL getKeyState(ui32 keyCode, f32* data, ui32 count) const override;
+		virtual uint32_t AE_CALL getKeyState (uint32_t keyCode, f32* data, uint32_t count) const override;
 		virtual void AE_CALL poll(bool dispatchEvent) override;
 
 	private:
-		using StateBuffer = ui8[256];
+		using StateBuffer = uint8_t[256];
 
 		StateBuffer _state;
 
-		inline static const ui8 SK_VK[] = {
+		inline static const uint8_t SK_VK[] = {
 			0,
 			VK_ESCAPE,
 			0x31,
@@ -274,7 +274,7 @@ namespace aurora::modules::inputs::win_direct_input {
 			0
 		};
 
-		inline static const ui8 VK_SK[] = {
+		inline static const uint8_t VK_SK[] = {
 			0,
 			0,//VK_LBUTTON
 			0,//VK_RBUTTON

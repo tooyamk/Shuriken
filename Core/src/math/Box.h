@@ -4,7 +4,7 @@
 #include "math/Vector.h"
 
 namespace aurora {
-	template<ui32 N, typename T>
+	template<uint32_t N, typename T>
 	class AE_TEMPLATE_DLL Box {
 	public:
 		Box() {
@@ -53,14 +53,14 @@ namespace aurora {
 
 	template<typename T> using Box1 = Box<1, T>;
 	using Box1f32 = Box1<f32>;
-	using Box1i32 = Box1<i32>;
-	using Box1ui32 = Box1<ui32>;
+	using Box1i32 = Box1<int32_t>;
+	using Box1ui32 = Box1<uint32_t>;
 	template<typename T> using Box2 = Box<2, T>;
 	using Box2f32 = Box2<f32>;
-	using Box2i32 = Box2<i32>;
-	using Box2ui32 = Box2<ui32>;
+	using Box2i32 = Box2<int32_t>;
+	using Box2ui32 = Box2<uint32_t>;
 	template<typename T> using Box3 = Box<3, T>;
 	using Box3f32 = Box3<f32>;
-	using Box3i32 = Box3<i32>;
-	using Box3ui32 = Box3<ui32>;
+	using Box3i32 = Box3<int32_t>;
+	using Box3ui32 = Box3<uint32_t>;
 }

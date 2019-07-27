@@ -65,7 +65,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		}
 	}
 
-	void Sampler::setMaxAnisotropy(ui32 max) {
+	void Sampler::setMaxAnisotropy (uint32_t max) {
 		if (_desc.MaxAnisotropy != max) {
 			_desc.MaxAnisotropy = max;
 			_dirty = true;
@@ -73,14 +73,14 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	void Sampler::setBorderColor(const Vec4f32& color) {
-		if (!ByteArray::isEqual((i8*)_desc.BorderColor, sizeof(_desc.BorderColor), (const i8*)&color, sizeof(_desc.BorderColor))) {
+		if (!ByteArray::isEqual((uint8_t*)_desc.BorderColor, sizeof(_desc.BorderColor), (const uint8_t*)&color, sizeof(_desc.BorderColor))) {
 			memcpy(_desc.BorderColor, &color, sizeof(_desc.BorderColor));
 			_dirty = true;
 		}
 	}
 
 	void Sampler::_updateFilter() {
-		ui32 filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+		uint32_t filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
 		if (_filter.minification == SamplerFilterMode::ANISOTROPIC || _filter.magnification == SamplerFilterMode::ANISOTROPIC || _filter.mipmap == SamplerFilterMode::ANISOTROPIC) {
 			filter = D3D11_FILTER_ANISOTROPIC;
 		} else {

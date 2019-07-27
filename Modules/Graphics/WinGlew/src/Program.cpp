@@ -84,8 +84,8 @@ namespace aurora::modules::graphics::win_glew {
 			info.size = size;
 			info.type = type;
 
-			static const i8 TYPE[] = { "type_" };
-			static const i8 COMBINED_TEX[] = { "_CombinedTex" };
+			static const char TYPE[] = { "type_" };
+			static const char COMBINED_TEX[] = { "_CombinedTex" };
 			if (len > sizeof(TYPE) - 1) {
 				if (std::string_view(charBuffer, sizeof(TYPE) - 1) == TYPE) {
 					info.names.emplace_back(charBuffer + sizeof(TYPE) - 1);
@@ -94,7 +94,7 @@ namespace aurora::modules::graphics::win_glew {
 					if (auto pos = String::findFirst(charBuffer + offset, len - offset, '_'); pos == std::string::npos || !pos) {
 						info.names.emplace_back(charBuffer);
 					} else {
-						ui32 texNameLen = 0;
+						uint32_t texNameLen = 0;
 						if (auto rst = std::from_chars(charBuffer + offset, charBuffer + offset + pos, texNameLen); rst.ec == std::errc()) {
 							offset += pos + 1;
 							info.names.emplace_back(charBuffer + offset, texNameLen);
@@ -219,7 +219,7 @@ namespace aurora::modules::graphics::win_glew {
 	}
 
 	void Program::draw(const VertexBufferFactory* vertexFactory, const ShaderParameterFactory* paramFactory, 
-		const IIndexBuffer* indexBuffer, ui32 count, ui32 offset) {
+		const IIndexBuffer* indexBuffer, uint32_t count, uint32_t offset) {
 		if (_handle && vertexFactory && indexBuffer && _graphics == indexBuffer->getGraphics() && count > 0) {
 			auto ib = (IndexBuffer*)indexBuffer->getNativeBuffer();
 			if (!ib) return;
@@ -232,7 +232,7 @@ namespace aurora::modules::graphics::win_glew {
 				}
 			}
 
-			ui8 texIndex = 0;
+			uint8_t texIndex = 0;
 
 			if (paramFactory) {
 				for (auto& layout : _uniformLayouts) {
@@ -274,14 +274,14 @@ namespace aurora::modules::graphics::win_glew {
 					layout.collectUsingInfo(*paramFactory, statistics, (std::vector<const ShaderParameter*>&)_tempParams, _tempVars);
 
 					ConstantBuffer* cb = nullptr;
-					ui32 numVars = _tempVars.size();
+					uint32_t numVars = _tempVars.size();
 					if (statistics.unknownCount < numVars) {
 						if (statistics.exclusiveCount > 0 && !statistics.shareCount) {
 							cb = (ConstantBuffer*)g->getConstantBufferManager().getExclusiveConstantBuffer(_tempParams, layout);
 
 							if (cb) {
 								bool isMaping = false;
-								for (ui32 i = 0; i < numVars; ++i) {
+								for (uint32_t i = 0; i < numVars; ++i) {
 									if (auto param = _tempParams[i]; param && param->getUpdateId() != cb->recordUpdateIds[i]) {
 										if (!isMaping) {
 											if (cb->map(Usage::MAP_WRITE) == Usage::NONE) break;
@@ -319,7 +319,7 @@ namespace aurora::modules::graphics::win_glew {
 
 	void Program::_constantBufferUpdateAll(ConstantBuffer* cb, const std::vector<ConstantBufferLayout::Variables>& vars) {
 		if (cb->map(Usage::MAP_WRITE) != Usage::NONE) {
-			for (ui32 i = 0, n = _tempVars.size(); i < n; ++i) {
+			for (uint32_t i = 0, n = _tempVars.size(); i < n; ++i) {
 				auto param = _tempParams[i];
 				if (param) ConstantBufferManager::updateConstantBuffer(cb, *param, *_tempVars[i]);
 			}
@@ -351,10 +351,10 @@ namespace aurora::modules::graphics::win_glew {
 		}
 
 		println("------ glsl shader code(", (type == GL_VERTEX_SHADER ? "vert" : "frag"), ") ------\n", 
-			std::string(source.data.getBytes(), source.data.getLength()), "\n------------------------------------");
+			std::string((char*)source.data.getBytes(), source.data.getLength()), "\n------------------------------------");
 
 		GLuint shader = glCreateShader(type);
-		auto s = source.data.getBytes();
+		auto s = (const char*)source.data.getBytes();
 		auto len = (GLint)source.data.getLength();
 		glShaderSource(shader, 1, &s, &len);
 		glCompileShader(shader);

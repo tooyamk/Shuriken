@@ -62,8 +62,8 @@ namespace aurora::modules::graphics {
 		} else {
 			std::vector<std::string_view> vers;
 			String::split(std::string_view(version), std::string_view("."), vers);
-			ui32 n = vers.size();
-			for (ui32 i = 0; i < n; ++i) {
+			uint32_t n = vers.size();
+			for (uint32_t i = 0; i < n; ++i) {
 				if (i != 0) sm.push_back('_');
 				sm += vers[i];
 			}

@@ -12,9 +12,9 @@ namespace aurora::modules::graphics::win_glew {
 
 		virtual ITextureResource* AE_CALL getResource() const override;
 		virtual const void* AE_CALL getNativeView() const override;
-		virtual ui32 AE_CALL getArraySize() const override;
-		virtual ui32 AE_CALL getMipLevels() const override;
-		virtual bool AE_CALL create(ITextureResource* res, ui32 mipBegin, ui32 mipLevels, ui32 arrayBegin, ui32 arraySize) override;
+		virtual uint32_t AE_CALL getArraySize() const override;
+		virtual uint32_t AE_CALL getMipLevels() const override;
+		virtual bool AE_CALL create(ITextureResource* res, uint32_t mipBegin, uint32_t mipLevels, uint32_t arrayBegin, uint32_t arraySize) override;
 
 		void AE_CALL release();
 
@@ -23,12 +23,12 @@ namespace aurora::modules::graphics::win_glew {
 		}
 
 	protected:
-		ui32 _mipBegin;
-		ui32 _mipLevels;
-		ui32 _createdMipLevels;
-		ui32 _arrayBegin;
-		ui32 _arraySize;
-		ui32 _createdArraySize;
+		uint32_t _mipBegin;
+		uint32_t _mipLevels;
+		uint32_t _createdMipLevels;
+		uint32_t _arrayBegin;
+		uint32_t _arraySize;
+		uint32_t _createdArraySize;
 
 		RefPtr<ITextureResource> _res;
 		GLuint _handle;

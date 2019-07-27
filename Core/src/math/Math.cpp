@@ -37,8 +37,8 @@ namespace aurora {
 	void Math::transposeMat(const f32(&m)[3][4], f32(&dst)[4][4]) {
 		f32 d[4][4];
 
-		for (ui8 c = 0; c < 4; ++c) {
-			for (ui8 r = 0; r < 3; ++r) d[c][r] = m[r][c];
+		for (uint8_t c = 0; c < 4; ++c) {
+			for (uint8_t r = 0; r < 3; ++r) d[c][r] = m[r][c];
 		}
 
 		d[0][3] = 0.f;
@@ -52,8 +52,8 @@ namespace aurora {
 	void Math::transposeMat(const f32(&m)[4][4], f32(&dst)[4][4]) {
 		f32 d[4][4];
 
-		for (ui8 c = 0; c < 4; ++c) {
-			for (ui8 r = 0; r < 4; ++r) d[c][r] = m[r][c];
+		for (uint8_t c = 0; c < 4; ++c) {
+			for (uint8_t r = 0; r < 4; ++r) d[c][r] = m[r][c];
 		}
 
 		memcpy(dst, d, sizeof(dst));
@@ -62,7 +62,7 @@ namespace aurora {
 	void Math::appendMat(const f32(&lhs)[3][4], const f32(&rhs)[3][4], f32(&dst)[3][4]) {
 		f32 m[3][4];
 
-		for (ui8 c = 0; c < 3; ++c) {
+		for (uint8_t c = 0; c < 3; ++c) {
 			auto& mc = m[c];
 			auto& rc = rhs[c];
 			mc[0] = lhs[0][0] * rc[0] + lhs[1][0] * rc[1] + lhs[2][0] * rc[2];
@@ -90,7 +90,7 @@ namespace aurora {
 	void Math::appendMat(const f32(&lhs)[3][4], const f32(&rhs)[4][4], f32(&dst)[4][4]) {
 		f32 m[4][4];
 
-		for (ui8 c = 0; c < 4; ++c) {
+		for (uint8_t c = 0; c < 4; ++c) {
 			auto& mc = m[c];
 			auto& rc = rhs[c];
 			mc[0] = lhs[0][0] * rc[0] + lhs[1][0] * rc[1] + lhs[2][0] * rc[2];
@@ -105,7 +105,7 @@ namespace aurora {
 	void Math::appendMat(const f32(&lhs)[4][4], const f32(&rhs)[3][4], f32(&dst)[3][4]) {
 		f32 m[3][4];
 
-		for (ui8 c = 0; c < 3; ++c) {
+		for (uint8_t c = 0; c < 3; ++c) {
 			auto& mc = m[c];
 			auto& rc = rhs[c];
 			mc[0] = lhs[0][0] * rc[0] + lhs[1][0] * rc[1] + lhs[2][0] * rc[2] + lhs[3][0] * rc[3];
@@ -133,7 +133,7 @@ namespace aurora {
 	void Math::appendMat(const f32(&lhs)[4][4], const f32(&rhs)[4][4], f32(&dst)[4][4]) {
 		f32 m[4][4];
 
-		for (ui8 c = 0; c < 4; ++c) {
+		for (uint8_t c = 0; c < 4; ++c) {
 			auto& mc = m[c];
 			auto& rc = rhs[c];
 			mc[0] = lhs[0][0] * rc[0] + lhs[1][0] * rc[1] + lhs[2][0] * rc[2] + lhs[3][0] * rc[3];

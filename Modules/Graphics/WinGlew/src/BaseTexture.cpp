@@ -27,7 +27,7 @@ namespace aurora::modules::graphics::win_glew {
 		releaseTex();
 	}
 
-	bool BaseTexture::create(Graphics& graphics, const Vec3ui32& size, ui32 arraySize, ui32 mipLevels,
+	bool BaseTexture::create(Graphics& graphics, const Vec3ui32& size, uint32_t arraySize, uint32_t mipLevels,
 		TextureFormat format, Usage resUsage, const void*const* data) {
 		releaseTex();
 
@@ -69,16 +69,16 @@ namespace aurora::modules::graphics::win_glew {
 						if (supportTexStorage) {
 							glTexStorage2D(glTexInfo.target, mipLevels, glTexInfo.internalFormat, size[0], arraySize);
 							if (data) {
-								for (ui32 i = 0; i < mipLevels; ++i) {
-									for (ui32 j = 0; j < arraySize; ++j) {
+								for (uint32_t i = 0; i < mipLevels; ++i) {
+									for (uint32_t j = 0; j < arraySize; ++j) {
 										if (auto subData = data[i + j * mipLevels]; subData) glTexSubImage2D(glTexInfo.target, i, 0, 0, w, j, glTexInfo.format, glTexInfo.type, subData);
 									}
 									w = Image::calcNextMipPixelSize(w);
 								}
 							}
 						} else {
-							for (ui32 i = 0; i < mipLevels; ++i) {
-								for (ui32 j = 0; j < arraySize; ++j) glTexImage2D(glTexInfo.target, i, glTexInfo.internalFormat, w, j, 0, glTexInfo.format, glTexInfo.type, data ? data[i + j * mipLevels] :  nullptr);
+							for (uint32_t i = 0; i < mipLevels; ++i) {
+								for (uint32_t j = 0; j < arraySize; ++j) glTexImage2D(glTexInfo.target, i, glTexInfo.internalFormat, w, j, 0, glTexInfo.format, glTexInfo.type, data ? data[i + j * mipLevels] :  nullptr);
 								w = Image::calcNextMipPixelSize(w);
 							}
 						}
@@ -89,13 +89,13 @@ namespace aurora::modules::graphics::win_glew {
 						if (supportTexStorage) {
 							glTexStorage1D(glTexInfo.target, mipLevels, glTexInfo.internalFormat, size[0]);
 							if (data) {
-								for (ui32 i = 0; i < mipLevels; ++i) {
+								for (uint32_t i = 0; i < mipLevels; ++i) {
 									if (data[i]) glTexSubImage1D(glTexInfo.target, i, 0, w, glTexInfo.format, glTexInfo.type, data[i]);
 									w = Image::calcNextMipPixelSize(w);
 								}
 							}
 						} else {
-							for (ui32 i = 0; i < mipLevels; ++i) {
+							for (uint32_t i = 0; i < mipLevels; ++i) {
 								glTexImage1D(glTexInfo.target, i, glTexInfo.internalFormat, w, 0, glTexInfo.format, glTexInfo.type, data ? data[i] : nullptr);
 								w = Image::calcNextMipPixelSize(w);
 							}
@@ -114,16 +114,16 @@ namespace aurora::modules::graphics::win_glew {
 						if (supportTexStorage) {
 							glTexStorage3D(glTexInfo.target, mipLevels, glTexInfo.internalFormat, size[0], size[1], arraySize);
 							if (data) {
-								for (ui32 i = 0; i < mipLevels; ++i) {
-									for (ui32 j = 0; j < arraySize; ++j) {
+								for (uint32_t i = 0; i < mipLevels; ++i) {
+									for (uint32_t j = 0; j < arraySize; ++j) {
 										if (auto subData = data[i + j * mipLevels]; subData) glTexSubImage3D(glTexInfo.target, i, 0, 0, 0, size2[0], size2[1], j, glTexInfo.format, glTexInfo.type, subData);
 									}
 									Image::calcNextMipPixelSize(size2);
 								}
 							}
 						} else {
-							for (ui32 i = 0; i < mipLevels; ++i) {
-								for (ui32 j = 0; j < arraySize; ++j) glTexImage3D(glTexInfo.target, i, glTexInfo.internalFormat, size2[0], size2[1], j, 0, glTexInfo.format, glTexInfo.type, data ? data[i + j * mipLevels] : nullptr);
+							for (uint32_t i = 0; i < mipLevels; ++i) {
+								for (uint32_t j = 0; j < arraySize; ++j) glTexImage3D(glTexInfo.target, i, glTexInfo.internalFormat, size2[0], size2[1], j, 0, glTexInfo.format, glTexInfo.type, data ? data[i + j * mipLevels] : nullptr);
 								Image::calcNextMipPixelSize(size2);
 							}
 						}
@@ -134,13 +134,13 @@ namespace aurora::modules::graphics::win_glew {
 						if (supportTexStorage) {
 							glTexStorage2D(glTexInfo.target, mipLevels, glTexInfo.internalFormat, size[0], size[1]);
 							if (data) {
-								for (ui32 i = 0; i < mipLevels; ++i) {
+								for (uint32_t i = 0; i < mipLevels; ++i) {
 									if (data[i]) glTexSubImage2D(glTexInfo.target, i, 0, 0, size2[0], size2[1], glTexInfo.format, glTexInfo.type, data[i]);
 									Image::calcNextMipPixelSize(size2);
 								}
 							}
 						} else {
-							for (ui32 i = 0; i < mipLevels; ++i) {
+							for (uint32_t i = 0; i < mipLevels; ++i) {
 								glTexImage2D(glTexInfo.target, i, glTexInfo.internalFormat, size2[0], size2[1], 0, glTexInfo.format, glTexInfo.type, data ? data[i] : nullptr);
 								Image::calcNextMipPixelSize(size2);
 
@@ -208,13 +208,13 @@ namespace aurora::modules::graphics::win_glew {
 					if (supportTexStorage) {
 						glTexStorage3D(glTexInfo.target, mipLevels, glTexInfo.internalFormat, size[0], size[1], size[2]);
 						if (data) {
-							for (ui32 i = 0; i < mipLevels; ++i) {
+							for (uint32_t i = 0; i < mipLevels; ++i) {
 								if (data[i]) glTexSubImage3D(glTexInfo.target, i, 0, 0, 0, size3[0], size3[1], size3[2], glTexInfo.format, glTexInfo.type, data[i]);
 								Image::calcNextMipPixelSize(size3);
 							}
 						}
 					} else {
-						for (ui32 i = 0; i < mipLevels; ++i) {
+						for (uint32_t i = 0; i < mipLevels; ++i) {
 							glTexImage3D(glTexInfo.target, i, glTexInfo.internalFormat, size3[0], size3[1], size3[2], 0, glTexInfo.format, glTexInfo.type, data ? data[i] : nullptr);
 							Image::calcNextMipPixelSize(size3);
 						}
@@ -242,7 +242,7 @@ namespace aurora::modules::graphics::win_glew {
 		return _createDone(false);
 	}
 
-	Usage BaseTexture::map(ui32 arraySlice, ui32 mipSlice, Usage expectMapUsage) {
+	Usage BaseTexture::map (uint32_t arraySlice, uint32_t mipSlice, Usage expectMapUsage) {
 		return Usage::NONE;
 		/*
 		Usage ret = Usage::NONE;
@@ -269,19 +269,19 @@ namespace aurora::modules::graphics::win_glew {
 		*/
 	}
 
-	void BaseTexture::unmap(ui32 arraySlice, ui32 mipSlice) {
+	void BaseTexture::unmap (uint32_t arraySlice, uint32_t mipSlice) {
 		//mapUsage = Usage::NONE;
 	}
 
-	ui32 BaseTexture::read(ui32 arraySlice, ui32 mipSlice, ui32 offset, void* dst, ui32 dstLen) {
+	uint32_t BaseTexture::read (uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, void* dst, uint32_t dstLen) {
 		return -1;
 	}
 
-	ui32 BaseTexture::write(ui32 arraySlice, ui32 mipSlice, ui32 offset, const void* data, ui32 length) {
+	uint32_t BaseTexture::write (uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, const void* data, uint32_t length) {
 		/*
 		if ((mapUsage & Usage::CPU_WRITE) == Usage::CPU_WRITE) {
 			if (data && length && offset < size) {
-				length = std::min<ui32>(length, size - offset);
+				length = std::min<uint32_t>(length, size - offset);
 				memcpy((i8*)mapData + offset, data, length);
 				return length;
 			}
@@ -291,14 +291,14 @@ namespace aurora::modules::graphics::win_glew {
 		return -1;
 	}
 
-	bool BaseTexture::update(ui32 arraySlice, ui32 mipSlice, const Box3ui32& range, const void* data) {
+	bool BaseTexture::update (uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const void* data) {
 		if (handle && (resUsage & Usage::UPDATE) == Usage::UPDATE && arraySlice < arraySize && mipSlice < mipLevels) {
 			return _update(arraySlice, mipSlice, range, data);
 		}
 		return false;
 	}
 
-	bool BaseTexture::copyFrom(Graphics& graphics, ui32 arraySlice, ui32 mipSlice, const Box3ui32& range, const IPixelBuffer* pixelBuffer) {
+	bool BaseTexture::copyFrom(Graphics& graphics, uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const IPixelBuffer* pixelBuffer) {
 		if (pixelBuffer && &graphics == pixelBuffer->getGraphics()) {
 			if (auto pb = (PixelBuffer*)pixelBuffer->getNativeBuffer(); pb) {
 				if (auto buf = pb->getInternalBuffer(); buf) {
@@ -383,7 +383,7 @@ namespace aurora::modules::graphics::win_glew {
 		return succeeded;
 	}
 
-	bool BaseTexture::_update(ui32 arraySlice, ui32 mipSlice, const Box3ui32& range, const void* data) {
+	bool BaseTexture::_update (uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const void* data) {
 		glBindTexture(glTexInfo.target, handle);
 		switch (glTexInfo.target) {
 		case GL_TEXTURE_1D:

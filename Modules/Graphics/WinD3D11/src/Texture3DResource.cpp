@@ -23,19 +23,19 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return &_baseTexRes;
 	}
 
-	ui16 Texture3DResource::getPerPixelByteSize() const {
+	uint16_t Texture3DResource::getPerPixelByteSize() const {
 		return _baseTexRes.perPixelSize;
 	}
 
-	ui32 Texture3DResource::getArraySize() const {
+	uint32_t Texture3DResource::getArraySize() const {
 		return _baseTexRes.arraySize;
 	}
 
-	ui32 Texture3DResource::getMipLevels() const {
+	uint32_t Texture3DResource::getMipLevels() const {
 		return _baseTexRes.mipLevels;
 	}
 
-	bool Texture3DResource::create(const Vec3ui32& size, ui32 arraySize, ui32 mipLevels, TextureFormat format, Usage resUsage, const void*const* data) {
+	bool Texture3DResource::create(const Vec3ui32& size, uint32_t arraySize, uint32_t mipLevels, TextureFormat format, Usage resUsage, const void*const* data) {
 		auto rst = _baseTexRes.create(*_graphics.get<Graphics>(), TextureType::TEX3D, size, arraySize, mipLevels, format, resUsage, data);
 		_view.create(this, 0, -1, 0, _baseTexRes.arraySize);
 		return rst;
@@ -45,23 +45,23 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return _baseTexRes.resUsage;
 	}
 
-	Usage Texture3DResource::map(ui32 arraySlice, ui32 mipSlice, Usage expectMapUsage) {
+	Usage Texture3DResource::map (uint32_t arraySlice, uint32_t mipSlice, Usage expectMapUsage) {
 		return _baseTexRes.map(*_graphics.get<Graphics>(), arraySlice, mipSlice, expectMapUsage);
 	}
 
-	void Texture3DResource::unmap(ui32 arraySlice, ui32 mipSlice) {
+	void Texture3DResource::unmap (uint32_t arraySlice, uint32_t mipSlice) {
 		_baseTexRes.unmap(*_graphics.get<Graphics>(), arraySlice, mipSlice);
 	}
 
-	ui32 Texture3DResource::read(ui32 arraySlice, ui32 mipSlice, ui32 offset, void* dst, ui32 dstLen) {
+	uint32_t Texture3DResource::read (uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, void* dst, uint32_t dstLen) {
 		return _baseTexRes.read(arraySlice, mipSlice, offset, dst, dstLen);
 	}
 
-	ui32 Texture3DResource::write(ui32 arraySlice, ui32 mipSlice, ui32 offset, const void* data, ui32 length) {
+	uint32_t Texture3DResource::write (uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, const void* data, uint32_t length) {
 		return _baseTexRes.write(arraySlice, mipSlice, offset, data, length);
 	}
 
-	bool Texture3DResource::update(ui32 arraySlice, ui32 mipSlice, const Box3ui32& range, const void* data) {
+	bool Texture3DResource::update (uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const void* data) {
 		D3D11_BOX box;
 		box.left = range.pos[0];
 		box.right = range.pos[0] + range.size[0];
@@ -73,7 +73,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return _baseTexRes.update(*_graphics.get<Graphics>(), arraySlice, mipSlice, box, data);
 	}
 
-	bool Texture3DResource::copyFrom(ui32 arraySlice, ui32 mipSlice, const Box3ui32& range, const IPixelBuffer* pixelBuffer) {
+	bool Texture3DResource::copyFrom (uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const IPixelBuffer* pixelBuffer) {
 		return false;
 	}
 }

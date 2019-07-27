@@ -14,10 +14,10 @@ namespace aurora {
 		free();
 	}
 
-	bool DynamicLib::load(const i8* path) {
+	bool DynamicLib::load(const char* path) {
 #if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
 		wchar_t* out = nullptr;
-		if (String::Utf8ToUnicode(path, (std::numeric_limits<ui32>::max)(), out) == std::string::npos) return false;
+		if (String::Utf8ToUnicode(path, (std::numeric_limits<uint32_t>::max)(), out) == std::string::npos) return false;
 		_lib = LoadLibraryW(out);
 		delete[] out;
 #elif AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_MAC
@@ -37,7 +37,7 @@ namespace aurora {
 		}
 	}
 
-	void* DynamicLib::getSymbolAddress(const i8* name) const {
+	void* DynamicLib::getSymbolAddress(const char* name) const {
 		if (_lib) {
 #if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
 			return GetProcAddress((HMODULE)_lib, name);

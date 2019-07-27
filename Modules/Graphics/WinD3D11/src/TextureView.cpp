@@ -28,15 +28,15 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return _view;
 	}
 
-	ui32 TextureView::getArraySize() const {
+	uint32_t TextureView::getArraySize() const {
 		return _createdArraySize;
 	}
 
-	ui32 TextureView::getMipLevels() const {
+	uint32_t TextureView::getMipLevels() const {
 		return _createdMipLevels;
 	}
 
-	bool TextureView::create(ITextureResource* res, ui32 mipBegin, ui32 mipLevels, ui32 arrayBegin, ui32 arraySize) {
+	bool TextureView::create(ITextureResource* res, uint32_t mipBegin, uint32_t mipLevels, uint32_t arrayBegin, uint32_t arraySize) {
 		release();
 
 		_mipBegin = mipBegin;
@@ -45,7 +45,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_arraySize = arraySize;
 
 		if (res && res->getGraphics() == _graphics.get()) {
-			if (auto native = (BaseTextureResource*)res->getNativeResource(); native && native->handle && (native->bindType & D3D11_BIND_SHADER_RESOURCE) && mipBegin < native->mipLevels && arrayBegin < std::max<ui32>(native->arraySize, 1)) {
+			if (auto native = (BaseTextureResource*)res->getNativeResource(); native && native->handle && (native->bindType & D3D11_BIND_SHADER_RESOURCE) && mipBegin < native->mipLevels && arrayBegin < std::max<uint32_t>(native->arraySize, 1)) {
 				auto lastMipLevels = native->mipLevels - mipBegin;
 				auto createMipLevels = mipLevels > lastMipLevels ? lastMipLevels : mipLevels;
 

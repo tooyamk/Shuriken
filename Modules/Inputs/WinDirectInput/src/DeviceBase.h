@@ -13,7 +13,7 @@ namespace aurora::modules::inputs::win_direct_input {
 
 		virtual events::IEventDispatcher<DeviceEvent>& AE_CALL getEventDispatcher() override;
 		virtual const DeviceInfo& AE_CALL getInfo() const override;
-		virtual void AE_CALL setDeadZone(ui32 keyCode, f32 deadZone) override {}
+		virtual void AE_CALL setDeadZone (uint32_t keyCode, f32 deadZone) override {}
 		virtual void AE_CALL setVibration(f32 left, f32 right) override {}
 
 	protected:
@@ -22,6 +22,6 @@ namespace aurora::modules::inputs::win_direct_input {
 		DeviceInfo _info;
 
 		LPDIRECTINPUTDEVICE8 _dev;
-		ui32 _type;
+		uint32_t _type;
 	};
 }

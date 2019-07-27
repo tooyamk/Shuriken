@@ -35,7 +35,7 @@ namespace aurora {
 			return _raw;
 		}
 
-		inline ui32 AE_CALL size() const {
+		inline uint32_t AE_CALL size() const {
 			return _validCount;
 		}
 
@@ -152,9 +152,9 @@ namespace aurora {
 		}
 
 	protected:
-		ui32 _traversing;
-		ui32 _validCount;
-		ui32 _totalCount;
+		uint32_t _traversing;
+		uint32_t _validCount;
+		uint32_t _totalCount;
 		std::list<Element> _raw;
 	};
 }

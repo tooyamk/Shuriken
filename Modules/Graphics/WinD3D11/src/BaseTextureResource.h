@@ -12,13 +12,13 @@ namespace aurora::modules::graphics::win_d3d11 {
 		BaseTextureResource(UINT resType);
 		virtual ~BaseTextureResource();
 
-		bool AE_CALL create(Graphics& graphics, TextureType texType, const Vec3ui32& size, ui32 arraySize, ui32 mipLevels,
+		bool AE_CALL create(Graphics& graphics, TextureType texType, const Vec3ui32& size, uint32_t arraySize, uint32_t mipLevels,
 			TextureFormat format, Usage resUsage, const void*const* data = nullptr);
-		Usage AE_CALL map(Graphics& graphics, ui32 arraySlice, ui32 mipSlice, Usage expectMapUsage);
-		void AE_CALL unmap(Graphics& graphics, ui32 arraySlice, ui32 mipSlice);
-		ui32 AE_CALL read(ui32 arraySlice, ui32 mipSlice, ui32 offset, void* dst, ui32 dstLen);
-		ui32 AE_CALL write(ui32 arraySlice, ui32 mipSlice, ui32 offset, const void* data, ui32 length);
-		bool AE_CALL update(Graphics& graphics, ui32 arraySlice, ui32 mipSlice, const D3D11_BOX& range, const void* data);
+		Usage AE_CALL map(Graphics& graphics, uint32_t arraySlice, uint32_t mipSlice, Usage expectMapUsage);
+		void AE_CALL unmap(Graphics& graphics, uint32_t arraySlice, uint32_t mipSlice);
+		uint32_t AE_CALL read (uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, void* dst, uint32_t dstLen);
+		uint32_t AE_CALL write (uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, const void* data, uint32_t length);
+		bool AE_CALL update(Graphics& graphics, uint32_t arraySlice, uint32_t mipSlice, const D3D11_BOX& range, const void* data);
 		void AE_CALL releaseTex(Graphics& graphics);
 		void AE_CALL addView(TextureView& view);
 		void AE_CALL removeView(TextureView& view);
@@ -29,14 +29,14 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		TextureFormat format;
 		DXGI_FORMAT internalFormat;
-		ui16 perPixelSize;
+		uint16_t perPixelSize;
 		Vec3ui32 texSize;
-		ui32 arraySize;
-		ui32 mipLevels;
+		uint32_t arraySize;
+		uint32_t mipLevels;
 
 		struct MappedRes {
 			Usage usage;
-			ui32 size;
+			uint32_t size;
 			D3D11_MAPPED_SUBRESOURCE res;
 		};
 

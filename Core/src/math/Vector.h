@@ -4,13 +4,13 @@
 #include "math/Math.h"
 
 namespace aurora {
-	template<ui32 N, typename T>
+	template<uint32_t N, typename T>
 	class AE_TEMPLATE_DLL Vector {
 	public:
 		using Vec = Vector<N, T>;
 		using Data = T[N];
 
-		template<ui32 COUNT>
+		template<uint32_t COUNT>
 		using SLICE_TYPE = T[COUNT];
 
 		Vec() {
@@ -33,7 +33,7 @@ namespace aurora {
 			set(values);
 		}
 
-		Vec(const T* values, ui32 len) {
+		Vec(const T* values, uint32_t len) {
 			set(values, len);
 			if (N > len) memset(data + len, 0, sizeof(T) * (N - len));
 		}
@@ -53,11 +53,11 @@ namespace aurora {
 			return data;
 		}
 
-		inline T& AE_CALL operator[](i32 i) {
+		inline T& AE_CALL operator[](int32_t i) {
 			return data[i];
 		}
 
-		inline const T& AE_CALL operator[](i32 i) const {
+		inline const T& AE_CALL operator[](int32_t i) const {
 			return data[i];
 		}
 
@@ -126,7 +126,7 @@ namespace aurora {
 		}
 
 		inline Vec& AE_CALL set(const T value) {
-			for (ui32 i = 0; i < N; ++i) data[i] = value;
+			for (uint32_t i = 0; i < N; ++i) data[i] = value;
 			return *this;
 		}
 
@@ -135,12 +135,12 @@ namespace aurora {
 		}
 
 		inline Vec& AE_CALL set(const T(&values)[N]) {
-			for (ui32 i = 0; i < N; ++i) data[i] = values[i];
+			for (uint32_t i = 0; i < N; ++i) data[i] = values[i];
 			return *this;
 		}
 
-		inline Vec& AE_CALL set(const T* values, ui32 len) {
-			for (ui32 i = 0, n = N > len ? len : N; i < n; ++i) data[i] = values[i];
+		inline Vec& AE_CALL set(const T* values, uint32_t len) {
+			for (uint32_t i = 0, n = N > len ? len : N; i < n; ++i) data[i] = values[i];
 			return *this;
 		}
 
@@ -152,7 +152,7 @@ namespace aurora {
 		inline Vec& AE_CALL set(Args... args) {
 			if constexpr (N > 0) {
 				if constexpr (N >= sizeof...(args)) {
-					ui32 i = 0;
+					uint32_t i = 0;
 					((data[i++] = args), ...);
 				} else {
 					_set(0, args...);
@@ -162,12 +162,12 @@ namespace aurora {
 		}
 
 		inline Vec& AE_CALL add(const T value) {
-			for (ui32 i = 0; i < N; ++i) data[i] += value;
+			for (uint32_t i = 0; i < N; ++i) data[i] += value;
 			return *this;
 		}
 
 		inline Vec& AE_CALL add(const T(&values)[N]) {
-			for (ui32 i = 0; i < N; ++i) data[i] += values[i];
+			for (uint32_t i = 0; i < N; ++i) data[i] += values[i];
 			return *this;
 		}
 
@@ -176,12 +176,12 @@ namespace aurora {
 		}
 
 		inline Vec& AE_CALL sub(const T value) {
-			for (ui32 i = 0; i < N; ++i) data[i] -= value;
+			for (uint32_t i = 0; i < N; ++i) data[i] -= value;
 			return *this;
 		}
 
 		inline Vec& AE_CALL sub(const T(&values)[N]) {
-			for (ui32 i = 0; i < N; ++i) data[i] -= values[i];
+			for (uint32_t i = 0; i < N; ++i) data[i] -= values[i];
 			return *this;
 		}
 
@@ -190,12 +190,12 @@ namespace aurora {
 		}
 
 		inline Vec& AE_CALL mul(const T value) {
-			for (ui32 i = 0; i < N; ++i) data[i] *= value;
+			for (uint32_t i = 0; i < N; ++i) data[i] *= value;
 			return *this;
 		}
 
 		inline Vec& AE_CALL mul(const T(&values)[N]) {
-			for (ui32 i = 0; i < N; ++i) data[i] *= values[i];
+			for (uint32_t i = 0; i < N; ++i) data[i] *= values[i];
 			return *this;
 		}
 
@@ -204,12 +204,12 @@ namespace aurora {
 		}
 
 		inline Vec& AE_CALL div(const T value) {
-			for (ui32 i = 0; i < N; ++i) data[i] /= value;
+			for (uint32_t i = 0; i < N; ++i) data[i] /= value;
 			return *this;
 		}
 
 		inline Vec& AE_CALL div(const T(&values)[N]) {
-			for (ui32 i = 0; i < N; ++i) data[i] /= values[i];
+			for (uint32_t i = 0; i < N; ++i) data[i] /= values[i];
 			return *this;
 		}
 
@@ -250,19 +250,19 @@ namespace aurora {
 
 		inline T AE_CALL getMax() const {
 			T max = data[0];
-			for (ui32 i = 1; i < N; ++i) {
+			for (uint32_t i = 1; i < N; ++i) {
 				if (max < data[i]) max = data[i];
 			}
 			return max;
 		}
 
-		template<ui32 COUNT>
+		template<uint32_t COUNT>
 		inline SLICE_TYPE<COUNT>& AE_CALL slice() const {
 			return (SLICE_TYPE<COUNT>&)data;
 		}
 
-		template<ui32 COUNT>
-		inline SLICE_TYPE<COUNT>& AE_CALL slice(ui32 start) const {
+		template<uint32_t COUNT>
+		inline SLICE_TYPE<COUNT>& AE_CALL slice (uint32_t start) const {
 			return (SLICE_TYPE<COUNT>&)*(data + start);
 		}
 
@@ -292,34 +292,34 @@ namespace aurora {
 		Data data;
 
 	private:
-		inline void AE_CALL _set(ui32 i, T value) {}
+		inline void AE_CALL _set(uint32_t i, T value) {}
 
 		template<typename... Args>
-		inline void AE_CALL _set(ui32 i, T value, Args... args) {
+		inline void AE_CALL _set(uint32_t i, T value, Args... args) {
 			data[i] = value;
 			if (i++ < N) _set(i, args...);
 		}
 	};
 
-	template<ui32 N, typename T> using Vec = Vector<N, T>;
+	template<uint32_t N, typename T> using Vec = Vector<N, T>;
 
-	template<ui32 N, typename T> const Vec<N, T> Vector<N, T>::ZERO = Vector<N, T>(Math::NUMBER_0<T>);
-	template<ui32 N, typename T> const Vec<N, T> Vector<N, T>::ONE = Vector<N, T>(Math::NUMBER_1<T>);
+	template<uint32_t N, typename T> const Vec<N, T> Vector<N, T>::ZERO = Vector<N, T>(Math::NUMBER_0<T>);
+	template<uint32_t N, typename T> const Vec<N, T> Vector<N, T>::ONE = Vector<N, T>(Math::NUMBER_1<T>);
 
 	template<typename T> using Vec1 = Vec<1, T>;
 	using Vec1f32 = Vec1<f32>;
-	using Vec1i32 = Vec1<i32>;
-	using Vec1ui32 = Vec1<ui32>;
+	using Vec1i32 = Vec1<int32_t>;
+	using Vec1ui32 = Vec1<uint32_t>;
 	template<typename T> using Vec2 = Vec<2, T>;
 	using Vec2f32 = Vec2<f32>;
-	using Vec2i32 = Vec2<i32>;
-	using Vec2ui32 = Vec2<ui32>;
+	using Vec2i32 = Vec2<int32_t>;
+	using Vec2ui32 = Vec2<uint32_t>;
 	template<typename T> using Vec3 = Vec<3, T>;
 	using Vec3f32 = Vec3<f32>;
-	using Vec3i32 = Vec3<i32>;
-	using Vec3ui32 = Vec3<ui32>;
+	using Vec3i32 = Vec3<int32_t>;
+	using Vec3ui32 = Vec3<uint32_t>;
 	template<typename T> using Vec4 = Vec<4, T>;
 	using Vec4f32 = Vec4<f32>;
-	using Vec4i32 = Vec4<i32>;
-	using Vec4ui32 = Vec4<ui32>;
+	using Vec4i32 = Vec4<int32_t>;
+	using Vec4ui32 = Vec4<uint32_t>;
 }

@@ -8,7 +8,7 @@ namespace aurora::modules::inputs::win_direct_input {
 		memset(_state, 0, sizeof(StateBuffer));
 	}
 
-	ui32 Keyboard::getKeyState(ui32 keyCode, f32* data, ui32 count) const {
+	uint32_t Keyboard::getKeyState (uint32_t keyCode, f32* data, uint32_t count) const {
 		if (data && count && keyCode < 256) {
 			switch (keyCode) {
 			case VK_SHIFT:
@@ -52,19 +52,19 @@ namespace aurora::modules::inputs::win_direct_input {
 		hr = _dev->GetDeviceState(sizeof(StateBuffer), state);
 		if (SUCCEEDED(hr)) {
 			StateBuffer changedBtns;
-			ui16 len = 0;
-			for (ui16 i = 0; i < sizeof(StateBuffer); ++i) {
+			uint16_t len = 0;
+			for (uint16_t i = 0; i < sizeof(StateBuffer); ++i) {
 				if (_state[i] != state[i]) {
 					_state[i] = state[i];
-					changedBtns[len++] = ui8(i);
+					changedBtns[len++] = uint8_t(i);
 				}
 			}
 
 			if (len > 0) {
 				//MapVirtualKeyEx(DIK_RCONTROL, MAPVK_VSC_TO_VK_EX, GetKeyboardLayout(0));
 				//auto layout = GetKeyboardLayout(0);
-				for (ui16 i = 0; i < len; ++i) {
-					ui8 key = changedBtns[i];
+				for (uint16_t i = 0; i < len; ++i) {
+					uint8_t key = changedBtns[i];
 					f32 value = (state[key] & 0x80) > 0 ? 1.f : 0.f;
 					_eventDispatcher.dispatchEvent(this, value > 0.f ? DeviceEvent::DOWN : DeviceEvent::UP, &Key({ SK_VK[key], 1, &value }));
 				}

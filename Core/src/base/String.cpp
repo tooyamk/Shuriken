@@ -41,7 +41,7 @@ namespace aurora {
 		size_t unicodeLen, utf8Len;
 		calcUnicodeToUtf8Length(in.c_str(), in.size(), unicodeLen, utf8Len);
 		++utf8Len;
-		auto out = new i8[utf8Len];
+		auto out = new char[utf8Len];
 		auto len = _UnicodeToUtf8(in.c_str(), unicodeLen, out);
 		out[len] = 0;
 
@@ -51,11 +51,11 @@ namespace aurora {
 		return std::move(s);
 	}
 
-	void String::calcUtf8ToUnicodeLength(const i8* in, size_t inLen, size_t& utf8Len, size_t& unicodeLen) {
+	void String::calcUtf8ToUnicodeLength(const char* in, size_t inLen, size_t& utf8Len, size_t& unicodeLen) {
 		size_t s = 0, d = 0;
 		if (in) {
 			for (; s < inLen;) {
-				if (ui8 c = in[s]; c == 0) {
+				if (uint8_t c = in[s]; c == 0) {
 					break;
 				} else if ((c & 0x80) == 0) {
 					++s;
@@ -76,7 +76,7 @@ namespace aurora {
 		unicodeLen = d;
 	}
 
-	std::string::size_type String::Utf8ToUnicode(const i8* in, size_t inLen, wchar_t* out, size_t outLen) {
+	std::string::size_type String::Utf8ToUnicode(const char* in, size_t inLen, wchar_t* out, size_t outLen) {
 		if (!in || !out) return std::string::npos;
 
 		size_t utf8Len, unicodeLen;
@@ -100,7 +100,7 @@ namespace aurora {
 		return std::move(s);
 	}
 
-	std::string::size_type String::Utf8ToUnicode(const i8* in, size_t inLen, wchar_t*& out) {
+	std::string::size_type String::Utf8ToUnicode(const char* in, size_t inLen, wchar_t*& out) {
 		if (!in) return std::string::npos;
 
 		size_t utf8Len, unicodeLen;
@@ -140,10 +140,10 @@ namespace aurora {
 		return d;
 	}
 
-	size_t String::_Utf8ToUnicode(const i8* in, size_t inLen, wchar_t* out) {
+	size_t String::_Utf8ToUnicode(const char* in, size_t inLen, wchar_t* out) {
 		size_t s = 0, d = 0;
 		while (s < inLen) {
-			if (ui8 c = in[s]; (c & 0x80) == 0) {
+			if (uint8_t c = in[s]; (c & 0x80) == 0) {
 				out[d++] = in[s++];
 			} else if ((c & 0xE0) == 0xC0) {// 110x-xxxx 10xx-xxxx
 				out[d++] = ((c & 0x3F) << 6) | (in[s + 1] & 0x3F);
@@ -192,9 +192,51 @@ namespace aurora {
 		}
 	}
 
-	std::string String::toString(const ui8* value, size_t size) {
+	std::string_view String::trimQuotation(const std::string_view& str) {
+		auto size = str.size();
+
+		if (size >= 2) {
+			if (str[0] == '\"' && str[size - 1] == '\"') {
+				return std::string_view(str.data() + 1, size - 2);
+			} else {
+				return str;
+			}
+		} else {
+			return str;
+		}
+	}
+
+	std::string_view String::trimSpace(const std::string_view& str) {
+		auto size = str.size();
+
+		if (size) {
+			size_t left = 0, right = size - 1;
+			do {
+				if (str[left] == ' ') {
+					++left;
+				} else {
+					break;
+				}
+			} while (left < size);
+
+			while (right > left) {
+				if (str[right] == ' ') {
+					--right;
+				} else {
+					break;
+				}
+			}
+			right = size - right - 1;
+
+			return std::string_view(str.data() + left, 1 + right - left);
+		} else {
+			return str;
+		}
+	}
+
+	std::string String::toString(const uint8_t* value, size_t size) {
 		std::string str(size << 1, 0);
-		i8 buf[3];
+		char buf[3];
 		for (size_t i = 0; i < size; ++i) {
 			snprintf(buf, sizeof(buf), "%02x", value[i]);
 			size_t idx = i << 1;
@@ -204,7 +246,7 @@ namespace aurora {
 		return std::move(str);
 	}
 
-	std::string::size_type String::findFirst(const i8* src, size_t srcSize, const i8* value, size_t valueSize) {
+	std::string::size_type String::findFirst(const char* src, size_t srcSize, const char* value, size_t valueSize) {
 		if (!value || !valueSize) return std::string::npos;
 
 		if (valueSize == std::string::npos) valueSize = strlen(value);
@@ -224,7 +266,7 @@ namespace aurora {
 		return std::string::npos;
 	}
 
-	bool String::isEqual(const i8* str1, const i8* str2) {
+	bool String::isEqual(const char* str1, const char* str2) {
 		if (str1 == str2) return true;
 		
 		size_t i = 0;

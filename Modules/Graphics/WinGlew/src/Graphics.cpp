@@ -77,7 +77,7 @@ namespace aurora::modules::graphics::win_glew {
 		_dc = GetDC(_app.get()->Win_getHWnd());
 		if (!_dc) return false;
 
-		i32 iAttribIList[] = {
+		int32_t iAttribIList[] = {
 			WGL_SUPPORT_OPENGL_ARB, 1,
 			WGL_DRAW_TO_WINDOW_ARB, 1,
 			WGL_ACCELERATION_ARB, WGL_FULL_ACCELERATION_ARB,
@@ -91,8 +91,8 @@ namespace aurora::modules::graphics::win_glew {
 			//WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB,
 			0 };
 
-		i32 nPixelFormat = -1;
-		ui32 nPixCount = 0;
+		int32_t nPixelFormat = -1;
+		uint32_t nPixCount = 0;
 
 		wglChoosePixelFormatARB(_dc, iAttribIList, nullptr, 1, &nPixelFormat, &nPixCount);
 		if (nPixelFormat == -1) {
@@ -316,7 +316,7 @@ namespace aurora::modules::graphics::win_glew {
 		}
 	}
 
-	ui32 Graphics::getGLTypeSize(GLenum type) {
+	uint32_t Graphics::getGLTypeSize(GLenum type) {
 		switch (type) {
 		case GL_BOOL:
 		case GL_BYTE:
@@ -383,21 +383,21 @@ namespace aurora::modules::graphics::win_glew {
 		return new ConstantBuffer(*this);
 	}
 
-	IConstantBuffer* Graphics::_createdExclusiveConstantBuffer(ui32 numParameters) {
+	IConstantBuffer* Graphics::_createdExclusiveConstantBuffer(uint32_t numParameters) {
 		auto cb = new ConstantBuffer(*this);
-		cb->recordUpdateIds = new ui32[numParameters];
-		memset(cb->recordUpdateIds, 0, sizeof(ui32) * numParameters);
+		cb->recordUpdateIds = new uint32_t[numParameters];
+		memset(cb->recordUpdateIds, 0, sizeof(uint32_t) * numParameters);
 		return cb;
 	}
 
 	void Graphics::_debugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam) {
-		const i8 ERR[] = "error";
-		const i8 WARNING[] = "warning";
+		const char ERR[] = "error";
+		const char WARNING[] = "warning";
 
 		auto msgSize = strlen(message);
 
-		if (String::findFirst((i8*)message, msgSize, ERR, sizeof(ERR) - 1) != std::string::npos ||
-			String::findFirst((i8*)message, msgSize, WARNING, sizeof(WARNING) - 1) != std::string::npos) {
+		if (String::findFirst(message, msgSize, ERR, sizeof(ERR) - 1) != std::string::npos ||
+			String::findFirst(message, msgSize, WARNING, sizeof(WARNING) - 1) != std::string::npos) {
 			println("gl message : ", message);
 		}
 	}

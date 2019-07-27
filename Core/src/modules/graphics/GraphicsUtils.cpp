@@ -1,7 +1,7 @@
 #include "GraphicsUtils.h"
 
 namespace aurora::modules::graphics {
-	MultipleVertexBuffer::MultipleVertexBuffer(IGraphicsModule& graphics, ui8 max) : IVertexBuffer(graphics),
+	MultipleVertexBuffer::MultipleVertexBuffer(IGraphicsModule& graphics, uint8_t max) : IVertexBuffer(graphics),
 		_vertSize(VertexSize::UNKNOWN),
 		_vertType(VertexType::UNKNOWN),
 		_base(graphics, max) {
@@ -14,13 +14,13 @@ namespace aurora::modules::graphics {
 		return _base.getNativeBuffer();
 	}
 
-	bool MultipleVertexBuffer::create(ui32 size, Usage bufferUsage, const void* data, ui32 dataSize) {
+	bool MultipleVertexBuffer::create (uint32_t size, Usage bufferUsage, const void* data, uint32_t dataSize) {
 		auto rst = _base.create(size, bufferUsage, data, dataSize);
 		if (_base.getCurrent()) _base.getCurrent()->target.get()->setFormat(_vertSize, _vertType);
 		return rst;
 	}
 
-	ui32 MultipleVertexBuffer::getSize() const {
+	uint32_t MultipleVertexBuffer::getSize() const {
 		return _base.getSize();
 	}
 
@@ -36,15 +36,15 @@ namespace aurora::modules::graphics {
 		_base.unmap();
 	}
 
-	ui32 MultipleVertexBuffer::read(ui32 offset, void* dst, ui32 dstLen) {
+	uint32_t MultipleVertexBuffer::read (uint32_t offset, void* dst, uint32_t dstLen) {
 		return _base.read(offset, dst, dstLen);
 	}
 
-	ui32 MultipleVertexBuffer::write(ui32 offset, const void* data, ui32 length) {
+	uint32_t MultipleVertexBuffer::write (uint32_t offset, const void* data, uint32_t length) {
 		return _base.write(offset, data, length);
 	}
 
-	ui32 MultipleVertexBuffer::update(ui32 offset, const void* data, ui32 length) {
+	uint32_t MultipleVertexBuffer::update (uint32_t offset, const void* data, uint32_t length) {
 		return _base.update(offset, data, length);
 	}
 
@@ -75,7 +75,7 @@ namespace aurora::modules::graphics {
 	}
 
 
-	MultipleIndexBuffer::MultipleIndexBuffer(IGraphicsModule& graphics, ui8 max) : IIndexBuffer(graphics),
+	MultipleIndexBuffer::MultipleIndexBuffer(IGraphicsModule& graphics, uint8_t max) : IIndexBuffer(graphics),
 		_idxType(IndexType::UNKNOWN),
 		_base(graphics, max) {
 	}
@@ -87,13 +87,13 @@ namespace aurora::modules::graphics {
 		return _base.getNativeBuffer();
 	}
 
-	bool MultipleIndexBuffer::create(ui32 size, Usage bufferUsage, const void* data, ui32 dataSize) {
+	bool MultipleIndexBuffer::create (uint32_t size, Usage bufferUsage, const void* data, uint32_t dataSize) {
 		auto rst = _base.create(size, bufferUsage, data, dataSize);
 		if (_base.getCurrent()) _base.getCurrent()->target.get()->setFormat(_idxType);
 		return rst;
 	}
 
-	ui32 MultipleIndexBuffer::getSize() const {
+	uint32_t MultipleIndexBuffer::getSize() const {
 		return _base.getSize();
 	}
 
@@ -109,15 +109,15 @@ namespace aurora::modules::graphics {
 		_base.unmap();
 	}
 
-	ui32 MultipleIndexBuffer::read(ui32 offset, void* dst, ui32 dstLen) {
+	uint32_t MultipleIndexBuffer::read (uint32_t offset, void* dst, uint32_t dstLen) {
 		return _base.read(offset, dst, dstLen);
 	}
 
-	ui32 MultipleIndexBuffer::write(ui32 offset, const void* data, ui32 length) {
+	uint32_t MultipleIndexBuffer::write (uint32_t offset, const void* data, uint32_t length) {
 		return _base.write(offset, data, length);
 	}
 
-	ui32 MultipleIndexBuffer::update(ui32 offset, const void* data, ui32 length) {
+	uint32_t MultipleIndexBuffer::update (uint32_t offset, const void* data, uint32_t length) {
 		return _base.update(offset, data, length);
 	}
 
@@ -145,7 +145,7 @@ namespace aurora::modules::graphics {
 	}
 
 
-	MultipleConstantBuffer::MultipleConstantBuffer(IGraphicsModule& graphics, ui8 max) : IConstantBuffer(graphics),
+	MultipleConstantBuffer::MultipleConstantBuffer(IGraphicsModule& graphics, uint8_t max) : IConstantBuffer(graphics),
 		_base(graphics, max) {
 	}
 
@@ -156,11 +156,11 @@ namespace aurora::modules::graphics {
 		return _base.getNativeBuffer();
 	}
 
-	bool MultipleConstantBuffer::create(ui32 size, Usage bufferUsage, const void* data, ui32 dataSize) {
+	bool MultipleConstantBuffer::create (uint32_t size, Usage bufferUsage, const void* data, uint32_t dataSize) {
 		return _base.create(size, bufferUsage, data, dataSize);
 	}
 
-	ui32 MultipleConstantBuffer::getSize() const {
+	uint32_t MultipleConstantBuffer::getSize() const {
 		return _base.getSize();
 	}
 
@@ -176,15 +176,15 @@ namespace aurora::modules::graphics {
 		_base.unmap();
 	}
 
-	ui32 MultipleConstantBuffer::read(ui32 offset, void* dst, ui32 dstLen) {
+	uint32_t MultipleConstantBuffer::read (uint32_t offset, void* dst, uint32_t dstLen) {
 		return _base.read(offset, dst, dstLen);
 	}
 
-	ui32 MultipleConstantBuffer::write(ui32 offset, const void* data, ui32 length) {
+	uint32_t MultipleConstantBuffer::write (uint32_t offset, const void* data, uint32_t length) {
 		return _base.write(offset, data, length);
 	}
 
-	ui32 MultipleConstantBuffer::update(ui32 offset, const void* data, ui32 length) {
+	uint32_t MultipleConstantBuffer::update (uint32_t offset, const void* data, uint32_t length) {
 		return _base.update(offset, data, length);
 	}
 

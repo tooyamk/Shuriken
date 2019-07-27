@@ -124,6 +124,6 @@ namespace aurora::modules::graphics::win_d3d11 {
 		void AE_CALL _resize(const Vec2<UINT>& size);
 
 		IConstantBuffer* AE_CALL _createdShareConstantBuffer();
-		IConstantBuffer* AE_CALL _createdExclusiveConstantBuffer(ui32 numParameters);
+		IConstantBuffer* AE_CALL _createdExclusiveConstantBuffer(uint32_t numParameters);
 	};
 }

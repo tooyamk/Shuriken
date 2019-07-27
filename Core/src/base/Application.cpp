@@ -4,7 +4,7 @@
 #include <thread>
 
 namespace aurora {
-	Application::Application(const i8* appId, f64 frameInterval) :
+	Application::Application(const char* appId, f64 frameInterval) :
 		_appId(appId),
 		_isClosing(false),
 #if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
@@ -221,7 +221,7 @@ namespace aurora {
 			auto t1 = Time::now<std::chrono::nanoseconds, std::chrono::steady_clock>();
 
 			f64 timePhase = f64(t1 - t0);
-			if (timePhase < _frameInterval) std::this_thread::sleep_for(std::chrono::nanoseconds(i64(_frameInterval - timePhase)));
+			if (timePhase < _frameInterval) std::this_thread::sleep_for(std::chrono::nanoseconds(int64_t(_frameInterval - timePhase)));
 		}
 	}
 
@@ -237,10 +237,10 @@ namespace aurora {
 			WCHAR wpath[1024];
 			GetModuleFileNameW(nullptr, wpath, sizeof(wpath));
 			std::string path = String::UnicodeToUtf8(wpath);
-			i8 cDir[500] = "";
-			i8 cDrive[100] = "";
-			i8 cf[100] = "";
-			i8 cExt[50] = "";
+			char cDir[500] = "";
+			char cDrive[100] = "";
+			char cf[100] = "";
+			char cExt[50] = "";
 			_splitpath_s(path.c_str(), cDrive, cDir, cf, cExt);
 
 			_appPath = cDrive;
@@ -309,7 +309,7 @@ namespace aurora {
 			SetWindowLongPtr(_hWnd, GWL_EXSTYLE, _getWindowExStyle());
 		}
 		if (posOrSize) {
-			ui32 flags = SWP_NOACTIVATE;
+			uint32_t flags = SWP_NOACTIVATE;
 			if (_isWindowed) {
 				flags |= SWP_NOOWNERZORDER | SWP_NOZORDER;
 			} else {

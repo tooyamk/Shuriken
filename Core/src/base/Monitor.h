@@ -10,10 +10,10 @@ namespace aurora {
 		public:
 		private:
 			bool _supported = false;
-			i32 _bitsPerPixel = 0;
-			i32 _horizontalPixels = 0;
-			i32 _verticalPixels = 0;
-			i32 _refreshRate = 0;//hz
+			int32_t _bitsPerPixel = 0;
+			int32_t _horizontalPixels = 0;
+			int32_t _verticalPixels = 0;
+			int32_t _refreshRate = 0;//hz
 
 			friend Monitor;
 		};
@@ -45,19 +45,19 @@ namespace aurora {
 			return _adapterDesc;
 		}
 
-		inline i32 AE_CALL gethorizontalSize() const {
+		inline int32_t AE_CALL gethorizontalSize() const {
 			return _horizontalSize;
 		}
 
-		inline i32 AE_CALL getVerticalSize() const {
+		inline int32_t AE_CALL getVerticalSize() const {
 			return _verticalSize;
 		}
 
-		inline i32 AE_CALL gethorizontalPixels() const {
+		inline int32_t AE_CALL gethorizontalPixels() const {
 			return _horizontalPixels;
 		}
 
-		inline i32 AE_CALL getVerticalPixels() const {
+		inline int32_t AE_CALL getVerticalPixels() const {
 			return _verticalPixels;
 		}
 
@@ -74,9 +74,9 @@ namespace aurora {
 		std::string _adapterName;
 		std::string _adapterDesc;
 
-		i32 _horizontalSize;//physics size mm
-		i32 _verticalSize;//physics size mm
-		i32 _horizontalPixels;
-		i32 _verticalPixels;
+		int32_t _horizontalSize;//physics size mm
+		int32_t _verticalSize;//physics size mm
+		int32_t _horizontalPixels;
+		int32_t _verticalPixels;
 	};
 }

@@ -69,7 +69,7 @@ namespace aurora::events {
 			return rst;
 		}
 
-		virtual ui32 AE_CALL hasEventListener(const EvtType& type) const  override {
+		virtual uint32_t AE_CALL hasEventListener(const EvtType& type) const  override {
 			auto itr = _listeners.find(type);
 			return itr == _listeners.end() ? 0 : itr->second.numValidListeners;
 		}
@@ -128,13 +128,13 @@ namespace aurora::events {
 			return false;
 		}
 
-		virtual ui32 AE_CALL removeEventListeners(const EvtType& type) override {
+		virtual uint32_t AE_CALL removeEventListeners(const EvtType& type) override {
 			auto itr = _listeners.find(type);
 			return itr == _listeners.end() ? 0 : _removeEventListeners(itr->second);
 		}
 
-		virtual ui32 AE_CALL removeEventListeners() override {
-			ui32 n = 0;
+		virtual uint32_t AE_CALL removeEventListeners() override {
+			uint32_t n = 0;
 			for (auto& itr : _listeners)  n += _removeEventListeners(itr.second);
 			return n;
 		}
@@ -188,18 +188,18 @@ namespace aurora::events {
 				numTotalListeners(1) {
 				listeners.emplace_back(rawListener, ref);
 			}
-			ui32 dispatching;
-			ui32 numValidListeners;
-			ui32 numTotalListeners;
+			uint32_t dispatching;
+			uint32_t numValidListeners;
+			uint32_t numTotalListeners;
 			std::list<Listener> listeners;
 		};
 
 
 		mutable std::unordered_map<EvtType, TypeListeners> _listeners;
 
-		ui32 AE_CALL _removeEventListeners(TypeListeners& typeListeners) {
-			ui32 n = typeListeners.numValidListeners;
-			if (typeListeners.numValidListeners) {
+		uint32_t AE_CALL _removeEventListeners(TypeListeners& typeListeners) {
+			uint32_t n = typeListeners.numValidListeners;
+			if (n) {
 				if (auto& list = typeListeners.listeners; typeListeners.dispatching) {
 					for (auto& f : list) {
 						if (f.valid) {

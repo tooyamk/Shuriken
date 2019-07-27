@@ -26,7 +26,7 @@ namespace aurora::modules::graphics {
 	};
 
 
-	enum class Usage : ui8 {
+	enum class Usage : uint8_t {
 		NONE = 0,//create and map
 		MAP_READ = 1,//create and map
 		MAP_WRITE = 1 << 1,//create and map
@@ -51,20 +51,20 @@ namespace aurora::modules::graphics {
 		virtual ~IBuffer() {}
 
 		virtual const void* AE_CALL getNativeBuffer() const = 0;
-		virtual bool AE_CALL create(ui32 size, Usage bufferUsage, const void* data = nullptr, ui32 dataSize = 0) = 0;
-		virtual ui32 AE_CALL getSize() const = 0;
+		virtual bool AE_CALL create (uint32_t size, Usage bufferUsage, const void* data = nullptr, uint32_t dataSize = 0) = 0;
+		virtual uint32_t AE_CALL getSize() const = 0;
 		virtual Usage AE_CALL getUsage() const = 0;
 		virtual Usage AE_CALL map(Usage expectMapUsage) = 0;
 		virtual void AE_CALL unmap() = 0;
-		virtual ui32 AE_CALL read(ui32 offset, void* dst, ui32 dstLen) = 0;
-		virtual ui32 AE_CALL write(ui32 offset, const void* data, ui32 length) = 0;
-		virtual ui32 AE_CALL update(ui32 offset, const void* data, ui32 length) = 0;
+		virtual uint32_t AE_CALL read (uint32_t offset, void* dst, uint32_t dstLen) = 0;
+		virtual uint32_t AE_CALL write (uint32_t offset, const void* data, uint32_t length) = 0;
+		virtual uint32_t AE_CALL update (uint32_t offset, const void* data, uint32_t length) = 0;
 		//virtual void AE_CALL flush() = 0;
 		virtual bool AE_CALL isSyncing() const = 0;
 	};
 
 
-	enum class VertexSize : ui8 {
+	enum class VertexSize : uint8_t {
 		UNKNOWN,
 		ONE,
 		TWO,
@@ -73,7 +73,7 @@ namespace aurora::modules::graphics {
 	};
 
 
-	enum class VertexType : ui8 {
+	enum class VertexType : uint8_t {
 		UNKNOWN,
 		I8,
 		UI8,
@@ -95,7 +95,7 @@ namespace aurora::modules::graphics {
 	};
 
 
-	enum class IndexType : ui8 {
+	enum class IndexType : uint8_t {
 		UNKNOWN,
 		UI8,
 		UI16,
@@ -131,14 +131,14 @@ namespace aurora::modules::graphics {
 	};
 
 
-	enum class SamplerFilterMode : ui8 {
+	enum class SamplerFilterMode : uint8_t {
 		POINT,
 		LINEAR,
 		ANISOTROPIC
 	};
 
 
-	enum class SamplerFilterOperation : ui8 {
+	enum class SamplerFilterOperation : uint8_t {
 		NORMAL,
 		COMPARISON,
 		MINIMUM,
@@ -146,7 +146,7 @@ namespace aurora::modules::graphics {
 	};
 
 
-	enum class SamplerComparisonFunc : ui8 {
+	enum class SamplerComparisonFunc : uint8_t {
 		NEVER,
 		LESS,
 		EQUAL,
@@ -158,7 +158,7 @@ namespace aurora::modules::graphics {
 	};
 
 
-	enum class SamplerAddressMode : ui8 {
+	enum class SamplerAddressMode : uint8_t {
 		WRAP,
 		MIRROR,
 		CLAMP,
@@ -204,20 +204,20 @@ namespace aurora::modules::graphics {
 
 		virtual void AE_CALL setMipLOD(f32 min, f32 max) = 0;
 		virtual void AE_CALL setMipLODBias(f32 bias) = 0;
-		virtual void AE_CALL setMaxAnisotropy(ui32 max) = 0;
+		virtual void AE_CALL setMaxAnisotropy (uint32_t max) = 0;
 
 		virtual void AE_CALL setBorderColor(const Vec4f32& color) = 0;
 	};
 
 
-	enum class TextureType : ui8 {
+	enum class TextureType : uint8_t {
 		TEX1D,
 		TEX2D,
 		TEX3D
 	};
 
 
-	enum class TextureFormat : ui8 {
+	enum class TextureFormat : uint8_t {
 		UNKNOWN,
 		R8G8B8,
 		R8G8B8A8
@@ -231,8 +231,8 @@ namespace aurora::modules::graphics {
 
 		//virtual TextureType AE_CALL getType() const = 0;
 		virtual const void* AE_CALL getNativeView() const = 0;
-		virtual ui32 AE_CALL getArraySize() const = 0;
-		virtual ui32 AE_CALL getMipLevels() const = 0;
+		virtual uint32_t AE_CALL getArraySize() const = 0;
+		virtual uint32_t AE_CALL getMipLevels() const = 0;
 	};
 
 
@@ -243,12 +243,12 @@ namespace aurora::modules::graphics {
 
 		virtual TextureType AE_CALL getType() const = 0;
 		virtual const void* AE_CALL getNativeResource() const = 0;
-		virtual ui16 AE_CALL getPerPixelByteSize() const = 0;
+		virtual uint16_t AE_CALL getPerPixelByteSize() const = 0;
 		virtual Usage AE_CALL getUsage() const = 0;
-		virtual Usage AE_CALL map(ui32 arraySlice, ui32 mipSlice, Usage expectMapUsage) = 0;
-		virtual void AE_CALL unmap(ui32 arraySlice, ui32 mipSlice) = 0;
-		virtual ui32 AE_CALL read(ui32 arraySlice, ui32 mipSlice, ui32 offset, void* dst, ui32 dstLen) = 0;
-		virtual ui32 AE_CALL write(ui32 arraySlice, ui32 mipSlice, ui32 offset, const void* data, ui32 length) = 0;
+		virtual Usage AE_CALL map (uint32_t arraySlice, uint32_t mipSlice, Usage expectMapUsage) = 0;
+		virtual void AE_CALL unmap (uint32_t arraySlice, uint32_t mipSlice) = 0;
+		virtual uint32_t AE_CALL read (uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, void* dst, uint32_t dstLen) = 0;
+		virtual uint32_t AE_CALL write (uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, const void* data, uint32_t length) = 0;
 	};
 
 
@@ -257,9 +257,9 @@ namespace aurora::modules::graphics {
 		ITexture1DResource(IGraphicsModule& graphics) : ITextureResource(graphics) {}
 		virtual ~ITexture1DResource() {}
 
-		virtual bool AE_CALL create(ui32 width, ui32 arraySize, ui32 mipLevels, TextureFormat format, Usage resUsage, const void*const* data = nullptr) = 0;
-		virtual bool AE_CALL update(ui32 arraySlice, ui32 mipSlice, const Box1ui32& range, const void* data) = 0;
-		virtual bool AE_CALL copyFrom(ui32 arraySlice, ui32 mipSlice, const Box1ui32& range, const IPixelBuffer* pixelBuffer) = 0;
+		virtual bool AE_CALL create (uint32_t width, uint32_t arraySize, uint32_t mipLevels, TextureFormat format, Usage resUsage, const void*const* data = nullptr) = 0;
+		virtual bool AE_CALL update (uint32_t arraySlice, uint32_t mipSlice, const Box1ui32& range, const void* data) = 0;
+		virtual bool AE_CALL copyFrom (uint32_t arraySlice, uint32_t mipSlice, const Box1ui32& range, const IPixelBuffer* pixelBuffer) = 0;
 	};
 
 
@@ -268,9 +268,9 @@ namespace aurora::modules::graphics {
 		ITexture2DResource(IGraphicsModule& graphics) : ITextureResource(graphics) {}
 		virtual ~ITexture2DResource() {}
 
-		virtual bool AE_CALL create(const Vec2ui32& size, ui32 arraySize, ui32 mipLevels, TextureFormat format, Usage resUsage, const void*const* data = nullptr) = 0;
-		virtual bool AE_CALL update(ui32 arraySlice, ui32 mipSlice, const Box2ui32& range, const void* data) = 0;
-		virtual bool AE_CALL copyFrom(ui32 arraySlice, ui32 mipSlice, const Box2ui32& range, const IPixelBuffer* pixelBuffer) = 0;
+		virtual bool AE_CALL create(const Vec2ui32& size, uint32_t arraySize, uint32_t mipLevels, TextureFormat format, Usage resUsage, const void*const* data = nullptr) = 0;
+		virtual bool AE_CALL update (uint32_t arraySlice, uint32_t mipSlice, const Box2ui32& range, const void* data) = 0;
+		virtual bool AE_CALL copyFrom (uint32_t arraySlice, uint32_t mipSlice, const Box2ui32& range, const IPixelBuffer* pixelBuffer) = 0;
 	};
 
 
@@ -279,9 +279,9 @@ namespace aurora::modules::graphics {
 		ITexture3DResource(IGraphicsModule& graphics) : ITextureResource(graphics) {}
 		virtual ~ITexture3DResource() {}
 
-		virtual bool AE_CALL create(const Vec3ui32& size, ui32 arraySize, ui32 mipLevels, TextureFormat format, Usage resUsage, const void*const* data = nullptr) = 0;
-		virtual bool AE_CALL update(ui32 arraySlice, ui32 mipSlice, const Box3ui32& range, const void* data) = 0;
-		virtual bool AE_CALL copyFrom(ui32 arraySlice, ui32 mipSlice, const Box3ui32& range, const IPixelBuffer* pixelBuffer) = 0;
+		virtual bool AE_CALL create(const Vec3ui32& size, uint32_t arraySize, uint32_t mipLevels, TextureFormat format, Usage resUsage, const void*const* data = nullptr) = 0;
+		virtual bool AE_CALL update (uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const void* data) = 0;
+		virtual bool AE_CALL copyFrom (uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const IPixelBuffer* pixelBuffer) = 0;
 	};
 
 
@@ -292,11 +292,11 @@ namespace aurora::modules::graphics {
 
 		//virtual TextureType AE_CALL getType() const = 0;
 		virtual ITextureResource* AE_CALL getResource() const = 0;
-		virtual bool AE_CALL create(ITextureResource* res, ui32 mipBegin, ui32 mipLevels, ui32 arrayBegin, ui32 arraySize) = 0;
+		virtual bool AE_CALL create(ITextureResource* res, uint32_t mipBegin, uint32_t mipLevels, uint32_t arrayBegin, uint32_t arraySize) = 0;
 	};
 
 
-	enum class ProgramStage : ui8 {
+	enum class ProgramStage : uint8_t {
 		UNKNOWN,
 		VS,//VertexShader
 		PS,//PixelShader
@@ -315,7 +315,7 @@ namespace aurora::modules::graphics {
 		virtual bool AE_CALL upload(const ProgramSource& vert, const ProgramSource& frag) = 0;
 		virtual bool AE_CALL use() = 0;
 		virtual void AE_CALL draw(const VertexBufferFactory* vertexFactory, const ShaderParameterFactory* paramFactory,
-			const IIndexBuffer* indexBuffer, ui32 count = (std::numeric_limits<ui32>::max)(), ui32 offset = 0) = 0;
+			const IIndexBuffer* indexBuffer, uint32_t count = (std::numeric_limits<uint32_t>::max)(), uint32_t offset = 0) = 0;
 	};
 
 

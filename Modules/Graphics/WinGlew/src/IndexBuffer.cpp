@@ -16,13 +16,13 @@ namespace aurora::modules::graphics::win_glew {
 		return this;
 	}
 
-	bool IndexBuffer::create(ui32 size, Usage bufferUsage, const void* data, ui32 dataSize) {
+	bool IndexBuffer::create (uint32_t size, Usage bufferUsage, const void* data, uint32_t dataSize) {
 		auto rst = _baseBuffer.create(*_graphics.get<Graphics>(), size, bufferUsage, data);
 		_calcNumElements();
 		return rst;
 	}
 
-	ui32 IndexBuffer::getSize() const {
+	uint32_t IndexBuffer::getSize() const {
 		return _baseBuffer.size;
 	}
 
@@ -38,15 +38,15 @@ namespace aurora::modules::graphics::win_glew {
 		_baseBuffer.unmap();
 	}
 
-	ui32 IndexBuffer::read(ui32 offset, void* dst, ui32 dstLen) {
+	uint32_t IndexBuffer::read (uint32_t offset, void* dst, uint32_t dstLen) {
 		return _baseBuffer.read(offset, dst, dstLen);
 	}
 
-	ui32 IndexBuffer::write(ui32 offset, const void* data, ui32 length) {
+	uint32_t IndexBuffer::write (uint32_t offset, const void* data, uint32_t length) {
 		return _baseBuffer.write(offset, data, length);
 	}
 
-	ui32 IndexBuffer::update(ui32 offset, const void* data, ui32 length) {
+	uint32_t IndexBuffer::update (uint32_t offset, const void* data, uint32_t length) {
 		return _baseBuffer.update(offset, data, length);
 	}
 
@@ -85,9 +85,9 @@ namespace aurora::modules::graphics::win_glew {
 		}
 	}
 
-	void IndexBuffer::draw(ui32 count, ui32 offset) {
+	void IndexBuffer::draw (uint32_t count, uint32_t offset) {
 		if (_numElements > 0 && offset < _numElements) {
-			ui32 last = _numElements - offset;
+			uint32_t last = _numElements - offset;
 			if (count > _numElements) count = _numElements;
 			if (count > last) count = last;
 

@@ -26,15 +26,15 @@ namespace aurora::modules::graphics::win_glew {
 		return &_handle;
 	}
 
-	ui32 TextureView::getArraySize() const {
+	uint32_t TextureView::getArraySize() const {
 		return _createdArraySize;
 	}
 
-	ui32 TextureView::getMipLevels() const {
+	uint32_t TextureView::getMipLevels() const {
 		return _createdMipLevels;
 	}
 
-	bool TextureView::create(ITextureResource* res, ui32 mipBegin, ui32 mipLevels, ui32 arrayBegin, ui32 arraySize) {
+	bool TextureView::create(ITextureResource* res, uint32_t mipBegin, uint32_t mipLevels, uint32_t arrayBegin, uint32_t arraySize) {
 		release();
 
 		_mipBegin = mipBegin;

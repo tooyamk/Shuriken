@@ -5,7 +5,7 @@
 #include "events/EventDispatcher.h"
 
 namespace aurora {
-	enum class ApplicationEvent : ui8 {
+	enum class ApplicationEvent : uint8_t {
 		UPDATE,
 		RESIZED,
 		FOCUS_IN,
@@ -23,7 +23,7 @@ namespace aurora {
 			bool thickFrame = false;
 		};
 
-		Application(const i8* appId, f64 frameInterval);
+		Application(const char* appId, f64 frameInterval);
 		virtual ~Application();
 
 		inline events::IEventDispatcher<ApplicationEvent>& AE_CALL getEventDispatcher() {
@@ -76,7 +76,7 @@ namespace aurora {
 		mutable std::string _appPath;
 
 		f64 _frameInterval; //microsecond
-		i64 _time;
+		int64_t _time;
 
 		bool AE_CALL _adjustWindowRect(const Box2i32& in, Box2i32& out);
 		void AE_CALL _recordWindowedRect() const;

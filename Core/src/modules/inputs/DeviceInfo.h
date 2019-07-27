@@ -3,7 +3,7 @@
 #include "modules/inputs/GUID.h"
 
 namespace aurora::modules::inputs {
-	enum class DeviceType : ui8;
+	enum class DeviceType : uint8_t;
 
 
 	class AE_DLL DeviceInfo {

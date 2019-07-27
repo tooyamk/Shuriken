@@ -41,7 +41,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		} else {
 			std::vector<GraphicsAdapter> adapters;
 			GraphicsAdapter::query(adapters);
-			std::vector<ui32> indices;
+			std::vector<uint32_t> indices;
 			GraphicsAdapter::autoSort(adapters, indices);
 
 			for (auto& idx : indices) {
@@ -79,14 +79,14 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		DXGI_FORMAT fmt = DXGI_FORMAT_R8G8B8A8_UNORM;
 
-		ui32 maxResolutionArea = 0;
+		uint32_t maxResolutionArea = 0;
 		f32 maxRefreshRate = 0.f;
 		for (UINT i = 0;; ++i) {
 			IDXGIOutput* output = nullptr;
 			if (dxgAdapter->EnumOutputs(i, &output) == DXGI_ERROR_NOT_FOUND) break;
 			objs.add(output);
 
-			ui32 numSupportedModes = 0;
+			uint32_t numSupportedModes = 0;
 			if (FAILED(output->GetDisplayModeList(fmt, 0, &numSupportedModes, nullptr))) continue;
 
 			auto supportedModes = new DXGI_MODE_DESC[numSupportedModes];
@@ -96,9 +96,9 @@ namespace aurora::modules::graphics::win_d3d11 {
 				continue;
 			}
 
-			for (ui32 i = 0; i < numSupportedModes; ++i) {
+			for (uint32_t i = 0; i < numSupportedModes; ++i) {
 				auto& m = supportedModes[i];
-				if (ui32 area = m.Width * m.Height; maxResolutionArea < area) {
+				if  (uint32_t area = m.Width * m.Height; maxResolutionArea < area) {
 					maxResolutionArea = area;
 					_refreshRate.Numerator = 0;
 					_refreshRate.Denominator = 1;
@@ -125,7 +125,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		   D3D_DRIVER_TYPE_HARDWARE, D3D_DRIVER_TYPE_WARP,
 		   D3D_DRIVER_TYPE_REFERENCE, D3D_DRIVER_TYPE_SOFTWARE
 		};
-		ui32 totalDriverTypes = ARRAYSIZE(driverTypes);
+		uint32_t totalDriverTypes = ARRAYSIZE(driverTypes);
 		*/
 
 		D3D_FEATURE_LEVEL featureLevels[] =
@@ -135,14 +135,14 @@ namespace aurora::modules::graphics::win_d3d11 {
 			D3D_FEATURE_LEVEL_10_1,
 			D3D_FEATURE_LEVEL_10_0
 		};
-		ui32 totalFeatureLevels = ARRAYSIZE(featureLevels);
+		uint32_t totalFeatureLevels = ARRAYSIZE(featureLevels);
 
-		ui32 creationFlags = 0;
+		uint32_t creationFlags = 0;
 #ifdef AE_DEBUG
 		creationFlags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
 		/*
-		for (ui32 i = 0; i < totalDriverTypes; ++i) {
+		for (uint32_t i = 0; i < totalDriverTypes; ++i) {
 			auto hr = D3D11CreateDevice(dxgAdapter, D3D_DRIVER_TYPE_UNKNOWN, nullptr, creationFlags,
 				featureLevels, totalFeatureLevels,
 				D3D11_SDK_VERSION, (ID3D11Device**)&_device, &_featureLevel, (ID3D11DeviceContext**)&_context);
@@ -329,10 +329,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return new ConstantBuffer(*this);
 	}
 
-	IConstantBuffer* Graphics::_createdExclusiveConstantBuffer(ui32 numParameters) {
+	IConstantBuffer* Graphics::_createdExclusiveConstantBuffer(uint32_t numParameters) {
 		auto cb = new ConstantBuffer(*this);
-		cb->recordUpdateIds = new ui32[numParameters];
-		memset(cb->recordUpdateIds, 0, sizeof(ui32) * numParameters);
+		cb->recordUpdateIds = new uint32_t[numParameters];
+		memset(cb->recordUpdateIds, 0, sizeof(uint32_t) * numParameters);
 		return cb;
 	}
 

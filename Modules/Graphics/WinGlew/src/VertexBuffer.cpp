@@ -18,11 +18,11 @@ namespace aurora::modules::graphics::win_glew {
 		return this;
 	}
 
-	bool VertexBuffer::create(ui32 size, Usage bufferUsage, const void* data, ui32 dataSize) {
+	bool VertexBuffer::create (uint32_t size, Usage bufferUsage, const void* data, uint32_t dataSize) {
 		return _baseBuffer.create(*_graphics.get<Graphics>(), size, bufferUsage, data);
 	}
 
-	ui32 VertexBuffer::getSize() const {
+	uint32_t VertexBuffer::getSize() const {
 		return _baseBuffer.size;
 	}
 
@@ -38,15 +38,15 @@ namespace aurora::modules::graphics::win_glew {
 		_baseBuffer.unmap();
 	}
 
-	ui32 VertexBuffer::read(ui32 offset, void* dst, ui32 dstLen) {
+	uint32_t VertexBuffer::read (uint32_t offset, void* dst, uint32_t dstLen) {
 		return _baseBuffer.read(offset, dst, dstLen);
 	}
 
-	ui32 VertexBuffer::write(ui32 offset, const void* data, ui32 length) {
+	uint32_t VertexBuffer::write (uint32_t offset, const void* data, uint32_t length) {
 		return _baseBuffer.write(offset, data, length);
 	}
 
-	ui32 VertexBuffer::update(ui32 offset, const void* data, ui32 length) {
+	uint32_t VertexBuffer::update (uint32_t offset, const void* data, uint32_t length) {
 		return _baseBuffer.update(offset, data, length);
 	}
 

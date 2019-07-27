@@ -17,17 +17,17 @@ namespace aurora::hash {
 		state[3] = 0x10325476;
 	}
 
-	// decodes input (ui8) into output (ui32). Assumes len is a multiple of 4.
-	void MD5::decode(ui32 output[], const ui8 input[], ui32 len) {
-		for (ui32 i = 0, j = 0; j < len; ++i, j += 4)
-			output[i] = ((ui32)input[j]) | (((ui32)input[j + 1]) << 8) |
-			(((ui32)input[j + 2]) << 16) | (((ui32)input[j + 3]) << 24);
+	// decodes input (uint8_t) into output (uint32_t). Assumes len is a multiple of 4.
+	void MD5::decode (uint32_t output[], const uint8_t input[], uint32_t len) {
+		for (uint32_t i = 0, j = 0; j < len; ++i, j += 4)
+			output[i] = ((uint32_t)input[j]) | (((uint32_t)input[j + 1]) << 8) |
+			(((uint32_t)input[j + 2]) << 16) | (((uint32_t)input[j + 3]) << 24);
 	}
 
-	// encodes input (ui32) into output (ui8). Assumes len is
+	// encodes input (uint32_t) into output (uint8_t). Assumes len is
 	// a multiple of 4.
-	void MD5::encode(ui8 output[], const ui32 input[], ui32 len) {
-		for (ui32 i = 0, j = 0; j < len; ++i, j += 4) {
+	void MD5::encode(uint8_t output[], const uint32_t input[], uint32_t len) {
+		for (uint32_t i = 0, j = 0; j < len; ++i, j += 4) {
 			output[j] = input[i] & 0xFF;
 			output[j + 1] = (input[i] >> 8) & 0xFF;
 			output[j + 2] = (input[i] >> 16) & 0xFF;
@@ -36,25 +36,25 @@ namespace aurora::hash {
 	}
 
 	// apply MD5 algo on a block
-	void MD5::transform(const ui8 block[BLOCK_SIZE]) {
-		const ui32 S11 = 7;
-		const ui32 S12 = 12;
-		const ui32 S13 = 17;
-		const ui32 S14 = 22;
-		const ui32 S21 = 5;
-		const ui32 S22 = 9;
-		const ui32 S23 = 14;
-		const ui32 S24 = 20;
-		const ui32 S31 = 4;
-		const ui32 S32 = 11;
-		const ui32 S33 = 16;
-		const ui32 S34 = 23;
-		const ui32 S41 = 6;
-		const ui32 S42 = 10;
-		const ui32 S43 = 15;
-		const ui32 S44 = 21;
+	void MD5::transform(const uint8_t block[BLOCK_SIZE]) {
+		const uint32_t S11 = 7;
+		const uint32_t S12 = 12;
+		const uint32_t S13 = 17;
+		const uint32_t S14 = 22;
+		const uint32_t S21 = 5;
+		const uint32_t S22 = 9;
+		const uint32_t S23 = 14;
+		const uint32_t S24 = 20;
+		const uint32_t S31 = 4;
+		const uint32_t S32 = 11;
+		const uint32_t S33 = 16;
+		const uint32_t S34 = 23;
+		const uint32_t S41 = 6;
+		const uint32_t S42 = 10;
+		const uint32_t S43 = 15;
+		const uint32_t S44 = 21;
 
-		ui32 a = state[0], b = state[1], c = state[2], d = state[3], x[16];
+		uint32_t a = state[0], b = state[1], c = state[2], d = state[3], x[16];
 		decode(x, block, BLOCK_SIZE);
 
 		/* Round 1 */
@@ -140,18 +140,18 @@ namespace aurora::hash {
 
 	// MD5 block update operation. Continues an MD5 message-digest
 	// operation, processing another message block
-	void MD5::update(const ui8* input, ui32 length) {
+	void MD5::update(const uint8_t* input, uint32_t length) {
 		// compute number of bytes mod 64
-		ui32 index = count[0] / 8 % BLOCK_SIZE;
+		uint32_t index = count[0] / 8 % BLOCK_SIZE;
 
 		// Update number of bits
 		if ((count[0] += (length << 3)) < (length << 3)) ++count[1];
 		count[1] += (length >> 29);
 
 		// number of bytes we need to fill in buffer
-		ui32 firstpart = 64 - index;
+		uint32_t firstpart = 64 - index;
 
-		ui32 i;
+		uint32_t i;
 
 		// transform as many times as possible.
 		if (length >= firstpart) {
@@ -171,27 +171,22 @@ namespace aurora::hash {
 		memcpy(&buffer[index], &input[i], length - i);
 	}
 
-	// for convenience provide a verson with signed char
-	void MD5::update(const i8 input[], ui32 length) {
-		update((const ui8*)input, length);
-	}
-
 	// MD5 finalization. Ends an MD5 message-digest operation, writing the
 	// the message digest and zeroizing the context.
 	MD5& MD5::finalize() {
-		static ui8 padding[64] = {
+		static uint8_t padding[64] = {
 			0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 		};
 
 		// Save number of bits
-		ui8 bits[8];
+		uint8_t bits[8];
 		encode(bits, count, 8);
 
 		// pad out to 56 mod 64.
-		ui32 index = count[0] / 8 % 64;
-		ui32 padLen = (index < 56) ? (56 - index) : (120 - index);
+		uint32_t index = count[0] / 8 % 64;
+		uint32_t padLen = (index < 56) ? (56 - index) : (120 - index);
 		update(padding, padLen);
 
 		// Append length (before padding)
@@ -209,14 +204,14 @@ namespace aurora::hash {
 
 	// return hex representation of digest as string
 	std::string MD5::hexdigest() const {
-		i8 buf[33];
+		char buf[33];
 		for (int i = 0; i < 16; ++i) sprintf(buf + i * 2, "%02x", digest[i]);
 		buf[32] = 0;
 
 		return std::string(buf);
 	}
 
-	std::string MD5::hash(const ui8 input[], ui32 length) {
+	std::string MD5::hash(const uint8_t input[], uint32_t length) {
 		init();
 		update(input, length);
 		finalize();

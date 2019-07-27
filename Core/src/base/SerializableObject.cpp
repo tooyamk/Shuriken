@@ -8,7 +8,7 @@ namespace aurora {
 	SerializableObject::Array* SerializableObject::Array::copy() const {
 		Array* arr = new Array();
 		arr->value.resize(this->value.size());
-		ui32 idx = 0;
+		uint32_t idx = 0;
 		for (auto& e : this->value) arr->value[idx++].set(e, true);
 		return arr;
 	}
@@ -16,7 +16,7 @@ namespace aurora {
 	bool SerializableObject::Array::isContentEqual(Array* data) const {
 		auto size = this->value.size();
 		if (size == data->value.size()) {
-			for (ui32 i = 0; i < size; ++i) {
+			for (uint32_t i = 0; i < size; ++i) {
 				if (!this->value[i].isContentEqual(data->value[i])) return false;
 			}
 
@@ -54,10 +54,10 @@ namespace aurora {
 		}
 	}
 
-	void SerializableObject::Map::unpack(ByteArray& ba, ui32 size) {
+	void SerializableObject::Map::unpack(ByteArray& ba, uint32_t size) {
 		this->value.clear();
 
-		for (ui32 i = 0; i < size; ++i) {
+		for (uint32_t i = 0; i < size; ++i) {
 			SerializableObject key;
 			SerializableObject value;
 			key.unpack(ba);
@@ -68,129 +68,128 @@ namespace aurora {
 
 
 	SerializableObject::SerializableObject() :
-		_type(ValueType::INVALID) {
-		_value.uint64 = 0;
+		_type(Type::INVALID) {
 	}
 
-	SerializableObject::SerializableObject(ValueType value) :
+	SerializableObject::SerializableObject(Type value) :
 		_type(value) {
 		switch (_type) {
-		case ValueType::STRING:
-			_value.uint64 = 0;
+		case Type::STRING:
+			_value[0] = 0;
 			break;
-		case ValueType::ARRAY:
-			_value.array = new Array();
+		case Type::ARRAY:
+			_getValue<Array*>() = new Array();
 			break;
-		case ValueType::MAP:
-			_value.map = new Map();
+		case Type::MAP:
+			_getValue<Map*>() = new Map();
 			break;
-		case ValueType::BYTES:
-			_value.internalBytes = new Bytes<false>();
+		case Type::BYTES:
+			_getValue<Bytes<false>*>() = new Bytes<false>();
 			break;
-		case ValueType::EXT_BYTES:
-			_value.externalBytes = new Bytes<true>();
+		case Type::EXT_BYTES:
+			_getValue<Bytes<true>*>() = new Bytes<true>();
 			break;
 		default:
-			_value.uint64 = 0;
+			_getValue<uint64_t>() = 0;
 			break;
 		}
 	}
 
 	SerializableObject::SerializableObject(bool value) :
-		_type(ValueType::BOOL) {
-		_value.boolean = value;
+		_type(Type::BOOL) {
+		_getValue<bool>() = value;
 	}
 
-	SerializableObject::SerializableObject(i8 value) :
-		_type(ValueType::INTEGET) {
-		_value.uint64 = value;
+	SerializableObject::SerializableObject(int8_t value) :
+		_type(Type::INT) {
+		_getValue<int64_t>() = value;
 	}
 
-	SerializableObject::SerializableObject(ui8 value) :
-		_type(ValueType::INTEGET) {
-		_value.uint64 = value;
+	SerializableObject::SerializableObject(uint8_t value) :
+		_type(Type::UINT) {
+		_getValue<uint64_t>() = value;
 	}
 
-	SerializableObject::SerializableObject(i16 value) :
-		_type(ValueType::INTEGET) {
-		_value.uint64 = value;
+	SerializableObject::SerializableObject(int16_t value) :
+		_type(Type::INT) {
+		_getValue<int64_t>() = value;
 	}
 
-	SerializableObject::SerializableObject(ui16 value) :
-		_type(ValueType::INTEGET) {
-		_value.uint64 = value;
+	SerializableObject::SerializableObject(uint16_t value) :
+		_type(Type::UINT) {
+		_getValue<uint64_t>() = value;
 	}
 
-	SerializableObject::SerializableObject(i32 value) :
-		_type(ValueType::INTEGET) {
-		_value.uint64 = value;
+	SerializableObject::SerializableObject(int32_t value) :
+		_type(Type::INT) {
+		_getValue<int64_t>() = value;
 	}
 
-	SerializableObject::SerializableObject(ui32 value) :
-		_type(ValueType::INTEGET) {
-		_value.uint64 = value;
+	SerializableObject::SerializableObject(uint32_t value) :
+		_type(Type::UINT) {
+		_getValue<uint64_t>() = value;
 	}
 
-	SerializableObject::SerializableObject(const i64& value) :
-		_type(ValueType::INTEGET) {
-		_value.uint64 = value;
+	SerializableObject::SerializableObject(const int64_t& value) :
+		_type(Type::INT) {
+		_getValue<int64_t>() = value;
 	}
 
-	SerializableObject::SerializableObject(const ui64& value) :
-		_type(ValueType::INTEGET) {
-		_value.uint64 = value;
+	SerializableObject::SerializableObject(const uint64_t& value) :
+		_type(Type::UINT) {
+		_getValue<uint64_t>() = value;
 	}
 
 	SerializableObject::SerializableObject(f32 value) :
-		_type(ValueType::FLOAT) {
-		_value.number32 = value;
+		_type(Type::FLOAT) {
+		_getValue<f32>() = value;
 	}
 
 	SerializableObject::SerializableObject(const f64& value) :
-		_type(ValueType::DOUBLE) {
-		_value.number64 = value;
+		_type(Type::DOUBLE) {
+		_getValue<f64>() = value;
 	}
 
-	SerializableObject::SerializableObject(const i8* value) :
-		_type(ValueType::STRING) {
-		if (auto size = strlen(value); size < SHORT_STRING_MAX_SIZE) {
+	SerializableObject::SerializableObject(const char* value) :
+		_type(Type::STRING) {
+		if (auto size = strlen(value); size < VALUE_SIZE) {
 			_writeShortString(value, size);
-			_type = ValueType::SHORT_STRING;
+			_type = Type::SHORT_STRING;
 		} else {
-			_value.string = new std::string(value);
-			_type = ValueType::STRING;
+			_getValue<std::string*>() = new std::string(value);
+			_type = Type::STRING;
 		}
 	}
 
 	SerializableObject::SerializableObject(const std::string& value) :
-		_type(ValueType::STRING) {
-		if (auto size = value.size(); size < SHORT_STRING_MAX_SIZE) {
+		_type(Type::STRING) {
+		if (auto size = value.size(); size < VALUE_SIZE) {
 			_writeShortString(value.c_str(), size);
-			_type = ValueType::SHORT_STRING;
+			_type = Type::SHORT_STRING;
 		} else {
-			_value.string = new std::string(value);
-			_type = ValueType::STRING;
+			_getValue<std::string*>() = new std::string(value);
+			_type = Type::STRING;
 		}
 	}
 
 	SerializableObject::SerializableObject(const std::string_view& value) :
-		_type(ValueType::STRING) {
-		if (auto size = value.size(); size < SHORT_STRING_MAX_SIZE) {
+		_type(Type::STRING) {
+		if (auto size = value.size(); size < VALUE_SIZE) {
 			_writeShortString(value.data(), size);
-			_type = ValueType::SHORT_STRING;
+			_type = Type::SHORT_STRING;
 		} else {
-			_value.string = new std::string(value);
-			_type = ValueType::STRING;
+			_getValue<std::string*>() = new std::string(value);
+			_type = Type::STRING;
 		}
 	}
 
-	SerializableObject::SerializableObject(const i8* value, ui32 size, bool copy) {
+	SerializableObject::SerializableObject(const uint8_t* value, size_t size, bool copy) {
 		if (copy) {
-			_value.internalBytes = size ? new Bytes<false>(value, size) : nullptr;
-			_type = ValueType::BYTES;
+			_getValue<Bytes<false>*>() = new Bytes<false>(value, size);
+			_type = Type::BYTES;
 		} else {
-			_value.externalBytes = size ? new Bytes<true>(value, size) : nullptr;
-			_type = ValueType::EXT_BYTES;
+			_getValue<Bytes<true>*>() = new Bytes<true>(value, size);
+			_type = Type::EXT_BYTES;
 		}
 	}
 
@@ -198,8 +197,8 @@ namespace aurora {
 	}
 
 	SerializableObject::SerializableObject(const SerializableObject& key, const SerializableObject& value) :
-		_type(ValueType::MAP) {
-		_value.map = new Map(key, value);
+		_type(Type::MAP) {
+		_getValue<Map*>() = new Map(key, value);
 	}
 
 	SerializableObject::SerializableObject(const SerializableObject& value) : SerializableObject(value, false) {
@@ -208,377 +207,303 @@ namespace aurora {
 	SerializableObject::SerializableObject(const SerializableObject& value, bool copy) :
 		_type(value._type) {
 		switch (_type) {
-		case ValueType::STRING:
-			_value.string = new std::string(*value._value.string);
+		case Type::STRING:
+			_getValue<std::string*>() = new std::string(*value._getValue<std::string*>());
 			break;
-		case ValueType::ARRAY:
+		case Type::ARRAY:
 		{
-			auto arr = value._value.array;
-			_value.array = copy ? arr->copy() : arr->ref<Array>();
+			auto arr = value._getValue<Array*>();
+			_getValue<Array*>() = copy ? arr->copy() : arr->ref<Array>();
 
 			break;
 		}
-		case ValueType::MAP:
+		case Type::MAP:
 		{
-			auto map = value._value.map;
-			_value.map = copy ? map->copy() : map->ref<Map>();
+			auto map = value._getValue<Map*>();
+			_getValue<Map*>() = copy ? map->copy() : map->ref<Map>();
 
 			break;
 		}
-		case ValueType::BYTES:
+		case Type::BYTES:
 		{
-			auto bytes = value._value.internalBytes;
-			_value.internalBytes = copy ? bytes->copy() : bytes->ref<Bytes<false>>();
+			auto bytes = value._getValue<Bytes<false>*>();
+			_getValue<Bytes<false>*>() = copy ? bytes->copy() : bytes->ref<Bytes<false>>();
 
 			break;
 		}
-		case ValueType::EXT_BYTES:
+		case Type::EXT_BYTES:
 		{
-			auto bytes = value._value.externalBytes;
-			_value.externalBytes = copy ? bytes->copy() : bytes->ref<Bytes<true>>();
+			auto bytes = value._getValue<Bytes<true>*>();
+			_getValue<Bytes<true>*>() = copy ? bytes->copy() : bytes->ref<Bytes<true>>();
 
 			break;
 		}
 		default:
-			_value.uint64 = value._value.uint64;
+			memcpy(_value, value._value, VALUE_SIZE);
 			break;
 		}
-	}
-
-	SerializableObject& SerializableObject::operator=(const SerializableObject& value) {
-		_type = value._type;
-		_value.uint64 = value._value.uint64;
-		switch (_type) {
-		case ValueType::STRING:
-			_value.string = new std::string(*value._value.string);
-			break;
-		case ValueType::ARRAY:
-			_value.array->ref();
-			break;
-		case ValueType::MAP:
-			_value.map->ref();
-			break;
-		case ValueType::BYTES:
-			_value.internalBytes->ref();
-			break;
-		case ValueType::EXT_BYTES:
-			_value.externalBytes->ref();
-			break;
-		default:
-			break;
-		}
-
-		return *this;
-	}
-
-	SerializableObject& SerializableObject::operator=(SerializableObject&& value) {
-		_type = value._type;
-		_value.uint64 = value._value.uint64;
-		value._value.uint64 = 0;
-		value._type = ValueType::INVALID;
-
-		return *this;
 	}
 
 	SerializableObject::SerializableObject(SerializableObject&& value) :
 		_type(value._type) {
-		_value.uint64 = value._value.uint64;
-		value._value.uint64 = 0;
-		value._type = ValueType::INVALID;
+		memcpy(_value, value._value, VALUE_SIZE);
+		value._type = Type::INVALID;
 	}
 
 	SerializableObject::~SerializableObject() {
 		_freeValue();
 	}
 
-	bool SerializableObject::isContentEqual(const SerializableObject& sv) const {
+	bool SerializableObject::isEqual(const SerializableObject& target) const {
 		switch (_type) {
-		case ValueType::INVALID:
-			return sv._type == ValueType::INVALID;
-			break;
-		case ValueType::BOOL:
-			return sv._type == ValueType::BOOL && _value.boolean == sv._value.boolean;
-			break;
-		case ValueType::INTEGET:
+		case Type::INVALID:
+			return target._type == Type::INVALID;
+		case Type::BOOL:
+			return target._type == Type::BOOL && _getValue<bool>() == target._getValue<bool>();
+		case Type::INT:
 		{
-			if (sv._type == ValueType::INTEGET) {
-				return _value.uint64 == sv._value.uint64;
-			} else if (sv._type == ValueType::FLOAT) {
-				return _value.uint64 == sv._value.number32;
-			} else if (sv._type == ValueType::DOUBLE) {
-				return _value.uint64 == sv._value.number64;
+			if (target._type == Type::INT) {
+				return _getValue<int64_t>() == target._getValue<int64_t>();
+			} else if (target._type == Type::UINT) {
+				auto v = _getValue<int64_t>();
+				return v < 0 ? false : v == target._getValue<uint64_t>();
 			} else {
 				return false;
 			}
-
-			break;
 		}
-		case ValueType::FLOAT:
+		case Type::UINT:
 		{
-			if (sv._type == ValueType::INTEGET) {
-				return _value.number32 == sv._value.uint64;
-			} else if (sv._type == ValueType::FLOAT) {
-				return _value.number32 == sv._value.number32;
-			} else if (sv._type == ValueType::DOUBLE) {
-				return _value.number32 == sv._value.number64;
+			if (target._type == Type::UINT) {
+				return _getValue<uint64_t>() == target._getValue<uint64_t>();
+			} else if (target._type == Type::INT) {
+				auto v = target._getValue<int64_t>();
+				return v < 0 ? false : v == _getValue<uint64_t>();
 			} else {
 				return false;
 			}
-
-			break;
 		}
-		case ValueType::DOUBLE:
+		case Type::FLOAT:
+			return target._type == Type::FLOAT && _getValue<f32>() == target._getValue<f32>();
+		case Type::DOUBLE:
+			return target._type == Type::DOUBLE && _getValue<f64>() == target._getValue<f64>();
+		case Type::STRING:
 		{
-			if (sv._type == ValueType::INTEGET) {
-				return _value.number64 == sv._value.uint64;
-			} else if (sv._type == ValueType::FLOAT) {
-				return _value.number64 == sv._value.number32;
-			} else if (sv._type == ValueType::DOUBLE) {
-				return _value.number64 == sv._value.number64;
+			if (target._type == Type::STRING) {
+				return *_getValue<std::string*>() == *target._getValue<std::string*>();
+			} else if (target._type == Type::SHORT_STRING) {
+				return _isContentEqual(*_getValue<std::string*>(), (char*)target._value);
 			} else {
 				return false;
 			}
-
-			break;
 		}
-		case ValueType::STRING:
+		case Type::SHORT_STRING:
 		{
-			if (sv._type == ValueType::STRING) {
-				return *_value.string == *sv._value.string;
-			} else if (sv._type == ValueType::SHORT_STRING) {
-				return _isContentEqual(*_value.string, sv._value.shortString);
+			if (target._type == Type::STRING) {
+				return _isContentEqual(*target._getValue<std::string*>(), (char*)_value);
+			} else if (target._type == Type::SHORT_STRING) {
+				return _isContentEqual((char*)_value, (char*)target._value);
 			} else {
 				return false;
 			}
-
-			break;
 		}
-		case ValueType::SHORT_STRING:
-		{
-			if (sv._type == ValueType::STRING) {
-				return _isContentEqual(*sv._value.string, _value.shortString);
-			} else if (sv._type == ValueType::SHORT_STRING) {
-				return _isContentEqual(_value.shortString, sv._value.shortString);
-			} else {
-				return false;
-			}
-
-			break;
+		case Type::ARRAY:
+			return target._type == Type::ARRAY && _getValue<Array*>() == target._getValue<Array*>();
+		case Type::MAP:
+			return target._type == Type::MAP && _getValue<Map*>() == target._getValue<Map*>();
+		case Type::BYTES:
+			return target._type == Type::BYTES && _getValue<Bytes<false>*>() == target._getValue<Bytes<false>*>();
+		case Type::EXT_BYTES:
+			return target._type == Type::EXT_BYTES && _getValue<Bytes<true>*>()->getValue() == target._getValue<Bytes<true>*>()->getValue() && _getValue<Bytes<true>*>()->getSize() == target._getValue<Bytes<true>*>()->getSize();
+		default:
+			return false;
 		}
-		case ValueType::ARRAY:
-			return sv._type == ValueType::ARRAY && _value.array->isContentEqual(sv._value.array);
-			break;
-		case ValueType::MAP:
-			return sv._type == ValueType::MAP && _value.map->isContentEqual(sv._value.map);
-			break;
-		case ValueType::BYTES:
+	}
+
+	bool SerializableObject::isContentEqual(const SerializableObject& target) const {
+		switch (_type) {
+		case Type::INVALID:
+			return target._type == Type::INVALID;
+		case Type::BOOL:
+			return target._type == Type::BOOL && _getValue<bool>() == target._getValue<bool>();
+		case Type::INT:
+			return _isEqual<int64_t>(target);
+		case Type::UINT:
+			return _isEqual<uint64_t>(target);
+		case Type::FLOAT:
+			return _isEqual<f32>(target);
+		case Type::DOUBLE:
+			return _isEqual<f64>(target);
+		case Type::STRING:
 		{
-			if (sv._type == ValueType::BYTES) {
-				return _value.internalBytes->isContentEqual(*sv._value.internalBytes);
-			} else if (sv._type == ValueType::EXT_BYTES) {
-				return _value.internalBytes->isContentEqual(*sv._value.externalBytes);
+			if (target._type == Type::STRING) {
+				return *_getValue<std::string*>() == *target._getValue<std::string*>();
+			} else if (target._type == Type::SHORT_STRING) {
+				return _isContentEqual(*_getValue<std::string*>(), (char*)target._value);
 			} else {
 				return false;
 			}
-
-			break;
 		}
-		case ValueType::EXT_BYTES:
+		case Type::SHORT_STRING:
 		{
-			if (sv._type == ValueType::BYTES) {
-				return _value.externalBytes->isContentEqual(*sv._value.internalBytes);
-			} else if (sv._type == ValueType::EXT_BYTES) {
-				return _value.externalBytes->isContentEqual(*sv._value.externalBytes);
+			if (target._type == Type::STRING) {
+				return _isContentEqual(*target._getValue<std::string*>(), (char*)_value);
+			} else if (target._type == Type::SHORT_STRING) {
+				return _isContentEqual((char*)_value, (char*)target._value);
 			} else {
 				return false;
 			}
-
-			break;
+		}
+		case Type::ARRAY:
+			return target._type == Type::ARRAY && _getValue<Array*>()->isContentEqual(target._getValue<Array*>());
+		case Type::MAP:
+			return target._type == Type::MAP && _getValue<Map*>()->isContentEqual(target._getValue<Map*>());
+		case Type::BYTES:
+		{
+			if (target._type == Type::BYTES) {
+				return _getValue<Bytes<false>*>()->isContentEqual(*target._getValue<Bytes<false>*>());
+			} else if (target._type == Type::EXT_BYTES) {
+				return _getValue<Bytes<false>*>()->isContentEqual(*target._getValue<Bytes<true>*>());
+			} else {
+				return false;
+			}
+		}
+		case Type::EXT_BYTES:
+		{
+			if (target._type == Type::BYTES) {
+				return _getValue<Bytes<true>*>()->isContentEqual(*target._getValue<Bytes<false>*>());
+			} else if (target._type == Type::EXT_BYTES) {
+				return _getValue<Bytes<true>*>()->isContentEqual(*target._getValue<Bytes<true>*>());
+			} else {
+				return false;
+			}
 		}
 		default:
 			return false;
-			break;
 		}
 	}
 
 	bool SerializableObject::operator==(const SerializableObject& right) const {
 		switch (_type) {
-		case ValueType::INVALID:
-			return right._type == ValueType::INVALID;
-			break;
-		case ValueType::BOOL:
-			return right._type == ValueType::BOOL && _value.boolean == right._value.boolean;
-			break;
-		case ValueType::INTEGET:
+		case Type::INVALID:
+			return right._type == Type::INVALID;
+		case Type::BOOL:
+			return right._type == Type::BOOL && _getValue<bool>() == right._getValue<bool>();
+		case Type::INT:
+			return _isEqual<int64_t>(right);
+		case Type::UINT:
+			return _isEqual<uint64_t>(right);
+		case Type::FLOAT:
+			return _isEqual<f32>(right);
+		case Type::DOUBLE:
+			return _isEqual<f64>(right);
+		case Type::STRING:
 		{
-			if (right._type == ValueType::INTEGET) {
-				return _value.uint64 == right._value.uint64;
-			} else if (right._type == ValueType::FLOAT) {
-				return _value.uint64 == right._value.number32;
-			} else if (right._type == ValueType::DOUBLE) {
-				return _value.uint64 == right._value.number64;
+			if (right._type == Type::STRING) {
+				return *_getValue<std::string*>() == *right._getValue<std::string*>();
+			} else if (right._type == Type::SHORT_STRING) {
+				return _isContentEqual(*_getValue<std::string*>(), (char*)right._value);
 			} else {
 				return false;
 			}
-
-			break;
 		}
-		case ValueType::FLOAT:
+		case Type::SHORT_STRING:
 		{
-			if (right._type == ValueType::INTEGET) {
-				return _value.number32 == right._value.uint64;
-			} else if (right._type == ValueType::FLOAT) {
-				return _value.number32 == right._value.number32;
-			} else if (right._type == ValueType::DOUBLE) {
-				return _value.number32 == right._value.number64;
+			if (right._type == Type::STRING) {
+				return _isContentEqual(*right._getValue<std::string*>(), (char*)_value);
+			} else if (right._type == Type::SHORT_STRING) {
+				return _isContentEqual((char*)_value, (char*)right._value);
 			} else {
 				return false;
 			}
-
-			break;
 		}
-		case ValueType::DOUBLE:
-		{
-			if (right._type == ValueType::INTEGET) {
-				return _value.number64 == right._value.uint64;
-			} else if (right._type == ValueType::FLOAT) {
-				return _value.number64 == right._value.number32;
-			} else if (right._type == ValueType::DOUBLE) {
-				return _value.number64 == right._value.number64;
-			} else {
-				return false;
-			}
-
-			break;
-		}
-		case ValueType::STRING:
-		{
-			if (right._type == ValueType::STRING) {
-				return *_value.string == *right._value.string;
-			} else if (right._type == ValueType::SHORT_STRING) {
-				return _isContentEqual(*_value.string, right._value.shortString);
-			} else {
-				return false;
-			}
-
-			break;
-		}
-		case ValueType::SHORT_STRING:
-		{
-			if (right._type == ValueType::STRING) {
-				return _isContentEqual(*right._value.string, _value.shortString);
-			} else if (right._type == ValueType::SHORT_STRING) {
-				return _isContentEqual(_value.shortString, right._value.shortString);
-			} else {
-				return false;
-			}
-
-			break;
-		}
-		case ValueType::ARRAY:
-			return right._type == ValueType::ARRAY && _value.array == right._value.array;
-			break;
-		case ValueType::MAP:
-			return right._type == ValueType::MAP && _value.map == right._value.map;
-			break;
-		case ValueType::BYTES:
-			return right._type == ValueType::BYTES && _value.internalBytes == right._value.internalBytes;
-			break;
-		case ValueType::EXT_BYTES:
-			return right._type == ValueType::EXT_BYTES && _value.externalBytes->getValue() == right._value.externalBytes->getValue() && _value.externalBytes->getSize() == right._value.externalBytes->getSize();
-			break;
+		case Type::ARRAY:
+			return right._type == Type::ARRAY && _getValue<Array*>() == right._getValue<Array*>();
+		case Type::MAP:
+			return right._type == Type::MAP && _getValue<Map*>() == right._getValue<Map*>();
+		case Type::BYTES:
+			return right._type == Type::BYTES && _getValue<Bytes<false>*>() == right._getValue<Bytes<false>*>();
+		case Type::EXT_BYTES:
+			return right._type == Type::EXT_BYTES && _getValue<Bytes<true>*>()->getValue() == right._getValue<Bytes<true>*>()->getValue() && _getValue<Bytes<true>*>()->getSize() == right._getValue<Bytes<true>*>()->getSize();
 		default:
 			return false;
-			break;
 		}
 	}
 
-	SerializableObject::ValueType SerializableObject::getType() const {
-		return _type == ValueType::SHORT_STRING ? ValueType::STRING : _type;
-	}
-
-	bool SerializableObject::isValid() const {
-		return _type != ValueType::INVALID;
-	}
-
-	ui32 SerializableObject::getSize() const {
+	size_t SerializableObject::getSize() const {
 		switch (_type) {
-		case ValueType::ARRAY:
-			return _value.array->value.size();
-			break;
-		case ValueType::MAP:
-			return _value.map->value.size();
-			break;
-		case ValueType::BYTES:
-			return _value.internalBytes->getSize();
-			break;
-		case ValueType::EXT_BYTES:
-			return _value.externalBytes->getSize();
-			break;
-		case ValueType::STRING:
-			return _value.string->size();
-			break;
-		case ValueType::SHORT_STRING:
-			return strlen(_value.shortString);
-			break;
+		case Type::ARRAY:
+			return _getValue<Array*>()->value.size();
+		case Type::MAP:
+			return _getValue<Map*>()->value.size();
+		case Type::BYTES:
+			return _getValue<Bytes<false>*>()->getSize();
+		case Type::EXT_BYTES:
+			return _getValue<Bytes<true>*>()->getSize();
+		case Type::STRING:
+			return _getValue<std::string*>()->size();
+		case Type::SHORT_STRING:
+			return strlen((char*)_value);
 		default:
 			return 0;
-			break;
 		}
 	}
 
-	void SerializableObject::clearValues() {
+	void SerializableObject::clear() {
 		switch (_type) {
-		case ValueType::ARRAY:
-			_value.array->value.clear();
+		case Type::ARRAY:
+			_getValue<Array*>()->value.clear();
 			break;
-		case ValueType::MAP:
-			_value.map->value.clear();
+		case Type::MAP:
+			_getValue<Map*>()->value.clear();
 			break;
-		case ValueType::BYTES:
-			_value.internalBytes->clear();
+		case Type::BYTES:
+			_getValue<Bytes<false>*>()->clear();
 			break;
-		case ValueType::EXT_BYTES:
-			_value.externalBytes->clear();
+		case Type::EXT_BYTES:
+			_getValue<Bytes<true>*>()->clear();
+			break;
+		case Type::STRING:
+			_getValue<std::string*>()->clear();
+			break;
+		case Type::SHORT_STRING:
+			_value[0] = 0;
 			break;
 		default:
+			_getValue<uint64_t>() = 0;
 			break;
 		}
 	}
 
 	bool SerializableObject::setInvalid() {
-		if (_type == ValueType::INVALID) {
+		if (_type == Type::INVALID) {
 			return false;
 		} else {
 			_freeValue();
-			_value.uint64 = 0;
-			_type = ValueType::INVALID;
+			_type = Type::INVALID;
 
 			return true;
 		}
 	}
 
 	bool SerializableObject::setArray() {
-		if (_type == ValueType::ARRAY) {
+		if (_type == Type::ARRAY) {
 			return false;
 		} else {
 			_freeValue();
-
-			_value.array = new Array();
-			_type = ValueType::ARRAY;
+			_getValue<Array*>() = new Array();
+			_type = Type::ARRAY;
 
 			return true;
 		}
 	}
 
 	bool SerializableObject::setMap() {
-		if (_type == ValueType::MAP) {
+		if (_type == Type::MAP) {
 			return false;
 		} else {
 			_freeValue();
-
-			_value.map = new Map();
-			_type = ValueType::MAP;
+			_getValue<Map*>() = new Map();
+			_type = Type::MAP;
 
 			return true;
 		}
@@ -586,248 +511,186 @@ namespace aurora {
 
 	bool SerializableObject::toBool(bool defaultValue) const {
 		switch (_type) {
-		case ValueType::BOOL:
-			return _value.boolean;
-			break;
-		case ValueType::INTEGET:
-			return _value.uint64 != 0;
-			break;
-		case ValueType::FLOAT:
-			return _value.number32 != 0.0f;
-			break;
-		case ValueType::DOUBLE:
-			return _value.number64 != 0.0;
-			break;
+		case Type::BOOL:
+			return _getValue<bool>();
+		case Type::INT:
+			return _getValue<int64_t>();
+		case Type::UINT:
+			return _getValue<uint64_t>();
+		case Type::FLOAT:
+			return _getValue<f32>() != 0.0f;
+		case Type::DOUBLE:
+			return _getValue<f64>() != 0.0;
+		case Type::INVALID:
+			return false;
 		default:
 			return defaultValue;
-			break;
 		}
 	}
 
 	std::string SerializableObject::toString(const std::string& defaultValue) const {
 		switch (_type) {
-		case ValueType::BOOL:
-			return _value.boolean ? "true" : "false";
-			break;
-		case ValueType::INTEGET:
-			return String::toString<i64>(_value.uint64);
-			break;
-		case ValueType::FLOAT:
-			return String::toString<f32>(_value.number32);
-			break;
-		case ValueType::DOUBLE:
-			return String::toString<f64>(_value.number64);
-			break;
-		case ValueType::STRING:
-			return *_value.string;
-			break;
-		case ValueType::SHORT_STRING:
-			return _value.shortString;
-			break;
+		case Type::BOOL:
+			return _getValue<bool>() ? "true" : "false";
+		case Type::INT:
+			return String::toString<int64_t>(_getValue<int64_t>());
+		case Type::UINT:
+			return String::toString<uint64_t>(_getValue<uint64_t>());
+		case Type::FLOAT:
+			return String::toString<f32>(_getValue<f32>());
+		case Type::DOUBLE:
+			return String::toString<f64>(_getValue<f64>());
+		case Type::STRING:
+			return *_getValue<std::string*>();
+		case Type::SHORT_STRING:
+			return (char*)_value;
+		case Type::INVALID:
+			return "";
 		default:
 			return defaultValue;
-			break;
 		}
 	}
 
-	const i8* SerializableObject::toBytes() const {
-		if (_type == ValueType::BYTES) {
-			return _value.internalBytes->getValue();
-		} else if (_type == ValueType::EXT_BYTES) {
-			return _value.externalBytes->getValue();
+	const uint8_t* SerializableObject::toBytes() const {
+		if (_type == Type::BYTES) {
+			return _getValue<Bytes<false>*>()->getValue();
+		} else if (_type == Type::EXT_BYTES) {
+			return _getValue<Bytes<true>*>()->getValue();
 		} else {
 			return nullptr;
 		}
 	}
 
-	void SerializableObject::set(bool value) {
-		_setInteger(value);
-	}
-
-	void SerializableObject::set(char value) {
-		_setInteger(value);
-	}
-
-	void SerializableObject::set(ui8 value) {
-		_setInteger(value);
-	}
-
-	void SerializableObject::set(short value) {
-		_setInteger(value);
-	}
-
-	void SerializableObject::set(ui16 value) {
-		_setInteger(value);
-	}
-
-	void SerializableObject::set(int value) {
-		_setInteger(value);
-	}
-
-	void SerializableObject::set(ui32 value) {
-		_setInteger(value);
-	}
-
-	void SerializableObject::set(const i64& value) {
-		_setInteger(value);
-	}
-
-	void SerializableObject::set(const ui64& value) {
-		_setInteger(value);
-	}
-
-	void SerializableObject::set(f32 value) {
-		if (_type != ValueType::FLOAT) {
-			_freeValue();
-			_type = ValueType::FLOAT;
-		}
-		_value.number32 = value;
-	}
-
-	void SerializableObject::set(const f64& value) {
-		if (_type != ValueType::DOUBLE) {
-			_freeValue();
-			_type = ValueType::DOUBLE;
-		}
-		_value.number64 = value;
-	}
-
-	void SerializableObject::set(const i8* value) {
-		if (_type == ValueType::STRING) {
-			*_value.string = value;
-		} else if (_type == ValueType::SHORT_STRING) {
-			ui32 size = strlen(value);
-			if (size < SHORT_STRING_MAX_SIZE) {
+	void SerializableObject::set(const char* value) {
+		if (_type == Type::STRING) {
+			*_getValue<std::string*>() = value;
+		} else if (_type == Type::SHORT_STRING) {
+			if (auto size = strlen(value); size < VALUE_SIZE) {
 				_writeShortString(value, size);
 			} else {
-				_value.string = new std::string(value);
-				_type = ValueType::STRING;
+				_getValue<std::string*>() = new std::string(value);
+				_type = Type::STRING;
 			}
 		} else {
 			_freeValue();
 
-			ui32 size = strlen(value);
-			if (size < SHORT_STRING_MAX_SIZE) {
+			if (auto size = strlen(value); size < VALUE_SIZE) {
 				_writeShortString(value, size);
-				_type = ValueType::SHORT_STRING;
+				_type = Type::SHORT_STRING;
 			} else {
-				_value.string = new std::string(value);
-				_type = ValueType::STRING;
+				_getValue<std::string*>() = new std::string(value);
+				_type = Type::STRING;
 			}
 		}
 	}
 
 	void SerializableObject::set(const std::string& value) {
-		if (_type == ValueType::STRING) {
-			*_value.string = value;
-		} else if (_type == ValueType::SHORT_STRING) {
-			ui32 size = value.size();
-			if (size < SHORT_STRING_MAX_SIZE) {
+		if (_type == Type::STRING) {
+			*_getValue<std::string*>() = value;
+		} else if (_type == Type::SHORT_STRING) {
+			if (auto size = value.size(); size < VALUE_SIZE) {
 				_writeShortString(value.c_str(), size);
 			} else {
-				_value.string = new std::string(value);
-				_type = ValueType::STRING;
+				_getValue<std::string*>() = new std::string(value);
+				_type = Type::STRING;
 			}
 		} else {
 			_freeValue();
 
-			ui32 size = value.size();
-			if (size < SHORT_STRING_MAX_SIZE) {
+			if (auto size = value.size(); size < VALUE_SIZE) {
 				_writeShortString(value.c_str(), size);
-				_type = ValueType::SHORT_STRING;
+				_type = Type::SHORT_STRING;
 			} else {
-				_value.string = new std::string(value);
-				_type = ValueType::STRING;
+				_getValue<std::string*>() = new std::string(value);
+				_type = Type::STRING;
 			}
 		}
 	}
 
 	void SerializableObject::set(const std::string_view& value) {
-		if (_type == ValueType::STRING) {
-			*_value.string = value;
-		} else if (_type == ValueType::SHORT_STRING) {
-			ui32 size = value.size();
-			if (size < SHORT_STRING_MAX_SIZE) {
+		if (_type == Type::STRING) {
+			*_getValue<std::string*>() = value;
+		} else if (_type == Type::SHORT_STRING) {
+			if (auto size = value.size(); size < VALUE_SIZE) {
 				_writeShortString(value.data(), size);
 			} else {
-				_value.string = new std::string(value);
-				_type = ValueType::STRING;
+				_getValue<std::string*>() = new std::string(value);
+				_type = Type::STRING;
 			}
 		} else {
 			_freeValue();
 
-			ui32 size = value.size();
-			if (size < SHORT_STRING_MAX_SIZE) {
+			if (auto size = value.size(); size < VALUE_SIZE) {
 				_writeShortString(value.data(), size);
-				_type = ValueType::SHORT_STRING;
+				_type = Type::SHORT_STRING;
 			} else {
-				_value.string = new std::string(value);
-				_type = ValueType::STRING;
+				_getValue<std::string*>() = new std::string(value);
+				_type = Type::STRING;
 			}
 		}
 	}
 
-	void SerializableObject::set(const i8* value, ui32 size, bool copy) {
+	void SerializableObject::set(const uint8_t* value, size_t size, bool copy) {
 		if (copy) {
 			setBytes<false>();
-			_value.internalBytes->setValue(value, size);
+			_getValue<Bytes<false>*>()->setValue(value, size);
 		} else {
 			setBytes<true>();
-			_value.externalBytes->setValue(value, size);
+			_getValue<Bytes<true>*>()->setValue(value, size);
 		}
 	}
 
 	void SerializableObject::set(const SerializableObject& value, bool copy) {
 		switch (value._type) {
-		case ValueType::STRING:
-			set(*value._value.string);
+		case Type::STRING:
+			set(*value._getValue<std::string*>());
 			break;
-		case ValueType::SHORT_STRING:
-			set(value._value.shortString);
+		case Type::SHORT_STRING:
+			set(value._value);
 			break;
-		case ValueType::ARRAY:
+		case Type::ARRAY:
 		{
 			_freeValue();
-			_type = ValueType::ARRAY;
+			_type = Type::ARRAY;
 
-			auto arr = value._value.array;
-			_value.array = copy ? arr->copy() : arr->ref<Array>();
+			auto arr = value._getValue<Array*>();
+			_getValue<Array*>() = copy ? arr->copy() : arr->ref<Array>();
 
 			break;
 		}
-		case ValueType::MAP:
+		case Type::MAP:
 		{
 			_freeValue();
-			_type = ValueType::MAP;
+			_type = Type::MAP;
 
-			auto map = value._value.map;
-			_value.map = copy ? map->copy() : map->ref<Map>();
+			auto map = value._getValue<Map*>();
+			_getValue<Map*>() = copy ? map->copy() : map->ref<Map>();
 
 			break;
 		}
-		case ValueType::BYTES:
+		case Type::BYTES:
 		{
 			_freeValue();
-			_type = ValueType::BYTES;
+			_type = Type::BYTES;
 
-			auto bytes = value._value.internalBytes;
-			_value.internalBytes = copy ? bytes->copy() : bytes->ref<Bytes<false>>();
+			auto bytes = value._getValue<Bytes<false>*>();
+			_getValue<Bytes<false>*>() = copy ? bytes->copy() : bytes->ref<Bytes<false>>();
 
 			break;
 		}
-		case ValueType::EXT_BYTES:
+		case Type::EXT_BYTES:
 		{
 			_freeValue();
-			_type = ValueType::EXT_BYTES;
+			_type = Type::EXT_BYTES;
 
-			auto bytes = value._value.externalBytes;
-			_value.externalBytes = copy ? bytes->copy() : bytes->ref<Bytes<true>>();
+			auto bytes = value._getValue<Bytes<true>*>();
+			_getValue<Bytes<true>*>() = copy ? bytes->copy() : bytes->ref<Bytes<true>>();
 
 			break;
 		}
 		default:
 		{
-			_value.uint64 = value._value.uint64;
+			memcpy(_value, value._value, VALUE_SIZE);
 			_type = value._type;
 
 			break;
@@ -835,15 +698,15 @@ namespace aurora {
 		}
 	}
 
-	SerializableObject& SerializableObject::at(ui32 index) {
+	SerializableObject& SerializableObject::at(size_t index) {
 		Array* arr = _getArray();
 		if (index >= arr->value.size()) arr->value.resize(index + 1);
 		return arr->value[index];
 	}
 
-	SerializableObject SerializableObject::tryAt(ui32 index) const {
-		if (_type == ValueType::ARRAY) {
-			Array* arr = _value.array;
+	SerializableObject SerializableObject::tryAt(size_t index) const {
+		if (_type == Type::ARRAY) {
+			Array* arr = _getValue<Array*>();
 			return index < arr->value.size() ? arr->value[index] : std::move(SerializableObject());
 		} else {
 			return std::move(SerializableObject());
@@ -854,9 +717,9 @@ namespace aurora {
 		_getArray()->value.emplace_back(value);
 	}
 
-	SerializableObject SerializableObject::removeAt(ui32 index) {
-		if (_type == ValueType::ARRAY) {
-			Array* arr = _value.array;
+	SerializableObject SerializableObject::removeAt(size_t index) {
+		if (_type == Type::ARRAY) {
+			Array* arr = _getValue<Array*>();
 
 			if (index < arr->value.size()) {
 				SerializableObject v = arr->value[index];
@@ -870,7 +733,7 @@ namespace aurora {
 		}
 	}
 
-	void SerializableObject::insertAt(ui32 index, const SerializableObject& value) {
+	void SerializableObject::insertAt(size_t index, const SerializableObject& value) {
 		Array* arr = _getArray();
 		if (index < arr->value.size()) {
 			arr->value.emplace(arr->value.begin() + index, value);
@@ -887,8 +750,8 @@ namespace aurora {
 	}
 
 	SerializableObject SerializableObject::tryGet(const SerializableObject& key) const {
-		if (_type == ValueType::MAP) {
-			Map* map = _value.map;
+		if (_type == Type::MAP) {
+			Map* map = _getValue<Map*>();
 
 			auto itr = map->value.find(key);
 			return itr == map->value.end() ? std::move(SerializableObject()) : itr->second;
@@ -910,12 +773,18 @@ namespace aurora {
 	}
 
 	bool SerializableObject::has(const SerializableObject& key) const {
-		return _type == ValueType::MAP ? _value.map->value.find(key) != _value.map->value.end() : false;
+		if (_type == Type::MAP) {
+			Map* map = _getValue<Map*>();
+
+			return map->value.find(key) != map->value.end();
+		} else {
+			return false;
+		}
 	}
 
 	SerializableObject SerializableObject::remove(const SerializableObject& key) {
-		if (_type == ValueType::MAP) {
-			Map* map = _value.map;
+		if (_type == Type::MAP) {
+			Map* map = _getValue<Map*>();
 
 			auto itr = map->value.find(key);
 			if (itr == map->value.end()) {
@@ -931,11 +800,11 @@ namespace aurora {
 	}
 
 	void SerializableObject::forEach(const std::function<ForEachOperation(const SerializableObject& key, SerializableObject& value)>& callback) {
-		if (_type == ValueType::ARRAY) {
-			Array* arr = _value.array;
+		if (_type == Type::ARRAY) {
+			Array* arr = _getValue<Array*>();
 			if (arr != nullptr) {
 				SerializableObject idx;
-				for (ui32 i = 0, n = arr->value.size(); i < n; ++i) {
+				for (size_t i = 0, n = arr->value.size(); i < n; ++i) {
 					idx.set(i);
 					auto op = callback(idx, arr->value[i]);
 					if ((op & ForEachOperation::ERASE) == ForEachOperation::ERASE) {
@@ -946,8 +815,8 @@ namespace aurora {
 					if ((op & ForEachOperation::BREAK) == ForEachOperation::BREAK) break;
 				}
 			}
-		} else if (_type == ValueType::MAP) {
-			Map* map = _value.map;
+		} else if (_type == Type::MAP) {
+			Map* map = _getValue<Map*>();
 			if (map != nullptr) {
 				for (auto itr = map->value.begin(); itr != map->value.end();) {
 					auto op = callback(itr->first, itr->second);
@@ -964,211 +833,237 @@ namespace aurora {
 
 	void SerializableObject::pack(ByteArray& ba) const {
 		switch (_type) {
-		case ValueType::INVALID:
-			ba.writeUInt8((ui8)_type);
+		case Type::INVALID:
+			ba.writeUInt8((uint8_t)_type);
 			break;
-		case ValueType::BOOL:
-			ba.writeUInt8((ui8)(_value.boolean ? InternalValueType::BOOL_TRUE : InternalValueType::BOOL_FALSE));
+		case Type::BOOL:
+			ba.writeUInt8((uint8_t)(_getValue<bool>() ? InternalType::BOOL_TRUE : InternalType::BOOL_FALSE));
 			break;
-		case ValueType::INTEGET:
+		case Type::INT:
 		{
-			if (_value.uint64 > INT64_MAX) {
-				i64 v = _value.uint64;
+			auto v = _getValue<int64_t>();
+			if (v < 0) {
 				if (v == -1) {
-					ba.writeUInt8((ui8)InternalValueType::N_INT_1);
-				} else if (v >= -0xFFLL) {
-					ba.writeUInt8((ui8)InternalValueType::N_INT_8BITS);
+					ba.writeUInt8((uint8_t)InternalType::N_INT_1);
+				} else if (v >= -0xFFi64) {
+					ba.writeUInt8((uint8_t)InternalType::N_INT_8BITS);
 					ba.writeUInt8(-v);
-				} else if (v >= -0xFFFFLL) {
-					ba.writeUInt8((ui8)InternalValueType::N_INT_16BITS);
+				} else if (v >= -0xFFFFi64) {
+					ba.writeUInt8((uint8_t)InternalType::N_INT_16BITS);
 					ba.writeUInt16(-v);
-				} else if (v >= -0xFFFFFFLL) {
-					ba.writeUInt8((ui8)InternalValueType::N_INT_24BITS);
+				} else if (v >= -0xFFFFFFi64) {
+					ba.writeUInt8((uint8_t)InternalType::N_INT_24BITS);
 					ba.writeUInt(3, -v);
-				} else if (v >= -(i64)0xFFFFFFFFLL) {
-					ba.writeUInt8((ui8)InternalValueType::N_INT_32BITS);
+				} else if (v >= -0xFFFFFFFFi64) {
+					ba.writeUInt8((uint8_t)InternalType::N_INT_32BITS);
 					ba.writeUInt32(-v);
-				} else if (v >= -0xFFFFFFFFFFLL) {
-					ba.writeUInt8((ui8)InternalValueType::N_INT_40BITS);
+				} else if (v >= -0xFFFFFFFFFFi64) {
+					ba.writeUInt8((uint8_t)InternalType::N_INT_40BITS);
 					ba.writeUInt(5, -v);
-				} else if (v >= -0xFFFFFFFFFFFFLL) {
-					ba.writeUInt8((ui8)InternalValueType::N_INT_48BITS);
+				} else if (v >= -0xFFFFFFFFFFFFi64) {
+					ba.writeUInt8((uint8_t)InternalType::N_INT_48BITS);
 					ba.writeUInt(6, -v);
-				} else if (v >= -0xFFFFFFFFFFFFFFLL) {
-					ba.writeUInt8((ui8)InternalValueType::N_INT_56BITS);
+				} else if (v >= -0xFFFFFFFFFFFFFFi64) {
+					ba.writeUInt8((uint8_t)InternalType::N_INT_56BITS);
 					ba.writeUInt(7, -v);
 				} else {
-					ba.writeUInt8((ui8)InternalValueType::N_INT_64BITS);
+					ba.writeUInt8((uint8_t)InternalType::N_INT_64BITS);
 					ba.writeUInt64(-v);
 				}
 			} else {
-				if (_value.uint64 == 0) {
-					ba.writeUInt8((ui8)InternalValueType::U_INT_0);
-				} else if (_value.uint64 == 1) {
-					ba.writeUInt8((ui8)InternalValueType::U_INT_1);
-				} else if (_value.uint64 <= 0xFFULL) {
-					ba.writeUInt8((ui8)InternalValueType::U_INT_8BITS);
-					ba.writeUInt8(_value.uint64);
-				} else if (_value.uint64 <= 0xFFFFULL) {
-					ba.writeUInt8((ui8)InternalValueType::U_INT_16BITS);
-					ba.writeUInt16(_value.uint64);
-				} else if (_value.uint64 <= 0xFFFFFFULL) {
-					ba.writeUInt8((ui8)InternalValueType::U_INT_24BITS);
-					ba.writeUInt(3, _value.uint64);
-				} else if (_value.uint64 <= 0xFFFFFFFFULL) {
-					ba.writeUInt8((ui8)InternalValueType::U_INT_32BITS);
-					ba.writeUInt32(_value.uint64);
-				} else if (_value.uint64 <= 0xFFFFFFFFFFULL) {
-					ba.writeUInt8((ui8)InternalValueType::U_INT_40BITS);
-					ba.writeUInt(5, _value.uint64);
-				} else if (_value.uint64 <= 0xFFFFFFFFFFFFULL) {
-					ba.writeUInt8((ui8)InternalValueType::U_INT_48BITS);
-					ba.writeUInt(6, _value.uint64);
-				} else if (_value.uint64 <= 0xFFFFFFFFFFFFFFULL) {
-					ba.writeUInt8((ui8)InternalValueType::U_INT_56BITS);
-					ba.writeUInt(7, _value.uint64);
+				if (v == 0) {
+					ba.writeUInt8((uint8_t)InternalType::U_INT_0);
+				} else if (v == 1) {
+					ba.writeUInt8((uint8_t)InternalType::U_INT_1);
+				} else if (v <= 0xFFi64) {
+					ba.writeUInt8((uint8_t)InternalType::U_INT_8BITS);
+					ba.writeUInt8(v);
+				} else if (v <= 0xFFFFi64) {
+					ba.writeUInt8((uint8_t)InternalType::U_INT_16BITS);
+					ba.writeUInt16(v);
+				} else if (v <= 0xFFFFFFi64) {
+					ba.writeUInt8((uint8_t)InternalType::U_INT_24BITS);
+					ba.writeUInt(3, v);
+				} else if (v <= 0xFFFFFFFFi64) {
+					ba.writeUInt8((uint8_t)InternalType::U_INT_32BITS);
+					ba.writeUInt32(v);
+				} else if (v <= 0xFFFFFFFFFFi64) {
+					ba.writeUInt8((uint8_t)InternalType::U_INT_40BITS);
+					ba.writeUInt(5, v);
+				} else if (v <= 0xFFFFFFFFFFFFi64) {
+					ba.writeUInt8((uint8_t)InternalType::U_INT_48BITS);
+					ba.writeUInt(6, v);
+				} else if (v <= 0xFFFFFFFFFFFFFFi64) {
+					ba.writeUInt8((uint8_t)InternalType::U_INT_56BITS);
+					ba.writeUInt(7, v);
 				} else {
-					ba.writeUInt8((ui8)InternalValueType::U_INT_64BITS);
-					ba.writeUInt64(_value.uint64);
+					ba.writeUInt8((uint8_t)InternalType::U_INT_64BITS);
+					ba.writeUInt64(v);
 				}
 			}
 
 			break;
 		}
-		case ValueType::FLOAT:
+		case Type::UINT:
+		{
+			auto v = _getValue<uint64_t>();
+			if (v == 0) {
+				ba.writeUInt8((uint8_t)InternalType::U_INT_0);
+			} else if (v == 1) {
+				ba.writeUInt8((uint8_t)InternalType::U_INT_1);
+			} else if (v <= 0xFFui64) {
+				ba.writeUInt8((uint8_t)InternalType::U_INT_8BITS);
+				ba.writeUInt8(v);
+			} else if (v <= 0xFFFFui64) {
+				ba.writeUInt8((uint8_t)InternalType::U_INT_16BITS);
+				ba.writeUInt16(v);
+			} else if (v <= 0xFFFFFFui64) {
+				ba.writeUInt8((uint8_t)InternalType::U_INT_24BITS);
+				ba.writeUInt(3, v);
+			} else if (v <= 0xFFFFFFFFui64) {
+				ba.writeUInt8((uint8_t)InternalType::U_INT_32BITS);
+				ba.writeUInt32(v);
+			} else if (v <= 0xFFFFFFFFFFui64) {
+				ba.writeUInt8((uint8_t)InternalType::U_INT_40BITS);
+				ba.writeUInt(5, v);
+			} else if (v <= 0xFFFFFFFFFFFFui64) {
+				ba.writeUInt8((uint8_t)InternalType::U_INT_48BITS);
+				ba.writeUInt(6, v);
+			} else if (v <= 0xFFFFFFFFFFFFFFui64) {
+				ba.writeUInt8((uint8_t)InternalType::U_INT_56BITS);
+				ba.writeUInt(7, v);
+			} else {
+				ba.writeUInt8((uint8_t)InternalType::U_INT_64BITS);
+				ba.writeUInt64(v);
+			}
+
+			break;
+		}
+		case Type::FLOAT:
 		{
 
-			f32 f = _value.number32;
+			f32 f = _getValue<f32>();
 			if (f == 0.0f) {
-				ba.writeUInt8((ui8)InternalValueType::FLOAT_0);
+				ba.writeUInt8((uint8_t)InternalType::FLOAT_0);
 			} else if (f == 0.5f) {
-				ba.writeUInt8((ui8)InternalValueType::FLOAT_0_5);
+				ba.writeUInt8((uint8_t)InternalType::FLOAT_0_5);
 			} else if (f == 1.0f) {
-				ba.writeUInt8((ui8)InternalValueType::FLOAT_1);
+				ba.writeUInt8((uint8_t)InternalType::FLOAT_1);
 			} else {
-				i32 intValue = f;
-				if (intValue == f) {
-					if (intValue < 0) {
-						if (intValue >= -0xFF) {
-							ba.writeUInt8((ui8)InternalValueType::N_FLOAT_INT_8BITS);
-							ba.writeUInt8(-intValue);
-						} else if (intValue >= -0xFFFF) {
-							ba.writeUInt8((ui8)InternalValueType::N_FLOAT_INT_16BITS);
-							ba.writeUInt16(-intValue);
-						} else if (intValue >= -0xFFFFFF) {
-							ba.writeUInt8((ui8)InternalValueType::N_FLOAT_INT_24BITS);
-							ba.writeUInt(3, -intValue);
-						} else {
-							ba.writeUInt8((ui8)_type);
-							ba.writeFloat32(f);
-						}
-					} else {
-						if (intValue <= 0xFF) {
-							ba.writeUInt8((ui8)InternalValueType::U_FLOAT_INT_8BITS);
-							ba.writeUInt8(intValue);
-						} else if (intValue <= 0xFFFF) {
-							ba.writeUInt8((ui8)InternalValueType::U_FLOAT_INT_16BITS);
-							ba.writeUInt16(intValue);
-						} else if (intValue <= 0xFFFFFF) {
-							ba.writeUInt8((ui8)InternalValueType::U_FLOAT_INT_24BITS);
-							ba.writeUInt(3, intValue);
-						} else {
-							ba.writeUInt8((ui8)_type);
-							ba.writeFloat32(f);
-						}
-					}
-				} else {
-					ba.writeUInt8((ui8)_type);
-					ba.writeFloat32(f);
-				}
+				ba.writeUInt8((uint8_t)_type);
+				ba.writeFloat32(f);
 			}
 
 			break;
 		}
-		case ValueType::DOUBLE:
+		case Type::DOUBLE:
 		{
-			f64 d = _value.number64;
+			f64 d = _getValue<f64>();
 			if (d == 0.0) {
-				ba.writeUInt8((ui8)InternalValueType::DOUBLE_0);
+				ba.writeUInt8((uint8_t)InternalType::DOUBLE_0);
 			} else if (d == 0.5) {
-				ba.writeUInt8((ui8)InternalValueType::DOUBLE_0_5);
+				ba.writeUInt8((uint8_t)InternalType::DOUBLE_0_5);
 			} else if (d == 1.0) {
-				ba.writeUInt8((ui8)InternalValueType::DOUBLE_1);
+				ba.writeUInt8((uint8_t)InternalType::DOUBLE_1);
 			} else {
-				ba.writeUInt8((ui8)_type);
+				ba.writeUInt8((uint8_t)_type);
 				ba.writeFloat64(d);
 			}
 
 			break;
 		}
-		case ValueType::STRING:
+		case Type::STRING:
 		{
-			const std::string& s = *_value.string;
+			auto& s = *_getValue<std::string*>();
 			if (s.empty()) {
-				ba.writeUInt8((ui8)InternalValueType::STRING_EMPTY);
+				ba.writeUInt8((uint8_t)InternalType::STRING_EMPTY);
 			} else {
-				ba.writeUInt8((ui8)_type);
+				ba.writeUInt8((uint8_t)_type);
 				ba.writeString(s);
 			}
 
 			break;
 		}
-		case ValueType::SHORT_STRING:
+		case Type::SHORT_STRING:
 		{
-			ui32 size = strlen(_value.shortString);
+			auto size = strlen((char*)_value);
 			if (size == 0) {
-				ba.writeUInt8((ui8)InternalValueType::STRING_EMPTY);
+				ba.writeUInt8((uint8_t)InternalType::STRING_EMPTY);
 			} else {
-				ba.writeUInt8((ui8)_type);
-				ba.writeString(_value.shortString, size);
+				ba.writeUInt8((uint8_t)_type);
+				ba.writeString((char*)_value, size);
 			}
 
 			break;
 		}
-		case ValueType::ARRAY:
+		case Type::ARRAY:
 		{
-			Array* arr = _value.array;
-			ui32 size = arr->value.size();
+			Array* arr = _getValue<Array*>();
+			auto size = arr->value.size();
 			if (size == 0) {
-				ba.writeUInt8((ui8)InternalValueType::ARRAY_0);
+				ba.writeUInt8((uint8_t)InternalType::ARRAY_0);
 				break;
-			} else if (size <= 0xFF) {
-				ba.writeUInt8((ui8)InternalValueType::ARRAY_8BITS);
+			} else if (size <= 0xFFui64) {
+				ba.writeUInt8((uint8_t)InternalType::ARRAY_8BITS);
 				ba.writeUInt8(size);
-			} else if (size <= 0xFFFF) {
-				ba.writeUInt8((ui8)InternalValueType::ARRAY_16BITS);
+			} else if (size <= 0xFFFFui64) {
+				ba.writeUInt8((uint8_t)InternalType::ARRAY_16BITS);
 				ba.writeUInt16(size);
-			} else if (size <= 0xFFFFFF) {
-				ba.writeUInt8((ui8)InternalValueType::ARRAY_24BITS);
+			} else if (size <= 0xFFFFFFui64) {
+				ba.writeUInt8((uint8_t)InternalType::ARRAY_24BITS);
 				ba.writeUInt(3, size);
-			} else {
-				ba.writeUInt8((ui8)InternalValueType::ARRAY_32BITS);
+			} else if (size <= 0xFFFFFFFFui64) {
+				ba.writeUInt8((uint8_t)InternalType::ARRAY_32BITS);
 				ba.writeUInt32(size);
+			} else if (size <= 0xFFFFFFFFFFui64) {
+				ba.writeUInt8((uint8_t)InternalType::ARRAY_40BITS);
+				ba.writeUInt(5, size);
+			} else if (size <= 0xFFFFFFFFFFFFui64) {
+				ba.writeUInt8((uint8_t)InternalType::ARRAY_48BITS);
+				ba.writeUInt(6, size);
+			} else if (size <= 0xFFFFFFFFFFFFFFui64) {
+				ba.writeUInt8((uint8_t)InternalType::ARRAY_56BITS);
+				ba.writeUInt(7, size);
+			} else {
+				ba.writeUInt8((uint8_t)InternalType::ARRAY_64BITS);
+				ba.writeUInt64(size);
 			}
 
 			for (auto& i : arr->value) i.pack(ba);
 
 			break;
 		}
-		case ValueType::MAP:
+		case Type::MAP:
 		{
-			Map* map = _value.map;
-			ui32 size = map->value.size();
+			Map* map = _getValue<Map*>();
+			auto size = map->value.size();
 			if (size == 0) {
-				ba.writeUInt8((ui8)InternalValueType::MAP_0);
+				ba.writeUInt8((uint8_t)InternalType::MAP_0);
 				break;
-			} else if (size <= 0xFF) {
-				ba.writeUInt8((ui8)InternalValueType::MAP_8BITS);
+			} else if (size <= 0xFFui64) {
+				ba.writeUInt8((uint8_t)InternalType::MAP_8BITS);
 				ba.writeUInt8(size);
-			} else if (size <= 0xFFFF) {
-				ba.writeUInt8((ui8)InternalValueType::MAP_16BITS);
+			} else if (size <= 0xFFFFui64) {
+				ba.writeUInt8((uint8_t)InternalType::MAP_16BITS);
 				ba.writeUInt16(size);
-			} else if (size <= 0xFFFFFF) {
-				ba.writeUInt8((ui8)InternalValueType::MAP_24BITS);
+			} else if (size <= 0xFFFFFFui64) {
+				ba.writeUInt8((uint8_t)InternalType::MAP_24BITS);
 				ba.writeUInt(3, size);
-			} else {
-				ba.writeUInt8((ui8)InternalValueType::MAP_32BITS);
+			} else if (size <= 0xFFFFFFFFui64) {
+				ba.writeUInt8((uint8_t)InternalType::MAP_32BITS);
 				ba.writeUInt32(size);
+			} else if (size <= 0xFFFFFFFFFFui64) {
+				ba.writeUInt8((uint8_t)InternalType::MAP_40BITS);
+				ba.writeUInt(5, size);
+			} else if (size <= 0xFFFFFFFFFFFFui64) {
+				ba.writeUInt8((uint8_t)InternalType::MAP_48BITS);
+				ba.writeUInt(5, size);
+			} else if (size <= 0xFFFFFFFFFFFFFFui64) {
+				ba.writeUInt8((uint8_t)InternalType::MAP_56BITS);
+				ba.writeUInt(5, size);
+			} else {
+				ba.writeUInt8((uint8_t)InternalType::MAP_64BITS);
+				ba.writeUInt64(size);
 			}
 
 			for (auto& i : map->value) {
@@ -1178,51 +1073,75 @@ namespace aurora {
 
 			break;
 		}
-		case ValueType::BYTES:
+		case Type::BYTES:
 		{
-			ui32 size = _value.internalBytes->getSize();
+			uint32_t size = _getValue<Bytes<false>*>()->getSize();
 			if (size == 0) {
-				ba.writeUInt8((ui8)InternalValueType::BYTES_0);
+				ba.writeUInt8((uint8_t)InternalType::BYTES_0);
 				break;
-			} else if (size <= 0xFF) {
-				ba.writeUInt8((ui8)InternalValueType::BYTES_8BITS);
+			} else if (size <= 0xFFui64) {
+				ba.writeUInt8((uint8_t)InternalType::BYTES_8BITS);
 				ba.writeUInt8(size);
-			} else if (size <= 0xFFFF) {
-				ba.writeUInt8((ui8)InternalValueType::BYTES_16BITS);
+			} else if (size <= 0xFFFFui64) {
+				ba.writeUInt8((uint8_t)InternalType::BYTES_16BITS);
 				ba.writeUInt16(size);
-			} else if (size <= 0xFFFFFF) {
-				ba.writeUInt8((ui8)InternalValueType::BYTES_24BITS);
+			} else if (size <= 0xFFFFFFui64) {
+				ba.writeUInt8((uint8_t)InternalType::BYTES_24BITS);
 				ba.writeUInt(3, size);
-			} else {
-				ba.writeUInt8((ui8)InternalValueType::BYTES_32BITS);
+			} else if (size <= 0xFFFFFFFFui64) {
+				ba.writeUInt8((uint8_t)InternalType::BYTES_32BITS);
 				ba.writeUInt32(size);
+			} else if (size <= 0xFFFFFFFFFFui64) {
+				ba.writeUInt8((uint8_t)InternalType::BYTES_40BITS);
+				ba.writeUInt(5, size);
+			} else if (size <= 0xFFFFFFFFFFFFui64) {
+				ba.writeUInt8((uint8_t)InternalType::BYTES_48BITS);
+				ba.writeUInt(5, size);
+			} else if (size <= 0xFFFFFFFFFFFFFFui64) {
+				ba.writeUInt8((uint8_t)InternalType::BYTES_56BITS);
+				ba.writeUInt(5, size);
+			} else {
+				ba.writeUInt8((uint8_t)InternalType::BYTES_64BITS);
+				ba.writeUInt64(size);
 			}
 
-			ba.writeBytes(_value.internalBytes->getValue(), 0, size);
+			ba.writeBytes(_getValue<Bytes<false>*>()->getValue(), size);
 
 			break;
 		}
-		case ValueType::EXT_BYTES:
+		case Type::EXT_BYTES:
 		{
-			ui32 size = _value.externalBytes->getSize();
+			uint32_t size = _getValue<Bytes<true>*>()->getSize();
 			if (size == 0) {
-				ba.writeUInt8((ui8)InternalValueType::BYTES_0);
+				ba.writeUInt8((uint8_t)InternalType::BYTES_0);
 				break;
-			} else if (size <= 0xFF) {
-				ba.writeUInt8((ui8)InternalValueType::BYTES_8BITS);
+			} else if (size <= 0xFFui64) {
+				ba.writeUInt8((uint8_t)InternalType::BYTES_8BITS);
 				ba.writeUInt8(size);
-			} else if (size <= 0xFFFF) {
-				ba.writeUInt8((ui8)InternalValueType::BYTES_16BITS);
+			} else if (size <= 0xFFFFui64) {
+				ba.writeUInt8((uint8_t)InternalType::BYTES_16BITS);
 				ba.writeUInt16(size);
-			} else if (size <= 0xFFFFFF) {
-				ba.writeUInt8((ui8)InternalValueType::BYTES_24BITS);
+			} else if (size <= 0xFFFFFFui64) {
+				ba.writeUInt8((uint8_t)InternalType::BYTES_24BITS);
 				ba.writeUInt(3, size);
-			} else {
-				ba.writeUInt8((ui8)InternalValueType::BYTES_32BITS);
+			} else if (size <= 0xFFFFFFFFui64) {
+				ba.writeUInt8((uint8_t)InternalType::BYTES_32BITS);
 				ba.writeUInt32(size);
+			} else if (size <= 0xFFFFFFFFFFui64) {
+				ba.writeUInt8((uint8_t)InternalType::BYTES_40BITS);
+				ba.writeUInt(5, size);
+			} else if (size <= 0xFFFFFFFFFFFFui64) {
+				ba.writeUInt8((uint8_t)InternalType::BYTES_48BITS);
+				ba.writeUInt(5, size);
+			} else if (size <= 0xFFFFFFFFFFFFFFui64) {
+				ba.writeUInt8((uint8_t)InternalType::BYTES_56BITS);
+				ba.writeUInt(5, size);
+			} else {
+				ba.writeUInt8((uint8_t)InternalType::BYTES_64BITS);
+				ba.writeUInt64(size);
 			}
 
-			ba.writeBytes(_value.externalBytes->getValue(), 0, size);
+			ba.writeBytes(_getValue<Bytes<true>*>()->getValue(), size);
 
 			break;
 		}
@@ -1233,167 +1152,185 @@ namespace aurora {
 
 	void SerializableObject::unpack(ByteArray& ba) {
 		if (ba.getBytesAvailable() > 0) {
-			InternalValueType type = (InternalValueType)ba.readUInt8();
+			InternalType type = (InternalType)ba.readUInt8();
 			switch (type) {
-			case InternalValueType::UNVALID:
+			case InternalType::UNVALID:
 				setInvalid();
 				break;
-			case InternalValueType::FLOAT_0:
+			case InternalType::FLOAT_0:
 				set(0.0f);
 				break;
-			case InternalValueType::FLOAT_0_5:
+			case InternalType::FLOAT_0_5:
 				set(0.5f);
 				break;
-			case InternalValueType::FLOAT_1:
+			case InternalType::FLOAT_1:
 				set(1.0f);
 				break;
-			case InternalValueType::N_FLOAT_INT_8BITS:
-				set(-(f32)ba.readUInt8());
-				break;
-			case InternalValueType::N_FLOAT_INT_16BITS:
-				set(-(f32)ba.readUInt16());
-				break;
-			case InternalValueType::N_FLOAT_INT_24BITS:
-				set(-(f32)ba.readUInt(3));
-				break;
-			case InternalValueType::U_FLOAT_INT_8BITS:
-				set((f32)ba.readUInt8());
-				break;
-			case InternalValueType::U_FLOAT_INT_16BITS:
-				set((f32)ba.readUInt16());
-				break;
-			case InternalValueType::U_FLOAT_INT_24BITS:
-				set((f32)ba.readUInt(3));
-				break;
-			case InternalValueType::FLOAT:
+			case InternalType::FLOAT:
 				set(ba.readFloat32());
 				break;
-			case InternalValueType::DOUBLE_0:
+			case InternalType::DOUBLE_0:
 				set(0.0);
 				break;
-			case InternalValueType::DOUBLE_0_5:
+			case InternalType::DOUBLE_0_5:
 				set(0.5);
 				break;
-			case InternalValueType::DOUBLE_1:
+			case InternalType::DOUBLE_1:
 				set(1.0);
 				break;
-			case InternalValueType::DOUBLE:
+			case InternalType::DOUBLE:
 				set(ba.readFloat64());
 				break;
-			case InternalValueType::STRING_EMPTY:
+			case InternalType::STRING_EMPTY:
 				set("");
 				break;
-			case InternalValueType::STRING:
-			case InternalValueType::SHORT_STRING:
+			case InternalType::STRING:
+			case InternalType::SHORT_STRING:
 				set(ba.readStringView());
 				break;
-			case InternalValueType::BOOL_TRUE:
+			case InternalType::BOOL_TRUE:
 				set(true);
 				break;
-			case InternalValueType::BOOL_FALSE:
+			case InternalType::BOOL_FALSE:
 				set(false);
 				break;
-			case InternalValueType::N_INT_1:
+			case InternalType::N_INT_1:
 				set(-1);
 				break;
-			case InternalValueType::N_INT_8BITS:
+			case InternalType::N_INT_8BITS:
 				set(-ba.readUInt8());
 				break;
-			case InternalValueType::N_INT_16BITS:
+			case InternalType::N_INT_16BITS:
 				set(-ba.readUInt16());
 				break;
-			case InternalValueType::N_INT_24BITS:
-				set(-(i64)ba.readUInt(3));
+			case InternalType::N_INT_24BITS:
+				set(-(int64_t)ba.readUInt(3));
 				break;
-			case InternalValueType::N_INT_32BITS:
-				set(-(i64)ba.readUInt32());
+			case InternalType::N_INT_32BITS:
+				set(-(int64_t)ba.readUInt32());
 				break;
-			case InternalValueType::N_INT_40BITS:
-				set(-(i64)ba.readUInt(5));
+			case InternalType::N_INT_40BITS:
+				set(-(int64_t)ba.readUInt(5));
 				break;
-			case InternalValueType::N_INT_48BITS:
-				set(-(i64)ba.readUInt(6));
+			case InternalType::N_INT_48BITS:
+				set(-(int64_t)ba.readUInt(6));
 				break;
-			case InternalValueType::N_INT_56BITS:
-				set(-(i64)ba.readUInt(7));
+			case InternalType::N_INT_56BITS:
+				set(-(int64_t)ba.readUInt(7));
 				break;
-			case InternalValueType::N_INT_64BITS:
-				set(-(i64)ba.readUInt64());
+			case InternalType::N_INT_64BITS:
+				set(-(int64_t)ba.readUInt64());
 				break;
-			case InternalValueType::U_INT_0:
+			case InternalType::U_INT_0:
 				set(0);
 				break;
-			case InternalValueType::U_INT_1:
+			case InternalType::U_INT_1:
 				set(1);
 				break;
-			case InternalValueType::U_INT_8BITS:
+			case InternalType::U_INT_8BITS:
 				set(ba.readUInt8());
 				break;
-			case InternalValueType::U_INT_16BITS:
+			case InternalType::U_INT_16BITS:
 				set(ba.readUInt16());
 				break;
-			case InternalValueType::U_INT_24BITS:
+			case InternalType::U_INT_24BITS:
 				set(ba.readUInt(3));
 				break;
-			case InternalValueType::U_INT_32BITS:
+			case InternalType::U_INT_32BITS:
 				set(ba.readUInt32());
 				break;
-			case InternalValueType::U_INT_40BITS:
+			case InternalType::U_INT_40BITS:
 				set(ba.readUInt(5));
 				break;
-			case InternalValueType::U_INT_48BITS:
+			case InternalType::U_INT_48BITS:
 				set(ba.readUInt(6));
 				break;
-			case InternalValueType::U_INT_56BITS:
+			case InternalType::U_INT_56BITS:
 				set(ba.readUInt(7));
 				break;
-			case InternalValueType::U_INT_64BITS:
+			case InternalType::U_INT_64BITS:
 				set(ba.readUInt64());
 				break;
-			case InternalValueType::ARRAY_0:
+			case InternalType::ARRAY_0:
 				_unpackArray(ba, 0);
 				break;
-			case InternalValueType::ARRAY_8BITS:
+			case InternalType::ARRAY_8BITS:
 				_unpackArray(ba, ba.readUInt8());
 				break;
-			case InternalValueType::ARRAY_16BITS:
+			case InternalType::ARRAY_16BITS:
 				_unpackArray(ba, ba.readUInt16());
 				break;
-			case InternalValueType::ARRAY_24BITS:
+			case InternalType::ARRAY_24BITS:
 				_unpackArray(ba, ba.readUInt(3));
 				break;
-			case InternalValueType::ARRAY_32BITS:
+			case InternalType::ARRAY_32BITS:
 				_unpackArray(ba, ba.readUInt32());
 				break;
-			case InternalValueType::MAP_0:
+			case InternalType::ARRAY_40BITS:
+				_unpackArray(ba, ba.readUInt(5));
+				break;
+			case InternalType::ARRAY_48BITS:
+				_unpackArray(ba, ba.readUInt(6));
+				break;
+			case InternalType::ARRAY_56BITS:
+				_unpackArray(ba, ba.readUInt(7));
+				break;
+			case InternalType::ARRAY_64BITS:
+				_unpackArray(ba, ba.readUInt64());
+				break;
+			case InternalType::MAP_0:
 				_unpackMap(ba, 0);
 				break;
-			case InternalValueType::MAP_8BITS:
+			case InternalType::MAP_8BITS:
 				_unpackMap(ba, ba.readUInt8());
 				break;
-			case InternalValueType::MAP_16BITS:
+			case InternalType::MAP_16BITS:
 				_unpackMap(ba, ba.readUInt16());
 				break;
-			case InternalValueType::MAP_24BITS:
+			case InternalType::MAP_24BITS:
 				_unpackMap(ba, ba.readUInt(3));
 				break;
-			case InternalValueType::MAP_32BITS:
+			case InternalType::MAP_32BITS:
 				_unpackMap(ba, ba.readUInt32());
 				break;
-			case InternalValueType::BYTES_0:
+			case InternalType::MAP_40BITS:
+				_unpackMap(ba, ba.readUInt(5));
+				break;
+			case InternalType::MAP_48BITS:
+				_unpackMap(ba, ba.readUInt(6));
+				break;
+			case InternalType::MAP_56BITS:
+				_unpackMap(ba, ba.readUInt(7));
+				break;
+			case InternalType::MAP_64BITS:
+				_unpackMap(ba, ba.readUInt64());
+				break;
+			case InternalType::BYTES_0:
 				_unpackBytes(ba, 0);
 				break;
-			case InternalValueType::BYTES_8BITS:
+			case InternalType::BYTES_8BITS:
 				_unpackBytes(ba, ba.readUInt8());
 				break;
-			case InternalValueType::BYTES_16BITS:
+			case InternalType::BYTES_16BITS:
 				_unpackBytes(ba, ba.readUInt16());
 				break;
-			case InternalValueType::BYTES_24BITS:
+			case InternalType::BYTES_24BITS:
 				_unpackBytes(ba, ba.readUInt(3));
 				break;
-			case InternalValueType::BYTES_32BITS:
+			case InternalType::BYTES_32BITS:
 				_unpackBytes(ba, ba.readUInt32());
+				break;
+			case InternalType::BYTES_40BITS:
+				_unpackBytes(ba, ba.readUInt(5));
+				break;
+			case InternalType::BYTES_48BITS:
+				_unpackBytes(ba, ba.readUInt(6));
+				break;
+			case InternalType::BYTES_56BITS:
+				_unpackBytes(ba, ba.readUInt(7));
+				break;
+			case InternalType::BYTES_64BITS:
+				_unpackBytes(ba, ba.readUInt64());
 				break;
 			default:
 				break;
@@ -1403,75 +1340,61 @@ namespace aurora {
 		}
 	}
 
-	void SerializableObject::_unpackArray(ByteArray& ba, ui32 size) {
+	void SerializableObject::_unpackArray(ByteArray& ba, size_t size) {
 		auto arr = _getArray()->value;
 		arr.resize(size);
-		for (ui32 i = 0; i < size; ++i) arr[i].unpack(ba);
+		for (size_t i = 0; i < size; ++i) arr[i].unpack(ba);
 	}
 
-	void SerializableObject::_unpackMap(ByteArray& ba, ui32 size) {
+	void SerializableObject::_unpackMap(ByteArray& ba, size_t size) {
 		_getMap()->unpack(ba, size);
 	}
 
-	void SerializableObject::_unpackBytes(ByteArray& ba, ui32 size) {
-		_getInternalBytes()->setValue(ba.getBytes() + ba.getPosition(), size);
+	void SerializableObject::_unpackBytes(ByteArray& ba, size_t size) {
+		_getBytes<false>()->setValue(ba.getBytes() + ba.getPosition(), size);
 		ba.setPosition(ba.getPosition() + size);
 	}
 
 	bool SerializableObject::_freeValue() {
 		switch (_type) {
-		case ValueType::STRING:
+		case Type::STRING:
 		{
-			delete _value.string;
-
-			_value.uint64 = 0;
-			_type = ValueType::INVALID;
+			delete _getValue<std::string*>();
+			_type = Type::INVALID;
 
 			return true;
 		}
-		case ValueType::ARRAY:
+		case Type::ARRAY:
 		{
-			_value.array->unref();
-
-			_value.uint64 = 0;
-			_type = ValueType::INVALID;
+			_getValue<Array*>()->unref();
+			_type = Type::INVALID;
 
 			return true;
 		}
-		case ValueType::MAP:
+		case Type::MAP:
 		{
-			_value.map->unref();
-
-			_value.uint64 = 0;
-			_type = ValueType::INVALID;
+			_getValue<Map*>()->unref();
+			_type = Type::INVALID;
 
 			return true;
 		}
-		case ValueType::BYTES:
+		case Type::BYTES:
 		{
-			_value.internalBytes->unref();
-
-			_value.uint64 = 0;
-			_type = ValueType::INVALID;
+			_getValue<Bytes<false>*>()->unref();
+			_type = Type::INVALID;
 
 			return true;
 		}
-		case ValueType::EXT_BYTES:
+		case Type::EXT_BYTES:
 		{
-			_value.externalBytes->unref();
-
-			_value.uint64 = 0;
-			_type = ValueType::INVALID;
+			_getValue<Bytes<true>*>()->unref();
+			_type = Type::INVALID;
 
 			return true;
 		}
 		default:
-		{
-			_value.uint64 = 0;
-			_type = ValueType::INVALID;
-
+			_type = Type::INVALID;
 			return false;
-		}
 		}
 	}
 }

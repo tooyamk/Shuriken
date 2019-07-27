@@ -11,15 +11,15 @@ namespace aurora::nodes::component {
 	public:
 		AE_DECLA_CANNOT_INSTANTIATE(ComponentFlag);
 
-		static const ui32 CAMERA = 0b1;
-		static const ui32 RENDERABLE = 0b10;
+		static const uint32_t CAMERA = 0b1;
+		static const uint32_t RENDERABLE = 0b10;
 	};
 
 
 	class AE_DLL AbstractComponent : public Ref {
 	public:
-		ui32 flag;
-		ui32 layer;
+		uint32_t flag;
+		uint32_t layer;
 
 		inline bool AE_CALL getEnalbed() const;
 		void AE_CALL setEnabled(bool b);

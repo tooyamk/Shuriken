@@ -54,7 +54,7 @@ namespace aurora::modules::graphics::win_glew {
 			}
 		}
 
-		inline ui32 AE_CALL getIntVersion() const {
+		inline uint32_t AE_CALL getIntVersion() const {
 			return _intVer;
 		}
 
@@ -71,7 +71,7 @@ namespace aurora::modules::graphics::win_glew {
 		}
 
 		static void AE_CALL convertFormat(TextureFormat fmt, GLenum& internalFormat, GLenum& format, GLenum& type);
-		static ui32 AE_CALL getGLTypeSize(GLenum type);
+		static uint32_t AE_CALL getGLTypeSize(GLenum type);
 
 	private:
 		Usage _createBufferMask;
@@ -88,7 +88,7 @@ namespace aurora::modules::graphics::win_glew {
 
 		GLint _majorVer;
 		GLint _minorVer;
-		ui32 _intVer;
+		uint32_t _intVer;
 		std::string _strVer;
 		inline static const std::string _moduleVersion = "0.1.0";
 		std::string _deviceVersion;
@@ -99,7 +99,7 @@ namespace aurora::modules::graphics::win_glew {
 		void AE_CALL _release();
 
 		IConstantBuffer* AE_CALL _createdShareConstantBuffer();
-		IConstantBuffer* AE_CALL _createdExclusiveConstantBuffer(ui32 numParameters);
+		IConstantBuffer* AE_CALL _createdExclusiveConstantBuffer (uint32_t numParameters);
 
 		static void GLAPIENTRY _debugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam);
 	};

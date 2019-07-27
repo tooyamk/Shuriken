@@ -18,9 +18,9 @@ namespace aurora {
 		DEVMODEW dm;
 
 		wchar_t* wadpName = nullptr;
-		String::Utf8ToUnicode(_adapterName.c_str(), (std::numeric_limits<ui32>::max)(), wadpName);
+		String::Utf8ToUnicode(_adapterName.c_str(), (std::numeric_limits<uint32_t>::max)(), wadpName);
 
-		ui32 modeIdx = 0;
+		uint32_t modeIdx = 0;
 
 		do {
 			memset(&dm, 0, sizeof(DEVMODEW));
@@ -72,10 +72,10 @@ namespace aurora {
 #if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
 		DISPLAY_DEVICEW adapter, display;
 
-		const ui32 strBufLen = sizeof(display.DeviceString) << 2;
-		i8 strBuf[strBufLen];
+		const uint32_t strBufLen = sizeof(display.DeviceString) << 2;
+		char strBuf[strBufLen];
 
-		for (ui32 adapterIdx = 0; ; ++adapterIdx) {
+		for (uint32_t adapterIdx = 0; ; ++adapterIdx) {
 			memset(&adapter, 0, sizeof(DISPLAY_DEVICEW));
 			adapter.cb = sizeof(DISPLAY_DEVICEW);
 
@@ -85,7 +85,7 @@ namespace aurora {
 			bool isPrimary = adapter.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE;
 			bool isModesPruned = adapter.StateFlags & DISPLAY_DEVICE_MODESPRUNED;
 
-			for (ui32 displayIdx = 0; ; ++displayIdx) {
+			for (uint32_t displayIdx = 0; ; ++displayIdx) {
 				memset(&display, 0, sizeof(DISPLAY_DEVICEW));
 				display.cb = sizeof(DISPLAY_DEVICEW);
 				

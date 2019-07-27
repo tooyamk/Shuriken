@@ -281,7 +281,7 @@ namespace aurora::nodes {
 		_components.clear();
 	}
 
-	component::AbstractComponent* Node::getComponent(ui32 flag) const {
+	component::AbstractComponent* Node::getComponent (uint32_t flag) const {
 		for (const auto c : _components) {
 			if ((c->flag & flag) == flag) return c;
 		}
@@ -295,7 +295,7 @@ namespace aurora::nodes {
 		return nullptr;
 	}
 
-	void Node::getComponents(ui32 flag, std::vector<component::AbstractComponent*>& dst) const {
+	void Node::getComponents (uint32_t flag, std::vector<component::AbstractComponent*>& dst) const {
 		for (const auto c : _components) {
 			if ((c->flag & flag) == flag) dst.push_back(c);
 		}
@@ -394,7 +394,7 @@ namespace aurora::nodes {
 		_checkNoticeUpdate(DirtyFlag::WRMIM);
 	}
 
-	void Node::_worldPositionChanged(ui32 oldDirty) {
+	void Node::_worldPositionChanged (uint32_t oldDirty) {
 		if (_parent) {
 			_parent->updateInverseWorldMatrix();
 
@@ -410,7 +410,7 @@ namespace aurora::nodes {
 		if (oldDirty != _dirty) _noticeUpdate(DirtyFlag::WMIM);
 	}
 
-	void Node::_worldRotationChanged(ui32 oldDirty) {
+	void Node::_worldRotationChanged (uint32_t oldDirty) {
 		if (_parent) {
 			_parent->updateWorldRotation();
 			_parent->_wr.invert(_lr);
@@ -424,7 +424,7 @@ namespace aurora::nodes {
 		if (oldDirty != _dirty) _noticeUpdate(DirtyFlag::WRMIM);
 	}
 
-	void Node::_checkNoticeUpdateNow(ui32 nowDirty, ui32 sendDirty) {
+	void Node::_checkNoticeUpdateNow (uint32_t nowDirty, uint32_t sendDirty) {
 		if (nowDirty != _dirty) {
 			_dirty = nowDirty;
 
@@ -432,7 +432,7 @@ namespace aurora::nodes {
 		}
 	}
 
-	void Node::_noticeUpdate(ui32 dirty) {
+	void Node::_noticeUpdate (uint32_t dirty) {
 		auto node = _childHead;
 		while (node) {
 			node->_checkNoticeUpdate(dirty);

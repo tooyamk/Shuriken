@@ -23,7 +23,7 @@ namespace aurora::modules::inputs::win_direct_input {
 
 		std::vector<DeviceInfo> _devices;
 		std::vector<DeviceInfo> _connectedDevices;
-		std::vector<ui32> _keepDevices;
+		std::vector<uint32_t> _keepDevices;
 	
 		events::EventDispatcher<ModuleEvent> _eventDispatcher;
 

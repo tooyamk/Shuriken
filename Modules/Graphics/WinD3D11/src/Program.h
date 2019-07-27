@@ -13,14 +13,14 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual bool AE_CALL upload(const ProgramSource& vert, const ProgramSource& frag) override;
 		virtual bool AE_CALL use() override;
 		virtual void AE_CALL draw(const VertexBufferFactory* vertexFactory, const ShaderParameterFactory* paramFactory,
-			const IIndexBuffer* indexBuffer, ui32 count = (std::numeric_limits<ui32>::max)(), ui32 offset = 0) override;
+			const IIndexBuffer* indexBuffer, uint32_t count = (std::numeric_limits<uint32_t>::max)(), uint32_t offset = 0) override;
 
 	protected:
 		class MyConstantBufferLayout : public ConstantBufferLayout {
 		public:
 			MyConstantBufferLayout() : sameId(0) {}
 
-			ui32 sameId;
+			uint32_t sameId;
 		};
 
 
@@ -31,18 +31,18 @@ namespace aurora::modules::graphics::win_d3d11 {
 			}
 
 			std::string name;
-			ui32 slot;
+			uint32_t slot;
 		};
 
 
 		struct InLayout {
-			InLayout(ui32 numInElements);
+			InLayout (uint32_t numInElements);
 			~InLayout();
 
-			std::vector<ui32> formats;
+			std::vector<uint32_t> formats;
 			ID3D11InputLayout* layout;
 
-			bool isEqual(const D3D11_INPUT_ELEMENT_DESC* inElements, ui32 num) const;
+			bool isEqual(const D3D11_INPUT_ELEMENT_DESC* inElements, uint32_t num) const;
 		};
 
 
@@ -52,7 +52,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		ID3D11InputLayout* _curInLayout;
 		D3D11_INPUT_ELEMENT_DESC* _inElements;
-		ui32 _numInElements;
+		uint32_t _numInElements;
 
 		std::vector<InVertexBufferInfo> _inVerBufInfos;
 		std::vector<InLayout> _inLayouts;
@@ -60,13 +60,13 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		struct TextureLayout {
 			std::string name;
-			ui32 bindPoint;
+			uint32_t bindPoint;
 		};
 
 
 		struct SamplerLayout {
 			std::string name;
-			ui32 bindPoint;
+			uint32_t bindPoint;
 		};
 
 
@@ -87,7 +87,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		std::vector<const ConstantBufferLayout::Variables*> _tempVars;
 
 		void AE_CALL _release();
-		ID3DBlob* AE_CALL _compileShader(const ProgramSource& source, const i8* target);
+		ID3DBlob* AE_CALL _compileShader(const ProgramSource& source, const char* target);
 		ID3D11InputLayout* _getOrCreateInputLayout();
 		void AE_CALL _parseInLayout(const D3D11_SHADER_DESC& desc, ID3D11ShaderReflection& ref);
 		void AE_CALL _parseParameterLayout(const D3D11_SHADER_DESC& desc, ID3D11ShaderReflection& ref, ParameterLayout& dst);

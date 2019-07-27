@@ -11,7 +11,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 	BaseBuffer::~BaseBuffer() {
 	}
 
-	bool BaseBuffer::create(Graphics& graphics, ui32 size, Usage resUsage, const void* data, ui32 dataSize) {
+	bool BaseBuffer::create(Graphics& graphics, uint32_t size, Usage resUsage, const void* data, uint32_t dataSize) {
 		releaseBuffer(graphics);
 
 		this->size = size;
@@ -52,23 +52,23 @@ namespace aurora::modules::graphics::win_d3d11 {
 		BaseResource::unmap(graphics, mapUsage, 0);
 	}
 
-	ui32 BaseBuffer::read(ui32 offset, void* dst, ui32 dstLen) {
+	uint32_t BaseBuffer::read (uint32_t offset, void* dst, uint32_t dstLen) {
 		if ((mapUsage & Usage::MAP_READ) == Usage::MAP_READ) {
 			if (!dstLen || offset >= size) return 0;
 			if (dst) {
-				auto readLen = std::min<ui32>(size - offset, dstLen);
-				memcpy(dst, (i8*)mappedRes.pData + offset, readLen);
+				auto readLen = std::min<uint32_t>(size - offset, dstLen);
+				memcpy(dst, (uint8_t*)mappedRes.pData + offset, readLen);
 				return readLen;
 			}
 		}
 		return -1;
 	}
 
-	ui32 BaseBuffer::write(Graphics& graphics, ui32 offset, const void* data, ui32 length) {
+	uint32_t BaseBuffer::write(Graphics& graphics, uint32_t offset, const void* data, uint32_t length) {
 		if ((mapUsage & Usage::MAP_WRITE) == Usage::MAP_WRITE) {
 			if (data && length && offset < size) {
-				length = std::min<ui32>(length, size - offset);
-				memcpy((i8*)mappedRes.pData + offset, data, length);
+				length = std::min<uint32_t>(length, size - offset);
+				memcpy((uint8_t*)mappedRes.pData + offset, data, length);
 				return length;
 			}
 			return 0;
@@ -76,10 +76,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return -1;
 	}
 
-	ui32 BaseBuffer::update(Graphics& graphics, ui32 offset, const void* data, ui32 length) {
+	uint32_t BaseBuffer::update(Graphics& graphics, uint32_t offset, const void* data, uint32_t length) {
 		if ((resUsage & Usage::UPDATE) == Usage::UPDATE) {
 			if (data && length && offset < size) {
-				length = std::min<ui32>(length, size - offset);
+				length = std::min<uint32_t>(length, size - offset);
 				if (length == size) {
 					graphics.getContext()->UpdateSubresource(handle, 0, nullptr, data, 0, 0);
 				} else {

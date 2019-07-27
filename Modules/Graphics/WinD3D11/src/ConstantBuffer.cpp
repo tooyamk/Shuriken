@@ -16,11 +16,11 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return this;
 	}
 
-	bool ConstantBuffer::create(ui32 size, Usage bufferUsage, const void* data, ui32 dataSize) {
+	bool ConstantBuffer::create (uint32_t size, Usage bufferUsage, const void* data, uint32_t dataSize) {
 		return _baseBuffer.create(*_graphics.get<Graphics>(), size, bufferUsage, data, dataSize);
 	}
 
-	ui32 ConstantBuffer::getSize() const {
+	uint32_t ConstantBuffer::getSize() const {
 		return _baseBuffer.size;
 	}
 
@@ -36,15 +36,15 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_baseBuffer.unmap(*_graphics.get<Graphics>());
 	}
 
-	ui32 ConstantBuffer::read(ui32 offset, void* dst, ui32 dstLen) {
+	uint32_t ConstantBuffer::read (uint32_t offset, void* dst, uint32_t dstLen) {
 		return _baseBuffer.read(offset, dst, dstLen);
 	}
 
-	ui32 ConstantBuffer::write(ui32 offset, const void* data, ui32 length) {
+	uint32_t ConstantBuffer::write (uint32_t offset, const void* data, uint32_t length) {
 		return _baseBuffer.write(*_graphics.get<Graphics>(), offset, data, length);
 	}
 
-	ui32 ConstantBuffer::update(ui32 offset, const void* data, ui32 length) {
+	uint32_t ConstantBuffer::update (uint32_t offset, const void* data, uint32_t length) {
 		return _baseBuffer.update(*_graphics.get<Graphics>(), offset, data, length);
 	}
 

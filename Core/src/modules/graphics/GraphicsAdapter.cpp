@@ -61,15 +61,15 @@ namespace aurora::modules::graphics {
 		return p;
 	}
 
-	void GraphicsAdapter::autoSort(const std::vector<GraphicsAdapter>& adapters, std::vector<ui32>& dst) {
+	void GraphicsAdapter::autoSort(const std::vector<GraphicsAdapter>& adapters, std::vector<uint32_t>& dst) {
 		std::vector<f64> scores;
 		dst.clear();
-		for (ui32 i = 0, n = adapters.size(); i < n; ++i) {
+		for (uint32_t i = 0, n = adapters.size(); i < n; ++i) {
 			scores.emplace_back(_calcScore(adapters[i]));
 			dst.emplace_back(i);
 		}
 
-		std::sort(dst.begin(), dst.end(), [&scores](const ui32 idx1, const ui32 idx2) {
+		std::sort(dst.begin(), dst.end(), [&scores](const uint32_t idx1, const uint32_t idx2) {
 			return scores[idx1] > scores[idx2];
 		});
 	}

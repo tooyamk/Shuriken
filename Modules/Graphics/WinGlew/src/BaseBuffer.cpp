@@ -18,7 +18,7 @@ namespace aurora::modules::graphics::win_glew {
 		releaseBuffer();
 	}
 
-	bool BaseBuffer::create(Graphics& graphics, ui32 size, Usage resUsage, const void* data, GLenum internalUsage) {
+	bool BaseBuffer::create(Graphics& graphics, uint32_t size, Usage resUsage, const void* data, GLenum internalUsage) {
 		releaseBuffer();
 
 		this->resUsage = resUsage & graphics.getCreateBufferMask();
@@ -109,11 +109,11 @@ namespace aurora::modules::graphics::win_glew {
 		}
 	}
 
-	ui32 BaseBuffer::read(ui32 offset, void* dst, ui32 dstLen) {
+	uint32_t BaseBuffer::read (uint32_t offset, void* dst, uint32_t dstLen) {
 		if ((mapUsage & Usage::MAP_READ)== Usage::MAP_READ) {
 			if (dst && dstLen && offset < size) {
-				dstLen = std::min<ui32>(dstLen, size - offset);
-				memcpy(dst, (i8*)mapData + offset, dstLen);
+				dstLen = std::min<uint32_t>(dstLen, size - offset);
+				memcpy(dst, (uint8_t*)mapData + offset, dstLen);
 				return dstLen;
 			}
 			return 0;
@@ -121,12 +121,12 @@ namespace aurora::modules::graphics::win_glew {
 		return -1;
 	}
 
-	ui32 BaseBuffer::write(ui32 offset, const void* data, ui32 length) {
+	uint32_t BaseBuffer::write (uint32_t offset, const void* data, uint32_t length) {
 		if ((mapUsage & Usage::MAP_WRITE) == Usage::MAP_WRITE) {
 			if (data && length && offset < size) {
 				dirty = true;
-				length = std::min<ui32>(length, size - offset);
-				memcpy((i8*)mapData + offset, data, length);
+				length = std::min<uint32_t>(length, size - offset);
+				memcpy((uint8_t*)mapData + offset, data, length);
 				return length;
 			}
 			return 0;
@@ -134,10 +134,10 @@ namespace aurora::modules::graphics::win_glew {
 		return -1;
 	}
 
-	ui32 BaseBuffer::update(ui32 offset, const void* data, ui32 length) {
+	uint32_t BaseBuffer::update (uint32_t offset, const void* data, uint32_t length) {
 		if ((resUsage & Usage::UPDATE) == Usage::UPDATE) {
 			if (data && length && offset < size) {
-				length = std::min<ui32>(length, size - offset);
+				length = std::min<uint32_t>(length, size - offset);
 
 				glBindBuffer(bufferType, handle);
 				glBufferSubData(bufferType, offset, length, data);

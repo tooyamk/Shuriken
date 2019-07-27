@@ -9,14 +9,14 @@ namespace aurora::modules::graphics {
 	class ShaderParameterFactory;
 
 
-	enum class ShaderParameterUsage : ui8 {
+	enum class ShaderParameterUsage : uint8_t {
 		AUTO,
 		SHARE,
 		EXCLUSIVE
 	};
 
 
-	enum class ShaderParameterType : ui8 {
+	enum class ShaderParameterType : uint8_t {
 		DATA,
 		SAMPLER,
 		TEXTURE,
@@ -45,15 +45,15 @@ namespace aurora::modules::graphics {
 			return _storageType == StorageType::DEFAULT ? &_data : _data.externalData;
 		}
 
-		inline ui16 AE_CALL getPerElementSize() const {
+		inline uint16_t AE_CALL getPerElementSize() const {
 			return _perElementSize;
 		}
 
-		inline ui32 AE_CALL getSize() const {
+		inline uint32_t AE_CALL getSize() const {
 			return _size;
 		}
 
-		inline ui32 AE_CALL getUpdateId() const {
+		inline uint32_t AE_CALL getUpdateId() const {
 			return _updateId;
 		}
 
@@ -67,7 +67,7 @@ namespace aurora::modules::graphics {
 			return set(&value, sizeof(value), sizeof(value), ShaderParameterType::DATA, true);
 		}
 		template<typename T>
-		inline ShaderParameter& AE_CALL set(Math::NumberType<T>* value, ui32 size, ui16 perElementSize, bool copy) {
+		inline ShaderParameter& AE_CALL set(Math::NumberType<T>* value, uint32_t size, uint16_t perElementSize, bool copy) {
 			return set(value, size, perElementSize, ShaderParameterType::DATA, copy);
 		}
 		template<typename T>
@@ -91,7 +91,7 @@ namespace aurora::modules::graphics {
 		inline ShaderParameter& AE_CALL set(const ShaderParameterFactory* value) {
 			return set(value, sizeof(value), sizeof(value), ShaderParameterType::FACTORY, false);
 		}
-		ShaderParameter& AE_CALL set(const void* data, ui32 size, ui16 perElementSize, ShaderParameterType type, bool copy);
+		ShaderParameter& AE_CALL set(const void* data, uint32_t size, uint16_t perElementSize, ShaderParameterType type, bool copy);
 
 		void AE_CALL clear();
 
@@ -101,7 +101,7 @@ namespace aurora::modules::graphics {
 		void AE_CALL __releaseExclusive(void* callTarget, EXCLUSIVE_FN callback);
 
 	private:
-		enum class StorageType : ui8 {
+		enum class StorageType : uint8_t {
 			DEFAULT,
 			INTERNAL,
 			EXTERNAL
@@ -111,15 +111,15 @@ namespace aurora::modules::graphics {
 		ShaderParameterUsage _usage;
 		ShaderParameterType _type;
 		StorageType _storageType;
-		ui16 _perElementSize;
-		ui32 _updateId;
-		ui32 _size;
+		uint16_t _perElementSize;
+		uint32_t _updateId;
+		uint32_t _size;
 		union Data {
-			i8 data[sizeof(f32) << 2];
+			uint8_t data[sizeof(f32) << 2];
 
 			struct {
-				i8* internalData;
-				ui32 internalSize;
+				uint8_t* internalData;
+				uint32_t internalSize;
 			};
 
 			struct {
@@ -127,9 +127,9 @@ namespace aurora::modules::graphics {
 				const void* externalData;
 			};
 		} _data;
-		static const ui32 DEFAULT_DATA_SIZE = sizeof(Data);
+		static const uint32_t DEFAULT_DATA_SIZE = sizeof(Data);
 
-		ui32 _exclusiveRc;
+		uint32_t _exclusiveRc;
 		void* _exclusiveFnTarget;
 		EXCLUSIVE_FN _exclusiveFn;
 	};

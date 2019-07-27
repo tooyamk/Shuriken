@@ -9,14 +9,14 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual ~IndexBuffer();
 
 		virtual const void* AE_CALL getNativeBuffer() const override;
-		virtual bool AE_CALL create(ui32 size, Usage bufferUsage, const void* data = nullptr, ui32 dataSize = 0) override;
-		virtual ui32 AE_CALL getSize() const override;
+		virtual bool AE_CALL create (uint32_t size, Usage bufferUsage, const void* data = nullptr, uint32_t dataSize = 0) override;
+		virtual uint32_t AE_CALL getSize() const override;
 		virtual Usage AE_CALL getUsage() const override;
 		virtual Usage AE_CALL map(Usage expectMapUsage) override;
 		virtual void AE_CALL unmap() override;
-		virtual ui32 AE_CALL read(ui32 offset, void* dst, ui32 dstLen) override;
-		virtual ui32 AE_CALL write(ui32 offset, const void* data, ui32 length) override;
-		virtual ui32 AE_CALL update(ui32 offset, const void* data, ui32 length) override;
+		virtual uint32_t AE_CALL read (uint32_t offset, void* dst, uint32_t dstLen) override;
+		virtual uint32_t AE_CALL write (uint32_t offset, const void* data, uint32_t length) override;
+		virtual uint32_t AE_CALL update (uint32_t offset, const void* data, uint32_t length) override;
 		virtual IndexType AE_CALL getFormat() const override;
 		virtual void AE_CALL setFormat(IndexType type) override;
 		//virtual void AE_CALL flush() override;
@@ -30,16 +30,16 @@ namespace aurora::modules::graphics::win_d3d11 {
 			return _internalFormat;
 		}
 
-		inline ui32 AE_CALL getNumElements() const {
+		inline uint32_t AE_CALL getNumElements() const {
 			return _numElements;
 		}
 
-		void AE_CALL draw(ui32 count = (std::numeric_limits<ui32>::max)(), ui32 offset = 0);
+		void AE_CALL draw (uint32_t count = (std::numeric_limits<uint32_t>::max)(), uint32_t offset = 0);
 
 	protected:
 		IndexType _idxType;
 		DXGI_FORMAT _internalFormat;
-		ui32 _numElements;
+		uint32_t _numElements;
 		BaseBuffer _baseBuffer;
 
 		void _calcNumElements();

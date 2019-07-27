@@ -57,7 +57,7 @@ namespace aurora::modules::graphics {
 		}
 	}
 
-	ShaderParameter& ShaderParameter::set(const void* data, ui32 size, ui16 perElementSize, ShaderParameterType type, bool copy) {
+	ShaderParameter& ShaderParameter::set(const void* data, uint32_t size, uint16_t perElementSize, ShaderParameterType type, bool copy) {
 		if (type >= ShaderParameterType::SAMPLER) copy = false;
 		bool isRefObj = type >= ShaderParameterType::SAMPLER;
 
@@ -69,7 +69,7 @@ namespace aurora::modules::graphics {
 					memcpy(&_data, data, size);
 				} else {
 					_storageType = StorageType::INTERNAL;
-					_data.internalData = new i8[size];
+					_data.internalData = new uint8_t[size];
 					_data.internalSize = size;
 					memcpy(&_data.internalData, data, size);
 				}
@@ -91,7 +91,7 @@ namespace aurora::modules::graphics {
 				} else {
 					if (_data.internalSize < size) {
 						delete[] _data.internalData;
-						_data.internalData = new i8[size];
+						_data.internalData = new uint8_t[size];
 						_data.internalSize = size;
 					}
 					memcpy(&_data.internalData, data, size);
@@ -115,7 +115,7 @@ namespace aurora::modules::graphics {
 					memcpy(&_data, data, size);
 				} else {
 					_storageType = StorageType::INTERNAL;
-					_data.internalData = new i8[size];
+					_data.internalData = new uint8_t[size];
 					_data.internalSize = size;
 					memcpy(&_data.internalData, data, size);
 				}

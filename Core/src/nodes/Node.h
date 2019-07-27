@@ -21,7 +21,7 @@ namespace aurora::nodes {
 
 		inline Node* AE_CALL getRoot() const;
 		inline Node* AE_CALL getParent() const;
-		inline ui32 AE_CALL getNumChildren() const;
+		inline uint32_t AE_CALL getNumChildren() const;
 
 		Node* AE_CALL addChild(Node* child);
 		Node* AE_CALL insertChild(Node* child, Node* before);
@@ -69,10 +69,10 @@ namespace aurora::nodes {
 		void AE_CALL addComponent(component::AbstractComponent* component);
 		void AE_CALL removeComponent(component::AbstractComponent* component);
 		void AE_CALL removeAllComponents();
-		component::AbstractComponent* AE_CALL getComponent(ui32 flag) const;
+		component::AbstractComponent* AE_CALL getComponent (uint32_t flag) const;
 		component::AbstractComponent* AE_CALL getComponentIf(const std::function<bool(component::AbstractComponent*)>& func) const;
 		inline const std::vector<component::AbstractComponent*>& AE_CALL getComponents() const;
-		void AE_CALL getComponents(ui32 flag, std::vector<component::AbstractComponent*>& dst) const;
+		void AE_CALL getComponents (uint32_t flag, std::vector<component::AbstractComponent*>& dst) const;
 		void AE_CALL getComponentsIf(const std::function<bool(component::AbstractComponent*)>& func, std::vector<component::AbstractComponent*>& dst) const;
 
 		/**
@@ -85,18 +85,18 @@ namespace aurora::nodes {
 
 	protected:
 		struct DirtyFlag {
-			static const ui32 LM = 0b1;
-			static const ui32 NOT_LM = ~LM;
-			static const ui32 WM = 0b10;
-			static const ui32 NOT_WM = ~WM;
-			static const ui32 WIM = 0b100;
-			static const ui32 NOT_WIM = ~WIM;
-			static const ui32 WR = 0b1000;
-			static const ui32 NOT_WR = ~WR;
-			static const ui32 WMIM = WM | WIM;
-			static const ui32 WRMIM = WMIM | WR;
-			static const ui32 LM_WRMIM = LM | WRMIM;
-			static const ui32 LM_WMIM = LM | WMIM;
+			static const uint32_t LM = 0b1;
+			static const uint32_t NOT_LM = ~LM;
+			static const uint32_t WM = 0b10;
+			static const uint32_t NOT_WM = ~WM;
+			static const uint32_t WIM = 0b100;
+			static const uint32_t NOT_WIM = ~WIM;
+			static const uint32_t WR = 0b1000;
+			static const uint32_t NOT_WR = ~WR;
+			static const uint32_t WMIM = WM | WIM;
+			static const uint32_t WRMIM = WMIM | WR;
+			static const uint32_t LM_WRMIM = LM | WRMIM;
+			static const uint32_t LM_WMIM = LM | WMIM;
 		};
 
 
@@ -107,7 +107,7 @@ namespace aurora::nodes {
 		Node* _next;
 
 		Node* _childHead;
-		ui32 _numChildren;
+		uint32_t _numChildren;
 
 		mutable Quaternion _lr;
 		mutable Vec3f32 _ls;
@@ -117,7 +117,7 @@ namespace aurora::nodes {
 		mutable Matrix34 _wm;
 		mutable Matrix34 _iwm;
 
-		mutable ui32 _dirty;
+		mutable uint32_t _dirty;
 		std::vector<component::AbstractComponent*> _components;
 
 		void AE_CALL _addNode(Node* child);
@@ -128,12 +128,12 @@ namespace aurora::nodes {
 		void AE_CALL _parentChanged(Node* root);
 
 		inline void AE_CALL _localDecomposition();
-		void AE_CALL _worldPositionChanged(ui32 oldDirty);
-		void AE_CALL _worldRotationChanged(ui32 oldDirty);
-		inline void AE_CALL _checkNoticeUpdate(ui32 dirty);
-		inline void AE_CALL _checkNoticeUpdate(ui32 appendDirty, ui32 sendDirty);
-		void AE_CALL _checkNoticeUpdateNow(ui32 nowDirty, ui32 sendDirty);
-		void AE_CALL _noticeUpdate(ui32 dirty);
+		void AE_CALL _worldPositionChanged (uint32_t oldDirty);
+		void AE_CALL _worldRotationChanged (uint32_t oldDirty);
+		inline void AE_CALL _checkNoticeUpdate (uint32_t dirty);
+		inline void AE_CALL _checkNoticeUpdate (uint32_t appendDirty, uint32_t sendDirty);
+		void AE_CALL _checkNoticeUpdateNow (uint32_t nowDirty, uint32_t sendDirty);
+		void AE_CALL _noticeUpdate (uint32_t dirty);
 
 		void AE_CALL _removeComponent(component::AbstractComponent* component);
 	};

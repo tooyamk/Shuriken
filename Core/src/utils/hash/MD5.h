@@ -6,51 +6,50 @@ namespace aurora::hash {
 	class AE_DLL MD5 {
 	public:
 		MD5();
-		std::string hash(const ui8* input, ui32 length);
+		std::string hash(const uint8_t* input, uint32_t length);
 
 	private:
 		void init();
-		void update(const ui8* buf, ui32 length);
-		void update(const i8* buf, ui32 length);
+		void update(const uint8_t* buf, uint32_t length);
 		MD5& finalize();
 		std::string hexdigest() const;
 
-		inline static const ui32 BLOCK_SIZE = 64;
+		inline static const uint32_t BLOCK_SIZE = 64;
 
-		void transform(const ui8 block[BLOCK_SIZE]);
-		static void decode(ui32 output[], const ui8 input[], ui32 len);
-		static void encode(ui8 output[], const ui32 input[], ui32 len);
+		void transform(const uint8_t block[BLOCK_SIZE]);
+		static void decode (uint32_t output[], const uint8_t input[], uint32_t len);
+		static void encode(uint8_t output[], const uint32_t input[], uint32_t len);
 
-		ui8 buffer[BLOCK_SIZE];
-		ui32 count[2];
-		ui32 state[4];
-		ui8 digest[16];
+		uint8_t buffer[BLOCK_SIZE];
+		uint32_t count[2];
+		uint32_t state[4];
+		uint8_t digest[16];
 
-		inline static ui32 F(ui32 x, ui32 y, ui32 z) {
+		inline static uint32_t F (uint32_t x, uint32_t y, uint32_t z) {
 			return (x & y) | ((~x) & z);
 		}
-		inline static ui32 G(ui32 x, ui32 y, ui32 z) {
+		inline static uint32_t G (uint32_t x, uint32_t y, uint32_t z) {
 			return (x & z) | (y & ~z);
 		}
-		inline static ui32 H(ui32 x, ui32 y, ui32 z) {
+		inline static uint32_t H (uint32_t x, uint32_t y, uint32_t z) {
 			return x ^ y ^ z;
 		}
-		inline static ui32 I(ui32 x, ui32 y, ui32 z) {
+		inline static uint32_t I (uint32_t x, uint32_t y, uint32_t z) {
 			return y ^ (x | ~z);
 		}
-		inline static ui32 rotate_left(ui32 x, i32 n) {
+		inline static uint32_t rotate_left (uint32_t x, int32_t n) {
 			return (x << n) | (x >> (32 - n));
 		}
-		inline static void FF(ui32& a, ui32 b, ui32 c, ui32 d, ui32 x, ui32 s, ui32 ac) {
+		inline static void FF(uint32_t& a, uint32_t b, uint32_t c, uint32_t d, uint32_t x, uint32_t s, uint32_t ac) {
 			a = rotate_left(a + F(b, c, d) + x + ac, s) + b;
 		}
-		inline static void GG(ui32& a, ui32 b, ui32 c, ui32 d, ui32 x, ui32 s, ui32 ac) {
+		inline static void GG(uint32_t& a, uint32_t b, uint32_t c, uint32_t d, uint32_t x, uint32_t s, uint32_t ac) {
 			a = rotate_left(a + G(b, c, d) + x + ac, s) + b;
 		}
-		inline static void HH(ui32& a, ui32 b, ui32 c, ui32 d, ui32 x, ui32 s, ui32 ac) {
+		inline static void HH(uint32_t& a, uint32_t b, uint32_t c, uint32_t d, uint32_t x, uint32_t s, uint32_t ac) {
 			a = rotate_left(a + H(b, c, d) + x + ac, s) + b;
 		}
-		inline static void II(ui32& a, ui32 b, ui32 c, ui32 d, ui32 x, ui32 s, ui32 ac) {
+		inline static void II(uint32_t& a, uint32_t b, uint32_t c, uint32_t d, uint32_t x, uint32_t s, uint32_t ac) {
 			a = rotate_left(a + I(b, c, d) + x + ac, s) + b;
 		}
 	};

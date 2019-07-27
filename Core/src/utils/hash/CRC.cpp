@@ -1,25 +1,25 @@
 #include "CRC.h"
 
 namespace aurora::hash {
-	ui16 CRC::CRC16(const i8* data, ui16 len) {
-		ui16 crc = 0xFFFF;
-		for (ui16 i = 0; i < len; ++i) crc = ((crc << 8) & 0xFFFF) ^ _table16[(crc >> 8) ^ (data[i] & 0xFF)];
+	uint16_t CRC::CRC16(const uint8_t* data, uint16_t len) {
+		uint16_t crc = 0xFFFF;
+		for (uint16_t i = 0; i < len; ++i) crc = ((crc << 8) & 0xFFFF) ^ _table16[(crc >> 8) ^ (data[i] & 0xFF)];
 		return crc;
 	}
 
-	ui32 CRC::CRC32(const i8* data, ui32 len) {
-		ui32 uiCRC32 = (std::numeric_limits<ui32>::max)();
-		for (ui32 i = 0; i < len; ++i) uiCRC32 = ((uiCRC32 >> 8) & 0x00FFFFFFui32) ^ _table32[(uiCRC32 ^ (ui32)data[i]) & 0xFF];
-		return (uiCRC32 ^ (std::numeric_limits<ui32>::max)());
+	uint32_t CRC::CRC32(const uint8_t* data, uint32_t len) {
+		uint32_t uiCRC32 = (std::numeric_limits<uint32_t>::max)();
+		for (uint32_t i = 0; i < len; ++i) uiCRC32 = ((uiCRC32 >> 8) & 0x00FFFFFFui32) ^ _table32[(uiCRC32 ^ (uint32_t)data[i]) & 0xFF];
+		return (uiCRC32 ^ (std::numeric_limits<uint32_t>::max)());
 	}
 
-	ui64 CRC::CRC64(const i8* data, ui32 len) {
-		auto crc = (std::numeric_limits<ui64>::max)();
-		for (ui32 i = 0; i < len; ++i) crc = _table64[((ui32)(crc >> 56) ^ (ui32)data[i]) & 0xFF] ^ (crc << 8);
-		return crc ^= (std::numeric_limits<ui64>::max)();
+	uint64_t CRC::CRC64(const uint8_t* data, uint32_t len) {
+		auto crc = (std::numeric_limits<uint64_t>::max)();
+		for (uint32_t i = 0; i < len; ++i) crc = _table64[((uint32_t)(crc >> 56) ^ (uint32_t)data[i]) & 0xFF] ^ (crc << 8);
+		return crc ^= (std::numeric_limits<uint64_t>::max)();
 	}
 
-	void CRC::CRC64StreamIteration(ui64& crc, const i8* data, ui32 len) {
-		for (ui32 i = 0; i < len; ++i) crc = _table64[((ui32)(crc >> 56) ^ (ui32)data[i]) & 0xFF] ^ (crc << 8);
+	void CRC::CRC64StreamIteration(uint64_t& crc, const uint8_t* data, uint32_t len) {
+		for (uint32_t i = 0; i < len; ++i) crc = _table64[((uint32_t)(crc >> 56) ^ (uint32_t)data[i]) & 0xFF] ^ (crc << 8);
 	}
 }

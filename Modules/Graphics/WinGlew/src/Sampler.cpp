@@ -67,7 +67,7 @@ namespace aurora::modules::graphics::win_glew {
 		}
 	}
 
-	void Sampler::setMaxAnisotropy(ui32 max) {
+	void Sampler::setMaxAnisotropy (uint32_t max) {
 		if (auto& features = _graphics.get<Graphics>()->getInternalFeatures(); max > features.maxAnisotropy) max = features.maxAnisotropy;
 		if (_maxAnisotropy != max) {
 			_maxAnisotropy = max;

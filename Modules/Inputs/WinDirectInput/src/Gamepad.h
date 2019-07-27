@@ -8,31 +8,31 @@ namespace aurora::modules::inputs::win_direct_input {
 	public:
 		Gamepad(Input& input, LPDIRECTINPUTDEVICE8 dev, const DeviceInfo& info);
 
-		virtual ui32 AE_CALL getKeyState(ui32 keyCode, f32* data, ui32 count) const override;
+		virtual uint32_t AE_CALL getKeyState (uint32_t keyCode, f32* data, uint32_t count) const override;
 		virtual void AE_CALL poll(bool dispatchEvent) override;
-		virtual void AE_CALL setDeadZone(ui32 keyCode, f32 deadZone) override;
+		virtual void AE_CALL setDeadZone (uint32_t keyCode, f32 deadZone) override;
 
 	private:
 		struct KeyMapping {
-			ui8 LSTICK_X;
-			ui8 LSTICK_Y;
-			ui8 RSTICK_X;
-			ui8 RSTICK_Y;
-			ui8 LTRIGGER;
-			ui8 RTRIGGER;
+			uint8_t LSTICK_X;
+			uint8_t LSTICK_Y;
+			uint8_t RSTICK_X;
+			uint8_t RSTICK_Y;
+			uint8_t LTRIGGER;
+			uint8_t RTRIGGER;
 
-			std::unordered_map<ui8, GamepadKeyCode> BUTTONS;
+			std::unordered_map<uint8_t, GamepadKeyCode> BUTTONS;
 		};
 
 
 		DIJOYSTATE2 _state;
 		const KeyMapping* _keyMapping;
-		std::unordered_map<GamepadKeyCode, ui8> _enumToKeyMapping;
+		std::unordered_map<GamepadKeyCode, uint8_t> _enumToKeyMapping;
 
-		std::unordered_map<ui32, f32> _deadZone;
+		std::unordered_map<uint32_t, f32> _deadZone;
 
 		inline f32 AE_CALL _getDeadZone(GamepadKeyCode key) const {
-			if (auto itr = _deadZone.find((ui32)key); itr == _deadZone.end()) {
+			if (auto itr = _deadZone.find((uint32_t)key); itr == _deadZone.end()) {
 				return 0.f;
 			} else {
 				return itr->second;
@@ -41,9 +41,9 @@ namespace aurora::modules::inputs::win_direct_input {
 
 		bool AE_CALL _checkInvalidData(const DIJOYSTATE2& state);
 
-		ui32 AE_CALL _getStick(LONG x, LONG y, GamepadKeyCode key, f32* data, ui32 count) const;
-		ui32 AE_CALL _getTrigger(LONG t, GamepadKeyCode key, ui8 index, f32& data) const;
-		ui32 AE_CALL _getTriggerSeparate(LONG t, GamepadKeyCode key, f32& data) const;
+		uint32_t AE_CALL _getStick(LONG x, LONG y, GamepadKeyCode key, f32* data, uint32_t count) const;
+		uint32_t AE_CALL _getTrigger(LONG t, GamepadKeyCode key, uint8_t index, f32& data) const;
+		uint32_t AE_CALL _getTriggerSeparate(LONG t, GamepadKeyCode key, f32& data) const;
 
 		void AE_CALL _updateStick(LONG oriX, LONG oriY, LONG curX, LONG curY, GamepadKeyCode key);
 		void AE_CALL _updateTrigger(LONG ori, LONG cur, GamepadKeyCode lkey, GamepadKeyCode rkey);
@@ -59,7 +59,7 @@ namespace aurora::modules::inputs::win_direct_input {
 			return f32(value) / 65535.f;
 		}
 		inline static f32 AE_CALL _translateDpad(DWORD value) {
-			return (value == (std::numeric_limits<ui32>::max)()) ? -1.f : Math::rad(f32(value) * .01f);
+			return (value == (std::numeric_limits<uint32_t>::max)()) ? -1.f : Math::rad(f32(value) * .01f);
 		}
 		inline static f32 AE_CALL _translateButton(DWORD value) {
 			return value & 0x80 ? 1.f : 0.f;

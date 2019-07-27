@@ -7,7 +7,7 @@
 #include "modules/graphics/IGraphicsModule.h"
 
 namespace aurora::modules::graphics::program_source_translator {
-	ProgramSourceTranslator::ProgramSourceTranslator(Ref* loader, const i8* dxc) :
+	ProgramSourceTranslator::ProgramSourceTranslator(Ref* loader, const char* dxc) :
 		_loader(loader),
 		_dxcLib(nullptr),
 		_dxcompiler(nullptr) {
@@ -32,7 +32,7 @@ namespace aurora::modules::graphics::program_source_translator {
 			dst.stage = source.stage;
 			dst.version = targetVersion.empty() ? source.version : targetVersion;
 			dst.data.setCapacity(source.data.getLength());
-			dst.data.writeBytes(source.data.getBytes(), 0, source.data.getLength());
+			dst.data.writeBytes(source.data.getBytes(), source.data.getLength());
 			return std::move(dst);
 		}
 
@@ -73,7 +73,7 @@ namespace aurora::modules::graphics::program_source_translator {
 			IFT(compileResult->GetErrorBuffer(&errors));
 			if (errors != nullptr) {
 				if (errors->GetBufferSize() > 0) {
-					println("hlsl to spirv error or warning : ", std::string((i8*)errors->GetBufferPointer(), errors->GetBufferSize()));
+					println("hlsl to spirv error or warning : ", std::string((char*)errors->GetBufferPointer(), errors->GetBufferSize()));
 					//ret.errorWarningMsg = CreateBlob(errors->GetBufferPointer(), static_cast<uint32_t>(errors->GetBufferSize()));
 				}
 				errors = nullptr;
@@ -83,7 +83,7 @@ namespace aurora::modules::graphics::program_source_translator {
 				CComPtr<IDxcBlob> program;
 				IFT(compileResult->GetResult(&program));
 				compileResult = nullptr;
-				if (program != nullptr) _spirvTo(source, (i8*)program->GetBufferPointer(), (ui32)program->GetBufferSize(), targetLanguage, targetVersion, dst);
+				if (program != nullptr) _spirvTo(source, (uint8_t*)program->GetBufferPointer(), (uint32_t)program->GetBufferSize(), targetLanguage, targetVersion, dst);
 			}
 		} else if (source.language == ProgramLanguage::SPIRV) {
 			_spirvTo(source, source.data.getBytes(), source.data.getLength(), targetLanguage, targetVersion, dst);
@@ -92,7 +92,7 @@ namespace aurora::modules::graphics::program_source_translator {
 		return std::move(dst);
 	}
 
-	void ProgramSourceTranslator::_spirvTo(const ProgramSource& source, const i8* sourceData, ui32 sourceDataSize, 
+	void ProgramSourceTranslator::_spirvTo(const ProgramSource& source, const uint8_t* sourceData, uint32_t sourceDataSize, 
 		ProgramLanguage targetLanguage, const std::string& targetVersion, ProgramSource& dst) {
 
 		spv::ExecutionModel model;
@@ -127,14 +127,14 @@ namespace aurora::modules::graphics::program_source_translator {
 			dst.stage = source.stage;
 			if (targetLanguage == ProgramLanguage::DXIL) dst.version = targetVersion.empty() ? source.version : targetVersion;
 			dst.data.setCapacity(sourceDataSize);
-			dst.data.writeBytes(sourceData, 0, sourceDataSize);
+			dst.data.writeBytes(sourceData, sourceDataSize);
 
 			break;
 		}
 		case ProgramLanguage::GLSL:
 		case ProgramLanguage::GSSL:
 		{
-			spirv_cross::CompilerGLSL compiler((uint32_t*)sourceData, sourceDataSize / sizeof(ui32));
+			spirv_cross::CompilerGLSL compiler((uint32_t*)sourceData, sourceDataSize / sizeof(uint32_t));
 
 			compiler.set_entry_point(ProgramSource::getEntryPoint(source), model);
 
@@ -173,7 +173,7 @@ namespace aurora::modules::graphics::program_source_translator {
 				dst.stage = source.stage;
 				dst.version = String::toString(opts.version);
 				dst.data.setCapacity(str.size());
-				dst.data.writeBytes(str.c_str(), 0, str.size());
+				dst.data.writeBytes((uint8_t*)str.c_str(), str.size());
 			} catch (spirv_cross::CompilerError& error) {
 				println("spirv to glsl/gssl error : ", error.what());
 			}
@@ -182,7 +182,7 @@ namespace aurora::modules::graphics::program_source_translator {
 		}
 		case ProgramLanguage::MSL:
 		{
-			spirv_cross::CompilerMSL compiler((uint32_t*)sourceData, sourceDataSize / sizeof(ui32));
+			spirv_cross::CompilerMSL compiler((uint32_t*)sourceData, sourceDataSize / sizeof(uint32_t));
 
 			compiler.set_entry_point(ProgramSource::getEntryPoint(source), model);
 
@@ -211,7 +211,7 @@ namespace aurora::modules::graphics::program_source_translator {
 				dst.stage = source.stage;
 				dst.version = String::toString(mslOpts.msl_version);
 				dst.data.setCapacity(str.size());
-				dst.data.writeBytes(str.c_str(), 0, str.size());
+				dst.data.writeBytes((uint8_t*)str.c_str(), str.size());
 			} catch (spirv_cross::CompilerError& error) {
 				println(error.what());
 			}

@@ -12,7 +12,7 @@ namespace aurora::modules::graphics {
 		};
 
 
-		MultipleBuffer(IGraphicsModule& graphics, ui8 max) : IObject(graphics),
+		MultipleBuffer(IGraphicsModule& graphics, uint8_t max) : IObject(graphics),
 			_count(0),
 			_max(max ? max : 1),
 			_head(nullptr),
@@ -27,7 +27,7 @@ namespace aurora::modules::graphics {
 			return _cur ? _cur->target.get()->getNativeBuffer() : nullptr;
 		}
 
-		bool AE_CALL create(ui32 size, Usage bufferUsage, const void* data, ui32 dataSize) {
+		bool AE_CALL create (uint32_t size, Usage bufferUsage, const void* data, uint32_t dataSize) {
 			_release();
 
 			if (auto buf = _createBuffer(); buf) {
@@ -46,7 +46,7 @@ namespace aurora::modules::graphics {
 			return false;
 		}
 
-		inline ui32 AE_CALL getSize() const {
+		inline uint32_t AE_CALL getSize() const {
 			return _cur ? _cur->target.get()->getSize() : 0;
 		}
 
@@ -113,15 +113,15 @@ namespace aurora::modules::graphics {
 			if (_cur) _cur->target.get()->unmap();
 		}
 
-		inline ui32 AE_CALL read(ui32 offset, void* dst, ui32 dstLen) {
+		inline uint32_t AE_CALL read (uint32_t offset, void* dst, uint32_t dstLen) {
 			return _cur ? _cur->target.get()->read(offset, dst, dstLen) : -1;
 		}
 
-		inline ui32 AE_CALL write(ui32 offset, const void* data, ui32 length) {
+		inline uint32_t AE_CALL write (uint32_t offset, const void* data, uint32_t length) {
 			return _cur ? _cur->target.get()->write(offset, data, length) : -1;
 		}
 
-		inline ui32 AE_CALL update(ui32 offset, const void* data, ui32 length) {
+		inline uint32_t AE_CALL update (uint32_t offset, const void* data, uint32_t length) {
 			return _cur ? _cur->target.get()->update(offset, data, length) : -1;
 		}
 
@@ -137,13 +137,13 @@ namespace aurora::modules::graphics {
 			return _cur;
 		}
 
-		inline ui8 getCount() const {
+		inline uint8_t getCount() const {
 			return _count;
 		}
 
 	private:
-		ui8 _count;
-		ui8 _max;
+		uint8_t _count;
+		uint8_t _max;
 
 		Node* _head;
 		Node* _cur;
@@ -178,18 +178,18 @@ namespace aurora::modules::graphics {
 
 	class AE_DLL MultipleVertexBuffer : public IVertexBuffer {
 	public:
-		MultipleVertexBuffer(IGraphicsModule& graphics, ui8 max);
+		MultipleVertexBuffer(IGraphicsModule& graphics, uint8_t max);
 		virtual ~MultipleVertexBuffer();
 
 		virtual const void* AE_CALL getNativeBuffer() const override;
-		virtual bool AE_CALL create(ui32 size, Usage bufferUsage, const void* data = nullptr, ui32 dataSize = 0) override;
-		virtual ui32 AE_CALL getSize() const override;
+		virtual bool AE_CALL create (uint32_t size, Usage bufferUsage, const void* data = nullptr, uint32_t dataSize = 0) override;
+		virtual uint32_t AE_CALL getSize() const override;
 		virtual Usage AE_CALL getUsage() const override;
 		virtual Usage AE_CALL map(Usage expectMapUsage) override;
 		virtual void AE_CALL unmap() override;
-		virtual ui32 AE_CALL read(ui32 offset, void* dst, ui32 dstLen) override;
-		virtual ui32 AE_CALL write(ui32 offset, const void* data, ui32 length) override;
-		virtual ui32 AE_CALL update(ui32 offset, const void* data, ui32 length) override;
+		virtual uint32_t AE_CALL read (uint32_t offset, void* dst, uint32_t dstLen) override;
+		virtual uint32_t AE_CALL write (uint32_t offset, const void* data, uint32_t length) override;
+		virtual uint32_t AE_CALL update (uint32_t offset, const void* data, uint32_t length) override;
 		virtual void AE_CALL getFormat(VertexSize* size, VertexType* type) const override;
 		virtual void AE_CALL setFormat(VertexSize size, VertexType type) override;
 		//virtual void AE_CALL flush() override;
@@ -205,18 +205,18 @@ namespace aurora::modules::graphics {
 
 	class AE_DLL MultipleIndexBuffer : public IIndexBuffer {
 	public:
-		MultipleIndexBuffer(IGraphicsModule& graphics, ui8 max);
+		MultipleIndexBuffer(IGraphicsModule& graphics, uint8_t max);
 		virtual ~MultipleIndexBuffer();
 
 		virtual const void* AE_CALL getNativeBuffer() const override;
-		virtual bool AE_CALL create(ui32 size, Usage bufferUsage, const void* data = nullptr, ui32 dataSize = 0) override;
-		virtual ui32 AE_CALL getSize() const override;
+		virtual bool AE_CALL create (uint32_t size, Usage bufferUsage, const void* data = nullptr, uint32_t dataSize = 0) override;
+		virtual uint32_t AE_CALL getSize() const override;
 		virtual Usage AE_CALL getUsage() const override;
 		virtual Usage AE_CALL map(Usage expectMapUsage) override;
 		virtual void AE_CALL unmap() override;
-		virtual ui32 AE_CALL read(ui32 offset, void* dst, ui32 dstLen) override;
-		virtual ui32 AE_CALL write(ui32 offset, const void* data, ui32 length) override;
-		virtual ui32 AE_CALL update(ui32 offset, const void* data, ui32 length) override;
+		virtual uint32_t AE_CALL read (uint32_t offset, void* dst, uint32_t dstLen) override;
+		virtual uint32_t AE_CALL write (uint32_t offset, const void* data, uint32_t length) override;
+		virtual uint32_t AE_CALL update (uint32_t offset, const void* data, uint32_t length) override;
 		virtual IndexType AE_CALL getFormat() const override;
 		virtual void AE_CALL setFormat(IndexType type) override;
 		//virtual void AE_CALL flush() override;
@@ -231,18 +231,18 @@ namespace aurora::modules::graphics {
 
 	class AE_DLL MultipleConstantBuffer : public IConstantBuffer {
 	public:
-		MultipleConstantBuffer(IGraphicsModule& graphics, ui8 max);
+		MultipleConstantBuffer(IGraphicsModule& graphics, uint8_t max);
 		virtual ~MultipleConstantBuffer();
 
 		virtual const void* AE_CALL getNativeBuffer() const override;
-		virtual bool AE_CALL create(ui32 size, Usage bufferUsage, const void* data = nullptr, ui32 dataSize = 0) override;
-		virtual ui32 AE_CALL getSize() const override;
+		virtual bool AE_CALL create (uint32_t size, Usage bufferUsage, const void* data = nullptr, uint32_t dataSize = 0) override;
+		virtual uint32_t AE_CALL getSize() const override;
 		virtual Usage AE_CALL getUsage() const override;
 		virtual Usage AE_CALL map(Usage expectMapUsage) override;
 		virtual void AE_CALL unmap() override;
-		virtual ui32 AE_CALL read(ui32 offset, void* dst, ui32 dstLen) override;
-		virtual ui32 AE_CALL write(ui32 offset, const void* data, ui32 length) override;
-		virtual ui32 AE_CALL update(ui32 offset, const void* data, ui32 length) override;
+		virtual uint32_t AE_CALL read (uint32_t offset, void* dst, uint32_t dstLen) override;
+		virtual uint32_t AE_CALL write (uint32_t offset, const void* data, uint32_t length) override;
+		virtual uint32_t AE_CALL update (uint32_t offset, const void* data, uint32_t length) override;
 		//virtual void AE_CALL flush() override;
 		virtual bool AE_CALL isSyncing() const override;
 

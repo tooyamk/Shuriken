@@ -13,22 +13,22 @@ namespace aurora::modules::graphics {
 
 	void ConstantBufferLayout::calcFeatureCode() {
 		featureCode = hash::CRC::CRC64StreamBegin();
-		hash::CRC::CRC64StreamIteration(featureCode, (i8*)&size, sizeof(size));
+		hash::CRC::CRC64StreamIteration(featureCode, (uint8_t*)&size, sizeof(size));
 
-		ui16 numValidVars = 0;
+		uint16_t numValidVars = 0;
 		for (auto& var : variables) _calcFeatureCode(var, numValidVars);
 
-		hash::CRC::CRC64StreamIteration(featureCode, (i8*)&numValidVars, sizeof(numValidVars));
+		hash::CRC::CRC64StreamIteration(featureCode, (uint8_t*)&numValidVars, sizeof(numValidVars));
 		hash::CRC::CRC64StreamEnd(featureCode);
 	}
 
-	void ConstantBufferLayout::_calcFeatureCode(const Variables& var, ui16& numValidVars) {
+	void ConstantBufferLayout::_calcFeatureCode(const Variables& var, uint16_t& numValidVars) {
 		if (var.structMembers.empty()) {
 			auto nameLen = var.name.size();
-			hash::CRC::CRC64StreamIteration(featureCode, (i8*)&nameLen, sizeof(nameLen));
-			hash::CRC::CRC64StreamIteration(featureCode, var.name.c_str(), var.name.size());
-			hash::CRC::CRC64StreamIteration(featureCode, (i8*)&var.offset, sizeof(var.offset));
-			hash::CRC::CRC64StreamIteration(featureCode, (i8*)&var.size, sizeof(var.size));
+			hash::CRC::CRC64StreamIteration(featureCode, (uint8_t*)&nameLen, sizeof(nameLen));
+			hash::CRC::CRC64StreamIteration(featureCode, (uint8_t*)var.name.c_str(), var.name.size());
+			hash::CRC::CRC64StreamIteration(featureCode, (uint8_t*)&var.offset, sizeof(var.offset));
+			hash::CRC::CRC64StreamIteration(featureCode, (uint8_t*)&var.size, sizeof(var.size));
 
 			++numValidVars;
 		} else {
@@ -85,7 +85,7 @@ namespace aurora::modules::graphics {
 		_unregisterExclusiveConstantLayout(layout);
 	}
 
-	void ConstantBufferManager::_registerShareConstantLayout(ui32 size) {
+	void ConstantBufferManager::_registerShareConstantLayout (uint32_t size) {
 		if (auto itr = _shareConstBufferPool.find(size); itr == _shareConstBufferPool.end()) {
 			auto& pool = _shareConstBufferPool.emplace(std::piecewise_construct, std::forward_as_tuple(size), std::forward_as_tuple()).first->second;
 			pool.rc = 1;
@@ -95,7 +95,7 @@ namespace aurora::modules::graphics {
 		}
 	}
 
-	void ConstantBufferManager::_unregisterShareConstantLayout(ui32 size) {
+	void ConstantBufferManager::_unregisterShareConstantLayout (uint32_t size) {
 		if (auto itr = _shareConstBufferPool.find(size); itr != _shareConstBufferPool.end() && !--itr->second.rc) {
 			//_graphics->ref();
 
@@ -106,7 +106,7 @@ namespace aurora::modules::graphics {
 		}
 	}
 
-	IConstantBuffer* ConstantBufferManager::popShareConstantBuffer(ui32 size) {
+	IConstantBuffer* ConstantBufferManager::popShareConstantBuffer (uint32_t size) {
 		if (auto itr = _shareConstBufferPool.find(size); itr != _shareConstBufferPool.end()) {
 			auto& pool = itr->second;
 			IConstantBuffer* cb;
@@ -161,7 +161,7 @@ namespace aurora::modules::graphics {
 	}
 
 	IConstantBuffer* ConstantBufferManager::_getExclusiveConstantBuffer(const ConstantBufferLayout& layout, const std::vector<ShaderParameter*>& parameters,
-		ui32 cur, ui32 max, ExclusiveConstNode* parent, std::unordered_map<const ShaderParameter*, ExclusiveConstNode>& chindrenContainer) {
+		uint32_t cur, uint32_t max, ExclusiveConstNode* parent, std::unordered_map<const ShaderParameter*, ExclusiveConstNode>& chindrenContainer) {
 		auto param = parameters[cur];
 		ExclusiveConstNode* node = nullptr;
 
@@ -228,7 +228,7 @@ namespace aurora::modules::graphics {
 		}
 	}
 
-	void ConstantBufferManager::_releaseExclusiveConstantToRoot(ExclusiveConstNode* parent, ExclusiveConstNode* releaseChild, ui32 releaseNumAssociativeBuffers, bool releaseParam) {
+	void ConstantBufferManager::_releaseExclusiveConstantToRoot(ExclusiveConstNode* parent, ExclusiveConstNode* releaseChild, uint32_t releaseNumAssociativeBuffers, bool releaseParam) {
 		if (parent) {
 			if (parent->numAssociativeBuffers <= releaseNumAssociativeBuffers) {
 				if (releaseChild) _releaseExclusiveConstantSelf(*releaseChild, releaseParam);
@@ -258,26 +258,26 @@ namespace aurora::modules::graphics {
 	}
 
 	void ConstantBufferManager::updateConstantBuffer(IConstantBuffer* cb, const ShaderParameter& param, const ConstantBufferLayout::Variables& var) {
-		ui32 size = param.getSize();
+		uint32_t size = param.getSize();
 		if (!size) return;
 
-		if (ui16 pes = param.getPerElementSize(); pes < size) {
+		if (uint16_t pes = param.getPerElementSize(); pes < size) {
 			auto stride = var.stride & 0x7FFFFFFFui32;
 			if (auto remainder = var.stride >= 0x80000000ui32 ? (pes & (stride - 1)) : pes % var.stride; remainder) {
 				auto offset = pes + stride - remainder;
-				auto max = std::min<ui32>(size, var.size);
-				ui32 cur = 0, fillSize = 0;
-				auto data = (const i8*)param.getData();
+				auto max = std::min<uint32_t>(size, var.size);
+				uint32_t cur = 0, fillSize = 0;
+				auto data = (const uint8_t*)param.getData();
 				do {
 					cb->write(var.offset + fillSize, data + cur, pes);
 					cur += pes;
 					fillSize += offset;
 				} while (cur < max && fillSize < var.size);
 			} else {
-				cb->write(var.offset, param.getData(), std::min<ui32>(size, var.size));
+				cb->write(var.offset, param.getData(), std::min<uint32_t>(size, var.size));
 			}
 		} else {
-			cb->write(var.offset, param.getData(), std::min<ui32>(size, var.size));
+			cb->write(var.offset, param.getData(), std::min<uint32_t>(size, var.size));
 		}
 	}
 }

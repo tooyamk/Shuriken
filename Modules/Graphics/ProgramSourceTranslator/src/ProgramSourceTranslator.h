@@ -25,7 +25,7 @@
 namespace aurora::modules::graphics::program_source_translator {
 	class ProgramSourceTranslator : public IProgramSourceTranslator {
 	public:
-		ProgramSourceTranslator(Ref* loader, const i8* dxc);
+		ProgramSourceTranslator(Ref* loader, const char* dxc);
 		virtual ~ProgramSourceTranslator();
 		
 		virtual ProgramSource AE_CALL translate(const ProgramSource& source, ProgramLanguage targetLanguage, const std::string& targetVersion) override;
@@ -37,7 +37,7 @@ namespace aurora::modules::graphics::program_source_translator {
 		CComPtr<IDxcLibrary> _dxcLib;
 		CComPtr<IDxcCompiler> _dxcompiler;
 
-		void _spirvTo(const ProgramSource& source, const i8* sourceData, ui32 sourceDataSize, 
+		void _spirvTo(const ProgramSource& source, const uint8_t* sourceData, uint32_t sourceDataSize, 
 			ProgramLanguage targetLanguage, const std::string& targetVersion, ProgramSource& dst);
 	};
 }
@@ -50,7 +50,7 @@ namespace aurora::modules::graphics {
 			return nullptr;
 		}
 
-		auto dxc = args->get<const i8*>("dxc", nullptr);
+		auto dxc = args->get<const char*>("dxc", nullptr);
 		if (!dxc) println("Module create err, no dxc");
 
 		return new program_source_translator::ProgramSourceTranslator(loader, dxc);

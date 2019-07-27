@@ -4,7 +4,7 @@
 #include "base/Ref.h"
 
 namespace aurora::modules {
-	enum class ModuleType : ui32 {
+	enum class ModuleType : uint32_t {
 		UNKNOWN = 0,
 		GRAPHICS = 0b1,
 		INPUT = 0b10

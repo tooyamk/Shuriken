@@ -124,7 +124,7 @@ namespace aurora::events {
 		}
 		virtual bool AE_CALL addEventListener(const EvtType& type, IEventListener<EvtType>& listener, bool ref) = 0;
 
-		virtual ui32 AE_CALL hasEventListener(const EvtType& type) const = 0;
+		virtual uint32_t AE_CALL hasEventListener(const EvtType& type) const = 0;
 		virtual bool AE_CALL hasEventListener(const EvtType& type, const IEventListener<EvtType>& listener) const = 0;
 
 		inline bool AE_CALL removeEventListener(const EvtType& type, IEventListener<EvtType>* listener) {
@@ -132,8 +132,8 @@ namespace aurora::events {
 		}
 		virtual bool AE_CALL removeEventListener(const EvtType& type, IEventListener<EvtType>& listener) = 0;
 
-		virtual ui32 AE_CALL removeEventListeners(const EvtType& type) = 0;
-		virtual ui32 AE_CALL removeEventListeners() = 0;
+		virtual uint32_t AE_CALL removeEventListeners(const EvtType& type) = 0;
+		virtual uint32_t AE_CALL removeEventListeners() = 0;
 
 		inline void AE_CALL dispatchEvent(const Event<EvtType>& e) const {
 			dispatchEvent(e.getTarget(), e.getType(), e.getData());

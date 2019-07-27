@@ -4,7 +4,7 @@
 #include <unordered_map>
 
 namespace aurora::modules::graphics {
-	enum class ShaderParameterType : ui8;
+	enum class ShaderParameterType : uint8_t;
 	class ShaderParameter;
 
 

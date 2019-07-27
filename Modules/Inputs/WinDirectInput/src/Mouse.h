@@ -7,7 +7,7 @@ namespace aurora::modules::inputs::win_direct_input {
 	public:
 		Mouse(Input& input, LPDIRECTINPUTDEVICE8 dev, const DeviceInfo& info);
 
-		virtual ui32 AE_CALL getKeyState(ui32 keyCode, f32* data, ui32 count) const override;
+		virtual uint32_t AE_CALL getKeyState (uint32_t keyCode, f32* data, uint32_t count) const override;
 		virtual void AE_CALL poll(bool dispatchEvent) override;
 
 	private:

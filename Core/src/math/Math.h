@@ -27,16 +27,16 @@ namespace aurora {
 		inline static bool AE_CALL isEqual(const In v1, const In v2) {
 			return v1 == v2;
 		}
-		template<ui32 N, typename In>
+		template<uint32_t N, typename In>
 		inline static bool AE_CALL isEqual(const In(&v)[N], const In value) {
-			for (ui32 i = 0; i < N; ++i) {
+			for (uint32_t i = 0; i < N; ++i) {
 				if (v[i] != value) return false;
 			}
 			return true;
 		}
-		template<ui32 N, typename In>
+		template<uint32_t N, typename In>
 		inline static bool AE_CALL isEqual(const In(&v1)[N], const In(&v2)[N]) {
-			for (ui32 i = 0; i < N; ++i) {
+			for (uint32_t i = 0; i < N; ++i) {
 				if (v1[i] != v2[i]) return false;
 			}
 			return true;
@@ -45,16 +45,16 @@ namespace aurora {
 		inline static bool AE_CALL isEqual(const In v1, const In v2, const In tolerance) {
 			return (v1 < v2 ? v2 - v1 : v1 - v2) <= tolerance;
 		}
-		template<ui32 N, typename In>
+		template<uint32_t N, typename In>
 		inline static bool AE_CALL isEqual(const In(&v)[N], const In value, const In tolerance) {
-			for (ui32 i = 0; i < N; ++i) {
+			for (uint32_t i = 0; i < N; ++i) {
 				if ((v[i] < value ? value - v[i] : v[i] - value) > tolerance) return false;
 			}
 			return true;
 		}
-		template<ui32 N, typename In>
+		template<uint32_t N, typename In>
 		inline static bool AE_CALL isEqual(const In(&v1)[N], const In(&v2)[N], const In tolerance) {
-			for (ui32 i = 0; i < N; ++i) {
+			for (uint32_t i = 0; i < N; ++i) {
 				if ((v1[i] < v2[i] ? v2[i] - v1[i] : v1[i] - v2[i]) > tolerance) return false;
 			}
 			return true;
@@ -65,17 +65,17 @@ namespace aurora {
 			return v < min ? min : (v > max ? max : v);
 		}
 
-		template<ui32 N, typename In>
+		template<uint32_t N, typename In>
 		inline static constexpr void AE_CALL clamp(const In(&v)[N], const In min, const In max, In(&dst)[N]) {
 			In tmp[N];
-			for (ui32 i = 0; i < N; ++i) tmp[i] = v[i] < min ? min : (v[i] > max ? max : v[i]);
-			for (ui32 i = 0; i < N; ++i) dst[i] = tmp[i];
+			for (uint32_t i = 0; i < N; ++i) tmp[i] = v[i] < min ? min : (v[i] > max ? max : v[i]);
+			for (uint32_t i = 0; i < N; ++i) dst[i] = tmp[i];
 		}
 
-		template<ui32 N, typename In, typename Out>
+		template<uint32_t N, typename In, typename Out>
 		inline static Out AE_CALL dot(const In(&v1)[N], const In(&v2)[N]) {
 			Out rst(0);
-			for (ui32 i = 0; i < N; ++i) rst += v1[i] * v2[i];
+			for (uint32_t i = 0; i < N; ++i) rst += v1[i] * v2[i];
 			return rst;
 		}
 
@@ -90,11 +90,11 @@ namespace aurora {
 			dst[2] = z;
 		}
 
-		template<ui32 N, typename In, typename Out>
+		template<uint32_t N, typename In, typename Out>
 		inline static void AE_CALL lerp(const In(&from)[N], const In(&to)[N], f32 t, Out(&dst)[N]) {
 			Out tmp[N];
-			for (ui32 i = 0; i < N; ++i) tmp[i] = from[i] + (to[i] - from[i]) * t;
-			for (ui32 i = 0; i < N; ++i) dst[i] = tmp[i];
+			for (uint32_t i = 0; i < N; ++i) tmp[i] = from[i] + (to[i] - from[i]) * t;
+			for (uint32_t i = 0; i < N; ++i) dst[i] = tmp[i];
 		}
 
 		static void AE_CALL slerpQuat(const f32* from, const f32* to, f32 t, f32* dst);
@@ -141,53 +141,53 @@ namespace aurora {
 			return deg * RAD<T>;
 		}
 
-		template<ui32 N, typename In, typename Out = In>
+		template<uint32_t N, typename In, typename Out = In>
 		inline static constexpr Out AE_CALL multiplies(const In(&v)[N]) {
 			if constexpr (N == 0) {
 				return Out(0);
 			} else {
 				Out m = v[0];
-				for (ui32 i = 1; i < N; ++i) m *= v[i];
+				for (uint32_t i = 1; i < N; ++i) m *= v[i];
 				return m;
 			}
 		}
 
-		template<ui32 N, typename In, typename Out = In>
+		template<uint32_t N, typename In, typename Out = In>
 		inline static Out AE_CALL distanceSq(const In(&v1)[N], const In(&v2)[N]) {
 			Out sq = 0;
-			for (ui32 i = 0; i < N; ++i) {
+			for (uint32_t i = 0; i < N; ++i) {
 				Out d = v1[i] < v2[i] ? v2[i] - v1[i] : v1[i] - v2[i];
 				sq += d * d;
 			}
 			return sq;
 		}
-		template<ui32 N, typename In, typename Out = In>
+		template<uint32_t N, typename In, typename Out = In>
 		inline static Out AE_CALL distanceSq(const FloatType<In>(&v1)[N], const FloatType<In>(&v2)[N]) {
 			Out sq = 0;
-			for (ui32 i = 0; i < N; ++i) {
+			for (uint32_t i = 0; i < N; ++i) {
 				In d = v1[i] - v2[i];
 				sq += d * d;
 			}
 			return sq;
 		}
 
-		template<ui32 N, typename In, typename Out = In>
+		template<uint32_t N, typename In, typename Out = In>
 		static void AE_CALL normalize(const In(&v)[N], Out(&dst)[N]) {
 			if (auto n = dot<N, In, f32>(v, v); !isEqual<In>(n, 1, TOLERANCE<decltype(n)>)) {
 				n = std::sqrt(n);
 				if (n > TOLERANCE<decltype(n)>) {
 					n = NUMBER_1<decltype(n)> / n;
 
-					for (ui32 i = 0; i < N; ++i) dst[i] *= n;
+					for (uint32_t i = 0; i < N; ++i) dst[i] *= n;
 				} else if (v != dst) {
-					for (ui32 i = 0; i < N; ++i) dst[i] = v[i];
+					for (uint32_t i = 0; i < N; ++i) dst[i] = v[i];
 				}
 			} else if (v != dst) {
-				for (ui32 i = 0; i < N; ++i) dst[i] = v[i];
+				for (uint32_t i = 0; i < N; ++i) dst[i] = v[i];
 			}
 		}
 
-		template<ui32 N, typename In, typename Out = In>
+		template<uint32_t N, typename In, typename Out = In>
 		static Out AE_CALL angleBetween(const In(&v1)[N], const In(&v2)[N]) {
 			In n1[N], n2[N];
 			normalize<N, In, In>(v1, n1);
@@ -201,8 +201,8 @@ namespace aurora {
 			return std::acos(a);
 		}
 
-		inline static bool AE_CALL isPOT(ui32 n);
-		inline static constexpr ui32 AE_CALL potLog2(ui32 pow);
+		inline static bool AE_CALL isPOT (uint32_t n);
+		inline static constexpr uint32_t AE_CALL potLog2 (uint32_t pow);
 	};
 }
 

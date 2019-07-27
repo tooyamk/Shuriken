@@ -29,15 +29,15 @@ namespace aurora {
 
 	Matrix44::Matrix44(const std::initializer_list<f32>& m) {
 		auto p = m.begin();
-		if (ui32 size = m.size(); size >= 16) {
+		if  (uint32_t size = m.size(); size >= 16) {
 			auto p = m.begin();
 			for (auto e : data) *e = *(p++);
 		} else {
 			auto m0 = (f32*)data;
-			for (ui8 i = 0; i < size; ++i) m0[i] = *(p++);
+			for (uint8_t i = 0; i < size; ++i) m0[i] = *(p++);
 
 			size *= sizeof(f32);
-			memset(((i8*)data) + size, 0, sizeof(m) - size);
+			memset(((uint8_t*)data) + size, 0, sizeof(m) - size);
 		}
 	}
 

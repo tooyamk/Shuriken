@@ -15,7 +15,7 @@ namespace aurora::modules::graphics::win_glew {
 		virtual void AE_CALL setAddress(SamplerAddressMode u, SamplerAddressMode v, SamplerAddressMode w) override;
 		virtual void AE_CALL setMipLOD(f32 min, f32 max) override;
 		virtual void AE_CALL setMipLODBias(f32 bias) override;
-		virtual void AE_CALL setMaxAnisotropy(ui32 max) override;
+		virtual void AE_CALL setMaxAnisotropy (uint32_t max) override;
 		virtual void AE_CALL setBorderColor(const Vec4f32& color) override;
 
 		inline GLuint AE_CALL getInternalSampler() const {
@@ -26,18 +26,18 @@ namespace aurora::modules::graphics::win_glew {
 
 	protected:
 		struct DirtyFlag {
-			static const ui8 FILTER = 1;
-			static const ui8 ADDRESS = 1 << 1;
-			static const ui8 BORDER_COLOR = 1 << 2;
-			static const ui8 COMPARE_FUNC = 1 << 3;
-			static const ui8 LOD = 1 << 4;
-			static const ui8 LOD_BAIS = 1 << 5;
-			static const ui8 MAX_ANISOTROPY = 1 << 6;
+			static const uint8_t FILTER = 1;
+			static const uint8_t ADDRESS = 1 << 1;
+			static const uint8_t BORDER_COLOR = 1 << 2;
+			static const uint8_t COMPARE_FUNC = 1 << 3;
+			static const uint8_t LOD = 1 << 4;
+			static const uint8_t LOD_BAIS = 1 << 5;
+			static const uint8_t MAX_ANISOTROPY = 1 << 6;
 		};
 
 
 		GLuint _handle;
-		ui8 _dirty;
+		uint8_t _dirty;
 		SamplerFilter _filter;
 		SamplerAddress _address;
 

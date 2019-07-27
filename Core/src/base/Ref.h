@@ -31,7 +31,7 @@ namespace aurora {
 			if (_refCount.fetch_sub(1) <= 1) delete this;
 		}
 
-		inline ui32 AE_CALL getReferenceCount() const {
+		inline uint32_t AE_CALL getReferenceCount() const {
 			return _refCount.load(std::memory_order_acquire);
 		}
 

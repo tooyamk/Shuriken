@@ -10,20 +10,20 @@ namespace aurora::modules::inputs {
 		GUID(GUID&& value);
 		~GUID();
 
-		inline const i8* AE_CALL getData() const {
+		inline const uint8_t* AE_CALL getData() const {
 			return _data;
 		}
 
-		inline ui32 AE_CALL getSize() const {
+		inline uint32_t AE_CALL getSize() const {
 			return _len;
 		}
 
-		void AE_CALL set(const i8* data, ui32 len);
-		bool AE_CALL isEqual(const i8* data, ui32 len) const;
+		void AE_CALL set(const uint8_t* data, uint32_t len);
+		bool AE_CALL isEqual(const uint8_t* data, uint32_t len) const;
 
 		inline GUID& AE_CALL operator=(const GUID& value) {
 			_len = value._len;
-			_data = new i8[_len];
+			_data = new uint8_t[_len];
 			memcpy(_data, value._data, _len);
 
 			return *this;
@@ -42,7 +42,7 @@ namespace aurora::modules::inputs {
 		}
 
 	private:
-		i8* _data;
-		ui32 _len;
+		uint8_t* _data;
+		uint32_t _len;
 	};
 }

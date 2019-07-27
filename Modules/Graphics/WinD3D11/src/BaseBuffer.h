@@ -8,12 +8,12 @@ namespace aurora::modules::graphics::win_d3d11 {
 		BaseBuffer(UINT bufferType);
 		virtual ~BaseBuffer();
 
-		bool AE_CALL create(Graphics& graphics, ui32 size, Usage resUsage, const void* data = nullptr, ui32 dataSize = 0);
+		bool AE_CALL create(Graphics& graphics, uint32_t size, Usage resUsage, const void* data = nullptr, uint32_t dataSize = 0);
 		Usage AE_CALL map(Graphics& graphics, Usage expectMapUsage);
 		void AE_CALL unmap(Graphics& graphics);
-		ui32 AE_CALL read(ui32 offset, void* dst, ui32 dstLen);
-		ui32 AE_CALL write(Graphics& graphics, ui32 offset, const void* data, ui32 length);
-		ui32 AE_CALL update(Graphics& graphics, ui32 offset, const void* data, ui32 length);
+		uint32_t AE_CALL read (uint32_t offset, void* dst, uint32_t dstLen);
+		uint32_t AE_CALL write(Graphics& graphics, uint32_t offset, const void* data, uint32_t length);
+		uint32_t AE_CALL update(Graphics& graphics, uint32_t offset, const void* data, uint32_t length);
 
 		Usage mapUsage;
 		D3D11_MAPPED_SUBRESOURCE mappedRes;

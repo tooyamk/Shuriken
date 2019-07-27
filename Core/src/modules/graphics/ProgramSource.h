@@ -3,10 +3,10 @@
 #include "base/ByteArray.h"
 
 namespace aurora::modules::graphics {
-	enum class ProgramStage : ui8;
+	enum class ProgramStage : uint8_t;
 
 
-	enum class ProgramLanguage : ui8 {
+	enum class ProgramLanguage : uint8_t {
 		UNKNOWN,
 		HLSL,
 		DXIL,

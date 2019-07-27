@@ -5,9 +5,9 @@
 namespace aurora::file {
 	namespace png_private {
 		struct ImageSource {
-			ui8* data;
-			i32 size;
-			i32 offset;
+			uint8_t* data;
+			int32_t size;
+			int32_t offset;
 		};
 
 		static void AE_CALL _readDataCallback(png_structp png_ptr, png_bytep data, png_size_t length) {
@@ -29,7 +29,7 @@ namespace aurora::file {
 		auto info = png_create_info_struct(png);
 
 		png_private::ImageSource is;
-		is.data = (ui8*)source.getBytes();
+		is.data = (uint8_t*)source.getBytes();
 		is.size = source.getLength();
 		is.offset = 0;
 
@@ -63,9 +63,9 @@ namespace aurora::file {
 		auto rowData = new png_bytep[height];
 
 		auto dataLen = rowBytes * height;
-		auto data = new ui8[dataLen];
+		auto data = new uint8_t[dataLen];
 		
-		for (ui32 i = 0; i < height; ++i) rowData[i] = data + i * rowBytes;
+		for (uint32_t i = 0; i < height; ++i) rowData[i] = data + i * rowBytes;
 		png_read_image(png, rowData);
 		png_read_end(png, nullptr);
 
@@ -75,7 +75,7 @@ namespace aurora::file {
 
 		auto img = new Image();
 		img->size.set(width, height);
-		img->source = ByteArray((i8*)data, dataLen, ByteArray::ExtMemMode::EXCLUSIVE);
+		img->source = ByteArray(data, dataLen, ByteArray::Usage::EXCLUSIVE);
 
 		switch (colorType) {
 			/*

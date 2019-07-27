@@ -8,7 +8,7 @@ namespace aurora::nodes::component {
 	public:
 		Camera();
 
-		ui32 cullingMask;
+		uint32_t cullingMask;
 
 		inline const Matrix44& AE_CALL getProjectionMatrix() const;
 		void AE_CALL setProjectionMatrix(const Matrix44& pm);

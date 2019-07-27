@@ -12,10 +12,10 @@ namespace aurora::modules::graphics {
 
 
 	struct AE_DLL ShaderParameterUsageStatistics {
-		ui16 exclusiveCount = 0;
-		ui16 autoCount = 0;
-		ui16 shareCount = 0;
-		ui16 unknownCount = 0;
+		uint16_t exclusiveCount = 0;
+		uint16_t autoCount = 0;
+		uint16_t shareCount = 0;
+		uint16_t unknownCount = 0;
 	};
 
 
@@ -23,9 +23,9 @@ namespace aurora::modules::graphics {
 	public:
 		struct AE_DLL Variables {
 			std::string name;
-			ui32 offset = 0;
-			ui32 size = 0;
-			ui32 stride = 0;
+			uint32_t offset = 0;
+			uint32_t size = 0;
+			uint32_t stride = 0;
 			std::vector<Variables> structMembers;
 		};
 
@@ -33,10 +33,10 @@ namespace aurora::modules::graphics {
 		ConstantBufferLayout();
 
 		std::string name;
-		ui32 bindPoint;
+		uint32_t bindPoint;
 		std::vector<Variables> variables;
-		ui32 size;
-		ui64 featureCode;
+		uint32_t size;
+		uint64_t featureCode;
 
 		void AE_CALL calcFeatureCode();
 
@@ -44,7 +44,7 @@ namespace aurora::modules::graphics {
 			std::vector<const ShaderParameter*>& usingParams, std::vector<const ConstantBufferLayout::Variables*>& usingVars) const;
 
 	private:
-		void AE_CALL _calcFeatureCode(const Variables& var, ui16& numValidVars);
+		void AE_CALL _calcFeatureCode(const Variables& var, uint16_t& numValidVars);
 
 		void AE_CALL _collectUsingInfo(const ConstantBufferLayout::Variables& var, const ShaderParameterFactory& factory, ShaderParameterUsageStatistics& statistics,
 			std::vector<const ShaderParameter*>& usingParams, std::vector<const ConstantBufferLayout::Variables*>& usingVars) const;
@@ -59,12 +59,12 @@ namespace aurora::modules::graphics {
 		~ConstantBufferManager();
 
 		std::function<IConstantBuffer*()> createShareConstantBufferCallback = nullptr;
-		std::function<IConstantBuffer*(ui32 numParameters)> createExclusiveConstantBufferCallback = nullptr;
+		std::function<IConstantBuffer* (uint32_t numParameters)> createExclusiveConstantBufferCallback = nullptr;
 
 		void AE_CALL registerConstantLayout(ConstantBufferLayout& layout);
 		void AE_CALL unregisterConstantLayout(ConstantBufferLayout& layout);
 
-		IConstantBuffer* AE_CALL popShareConstantBuffer(ui32 size);
+		IConstantBuffer* AE_CALL popShareConstantBuffer (uint32_t size);
 		void AE_CALL resetUsedShareConstantBuffers();
 
 		IConstantBuffer* AE_CALL getExclusiveConstantBuffer(const std::vector<ShaderParameter*>& parameters, const ConstantBufferLayout& layout);
@@ -73,17 +73,17 @@ namespace aurora::modules::graphics {
 
 	private:
 		struct ShareConstBuffers {
-			ui32 rc;
-			ui32 idleIndex;
+			uint32_t rc;
+			uint32_t idleIndex;
 			std::vector<IConstantBuffer*> buffers;
 		};
 
 
-		std::unordered_map<ui32, ShareConstBuffers> _shareConstBufferPool;
-		std::unordered_set<ui32> _usedShareConstBufferPool;
+		std::unordered_map<uint32_t, ShareConstBuffers> _shareConstBufferPool;
+		std::unordered_set<uint32_t> _usedShareConstBufferPool;
 
-		void AE_CALL _registerShareConstantLayout(ui32 size);
-		void AE_CALL _unregisterShareConstantLayout(ui32 size);
+		void AE_CALL _registerShareConstantLayout (uint32_t size);
+		void AE_CALL _unregisterShareConstantLayout (uint32_t size);
 
 
 		struct ExclusiveConstNode {
@@ -93,9 +93,9 @@ namespace aurora::modules::graphics {
 				parent(nullptr) {
 			}
 
-			ui32 numAssociativeBuffers;
+			uint32_t numAssociativeBuffers;
 			std::unordered_map<const ShaderParameter*, ExclusiveConstNode> children;
-			std::unordered_map<ui64, IConstantBuffer*> buffers;
+			std::unordered_map<uint64_t, IConstantBuffer*> buffers;
 			ShaderParameter* parameter;
 			ExclusiveConstNode* parent;
 		};
@@ -106,21 +106,21 @@ namespace aurora::modules::graphics {
 
 
 		struct ExcLusiveConsts {
-			ui32 rc;
+			uint32_t rc;
 			std::unordered_set<ExclusiveConstNode*> nodes;
 		};
 
 
-		std::unordered_map<ui64, ExcLusiveConsts> _exclusiveConstPool;
+		std::unordered_map<uint64_t, ExcLusiveConsts> _exclusiveConstPool;
 
 
 		IConstantBuffer* AE_CALL _getExclusiveConstantBuffer(const ConstantBufferLayout& layout, const std::vector<ShaderParameter*>& parameters,
-			ui32 cur, ui32 max, ExclusiveConstNode* parent, std::unordered_map <const ShaderParameter*, ExclusiveConstNode>& chindrenContainer);
+			uint32_t cur, uint32_t max, ExclusiveConstNode* parent, std::unordered_map <const ShaderParameter*, ExclusiveConstNode>& chindrenContainer);
 		void AE_CALL _registerExclusiveConstantLayout(ConstantBufferLayout& layout);
 		void AE_CALL _unregisterExclusiveConstantLayout(ConstantBufferLayout& layout);
 		static void _releaseExclusiveConstant(void* target, const ShaderParameter& param);
 		void _releaseExclusiveConstant(const ShaderParameter& param);
-		void _releaseExclusiveConstantToRoot(ExclusiveConstNode* parent, ExclusiveConstNode* releaseChild, ui32 releaseNumAssociativeBuffers, bool releaseParam);
+		void _releaseExclusiveConstantToRoot(ExclusiveConstNode* parent, ExclusiveConstNode* releaseChild, uint32_t releaseNumAssociativeBuffers, bool releaseParam);
 		void _releaseExclusiveConstantToLeaf(ExclusiveConstNode& node, bool releaseParam);
 		void _releaseExclusiveConstantSelf(ExclusiveConstNode& node, bool releaseParam);
 	};

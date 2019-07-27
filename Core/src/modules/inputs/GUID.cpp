@@ -7,7 +7,7 @@ namespace aurora::modules::inputs {
 	}
 
 	GUID::GUID(const GUID& value) :
-		_data(new i8[value._len]),
+		_data(new uint8_t[value._len]),
 		_len(value._len) {
 		memcpy(_data, value._data, _len);
 	}
@@ -22,19 +22,19 @@ namespace aurora::modules::inputs {
 		if (_data) delete[] _data;
 	}
 
-	void GUID::set(const i8* data, ui32 len) {
+	void GUID::set(const uint8_t* data, uint32_t len) {
 		if (_len != len) {
 			_len = len;
 			delete[] _data;
-			_data = new i8[_len];
+			_data = new uint8_t[_len];
 		}
 
 		memcpy(_data, data, _len);
 	}
 
-	bool GUID::isEqual(const i8* data, ui32 len) const {
+	bool GUID::isEqual(const uint8_t* data, uint32_t len) const {
 		if (_len == len) {
-			for (ui32 i = 0; i < _len; ++i) {
+			for (uint32_t i = 0; i < _len; ++i) {
 				if (_data[i] != data[i]) return false;
 			}
 			return true;

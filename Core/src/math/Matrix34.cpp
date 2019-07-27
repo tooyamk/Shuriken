@@ -31,10 +31,10 @@ namespace aurora {
 			for (auto e : data) *e = *(p++);
 		} else {
 			auto m0 = (f32*)data;
-			for (ui8 i = 0; i < size; ++i) m0[i] = *(p++);
+			for (uint8_t i = 0; i < size; ++i) m0[i] = *(p++);
 
 			size *= sizeof(f32);
-			memset(((i8*)data) + size, 0, sizeof(m) - size);
+			memset(((uint8_t*)data) + size, 0, sizeof(m) - size);
 		}
 	}
 
