@@ -16,13 +16,13 @@ namespace aurora {
 		return _data != nullptr;
 	}
 
-	inline Endian ByteArray::getEndian() const {
+	inline std::endian ByteArray::getEndian() const {
 		return _endian;
 	}
 
-	inline void ByteArray::setEndian(Endian endian) {
+	inline void ByteArray::setEndian(std::endian endian) {
 		_endian = endian;
-		_needReverse = _endian != NATIVE_ENDIAN;
+		_needReverse = _endian != std::endian::native;
 	}
 
 	inline uint8_t* ByteArray::getBytes() {

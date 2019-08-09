@@ -37,8 +37,8 @@ namespace aurora {
 
 		inline bool AE_CALL isValid() const;
 
-		inline Endian AE_CALL getEndian() const;
-		inline void AE_CALL setEndian(Endian endian);
+		inline std::endian AE_CALL getEndian() const;
+		inline void AE_CALL setEndian(std::endian endian);
 
 		inline uint8_t* AE_CALL getBytes();
 		inline const uint8_t* AE_CALL getBytes() const;
@@ -134,10 +134,10 @@ namespace aurora {
 		static const uint64_t INT56 = 0x100000000000000ui64;//1 << 56
 		static const uint64_t INT56_MAX = (INT56 / 2) - 1;
 
-		Endian _endian;
 		Usage _usage;
 		bool _needReverse;
 		uint8_t* _data;
+		std::endian _endian;
 		size_t _position;
 		size_t _length;
 		size_t _capacity;

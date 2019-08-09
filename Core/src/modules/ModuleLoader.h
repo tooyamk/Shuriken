@@ -13,7 +13,7 @@ namespace aurora::modules {
 		ModuleLoader() : _createFn(nullptr) {}
 		virtual ~ModuleLoader() {}
 
-		bool AE_CALL load(const uint8_t* path) {
+		bool AE_CALL load(const char* path) {
 			if (_lib.isLoaded()) _lib.free();
 			if (_lib.load(path)) {
 				_createFn = (CreateModuleFn)_lib.getSymbolAddress(AE_TO_STRING(AE_CREATE_MODULE_FN_NAME));
