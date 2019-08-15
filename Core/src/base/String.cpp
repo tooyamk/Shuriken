@@ -37,20 +37,6 @@ namespace aurora {
 		return _UnicodeToUtf8(in, unicodeLen, out);
 	}
 
-	std::string String::UnicodeToUtf8(const std::wstring& in) {
-		size_t unicodeLen, utf8Len;
-		calcUnicodeToUtf8Length(in.c_str(), in.size(), unicodeLen, utf8Len);
-		++utf8Len;
-		auto out = new char[utf8Len];
-		auto len = _UnicodeToUtf8(in.c_str(), unicodeLen, out);
-		out[len] = 0;
-
-		std::string s(out);
-		delete[] out;
-
-		return std::move(s);
-	}
-
 	void String::calcUtf8ToUnicodeLength(const char* in, size_t inLen, size_t& utf8Len, size_t& unicodeLen) {
 		size_t s = 0, d = 0;
 		if (in) {
@@ -84,20 +70,6 @@ namespace aurora {
 		if (outLen < unicodeLen) return -1;
 
 		return _Utf8ToUnicode(in, utf8Len, out);
-	}
-
-	std::wstring String::Utf8ToUnicode(const std::string& in) {
-		size_t utf8Len, unicodeLen;
-		calcUtf8ToUnicodeLength(in.c_str(), in.size(), utf8Len, unicodeLen);
-		++unicodeLen;
-		auto out = new wchar_t[unicodeLen];
-		auto len = _Utf8ToUnicode(in.c_str(), utf8Len, out);
-		out[len] = 0;
-
-		std::wstring s(out);
-		delete[] out;
-
-		return std::move(s);
 	}
 
 	std::string::size_type String::Utf8ToUnicode(const char* in, size_t inLen, wchar_t*& out) {

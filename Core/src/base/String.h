@@ -9,10 +9,42 @@ namespace aurora {
 	public:
 		static void AE_CALL calcUnicodeToUtf8Length(const wchar_t* in, size_t inLen, size_t& unicodeLen, size_t& utf8Len);
 		static std::string::size_type AE_CALL UnicodeToUtf8(const wchar_t* in, size_t inLen, char* out, size_t outLen);
-		static std::string AE_CALL UnicodeToUtf8(const std::wstring& in);
+		
+		template<typename T,
+		typename = std::enable_if_t<is_wstring_v<T>, T>>
+		static std::string AE_CALL UnicodeToUtf8(const T& in) {
+			size_t unicodeLen, utf8Len;
+			calcUnicodeToUtf8Length(in.data(), in.size(), unicodeLen, utf8Len);
+			std::string s;
+			s.resize(utf8Len);
+			_UnicodeToUtf8(in.data(), unicodeLen, (char*)s.data());
+
+			return std::move(s);
+		}
+
+		inline static std::string AE_CALL UnicodeToUtf8(const wchar_t* in) {
+			return std::move(UnicodeToUtf8(std::wstring_view(in, wcslen(in))));
+		}
+
 		static void AE_CALL calcUtf8ToUnicodeLength(const char* in, size_t inLen, size_t& utf8Len, size_t& unicodeLen);
 		static std::string::size_type AE_CALL Utf8ToUnicode(const char* in, size_t inLen, wchar_t* out, size_t outLen);
-		static std::wstring AE_CALL Utf8ToUnicode(const std::string& in);
+		
+		template<typename T,
+		typename = std::enable_if_t<is_string_v<T>, T>>
+		static std::wstring AE_CALL Utf8ToUnicode(const T& in) {
+			size_t utf8Len, unicodeLen;
+			calcUtf8ToUnicodeLength(in.data(), in.size(), utf8Len, unicodeLen);
+			std::wstring s;
+			s.resize(unicodeLen);
+			_Utf8ToUnicode(in.data(), utf8Len, (wchar_t*)s.data());
+
+			return std::move(s);
+		}
+
+		inline static std::wstring AE_CALL Utf8ToUnicode(const char* in) {
+			return std::move(Utf8ToUnicode(std::string_view(in, strlen(in))));
+		}
+
 		static std::string::size_type AE_CALL Utf8ToUnicode(const char* in, size_t inLen, wchar_t*& out);
 
 		inline static void AE_CALL split(const std::string& input, const std::string& separator, std::vector<std::string>& dst) {

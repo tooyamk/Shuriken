@@ -102,11 +102,11 @@ namespace aurora {
 		SerializableObject(SerializableObject&& value);
 		~SerializableObject();
 
-		inline SerializableObject& operator=(const SerializableObject& value) {
+		inline SerializableObject& AE_CALL operator=(const SerializableObject& value) {
 			set(value);
 			return *this;
 		}
-		inline SerializableObject& operator=(SerializableObject&& value) {
+		inline SerializableObject& AE_CALL operator=(SerializableObject&& value) {
 			_type = value._type;
 			memcpy(_value, value._value, VALUE_SIZE);
 			value._type = Type::INVALID;
@@ -121,8 +121,8 @@ namespace aurora {
 			return _type != Type::INVALID;
 		}
 
-		size_t getSize() const;
-		void clear();
+		size_t AE_CALL getSize() const;
+		void AE_CALL clear();
 
 		bool AE_CALL setInvalid();
 		bool AE_CALL setArray();
