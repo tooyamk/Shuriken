@@ -86,6 +86,9 @@ namespace aurora {
 		inline uint64_t AE_CALL readUInt64();
 		inline void AE_CALL writeUInt64(const uint64_t& value);
 
+		uint64_t AE_CALL readDynamicUInt64();
+		void AE_CALL writeDynamicUInt64(uint64_t value);
+
 		int64_t AE_CALL readInt(uint8_t numBytes);
 		uint64_t AE_CALL readUInt(uint8_t numBytes);
 		void AE_CALL writeInt(uint8_t numBytes, int64_t value);

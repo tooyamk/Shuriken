@@ -799,6 +799,44 @@ namespace aurora {
 		}
 	}
 
+	void SerializableObject::forEach(const std::function<void(const SerializableObject& key, const SerializableObject& value)>& callback) const {
+		if (_type == Type::ARRAY) {
+			Array* arr = _getValue<Array*>();
+			if (arr) {
+				SerializableObject idx;
+				for (size_t i = 0, n = arr->value.size(); i < n; ++i) {
+					idx.set(i);
+					callback(idx, arr->value[i]);
+				}
+			}
+		} else if (_type == Type::MAP) {
+			Map* map = _getValue<Map*>();
+			if (map) {
+				for (auto itr = map->value.begin(); itr != map->value.end();) callback(itr->first, itr->second);
+			}
+		}
+	}
+
+	void SerializableObject::forEach(const std::function<bool(const SerializableObject& key, const SerializableObject& value)>& callback) const {
+		if (_type == Type::ARRAY) {
+			Array* arr = _getValue<Array*>();
+			if (arr) {
+				SerializableObject idx;
+				for (size_t i = 0, n = arr->value.size(); i < n; ++i) {
+					idx.set(i);
+					if (!callback(idx, arr->value[i])) break;
+				}
+			}
+		} else if (_type == Type::MAP) {
+			Map* map = _getValue<Map*>();
+			if (map) {
+				for (auto itr = map->value.begin(); itr != map->value.end();) {
+					if (!callback(itr->first, itr->second)) break;
+				}
+			}
+		}
+	}
+
 	void SerializableObject::forEach(const std::function<ForEachOperation(const SerializableObject& key, SerializableObject& value)>& callback) {
 		if (_type == Type::ARRAY) {
 			Array* arr = _getValue<Array*>();

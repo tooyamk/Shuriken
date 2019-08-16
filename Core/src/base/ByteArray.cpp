@@ -197,6 +197,41 @@ namespace aurora {
 		}
 	}
 
+	uint64_t ByteArray::readDynamicUInt64() {
+		uint64_t rst = 0;
+		uint32_t bits = 0;
+		while (_position < _length) {
+			uint64_t val = _data[_position++];
+			auto hasNext = (val & 0x80) != 0;
+			val &= 0x7F;
+			val <<= bits;
+			rst |= val;
+
+			if (hasNext) {
+				bits += 7;
+			} else {
+				break;
+			}
+		};
+
+		return rst;
+	}
+
+	void ByteArray::writeDynamicUInt64(uint64_t value) {
+		value &= 0xFFFFFFFFFFFFFFFui64;
+		do {
+			uint8_t val = value & 0x7F;
+			value >>= 7;
+			if (value) {
+				val |= 0x80;
+				writeUInt8(val);
+			} else {
+				writeUInt8(val);
+				break;
+			}
+		} while (true);
+	}
+
 	size_t ByteArray::readBytes(uint8_t* bytes, size_t length) {
 		size_t len = _length - _position;
 		if (length > len) length = len;

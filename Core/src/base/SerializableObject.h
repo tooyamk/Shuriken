@@ -235,6 +235,8 @@ namespace aurora {
 		SerializableObject AE_CALL remove(const SerializableObject& key);
 		bool AE_CALL has(const SerializableObject& key) const;
 
+		void AE_CALL forEach(const std::function<void(const SerializableObject& key, const SerializableObject& value)>& callback) const;
+		void AE_CALL forEach(const std::function<bool(const SerializableObject& key, const SerializableObject& value)>& callback) const;
 		void AE_CALL forEach(const std::function<ForEachOperation(const SerializableObject& key, SerializableObject& value)>& callback);
 
 		void AE_CALL pack(ByteArray& ba) const;
