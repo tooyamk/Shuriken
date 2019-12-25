@@ -45,23 +45,23 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return _baseTexRes.resUsage;
 	}
 
-	Usage Texture2DResource::map (uint32_t arraySlice, uint32_t mipSlice, Usage expectMapUsage) {
+	Usage Texture2DResource::map(uint32_t arraySlice, uint32_t mipSlice, Usage expectMapUsage) {
 		return _baseTexRes.map(*_graphics.get<Graphics>(), arraySlice, mipSlice, expectMapUsage);
 	}
 
-	void Texture2DResource::unmap (uint32_t arraySlice, uint32_t mipSlice) {
+	void Texture2DResource::unmap(uint32_t arraySlice, uint32_t mipSlice) {
 		_baseTexRes.unmap(*_graphics.get<Graphics>(), arraySlice, mipSlice);
 	}
 
-	uint32_t Texture2DResource::read (uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, void* dst, uint32_t dstLen) {
+	uint32_t Texture2DResource::read(uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, void* dst, uint32_t dstLen) {
 		return _baseTexRes.read(arraySlice, mipSlice, offset, dst, dstLen);
 	}
 
-	uint32_t Texture2DResource::write (uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, const void* data, uint32_t length) {
+	uint32_t Texture2DResource::write(uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, const void* data, uint32_t length) {
 		return _baseTexRes.write(arraySlice, mipSlice, offset, data, length);
 	}
 
-	bool Texture2DResource::update (uint32_t arraySlice, uint32_t mipSlice, const Box2ui32& range, const void* data) {
+	bool Texture2DResource::update(uint32_t arraySlice, uint32_t mipSlice, const Box2ui32& range, const void* data) {
 		D3D11_BOX box;
 		box.left = range.pos[0];
 		box.right = range.pos[0] + range.size[0];
@@ -73,7 +73,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return _baseTexRes.update(*_graphics.get<Graphics>(), arraySlice, mipSlice, box, data);
 	}
 
-	bool Texture2DResource::copyFrom (uint32_t arraySlice, uint32_t mipSlice, const Box2ui32& range, const IPixelBuffer* pixelBuffer) {
+	bool Texture2DResource::copyFrom(uint32_t arraySlice, uint32_t mipSlice, const Box2ui32& range, const IPixelBuffer* pixelBuffer) {
 		return false;
 	}
 }

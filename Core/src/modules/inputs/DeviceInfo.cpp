@@ -6,7 +6,7 @@ namespace aurora::modules::inputs {
 		type(DeviceType::UNKNOWN) {
 	}
 
-	DeviceInfo::DeviceInfo(const GUID& guid, DeviceType type) :
+	DeviceInfo::DeviceInfo(const DeviceGUID& guid, DeviceType type) :
 		guid(guid),
 		type(type) {
 	}

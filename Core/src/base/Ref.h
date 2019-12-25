@@ -1,6 +1,6 @@
 #pragma once
 
-#include "base/LowLevel.h"
+#include "base/Global.h"
 #include <atomic>
 
 namespace aurora {
@@ -8,7 +8,7 @@ namespace aurora {
 	public:
 		template<typename T>
 		//using RefType = std::enable_if_t<std::is_base_of_v<Ref, T>, T>;
-		using RefType = T;
+		using Type = T;
 
 		Ref() :
 			_refCount(0) {
@@ -22,7 +22,7 @@ namespace aurora {
 		}
 
 		template<typename T>
-		inline RefType<T>* ref() {
+		inline Type<T>* ref() {
 			ref();
 			return (T*)this;
 		}
@@ -36,7 +36,7 @@ namespace aurora {
 		}
 
 		template<typename P1, typename P2>
-		inline static void AE_CALL set(RefType<P1>*& ptr, RefType<P2>* target) {
+		inline static void AE_CALL set(Type<P1>*& ptr, Type<P2>* target) {
 			if (ptr != target) {
 				if (target) target->ref();
 				if (ptr) ptr->unref();
@@ -45,13 +45,13 @@ namespace aurora {
 		}
 
 		template<typename P>
-		inline static void AE_CALL setNull(RefType<P>*& ptr) {
+		inline static void AE_CALL setNull(Type<P>*& ptr) {
 			ptr->unref();
 			ptr = nullptr;
 		}
 
 		template<typename P>
-		inline static void AE_CALL checkSetNull(RefType<P>*& ptr) {
+		inline static void AE_CALL checkSetNull(Type<P>*& ptr) {
 			if (ptr) setNull(ptr);
 		}
 
@@ -70,7 +70,7 @@ namespace aurora {
 		RefPtr(const RefPtr<T>& ptr) : RefPtr(ptr._target) {
 		}
 
-		RefPtr(RefPtr<T>&& ptr) :
+		RefPtr(RefPtr<T>&& ptr) noexcept :
 			_target(ptr._target) {
 			ptr._target = nullptr;
 		}
@@ -87,7 +87,7 @@ namespace aurora {
 			reset();
 		}
 
-		inline RefPtr<T>& AE_CALL operator=(RefPtr<T>&& ptr) {
+		inline RefPtr<T>& AE_CALL operator=(RefPtr<T>&& ptr) noexcept {
 			if (_target) _target->unref();
 			_target = ptr._target;
 			ptr._target = nullptr;
@@ -167,7 +167,7 @@ namespace aurora {
 		}
 
 	private:
-		Ref::RefType<T>* _target;
+		Ref::Type<T>* _target;
 	};
 
 

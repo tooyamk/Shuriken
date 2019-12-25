@@ -41,23 +41,23 @@ namespace aurora::modules::graphics::win_glew {
 		return _baseTex.resUsage;
 	}
 
-	Usage Texture2DResource::map (uint32_t arraySlice, uint32_t mipSlice, Usage expectMapUsage) {
+	Usage Texture2DResource::map(uint32_t arraySlice, uint32_t mipSlice, Usage expectMapUsage) {
 		return _baseTex.map(arraySlice, mipSlice, expectMapUsage);
 	}
 
-	void Texture2DResource::unmap (uint32_t arraySlice, uint32_t mipSlice) {
+	void Texture2DResource::unmap(uint32_t arraySlice, uint32_t mipSlice) {
 		_baseTex.unmap(arraySlice, mipSlice);
 	}
 
-	uint32_t Texture2DResource::read (uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, void* dst, uint32_t dstLen) {
+	uint32_t Texture2DResource::read(uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, void* dst, uint32_t dstLen) {
 		return _baseTex.read(arraySlice, mipSlice, offset, dst, dstLen);
 	}
 
-	uint32_t Texture2DResource::write (uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, const void* data, uint32_t length) {
+	uint32_t Texture2DResource::write(uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, const void* data, uint32_t length) {
 		return _baseTex.write(arraySlice, mipSlice, offset, data, length);
 	}
 
-	bool Texture2DResource::update (uint32_t arraySlice, uint32_t mipSlice, const Box2ui32& range, const void* data) {
+	bool Texture2DResource::update(uint32_t arraySlice, uint32_t mipSlice, const Box2ui32& range, const void* data) {
 		Box3ui32 box;
 		((Vec2ui32&)box.pos).set(range.pos.slice<2>());
 		((Vec2ui32&)box.size).set(range.size.slice<2>());
@@ -65,7 +65,7 @@ namespace aurora::modules::graphics::win_glew {
 		return _baseTex.update(arraySlice, mipSlice, box, data);
 	}
 
-	bool Texture2DResource::copyFrom (uint32_t arraySlice, uint32_t mipSlice, const Box2ui32& range, const IPixelBuffer* pixelBuffer) {
+	bool Texture2DResource::copyFrom(uint32_t arraySlice, uint32_t mipSlice, const Box2ui32& range, const IPixelBuffer* pixelBuffer) {
 		Box3ui32 box;
 		((Vec2ui32&)box.pos).set(range.pos.slice<2>());
 		((Vec2ui32&)box.size).set(range.size.slice<2>());

@@ -255,22 +255,23 @@ namespace aurora::nodes {
 		}
 	}
 
-	void Node::addComponent(component::AbstractComponent* component) {
-		if (component) {
-			if (auto node = component->getNode(); node != this) {
-				component->ref();
-				if (node) node->_removeComponent(component);
-				_components.push_back(component);
-				component->__setNode(this);
-			}
+	bool Node::addComponent(component::AbstractComponent* component) {
+		if (component && !component->getNode()) {
+			component->ref();
+			_components.emplace_back(component);
+			component->__setNode(this);
+			return true;
 		}
+		return false;
 	}
 
-	void Node::removeComponent(component::AbstractComponent* component) {
+	bool Node::removeComponent(component::AbstractComponent* component) {
 		if (component && component->getNode() == this) {
 			component->__setNode(nullptr);
 			_removeComponent(component);
+			return true;
 		}
+		return false;
 	}
 
 	void Node::removeAllComponents() {
@@ -281,29 +282,33 @@ namespace aurora::nodes {
 		_components.clear();
 	}
 
-	component::AbstractComponent* Node::getComponent (uint32_t flag) const {
-		for (const auto c : _components) {
+	component::AbstractComponent* Node::getComponent(uint32_t flag) const {
+		for (auto c : _components) {
 			if ((c->flag & flag) == flag) return c;
 		}
 		return nullptr;
 	}
 
 	component::AbstractComponent* Node::getComponentIf(const std::function<bool(component::AbstractComponent*)>& func) const {
-		for (const auto c : _components) {
-			if (func(c)) return c;
+		if (func) {
+			for (auto c : _components) {
+				if (func(c)) return c;
+			}
 		}
 		return nullptr;
 	}
 
-	void Node::getComponents (uint32_t flag, std::vector<component::AbstractComponent*>& dst) const {
-		for (const auto c : _components) {
-			if ((c->flag & flag) == flag) dst.push_back(c);
+	void Node::getComponents(uint32_t flag, std::vector<component::AbstractComponent*>& dst) const {
+		for (auto c : _components) {
+			if ((c->flag & flag) == flag) dst.emplace_back(c);
 		}
 	}
 
 	void Node::getComponentsIf(const std::function<bool(component::AbstractComponent*)>& func, std::vector<component::AbstractComponent*>& dst) const {
-		for (const auto c : _components) {
-			if (func(c)) dst.push_back(c);
+		if (func) {
+			for (auto c : _components) {
+				if (func(c)) dst.emplace_back(c);
+			}
 		}
 	}
 
@@ -394,12 +399,12 @@ namespace aurora::nodes {
 		_checkNoticeUpdate(DirtyFlag::WRMIM);
 	}
 
-	void Node::_worldPositionChanged (uint32_t oldDirty) {
+	void Node::_worldPositionChanged(DirtyType oldDirty) {
 		if (_parent) {
 			_parent->updateInverseWorldMatrix();
 
 			f32 tmp[3] = { _wm.data[0][3], _wm.data[1][3], _wm.data[2][3] };
-			Math::matTransformPoint(_parent->_iwm.data, tmp, tmp);
+			Math::matTransformPoint(_parent->_iwm, tmp, tmp);
 
 			_lm.setPosition(tmp);
 		} else {
@@ -410,7 +415,7 @@ namespace aurora::nodes {
 		if (oldDirty != _dirty) _noticeUpdate(DirtyFlag::WMIM);
 	}
 
-	void Node::_worldRotationChanged (uint32_t oldDirty) {
+	void Node::_worldRotationChanged(DirtyType oldDirty) {
 		if (_parent) {
 			_parent->updateWorldRotation();
 			_parent->_wr.invert(_lr);
@@ -424,7 +429,7 @@ namespace aurora::nodes {
 		if (oldDirty != _dirty) _noticeUpdate(DirtyFlag::WRMIM);
 	}
 
-	void Node::_checkNoticeUpdateNow (uint32_t nowDirty, uint32_t sendDirty) {
+	void Node::_checkNoticeUpdateNow(DirtyType nowDirty, DirtyType sendDirty) {
 		if (nowDirty != _dirty) {
 			_dirty = nowDirty;
 
@@ -432,7 +437,7 @@ namespace aurora::nodes {
 		}
 	}
 
-	void Node::_noticeUpdate (uint32_t dirty) {
+	void Node::_noticeUpdate(DirtyType dirty) {
 		auto node = _childHead;
 		while (node) {
 			node->_checkNoticeUpdate(dirty);

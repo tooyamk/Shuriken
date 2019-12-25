@@ -33,12 +33,20 @@ namespace aurora {
 		return _data;
 	}
 
-	inline ByteArray ByteArray::slice(size_t start, size_t length) const {
+	inline ByteArray ByteArray::slice(size_t start, size_t length, Usage usage) const {
 		if (start >= _length) {
-			return std::move(ByteArray(nullptr, 0, Usage::SHARED));
+			return std::move(ByteArray(nullptr, 0, usage));
 		} else {
-			return std::move(ByteArray(_data + start, std::min<size_t>(length, _length - start), Usage::SHARED));
+			return std::move(ByteArray(_data + start, std::min<size_t>(length, _length - start), usage));
 		}
+	}
+
+	inline ByteArray ByteArray::slice(size_t length, Usage usage) const {
+		return std::move(ByteArray(_data + _position, std::min<size_t>(length, _length - _position), usage));
+	}
+
+	inline ByteArray ByteArray::slice(Usage usage) const {
+		return std::move(ByteArray(_data + _position, _length - _position, usage));
 	}
 
 	inline size_t ByteArray::getCapacity() const {
@@ -86,88 +94,8 @@ namespace aurora {
 		return _length - _position;
 	}
 
-	inline int8_t ByteArray::readInt8() {
-		return _read<int8_t>();
-	}
-
-	inline uint8_t ByteArray::readUInt8() {
-		return _read<uint8_t>();
-	}
-
-	inline void ByteArray::writeInt8(int8_t value) {
-		_write((uint8_t*)&value, 1);
-	}
-
-	inline void ByteArray::writeUInt8(uint8_t value) {
-		_write((uint8_t*)&value, 1);
-	}
-
-	inline uint16_t ByteArray::readInt16() {
-		return _read<uint16_t>();
-	}
-
-	inline void ByteArray::writeInt16(uint16_t value) {
-		_write((uint8_t*)&value, 2);
-	}
-
-	inline uint16_t ByteArray::readUInt16() {
-		return _read<uint16_t>();
-	}
-
-	inline void ByteArray::writeUInt16(uint16_t value) {
-		_write((uint8_t*)&value, 2);
-	}
-
-	inline int32_t ByteArray::readInt32() {
-		return _read<int32_t>();
-	}
-
-	inline void ByteArray::writeInt32(int32_t value) {
-		_write((uint8_t*)&value, 4);
-	}
-
-	inline uint32_t ByteArray::readUInt32() {
-		return _read<uint32_t>();
-	}
-
-	inline void ByteArray::writeUInt32(uint32_t value) {
-		_write((uint8_t*)&value, 4);
-	}
-
-	inline f32 ByteArray::readFloat32() {
-		return _read<f32>();
-	}
-
-	inline void ByteArray::writeFloat32(f32 value) {
-		_write((uint8_t*)&value, 4);
-	}
-
-	inline f64 ByteArray::readFloat64() {
-		return _read<f64>();
-	}
-
-	inline void ByteArray::writeFloat64(const f64& value) {
-		_write((uint8_t*)&value, 8);
-	}
-
-	inline int64_t ByteArray::readInt64() {
-		return _read<int64_t>();
-	}
-
-	inline void ByteArray::writeInt64(const int64_t& value) {
-		_write((uint8_t*)&value, 8);
-	}
-
-	inline uint64_t ByteArray::readUInt64() {
-		return _read<uint64_t>();
-	}
-
-	inline void ByteArray::writeUInt64(const uint64_t& value) {
-		_write((uint8_t*)&value, 8);
-	}
-
 	inline void ByteArray::writeUInt(uint8_t numBytes, uint64_t value) {
-		if (numBytes > 0 && numBytes < 9) _write((uint8_t*)&value, numBytes);
+		if (numBytes > 0 && numBytes < 9) _write((uint8_t*)& value, numBytes);
 	}
 
 	inline void ByteArray::writeBytes(const uint8_t* bytes, size_t length) {
@@ -180,52 +108,53 @@ namespace aurora {
 	}
 
 	inline std::tuple<size_t, size_t> ByteArray::readString(size_t size, bool chechBOM) {
-		auto tuple = readString(_position, size, chechBOM);
-		_position = std::get<2>(tuple);
-		return std::make_tuple(std::get<0>(tuple), std::get<0>(tuple));
+		auto [begin, s, pos] = readString(_position, size, chechBOM);
+		_position = pos;
+		return std::make_tuple(begin, s);
 	}
 
 	inline std::string ByteArray::readString(bool chechBOM) {
-		auto tuple = readString(_position, (std::numeric_limits<size_t>::max)(), chechBOM);
-		_position = std::get<2>(tuple);
-		return std::move(std::string((char*)_data + std::get<0>(tuple), std::get<1>(tuple)));
+		auto [begin, size, pos] = readString(_position, (std::numeric_limits<size_t>::max)(), chechBOM);
+		_position = pos;
+		return std::move(std::string((char*)_data + begin, size));
 	}
 
 	inline std::string_view ByteArray::readStringView(bool chechBOM) {
-		auto tuple = readString(_position, (std::numeric_limits<size_t>::max)(), chechBOM);
-		_position = std::get<2>(tuple);
-		return std::move(std::string_view((char*)_data + std::get<0>(tuple), std::get<1>(tuple)));
+		auto [begin, size, pos] = readString(_position, (std::numeric_limits<size_t>::max)(), chechBOM);
+		_position = pos;
+		return std::move(std::string_view((char*)_data + begin, size));
 	}
 
 	inline void ByteArray::writeString(const std::string& str) {
-		writeString(str.c_str(), str.size());
-	}
-
-	inline void ByteArray::writeStringView(const std::string_view& str) {
 		writeString(str.data(), str.size());
 	}
 
-	inline bool ByteArray::readBool() {
-		return readInt8() != 0;
+	inline void ByteArray::writeString(const std::string_view& str) {
+		writeString(str.data(), str.size());
 	}
 
-	inline void ByteArray::writeBool(bool b) {
-		writeInt8(b ? 1 : 0);
+	inline void ByteArray::writeString(const char* str) {
+		writeString(str, strlen(str));
+	}
+
+	inline void ByteArray::writePadding(size_t length) {
+		_checkLength(length);
+		_position += length;
 	}
 
 	inline void ByteArray::readTwoUInt12(uint16_t& value1, uint16_t& value2) {
-		uint8_t v1 = readUInt8();
-		uint8_t v2 = readUInt8();
-		uint8_t v3 = readUInt8();
+		auto v1 = read<uint8_t>();
+		auto v2 = read<uint8_t>();
+		auto v3 = read<uint8_t>();
 
 		value1 = (v1 << 4) | ((v2 >> 4) & 0xF);
 		value2 = ((v2 & 0xF) << 8) | v3;
 	}
 
 	inline void ByteArray::writeTwoUInt12(uint16_t value1, uint16_t value2) {
-		writeUInt8((value1 >> 4) & 0xFF);
-		writeUInt8(((value1 & 0xF) << 4) | ((value2 >> 8) & 0xF));
-		writeUInt8(value2 & 0xFF);
+		write<uint8_t>((value1 >> 4) & 0xFF);
+		write<uint8_t>(((value1 & 0xF) << 4) | ((value2 >> 8) & 0xF));
+		write<uint8_t>(value2 & 0xFF);
 	}
 
 	inline void ByteArray::readTwoInt12(int16_t& value1, int16_t& value2) {
@@ -251,7 +180,7 @@ namespace aurora {
 			if (_needReverse) {
 				for (int8_t i = len - 1; i >= 0; --i) p[i] = _data[_position++];
 			} else {
-				memcpy(p, _data + _position, len);
+				memmove(p, _data + _position, len);
 				_position += len;
 			}
 		}
@@ -263,7 +192,7 @@ namespace aurora {
 		if (_needReverse) {
 			for (int32_t i = len - 1; i >= 0; --i) _data[_position++] = p[i];
 		} else {
-			memcpy(_data + _position, p, len);
+			memmove(_data + _position, p, len);
 			_position += len;
 		}
 	}

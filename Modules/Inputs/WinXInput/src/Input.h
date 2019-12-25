@@ -11,7 +11,7 @@ namespace aurora::modules::inputs::win_xinput {
 
 		virtual events::IEventDispatcher<ModuleEvent>& AE_CALL getEventDispatcher() override;
 		virtual void AE_CALL poll() override;
-		virtual IInputDevice* AE_CALL createDevice(const GUID& guid) override;
+		virtual IInputDevice* AE_CALL createDevice(const DeviceGUID& guid) override;
 
 	private:
 		RefPtr<Ref> _loader;

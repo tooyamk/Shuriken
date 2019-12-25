@@ -100,7 +100,7 @@ namespace aurora::modules::graphics::win_glew {
 			return false;
 		}
 
-		PIXELFORMATDESCRIPTOR pfd;
+		PIXELFORMATDESCRIPTOR pfd = { 0 };
 		if (!SetPixelFormat(_dc, nPixelFormat, &pfd)) {
 			_release();
 			return false;
@@ -248,7 +248,7 @@ namespace aurora::modules::graphics::win_glew {
 		if (hwnd) {
 			auto dc = GetDC(hwnd);
 			if (dc) {
-				PIXELFORMATDESCRIPTOR pfd;
+				PIXELFORMATDESCRIPTOR pfd = { 0 };
 				if (SetPixelFormat(dc, 1, &pfd)) {
 					auto rc = wglCreateContext(dc);
 					if (rc) {

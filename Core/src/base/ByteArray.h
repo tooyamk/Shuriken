@@ -1,6 +1,6 @@
 #pragma once
 
-#include "base/LowLevel.h"
+#include "base/Global.h"
 #include <algorithm>
 #include <string_view>
 
@@ -14,18 +14,18 @@ namespace aurora {
 		};
 
 
-		//enum class CompressionAlgorithm : uint8_t {
+		//enum class CompressionAlgorithm : ui8 {
 		//	ZLIB
 		//};
 
 
 		ByteArray(const ByteArray&) = delete;
 		ByteArray& AE_CALL operator=(const ByteArray&) = delete;
-		ByteArray(ByteArray&& bytes);
+		ByteArray(ByteArray&& bytes) noexcept;
 		ByteArray(size_t capacity = 0, size_t length = 0);
-		ByteArray(uint8_t* bytes, size_t size, Usage extMode = Usage::SHARED);
-		ByteArray(uint8_t* bytes, size_t capacity, size_t length, Usage extMode = Usage::SHARED);
-		ByteArray& AE_CALL operator=(ByteArray&& value);
+		ByteArray(uint8_t* bytes, size_t size, Usage usage = Usage::SHARED);
+		ByteArray(uint8_t* bytes, size_t capacity, size_t length, Usage usage = Usage::SHARED);
+		ByteArray& AE_CALL operator=(ByteArray&& value) noexcept;
 		~ByteArray();
 
 		inline AE_CALL operator bool() const;
@@ -43,7 +43,9 @@ namespace aurora {
 		inline uint8_t* AE_CALL getBytes();
 		inline const uint8_t* AE_CALL getBytes() const;
 
-		inline ByteArray AE_CALL slice(size_t start, size_t length) const;
+		inline ByteArray AE_CALL slice(size_t start, size_t length, Usage usage = Usage::SHARED) const;
+		inline ByteArray AE_CALL slice(size_t length, Usage usage = Usage::SHARED) const;
+		inline ByteArray AE_CALL slice(Usage usage = Usage::SHARED) const;
 
 		inline size_t AE_CALL getCapacity() const;
 		inline void AE_CALL setCapacity(size_t capacity);
@@ -58,33 +60,6 @@ namespace aurora {
 		inline void AE_CALL seekEnd();
 
 		inline size_t AE_CALL getBytesAvailable() const;
-
-		inline int8_t AE_CALL readInt8();
-		inline uint8_t AE_CALL readUInt8();
-		inline void AE_CALL writeInt8(int8_t value);
-		inline void AE_CALL writeUInt8(uint8_t value);
-
-		inline uint16_t AE_CALL readInt16();
-		inline uint16_t AE_CALL readUInt16();
-		inline void AE_CALL writeInt16(uint16_t value);
-		inline void AE_CALL writeUInt16(uint16_t value);
-
-		inline int32_t AE_CALL readInt32();
-		inline uint32_t AE_CALL readUInt32();
-		inline void AE_CALL writeInt32(int32_t value);
-		inline void AE_CALL writeUInt32(uint32_t value);
-
-		inline f32 AE_CALL readFloat32();
-		inline void AE_CALL writeFloat32(f32 value);
-
-		inline f64 AE_CALL readFloat64();
-		inline void AE_CALL writeFloat64(const f64& value);
-
-		inline int64_t AE_CALL readInt64();
-		inline void AE_CALL writeInt64(const int64_t& value);
-
-		inline uint64_t AE_CALL readUInt64();
-		inline void AE_CALL writeUInt64(const uint64_t& value);
 
 		uint64_t AE_CALL readDynamicUInt64();
 		void AE_CALL writeDynamicUInt64(uint64_t value);
@@ -106,11 +81,75 @@ namespace aurora {
 		inline std::string AE_CALL readString(bool chechBOM = false);
 		inline std::string_view AE_CALL readStringView(bool chechBOM = false);
 		inline void AE_CALL writeString(const std::string& str);
+		inline void AE_CALL writeString(const std::string_view& str);
 		void AE_CALL writeString(const char* str, size_t size);
-		inline void AE_CALL writeStringView(const std::string_view& str);
+		inline void AE_CALL writeString(const char* str);
 
-		inline bool AE_CALL readBool();
-		inline void AE_CALL writeBool(bool b);
+		template<typename T>
+		T AE_CALL read() {
+			if constexpr (
+				std::is_same_v<T, bool> || 
+				std::is_same_v<T, int8_t> ||
+				std::is_same_v<T, uint8_t> ||
+				std::is_same_v<T, int16_t> ||
+				std::is_same_v<T, uint16_t> ||
+				std::is_same_v<T, int32_t> ||
+				std::is_same_v<T, uint32_t> ||
+				std::is_same_v<T, int64_t> ||
+				std::is_same_v<T, uint64_t> ||
+				std::is_same_v<T, f32> ||
+				std::is_same_v<T, f64>) {
+				if constexpr (sizeof(T) == 1) {
+					if (_position < _length) {
+						return *(T*)&_data[_position++];
+					} else {
+						_position = _length;
+						return (T)0;
+					}
+				} else {
+					const uint32_t len = sizeof(T);
+					if (_position + len > _length) {
+						_position = _length;
+						return (T)0;
+					}
+
+					if (_needReverse) {
+						T v;
+						auto p = (uint8_t*)&v;
+						for (int32_t i = len - 1; i >= 0; --i) p[i] = _data[_position++];
+						return v;
+					} else {
+						T v = *(T*)&_data[_position];
+						_position += len;
+						return v;
+					}
+				}
+			} else {
+				static_assert(false, "ByteArray read<T>, unsupported type");
+			}
+		}
+
+		template<typename T>
+		inline void AE_CALL write(const T& value) {
+			if constexpr (
+				std::is_same_v<T, bool> ||
+				std::is_same_v<T, int8_t> ||
+				std::is_same_v<T, uint8_t> ||
+				std::is_same_v<T, int16_t> ||
+				std::is_same_v<T, uint16_t> ||
+				std::is_same_v<T, int32_t> ||
+				std::is_same_v<T, uint32_t> ||
+				std::is_same_v<T, int64_t> ||
+				std::is_same_v<T, uint64_t> ||
+				std::is_same_v<T, f32> ||
+				std::is_same_v<T, f64>) {
+				_write((uint8_t*)&value, sizeof(T));
+			} else {
+				static_assert(false, "ByteArray write<T>, unsupported type");
+			}
+		}
+
+		inline void AE_CALL writePadding(size_t length);
 
 		inline void AE_CALL readTwoUInt12(uint16_t& value1, uint16_t& value2);
 		inline void AE_CALL writeTwoUInt12(uint16_t value1, uint16_t value2);
@@ -145,25 +184,6 @@ namespace aurora {
 		size_t _length;
 		size_t _capacity;
 
-		template<typename K>
-		K AE_CALL _read() {
-			const uint32_t len = sizeof(K);
-			if (_position + len > _length) {
-				_position = _length;
-				return (K)0;
-			}
-
-			if (_needReverse) {
-				K v;
-				int8_t* p = (int8_t*)&v;
-				for (int8_t i = len - 1; i >= 0; --i) p[i] = _data[_position++];
-				return v;
-			} else {
-				K* p = (K*)&_data[_position];
-				_position += len;
-				return *p;
-			}
-		}
 		inline void AE_CALL _read(uint8_t* p, uint32_t len);
 		inline void AE_CALL _write(const uint8_t* p, uint32_t len);
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "base/LowLevel.h"
+#include "base/Global.h"
 
 namespace aurora::hash {
 	class AE_DLL CRC {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "base/LowLevel.h"
+#include "base/Global.h"
 #include "math/Vector.h"
 
 namespace aurora {
@@ -10,12 +10,12 @@ namespace aurora {
 		Box() {
 		}
 
-		Box(const Box<N, T>& box) :
+		Box(const Box& box) :
 			pos(box.pos),
 			size(box.size) {
 		}
 
-		Box(Box<N, T>&& box) :
+		Box(Box&& box) :
 			pos(box.pos),
 			size(box.size) {
 		}
@@ -25,15 +25,15 @@ namespace aurora {
 			size(size) {
 		}
 
-		inline bool AE_CALL operator==(const Box<N, T>& box) {
+		inline bool AE_CALL operator==(const Box& box) {
 			return pos == box.pos && size == box.size;
 		}
 
-		inline bool AE_CALL operator!=(const Box<N, T>& box) {
+		inline bool AE_CALL operator!=(const Box& box) {
 			return pos != box.pos || size != box.size;
 		}
 
-		inline void AE_CALL set(const Box<N, T>& box) {
+		inline void AE_CALL set(const Box& box) {
 			pos.set(box.pos);
 			size.set(box.size);
 		}
@@ -43,7 +43,7 @@ namespace aurora {
 			this->size.set(size);
 		}
 
-		inline bool AE_CALL isEqual(const Box<N, T>& box) const {
+		inline bool AE_CALL isEqual(const Box& box) const {
 			return pos == box.pos && size == box.size;
 		}
 

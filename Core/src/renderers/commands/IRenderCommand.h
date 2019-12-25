@@ -1,6 +1,6 @@
 #pragma once
 
-#include "base/LowLevel.h"
+#include "base/Global.h"
 
 namespace aurora::renderers::commands {
 	class AE_DLL IRenderCommand {

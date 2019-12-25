@@ -18,6 +18,10 @@ namespace aurora::nodes {
 		dst[2] = z;
 	}
 
+	inline Vec3f32 Node::getLocalPosition() const {
+		return Vec3f32(_lm.data[0][3], _lm.data[1][3], _lm.data[2][3]);
+	}
+
 	inline const Quaternion& Node::getLocalRotation() const {
 		return _lr;
 	}
@@ -44,6 +48,12 @@ namespace aurora::nodes {
 		dst[2] = z;
 	}
 
+	inline Vec3f32 Node::getWorldPosition() const {
+		updateWorldMatrix();
+
+		return Vec3f32(_wm.data[0][3], _wm.data[1][3], _wm.data[2][3]);
+	}
+
 	inline const Matrix34& Node::getWorldMatrix() const {
 		updateWorldMatrix();
 		return _wm;
@@ -64,11 +74,11 @@ namespace aurora::nodes {
 		rot.toQuaternion(_lr);
 	}
 
-	inline void Node::_checkNoticeUpdate (uint32_t dirty) {
+	inline void Node::_checkNoticeUpdate(DirtyType dirty) {
 		_checkNoticeUpdateNow(_dirty | dirty, dirty);
 	}
 
-	inline void Node::_checkNoticeUpdate (uint32_t appendDirty, uint32_t sendDirty) {
+	inline void Node::_checkNoticeUpdate(DirtyType appendDirty, DirtyType sendDirty) {
 		_checkNoticeUpdateNow(_dirty | appendDirty, sendDirty);
 	}
 }

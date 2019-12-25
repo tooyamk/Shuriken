@@ -36,15 +36,15 @@ namespace aurora::modules::graphics {
 		_base.unmap();
 	}
 
-	uint32_t MultipleVertexBuffer::read (uint32_t offset, void* dst, uint32_t dstLen) {
+	uint32_t MultipleVertexBuffer::read(uint32_t offset, void* dst, uint32_t dstLen) {
 		return _base.read(offset, dst, dstLen);
 	}
 
-	uint32_t MultipleVertexBuffer::write (uint32_t offset, const void* data, uint32_t length) {
+	uint32_t MultipleVertexBuffer::write(uint32_t offset, const void* data, uint32_t length) {
 		return _base.write(offset, data, length);
 	}
 
-	uint32_t MultipleVertexBuffer::update (uint32_t offset, const void* data, uint32_t length) {
+	uint32_t MultipleVertexBuffer::update(uint32_t offset, const void* data, uint32_t length) {
 		return _base.update(offset, data, length);
 	}
 
@@ -109,15 +109,15 @@ namespace aurora::modules::graphics {
 		_base.unmap();
 	}
 
-	uint32_t MultipleIndexBuffer::read (uint32_t offset, void* dst, uint32_t dstLen) {
+	uint32_t MultipleIndexBuffer::read(uint32_t offset, void* dst, uint32_t dstLen) {
 		return _base.read(offset, dst, dstLen);
 	}
 
-	uint32_t MultipleIndexBuffer::write (uint32_t offset, const void* data, uint32_t length) {
+	uint32_t MultipleIndexBuffer::write(uint32_t offset, const void* data, uint32_t length) {
 		return _base.write(offset, data, length);
 	}
 
-	uint32_t MultipleIndexBuffer::update (uint32_t offset, const void* data, uint32_t length) {
+	uint32_t MultipleIndexBuffer::update(uint32_t offset, const void* data, uint32_t length) {
 		return _base.update(offset, data, length);
 	}
 
@@ -176,15 +176,15 @@ namespace aurora::modules::graphics {
 		_base.unmap();
 	}
 
-	uint32_t MultipleConstantBuffer::read (uint32_t offset, void* dst, uint32_t dstLen) {
+	uint32_t MultipleConstantBuffer::read(uint32_t offset, void* dst, uint32_t dstLen) {
 		return _base.read(offset, dst, dstLen);
 	}
 
-	uint32_t MultipleConstantBuffer::write (uint32_t offset, const void* data, uint32_t length) {
+	uint32_t MultipleConstantBuffer::write(uint32_t offset, const void* data, uint32_t length) {
 		return _base.write(offset, data, length);
 	}
 
-	uint32_t MultipleConstantBuffer::update (uint32_t offset, const void* data, uint32_t length) {
+	uint32_t MultipleConstantBuffer::update(uint32_t offset, const void* data, uint32_t length) {
 		return _base.update(offset, data, length);
 	}
 

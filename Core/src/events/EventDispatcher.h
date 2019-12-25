@@ -11,6 +11,8 @@ namespace aurora::events {
 		}
 		EventDispatcher(const EventDispatcher&) = delete;
 		EventDispatcher(EventDispatcher&&) = delete;
+		EventDispatcher& operator=(const EventDispatcher&) = delete;
+		EventDispatcher& operator=(EventDispatcher&&) = delete;
 
 		virtual ~EventDispatcher() {
 		}
@@ -92,7 +94,7 @@ namespace aurora::events {
 			return false;
 		}
 
-		virtual bool AE_CALL removeEventListener(const EvtType& type, IEventListener<EvtType>& listener) override {
+		virtual bool AE_CALL removeEventListener(const EvtType& type, const IEventListener<EvtType>& listener) override {
 			if (auto itr = _listeners.find(type); itr != _listeners.end()) {
 				if (auto& tl = itr->second; tl.numValidListeners) {
 					if (auto& list = tl.listeners; tl.dispatching) {

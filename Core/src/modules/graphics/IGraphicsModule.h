@@ -51,14 +51,14 @@ namespace aurora::modules::graphics {
 		virtual ~IBuffer() {}
 
 		virtual const void* AE_CALL getNativeBuffer() const = 0;
-		virtual bool AE_CALL create (uint32_t size, Usage bufferUsage, const void* data = nullptr, uint32_t dataSize = 0) = 0;
+		virtual bool AE_CALL create(uint32_t size, Usage bufferUsage, const void* data = nullptr, uint32_t dataSize = 0) = 0;
 		virtual uint32_t AE_CALL getSize() const = 0;
 		virtual Usage AE_CALL getUsage() const = 0;
 		virtual Usage AE_CALL map(Usage expectMapUsage) = 0;
 		virtual void AE_CALL unmap() = 0;
-		virtual uint32_t AE_CALL read (uint32_t offset, void* dst, uint32_t dstLen) = 0;
-		virtual uint32_t AE_CALL write (uint32_t offset, const void* data, uint32_t length) = 0;
-		virtual uint32_t AE_CALL update (uint32_t offset, const void* data, uint32_t length) = 0;
+		virtual uint32_t AE_CALL read(uint32_t offset, void* dst, uint32_t dstLen) = 0;
+		virtual uint32_t AE_CALL write(uint32_t offset, const void* data, uint32_t length) = 0;
+		virtual uint32_t AE_CALL update(uint32_t offset, const void* data, uint32_t length) = 0;
 		//virtual void AE_CALL flush() = 0;
 		virtual bool AE_CALL isSyncing() const = 0;
 	};
@@ -245,10 +245,10 @@ namespace aurora::modules::graphics {
 		virtual const void* AE_CALL getNativeResource() const = 0;
 		virtual uint16_t AE_CALL getPerPixelByteSize() const = 0;
 		virtual Usage AE_CALL getUsage() const = 0;
-		virtual Usage AE_CALL map (uint32_t arraySlice, uint32_t mipSlice, Usage expectMapUsage) = 0;
-		virtual void AE_CALL unmap (uint32_t arraySlice, uint32_t mipSlice) = 0;
-		virtual uint32_t AE_CALL read (uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, void* dst, uint32_t dstLen) = 0;
-		virtual uint32_t AE_CALL write (uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, const void* data, uint32_t length) = 0;
+		virtual Usage AE_CALL map(uint32_t arraySlice, uint32_t mipSlice, Usage expectMapUsage) = 0;
+		virtual void AE_CALL unmap(uint32_t arraySlice, uint32_t mipSlice) = 0;
+		virtual uint32_t AE_CALL read(uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, void* dst, uint32_t dstLen) = 0;
+		virtual uint32_t AE_CALL write(uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, const void* data, uint32_t length) = 0;
 	};
 
 
@@ -257,9 +257,9 @@ namespace aurora::modules::graphics {
 		ITexture1DResource(IGraphicsModule& graphics) : ITextureResource(graphics) {}
 		virtual ~ITexture1DResource() {}
 
-		virtual bool AE_CALL create (uint32_t width, uint32_t arraySize, uint32_t mipLevels, TextureFormat format, Usage resUsage, const void*const* data = nullptr) = 0;
-		virtual bool AE_CALL update (uint32_t arraySlice, uint32_t mipSlice, const Box1ui32& range, const void* data) = 0;
-		virtual bool AE_CALL copyFrom (uint32_t arraySlice, uint32_t mipSlice, const Box1ui32& range, const IPixelBuffer* pixelBuffer) = 0;
+		virtual bool AE_CALL create(uint32_t width, uint32_t arraySize, uint32_t mipLevels, TextureFormat format, Usage resUsage, const void*const* data = nullptr) = 0;
+		virtual bool AE_CALL update(uint32_t arraySlice, uint32_t mipSlice, const Box1ui32& range, const void* data) = 0;
+		virtual bool AE_CALL copyFrom(uint32_t arraySlice, uint32_t mipSlice, const Box1ui32& range, const IPixelBuffer* pixelBuffer) = 0;
 	};
 
 
@@ -269,8 +269,8 @@ namespace aurora::modules::graphics {
 		virtual ~ITexture2DResource() {}
 
 		virtual bool AE_CALL create(const Vec2ui32& size, uint32_t arraySize, uint32_t mipLevels, TextureFormat format, Usage resUsage, const void*const* data = nullptr) = 0;
-		virtual bool AE_CALL update (uint32_t arraySlice, uint32_t mipSlice, const Box2ui32& range, const void* data) = 0;
-		virtual bool AE_CALL copyFrom (uint32_t arraySlice, uint32_t mipSlice, const Box2ui32& range, const IPixelBuffer* pixelBuffer) = 0;
+		virtual bool AE_CALL update(uint32_t arraySlice, uint32_t mipSlice, const Box2ui32& range, const void* data) = 0;
+		virtual bool AE_CALL copyFrom(uint32_t arraySlice, uint32_t mipSlice, const Box2ui32& range, const IPixelBuffer* pixelBuffer) = 0;
 	};
 
 
@@ -280,8 +280,8 @@ namespace aurora::modules::graphics {
 		virtual ~ITexture3DResource() {}
 
 		virtual bool AE_CALL create(const Vec3ui32& size, uint32_t arraySize, uint32_t mipLevels, TextureFormat format, Usage resUsage, const void*const* data = nullptr) = 0;
-		virtual bool AE_CALL update (uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const void* data) = 0;
-		virtual bool AE_CALL copyFrom (uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const IPixelBuffer* pixelBuffer) = 0;
+		virtual bool AE_CALL update(uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const void* data) = 0;
+		virtual bool AE_CALL copyFrom(uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const IPixelBuffer* pixelBuffer) = 0;
 	};
 
 

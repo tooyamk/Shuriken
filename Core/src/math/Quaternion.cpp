@@ -18,7 +18,7 @@ namespace aurora {
 		w(q.w) {
 	}
 
-	Quaternion::Quaternion(Quaternion&& q) :
+	Quaternion::Quaternion(Quaternion&& q) noexcept :
 		x(q.x),
 		y(q.y),
 		z(q.z),

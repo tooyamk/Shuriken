@@ -192,12 +192,13 @@
     <ClInclude Include="src\base\Application.h" />
     <ClInclude Include="src\base\Args.h" />
     <ClInclude Include="src\base\ByteArray.h" />
+    <ClInclude Include="src\base\GUID.h" />
     <ClInclude Include="src\base\Image.h" />
     <ClInclude Include="src\base\SerializableObject.h" />
     <ClInclude Include="src\base\String.h" />
     <ClInclude Include="src\base\STList.h" />
     <ClInclude Include="src\base\Lock.h" />
-    <ClInclude Include="src\base\LowLevel.h" />
+    <ClInclude Include="src\base\GLobal.h" />
     <ClInclude Include="src\base\DynamicLib.h" />
     <ClInclude Include="src\base\Monitor.h" />
     <ClInclude Include="src\base\Ref.h" />
@@ -222,7 +223,6 @@
     <ClInclude Include="src\modules\IModule.h" />
     <ClInclude Include="src\modules\inputs\DeviceInfo.h" />
     <ClInclude Include="src\modules\inputs\IInputModule.h" />
-    <ClInclude Include="src\modules\inputs\GUID.h" />
     <ClInclude Include="src\modules\ModuleLoader.h" />
     <ClInclude Include="src\nodes\components\AbstractComponent.h" />
     <ClInclude Include="src\nodes\components\Camera.h" />
@@ -256,7 +256,6 @@
     <ClCompile Include="src\modules\graphics\VertexBufferFactory.cpp" />
     <ClCompile Include="src\modules\inputs\DeviceInfo.cpp" />
     <ClCompile Include="src\modules\inputs\IInputModule.cpp" />
-    <ClCompile Include="src\modules\inputs\GUID.cpp" />
     <ClCompile Include="src\nodes\components\AbstractComponent.cpp" />
     <ClCompile Include="src\nodes\components\Camera.cpp" />
     <ClCompile Include="src\nodes\Node.cpp" />

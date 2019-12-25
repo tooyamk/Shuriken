@@ -66,7 +66,7 @@ namespace aurora::modules::inputs::win_direct_input {
 		for (uint32_t i = connectedIdx, n = changed.size(); i < n; ++i) _eventDispatcher.dispatchEvent(this, ModuleEvent::CONNECTED, &changed[i]);
 	}
 
-	IInputDevice* Input::createDevice(const GUID& guid) {
+	IInputDevice* Input::createDevice(const DeviceGUID& guid) {
 		for (auto& info : _devices) {
 			if (info.guid == guid) {
 				LPDIRECTINPUTDEVICE8 dev = nullptr;
@@ -99,14 +99,14 @@ namespace aurora::modules::inputs::win_direct_input {
 			auto im = (Input*)pContext;
 
 			for (uint32_t i = 0, n = im->_devices.size(); i < n; ++i) {
-				if (im->_devices[i].guid.isEqual((const uint8_t*)&pdidInstance->guidProduct, sizeof(::GUID))) {
+				if (im->_devices[i].guid.isEqual<false, true>((const uint8_t*)&pdidInstance->guidProduct, sizeof(::GUID))) {
 					im->_keepDevices.emplace_back(i);
 					return DIENUM_CONTINUE;
 				}
 			}
 
 			auto& info = im->_connectedDevices.emplace_back();
-			info.guid.set((const uint8_t*)&pdidInstance->guidProduct, sizeof(::GUID));
+			info.guid.set<false, true>((const uint8_t*)&pdidInstance->guidProduct, sizeof(::GUID));
 			switch (type) {
 			case DI8DEVTYPE_MOUSE:
 				info.type |= DeviceType::MOUSE;

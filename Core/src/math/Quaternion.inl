@@ -2,8 +2,16 @@
 #include "math/Matrix34.h"
 
 namespace aurora {
+	inline Quaternion::operator Quaternion::Data& () {
+ 		return data;
+ 	}
+
+	inline Quaternion::operator const Quaternion::Data& () const {
+		return data;
+	}
+
 	inline f32 Quaternion::length() const {
-		return std::sqrt(x * x + y * y + z * z + w * w);
+		return std::sqrt(lengthSq());
 	}
 
 	inline f32 Quaternion::lengthSq() const {
@@ -70,7 +78,7 @@ namespace aurora {
 	}
 
 	inline void Quaternion::append(const Quaternion& q, Quaternion& dst) const {
-		Math::appendQuat(&x, &q.x, &dst.x);
+		Math::appendQuat(*this, q, dst);
 	}
 
 	inline void Quaternion::rotate(const f32(&p)[3], f32(&dst)[3]) const {

@@ -1,5 +1,5 @@
 namespace aurora {
-	inline void Math::appendQuat(const f32* lhs, const f32* rhs, f32* dst) {
+	inline void Math::appendQuat(const f32(&lhs)[4], const f32(&rhs)[4], f32(&dst)[4]) {
 		auto w = lhs[3] * rhs[3] - lhs[0] * rhs[0] - lhs[1] * rhs[1] - lhs[2] * rhs[2];
 		auto x = lhs[0] * rhs[3] + lhs[3] * rhs[0] + lhs[2] * rhs[1] - lhs[1] * rhs[2];
 		auto y = lhs[1] * rhs[3] + lhs[3] * rhs[1] + lhs[0] * rhs[2] - lhs[2] * rhs[0];

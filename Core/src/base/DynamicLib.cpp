@@ -1,7 +1,7 @@
 #include "DynamicLib.h"
 #include "base/String.h"
 
-#if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_MAC
+#if AE_OS != AE_OS_WIN
 #include <dlfcn.h>
 #endif
 
@@ -15,12 +15,12 @@ namespace aurora {
 	}
 
 	bool DynamicLib::load(const char* path) {
-#if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
+#if AE_OS == AE_OS_WIN
 		wchar_t* out = nullptr;
 		if (String::Utf8ToUnicode(path, (std::numeric_limits<uint32_t>::max)(), out) == std::string::npos) return false;
 		_lib = LoadLibraryW(out);
 		delete[] out;
-#elif AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_MAC
+#else
 		_lib = dlopen(path, RTLD_LAZY);
 #endif
 		return _lib;
@@ -28,9 +28,9 @@ namespace aurora {
 
 	void DynamicLib::free() {
 		if (_lib) {
-#if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
+#if AE_OS == AE_OS_WIN
 			FreeLibrary((HMODULE)_lib);
-#elif AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_MAC
+#else
 			dlclose(_lib);
 #endif
 			_lib = nullptr;
@@ -39,12 +39,10 @@ namespace aurora {
 
 	void* DynamicLib::getSymbolAddress(const char* name) const {
 		if (_lib) {
-#if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
+#if AE_OS == AE_OS_WIN
 			return GetProcAddress((HMODULE)_lib, name);
-#elif AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_MAC
-			return dlsym(_lib, name);
 #else
-			return nullptr;
+			return dlsym(_lib, name);
 #endif
 		} else {
 			return nullptr;

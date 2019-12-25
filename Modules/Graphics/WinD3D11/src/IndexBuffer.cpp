@@ -17,7 +17,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return this;
 	}
 
-	bool IndexBuffer::create (uint32_t size, Usage bufferUsage, const void* data, uint32_t dataSize) {
+	bool IndexBuffer::create(uint32_t size, Usage bufferUsage, const void* data, uint32_t dataSize) {
 		return _baseBuffer.create(*_graphics.get<Graphics>(), size, bufferUsage, data, dataSize);
 	}
 
@@ -37,15 +37,15 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_baseBuffer.unmap(*_graphics.get<Graphics>());
 	}
 
-	uint32_t IndexBuffer::read (uint32_t offset, void* dst, uint32_t dstLen) {
+	uint32_t IndexBuffer::read(uint32_t offset, void* dst, uint32_t dstLen) {
 		return _baseBuffer.read(offset, dst, dstLen);
 	}
 
-	uint32_t IndexBuffer::write (uint32_t offset, const void* data, uint32_t length) {
+	uint32_t IndexBuffer::write(uint32_t offset, const void* data, uint32_t length) {
 		return _baseBuffer.write(*_graphics.get<Graphics>(), offset, data, length);
 	}
 
-	uint32_t IndexBuffer::update (uint32_t offset, const void* data, uint32_t length) {
+	uint32_t IndexBuffer::update(uint32_t offset, const void* data, uint32_t length) {
 		return _baseBuffer.update(*_graphics.get<Graphics>(), offset, data, length);
 	}
 

@@ -2,6 +2,14 @@
 #include "math/Matrix44.h"
 
 namespace aurora {
+	inline Matrix34::operator Matrix34::Data& () {
+		return data;
+	}
+
+	inline Matrix34::operator const Matrix34::Data& () const {
+		return data;
+	}
+
 	inline void Matrix34::transpose(Matrix44& dst) const {
 		Math::transposeMat(data, dst.data);
 	}

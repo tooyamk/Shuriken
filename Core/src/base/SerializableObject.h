@@ -106,7 +106,7 @@ namespace aurora {
 			set(value);
 			return *this;
 		}
-		inline SerializableObject& AE_CALL operator=(SerializableObject&& value) {
+		inline SerializableObject& AE_CALL operator=(SerializableObject&& value) noexcept {
 			_type = value._type;
 			memcpy(_value, value._value, VALUE_SIZE);
 			value._type = Type::INVALID;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "base/LowLevel.h"
+#include "base/Global.h"
 #include <initializer_list>
 
 namespace aurora {
@@ -18,6 +18,8 @@ namespace aurora {
 	 */
 	class AE_DLL Matrix34 {
 	public:
+		using Data = f32[3][4];
+
 		Matrix34();
 		Matrix34(
 			f32 m00, f32 m01 = 0.f, f32 m02 = 0.f, f32 m03 = 0.f,
@@ -29,6 +31,9 @@ namespace aurora {
 		Matrix34(const f32(&m)[3][4]);
 		Matrix34(const f32(&m)[4][4]);
 		~Matrix34();
+
+		inline AE_CALL operator Data& ();
+		inline AE_CALL operator const Data& () const;
 
 		void AE_CALL set33(const Matrix34& m);
 		void AE_CALL set33(const Matrix44& m);
@@ -94,7 +99,7 @@ namespace aurora {
 
 		union {
 			//__m128 col[4];
-			f32 data[3][4];
+			Data data;
 		};
 	};
 }

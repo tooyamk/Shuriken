@@ -52,7 +52,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		BaseResource::unmap(graphics, mapUsage, 0);
 	}
 
-	uint32_t BaseBuffer::read (uint32_t offset, void* dst, uint32_t dstLen) {
+	uint32_t BaseBuffer::read(uint32_t offset, void* dst, uint32_t dstLen) {
 		if ((mapUsage & Usage::MAP_READ) == Usage::MAP_READ) {
 			if (!dstLen || offset >= size) return 0;
 			if (dst) {

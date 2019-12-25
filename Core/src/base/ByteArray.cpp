@@ -1,7 +1,7 @@
 #include "ByteArray.h"
 
 namespace aurora {
-	ByteArray::ByteArray(ByteArray&& bytes) :
+	ByteArray::ByteArray(ByteArray&& bytes) noexcept :
 		_endian(bytes._endian),
 		_needReverse(bytes._needReverse),
 		_capacity(bytes._capacity),
@@ -44,7 +44,7 @@ namespace aurora {
 		}
 	}
 
-	ByteArray& ByteArray::operator=(ByteArray&& value) {
+	ByteArray& ByteArray::operator=(ByteArray&& value) noexcept {
 		dispose(true);
 
 		_endian = value._endian;
@@ -89,9 +89,9 @@ namespace aurora {
 	int64_t ByteArray::readInt(uint8_t numBytes) {
 		switch (numBytes) {
 		case 1:
-			return _read<int8_t>();
+			return read<int8_t>();
 		case 2:
-			return _read<uint16_t>();
+			return read<uint16_t>();
 		case 3:
 		{
 			int32_t v = 0;
@@ -99,7 +99,7 @@ namespace aurora {
 			return v > INT24_MAX ? v - INT24 : v;
 		}
 		case 4:
-			return _read<int32_t>();
+			return read<int32_t>();
 		case 5:
 		{
 			int64_t v = 0;
@@ -119,16 +119,16 @@ namespace aurora {
 			return v > INT56_MAX ? v - INT56 : v;
 		}
 		default:
-			return _read<int64_t>();
+			return read<int64_t>();
 		}
 	}
 
 	uint64_t ByteArray::readUInt(uint8_t numBytes) {
 		switch (numBytes) {
 		case 1:
-			return _read<uint8_t>();
+			return read<uint8_t>();
 		case 2:
-			return _read<uint16_t>();
+			return read<uint16_t>();
 		case 3:
 		{
 			uint32_t v = 0;
@@ -136,7 +136,7 @@ namespace aurora {
 			return v;
 		}
 		case 4:
-			return _read<uint32_t>();
+			return read<uint32_t>();
 		case 5:
 		case 6:
 		case 7:
@@ -146,17 +146,17 @@ namespace aurora {
 			return v;
 		}
 		default:
-			return _read<uint64_t>();
+			return read<uint64_t>();
 		}
 	}
 
 	void ByteArray::writeInt(uint8_t numBytes, int64_t value) {
 		switch (numBytes) {
 		case 1:
-			writeInt8(value);
+			write<int8_t>(value);
 			break;
 		case 2:
-			writeInt16(value);
+			write<int16_t>(value);
 			break;
 		case 3:
 		{
@@ -166,7 +166,7 @@ namespace aurora {
 			break;
 		}
 		case 4:
-			writeInt32(value);
+			write<int32_t>(value);
 			break;
 		case 5:
 		{
@@ -190,7 +190,7 @@ namespace aurora {
 			break;
 		}
 		case 8:
-			writeInt64(value);
+			write<int64_t>(value);
 			break;
 		default:
 			break;
@@ -224,9 +224,9 @@ namespace aurora {
 			value >>= 7;
 			if (value) {
 				val |= 0x80;
-				writeUInt8(val);
+				write<uint8_t>(val);
 			} else {
-				writeUInt8(val);
+				write<uint8_t>(val);
 				break;
 			}
 		} while (true);

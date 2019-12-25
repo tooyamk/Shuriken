@@ -109,7 +109,7 @@ namespace aurora::modules::graphics::win_glew {
 		}
 	}
 
-	uint32_t BaseBuffer::read (uint32_t offset, void* dst, uint32_t dstLen) {
+	uint32_t BaseBuffer::read(uint32_t offset, void* dst, uint32_t dstLen) {
 		if ((mapUsage & Usage::MAP_READ)== Usage::MAP_READ) {
 			if (dst && dstLen && offset < size) {
 				dstLen = std::min<uint32_t>(dstLen, size - offset);
@@ -121,7 +121,7 @@ namespace aurora::modules::graphics::win_glew {
 		return -1;
 	}
 
-	uint32_t BaseBuffer::write (uint32_t offset, const void* data, uint32_t length) {
+	uint32_t BaseBuffer::write(uint32_t offset, const void* data, uint32_t length) {
 		if ((mapUsage & Usage::MAP_WRITE) == Usage::MAP_WRITE) {
 			if (data && length && offset < size) {
 				dirty = true;
@@ -134,7 +134,7 @@ namespace aurora::modules::graphics::win_glew {
 		return -1;
 	}
 
-	uint32_t BaseBuffer::update (uint32_t offset, const void* data, uint32_t length) {
+	uint32_t BaseBuffer::update(uint32_t offset, const void* data, uint32_t length) {
 		if ((resUsage & Usage::UPDATE) == Usage::UPDATE) {
 			if (data && length && offset < size) {
 				length = std::min<uint32_t>(length, size - offset);

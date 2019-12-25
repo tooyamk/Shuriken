@@ -19,7 +19,7 @@ namespace aurora::events {
 			_target(target) {
 		}
 
-		Event(void* target, const Event<EvtType>& e) :
+		Event(void* target, const Event& e) :
 			_type(e.getType()),
 			_data(e.getData()),
 			_target(target) {
@@ -78,8 +78,6 @@ namespace aurora::events {
 		Class* _target;
 		EvtMethod<EvtType, Class> _method;
 	};
-	template<typename EvtType, typename Class>
-	using EventListenerMethod = EventListener<EvtType, Class>;
 
 
 	template<typename EvtType>
@@ -96,7 +94,7 @@ namespace aurora::events {
 		EvtFn<EvtType> _fn;
 	};
 	template<typename EvtType>
-	using EventListenerFn = EventListener<EvtType, EvtFn<EvtType>>;
+	EventListener(EvtFn<EvtType>)->EventListener<EvtType, EvtFn<EvtType>>;
 
 
 	template<typename EvtType>
@@ -113,7 +111,24 @@ namespace aurora::events {
 		EvtFunc<EvtType> _fn;
 	};
 	template<typename EvtType>
-	using EventListenerFunc = EventListener<EvtType, EvtFunc<EvtType>>;
+	EventListener(EvtFunc<EvtType>)->EventListener<EvtType, EvtFunc<EvtType>>;
+
+
+	template<typename EvtType, typename Fn>
+	class AE_TEMPLATE_DLL EventListener<EvtType, const Fn&> : public IEventListener<EvtType> {
+	public:
+		EventListener(const Recognitor<EvtType>& recognitor, const Fn& fn) :
+			_fn(fn) {
+		}
+
+		virtual void AE_CALL onEvent(Event<EvtType>& e) override {
+			_fn(e);
+		}
+	private:
+		Fn _fn;
+	};
+	template<typename EvtType, typename Fn, typename = std::enable_if_t<std::is_invocable_r<void, Fn, Event<EvtType>>::value, Fn>>
+	EventListener(Recognitor<EvtType>, Fn)->EventListener<EvtType, const Fn&>;
 
 
 	template<typename EvtType>
@@ -127,10 +142,10 @@ namespace aurora::events {
 		virtual uint32_t AE_CALL hasEventListener(const EvtType& type) const = 0;
 		virtual bool AE_CALL hasEventListener(const EvtType& type, const IEventListener<EvtType>& listener) const = 0;
 
-		inline bool AE_CALL removeEventListener(const EvtType& type, IEventListener<EvtType>* listener) {
+		inline bool AE_CALL removeEventListener(const EvtType& type, const IEventListener<EvtType>* listener) {
 			return listener ? removeEventListener(type, *listener) : false;
 		}
-		virtual bool AE_CALL removeEventListener(const EvtType& type, IEventListener<EvtType>& listener) = 0;
+		virtual bool AE_CALL removeEventListener(const EvtType& type, const IEventListener<EvtType>& listener) = 0;
 
 		virtual uint32_t AE_CALL removeEventListeners(const EvtType& type) = 0;
 		virtual uint32_t AE_CALL removeEventListeners() = 0;

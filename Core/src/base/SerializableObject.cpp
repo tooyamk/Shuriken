@@ -872,71 +872,71 @@ namespace aurora {
 	void SerializableObject::pack(ByteArray& ba) const {
 		switch (_type) {
 		case Type::INVALID:
-			ba.writeUInt8((uint8_t)_type);
+			ba.write<uint8_t>((uint8_t)_type);
 			break;
 		case Type::BOOL:
-			ba.writeUInt8((uint8_t)(_getValue<bool>() ? InternalType::BOOL_TRUE : InternalType::BOOL_FALSE));
+			ba.write<uint8_t>((uint8_t)(_getValue<bool>() ? InternalType::BOOL_TRUE : InternalType::BOOL_FALSE));
 			break;
 		case Type::INT:
 		{
 			auto v = _getValue<int64_t>();
 			if (v < 0) {
 				if (v == -1) {
-					ba.writeUInt8((uint8_t)InternalType::N_INT_1);
+					ba.write<uint8_t>((uint8_t)InternalType::N_INT_1);
 				} else if (v >= -0xFFi64) {
-					ba.writeUInt8((uint8_t)InternalType::N_INT_8BITS);
-					ba.writeUInt8(-v);
+					ba.write<uint8_t>((uint8_t)InternalType::N_INT_8BITS);
+					ba.write<uint8_t>(-v);
 				} else if (v >= -0xFFFFi64) {
-					ba.writeUInt8((uint8_t)InternalType::N_INT_16BITS);
-					ba.writeUInt16(-v);
+					ba.write<uint8_t>((uint8_t)InternalType::N_INT_16BITS);
+					ba.write<uint16_t>(-v);
 				} else if (v >= -0xFFFFFFi64) {
-					ba.writeUInt8((uint8_t)InternalType::N_INT_24BITS);
+					ba.write<uint8_t>((uint8_t)InternalType::N_INT_24BITS);
 					ba.writeUInt(3, -v);
 				} else if (v >= -0xFFFFFFFFi64) {
-					ba.writeUInt8((uint8_t)InternalType::N_INT_32BITS);
-					ba.writeUInt32(-v);
+					ba.write<uint8_t>((uint8_t)InternalType::N_INT_32BITS);
+					ba.write<uint32_t>(-v);
 				} else if (v >= -0xFFFFFFFFFFi64) {
-					ba.writeUInt8((uint8_t)InternalType::N_INT_40BITS);
+					ba.write<uint8_t>((uint8_t)InternalType::N_INT_40BITS);
 					ba.writeUInt(5, -v);
 				} else if (v >= -0xFFFFFFFFFFFFi64) {
-					ba.writeUInt8((uint8_t)InternalType::N_INT_48BITS);
+					ba.write<uint8_t>((uint8_t)InternalType::N_INT_48BITS);
 					ba.writeUInt(6, -v);
 				} else if (v >= -0xFFFFFFFFFFFFFFi64) {
-					ba.writeUInt8((uint8_t)InternalType::N_INT_56BITS);
+					ba.write<uint8_t>((uint8_t)InternalType::N_INT_56BITS);
 					ba.writeUInt(7, -v);
 				} else {
-					ba.writeUInt8((uint8_t)InternalType::N_INT_64BITS);
-					ba.writeUInt64(-v);
+					ba.write<uint8_t>((uint8_t)InternalType::N_INT_64BITS);
+					ba.write<uint64_t>(-v);
 				}
 			} else {
 				if (v == 0) {
-					ba.writeUInt8((uint8_t)InternalType::U_INT_0);
+					ba.write<uint8_t>((uint8_t)InternalType::U_INT_0);
 				} else if (v == 1) {
-					ba.writeUInt8((uint8_t)InternalType::U_INT_1);
+					ba.write<uint8_t>((uint8_t)InternalType::U_INT_1);
 				} else if (v <= 0xFFi64) {
-					ba.writeUInt8((uint8_t)InternalType::U_INT_8BITS);
-					ba.writeUInt8(v);
+					ba.write<uint8_t>((uint8_t)InternalType::U_INT_8BITS);
+					ba.write<uint8_t>(v);
 				} else if (v <= 0xFFFFi64) {
-					ba.writeUInt8((uint8_t)InternalType::U_INT_16BITS);
-					ba.writeUInt16(v);
+					ba.write<uint8_t>((uint8_t)InternalType::U_INT_16BITS);
+					ba.write<uint16_t>(v);
 				} else if (v <= 0xFFFFFFi64) {
-					ba.writeUInt8((uint8_t)InternalType::U_INT_24BITS);
+					ba.write<uint8_t>((uint8_t)InternalType::U_INT_24BITS);
 					ba.writeUInt(3, v);
 				} else if (v <= 0xFFFFFFFFi64) {
-					ba.writeUInt8((uint8_t)InternalType::U_INT_32BITS);
-					ba.writeUInt32(v);
+					ba.write<uint8_t>((uint8_t)InternalType::U_INT_32BITS);
+					ba.write<uint32_t>(v);
 				} else if (v <= 0xFFFFFFFFFFi64) {
-					ba.writeUInt8((uint8_t)InternalType::U_INT_40BITS);
+					ba.write<uint8_t>((uint8_t)InternalType::U_INT_40BITS);
 					ba.writeUInt(5, v);
 				} else if (v <= 0xFFFFFFFFFFFFi64) {
-					ba.writeUInt8((uint8_t)InternalType::U_INT_48BITS);
+					ba.write<uint8_t>((uint8_t)InternalType::U_INT_48BITS);
 					ba.writeUInt(6, v);
 				} else if (v <= 0xFFFFFFFFFFFFFFi64) {
-					ba.writeUInt8((uint8_t)InternalType::U_INT_56BITS);
+					ba.write<uint8_t>((uint8_t)InternalType::U_INT_56BITS);
 					ba.writeUInt(7, v);
 				} else {
-					ba.writeUInt8((uint8_t)InternalType::U_INT_64BITS);
-					ba.writeUInt64(v);
+					ba.write<uint8_t>((uint8_t)InternalType::U_INT_64BITS);
+					ba.write<uint64_t>(v);
 				}
 			}
 
@@ -946,33 +946,33 @@ namespace aurora {
 		{
 			auto v = _getValue<uint64_t>();
 			if (v == 0) {
-				ba.writeUInt8((uint8_t)InternalType::U_INT_0);
+				ba.write<uint8_t>((uint8_t)InternalType::U_INT_0);
 			} else if (v == 1) {
-				ba.writeUInt8((uint8_t)InternalType::U_INT_1);
+				ba.write<uint8_t>((uint8_t)InternalType::U_INT_1);
 			} else if (v <= 0xFFui64) {
-				ba.writeUInt8((uint8_t)InternalType::U_INT_8BITS);
-				ba.writeUInt8(v);
+				ba.write<uint8_t>((uint8_t)InternalType::U_INT_8BITS);
+				ba.write<uint8_t>(v);
 			} else if (v <= 0xFFFFui64) {
-				ba.writeUInt8((uint8_t)InternalType::U_INT_16BITS);
-				ba.writeUInt16(v);
+				ba.write<uint8_t>((uint8_t)InternalType::U_INT_16BITS);
+				ba.write<uint16_t>(v);
 			} else if (v <= 0xFFFFFFui64) {
-				ba.writeUInt8((uint8_t)InternalType::U_INT_24BITS);
+				ba.write<uint8_t>((uint8_t)InternalType::U_INT_24BITS);
 				ba.writeUInt(3, v);
 			} else if (v <= 0xFFFFFFFFui64) {
-				ba.writeUInt8((uint8_t)InternalType::U_INT_32BITS);
-				ba.writeUInt32(v);
+				ba.write<uint8_t>((uint8_t)InternalType::U_INT_32BITS);
+				ba.write<uint32_t>(v);
 			} else if (v <= 0xFFFFFFFFFFui64) {
-				ba.writeUInt8((uint8_t)InternalType::U_INT_40BITS);
+				ba.write<uint8_t>((uint8_t)InternalType::U_INT_40BITS);
 				ba.writeUInt(5, v);
 			} else if (v <= 0xFFFFFFFFFFFFui64) {
-				ba.writeUInt8((uint8_t)InternalType::U_INT_48BITS);
+				ba.write<uint8_t>((uint8_t)InternalType::U_INT_48BITS);
 				ba.writeUInt(6, v);
 			} else if (v <= 0xFFFFFFFFFFFFFFui64) {
-				ba.writeUInt8((uint8_t)InternalType::U_INT_56BITS);
+				ba.write<uint8_t>((uint8_t)InternalType::U_INT_56BITS);
 				ba.writeUInt(7, v);
 			} else {
-				ba.writeUInt8((uint8_t)InternalType::U_INT_64BITS);
-				ba.writeUInt64(v);
+				ba.write<uint8_t>((uint8_t)InternalType::U_INT_64BITS);
+				ba.write<uint64_t>(v);
 			}
 
 			break;
@@ -982,14 +982,14 @@ namespace aurora {
 
 			f32 f = _getValue<f32>();
 			if (f == 0.0f) {
-				ba.writeUInt8((uint8_t)InternalType::FLOAT_0);
+				ba.write<uint8_t>((uint8_t)InternalType::FLOAT_0);
 			} else if (f == 0.5f) {
-				ba.writeUInt8((uint8_t)InternalType::FLOAT_0_5);
+				ba.write<uint8_t>((uint8_t)InternalType::FLOAT_0_5);
 			} else if (f == 1.0f) {
-				ba.writeUInt8((uint8_t)InternalType::FLOAT_1);
+				ba.write<uint8_t>((uint8_t)InternalType::FLOAT_1);
 			} else {
-				ba.writeUInt8((uint8_t)_type);
-				ba.writeFloat32(f);
+				ba.write<uint8_t>((uint8_t)_type);
+				ba.write<f32>(f);
 			}
 
 			break;
@@ -998,14 +998,14 @@ namespace aurora {
 		{
 			f64 d = _getValue<f64>();
 			if (d == 0.0) {
-				ba.writeUInt8((uint8_t)InternalType::DOUBLE_0);
+				ba.write<uint8_t>((uint8_t)InternalType::DOUBLE_0);
 			} else if (d == 0.5) {
-				ba.writeUInt8((uint8_t)InternalType::DOUBLE_0_5);
+				ba.write<uint8_t>((uint8_t)InternalType::DOUBLE_0_5);
 			} else if (d == 1.0) {
-				ba.writeUInt8((uint8_t)InternalType::DOUBLE_1);
+				ba.write<uint8_t>((uint8_t)InternalType::DOUBLE_1);
 			} else {
-				ba.writeUInt8((uint8_t)_type);
-				ba.writeFloat64(d);
+				ba.write<uint8_t>((uint8_t)_type);
+				ba.write<f64>(d);
 			}
 
 			break;
@@ -1014,9 +1014,9 @@ namespace aurora {
 		{
 			auto& s = *_getValue<std::string*>();
 			if (s.empty()) {
-				ba.writeUInt8((uint8_t)InternalType::STRING_EMPTY);
+				ba.write<uint8_t>((uint8_t)InternalType::STRING_EMPTY);
 			} else {
-				ba.writeUInt8((uint8_t)_type);
+				ba.write<uint8_t>((uint8_t)_type);
 				ba.writeString(s);
 			}
 
@@ -1026,9 +1026,9 @@ namespace aurora {
 		{
 			auto size = strlen((char*)_value);
 			if (size == 0) {
-				ba.writeUInt8((uint8_t)InternalType::STRING_EMPTY);
+				ba.write<uint8_t>((uint8_t)InternalType::STRING_EMPTY);
 			} else {
-				ba.writeUInt8((uint8_t)_type);
+				ba.write<uint8_t>((uint8_t)_type);
 				ba.writeString((char*)_value, size);
 			}
 
@@ -1039,32 +1039,32 @@ namespace aurora {
 			Array* arr = _getValue<Array*>();
 			auto size = arr->value.size();
 			if (size == 0) {
-				ba.writeUInt8((uint8_t)InternalType::ARRAY_0);
+				ba.write<uint8_t>((uint8_t)InternalType::ARRAY_0);
 				break;
 			} else if (size <= 0xFFui64) {
-				ba.writeUInt8((uint8_t)InternalType::ARRAY_8BITS);
-				ba.writeUInt8(size);
+				ba.write<uint8_t>((uint8_t)InternalType::ARRAY_8BITS);
+				ba.write<uint8_t>(size);
 			} else if (size <= 0xFFFFui64) {
-				ba.writeUInt8((uint8_t)InternalType::ARRAY_16BITS);
-				ba.writeUInt16(size);
+				ba.write<uint8_t>((uint8_t)InternalType::ARRAY_16BITS);
+				ba.write<uint16_t>(size);
 			} else if (size <= 0xFFFFFFui64) {
-				ba.writeUInt8((uint8_t)InternalType::ARRAY_24BITS);
+				ba.write<uint8_t>((uint8_t)InternalType::ARRAY_24BITS);
 				ba.writeUInt(3, size);
 			} else if (size <= 0xFFFFFFFFui64) {
-				ba.writeUInt8((uint8_t)InternalType::ARRAY_32BITS);
-				ba.writeUInt32(size);
+				ba.write<uint8_t>((uint8_t)InternalType::ARRAY_32BITS);
+				ba.write<uint32_t>(size);
 			} else if (size <= 0xFFFFFFFFFFui64) {
-				ba.writeUInt8((uint8_t)InternalType::ARRAY_40BITS);
+				ba.write<uint8_t>((uint8_t)InternalType::ARRAY_40BITS);
 				ba.writeUInt(5, size);
 			} else if (size <= 0xFFFFFFFFFFFFui64) {
-				ba.writeUInt8((uint8_t)InternalType::ARRAY_48BITS);
+				ba.write<uint8_t>((uint8_t)InternalType::ARRAY_48BITS);
 				ba.writeUInt(6, size);
 			} else if (size <= 0xFFFFFFFFFFFFFFui64) {
-				ba.writeUInt8((uint8_t)InternalType::ARRAY_56BITS);
+				ba.write<uint8_t>((uint8_t)InternalType::ARRAY_56BITS);
 				ba.writeUInt(7, size);
 			} else {
-				ba.writeUInt8((uint8_t)InternalType::ARRAY_64BITS);
-				ba.writeUInt64(size);
+				ba.write<uint8_t>((uint8_t)InternalType::ARRAY_64BITS);
+				ba.write<uint64_t>(size);
 			}
 
 			for (auto& i : arr->value) i.pack(ba);
@@ -1076,32 +1076,32 @@ namespace aurora {
 			Map* map = _getValue<Map*>();
 			auto size = map->value.size();
 			if (size == 0) {
-				ba.writeUInt8((uint8_t)InternalType::MAP_0);
+				ba.write<uint8_t>((uint8_t)InternalType::MAP_0);
 				break;
 			} else if (size <= 0xFFui64) {
-				ba.writeUInt8((uint8_t)InternalType::MAP_8BITS);
-				ba.writeUInt8(size);
+				ba.write<uint8_t>((uint8_t)InternalType::MAP_8BITS);
+				ba.write<uint8_t>(size);
 			} else if (size <= 0xFFFFui64) {
-				ba.writeUInt8((uint8_t)InternalType::MAP_16BITS);
-				ba.writeUInt16(size);
+				ba.write<uint8_t>((uint8_t)InternalType::MAP_16BITS);
+				ba.write<uint16_t>(size);
 			} else if (size <= 0xFFFFFFui64) {
-				ba.writeUInt8((uint8_t)InternalType::MAP_24BITS);
+				ba.write<uint8_t>((uint8_t)InternalType::MAP_24BITS);
 				ba.writeUInt(3, size);
 			} else if (size <= 0xFFFFFFFFui64) {
-				ba.writeUInt8((uint8_t)InternalType::MAP_32BITS);
-				ba.writeUInt32(size);
+				ba.write<uint8_t>((uint8_t)InternalType::MAP_32BITS);
+				ba.write<uint32_t>(size);
 			} else if (size <= 0xFFFFFFFFFFui64) {
-				ba.writeUInt8((uint8_t)InternalType::MAP_40BITS);
+				ba.write<uint8_t>((uint8_t)InternalType::MAP_40BITS);
 				ba.writeUInt(5, size);
 			} else if (size <= 0xFFFFFFFFFFFFui64) {
-				ba.writeUInt8((uint8_t)InternalType::MAP_48BITS);
+				ba.write<uint8_t>((uint8_t)InternalType::MAP_48BITS);
 				ba.writeUInt(5, size);
 			} else if (size <= 0xFFFFFFFFFFFFFFui64) {
-				ba.writeUInt8((uint8_t)InternalType::MAP_56BITS);
+				ba.write<uint8_t>((uint8_t)InternalType::MAP_56BITS);
 				ba.writeUInt(5, size);
 			} else {
-				ba.writeUInt8((uint8_t)InternalType::MAP_64BITS);
-				ba.writeUInt64(size);
+				ba.write<uint8_t>((uint8_t)InternalType::MAP_64BITS);
+				ba.write<uint64_t>(size);
 			}
 
 			for (auto& i : map->value) {
@@ -1115,32 +1115,32 @@ namespace aurora {
 		{
 			uint32_t size = _getValue<Bytes<false>*>()->getSize();
 			if (size == 0) {
-				ba.writeUInt8((uint8_t)InternalType::BYTES_0);
+				ba.write<uint8_t>((uint8_t)InternalType::BYTES_0);
 				break;
 			} else if (size <= 0xFFui64) {
-				ba.writeUInt8((uint8_t)InternalType::BYTES_8BITS);
-				ba.writeUInt8(size);
+				ba.write<uint8_t>((uint8_t)InternalType::BYTES_8BITS);
+				ba.write<uint8_t>(size);
 			} else if (size <= 0xFFFFui64) {
-				ba.writeUInt8((uint8_t)InternalType::BYTES_16BITS);
-				ba.writeUInt16(size);
+				ba.write<uint8_t>((uint8_t)InternalType::BYTES_16BITS);
+				ba.write<uint16_t>(size);
 			} else if (size <= 0xFFFFFFui64) {
-				ba.writeUInt8((uint8_t)InternalType::BYTES_24BITS);
+				ba.write<uint8_t>((uint8_t)InternalType::BYTES_24BITS);
 				ba.writeUInt(3, size);
 			} else if (size <= 0xFFFFFFFFui64) {
-				ba.writeUInt8((uint8_t)InternalType::BYTES_32BITS);
-				ba.writeUInt32(size);
+				ba.write<uint8_t>((uint8_t)InternalType::BYTES_32BITS);
+				ba.write<uint32_t>(size);
 			} else if (size <= 0xFFFFFFFFFFui64) {
-				ba.writeUInt8((uint8_t)InternalType::BYTES_40BITS);
+				ba.write<uint8_t>((uint8_t)InternalType::BYTES_40BITS);
 				ba.writeUInt(5, size);
 			} else if (size <= 0xFFFFFFFFFFFFui64) {
-				ba.writeUInt8((uint8_t)InternalType::BYTES_48BITS);
+				ba.write<uint8_t>((uint8_t)InternalType::BYTES_48BITS);
 				ba.writeUInt(5, size);
 			} else if (size <= 0xFFFFFFFFFFFFFFui64) {
-				ba.writeUInt8((uint8_t)InternalType::BYTES_56BITS);
+				ba.write<uint8_t>((uint8_t)InternalType::BYTES_56BITS);
 				ba.writeUInt(5, size);
 			} else {
-				ba.writeUInt8((uint8_t)InternalType::BYTES_64BITS);
-				ba.writeUInt64(size);
+				ba.write<uint8_t>((uint8_t)InternalType::BYTES_64BITS);
+				ba.write<uint64_t>(size);
 			}
 
 			ba.writeBytes(_getValue<Bytes<false>*>()->getValue(), size);
@@ -1151,32 +1151,32 @@ namespace aurora {
 		{
 			uint32_t size = _getValue<Bytes<true>*>()->getSize();
 			if (size == 0) {
-				ba.writeUInt8((uint8_t)InternalType::BYTES_0);
+				ba.write<uint8_t>((uint8_t)InternalType::BYTES_0);
 				break;
 			} else if (size <= 0xFFui64) {
-				ba.writeUInt8((uint8_t)InternalType::BYTES_8BITS);
-				ba.writeUInt8(size);
+				ba.write<uint8_t>((uint8_t)InternalType::BYTES_8BITS);
+				ba.write<uint8_t>(size);
 			} else if (size <= 0xFFFFui64) {
-				ba.writeUInt8((uint8_t)InternalType::BYTES_16BITS);
-				ba.writeUInt16(size);
+				ba.write<uint8_t>((uint8_t)InternalType::BYTES_16BITS);
+				ba.write<uint16_t>(size);
 			} else if (size <= 0xFFFFFFui64) {
-				ba.writeUInt8((uint8_t)InternalType::BYTES_24BITS);
+				ba.write<uint8_t>((uint8_t)InternalType::BYTES_24BITS);
 				ba.writeUInt(3, size);
 			} else if (size <= 0xFFFFFFFFui64) {
-				ba.writeUInt8((uint8_t)InternalType::BYTES_32BITS);
-				ba.writeUInt32(size);
+				ba.write<uint8_t>((uint8_t)InternalType::BYTES_32BITS);
+				ba.write<uint32_t>(size);
 			} else if (size <= 0xFFFFFFFFFFui64) {
-				ba.writeUInt8((uint8_t)InternalType::BYTES_40BITS);
+				ba.write<uint8_t>((uint8_t)InternalType::BYTES_40BITS);
 				ba.writeUInt(5, size);
 			} else if (size <= 0xFFFFFFFFFFFFui64) {
-				ba.writeUInt8((uint8_t)InternalType::BYTES_48BITS);
+				ba.write<uint8_t>((uint8_t)InternalType::BYTES_48BITS);
 				ba.writeUInt(5, size);
 			} else if (size <= 0xFFFFFFFFFFFFFFui64) {
-				ba.writeUInt8((uint8_t)InternalType::BYTES_56BITS);
+				ba.write<uint8_t>((uint8_t)InternalType::BYTES_56BITS);
 				ba.writeUInt(5, size);
 			} else {
-				ba.writeUInt8((uint8_t)InternalType::BYTES_64BITS);
-				ba.writeUInt64(size);
+				ba.write<uint8_t>((uint8_t)InternalType::BYTES_64BITS);
+				ba.write<uint64_t>(size);
 			}
 
 			ba.writeBytes(_getValue<Bytes<true>*>()->getValue(), size);
@@ -1190,7 +1190,7 @@ namespace aurora {
 
 	void SerializableObject::unpack(ByteArray& ba) {
 		if (ba.getBytesAvailable() > 0) {
-			InternalType type = (InternalType)ba.readUInt8();
+			InternalType type = (InternalType)ba.read<uint8_t>();
 			switch (type) {
 			case InternalType::UNVALID:
 				setInvalid();
@@ -1205,7 +1205,7 @@ namespace aurora {
 				set(1.0f);
 				break;
 			case InternalType::FLOAT:
-				set(ba.readFloat32());
+				set(ba.read<f32>());
 				break;
 			case InternalType::DOUBLE_0:
 				set(0.0);
@@ -1217,7 +1217,7 @@ namespace aurora {
 				set(1.0);
 				break;
 			case InternalType::DOUBLE:
-				set(ba.readFloat64());
+				set(ba.read<f64>());
 				break;
 			case InternalType::STRING_EMPTY:
 				set("");
@@ -1236,16 +1236,16 @@ namespace aurora {
 				set(-1);
 				break;
 			case InternalType::N_INT_8BITS:
-				set(-ba.readUInt8());
+				set(-ba.read<uint8_t>());
 				break;
 			case InternalType::N_INT_16BITS:
-				set(-ba.readUInt16());
+				set(-ba.read<uint16_t>());
 				break;
 			case InternalType::N_INT_24BITS:
 				set(-(int64_t)ba.readUInt(3));
 				break;
 			case InternalType::N_INT_32BITS:
-				set(-(int64_t)ba.readUInt32());
+				set(-(int64_t)ba.read<uint32_t>());
 				break;
 			case InternalType::N_INT_40BITS:
 				set(-(int64_t)ba.readUInt(5));
@@ -1257,7 +1257,7 @@ namespace aurora {
 				set(-(int64_t)ba.readUInt(7));
 				break;
 			case InternalType::N_INT_64BITS:
-				set(-(int64_t)ba.readUInt64());
+				set(-(int64_t)ba.read<uint64_t>());
 				break;
 			case InternalType::U_INT_0:
 				set(0);
@@ -1266,16 +1266,16 @@ namespace aurora {
 				set(1);
 				break;
 			case InternalType::U_INT_8BITS:
-				set(ba.readUInt8());
+				set(ba.read<uint8_t>());
 				break;
 			case InternalType::U_INT_16BITS:
-				set(ba.readUInt16());
+				set(ba.read<uint16_t>());
 				break;
 			case InternalType::U_INT_24BITS:
 				set(ba.readUInt(3));
 				break;
 			case InternalType::U_INT_32BITS:
-				set(ba.readUInt32());
+				set(ba.read<uint32_t>());
 				break;
 			case InternalType::U_INT_40BITS:
 				set(ba.readUInt(5));
@@ -1287,22 +1287,22 @@ namespace aurora {
 				set(ba.readUInt(7));
 				break;
 			case InternalType::U_INT_64BITS:
-				set(ba.readUInt64());
+				set(ba.read<uint64_t>());
 				break;
 			case InternalType::ARRAY_0:
 				_unpackArray(ba, 0);
 				break;
 			case InternalType::ARRAY_8BITS:
-				_unpackArray(ba, ba.readUInt8());
+				_unpackArray(ba, ba.read<uint8_t>());
 				break;
 			case InternalType::ARRAY_16BITS:
-				_unpackArray(ba, ba.readUInt16());
+				_unpackArray(ba, ba.read<uint16_t>());
 				break;
 			case InternalType::ARRAY_24BITS:
 				_unpackArray(ba, ba.readUInt(3));
 				break;
 			case InternalType::ARRAY_32BITS:
-				_unpackArray(ba, ba.readUInt32());
+				_unpackArray(ba, ba.read<uint32_t>());
 				break;
 			case InternalType::ARRAY_40BITS:
 				_unpackArray(ba, ba.readUInt(5));
@@ -1314,22 +1314,22 @@ namespace aurora {
 				_unpackArray(ba, ba.readUInt(7));
 				break;
 			case InternalType::ARRAY_64BITS:
-				_unpackArray(ba, ba.readUInt64());
+				_unpackArray(ba, ba.read<uint64_t>());
 				break;
 			case InternalType::MAP_0:
 				_unpackMap(ba, 0);
 				break;
 			case InternalType::MAP_8BITS:
-				_unpackMap(ba, ba.readUInt8());
+				_unpackMap(ba, ba.read<uint8_t>());
 				break;
 			case InternalType::MAP_16BITS:
-				_unpackMap(ba, ba.readUInt16());
+				_unpackMap(ba, ba.read<uint16_t>());
 				break;
 			case InternalType::MAP_24BITS:
 				_unpackMap(ba, ba.readUInt(3));
 				break;
 			case InternalType::MAP_32BITS:
-				_unpackMap(ba, ba.readUInt32());
+				_unpackMap(ba, ba.read<uint32_t>());
 				break;
 			case InternalType::MAP_40BITS:
 				_unpackMap(ba, ba.readUInt(5));
@@ -1341,22 +1341,22 @@ namespace aurora {
 				_unpackMap(ba, ba.readUInt(7));
 				break;
 			case InternalType::MAP_64BITS:
-				_unpackMap(ba, ba.readUInt64());
+				_unpackMap(ba, ba.read<uint64_t>());
 				break;
 			case InternalType::BYTES_0:
 				_unpackBytes(ba, 0);
 				break;
 			case InternalType::BYTES_8BITS:
-				_unpackBytes(ba, ba.readUInt8());
+				_unpackBytes(ba, ba.read<uint8_t>());
 				break;
 			case InternalType::BYTES_16BITS:
-				_unpackBytes(ba, ba.readUInt16());
+				_unpackBytes(ba, ba.read<uint16_t>());
 				break;
 			case InternalType::BYTES_24BITS:
 				_unpackBytes(ba, ba.readUInt(3));
 				break;
 			case InternalType::BYTES_32BITS:
-				_unpackBytes(ba, ba.readUInt32());
+				_unpackBytes(ba, ba.read<uint32_t>());
 				break;
 			case InternalType::BYTES_40BITS:
 				_unpackBytes(ba, ba.readUInt(5));
@@ -1368,7 +1368,7 @@ namespace aurora {
 				_unpackBytes(ba, ba.readUInt(7));
 				break;
 			case InternalType::BYTES_64BITS:
-				_unpackBytes(ba, ba.readUInt64());
+				_unpackBytes(ba, ba.read<uint64_t>());
 				break;
 			default:
 				break;

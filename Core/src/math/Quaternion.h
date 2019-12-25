@@ -1,6 +1,6 @@
 #pragma once
 
-#include "base/LowLevel.h"
+#include "base/Global.h"
 
 namespace aurora {
 	class Matrix34;
@@ -8,13 +8,18 @@ namespace aurora {
 
 	class AE_DLL Quaternion {
 	public:
+		using Data = f32[4];
+
 		Quaternion();
 		Quaternion(const Quaternion& v);
-		Quaternion(Quaternion&& v);
+		Quaternion(Quaternion&& v) noexcept;
 		Quaternion(f32 x, f32 y = 0.f, f32 z = 0.f, f32 w = 1.f);
 		~Quaternion();
 
 		static const Quaternion IDENTITY;
+
+		inline AE_CALL operator Data& ();
+		inline AE_CALL operator const Data& () const;
 
 		inline f32 AE_CALL length() const;
 		inline f32 AE_CALL lengthSq() const;
@@ -48,7 +53,7 @@ namespace aurora {
 		inline static f32 AE_CALL angleBetween(const Quaternion& q1, const Quaternion& q2);
 
 		union {
-			f32 data[4];
+			Data data;
 
 			struct {
 				f32 x;

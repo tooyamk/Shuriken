@@ -10,7 +10,7 @@ namespace aurora::file {
 			int32_t offset;
 		};
 
-		static void AE_CALL _readDataCallback(png_structp png_ptr, png_bytep data, png_size_t length) {
+		static void _readDataCallback(png_structp png_ptr, png_bytep data, png_size_t length) {
 			auto isource = (ImageSource*)png_get_io_ptr(png_ptr);
 
 			if ((int)(isource->offset + length) <= isource->size) {
@@ -32,7 +32,7 @@ namespace aurora::file {
 		is.data = (uint8_t*)source.getBytes();
 		is.size = source.getLength();
 		is.offset = 0;
-
+		
 		png_set_read_fn(png, &is, png_private::_readDataCallback);
 		png_read_info(png, info);
 		auto width = png_get_image_width(png, info);

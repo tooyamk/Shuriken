@@ -13,7 +13,7 @@ namespace aurora::modules::graphics::win_glew {
 		return this;
 	}
 
-	bool PixelBuffer::create (uint32_t size, Usage bufferUsage, const void* data, uint32_t dataSize) {
+	bool PixelBuffer::create(uint32_t size, Usage bufferUsage, const void* data, uint32_t dataSize) {
 		baseBuffer.releaseBuffer();
 
 		bool read = (bufferUsage & Usage::MAP_READ) == Usage::MAP_READ;
@@ -51,15 +51,15 @@ namespace aurora::modules::graphics::win_glew {
 		baseBuffer.unmap();
 	}
 
-	uint32_t PixelBuffer::read (uint32_t offset, void* dst, uint32_t dstLen) {
+	uint32_t PixelBuffer::read(uint32_t offset, void* dst, uint32_t dstLen) {
 		return baseBuffer.read(offset, dst, dstLen);
 	}
 
-	uint32_t PixelBuffer::write (uint32_t offset, const void* data, uint32_t length) {
+	uint32_t PixelBuffer::write(uint32_t offset, const void* data, uint32_t length) {
 		return baseBuffer.write(offset, data, length);
 	}
 
-	uint32_t PixelBuffer::update (uint32_t offset, const void* data, uint32_t length) {
+	uint32_t PixelBuffer::update(uint32_t offset, const void* data, uint32_t length) {
 		return baseBuffer.update(offset, data, length);
 	}
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "base/LowLevel.h"
+#include "base/Global.h"
 #include <cmath>
 
 namespace aurora {
@@ -24,11 +24,11 @@ namespace aurora {
 		template<typename T> inline static const FloatType<T> RAD = PI<T> / T(180.);
 
 		template<typename In>
-		inline static bool AE_CALL isEqual(const In v1, const In v2) {
+		inline static bool AE_CALL isEqual(const In& v1, const In& v2) {
 			return v1 == v2;
 		}
 		template<uint32_t N, typename In>
-		inline static bool AE_CALL isEqual(const In(&v)[N], const In value) {
+		inline static bool AE_CALL isEqual(const In(&v)[N], const In& value) {
 			for (uint32_t i = 0; i < N; ++i) {
 				if (v[i] != value) return false;
 			}
@@ -42,18 +42,18 @@ namespace aurora {
 			return true;
 		}
 		template<typename In>
-		inline static bool AE_CALL isEqual(const In v1, const In v2, const In tolerance) {
+		inline static bool AE_CALL isEqual(const In& v1, const In& v2, const In& tolerance) {
 			return (v1 < v2 ? v2 - v1 : v1 - v2) <= tolerance;
 		}
 		template<uint32_t N, typename In>
-		inline static bool AE_CALL isEqual(const In(&v)[N], const In value, const In tolerance) {
+		inline static bool AE_CALL isEqual(const In(&v)[N], const In& value, const In& tolerance) {
 			for (uint32_t i = 0; i < N; ++i) {
 				if ((v[i] < value ? value - v[i] : v[i] - value) > tolerance) return false;
 			}
 			return true;
 		}
 		template<uint32_t N, typename In>
-		inline static bool AE_CALL isEqual(const In(&v1)[N], const In(&v2)[N], const In tolerance) {
+		inline static bool AE_CALL isEqual(const In(&v1)[N], const In(&v2)[N], const In& tolerance) {
 			for (uint32_t i = 0; i < N; ++i) {
 				if ((v1[i] < v2[i] ? v2[i] - v1[i] : v1[i] - v2[i]) > tolerance) return false;
 			}
@@ -61,12 +61,12 @@ namespace aurora {
 		}
 
 		template<typename In>
-		inline static constexpr In AE_CALL clamp(const In v, const In min, const In max) {
+		inline static constexpr In AE_CALL clamp(const In& v, const In& min, const In& max) {
 			return v < min ? min : (v > max ? max : v);
 		}
 
 		template<uint32_t N, typename In>
-		inline static constexpr void AE_CALL clamp(const In(&v)[N], const In min, const In max, In(&dst)[N]) {
+		inline static constexpr void AE_CALL clamp(const In(&v)[N], const In& min, const In& max, In(&dst)[N]) {
 			In tmp[N];
 			for (uint32_t i = 0; i < N; ++i) tmp[i] = v[i] < min ? min : (v[i] > max ? max : v[i]);
 			for (uint32_t i = 0; i < N; ++i) dst[i] = tmp[i];
@@ -98,7 +98,7 @@ namespace aurora {
 		}
 
 		static void AE_CALL slerpQuat(const f32* from, const f32* to, f32 t, f32* dst);
-		inline static void AE_CALL appendQuat(const f32* lhs, const f32* rhs, f32* dst);
+		inline static void AE_CALL appendQuat(const f32(&lhs)[4], const f32(&rhs)[4], f32(&dst)[4]);
 
 		template<typename T>
 		inline static void AE_CALL quatRotate(const T(&q)[4], const T(&p)[3], f32(&dst)[3]) {
@@ -132,12 +132,12 @@ namespace aurora {
 		inline static void AE_CALL matTransformPoint(const f32(&m)[3][4], const f32(&p)[3], f32(&dst)[3]);
 
 		template<typename T>
-		inline static constexpr FloatType<T> AE_CALL deg(T rad) {
+		inline static constexpr FloatType<T> AE_CALL deg(const T& rad) {
 			return rad * DEG<T>;
 		}
 
 		template<typename T>
-		inline static constexpr FloatType<T> AE_CALL rad(T deg) {
+		inline static constexpr FloatType<T> AE_CALL rad(const T& deg) {
 			return deg * RAD<T>;
 		}
 
@@ -173,17 +173,46 @@ namespace aurora {
 
 		template<uint32_t N, typename In, typename Out = In>
 		static void AE_CALL normalize(const In(&v)[N], Out(&dst)[N]) {
-			if (auto n = dot<N, In, f32>(v, v); !isEqual<In>(n, 1, TOLERANCE<decltype(n)>)) {
-				n = std::sqrt(n);
-				if (n > TOLERANCE<decltype(n)>) {
-					n = NUMBER_1<decltype(n)> / n;
+			if constexpr (sizeof(In) >= sizeof(Out)) {
+				if (auto n = dot<N, In, f32>(v, v); !isEqual<In>(n, 1, TOLERANCE<decltype(n)>)) {
+					n = std::sqrt(n);
+					if (n > TOLERANCE<decltype(n)>) {
+						n = NUMBER_1<decltype(n)> / n;
 
-					for (uint32_t i = 0; i < N; ++i) dst[i] *= n;
-				} else if (v != dst) {
-					for (uint32_t i = 0; i < N; ++i) dst[i] = v[i];
+						if (&v >= &dst) {
+							for (uint32_t i = 0; i < N; ++i) dst[i] = v[i] * n;
+						} else {
+							for (uint32_t i = N - 1; i < N; --i) dst[i] = v[i] * n;
+						}
+					} else {
+						if (&v >= &dst) {
+							for (uint32_t i = 0; i < N; ++i) dst[i] = v[i];
+						} else {
+							for (uint32_t i = N - 1; i < N; --i) dst[i] = v[i];
+						}
+					}
+				} else {
+					if (&v >= &dst) {
+						for (uint32_t i = 0; i < N; ++i) dst[i] = v[i];
+					} else {
+						for (uint32_t i = N - 1; i < N; --i) dst[i] = v[i];
+					}
 				}
-			} else if (v != dst) {
-				for (uint32_t i = 0; i < N; ++i) dst[i] = v[i];
+			} else {
+				Out tmp[N];
+				if (auto n = dot<N, In, f32>(v, v); !isEqual<In>(n, 1, TOLERANCE<decltype(n)>)) {
+					n = std::sqrt(n);
+					if (n > TOLERANCE<decltype(n)>) {
+						n = NUMBER_1<decltype(n)> / n;
+
+						for (uint32_t i = 0; i < N; ++i) tmp[i] = v[i] * n;
+					} else {
+						for (uint32_t i = 0; i < N; ++i) tmp[i] = v[i];
+					}
+				} else {
+					for (uint32_t i = 0; i < N; ++i) tmp[i] = v[i];
+				}
+				memcpy(dst, tmp, N * sizeof(tmp));
 			}
 		}
 

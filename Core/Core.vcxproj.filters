@@ -93,9 +93,6 @@
     <ClInclude Include="src\modules\ModuleLoader.h">
       <Filter>src\modules</Filter>
     </ClInclude>
-    <ClInclude Include="src\base\LowLevel.h">
-      <Filter>src\base</Filter>
-    </ClInclude>
     <ClInclude Include="src\Aurora.h">
       <Filter>src</Filter>
     </ClInclude>
@@ -159,9 +156,6 @@
     <ClInclude Include="src\modules\inputs\IInputModule.h">
       <Filter>src\modules\inputs</Filter>
     </ClInclude>
-    <ClInclude Include="src\modules\inputs\GUID.h">
-      <Filter>src\modules\inputs</Filter>
-    </ClInclude>
     <ClInclude Include="src\modules\inputs\DeviceInfo.h">
       <Filter>src\modules\inputs</Filter>
     </ClInclude>
@@ -169,6 +163,12 @@
       <Filter>src\modules\graphics</Filter>
     </ClInclude>
     <ClInclude Include="src\base\SerializableObject.h">
+      <Filter>src\base</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\GLobal.h">
+      <Filter>src\base</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\GUID.h">
       <Filter>src\base</Filter>
     </ClInclude>
   </ItemGroup>
@@ -246,9 +246,6 @@
       <Filter>src\modules\graphics</Filter>
     </ClCompile>
     <ClCompile Include="src\modules\inputs\IInputModule.cpp">
-      <Filter>src\modules\inputs</Filter>
-    </ClCompile>
-    <ClCompile Include="src\modules\inputs\GUID.cpp">
       <Filter>src\modules\inputs</Filter>
     </ClCompile>
     <ClCompile Include="src\modules\inputs\DeviceInfo.cpp">

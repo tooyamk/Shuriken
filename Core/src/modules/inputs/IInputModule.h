@@ -62,7 +62,7 @@ namespace aurora::modules::inputs {
 
 		virtual events::IEventDispatcher<ModuleEvent>& AE_CALL getEventDispatcher() = 0;
 		virtual void AE_CALL poll() = 0;
-		virtual IInputDevice* AE_CALL createDevice(const GUID& guid) = 0;
+		virtual IInputDevice* AE_CALL createDevice(const DeviceGUID& guid) = 0;
 	};
 
 

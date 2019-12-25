@@ -10,7 +10,7 @@
 #include "modules/graphics/IProgramSourceTranslator.h"
 #include "base/DynamicLib.h"
 
-#ifdef AE_64BITS
+#if AE_OS_BIT == AE_OS_BIT_64
 #ifdef AE_DEBUG
 #pragma comment(lib, "libs/spirv-cross/x64/spirv-cross-cored.lib")
 #pragma comment(lib, "libs/spirv-cross/x64/spirv-cross-glsld.lib")
@@ -27,7 +27,7 @@ namespace aurora::modules::graphics::program_source_translator {
 	public:
 		ProgramSourceTranslator(Ref* loader, const char* dxc);
 		virtual ~ProgramSourceTranslator();
-		
+
 		virtual ProgramSource AE_CALL translate(const ProgramSource& source, ProgramLanguage targetLanguage, const std::string& targetVersion) override;
 
 	private:
@@ -37,14 +37,14 @@ namespace aurora::modules::graphics::program_source_translator {
 		CComPtr<IDxcLibrary> _dxcLib;
 		CComPtr<IDxcCompiler> _dxcompiler;
 
-		void _spirvTo(const ProgramSource& source, const uint8_t* sourceData, uint32_t sourceDataSize, 
+		void _spirvTo(const ProgramSource& source, const uint8_t* sourceData, uint32_t sourceDataSize,
 			ProgramLanguage targetLanguage, const std::string& targetVersion, ProgramSource& dst);
 	};
 }
 
 #ifdef AE_MODULE_EXPORTS
 namespace aurora::modules::graphics {
-	extern "C" AE_MODULE_DLL_EXPORT void* AE_CREATE_MODULE_FN_NAME(Ref* loader, const Args* args) {
+	extern "C" AE_MODULE_DLL_EXPORT void* AE_CREATE_MODULE_FN_NAME(Ref * loader, const Args * args) {
 		if (!args) {
 			println("Module create err, no args");
 			return nullptr;

@@ -30,6 +30,7 @@ namespace aurora::nodes {
 		void AE_CALL removeAllChildren();
 
 		inline void AE_CALL getLocalPosition(f32(&dst)[3]) const;
+		inline Vec3f32 AE_CALL getLocalPosition() const;
 		void AE_CALL setLocalPosition(const f32(&p)[3]);
 		void AE_CALL localTranslate(const f32(&p)[3]);
 
@@ -47,6 +48,7 @@ namespace aurora::nodes {
 		void AE_CALL parentRotate(const Quaternion& q);
 
 		inline void AE_CALL getWorldPosition(f32(&dst)[3]) const;
+		inline Vec3f32 AE_CALL getWorldPosition() const;
 		void AE_CALL setWorldPosition(const f32(&p)[3]);
 		void AE_CALL worldTranslate(const f32(&p)[3]);
 
@@ -66,13 +68,13 @@ namespace aurora::nodes {
 		void AE_CALL updateWorldMatrix() const;
 		void AE_CALL updateInverseWorldMatrix() const;
 
-		void AE_CALL addComponent(component::AbstractComponent* component);
-		void AE_CALL removeComponent(component::AbstractComponent* component);
+		bool AE_CALL addComponent(component::AbstractComponent* component);
+		bool AE_CALL removeComponent(component::AbstractComponent* component);
 		void AE_CALL removeAllComponents();
-		component::AbstractComponent* AE_CALL getComponent (uint32_t flag) const;
+		component::AbstractComponent* AE_CALL getComponent(uint32_t flag) const;
 		component::AbstractComponent* AE_CALL getComponentIf(const std::function<bool(component::AbstractComponent*)>& func) const;
 		inline const std::vector<component::AbstractComponent*>& AE_CALL getComponents() const;
-		void AE_CALL getComponents (uint32_t flag, std::vector<component::AbstractComponent*>& dst) const;
+		void AE_CALL getComponents(uint32_t flag, std::vector<component::AbstractComponent*>& dst) const;
 		void AE_CALL getComponentsIf(const std::function<bool(component::AbstractComponent*)>& func, std::vector<component::AbstractComponent*>& dst) const;
 
 		/**
@@ -84,19 +86,21 @@ namespace aurora::nodes {
 		static void AE_CALL getLocalRotationFromWorld(const Node& node, const Quaternion& worldRot, Quaternion& dst);
 
 	protected:
+		using DirtyType = uint8_t;
+
 		struct DirtyFlag {
-			static const uint32_t LM = 0b1;
-			static const uint32_t NOT_LM = ~LM;
-			static const uint32_t WM = 0b10;
-			static const uint32_t NOT_WM = ~WM;
-			static const uint32_t WIM = 0b100;
-			static const uint32_t NOT_WIM = ~WIM;
-			static const uint32_t WR = 0b1000;
-			static const uint32_t NOT_WR = ~WR;
-			static const uint32_t WMIM = WM | WIM;
-			static const uint32_t WRMIM = WMIM | WR;
-			static const uint32_t LM_WRMIM = LM | WRMIM;
-			static const uint32_t LM_WMIM = LM | WMIM;
+			static const DirtyType LM = 0b1;
+			static const DirtyType NOT_LM = ~LM;
+			static const DirtyType WM = 0b10;
+			static const DirtyType NOT_WM = ~WM;
+			static const DirtyType WIM = 0b100;
+			static const DirtyType NOT_WIM = ~WIM;
+			static const DirtyType WR = 0b1000;
+			static const DirtyType NOT_WR = ~WR;
+			static const DirtyType WMIM = WM | WIM;
+			static const DirtyType WRMIM = WMIM | WR;
+			static const DirtyType LM_WRMIM = LM | WRMIM;
+			static const DirtyType LM_WMIM = LM | WMIM;
 		};
 
 
@@ -117,7 +121,7 @@ namespace aurora::nodes {
 		mutable Matrix34 _wm;
 		mutable Matrix34 _iwm;
 
-		mutable uint32_t _dirty;
+		mutable DirtyType _dirty;
 		std::vector<component::AbstractComponent*> _components;
 
 		void AE_CALL _addNode(Node* child);
@@ -128,12 +132,12 @@ namespace aurora::nodes {
 		void AE_CALL _parentChanged(Node* root);
 
 		inline void AE_CALL _localDecomposition();
-		void AE_CALL _worldPositionChanged (uint32_t oldDirty);
-		void AE_CALL _worldRotationChanged (uint32_t oldDirty);
-		inline void AE_CALL _checkNoticeUpdate (uint32_t dirty);
-		inline void AE_CALL _checkNoticeUpdate (uint32_t appendDirty, uint32_t sendDirty);
-		void AE_CALL _checkNoticeUpdateNow (uint32_t nowDirty, uint32_t sendDirty);
-		void AE_CALL _noticeUpdate (uint32_t dirty);
+		void AE_CALL _worldPositionChanged(DirtyType oldDirty);
+		void AE_CALL _worldRotationChanged(DirtyType oldDirty);
+		inline void AE_CALL _checkNoticeUpdate(DirtyType dirty);
+		inline void AE_CALL _checkNoticeUpdate(DirtyType appendDirty, DirtyType sendDirty);
+		void AE_CALL _checkNoticeUpdateNow(DirtyType nowDirty, DirtyType sendDirty);
+		void AE_CALL _noticeUpdate(DirtyType dirty);
 
 		void AE_CALL _removeComponent(component::AbstractComponent* component);
 	};

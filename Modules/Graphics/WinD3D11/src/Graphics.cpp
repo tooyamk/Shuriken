@@ -65,8 +65,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			if (dxgFctory->EnumAdapters(i, &dxgAdapter) == DXGI_ERROR_NOT_FOUND) break;
 			objs.add(dxgAdapter);
 
-			DXGI_ADAPTER_DESC desc;
-			memset(&desc, 0, sizeof(DXGI_ADAPTER_DESC));
+			DXGI_ADAPTER_DESC desc = { 0 };
 			if (FAILED(dxgAdapter->GetDesc(&desc)) || desc.DeviceId != adapter.deviceId || desc.VendorId != adapter.vendorId) {
 				dxgAdapter = nullptr;
 				continue;
@@ -226,8 +225,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		Vec2i32 size;
 		_app.get()->getInnerSize(size);
 
-		DXGI_SWAP_CHAIN_DESC swapChainDesc;
-		memset(&swapChainDesc, 0, sizeof(swapChainDesc));
+		DXGI_SWAP_CHAIN_DESC swapChainDesc = { 0 };
 		swapChainDesc.BufferCount = 1;
 		swapChainDesc.BufferDesc.Width = (UINT)size[0];
 		swapChainDesc.BufferDesc.Height = (UINT)size[1];
@@ -378,11 +376,13 @@ namespace aurora::modules::graphics::win_d3d11 {
 		DXGI_SWAP_CHAIN_DESC swapChainDesc;
 		_swapChain->GetDesc(&swapChainDesc);
 
-		bool sizeChange = swapChainDesc.BufferDesc.Width != size[0] || swapChainDesc.BufferDesc.Height != size[1];
+		auto& bufferDesc = swapChainDesc.BufferDesc;
+
+		bool sizeChange = bufferDesc.Width != size[0] || bufferDesc.Height != size[1];
 
 		if (sizeChange || !_backBufferTarget) {
-			swapChainDesc.BufferDesc.Width = size[0];
-			swapChainDesc.BufferDesc.Height = size[1];
+			bufferDesc.Width = size[0];
+			bufferDesc.Height = size[1];
 
 			if (_backBufferTarget) {
 				_backBufferTarget->Release();
@@ -390,7 +390,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			}
 
 			if (sizeChange) {
-				if (FAILED(_swapChain->ResizeBuffers(swapChainDesc.BufferCount, size[0], size[1], swapChainDesc.BufferDesc.Format, swapChainDesc.Flags))) {
+				if (FAILED(_swapChain->ResizeBuffers(swapChainDesc.BufferCount, size[0], size[1], bufferDesc.Format, swapChainDesc.Flags))) {
 					println("dx11 error : swap chain ResizeBuffers error");
 				}
 			}
@@ -400,10 +400,11 @@ namespace aurora::modules::graphics::win_d3d11 {
 				println("dx11 error : swap chain GetBuffer error");
 			}
 
-			if (FAILED(_device->CreateRenderTargetView(backBufferTexture, nullptr, (ID3D11RenderTargetView**)&_backBufferTarget))) {
+			if (backBufferTexture && FAILED(_device->CreateRenderTargetView(backBufferTexture, nullptr, (ID3D11RenderTargetView**)&_backBufferTarget))) {
 				if (backBufferTexture) backBufferTexture->Release();
 				println("dx11 error : swap chain CreateRenderTargetView error");
 			}
+			
 			backBufferTexture->Release();
 
 			_context->OMSetRenderTargets(1, (ID3D11RenderTargetView**)&_backBufferTarget, nullptr);

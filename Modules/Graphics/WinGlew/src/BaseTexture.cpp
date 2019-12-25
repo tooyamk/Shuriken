@@ -242,7 +242,7 @@ namespace aurora::modules::graphics::win_glew {
 		return _createDone(false);
 	}
 
-	Usage BaseTexture::map (uint32_t arraySlice, uint32_t mipSlice, Usage expectMapUsage) {
+	Usage BaseTexture::map(uint32_t arraySlice, uint32_t mipSlice, Usage expectMapUsage) {
 		return Usage::NONE;
 		/*
 		Usage ret = Usage::NONE;
@@ -269,15 +269,15 @@ namespace aurora::modules::graphics::win_glew {
 		*/
 	}
 
-	void BaseTexture::unmap (uint32_t arraySlice, uint32_t mipSlice) {
+	void BaseTexture::unmap(uint32_t arraySlice, uint32_t mipSlice) {
 		//mapUsage = Usage::NONE;
 	}
 
-	uint32_t BaseTexture::read (uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, void* dst, uint32_t dstLen) {
+	uint32_t BaseTexture::read(uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, void* dst, uint32_t dstLen) {
 		return -1;
 	}
 
-	uint32_t BaseTexture::write (uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, const void* data, uint32_t length) {
+	uint32_t BaseTexture::write(uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, const void* data, uint32_t length) {
 		/*
 		if ((mapUsage & Usage::CPU_WRITE) == Usage::CPU_WRITE) {
 			if (data && length && offset < size) {
@@ -291,7 +291,7 @@ namespace aurora::modules::graphics::win_glew {
 		return -1;
 	}
 
-	bool BaseTexture::update (uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const void* data) {
+	bool BaseTexture::update(uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const void* data) {
 		if (handle && (resUsage & Usage::UPDATE) == Usage::UPDATE && arraySlice < arraySize && mipSlice < mipLevels) {
 			return _update(arraySlice, mipSlice, range, data);
 		}
@@ -383,7 +383,7 @@ namespace aurora::modules::graphics::win_glew {
 		return succeeded;
 	}
 
-	bool BaseTexture::_update (uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const void* data) {
+	bool BaseTexture::_update(uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const void* data) {
 		glBindTexture(glTexInfo.target, handle);
 		switch (glTexInfo.target) {
 		case GL_TEXTURE_1D:

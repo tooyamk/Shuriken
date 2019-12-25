@@ -1,6 +1,6 @@
 #pragma once
 
-#include "base/LowLevel.h"
+#include "base/Global.h"
 #include <functional>
 #include <unordered_map>
 #include <unordered_set>

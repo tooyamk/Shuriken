@@ -15,7 +15,7 @@ namespace aurora::modules::graphics::win_glew {
 		return this;
 	}
 
-	bool ConstantBuffer::create (uint32_t size, Usage bufferUsage, const void* data, uint32_t dataSize) {
+	bool ConstantBuffer::create(uint32_t size, Usage bufferUsage, const void* data, uint32_t dataSize) {
 		return _baseBuffer.create(*_graphics.get<Graphics>(), size, bufferUsage, data);
 	}
 
@@ -35,15 +35,15 @@ namespace aurora::modules::graphics::win_glew {
 		_baseBuffer.unmap();
 	}
 
-	uint32_t ConstantBuffer::read (uint32_t offset, void* dst, uint32_t dstLen) {
+	uint32_t ConstantBuffer::read(uint32_t offset, void* dst, uint32_t dstLen) {
 		return _baseBuffer.read(offset, dst, dstLen);
 	}
 
-	uint32_t ConstantBuffer::write (uint32_t offset, const void* data, uint32_t length) {
+	uint32_t ConstantBuffer::write(uint32_t offset, const void* data, uint32_t length) {
 		return _baseBuffer.write(offset, data, length);
 	}
 
-	uint32_t ConstantBuffer::update (uint32_t offset, const void* data, uint32_t length) {
+	uint32_t ConstantBuffer::update(uint32_t offset, const void* data, uint32_t length) {
 		return _baseBuffer.update(offset, data, length);
 	}
 

@@ -95,7 +95,6 @@ namespace aurora::modules::graphics::win_d3d11 {
 			desc.MipLevels = mipLevels;
 			desc.MiscFlags = 0;
 			//desc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;//D3D11_RESOURCE_MISC_TEXTURECUBE
-			//
 			desc.ArraySize = arraySize;
 
 			break;
@@ -112,7 +111,6 @@ namespace aurora::modules::graphics::win_d3d11 {
 			desc.MipLevels = mipLevels;
 			desc.MiscFlags = 0;
 			//desc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;//D3D11_RESOURCE_MISC_TEXTURECUBE
-			//
 			desc.ArraySize = arraySize;
 			desc.SampleDesc.Count = 1;
 			desc.SampleDesc.Quality = 0;
@@ -183,7 +181,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			Vec3ui32 size3(size);
 			for (uint32_t i = 0; i < mipLevels; ++i) {
 				auto& mapped = mappedRes[i];
-				mapped.size = size3.getMultiplies()* perPixelSize;
+				mapped.size = size3.getMultiplies() * perPixelSize;
 				mapped.usage = Usage::NONE;
 
 				Image::calcNextMipPixelSize(size3);
@@ -237,7 +235,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		if  (uint32_t subresource = calcSubresource(mipSlice, arraySlice, mipLevels); subresource < mappedRes.size()) BaseResource::unmap(graphics, mappedRes[subresource].usage, subresource);
 	}
 
-	uint32_t BaseTextureResource::read (uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, void* dst, uint32_t dstLen) {
+	uint32_t BaseTextureResource::read(uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, void* dst, uint32_t dstLen) {
 		if  (uint32_t subresource = calcSubresource(mipSlice, arraySlice, mipLevels); subresource < mappedRes.size()) {
 			if (auto& mapped = mappedRes[subresource]; (mapped.usage & Usage::MAP_READ) == Usage::MAP_READ) {
 				if (dst && dstLen && offset < mapped.size) {
@@ -251,7 +249,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return -1;
 	}
 
-	uint32_t BaseTextureResource::write (uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, const void* data, uint32_t length) {
+	uint32_t BaseTextureResource::write(uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, const void* data, uint32_t length) {
 		if  (uint32_t subresource = calcSubresource(mipSlice, arraySlice, mipLevels); subresource < mappedRes.size()) {
 			if (auto& mapped = mappedRes[subresource]; (mapped.usage & Usage::MAP_WRITE) == Usage::MAP_WRITE) {
 				if (data && length && offset < mapped.size) {

@@ -56,7 +56,7 @@ namespace aurora {
 
 		const std::string& getAppPath() const;
 
-#if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
+#if AE_OS == AE_OS_WIN
 		inline HWND AE_CALL Win_getHWnd() const {
 			return _hWnd;
 		}
@@ -81,7 +81,7 @@ namespace aurora {
 		bool AE_CALL _adjustWindowRect(const Box2i32& in, Box2i32& out);
 		void AE_CALL _recordWindowedRect() const;
 
-#if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
+#if AE_OS == AE_OS_WIN
 		HINSTANCE _hIns;
 		HWND _hWnd;
 

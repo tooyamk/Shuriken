@@ -1,6 +1,6 @@
 #pragma once
 
-#include "base/LowLevel.h"
+#include "base/Global.h"
 #include "math/Math.h"
 
 namespace aurora {
@@ -17,7 +17,7 @@ namespace aurora {
 			memset(this, 0, sizeof(T) * N);
 		}
 
-		Vec(const T value) {
+		Vec(const T& value) {
 			set(value);
 		}
 
@@ -25,7 +25,7 @@ namespace aurora {
 			set(vec);
 		}
 
-		Vec(Vec&& vec) {
+		Vec(Vec&& vec) noexcept {
 			set(vec);
 		}
 
@@ -34,22 +34,28 @@ namespace aurora {
 		}
 
 		Vec(const T* values, uint32_t len) {
-			set(values, len);
-			if (N > len) memset(data + len, 0, sizeof(T) * (N - len));
+			if (N > len) {
+				for (uint32_t i = 0; i < len; ++i) data[i] = values[i];
+				memset(data + len, 0, sizeof(T) * (N - len));
+			} else {
+				for (uint32_t i = 0; i < N; ++i) data[i] = values[i];
+			}
 		}
 
-		Vec(const std::initializer_list<const T>& list) {
-			set(list);
-			if (N > list.size()) memset(data + list.size(), 0, sizeof(T) * (N - list.size()));
+		Vec(const std::initializer_list<const T>& list) : Vec(list.begin(), list.size()) {
 		}
 
-		template<typename... Args, typename = typename std::enable_if_t<are_all_convertible_v<Args..., T>>>
+		template<typename... Args, typename = typename std::enable_if_t<std::conjunction_v<std::is_convertible<Args, T>...>>>
 		Vec(Args... args) {
 			set(args...);
 			if constexpr (N > sizeof...(args)) memset(data + sizeof...(args), 0, sizeof(T) * (N - sizeof...(args)));
 		}
 
 		inline AE_CALL operator Data&() {
+			return data;
+		}
+
+		inline AE_CALL operator const Data& () const {
 			return data;
 		}
 
@@ -61,7 +67,7 @@ namespace aurora {
 			return data[i];
 		}
 
-		inline bool AE_CALL operator==(const T value) const {
+		inline bool AE_CALL operator==(const T& value) const {
 			return Math::isEqual<N, T>(data, value);
 		}
 
@@ -69,7 +75,7 @@ namespace aurora {
 			return Math::isEqual<N, T>(data, value.data);
 		}
 
-		inline bool AE_CALL operator!=(const T value) const {
+		inline bool AE_CALL operator!=(const T& value) const {
 			return !Math::isEqual<N, T>(data, value);
 		}
 
@@ -77,7 +83,7 @@ namespace aurora {
 			return !Math::isEqual<N, T>(data, value.data);
 		}
 
-		inline void AE_CALL operator+=(const T value) {
+		inline void AE_CALL operator+=(const T& value) {
 			add(value);
 		}
 
@@ -89,7 +95,7 @@ namespace aurora {
 			add(vec);
 		}
 
-		inline void AE_CALL operator-=(const T value) {
+		inline void AE_CALL operator-=(const T& value) {
 			sub(value);
 		}
 
@@ -101,7 +107,7 @@ namespace aurora {
 			sub(vec);
 		}
 
-		inline void AE_CALL operator*=(const T value) {
+		inline void AE_CALL operator*=(const T& value) {
 			mul(value);
 		}
 
@@ -113,7 +119,7 @@ namespace aurora {
 			mul(vec);
 		}
 
-		inline void AE_CALL operator/=(const T value) {
+		inline void AE_CALL operator/=(const T& value) {
 			div(value);
 		}
 
@@ -125,7 +131,11 @@ namespace aurora {
 			div(vec);
 		}
 
-		inline Vec& AE_CALL set(const T value) {
+		inline constexpr uint32_t AE_CALL getSize() const {
+			return N;
+		}
+
+		inline Vec& AE_CALL set(const T& value) {
 			for (uint32_t i = 0; i < N; ++i) data[i] = value;
 			return *this;
 		}
@@ -148,20 +158,20 @@ namespace aurora {
 			return set(list.begin(), list.size());
 		}
 
-		template<typename... Args, typename = typename std::enable_if_t<are_all_convertible_v<Args..., T>>>
+		template<typename... Args, typename = typename std::enable_if_t<std::conjunction_v<std::is_convertible<Args, T>...>>>
 		inline Vec& AE_CALL set(Args... args) {
 			if constexpr (N > 0) {
 				if constexpr (N >= sizeof...(args)) {
 					uint32_t i = 0;
 					((data[i++] = args), ...);
 				} else {
-					_set(0, args...);
+					_set<0>(args...);
 				}
 			}
 			return *this;
 		}
 
-		inline Vec& AE_CALL add(const T value) {
+		inline Vec& AE_CALL add(const T& value) {
 			for (uint32_t i = 0; i < N; ++i) data[i] += value;
 			return *this;
 		}
@@ -175,7 +185,7 @@ namespace aurora {
 			return add(vec.data);
 		}
 
-		inline Vec& AE_CALL sub(const T value) {
+		inline Vec& AE_CALL sub(const T& value) {
 			for (uint32_t i = 0; i < N; ++i) data[i] -= value;
 			return *this;
 		}
@@ -189,7 +199,7 @@ namespace aurora {
 			return sub(vec.data);
 		}
 
-		inline Vec& AE_CALL mul(const T value) {
+		inline Vec& AE_CALL mul(const T& value) {
 			for (uint32_t i = 0; i < N; ++i) data[i] *= value;
 			return *this;
 		}
@@ -203,7 +213,7 @@ namespace aurora {
 			return mul(vec.data);
 		}
 
-		inline Vec& AE_CALL div(const T value) {
+		inline Vec& AE_CALL div(const T& value) {
 			for (uint32_t i = 0; i < N; ++i) data[i] /= value;
 			return *this;
 		}
@@ -217,11 +227,11 @@ namespace aurora {
 			return div(vec.data);
 		}
 
-		inline bool AE_CALL isEqual(const T value) const {
+		inline bool AE_CALL isEqual(const T& value) const {
 			return Math::isEqual<N, T>(data, value);
 		}
 
-		inline bool AE_CALL isEqual(const T value, const T tolerance) const {
+		inline bool AE_CALL isEqual(const T& value, const T& tolerance) const {
 			return Math::isEqual<N, T>(data, value, tolerance);
 		}
 
@@ -229,7 +239,7 @@ namespace aurora {
 			return Math::isEqual<N, T>(data, value.data);
 		}
 
-		inline bool AE_CALL isEqual(const Vec& value, const T tolerance) const {
+		inline bool AE_CALL isEqual(const Vec& value, const T& tolerance) const {
 			return Math::isEqual<N, T>(data, value.data, tolerance);
 		}
 
@@ -248,21 +258,37 @@ namespace aurora {
 			return std::sqrt(getLengthSq<Ret>());
 		}
 
-		inline T AE_CALL getMax() const {
-			T max = data[0];
-			for (uint32_t i = 1; i < N; ++i) {
-				if (max < data[i]) max = data[i];
+		inline T AE_CALL getMin() const {
+			if constexpr (N > 0) {
+				T val = data[0];
+				for (uint32_t i = 1; i < N; ++i) {
+					if (val > data[i]) val = data[i];
+				}
+				return val;
+			} else {
+				return T(0);
 			}
-			return max;
 		}
 
-		template<uint32_t COUNT>
+		inline T AE_CALL getMax() const {
+			if constexpr (N > 0) {
+				T val = data[0];
+				for (uint32_t i = 1; i < N; ++i) {
+					if (val < data[i]) val = data[i];
+				}
+				return val;
+			} else {
+				return T(0);
+			}
+		}
+
+		template<uint32_t COUNT = N>
 		inline SLICE_TYPE<COUNT>& AE_CALL slice() const {
 			return (SLICE_TYPE<COUNT>&)data;
 		}
 
 		template<uint32_t COUNT>
-		inline SLICE_TYPE<COUNT>& AE_CALL slice (uint32_t start) const {
+		inline SLICE_TYPE<COUNT>& AE_CALL slice(uint32_t start) const {
 			return (SLICE_TYPE<COUNT>&)*(data + start);
 		}
 
@@ -292,12 +318,12 @@ namespace aurora {
 		Data data;
 
 	private:
-		inline void AE_CALL _set(uint32_t i, T value) {}
-
-		template<typename... Args>
-		inline void AE_CALL _set(uint32_t i, T value, Args... args) {
-			data[i] = value;
-			if (i++ < N) _set(i, args...);
+		template<uint32_t I, typename... Args>
+		inline void AE_CALL _set(const T& value, Args... args) {
+			if constexpr (I < N) {
+				data[I] = value;
+				_set<I + 1>(args...);
+			}
 		}
 	};
 
@@ -305,6 +331,31 @@ namespace aurora {
 
 	template<uint32_t N, typename T> const Vec<N, T> Vector<N, T>::ZERO = Vector<N, T>(Math::NUMBER_0<T>);
 	template<uint32_t N, typename T> const Vec<N, T> Vector<N, T>::ONE = Vector<N, T>(Math::NUMBER_1<T>);
+
+#define AE_VECTOR_ARITHMETIC(__SYMBOL__) \
+template<uint32_t N, typename T> \
+inline constexpr Vec<N, T> AE_CALL operator __SYMBOL__(const Vec<N, T>& v1, const Vec<N, T> v2) { \
+	auto v = v1; \
+	v __SYMBOL__= v2; \
+	return v; \
+} \
+template<uint32_t N, typename T> \
+inline constexpr Vec<N, T> AE_CALL operator __SYMBOL__(const Vec<N, T>& v1, const T& v2) { \
+	auto v = v1; \
+	v __SYMBOL__= v2; \
+	return v; \
+} \
+template<uint32_t N, typename T> \
+inline constexpr Vec<N, T> AE_CALL operator __SYMBOL__(const T& v1, const Vec<N, T>& v2) { \
+	Vec<N, T> v(v1); \
+	v __SYMBOL__= v2; \
+	return v; \
+} \
+
+	AE_VECTOR_ARITHMETIC(+);
+	AE_VECTOR_ARITHMETIC(-);
+	AE_VECTOR_ARITHMETIC(*);
+	AE_VECTOR_ARITHMETIC(/);
 
 	template<typename T> using Vec1 = Vec<1, T>;
 	using Vec1f32 = Vec1<f32>;

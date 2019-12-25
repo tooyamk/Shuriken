@@ -28,7 +28,7 @@ namespace aurora::modules::inputs::win_xinput {
 			if (XInputGetState(i, &state) == ERROR_SUCCESS) {
 				bool found = false;
 				for (uint32_t j = 0, n = _devices.size(); j < n; ++j) {
-					if (_devices[j].guid.isEqual((const uint8_t*)&guid, sizeof(guid))) {
+					if (_devices[j].guid.isEqual<false, true>((const uint8_t*)&guid, sizeof(guid))) {
 						_keepDevices.emplace_back(j);
 						found = true;
 						break;
@@ -37,7 +37,7 @@ namespace aurora::modules::inputs::win_xinput {
 
 				if (!found) {
 					auto& info = _connectedDevices.emplace_back();
-					info.guid.set((const uint8_t*)&guid, sizeof(guid));
+					info.guid.set<false, true>((const uint8_t*)&guid, sizeof(guid));
 					info.type = DeviceType::GAMEPAD;
 				}
 			}
@@ -84,7 +84,7 @@ namespace aurora::modules::inputs::win_xinput {
 		for (uint32_t i = connectedIdx, n = changed.size(); i < n; ++i) _eventDispatcher.dispatchEvent(this, ModuleEvent::CONNECTED, &changed[i]);
 	}
 
-	IInputDevice* Input::createDevice(const GUID& guid) {
+	IInputDevice* Input::createDevice(const DeviceGUID& guid) {
 		for (auto& info : _devices) {
 			if (info.guid == guid) return new Gamepad(*this, info);
 		}
