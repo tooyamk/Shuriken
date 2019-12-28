@@ -279,22 +279,22 @@ namespace aurora {
 			N_INT_48BITS,
 			N_INT_56BITS,
 			N_INT_64BITS,
-			U_INT_0 = 40,
-			U_INT_1,
-			U_INT_8BITS,
-			U_INT_16BITS,
-			U_INT_24BITS,
-			U_INT_32BITS,
-			U_INT_40BITS,
-			U_INT_48BITS,
-			U_INT_56BITS,
-			U_INT_64BITS,
-			FLOAT_0 = 60,
-			FLOAT_0_5,
-			FLOAT_1,
-			DOUBLE_0 = 80,
-			DOUBLE_0_5,
-			DOUBLE_1,
+			P_INT_0 = 40,
+			P_INT_1,
+			P_INT_8BITS,
+			P_INT_16BITS,
+			P_INT_24BITS,
+			P_INT_32BITS,
+			P_INT_40BITS,
+			P_INT_48BITS,
+			P_INT_56BITS,
+			P_INT_64BITS,
+			FLT_0 = 60,
+			FLT_0_5,
+			FLT_1,
+			DBL_0 = 80,
+			DBL_0_5,
+			DBL_1,
 			STRING_EMPTY = 100,
 			ARRAY_0 = 120,
 			ARRAY_8BITS,
@@ -564,6 +564,8 @@ namespace aurora {
 		inline bool AE_CALL _isContentEqual(const char* s1, const char* s2) const {
 			return _isContentEqual((uint8_t*)s1, strlen(s1), (uint8_t*)s2, strlen(s2));
 		}
+
+		void AE_CALL _packUInt(ByteArray& ba, uint64_t val, uint8_t typeBegin) const;
 
 		void AE_CALL _unpackArray(ByteArray& ba, size_t size);
 		void AE_CALL _unpackMap(ByteArray& ba, size_t size);

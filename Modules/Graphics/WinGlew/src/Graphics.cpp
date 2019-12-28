@@ -143,15 +143,16 @@ namespace aurora::modules::graphics::win_glew {
 
 		_internalFeatures.maxAnisotropy = 1.f;
 		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &_internalFeatures.maxAnisotropy);
-		_internalFeatures.supportTexStorage = isGreatThanVersion(4, 2);
+		
 
-		_deviceFeatures.supportSampler = isGreatThanVersion(3, 3);
-		_deviceFeatures.supportTextureView = isGreatThanVersion(4, 3);
 		_deviceFeatures.supportPixelBuffer = true;
 		_deviceFeatures.supportConstantBuffer = isGreatThanVersion(3, 1);
-		_deviceFeatures.supportPersisientMap = isGreatThanVersion(4, 4);
+		_deviceFeatures.supportSampler = isGreatThanVersion(3, 3);
+		_internalFeatures.supportTexStorage = isGreatThanVersion(4, 2);
+		_deviceFeatures.supportTextureView = isGreatThanVersion(4, 3);
+		_deviceFeatures.supportPersistentMap = isGreatThanVersion(4, 4);
 
-		_createBufferMask = Usage::MAP_READ_WRITE | Usage::UPDATE | (_deviceFeatures.supportPersisientMap ? Usage::PERSISTENT_MAP : Usage::NONE);
+		_createBufferMask = Usage::MAP_READ_WRITE | Usage::UPDATE | (_deviceFeatures.supportPersistentMap ? Usage::PERSISTENT_MAP : Usage::NONE);
 
 		return true;
 	}

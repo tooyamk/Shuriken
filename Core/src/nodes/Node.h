@@ -84,6 +84,11 @@ namespace aurora::nodes {
 		 * @param worldRot Target world rotation.
 		 */
 		static void AE_CALL getLocalRotationFromWorld(const Node& node, const Quaternion& worldRot, Quaternion& dst);
+		inline static Quaternion AE_CALL getLocalRotationFromWorld(const Node& node, const Quaternion& worldRot) {
+			Quaternion q;
+			getLocalRotationFromWorld(node, worldRot, q);
+			return q;
+		}
 
 	protected:
 		using DirtyType = uint8_t;

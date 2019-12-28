@@ -201,7 +201,7 @@ namespace aurora::modules::graphics::win_glew {
 					foundVar->offset = offsets[j];
 				}
 
-				layout.calcFeatureCode();
+				layout.calcFeatureValue();
 
 				g->getConstantBufferManager().registerConstantLayout(layout);
 			}
@@ -335,6 +335,9 @@ namespace aurora::modules::graphics::win_glew {
 		}
 		_inVertexBufferLayouts.clear();
 		_uniformLayouts.clear();
+
+		auto& cbm = _graphics.get<Graphics>()->getConstantBufferManager();
+		for (auto& layout : _uniformBlockLayouts) cbm.unregisterConstantLayout(layout);
 		_uniformBlockLayouts.clear();
 	}
 
@@ -351,10 +354,10 @@ namespace aurora::modules::graphics::win_glew {
 		}
 
 		println("------ glsl shader code(", (type == GL_VERTEX_SHADER ? "vert" : "frag"), ") ------\n", 
-			std::string((char*)source.data.getBytes(), source.data.getLength()), "\n------------------------------------");
+			std::string_view((char*)source.data.getSource(), source.data.getLength()), "\n------------------------------------");
 
 		GLuint shader = glCreateShader(type);
-		auto s = (const char*)source.data.getBytes();
+		auto s = (const char*)source.data.getSource();
 		auto len = (GLint)source.data.getLength();
 		glShaderSource(shader, 1, &s, &len);
 		glCompileShader(shader);

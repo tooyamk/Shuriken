@@ -25,11 +25,11 @@ namespace aurora {
 		_needReverse = _endian != std::endian::native;
 	}
 
-	inline uint8_t* ByteArray::getBytes() {
+	inline uint8_t* ByteArray::getSource() {
 		return _data;
 	}
 
-	inline const uint8_t* ByteArray::getBytes() const {
+	inline const uint8_t* ByteArray::getSource() const {
 		return _data;
 	}
 
@@ -95,7 +95,7 @@ namespace aurora {
 	}
 
 	inline void ByteArray::writeUInt(uint8_t numBytes, uint64_t value) {
-		if (numBytes > 0 && numBytes < 9) _write((uint8_t*)& value, numBytes);
+		if (numBytes > 0 && numBytes < 9) _write((uint8_t*)&value, numBytes);
 	}
 
 	inline void ByteArray::writeBytes(const uint8_t* bytes, size_t length) {
@@ -142,13 +142,12 @@ namespace aurora {
 		_position += length;
 	}
 
-	inline void ByteArray::readTwoUInt12(uint16_t& value1, uint16_t& value2) {
+	inline std::tuple<uint16_t, uint16_t> ByteArray::readTwoUInt12() {
 		auto v1 = read<uint8_t>();
 		auto v2 = read<uint8_t>();
 		auto v3 = read<uint8_t>();
 
-		value1 = (v1 << 4) | ((v2 >> 4) & 0xF);
-		value2 = ((v2 & 0xF) << 8) | v3;
+		return std::make_tuple<uint16_t, uint16_t>((v1 << 4) | ((v2 >> 4) & 0xF), ((v2 & 0xF) << 8) | v3);
 	}
 
 	inline void ByteArray::writeTwoUInt12(uint16_t value1, uint16_t value2) {
@@ -157,20 +156,17 @@ namespace aurora {
 		write<uint8_t>(value2 & 0xFF);
 	}
 
-	inline void ByteArray::readTwoInt12(int16_t& value1, int16_t& value2) {
-		uint16_t v1, v2;
-		readTwoUInt12(v1, v2);
-
-		value1 = v1 > INT12_MAX ? v1 - INT12 : v1;
-		value2 = v2 > INT12_MAX ? v2 - INT12 : v2;
+	inline std::tuple<int16_t, int16_t> ByteArray::readTwoInt12() {
+		auto [v1, v2] = readTwoUInt12();
+		return std::make_tuple<int16_t, int16_t>(v1 > intMax<12>() ? v1 - uintMax<12>() - 1 : v1, v2 > intMax<12>() ? v2 - uintMax<12>() - 1 : v2);
 	}
 
 	inline void ByteArray::writeTwoInt12(int16_t value1, int16_t value2) {
-		writeTwoUInt12(value1 < 0 ? INT12 + value1 : value1, value2 < 0 ? INT12 + value2 : value2);
+		writeTwoUInt12(value1 < 0 ? uintMax<12>() + 1 + value1 : value1, value2 < 0 ? uintMax<12>() + 1 + value2 : value2);
 	}
 
 	inline bool ByteArray::isEqual(const ByteArray& data1, const ByteArray& data2) {
-		return isEqual(data1.getBytes(), data1.getLength(), data2.getBytes(), data2.getLength());
+		return data1.getLength() == data2.getLength() ? isEqual(data1.getSource(), data2.getSource(), data1.getLength()) : false;
 	}
 
 	inline void ByteArray::_read(uint8_t* p, uint32_t len) {

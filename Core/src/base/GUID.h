@@ -12,10 +12,10 @@ namespace aurora::modules::inputs {
 			memset(_data, 0, sizeof(Data));
 		}
 		GUID(const GUID& value) {
-			memcpy(_data, value._data, N);
+			memcpy(_data, value._data, sizeof(Data));
 		}
 		GUID(GUID&& value) {
-			memcpy(_data, value._data, N);
+			memcpy(_data, value._data, sizeof(Data));
 		}
 		~GUID() {
 		}
@@ -106,11 +106,12 @@ namespace aurora::modules::inputs {
 			return *this;
 		}
 
-		inline bool AE_CALL operator==(const GUID& right) const {
-			for (uint32_t i = 0; i < N; ++i) {
-				if (_data[i] != right._data[i]) return false;
-			}
-			return true;
+		inline bool AE_CALL operator==(const GUID& val) const {
+			return memEqual<sizeof(GUID)>(this, &val);
+		}
+
+		inline bool AE_CALL operator!=(const GUID& val) const {
+			return !memEqual<sizeof(GUID)>(this, &val);
 		}
 
 	private:

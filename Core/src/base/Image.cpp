@@ -140,7 +140,7 @@ namespace aurora {
 		switch (format) {
 		case TextureFormat::R8G8B8:
 		{
-			if (convertFormat(size, this->format, (const uint8_t*)source.getBytes(), format, dst)) {
+			if (convertFormat(size, this->format, (const uint8_t*)source.getSource(), format, dst)) {
 				generateMips_UInt8s(size, format, mipLevels, 3, dst, dstDataPtr);
 				return true;
 			}
@@ -149,7 +149,7 @@ namespace aurora {
 		}
 		case TextureFormat::R8G8B8A8:
 		{
-			if (convertFormat(size, this->format, (const uint8_t*)source.getBytes(), format, dst)) {
+			if (convertFormat(size, this->format, (const uint8_t*)source.getSource(), format, dst)) {
 				generateMips_UInt8s(size, format, mipLevels, 4, dst, dstDataPtr);
 				return true;
 			}

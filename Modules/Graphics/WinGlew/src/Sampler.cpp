@@ -5,100 +5,101 @@
 namespace aurora::modules::graphics::win_glew {
 	Sampler::Sampler(Graphics& graphics) : ISampler(graphics),
 		_handle(0),
-		_dirty(0xFF),
-		_internalLOD({ -1000.f, 1000.f }),
-		_internalLODBias(0.f),
-		_maxAnisotropy(1.0f),
-		_internalCompareFunc(GL_NEVER) {
+		_dirty(DirtyFlag::EMPTY) {
+		memset(&_desc, 0, sizeof(_desc));
+		_desc.LOD.set(-1000.f, 1000.f);
+		_desc.LODBias = 0.f;
+		_desc.maxAnisotropy = 1.0f;
+		_desc.compareFunc = GL_NEVER;
+
 		_updateFilter();
 		_updateAddress();
+
+		memcpy(&_oldDesc, &_desc, sizeof(_desc));
 	}
 
 	Sampler::~Sampler() {
 		_releaseRes();
 	}
 
-	void Sampler::setFilter(SamplerFilterOperation op, SamplerFilterMode min, SamplerFilterMode mag, SamplerFilterMode mipmap) {
-		if (op != SamplerFilterOperation::COMPARISON) op = SamplerFilterOperation::NORMAL;
-		if (_filter.operation != op || _filter.minification != min || _filter.magnification != mag || _filter.mipmap != mipmap) {
-			_filter.operation = op;
-			_filter.minification = min;
-			_filter.magnification = mag;
-			_filter.mipmap = mipmap;
+	void Sampler::setFilter(const SamplerFilter& filter) {
+		auto f = filter;
+		if (f.operation != SamplerFilterOperation::COMPARISON) f.operation = SamplerFilterOperation::NORMAL;
+		if (_filter != f) {
+			_filter = f;
 
 			_updateFilter();
-			_dirty |= DirtyFlag::FILTER;
+			_setDirty(!memEqual<sizeof(_desc.filter)>(&_oldDesc.filter, &_desc.filter), DirtyFlag::FILTER);
 		}
 	}
 
 	void Sampler::setComparisonFunc(SamplerComparisonFunc func) {
 		auto fn = _convertComparisonFunc(func);
-		if (_internalCompareFunc != fn) {
-			_internalCompareFunc = fn;
-			_dirty |= DirtyFlag::COMPARE_FUNC;
+		if (_desc.compareFunc != fn) {
+			_desc.compareFunc = fn;
+
+			_setDirty(_oldDesc.compareFunc != _desc.compareFunc, DirtyFlag::COMPARE_FUNC);
 		}
 	}
 
-	void Sampler::setAddress(SamplerAddressMode u, SamplerAddressMode v, SamplerAddressMode w) {
-		if (_address.u != u || _address.v != v || _address.w != w) {
-			_address.u = u;
-			_address.v = v;
-			_address.w = w;
+	void Sampler::setAddress(const SamplerAddress& address) {
+		if (_address != address) {
+			_address = address;
 
 			_updateAddress();
-			_dirty |= DirtyFlag::ADDRESS;
+			_setDirty(!memEqual<sizeof(_desc.address)>(&_oldDesc.address, &_desc.address), DirtyFlag::ADDRESS);
 		}
 	}
 
 	void Sampler::setMipLOD(f32 min, f32 max) {
-		if (_internalLOD.min != min || _internalLOD.max != max) {
-			_internalLOD.min = min;
-			_internalLOD.max = max;
+		if (_desc.LOD[0] != min || _desc.LOD[1] != max) {
+			_desc.LOD.set(min, max);
 
-			_dirty |= DirtyFlag::LOD;
+			_setDirty(!memEqual<sizeof(_desc.LOD)>(&_oldDesc.LOD, &_desc.LOD), DirtyFlag::LOD);
 		}
 	}
 
 	void Sampler::setMipLODBias(f32 bias) {
-		if (_internalLODBias != bias) {
-			_internalLODBias = bias;
+		if (_desc.LODBias != bias) {
+			_desc.LODBias = bias;
 
-			_dirty |= DirtyFlag::LOD_BAIS;
+			_setDirty(_oldDesc.LODBias != _desc.LODBias, DirtyFlag::LOD_BIAS);
 		}
 	}
 
-	void Sampler::setMaxAnisotropy (uint32_t max) {
+	void Sampler::setMaxAnisotropy(uint32_t max) {
 		if (auto& features = _graphics.get<Graphics>()->getInternalFeatures(); max > features.maxAnisotropy) max = features.maxAnisotropy;
-		if (_maxAnisotropy != max) {
-			_maxAnisotropy = max;
+		if (_desc.maxAnisotropy != max) {
+			_desc.maxAnisotropy = max;
 
-			_dirty |= DirtyFlag::MAX_ANISOTROPY;
+			_setDirty(_oldDesc.maxAnisotropy != _desc.maxAnisotropy, DirtyFlag::MAX_ANISOTROPY);
 		}
 	}
 
 	void Sampler::setBorderColor(const Vec4f32& color) {
-		if (_internalBorderColor != color) {
-			_internalBorderColor.set(color);
-			_dirty |= DirtyFlag::BORDER_COLOR;
+		if (_desc.borderColor != color) {
+			_desc.borderColor.set(color);
+
+			_setDirty(!memEqual<sizeof(_desc.borderColor)>(&_oldDesc.borderColor, &_desc.borderColor), DirtyFlag::BORDER_COLOR);
 		}
 	}
 
 	void Sampler::_updateFilter() {
-		_internalFilter.min = GL_NEAREST;
-		_internalFilter.mag = GL_NEAREST;
+		_desc.filter.min = GL_NEAREST;
+		_desc.filter.mag = GL_NEAREST;
 		if (_filter.minification == SamplerFilterMode::ANISOTROPIC || _filter.magnification == SamplerFilterMode::ANISOTROPIC || _filter.mipmap == SamplerFilterMode::ANISOTROPIC) {
 			//min = GL_TEXTURE_MAX_ANISOTROPY_EXT;
 			//mag = GL_TEXTURE_MAX_ANISOTROPY_EXT;
 		} else {
 			if (_filter.minification == SamplerFilterMode::POINT) {
-				_internalFilter.min = _filter.mipmap == SamplerFilterMode::POINT ? GL_NEAREST_MIPMAP_NEAREST : GL_NEAREST_MIPMAP_LINEAR;
+				_desc.filter.min = _filter.mipmap == SamplerFilterMode::POINT ? GL_NEAREST_MIPMAP_NEAREST : GL_NEAREST_MIPMAP_LINEAR;
 			} else {
-				_internalFilter.min = _filter.mipmap == SamplerFilterMode::POINT ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR_MIPMAP_LINEAR;
+				_desc.filter.min = _filter.mipmap == SamplerFilterMode::POINT ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR_MIPMAP_LINEAR;
 			}
-			_internalFilter.mag = _filter.magnification == SamplerFilterMode::POINT && _filter.mipmap == SamplerFilterMode::POINT ? GL_NEAREST : GL_LINEAR;
+			_desc.filter.mag = _filter.magnification == SamplerFilterMode::POINT && _filter.mipmap == SamplerFilterMode::POINT ? GL_NEAREST : GL_LINEAR;
 		}
 
-		_internalFilter.compareMode = _filter.operation == SamplerFilterOperation::COMPARISON ? GL_COMPARE_REF_TO_TEXTURE : GL_NONE;
+		_desc.filter.compareMode = _filter.operation == SamplerFilterOperation::COMPARISON ? GL_COMPARE_REF_TO_TEXTURE : GL_NONE;
 	}
 
 	GLenum Sampler::_convertComparisonFunc(SamplerComparisonFunc func) {
@@ -142,39 +143,43 @@ namespace aurora::modules::graphics::win_glew {
 	}
 
 	void Sampler::_updateAddress() {
-		_internalAddress.s = _convertAddressMode(_address.u);
-		_internalAddress.t = _convertAddressMode(_address.v);
-		_internalAddress.r = _convertAddressMode(_address.w);
+		_desc.address.s = _convertAddressMode(_address.u);
+		_desc.address.t = _convertAddressMode(_address.v);
+		_desc.address.r = _convertAddressMode(_address.w);
 	}
 
 	void Sampler::update() {
 		if (_dirty) {
-			if (!_handle) glGenSamplers(1, &_handle);
-
-			if (_dirty & DirtyFlag::FILTER) {
-				glSamplerParameteri(_handle, GL_TEXTURE_COMPARE_MODE, _internalFilter.compareMode);
-
-				glSamplerParameteri(_handle, GL_TEXTURE_MIN_FILTER, _internalFilter.min);
-				glSamplerParameteri(_handle, GL_TEXTURE_MAG_FILTER, _internalFilter.mag);
+			if (_dirty & DirtyFlag::EMPTY) {
+				glGenSamplers(1, &_handle);
+				_dirty = 0x7F;
 			}
 
-			if (_dirty & DirtyFlag::COMPARE_FUNC) glSamplerParameteri(_handle, GL_TEXTURE_COMPARE_FUNC, _internalCompareFunc);
+			if (_dirty & DirtyFlag::FILTER) {
+				glSamplerParameteri(_handle, GL_TEXTURE_COMPARE_MODE, _desc.filter.compareMode);
+
+				glSamplerParameteri(_handle, GL_TEXTURE_MIN_FILTER, _desc.filter.min);
+				glSamplerParameteri(_handle, GL_TEXTURE_MAG_FILTER, _desc.filter.mag);
+			}
+
+			if (_dirty & DirtyFlag::COMPARE_FUNC) glSamplerParameteri(_handle, GL_TEXTURE_COMPARE_FUNC, _desc.compareFunc);
 
 			if (_dirty & DirtyFlag::ADDRESS) {
-				glSamplerParameteri(_handle, GL_TEXTURE_WRAP_S, _internalAddress.s);
-				glSamplerParameteri(_handle, GL_TEXTURE_WRAP_S, _internalAddress.t);
-				glSamplerParameteri(_handle, GL_TEXTURE_WRAP_S, _internalAddress.r);
+				glSamplerParameteri(_handle, GL_TEXTURE_WRAP_S, _desc.address.s);
+				glSamplerParameteri(_handle, GL_TEXTURE_WRAP_T, _desc.address.t);
+				glSamplerParameteri(_handle, GL_TEXTURE_WRAP_R, _desc.address.r);
 			}
 
 			if (_dirty & DirtyFlag::LOD) {
-				glSamplerParameterf(_handle, GL_TEXTURE_MIN_LOD, _internalLOD.min);
-				glSamplerParameterf(_handle, GL_TEXTURE_MAX_LOD, _internalLOD.max);
+				glSamplerParameterf(_handle, GL_TEXTURE_MIN_LOD, _desc.LOD[0]);
+				glSamplerParameterf(_handle, GL_TEXTURE_MAX_LOD, _desc.LOD[1]);
 			}
 
-			if (_dirty & DirtyFlag::LOD_BAIS) glSamplerParameterf(_handle, GL_TEXTURE_LOD_BIAS, _internalLODBias);
-			if (_dirty & DirtyFlag::MAX_ANISOTROPY) glSamplerParameterf(_handle, GL_TEXTURE_MAX_ANISOTROPY, _maxAnisotropy);
-			if (_dirty & DirtyFlag::BORDER_COLOR) glSamplerParameterfv(_handle, GL_TEXTURE_BORDER_COLOR, _internalBorderColor);
+			if (_dirty & DirtyFlag::LOD_BIAS) glSamplerParameterf(_handle, GL_TEXTURE_LOD_BIAS, _desc.LODBias);
+			if (_dirty & DirtyFlag::MAX_ANISOTROPY) glSamplerParameterf(_handle, GL_TEXTURE_MAX_ANISOTROPY, _desc.maxAnisotropy);
+			if (_dirty & DirtyFlag::BORDER_COLOR) glSamplerParameterfv(_handle, GL_TEXTURE_BORDER_COLOR, _desc.borderColor);
 
+			memcpy(&_oldDesc, &_desc, sizeof(_desc));
 			_dirty = 0;
 		}
 	}
@@ -184,6 +189,6 @@ namespace aurora::modules::graphics::win_glew {
 			glDeleteSamplers(1, &_handle);
 			_handle = 0;
 		}
-		_dirty = 0xFF;
+		_dirty |= DirtyFlag::EMPTY;
 	}
 }

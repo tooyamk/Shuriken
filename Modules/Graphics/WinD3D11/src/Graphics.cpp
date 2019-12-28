@@ -253,7 +253,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_deviceFeatures.supportTextureView = true;
 		_deviceFeatures.supportPixelBuffer = false;
 		_deviceFeatures.supportConstantBuffer = true;
-		_deviceFeatures.supportPersisientMap = false;
+		_deviceFeatures.supportPersistentMap = false;
 
 		_resize((Vec2<UINT>&)size);
 

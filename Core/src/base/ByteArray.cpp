@@ -96,7 +96,7 @@ namespace aurora {
 		{
 			int32_t v = 0;
 			_read((uint8_t*)& v, 3);
-			return v > INT24_MAX ? v - INT24 : v;
+			return v > intMax<24>() ? v - uintMax<24>() - 1 : v;
 		}
 		case 4:
 			return read<int32_t>();
@@ -104,19 +104,19 @@ namespace aurora {
 		{
 			int64_t v = 0;
 			_read((uint8_t*)&v, 5);
-			return v > INT40_MAX ? v - INT40 : v;
+			return v > intMax<40>() ? v - uintMax<40>() - 1 : v;
 		}
 		case 6:
 		{
 			int64_t v = 0;
 			_read((uint8_t*)&v, 6);
-			return v > INT48_MAX ? v - INT48 : v;
+			return v > intMax<48>() ? v - uintMax<48>() - 1 : v;
 		}
 		case 7:
 		{
 			int64_t v = 0;
 			_read((uint8_t*)&v, 7);
-			return v > INT56_MAX ? v - INT56 : v;
+			return v > intMax<56>() ? v - uintMax<56>() - 1 : v;
 		}
 		default:
 			return read<int64_t>();
@@ -160,8 +160,8 @@ namespace aurora {
 			break;
 		case 3:
 		{
-			if (value < 0) value = INT24 + value;
-			_write((uint8_t*)& value, 3);
+			if (value < 0) value = uintMax<24>() + 1 + value;
+			_write((uint8_t*)&value, 3);
 
 			break;
 		}
@@ -170,21 +170,21 @@ namespace aurora {
 			break;
 		case 5:
 		{
-			if (value < 0) value = INT40 + value;
+			if (value < 0) value = uintMax<40>() + 1 + value;
 			_write((uint8_t*)&value, 5);
 
 			break;
 		}
 		case 6:
 		{
-			if (value < 0) value = INT48 + value;
+			if (value < 0) value = uintMax<48>() + 1 + value;
 			_write((uint8_t*)&value, 6);
 
 			break;
 		}
 		case 7:
 		{
-			if (value < 0) value = INT56 + value;
+			if (value < 0) value = uintMax<56>() + 1 + value;
 			_write((uint8_t*)&value, 7);
 
 			break;
@@ -262,7 +262,7 @@ namespace aurora {
 
 		len -= offset;
 		if (length > len) length = len;
-		auto baBytes = ba.getBytes();
+		auto baBytes = ba.getSource();
 
 		_checkLength(length);
 
@@ -275,8 +275,7 @@ namespace aurora {
 		if (chechBOM) begin += _bomOffset(begin);
 		if (_length <= begin) return std::make_tuple(begin, 0, begin);
 
-		auto len = _length - begin;
-		if (size > len) size = len;
+		if (auto len = _length - begin; size > len) size = len;
 		if (!size) return std::make_tuple(begin, 0, begin);
 
 		for (size_t i = begin, n = begin + size; i < n; ++i) {
@@ -354,10 +353,8 @@ namespace aurora {
 		}
 	}
 
-	bool ByteArray::isEqual(const uint8_t* data1, size_t data1Len, const uint8_t* data2, size_t data2Len) {
-		if (data1Len != data2Len) return false;
-
-		for (size_t i = 0; i < data1Len; ++i) {
+	bool ByteArray::isEqual(const uint8_t* data1, const uint8_t* data2, size_t len) {
+		for (size_t i = 0; i < len; ++i) {
 			if (data1[i] != data2[i]) return false;
 		}
 

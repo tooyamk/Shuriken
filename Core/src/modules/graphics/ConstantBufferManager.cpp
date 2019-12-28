@@ -8,31 +8,31 @@ namespace aurora::modules::graphics {
 	ConstantBufferLayout::ConstantBufferLayout() :
 		bindPoint(0),
 		size(0),
-		featureCode(0) {
+		featureValue(0) {
 	}
 
-	void ConstantBufferLayout::calcFeatureCode() {
-		featureCode = hash::CRC::CRC64StreamBegin();
-		hash::CRC::CRC64StreamIteration(featureCode, (uint8_t*)&size, sizeof(size));
+	void ConstantBufferLayout::calcFeatureValue() {
+		featureValue = hash::CRC::CRC64StreamBegin();
+		hash::CRC::CRC64StreamIteration(featureValue, (uint8_t*)&size, sizeof(size));
 
 		uint16_t numValidVars = 0;
-		for (auto& var : variables) _calcFeatureCode(var, numValidVars);
+		for (auto& var : variables) _calcFeatureValue(var, numValidVars);
 
-		hash::CRC::CRC64StreamIteration(featureCode, (uint8_t*)&numValidVars, sizeof(numValidVars));
-		hash::CRC::CRC64StreamEnd(featureCode);
+		hash::CRC::CRC64StreamIteration(featureValue, (uint8_t*)&numValidVars, sizeof(numValidVars));
+		hash::CRC::CRC64StreamEnd(featureValue);
 	}
 
-	void ConstantBufferLayout::_calcFeatureCode(const Variables& var, uint16_t& numValidVars) {
+	void ConstantBufferLayout::_calcFeatureValue(const Variables& var, uint16_t& numValidVars) {
 		if (var.structMembers.empty()) {
 			auto nameLen = var.name.size();
-			hash::CRC::CRC64StreamIteration(featureCode, (uint8_t*)&nameLen, sizeof(nameLen));
-			hash::CRC::CRC64StreamIteration(featureCode, (uint8_t*)var.name.c_str(), var.name.size());
-			hash::CRC::CRC64StreamIteration(featureCode, (uint8_t*)&var.offset, sizeof(var.offset));
-			hash::CRC::CRC64StreamIteration(featureCode, (uint8_t*)&var.size, sizeof(var.size));
+			hash::CRC::CRC64StreamIteration(featureValue, (uint8_t*)&nameLen, sizeof(nameLen));
+			hash::CRC::CRC64StreamIteration(featureValue, (uint8_t*)var.name.c_str(), var.name.size());
+			hash::CRC::CRC64StreamIteration(featureValue, (uint8_t*)&var.offset, sizeof(var.offset));
+			hash::CRC::CRC64StreamIteration(featureValue, (uint8_t*)&var.size, sizeof(var.size));
 
 			++numValidVars;
 		} else {
-			for (auto& mvar : var.structMembers) _calcFeatureCode(mvar, numValidVars);
+			for (auto& mvar : var.structMembers) _calcFeatureValue(mvar, numValidVars);
 		}
 	}
 
@@ -85,7 +85,7 @@ namespace aurora::modules::graphics {
 		_unregisterExclusiveConstantLayout(layout);
 	}
 
-	void ConstantBufferManager::_registerShareConstantLayout (uint32_t size) {
+	void ConstantBufferManager::_registerShareConstantLayout(uint32_t size) {
 		if (auto itr = _shareConstBufferPool.find(size); itr == _shareConstBufferPool.end()) {
 			auto& pool = _shareConstBufferPool.emplace(std::piecewise_construct, std::forward_as_tuple(size), std::forward_as_tuple()).first->second;
 			pool.rc = 1;
@@ -95,7 +95,7 @@ namespace aurora::modules::graphics {
 		}
 	}
 
-	void ConstantBufferManager::_unregisterShareConstantLayout (uint32_t size) {
+	void ConstantBufferManager::_unregisterShareConstantLayout(uint32_t size) {
 		if (auto itr = _shareConstBufferPool.find(size); itr != _shareConstBufferPool.end() && !--itr->second.rc) {
 			//_graphics->ref();
 
@@ -106,7 +106,7 @@ namespace aurora::modules::graphics {
 		}
 	}
 
-	IConstantBuffer* ConstantBufferManager::popShareConstantBuffer (uint32_t size) {
+	IConstantBuffer* ConstantBufferManager::popShareConstantBuffer(uint32_t size) {
 		if (auto itr = _shareConstBufferPool.find(size); itr != _shareConstBufferPool.end()) {
 			auto& pool = itr->second;
 			IConstantBuffer* cb;
@@ -138,15 +138,15 @@ namespace aurora::modules::graphics {
 	}
 
 	void ConstantBufferManager::_registerExclusiveConstantLayout(ConstantBufferLayout& layout) {
-		if (auto itr = _exclusiveConstPool.find(layout.featureCode); itr == _exclusiveConstPool.end()) {
-			_exclusiveConstPool.emplace(std::piecewise_construct, std::forward_as_tuple(layout.featureCode), std::forward_as_tuple()).first->second.rc = 1;
+		if (auto itr = _exclusiveConstPool.find(layout.featureValue); itr == _exclusiveConstPool.end()) {
+			_exclusiveConstPool.emplace(std::piecewise_construct, std::forward_as_tuple(layout.featureValue), std::forward_as_tuple()).first->second.rc = 1;
 		} else {
 			++itr->second.rc;
 		}
 	}
 
 	void ConstantBufferManager::_unregisterExclusiveConstantLayout(ConstantBufferLayout& layout) {
-		if (auto itr = _exclusiveConstPool.find(layout.featureCode); itr != _exclusiveConstPool.end() && !--itr->second.rc) {
+		if (auto itr = _exclusiveConstPool.find(layout.featureValue); itr != _exclusiveConstPool.end() && !--itr->second.rc) {
 			//_graphics->ref();
 
 			for (auto node : itr->second.nodes) {
@@ -188,12 +188,12 @@ namespace aurora::modules::graphics {
 			if (!node) return nullptr;
 
 			IConstantBuffer* cb = nullptr;
-			if (auto itr = node->buffers.find(layout.featureCode); itr == node->buffers.end()) {
-				cb = node->buffers.emplace(layout.featureCode, createExclusiveConstantBufferCallback(cur + 1)).first->second;
+			if (auto itr = node->buffers.find(layout.featureValue); itr == node->buffers.end()) {
+				cb = node->buffers.emplace(layout.featureValue, createExclusiveConstantBufferCallback(cur + 1)).first->second;
 				cb->ref();
 				cb->create(layout.size, Usage::MAP_WRITE);
 
-				_exclusiveConstPool.find(layout.featureCode)->second.nodes.emplace(node);
+				_exclusiveConstPool.find(layout.featureValue)->second.nodes.emplace(node);
 
 				do {
 					++node->numAssociativeBuffers;

@@ -10,12 +10,12 @@ namespace aurora::modules::graphics::win_d3d11 {
 		Sampler(Graphics& graphics);
 		virtual ~Sampler();
 
-		virtual void AE_CALL setFilter(SamplerFilterOperation op, SamplerFilterMode min, SamplerFilterMode mag, SamplerFilterMode mipmap) override;
+		virtual void AE_CALL setFilter(const SamplerFilter& filter) override;
 		virtual void AE_CALL setComparisonFunc(SamplerComparisonFunc func) override;
-		virtual void AE_CALL setAddress(SamplerAddressMode u, SamplerAddressMode v, SamplerAddressMode w) override;
+		virtual void AE_CALL setAddress(const SamplerAddress& address) override;
 		virtual void AE_CALL setMipLOD(f32 min, f32 max) override;
 		virtual void AE_CALL setMipLODBias(f32 bias) override;
-		virtual void AE_CALL setMaxAnisotropy (uint32_t max) override;
+		virtual void AE_CALL setMaxAnisotropy(uint32_t max) override;
 		virtual void AE_CALL setBorderColor(const Vec4f32& color) override;
 
 		inline ID3D11SamplerState* AE_CALL getInternalSampler() const {
@@ -25,10 +25,24 @@ namespace aurora::modules::graphics::win_d3d11 {
 		void AE_CALL update();
 
 	protected:
-		bool _dirty;
+		using DirtyType = uint8_t;
+
+		struct DirtyFlag {
+			static const DirtyType EMPTY = 0b1;
+			static const DirtyType FILTER = 0b1 << 1;
+			static const DirtyType COMPARISON_FUNC = 0b1 << 2;
+			static const DirtyType ADDRESS = 0b1 << 3;
+			static const DirtyType LOD = 0b1 << 4;
+			static const DirtyType LOD_BIAS = 0b1 << 5;
+			static const DirtyType MAX_ANISOTROPY = 0b1 << 6;
+			static const DirtyType BORDER_COLOR = 0b1 << 7;
+		};
+
+		DirtyType _dirty;
 		SamplerFilter _filter;
 		SamplerAddress _address;
 		D3D11_SAMPLER_DESC _desc;
+		D3D11_SAMPLER_DESC _oldDesc;
 		ID3D11SamplerState* _samplerState;
 
 		void AE_CALL _updateFilter();
@@ -38,5 +52,13 @@ namespace aurora::modules::graphics::win_d3d11 {
 		void AE_CALL _updateAddress();
 
 		void AE_CALL _releaseRes();
+
+		inline void AE_CALL _setDirty(bool dirty, DirtyType val) {
+			if (dirty) {
+				_dirty |= val;
+			} else {
+				_dirty &= ~val;
+			}
+		}
 	};
 }

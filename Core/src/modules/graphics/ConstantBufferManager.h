@@ -36,15 +36,15 @@ namespace aurora::modules::graphics {
 		uint32_t bindPoint;
 		std::vector<Variables> variables;
 		uint32_t size;
-		uint64_t featureCode;
+		uint64_t featureValue;
 
-		void AE_CALL calcFeatureCode();
+		void AE_CALL calcFeatureValue();
 
 		void AE_CALL collectUsingInfo(const ShaderParameterFactory& factory, ShaderParameterUsageStatistics& statistics,
 			std::vector<const ShaderParameter*>& usingParams, std::vector<const ConstantBufferLayout::Variables*>& usingVars) const;
 
 	private:
-		void AE_CALL _calcFeatureCode(const Variables& var, uint16_t& numValidVars);
+		void AE_CALL _calcFeatureValue(const Variables& var, uint16_t& numValidVars);
 
 		void AE_CALL _collectUsingInfo(const ConstantBufferLayout::Variables& var, const ShaderParameterFactory& factory, ShaderParameterUsageStatistics& statistics,
 			std::vector<const ShaderParameter*>& usingParams, std::vector<const ConstantBufferLayout::Variables*>& usingVars) const;
@@ -59,12 +59,12 @@ namespace aurora::modules::graphics {
 		~ConstantBufferManager();
 
 		std::function<IConstantBuffer*()> createShareConstantBufferCallback = nullptr;
-		std::function<IConstantBuffer* (uint32_t numParameters)> createExclusiveConstantBufferCallback = nullptr;
+		std::function<IConstantBuffer*(uint32_t numParameters)> createExclusiveConstantBufferCallback = nullptr;
 
 		void AE_CALL registerConstantLayout(ConstantBufferLayout& layout);
 		void AE_CALL unregisterConstantLayout(ConstantBufferLayout& layout);
 
-		IConstantBuffer* AE_CALL popShareConstantBuffer (uint32_t size);
+		IConstantBuffer* AE_CALL popShareConstantBuffer(uint32_t size);
 		void AE_CALL resetUsedShareConstantBuffers();
 
 		IConstantBuffer* AE_CALL getExclusiveConstantBuffer(const std::vector<ShaderParameter*>& parameters, const ConstantBufferLayout& layout);
@@ -82,8 +82,8 @@ namespace aurora::modules::graphics {
 		std::unordered_map<uint32_t, ShareConstBuffers> _shareConstBufferPool;
 		std::unordered_set<uint32_t> _usedShareConstBufferPool;
 
-		void AE_CALL _registerShareConstantLayout (uint32_t size);
-		void AE_CALL _unregisterShareConstantLayout (uint32_t size);
+		void AE_CALL _registerShareConstantLayout(uint32_t size);
+		void AE_CALL _unregisterShareConstantLayout(uint32_t size);
 
 
 		struct ExclusiveConstNode {

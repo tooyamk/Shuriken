@@ -11,7 +11,7 @@ namespace aurora {
 		static std::string::size_type AE_CALL UnicodeToUtf8(const wchar_t* in, size_t inLen, char* out, size_t outLen);
 		
 		template<typename T,
-		typename = std::enable_if_t<is_wstring_v<T>, T>>
+		typename = typename std::enable_if_t<is_wstring_v<T>, T>>
 		static std::string AE_CALL UnicodeToUtf8(const T& in) {
 			size_t unicodeLen, utf8Len;
 			calcUnicodeToUtf8Length(in.data(), in.size(), unicodeLen, utf8Len);
@@ -30,7 +30,7 @@ namespace aurora {
 		static std::string::size_type AE_CALL Utf8ToUnicode(const char* in, size_t inLen, wchar_t* out, size_t outLen);
 		
 		template<typename T,
-		typename = std::enable_if_t<is_string_v<T>, T>>
+		typename = typename std::enable_if_t<is_string_v<T>, T>>
 		static std::wstring AE_CALL Utf8ToUnicode(const T& in) {
 			size_t utf8Len, unicodeLen;
 			calcUtf8ToUnicodeLength(in.data(), in.size(), utf8Len, unicodeLen);

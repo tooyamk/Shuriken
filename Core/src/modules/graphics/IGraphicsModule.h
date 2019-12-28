@@ -168,7 +168,21 @@ namespace aurora::modules::graphics {
 
 
 	struct AE_DLL SamplerFilter {
-		SamplerFilter();
+		SamplerFilter(SamplerFilterOperation op = SamplerFilterOperation::NORMAL, SamplerFilterMode min = SamplerFilterMode::LINEAR, SamplerFilterMode mag = SamplerFilterMode::LINEAR, SamplerFilterMode mipmap = SamplerFilterMode::LINEAR);
+		SamplerFilter(const SamplerFilter& filter);
+
+		inline bool AE_CALL operator==(const SamplerFilter& val) const {
+			return memEqual<sizeof(SamplerFilter)>(this, &val);
+		}
+
+		inline bool AE_CALL operator!=(const SamplerFilter& val) const {
+			return !memEqual<sizeof(SamplerFilter)>(this, &val);
+		}
+
+		inline void AE_CALL operator=(const SamplerFilter& val) {
+			memcpy(this, &val, sizeof(SamplerFilter));
+		}
+
 		SamplerFilterOperation operation;
 		SamplerFilterMode minification;
 		SamplerFilterMode magnification;
@@ -178,6 +192,19 @@ namespace aurora::modules::graphics {
 
 	struct AE_DLL SamplerAddress {
 		SamplerAddress(SamplerAddressMode u = SamplerAddressMode::WRAP, SamplerAddressMode v = SamplerAddressMode::WRAP, SamplerAddressMode w = SamplerAddressMode::WRAP);
+
+
+		inline bool AE_CALL operator==(const SamplerAddress& val) const {
+			return memEqual<sizeof(SamplerAddress)>(this, &val);
+		}
+
+		inline bool AE_CALL operator!=(const SamplerAddress& val) const {
+			return !memEqual<sizeof(SamplerAddress)>(this, &val);
+		}
+
+		inline void AE_CALL operator=(const SamplerAddress& val) {
+			memcpy(this, &val, sizeof(SamplerAddress));
+		}
 
 		SamplerAddressMode u;
 		SamplerAddressMode v;
@@ -190,17 +217,17 @@ namespace aurora::modules::graphics {
 		ISampler(IGraphicsModule& graphics) : IObject(graphics) {}
 		virtual ~ISampler() {}
 
-		virtual void AE_CALL setFilter(SamplerFilterOperation op, SamplerFilterMode min, SamplerFilterMode mag, SamplerFilterMode mipmap) = 0;
-		inline void AE_CALL setFilter(const SamplerFilter& filter) {
-			setFilter(filter.operation, filter.minification, filter.magnification, filter.mipmap);
+		inline void AE_CALL setFilter(SamplerFilterOperation op, SamplerFilterMode min, SamplerFilterMode mag, SamplerFilterMode mipmap) {
+			setFilter(SamplerFilter(op, min, mag, mipmap));
 		}
+		virtual void AE_CALL setFilter(const SamplerFilter& filter) = 0;
 
 		virtual void AE_CALL setComparisonFunc(SamplerComparisonFunc func) = 0;
 
-		virtual void AE_CALL setAddress(SamplerAddressMode u, SamplerAddressMode v, SamplerAddressMode w) = 0;
-		inline void AE_CALL setAddress(const SamplerAddress& address) {
-			setAddress(address.u, address.v, address.w);
+		inline void AE_CALL setAddress(SamplerAddressMode u, SamplerAddressMode v, SamplerAddressMode w) {
+			setAddress(SamplerAddress(u, v, w));
 		}
+		virtual void AE_CALL setAddress(const SamplerAddress& address) = 0;
 
 		virtual void AE_CALL setMipLOD(f32 min, f32 max) = 0;
 		virtual void AE_CALL setMipLODBias(f32 bias) = 0;
@@ -296,6 +323,128 @@ namespace aurora::modules::graphics {
 	};
 
 
+	enum class BlendFactor : uint8_t {
+		ZERO,
+		ONE,
+		SRC_COLOR,
+		ONE_MINUS_SRC_COLOR,
+		SRC_ALPHA,
+		ONE_MINUS_SRC_ALPHA,
+		DST_COLOR,
+		ONE_MINUS_DST_COLOR,
+		DST_ALPHA,
+		ONE_MINUS_DST_ALPHA,
+		SRC_ALPHA_SATURATE,
+		CONSTANT_COLOR,
+		ONE_MINUS_CONSTANT_COLOR,
+		SRC1_COLOR,
+		ONE_MINUS_SRC1_COLOR,
+		SRC1_ALPHA,
+		ONE_MINUS_SRC1_ALPHA
+	};
+
+
+	enum class BlendOp : uint8_t {
+		ADD,
+		SUBTRACT,
+		REV_SUBTRACT,
+		MIN,
+		MAX
+	};
+
+
+	enum class BlendLogicOp : uint8_t {
+		CLEAR,
+		SET,
+		COPY,
+		COPY_INVERTED,
+		NOOP,
+		INVERT,
+		AND,
+		NAND,
+		OR,
+		NOR,
+		XOR,
+		EQUIV,
+		AND_REVERSE,
+		AND_INVERTED,
+		OR_REVERSE,
+		OR_INVERTED
+	};
+
+
+	struct AE_DLL BlendFunc {
+		BlendFunc();
+		BlendFunc(BlendFactor src, BlendFactor dst);
+		BlendFunc(BlendFactor srcColor, BlendFactor dstColor, BlendFactor srcAlpha, BlendFactor dstAlpha);
+		BlendFunc(const BlendFunc& func);
+
+		inline bool AE_CALL operator==(const BlendFunc& val) const {
+			return memEqual<sizeof(BlendFunc)>(this, &val);
+		}
+
+		inline bool AE_CALL operator!=(const BlendFunc& val) const {
+			return !memEqual<sizeof(BlendFunc)>(this, &val);
+		}
+
+		inline void AE_CALL operator=(const BlendFunc& val) {
+			memcpy(this, &val, sizeof(BlendFunc));
+		}
+		
+		inline BlendFunc& AE_CALL set(BlendFactor src, BlendFactor dst) {
+			return set(src, dst, src, dst);
+		}
+
+		inline BlendFunc& AE_CALL set(BlendFactor srcColor, BlendFactor dstColor, BlendFactor srcAlpha, BlendFactor dstAlpha) {
+			this->srcColor = srcColor;
+			this->dstColor = dstColor;
+			this->srcAlpha = srcAlpha;
+			this->dstAlpha = dstAlpha;
+			
+			return *this;
+		}
+
+		BlendFactor srcColor;
+		BlendFactor dstColor;
+		BlendFactor srcAlpha;
+		BlendFactor dstAlpha;
+	};
+
+
+	struct AE_DLL BlendEquation {
+		BlendEquation();
+		BlendEquation(BlendOp op);
+		BlendEquation(BlendOp color, BlendOp alpha);
+		BlendEquation(const BlendEquation& op);
+
+		inline bool AE_CALL operator==(const BlendEquation& val) const {
+			return memEqual<sizeof(BlendEquation)>(this, &val);
+		}
+
+		inline bool AE_CALL operator!=(const BlendEquation& val) const {
+			return !memEqual<sizeof(BlendEquation)>(this, &val);
+		}
+
+		inline void AE_CALL operator=(const BlendEquation& val) {
+			memcpy(this, &val, sizeof(BlendEquation));
+		}
+
+		inline BlendEquation& AE_CALL set(BlendOp op) {
+			return set(op, op);
+		}
+
+		inline BlendEquation& AE_CALL set(BlendOp color, BlendOp alpha) {
+			this->color = color;
+			this->alpha = alpha;
+
+			return *this;
+		}
+
+		BlendOp color;
+		BlendOp alpha;
+	};
+
+
 	enum class ProgramStage : uint8_t {
 		UNKNOWN,
 		VS,//VertexShader
@@ -324,7 +473,7 @@ namespace aurora::modules::graphics {
 		bool supportTextureView;
 		bool supportPixelBuffer;
 		bool supportConstantBuffer;
-		bool supportPersisientMap;
+		bool supportPersistentMap;
 	};
 
 

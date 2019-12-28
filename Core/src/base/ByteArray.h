@@ -40,8 +40,8 @@ namespace aurora {
 		inline std::endian AE_CALL getEndian() const;
 		inline void AE_CALL setEndian(std::endian endian);
 
-		inline uint8_t* AE_CALL getBytes();
-		inline const uint8_t* AE_CALL getBytes() const;
+		inline uint8_t* AE_CALL getSource();
+		inline const uint8_t* AE_CALL getSource() const;
 
 		inline ByteArray AE_CALL slice(size_t start, size_t length, Usage usage = Usage::SHARED) const;
 		inline ByteArray AE_CALL slice(size_t length, Usage usage = Usage::SHARED) const;
@@ -151,10 +151,10 @@ namespace aurora {
 
 		inline void AE_CALL writePadding(size_t length);
 
-		inline void AE_CALL readTwoUInt12(uint16_t& value1, uint16_t& value2);
+		inline std::tuple<uint16_t, uint16_t> AE_CALL readTwoUInt12();
 		inline void AE_CALL writeTwoUInt12(uint16_t value1, uint16_t value2);
 
-		inline void AE_CALL readTwoInt12(int16_t& value1, int16_t& value2);
+		inline std::tuple<int16_t, int16_t> AE_CALL readTwoInt12();
 		inline void AE_CALL writeTwoInt12(int16_t value1, int16_t value2);
 
 		void AE_CALL popFront(size_t len);
@@ -162,20 +162,9 @@ namespace aurora {
 		void AE_CALL insert(size_t len);
 
 		inline static bool isEqual(const ByteArray& data1, const ByteArray& data2);
-		static bool isEqual(const uint8_t* data1, size_t data1Len, const uint8_t* data2, size_t data2Len);
+		static bool isEqual(const uint8_t* data1, const uint8_t* data2, size_t len);
 
 	private:
-		static const uint16_t INT12 = 1 << 12;
-		static const uint16_t INT12_MAX = (INT12 >> 1) - 1;
-		static const int32_t INT24 = 1 << 24;
-		static const int32_t INT24_MAX = (INT24 >> 1) - 1;
-		static const uint64_t INT40 = 0x10000000000ui64;//1 << 40
-		static const uint64_t INT40_MAX = (INT40 / 2) - 1;
-		static const uint64_t INT48 = 0x1000000000000ui64;//1 << 48
-		static const uint64_t INT48_MAX = (INT48 / 2) - 1;
-		static const uint64_t INT56 = 0x100000000000000ui64;//1 << 56
-		static const uint64_t INT56_MAX = (INT56 / 2) - 1;
-
 		Usage _usage;
 		bool _needReverse;
 		uint8_t* _data;

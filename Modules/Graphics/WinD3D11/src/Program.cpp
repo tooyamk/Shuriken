@@ -131,8 +131,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		cbLayout.collectUsingInfo(factory, statistics, (std::vector<const ShaderParameter*>&)_tempParams, _tempVars);
 
 		ConstantBuffer* cb = nullptr;
-		uint32_t numVars = _tempVars.size();
-		if (statistics.unknownCount < numVars) {
+		if (uint32_t numVars = _tempVars.size(); statistics.unknownCount < numVars) {
 			if (statistics.exclusiveCount > 0 && !statistics.shareCount) {
 				auto g = _graphics.get<Graphics>();
 				cb = (ConstantBuffer*)g->getConstantBufferManager().getExclusiveConstantBuffer(_tempParams, cbLayout);
@@ -298,7 +297,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 #endif
 
 		ID3DBlob* buffer = nullptr, *errorBuffer = nullptr;
-		HRESULT hr = D3DCompile(source.data.getBytes(), source.data.getLength(), nullptr, nullptr, nullptr, 
+		HRESULT hr = D3DCompile(source.data.getSource(), source.data.getLength(), nullptr, nullptr, nullptr, 
 			ProgramSource::getEntryPoint(source).c_str(), target, shaderFlags, 0, &buffer, &errorBuffer);
 
 		if (FAILED(hr)) {
@@ -462,7 +461,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 					}
 				}
 
-				buffer->calcFeatureCode();
+				buffer->calcFeatureValue();
 
 				_graphics.get<Graphics>()->getConstantBufferManager().registerConstantLayout(*buffer);
 			}
@@ -517,7 +516,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 				
 				for (auto& buffer0 : *buffers0) {
 					for (auto& buffer1 : *buffers1) {
-						if (buffer0.featureCode == buffer1.featureCode) {
+						if (buffer0.featureValue == buffer1.featureValue) {
 							if (buffer0.sameId == 0) {
 								buffer0.sameId = ++sameId;
 								_usingSameConstBuffers.emplace_back(nullptr);

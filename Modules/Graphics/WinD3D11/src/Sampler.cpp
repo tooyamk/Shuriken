@@ -4,47 +4,43 @@
 
 namespace aurora::modules::graphics::win_d3d11 {
 	Sampler::Sampler(Graphics& graphics) : ISampler(graphics),
-		_dirty(true),
+		_dirty(DirtyFlag::EMPTY),
 		_samplerState(nullptr) {
 		memset(&_desc, 0, sizeof(_desc));
 		_updateFilter();
 		_updateAddress();
+
 		_desc.ComparisonFunc = D3D11_COMPARISON_NEVER;
 		_desc.MaxLOD = D3D11_FLOAT32_MAX;
+		_oldDesc = _desc;
 	}
 
 	Sampler::~Sampler() {
 		_releaseRes();
 	}
 
-	void Sampler::setFilter(SamplerFilterOperation op, SamplerFilterMode min, SamplerFilterMode mag, SamplerFilterMode mipmap) {
-		if (_filter.operation != op || _filter.minification != min || _filter.magnification != mag || _filter.mipmap != mipmap) {
-			_filter.operation = op;
-			_filter.minification = min;
-			_filter.magnification = mag;
-			_filter.mipmap = mipmap;
+	void Sampler::setFilter(const SamplerFilter& filter) {
+		if (_filter != filter) {
+			_filter = filter;
 
 			_updateFilter();
-			_dirty = true;
+			_setDirty(_oldDesc.Filter != _desc.Filter, DirtyFlag::FILTER);
 		}
 	}
 
 	void Sampler::setComparisonFunc(SamplerComparisonFunc func) {
-		auto fn = _convertComparisonFunc(func);
-		if (_desc.ComparisonFunc != fn) {
+		if (auto fn = _convertComparisonFunc(func); _desc.ComparisonFunc != fn) {
 			_desc.ComparisonFunc = fn;
-			_dirty = true;
+			_setDirty(_oldDesc.ComparisonFunc != _desc.ComparisonFunc, DirtyFlag::COMPARISON_FUNC);
 		}
 	}
 
-	void Sampler::setAddress(SamplerAddressMode u, SamplerAddressMode v, SamplerAddressMode w) {
-		if (_address.u != u || _address.v != v || _address.w != w) {
-			_address.u = u;
-			_address.v = v;
-			_address.w = w;
+	void Sampler::setAddress(const SamplerAddress& address) {
+		if (_address != address) {
+			_address = address;
 
 			_updateAddress();
-			_dirty = true;
+			_setDirty(_oldDesc.AddressU != _desc.AddressU || _oldDesc.AddressV != _desc.AddressV || _oldDesc.AddressW != _desc.AddressW, DirtyFlag::ADDRESS);
 		}
 	}
 
@@ -53,7 +49,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			_desc.MinLOD = min;
 			_desc.MaxLOD = max;
 
-			_dirty = true;
+			_setDirty(_oldDesc.MinLOD != _desc.MinLOD || _oldDesc.MaxLOD != _desc.MaxLOD, DirtyFlag::LOD);
 		}
 	}
 
@@ -61,21 +57,23 @@ namespace aurora::modules::graphics::win_d3d11 {
 		if (_desc.MipLODBias != bias) {
 			_desc.MipLODBias = bias;
 
-			_dirty = true;
+			_setDirty(_oldDesc.MipLODBias != _desc.MipLODBias, DirtyFlag::LOD_BIAS);
 		}
 	}
 
-	void Sampler::setMaxAnisotropy (uint32_t max) {
+	void Sampler::setMaxAnisotropy(uint32_t max) {
 		if (_desc.MaxAnisotropy != max) {
 			_desc.MaxAnisotropy = max;
-			_dirty = true;
+			
+			_setDirty(_oldDesc.MaxAnisotropy != _desc.MaxAnisotropy, DirtyFlag::MAX_ANISOTROPY);
 		}
 	}
 
 	void Sampler::setBorderColor(const Vec4f32& color) {
-		if (!ByteArray::isEqual((uint8_t*)_desc.BorderColor, sizeof(_desc.BorderColor), (const uint8_t*)&color, sizeof(_desc.BorderColor))) {
-			memcpy(_desc.BorderColor, &color, sizeof(_desc.BorderColor));
-			_dirty = true;
+		if (!Math::isEqual(_desc.BorderColor, color.data)) {
+			color.copyTo(_desc.BorderColor);
+
+			_setDirty(!memEqual<sizeof(_desc.BorderColor)>(_oldDesc.BorderColor, _desc.BorderColor), DirtyFlag::BORDER_COLOR);
 		}
 	}
 
@@ -141,7 +139,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 	void Sampler::update() {
 		if (_dirty) {
 			_releaseRes();
-			if (SUCCEEDED(_graphics.get<Graphics>()->getDevice()->CreateSamplerState(&_desc, &_samplerState))) _dirty = false;
+			if (SUCCEEDED(_graphics.get<Graphics>()->getDevice()->CreateSamplerState(&_desc, &_samplerState))) {
+				_oldDesc = _desc;
+				_dirty = 0;
+			}
 		}
 	}
 
@@ -150,6 +151,6 @@ namespace aurora::modules::graphics::win_d3d11 {
 			_samplerState->Release();
 			_samplerState = nullptr;
 		}
-		_dirty = true;
+		_dirty |= DirtyFlag::EMPTY;
 	}
 }

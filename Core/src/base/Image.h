@@ -24,7 +24,7 @@ namespace aurora {
 		inline bool generateMips(modules::graphics::TextureFormat format, uint32_t mipLevels, ByteArray& dst, std::vector<void*>& dstDataPtr) const {
 			dst = ByteArray(calcMipsByteSize(size, mipLevels, calcPerPixelByteSize(format)));
 			dstDataPtr.resize(mipLevels);
-			return generateMips(format, mipLevels, (uint8_t*)dst.getBytes(), dstDataPtr.data());
+			return generateMips(format, mipLevels, (uint8_t*)dst.getSource(), dstDataPtr.data());
 		}
 		bool generateMips(modules::graphics::TextureFormat format, uint32_t mipLevels, uint8_t* dst, void** dstDataPtr) const;
 

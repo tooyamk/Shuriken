@@ -21,11 +21,11 @@ namespace aurora {
 		dst[2] = z;
 	}
 
-	inline bool Math::isPOT (uint32_t n) {
+	inline bool Math::isPOT(uint32_t n) {
 		return n < 1 ? false : !(n & (n - 1));
 	}
 
-	inline constexpr uint32_t Math::potLog2 (uint32_t pow) {
+	inline constexpr uint32_t Math::potLog2(uint32_t pow) {
 		auto f = (f32)pow;
 		return ((((uint32_t&)f) >> 23) & 0xFF) - 127;
 	}

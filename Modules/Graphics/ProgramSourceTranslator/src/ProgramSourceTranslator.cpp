@@ -32,7 +32,7 @@ namespace aurora::modules::graphics::program_source_translator {
 			dst.stage = source.stage;
 			dst.version = targetVersion.empty() ? source.version : targetVersion;
 			dst.data.setCapacity(source.data.getLength());
-			dst.data.writeBytes(source.data.getBytes(), source.data.getLength());
+			dst.data.writeBytes(source.data.getSource(), source.data.getLength());
 			return std::move(dst);
 		}
 
@@ -42,7 +42,7 @@ namespace aurora::modules::graphics::program_source_translator {
 			std::vector<DxcDefine> dxcDefines;
 
 			CComPtr<IDxcBlobEncoding> sourceBlob;
-			IFT(_dxcLib->CreateBlobWithEncodingOnHeapCopy(source.data.getBytes(), source.data.getLength(), CP_UTF8, &sourceBlob));
+			IFT(_dxcLib->CreateBlobWithEncodingOnHeapCopy(source.data.getSource(), source.data.getLength(), CP_UTF8, &sourceBlob));
 			IFTARG(sourceBlob->GetBufferSize() >= 4);
 
 			//std::wstring shaderNameUtf16;
@@ -86,7 +86,7 @@ namespace aurora::modules::graphics::program_source_translator {
 				if (program != nullptr) _spirvTo(source, (uint8_t*)program->GetBufferPointer(), (uint32_t)program->GetBufferSize(), targetLanguage, targetVersion, dst);
 			}
 		} else if (source.language == ProgramLanguage::SPIRV) {
-			_spirvTo(source, source.data.getBytes(), source.data.getLength(), targetLanguage, targetVersion, dst);
+			_spirvTo(source, source.data.getSource(), source.data.getLength(), targetLanguage, targetVersion, dst);
 		}
 
 		return std::move(dst);

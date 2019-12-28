@@ -23,13 +23,13 @@ namespace aurora::file {
 	}
 
 	Image* PNGConverter::parse(const ByteArray& source) {
-		if (source.getLength() < 8 || png_sig_cmp((png_byte*)source.getBytes(), 0, 8)) return nullptr;
+		if (source.getLength() < 8 || png_sig_cmp((png_byte*)source.getSource(), 0, 8)) return nullptr;
 
 		auto png = png_create_read_struct(PNG_LIBPNG_VER_STRING, 0, 0, 0);
 		auto info = png_create_info_struct(png);
 
 		png_private::ImageSource is;
-		is.data = (uint8_t*)source.getBytes();
+		is.data = (uint8_t*)source.getSource();
 		is.size = source.getLength();
 		is.offset = 0;
 		

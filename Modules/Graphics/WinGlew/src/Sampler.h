@@ -10,12 +10,12 @@ namespace aurora::modules::graphics::win_glew {
 		Sampler(Graphics& graphics);
 		virtual ~Sampler();
 
-		virtual void AE_CALL setFilter(SamplerFilterOperation op, SamplerFilterMode min, SamplerFilterMode mag, SamplerFilterMode mipmap) override;
+		virtual void AE_CALL setFilter(const SamplerFilter& filter) override;
 		virtual void AE_CALL setComparisonFunc(SamplerComparisonFunc func) override;
-		virtual void AE_CALL setAddress(SamplerAddressMode u, SamplerAddressMode v, SamplerAddressMode w) override;
+		virtual void AE_CALL setAddress(const SamplerAddress& address) override;
 		virtual void AE_CALL setMipLOD(f32 min, f32 max) override;
 		virtual void AE_CALL setMipLODBias(f32 bias) override;
-		virtual void AE_CALL setMaxAnisotropy (uint32_t max) override;
+		virtual void AE_CALL setMaxAnisotropy(uint32_t max) override;
 		virtual void AE_CALL setBorderColor(const Vec4f32& color) override;
 
 		inline GLuint AE_CALL getInternalSampler() const {
@@ -25,47 +25,48 @@ namespace aurora::modules::graphics::win_glew {
 		void AE_CALL update();
 
 	protected:
+		using DirtyType = uint8_t;
+
 		struct DirtyFlag {
-			static const uint8_t FILTER = 1;
-			static const uint8_t ADDRESS = 1 << 1;
-			static const uint8_t BORDER_COLOR = 1 << 2;
-			static const uint8_t COMPARE_FUNC = 1 << 3;
-			static const uint8_t LOD = 1 << 4;
-			static const uint8_t LOD_BAIS = 1 << 5;
-			static const uint8_t MAX_ANISOTROPY = 1 << 6;
+			static const DirtyType EMPTY = 0b1;
+			static const DirtyType FILTER = 0b1 << 1;
+			static const DirtyType COMPARE_FUNC = 0b1 << 2;
+			static const DirtyType ADDRESS = 0b1 << 3;
+			static const DirtyType LOD = 0b1 << 4;
+			static const DirtyType LOD_BIAS = 0b1 << 5;
+			static const DirtyType MAX_ANISOTROPY = 0b1 << 6;
+			static const DirtyType BORDER_COLOR = 0b1 << 7;
 		};
 
 
+		struct Desc {
+			struct {
+				GLenum compareMode;
+				GLenum min;
+				GLenum mag;
+			} filter;
+
+			struct {
+				GLenum s;
+				GLenum t;
+				GLenum r;
+			} address;
+
+			GLenum compareFunc;
+			Vec2<GLfloat> LOD;
+			GLfloat LODBias;
+			GLfloat maxAnisotropy;
+			Vec4<GLfloat> borderColor;
+		};
+
+
+		DirtyType _dirty;
 		GLuint _handle;
-		uint8_t _dirty;
 		SamplerFilter _filter;
 		SamplerAddress _address;
 
-
-		struct {
-			GLenum compareMode;
-			GLenum min;
-			GLenum mag;
-		} _internalFilter;
-
-
-		struct {
-			GLenum s;
-			GLenum t;
-			GLenum r;
-		} _internalAddress;
-
-
-		struct {
-			GLfloat min;
-			GLfloat max;
-		} _internalLOD;
-
-
-		GLenum _internalCompareFunc;
-		GLfloat _internalLODBias;
-		GLfloat _maxAnisotropy;
-		Vec4f32 _internalBorderColor;
+		Desc _desc;
+		Desc _oldDesc;
 
 		void AE_CALL _updateFilter();
 
@@ -74,5 +75,13 @@ namespace aurora::modules::graphics::win_glew {
 		void AE_CALL _updateAddress();
 
 		void AE_CALL _releaseRes();
+
+		inline void AE_CALL _setDirty(bool dirty, DirtyType val) {
+			if (dirty) {
+				_dirty |= val;
+			} else {
+				_dirty &= ~val;
+			}
+		}
 	};
 }
