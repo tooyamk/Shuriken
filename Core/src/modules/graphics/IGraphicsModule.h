@@ -462,9 +462,6 @@ namespace aurora::modules::graphics {
 		virtual ~IProgram() {}
 
 		virtual bool AE_CALL upload(const ProgramSource& vert, const ProgramSource& frag) = 0;
-		virtual bool AE_CALL use() = 0;
-		virtual void AE_CALL draw(const VertexBufferFactory* vertexFactory, const ShaderParameterFactory* paramFactory,
-			const IIndexBuffer* indexBuffer, uint32_t count = (std::numeric_limits<uint32_t>::max)(), uint32_t offset = 0) = 0;
 	};
 
 
@@ -499,6 +496,8 @@ namespace aurora::modules::graphics {
 		virtual IVertexBuffer* AE_CALL createVertexBuffer() = 0;
 
 		virtual void AE_CALL beginRender() = 0;
+		virtual void AE_CALL draw(const VertexBufferFactory* vertexFactory, IProgram* program, const ShaderParameterFactory* paramFactory,
+			const IIndexBuffer* indexBuffer, uint32_t count = (std::numeric_limits<uint32_t>::max)(), uint32_t offset = 0) = 0;
 		virtual void AE_CALL endRender() = 0;
 		virtual void AE_CALL present() = 0;
 

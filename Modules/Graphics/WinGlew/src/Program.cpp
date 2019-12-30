@@ -210,21 +210,9 @@ namespace aurora::modules::graphics::win_glew {
 		return true;
 	}
 
-	bool Program::use() {
+	bool Program::use(const VertexBufferFactory* vertexFactory, const ShaderParameterFactory* paramFactory) {
 		if (_handle) {
 			glUseProgram(_handle);
-			return true;
-		}
-		return false;
-	}
-
-	void Program::draw(const VertexBufferFactory* vertexFactory, const ShaderParameterFactory* paramFactory, 
-		const IIndexBuffer* indexBuffer, uint32_t count, uint32_t offset) {
-		if (_handle && vertexFactory && indexBuffer && _graphics == indexBuffer->getGraphics() && count > 0) {
-			auto ib = (IndexBuffer*)indexBuffer->getNativeBuffer();
-			if (!ib) return;
-
-			auto g = _graphics.get<Graphics>();
 
 			for (auto& info : _inVertexBufferLayouts) {
 				if (auto vb = vertexFactory->get(info.name); vb && _graphics == vb->getGraphics()) {
@@ -235,6 +223,8 @@ namespace aurora::modules::graphics::win_glew {
 			uint8_t texIndex = 0;
 
 			if (paramFactory) {
+				auto g = _graphics.get<Graphics>();
+
 				for (auto& layout : _uniformLayouts) {
 					switch (layout.type) {
 					case GL_SAMPLER_2D:
@@ -260,7 +250,7 @@ namespace aurora::modules::graphics::win_glew {
 							}
 						}
 
-						
+
 
 						break;
 					}
@@ -311,10 +301,9 @@ namespace aurora::modules::graphics::win_glew {
 			glCullFace(GL_BACK);
 			glDisable(GL_DEPTH_TEST);
 
-			ib->draw(count, offset);
-
-			g->getConstantBufferManager().resetUsedShareConstantBuffers();
+			return true;
 		}
+		return false;
 	}
 
 	void Program::_constantBufferUpdateAll(ConstantBuffer* cb, const std::vector<ConstantBufferLayout::Variables>& vars) {

@@ -23,6 +23,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual IPixelBuffer* AE_CALL createPixelBuffer() override;
 		
 		virtual void AE_CALL beginRender() override;
+		virtual void AE_CALL draw(const VertexBufferFactory* vertexFactory, IProgram* program, const ShaderParameterFactory* paramFactory, 
+			const IIndexBuffer* indexBuffer, uint32_t count = (std::numeric_limits<uint32_t>::max)(), uint32_t offset = 0) override;
 		virtual void AE_CALL endRender() override;
 		virtual void AE_CALL present() override;
 

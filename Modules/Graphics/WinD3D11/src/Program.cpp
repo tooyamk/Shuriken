@@ -110,15 +110,55 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return true;
 	}
 
-	bool Program::use() {
+	bool Program::use(const VertexBufferFactory* vertexFactory, const ShaderParameterFactory* paramFactory) {
 		if (_vs) {
 			auto g = _graphics.get<Graphics>();
 			g->useShader<ProgramStage::VS>(_vs, nullptr, 0);
 			g->useShader<ProgramStage::PS>(_ps, nullptr, 0);
 
-			return true;
+			auto context = g->getContext();
+
+			bool inElementsDirty = false;
+			for (uint32_t i = 0, n = _inVerBufInfos.size(); i < n; ++i) {
+				auto& info = _inVerBufInfos[i];
+				auto vb = vertexFactory->get(info.name);
+				if (vb && _graphics == vb->getGraphics()) {
+					auto& ie = _inElements[i];
+					auto vb1 = (VertexBuffer*)vb->getNativeBuffer();
+					if (auto buf = vb1->getInternalBuffer(); buf) {
+						auto fmt = vb1->getInternalFormat();
+						if (fmt != DXGI_FORMAT_UNKNOWN) {
+							auto stride = vb1->getStride();
+							UINT offset = 0;
+							g->useVertexBuffers(info.slot, 1, &buf, &stride, &offset);
+
+							if (ie.Format != fmt) {
+								inElementsDirty = true;
+								ie.Format = fmt;
+							}
+						}
+					}
+				}
+			}
+
+			if (inElementsDirty) _curInLayout = _getOrCreateInputLayout();
+
+			if (_curInLayout) {
+				if (paramFactory) {
+					_useParameters<ProgramStage::VS>(_vsParamLayout, *paramFactory);
+					_useParameters<ProgramStage::PS>(_psParamLayout, *paramFactory);
+				}
+
+				context->IASetInputLayout(_curInLayout);
+
+				return true;
+			}
 		}
 		return false;
+	}
+
+	void Program::useEnd() {
+		for (uint32_t i = 0, n = _usingSameConstBuffers.size(); i < n; ++i) _usingSameConstBuffers[i] = nullptr;
 	}
 
 	ConstantBuffer* Program::_getConstantBuffer(const MyConstantBufferLayout& cbLayout, const ShaderParameterFactory& factory) {
@@ -185,68 +225,6 @@ namespace aurora::modules::graphics::win_d3d11 {
 			}
 
 			cb->unmap();
-		}
-	}
-
-	void Program::draw(const VertexBufferFactory* vertexFactory, const ShaderParameterFactory* paramFactory,
-		const IIndexBuffer* indexBuffer, uint32_t count, uint32_t offset) {
-		if (_vs && vertexFactory && indexBuffer && _graphics == indexBuffer->getGraphics() && count > 0) {
-			auto ib = (IndexBuffer*)indexBuffer->getNativeBuffer();
-			if (!ib) return;
-			auto internalIndexBuffer = ib->getInternalBuffer();
-			auto fmt = ib->getInternalFormat();
-			if (!internalIndexBuffer || fmt == DXGI_FORMAT_UNKNOWN) return;
-			auto numIndexElements = ib->getNumElements();
-			if (!numIndexElements || offset >= numIndexElements) return;
-
-			auto g = _graphics.get<Graphics>();
-			auto context = g->getContext();
-
-			bool inElementsDirty = false;
-			for (uint32_t i = 0, n = _inVerBufInfos.size(); i < n; ++i) {
-				auto& info = _inVerBufInfos[i];
-				auto vb = vertexFactory->get(info.name);
-				if (vb && _graphics == vb->getGraphics()) {
-					auto& ie = _inElements[i];
-					auto vb1 = (VertexBuffer*)vb->getNativeBuffer();
-					if (auto buf = vb1->getInternalBuffer(); buf) {
-						auto fmt = vb1->getInternalFormat();
-						if (fmt != DXGI_FORMAT_UNKNOWN) {
-							auto stride = vb1->getStride();
-							UINT offset = 0;
-							g->useVertexBuffers(info.slot, 1, &buf, &stride, &offset);
-
-							if (ie.Format != fmt) {
-								inElementsDirty = true;
-								ie.Format = fmt;
-							}
-						}
-					}
-				}
-			}
-
-			if (inElementsDirty) _curInLayout = _getOrCreateInputLayout();
-
-			if (_curInLayout) {
-				if (paramFactory) {
-					_useParameters<ProgramStage::VS>(_vsParamLayout, *paramFactory);
-					_useParameters<ProgramStage::PS>(_psParamLayout, *paramFactory);
-				}
-
-				context->IASetInputLayout(_curInLayout);
-
-				uint32_t last = numIndexElements - offset;
-				if (count > numIndexElements) count = numIndexElements;
-				if (count > last) count = last;
-				context->IASetIndexBuffer((ID3D11Buffer*)internalIndexBuffer, fmt, 0);
-				context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-				context->DrawIndexed(count, offset, 0);
-
-				if (paramFactory) {
-					for (uint32_t i = 0, n = _usingSameConstBuffers.size(); i < n; ++i) _usingSameConstBuffers[i] = nullptr;
-				}
-				g->getConstantBufferManager().resetUsedShareConstantBuffers();
-			}
 		}
 	}
 

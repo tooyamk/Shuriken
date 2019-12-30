@@ -313,6 +313,32 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_context->ClearRenderTargetView(_backBufferTarget, clearColor);
 	}
 
+	void Graphics::draw(const VertexBufferFactory* vertexFactory, IProgram* program, const ShaderParameterFactory* paramFactory, const IIndexBuffer* indexBuffer, uint32_t count, uint32_t offset) {
+		if (vertexFactory && indexBuffer && program && program->getGraphics() == this && indexBuffer->getGraphics() == this && count > 0) {
+			auto ib = (IndexBuffer*)indexBuffer->getNativeBuffer();
+			if (!ib) return;
+			auto internalIndexBuffer = ib->getInternalBuffer();
+			auto fmt = ib->getInternalFormat();
+			if (!internalIndexBuffer || fmt == DXGI_FORMAT_UNKNOWN) return;
+			auto numIndexElements = ib->getNumElements();
+			if (!numIndexElements || offset >= numIndexElements) return;
+
+			auto p = (Program*)program;
+			if (p->use(vertexFactory, paramFactory)) {
+				uint32_t last = numIndexElements - offset;
+				if (count > numIndexElements) count = numIndexElements;
+				if (count > last) count = last;
+				_context->IASetIndexBuffer((ID3D11Buffer*)internalIndexBuffer, fmt, 0);
+				_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+				_context->DrawIndexed(count, offset, 0);
+
+				p->useEnd();
+
+				_constantBufferManager.resetUsedShareConstantBuffers();
+			}
+		}
+	}
+
 	void Graphics::endRender() {
 	}
 

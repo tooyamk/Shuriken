@@ -213,6 +213,20 @@ namespace aurora::modules::graphics::win_glew {
 		glViewport(0, 0, size[0], size[1]);
 	}
 
+	void Graphics::draw(const VertexBufferFactory* vertexFactory, IProgram* program, const ShaderParameterFactory* paramFactory, const IIndexBuffer* indexBuffer, uint32_t count, uint32_t offset) {
+		if (vertexFactory && indexBuffer && program && program->getGraphics() == this && indexBuffer->getGraphics() == this && count > 0) {
+			auto ib = (IndexBuffer*)indexBuffer->getNativeBuffer();
+			if (!ib) return;
+
+			auto p = (Program*)program;
+			if (p->use(vertexFactory, paramFactory)) {
+				ib->draw(count, offset);
+
+				_constantBufferManager.resetUsedShareConstantBuffers();
+			}
+		}
+	}
+
 	void Graphics::endRender() {
 		//交换当前缓冲区和后台缓冲区
 		SwapBuffers(_dc);
