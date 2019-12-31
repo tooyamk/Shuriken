@@ -90,7 +90,7 @@ namespace aurora::modules::inputs::win_direct_input {
 	}
 
 	HWND Input::getHWND() const {
-		return _app.get()->Win_getHWnd();
+		return _app->Win_getHWnd();
 	}
 
 	BOOL Input::_enumDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, LPVOID pContext) {

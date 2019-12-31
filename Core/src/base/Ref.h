@@ -22,7 +22,7 @@ namespace aurora {
 		}
 
 		template<typename T>
-		inline Type<T>* ref() {
+		inline Type<T>* AE_CALL ref() {
 			ref();
 			return (T*)this;
 		}
@@ -85,6 +85,14 @@ namespace aurora {
 
 		~RefPtr() {
 			reset();
+		}
+
+		inline T* AE_CALL operator->() const {
+			return _target;
+		}
+
+		inline T& AE_CALL operator*() const {
+			return *_target;
 		}
 
 		inline RefPtr<T>& AE_CALL operator=(RefPtr<T>&& ptr) noexcept {

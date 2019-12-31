@@ -5,7 +5,7 @@
 namespace aurora::modules::inputs::win_direct_input {
 	Mouse::Mouse(Input& input, LPDIRECTINPUTDEVICE8 dev, const DeviceInfo& info) : DeviceBase(input, dev, info) {
 		_dev->SetDataFormat(&c_dfDIMouse2);
-		_dev->SetCooperativeLevel(_input.get()->getHWND(), DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
+		_dev->SetCooperativeLevel(_input->getHWND(), DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
 		memset(&_state, 0, sizeof(DIMOUSESTATE2));
 
 		GetCursorPos(&_pos);
@@ -114,7 +114,7 @@ namespace aurora::modules::inputs::win_direct_input {
 	POINT Mouse::_getClientPos() const {
 		POINT p;
 		GetCursorPos(&p);
-		ScreenToClient(_input.get()->getHWND(), &p);
+		ScreenToClient(_input->getHWND(), &p);
 		return p;
 	}
 }

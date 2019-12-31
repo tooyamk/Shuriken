@@ -17,18 +17,17 @@ namespace aurora::events {
 		virtual ~EventDispatcher() {
 		}
 
-		virtual bool AE_CALL addEventListener(const EvtType& type, IEventListener<EvtType>& listener, bool ref) override {
+		virtual bool AE_CALL addEventListener(const EvtType& type, IEventListener<EvtType>& listener) override {
 			bool rst = true;
 
 			if (auto itr = _listeners.find(type); itr == _listeners.end()) {
-				if (ref) listener.ref();
+				listener.ref();
 				_listeners.emplace(std::piecewise_construct,
 					std::forward_as_tuple(type),
-					std::forward_as_tuple(&listener, ref));
+					std::forward_as_tuple(&listener));
 			} else {
 				auto& tl = itr->second;
 				auto& list = tl.listeners;
-				bool oldRef = false;
 				if (tl.numValidListeners) {
 					if (tl.dispatching) {
 						for (auto& f : list) {
@@ -36,7 +35,6 @@ namespace aurora::events {
 								if (f.valid) {
 									f.valid = false;
 									rst = false;
-									oldRef = f.ref;
 									--tl.numValidListeners;
 								}
 								break;
@@ -46,7 +44,6 @@ namespace aurora::events {
 						for (auto itr = list.begin(); itr != list.end(); ++itr) {
 							if (&listener == (*itr).rawListener) {
 								rst = false;
-								oldRef = (*itr).ref;
 								--tl.numValidListeners;
 
 								list.erase(itr);
@@ -57,15 +54,9 @@ namespace aurora::events {
 					}
 				}
 
-				list.emplace_back(&listener, ref);
+				list.emplace_back(&listener);
 				++tl.numValidListeners;
 				++tl.numTotalListeners;
-
-				if (oldRef) {
-					if (!ref) listener.unref();
-				} else if (ref) {
-					listener.ref();
-				}
 			}
 
 			return rst;
@@ -102,7 +93,7 @@ namespace aurora::events {
 							if (f.rawListener == &listener) {
 								if (f.valid) {
 									f.valid = false;
-									if (f.ref) f.rawListener->unref();
+									f.rawListener->unref();
 									--tl.numValidListeners;
 
 									return true;
@@ -114,7 +105,7 @@ namespace aurora::events {
 					} else {
 						for (auto itr = list.begin(); itr != list.end(); ++itr) {
 							if (&listener == (*itr).rawListener) {
-								if ((*itr).ref) (*itr).rawListener->unref();
+								(*itr).rawListener->unref();
 
 								list.erase(itr);
 								--tl.numValidListeners;
@@ -172,23 +163,21 @@ namespace aurora::events {
 
 	protected:
 		struct Listener {
-			Listener(IEventListener<EvtType>* rawListener, bool ref) :
+			Listener(IEventListener<EvtType>* rawListener) :
 				valid(true),
-				ref(ref),
 				rawListener(rawListener) {
 			}
 			bool valid;
-			bool ref;
 			IEventListener<EvtType>* rawListener;
 		};
 
 
 		struct TypeListeners {
-			TypeListeners(IEventListener<EvtType>* rawListener, bool ref) :
+			TypeListeners(IEventListener<EvtType>* rawListener) :
 				dispatching(false),
 				numValidListeners(1),
 				numTotalListeners(1) {
-				listeners.emplace_back(rawListener, ref);
+				listeners.emplace_back(rawListener);
 			}
 			uint32_t dispatching;
 			uint32_t numValidListeners;
@@ -206,14 +195,12 @@ namespace aurora::events {
 					for (auto& f : list) {
 						if (f.valid) {
 							f.valid = false;
-							if (f.ref) f.rawListener->unref();
+							f.rawListener->unref();
 							--typeListeners.numValidListeners;
 						}
 					}
 				} else {
-					for (auto& f : list) {
-						if (f.ref) f.rawListener->unref();
-					}
+					for (auto& f : list) f.rawListener->unref();
 					list.clear();
 					typeListeners.numValidListeners = 0;
 					typeListeners.numTotalListeners = 0;

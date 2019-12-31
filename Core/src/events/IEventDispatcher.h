@@ -134,10 +134,10 @@ namespace aurora::events {
 	template<typename EvtType>
 	class AE_TEMPLATE_DLL IEventDispatcher : public Ref {
 	public:
-		inline bool AE_CALL addEventListener(const EvtType& type, IEventListener<EvtType>* listener, bool ref) {
-			return listener ? addEventListener(type, *listener, ref) : false;
+		inline bool AE_CALL addEventListener(const EvtType& type, IEventListener<EvtType>* listener) {
+			return listener ? addEventListener(type, *listener) : false;
 		}
-		virtual bool AE_CALL addEventListener(const EvtType& type, IEventListener<EvtType>& listener, bool ref) = 0;
+		virtual bool AE_CALL addEventListener(const EvtType& type, IEventListener<EvtType>& listener) = 0;
 
 		virtual uint32_t AE_CALL hasEventListener(const EvtType& type) const = 0;
 		virtual bool AE_CALL hasEventListener(const EvtType& type, const IEventListener<EvtType>& listener) const = 0;

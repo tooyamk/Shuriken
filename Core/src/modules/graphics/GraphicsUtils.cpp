@@ -14,9 +14,9 @@ namespace aurora::modules::graphics {
 		return _base.getNativeBuffer();
 	}
 
-	bool MultipleVertexBuffer::create (uint32_t size, Usage bufferUsage, const void* data, uint32_t dataSize) {
+	bool MultipleVertexBuffer::create(uint32_t size, Usage bufferUsage, const void* data, uint32_t dataSize) {
 		auto rst = _base.create(size, bufferUsage, data, dataSize);
-		if (_base.getCurrent()) _base.getCurrent()->target.get()->setFormat(_vertSize, _vertType);
+		if (_base.getCurrent()) _base.getCurrent()->target->setFormat(_vertSize, _vertType);
 		return rst;
 	}
 
@@ -61,7 +61,7 @@ namespace aurora::modules::graphics {
 			auto node = _base.getBegin();
 			auto n = _base.getCount();
 			while (n-- > 0) {
-				node->target.get()->setFormat(size, type);
+				node->target->setFormat(size, type);
 				node = node->next;
 			};
 		}
@@ -89,7 +89,7 @@ namespace aurora::modules::graphics {
 
 	bool MultipleIndexBuffer::create (uint32_t size, Usage bufferUsage, const void* data, uint32_t dataSize) {
 		auto rst = _base.create(size, bufferUsage, data, dataSize);
-		if (_base.getCurrent()) _base.getCurrent()->target.get()->setFormat(_idxType);
+		if (_base.getCurrent()) _base.getCurrent()->target->setFormat(_idxType);
 		return rst;
 	}
 
@@ -131,7 +131,7 @@ namespace aurora::modules::graphics {
 
 			auto node = _base.getBegin();
 			while (node) {
-				node->target.get()->setFormat(type);
+				node->target->setFormat(type);
 				node = node->next;
 			};
 		}

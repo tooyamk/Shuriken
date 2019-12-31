@@ -7,7 +7,7 @@ namespace aurora {
 	Application::Application(const char* appId, f64 frameInterval) :
 		_appId(appId),
 		_isClosing(false),
-#if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
+#if AE_OS == AE_OS_WIN
 		_hIns(nullptr),
 		_hWnd(nullptr),
 		_lastWndInnerRect({0, 0, 0, 0}),
@@ -18,7 +18,7 @@ namespace aurora {
 	}
 
 	Application::~Application() {
-#if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
+#if AE_OS == AE_OS_WIN
 		if (_hWnd) {
 			DestroyWindow(_hWnd);
 			_hWnd = nullptr;
@@ -37,7 +37,7 @@ namespace aurora {
 		_isWindowed = !fullscreen;
 		_style = style;
 
-#if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
+#if AE_OS == AE_OS_WIN
 		_hIns = GetModuleHandle(nullptr);
 
 		WNDCLASSEXW wnd;
@@ -87,7 +87,7 @@ namespace aurora {
 				_recordWindowedRect();
 			}
 
-#if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
+#if AE_OS == AE_OS_WIN
 			_updateWindowRectValue();
 			_changeWindow(true, true);
 			if (visibled) ShowWindow(_hWnd, SW_SHOWDEFAULT);
@@ -98,7 +98,7 @@ namespace aurora {
 	}
 
 	void Application::getInnerSize(Vec2i32& size) {
-#if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
+#if AE_OS == AE_OS_WIN
 		RECT rect;
 		GetClientRect(_hWnd, &rect);
 		size.set(rect.right - rect.left, rect.bottom - rect.top);
@@ -108,7 +108,7 @@ namespace aurora {
 	}
 
 	void Application::getWindowedRect(Box2i32& dst) const {
-#if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
+#if AE_OS == AE_OS_WIN
 		if (_isWindowed) _recordWindowedRect();
 #endif
 		dst.set(_windowedRect);
@@ -127,7 +127,7 @@ namespace aurora {
 				_windowedRect.set(rect);
 
 				if (_isWindowed) {
-#if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
+#if AE_OS == AE_OS_WIN
 					_updateWindowRectValue();
 					_changeWindow(false, true);
 #endif
@@ -137,25 +137,25 @@ namespace aurora {
 	}
 
 	void Application::setWindowTitle(const std::string& title) {
-#if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
+#if AE_OS == AE_OS_WIN
 		if (_hWnd) SetWindowTextW(_hWnd, String::Utf8ToUnicode(title).c_str());
 #endif
 	}
 
 	void Application::setCursorVisible(bool isVisible) {
-#if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
+#if AE_OS == AE_OS_WIN
 		ShowCursor(isVisible);
 #endif
 	}
 
 	bool Application::hasFocus() const {
-#if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
+#if AE_OS == AE_OS_WIN
 		return GetForegroundWindow() == _hWnd;
 #endif
 	}
 
 	void Application::pollEvents() {
-#if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
+#if AE_OS == AE_OS_WIN
 		MSG msg;
 		memset(&msg, 0, sizeof(msg));
 
@@ -183,14 +183,14 @@ namespace aurora {
 	}
 
 	bool Application::isVisible() const {
-#if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
+#if AE_OS == AE_OS_WIN
 		return _hWnd ? IsWindowVisible(_hWnd) : false;
 #endif
 		return false;
 	}
 
 	void Application::setVisible(bool b) {
-#if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
+#if AE_OS == AE_OS_WIN
 		if (_hWnd) {
 			if (b) {
 				ShowWindow(_hWnd, SW_SHOWDEFAULT);
@@ -226,13 +226,13 @@ namespace aurora {
 	}
 
 	void Application::shutdown() {
-#if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
+#if AE_OS == AE_OS_WIN
 		PostQuitMessage(0);
 #endif
 	}
 
 	const std::string& Application::getAppPath() const {
-#if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
+#if AE_OS == AE_OS_WIN
 		if (_appPath.empty()) {
 			WCHAR wpath[1024];
 			GetModuleFileNameW(nullptr, wpath, sizeof(wpath));
@@ -251,7 +251,7 @@ namespace aurora {
 	}
 
 	bool Application::_adjustWindowRect(const Box2i32& in, Box2i32& out) {
-#if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
+#if AE_OS == AE_OS_WIN
 		RECT rect = { in.pos[0], in.pos[1], in.pos[0] + in.size[0], in.pos[1] + in.size[1] };
 		auto rst = AdjustWindowRectEx(&rect, _getWindowStyle(), FALSE, _getWindowExStyle());
 		out.set(Vec2i32({ rect.left, rect.top }), Vec2i32({ rect.right - rect.left, rect.bottom - rect.top }));
@@ -262,14 +262,14 @@ namespace aurora {
 	}
 
 	void Application::_recordWindowedRect() const {
-#if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
+#if AE_OS == AE_OS_WIN
 		RECT rect;
 		GetWindowRect(_hWnd, &rect);
 		_windowedRect.set(Vec2i32({ rect.left, rect.top }), Vec2i32({ rect.right - rect.left, rect.bottom - rect.top }));
 #endif
 	}
 
-#if AE_TARGET_OS_PLATFORM == AE_OS_PLATFORM_WIN
+#if AE_OS == AE_OS_WIN
 	DWORD Application::_getWindowStyle() const {
 		DWORD style = WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
 

@@ -35,7 +35,7 @@ namespace aurora::modules::graphics::win_glew {
 	}
 
 	bool Graphics::createDevice(const GraphicsAdapter* adapter) {
-		if (_dc || !_app.get()->Win_getHWnd()) return false;
+		if (_dc || !_app->Win_getHWnd()) return false;
 
 		/*
 		pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
@@ -74,7 +74,7 @@ namespace aurora::modules::graphics::win_glew {
 			return false;
 		}
 
-		_dc = GetDC(_app.get()->Win_getHWnd());
+		_dc = GetDC(_app->Win_getHWnd());
 		if (!_dc) return false;
 
 		int32_t iAttribIList[] = {
@@ -209,7 +209,7 @@ namespace aurora::modules::graphics::win_glew {
 		wglMakeCurrent(_dc, _rc);
 
 		Vec2i32 size;
-		_app.get()->getInnerSize(size);
+		_app->getInnerSize(size);
 		glViewport(0, 0, size[0], size[1]);
 	}
 
@@ -292,7 +292,7 @@ namespace aurora::modules::graphics::win_glew {
 		}
 
 		if (_dc) {
-			ReleaseDC(_app.get()->Win_getHWnd(), _dc);
+			ReleaseDC(_app->Win_getHWnd(), _dc);
 			_dc = nullptr;
 		}
 

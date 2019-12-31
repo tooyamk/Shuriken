@@ -23,18 +23,19 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_backBufferTarget(nullptr),
 		_deviceFeatures({ 0 }),
 		_resizedListener(this, &Graphics::_resizedHandler) {
-		_app.get()->getEventDispatcher().addEventListener(ApplicationEvent::RESIZED, _resizedListener, false);
+		_resizedListener.ref();
+		_app->getEventDispatcher().addEventListener(ApplicationEvent::RESIZED, _resizedListener);
 		_constantBufferManager.createShareConstantBufferCallback = std::bind(&Graphics::_createdShareConstantBuffer, this);
 		_constantBufferManager.createExclusiveConstantBufferCallback = std::bind(&Graphics::_createdExclusiveConstantBuffer, this, std::placeholders::_1);
 	}
 
 	Graphics::~Graphics() {
-		_app.get()->getEventDispatcher().removeEventListener(ApplicationEvent::RESIZED, _resizedListener);
+		_app->getEventDispatcher().removeEventListener(ApplicationEvent::RESIZED, _resizedListener);
 		_release();
 	}
 
 	bool Graphics::createDevice(const GraphicsAdapter* adapter) {
-		if (_device || !_app.get()->Win_getHWnd()) return false;
+		if (_device || !_app->Win_getHWnd()) return false;
 
 		if (adapter) {
 			return _createDevice(*adapter);
@@ -58,7 +59,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		if (FAILED(CreateDXGIFactory1(__uuidof(IDXGIFactory2), (void**)&dxgFctory))) return false;
 		objs.add(dxgFctory);
-		dxgFctory->MakeWindowAssociation(_app.get()->Win_getHWnd(), DXGI_MWA_NO_WINDOW_CHANGES | DXGI_MWA_NO_ALT_ENTER);
+		dxgFctory->MakeWindowAssociation(_app->Win_getHWnd(), DXGI_MWA_NO_WINDOW_CHANGES | DXGI_MWA_NO_ALT_ENTER);
 
 		IDXGIAdapter* dxgAdapter = nullptr;
 		for (UINT i = 0;; ++i) {
@@ -223,7 +224,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		}
 
 		Vec2i32 size;
-		_app.get()->getInnerSize(size);
+		_app->getInnerSize(size);
 
 		DXGI_SWAP_CHAIN_DESC swapChainDesc = { 0 };
 		swapChainDesc.BufferCount = 1;
@@ -235,7 +236,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		swapChainDesc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
 		swapChainDesc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
 		swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-		swapChainDesc.OutputWindow = _app.get()->Win_getHWnd();
+		swapChainDesc.OutputWindow = _app->Win_getHWnd();
 		swapChainDesc.Windowed = true;
 		swapChainDesc.SampleDesc.Count = 1;
 		swapChainDesc.SampleDesc.Quality = 0;
@@ -362,7 +363,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 	void Graphics::_resizedHandler(events::Event<ApplicationEvent>& e) {
 		Vec2i32 size;
-		_app.get()->getInnerSize(size);
+		_app->getInnerSize(size);
 		_resize((Vec2<UINT>&)size);
 	}
 

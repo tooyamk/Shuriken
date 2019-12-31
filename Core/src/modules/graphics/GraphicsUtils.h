@@ -24,7 +24,7 @@ namespace aurora::modules::graphics {
 		}
 
 		inline const void* AE_CALL getNativeBuffer() const {
-			return _cur ? _cur->target.get()->getNativeBuffer() : nullptr;
+			return _cur ? _cur->target->getNativeBuffer() : nullptr;
 		}
 
 		bool AE_CALL create(uint32_t size, Usage bufferUsage, const void* data, uint32_t dataSize) {
@@ -47,11 +47,11 @@ namespace aurora::modules::graphics {
 		}
 
 		inline uint32_t AE_CALL getSize() const {
-			return _cur ? _cur->target.get()->getSize() : 0;
+			return _cur ? _cur->target->getSize() : 0;
 		}
 
 		inline Usage AE_CALL getUsage() const {
-			return _cur ? _cur->target.get()->getUsage() : Usage::NONE;
+			return _cur ? _cur->target->getUsage() : Usage::NONE;
 		}
 
 		Usage AE_CALL map(Usage expectMapUsage) {
@@ -62,7 +62,7 @@ namespace aurora::modules::graphics {
 						if (forceSwap) {
 							if (_count >= _max) needCreate = false;
 						} else if (_count > 1) {
-							if (_cur->next->target.get()->isSyncing()) {
+							if (_cur->next->target->isSyncing()) {
 								if (_count >= _max) needCreate = false;
 							} else {
 								needCreate = false;
@@ -92,11 +92,11 @@ namespace aurora::modules::graphics {
 								return usage;
 							} else {
 								_cur = _cur->next;
-								return _cur->target.get()->map(expectMapUsage);
+								return _cur->target->map(expectMapUsage);
 							}
 						} else {
 							_cur = _cur->next;
-							return _cur->target.get()->map(expectMapUsage);
+							return _cur->target->map(expectMapUsage);
 						}
 					} else {
 						return buf->map(expectMapUsage);
@@ -110,23 +110,23 @@ namespace aurora::modules::graphics {
 		}
 
 		inline void AE_CALL unmap() {
-			if (_cur) _cur->target.get()->unmap();
+			if (_cur) _cur->target->unmap();
 		}
 
 		inline uint32_t AE_CALL read(uint32_t offset, void* dst, uint32_t dstLen) {
-			return _cur ? _cur->target.get()->read(offset, dst, dstLen) : -1;
+			return _cur ? _cur->target->read(offset, dst, dstLen) : -1;
 		}
 
 		inline uint32_t AE_CALL write(uint32_t offset, const void* data, uint32_t length) {
-			return _cur ? _cur->target.get()->write(offset, data, length) : -1;
+			return _cur ? _cur->target->write(offset, data, length) : -1;
 		}
 
 		inline uint32_t AE_CALL update(uint32_t offset, const void* data, uint32_t length) {
-			return _cur ? _cur->target.get()->update(offset, data, length) : -1;
+			return _cur ? _cur->target->update(offset, data, length) : -1;
 		}
 
 		inline bool AE_CALL isSyncing() const {
-			return _cur ? _cur->target.get()->isSyncing() : false;
+			return _cur ? _cur->target->isSyncing() : false;
 		}
 
 		inline Node* getBegin() const {
@@ -166,9 +166,9 @@ namespace aurora::modules::graphics {
 
 		T* AE_CALL _createBuffer() {
 			if constexpr (std::is_base_of_v<IVertexBuffer, T>) {
-				return _graphics.get()->createVertexBuffer();
+				return _graphics->createVertexBuffer();
 			} else if constexpr (std::is_base_of_v<IIndexBuffer, T>) {
-				return _graphics.get()->createIndexBuffer();
+				return _graphics->createIndexBuffer();
 			} else {
 				return nullptr;
 			}

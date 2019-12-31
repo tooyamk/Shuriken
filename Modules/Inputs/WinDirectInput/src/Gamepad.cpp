@@ -66,7 +66,7 @@ namespace aurora::modules::inputs::win_direct_input {
 	Gamepad::Gamepad(Input& input, LPDIRECTINPUTDEVICE8 dev, const DeviceInfo& info) : DeviceBase(input, dev, info),
 		_keyMapping(nullptr) {
 		_dev->SetDataFormat(&c_dfDIJoystick2);
-		_dev->SetCooperativeLevel(_input.get()->getHWND(), DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
+		_dev->SetCooperativeLevel(_input->getHWND(), DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
 
 		if (_isXInputDevice(*(const ::GUID*)info.guid.getData())) {
 			_keyMapping = &XINPUT;

@@ -44,7 +44,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_arrayBegin = arrayBegin;
 		_arraySize = arraySize;
 
-		if (res && res->getGraphics() == _graphics.get()) {
+		if (res && res->getGraphics() == _graphics) {
 			if (auto native = (BaseTextureResource*)res->getNativeResource(); native && native->handle && (native->bindType & D3D11_BIND_SHADER_RESOURCE) && mipBegin < native->mipLevels && arrayBegin < std::max<uint32_t>(native->arraySize, 1)) {
 				auto lastMipLevels = native->mipLevels - mipBegin;
 				auto createMipLevels = mipLevels > lastMipLevels ? lastMipLevels : mipLevels;
@@ -127,7 +127,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 	void TextureView::_setRes(ITextureResource* res) {
 		if (!_internalView && _res != res) {
 			if (_res) {
-				auto native = (BaseTextureResource*)_res.get()->getNativeResource();
+				auto native = (BaseTextureResource*)_res->getNativeResource();
 				native->removeView(*this);
 			}
 			_res = res;

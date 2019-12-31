@@ -171,6 +171,9 @@
     <ClInclude Include="src\base\GUID.h">
       <Filter>src\base</Filter>
     </ClInclude>
+    <ClInclude Include="src\base\TimeWheel.h">
+      <Filter>src\base</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\math\Matrix44.cpp">
@@ -258,6 +261,9 @@
       <Filter>src\base</Filter>
     </ClCompile>
     <ClCompile Include="src\base\Lock.cpp">
+      <Filter>src\base</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\TimeWheel.cpp">
       <Filter>src\base</Filter>
     </ClCompile>
   </ItemGroup>

@@ -75,7 +75,7 @@ namespace aurora {
 		
 		mutable std::string _appPath;
 
-		f64 _frameInterval; //microsecond
+		f64 _frameInterval; //nanoseconds
 		int64_t _time;
 
 		bool AE_CALL _adjustWindowRect(const Box2i32& in, Box2i32& out);

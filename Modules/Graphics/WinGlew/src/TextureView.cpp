@@ -90,7 +90,7 @@ namespace aurora::modules::graphics::win_glew {
 	void TextureView::_setRes(ITextureResource* res) {
 		if (_res != res) {
 			if (_res) {
-				auto native = (BaseTexture*)_res.get()->getNativeResource();
+				auto native = (BaseTexture*)_res->getNativeResource();
 				native->removeView(*this);
 			}
 			_res = res;

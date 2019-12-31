@@ -8,6 +8,7 @@
 #include "base/STList.h"
 #include "base/String.h"
 #include "base/Time.h"
+#include "base/TimeWheel.h"
 
 #include "events/EventDispatcher.h"
 

@@ -14,19 +14,19 @@ namespace aurora::modules::graphics::win_d3d11 {
 	BaseResource::~BaseResource() {
 	}
 
-	void BaseResource::createInit(Usage resUsage, uint32_t resSize, uint32_t dataSize, UINT mipLevels, UINT& cpuUsage, D3D11_USAGE& d3dUsage) {
+	bool BaseResource::createInit(Usage resUsage, uint32_t resSize, uint32_t dataSize, UINT mipLevels, UINT& cpuUsage, D3D11_USAGE& d3dUsage) {
 		cpuUsage = 0;
 		
 		bool resCpuRead = (resUsage & Usage::MAP_READ) == Usage::MAP_READ;
 		bool resCpuWrite = (resUsage & Usage::MAP_WRITE) == Usage::MAP_WRITE;
 
-		if (resCpuRead || ((resUsage & Usage::MAP_WRITE_UPDATE) == Usage::MAP_WRITE_UPDATE)) {
+		if (resCpuRead) {
 			d3dUsage = D3D11_USAGE_STAGING;
 			this->resUsage = Usage::MAP_READ_WRITE | Usage::UPDATE;
 			cpuUsage = D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE;
-		} else if (resCpuWrite && mipLevels <= 1) {
+		} else if (resCpuWrite && mipLevels <= 1 && ((resUsage & Usage::MAP_WRITE) == Usage::MAP_WRITE)) {
 			d3dUsage = D3D11_USAGE_DYNAMIC;
-			this->resUsage = Usage::MAP_WRITE;
+			this->resUsage = Usage::MAP_WRITE_UPDATE;
 			cpuUsage = D3D11_CPU_ACCESS_WRITE;
 		} else if (((resUsage & Usage::UPDATE) == Usage::UPDATE) || dataSize < resSize) {
 			d3dUsage = D3D11_USAGE_DEFAULT;
@@ -39,6 +39,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 		}
 
 		if (d3dUsage != D3D11_USAGE_STAGING) bindType = resType;
+
+		return true;
 	}
 
 	Usage BaseResource::map(Graphics& graphics, Usage expectMapUsage, Usage& mapUsage, UINT subresource, D3D11_MAPPED_SUBRESOURCE& mappedRes) {
