@@ -10,11 +10,15 @@ namespace aurora::modules::graphics {
 			return nullptr;
 		}
 
-		auto app = args->get<Application*>("app", nullptr);
-		if (!app) println("DX11GraphicsModule create error : no app");
+		auto app = args->get<Application*>("app");
+		if (!app && !app.value()) {
+			println("DX11GraphicsModule create error : no app");
+			return nullptr;
+		}
 
-		auto g = new win_d3d11::Graphics(loader, app);
-		if (!g->createDevice(args->get<const GraphicsAdapter*>("adapter", nullptr))) {
+		auto g = new win_d3d11::Graphics(loader, app.value());
+		auto adapter = args->get<const GraphicsAdapter*>("adapter");
+		if (!g->createDevice(adapter.has_value() ? adapter.value() : nullptr)) {
 			g->unref();
 			g = nullptr;
 		}

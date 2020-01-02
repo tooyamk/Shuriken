@@ -24,7 +24,7 @@ namespace aurora::modules::inputs::win_direct_input {
 		if (!_di && FAILED(DirectInput8Create(GetModuleHandle(nullptr), DIRECTINPUT_VERSION, IID_IDirectInput8, (LPVOID*)&_di, nullptr))) return;
 
 		_di->EnumDevices(DI8DEVCLASS_ALL, _enumDevicesCallback, this, DIEDFL_ATTACHEDONLY);
-		
+
 		std::vector<DeviceInfo> changed;
 		if (_keepDevices.size() < _devices.size()) {
 			uint32_t size = _keepDevices.size();
@@ -54,7 +54,7 @@ namespace aurora::modules::inputs::win_direct_input {
 		_keepDevices.clear();
 
 		uint32_t connectedIdx = changed.size();
-		if (_connectedDevices.size() > 0) {
+		if (_connectedDevices.size()) {
 			for (auto& e : _connectedDevices) {
 				_devices.emplace_back(e);
 				changed.emplace_back(std::move(e));

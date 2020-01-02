@@ -11,22 +11,22 @@ namespace aurora {
 	}
 
 	DynamicLib::~DynamicLib() {
-		free();
+		release();
 	}
 
-	bool DynamicLib::load(const char* path) {
+	bool DynamicLib::load(const std::string_view& path) {
+		release();
 #if AE_OS == AE_OS_WIN
-		wchar_t* out = nullptr;
-		if (String::Utf8ToUnicode(path, (std::numeric_limits<uint32_t>::max)(), out) == std::string::npos) return false;
-		_lib = LoadLibraryW(out);
-		delete[] out;
+		auto wpath = String::Utf8ToUnicode(path);
+		if (wpath.empty()) return false;
+		_lib = LoadLibraryW(wpath.data());
 #else
-		_lib = dlopen(path, RTLD_LAZY);
+		_lib = dlopen(path.data(), RTLD_LAZY);
 #endif
 		return _lib;
 	}
 
-	void DynamicLib::free() {
+	void DynamicLib::release() {
 		if (_lib) {
 #if AE_OS == AE_OS_WIN
 			FreeLibrary((HMODULE)_lib);
@@ -37,12 +37,12 @@ namespace aurora {
 		}
 	}
 
-	void* DynamicLib::getSymbolAddress(const char* name) const {
+	void* DynamicLib::getSymbolAddress(const std::string_view& name) const {
 		if (_lib) {
 #if AE_OS == AE_OS_WIN
-			return GetProcAddress((HMODULE)_lib, name);
+			return GetProcAddress((HMODULE)_lib, name.data());
 #else
-			return dlsym(_lib, name);
+			return dlsym(_lib, name.data());
 #endif
 		} else {
 			return nullptr;

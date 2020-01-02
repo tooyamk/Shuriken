@@ -4,16 +4,19 @@
 #include <thread>
 
 namespace aurora {
-	Application::Application(const char* appId, f64 frameInterval) :
+	Application::Application(const std::string_view& appId, f64 frameInterval) :
 		_appId(appId),
 		_isClosing(false),
+		_updatingCount(0),
+		_updatingTimePoint(0),
+		_updateTimeCompensationTimePoint(0),
+		_updateTimeCompensationFrameCount(0),
 #if AE_OS == AE_OS_WIN
 		_hIns(nullptr),
 		_hWnd(nullptr),
 		_lastWndInnerRect({0, 0, 0, 0}),
 #endif
-		_isWindowed(true),
-		_time(0) {
+		_isWindowed(true) {
 		setFrameInterval(frameInterval);
 	}
 
@@ -32,7 +35,7 @@ namespace aurora {
 #endif
 	}
 
-	bool Application::createWindow(const Style& style, const std::string& title, const Box2i32& windowedRect, bool fullscreen) {
+	bool Application::createWindow(const Style& style, const std::string_view& title, const Box2i32& windowedRect, bool fullscreen) {
 		_windowedRect.set(windowedRect);
 		_isWindowed = !fullscreen;
 		_style = style;
@@ -136,7 +139,7 @@ namespace aurora {
 		}
 	}
 
-	void Application::setWindowTitle(const std::string& title) {
+	void Application::setWindowTitle(const std::string_view& title) {
 #if AE_OS == AE_OS_WIN
 		if (_hWnd) SetWindowTextW(_hWnd, String::Utf8ToUnicode(title).c_str());
 #endif
@@ -175,11 +178,12 @@ namespace aurora {
 	}
 
 	void Application::setFrameInterval(f64 frameInterval) {
-		_frameInterval = frameInterval <= 0. ? 0. : frameInterval;
+		_frameInterval = frameInterval < 0. ? 0. : frameInterval;
 	}
 
 	void Application::resetDeltaRecord() {
-		_time = 0;
+		_updatingCount = 0;
+		_updateTimeCompensationFrameCount = 0;
 	}
 
 	bool Application::isVisible() const {
@@ -203,25 +207,56 @@ namespace aurora {
 #endif
 	}
 
-	void Application::run() {
+	void Application::run(bool frameIntervalCap) {
 		while (!_isClosing) {
 			pollEvents();
-			update(true);
+			tick(frameIntervalCap);
 		}
 	}
 
-	void Application::update(bool autoSleep) {
-		auto t0 = Time::now<std::chrono::nanoseconds, std::chrono::steady_clock>();
-		auto dt = _time == 0 ? 0 : (t0 - _time);
-		_time = t0;
+	void Application::tick(bool frameIntervalCap) {
+		auto t0 = Time::now();
+		auto dt = _updatingCount++ == 0 ? 0 : (t0 - _updatingTimePoint);
+		_updatingTimePoint = t0;
 
-		_eventDispatcher.dispatchEvent(this, ApplicationEvent::UPDATE, &dt);
+		_eventDispatcher.dispatchEvent(this, ApplicationEvent::TICKING, &dt);
+		_eventDispatcher.dispatchEvent(this, ApplicationEvent::TICKED);
 
-		if (autoSleep) {
-			auto t1 = Time::now<std::chrono::nanoseconds, std::chrono::steady_clock>();
+		if (frameIntervalCap) {
+			auto t1 = Time::now();
+			auto phase = f64(t1 - t0);
 
-			f64 timePhase = f64(t1 - t0);
-			if (timePhase < _frameInterval) std::this_thread::sleep_for(std::chrono::nanoseconds(int64_t(_frameInterval - timePhase)));
+			if (_updateTimeCompensationFrameCount) {
+				if (auto t = _updateTimeCompensationFrameCount * _frameInterval - (t0 - _updateTimeCompensationTimePoint); t > 0.) {
+					t += _frameInterval - phase;
+
+					if (t > 0.) {
+						++_updateTimeCompensationFrameCount;
+
+						if (size_t st = t; st) std::this_thread::sleep_for(std::chrono::milliseconds(st));
+					} else {
+						_updateTimeCompensationFrameCount = 0;
+					}
+				} else {
+					if (phase < _frameInterval) {
+						_updateTimeCompensationTimePoint = t0;
+						_updateTimeCompensationFrameCount = 1;
+
+						if (size_t st = _frameInterval - phase; st) std::this_thread::sleep_for(std::chrono::milliseconds(st));
+					} else {
+						_updateTimeCompensationFrameCount = 0;
+					}
+				}
+			} else {
+				if (phase < _frameInterval) {
+					_updateTimeCompensationTimePoint = t0;
+					_updateTimeCompensationFrameCount = 1;
+
+					if (size_t st = _frameInterval - phase; st) std::this_thread::sleep_for(std::chrono::milliseconds(st));
+				}
+			}
+		} else {
+			_updateTimeCompensationFrameCount = 0;
 		}
 	}
 

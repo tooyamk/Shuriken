@@ -7,7 +7,7 @@
 #include "modules/graphics/IGraphicsModule.h"
 
 namespace aurora::modules::graphics::program_source_translator {
-	ProgramSourceTranslator::ProgramSourceTranslator(Ref* loader, const char* dxc) :
+	ProgramSourceTranslator::ProgramSourceTranslator(Ref* loader, const std::string_view& dxc) :
 		_loader(loader),
 		_dxcLib(nullptr),
 		_dxcompiler(nullptr) {

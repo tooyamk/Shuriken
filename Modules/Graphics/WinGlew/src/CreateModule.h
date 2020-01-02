@@ -10,11 +10,16 @@ namespace aurora::modules::graphics {
 			return nullptr;
 		}
 
-		auto app = args->get<Application*>("app", nullptr);
-		if (!app) println("GlewGraphicsModule create error : no app");
+		auto app = args->get<Application*>("app");
+		if (!app && !app.value()) {
+			println("GlewGraphicsModule create error : no app");
+			return nullptr;
+		}
 
-		auto g = new win_glew::Graphics(loader, app, args->get<IProgramSourceTranslator*>("trans", nullptr));
-		if (!g->createDevice(args->get<const GraphicsAdapter*>("adapter", nullptr))) {
+		auto trans = args->get<IProgramSourceTranslator*>("trans");
+		auto adapter = args->get<const GraphicsAdapter*>("adapter");
+		auto g = new win_glew::Graphics(loader, app.value(), trans.has_value() ? trans.value() : nullptr);
+		if (!g->createDevice(adapter.has_value() ? adapter.value() : nullptr)) {
 			g->unref();
 			g = nullptr;
 		}

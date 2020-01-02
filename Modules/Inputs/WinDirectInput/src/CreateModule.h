@@ -10,10 +10,13 @@ namespace aurora::modules::inputs {
 			return nullptr;
 		}
 
-		auto app = args->get<Application*>("app", nullptr);
-		if (!app) println("DirectInputModule create error : no app");
+		auto app = args->get<Application*>("app");
+		if (!app && !app.value()) {
+			println("DirectInputModule create error : no app");
+			return nullptr;
+		}
 
-		return new win_direct_input::Input(loader, app);
+		return new win_direct_input::Input(loader, app.value());
 	}
 }
 #endif

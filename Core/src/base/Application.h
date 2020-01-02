@@ -5,8 +5,12 @@
 #include "events/EventDispatcher.h"
 
 namespace aurora {
+	class IClocker;
+
+
 	enum class ApplicationEvent : uint8_t {
-		UPDATE,
+		TICKING,
+		TICKED,
 		RESIZED,
 		FOCUS_IN,
 		FOCUS_OUT,
@@ -23,31 +27,31 @@ namespace aurora {
 			bool thickFrame = false;
 		};
 
-		Application(const char* appId, f64 frameInterval);
+		Application(const std::string_view& appId, f64 frameInterval);
 		virtual ~Application();
 
 		inline events::IEventDispatcher<ApplicationEvent>& AE_CALL getEventDispatcher() {
 			return _eventDispatcher;
 		}
 
-		bool AE_CALL createWindow(const Style& style, const std::string& title, const Box2i32& windowedRect, bool fullscreen);
+		bool AE_CALL createWindow(const Style& style, const std::string_view& title, const Box2i32& windowedRect, bool fullscreen);
 		bool AE_CALL isWindowed() const;
 		void AE_CALL toggleFullscreen();
 		void AE_CALL getInnerSize(Vec2i32& size);
 		void AE_CALL getWindowedRect(Box2i32& dst) const;
 		void AE_CALL setWindowedRect(const Box2i32& rect);
-		void AE_CALL setWindowTitle(const std::string& title);
+		void AE_CALL setWindowTitle(const std::string_view& title);
 		void AE_CALL setCursorVisible(bool isVisible);
 		bool AE_CALL hasFocus() const;
 		void AE_CALL pollEvents();
 
 		bool AE_CALL isVisible() const;
 		void AE_CALL setVisible(bool b);
-		void AE_CALL run();
+		void AE_CALL run(bool frameIntervalCap);
 		f64 AE_CALL getFrameInterval() const;
 		void AE_CALL setFrameInterval(f64 frameInterval);
 		void AE_CALL resetDeltaRecord();
-		void AE_CALL update(bool autoSleep);
+		void AE_CALL tick(bool frameIntervalCap);
 		void AE_CALL shutdown();
 
 		inline const std::string& getAppId() const {
@@ -75,8 +79,11 @@ namespace aurora {
 		
 		mutable std::string _appPath;
 
-		f64 _frameInterval; //nanoseconds
-		int64_t _time;
+		f64 _frameInterval;
+		size_t _updatingCount;
+		int64_t _updatingTimePoint;
+		int64_t _updateTimeCompensationTimePoint;
+		size_t _updateTimeCompensationFrameCount;
 
 		bool AE_CALL _adjustWindowRect(const Box2i32& in, Box2i32& out);
 		void AE_CALL _recordWindowedRect() const;

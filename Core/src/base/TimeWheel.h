@@ -2,10 +2,7 @@
 
 #include "events/EventDispatcher.h"
 #include <functional>
-#include <memory>
 #include <mutex>
-#include <shared_mutex>
-#include <vector>
 
 namespace aurora {
 	class AE_DLL TimeWheel : public std::enable_shared_from_this<TimeWheel> {
@@ -15,13 +12,13 @@ namespace aurora {
 		};
 
 
+		enum class TimerEvent : uint8_t {
+			TICK
+		};
+
+
 		class AE_DLL Timer : public Ref {
 		public:
-			enum class TimerEvent : uint8_t {
-				TICK
-			};
-
-
 			Timer();
 			~Timer();
 
@@ -47,20 +44,28 @@ namespace aurora {
 			}
 
 			inline bool AE_CALL isRunning() const {
-				return !_wheel.expired();
+				std::scoped_lock lck(_mutex);
+				return !_tickIDs.empty();
 			}
 
 			inline events::IEventDispatcher<TimerEvent>& AE_CALL getEventDispatcher() {
 				return _eventDispatcher;
 			}
 
-			inline void AE_CALL doTick() {
-				_eventDispatcher.dispatchEvent(this, TimerEvent::TICK);
+			inline void AE_CALL doTick(uint64_t tickID) {
+				std::scoped_lock lck(_mutex);
+
+				auto itr = std::find(_tickIDs.begin(), _tickIDs.end(), tickID);
+				if (itr != _tickIDs.end()) {
+					_tickIDs.erase(itr);
+
+					_eventDispatcher.dispatchEvent(this, TimerEvent::TICK);
+				}
 			}
 
 		private:
 			bool _isStrict;
-			std::recursive_mutex _mutex;
+			mutable std::recursive_mutex _mutex;
 			//AtomicLock<true, true> _lock;
 			std::weak_ptr<TimeWheel> _wheel;
 			size_t _count;
@@ -70,6 +75,7 @@ namespace aurora {
 			size_t _runningCycle;
 			uint64_t _runningDelay;
 			size_t _slotIndex;
+			std::list<uint64_t> _tickIDs;
 			Timer* _prev;
 			Timer* _next;
 
@@ -77,9 +83,21 @@ namespace aurora {
 
 			inline void AE_CALL _stop() {
 				if (auto p = _wheel.lock(); p) p->stopTimer(*this);
+				_tickIDs.clear();
 			}
 
 			friend TimeWheel;
+		};
+
+
+		struct AE_DLL Trigger {
+			Trigger(Timer& timer, const uint64_t id) :
+				timer(timer),
+				tickID(id) {
+			}
+
+			Timer& timer;
+			uint64_t tickID;
 		};
 
 
@@ -96,7 +114,7 @@ namespace aurora {
 		void AE_CALL startTimer(Timer& timer, uint64_t delay, size_t count, bool strict);
 
 		inline void AE_CALL stopTimer(Timer& timer) {
-			std::shared_lock lck(_mutex);
+			std::scoped_lock lck(_mutex);
 
 			_stopTimer(timer);
 		}
@@ -110,11 +128,7 @@ namespace aurora {
 			Timer* head;
 			Timer* tail;
 
-			std::mutex _mutex;
-
 			void AE_CALL add(Timer* t) {
-				std::scoped_lock lck(_mutex);
-
 				if (head) {
 					t->_prev = tail;
 					tail->_next = t;
@@ -157,13 +171,21 @@ namespace aurora {
 							RefPtr<Timer> p = t;
 							++t->_runningCount;
 							auto e = t->_runningDelay;
+
+							auto id = ++wheel._tickIDGenerator;
+
+							{
+								std::scoped_lock lck(t->_mutex);
+								t->_tickIDs.emplace_back(id);
+							}
+
 							if (t->_count && t->_count <= t->_runningCount) {
 								this->remove(tickingTimer, t);
 								t->_wheel.reset();
 								t->unref();
-								wheel._eventDispatcher.dispatchEvent(&wheel, TimeWheelEvent::TRIGGER, t);
+								wheel._eventDispatcher.dispatchEvent(&wheel, TimeWheelEvent::TRIGGER, &Trigger(*t, id));
 							} else {
-								wheel._eventDispatcher.dispatchEvent(&wheel, TimeWheelEvent::TRIGGER, t);
+								wheel._eventDispatcher.dispatchEvent(&wheel, TimeWheelEvent::TRIGGER, &Trigger(*t, id));
 								if (t == tickingTimer) wheel._repeatTimer(*t, e);
 							}
 
@@ -181,7 +203,7 @@ namespace aurora {
 		};
 
 
-		std::shared_mutex _mutex;
+		std::recursive_mutex _mutex;
 		std::vector<Slot> _slots;
 		size_t _numSlots;
 		size_t _curSlotIndex;
@@ -189,6 +211,8 @@ namespace aurora {
 		uint64_t _slotElapsed;
 		uint64_t _interval;
 		uint64_t _cycle;
+
+		uint64_t _tickIDGenerator;
 
 		uint64_t _tickingLastTime;
 		Timer* _tickingTimer;

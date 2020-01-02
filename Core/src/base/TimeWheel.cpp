@@ -36,7 +36,7 @@ namespace aurora {
 		timer._count = count;
 		timer._runningCount = 0;
 
-		std::shared_lock slock(_mutex);
+		std::scoped_lock lock2(_mutex);
 
 		_addTimer(timer, delay, _tickingElapsed, strict);
 	}
@@ -88,7 +88,7 @@ namespace aurora {
 
 	void TimeWheel::tick(uint64_t elapsed) {
 		{
-			std::unique_lock lck(_mutex);
+			std::scoped_lock lck(_mutex);
 
 			_tickingLastTime = elapsed;
 
@@ -108,7 +108,7 @@ namespace aurora {
 
 		if (_tickingLastTime) {
 			while (_tickingLastTime >= _interval) {
-				std::unique_lock lck(_mutex);
+				std::scoped_lock lck(_mutex);
 
 				_tickingElapsed = _interval;
 				_slots[_curSlotIndex].tick(*this, true, _tickingElapsed);
@@ -119,7 +119,7 @@ namespace aurora {
 			}
 
 			if (_tickingLastTime) {
-				std::unique_lock lck(_mutex);
+				std::scoped_lock lck(_mutex);
 
 				_tickingElapsed = _tickingLastTime;
 				_slots[_curSlotIndex].tick(*this, false, _tickingElapsed);

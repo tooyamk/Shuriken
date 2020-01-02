@@ -1,14 +1,12 @@
 #include "Input.h"
 #include "Gamepad.h"
 #include "CreateModule.h"
-#include "base/Application.h"
 #include "base/ByteArray.h"
 #include <algorithm>
 
 namespace aurora::modules::inputs::win_xinput {
-	Input::Input(Ref* loader, Application* app) :
-		_loader(loader),
-		_app(app) {
+	Input::Input(Ref* loader) :
+		_loader(loader) {
 	}
 
 	Input::~Input() {

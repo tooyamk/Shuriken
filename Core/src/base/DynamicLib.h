@@ -9,9 +9,9 @@ namespace aurora {
 		virtual ~DynamicLib();
 
 		inline bool AE_CALL isLoaded() const { return _lib; }
-		bool AE_CALL load(const char* path);
-		void AE_CALL free();
-		void* AE_CALL getSymbolAddress(const char* name) const;
+		bool AE_CALL load(const std::string_view& path);
+		void AE_CALL release();
+		void* AE_CALL getSymbolAddress(const std::string_view& name) const;
 
 	private:
 		void* _lib;

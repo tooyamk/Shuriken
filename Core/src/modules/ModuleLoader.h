@@ -14,7 +14,7 @@ namespace aurora::modules {
 		virtual ~ModuleLoader() {}
 
 		bool AE_CALL load(const char* path) {
-			if (_lib.isLoaded()) _lib.free();
+			if (_lib.isLoaded()) _lib.release();
 			if (_lib.load(path)) {
 				_createFn = (CreateModuleFn)_lib.getSymbolAddress(AE_TO_STRING(AE_CREATE_MODULE_FN_NAME));
 				return _createFn;
@@ -26,7 +26,7 @@ namespace aurora::modules {
 		}
 
 		inline void AE_CALL free() {
-			_lib.free();
+			_lib.release();
 		}
 
 		RetType* AE_CALL create(const Args* args) {

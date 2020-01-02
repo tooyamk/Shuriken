@@ -25,7 +25,7 @@
 namespace aurora::modules::graphics::program_source_translator {
 	class ProgramSourceTranslator : public IProgramSourceTranslator {
 	public:
-		ProgramSourceTranslator(Ref* loader, const char* dxc);
+		ProgramSourceTranslator(Ref* loader, const std::string_view& dxc);
 		virtual ~ProgramSourceTranslator();
 
 		virtual ProgramSource AE_CALL translate(const ProgramSource& source, ProgramLanguage targetLanguage, const std::string& targetVersion) override;
@@ -50,10 +50,13 @@ namespace aurora::modules::graphics {
 			return nullptr;
 		}
 
-		auto dxc = args->get<const char*>("dxc", nullptr);
-		if (!dxc) println("Module create err, no dxc");
+		auto dxc = args->get<const std::string>("dxc");
+		if (!dxc) {
+			println("Module create err, no dxc");
+			return nullptr;
+		}
 
-		return new program_source_translator::ProgramSourceTranslator(loader, dxc);
+		return new program_source_translator::ProgramSourceTranslator(loader, dxc.value().data());
 	}
 }
 #endif
