@@ -52,6 +52,10 @@ namespace aurora {
 				return _eventDispatcher;
 			}
 
+			inline const events::IEventDispatcher<TimerEvent>& AE_CALL getEventDispatcher() const {
+				return _eventDispatcher;
+			}
+
 			inline void AE_CALL doTick(uint64_t tickID) {
 				std::scoped_lock lck(_mutex);
 
@@ -104,6 +108,10 @@ namespace aurora {
 		TimeWheel(uint64_t interval, size_t numSlots);
 
 		inline events::IEventDispatcher<TimeWheelEvent>& AE_CALL getEventDispatcher() {
+			return _eventDispatcher;
+		}
+
+		inline const events::IEventDispatcher<TimeWheelEvent>& AE_CALL getEventDispatcher() const {
 			return _eventDispatcher;
 		}
 

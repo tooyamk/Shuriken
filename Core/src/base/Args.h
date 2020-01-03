@@ -28,13 +28,9 @@ namespace aurora {
 		std::optional<T> get(const std::string& name) const {
 			auto itr = _args.find(name);
 			if (itr == _args.end()) {
-				return std::optional<T>();
+				return std::nullopt;
 			} else {
-				if (itr->second.type() == typeid(T)) {
-					return std::optional<T>(std::any_cast<T>(itr->second));
-				} else {
-					return std::optional<T>();
-				}
+				return itr->second.type() == typeid(T) ? std::make_optional<T>(std::any_cast<T>(itr->second)) : std::nullopt;
 			}
 		}
 	protected:

@@ -47,10 +47,10 @@ namespace aurora {
 
 		static std::string::size_type AE_CALL Utf8ToUnicode(const char* in, size_t inLen, wchar_t*& out);
 
-		inline static void AE_CALL split(const std::string& input, const std::string& separator, std::vector<std::string>& dst) {
-			split(input, std::regex("\\" + separator), dst);
-		}
-		static void AE_CALL split(const std::string& input, const std::regex& separator, std::vector<std::string>& dst);
+		//inline static void AE_CALL split(const std::string_view& input, const std::string& separator, std::vector<std::string_view>& dst) {
+		//	split(input, std::regex("\\" + separator), dst);
+		//}
+		static void AE_CALL split(const std::string_view& input, const std::regex& separator, std::vector<std::string_view>& dst);
 		static void AE_CALL split(const std::string_view& input, const std::string_view& separator, std::vector<std::string_view>& dst);
 
 		static std::string_view trimQuotation(const std::string_view& str);
@@ -83,12 +83,6 @@ namespace aurora {
 
 		template<typename T,
 		typename = typename std::enable_if_t<std::is_integral_v<T>, T>>
-		inline static T toNumber(const std::string& in, const int32_t base = 10) {
-			return toNumber<T>(in.c_str(), in.size(), base);
-		}
-
-		template<typename T,
-		typename = typename std::enable_if_t<std::is_integral_v<T>, T>>
 		inline static T toNumber(const std::string_view& in, const int32_t base = 10) {
 			return toNumber<T>(in.data(), in.size(), base);
 		}
@@ -98,12 +92,6 @@ namespace aurora {
 		inline static T toNumber(const char* in, size_t size, std::chars_format fmt = std::chars_format::general) {
 			T value;
 			return std::from_chars(in, in + size, value, fmt).ec == std::errc() ? value : 0.;
-		}
-
-		template<typename T,
-		typename = typename std::enable_if_t<std::is_floating_point_v<T>, T>>
-		inline static T toNumber(const std::string& in, std::chars_format fmt = std::chars_format::general) {
-			return toNumber<T>(in.c_str(), in.size(), fmt);
 		}
 
 		template<typename T,

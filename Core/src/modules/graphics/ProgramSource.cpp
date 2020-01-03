@@ -31,7 +31,7 @@ namespace aurora::modules::graphics {
 			data.isValid();
 	}
 
-	std::string ProgramSource::toHLSLShaderModel(ProgramStage stage, const std::string& version) {
+	std::string ProgramSource::toHLSLShaderModel(ProgramStage stage, const std::string_view& version) {
 		std::string sm;
 		switch (stage) {
 		case ProgramStage::VS:
@@ -61,7 +61,7 @@ namespace aurora::modules::graphics {
 			sm += "5_0";
 		} else {
 			std::vector<std::string_view> vers;
-			String::split(std::string_view(version), std::string_view("."), vers);
+			String::split(version, ".", vers);
 			uint32_t n = vers.size();
 			for (uint32_t i = 0; i < n; ++i) {
 				if (i != 0) sm.push_back('_');

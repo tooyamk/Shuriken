@@ -22,7 +22,7 @@ namespace aurora::modules::graphics::program_source_translator {
 	ProgramSourceTranslator::~ProgramSourceTranslator() {
 	}
 
-	ProgramSource ProgramSourceTranslator::translate(const ProgramSource& source, ProgramLanguage targetLanguage, const std::string& targetVersion) {
+	ProgramSource ProgramSourceTranslator::translate(const ProgramSource& source, ProgramLanguage targetLanguage, const std::string_view& targetVersion) {
 		ProgramSource dst;
 
 		if (!source.isValid() || targetLanguage == ProgramLanguage::UNKNOWN) return std::move(dst);
@@ -32,7 +32,7 @@ namespace aurora::modules::graphics::program_source_translator {
 			dst.stage = source.stage;
 			dst.version = targetVersion.empty() ? source.version : targetVersion;
 			dst.data.setCapacity(source.data.getLength());
-			dst.data.writeBytes(source.data.getSource(), source.data.getLength());
+			dst.data.write<ba_t::BYTE>(source.data.getSource(), source.data.getLength());
 			return std::move(dst);
 		}
 
@@ -58,11 +58,11 @@ namespace aurora::modules::graphics::program_source_translator {
 
 			std::vector<const wchar_t*> dxcArgs;
 			dxcArgs.reserve(dxcArgStrings.size());
-			for (const auto& arg : dxcArgStrings) dxcArgs.emplace_back(arg.c_str());
+			for (const auto& arg : dxcArgStrings) dxcArgs.emplace_back(arg.data());
 
 			//CComPtr<IDxcIncludeHandler> includeHandler = new ScIncludeHandler(std::move(source.loadIncludeCallback));
 			CComPtr<IDxcOperationResult> compileResult;
-			IFT(_dxcompiler->Compile(sourceBlob, L"", String::Utf8ToUnicode(ProgramSource::getEntryPoint(source)).c_str(), profile.c_str(),
+			IFT(_dxcompiler->Compile(sourceBlob, L"", String::Utf8ToUnicode(ProgramSource::getEntryPoint(source)).data(), profile.data(),
 				dxcArgs.data(), (UINT32)(dxcArgs.size()), dxcDefines.data(),
 				(UINT32)(dxcDefines.size()), nullptr, &compileResult));
 
@@ -93,7 +93,7 @@ namespace aurora::modules::graphics::program_source_translator {
 	}
 
 	void ProgramSourceTranslator::_spirvTo(const ProgramSource& source, const uint8_t* sourceData, uint32_t sourceDataSize, 
-		ProgramLanguage targetLanguage, const std::string& targetVersion, ProgramSource& dst) {
+		ProgramLanguage targetLanguage, const std::string_view& targetVersion, ProgramSource& dst) {
 
 		spv::ExecutionModel model;
 		switch (source.stage) {
@@ -127,7 +127,7 @@ namespace aurora::modules::graphics::program_source_translator {
 			dst.stage = source.stage;
 			if (targetLanguage == ProgramLanguage::DXIL) dst.version = targetVersion.empty() ? source.version : targetVersion;
 			dst.data.setCapacity(sourceDataSize);
-			dst.data.writeBytes(sourceData, sourceDataSize);
+			dst.data.write<ba_t::BYTE>(sourceData, sourceDataSize);
 
 			break;
 		}
@@ -139,7 +139,7 @@ namespace aurora::modules::graphics::program_source_translator {
 			compiler.set_entry_point(ProgramSource::getEntryPoint(source), model);
 
 			auto opts = compiler.get_common_options();
-			if (!targetVersion.empty()) opts.version = std::stoi(targetVersion);
+			if (!targetVersion.empty()) opts.version = String::toNumber<decltype(opts.version)>(targetVersion);
 			opts.es = targetLanguage == ProgramLanguage::GSSL;
 			opts.force_temporary = false;
 			opts.separate_shader_objects = true;
@@ -173,7 +173,7 @@ namespace aurora::modules::graphics::program_source_translator {
 				dst.stage = source.stage;
 				dst.version = String::toString(opts.version);
 				dst.data.setCapacity(str.size());
-				dst.data.writeBytes((uint8_t*)str.c_str(), str.size());
+				dst.data.write<ba_t::BYTE>((uint8_t*)str.data(), str.size());
 			} catch (spirv_cross::CompilerError& error) {
 				println("spirv to glsl/gssl error : ", error.what());
 			}
@@ -187,7 +187,7 @@ namespace aurora::modules::graphics::program_source_translator {
 			compiler.set_entry_point(ProgramSource::getEntryPoint(source), model);
 
 			auto opts = compiler.get_common_options();
-			if (!targetVersion.empty()) opts.version = std::stoi(targetVersion);
+			if (!targetVersion.empty()) opts.version = String::toNumber<decltype(opts.version)>(targetVersion);
 			opts.es = false;
 			opts.force_temporary = false;
 			opts.separate_shader_objects = true;
@@ -200,7 +200,7 @@ namespace aurora::modules::graphics::program_source_translator {
 			compiler.set_common_options(opts);
 
 			auto mslOpts = compiler.get_msl_options();
-			if (!targetVersion.empty()) mslOpts.msl_version = std::stoi(targetVersion);
+			if (!targetVersion.empty()) mslOpts.msl_version = String::toNumber<decltype(mslOpts.msl_version)>(targetVersion);
 			mslOpts.swizzle_texture_samples = false;
 			compiler.set_msl_options(mslOpts);
 
@@ -211,7 +211,7 @@ namespace aurora::modules::graphics::program_source_translator {
 				dst.stage = source.stage;
 				dst.version = String::toString(mslOpts.msl_version);
 				dst.data.setCapacity(str.size());
-				dst.data.writeBytes((uint8_t*)str.c_str(), str.size());
+				dst.data.write<ba_t::BYTE>((uint8_t*)str.data(), str.size());
 			} catch (spirv_cross::CompilerError& error) {
 				println(error.what());
 			}

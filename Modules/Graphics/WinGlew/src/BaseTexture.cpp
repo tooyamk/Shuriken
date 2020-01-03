@@ -48,9 +48,11 @@ namespace aurora::modules::graphics::win_glew {
 		if (handle) {
 			this->resUsage = resUsage & graphics.getCreateBufferMask();
 
-			Graphics::convertFormat(format, glTexInfo.internalFormat, glTexInfo.format, glTexInfo.type);
+			if (auto rst = Graphics::convertFormat(format); rst) {
+				glTexInfo.internalFormat = rst->internalFormat;
+				glTexInfo.format = rst->format;
+				glTexInfo.type = rst->type;
 
-			if (glTexInfo.format != 0) {
 				bool supportTexStorage = graphics.getInternalFeatures().supportTexStorage;
 
 				auto perPixelSize = Image::calcPerPixelByteSize(format);

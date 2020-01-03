@@ -406,7 +406,7 @@ namespace aurora {
 template<uint32_t N, typename T1, typename T2, typename = typename std::enable_if_t<std::is_convertible_v<T1, T2>, T1>> \
 using VecArithmeticType = Vec<N, decltype((*(T1*)0) + (*(T2*)0))>; \
 template<uint32_t N, typename T1, typename T2> \
-inline constexpr VecArithmeticType<N, T1, T2> AE_CALL operator __SYMBOL__(const Vec<N, T1>& v1, const Vec<N, T2> v2) { \
+inline constexpr VecArithmeticType<N, T1, T2> AE_CALL operator __SYMBOL__(const Vec<N, T1>& v1, const Vec<N, T2>& v2) { \
 	VecArithmeticType<N, T1, T2> v = v1; \
 	v __SYMBOL__= v2; \
 	return v; \

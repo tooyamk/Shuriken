@@ -148,10 +148,13 @@ namespace aurora {
 		return d;
 	}
 
-	void String::split(const std::string& input, const std::regex& separator, std::vector<std::string>& dst) {
-		std::sregex_token_iterator itr(input.begin(), input.end(), separator, -1);
-		std::sregex_token_iterator end;
-		while (itr != end) dst.emplace_back(*itr++);
+	void String::split(const std::string_view& input, const std::regex& separator, std::vector<std::string_view>& dst) {
+		std::regex_token_iterator itr(input.begin(), input.end(), separator, -1);
+		std::regex_token_iterator<std::string_view::const_iterator> end;
+		while (itr != end) {
+			dst.emplace_back(&*itr->first, itr->length());
+			++itr;
+		}
 	}
 
 	void String::split(const std::string_view& input, const std::string_view& separator, std::vector<std::string_view>& dst) {

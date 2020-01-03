@@ -14,6 +14,30 @@ namespace aurora {
 		};
 
 
+		enum class Type : uint8_t {
+			BOOL,
+			I8,
+			I16,
+			I32,
+			I64,
+			UI8,
+			UI16,
+			UI32,
+			UI64,
+			D_UI64,
+			IX,
+			UIX,
+			TWO_I12,
+			TWO_UI12,
+			F32,
+			F64,
+			STR,
+			STR_V,
+			BYTE,
+			PADDING
+		};
+
+
 		//enum class CompressionAlgorithm : ui8 {
 		//	ZLIB
 		//};
@@ -61,105 +85,416 @@ namespace aurora {
 
 		inline size_t AE_CALL getBytesAvailable() const;
 
-		uint64_t AE_CALL readDynamicUInt64();
-		void AE_CALL writeDynamicUInt64(uint64_t value);
-
-		int64_t AE_CALL readInt(uint8_t numBytes);
-		uint64_t AE_CALL readUInt(uint8_t numBytes);
-		void AE_CALL writeInt(uint8_t numBytes, int64_t value);
-		inline void AE_CALL writeUInt(uint8_t numBytes, uint64_t value);
-
-		size_t AE_CALL readBytes(uint8_t* bytes, size_t length = (std::numeric_limits<size_t>::max)());
-		size_t AE_CALL readBytes(ByteArray& ba, size_t offset = 0, size_t length = (std::numeric_limits<size_t>::max)());
-		inline void AE_CALL writeBytes(const uint8_t* bytes, size_t length);
-		size_t AE_CALL writeBytes(const ByteArray& ba, size_t offset = 0, size_t length = (std::numeric_limits<size_t>::max)());
-
-		//begin, size, position
-		std::tuple<size_t, size_t, size_t> AE_CALL readString(size_t begin, size_t size, bool chechBOM = false) const;
-		//begin, size
-		inline std::tuple<size_t, size_t> AE_CALL readString(size_t size, bool chechBOM = false);
-		inline std::string AE_CALL readString(bool chechBOM = false);
-		inline std::string_view AE_CALL readStringView(bool chechBOM = false);
-		inline void AE_CALL writeString(const std::string& str);
-		inline void AE_CALL writeString(const std::string_view& str);
-		void AE_CALL writeString(const char* str, size_t size);
-		inline void AE_CALL writeString(const char* str);
-
-		template<typename T>
-		T AE_CALL read() {
-			if constexpr (
-				std::is_same_v<T, bool> || 
-				std::is_same_v<T, int8_t> ||
-				std::is_same_v<T, uint8_t> ||
-				std::is_same_v<T, int16_t> ||
-				std::is_same_v<T, uint16_t> ||
-				std::is_same_v<T, int32_t> ||
-				std::is_same_v<T, uint32_t> ||
-				std::is_same_v<T, int64_t> ||
-				std::is_same_v<T, uint64_t> ||
-				std::is_same_v<T, f32> ||
-				std::is_same_v<T, f64>) {
-				if constexpr (sizeof(T) == 1) {
-					if (_position < _length) {
-						return *(T*)&_data[_position++];
-					} else {
-						_position = _length;
-						return (T)0;
-					}
-				} else {
-					const uint32_t len = sizeof(T);
-					if (_position + len > _length) {
-						_position = _length;
-						return (T)0;
-					}
-
-					if (_needReverse) {
-						T v;
-						auto p = (uint8_t*)&v;
-						for (int32_t i = len - 1; i >= 0; --i) p[i] = _data[_position++];
-						return v;
-					} else {
-						T v = *(T*)&_data[_position];
-						_position += len;
-						return v;
-					}
-				}
-			} else {
-				static_assert(false, "ByteArray read<T>, unsupported type");
-			}
-		}
-
-		template<typename T>
-		inline void AE_CALL write(const T& value) {
-			if constexpr (
-				std::is_same_v<T, bool> ||
-				std::is_same_v<T, int8_t> ||
-				std::is_same_v<T, uint8_t> ||
-				std::is_same_v<T, int16_t> ||
-				std::is_same_v<T, uint16_t> ||
-				std::is_same_v<T, int32_t> ||
-				std::is_same_v<T, uint32_t> ||
-				std::is_same_v<T, int64_t> ||
-				std::is_same_v<T, uint64_t> ||
-				std::is_same_v<T, f32> ||
-				std::is_same_v<T, f64>) {
-				_write((uint8_t*)&value, sizeof(T));
-			} else {
-				static_assert(false, "ByteArray write<T>, unsupported type");
-			}
-		}
-
-		inline void AE_CALL writePadding(size_t length);
-
-		inline std::tuple<uint16_t, uint16_t> AE_CALL readTwoUInt12();
-		inline void AE_CALL writeTwoUInt12(uint16_t value1, uint16_t value2);
-
-		inline std::tuple<int16_t, int16_t> AE_CALL readTwoInt12();
-		inline void AE_CALL writeTwoInt12(int16_t value1, int16_t value2);
-
 		void AE_CALL popFront(size_t len);
 		void AE_CALL popBack(size_t len);
 		void AE_CALL insert(size_t len);
+
+		template<Type T, typename = typename std::enable_if_t<T == Type::BOOL, bool>>
+		inline bool AE_CALL read() {
+			return _read<bool>();
+		}
+
+		template<Type T, typename = typename std::enable_if_t<T == Type::I8, bool>>
+		inline int8_t AE_CALL read() {
+			return _read<int8_t>();
+		}
+
+		template<Type T, typename = typename std::enable_if_t<T == Type::I16, bool>>
+		inline int16_t AE_CALL read() {
+			return _read<int16_t>();
+		}
+
+		template<Type T, typename = typename std::enable_if_t<T == Type::I32, bool>>
+		inline int32_t AE_CALL read() {
+			return _read<int32_t>();
+		}
+
+		template<Type T, typename = typename std::enable_if_t<T == Type::I64, bool>>
+		inline int64_t AE_CALL read() {
+			return _read<int64_t>();
+		}
+
+		template<Type T, typename = typename std::enable_if_t<T == Type::UI8, bool>>
+		inline uint8_t AE_CALL read() {
+			return _read<uint8_t>();
+		}
+
+		template<Type T, typename = typename std::enable_if_t<T == Type::UI16, bool>>
+		inline uint16_t AE_CALL read() {
+			return _read<uint16_t>();
+		}
+
+		template<Type T, typename = typename std::enable_if_t<T == Type::UI32, bool>>
+		inline uint32_t AE_CALL read() {
+			return _read<uint32_t>();
+		}
+
+		template<Type T, typename = typename std::enable_if_t<T == Type::UI64 || T == Type::D_UI64, bool>>
+		inline uint64_t AE_CALL read() {
+			if constexpr (T == Type::UI64) {
+				return _read<uint64_t>();
+			} else {
+				uint64_t rst = 0;
+				uint32_t bits = 0;
+				while (_position < _length) {
+					uint64_t val = _data[_position++];
+					auto hasNext = (val & 0x80) != 0;
+					val &= 0x7F;
+					val <<= bits;
+					rst |= val;
+
+					if (hasNext) {
+						bits += 7;
+					} else {
+						break;
+					}
+				};
+
+				return rst;
+			}
+		}
+
+		template<Type T, typename = typename std::enable_if_t<T == Type::IX, bool>>
+		int64_t AE_CALL read(uint8_t numBytes) {
+			switch (numBytes) {
+			case 1:
+				return read<ba_t::I8>();
+			case 2:
+				return read<ba_t::UI16>();
+			case 3:
+			{
+				int32_t v = 0;
+				_read((uint8_t*)&v, 3);
+				return v > intMax<24>() ? v - uintMax<24>() - 1 : v;
+			}
+			case 4:
+				return read<ba_t::I32>();
+			case 5:
+			{
+				int64_t v = 0;
+				_read((uint8_t*)&v, 5);
+				return v > intMax<40>() ? v - uintMax<40>() - 1 : v;
+			}
+			case 6:
+			{
+				int64_t v = 0;
+				_read((uint8_t*)&v, 6);
+				return v > intMax<48>() ? v - uintMax<48>() - 1 : v;
+			}
+			case 7:
+			{
+				int64_t v = 0;
+				_read((uint8_t*)&v, 7);
+				return v > intMax<56>() ? v - uintMax<56>() - 1 : v;
+			}
+			case 8:
+			{
+				return read<ba_t::I64>();
+			}
+			default:
+				return 0;
+			}
+		}
+
+		template<Type T, typename = typename std::enable_if_t<T == Type::UIX, bool>>
+		uint64_t AE_CALL read(uint8_t numBytes) {
+			switch (numBytes) {
+			case 1:
+				return read<ba_t::UI8>();
+			case 2:
+				return read<ba_t::UI16>();
+			case 3:
+			{
+				uint32_t v = 0;
+				_read((uint8_t*)&v, 3);
+				return v;
+			}
+			case 4:
+				return read<ba_t::UI32>();
+			case 5:
+			case 6:
+			case 7:
+			{
+				uint64_t v = 0;
+				_read((uint8_t*)&v, numBytes);
+				return v;
+			}
+			case 8:
+			{
+				return read<ba_t::UI64>();
+			}
+			default:
+				return 0;
+			}
+		}
+
+		template<Type T, typename = typename std::enable_if_t<T == Type::TWO_I12, bool>>
+		inline std::tuple<int16_t, int16_t> AE_CALL read() {
+			auto [v1, v2] = read<Type::TWO_UI12>();
+			return std::make_tuple<int16_t, int16_t>(v1 > intMax<12>() ? v1 - uintMax<12>() - 1 : v1, v2 > intMax<12>() ? v2 - uintMax<12>() - 1 : v2);
+		}
+
+		template<Type T, typename = typename std::enable_if_t<T == Type::TWO_UI12, bool>>
+		inline std::tuple<uint16_t, uint16_t> AE_CALL read() {
+			auto v1 = read<Type::UI8>();
+			auto v2 = read<Type::UI8>();
+			auto v3 = read<Type::UI8>();
+
+			return std::make_tuple<uint16_t, uint16_t>((v1 << 4) | ((v2 >> 4) & 0xF), ((v2 & 0xF) << 8) | v3);
+		}
+
+		template<Type T, typename = typename std::enable_if_t<T == Type::F32, bool>>
+		inline f32 AE_CALL read() {
+			return _read<f32>();
+		}
+
+		template<Type T, typename = typename std::enable_if_t<T == Type::F64, bool>>
+		inline f64 AE_CALL read() {
+			return _read<f64>();
+		}
+
+		template<Type T, typename = typename std::enable_if_t<T == Type::STR, bool>>
+		inline std::string AE_CALL read(bool chechBOM) {
+			return _read<std::string>(chechBOM);
+		}
+
+		template<Type T, typename = typename std::enable_if_t<T == Type::STR_V, bool>>
+		inline std::string_view AE_CALL read(bool chechBOM) {
+			return _read<std::string_view>(chechBOM);
+		}
+
+		template<Type T, typename = typename std::enable_if_t<T == Type::STR, bool>>
+		//begin, size, position
+		std::tuple<size_t, size_t, size_t> AE_CALL read(size_t begin, size_t size, bool chechBOM) const {
+			if (chechBOM) begin += _bomOffset(begin);
+			if (_length <= begin) return std::make_tuple(begin, 0, begin);
+
+			if (auto len = _length - begin; size > len) size = len;
+			if (!size) return std::make_tuple(begin, 0, begin);
+
+			for (size_t i = begin, n = begin + size; i < n; ++i) {
+				if (!_data[i]) {
+					auto s = i - begin;
+					return std::make_tuple(begin, s, begin + s + 1);
+				}
+			}
+
+			return std::make_tuple(begin, size, _length);
+		}
+
+		template<Type T, typename = typename std::enable_if_t<T == Type::STR, bool>>
+		//begin, size
+		inline std::tuple<size_t, size_t> AE_CALL read(size_t size, bool chechBOM) {
+			auto [begin, s, pos] = read<T>(_position, size, chechBOM);
+			_position = pos;
+			return std::make_tuple(begin, s);
+		}
+
+		template<Type T, typename = typename std::enable_if_t<T == Type::BYTE, bool>>
+		size_t AE_CALL read(uint8_t* bytes, size_t length = (std::numeric_limits<size_t>::max)()) {
+			size_t len = _length - _position;
+			if (length > len) length = len;
+
+			memmove(bytes, _data + _position, length);
+			_position += length;
+
+			return length;
+		}
+
+		template<Type T, typename = typename std::enable_if_t<T == Type::BYTE, bool>>
+		size_t AE_CALL read(ByteArray& ba, size_t offset = 0, size_t length = (std::numeric_limits<size_t>::max)()) {
+			size_t len = _length - _position;
+			if (length > len) length = len;
+
+			auto pos = ba.getPosition();
+			ba.setPosition(offset);
+			ba.write<T>(_data + _position, length);
+			ba.setPosition(pos);
+			_position += length;
+
+			return length;
+		}
+
+		template<Type T, typename = typename std::enable_if_t<T == Type::BYTE, bool>>
+		inline void AE_CALL write(bool value) {
+			_write<bool>(value);
+		}
+
+		template<Type T, typename = typename std::enable_if_t<T == Type::I8, bool>>
+		inline void AE_CALL write(int8_t value) {
+			_write<int8_t>(value);
+		}
+
+		template<Type T, typename = typename std::enable_if_t<T == Type::I16, bool>>
+		inline void AE_CALL write(int16_t value) {
+			_write<int16_t>(value);
+		}
+
+		template<Type T, typename = typename std::enable_if_t<T == Type::I32, bool>>
+		inline void AE_CALL write(int32_t value) {
+			_write<int32_t>(value);
+		}
+
+		template<Type T, typename = typename std::enable_if_t<T == Type::I64, bool>>
+		inline void AE_CALL write(int64_t value) {
+			_write<int64_t>(value);
+		}
+
+		template<Type T, typename = typename std::enable_if_t<T == Type::UI8, bool>>
+		inline void AE_CALL write(uint8_t value) {
+			_write<uint8_t>(value);
+		}
+
+		template<Type T, typename = typename std::enable_if_t<T == Type::UI16, bool>>
+		inline void AE_CALL write(uint16_t value) {
+			_write<uint16_t>(value);
+		}
+
+		template<Type T, typename = typename std::enable_if_t<T == Type::UI32, bool>>
+		inline void AE_CALL write(uint32_t value) {
+			_write<uint32_t>(value);
+		}
+
+		template<Type T, typename = typename std::enable_if_t<T == Type::UI64 || T == Type::D_UI64 || T == Type::PADDING, bool>>
+		inline void AE_CALL write(uint64_t value) {
+			if constexpr (T == Type::UI64) {
+				_write<uint64_t>(value);
+			} else if constexpr (T == Type::D_UI64) {
+				value &= 0xFFFFFFFFFFFFFFFui64;
+				do {
+					uint8_t val = value & 0x7F;
+					value >>= 7;
+					if (value) {
+						val |= 0x80;
+						write<Type::UI8>(val);
+					} else {
+						write<Type::UI8>(val);
+						break;
+					}
+				} while (true);
+			} else {
+				_checkLength(length);
+				_position += length;
+			}
+		}
+
+		template<Type T, typename = typename std::enable_if_t<T == Type::IX, bool>>
+		void AE_CALL write(int64_t value, uint8_t numBytes) {
+			switch (numBytes) {
+			case 1:
+				write<Type::I8>(value);
+				break;
+			case 2:
+				write<Type::I16>(value);
+				break;
+			case 3:
+			{
+				if (value < 0) value = uintMax<24>() + 1 + value;
+				_write((uint8_t*)&value, 3);
+
+				break;
+			}
+			case 4:
+				write<Type::I32>(value);
+				break;
+			case 5:
+			{
+				if (value < 0) value = uintMax<40>() + 1 + value;
+				_write((uint8_t*)&value, 5);
+
+				break;
+			}
+			case 6:
+			{
+				if (value < 0) value = uintMax<48>() + 1 + value;
+				_write((uint8_t*)&value, 6);
+
+				break;
+			}
+			case 7:
+			{
+				if (value < 0) value = uintMax<56>() + 1 + value;
+				_write((uint8_t*)&value, 7);
+
+				break;
+			}
+			case 8:
+				write<Type::I64>(value);
+				break;
+			default:
+				break;
+			}
+		}
+
+		template<Type T, typename = typename std::enable_if_t<T == Type::UIX, bool>>
+		inline void AE_CALL write(uint64_t value, uint8_t numBytes) {
+			if (numBytes > 0 && numBytes < 9) _write((uint8_t*)&value, numBytes);
+		}
+
+		template<Type T, typename = typename std::enable_if_t<T == Type::TWO_I12, bool>>
+		inline void AE_CALL write(int16_t value1, int16_t value2) {
+			write<Type::TWO_UI12>(value1 < 0 ? uintMax<12>() + 1 + value1 : value1, value2 < 0 ? uintMax<12>() + 1 + value2 : value2);
+		}
+
+		template<Type T, typename = typename std::enable_if_t<T == Type::TWO_UI12, bool>>
+		inline void AE_CALL write(uint16_t value1, uint16_t value2) {
+			write<Type::UI8>((value1 >> 4) & 0xFF);
+			write<Type::UI8>(((value1 & 0xF) << 4) | ((value2 >> 8) & 0xF));
+			write<Type::UI8>(value2 & 0xFF);
+		}
+
+		template<Type T, typename = typename std::enable_if_t<T == Type::F32, bool>>
+		inline void AE_CALL write(f32 value) {
+			_write<f32>(value);
+		}
+
+		template<Type T, typename = typename std::enable_if_t<T == Type::F64, bool>>
+		inline void AE_CALL write(f64 value) {
+			_write<f64>(value);
+		}
+
+		template<Type T, typename = typename std::enable_if_t<T == Type::STR, bool>>
+		void AE_CALL write(const std::string_view& value) {
+			auto size = value.size();
+
+			_checkLength(size + 1);
+
+			memmove(_data + _position, value.data(), size);
+			_position += size;
+			_data[_position++] = '\0';
+		}
+
+		template<Type T, typename = typename std::enable_if_t<T == Type::STR, bool>>
+		inline void AE_CALL write(const char* value, size_t size) {
+			write<T>(std::string_view(value, size));
+		}
+
+		template<Type T, typename = typename std::enable_if_t<T == Type::BYTE, bool>>
+		inline void AE_CALL write(const uint8_t* bytes, size_t length) {
+			if (length > 0) {
+				_checkLength(length);
+
+				memmove(_data + _position, bytes, length);
+				_position += length;
+			}
+		}
+
+		template<Type T, typename = typename std::enable_if_t<T == Type::BYTE, bool>>
+		size_t AE_CALL write(const ByteArray& ba, size_t offset = 0, size_t length = (std::numeric_limits<size_t>::max)()) {
+			if (!length) return 0;
+			auto len = ba.getLength();
+			if (len <= offset) return 0;
+
+			len -= offset;
+			if (length > len) length = len;
+			auto baBytes = ba.getSource();
+
+			_checkLength(length);
+
+			memmove(_data + _position, baBytes + offset, length);
+			_position += length;
+			return length;
+		}
 
 		inline static bool isEqual(const ByteArray& data1, const ByteArray& data2);
 		static bool isEqual(const uint8_t* data1, const uint8_t* data2, size_t len);
@@ -174,7 +509,71 @@ namespace aurora {
 		size_t _capacity;
 
 		inline void AE_CALL _read(uint8_t* p, uint32_t len);
+
+		template<typename T, typename = typename std::enable_if_t<
+			std::is_same_v<T, bool> ||
+			std::is_same_v<T, int8_t> ||
+			std::is_same_v<T, uint8_t> ||
+			std::is_same_v<T, int16_t> ||
+			std::is_same_v<T, uint16_t> ||
+			std::is_same_v<T, int32_t> ||
+			std::is_same_v<T, uint32_t> ||
+			std::is_same_v<T, int64_t> ||
+			std::is_same_v<T, uint64_t> ||
+			std::is_same_v<T, f32> ||
+			std::is_same_v<T, f64>, T>>
+			T AE_CALL _read() {
+			if constexpr (sizeof(T) == 1) {
+				if (_position < _length) {
+					return *(T*)&_data[_position++];
+				} else {
+					_position = _length;
+					return (T)0;
+				}
+			} else {
+				const uint32_t len = sizeof(T);
+				if (_position + len > _length) {
+					_position = _length;
+					return (T)0;
+				}
+
+				if (_needReverse) {
+					T v;
+					auto p = (uint8_t*)&v;
+					for (int32_t i = len - 1; i >= 0; --i) p[i] = _data[_position++];
+					return v;
+				} else {
+					T v = *(T*)&_data[_position];
+					_position += len;
+					return v;
+				}
+			}
+		}
+
+		template<typename T, typename = typename std::enable_if_t<is_string_v<T>, T>>
+		inline T AE_CALL _read(bool chechBOM) {
+			auto [begin, size, pos] = read<Type::STR>(_position, (std::numeric_limits<size_t>::max)(), chechBOM);
+			_position = pos;
+			return std::move(T((char*)_data + begin, size));
+		}
+
 		inline void AE_CALL _write(const uint8_t* p, uint32_t len);
+
+		template<typename T, typename = typename std::enable_if_t<
+			std::is_same_v<T, bool> ||
+			std::is_same_v<T, int8_t> ||
+			std::is_same_v<T, uint8_t> ||
+			std::is_same_v<T, int16_t> ||
+			std::is_same_v<T, uint16_t> ||
+			std::is_same_v<T, int32_t> ||
+			std::is_same_v<T, uint32_t> ||
+			std::is_same_v<T, int64_t> ||
+			std::is_same_v<T, uint64_t> ||
+			std::is_same_v<T, f32> ||
+			std::is_same_v<T, f64>, T>>
+		inline void AE_CALL _write(const T& value) {
+			_write((uint8_t*)&value, sizeof(T));
+		}
 
 		void AE_CALL _resize(size_t len);
 		inline void AE_CALL _dilatation(size_t size);
@@ -182,6 +581,8 @@ namespace aurora {
 
 		inline uint8_t AE_CALL _bomOffset(size_t pos) const;
 	};
+
+	using ba_t = ByteArray::Type;
 }
 
 #include "ByteArray.inl"

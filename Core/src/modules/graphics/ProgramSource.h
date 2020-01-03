@@ -36,13 +36,13 @@ namespace aurora::modules::graphics {
 			return toHLSLShaderModel(source.stage, source.version);
 		}
 
-		static std::string AE_CALL toHLSLShaderModel(ProgramStage stage, const std::string& version);
+		static std::string AE_CALL toHLSLShaderModel(ProgramStage stage, const std::string_view& version);
 
 		inline static std::string AE_CALL getEntryPoint(const ProgramSource& source) {
 			return getEntryPoint(source.entryPoint);
 		}
-		inline static std::string AE_CALL getEntryPoint(const std::string& entryPoint) {
-			return entryPoint.empty() ? "main" : entryPoint;
+		inline static std::string AE_CALL getEntryPoint(const std::string_view& entryPoint) {
+			return entryPoint.empty() ? "main" : std::move(std::string(entryPoint));
 		}
 	};
 }

@@ -34,6 +34,10 @@ namespace aurora {
 			return _eventDispatcher;
 		}
 
+		inline const events::IEventDispatcher<ApplicationEvent>& AE_CALL getEventDispatcher() const {
+			return _eventDispatcher;
+		}
+
 		bool AE_CALL createWindow(const Style& style, const std::string_view& title, const Box2i32& windowedRect, bool fullscreen);
 		bool AE_CALL isWindowed() const;
 		void AE_CALL toggleFullscreen();

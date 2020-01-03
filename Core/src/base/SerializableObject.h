@@ -558,7 +558,7 @@ namespace aurora {
 		}
 
 		inline bool AE_CALL _isContentEqual(const std::string& s1, const char* s2) const {
-			return _isContentEqual((uint8_t*)s1.c_str(), s1.size(), (uint8_t*)s2, strlen(s2));
+			return _isContentEqual((uint8_t*)s1.data(), s1.size(), (uint8_t*)s2, strlen(s2));
 		}
 
 		inline bool AE_CALL _isContentEqual(const char* s1, const char* s2) const {

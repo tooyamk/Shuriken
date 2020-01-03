@@ -72,7 +72,14 @@ namespace aurora::modules::graphics::win_glew {
 			return _createBufferMask;
 		}
 
-		static void AE_CALL convertFormat(TextureFormat fmt, GLenum& internalFormat, GLenum& format, GLenum& type);
+		struct ConvertFormatResult {
+			ConvertFormatResult(GLenum internalFormat, GLenum format, GLenum type) : internalFormat(internalFormat), format(format), type(type) {}
+			GLenum internalFormat;
+			GLenum format;
+			GLenum type;
+		};
+
+		static std::optional<ConvertFormatResult> AE_CALL convertFormat(TextureFormat fmt);
 		static uint32_t AE_CALL getGLTypeSize(GLenum type);
 
 	private:

@@ -54,10 +54,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		auto& sm = g->getSupportShaderModel();
 
-		_vertBlob = _compileShader(vert, ProgramSource::toHLSLShaderModel(ProgramStage::VS, vert.version.empty() ? sm : vert.version).c_str());
+		_vertBlob = _compileShader(vert, ProgramSource::toHLSLShaderModel(ProgramStage::VS, vert.version.empty() ? sm : vert.version).data());
 		if (!_vertBlob) return false;
 
-		auto pixelBlob = _compileShader(frag, ProgramSource::toHLSLShaderModel(ProgramStage::PS, frag.version.empty() ? sm : frag.version).c_str());
+		auto pixelBlob = _compileShader(frag, ProgramSource::toHLSLShaderModel(ProgramStage::PS, frag.version.empty() ? sm : frag.version).data());
 		if (!pixelBlob) {
 			_release();
 			return false;
@@ -276,7 +276,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		ID3DBlob* buffer = nullptr, *errorBuffer = nullptr;
 		HRESULT hr = D3DCompile(source.data.getSource(), source.data.getLength(), nullptr, nullptr, nullptr, 
-			ProgramSource::getEntryPoint(source).c_str(), target, shaderFlags, 0, &buffer, &errorBuffer);
+			ProgramSource::getEntryPoint(source).data(), target, shaderFlags, 0, &buffer, &errorBuffer);
 
 		if (FAILED(hr)) {
 			if (errorBuffer) {
@@ -415,7 +415,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			MyConstantBufferLayout* buffer = nullptr;
 			int16_t idx = -1;
 			for (int16_t j = 0, n = dst.constantBuffers.size(); j < n;  ++j) {
-				if (String::isEqual(dst.constantBuffers[j].name.c_str(), bDesc.Name)) {
+				if (String::isEqual(dst.constantBuffers[j].name.data(), bDesc.Name)) {
 					idx = j;
 					buffer = &dst.constantBuffers[j];
 					buffer->size = bDesc.Size;

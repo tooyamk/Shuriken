@@ -29,7 +29,7 @@ namespace aurora {
 
 		if (_hIns) {
 			auto appIdW = String::Utf8ToUnicode(_appId);
-			UnregisterClass(appIdW.c_str(), _hIns);
+			UnregisterClass(appIdW.data(), _hIns);
 			_hIns = nullptr;
 		}
 #endif
@@ -56,7 +56,7 @@ namespace aurora {
 		wnd.hbrBackground = nullptr;//static_cast<HBRUSH>(GetStockObject(WHITE_BRUSH));
 		wnd.lpszMenuName = nullptr;//NULL;
 		auto appIdW = String::Utf8ToUnicode(_appId);
-		wnd.lpszClassName = appIdW.c_str();
+		wnd.lpszClassName = appIdW.data();
 		wnd.hIconSm = nullptr;
 
 		RegisterClassExW(&wnd);
@@ -64,7 +64,7 @@ namespace aurora {
 		_adjustWindowRect(_windowedRect, _windowedRect);
 		_updateWindowRectValue();
 
-		_hWnd = CreateWindowExW(_getWindowExStyle(), wnd.lpszClassName, String::Utf8ToUnicode(title).c_str(), _getWindowStyle(),
+		_hWnd = CreateWindowExW(_getWindowExStyle(), wnd.lpszClassName, String::Utf8ToUnicode(title).data(), _getWindowStyle(),
 			_wndRect.pos[0], _wndRect.pos[1], _wndRect.size[0], _wndRect.size[1],
 			GetDesktopWindow(), nullptr, _hIns, nullptr);
 		SetWindowLongPtr(_hWnd, GWLP_USERDATA, (LONG_PTR)this);
@@ -141,7 +141,7 @@ namespace aurora {
 
 	void Application::setWindowTitle(const std::string_view& title) {
 #if AE_OS == AE_OS_WIN
-		if (_hWnd) SetWindowTextW(_hWnd, String::Utf8ToUnicode(title).c_str());
+		if (_hWnd) SetWindowTextW(_hWnd, String::Utf8ToUnicode(title).data());
 #endif
 	}
 
@@ -276,7 +276,7 @@ namespace aurora {
 			char cDrive[100] = "";
 			char cf[100] = "";
 			char cExt[50] = "";
-			_splitpath_s(path.c_str(), cDrive, cDir, cf, cExt);
+			_splitpath_s(path.data(), cDrive, cDir, cf, cExt);
 
 			_appPath = cDrive;
 			_appPath += cDir;

@@ -28,7 +28,7 @@ namespace aurora::modules::graphics::program_source_translator {
 		ProgramSourceTranslator(Ref* loader, const std::string_view& dxc);
 		virtual ~ProgramSourceTranslator();
 
-		virtual ProgramSource AE_CALL translate(const ProgramSource& source, ProgramLanguage targetLanguage, const std::string& targetVersion) override;
+		virtual ProgramSource AE_CALL translate(const ProgramSource& source, ProgramLanguage targetLanguage, const std::string_view& targetVersion) override;
 
 	private:
 		RefPtr<Ref> _loader;
@@ -38,7 +38,7 @@ namespace aurora::modules::graphics::program_source_translator {
 		CComPtr<IDxcCompiler> _dxcompiler;
 
 		void _spirvTo(const ProgramSource& source, const uint8_t* sourceData, uint32_t sourceDataSize,
-			ProgramLanguage targetLanguage, const std::string& targetVersion, ProgramSource& dst);
+			ProgramLanguage targetLanguage, const std::string_view& targetVersion, ProgramSource& dst);
 	};
 }
 

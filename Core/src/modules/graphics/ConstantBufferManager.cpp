@@ -26,7 +26,7 @@ namespace aurora::modules::graphics {
 		if (var.structMembers.empty()) {
 			auto nameLen = var.name.size();
 			hash::CRC::CRC64StreamIteration(featureValue, (uint8_t*)&nameLen, sizeof(nameLen));
-			hash::CRC::CRC64StreamIteration(featureValue, (uint8_t*)var.name.c_str(), var.name.size());
+			hash::CRC::CRC64StreamIteration(featureValue, (uint8_t*)var.name.data(), var.name.size());
 			hash::CRC::CRC64StreamIteration(featureValue, (uint8_t*)&var.offset, sizeof(var.offset));
 			hash::CRC::CRC64StreamIteration(featureValue, (uint8_t*)&var.size, sizeof(var.size));
 

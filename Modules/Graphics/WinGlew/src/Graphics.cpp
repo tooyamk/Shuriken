@@ -255,11 +255,11 @@ namespace aurora::modules::graphics::win_glew {
 			return DefWindowProc(hWnd, msg, wParam, lParam);
 		};
 		wnd.hInstance = hIns;
-		wnd.lpszClassName = className.c_str();
+		wnd.lpszClassName = className.data();
 
 		RegisterClassExW(&wnd);
 
-		auto hwnd = CreateWindowEx(0, className.c_str(), L"", 0, 0, 0, 40, 40, nullptr, nullptr, nullptr, nullptr);
+		auto hwnd = CreateWindowEx(0, className.data(), L"", 0, 0, 0, 40, 40, nullptr, nullptr, nullptr, nullptr);
 		if (hwnd) {
 			auto dc = GetDC(hwnd);
 			if (dc) {
@@ -278,7 +278,7 @@ namespace aurora::modules::graphics::win_glew {
 			DestroyWindow(hwnd);
 		}
 
-		UnregisterClass(className.c_str(), hIns);
+		UnregisterClass(className.data(), hIns);
 
 		return initOk;
 	}
@@ -302,32 +302,14 @@ namespace aurora::modules::graphics::win_glew {
 		_createBufferMask = Usage::NONE;
 	}
 
-	void Graphics::convertFormat(TextureFormat fmt, GLenum& internalFormat, GLenum& format, GLenum& type) {
+	std::optional<Graphics::ConvertFormatResult> Graphics::convertFormat(TextureFormat fmt) {
 		switch (fmt) {
 		case TextureFormat::R8G8B8:
-		{
-			internalFormat = GL_RGB8;
-			format = GL_RGB;
-			type = GL_UNSIGNED_BYTE;
-
-			break;
-		}
+			return std::make_optional<ConvertFormatResult>(GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE);
 		case TextureFormat::R8G8B8A8:
-		{
-			internalFormat = GL_RGBA8;
-			format = GL_RGBA;
-			type = GL_UNSIGNED_BYTE;
-
-			break;
-		}
+			return std::make_optional<ConvertFormatResult>(GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
 		default:
-		{
-			internalFormat = 0;
-			format = 0;
-			type = 0;
-
-			break;
-		}
+			return std::nullopt;
 		}
 	}
 
