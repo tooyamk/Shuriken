@@ -445,6 +445,31 @@ namespace aurora::modules::graphics {
 	};
 
 
+	class AE_DLL RenderTargetBlendState {
+	public:
+		RenderTargetBlendState();
+
+		bool enabled;
+		BlendFunc func;
+		BlendOp opColor;
+		BlendOp opALpha;
+		Vec4<bool> writeMask;
+	};
+
+
+	class AE_DLL IBlendState : public IObject {
+	public:
+		IBlendState(IGraphicsModule& graphics) : IObject(graphics) {}
+		virtual ~IBlendState() {}
+
+		virtual bool AE_CALL isIndependentBlendEnabled() const = 0;
+		virtual void AE_CALL setIndependentBlendEnabled(bool enalbed) = 0;
+
+		virtual const RenderTargetBlendState& AE_CALL getRenderTargetState(uint8_t index) const = 0;
+		virtual void AE_CALL setRenderTargetState(uint8_t index, const RenderTargetBlendState& state) = 0;
+	};
+
+
 	enum class ProgramStage : uint8_t {
 		UNKNOWN,
 		VS,//VertexShader
@@ -494,9 +519,11 @@ namespace aurora::modules::graphics {
 		virtual ITexture3DResource* AE_CALL createTexture3DResource() = 0;
 		virtual ITextureView* AE_CALL createTextureView() = 0;
 		virtual IVertexBuffer* AE_CALL createVertexBuffer() = 0;
+		virtual IBlendState* AE_CALL createBlendState() = 0;
 
 		virtual void AE_CALL beginRender() = 0;
 		virtual void AE_CALL draw(const VertexBufferFactory* vertexFactory, IProgram* program, const ShaderParameterFactory* paramFactory,
+			IBlendState* blendState, const Vec4f32& blendConstantFactors,
 			const IIndexBuffer* indexBuffer, uint32_t count = (std::numeric_limits<uint32_t>::max)(), uint32_t offset = 0) = 0;
 		virtual void AE_CALL endRender() = 0;
 		virtual void AE_CALL present() = 0;

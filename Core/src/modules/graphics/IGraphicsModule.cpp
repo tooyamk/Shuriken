@@ -52,4 +52,12 @@ namespace aurora::modules::graphics {
 	}
 
 	BlendEquation::BlendEquation(const BlendEquation& equation) : BlendEquation(equation.color, equation.alpha) {}
+
+
+	RenderTargetBlendState::RenderTargetBlendState() :
+		enabled(false),
+		opColor(BlendOp::ADD),
+		opALpha(BlendOp::ADD),
+		writeMask(true) {
+	}
 }

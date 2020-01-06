@@ -6,24 +6,24 @@ namespace aurora::hash {
 	class AE_DLL MD5 {
 	public:
 		MD5();
-		std::string AE_CALL hash(const uint8_t* input, uint32_t length);
+		std::string AE_CALL hash(const uint8_t* input, size_t length);
 
 	private:
 		void AE_CALL init();
-		void AE_CALL update(const uint8_t* buf, uint32_t length);
+		void AE_CALL update(const uint8_t* buf, size_t length);
 		MD5& AE_CALL finalize();
 		std::string AE_CALL hexdigest() const;
 
 		inline static const uint32_t BLOCK_SIZE = 64;
 
 		void AE_CALL transform(const uint8_t block[BLOCK_SIZE]);
-		static void AE_CALL decode(uint32_t output[], const uint8_t input[], uint32_t len);
-		static void AE_CALL encode(uint8_t output[], const uint32_t input[], uint32_t len);
+		static void AE_CALL decode(uint32_t output[], const uint8_t input[], size_t len);
+		static void AE_CALL encode(uint8_t output[], const uint32_t input[], size_t len);
 
-		uint8_t buffer[BLOCK_SIZE];
-		uint32_t count[2];
-		uint32_t state[4];
-		uint8_t digest[16];
+		uint8_t _buffer[BLOCK_SIZE];
+		uint32_t _count[2];
+		uint32_t _state[4];
+		uint8_t _digest[16];
 
 		inline static uint32_t AE_CALL F(uint32_t x, uint32_t y, uint32_t z) {
 			return (x & y) | ((~x) & z);

@@ -1,5 +1,6 @@
 #include "Graphics.h"
 #include "CreateModule.h"
+#include "BlendState.h"
 #include "IndexBuffer.h"
 #include "Program.h"
 #include "Sampler.h"
@@ -309,13 +310,19 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return nullptr;
 	}
 
+	IBlendState* Graphics::createBlendState() {
+		return new BlendState(*this);
+	}
+
 	void Graphics::beginRender() {
 		f32 clearColor[] = { 0.0f, 0.0f, 0.25f, 1.0f };
 		_context->ClearRenderTargetView(_backBufferTarget, clearColor);
 	}
 
-	void Graphics::draw(const VertexBufferFactory* vertexFactory, IProgram* program, const ShaderParameterFactory* paramFactory, const IIndexBuffer* indexBuffer, uint32_t count, uint32_t offset) {
-		if (vertexFactory && indexBuffer && program && program->getGraphics() == this && indexBuffer->getGraphics() == this && count > 0) {
+	void Graphics::draw(const VertexBufferFactory* vertexFactory, IProgram* program, const ShaderParameterFactory* paramFactory, 
+		IBlendState* blendState, const Vec4f32& blendConstantFactors, 
+		const IIndexBuffer* indexBuffer, uint32_t count, uint32_t offset) {
+		if (vertexFactory && blendState && indexBuffer && program && program->getGraphics() == this && indexBuffer->getGraphics() == this && count > 0) {
 			auto ib = (IndexBuffer*)indexBuffer->getNativeBuffer();
 			if (!ib) return;
 			auto internalIndexBuffer = ib->getInternalBuffer();
@@ -326,6 +333,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 			auto p = (Program*)program;
 			if (p->use(vertexFactory, paramFactory)) {
+				auto bs = (BlendState*)blendState;
+				bs->update();
+				_context->OMSetBlendState(bs->getInternalBlendState(), blendConstantFactors.data, 0xFFFFFFFF);
+
 				uint32_t last = numIndexElements - offset;
 				if (count > numIndexElements) count = numIndexElements;
 				if (count > last) count = last;

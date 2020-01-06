@@ -7,17 +7,64 @@ namespace aurora::hash {
 	public:
 		AE_DECLA_CANNOT_INSTANTIATE(CRC);
 
-		static uint16_t AE_CALL CRC16(const uint8_t* data, uint16_t len);
-		static uint32_t AE_CALL CRC32(const uint8_t* data, uint32_t len);
-
-		static uint64_t AE_CALL CRC64(const uint8_t* data, uint32_t len);
-
-		inline static uint64_t AE_CALL CRC64StreamBegin() {
-			return 0xFFFFFFFFFFFFFFFFui64;
+		template<size_t Bits>
+		static uint_t<Bits> AE_CALL hash(const uint8_t* data, size_t len) {
+			static_assert(false, "only support 16, 32, 64 bits mode");
 		}
-		static void AE_CALL CRC64StreamIteration(uint64_t& crc, const uint8_t* data, uint32_t len);
-		inline static void AE_CALL CRC64StreamEnd(uint64_t& crc) {
-			crc ^= 0xFFFFFFFFFFFFFFFFui64;
+
+		template<>
+		static uint16_t AE_CALL hash<16>(const uint8_t* data, size_t len) {
+			uint16_t crc = (std::numeric_limits<uint16_t>::max)();
+			for (size_t i = 0; i < len; ++i) crc = ((crc << 8) & 0xFFFF) ^ _table16[(crc >> 8) ^ (data[i] & 0xFF)];
+			return crc ^ (std::numeric_limits<uint16_t>::max)();
+		}
+
+		template<>
+		static uint32_t AE_CALL hash<32>(const uint8_t* data, size_t len) {
+			uint32_t crc = (std::numeric_limits<uint32_t>::max)();
+			for (size_t i = 0; i < len; ++i) crc = ((crc >> 8) & 0x00FFFFFFui32) ^ _table32[(crc ^ (uint32_t)data[i]) & 0xFF];
+			return crc ^ (std::numeric_limits<uint32_t>::max)();
+		}
+
+		template<>
+		static uint64_t AE_CALL hash<64>(const uint8_t* data, size_t len) {
+			auto crc = (std::numeric_limits<uint64_t>::max)();
+			for (size_t i = 0; i < len; ++i) crc = _table64[((uint32_t)(crc >> 56) ^ (uint32_t)data[i]) & 0xFF] ^ (crc << 8);
+			return crc ^ (std::numeric_limits<uint64_t>::max)();
+		}
+
+		template<size_t Bits>
+		inline static uint_t<Bits> AE_CALL begin() {
+			static_assert(Bits == 16 || Bits == 32 || Bits == 64, "only support 16, 32, 64 bits mode");
+
+			return uintMax<Bits>();
+		}
+
+		template<size_t Bits>
+		static void AE_CALL update(uint_t<Bits>& crc, const uint8_t* data, size_t len) {
+			static_assert(false, "only support 16, 32, 64 bits mode");
+		}
+
+		template<>
+		static void AE_CALL update<16>(uint16_t& crc, const uint8_t* data, size_t len) {
+			for (size_t i = 0; i < len; ++i) crc = ((crc << 8) & 0xFFFF) ^ _table16[(crc >> 8) ^ (data[i] & 0xFF)];
+		}
+
+		template<>
+		static void AE_CALL update<32>(uint32_t& crc, const uint8_t* data, size_t len) {
+			for (size_t i = 0; i < len; ++i) crc = ((crc >> 8) & 0x00FFFFFFui32) ^ _table32[(crc ^ (uint32_t)data[i]) & 0xFF];
+		}
+
+		template<>
+		static void AE_CALL update<64>(uint64_t& crc, const uint8_t* data, size_t len) {
+			for (size_t i = 0; i < len; ++i) crc = _table64[((uint32_t)(crc >> 56) ^ (uint32_t)data[i]) & 0xFF] ^ (crc << 8);
+		}
+
+		template<size_t Bits>
+		inline static void AE_CALL end(uint_t<Bits>& crc) {
+			static_assert(Bits == 16 || Bits == 32 || Bits == 64, "only support 16, 32, 64 bits mode");
+
+			crc ^= uintMax<Bits>();
 		}
 
 	private:

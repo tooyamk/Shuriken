@@ -152,7 +152,7 @@ namespace aurora::modules::graphics::win_glew {
 		if (_dirty) {
 			if (_dirty & DirtyFlag::EMPTY) {
 				glGenSamplers(1, &_handle);
-				_dirty = 0x7F;
+				_dirty = ~DirtyFlag::EMPTY;
 			}
 
 			if (_dirty & DirtyFlag::FILTER) {

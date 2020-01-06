@@ -21,9 +21,11 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual ITextureView* AE_CALL createTextureView() override;
 		virtual IVertexBuffer* AE_CALL createVertexBuffer() override;
 		virtual IPixelBuffer* AE_CALL createPixelBuffer() override;
+		virtual IBlendState* AE_CALL createBlendState() override;
 		
 		virtual void AE_CALL beginRender() override;
 		virtual void AE_CALL draw(const VertexBufferFactory* vertexFactory, IProgram* program, const ShaderParameterFactory* paramFactory, 
+			IBlendState* blendState, const Vec4f32& blendConstantFactors,
 			const IIndexBuffer* indexBuffer, uint32_t count = (std::numeric_limits<uint32_t>::max)(), uint32_t offset = 0) override;
 		virtual void AE_CALL endRender() override;
 		virtual void AE_CALL present() override;
