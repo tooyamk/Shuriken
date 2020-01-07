@@ -98,19 +98,6 @@ namespace aurora {
 		return data1.getLength() == data2.getLength() ? isEqual(data1.getSource(), data2.getSource(), data1.getLength()) : false;
 	}
 
-	inline void ByteArray::_read(uint8_t* p, uint32_t len) {
-		if (_position + len > _length) {
-			_position = _length;
-		} else {
-			if (_needReverse) {
-				for (int8_t i = len - 1; i >= 0; --i) p[i] = _data[_position++];
-			} else {
-				memmove(p, _data + _position, len);
-				_position += len;
-			}
-		}
-	}
-
 	inline void ByteArray::_write(const uint8_t* p, uint32_t len) {
 		_checkLength(len);
 

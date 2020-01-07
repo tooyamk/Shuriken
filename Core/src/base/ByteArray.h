@@ -161,36 +161,18 @@ namespace aurora {
 				return read<ba_t::I8>();
 			case 2:
 				return read<ba_t::UI16>();
-			case 3:
-			{
-				int32_t v = 0;
-				_read((uint8_t*)&v, 3);
-				return v > intMax<24>() ? v - uintMax<24>() - 1 : v;
-			}
 			case 4:
 				return read<ba_t::I32>();
-			case 5:
-			{
-				int64_t v = 0;
-				_read((uint8_t*)&v, 5);
-				return v > intMax<40>() ? v - uintMax<40>() - 1 : v;
-			}
-			case 6:
-			{
-				int64_t v = 0;
-				_read((uint8_t*)&v, 6);
-				return v > intMax<48>() ? v - uintMax<48>() - 1 : v;
-			}
-			case 7:
-			{
-				int64_t v = 0;
-				_read((uint8_t*)&v, 7);
-				return v > intMax<56>() ? v - uintMax<56>() - 1 : v;
-			}
 			case 8:
-			{
 				return read<ba_t::I64>();
-			}
+			case 3:
+				return _readIX<3>();
+			case 5:
+				return _readIX<5>();
+			case 6:
+				return _readIX<6>();
+			case 7:
+				return _readIX<7>();
 			default:
 				return 0;
 			}
@@ -203,26 +185,18 @@ namespace aurora {
 				return read<ba_t::UI8>();
 			case 2:
 				return read<ba_t::UI16>();
-			case 3:
-			{
-				uint32_t v = 0;
-				_read((uint8_t*)&v, 3);
-				return v;
-			}
 			case 4:
 				return read<ba_t::UI32>();
-			case 5:
-			case 6:
-			case 7:
-			{
-				uint64_t v = 0;
-				_read((uint8_t*)&v, numBytes);
-				return v;
-			}
 			case 8:
-			{
 				return read<ba_t::UI64>();
-			}
+			case 3:
+				return _readUIX<3>();
+			case 5:
+				return _readUIX<5>();
+			case 6:
+				return _readUIX<6>();
+			case 7:
+				return _readUIX<7>();
 			default:
 				return 0;
 			}
@@ -389,7 +363,7 @@ namespace aurora {
 				break;
 			case 3:
 			{
-				if (value < 0) value = uintMax<24>() + 1 + value;
+				if (value < 0) value = BitUInt<24>::MAX + 1 + value;
 				_write((uint8_t*)&value, 3);
 
 				break;
@@ -399,21 +373,21 @@ namespace aurora {
 				break;
 			case 5:
 			{
-				if (value < 0) value = uintMax<40>() + 1 + value;
+				if (value < 0) value = BitUInt<40>::MAX + 1 + value;
 				_write((uint8_t*)&value, 5);
 
 				break;
 			}
 			case 6:
 			{
-				if (value < 0) value = uintMax<48>() + 1 + value;
+				if (value < 0) value = BitUInt<48>::MAX + 1 + value;
 				_write((uint8_t*)&value, 6);
 
 				break;
 			}
 			case 7:
 			{
-				if (value < 0) value = uintMax<56>() + 1 + value;
+				if (value < 0) value = BitUInt<56>::MAX + 1 + value;
 				_write((uint8_t*)&value, 7);
 
 				break;
@@ -502,13 +476,36 @@ namespace aurora {
 	private:
 		Usage _usage;
 		bool _needReverse;
-		uint8_t* _data;
 		std::endian _endian;
+		uint8_t* _data;
 		size_t _position;
 		size_t _length;
 		size_t _capacity;
 
-		inline void AE_CALL _read(uint8_t* p, uint32_t len);
+		template<size_t Bytes>
+		inline int_t<Bytes * 8> AE_CALL _readIX() {
+			int_t<Bytes * 8> v = _readUIX<Bytes>();
+			return v > BitInt<Bytes * 8>::MAX ? v - BitUInt<Bytes * 8>::MAX - 1 : v;
+		}
+
+		template<size_t Bytes>
+		uint_t<Bytes * 8> AE_CALL _readUIX() {
+			if (_position + Bytes > _length) {
+				_position = _length;
+				return 0;
+			} else {
+				if (_needReverse) {
+					auto v = byteswap<Bytes>(&_data[_position]);
+					_position += 3;
+					return v;
+				} else {
+					uint_t<Bytes * 8> v = _data[_position];
+					for (size_t i = 1; i < Bytes; ++i) v |= (uint_t<Bytes * 8>)_data[_position + i] << (i * 8);
+					_position += 3;
+					return v;
+				}
+			}
+		}
 
 		template<typename T, typename = typename std::enable_if_t<
 			std::is_same_v<T, bool> ||
@@ -522,7 +519,7 @@ namespace aurora {
 			std::is_same_v<T, uint64_t> ||
 			std::is_same_v<T, f32> ||
 			std::is_same_v<T, f64>, T>>
-			T AE_CALL _read() {
+		T AE_CALL _read() {
 			if constexpr (sizeof(T) == 1) {
 				if (_position < _length) {
 					return *(T*)&_data[_position++];
@@ -531,17 +528,20 @@ namespace aurora {
 					return (T)0;
 				}
 			} else {
-				const uint32_t len = sizeof(T);
+				constexpr uint32_t len = sizeof(T);
 				if (_position + len > _length) {
 					_position = _length;
 					return (T)0;
 				}
 
 				if (_needReverse) {
-					T v;
-					auto p = (uint8_t*)&v;
-					for (int32_t i = len - 1; i >= 0; --i) p[i] = _data[_position++];
-					return v;
+					auto v = byteswap<len>(&_data[_position]);
+					_position += len;
+					if constexpr (std::is_integral_v<T>) {
+						return v;
+					} else {
+						return *(T*)&v;
+					}
 				} else {
 					T v = *(T*)&_data[_position];
 					_position += len;

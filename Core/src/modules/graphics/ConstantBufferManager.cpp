@@ -13,22 +13,22 @@ namespace aurora::modules::graphics {
 
 	void ConstantBufferLayout::calcFeatureValue() {
 		featureValue = hash::CRC::begin<64>();
-		hash::CRC::update<64>(featureValue, (uint8_t*)&size, sizeof(size));
+		hash::CRC::update<64>(featureValue, (uint8_t*)&size, sizeof(size), hash::CRC::TABLE64_WE);
 
 		uint16_t numValidVars = 0;
 		for (auto& var : variables) _calcFeatureValue(var, numValidVars);
 
-		hash::CRC::update<64>(featureValue, (uint8_t*)&numValidVars, sizeof(numValidVars));
+		hash::CRC::update<64>(featureValue, (uint8_t*)&numValidVars, sizeof(numValidVars), hash::CRC::TABLE64_WE);
 		hash::CRC::end<64>(featureValue);
 	}
 
 	void ConstantBufferLayout::_calcFeatureValue(const Variables& var, uint16_t& numValidVars) {
 		if (var.structMembers.empty()) {
 			auto nameLen = var.name.size();
-			hash::CRC::update<64>(featureValue, (uint8_t*)&nameLen, sizeof(nameLen));
-			hash::CRC::update<64>(featureValue, (uint8_t*)var.name.data(), var.name.size());
-			hash::CRC::update<64>(featureValue, (uint8_t*)&var.offset, sizeof(var.offset));
-			hash::CRC::update<64>(featureValue, (uint8_t*)&var.size, sizeof(var.size));
+			hash::CRC::update<64>(featureValue, (uint8_t*)&nameLen, sizeof(nameLen), hash::CRC::TABLE64_WE);
+			hash::CRC::update<64>(featureValue, (uint8_t*)var.name.data(), var.name.size(), hash::CRC::TABLE64_WE);
+			hash::CRC::update<64>(featureValue, (uint8_t*)&var.offset, sizeof(var.offset), hash::CRC::TABLE64_WE);
+			hash::CRC::update<64>(featureValue, (uint8_t*)&var.size, sizeof(var.size), hash::CRC::TABLE64_WE);
 
 			++numValidVars;
 		} else {

@@ -1007,7 +1007,7 @@ namespace aurora {
 			if (size == 0) {
 				ba.write<ba_t::UI8>((uint8_t)InternalType::BYTES_0);
 				break;
-			} else if (size <= uintMax<8>()) {
+			} else if (size <= BitUInt<8>::MAX) {
 				_packUInt(ba, size, (uint8_t)InternalType::BYTES_8BITS);
 			}
 
@@ -1035,25 +1035,25 @@ namespace aurora {
 	}
 
 	void SerializableObject::_packUInt(ByteArray& ba, uint64_t val, uint8_t typeBegin) const {
-		if (val <= uintMax<8>()) {
+		if (val <= BitUInt<8>::MAX) {
 			ba.write<ba_t::UI8>(typeBegin);
 			ba.write<ba_t::UI8>(val);
-		} else if (val <= uintMax<16>()) {
+		} else if (val <= BitUInt<16>::MAX) {
 			ba.write<ba_t::UI8>(typeBegin + 1);
 			ba.write<ba_t::UI16>(val);
-		} else if (val <= uintMax<24>()) {
+		} else if (val <= BitUInt<24>::MAX) {
 			ba.write<ba_t::UI8>(typeBegin + 2);
 			ba.write<ba_t::UIX>(val, 3);
-		} else if (val <= uintMax<32>()) {
+		} else if (val <= BitUInt<32>::MAX) {
 			ba.write<ba_t::UI8>(typeBegin + 3);
 			ba.write<ba_t::UI32>(val);
-		} else if (val <= uintMax<40>()) {
+		} else if (val <= BitUInt<40>::MAX) {
 			ba.write<ba_t::UI8>(typeBegin + 4);
 			ba.write<ba_t::UIX>(val, 5);
-		} else if (val <= uintMax<48>()) {
+		} else if (val <= BitUInt<48>::MAX) {
 			ba.write<ba_t::UI8>(typeBegin + 5);
 			ba.write<ba_t::UIX>(val, 6);
-		} else if (val <= uintMax<56>()) {
+		} else if (val <= BitUInt<56>::MAX) {
 			ba.write<ba_t::UI8>(typeBegin + 6);
 			ba.write<ba_t::UIX>(val, 7);
 		} else {

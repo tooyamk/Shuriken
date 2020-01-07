@@ -58,9 +58,9 @@ namespace aurora {
 
 		template<typename T,
 		typename = typename std::enable_if_t<std::is_integral_v<T>, T>>
-		inline static std::string AE_CALL toString(T value) {
+		inline static std::string AE_CALL toString(T value, uint8_t base = 10) {
 			char buf[21];
-			auto rst = std::to_chars(buf, buf + sizeof(buf), value);
+			auto rst = std::to_chars(buf, buf + sizeof(buf), value, base);
 			return std::move(std::string(buf, rst.ec == std::errc() ? rst.ptr - buf : 0));
 		}
 

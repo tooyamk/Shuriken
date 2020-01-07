@@ -13,8 +13,8 @@ namespace aurora {
 	}
 
 	ByteArray::ByteArray(size_t capacity, size_t length) :
-		_endian(std::endian::native),
-		_needReverse(false),
+		_endian(std::endian::little),
+		_needReverse(std::endian::native != std::endian::little),
 		_capacity(capacity),
 		_length(length > capacity ? capacity : length),
 		_position(0),
@@ -26,8 +26,8 @@ namespace aurora {
 	}
 
 	ByteArray::ByteArray(uint8_t* bytes, size_t capacity, size_t length, Usage usage) :
-		_endian(std::endian::native),
-		_needReverse(false),
+		_endian(std::endian::little),
+		_needReverse(std::endian::native != std::endian::little),
 		_capacity(capacity),
 		_length(length),
 		_position(0) {
