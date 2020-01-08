@@ -23,6 +23,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_swapChain(nullptr),
 		_backBufferTarget(nullptr),
 		_deviceFeatures({ 0 }),
+		_blendState({ 0 }),
 		_resizedListener(this, &Graphics::_resizedHandler) {
 		_resizedListener.ref();
 		_app->getEventDispatcher().addEventListener(ApplicationEvent::RESIZED, _resizedListener);
@@ -314,15 +315,29 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return new BlendState(*this);
 	}
 
+	void Graphics::setBlendState(IBlendState* state, const Vec4f32& constantFactors, uint32_t sampleMask) {
+		if (state && state->getGraphics() == this) {
+			auto bs = (BlendState*)state;
+			bs->update();
+			if (auto internalBlendState = bs->getInternalBlendState(); internalBlendState &&
+				(_blendState.featureValue != bs->getFeatureValue() || !memEqual<sizeof(_blendState.constantFactors)>(&_blendState.constantFactors, &constantFactors) || _blendState.sampleMask != sampleMask)) {
+				_blendState.featureValue = bs->getFeatureValue();
+				_blendState.constantFactors.set(constantFactors);
+				_blendState.sampleMask = sampleMask;
+
+				_context->OMSetBlendState(internalBlendState, constantFactors.data, sampleMask);
+			}
+		}
+	}
+
 	void Graphics::beginRender() {
 		f32 clearColor[] = { 0.0f, 0.0f, 0.25f, 1.0f };
 		_context->ClearRenderTargetView(_backBufferTarget, clearColor);
 	}
 
 	void Graphics::draw(const VertexBufferFactory* vertexFactory, IProgram* program, const ShaderParameterFactory* paramFactory, 
-		IBlendState* blendState, const Vec4f32& blendConstantFactors, 
 		const IIndexBuffer* indexBuffer, uint32_t count, uint32_t offset) {
-		if (vertexFactory && blendState && indexBuffer && program && program->getGraphics() == this && indexBuffer->getGraphics() == this && count > 0) {
+		if (vertexFactory && indexBuffer && program && program->getGraphics() == this && indexBuffer->getGraphics() == this && count > 0) {
 			auto ib = (IndexBuffer*)indexBuffer->getNativeBuffer();
 			if (!ib) return;
 			auto internalIndexBuffer = ib->getInternalBuffer();
@@ -333,10 +348,6 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 			auto p = (Program*)program;
 			if (p->use(vertexFactory, paramFactory)) {
-				auto bs = (BlendState*)blendState;
-				bs->update();
-				_context->OMSetBlendState(bs->getInternalBlendState(), blendConstantFactors.data, 0xFFFFFFFF);
-
 				uint32_t last = numIndexElements - offset;
 				if (count > numIndexElements) count = numIndexElements;
 				if (count > last) count = last;

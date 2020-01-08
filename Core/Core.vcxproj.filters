@@ -174,7 +174,7 @@
     <ClInclude Include="src\base\TimeWheel.h">
       <Filter>src\base</Filter>
     </ClInclude>
-    <ClInclude Include="src\utils\hash\XXHASH.h">
+    <ClInclude Include="src\utils\hash\xxHash.h">
       <Filter>src\utils\hash</Filter>
     </ClInclude>
   </ItemGroup>

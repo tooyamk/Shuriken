@@ -68,9 +68,6 @@
     <ClCompile Include="src\IndexBuffer.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\Base.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\ConstantBuffer.cpp">
       <Filter>src</Filter>
     </ClCompile>

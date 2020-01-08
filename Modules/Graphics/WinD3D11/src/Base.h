@@ -17,10 +17,18 @@
 namespace aurora::modules::graphics::win_d3d11 {
 	class DXObjGuard {
 	public:
-		~DXObjGuard();
+		~DXObjGuard() {
+			clear();
+		}
 
-		void add(IUnknown* obj);
-		void clear();
+		inline void add(IUnknown* obj) {
+			if (obj) _objs.emplace_back(obj);
+		}
+		inline void clear() {
+			for (auto obj : _objs) obj->Release();
+			_objs.clear();
+		}
+
 	private:
 		std::vector<IUnknown*> _objs;
 	};

@@ -521,9 +521,10 @@ namespace aurora::modules::graphics {
 		virtual IVertexBuffer* AE_CALL createVertexBuffer() = 0;
 		virtual IBlendState* AE_CALL createBlendState() = 0;
 
+		virtual void AE_CALL setBlendState(IBlendState* state, const Vec4f32& constantFactors, uint32_t sampleMask = (std::numeric_limits<uint32_t>::max)()) = 0;
+
 		virtual void AE_CALL beginRender() = 0;
 		virtual void AE_CALL draw(const VertexBufferFactory* vertexFactory, IProgram* program, const ShaderParameterFactory* paramFactory,
-			IBlendState* blendState, const Vec4f32& blendConstantFactors,
 			const IIndexBuffer* indexBuffer, uint32_t count = (std::numeric_limits<uint32_t>::max)(), uint32_t offset = 0) = 0;
 		virtual void AE_CALL endRender() = 0;
 		virtual void AE_CALL present() = 0;

@@ -232,7 +232,7 @@
     <ClInclude Include="src\renderers\commands\IRenderCommand.h" />
     <ClInclude Include="src\utils\hash\CRC.h" />
     <ClInclude Include="src\utils\hash\MD5.h" />
-    <ClInclude Include="src\utils\hash\XXHASH.h" />
+    <ClInclude Include="src\utils\hash\xxHash.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\base\Application.cpp" />

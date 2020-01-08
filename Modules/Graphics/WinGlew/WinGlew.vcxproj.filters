@@ -45,6 +45,9 @@
     <ClInclude Include="src\TextureView.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\BlendState.h">
+      <Filter>src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Graphics.cpp">
@@ -78,6 +81,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\TextureView.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\BlendState.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

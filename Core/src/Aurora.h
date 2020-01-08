@@ -32,3 +32,4 @@
 
 #include "utils/hash/CRC.h"
 #include "utils/hash/MD5.h"
+#include "utils/hash/xxHash.h"

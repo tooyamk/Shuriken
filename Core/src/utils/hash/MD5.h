@@ -6,7 +6,7 @@ namespace aurora::hash {
 	class AE_DLL MD5 {
 	public:
 		MD5();
-		std::string AE_CALL hash(const uint8_t* input, size_t length);
+		std::string AE_CALL calc(const uint8_t* input, size_t length);
 
 	private:
 		void AE_CALL init();

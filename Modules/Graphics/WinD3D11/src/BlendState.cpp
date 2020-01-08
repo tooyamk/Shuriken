@@ -1,5 +1,6 @@
 #include "BlendState.h"
 #include "Graphics.h"
+#include "utils/hash/xxHash.h"
 
 namespace aurora::modules::graphics::win_d3d11 {
 	BlendState::BlendState(Graphics& graphics) : IBlendState(graphics),
@@ -135,6 +136,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			if (SUCCEEDED(_graphics.get<Graphics>()->getDevice()->CreateBlendState1(&_desc, &_blendState))) {
 				_oldIndependentBlendEnabled = _desc.IndependentBlendEnable;
 				memcpy(&_oldRtStatus, &_rtStatus, sizeof(_rtStatus));
+				_featureValue = hash::xxHash::calc<sizeof(_featureValue) * 8, std::endian::native>((uint8_t*)&_desc, sizeof(_desc), 0);
 				_dirty = 0;
 			}
 		}
@@ -146,5 +148,6 @@ namespace aurora::modules::graphics::win_d3d11 {
 			_blendState = nullptr;
 		}
 		_dirty |= DirtyFlag::EMPTY;
+		_featureValue = 0;
 	}
 }

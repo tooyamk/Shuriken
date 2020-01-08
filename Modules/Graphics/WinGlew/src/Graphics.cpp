@@ -1,5 +1,6 @@
 #include "Graphics.h"
 #include "CreateModule.h"
+#include "BlendState.h"
 #include "ConstantBuffer.h"
 #include "IndexBuffer.h"
 #include "PixelBuffer.h"
@@ -146,13 +147,21 @@ namespace aurora::modules::graphics::win_glew {
 		
 
 		_deviceFeatures.supportPixelBuffer = true;
-		_deviceFeatures.supportConstantBuffer = isGreatThanVersion(3, 1);
-		_deviceFeatures.supportSampler = isGreatThanVersion(3, 3);
-		_internalFeatures.supportTexStorage = isGreatThanVersion(4, 2);
-		_deviceFeatures.supportTextureView = isGreatThanVersion(4, 3);
-		_deviceFeatures.supportPersistentMap = isGreatThanVersion(4, 4);
+		_deviceFeatures.supportConstantBuffer = isGreatThanOrEqualVersion(3, 1);
+		_deviceFeatures.supportSampler = isGreatThanOrEqualVersion(3, 3);
+		_internalFeatures.supportIndependentBlendEnable = isGreatThanOrEqualVersion(4, 0);
+		_internalFeatures.supportTexStorage = isGreatThanOrEqualVersion(4, 2);
+		_deviceFeatures.supportTextureView = isGreatThanOrEqualVersion(4, 3);
+		_deviceFeatures.supportPersistentMap = isGreatThanOrEqualVersion(4, 4);
 
 		_createBufferMask = Usage::MAP_READ_WRITE | Usage::UPDATE | (_deviceFeatures.supportPersistentMap ? Usage::PERSISTENT_MAP : Usage::NONE);
+
+		_glStatus.blendEnabled = 0;
+		if (_internalFeatures.supportIndependentBlendEnable) {
+			for (size_t i = 0; i < 8; ++i) _glStatus.blendEnabled |= glIsEnabledi(GL_BLEND, i) << i;
+		} else {
+			_glStatus.blendEnabled = glIsEnabled(GL_BLEND) ? 0xFF : 0;
+		}
 
 		return true;
 	}
@@ -203,6 +212,47 @@ namespace aurora::modules::graphics::win_glew {
 
 	IPixelBuffer* Graphics::createPixelBuffer() {
 		return new PixelBuffer(*this);
+	}
+
+	IBlendState* Graphics::createBlendState() {
+		return new BlendState(*this);
+	}
+
+	void Graphics::setBlendState(IBlendState* state, const Vec4f32& constantFactors, uint32_t sampleMask) {
+		if (state && state->getGraphics() == this) {
+			if (_internalFeatures.supportIndependentBlendEnable) {
+				if (state->isIndependentBlendEnabled()) {
+					for (size_t i = 0; i < 8; ++i) {
+						auto& rts = state->getRenderTargetState(i);
+						if (bool(_glStatus.blendEnabled >> i & 0x1) != rts.enabled) {
+							if (rts.enabled) {
+								glEnablei(GL_BLEND, i);
+								_glStatus.blendEnabled |= 1 << i;
+							} else {
+								glDisablei(GL_BLEND, i);
+								_glStatus.blendEnabled &= ~(1 << i);
+							}
+						}
+					}
+				} else {
+					goto unify;
+				}
+			} else {
+			unify:
+				auto& rts = state->getRenderTargetState(0);
+				if (rts.enabled) {
+					if (_glStatus.blendEnabled != 0xFF) {
+						glEnable(GL_BLEND);
+						_glStatus.blendEnabled = 0xFF;
+					}
+				} else {
+					if (_glStatus.blendEnabled) {
+						glDisable(GL_BLEND);
+						_glStatus.blendEnabled = 0;
+					}
+				}
+			}
+		}
 	}
 
 	void Graphics::beginRender() {

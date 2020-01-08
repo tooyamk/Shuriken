@@ -22,10 +22,11 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual IVertexBuffer* AE_CALL createVertexBuffer() override;
 		virtual IPixelBuffer* AE_CALL createPixelBuffer() override;
 		virtual IBlendState* AE_CALL createBlendState() override;
+
+		virtual void AE_CALL setBlendState(IBlendState* state, const Vec4f32& constantFactors, uint32_t sampleMask = (std::numeric_limits<uint32_t>::max)()) override;
 		
 		virtual void AE_CALL beginRender() override;
 		virtual void AE_CALL draw(const VertexBufferFactory* vertexFactory, IProgram* program, const ShaderParameterFactory* paramFactory, 
-			IBlendState* blendState, const Vec4f32& blendConstantFactors,
 			const IIndexBuffer* indexBuffer, uint32_t count = (std::numeric_limits<uint32_t>::max)(), uint32_t offset = 0) override;
 		virtual void AE_CALL endRender() override;
 		virtual void AE_CALL present() override;
@@ -116,6 +117,12 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		GraphicsDeviceFeatures _deviceFeatures;
 		std::string _deviceVersion;
+
+		struct {
+			uint64_t featureValue;
+			Vec4f32 constantFactors;
+			uint32_t sampleMask;
+		} _blendState;
 
 		ConstantBufferManager _constantBufferManager;
 

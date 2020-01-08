@@ -42,7 +42,6 @@
     <ClInclude Include="src\VertexBuffer.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Base.cpp" />
     <ClCompile Include="src\BaseBuffer.cpp" />
     <ClCompile Include="src\BaseResource.cpp" />
     <ClCompile Include="src\BaseTextureResource.cpp" />

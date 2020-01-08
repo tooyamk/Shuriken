@@ -1,6 +1,7 @@
 #pragma once
 
 #include "base/Global.h"
+#include "utils/hash/CRC.h"
 #include <functional>
 #include <unordered_map>
 #include <unordered_set>
@@ -44,6 +45,8 @@ namespace aurora::modules::graphics {
 			std::vector<const ShaderParameter*>& usingParams, std::vector<const ConstantBufferLayout::Variables*>& usingVars) const;
 
 	private:
+		inline static auto _crcTable = hash::CRC::createTable<64>(0x42F0E1EBA9EA3693ui64);
+
 		void AE_CALL _calcFeatureValue(const Variables& var, uint16_t& numValidVars);
 
 		void AE_CALL _collectUsingInfo(const ConstantBufferLayout::Variables& var, const ShaderParameterFactory& factory, ShaderParameterUsageStatistics& statistics,

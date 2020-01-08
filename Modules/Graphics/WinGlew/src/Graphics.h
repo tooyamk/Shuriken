@@ -8,6 +8,7 @@ namespace aurora::modules::graphics::win_glew {
 	public:
 		struct InternalFeatures {
 			bool supportTexStorage;
+			bool supportIndependentBlendEnable;
 			GLfloat maxAnisotropy;
 		};
 
@@ -27,6 +28,9 @@ namespace aurora::modules::graphics::win_glew {
 		virtual ITextureView* AE_CALL createTextureView() override;
 		virtual IVertexBuffer* AE_CALL createVertexBuffer() override;
 		virtual IPixelBuffer* AE_CALL createPixelBuffer() override;
+		virtual IBlendState* AE_CALL createBlendState() override;
+
+		virtual void AE_CALL setBlendState(IBlendState* state, const Vec4f32& constantFactors, uint32_t sampleMask = (std::numeric_limits<uint32_t>::max)()) override;
 		
 		virtual void AE_CALL beginRender() override;
 		virtual void AE_CALL draw(const VertexBufferFactory* vertexFactory, IProgram* program, const ShaderParameterFactory* paramFactory,
@@ -46,14 +50,8 @@ namespace aurora::modules::graphics::win_glew {
 			return _constantBufferManager;
 		}
 
-		inline bool AE_CALL isGreatThanVersion(GLint major, GLint minor) const {
-			if (_majorVer > major) {
-				return true;
-			} else if (_majorVer < major) {
-				return false;
-			} else {
-				return _minorVer >= minor;
-			}
+		inline bool AE_CALL isGreatThanOrEqualVersion(GLint major, GLint minor) const {
+			return _majorVer > major ? true : (_majorVer < major ? false : _minorVer >= minor);
 		}
 
 		inline uint32_t AE_CALL getIntVersion() const {
@@ -83,6 +81,11 @@ namespace aurora::modules::graphics::win_glew {
 		static uint32_t AE_CALL getGLTypeSize(GLenum type);
 
 	private:
+		struct {
+			uint8_t blendEnabled;
+		} _glStatus;
+
+
 		Usage _createBufferMask;
 
 		RefPtr<Ref> _loader;

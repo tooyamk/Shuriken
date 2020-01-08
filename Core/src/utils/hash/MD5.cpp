@@ -211,7 +211,7 @@ namespace aurora::hash {
 		return std::string(buf);
 	}
 
-	std::string MD5::hash(const uint8_t* input, size_t length) {
+	std::string MD5::calc(const uint8_t* input, size_t length) {
 		init();
 		update(input, length);
 		finalize();
