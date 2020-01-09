@@ -149,19 +149,14 @@ namespace aurora::modules::graphics::win_glew {
 		_deviceFeatures.supportPixelBuffer = true;
 		_deviceFeatures.supportConstantBuffer = isGreatThanOrEqualVersion(3, 1);
 		_deviceFeatures.supportSampler = isGreatThanOrEqualVersion(3, 3);
-		_internalFeatures.supportIndependentBlendEnable = isGreatThanOrEqualVersion(4, 0);
+		_deviceFeatures.supportIndependentBlend = isGreatThanOrEqualVersion(4, 0);
 		_internalFeatures.supportTexStorage = isGreatThanOrEqualVersion(4, 2);
 		_deviceFeatures.supportTextureView = isGreatThanOrEqualVersion(4, 3);
 		_deviceFeatures.supportPersistentMap = isGreatThanOrEqualVersion(4, 4);
 
 		_createBufferMask = Usage::MAP_READ_WRITE | Usage::UPDATE | (_deviceFeatures.supportPersistentMap ? Usage::PERSISTENT_MAP : Usage::NONE);
 
-		_glStatus.blendEnabled = 0;
-		if (_internalFeatures.supportIndependentBlendEnable) {
-			for (size_t i = 0; i < 8; ++i) _glStatus.blendEnabled |= glIsEnabledi(GL_BLEND, i) << i;
-		} else {
-			_glStatus.blendEnabled = glIsEnabled(GL_BLEND) ? 0xFF : 0;
-		}
+		_setInitState();
 
 		return true;
 	}
@@ -220,38 +215,144 @@ namespace aurora::modules::graphics::win_glew {
 
 	void Graphics::setBlendState(IBlendState* state, const Vec4f32& constantFactors, uint32_t sampleMask) {
 		if (state && state->getGraphics() == this) {
-			if (_internalFeatures.supportIndependentBlendEnable) {
-				if (state->isIndependentBlendEnabled()) {
-					for (size_t i = 0; i < 8; ++i) {
-						auto& rts = state->getRenderTargetState(i);
-						if (bool(_glStatus.blendEnabled >> i & 0x1) != rts.enabled) {
-							if (rts.enabled) {
+			auto bs = (BlendState*)state;
+			auto& blend = _glStatus.blend;
+
+			if (_deviceFeatures.supportIndependentBlend) {
+				if (bs->isIndependentBlendEnabled()) {
+					auto funcChanged = false, opChanged = false, writeMaskChanged = false;
+					
+					for (size_t i = 0; i < MAX_RTS; ++i) {
+						auto& rt = bs->getInternalRenderTargetState(i);
+						if (bool(blend.enabled >> i & 0x1) != rt.state.enabled) {
+							if (rt.state.enabled) {
 								glEnablei(GL_BLEND, i);
-								_glStatus.blendEnabled |= 1 << i;
+								blend.enabled |= 1 << i;
 							} else {
 								glDisablei(GL_BLEND, i);
-								_glStatus.blendEnabled &= ~(1 << i);
+								blend.enabled &= ~(1 << i);
 							}
 						}
+
+						if (rt.state.enabled) {
+							if (blend.func[i].featureValue != rt.internalFunc.featureValue) {
+								glBlendFuncSeparatei(i, rt.internalFunc.srcColor, rt.internalFunc.dstColor, rt.internalFunc.srcAlpha, rt.internalFunc.dstAlpha);
+								blend.func[i].featureValue = rt.internalFunc.featureValue;
+								funcChanged = true;
+							}
+
+							if (blend.op[i].featureValue != rt.internalOp.featureValue) {
+								glBlendEquationSeparatei(i, rt.internalOp.color, rt.internalOp.alpha);
+								blend.op[i].featureValue = rt.internalOp.featureValue;
+								opChanged = true;
+							}
+						}
+
+						if (blend.writeMask[i].featureValue != rt.internalWriteMask.featureValue) {
+							glColorMaski(i, rt.internalWriteMask.rgba[0], rt.internalWriteMask.rgba[1], rt.internalWriteMask.rgba[2], rt.internalWriteMask.rgba[3]);
+							blend.writeMask[i].featureValue = rt.internalWriteMask.featureValue;
+							writeMaskChanged = true;
+						}
 					}
+					
+					if (funcChanged) _checkBlendFuncIsSame();
+					if (opChanged) _checkBlendOpIsSame();
+					if (writeMaskChanged) _checkBlendWriteMaskIsSame();
 				} else {
-					goto unify;
+					_setDependentBlendState<true>(bs->getInternalRenderTargetState(0));
 				}
 			} else {
-			unify:
-				auto& rts = state->getRenderTargetState(0);
-				if (rts.enabled) {
-					if (_glStatus.blendEnabled != 0xFF) {
-						glEnable(GL_BLEND);
-						_glStatus.blendEnabled = 0xFF;
+				_setDependentBlendState<false>(bs->getInternalRenderTargetState(0));
+			}
+
+			if (blend.enabled && !memEqual<sizeof(Vec4f32)>(&blend.constantFactors, &constantFactors)) {
+				glBlendColor(constantFactors.data[0], constantFactors.data[1], constantFactors.data[2], constantFactors.data[3]);
+				memcpy(&blend.constantFactors, &constantFactors, sizeof(Vec4f32));
+			}
+		}
+	}
+
+	template<bool SupportIndependentBlend>
+	void AE_CALL Graphics::_setDependentBlendState(const InternalRenderTargetBlendState& rt) {
+		auto& blend = _glStatus.blend;
+		if (rt.state.enabled) {
+			if (blend.enabled != 0xFF) {
+				glEnable(GL_BLEND);
+				blend.enabled = 0xFF;
+			}
+
+			if constexpr (SupportIndependentBlend) {
+				if (blend.isFuncSame) {
+					if (blend.func[0].featureValue != rt.internalFunc.featureValue) {
+						glBlendFuncSeparate(rt.internalFunc.srcColor, rt.internalFunc.dstColor, rt.internalFunc.srcAlpha, rt.internalFunc.dstAlpha);
+						for (size_t i = 0; i < MAX_RTS; ++i) blend.func[i].featureValue = rt.internalFunc.featureValue;
 					}
 				} else {
-					if (_glStatus.blendEnabled) {
-						glDisable(GL_BLEND);
-						_glStatus.blendEnabled = 0;
+					auto needChange = false;
+					for (size_t i = 0; i < MAX_RTS; ++i) {
+						if (blend.func[i].featureValue != rt.internalFunc.featureValue) {
+							blend.func[i].featureValue = rt.internalFunc.featureValue;
+							needChange = true;
+						}
 					}
+					if (needChange) glBlendFuncSeparate(rt.internalFunc.srcColor, rt.internalFunc.dstColor, rt.internalFunc.srcAlpha, rt.internalFunc.dstAlpha);
+					blend.isFuncSame = true;
+				}
+
+				if (blend.isOpSame) {
+					if (blend.op[0].featureValue != rt.internalOp.featureValue) {
+						glBlendEquationSeparate(rt.internalOp.color, rt.internalOp.alpha);
+						for (size_t i = 0; i < MAX_RTS; ++i) blend.op[i].featureValue = rt.internalOp.featureValue;
+					}
+				} else {
+					auto needChange = false;
+					for (size_t i = 0; i < MAX_RTS; ++i) {
+						if (blend.op[i].featureValue != rt.internalOp.featureValue) {
+							blend.op[i].featureValue = rt.internalOp.featureValue;
+							needChange = true;
+						}
+					}
+					if (needChange) glBlendEquationSeparate(rt.internalOp.color, rt.internalOp.alpha);
+					blend.isOpSame = true;
+				}
+			} else {
+				if (blend.func[0].featureValue != rt.internalFunc.featureValue) {
+					glBlendFuncSeparate(rt.internalFunc.srcColor, rt.internalFunc.dstColor, rt.internalFunc.srcAlpha, rt.internalFunc.dstAlpha);
+					blend.func[0].featureValue = rt.internalFunc.featureValue;
+				}
+
+				if (blend.op[0].featureValue != rt.internalOp.featureValue) {
+					glBlendEquationSeparate(rt.internalOp.color, rt.internalOp.alpha);
+					blend.op[0].featureValue = rt.internalOp.featureValue;
+				}
+
+				if (blend.writeMask[0].featureValue != rt.internalWriteMask.featureValue) {
+					glColorMask(rt.internalWriteMask.rgba[0], rt.internalWriteMask.rgba[1], rt.internalWriteMask.rgba[2], rt.internalWriteMask.rgba[3]);
+					blend.writeMask[0].featureValue = rt.internalWriteMask.featureValue;
 				}
 			}
+		} else {
+			if (blend.enabled) {
+				glDisable(GL_BLEND);
+				blend.enabled = 0;
+			}
+		}
+
+		if (blend.isWriteMaskSame) {
+			if (blend.writeMask[0].featureValue != rt.internalWriteMask.featureValue) {
+				glColorMask(rt.internalWriteMask.rgba[0], rt.internalWriteMask.rgba[1], rt.internalWriteMask.rgba[2], rt.internalWriteMask.rgba[3]);
+				for (size_t i = 0; i < MAX_RTS; ++i) blend.writeMask[i].featureValue = rt.internalWriteMask.featureValue;
+			}
+		} else {
+			auto needChange = false;
+			for (size_t i = 0; i < MAX_RTS; ++i) {
+				if (blend.writeMask[i].featureValue != rt.internalWriteMask.featureValue) {
+					blend.writeMask[i].featureValue = rt.internalWriteMask.featureValue;
+					needChange = true;
+				}
+			}
+			if (needChange) glColorMask(rt.internalWriteMask.rgba[0], rt.internalWriteMask.rgba[1], rt.internalWriteMask.rgba[2], rt.internalWriteMask.rgba[3]);
+			blend.isWriteMaskSame = true;
 		}
 	}
 
@@ -287,9 +388,33 @@ namespace aurora::modules::graphics::win_glew {
 	void Graphics::present() {
 	}
 
-	void Graphics::clear() {
-		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+	void Graphics::clear(ClearFlag flag, const Vec4f32& color, f32 depth, size_t stencil) {
+		GLbitfield mask = 0;
+		if ((flag & ClearFlag::COLOR) != ClearFlag::NONE) {
+			mask |= GL_COLOR_BUFFER_BIT;
+			if (!memEqual<sizeof(Vec4f32)>(_glStatus.clear.color.data, color.data)) {
+				glClearColor(color.data[0], color.data[1], color.data[2], color.data[3]);
+				memcpy(_glStatus.clear.color.data, color.data, sizeof(Vec4f32));
+			}
+		}
+
+		if ((flag & ClearFlag::DEPTH) != ClearFlag::NONE) {
+			mask |= GL_DEPTH_BUFFER_BIT;
+			if (_glStatus.clear.depth != depth) {
+				glClearDepth(depth);
+				_glStatus.clear.depth = depth;
+			}
+		}
+
+		if ((flag & ClearFlag::STENCIL) != ClearFlag::NONE) {
+			mask |= GL_STENCIL_BUFFER_BIT;
+			if (_glStatus.clear.stencil != stencil) {
+				glClearStencil(stencil);
+				_glStatus.clear.stencil = stencil;
+			}
+		}
+
+		if (mask) glClear(mask);
 	}
 
 	bool Graphics::_glInit() {
@@ -333,6 +458,97 @@ namespace aurora::modules::graphics::win_glew {
 		return initOk;
 	}
 
+	void Graphics::_setInitState() {
+		{
+			auto& clear = _glStatus.clear;
+
+			GLfloat color[4];
+			glGetFloatv(GL_COLOR_CLEAR_VALUE, color);
+			clear.color.set(color);
+
+			GLfloat depth;
+			glGetFloatv(GL_DEPTH_CLEAR_VALUE, &depth);
+			clear.depth = depth;
+
+			GLint stencil;
+			glGetIntegerv(GL_STENCIL_CLEAR_VALUE, &stencil);
+			clear.stencil = stencil;
+		}
+
+		{
+			auto& blend = _glStatus.blend;
+			if (_deviceFeatures.supportIndependentBlend) {
+				blend.enabled = 0;
+				for (size_t i = 0; i < MAX_RTS; ++i) {
+					blend.enabled |= glIsEnabledi(GL_BLEND, i) << i;
+
+					GLint sc, dc, sa, da;
+					glGetIntegeri_v(GL_BLEND_SRC_RGB, i, &sc);
+					glGetIntegeri_v(GL_BLEND_DST_RGB, i, &dc);
+					glGetIntegeri_v(GL_BLEND_SRC_ALPHA, i, &sa);
+					glGetIntegeri_v(GL_BLEND_DST_ALPHA, i, &da);
+					auto& bf = blend.func[i];
+					bf.srcColor = sc;
+					bf.dstColor = dc;
+					bf.srcAlpha = sa;
+					bf.dstAlpha = da;
+
+					GLint oc, oa;
+					glGetIntegeri_v(GL_BLEND_EQUATION_RGB, i, &oc);
+					glGetIntegeri_v(GL_BLEND_EQUATION_ALPHA, i, &oa);
+					auto& op = blend.op[i];
+					op.color = oc;
+					op.alpha = oa;
+
+					GLboolean wms[4];
+					glGetBooleani_v(GL_COLOR_WRITEMASK, i, wms);
+					auto& wm = blend.writeMask[i];
+					memcpy(wm.rgba, wms, sizeof(wm.rgba));
+				}
+
+				_checkBlendFuncIsSame();
+				_checkBlendOpIsSame();
+				_checkBlendWriteMaskIsSame();
+			} else {
+				blend.enabled = glIsEnabled(GL_BLEND) ? 0xFF : 0;
+
+				GLint sc, dc, sa, da;
+				glGetIntegerv(GL_BLEND_SRC_RGB, &sc);
+				glGetIntegerv(GL_BLEND_DST_RGB, &dc);
+				glGetIntegerv(GL_BLEND_SRC_ALPHA, &sa);
+				glGetIntegerv(GL_BLEND_DST_ALPHA, &da);
+				auto& bf = blend.func[0];
+				bf.srcColor = sc;
+				bf.dstColor = dc;
+				bf.srcAlpha = sa;
+				bf.dstAlpha = da;
+
+				GLint oc, oa;
+				glGetIntegerv(GL_BLEND_EQUATION_RGB, &oc);
+				glGetIntegerv(GL_BLEND_EQUATION_ALPHA, &oa);
+				auto& op = blend.op[0];
+				op.color = oc;
+				op.alpha = oa;
+
+				GLboolean wms[4];
+				glGetBooleanv(GL_COLOR_WRITEMASK, wms);
+				auto& wm = blend.writeMask[0];
+				memcpy(wm.rgba, wms, sizeof(wm.rgba));
+
+				for (size_t i = 1; i < MAX_RTS; ++i) {
+					blend.func[i].featureValue = bf.featureValue;
+					blend.op[i].featureValue = op.featureValue;
+					blend.writeMask[i].featureValue = wm.featureValue;
+				}
+				blend.isFuncSame = true;
+				blend.isOpSame = true;
+				blend.isWriteMaskSame = true;
+			}
+
+			glGetFloatv(GL_BLEND_COLOR, blend.constantFactors.data);
+		}
+	}
+
 	void Graphics::_release() {
 		if (wglGetCurrentContext() == _rc) wglMakeCurrent(nullptr, nullptr);
 
@@ -350,6 +566,39 @@ namespace aurora::modules::graphics::win_glew {
 		memset(&_deviceFeatures, 0, sizeof(_deviceFeatures));
 		_deviceVersion = "OpenGL Unknown";
 		_createBufferMask = Usage::NONE;
+	}
+
+	void Graphics::_checkBlendFuncIsSame() {
+		auto& blend = _glStatus.blend;
+		blend.isFuncSame = true;
+		for (size_t i = 1; i < MAX_RTS; ++i) {
+			if (blend.func[0].featureValue != blend.func[i].featureValue) {
+				blend.isFuncSame = false;
+				break;
+			}
+		}
+	}
+
+	void Graphics::_checkBlendOpIsSame() {
+		auto& blend = _glStatus.blend;
+		blend.isOpSame = true;
+		for (size_t i = 1; i < MAX_RTS; ++i) {
+			if (blend.op[0].featureValue != blend.op[i].featureValue) {
+				blend.isOpSame = false;
+				break;
+			}
+		}
+	}
+
+	void Graphics::_checkBlendWriteMaskIsSame() {
+		auto& blend = _glStatus.blend;
+		blend.isWriteMaskSame = true;
+		for (size_t i = 1; i < MAX_RTS; ++i) {
+			if (blend.writeMask[0].featureValue != blend.writeMask[i].featureValue) {
+				blend.isWriteMaskSame = false;
+				break;
+			}
+		}
 	}
 
 	std::optional<Graphics::ConvertFormatResult> Graphics::convertFormat(TextureFormat fmt) {

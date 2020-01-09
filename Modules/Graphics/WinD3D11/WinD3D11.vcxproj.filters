@@ -54,6 +54,9 @@
     <ClInclude Include="src\BlendState.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\RasterizerState.h">
+      <Filter>src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Graphics.cpp">
@@ -96,6 +99,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\BlendState.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\RasterizerState.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

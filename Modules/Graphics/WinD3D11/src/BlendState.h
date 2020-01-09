@@ -16,8 +16,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual const RenderTargetBlendState& AE_CALL getRenderTargetState(uint8_t index) const override;
 		virtual void AE_CALL setRenderTargetState(uint8_t index, const RenderTargetBlendState& state) override;
 
-		inline ID3D11BlendState1* AE_CALL getInternalBlendState() const {
-			return _blendState;
+		inline ID3D11BlendState1* AE_CALL getInternalState() const {
+			return _internalState;
 		}
 
 		inline const uint64_t& AE_CALL getFeatureValue() const {
@@ -36,14 +36,14 @@ namespace aurora::modules::graphics::win_d3d11 {
 		};
 
 		static const RenderTargetBlendState DEFAULT_RT_STATE;
-		static const uint8_t NUM_RTS = 8;
+		static const uint8_t MAX_RTS = 8;
 
 		DirtyType _dirty;
 		bool _oldIndependentBlendEnabled;
 		D3D11_BLEND_DESC1 _desc;
-		RenderTargetBlendState _rtStatus[NUM_RTS];
-		RenderTargetBlendState _oldRtStatus[NUM_RTS];
-		ID3D11BlendState1* _blendState;
+		RenderTargetBlendState _rtStatus[MAX_RTS];
+		RenderTargetBlendState _oldRtStatus[MAX_RTS];
+		ID3D11BlendState1* _internalState;
 		uint64_t _featureValue;
 
 		static D3D11_BLEND AE_CALL _convertBlendFactor(BlendFactor factor);

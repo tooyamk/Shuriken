@@ -6,10 +6,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 	BlendState::BlendState(Graphics& graphics) : IBlendState(graphics),
 		_dirty(DirtyFlag::EMPTY),
 		_desc({ 0 }),
-		_blendState(nullptr),
+		_internalState(nullptr),
 		_featureValue(0) {
 		_oldIndependentBlendEnabled = _desc.IndependentBlendEnable;
-		for (uint8_t i = 0; i < NUM_RTS; ++i) _setRenderTargetState(i, _rtStatus[i]);
+		for (uint8_t i = 0; i < MAX_RTS; ++i) _setRenderTargetState(i, _rtStatus[i]);
 	}
 
 	BlendState::~BlendState() {
@@ -31,26 +31,14 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	const RenderTargetBlendState& BlendState::getRenderTargetState(uint8_t index) const {
-		return index < NUM_RTS ? _rtStatus[index] : DEFAULT_RT_STATE;
+		return index < MAX_RTS ? _rtStatus[index] : DEFAULT_RT_STATE;
 	}
 
 	void BlendState::setRenderTargetState(uint8_t index, const RenderTargetBlendState& state) {
-		if (index < NUM_RTS && !memEqual<sizeof(state)>(&_rtStatus[index], &state)) {
+		if (index < MAX_RTS && !memEqual<sizeof(state)>(&_rtStatus[index], &state)) {
 			_rtStatus[index] = state;
 
-			auto& stateDesc = _desc.RenderTarget[index];
-			stateDesc.BlendEnable = state.enabled;
-			stateDesc.SrcBlend = _convertBlendFactor(state.func.srcColor);
-			stateDesc.SrcBlendAlpha = _convertBlendFactor(state.func.srcAlpha);
-			stateDesc.DestBlend = _convertBlendFactor(state.func.dstColor);
-			stateDesc.DestBlendAlpha = _convertBlendFactor(state.func.dstAlpha);
-			stateDesc.BlendOp = _convertBlendOp(state.opColor);
-			stateDesc.BlendOpAlpha = _convertBlendOp(state.opALpha);
-			stateDesc.RenderTargetWriteMask =
-				(state.writeMask.data[0] ? D3D11_COLOR_WRITE_ENABLE_RED : 0) |
-				(state.writeMask.data[1] ? D3D11_COLOR_WRITE_ENABLE_GREEN : 0) |
-				(state.writeMask.data[2] ? D3D11_COLOR_WRITE_ENABLE_BLUE : 0) |
-				(state.writeMask.data[3] ? D3D11_COLOR_WRITE_ENABLE_ALPHA : 0);
+			_setRenderTargetState(index, state);
 
 			_setDirty(!memEqual<sizeof(state)>(&_oldRtStatus[index], &_rtStatus[index]), DirtyFlag::RT_STATE);
 		}
@@ -63,8 +51,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 		stateDesc.SrcBlendAlpha = _convertBlendFactor(state.func.srcAlpha);
 		stateDesc.DestBlend = _convertBlendFactor(state.func.dstColor);
 		stateDesc.DestBlendAlpha = _convertBlendFactor(state.func.dstAlpha);
-		stateDesc.BlendOp = _convertBlendOp(state.opColor);
-		stateDesc.BlendOpAlpha = _convertBlendOp(state.opALpha);
+		stateDesc.BlendOp = _convertBlendOp(state.op.color);
+		stateDesc.BlendOpAlpha = _convertBlendOp(state.op.alpha);
 		stateDesc.RenderTargetWriteMask =
 			(state.writeMask.data[0] ? D3D11_COLOR_WRITE_ENABLE_RED : 0) |
 			(state.writeMask.data[1] ? D3D11_COLOR_WRITE_ENABLE_GREEN : 0) |
@@ -133,7 +121,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 	void BlendState::update() {
 		if (_dirty) {
 			_releaseRes();
-			if (SUCCEEDED(_graphics.get<Graphics>()->getDevice()->CreateBlendState1(&_desc, &_blendState))) {
+			if (SUCCEEDED(_graphics.get<Graphics>()->getDevice()->CreateBlendState1(&_desc, &_internalState))) {
 				_oldIndependentBlendEnabled = _desc.IndependentBlendEnable;
 				memcpy(&_oldRtStatus, &_rtStatus, sizeof(_rtStatus));
 				_featureValue = hash::xxHash::calc<sizeof(_featureValue) * 8, std::endian::native>((uint8_t*)&_desc, sizeof(_desc), 0);
@@ -143,9 +131,9 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	void BlendState::_releaseRes() {
-		if (_blendState) {
-			_blendState->Release();
-			_blendState = nullptr;
+		if (_internalState) {
+			_internalState->Release();
+			_internalState = nullptr;
 		}
 		_dirty |= DirtyFlag::EMPTY;
 		_featureValue = 0;

@@ -4,11 +4,12 @@
 #include "modules/graphics/ConstantBufferManager.h"
 
 namespace aurora::modules::graphics::win_glew {
+	class BlendState;
+
 	class AE_MODULE_DLL Graphics : public IGraphicsModule {
 	public:
 		struct InternalFeatures {
 			bool supportTexStorage;
-			bool supportIndependentBlendEnable;
 			GLfloat maxAnisotropy;
 		};
 
@@ -38,7 +39,7 @@ namespace aurora::modules::graphics::win_glew {
 		virtual void AE_CALL endRender() override;
 		virtual void AE_CALL present() override;
 
-		virtual void AE_CALL clear() override;
+		virtual void AE_CALL clear(ClearFlag flag, const Vec4f32& color, f32 depth, size_t stencil) override;
 
 		bool AE_CALL createDevice(const GraphicsAdapter* adapter);
 
@@ -82,7 +83,22 @@ namespace aurora::modules::graphics::win_glew {
 
 	private:
 		struct {
-			uint8_t blendEnabled;
+			struct {
+				Vec4f32 color;
+				f32 depth;
+				size_t stencil;
+			} clear;
+
+			struct {
+				uint8_t enabled;
+				bool isFuncSame;
+				bool isOpSame;
+				bool isWriteMaskSame;
+				InternalBlendFunc func[MAX_RTS];
+				InternalBlendOp op[MAX_RTS];
+				InternalBlendWriteMask writeMask[MAX_RTS];
+				Vec4f32 constantFactors;
+			} blend;
 		} _glStatus;
 
 
@@ -108,10 +124,18 @@ namespace aurora::modules::graphics::win_glew {
 		ConstantBufferManager _constantBufferManager;
 
 		bool AE_CALL _glInit();
+		void AE_CALL _setInitState();
 		void AE_CALL _release();
 
 		IConstantBuffer* AE_CALL _createdShareConstantBuffer();
 		IConstantBuffer* AE_CALL _createdExclusiveConstantBuffer (uint32_t numParameters);
+
+		void AE_CALL _checkBlendFuncIsSame();
+		void AE_CALL _checkBlendOpIsSame();
+		void AE_CALL _checkBlendWriteMaskIsSame();
+
+		template<bool SupportIndependentBlend>
+		void AE_CALL _setDependentBlendState(const InternalRenderTargetBlendState& rt);
 
 		static void GLAPIENTRY _debugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam);
 	};

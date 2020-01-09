@@ -3,6 +3,7 @@
 #include "BlendState.h"
 #include "IndexBuffer.h"
 #include "Program.h"
+#include "RasterizerState.h"
 #include "Sampler.h"
 #include "Texture1DResource.h"
 #include "Texture2DResource.h"
@@ -23,7 +24,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_swapChain(nullptr),
 		_backBufferTarget(nullptr),
 		_deviceFeatures({ 0 }),
-		_blendState({ 0 }),
+		_d3dStatus({ 0 }),
 		_resizedListener(this, &Graphics::_resizedHandler) {
 		_resizedListener.ref();
 		_app->getEventDispatcher().addEventListener(ApplicationEvent::RESIZED, _resizedListener);
@@ -257,6 +258,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_deviceFeatures.supportPixelBuffer = false;
 		_deviceFeatures.supportConstantBuffer = true;
 		_deviceFeatures.supportPersistentMap = false;
+		_deviceFeatures.supportIndependentBlend = true;
 
 		_resize((Vec2<UINT>&)size);
 
@@ -269,6 +271,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 	const GraphicsDeviceFeatures& Graphics::getDeviceFeatures() const {
 		return _deviceFeatures;
+	}
+
+	IRasterizerState* Graphics::createRasterizerState() {
+		return new RasterizerState(*this);
 	}
 
 	IConstantBuffer* Graphics::createConstantBuffer() {
@@ -315,24 +321,36 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return new BlendState(*this);
 	}
 
+	void Graphics::setRasterizerState(IRasterizerState* state) {
+		if (state && state->getGraphics() == this) {
+			auto rs = (RasterizerState*)state;
+			rs->update();
+			auto& rasterizer = _d3dStatus.rasterizer;
+			if (auto internalState = rs->getInternalState(); internalState && rasterizer.featureValue != rs->getFeatureValue()) {
+				rasterizer.featureValue = rs->getFeatureValue();
+
+				_context->RSSetState(internalState);
+			}
+		}
+	}
+
 	void Graphics::setBlendState(IBlendState* state, const Vec4f32& constantFactors, uint32_t sampleMask) {
 		if (state && state->getGraphics() == this) {
 			auto bs = (BlendState*)state;
 			bs->update();
-			if (auto internalBlendState = bs->getInternalBlendState(); internalBlendState &&
-				(_blendState.featureValue != bs->getFeatureValue() || !memEqual<sizeof(_blendState.constantFactors)>(&_blendState.constantFactors, &constantFactors) || _blendState.sampleMask != sampleMask)) {
-				_blendState.featureValue = bs->getFeatureValue();
-				_blendState.constantFactors.set(constantFactors);
-				_blendState.sampleMask = sampleMask;
+			auto& blend = _d3dStatus.blend;
+			if (auto internalState = bs->getInternalState(); internalState &&
+				(blend.featureValue != bs->getFeatureValue() || !memEqual<sizeof(blend.constantFactors)>(&blend.constantFactors, &constantFactors) || blend.sampleMask != sampleMask)) {
+				blend.featureValue = bs->getFeatureValue();
+				blend.constantFactors.set(constantFactors);
+				blend.sampleMask = sampleMask;
 
-				_context->OMSetBlendState(internalBlendState, constantFactors.data, sampleMask);
+				_context->OMSetBlendState(internalState, constantFactors.data, sampleMask);
 			}
 		}
 	}
 
 	void Graphics::beginRender() {
-		f32 clearColor[] = { 0.0f, 0.0f, 0.25f, 1.0f };
-		_context->ClearRenderTargetView(_backBufferTarget, clearColor);
 	}
 
 	void Graphics::draw(const VertexBufferFactory* vertexFactory, IProgram* program, const ShaderParameterFactory* paramFactory, 
@@ -369,7 +387,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_swapChain->Present(0, 0);
 	}
 
-	void Graphics::clear() {
+	void Graphics::clear(ClearFlag flag, const Vec4f32& color, f32 depth, size_t stencil) {
+		if ((flag & ClearFlag::COLOR) != ClearFlag::NONE) _context->ClearRenderTargetView(_backBufferTarget, color.data);
 	}
 
 	IConstantBuffer* Graphics::_createdShareConstantBuffer() {

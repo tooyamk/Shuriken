@@ -34,6 +34,7 @@
     <ClInclude Include="src\Graphics.h" />
     <ClInclude Include="src\IndexBuffer.h" />
     <ClInclude Include="src\Program.h" />
+    <ClInclude Include="src\RasterizerState.h" />
     <ClInclude Include="src\Sampler.h" />
     <ClInclude Include="src\Texture1DResource.h" />
     <ClInclude Include="src\Texture2DResource.h" />
@@ -50,6 +51,7 @@
     <ClCompile Include="src\Graphics.cpp" />
     <ClCompile Include="src\IndexBuffer.cpp" />
     <ClCompile Include="src\Program.cpp" />
+    <ClCompile Include="src\RasterizerState.cpp" />
     <ClCompile Include="src\Sampler.cpp" />
     <ClCompile Include="src\Texture1DResource.cpp" />
     <ClCompile Include="src\Texture2DResource.cpp" />

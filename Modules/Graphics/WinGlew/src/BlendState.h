@@ -7,14 +7,6 @@ namespace aurora::modules::graphics::win_glew {
 
 	class AE_MODULE_DLL BlendState : public IBlendState {
 	public:
-		static const uint8_t NUM_RTS = 8;
-
-		struct Desc {
-			bool independentBlendEnabled = false;
-			RenderTargetBlendState renderTarget[NUM_RTS];
-		};
-
-
 		BlendState(Graphics& graphics);
 		virtual ~BlendState();
 
@@ -24,15 +16,19 @@ namespace aurora::modules::graphics::win_glew {
 		virtual const RenderTargetBlendState& AE_CALL getRenderTargetState(uint8_t index) const override;
 		virtual void AE_CALL setRenderTargetState(uint8_t index, const RenderTargetBlendState& state) override;
 
-		inline const Desc& AE_CALL getDesc() const {
-			return _desc;
+		inline const InternalRenderTargetBlendState& AE_CALL getInternalRenderTargetState(uint8_t index) const {
+			return _status[index];
 		}
-
-		void AE_CALL update();
 
 	protected:
 		static const RenderTargetBlendState DEFAULT_RT_STATE;
 
-		Desc _desc;
+		bool _independentBlendEnabled = false;
+		InternalRenderTargetBlendState _status[MAX_RTS];
+
+		static uint16_t AE_CALL _convertBlendFactor(BlendFactor factor);
+		static uint16_t AE_CALL _convertBlendOp(BlendOp op);
+
+		void AE_CALL _updateInternalState(uint8_t index);
 	};
 }

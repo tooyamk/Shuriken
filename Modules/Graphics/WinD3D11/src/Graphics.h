@@ -11,6 +11,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		virtual const std::string& AE_CALL getVersion() const override;
 		virtual const GraphicsDeviceFeatures& AE_CALL getDeviceFeatures() const override;
+		virtual IRasterizerState* AE_CALL createRasterizerState() override;
 		virtual IConstantBuffer* AE_CALL createConstantBuffer() override;
 		virtual IIndexBuffer* AE_CALL createIndexBuffer() override;
 		virtual IProgram* AE_CALL createProgram() override;
@@ -23,6 +24,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual IPixelBuffer* AE_CALL createPixelBuffer() override;
 		virtual IBlendState* AE_CALL createBlendState() override;
 
+		virtual void AE_CALL setRasterizerState(IRasterizerState* state) override;
 		virtual void AE_CALL setBlendState(IBlendState* state, const Vec4f32& constantFactors, uint32_t sampleMask = (std::numeric_limits<uint32_t>::max)()) override;
 		
 		virtual void AE_CALL beginRender() override;
@@ -31,7 +33,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual void AE_CALL endRender() override;
 		virtual void AE_CALL present() override;
 
-		virtual void AE_CALL clear() override;
+		virtual void AE_CALL clear(ClearFlag flag, const Vec4f32& color, f32 depth, size_t stencil) override;
 
 		bool AE_CALL createDevice(const GraphicsAdapter* adapter);
 
@@ -119,10 +121,16 @@ namespace aurora::modules::graphics::win_d3d11 {
 		std::string _deviceVersion;
 
 		struct {
-			uint64_t featureValue;
-			Vec4f32 constantFactors;
-			uint32_t sampleMask;
-		} _blendState;
+			struct {
+				uint64_t featureValue;
+			} rasterizer;
+
+			struct {
+				uint64_t featureValue;
+				Vec4f32 constantFactors;
+				uint32_t sampleMask;
+			} blend;
+		} _d3dStatus;
 
 		ConstantBufferManager _constantBufferManager;
 

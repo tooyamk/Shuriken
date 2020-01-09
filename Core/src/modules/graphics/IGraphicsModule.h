@@ -451,8 +451,10 @@ namespace aurora::modules::graphics {
 
 		bool enabled;
 		BlendFunc func;
-		BlendOp opColor;
-		BlendOp opALpha;
+		struct {
+			BlendOp color;
+			BlendOp alpha;
+		} op;
 		Vec4<bool> writeMask;
 	};
 
@@ -490,12 +492,57 @@ namespace aurora::modules::graphics {
 	};
 
 
+	enum class FillMode : uint8_t {
+		WIREFRAME,
+		SOLID
+	};
+
+
+	enum class CullMode : uint8_t {
+		NONE,
+		FRONT,
+		BACK
+	};
+
+
+	enum class FrontFace : uint8_t {
+		CW,
+		CCW
+	};
+
+
+	class AE_DLL IRasterizerState : public IObject {
+	public:
+		IRasterizerState(IGraphicsModule& graphics) : IObject(graphics) {}
+		virtual ~IRasterizerState() {}
+
+		virtual FillMode AE_CALL getFillMode() const = 0;
+		virtual void AE_CALL setFillMode(FillMode fill) = 0;
+
+		virtual CullMode AE_CALL getCullMode() const = 0;
+		virtual void AE_CALL setCullMode(CullMode cull) = 0;
+
+		virtual FrontFace AE_CALL getFrontFace() const = 0;
+		virtual void AE_CALL setFrontFace(FrontFace front) = 0;
+	};
+
+
+	enum class ClearFlag : uint8_t {
+		NONE,
+		COLOR,
+		DEPTH,
+		STENCIL
+	};
+	AE_DEFINE_ENUM_BIT_OPERATIION(ClearFlag);
+
+
 	struct AE_DLL GraphicsDeviceFeatures {
 		bool supportSampler;
 		bool supportTextureView;
 		bool supportPixelBuffer;
 		bool supportConstantBuffer;
 		bool supportPersistentMap;
+		bool supportIndependentBlend;
 	};
 
 
@@ -509,19 +556,21 @@ namespace aurora::modules::graphics {
 
 		virtual const std::string& AE_CALL getVersion() const = 0;
 		virtual const GraphicsDeviceFeatures& AE_CALL getDeviceFeatures() const = 0;
+		virtual IRasterizerState* AE_CALL createRasterizerState() = 0;
 		virtual IConstantBuffer* AE_CALL createConstantBuffer() = 0;
 		virtual IIndexBuffer* AE_CALL createIndexBuffer() = 0;
 		virtual IPixelBuffer* AE_CALL createPixelBuffer() = 0;
 		virtual IProgram* AE_CALL createProgram() = 0;
 		virtual ISampler* AE_CALL createSampler() = 0;
-		virtual ITexture1DResource* AE_CALL createTexture1DResource() = 0;
+		virtual ITexture1DResource* AE_CALL createTexture1DResource() = 0;//unrealized wingl
 		virtual ITexture2DResource* AE_CALL createTexture2DResource() = 0;
-		virtual ITexture3DResource* AE_CALL createTexture3DResource() = 0;
+		virtual ITexture3DResource* AE_CALL createTexture3DResource() = 0;//unrealized wingl
 		virtual ITextureView* AE_CALL createTextureView() = 0;
 		virtual IVertexBuffer* AE_CALL createVertexBuffer() = 0;
 		virtual IBlendState* AE_CALL createBlendState() = 0;
 
-		virtual void AE_CALL setBlendState(IBlendState* state, const Vec4f32& constantFactors, uint32_t sampleMask = (std::numeric_limits<uint32_t>::max)()) = 0;
+		virtual void AE_CALL setRasterizerState(IRasterizerState* state) = 0;//unrealized wingl
+		virtual void AE_CALL setBlendState(IBlendState* state, const Vec4f32& constantFactors, uint32_t sampleMask = (std::numeric_limits<uint32_t>::max)()) = 0;//unrealized all sampleMask
 
 		virtual void AE_CALL beginRender() = 0;
 		virtual void AE_CALL draw(const VertexBufferFactory* vertexFactory, IProgram* program, const ShaderParameterFactory* paramFactory,
@@ -529,6 +578,7 @@ namespace aurora::modules::graphics {
 		virtual void AE_CALL endRender() = 0;
 		virtual void AE_CALL present() = 0;
 
-		virtual void AE_CALL clear() = 0;
+		//unrealized wind3d11 depth stencil
+		virtual void AE_CALL clear(ClearFlag flag, const Vec4f32& color, f32 depth, size_t stencil) = 0;
 	};
 }

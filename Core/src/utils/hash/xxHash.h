@@ -3,7 +3,7 @@
 #include "base/Global.h"
 
 namespace aurora::hash {
-	class AE_TEMPLATE_DLL xxHash {
+	class  xxHash {
 	public:
 		AE_DECLA_CANNOT_INSTANTIATE(xxHash);
 
@@ -16,7 +16,7 @@ namespace aurora::hash {
 			constexpr size_t OFFSET = Bits >> 3;
 			constexpr size_t HALF_BITS = Bits >> 1;
 
-			auto& prime = PRIME<Bits>;
+			auto& prime = Prime<Bits>::VALUE;
 
 			auto dataEnd = data + len;
 			hash_t ret;
@@ -46,11 +46,11 @@ namespace aurora::hash {
 
 	private:
 		template<size_t Bits>
-		constexpr static uint_t<Bits> PRIME[] = { };
+		struct Prime { inline static constexpr uint_t<Bits> VALUE[] = { 0, 0, 0, 0 }; };
 		template<>
-		constexpr static uint_t<32> PRIME<32>[] = { 2654435761ui32, 2246822519ui32, 3266489917ui32, 668265263ui32, 374761393ui32 };
+		struct Prime<32> { inline static constexpr uint_t<32> VALUE[] = { 2654435761ui32, 2246822519ui32, 3266489917ui32, 668265263ui32, 374761393ui32 }; };
 		template<>
-		constexpr static uint_t<64> PRIME<64>[] = { 11400714785074694791ui64, 14029467366897019727ui64, 1609587929392839161ui64, 9650029242287828579ui64, 2870177450012600261ui64 };
+		struct Prime<64> { inline static constexpr uint_t<64> VALUE[] = { 11400714785074694791ui64, 14029467366897019727ui64, 1609587929392839161ui64, 9650029242287828579ui64, 2870177450012600261ui64 }; };
 
 		template<size_t Bits, std::endian DataEndian>
 		inline static uint_t<Bits> AE_CALL _readUInt(const uint8_t* data) {
@@ -65,9 +65,9 @@ namespace aurora::hash {
 		inline static uint_t<Bits> AE_CALL _round(uint_t<Bits> seed, uint_t<Bits> x) {
 			constexpr size_t SHIFT = Bits == 32 ? 13 : 31;
 
-			seed += x * PRIME<Bits>[1];
+			seed += x * Prime<Bits>::VALUE[1];
 			seed = rotl(seed, SHIFT);
-			seed *= PRIME<Bits>[0];
+			seed *= Prime<Bits>::VALUE[0];
 			return seed;
 		}
 
@@ -86,7 +86,7 @@ namespace aurora::hash {
 			if constexpr (Bits == 64) {
 				val = _round<Bits>(0, val);
 				acc ^= val;
-				acc = acc * PRIME<Bits>[0] + PRIME<Bits>[3];
+				acc = acc * Prime<Bits>::VALUE[0] + Prime<Bits>::VALUE[3];
 			}
 			return acc;
 		}
@@ -95,47 +95,47 @@ namespace aurora::hash {
 		inline static uint_t<Bits> AE_CALL _subEnding(uint_t<Bits> ret, const uint8_t* data, const uint8_t* dataEnd) {
 			if constexpr (Bits == 32) {
 				while ((data + 4) <= dataEnd) {
-					ret += _readUInt<Bits, DataEndian>(data) * PRIME<Bits>[2];
-					ret = rotl(ret, 17) * PRIME<Bits>[3];
+					ret += _readUInt<Bits, DataEndian>(data) * Prime<Bits>::VALUE[2];
+					ret = rotl(ret, 17) * Prime<Bits>::VALUE[3];
 					data += 4;
 				}
 
 				while (data < dataEnd) {
-					ret += (*data) * PRIME<Bits>[4];
-					ret = rotl(ret, 11) * PRIME<Bits>[0];
+					ret += (*data) * Prime<Bits>::VALUE[4];
+					ret = rotl(ret, 11) * Prime<Bits>::VALUE[0];
 					++data;
 				}
 
 				ret ^= ret >> 15;
-				ret *= PRIME<Bits>[1];
+				ret *= Prime<Bits>::VALUE[1];
 				ret ^= ret >> 13;
-				ret *= PRIME<Bits>[2];
+				ret *= Prime<Bits>::VALUE[2];
 				ret ^= ret >> 16;
 
 				return ret;
 			} else if constexpr (Bits == 64) {
 				while (data + 8 <= dataEnd) {
 					ret ^= _round<Bits>(0, _readUInt<Bits, DataEndian>(data));
-					ret = rotl(ret, 27) * PRIME<Bits>[0] + PRIME<Bits>[3];
+					ret = rotl(ret, 27) * Prime<Bits>::VALUE[0] + Prime<Bits>::VALUE[3];
 					data += 8;
 				}
 
 				if (data + 4 <= dataEnd) {
-					ret ^= (uint_t<Bits>)_readUInt<Bits / 2, DataEndian>(data) * PRIME<Bits>[0];
-					ret = rotl(ret, 23) * PRIME<Bits>[1] + PRIME<Bits>[2];
+					ret ^= (uint_t<Bits>)_readUInt<Bits / 2, DataEndian>(data) * Prime<Bits>::VALUE[0];
+					ret = rotl(ret, 23) * Prime<Bits>::VALUE[1] + Prime<Bits>::VALUE[2];
 					data += 4;
 				}
 
 				while (data < dataEnd) {
-					ret ^= (*data) * PRIME<Bits>[4];
-					ret = rotl(ret, 11) * PRIME<Bits>[0];
+					ret ^= (*data) * Prime<Bits>::VALUE[4];
+					ret = rotl(ret, 11) * Prime<Bits>::VALUE[0];
 					++data;
 				}
 
 				ret ^= ret >> 33;
-				ret *= PRIME<Bits>[1];
+				ret *= Prime<Bits>::VALUE[1];
 				ret ^= ret >> 29;
-				ret *= PRIME<Bits>[2];
+				ret *= Prime<Bits>::VALUE[2];
 				ret ^= ret >> 32;
 
 				return ret;
