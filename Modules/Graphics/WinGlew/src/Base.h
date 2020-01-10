@@ -3,6 +3,7 @@
 #include "modules/graphics/IGraphicsModule.h"
 #include "modules/graphics/IProgramSourceTranslator.h"
 #include "base/Application.h"
+#include "utils/hash/xxHash.h"
 
 #include "GL/glew.h"
 #pragma comment (lib, "glew.lib")
@@ -55,4 +56,22 @@ namespace aurora::modules::graphics::win_glew {
 		InternalBlendOp internalOp;
 		InternalBlendWriteMask internalWriteMask;
 	};
+
+
+	struct InternalRasterizerState {
+		bool cullEnabled;
+		uint16_t fillMode;
+		uint16_t cullMode;
+		uint16_t frontFace;
+	};
+
+
+	inline uint64_t calcHash(const void* data, size_t size) {
+		return hash::xxHash::calc<64, std::endian::native>((uint8_t*)data, size, 0);
+	}
+
+	template<typename T>
+	inline uint64_t calcHash(const T& val) {
+		return calcHash(&val, sizeof(T));
+	}
 }

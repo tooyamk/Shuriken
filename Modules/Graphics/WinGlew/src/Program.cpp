@@ -297,10 +297,6 @@ namespace aurora::modules::graphics::win_glew {
 				}
 			}
 
-			glEnable(GL_CULL_FACE);
-			glCullFace(GL_BACK);
-			glDisable(GL_DEPTH_TEST);
-
 			return true;
 		}
 		return false;

@@ -273,8 +273,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return _deviceFeatures;
 	}
 
-	IRasterizerState* Graphics::createRasterizerState() {
-		return new RasterizerState(*this);
+	IBlendState* Graphics::createBlendState() {
+		return new BlendState(*this);
 	}
 
 	IConstantBuffer* Graphics::createConstantBuffer() {
@@ -287,6 +287,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 	IProgram* Graphics::createProgram() {
 		return new Program(*this);
+	}
+
+	IRasterizerState* Graphics::createRasterizerState() {
+		return new RasterizerState(*this);
 	}
 
 	ISampler* Graphics::createSampler() {
@@ -317,23 +321,6 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return nullptr;
 	}
 
-	IBlendState* Graphics::createBlendState() {
-		return new BlendState(*this);
-	}
-
-	void Graphics::setRasterizerState(IRasterizerState* state) {
-		if (state && state->getGraphics() == this) {
-			auto rs = (RasterizerState*)state;
-			rs->update();
-			auto& rasterizer = _d3dStatus.rasterizer;
-			if (auto internalState = rs->getInternalState(); internalState && rasterizer.featureValue != rs->getFeatureValue()) {
-				rasterizer.featureValue = rs->getFeatureValue();
-
-				_context->RSSetState(internalState);
-			}
-		}
-	}
-
 	void Graphics::setBlendState(IBlendState* state, const Vec4f32& constantFactors, uint32_t sampleMask) {
 		if (state && state->getGraphics() == this) {
 			auto bs = (BlendState*)state;
@@ -346,6 +333,19 @@ namespace aurora::modules::graphics::win_d3d11 {
 				blend.sampleMask = sampleMask;
 
 				_context->OMSetBlendState(internalState, constantFactors.data, sampleMask);
+			}
+		}
+	}
+
+	void Graphics::setRasterizerState(IRasterizerState* state) {
+		if (state && state->getGraphics() == this) {
+			auto rs = (RasterizerState*)state;
+			rs->update();
+			auto& rasterizer = _d3dStatus.rasterizer;
+			if (auto internalState = rs->getInternalState(); internalState && rasterizer.featureValue != rs->getFeatureValue()) {
+				rasterizer.featureValue = rs->getFeatureValue();
+
+				_context->RSSetState(internalState);
 			}
 		}
 	}

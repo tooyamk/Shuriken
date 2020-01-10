@@ -1,0 +1,6 @@
+PROJECT(Core)
+include_directories(src)
+ADD_DEFINITIONS(-D AE_EXPORTS)
+FILE(GLOB SRC_FILES "src/*/*.h" "src/*/*.cpp" "src/*/*/*.h" "src/*/*/*.cpp")
+ADD_LIBRARY(${PROJECT_NAME} SHARED ${SRC_FILES})
+SET(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR})

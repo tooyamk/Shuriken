@@ -37,6 +37,7 @@
     <ClInclude Include="src\IndexBuffer.h" />
     <ClInclude Include="src\PixelBuffer.h" />
     <ClInclude Include="src\Program.h" />
+    <ClInclude Include="src\RasterizerState.h" />
     <ClInclude Include="src\Sampler.h" />
     <ClInclude Include="src\Texture2DResource.h" />
     <ClInclude Include="src\TextureView.h" />
@@ -51,6 +52,7 @@
     <ClCompile Include="src\IndexBuffer.cpp" />
     <ClCompile Include="src\PixelBuffer.cpp" />
     <ClCompile Include="src\Program.cpp" />
+    <ClCompile Include="src\RasterizerState.cpp" />
     <ClCompile Include="src\Sampler.cpp" />
     <ClCompile Include="src\Texture2DResource.cpp" />
     <ClCompile Include="src\TextureView.cpp" />

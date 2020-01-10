@@ -19,9 +19,11 @@ namespace aurora::modules::graphics::win_glew {
 
 		virtual const std::string& AE_CALL getVersion() const override;
 		virtual const GraphicsDeviceFeatures& AE_CALL getDeviceFeatures() const override;
+		virtual IBlendState* AE_CALL createBlendState() override;
 		virtual IConstantBuffer* AE_CALL createConstantBuffer() override;
 		virtual IIndexBuffer* AE_CALL createIndexBuffer() override;
 		virtual IProgram* AE_CALL createProgram() override;
+		virtual IRasterizerState* AE_CALL createRasterizerState() override;
 		virtual ISampler* AE_CALL createSampler() override;
 		virtual ITexture1DResource* AE_CALL createTexture1DResource() override;
 		virtual ITexture2DResource* AE_CALL createTexture2DResource() override;
@@ -29,9 +31,9 @@ namespace aurora::modules::graphics::win_glew {
 		virtual ITextureView* AE_CALL createTextureView() override;
 		virtual IVertexBuffer* AE_CALL createVertexBuffer() override;
 		virtual IPixelBuffer* AE_CALL createPixelBuffer() override;
-		virtual IBlendState* AE_CALL createBlendState() override;
 
 		virtual void AE_CALL setBlendState(IBlendState* state, const Vec4f32& constantFactors, uint32_t sampleMask = (std::numeric_limits<uint32_t>::max)()) override;
+		virtual void AE_CALL setRasterizerState(IRasterizerState* state) override;
 		
 		virtual void AE_CALL beginRender() override;
 		virtual void AE_CALL draw(const VertexBufferFactory* vertexFactory, IProgram* program, const ShaderParameterFactory* paramFactory,
@@ -84,12 +86,6 @@ namespace aurora::modules::graphics::win_glew {
 	private:
 		struct {
 			struct {
-				Vec4f32 color;
-				f32 depth;
-				size_t stencil;
-			} clear;
-
-			struct {
 				uint8_t enabled;
 				bool isFuncSame;
 				bool isOpSame;
@@ -99,6 +95,17 @@ namespace aurora::modules::graphics::win_glew {
 				InternalBlendWriteMask writeMask[MAX_RTS];
 				Vec4f32 constantFactors;
 			} blend;
+
+			struct {
+				Vec4f32 color;
+				f32 depth;
+				size_t stencil;
+			} clear;
+
+			struct {
+				uint64_t featureValue;
+				InternalRasterizerState state;
+			} rasterizer;
 		} _glStatus;
 
 

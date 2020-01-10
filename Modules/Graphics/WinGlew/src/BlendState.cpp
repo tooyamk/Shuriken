@@ -1,6 +1,5 @@
 #include "BlendState.h"
 #include "Graphics.h"
-#include "utils/hash/xxHash.h"
 
 namespace aurora::modules::graphics::win_glew {
 	BlendState::BlendState(Graphics& graphics) : IBlendState(graphics) {

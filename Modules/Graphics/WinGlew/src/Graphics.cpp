@@ -5,6 +5,7 @@
 #include "IndexBuffer.h"
 #include "PixelBuffer.h"
 #include "Program.h"
+#include "RasterizerState.h"
 #include "Sampler.h"
 #include "Texture2DResource.h"
 #include "TextureView.h"
@@ -126,8 +127,6 @@ namespace aurora::modules::graphics::win_glew {
 
 		wglMakeCurrent(_dc, _rc);
 
-		glFrontFace(GL_CW);
-
 		glGetIntegerv(GL_MAJOR_VERSION, &_majorVer);
 		glGetIntegerv(GL_MINOR_VERSION, &_minorVer);
 
@@ -169,6 +168,10 @@ namespace aurora::modules::graphics::win_glew {
 		return _deviceFeatures;
 	}
 
+	IBlendState* Graphics::createBlendState() {
+		return new BlendState(*this);
+	}
+
 	IConstantBuffer* Graphics::createConstantBuffer() {
 		return _deviceFeatures.supportConstantBuffer ? new ConstantBuffer(*this) : nullptr;
 	}
@@ -179,6 +182,10 @@ namespace aurora::modules::graphics::win_glew {
 
 	IProgram* Graphics::createProgram() {
 		return new Program(*this);
+	}
+
+	IRasterizerState* Graphics::createRasterizerState() {
+		return new RasterizerState(*this);
 	}
 
 	ISampler* Graphics::createSampler() {
@@ -207,10 +214,6 @@ namespace aurora::modules::graphics::win_glew {
 
 	IPixelBuffer* Graphics::createPixelBuffer() {
 		return new PixelBuffer(*this);
-	}
-
-	IBlendState* Graphics::createBlendState() {
-		return new BlendState(*this);
 	}
 
 	void Graphics::setBlendState(IBlendState* state, const Vec4f32& constantFactors, uint32_t sampleMask) {
@@ -353,6 +356,46 @@ namespace aurora::modules::graphics::win_glew {
 			}
 			if (needChange) glColorMask(rt.internalWriteMask.rgba[0], rt.internalWriteMask.rgba[1], rt.internalWriteMask.rgba[2], rt.internalWriteMask.rgba[3]);
 			blend.isWriteMaskSame = true;
+		}
+	}
+
+	void Graphics::setRasterizerState(IRasterizerState* state) {
+		if (state && state->getGraphics() == this) {
+			auto rs = (RasterizerState*)state;
+			rs->update();
+			auto& rasterizer = _glStatus.rasterizer;
+			if (rasterizer.featureValue != rs->getFeatureValue()) {
+				auto& internalState = rs->getInternalState();
+
+				if (rasterizer.state.fillMode != internalState.fillMode) {
+					glPolygonMode(GL_FRONT_AND_BACK, internalState.fillMode);
+					rasterizer.state.fillMode = internalState.fillMode;
+				}
+
+				if (internalState.cullEnabled) {
+					if (!rasterizer.state.cullEnabled) {
+						glEnable(GL_CULL_FACE);
+						rasterizer.state.cullEnabled = true;
+					}
+
+					if (rasterizer.state.cullMode != internalState.cullMode) {
+						glCullFace(internalState.cullMode);
+						rasterizer.state.cullMode = internalState.cullMode;
+					}
+				} else {
+					if (rasterizer.state.cullEnabled) {
+						glDisable(GL_CULL_FACE);
+						rasterizer.state.cullEnabled = false;
+					}
+				}
+
+				if (rasterizer.state.frontFace != internalState.frontFace) {
+					glFrontFace(internalState.frontFace);
+					rasterizer.state.frontFace = internalState.frontFace;
+				}
+
+				rasterizer.featureValue = rs->getFeatureValue();
+			}
 		}
 	}
 
@@ -546,6 +589,24 @@ namespace aurora::modules::graphics::win_glew {
 			}
 
 			glGetFloatv(GL_BLEND_COLOR, blend.constantFactors.data);
+		}
+
+		{
+			auto& rasterizer = _glStatus.rasterizer;
+
+			GLint val = 0;
+			glGetIntegerv(GL_POLYGON_MODE, &val);
+			rasterizer.state.fillMode = val;
+
+			glGetIntegerv(GL_CULL_FACE_MODE, &val);
+			rasterizer.state.cullMode = val;
+
+			glGetIntegerv(GL_FRONT_FACE, &val);
+			rasterizer.state.frontFace = val;
+
+			rasterizer.state.cullEnabled = glIsEnabled(GL_CULL_FACE);
+
+			rasterizer.featureValue = calcHash(rasterizer.state);
 		}
 	}
 

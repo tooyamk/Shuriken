@@ -30,7 +30,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			_fillMode = fill;
 			_desc.FillMode = _convertFillMode(fill);
 
-			_setDirty(_oldDesc.FillMode != _oldDesc.FillMode, DirtyFlag::FILL_MODE);
+			_setDirty(_oldDesc.FillMode != _desc.FillMode, DirtyFlag::FILL_MODE);
 		}
 	}
 
@@ -43,7 +43,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			_cullMode = cull;
 			_desc.CullMode = _convertCullMode(cull);
 
-			_setDirty(_oldDesc.CullMode != _oldDesc.CullMode, DirtyFlag::CULL_MODE);
+			_setDirty(_oldDesc.CullMode != _desc.CullMode, DirtyFlag::CULL_MODE);
 		}
 	}
 
@@ -56,7 +56,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			_frontFace = front;
 			_desc.FrontCounterClockwise = front == FrontFace::CCW;
 
-			_setDirty(_oldDesc.FrontCounterClockwise != _oldDesc.FrontCounterClockwise, DirtyFlag::FRONT_FACE);
+			_setDirty(_oldDesc.FrontCounterClockwise != _desc.FrontCounterClockwise, DirtyFlag::FRONT_FACE);
 		}
 	}
 

@@ -192,13 +192,13 @@
     <ClInclude Include="src\base\Application.h" />
     <ClInclude Include="src\base\Args.h" />
     <ClInclude Include="src\base\ByteArray.h" />
+    <ClInclude Include="src\base\Global.h" />
     <ClInclude Include="src\base\GUID.h" />
     <ClInclude Include="src\base\Image.h" />
     <ClInclude Include="src\base\SerializableObject.h" />
     <ClInclude Include="src\base\String.h" />
     <ClInclude Include="src\base\STList.h" />
     <ClInclude Include="src\base\Lock.h" />
-    <ClInclude Include="src\base\GLobal.h" />
     <ClInclude Include="src\base\DynamicLib.h" />
     <ClInclude Include="src\base\Monitor.h" />
     <ClInclude Include="src\base\Ref.h" />

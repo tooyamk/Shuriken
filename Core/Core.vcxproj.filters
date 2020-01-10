@@ -165,9 +165,6 @@
     <ClInclude Include="src\base\SerializableObject.h">
       <Filter>src\base</Filter>
     </ClInclude>
-    <ClInclude Include="src\base\GLobal.h">
-      <Filter>src\base</Filter>
-    </ClInclude>
     <ClInclude Include="src\base\GUID.h">
       <Filter>src\base</Filter>
     </ClInclude>
@@ -176,6 +173,9 @@
     </ClInclude>
     <ClInclude Include="src\utils\hash\xxHash.h">
       <Filter>src\utils\hash</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\Global.h">
+      <Filter>src\base</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

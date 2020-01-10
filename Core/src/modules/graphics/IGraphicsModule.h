@@ -556,21 +556,21 @@ namespace aurora::modules::graphics {
 
 		virtual const std::string& AE_CALL getVersion() const = 0;
 		virtual const GraphicsDeviceFeatures& AE_CALL getDeviceFeatures() const = 0;
-		virtual IRasterizerState* AE_CALL createRasterizerState() = 0;
+		virtual IBlendState* AE_CALL createBlendState() = 0;
 		virtual IConstantBuffer* AE_CALL createConstantBuffer() = 0;
 		virtual IIndexBuffer* AE_CALL createIndexBuffer() = 0;
 		virtual IPixelBuffer* AE_CALL createPixelBuffer() = 0;
 		virtual IProgram* AE_CALL createProgram() = 0;
+		virtual IRasterizerState* AE_CALL createRasterizerState() = 0;
 		virtual ISampler* AE_CALL createSampler() = 0;
 		virtual ITexture1DResource* AE_CALL createTexture1DResource() = 0;//unrealized wingl
 		virtual ITexture2DResource* AE_CALL createTexture2DResource() = 0;
 		virtual ITexture3DResource* AE_CALL createTexture3DResource() = 0;//unrealized wingl
 		virtual ITextureView* AE_CALL createTextureView() = 0;
 		virtual IVertexBuffer* AE_CALL createVertexBuffer() = 0;
-		virtual IBlendState* AE_CALL createBlendState() = 0;
 
-		virtual void AE_CALL setRasterizerState(IRasterizerState* state) = 0;//unrealized wingl
 		virtual void AE_CALL setBlendState(IBlendState* state, const Vec4f32& constantFactors, uint32_t sampleMask = (std::numeric_limits<uint32_t>::max)()) = 0;//unrealized all sampleMask
+		virtual void AE_CALL setRasterizerState(IRasterizerState* state) = 0;
 
 		virtual void AE_CALL beginRender() = 0;
 		virtual void AE_CALL draw(const VertexBufferFactory* vertexFactory, IProgram* program, const ShaderParameterFactory* paramFactory,

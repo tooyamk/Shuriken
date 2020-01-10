@@ -29,7 +29,7 @@ namespace aurora {
 
 		if (_hIns) {
 			auto appIdW = String::Utf8ToUnicode(_appId);
-			UnregisterClass(appIdW.data(), _hIns);
+			UnregisterClassW(appIdW.data(), _hIns);
 			_hIns = nullptr;
 		}
 #endif
