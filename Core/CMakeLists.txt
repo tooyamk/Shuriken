@@ -1,10 +1,16 @@
-auto_set_project_name()
+__set_project()
 set_property(GLOBAL PROPERTY __PROJECT_CORE_NAME ${PROJECT_NAME})
-set_property(GLOBAL PROPERTY __PROJECT_CORE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+set_property(GLOBAL PROPERTY __PROJECT_CORE_SRC_DIR ${PROJECT_SOURCE_DIR})
+set_property(GLOBAL PROPERTY __PROJECT_CORE_BUILD_DIR ${__BUILD_DIR})
+
+message("=======================")
+#message(${LIBRARY_OUTPUT_DIRECTORY})
+#message(${LIBRARY_OUTPUT_DIRECTORY_DEBUG})
 
 include_directories(src)
 add_definitions(-D AE_EXPORTS)
 file(GLOB SRC_FILES "src/*/*.h" "src/*/*.cpp" "src/*/*/*.h" "src/*/*/*.cpp")
-add_library_source_group(${PROJECT_NAME} SHARED ${SRC_FILES})
+__add_library_source_group(${PROJECT_NAME} SHARED ${SRC_FILES})
 
-#set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/build/)
+#set(CMAKE_INSTALL_PREFIX ${PROJECT_BINARY_DIR})
+#install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})

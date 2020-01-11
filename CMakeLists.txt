@@ -1,10 +1,20 @@
-macro(auto_set_project_name)
+cmake_minimum_required (VERSION 3.10.0)
+
+set(CMAKE_DEBUG_POSTFIX _d)
+
+macro(__set_project)
     get_filename_component(ProjectId ${CMAKE_CURRENT_SOURCE_DIR} NAME)
     string(REPLACE " " "_" ProjectId ${ProjectId})
     project(${ProjectId})
+
+    set(__BUILD_DIR ${PROJECT_BINARY_DIR}/build/)
+    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${BUILD_DIR})
+    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${BUILD_DIR})
+    set(LIBRARY_OUTPUT_PATH ${__BUILD_DIR})
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BUILD_DIR})
 endmacro()
 
-function(assign_source_group)
+function(__assign_source_group)
     foreach(_source IN ITEMS ${ARGN})
         if (IS_ABSOLUTE "${_source}")
             file(RELATIVE_PATH _source_rel "${CMAKE_CURRENT_SOURCE_DIR}" "${_source}")
@@ -15,19 +25,21 @@ function(assign_source_group)
         string(REPLACE "/" "\\" _source_path_msvc "${_source_path}")
         source_group("${_source_path_msvc}" FILES "${_source}")
     endforeach()
-endfunction(assign_source_group)
+endfunction(__assign_source_group)
  
-function(add_library_source_group)
+function(__add_library_source_group)
     foreach(_source IN ITEMS ${ARGN})
-        assign_source_group(${_source})
+    __assign_source_group(${_source})
     endforeach()
     add_library(${ARGV})
-endfunction(add_library_source_group)
+endfunction(__add_library_source_group)
 
 set(CMAKE_CXX_STANDARD 17)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 project(Aurora)
 
+add_subdirectory(Libs/zlib)
+add_subdirectory(Libs/libpng)
 add_subdirectory(Core)
 add_subdirectory(Modules/Graphics/WinD3D11)

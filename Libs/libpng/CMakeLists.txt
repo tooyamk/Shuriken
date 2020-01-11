@@ -1,0 +1,36 @@
+__set_project()
+set_property(GLOBAL PROPERTY __PROJECT_LIBPNG_NAME ${PROJECT_NAME})
+set_property(GLOBAL PROPERTY __PROJECT_LIBPNG_DIR ${PROJECT_SOURCE_DIR})
+
+get_property(__PROJECT_ZLIB_NAME GLOBAL PROPERTY "__PROJECT_ZLIB_NAME")
+get_property(__PROJECT_ZLIB_SRC_DIR GLOBAL PROPERTY "__PROJECT_ZLIB_SRC_DIR")
+get_property(__PROJECT_ZLIB_BUILD_DIR GLOBAL PROPERTY "__PROJECT_ZLIB_BUILD_DIR")
+
+include(ExternalProject)
+
+ExternalProject_Add(
+    ${PROJECT_NAME}
+    PREFIX ${PROJECT_SOURCE_DIR}
+    GIT_REPOSITORY https://github.com/glennrp/libpng.git
+    GIT_TAG v1.6.37
+    GIT_SHALLOW 1
+    GIT_PROGRESS 1
+    TMP_DIR tmp
+    STAMP_DIR stamp
+    DOWNLOAD_DIR download
+    INSTALL_DIR install
+    SOURCE_DIR src
+    BINARY_DIR ${__BUILD_DIR}
+    INSTALL_COMMAND ""
+    CMAKE_ARGS
+        -DSKIP_INSTALL_ALL=1
+        -DPNG_BUILD_ZLIB=ON
+        -DPNG_STATIC=OFF
+        -DPNG_TESTS=OFF
+        -DZLIB_INCLUDE_DIR=${__PROJECT_ZLIB_SRC_DIR}/src/
+        -DZLIB_LIBRARY=${__PROJECT_ZLIB_BUILD_DIR}/Debug/zlibd.lib
+        -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+)
+
+add_dependencies(${PROJECT_NAME} ${__PROJECT_ZLIB_NAME})
+set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER "Libs")
