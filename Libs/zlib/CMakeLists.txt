@@ -1,13 +1,12 @@
 __set_project()
 set_property(GLOBAL PROPERTY __PROJECT_ZLIB_NAME ${PROJECT_NAME})
-set_property(GLOBAL PROPERTY __PROJECT_ZLIB_SRC_DIR ${PROJECT_SOURCE_DIR})
-set_property(GLOBAL PROPERTY __PROJECT_ZLIB_BUILD_DIR ${__BUILD_DIR})
+set_property(GLOBAL PROPERTY __PROJECT_ZLIB_INSTALL_DIR ${PROJECT_BINARY_DIR}/install)
 
 include(ExternalProject)
 
 ExternalProject_Add(
     ${PROJECT_NAME}
-    PREFIX ${PROJECT_SOURCE_DIR}
+    PREFIX ${PROJECT_BINARY_DIR}
     #URL https://www.zlib.net/zlib1211.zip
     GIT_REPOSITORY https://github.com/madler/zlib.git
     GIT_TAG v1.2.11
@@ -23,6 +22,7 @@ ExternalProject_Add(
     CMAKE_ARGS
         -DBUILD_SHARED_LIBS=1
         -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+        -DCMAKE_DEBUG_POSTFIX=${CMAKE_DEBUG_POSTFIX}
         _DCMAKE_DEBUG_POSTFIX=${CMAKE_DEBUG_POSTFIX}
 )
 

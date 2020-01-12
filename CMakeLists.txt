@@ -1,17 +1,21 @@
 cmake_minimum_required (VERSION 3.10.0)
 
-set(CMAKE_DEBUG_POSTFIX _d)
+set(CMAKE_DEBUG_POSTFIX d)
+#set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "add a postfix, usually d on windows")
+#set(CMAKE_RELEASE_POSTFIX "" CACHE STRING "add a postfix, usually empty on windows")
+#set(CMAKE_RELWITHDEBINFO_POSTFIX "rd" CACHE STRING "add a postfix, usually empty on windows")
+#set(CMAKE_MINSIZEREL_POSTFIX "s" CACHE STRING "add a postfix, usually empty on windows")
 
 macro(__set_project)
     get_filename_component(ProjectId ${CMAKE_CURRENT_SOURCE_DIR} NAME)
     string(REPLACE " " "_" ProjectId ${ProjectId})
     project(${ProjectId})
 
-    set(__BUILD_DIR ${PROJECT_BINARY_DIR}/build/)
-    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${BUILD_DIR})
-    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${BUILD_DIR})
-    set(LIBRARY_OUTPUT_PATH ${__BUILD_DIR})
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BUILD_DIR})
+    set(__BUILD_DIR ${PROJECT_BINARY_DIR}/build)
+    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${__BUILD_DIR}$<0:>)
+    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${__BUILD_DIR}$<0:>)
+    #set(LIBRARY_OUTPUT_PATH ${__BUILD_DIR}$<0:>)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${__BUILD_DIR}$<0:>)
 endmacro()
 
 function(__assign_source_group)
@@ -39,7 +43,11 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 project(Aurora)
 
+set(__AE_MODULES_FOLDER_NAME Modules)
+set(__AE_EXTENSIONS_FOLDER_NAME Extensions)
+
 add_subdirectory(Libs/zlib)
 add_subdirectory(Libs/libpng)
 add_subdirectory(Core)
-add_subdirectory(Modules/Graphics/WinD3D11)
+add_subdirectory(${__AE_MODULES_FOLDER_NAME}/Graphics/WinD3D11)
+add_subdirectory(${__AE_EXTENSIONS_FOLDER_NAME}/Files/Images/PNGConverter)
