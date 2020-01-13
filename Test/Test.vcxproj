@@ -31,7 +31,7 @@
     <ProjectReference Include="..\Modules\Graphics\WinD3D11\WinD3D11.vcxproj">
       <Project>{a3d58001-9a8b-4f70-a59b-8a4c0d4b0e10}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\Modules\Graphics\WinGlew\WinGlew.vcxproj">
+    <ProjectReference Include="..\Modules\Graphics\WinGL\WinGL.vcxproj">
       <Project>{a65be382-ccae-473b-94d8-9f224c5af736}</Project>
     </ProjectReference>
     <ProjectReference Include="..\Modules\Inputs\WinDirectInput\WinDirectInput.vcxproj">

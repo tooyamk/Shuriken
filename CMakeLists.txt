@@ -50,13 +50,14 @@ set(__AE_EXTENSIONS_FOLDER_NAME Extensions)
 add_subdirectory(${__AE_EXTERNAL_FOLDER_NAME}/zlib)
 add_subdirectory(${__AE_EXTERNAL_FOLDER_NAME}/libpng)
 add_subdirectory(${__AE_EXTERNAL_FOLDER_NAME}/glew)
-add_subdirectory(${__AE_EXTERNAL_FOLDER_NAME}/dxcompiler)
+add_subdirectory(${__AE_EXTERNAL_FOLDER_NAME}/dxcompiler)#compile failed
 
 add_subdirectory(Core)
 
 if (WIN32)
+    add_subdirectory(${__AE_MODULES_FOLDER_NAME}/Graphics/ProgramSourceTranslator)#only x64
     add_subdirectory(${__AE_MODULES_FOLDER_NAME}/Graphics/WinD3D11)
+    add_subdirectory(${__AE_MODULES_FOLDER_NAME}/Graphics/WinGL)
 endif ()
-#add_subdirectory(${__AE_MODULES_FOLDER_NAME}/Graphics/WinGlew)
 
 add_subdirectory(${__AE_EXTENSIONS_FOLDER_NAME}/Files/Images/PNGConverter)

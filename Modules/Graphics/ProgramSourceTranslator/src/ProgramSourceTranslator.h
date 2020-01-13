@@ -10,18 +10,6 @@
 #include "modules/graphics/IProgramSourceTranslator.h"
 #include "base/DynamicLib.h"
 
-#if AE_OS_BIT == AE_OS_BIT_64
-#ifdef AE_DEBUG
-#pragma comment(lib, "libs/spirv-cross/x64/spirv-cross-cored.lib")
-#pragma comment(lib, "libs/spirv-cross/x64/spirv-cross-glsld.lib")
-#pragma comment(lib, "libs/spirv-cross/x64/spirv-cross-msld.lib")
-#else
-#pragma comment(lib, "libs/spirv-cross/x64/spirv-cross-core.lib")
-#pragma comment(lib, "libs/spirv-cross/x64/spirv-cross-glsl.lib")
-#pragma comment(lib, "libs/spirv-cross/x64/spirv-cross-msl.lib")
-#endif
-#endif
-
 namespace aurora::modules::graphics::program_source_translator {
 	class ProgramSourceTranslator : public IProgramSourceTranslator {
 	public:
