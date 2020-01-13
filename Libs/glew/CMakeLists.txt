@@ -1,6 +1,7 @@
 __set_project()
 set_property(GLOBAL PROPERTY __PROJECT_GLEW_NAME ${PROJECT_NAME})
-set_property(GLOBAL PROPERTY __PROJECT_GLEW_INSTALL_DIR ${PROJECT_BINARY_DIR}/install)
+set_property(GLOBAL PROPERTY __PROJECT_GLEW_INCLUDE ${PROJECT_BINARY_DIR}/install/include)
+set_property(GLOBAL PROPERTY __PROJECT_GLEW_SHARED_LIB ${PROJECT_BINARY_DIR}/install/lib/glew32$<$<CONFIG:Debug>:d>${CMAKE_STATIC_LIBRARY_SUFFIX})
 
 include(ExternalProject)
 
@@ -25,4 +26,4 @@ ExternalProject_Add(
         <SOURCE_DIR>/build/cmake
 )
 
-set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER "Libs")
+set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER ${__AE_THIRDPARTY_FOLDER_NAME})

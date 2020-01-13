@@ -43,6 +43,7 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 project(Aurora)
 
+set(__AE_THIRDPARTY_FOLDER_NAME ThirdParty)
 set(__AE_MODULES_FOLDER_NAME Modules)
 set(__AE_EXTENSIONS_FOLDER_NAME Extensions)
 
@@ -55,5 +56,6 @@ add_subdirectory(Core)
 if (WIN32)
     add_subdirectory(${__AE_MODULES_FOLDER_NAME}/Graphics/WinD3D11)
 endif ()
+#add_subdirectory(${__AE_MODULES_FOLDER_NAME}/Graphics/WinGlew)
 
 add_subdirectory(${__AE_EXTENSIONS_FOLDER_NAME}/Files/Images/PNGConverter)
