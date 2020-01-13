@@ -1,10 +1,10 @@
 cmake_minimum_required (VERSION 3.10.0)
 
 set(CMAKE_DEBUG_POSTFIX d)
-#set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "add a postfix, usually d on windows")
-#set(CMAKE_RELEASE_POSTFIX "" CACHE STRING "add a postfix, usually empty on windows")
-#set(CMAKE_RELWITHDEBINFO_POSTFIX "rd" CACHE STRING "add a postfix, usually empty on windows")
-#set(CMAKE_MINSIZEREL_POSTFIX "s" CACHE STRING "add a postfix, usually empty on windows")
+#set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "")
+#set(CMAKE_RELEASE_POSTFIX "" CACHE STRING "")
+#set(CMAKE_RELWITHDEBINFO_POSTFIX "rd" CACHE STRING "")
+#set(CMAKE_MINSIZEREL_POSTFIX "s" CACHE STRING "")
 
 macro(__set_project)
     get_filename_component(ProjectId ${CMAKE_CURRENT_SOURCE_DIR} NAME)
@@ -43,13 +43,14 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 project(Aurora)
 
-set(__AE_THIRDPARTY_FOLDER_NAME ThirdParty)
+set(__AE_EXTERNAL_FOLDER_NAME External)
 set(__AE_MODULES_FOLDER_NAME Modules)
 set(__AE_EXTENSIONS_FOLDER_NAME Extensions)
 
-add_subdirectory(Libs/zlib)
-add_subdirectory(Libs/libpng)
-add_subdirectory(Libs/glew)
+add_subdirectory(${__AE_EXTERNAL_FOLDER_NAME}/zlib)
+add_subdirectory(${__AE_EXTERNAL_FOLDER_NAME}/libpng)
+add_subdirectory(${__AE_EXTERNAL_FOLDER_NAME}/glew)
+add_subdirectory(${__AE_EXTERNAL_FOLDER_NAME}/dxcompiler)
 
 add_subdirectory(Core)
 

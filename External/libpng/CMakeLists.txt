@@ -23,9 +23,7 @@ ExternalProject_Add(
     INSTALL_DIR install
     SOURCE_DIR src
     BINARY_DIR ${__BUILD_DIR}
-    #INSTALL_COMMAND ""
     CMAKE_ARGS
-        #-DSKIP_INSTALL_ALL=1
         -DPNG_BUILD_ZLIB=ON
         -DPNG_STATIC=OFF
         -DPNG_TESTS=OFF
@@ -35,4 +33,4 @@ ExternalProject_Add(
 )
 
 add_dependencies(${PROJECT_NAME} ${__PROJECT_ZLIB_NAME})
-set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER ${__AE_THIRDPARTY_FOLDER_NAME})
+set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER ${__AE_EXTERNAL_FOLDER_NAME})
