@@ -38,6 +38,13 @@ function(__add_library_source_group)
     add_library(${ARGV})
 endfunction(__add_library_source_group)
 
+function(__add_executable_source_group)
+    foreach (_source IN ITEMS ${ARGN})
+        __assign_source_group(${_source})
+    endforeach ()
+    add_executable(${ARGV})
+endfunction(__add_executable_source_group)
+
 set(CMAKE_CXX_STANDARD 17)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
@@ -58,6 +65,11 @@ if (WIN32)
     add_subdirectory(${__AE_MODULES_FOLDER_NAME}/Graphics/ProgramSourceTranslator)#only x64
     add_subdirectory(${__AE_MODULES_FOLDER_NAME}/Graphics/WinD3D11)
     add_subdirectory(${__AE_MODULES_FOLDER_NAME}/Graphics/WinGL)
+
+    add_subdirectory(${__AE_MODULES_FOLDER_NAME}/Inputs/WinDirectInput)
+    add_subdirectory(${__AE_MODULES_FOLDER_NAME}/Inputs/WinXInput)
 endif ()
 
 add_subdirectory(${__AE_EXTENSIONS_FOLDER_NAME}/Files/Images/PNGConverter)
+
+add_subdirectory(Test)

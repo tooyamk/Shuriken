@@ -1,5 +1,7 @@
 __set_project()
+set(__OUTPUT_NAME ae-program-source-translator)
 set_property(GLOBAL PROPERTY __PROJECT_AE_PST_NAME ${PROJECT_NAME})
+set_property(GLOBAL PROPERTY __PROJECT_AE_PST_DLL ${__BUILD_DIR}/${__OUTPUT_NAME}$<$<CONFIG:Debug>:${CMAKE_DEBUG_POSTFIX}>${CMAKE_SHARED_LIBRARY_SUFFIX})
 
 get_property(__PROJECT_AE_CORE_NAME GLOBAL PROPERTY "__PROJECT_AE_CORE_NAME")
 get_property(__PROJECT_AE_CORE_SRC_DIR GLOBAL PROPERTY "__PROJECT_AE_CORE_SRC_DIR")
@@ -20,4 +22,4 @@ target_link_libraries(${PROJECT_NAME}
     ${PROJECT_SOURCE_DIR}/libs/spirv-cross/x64/spirv-cross-msl$<$<CONFIG:Debug>:d>${CMAKE_STATIC_LIBRARY_SUFFIX}
 )
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER ${__AE_MODULES_FOLDER_NAME}/Graphics)
-set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ae-program-source-translator)
+set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${__OUTPUT_NAME}) 
