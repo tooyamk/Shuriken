@@ -14,7 +14,7 @@ namespace aurora {
 		release();
 	}
 
-	inline bool DynamicLib::load(const std::string_view& path) {
+	bool DynamicLib::load(const std::string_view& path) {
 		release();
 #if AE_OS == AE_OS_WIN
 		auto wpath = String::Utf8ToUnicode(path);
@@ -26,7 +26,7 @@ namespace aurora {
 		return _lib;
 	}
 
-	inline void DynamicLib::release() {
+	void DynamicLib::release() {
 		if (_lib) {
 #if AE_OS == AE_OS_WIN
 			FreeLibrary((HMODULE)_lib);
@@ -37,7 +37,7 @@ namespace aurora {
 		}
 	}
 
-	inline void* DynamicLib::getSymbolAddress(const std::string_view& name) const {
+	void* DynamicLib::getSymbolAddress(const std::string_view& name) const {
 		if (_lib) {
 #if AE_OS == AE_OS_WIN
 			return GetProcAddress((HMODULE)_lib, name.data());

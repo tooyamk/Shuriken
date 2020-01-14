@@ -25,6 +25,7 @@ ExternalProject_Add(
     INSTALL_DIR install
     SOURCE_DIR src
     BINARY_DIR ${__BUILD_DIR}
+    UPDATE_COMMAND ""
     CMAKE_ARGS
         -DPNG_BUILD_ZLIB=ON
         -DPNG_STATIC=OFF

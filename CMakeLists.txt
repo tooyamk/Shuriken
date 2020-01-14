@@ -11,6 +11,9 @@ macro(__set_project)
     string(REPLACE " " "_" ProjectId ${ProjectId})
     project(${ProjectId})
 
+    #set(PROJECT_NAME ${ProjectId})
+    #set(PROJECT_BINARY_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+
     set(__BUILD_DIR ${PROJECT_BINARY_DIR}/build)
     set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${__BUILD_DIR}$<0:>)
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${__BUILD_DIR}$<0:>)

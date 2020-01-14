@@ -21,6 +21,7 @@ ExternalProject_Add(
     INSTALL_DIR install
     SOURCE_DIR src
     BINARY_DIR ${__BUILD_DIR}
+    UPDATE_COMMAND ""
     CONFIGURE_COMMAND
         ${CMAKE_COMMAND}
         -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>

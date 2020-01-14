@@ -20,6 +20,7 @@ ExternalProject_Add(
     INSTALL_DIR install
     SOURCE_DIR src
     BINARY_DIR ${__BUILD_DIR}
+    UPDATE_COMMAND ""
     CMAKE_ARGS
         -DBUILD_SHARED_LIBS=1
         -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
