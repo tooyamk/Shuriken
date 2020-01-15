@@ -594,15 +594,15 @@ namespace aurora::modules::graphics::win_gl {
 		{
 			auto& rasterizer = _glStatus.rasterizer;
 
-			GLint val = 0;
-			glGetIntegerv(GL_POLYGON_MODE, &val);
-			rasterizer.state.fillMode = val;
+			GLint val[2];
+			glGetIntegerv(GL_POLYGON_MODE, val);
+			rasterizer.state.fillMode = val[0] == val[1] ? val[0] : 0;
 
-			glGetIntegerv(GL_CULL_FACE_MODE, &val);
-			rasterizer.state.cullMode = val;
+			glGetIntegerv(GL_CULL_FACE_MODE, val);
+			rasterizer.state.cullMode = val[0];
 
-			glGetIntegerv(GL_FRONT_FACE, &val);
-			rasterizer.state.frontFace = val;
+			glGetIntegerv(GL_FRONT_FACE, val);
+			rasterizer.state.frontFace = val[0];
 
 			rasterizer.state.cullEnabled = glIsEnabled(GL_CULL_FACE);
 

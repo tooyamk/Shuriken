@@ -57,6 +57,7 @@ namespace aurora::modules::graphics::win_gl {
 
 	struct InternalRasterizerState {
 		bool cullEnabled;
+		uint8_t unuse = 0;
 		uint16_t fillMode;
 		uint16_t cullMode;
 		uint16_t frontFace;

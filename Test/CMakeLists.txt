@@ -29,19 +29,6 @@ include_directories(${__PROJECT_AE_CORE_SRC_DIR}/src/)
 file(GLOB SRC_FILES "src/*.h" "src/*.cpp")
 __add_executable_source_group(${PROJECT_NAME} ${SRC_FILES})
 
-add_dependencies(${PROJECT_NAME} 
-    ${__PROJECT_AE_CORE_NAME}
-    ${__PROJECT_AE_PNG_CONVERTER_NAME}
-)
-if (WIN32)
-    add_dependencies(${PROJECT_NAME}
-        ${__PROJECT_AE_WIN_GL_NAME}
-        ${__PROJECT_AE_WIN_D3D11_NAME}
-        ${__PROJECT_AE_WIN_DIRECT_INPUT_NAME}
-        ${__PROJECT_AE_WIN_XINPUT_NAME}
-)
-endif ()
-
 target_link_libraries(${PROJECT_NAME}
     ${__PROJECT_AE_CORE_NAME}
     ${__PROJECT_AE_PNG_CONVERTER_NAME}
@@ -65,15 +52,21 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E make_directory ${__OUTPUT_LIBS_FOLDER}
     COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/../Resources/ ${__BUILD_DIR}/Resources/ 
 )
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+
+add_custom_target(run_test_general ALL
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${__PROJECT_AE_CORE_DLL} ${__BUILD_DIR}
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${__PROJECT_AE_PNG_CONVERTER_DLL} ${__OUTPUT_LIBS_FOLDER}
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${__PROJECT_ZLIB_DLL} ${__OUTPUT_LIBS_FOLDER}
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${__PROJECT_LIBPNG_DLL} ${__OUTPUT_LIBS_FOLDER}
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${__PROJECT_GLEW_DLL} ${__OUTPUT_LIBS_FOLDER}
 )
+add_dependencies(run_test_general
+    ${__PROJECT_AE_CORE_NAME}
+    ${__PROJECT_AE_PNG_CONVERTER_NAME}
+)
+add_dependencies(${PROJECT_NAME} run_test_general)
 if (WIN32)
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    add_custom_target(run_test_win ALL
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${__PROJECT_AE_PST_SRC_DIR}/libs/dxcompiler/x64/dxcompiler.dll ${__OUTPUT_LIBS_FOLDER}
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${__PROJECT_AE_PST_SRC_DIR}/libs/dxcompiler/x64/dxil.dll ${__OUTPUT_LIBS_FOLDER}
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${__PROJECT_AE_PST_DLL} ${__OUTPUT_LIBS_FOLDER}
@@ -82,4 +75,11 @@ if (WIN32)
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${__PROJECT_AE_WIN_DIRECT_INPUT_DLL} ${__OUTPUT_LIBS_FOLDER}
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${__PROJECT_AE_WIN_XINPUT_DLL} ${__OUTPUT_LIBS_FOLDER}
     )
+    add_dependencies(run_test_win
+        ${__PROJECT_AE_WIN_GL_NAME}
+        ${__PROJECT_AE_WIN_D3D11_NAME}
+        ${__PROJECT_AE_WIN_DIRECT_INPUT_NAME}
+        ${__PROJECT_AE_WIN_XINPUT_NAME}
+    )
+    add_dependencies(${PROJECT_NAME} run_test_win)
 endif ()
