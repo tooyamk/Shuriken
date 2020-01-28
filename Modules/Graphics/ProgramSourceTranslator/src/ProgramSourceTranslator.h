@@ -32,7 +32,7 @@ namespace aurora::modules::graphics::program_source_translator {
 
 #ifdef AE_MODULE_EXPORTS
 namespace aurora::modules::graphics {
-	extern "C" AE_MODULE_DLL_EXPORT void* AE_CREATE_MODULE_FN_NAME(Ref * loader, const Args * args) {
+	extern "C" AE_MODULE_DLL_EXPORT void* AE_CREATE_MODULE_FN_NAME(Ref* loader, const Args* args) {
 		if (!args) {
 			println("Module create err, no args");
 			return nullptr;

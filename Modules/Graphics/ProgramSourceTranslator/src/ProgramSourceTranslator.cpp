@@ -2,7 +2,7 @@
 //#include "spirv-tools/libspirv.h"
 //#include "spirv.hpp"
 //#include "spirv_cross.hpp"
-#include "spirv_msl.hpp"
+#include "spirv_cross/spirv_msl.hpp"
 #include "base/String.h"
 #include "modules/graphics/IGraphicsModule.h"
 
@@ -150,8 +150,8 @@ namespace aurora::modules::graphics::program_source_translator {
 			opts.vertex.flip_vert_y = false;
 			opts.vertex.support_nonzero_base_instance = true;
 			compiler.set_common_options(opts);
-
-			if (auto sampler = compiler.build_dummy_sampler_for_combined_images(); sampler != 0) {
+			
+			if (auto sampler = compiler.build_dummy_sampler_for_combined_images(); (uint32_t)sampler != 0) {
 				compiler.set_decoration(sampler, spv::DecorationDescriptorSet, 0);
 				compiler.set_decoration(sampler, spv::DecorationBinding, 0);
 			}

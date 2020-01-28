@@ -61,7 +61,8 @@ set(__AE_EXTENSIONS_FOLDER_NAME Extensions)
 add_subdirectory(${__AE_EXTERNAL_FOLDER_NAME}/zlib)
 add_subdirectory(${__AE_EXTERNAL_FOLDER_NAME}/libpng)
 add_subdirectory(${__AE_EXTERNAL_FOLDER_NAME}/glew)
-add_subdirectory(${__AE_EXTERNAL_FOLDER_NAME}/dxcompiler)#compile failed
+add_subdirectory(${__AE_EXTERNAL_FOLDER_NAME}/DirectXShaderCompiler)
+add_subdirectory(${__AE_EXTERNAL_FOLDER_NAME}/SPIRV-Cross)
 
 add_subdirectory(Core)
 

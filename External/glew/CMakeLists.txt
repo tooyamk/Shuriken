@@ -7,6 +7,14 @@ set_property(GLOBAL PROPERTY __PROJECT_GLEW_DLL ${PROJECT_BINARY_DIR}/install/bi
 
 include(ExternalProject)
 
+if (MSVC)
+    set(sharedLinkFlags "${CMAKE_SHARED_LINKER_FLAGS} /DYNAMICBASE \"msvcurt.lib\"")
+    set(staticLinkFlags "${CMAKE_STATIC_LINKER_FLAGS} /DYNAMICBASE \"msvcurt.lib\"")
+else ()
+    set(sharedLinkFlags "${CMAKE_SHARED_LINKER_FLAGS}")
+    set(staticLinkFlags "${CMAKE_STATIC_LINKER_FLAGS}")
+endif ()
+
 ExternalProject_Add(
     ${PROJECT_NAME}
     PREFIX ${PROJECT_BINARY_DIR}
@@ -25,7 +33,10 @@ ExternalProject_Add(
     CONFIGURE_COMMAND
         ${CMAKE_COMMAND}
         -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
+        -DCMAKE_SHARED_LINKER_FLAGS=${sharedLinkFlags}
+        -DCMAKE_STATIC_LINKER_FLAGS=${staticLinkFlags}
         <SOURCE_DIR>/build/cmake
+        CMAKE_CACHE_ARGS
 )
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER ${__AE_EXTERNAL_FOLDER_NAME})
