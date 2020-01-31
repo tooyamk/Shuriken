@@ -31,6 +31,10 @@ namespace aurora {
 			if (_refCount.fetch_sub(1) <= 1) delete this;
 		}
 
+		inline void AE_CALL weakUnref() {
+			_refCount.fetch_sub(1);
+		}
+
 		inline uint32_t AE_CALL getReferenceCount() const {
 			return _refCount.load(std::memory_order_acquire);
 		}
@@ -168,6 +172,10 @@ namespace aurora {
 				_target->unref();
 				_target = nullptr;
 			}
+		}
+
+		inline void AE_CALL weakReset() {
+			if (_target) _target = nullptr;
 		}
 
 		inline bool AE_CALL isEmpty() const {

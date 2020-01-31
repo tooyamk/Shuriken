@@ -11,7 +11,7 @@ namespace aurora::modules::graphics::win_gl {
 		virtual ~Sampler();
 
 		virtual void AE_CALL setFilter(const SamplerFilter& filter) override;
-		virtual void AE_CALL setComparisonFunc(SamplerComparisonFunc func) override;
+		virtual void AE_CALL setComparisonFunc(ComparisonFunc func) override;
 		virtual void AE_CALL setAddress(const SamplerAddress& address) override;
 		virtual void AE_CALL setMipLOD(f32 min, f32 max) override;
 		virtual void AE_CALL setMipLODBias(f32 bias) override;
@@ -70,7 +70,6 @@ namespace aurora::modules::graphics::win_gl {
 
 		void AE_CALL _updateFilter();
 
-		static GLenum AE_CALL _convertComparisonFunc(SamplerComparisonFunc func);
 		static GLenum AE_CALL _convertAddressMode(SamplerAddressMode mode);
 		void AE_CALL _updateAddress();
 

@@ -7,7 +7,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 	class AE_MODULE_DLL BlendState : public IBlendState {
 	public:
-		BlendState(Graphics& graphics);
+		BlendState(Graphics& graphics, bool isInternal);
 		virtual ~BlendState();
 
 		virtual bool AE_CALL isIndependentBlendEnabled() const override;
@@ -38,6 +38,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		static const RenderTargetBlendState DEFAULT_RT_STATE;
 		static const uint8_t MAX_RTS = 8;
 
+		bool _isInternal;
 		DirtyType _dirty;
 		bool _oldIndependentBlendEnabled;
 		D3D11_BLEND_DESC1 _desc;

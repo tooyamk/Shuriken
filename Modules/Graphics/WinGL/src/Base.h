@@ -42,6 +42,7 @@ namespace aurora::modules::graphics::win_gl {
 	struct InternalBlendWriteMask {
 		union {
 			uint32_t featureValue;
+
 			bool rgba[4];
 		};
 	};
@@ -57,10 +58,47 @@ namespace aurora::modules::graphics::win_gl {
 
 	struct InternalRasterizerState {
 		bool cullEnabled;
-		uint8_t unuse = 0;
+		uint8_t unused = 0;
 		uint16_t fillMode;
 		uint16_t cullMode;
 		uint16_t frontFace;
+	};
+
+
+	struct InternalDepthState {
+		union {
+			uint32_t featureValue;
+
+			struct {
+				bool enabled;
+				bool writeable;
+				uint16_t func;
+			};
+		};
+	};
+
+
+	struct InternalStencilFaceState {
+		uint16_t func;
+		struct {
+			uint16_t fail;
+			uint16_t depthFail;
+			uint16_t pass;
+		} op;
+		struct {
+			uint8_t read;
+			uint8_t write;
+		} mask;
+	};
+
+
+	struct InternalStencilState {
+		bool enabled;
+		
+		struct {
+			InternalStencilFaceState front;
+			InternalStencilFaceState back;
+		} face;
 	};
 
 

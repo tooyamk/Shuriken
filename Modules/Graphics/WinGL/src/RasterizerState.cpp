@@ -2,9 +2,11 @@
 #include "Graphics.h"
 
 namespace aurora::modules::graphics::win_gl {
-	RasterizerState::RasterizerState(Graphics& graphics) : IRasterizerState(graphics),
+	RasterizerState::RasterizerState(Graphics& graphics, bool isInternal) : IRasterizerState(graphics),
+		_isInternal(isInternal),
 		_dirty(DirtyFlag::EMPTY),
 		_featureValue(0) {
+		if (_isInternal) _graphics->weakUnref();
 		_desc.fillMode = FillMode::SOLID;
 		_desc.cullMode = CullMode::BACK;
 		_desc.frontFace = FrontFace::CW;
@@ -12,6 +14,7 @@ namespace aurora::modules::graphics::win_gl {
 	}
 
 	RasterizerState::~RasterizerState() {
+		if (_isInternal) _graphics.weakReset();
 	}
 
 	FillMode RasterizerState::getFillMode() const {

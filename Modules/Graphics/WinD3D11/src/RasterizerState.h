@@ -7,7 +7,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 	class AE_MODULE_DLL RasterizerState : public IRasterizerState {
 	public:
-		RasterizerState(Graphics& graphics);
+		RasterizerState(Graphics& graphics, bool isInternal);
 		virtual ~RasterizerState();
 
 		virtual FillMode AE_CALL getFillMode() const override;
@@ -39,12 +39,15 @@ namespace aurora::modules::graphics::win_d3d11 {
 			static const DirtyType FRONT_FACE = 0b1 << 3;
 		};
 
+		bool _isInternal;
 		DirtyType _dirty;
 		FillMode _fillMode;
+		FillMode _oldFillMode;
 		CullMode _cullMode;
+		CullMode _oldCullMode;
 		FrontFace _frontFace;
+		FrontFace _oldFrontFace;
 		D3D11_RASTERIZER_DESC2 _desc;
-		D3D11_RASTERIZER_DESC2 _oldDesc;
 		ID3D11RasterizerState2* _internalState;
 		uint64_t _featureValue;
 

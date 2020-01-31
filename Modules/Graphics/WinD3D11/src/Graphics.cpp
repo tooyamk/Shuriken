@@ -1,6 +1,7 @@
 #include "Graphics.h"
 #include "CreateModule.h"
 #include "BlendState.h"
+#include "DepthStencilState.h"
 #include "IndexBuffer.h"
 #include "Program.h"
 #include "RasterizerState.h"
@@ -22,7 +23,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_device(nullptr),
 		_context(nullptr),
 		_swapChain(nullptr),
-		_backBufferTarget(nullptr),
+		_backBufferView(nullptr),
 		_deviceFeatures({ 0 }),
 		_d3dStatus({ 0 }),
 		_resizedListener(this, &Graphics::_resizedHandler) {
@@ -259,8 +260,14 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_deviceFeatures.supportConstantBuffer = true;
 		_deviceFeatures.supportPersistentMap = false;
 		_deviceFeatures.supportIndependentBlend = true;
+		_deviceFeatures.supportStencilIndependentRef = false;
+		_deviceFeatures.supportStencilIndependentMask = false;
 
 		_resize((Vec2<UINT>&)size);
+
+		_defaultBlendState = new BlendState(*this, true);
+		_defaultDepthStencilState = new DepthStencilState(*this, true);
+		_defaultRasterizerState = new RasterizerState(*this, true);
 
 		return true;
 	}
@@ -274,11 +281,15 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	IBlendState* Graphics::createBlendState() {
-		return new BlendState(*this);
+		return new BlendState(*this, false);
 	}
 
 	IConstantBuffer* Graphics::createConstantBuffer() {
 		return new ConstantBuffer(*this);
+	}
+
+	IDepthStencilState* Graphics::createDepthStencilState() {
+		return new DepthStencilState(*this, false);
 	}
 
 	IIndexBuffer* Graphics::createIndexBuffer() {
@@ -290,7 +301,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	IRasterizerState* Graphics::createRasterizerState() {
-		return new RasterizerState(*this);
+		return new RasterizerState(*this, false);
 	}
 
 	ISampler* Graphics::createSampler() {
@@ -323,30 +334,63 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 	void Graphics::setBlendState(IBlendState* state, const Vec4f32& constantFactors, uint32_t sampleMask) {
 		if (state && state->getGraphics() == this) {
-			auto bs = (BlendState*)state;
-			bs->update();
-			auto& blend = _d3dStatus.blend;
-			if (auto internalState = bs->getInternalState(); internalState &&
-				(blend.featureValue != bs->getFeatureValue() || !memEqual<sizeof(blend.constantFactors)>(&blend.constantFactors, &constantFactors) || blend.sampleMask != sampleMask)) {
-				blend.featureValue = bs->getFeatureValue();
-				blend.constantFactors.set(constantFactors);
-				blend.sampleMask = sampleMask;
+			_setBlendState(*state, constantFactors, sampleMask);
+		} else if (_defaultBlendState) {
+			_setBlendState(*_defaultBlendState, constantFactors, sampleMask);
+		}
+	}
 
-				_context->OMSetBlendState(internalState, constantFactors.data, sampleMask);
-			}
+	void Graphics::_setBlendState(IBlendState& state, const Vec4f32& constantFactors, uint32_t sampleMask) {
+		auto& bs = (BlendState&)state;
+		bs.update();
+		auto& blend = _d3dStatus.blend;
+		if (auto internalState = bs.getInternalState(); internalState &&
+			(blend.featureValue != bs.getFeatureValue() || !memEqual<sizeof(blend.constantFactors)>(&blend.constantFactors, &constantFactors) || blend.sampleMask != sampleMask)) {
+			blend.featureValue = bs.getFeatureValue();
+			blend.constantFactors.set(constantFactors);
+			blend.sampleMask = sampleMask;
+
+			_context->OMSetBlendState(internalState, constantFactors.data, sampleMask);
+		}
+	}
+
+	void Graphics::setDepthStencilState(IDepthStencilState* state, uint32_t stencilFrontRef, uint32_t stencilBackRef) {
+		if (state && state->getGraphics() == this) {
+			_setDepthStencilState(*state, stencilFrontRef);
+		} else if (_defaultBlendState) {
+			_setDepthStencilState(*_defaultDepthStencilState, stencilFrontRef);
+		}
+	}
+
+	void Graphics::_setDepthStencilState(IDepthStencilState& state, uint32_t stencilRef) {
+		auto& ds = (DepthStencilState&)state;
+		ds.update();
+		auto& depthStencil = _d3dStatus.depthStencil;
+		if (auto internalState = ds.getInternalState(); internalState &&
+			(depthStencil.featureValue != ds.getFeatureValue() || depthStencil.stencilRef != stencilRef)) {
+			depthStencil.featureValue = ds.getFeatureValue();
+			depthStencil.stencilRef = stencilRef;
+
+			_context->OMSetDepthStencilState(internalState, stencilRef);
 		}
 	}
 
 	void Graphics::setRasterizerState(IRasterizerState* state) {
 		if (state && state->getGraphics() == this) {
-			auto rs = (RasterizerState*)state;
-			rs->update();
-			auto& rasterizer = _d3dStatus.rasterizer;
-			if (auto internalState = rs->getInternalState(); internalState && rasterizer.featureValue != rs->getFeatureValue()) {
-				rasterizer.featureValue = rs->getFeatureValue();
+			_setRasterizerState(*state);
+		} else if (_defaultRasterizerState) {
+			_setRasterizerState(*_defaultRasterizerState);
+		}
+	}
 
-				_context->RSSetState(internalState);
-			}
+	void Graphics::_setRasterizerState(IRasterizerState& state) {
+		auto& rs = (RasterizerState&)state;
+		rs.update();
+		auto& rasterizer = _d3dStatus.rasterizer;
+		if (auto internalState = rs.getInternalState(); internalState && rasterizer.featureValue != rs.getFeatureValue()) {
+			rasterizer.featureValue = rs.getFeatureValue();
+
+			_context->RSSetState(internalState);
 		}
 	}
 
@@ -363,7 +407,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			if (!internalIndexBuffer || fmt == DXGI_FORMAT_UNKNOWN) return;
 			auto numIndexElements = ib->getNumElements();
 			if (!numIndexElements || offset >= numIndexElements) return;
-
+			
 			auto p = (Program*)program;
 			if (p->use(vertexFactory, paramFactory)) {
 				uint32_t last = numIndexElements - offset;
@@ -388,7 +432,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	void Graphics::clear(ClearFlag flag, const Vec4f32& color, f32 depth, size_t stencil) {
-		if ((flag & ClearFlag::COLOR) != ClearFlag::NONE) _context->ClearRenderTargetView(_backBufferTarget, color.data);
+		if ((flag & ClearFlag::COLOR) != ClearFlag::NONE) _context->ClearRenderTargetView(_backBufferView, color.data);
 	}
 
 	IConstantBuffer* Graphics::_createdShareConstantBuffer() {
@@ -409,9 +453,9 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	void Graphics::_release() {
-		if (_backBufferTarget) {
-			_backBufferTarget->Release();
-			_backBufferTarget = nullptr;
+		if (_backBufferView) {
+			_backBufferView->Release();
+			_backBufferView = nullptr;
 		}
 		if (_swapChain) {
 			_swapChain->Release();
@@ -448,13 +492,13 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		bool sizeChange = bufferDesc.Width != size[0] || bufferDesc.Height != size[1];
 
-		if (sizeChange || !_backBufferTarget) {
+		if (sizeChange || !_backBufferView) {
 			bufferDesc.Width = size[0];
 			bufferDesc.Height = size[1];
 
-			if (_backBufferTarget) {
-				_backBufferTarget->Release();
-				_backBufferTarget = nullptr;
+			if (_backBufferView) {
+				_backBufferView->Release();
+				_backBufferView = nullptr;
 			}
 
 			if (sizeChange) {
@@ -468,14 +512,14 @@ namespace aurora::modules::graphics::win_d3d11 {
 				println("dx11 error : swap chain GetBuffer error");
 			}
 
-			if (backBufferTexture && FAILED(_device->CreateRenderTargetView(backBufferTexture, nullptr, (ID3D11RenderTargetView**)&_backBufferTarget))) {
-				if (backBufferTexture) backBufferTexture->Release();
-				println("dx11 error : swap chain CreateRenderTargetView error");
+			if (backBufferTexture) {
+				if (FAILED(_device->CreateRenderTargetView(backBufferTexture, nullptr, (ID3D11RenderTargetView**)&_backBufferView))) {
+					println("dx11 error : swap chain CreateRenderTargetView error");
+				}
+				backBufferTexture->Release();
 			}
-			
-			backBufferTexture->Release();
 
-			_context->OMSetRenderTargets(1, (ID3D11RenderTargetView**)&_backBufferTarget, nullptr);
+			if (_backBufferView) _context->OMSetRenderTargets(1, (ID3D11RenderTargetView**)&_backBufferView, nullptr);
 
 			D3D11_VIEWPORT vp;
 			vp.Width = (FLOAT)size[0];
@@ -497,6 +541,29 @@ namespace aurora::modules::graphics::win_d3d11 {
 			return DXGI_FORMAT_R8G8B8A8_UNORM;
 		default:
 			return DXGI_FORMAT_UNKNOWN;
+		}
+	}
+
+	D3D11_COMPARISON_FUNC Graphics::convertComparisonFunc(ComparisonFunc func) {
+		switch (func) {
+		case ComparisonFunc::NEVER:
+			return D3D11_COMPARISON_NEVER;
+		case ComparisonFunc::LESS:
+			return D3D11_COMPARISON_LESS;
+		case ComparisonFunc::EQUAL:
+			return D3D11_COMPARISON_EQUAL;
+		case ComparisonFunc::LESS_EQUAL:
+			return D3D11_COMPARISON_LESS_EQUAL;
+		case ComparisonFunc::GREATER:
+			return D3D11_COMPARISON_GREATER;
+		case ComparisonFunc::NOT_EQUAL:
+			return D3D11_COMPARISON_NOT_EQUAL;
+		case ComparisonFunc::GREATER_EQUAL:
+			return D3D11_COMPARISON_GREATER_EQUAL;
+		case ComparisonFunc::ALWAYS:
+			return D3D11_COMPARISON_ALWAYS;
+		default:
+			return D3D11_COMPARISON_NEVER;
 		}
 	}
 }

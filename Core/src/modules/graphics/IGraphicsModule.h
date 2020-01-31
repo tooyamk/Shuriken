@@ -146,7 +146,7 @@ namespace aurora::modules::graphics {
 	};
 
 
-	enum class SamplerComparisonFunc : uint8_t {
+	enum class ComparisonFunc : uint8_t {
 		NEVER,
 		LESS,
 		EQUAL,
@@ -222,7 +222,7 @@ namespace aurora::modules::graphics {
 		}
 		virtual void AE_CALL setFilter(const SamplerFilter& filter) = 0;
 
-		virtual void AE_CALL setComparisonFunc(SamplerComparisonFunc func) = 0;
+		virtual void AE_CALL setComparisonFunc(ComparisonFunc func) = 0;
 
 		inline void AE_CALL setAddress(SamplerAddressMode u, SamplerAddressMode v, SamplerAddressMode w) {
 			setAddress(SamplerAddress(u, v, w));
@@ -528,12 +528,67 @@ namespace aurora::modules::graphics {
 
 
 	enum class ClearFlag : uint8_t {
-		NONE,
-		COLOR,
-		DEPTH,
-		STENCIL
+		NONE = 0,
+		COLOR = 0b1,
+		DEPTH = 0b10,
+		STENCIL = 0b100
 	};
 	AE_DEFINE_ENUM_BIT_OPERATIION(ClearFlag);
+
+
+	struct AE_DLL DepthState {
+		bool enabled = true;
+		bool writeable = true;
+		ComparisonFunc func = ComparisonFunc::LESS;
+	};
+
+
+	enum class StencilOp : uint8_t {
+		KEEP,
+		ZERO,
+		REPLACE,
+		INCR_CLAMP,
+		DECR_CLAMP,
+		INCR_WRAP,
+		DECR_WRAP,
+		INVERT
+	};
+
+
+	struct AE_DLL StencilFaceState {
+		ComparisonFunc func = ComparisonFunc::ALWAYS;
+		struct {
+			StencilOp fail = StencilOp::KEEP;
+			StencilOp depthFail = StencilOp::KEEP;
+			StencilOp pass = StencilOp::KEEP;
+		} op;
+		struct {
+			uint8_t read = 0xFF;
+			uint8_t write = 0xFF;
+		} mask;	};
+
+
+	struct AE_DLL StencilState {
+		bool enabled = false;
+		struct {
+			StencilFaceState front;
+			StencilFaceState back;
+		} face;
+	};
+
+
+	class AE_DLL IDepthStencilState : public IObject {
+	public:
+		IDepthStencilState(IGraphicsModule& graphics) : IObject(graphics) {}
+		virtual ~IDepthStencilState() {}
+
+		virtual const DepthState& AE_CALL getDepthState() const = 0;
+		virtual void AE_CALL setDepthState(const DepthState& depthState) = 0;
+
+		virtual const StencilState& AE_CALL getStencilState() const = 0;
+		virtual void AE_CALL setStencilState(const StencilState& stencilState) = 0;
+
+	};
 
 
 	struct AE_DLL GraphicsDeviceFeatures {
@@ -543,6 +598,8 @@ namespace aurora::modules::graphics {
 		bool supportConstantBuffer;
 		bool supportPersistentMap;
 		bool supportIndependentBlend;
+		bool supportStencilIndependentRef;
+		bool supportStencilIndependentMask;
 	};
 
 
@@ -558,6 +615,7 @@ namespace aurora::modules::graphics {
 		virtual const GraphicsDeviceFeatures& AE_CALL getDeviceFeatures() const = 0;
 		virtual IBlendState* AE_CALL createBlendState() = 0;
 		virtual IConstantBuffer* AE_CALL createConstantBuffer() = 0;
+		virtual IDepthStencilState* AE_CALL createDepthStencilState() = 0;
 		virtual IIndexBuffer* AE_CALL createIndexBuffer() = 0;
 		virtual IPixelBuffer* AE_CALL createPixelBuffer() = 0;
 		virtual IProgram* AE_CALL createProgram() = 0;
@@ -570,6 +628,10 @@ namespace aurora::modules::graphics {
 		virtual IVertexBuffer* AE_CALL createVertexBuffer() = 0;
 
 		virtual void AE_CALL setBlendState(IBlendState* state, const Vec4f32& constantFactors, uint32_t sampleMask = (std::numeric_limits<uint32_t>::max)()) = 0;//unrealized all sampleMask
+		virtual void AE_CALL setDepthStencilState(IDepthStencilState* state, uint32_t stencilFrontRef, uint32_t stencilBackRef) = 0;
+		inline void AE_CALL setDepthStencilState(IDepthStencilState* state, uint32_t stencilRef) {
+			setDepthStencilState(state, stencilRef, stencilRef);
+		}
 		virtual void AE_CALL setRasterizerState(IRasterizerState* state) = 0;
 
 		virtual void AE_CALL beginRender() = 0;

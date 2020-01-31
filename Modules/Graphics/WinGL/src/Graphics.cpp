@@ -2,6 +2,7 @@
 #include "CreateModule.h"
 #include "BlendState.h"
 #include "ConstantBuffer.h"
+#include "DepthStencilState.h"
 #include "IndexBuffer.h"
 #include "PixelBuffer.h"
 #include "Program.h"
@@ -152,10 +153,16 @@ namespace aurora::modules::graphics::win_gl {
 		_internalFeatures.supportTexStorage = isGreatThanOrEqualVersion(4, 2);
 		_deviceFeatures.supportTextureView = isGreatThanOrEqualVersion(4, 3);
 		_deviceFeatures.supportPersistentMap = isGreatThanOrEqualVersion(4, 4);
+		_deviceFeatures.supportStencilIndependentRef = true;
+		_deviceFeatures.supportStencilIndependentMask = true;
 
 		_createBufferMask = Usage::MAP_READ_WRITE | Usage::UPDATE | (_deviceFeatures.supportPersistentMap ? Usage::PERSISTENT_MAP : Usage::NONE);
 
 		_setInitState();
+
+		_defaultBlendState = new BlendState(*this, true);
+		_defaultDepthStencilState = new DepthStencilState(*this, true);
+		_defaultRasterizerState = new RasterizerState(*this, true);
 
 		return true;
 	}
@@ -169,11 +176,15 @@ namespace aurora::modules::graphics::win_gl {
 	}
 
 	IBlendState* Graphics::createBlendState() {
-		return new BlendState(*this);
+		return new BlendState(*this, false);
 	}
 
 	IConstantBuffer* Graphics::createConstantBuffer() {
 		return _deviceFeatures.supportConstantBuffer ? new ConstantBuffer(*this) : nullptr;
+	}
+
+	IDepthStencilState* Graphics::createDepthStencilState() {
+		return new DepthStencilState(*this, false);
 	}
 
 	IIndexBuffer* Graphics::createIndexBuffer() {
@@ -185,7 +196,7 @@ namespace aurora::modules::graphics::win_gl {
 	}
 
 	IRasterizerState* Graphics::createRasterizerState() {
-		return new RasterizerState(*this);
+		return new RasterizerState(*this, false);
 	}
 
 	ISampler* Graphics::createSampler() {
@@ -218,60 +229,66 @@ namespace aurora::modules::graphics::win_gl {
 
 	void Graphics::setBlendState(IBlendState* state, const Vec4f32& constantFactors, uint32_t sampleMask) {
 		if (state && state->getGraphics() == this) {
-			auto bs = (BlendState*)state;
-			auto& blend = _glStatus.blend;
+			_setBlendState(*state, constantFactors, sampleMask);
+		} else if (_defaultBlendState) {
+			_setBlendState(*_defaultBlendState, constantFactors, sampleMask);
+		}
+	}
 
-			if (_deviceFeatures.supportIndependentBlend) {
-				if (bs->isIndependentBlendEnabled()) {
-					auto funcChanged = false, opChanged = false, writeMaskChanged = false;
-					
-					for (size_t i = 0; i < MAX_RTS; ++i) {
-						auto& rt = bs->getInternalRenderTargetState(i);
-						if (bool(blend.enabled >> i & 0x1) != rt.state.enabled) {
-							if (rt.state.enabled) {
-								glEnablei(GL_BLEND, i);
-								blend.enabled |= 1 << i;
-							} else {
-								glDisablei(GL_BLEND, i);
-								blend.enabled &= ~(1 << i);
-							}
-						}
+	void Graphics::_setBlendState(IBlendState& state, const Vec4f32& constantFactors, uint32_t sampleMask) {
+		auto& bs = (BlendState&)state;
+		auto& blend = _glStatus.blend;
 
+		if (_deviceFeatures.supportIndependentBlend) {
+			if (bs.isIndependentBlendEnabled()) {
+				auto funcChanged = false, opChanged = false, writeMaskChanged = false;
+
+				for (size_t i = 0; i < MAX_RTS; ++i) {
+					auto& rt = bs.getInternalRenderTargetState(i);
+					if (bool(blend.enabled >> i & 0x1) != rt.state.enabled) {
 						if (rt.state.enabled) {
-							if (blend.func[i].featureValue != rt.internalFunc.featureValue) {
-								glBlendFuncSeparatei(i, rt.internalFunc.srcColor, rt.internalFunc.dstColor, rt.internalFunc.srcAlpha, rt.internalFunc.dstAlpha);
-								blend.func[i].featureValue = rt.internalFunc.featureValue;
-								funcChanged = true;
-							}
-
-							if (blend.op[i].featureValue != rt.internalOp.featureValue) {
-								glBlendEquationSeparatei(i, rt.internalOp.color, rt.internalOp.alpha);
-								blend.op[i].featureValue = rt.internalOp.featureValue;
-								opChanged = true;
-							}
-						}
-
-						if (blend.writeMask[i].featureValue != rt.internalWriteMask.featureValue) {
-							glColorMaski(i, rt.internalWriteMask.rgba[0], rt.internalWriteMask.rgba[1], rt.internalWriteMask.rgba[2], rt.internalWriteMask.rgba[3]);
-							blend.writeMask[i].featureValue = rt.internalWriteMask.featureValue;
-							writeMaskChanged = true;
+							glEnablei(GL_BLEND, i);
+							blend.enabled |= 1 << i;
+						} else {
+							glDisablei(GL_BLEND, i);
+							blend.enabled &= ~(1 << i);
 						}
 					}
-					
-					if (funcChanged) _checkBlendFuncIsSame();
-					if (opChanged) _checkBlendOpIsSame();
-					if (writeMaskChanged) _checkBlendWriteMaskIsSame();
-				} else {
-					_setDependentBlendState<true>(bs->getInternalRenderTargetState(0));
-				}
-			} else {
-				_setDependentBlendState<false>(bs->getInternalRenderTargetState(0));
-			}
 
-			if (blend.enabled && !memEqual<sizeof(Vec4f32)>(&blend.constantFactors, &constantFactors)) {
-				glBlendColor(constantFactors.data[0], constantFactors.data[1], constantFactors.data[2], constantFactors.data[3]);
-				memcpy(&blend.constantFactors, &constantFactors, sizeof(Vec4f32));
+					if (rt.state.enabled) {
+						if (blend.func[i].featureValue != rt.internalFunc.featureValue) {
+							glBlendFuncSeparatei(i, rt.internalFunc.srcColor, rt.internalFunc.dstColor, rt.internalFunc.srcAlpha, rt.internalFunc.dstAlpha);
+							blend.func[i].featureValue = rt.internalFunc.featureValue;
+							funcChanged = true;
+						}
+
+						if (blend.op[i].featureValue != rt.internalOp.featureValue) {
+							glBlendEquationSeparatei(i, rt.internalOp.color, rt.internalOp.alpha);
+							blend.op[i].featureValue = rt.internalOp.featureValue;
+							opChanged = true;
+						}
+					}
+
+					if (blend.writeMask[i].featureValue != rt.internalWriteMask.featureValue) {
+						glColorMaski(i, rt.internalWriteMask.rgba[0], rt.internalWriteMask.rgba[1], rt.internalWriteMask.rgba[2], rt.internalWriteMask.rgba[3]);
+						blend.writeMask[i].featureValue = rt.internalWriteMask.featureValue;
+						writeMaskChanged = true;
+					}
+				}
+
+				if (funcChanged) _checkBlendFuncIsSame();
+				if (opChanged) _checkBlendOpIsSame();
+				if (writeMaskChanged) _checkBlendWriteMaskIsSame();
+			} else {
+				_setDependentBlendState<true>(bs.getInternalRenderTargetState(0));
 			}
+		} else {
+			_setDependentBlendState<false>(bs.getInternalRenderTargetState(0));
+		}
+
+		if (blend.enabled && !memEqual<sizeof(Vec4f32)>(&blend.constantFactors, &constantFactors)) {
+			glBlendColor(constantFactors.data[0], constantFactors.data[1], constantFactors.data[2], constantFactors.data[3]);
+			memcpy(&blend.constantFactors, &constantFactors, sizeof(Vec4f32));
 		}
 	}
 
@@ -359,43 +376,156 @@ namespace aurora::modules::graphics::win_gl {
 		}
 	}
 
-	void Graphics::setRasterizerState(IRasterizerState* state) {
+	void Graphics::setDepthStencilState(IDepthStencilState* state, uint32_t stencilFrontRef, uint32_t stencilBackRef) {
 		if (state && state->getGraphics() == this) {
-			auto rs = (RasterizerState*)state;
-			rs->update();
-			auto& rasterizer = _glStatus.rasterizer;
-			if (rasterizer.featureValue != rs->getFeatureValue()) {
-				auto& internalState = rs->getInternalState();
+			_setDepthStencilState(*state, stencilFrontRef, stencilBackRef);
+		} else if (_defaultDepthStencilState) {
+			_setDepthStencilState(*_defaultDepthStencilState, stencilFrontRef, stencilBackRef);
+		}
+	}
 
-				if (rasterizer.state.fillMode != internalState.fillMode) {
-					glPolygonMode(GL_FRONT_AND_BACK, internalState.fillMode);
-					rasterizer.state.fillMode = internalState.fillMode;
+	void Graphics::_setDepthStencilState(IDepthStencilState& state, uint32_t stencilFrontRef, uint32_t stencilBackRef) {
+		auto& ds = (DepthStencilState&)state;
+		ds.update();
+
+		{
+			auto& depth = _glStatus.depth;
+			auto& ids = ds.getInternalDepthState();
+			auto changed = false;
+			if (depth.enabled == ids.enabled) {
+				if (ids.enabled && depth.featureValue != ids.featureValue) changed = true;
+			} else {
+				if (ids.enabled) {
+					glEnable(GL_DEPTH_TEST);
+					depth.enabled = true;
+
+					if (depth.featureValue != ids.featureValue) changed = true;
+				} else {
+					glDisable(GL_DEPTH_TEST);
+					depth.enabled = false;
+				}
+			}
+			if (changed) {
+				if (depth.writeable != ids.writeable) {
+					glDepthMask(ids.writeable);
+					depth.writeable = ids.writeable;
 				}
 
-				if (internalState.cullEnabled) {
-					if (!rasterizer.state.cullEnabled) {
-						glEnable(GL_CULL_FACE);
-						rasterizer.state.cullEnabled = true;
-					}
+				if (depth.func != ids.func) {
+					glDepthFunc(ids.func);
+					depth.func = ids.func;
+				}
+			}
+		}
 
-					if (rasterizer.state.cullMode != internalState.cullMode) {
-						glCullFace(internalState.cullMode);
-						rasterizer.state.cullMode = internalState.cullMode;
+		{
+			auto& stencil = _glStatus.stencil;
+			auto& iss = ds.getInternalStencilState();
+			auto changed = false;
+			auto frontRefChanged = false, backRefChanged = false;
+			if (stencil.state.enabled == iss.enabled) {
+				if (iss.enabled) {
+					if (stencil.featureValue == ds.getStencilFeatureValue()) {
+						frontRefChanged = stencil.ref.front != stencilFrontRef;
+						backRefChanged = stencil.ref.back != stencilBackRef;
+					} else {
+						changed = true;
+					}
+				}
+			} else {
+				if (iss.enabled) {
+					glEnable(GL_STENCIL_TEST);
+
+					if (stencil.featureValue == ds.getStencilFeatureValue()) {
+						frontRefChanged = stencil.ref.front != stencilFrontRef;
+						backRefChanged = stencil.ref.back != stencilBackRef;
+					} else {
+						changed = true;
 					}
 				} else {
-					if (rasterizer.state.cullEnabled) {
-						glDisable(GL_CULL_FACE);
-						rasterizer.state.cullEnabled = false;
-					}
+					glDisable(GL_STENCIL_TEST);
 				}
-
-				if (rasterizer.state.frontFace != internalState.frontFace) {
-					glFrontFace(internalState.frontFace);
-					rasterizer.state.frontFace = internalState.frontFace;
-				}
-
-				rasterizer.featureValue = rs->getFeatureValue();
+				stencil.state.enabled = iss.enabled;
 			}
+
+			if (changed) {
+				if (stencil.state.face.front.func != iss.face.front.func || stencil.ref.front != stencilFrontRef || stencil.state.face.front.mask.read != iss.face.front.mask.read) {
+					glStencilFuncSeparate(GL_FRONT, iss.face.front.func, stencilFrontRef, iss.face.front.mask.read);
+					stencil.ref.front = stencilFrontRef;
+				}
+				if (stencil.state.face.back.func != iss.face.back.func || stencil.ref.back != stencilBackRef || stencil.state.face.back.mask.read != iss.face.back.mask.read) {
+					glStencilFuncSeparate(GL_BACK, iss.face.back.func, stencilBackRef, iss.face.back.mask.read);
+					stencil.ref.back = stencilBackRef;
+				}
+
+				if (stencil.state.face.front.mask.write != iss.face.front.mask.write) glStencilMaskSeparate(GL_FRONT, iss.face.front.mask.write);
+				if (stencil.state.face.back.mask.write != iss.face.back.mask.write) glStencilMaskSeparate(GL_BACK, iss.face.back.mask.write);
+
+				if (!memEqual<sizeof(stencil.state.face.front.op)>(&stencil.state.face.front.op, &iss.face.front.op))
+					glStencilOpSeparate(GL_FRONT, iss.face.front.op.fail, iss.face.front.op.depthFail, iss.face.front.op.pass);
+
+				if (!memEqual<sizeof(stencil.state.face.back.op)>(&stencil.state.face.back.op, &iss.face.back.op))
+					glStencilOpSeparate(GL_BACK, iss.face.back.op.fail, iss.face.back.op.depthFail, iss.face.back.op.pass);
+
+				stencil.state.face = iss.face;
+				stencil.featureValue = ds.getStencilFeatureValue();
+			} else {
+				if (frontRefChanged) {
+					glStencilFuncSeparate(GL_FRONT, iss.face.front.func, stencilFrontRef, iss.face.front.mask.read);
+					stencil.ref.front = stencilFrontRef;
+				}
+
+				if (backRefChanged) {
+					glStencilFuncSeparate(GL_BACK, iss.face.back.func, stencilBackRef, iss.face.back.mask.read);
+					stencil.ref.back = stencilBackRef;
+				}
+			}
+		}
+	}
+
+	void Graphics::setRasterizerState(IRasterizerState* state) {
+		if (state && state->getGraphics() == this) {
+			_setRasterizerState(*state);
+		} else if (_defaultRasterizerState) {
+			_setRasterizerState(*_defaultRasterizerState);
+		}
+	}
+
+	void Graphics::_setRasterizerState(IRasterizerState& state) {
+		auto& rs = (RasterizerState&)state;
+		rs.update();
+		auto& rasterizer = _glStatus.rasterizer;
+		if (rasterizer.featureValue != rs.getFeatureValue()) {
+			auto& internalState = rs.getInternalState();
+
+			if (rasterizer.state.fillMode != internalState.fillMode) {
+				glPolygonMode(GL_FRONT_AND_BACK, internalState.fillMode);
+				rasterizer.state.fillMode = internalState.fillMode;
+			}
+
+			if (internalState.cullEnabled) {
+				if (!rasterizer.state.cullEnabled) {
+					glEnable(GL_CULL_FACE);
+					rasterizer.state.cullEnabled = true;
+				}
+
+				if (rasterizer.state.cullMode != internalState.cullMode) {
+					glCullFace(internalState.cullMode);
+					rasterizer.state.cullMode = internalState.cullMode;
+				}
+			} else {
+				if (rasterizer.state.cullEnabled) {
+					glDisable(GL_CULL_FACE);
+					rasterizer.state.cullEnabled = false;
+				}
+			}
+
+			if (rasterizer.state.frontFace != internalState.frontFace) {
+				glFrontFace(internalState.frontFace);
+				rasterizer.state.frontFace = internalState.frontFace;
+			}
+
+			rasterizer.featureValue = rs.getFeatureValue();
 		}
 	}
 
@@ -592,6 +722,64 @@ namespace aurora::modules::graphics::win_gl {
 		}
 
 		{
+			auto& depth = _glStatus.depth;
+
+			depth.enabled = glIsEnabled(GL_DEPTH_TEST);
+
+			GLboolean b;
+			glGetBooleanv(GL_DEPTH_WRITEMASK, &b);
+			depth.writeable = b;
+
+			GLint val;
+			glGetIntegerv(GL_DEPTH_FUNC, &val);
+			depth.func = val;
+		}
+
+		{
+			auto& stencil = _glStatus.stencil;
+
+			stencil.state.enabled = glIsEnabled(GL_STENCIL_TEST);
+
+			GLint val[2];
+			glGetIntegerv(GL_STENCIL_VALUE_MASK, &val[0]);
+			glGetIntegerv(GL_STENCIL_BACK_VALUE_MASK, &val[1]);
+			stencil.state.face.front.mask.read = val[0];
+			stencil.state.face.back.mask.read = val[1];
+
+			glGetIntegerv(GL_STENCIL_REF, &val[0]);
+			glGetIntegerv(GL_STENCIL_BACK_REF, &val[1]);
+			stencil.ref.front = val[0];
+			stencil.ref.back = val[1];
+
+			glGetIntegerv(GL_STENCIL_WRITEMASK, &val[0]);
+			glGetIntegerv(GL_STENCIL_BACK_WRITEMASK, &val[1]);
+			stencil.state.face.front.mask.write = val[0];
+			stencil.state.face.back.mask.write = val[1];
+
+			glGetIntegerv(GL_STENCIL_FUNC, &val[0]);
+			glGetIntegerv(GL_STENCIL_BACK_FUNC, &val[1]);
+			stencil.state.face.front.func = val[0];
+			stencil.state.face.back.func = val[1];
+
+			glGetIntegerv(GL_STENCIL_FAIL, &val[0]);
+			glGetIntegerv(GL_STENCIL_BACK_FAIL, &val[1]);
+			stencil.state.face.front.op.fail = val[0];
+			stencil.state.face.back.op.fail = val[1];
+
+			glGetIntegerv(GL_STENCIL_PASS_DEPTH_FAIL, &val[0]);
+			glGetIntegerv(GL_STENCIL_BACK_PASS_DEPTH_FAIL, &val[1]);
+			stencil.state.face.front.op.depthFail = val[0];
+			stencil.state.face.back.op.depthFail = val[1];
+
+			glGetIntegerv(GL_STENCIL_PASS_DEPTH_PASS, &val[0]);
+			glGetIntegerv(GL_STENCIL_BACK_PASS_DEPTH_PASS, &val[1]);
+			stencil.state.face.front.op.pass = val[0];
+			stencil.state.face.back.op.pass = val[1];
+
+			stencil.featureValue = calcHash(stencil.state.face);
+		}
+
+		{
 			auto& rasterizer = _glStatus.rasterizer;
 
 			GLint val[2];
@@ -670,6 +858,29 @@ namespace aurora::modules::graphics::win_gl {
 			return std::make_optional<ConvertFormatResult>(GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
 		default:
 			return std::nullopt;
+		}
+	}
+
+	GLenum Graphics::convertComparisonFunc(ComparisonFunc func) {
+		switch (func) {
+		case ComparisonFunc::NEVER:
+			return GL_NEVER;
+		case ComparisonFunc::LESS:
+			return GL_LESS;
+		case ComparisonFunc::EQUAL:
+			return GL_EQUAL;
+		case ComparisonFunc::LESS_EQUAL:
+			return GL_LEQUAL;
+		case ComparisonFunc::GREATER:
+			return GL_GREATER;
+		case ComparisonFunc::NOT_EQUAL:
+			return GL_NOTEQUAL;
+		case ComparisonFunc::GREATER_EQUAL:
+			return GL_GEQUAL;
+		case ComparisonFunc::ALWAYS:
+			return GL_ALWAYS;
+		default:
+			return GL_NEVER;
 		}
 	}
 

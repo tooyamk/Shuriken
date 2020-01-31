@@ -7,7 +7,7 @@ namespace aurora::modules::graphics::win_gl {
 
 	class AE_MODULE_DLL BlendState : public IBlendState {
 	public:
-		BlendState(Graphics& graphics);
+		BlendState(Graphics& graphics, bool isInternal);
 		virtual ~BlendState();
 
 		virtual bool AE_CALL isIndependentBlendEnabled() const override;
@@ -23,6 +23,7 @@ namespace aurora::modules::graphics::win_gl {
 	protected:
 		static const RenderTargetBlendState DEFAULT_RT_STATE;
 
+		bool _isInternal;
 		bool _independentBlendEnabled = false;
 		InternalRenderTargetBlendState _status[MAX_RTS];
 

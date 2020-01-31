@@ -33,8 +33,8 @@ namespace aurora::modules::graphics::win_gl {
 		}
 	}
 
-	void Sampler::setComparisonFunc(SamplerComparisonFunc func) {
-		auto fn = _convertComparisonFunc(func);
+	void Sampler::setComparisonFunc(ComparisonFunc func) {
+		auto fn = Graphics::convertComparisonFunc(func);
 		if (_desc.compareFunc != fn) {
 			_desc.compareFunc = fn;
 
@@ -100,29 +100,6 @@ namespace aurora::modules::graphics::win_gl {
 		}
 
 		_desc.filter.compareMode = _filter.operation == SamplerFilterOperation::COMPARISON ? GL_COMPARE_REF_TO_TEXTURE : GL_NONE;
-	}
-
-	GLenum Sampler::_convertComparisonFunc(SamplerComparisonFunc func) {
-		switch (func) {
-		case SamplerComparisonFunc::NEVER:
-			return GL_NEVER;
-		case SamplerComparisonFunc::LESS:
-			return GL_LESS;
-		case SamplerComparisonFunc::EQUAL:
-			return GL_EQUAL;
-		case SamplerComparisonFunc::LESS_EQUAL:
-			return GL_LEQUAL;
-		case SamplerComparisonFunc::GREATER:
-			return GL_GREATER;
-		case SamplerComparisonFunc::NOT_EQUAL:
-			return GL_NOTEQUAL;
-		case SamplerComparisonFunc::GREATER_EQUAL:
-			return GL_GEQUAL;
-		case SamplerComparisonFunc::ALWAYS:
-			return GL_ALWAYS;
-		default:
-			return GL_NEVER;
-		}
 	}
 
 	GLenum Sampler::_convertAddressMode(SamplerAddressMode mode) {

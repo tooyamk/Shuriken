@@ -205,7 +205,7 @@ namespace aurora {
 		template<Type T, typename = typename std::enable_if_t<T == Type::TWO_I12, bool>>
 		inline std::tuple<int16_t, int16_t> AE_CALL read() {
 			auto [v1, v2] = read<Type::TWO_UI12>();
-			return std::make_tuple<int16_t, int16_t>(v1 > intMax<12>() ? v1 - uintMax<12>() - 1 : v1, v2 > intMax<12>() ? v2 - uintMax<12>() - 1 : v2);
+			return std::make_tuple<int16_t, int16_t>(v1 > BitInt<12>::MAX ? v1 - BitUInt<12>::MAX - 1 : v1, v2 > BitInt<12>::MAX ? v2 - BitUInt<12>::MAX - 1 : v2);
 		}
 
 		template<Type T, typename = typename std::enable_if_t<T == Type::TWO_UI12, bool>>
@@ -407,7 +407,7 @@ namespace aurora {
 
 		template<Type T, typename = typename std::enable_if_t<T == Type::TWO_I12, bool>>
 		inline void AE_CALL write(int16_t value1, int16_t value2) {
-			write<Type::TWO_UI12>(value1 < 0 ? uintMax<12>() + 1 + value1 : value1, value2 < 0 ? uintMax<12>() + 1 + value2 : value2);
+			write<Type::TWO_UI12>(value1 < 0 ? BitUInt<12>::MAX + 1 + value1 : value1, value2 < 0 ? BitUInt<12>::MAX + 1 + value2 : value2);
 		}
 
 		template<Type T, typename = typename std::enable_if_t<T == Type::TWO_UI12, bool>>

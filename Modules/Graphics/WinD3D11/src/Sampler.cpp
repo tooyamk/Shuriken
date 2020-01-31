@@ -28,8 +28,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 		}
 	}
 
-	void Sampler::setComparisonFunc(SamplerComparisonFunc func) {
-		if (auto fn = _convertComparisonFunc(func); _desc.ComparisonFunc != fn) {
+	void Sampler::setComparisonFunc(ComparisonFunc func) {
+		if (auto fn = Graphics::convertComparisonFunc(func); _desc.ComparisonFunc != fn) {
 			_desc.ComparisonFunc = fn;
 			_setDirty(_oldDesc.ComparisonFunc != _desc.ComparisonFunc, DirtyFlag::COMPARISON_FUNC);
 		}
@@ -88,29 +88,6 @@ namespace aurora::modules::graphics::win_d3d11 {
 		}
 		if (_filter.operation == SamplerFilterOperation::COMPARISON) filter |= D3D11_FILTER_COMPARISON_MIN_MAG_MIP_POINT;
 		_desc.Filter = (D3D11_FILTER)filter;
-	}
-
-	D3D11_COMPARISON_FUNC Sampler::_convertComparisonFunc(SamplerComparisonFunc func) {
-		switch (func) {
-		case SamplerComparisonFunc::NEVER:
-			return D3D11_COMPARISON_NEVER;
-		case SamplerComparisonFunc::LESS:
-			return D3D11_COMPARISON_LESS;
-		case SamplerComparisonFunc::EQUAL:
-			return D3D11_COMPARISON_EQUAL;
-		case SamplerComparisonFunc::LESS_EQUAL:
-			return D3D11_COMPARISON_LESS_EQUAL;
-		case SamplerComparisonFunc::GREATER:
-			return D3D11_COMPARISON_GREATER;
-		case SamplerComparisonFunc::NOT_EQUAL:
-			return D3D11_COMPARISON_NOT_EQUAL;
-		case SamplerComparisonFunc::GREATER_EQUAL:
-			return D3D11_COMPARISON_GREATER_EQUAL;
-		case SamplerComparisonFunc::ALWAYS:
-			return D3D11_COMPARISON_ALWAYS;
-		default:
-			return D3D11_COMPARISON_NEVER;
-		}
 	}
 
 	D3D11_TEXTURE_ADDRESS_MODE Sampler::_convertAddressMode(SamplerAddressMode mode) {

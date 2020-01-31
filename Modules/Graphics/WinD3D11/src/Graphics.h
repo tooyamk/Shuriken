@@ -4,6 +4,10 @@
 #include "modules/graphics/ConstantBufferManager.h"
 
 namespace aurora::modules::graphics::win_d3d11 {
+	class BlendState;
+	class DepthStencilState;
+	class RasterizerState;
+
 	class AE_MODULE_DLL Graphics : public IGraphicsModule {
 	public:
 		Graphics(Ref* loader, Application* app);
@@ -13,6 +17,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual const GraphicsDeviceFeatures& AE_CALL getDeviceFeatures() const override;
 		virtual IBlendState* AE_CALL createBlendState() override;
 		virtual IConstantBuffer* AE_CALL createConstantBuffer() override;
+		virtual IDepthStencilState* AE_CALL createDepthStencilState() override;
 		virtual IIndexBuffer* AE_CALL createIndexBuffer() override;
 		virtual IProgram* AE_CALL createProgram() override;
 		virtual IRasterizerState* AE_CALL createRasterizerState() override;
@@ -25,6 +30,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual IPixelBuffer* AE_CALL createPixelBuffer() override;
 
 		virtual void AE_CALL setBlendState(IBlendState* state, const Vec4f32& constantFactors, uint32_t sampleMask = (std::numeric_limits<uint32_t>::max)()) override;
+		virtual void AE_CALL setDepthStencilState(IDepthStencilState* state, uint32_t stencilFrontRef, uint32_t stencilBackRef) override;
 		virtual void AE_CALL setRasterizerState(IRasterizerState* state) override;
 		
 		virtual void AE_CALL beginRender() override;
@@ -102,6 +108,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		}
 
 		static DXGI_FORMAT AE_CALL convertInternalFormat(TextureFormat fmt);
+		static D3D11_COMPARISON_FUNC AE_CALL convertComparisonFunc(ComparisonFunc func);
 
 	private:
 		RefPtr<Ref> _loader;
@@ -114,8 +121,12 @@ namespace aurora::modules::graphics::win_d3d11 {
 		ID3D11Device5* _device;
 		ID3D11DeviceContext4* _context;
 		IDXGISwapChain4* _swapChain;
-		ID3D11RenderTargetView1* _backBufferTarget;
+		ID3D11RenderTargetView1* _backBufferView;
 		D3D11_FEATURE_DATA_D3D11_OPTIONS _internalFeatures;
+
+		RefPtr<BlendState> _defaultBlendState;
+		RefPtr<DepthStencilState> _defaultDepthStencilState;
+		RefPtr<RasterizerState> _defaultRasterizerState;
 
 		GraphicsDeviceFeatures _deviceFeatures;
 		std::string _deviceVersion;
@@ -130,6 +141,11 @@ namespace aurora::modules::graphics::win_d3d11 {
 				Vec4f32 constantFactors;
 				uint32_t sampleMask;
 			} blend;
+
+			struct {
+				uint64_t featureValue;
+				uint32_t stencilRef;
+			} depthStencil;
 		} _d3dStatus;
 
 		ConstantBufferManager _constantBufferManager;
@@ -138,6 +154,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 		void AE_CALL _resizedHandler(events::Event<ApplicationEvent>& e);
 
 		bool AE_CALL _createDevice(const GraphicsAdapter& adapter);
+
+		void AE_CALL _setBlendState(IBlendState& state, const Vec4f32& constantFactors, uint32_t sampleMask);
+		void AE_CALL _setDepthStencilState(IDepthStencilState& state, uint32_t stencilRef);
+		void AE_CALL _setRasterizerState(IRasterizerState& state);
 
 		void AE_CALL _release();
 		void AE_CALL _resize(const Vec2<UINT>& size);

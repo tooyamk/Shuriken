@@ -2,11 +2,14 @@
 #include "Graphics.h"
 
 namespace aurora::modules::graphics::win_gl {
-	BlendState::BlendState(Graphics& graphics) : IBlendState(graphics) {
+	BlendState::BlendState(Graphics& graphics, bool isInternal) : IBlendState(graphics),
+		_isInternal(isInternal) {
+		if (_isInternal) _graphics->weakUnref();
 		for (uint8_t i = 0; i < MAX_RTS; ++i) _updateInternalState(i);
 	}
 
 	BlendState::~BlendState() {
+		if (_isInternal) _graphics.weakReset();
 	}
 
 	const RenderTargetBlendState BlendState::DEFAULT_RT_STATE = RenderTargetBlendState();

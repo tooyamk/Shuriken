@@ -5,6 +5,8 @@
 
 namespace aurora::modules::graphics::win_gl {
 	class BlendState;
+	class DepthStencilState;
+	class RasterizerState;
 
 	class AE_MODULE_DLL Graphics : public IGraphicsModule {
 	public:
@@ -21,6 +23,7 @@ namespace aurora::modules::graphics::win_gl {
 		virtual const GraphicsDeviceFeatures& AE_CALL getDeviceFeatures() const override;
 		virtual IBlendState* AE_CALL createBlendState() override;
 		virtual IConstantBuffer* AE_CALL createConstantBuffer() override;
+		virtual IDepthStencilState* AE_CALL createDepthStencilState() override;
 		virtual IIndexBuffer* AE_CALL createIndexBuffer() override;
 		virtual IProgram* AE_CALL createProgram() override;
 		virtual IRasterizerState* AE_CALL createRasterizerState() override;
@@ -33,6 +36,7 @@ namespace aurora::modules::graphics::win_gl {
 		virtual IPixelBuffer* AE_CALL createPixelBuffer() override;
 
 		virtual void AE_CALL setBlendState(IBlendState* state, const Vec4f32& constantFactors, uint32_t sampleMask = (std::numeric_limits<uint32_t>::max)()) override;
+		virtual void AE_CALL setDepthStencilState(IDepthStencilState* state, uint32_t stencilFrontRef, uint32_t stencilBackRef) override;
 		virtual void AE_CALL setRasterizerState(IRasterizerState* state) override;
 		
 		virtual void AE_CALL beginRender() override;
@@ -81,6 +85,7 @@ namespace aurora::modules::graphics::win_gl {
 		};
 
 		static std::optional<ConvertFormatResult> AE_CALL convertFormat(TextureFormat fmt);
+		static GLenum AE_CALL convertComparisonFunc(ComparisonFunc func);
 		static uint32_t AE_CALL getGLTypeSize(GLenum type);
 
 	private:
@@ -106,6 +111,17 @@ namespace aurora::modules::graphics::win_gl {
 				uint64_t featureValue;
 				InternalRasterizerState state;
 			} rasterizer;
+
+			InternalDepthState depth;
+
+			struct {
+				uint64_t featureValue;
+				struct {
+					uint32_t front;
+					uint32_t back;
+				} ref;
+				InternalStencilState state;
+			} stencil;
 		} _glStatus;
 
 
@@ -114,6 +130,10 @@ namespace aurora::modules::graphics::win_gl {
 		RefPtr<Ref> _loader;
 		RefPtr<Application> _app;
 		RefPtr<IProgramSourceTranslator> _trans;
+
+		RefPtr<BlendState> _defaultBlendState;
+		RefPtr<DepthStencilState> _defaultDepthStencilState;
+		RefPtr<RasterizerState> _defaultRasterizerState;
 
 		InternalFeatures _internalFeatures;
 		GraphicsDeviceFeatures _deviceFeatures;
@@ -134,8 +154,12 @@ namespace aurora::modules::graphics::win_gl {
 		void AE_CALL _setInitState();
 		void AE_CALL _release();
 
+		void AE_CALL _setBlendState(IBlendState& state, const Vec4f32& constantFactors, uint32_t sampleMask);
+		void AE_CALL _setDepthStencilState(IDepthStencilState& state, uint32_t stencilFrontRef, uint32_t stencilBackRef);
+		void AE_CALL _setRasterizerState(IRasterizerState& state);
+
 		IConstantBuffer* AE_CALL _createdShareConstantBuffer();
-		IConstantBuffer* AE_CALL _createdExclusiveConstantBuffer (uint32_t numParameters);
+		IConstantBuffer* AE_CALL _createdExclusiveConstantBuffer(uint32_t numParameters);
 
 		void AE_CALL _checkBlendFuncIsSame();
 		void AE_CALL _checkBlendOpIsSame();

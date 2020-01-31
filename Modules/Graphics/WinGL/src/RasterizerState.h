@@ -7,7 +7,7 @@ namespace aurora::modules::graphics::win_gl {
 
 	class AE_MODULE_DLL RasterizerState : public IRasterizerState {
 	public:
-		RasterizerState(Graphics& graphics);
+		RasterizerState(Graphics& graphics, bool isInternal);
 		virtual ~RasterizerState();
 
 		virtual FillMode AE_CALL getFillMode() const override;
@@ -45,6 +45,7 @@ namespace aurora::modules::graphics::win_gl {
 			FrontFace frontFace;
 		};
 
+		bool _isInternal;
 		DirtyType _dirty;
 		Desc _desc;
 		Desc _oldDesc;

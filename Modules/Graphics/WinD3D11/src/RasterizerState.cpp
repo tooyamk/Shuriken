@@ -1,23 +1,27 @@
 #include "RasterizerState.h"
 #include "Graphics.h"
-#include "utils/hash/xxHash.h"
 
 namespace aurora::modules::graphics::win_d3d11 {
-	RasterizerState::RasterizerState(Graphics& graphics) : IRasterizerState(graphics),
+	RasterizerState::RasterizerState(Graphics& graphics, bool isInternal) : IRasterizerState(graphics),
+		_isInternal(isInternal),
 		_dirty(DirtyFlag::EMPTY),
 		_fillMode(FillMode::SOLID),
+		_oldFillMode(_fillMode),
 		_cullMode(CullMode::BACK),
+		_oldCullMode(_cullMode),
 		_frontFace(FrontFace::CW),
+		_oldFrontFace(_frontFace),
 		_internalState(nullptr),
 		_featureValue(0) {
+		if (_isInternal) _graphics->weakUnref();
 		memset(&_desc, 0, sizeof(_desc));
 		_desc.FillMode = _convertFillMode(_fillMode);
 		_desc.CullMode = _convertCullMode(_cullMode);
 		_desc.FrontCounterClockwise = _frontFace == FrontFace::CCW;
-		_oldDesc = _desc;
 	}
 
 	RasterizerState::~RasterizerState() {
+		if (_isInternal) _graphics.weakReset();
 		_releaseRes();
 	}
 
@@ -30,7 +34,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			_fillMode = fill;
 			_desc.FillMode = _convertFillMode(fill);
 
-			_setDirty(_oldDesc.FillMode != _desc.FillMode, DirtyFlag::FILL_MODE);
+			_setDirty(_fillMode != _oldFillMode, DirtyFlag::FILL_MODE);
 		}
 	}
 
@@ -43,7 +47,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			_cullMode = cull;
 			_desc.CullMode = _convertCullMode(cull);
 
-			_setDirty(_oldDesc.CullMode != _desc.CullMode, DirtyFlag::CULL_MODE);
+			_setDirty(_cullMode != _oldCullMode, DirtyFlag::CULL_MODE);
 		}
 	}
 
@@ -56,7 +60,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			_frontFace = front;
 			_desc.FrontCounterClockwise = front == FrontFace::CCW;
 
-			_setDirty(_oldDesc.FrontCounterClockwise != _desc.FrontCounterClockwise, DirtyFlag::FRONT_FACE);
+			_setDirty(_frontFace != _oldFrontFace, DirtyFlag::FRONT_FACE);
 		}
 	}
 
@@ -88,8 +92,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 		if (_dirty) {
 			_releaseRes();
 			if (SUCCEEDED(_graphics.get<Graphics>()->getDevice()->CreateRasterizerState2(&_desc, &_internalState))) {
-				_oldDesc = _desc;
-				_featureValue = hash::xxHash::calc<sizeof(_featureValue) * 8, std::endian::native>((uint8_t*)&_desc, sizeof(_desc), 0);
+				_oldFillMode = _fillMode;
+				_oldCullMode = _cullMode;
+				_oldFrontFace = _frontFace;
+				_featureValue = ((uint64_t)_fillMode << 2) | ((uint64_t)_cullMode << 1) | (uint64_t)_frontFace;
 				_dirty = 0;
 			}
 		}

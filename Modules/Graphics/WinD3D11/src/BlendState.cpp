@@ -3,16 +3,19 @@
 #include "utils/hash/xxHash.h"
 
 namespace aurora::modules::graphics::win_d3d11 {
-	BlendState::BlendState(Graphics& graphics) : IBlendState(graphics),
+	BlendState::BlendState(Graphics& graphics, bool isInternal) : IBlendState(graphics),
+		_isInternal(isInternal),
 		_dirty(DirtyFlag::EMPTY),
 		_desc({ 0 }),
 		_internalState(nullptr),
 		_featureValue(0) {
+		if (_isInternal) _graphics->weakUnref();
 		_oldIndependentBlendEnabled = _desc.IndependentBlendEnable;
 		for (uint8_t i = 0; i < MAX_RTS; ++i) _setRenderTargetState(i, _rtStatus[i]);
 	}
 
 	BlendState::~BlendState() {
+		if (_isInternal) _graphics.weakReset();
 		_releaseRes();
 	}
 
@@ -124,7 +127,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			if (SUCCEEDED(_graphics.get<Graphics>()->getDevice()->CreateBlendState1(&_desc, &_internalState))) {
 				_oldIndependentBlendEnabled = _desc.IndependentBlendEnable;
 				memcpy(&_oldRtStatus, &_rtStatus, sizeof(_rtStatus));
-				_featureValue = hash::xxHash::calc<sizeof(_featureValue) * 8, std::endian::native>((uint8_t*)&_desc, sizeof(_desc), 0);
+				_featureValue = hash::xxHash::calc<sizeof(_featureValue) * 8, std::endian::native>((uint8_t*)&_desc, _desc.IndependentBlendEnable ? sizeof(_desc) : sizeof(_desc) - sizeof(_desc.RenderTarget[0]) * 7, 0);
 				_dirty = 0;
 			}
 		}
