@@ -26,6 +26,11 @@ public:
 				if (graphics) {
 					println("Graphics Version : ", graphics->getVersion());
 
+					graphics->getEventDispatcher().addEventListener(GraphicsEvent::ERR, new EventListener(Recognitor<GraphicsEvent>(),[](Event<GraphicsEvent>& e) {
+						println(*(std::string_view*)e.getData());
+						int a = 1;
+					}));
+
 					{
 						RefPtr<IRasterizerState> rs = graphics->createRasterizerState();
 						rs->setFillMode(FillMode::SOLID);
@@ -56,7 +61,7 @@ public:
 							0.0f, 1.0f, 0.5f,
 							1.0f, 1.0f, 0.5f,
 							1.0f, 0.0f, 0.5f };
-						vertexBuffer->create(sizeof(vertices), Usage::MAP_WRITE | Usage::UPDATE | Usage::PERSISTENT_MAP, vertices, sizeof(vertices));
+						vertexBuffer->create(sizeof(vertices), Usage::NONE, vertices, sizeof(vertices));
 						vertexBuffer->setFormat(VertexSize::THREE, VertexType::F32);
 					}
 
@@ -120,7 +125,7 @@ public:
 
 						mipsData0Ptr.insert(mipsData0Ptr.end(), mipsData1Ptr.begin(), mipsData1Ptr.end());
 
-						texRes->create(img0->size, 0, 1, img0->format, Usage::UPDATE, mipsData0Ptr.data());
+						auto hr = texRes->create(img0->size, 0, 1, img0->format, Usage::IGNORE_UNSUPPORTED | Usage::UPDATE | Usage::MAP_WRITE, mipsData0Ptr.data());
 
 						auto pb = graphics->createPixelBuffer();
 						if (pb) {
@@ -128,12 +133,11 @@ public:
 							//texRes->copyFrom(0, 0, Box2ui32(Vec2ui32(0, 0), Vec2ui32(4, 4)), pb);
 						}
 
-						//auto mapped = tex->map(Usage::CPU_WRITE);
 						uint8_t texData[] = { 255, 0, 0, 255, 0, 255, 0, 255, 0, 0, 255, 255, 0, 0, 0, 255 };
-						//texRes->write(0, Rect<uint32_t>(2, 3, 3, 4), texData);
-						//tex->unmap();
-						//texRes->map(0, 0, Usage::MAP_WRITE);
-						//texRes->update(0, 0, Box2ui32(Vec2ui32(0, 0), Vec2ui32(2, 2)), texData);
+						auto mapped = texRes->map(0, 0, Usage::MAP_WRITE);
+						texRes->write(0, 0, 4, texData, sizeof(texData));
+						texRes->unmap(0, 0);
+						//texRes->update(0, 0, Box2ui32(Vec2ui32(1, 1), Vec2ui32(2, 2)), texData);
 
 						cf->add("texDiffuse", new ShaderParameter(ShaderParameterUsage::AUTO))->set(texView ? (ITextureViewBase*)texView : (ITextureViewBase*)texRes).setUpdated();
 					}

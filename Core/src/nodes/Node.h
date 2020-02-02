@@ -74,7 +74,7 @@ namespace aurora::nodes {
 		component::AbstractComponent* AE_CALL getComponent(uint32_t flag) const;
 		component::AbstractComponent* AE_CALL getComponentIf(const std::function<bool(component::AbstractComponent*)>& func) const;
 		inline const std::vector<component::AbstractComponent*>& AE_CALL getComponents() const;
-		void AE_CALL getComponents(uint32_t flag, std::vector<component::AbstractComponent*>& dst) const;
+		void AE_CALL getComponents(uint32_t flags, std::vector<component::AbstractComponent*>& dst) const;
 		void AE_CALL getComponentsIf(const std::function<bool(component::AbstractComponent*)>& func, std::vector<component::AbstractComponent*>& dst) const;
 
 		/**

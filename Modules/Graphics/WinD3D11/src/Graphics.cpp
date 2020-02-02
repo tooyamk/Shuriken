@@ -1,6 +1,7 @@
 #include "Graphics.h"
 #include "CreateModule.h"
 #include "BlendState.h"
+#include "DepthStencil.h"
 #include "DepthStencilState.h"
 #include "IndexBuffer.h"
 #include "Program.h"
@@ -24,6 +25,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_context(nullptr),
 		_swapChain(nullptr),
 		_backBufferView(nullptr),
+		_backDepthStencil(nullptr),
 		_deviceFeatures({ 0 }),
 		_d3dStatus({ 0 }),
 		_resizedListener(this, &Graphics::_resizedHandler) {
@@ -263,13 +265,22 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_deviceFeatures.supportStencilIndependentRef = false;
 		_deviceFeatures.supportStencilIndependentMask = false;
 
-		_resize((Vec2<UINT>&)size);
-
 		_defaultBlendState = new BlendState(*this, true);
 		_defaultDepthStencilState = new DepthStencilState(*this, true);
 		_defaultRasterizerState = new RasterizerState(*this, true);
+		_backDepthStencil = new DepthStencil(*this, true);
+
+		_resize((Vec2<UINT>&)size);
 
 		return true;
+	}
+
+	events::IEventDispatcher<GraphicsEvent>& Graphics::getEventDispatcher() {
+		return _eventDispatcher;
+	}
+
+	const events::IEventDispatcher<GraphicsEvent>& Graphics::getEventDispatcher() const {
+		return _eventDispatcher;
 	}
 
 	const std::string& Graphics::getVersion() const {
@@ -431,8 +442,14 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_swapChain->Present(0, 0);
 	}
 
-	void Graphics::clear(ClearFlag flag, const Vec4f32& color, f32 depth, size_t stencil) {
-		if ((flag & ClearFlag::COLOR) != ClearFlag::NONE) _context->ClearRenderTargetView(_backBufferView, color.data);
+	void Graphics::clear(ClearFlag flags, const Vec4f32& color, f32 depth, size_t stencil) {
+		if (_backBufferView && (flags & ClearFlag::COLOR) != ClearFlag::NONE) _context->ClearRenderTargetView(_backBufferView, color.data);
+		if (_backDepthStencil && _backDepthStencil->getInernalView() && (flags & ClearFlag::DEPTH_STENCIL) != ClearFlag::NONE) {
+			UINT clearFlags = 0;
+			if ((flags & ClearFlag::DEPTH) != ClearFlag::NONE) clearFlags |= D3D11_CLEAR_DEPTH;
+			if ((flags & ClearFlag::STENCIL) != ClearFlag::NONE) clearFlags |= D3D11_CLEAR_STENCIL;
+			_context->ClearDepthStencilView(_backDepthStencil->getInernalView(), clearFlags, depth, stencil);
+		}
 	}
 
 	IConstantBuffer* Graphics::_createdShareConstantBuffer() {
@@ -457,6 +474,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			_backBufferView->Release();
 			_backBufferView = nullptr;
 		}
+		_backDepthStencil.reset();
 		if (_swapChain) {
 			_swapChain->Release();
 			_swapChain = nullptr;
@@ -492,7 +510,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		bool sizeChange = bufferDesc.Width != size[0] || bufferDesc.Height != size[1];
 
-		if (sizeChange || !_backBufferView) {
+		if (sizeChange || !_backBufferView || !_backDepthStencil->getInernalView()) {
 			bufferDesc.Width = size[0];
 			bufferDesc.Height = size[1];
 
@@ -503,23 +521,26 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 			if (sizeChange) {
 				if (FAILED(_swapChain->ResizeBuffers(swapChainDesc.BufferCount, size[0], size[1], bufferDesc.Format, swapChainDesc.Flags))) {
-					println("dx11 error : swap chain ResizeBuffers error");
+					this->error("d3d11 swap chain ResizeBuffers error");
 				}
 			}
 
 			ID3D11Texture2D* backBufferTexture = nullptr;
 			if (FAILED(_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&backBufferTexture))) {
-				println("dx11 error : swap chain GetBuffer error");
+				this->error("d3d11 swap chain GetBuffer error");
 			}
 
 			if (backBufferTexture) {
 				if (FAILED(_device->CreateRenderTargetView(backBufferTexture, nullptr, (ID3D11RenderTargetView**)&_backBufferView))) {
-					println("dx11 error : swap chain CreateRenderTargetView error");
+					this->error("d3d11 swap chain CreateRenderTargetView error");
 				}
 				backBufferTexture->Release();
 			}
 
-			if (_backBufferView) _context->OMSetRenderTargets(1, (ID3D11RenderTargetView**)&_backBufferView, nullptr);
+			if (_backBufferView) {
+				_backDepthStencil->create(size, false);
+				_context->OMSetRenderTargets(1, (ID3D11RenderTargetView**)&_backBufferView, _backDepthStencil->getInernalView());
+			}
 
 			D3D11_VIEWPORT vp;
 			vp.Width = (FLOAT)size[0];

@@ -31,6 +31,13 @@ namespace aurora::modules::graphics::win_gl {
 		TextureFormat format, Usage resUsage, const void*const* data) {
 		releaseTex();
 
+		if ((resUsage & Usage::IGNORE_UNSUPPORTED) == Usage::IGNORE_UNSUPPORTED) resUsage &= graphics.getTexCreateUsageMask();
+
+		if ((resUsage & Usage::MAP_READ_WRITE) != Usage::NONE) {
+			graphics.error("openGL Texture create error : not support Usage::READ or Usage::WRITE");
+			return false;
+		}
+
 		if (mipLevels == 0) {
 			mipLevels = Image::calcMipLevels(size.getMax());
 		} else if (mipLevels > 1) {
@@ -46,7 +53,7 @@ namespace aurora::modules::graphics::win_gl {
 		glGenTextures(1, &handle);
 
 		if (handle) {
-			this->resUsage = resUsage & graphics.getCreateBufferMask();
+			this->resUsage = resUsage & graphics.getBufferCreateUsageMask();
 
 			if (auto rst = Graphics::convertFormat(format); rst) {
 				glTexInfo.internalFormat = rst->internalFormat;
@@ -236,12 +243,16 @@ namespace aurora::modules::graphics::win_gl {
 				this->mipLevels = mipLevels;
 				//mapData = glMapBufferRange(texType, 0, size, flags);
 
-				return _createDone(true);
+				//glBindTexture(GL_TEXTURE_BUFFER, handle);
+				//mapData = glMapBuffer(GL_TEXTURE_BUFFER, GL_WRITE_ONLY);
+				//glBindTexture(GL_TEXTURE_BUFFER, 0);
+
+				return _createDone(graphics, true);
 			}
 		}
 
 		releaseTex();
-		return _createDone(false);
+		return _createDone(graphics, false);
 	}
 
 	Usage BaseTexture::map(uint32_t arraySlice, uint32_t mipSlice, Usage expectMapUsage) {
@@ -380,8 +391,9 @@ namespace aurora::modules::graphics::win_gl {
 		}
 	}
 
-	bool BaseTexture::_createDone(bool succeeded) {
+	bool BaseTexture::_createDone(Graphics& graphics, bool succeeded) {
 		for (auto& itr : views) itr->onResRecreated();
+		if (!succeeded) graphics.error("openGL textrue create error");
 		return succeeded;
 	}
 

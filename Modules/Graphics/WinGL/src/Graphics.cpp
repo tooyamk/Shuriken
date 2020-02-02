@@ -19,7 +19,8 @@
 namespace aurora::modules::graphics::win_gl {
 	Graphics::Graphics(Ref* loader, Application* app, IProgramSourceTranslator* trans) :
 		_loader(loader),
-		_createBufferMask(Usage::NONE),
+		_bufferCreateUsageMask(Usage::NONE),
+		_texCreateUsageMask(Usage::NONE),
 		_app(app),
 		_trans(trans),
 		_dc(nullptr),
@@ -131,21 +132,20 @@ namespace aurora::modules::graphics::win_gl {
 		glGetIntegerv(GL_MAJOR_VERSION, &_majorVer);
 		glGetIntegerv(GL_MINOR_VERSION, &_minorVer);
 
-#ifdef AE_DEBUG
-		glEnable(GL_DEBUG_OUTPUT);
-		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-		glDebugMessageCallback(&Graphics::_debugCallback, NULL);
-		glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
-#endif
-
 		_intVer = _majorVer * 100 + _minorVer * 10;
 		_strVer = String::toString(_intVer);
 		_deviceVersion = "OpenGL " + String::toString(_majorVer) + "." + String::toString(_minorVer);
 
+#ifdef AE_DEBUG
+		glEnable(GL_DEBUG_OUTPUT);
+		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+		glDebugMessageCallback(&Graphics::_debugCallback, this);
+		glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
+#endif
+
 		_internalFeatures.maxAnisotropy = 1.f;
 		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &_internalFeatures.maxAnisotropy);
 		
-
 		_deviceFeatures.supportPixelBuffer = true;
 		_deviceFeatures.supportConstantBuffer = isGreatThanOrEqualVersion(3, 1);
 		_deviceFeatures.supportSampler = isGreatThanOrEqualVersion(3, 3);
@@ -156,7 +156,8 @@ namespace aurora::modules::graphics::win_gl {
 		_deviceFeatures.supportStencilIndependentRef = true;
 		_deviceFeatures.supportStencilIndependentMask = true;
 
-		_createBufferMask = Usage::MAP_READ_WRITE | Usage::UPDATE | (_deviceFeatures.supportPersistentMap ? Usage::PERSISTENT_MAP : Usage::NONE);
+		_bufferCreateUsageMask = Usage::MAP_READ_WRITE | Usage::UPDATE | (_deviceFeatures.supportPersistentMap ? Usage::PERSISTENT_MAP : Usage::NONE);
+		_texCreateUsageMask = Usage::UPDATE;
 
 		_setInitState();
 
@@ -165,6 +166,14 @@ namespace aurora::modules::graphics::win_gl {
 		_defaultRasterizerState = new RasterizerState(*this, true);
 
 		return true;
+	}
+
+	events::IEventDispatcher<GraphicsEvent>& Graphics::getEventDispatcher() {
+		return _eventDispatcher;
+	}
+
+	const events::IEventDispatcher<GraphicsEvent>& Graphics::getEventDispatcher() const {
+		return _eventDispatcher;
 	}
 
 	const std::string& Graphics::getVersion() const {
@@ -561,9 +570,9 @@ namespace aurora::modules::graphics::win_gl {
 	void Graphics::present() {
 	}
 
-	void Graphics::clear(ClearFlag flag, const Vec4f32& color, f32 depth, size_t stencil) {
+	void Graphics::clear(ClearFlag flags, const Vec4f32& color, f32 depth, size_t stencil) {
 		GLbitfield mask = 0;
-		if ((flag & ClearFlag::COLOR) != ClearFlag::NONE) {
+		if ((flags & ClearFlag::COLOR) != ClearFlag::NONE) {
 			mask |= GL_COLOR_BUFFER_BIT;
 			if (!memEqual<sizeof(Vec4f32)>(_glStatus.clear.color.data, color.data)) {
 				glClearColor(color.data[0], color.data[1], color.data[2], color.data[3]);
@@ -571,7 +580,7 @@ namespace aurora::modules::graphics::win_gl {
 			}
 		}
 
-		if ((flag & ClearFlag::DEPTH) != ClearFlag::NONE) {
+		if ((flags & ClearFlag::DEPTH) != ClearFlag::NONE) {
 			mask |= GL_DEPTH_BUFFER_BIT;
 			if (_glStatus.clear.depth != depth) {
 				glClearDepth(depth);
@@ -579,7 +588,7 @@ namespace aurora::modules::graphics::win_gl {
 			}
 		}
 
-		if ((flag & ClearFlag::STENCIL) != ClearFlag::NONE) {
+		if ((flags & ClearFlag::STENCIL) != ClearFlag::NONE) {
 			mask |= GL_STENCIL_BUFFER_BIT;
 			if (_glStatus.clear.stencil != stencil) {
 				glClearStencil(stencil);
@@ -814,7 +823,7 @@ namespace aurora::modules::graphics::win_gl {
 		memset(&_internalFeatures, 0, sizeof(_internalFeatures));
 		memset(&_deviceFeatures, 0, sizeof(_deviceFeatures));
 		_deviceVersion = "OpenGL Unknown";
-		_createBufferMask = Usage::NONE;
+		_bufferCreateUsageMask = Usage::NONE;
 	}
 
 	void Graphics::_checkBlendFuncIsSame() {
@@ -966,7 +975,7 @@ namespace aurora::modules::graphics::win_gl {
 
 		if (String::findFirst(message, msgSize, ERR, sizeof(ERR) - 1) != std::string::npos ||
 			String::findFirst(message, msgSize, WARNING, sizeof(WARNING) - 1) != std::string::npos) {
-			println("gl message : ", message);
+			((Graphics*)userParam)->error(std::string("openGL sys message : ") + message);
 		}
 	}
 }

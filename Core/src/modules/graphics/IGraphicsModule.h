@@ -3,6 +3,11 @@
 #include "modules/IModule.h"
 #include "math/Box.h"
 
+namespace aurora::events {
+	template<typename EvtType>
+	class IEventDispatcher;
+}
+
 namespace aurora::modules::graphics {
 	class IGraphicsModule;
 	class GraphicsAdapter;
@@ -33,11 +38,12 @@ namespace aurora::modules::graphics {
 		UPDATE = 1 << 2,//create
 
 		PERSISTENT_MAP = 1 << 3,//create
+		IGNORE_UNSUPPORTED = 1 << 4,//create
 
-		MAP_SWAP = 1 << 4,//map
-		MAP_FORCE_SWAP = (1 << 5) | MAP_SWAP,//map
+		MAP_SWAP = 1 << 5,//map
+		MAP_FORCE_SWAP = (1 << 6) | MAP_SWAP,//map
 
-		DISCARD = 1 << 6,//map return
+		DISCARD = 1 << 7,//map return
 
 		MAP_READ_WRITE = MAP_READ | MAP_WRITE,
 		MAP_WRITE_UPDATE = MAP_WRITE | UPDATE
@@ -323,6 +329,17 @@ namespace aurora::modules::graphics {
 	};
 
 
+	class AE_DLL IDepthStencil : public IObject {
+	public:
+		IDepthStencil(IGraphicsModule& graphics) : IObject(graphics) {}
+		virtual ~IDepthStencil() {}
+
+		virtual bool AE_CALL isMultisampling() const = 0;
+		virtual const Vec2ui32& AE_CALL getSize() const = 0;
+		virtual bool AE_CALL create(const Vec2ui32& size, bool multisampling) = 0;
+	};
+
+
 	enum class BlendFactor : uint8_t {
 		ZERO,
 		ONE,
@@ -531,7 +548,9 @@ namespace aurora::modules::graphics {
 		NONE = 0,
 		COLOR = 0b1,
 		DEPTH = 0b10,
-		STENCIL = 0b100
+		STENCIL = 0b100,
+
+		DEPTH_STENCIL = DEPTH | STENCIL
 	};
 	AE_DEFINE_ENUM_BIT_OPERATIION(ClearFlag);
 
@@ -603,6 +622,11 @@ namespace aurora::modules::graphics {
 	};
 
 
+	enum class GraphicsEvent : uint8_t {
+		ERR
+	};
+
+
 	class AE_DLL IGraphicsModule : public IModule {
 	public:
 		virtual ~IGraphicsModule();
@@ -610,6 +634,9 @@ namespace aurora::modules::graphics {
 		virtual ModuleType AE_CALL getType() const override {
 			return ModuleType::GRAPHICS;
 		}
+
+		virtual events::IEventDispatcher<GraphicsEvent>& AE_CALL getEventDispatcher() = 0;
+		virtual const events::IEventDispatcher<GraphicsEvent>& AE_CALL getEventDispatcher() const = 0;
 
 		virtual const std::string& AE_CALL getVersion() const = 0;
 		virtual const GraphicsDeviceFeatures& AE_CALL getDeviceFeatures() const = 0;
@@ -641,6 +668,6 @@ namespace aurora::modules::graphics {
 		virtual void AE_CALL present() = 0;
 
 		//unrealized wind3d11 depth stencil
-		virtual void AE_CALL clear(ClearFlag flag, const Vec4f32& color, f32 depth, size_t stencil) = 0;
+		virtual void AE_CALL clear(ClearFlag flags, const Vec4f32& color, f32 depth, size_t stencil) = 0;
 	};
 }

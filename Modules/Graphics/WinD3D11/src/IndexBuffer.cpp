@@ -67,7 +67,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			switch (type) {
 			case IndexType::UI8:
 			{
-				println("IndexBuffer.setFormat error : not supprot uint8_t type");
+				_graphics.get<Graphics>()->error("d3d11 IndexBuffer::setFormat error : not supprot IndexType::UI8");
 				_internalFormat = DXGI_FORMAT_UNKNOWN;
 
 				break;

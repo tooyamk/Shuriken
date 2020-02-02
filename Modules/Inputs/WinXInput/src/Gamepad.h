@@ -42,7 +42,7 @@ namespace aurora::modules::inputs::win_xinput {
 
 		void AE_CALL _updateStick(SHORT oriX, SHORT oriY, SHORT curX, SHORT curY, GamepadKeyCode key);
 		void AE_CALL _updateTrigger(SHORT ori, SHORT cur, GamepadKeyCode key);
-		void AE_CALL _updateButton(WORD ori, WORD cur, uint16_t flag, GamepadKeyCode key);
+		void AE_CALL _updateButton(WORD ori, WORD cur, uint16_t flags, GamepadKeyCode key);
 
 		inline static f32 AE_CALL _translateDeadZone0_1(f32 value, f32 dz, bool inDz) {
 			return inDz ? 0.f : (value - dz) / (1.f - dz);
@@ -50,9 +50,11 @@ namespace aurora::modules::inputs::win_xinput {
 
 		template<bool FLIP>
 		inline static f32 AE_CALL _translateStick(SHORT value) {
-			auto v = f32(value) / 32767.f;
-			if constexpr (FLIP) v = -v;
-			return v;
+			if constexpr (FLIP) {
+				return f32(value) / -32767.f;
+			} else {
+				return f32(value) / 32767.f;
+			}
 		}
 		inline static f32 AE_CALL _translateTrigger(SHORT value) {
 			return f32(value) / 255.f;

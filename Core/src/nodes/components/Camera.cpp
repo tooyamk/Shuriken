@@ -6,7 +6,7 @@ namespace aurora::nodes::component {
 		_aspectRatio(0.f),
 		_zNear(0.f),
 		_zFar(0.f) {
-		flag |= ComponentFlag::CAMERA;
+		flags |= ComponentFlag::CAMERA;
 	}
 
 	void Camera::setProjectionMatrix(const Matrix44& pm) {

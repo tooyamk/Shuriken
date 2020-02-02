@@ -14,19 +14,33 @@ namespace aurora::modules::graphics::win_d3d11 {
 	BaseResource::~BaseResource() {
 	}
 
-	bool BaseResource::createInit(Usage resUsage, uint32_t resSize, uint32_t dataSize, UINT mipLevels, UINT& cpuUsage, D3D11_USAGE& d3dUsage) {
+	bool BaseResource::createInit(Graphics& graphics, Usage resUsage, uint32_t resSize, uint32_t dataSize, UINT mipLevels, UINT& cpuUsage, D3D11_USAGE& d3dUsage) {
 		cpuUsage = 0;
-		
+
 		bool resCpuRead = (resUsage & Usage::MAP_READ) == Usage::MAP_READ;
 		bool resCpuWrite = (resUsage & Usage::MAP_WRITE) == Usage::MAP_WRITE;
 
 		if (resCpuRead) {
+			if ((resUsage & Usage::IGNORE_UNSUPPORTED) == Usage::NONE && (resUsage & Usage::UPDATE) == Usage::UPDATE) {
+				graphics.error("d3d11 Resource:create error : not support Usage::UPDATE");
+				return false;
+			}
+
 			d3dUsage = D3D11_USAGE_STAGING;
-			this->resUsage = Usage::MAP_READ_WRITE | Usage::UPDATE;
-			cpuUsage = D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE;
-		} else if (resCpuWrite && mipLevels <= 1 && ((resUsage & Usage::MAP_WRITE) == Usage::MAP_WRITE)) {
+			this->resUsage = Usage::MAP_READ;
+			cpuUsage = D3D11_CPU_ACCESS_READ;
+			if (resCpuWrite) {
+				this->resUsage |= Usage::MAP_WRITE;
+				cpuUsage |= D3D11_CPU_ACCESS_WRITE;
+			}
+		} else if (resCpuWrite && mipLevels <= 1) {
+			if ((resUsage & Usage::IGNORE_UNSUPPORTED) == Usage::NONE && (resUsage & Usage::UPDATE) == Usage::UPDATE) {
+				graphics.error("d3d11 Resource::create error : not support Usage::UPDATE");
+				return false;
+			}
+
 			d3dUsage = D3D11_USAGE_DYNAMIC;
-			this->resUsage = Usage::MAP_WRITE_UPDATE;
+			this->resUsage = Usage::MAP_WRITE;
 			cpuUsage = D3D11_CPU_ACCESS_WRITE;
 		} else if (((resUsage & Usage::UPDATE) == Usage::UPDATE) || dataSize < resSize) {
 			d3dUsage = D3D11_USAGE_DEFAULT;
@@ -34,8 +48,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 		} else if (dataSize >= resSize) {
 			d3dUsage = D3D11_USAGE_IMMUTABLE;
 		} else {
-			d3dUsage = D3D11_USAGE_DEFAULT;
-			this->resUsage = Usage::UPDATE;
+			this->resUsage = Usage::NONE;
+			return false;
+			//d3dUsage = D3D11_USAGE_DEFAULT;
+			//this->resUsage = Usage::UPDATE;
 		}
 
 		if (d3dUsage != D3D11_USAGE_STAGING) bindType = resType;

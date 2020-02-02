@@ -15,8 +15,8 @@ public:
 		if (app->createWindow(wndStype, u8"", Box2i32(Vec2i32({ 100, 100 }), Vec2i32({ 800, 600 })), false)) {
 			RefPtr<GraphicsModuleLoader> gml = new GraphicsModuleLoader();
 
-			if (gml->load(getDLLName("ae-win-gl"))) {
-				//if (gml->load(getDLLName("ae-win-d3d11"))) {
+			//if (gml->load(getDLLName("ae-win-gl"))) {
+			if (gml->load(getDLLName("ae-win-d3d11"))) {
 				auto gpstml = new ModuleLoader<IProgramSourceTranslator>();
 				gpstml->load(getDLLName("ae-program-source-translator"));
 				auto gpst = gpstml->create(&Args().add("dxc", getDLLName("dxcompiler")));
@@ -51,7 +51,7 @@ public:
 							0.f, 1.f,
 							1.f, 1.f,
 							1.f, 0.f };
-						vertexBuffer->create(sizeof(vertices), Usage::MAP_WRITE | Usage::UPDATE | Usage::PERSISTENT_MAP, vertices, sizeof(vertices));
+						auto hr = vertexBuffer->create(sizeof(vertices), Usage::MAP_WRITE | Usage::PERSISTENT_MAP, vertices, sizeof(vertices));
 						vertexBuffer->setFormat(VertexSize::TWO, VertexType::F32);
 					}
 

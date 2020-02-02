@@ -56,6 +56,6 @@ namespace aurora::modules::graphics::win_gl {
 
 	private:
 		bool AE_CALL _update (uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const void* data);
-		bool AE_CALL _createDone(bool succeeded);
+		bool AE_CALL _createDone(Graphics& graphics, bool succeeded);
 	};
 }

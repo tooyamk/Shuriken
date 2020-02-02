@@ -19,6 +19,9 @@ namespace aurora::modules::graphics::win_gl {
 		Graphics(Ref* loader, Application* app, IProgramSourceTranslator* trans);
 		virtual ~Graphics();
 
+		virtual events::IEventDispatcher<GraphicsEvent>& AE_CALL getEventDispatcher() override;
+		virtual const events::IEventDispatcher<GraphicsEvent>& AE_CALL getEventDispatcher() const override;
+
 		virtual const std::string& AE_CALL getVersion() const override;
 		virtual const GraphicsDeviceFeatures& AE_CALL getDeviceFeatures() const override;
 		virtual IBlendState* AE_CALL createBlendState() override;
@@ -45,9 +48,13 @@ namespace aurora::modules::graphics::win_gl {
 		virtual void AE_CALL endRender() override;
 		virtual void AE_CALL present() override;
 
-		virtual void AE_CALL clear(ClearFlag flag, const Vec4f32& color, f32 depth, size_t stencil) override;
+		virtual void AE_CALL clear(ClearFlag flags, const Vec4f32& color, f32 depth, size_t stencil) override;
 
 		bool AE_CALL createDevice(const GraphicsAdapter* adapter);
+
+		inline void AE_CALL error(const std::string_view& msg) {
+			_eventDispatcher.dispatchEvent(this, GraphicsEvent::ERR, (std::string_view*)&msg);
+		}
 
 		inline IProgramSourceTranslator* AE_CALL getProgramSourceTranslator() const {
 			return _trans.get();
@@ -73,8 +80,12 @@ namespace aurora::modules::graphics::win_gl {
 			return _internalFeatures;
 		}
 
-		inline const Usage AE_CALL getCreateBufferMask() const {
-			return _createBufferMask;
+		inline const Usage AE_CALL getBufferCreateUsageMask() const {
+			return _bufferCreateUsageMask;
+		}
+
+		inline const Usage AE_CALL getTexCreateUsageMask() const {
+			return _texCreateUsageMask;
 		}
 
 		struct ConvertFormatResult {
@@ -125,7 +136,8 @@ namespace aurora::modules::graphics::win_gl {
 		} _glStatus;
 
 
-		Usage _createBufferMask;
+		Usage _bufferCreateUsageMask;
+		Usage _texCreateUsageMask;
 
 		RefPtr<Ref> _loader;
 		RefPtr<Application> _app;
@@ -149,6 +161,8 @@ namespace aurora::modules::graphics::win_gl {
 		std::string _deviceVersion;
 
 		ConstantBufferManager _constantBufferManager;
+
+		events::EventDispatcher<GraphicsEvent> _eventDispatcher;
 
 		bool AE_CALL _glInit();
 		void AE_CALL _setInitState();

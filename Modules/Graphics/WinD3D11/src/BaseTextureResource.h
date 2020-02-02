@@ -30,6 +30,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		TextureFormat format;
 		DXGI_FORMAT internalFormat;
 		uint16_t perPixelSize;
+		uint32_t perRowPixelSize;
 		Vec3ui32 texSize;
 		uint32_t arraySize;
 		uint32_t mipLevels;
@@ -52,6 +53,6 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 	private:
 		HRESULT AE_CALL _createInternalTexture(Graphics& graphics, TextureType texType, const TexDesc& desc, const D3D11_SUBRESOURCE_DATA* pInitialData);
-		bool AE_CALL _createDone(bool succeeded);
+		bool AE_CALL _createDone(Graphics& graphics, bool succeeded);
 	};
 }

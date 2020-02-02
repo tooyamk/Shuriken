@@ -21,7 +21,7 @@ namespace aurora::modules::graphics::win_gl {
 	bool BaseBuffer::create(Graphics& graphics, uint32_t size, Usage resUsage, const void* data, GLenum internalUsage) {
 		releaseBuffer();
 
-		this->resUsage = resUsage & graphics.getCreateBufferMask();
+		this->resUsage = resUsage & graphics.getBufferCreateUsageMask();
 		this->size = size;
 
 		glGenBuffers(1, &handle);

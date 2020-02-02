@@ -263,9 +263,9 @@ namespace aurora::modules::inputs::win_xinput {
 		}
 	}
 
-	void Gamepad::_updateButton(WORD ori, WORD cur, uint16_t flag, GamepadKeyCode key) {
-		auto curDown = cur & flag;
-		if ((ori & flag) != curDown) {
+	void Gamepad::_updateButton(WORD ori, WORD cur, uint16_t flags, GamepadKeyCode key) {
+		auto curDown = cur & flags;
+		if ((ori & flags) != curDown) {
 			f32 value = curDown ? 1.f : 0.f;
 			_eventDispatcher.dispatchEvent(this, curDown ? DeviceEvent::DOWN : DeviceEvent::UP, &Key({ (uint8_t)key, 1, &value }));
 		}

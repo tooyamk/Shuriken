@@ -284,7 +284,7 @@ namespace aurora::nodes {
 
 	component::AbstractComponent* Node::getComponent(uint32_t flag) const {
 		for (auto c : _components) {
-			if ((c->flag & flag) == flag) return c;
+			if ((c->flags & flag) == flag) return c;
 		}
 		return nullptr;
 	}
@@ -298,9 +298,9 @@ namespace aurora::nodes {
 		return nullptr;
 	}
 
-	void Node::getComponents(uint32_t flag, std::vector<component::AbstractComponent*>& dst) const {
+	void Node::getComponents(uint32_t flags, std::vector<component::AbstractComponent*>& dst) const {
 		for (auto c : _components) {
-			if ((c->flag & flag) == flag) dst.emplace_back(c);
+			if ((c->flags & flags) == flags) dst.emplace_back(c);
 		}
 	}
 

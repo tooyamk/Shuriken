@@ -69,7 +69,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 		}
 
 		DXGI_FORMAT internalFormat = Graphics::convertInternalFormat(format);
-		if (internalFormat == DXGI_FORMAT_UNKNOWN) return _createDone(false);
+		if (internalFormat == DXGI_FORMAT_UNKNOWN) {
+			graphics.error("d3d11 Texture::create error : not support fromat");
+			return _createDone(graphics, false);
+		}
 
 		auto perPixelSize = Image::calcPerPixelByteSize(format);
 		auto mipsByteSize = Image::calcMipsByteSize(size, mipLevels, perPixelSize);
@@ -78,7 +81,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		D3D11_USAGE d3dUsage;
 		UINT cpuUsage;
-		createInit(resUsage, this->size, data ? this->size : 0, mipLevels, cpuUsage, d3dUsage);
+		if (!createInit(graphics, resUsage, this->size, data ? this->size : 0, mipLevels, cpuUsage, d3dUsage)) return _createDone(graphics, false);
 
 		TexDesc texDesc;
 		memset(&texDesc, 0, sizeof(texDesc));
@@ -170,8 +173,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 		}
 
 		if (FAILED(hr)) {
-			releaseTex(graphics);
-			return _createDone(false);
+			graphics.error("d3d11 Texture::create error : internal create texture error");
+			return _createDone(graphics, false);
 		}
 
 		//((ID3D11Texture2D*)_baseRes.handle)->GetDesc(&desc);
@@ -197,15 +200,17 @@ namespace aurora::modules::graphics::win_d3d11 {
 		this->format = format;
 		this->internalFormat = internalFormat;
 		this->perPixelSize = perPixelSize;
+		this->perRowPixelSize = perPixelSize * size[0];
 		texSize.set(size);
 		this->arraySize = isArray ? arraySize : 0;
 		this->mipLevels = mipLevels;
 		//((Graphics*)_graphics)->getContext()->GenerateMips(_view);
 
-		return _createDone(true);
+		return _createDone(graphics, true);
 	}
 
-	bool BaseTextureResource::_createDone(bool succeeded) {
+	bool BaseTextureResource::_createDone(Graphics& graphics, bool succeeded) {
+		if (!succeeded) releaseTex(graphics);
 		for (auto& itr : views) itr->onResRecreated();
 		return succeeded;
 	}
@@ -239,9 +244,35 @@ namespace aurora::modules::graphics::win_d3d11 {
 		if  (uint32_t subresource = calcSubresource(mipSlice, arraySlice, mipLevels); subresource < mappedRes.size()) {
 			if (auto& mapped = mappedRes[subresource]; (mapped.usage & Usage::MAP_READ) == Usage::MAP_READ) {
 				if (dst && dstLen && offset < mapped.size) {
-					auto readLen = std::min<uint32_t>(mapped.size - offset, dstLen);
-					memcpy(dst, (uint8_t*)mapped.res.pData + offset, readLen);
-					return readLen;
+					auto length = std::min<uint32_t>(mapped.size - offset, dstLen);
+					if (offset + length <= perRowPixelSize || perRowPixelSize == mapped.res.RowPitch) {
+						memcpy(dst, (uint8_t*)mapped.res.pData + offset, length);
+					} else {
+						auto out = (uint8_t*)dst;
+						auto pData = (uint8_t*)mapped.res.pData;
+						auto len = length;
+
+						uint32_t fillLen;
+						if (offset) {
+							auto skipRows = offset / perRowPixelSize;
+							pData += skipRows * mapped.res.RowPitch;
+							offset -= skipRows * perRowPixelSize;
+							fillLen = perRowPixelSize - offset;
+							if (fillLen > len) fillLen = len;
+						} else {
+							fillLen = perRowPixelSize;
+						}
+
+						memcpy(dst, pData + offset, fillLen);
+						while (len > fillLen) {
+							len -= fillLen;
+							out += fillLen;
+							pData += mapped.res.RowPitch;
+							fillLen = len < perRowPixelSize ? len : perRowPixelSize;
+							memcpy(out, pData, fillLen);
+						}
+					}
+					return length;
 				}
 				return 0;
 			}
@@ -254,7 +285,33 @@ namespace aurora::modules::graphics::win_d3d11 {
 			if (auto& mapped = mappedRes[subresource]; (mapped.usage & Usage::MAP_WRITE) == Usage::MAP_WRITE) {
 				if (data && length && offset < mapped.size) {
 					length = std::min<uint32_t>(length, mapped.size - offset);
-					memcpy((uint8_t*)mapped.res.pData + offset, data, length);
+					if (offset + length <= perRowPixelSize || perRowPixelSize == mapped.res.RowPitch) {
+						memcpy((uint8_t*)mapped.res.pData + offset, data, length);
+					} else {
+						auto src = (uint8_t*)data;
+						auto pData = (uint8_t*)mapped.res.pData;
+						auto len = length;
+
+						uint32_t fillLen;
+						if (offset) {
+							auto skipRows = offset / perRowPixelSize;
+							pData += skipRows * mapped.res.RowPitch;
+							offset -= skipRows * perRowPixelSize;
+							fillLen = perRowPixelSize - offset;
+							if (fillLen > len) fillLen = len;
+						} else {
+							fillLen = perRowPixelSize;
+						}
+
+						memcpy(pData + offset, src, fillLen);
+						while (len > fillLen) {
+							len -= fillLen;
+							src += fillLen;
+							pData += mapped.res.RowPitch;
+							fillLen = len < perRowPixelSize ? len : perRowPixelSize;
+							memcpy(pData, src, fillLen);
+						}
+					}
 					return length;
 				}
 				return 0;
@@ -266,11 +323,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 	bool BaseTextureResource::update(Graphics& graphics, uint32_t arraySlice, uint32_t mipSlice, const D3D11_BOX& range, const void* data) {
 		if ((resUsage & Usage::UPDATE) == Usage::UPDATE) {
 			if (data && !arraySlice && mipSlice < mipLevels) {
-				Vec2ui32 size(texSize.slice<2>());
-				Image::calcSpecificMipPixelSize(size, mipSlice);
-				auto rowByteSize = size[0] * perPixelSize;
-
-				graphics.getContext()->UpdateSubresource(handle, mipSlice, &range, data, rowByteSize, rowByteSize * size[1]);
+				auto rowByteSize = (range.right - range.left) * perPixelSize;
+				graphics.getContext()->UpdateSubresource(handle, mipSlice, &range, data, rowByteSize, rowByteSize * (range.bottom - range.top));
 			}
 			return true;
 		}

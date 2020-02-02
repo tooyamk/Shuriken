@@ -5,6 +5,7 @@
 
 namespace aurora::modules::graphics::win_d3d11 {
 	class BlendState;
+	class DepthStencil;
 	class DepthStencilState;
 	class RasterizerState;
 
@@ -12,6 +13,9 @@ namespace aurora::modules::graphics::win_d3d11 {
 	public:
 		Graphics(Ref* loader, Application* app);
 		virtual ~Graphics();
+
+		virtual events::IEventDispatcher<GraphicsEvent>& AE_CALL getEventDispatcher() override;
+		virtual const events::IEventDispatcher<GraphicsEvent>& AE_CALL getEventDispatcher() const override;
 
 		virtual const std::string& AE_CALL getVersion() const override;
 		virtual const GraphicsDeviceFeatures& AE_CALL getDeviceFeatures() const override;
@@ -39,9 +43,13 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual void AE_CALL endRender() override;
 		virtual void AE_CALL present() override;
 
-		virtual void AE_CALL clear(ClearFlag flag, const Vec4f32& color, f32 depth, size_t stencil) override;
+		virtual void AE_CALL clear(ClearFlag flags, const Vec4f32& color, f32 depth, size_t stencil) override;
 
 		bool AE_CALL createDevice(const GraphicsAdapter* adapter);
+
+		inline void AE_CALL error(const std::string_view& msg) {
+			_eventDispatcher.dispatchEvent(this, GraphicsEvent::ERR, (std::string_view*) & msg);
+		}
 
 		inline ID3D11Device5* AE_CALL getDevice() const {
 			return _device;
@@ -122,6 +130,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		ID3D11DeviceContext4* _context;
 		IDXGISwapChain4* _swapChain;
 		ID3D11RenderTargetView1* _backBufferView;
+		RefPtr<DepthStencil> _backDepthStencil;
 		D3D11_FEATURE_DATA_D3D11_OPTIONS _internalFeatures;
 
 		RefPtr<BlendState> _defaultBlendState;
@@ -149,6 +158,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 		} _d3dStatus;
 
 		ConstantBufferManager _constantBufferManager;
+
+		events::EventDispatcher<GraphicsEvent> _eventDispatcher;
 
 		events::EventListener<ApplicationEvent, Graphics> _resizedListener;
 		void AE_CALL _resizedHandler(events::Event<ApplicationEvent>& e);

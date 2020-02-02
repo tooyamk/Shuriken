@@ -280,7 +280,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		if (FAILED(hr)) {
 			if (errorBuffer) {
-				println("d3d11 compile shader err : ", errorBuffer->GetBufferPointer());
+				_graphics.get<Graphics>()->error(std::string("d3d11 compile shader error : ") + (char*)errorBuffer->GetBufferPointer());
 				errorBuffer->Release();
 			}
 

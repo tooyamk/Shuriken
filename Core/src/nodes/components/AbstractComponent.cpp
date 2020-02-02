@@ -3,7 +3,7 @@
 namespace aurora::nodes::component {
 	AbstractComponent::AbstractComponent() :
 		_enabled(true),
-		flag(0),
+		flags(0),
 		layer(0xFFFFFFFF),
 		_node(nullptr) {
 	}

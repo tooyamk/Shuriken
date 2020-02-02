@@ -18,7 +18,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		D3D11_USAGE d3dUsage;
 		UINT cpuUsage;
-		createInit(resUsage, size, dataSize, 0, cpuUsage, d3dUsage);
+		if (!createInit(graphics, resUsage, size, dataSize, 0, cpuUsage, d3dUsage)) return false;
 
 		D3D11_BUFFER_DESC desc;
 		memset(&desc, 0, sizeof(desc));

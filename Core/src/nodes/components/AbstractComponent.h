@@ -18,7 +18,7 @@ namespace aurora::nodes::component {
 
 	class AE_DLL AbstractComponent : public Ref {
 	public:
-		uint32_t flag;
+		uint32_t flags;
 		uint32_t layer;
 
 		inline bool AE_CALL getEnalbed() const;

@@ -20,7 +20,7 @@ namespace aurora::modules::graphics::win_gl {
 		bool write = ((bufferUsage & Usage::MAP_WRITE) == Usage::MAP_WRITE) || ((bufferUsage & Usage::UPDATE) == Usage::UPDATE);
 
 		if (read && write) {
-			println("PixelBuffer.create error");
+			_graphics.get<Graphics>()->error("openGL PixelBuffer create error, could not enable Usage::MAP_READ and (Usage::MAP_WRITE or Usage::UPDATE) at same time");
 			return false;
 		} else {
 			if (read) {
