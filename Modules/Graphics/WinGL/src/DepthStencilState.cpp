@@ -13,6 +13,10 @@ namespace aurora::modules::graphics::win_gl {
 		if (_isInternal) _graphics.weakReset();
 	}
 
+	const void* DepthStencilState::getNative() const {
+		return this;
+	}
+
 	const DepthState& DepthStencilState::getDepthState() const {
 		return _depthState;
 	}

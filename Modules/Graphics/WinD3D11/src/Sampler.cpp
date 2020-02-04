@@ -19,6 +19,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_releaseRes();
 	}
 
+	const void* Sampler::getNative() const {
+		return this;
+	}
+
 	void Sampler::setFilter(const SamplerFilter& filter) {
 		if (_filter != filter) {
 			_filter = filter;

@@ -10,6 +10,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		Sampler(Graphics& graphics);
 		virtual ~Sampler();
 
+		virtual const void* AE_CALL getNative() const override;
 		virtual void AE_CALL setFilter(const SamplerFilter& filter) override;
 		virtual void AE_CALL setComparisonFunc(ComparisonFunc func) override;
 		virtual void AE_CALL setAddress(const SamplerAddress& address) override;

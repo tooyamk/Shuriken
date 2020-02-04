@@ -8,6 +8,7 @@
 #include "Program.h"
 #include "RasterizerState.h"
 #include "Sampler.h"
+#include "SimulativeTextureView.h"
 #include "Texture2DResource.h"
 #include "TextureView.h"
 #include "VertexBuffer.h"
@@ -137,24 +138,33 @@ namespace aurora::modules::graphics::win_gl {
 		_deviceVersion = "OpenGL " + String::toString(_majorVer) + "." + String::toString(_minorVer);
 
 #ifdef AE_DEBUG
-		glEnable(GL_DEBUG_OUTPUT);
-		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-		glDebugMessageCallback(&Graphics::_debugCallback, this);
-		glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
+		if (isGreatThanOrEqualVersion(4, 3) || glewIsSupported("GL_KHR_debug") || glewIsSupported("GL_ARB_debug_output")) {
+			glEnable(GL_DEBUG_OUTPUT);
+			glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+			glDebugMessageCallback(&Graphics::_debugCallback, this);
+			glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
+		}
 #endif
 
 		_internalFeatures.maxAnisotropy = 1.f;
 		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &_internalFeatures.maxAnisotropy);
 		
 		_deviceFeatures.supportPixelBuffer = true;
-		_deviceFeatures.supportConstantBuffer = isGreatThanOrEqualVersion(3, 1);
-		_deviceFeatures.supportSampler = isGreatThanOrEqualVersion(3, 3);
-		_deviceFeatures.supportIndependentBlend = isGreatThanOrEqualVersion(4, 0);
-		_internalFeatures.supportTexStorage = isGreatThanOrEqualVersion(4, 2);
-		_deviceFeatures.supportTextureView = isGreatThanOrEqualVersion(4, 3);
-		_deviceFeatures.supportPersistentMap = isGreatThanOrEqualVersion(4, 4);
+		_deviceFeatures.supportConstantBuffer = isGreatThanOrEqualVersion(3, 1) || glewIsSupported("GL_ARB_uniform_buffer_object");
+		_deviceFeatures.supportSampler = isGreatThanOrEqualVersion(3, 3) || glewIsSupported("GL_ARB_sampler_objects");
+		_deviceFeatures.supportIndependentBlend = isGreatThanOrEqualVersion(4, 0) ||
+			(isGreatThanOrEqualVersion(3, 0) &&
+			glewIsSupported("GL_EXT_blend_func_separate") &&
+			glewIsSupported("GL_EXT_blend_equation_separate"));
+		_internalFeatures.supportTexStorage = isGreatThanOrEqualVersion(4, 2) || glewIsSupported("GL_ARB_texture_storage");
+		_deviceFeatures.supportNativeTextureView = isGreatThanOrEqualVersion(4, 3) || glewIsSupported("ARB_texture_view");
+		_deviceFeatures.supportPersistentMap = isGreatThanOrEqualVersion(4, 4) || glewIsSupported("GL_ARB_buffer_storage");
 		_deviceFeatures.supportStencilIndependentRef = true;
 		_deviceFeatures.supportStencilIndependentMask = true;
+
+		GLint val = 0;
+		glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &val);
+		_deviceFeatures.simultaneousRenderTargetCount = val;
 
 		_bufferCreateUsageMask = Usage::MAP_READ_WRITE | Usage::UPDATE | (_deviceFeatures.supportPersistentMap ? Usage::PERSISTENT_MAP : Usage::NONE);
 		_texCreateUsageMask = Usage::UPDATE;
@@ -192,6 +202,10 @@ namespace aurora::modules::graphics::win_gl {
 		return _deviceFeatures.supportConstantBuffer ? new ConstantBuffer(*this) : nullptr;
 	}
 
+	IDepthStencil* Graphics::createDepthStencil() {
+		return nullptr;
+	}
+
 	IDepthStencilState* Graphics::createDepthStencilState() {
 		return new DepthStencilState(*this, false);
 	}
@@ -206,6 +220,14 @@ namespace aurora::modules::graphics::win_gl {
 
 	IRasterizerState* Graphics::createRasterizerState() {
 		return new RasterizerState(*this, false);
+	}
+
+	IRenderTarget* Graphics::createRenderTarget() {
+		return nullptr;
+	}
+
+	IRenderView* Graphics::createRenderView() {
+		return nullptr;
 	}
 
 	ISampler* Graphics::createSampler() {
@@ -225,7 +247,11 @@ namespace aurora::modules::graphics::win_gl {
 	}
 
 	ITextureView* Graphics::createTextureView() {
-		return _deviceFeatures.supportTextureView ? new TextureView(*this) : nullptr;
+		if (_deviceFeatures.supportNativeTextureView) {
+			return new TextureView(*this);
+		} else {
+			return new SimulativeTextureView(*this);
+		}
 	}
 
 	IVertexBuffer* Graphics::createVertexBuffer() {
@@ -238,22 +264,25 @@ namespace aurora::modules::graphics::win_gl {
 
 	void Graphics::setBlendState(IBlendState* state, const Vec4f32& constantFactors, uint32_t sampleMask) {
 		if (state && state->getGraphics() == this) {
-			_setBlendState(*state, constantFactors, sampleMask);
+			if (auto bs = state->getNative(); bs) {
+				_setBlendState(*(BlendState*)bs, constantFactors, sampleMask);
+			} else {
+				_setBlendState(*(BlendState*)_defaultBlendState->getNative(), constantFactors, sampleMask);
+			}
 		} else if (_defaultBlendState) {
-			_setBlendState(*_defaultBlendState, constantFactors, sampleMask);
+			_setBlendState(*(BlendState*)_defaultBlendState->getNative(), constantFactors, sampleMask);
 		}
 	}
 
-	void Graphics::_setBlendState(IBlendState& state, const Vec4f32& constantFactors, uint32_t sampleMask) {
-		auto& bs = (BlendState&)state;
+	void Graphics::_setBlendState(BlendState& state, const Vec4f32& constantFactors, uint32_t sampleMask) {
 		auto& blend = _glStatus.blend;
 
 		if (_deviceFeatures.supportIndependentBlend) {
-			if (bs.isIndependentBlendEnabled()) {
+			if (state.isIndependentBlendEnabled()) {
 				auto funcChanged = false, opChanged = false, writeMaskChanged = false;
 
-				for (size_t i = 0; i < MAX_RTS; ++i) {
-					auto& rt = bs.getInternalRenderTargetState(i);
+				for (size_t i = 0; i < _deviceFeatures.simultaneousRenderTargetCount; ++i) {
+					auto& rt = state.getInternalRenderTargetState(i);
 					if (bool(blend.enabled >> i & 0x1) != rt.state.enabled) {
 						if (rt.state.enabled) {
 							glEnablei(GL_BLEND, i);
@@ -289,10 +318,10 @@ namespace aurora::modules::graphics::win_gl {
 				if (opChanged) _checkBlendOpIsSame();
 				if (writeMaskChanged) _checkBlendWriteMaskIsSame();
 			} else {
-				_setDependentBlendState<true>(bs.getInternalRenderTargetState(0));
+				_setDependentBlendState<true>(state.getInternalRenderTargetState(0));
 			}
 		} else {
-			_setDependentBlendState<false>(bs.getInternalRenderTargetState(0));
+			_setDependentBlendState<false>(state.getInternalRenderTargetState(0));
 		}
 
 		if (blend.enabled && !memEqual<sizeof(Vec4f32)>(&blend.constantFactors, &constantFactors)) {
@@ -314,11 +343,11 @@ namespace aurora::modules::graphics::win_gl {
 				if (blend.isFuncSame) {
 					if (blend.func[0].featureValue != rt.internalFunc.featureValue) {
 						glBlendFuncSeparate(rt.internalFunc.srcColor, rt.internalFunc.dstColor, rt.internalFunc.srcAlpha, rt.internalFunc.dstAlpha);
-						for (size_t i = 0; i < MAX_RTS; ++i) blend.func[i].featureValue = rt.internalFunc.featureValue;
+						for (size_t i = 0; i < _deviceFeatures.simultaneousRenderTargetCount; ++i) blend.func[i].featureValue = rt.internalFunc.featureValue;
 					}
 				} else {
 					auto needChange = false;
-					for (size_t i = 0; i < MAX_RTS; ++i) {
+					for (size_t i = 0; i < _deviceFeatures.simultaneousRenderTargetCount; ++i) {
 						if (blend.func[i].featureValue != rt.internalFunc.featureValue) {
 							blend.func[i].featureValue = rt.internalFunc.featureValue;
 							needChange = true;
@@ -331,11 +360,11 @@ namespace aurora::modules::graphics::win_gl {
 				if (blend.isOpSame) {
 					if (blend.op[0].featureValue != rt.internalOp.featureValue) {
 						glBlendEquationSeparate(rt.internalOp.color, rt.internalOp.alpha);
-						for (size_t i = 0; i < MAX_RTS; ++i) blend.op[i].featureValue = rt.internalOp.featureValue;
+						for (size_t i = 0; i < _deviceFeatures.simultaneousRenderTargetCount; ++i) blend.op[i].featureValue = rt.internalOp.featureValue;
 					}
 				} else {
 					auto needChange = false;
-					for (size_t i = 0; i < MAX_RTS; ++i) {
+					for (size_t i = 0; i < _deviceFeatures.simultaneousRenderTargetCount; ++i) {
 						if (blend.op[i].featureValue != rt.internalOp.featureValue) {
 							blend.op[i].featureValue = rt.internalOp.featureValue;
 							needChange = true;
@@ -370,11 +399,11 @@ namespace aurora::modules::graphics::win_gl {
 		if (blend.isWriteMaskSame) {
 			if (blend.writeMask[0].featureValue != rt.internalWriteMask.featureValue) {
 				glColorMask(rt.internalWriteMask.rgba[0], rt.internalWriteMask.rgba[1], rt.internalWriteMask.rgba[2], rt.internalWriteMask.rgba[3]);
-				for (size_t i = 0; i < MAX_RTS; ++i) blend.writeMask[i].featureValue = rt.internalWriteMask.featureValue;
+				for (size_t i = 0; i < _deviceFeatures.simultaneousRenderTargetCount; ++i) blend.writeMask[i].featureValue = rt.internalWriteMask.featureValue;
 			}
 		} else {
 			auto needChange = false;
-			for (size_t i = 0; i < MAX_RTS; ++i) {
+			for (size_t i = 0; i < _deviceFeatures.simultaneousRenderTargetCount; ++i) {
 				if (blend.writeMask[i].featureValue != rt.internalWriteMask.featureValue) {
 					blend.writeMask[i].featureValue = rt.internalWriteMask.featureValue;
 					needChange = true;
@@ -387,19 +416,22 @@ namespace aurora::modules::graphics::win_gl {
 
 	void Graphics::setDepthStencilState(IDepthStencilState* state, uint32_t stencilFrontRef, uint32_t stencilBackRef) {
 		if (state && state->getGraphics() == this) {
-			_setDepthStencilState(*state, stencilFrontRef, stencilBackRef);
-		} else if (_defaultDepthStencilState) {
-			_setDepthStencilState(*_defaultDepthStencilState, stencilFrontRef, stencilBackRef);
+			if (auto native = state->getNative(); native) {
+				_setDepthStencilState(*(DepthStencilState*)native, stencilFrontRef, stencilBackRef);
+			} else {
+				_setDepthStencilState(*(DepthStencilState*)_defaultDepthStencilState->getNative(), stencilFrontRef, stencilBackRef);
+			}
+		} else if (_defaultBlendState) {
+			_setDepthStencilState(*(DepthStencilState*)_defaultDepthStencilState->getNative(), stencilFrontRef, stencilBackRef);
 		}
 	}
 
-	void Graphics::_setDepthStencilState(IDepthStencilState& state, uint32_t stencilFrontRef, uint32_t stencilBackRef) {
-		auto& ds = (DepthStencilState&)state;
-		ds.update();
+	void Graphics::_setDepthStencilState(DepthStencilState& state, uint32_t stencilFrontRef, uint32_t stencilBackRef) {
+		state.update();
 
 		{
 			auto& depth = _glStatus.depth;
-			auto& ids = ds.getInternalDepthState();
+			auto& ids = state.getInternalDepthState();
 			auto changed = false;
 			if (depth.enabled == ids.enabled) {
 				if (ids.enabled && depth.featureValue != ids.featureValue) changed = true;
@@ -429,12 +461,12 @@ namespace aurora::modules::graphics::win_gl {
 
 		{
 			auto& stencil = _glStatus.stencil;
-			auto& iss = ds.getInternalStencilState();
+			auto& iss = state.getInternalStencilState();
 			auto changed = false;
 			auto frontRefChanged = false, backRefChanged = false;
 			if (stencil.state.enabled == iss.enabled) {
 				if (iss.enabled) {
-					if (stencil.featureValue == ds.getStencilFeatureValue()) {
+					if (stencil.featureValue == state.getStencilFeatureValue()) {
 						frontRefChanged = stencil.ref.front != stencilFrontRef;
 						backRefChanged = stencil.ref.back != stencilBackRef;
 					} else {
@@ -445,7 +477,7 @@ namespace aurora::modules::graphics::win_gl {
 				if (iss.enabled) {
 					glEnable(GL_STENCIL_TEST);
 
-					if (stencil.featureValue == ds.getStencilFeatureValue()) {
+					if (stencil.featureValue == state.getStencilFeatureValue()) {
 						frontRefChanged = stencil.ref.front != stencilFrontRef;
 						backRefChanged = stencil.ref.back != stencilBackRef;
 					} else {
@@ -477,7 +509,7 @@ namespace aurora::modules::graphics::win_gl {
 					glStencilOpSeparate(GL_BACK, iss.face.back.op.fail, iss.face.back.op.depthFail, iss.face.back.op.pass);
 
 				stencil.state.face = iss.face;
-				stencil.featureValue = ds.getStencilFeatureValue();
+				stencil.featureValue = state.getStencilFeatureValue();
 			} else {
 				if (frontRefChanged) {
 					glStencilFuncSeparate(GL_FRONT, iss.face.front.func, stencilFrontRef, iss.face.front.mask.read);
@@ -494,18 +526,21 @@ namespace aurora::modules::graphics::win_gl {
 
 	void Graphics::setRasterizerState(IRasterizerState* state) {
 		if (state && state->getGraphics() == this) {
-			_setRasterizerState(*state);
+			if (auto native = state->getNative(); native) {
+				_setRasterizerState(*(RasterizerState*)native);
+			} else {
+				_setRasterizerState(*(RasterizerState*)_defaultRasterizerState->getNative());
+			}
 		} else if (_defaultRasterizerState) {
-			_setRasterizerState(*_defaultRasterizerState);
+			_setRasterizerState(*(RasterizerState*)_defaultRasterizerState->getNative());
 		}
 	}
 
-	void Graphics::_setRasterizerState(IRasterizerState& state) {
-		auto& rs = (RasterizerState&)state;
-		rs.update();
+	void Graphics::_setRasterizerState(RasterizerState& state) {
+		state.update();
 		auto& rasterizer = _glStatus.rasterizer;
-		if (rasterizer.featureValue != rs.getFeatureValue()) {
-			auto& internalState = rs.getInternalState();
+		if (rasterizer.featureValue != state.getFeatureValue()) {
+			auto& internalState = state.getInternalState();
 
 			if (rasterizer.state.fillMode != internalState.fillMode) {
 				glPolygonMode(GL_FRONT_AND_BACK, internalState.fillMode);
@@ -534,7 +569,7 @@ namespace aurora::modules::graphics::win_gl {
 				rasterizer.state.frontFace = internalState.frontFace;
 			}
 
-			rasterizer.featureValue = rs.getFeatureValue();
+			rasterizer.featureValue = state.getFeatureValue();
 		}
 	}
 
@@ -548,11 +583,11 @@ namespace aurora::modules::graphics::win_gl {
 
 	void Graphics::draw(const VertexBufferFactory* vertexFactory, IProgram* program, const ShaderParameterFactory* paramFactory, const IIndexBuffer* indexBuffer, uint32_t count, uint32_t offset) {
 		if (vertexFactory && indexBuffer && program && program->getGraphics() == this && indexBuffer->getGraphics() == this && count > 0) {
-			auto ib = (IndexBuffer*)indexBuffer->getNativeBuffer();
+			auto ib = (IndexBuffer*)indexBuffer->getNative();
 			if (!ib) return;
 
-			auto p = (Program*)program;
-			if (p->use(vertexFactory, paramFactory)) {
+			auto p = (Program*)program->getNative();
+			if (p && p->use(vertexFactory, paramFactory)) {
 				ib->draw(count, offset);
 
 				_constantBufferManager.resetUsedShareConstantBuffers();
@@ -568,6 +603,9 @@ namespace aurora::modules::graphics::win_gl {
 	}
 
 	void Graphics::present() {
+	}
+
+	void Graphics::setRenderTarget(IRenderTarget* rt) {
 	}
 
 	void Graphics::clear(ClearFlag flags, const Vec4f32& color, f32 depth, size_t stencil) {
@@ -659,9 +697,12 @@ namespace aurora::modules::graphics::win_gl {
 
 		{
 			auto& blend = _glStatus.blend;
+			blend.func.resize(_deviceFeatures.simultaneousRenderTargetCount);
+			blend.op.resize(_deviceFeatures.simultaneousRenderTargetCount);
+			blend.writeMask.resize(_deviceFeatures.simultaneousRenderTargetCount);
 			if (_deviceFeatures.supportIndependentBlend) {
 				blend.enabled = 0;
-				for (size_t i = 0; i < MAX_RTS; ++i) {
+				for (size_t i = 0; i < _deviceFeatures.simultaneousRenderTargetCount; ++i) {
 					blend.enabled |= glIsEnabledi(GL_BLEND, i) << i;
 
 					GLint sc, dc, sa, da;
@@ -717,7 +758,7 @@ namespace aurora::modules::graphics::win_gl {
 				auto& wm = blend.writeMask[0];
 				memcpy(wm.rgba, wms, sizeof(wm.rgba));
 
-				for (size_t i = 1; i < MAX_RTS; ++i) {
+				for (size_t i = 1; i < _deviceFeatures.simultaneousRenderTargetCount; ++i) {
 					blend.func[i].featureValue = bf.featureValue;
 					blend.op[i].featureValue = op.featureValue;
 					blend.writeMask[i].featureValue = wm.featureValue;
@@ -829,7 +870,7 @@ namespace aurora::modules::graphics::win_gl {
 	void Graphics::_checkBlendFuncIsSame() {
 		auto& blend = _glStatus.blend;
 		blend.isFuncSame = true;
-		for (size_t i = 1; i < MAX_RTS; ++i) {
+		for (size_t i = 1; i < _deviceFeatures.simultaneousRenderTargetCount; ++i) {
 			if (blend.func[0].featureValue != blend.func[i].featureValue) {
 				blend.isFuncSame = false;
 				break;
@@ -840,7 +881,7 @@ namespace aurora::modules::graphics::win_gl {
 	void Graphics::_checkBlendOpIsSame() {
 		auto& blend = _glStatus.blend;
 		blend.isOpSame = true;
-		for (size_t i = 1; i < MAX_RTS; ++i) {
+		for (size_t i = 1; i < _deviceFeatures.simultaneousRenderTargetCount; ++i) {
 			if (blend.op[0].featureValue != blend.op[i].featureValue) {
 				blend.isOpSame = false;
 				break;
@@ -851,7 +892,7 @@ namespace aurora::modules::graphics::win_gl {
 	void Graphics::_checkBlendWriteMaskIsSame() {
 		auto& blend = _glStatus.blend;
 		blend.isWriteMaskSame = true;
-		for (size_t i = 1; i < MAX_RTS; ++i) {
+		for (size_t i = 1; i < _deviceFeatures.simultaneousRenderTargetCount; ++i) {
 			if (blend.writeMask[0].featureValue != blend.writeMask[i].featureValue) {
 				blend.isWriteMaskSame = false;
 				break;

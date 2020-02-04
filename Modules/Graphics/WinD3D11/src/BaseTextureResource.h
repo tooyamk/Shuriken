@@ -4,9 +4,6 @@
 #include <unordered_set>
 
 namespace aurora::modules::graphics::win_d3d11 {
-	class TextureView;
-
-
 	class BaseTextureResource : public BaseResource {
 	public:
 		BaseTextureResource(UINT resType);
@@ -20,10 +17,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 		uint32_t AE_CALL write(uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, const void* data, uint32_t length);
 		bool AE_CALL update(Graphics& graphics, uint32_t arraySlice, uint32_t mipSlice, const D3D11_BOX& range, const void* data);
 		void AE_CALL releaseTex(Graphics& graphics);
-		void AE_CALL addView(TextureView& view);
-		void AE_CALL removeView(TextureView& view);
 
-		inline static constexpr UINT calcSubresource(UINT mipSlice, UINT arraySlice, UINT mipLevels) {
+		inline static constexpr UINT AE_CALL calcSubresource(UINT mipSlice, UINT arraySlice, UINT mipLevels) {
 			return mipSlice + arraySlice * mipLevels;
 		}
 
@@ -48,8 +43,6 @@ namespace aurora::modules::graphics::win_d3d11 {
 		};
 
 		std::vector<MappedRes> mappedRes;
-
-		std::unordered_set<TextureView*> views;
 
 	private:
 		HRESULT AE_CALL _createInternalTexture(Graphics& graphics, TextureType texType, const TexDesc& desc, const D3D11_SUBRESOURCE_DATA* pInitialData);

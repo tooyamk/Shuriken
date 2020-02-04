@@ -10,6 +10,8 @@ namespace aurora::modules::graphics::win_gl {
 		DepthStencilState(Graphics& graphics, bool isInternal);
 		virtual ~DepthStencilState();
 
+		virtual const void* AE_CALL getNative() const override;
+
 		virtual const DepthState& AE_CALL getDepthState() const override;
 		virtual void AE_CALL setDepthState(const DepthState& depthState) override;
 

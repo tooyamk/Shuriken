@@ -109,9 +109,6 @@ public:
 
 					auto texRes = graphics->createTexture2DResource();
 					if (texRes) {
-						auto texView = graphics->createTextureView();
-						if (texView) texView->create(texRes, 0, -1, 0, -1);
-
 						auto img0 = file::PNGConverter::parse(readFile(app->getAppPath() + u8"Resources/c4.png"));
 						auto mipLevels = Image::calcMipLevels(img0->size);
 						ByteArray mipsData0;
@@ -125,7 +122,10 @@ public:
 
 						mipsData0Ptr.insert(mipsData0Ptr.end(), mipsData1Ptr.begin(), mipsData1Ptr.end());
 
-						auto hr = texRes->create(img0->size, 0, 1, img0->format, Usage::IGNORE_UNSUPPORTED | Usage::UPDATE | Usage::MAP_WRITE, mipsData0Ptr.data());
+						auto hr = texRes->create(img0->size, 0, 1, img0->format, Usage::IGNORE_UNSUPPORTED | Usage::MAP_WRITE, mipsData0Ptr.data());
+
+						auto texView = graphics->createTextureView();
+						texView->create(texRes, 0, -1, 0, -1);
 
 						auto pb = graphics->createPixelBuffer();
 						if (pb) {
@@ -139,7 +139,7 @@ public:
 						texRes->unmap(0, 0);
 						//texRes->update(0, 0, Box2ui32(Vec2ui32(1, 1), Vec2ui32(2, 2)), texData);
 
-						cf->add("texDiffuse", new ShaderParameter(ShaderParameterUsage::AUTO))->set(texView ? (ITextureViewBase*)texView : (ITextureViewBase*)texRes).setUpdated();
+						cf->add("texDiffuse", new ShaderParameter(ShaderParameterUsage::AUTO))->set(texView).setUpdated();
 					}
 
 					auto sam = graphics->createSampler();

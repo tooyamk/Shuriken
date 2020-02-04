@@ -5,10 +5,10 @@
 namespace aurora::modules::graphics::win_gl {
 	class Graphics;
 
-	class AE_MODULE_DLL TextureView : public ITextureView {
+	class AE_MODULE_DLL SimulativeTextureView : public ITextureView {
 	public:
-		TextureView(Graphics& graphics);
-		virtual ~TextureView();
+		SimulativeTextureView(Graphics& graphics);
+		virtual ~SimulativeTextureView();
 
 		virtual bool AE_CALL isCreated() const override;
 		virtual ITextureResource* AE_CALL getResource() const override;

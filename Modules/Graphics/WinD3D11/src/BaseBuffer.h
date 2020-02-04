@@ -18,6 +18,6 @@ namespace aurora::modules::graphics::win_d3d11 {
 		Usage mapUsage;
 		D3D11_MAPPED_SUBRESOURCE mappedRes;
 
-		void releaseBuffer(Graphics& graphics);
+		void AE_CALL releaseBuffer(Graphics& graphics);
 	};
 }

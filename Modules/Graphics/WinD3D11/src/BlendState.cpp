@@ -11,7 +11,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_featureValue(0) {
 		if (_isInternal) _graphics->weakUnref();
 		_oldIndependentBlendEnabled = _desc.IndependentBlendEnable;
-		for (uint8_t i = 0; i < MAX_RTS; ++i) _setRenderTargetState(i, _rtStatus[i]);
+		for (uint8_t i = 0; i < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i) _setRenderTargetState(i, _rtStatus[i]);
 	}
 
 	BlendState::~BlendState() {
@@ -19,7 +19,9 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_releaseRes();
 	}
 
-	const RenderTargetBlendState BlendState::DEFAULT_RT_STATE = RenderTargetBlendState();
+	const void* BlendState::getNative() const {
+		return this;
+	}
 
 	bool BlendState::isIndependentBlendEnabled() const {
 		return _desc.IndependentBlendEnable;
@@ -33,18 +35,23 @@ namespace aurora::modules::graphics::win_d3d11 {
 		}
 	}
 
-	const RenderTargetBlendState& BlendState::getRenderTargetState(uint8_t index) const {
-		return index < MAX_RTS ? _rtStatus[index] : DEFAULT_RT_STATE;
+	const RenderTargetBlendState* BlendState::getRenderTargetState(uint8_t index) const {
+		return index < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT ? &_rtStatus[index] : nullptr;
 	}
 
-	void BlendState::setRenderTargetState(uint8_t index, const RenderTargetBlendState& state) {
-		if (index < MAX_RTS && !memEqual<sizeof(state)>(&_rtStatus[index], &state)) {
-			_rtStatus[index] = state;
+	bool BlendState::setRenderTargetState(uint8_t index, const RenderTargetBlendState& state) {
+		if (index < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT) {
+			if (!memEqual<sizeof(state)>(&_rtStatus[index], &state)) {
+				_rtStatus[index] = state;
 
-			_setRenderTargetState(index, state);
+				_setRenderTargetState(index, state);
 
-			_setDirty(!memEqual<sizeof(state)>(&_oldRtStatus[index], &_rtStatus[index]), DirtyFlag::RT_STATE);
+				_setDirty(!memEqual<sizeof(state)>(&_oldRtStatus[index], &_rtStatus[index]), DirtyFlag::RT_STATE);
+			}
+
+			return true;
 		}
+		return false;
 	}
 
 	void BlendState::_setRenderTargetState(uint8_t index, const RenderTargetBlendState& state) {

@@ -3,16 +3,20 @@
 
 namespace aurora::modules::graphics::win_gl {
 	BlendState::BlendState(Graphics& graphics, bool isInternal) : IBlendState(graphics),
-		_isInternal(isInternal) {
+		_isInternal(isInternal),
+		MAX_MRT_COUNT(graphics.getDeviceFeatures().simultaneousRenderTargetCount),
+		_status(MAX_MRT_COUNT) {
 		if (_isInternal) _graphics->weakUnref();
-		for (uint8_t i = 0; i < MAX_RTS; ++i) _updateInternalState(i);
+		for (uint8_t i = 0; i < MAX_MRT_COUNT; ++i) _updateInternalState(i);
 	}
 
 	BlendState::~BlendState() {
 		if (_isInternal) _graphics.weakReset();
 	}
 
-	const RenderTargetBlendState BlendState::DEFAULT_RT_STATE = RenderTargetBlendState();
+	const void* BlendState::getNative() const {
+		return this;
+	}
 
 	bool BlendState::isIndependentBlendEnabled() const {
 		return _independentBlendEnabled;
@@ -22,15 +26,20 @@ namespace aurora::modules::graphics::win_gl {
 		_independentBlendEnabled = enalbed;
 	}
 
-	const RenderTargetBlendState& BlendState::getRenderTargetState(uint8_t index) const {
-		return index < MAX_RTS ? _status[index].state : DEFAULT_RT_STATE;
+	const RenderTargetBlendState* BlendState::getRenderTargetState(uint8_t index) const {
+		return index < MAX_MRT_COUNT ? &_status[index].state : nullptr;
 	}
 
-	void BlendState::setRenderTargetState(uint8_t index, const RenderTargetBlendState& state) {
-		if (index < MAX_RTS && !memEqual<sizeof(state)>(&_status[index].state, &state)) {
-			_status[index].state = state;
-			_updateInternalState(index);
+	bool BlendState::setRenderTargetState(uint8_t index, const RenderTargetBlendState& state) {
+		if (index < MAX_MRT_COUNT) {
+			if (!memEqual<sizeof(state)>(&_status[index].state, &state)) {
+				_status[index].state = state;
+				_updateInternalState(index);
+			}
+
+			return true;
 		}
+		return false;
 	}
 
 	uint16_t BlendState::_convertBlendFactor(BlendFactor factor) {

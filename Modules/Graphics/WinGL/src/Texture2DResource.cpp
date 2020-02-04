@@ -13,11 +13,11 @@ namespace aurora::modules::graphics::win_gl {
 		return TextureType::TEX2D;
 	}
 
-	const void* Texture2DResource::getNativeView() const {
-		return &_baseTex.handle;
+	bool Texture2DResource::isCreated() const {
+		return _baseTex.handle;
 	}
 
-	const void* Texture2DResource::getNativeResource() const {
+	const void* Texture2DResource::getNative() const {
 		return &_baseTex;
 	}
 
@@ -25,12 +25,8 @@ namespace aurora::modules::graphics::win_gl {
 		return _baseTex.perPixelSize;
 	}
 
-	uint32_t Texture2DResource::getArraySize() const {
-		return _baseTex.isArray ? _baseTex.arraySize : 0;
-	}
-
-	uint32_t Texture2DResource::getMipLevels() const {
-		return _baseTex.mipLevels;
+	const Vec2ui32& Texture2DResource::getSize() const {
+		return (Vec2ui32&)_baseTex.texSize;
 	}
 
 	bool Texture2DResource::create(const Vec2ui32& size, uint32_t arraySize, uint32_t mipLevels, TextureFormat format, Usage resUsage, const void*const* data) {
@@ -55,6 +51,10 @@ namespace aurora::modules::graphics::win_gl {
 
 	uint32_t Texture2DResource::write(uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, const void* data, uint32_t length) {
 		return _baseTex.write(arraySlice, mipSlice, offset, data, length);
+	}
+
+	void Texture2DResource::destroy() {
+		_baseTex.releaseTex();
 	}
 
 	bool Texture2DResource::update(uint32_t arraySlice, uint32_t mipSlice, const Box2ui32& range, const void* data) {

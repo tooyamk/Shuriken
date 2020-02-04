@@ -14,7 +14,11 @@ namespace aurora::modules::graphics::win_gl {
 	VertexBuffer::~VertexBuffer() {
 	}
 
-	const void* VertexBuffer::getNativeBuffer() const {
+	bool VertexBuffer::isCreated() const {
+		return _baseBuffer.handle;
+	}
+
+	const void* VertexBuffer::getNative() const {
 		return this;
 	}
 
@@ -56,6 +60,10 @@ namespace aurora::modules::graphics::win_gl {
 
 	bool VertexBuffer::isSyncing() const {
 		return _baseBuffer.isSyncing();
+	}
+
+	void VertexBuffer::destroy() {
+		_baseBuffer.releaseBuffer();
 	}
 
 	void VertexBuffer::getFormat(VertexSize* size, VertexType* type) const {

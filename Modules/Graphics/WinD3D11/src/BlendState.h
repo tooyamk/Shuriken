@@ -10,11 +10,12 @@ namespace aurora::modules::graphics::win_d3d11 {
 		BlendState(Graphics& graphics, bool isInternal);
 		virtual ~BlendState();
 
+		virtual const void* AE_CALL getNative() const override;
 		virtual bool AE_CALL isIndependentBlendEnabled() const override;
 		virtual void AE_CALL setIndependentBlendEnabled(bool enalbed) override;
 
-		virtual const RenderTargetBlendState& AE_CALL getRenderTargetState(uint8_t index) const override;
-		virtual void AE_CALL setRenderTargetState(uint8_t index, const RenderTargetBlendState& state) override;
+		virtual const RenderTargetBlendState* AE_CALL getRenderTargetState(uint8_t index) const override;
+		virtual bool AE_CALL setRenderTargetState(uint8_t index, const RenderTargetBlendState& state) override;
 
 		inline ID3D11BlendState1* AE_CALL getInternalState() const {
 			return _internalState;
@@ -35,15 +36,12 @@ namespace aurora::modules::graphics::win_d3d11 {
 			static const DirtyType RT_STATE = 0b1 << 2;
 		};
 
-		static const RenderTargetBlendState DEFAULT_RT_STATE;
-		static const uint8_t MAX_RTS = 8;
-
 		bool _isInternal;
 		DirtyType _dirty;
 		bool _oldIndependentBlendEnabled;
 		D3D11_BLEND_DESC1 _desc;
-		RenderTargetBlendState _rtStatus[MAX_RTS];
-		RenderTargetBlendState _oldRtStatus[MAX_RTS];
+		RenderTargetBlendState _rtStatus[D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT];
+		RenderTargetBlendState _oldRtStatus[D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT];
 		ID3D11BlendState1* _internalState;
 		uint64_t _featureValue;
 

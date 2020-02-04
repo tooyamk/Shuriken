@@ -18,6 +18,10 @@ namespace aurora::modules::graphics::win_gl {
 		_release();
 	}
 
+	const void* Program::getNative() const {
+		return this;
+	}
+
 	bool Program::upload(const ProgramSource& vert, const ProgramSource& frag) {
 		_release();
 
@@ -34,8 +38,7 @@ namespace aurora::modules::graphics::win_gl {
 			return false;
 		}
 
-		_handle = glCreateProgram();
-		if (!_handle) {
+		if (_handle = glCreateProgram(); !_handle) {
 			glDeleteShader(vertexShader);
 			glDeleteShader(fragmentShader);
 			return false;
@@ -216,7 +219,7 @@ namespace aurora::modules::graphics::win_gl {
 
 			for (auto& info : _inVertexBufferLayouts) {
 				if (auto vb = vertexFactory->get(info.name); vb && _graphics == vb->getGraphics()) {
-					if (auto vb1 = (VertexBuffer*)vb->getNativeBuffer(); vb1) vb1->use(info.location);
+					if (auto vb1 = (VertexBuffer*)vb->getNative(); vb1) vb1->use(info.location);
 				}
 			}
 
@@ -231,14 +234,16 @@ namespace aurora::modules::graphics::win_gl {
 					{
 						if (auto p0 = paramFactory->get(layout.names[0], ShaderParameterType::TEXTURE); p0) {
 							if (auto data = p0->getData(); data && g == ((ITextureResource*)data)->getGraphics()) {
-								if (auto native = (GLuint*)((ITextureViewBase*)data)->getNativeView(); native) {
+								if (auto native = (GLuint*)((ITextureView*)data)->getNative(); native) {
 									auto idx = texIndex++;
 
 									GLuint sampler = 0;
 									if (auto p1 = paramFactory->get(layout.names[1], ShaderParameterType::SAMPLER); p1) {
 										if (auto data = p1->getData(); data && g == ((ISampler*)data)->getGraphics()) {
-											((Sampler*)data)->update();
-											sampler = ((Sampler*)data)->getInternalSampler();
+											if (auto s = (Sampler*)((ISampler*)data)->getNative(); s) {
+												s->update();
+												sampler = s->getInternalSampler();
+											}
 										}
 									}
 
@@ -267,9 +272,7 @@ namespace aurora::modules::graphics::win_gl {
 					uint32_t numVars = _tempVars.size();
 					if (statistics.unknownCount < numVars) {
 						if (statistics.exclusiveCount > 0 && !statistics.shareCount) {
-							cb = (ConstantBuffer*)g->getConstantBufferManager().getExclusiveConstantBuffer(_tempParams, layout);
-
-							if (cb) {
+							if (cb = (ConstantBuffer*)g->getConstantBufferManager().getExclusiveConstantBuffer(_tempParams, layout); cb) {
 								bool isMaping = false;
 								for (uint32_t i = 0; i < numVars; ++i) {
 									if (auto param = _tempParams[i]; param && param->getUpdateId() != cb->recordUpdateIds[i]) {
@@ -285,15 +288,14 @@ namespace aurora::modules::graphics::win_gl {
 								if (isMaping) cb->unmap();
 							}
 						} else {
-							cb = (ConstantBuffer*)_graphics.get<Graphics>()->getConstantBufferManager().popShareConstantBuffer(layout.size);
-							if (cb) _constantBufferUpdateAll(cb, layout.variables);
+							if (cb = (ConstantBuffer*)g->getConstantBufferManager().popShareConstantBuffer(layout.size); cb) _constantBufferUpdateAll(cb, layout.variables);
 						}
 					}
 
 					_tempParams.clear();
 					_tempVars.clear();
 
-					if (auto cb1 = (ConstantBuffer*)cb->getNativeBuffer(); cb1) glBindBufferBase(GL_UNIFORM_BUFFER, layout.bindPoint, cb1->getInternalBuffer());
+					if (auto cb1 = (ConstantBuffer*)cb->getNative(); cb1) glBindBufferBase(GL_UNIFORM_BUFFER, layout.bindPoint, cb1->getInternalBuffer());
 				}
 			}
 
@@ -305,8 +307,7 @@ namespace aurora::modules::graphics::win_gl {
 	void Program::_constantBufferUpdateAll(ConstantBuffer* cb, const std::vector<ConstantBufferLayout::Variables>& vars) {
 		if (cb->map(Usage::MAP_WRITE) != Usage::NONE) {
 			for (uint32_t i = 0, n = _tempVars.size(); i < n; ++i) {
-				auto param = _tempParams[i];
-				if (param) ConstantBufferManager::updateConstantBuffer(cb, *param, *_tempVars[i]);
+				if (auto param = _tempParams[i]; param) ConstantBufferManager::updateConstantBuffer(cb, *param, *_tempVars[i]);
 			}
 
 			cb->unmap();
@@ -354,7 +355,11 @@ namespace aurora::modules::graphics::win_gl {
 			GLsizei logLen = 0;
 			GLchar log[1024];
 			glGetShaderInfoLog(shader, sizeof(log), &logLen, log);
-			println("compile shader error(", (type == GL_VERTEX_SHADER ? "vert" : "frag"), ") : \n", log);
+			std::string msg = "openGL compile shader error(";
+			msg += type == GL_VERTEX_SHADER ? "vert" : "frag";
+			msg += ") : \n";
+			msg += log;
+			_graphics.get<Graphics>()->error(msg);
 
 			glDeleteShader(shader);
 			return 0;

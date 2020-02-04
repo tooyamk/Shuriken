@@ -2,6 +2,7 @@
 
 #include "ConstantBuffer.h"
 #include "Sampler.h"
+#include "TextureView.h"
 #include "modules/graphics/ConstantBufferManager.h"
 
 namespace aurora::modules::graphics::win_d3d11 {
@@ -10,6 +11,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		Program(Graphics& graphics);
 		virtual ~Program();
 
+		virtual const void* AE_CALL getNative() const override;
 		virtual bool AE_CALL upload(const ProgramSource& vert, const ProgramSource& frag) override;
 
 		bool AE_CALL use(const VertexBufferFactory* vertexFactory, const ShaderParameterFactory* paramFactory);
@@ -97,22 +99,26 @@ namespace aurora::modules::graphics::win_d3d11 {
 		ConstantBuffer* _getConstantBuffer(const MyConstantBufferLayout& cbLayout, const ShaderParameterFactory& factory);
 		void _constantBufferUpdateAll(ConstantBuffer* cb, const std::vector<ConstantBufferLayout::Variables>& vars);
 
-		template<ProgramStage stage>
+		template<ProgramStage Stage>
 		void AE_CALL _useParameters(const ParameterLayout& layout, const ShaderParameterFactory& factory) {
 			auto g = _graphics.get<Graphics>();
 
 			for (auto& info : layout.constantBuffers) {
 				auto cb = _getConstantBuffer(info, factory);
 				if (cb && g == cb->getGraphics()) {
-					if (auto buffer = ((ConstantBuffer*)cb->getNativeBuffer())->getInternalBuffer(); buffer) g->useConstantBuffers<stage>(info.bindPoint, 1, &buffer);
+					if (auto native = (ConstantBuffer*)cb->getNative(); native) {
+						if (auto buffer = native->getInternalBuffer(); buffer) g->useConstantBuffers<Stage>(info.bindPoint, 1, &buffer);
+					}
 				}
 			}
 
 			for (auto& info : layout.textures) {
 				if (auto p = factory.get(info.name, ShaderParameterType::TEXTURE); p) {
-					if (auto data = p->getData(); data && g == ((ITextureViewBase*)data)->getGraphics()) {
-						auto view = (ID3D11ShaderResourceView*)((ITextureViewBase*)data)->getNativeView();
-						g->useShaderResources<stage>(info.bindPoint, 1, &view);
+					if (auto data = p->getData(); data && g == ((ITextureView*)data)->getGraphics()) {
+						if (auto native = (TextureView*)((ITextureView*)data)->getNative(); native) {
+							auto iv = native->getInternalView();
+							g->useShaderResources<Stage>(info.bindPoint, 1, &iv);
+						}
 					}
 					//if (data) (BaseTexture*)(((ITexture*)data)->getNative())->use<stage>((Graphics*)_graphics, info.bindPoint);
 				}
@@ -121,9 +127,11 @@ namespace aurora::modules::graphics::win_d3d11 {
 			for (auto& info : layout.samplers) {
 				if (auto p = factory.get(info.name, ShaderParameterType::SAMPLER); p) {
 					if (auto data = p->getData(); data && g == ((ISampler*)data)->getGraphics()) {
-						((Sampler*)data)->update();
-						auto sampler = ((Sampler*)data)->getInternalSampler();
-						g->useSamplers<stage>(info.bindPoint, 1, &sampler);
+						if (auto native = (Sampler*)((ISampler*)data)->getNative(); native) {
+							native->update();
+							auto is = native->getInternalSampler();
+							g->useSamplers<Stage>(info.bindPoint, 1, &is);
+						}
 					}
 				}
 			}

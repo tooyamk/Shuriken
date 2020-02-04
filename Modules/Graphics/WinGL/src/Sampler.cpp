@@ -22,6 +22,10 @@ namespace aurora::modules::graphics::win_gl {
 		_releaseRes();
 	}
 
+	const void* Sampler::getNative() const {
+		return this;
+	}
+
 	void Sampler::setFilter(const SamplerFilter& filter) {
 		auto f = filter;
 		if (f.operation != SamplerFilterOperation::COMPARISON) f.operation = SamplerFilterOperation::NORMAL;

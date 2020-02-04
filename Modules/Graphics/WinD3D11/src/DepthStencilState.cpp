@@ -17,6 +17,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_releaseRes();
 	}
 
+	const void* DepthStencilState::getNative() const {
+		return this;
+	}
+
 	const DepthState& DepthStencilState::getDepthState() const {
 		return _depthState;
 	}

@@ -5,7 +5,7 @@
 
 namespace aurora::modules::graphics {
 	class ISampler;
-	class ITextureViewBase;
+	class ITextureView;
 	class ShaderParameterFactory;
 
 
@@ -85,7 +85,7 @@ namespace aurora::modules::graphics {
 		inline ShaderParameter& AE_CALL set(const ISampler* value) {
 			return set(value, sizeof(value), sizeof(value), ShaderParameterType::SAMPLER, false);
 		}
-		inline ShaderParameter& AE_CALL set(const ITextureViewBase* value) {
+		inline ShaderParameter& AE_CALL set(const ITextureView* value) {
 			return set(value, sizeof(value), sizeof(value), ShaderParameterType::TEXTURE, false);
 		}
 		inline ShaderParameter& AE_CALL set(const ShaderParameterFactory* value) {

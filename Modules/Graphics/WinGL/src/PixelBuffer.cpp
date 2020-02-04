@@ -3,18 +3,22 @@
 
 namespace aurora::modules::graphics::win_gl {
 	PixelBuffer::PixelBuffer(Graphics& graphics) : IPixelBuffer(graphics),
-		baseBuffer(0) {
+		_baseBuffer(0) {
 	}
 
 	PixelBuffer::~PixelBuffer() {
 	}
 
-	const void* PixelBuffer::getNativeBuffer() const {
+	bool PixelBuffer::isCreated() const {
+		return _baseBuffer.handle;
+	}
+
+	const void* PixelBuffer::getNative() const {
 		return this;
 	}
 
 	bool PixelBuffer::create(uint32_t size, Usage bufferUsage, const void* data, uint32_t dataSize) {
-		baseBuffer.releaseBuffer();
+		destroy();
 
 		bool read = (bufferUsage & Usage::MAP_READ) == Usage::MAP_READ;
 		bool write = ((bufferUsage & Usage::MAP_WRITE) == Usage::MAP_WRITE) || ((bufferUsage & Usage::UPDATE) == Usage::UPDATE);
@@ -24,43 +28,43 @@ namespace aurora::modules::graphics::win_gl {
 			return false;
 		} else {
 			if (read) {
-				baseBuffer.bufferType = GL_PIXEL_PACK_BUFFER;
+				_baseBuffer.bufferType = GL_PIXEL_PACK_BUFFER;
 			} else if (write) {
-				baseBuffer.bufferType = GL_PIXEL_UNPACK_BUFFER;
+				_baseBuffer.bufferType = GL_PIXEL_UNPACK_BUFFER;
 			} else {
 				return true;
 			}
 
-			return baseBuffer.create(*_graphics.get<Graphics>(), size, bufferUsage, data, GL_DYNAMIC_READ);
+			return _baseBuffer.create(*_graphics.get<Graphics>(), size, bufferUsage, data, GL_DYNAMIC_READ);
 		}
 	}
 
 	uint32_t PixelBuffer::getSize() const {
-		return baseBuffer.size;
+		return _baseBuffer.size;
 	}
 
 	Usage PixelBuffer::getUsage() const {
-		return baseBuffer.resUsage;
+		return _baseBuffer.resUsage;
 	}
 
 	Usage PixelBuffer::map(Usage expectMapUsage) {
-		return baseBuffer.map(expectMapUsage, GL_READ_WRITE);
+		return _baseBuffer.map(expectMapUsage, GL_READ_WRITE);
 	}
 
 	void PixelBuffer::unmap() {
-		baseBuffer.unmap();
+		_baseBuffer.unmap();
 	}
 
 	uint32_t PixelBuffer::read(uint32_t offset, void* dst, uint32_t dstLen) {
-		return baseBuffer.read(offset, dst, dstLen);
+		return _baseBuffer.read(offset, dst, dstLen);
 	}
 
 	uint32_t PixelBuffer::write(uint32_t offset, const void* data, uint32_t length) {
-		return baseBuffer.write(offset, data, length);
+		return _baseBuffer.write(offset, data, length);
 	}
 
 	uint32_t PixelBuffer::update(uint32_t offset, const void* data, uint32_t length) {
-		return baseBuffer.update(offset, data, length);
+		return _baseBuffer.update(offset, data, length);
 	}
 
 	//void PixelBuffer::flush() {
@@ -68,6 +72,10 @@ namespace aurora::modules::graphics::win_gl {
 	//}
 
 	bool PixelBuffer::isSyncing() const {
-		return baseBuffer.isSyncing();
+		return _baseBuffer.isSyncing();
+	}
+
+	void PixelBuffer::destroy() {
+		_baseBuffer.releaseBuffer();
 	}
 }

@@ -5,7 +5,6 @@
 
 namespace aurora::modules::graphics::win_gl {
 	class Graphics;
-	class TextureView;
 
 	class AE_MODULE_DLL BaseTexture {
 	public:
@@ -22,8 +21,6 @@ namespace aurora::modules::graphics::win_gl {
 		bool AE_CALL copyFrom(Graphics& graphics, uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const IPixelBuffer* pixelBuffer);
 		void AE_CALL flush();
 		void AE_CALL releaseTex();
-		void AE_CALL addView(TextureView& view);
-		void AE_CALL removeView(TextureView& view);
 		void AE_CALL waitServerSync();
 		void AE_CALL releaseSync();
 
@@ -50,12 +47,11 @@ namespace aurora::modules::graphics::win_gl {
 
 		//TextureFormat format;
 		//GLenum internalFormat;
-		std::unordered_set<TextureView*> views;
 
 		GLsync sync;
 
 	private:
-		bool AE_CALL _update (uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const void* data);
+		bool AE_CALL _update(uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const void* data);
 		bool AE_CALL _createDone(Graphics& graphics, bool succeeded);
 	};
 }

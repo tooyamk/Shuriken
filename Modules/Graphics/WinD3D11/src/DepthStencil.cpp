@@ -14,6 +14,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_release();
 	}
 
+	const void* DepthStencil::getNative() const {
+		return this;
+	}
+
 	bool DepthStencil::isMultisampling() const {
 		return _isMultisampling;
 	}

@@ -8,7 +8,8 @@ namespace aurora::modules::graphics::win_gl {
 		IndexBuffer(Graphics& graphics);
 		virtual ~IndexBuffer();
 
-		virtual const void* AE_CALL getNativeBuffer() const override;
+		virtual bool AE_CALL isCreated() const override;
+		virtual const void* AE_CALL getNative() const override;
 		virtual bool AE_CALL create(uint32_t size, Usage bufferUsage, const void* data = nullptr, uint32_t dataSize = 0) override;
 		virtual uint32_t AE_CALL getSize() const override;
 		virtual Usage AE_CALL getUsage() const override;
@@ -21,6 +22,7 @@ namespace aurora::modules::graphics::win_gl {
 		virtual void AE_CALL setFormat(IndexType type) override;
 		//virtual void AE_CALL flush() override;
 		virtual bool AE_CALL isSyncing() const override;
+		virtual void AE_CALL destroy() override;
 
 		void AE_CALL draw(uint32_t count = (std::numeric_limits<uint32_t>::max)(), uint32_t offset = 0);
 

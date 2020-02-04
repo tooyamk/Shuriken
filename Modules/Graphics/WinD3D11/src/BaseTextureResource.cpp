@@ -81,7 +81,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		D3D11_USAGE d3dUsage;
 		UINT cpuUsage;
-		if (!createInit(graphics, resUsage, this->size, data ? this->size : 0, mipLevels, cpuUsage, d3dUsage)) return _createDone(graphics, false);
+		if (!createInit<true>(graphics, resUsage, this->size, data ? this->size : 0, mipLevels, cpuUsage, d3dUsage)) return _createDone(graphics, false);
 
 		TexDesc texDesc;
 		memset(&texDesc, 0, sizeof(texDesc));
@@ -211,7 +211,6 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 	bool BaseTextureResource::_createDone(Graphics& graphics, bool succeeded) {
 		if (!succeeded) releaseTex(graphics);
-		for (auto& itr : views) itr->onResRecreated();
 		return succeeded;
 	}
 
@@ -346,13 +345,5 @@ namespace aurora::modules::graphics::win_d3d11 {
 		arraySize = 0;
 		mipLevels = 0;
 		mappedRes.clear();
-	}
-
-	void BaseTextureResource::addView(TextureView& view) {
-		if (auto itr = views.find(&view); itr == views.end()) views.emplace(&view);
-	}
-
-	void BaseTextureResource::removeView(TextureView& view) {
-		if (auto itr = views.find(&view); itr != views.end()) views.erase(itr);
 	}
 }

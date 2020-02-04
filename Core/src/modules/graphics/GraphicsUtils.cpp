@@ -10,8 +10,12 @@ namespace aurora::modules::graphics {
 	MultipleVertexBuffer::~MultipleVertexBuffer() {
 	}
 
-	const void* MultipleVertexBuffer::getNativeBuffer() const {
-		return _base.getNativeBuffer();
+	bool MultipleVertexBuffer::isCreated() const {
+		return _base.isCreated();
+	}
+
+	const void* MultipleVertexBuffer::getNative() const {
+		return _base.getNative();
 	}
 
 	bool MultipleVertexBuffer::create(uint32_t size, Usage bufferUsage, const void* data, uint32_t dataSize) {
@@ -74,6 +78,10 @@ namespace aurora::modules::graphics {
 		return _base.isSyncing();
 	}
 
+	void MultipleVertexBuffer::destroy() {
+		_base.destroy();
+	}
+
 
 	MultipleIndexBuffer::MultipleIndexBuffer(IGraphicsModule& graphics, uint8_t max) : IIndexBuffer(graphics),
 		_idxType(IndexType::UNKNOWN),
@@ -83,8 +91,12 @@ namespace aurora::modules::graphics {
 	MultipleIndexBuffer::~MultipleIndexBuffer() {
 	}
 
-	const void* MultipleIndexBuffer::getNativeBuffer() const {
-		return _base.getNativeBuffer();
+	bool MultipleIndexBuffer::isCreated() const {
+		return _base.isCreated();
+	}
+
+	const void* MultipleIndexBuffer::getNative() const {
+		return _base.getNative();
 	}
 
 	bool MultipleIndexBuffer::create (uint32_t size, Usage bufferUsage, const void* data, uint32_t dataSize) {
@@ -144,6 +156,10 @@ namespace aurora::modules::graphics {
 		return _base.isSyncing();
 	}
 
+	void MultipleIndexBuffer::destroy() {
+		_base.destroy();
+	}
+
 
 	MultipleConstantBuffer::MultipleConstantBuffer(IGraphicsModule& graphics, uint8_t max) : IConstantBuffer(graphics),
 		_base(graphics, max) {
@@ -152,8 +168,12 @@ namespace aurora::modules::graphics {
 	MultipleConstantBuffer::~MultipleConstantBuffer() {
 	}
 
-	const void* MultipleConstantBuffer::getNativeBuffer() const {
-		return _base.getNativeBuffer();
+	bool MultipleConstantBuffer::isCreated() const {
+		return _base.isCreated();
+	}
+
+	const void* MultipleConstantBuffer::getNative() const {
+		return _base.getNative();
 	}
 
 	bool MultipleConstantBuffer::create (uint32_t size, Usage bufferUsage, const void* data, uint32_t dataSize) {
@@ -193,5 +213,9 @@ namespace aurora::modules::graphics {
 
 	bool MultipleConstantBuffer::isSyncing() const {
 		return _base.isSyncing();
+	}
+
+	void MultipleConstantBuffer::destroy() {
+		_base.destroy();
 	}
 }

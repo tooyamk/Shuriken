@@ -20,15 +20,19 @@ namespace aurora::modules::graphics {
 		}
 
 		virtual ~MultipleBuffer() {
-			_release();
+			destroy();
 		}
 
-		inline const void* AE_CALL getNativeBuffer() const {
-			return _cur ? _cur->target->getNativeBuffer() : nullptr;
+		inline bool AE_CALL isCreated() const {
+			return _cur ? _cur->target->isCreated() : false;
+		}
+
+		inline const void* AE_CALL getNative() const {
+			return _cur ? _cur->target->getNative() : nullptr;
 		}
 
 		bool AE_CALL create(uint32_t size, Usage bufferUsage, const void* data, uint32_t dataSize) {
-			_release();
+			destroy();
 
 			if (auto buf = _createBuffer(); buf) {
 				_head = new Node();
@@ -129,6 +133,22 @@ namespace aurora::modules::graphics {
 			return _cur ? _cur->target->isSyncing() : false;
 		}
 
+		void AE_CALL destroy() {
+			if (_cur) {
+				auto node = _head;
+				auto n = _count;
+				do {
+					auto next = node->next;
+					delete node;
+					node = next;
+				} while (--n > 0);
+
+				_head = nullptr;
+				_cur = nullptr;
+				_count = 0;
+			}
+		}
+
 		inline Node* getBegin() const {
 			return _head;
 		}
@@ -148,27 +168,13 @@ namespace aurora::modules::graphics {
 		Node* _head;
 		Node* _cur;
 
-		void AE_CALL _release() {
-			if (_cur) {
-				auto node = _head;
-				auto n = _count;
-				do {
-					auto next = node->next;
-					delete node;
-					node = next;
-				} while (--n > 0);
-
-				_head = nullptr;
-				_cur = nullptr;
-				_count = 0;
-			}
-		}
-
 		T* AE_CALL _createBuffer() {
 			if constexpr (std::is_base_of_v<IVertexBuffer, T>) {
 				return _graphics->createVertexBuffer();
 			} else if constexpr (std::is_base_of_v<IIndexBuffer, T>) {
 				return _graphics->createIndexBuffer();
+			} else if constexpr (std::is_base_of_v<IConstantBuffer, T>) {
+				return _graphics->createConstantBuffer();
 			} else {
 				return nullptr;
 			}
@@ -181,7 +187,8 @@ namespace aurora::modules::graphics {
 		MultipleVertexBuffer(IGraphicsModule& graphics, uint8_t max);
 		virtual ~MultipleVertexBuffer();
 
-		virtual const void* AE_CALL getNativeBuffer() const override;
+		virtual bool AE_CALL isCreated() const override;
+		virtual const void* AE_CALL getNative() const override;
 		virtual bool AE_CALL create(uint32_t size, Usage bufferUsage, const void* data = nullptr, uint32_t dataSize = 0) override;
 		virtual uint32_t AE_CALL getSize() const override;
 		virtual Usage AE_CALL getUsage() const override;
@@ -194,6 +201,7 @@ namespace aurora::modules::graphics {
 		virtual void AE_CALL setFormat(VertexSize size, VertexType type) override;
 		//virtual void AE_CALL flush() override;
 		virtual bool AE_CALL isSyncing() const override;
+		virtual void AE_CALL destroy() override;
 
 	private:
 		VertexSize _vertSize;
@@ -208,7 +216,8 @@ namespace aurora::modules::graphics {
 		MultipleIndexBuffer(IGraphicsModule& graphics, uint8_t max);
 		virtual ~MultipleIndexBuffer();
 
-		virtual const void* AE_CALL getNativeBuffer() const override;
+		virtual bool AE_CALL isCreated() const override;
+		virtual const void* AE_CALL getNative() const override;
 		virtual bool AE_CALL create(uint32_t size, Usage bufferUsage, const void* data = nullptr, uint32_t dataSize = 0) override;
 		virtual uint32_t AE_CALL getSize() const override;
 		virtual Usage AE_CALL getUsage() const override;
@@ -221,6 +230,7 @@ namespace aurora::modules::graphics {
 		virtual void AE_CALL setFormat(IndexType type) override;
 		//virtual void AE_CALL flush() override;
 		virtual bool AE_CALL isSyncing() const override;
+		virtual void AE_CALL destroy() override;
 
 	private:
 		IndexType _idxType;
@@ -234,7 +244,8 @@ namespace aurora::modules::graphics {
 		MultipleConstantBuffer(IGraphicsModule& graphics, uint8_t max);
 		virtual ~MultipleConstantBuffer();
 
-		virtual const void* AE_CALL getNativeBuffer() const override;
+		virtual bool AE_CALL isCreated() const override;
+		virtual const void* AE_CALL getNative() const override;
 		virtual bool AE_CALL create(uint32_t size, Usage bufferUsage, const void* data = nullptr, uint32_t dataSize = 0) override;
 		virtual uint32_t AE_CALL getSize() const override;
 		virtual Usage AE_CALL getUsage() const override;
@@ -245,6 +256,7 @@ namespace aurora::modules::graphics {
 		virtual uint32_t AE_CALL update(uint32_t offset, const void* data, uint32_t length) override;
 		//virtual void AE_CALL flush() override;
 		virtual bool AE_CALL isSyncing() const override;
+		virtual void AE_CALL destroy() override;
 
 	private:
 		MultipleBuffer<IConstantBuffer> _base;

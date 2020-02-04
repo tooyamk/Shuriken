@@ -26,6 +26,11 @@ public:
 				if (graphics) {
 					println("Graphics Version : ", graphics->getVersion());
 
+					graphics->getEventDispatcher().addEventListener(GraphicsEvent::ERR, new EventListener(Recognitor<GraphicsEvent>(), [](Event<GraphicsEvent>& e) {
+						println(*(std::string_view*)e.getData());
+						int a = 1;
+					}));
+
 					{
 						RefPtr<IRasterizerState> rs = graphics->createRasterizerState();
 						rs->setFillMode(FillMode::SOLID);
@@ -92,9 +97,6 @@ public:
 
 					auto texRes = graphics->createTexture2DResource();
 					if (texRes) {
-						auto texView = graphics->createTextureView();
-						if (texView) texView->create(texRes, 0, -1, 0, -1);
-
 						auto img0 = file::PNGConverter::parse(readFile(app->getAppPath() + u8"Resources/c4.png"));
 						auto mipLevels = Image::calcMipLevels(img0->size);
 						ByteArray mipsData0;
@@ -110,6 +112,9 @@ public:
 
 						texRes->create(img0->size, 0, 1, img0->format, Usage::UPDATE, mipsData0Ptr.data());
 
+						auto texView = graphics->createTextureView();
+						texView->create(texRes, 0, -1, 0, -1);
+
 						auto pb = graphics->createPixelBuffer();
 						if (pb) {
 							//pb->create(img0->size.getMultiplies() * 4, Usage::MAP_WRITE | Usage::PERSISTENT_MAP, mipsData0Ptr.data()[0], img0->size.getMultiplies() * 4);
@@ -123,7 +128,7 @@ public:
 						//texRes->map(0, 0, Usage::MAP_WRITE);
 						//texRes->update(0, 0, Box2ui32(Vec2ui32(0, 0), Vec2ui32(2, 2)), texData);
 
-						cf->add("texDiffuse", new ShaderParameter(ShaderParameterUsage::AUTO))->set(texView ? (ITextureViewBase*)texView : (ITextureViewBase*)texRes).setUpdated();
+						cf->add("texDiffuse", new ShaderParameter(ShaderParameterUsage::AUTO))->set(texView).setUpdated();
 					}
 
 					auto sam = graphics->createSampler();

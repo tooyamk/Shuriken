@@ -17,6 +17,10 @@ namespace aurora::modules::graphics::win_gl {
 		if (_isInternal) _graphics.weakReset();
 	}
 
+	const void* RasterizerState::getNative() const {
+		return this;
+	}
+
 	FillMode RasterizerState::getFillMode() const {
 		return _desc.fillMode;
 	}

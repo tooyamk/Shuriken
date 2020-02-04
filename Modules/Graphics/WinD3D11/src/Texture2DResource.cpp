@@ -3,23 +3,22 @@
 
 namespace aurora::modules::graphics::win_d3d11 {
 	Texture2DResource::Texture2DResource(Graphics& graphics) : ITexture2DResource(graphics),
-		_baseTexRes(D3D11_BIND_SHADER_RESOURCE),
-		_view(graphics, true) {
+		_baseTexRes(D3D11_BIND_SHADER_RESOURCE) {
 	}
 
 	Texture2DResource::~Texture2DResource() {
-		_baseTexRes.releaseTex(*_graphics.get<Graphics>());
+		destroy();
 	}
 
 	TextureType Texture2DResource::getType() const {
 		return TextureType::TEX2D;
 	}
 
-	const void* Texture2DResource::getNativeView() const {
-		return _view.getNativeView();
+	bool Texture2DResource::isCreated() const {
+		return _baseTexRes.handle;
 	}
 
-	const void* Texture2DResource::getNativeResource() const {
+	const void* Texture2DResource::getNative() const {
 		return &_baseTexRes;
 	}
 
@@ -27,18 +26,12 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return _baseTexRes.perPixelSize;
 	}
 
-	uint32_t Texture2DResource::getArraySize() const {
-		return _baseTexRes.arraySize;
-	}
-
-	uint32_t Texture2DResource::getMipLevels() const {
-		return _baseTexRes.mipLevels;
+	const Vec2ui32& Texture2DResource::getSize() const {
+		return (Vec2ui32&)_baseTexRes.texSize;
 	}
 
 	bool Texture2DResource::create(const Vec2ui32& size, uint32_t arraySize, uint32_t mipLevels, TextureFormat format, Usage resUsage, const void*const* data) {
-		auto rst = _baseTexRes.create(*_graphics.get<Graphics>(), TextureType::TEX2D, Vec3ui32(size[0], size[1], 1), arraySize, mipLevels, format, resUsage, data);
-		_view.create(this, 0, -1, 0, _baseTexRes.arraySize);
-		return rst;
+		return _baseTexRes.create(*_graphics.get<Graphics>(), TextureType::TEX2D, Vec3ui32(size[0], size[1], 1), arraySize, mipLevels, format, resUsage, data);
 	}
 
 	Usage Texture2DResource::getUsage() const {
@@ -59,6 +52,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 	uint32_t Texture2DResource::write(uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, const void* data, uint32_t length) {
 		return _baseTexRes.write(arraySlice, mipSlice, offset, data, length);
+	}
+
+	void Texture2DResource::destroy() {
+		_baseTexRes.releaseTex(*_graphics.get<Graphics>());
 	}
 
 	bool Texture2DResource::update(uint32_t arraySlice, uint32_t mipSlice, const Box2ui32& range, const void* data) {

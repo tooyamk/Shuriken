@@ -25,6 +25,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_releaseRes();
 	}
 
+	const void* RasterizerState::getNative() const {
+		return this;
+	}
+
 	FillMode RasterizerState::getFillMode() const {
 		return _fillMode;
 	}

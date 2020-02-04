@@ -8,7 +8,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 		VertexBuffer(Graphics& graphics);
 		virtual ~VertexBuffer();
 
-		virtual const void* AE_CALL getNativeBuffer() const override;
+		virtual bool AE_CALL isCreated() const override;
+		virtual const void* AE_CALL getNative() const override;
 		virtual bool AE_CALL create(uint32_t size, Usage bufferUsage, const void* data = nullptr, uint32_t dataSize = 0) override;
 		virtual uint32_t AE_CALL getSize() const override;
 		virtual Usage AE_CALL getUsage() const override;
@@ -21,6 +22,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual void AE_CALL setFormat(VertexSize size, VertexType type) override;
 		//virtual void AE_CALL flush() override;
 		virtual bool AE_CALL isSyncing() const override;
+		virtual void AE_CALL destroy() override;
 
 		inline ID3D11Buffer* AE_CALL getInternalBuffer() const {
 			return (ID3D11Buffer*)_baseBuffer.handle;

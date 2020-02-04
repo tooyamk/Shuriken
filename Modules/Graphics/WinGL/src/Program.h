@@ -12,6 +12,7 @@ namespace aurora::modules::graphics::win_gl {
 		Program(Graphics& graphics);
 		virtual ~Program();
 
+		virtual const void* AE_CALL getNative() const override;
 		virtual bool AE_CALL upload(const ProgramSource& vert, const ProgramSource& frag) override;
 
 		bool AE_CALL use(const VertexBufferFactory* vertexFactory, const ShaderParameterFactory* paramFactory);

@@ -10,6 +10,8 @@ namespace aurora::modules::graphics::win_gl {
 		RasterizerState(Graphics& graphics, bool isInternal);
 		virtual ~RasterizerState();
 
+		virtual const void* AE_CALL getNative() const override;
+
 		virtual FillMode AE_CALL getFillMode() const override;
 		virtual void AE_CALL setFillMode(FillMode fill) override;
 

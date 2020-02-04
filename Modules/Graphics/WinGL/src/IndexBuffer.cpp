@@ -12,7 +12,11 @@ namespace aurora::modules::graphics::win_gl {
 	IndexBuffer::~IndexBuffer() {
 	}
 
-	const void* IndexBuffer::getNativeBuffer() const {
+	bool IndexBuffer::isCreated() const {
+		return _baseBuffer.handle;
+	}
+
+	const void* IndexBuffer::getNative() const {
 		return this;
 	}
 
@@ -56,6 +60,10 @@ namespace aurora::modules::graphics::win_gl {
 
 	bool IndexBuffer::isSyncing() const {
 		return _baseBuffer.isSyncing();
+	}
+
+	void IndexBuffer::destroy() {
+		_baseBuffer.releaseBuffer();
 	}
 
 	IndexType IndexBuffer::getFormat() const {

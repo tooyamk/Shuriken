@@ -14,15 +14,18 @@ namespace aurora::modules::graphics::win_gl {
 	}
 
 	TextureView::~TextureView() {
-		release();
-		_setRes(nullptr);
+		destroy();
+	}
+
+	bool TextureView::isCreated() const {
+		return _handle;
 	}
 
 	ITextureResource* TextureView::getResource() const {
 		return _res.get();
 	}
 
-	const void* TextureView::getNativeView() const {
+	const void* TextureView::getNative() const {
 		return &_handle;
 	}
 
@@ -35,7 +38,9 @@ namespace aurora::modules::graphics::win_gl {
 	}
 
 	bool TextureView::create(ITextureResource* res, uint32_t mipBegin, uint32_t mipLevels, uint32_t arrayBegin, uint32_t arraySize) {
-		release();
+		RefPtr guard(res);
+
+		destroy();
 
 		_mipBegin = mipBegin;
 		_mipLevels = mipLevels;
@@ -43,8 +48,7 @@ namespace aurora::modules::graphics::win_gl {
 		_arraySize = arraySize;
 
 		if (res && res->getGraphics() == _graphics) {
-			auto native = (const BaseTexture*)res->getNativeResource();
-			if (native && native->handle && mipBegin < native->mipLevels && arrayBegin < native->arraySize) {
+			if (auto native = (const BaseTexture*)res->getNative(); native && native->handle && mipBegin < native->mipLevels && arrayBegin < native->arraySize) {
 				auto lastMipLevels = native->mipLevels - mipBegin;
 				auto createMipLevels = mipLevels > lastMipLevels ? lastMipLevels : mipLevels;
 
@@ -83,25 +87,15 @@ namespace aurora::modules::graphics::win_gl {
 	}
 
 	bool TextureView::_createDone(bool succeeded, ITextureResource* res) {
-		_setRes(res);
+		if (succeeded) {
+			_res = res;
+		} else {
+			destroy();
+		}
 		return succeeded;
 	}
 
-	void TextureView::_setRes(ITextureResource* res) {
-		if (_res != res) {
-			if (_res) {
-				auto native = (BaseTexture*)_res->getNativeResource();
-				native->removeView(*this);
-			}
-			_res = res;
-			if (res) {
-				auto native = (BaseTexture*)res->getNativeResource();
-				native->addView(*this);
-			}
-		}
-	}
-
-	void TextureView::release() {
+	void TextureView::destroy() {
 		if (_handle) {
 			glDeleteTextures(1, &_handle);
 			_handle = 0;
@@ -113,5 +107,6 @@ namespace aurora::modules::graphics::win_gl {
 		_arrayBegin = 0;
 		_arraySize = 0;
 		_createdArraySize = 0;
+		_res.reset();
 	}
 }

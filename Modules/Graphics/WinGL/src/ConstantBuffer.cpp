@@ -11,7 +11,11 @@ namespace aurora::modules::graphics::win_gl {
 		if (recordUpdateIds) delete[] recordUpdateIds;
 	}
 
-	const void* ConstantBuffer::getNativeBuffer() const {
+	bool ConstantBuffer::isCreated() const {
+		return _baseBuffer.handle;
+	}
+
+	const void* ConstantBuffer::getNative() const {
 		return this;
 	}
 
@@ -53,5 +57,9 @@ namespace aurora::modules::graphics::win_gl {
 
 	bool ConstantBuffer::isSyncing() const {
 		return _baseBuffer.isSyncing();
+	}
+
+	void ConstantBuffer::destroy() {
+		_baseBuffer.releaseBuffer();
 	}
 }

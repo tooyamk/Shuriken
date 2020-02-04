@@ -11,8 +11,6 @@
 //#include "GL/eglew.h"
 
 namespace aurora::modules::graphics::win_gl {
-	static constexpr uint8_t MAX_RTS = 8;
-
 	struct InternalBlendFunc {
 		union {
 			uint64_t featureValue;

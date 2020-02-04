@@ -313,13 +313,13 @@ namespace aurora::modules::graphics::win_gl {
 
 	bool BaseTexture::copyFrom(Graphics& graphics, uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const IPixelBuffer* pixelBuffer) {
 		if (pixelBuffer && &graphics == pixelBuffer->getGraphics()) {
-			if (auto pb = (PixelBuffer*)pixelBuffer->getNativeBuffer(); pb) {
+			if (auto pb = (PixelBuffer*)pixelBuffer->getNative(); pb) {
 				if (auto buf = pb->getInternalBuffer(); buf) {
 					if (auto pbType = pb->getInternalType(); pbType == GL_PIXEL_UNPACK_BUFFER) {
 						glBindBuffer(pbType, buf);
 						auto rst = _update(arraySlice, mipSlice, range, nullptr);
 						glBindBuffer(pbType, 0);
-						pb->baseBuffer.doSync<true>();
+						pb->getBaseBuffer()->doSync<true>();
 
 						return rst;
 					}
@@ -363,14 +363,6 @@ namespace aurora::modules::graphics::win_gl {
 		mapUsage = Usage::NONE;
 	}
 
-	void BaseTexture::addView(TextureView& view) {
-		if (auto itr = views.find(&view); itr == views.end()) views.emplace(&view);
-	}
-
-	void BaseTexture::removeView(TextureView& view) {
-		if (auto itr = views.find(&view); itr != views.end()) views.erase(itr);
-	}
-
 	void BaseTexture::waitServerSync() {
 		if (sync) {
 			do {
@@ -392,7 +384,6 @@ namespace aurora::modules::graphics::win_gl {
 	}
 
 	bool BaseTexture::_createDone(Graphics& graphics, bool succeeded) {
-		for (auto& itr : views) itr->onResRecreated();
 		if (!succeeded) graphics.error("openGL textrue create error");
 		return succeeded;
 	}

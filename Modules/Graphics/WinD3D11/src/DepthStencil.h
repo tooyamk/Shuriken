@@ -10,12 +10,13 @@ namespace aurora::modules::graphics::win_d3d11 {
 		DepthStencil(Graphics& graphics, bool internalView);
 		virtual ~DepthStencil();
 
+		virtual const void* AE_CALL getNative() const override;
 		virtual bool AE_CALL isMultisampling() const override;
 		virtual const Vec2ui32& AE_CALL getSize() const override;
 		virtual bool AE_CALL create(const Vec2ui32& size, bool multisampling) override;
 
 
-		inline ID3D11DepthStencilView* getInernalView() {
+		inline ID3D11DepthStencilView* getInternalView() {
 			return _view;
 		}
 

@@ -26,10 +26,13 @@ namespace aurora::modules::graphics::win_gl {
 		virtual const GraphicsDeviceFeatures& AE_CALL getDeviceFeatures() const override;
 		virtual IBlendState* AE_CALL createBlendState() override;
 		virtual IConstantBuffer* AE_CALL createConstantBuffer() override;
+		virtual IDepthStencil* AE_CALL createDepthStencil() override;
 		virtual IDepthStencilState* AE_CALL createDepthStencilState() override;
 		virtual IIndexBuffer* AE_CALL createIndexBuffer() override;
 		virtual IProgram* AE_CALL createProgram() override;
 		virtual IRasterizerState* AE_CALL createRasterizerState() override;
+		virtual IRenderTarget* AE_CALL createRenderTarget() override;
+		virtual IRenderView* AE_CALL createRenderView() override;
 		virtual ISampler* AE_CALL createSampler() override;
 		virtual ITexture1DResource* AE_CALL createTexture1DResource() override;
 		virtual ITexture2DResource* AE_CALL createTexture2DResource() override;
@@ -48,6 +51,7 @@ namespace aurora::modules::graphics::win_gl {
 		virtual void AE_CALL endRender() override;
 		virtual void AE_CALL present() override;
 
+		virtual void AE_CALL setRenderTarget(IRenderTarget* rt) override;
 		virtual void AE_CALL clear(ClearFlag flags, const Vec4f32& color, f32 depth, size_t stencil) override;
 
 		bool AE_CALL createDevice(const GraphicsAdapter* adapter);
@@ -106,9 +110,9 @@ namespace aurora::modules::graphics::win_gl {
 				bool isFuncSame;
 				bool isOpSame;
 				bool isWriteMaskSame;
-				InternalBlendFunc func[MAX_RTS];
-				InternalBlendOp op[MAX_RTS];
-				InternalBlendWriteMask writeMask[MAX_RTS];
+				std::vector<InternalBlendFunc> func;
+				std::vector<InternalBlendOp> op;
+				std::vector<InternalBlendWriteMask> writeMask;
 				Vec4f32 constantFactors;
 			} blend;
 
@@ -168,9 +172,9 @@ namespace aurora::modules::graphics::win_gl {
 		void AE_CALL _setInitState();
 		void AE_CALL _release();
 
-		void AE_CALL _setBlendState(IBlendState& state, const Vec4f32& constantFactors, uint32_t sampleMask);
-		void AE_CALL _setDepthStencilState(IDepthStencilState& state, uint32_t stencilFrontRef, uint32_t stencilBackRef);
-		void AE_CALL _setRasterizerState(IRasterizerState& state);
+		void AE_CALL _setBlendState(BlendState& state, const Vec4f32& constantFactors, uint32_t sampleMask);
+		void AE_CALL _setDepthStencilState(DepthStencilState& state, uint32_t stencilFrontRef, uint32_t stencilBackRef);
+		void AE_CALL _setRasterizerState(RasterizerState& state);
 
 		IConstantBuffer* AE_CALL _createdShareConstantBuffer();
 		IConstantBuffer* AE_CALL _createdExclusiveConstantBuffer(uint32_t numParameters);

@@ -6,16 +6,20 @@
 #include "IndexBuffer.h"
 #include "Program.h"
 #include "RasterizerState.h"
+#include "RenderTarget.h"
+#include "RenderView.h"
 #include "Sampler.h"
 #include "Texture1DResource.h"
 #include "Texture2DResource.h"
 #include "Texture3DResource.h"
+#include "TextureView.h"
 #include "VertexBuffer.h"
 #include "base/Application.h"
 #include "modules/graphics/GraphicsAdapter.h"
 
 namespace aurora::modules::graphics::win_d3d11 {
 	Graphics::Graphics(Ref* loader, Application* app) :
+		_curIsBackBuffer(true),
 		_loader(loader),
 		_app(app),
 		_refreshRate({0, 1}),
@@ -28,6 +32,9 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_backDepthStencil(nullptr),
 		_deviceFeatures({ 0 }),
 		_d3dStatus({ 0 }),
+		_numRTVs(0),
+		_RTVs({ 0 }),
+		_DSV(nullptr),
 		_resizedListener(this, &Graphics::_resizedHandler) {
 		_resizedListener.ref();
 		_app->getEventDispatcher().addEventListener(ApplicationEvent::RESIZED, _resizedListener);
@@ -257,13 +264,14 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_device->CheckFeatureSupport(D3D11_FEATURE_D3D11_OPTIONS, &_internalFeatures, sizeof(_internalFeatures));
 
 		_deviceFeatures.supportSampler = true;
-		_deviceFeatures.supportTextureView = true;
+		_deviceFeatures.supportNativeTextureView = true;
 		_deviceFeatures.supportPixelBuffer = false;
 		_deviceFeatures.supportConstantBuffer = true;
 		_deviceFeatures.supportPersistentMap = false;
 		_deviceFeatures.supportIndependentBlend = true;
 		_deviceFeatures.supportStencilIndependentRef = false;
 		_deviceFeatures.supportStencilIndependentMask = false;
+		_deviceFeatures.simultaneousRenderTargetCount = D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT;
 
 		_defaultBlendState = new BlendState(*this, true);
 		_defaultDepthStencilState = new DepthStencilState(*this, true);
@@ -299,6 +307,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return new ConstantBuffer(*this);
 	}
 
+	IDepthStencil* Graphics::createDepthStencil() {
+		return new DepthStencil(*this, false);
+	}
+
 	IDepthStencilState* Graphics::createDepthStencilState() {
 		return new DepthStencilState(*this, false);
 	}
@@ -313,6 +325,14 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 	IRasterizerState* Graphics::createRasterizerState() {
 		return new RasterizerState(*this, false);
+	}
+
+	IRenderTarget* Graphics::createRenderTarget() {
+		return new RenderTarget(*this);
+	}
+
+	IRenderView* Graphics::createRenderView() {
+		return new RenderView(*this);
 	}
 
 	ISampler* Graphics::createSampler() {
@@ -332,7 +352,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	ITextureView* Graphics::createTextureView() {
-		return new TextureView(*this, false);
+		return new TextureView(*this);
 	}
 
 	IVertexBuffer* Graphics::createVertexBuffer() {
@@ -345,19 +365,22 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 	void Graphics::setBlendState(IBlendState* state, const Vec4f32& constantFactors, uint32_t sampleMask) {
 		if (state && state->getGraphics() == this) {
-			_setBlendState(*state, constantFactors, sampleMask);
+			if (auto native = state->getNative(); native) {
+				_setBlendState(*(BlendState*)native, constantFactors, sampleMask);
+			} else {
+				_setBlendState(*(BlendState*)_defaultBlendState->getNative(), constantFactors, sampleMask);
+			}
 		} else if (_defaultBlendState) {
-			_setBlendState(*_defaultBlendState, constantFactors, sampleMask);
+			_setBlendState(*(BlendState*)_defaultBlendState->getNative(), constantFactors, sampleMask);
 		}
 	}
 
-	void Graphics::_setBlendState(IBlendState& state, const Vec4f32& constantFactors, uint32_t sampleMask) {
-		auto& bs = (BlendState&)state;
-		bs.update();
+	void Graphics::_setBlendState(BlendState& state, const Vec4f32& constantFactors, uint32_t sampleMask) {
+		state.update();
 		auto& blend = _d3dStatus.blend;
-		if (auto internalState = bs.getInternalState(); internalState &&
-			(blend.featureValue != bs.getFeatureValue() || !memEqual<sizeof(blend.constantFactors)>(&blend.constantFactors, &constantFactors) || blend.sampleMask != sampleMask)) {
-			blend.featureValue = bs.getFeatureValue();
+		if (auto internalState = state.getInternalState(); internalState &&
+			(blend.featureValue != state.getFeatureValue() || !memEqual<sizeof(blend.constantFactors)>(&blend.constantFactors, &constantFactors) || blend.sampleMask != sampleMask)) {
+			blend.featureValue = state.getFeatureValue();
 			blend.constantFactors.set(constantFactors);
 			blend.sampleMask = sampleMask;
 
@@ -367,19 +390,22 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 	void Graphics::setDepthStencilState(IDepthStencilState* state, uint32_t stencilFrontRef, uint32_t stencilBackRef) {
 		if (state && state->getGraphics() == this) {
-			_setDepthStencilState(*state, stencilFrontRef);
+			if (auto native = state->getNative(); native) {
+				_setDepthStencilState(*(DepthStencilState*)native, stencilFrontRef);
+			} else {
+				_setDepthStencilState(*(DepthStencilState*)_defaultDepthStencilState->getNative(), stencilFrontRef);
+			}
 		} else if (_defaultBlendState) {
-			_setDepthStencilState(*_defaultDepthStencilState, stencilFrontRef);
+			_setDepthStencilState(*(DepthStencilState*)_defaultDepthStencilState->getNative(), stencilFrontRef);
 		}
 	}
 
-	void Graphics::_setDepthStencilState(IDepthStencilState& state, uint32_t stencilRef) {
-		auto& ds = (DepthStencilState&)state;
-		ds.update();
+	void Graphics::_setDepthStencilState(DepthStencilState& state, uint32_t stencilRef) {
+		state.update();
 		auto& depthStencil = _d3dStatus.depthStencil;
-		if (auto internalState = ds.getInternalState(); internalState &&
-			(depthStencil.featureValue != ds.getFeatureValue() || depthStencil.stencilRef != stencilRef)) {
-			depthStencil.featureValue = ds.getFeatureValue();
+		if (auto internalState = state.getInternalState(); internalState &&
+			(depthStencil.featureValue != state.getFeatureValue() || depthStencil.stencilRef != stencilRef)) {
+			depthStencil.featureValue = state.getFeatureValue();
 			depthStencil.stencilRef = stencilRef;
 
 			_context->OMSetDepthStencilState(internalState, stencilRef);
@@ -388,18 +414,21 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 	void Graphics::setRasterizerState(IRasterizerState* state) {
 		if (state && state->getGraphics() == this) {
-			_setRasterizerState(*state);
+			if (auto native = state->getNative(); native) {
+				_setRasterizerState(*(RasterizerState*)native);
+			} else {
+				_setRasterizerState(*(RasterizerState*)_defaultRasterizerState->getNative());
+			}
 		} else if (_defaultRasterizerState) {
-			_setRasterizerState(*_defaultRasterizerState);
+			_setRasterizerState(*(RasterizerState*)_defaultRasterizerState->getNative());
 		}
 	}
 
-	void Graphics::_setRasterizerState(IRasterizerState& state) {
-		auto& rs = (RasterizerState&)state;
-		rs.update();
+	void Graphics::_setRasterizerState(RasterizerState& state) {
+		state.update();
 		auto& rasterizer = _d3dStatus.rasterizer;
-		if (auto internalState = rs.getInternalState(); internalState && rasterizer.featureValue != rs.getFeatureValue()) {
-			rasterizer.featureValue = rs.getFeatureValue();
+		if (auto internalState = state.getInternalState(); internalState && rasterizer.featureValue != state.getFeatureValue()) {
+			rasterizer.featureValue = state.getFeatureValue();
 
 			_context->RSSetState(internalState);
 		}
@@ -411,7 +440,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 	void Graphics::draw(const VertexBufferFactory* vertexFactory, IProgram* program, const ShaderParameterFactory* paramFactory, 
 		const IIndexBuffer* indexBuffer, uint32_t count, uint32_t offset) {
 		if (vertexFactory && indexBuffer && program && program->getGraphics() == this && indexBuffer->getGraphics() == this && count > 0) {
-			auto ib = (IndexBuffer*)indexBuffer->getNativeBuffer();
+			auto ib = (IndexBuffer*)indexBuffer->getNative();
 			if (!ib) return;
 			auto internalIndexBuffer = ib->getInternalBuffer();
 			auto fmt = ib->getInternalFormat();
@@ -419,18 +448,48 @@ namespace aurora::modules::graphics::win_d3d11 {
 			auto numIndexElements = ib->getNumElements();
 			if (!numIndexElements || offset >= numIndexElements) return;
 			
-			auto p = (Program*)program;
-			if (p->use(vertexFactory, paramFactory)) {
-				uint32_t last = numIndexElements - offset;
-				if (count > numIndexElements) count = numIndexElements;
-				if (count > last) count = last;
-				_context->IASetIndexBuffer((ID3D11Buffer*)internalIndexBuffer, fmt, 0);
-				_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-				_context->DrawIndexed(count, offset, 0);
+			auto p = (Program*)program->getNative();
+			if (p) {
+				if (p->use(vertexFactory, paramFactory)) {
+					uint32_t last = numIndexElements - offset;
+					if (count > numIndexElements) count = numIndexElements;
+					if (count > last) count = last;
+					_context->IASetIndexBuffer((ID3D11Buffer*)internalIndexBuffer, fmt, 0);
+					_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+					_context->DrawIndexed(count, offset, 0);
 
-				p->useEnd();
+					p->useEnd();
 
-				_constantBufferManager.resetUsedShareConstantBuffers();
+					_constantBufferManager.resetUsedShareConstantBuffers();
+				}
+				
+				clearShaderResources<ProgramStage::CS>();
+				clearShaderResources<ProgramStage::DS>();
+				clearShaderResources<ProgramStage::GS>();
+				clearShaderResources<ProgramStage::HS>();
+				clearShaderResources<ProgramStage::PS>();
+				clearShaderResources<ProgramStage::VS>();
+
+				clearConstantBuffers<ProgramStage::CS>();
+				clearConstantBuffers<ProgramStage::DS>();
+				clearConstantBuffers<ProgramStage::GS>();
+				clearConstantBuffers<ProgramStage::HS>();
+				clearConstantBuffers<ProgramStage::PS>();
+				clearConstantBuffers<ProgramStage::VS>();
+
+				clearSamplers<ProgramStage::CS>();
+				clearSamplers<ProgramStage::DS>();
+				clearSamplers<ProgramStage::GS>();
+				clearSamplers<ProgramStage::HS>();
+				clearSamplers<ProgramStage::PS>();
+				clearSamplers<ProgramStage::VS>();
+
+				_programUsingSlotsCS.reset();
+				_programUsingSlotsDS.reset();
+				_programUsingSlotsGS.reset();
+				_programUsingSlotsHS.reset();
+				_programUsingSlotsPS.reset();
+				_programUsingSlotsVS.reset();
 			}
 		}
 	}
@@ -442,13 +501,67 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_swapChain->Present(0, 0);
 	}
 
+	void Graphics::setRenderTarget(IRenderTarget* rt) {
+		bool setToBack = true;
+
+		if (rt && rt->getGraphics() == this) {
+			if (auto rtt = (RenderTarget*)rt->getNative(); rtt) {
+				setToBack = false;
+				_curIsBackBuffer = false;
+
+				_numRTVs = 0;
+				for (uint8_t i = 0; i < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i) {
+					_RTVs[i] = nullptr;
+					if (auto rv = rtt->getRenderView(i); rv) {
+						if (auto native = (RenderView*)rv->getNative(); native) {
+							if (auto v = native->getInternalView(); v) {
+								_RTVs[i] = v;
+								_numRTVs = i + 1;
+							}
+						}
+					}
+				}
+				
+				_DSV = nullptr;
+				if (auto ds = rtt->getDepthStencil(); ds) {
+					if (auto native = (DepthStencil*)ds->getNative(); native) {
+						_DSV = native->getInternalView();
+					}
+				}
+
+				if (_context) _context->OMSetRenderTargets(_numRTVs, (ID3D11RenderTargetView**)_RTVs.data(), _DSV);
+			}
+		}
+
+		if (setToBack && !_curIsBackBuffer) {
+			_curIsBackBuffer = true;
+			if (_context) _context->OMSetRenderTargets(1, (ID3D11RenderTargetView**)&_backBufferView, _backDepthStencil->getInternalView());
+		}
+	}
+
 	void Graphics::clear(ClearFlag flags, const Vec4f32& color, f32 depth, size_t stencil) {
-		if (_backBufferView && (flags & ClearFlag::COLOR) != ClearFlag::NONE) _context->ClearRenderTargetView(_backBufferView, color.data);
-		if (_backDepthStencil && _backDepthStencil->getInernalView() && (flags & ClearFlag::DEPTH_STENCIL) != ClearFlag::NONE) {
-			UINT clearFlags = 0;
-			if ((flags & ClearFlag::DEPTH) != ClearFlag::NONE) clearFlags |= D3D11_CLEAR_DEPTH;
-			if ((flags & ClearFlag::STENCIL) != ClearFlag::NONE) clearFlags |= D3D11_CLEAR_STENCIL;
-			_context->ClearDepthStencilView(_backDepthStencil->getInernalView(), clearFlags, depth, stencil);
+		if (_context) {
+			if ((flags & ClearFlag::COLOR) != ClearFlag::NONE) {
+				if (_curIsBackBuffer) {
+					if (_backBufferView) _context->ClearRenderTargetView(_backBufferView, color.data);
+				} else {
+					for (uint8_t i = 0; i < _numRTVs; ++i) {
+						auto view = _RTVs[i];
+						if (view) _context->ClearRenderTargetView(view, color.data);
+					}
+				}
+			}
+			if ( (flags & ClearFlag::DEPTH_STENCIL) != ClearFlag::NONE) {
+				UINT clearFlags = 0;
+				if ((flags & ClearFlag::DEPTH) != ClearFlag::NONE) clearFlags |= D3D11_CLEAR_DEPTH;
+				if ((flags & ClearFlag::STENCIL) != ClearFlag::NONE) clearFlags |= D3D11_CLEAR_STENCIL;
+
+				if (_curIsBackBuffer) {
+					if (_backDepthStencil && _backDepthStencil->getInternalView()) _context->ClearDepthStencilView(_backDepthStencil->getInternalView(), clearFlags, depth, stencil);
+				} else {
+					if (_DSV) _context->ClearDepthStencilView(_DSV, clearFlags, depth, stencil);
+				}
+			}
 		}
 	}
 
@@ -510,7 +623,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		bool sizeChange = bufferDesc.Width != size[0] || bufferDesc.Height != size[1];
 
-		if (sizeChange || !_backBufferView || !_backDepthStencil->getInernalView()) {
+		if (sizeChange || !_backBufferView || !_backDepthStencil->getInternalView()) {
 			bufferDesc.Width = size[0];
 			bufferDesc.Height = size[1];
 
@@ -525,21 +638,22 @@ namespace aurora::modules::graphics::win_d3d11 {
 				}
 			}
 
-			ID3D11Texture2D* backBufferTexture = nullptr;
-			if (FAILED(_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&backBufferTexture))) {
+			ID3D11Texture2D* backBufferTex = nullptr;
+			if (FAILED(_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&backBufferTex))) {
 				this->error("d3d11 swap chain GetBuffer error");
 			}
 
-			if (backBufferTexture) {
-				if (FAILED(_device->CreateRenderTargetView(backBufferTexture, nullptr, (ID3D11RenderTargetView**)&_backBufferView))) {
+			if (backBufferTex) {
+				if (FAILED(_device->CreateRenderTargetView1(backBufferTex, nullptr, (ID3D11RenderTargetView1**)&_backBufferView))) {
 					this->error("d3d11 swap chain CreateRenderTargetView error");
 				}
-				backBufferTexture->Release();
+				backBufferTex->Release();
 			}
 
-			if (_backBufferView) {
-				_backDepthStencil->create(size, false);
-				_context->OMSetRenderTargets(1, (ID3D11RenderTargetView**)&_backBufferView, _backDepthStencil->getInernalView());
+			_backDepthStencil->create(size, false);
+
+			if (_curIsBackBuffer) {
+				_context->OMSetRenderTargets(1, (ID3D11RenderTargetView**)&_backBufferView, _backDepthStencil->getInternalView());
 			}
 
 			D3D11_VIEWPORT vp;

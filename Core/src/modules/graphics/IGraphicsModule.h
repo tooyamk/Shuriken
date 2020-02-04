@@ -31,7 +31,7 @@ namespace aurora::modules::graphics {
 	};
 
 
-	enum class Usage : uint8_t {
+	enum class Usage : uint16_t {
 		NONE = 0,//create and map
 		MAP_READ = 1,//create and map
 		MAP_WRITE = 1 << 1,//create and map
@@ -39,11 +39,12 @@ namespace aurora::modules::graphics {
 
 		PERSISTENT_MAP = 1 << 3,//create
 		IGNORE_UNSUPPORTED = 1 << 4,//create
+		RENDERABLE = 1 << 5,//create
 
-		MAP_SWAP = 1 << 5,//map
-		MAP_FORCE_SWAP = (1 << 6) | MAP_SWAP,//map
+		MAP_SWAP = 1 << 6,//map
+		MAP_FORCE_SWAP = (1 << 7) | MAP_SWAP,//map
 
-		DISCARD = 1 << 7,//map return
+		DISCARD = 1 << 8,//map return
 
 		MAP_READ_WRITE = MAP_READ | MAP_WRITE,
 		MAP_WRITE_UPDATE = MAP_WRITE | UPDATE
@@ -56,7 +57,8 @@ namespace aurora::modules::graphics {
 		IBuffer(IGraphicsModule& graphics) : IObject(graphics) {}
 		virtual ~IBuffer() {}
 
-		virtual const void* AE_CALL getNativeBuffer() const = 0;
+		virtual bool AE_CALL isCreated() const = 0;
+		virtual const void* AE_CALL getNative() const = 0;
 		virtual bool AE_CALL create(uint32_t size, Usage bufferUsage, const void* data = nullptr, uint32_t dataSize = 0) = 0;
 		virtual uint32_t AE_CALL getSize() const = 0;
 		virtual Usage AE_CALL getUsage() const = 0;
@@ -67,6 +69,7 @@ namespace aurora::modules::graphics {
 		virtual uint32_t AE_CALL update(uint32_t offset, const void* data, uint32_t length) = 0;
 		//virtual void AE_CALL flush() = 0;
 		virtual bool AE_CALL isSyncing() const = 0;
+		virtual void AE_CALL destroy() = 0;
 	};
 
 
@@ -223,6 +226,8 @@ namespace aurora::modules::graphics {
 		ISampler(IGraphicsModule& graphics) : IObject(graphics) {}
 		virtual ~ISampler() {}
 
+		virtual const void* AE_CALL getNative() const = 0;
+
 		inline void AE_CALL setFilter(SamplerFilterOperation op, SamplerFilterMode min, SamplerFilterMode mag, SamplerFilterMode mipmap) {
 			setFilter(SamplerFilter(op, min, mag, mipmap));
 		}
@@ -257,31 +262,21 @@ namespace aurora::modules::graphics {
 	};
 
 
-	class AE_DLL ITextureViewBase : public IObject {
+	class AE_DLL ITextureResource : public IObject {
 	public:
-		ITextureViewBase(IGraphicsModule& graphics) : IObject(graphics) {}
-		virtual ~ITextureViewBase() {}
-
-		//virtual TextureType AE_CALL getType() const = 0;
-		virtual const void* AE_CALL getNativeView() const = 0;
-		virtual uint32_t AE_CALL getArraySize() const = 0;
-		virtual uint32_t AE_CALL getMipLevels() const = 0;
-	};
-
-
-	class AE_DLL ITextureResource : public ITextureViewBase {
-	public:
-		ITextureResource(IGraphicsModule& graphics) : ITextureViewBase(graphics) {}
+		ITextureResource(IGraphicsModule& graphics) : IObject(graphics) {}
 		virtual ~ITextureResource() {}
 
 		virtual TextureType AE_CALL getType() const = 0;
-		virtual const void* AE_CALL getNativeResource() const = 0;
+		virtual bool AE_CALL isCreated() const = 0;
+		virtual const void* AE_CALL getNative() const = 0;
 		virtual uint16_t AE_CALL getPerPixelByteSize() const = 0;
 		virtual Usage AE_CALL getUsage() const = 0;
 		virtual Usage AE_CALL map(uint32_t arraySlice, uint32_t mipSlice, Usage expectMapUsage) = 0;
 		virtual void AE_CALL unmap(uint32_t arraySlice, uint32_t mipSlice) = 0;
 		virtual uint32_t AE_CALL read(uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, void* dst, uint32_t dstLen) = 0;
 		virtual uint32_t AE_CALL write(uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, const void* data, uint32_t length) = 0;
+		virtual void AE_CALL destroy() = 0;
 	};
 
 
@@ -290,6 +285,7 @@ namespace aurora::modules::graphics {
 		ITexture1DResource(IGraphicsModule& graphics) : ITextureResource(graphics) {}
 		virtual ~ITexture1DResource() {}
 
+		virtual const Vec1ui32& AE_CALL getSize() const = 0;
 		virtual bool AE_CALL create(uint32_t width, uint32_t arraySize, uint32_t mipLevels, TextureFormat format, Usage resUsage, const void*const* data = nullptr) = 0;
 		virtual bool AE_CALL update(uint32_t arraySlice, uint32_t mipSlice, const Box1ui32& range, const void* data) = 0;
 		virtual bool AE_CALL copyFrom(uint32_t arraySlice, uint32_t mipSlice, const Box1ui32& range, const IPixelBuffer* pixelBuffer) = 0;
@@ -301,6 +297,7 @@ namespace aurora::modules::graphics {
 		ITexture2DResource(IGraphicsModule& graphics) : ITextureResource(graphics) {}
 		virtual ~ITexture2DResource() {}
 
+		virtual const Vec2ui32& AE_CALL getSize() const = 0;
 		virtual bool AE_CALL create(const Vec2ui32& size, uint32_t arraySize, uint32_t mipLevels, TextureFormat format, Usage resUsage, const void*const* data = nullptr) = 0;
 		virtual bool AE_CALL update(uint32_t arraySlice, uint32_t mipSlice, const Box2ui32& range, const void* data) = 0;
 		virtual bool AE_CALL copyFrom(uint32_t arraySlice, uint32_t mipSlice, const Box2ui32& range, const IPixelBuffer* pixelBuffer) = 0;
@@ -312,20 +309,41 @@ namespace aurora::modules::graphics {
 		ITexture3DResource(IGraphicsModule& graphics) : ITextureResource(graphics) {}
 		virtual ~ITexture3DResource() {}
 
+		virtual const Vec3ui32& AE_CALL getSize() const = 0;
 		virtual bool AE_CALL create(const Vec3ui32& size, uint32_t arraySize, uint32_t mipLevels, TextureFormat format, Usage resUsage, const void*const* data = nullptr) = 0;
 		virtual bool AE_CALL update(uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const void* data) = 0;
 		virtual bool AE_CALL copyFrom(uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const IPixelBuffer* pixelBuffer) = 0;
 	};
 
 
-	class AE_DLL ITextureView : public ITextureViewBase {
+	class AE_DLL ITextureView : public IObject {
 	public:
-		ITextureView(IGraphicsModule& graphics) : ITextureViewBase(graphics) {}
+		ITextureView(IGraphicsModule& graphics) : IObject(graphics) {}
 		virtual ~ITextureView() {}
 
 		//virtual TextureType AE_CALL getType() const = 0;
+		virtual bool AE_CALL isCreated() const = 0;
 		virtual ITextureResource* AE_CALL getResource() const = 0;
+		virtual const void* AE_CALL getNative() const = 0;
+		virtual uint32_t AE_CALL getArraySize() const = 0;
+		virtual uint32_t AE_CALL getMipLevels() const = 0;
 		virtual bool AE_CALL create(ITextureResource* res, uint32_t mipBegin, uint32_t mipLevels, uint32_t arrayBegin, uint32_t arraySize) = 0;
+		virtual void AE_CALL destroy() = 0;
+	};
+
+
+	class AE_DLL IRenderView : public IObject {
+	public:
+		IRenderView(IGraphicsModule& graphics) : IObject(graphics) {}
+		virtual ~IRenderView() {}
+
+		virtual bool AE_CALL isCreated() const = 0;
+		virtual ITextureResource* AE_CALL getResource() const = 0;
+		virtual const void* AE_CALL getNative() const = 0;
+		virtual uint32_t AE_CALL getArraySize() const = 0;
+		virtual uint32_t AE_CALL getMipSlice() const = 0;
+		virtual bool AE_CALL create(ITextureResource* res, uint32_t mipSlice, uint32_t arrayBegin, uint32_t arraySize) = 0;
+		virtual void AE_CALL destroy() = 0;
 	};
 
 
@@ -334,9 +352,26 @@ namespace aurora::modules::graphics {
 		IDepthStencil(IGraphicsModule& graphics) : IObject(graphics) {}
 		virtual ~IDepthStencil() {}
 
+		virtual const void* AE_CALL getNative() const = 0;
 		virtual bool AE_CALL isMultisampling() const = 0;
 		virtual const Vec2ui32& AE_CALL getSize() const = 0;
 		virtual bool AE_CALL create(const Vec2ui32& size, bool multisampling) = 0;
+	};
+
+
+	class AE_DLL IRenderTarget : public IObject {
+	public:
+		IRenderTarget(IGraphicsModule& graphics) : IObject(graphics) {}
+		virtual ~IRenderTarget() {}
+
+		virtual const void* AE_CALL getNative() const = 0;
+
+		virtual IRenderView* AE_CALL getRenderView(uint8_t index) const = 0;
+		virtual bool AE_CALL setRenderView(uint8_t index, IRenderView* view) = 0;
+		virtual void AE_CALL eraseRenderViews(uint8_t begin, uint8_t size) = 0;
+
+		virtual IDepthStencil* AE_CALL getDepthStencil() const = 0;
+		virtual void AE_CALL setDepthStencil(IDepthStencil* ds) = 0;
 	};
 
 
@@ -481,22 +516,23 @@ namespace aurora::modules::graphics {
 		IBlendState(IGraphicsModule& graphics) : IObject(graphics) {}
 		virtual ~IBlendState() {}
 
+		virtual const void* AE_CALL getNative() const = 0;
 		virtual bool AE_CALL isIndependentBlendEnabled() const = 0;
 		virtual void AE_CALL setIndependentBlendEnabled(bool enalbed) = 0;
 
-		virtual const RenderTargetBlendState& AE_CALL getRenderTargetState(uint8_t index) const = 0;
-		virtual void AE_CALL setRenderTargetState(uint8_t index, const RenderTargetBlendState& state) = 0;
+		virtual const RenderTargetBlendState* AE_CALL getRenderTargetState(uint8_t index) const = 0;
+		virtual bool AE_CALL setRenderTargetState(uint8_t index, const RenderTargetBlendState& state) = 0;
 	};
 
 
 	enum class ProgramStage : uint8_t {
 		UNKNOWN,
-		VS,//VertexShader
-		PS,//PixelShader
-		GS,//GeomtryShader
 		CS,//ComputeShader
+		DS, //DomainShader
+		GS,//GeomtryShader
 		HS,//HullShader
-		DS //DomainShader
+		PS,//PixelShader
+		VS,//VertexShader
 	};
 
 
@@ -505,6 +541,7 @@ namespace aurora::modules::graphics {
 		IProgram(IGraphicsModule& graphics) : IObject(graphics) {}
 		virtual ~IProgram() {}
 
+		virtual const void* AE_CALL getNative() const = 0;
 		virtual bool AE_CALL upload(const ProgramSource& vert, const ProgramSource& frag) = 0;
 	};
 
@@ -532,6 +569,8 @@ namespace aurora::modules::graphics {
 	public:
 		IRasterizerState(IGraphicsModule& graphics) : IObject(graphics) {}
 		virtual ~IRasterizerState() {}
+
+		virtual const void* AE_CALL getNative() const = 0;
 
 		virtual FillMode AE_CALL getFillMode() const = 0;
 		virtual void AE_CALL setFillMode(FillMode fill) = 0;
@@ -601,6 +640,8 @@ namespace aurora::modules::graphics {
 		IDepthStencilState(IGraphicsModule& graphics) : IObject(graphics) {}
 		virtual ~IDepthStencilState() {}
 
+		virtual const void* AE_CALL getNative() const = 0;
+
 		virtual const DepthState& AE_CALL getDepthState() const = 0;
 		virtual void AE_CALL setDepthState(const DepthState& depthState) = 0;
 
@@ -612,13 +653,14 @@ namespace aurora::modules::graphics {
 
 	struct AE_DLL GraphicsDeviceFeatures {
 		bool supportSampler;
-		bool supportTextureView;
+		bool supportNativeTextureView;
 		bool supportPixelBuffer;
 		bool supportConstantBuffer;
 		bool supportPersistentMap;
 		bool supportIndependentBlend;
 		bool supportStencilIndependentRef;
 		bool supportStencilIndependentMask;
+		uint8_t simultaneousRenderTargetCount;
 	};
 
 
@@ -642,11 +684,14 @@ namespace aurora::modules::graphics {
 		virtual const GraphicsDeviceFeatures& AE_CALL getDeviceFeatures() const = 0;
 		virtual IBlendState* AE_CALL createBlendState() = 0;
 		virtual IConstantBuffer* AE_CALL createConstantBuffer() = 0;
+		virtual IDepthStencil* AE_CALL createDepthStencil() = 0;
 		virtual IDepthStencilState* AE_CALL createDepthStencilState() = 0;
 		virtual IIndexBuffer* AE_CALL createIndexBuffer() = 0;
 		virtual IPixelBuffer* AE_CALL createPixelBuffer() = 0;
 		virtual IProgram* AE_CALL createProgram() = 0;
 		virtual IRasterizerState* AE_CALL createRasterizerState() = 0;
+		virtual IRenderTarget* AE_CALL createRenderTarget() = 0;
+		virtual IRenderView* AE_CALL createRenderView() = 0;
 		virtual ISampler* AE_CALL createSampler() = 0;
 		virtual ITexture1DResource* AE_CALL createTexture1DResource() = 0;//unrealized wingl
 		virtual ITexture2DResource* AE_CALL createTexture2DResource() = 0;
@@ -667,7 +712,7 @@ namespace aurora::modules::graphics {
 		virtual void AE_CALL endRender() = 0;
 		virtual void AE_CALL present() = 0;
 
-		//unrealized wind3d11 depth stencil
+		virtual void AE_CALL setRenderTarget(IRenderTarget* rt) = 0;
 		virtual void AE_CALL clear(ClearFlag flags, const Vec4f32& color, f32 depth, size_t stencil) = 0;
 	};
 }

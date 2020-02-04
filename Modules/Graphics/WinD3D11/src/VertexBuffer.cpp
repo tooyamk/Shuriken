@@ -11,10 +11,14 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	VertexBuffer::~VertexBuffer() {
-		_baseBuffer.releaseBuffer(*_graphics.get<Graphics>());
+		destroy();
 	}
 
-	const void* VertexBuffer::getNativeBuffer() const {
+	bool VertexBuffer::isCreated() const {
+		return _baseBuffer.handle;
+	}
+
+	const void* VertexBuffer::getNative() const {
 		return this;
 	}
 
@@ -55,6 +59,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 	bool VertexBuffer::isSyncing() const {
 		return false;
+	}
+
+	void VertexBuffer::destroy() {
+		_baseBuffer.releaseBuffer(*_graphics.get<Graphics>());
 	}
 
 	void VertexBuffer::getFormat(VertexSize* size, VertexType* type) const {

@@ -10,10 +10,14 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	IndexBuffer::~IndexBuffer() {
-		_baseBuffer.releaseBuffer(*_graphics.get<Graphics>());
+		destroy();
 	}
 
-	const void* IndexBuffer::getNativeBuffer() const {
+	bool IndexBuffer::isCreated() const {
+		return _baseBuffer.handle;
+	}
+
+	const void* IndexBuffer::getNative() const {
 		return this;
 	}
 
@@ -54,6 +58,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 	bool IndexBuffer::isSyncing() const {
 		return false;
+	}
+
+	void IndexBuffer::destroy() {
+		_baseBuffer.releaseBuffer(*_graphics.get<Graphics>());
 	}
 
 	IndexType IndexBuffer::getFormat() const {

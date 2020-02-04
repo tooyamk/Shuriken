@@ -9,10 +9,14 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 	ConstantBuffer::~ConstantBuffer() {
 		if (recordUpdateIds) delete[] recordUpdateIds;
-		_baseBuffer.releaseBuffer(*_graphics.get<Graphics>());
+		destroy();
 	}
 
-	const void* ConstantBuffer::getNativeBuffer() const {
+	bool ConstantBuffer::isCreated() const {
+		return _baseBuffer.handle;
+	}
+
+	const void* ConstantBuffer::getNative() const {
 		return this;
 	}
 
@@ -53,5 +57,9 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 	bool ConstantBuffer::isSyncing() const {
 		return false;
+	}
+
+	void ConstantBuffer::destroy() {
+		_baseBuffer.releaseBuffer(*_graphics.get<Graphics>());
 	}
 }

@@ -4,8 +4,7 @@
 #include <algorithm>
 
 namespace aurora::modules::graphics::win_d3d11 {
-	TextureView::TextureView(Graphics& graphics, bool internalView) : ITextureView(graphics),
-		_internalView(internalView),
+	TextureView::TextureView(Graphics& graphics) : ITextureView(graphics),
 		_mipBegin(0),
 		_mipLevels(0),
 		_createdMipLevels(0),
@@ -16,16 +15,19 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	TextureView::~TextureView() {
-		release();
-		_setRes(nullptr);
+		destroy();
+	}
+
+	bool TextureView::isCreated() const {
+		return _view;
 	}
 
 	ITextureResource* TextureView::getResource() const {
 		return _res.get();
 	}
 
-	const void* TextureView::getNativeView() const {
-		return _view;
+	const void* TextureView::getNative() const {
+		return this;
 	}
 
 	uint32_t TextureView::getArraySize() const {
@@ -37,15 +39,17 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	bool TextureView::create(ITextureResource* res, uint32_t mipBegin, uint32_t mipLevels, uint32_t arrayBegin, uint32_t arraySize) {
-		release();
+		RefPtr guard(res);
 
+		destroy();
+		
 		_mipBegin = mipBegin;
 		_mipLevels = mipLevels;
 		_arrayBegin = arrayBegin;
 		_arraySize = arraySize;
 
 		if (res && res->getGraphics() == _graphics) {
-			if (auto native = (BaseTextureResource*)res->getNativeResource(); native && native->handle && (native->bindType & D3D11_BIND_SHADER_RESOURCE) && mipBegin < native->mipLevels && arrayBegin < std::max<uint32_t>(native->arraySize, 1)) {
+			if (auto native = (BaseTextureResource*)res->getNative(); native && native->handle && (native->bindType & D3D11_BIND_SHADER_RESOURCE) && mipBegin < native->mipLevels && arrayBegin < std::max<uint32_t>(native->arraySize, 1)) {
 				auto lastMipLevels = native->mipLevels - mipBegin;
 				auto createMipLevels = mipLevels > lastMipLevels ? lastMipLevels : mipLevels;
 
@@ -104,10 +108,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 				if (desc.ViewDimension == D3D_SRV_DIMENSION_UNKNOWN) return _createDone(false, res);
 
-				if (FAILED(_graphics.get<Graphics>()->getDevice()->CreateShaderResourceView(native->handle, &desc, &_view))) {
-					release();
-					return _createDone(false, res);
-				}
+				if (FAILED(_graphics.get<Graphics>()->getDevice()->CreateShaderResourceView(native->handle, &desc, &_view))) return _createDone(false, res);
 
 				_createdMipLevels = createMipLevels;
 				_createdArraySize = createArraySize;
@@ -120,25 +121,15 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	bool TextureView::_createDone(bool succeeded, ITextureResource* res) {
-		_setRes(res);
+		if (succeeded) {
+			_res = res;
+		} else {
+			destroy();
+		}
 		return succeeded;
 	}
 
-	void TextureView::_setRes(ITextureResource* res) {
-		if (!_internalView && _res != res) {
-			if (_res) {
-				auto native = (BaseTextureResource*)_res->getNativeResource();
-				native->removeView(*this);
-			}
-			_res = res;
-			if (res) {
-				auto native = (BaseTextureResource*)res->getNativeResource();
-				native->addView(*this);
-			}
-		}
-	}
-
-	void TextureView::release() {
+	void TextureView::destroy() {
 		if (_view) {
 			_view->Release();
 			_view = nullptr;
@@ -149,5 +140,6 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_arrayBegin = 0;
 		_arraySize = 0;
 		_createdArraySize = 0;
+		_res.reset();
 	}
 }
