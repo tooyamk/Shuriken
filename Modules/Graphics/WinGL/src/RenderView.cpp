@@ -1,51 +1,47 @@
-#include "TextureView.h"
+#include "RenderView.h"
 #include "BaseTexture.h"
 #include "Graphics.h"
 
 namespace aurora::modules::graphics::win_gl {
-	TextureView::TextureView(Graphics& graphics) : ITextureView(graphics),
+	RenderView::RenderView(Graphics& graphics) : IRenderView(graphics),
 		_base(false) {
 	}
 
-	TextureView::~TextureView() {
+	RenderView::~RenderView() {
 		destroy();
 	}
 
-	bool TextureView::isCreated() const {
+	bool RenderView::isCreated() const {
 		return _base.handle;
 	}
 
-	ITextureResource* TextureView::getResource() const {
+	ITextureResource* RenderView::getResource() const {
 		return _base.res.get();
 	}
 
-	const void* TextureView::getNative() const {
+	const void* RenderView::getNative() const {
 		return &_base;
 	}
 
-	uint32_t TextureView::getArraySize() const {
+	uint32_t RenderView::getArraySize() const {
 		return _base.createdArraySize;
 	}
 
-	uint32_t TextureView::getMipLevels() const {
-		return _base.createdMipLevels;
+	uint32_t RenderView::getMipSlice() const {
+		return _base.mipSlice;
 	}
 
-	bool TextureView::create(ITextureResource* res, uint32_t mipBegin, uint32_t mipLevels, uint32_t arrayBegin, uint32_t arraySize) {
+	bool RenderView::create(ITextureResource* res, uint32_t mipSlice, uint32_t arrayBegin, uint32_t arraySize) {
 		RefPtr guard(res);
 
 		destroy();
 
-		_base.mipBegin = mipBegin;
-		_base.mipLevels = mipLevels;
+		_base.mipSlice = mipSlice;
 		_base.arrayBegin = arrayBegin;
 		_base.arraySize = arraySize;
 
 		if (res && res->getGraphics() == _graphics) {
-			if (auto native = (const BaseTexture*)res->getNative(); native && native->handle && mipBegin < native->mipLevels && (native->arraySize ? arrayBegin < native->arraySize : arrayBegin == 0)) {
-				auto lastMipLevels = native->mipLevels - mipBegin;
-				auto createMipLevels = mipLevels > lastMipLevels ? lastMipLevels : mipLevels;
-
+			if (auto native = (const BaseTexture*)res->getNative(); native && native->handle && mipSlice < native->mipLevels && (native->arraySize ? arrayBegin < native->arraySize : arrayBegin == 0)) {
 				auto lastArraySize = native->arraySize - arrayBegin;
 				if (!lastArraySize) lastArraySize = 1;
 				auto createArraySize = arraySize ? (arraySize > lastArraySize ? lastArraySize : arraySize) : 0;
@@ -68,9 +64,8 @@ namespace aurora::modules::graphics::win_gl {
 				if (_base.internalFormat == GL_NONE) return _createDone(false, res);
 
 				glGenTextures(1, &_base.handle);
-				glTextureView(_base.handle, _base.internalFormat, native->handle, native->glTexInfo.internalFormat, mipBegin, createMipLevels, arrayBegin, createArraySize ? createArraySize : 1);
+				glTextureView(_base.handle, _base.internalFormat, native->handle, native->glTexInfo.internalFormat, mipSlice, 1, arrayBegin, createArraySize ? createArraySize : 1);
 
-				_base.createdMipLevels = createMipLevels;
 				_base.createdArraySize = createArraySize;
 
 				return _createDone(true, res);
@@ -80,7 +75,7 @@ namespace aurora::modules::graphics::win_gl {
 		return _createDone(false, res);
 	}
 
-	bool TextureView::_createDone(bool succeeded, ITextureResource* res) {
+	bool RenderView::_createDone(bool succeeded, ITextureResource* res) {
 		if (succeeded) {
 			_base.res = res;
 		} else {
@@ -89,7 +84,7 @@ namespace aurora::modules::graphics::win_gl {
 		return succeeded;
 	}
 
-	void TextureView::destroy() {
+	void RenderView::destroy() {
 		_base.destroy();
 	}
 }

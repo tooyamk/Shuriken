@@ -262,9 +262,13 @@ namespace aurora::modules::graphics::win_d3d11 {
 		}
 
 		_device->CheckFeatureSupport(D3D11_FEATURE_D3D11_OPTIONS, &_internalFeatures, sizeof(_internalFeatures));
+		UINT quality = 0;
+		_device->CheckMultisampleQualityLevels1(fmt, 4, 0, &quality);
 
+		_deviceFeatures.supportIndexBufferFormatUI8 = false;
 		_deviceFeatures.supportSampler = true;
 		_deviceFeatures.supportNativeTextureView = true;
+		_deviceFeatures.supportNativeRenderView = true;
 		_deviceFeatures.supportPixelBuffer = false;
 		_deviceFeatures.supportConstantBuffer = true;
 		_deviceFeatures.supportPersistentMap = false;
@@ -483,13 +487,6 @@ namespace aurora::modules::graphics::win_d3d11 {
 				clearSamplers<ProgramStage::HS>();
 				clearSamplers<ProgramStage::PS>();
 				clearSamplers<ProgramStage::VS>();
-
-				_programUsingSlotsCS.reset();
-				_programUsingSlotsDS.reset();
-				_programUsingSlotsGS.reset();
-				_programUsingSlotsHS.reset();
-				_programUsingSlotsPS.reset();
-				_programUsingSlotsVS.reset();
 			}
 		}
 	}
@@ -510,7 +507,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 				_curIsBackBuffer = false;
 
 				_numRTVs = 0;
-				for (uint8_t i = 0; i < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i) {
+				for (uint8_t i = 0, n = rtt->getNumRenderViews(); i < n; ++i) {
 					_RTVs[i] = nullptr;
 					if (auto rv = rtt->getRenderView(i); rv) {
 						if (auto native = (RenderView*)rv->getNative(); native) {
@@ -650,7 +647,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 				backBufferTex->Release();
 			}
 
-			_backDepthStencil->create(size, false);
+			_backDepthStencil->create(size, DepthStencilFormat::D24S8, false);
 
 			if (_curIsBackBuffer) {
 				_context->OMSetRenderTargets(1, (ID3D11RenderTargetView**)&_backBufferView, _backDepthStencil->getInternalView());

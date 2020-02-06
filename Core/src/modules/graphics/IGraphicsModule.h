@@ -347,6 +347,16 @@ namespace aurora::modules::graphics {
 	};
 
 
+	enum class DepthStencilFormat : uint8_t {
+		UNKNOWN,
+		D16,
+		D24,
+		D24S8,
+		D32,
+		D32S8
+	};
+
+
 	class AE_DLL IDepthStencil : public IObject {
 	public:
 		IDepthStencil(IGraphicsModule& graphics) : IObject(graphics) {}
@@ -355,7 +365,8 @@ namespace aurora::modules::graphics {
 		virtual const void* AE_CALL getNative() const = 0;
 		virtual bool AE_CALL isMultisampling() const = 0;
 		virtual const Vec2ui32& AE_CALL getSize() const = 0;
-		virtual bool AE_CALL create(const Vec2ui32& size, bool multisampling) = 0;
+		virtual bool AE_CALL create(const Vec2ui32& size, DepthStencilFormat format, bool multisampling) = 0;
+		virtual void AE_CALL destroy() = 0;
 	};
 
 
@@ -542,7 +553,8 @@ namespace aurora::modules::graphics {
 		virtual ~IProgram() {}
 
 		virtual const void* AE_CALL getNative() const = 0;
-		virtual bool AE_CALL upload(const ProgramSource& vert, const ProgramSource& frag) = 0;
+		virtual bool AE_CALL create(const ProgramSource& vert, const ProgramSource& frag) = 0;
+		virtual void AE_CALL destroy() = 0;
 	};
 
 
@@ -652,8 +664,10 @@ namespace aurora::modules::graphics {
 
 
 	struct AE_DLL GraphicsDeviceFeatures {
+		bool supportIndexBufferFormatUI8;
 		bool supportSampler;
 		bool supportNativeTextureView;
+		bool supportNativeRenderView;
 		bool supportPixelBuffer;
 		bool supportConstantBuffer;
 		bool supportPersistentMap;

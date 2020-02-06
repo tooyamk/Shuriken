@@ -125,33 +125,18 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		template<ProgramStage Stage>
 		inline void AE_CALL clearShaderResources() {
-			void(ID3D11DeviceContext::*fn)(UINT, UINT, ID3D11ShaderResourceView*const*);
-			ProgramUsingSlots* slots;
 			if constexpr (Stage == ProgramStage::CS) {
-				fn = &ID3D11DeviceContext::CSSetShaderResources;
-				slots = &_programUsingSlotsCS;
+				_clearD3D11DeviceChildren<ID3D11ShaderResourceView>(_programUsingSlotsCS.shaderResources, &ID3D11DeviceContext::CSSetShaderResources);
 			} else if constexpr (Stage == ProgramStage::DS) {
-				fn = &ID3D11DeviceContext::DSSetShaderResources;
-				slots = &_programUsingSlotsDS;
+				_clearD3D11DeviceChildren<ID3D11ShaderResourceView>(_programUsingSlotsDS.shaderResources, &ID3D11DeviceContext::DSSetShaderResources);
 			} else if constexpr (Stage == ProgramStage::GS) {
-				fn = &ID3D11DeviceContext::GSSetShaderResources;
-				slots = &_programUsingSlotsGS;
+				_clearD3D11DeviceChildren<ID3D11ShaderResourceView>(_programUsingSlotsGS.shaderResources, &ID3D11DeviceContext::GSSetShaderResources);
 			} else if constexpr (Stage == ProgramStage::HS) {
-				fn = &ID3D11DeviceContext::HSSetShaderResources;
-				slots = &_programUsingSlotsHS;
+				_clearD3D11DeviceChildren<ID3D11ShaderResourceView>(_programUsingSlotsHS.shaderResources, &ID3D11DeviceContext::HSSetShaderResources);
 			} else if constexpr (Stage == ProgramStage::PS) {
-				fn = &ID3D11DeviceContext::PSSetShaderResources;
-				slots = &_programUsingSlotsPS;
+				_clearD3D11DeviceChildren<ID3D11ShaderResourceView>(_programUsingSlotsPS.shaderResources, &ID3D11DeviceContext::PSSetShaderResources);
 			} else if constexpr (Stage == ProgramStage::VS) {
-				fn = &ID3D11DeviceContext::VSSetShaderResources;
-				slots = &_programUsingSlotsVS;
-			} else {
-				return;
-			}
-
-			for (const auto& slot : slots->shaderResources) {
-				_checkProgramClearData(slot.num);
-				(_context->*fn)(slot.start, slot.num, (ID3D11ShaderResourceView*const*)_programClearData.data());
+				_clearD3D11DeviceChildren<ID3D11ShaderResourceView>(_programUsingSlotsVS.shaderResources, &ID3D11DeviceContext::VSSetShaderResources);
 			}
 		}
 
@@ -180,33 +165,18 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		template<ProgramStage Stage>
 		inline void AE_CALL clearConstantBuffers() {
-			void(ID3D11DeviceContext::*fn)(UINT, UINT, ID3D11Buffer*const*);
-			ProgramUsingSlots* slots;
 			if constexpr (Stage == ProgramStage::CS) {
-				fn = &ID3D11DeviceContext::CSSetConstantBuffers;
-				slots = &_programUsingSlotsCS;
+				_clearD3D11DeviceChildren<ID3D11Buffer>(_programUsingSlotsCS.constantBuffers, &ID3D11DeviceContext::CSSetConstantBuffers);
 			} else if constexpr (Stage == ProgramStage::DS) {
-				fn = &ID3D11DeviceContext::DSSetConstantBuffers;
-				slots = &_programUsingSlotsDS;
+				_clearD3D11DeviceChildren<ID3D11Buffer>(_programUsingSlotsDS.constantBuffers, &ID3D11DeviceContext::DSSetConstantBuffers);
 			} else if constexpr (Stage == ProgramStage::GS) {
-				fn = &ID3D11DeviceContext::GSSetConstantBuffers;
-				slots = &_programUsingSlotsGS;
+				_clearD3D11DeviceChildren<ID3D11Buffer>(_programUsingSlotsGS.constantBuffers, &ID3D11DeviceContext::GSSetConstantBuffers);
 			} else if constexpr (Stage == ProgramStage::HS) {
-				fn = &ID3D11DeviceContext::HSSetConstantBuffers;
-				slots = &_programUsingSlotsHS;
+				_clearD3D11DeviceChildren<ID3D11Buffer>(_programUsingSlotsHS.constantBuffers, &ID3D11DeviceContext::HSSetConstantBuffers);
 			} else if constexpr (Stage == ProgramStage::PS) {
-				fn = &ID3D11DeviceContext::PSSetConstantBuffers;
-				slots = &_programUsingSlotsPS;
+				_clearD3D11DeviceChildren<ID3D11Buffer>(_programUsingSlotsPS.constantBuffers, &ID3D11DeviceContext::PSSetConstantBuffers);
 			} else if constexpr (Stage == ProgramStage::VS) {
-				fn = &ID3D11DeviceContext::VSSetConstantBuffers;
-				slots = &_programUsingSlotsVS;
-			} else {
-				return;
-			}
-
-			for (const auto& slot : slots->constantBuffers) {
-				_checkProgramClearData(slot.num);
-				(_context->*fn)(slot.start, slot.num, (ID3D11Buffer*const*)_programClearData.data());
+				_clearD3D11DeviceChildren<ID3D11Buffer>(_programUsingSlotsVS.constantBuffers, &ID3D11DeviceContext::VSSetConstantBuffers);
 			}
 		}
 
@@ -235,33 +205,18 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		template<ProgramStage Stage>
 		inline void AE_CALL clearSamplers() {
-			void(ID3D11DeviceContext::*fn)(UINT, UINT, ID3D11SamplerState*const*);
-			ProgramUsingSlots* slots;
 			if constexpr (Stage == ProgramStage::CS) {
-				fn = &ID3D11DeviceContext::CSSetSamplers;
-				slots = &_programUsingSlotsCS;
+				_clearD3D11DeviceChildren<ID3D11SamplerState>(_programUsingSlotsCS.samplers, &ID3D11DeviceContext::CSSetSamplers);
 			} else if constexpr (Stage == ProgramStage::DS) {
-				fn = &ID3D11DeviceContext::DSSetSamplers;
-				slots = &_programUsingSlotsDS;
+				_clearD3D11DeviceChildren<ID3D11SamplerState>(_programUsingSlotsDS.samplers, &ID3D11DeviceContext::DSSetSamplers);
 			} else if constexpr (Stage == ProgramStage::GS) {
-				fn = &ID3D11DeviceContext::GSSetSamplers;
-				slots = &_programUsingSlotsGS;
+				_clearD3D11DeviceChildren<ID3D11SamplerState>(_programUsingSlotsGS.samplers, &ID3D11DeviceContext::GSSetSamplers);
 			} else if constexpr (Stage == ProgramStage::HS) {
-				fn = &ID3D11DeviceContext::HSSetSamplers;
-				slots = &_programUsingSlotsHS;
+				_clearD3D11DeviceChildren<ID3D11SamplerState>(_programUsingSlotsHS.samplers, &ID3D11DeviceContext::HSSetSamplers);
 			} else if constexpr (Stage == ProgramStage::PS) {
-				fn = &ID3D11DeviceContext::PSSetSamplers;
-				slots = &_programUsingSlotsPS;
+				_clearD3D11DeviceChildren<ID3D11SamplerState>(_programUsingSlotsPS.samplers, &ID3D11DeviceContext::PSSetSamplers);
 			} else if constexpr (Stage == ProgramStage::VS) {
-				fn = &ID3D11DeviceContext::VSSetSamplers;
-				slots = &_programUsingSlotsVS;
-			} else {
-				return;
-			}
-
-			for (const auto& slot : slots->samplers) {
-				_checkProgramClearData(slot.num);
-				(_context->*fn)(slot.start, slot.num, (ID3D11SamplerState*const*)_programClearData.data());
+				_clearD3D11DeviceChildren<ID3D11SamplerState>(_programUsingSlotsVS.samplers, &ID3D11DeviceContext::VSSetSamplers);
 			}
 		}
 
@@ -300,12 +255,6 @@ namespace aurora::modules::graphics::win_d3d11 {
 			std::vector<Slot> shaderResources;
 			std::vector<Slot> constantBuffers;
 			std::vector<Slot> samplers;
-
-			inline void AE_CALL reset() {
-				shaderResources.clear();
-				constantBuffers.clear();
-				samplers.clear();
-			}
 		};
 
 		ProgramUsingSlots _programUsingSlotsCS;
@@ -363,6 +312,31 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		void AE_CALL _release();
 		void AE_CALL _resize(const Vec2<UINT>& size);
+
+		template<typename T>
+		void AE_CALL _clearD3D11DeviceChildren(std::vector<ProgramUsingSlots::Slot>& slots, void(ID3D11DeviceContext::*fn)(UINT, UINT, T*const*)) {
+			if (auto size = slots.size(); size) {
+				ProgramUsingSlots::Slot* s = &slots[0];
+				for (size_t i = 1; i < size; ++i) {
+					ProgramUsingSlots::Slot* s1 = &slots[i];
+					if (s->start + s->num >= s1->start) {
+						s->num = s1->start + s1->num - s->start;
+					} else {
+						_clearD3D11DeviceChildren<T>(*s, fn);
+						s = s1;
+					}
+				}
+				_clearD3D11DeviceChildren<T>(*s, fn);
+
+				slots.clear();
+			}
+		}
+
+		template<typename T>
+		inline void AE_CALL _clearD3D11DeviceChildren(const ProgramUsingSlots::Slot& slot, void(ID3D11DeviceContext::*fn)(UINT, UINT, T*const*)) {
+			_checkProgramClearData(slot.num);
+			(_context->*fn)(slot.start, slot.num, (T*const*)_programClearData.data());
+		}
 
 		IConstantBuffer* AE_CALL _createdShareConstantBuffer();
 		IConstantBuffer* AE_CALL _createdExclusiveConstantBuffer(uint32_t numParameters);

@@ -18,6 +18,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_desc.FillMode = _convertFillMode(_fillMode);
 		_desc.CullMode = _convertCullMode(_cullMode);
 		_desc.FrontCounterClockwise = _frontFace == FrontFace::CCW;
+		_desc.DepthClipEnable = true;
 	}
 
 	RasterizerState::~RasterizerState() {

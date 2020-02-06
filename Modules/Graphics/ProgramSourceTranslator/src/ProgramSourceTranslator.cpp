@@ -137,6 +137,8 @@ namespace aurora::modules::graphics::program_source_translator {
 			spirv_cross::CompilerGLSL compiler((uint32_t*)sourceData, sourceDataSize / sizeof(uint32_t));
 
 			compiler.set_entry_point(ProgramSource::getEntryPoint(source), model);
+			//compiler.require_extension("GL_ARB_fragment_coord_conventions");
+			//compiler.set_execution_mode(spv::ExecutionModeOriginUpperLeft);
 
 			auto opts = compiler.get_common_options();
 			if (!targetVersion.empty()) opts.version = String::toNumber<decltype(opts.version)>(targetVersion);
@@ -163,7 +165,7 @@ namespace aurora::modules::graphics::program_source_translator {
 			compiler.build_combined_image_samplers();
 			for (auto& remap : compiler.get_combined_image_samplers()) {
 				auto& texName = compiler.get_name(remap.image_id);
-				compiler.set_name(remap.combined_id, "_CombinedTex" + String::toString(texName.size()) + "_" + texName + compiler.get_name(remap.sampler_id));
+				compiler.set_name(remap.combined_id, "_CombinedTexSampler" + String::toString(texName.size()) + "_" + texName + compiler.get_name(remap.sampler_id));
 			}
 
 			try {

@@ -2,15 +2,19 @@
 #include "CreateModule.h"
 #include "BlendState.h"
 #include "ConstantBuffer.h"
+#include "DepthStencil.h"
 #include "DepthStencilState.h"
 #include "IndexBuffer.h"
 #include "PixelBuffer.h"
 #include "Program.h"
 #include "RasterizerState.h"
+#include "RenderTarget.h"
+#include "RenderView.h"
+#include "RenderViewSimulative.h"
 #include "Sampler.h"
-#include "SimulativeTextureView.h"
 #include "Texture2DResource.h"
 #include "TextureView.h"
+#include "TextureViewSimulative.h"
 #include "VertexBuffer.h"
 #include "base/Application.h"
 #include "base/String.h"
@@ -149,6 +153,7 @@ namespace aurora::modules::graphics::win_gl {
 		_internalFeatures.maxAnisotropy = 1.f;
 		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &_internalFeatures.maxAnisotropy);
 		
+		_deviceFeatures.supportIndexBufferFormatUI8 = true;
 		_deviceFeatures.supportPixelBuffer = true;
 		_deviceFeatures.supportConstantBuffer = isGreatThanOrEqualVersion(3, 1) || glewIsSupported("GL_ARB_uniform_buffer_object");
 		_deviceFeatures.supportSampler = isGreatThanOrEqualVersion(3, 3) || glewIsSupported("GL_ARB_sampler_objects");
@@ -158,6 +163,7 @@ namespace aurora::modules::graphics::win_gl {
 			glewIsSupported("GL_EXT_blend_equation_separate"));
 		_internalFeatures.supportTexStorage = isGreatThanOrEqualVersion(4, 2) || glewIsSupported("GL_ARB_texture_storage");
 		_deviceFeatures.supportNativeTextureView = isGreatThanOrEqualVersion(4, 3) || glewIsSupported("ARB_texture_view");
+		_deviceFeatures.supportNativeRenderView = _deviceFeatures.supportNativeTextureView;
 		_deviceFeatures.supportPersistentMap = isGreatThanOrEqualVersion(4, 4) || glewIsSupported("GL_ARB_buffer_storage");
 		_deviceFeatures.supportStencilIndependentRef = true;
 		_deviceFeatures.supportStencilIndependentMask = true;
@@ -203,7 +209,7 @@ namespace aurora::modules::graphics::win_gl {
 	}
 
 	IDepthStencil* Graphics::createDepthStencil() {
-		return nullptr;
+		return new DepthStencil(*this);
 	}
 
 	IDepthStencilState* Graphics::createDepthStencilState() {
@@ -223,11 +229,15 @@ namespace aurora::modules::graphics::win_gl {
 	}
 
 	IRenderTarget* Graphics::createRenderTarget() {
-		return nullptr;
+		return new RenderTarget(*this);
 	}
 
 	IRenderView* Graphics::createRenderView() {
-		return nullptr;
+		if (_deviceFeatures.supportNativeRenderView) {
+			return new RenderView(*this);
+		} else {
+			return new RenderViewSimulative(*this);
+		}
 	}
 
 	ISampler* Graphics::createSampler() {
@@ -250,7 +260,7 @@ namespace aurora::modules::graphics::win_gl {
 		if (_deviceFeatures.supportNativeTextureView) {
 			return new TextureView(*this);
 		} else {
-			return new SimulativeTextureView(*this);
+			return new TextureViewSimulative(*this);
 		}
 	}
 
@@ -597,15 +607,26 @@ namespace aurora::modules::graphics::win_gl {
 
 	void Graphics::endRender() {
 		//交换当前缓冲区和后台缓冲区
-		SwapBuffers(_dc);
+		//SwapBuffers(_dc);
 
 		//if (wglGetCurrentContext() == _rc) wglMakeCurrent(nullptr, nullptr);
 	}
 
 	void Graphics::present() {
+		SwapBuffers(_dc);
 	}
 
 	void Graphics::setRenderTarget(IRenderTarget* rt) {
+		if (rt) {
+			if (auto native = (RenderTarget*)rt->getNative(); native) {
+				native->update();
+				glBindFramebuffer(GL_FRAMEBUFFER, native->getInternalBuffer());
+			} else {
+				glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			}
+		} else {
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		}
 	}
 
 	void Graphics::clear(ClearFlag flags, const Vec4f32& color, f32 depth, size_t stencil) {

@@ -1,5 +1,5 @@
 struct VS_INPUT {
-    float2 position : POSITION0;
+    float3 position : POSITION0;
     float3 ccc : ATTRIBUTE1;
     float2 uv : TEXCOORD0;
 };
@@ -23,7 +23,7 @@ float aabbcc11;
 VS_OUTPUT main(VS_INPUT input)
 {
     VS_OUTPUT output = (VS_OUTPUT)0;
-    output.position = float4(input.position.x / 1.0f, input.position.y / 1.0f, 0.0f, 1.0f);
+    output.position = float4(input.position, 1.0f);
     output.uv = input.uv;
     //output.position = mul(float4(input.position.x / 10.0f, input.position.y / 10.0f, 0.0f, 1.0f * aabbcc * fff3 * aabbcc11), matWorld);
 

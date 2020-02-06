@@ -2,7 +2,7 @@
 
 #include "Base.h"
 
-namespace aurora::modules::graphics::win_d3d11 {
+namespace aurora::modules::graphics::win_gl {
 	class Graphics;
 
 	class AE_MODULE_DLL RenderTarget : public IRenderTarget {
@@ -19,13 +19,30 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual IDepthStencil* AE_CALL getDepthStencil() const override;
 		virtual void AE_CALL setDepthStencil(IDepthStencil* ds) override;
 
-		uint8_t AE_CALL getNumRenderViews();
+		void AE_CALL update();
+
+		inline GLuint AE_CALL getInternalBuffer() {
+			return _handle;
+		}
 
 	protected:
 		bool _numViewsDirty;
 		uint8_t _numViews;
 
-		RefPtr<IRenderView> _views[D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT];
+		std::vector<RefPtr<IRenderView>> _views;
+		std::vector<GLuint> _bindedViews;
 		RefPtr<IDepthStencil> _ds;
+		GLenum _bindedDSAttachmentType;
+		GLuint _bindedDSBuffer;
+
+		GLuint _handle;
+
+		inline void AE_CALL _unbindDS() {
+			if (_bindedDSBuffer) {
+				glFramebufferRenderbuffer(GL_FRAMEBUFFER, _bindedDSAttachmentType, GL_RENDERBUFFER, 0);
+				_bindedDSBuffer = 0;
+				_bindedDSAttachmentType = GL_NONE;
+			}
+		}
 	};
 }

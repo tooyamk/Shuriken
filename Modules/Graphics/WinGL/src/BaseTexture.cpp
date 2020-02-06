@@ -5,12 +5,9 @@
 #include "base/Image.h"
 #include <algorithm>
 
-#include <thread>
-
 namespace aurora::modules::graphics::win_gl {
 	BaseTexture::BaseTexture(TextureType texType) :
 		dirty(false),
-		isArray(false),
 		texType(texType),
 		resUsage(Usage::NONE),
 		mapUsage(Usage::NONE),
@@ -238,8 +235,7 @@ namespace aurora::modules::graphics::win_gl {
 				glTexParameteri(glTexInfo.target, GL_TEXTURE_MAX_LEVEL, mipLevels - 1);
 				//glBindTexture(glTexInfo.target, 0);
 
-				this->isArray = isArray;
-				this->arraySize = arraySize;
+				this->arraySize = isArray ? arraySize : 0;
 				this->mipLevels = mipLevels;
 				//mapData = glMapBufferRange(texType, 0, size, flags);
 
@@ -305,7 +301,7 @@ namespace aurora::modules::graphics::win_gl {
 	}
 
 	bool BaseTexture::update(uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const void* data) {
-		if (handle && (resUsage & Usage::UPDATE) == Usage::UPDATE && arraySlice < arraySize && mipSlice < mipLevels) {
+		if (handle && (resUsage & Usage::UPDATE) == Usage::UPDATE && (arraySize ? arraySlice < arraySize : arraySlice == 0) && mipSlice < mipLevels) {
 			return _update(arraySlice, mipSlice, range, data);
 		}
 		return false;
@@ -352,7 +348,6 @@ namespace aurora::modules::graphics::win_gl {
 
 			dirty = false;
 			memset(&glTexInfo, 0, sizeof(glTexInfo));
-			isArray = false;
 			arraySize = 0;
 			mipLevels = 0;
 			texSize.set(0);

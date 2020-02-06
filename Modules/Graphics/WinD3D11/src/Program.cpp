@@ -42,15 +42,15 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	Program::~Program() {
-		_release();
+		destroy();
 	}
 
 	const void* Program::getNative() const {
 		return this;
 	}
 
-	bool Program::upload(const ProgramSource& vert, const ProgramSource& frag) {
-		_release();
+	bool Program::create(const ProgramSource& vert, const ProgramSource& frag) {
+		destroy();
 
 		DXObjGuard objs;
 
@@ -63,7 +63,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		auto pixelBlob = _compileShader(frag, ProgramSource::toHLSLShaderModel(ProgramStage::PS, frag.version.empty() ? sm : frag.version).data());
 		if (!pixelBlob) {
-			_release();
+			destroy();
 			return false;
 		}
 		objs.add(pixelBlob);
@@ -72,13 +72,13 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		HRESULT hr = device->CreateVertexShader(_vertBlob->GetBufferPointer(), _vertBlob->GetBufferSize(), 0, &_vs);
 		if (FAILED(hr)) {
-			_release();
+			destroy();
 			return false;
 		}
 
 		ID3D11ShaderReflection* vsr = nullptr;
 		if (FAILED(D3DReflect(_vertBlob->GetBufferPointer(), _vertBlob->GetBufferSize(), IID_ID3D11ShaderReflection, (void**)&vsr))) {
-			_release();
+			destroy();
 			return false;
 		}
 		objs.add(vsr);
@@ -94,13 +94,13 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		ID3D11PixelShader* fs = nullptr;
 		if (FAILED(device->CreatePixelShader(pixelBlob->GetBufferPointer(), pixelBlob->GetBufferSize(), 0, &_ps))) {
-			_release();
+			destroy();
 			return false;
 		}
 
 		ID3D11ShaderReflection* psr = nullptr;
 		if (FAILED(D3DReflect(pixelBlob->GetBufferPointer(), pixelBlob->GetBufferSize(), IID_ID3D11ShaderReflection, (void**)&psr))) {
-			_release();
+			destroy();
 			return false;
 		}
 		objs.add(psr);
@@ -225,7 +225,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		}
 	}
 
-	void Program::_release() {
+	void Program::destroy() {
 		_curInLayout = nullptr;
 		_inVerBufInfos.clear();
 		_inLayouts.clear();

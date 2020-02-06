@@ -2,12 +2,12 @@
 
 #include "Base.h"
 
-namespace aurora::modules::graphics::win_d3d11 {
+namespace aurora::modules::graphics::win_gl {
 	class Graphics;
 
 	class AE_MODULE_DLL DepthStencil : public IDepthStencil {
 	public:
-		DepthStencil(Graphics& graphics, bool internalView);
+		DepthStencil(Graphics& graphics);
 		virtual ~DepthStencil();
 
 		virtual const void* AE_CALL getNative() const override;
@@ -16,18 +16,21 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual bool AE_CALL create(const Vec2ui32& size, DepthStencilFormat format, bool multisampling) override;
 		virtual void AE_CALL destroy() override;
 
+		inline GLuint AE_CALL getInternalBuffer() const {
+			return _handle;
+		}
 
-		inline ID3D11DepthStencilView* getInternalView() {
-			return _view;
+		inline GLenum AE_CALL getInternalAttachmentType() const {
+			return _attachmentType;
 		}
 
 	private:
-		bool _isInternal;
 		bool _isMultisampling;
 		Vec2ui32 _size;
 
-		ID3D11DepthStencilView* _view;
+		GLuint _handle;
+		GLenum _attachmentType;
 
-		static DXGI_FORMAT AE_CALL convertInternalFormat(DepthStencilFormat fmt);
+		static std::tuple<GLenum, GLenum> AE_CALL convertInternalFormat(DepthStencilFormat fmt);
 	};
 }

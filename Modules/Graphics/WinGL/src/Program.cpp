@@ -1,5 +1,6 @@
 #include "Program.h"
 #include "BaseTexture.h"
+#include "BaseTextureView.h"
 #include "Graphics.h"
 #include "ConstantBuffer.h"
 #include "IndexBuffer.h"
@@ -15,26 +16,26 @@ namespace aurora::modules::graphics::win_gl {
 	}
 
 	Program::~Program() {
-		_release();
+		destroy();
 	}
 
 	const void* Program::getNative() const {
 		return this;
 	}
 
-	bool Program::upload(const ProgramSource& vert, const ProgramSource& frag) {
-		_release();
+	bool Program::create(const ProgramSource& vert, const ProgramSource& frag) {
+		destroy();
 
 		auto vertexShader = _compileShader(vert, GL_VERTEX_SHADER);
 		if (!vertexShader) {
-			_release();
+			destroy();
 			return false;
 		}
 
 		auto fragmentShader = _compileShader(frag, GL_FRAGMENT_SHADER);
 		if (!fragmentShader) {
 			glDeleteShader(vertexShader);
-			_release();
+			destroy();
 			return false;
 		}
 
@@ -53,7 +54,7 @@ namespace aurora::modules::graphics::win_gl {
 		GLint status;
 		glGetProgramiv(_handle, GL_LINK_STATUS, &status);
 		if (status == GL_FALSE) {
-			_release();
+			destroy();
 			return false;
 		}
 
@@ -88,7 +89,7 @@ namespace aurora::modules::graphics::win_gl {
 			info.type = type;
 
 			static const char TYPE[] = { "type_" };
-			static const char COMBINED_TEX[] = { "_CombinedTex" };
+			static const char COMBINED_TEX[] = { "_CombinedTexSampler" };
 			if (len > sizeof(TYPE) - 1) {
 				if (std::string_view(charBuffer, sizeof(TYPE) - 1) == TYPE) {
 					info.names.emplace_back(charBuffer + sizeof(TYPE) - 1);
@@ -223,39 +224,41 @@ namespace aurora::modules::graphics::win_gl {
 				}
 			}
 
-			uint8_t texIndex = 0;
+			uint8_t texIdx = 0;
 
 			if (paramFactory) {
 				auto g = _graphics.get<Graphics>();
 
 				for (auto& layout : _uniformLayouts) {
 					switch (layout.type) {
+					case GL_SAMPLER_1D:
+					case GL_SAMPLER_1D_ARRAY:
 					case GL_SAMPLER_2D:
+					case GL_SAMPLER_2D_ARRAY:
+					case GL_SAMPLER_3D:
 					{
 						if (auto p0 = paramFactory->get(layout.names[0], ShaderParameterType::TEXTURE); p0) {
-							if (auto data = p0->getData(); data && g == ((ITextureResource*)data)->getGraphics()) {
-								if (auto native = (GLuint*)((ITextureView*)data)->getNative(); native) {
-									auto idx = texIndex++;
+							if (auto data = p0->getData(); data && g == ((ITextureView*)data)->getGraphics()) {
+								if (auto native = (BaseTextureView*)((ITextureView*)data)->getNative(); native && native->internalFormat != GL_NONE) {
+									auto idx = texIdx++;
 
 									GLuint sampler = 0;
 									if (auto p1 = paramFactory->get(layout.names[1], ShaderParameterType::SAMPLER); p1) {
 										if (auto data = p1->getData(); data && g == ((ISampler*)data)->getGraphics()) {
-											if (auto s = (Sampler*)((ISampler*)data)->getNative(); s) {
-												s->update();
-												sampler = s->getInternalSampler();
+											if (auto native = (Sampler*)((ISampler*)data)->getNative(); native) {
+												native->update();
+												sampler = native->getInternalSampler();
 											}
 										}
 									}
 
 									glActiveTexture(GL_TEXTURE0 + idx);
-									glBindTexture(GL_TEXTURE_2D, *native);
+									glBindTexture(native->internalFormat, native->handle);
 									glBindSampler(idx, sampler);
 									glUniform1i(layout.location, idx);
 								}
 							}
 						}
-
-
 
 						break;
 					}
@@ -314,7 +317,7 @@ namespace aurora::modules::graphics::win_gl {
 		}
 	}
 
-	void Program::_release() {
+	void Program::destroy() {
 		if (_handle) {
 			glDeleteProgram(_handle);
 			_handle = 0;

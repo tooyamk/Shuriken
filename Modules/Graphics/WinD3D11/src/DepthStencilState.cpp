@@ -26,7 +26,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	void DepthStencilState::setDepthState(const DepthState& depthState) {
-		if (memEqual<sizeof(_depthState)>(&_depthState, &depthState)) {
+		if (!memEqual<sizeof(_depthState)>(&_depthState, &depthState)) {
 			_depthState = depthState;
 			_updateDepth();
 
@@ -45,7 +45,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	void DepthStencilState::setStencilState(const StencilState& stencilState) {
-		if (memEqual<sizeof(_stencilState)>(&_stencilState, &stencilState)) {
+		if (!memEqual<sizeof(_stencilState)>(&_stencilState, &stencilState)) {
 			_stencilState = stencilState;
 			_updateStencil();
 

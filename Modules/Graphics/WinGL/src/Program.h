@@ -13,7 +13,8 @@ namespace aurora::modules::graphics::win_gl {
 		virtual ~Program();
 
 		virtual const void* AE_CALL getNative() const override;
-		virtual bool AE_CALL upload(const ProgramSource& vert, const ProgramSource& frag) override;
+		virtual bool AE_CALL create(const ProgramSource& vert, const ProgramSource& frag) override;
+		virtual void AE_CALL destroy() override;
 
 		bool AE_CALL use(const VertexBufferFactory* vertexFactory, const ShaderParameterFactory* paramFactory);
 
@@ -46,7 +47,6 @@ namespace aurora::modules::graphics::win_gl {
 
 		void _constantBufferUpdateAll(ConstantBuffer* cb, const std::vector<ConstantBufferLayout::Variables>& vars);
 
-		void AE_CALL _release();
 		GLuint AE_CALL _compileShader(const ProgramSource& source, GLenum type);
 	};
 }

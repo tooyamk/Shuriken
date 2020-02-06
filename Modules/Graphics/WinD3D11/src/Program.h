@@ -12,7 +12,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual ~Program();
 
 		virtual const void* AE_CALL getNative() const override;
-		virtual bool AE_CALL upload(const ProgramSource& vert, const ProgramSource& frag) override;
+		virtual bool AE_CALL create(const ProgramSource& vert, const ProgramSource& frag) override;
+		virtual void AE_CALL destroy() override;
 
 		bool AE_CALL use(const VertexBufferFactory* vertexFactory, const ShaderParameterFactory* paramFactory);
 		void AE_CALL useEnd();
@@ -88,7 +89,6 @@ namespace aurora::modules::graphics::win_d3d11 {
 		std::vector<ShaderParameter*> _tempParams;
 		std::vector<const ConstantBufferLayout::Variables*> _tempVars;
 
-		void AE_CALL _release();
 		ID3DBlob* AE_CALL _compileShader(const ProgramSource& source, const char* target);
 		ID3D11InputLayout* _getOrCreateInputLayout();
 		void AE_CALL _parseInLayout(const D3D11_SHADER_DESC& desc, ID3D11ShaderReflection& ref);

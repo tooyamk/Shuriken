@@ -1,25 +1,25 @@
 #pragma once
 
-#include "BaseTextureView.h"
+#include "BaseRenderView.h"
 
 namespace aurora::modules::graphics::win_gl {
 	class Graphics;
 
-	class AE_MODULE_DLL TextureView : public ITextureView {
+	class AE_MODULE_DLL RenderViewSimulative : public IRenderView {
 	public:
-		TextureView(Graphics& graphics);
-		virtual ~TextureView();
+		RenderViewSimulative(Graphics& graphics);
+		virtual ~RenderViewSimulative();
 
 		virtual bool AE_CALL isCreated() const override;
 		virtual ITextureResource* AE_CALL getResource() const override;
 		virtual const void* AE_CALL getNative() const override;
 		virtual uint32_t AE_CALL getArraySize() const override;
-		virtual uint32_t AE_CALL getMipLevels() const override;
-		virtual bool AE_CALL create(ITextureResource* res, uint32_t mipBegin, uint32_t mipLevels, uint32_t arrayBegin, uint32_t arraySize) override;
+		virtual uint32_t AE_CALL getMipSlice() const override;
+		virtual bool AE_CALL create(ITextureResource* res, uint32_t mipSlice, uint32_t arrayBegin, uint32_t arraySize) override;
 		virtual void AE_CALL destroy() override;
 
 	protected:
-		BaseTextureView _base;
+		BaseRenderView _base;
 
 		bool AE_CALL _createDone(bool succeeded, ITextureResource* res);
 	};

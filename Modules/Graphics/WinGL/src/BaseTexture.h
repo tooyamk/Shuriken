@@ -25,7 +25,6 @@ namespace aurora::modules::graphics::win_gl {
 		void AE_CALL releaseSync();
 
 		bool dirty;
-		bool isArray;
 		TextureType texType;
 		Usage resUsage;
 		Usage mapUsage;
