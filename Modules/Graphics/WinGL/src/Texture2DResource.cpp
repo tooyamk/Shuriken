@@ -10,7 +10,7 @@ namespace aurora::modules::graphics::win_gl {
 	}
 
 	TextureType Texture2DResource::getType() const {
-		return TextureType::TEX2D;
+		return _baseTex.texType;
 	}
 
 	bool Texture2DResource::isCreated() const {

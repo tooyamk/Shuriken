@@ -46,48 +46,9 @@ namespace aurora::modules::graphics::win_d3d11 {
 		auto isArray = arraySize && texType != TextureType::TEX3D;
 		if (arraySize < 1 || texType == TextureType::TEX3D) arraySize = 1;
 
-		ByteArray autoReleaseData;
-		std::vector<void*> texData(mipLevels * arraySize);
-		switch (format) {
-		case TextureFormat::R8G8B8:
-		{
-			format = TextureFormat::R8G8B8A8;
-
-			if (data) {
-				auto srcPerPixelByteSize = Image::calcPerPixelByteSize(TextureFormat::R8G8B8);
-				auto dstPerPixelByteSize = Image::calcPerPixelByteSize(format);
-				auto dstByteSize = Image::calcMipsByteSize(size, mipLevels, dstPerPixelByteSize) * arraySize;
-				auto dst = new uint8_t[dstByteSize];
-				autoReleaseData = ByteArray(dst, dstByteSize, ByteArray::Usage::EXCLUSIVE);
-				Vec3ui32 size3;
-				for (uint32_t i = 0; i < arraySize; ++i) {
-					size3.set(size);
-					for (uint32_t j = 0; j < mipLevels; ++j) {
-						texData[j] = dst;
-						auto src = (uint8_t*)data[j];
-						auto numPixels = size3[0] * size3[1];
-						auto srcPitch = numPixels * srcPerPixelByteSize;
-						auto dstPitch = numPixels * dstPerPixelByteSize;
-						for (uint32_t k = 0; k < size3[2]; ++k) {
-							Image::convertFormat((Vec2ui32&)size, TextureFormat::R8G8B8, src, format, dst);
-							src += srcPitch;
-							dst += dstPitch;
-						}
-						Image::calcNextMipPixelSize(size3);
-					}
-				}
-				data = texData.data();
-			}
-
-			break;
-		}
-		default:
-			break;
-		}
-
 		DXGI_FORMAT internalFormat = Graphics::convertInternalFormat(format);
 		if (internalFormat == DXGI_FORMAT_UNKNOWN) {
-			graphics.error("d3d11 Texture::create error : not support fromat");
+			graphics.error("d3d11 Texture::create error : not support texture fromat");
 			return _createDone(graphics, false);
 		}
 

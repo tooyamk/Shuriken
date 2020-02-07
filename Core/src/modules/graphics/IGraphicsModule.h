@@ -287,7 +287,7 @@ namespace aurora::modules::graphics {
 		ITexture1DResource(IGraphicsModule& graphics) : ITextureResource(graphics) {}
 		virtual ~ITexture1DResource() {}
 
-		virtual const Vec1ui32& AE_CALL getSize() const = 0;
+		virtual uint32_t AE_CALL getSize() const = 0;
 		virtual bool AE_CALL create(uint32_t width, uint32_t arraySize, uint32_t mipLevels, TextureFormat format, Usage resUsage, const void*const* data = nullptr) = 0;
 		virtual bool AE_CALL update(uint32_t arraySlice, uint32_t mipSlice, const Box1ui32& range, const void* data) = 0;
 		virtual bool AE_CALL copyFrom(uint32_t arraySlice, uint32_t mipSlice, const Box1ui32& range, const IPixelBuffer* pixelBuffer) = 0;
@@ -678,6 +678,7 @@ namespace aurora::modules::graphics {
 		bool supportStencilIndependentMask;
 		uint8_t supportMaxSampleCount;
 		uint8_t simultaneousRenderTargetCount;
+		std::vector<TextureFormat> supportTextureFormat;
 	};
 
 

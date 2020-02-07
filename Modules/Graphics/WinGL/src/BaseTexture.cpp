@@ -31,7 +31,7 @@ namespace aurora::modules::graphics::win_gl {
 
 		if (sampleCount > 1 && texType != TextureType::TEX2D) {
 			graphics.error("openGL Texture create error : only support extureType::TEX2D when sampleCount > 1");
-			return false;
+			return _createDone(graphics, false);
 		}
 
 		if (!sampleCount) sampleCount = 1;
@@ -40,7 +40,7 @@ namespace aurora::modules::graphics::win_gl {
 
 		if ((resUsage & Usage::MAP_READ_WRITE) != Usage::NONE) {
 			graphics.error("openGL Texture create error : not support Usage::READ or Usage::WRITE");
-			return false;
+			return _createDone(graphics, false);
 		}
 
 		if (mipLevels == 0) {
@@ -101,7 +101,7 @@ namespace aurora::modules::graphics::win_gl {
 							}
 						} else {
 							for (uint32_t i = 0; i < mipLevels; ++i) {
-								for (uint32_t j = 0; j < arraySize; ++j) glTexImage2D(glTexInfo.target, i, glTexInfo.internalFormat, w, j, 0, glTexInfo.format, glTexInfo.type, data ? data[i + j * mipLevels] :  nullptr);
+								for (uint32_t j = 0; j < arraySize; ++j) glTexImage2D(glTexInfo.target, i, glTexInfo.internalFormat, w, j, 0, glTexInfo.format, glTexInfo.type, data ? data[i + j * mipLevels] : nullptr);
 								w = Image::calcNextMipPixelSize(w);
 							}
 						}
@@ -213,9 +213,9 @@ namespace aurora::modules::graphics::win_gl {
 							glBufferData(GL_PIXEL_UNPACK_BUFFER, this->size, nullptr, GL_DYNAMIC_DRAW);
 
 							glTexImage2D(glTexInfo.target, 0, glTexInfo.internalFormat, size2[0], size2[1], 0, glTexInfo.format, glTexInfo.type, nullptr);
-							
+
 							//glBindBuffer(GL_PIXEL_UNPACK_BUFFER, bufID);
-							
+
 							auto* ptr = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_READ_WRITE);
 							memcpy(ptr, data[0], this->size);
 							//glBindBuffer(GL_PIXEL_UNPACK_BUFFER, bufID);
@@ -278,11 +278,14 @@ namespace aurora::modules::graphics::win_gl {
 				//glBindTexture(GL_TEXTURE_BUFFER, 0);
 
 				return _createDone(graphics, true);
+			} else {
+				graphics.error("openGL Texture create error : not support texture format");
+				return _createDone(graphics, false);
 			}
+		} else {
+			graphics.error("openGL Texture create error : internal texture generate failure");
+			return _createDone(graphics, false);
 		}
-
-		releaseTex();
-		return _createDone(graphics, false);
 	}
 
 	Usage BaseTexture::map(uint32_t arraySlice, uint32_t mipSlice, Usage expectMapUsage) {
@@ -414,7 +417,7 @@ namespace aurora::modules::graphics::win_gl {
 	}
 
 	bool BaseTexture::_createDone(Graphics& graphics, bool succeeded) {
-		if (!succeeded) graphics.error("openGL textrue create error");
+		if (!succeeded) releaseTex();
 		return succeeded;
 	}
 

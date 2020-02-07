@@ -2,7 +2,7 @@
 #include "png.h"
 #include "modules/graphics/IGraphicsModule.h"
 
-namespace aurora::file {
+namespace aurora::extensions::file {
 	namespace png_private {
 		struct ImageSource {
 			uint8_t* data;

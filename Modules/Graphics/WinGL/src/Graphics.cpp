@@ -12,7 +12,9 @@
 #include "RenderView.h"
 #include "RenderViewSimulative.h"
 #include "Sampler.h"
+#include "Texture1DResource.h"
 #include "Texture2DResource.h"
+#include "Texture3DResource.h"
 #include "TextureView.h"
 #include "TextureViewSimulative.h"
 #include "VertexBuffer.h"
@@ -177,6 +179,9 @@ namespace aurora::modules::graphics::win_gl {
 		glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &val);
 		_deviceFeatures.simultaneousRenderTargetCount = val;
 
+		_deviceFeatures.supportTextureFormat.emplace_back(TextureFormat::R8G8B8);
+		_deviceFeatures.supportTextureFormat.emplace_back(TextureFormat::R8G8B8A8);
+
 		_bufferCreateUsageMask = Usage::MAP_READ_WRITE | Usage::UPDATE | (_deviceFeatures.supportPersistentMap ? Usage::PERSISTENT_MAP : Usage::NONE);
 		_texCreateUsageMask = Usage::UPDATE;
 
@@ -253,7 +258,7 @@ namespace aurora::modules::graphics::win_gl {
 	}
 
 	ITexture1DResource* Graphics::createTexture1DResource() {
-		return nullptr;
+		return new Texture1DResource(*this);
 	}
 
 	ITexture2DResource* Graphics::createTexture2DResource() {
@@ -261,7 +266,7 @@ namespace aurora::modules::graphics::win_gl {
 	}
 
 	ITexture3DResource* Graphics::createTexture3DResource() {
-		return nullptr;
+		return new Texture3DResource(*this);
 	}
 
 	ITextureView* Graphics::createTextureView() {

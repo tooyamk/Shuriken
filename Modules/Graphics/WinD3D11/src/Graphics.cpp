@@ -250,6 +250,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_deviceFeatures.supportStencilIndependentRef = false;
 		_deviceFeatures.supportStencilIndependentMask = false;
 		_deviceFeatures.simultaneousRenderTargetCount = D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT;
+		_deviceFeatures.supportTextureFormat.emplace_back(TextureFormat::R8G8B8A8);
 
 		for (size_t i = 1; i <= D3D11_MAX_MULTISAMPLE_SAMPLE_COUNT; i <<= 1) {
 			UINT numQualityLevels = 0;
