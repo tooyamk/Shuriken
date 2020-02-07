@@ -30,18 +30,18 @@ namespace aurora::modules::graphics::win_gl {
 		uint8_t _numViews;
 
 		std::vector<RefPtr<IRenderView>> _views;
-		std::vector<GLuint> _bindedViews;
+		std::vector<GLuint> _bindingViews;
 		RefPtr<IDepthStencil> _ds;
-		GLenum _bindedDSAttachmentType;
-		GLuint _bindedDSBuffer;
+		GLenum _bindingDSAttachmentType;
+		GLuint _bindingDSBuffer;
 
 		GLuint _handle;
 
 		inline void AE_CALL _unbindDS() {
-			if (_bindedDSBuffer) {
-				glFramebufferRenderbuffer(GL_FRAMEBUFFER, _bindedDSAttachmentType, GL_RENDERBUFFER, 0);
-				_bindedDSBuffer = 0;
-				_bindedDSAttachmentType = GL_NONE;
+			if (_bindingDSBuffer) {
+				glFramebufferRenderbuffer(GL_FRAMEBUFFER, _bindingDSAttachmentType, GL_RENDERBUFFER, 0);
+				_bindingDSBuffer = 0;
+				_bindingDSAttachmentType = GL_NONE;
 			}
 		}
 	};

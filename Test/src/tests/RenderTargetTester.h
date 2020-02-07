@@ -21,7 +21,7 @@ public:
 				gpstml->load(getDLLName("ae-program-source-translator"));
 				RefPtr gpst = gpstml->create(&Args().add("dxc", getDLLName("dxcompiler")));
 
-				RefPtr graphics = gml->create(&Args().add("app", &*app).add("trans", gpst.get()));
+				RefPtr graphics = gml->create(&Args().add("app", &*app).add("sampleCount", SampleCount(1)).add("trans", gpst.get()));
 
 				if (graphics) {
 					println("Graphics Version : ", graphics->getVersion());
@@ -75,10 +75,10 @@ public:
 							*/
 							///*
 							f32 vertices[] = {
-								-0.5f, -0.5f, 10.0f,
-								-0.5f, 0.5f, 0.f,
-								0.5f, 0.5f, 0.f,
-								0.5f, -0.5f, 0.f,
+								-0.5f, -0.5f, .0f,
+								-0.5f, 0.5f, .0f,
+								0.45f, 0.45f, 0.2f,
+								0.45f, -0.5f, .0f,
 
 								0.0f, 0.0f, 0.5f,
 								0.0f, 1.0f, 0.5f,
@@ -133,14 +133,14 @@ public:
 
 					{
 						RefPtr rts = graphics->createTexture2DResource();
-						rts->create(Vec2ui32(800, 600), 0, 1, TextureFormat::R8G8B8A8, Usage::RENDERABLE);
+						rts->create(Vec2ui32(800, 600), 0, 1, 4, TextureFormat::R8G8B8A8, Usage::RENDERABLE);
 
 						{
 							RefPtr rv = graphics->createRenderView();
 							rv->create(rts.get(), 0, 0, 0);
 
 							RefPtr ds = graphics->createDepthStencil();
-							ds->create(rts->getSize(), DepthStencilFormat::D24S8, false);
+							ds->create(rts->getSize(), DepthStencilFormat::D24S8, rts->getSampleCount());
 
 							renderData.rt = graphics->createRenderTarget();
 							renderData.rt->setRenderView(0, rv.get());
@@ -174,7 +174,7 @@ public:
 
 							mipsData0Ptr.insert(mipsData0Ptr.end(), mipsData1Ptr.begin(), mipsData1Ptr.end());
 
-							auto hr = texRes->create(img0->size, 0, 1, img0->format, Usage::IGNORE_UNSUPPORTED | Usage::UPDATE, mipsData0Ptr.data());
+							auto hr = texRes->create(img0->size, 0, 1, 1, img0->format, Usage::IGNORE_UNSUPPORTED | Usage::UPDATE, mipsData0Ptr.data());
 
 							RefPtr texView = graphics->createTextureView();
 							texView->create(texRes.get(), 0, -1, 0, -1);

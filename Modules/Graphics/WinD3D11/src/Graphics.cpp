@@ -20,6 +20,7 @@
 namespace aurora::modules::graphics::win_d3d11 {
 	Graphics::Graphics(Ref* loader, Application* app) :
 		_curIsBackBuffer(true),
+		_backBufferSampleCount(1),
 		_loader(loader),
 		_app(app),
 		_refreshRate({0, 1}),
@@ -47,11 +48,11 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_release();
 	}
 
-	bool Graphics::createDevice(const GraphicsAdapter* adapter) {
+	bool Graphics::createDevice(const GraphicsAdapter* adapter, SampleCount sampleCount) {
 		if (_device || !_app->Win_getHWnd()) return false;
 
 		if (adapter) {
-			return _createDevice(*adapter);
+			return _createDevice(*adapter, sampleCount);
 		} else {
 			std::vector<GraphicsAdapter> adapters;
 			GraphicsAdapter::query(adapters);
@@ -59,13 +60,13 @@ namespace aurora::modules::graphics::win_d3d11 {
 			GraphicsAdapter::autoSort(adapters, indices);
 
 			for (auto& idx : indices) {
-				if (_createDevice(adapters[idx])) return true;
+				if (_createDevice(adapters[idx], sampleCount)) return true;
 			}
 			return false;
 		}
 	}
 
-	bool Graphics::_createDevice(const GraphicsAdapter& adapter) {
+	bool Graphics::_createDevice(const GraphicsAdapter& adapter, SampleCount sampleCount) {
 		DXObjGuard objs;
 
 		IDXGIFactory2* dxgFctory = nullptr;
@@ -236,34 +237,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		}
 		}
 
-		Vec2i32 size;
-		_app->getInnerSize(size);
-
-		DXGI_SWAP_CHAIN_DESC swapChainDesc = { 0 };
-		swapChainDesc.BufferCount = 1;
-		swapChainDesc.BufferDesc.Width = (UINT)size[0];
-		swapChainDesc.BufferDesc.Height = (UINT)size[1];
-		swapChainDesc.BufferDesc.Format = fmt;
-		swapChainDesc.BufferDesc.RefreshRate.Numerator = _refreshRate.Numerator;
-		swapChainDesc.BufferDesc.RefreshRate.Denominator = _refreshRate.Denominator;
-		swapChainDesc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
-		swapChainDesc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
-		swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-		swapChainDesc.OutputWindow = _app->Win_getHWnd();
-		swapChainDesc.Windowed = true;
-		swapChainDesc.SampleDesc.Count = 1;
-		swapChainDesc.SampleDesc.Quality = 0;
-		swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
-		swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
-
-		if (FAILED(dxgFctory->CreateSwapChain(_device, &swapChainDesc, (IDXGISwapChain**)&_swapChain))) {
-			_release();
-			return false;
-		}
-
 		_device->CheckFeatureSupport(D3D11_FEATURE_D3D11_OPTIONS, &_internalFeatures, sizeof(_internalFeatures));
-		UINT quality = 0;
-		_device->CheckMultisampleQualityLevels1(fmt, 4, 0, &quality);
 
 		_deviceFeatures.supportIndexBufferFormatUI8 = false;
 		_deviceFeatures.supportSampler = true;
@@ -276,6 +250,38 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_deviceFeatures.supportStencilIndependentRef = false;
 		_deviceFeatures.supportStencilIndependentMask = false;
 		_deviceFeatures.simultaneousRenderTargetCount = D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT;
+
+		for (size_t i = 1; i <= D3D11_MAX_MULTISAMPLE_SAMPLE_COUNT; i <<= 1) {
+			UINT numQualityLevels = 0;
+			_device->CheckMultisampleQualityLevels(fmt, i, &numQualityLevels);
+			if (numQualityLevels) _deviceFeatures.supportMaxSampleCount = i;
+		}
+
+		Vec2i32 size;
+		_app->getInnerSize(size);
+
+		_backBufferSampleCount = sampleCount > _deviceFeatures.supportMaxSampleCount ? _deviceFeatures.supportMaxSampleCount : sampleCount;
+		DXGI_SWAP_CHAIN_DESC swapChainDesc = { 0 };
+		swapChainDesc.BufferCount = 1;
+		swapChainDesc.BufferDesc.Width = (UINT)size[0];
+		swapChainDesc.BufferDesc.Height = (UINT)size[1];
+		swapChainDesc.BufferDesc.Format = fmt;
+		swapChainDesc.BufferDesc.RefreshRate.Numerator = _refreshRate.Numerator;
+		swapChainDesc.BufferDesc.RefreshRate.Denominator = _refreshRate.Denominator;
+		swapChainDesc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+		swapChainDesc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+		swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+		swapChainDesc.OutputWindow = _app->Win_getHWnd();
+		swapChainDesc.Windowed = true;
+		swapChainDesc.SampleDesc.Count = _backBufferSampleCount;
+		swapChainDesc.SampleDesc.Quality = 0;
+		swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+		swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+
+		if (FAILED(dxgFctory->CreateSwapChain(_device, &swapChainDesc, (IDXGISwapChain**)&_swapChain))) {
+			_release();
+			return false;
+		}
 
 		_defaultBlendState = new BlendState(*this, true);
 		_defaultDepthStencilState = new DepthStencilState(*this, true);
@@ -647,7 +653,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 				backBufferTex->Release();
 			}
 
-			_backDepthStencil->create(size, DepthStencilFormat::D24S8, false);
+			_backDepthStencil->create(size, DepthStencilFormat::D24S8, _backBufferSampleCount);
 
 			if (_curIsBackBuffer) {
 				_context->OMSetRenderTargets(1, (ID3D11RenderTargetView**)&_backBufferView, _backDepthStencil->getInternalView());

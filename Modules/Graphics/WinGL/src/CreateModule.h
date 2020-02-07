@@ -18,8 +18,9 @@ namespace aurora::modules::graphics {
 
 		auto trans = args->get<IProgramSourceTranslator*>("trans");
 		auto adapter = args->get<const GraphicsAdapter*>("adapter");
+		auto sc = args->get<SampleCount>("sampleCount");
 		auto g = new win_gl::Graphics(loader, app.value(), trans.has_value() ? trans.value() : nullptr);
-		if (!g->createDevice(adapter.has_value() ? adapter.value() : nullptr)) {
+		if (!g->createDevice(adapter.has_value() ? adapter.value() : nullptr, sc ? *sc : 1)) {
 			g->unref();
 			g = nullptr;
 		}

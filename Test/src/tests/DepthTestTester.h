@@ -15,13 +15,14 @@ public:
 		if (app->createWindow(wndStype, u8"", Box2i32(Vec2i32({ 100, 100 }), Vec2i32({ 800, 600 })), false)) {
 			RefPtr<GraphicsModuleLoader> gml = new GraphicsModuleLoader();
 
-			if (gml->load(getDLLName("ae-win-gl"))) {
-			//if (gml->load(getDLLName("ae-win-d3d11"))) {
+			//if (gml->load(getDLLName("ae-win-gl"))) {
+			if (gml->load(getDLLName("ae-win-d3d11"))) {
 				auto gpstml = new ModuleLoader<IProgramSourceTranslator>();
 				gpstml->load(getDLLName("ae-program-source-translator"));
 				auto gpst = gpstml->create(&Args().add("dxc", getDLLName("dxcompiler")));
+				if (gpst) gpst->ref();
 
-				RefPtr<IGraphicsModule> graphics = gml->create(&Args().add("app", &*app).add("trans", gpst));
+				RefPtr graphics = gml->create(&Args().add("app", &*app).add("sampleCount", SampleCount(4)).add("trans", gpst));
 
 				if (graphics) {
 					println("Graphics Version : ", graphics->getVersion());
@@ -52,7 +53,7 @@ public:
 
 					renderData.dss = graphics->createDepthStencilState();
 					DepthState ds;
-					ds.enabled = false;
+					//ds.enabled = false;
 					renderData.dss->setDepthState(ds);
 					renderData.vbf = new VertexBufferFactory();
 					renderData.spf = new ShaderParameterFactory();
@@ -71,10 +72,10 @@ public:
 							*/
 							///*
 							f32 vertices[] = {
-								-0.5f, -0.5f, -1.0f,
-								-0.5f, 0.5f, -1.0f,
+								-0.5f, -0.5f, .0f,
+								-0.5f, 0.5f, .0f,
 								0.45f, 0.45f, 0.2f,
-								0.45f, -0.5f, -1.0f,
+								0.45f, -0.5f, .0f,
 
 								0.0f, 0.0f, 0.5f,
 								0.0f, 1.0f, 0.5f,
@@ -143,7 +144,7 @@ public:
 
 							mipsData0Ptr.insert(mipsData0Ptr.end(), mipsData1Ptr.begin(), mipsData1Ptr.end());
 
-							auto hr = texRes->create(img0->size, 0, 1, img0->format, Usage::IGNORE_UNSUPPORTED | Usage::MAP_WRITE, mipsData0Ptr.data());
+							auto hr = texRes->create(img0->size, 0, 1, 1, img0->format, Usage::IGNORE_UNSUPPORTED | Usage::MAP_WRITE, mipsData0Ptr.data());
 
 							auto texView = graphics->createTextureView();
 							texView->create(texRes, 0, -1, 0, -1);

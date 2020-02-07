@@ -3,7 +3,7 @@
 
 namespace aurora::modules::graphics::win_d3d11 {
 	DepthStencil::DepthStencil(Graphics& graphics, bool internalView) : IDepthStencil(graphics),
-		_isMultisampling(false),
+		_sampleCount(0),
 		_view(nullptr) {
 		if (_isInternal) _graphics->weakUnref();
 	}
@@ -17,16 +17,18 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return this;
 	}
 
-	bool DepthStencil::isMultisampling() const {
-		return _isMultisampling;
+	SampleCount DepthStencil::getSampleCount() const {
+		return _sampleCount;
 	}
 
 	const Vec2ui32& DepthStencil::getSize() const {
 		return _size;
 	}
 
-	bool DepthStencil::create(const Vec2ui32& size, DepthStencilFormat format, bool multisampling) {
+	bool DepthStencil::create(const Vec2ui32& size, DepthStencilFormat format, SampleCount sampleCount) {
 		destroy();
+
+		if (!sampleCount) sampleCount = 1;
 
 		auto fmt = convertInternalFormat(format);
 		if (fmt == DXGI_FORMAT_UNKNOWN) {
@@ -44,7 +46,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		texDesc.Height = size[1];
 		texDesc.MipLevels = 1;
 		texDesc.MiscFlags = 0;
-		texDesc.SampleDesc.Count = 1;
+		texDesc.SampleDesc.Count = sampleCount;
 		texDesc.SampleDesc.Quality = 0;
 		texDesc.Usage = D3D11_USAGE_DEFAULT;
 
@@ -59,8 +61,12 @@ namespace aurora::modules::graphics::win_d3d11 {
 		memset(&dsvDesc, 0, sizeof(dsvDesc));
 
 		dsvDesc.Format = texDesc.Format;
-		dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
-		dsvDesc.Texture2D.MipSlice = 0;
+		if (sampleCount == 1) {
+			dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+			dsvDesc.Texture2D.MipSlice = 0;
+		} else {
+			dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
+		}
 
 		if (FAILED(device->CreateDepthStencilView(tex, &dsvDesc, &_view))) {
 			if (tex) tex->Release();
@@ -70,7 +76,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		tex->Release();
 
 		_size.set(size);
-		_isMultisampling = multisampling;
+		_sampleCount = sampleCount;
 
 		return true;
 	}
@@ -82,7 +88,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		}
 
 		_size.set(0);
-		_isMultisampling = false;
+		_sampleCount = 0;
 	}
 
 	DXGI_FORMAT DepthStencil::convertInternalFormat(DepthStencilFormat fmt) {

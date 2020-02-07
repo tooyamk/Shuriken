@@ -21,7 +21,7 @@ public:
 				gpstml->load(getDLLName("ae-program-source-translator"));
 				auto gpst = gpstml->create(&Args().add("dxc", getDLLName("dxcompiler")));
 
-				RefPtr<IGraphicsModule> graphics = gml->create(&Args().add("app", &*app).add("trans", gpst));
+				RefPtr<IGraphicsModule> graphics = gml->create(&Args().add("app", &*app).add("sampleCount", SampleCount(4)).add("trans", gpst));
 
 				if (graphics) {
 					println("Graphics Version : ", graphics->getVersion());
@@ -130,7 +130,7 @@ public:
 
 							mipsData0Ptr.insert(mipsData0Ptr.end(), mipsData1Ptr.begin(), mipsData1Ptr.end());
 
-							texRes->create(img0->size, 0, 1, img0->format, Usage::UPDATE, mipsData0Ptr.data());
+							texRes->create(img0->size, 0, 1, 1, img0->format, Usage::UPDATE, mipsData0Ptr.data());
 
 							auto texView = graphics->createTextureView();
 							texView->create(texRes, 0, -1, 0, -1);

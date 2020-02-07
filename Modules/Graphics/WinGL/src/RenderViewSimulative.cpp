@@ -42,29 +42,42 @@ namespace aurora::modules::graphics::win_gl {
 
 		if (res && res->getGraphics() == _graphics) {
 			if (mipSlice) {
-				_graphics.get<Graphics>()->error("openGL SimulativeRenderView::create error : mipBegin must be 0");
+				_graphics.get<Graphics>()->error("openGL RenderView(Simulative)::create error : mipBegin must be 0");
 				return _createDone(false, res);
 			}
+
 			if (arrayBegin) {
-				_graphics.get<Graphics>()->error("openGL SimulativeRenderView::create error : arrayBegin must be 0");
+				_graphics.get<Graphics>()->error("openGL RenderView(Simulative)::create error : arrayBegin must be 0");
 				return _createDone(false, res);
 			}
-			if (auto native = (const BaseTexture*)res->getNative(); native && native->handle && (native->resUsage & Usage::RENDERABLE) == Usage::RENDERABLE) {
-				if (arraySize < native->arraySize) {
-					_graphics.get<Graphics>()->error("openGL SimulativeRenderView::create error : arraySize must >= res.arraySize");
-					return _createDone(false, res);
-				}
 
-				_base.handle = native->handle;
-				_base.internalFormat = native->glTexInfo.target;
+			auto native = (const BaseTexture*)res->getNative();
 
-				_base.createdArraySize = native->arraySize;
-
-				return _createDone(true, res);
+			if (!native || !native->handle) {
+				_graphics.get<Graphics>()->error("openGL RenderView(Simulative)::create error : res invalid");
+				return _createDone(false, res);
 			}
-		}
 
-		return _createDone(false, res);
+			if ((native->resUsage & Usage::RENDERABLE) != Usage::RENDERABLE) {
+				_graphics.get<Graphics>()->error("openGL RenderView(Simulative)::create error : res must has Usage::RENDERABLE");
+				return _createDone(false, res);
+			}
+
+			if (arraySize < native->arraySize) {
+				_graphics.get<Graphics>()->error("openGL RenderView(Simulative)::create error : arraySize must >= res.arraySize");
+				return _createDone(false, res);
+			}
+
+			_base.handle = native->handle;
+			_base.internalFormat = native->glTexInfo.target;
+
+			_base.createdArraySize = native->arraySize;
+
+			return _createDone(true, res);
+		} else {
+			_graphics.get<Graphics>()->error("openGL RenderView(Simulative)::create error : res invalid");
+			return _createDone(false, res);
+		}
 	}
 
 	bool RenderViewSimulative::_createDone(bool succeeded, ITextureResource* res) {

@@ -49,7 +49,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual void AE_CALL setRenderTarget(IRenderTarget* rt) override;
 		virtual void AE_CALL clear(ClearFlag flags, const Vec4f32& color, f32 depth, size_t stencil) override;
 
-		bool AE_CALL createDevice(const GraphicsAdapter* adapter);
+		bool AE_CALL createDevice(const GraphicsAdapter* adapter, SampleCount sampleCount);
 
 		inline void AE_CALL error(const std::string_view& msg) {
 			_eventDispatcher.dispatchEvent(this, GraphicsEvent::ERR, (std::string_view*) & msg);
@@ -225,6 +225,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 	private:
 		bool _curIsBackBuffer;
+		SampleCount _backBufferSampleCount;
 		RefPtr<Ref> _loader;
 		RefPtr<Application> _app;
 
@@ -296,7 +297,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		events::EventListener<ApplicationEvent, Graphics> _resizedListener;
 		void AE_CALL _resizedHandler(events::Event<ApplicationEvent>& e);
 
-		bool AE_CALL _createDevice(const GraphicsAdapter& adapter);
+		bool AE_CALL _createDevice(const GraphicsAdapter& adapter, SampleCount sampleCount);
 
 		void AE_CALL _setBlendState(BlendState& state, const Vec4f32& constantFactors, uint32_t sampleMask);
 		void AE_CALL _setDepthStencilState(DepthStencilState& state, uint32_t stencilRef);

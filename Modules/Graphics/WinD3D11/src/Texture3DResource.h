@@ -11,6 +11,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual TextureType AE_CALL getType() const override;
 		virtual bool AE_CALL isCreated() const override;
 		virtual const void* AE_CALL getNative() const override;
+		virtual SampleCount AE_CALL getSampleCount() const override;
 		virtual uint16_t AE_CALL getPerPixelByteSize() const override;
 		virtual const Vec3ui32& AE_CALL getSize() const override;
 		virtual bool AE_CALL create(const Vec3ui32& size, uint32_t arraySize, uint32_t mipLevels, TextureFormat format, Usage resUsage, const void*const* data = nullptr);

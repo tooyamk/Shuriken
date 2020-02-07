@@ -165,7 +165,13 @@ namespace aurora::modules::graphics::program_source_translator {
 			compiler.build_combined_image_samplers();
 			for (auto& remap : compiler.get_combined_image_samplers()) {
 				auto& texName = compiler.get_name(remap.image_id);
-				compiler.set_name(remap.combined_id, "_CombinedTexSampler" + String::toString(texName.size()) + "_" + texName + compiler.get_name(remap.sampler_id));
+				auto& samplerName = compiler.get_name(remap.sampler_id);
+
+				if (samplerName.rfind("DummySampler") == std::string::npos) {
+					compiler.set_name(remap.combined_id, COMBINED_TEXTURE_SAMPLER + String::toString(texName.size()) + "_" + texName + samplerName);
+				} else {
+					compiler.set_name(remap.combined_id, texName);
+				}
 			}
 
 			try {

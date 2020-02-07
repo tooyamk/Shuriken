@@ -3,7 +3,7 @@
 
 namespace aurora::modules::graphics::win_gl {
 	DepthStencil::DepthStencil(Graphics& graphics) : IDepthStencil(graphics),
-		_isMultisampling(false),
+		_sampleCount(0),
 		_handle(0),
 		_attachmentType(GL_NONE) {
 	}
@@ -16,15 +16,15 @@ namespace aurora::modules::graphics::win_gl {
 		return this;
 	}
 
-	bool DepthStencil::isMultisampling() const {
-		return _isMultisampling;
+	SampleCount DepthStencil::getSampleCount() const {
+		return _sampleCount;
 	}
 
 	const Vec2ui32& DepthStencil::getSize() const {
 		return _size;
 	}
 
-	bool DepthStencil::create(const Vec2ui32& size, DepthStencilFormat format, bool multisampling) {
+	bool DepthStencil::create(const Vec2ui32& size, DepthStencilFormat format, SampleCount sampleCount) {
 		destroy();
 
 		auto [fmt, attachment] = convertInternalFormat(format);
@@ -35,11 +35,15 @@ namespace aurora::modules::graphics::win_gl {
 
 		glGenRenderbuffers(1, &_handle);
 		glBindRenderbuffer(GL_RENDERBUFFER, _handle);
-		glRenderbufferStorage(GL_RENDERBUFFER, fmt, size[0], size[1]);
-		//glRenderbufferStorageMultisample()
+		if (sampleCount > 1) {
+			glRenderbufferStorageMultisample(GL_RENDERBUFFER, sampleCount, fmt, size[0], size[1]);
+		} else {
+			glRenderbufferStorage(GL_RENDERBUFFER, fmt, size[0], size[1]);
+		}
+		glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
 		_size.set(size);
-		_isMultisampling = multisampling;
+		_sampleCount = sampleCount;
 		_attachmentType = attachment;
 
 		return true;
@@ -52,7 +56,7 @@ namespace aurora::modules::graphics::win_gl {
 		}
 
 		_size.set(0);
-		_isMultisampling = false;
+		_sampleCount = 0;
 		_attachmentType = GL_NONE;
 	}
 

@@ -43,7 +43,7 @@ namespace aurora::modules::graphics::win_gl {
 		_release();
 	}
 
-	bool Graphics::createDevice(const GraphicsAdapter* adapter) {
+	bool Graphics::createDevice(const GraphicsAdapter* adapter, SampleCount sampleCount) {
 		if (_dc || !_app->Win_getHWnd()) return false;
 
 		/*
@@ -84,7 +84,12 @@ namespace aurora::modules::graphics::win_gl {
 		}
 
 		_dc = GetDC(_app->Win_getHWnd());
-		if (!_dc) return false;
+		if (!_dc) {
+			_release();
+			return false;
+		}
+
+		if (sampleCount > _deviceFeatures.supportMaxSampleCount) sampleCount = _deviceFeatures.supportMaxSampleCount;
 
 		int32_t iAttribIList[] = {
 			WGL_SUPPORT_OPENGL_ARB, 1,
@@ -92,11 +97,11 @@ namespace aurora::modules::graphics::win_gl {
 			WGL_ACCELERATION_ARB, WGL_FULL_ACCELERATION_ARB,
 			WGL_COLOR_BITS_ARB, 32,
 			WGL_DEPTH_BITS_ARB, 24,
+			WGL_STENCIL_BITS_ARB, 8,
 			WGL_DOUBLE_BUFFER_ARB, GL_TRUE,
 			WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB,
-			WGL_STENCIL_BITS_ARB, 8,
-			WGL_SAMPLE_BUFFERS_ARB, GL_TRUE,//MSAA
-			WGL_SAMPLES_ARB, 4,//4x AA
+			WGL_SAMPLE_BUFFERS_ARB, sampleCount > 1 ? GL_TRUE : GL_FALSE,
+			WGL_SAMPLES_ARB, sampleCount > 1 ? sampleCount : 0,
 			//WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB,
 			0 };
 
@@ -174,6 +179,9 @@ namespace aurora::modules::graphics::win_gl {
 
 		_bufferCreateUsageMask = Usage::MAP_READ_WRITE | Usage::UPDATE | (_deviceFeatures.supportPersistentMap ? Usage::PERSISTENT_MAP : Usage::NONE);
 		_texCreateUsageMask = Usage::UPDATE;
+
+		//glEnable(GL_MULTISAMPLE);
+		//glDisable(GL_MULTISAMPLE);
 
 		_setInitState();
 
@@ -685,6 +693,15 @@ namespace aurora::modules::graphics::win_gl {
 					if (rc) {
 						wglMakeCurrent(dc, rc);
 						initOk = glewInit() == GLEW_OK;
+
+						if (glewInit() == GLEW_OK) {
+							initOk = true;
+
+							GLint val;
+							glGetIntegerv(GL_MAX_SAMPLES, &val);
+							_deviceFeatures.supportMaxSampleCount = val;
+						}
+
 						wglMakeCurrent(nullptr, nullptr);
 						wglDeleteContext(rc);
 					}

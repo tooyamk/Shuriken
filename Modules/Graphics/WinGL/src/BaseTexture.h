@@ -11,7 +11,7 @@ namespace aurora::modules::graphics::win_gl {
 		BaseTexture(TextureType texType);
 		virtual ~BaseTexture();
 		
-		bool AE_CALL create(Graphics& graphics, const Vec3ui32& size, uint32_t arraySize, uint32_t mipLevels,
+		bool AE_CALL create(Graphics& graphics, const Vec3ui32& size, uint32_t arraySize, uint32_t mipLevels, SampleCount sampleCount,
 			TextureFormat format, Usage resUsage, const void*const* data = nullptr);
 		Usage AE_CALL map(uint32_t arraySlice, uint32_t mipSlice, Usage expectMapUsage);
 		void AE_CALL unmap(uint32_t arraySlice, uint32_t mipSlice);
@@ -25,6 +25,7 @@ namespace aurora::modules::graphics::win_gl {
 		void AE_CALL releaseSync();
 
 		bool dirty;
+		SampleCount sampleCount;
 		TextureType texType;
 		Usage resUsage;
 		Usage mapUsage;

@@ -11,9 +11,9 @@ namespace aurora::modules::graphics::win_gl {
 		virtual ~DepthStencil();
 
 		virtual const void* AE_CALL getNative() const override;
-		virtual bool AE_CALL isMultisampling() const override;
+		virtual SampleCount AE_CALL getSampleCount() const override;
 		virtual const Vec2ui32& AE_CALL getSize() const override;
-		virtual bool AE_CALL create(const Vec2ui32& size, DepthStencilFormat format, bool multisampling) override;
+		virtual bool AE_CALL create(const Vec2ui32& size, DepthStencilFormat format, SampleCount sampleCount) override;
 		virtual void AE_CALL destroy() override;
 
 		inline GLuint AE_CALL getInternalBuffer() const {
@@ -25,7 +25,7 @@ namespace aurora::modules::graphics::win_gl {
 		}
 
 	private:
-		bool _isMultisampling;
+		SampleCount _sampleCount;
 		Vec2ui32 _size;
 
 		GLuint _handle;

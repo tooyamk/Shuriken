@@ -9,7 +9,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		BaseTextureResource(UINT resType);
 		virtual ~BaseTextureResource();
 
-		bool AE_CALL create(Graphics& graphics, TextureType texType, const Vec3ui32& size, uint32_t arraySize, uint32_t mipLevels,
+		bool AE_CALL create(Graphics& graphics, TextureType texType, const Vec3ui32& size, uint32_t arraySize, uint32_t mipLevels, SampleCount sampleCount,
 			TextureFormat format, Usage resUsage, const void*const* data = nullptr);
 		Usage AE_CALL map(Graphics& graphics, uint32_t arraySlice, uint32_t mipSlice, Usage expectMapUsage);
 		void AE_CALL unmap(Graphics& graphics, uint32_t arraySlice, uint32_t mipSlice);
@@ -24,6 +24,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		TextureFormat format;
 		DXGI_FORMAT internalFormat;
+		SampleCount sampleCount;
 		uint16_t perPixelSize;
 		uint32_t perRowPixelSize;
 		Vec3ui32 texSize;

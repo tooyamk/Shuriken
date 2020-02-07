@@ -8,6 +8,7 @@
 namespace aurora::modules::graphics::win_gl {
 	BaseTexture::BaseTexture(TextureType texType) :
 		dirty(false),
+		sampleCount(0),
 		texType(texType),
 		resUsage(Usage::NONE),
 		mapUsage(Usage::NONE),
@@ -24,9 +25,16 @@ namespace aurora::modules::graphics::win_gl {
 		releaseTex();
 	}
 
-	bool BaseTexture::create(Graphics& graphics, const Vec3ui32& size, uint32_t arraySize, uint32_t mipLevels,
+	bool BaseTexture::create(Graphics& graphics, const Vec3ui32& size, uint32_t arraySize, uint32_t mipLevels, SampleCount sampleCount,
 		TextureFormat format, Usage resUsage, const void*const* data) {
 		releaseTex();
+
+		if (sampleCount > 1 && texType != TextureType::TEX2D) {
+			graphics.error("openGL Texture create error : only support extureType::TEX2D when sampleCount > 1");
+			return false;
+		}
+
+		if (!sampleCount) sampleCount = 1;
 
 		if ((resUsage & Usage::IGNORE_UNSUPPORTED) == Usage::IGNORE_UNSUPPORTED) resUsage &= graphics.getTexCreateUsageMask();
 
@@ -36,8 +44,17 @@ namespace aurora::modules::graphics::win_gl {
 		}
 
 		if (mipLevels == 0) {
-			mipLevels = Image::calcMipLevels(size.getMax());
+			if (sampleCount > 1) {
+				mipLevels = 1;
+			} else {
+				mipLevels = Image::calcMipLevels(size.getMax());
+			}
 		} else if (mipLevels > 1) {
+			if (sampleCount > 1) {
+				graphics.error("openGL Texture::create error : could not enable multisampling and mipmap at same time");
+				return _createDone(graphics, false);
+			}
+
 			auto maxLevels = Image::calcMipLevels(size.getMax());
 			if (mipLevels > maxLevels) mipLevels = maxLevels;
 		}
@@ -114,50 +131,66 @@ namespace aurora::modules::graphics::win_gl {
 				{
 					Vec2ui32 size2(size.slice<2>());
 					if (isArray) {
-						glTexInfo.target = GL_TEXTURE_2D_ARRAY;
+						glTexInfo.target = sampleCount > 1 ? GL_TEXTURE_2D_MULTISAMPLE_ARRAY : GL_TEXTURE_2D_ARRAY;
 						glBindTexture(glTexInfo.target, handle);
 
 						if (supportTexStorage) {
-							glTexStorage3D(glTexInfo.target, mipLevels, glTexInfo.internalFormat, size[0], size[1], arraySize);
-							if (data) {
-								for (uint32_t i = 0; i < mipLevels; ++i) {
-									for (uint32_t j = 0; j < arraySize; ++j) {
-										if (auto subData = data[i + j * mipLevels]; subData) glTexSubImage3D(glTexInfo.target, i, 0, 0, 0, size2[0], size2[1], j, glTexInfo.format, glTexInfo.type, subData);
+							if (sampleCount > 1) {
+								glTexStorage3DMultisample(glTexInfo.target, sampleCount, glTexInfo.internalFormat, size[0], size[1], arraySize, true);
+							} else {
+								glTexStorage3D(glTexInfo.target, mipLevels, glTexInfo.internalFormat, size[0], size[1], arraySize);
+								if (data) {
+									for (uint32_t i = 0; i < mipLevels; ++i) {
+										for (uint32_t j = 0; j < arraySize; ++j) {
+											if (auto subData = data[i + j * mipLevels]; subData) glTexSubImage3D(glTexInfo.target, i, 0, 0, 0, size2[0], size2[1], j, glTexInfo.format, glTexInfo.type, subData);
+										}
+										Image::calcNextMipPixelSize(size2);
 									}
-									Image::calcNextMipPixelSize(size2);
 								}
 							}
 						} else {
-							for (uint32_t i = 0; i < mipLevels; ++i) {
-								for (uint32_t j = 0; j < arraySize; ++j) glTexImage3D(glTexInfo.target, i, glTexInfo.internalFormat, size2[0], size2[1], j, 0, glTexInfo.format, glTexInfo.type, data ? data[i + j * mipLevels] : nullptr);
-								Image::calcNextMipPixelSize(size2);
+							if (sampleCount > 1) {
+								glTexImage3DMultisample(glTexInfo.target, sampleCount, glTexInfo.internalFormat, size[0], size[1], arraySize, true);
+							} else {
+								for (uint32_t i = 0; i < mipLevels; ++i) {
+									for (uint32_t j = 0; j < arraySize; ++j) glTexImage3D(glTexInfo.target, i, glTexInfo.internalFormat, size2[0], size2[1], j, 0, glTexInfo.format, glTexInfo.type, data ? data[i + j * mipLevels] : nullptr);
+									Image::calcNextMipPixelSize(size2);
+								}
 							}
 						}
 					} else {
-						glTexInfo.target = GL_TEXTURE_2D;
+						glTexInfo.target = sampleCount > 1 ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D;
 						glBindTexture(glTexInfo.target, handle);
 
 						if (supportTexStorage) {
-							glTexStorage2D(glTexInfo.target, mipLevels, glTexInfo.internalFormat, size[0], size[1]);
-							if (data) {
-								for (uint32_t i = 0; i < mipLevels; ++i) {
-									if (data[i]) glTexSubImage2D(glTexInfo.target, i, 0, 0, size2[0], size2[1], glTexInfo.format, glTexInfo.type, data[i]);
-									Image::calcNextMipPixelSize(size2);
+							if (sampleCount > 1) {
+								glTexStorage2DMultisample(glTexInfo.target, sampleCount, glTexInfo.internalFormat, size[0], size[1], true);
+							} else {
+								glTexStorage2D(glTexInfo.target, mipLevels, glTexInfo.internalFormat, size[0], size[1]);
+								if (data) {
+									for (uint32_t i = 0; i < mipLevels; ++i) {
+										if (data[i]) glTexSubImage2D(glTexInfo.target, i, 0, 0, size2[0], size2[1], glTexInfo.format, glTexInfo.type, data[i]);
+										Image::calcNextMipPixelSize(size2);
+									}
 								}
 							}
 						} else {
-							for (uint32_t i = 0; i < mipLevels; ++i) {
-								glTexImage2D(glTexInfo.target, i, glTexInfo.internalFormat, size2[0], size2[1], 0, glTexInfo.format, glTexInfo.type, data ? data[i] : nullptr);
-								Image::calcNextMipPixelSize(size2);
+							if (sampleCount > 1) {
+								glTexImage2DMultisample(glTexInfo.target, sampleCount, glTexInfo.internalFormat, size[0], size[1], true);
+							} else {
+								for (uint32_t i = 0; i < mipLevels; ++i) {
+									glTexImage2D(glTexInfo.target, i, glTexInfo.internalFormat, size2[0], size2[1], 0, glTexInfo.format, glTexInfo.type, data ? data[i] : nullptr);
+									Image::calcNextMipPixelSize(size2);
 
-								/*
-								GLuint bufID = 0;
-								glGenBuffers(1, &bufID);
-								glBindBuffer(GL_PIXEL_UNPACK_BUFFER, bufID);
-								glBufferData(GL_PIXEL_UNPACK_BUFFER, this->size, data[0], GL_DYNAMIC_DRAW);
-								glBindTexture(glTexInfo.target, handle);
-								glTexSubImage2D(glTexInfo.target, i, 0, 0, size2[0], size2[1], glTexInfo.format, glTexInfo.type, nullptr);
-								*/
+									/*
+									GLuint bufID = 0;
+									glGenBuffers(1, &bufID);
+									glBindBuffer(GL_PIXEL_UNPACK_BUFFER, bufID);
+									glBufferData(GL_PIXEL_UNPACK_BUFFER, this->size, data[0], GL_DYNAMIC_DRAW);
+									glBindTexture(glTexInfo.target, handle);
+									glTexSubImage2D(glTexInfo.target, i, 0, 0, size2[0], size2[1], glTexInfo.format, glTexInfo.type, nullptr);
+									*/
+								}
 							}
 
 
@@ -232,11 +265,12 @@ namespace aurora::modules::graphics::win_gl {
 					break;
 				}
 
-				glTexParameteri(glTexInfo.target, GL_TEXTURE_MAX_LEVEL, mipLevels - 1);
-				//glBindTexture(glTexInfo.target, 0);
+				if (sampleCount == 1) glTexParameteri(glTexInfo.target, GL_TEXTURE_MAX_LEVEL, mipLevels - 1);
+				glBindTexture(glTexInfo.target, 0);
 
 				this->arraySize = isArray ? arraySize : 0;
 				this->mipLevels = mipLevels;
+				this->sampleCount = sampleCount;
 				//mapData = glMapBufferRange(texType, 0, size, flags);
 
 				//glBindTexture(GL_TEXTURE_BUFFER, handle);
@@ -353,6 +387,7 @@ namespace aurora::modules::graphics::win_gl {
 			texSize.set(0);
 		}
 
+		sampleCount = 0;
 		size = 0;
 		resUsage = Usage::NONE;
 		mapUsage = Usage::NONE;

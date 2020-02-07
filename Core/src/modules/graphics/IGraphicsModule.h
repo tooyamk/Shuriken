@@ -15,6 +15,7 @@ namespace aurora::modules::graphics {
 	class ShaderParameterFactory;
 	class VertexBufferFactory;
 
+	using SampleCount = uint8_t;
 
 	class AE_DLL IObject : public Ref {
 	public:
@@ -270,6 +271,7 @@ namespace aurora::modules::graphics {
 		virtual TextureType AE_CALL getType() const = 0;
 		virtual bool AE_CALL isCreated() const = 0;
 		virtual const void* AE_CALL getNative() const = 0;
+		virtual SampleCount AE_CALL getSampleCount() const = 0;
 		virtual uint16_t AE_CALL getPerPixelByteSize() const = 0;
 		virtual Usage AE_CALL getUsage() const = 0;
 		virtual Usage AE_CALL map(uint32_t arraySlice, uint32_t mipSlice, Usage expectMapUsage) = 0;
@@ -298,7 +300,7 @@ namespace aurora::modules::graphics {
 		virtual ~ITexture2DResource() {}
 
 		virtual const Vec2ui32& AE_CALL getSize() const = 0;
-		virtual bool AE_CALL create(const Vec2ui32& size, uint32_t arraySize, uint32_t mipLevels, TextureFormat format, Usage resUsage, const void*const* data = nullptr) = 0;
+		virtual bool AE_CALL create(const Vec2ui32& size, uint32_t arraySize, uint32_t mipLevels, SampleCount sampleCount, TextureFormat format, Usage resUsage, const void*const* data = nullptr) = 0;
 		virtual bool AE_CALL update(uint32_t arraySlice, uint32_t mipSlice, const Box2ui32& range, const void* data) = 0;
 		virtual bool AE_CALL copyFrom(uint32_t arraySlice, uint32_t mipSlice, const Box2ui32& range, const IPixelBuffer* pixelBuffer) = 0;
 	};
@@ -363,9 +365,9 @@ namespace aurora::modules::graphics {
 		virtual ~IDepthStencil() {}
 
 		virtual const void* AE_CALL getNative() const = 0;
-		virtual bool AE_CALL isMultisampling() const = 0;
+		virtual SampleCount AE_CALL getSampleCount() const = 0;
 		virtual const Vec2ui32& AE_CALL getSize() const = 0;
-		virtual bool AE_CALL create(const Vec2ui32& size, DepthStencilFormat format, bool multisampling) = 0;
+		virtual bool AE_CALL create(const Vec2ui32& size, DepthStencilFormat format, SampleCount sampleCount) = 0;
 		virtual void AE_CALL destroy() = 0;
 	};
 
@@ -674,6 +676,7 @@ namespace aurora::modules::graphics {
 		bool supportIndependentBlend;
 		bool supportStencilIndependentRef;
 		bool supportStencilIndependentMask;
+		uint8_t supportMaxSampleCount;
 		uint8_t simultaneousRenderTargetCount;
 	};
 

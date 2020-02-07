@@ -88,13 +88,12 @@ namespace aurora::modules::graphics::win_gl {
 			info.size = size;
 			info.type = type;
 
-			static const char TYPE[] = { "type_" };
-			static const char COMBINED_TEX[] = { "_CombinedTexSampler" };
+			static constexpr char TYPE[] = { "type_" };
 			if (len > sizeof(TYPE) - 1) {
 				if (std::string_view(charBuffer, sizeof(TYPE) - 1) == TYPE) {
 					info.names.emplace_back(charBuffer + sizeof(TYPE) - 1);
-				} else if (len > sizeof(COMBINED_TEX) - 1 && std::string_view(charBuffer, sizeof(COMBINED_TEX) - 1) == COMBINED_TEX) {
-					auto offset = sizeof(COMBINED_TEX) - 1;
+				} else if (len > sizeof(IProgramSourceTranslator::COMBINED_TEXTURE_SAMPLER) - 1 && std::string_view(charBuffer, sizeof(IProgramSourceTranslator::COMBINED_TEXTURE_SAMPLER) - 1) == IProgramSourceTranslator::COMBINED_TEXTURE_SAMPLER) {
+					auto offset = sizeof(IProgramSourceTranslator::COMBINED_TEXTURE_SAMPLER) - 1;
 					if (auto pos = String::findFirst(charBuffer + offset, len - offset, '_'); pos == std::string::npos || !pos) {
 						info.names.emplace_back(charBuffer);
 					} else {
@@ -234,7 +233,9 @@ namespace aurora::modules::graphics::win_gl {
 					case GL_SAMPLER_1D:
 					case GL_SAMPLER_1D_ARRAY:
 					case GL_SAMPLER_2D:
+					case GL_SAMPLER_2D_MULTISAMPLE:
 					case GL_SAMPLER_2D_ARRAY:
+					case GL_SAMPLER_2D_MULTISAMPLE_ARRAY:
 					case GL_SAMPLER_3D:
 					{
 						if (auto p0 = paramFactory->get(layout.names[0], ShaderParameterType::TEXTURE); p0) {
@@ -243,18 +244,20 @@ namespace aurora::modules::graphics::win_gl {
 									auto idx = texIdx++;
 
 									GLuint sampler = 0;
-									if (auto p1 = paramFactory->get(layout.names[1], ShaderParameterType::SAMPLER); p1) {
-										if (auto data = p1->getData(); data && g == ((ISampler*)data)->getGraphics()) {
-											if (auto native = (Sampler*)((ISampler*)data)->getNative(); native) {
-												native->update();
-												sampler = native->getInternalSampler();
+									if (layout.names.size() > 1 && !layout.names[1].empty()) {
+										if (auto p1 = paramFactory->get(layout.names[1], ShaderParameterType::SAMPLER); p1) {
+											if (auto data = p1->getData(); data && g == ((ISampler*)data)->getGraphics()) {
+												if (auto native = (Sampler*)((ISampler*)data)->getNative(); native) {
+													native->update();
+													sampler = native->getInternalSampler();
+												}
 											}
 										}
 									}
 
 									glActiveTexture(GL_TEXTURE0 + idx);
 									glBindTexture(native->internalFormat, native->handle);
-									glBindSampler(idx, sampler);
+									if (sampler) glBindSampler(idx, sampler);
 									glUniform1i(layout.location, idx);
 								}
 							}

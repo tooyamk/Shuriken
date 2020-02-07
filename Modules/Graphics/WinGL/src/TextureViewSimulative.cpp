@@ -43,34 +43,43 @@ namespace aurora::modules::graphics::win_gl {
 
 		if (res && res->getGraphics() == _graphics) {
 			if (mipBegin) {
-				_graphics.get<Graphics>()->error("openGL SimulativeTextureView::create error : mipBegin must be 0");
+				_graphics.get<Graphics>()->error("openGL TextureView(Simulative)::create error : mipBegin must be 0");
 				return _createDone(false, res);
 			}
+
 			if (arrayBegin) {
-				_graphics.get<Graphics>()->error("openGL SimulativeTextureView::create error : arrayBegin must be 0");
+				_graphics.get<Graphics>()->error("openGL TextureView(Simulative)::create error : arrayBegin must be 0");
 				return _createDone(false, res);
 			}
-			if (auto native = (const BaseTexture*)res->getNative(); native && native->handle) {
-				if (mipLevels < native->mipLevels) {
-					_graphics.get<Graphics>()->error("openGL SimulativeTextureView::create error : mipLevels must >= res.mipLevels");
-					return _createDone(false, res);
-				}
-				if (arraySize < native->arraySize) {
-					_graphics.get<Graphics>()->error("openGL SimulativeTextureView::create error : arraySize must >= res.arraySize");
-					return _createDone(false, res);
-				}
 
-				_base.handle = native->handle;
-				_base.internalFormat = native->glTexInfo.target;
+			auto native = (const BaseTexture*)res->getNative();
 
-				_base.createdMipLevels = native->mipLevels;
-				_base.createdArraySize = native->arraySize;
-
-				return _createDone(true, res);
+			if (!native && !native->handle) {
+				_graphics.get<Graphics>()->error("openGL TextureView(Simulative)::create error : res invalid");
+				return _createDone(false, res);
 			}
-		}
 
-		return _createDone(false, res);
+			if (mipLevels < native->mipLevels) {
+				_graphics.get<Graphics>()->error("openGL TextureView(Simulative)::create error : mipLevels must >= res.mipLevels");
+				return _createDone(false, res);
+			}
+
+			if (arraySize < native->arraySize) {
+				_graphics.get<Graphics>()->error("openGL TextureView(Simulative)::create error : arraySize must >= res.arraySize");
+				return _createDone(false, res);
+			}
+
+			_base.handle = native->handle;
+			_base.internalFormat = native->glTexInfo.target;
+
+			_base.createdMipLevels = native->mipLevels;
+			_base.createdArraySize = native->arraySize;
+
+			return _createDone(true, res);
+		} else {
+			_graphics.get<Graphics>()->error("openGL TextureView(Simulative)::create error : res invalid");
+			return _createDone(false, res);
+		}
 	}
 
 	bool TextureViewSimulative::_createDone(bool succeeded, ITextureResource* res) {

@@ -81,15 +81,25 @@ namespace aurora::modules::graphics::win_d3d11 {
 				case TextureType::TEX2D:
 				{
 					if (arraySize && native->arraySize) {
-						desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
-						desc.Texture2DArray.MostDetailedMip = mipBegin;
-						desc.Texture2DArray.MipLevels = createMipLevels;
-						desc.Texture2DArray.FirstArraySlice = arrayBegin;
-						desc.Texture2DArray.ArraySize = createArraySize;
+						if (native->sampleCount > 1) {
+							desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DMSARRAY;
+							desc.Texture2DMSArray.FirstArraySlice = arrayBegin;
+							desc.Texture2DMSArray.ArraySize = createArraySize;
+						} else {
+							desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
+							desc.Texture2DArray.MostDetailedMip = mipBegin;
+							desc.Texture2DArray.MipLevels = createMipLevels;
+							desc.Texture2DArray.FirstArraySlice = arrayBegin;
+							desc.Texture2DArray.ArraySize = createArraySize;
+						}
 					} else {
-						desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-						desc.Texture2D.MostDetailedMip = mipBegin;
-						desc.Texture2D.MipLevels = createMipLevels;
+						if (native->sampleCount > 1) {
+							desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DMS;
+						} else {
+							desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+							desc.Texture2D.MostDetailedMip = mipBegin;
+							desc.Texture2D.MipLevels = createMipLevels;
+						}
 					}
 
 					break;

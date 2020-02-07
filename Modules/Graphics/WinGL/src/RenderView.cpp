@@ -41,38 +41,71 @@ namespace aurora::modules::graphics::win_gl {
 		_base.arraySize = arraySize;
 
 		if (res && res->getGraphics() == _graphics) {
-			if (auto native = (const BaseTexture*)res->getNative(); native && native->handle && mipSlice < native->mipLevels && (native->arraySize ? arrayBegin < native->arraySize : arrayBegin == 0)) {
-				auto lastArraySize = native->arraySize - arrayBegin;
-				if (!lastArraySize) lastArraySize = 1;
-				auto createArraySize = arraySize ? (arraySize > lastArraySize ? lastArraySize : arraySize) : 0;
+			auto native = (const BaseTexture*)res->getNative();
 
-				_base.internalFormat = GL_NONE;
-				switch (res->getType()) {
-				case TextureType::TEX1D:
-					_base.internalFormat = arraySize && native->arraySize ? GL_TEXTURE_1D_ARRAY : GL_TEXTURE_1D;
-					break;
-				case TextureType::TEX2D:
+			if (!native && !native->handle) {
+				_graphics.get<Graphics>()->error("openGL RenderView::create error : res invalid");
+				return _createDone(false, res);
+			}
+
+			if (mipSlice >= native->mipLevels) {
+				_graphics.get<Graphics>()->error("openGL RenderView::create error : mipSlice must < res.mipLevels");
+				return _createDone(false, res);
+			}
+
+			if (native->arraySize) {
+				if (arrayBegin >= native->arraySize) {
+					_graphics.get<Graphics>()->error("openGL RenderView::create error : arrayBegin must < res.arraySize when res is array texture");
+					return _createDone(false, res);
+				}
+			} else {
+				if (arrayBegin) {
+					_graphics.get<Graphics>()->error("openGL RenderView::create error : arrayBegin must be 0 when res is not array texture");
+					return _createDone(false, res);
+				}
+			}
+
+			auto lastArraySize = native->arraySize - arrayBegin;
+			if (!lastArraySize) lastArraySize = 1;
+			auto createArraySize = arraySize ? (arraySize > lastArraySize ? lastArraySize : arraySize) : 0;
+
+			_base.internalFormat = GL_NONE;
+			switch (res->getType()) {
+			case TextureType::TEX1D:
+				_base.internalFormat = arraySize && native->arraySize ? GL_TEXTURE_1D_ARRAY : GL_TEXTURE_1D;
+				break;
+			case TextureType::TEX2D:
+			{
+				if (native->sampleCount > 1) {
+					_base.internalFormat = arraySize && native->arraySize ? GL_TEXTURE_2D_MULTISAMPLE_ARRAY : GL_TEXTURE_2D_MULTISAMPLE;
+				} else {
 					_base.internalFormat = arraySize && native->arraySize ? GL_TEXTURE_2D_ARRAY : GL_TEXTURE_2D;
-					break;
-				case TextureType::TEX3D:
-					_base.internalFormat = GL_TEXTURE_3D;
-					break;
-				default:
-					break;
 				}
 
-				if (_base.internalFormat == GL_NONE) return _createDone(false, res);
-
-				glGenTextures(1, &_base.handle);
-				glTextureView(_base.handle, _base.internalFormat, native->handle, native->glTexInfo.internalFormat, mipSlice, 1, arrayBegin, createArraySize ? createArraySize : 1);
-
-				_base.createdArraySize = createArraySize;
-
-				return _createDone(true, res);
+				break;
 			}
-		}
+			case TextureType::TEX3D:
+				_base.internalFormat = GL_TEXTURE_3D;
+				break;
+			default:
+				break;
+			}
 
-		return _createDone(false, res);
+			if (_base.internalFormat == GL_NONE) {
+				_graphics.get<Graphics>()->error("openGL RenderView::create error : unknow internal format");
+				return _createDone(false, res);
+			}
+
+			glGenTextures(1, &_base.handle);
+			glTextureView(_base.handle, _base.internalFormat, native->handle, native->glTexInfo.internalFormat, mipSlice, 1, arrayBegin, createArraySize ? createArraySize : 1);
+
+			_base.createdArraySize = createArraySize;
+
+			return _createDone(true, res);
+		} else {
+			_graphics.get<Graphics>()->error("openGL RenderView::create error : res invalid");
+			return _createDone(false, res);
+		}
 	}
 
 	bool RenderView::_createDone(bool succeeded, ITextureResource* res) {

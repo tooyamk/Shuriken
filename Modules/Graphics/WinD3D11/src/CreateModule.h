@@ -18,7 +18,8 @@ namespace aurora::modules::graphics {
 
 		auto g = new win_d3d11::Graphics(loader, app.value());
 		auto adapter = args->get<const GraphicsAdapter*>("adapter");
-		if (!g->createDevice(adapter.has_value() ? adapter.value() : nullptr)) {
+		auto sc = args->get<SampleCount>("sampleCount");
+		if (!g->createDevice(adapter.has_value() ? adapter.value() : nullptr, sc ? *sc : 1)) {
 			g->unref();
 			g = nullptr;
 		}

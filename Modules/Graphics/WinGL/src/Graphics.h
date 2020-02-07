@@ -54,7 +54,7 @@ namespace aurora::modules::graphics::win_gl {
 		virtual void AE_CALL setRenderTarget(IRenderTarget* rt) override;
 		virtual void AE_CALL clear(ClearFlag flags, const Vec4f32& color, f32 depth, size_t stencil) override;
 
-		bool AE_CALL createDevice(const GraphicsAdapter* adapter);
+		bool AE_CALL createDevice(const GraphicsAdapter* adapter, SampleCount sampleCount);
 
 		inline void AE_CALL error(const std::string_view& msg) {
 			_eventDispatcher.dispatchEvent(this, GraphicsEvent::ERR, (std::string_view*)&msg);

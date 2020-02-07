@@ -7,6 +7,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 	BaseTextureResource::BaseTextureResource(UINT resType) : BaseResource(resType),
 		format(TextureFormat::UNKNOWN),
 		internalFormat(DXGI_FORMAT_UNKNOWN),
+		sampleCount(0),
 		perPixelSize(0),
 		arraySize(0),
 		mipLevels(0) {
@@ -15,13 +16,29 @@ namespace aurora::modules::graphics::win_d3d11 {
 	BaseTextureResource::~BaseTextureResource() {
 	}
 
-	bool BaseTextureResource::create(Graphics& graphics, TextureType texType, const Vec3ui32& size, uint32_t arraySize, uint32_t mipLevels,
+	bool BaseTextureResource::create(Graphics& graphics, TextureType texType, const Vec3ui32& size, uint32_t arraySize, uint32_t mipLevels, SampleCount sampleCount,
 		TextureFormat format, Usage resUsage, const void*const* data) {
 		releaseTex(graphics);
 
+		if (sampleCount > 1 && texType != TextureType::TEX2D) {
+			graphics.error("d3d11 Texture create error : only support extureType::TEX2D when sampleCount > 1");
+			return false;
+		}
+
+		if (!sampleCount) sampleCount = 1;
+
 		if (mipLevels == 0) {
-			mipLevels = Image::calcMipLevels(size.getMax());
+			if (sampleCount > 1) {
+				mipLevels = 1;
+			} else {
+				mipLevels = Image::calcMipLevels(size.getMax());
+			}
 		} else if (mipLevels > 1) {
+			if (sampleCount > 1) {
+				graphics.error("d3d11 Texture::create error : could not enable multisampling and mipmap at same time");
+				return _createDone(graphics, false);
+			}
+
 			auto maxLevels = Image::calcMipLevels(size.getMax());
 			if (mipLevels > maxLevels) mipLevels = maxLevels;
 		}
@@ -115,9 +132,9 @@ namespace aurora::modules::graphics::win_d3d11 {
 			desc.MiscFlags = 0;
 			//desc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;//D3D11_RESOURCE_MISC_TEXTURECUBE
 			desc.ArraySize = arraySize;
-			desc.SampleDesc.Count = 1;
+			desc.SampleDesc.Count = sampleCount;
 			desc.SampleDesc.Quality = 0;
-
+			
 			break;
 		}
 		case TextureType::TEX3D:
@@ -199,6 +216,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		this->format = format;
 		this->internalFormat = internalFormat;
+		this->sampleCount = sampleCount;
 		this->perPixelSize = perPixelSize;
 		this->perRowPixelSize = perPixelSize * size[0];
 		texSize.set(size);
@@ -339,7 +357,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 		releaseRes();
 
 		format = TextureFormat::UNKNOWN;
-		internalFormat = DXGI_FORMAT_UNKNOWN,
+		internalFormat = DXGI_FORMAT_UNKNOWN;
+		sampleCount = 0;
 		perPixelSize = 0;
 		texSize.set(0);
 		arraySize = 0;

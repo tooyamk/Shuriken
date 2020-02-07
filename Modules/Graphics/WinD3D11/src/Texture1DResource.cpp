@@ -22,6 +22,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return &_baseTexRes;
 	}
 
+	SampleCount Texture1DResource::getSampleCount() const {
+		return _baseTexRes.sampleCount;
+	}
+
 	uint16_t Texture1DResource::getPerPixelByteSize() const {
 		return _baseTexRes.perPixelSize;
 	}
@@ -31,7 +35,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	bool Texture1DResource::create(uint32_t width, uint32_t arraySize, uint32_t mipLevels, TextureFormat format, Usage resUsage, const void*const* data) {
-		return _baseTexRes.create(*_graphics.get<Graphics>(), TextureType::TEX1D, Vec3ui32(width, 1, 1), arraySize, mipLevels, format, resUsage, data);
+		return _baseTexRes.create(*_graphics.get<Graphics>(), TextureType::TEX1D, Vec3ui32(width, 1, 1), arraySize, mipLevels, 1, format, resUsage, data);
 	}
 
 	Usage Texture1DResource::getUsage() const {
