@@ -6,7 +6,7 @@ set_property(GLOBAL PROPERTY __PROJECT_AE_CORE_DLL ${__BUILD_DIR}/${__OUTPUT_NAM
 
 include_directories(src)
 add_definitions(-D AE_EXPORTS)
-file(GLOB SRC_FILES "src/*.h" "src/*.cpp" "src/*/*.h" "src/*/*.cpp" "src/*/*/*.h" "src/*/*/*.cpp")
+file(GLOB SRC_FILES "src/*.h" "src/*.cpp" "src/*.inl" "src/*/*.h" "src/*/*.cpp" "src/*/*.inl" "src/*/*/*.h" "src/*/*/*.cpp" "src/*/*/*.inl")
 __add_library_source_group(${PROJECT_NAME} SHARED ${SRC_FILES})
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${__OUTPUT_NAME})
 

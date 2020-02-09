@@ -29,7 +29,7 @@ if (WIN32)
 endif ()
 
 include_directories(${__PROJECT_AE_CORE_SRC_DIR}/src/)
-file(GLOB SRC_FILES "src/*.h" "src/*.cpp")
+file(GLOB SRC_FILES "src/*.h" "src/*.cpp" "src/*/*.h" "src/*/*.cpp")
 __add_executable_source_group(${PROJECT_NAME} ${SRC_FILES})
 
 target_link_libraries(${PROJECT_NAME}

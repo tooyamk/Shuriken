@@ -59,6 +59,11 @@ namespace aurora::modules::graphics::win_gl {
 			}
 
 			if ((native->resUsage & Usage::RENDERABLE) != Usage::RENDERABLE) {
+				_graphics.get<Graphics>()->error("openGL RenderView(Simulative)::create error : res usage must has Usage::RENDERABLE");
+				return _createDone(false, res);
+			}
+
+			if ((native->resUsage & Usage::RENDERABLE) != Usage::RENDERABLE) {
 				_graphics.get<Graphics>()->error("openGL RenderView(Simulative)::create error : res must has Usage::RENDERABLE");
 				return _createDone(false, res);
 			}

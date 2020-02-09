@@ -46,78 +46,112 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_arraySize = arraySize;
 
 		if (res && res->getGraphics() == _graphics) {
-			if (auto native = (BaseTextureResource*)res->getNative(); native && native->handle && (native->bindType & D3D11_BIND_RENDER_TARGET) && mipSlice < native->mipLevels && arrayBegin < std::max<uint32_t>(native->arraySize, 1)) {
-				auto lastArraySize = native->arraySize - arrayBegin;
-				if (!lastArraySize) lastArraySize = 1;
-				auto createArraySize = arraySize ? (arraySize > lastArraySize ? lastArraySize : arraySize) : 0;
-
-				D3D11_RENDER_TARGET_VIEW_DESC1 desc;
-				memset(&desc, 0, sizeof(desc));
-				desc.Format = native->internalFormat;
-
-				switch (res->getType()) {
-				case TextureType::TEX1D:
-				{
-					if (arraySize && native->arraySize) {
-						desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE1DARRAY;
-						desc.Texture1DArray.MipSlice = mipSlice;
-						desc.Texture1DArray.FirstArraySlice = arrayBegin;
-						desc.Texture1DArray.ArraySize = createArraySize;
-					} else {
-						desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE1D;
-						desc.Texture1D.MipSlice = mipSlice;
-					}
-
-					break;
-				}
-				case TextureType::TEX2D:
-				{
-					if (arraySize && native->arraySize) {
-						if (native->sampleCount > 1) {
-							desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMSARRAY;
-							desc.Texture2DMSArray.FirstArraySlice = arrayBegin;
-							desc.Texture2DMSArray.ArraySize = createArraySize;
-						} else {
-							desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DARRAY;
-							desc.Texture2DArray.MipSlice = mipSlice;
-							desc.Texture2DArray.FirstArraySlice = arrayBegin;
-							desc.Texture2DArray.ArraySize = createArraySize;
-						}
-					} else {
-						if (native->sampleCount > 1) {
-							desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMS;
-						} else {
-							desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-							desc.Texture2D.MipSlice = mipSlice;
-						}
-					}
-
-					break;
-				}
-				case TextureType::TEX3D:
-				{
-					desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE3D;
-					desc.Texture3D.MipSlice = mipSlice;
-					desc.Texture3D.FirstWSlice = arrayBegin;
-					desc.Texture3D.WSize = arraySize;
-
-					break;
-				}
-				default:
-					break;
-				}
-
-				if (desc.ViewDimension == D3D_SRV_DIMENSION_UNKNOWN) return _createDone(false, res);
-
-				if (FAILED(_graphics.get<Graphics>()->getDevice()->CreateRenderTargetView1(native->handle, &desc, &_view))) return _createDone(false, res);
-
-				_createdArraySize = createArraySize;
-
-				return _createDone(true, res);
+			auto native = (BaseTextureResource*)res->getNative();
+			
+			if (!native && !native->handle) {
+				_graphics.get<Graphics>()->error("d3d11 RenderView::create error : res invalid");
+				return _createDone(false, res);
 			}
-		}
 
-		return _createDone(false, res);
+			if ((native->resUsage & Usage::RENDERABLE) != Usage::RENDERABLE) {
+				_graphics.get<Graphics>()->error("d3d11 RenderView::create error : res usage must has Usage::RENDERABLE");
+				return _createDone(false, res);
+			}
+
+			if (mipSlice >= native->mipLevels) {
+				_graphics.get<Graphics>()->error("d3d11 RenderView::create error : mipSlice must < res.mipLevels");
+				return _createDone(false, res);
+			}
+
+			if (native->arraySize) {
+				if (arrayBegin >= native->arraySize) {
+					_graphics.get<Graphics>()->error("d3d11 RenderView::create error : arrayBegin must < res.arraySize when res is array texture");
+					return _createDone(false, res);
+				}
+			} else {
+				if (arrayBegin) {
+					_graphics.get<Graphics>()->error("d3d11 RenderView::create error : arrayBegin must be 0 when res is not array texture");
+					return _createDone(false, res);
+				}
+			}
+
+			auto lastArraySize = native->arraySize - arrayBegin;
+			if (!lastArraySize) lastArraySize = 1;
+			auto createArraySize = arraySize ? (arraySize > lastArraySize ? lastArraySize : arraySize) : 0;
+
+			D3D11_RENDER_TARGET_VIEW_DESC1 desc;
+			memset(&desc, 0, sizeof(desc));
+			desc.Format = native->internalFormat;
+
+			switch (res->getType()) {
+			case TextureType::TEX1D:
+			{
+				if (arraySize && native->arraySize) {
+					desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE1DARRAY;
+					desc.Texture1DArray.MipSlice = mipSlice;
+					desc.Texture1DArray.FirstArraySlice = arrayBegin;
+					desc.Texture1DArray.ArraySize = createArraySize;
+				} else {
+					desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE1D;
+					desc.Texture1D.MipSlice = mipSlice;
+				}
+
+				break;
+			}
+			case TextureType::TEX2D:
+			{
+				if (arraySize && native->arraySize) {
+					if (native->sampleCount > 1) {
+						desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMSARRAY;
+						desc.Texture2DMSArray.FirstArraySlice = arrayBegin;
+						desc.Texture2DMSArray.ArraySize = createArraySize;
+					} else {
+						desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DARRAY;
+						desc.Texture2DArray.MipSlice = mipSlice;
+						desc.Texture2DArray.FirstArraySlice = arrayBegin;
+						desc.Texture2DArray.ArraySize = createArraySize;
+					}
+				} else {
+					if (native->sampleCount > 1) {
+						desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMS;
+					} else {
+						desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+						desc.Texture2D.MipSlice = mipSlice;
+					}
+				}
+
+				break;
+			}
+			case TextureType::TEX3D:
+			{
+				desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE3D;
+				desc.Texture3D.MipSlice = mipSlice;
+				desc.Texture3D.FirstWSlice = arrayBegin;
+				desc.Texture3D.WSize = arraySize;
+
+				break;
+			}
+			default:
+				break;
+			}
+
+			if (desc.ViewDimension == D3D_SRV_DIMENSION_UNKNOWN) {
+				_graphics.get<Graphics>()->error("d3d11 RenderView::create error : internal format is wrong");
+				return _createDone(false, res);
+			}
+
+			if (FAILED(_graphics.get<Graphics>()->getDevice()->CreateRenderTargetView1(native->handle, &desc, &_view))) {
+				_graphics.get<Graphics>()->error("d3d11 RenderView::create error : internal view create failure");
+				return _createDone(false, res);
+			}
+
+			_createdArraySize = createArraySize;
+
+			return _createDone(true, res);
+		} else {
+			_graphics.get<Graphics>()->error("d3d11 RenderView::create error : res invalid");
+			return _createDone(false, res);
+		}
 	}
 
 	bool RenderView::_createDone(bool succeeded, ITextureResource* res) {

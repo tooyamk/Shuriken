@@ -124,8 +124,9 @@ namespace aurora::modules::graphics::win_gl {
 		
 		GLint attribs[] = {
 			//WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
-			//WGL_CONTEXT_MINOR_VERSION_ARB, 3,
+			//WGL_CONTEXT_MINOR_VERSION_ARB, 1,
 			WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB,//兼容模式环境
+			//WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_ES_PROFILE_BIT_EXT,
 			//WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,//核心功能环境
 #ifdef AE_DEBUG
 			WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_DEBUG_BIT_ARB,
@@ -182,7 +183,7 @@ namespace aurora::modules::graphics::win_gl {
 		_deviceFeatures.supportTextureFormat.emplace_back(TextureFormat::R8G8B8);
 		_deviceFeatures.supportTextureFormat.emplace_back(TextureFormat::R8G8B8A8);
 
-		_bufferCreateUsageMask = Usage::MAP_READ_WRITE | Usage::UPDATE | (_deviceFeatures.supportPersistentMap ? Usage::PERSISTENT_MAP : Usage::NONE);
+		_bufferCreateUsageMask = Usage::MAP_READ_WRITE | Usage::UPDATE | Usage::RENDERABLE | (_deviceFeatures.supportPersistentMap ? Usage::PERSISTENT_MAP : Usage::NONE);
 		_texCreateUsageMask = Usage::UPDATE;
 
 		//glEnable(GL_MULTISAMPLE);

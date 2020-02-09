@@ -76,5 +76,6 @@ if (WIN32)
 endif ()
 
 add_subdirectory(${__AE_EXTENSIONS_FOLDER_NAME}/Files/Images/PNGConverter)
+#add_subdirectory(${__AE_EXTENSIONS_FOLDER_NAME}/Files/Models/FBXConverter)
 
 add_subdirectory(Test)

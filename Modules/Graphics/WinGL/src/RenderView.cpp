@@ -48,6 +48,11 @@ namespace aurora::modules::graphics::win_gl {
 				return _createDone(false, res);
 			}
 
+			if ((native->resUsage & Usage::RENDERABLE) != Usage::RENDERABLE) {
+				_graphics.get<Graphics>()->error("openGL RenderView::create error : res usage must has Usage::RENDERABLE");
+				return _createDone(false, res);
+			}
+
 			if (mipSlice >= native->mipLevels) {
 				_graphics.get<Graphics>()->error("openGL RenderView::create error : mipSlice must < res.mipLevels");
 				return _createDone(false, res);
