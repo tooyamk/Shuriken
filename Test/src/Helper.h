@@ -1,7 +1,14 @@
 #pragma once
 
-#include "Aurora.h"
+#include "aurora/Aurora.h"
 #include <fstream>
+
+using namespace aurora;
+using namespace aurora::components;
+using namespace aurora::events;
+using namespace aurora::modules;
+using namespace aurora::modules::graphics;
+using namespace aurora::modules::inputs;
 
 inline std::string getDLLName(const std::string& name) {
 #if defined(AE_DEBUG)
@@ -19,8 +26,8 @@ inline std::string getDLLName(const std::string& name) {
 #endif
 }
 
-inline aurora::ByteArray readFile(const std::string& path) {
-	aurora::ByteArray dst;
+inline ByteArray readFile(const std::string& path) {
+	ByteArray dst;
 	std::ifstream stream(path, std::ios::in | std::ios::binary);
 	if (stream.good()) {
 		auto beg = stream.tellg();
@@ -33,16 +40,28 @@ inline aurora::ByteArray readFile(const std::string& path) {
 		stream.seekg(0, std::ios::beg);
 		stream.read((char*)data, size);
 
-		dst = aurora::ByteArray(data, size, aurora::ByteArray::Usage::EXCLUSIVE);
+		dst = ByteArray(data, size, ByteArray::Usage::EXCLUSIVE);
 	}
 	stream.close();
 	return std::move(dst);
 }
 
-inline aurora::modules::graphics::ProgramSource readProgramSourcee(const std::string& path, aurora::modules::graphics::ProgramStage type) {
-	aurora::modules::graphics::ProgramSource s;
-	s.language = aurora::modules::graphics::ProgramLanguage::HLSL;
+inline ProgramSource readProgramSourcee(const std::string& path, ProgramStage type) {
+	ProgramSource s;
+	s.language = ProgramLanguage::HLSL;
 	s.stage = type;
 	s.data = readFile(path);
 	return std::move(s);
+}
+
+inline bool programCreate(IProgram& program, const std::string_view& vert, const std::string_view& frag) {
+	std::string appPath = String::UnicodeToUtf8(getAppPath()) + u8"Resources/shaders/";
+	if (program.create(readProgramSourcee(appPath + vert.data(), ProgramStage::VS), readProgramSourcee(appPath + frag.data(), ProgramStage::PS),
+		[&appPath](const IProgram& program, ProgramStage stage, const std::string_view& name) {
+		return readFile(appPath + name.data());
+	})) {
+		println(L"program create error");
+		return false;
+	}
+	return true;
 }

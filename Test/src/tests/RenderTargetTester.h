@@ -5,6 +5,9 @@
 class RenderTargetTester : public BaseTester {
 public:
 	virtual int32_t AE_CALL run() override {
+		//nodes::components::AbstractComponent* com;
+
+
 		auto monitors = Monitor::getMonitors();
 		auto vms = monitors[0].getVideoModes();
 
@@ -245,14 +248,10 @@ public:
 					//
 
 					renderData.p = graphics->createProgram();
-					if (!renderData.p->create(readProgramSourcee(app->getAppPath() + u8"Resources/vert.hlsl", ProgramStage::VS), readProgramSourcee(app->getAppPath() + u8"Resources/frag.hlsl", ProgramStage::PS))) {
-						println(L"program upload error");
-					}
+					programCreate(*renderData.p, "vert.hlsl", "frag.hlsl");
 
 					renderData.pp.p = graphics->createProgram();
-					if (!renderData.pp.p->create(readProgramSourcee(app->getAppPath() + u8"Resources/pp_draw_tex_vert.hlsl", ProgramStage::VS), readProgramSourcee(app->getAppPath() + u8"Resources/pp_draw_tex_frag.hlsl", ProgramStage::PS))) {
-						println(L"program upload error");
-					}
+					programCreate(*renderData.pp.p, "pp_draw_tex_vert.hlsl", "pp_draw_tex_frag.hlsl");
 
 					RefPtr appClosingListener = new EventListener(std::function([](Event<ApplicationEvent>& e) {
 						//*e.getData<bool>() = true;
@@ -282,7 +281,7 @@ public:
 
 						renderData.g->setBlendState(renderData.bs.get(), Vec4f32::ZERO);
 						renderData.g->setDepthStencilState(renderData.dss.get(), 0);
-						renderData.g->draw(renderData.pp.vbf.get(), renderData.pp.p.get(), renderData.spf.get(), renderData.pp.ib.get());
+						renderData.g->draw(renderData.pp.vbf, renderData.pp.p.get(), renderData.spf.get(), renderData.pp.ib.get());
 
 						renderData.g->endRender();
 

@@ -16,7 +16,9 @@ include_directories(
     ${__PROJECT_LIBPNG_INCLUDE}
 )
 add_definitions(-D AE_EXTENSION_EXPORTS)
-file(GLOB SRC_FILES "src/*.h" "src/*.cpp")
+file(GLOB SRC_FILES
+    "src/*.h" "src/*.cpp"
+    "src/*/*.h" "src/*/*.cpp")
 __add_library_source_group(${PROJECT_NAME} SHARED ${SRC_FILES})
 add_dependencies(${PROJECT_NAME} 
     ${__PROJECT_AE_CORE_NAME}

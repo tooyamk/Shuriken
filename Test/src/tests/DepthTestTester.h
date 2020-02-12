@@ -186,9 +186,7 @@ public:
 					}
 
 					renderData.p = graphics->createProgram();
-					if (!renderData.p->create(readProgramSourcee(app->getAppPath() + u8"Resources/vert.hlsl", ProgramStage::VS), readProgramSourcee(app->getAppPath() + u8"Resources/frag.hlsl", ProgramStage::PS))) {
-						println(L"program upload error");
-					}
+					programCreate(*renderData.p, "vert.hlsl", "frag.hlsl");
 
 					RefPtr<IEventListener<ApplicationEvent>> appClosingListener = new EventListener(std::function([](Event<ApplicationEvent>& e) {
 						//*e.getData<bool>() = true;

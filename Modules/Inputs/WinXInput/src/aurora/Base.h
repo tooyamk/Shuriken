@@ -1,0 +1,14 @@
+#pragma once
+
+#include "aurora/modules/inputs/IInputModule.h"
+#include "aurora/Application.h"
+
+#include <Xinput.h>
+#pragma comment(lib, "Xinput.lib")
+
+namespace aurora::modules::inputs::win_xinput {
+	struct InternalGUID {
+		const char head[6] = { 'X', 'I', 'n', 'p', 'u', 't' };
+		uint8_t index = 0;
+	};
+}
