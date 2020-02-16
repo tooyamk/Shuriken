@@ -2,7 +2,7 @@
 
 #include "aurora/Node.h"
 
-namespace aurora::renderers {
+namespace aurora::render {
 	class AE_DLL IRenderPipeline : public Ref {
 	public:
 		virtual ~IRenderPipeline() {}

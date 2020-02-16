@@ -139,7 +139,8 @@ namespace aurora::events {
 		}
 		virtual bool AE_CALL addEventListener(const EvtType& type, IEventListener<EvtType>& listener) = 0;
 
-		virtual uint32_t AE_CALL hasEventListener(const EvtType& type) const = 0;
+		virtual uint32_t AE_CALL getNumEventListeners() const = 0;
+		virtual uint32_t AE_CALL getNumEventListeners(const EvtType& type) const = 0;
 		virtual bool AE_CALL hasEventListener(const EvtType& type, const IEventListener<EvtType>& listener) const = 0;
 
 		inline bool AE_CALL removeEventListener(const EvtType& type, const IEventListener<EvtType>* listener) {

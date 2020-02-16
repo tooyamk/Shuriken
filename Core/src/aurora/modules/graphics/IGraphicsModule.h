@@ -1,9 +1,17 @@
 #pragma once
 
-#include "aurora/ByteArray.h"
 #include "aurora/modules/IModule.h"
+#include "aurora/ByteArray.h"
 #include "aurora/math/Box.h"
 #include <functional>
+
+namespace aurora {
+	enum class ProgramStage : uint8_t;
+	class IShaderParameterGetter;
+	class IVertexBufferGetter;
+	class ProgramSource;
+	class ShaderDefine;
+}
 
 namespace aurora::events {
 	template<typename EvtType>
@@ -13,9 +21,6 @@ namespace aurora::events {
 namespace aurora::modules::graphics {
 	class IGraphicsModule;
 	class GraphicsAdapter;
-	class ProgramSource;
-	class ShaderParameterFactory;
-	class VertexBufferFactory;
 
 	using SampleCount = uint8_t;
 
@@ -540,16 +545,6 @@ namespace aurora::modules::graphics {
 	};
 
 
-	enum class ProgramStage : uint8_t {
-		UNKNOWN,
-		CS,//ComputeShader
-		DS, //DomainShader
-		GS,//GeomtryShader
-		HS,//HullShader
-		PS,//PixelShader
-		VS,//VertexShader
-	};
-
 	class AE_DLL IProgram : public IObject {
 	public:
 		using IncludeHandler = std::function<ByteArray(const IProgram&, ProgramStage, const std::string_view&)>;
@@ -558,7 +553,7 @@ namespace aurora::modules::graphics {
 		virtual ~IProgram() {}
 
 		virtual const void* AE_CALL getNative() const = 0;
-		virtual bool AE_CALL create(const ProgramSource& vert, const ProgramSource& frag, const IncludeHandler& handler) = 0;
+		virtual bool AE_CALL create(const ProgramSource& vert, const ProgramSource& frag, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& handler) = 0;
 		virtual void AE_CALL destroy() = 0;
 	};
 
@@ -615,6 +610,7 @@ namespace aurora::modules::graphics {
 		bool enabled = true;
 		bool writeable = true;
 		ComparisonFunc func = ComparisonFunc::LESS;
+		uint8_t unused = 0;
 	};
 
 
@@ -640,11 +636,13 @@ namespace aurora::modules::graphics {
 		struct {
 			uint8_t read = 0xFF;
 			uint8_t write = 0xFF;
-		} mask;	};
+		} mask;	
+	};
 
 
 	struct AE_DLL StencilState {
 		bool enabled = false;
+		uint8_t unused = 0;
 		struct {
 			StencilFaceState front;
 			StencilFaceState back;
@@ -748,7 +746,7 @@ namespace aurora::modules::graphics {
 		virtual void AE_CALL setRasterizerState(IRasterizerState* state) = 0;
 
 		virtual void AE_CALL beginRender() = 0;
-		virtual void AE_CALL draw(const VertexBufferFactory* vertexFactory, IProgram* program, const ShaderParameterFactory* paramFactory,
+		virtual void AE_CALL draw(const IVertexBufferGetter* vertexBufferGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
 			const IIndexBuffer* indexBuffer, uint32_t count = (std::numeric_limits<uint32_t>::max)(), uint32_t offset = 0) = 0;
 		virtual void AE_CALL endRender() = 0;
 		virtual void AE_CALL present() = 0;

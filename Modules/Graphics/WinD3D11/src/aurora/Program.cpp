@@ -2,10 +2,11 @@
 #include "Graphics.h"
 #include "IndexBuffer.h"
 #include "VertexBuffer.h"
+#include "aurora/GraphicsBuffer.h"
+#include "aurora/ProgramSource.h"
+#include "aurora/ShaderDefine.h"
+#include "aurora/ShaderParameter.h"
 #include "aurora/String.h"
-#include "aurora/modules/graphics/ProgramSource.h"
-#include "aurora/modules/graphics/ShaderParameterFactory.h"
-#include "aurora/modules/graphics/VertexBufferFactory.h"
 #include <vector>
 
 namespace aurora::modules::graphics::win_d3d11 {
@@ -73,7 +74,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return this;
 	}
 
-	bool Program::create(const ProgramSource& vert, const ProgramSource& frag, const IncludeHandler& handler) {
+	bool Program::create(const ProgramSource& vert, const ProgramSource& frag, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& handler) {
 		destroy();
 
 		DXObjGuard objs;
@@ -82,10 +83,24 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		auto& sm = g->getSupportShaderModel();
 
-		_vertBlob = _compileShader(vert, ProgramStage::VS, ProgramSource::toHLSLShaderModel(ProgramStage::VS, vert.version.empty() ? sm : vert.version), handler);
+		std::vector<D3D_SHADER_MACRO> d3dDefines(numDefines + 1);
+		{
+			for (size_t i = 0; i < numDefines; ++i) {
+				auto& d3dDef = d3dDefines[i];
+				auto def = defines + (i << 1);
+
+				d3dDef.Name = def->name.data();
+				d3dDef.Definition = def->value.data();
+			}
+			auto& def = d3dDefines[numDefines];
+			def.Name = nullptr;
+			def.Definition = nullptr;
+		}
+
+		_vertBlob = _compileShader(vert, ProgramStage::VS, ProgramSource::toHLSLShaderModel(ProgramStage::VS, vert.version.empty() ? sm : vert.version), d3dDefines.data(), handler);
 		if (!_vertBlob) return false;
 
-		auto pixelBlob = _compileShader(frag, ProgramStage::PS, ProgramSource::toHLSLShaderModel(ProgramStage::PS, frag.version.empty() ? sm : frag.version), handler);
+		auto pixelBlob = _compileShader(frag, ProgramStage::PS, ProgramSource::toHLSLShaderModel(ProgramStage::PS, frag.version.empty() ? sm : frag.version), d3dDefines.data(), handler);
 		if (!pixelBlob) {
 			destroy();
 			return false;
@@ -138,7 +153,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return true;
 	}
 
-	bool Program::use(const VertexBufferFactory* vertexFactory, const ShaderParameterFactory* paramFactory) {
+	bool Program::use(const IVertexBufferGetter* vertexBufferGetter, const IShaderParameterGetter* shaderParamGetter) {
 		if (_vs) {
 			auto g = _graphics.get<Graphics>();
 			g->useShader<ProgramStage::VS>(_vs, nullptr, 0);
@@ -149,7 +164,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			bool inElementsDirty = false;
 			for (uint32_t i = 0, n = _inVerBufInfos.size(); i < n; ++i) {
 				auto& info = _inVerBufInfos[i];
-				if (auto vb = vertexFactory->get(info.name); vb && _graphics == vb->getGraphics()) {
+				if (auto vb = vertexBufferGetter->get(info.name); vb && _graphics == vb->getGraphics()) {
 					if (auto native = (VertexBuffer*)vb->getNative(); native) {
 						if (auto buf = native->getInternalBuffer(); buf) {
 							if (auto fmt = native->getInternalFormat(); fmt != DXGI_FORMAT_UNKNOWN) {
@@ -171,9 +186,9 @@ namespace aurora::modules::graphics::win_d3d11 {
 			if (inElementsDirty) _curInLayout = _getOrCreateInputLayout();
 
 			if (_curInLayout) {
-				if (paramFactory) {
-					_useParameters<ProgramStage::VS>(_vsParamLayout, *paramFactory);
-					_useParameters<ProgramStage::PS>(_psParamLayout, *paramFactory);
+				if (shaderParamGetter) {
+					_useParameters<ProgramStage::VS>(_vsParamLayout, *shaderParamGetter);
+					_useParameters<ProgramStage::PS>(_psParamLayout, *shaderParamGetter);
 				}
 
 				context->IASetInputLayout(_curInLayout);
@@ -188,13 +203,13 @@ namespace aurora::modules::graphics::win_d3d11 {
 		for (uint32_t i = 0, n = _usingSameConstBuffers.size(); i < n; ++i) _usingSameConstBuffers[i] = nullptr;
 	}
 
-	ConstantBuffer* Program::_getConstantBuffer(const MyConstantBufferLayout& cbLayout, const ShaderParameterFactory& factory) {
+	ConstantBuffer* Program::_getConstantBuffer(const MyConstantBufferLayout& cbLayout, const IShaderParameterGetter& paramGetter) {
 		if (cbLayout.sameId) {
 			if (auto cb = _usingSameConstBuffers[cbLayout.sameId - 1]; cb) return cb;
 		}
 
 		ShaderParameterUsageStatistics statistics;
-		cbLayout.collectUsingInfo(factory, statistics, (std::vector<const ShaderParameter*>&)_tempParams, _tempVars);
+		cbLayout.collectUsingInfo(paramGetter, statistics, (std::vector<const ShaderParameter*>&)_tempParams, _tempVars);
 
 		ConstantBuffer* cb = nullptr;
 		if (uint32_t numVars = _tempVars.size(); statistics.unknownCount < numVars) {
@@ -286,7 +301,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_usingSameConstBuffers.clear();
 	}
 
-	ID3DBlob* Program::_compileShader(const ProgramSource& source, ProgramStage stage, const std::string_view& target, const IncludeHandler& handler) {
+	ID3DBlob* Program::_compileShader(const ProgramSource& source, ProgramStage stage, const std::string_view& target, const D3D_SHADER_MACRO* defines, const IncludeHandler& handler) {
 		DWORD shaderFlags = D3DCOMPILE_ENABLE_STRICTNESS;
 
 #ifdef AE_DEBUG
@@ -297,7 +312,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		ID3DBlob* buffer = nullptr, *errorBuffer = nullptr;
 		MyIncludeHandler include(*this, stage, handler);
-		HRESULT hr = D3DCompile(source.data.getSource(), source.data.getLength(), nullptr, nullptr, &include,
+		HRESULT hr = D3DCompile(source.data.getSource(), source.data.getLength(), nullptr, defines, &include,
 			ProgramSource::getEntryPoint(source).data(), target.data(), shaderFlags, 0, &buffer, &errorBuffer);
 
 		if (FAILED(hr)) {

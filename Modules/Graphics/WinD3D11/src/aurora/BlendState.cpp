@@ -134,7 +134,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			if (SUCCEEDED(_graphics.get<Graphics>()->getDevice()->CreateBlendState1(&_desc, &_internalState))) {
 				_oldIndependentBlendEnabled = _desc.IndependentBlendEnable;
 				memcpy(&_oldRtStatus, &_rtStatus, sizeof(_rtStatus));
-				_featureValue = hash::xxHash::calc<sizeof(_featureValue) * 8, std::endian::native>((uint8_t*)&_desc, _desc.IndependentBlendEnable ? sizeof(_desc) : sizeof(_desc) - sizeof(_desc.RenderTarget[0]) * 7, 0);
+				_featureValue = hash::xxHash::calc<sizeof(_featureValue) * 8, std::endian::native>(&_desc, _desc.IndependentBlendEnable ? sizeof(_desc) : sizeof(_desc) - sizeof(_desc.RenderTarget[0]) * 7, 0);
 				_dirty = 0;
 			}
 		}

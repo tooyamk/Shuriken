@@ -2,7 +2,7 @@
 
 #include "aurora/Ref.h"
 
-namespace aurora::renderers {
+namespace aurora::render {
 	class IRenderEntry : public Ref {
 	public:
 		virtual ~IRenderEntry() {}

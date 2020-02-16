@@ -1,9 +1,10 @@
-#include "GraphicsUtils.h"
+#include "GraphicsBuffer.h"
+#include "aurora/modules/graphics/IGraphicsModule.h"
 
-namespace aurora::modules::graphics {
-	MultipleVertexBuffer::MultipleVertexBuffer(IGraphicsModule& graphics, uint8_t max) : IVertexBuffer(graphics),
-		_vertSize(VertexSize::UNKNOWN),
-		_vertType(VertexType::UNKNOWN),
+namespace aurora {
+	MultipleVertexBuffer::MultipleVertexBuffer(modules::graphics::IGraphicsModule& graphics, uint8_t max) : modules::graphics::IVertexBuffer(graphics),
+		_vertSize(modules::graphics::VertexSize::UNKNOWN),
+		_vertType(modules::graphics::VertexType::UNKNOWN),
 		_base(graphics, max) {
 	}
 
@@ -18,7 +19,7 @@ namespace aurora::modules::graphics {
 		return _base.getNative();
 	}
 
-	bool MultipleVertexBuffer::create(uint32_t size, Usage bufferUsage, const void* data, uint32_t dataSize) {
+	bool MultipleVertexBuffer::create(uint32_t size, modules::graphics::Usage bufferUsage, const void* data, uint32_t dataSize) {
 		auto rst = _base.create(size, bufferUsage, data, dataSize);
 		if (_base.getCurrent()) _base.getCurrent()->target->setFormat(_vertSize, _vertType);
 		return rst;
@@ -28,11 +29,11 @@ namespace aurora::modules::graphics {
 		return _base.getSize();
 	}
 
-	Usage MultipleVertexBuffer::getUsage() const {
+	modules::graphics::Usage MultipleVertexBuffer::getUsage() const {
 		return _base.getUsage();
 	}
 
-	Usage MultipleVertexBuffer::map(Usage expectMapUsage) {
+	modules::graphics::Usage MultipleVertexBuffer::map(modules::graphics::Usage expectMapUsage) {
 		return _base.map(expectMapUsage);
 	}
 
@@ -52,12 +53,12 @@ namespace aurora::modules::graphics {
 		return _base.update(offset, data, length);
 	}
 
-	void MultipleVertexBuffer::getFormat(VertexSize* size, VertexType* type) const {
+	void MultipleVertexBuffer::getFormat(modules::graphics::VertexSize* size, modules::graphics::VertexType* type) const {
 		if (size) *size = _vertSize;
 		if (type) *type = _vertType;
 	}
 
-	void MultipleVertexBuffer::setFormat(VertexSize size, VertexType type) {
+	void MultipleVertexBuffer::setFormat(modules::graphics::VertexSize size, modules::graphics::VertexType type) {
 		if (_vertSize != size || _vertType != type) {
 			_vertSize = size;
 			_vertType = type;
@@ -83,8 +84,8 @@ namespace aurora::modules::graphics {
 	}
 
 
-	MultipleIndexBuffer::MultipleIndexBuffer(IGraphicsModule& graphics, uint8_t max) : IIndexBuffer(graphics),
-		_idxType(IndexType::UNKNOWN),
+	MultipleIndexBuffer::MultipleIndexBuffer(modules::graphics::IGraphicsModule& graphics, uint8_t max) : modules::graphics::IIndexBuffer(graphics),
+		_idxType(modules::graphics::IndexType::UNKNOWN),
 		_base(graphics, max) {
 	}
 
@@ -99,7 +100,7 @@ namespace aurora::modules::graphics {
 		return _base.getNative();
 	}
 
-	bool MultipleIndexBuffer::create (uint32_t size, Usage bufferUsage, const void* data, uint32_t dataSize) {
+	bool MultipleIndexBuffer::create(uint32_t size, modules::graphics::Usage bufferUsage, const void* data, uint32_t dataSize) {
 		auto rst = _base.create(size, bufferUsage, data, dataSize);
 		if (_base.getCurrent()) _base.getCurrent()->target->setFormat(_idxType);
 		return rst;
@@ -109,11 +110,11 @@ namespace aurora::modules::graphics {
 		return _base.getSize();
 	}
 
-	Usage MultipleIndexBuffer::getUsage() const {
+	modules::graphics::Usage MultipleIndexBuffer::getUsage() const {
 		return _base.getUsage();
 	}
 
-	Usage MultipleIndexBuffer::map(Usage expectMapUsage) {
+	modules::graphics::Usage MultipleIndexBuffer::map(modules::graphics::Usage expectMapUsage) {
 		return _base.map(expectMapUsage);
 	}
 
@@ -133,11 +134,11 @@ namespace aurora::modules::graphics {
 		return _base.update(offset, data, length);
 	}
 
-	IndexType MultipleIndexBuffer::getFormat() const {
+	modules::graphics::IndexType MultipleIndexBuffer::getFormat() const {
 		return _idxType;
 	}
 
-	void MultipleIndexBuffer::setFormat(IndexType type) {
+	void MultipleIndexBuffer::setFormat(modules::graphics::IndexType type) {
 		if (_idxType != type) {
 			_idxType = type;
 
@@ -161,7 +162,7 @@ namespace aurora::modules::graphics {
 	}
 
 
-	MultipleConstantBuffer::MultipleConstantBuffer(IGraphicsModule& graphics, uint8_t max) : IConstantBuffer(graphics),
+	MultipleConstantBuffer::MultipleConstantBuffer(modules::graphics::IGraphicsModule& graphics, uint8_t max) : modules::graphics::IConstantBuffer(graphics),
 		_base(graphics, max) {
 	}
 
@@ -176,7 +177,7 @@ namespace aurora::modules::graphics {
 		return _base.getNative();
 	}
 
-	bool MultipleConstantBuffer::create (uint32_t size, Usage bufferUsage, const void* data, uint32_t dataSize) {
+	bool MultipleConstantBuffer::create(uint32_t size, modules::graphics::Usage bufferUsage, const void* data, uint32_t dataSize) {
 		return _base.create(size, bufferUsage, data, dataSize);
 	}
 
@@ -184,11 +185,11 @@ namespace aurora::modules::graphics {
 		return _base.getSize();
 	}
 
-	Usage MultipleConstantBuffer::getUsage() const {
+	modules::graphics::Usage MultipleConstantBuffer::getUsage() const {
 		return _base.getUsage();
 	}
 
-	Usage MultipleConstantBuffer::map(Usage expectMapUsage) {
+	modules::graphics::Usage MultipleConstantBuffer::map(modules::graphics::Usage expectMapUsage) {
 		return _base.map(expectMapUsage);
 	}
 
@@ -217,5 +218,27 @@ namespace aurora::modules::graphics {
 
 	void MultipleConstantBuffer::destroy() {
 		_base.destroy();
+	}
+
+
+	VertexBufferCollection::~VertexBufferCollection() {
+		clear();
+	}
+
+	modules::graphics::IVertexBuffer* VertexBufferCollection::get(const std::string& name) const {
+		auto itr = _buffers.find(name);
+		return itr == _buffers.end() ? nullptr : itr->second;
+	}
+
+	void VertexBufferCollection::add(const std::string& name, modules::graphics::IVertexBuffer* buffer) {
+		if (auto itr = _buffers.find(name); buffer) {
+			if (itr == _buffers.end()) {
+				_buffers.emplace(name, buffer);
+			} else if (itr->second != buffer) {
+				itr->second = buffer;
+			}
+		} else if (itr != _buffers.end()) {
+			_buffers.erase(itr);
+		}
 	}
 }

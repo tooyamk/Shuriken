@@ -2,7 +2,7 @@
 
 #include "aurora/Global.h"
 
-namespace aurora::renderers::commands {
+namespace aurora::render::commands {
 	class AE_DLL IRenderCommand {
 	public:
 		virtual ~IRenderCommand();

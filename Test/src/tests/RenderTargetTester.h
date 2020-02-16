@@ -5,9 +5,6 @@
 class RenderTargetTester : public BaseTester {
 public:
 	virtual int32_t AE_CALL run() override {
-		//nodes::components::AbstractComponent* com;
-
-
 		auto monitors = Monitor::getMonitors();
 		auto vms = monitors[0].getVideoModes();
 
@@ -36,8 +33,8 @@ public:
 
 					struct {
 						RefPtr<IGraphicsModule> g;
-						RefPtr<VertexBufferFactory> vbf;
-						RefPtr<ShaderParameterFactory> spf;
+						RefPtr<VertexBufferCollection> vbf;
+						RefPtr<ShaderParameterCollection> spc;
 						RefPtr<IProgram> p;
 						RefPtr<IIndexBuffer> ib;
 						RefPtr<IBlendState> bs;
@@ -45,7 +42,7 @@ public:
 						RefPtr<IRenderTarget> rt;
 
 						struct {
-							RefPtr<VertexBufferFactory> vbf;
+							RefPtr<VertexBufferCollection> vbf;
 							RefPtr<IProgram> p;
 							RefPtr<IIndexBuffer> ib;
 						} pp;
@@ -61,8 +58,8 @@ public:
 					}
 
 					renderData.dss = graphics->createDepthStencilState();
-					renderData.vbf = new VertexBufferFactory();
-					renderData.spf = new ShaderParameterFactory();
+					renderData.vbf = new VertexBufferCollection();
+					renderData.spc = new ShaderParameterCollection();
 
 					{
 						//auto vertexBuffer = graphics->createVertexBuffer();
@@ -112,16 +109,16 @@ public:
 					}
 
 					{
-						renderData.spf->add("red", new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set(Vec4f32::ONE).setUpdated();
-						renderData.spf->add("green", new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set(Vec4f32::ONE).setUpdated();
+						renderData.spc->add("red", new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set(Vec4f32::ONE).setUpdated();
+						renderData.spc->add("green", new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set(Vec4f32::ONE).setUpdated();
 						//cf->add("blue", new ShaderParameter())->set(Vec4f32::ONE).setUpdated();
 
-						RefPtr aabbccStruct = new ShaderParameterFactory();
+						RefPtr aabbccStruct = new ShaderParameterCollection();
 						aabbccStruct->add("val1", new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set(Vec4f32::ONE).setUpdated();
 						f32 val2[] = { 1.0f, 1.0f };
 						aabbccStruct->add("val2", new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set<f32>(val2, sizeof(val2), sizeof(f32), true).setUpdated();
 						aabbccStruct->add("val3", new ShaderParameter())->set(Vec4f32::ONE).setUpdated();
-						renderData.spf->add("blue", new ShaderParameter())->set(aabbccStruct.get());
+						renderData.spc->add("blue", new ShaderParameter())->set(aabbccStruct.get());
 					}
 
 					renderData.bs = graphics->createBlendState();
@@ -156,8 +153,8 @@ public:
 
 							RefPtr s = graphics->createSampler();
 
-							renderData.spf->add("ppTex", new ShaderParameter(ShaderParameterUsage::AUTO))->set(tv.get()).setUpdated();
-							renderData.spf->add("ppTexSampler", new ShaderParameter(ShaderParameterUsage::AUTO))->set(s.get()).setUpdated();
+							renderData.spc->add("ppTex", new ShaderParameter(ShaderParameterUsage::AUTO))->set(tv.get()).setUpdated();
+							renderData.spc->add("ppTexSampler", new ShaderParameter(ShaderParameterUsage::AUTO))->set(s.get()).setUpdated();
 						}
 					}
 
@@ -194,7 +191,7 @@ public:
 							//texRes->unmap(0, 0);
 							//texRes->update(0, 0, Box2ui32(Vec2ui32(1, 1), Vec2ui32(2, 2)), texData);
 
-							renderData.spf->add("texDiffuse", new ShaderParameter(ShaderParameterUsage::AUTO))->set(texView.get()).setUpdated();
+							renderData.spc->add("texDiffuse", new ShaderParameter(ShaderParameterUsage::AUTO))->set(texView.get()).setUpdated();
 						}
 
 						RefPtr sam = graphics->createSampler();
@@ -202,7 +199,7 @@ public:
 							//sam->setMipLOD(0, 0);
 							//sam->setAddress(SamplerAddressMode::WRAP, SamplerAddressMode::WRAP, SamplerAddressMode::WRAP);
 							sam->setFilter(SamplerFilterOperation::NORMAL, SamplerFilterMode::POINT, SamplerFilterMode::POINT, SamplerFilterMode::POINT);
-							renderData.spf->add("samLiner", new ShaderParameter(ShaderParameterUsage::AUTO))->set(sam.get()).setUpdated();
+							renderData.spc->add("samLiner", new ShaderParameter(ShaderParameterUsage::AUTO))->set(sam.get()).setUpdated();
 						}
 					}
 
@@ -226,7 +223,7 @@ public:
 						renderData.pp.ib->setFormat(IndexType::UI16);
 					}
 
-					renderData.pp.vbf = new VertexBufferFactory();
+					renderData.pp.vbf = new VertexBufferCollection();
 					{
 						RefPtr ppVertexBuffer = graphics->createVertexBuffer();
 						{
@@ -270,7 +267,7 @@ public:
 
 						renderData.g->setBlendState(renderData.bs.get(), Vec4f32::ZERO);
 						renderData.g->setDepthStencilState(renderData.dss.get(), 0);
-						renderData.g->draw(renderData.vbf.get(), renderData.p.get(), renderData.spf.get(), renderData.ib.get());
+						renderData.g->draw(renderData.vbf.get(), renderData.p.get(), renderData.spc.get(), renderData.ib.get());
 
 						renderData.g->endRender();
 
@@ -281,7 +278,7 @@ public:
 
 						renderData.g->setBlendState(renderData.bs.get(), Vec4f32::ZERO);
 						renderData.g->setDepthStencilState(renderData.dss.get(), 0);
-						renderData.g->draw(renderData.pp.vbf, renderData.pp.p.get(), renderData.spf.get(), renderData.pp.ib.get());
+						renderData.g->draw(renderData.pp.vbf, renderData.pp.p.get(), renderData.spc.get(), renderData.pp.ib.get());
 
 						renderData.g->endRender();
 
@@ -290,7 +287,7 @@ public:
 
 					evtDispatcher.addEventListener(ApplicationEvent::CLOSING, *appClosingListener);
 
-					(new Stats())->run(app.get());
+					(new Stats())->run(app);
 					app->setVisible(true);
 					app->run(true);
 				}

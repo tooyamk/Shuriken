@@ -95,13 +95,14 @@ namespace aurora::hash {
 		}
 
 		template<size_t Bits, bool InputReflected>
-		static uint_t<Bits> AE_CALL update(uint_t<Bits> crc, const uint8_t* data, size_t len, const TableType<Bits>& table) {
+		static uint_t<Bits> AE_CALL update(uint_t<Bits> crc, const void* data, size_t len, const TableType<Bits>& table) {
+			auto src = (const uint8_t*)data;
 			uint_t<Bits> val;
 			for (size_t i = 0; i < len; ++i) {
 				if constexpr (InputReflected) {
-					val = REFLECTION_TABLE[data[i]];
+					val = REFLECTION_TABLE[src[i]];
 				} else {
-					val = data[i];
+					val = src[i];
 				}
 				crc = table[((uint_t<Bits>)(crc >> (Bits - 8)) ^ val) & 0xFF] ^ (uint_t<Bits>)(crc << 8);
 			}
@@ -118,7 +119,7 @@ namespace aurora::hash {
 		}
 
 		template<size_t Bits>
-		inline static uint_t<Bits> AE_CALL calc(const uint8_t* data, size_t len, uint_t<Bits> initialValue, uint_t<Bits> finalXorValue, bool reflectInput, bool ResultReflected, const TableType<Bits>& table) {
+		inline static uint_t<Bits> AE_CALL calc(const void* data, size_t len, uint_t<Bits> initialValue, uint_t<Bits> finalXorValue, bool reflectInput, bool ResultReflected, const TableType<Bits>& table) {
 			auto crc = init<Bits>(initialValue);
 			crc = reflectInput ? update<Bits, true>(crc, data, len, table) : update<Bits, false>(crc, data, len, table);
 			return ResultReflected ? finish<Bits, true>(crc, finalXorValue) : finish<Bits, false>(crc, finalXorValue);

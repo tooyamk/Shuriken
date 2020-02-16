@@ -44,14 +44,14 @@ public:
 	}
 
 	void AE_CALL initInputModule(std::vector<RefPtr<IInputModule>>& modules, const std::string_view& dll, const Args* args) {
-		RefPtr<InputModuleLoader> loader = new InputModuleLoader();
+		RefPtr loader = new InputModuleLoader();
 		if (loader->load(dll)) {
 			if (auto im = loader->create(args); im) modules.emplace_back(im);
 		}
 	}
 
 	virtual int32_t AE_CALL run() override {
-		RefPtr<Application> app = new Application(u8"TestApp", 1000. / 60.);
+		RefPtr app = new Application(u8"TestApp", 1000. / 60.);
 
 		Application::Style wndStype;
 		wndStype.thickFrame = true;

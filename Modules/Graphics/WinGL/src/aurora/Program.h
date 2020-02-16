@@ -13,10 +13,10 @@ namespace aurora::modules::graphics::win_gl {
 		virtual ~Program();
 
 		virtual const void* AE_CALL getNative() const override;
-		virtual bool AE_CALL create(const ProgramSource& vert, const ProgramSource& frag, const IncludeHandler& handler) override;
+		virtual bool AE_CALL create(const ProgramSource& vert, const ProgramSource& frag, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& handler) override;
 		virtual void AE_CALL destroy() override;
 
-		bool AE_CALL use(const VertexBufferFactory* vertexFactory, const ShaderParameterFactory* paramFactory);
+		bool AE_CALL use(const IVertexBufferGetter* vertexBufferGetter, const IShaderParameterGetter* shaderParamGetter);
 
 	protected:
 		struct InVertexBufferInfo {
@@ -47,6 +47,6 @@ namespace aurora::modules::graphics::win_gl {
 
 		void _constantBufferUpdateAll(ConstantBuffer* cb, const std::vector<ConstantBufferLayout::Variables>& vars);
 
-		GLuint AE_CALL _compileShader(const ProgramSource& source, GLenum type, ProgramStage stage, const IncludeHandler& handler);
+		GLuint AE_CALL _compileShader(const ProgramSource& source, GLenum type, ProgramStage stage, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& handler);
 	};
 }

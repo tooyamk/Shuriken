@@ -4,7 +4,7 @@
 #include "aurora/math/Matrix.h"
 
 namespace aurora::components {
-	class Camera : public IComponent {
+	class AE_DLL Camera : public IComponent {
 	public:
 		Camera();
 

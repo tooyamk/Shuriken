@@ -14,14 +14,13 @@
 #include "Texture3DResource.h"
 #include "TextureView.h"
 #include "VertexBuffer.h"
+#include "aurora/ProgramSource.h"
 #include "aurora/modules/graphics/GraphicsAdapter.h"
 
 namespace aurora::modules::graphics::win_d3d11 {
-	Graphics::Graphics(Ref* loader, Application* app) :
+	Graphics::Graphics() :
 		_curIsBackBuffer(true),
 		_backBufferSampleCount(1),
-		_loader(loader),
-		_app(app),
 		_refreshRate({0, 1}),
 		_featureLevel(D3D_FEATURE_LEVEL_9_1),
 		//_driverType(D3D_DRIVER_TYPE_NULL),
@@ -36,21 +35,20 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_DSV(nullptr),
 		_resizedListener(this, &Graphics::_resizedHandler) {
 		_resizedListener.ref();
-		_app->getEventDispatcher().addEventListener(ApplicationEvent::RESIZED, _resizedListener);
 		_constantBufferManager.createShareConstantBufferCallback = std::bind(&Graphics::_createdShareConstantBuffer, this);
 		_constantBufferManager.createExclusiveConstantBufferCallback = std::bind(&Graphics::_createdExclusiveConstantBuffer, this, std::placeholders::_1);
 	}
 
 	Graphics::~Graphics() {
-		_app->getEventDispatcher().removeEventListener(ApplicationEvent::RESIZED, _resizedListener);
+		if (_app) _app->getEventDispatcher().removeEventListener(ApplicationEvent::RESIZED, _resizedListener);
 		_release();
 	}
 
-	bool Graphics::createDevice(const GraphicsAdapter* adapter, SampleCount sampleCount) {
-		if (_device || !_app->Win_getHWnd()) return false;
+	bool Graphics::createDevice(Ref* loader, Application* app, const GraphicsAdapter* adapter, SampleCount sampleCount) {
+		if (_device || !app->Win_getHWnd()) return false;
 
 		if (adapter) {
-			return _createDevice(*adapter, sampleCount);
+			return _createDevice(loader, app, *adapter, sampleCount);
 		} else {
 			std::vector<GraphicsAdapter> adapters;
 			GraphicsAdapter::query(adapters);
@@ -58,20 +56,20 @@ namespace aurora::modules::graphics::win_d3d11 {
 			GraphicsAdapter::autoSort(adapters, indices);
 
 			for (auto& idx : indices) {
-				if (_createDevice(adapters[idx], sampleCount)) return true;
+				if (_createDevice(loader, app, adapters[idx], sampleCount)) return true;
 			}
 			return false;
 		}
 	}
 
-	bool Graphics::_createDevice(const GraphicsAdapter& adapter, SampleCount sampleCount) {
+	bool Graphics::_createDevice(Ref* loader, Application* app, const GraphicsAdapter& adapter, SampleCount sampleCount) {
 		DXObjGuard objs;
 
 		IDXGIFactory2* dxgFctory = nullptr;
 
 		if (FAILED(CreateDXGIFactory1(__uuidof(IDXGIFactory2), (void**)&dxgFctory))) return false;
 		objs.add(dxgFctory);
-		dxgFctory->MakeWindowAssociation(_app->Win_getHWnd(), DXGI_MWA_NO_WINDOW_CHANGES | DXGI_MWA_NO_ALT_ENTER);
+		dxgFctory->MakeWindowAssociation(app->Win_getHWnd(), DXGI_MWA_NO_WINDOW_CHANGES | DXGI_MWA_NO_ALT_ENTER);
 
 		IDXGIAdapter* dxgAdapter = nullptr;
 		for (UINT i = 0;; ++i) {
@@ -258,7 +256,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		}
 
 		Vec2i32 size;
-		_app->getInnerSize(size);
+		app->getInnerSize(size);
 
 		_backBufferSampleCount = sampleCount > _deviceFeatures.maxSampleCount ? _deviceFeatures.maxSampleCount : sampleCount;
 		DXGI_SWAP_CHAIN_DESC swapChainDesc = { 0 };
@@ -271,7 +269,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		swapChainDesc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
 		swapChainDesc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
 		swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-		swapChainDesc.OutputWindow = _app->Win_getHWnd();
+		swapChainDesc.OutputWindow = app->Win_getHWnd();
 		swapChainDesc.Windowed = true;
 		swapChainDesc.SampleDesc.Count = _backBufferSampleCount;
 		swapChainDesc.SampleDesc.Quality = 0;
@@ -287,6 +285,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_defaultDepthStencilState = new DepthStencilState(*this, true);
 		_defaultRasterizerState = new RasterizerState(*this, true);
 		_backDepthStencil = new DepthStencil(*this, true);
+
+		_loader = loader;
+		_app = app;
+		_app->getEventDispatcher().addEventListener(ApplicationEvent::RESIZED, _resizedListener);
 
 		_resize((Vec2<UINT>&)size);
 
@@ -447,9 +449,9 @@ namespace aurora::modules::graphics::win_d3d11 {
 	void Graphics::beginRender() {
 	}
 
-	void Graphics::draw(const VertexBufferFactory* vertexFactory, IProgram* program, const ShaderParameterFactory* paramFactory, 
+	void Graphics::draw(const IVertexBufferGetter* vertexBufferGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
 		const IIndexBuffer* indexBuffer, uint32_t count, uint32_t offset) {
-		if (vertexFactory && indexBuffer && program && program->getGraphics() == this && indexBuffer->getGraphics() == this && count > 0) {
+		if (vertexBufferGetter && indexBuffer && program && program->getGraphics() == this && indexBuffer->getGraphics() == this && count > 0) {
 			auto ib = (IndexBuffer*)indexBuffer->getNative();
 			if (!ib) return;
 			auto internalIndexBuffer = ib->getInternalBuffer();
@@ -460,7 +462,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			
 			auto p = (Program*)program->getNative();
 			if (p) {
-				if (p->use(vertexFactory, paramFactory)) {
+				if (p->use(vertexBufferGetter, shaderParamGetter)) {
 					uint32_t last = numIndexElements - offset;
 					if (count > numIndexElements) count = numIndexElements;
 					if (count > last) count = last;

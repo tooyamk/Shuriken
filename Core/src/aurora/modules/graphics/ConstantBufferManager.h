@@ -6,12 +6,15 @@
 #include <unordered_map>
 #include <unordered_set>
 
+namespace aurora {
+	class ShaderParameter;
+	class IShaderParameterGetter;
+}
+
 namespace aurora::modules::graphics {
 	class IConstantBuffer;
-	class ShaderParameter;
-	class ShaderParameterFactory;
-
-
+	
+	
 	struct AE_DLL ShaderParameterUsageStatistics {
 		uint16_t exclusiveCount = 0;
 		uint16_t autoCount = 0;
@@ -41,7 +44,7 @@ namespace aurora::modules::graphics {
 
 		void AE_CALL calcFeatureValue();
 
-		void AE_CALL collectUsingInfo(const ShaderParameterFactory& factory, ShaderParameterUsageStatistics& statistics,
+		void AE_CALL collectUsingInfo(const IShaderParameterGetter& getter, ShaderParameterUsageStatistics& statistics,
 			std::vector<const ShaderParameter*>& usingParams, std::vector<const ConstantBufferLayout::Variables*>& usingVars) const;
 
 	private:
@@ -49,7 +52,7 @@ namespace aurora::modules::graphics {
 
 		void AE_CALL _calcFeatureValue(const Variables& var, uint16_t& numValidVars);
 
-		void AE_CALL _collectUsingInfo(const ConstantBufferLayout::Variables& var, const ShaderParameterFactory& factory, ShaderParameterUsageStatistics& statistics,
+		void AE_CALL _collectUsingInfo(const ConstantBufferLayout::Variables& var, const IShaderParameterGetter& getter, ShaderParameterUsageStatistics& statistics,
 			std::vector<const ShaderParameter*>& usingParams, std::vector<const ConstantBufferLayout::Variables*>& usingVars) const;
 	};
 
@@ -118,7 +121,7 @@ namespace aurora::modules::graphics {
 
 
 		IConstantBuffer* AE_CALL _getExclusiveConstantBuffer(const ConstantBufferLayout& layout, const std::vector<ShaderParameter*>& parameters,
-			uint32_t cur, uint32_t max, ExclusiveConstNode* parent, std::unordered_map <const ShaderParameter*, ExclusiveConstNode>& chindrenContainer);
+			uint32_t cur, uint32_t max, ExclusiveConstNode* parent, std::unordered_map <const ShaderParameter*, ExclusiveConstNode>& childContainer);
 		void AE_CALL _registerExclusiveConstantLayout(ConstantBufferLayout& layout);
 		void AE_CALL _unregisterExclusiveConstantLayout(ConstantBufferLayout& layout);
 		static void _releaseExclusiveConstant(void* target, const ShaderParameter& param);

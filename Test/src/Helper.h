@@ -46,7 +46,7 @@ inline ByteArray readFile(const std::string& path) {
 	return std::move(dst);
 }
 
-inline ProgramSource readProgramSourcee(const std::string& path, ProgramStage type) {
+inline ProgramSource readProgramSource(const std::string& path, ProgramStage type) {
 	ProgramSource s;
 	s.language = ProgramLanguage::HLSL;
 	s.stage = type;
@@ -56,7 +56,7 @@ inline ProgramSource readProgramSourcee(const std::string& path, ProgramStage ty
 
 inline bool programCreate(IProgram& program, const std::string_view& vert, const std::string_view& frag) {
 	std::string appPath = String::UnicodeToUtf8(getAppPath()) + u8"Resources/shaders/";
-	if (program.create(readProgramSourcee(appPath + vert.data(), ProgramStage::VS), readProgramSourcee(appPath + frag.data(), ProgramStage::PS),
+	if (program.create(readProgramSource(appPath + vert.data(), ProgramStage::VS), readProgramSource(appPath + frag.data(), ProgramStage::PS), nullptr, 0,
 		[&appPath](const IProgram& program, ProgramStage stage, const std::string_view& name) {
 		return readFile(appPath + name.data());
 	})) {

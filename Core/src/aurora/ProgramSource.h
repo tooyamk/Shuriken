@@ -1,9 +1,18 @@
 #pragma once
 
 #include "aurora/ByteArray.h"
+#include "aurora/Ref.h"
 
-namespace aurora::modules::graphics {
-	enum class ProgramStage : uint8_t;
+namespace aurora {
+	enum class ProgramStage : uint8_t {
+		UNKNOWN,
+		CS,//ComputeShader
+		DS, //DomainShader
+		GS,//GeomtryShader
+		HS,//HullShader
+		PS,//PixelShader
+		VS,//VertexShader
+	};
 
 
 	enum class ProgramLanguage : uint8_t {
@@ -17,7 +26,7 @@ namespace aurora::modules::graphics {
 	};
 
 
-	class AE_DLL ProgramSource {
+	class AE_DLL ProgramSource : public Ref {
 	public:
 		ProgramSource();
 		ProgramSource(ProgramSource&& value);

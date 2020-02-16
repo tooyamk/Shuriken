@@ -1,6 +1,6 @@
 #include "IRenderCommand.h"
 
-namespace aurora::renderers::commands {
+namespace aurora::render::commands {
 	IRenderCommand::IRenderCommand() {
 	}
 

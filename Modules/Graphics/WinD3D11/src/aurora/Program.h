@@ -12,10 +12,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual ~Program();
 
 		virtual const void* AE_CALL getNative() const override;
-		virtual bool AE_CALL create(const ProgramSource& vert, const ProgramSource& frag, const IncludeHandler& handler) override;
+		virtual bool AE_CALL create(const ProgramSource& vert, const ProgramSource& frag, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& handler) override;
 		virtual void AE_CALL destroy() override;
 
-		bool AE_CALL use(const VertexBufferFactory* vertexFactory, const ShaderParameterFactory* paramFactory);
+		bool AE_CALL use(const IVertexBufferGetter* vertexBufferGetter, const IShaderParameterGetter* shaderParamGetter);
 		void AE_CALL useEnd();
 
 	protected:
@@ -104,22 +104,22 @@ namespace aurora::modules::graphics::win_d3d11 {
 		std::vector<ShaderParameter*> _tempParams;
 		std::vector<const ConstantBufferLayout::Variables*> _tempVars;
 
-		ID3DBlob* AE_CALL _compileShader(const ProgramSource& source, ProgramStage stage, const std::string_view& target, const IncludeHandler& handler);
+		ID3DBlob* AE_CALL _compileShader(const ProgramSource& source, ProgramStage stage, const std::string_view& target, const D3D_SHADER_MACRO* defines, const IncludeHandler& handler);
 		ID3D11InputLayout* _getOrCreateInputLayout();
 		void AE_CALL _parseInLayout(const D3D11_SHADER_DESC& desc, ID3D11ShaderReflection& ref);
 		void AE_CALL _parseParameterLayout(const D3D11_SHADER_DESC& desc, ID3D11ShaderReflection& ref, ParameterLayout& dst);
 		void AE_CALL _parseConstantVar(ConstantBufferLayout::Variables& var, ID3D11ShaderReflectionType* type);
 		void AE_CALL _calcConstantLayoutSameBuffers(std::vector<std::vector<MyConstantBufferLayout>*>& constBufferLayouts);
 
-		ConstantBuffer* _getConstantBuffer(const MyConstantBufferLayout& cbLayout, const ShaderParameterFactory& factory);
+		ConstantBuffer* _getConstantBuffer(const MyConstantBufferLayout& cbLayout, const IShaderParameterGetter& paramGetter);
 		void _constantBufferUpdateAll(ConstantBuffer* cb, const std::vector<ConstantBufferLayout::Variables>& vars);
 
 		template<ProgramStage Stage>
-		void AE_CALL _useParameters(const ParameterLayout& layout, const ShaderParameterFactory& factory) {
+		void AE_CALL _useParameters(const ParameterLayout& layout, const IShaderParameterGetter& paramGetter) {
 			auto g = _graphics.get<Graphics>();
 
 			for (auto& info : layout.constantBuffers) {
-				auto cb = _getConstantBuffer(info, factory);
+				auto cb = _getConstantBuffer(info, paramGetter);
 				if (cb && g == cb->getGraphics()) {
 					if (auto native = (ConstantBuffer*)cb->getNative(); native) {
 						if (auto buffer = native->getInternalBuffer(); buffer) g->useConstantBuffers<Stage>(info.bindPoint, 1, &buffer);
@@ -128,7 +128,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			}
 
 			for (auto& info : layout.textures) {
-				if (auto p = factory.get(info.name, ShaderParameterType::TEXTURE); p) {
+				if (auto p = paramGetter.get(info.name, ShaderParameterType::TEXTURE); p) {
 					if (auto data = p->getData(); data && g == ((ITextureView*)data)->getGraphics()) {
 						if (auto native = (TextureView*)((ITextureView*)data)->getNative(); native) {
 							auto iv = native->getInternalView();
@@ -140,7 +140,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			}
 
 			for (auto& info : layout.samplers) {
-				if (auto p = factory.get(info.name, ShaderParameterType::SAMPLER); p) {
+				if (auto p = paramGetter.get(info.name, ShaderParameterType::SAMPLER); p) {
 					if (auto data = p->getData(); data && g == ((ISampler*)data)->getGraphics()) {
 						if (auto native = (Sampler*)((ISampler*)data)->getNative(); native) {
 							native->update();

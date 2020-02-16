@@ -16,10 +16,10 @@ namespace aurora::modules::graphics {
 			return nullptr;
 		}
 
-		auto g = new win_d3d11::Graphics(loader, app.value());
+		auto g = new win_d3d11::Graphics();
 		auto adapter = args->get<const GraphicsAdapter*>("adapter");
 		auto sc = args->get<SampleCount>("sampleCount");
-		if (!g->createDevice(adapter.has_value() ? adapter.value() : nullptr, sc ? *sc : 1)) {
+		if (!g->createDevice(loader, app.value(), adapter.has_value() ? adapter.value() : nullptr, sc ? *sc : 1)) {
 			g->unref();
 			g = nullptr;
 		}

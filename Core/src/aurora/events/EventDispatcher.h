@@ -62,7 +62,13 @@ namespace aurora::events {
 			return rst;
 		}
 
-		virtual uint32_t AE_CALL hasEventListener(const EvtType& type) const  override {
+		virtual uint32_t AE_CALL getNumEventListeners() const override {
+			uint32_t n = 0;
+			for (auto& itr : _listeners) n += itr.second.numValidListeners;
+			return n;
+		}
+
+		virtual uint32_t AE_CALL getNumEventListeners(const EvtType& type) const override {
 			auto itr = _listeners.find(type);
 			return itr == _listeners.end() ? 0 : itr->second.numValidListeners;
 		}
@@ -174,7 +180,7 @@ namespace aurora::events {
 
 		struct TypeListeners {
 			TypeListeners(IEventListener<EvtType>* rawListener) :
-				dispatching(false),
+				dispatching(0),
 				numValidListeners(1),
 				numTotalListeners(1) {
 				listeners.emplace_back(rawListener);

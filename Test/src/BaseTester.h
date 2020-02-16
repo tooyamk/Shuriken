@@ -11,6 +11,7 @@ using namespace aurora::events;
 using namespace aurora::modules;
 using namespace aurora::modules::graphics;
 using namespace aurora::modules::inputs;
+using namespace aurora::render;
 
 class Stats {
 public:

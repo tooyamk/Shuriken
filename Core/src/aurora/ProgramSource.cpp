@@ -2,7 +2,7 @@
 #include "aurora/String.h"
 #include "aurora/modules/graphics/IGraphicsModule.h"
 
-namespace aurora::modules::graphics {
+namespace aurora {
 	ProgramSource::ProgramSource() :
 		language(ProgramLanguage::UNKNOWN),
 		stage(ProgramStage::UNKNOWN),

@@ -101,7 +101,7 @@ namespace aurora::modules::graphics::win_gl {
 
 
 	inline uint64_t calcHash(const void* data, size_t size) {
-		return hash::xxHash::calc<64, std::endian::native>((uint8_t*)data, size, 0);
+		return hash::xxHash::calc<64, std::endian::native>(data, size, 0);
 	}
 
 	template<typename T>

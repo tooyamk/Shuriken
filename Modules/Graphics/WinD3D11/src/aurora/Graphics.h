@@ -11,7 +11,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 	class AE_MODULE_DLL Graphics : public IGraphicsModule {
 	public:
-		Graphics(Ref* loader, Application* app);
+		Graphics();
 		virtual ~Graphics();
 
 		virtual events::IEventDispatcher<GraphicsEvent>& AE_CALL getEventDispatcher() override;
@@ -41,7 +41,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual void AE_CALL setRasterizerState(IRasterizerState* state) override;
 		
 		virtual void AE_CALL beginRender() override;
-		virtual void AE_CALL draw(const VertexBufferFactory* vertexFactory, IProgram* program, const ShaderParameterFactory* paramFactory, 
+		virtual void AE_CALL draw(const IVertexBufferGetter* vertexBufferGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
 			const IIndexBuffer* indexBuffer, uint32_t count = (std::numeric_limits<uint32_t>::max)(), uint32_t offset = 0) override;
 		virtual void AE_CALL endRender() override;
 		virtual void AE_CALL present() override;
@@ -49,7 +49,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual void AE_CALL setRenderTarget(IRenderTarget* rt) override;
 		virtual void AE_CALL clear(ClearFlag flags, const Vec4f32& color, f32 depth, size_t stencil) override;
 
-		bool AE_CALL createDevice(const GraphicsAdapter* adapter, SampleCount sampleCount);
+		bool AE_CALL createDevice(Ref* loader, Application* app, const GraphicsAdapter* adapter, SampleCount sampleCount);
 
 		inline void AE_CALL error(const std::string_view& msg) {
 			_eventDispatcher.dispatchEvent(this, GraphicsEvent::ERR, (std::string_view*) & msg);
@@ -297,7 +297,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		events::EventListener<ApplicationEvent, Graphics> _resizedListener;
 		void AE_CALL _resizedHandler(events::Event<ApplicationEvent>& e);
 
-		bool AE_CALL _createDevice(const GraphicsAdapter& adapter, SampleCount sampleCount);
+		bool AE_CALL _createDevice(Ref* loader, Application* app, const GraphicsAdapter& adapter, SampleCount sampleCount);
 
 		void AE_CALL _setBlendState(BlendState& state, const Vec4f32& constantFactors, uint32_t sampleMask);
 		void AE_CALL _setDepthStencilState(DepthStencilState& state, uint32_t stencilRef);

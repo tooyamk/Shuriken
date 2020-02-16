@@ -8,12 +8,12 @@ public:
 		auto monitors = Monitor::getMonitors();
 		auto vms = monitors[0].getVideoModes();
 
-		RefPtr<Application> app = new Application(u8"TestApp", 1000. / 60.);
+		RefPtr app = new Application(u8"TestApp", 1000. / 60.);
 
 		Application::Style wndStype;
 		wndStype.thickFrame = true;
 		if (app->createWindow(wndStype, u8"", Box2i32(Vec2i32({ 100, 100 }), Vec2i32({ 800, 600 })), false)) {
-			RefPtr<GraphicsModuleLoader> gml = new GraphicsModuleLoader();
+			RefPtr gml = new GraphicsModuleLoader();
 
 			//if (gml->load(getDLLName("ae-win-gl"))) {
 			if (gml->load(getDLLName("ae-win-d3d11"))) {
@@ -21,7 +21,7 @@ public:
 				gpstml->load(getDLLName("ae-program-source-translator"));
 				auto gpst = gpstml->create(&Args().add("dxc", getDLLName("dxcompiler")));
 
-				RefPtr<IGraphicsModule> graphics = gml->create(&Args().add("app", &*app).add("sampleCount", SampleCount(4)).add("trans", gpst));
+				RefPtr graphics = gml->create(&Args().add("app", &*app).add("sampleCount", SampleCount(4)).add("trans", gpst));
 
 				if (graphics) {
 					println("Graphics Version : ", graphics->getVersion());
@@ -33,8 +33,8 @@ public:
 
 					struct {
 						RefPtr<IGraphicsModule> g;
-						RefPtr<VertexBufferFactory> vbf;
-						RefPtr<ShaderParameterFactory> spf;
+						RefPtr<VertexBufferCollection> vbf;
+						RefPtr<ShaderParameterCollection> spc;
 						RefPtr<IProgram> p;
 						RefPtr<IIndexBuffer> ib;
 						RefPtr<IBlendState> bs;
@@ -51,8 +51,8 @@ public:
 					}
 
 					renderData.dss = graphics->createDepthStencilState();
-					renderData.vbf = new VertexBufferFactory();
-					renderData.spf = new ShaderParameterFactory();
+					renderData.vbf = new VertexBufferCollection();
+					renderData.spc = new ShaderParameterCollection();
 
 					{
 						//auto vertexBuffer = graphics->createVertexBuffer();
@@ -92,16 +92,16 @@ public:
 					}
 
 					{
-						renderData.spf->add("red", new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set(Vec4f32::ONE).setUpdated();
-						renderData.spf->add("green", new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set(Vec4f32::ONE).setUpdated();
+						renderData.spc->add("red", new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set(Vec4f32::ONE).setUpdated();
+						renderData.spc->add("green", new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set(Vec4f32::ONE).setUpdated();
 						//cf->add("blue", new ShaderParameter())->set(Vec4f32::ONE).setUpdated();
 
-						auto aabbccStruct = new ShaderParameterFactory();
+						auto aabbccStruct = new ShaderParameterCollection();
 						aabbccStruct->add("val1", new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set(Vec4f32::ONE).setUpdated();
 						f32 val2[] = { 1.0f, 1.0f };
 						aabbccStruct->add("val2", new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set<f32>(val2, sizeof(val2), sizeof(f32), true).setUpdated();
 						aabbccStruct->add("val3", new ShaderParameter())->set(Vec4f32::ONE).setUpdated();
-						renderData.spf->add("blue", new ShaderParameter())->set(aabbccStruct);
+						renderData.spc->add("blue", new ShaderParameter())->set(aabbccStruct);
 					}
 
 					renderData.bs = graphics->createBlendState();
@@ -148,7 +148,7 @@ public:
 							//texRes->map(0, 0, Usage::MAP_WRITE);
 							//texRes->update(0, 0, Box2ui32(Vec2ui32(0, 0), Vec2ui32(2, 2)), texData);
 
-							renderData.spf->add("texDiffuse", new ShaderParameter(ShaderParameterUsage::AUTO))->set(texView).setUpdated();
+							renderData.spc->add("texDiffuse", new ShaderParameter(ShaderParameterUsage::AUTO))->set(texView).setUpdated();
 						}
 
 						auto sam = graphics->createSampler();
@@ -156,7 +156,7 @@ public:
 							//sam->setMipLOD(0, 0);
 							//sam->setAddress(SamplerAddressMode::WRAP, SamplerAddressMode::WRAP, SamplerAddressMode::WRAP);
 							sam->setFilter(SamplerFilterOperation::NORMAL, SamplerFilterMode::POINT, SamplerFilterMode::POINT, SamplerFilterMode::POINT);
-							renderData.spf->add("samLiner", new ShaderParameter(ShaderParameterUsage::AUTO))->set(sam).setUpdated();
+							renderData.spc->add("samLiner", new ShaderParameter(ShaderParameterUsage::AUTO))->set(sam).setUpdated();
 						}
 					}
 
@@ -200,7 +200,7 @@ public:
 						renderData.g->clear(ClearFlag::COLOR | ClearFlag::DEPTH | ClearFlag::STENCIL, Vec4f32(0.0f, 0.0f, 0.25f, 1.0f), 1.f, 0);
 
 						if (true) {
-							renderData.spf->get("red")->set(Vec4f32((f32)rand() / (f32)RAND_MAX, (f32)rand() / (f32)RAND_MAX)).setUpdated();
+							renderData.spc->get("red")->set(Vec4f32((f32)rand() / (f32)RAND_MAX, (f32)rand() / (f32)RAND_MAX)).setUpdated();
 
 							auto vb = renderData.vbf->get("POSITION0");
 							if (vb) {
@@ -225,7 +225,7 @@ public:
 						}
 
 						renderData.g->setBlendState(renderData.bs.get(), Vec4f32::ZERO);
-						renderData.g->draw(renderData.vbf.get(), renderData.p.get(), renderData.spf.get(), renderData.ib.get());
+						renderData.g->draw(renderData.vbf.get(), renderData.p.get(), renderData.spc.get(), renderData.ib.get());
 
 						renderData.g->endRender();
 						renderData.g->present();
@@ -233,7 +233,7 @@ public:
 
 					evtDispatcher.addEventListener(ApplicationEvent::CLOSING, *appClosingListener);
 
-					(new Stats())->run(&*app);
+					(new Stats())->run(app);
 					app->setVisible(true);
 					app->run(true);
 				}

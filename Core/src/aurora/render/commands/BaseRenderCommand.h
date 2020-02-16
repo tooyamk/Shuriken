@@ -1,8 +1,8 @@
 #pragma once
 
-#include "aurora/renderers/commands/IRenderCommand.h"
+#include "aurora/render/commands/IRenderCommand.h"
 
-namespace aurora::renderers::commands {
+namespace aurora::render::commands {
 	template<typename T>
 	class AE_TEMPLATE_DLL BaseRenderCommand : public IRenderCommand {
 	protected:

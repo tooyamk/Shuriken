@@ -1,6 +1,6 @@
 #include "ConstantBufferManager.h"
+#include "aurora/ShaderParameter.h"
 #include "aurora/modules/graphics/IGraphicsModule.h"
-#include "aurora/modules/graphics/ShaderParameterFactory.h"
 #include <algorithm>
 
 namespace aurora::modules::graphics {
@@ -11,22 +11,22 @@ namespace aurora::modules::graphics {
 	}
 
 	void ConstantBufferLayout::calcFeatureValue() {
-		featureValue = hash::CRC::update<64, false>(0, (uint8_t*)&size, sizeof(size), _crcTable);
+		featureValue = hash::CRC::update<64, false>(0, &size, sizeof(size), _crcTable);
 
 		uint16_t numValidVars = 0;
 		for (auto& var : variables) _calcFeatureValue(var, numValidVars);
 
-		featureValue = hash::CRC::update<64, false>(featureValue, (uint8_t*)&numValidVars, sizeof(numValidVars), _crcTable);
+		featureValue = hash::CRC::update<64, false>(featureValue, &numValidVars, sizeof(numValidVars), _crcTable);
 		featureValue = hash::CRC::finish<64, false>(featureValue, 0);
 	}
 
 	void ConstantBufferLayout::_calcFeatureValue(const Variables& var, uint16_t& numValidVars) {
 		if (var.structMembers.empty()) {
 			auto nameLen = var.name.size();
-			featureValue = hash::CRC::update<64, false>(featureValue, (uint8_t*)&nameLen, sizeof(nameLen), _crcTable);
-			featureValue = hash::CRC::update<64, false>(featureValue, (uint8_t*)var.name.data(), var.name.size(), _crcTable);
-			featureValue = hash::CRC::update<64, false>(featureValue, (uint8_t*)&var.offset, sizeof(var.offset), _crcTable);
-			featureValue = hash::CRC::update<64, false>(featureValue, (uint8_t*)&var.size, sizeof(var.size), _crcTable);
+			featureValue = hash::CRC::update<64, false>(featureValue, &nameLen, sizeof(nameLen), _crcTable);
+			featureValue = hash::CRC::update<64, false>(featureValue, var.name.data(), var.name.size(), _crcTable);
+			featureValue = hash::CRC::update<64, false>(featureValue, &var.offset, sizeof(var.offset), _crcTable);
+			featureValue = hash::CRC::update<64, false>(featureValue, &var.size, sizeof(var.size), _crcTable);
 
 			++numValidVars;
 		} else {
@@ -34,17 +34,17 @@ namespace aurora::modules::graphics {
 		}
 	}
 
-	void ConstantBufferLayout::collectUsingInfo(const ShaderParameterFactory& factory, ShaderParameterUsageStatistics& statistics,
+	void ConstantBufferLayout::collectUsingInfo(const IShaderParameterGetter& getter, ShaderParameterUsageStatistics& statistics,
 		std::vector<const ShaderParameter*>& usingParams, std::vector<const ConstantBufferLayout::Variables*>& usingVars) const {
-		for (auto& var : variables) _collectUsingInfo(var, factory, statistics, usingParams, usingVars);
+		for (auto& var : variables) _collectUsingInfo(var, getter, statistics, usingParams, usingVars);
 	}
 
-	void ConstantBufferLayout::_collectUsingInfo(const ConstantBufferLayout::Variables& var, const ShaderParameterFactory& factory, 
+	void ConstantBufferLayout::_collectUsingInfo(const ConstantBufferLayout::Variables& var, const IShaderParameterGetter& getter,
 		ShaderParameterUsageStatistics& statistics, std::vector<const ShaderParameter*>& usingParams, std::vector<const ConstantBufferLayout::Variables*>& usingVars) const {
-		if (auto p = factory.get(var.name); var.structMembers.size()) {
-			if (p && p->getType() == ShaderParameterType::FACTORY) {
+		if (auto p = getter.get(var.name); var.structMembers.size()) {
+			if (p && p->getType() == ShaderParameterType::GETTER) {
 				if (auto data = p->getData(); data) {
-					for (auto& memVar : var.structMembers) _collectUsingInfo(memVar, *(const ShaderParameterFactory*)data, statistics, usingParams, usingVars);
+					for (auto& memVar : var.structMembers) _collectUsingInfo(memVar, *(const IShaderParameterGetter*)data, statistics, usingParams, usingVars);
 				}
 			}
 		} else {
@@ -159,13 +159,13 @@ namespace aurora::modules::graphics {
 	}
 
 	IConstantBuffer* ConstantBufferManager::_getExclusiveConstantBuffer(const ConstantBufferLayout& layout, const std::vector<ShaderParameter*>& parameters,
-		uint32_t cur, uint32_t max, ExclusiveConstNode* parent, std::unordered_map<const ShaderParameter*, ExclusiveConstNode>& chindrenContainer) {
+		uint32_t cur, uint32_t max, ExclusiveConstNode* parent, std::unordered_map<const ShaderParameter*, ExclusiveConstNode>& childContainer) {
 		auto param = parameters[cur];
 		ExclusiveConstNode* node = nullptr;
 
 		if (param) {
-			if (auto itr = chindrenContainer.find(param); itr == chindrenContainer.end()) {
-				node = &chindrenContainer.emplace(std::piecewise_construct, std::forward_as_tuple(param), std::forward_as_tuple()).first->second;
+			if (auto itr = childContainer.find(param); itr == childContainer.end()) {
+				node = &childContainer.emplace(std::piecewise_construct, std::forward_as_tuple(param), std::forward_as_tuple()).first->second;
 				node->parameter = param;
 				node->parent = parent;
 
@@ -175,7 +175,7 @@ namespace aurora::modules::graphics {
 					itr2->second.emplace(node);
 				}
 
-				param->__setExclusive(this, &ConstantBufferManager::_releaseExclusiveConstant);
+				param->addReleaseExclusiveHandler(this, &ConstantBufferManager::_releaseExclusiveConstant);
 			} else {
 				node = &itr->second;
 			}
@@ -206,7 +206,7 @@ namespace aurora::modules::graphics {
 			if (param) {
 				return _getExclusiveConstantBuffer(layout, parameters, cur + 1, max, node, node->children);
 			} else {
-				return _getExclusiveConstantBuffer(layout, parameters, cur + 1, max, parent, chindrenContainer);
+				return _getExclusiveConstantBuffer(layout, parameters, cur + 1, max, parent, childContainer);
 			}
 		}
 	}
@@ -252,7 +252,7 @@ namespace aurora::modules::graphics {
 
 	void ConstantBufferManager::_releaseExclusiveConstantSelf(ExclusiveConstNode& node, bool releaseParam) {
 		for (auto& itr : node.buffers) itr.second->unref();
-		if (releaseParam) node.parameter->__releaseExclusive(this, &ConstantBufferManager::_releaseExclusiveConstant);
+		if (releaseParam) node.parameter->removeReleaseExclusiveHandler(this, &ConstantBufferManager::_releaseExclusiveConstant);
 	}
 
 	void ConstantBufferManager::updateConstantBuffer(IConstantBuffer* cb, const ShaderParameter& param, const ConstantBufferLayout::Variables& var) {

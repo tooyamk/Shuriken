@@ -1,8 +1,12 @@
 #pragma once
 
 #include "aurora/modules/IModule.h"
-#include "aurora/modules/graphics/ProgramSource.h"
+#include "aurora/ProgramSource.h"
 #include <functional>
+
+namespace aurora {
+	class ShaderDefine;
+}
 
 namespace aurora::modules::graphics {
 	class AE_DLL IProgramSourceTranslator : public IModule {
@@ -12,6 +16,6 @@ namespace aurora::modules::graphics {
 		using IncludeHandler = std::function<ByteArray(const std::string_view&)>;
 
 		virtual ModuleType AE_CALL getType() const override;
-		virtual ProgramSource AE_CALL translate(const ProgramSource& source, ProgramLanguage targetLanguage, const std::string_view& targetVersion, const IncludeHandler& callback) = 0;
+		virtual ProgramSource AE_CALL translate(const ProgramSource& source, ProgramLanguage targetLanguage, const std::string_view& targetVersion, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& callback) = 0;
 	};
 }

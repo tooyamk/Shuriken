@@ -17,7 +17,7 @@ namespace aurora {
 		_wm(),
 		_iwm(),
 		_dirty(0),
-		_components(32) {
+		_components() {
 	}
 
 	Node::~Node() {

@@ -6,9 +6,10 @@
 #include "IndexBuffer.h"
 #include "Sampler.h"
 #include "VertexBuffer.h"
+#include "aurora/GraphicsBuffer.h"
+#include "aurora/ShaderDefine.h"
+#include "aurora/ShaderParameter.h"
 #include "aurora/String.h"
-#include "aurora/modules/graphics/VertexBufferFactory.h"
-#include "aurora/modules/graphics/ShaderParameterFactory.h"
 
 namespace aurora::modules::graphics::win_gl {
 	Program::Program(Graphics& graphics) : IProgram(graphics),
@@ -23,16 +24,16 @@ namespace aurora::modules::graphics::win_gl {
 		return this;
 	}
 
-	bool Program::create(const ProgramSource& vert, const ProgramSource& frag, const IncludeHandler& handler) {
+	bool Program::create(const ProgramSource& vert, const ProgramSource& frag, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& handler) {
 		destroy();
 
-		auto vertexShader = _compileShader(vert, GL_VERTEX_SHADER, ProgramStage::VS, handler);
+		auto vertexShader = _compileShader(vert, GL_VERTEX_SHADER, ProgramStage::VS, defines, numDefines, handler);
 		if (!vertexShader) {
 			destroy();
 			return false;
 		}
 
-		auto fragmentShader = _compileShader(frag, GL_FRAGMENT_SHADER, ProgramStage::PS, handler);
+		auto fragmentShader = _compileShader(frag, GL_FRAGMENT_SHADER, ProgramStage::PS, defines, numDefines, handler);
 		if (!fragmentShader) {
 			glDeleteShader(vertexShader);
 			destroy();
@@ -213,19 +214,19 @@ namespace aurora::modules::graphics::win_gl {
 		return true;
 	}
 
-	bool Program::use(const VertexBufferFactory* vertexFactory, const ShaderParameterFactory* paramFactory) {
+	bool Program::use(const IVertexBufferGetter* vertexBufferGetter, const IShaderParameterGetter* shaderParamGetter) {
 		if (_handle) {
 			glUseProgram(_handle);
 
 			for (auto& info : _inVertexBufferLayouts) {
-				if (auto vb = vertexFactory->get(info.name); vb && _graphics == vb->getGraphics()) {
+				if (auto vb = vertexBufferGetter->get(info.name); vb && _graphics == vb->getGraphics()) {
 					if (auto vb1 = (VertexBuffer*)vb->getNative(); vb1) vb1->use(info.location);
 				}
 			}
 
 			uint8_t texIdx = 0;
 
-			if (paramFactory) {
+			if (shaderParamGetter) {
 				auto g = _graphics.get<Graphics>();
 
 				for (auto& layout : _uniformLayouts) {
@@ -238,14 +239,14 @@ namespace aurora::modules::graphics::win_gl {
 					case GL_SAMPLER_2D_MULTISAMPLE_ARRAY:
 					case GL_SAMPLER_3D:
 					{
-						if (auto p0 = paramFactory->get(layout.names[0], ShaderParameterType::TEXTURE); p0) {
+						if (auto p0 = shaderParamGetter->get(layout.names[0], ShaderParameterType::TEXTURE); p0) {
 							if (auto data = p0->getData(); data && g == ((ITextureView*)data)->getGraphics()) {
 								if (auto native = (BaseTextureView*)((ITextureView*)data)->getNative(); native && native->internalFormat != GL_NONE) {
 									auto idx = texIdx++;
 
 									GLuint sampler = 0;
 									if (layout.names.size() > 1 && !layout.names[1].empty()) {
-										if (auto p1 = paramFactory->get(layout.names[1], ShaderParameterType::SAMPLER); p1) {
+										if (auto p1 = shaderParamGetter->get(layout.names[1], ShaderParameterType::SAMPLER); p1) {
 											if (auto data = p1->getData(); data && g == ((ISampler*)data)->getGraphics()) {
 												if (auto native = (Sampler*)((ISampler*)data)->getNative(); native) {
 													native->update();
@@ -272,26 +273,26 @@ namespace aurora::modules::graphics::win_gl {
 
 				for (auto& layout : _uniformBlockLayouts) {
 					ShaderParameterUsageStatistics statistics;
-					layout.collectUsingInfo(*paramFactory, statistics, (std::vector<const ShaderParameter*>&)_tempParams, _tempVars);
+					layout.collectUsingInfo(*shaderParamGetter, statistics, (std::vector<const ShaderParameter*>&)_tempParams, _tempVars);
 
 					ConstantBuffer* cb = nullptr;
 					uint32_t numVars = _tempVars.size();
 					if (statistics.unknownCount < numVars) {
 						if (statistics.exclusiveCount > 0 && !statistics.shareCount) {
 							if (cb = (ConstantBuffer*)g->getConstantBufferManager().getExclusiveConstantBuffer(_tempParams, layout); cb) {
-								bool isMaping = false;
+								bool isMapping = false;
 								for (uint32_t i = 0; i < numVars; ++i) {
 									if (auto param = _tempParams[i]; param && param->getUpdateId() != cb->recordUpdateIds[i]) {
-										if (!isMaping) {
+										if (!isMapping) {
 											if (cb->map(Usage::MAP_WRITE) == Usage::NONE) break;
-											isMaping = true;
+											isMapping = true;
 										}
 										cb->recordUpdateIds[i] = param->getUpdateId();
 										ConstantBufferManager::updateConstantBuffer(cb, *param, *_tempVars[i]);
 									}
 								}
 
-								if (isMaping) cb->unmap();
+								if (isMapping) cb->unmap();
 							}
 						} else {
 							if (cb = (ConstantBuffer*)g->getConstantBufferManager().popShareConstantBuffer(layout.size); cb) _constantBufferUpdateAll(cb, layout.variables);
@@ -333,16 +334,16 @@ namespace aurora::modules::graphics::win_gl {
 		_uniformBlockLayouts.clear();
 	}
 
-	GLuint Program::_compileShader(const ProgramSource& source, GLenum type, ProgramStage stage, const IncludeHandler& handler) {
+	GLuint Program::_compileShader(const ProgramSource& source, GLenum type, ProgramStage stage, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& handler) {
 		if (!source.isValid()) return 0;
 
 		if (source.language != ProgramLanguage::GLSL) {
 			auto g = _graphics.get<Graphics>();
 			if (auto translator = g->getProgramSourceTranslator(); translator) {
-				return _compileShader(g->getProgramSourceTranslator()->translate(source, ProgramLanguage::GLSL, g->getStringVersion(), [this, stage, handler](const std::string_view& name) {
+				return _compileShader(g->getProgramSourceTranslator()->translate(source, ProgramLanguage::GLSL, g->getStringVersion(), defines, numDefines, [this, stage, handler](const std::string_view& name) {
 					if (handler) return handler(*this, stage, name);
 					return ByteArray();
-				}), type, stage, handler);
+				}), type, stage, defines, numDefines, handler);
 			} else {
 				return 0;
 			}

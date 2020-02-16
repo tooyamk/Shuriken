@@ -3,6 +3,7 @@
 //#include "spirv.hpp"
 //#include "spirv_cross.hpp"
 #include "spirv_cross/spirv_msl.hpp"
+#include "aurora/ShaderDefine.h"
 #include "aurora/String.h"
 #include "aurora/modules/graphics/IGraphicsModule.h"
 
@@ -66,7 +67,7 @@ namespace aurora::modules::graphics::program_source_translator {
 	ProgramSourceTranslator::~ProgramSourceTranslator() {
 	}
 
-	ProgramSource ProgramSourceTranslator::translate(const ProgramSource& source, ProgramLanguage targetLanguage, const std::string_view& targetVersion, const IncludeHandler& handler) {
+	ProgramSource ProgramSourceTranslator::translate(const ProgramSource& source, ProgramLanguage targetLanguage, const std::string_view& targetVersion, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& handler) {
 		ProgramSource dst;
 
 		if (!source.isValid() || targetLanguage == ProgramLanguage::UNKNOWN) return std::move(dst);
@@ -83,7 +84,20 @@ namespace aurora::modules::graphics::program_source_translator {
 		if (source.language == ProgramLanguage::HLSL) {
 			auto profile = String::Utf8ToUnicode(ProgramSource::toHLSLShaderModel(source.stage, source.version));
 
-			std::vector<DxcDefine> dxcDefines;
+			std::vector<std::wstring> defineStrs(numDefines << 1);
+			std::vector<DxcDefine> dxcDefines(numDefines);
+			for (size_t i = 0; i < numDefines; ++i) {
+				auto& dxcDef = dxcDefines[i];
+
+				auto j = i << 1;
+				auto def = defines + j;
+				defineStrs[j] = String::Utf8ToUnicode(def->name);
+				dxcDef.Name = defineStrs[j].data();
+
+				++j;
+				defineStrs[j] = String::Utf8ToUnicode(def->value);
+				dxcDef.Value = defineStrs[j].data();
+			}
 
 			CComPtr<IDxcBlobEncoding> sourceBlob;
 			IFT(_dxcLib->CreateBlobWithEncodingOnHeapCopy(source.data.getSource(), source.data.getLength(), CP_UTF8, &sourceBlob));

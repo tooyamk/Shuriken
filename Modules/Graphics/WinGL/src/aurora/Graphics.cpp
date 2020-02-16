@@ -24,12 +24,9 @@
 #include "GL/wglew.h"
 
 namespace aurora::modules::graphics::win_gl {
-	Graphics::Graphics(Ref* loader, Application* app, IProgramSourceTranslator* trans) :
-		_loader(loader),
+	Graphics::Graphics() :
 		_bufferCreateUsageMask(Usage::NONE),
 		_texCreateUsageMask(Usage::NONE),
-		_app(app),
-		_trans(trans),
 		_dc(nullptr),
 		_rc(nullptr),
 		_majorVer(0),
@@ -44,8 +41,8 @@ namespace aurora::modules::graphics::win_gl {
 		_release();
 	}
 
-	bool Graphics::createDevice(const GraphicsAdapter* adapter, SampleCount sampleCount) {
-		if (_dc || !_app->Win_getHWnd()) return false;
+	bool Graphics::createDevice(Ref* loader, Application* app, IProgramSourceTranslator* trans, const GraphicsAdapter* adapter, SampleCount sampleCount) {
+		if (_dc || !app->Win_getHWnd()) return false;
 
 		/*
 		pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
@@ -84,7 +81,7 @@ namespace aurora::modules::graphics::win_gl {
 			return false;
 		}
 
-		_dc = GetDC(_app->Win_getHWnd());
+		_dc = GetDC(app->Win_getHWnd());
 		if (!_dc) {
 			_release();
 			return false;
@@ -195,6 +192,10 @@ namespace aurora::modules::graphics::win_gl {
 		_defaultBlendState = new BlendState(*this, true);
 		_defaultDepthStencilState = new DepthStencilState(*this, true);
 		_defaultRasterizerState = new RasterizerState(*this, true);
+
+		_loader = loader;
+		_app = app;
+		_trans = trans;
 
 		return true;
 	}
@@ -606,13 +607,13 @@ namespace aurora::modules::graphics::win_gl {
 		glViewport(0, 0, size[0], size[1]);
 	}
 
-	void Graphics::draw(const VertexBufferFactory* vertexFactory, IProgram* program, const ShaderParameterFactory* paramFactory, const IIndexBuffer* indexBuffer, uint32_t count, uint32_t offset) {
-		if (vertexFactory && indexBuffer && program && program->getGraphics() == this && indexBuffer->getGraphics() == this && count > 0) {
+	void Graphics::draw(const IVertexBufferGetter* vertexBufferGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter, const IIndexBuffer* indexBuffer, uint32_t count, uint32_t offset) {
+		if (vertexBufferGetter && indexBuffer && program && program->getGraphics() == this && indexBuffer->getGraphics() == this && count > 0) {
 			auto ib = (IndexBuffer*)indexBuffer->getNative();
 			if (!ib) return;
 
 			auto p = (Program*)program->getNative();
-			if (p && p->use(vertexFactory, paramFactory)) {
+			if (p && p->use(vertexBufferGetter, shaderParamGetter)) {
 				ib->draw(count, offset);
 
 				_constantBufferManager.resetUsedShareConstantBuffers();

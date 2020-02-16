@@ -7,12 +7,12 @@
 #pragma comment(lib, "d3d11.lib")
 
 #include <d3dcompiler.h>
-#pragma  comment(lib,"d3dcompiler.lib")
+#pragma comment(lib,"d3dcompiler.lib")
 
 #include <dxgi1_6.h>
-#pragma  comment(lib,"dxgi.lib")
+#pragma comment(lib,"dxgi.lib")
 
-#pragma  comment(lib,"dxguid.lib")
+#pragma comment(lib,"dxguid.lib")
 
 namespace aurora::modules::graphics::win_d3d11 {
 	class DXObjGuard {

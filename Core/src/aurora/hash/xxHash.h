@@ -8,7 +8,7 @@ namespace aurora::hash {
 		AE_DECLARE_CANNOT_INSTANTIATE(xxHash);
 
 		template<size_t Bits, std::endian DataEndian>
-		static uint_t<Bits> AE_CALL calc(const uint8_t* data, size_t len, uint_t<Bits> seed) {
+		static uint_t<Bits> AE_CALL calc(const void* data, size_t len, uint_t<Bits> seed) {
 			static_assert(Bits == 32 || Bits == 64, "only support 32, 64 bits mode");
 
 			using hash_t = uint_t<Bits>;
@@ -18,7 +18,8 @@ namespace aurora::hash {
 
 			auto& prime = Prime<Bits>::VALUE;
 
-			auto dataEnd = data + len;
+			auto src = (const uint8_t*)data;
+			auto dataEnd = src + len;
 			hash_t ret;
 
 			if (len >= HALF_BITS) {
@@ -28,11 +29,11 @@ namespace aurora::hash {
 				hash_t v4 = seed - prime[0];
 
 				do {
-					v1 = _round<Bits>(v1, _readUInt<Bits, DataEndian>(data)); data += OFFSET;
-					v2 = _round<Bits>(v2, _readUInt<Bits, DataEndian>(data)); data += OFFSET;
-					v3 = _round<Bits>(v3, _readUInt<Bits, DataEndian>(data)); data += OFFSET;
-					v4 = _round<Bits>(v4, _readUInt<Bits, DataEndian>(data)); data += OFFSET;
-				} while (data <= (dataEnd - HALF_BITS));
+					v1 = _round<Bits>(v1, _readUInt<Bits, DataEndian>(src)); src += OFFSET;
+					v2 = _round<Bits>(v2, _readUInt<Bits, DataEndian>(src)); src += OFFSET;
+					v3 = _round<Bits>(v3, _readUInt<Bits, DataEndian>(src)); src += OFFSET;
+					v4 = _round<Bits>(v4, _readUInt<Bits, DataEndian>(src)); src += OFFSET;
+				} while (src <= (dataEnd - HALF_BITS));
 
 				ret = rotl(v1, 1) + rotl(v2, 7) + rotl(v3, 12) + rotl(v4, 18);
 
@@ -41,7 +42,7 @@ namespace aurora::hash {
 				ret = seed + prime[4];
 			}
 
-			return _subEnding<Bits, DataEndian>(ret + (hash_t)len, data, dataEnd);
+			return _subEnding<Bits, DataEndian>(ret + (hash_t)len, src, dataEnd);
 		}
 
 	private:

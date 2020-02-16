@@ -100,7 +100,7 @@ namespace aurora {
 		}
 	}
 
-	void Application::getInnerSize(Vec2i32& size) {
+	void Application::getInnerSize(Vec2i32& size) const {
 #if AE_OS == AE_OS_WIN
 		RECT rect;
 		GetClientRect(_hWnd, &rect);
