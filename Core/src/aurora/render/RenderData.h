@@ -1,5 +1,6 @@
 #pragma once
 
+#include "aurora/math/Matrix.h"
 #include "aurora/render/RenderPriority.h"
 
 namespace aurora {
@@ -27,7 +28,13 @@ namespace aurora::render {
 		RenderState* state;
 		Material* material;
 		const Mesh* mesh;
-		const IRenderer* renderer;
+		IRenderer* renderer;
+
+		struct {
+			Matrix34 l2w;
+			Matrix34 l2v;
+			Matrix44 l2p;
+		} matrix;
 
 		inline void AE_CALL set(const RenderData& data) {
 			renderable = data.renderable;

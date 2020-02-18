@@ -8,7 +8,7 @@ public:
 		auto monitors = Monitor::getMonitors();
 		auto vms = monitors[0].getVideoModes();
 
-		RefPtr app = new Application(u8"TestApp", 1000. / 60.);
+		RefPtr app = new Application(u8"TestApp");
 
 		Application::Style wndStype;
 		wndStype.thickFrame = true;
@@ -175,16 +175,13 @@ public:
 					renderData.p = graphics->createProgram();
 					programCreate(*renderData.p, "vert.hlsl", "frag.hlsl");
 
-					RefPtr<IEventListener<ApplicationEvent>> appClosingListener = new EventListener(std::function([](Event<ApplicationEvent>& e) {
+					app->getEventDispatcher().addEventListener(ApplicationEvent::CLOSING, new EventListener(std::function([](Event<ApplicationEvent>& e) {
 						//*e.getData<bool>() = true;
+					})));
 
-					}));
+					RefPtr looper = new Looper(1000.0 / 60.0);
 
-					auto& evtDispatcher = app->getEventDispatcher();
-
-					evtDispatcher.addEventListener(ApplicationEvent::TICKING, new EventListener(std::function([renderData](Event<ApplicationEvent>& e) {
-						auto app = e.getTarget<Application>();
-
+					looper->getEventDispatcher().addEventListener(LooperEvent::TICKING, new EventListener(std::function([renderData](Event<LooperEvent>& e) {
 						auto dt = f64(*e.getData<int64_t>());
 						//println(dt);
 
@@ -231,11 +228,9 @@ public:
 						renderData.g->present();
 					})));
 
-					evtDispatcher.addEventListener(ApplicationEvent::CLOSING, *appClosingListener);
-
-					(new Stats())->run(app);
+					(new Stats())->run(looper);
 					app->setVisible(true);
-					app->run(true);
+					looper->run(true);
 				}
 			}
 		}

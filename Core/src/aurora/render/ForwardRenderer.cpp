@@ -9,7 +9,14 @@ namespace aurora::render {
 		_graphics(graphics),
 		_defaultBlendState(graphics.createBlendState()),
 		_defaultDepthStencilState(graphics.createDepthStencilState()),
-		_defaultRasterizerState(graphics.createRasterizerState()) {
+		_defaultRasterizerState(graphics.createRasterizerState()),
+		_m34_l2w(new ShaderParameter()),
+		_m34_l2v(new ShaderParameter()),
+		_m44_l2p(new ShaderParameter()),
+		_shaderParameters(new ShaderParameterCollection()) {
+		_shaderParameters->add("_mat_l2w", _m34_l2w);
+		_shaderParameters->add("_mat_l2v", _m34_l2v);
+		_shaderParameters->add("_mat_l2p", _m44_l2p);
 	}
 
 	/*
@@ -21,7 +28,7 @@ namespace aurora::render {
 	}
 	*/
 
-	void ForwardRenderer::collectRenderData(IRenderDataCollector& collector) const {
+	void ForwardRenderer::collectRenderData(IRenderDataCollector& collector) {
 		collector.data.renderer = this;
 
 		auto renderable = collector.data.renderable;
@@ -47,7 +54,7 @@ namespace aurora::render {
 		return mesh && !mesh->getVertexBuffers().isEmpty() && mesh->getIndexBuffer();
 	}
 
-	void ForwardRenderer::render(RenderData*const* data, size_t count, ShaderDefineGetterStack& shaderDefineStack, ShaderParameterGetterStack& shaderParameterStack) const {
+	void ForwardRenderer::render(RenderData*const* data, size_t count, ShaderDefineGetterStack& shaderDefineStack, ShaderParameterGetterStack& shaderParameterStack) {
 		for (size_t i = 0; i < count; ++i) {
 			auto rd = data[i];
 
@@ -87,7 +94,11 @@ namespace aurora::render {
 				_graphics->setRasterizerState(_defaultRasterizerState);
 			}
 
-			StackPopper<ShaderParameterGetterStack, StackPopperFlag::CHECK_POP> popper(shaderParameterStack, shaderParameterStack.push(rd->material->getParameters()));
+			StackPopper<ShaderParameterGetterStack, StackPopperFlag::MULTI_POP> popper(shaderParameterStack, shaderParameterStack.push(&*_shaderParameters, rd->material->getParameters()));
+
+			_m34_l2w->set(rd->matrix.l2w, ShaderParameterUpdateBehavior::FORCE);
+			_m34_l2v->set(rd->matrix.l2v, ShaderParameterUpdateBehavior::FORCE);
+			_m44_l2p->set(rd->matrix.l2p, ShaderParameterUpdateBehavior::FORCE);
 
 			_graphics->draw(&rd->mesh->getVertexBuffers(), program, &shaderParameterStack, rd->mesh->getIndexBuffer());
 		}

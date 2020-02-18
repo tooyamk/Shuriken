@@ -2,6 +2,11 @@
 
 #include "aurora/components/IComponent.h"
 #include "aurora/math/Matrix.h"
+#include "aurora/math/Vector.h"
+
+namespace aurora::modules::graphics {
+	enum class ClearFlag : uint8_t;
+}
 
 namespace aurora::components {
 	class AE_DLL Camera : public IComponent {
@@ -9,6 +14,11 @@ namespace aurora::components {
 		Camera();
 
 		uint32_t cullingMask;
+
+		modules::graphics::ClearFlag clearFlag;
+		Vec4f32 clearColor;
+		f32 clearDepthValue;
+		size_t clearStencilValue;
 
 		inline const Matrix44& AE_CALL getProjectionMatrix() const {
 			return _pm;

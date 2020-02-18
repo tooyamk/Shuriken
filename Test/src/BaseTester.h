@@ -15,7 +15,7 @@ using namespace aurora::render;
 
 class Stats {
 public:
-	void AE_CALL run(Application* app);
+	void AE_CALL run(Looper* looper);
 
 private:
 	std::atomic_uint32_t _frameCount = 0;

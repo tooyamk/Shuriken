@@ -20,6 +20,8 @@ namespace aurora {
 			memset(this, 0, sizeof(T) * N);
 		}
 
+		Vec(const NoInit&) {}
+
 		template<typename K, typename = ConvertibleType<K>>
 		Vec(const K& value) {
 			set(value);

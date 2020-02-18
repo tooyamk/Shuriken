@@ -601,7 +601,8 @@ namespace aurora::modules::graphics {
 		DEPTH = 0b10,
 		STENCIL = 0b100,
 
-		DEPTH_STENCIL = DEPTH | STENCIL
+		DEPTH_STENCIL = DEPTH | STENCIL,
+		ALL = COLOR | DEPTH_STENCIL
 	};
 	AE_DEFINE_ENUM_BIT_OPERATIION(ClearFlag);
 

@@ -197,7 +197,6 @@ namespace aurora::modules::graphics::program_source_translator {
 			compiler.set_entry_point(ProgramSource::getEntryPoint(source), model);
 			//compiler.require_extension("GL_ARB_fragment_coord_conventions");
 			//compiler.set_execution_mode(spv::ExecutionModeOriginUpperLeft);
-
 			auto opts = compiler.get_common_options();
 			if (!targetVersion.empty()) opts.version = String::toNumber<decltype(opts.version)>(targetVersion);
 			opts.es = targetLanguage == ProgramLanguage::GSSL;
@@ -210,6 +209,27 @@ namespace aurora::modules::graphics::program_source_translator {
 			opts.vertex.flip_vert_y = false;
 			opts.vertex.support_nonzero_base_instance = true;
 			compiler.set_common_options(opts);
+
+			auto resources = compiler.get_shader_resources();
+			for (auto& val : resources.uniform_buffers) {
+				auto& type = compiler.get_type(val.base_type_id);
+				auto numMembers = type.member_types.size();
+				for (size_t i = 0; i < numMembers; ++i) {
+					//auto& name = compiler.get_member_name(type.self, i);
+					//auto& memberType = compiler.get_type(type.member_types[i]);
+					if (compiler.has_member_decoration(type.self, i, spv::DecorationRowMajor)) {
+						compiler.unset_member_decoration(type.self, i, spv::DecorationRowMajor);
+						compiler.set_member_decoration(type.self, i, spv::DecorationColMajor);
+					}
+				}
+			}
+
+			for (auto& val : resources.stage_inputs) {
+				auto& name = compiler.get_name(val.id);
+				if (name.size() > 7 && std::string_view(name.data(), 7) == "in_var_") {
+					compiler.set_name(val.id, std::string(name.data() + 7));
+				}
+			}
 			
 			if (auto sampler = compiler.build_dummy_sampler_for_combined_images(); (uint32_t)sampler != 0) {
 				compiler.set_decoration(sampler, spv::DecorationDescriptorSet, 0);

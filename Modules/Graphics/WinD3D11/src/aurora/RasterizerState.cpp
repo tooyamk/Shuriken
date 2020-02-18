@@ -100,7 +100,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 				_oldFillMode = _fillMode;
 				_oldCullMode = _cullMode;
 				_oldFrontFace = _frontFace;
-				_featureValue = ((uint64_t)_fillMode << 2) | ((uint64_t)_cullMode << 1) | (uint64_t)_frontFace;
+				_featureValue = ((uint64_t)_fillMode << 3) | ((uint64_t)_cullMode << 1) | (uint64_t)_frontFace;
 				_dirty = 0;
 			}
 		}

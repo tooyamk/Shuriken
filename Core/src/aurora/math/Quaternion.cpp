@@ -10,6 +10,8 @@ namespace aurora {
 		w(1.f) {
 	}
 
+	Quaternion::Quaternion(const NoInit&) {}
+
 	Quaternion::Quaternion(const Quaternion& q) :
 		x(q.x),
 		y(q.y),
@@ -34,7 +36,7 @@ namespace aurora {
 	Quaternion::~Quaternion() {
 	}
 
-	const Quaternion Quaternion::IDENTITY(0.f, 0.f, 0.f, 1.f);
+	const Quaternion Quaternion::IDENTITY = Quaternion();
 
 	void Quaternion::normalize() {
 		auto n = x * x + y * y + z * z + w * w;
@@ -84,30 +86,6 @@ namespace aurora {
 		m[0][2] = xz + wy;
 		m[1][2] = yz - wx;
 		m[2][2] = 1.f - xx - yy;
-	}
-
-	void Quaternion::createFromEulerX(f32 radian, Quaternion& dst) {
-		radian *= .5f;
-		auto x = std::sin(radian);
-		auto w = std::cos(radian);
-
-		dst.set(x, 0.f, 0.f, w);
-	}
-
-	void Quaternion::createFromEulerY(f32 radian, Quaternion& dst) {
-		radian *= .5f;
-		auto y = std::sin(radian);
-		auto w = std::cos(radian);
-
-		dst.set(0.f, y, 0.f, w);
-	}
-
-	void Quaternion::createFromEulerZ(f32 radian, Quaternion& dst) {
-		radian *= .5f;
-		auto z = std::sin(radian);
-		auto w = std::cos(radian);
-
-		dst.set(0.f, 0.f, z, w);
 	}
 
 	void Quaternion::createFromEuler(const f32(&radians)[3], Quaternion& dst) {

@@ -4,20 +4,15 @@
 #include <thread>
 
 namespace aurora {
-	Application::Application(const std::string_view& appId, f64 frameInterval) :
+	Application::Application(const std::string_view& appId) :
 		_appId(appId),
 		_isClosing(false),
-		_updatingCount(0),
-		_updatingTimePoint(0),
-		_updateTimeCompensationTimePoint(0),
-		_updateTimeCompensationFrameCount(0),
 #if AE_OS == AE_OS_WIN
 		_hIns(nullptr),
 		_hWnd(nullptr),
 		_lastWndInnerRect({0, 0, 0, 0}),
 #endif
 		_isWindowed(true) {
-		setFrameInterval(frameInterval);
 	}
 
 	Application::~Application() {
@@ -72,6 +67,7 @@ namespace aurora {
 
 		return _hWnd;
 #endif
+		
 		return false;
 	}
 
@@ -173,19 +169,6 @@ namespace aurora {
 #endif
 	}
 
-	f64 Application::getFrameInterval() const {
-		return _frameInterval;
-	}
-
-	void Application::setFrameInterval(f64 frameInterval) {
-		_frameInterval = frameInterval < 0. ? 0. : frameInterval;
-	}
-
-	void Application::resetDeltaRecord() {
-		_updatingCount = 0;
-		_updateTimeCompensationFrameCount = 0;
-	}
-
 	bool Application::isVisible() const {
 #if AE_OS == AE_OS_WIN
 		return _hWnd ? IsWindowVisible(_hWnd) : false;
@@ -205,59 +188,6 @@ namespace aurora {
 			UpdateWindow(_hWnd);
 		}
 #endif
-	}
-
-	void Application::run(bool frameIntervalCap) {
-		while (!_isClosing) {
-			pollEvents();
-			tick(frameIntervalCap);
-		}
-	}
-
-	void Application::tick(bool frameIntervalCap) {
-		auto t0 = Time::now();
-		auto dt = _updatingCount++ == 0 ? 0 : (t0 - _updatingTimePoint);
-		_updatingTimePoint = t0;
-
-		_eventDispatcher.dispatchEvent(this, ApplicationEvent::TICKING, &dt);
-		_eventDispatcher.dispatchEvent(this, ApplicationEvent::TICKED);
-
-		if (frameIntervalCap) {
-			auto t1 = Time::now();
-			auto phase = f64(t1 - t0);
-
-			if (_updateTimeCompensationFrameCount) {
-				if (auto t = _updateTimeCompensationFrameCount * _frameInterval - (t0 - _updateTimeCompensationTimePoint); t > 0.) {
-					t += _frameInterval - phase;
-
-					if (t > 0.) {
-						++_updateTimeCompensationFrameCount;
-
-						if (size_t st = t; st) std::this_thread::sleep_for(std::chrono::milliseconds(st));
-					} else {
-						_updateTimeCompensationFrameCount = 0;
-					}
-				} else {
-					if (phase < _frameInterval) {
-						_updateTimeCompensationTimePoint = t0;
-						_updateTimeCompensationFrameCount = 1;
-
-						if (size_t st = _frameInterval - phase; st) std::this_thread::sleep_for(std::chrono::milliseconds(st));
-					} else {
-						_updateTimeCompensationFrameCount = 0;
-					}
-				}
-			} else {
-				if (phase < _frameInterval) {
-					_updateTimeCompensationTimePoint = t0;
-					_updateTimeCompensationFrameCount = 1;
-
-					if (size_t st = _frameInterval - phase; st) std::this_thread::sleep_for(std::chrono::milliseconds(st));
-				}
-			}
-		} else {
-			_updateTimeCompensationFrameCount = 0;
-		}
 	}
 
 	void Application::shutdown() {

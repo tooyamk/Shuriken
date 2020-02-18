@@ -1,12 +1,12 @@
 #include "BaseTester.h"
 
-void Stats::run(Application* app) {
-	if (app) {
-		app->getEventDispatcher().addEventListener(ApplicationEvent::TICKING, new EventListener(std::function([this](Event<ApplicationEvent>& e) {
+void Stats::run(Looper* looper) {
+	if (looper) {
+		looper->getEventDispatcher().addEventListener(LooperEvent::TICKING, new EventListener(std::function([this](Event<LooperEvent>& e) {
 			++_frameCount;
 		})));
 
-		std::thread([this, app]() {
+		std::thread([this, looper]() {
 			auto tw = std::make_shared<TimeWheel>(100, 100);
 			tw->getEventDispatcher().addEventListener(TimeWheel::TimeWheelEvent::TRIGGER, new EventListener(std::function([](Event<TimeWheel::TimeWheelEvent>& e) {
 				auto trigger = e.getData<TimeWheel::Trigger>();
@@ -15,11 +15,11 @@ void Stats::run(Application* app) {
 
 			auto frameTime = Time::now();
 			TimeWheel::Timer timer;
-			timer.getEventDispatcher().addEventListener(TimeWheel::TimerEvent::TICK, new EventListener(std::function([this, app, &frameTime](Event<TimeWheel::TimerEvent>& e) {
+			timer.getEventDispatcher().addEventListener(TimeWheel::TimerEvent::TICK, new EventListener(std::function([this, looper, &frameTime](Event<TimeWheel::TimerEvent>& e) {
 				auto t = Time::now();
 
 				auto fps = _frameCount / ((t - frameTime) * 0.001);
-				println("fps : ", round(fps));
+				println("fps : ", fps);
 
 				_frameCount = 0;
 				frameTime = t;

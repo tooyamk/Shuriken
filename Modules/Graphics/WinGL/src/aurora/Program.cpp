@@ -69,7 +69,7 @@ namespace aurora::modules::graphics::win_gl {
 			auto& info = _inVertexBufferLayouts[i];
 			glGetActiveAttrib(_handle, i, sizeof(charBuffer), &len, &info.size, &info.type, charBuffer);
 			
-			info.name = charBuffer + 7;//in_var_
+			info.name = charBuffer;// +7;//in_var_
 			info.location = glGetAttribLocation(_handle, charBuffer);
 		}
 
@@ -302,7 +302,9 @@ namespace aurora::modules::graphics::win_gl {
 					_tempParams.clear();
 					_tempVars.clear();
 
-					if (auto cb1 = (ConstantBuffer*)cb->getNative(); cb1) glBindBufferBase(GL_UNIFORM_BUFFER, layout.bindPoint, cb1->getInternalBuffer());
+					if (cb) {
+						if (auto native = (ConstantBuffer*)cb->getNative(); native) glBindBufferBase(GL_UNIFORM_BUFFER, layout.bindPoint, native->getInternalBuffer());
+					}
 				}
 			}
 

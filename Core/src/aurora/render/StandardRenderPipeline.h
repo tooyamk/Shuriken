@@ -3,6 +3,7 @@
 #include "aurora/render/IRenderPipeline.h"
 #include "aurora/ShaderDefine.h"
 #include "aurora/ShaderParameter.h"
+#include "aurora/math/Matrix.h"
 #include "aurora/render/IRenderDataCollector.h"
 #include "aurora/render/RenderData.h"
 
@@ -22,7 +23,7 @@ namespace aurora::render {
 	public:
 		StandardRenderPipeline();
 
-		virtual void AE_CALL render(Node* node) override;
+		virtual void AE_CALL render(modules::graphics::IGraphicsModule* graphics, components::Camera* camera, Node* node) override;
 
 	protected:
 		class RenderDataCollector : public IRenderDataCollector {
@@ -30,6 +31,11 @@ namespace aurora::render {
 			RenderDataCollector(StandardRenderPipeline& pipeline);
 
 			virtual void AE_CALL commit() override;
+
+			struct {
+				Matrix34 w2v;
+				Matrix44 w2p;
+			} matrix;
 
 		private:
 			StandardRenderPipeline& _pipeline;
@@ -44,8 +50,13 @@ namespace aurora::render {
 		size_t _renderDataPoolVernier;
 		std::vector<RenderData*> _renderQueue;
 
-		ShaderDefineGetterStack _shaderDefineStack;
-		ShaderParameterGetterStack _shaderParameterStack;
+		RefPtr<ShaderParameter> _m34_w2v;
+		RefPtr<ShaderParameter> _m44_w2p;
+
+		RefPtr<ShaderParameterCollection> _shaderParameters;
+
+		RefPtr<ShaderDefineGetterStack> _shaderDefineStack;
+		RefPtr<ShaderParameterGetterStack> _shaderParameterStack;
 
 		friend RenderDataCollector;
 	};

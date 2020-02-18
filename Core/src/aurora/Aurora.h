@@ -6,6 +6,7 @@
 #include "aurora/GraphicsBuffer.h"
 #include "aurora/Image.h"
 #include "aurora/Lock.h"
+#include "aurora/Looper.h"
 #include "aurora/Material.h"
 #include "aurora/Monitor.h"
 #include "aurora/Node.h"

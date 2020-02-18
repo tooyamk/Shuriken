@@ -177,7 +177,7 @@ namespace aurora {
 			auto tmp11 = m[0][1] * m[1][0];
 
 			d[0][2] = (tmp4 - tmp5) * det;
-			d[1][0] = (tmp9 - tmp8) * det;
+			d[1][2] = (tmp9 - tmp8) * det;
 			d[2][2] = (tmp10 - tmp11) * det;
 			d[0][3] = (tmp2 * m[2][2] + tmp5 * m[2][3] + tmp1 * m[2][1] - tmp4 * m[2][3] - tmp0 * m[2][1] - tmp3 * m[2][2]) * det;
 			d[1][3] = (tmp8 * m[2][3] + tmp0 * m[2][0] + tmp7 * m[2][2] - tmp6 * m[2][2] - tmp9 * m[2][3] - tmp1 * m[2][0]) * det;

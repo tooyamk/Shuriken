@@ -9,6 +9,8 @@ namespace aurora {
 			 {0.f, 0.f, 1.f, 0.f} } {
 	}
 
+	Matrix34::Matrix34(const NoInit&) {}
+
 	Matrix34::Matrix34(
 		f32 m00, f32 m01, f32 m02, f32 m03,
 		f32 m10, f32 m11, f32 m12, f32 m13,
@@ -47,6 +49,8 @@ namespace aurora {
 
 	Matrix34::~Matrix34() {
 	}
+
+	const Matrix34 Matrix34::IDENTITY = Matrix34();
 
 	void Matrix34::set33(const Matrix34& m) {
 		memcpy(&data[0][0], &m.data[0][0], sizeof(f32) * 3);
@@ -365,6 +369,8 @@ namespace aurora {
 			 {0.f, 0.f, 0.f, 1.f} } {
 	}
 
+	Matrix44::Matrix44(const NoInit&) {}
+
 	Matrix44::Matrix44(
 		f32 m00, f32 m01, f32 m02, f32 m03,
 		f32 m10, f32 m11, f32 m12, f32 m13,
@@ -410,6 +416,8 @@ namespace aurora {
 
 	Matrix44::~Matrix44() {
 	}
+
+	const Matrix44 Matrix44::IDENTITY = Matrix44();
 
 	void Matrix44::set33(const Matrix34& m) {
 		memcpy(&data[0][0], &m.data[0][0], sizeof(f32) * 3);
@@ -511,46 +519,5 @@ namespace aurora {
 		data[3][1] = m31;
 		data[3][2] = m32;
 		data[3][3] = m33;
-	}
-
-	void Matrix44::createOrthoLH(f32 width, f32 height, f32 zNear, f32 zFar, Matrix44& dst) {
-		dst.set44(
-			2.f / width, 0.f, 0.f, 0.f,
-			0.f, 2.f / height, 0.f, 0.f,
-			0.f, 0.f, 1.f / (zFar - zNear), zNear / (zNear - zFar));
-	}
-
-	void Matrix44::createOrthoOffCenterLH(f32 left, f32 right, f32 bottom, f32 top, f32 zNear, f32 zFar, Matrix44& dst) {
-		dst.set44(
-			2.f / (right - 1.f), 0.f, 0.f, (1.f + right) / (1.f - right),
-			0.f, 2.f / (top - bottom), 0.f, (top + bottom) / (bottom - top),
-			0.f, 0.f, 1.f / (zFar - zNear), zNear / (zNear - zFar));
-	}
-
-	void Matrix44::createPerspectiveFovLH(f32 fieldOfViewY, f32 aspectRatio, f32 zNear, f32 zFar, Matrix44& dst) {
-		f32 yScale = 1.f / std::tan(fieldOfViewY * .5f);
-		dst.set44(
-			yScale / aspectRatio, 0.f, 0.f, 0.f,
-			0.f, yScale, 0.f, 0.f,
-			0.f, 0.f, zFar / (zFar - zNear), zNear * zFar / (zNear - zFar),
-			0.f, 0.f, 1.f, 0.f);
-	}
-
-	void Matrix44::createPerspectiveLH(f32 width, f32 height, f32 zNear, f32 zFar, Matrix44& dst) {
-		auto zNear2 = zNear * 2.f;
-		dst.set44(
-			zNear2 / width, 0.f, 0.f, 0.f,
-			0.f, zNear2 / height, 0.f, 0.f,
-			0.f, 0.f, zFar / (zFar - zNear), zNear * zFar / (zNear - zFar),
-			0.f, 0.f, 1.f, 0.f);
-	}
-
-	void Matrix44::createPerspectiveOffCenterLH(f32 left, f32 right, f32 bottom, f32 top, f32 zNear, f32 zFar, Matrix44& dst) {
-		auto zNear2 = zNear * 2.f;
-		dst.set44(
-			zNear2 / (right - left), 0.f, (left + right) / (left - right), 0.f,
-			0.f, zNear2 / (top - bottom), (top + bottom) / (bottom - top), 0.f,
-			0.f, 0.f, zFar / (zFar - zNear), zNear * zFar / (zNear - zFar),
-			0.f, 0.f, 1.f, 0.f);
 	}
 }

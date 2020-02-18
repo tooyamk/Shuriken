@@ -8,7 +8,7 @@ public:
 		auto monitors = Monitor::getMonitors();
 		auto vms = monitors[0].getVideoModes();
 
-		RefPtr app = new Application(u8"TestApp", 1000. / 60.);
+		RefPtr app = new Application(u8"TestApp");
 
 		Application::Style wndStype;
 		wndStype.thickFrame = true;
@@ -35,6 +35,8 @@ public:
 					struct {
 						RefPtr<IGraphicsModule> g;
 						RefPtr<Node> wrold;
+						RefPtr<Node> model;
+						RefPtr<Camera> camera;
 						RefPtr<Material> material;
 						RefPtr<StandardRenderPipeline> renderPipeline;
 					} renderData;
@@ -43,8 +45,10 @@ public:
 					{
 						RefPtr worldNode = new Node();
 						auto modelNode = worldNode->addChild(new Node());
+						renderData.model = modelNode;
 						auto cameraNode = worldNode->addChild(new Node());
 						auto camera = new Camera();
+						renderData.camera = camera;
 						cameraNode->addComponent(camera);
 						auto renderableMesh = new RenderableMesh();
 						auto pass = new RenderPass();
@@ -52,10 +56,16 @@ public:
 						renderData.material = mat;
 						pass->material = mat;
 						renderableMesh->renderPasses.emplace_back(pass);
-						renderableMesh->renderPasses.emplace_back(pass);
+						//renderableMesh->renderPasses.emplace_back(pass);
 						auto mesh = new Mesh();
 						renderableMesh->setMesh(mesh);
 						modelNode->addComponent(renderableMesh);
+
+						{
+							auto size = app->getInnerSize();
+							camera->setProjectionMatrix(Matrix44::createOrthoLH(size[0], size[1], 10, 1000));
+							camera->getNode()->localTranslate(Vec3f32(0.f, 0.f, -100.f));
+						}
 
 						{
 							//auto vertexBuffer = graphics->createVertexBuffer();
@@ -71,10 +81,10 @@ public:
 								*/
 								///*
 								f32 vertices[] = {
-									-0.5f, -0.5f, .0f,
-									-0.5f, 0.5f, .0f,
-									0.45f, 0.45f, 0.2f,
-									0.45f, -0.5f, .0f,
+									-110.5f, -110.5f, 0.f,
+									-110.5f, 110.5f, .0f,
+									110.45f, 110.45f, 0.f,
+									110.45f, -110.5f, .0f,
 
 									0.0f, 0.0f, 0.5f,
 									0.0f, 1.0f, 0.5f,
@@ -108,10 +118,7 @@ public:
 							auto ib = graphics->createIndexBuffer();
 							uint16_t indices[] = {
 									0, 1, 3,
-									3, 1, 2,
-
-									4, 5, 7,
-									7, 5, 6 };
+									3, 1, 2 };
 							ib->create(sizeof(indices), Usage::NONE, indices, sizeof(indices));
 							ib->setFormat(IndexType::UI16);
 
@@ -121,19 +128,20 @@ public:
 						{
 							RefPtr s = new Shader();
 							mat->setShader(s);
+							mat->setParameters(new ShaderParameterCollection());
 							std::string shaderResourcesFolder = app->getAppPath() + u8"Resources/shaders/";
 							//s->upload(std::filesystem::path(app->getAppPath() + u8"Resources/shaders/test.shader"));
 							s->upload(graphics,
-								new ProgramSource(readProgramSource(shaderResourcesFolder + "vert.hlsl", ProgramStage::VS)),
-								new ProgramSource(readProgramSource(shaderResourcesFolder + "frag.hlsl", ProgramStage::PS)),
+								new ProgramSource(readProgramSource(shaderResourcesFolder + "modelVert.hlsl", ProgramStage::VS)),
+								new ProgramSource(readProgramSource(shaderResourcesFolder + "modelFrag.hlsl", ProgramStage::PS)),
 								nullptr, 0, nullptr, 0,
 								[&shaderResourcesFolder](const Shader& shader, ProgramStage stage, const std::string_view& name) {
 								return readFile(shaderResourcesFolder + name.data());
 							});
 
 							{
-								mat->getParameters().add("red", new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set(Vec4f32::ONE).setUpdated();
-								mat->getParameters().add("green", new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set(Vec4f32::ONE).setUpdated();
+								mat->getParameters()->add("red", new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set(Vec4f32::ONE).setUpdated();
+								mat->getParameters()->add("green", new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set(Vec4f32::ONE).setUpdated();
 								//cf->add("blue", new ShaderParameter())->set(Vec4f32::ONE).setUpdated();
 
 								auto aabbccStruct = new ShaderParameterCollection();
@@ -141,7 +149,7 @@ public:
 								f32 val2[] = { 1.0f, 1.0f };
 								aabbccStruct->add("val2", new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set<f32>(val2, sizeof(val2), sizeof(f32), true).setUpdated();
 								aabbccStruct->add("val3", new ShaderParameter())->set(Vec4f32::ONE).setUpdated();
-								mat->getParameters().add("blue", new ShaderParameter())->set(aabbccStruct);
+								mat->getParameters()->add("blue", new ShaderParameter())->set(aabbccStruct);
 							}
 						}
 
@@ -193,7 +201,7 @@ public:
 							//texRes->unmap(0, 0);
 							//texRes->update(0, 0, Box2ui32(Vec2ui32(1, 1), Vec2ui32(2, 2)), texData);
 
-							renderData.material->getParameters().add("texDiffuse", new ShaderParameter(ShaderParameterUsage::AUTO))->set(texView).setUpdated();
+							renderData.material->getParameters()->add("texDiffuse", new ShaderParameter(ShaderParameterUsage::AUTO))->set(texView).setUpdated();
 						}
 
 						auto sam = graphics->createSampler();
@@ -201,35 +209,33 @@ public:
 							//sam->setMipLOD(0, 0);
 							//sam->setAddress(SamplerAddressMode::WRAP, SamplerAddressMode::WRAP, SamplerAddressMode::WRAP);
 							sam->setFilter(SamplerFilterOperation::NORMAL, SamplerFilterMode::POINT, SamplerFilterMode::POINT, SamplerFilterMode::POINT);
-							renderData.material->getParameters().add("samLiner", new ShaderParameter(ShaderParameterUsage::AUTO))->set(sam).setUpdated();
+							renderData.material->getParameters()->add("samLiner", new ShaderParameter(ShaderParameterUsage::AUTO))->set(sam).setUpdated();
 						}
 					}
 
-					RefPtr<IEventListener<ApplicationEvent>> appClosingListener = new EventListener(std::function([](Event<ApplicationEvent>& e) {
+					app->getEventDispatcher().addEventListener(ApplicationEvent::CLOSING, new EventListener(std::function([](Event<ApplicationEvent>& e) {
 						//*e.getData<bool>() = true;
-					}));
+					})));
 
-					auto& evtDispatcher = app->getEventDispatcher();
+					RefPtr looper = new Looper(1000.0 / 60.0);
 
-					evtDispatcher.addEventListener(ApplicationEvent::TICKING, new EventListener(std::function([renderData](Event<ApplicationEvent>& e) {
-						auto app = e.getTarget<Application>();
+					looper->getEventDispatcher().addEventListener(LooperEvent::TICKING, new EventListener(std::function([renderData](Event<LooperEvent>& e) {
+						auto dt = f32(*e.getData<int64_t>()) * 0.001f;
 
-						auto dt = f64(*e.getData<int64_t>());
+						renderData.model->localRotate(Quaternion::createFromEulerY(Math::PI<f32> * dt));
 
-						renderData.g->beginRender();
-						renderData.g->clear(ClearFlag::COLOR | ClearFlag::DEPTH | ClearFlag::STENCIL, Vec4f32(0.0f, 0.0f, 0.25f, 1.0f), 1.0f, 0);
+						//renderData.g->beginRender();
+						//renderData.g->clear(ClearFlag::COLOR | ClearFlag::DEPTH | ClearFlag::STENCIL, Vec4f32(0.0f, 0.0f, 0.25f, 1.0f), 1.0f, 0);
 
-						renderData.renderPipeline->render(renderData.wrold);
+						renderData.renderPipeline->render(renderData.g, renderData.camera, renderData.wrold);
 
-						renderData.g->endRender();
+						//renderData.g->endRender();
 						renderData.g->present();
 					})));
 
-					evtDispatcher.addEventListener(ApplicationEvent::CLOSING, *appClosingListener);
-
-					(new Stats())->run(app);
+					(new Stats())->run(looper);
 					app->setVisible(true);
-					app->run(true);
+					looper->run(true);
 				}
 			}
 		}

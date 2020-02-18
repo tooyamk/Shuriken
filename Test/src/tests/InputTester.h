@@ -51,7 +51,7 @@ public:
 	}
 
 	virtual int32_t AE_CALL run() override {
-		RefPtr app = new Application(u8"TestApp", 1000. / 60.);
+		RefPtr app = new Application(u8"TestApp");
 
 		Application::Style wndStype;
 		wndStype.thickFrame = true;
@@ -181,9 +181,9 @@ public:
 				})));
 			}
 
-			auto& evtDispatcher = app->getEventDispatcher();
+			RefPtr looper = new Looper(1000.0 / 60.0);
 
-			evtDispatcher.addEventListener(ApplicationEvent::TICKING, new EventListener(std::function([&inputModules, &inputDevices](Event<ApplicationEvent>& e) {
+			looper->getEventDispatcher().addEventListener(LooperEvent::TICKING, new EventListener(std::function([&inputModules, &inputDevices](Event<LooperEvent>& e) {
 				for (auto& im : inputModules) im->poll();
 				for (auto& dev : inputDevices) dev->poll(true);
 
@@ -193,7 +193,7 @@ public:
 			//evtDispatcher.addEventListener(ApplicationEvent::CLOSING, *appClosingListener);
 
 			app->setVisible(true);
-			app->run(true);
+			looper->run(true);
 		}
 
 		return 0;

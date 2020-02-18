@@ -1,5 +1,6 @@
 #include "StandardRenderPipeline.h"
 #include "aurora/Node.h"
+#include "aurora/components/Camera.h"
 #include "aurora/components/IRenderable.h"
 #include "aurora/render/IRenderer.h"
 #include <algorithm>
@@ -15,32 +16,52 @@ namespace aurora::render {
 
 
 	StandardRenderPipeline::StandardRenderPipeline() :
-		_renderDataPoolVernier(0) {
+		_renderDataPoolVernier(0),
+		_m34_w2v(new ShaderParameter()),
+		_m44_w2p(new ShaderParameter()),
+		_shaderParameters(new ShaderParameterCollection()),
+		_shaderDefineStack(new ShaderDefineGetterStack()),
+		_shaderParameterStack(new ShaderParameterGetterStack()) {
+		_shaderParameters->add("_mat_w2v", _m34_w2v);
+		_shaderParameters->add("_mat_w2p", _m44_w2p);
 	}
 
-	void StandardRenderPipeline::render(Node* node) {
-		if (node) {
-			{
-				RenderDataCollector collector(*this);
-				_collectNode(node, collector);
-			}
+	void StandardRenderPipeline::render(modules::graphics::IGraphicsModule* graphics, components::Camera* camera, Node* node) {
+		if (graphics && camera && node && camera->getNode() && camera->getNode()->getRoot() == node->getRoot()) {
+			RenderDataCollector collector(*this);
+			collector.matrix.w2v = camera->getNode()->getInverseWorldMatrix();
+			collector.matrix.w2v.append(camera->getProjectionMatrix(), collector.matrix.w2p);
 
-			std::stable_sort(_renderQueue.begin(), _renderQueue.end(), [](const RenderData* lhs, const RenderData* rhs) {
-				if (lhs->priority.level1 == rhs->priority.level1) {
-					using Lv2_t = std::underlying_type<RenderPriority::Level2>::type;
-					auto val = (Lv2_t)lhs->priority.level2 - (Lv2_t)rhs->priority.level2;
-					if (val == 0) {
-						//todo
-						return false;
+			_collectNode(node, collector);
+
+			if (!_renderQueue.empty()) {
+				_m34_w2v->set(collector.matrix.w2v);
+				_m44_w2p->set(collector.matrix.w2p);
+
+				std::stable_sort(_renderQueue.begin(), _renderQueue.end(), [](const RenderData* lhs, const RenderData* rhs) {
+					if (lhs->priority.level1 == rhs->priority.level1) {
+						using Lv2_t = std::underlying_type<RenderPriority::Level2>::type;
+						auto val = (Lv2_t)lhs->priority.level2 - (Lv2_t)rhs->priority.level2;
+						if (val == 0) {
+							//todo
+							return false;
+						} else {
+							return val < 0;
+						}
 					} else {
-						return val < 0;
+						return lhs->priority.level1 < rhs->priority.level1;
 					}
-				} else {
-					return lhs->priority.level1 < rhs->priority.level1;
-				}
-			});
+				});
 
-			_render();
+				camera->getProjectionMatrix();
+
+				graphics->beginRender();
+				graphics->clear(camera->clearFlag, camera->clearColor, camera->clearDepthValue, camera->clearStencilValue);
+
+				_render();
+
+				graphics->endRender();
+			}
 		}
 	}
 
@@ -64,6 +85,7 @@ namespace aurora::render {
 			RenderData* data;
 			if (_renderDataPoolVernier) {
 				data = _renderDataPool[--_renderDataPoolVernier];
+				data->reset();
 			} else {
 				data = new RenderData();
 				_renderDataPool.emplace_back(data);
@@ -71,26 +93,34 @@ namespace aurora::render {
 
 			_renderQueue.emplace_back(data);
 			data->set(collector.data);
+
+			data->matrix.l2w = data->renderable->getNode()->getWorldMatrix();
+			data->matrix.l2w.append(collector.matrix.w2v, data->matrix.l2v);
+			data->matrix.l2w.append(collector.matrix.w2p, data->matrix.l2p);
 		}
 	}
 
 	void StandardRenderPipeline::_render() {
 		if (auto size = _renderQueue.size(); size) {
+			_shaderParameterStack->push(*_shaderParameters);
+
 			auto renderer = _renderQueue[0]->renderer;
 			size_t begin = 0;
 			for (size_t i = 1; i < size; ++i) {
 				auto& data = _renderQueue[i];
 				if (data->renderer != renderer) {
-					if (renderer) renderer->render(_renderQueue.data() + begin, i - begin, _shaderDefineStack, _shaderParameterStack);
+					if (renderer) renderer->render(_renderQueue.data() + begin, i - begin, *_shaderDefineStack, *_shaderParameterStack);
 					renderer = data->renderer;
 					begin = i;
 				}
 			}
 
-			if (renderer) renderer->render(_renderQueue.data() + begin, size - begin, _shaderDefineStack, _shaderParameterStack);
+			if (renderer) renderer->render(_renderQueue.data() + begin, size - begin, *_shaderDefineStack, *_shaderParameterStack);
 
 			_renderQueue.clear();
 			_renderDataPoolVernier = _renderDataPool.size();
+
+			_shaderParameterStack->pop();
 		}
 	}
 }

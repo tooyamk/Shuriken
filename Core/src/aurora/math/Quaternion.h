@@ -11,6 +11,7 @@ namespace aurora {
 		using Data = f32[4];
 
 		Quaternion();
+		Quaternion(const NoInit&);
 		Quaternion(const Quaternion& v);
 		Quaternion(Quaternion&& v) noexcept;
 		Quaternion(f32 x, f32 y = 0.f, f32 z = 0.f, f32 w = 1.f);
@@ -95,10 +96,48 @@ namespace aurora {
 			toMatrix((Matrix34&)dst);
 		}
 
-		static void AE_CALL createFromEulerX(f32 radian, Quaternion& dst);
-		static void AE_CALL createFromEulerY(f32 radian, Quaternion& dst);
-		static void AE_CALL createFromEulerZ(f32 radian, Quaternion& dst);
+		static void AE_CALL createFromEulerX(f32 radian, Quaternion& dst) {
+			radian *= .5f;
+			auto x = std::sin(radian);
+			auto w = std::cos(radian);
+
+			dst.set(x, 0.f, 0.f, w);
+		}
+		inline static Quaternion createFromEulerX(f32 radian) {
+			Quaternion q(NO_INIT);
+			createFromEulerX(radian, q);
+			return q;
+		}
+		inline static void AE_CALL createFromEulerY(f32 radian, Quaternion& dst) {
+			radian *= .5f;
+			auto y = std::sin(radian);
+			auto w = std::cos(radian);
+
+			dst.set(0.f, y, 0.f, w);
+		}
+		inline static Quaternion AE_CALL createFromEulerY(f32 radian) {
+			Quaternion q(NO_INIT);
+			createFromEulerY(radian, q);
+			return q;
+		}
+		inline static void AE_CALL createFromEulerZ(f32 radian, Quaternion& dst) {
+			radian *= .5f;
+			auto z = std::sin(radian);
+			auto w = std::cos(radian);
+
+			dst.set(0.f, 0.f, z, w);
+		}
+		inline static Quaternion AE_CALL createFromEulerZ(f32 radian) {
+			Quaternion q(NO_INIT);
+			createFromEulerZ(radian, q);
+			return q;
+		}
 		static void AE_CALL createFromEuler(const f32(&radians)[3], Quaternion& dst);
+		inline static Quaternion AE_CALL createFromEuler(const f32(&radians)[3]) {
+			Quaternion q(NO_INIT);
+			createFromEuler(radians, q);
+			return q;
+		}
 		static void AE_CALL createFromAxis(const f32(&axis)[3], f32 radian, Quaternion& dst);
 		static void AE_CALL createLookAt(const f32(&forward)[3], const f32(&upward)[3], Quaternion& dst);
 		inline static void AE_CALL slerp(const Quaternion& from, const Quaternion& to, f32 t, Quaternion& dst) {

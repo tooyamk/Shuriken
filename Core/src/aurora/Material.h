@@ -16,23 +16,23 @@ namespace aurora {
 			_shader = shader;
 		}
 
-		inline ShaderDefineCollection& AE_CALL getDefines() {
+		inline ShaderDefineCollection* AE_CALL getDefines() const {
 			return _defines;
 		}
-		inline const ShaderDefineCollection& AE_CALL getDefines() const {
-			return _defines;
+		inline void AE_CALL setDefines(ShaderDefineCollection* defines) {
+			_defines = defines;
 		}
 
-		inline ShaderParameterCollection& AE_CALL getParameters() {
+		inline ShaderParameterCollection* AE_CALL getParameters() const {
 			return _parameters;
 		}
-		inline const ShaderParameterCollection& AE_CALL getParameters() const {
-			return _parameters;
+		inline void AE_CALL setParameters(ShaderParameterCollection* parameters) {
+			_parameters = parameters;
 		}
 
 	protected:
 		RefPtr<Shader> _shader;
-		ShaderDefineCollection _defines;
-		ShaderParameterCollection _parameters;
+		RefPtr<ShaderDefineCollection> _defines;
+		RefPtr<ShaderParameterCollection> _parameters;
 	};
 }

@@ -21,6 +21,7 @@ namespace aurora {
 		using Data = f32[3][4];
 
 		Matrix34();
+		Matrix34(const NoInit&);
 		Matrix34(
 			f32 m00,       f32 m01 = 0.f, f32 m02 = 0.f, f32 m03 = 0.f,
 			f32 m10 = 0.f, f32 m11 = 1.f, f32 m12 = 0.f, f32 m13 = 0.f,
@@ -31,6 +32,8 @@ namespace aurora {
 		Matrix34(const f32(&m)[3][4]);
 		Matrix34(const f32(&m)[4][4]);
 		~Matrix34();
+
+		static const Matrix34 IDENTITY;
 
 		inline AE_CALL operator Data& ();
 		inline AE_CALL operator const Data& () const;
@@ -119,6 +122,7 @@ namespace aurora {
 		using Data44 = f32[4][4];
 
 		Matrix44();
+		Matrix44(const NoInit&);
 		Matrix44(
 			f32 m00,       f32 m01 = 0.f, f32 m02 = 0.f, f32 m03 = 0.f,
 			f32 m10 = 0.f, f32 m11 = 1.f, f32 m12 = 0.f, f32 m13 = 0.f,
@@ -130,6 +134,8 @@ namespace aurora {
 		Matrix44(const f32(&m)[3][4]);
 		Matrix44(const f32(&m)[4][4]);
 		~Matrix44();
+
+		static const Matrix44 IDENTITY;
 
 		inline AE_CALL operator Data34& ();
 		inline AE_CALL operator const Data34& () const;
@@ -170,11 +176,67 @@ namespace aurora {
 		inline void AE_CALL append(const Matrix44& rhs, Matrix34& dst) const;
 		inline void AE_CALL append(const Matrix44& rhs, Matrix44& dst) const;
 
-		static void AE_CALL createOrthoLH(f32 width, f32 height, f32 zNear, f32 zFar, Matrix44& dst);
-		static void AE_CALL createOrthoOffCenterLH(f32 left, f32 right, f32 bottom, f32 top, f32 zNear, f32 zFar, Matrix44& dst);
-		static void AE_CALL createPerspectiveFovLH(f32 fieldOfViewY, f32 aspectRatio, f32 zNear, f32 zFar, Matrix44& dst);
-		static void AE_CALL createPerspectiveLH(f32 width, f32 height, f32 zNear, f32 zFar, Matrix44& dst);
-		static void AE_CALL createPerspectiveOffCenterLH(f32 left, f32 right, f32 bottom, f32 top, f32 zNear, f32 zFar, Matrix44& dst);
+		inline static void AE_CALL createOrthoLH(f32 width, f32 height, f32 zNear, f32 zFar, Matrix44& dst) {
+			dst.set44(
+				2.f / width, 0.f, 0.f, 0.f,
+				0.f, 2.f / height, 0.f, 0.f,
+				0.f, 0.f, 1.f / (zFar - zNear), zNear / (zNear - zFar));
+		}
+		inline static Matrix44 AE_CALL createOrthoLH(f32 width, f32 height, f32 zNear, f32 zFar) {
+			Matrix44 m(NO_INIT);
+			createOrthoLH(width, height, zNear, zFar, m);
+			return m;
+		}
+		inline static void AE_CALL createOrthoOffCenterLH(f32 left, f32 right, f32 bottom, f32 top, f32 zNear, f32 zFar, Matrix44& dst) {
+			dst.set44(
+				2.f / (right - 1.f), 0.f, 0.f, (1.f + right) / (1.f - right),
+				0.f, 2.f / (top - bottom), 0.f, (top + bottom) / (bottom - top),
+				0.f, 0.f, 1.f / (zFar - zNear), zNear / (zNear - zFar));
+		}
+		inline static Matrix44 AE_CALL createOrthoOffCenterLH(f32 left, f32 right, f32 bottom, f32 top, f32 zNear, f32 zFar) {
+			Matrix44 m(NO_INIT);
+			createOrthoOffCenterLH(left, right, bottom, top, zNear, zFar, m);
+			return m;
+		}
+		inline static void AE_CALL createPerspectiveFovLH(f32 fieldOfViewY, f32 aspectRatio, f32 zNear, f32 zFar, Matrix44& dst) {
+			f32 yScale = 1.f / std::tan(fieldOfViewY * .5f);
+			dst.set44(
+				yScale / aspectRatio, 0.f, 0.f, 0.f,
+				0.f, yScale, 0.f, 0.f,
+				0.f, 0.f, zFar / (zFar - zNear), zNear * zFar / (zNear - zFar),
+				0.f, 0.f, 1.f, 0.f);
+		}
+		inline static Matrix44 AE_CALL createPerspectiveFovLH(f32 fieldOfViewY, f32 aspectRatio, f32 zNear, f32 zFar) {
+			Matrix44 m(NO_INIT);
+			createPerspectiveFovLH(fieldOfViewY, aspectRatio, zNear, zFar, m);
+			return m;
+		}
+		inline static void AE_CALL createPerspectiveLH(f32 width, f32 height, f32 zNear, f32 zFar, Matrix44& dst) {
+			auto zNear2 = zNear * 2.f;
+			dst.set44(
+				zNear2 / width, 0.f, 0.f, 0.f,
+				0.f, zNear2 / height, 0.f, 0.f,
+				0.f, 0.f, zFar / (zFar - zNear), zNear * zFar / (zNear - zFar),
+				0.f, 0.f, 1.f, 0.f);
+		}
+		inline static Matrix44 AE_CALL createPerspectiveLH(f32 width, f32 height, f32 zNear, f32 zFar) {
+			Matrix44 m(NO_INIT);
+			createPerspectiveLH(width, height, zNear, zFar, m);
+			return m;
+		}
+		inline static void AE_CALL createPerspectiveOffCenterLH(f32 left, f32 right, f32 bottom, f32 top, f32 zNear, f32 zFar, Matrix44& dst) {
+			auto zNear2 = zNear * 2.f;
+			dst.set44(
+				zNear2 / (right - left), 0.f, (left + right) / (left - right), 0.f,
+				0.f, zNear2 / (top - bottom), (top + bottom) / (bottom - top), 0.f,
+				0.f, 0.f, zFar / (zFar - zNear), zNear * zFar / (zNear - zFar),
+				0.f, 0.f, 1.f, 0.f);
+		}
+		inline static Matrix44 AE_CALL createPerspectiveOffCenterLH(f32 left, f32 right, f32 bottom, f32 top, f32 zNear, f32 zFar) {
+			Matrix44 m(NO_INIT);
+			createPerspectiveOffCenterLH(left, right, bottom, top, zNear, zFar, m);
+			return m;
+		}
 		//static void AE_CALL createLookAt(const Vector3& forward, const Vector3& upward, Matrix44& dst);
 		//static void AE_CALL createRotationAxis(const Vector3& axis, f32 radian, Matrix44& dst);
 
