@@ -183,7 +183,13 @@ public:
 
 			RefPtr looper = new Looper(1000.0 / 60.0);
 
-			looper->getEventDispatcher().addEventListener(LooperEvent::TICKING, new EventListener(std::function([&inputModules, &inputDevices](Event<LooperEvent>& e) {
+			app->getEventDispatcher().addEventListener(ApplicationEvent::CLOSED, new EventListener(std::function([looper](Event<ApplicationEvent>& e) {
+				looper->stop();
+			})));
+
+			looper->getEventDispatcher().addEventListener(LooperEvent::TICKING, new EventListener(std::function([app, &inputModules, &inputDevices](Event<LooperEvent>& e) {
+				app->pollEvents();
+
 				for (auto& im : inputModules) im->poll();
 				for (auto& dev : inputDevices) dev->poll(true);
 

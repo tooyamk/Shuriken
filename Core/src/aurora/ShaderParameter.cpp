@@ -115,7 +115,7 @@ namespace aurora {
 		return itr == _parameters.end() ? nullptr : (itr->second->getType() == type ? itr->second : nullptr);
 	}
 
-	ShaderParameter* ShaderParameterCollection::add(const std::string& name, ShaderParameter* parameter) {
+	ShaderParameter* ShaderParameterCollection::set(const std::string& name, ShaderParameter* parameter) {
 		if (auto itr = _parameters.find(name); parameter) {
 			if (itr == _parameters.end()) {
 				_parameters.emplace(name, parameter);

@@ -86,10 +86,7 @@ namespace aurora {
 								newBuf->create(buf->getSize(), buf->getUsage());
 
 								if constexpr (std::is_base_of_v<modules::graphics::IVertexBuffer, T>) {
-									modules::graphics::VertexSize size;
-									modules::graphics::VertexType type;
-									buf->getFormat(&size, &type);
-									newBuf->setFormat(size, type);
+									newBuf->setFormat(buf->getFormat());
 								}
 
 								auto usage = newBuf->map(expectMapUsage);
@@ -198,15 +195,14 @@ namespace aurora {
 		virtual uint32_t AE_CALL read(uint32_t offset, void* dst, uint32_t dstLen) override;
 		virtual uint32_t AE_CALL write(uint32_t offset, const void* data, uint32_t length) override;
 		virtual uint32_t AE_CALL update(uint32_t offset, const void* data, uint32_t length) override;
-		virtual void AE_CALL getFormat(modules::graphics::VertexSize* size, modules::graphics::VertexType* type) const override;
-		virtual void AE_CALL setFormat(modules::graphics::VertexSize size, modules::graphics::VertexType type) override;
+		virtual const modules::graphics::VertexFormat& AE_CALL getFormat() const override;
+		virtual void AE_CALL setFormat(const modules::graphics::VertexFormat& format) override;
 		//virtual void AE_CALL flush() override;
 		virtual bool AE_CALL isSyncing() const override;
 		virtual void AE_CALL destroy() override;
 
 	private:
-		modules::graphics::VertexSize _vertSize;
-		modules::graphics::VertexType _vertType;
+		modules::graphics::VertexFormat _format;
 
 		MultipleBuffer<modules::graphics::IVertexBuffer> _base;
 	};
@@ -277,7 +273,7 @@ namespace aurora {
 		~VertexBufferCollection();
 
 		virtual modules::graphics::IVertexBuffer* AE_CALL get(const std::string& name) const override;
-		void AE_CALL add(const std::string& name, modules::graphics::IVertexBuffer* buffer);
+		void AE_CALL set(const std::string& name, modules::graphics::IVertexBuffer* buffer);
 		inline void AE_CALL remove(const std::string& name) {
 			if (auto itr = _buffers.find(name); itr != _buffers.end()) _buffers.erase(itr);
 		}

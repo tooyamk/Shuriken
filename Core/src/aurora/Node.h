@@ -14,7 +14,7 @@ namespace aurora::components {
 namespace aurora {
 	class AE_DLL Node : public Ref {
 	public:
-		class iterator {
+		class AE_DLL iterator {
 		public:
 			iterator(Node* node = nullptr) :
 				_node(node) {
@@ -22,6 +22,7 @@ namespace aurora {
 
 			inline iterator& operator=(const iterator& itr) {
 				_node = itr._node;
+				return *this;
 			}
 
 			inline bool operator==(const iterator& itr) const {
@@ -105,10 +106,14 @@ namespace aurora {
 		void AE_CALL setLocalScale(const f32(&s)[3]);
 
 		inline const Matrix34& AE_CALL getLocalMatrix() const {
+			updateLocalMatrix();
+
 			return _lm;
 		}
 		void AE_CALL setLocalMatrix(const Matrix34& m);
 		void AE_CALL setLocalTRS(const f32(&pos)[3], const Quaternion& rot, const f32(&scale)[3]);
+
+		void AE_CALL parentTranslate(const f32(&p)[3]);
 
 		void AE_CALL parentRotate(const Quaternion& q);
 

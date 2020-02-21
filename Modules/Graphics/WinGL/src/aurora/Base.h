@@ -92,6 +92,7 @@ namespace aurora::modules::graphics::win_gl {
 
 	struct InternalStencilState {
 		bool enabled;
+		uint8_t unused = 0;
 		
 		struct {
 			InternalStencilFaceState front;

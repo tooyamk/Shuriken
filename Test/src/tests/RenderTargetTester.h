@@ -21,7 +21,7 @@ public:
 				gpstml->load(getDLLName("ae-program-source-translator"));
 				RefPtr gpst = gpstml->create(&Args().add("dxc", getDLLName("dxcompiler")));
 
-				RefPtr graphics = gml->create(&Args().add("app", &*app).add("sampleCount", SampleCount(1)).add("trans", gpst.get()));
+				RefPtr graphics = gml->create(&Args().add("app", &*app).add("sampleCount", SampleCount(1)).add("trans", &*gpst));
 
 				if (graphics) {
 					println("Graphics Version : ", graphics->getVersion());
@@ -32,6 +32,8 @@ public:
 					}));
 
 					struct {
+						RefPtr<Application> app;
+						RefPtr<Looper> looper;
 						RefPtr<IGraphicsModule> g;
 						RefPtr<VertexBufferCollection> vbf;
 						RefPtr<ShaderParameterCollection> spc;
@@ -47,6 +49,8 @@ public:
 							RefPtr<IIndexBuffer> ib;
 						} pp;
 					} renderData;
+					renderData.app = app;
+					renderData.looper = new Looper(1000.0 / 60.0);
 					renderData.g = graphics;
 
 					{
@@ -85,7 +89,7 @@ public:
 								1.0f, 1.0f, 0.5f,
 								1.0f, 0.0f, 0.5f };
 							vertexBuffer->create(sizeof(vertices), Usage::NONE, vertices, sizeof(vertices));
-							vertexBuffer->setFormat(VertexSize::THREE, VertexType::F32);
+							vertexBuffer->setFormat(VertexFormat(VertexSize::THREE, VertexType::F32));
 						}
 
 						RefPtr uvBuffer = graphics->createVertexBuffer();
@@ -101,24 +105,24 @@ public:
 								1.f, 0.f,
 								1.f, 1.f };
 							uvBuffer->create(sizeof(uvs), Usage::NONE, uvs, sizeof(uvs));
-							uvBuffer->setFormat(VertexSize::TWO, VertexType::F32);
+							uvBuffer->setFormat(VertexFormat(VertexSize::TWO, VertexType::F32));
 						}
 
-						renderData.vbf->add("POSITION0", vertexBuffer.get());
-						renderData.vbf->add("TEXCOORD0", uvBuffer.get());
+						renderData.vbf->set("POSITION0", vertexBuffer.get());
+						renderData.vbf->set("TEXCOORD0", uvBuffer.get());
 					}
 
 					{
-						renderData.spc->add("red", new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set(Vec4f32::ONE).setUpdated();
-						renderData.spc->add("green", new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set(Vec4f32::ONE).setUpdated();
+						renderData.spc->set("red", new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set(Vec4f32::ONE).setUpdated();
+						renderData.spc->set("green", new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set(Vec4f32::ONE).setUpdated();
 						//cf->add("blue", new ShaderParameter())->set(Vec4f32::ONE).setUpdated();
 
 						RefPtr aabbccStruct = new ShaderParameterCollection();
-						aabbccStruct->add("val1", new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set(Vec4f32::ONE).setUpdated();
+						aabbccStruct->set("val1", new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set(Vec4f32::ONE).setUpdated();
 						f32 val2[] = { 1.0f, 1.0f };
-						aabbccStruct->add("val2", new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set<f32>(val2, sizeof(val2), sizeof(f32), true).setUpdated();
-						aabbccStruct->add("val3", new ShaderParameter())->set(Vec4f32::ONE).setUpdated();
-						renderData.spc->add("blue", new ShaderParameter())->set(aabbccStruct.get());
+						aabbccStruct->set("val2", new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set<f32>(val2, sizeof(val2), sizeof(f32), true).setUpdated();
+						aabbccStruct->set("val3", new ShaderParameter())->set(Vec4f32::ONE).setUpdated();
+						renderData.spc->set("blue", new ShaderParameter())->set(aabbccStruct.get());
 					}
 
 					renderData.bs = graphics->createBlendState();
@@ -153,21 +157,21 @@ public:
 
 							RefPtr s = graphics->createSampler();
 
-							renderData.spc->add("ppTex", new ShaderParameter(ShaderParameterUsage::AUTO))->set(tv.get()).setUpdated();
-							renderData.spc->add("ppTexSampler", new ShaderParameter(ShaderParameterUsage::AUTO))->set(s.get()).setUpdated();
+							renderData.spc->set("ppTex", new ShaderParameter(ShaderParameterUsage::AUTO))->set(tv.get()).setUpdated();
+							renderData.spc->set("ppTexSampler", new ShaderParameter(ShaderParameterUsage::AUTO))->set(s.get()).setUpdated();
 						}
 					}
 
 					{
 						RefPtr texRes = graphics->createTexture2DResource();
 						if (texRes) {
-							auto img0 = extensions::file::PNGConverter::parse(readFile(app->getAppPath() + u8"Resources/c4.png"));
+							auto img0 = extensions::PNGConverter::parse(readFile(app->getAppPath() + u8"Resources/c4.png"));
 							auto mipLevels = Image::calcMipLevels(img0->size);
 							ByteArray mipsData0;
 							std::vector<void*> mipsData0Ptr;
 							img0->generateMips(img0->format, mipLevels, mipsData0, mipsData0Ptr);
 
-							auto img1 = extensions::file::PNGConverter::parse(readFile(app->getAppPath() + u8"Resources/red.png"));
+							auto img1 = extensions::PNGConverter::parse(readFile(app->getAppPath() + u8"Resources/red.png"));
 							ByteArray mipsData1;
 							std::vector<void*> mipsData1Ptr;
 							img1->generateMips(img1->format, mipLevels, mipsData1, mipsData1Ptr);
@@ -191,7 +195,7 @@ public:
 							//texRes->unmap(0, 0);
 							//texRes->update(0, 0, Box2ui32(Vec2ui32(1, 1), Vec2ui32(2, 2)), texData);
 
-							renderData.spc->add("texDiffuse", new ShaderParameter(ShaderParameterUsage::AUTO))->set(texView.get()).setUpdated();
+							renderData.spc->set("texDiffuse", new ShaderParameter(ShaderParameterUsage::AUTO))->set(texView.get()).setUpdated();
 						}
 
 						RefPtr sam = graphics->createSampler();
@@ -199,7 +203,7 @@ public:
 							//sam->setMipLOD(0, 0);
 							//sam->setAddress(SamplerAddressMode::WRAP, SamplerAddressMode::WRAP, SamplerAddressMode::WRAP);
 							sam->setFilter(SamplerFilterOperation::NORMAL, SamplerFilterMode::POINT, SamplerFilterMode::POINT, SamplerFilterMode::POINT);
-							renderData.spc->add("samLiner", new ShaderParameter(ShaderParameterUsage::AUTO))->set(sam.get()).setUpdated();
+							renderData.spc->set("samLiner", new ShaderParameter(ShaderParameterUsage::AUTO))->set(sam.get()).setUpdated();
 						}
 					}
 
@@ -229,18 +233,18 @@ public:
 						{
 							f32 data[] = { -1.0f, 1.0f, 0.8f, 1.0f, 0.8f, -0.9f, -1.0f, -0.9f };
 							ppVertexBuffer->create(sizeof(data), Usage::NONE, data, sizeof(data));
-							ppVertexBuffer->setFormat(VertexSize::TWO, VertexType::F32);
+							ppVertexBuffer->setFormat(VertexFormat(VertexSize::TWO, VertexType::F32));
 						}
 
 						RefPtr ppUVBuffer = graphics->createVertexBuffer();
 						{
 							f32 data[] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f };
 							ppUVBuffer->create(sizeof(data), Usage::NONE, data, sizeof(data));
-							ppUVBuffer->setFormat(VertexSize::TWO, VertexType::F32);
+							ppUVBuffer->setFormat(VertexFormat(VertexSize::TWO, VertexType::F32));
 						}
 
-						renderData.pp.vbf->add("POSITION0", ppVertexBuffer.get());
-						renderData.pp.vbf->add("TEXCOORD0", ppUVBuffer.get());
+						renderData.pp.vbf->set("POSITION0", ppVertexBuffer.get());
+						renderData.pp.vbf->set("TEXCOORD0", ppUVBuffer.get());
 					}
 					//
 
@@ -254,10 +258,14 @@ public:
 						//*e.getData<bool>() = true;
 					})));
 
-					RefPtr looper = new Looper(1000.0 / 60.0);
+					app->getEventDispatcher().addEventListener(ApplicationEvent::CLOSED, new EventListener(std::function([renderData](Event<ApplicationEvent>& e) {
+						renderData.looper->stop();
+					})));
 
-					looper->getEventDispatcher().addEventListener(LooperEvent::TICKING, new EventListener(std::function([renderData](Event<LooperEvent>& e) {
+					renderData.looper->getEventDispatcher().addEventListener(LooperEvent::TICKING, new EventListener(std::function([renderData](Event<LooperEvent>& e) {
 						auto dt = f64(*e.getData<int64_t>());
+
+						renderData.app->pollEvents();
 
 						renderData.g->setRenderTarget(renderData.rt.get());
 						renderData.g->beginRender();
@@ -283,9 +291,9 @@ public:
 						renderData.g->present();
 					})));
 
-					(new Stats())->run(looper);
+					(new Stats())->run(renderData.looper);
 					app->setVisible(true);
-					looper->run(true);
+					renderData.looper->run(true);
 				}
 			}
 		}

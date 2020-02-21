@@ -160,6 +160,15 @@ namespace aurora {
 		_checkNoticeUpdate(DirtyFlag::LM_WRMIM, DirtyFlag::WRMIM);
 	}
 
+	void Node::parentTranslate(const f32(&p)[3]) {
+		auto& data = _lm.data;
+		data[0][3] += p[0];
+		data[1][3] += p[1];
+		data[2][3] += p[2];
+
+		_checkNoticeUpdate(DirtyFlag::WMIM);
+	}
+
 	void Node::parentRotate(const Quaternion& q) {
 		_lr.append(q);
 

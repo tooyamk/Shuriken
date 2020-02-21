@@ -3,8 +3,6 @@
 
 namespace aurora {
 	MultipleVertexBuffer::MultipleVertexBuffer(modules::graphics::IGraphicsModule& graphics, uint8_t max) : modules::graphics::IVertexBuffer(graphics),
-		_vertSize(modules::graphics::VertexSize::UNKNOWN),
-		_vertType(modules::graphics::VertexType::UNKNOWN),
 		_base(graphics, max) {
 	}
 
@@ -21,7 +19,7 @@ namespace aurora {
 
 	bool MultipleVertexBuffer::create(uint32_t size, modules::graphics::Usage bufferUsage, const void* data, uint32_t dataSize) {
 		auto rst = _base.create(size, bufferUsage, data, dataSize);
-		if (_base.getCurrent()) _base.getCurrent()->target->setFormat(_vertSize, _vertType);
+		if (_base.getCurrent()) _base.getCurrent()->target->setFormat(_format);
 		return rst;
 	}
 
@@ -53,20 +51,19 @@ namespace aurora {
 		return _base.update(offset, data, length);
 	}
 
-	void MultipleVertexBuffer::getFormat(modules::graphics::VertexSize* size, modules::graphics::VertexType* type) const {
-		if (size) *size = _vertSize;
-		if (type) *type = _vertType;
+	const modules::graphics::VertexFormat& MultipleVertexBuffer::getFormat() const {
+		return _format;
 	}
 
-	void MultipleVertexBuffer::setFormat(modules::graphics::VertexSize size, modules::graphics::VertexType type) {
-		if (_vertSize != size || _vertType != type) {
-			_vertSize = size;
-			_vertType = type;
+	void MultipleVertexBuffer::setFormat(const modules::graphics::VertexFormat& format) {
+		if (!memEqual<sizeof(_format)>(&_format, &format)) {
+			_format.size = format.size;
+			_format.type = format.type;
 
 			auto node = _base.getBegin();
 			auto n = _base.getCount();
 			while (n-- > 0) {
-				node->target->setFormat(size, type);
+				node->target->setFormat(_format);
 				node = node->next;
 			};
 		}
@@ -230,7 +227,7 @@ namespace aurora {
 		return itr == _buffers.end() ? nullptr : itr->second;
 	}
 
-	void VertexBufferCollection::add(const std::string& name, modules::graphics::IVertexBuffer* buffer) {
+	void VertexBufferCollection::set(const std::string& name, modules::graphics::IVertexBuffer* buffer) {
 		if (auto itr = _buffers.find(name); buffer) {
 			if (itr == _buffers.end()) {
 				_buffers.emplace(name, buffer);

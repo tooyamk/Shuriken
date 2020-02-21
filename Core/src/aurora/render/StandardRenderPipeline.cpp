@@ -1,5 +1,6 @@
 #include "StandardRenderPipeline.h"
 #include "aurora/Node.h"
+#include "aurora/ShaderPredefine.h"
 #include "aurora/components/Camera.h"
 #include "aurora/components/IRenderable.h"
 #include "aurora/render/IRenderer.h"
@@ -22,8 +23,8 @@ namespace aurora::render {
 		_shaderParameters(new ShaderParameterCollection()),
 		_shaderDefineStack(new ShaderDefineGetterStack()),
 		_shaderParameterStack(new ShaderParameterGetterStack()) {
-		_shaderParameters->add("_mat_w2v", _m34_w2v);
-		_shaderParameters->add("_mat_w2p", _m44_w2p);
+		_shaderParameters->set(ShaderPredefine::MATRIX_WV, _m34_w2v);
+		_shaderParameters->set(ShaderPredefine::MATRIX_WP, _m44_w2p);
 	}
 
 	void StandardRenderPipeline::render(modules::graphics::IGraphicsModule* graphics, components::Camera* camera, Node* node) {

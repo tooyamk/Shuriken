@@ -211,6 +211,7 @@ namespace aurora::modules::graphics::program_source_translator {
 			compiler.set_common_options(opts);
 
 			auto resources = compiler.get_shader_resources();
+			/*
 			for (auto& val : resources.uniform_buffers) {
 				auto& type = compiler.get_type(val.base_type_id);
 				auto numMembers = type.member_types.size();
@@ -223,6 +224,7 @@ namespace aurora::modules::graphics::program_source_translator {
 					}
 				}
 			}
+			*/
 
 			for (auto& val : resources.stage_inputs) {
 				auto& name = compiler.get_name(val.id);

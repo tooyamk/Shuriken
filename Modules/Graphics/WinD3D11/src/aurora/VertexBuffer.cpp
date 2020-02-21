@@ -3,8 +3,6 @@
 
 namespace aurora::modules::graphics::win_d3d11 {
 	VertexBuffer::VertexBuffer(Graphics& graphics) : IVertexBuffer(graphics),
-		_vertSize(VertexSize::UNKNOWN),
-		_vertType(VertexType::UNKNOWN),
 		_internalFormat(DXGI_FORMAT_UNKNOWN),
 		_stride(0),
 		_baseBuffer(D3D11_BIND_VERTEX_BUFFER) {
@@ -65,20 +63,19 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_baseBuffer.releaseBuffer(*_graphics.get<Graphics>());
 	}
 
-	void VertexBuffer::getFormat(VertexSize* size, VertexType* type) const {
-		if (size) *size = _vertSize;
-		if (type) *type = _vertType;
+	const VertexFormat& VertexBuffer::getFormat() const {
+		return _format;
 	}
 
-	void VertexBuffer::setFormat(VertexSize size, VertexType type) {
-		if (_vertSize != size || _vertType != type) {
-			_vertSize = size;
-			_vertType = type;
+	void VertexBuffer::setFormat(const VertexFormat& format) {
+		if (!memEqual<sizeof(_format)>(&_format, &format)) {
+			_format.size = format.size;
+			_format.type = format.type;
 
-			switch (type) {
+			switch (_format.type) {
 			case VertexType::I8:
 			{
-				switch (size) {
+				switch (_format.size) {
 				case VertexSize::ONE:
 				{
 					_internalFormat = DXGI_FORMAT_R8_SINT;
@@ -113,7 +110,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			}
 			case VertexType::UI8:
 			{
-				switch (size) {
+				switch (_format.size) {
 				case VertexSize::ONE:
 				{
 					_internalFormat = DXGI_FORMAT_R8_UINT;
@@ -148,7 +145,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			}
 			case VertexType::I16:
 			{
-				switch (size) {
+				switch (_format.size) {
 				case VertexSize::ONE:
 				{
 					_internalFormat = DXGI_FORMAT_R16_SINT;
@@ -183,7 +180,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			}
 			case VertexType::UI16:
 			{
-				switch (size) {
+				switch (_format.size) {
 				case VertexSize::ONE:
 				{
 					_internalFormat = DXGI_FORMAT_R16_UINT;
@@ -218,7 +215,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			}
 			case VertexType::I32:
 			{
-				switch (size) {
+				switch (_format.size) {
 				case VertexSize::ONE:
 				{
 					_internalFormat = DXGI_FORMAT_R32_SINT;
@@ -253,7 +250,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			}
 			case VertexType::UI32:
 			{
-				switch (size) {
+				switch (_format.size) {
 				case VertexSize::ONE:
 				{
 					_internalFormat = DXGI_FORMAT_R32_UINT;
@@ -288,7 +285,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			}
 			case VertexType::F32:
 			{
-				switch (size) {
+				switch (_format.size) {
 				case VertexSize::ONE:
 				{
 					_internalFormat = DXGI_FORMAT_R32_FLOAT;

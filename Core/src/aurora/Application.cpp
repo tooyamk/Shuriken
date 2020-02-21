@@ -293,7 +293,11 @@ namespace aurora {
 			if (app) {
 				bool isCanceled = false;
 				app->_eventDispatcher.dispatchEvent(app, ApplicationEvent::CLOSING, &isCanceled);
-				if (isCanceled) return 0;
+				if (isCanceled) {
+					return 0;
+				} else {
+					app->_eventDispatcher.dispatchEvent(app, ApplicationEvent::CLOSED);
+				}
 			}
 
 			break;

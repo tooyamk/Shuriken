@@ -1,5 +1,6 @@
 #include "ForwardRenderer.h"
 #include "aurora/Mesh.h"
+#include "aurora/ShaderPredefine.h"
 #include "aurora/StackPopper.h"
 #include "aurora/components/IRenderable.h"
 #include "aurora/render/IRenderDataCollector.h"
@@ -14,9 +15,9 @@ namespace aurora::render {
 		_m34_l2v(new ShaderParameter()),
 		_m44_l2p(new ShaderParameter()),
 		_shaderParameters(new ShaderParameterCollection()) {
-		_shaderParameters->add("_mat_l2w", _m34_l2w);
-		_shaderParameters->add("_mat_l2v", _m34_l2v);
-		_shaderParameters->add("_mat_l2p", _m44_l2p);
+		_shaderParameters->set(ShaderPredefine::MATRIX_LW, _m34_l2w);
+		_shaderParameters->set(ShaderPredefine::MATRIX_LV, _m34_l2v);
+		_shaderParameters->set(ShaderPredefine::MATRIX_LP, _m44_l2p);
 	}
 
 	/*

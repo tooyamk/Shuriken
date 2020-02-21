@@ -3,8 +3,6 @@
 
 namespace aurora::modules::graphics::win_gl {
 	VertexBuffer::VertexBuffer(Graphics& graphics) : IVertexBuffer(graphics),
-		_vertSize(VertexSize::UNKNOWN),
-		_vertType(VertexType::UNKNOWN),
 		_validVertexFormat(false),
 		_vertexSize(0),
 		_vertexType(0),
@@ -66,17 +64,16 @@ namespace aurora::modules::graphics::win_gl {
 		_baseBuffer.releaseBuffer();
 	}
 
-	void VertexBuffer::getFormat(VertexSize* size, VertexType* type) const {
-		if (size) *size = _vertSize;
-		if (type) *type = _vertType;
+	const VertexFormat& VertexBuffer::getFormat() const {
+		return _format;
 	}
 
-	void VertexBuffer::setFormat(VertexSize size, VertexType type) {
-		if (_vertSize != size || _vertType != type) {
-			_vertSize = size;
-			_vertType = type;
+	void VertexBuffer::setFormat(const VertexFormat& format) {
+		if (!memEqual<sizeof(_format)>(&_format, &format)) {
+			_format.size = format.size;
+			_format.type = format.type;
 
-			switch (size) {
+			switch (_format.size) {
 			case VertexSize::ONE:
 				_vertexSize = 1;
 				break;
@@ -94,7 +91,7 @@ namespace aurora::modules::graphics::win_gl {
 				break;
 			}
 
-			switch (type) {
+			switch (_format.type) {
 			case VertexType::I8:
 				_vertexType = GL_BYTE;
 				break;

@@ -161,6 +161,29 @@ namespace aurora {
 			dst[3] = w;
 		}
 
+		inline static void AE_CALL matTransformPoint(const f32(&m)[4][4], const f32(&p)[3], f32(&dst)[4]) {
+			auto x = p[0] * m[0][0] + p[1] * m[0][1] + p[2] * m[0][2] + m[0][3];
+			auto y = p[0] * m[1][0] + p[1] * m[1][1] + p[2] * m[1][2] + m[1][3];
+			auto z = p[0] * m[2][0] + p[1] * m[2][1] + p[2] * m[2][2] + m[2][3];
+			auto w = p[0] * m[3][0] + p[1] * m[3][1] + p[2] * m[3][2] + m[3][3];
+
+			dst[0] = x;
+			dst[1] = y;
+			dst[2] = z;
+			dst[3] = w;
+		}
+
+		inline static void AE_CALL matTransformPoint(const f32(&m)[4][4], const f32(&p)[3], f32(&dst)[3]) {
+			auto x = p[0] * m[0][0] + p[1] * m[0][1] + p[2] * m[0][2] + m[0][3];
+			auto y = p[0] * m[1][0] + p[1] * m[1][1] + p[2] * m[1][2] + m[1][3];
+			auto z = p[0] * m[2][0] + p[1] * m[2][1] + p[2] * m[2][2] + m[2][3];
+			auto w = p[0] * m[3][0] + p[1] * m[3][1] + p[2] * m[3][2] + m[3][3];
+
+			dst[0] = x / w;
+			dst[1] = y / w;
+			dst[2] = z / w;
+		}
+
 		template<typename T>
 		inline static constexpr FloatType<T> AE_CALL deg(const T& rad) {
 			return rad * DEG<T>;

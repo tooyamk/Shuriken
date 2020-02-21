@@ -1,10 +1,12 @@
 #pragma once
 
-#include "base/Image.h"
+#include "aurora/Image.h"
 
-namespace aurora::extensions::file {
+namespace aurora::extensions {
 	class AE_EXTENSION_DLL PNGConverter {
 	public:
+		AE_DECLARE_CANNOT_INSTANTIATE(PNGConverter);
+
 		static Image* AE_CALL parse(const ByteArray& source);
 	};
 }

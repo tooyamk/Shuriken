@@ -90,16 +90,24 @@ namespace aurora {
 
 		inline ByteArray AE_CALL slice(size_t start, size_t length, Usage usage = Usage::SHARED) const {
 			if (start >= _length) {
-				return std::move(ByteArray(nullptr, 0, usage));
+				ByteArray ba(nullptr, 0, usage);
+				ba.setEndian(_endian);
+				return std::move(ba);
 			} else {
-				return std::move(ByteArray(_data + start, std::min<size_t>(length, _length - start), usage));
+				ByteArray ba(_data + start, std::min<size_t>(length, _length - start), usage);
+				ba.setEndian(_endian);
+				return std::move(ba);
 			}
 		}
 		inline ByteArray AE_CALL slice(size_t length, Usage usage = Usage::SHARED) const {
-			return std::move(ByteArray(_data + _position, std::min<size_t>(length, _length - _position), usage));
+			ByteArray ba(_data + _position, std::min<size_t>(length, _length - _position), usage);
+			ba.setEndian(_endian);
+			return std::move(ba);
 		}
 		inline ByteArray AE_CALL slice(Usage usage = Usage::SHARED) const {
-			return std::move(ByteArray(_data + _position, _length - _position, usage));
+			ByteArray ba(_data + _position, _length - _position, usage);
+			ba.setEndian(_endian);
+			return std::move(ba);
 		}
 
 		inline size_t AE_CALL getCapacity() const {
@@ -132,6 +140,10 @@ namespace aurora {
 			_position = pos > _length ? _length : pos;
 		}
 
+		inline void AE_CALL skip(size_t size) {
+			setPosition(_position + size);
+		}
+
 		inline void AE_CALL seekBegin() {
 			_position = 0;
 		}
@@ -146,6 +158,22 @@ namespace aurora {
 		void AE_CALL popFront(size_t len);
 		void AE_CALL popBack(size_t len);
 		void AE_CALL insert(size_t len);
+
+		template<typename T, typename = typename std::enable_if_t<
+			std::is_same_v<T, bool> ||
+			std::is_same_v<T, int8_t> ||
+			std::is_same_v<T, uint8_t> ||
+			std::is_same_v<T, int16_t> ||
+			std::is_same_v<T, uint16_t> ||
+			std::is_same_v<T, int32_t> ||
+			std::is_same_v<T, uint32_t> ||
+			std::is_same_v<T, int64_t> ||
+			std::is_same_v<T, uint64_t> ||
+			std::is_same_v<T, f32> ||
+			std::is_same_v<T, f64>, bool>>
+		inline T AE_CALL read() {
+			return _read<T>();
+		}
 
 		template<Type T, typename = typename std::enable_if_t<T == Type::BOOL, bool>>
 		inline bool AE_CALL read() {
@@ -285,39 +313,43 @@ namespace aurora {
 			return _read<f64>();
 		}
 
-		template<Type T, typename = typename std::enable_if_t<T == Type::STR, bool>>
-		inline std::string AE_CALL read(bool chechBOM) {
-			return _read<std::string>(chechBOM);
+		template<Type T, bool CheckEndMark = true, bool CheckBOM = false, typename = typename std::enable_if_t<T == Type::STR, bool>>
+		inline std::string AE_CALL read(size_t size = (std::numeric_limits<size_t>::max)()) {
+			return _read<std::string, CheckEndMark, CheckBOM>(size);
 		}
 
-		template<Type T, typename = typename std::enable_if_t<T == Type::STR_V, bool>>
-		inline std::string_view AE_CALL read(bool chechBOM) {
-			return _read<std::string_view>(chechBOM);
+		template<Type T, bool CheckEndMark = true, bool CheckBOM = false, typename = typename std::enable_if_t<T == Type::STR_V, bool>>
+		inline std::string_view AE_CALL read(size_t size = (std::numeric_limits<size_t>::max)()) {
+			return _read<std::string_view, CheckEndMark, CheckBOM>(size);
 		}
 
-		template<Type T, typename = typename std::enable_if_t<T == Type::STR, bool>>
+		template<Type T, bool CheckEndMark = true, bool CheckBOM = false, typename = typename std::enable_if_t<T == Type::STR, bool>>
 		//begin, size, position
-		std::tuple<size_t, size_t, size_t> AE_CALL read(size_t begin, size_t size, bool chechBOM) const {
-			if (chechBOM) begin += _bomOffset(begin);
+		inline std::tuple<size_t, size_t, size_t> AE_CALL read(size_t begin, size_t size) const {
+			if constexpr (CheckBOM) {
+				begin += _bomOffset(begin);
+			}
 			if (_length <= begin) return std::make_tuple(begin, 0, begin);
 
 			if (auto len = _length - begin; size > len) size = len;
 			if (!size) return std::make_tuple(begin, 0, begin);
 
-			for (size_t i = begin, n = begin + size; i < n; ++i) {
-				if (!_data[i]) {
-					auto s = i - begin;
-					return std::make_tuple(begin, s, begin + s + 1);
+			if constexpr (CheckEndMark) {
+				for (size_t i = begin, n = begin + size; i < n; ++i) {
+					if (!_data[i]) {
+						auto s = i - begin;
+						return std::make_tuple(begin, s, begin + s + 1);
+					}
 				}
 			}
 
-			return std::make_tuple(begin, size, _length);
+			return std::make_tuple(begin, size, begin + size);
 		}
 
 		template<Type T, typename = typename std::enable_if_t<T == Type::STR, bool>>
 		//begin, size
-		inline std::tuple<size_t, size_t> AE_CALL read(size_t size, bool chechBOM) {
-			auto [begin, s, pos] = read<T>(_position, size, chechBOM);
+		inline std::tuple<size_t, size_t> AE_CALL read(size_t size) {
+			auto [begin, s, pos] = read<T>(_position, size);
 			_position = pos;
 			return std::make_tuple(begin, s);
 		}
@@ -345,6 +377,22 @@ namespace aurora {
 			_position += length;
 
 			return length;
+		}
+
+		template<typename T, typename = typename std::enable_if_t<
+			std::is_same_v<T, bool> ||
+			std::is_same_v<T, int8_t> ||
+			std::is_same_v<T, uint8_t> ||
+			std::is_same_v<T, int16_t> ||
+			std::is_same_v<T, uint16_t> ||
+			std::is_same_v<T, int32_t> ||
+			std::is_same_v<T, uint32_t> ||
+			std::is_same_v<T, int64_t> ||
+			std::is_same_v<T, uint64_t> ||
+			std::is_same_v<T, f32> ||
+			std::is_same_v<T, f64>, bool>>
+		inline void AE_CALL write(T value) {
+			_write<T>(value);
 		}
 
 		template<Type T, typename = typename std::enable_if_t<T == Type::BYTE, bool>>
@@ -617,11 +665,11 @@ namespace aurora {
 			}
 		}
 
-		template<typename T, typename = typename std::enable_if_t<is_string_v<T>, T>>
-		inline T AE_CALL _read(bool chechBOM) {
-			auto [begin, size, pos] = read<Type::STR>(_position, (std::numeric_limits<size_t>::max)(), chechBOM);
+		template<typename T, bool CheckEndMark, bool CheckBOM, typename = typename std::enable_if_t<is_string_v<T>, T>>
+		inline T AE_CALL _read(size_t size) {
+			auto [begin, num, pos] = read<Type::STR, CheckEndMark, CheckBOM>(_position, size);
 			_position = pos;
-			return std::move(T((char*)_data + begin, size));
+			return std::move(T((char*)_data + begin, num));
 		}
 
 		inline void AE_CALL _write(const uint8_t* p, uint32_t len) {

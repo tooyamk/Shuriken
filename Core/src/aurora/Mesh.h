@@ -9,11 +9,11 @@ namespace aurora {
 		Mesh();
 
 		inline VertexBufferCollection& AE_CALL getVertexBuffers() {
-			return _vertexBuffers;
+			return *_vertexBuffers;
 		}
 
 		inline const VertexBufferCollection& AE_CALL getVertexBuffers() const {
-			return _vertexBuffers;
+			return *_vertexBuffers;
 		}
 
 		inline modules::graphics::IIndexBuffer* AE_CALL getIndexBuffer() const {
@@ -25,7 +25,7 @@ namespace aurora {
 		}
 
 	protected:
-		VertexBufferCollection _vertexBuffers;
+		RefPtr<VertexBufferCollection> _vertexBuffers;
 		RefPtr<modules::graphics::IIndexBuffer> _indexBuffer;
 	};
 }

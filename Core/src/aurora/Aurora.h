@@ -15,6 +15,7 @@
 #include "aurora/Shader.h"
 #include "aurora/ShaderDefine.h"
 #include "aurora/ShaderParameter.h"
+#include "aurora/ShaderPredefine.h"
 #include "aurora/String.h"
 #include "aurora/Time.h"
 #include "aurora/TimeWheel.h"

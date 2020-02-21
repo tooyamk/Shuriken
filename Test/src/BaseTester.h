@@ -3,7 +3,8 @@
 #include "aurora/Aurora.h"
 #include "Helper.h"
 
-#include "../../Extensions/Files/Images/PNGConverter/src/aurora/PNGConverter.h"
+#include "Extensions/PNGConverter/src/aurora/PNGConverter.h"
+#include "Extensions/FBXConverter/src/aurora/FBXConverter.h"
 
 using namespace aurora;
 using namespace aurora::components;

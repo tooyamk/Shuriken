@@ -1,39 +1,40 @@
-#include "PNGConverter.h"
+#pragma once
+
+#include "aurora/Image.h"
 #include "png.h"
-#include "modules/graphics/IGraphicsModule.h"
+#include "aurora/modules/graphics/IGraphicsModule.h"
 
-namespace aurora::extensions::file {
-	namespace png_private {
-		struct ImageSource {
-			uint8_t* data;
-			int32_t size;
-			int32_t offset;
-		};
+namespace aurora::extensions::png_converter {
+	struct ImageSource {
+		uint8_t* data;
+		int32_t size;
+		int32_t offset;
+	};
 
-		static void _readDataCallback(png_structp png_ptr, png_bytep data, png_size_t length) {
-			auto isource = (ImageSource*)png_get_io_ptr(png_ptr);
+	inline void AE_CALL readDataCallback(png_structp png_ptr, png_bytep data, png_size_t length) {
+		auto isource = (ImageSource*)png_get_io_ptr(png_ptr);
 
-			if ((int)(isource->offset + length) <= isource->size) {
-				memcpy(data, isource->data + isource->offset, length);
-				isource->offset += length;
-			} else {
-				png_error(png_ptr, "PNG readDataCallback failed");
-			}
+		if ((int)(isource->offset + length) <= isource->size) {
+			memcpy(data, isource->data + isource->offset, length);
+			isource->offset += length;
+		} else {
+			png_error(png_ptr, "PNG readDataCallback failed");
 		}
 	}
 
-	Image* PNGConverter::parse(const ByteArray& source) {
-		if (source.getLength() < 8 || png_sig_cmp((png_byte*)source.getSource(), 0, 8)) return nullptr;
+	inline Image* AE_CALL parse(const ByteArray& source) {
+		ByteArray src = source.slice();
+		if (src.getLength() < 8 || png_sig_cmp((png_byte*)src.getSource(), 0, 8)) return nullptr;
 
 		auto png = png_create_read_struct(PNG_LIBPNG_VER_STRING, 0, 0, 0);
 		auto info = png_create_info_struct(png);
 
-		png_private::ImageSource is;
-		is.data = (uint8_t*)source.getSource();
-		is.size = source.getLength();
+		ImageSource is;
+		is.data = (uint8_t*)src.getSource();
+		is.size = src.getLength();
 		is.offset = 0;
-		
-		png_set_read_fn(png, &is, png_private::_readDataCallback);
+
+		png_set_read_fn(png, &is, readDataCallback);
 		png_read_info(png, info);
 		auto width = png_get_image_width(png, info);
 		auto height = png_get_image_height(png, info);
@@ -46,9 +47,9 @@ namespace aurora::extensions::file {
 			bitDepth = 8;
 			png_set_expand_gray_1_2_4_to_8(png);
 		}
-		
+
 		if (png_get_valid(png, info, PNG_INFO_tRNS)) png_set_tRNS_to_alpha(png);
-		
+
 		if (bitDepth == 16) {
 			png_set_strip_16(png);
 		} else if (bitDepth < 8) {
@@ -64,7 +65,7 @@ namespace aurora::extensions::file {
 
 		auto dataLen = rowBytes * height;
 		auto data = new uint8_t[dataLen];
-		
+
 		for (uint32_t i = 0; i < height; ++i) rowData[i] = data + i * rowBytes;
 		png_read_image(png, rowData);
 		png_read_end(png, nullptr);

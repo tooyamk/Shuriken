@@ -17,7 +17,8 @@ namespace aurora {
 		RESIZED,
 		FOCUS_IN,
 		FOCUS_OUT,
-		CLOSING
+		CLOSING,
+		CLOSED
 	};
 
 

@@ -13,6 +13,10 @@ get_property(__PROJECT_AE_PNG_CONVERTER_NAME GLOBAL PROPERTY "__PROJECT_AE_PNG_C
 get_property(__PROJECT_AE_PNG_CONVERTER_OUTPUT_NAME GLOBAL PROPERTY "__PROJECT_AE_PNG_CONVERTER_OUTPUT_NAME")
 get_property(__PROJECT_AE_PNG_CONVERTER_DLL GLOBAL PROPERTY "__PROJECT_AE_PNG_CONVERTER_DLL")
 
+get_property(__PROJECT_AE_FBX_CONVERTER_NAME GLOBAL PROPERTY "__PROJECT_AE_FBX_CONVERTER_NAME")
+get_property(__PROJECT_AE_FBX_CONVERTER_OUTPUT_NAME GLOBAL PROPERTY "__PROJECT_AE_FBX_CONVERTER_OUTPUT_NAME")
+get_property(__PROJECT_AE_FBX_CONVERTER_DLL GLOBAL PROPERTY "__PROJECT_AE_FBX_CONVERTER_DLL")
+
 get_property(__PROJECT_AE_PST_NAME GLOBAL PROPERTY "__PROJECT_AE_PST_NAME")
 get_property(__PROJECT_AE_PST_DLL GLOBAL PROPERTY "__PROJECT_AE_PST_DLL")
 
@@ -28,13 +32,17 @@ if (WIN32)
     get_property(__PROJECT_AE_WIN_XINPUT_DLL GLOBAL PROPERTY "__PROJECT_AE_WIN_XINPUT_DLL")
 endif ()
 
-include_directories(${__PROJECT_AE_CORE_SRC_DIR}/src/)
+include_directories(
+    ${__PROJECT_AE_CORE_SRC_DIR}/src/
+    ${__AE_ROOT_FOLDER}/
+)
 file(GLOB SRC_FILES "src/*.h" "src/*.cpp" "src/*/*.h" "src/*/*.cpp")
 __add_executable_source_group(${PROJECT_NAME} ${SRC_FILES})
 
 target_link_libraries(${PROJECT_NAME}
     ${__PROJECT_AE_CORE_NAME}
     ${__PROJECT_AE_PNG_CONVERTER_NAME}
+    ${__PROJECT_AE_FBX_CONVERTER_NAME}
 )
 
 if (WIN32)
@@ -47,6 +55,7 @@ if (WIN32)
 
     set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS /SUBSYSTEM:WINDOWS)
     __set_delayload(${__PROJECT_AE_PNG_CONVERTER_OUTPUT_NAME})
+    __set_delayload(${__PROJECT_AE_FBX_CONVERTER_OUTPUT_NAME})
 endif ()
 
 set(__OUTPUT_LIBS_FOLDER ${__BUILD_DIR}/libs)
@@ -59,6 +68,7 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 add_custom_target(run_test_general ALL
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${__PROJECT_AE_CORE_DLL} ${__BUILD_DIR}
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${__PROJECT_AE_PNG_CONVERTER_DLL} ${__OUTPUT_LIBS_FOLDER}
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${__PROJECT_AE_FBX_CONVERTER_DLL} ${__OUTPUT_LIBS_FOLDER}
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${__PROJECT_ZLIB_DLL} ${__OUTPUT_LIBS_FOLDER}
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${__PROJECT_LIBPNG_DLL} ${__OUTPUT_LIBS_FOLDER}
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${__PROJECT_GLEW_DLL} ${__OUTPUT_LIBS_FOLDER}
@@ -68,6 +78,7 @@ add_custom_target(run_test_general ALL
 add_dependencies(run_test_general
     ${__PROJECT_AE_CORE_NAME}
     ${__PROJECT_AE_PNG_CONVERTER_NAME}
+    ${__PROJECT_AE_FBX_CONVERTER_NAME}
     ${__PROJECT_AE_PST_NAME}
 )
 add_dependencies(${PROJECT_NAME} run_test_general)

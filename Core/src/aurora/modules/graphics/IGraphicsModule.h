@@ -102,13 +102,29 @@ namespace aurora::modules::graphics {
 	};
 
 
+	struct AE_DLL VertexFormat {
+		VertexFormat() :
+			size(VertexSize::UNKNOWN),
+			type(VertexType::UNKNOWN) {
+		}
+
+		VertexFormat(VertexSize size, VertexType type) :
+			size(size),
+			type(type) {
+		}
+
+		VertexSize size;
+		VertexType type;
+	};
+
+
 	class AE_DLL IVertexBuffer : public IBuffer {
 	public:
 		IVertexBuffer(IGraphicsModule& graphics) : IBuffer(graphics) {}
 		virtual ~IVertexBuffer() {}
 
-		virtual void AE_CALL getFormat(VertexSize* size, VertexType* type) const = 0;
-		virtual void AE_CALL setFormat(VertexSize size, VertexType type) = 0;
+		virtual const VertexFormat& AE_CALL getFormat() const = 0;
+		virtual void AE_CALL setFormat(const VertexFormat& format) = 0;
 	};
 
 

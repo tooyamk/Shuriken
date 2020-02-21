@@ -137,8 +137,6 @@ namespace aurora {
 
 		static const Matrix44 IDENTITY;
 
-		inline AE_CALL operator Data34& ();
-		inline AE_CALL operator const Data34& () const;
 		inline AE_CALL operator Data44& ();
 		inline AE_CALL operator const Data44& () const;
 
@@ -361,15 +359,6 @@ namespace aurora {
 		data[2][0] *= x;
 		data[2][1] *= y;
 		data[2][2] *= z;
-	}
-
-
-	inline AE_CALL Matrix44::operator Matrix44::Data34& () {
-		return (Data34&)data;
-	}
-
-	inline AE_CALL Matrix44::operator const Matrix44::Data34& () const {
-		return (Data34&)data;
 	}
 
 	inline AE_CALL Matrix44::operator Matrix44::Data44& () {

@@ -58,16 +58,19 @@ set(__AE_EXTERNAL_FOLDER_NAME External)
 set(__AE_MODULES_FOLDER_NAME Modules)
 set(__AE_EXTENSIONS_FOLDER_NAME Extensions)
 
+SET(__AE_ROOT_FOLDER ${CMAKE_CURRENT_SOURCE_DIR})
+
 add_subdirectory(${__AE_EXTERNAL_FOLDER_NAME}/zlib)
 add_subdirectory(${__AE_EXTERNAL_FOLDER_NAME}/libpng)
 add_subdirectory(${__AE_EXTERNAL_FOLDER_NAME}/glew)
 add_subdirectory(${__AE_EXTERNAL_FOLDER_NAME}/DirectXShaderCompiler)
 add_subdirectory(${__AE_EXTERNAL_FOLDER_NAME}/SPIRV-Cross)
+add_subdirectory(${__AE_EXTERNAL_FOLDER_NAME}/BoostPreprocessor)
 
 add_subdirectory(Core)
 
 if (WIN32)
-    add_subdirectory(${__AE_MODULES_FOLDER_NAME}/Graphics/ProgramSourceTranslator)#only x64
+    add_subdirectory(${__AE_MODULES_FOLDER_NAME}/Graphics/ProgramSourceTranslator)#??only x64
     add_subdirectory(${__AE_MODULES_FOLDER_NAME}/Graphics/WinD3D11)
     add_subdirectory(${__AE_MODULES_FOLDER_NAME}/Graphics/WinGL)
 
@@ -75,7 +78,7 @@ if (WIN32)
     add_subdirectory(${__AE_MODULES_FOLDER_NAME}/Inputs/WinXInput)
 endif ()
 
-add_subdirectory(${__AE_EXTENSIONS_FOLDER_NAME}/Files/Images/PNGConverter)
-#add_subdirectory(${__AE_EXTENSIONS_FOLDER_NAME}/Files/Models/FBXConverter)
+add_subdirectory(${__AE_EXTENSIONS_FOLDER_NAME}/PNGConverter)
+add_subdirectory(${__AE_EXTENSIONS_FOLDER_NAME}/FBXConverter)
 
 add_subdirectory(Test)

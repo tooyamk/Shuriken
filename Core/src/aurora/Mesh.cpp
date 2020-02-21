@@ -1,7 +1,7 @@
 #include "Mesh.h"
 
 namespace aurora {
-	Mesh::Mesh() {
-		_vertexBuffers.ref();
+	Mesh::Mesh() :
+		_vertexBuffers(new VertexBufferCollection()) {
 	}
 }

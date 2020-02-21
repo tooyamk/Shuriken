@@ -338,7 +338,7 @@ namespace aurora {
 		virtual ShaderParameter* AE_CALL get(const std::string& name) const override;
 		virtual ShaderParameter* AE_CALL get(const std::string& name, ShaderParameterType type) const override;
 
-		ShaderParameter* AE_CALL add(const std::string& name, ShaderParameter* parameter);
+		ShaderParameter* AE_CALL set(const std::string& name, ShaderParameter* parameter);
 		inline void AE_CALL remove(const std::string& name) {
 			if (auto itr = _parameters.find(name); itr != _parameters.end()) _parameters.erase(itr);
 		}
