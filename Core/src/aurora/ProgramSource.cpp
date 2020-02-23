@@ -12,13 +12,15 @@ namespace aurora {
 	ProgramSource::ProgramSource(ProgramSource&& value) :
 		language(value.language),
 		stage(value.stage),
+		entryPoint(std::move(value.entryPoint)),
 		version(std::move(value.version)),
 		data(std::move(value.data)) {
 	}
 
-	ProgramSource& ProgramSource::operator=(ProgramSource&& value) {
+	ProgramSource& ProgramSource::operator=(ProgramSource&& value) noexcept {
 		language = value.language;
 		stage = value.stage;
+		entryPoint = std::move(value.entryPoint);
 		version = std::move(value.version);
 		data = std::move(value.data);
 

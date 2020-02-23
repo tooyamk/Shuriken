@@ -19,12 +19,7 @@ namespace aurora::components {
 		auto& m = _pm.data;
 
 		_zNear = -m[2][3] / m[2][2];
-
-		if (m[3][3] == 1.f) {
-			_zFar = 1.f / m[2][2] + _zNear;
-		} else {
-			_zFar = (_zNear * m[2][2]) / (m[2][2] - 1.f);
-		}
+		_zFar = (m[2][3] - m[3][3]) / (m[3][2] - m[2][2]);
 
 		_aspectRatio = m[1][1] / m[0][0];
 	}

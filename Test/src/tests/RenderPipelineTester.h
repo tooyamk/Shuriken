@@ -15,8 +15,8 @@ public:
 		if (app->createWindow(wndStype, u8"", Box2i32(Vec2i32({ 100, 100 }), Vec2i32({ 800, 600 })), false)) {
 			RefPtr gml = new GraphicsModuleLoader();
 
-			if (gml->load(getDLLName("ae-win-gl"))) {
-			//if (gml->load(getDLLName("ae-win-d3d11"))) {
+			//if (gml->load(getDLLName("ae-win-gl"))) {
+			if (gml->load(getDLLName("ae-win-d3d11"))) {
 				RefPtr gpstml = new ModuleLoader<IProgramSourceTranslator>();
 				gpstml->load(getDLLName("ae-program-source-translator"));
 				RefPtr gpst = gpstml->create(&Args().add("dxc", getDLLName("dxcompiler")));
@@ -109,10 +109,16 @@ public:
 
 						{
 							RefPtr s = new Shader();
+
 							mat->setShader(s);
 							mat->setParameters(new ShaderParameterCollection());
 							std::string shaderResourcesFolder = app->getAppPath() + u8"Resources/shaders/";
 							//s->upload(std::filesystem::path(app->getAppPath() + u8"Resources/shaders/test.shader"));
+							extensions::ShaderUploader::upload(s, graphics, readFile(app->getAppPath() + u8"Resources/shaders/test.shader"),
+								[shaderResourcesFolder](const Shader& shader, ProgramStage stage, const std::string_view& name) {
+								return readFile(shaderResourcesFolder + name.data());
+							});
+							/*
 							s->upload(graphics,
 								new ProgramSource(readProgramSource(shaderResourcesFolder + "modelVert.hlsl", ProgramStage::VS)),
 								new ProgramSource(readProgramSource(shaderResourcesFolder + "modelFrag.hlsl", ProgramStage::PS)),
@@ -120,6 +126,7 @@ public:
 								[&shaderResourcesFolder](const Shader& shader, ProgramStage stage, const std::string_view& name) {
 								return readFile(shaderResourcesFolder + name.data());
 							});
+							*/
 
 							{
 								mat->getParameters()->set("red", new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set(Vec4f32::ONE).setUpdated();

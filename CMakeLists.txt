@@ -80,5 +80,6 @@ endif ()
 
 add_subdirectory(${__AE_EXTENSIONS_FOLDER_NAME}/PNGConverter)
 add_subdirectory(${__AE_EXTENSIONS_FOLDER_NAME}/FBXConverter)
+add_subdirectory(${__AE_EXTENSIONS_FOLDER_NAME}/ShaderUploader)
 
 add_subdirectory(Test)

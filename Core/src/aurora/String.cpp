@@ -22,7 +22,7 @@ namespace aurora {
 				}
 			}
 		}
-
+		
 		unicodeLen = s;
 		utf8Len = d;
 	}
@@ -158,13 +158,34 @@ namespace aurora {
 	}
 
 	void String::split(const std::string_view& input, const std::string_view& separator, std::vector<std::string_view>& dst) {
-		size_t first = 0, size = input.size();
-		while (first < size) {
-			auto second = input.find_first_of(separator, first);
-			if (first != second) dst.emplace_back(input.substr(first, second - first));
-			if (second == std::string_view::npos) break;
-			first = second + 1;
+		size_t i = 0, size = input.size(), step = separator.size();
+		while (i < size) {
+			auto f = input.find_first_of(separator, i);
+			if (f == std::string_view::npos) {
+				dst.emplace_back(input.data() + i, size - i);
+				return;
+			} else {
+				dst.emplace_back(input.data() + i, f - i);
+			}
+			
+			i = f + step;
 		}
+
+		dst.emplace_back(nullptr, 0);
+	}
+
+	void String::split(const std::string_view& input, uint8_t flags, std::vector<std::string_view>& dst) {
+		size_t begin = 0, i = 0, size = input.size();
+		while (i < size) {
+			if (CHARS[input[i]] & flags) {
+				dst.emplace_back(input.data() + begin, i - begin);
+				++i;
+				begin = i;
+			} else {
+				++i;
+			}
+		}
+		dst.emplace_back(input.data() + begin, i - begin);
 	}
 
 	std::string_view String::trimQuotation(const std::string_view& str) {
@@ -176,34 +197,37 @@ namespace aurora {
 			} else {
 				return str;
 			}
+		} else if (size == 1 && str[0] == '\"') {
+			return std::string_view();
 		} else {
 			return str;
 		}
 	}
 
-	std::string_view String::trimSpace(const std::string_view& str) {
+	std::string_view String::trim(const std::string_view& str, uint8_t flags) {
 		auto size = str.size();
 
 		if (size) {
 			size_t left = 0, right = size - 1;
 			do {
-				if (str[left] == ' ') {
+				if (CHARS[str[left]] & flags) {
 					++left;
 				} else {
 					break;
 				}
 			} while (left < size);
 
+			if (left == size) return std::string_view();
+
 			while (right > left) {
-				if (str[right] == ' ') {
+				if (CHARS[str[right]] & flags) {
 					--right;
 				} else {
 					break;
 				}
 			}
-			right = size - right - 1;
 
-			return std::string_view(str.data() + left, 1 + right - left);
+			return std::string_view(str.data() + left, right - left + 1);
 		} else {
 			return str;
 		}

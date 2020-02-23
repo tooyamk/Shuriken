@@ -619,7 +619,9 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	void Graphics::_resize(const Vec2<UINT>& size) {
-		if (!_swapChain) return;
+		if (!_swapChain || size == Vec2<UINT>::ZERO || _d3dStatus.backSize == size) return;
+
+		_d3dStatus.backSize = size;
 
 		DXGI_SWAP_CHAIN_DESC swapChainDesc;
 		_swapChain->GetDesc(&swapChainDesc);

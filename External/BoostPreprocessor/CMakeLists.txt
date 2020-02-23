@@ -8,7 +8,7 @@ ExternalProject_Add(
     ${PROJECT_NAME}
     PREFIX ${PROJECT_BINARY_DIR}
     GIT_REPOSITORY https://github.com/boostorg/preprocessor.git
-    GIT_TAG master
+    GIT_TAG boost-1.72.0
     GIT_SHALLOW 1
     GIT_PROGRESS 1
     TMP_DIR tmp

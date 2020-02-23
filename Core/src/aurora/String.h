@@ -7,6 +7,41 @@
 namespace aurora {
 	class AE_DLL String {
 	public:
+		struct AE_DLL CharFlag {
+			inline static constexpr uint8_t WHITE_SPACE = 0b1;
+			inline static constexpr uint8_t NEW_LINE = 0b10;
+		};
+
+		
+		inline static constexpr uint8_t CHARS[] = {
+			0, 0, 0, 0, 0, 0, 0, 0, 0, CharFlag::WHITE_SPACE,  //  0-9 9=\t
+			CharFlag::WHITE_SPACE | CharFlag::NEW_LINE, CharFlag::WHITE_SPACE, CharFlag::WHITE_SPACE, CharFlag::WHITE_SPACE | CharFlag::NEW_LINE, 0, 0, 0, 0, 0, 0,  // 10- 19 10=\n, 11=\v, 12=\f, 13=\r
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  // 20- 29
+			0, 0, CharFlag::WHITE_SPACE, 0, 0, 0, 0, 0, 0, 0,  // 30- 39 32=space
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  // 40- 49
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  // 50- 59
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  // 60- 69
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  // 70- 79
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  // 80- 89
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  // 90- 99
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  //100-109
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  //110-119
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  //120-129
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  //130-139
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  //140-149
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  //150-159
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  //160-169
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  //170-179
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  //180-189
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  //190-199
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  //200-209
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  //210-219
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  //220-229
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  //230-239
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  //240-249
+			0, 0, 0, 0, 0, 0			   //250-255
+		};
+
 		static void AE_CALL calcUnicodeToUtf8Length(const wchar_t* in, size_t inLen, size_t& unicodeLen, size_t& utf8Len);
 		static std::string::size_type AE_CALL UnicodeToUtf8(const wchar_t* in, size_t inLen, char* out, size_t outLen);
 		
@@ -52,9 +87,10 @@ namespace aurora {
 		//}
 		static void AE_CALL split(const std::string_view& input, const std::regex& separator, std::vector<std::string_view>& dst);
 		static void AE_CALL split(const std::string_view& input, const std::string_view& separator, std::vector<std::string_view>& dst);
+		static void AE_CALL split(const std::string_view& input, uint8_t flags, std::vector<std::string_view>& dst);
 
 		static std::string_view trimQuotation(const std::string_view& str);
-		static std::string_view trimSpace(const std::string_view& str);
+		static std::string_view trim(const std::string_view& str, uint8_t flags);
 
 		template<typename T,
 		typename = typename std::enable_if_t<std::is_integral_v<T>, T>>
@@ -108,6 +144,13 @@ namespace aurora {
 		}
 
 		static std::string::size_type AE_CALL findFirst(const char* src, size_t srcSize, const char* value, size_t valueSize);
+
+		inline static std::string::size_type AE_CALL findFirst(const std::string_view input, uint8_t flags) {
+			for (size_t i = 0, n = input.size(); i < n; ++i) {
+				if (CHARS[input[i]] & flags) return i;
+			}
+			return std::string::npos;
+		}
 
 		/*
 		inline static std::string AE_CALL toString(const unsigned char* value, unsigned int size) {

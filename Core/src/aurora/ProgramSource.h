@@ -37,7 +37,7 @@ namespace aurora {
 		std::string entryPoint;
 		ByteArray data;
 
-		ProgramSource& AE_CALL operator=(ProgramSource&& value);
+		ProgramSource& AE_CALL operator=(ProgramSource&& value) noexcept;
 
 		bool AE_CALL isValid() const;
 

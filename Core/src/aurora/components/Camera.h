@@ -20,6 +20,18 @@ namespace aurora::components {
 		f32 clearDepthValue;
 		size_t clearStencilValue;
 
+		inline f32 AE_CALL getAspectRatio() const {
+			return _aspectRatio;
+		}
+
+		inline f32 AE_CALL getNearClipPlane() const {
+			return _zNear;
+		}
+
+		inline f32 AE_CALL getFarClipPlane() const {
+			return _zFar;
+		}
+
 		inline const Matrix44& AE_CALL getProjectionMatrix() const {
 			return _pm;
 		}
@@ -27,6 +39,7 @@ namespace aurora::components {
 
 	protected:
 		Matrix44 _pm;//projectionMatrix
+
 		f32 _aspectRatio;
 		f32 _zNear;
 		f32 _zFar;

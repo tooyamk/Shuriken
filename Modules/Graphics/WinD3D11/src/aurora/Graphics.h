@@ -288,6 +288,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 				uint64_t featureValue;
 				uint32_t stencilRef;
 			} depthStencil;
+
+			Vec2<UINT> backSize;
 		} _d3dStatus;
 
 		ConstantBufferManager _constantBufferManager;

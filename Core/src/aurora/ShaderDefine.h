@@ -6,9 +6,12 @@
 namespace aurora {
 	class AE_DLL ShaderDefine {
 	public:
-		ShaderDefine() :
-			name(nullptr),
-			value(nullptr) {
+		ShaderDefine() {
+		}
+
+		ShaderDefine(const std::string_view& name, const std::string_view& value) :
+			name(name),
+			value(value) {
 		}
 
 		std::string_view name;

@@ -1,12 +1,27 @@
-define(static) {
-    aabb 1.0
+define(
+        
+        static ) {
+    aabb     1.0
 }
-define(dynamic) {
+define(     dynamic   ) {
 
 }
-program(vs) {
-    "vert.hlsl"
+
+//eafewgewg
+
+/**/
+
+program (vs) {
+    #include "modelVert.hlsl"
 }
-program(ps) {
-    "frag.hlsl"
+
+/*gwegwe
+wgwgirwjgiowarjgowiraheaotiuhb;oetij
+rgrwigwjrigerjoigj//wegwrr
+*/
+
+program     
+(ps) {
+    #include "modelFrag.hlsl"//wewewhhh
+    //hyjukik
 }
