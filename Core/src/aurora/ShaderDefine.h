@@ -2,6 +2,7 @@
 
 #include "aurora/Ref.h"
 #include <unordered_map>
+#include <vector>
 
 namespace aurora {
 	class AE_DLL ShaderDefine {

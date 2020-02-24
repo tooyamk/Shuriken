@@ -1,4 +1,4 @@
-#include "md5.h"
+#include "MD5.h"
 
 namespace aurora::hash {
 	MD5::MD5() {

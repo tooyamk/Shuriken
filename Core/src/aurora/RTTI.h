@@ -32,17 +32,16 @@ namespace aurora::rtti {
 #define AE_RTTI_DECLARE_BASE() \
 inline static aurora::rtti::ClassInfo __rttiClassInfo = aurora::rtti::ClassInfo(nullptr); \
 friend aurora::rtti::ClassInfo; \
-aurora::rtti::ClassInfo* __rtti; \
+aurora::rtti::ClassInfo* __rtti;
 
 #define AE_RTTI_DECLARE_DERIVED(__BASE__) \
 inline static aurora::rtti::ClassInfo __rttiClassInfo = aurora::rtti::ClassInfo(&__BASE__::__rttiClassInfo); \
-friend aurora::rtti::ClassInfo; \
+friend aurora::rtti::ClassInfo;
 
-#define AE_RTTI_DEFINE() \
-__rtti = &__rttiClassInfo; \
+#define AE_RTTI_DEFINE() __rtti = &__rttiClassInfo;
 
 #define AE_RTTI_GEN_IS_KIND_OF_METHOD() \
 template<typename RTTI_CLASS> \
 inline bool AE_CALL isKindOf() const { \
 	return __rtti->isKindOf<RTTI_CLASS>(); \
-}; \
+};

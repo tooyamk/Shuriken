@@ -95,7 +95,7 @@ namespace aurora::modules::graphics::win_gl {
 					info.names.emplace_back(charBuffer + sizeof(TYPE) - 1);
 				} else if (len > sizeof(IProgramSourceTranslator::COMBINED_TEXTURE_SAMPLER) - 1 && std::string_view(charBuffer, sizeof(IProgramSourceTranslator::COMBINED_TEXTURE_SAMPLER) - 1) == IProgramSourceTranslator::COMBINED_TEXTURE_SAMPLER) {
 					auto offset = sizeof(IProgramSourceTranslator::COMBINED_TEXTURE_SAMPLER) - 1;
-					if (auto pos = String::findFirst(charBuffer + offset, len - offset, '_'); pos == std::string::npos || !pos) {
+					if (auto pos = String::findFirst(std::string_view(charBuffer + offset, len - offset), '_'); pos == std::string::npos || !pos) {
 						info.names.emplace_back(charBuffer);
 					} else {
 						uint32_t texNameLen = 0;
@@ -160,7 +160,7 @@ namespace aurora::modules::graphics::win_gl {
 				for (GLint j = 0; j < numUniforms; ++j) {
 					glGetActiveUniformName(_handle, indices[j], sizeof(charBuffer), &nameLen, charBuffer);
 					
-					auto rootOffset = String::findFirst(charBuffer, nameLen, '.') + 1;
+					auto rootOffset = String::findFirst(std::string_view(charBuffer, nameLen), '.') + 1;
 					std::string_view child(charBuffer + rootOffset, nameLen - rootOffset);
 
 					ConstantBufferLayout::Variables* foundVar = nullptr;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "aurora/events/EventDispatcher.h"
+#include <thread>
 
 #if AE_OS == AE_OS_WIN
 #include "mmsystem.h"

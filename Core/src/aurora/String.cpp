@@ -1,40 +1,38 @@
 #include "String.h"
 
 namespace aurora {
-	void String::calcUnicodeToUtf8Length(const wchar_t* in, size_t inLen, size_t& unicodeLen, size_t& utf8Len) {
+	std::tuple<size_t, size_t> String::calcUnicodeToUtf8Length(const std::wstring_view& in) {
 		size_t s = 0, d = 0;
-		if (in) {
-			while (s < inLen) {
-				if (wchar_t c = in[s++]; c == 0) {
-					break;
-				} else if (c < 0x80) {  //
-					//length = 1;
-					++d;
-				} else if (c < 0x800) {
-					//length = 2;
-					d += 2;
-				} else if (c < 0x10000) {
-					//length = 3;
-					d += 3;
-				} else if (c < 0x200000) {
-					//length = 4;
-					d += 4;
-				}
+		
+		auto inSize = in.size();
+		while (s < inSize) {
+			if (wchar_t c = in[s++]; c == 0) {
+				break;
+			} else if (c < 0x80) {  //
+				//length = 1;
+				++d;
+			} else if (c < 0x800) {
+				//length = 2;
+				d += 2;
+			} else if (c < 0x10000) {
+				//length = 3;
+				d += 3;
+			} else if (c < 0x200000) {
+				//length = 4;
+				d += 4;
 			}
 		}
 		
-		unicodeLen = s;
-		utf8Len = d;
+		return std::make_tuple(s, d);
 	}
 
-	std::string::size_type String::UnicodeToUtf8(const wchar_t * in, size_t inLen, char* out, size_t outLen) {
-		if (!in || !out) return std::string::npos;
+	std::string::size_type String::UnicodeToUtf8(const std::wstring_view& in, char* outBuffer, size_t outBufferSize) {
+		if (in.empty() || !outBuffer) return std::string::npos;
 
-		size_t unicodeLen, utf8Len;
-		calcUnicodeToUtf8Length(in, inLen, unicodeLen, utf8Len);
-		if (outLen < unicodeLen) return -1;
+		auto [unicodeLen, utf8Len] = calcUnicodeToUtf8Length(in);
+		if (outBufferSize < unicodeLen) return std::string::npos;
 
-		return _UnicodeToUtf8(in, unicodeLen, out);
+		return _UnicodeToUtf8(in.data(), unicodeLen, outBuffer);
 	}
 
 	void String::calcUtf8ToUnicodeLength(const char* in, size_t inLen, size_t& utf8Len, size_t& unicodeLen) {
@@ -245,15 +243,14 @@ namespace aurora {
 		return std::move(str);
 	}
 
-	std::string::size_type String::findFirst(const char* src, size_t srcSize, const char* value, size_t valueSize) {
-		if (!value || !valueSize) return std::string::npos;
+	std::string::size_type String::findFirst(const std::string_view& src, const std::string_view& value) {
+		if (src.empty() || value.empty()) return std::string::npos;
 
-		if (valueSize == std::string::npos) valueSize = strlen(value);
-
-		for (size_t i = 0; i < srcSize; ++i) {
+		auto valSize = value.size();
+		for (size_t i = 0, srcSize = src.size(); i < srcSize; ++i) {
 			if (src[i] == value[0]) {
 				bool equal = true;
-				for (size_t j = 1; j < valueSize; ++j) {
+				for (size_t j = 1; j < valSize; ++j) {
 					if (src[i + j] != value[j]) {
 						equal = false;
 						break;

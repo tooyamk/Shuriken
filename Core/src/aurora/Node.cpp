@@ -149,7 +149,7 @@ namespace aurora {
 		_lm.set34(m);
 		_localDecomposition();
 
-		_checkNoticeUpdateNow(_dirty & DirtyFlag::NOT_LM | DirtyFlag::WRMIM, DirtyFlag::WRMIM);
+		_checkNoticeUpdateNow((_dirty & DirtyFlag::NOT_LM) | DirtyFlag::WRMIM, DirtyFlag::WRMIM);
 	}
 
 	void Node::setLocalTRS(const f32(&pos)[3], const Quaternion& rot, const f32(&scale)[3]) {
@@ -208,7 +208,7 @@ namespace aurora {
 	void Node::setWorldMatrix(const Matrix34& m) {
 		_wm.set34(m);
 
-		auto now = _dirty & DirtyFlag::NOT_WM | DirtyFlag::WIM;
+		auto now = (_dirty & DirtyFlag::NOT_WM) | DirtyFlag::WIM;
 
 		if (_parent) {
 			_wm.append(getInverseWorldMatrix(), _lm);
@@ -218,7 +218,7 @@ namespace aurora {
 
 		_localDecomposition();
 
-		_checkNoticeUpdateNow(now & DirtyFlag::NOT_LM | DirtyFlag::WR, DirtyFlag::WRMIM);
+		_checkNoticeUpdateNow((now & DirtyFlag::NOT_LM) | DirtyFlag::WR, DirtyFlag::WRMIM);
 	}
 
 	void Node::setIdentity() {

@@ -26,7 +26,7 @@ namespace aurora {
 		}
 
 		template<typename PT, typename ST, typename = ConvertibleType<PT>, typename = ConvertibleType<ST>>
-		Box(const Vec<N, PT>&pos, const Vec<N, ST>& size) :
+		Box(const Vector<N, PT>&pos, const Vector<N, ST>& size) :
 			pos(pos),
 			size(size) {
 		}
@@ -48,7 +48,7 @@ namespace aurora {
 		}
 
 		template<typename PT, typename ST, typename = ConvertibleType<PT>, typename = ConvertibleType<ST>>
-		inline void AE_CALL set(const Vec<N, PT>&pos, const Vec<N, ST>& size) {
+		inline void AE_CALL set(const Vector<N, PT>&pos, const Vector<N, ST>& size) {
 			this->pos.set(pos);
 			this->size.set(size);
 		}
@@ -58,8 +58,8 @@ namespace aurora {
 			return pos == box.pos && size == box.size;
 		}
 
-		Vec<N, T> pos;
-		Vec<N, T> size;
+		Vector<N, T> pos;
+		Vector<N, T> size;
 	};
 
 	template<typename T> using Box1 = Box<1, T>;

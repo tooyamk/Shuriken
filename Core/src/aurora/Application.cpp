@@ -76,6 +76,7 @@ namespace aurora {
 	}
 
 	void Application::toggleFullscreen() {
+#if AE_OS == AE_OS_WIN
 		if (_hWnd) {
 			_isWindowed = !_isWindowed;
 
@@ -86,14 +87,13 @@ namespace aurora {
 				_recordWindowedRect();
 			}
 
-#if AE_OS == AE_OS_WIN
 			_updateWindowRectValue();
 			_changeWindow(true, true);
 			if (visibled) ShowWindow(_hWnd, SW_SHOWDEFAULT);
-#endif
 			
 			_eventDispatcher.dispatchEvent(this, ApplicationEvent::RESIZED);
 		}
+#endif
 	}
 
 	void Application::getInnerSize(Vec2i32& size) const {
@@ -101,7 +101,7 @@ namespace aurora {
 		RECT rect;
 		GetClientRect(_hWnd, &rect);
 		size.set(rect.right - rect.left, rect.bottom - rect.top);
-#elif
+#else
 		size.set(0);
 #endif
 	}
@@ -116,6 +116,7 @@ namespace aurora {
 	void Application::setWindowedRect(const Box2i32& rect) {
 		Box2i32 out;
 		if (_adjustWindowRect(rect, out)) {
+#if AE_OS == AE_OS_WIN
 			_lastWndInnerRect.left = rect.pos[0];
 			_lastWndInnerRect.right = rect.pos[0] + rect.size[0];
 			_lastWndInnerRect.top = rect.pos[1];
@@ -126,12 +127,11 @@ namespace aurora {
 				_windowedRect.set(rect);
 
 				if (_isWindowed) {
-#if AE_OS == AE_OS_WIN
 					_updateWindowRectValue();
 					_changeWindow(false, true);
-#endif
 				}
 			}
+#endif
 		}
 	}
 
@@ -151,6 +151,7 @@ namespace aurora {
 #if AE_OS == AE_OS_WIN
 		return GetForegroundWindow() == _hWnd;
 #endif
+		return true;
 	}
 
 	void Application::pollEvents() {
@@ -209,8 +210,9 @@ namespace aurora {
 		auto rst = AdjustWindowRectEx(&rect, _getWindowStyle(), FALSE, _getWindowExStyle());
 		out.set(Vec2i32({ rect.left, rect.top }), Vec2i32({ rect.right - rect.left, rect.bottom - rect.top }));
 		return rst;
-#elif
+#else
 		out.set(in);
+		return true;
 #endif
 	}
 

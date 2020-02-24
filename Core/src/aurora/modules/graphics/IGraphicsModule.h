@@ -4,6 +4,7 @@
 #include "aurora/ByteArray.h"
 #include "aurora/math/Box.h"
 #include <functional>
+#include <vector>
 
 namespace aurora {
 	enum class ProgramStage : uint8_t;

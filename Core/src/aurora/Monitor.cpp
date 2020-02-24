@@ -96,20 +96,20 @@ namespace aurora {
 					monitor._primary = isPrimary;
 					monitor._modesPruned = isModesPruned;
 
-					auto strLen = String::UnicodeToUtf8(adapter.DeviceName, sizeof(adapter.DeviceName), strBuf, strBufLen);
+					auto strLen = String::UnicodeToUtf8(std::wstring_view(adapter.DeviceName, sizeof(adapter.DeviceName)), strBuf, strBufLen);
 					strBuf[strLen] = 0;
 					monitor._adapterName = strBuf;
 
-					strLen = String::UnicodeToUtf8(adapter.DeviceString, sizeof(adapter.DeviceString), strBuf, strBufLen);
+					strLen = String::UnicodeToUtf8(std::wstring_view(adapter.DeviceString, sizeof(adapter.DeviceString)), strBuf, strBufLen);
 					strBuf[strLen] = 0;
 					monitor._adapterDesc = strBuf;
 
 					if (hasDisplay) {
-						strLen = String::UnicodeToUtf8(display.DeviceName, sizeof(display.DeviceName), strBuf, strBufLen);
+						strLen = String::UnicodeToUtf8(std::wstring_view(display.DeviceName, sizeof(display.DeviceName)), strBuf, strBufLen);
 						strBuf[strLen] = 0;
 						monitor._deviceName = strBuf;
 
-						strLen = String::UnicodeToUtf8(display.DeviceString, sizeof(display.DeviceString), strBuf, strBufLen);
+						strLen = String::UnicodeToUtf8(std::wstring_view(display.DeviceString, sizeof(display.DeviceString)), strBuf, strBufLen);
 						strBuf[strLen] = 0;
 						monitor._deviceDesc = strBuf;
 					}

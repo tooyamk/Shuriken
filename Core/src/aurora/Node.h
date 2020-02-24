@@ -4,6 +4,7 @@
 #include "aurora/math/Matrix.h"
 #include "aurora/math/Quaternion.h"
 #include "aurora/math/Vector.h"
+#include "aurora/components/IComponent.h"
 #include <functional>
 #include <vector>
 

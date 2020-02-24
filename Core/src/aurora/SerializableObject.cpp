@@ -646,7 +646,7 @@ namespace aurora {
 			set(*value._getValue<std::string*>());
 			break;
 		case Type::SHORT_STRING:
-			set(value._value);
+			set((const char*)value._value);
 			break;
 		case Type::ARRAY:
 		{

@@ -398,51 +398,98 @@ namespace aurora {
 		}
 	};
 
-	template<uint32_t N, typename T> using Vec = Vector<N, T>;
+	template<uint32_t N, typename T> const Vector<N, T> Vector<N, T>::ZERO = Vector<N, T>(Math::NUMBER_0<T>);
+	template<uint32_t N, typename T> const Vector<N, T> Vector<N, T>::ONE = Vector<N, T>(Math::NUMBER_1<T>);
 
-	template<uint32_t N, typename T> const Vec<N, T> Vector<N, T>::ZERO = Vector<N, T>(Math::NUMBER_0<T>);
-	template<uint32_t N, typename T> const Vec<N, T> Vector<N, T>::ONE = Vector<N, T>(Math::NUMBER_1<T>);
+	template<uint32_t N, typename T1, typename T2>
+	inline constexpr Vector<N, decltype((*(T1*)0) + (*(T2*)0))> AE_CALL operator+(const Vector<N, T1>& v1, const Vector<N, T2>& v2) {
+		Vector<N, decltype((*(T1*)0) + (*(T2*)0))> v(v1);
+		v += v2;
+		return v;
+	}
+	template<uint32_t N, typename T1, typename T2>
+	inline constexpr Vector<N, decltype((*(T1*)0) + (*(T2*)0))> AE_CALL operator+(const Vector<N, T1>& v1, const T2& v2) {
+		Vector<N, decltype((*(T1*)0) + (*(T2*)0))> v(v1);
+			v += v2;
+			return v;
+	}
+	template<uint32_t N, typename T1, typename T2>
+	inline constexpr Vector<N, decltype((*(T1*)0) + (*(T2*)0))> AE_CALL operator+(const T1& v1, const Vector<N, T2>& v2) {
+		Vector<N, decltype((*(T1*)0) + (*(T2*)0))> v(v1);
+		v += v2;
+		return v;
+	}
 
-#define AE_VECTOR_ARITHMETIC(__SYMBOL__) \
-template<uint32_t N, typename T1, typename T2, typename = typename std::enable_if_t<std::is_convertible_v<T1, T2>, T1>> \
-using VecArithmeticType = Vector<N, decltype((*(T1*)0) + (*(T2*)0))>; \
-template<uint32_t N, typename T1, typename T2> \
-inline constexpr VecArithmeticType<N, T1, T2> AE_CALL operator __SYMBOL__(const Vector<N, T1>& v1, const Vector<N, T2>& v2) { \
-	VecArithmeticType<N, T1, T2> v = v1; \
-	v __SYMBOL__= v2; \
-	return v; \
-} \
-template<uint32_t N, typename T1, typename T2> \
-inline constexpr VecArithmeticType<N, T1, T2> AE_CALL operator __SYMBOL__(const Vector<N, T1>& v1, const T2& v2) { \
-	VecArithmeticType<N, T1, T2> = v1; \
-	v __SYMBOL__= v2; \
-	return v; \
-} \
-template<uint32_t N, typename T1, typename T2> \
-inline constexpr VecArithmeticType<N, T1, T2> AE_CALL operator __SYMBOL__(const T1& v1, const Vector<N, T2>& v2) { \
-	VecArithmeticType<N, T1, T2> v(v1); \
-	v __SYMBOL__= v2; \
-	return v; \
-} \
+	template<uint32_t N, typename T1, typename T2>
+	inline constexpr Vector<N, decltype((*(T1*)0) - (*(T2*)0))> AE_CALL operator-(const Vector<N, T1>& v1, const Vector<N, T2>& v2) {
+		Vector<N, decltype((*(T1*)0) - (*(T2*)0))> v(v1);
+		v -= v2;
+		return v;
+	}
+	template<uint32_t N, typename T1, typename T2>
+	inline constexpr Vector<N, decltype((*(T1*)0) - (*(T2*)0))> AE_CALL operator-(const Vector<N, T1>& v1, const T2& v2) {
+		Vector<N, decltype((*(T1*)0) - (*(T2*)0))> v(v1);
+		v -= v2;
+		return v;
+	}
+	template<uint32_t N, typename T1, typename T2>
+	inline constexpr Vector<N, decltype((*(T1*)0) - (*(T2*)0))> AE_CALL operator-(const T1& v1, const Vector<N, T2>& v2) {
+		Vector<N, decltype((*(T1*)0) - (*(T2*)0))> v(v1);
+		v -= v2;
+		return v;
+	}
 
-	AE_VECTOR_ARITHMETIC(+);
-	AE_VECTOR_ARITHMETIC(-);
-	AE_VECTOR_ARITHMETIC(*);
-	AE_VECTOR_ARITHMETIC(/);
+	template<uint32_t N, typename T1, typename T2>
+	inline constexpr Vector<N, decltype((*(T1*)0) * (*(T2*)0))> AE_CALL operator*(const Vector<N, T1>& v1, const Vector<N, T2>& v2) {
+		Vector<N, decltype((*(T1*)0) * (*(T2*)0))> v(v1);
+		v *= v2;
+		return v;
+	}
+	template<uint32_t N, typename T1, typename T2>
+	inline constexpr Vector<N, decltype((*(T1*)0) * (*(T2*)0))> AE_CALL operator*(const Vector<N, T1>& v1, const T2& v2) {
+		Vector<N, decltype((*(T1*)0) * (*(T2*)0))> v(v1);
+		v *= v2;
+		return v;
+	}
+	template<uint32_t N, typename T1, typename T2>
+	inline constexpr Vector<N, decltype((*(T1*)0) * (*(T2*)0))> AE_CALL operator*(const T1& v1, const Vector<N, T2>& v2) {
+		Vector<N, decltype((*(T1*)0) * (*(T2*)0))> v(v1);
+		v *= v2;
+		return v;
+	}
 
-	template<typename T> using Vec1 = Vec<1, T>;
+	template<uint32_t N, typename T1, typename T2>
+	inline constexpr Vector<N, decltype((*(T1*)0) / (*(T2*)0))> AE_CALL operator/(const Vector<N, T1>& v1, const Vector<N, T2>& v2) {
+		Vector<N, decltype((*(T1*)0) / (*(T2*)0))> v(v1);
+		v /= v2;
+		return v;
+	}
+	template<uint32_t N, typename T1, typename T2>
+	inline constexpr Vector<N, decltype((*(T1*)0) / (*(T2*)0))> AE_CALL operator/(const Vector<N, T1>& v1, const T2& v2) {
+		Vector<N, decltype((*(T1*)0) / (*(T2*)0))> v(v1);
+		v /= v2;
+		return v;
+	}
+	template<uint32_t N, typename T1, typename T2>
+	inline constexpr Vector<N, decltype((*(T1*)0) / (*(T2*)0))> AE_CALL operator/(const T1& v1, const Vector<N, T2>& v2) {
+		Vector<N, decltype((*(T1*)0) / (*(T2*)0))> v(v1);
+		v /= v2;
+		return v;
+	}
+
+	template<typename T> using Vec1 = Vector<1, T>;
 	using Vec1f32 = Vec1<f32>;
 	using Vec1i32 = Vec1<int32_t>;
 	using Vec1ui32 = Vec1<uint32_t>;
-	template<typename T> using Vec2 = Vec<2, T>;
+	template<typename T> using Vec2 = Vector<2, T>;
 	using Vec2f32 = Vec2<f32>;
 	using Vec2i32 = Vec2<int32_t>;
 	using Vec2ui32 = Vec2<uint32_t>;
-	template<typename T> using Vec3 = Vec<3, T>;
+	template<typename T> using Vec3 = Vector<3, T>;
 	using Vec3f32 = Vec3<f32>;
 	using Vec3i32 = Vec3<int32_t>;
 	using Vec3ui32 = Vec3<uint32_t>;
-	template<typename T> using Vec4 = Vec<4, T>;
+	template<typename T> using Vec4 = Vector<4, T>;
 	using Vec4f32 = Vec4<f32>;
 	using Vec4i32 = Vec4<int32_t>;
 	using Vec4ui32 = Vec4<uint32_t>;

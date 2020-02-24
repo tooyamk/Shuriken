@@ -51,7 +51,7 @@
 
 
 #define AE_COMPILER_UNKNOWN 0
-#define AE_COMPILER_MSC     1
+#define AE_COMPILER_MSVC    1
 #define AE_COMPILER_GCC     2
 #define AE_COMPILER_CLANG   3
 
@@ -60,7 +60,7 @@
 
 #if defined(_MSC_VER)
 #	undef AE_COMPILER
-#	define AE_COMPILER AE_COMPILER_MSC
+#	define AE_COMPILER AE_COMPILER_MSVC
 #elif defined(__GNUC__)
 #	undef AE_COMPILER
 #	define AE_COMPILER AE_COMPILER_GCC
@@ -82,7 +82,7 @@
 
 #ifdef __cplusplus
 #	undef __cpp_ver
-#	if AE_COMPILER == AE_COMPILER_MSC
+#	if AE_COMPILER == AE_COMPILER_MSVC
 #		if __cplusplus != _MSVC_LANG
 #			define __cpp_ver _MSVC_LANG
 #		endif
@@ -107,7 +107,11 @@
 #endif
 
 
-#define AE_CALL __fastcall
+#if AE_COMPILER == AE_COMPILER_MSVC
+	#define AE_CALL __fastcall
+#else
+	#define AE_CALL
+#endif
 
 
 #define ae_internal_public public
@@ -141,12 +145,14 @@
 #endif
 
 
-#if AE_COMPILER == AE_COMPILER_MSC
+#if AE_OS == AE_OS_WIN
 #	define AE_DLL_EXPORT __declspec(dllexport)
 #	define AE_DLL_IMPORT __declspec(dllimport)
 #else
-#	define AE_DLL_EXPORT __attribute__((dllexport))
-#	define AE_DLL_IMPORT __attribute__((dllimport))
+#	define AE_DLL_EXPORT
+#	define AE_DLL_IMPORT
+//#	define AE_DLL_EXPORT __attribute__((dllexport))
+//#	define AE_DLL_IMPORT __attribute__((dllimport))
 #endif
 
 #define AE_MODULE_DLL_EXPORT AE_DLL_EXPORT
@@ -184,7 +190,7 @@ __CLASS__() = delete; \
 __CLASS__(const __CLASS__&) = delete; \
 __CLASS__(__CLASS__&&) = delete; \
 __CLASS__& operator=(const __CLASS__&) = delete; \
-__CLASS__& operator=(__CLASS__&&) = delete; \
+__CLASS__& operator=(__CLASS__&&) = delete;
 
 
 #define AE_DEFINE_ENUM_BIT_OPERATIION(__ENUM__) \
@@ -211,7 +217,7 @@ inline constexpr __ENUM__& AE_CALL operator|=(__ENUM__& e1, __ENUM__ e2) { \
 inline constexpr __ENUM__& AE_CALL operator^=(__ENUM__& e1, __ENUM__ e2) { \
 	e1 = e1 ^ e2; \
 	return e1; \
-} \
+}
 
 
 namespace std {
@@ -305,7 +311,7 @@ namespace aurora {
 		} else if constexpr (Bytes == 1) {
 			return data[0];
 		} else if constexpr (Bytes == 2) {
-#if AE_COMPILER == AE_COMPILER_MSC
+#if AE_COMPILER == AE_COMPILER_MSVC
 			return _byteswap_ushort(*((t*)data));
 #elif AE_COMPILER == AE_COMPILER_GCC || AE_COMPILER == AE_COMPILER_CLANG
 			return __builtin_bswap16(*((t*)data));
@@ -315,7 +321,7 @@ namespace aurora {
 		} else if constexpr (Bytes == 3) {
 			return (t)data[0] << 16 | (t)data[1] << 8 | (t)data[2];
 		} else if constexpr (Bytes == 4) {
-#if AE_COMPILER == AE_COMPILER_MSC
+#if AE_COMPILER == AE_COMPILER_MSVC
 			return _byteswap_ulong(*((t*)data));
 #elif AE_COMPILER == AE_COMPILER_GCC || AE_COMPILER == AE_COMPILER_CLANG
 			return __builtin_bswap32(*((t*)data));
@@ -329,7 +335,7 @@ namespace aurora {
 		} else if constexpr (Bytes == 7) {
 			return (t)data[0] << 48 | (t)data[1] << 40 | (t)data[2] << 32 | (t)data[3] << 24 | (t)data[4] << 16 | (t)data[5] << 8 | (t)data[6];
 		} else if constexpr (Bytes == 8) {
-#if AE_COMPILER == AE_COMPILER_MSC
+#if AE_COMPILER == AE_COMPILER_MSVC
 			return _byteswap_uint64(*((t*)data));
 #elif AE_COMPILER == AE_COMPILER_GCC || AE_COMPILER == AE_COMPILER_CLANG
 			return __builtin_bswap64(*((t*)data));
@@ -356,28 +362,28 @@ namespace aurora {
 	template<typename T, typename = typename std::enable_if_t<std::is_integral_v<T> && std::is_unsigned_v<T>, T>>
 	inline T AE_CALL rotl(T val, size_t shift) {
 		if constexpr (std::is_same_v<T, uint8_t>) {
-#if AE_COMPILER == AE_COMPILER_MSC
+#if AE_COMPILER == AE_COMPILER_MSVC
 			return _rotl8(val, shift);
 #else
 			shift &= (size_t)0x7;
 			return val << shift | val >> (8 - shift);
 #endif
 		} else if constexpr (std::is_same_v<T, uint16_t>) {
-#if AE_COMPILER == AE_COMPILER_MSC
+#if AE_COMPILER == AE_COMPILER_MSVC
 			return _rotl16(val, shift);
 #else
 			shift &= (size_t)0xF;
 			return val << shift | val >> (16 - shift);
 #endif
 		} else if constexpr (std::is_same_v<T, uint32_t>) {
-#if AE_COMPILER == AE_COMPILER_MSC
+#if AE_COMPILER == AE_COMPILER_MSVC
 			return _rotl(val, shift);
 #else
 			shift &= (size_t)0x1F;
 			return val << shift | val >> (32 - shift);
 #endif
 		} else if constexpr (std::is_same_v<T, uint64_t>) {
-#if AE_COMPILER == AE_COMPILER_MSC
+#if AE_COMPILER == AE_COMPILER_MSVC
 			return _rotl64(val, shift);
 #else
 			shift &= (size_t)0x3F;

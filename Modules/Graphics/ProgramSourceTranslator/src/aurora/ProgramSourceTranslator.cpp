@@ -18,7 +18,7 @@ namespace aurora::modules::graphics::program_source_translator {
 		if ((pFilename[0] == L'.') && (pFilename[1] == L'/')) pFilename += 2;
 
 		if (_handler) {
-			 ByteArray data = _handler(String::UnicodeToUtf8(pFilename));
+			 ByteArray data = _handler(String::UnicodeToUtf8(std::wstring_view(pFilename)));
 			 return _lib->CreateBlobWithEncodingOnHeapCopy(data.getSource(), data.getLength(), CP_UTF8, reinterpret_cast<IDxcBlobEncoding**>(ppIncludeSource));
 		}
 

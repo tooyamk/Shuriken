@@ -4,6 +4,7 @@
 #include "aurora/math/Matrix.h"
 #include "aurora/math/Vector.h"
 #include <unordered_map>
+#include <vector>
 
 namespace aurora::modules::graphics {
 	class ISampler;

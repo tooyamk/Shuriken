@@ -3,6 +3,7 @@
 #include "aurora/events/EventDispatcher.h"
 #include <functional>
 #include <mutex>
+#include <vector>
 
 namespace aurora {
 	class AE_DLL TimeWheel : public std::enable_shared_from_this<TimeWheel> {
@@ -191,9 +192,11 @@ namespace aurora {
 								this->remove(tickingTimer, t);
 								t->_wheel.reset();
 								t->unref();
-								wheel._eventDispatcher.dispatchEvent(&wheel, TimeWheelEvent::TRIGGER, &Trigger(*t, id));
+								Trigger trigger(*t, id);
+								wheel._eventDispatcher.dispatchEvent(&wheel, TimeWheelEvent::TRIGGER, &trigger);
 							} else {
-								wheel._eventDispatcher.dispatchEvent(&wheel, TimeWheelEvent::TRIGGER, &Trigger(*t, id));
+								Trigger trigger(*t, id);
+								wheel._eventDispatcher.dispatchEvent(&wheel, TimeWheelEvent::TRIGGER, &trigger);
 								if (t == tickingTimer) wheel._repeatTimer(*t, e);
 							}
 

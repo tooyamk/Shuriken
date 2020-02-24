@@ -1055,13 +1055,10 @@ namespace aurora::modules::graphics::win_gl {
 	}
 
 	void Graphics::_debugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam) {
-		const char ERR[] = "error";
-		const char WARNING[] = "warning";
+		std::string_view mv(message);
 
-		auto msgSize = strlen(message);
-
-		if (String::findFirst(message, msgSize, ERR, sizeof(ERR) - 1) != std::string::npos ||
-			String::findFirst(message, msgSize, WARNING, sizeof(WARNING) - 1) != std::string::npos) {
+		if (String::findFirst(mv, "error") != std::string::npos ||
+			String::findFirst(mv, "warning") != std::string::npos) {
 			((Graphics*)userParam)->error(std::string("OpenGL sys message : ") + message);
 		}
 	}
