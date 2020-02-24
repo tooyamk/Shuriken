@@ -49,16 +49,16 @@ namespace aurora::hash {
 		template<size_t Bits>
 		struct Prime { inline static constexpr uint_t<Bits> VALUE[] = { 0, 0, 0, 0 }; };
 		template<>
-		struct Prime<32> { inline static constexpr uint_t<32> VALUE[] = { 2654435761ui32, 2246822519ui32, 3266489917ui32, 668265263ui32, 374761393ui32 }; };
+		struct Prime<32> { inline static constexpr uint_t<32> VALUE[] = { 2654435761U, 2246822519U, 3266489917U, 668265263U, 374761393U }; };
 		template<>
-		struct Prime<64> { inline static constexpr uint_t<64> VALUE[] = { 11400714785074694791ui64, 14029467366897019727ui64, 1609587929392839161ui64, 9650029242287828579ui64, 2870177450012600261ui64 }; };
+		struct Prime<64> { inline static constexpr uint_t<64> VALUE[] = { 11400714785074694791ULL, 14029467366897019727ULL, 1609587929392839161ULL, 9650029242287828579ULL, 2870177450012600261ULL }; };
 
 		template<size_t Bits, std::endian DataEndian>
 		inline static uint_t<Bits> AE_CALL _readUInt(const uint8_t* data) {
 			if constexpr (DataEndian == std::endian::native) {
 				return *(uint_t<Bits>*)data;
 			} else {
-				return byteswap<Bits>(data);
+				return byteswap<Bits / 8>(data);
 			}
 		}
 

@@ -6,6 +6,8 @@ set(CMAKE_DEBUG_POSTFIX d)
 #set(CMAKE_RELWITHDEBINFO_POSTFIX "rd" CACHE STRING "")
 #set(CMAKE_MINSIZEREL_POSTFIX "s" CACHE STRING "")
 
+option(AE_TESTS "" ON)
+
 macro(__set_project)
     get_filename_component(ProjectId ${CMAKE_CURRENT_SOURCE_DIR} NAME)
     string(REPLACE " " "_" ProjectId ${ProjectId})
@@ -82,4 +84,6 @@ add_subdirectory(${__AE_EXTENSIONS_FOLDER_NAME}/PNGConverter)
 add_subdirectory(${__AE_EXTENSIONS_FOLDER_NAME}/FBXConverter)
 add_subdirectory(${__AE_EXTENSIONS_FOLDER_NAME}/ShaderUploader)
 
-add_subdirectory(Test)
+if (AE_TESTS)
+    add_subdirectory(Test)
+endif ()

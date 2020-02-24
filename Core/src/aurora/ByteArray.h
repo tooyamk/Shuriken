@@ -37,6 +37,11 @@ namespace aurora {
 			PADDING
 		};
 
+	private:
+		using ba_t = Type;
+
+	public:
+
 
 		//enum class CompressionAlgorithm : ui8 {
 		//	ZLIB
@@ -440,7 +445,7 @@ namespace aurora {
 			if constexpr (T == Type::UI64) {
 				_write<uint64_t>(value);
 			} else if constexpr (T == Type::D_UI64) {
-				value &= 0xFFFFFFFFFFFFFFFui64;
+				value &= 0xFFFFFFFFFFFFFFFULL;
 				do {
 					uint8_t val = value & 0x7F;
 					value >>= 7;
@@ -453,8 +458,8 @@ namespace aurora {
 					}
 				} while (true);
 			} else {
-				_checkLength(length);
-				_position += length;
+				_checkLength(sizeof(value));
+				_position += sizeof(value);
 			}
 		}
 
@@ -643,15 +648,15 @@ namespace aurora {
 					return (T)0;
 				}
 			} else {
-				constexpr uint32_t len = sizeof(T);
-				if (_position + len > _length) {
+				constexpr uint32_t TYPE_BYTES = sizeof(T);
+				if (_position + TYPE_BYTES > _length) {
 					_position = _length;
 					return (T)0;
 				}
 
 				if (_needReverse) {
-					auto v = byteswap<len>(&_data[_position]);
-					_position += len;
+					auto v = byteswap<TYPE_BYTES>(&_data[_position]);
+					_position += TYPE_BYTES;
 					if constexpr (std::is_integral_v<T>) {
 						return v;
 					} else {
@@ -659,7 +664,7 @@ namespace aurora {
 					}
 				} else {
 					T v = *(T*)&_data[_position];
-					_position += len;
+					_position += TYPE_BYTES;
 					return v;
 				}
 			}

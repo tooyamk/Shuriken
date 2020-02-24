@@ -198,19 +198,7 @@ namespace aurora {
 
 	const std::string& Application::getAppPath() const {
 #if AE_OS == AE_OS_WIN
-		if (_appPath.empty()) {
-			WCHAR wpath[1024];
-			GetModuleFileNameW(nullptr, wpath, sizeof(wpath));
-			std::string path = String::UnicodeToUtf8(wpath);
-			char cDir[500] = "";
-			char cDrive[100] = "";
-			char cf[100] = "";
-			char cExt[50] = "";
-			_splitpath_s(path.data(), cDrive, cDir, cf, cExt);
-
-			_appPath = cDrive;
-			_appPath += cDir;
-		}
+		if (_appPath.empty()) _appPath = String::UnicodeToUtf8(::aurora::getAppPath());
 #endif
 		return _appPath;
 	}

@@ -29,7 +29,7 @@ namespace aurora {
 		void AE_CALL unload();
 
 	protected:
-		inline static auto _crcTable = hash::CRC::createTable<64>(0x42F0E1EBA9EA3693ui64);
+		inline static auto _crcTable = hash::CRC::createTable<64>(0x42F0E1EBA9EA3693ULL);
 
 		bool _isResourcesValid;
 

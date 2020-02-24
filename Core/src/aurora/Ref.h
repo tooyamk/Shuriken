@@ -80,11 +80,11 @@ namespace aurora {
 		}
 
 		RefPtr(T* target) :
-			_target(target ? target->ref<T>() : nullptr) {
+			_target(target ? target->template ref<T>() : nullptr) {
 		}
 
 		RefPtr(T& target) :
-			_target(target.ref<T>()) {
+			_target(target.template ref<T>()) {
 		}
 
 		~RefPtr() {

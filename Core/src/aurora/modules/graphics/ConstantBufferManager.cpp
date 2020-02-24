@@ -260,8 +260,8 @@ namespace aurora::modules::graphics {
 		if (!size) return;
 
 		if (uint16_t pes = param.getPerElementSize(); pes < size) {
-			auto stride = var.stride & 0x7FFFFFFFui32;
-			if (auto remainder = var.stride >= 0x80000000ui32 ? (pes & (stride - 1)) : pes % var.stride; remainder) {
+			auto stride = var.stride & 0x7FFFFFFFU;
+			if (auto remainder = var.stride >= 0x80000000U ? (pes & (stride - 1)) : pes % var.stride; remainder) {
 				auto offset = pes + stride - remainder;
 				auto max = std::min<uint32_t>(size, var.size);
 				uint32_t cur = 0, fillSize = 0;

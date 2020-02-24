@@ -48,7 +48,7 @@ namespace aurora::modules::graphics {
 			std::vector<const ShaderParameter*>& usingParams, std::vector<const ConstantBufferLayout::Variables*>& usingVars) const;
 
 	private:
-		inline static auto _crcTable = hash::CRC::createTable<64>(0x42F0E1EBA9EA3693ui64);
+		inline static auto _crcTable = hash::CRC::createTable<64>(0x42F0E1EBA9EA3693ULL);
 
 		void AE_CALL _calcFeatureValue(const Variables& var, uint16_t& numValidVars);
 

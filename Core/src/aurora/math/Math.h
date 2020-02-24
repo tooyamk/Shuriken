@@ -218,7 +218,7 @@ namespace aurora {
 		inline static Out AE_CALL distanceSq(const FloatType<In1>(&v1)[N], const FloatType<In2>(&v2)[N]) {
 			Out sq = 0;
 			for (uint32_t i = 0; i < N; ++i) {
-				In d = v1[i] - v2[i];
+				Out d = v1[i] - v2[i];
 				sq += d * d;
 			}
 			return sq;
@@ -288,8 +288,7 @@ namespace aurora {
 			return n < 1 ? false : !(n & (n - 1));
 		}
 		inline static constexpr uint32_t AE_CALL potLog2(uint32_t pow) {
-			auto f = (f32)pow;
-			return ((((uint32_t&)f) >> 23) & 0xFF) - 127;
+			return ((pow >> 23) & 0xFF) - 127;
 		}
 	};
 }

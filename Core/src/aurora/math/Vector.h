@@ -7,7 +7,6 @@ namespace aurora {
 	template<uint32_t N, typename T>
 	class AE_TEMPLATE_DLL Vector {
 	public:
-		using Vec = Vector<N, T>;
 		using Data = T[N];
 
 		template<uint32_t COUNT>
@@ -16,34 +15,34 @@ namespace aurora {
 		template<typename K>
 		using ConvertibleType = typename std::enable_if_t<std::is_convertible_v<K, T>, K>;
 
-		Vec() {
+		Vector() {
 			memset(this, 0, sizeof(T) * N);
 		}
 
-		Vec(const NoInit&) {}
+		Vector(const NoInit&) {}
 
 		template<typename K, typename = ConvertibleType<K>>
-		Vec(const K& value) {
+		Vector(const K& value) {
 			set(value);
 		}
 
 		template<typename K, typename = ConvertibleType<K>>
-		Vec(const Vector<N, K>& vec) {
+		Vector(const Vector<N, K>& vec) {
 			set(vec.data);
 		}
 
 		template<typename K, typename = ConvertibleType<K>>
-		Vec(Vector<N, K>&& vec) noexcept {
+		Vector(Vector<N, K>&& vec) noexcept {
 			set(vec.data);
 		}
 
 		template<typename K, typename = ConvertibleType<K>>
-		Vec(const K(&values)[N]) {
+		Vector(const K(&values)[N]) {
 			set(values);
 		}
 
 		template<typename K, typename = ConvertibleType<K>>
-		Vec(const K* values, uint32_t len) {
+		Vector(const K* values, uint32_t len) {
 			if (N > len) {
 				for (uint32_t i = 0; i < len; ++i) data[i] = values[i];
 				memset(data + len, 0, sizeof(T) * (N - len));
@@ -53,11 +52,11 @@ namespace aurora {
 		}
 
 		template<typename K, typename = ConvertibleType<K>>
-		Vec(const std::initializer_list<const K>& list) : Vec(list.begin(), list.size()) {
+		Vector(const std::initializer_list<const K>& list) : Vector(list.begin(), list.size()) {
 		}
 
 		template<typename... Args, typename = typename std::enable_if_t<std::conjunction_v<std::is_convertible<Args, T>...>>>
-		Vec(Args... args) {
+		Vector(Args... args) {
 			set(args...);
 			if constexpr (N > sizeof...(args)) memset(data + sizeof...(args), 0, sizeof(T) * (N - sizeof...(args)));
 		}
@@ -79,12 +78,12 @@ namespace aurora {
 		}
 
 		template<typename K, typename = ConvertibleType<K>>
-		inline Vec& AE_CALL operator=(const Vector<N, K>& value) {
+		inline Vector& AE_CALL operator=(const Vector<N, K>& value) {
 			return set(value.data);
 		}
 
 		template<typename K, typename = ConvertibleType<K>>
-		inline Vec& AE_CALL operator=(Vector<N, K>&& value) noexcept {
+		inline Vector& AE_CALL operator=(Vector<N, K>&& value) noexcept {
 			return set(value.data);
 		}
 
@@ -173,18 +172,18 @@ namespace aurora {
 		}
 
 		template<typename K, typename = ConvertibleType<K>>
-		inline Vec& AE_CALL set(const K& value) {
+		inline Vector& AE_CALL set(const K& value) {
 			for (uint32_t i = 0; i < N; ++i) data[i] = value;
 			return *this;
 		}
 
 		template<typename K, typename = ConvertibleType<K>>
-		inline Vec& AE_CALL set(const Vector<N, K>& vec) {
+		inline Vector& AE_CALL set(const Vector<N, K>& vec) {
 			return set(vec.data);
 		}
 
 		template<typename K, typename = ConvertibleType<K>>
-		inline Vec& AE_CALL set(const K(&values)[N]) {
+		inline Vector& AE_CALL set(const K(&values)[N]) {
 			if constexpr (std::is_same_v<T, K>) {
 				memcpy(data, values, sizeof(T) * N);
 			} else {
@@ -195,18 +194,18 @@ namespace aurora {
 		}
 
 		template<typename K, typename = ConvertibleType<K>>
-		inline Vec& AE_CALL set(const K* values, uint32_t len) {
+		inline Vector& AE_CALL set(const K* values, uint32_t len) {
 			for (uint32_t i = 0, n = N > len ? len : N; i < n; ++i) data[i] = values[i];
 			return *this;
 		}
 
 		template<typename K, typename = ConvertibleType<K>>
-		inline Vec& AE_CALL set(const std::initializer_list<const K>& list) {
+		inline Vector& AE_CALL set(const std::initializer_list<const K>& list) {
 			return set(list.begin(), list.size());
 		}
 
 		template<typename... Args, typename = typename std::enable_if_t<std::conjunction_v<std::is_convertible<Args, T>...>>>
-		inline Vec& AE_CALL set(Args... args) {
+		inline Vector& AE_CALL set(Args... args) {
 			if constexpr (N > 0) {
 				if constexpr (N >= sizeof...(args)) {
 					uint32_t i = 0;
@@ -228,70 +227,70 @@ namespace aurora {
 		}
 
 		template<typename K, typename = ConvertibleType<K>>
-		inline Vec& AE_CALL add(const K& value) {
+		inline Vector& AE_CALL add(const K& value) {
 			for (uint32_t i = 0; i < N; ++i) data[i] += value;
 			return *this;
 		}
 
 		template<typename K, typename = ConvertibleType<K>>
-		inline Vec& AE_CALL add(const K(&values)[N]) {
+		inline Vector& AE_CALL add(const K(&values)[N]) {
 			for (uint32_t i = 0; i < N; ++i) data[i] += values[i];
 			return *this;
 		}
 
 		template<typename K, typename = ConvertibleType<K>>
-		inline Vec& AE_CALL add(const Vector<N, K>& vec) {
+		inline Vector& AE_CALL add(const Vector<N, K>& vec) {
 			return add(vec.data);
 		}
 
 		template<typename K, typename = ConvertibleType<K>>
-		inline Vec& AE_CALL sub(const K& value) {
+		inline Vector& AE_CALL sub(const K& value) {
 			for (uint32_t i = 0; i < N; ++i) data[i] -= value;
 			return *this;
 		}
 
 		template<typename K, typename = ConvertibleType<K>>
-		inline Vec& AE_CALL sub(const K(&values)[N]) {
+		inline Vector& AE_CALL sub(const K(&values)[N]) {
 			for (uint32_t i = 0; i < N; ++i) data[i] -= values[i];
 			return *this;
 		}
 
 		template<typename K, typename = ConvertibleType<K>>
-		inline Vec& AE_CALL sub(const Vector<N, K>& vec) {
+		inline Vector& AE_CALL sub(const Vector<N, K>& vec) {
 			return sub(vec.data);
 		}
 
 		template<typename K, typename = ConvertibleType<K>>
-		inline Vec& AE_CALL mul(const K& value) {
+		inline Vector& AE_CALL mul(const K& value) {
 			for (uint32_t i = 0; i < N; ++i) data[i] *= value;
 			return *this;
 		}
 
 		template<typename K, typename = ConvertibleType<K>>
-		inline Vec& AE_CALL mul(const K(&values)[N]) {
+		inline Vector& AE_CALL mul(const K(&values)[N]) {
 			for (uint32_t i = 0; i < N; ++i) data[i] *= values[i];
 			return *this;
 		}
 
 		template<typename K, typename = ConvertibleType<K>>
-		inline Vec& AE_CALL mul(const Vector<N, K>& vec) {
+		inline Vector& AE_CALL mul(const Vector<N, K>& vec) {
 			return mul(vec.data);
 		}
 
 		template<typename K, typename = ConvertibleType<K>>
-		inline Vec& AE_CALL div(const K& value) {
+		inline Vector& AE_CALL div(const K& value) {
 			for (uint32_t i = 0; i < N; ++i) data[i] /= value;
 			return *this;
 		}
 
 		template<typename K, typename = ConvertibleType<K>>
-		inline Vec& AE_CALL div(const K(&values)[N]) {
+		inline Vector& AE_CALL div(const K(&values)[N]) {
 			for (uint32_t i = 0; i < N; ++i) data[i] /= values[i];
 			return *this;
 		}
 
 		template<typename K, typename = ConvertibleType<K>>
-		inline Vec& AE_CALL div(const Vector<N, K>& vec) {
+		inline Vector& AE_CALL div(const Vector<N, K>& vec) {
 			return div(vec.data);
 		}
 
@@ -315,7 +314,7 @@ namespace aurora {
 			return Math::isEqual(data, value.data, tolerance);
 		}
 
-		inline Vec& AE_CALL normalize() {
+		inline Vector& AE_CALL normalize() {
 			Math::normalize(data, data);
 			return *this;
 		}
@@ -384,8 +383,8 @@ namespace aurora {
 			Math::lerp(data, to.data, t, dst.data);
 		}
 
-		static const Vec ZERO;
-		static const Vec ONE;
+		static const Vector ZERO;
+		static const Vector ONE;
 
 		Data data;
 
@@ -406,21 +405,21 @@ namespace aurora {
 
 #define AE_VECTOR_ARITHMETIC(__SYMBOL__) \
 template<uint32_t N, typename T1, typename T2, typename = typename std::enable_if_t<std::is_convertible_v<T1, T2>, T1>> \
-using VecArithmeticType = Vec<N, decltype((*(T1*)0) + (*(T2*)0))>; \
+using VecArithmeticType = Vector<N, decltype((*(T1*)0) + (*(T2*)0))>; \
 template<uint32_t N, typename T1, typename T2> \
-inline constexpr VecArithmeticType<N, T1, T2> AE_CALL operator __SYMBOL__(const Vec<N, T1>& v1, const Vec<N, T2>& v2) { \
+inline constexpr VecArithmeticType<N, T1, T2> AE_CALL operator __SYMBOL__(const Vector<N, T1>& v1, const Vector<N, T2>& v2) { \
 	VecArithmeticType<N, T1, T2> v = v1; \
 	v __SYMBOL__= v2; \
 	return v; \
 } \
 template<uint32_t N, typename T1, typename T2> \
-inline constexpr VecArithmeticType<N, T1, T2> AE_CALL operator __SYMBOL__(const Vec<N, T1>& v1, const T2& v2) { \
+inline constexpr VecArithmeticType<N, T1, T2> AE_CALL operator __SYMBOL__(const Vector<N, T1>& v1, const T2& v2) { \
 	VecArithmeticType<N, T1, T2> = v1; \
 	v __SYMBOL__= v2; \
 	return v; \
 } \
 template<uint32_t N, typename T1, typename T2> \
-inline constexpr VecArithmeticType<N, T1, T2> AE_CALL operator __SYMBOL__(const T1& v1, const Vec<N, T2>& v2) { \
+inline constexpr VecArithmeticType<N, T1, T2> AE_CALL operator __SYMBOL__(const T1& v1, const Vector<N, T2>& v2) { \
 	VecArithmeticType<N, T1, T2> v(v1); \
 	v __SYMBOL__= v2; \
 	return v; \
