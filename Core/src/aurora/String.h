@@ -91,15 +91,75 @@ namespace aurora {
 		template<typename T, typename = typename std::enable_if_t<std::is_integral_v<T>, T>>
 		inline static std::string AE_CALL toString(T value, uint8_t base = 10) {
 			char buf[21];
+#if __cpp_lib_to_chars
 			auto rst = std::to_chars(buf, buf + sizeof(buf), value, base);
 			return std::move(std::string(buf, rst.ec == std::errc() ? rst.ptr - buf : 0));
+#else
+			if constexpr (std::is_same_v<T, int8_t>) {
+				snprintf(buf, sizeof(buf), "%hhd", value);
+			} else if constexpr (std::is_same_v<T, uint8_t>) {
+				switch(base) {
+				case 8:
+					snprintf(buf, sizeof(buf), "%hho", value);
+				case 16:
+					snprintf(buf, sizeof(buf), "%hhx", value);
+				default:
+					snprintf(buf, sizeof(buf), "%hhu", value);
+				}
+			} else if constexpr (std::is_same_v<T, int16_t>) {
+				snprintf(buf, sizeof(buf), "%hd", value);
+			} else if constexpr (std::is_same_v<T, uint16_t>) {
+				switch (base) {
+				case 8:
+					snprintf(buf, sizeof(buf), "%ho", value);
+				case 16:
+					snprintf(buf, sizeof(buf), "%hx", value);
+				default:
+					snprintf(buf, sizeof(buf), "%hu", value);
+				}
+			} else if constexpr (std::is_same_v<T, int32_t>) {
+				snprintf(buf, sizeof(buf), "%d", value);
+			} else if constexpr (std::is_same_v<T, uint32_t>) {
+				switch (base) {
+				case 8:
+					snprintf(buf, sizeof(buf), "%o", value);
+				case 16:
+					snprintf(buf, sizeof(buf), "%x", value);
+				default:
+					snprintf(buf, sizeof(buf), "%u", value);
+				}
+			} else if constexpr (std::is_same_v<T, int64_t>) {
+				snprintf(buf, sizeof(buf), "%lld", value);
+			} else if constexpr (std::is_same_v<T, uint64_t>) {
+				switch (base) {
+				case 8:
+					snprintf(buf, sizeof(buf), "%llo", value);
+				case 16:
+					snprintf(buf, sizeof(buf), "%llx", value);
+				default:
+					snprintf(buf, sizeof(buf), "%llu", value);
+				}
+			}
+
+			return std::move(std::string(buf));
+#endif
 		}
 
 		template<typename T, typename = typename std::enable_if_t<std::is_floating_point_v<T>, T>>
-		inline static std::string AE_CALL toString(T value, std::chars_format fmt = std::chars_format::general) {
+		inline static std::string AE_CALL toString(T value) {
 			char buf[33];
-			auto rst = std::to_chars(buf, buf + sizeof(buf), value, fmt);
+#if __cpp_lib_to_chars
+			auto rst = std::to_chars(buf, buf + sizeof(buf), value);
 			return std::move(std::string(buf, rst.ec == std::errc() ? rst.ptr - buf : 0));
+#else
+			if constexpr (std::is_same_v<T, f32>) {
+				snprintf(buf, sizeof(buf), "%f", value);
+			} else if constexpr (std::is_same_v<T, f64>) {
+				snprintf(buf, sizeof(buf), "%lf", value);
+			}
+
+			return std::move(std::string(buf));
+#endif
 		}
 
 		static std::string AE_CALL toString(const uint8_t* value, size_t size);
@@ -107,15 +167,39 @@ namespace aurora {
 		template<typename T, typename = typename std::enable_if_t<std::is_integral_v<T>, T>>
 		inline static T toNumber(const std::string_view& in, int32_t base = 10) {
 			T value;
+#if __cpp_lib_to_chars
 			auto begin = in.data();
 			return std::from_chars(begin, begin + in.size(), value, base).ec == std::errc() ? value : 0;
+#else
+			if constexpr (std::is_unsigned_v<T>) {
+				if constexpr (sizeof(T) <= 4) {
+					return std::stoul(in.data(), nullptr, base);
+				} else {
+					return std::stoull(in.data(), nullptr, base);
+				}
+			} else {
+				if constexpr (sizeof(T) <= 4) {
+					return std::stol(in.data(), nullptr, base);
+				} else {
+					return std::stoll(in.data(), nullptr, base);
+				}
+			}
+#endif
 		}
 
 		template<typename T, typename = typename std::enable_if_t<std::is_floating_point_v<T>, T>>
-		inline static T toNumber(const std::string_view& in, size_t size, std::chars_format fmt = std::chars_format::general) {
+		inline static T toNumber(const std::string_view& in, size_t size) {
 			T value;
+#if __cpp_lib_to_chars
 			auto begin = in.data();
-			return std::from_chars(begin, begin + in.size(), value, fmt).ec == std::errc() ? value : 0.;
+			return std::from_chars(begin, begin + in.size(), value).ec == std::errc() ? value : 0.;
+#else
+			if constexpr (sizeof(T) <= 4) {
+				return std::stof(in.data(), nullptr);
+			} else {
+				return std::stod(in.data(), nullptr);
+			}
+#endif
 		}
 
 		inline static std::string::size_type AE_CALL findFirst(const std::string_view& src, char c) {

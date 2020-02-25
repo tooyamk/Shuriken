@@ -343,11 +343,6 @@ namespace aurora {
 
 		auto& m = dst.data;
 
-		m[3][0] = 0.f;
-		m[3][1] = 0.f;
-		m[3][2] = 0.f;
-		m[3][3] = 1.f;
-
 		if (scale) dst.prependScale(scale);
 
 		if (trans) {

@@ -61,12 +61,12 @@
 #if defined(_MSC_VER)
 #	undef AE_COMPILER
 #	define AE_COMPILER AE_COMPILER_MSVC
-#elif defined(__GNUC__)
-#	undef AE_COMPILER
-#	define AE_COMPILER AE_COMPILER_GCC
 #elif defined(__clang__)
 #	undef AE_COMPILER
 #	define AE_COMPILER AE_COMPILER_CLANG
+#elif defined(__GNUC__)
+#	undef AE_COMPILER
+#	define AE_COMPILER AE_COMPILER_GCC
 #endif
 
 
@@ -81,29 +81,33 @@
 #define AE_CPP_VER AE_CPP_VER_UNKNOWN
 
 #ifdef __cplusplus
-#	undef __cpp_ver
+#	undef __ae_tmp_cpp_ver
 #	if AE_COMPILER == AE_COMPILER_MSVC
 #		if __cplusplus != _MSVC_LANG
-#			define __cpp_ver _MSVC_LANG
+#			define __ae_tmp_cpp_ver _MSVC_LANG
 #		endif
 #	endif
-#	if !defined(__cpp_ver)
-#		define __cpp_ver __cplusplus
+#	if !defined(__ae_tmp_cpp_ver)
+#		define __ae_tmp_cpp_ver __cplusplus
 #	endif
-#	if __cpp_ver == 199711L
+#	if __ae_tmp_cpp_ver == 199711L
 #		undef AE_CPP_VER
 #		define AE_CPP_VER AE_CPP_VER_03
-#	elif __cpp_ver == 201103L
+#	elif __ae_tmp_cpp_ver == 201103L
 #		undef AE_CPP_VER
 #		define AE_CPP_VER AE_CPP_VER_14
-#	elif __cpp_ver == 201402L
+#	elif __ae_tmp_cpp_ver == 201402L
 #		undef AE_CPP_VER
 #		define AE_CPP_VER AE_CPP_VER_14
-#	elif __cpp_ver == 201703L || __cpp_ver == 201704L
+#	elif __ae_tmp_cpp_ver == 201703L || __ae_tmp_cpp_ver == 201704L
 #		undef AE_CPP_VER
 #		define AE_CPP_VER AE_CPP_VER_17
 #	endif
-#undef __cpp_ver
+#undef __ae_tmp_cpp_ver
+#endif
+
+#if AE_CPP_VER < AE_CPP_VER_17
+#	error compile aurora library need c++17
 #endif
 
 
@@ -134,7 +138,9 @@
 #endif
 
 
-#include <charconv>
+#if __cpp_lib_to_chars
+#	include <charconv>
+#endif
 #include <iostream>
 #include <mutex>
 #include <string>
@@ -565,6 +571,10 @@ namespace aurora {
 				if (buf) write(buf, wcslen(buf));
 			}
 
+			inline void AE_CALL write(const std::wstring& str) {
+				write(str.data(), str.size());
+			}
+
 			inline void AE_CALL write(const wchar_t* buf, uint32_t size) {
 				dilatation(size);
 				for (uint32_t i = 0; i < size; ++i) data[pos++] = buf[i];
@@ -640,6 +650,7 @@ namespace aurora {
 			} else if constexpr (std::is_same_v<T, bool>) {
 				out.write(value ? L"true" : L"false");
 			} else if constexpr (std::is_arithmetic_v<T>) {
+#if __cpp_lib_to_chars
 				if constexpr (std::is_integral_v<T>) {
 					char buf[21];
 					auto rst = std::to_chars(buf, buf + sizeof(buf), value);
@@ -649,6 +660,9 @@ namespace aurora {
 					auto rst = std::to_chars(buf, buf + sizeof(buf), value, std::chars_format::general);
 					if (rst.ec == std::errc()) out.write(buf, rst.ptr - buf);
 				}
+#else
+				out.write(std::to_wstring(value));
+#endif
 			} else if constexpr (std::is_enum_v<T>) {
 				out.write(L'[');
 				_print(out, (std::underlying_type_t<T>)value);

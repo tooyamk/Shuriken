@@ -62,6 +62,20 @@ namespace aurora::hash {
 		CRC64_XZ             true            true             0x42F0E1EBA9EA3693  0xFFFFFFFFFFFFFFFF  0xFFFFFFFFFFFFFFFF
 	*/
 	class AE_TEMPLATE_DLL CRC {
+	private:
+		class Helper {
+		public:
+			template<size_t Bits>
+			inline static constexpr uint_t<Bits> AE_CALL reflectUnsigned(uint_t<Bits> x, size_t wordLength = std::numeric_limits<uint_t<Bits>>::digits) {
+				for (uint_t<Bits> l = 1u, h = l << (wordLength - 1); h > l; h >>= 1, l <<= 1) {
+					const uint_t<Bits> m = h | l, t = x & m;
+					if ((t == h) || (t == l)) x ^= m;
+				}
+				return x;
+			}
+		};
+
+
 	public:
 		AE_DECLARE_CANNOT_INSTANTIATE(CRC);
 
@@ -83,9 +97,9 @@ namespace aurora::hash {
 			return table;
 		}
 
-		static ReflectionTableType AE_CALL createReflectionTable() {
+		inline static ReflectionTableType AE_CALL createReflectionTable() {
 			ReflectionTableType table;
-			for (size_t i = 0; i < 256; ++i) table[i] = _reflectUnsigned<8>(i);
+			for (size_t i = 0; i < 256; ++i) table[i] = Helper::reflectUnsigned<8>(i);
 			return table;
 		}
 
@@ -112,7 +126,7 @@ namespace aurora::hash {
 		template<size_t Bits, bool ResultReflected>
 		inline static uint_t<Bits> AE_CALL finish(uint_t<Bits> crc, uint_t<Bits> finalXorValue) {
 			if constexpr (ResultReflected) {
-				return (_reflectUnsigned<Bits>(crc, Bits) ^ finalXorValue) & LOW_BITS_MASK<Bits>;
+				return (Helper::reflectUnsigned<Bits>(crc, Bits) ^ finalXorValue) & LOW_BITS_MASK<Bits>;
 			} else {
 				return (crc ^ finalXorValue) & LOW_BITS_MASK<Bits>;
 			}
@@ -127,6 +141,9 @@ namespace aurora::hash {
 
 	private:
 		inline static const ReflectionTableType REFLECTION_TABLE = createReflectionTable();
+
+		template<size_t Bits>
+		static constexpr uint_t<Bits> LOW_BITS_MASK = Bits ? (((((uint_t<Bits>)(1) << (Bits - 1)) - (uint_t<Bits>)(1)) << 1) | (uint_t<Bits>)(1)) : 0u;
 
 		template<size_t Bits>
 		static void AE_CALL _wordUpdate(uint_t<Bits>& remainder, uint_t<Bits> truncatedDivisor, uint_t<Bits> newDividendBits, size_t wordLength, bool reflect) {
@@ -145,20 +162,8 @@ namespace aurora::hash {
 		}
 
 		template<size_t Bits>
-		static constexpr uint_t<Bits> LOW_BITS_MASK = Bits ? ((((uint_t<Bits>(1) << (Bits - 1)) - uint_t<Bits>(1)) << 1) | uint_t<Bits>(1)) : 0u;
-
-		template<size_t Bits>
-		static constexpr uint_t<Bits> AE_CALL _reflectUnsigned(uint_t<Bits> x, size_t wordLength = std::numeric_limits<uint_t<Bits>>::digits) {
-			for (uint_t<Bits> l = 1u, h = l << (wordLength - 1); h > l; h >>= 1, l <<= 1) {
-				uint_t<Bits> const  m = h | l, t = x & m;
-				if ((t == h) || (t == l)) x ^= m;
-			}
-			return x;
-		}
-
-		template<size_t Bits>
 		inline static constexpr uint_t<Bits> AE_CALL _reflectOptionally(uint_t<Bits> x, bool reflect, size_t wordLength = std::numeric_limits<uint_t<Bits>>::digits) {
-			return reflect ? _reflectUnsigned<Bits>(x, wordLength) : x;
+			return reflect ? Helper::reflectUnsigned<Bits>(x, wordLength) : x;
 		}
 	};
 }
