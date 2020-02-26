@@ -8,9 +8,6 @@ public:
 		auto monitors = Monitor::getMonitors();
 		auto vms = monitors[0].getVideoModes();
 
-		auto sss = String::toString(255.0f, std::chars_format::hex);
-		auto szzz = sss.size();
-
 		RefPtr app = new Application(u8"TestApp");
 
 		Application::Style wndStype;

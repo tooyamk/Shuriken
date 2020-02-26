@@ -73,7 +73,7 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/../Resources/ ${__BUILD_DIR}/Resources/ 
 )
 
-add_custom_target(run_test_general ALL
+set(test_pre_build_commands
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${__PROJECT_AE_CORE_DLL} ${__BUILD_DIR}
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${__PROJECT_AE_PNG_CONVERTER_DLL} ${__OUTPUT_LIBS_FOLDER}
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${__PROJECT_AE_FBX_CONVERTER_DLL} ${__OUTPUT_LIBS_FOLDER}
@@ -84,26 +84,29 @@ add_custom_target(run_test_general ALL
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${__PROJECT_DX_SHADER_COMPILER_DLL} ${__OUTPUT_LIBS_FOLDER}
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${__PROJECT_AE_PST_DLL} ${__OUTPUT_LIBS_FOLDER}
 )
-add_dependencies(run_test_general
+set(test_pre_build_depends
     ${__PROJECT_AE_CORE_NAME}
     ${__PROJECT_AE_PNG_CONVERTER_NAME}
     ${__PROJECT_AE_FBX_CONVERTER_NAME}
     ${__PROJECT_AE_SHADER_UPLOADER_NAME}
     ${__PROJECT_AE_PST_NAME}
 )
-add_dependencies(${PROJECT_NAME} run_test_general)
 if (WIN32)
-    add_custom_target(run_test_win ALL
+    list(APPEND test_pre_build_commands
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${__PROJECT_AE_WIN_GL_DLL} ${__OUTPUT_LIBS_FOLDER}
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${__PROJECT_AE_WIN_D3D11_DLL} ${__OUTPUT_LIBS_FOLDER}
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${__PROJECT_AE_WIN_DIRECT_INPUT_DLL} ${__OUTPUT_LIBS_FOLDER}
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${__PROJECT_AE_WIN_XINPUT_DLL} ${__OUTPUT_LIBS_FOLDER}
     )
-    add_dependencies(run_test_win
+    list(APPEND test_pre_build_depends
         ${__PROJECT_AE_WIN_GL_NAME}
         ${__PROJECT_AE_WIN_D3D11_NAME}
         ${__PROJECT_AE_WIN_DIRECT_INPUT_NAME}
         ${__PROJECT_AE_WIN_XINPUT_NAME}
     )
-    add_dependencies(${PROJECT_NAME} run_test_win)
 endif ()
+
+add_custom_target(test_pre_build ALL ${test_pre_build_commands})
+add_dependencies(test_pre_build ${test_pre_build_depends})
+
+add_dependencies(${PROJECT_NAME} test_pre_build)

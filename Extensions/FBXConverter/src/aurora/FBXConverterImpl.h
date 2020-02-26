@@ -11,10 +11,10 @@
 
 namespace aurora::extensions::fbx_converter {
 #define AE_FBX_CONVERTER_TO_STR_ARRAY_ELEM(r, data, i, elem) \
-    BOOST_PP_COMMA_IF(i) BOOST_PP_STRINGIZE(elem) \
+    BOOST_PP_COMMA_IF(i) BOOST_PP_STRINGIZE(elem)
 
 #define AE_FBX_CONVERTER_TO_STR_ARRAY(...) \
-    BOOST_PP_SEQ_FOR_EACH_I(AE_FBX_CONVERTER_TO_STR_ARRAY_ELEM, ~, BOOST_PP_TUPLE_TO_SEQ((__VA_ARGS__))) \
+    BOOST_PP_SEQ_FOR_EACH_I(AE_FBX_CONVERTER_TO_STR_ARRAY_ELEM, ~, BOOST_PP_TUPLE_TO_SEQ((__VA_ARGS__)))
 
 
 #define AE_FBX_CONVERTER_DECLARE_ENUM(__NAME__, __BASE__, ...) \
@@ -29,7 +29,7 @@ inline static const std::unordered_map<std::string_view, __NAME__> __NAME__##_re
 inline static __NAME__ get##__NAME__(const std::string_view& name) { \
 	auto itr = __NAME__##_ref.find(name); \
 	return itr == __NAME__##_ref.end() ? (__NAME__)0 : itr->second; \
-} \
+}
 
 	class Node {
 	public:
