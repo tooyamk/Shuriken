@@ -53,10 +53,27 @@ function(__add_executable_source_group)
     add_executable(${ARGV})
 endfunction(__add_executable_source_group)
 
+function(__target_link_library_external_project)
+    add_library(tmp_dumy_lib UNKNOWN IMPORTED)
+    get_property(tmp_var GLOBAL PROPERTY ${ARGV1}_LIB_R)
+    if (tmp_var)
+        set_property(TARGET tmp_dumy_lib PROPERTY IMPORTED_LOCATION ${tmp_var})
+    endif()
+    get_property(tmp_var GLOBAL PROPERTY ${ARGV1}_LIB_D)
+    if (tmp_var)
+        set_property(TARGET tmp_dumy_lib PROPERTY IMPORTED_LOCATION_DEBUG ${tmp_var})
+    endif()
+    target_link_libraries(${ARGV0} tmp_dumy_lib)
+    unset(tmp_var)
+    unset(tmp_dumy_lib)
+endfunction(__target_link_library_external_project)
+
 set(CMAKE_CXX_STANDARD 17)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 project(Aurora)
+
+cmake_policy(SET CMP0060 NEW)
 
 if (WIN32)
     set(__AE_SLIB_SUFFIX ${CMAKE_STATIC_LIBRARY_SUFFIX})
@@ -67,6 +84,22 @@ else ()
     set(__AE_LIB_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
     set(__AE_DLL_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
 endif ()
+
+set(__EXTERNAL_PROJECT_CMAKE_ARGS
+    -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+    -DCMAKE_DEBUG_POSTFIX=${CMAKE_DEBUG_POSTFIX}
+    -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+    -DCMAKE_CONFIGURATION_TYPES=${CMAKE_CONFIGURATION_TYPES}
+    -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+    -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
+    -DANDROID_ABI=${ANDROID_ABI}
+    -DANDROID_PLATFORM=${ANDROID_PLATFORM}
+    -DANDROID_NDK=${ANDROID_NDK}
+    -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
+    -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
+    -DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}
+    G${CMAKE_GENERATOR}
+)
 
 set(__AE_EXTERNAL_FOLDER_NAME External)
 set(__AE_MODULES_FOLDER_NAME Modules)
