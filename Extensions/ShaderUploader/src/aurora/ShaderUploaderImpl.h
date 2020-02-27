@@ -77,13 +77,13 @@ namespace aurora::extensions::shader_uploader {
 	template<bool IsStatic, typename T>
 	inline bool AE_CALL parseDefines(std::vector<T>& out, const std::string_view& content) {
 		std::vector<std::string_view> defs;
-		String::split(content, String::CharFlag::NEW_LINE, defs);
+		String::split<true>(content, String::CharFlag::NEW_LINE, defs);
 		std::vector<std::string_view> kvs;
 		for (auto& def : defs) {
 			auto fmtDef = String::trim(def, String::CharFlag::WHITE_SPACE);
 			if (fmtDef.empty()) continue;
 
-			String::split(fmtDef, String::CharFlag::WHITE_SPACE, kvs);
+			String::split<true>(fmtDef, String::CharFlag::WHITE_SPACE, kvs);
 			if (auto n = kvs.size(); n) {
 				if constexpr (IsStatic) {
 					if (n == 1) {

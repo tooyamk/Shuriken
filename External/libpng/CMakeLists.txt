@@ -16,6 +16,8 @@ get_property(__PROJECT_ZLIB_LIB GLOBAL PROPERTY "__PROJECT_ZLIB_LIB")
 
 include(ExternalProject)
 
+__create_external_project_cmake_args(__CMAKE_ARGS)
+
 ExternalProject_Add(
     ${PROJECT_NAME}
     PREFIX ${PROJECT_BINARY_DIR}
@@ -40,7 +42,7 @@ ExternalProject_Add(
         -DPNG_TESTS=OFF
         -DZLIB_INCLUDE_DIR=${__PROJECT_ZLIB_INCLUDE}
         -DZLIB_LIBRARY=${__PROJECT_ZLIB_LIB}
-        ${__EXTERNAL_PROJECT_CMAKE_ARGS}
+        ${__CMAKE_ARGS}
 )
 
 add_dependencies(${PROJECT_NAME} ${__PROJECT_ZLIB_NAME})

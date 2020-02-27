@@ -54,16 +54,17 @@ function(__add_executable_source_group)
 endfunction(__add_executable_source_group)
 
 function(__target_link_library_external_project)
-    add_library(tmp_dumy_lib UNKNOWN IMPORTED)
-    get_property(tmp_var GLOBAL PROPERTY ${ARGV1}_LIB_R)
+    set(tmp_dumy_lib tmp_dumy_lib_${ARGV0}_${ARGV1})
+    add_library(${tmp_dumy_lib} UNKNOWN IMPORTED)
+    get_property(tmp_var GLOBAL PROPERTY ${ARGV1}_R)
     if (tmp_var)
-        set_property(TARGET tmp_dumy_lib PROPERTY IMPORTED_LOCATION ${tmp_var})
+        set_property(TARGET ${tmp_dumy_lib} PROPERTY IMPORTED_LOCATION ${tmp_var})
     endif()
-    get_property(tmp_var GLOBAL PROPERTY ${ARGV1}_LIB_D)
+    get_property(tmp_var GLOBAL PROPERTY ${ARGV1}_D)
     if (tmp_var)
-        set_property(TARGET tmp_dumy_lib PROPERTY IMPORTED_LOCATION_DEBUG ${tmp_var})
+        set_property(TARGET ${tmp_dumy_lib} PROPERTY IMPORTED_LOCATION_DEBUG ${tmp_var})
     endif()
-    target_link_libraries(${ARGV0} tmp_dumy_lib)
+    target_link_libraries(${ARGV0} ${tmp_dumy_lib})
     unset(tmp_var)
     unset(tmp_dumy_lib)
 endfunction(__target_link_library_external_project)
@@ -85,21 +86,23 @@ else ()
     set(__AE_DLL_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
 endif ()
 
-set(__EXTERNAL_PROJECT_CMAKE_ARGS
-    -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
-    -DCMAKE_DEBUG_POSTFIX=${CMAKE_DEBUG_POSTFIX}
-    -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-    -DCMAKE_CONFIGURATION_TYPES=${CMAKE_CONFIGURATION_TYPES}
-    -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
-    -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
-    -DANDROID_ABI=${ANDROID_ABI}
-    -DANDROID_PLATFORM=${ANDROID_PLATFORM}
-    -DANDROID_NDK=${ANDROID_NDK}
-    -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
-    -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
-    -DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}
-    G${CMAKE_GENERATOR}
-)
+macro(__create_external_project_cmake_args)
+    set(${ARGV0}
+        -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+        -DCMAKE_DEBUG_POSTFIX=${CMAKE_DEBUG_POSTFIX}
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DCMAKE_CONFIGURATION_TYPES=${CMAKE_CONFIGURATION_TYPES}
+        -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+        -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
+        -DANDROID_ABI=${ANDROID_ABI}
+        -DANDROID_PLATFORM=${ANDROID_PLATFORM}
+        -DANDROID_NDK=${ANDROID_NDK}
+        -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
+        -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
+        -DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}
+        G${CMAKE_GENERATOR}
+    )
+endmacro()
 
 set(__AE_EXTERNAL_FOLDER_NAME External)
 set(__AE_MODULES_FOLDER_NAME Modules)
@@ -116,8 +119,8 @@ add_subdirectory(${__AE_EXTERNAL_FOLDER_NAME}/BoostPreprocessor)
 
 add_subdirectory(Core)
 
+add_subdirectory(${__AE_MODULES_FOLDER_NAME}/Graphics/ProgramSourceTranslator)#??only x64
 if (WIN32)
-    add_subdirectory(${__AE_MODULES_FOLDER_NAME}/Graphics/ProgramSourceTranslator)#??only x64
     add_subdirectory(${__AE_MODULES_FOLDER_NAME}/Graphics/WinD3D11)
     add_subdirectory(${__AE_MODULES_FOLDER_NAME}/Graphics/WinGL)
 

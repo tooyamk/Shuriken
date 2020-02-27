@@ -26,6 +26,6 @@ add_dependencies(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
     ${__PROJECT_AE_CORE_NAME}
 )
-__target_link_library_external_project(${PROJECT_NAME} "__PROJECT_LIBPNG")
+__target_link_library_external_project(${PROJECT_NAME} "__PROJECT_LIBPNG_LIB")
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER ${__AE_EXTENSIONS_FOLDER_NAME})
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${__OUTPUT_NAME}) 

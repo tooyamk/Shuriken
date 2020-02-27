@@ -172,20 +172,6 @@ namespace aurora {
 		dst.emplace_back(nullptr, 0);
 	}
 
-	void String::split(const std::string_view& input, uint8_t flags, std::vector<std::string_view>& dst) {
-		size_t begin = 0, i = 0, size = input.size();
-		while (i < size) {
-			if (CHARS[input[i]] & flags) {
-				dst.emplace_back(input.data() + begin, i - begin);
-				++i;
-				begin = i;
-			} else {
-				++i;
-			}
-		}
-		dst.emplace_back(input.data() + begin, i - begin);
-	}
-
 	std::string_view String::trimQuotation(const std::string_view& str) {
 		auto size = str.size();
 

@@ -16,6 +16,8 @@ set_property(GLOBAL PROPERTY __PROJECT_ZLIB_DLL ${PROJECT_BINARY_DIR}/install/$<
 
 include(ExternalProject)
 
+__create_external_project_cmake_args(__CMAKE_ARGS)
+
 ExternalProject_Add(
     ${PROJECT_NAME}
     PREFIX ${PROJECT_BINARY_DIR}
@@ -35,7 +37,7 @@ ExternalProject_Add(
         ${__LIB_D}
     CMAKE_ARGS
         -DBUILD_SHARED_LIBS=1
-        ${__EXTERNAL_PROJECT_CMAKE_ARGS}
+        ${__CMAKE_ARGS}
 )
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER ${__AE_EXTERNAL_FOLDER_NAME})

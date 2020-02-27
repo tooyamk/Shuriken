@@ -83,7 +83,30 @@ namespace aurora {
 		//}
 		static void AE_CALL split(const std::string_view& input, const std::regex& separator, std::vector<std::string_view>& dst);
 		static void AE_CALL split(const std::string_view& input, const std::string_view& separator, std::vector<std::string_view>& dst);
-		static void AE_CALL split(const std::string_view& input, uint8_t flags, std::vector<std::string_view>& dst);
+
+		template<bool SkipEmpty = false>
+		static void AE_CALL split(const std::string_view& input, uint8_t flags, std::vector<std::string_view>& dst) {
+			size_t begin = 0, i = 0, size = input.size();
+				while (i < size) {
+					if (CHARS[input[i]] & flags) {
+						if constexpr (SkipEmpty) {
+							if (i > begin) dst.emplace_back(input.data() + begin, i - begin);
+						} else {
+							dst.emplace_back(input.data() + begin, i - begin);
+						}
+						++i;
+						begin = i;
+					} else {
+						++i;
+					}
+				}
+
+				if constexpr (SkipEmpty) {
+					if (i > begin) dst.emplace_back(input.data() + begin, i - begin);
+				} else {
+					dst.emplace_back(input.data() + begin, i - begin);
+				}
+		}
 
 		static std::string_view trimQuotation(const std::string_view& str);
 		static std::string_view trim(const std::string_view& str, uint8_t flags);
