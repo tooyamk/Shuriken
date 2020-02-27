@@ -32,7 +32,7 @@ endfunction(__findDir)
 set(DIASDK_LIBRARIES "")
 set(DIASDK_INCLUDE_DIR "")
 if (MSVC)
-    set(cxxFlags "${CMAKE_CXX_FLAGS} /Wv:18")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Wv:18")
 
     set(path "nil")
     __findDir(${CMAKE_CXX_COMPILER} path "Community" "Professional" "Enterprise")
@@ -41,8 +41,6 @@ if (MSVC)
         set(DIASDK_LIBRARIES "${path}/DIA SDK/lib")
         set(DIASDK_INCLUDE_DIR "${path}/DIA SDK/include")
     endif ()
-else ()
-    set(cxxFlags "${CMAKE_CXX_FLAGS}")
 endif ()
 
 string(TOLOWER ${CMAKE_SYSTEM_PROCESSOR} arch)
@@ -92,7 +90,6 @@ ExternalProject_Add(
     BINARY_DIR ${__BUILD_DIR}
     UPDATE_COMMAND ""
     CMAKE_ARGS
-        -DCMAKE_CXX_FLAGS=${cxxFlags}
         -DBUILD_SHARED_LIBS=OFF
         -DLLVM_BUILD_EXAMPLES=OFF
         -DLLVM_BUILD_TESTS=OFF
