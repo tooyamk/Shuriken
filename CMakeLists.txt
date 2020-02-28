@@ -8,7 +8,7 @@ set(CMAKE_STATIC_LIBRARY_PREFIX "")
 #set(CMAKE_RELWITHDEBINFO_POSTFIX "rd" CACHE STRING "")
 #set(CMAKE_MINSIZEREL_POSTFIX "s" CACHE STRING "")
 
-option(AE_TESTS "" ON)
+option(AE_TESTS "" OFF)
 
 macro(__set_project)
     get_filename_component(ProjectId ${CMAKE_CURRENT_SOURCE_DIR} NAME)
@@ -86,8 +86,8 @@ else ()
     set(__AE_DLL_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
 endif ()
 
-macro(__create_external_project_cmake_args)
-    set(${ARGV0}
+macro(__create_external_project_cmake_args target)
+    set(${target}
         -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
         -DCMAKE_DEBUG_POSTFIX=${CMAKE_DEBUG_POSTFIX}
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
@@ -100,7 +100,7 @@ macro(__create_external_project_cmake_args)
         -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
         -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
         -DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}
-        G${CMAKE_GENERATOR}
+        -DCMAKE_GENERATOR=${CMAKE_GENERATOR}
     )
 endmacro()
 
