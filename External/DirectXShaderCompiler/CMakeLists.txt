@@ -5,7 +5,7 @@ set_property(GLOBAL PROPERTY __PROJECT_DX_SHADER_COMPILER_DLL ${PROJECT_BINARY_D
 
 include(ExternalProject)
 
-function(__findDir in out names)
+function(__find_dir in out names)
     set(cond TRUE)
     while(${cond})
         get_filename_component(name ${in} NAME)
@@ -27,7 +27,7 @@ function(__findDir in out names)
             set(${out} ${in} PARENT_SCOPE)
         endif ()
     endwhile()
-endfunction(__findDir)
+endfunction(__find_dir)
 
 set(DIASDK_LIBRARIES "")
 set(DIASDK_INCLUDE_DIR "")
@@ -35,7 +35,7 @@ if (MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Wv:18")
 
     set(path "nil")
-    __findDir(${CMAKE_CXX_COMPILER} path "Community" "Professional" "Enterprise")
+    __find_dir(${CMAKE_CXX_COMPILER} path "Community" "Professional" "Enterprise")
     if (NOT (${path} STREQUAL "nil"))
     message(${path})
         set(DIASDK_LIBRARIES "${path}/DIA SDK/lib")
@@ -71,9 +71,67 @@ elseif (${arch} MATCHES "aarch64")
     set(arch "AArch64")
 endif ()
 
-message(WARNING "ARCHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH     ${arch}")
+function(__detect_arch processor result)
+    string(TOLOWER ${processor} ${result})
+    if (${result} MATCHES "(amd)|(86)")
+        if (${CMAKE_SIZEOF_VOID_P} EQUAL 8)
+            set(${result} "x64")
+        elseif (${CMAKE_SIZEOF_VOID_P} EQUAL 4)
+            set(${result} "X86")
+        endif ()
+    elseif (${result} MATCHES "arm")
+        if (${CMAKE_SIZEOF_VOID_P} EQUAL 8)
+            set(${result} "ARM64")
+        elseif (${CMAKE_SIZEOF_VOID_P} EQUAL 4)
+            set(${result} "ARM")
+        endif ()
+    elseif (${result} MATCHES "aarch64")
+        set(${result} "AArch64")
+    endif ()
+endfunction(__detect_arch)
+
+__detect_arch(${CMAKE_SYSTEM_PROCESSOR} arch)
+__detect_arch(${CMAKE_HOST_SYSTEM_PROCESSOR} host_arch)
+
+message(WARNING "ARCHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH     ${arch}   ${host_arch}")
 
 __create_external_project_cmake_args(__CMAKE_ARGS)
+
+set(__dxc_args
+    -DBUILD_SHARED_LIBS=OFF
+    -DLLVM_BUILD_EXAMPLES=OFF
+    -DLLVM_BUILD_TESTS=OFF
+    -DLLVM_BUILD_DOCS=OFF
+    -DSPIRV_BUILD_TESTS=OFF
+    -DLLVM_ENABLE_WARNINGS=OFF
+    -DLLVM_ENABLE_WERROR=OFF
+    -DINSTALL_GTEST=OFF
+    -DBUILD_GMOCK=OFF
+    -Dgtest_force_shared_crt=ON
+    -DSPIRV_SKIP_EXECUTABLES=ON
+    -DENABLE_SPIRV_CODEGEN=ON
+    -DCLANG_INCLUDE_TESTS=OFF
+    -DLLVM_INCLUDE_TESTS=OFF
+    -DHLSL_INCLUDE_TESTS=OFF
+    -DLLVM_INCLUDE_DOCS=OFF
+    -DLLVM_INCLUDE_EXAMPLES=OFF
+    -DLIBCLANG_BUILD_STATIC=ON
+    -DLLVM_OPTIMIZED_TABLEGEN=OFF
+    -DLLVM_REQUIRES_EH=ON
+    -DLLVM_APPEND_VC_REV=ON
+    -DLLVM_ENABLE_RTTI=ON
+    -DLLVM_ENABLE_EH=ON
+    -DLLVM_ENABLE_TERMINFO=OFF
+    -DCLANG_BUILD_EXAMPLES=OFF
+    -DLLVM_REQUIRES_RTTI=ON
+    -DSPIRV_BUILD_TESTS=OFF
+    -DSPIRV_SKIP_TESTS=ON
+    -DCLANG_ENABLE_STATIC_ANALYZER=OFF
+    -DCLANG_ENABLE_ARCMT=OFF
+    -DCLANG_CL=OFF
+    -DLLVM_TARGETS_TO_BUILD=None
+    -DLLVM_DEFAULT_TARGET_TRIPLE=dxil-ms-dx
+)
 
 ExternalProject_Add(
     ${PROJECT_NAME}
@@ -92,42 +150,14 @@ ExternalProject_Add(
     SOURCE_DIR src
     BINARY_DIR ${__BUILD_DIR}
     UPDATE_COMMAND ""
+    PATCH_COMMAND 
+        ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/patch/GetHostTriple.cmake ${CMAKE_CURRENT_BINARY_DIR}/src/cmake/modules
+        copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/patch/CrossCompile.cmake ${CMAKE_CURRENT_BINARY_DIR}/src/cmake/modules
     CMAKE_ARGS
-        -DBUILD_SHARED_LIBS=OFF
-        -DLLVM_BUILD_EXAMPLES=OFF
-        -DLLVM_BUILD_TESTS=OFF
-        -DLLVM_BUILD_DOCS=OFF
-        -DSPIRV_BUILD_TESTS=OFF
-        -DSPIRV_TOOLS_EXTRA_DEFINITIONS="/D_ITERATOR_DEBUG_LEVEL=0"
-        -DLLVM_ENABLE_WARNINGS=OFF
-        -DLLVM_ENABLE_WERROR=OFF
-        -DINSTALL_GTEST=OFF
-        -DBUILD_GMOCK=OFF
-        -Dgtest_force_shared_crt=ON
-        -DSPIRV_SKIP_EXECUTABLES=ON
-        -DENABLE_SPIRV_CODEGEN=ON
-        -DCLANG_INCLUDE_TESTS=OFF
-        -DLLVM_INCLUDE_TESTS=OFF
-        -DHLSL_INCLUDE_TESTS=OFF
-        -DLLVM_INCLUDE_DOCS=OFF
-        -DLLVM_INCLUDE_EXAMPLES=OFF
-        -DLIBCLANG_BUILD_STATIC=ON
-        -DLLVM_OPTIMIZED_TABLEGEN=OFF
-        -DLLVM_REQUIRES_EH=ON
-        -DLLVM_APPEND_VC_REV=ON
-        -DLLVM_ENABLE_RTTI=ON
-        -DLLVM_ENABLE_EH=ON
-        -DLLVM_ENABLE_TERMINFO=OFF
-        -DCLANG_BUILD_EXAMPLES=OFF
-        -DLLVM_REQUIRES_RTTI=ON
-        -DSPIRV_BUILD_TESTS=OFF
-        -DSPIRV_SKIP_TESTS=ON
-        -DCLANG_ENABLE_STATIC_ANALYZER=OFF
-        -DCLANG_ENABLE_ARCMT=OFF
-        -DCLANG_CL=OFF
-        -DLLVM_TARGETS_TO_BUILD:STRING=None
-        -DDXC_BUILD_ARCH:STRING=${arch}
-        -DLLVM_DEFAULT_TARGET_TRIPLE:STRING=dxil-ms-dx
+        ${__dxc_args}
+        -DDXC_BUILD_ARCH=${arch}
+        -D__dxc_args=${__dxc_args}
+        -D__dxc_host_arch=${host_arch}
         #-DLLVM_ENABLE_WARNINGS:BOOL=OFF
         #-DLLVM_ENABLE_WERROR:BOOL=OFF
         -DDIASDK_LIBRARIES:STRING=${DIASDK_LIBRARIES}
