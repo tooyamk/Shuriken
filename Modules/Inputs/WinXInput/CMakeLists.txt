@@ -7,7 +7,7 @@ get_property(__PROJECT_AE_CORE_NAME GLOBAL PROPERTY "__PROJECT_AE_CORE_NAME")
 get_property(__PROJECT_AE_CORE_SRC_DIR GLOBAL PROPERTY "__PROJECT_AE_CORE_SRC_DIR")
 
 include_directories(${__PROJECT_AE_CORE_SRC_DIR}/src/)
-add_definitions(-D AE_MODULE_EXPORTS)
+add_definitions(-DAE_MODULE_EXPORTS)
 file(GLOB SRC_FILES
     "src/*.h" "src/*.cpp"
     "src/*/*.h" "src/*/*.cpp")

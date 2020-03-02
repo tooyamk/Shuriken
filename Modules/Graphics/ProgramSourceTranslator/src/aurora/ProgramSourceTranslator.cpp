@@ -37,7 +37,7 @@ namespace aurora::modules::graphics::program_source_translator {
 		return result;
 	}
 
-	HRESULT ProgramSourceTranslator::MyIncludeHandler::QueryInterface(REFIID riid, _COM_Outptr_ void __RPC_FAR* __RPC_FAR* ppvObject) {
+	HRESULT ProgramSourceTranslator::MyIncludeHandler::QueryInterface(REFIID riid, void** ppvObject) {
 		if (IsEqualIID(riid, __uuidof(IDxcIncludeHandler))) {
 			*ppvObject = dynamic_cast<IDxcIncludeHandler*>(this);
 			this->AddRef();

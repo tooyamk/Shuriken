@@ -20,7 +20,7 @@ include_directories(
     ${__PROJECT_DX_SHADER_COMPILER_PLATFORM_INCLUDE}
     ${__PROJECT_SPIRV_CROSS_INCLUDE}
 )
-add_definitions(-D AE_MODULE_EXPORTS)
+add_definitions(-DAE_MODULE_EXPORTS)
 file(GLOB SRC_FILES
     "src/*.h" "src/*.cpp"
     "src/*/*.h" "src/*/*.cpp")

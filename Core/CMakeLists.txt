@@ -5,7 +5,7 @@ set_property(GLOBAL PROPERTY __PROJECT_AE_CORE_SRC_DIR ${PROJECT_SOURCE_DIR})
 set_property(GLOBAL PROPERTY __PROJECT_AE_CORE_DLL ${__BUILD_DIR}/${__OUTPUT_NAME}${__BUILD_TYPE_POSTFIX}${CMAKE_SHARED_LIBRARY_SUFFIX})
 
 include_directories(src)
-add_definitions(-D AE_EXPORTS)
+add_definitions(-DAE_EXPORTS)
 file(GLOB SRC_FILES
     "src/*.h" "src/*.cpp"
     "src/*/*.h" "src/*/*.cpp"

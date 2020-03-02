@@ -14,7 +14,7 @@ include_directories(
     ${__PROJECT_AE_CORE_SRC_DIR}/src/
     ${__PROJECT_LIBPNG_INCLUDE}
 )
-add_definitions(-D AE_EXTENSION_EXPORTS)
+add_definitions(-DAE_EXTENSION_EXPORTS)
 file(GLOB SRC_FILES
     "src/*.h" "src/*.cpp"
     "src/*/*.h" "src/*/*.cpp")

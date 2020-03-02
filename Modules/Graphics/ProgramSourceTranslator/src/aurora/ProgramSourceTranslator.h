@@ -25,7 +25,7 @@ namespace aurora::modules::graphics::program_source_translator {
 			HRESULT STDMETHODCALLTYPE LoadSource(_In_z_ LPCWSTR pFilename, _COM_Outptr_result_maybenull_ IDxcBlob** ppIncludeSource) override;
 			ULONG STDMETHODCALLTYPE AddRef() override;
 			ULONG STDMETHODCALLTYPE Release() override;
-			HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, _COM_Outptr_ void __RPC_FAR* __RPC_FAR* ppvObject) override;
+			HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void** ppvObject) override;
 
 		private:
 			IDxcLibrary* _lib;

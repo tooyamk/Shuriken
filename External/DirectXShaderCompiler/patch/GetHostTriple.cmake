@@ -2,7 +2,7 @@
 # Invokes config.guess
 
 function( get_host_triple var )
-  if( MSVC )
+  if(CMAKE_HOST_SYSTEM_NAME MATCHES "Windows")
     if( CMAKE_CL_64 )
       set( value "x86_64-pc-win32" )
     else()
@@ -14,7 +14,7 @@ function( get_host_triple var )
     else()
       set( value "i686-pc-mingw32" )
     endif()
-  else( MSVC )
+  else()
     set(config_guess ${LLVM_MAIN_SRC_DIR}/autoconf/config.guess)
     execute_process(COMMAND sh ${config_guess}
       RESULT_VARIABLE TT_RV
@@ -24,7 +24,7 @@ function( get_host_triple var )
       message(FATAL_ERROR "Failed to execute ${config_guess}")
     endif( NOT TT_RV EQUAL 0 )
     set( value ${TT_OUT} )
-  endif( MSVC )
+  endif()
   set( ${var} ${value} PARENT_SCOPE )
   message(STATUS "Target triple: ${value}")
 endfunction( get_host_triple var )

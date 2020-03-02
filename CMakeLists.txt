@@ -77,9 +77,16 @@ endfunction(__target_link_library_external_project)
 set(CMAKE_CXX_STANDARD 17)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
+if (CMAKE_C_COMPILER_ID MATCHES Clang)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fms-extensions")
+endif ()
+if (CMAKE_CXX_COMPILER_ID MATCHES Clang)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fms-extensions")
+endif ()
+
 project(Aurora)
 
-cmake_policy(SET CMP0060 NEW)
+#cmake_policy(SET CMP0060 NEW)
 
 if (WIN32)
     set(__AE_SLIB_SUFFIX ${CMAKE_STATIC_LIBRARY_SUFFIX})
