@@ -1,6 +1,7 @@
 __set_project()
 set_property(GLOBAL PROPERTY __PROJECT_DX_SHADER_COMPILER_NAME ${PROJECT_NAME})
 set_property(GLOBAL PROPERTY __PROJECT_DX_SHADER_COMPILER_INCLUDE ${PROJECT_BINARY_DIR}/src/include)
+set_property(GLOBAL PROPERTY __PROJECT_DX_SHADER_COMPILER_PLATFORM_INCLUDE ${PROJECT_BINARY_DIR}/src/include)
 set_property(GLOBAL PROPERTY __PROJECT_DX_SHADER_COMPILER_DLL ${PROJECT_BINARY_DIR}/install/bin/dxcompiler$<$<CONFIG:Debug>:d>${CMAKE_SHARED_LIBRARY_SUFFIX})
 
 include(ExternalProject)
@@ -44,6 +45,8 @@ if (MSVC)
 else()
     if (CMAKE_SYSTEM_NAME MATCHES "Android")
         set(patch_header_dir ${CMAKE_CURRENT_SOURCE_DIR}/src/Android)
+        set_property(GLOBAL PROPERTY __PROJECT_DX_SHADER_COMPILER_PLATFORM_INCLUDE ${patch_header_dir})
+
         if (CMAKE_C_COMPILER_ID MATCHES "(Clang)|(GNU)")
             set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I${patch_header_dir}")
         endif ()
@@ -72,66 +75,33 @@ elseif (${arch} MATCHES "aarch64")
 endif ()
 
 function(__detect_arch processor result)
-    string(TOLOWER ${processor} ${result})
-    if (${result} MATCHES "(amd)|(86)")
+    string(TOLOWER ${processor} val)
+    if (val MATCHES "(amd)|(86)")
         if (${CMAKE_SIZEOF_VOID_P} EQUAL 8)
-            set(${result} "x64")
+            set(val "x64")
         elseif (${CMAKE_SIZEOF_VOID_P} EQUAL 4)
-            set(${result} "X86")
+            set(val "X86")
         endif ()
-    elseif (${result} MATCHES "arm")
+    elseif (val MATCHES "arm")
         if (${CMAKE_SIZEOF_VOID_P} EQUAL 8)
-            set(${result} "ARM64")
+            set(val "ARM64")
         elseif (${CMAKE_SIZEOF_VOID_P} EQUAL 4)
-            set(${result} "ARM")
+            set(val "ARM")
         endif ()
-    elseif (${result} MATCHES "aarch64")
-        set(${result} "AArch64")
+    elseif (val MATCHES "aarch64")
+        set(val "AArch64")
     endif ()
+    set(${result} ${val} PARENT_SCOPE)
 endfunction(__detect_arch)
 
 __detect_arch(${CMAKE_SYSTEM_PROCESSOR} arch)
 __detect_arch(${CMAKE_HOST_SYSTEM_PROCESSOR} host_arch)
 
-message(WARNING "ARCHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH     ${arch}   ${host_arch}")
-
 __create_external_project_cmake_args(__CMAKE_ARGS)
 
-set(__dxc_args
-    -DBUILD_SHARED_LIBS=OFF
-    -DLLVM_BUILD_EXAMPLES=OFF
-    -DLLVM_BUILD_TESTS=OFF
-    -DLLVM_BUILD_DOCS=OFF
-    -DSPIRV_BUILD_TESTS=OFF
-    -DLLVM_ENABLE_WARNINGS=OFF
-    -DLLVM_ENABLE_WERROR=OFF
-    -DINSTALL_GTEST=OFF
-    -DBUILD_GMOCK=OFF
-    -Dgtest_force_shared_crt=ON
-    -DSPIRV_SKIP_EXECUTABLES=ON
-    -DENABLE_SPIRV_CODEGEN=ON
-    -DCLANG_INCLUDE_TESTS=OFF
-    -DLLVM_INCLUDE_TESTS=OFF
-    -DHLSL_INCLUDE_TESTS=OFF
-    -DLLVM_INCLUDE_DOCS=OFF
-    -DLLVM_INCLUDE_EXAMPLES=OFF
-    -DLIBCLANG_BUILD_STATIC=ON
-    -DLLVM_OPTIMIZED_TABLEGEN=OFF
-    -DLLVM_REQUIRES_EH=ON
-    -DLLVM_APPEND_VC_REV=ON
-    -DLLVM_ENABLE_RTTI=ON
-    -DLLVM_ENABLE_EH=ON
-    -DLLVM_ENABLE_TERMINFO=OFF
-    -DCLANG_BUILD_EXAMPLES=OFF
-    -DLLVM_REQUIRES_RTTI=ON
-    -DSPIRV_BUILD_TESTS=OFF
-    -DSPIRV_SKIP_TESTS=ON
-    -DCLANG_ENABLE_STATIC_ANALYZER=OFF
-    -DCLANG_ENABLE_ARCMT=OFF
-    -DCLANG_CL=OFF
-    -DLLVM_TARGETS_TO_BUILD=None
-    -DLLVM_DEFAULT_TARGET_TRIPLE=dxil-ms-dx
-)
+set(predefined_config_params_file ${CMAKE_CURRENT_SOURCE_DIR}/predefined-config-params.cmake)
+include(${predefined_config_params_file})
+__get_predefined_config_params(predefined_params)
 
 ExternalProject_Add(
     ${PROJECT_NAME}
@@ -150,14 +120,12 @@ ExternalProject_Add(
     SOURCE_DIR src
     BINARY_DIR ${__BUILD_DIR}
     UPDATE_COMMAND ""
-    PATCH_COMMAND 
-        ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/patch/GetHostTriple.cmake ${CMAKE_CURRENT_BINARY_DIR}/src/cmake/modules
-        copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/patch/CrossCompile.cmake ${CMAKE_CURRENT_BINARY_DIR}/src/cmake/modules
+    PATCH_COMMAND ${CMAKE_COMMAND} -DSRC_DIR=${CMAKE_CURRENT_SOURCE_DIR} -DBIN_DIR=${CMAKE_CURRENT_BINARY_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/patch/patch.cmake
     CMAKE_ARGS
-        ${__dxc_args}
+        ${predefined_params}
         -DDXC_BUILD_ARCH=${arch}
-        -D__dxc_args=${__dxc_args}
-        -D__dxc_host_arch=${host_arch}
+        -DPREDEFINED_CONFIG_PARAMS_FILE=${predefined_config_params_file}
+        -DDXC_BUILD_HOST_ARCH=${host_arch}
         #-DLLVM_ENABLE_WARNINGS:BOOL=OFF
         #-DLLVM_ENABLE_WERROR:BOOL=OFF
         -DDIASDK_LIBRARIES:STRING=${DIASDK_LIBRARIES}

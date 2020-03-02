@@ -12,22 +12,18 @@ function(llvm_create_cross_target_internal target_name tooclhain buildtype)
         CACHE STRING "Toolchain file for ${target_name}")
   endif()
 
-  set(args
-    ${__dxc_args}
-    -DDXC_BUILD_ARCH=${__dxc_host_arch}
+  include(${PREDEFINED_CONFIG_PARAMS_FILE})
+  __get_predefined_config_params(predefined_params)
+  list(APPEND predefined_params
+    -DDXC_BUILD_ARCH=${DXC_BUILD_HOST_ARCH}
   )
-  if (NOT CMAKE_CONFIGURATION_TYPES)
-    list(APPEND args
-      -DCMAKE_RUNTIME_OUTPUT_DIRECTORY="${LLVM_${target_name}_BUILD$<0:>/bin"
-    )
-  endif ()
 
   add_custom_command(OUTPUT ${LLVM_${target_name}_BUILD}
     COMMAND ${CMAKE_COMMAND} -E make_directory ${LLVM_${target_name}_BUILD}
     COMMENT "Creating ${LLVM_${target_name}_BUILD}...")
 
   add_custom_command(OUTPUT ${LLVM_${target_name}_BUILD}/CMakeCache.txt
-    COMMAND ${CMAKE_COMMAND} ${args}
+    COMMAND ${CMAKE_COMMAND} ${predefined_params}
         ${CROSS_TOOLCHAIN_FLAGS_${target_name}} ${CMAKE_SOURCE_DIR}
     WORKING_DIRECTORY ${LLVM_${target_name}_BUILD}
     DEPENDS ${LLVM_${target_name}_BUILD}
@@ -51,7 +47,7 @@ function(llvm_create_cross_target_internal target_name tooclhain buildtype)
       set(build_type_flags "-DCMAKE_BUILD_TYPE=${buildtype}")
     endif()
     execute_process(COMMAND ${CMAKE_COMMAND} ${build_type_flags}
-        -DLLVM_TARGETS_TO_BUILD=${LLVM_TARGETS_TO_BUILD} ${args}
+        -DLLVM_TARGETS_TO_BUILD=${LLVM_TARGETS_TO_BUILD} ${predefined_params}
         ${CROSS_TOOLCHAIN_FLAGS_${target_name}} ${CMAKE_SOURCE_DIR}
       WORKING_DIRECTORY ${LLVM_${target_name}_BUILD} )
   endif(NOT IS_DIRECTORY ${LLVM_${target_name}_BUILD})
