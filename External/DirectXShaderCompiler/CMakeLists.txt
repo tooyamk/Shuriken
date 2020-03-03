@@ -1,10 +1,17 @@
 __set_project()
-set_property(GLOBAL PROPERTY __PROJECT_DX_SHADER_COMPILER_NAME ${PROJECT_NAME})
-set_property(GLOBAL PROPERTY __PROJECT_DX_SHADER_COMPILER_INCLUDE ${PROJECT_BINARY_DIR}/src/include)
-set_property(GLOBAL PROPERTY __PROJECT_DX_SHADER_COMPILER_PLATFORM_INCLUDE ${PROJECT_BINARY_DIR}/src/include)
-set_property(GLOBAL PROPERTY __PROJECT_DX_SHADER_COMPILER_DLL ${PROJECT_BINARY_DIR}/install/bin/dxcompiler$<$<CONFIG:Debug>:d>${CMAKE_SHARED_LIBRARY_SUFFIX})
-
-include(ExternalProject)
+set(LLVMDxcSupport LLVMDxcSupport)
+if (UNIX)
+    set(LLVMDxcSupport lib${LLVMDxcSupport})
+endif ()
+set(LLVMDxcSupport_SLIB_PREFIX ${PROJECT_BINARY_DIR}/install/lib/${LLVMDxcSupport})
+set(LLVMDxcSupport_SLIB_R ${LLVMDxcSupport_SLIB_PREFIX}${AE_SLIB_SUFFIX})
+set(LLVMDxcSupport_SLIB_D ${LLVMDxcSupport_SLIB_PREFIX}d${AE_SLIB_SUFFIX})
+set_property(GLOBAL PROPERTY PROJECT_DX_SHADER_COMPILER_NAME ${PROJECT_NAME})
+set_property(GLOBAL PROPERTY PROJECT_DX_SHADER_COMPILER_INCLUDE ${PROJECT_BINARY_DIR}/src/include)
+set_property(GLOBAL PROPERTY PROJECT_DX_SHADER_COMPILER_PLATFORM_INCLUDE ${PROJECT_BINARY_DIR}/src/include)
+set_property(GLOBAL PROPERTY PROJECT_DX_SHADER_COMPILER_LLVMDxcSupport_SLIB_R ${LLVMDxcSupport_SLIB_R})
+set_property(GLOBAL PROPERTY PROJECT_DX_SHADER_COMPILER_LLVMDxcSupport_SLIB_D ${LLVMDxcSupport_SLIB_D})
+set_property(GLOBAL PROPERTY PROJECT_DX_SHADER_COMPILER_DLL ${PROJECT_BINARY_DIR}/install/bin/dxcompiler$<$<CONFIG:Debug>:d>${AE_DLL_SUFFIX})
 
 function(__find_dir in out names)
     set(cond TRUE)
@@ -44,8 +51,8 @@ if (MSVC)
     endif ()
 else()
     if (CMAKE_SYSTEM_NAME MATCHES "Android")
-        set(patch_header_dir ${CMAKE_CURRENT_SOURCE_DIR}/src/Android)
-        set_property(GLOBAL PROPERTY __PROJECT_DX_SHADER_COMPILER_PLATFORM_INCLUDE ${patch_header_dir})
+        set(patch_header_dir ${CMAKE_CURRENT_SOURCE_DIR}/Android)
+        set_property(GLOBAL PROPERTY PROJECT_DX_SHADER_COMPILER_PLATFORM_INCLUDE ${patch_header_dir})
 
         if (CMAKE_C_COMPILER_ID MATCHES "(Clang)|(GNU)")
             set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I${patch_header_dir}")
@@ -103,12 +110,12 @@ set(predefined_config_params_file ${CMAKE_CURRENT_SOURCE_DIR}/predefined-config-
 include(${predefined_config_params_file})
 __get_predefined_config_params(predefined_params)
 
+include(ExternalProject)
+
 ExternalProject_Add(
     ${PROJECT_NAME}
     PREFIX ${PROJECT_BINARY_DIR}
     GIT_REPOSITORY https://github.com/microsoft/DirectXShaderCompiler.git
-    #GIT_TAG v1.4.1907
-    #GIT_TAG v1.2.0-alpha
     GIT_TAG d0e9147ab86c8cb29a5fd81bd758e44d440c332c#release-1.5.1911
     GIT_SHALLOW 1
     GIT_PROGRESS 1
@@ -118,9 +125,12 @@ ExternalProject_Add(
     DOWNLOAD_DIR download
     INSTALL_DIR install
     SOURCE_DIR src
-    BINARY_DIR ${__BUILD_DIR}
+    BINARY_DIR ${AE_BUILD_DIR}
     UPDATE_COMMAND ""
     PATCH_COMMAND ${CMAKE_COMMAND} -DSRC_DIR=${CMAKE_CURRENT_SOURCE_DIR} -DBIN_DIR=${CMAKE_CURRENT_BINARY_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/patch/patch.cmake
+    BUILD_BYPRODUCTS 
+        ${LLVMDxcSupport_SLIB_R}
+        ${LLVMDxcSupport_SLIB_D}
     CMAKE_ARGS
         ${predefined_params}
         -DDXC_BUILD_ARCH=${arch}
@@ -128,11 +138,11 @@ ExternalProject_Add(
         -DDXC_BUILD_HOST_ARCH=${host_arch}
         #-DLLVM_ENABLE_WARNINGS:BOOL=OFF
         #-DLLVM_ENABLE_WERROR:BOOL=OFF
-        -DDIASDK_LIBRARIES:STRING=${DIASDK_LIBRARIES}
-        -DDIASDK_INCLUDE_DIR:STRING=${DIASDK_INCLUDE_DIR}
-        -DCMAKE_SHARED_LIBRARY_PREFIX=${CMAKE_SHARED_LIBRARY_PREFIX}
-        -DCMAKE_STATIC_LIBRARY_PREFIX=${CMAKE_STATIC_LIBRARY_PREFIX}
+        -DDIASDK_LIBRARIES=${DIASDK_LIBRARIES}
+        -DDIASDK_INCLUDE_DIR=${DIASDK_INCLUDE_DIR}
+        #-DCMAKE_SHARED_LIBRARY_PREFIX=${CMAKE_SHARED_LIBRARY_PREFIX}
+        #-DCMAKE_STATIC_LIBRARY_PREFIX=${CMAKE_STATIC_LIBRARY_PREFIX}
         ${__CMAKE_ARGS}
 )
 
-set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER ${__AE_EXTERNAL_FOLDER_NAME})
+set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER ${AE_EXTERNAL_FOLDER_NAME})
