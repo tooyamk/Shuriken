@@ -5,7 +5,7 @@
 
 #include "Extensions/PNGConverter/src/aurora/PNGConverter.h"
 #include "Extensions/FBXConverter/src/aurora/FBXConverter.h"
-#include "Extensions/ShaderUploader/src/aurora/ShaderUploader.h"
+#include "Extensions/ShaderScript/src/aurora/ShaderScript.h"
 
 using namespace aurora;
 using namespace aurora::components;

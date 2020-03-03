@@ -142,7 +142,7 @@ endif ()
 
 add_subdirectory(${AE_EXTENSIONS_FOLDER_NAME}/PNGConverter)
 add_subdirectory(${AE_EXTENSIONS_FOLDER_NAME}/FBXConverter)
-add_subdirectory(${AE_EXTENSIONS_FOLDER_NAME}/ShaderUploader)
+add_subdirectory(${AE_EXTENSIONS_FOLDER_NAME}/ShaderScript)
 
 if (AE_TESTS)
     add_subdirectory(Test)

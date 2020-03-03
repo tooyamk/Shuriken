@@ -21,22 +21,31 @@ namespace aurora {
 
 		Shader();
 
-		void AE_CALL upload(modules::graphics::IGraphicsModule* graphics, ProgramSource* vs, ProgramSource* ps, 
+		void AE_CALL set(modules::graphics::IGraphicsModule* graphics, ProgramSource* vs, ProgramSource* ps, 
 			const ShaderDefine* staticDefines, size_t numStaticDefines, const std::string_view* dynamicDefines, size_t numDynamicDefines,
 			const IncludeHandler& handler);
 		modules::graphics::IProgram* AE_CALL select(const IShaderDefineGetter* getter);
 
-		void AE_CALL unload();
+		void AE_CALL unset();
+
+		void AE_CALL setVariant(ProgramSource* vs, ProgramSource* ps, const IShaderDefineGetter* getter);
 
 	protected:
 		inline static auto _crcTable = hash::CRC::createTable<64>(0x42F0E1EBA9EA3693ULL);
 
-		bool _isResourcesValid;
+
+		struct Variant {
+			RefPtr<ProgramSource> vs;
+			RefPtr<ProgramSource> ps;
+		};
+
 
 		RefPtr<modules::graphics::IGraphicsModule> _graphics;
 		RefPtr<ProgramSource> _vs;
 		RefPtr<ProgramSource> _ps;
 		IncludeHandler _includeHhandler;
+
+		std::unordered_map<uint64_t, Variant> _variants;
 
 		std::vector<std::string> _staticDefines;
 		std::vector<std::string> _dynamicDefines;

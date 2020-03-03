@@ -114,7 +114,7 @@ public:
 							mat->setParameters(new ShaderParameterCollection());
 							std::string shaderResourcesFolder = app->getAppPath() + u8"Resources/shaders/";
 							//s->upload(std::filesystem::path(app->getAppPath() + u8"Resources/shaders/test.shader"));
-							extensions::ShaderUploader::upload(s, graphics, readFile(app->getAppPath() + u8"Resources/shaders/test.shader"),
+							extensions::ShaderScript::upload(s, graphics, readFile(app->getAppPath() + u8"Resources/shaders/test.shader"),
 								[shaderResourcesFolder](const Shader& shader, ProgramStage stage, const std::string_view& name) {
 								return readFile(shaderResourcesFolder + name.data());
 							});

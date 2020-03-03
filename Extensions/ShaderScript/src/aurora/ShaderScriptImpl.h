@@ -4,7 +4,7 @@
 #include "aurora/String.h"
 #include <regex>
 
-namespace aurora::extensions::shader_uploader {
+namespace aurora::extensions::shader_script {
 	inline constexpr bool VALID_CHARS[] = {
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  //  0-  9
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  // 10- 19
@@ -35,16 +35,30 @@ namespace aurora::extensions::shader_uploader {
 	};
 
 
-	struct ParsedData {
-		std::vector<ShaderDefine> staticDefines;
-		std::vector<std::string_view> dynamicDefines;
+	struct ShaderData {
+		bool isValid;
 		RefPtr<ProgramSource> vs;
 		RefPtr<ProgramSource> ps;
 	};
 
 
+	struct VariantShaderData {
+		RefPtr<ProgramSource> vs;
+		RefPtr<ProgramSource> ps;
+		ShaderDefineCollection defines;
+	};
+
+
+	struct ParsedData {
+		std::vector<ShaderDefine> staticDefines;
+		std::vector<std::string_view> dynamicDefines;
+		ShaderData shader;
+		std::vector<VariantShaderData> variantShaders;
+	};
+
+
 	template<char Start, char End>
-	inline std::tuple<std::string::size_type, std::string::size_type> findNest(const std::string& data, size_t begin) {
+	inline std::tuple<std::string::size_type, std::string::size_type> findNest(const std::string_view& data, size_t begin) {
 		size_t nest = 0;
 		for (size_t i = begin, n = data.size(); i < n; ++i) {
 			switch (data[i]) {
@@ -126,15 +140,53 @@ namespace aurora::extensions::shader_uploader {
 		return true;
 	}
 
-	inline bool AE_CALL parseBlock(ParsedData& data, const std::string_view& name, const std::string_view& args, const std::string_view& content) {
-		if (name == "define") {
-			auto fmtArgs = String::trim(args, String::CharFlag::WHITE_SPACE);
-			if (fmtArgs == "static") {
-				if (!parseDefines<true>(data.staticDefines, content)) return false;
-			} else if (fmtArgs == "dynamic") {
-				if (!parseDefines<false>(data.dynamicDefines, content)) return false;
+	template<typename T>
+	inline bool AE_CALL parseBlock(T& data, const std::string_view& src, bool(*fn)(T& data, const std::string_view& name, const std::string_view& args, const std::string_view& content)) {
+		size_t i = 0;
+		do {
+			if (auto [begin1, size1] = findNest<'(', ')'>(src, i); size1) {
+				if (auto [begin2, size2] = findNest<'{', '}'>(src, begin1 + size1 + 1); size2) {
+					if (begin1 >= 2) {
+						std::string::size_type begin0 = i;
+						std::string::size_type end0 = std::string::npos;
+						size_t j = begin1 - 2;
+						do {
+							if (VALID_CHARS[src[j]]) {
+								if (end0 == std::string::npos) {
+									end0 = j;
+								}
+							} else if (end0 == std::string::npos && (String::CHARS[src[j]] & String::CharFlag::WHITE_SPACE)) {
+								continue;
+							} else {
+								begin0 = j + 1;
+								break;
+							}
+
+						} while (j--);
+
+						if (end0 != std::string::npos) {
+							if (!fn(data,
+								std::string_view(src.data() + begin0, end0 - begin0 + 1),
+								std::string_view(src.data() + begin1, size1),
+								std::string_view(src.data() + begin2, size2))) return false;
+						}
+					}
+
+					i = begin2 + size2 + 1;
+
+				} else {
+					break;
+				}
+			} else {
+				break;
 			}
-		} else if (name == "program") {
+		} while (true);
+
+		return false;
+	}
+
+	inline bool AE_CALL parseBlockProgram(ShaderData& data, const std::string_view& name, const std::string_view& args, const std::string_view& content) {
+		if (name == "program") {
 			auto fmtArgs = String::trim(args, String::CharFlag::WHITE_SPACE);
 			if (fmtArgs == "vs") {
 				if (!parseProgram<ProgramStage::VS>(data.vs, content)) return false;
@@ -142,13 +194,26 @@ namespace aurora::extensions::shader_uploader {
 				if (!parseProgram<ProgramStage::PS>(data.ps, content)) return false;
 			}
 		}
+	}
+
+	inline bool AE_CALL parseBlock1(ParsedData& data, const std::string_view& name, const std::string_view& args, const std::string_view& content) {
+		if (name == "define") {
+			auto fmtArgs = String::trim(args, String::CharFlag::WHITE_SPACE);
+			if (fmtArgs == "static") {
+				if (!parseDefines<true>(data.staticDefines, content)) return false;
+			} else if (fmtArgs == "dynamic") {
+				if (!parseDefines<false>(data.dynamicDefines, content)) return false;
+			}
+		} else if (name == "shader") {
+			//if (!parseBlock(data.shaders.emplace_back(), content, &parseBlockProgram)) return false;
+		}
 
 		return true;
 	}
 
 	inline bool AE_CALL upload(Shader* shader, modules::graphics::IGraphicsModule* graphics, const ByteArray& source, const Shader::IncludeHandler& handler) {
 		if (shader) {
-			shader->unload();
+			shader->unset();
 
 			auto src = std::regex_replace((const char*)source.getSource(), std::regex("//.*|/\\*[\\s\\S]*?\\*/|"), "");
 			//for (auto& c : src) {
@@ -159,48 +224,10 @@ namespace aurora::extensions::shader_uploader {
 
 			ParsedData data;
 
-			size_t i = 0;
-			do {
-				if (auto [begin1, size1] = findNest<'(', ')'>(src, i); size1) {
-					if (auto [begin2, size2] = findNest<'{', '}'>(src, begin1 + size1 + 1); size2) {
-						if (begin1 >= 2) {
-							std::string::size_type begin0 = i;
-							std::string::size_type end0 = std::string::npos;
-							size_t j = begin1 - 2;
-							do {
-								if (VALID_CHARS[src[j]]) {
-									if (end0 == std::string::npos) {
-										end0 = j;
-									}
-								} else if (end0 == std::string::npos && (String::CHARS[src[j]] & String::CharFlag::WHITE_SPACE)) {
-									continue;
-								} else {
-									begin0 = j + 1;
-									break;
-								}
+			if (!parseBlock(data, src, &parseBlock1)) return false;
 
-							} while (j--);
-
-							if (end0 != std::string::npos) {
-								if (!parseBlock(data,
-									std::string_view(src.data() + begin0, end0 - begin0 + 1),
-									std::string_view(src.data() + begin1, size1),
-									std::string_view(src.data() + begin2, size2))) return false;
-							}
-						}
-
-						i = begin2 + size2 + 1;
-
-					} else {
-						break;
-					}
-				} else {
-					break;
-				}
-			} while (true);
-
-			shader->upload(graphics, data.vs, data.ps,
-				data.staticDefines.data(), data.staticDefines.size(), data.dynamicDefines.data(), data.dynamicDefines.size(), handler);
+			//shader->set(graphics, data.vs, data.ps,
+			//	data.staticDefines.data(), data.staticDefines.size(), data.dynamicDefines.data(), data.dynamicDefines.size(), handler);
 		}
 
 		return false;

@@ -10,7 +10,7 @@ define(     dynamic   ) {
 //eafewgewg
 
 /**/
-
+shader() {
 program (vs) {
     #include "modelVert.hlsl"
 }
@@ -24,4 +24,5 @@ program
 (ps) {
     #include "modelFrag.hlsl"//wewewhhh
     //hyjukik
+}
 }
