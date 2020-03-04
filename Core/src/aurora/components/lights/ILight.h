@@ -1,0 +1,33 @@
+#pragma once
+
+#include "aurora/components/IComponent.h"
+#include "aurora/math/Vector.h"
+
+namespace aurora::components::lights {
+	class AE_DLL ILight : public IComponent {
+	public:
+		ILight();
+
+		inline const Vec3f32& AE_CALL getColor() const {
+			return _color;
+		}
+
+		inline void AE_CALL setColor(const Vec3f32& color) {
+			_color = color;
+		}
+
+		inline f32 AE_CALL getIntensity() const {
+			return _intensity;
+		}
+
+		inline void AE_CALL setIntensity(f32 intensity) {
+			_intensity = intensity;
+		}
+
+	protected:
+		AE_RTTI_DECLARE_DERIVED(IComponent);
+
+		Vec3f32 _color;
+		f32 _intensity;
+	};
+}

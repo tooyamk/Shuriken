@@ -12,7 +12,9 @@ namespace aurora::render {
 		//virtual bool AE_CALL checkValidity(const components::IRenderable& renderable) const override;
 		virtual void AE_CALL collectRenderData(IRenderDataCollector& collector) override;
 		virtual bool AE_CALL collectRenderDataConfirm(IRenderDataCollector& collector) const override;
+		virtual void AE_CALL preRender(const RenderEnvironment& env) override;
 		virtual void AE_CALL render(RenderData*const* data, size_t count, ShaderDefineGetterStack& shaderDefineStack, ShaderParameterGetterStack& shaderParameterStack) override;
+		virtual void AE_CALL postRender() override;
 
 	protected:
 		RefPtr<modules::graphics::IGraphicsModule> _graphics;

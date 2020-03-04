@@ -8,7 +8,7 @@ namespace aurora {
 	class Mesh;
 }
 
-namespace aurora::components {
+namespace aurora::components::renderables {
 	class IRenderable;
 }
 
@@ -23,7 +23,7 @@ namespace aurora::render {
 			reset();
 		}
 
-		const components::IRenderable* renderable;
+		const components::renderables::IRenderable* renderable;
 		RenderPriority priority;
 		RenderState* state;
 		Material* material;

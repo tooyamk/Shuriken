@@ -2,7 +2,8 @@
 #include "aurora/Node.h"
 #include "aurora/ShaderPredefine.h"
 #include "aurora/components/Camera.h"
-#include "aurora/components/IRenderable.h"
+#include "aurora/components/lights/ILight.h"
+#include "aurora/components/renderables/IRenderable.h"
 #include "aurora/render/IRenderer.h"
 #include <algorithm>
 
@@ -27,7 +28,7 @@ namespace aurora::render {
 		_shaderParameters->set(ShaderPredefine::MATRIX_WP, _m44_w2p);
 	}
 
-	void StandardRenderPipeline::render(modules::graphics::IGraphicsModule* graphics, components::Camera* camera, Node* node) {
+	void StandardRenderPipeline::render(modules::graphics::IGraphicsModule* graphics, components::Camera* camera, Node* node, const std::vector<components::lights::ILight*>* lights) {
 		if (graphics && camera && node && camera->getNode() && camera->getNode()->getRoot() == node->getRoot()) {
 			RenderDataCollector collector(*this);
 			collector.matrix.w2v = camera->getNode()->getInverseWorldMatrix();
@@ -44,8 +45,14 @@ namespace aurora::render {
 						using Lv2_t = std::underlying_type<RenderPriority::Level2>::type;
 						auto val = (Lv2_t)lhs->priority.level2 - (Lv2_t)rhs->priority.level2;
 						if (val == 0) {
-							//todo
-							return false;
+							switch (lhs->priority.level2) {
+							case RenderPriority::Level2::FAR_TO_NEAR:
+								return lhs->matrix.l2v[2][3] > rhs->matrix.l2v[2][3];
+							case RenderPriority::Level2::NEAR_TO_FAR:
+								return lhs->matrix.l2v[2][3] < rhs->matrix.l2v[2][3];
+							default:
+								return false;
+							}
 						} else {
 							return val < 0;
 						}
@@ -59,7 +66,16 @@ namespace aurora::render {
 				graphics->beginRender();
 				graphics->clear(camera->clearFlag, camera->clearColor, camera->clearDepthValue, camera->clearStencilValue);
 
+				if (lights) {
+					auto root = node->getRoot();
+					for (auto l : *lights) {
+						if (l && l->getNode() && l->getNode()->getRoot() == root) _renderEnv.lights.emplace_back(l);
+					}
+				}
+
 				_render();
+
+				_renderEnv.reset();
 
 				graphics->endRender();
 			}
@@ -69,8 +85,8 @@ namespace aurora::render {
 	void StandardRenderPipeline::_collectNode(Node* node, RenderDataCollector& collector) {
 		auto& components = node->getComponents();
 		for (auto& c : components) {
-			if (c->isKindOf<components::IRenderable>()) {
-				auto r = (const components::IRenderable*)c;
+			if (c->isKindOf<components::renderables::IRenderable>()) {
+				auto r = (const components::renderables::IRenderable*)c;
 				if (r->getRenderer()) {
 					collector.data.renderable = r;
 					r->getRenderer()->collectRenderData(collector);
@@ -95,6 +111,8 @@ namespace aurora::render {
 			_renderQueue.emplace_back(data);
 			data->set(collector.data);
 
+			if (_renderers.find(data->renderer) == _renderers.end()) _renderers.emplace(data->renderer);
+
 			data->matrix.l2w = data->renderable->getNode()->getWorldMatrix();
 			data->matrix.l2w.append(collector.matrix.w2v, data->matrix.l2v);
 			data->matrix.l2w.append(collector.matrix.w2p, data->matrix.l2p);
@@ -103,6 +121,8 @@ namespace aurora::render {
 
 	void StandardRenderPipeline::_render() {
 		if (auto size = _renderQueue.size(); size) {
+			for (auto& r : _renderers) r->preRender(_renderEnv);
+
 			_shaderParameterStack->push(*_shaderParameters);
 
 			auto renderer = _renderQueue[0]->renderer;
@@ -122,6 +142,9 @@ namespace aurora::render {
 			_renderDataPoolVernier = _renderDataPool.size();
 
 			_shaderParameterStack->pop();
+
+			for (auto& r : _renderers) r->postRender();
+			_renderers.clear();
 		}
 	}
 }

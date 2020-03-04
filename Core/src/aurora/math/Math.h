@@ -19,6 +19,8 @@ namespace aurora {
 		template<typename T> inline static constexpr FloatType<T> PI = T(3.14159265358979323846);
 		template<typename T> inline static constexpr FloatType<T> PI_2 = PI<T> * T(.5);
 		template<typename T> inline static constexpr FloatType<T> PI_4 = PI<T> * T(.25);
+		template<typename T> inline static constexpr FloatType<T> PI_6 = PI<T> / T(6.0);
+		template<typename T> inline static constexpr FloatType<T> PI_8 = PI<T> * T(.125);
 		template<typename T> inline static constexpr FloatType<T> PI2 = PI<T> * T(2.);
 		template<typename T> inline static constexpr FloatType<T> DEG = T(180.) / PI<T>;
 		template<typename T> inline static constexpr FloatType<T> RAD = PI<T> / T(180.);

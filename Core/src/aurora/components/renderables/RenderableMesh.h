@@ -1,9 +1,9 @@
 #pragma once
 
-#include "aurora/components/IRenderable.h"
+#include "aurora/components/renderables/IRenderable.h"
 #include "aurora/Mesh.h"
 
-namespace aurora::components {
+namespace aurora::components::renderables {
 	class AE_DLL RenderableMesh : public IRenderable {
 	public:
 		RenderableMesh();

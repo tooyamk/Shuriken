@@ -36,7 +36,10 @@
 #include "aurora/modules/graphics/IProgramSourceTranslator.h"
 
 #include "aurora/components/Camera.h"
-#include "aurora/components/RenderableMesh.h"
+#include "aurora/components/renderables/RenderableMesh.h"
+#include "aurora/components/lights/DirectionLight.h"
+#include "aurora/components/lights/PointLight.h"
+#include "aurora/components/lights/SpotLight.h"
 
 #include "aurora/render/ForwardRenderer.h"
 #include "aurora/render/StandardRenderPipeline.h"

@@ -6,13 +6,11 @@
 #include "aurora/math/Matrix.h"
 #include "aurora/render/IRenderDataCollector.h"
 #include "aurora/render/RenderData.h"
+#include "aurora/render/RenderEnvironment.h"
+#include <unordered_set>
 
 namespace aurora {
 	class Material;
-}
-
-namespace aurora::components {
-	class IRenderable;
 }
 
 namespace aurora::render {
@@ -23,7 +21,7 @@ namespace aurora::render {
 	public:
 		StandardRenderPipeline();
 
-		virtual void AE_CALL render(modules::graphics::IGraphicsModule* graphics, components::Camera* camera, Node* node) override;
+		virtual void AE_CALL render(modules::graphics::IGraphicsModule* graphics, components::Camera* camera, Node* node, const std::vector<components::lights::ILight*>* lights) override;
 
 	protected:
 		class RenderDataCollector : public IRenderDataCollector {
@@ -49,6 +47,10 @@ namespace aurora::render {
 		std::vector<RenderData*> _renderDataPool;
 		size_t _renderDataPoolVernier;
 		std::vector<RenderData*> _renderQueue;
+
+		std::unordered_set<IRenderer*> _renderers;
+
+		RenderEnvironment _renderEnv;
 
 		RefPtr<ShaderParameter> _m34_w2v;
 		RefPtr<ShaderParameter> _m44_w2p;

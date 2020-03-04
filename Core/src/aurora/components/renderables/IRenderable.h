@@ -11,7 +11,7 @@ namespace aurora::render {
 	class RenderPass;
 }
 
-namespace aurora::components {
+namespace aurora::components::renderables {
 	class AE_DLL IRenderable : public IComponent {
 	public:
 		IRenderable();

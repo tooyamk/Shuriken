@@ -9,6 +9,8 @@
 
 using namespace aurora;
 using namespace aurora::components;
+using namespace aurora::components::renderables;
+using namespace aurora::components::lights;
 using namespace aurora::events;
 using namespace aurora::modules;
 using namespace aurora::modules::graphics;

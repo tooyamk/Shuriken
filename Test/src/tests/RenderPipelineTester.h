@@ -40,6 +40,7 @@ public:
 						RefPtr<Camera> camera;
 						RefPtr<Material> material;
 						RefPtr<StandardRenderPipeline> renderPipeline;
+						std::vector<ILight*> lights;
 					} renderData;
 					renderData.app = app;
 					renderData.looper = new Looper(1000.0 / 60.0);
@@ -53,9 +54,14 @@ public:
 						//modelNode->parentTranslate(Vec3f32(0, 3000.f, 0));
 						//modelNode->localRotate(Quaternion::createFromEulerY(Math::PI<f32> * 0.8f));
 						//modelNode->localRotate(Quaternion::createFromEulerY(Math::PI<f32>* 0.15f));
-						auto lm = modelNode->getLocalMatrix();
-						auto wm = modelNode->getWorldMatrix();
+						//auto lm = modelNode->getLocalMatrix();
+						//auto wm = modelNode->getWorldMatrix();
 						renderData.model = modelNode;
+						auto lightNode = worldNode->addChild(new Node());
+						auto light = new DirectionLight();
+						lightNode->addComponent(light);
+						lightNode->localRotate(Quaternion::createFromEulerY(Math::PI_4<f32>));
+						renderData.lights.emplace_back(light);
 						auto cameraNode = worldNode->addChild(new Node());
 						auto camera = new Camera();
 						renderData.camera = camera;
@@ -114,31 +120,13 @@ public:
 							mat->setParameters(new ShaderParameterCollection());
 							std::string shaderResourcesFolder = app->getAppPath() + u8"Resources/shaders/";
 							//s->upload(std::filesystem::path(app->getAppPath() + u8"Resources/shaders/test.shader"));
-							extensions::ShaderScript::set(s, graphics, readFile(app->getAppPath() + u8"Resources/shaders/test.shader"),
+							extensions::ShaderScript::set(s, graphics, readFile(app->getAppPath() + u8"Resources/shaders/lighting.shader"),
 								[shaderResourcesFolder](const Shader& shader, ProgramStage stage, const std::string_view& name) {
 								return readFile(shaderResourcesFolder + name.data());
 							});
-							/*
-							s->upload(graphics,
-								new ProgramSource(readProgramSource(shaderResourcesFolder + "modelVert.hlsl", ProgramStage::VS)),
-								new ProgramSource(readProgramSource(shaderResourcesFolder + "modelFrag.hlsl", ProgramStage::PS)),
-								nullptr, 0, nullptr, 0,
-								[&shaderResourcesFolder](const Shader& shader, ProgramStage stage, const std::string_view& name) {
-								return readFile(shaderResourcesFolder + name.data());
-							});
-							*/
 
 							{
-								mat->getParameters()->set("red", new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set(Vec4f32::ONE).setUpdated();
-								mat->getParameters()->set("green", new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set(Vec4f32::ONE).setUpdated();
-								//cf->add("blue", new ShaderParameter())->set(Vec4f32::ONE).setUpdated();
-
-								auto aabbccStruct = new ShaderParameterCollection();
-								aabbccStruct->set("val1", new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set(Vec4f32::ONE).setUpdated();
-								f32 val2[] = { 1.0f, 1.0f };
-								aabbccStruct->set("val2", new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set<f32>(val2, sizeof(val2), sizeof(f32), true).setUpdated();
-								aabbccStruct->set("val3", new ShaderParameter())->set(Vec4f32::ONE).setUpdated();
-								mat->getParameters()->set("blue", new ShaderParameter())->set(aabbccStruct);
+								mat->getParameters()->set(ShaderPredefine::DIFFUSE_COLOR, new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set(Vec3f32::ONE);
 							}
 						}
 
@@ -167,27 +155,15 @@ public:
 							auto texView = graphics->createTextureView();
 							texView->create(texRes, 0, -1, 0, -1);
 
-							auto pb = graphics->createPixelBuffer();
-							if (pb) {
-								//pb->create(img0->size.getMultiplies() * 4, Usage::MAP_WRITE | Usage::PERSISTENT_MAP, mipsData0Ptr.data()[0], img0->size.getMultiplies() * 4);
-								//texRes->copyFrom(0, 0, Box2ui32(Vec2ui32(0, 0), Vec2ui32(4, 4)), pb);
-							}
-
-							uint8_t texData[] = { 255, 0, 0, 255, 0, 255, 0, 255, 0, 0, 255, 255, 0, 0, 0, 255 };
-							//auto mapped = texRes->map(0, 0, Usage::MAP_WRITE);
-							//texRes->write(0, 0, 4, texData, sizeof(texData));
-							//texRes->unmap(0, 0);
-							//texRes->update(0, 0, Box2ui32(Vec2ui32(1, 1), Vec2ui32(2, 2)), texData);
-
-							renderData.material->getParameters()->set("texDiffuse", new ShaderParameter(ShaderParameterUsage::AUTO))->set(texView).setUpdated();
+							renderData.material->getParameters()->set(ShaderPredefine::DIFFUSE_TEXTURE, new ShaderParameter(ShaderParameterUsage::AUTO))->set(texView);
 						}
 
 						auto sam = graphics->createSampler();
 						if (sam) {
 							//sam->setMipLOD(0, 0);
 							//sam->setAddress(SamplerAddressMode::WRAP, SamplerAddressMode::WRAP, SamplerAddressMode::WRAP);
-							sam->setFilter(SamplerFilterOperation::NORMAL, SamplerFilterMode::POINT, SamplerFilterMode::POINT, SamplerFilterMode::POINT);
-							renderData.material->getParameters()->set("samLiner", new ShaderParameter(ShaderParameterUsage::AUTO))->set(sam).setUpdated();
+							//sam->setFilter(SamplerFilterOperation::NORMAL, SamplerFilterMode::POINT, SamplerFilterMode::POINT, SamplerFilterMode::POINT);
+							renderData.material->getParameters()->set(ShaderPredefine::DIFFUSE_TEXTURE + "Sampler", new ShaderParameter(ShaderParameterUsage::AUTO))->set(sam);
 						}
 					}
 
@@ -206,12 +182,7 @@ public:
 
 						renderData.model->localRotate(Quaternion::createFromEulerY(Math::PI<f32> * dt * 0.5f));
 
-						//renderData.g->beginRender();
-						//renderData.g->clear(ClearFlag::COLOR | ClearFlag::DEPTH | ClearFlag::STENCIL, Vec4f32(0.0f, 0.0f, 0.25f, 1.0f), 1.0f, 0);
-
-						renderData.renderPipeline->render(renderData.g, renderData.camera, renderData.wrold);
-
-						//renderData.g->endRender();
+						renderData.renderPipeline->render(renderData.g, renderData.camera, renderData.wrold, &renderData.lights);
 						renderData.g->present();
 					})));
 

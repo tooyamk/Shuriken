@@ -1,7 +1,7 @@
 #include "RenderableMesh.h"
 #include "aurora/render/IRenderDataCollector.h"
 
-namespace aurora::components {
+namespace aurora::components::renderables {
 	RenderableMesh::RenderableMesh() {
 		AE_RTTI_DEFINE();
 	}

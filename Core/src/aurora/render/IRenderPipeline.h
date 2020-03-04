@@ -4,6 +4,10 @@
 
 namespace aurora::components {
 	class Camera;
+
+	namespace lights {
+		class ILight;
+	}
 }
 
 namespace aurora::modules::graphics {
@@ -15,6 +19,6 @@ namespace aurora::render {
 	public:
 		virtual ~IRenderPipeline() {}
 
-		virtual void AE_CALL render(modules::graphics::IGraphicsModule* graphics, components::Camera* camera, Node* node) = 0;
+		virtual void AE_CALL render(modules::graphics::IGraphicsModule* graphics, components::Camera* camera, Node* node, const std::vector<components::lights::ILight*>* lights) = 0;
 	};
 }

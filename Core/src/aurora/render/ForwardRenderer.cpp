@@ -2,7 +2,7 @@
 #include "aurora/Mesh.h"
 #include "aurora/ShaderPredefine.h"
 #include "aurora/StackPopper.h"
-#include "aurora/components/IRenderable.h"
+#include "aurora/components/renderables/IRenderable.h"
 #include "aurora/render/IRenderDataCollector.h"
 
 namespace aurora::render {
@@ -19,15 +19,6 @@ namespace aurora::render {
 		_shaderParameters->set(ShaderPredefine::MATRIX_LV, _m34_l2v);
 		_shaderParameters->set(ShaderPredefine::MATRIX_LP, _m44_l2p);
 	}
-
-	/*
-	bool ForwardRenderer::checkValidity(const components::IRenderable& renderable) const {
-		for (auto& m : renderable.materials) {
-			if (m) return true;
-		}
-		return false;
-	}
-	*/
 
 	void ForwardRenderer::collectRenderData(IRenderDataCollector& collector) {
 		collector.data.renderer = this;
@@ -53,6 +44,10 @@ namespace aurora::render {
 	bool ForwardRenderer::collectRenderDataConfirm(IRenderDataCollector& collector) const {
 		auto mesh = collector.data.mesh;
 		return mesh && !mesh->getVertexBuffers().isEmpty() && mesh->getIndexBuffer();
+	}
+
+	void ForwardRenderer::preRender(const RenderEnvironment& env) {
+
 	}
 
 	void ForwardRenderer::render(RenderData*const* data, size_t count, ShaderDefineGetterStack& shaderDefineStack, ShaderParameterGetterStack& shaderParameterStack) {
@@ -103,5 +98,9 @@ namespace aurora::render {
 
 			_graphics->draw(&rd->mesh->getVertexBuffers(), program, &shaderParameterStack, rd->mesh->getIndexBuffer());
 		}
+	}
+
+	void ForwardRenderer::postRender() {
+
 	}
 }
