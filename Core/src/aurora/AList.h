@@ -2,6 +2,7 @@
 
 #include "aurora/Global.h"
 #include <functional>
+#include <list>
 
 namespace aurora {
 	template<typename T>
@@ -100,7 +101,7 @@ namespace aurora {
 			if (!fn) return;
 
 			for (auto itr = _raw.begin(); itr != _raw.end(); ++itr) {
-				if (auto& e = *itr; e._valid) fn(e._value)
+				if (auto& e = *itr; e._valid) fn(e._value);
 			}
 		}
 
@@ -116,7 +117,7 @@ namespace aurora {
 			if (!fn) return;
 
 			for (auto itr = _raw.begin(); itr != _raw.end(); ++itr) {
-				if (auto& e = *itr; e._valid) fn(e._value)
+				if (auto& e = *itr; e._valid) fn(e._value);
 			}
 		}
 

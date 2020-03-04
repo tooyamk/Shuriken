@@ -5,46 +5,28 @@
 #include <regex>
 
 namespace aurora::extensions::shader_script {
-	inline constexpr bool VALID_CHARS[] = {
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  //  0-  9
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  // 10- 19
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  // 20- 29
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  // 30- 39
-		0, 0, 0, 0, 0, 0, 0, 0, 1, 1,  // 40- 49 0 1
-		1, 1, 1, 1, 1, 1, 1, 1, 0, 0,  // 50- 59 2-9
-		0, 0, 0, 0, 0, 1, 1, 1, 1, 1,  // 60- 69 A-E
-		1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  // 70- 79 F-O
-		1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  // 80- 89 P-Y
-		1, 0, 0, 0, 0, 1, 0, 1, 1, 1,  // 90- 99 Z _ a-c
-		1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  //100-109 d-m
-		1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  //110-119 n-w
-		1, 1, 1, 0, 0, 0, 0, 0, 0, 0,  //120-129 x-z
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  //130-139
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  //140-149
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  //150-159
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  //160-169
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  //170-179
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  //180-189
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  //190-199
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  //200-209
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  //210-219
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  //220-229
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  //230-239
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  //240-249
-		0, 0, 0, 0, 0, 0			   //250-255
+	struct Block : public Ref {
+		std::string_view name;
+		size_t contentBegin;
+		std::string_view content;
+		std::vector<RefPtr<Block>> chindren;
 	};
 
 
-	struct ShaderData {
-		bool isValid;
+	struct ProgramData {
 		RefPtr<ProgramSource> vs;
 		RefPtr<ProgramSource> ps;
 	};
 
 
-	struct VariantShaderData {
-		RefPtr<ProgramSource> vs;
-		RefPtr<ProgramSource> ps;
+	struct VariantShader {
+		VariantShader() {}
+		VariantShader(VariantShader& value) : 
+			program(value.program),
+			defines(value.defines) {
+		}
+
+		ProgramData program;
 		ShaderDefineCollection defines;
 	};
 
@@ -52,77 +34,46 @@ namespace aurora::extensions::shader_script {
 	struct ParsedData {
 		std::vector<ShaderDefine> staticDefines;
 		std::vector<std::string_view> dynamicDefines;
-		ShaderData shader;
-		std::vector<VariantShaderData> variantShaders;
+		ProgramData mainProgram;
+		std::vector<VariantShader> variantShaders;
 	};
 
 
-	template<char Start, char End>
-	inline std::tuple<std::string::size_type, std::string::size_type> findNest(const std::string_view& data, size_t begin) {
-		size_t nest = 0;
-		for (size_t i = begin, n = data.size(); i < n; ++i) {
-			switch (data[i]) {
-			case Start:
-			{
-				if (nest == 0) begin = i;
-				++nest;
-
-				break;
-			}
-			case End:
-			{
-				if (nest == 0) {
-					//error
-				} else {
-					--nest;
-					if (nest == 0) return std::make_tuple(begin + 1, i - begin - 1);
-				}
-
-				break;
-			}
-			default:
-				break;
-			}
-		}
-
-		return std::make_tuple(std::string::npos, 0);
-	}
-
-	template<bool IsStatic, typename T>
-	inline bool AE_CALL parseDefines(std::vector<T>& out, const std::string_view& content) {
+	template<typename T>
+	inline bool AE_CALL parseDefineBlock(T& out, const std::string_view& content) {
+		auto fmtContent = String::trim(content, String::CharFlag::WHITE_SPACE);
 		std::vector<std::string_view> defs;
 		String::split<true>(content, String::CharFlag::NEW_LINE, defs);
-		std::vector<std::string_view> kvs;
 		for (auto& def : defs) {
 			auto fmtDef = String::trim(def, String::CharFlag::WHITE_SPACE);
 			if (fmtDef.empty()) continue;
 
-			String::split<true>(fmtDef, String::CharFlag::WHITE_SPACE, kvs);
-			if (auto n = kvs.size(); n) {
-				if constexpr (IsStatic) {
-					if (n == 1) {
-						out.emplace_back(kvs[0], "");
-					} else if (n > 1) {
-						for (size_t i = 1, nn = n - 2; i < nn; ++i) {
-							if (!kvs[i].empty()) {
-								println("ShaderUploader::upload error : parse static defines error");
-								return false;
-							}
-						}
+			auto pos = String::findFirst(fmtDef, String::CharFlag::WHITE_SPACE);
 
-						out.emplace_back(kvs[0], kvs[n - 1]);
+			if constexpr (std::is_same_v<T, std::vector<ShaderDefine>> || std::is_same_v<T, ShaderDefineCollection>) {
+				if (pos == std::string_view::npos) {
+					if constexpr (std::is_same_v<T, std::vector<ShaderDefine>>) {
+						out.emplace_back(fmtDef, nullptr);
+					} else {
+						out.add(std::string(fmtDef), "");
 					}
 				} else {
-					if (n == 1) {
-						out.emplace_back(kvs[0]);
+					std::string_view k(fmtDef.data(), pos);
+					auto v = String::trim(std::string_view(fmtDef.data() + pos + 1, fmtDef.size() - pos - 1), String::CharFlag::WHITE_SPACE);
+					if constexpr (std::is_same_v<T, std::vector<ShaderDefine>>) {
+						out.emplace_back(k, v);
 					} else {
-						println("ShaderUploader::upload error : parse dynamic defines error");
-						return false;
+						out.add(std::string(k), std::string(v));
 					}
 				}
+			} else {
+				if (pos == std::string_view::npos) {
+					out.emplace_back(fmtDef);
+				} else {
+					println("ShaderScript::parseDefines error : parse dynamic defines error, value has white space");
+					return false;
+				}
 			}
-
-			kvs.clear();
 		}
 		
 		return true;
@@ -140,78 +91,121 @@ namespace aurora::extensions::shader_script {
 		return true;
 	}
 
-	template<typename T>
-	inline bool AE_CALL parseBlock(T& data, const std::string_view& src, bool(*fn)(T& data, const std::string_view& name, const std::string_view& args, const std::string_view& content)) {
-		size_t i = 0;
-		do {
-			if (auto [begin1, size1] = findNest<'(', ')'>(src, i); size1) {
-				if (auto [begin2, size2] = findNest<'{', '}'>(src, begin1 + size1 + 1); size2) {
-					if (begin1 >= 2) {
-						std::string::size_type begin0 = i;
-						std::string::size_type end0 = std::string::npos;
-						size_t j = begin1 - 2;
-						do {
-							if (VALID_CHARS[src[j]]) {
-								if (end0 == std::string::npos) {
-									end0 = j;
-								}
-							} else if (end0 == std::string::npos && (String::CHARS[src[j]] & String::CharFlag::WHITE_SPACE)) {
-								continue;
-							} else {
-								begin0 = j + 1;
-								break;
-							}
-
-						} while (j--);
-
-						if (end0 != std::string::npos) {
-							if (!fn(data,
-								std::string_view(src.data() + begin0, end0 - begin0 + 1),
-								std::string_view(src.data() + begin1, size1),
-								std::string_view(src.data() + begin2, size2))) return false;
-						}
-					}
-
-					i = begin2 + size2 + 1;
-
-				} else {
-					break;
-				}
-			} else {
-				break;
+	inline bool AE_CALL parseMainDefineBlock(ParsedData& rst, const Block& block) {
+		for (auto& c : block.chindren) {
+			auto name = String::trim(c->name, String::CharFlag::WHITE_SPACE);
+			if (name == "static") {
+				if (!parseDefineBlock(rst.staticDefines, c->content)) return false;
+			} else if (name == "dynamic") {
+				if (!parseDefineBlock(rst.dynamicDefines, c->content)) return false;
 			}
-		} while (true);
-
-		return false;
-	}
-
-	inline bool AE_CALL parseBlockProgram(ShaderData& data, const std::string_view& name, const std::string_view& args, const std::string_view& content) {
-		if (name == "program") {
-			auto fmtArgs = String::trim(args, String::CharFlag::WHITE_SPACE);
-			if (fmtArgs == "vs") {
-				if (!parseProgram<ProgramStage::VS>(data.vs, content)) return false;
-			} else if (fmtArgs == "ps") {
-				if (!parseProgram<ProgramStage::PS>(data.ps, content)) return false;
-			}
-		}
-	}
-
-	inline bool AE_CALL parseBlock1(ParsedData& data, const std::string_view& name, const std::string_view& args, const std::string_view& content) {
-		if (name == "define") {
-			auto fmtArgs = String::trim(args, String::CharFlag::WHITE_SPACE);
-			if (fmtArgs == "static") {
-				if (!parseDefines<true>(data.staticDefines, content)) return false;
-			} else if (fmtArgs == "dynamic") {
-				if (!parseDefines<false>(data.dynamicDefines, content)) return false;
-			}
-		} else if (name == "shader") {
-			//if (!parseBlock(data.shaders.emplace_back(), content, &parseBlockProgram)) return false;
 		}
 
 		return true;
 	}
 
-	inline bool AE_CALL upload(Shader* shader, modules::graphics::IGraphicsModule* graphics, const ByteArray& source, const Shader::IncludeHandler& handler) {
+	inline bool AE_CALL parseProgramBlock(ProgramData& out, const Block& block) {
+		for (auto& c : block.chindren) {
+			auto name = String::trim(c->name, String::CharFlag::WHITE_SPACE);
+			if (name == "vs") {
+				if (!parseProgram<ProgramStage::VS>(out.vs, c->content)) return false;
+			} else if (name == "ps") {
+				if (!parseProgram<ProgramStage::PS>(out.ps, c->content)) return false;
+			}
+		}
+
+		return true;
+	}
+
+	inline bool AE_CALL parseVariantBlock(VariantShader& out, const Block& block) {
+		for (auto& c : block.chindren) {
+			auto name = String::trim(c->name, String::CharFlag::WHITE_SPACE);
+			if (name == "define") {
+				if (!parseDefineBlock(out.defines, c->content)) return false;
+			} else if (name == "program") {
+				if (!parseProgramBlock(out.program, *c)) return false;
+			}
+		}
+
+		return true;
+	}
+
+	inline bool AE_CALL parseShaderBlock(ParsedData& rst, const Block& block) {
+		auto name = String::trim(block.name, String::CharFlag::WHITE_SPACE);
+		if (name == "shader") {
+			for (auto& c : block.chindren) {
+				name = String::trim(c->name, String::CharFlag::WHITE_SPACE);
+				if (name == "define") {
+					if (!parseMainDefineBlock(rst, *c)) return false;
+				} else if (name == "program") {
+					if (!parseProgramBlock(rst.mainProgram, *c)) return false;
+				} else if (name == "variant") {
+					if (!parseVariantBlock(rst.variantShaders.emplace_back(), *c)) return false;
+				}
+			}
+
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	inline std::vector<RefPtr<Block>> AE_CALL parseBlocks(const std::string_view& data) {
+		std::vector<RefPtr<Block>> blocks;
+
+		std::vector<RefPtr<Block>> stack;
+
+		RefPtr<Block> curBlock;
+
+		size_t begin = 0;
+		for (size_t i = 0, n = data.size(); i < n; ++i) {
+			switch (data[i]) {
+			case '{':
+			{
+				RefPtr block = new Block();
+
+				if (curBlock) {
+					curBlock->chindren.emplace_back(block);
+					stack.emplace_back(curBlock);
+				} else {
+					blocks.emplace_back(block);
+				}
+				curBlock = block;
+
+				curBlock->name = std::string_view(data.data() + begin, i - begin);
+				begin = i + 1;
+				curBlock->contentBegin = begin;
+
+				break;
+			}
+			case '}':
+			{
+				if (curBlock) {
+					curBlock->content = std::string_view(data.data() + curBlock->contentBegin, i - curBlock->contentBegin);
+					begin = i + 1;
+
+					if (stack.empty()) {
+						curBlock = nullptr;
+					} else {
+						curBlock = stack[stack.size() - 1];
+						stack.pop_back();
+					}
+				} else {
+					//error
+					return std::vector<RefPtr<Block>>();
+				}
+
+				break;
+			}
+			default:
+				break;
+			}
+		}
+
+		return std::move(blocks);
+	}
+
+	inline bool AE_CALL set(Shader* shader, modules::graphics::IGraphicsModule* graphics, const ByteArray& source, const Shader::IncludeHandler& handler) {
 		if (shader) {
 			shader->unset();
 
@@ -222,12 +216,27 @@ namespace aurora::extensions::shader_script {
 			//src = std::regex_replace(src, std::regex("\r\n"), "\n");
 			//src = std::regex_replace(src, std::regex("\r"), "\n");
 
-			ParsedData data;
+			auto blocks = parseBlocks(src);
+			if (auto size = blocks.size(); size) {
+				ParsedData data;
 
-			if (!parseBlock(data, src, &parseBlock1)) return false;
+				--size;
+				do {
+					if (parseShaderBlock(data, *blocks[size])) {
+						shader->set(graphics, data.mainProgram.vs, data.mainProgram.ps, data.staticDefines.data(), data.staticDefines.size(), data.dynamicDefines.data(), data.dynamicDefines.size(), handler);
+						for (auto& v : data.variantShaders) shader->setVariant(v.program.vs, v.program.ps, &v.defines);
 
-			//shader->set(graphics, data.vs, data.ps,
-			//	data.staticDefines.data(), data.staticDefines.size(), data.dynamicDefines.data(), data.dynamicDefines.size(), handler);
+						return true;
+					} else {
+						if (size) {
+							data = ParsedData();
+							--size;
+						} else {
+							return false;
+						}
+					}
+				} while (true);
+			}
 		}
 
 		return false;

@@ -141,7 +141,7 @@ namespace aurora::hash {
 
 				return ret;
 			} else {
-				static_assert(false, "not support bits mode");
+				static_assert(Bits != 32, "not support bits mode");
 			}
 		}
 	};

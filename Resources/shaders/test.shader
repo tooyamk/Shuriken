@@ -1,28 +1,39 @@
-define(
-        
-        static ) {
-    aabb     1.0
-}
-define(     dynamic   ) {
+shader {
+    define {
+        static {
+            aabb     1.0
+        }
 
-}
+        dynamic {
 
-//eafewgewg
+        }
+    }
 
-/**/
-shader() {
-program (vs) {
-    #include "modelVert.hlsl"
-}
+    program {
+        vs {
+            #include "modelVert.hlsl"
+        }
 
-/*gwegwe
-wgwgirwjgiowarjgowiraheaotiuhb;oetij
-rgrwigwjrigerjoigj//wegwrr
-*/
+        ps {
+            #include "modelFrag.hlsl"
+        }
+    }
 
-program     
-(ps) {
-    #include "modelFrag.hlsl"//wewewhhh
-    //hyjukik
-}
+    /*
+    variant {
+        define {
+
+        }
+
+        program {
+            vs {
+
+            }
+
+            ps {
+
+            }
+        }
+    }
+    */
 }

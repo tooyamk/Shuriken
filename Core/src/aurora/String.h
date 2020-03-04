@@ -211,7 +211,7 @@ namespace aurora {
 		}
 
 		template<typename T, typename = typename std::enable_if_t<std::is_floating_point_v<T>, T>>
-		inline static T toNumber(const std::string_view& in, size_t size) {
+		inline static T toNumber(const std::string_view& in) {
 			T value;
 #if __cpp_lib_to_chars
 			auto begin = in.data();

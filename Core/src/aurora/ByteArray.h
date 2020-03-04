@@ -318,6 +318,11 @@ namespace aurora {
 			return _read<f64>();
 		}
 
+		template<typename T, bool CheckEndMark = true, bool CheckBOM = false, typename = typename std::enable_if_t<is_string_v<T>, bool>>
+		inline T AE_CALL read(size_t size = (std::numeric_limits<size_t>::max)()) {
+			return _read<T, CheckEndMark, CheckBOM>(size);
+		}
+
 		template<Type T, bool CheckEndMark = true, bool CheckBOM = false, typename = typename std::enable_if_t<T == Type::STR, bool>>
 		inline std::string AE_CALL read(size_t size = (std::numeric_limits<size_t>::max)()) {
 			return _read<std::string, CheckEndMark, CheckBOM>(size);
@@ -360,7 +365,7 @@ namespace aurora {
 		}
 
 		template<Type T, typename = typename std::enable_if_t<T == Type::BYTE, bool>>
-		size_t AE_CALL read(uint8_t* bytes, size_t length = (std::numeric_limits<size_t>::max)()) {
+		size_t AE_CALL read(void* bytes, size_t length = (std::numeric_limits<size_t>::max)()) {
 			size_t len = _length - _position;
 			if (length > len) length = len;
 
@@ -555,13 +560,23 @@ namespace aurora {
 		}
 
 		template<Type T, typename = typename std::enable_if_t<T == Type::BYTE, bool>>
-		inline void AE_CALL write(const uint8_t* bytes, size_t length) {
+		inline void AE_CALL write(const void* bytes, size_t length) {
 			if (length > 0) {
 				_checkLength(length);
 
 				memmove(_data + _position, bytes, length);
 				_position += length;
 			}
+		}
+
+		template<Type T, typename V, typename = typename std::enable_if_t<T == Type::BYTE && is_string_v<V>, bool>>
+		inline void AE_CALL write(const V& str) {
+			write<T>(str.data(), str.size());
+		}
+
+		template<Type T, typename = typename std::enable_if_t<T == Type::BYTE, bool>>
+		inline void AE_CALL write(const char* str) {
+			write<T>(str, strlen(str));
 		}
 
 		template<Type T, typename = typename std::enable_if_t<T == Type::BYTE, bool>>

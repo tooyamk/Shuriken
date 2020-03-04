@@ -135,6 +135,8 @@
 #	include <windows.h>
 #elif AE_OS == AE_OS_MAC
 #	include <unistd.h>
+#elif AE_OS == AE_OS_ANDROID
+#	include <android/log.h>
 #endif
 
 
@@ -635,6 +637,8 @@ namespace aurora {
 			} else {
 #if AE_OS == AE_OS_WIN
 				OutputDebugStringW(data);
+#elif AE_OS == AE_OS_ANDROID
+				__android_log_print(ANDROID_LOG_INFO, "Aurora", "%ls", data);
 #endif
 			}
 		}

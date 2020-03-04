@@ -30,7 +30,13 @@ namespace aurora {
 
 	class AE_DLL ShaderDefineCollection : public IShaderDefineGetter {
 	public:
+		ShaderDefineCollection() {}
+		ShaderDefineCollection(const ShaderDefineCollection& other) : _values(other._values) {}
 		virtual ~ShaderDefineCollection() {}
+
+		inline void AE_CALL operator=(const ShaderDefineCollection& other) {
+			_values = other._values;
+		}
 
 		virtual const std::string* AE_CALL get(const std::string& name) const override;
 

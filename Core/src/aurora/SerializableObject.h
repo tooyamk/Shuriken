@@ -174,7 +174,7 @@ namespace aurora {
 			case Type::STRING:
 				return String::toNumber<T>(*_getValue<std::string*>());
 			case Type::SHORT_STRING:
-				return String::toNumber<T>((char*)_value, strlen((char*)_value));
+				return String::toNumber<T>(std::string_view((char*)_value, strlen((char*)_value)));
 			default:
 				return defaultValue;
 			}
