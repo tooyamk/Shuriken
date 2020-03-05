@@ -203,7 +203,7 @@ public:
 							//sam->setMipLOD(0, 0);
 							//sam->setAddress(SamplerAddressMode::WRAP, SamplerAddressMode::WRAP, SamplerAddressMode::WRAP);
 							sam->setFilter(SamplerFilterOperation::NORMAL, SamplerFilterMode::POINT, SamplerFilterMode::POINT, SamplerFilterMode::POINT);
-							renderData.spc->set("samLiner", new ShaderParameter(ShaderParameterUsage::AUTO))->set(sam.get()).setUpdated();
+							renderData.spc->set("samLiner", new ShaderParameter(ShaderParameterUsage::AUTO))->set(&*sam).setUpdated();
 						}
 					}
 

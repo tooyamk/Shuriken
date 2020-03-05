@@ -1058,7 +1058,8 @@ namespace aurora::modules::graphics::win_gl {
 		std::string_view mv(message);
 
 		if (String::findFirst(mv, "error") != std::string::npos ||
-			String::findFirst(mv, "warning") != std::string::npos) {
+			String::findFirst(mv, "warning") != std::string::npos ||
+			String::findFirst(mv, "failed") != std::string::npos) {
 			((Graphics*)userParam)->error(std::string("OpenGL sys message : ") + message);
 		}
 	}

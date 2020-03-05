@@ -384,12 +384,14 @@ namespace aurora {
 			((_stack.emplace_back(args)), ...);
 			return sizeof...(args);
 		}
+
 		inline void AE_CALL pop() {
 			_stack.pop_back();
 		}
 		inline void AE_CALL pop(size_t count) {
 			if (count) _stack.erase(_stack.end() - count, _stack.end());
 		}
+
 		inline void AE_CALL clear() {
 			_stack.clear();
 		}

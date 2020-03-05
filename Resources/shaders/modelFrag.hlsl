@@ -6,8 +6,8 @@ struct PS_INPUT {
 //float2 red[2];
 float3 green;
 
-Texture2D texDiffuse : register(t3);
-SamplerState samLiner;
+Texture2D _diffuseTex : register(t3);
+SamplerState _diffuseTexSampler;
 
 //struct aabbcc {
 //    float val1;
@@ -23,7 +23,8 @@ cbuffer buf1 {
 }
 
 float4 main(PS_INPUT input) : SV_TARGET {
-    float4 c = texDiffuse.Sample(samLiner, input.uv);
+    float4 c = _diffuseTex.Sample(_diffuseTexSampler, input.uv);
+    c.x = green.x;
     //c.x = blue.val2[1];
     return c;
     //c.x = red;

@@ -40,7 +40,7 @@ namespace aurora {
 
 		virtual const std::string* AE_CALL get(const std::string& name) const override;
 
-		inline void AE_CALL add(const std::string& name, const std::string& value) {
+		inline void AE_CALL set(const std::string& name, const std::string& value) {
 			if (auto itr = _values.find(name); itr == _values.end()) {
 				_values.emplace(name, value);
 			} else {
@@ -72,21 +72,41 @@ namespace aurora {
 			}
 			return false;
 		}
+		template<typename... Args, typename = typename std::enable_if_t<std::conjunction_v<std::is_base_of<IShaderDefineGetter, Args>...>>>
+		inline size_t AE_CALL push(Args*... args) {
+			size_t n = 0;
+			((_push(n, args)), ...);
+			return n;
+		}
 		inline bool AE_CALL push(IShaderDefineGetter& getter) {
 			_stack.emplace_back(&getter);
 			return true;
 		}
+		template<typename... Args, typename = typename std::enable_if_t<std::conjunction_v<std::is_base_of<IShaderDefineGetter, Args>...>>>
+		inline size_t AE_CALL push(Args&... args) {
+			((_stack.emplace_back(args)), ...);
+			return sizeof...(args);
+		}
+
 		inline void AE_CALL pop() {
 			_stack.pop_back();
 		}
 		inline void AE_CALL pop(size_t count) {
 			_stack.erase(_stack.end() - count, _stack.end());
 		}
+
 		inline void AE_CALL clear() {
 			_stack.clear();
 		}
 
 	protected:
 		std::vector<RefPtr<IShaderDefineGetter>> _stack;
+
+		inline void AE_CALL _push(size_t& n, IShaderDefineGetter* getter) {
+			if (getter) {
+				_stack.emplace_back(getter);
+				++n;
+			}
+		}
 	};
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "aurora/render/IRenderer.h"
+#include "aurora/ShaderDefine.h"
 #include "aurora/ShaderParameter.h"
 #include "aurora/modules/graphics/IGraphicsModule.h"
 
@@ -17,16 +18,43 @@ namespace aurora::render {
 		virtual void AE_CALL postRender() override;
 
 	protected:
+		struct LightData : public Ref {
+			LightData() :
+				param(new ShaderParameter()),
+				paramCollection(new ShaderParameterCollection()),
+				dir(new ShaderParameter()) {
+				param->set(paramCollection);
+				paramCollection->set("dir", dir);
+			}
+
+			std::string lightType;
+
+			RefPtr<ShaderParameter> param;
+			RefPtr<ShaderParameterCollection> paramCollection;
+
+			RefPtr<ShaderParameter> dir;
+
+			void AE_CALL reset() {
+				//todo
+			}
+		};
+
+
 		RefPtr<modules::graphics::IGraphicsModule> _graphics;
 
 		RefPtr<modules::graphics::IBlendState> _defaultBlendState;
 		RefPtr<modules::graphics::IDepthStencilState> _defaultDepthStencilState;
 		RefPtr<modules::graphics::IRasterizerState> _defaultRasterizerState;
 
+		std::vector<RefPtr<LightData>> _lightsData;
+		size_t _numLights;
+		RefPtr<LightData> _nullLightData;
+
 		RefPtr<ShaderParameter> _m34_l2w;
 		RefPtr<ShaderParameter> _m34_l2v;
 		RefPtr<ShaderParameter> _m44_l2p;
 
+		RefPtr<ShaderDefineCollection> _shaderDefines;
 		RefPtr<ShaderParameterCollection> _shaderParameters;
 	};
 }

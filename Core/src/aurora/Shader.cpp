@@ -87,7 +87,7 @@ namespace aurora {
 						auto succeeded = p->create(*_vs, *_ps, _defines.data(), count, [this](const modules::graphics::IProgram&, ProgramStage stage, const std::string_view& name) {
 							return _includeHhandler ? _includeHhandler(*this, stage, name) : ByteArray();
 						});
-						if (succeeded) _programs.emplace(fv, p);
+						_programs.emplace(fv, succeeded ? p : nullptr);
 					}
 				} else {
 					auto& variant = itr2->second;
@@ -95,7 +95,7 @@ namespace aurora {
 						auto succeeded = p->create(*variant.vs, *variant.ps, _defines.data(), count, [this](const modules::graphics::IProgram&, ProgramStage stage, const std::string_view& name) {
 							return _includeHhandler ? _includeHhandler(*this, stage, name) : ByteArray();
 						});
-						if (succeeded) _programs.emplace(fv, p);
+						_programs.emplace(fv, succeeded ? p : nullptr);
 					}
 				}
 			} else {

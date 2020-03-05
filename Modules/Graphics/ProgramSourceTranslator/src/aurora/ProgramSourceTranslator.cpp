@@ -248,7 +248,7 @@ namespace aurora::modules::graphics::program_source_translator {
 				auto& samplerName = compiler.get_name(remap.sampler_id);
 
 				if (samplerName.rfind("DummySampler") == std::string::npos) {
-					compiler.set_name(remap.combined_id, COMBINED_TEXTURE_SAMPLER + String::toString(texName.size()) + "_" + texName + samplerName);
+					compiler.set_name(remap.combined_id, COMBINED_TEXTURE_SAMPLER + String::toString(texName.size()) + "s" + texName + "s" + samplerName);
 				} else {
 					compiler.set_name(remap.combined_id, texName);
 				}

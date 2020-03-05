@@ -55,6 +55,13 @@ namespace aurora::modules::graphics::win_gl {
 		GLint status;
 		glGetProgramiv(_handle, GL_LINK_STATUS, &status);
 		if (status == GL_FALSE) {
+			GLint len;
+			glGetProgramiv(_handle, GL_INFO_LOG_LENGTH, &len);
+			std::string info(len, 0);
+			glGetProgramInfoLog(_handle, len, &len, info.data());
+
+			_graphics.get<Graphics>()->error("OpenGL link shader error : " + info);
+
 			destroy();
 			return false;
 		}
@@ -95,14 +102,14 @@ namespace aurora::modules::graphics::win_gl {
 					info.names.emplace_back(charBuffer + sizeof(TYPE) - 1);
 				} else if (len > sizeof(IProgramSourceTranslator::COMBINED_TEXTURE_SAMPLER) - 1 && std::string_view(charBuffer, sizeof(IProgramSourceTranslator::COMBINED_TEXTURE_SAMPLER) - 1) == IProgramSourceTranslator::COMBINED_TEXTURE_SAMPLER) {
 					auto offset = sizeof(IProgramSourceTranslator::COMBINED_TEXTURE_SAMPLER) - 1;
-					if (auto pos = String::findFirst(std::string_view(charBuffer + offset, len - offset), '_'); pos == std::string::npos || !pos) {
+					if (auto pos = String::findFirst(std::string_view(charBuffer + offset, len - offset), 's'); pos == std::string::npos || !pos) {
 						info.names.emplace_back(charBuffer);
 					} else {
 						uint32_t texNameLen = 0;
 						if (auto rst = std::from_chars(charBuffer + offset, charBuffer + offset + pos, texNameLen); rst.ec == std::errc()) {
 							offset += pos + 1;
 							info.names.emplace_back(charBuffer + offset, texNameLen);
-							info.names.emplace_back(charBuffer + offset + texNameLen);
+							info.names.emplace_back(charBuffer + offset + texNameLen + 1);
 						} else {
 							info.names.emplace_back(charBuffer);
 						}
@@ -364,14 +371,18 @@ namespace aurora::modules::graphics::win_gl {
 		glGetShaderiv(shader, GL_COMPILE_STATUS, &compileStatus);
 
 		if (compileStatus == GL_FALSE) {
+			GLint len;
+			glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &len);
+			std::string info(len, 0);
+			glGetShaderInfoLog(shader, len, &len, info.data());
+			
 			GLsizei logLen = 0;
 			GLchar log[1024];
 			glGetShaderInfoLog(shader, sizeof(log), &logLen, log);
 			std::string msg = "OpenGL compile shader error(";
 			msg += type == GL_VERTEX_SHADER ? "vert" : "frag";
 			msg += ") : \n";
-			msg += log;
-			_graphics.get<Graphics>()->error(msg);
+			_graphics.get<Graphics>()->error(msg + info);
 
 			glDeleteShader(shader);
 			return 0;

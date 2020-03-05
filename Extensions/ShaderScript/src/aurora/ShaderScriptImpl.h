@@ -55,7 +55,7 @@ namespace aurora::extensions::shader_script {
 					if constexpr (std::is_same_v<T, std::vector<ShaderDefine>>) {
 						out.emplace_back(fmtDef, nullptr);
 					} else {
-						out.add(std::string(fmtDef), "");
+						out.set(std::string(fmtDef), "");
 					}
 				} else {
 					std::string_view k(fmtDef.data(), pos);
@@ -63,7 +63,7 @@ namespace aurora::extensions::shader_script {
 					if constexpr (std::is_same_v<T, std::vector<ShaderDefine>>) {
 						out.emplace_back(k, v);
 					} else {
-						out.add(std::string(k), std::string(v));
+						out.set(std::string(k), std::string(v));
 					}
 				}
 			} else {

@@ -1,9 +1,14 @@
 #include "ForwardRenderer.h"
 #include "aurora/Mesh.h"
+#include "aurora/Node.h"
 #include "aurora/ShaderPredefine.h"
 #include "aurora/StackPopper.h"
+#include "aurora/components/lights/DirectionLight.h"
+#include "aurora/components/lights/PointLight.h"
+#include "aurora/components/lights/SpotLight.h"
 #include "aurora/components/renderables/IRenderable.h"
 #include "aurora/render/IRenderDataCollector.h"
+#include "aurora/render/RenderEnvironment.h"
 
 namespace aurora::render {
 	ForwardRenderer::ForwardRenderer(modules::graphics::IGraphicsModule& graphics) :
@@ -11,9 +16,12 @@ namespace aurora::render {
 		_defaultBlendState(graphics.createBlendState()),
 		_defaultDepthStencilState(graphics.createDepthStencilState()),
 		_defaultRasterizerState(graphics.createRasterizerState()),
+		_numLights(0),
+		_nullLightData(new LightData()),
 		_m34_l2w(new ShaderParameter()),
 		_m34_l2v(new ShaderParameter()),
 		_m44_l2p(new ShaderParameter()),
+		_shaderDefines(new ShaderDefineCollection()),
 		_shaderParameters(new ShaderParameterCollection()) {
 		_shaderParameters->set(ShaderPredefine::MATRIX_LW, _m34_l2w);
 		_shaderParameters->set(ShaderPredefine::MATRIX_LV, _m34_l2v);
@@ -47,7 +55,30 @@ namespace aurora::render {
 	}
 
 	void ForwardRenderer::preRender(const RenderEnvironment& env) {
+		_numLights = 0;
+		for (size_t i = 0, n = env.lights.size(); i < n; ++i) {
+			auto& l = env.lights[i];
+			if (l) {
+				auto& data = _numLights >= _lightsData.size() ? _lightsData.emplace_back(new LightData()) : _lightsData[_numLights];
+				++_numLights;
 
+				if (l->isKindOf<components::lights::DirectionLight>()) {
+					auto& wm = l->getNode()->getWorldMatrix();
+					Vec3f32 dir(wm[0][2], wm[1][2], wm[2][2]);
+					dir.normalize();
+					data->dir->set(Vec3f32(1, 0, 0));
+					data->lightType = "1";
+				} else if (l->isKindOf<components::lights::PointLight>()) {
+
+				} else if (l->isKindOf<components::lights::SpotLight>()) {
+
+				} else {
+					--_numLights;
+				}
+			}
+		}
+
+		if (!_numLights) _shaderDefines->set("_LIGHT_TYPE", "0");
 	}
 
 	void ForwardRenderer::render(RenderData*const* data, size_t count, ShaderDefineGetterStack& shaderDefineStack, ShaderParameterGetterStack& shaderParameterStack) {
@@ -63,7 +94,12 @@ namespace aurora::render {
 			modules::graphics::IProgram* program;
 
 			{
-				StackPopper<ShaderDefineGetterStack, StackPopperFlag::CHECK_POP> popper(shaderDefineStack, shaderDefineStack.push(rd->material->getDefines()));
+				if (_numLights) {
+					auto& data = _lightsData[0];
+					_shaderDefines->set("_LIGHT_TYPE", data->lightType);
+				}
+
+				StackPopper<ShaderDefineGetterStack, StackPopperFlag::MULTI_POP> popper(shaderDefineStack, shaderDefineStack.push(&*_shaderDefines, rd->material->getDefines()));
 
 				program = shader->select(&shaderDefineStack);
 				if (!program) continue;
@@ -101,6 +137,5 @@ namespace aurora::render {
 	}
 
 	void ForwardRenderer::postRender() {
-
 	}
 }

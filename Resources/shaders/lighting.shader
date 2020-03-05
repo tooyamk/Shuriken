@@ -4,7 +4,7 @@ shader {
         }
 
         dynamic {
-
+            _LIGHT_TYPE
         }
     }
 
@@ -42,15 +42,30 @@ shader {
                 float2 uv : UV0;
             };
 
+            #if _LIGHT_TYPE != 0
+            struct Light {
+                float3 dir;
+            };
+
+            Light _light;
+            #endif
+
+            cbuffer buf1 {
             float3 _ambientColor;
             float3 _diffuseColor;
+            }
 
             Texture2D _diffuseTex;
             SamplerState _diffuseTexSampler;
 
             float4 main(PS_INPUT input) : SV_TARGET {
                 float4 c = _diffuseTex.Sample(_diffuseTexSampler, input.uv);
-                c.xyz *= _ambientColor * _diffuseColor;
+                c.xyz += _ambientColor * _diffuseColor;
+
+                #if _LIGHT_TYPE != 0
+                //c.xyz *= _light.dir;
+                #endif
+
                 return c;
             }
         }
