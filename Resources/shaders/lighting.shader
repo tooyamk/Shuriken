@@ -42,6 +42,7 @@ shader {
                 float2 uv : UV0;
             };
 
+            float3 _ambientColor;
             float3 _diffuseColor;
 
             Texture2D _diffuseTex;
@@ -49,7 +50,7 @@ shader {
 
             float4 main(PS_INPUT input) : SV_TARGET {
                 float4 c = _diffuseTex.Sample(_diffuseTexSampler, input.uv);
-                c.xyz *= _diffuseColor;
+                c.xyz *= _ambientColor * _diffuseColor;
                 return c;
             }
         }

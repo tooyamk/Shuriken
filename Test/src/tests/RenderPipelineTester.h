@@ -132,6 +132,8 @@ public:
 
 						renderData.wrold = worldNode;
 						renderData.renderPipeline = new StandardRenderPipeline();
+						renderData.renderPipeline->getShaderParameters().set(ShaderPredefine::AMBIENT_COLOR, new ShaderParameter())->set(Vec3f32(0.2f));
+						renderData.renderPipeline->getShaderParameters().set(ShaderPredefine::DIFFUSE_COLOR, new ShaderParameter())->set(Vec3f32::ONE);
 					}
 
 					{

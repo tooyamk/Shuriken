@@ -2,17 +2,14 @@ __set_project()
 set(__OUTPUT_NAME glew32)
 set_property(GLOBAL PROPERTY PROJECT_GLEW_NAME ${PROJECT_NAME})
 set_property(GLOBAL PROPERTY PROJECT_GLEW_INCLUDE ${PROJECT_BINARY_DIR}/install/include)
-set_property(GLOBAL PROPERTY PROJECT_GLEW_LIB ${PROJECT_BINARY_DIR}/install/lib/${__OUTPUT_NAME}$<$<CONFIG:Debug>:d>${CMAKE_STATIC_LIBRARY_SUFFIX})
-set_property(GLOBAL PROPERTY PROJECT_GLEW_DLL ${PROJECT_BINARY_DIR}/install/bin/${__OUTPUT_NAME}$<$<CONFIG:Debug>:d>${CMAKE_SHARED_LIBRARY_SUFFIX})
+set_property(GLOBAL PROPERTY PROJECT_GLEW_LIB ${PROJECT_BINARY_DIR}/install/lib/${__OUTPUT_NAME}$<$<CONFIG:Debug>:d>${AE_LIB_SUFFIX})
+set_property(GLOBAL PROPERTY PROJECT_GLEW_DLL ${PROJECT_BINARY_DIR}/install/bin/${__OUTPUT_NAME}$<$<CONFIG:Debug>:d>${AE_DLL_SUFFIX})
 
 include(ExternalProject)
 
 if (MSVC)
-    set(sharedLinkFlags "${CMAKE_SHARED_LINKER_FLAGS} /DYNAMICBASE \"msvcurt.lib\"")
-    set(staticLinkFlags "${CMAKE_STATIC_LINKER_FLAGS} /DYNAMICBASE \"msvcurt.lib\"")
-else ()
-    set(sharedLinkFlags "${CMAKE_SHARED_LINKER_FLAGS}")
-    set(staticLinkFlags "${CMAKE_STATIC_LINKER_FLAGS}")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /DYNAMICBASE \"msvcurt.lib\"")
+    set(CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} /DYNAMICBASE \"msvcurt.lib\"")
 endif ()
 
 ExternalProject_Add(
@@ -33,8 +30,8 @@ ExternalProject_Add(
     CONFIGURE_COMMAND
         ${CMAKE_COMMAND}
         -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
-        -DCMAKE_SHARED_LINKER_FLAGS=${sharedLinkFlags}
-        -DCMAKE_STATIC_LINKER_FLAGS=${staticLinkFlags}
+        -DCMAKE_SHARED_LINKER_FLAGS=${CMAKE_SHARED_LINKER_FLAGS}
+        -DCMAKE_STATIC_LINKER_FLAGS=${CMAKE_STATIC_LINKER_FLAGS}
         <SOURCE_DIR>/build/cmake
         CMAKE_CACHE_ARGS
 )

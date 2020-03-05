@@ -21,6 +21,10 @@ namespace aurora::render {
 	public:
 		StandardRenderPipeline();
 
+		inline ShaderParameterCollection& getShaderParameters() const {
+			return *_shaderParameters;
+		}
+
 		virtual void AE_CALL render(modules::graphics::IGraphicsModule* graphics, components::Camera* camera, Node* node, const std::vector<components::lights::ILight*>* lights) override;
 
 	protected:
