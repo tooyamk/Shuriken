@@ -15,8 +15,8 @@ public:
 		if (app->createWindow(wndStype, u8"", Box2i32(Vec2i32({ 100, 100 }), Vec2i32({ 800, 600 })), false)) {
 			RefPtr gml = new GraphicsModuleLoader();
 
-			//if (gml->load(getDLLName("ae-win-gl"))) {
-			if (gml->load(getDLLName("ae-win-d3d11"))) {
+			if (gml->load(getDLLName("ae-win-gl"))) {
+			//if (gml->load(getDLLName("ae-win-d3d11"))) {
 				RefPtr gpstml = new ModuleLoader<IProgramSourceTranslator>();
 				gpstml->load(getDLLName("ae-program-source-translator"));
 				RefPtr gpst = gpstml->create(&Args().add("dxc", getDLLName("dxcompiler")));
@@ -132,7 +132,7 @@ public:
 
 						renderData.wrold = worldNode;
 						renderData.renderPipeline = new StandardRenderPipeline();
-						renderData.renderPipeline->getShaderParameters().set(ShaderPredefine::AMBIENT_COLOR, new ShaderParameter())->set(Vec3f32(0.2f));
+						renderData.renderPipeline->getShaderParameters().set(ShaderPredefine::AMBIENT_COLOR, new ShaderParameter())->set(Vec3f32(0.9f));
 						renderData.renderPipeline->getShaderParameters().set(ShaderPredefine::DIFFUSE_COLOR, new ShaderParameter())->set(Vec3f32::ONE);
 					}
 
