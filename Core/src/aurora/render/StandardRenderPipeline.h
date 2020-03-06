@@ -56,8 +56,11 @@ namespace aurora::render {
 
 		RenderEnvironment _renderEnv;
 
-		RefPtr<ShaderParameter> _m34_w2v;
-		RefPtr<ShaderParameter> _m44_w2p;
+		struct {
+			RefPtr<ShaderParameter> m34_w2v;
+			RefPtr<ShaderParameter> m44_w2p;
+			RefPtr<ShaderParameter> v3_camPos;
+		} _builtinShaderParameters;
 
 		RefPtr<ShaderParameterCollection> _shaderParameters;
 

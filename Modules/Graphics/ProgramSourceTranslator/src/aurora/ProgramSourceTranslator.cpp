@@ -213,25 +213,12 @@ namespace aurora::modules::graphics::program_source_translator {
 
 			auto resources = compiler.get_shader_resources();
 
-			/*
 			for (auto& val : resources.uniform_buffers) {
 				compiler.unset_decoration(val.id, spv::DecorationBinding);
 				if (val.name == "type__Globals") {
 					compiler.set_name(val.base_type_id, val.name + String::toString((std::underlying_type_t<ProgramStage>)source.stage));
 				}
-				//if (val.name == "type__Globals") {
-				compiler.unset_decoration(val.base_type_id, spv::DecorationDescriptorSet);
-				compiler.unset_decoration(val.base_type_id, spv::DecorationBinding);
-				compiler.unset_decoration(val.id, spv::DecorationDescriptorSet);
-
-				compiler.unset_decoration(val.type_id, spv::DecorationDescriptorSet);
-				compiler.unset_decoration(val.type_id, spv::DecorationBinding);
-				//compiler.set_decoration(val.id, spv::DecorationBinding, resources.uniform_buffers.size());
-				//auto iii = compiler.get_decoration(val.id, spv::DecorationBinding);
-				//compiler.set_name(val.base_type_id, val.name + "_ps");
-				//break;
 			}
-			*/
 			/*
 			for (auto& val : resources.uniform_buffers) {
 				auto& type = compiler.get_type(val.base_type_id);

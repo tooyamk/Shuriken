@@ -22,9 +22,15 @@ namespace aurora::render {
 			LightData() :
 				param(new ShaderParameter()),
 				paramCollection(new ShaderParameterCollection()),
-				dir(new ShaderParameter()) {
+				color(new ShaderParameter()),
+				dir(new ShaderParameter()),
+				pos(new ShaderParameter()),
+				attenuation(new ShaderParameter()) {
 				param->set(paramCollection);
+				paramCollection->set("color", color);
 				paramCollection->set("dir", dir);
+				paramCollection->set("pos", pos);
+				paramCollection->set("attenuation", attenuation);
 			}
 
 			std::string lightType;
@@ -32,7 +38,10 @@ namespace aurora::render {
 			RefPtr<ShaderParameter> param;
 			RefPtr<ShaderParameterCollection> paramCollection;
 
+			RefPtr<ShaderParameter> color;
 			RefPtr<ShaderParameter> dir;
+			RefPtr<ShaderParameter> pos;
+			RefPtr<ShaderParameter> attenuation;
 
 			void AE_CALL reset() {
 				//todo

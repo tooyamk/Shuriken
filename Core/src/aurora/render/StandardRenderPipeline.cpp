@@ -19,13 +19,15 @@ namespace aurora::render {
 
 	StandardRenderPipeline::StandardRenderPipeline() :
 		_renderDataPoolVernier(0),
-		_m34_w2v(new ShaderParameter()),
-		_m44_w2p(new ShaderParameter()),
 		_shaderParameters(new ShaderParameterCollection()),
 		_shaderDefineStack(new ShaderDefineGetterStack()),
 		_shaderParameterStack(new ShaderParameterGetterStack()) {
-		_shaderParameters->set(ShaderPredefine::MATRIX_WV, _m34_w2v);
-		_shaderParameters->set(ShaderPredefine::MATRIX_WP, _m44_w2p);
+		_builtinShaderParameters.m34_w2v = new ShaderParameter();
+		_builtinShaderParameters.m44_w2p = new ShaderParameter();
+		_builtinShaderParameters.v3_camPos = new ShaderParameter();
+		_shaderParameters->set(ShaderPredefine::MATRIX_WV, _builtinShaderParameters.m34_w2v);
+		_shaderParameters->set(ShaderPredefine::MATRIX_WP, _builtinShaderParameters.m44_w2p);
+		_shaderParameters->set(ShaderPredefine::CAMERA_POS, _builtinShaderParameters.v3_camPos);
 	}
 
 	void StandardRenderPipeline::render(modules::graphics::IGraphicsModule* graphics, components::Camera* camera, Node* node, const std::vector<components::lights::ILight*>* lights) {
@@ -37,8 +39,9 @@ namespace aurora::render {
 			_collectNode(node, collector);
 
 			if (!_renderQueue.empty()) {
-				_m34_w2v->set(collector.matrix.w2v);
-				_m44_w2p->set(collector.matrix.w2p);
+				_builtinShaderParameters.m34_w2v->set(collector.matrix.w2v);
+				_builtinShaderParameters.m44_w2p->set(collector.matrix.w2p);
+				_builtinShaderParameters.v3_camPos->set(camera->getNode()->getWorldPosition());
 
 				std::stable_sort(_renderQueue.begin(), _renderQueue.end(), [](const RenderData* lhs, const RenderData* rhs) {
 					if (lhs->priority.level1 == rhs->priority.level1) {

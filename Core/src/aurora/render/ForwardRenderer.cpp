@@ -60,20 +60,42 @@ namespace aurora::render {
 			auto& l = env.lights[i];
 			if (l) {
 				auto& data = _numLights >= _lightsData.size() ? _lightsData.emplace_back(new LightData()) : _lightsData[_numLights];
-				++_numLights;
+				
+				if (l->isKindOf<components::lights::ILight>()) {
+					++_numLights;
 
-				if (l->isKindOf<components::lights::DirectionLight>()) {
-					auto& wm = l->getNode()->getWorldMatrix();
-					Vec3f32 dir(wm[0][2], wm[1][2], wm[2][2]);
-					dir.normalize();
-					data->dir->set(Vec3f32(1, 0, 0));
-					data->lightType = "1";
-				} else if (l->isKindOf<components::lights::PointLight>()) {
+					data->color->set(l->getColor() * l->getIntensity());
 
-				} else if (l->isKindOf<components::lights::SpotLight>()) {
+					if (l->isKindOf<components::lights::DirectionLight>()) {
+						auto& wm = l->getNode()->getWorldMatrix();
+						Vec3f32 dir(wm[0][2], wm[1][2], wm[2][2]);
+						dir.normalize();
+						data->dir->set(dir);
 
-				} else {
-					--_numLights;
+						data->lightType = "1";
+					} else if (l->isKindOf<components::lights::PointLight>()) {
+						auto radius = ((const components::lights::PointLight*)l)->getRadius();
+
+						data->pos->set(l->getNode()->getWorldPosition());
+						data->attenuation->set(Vec3f32(1.f, 4.5f / radius, 75.f / (radius * radius)));
+
+						data->lightType = "2";
+					} else if (l->isKindOf<components::lights::SpotLight>()) {
+						auto sl = (const components::lights::SpotLight*)l;
+						auto radius = sl->getRadius();
+
+						auto& wm = l->getNode()->getWorldMatrix();
+						Vec3f32 dir(wm[0][2], wm[1][2], wm[2][2]);
+						dir.normalize();
+						data->dir->set(dir);
+
+						data->pos->set(l->getNode()->getWorldPosition());
+						data->attenuation->set(Vec4f32(1.f, 4.5f / radius, 75.f / (radius * radius), std::cos(sl->getSpotAngle() * 0.5f)));
+
+						data->lightType = "3";
+					} else {
+						--_numLights;
+					}
 				}
 			}
 		}
@@ -97,6 +119,7 @@ namespace aurora::render {
 				if (_numLights) {
 					auto& data = _lightsData[0];
 					_shaderDefines->set("_LIGHT_TYPE", data->lightType);
+					_shaderParameters->set("_light", data->param);
 				}
 
 				StackPopper<ShaderDefineGetterStack, StackPopperFlag::MULTI_POP> popper(shaderDefineStack, shaderDefineStack.push(&*_shaderDefines, rd->material->getDefines()));

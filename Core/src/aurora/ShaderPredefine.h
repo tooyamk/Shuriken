@@ -20,6 +20,8 @@ namespace aurora {
 		inline static const std::string MATRIX_WV = { "_matrix_wv" };
 		inline static const std::string MATRIX_WP = { "_matrix_wp" };
 
+		inline static const std::string CAMERA_POS = { "_cameraPos" };
+
 		inline static const std::string AMBIENT_COLOR = { "_ambientColor" };
 		inline static const std::string DIFFUSE_COLOR = { "_diffuseColor" };
 		inline static const std::string SPECULAR_COLOR = { "_specularColor" };

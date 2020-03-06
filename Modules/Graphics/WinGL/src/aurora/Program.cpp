@@ -137,8 +137,10 @@ namespace aurora::modules::graphics::win_gl {
 			_uniformBlockLayouts.resize(numUniformBlocks);
 			for (GLint i = 0; i < numUniformBlocks; ++i) {
 				auto& layout = _uniformBlockLayouts[i];
+				layout.bindPoint = i;
 
-				glGetActiveUniformBlockiv(_handle, i, GL_UNIFORM_BLOCK_BINDING, (GLint*)&layout.bindPoint);
+				glUniformBlockBinding(_handle, i, i);
+				//glGetActiveUniformBlockiv(_handle, i, GL_UNIFORM_BLOCK_BINDING, (GLint*)&layout.bindPoint);
 				glGetActiveUniformBlockiv(_handle, i, GL_UNIFORM_BLOCK_DATA_SIZE, (GLint*)&layout.size);
 
 				//GLint nameLen;
