@@ -306,7 +306,7 @@ namespace aurora {
 
 	template<size_t Bits>
 	struct BitUInt {
-		static constexpr int_t<Bits> MAX = _uintMax<Bits>();
+		static constexpr uint_t<Bits> MAX = _uintMax<Bits>();
 	};
 
 

@@ -25,6 +25,7 @@ namespace aurora {
 			UI32,
 			UI64,
 			D_UI64,
+			RD_UI64,
 			IX,
 			UIX,
 			TWO_I12,
@@ -220,15 +221,33 @@ namespace aurora {
 			return _read<uint32_t>();
 		}
 
-		template<Type T, typename = typename std::enable_if_t<T == Type::UI64 || T == Type::D_UI64, bool>>
+		template<Type T, typename = typename std::enable_if_t<T == Type::UI64 || T == Type::D_UI64 || T == Type::RD_UI64, bool>>
 		inline uint64_t AE_CALL read() {
 			if constexpr (T == Type::UI64) {
 				return _read<uint64_t>();
-			} else {
+			} else if constexpr (T == Type::D_UI64) {
 				uint64_t rst = 0;
 				uint32_t bits = 0;
 				while (_position < _length) {
 					uint64_t val = _data[_position++];
+					auto hasNext = (val & 0x80) != 0;
+					val &= 0x7F;
+					val <<= bits;
+					rst |= val;
+
+					if (hasNext) {
+						bits += 7;
+					} else {
+						break;
+					}
+				};
+
+				return rst;
+			} else {
+				uint64_t rst = 0;
+				uint32_t bits = 0;
+				while (_position > 0) {
+					uint64_t val = _data[--_position];
 					auto hasNext = (val & 0x80) != 0;
 					val &= 0x7F;
 					val <<= bits;
@@ -405,7 +424,7 @@ namespace aurora {
 			_write<T>(value);
 		}
 
-		template<Type T, typename = typename std::enable_if_t<T == Type::BYTE, bool>>
+		template<Type T, typename = typename std::enable_if_t<T == Type::BOOL, bool>>
 		inline void AE_CALL write(bool value) {
 			_write<bool>(value);
 		}
@@ -445,26 +464,30 @@ namespace aurora {
 			_write<uint32_t>(value);
 		}
 
-		template<Type T, typename = typename std::enable_if_t<T == Type::UI64 || T == Type::D_UI64 || T == Type::PADDING, bool>>
+		template<Type T, typename = typename std::enable_if_t<T == Type::UI64 || T == Type::D_UI64 || T == Type::RD_UI64 || T == Type::PADDING, bool>>
 		inline void AE_CALL write(uint64_t value) {
 			if constexpr (T == Type::UI64) {
 				_write<uint64_t>(value);
-			} else if constexpr (T == Type::D_UI64) {
+			} else if constexpr (T == Type::D_UI64 || T == Type::RD_UI64) {
 				value &= 0xFFFFFFFFFFFFFFFULL;
+				uint8_t i = 0;
+				uint8_t vals[8];
 				do {
 					uint8_t val = value & 0x7F;
 					value >>= 7;
 					if (value) {
 						val |= 0x80;
-						write<Type::UI8>(val);
+						vals[i++] = val;
 					} else {
-						write<Type::UI8>(val);
+						vals[i++] = val;
 						break;
 					}
 				} while (true);
+
+				write<Type::BYTE, T == Type::RD_UI64>(vals, i);
 			} else {
-				_checkLength(sizeof(value));
-				_position += sizeof(value);
+				_checkLength(value);
+				_position += value;
 			}
 		}
 
@@ -559,12 +582,23 @@ namespace aurora {
 			write<T>(std::string_view(value, size));
 		}
 
-		template<Type T, typename = typename std::enable_if_t<T == Type::BYTE, bool>>
+		template<Type T, bool Reverse = false, typename = typename std::enable_if_t<T == Type::BYTE, bool>>
 		inline void AE_CALL write(const void* bytes, size_t length) {
 			if (length > 0) {
 				_checkLength(length);
 
-				memmove(_data + _position, bytes, length);
+				if constexpr (Reverse) {
+					auto src = (const uint8_t*)bytes + length - 1;
+					auto dst = _data + _position;
+					for (size_t i = 0; i < length; ++i) {
+						*dst = *src;
+						++dst;
+						--src;
+					}
+				} else {
+					memmove(_data + _position, bytes, length);
+				}
+
 				_position += length;
 			}
 		}
@@ -636,7 +670,7 @@ namespace aurora {
 				} else {
 					uint_t<Bytes * 8> v = _data[_position];
 					for (size_t i = 1; i < Bytes; ++i) v |= (uint_t<Bytes * 8>)_data[_position + i] << (i * 8);
-					_position += 3;
+					_position += Bytes;
 					return v;
 				}
 			}

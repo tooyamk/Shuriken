@@ -10,7 +10,7 @@ using namespace aurora::modules;
 using namespace aurora::modules::graphics;
 using namespace aurora::modules::inputs;
 
-inline std::string getDLLName(const std::string& name) {
+inline std::string AE_CALL getDLLName(const std::string& name) {
 #if defined(AE_DEBUG)
 #if AE_OS == AE_OS_WIN
 	return name + "d.dll";
@@ -26,7 +26,7 @@ inline std::string getDLLName(const std::string& name) {
 #endif
 }
 
-inline ByteArray readFile(const std::string& path) {
+inline ByteArray AE_CALL readFile(const std::string& path) {
 	ByteArray dst;
 	std::ifstream stream(path, std::ios::in | std::ios::binary);
 	if (stream.good()) {
@@ -46,7 +46,7 @@ inline ByteArray readFile(const std::string& path) {
 	return std::move(dst);
 }
 
-inline ProgramSource readProgramSource(const std::string& path, ProgramStage type) {
+inline ProgramSource AE_CALL readProgramSource(const std::string& path, ProgramStage type) {
 	ProgramSource s;
 	s.language = ProgramLanguage::HLSL;
 	s.stage = type;
@@ -54,7 +54,7 @@ inline ProgramSource readProgramSource(const std::string& path, ProgramStage typ
 	return std::move(s);
 }
 
-inline bool programCreate(IProgram& program, const std::string_view& vert, const std::string_view& frag) {
+inline bool AE_CALL programCreate(IProgram& program, const std::string_view& vert, const std::string_view& frag) {
 	std::string appPath = String::UnicodeToUtf8(getAppPath()) + u8"Resources/shaders/";
 	if (program.create(readProgramSource(appPath + vert.data(), ProgramStage::VS), readProgramSource(appPath + frag.data(), ProgramStage::PS), nullptr, 0,
 		[&appPath](const IProgram& program, ProgramStage stage, const std::string_view& name) {

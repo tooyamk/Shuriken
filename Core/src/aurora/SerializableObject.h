@@ -41,7 +41,7 @@ namespace aurora {
 
 
 		struct HashKey {
-			size_t operator()(const SerializableObject& value) const {
+			inline size_t operator()(const SerializableObject& value) const {
 				switch (value._type) {
 				case Type::BOOL:
 					return std::hash<bool>{}(value._getValue<bool>());
@@ -72,7 +72,7 @@ namespace aurora {
 
 
 		struct HashCompare {
-			bool operator()(const SerializableObject& value1, const SerializableObject& value2) const {
+			inline bool operator()(const SerializableObject& value1, const SerializableObject& value2) const {
 				return value1.isEqual(value2);
 			}
 		};
@@ -119,6 +119,15 @@ namespace aurora {
 		}
 		inline bool AE_CALL isValid() const {
 			return _type != Type::INVALID;
+		}
+		inline bool AE_CALL isNumber() const {
+			return _type == Type::INT || _type == Type::UINT || _type == Type::FLOAT || _type == Type::DOUBLE;
+		}
+		inline bool AE_CALL isInteger() const {
+			return _type == Type::INT || _type == Type::UINT;
+		}
+		inline bool AE_CALL isFloatingPoint() const {
+			return _type == Type::FLOAT || _type == Type::DOUBLE;
 		}
 
 		size_t AE_CALL getSize() const;

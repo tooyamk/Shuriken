@@ -812,7 +812,7 @@ namespace aurora {
 		} else if (_type == Type::MAP) {
 			Map* map = _getValue<Map*>();
 			if (map) {
-				for (auto itr = map->value.begin(); itr != map->value.end();) callback(itr->first, itr->second);
+				for (auto& itr : map->value) callback(itr.first, itr.second);
 			}
 		}
 	}
@@ -1098,7 +1098,7 @@ namespace aurora {
 				break;
 			case InternalType::STRING:
 			case InternalType::SHORT_STRING:
-				set(ba.read<ba_t::STR_V>(false));
+				set(ba.read<ba_t::STR_V>());
 				break;
 			case InternalType::BOOL_TRUE:
 				set(true);
@@ -1187,7 +1187,7 @@ namespace aurora {
 	}
 
 	void SerializableObject::_unpackArray(ByteArray& ba, size_t size) {
-		auto arr = _getArray()->value;
+		auto& arr = _getArray()->value;
 		arr.resize(size);
 		for (size_t i = 0; i < size; ++i) arr[i].unpack(ba);
 	}
