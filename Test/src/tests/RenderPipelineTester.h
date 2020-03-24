@@ -1,10 +1,46 @@
 #pragma once
 
 #include "../BaseTester.h"
+#include "aurora/SerializableObject.h"
+
+class Filter : public SerializableObject::IPackFilter {
+public:
+	virtual bool AE_CALL packable(const SerializableObject* parent, size_t depth, size_t index, const SerializableObject& val) const override {
+		return true;
+	}
+
+	virtual bool AE_CALL packable(const SerializableObject* parent, size_t depth, const SerializableObject& key, const SerializableObject& val) const override {
+		if (depth == 0) {
+			if (key.toStringView() == "b") return false;
+		} else if (depth == 1) {
+			if (key.toNumber<int>() == 111) return false;
+		}
+
+		return true;
+	}
+};
 
 class RenderPipelineTester : public BaseTester {
 public:
 	virtual int32_t AE_CALL run() override {
+		{
+			SerializableObject so;
+			so.insert("a", 1);
+			so.insert("b", 2);
+			so.get("c").insert(111, 222);
+			so.get("c").insert(333, 444);
+
+			ByteArray ba;
+			so.pack(ba, Filter());
+			ba.seekBegin();
+
+			SerializableObject so2;
+			so2.unpack(ba);
+
+			println(so.toJson());
+			println(so2.toJson());
+		}
+
 		auto monitors = Monitor::getMonitors();
 		auto vms = monitors[0].getVideoModes();
 

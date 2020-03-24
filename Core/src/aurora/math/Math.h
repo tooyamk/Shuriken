@@ -7,23 +7,18 @@ namespace aurora {
 	class AE_DLL Math {
 	public:
 		AE_DECLARE_CANNOT_INSTANTIATE(Math);
-		
-		template<typename T> using NumberType = typename std::enable_if_t<std::is_arithmetic_v<T>, T>;
-		template<typename T> using FloatType = typename std::enable_if_t<std::is_floating_point_v<T>, T>;
-		template<typename T> using IntType = typename std::enable_if_t<std::is_integral_v<T>, T>;
-		template<typename T> using UIntType = typename std::enable_if_t<std::is_integral_v<T> && std::is_unsigned_v<T>, T>;
 
-		template<typename T> inline static constexpr NumberType<T> NUMBER_0 = 0;
-		template<typename T> inline static constexpr NumberType<T> NUMBER_1 = 1;
-		template<typename T> inline static constexpr FloatType<T> TOLERANCE = T(2e-37);
-		template<typename T> inline static constexpr FloatType<T> PI = T(3.14159265358979323846);
-		template<typename T> inline static constexpr FloatType<T> PI_2 = PI<T> * T(.5);
-		template<typename T> inline static constexpr FloatType<T> PI_4 = PI<T> * T(.25);
-		template<typename T> inline static constexpr FloatType<T> PI_6 = PI<T> / T(6.0);
-		template<typename T> inline static constexpr FloatType<T> PI_8 = PI<T> * T(.125);
-		template<typename T> inline static constexpr FloatType<T> PI2 = PI<T> * T(2.);
-		template<typename T> inline static constexpr FloatType<T> DEG = T(180.) / PI<T>;
-		template<typename T> inline static constexpr FloatType<T> RAD = PI<T> / T(180.);
+		template<typename T> inline static constexpr arithmetic_t<T> NUMBER_0 = 0;
+		template<typename T> inline static constexpr arithmetic_t<T> NUMBER_1 = 1;
+		template<typename T> inline static constexpr floating_point_t<T> TOLERANCE = T(2e-37);
+		template<typename T> inline static constexpr floating_point_t<T> PI = T(3.14159265358979323846);
+		template<typename T> inline static constexpr floating_point_t<T> PI_2 = PI<T> * T(.5);
+		template<typename T> inline static constexpr floating_point_t<T> PI_4 = PI<T> * T(.25);
+		template<typename T> inline static constexpr floating_point_t<T> PI_6 = PI<T> / T(6.0);
+		template<typename T> inline static constexpr floating_point_t<T> PI_8 = PI<T> * T(.125);
+		template<typename T> inline static constexpr floating_point_t<T> PI2 = PI<T> * T(2.);
+		template<typename T> inline static constexpr floating_point_t<T> DEG = T(180.) / PI<T>;
+		template<typename T> inline static constexpr floating_point_t<T> RAD = PI<T> / T(180.);
 
 		template<typename In1, typename In2>
 		inline static bool AE_CALL isEqual(const In1& v1, const In2& v2) {
@@ -187,12 +182,12 @@ namespace aurora {
 		}
 
 		template<typename T>
-		inline static constexpr FloatType<T> AE_CALL deg(const T& rad) {
+		inline static constexpr floating_point_t<T> AE_CALL deg(const T& rad) {
 			return rad * DEG<T>;
 		}
 
 		template<typename T>
-		inline static constexpr FloatType<T> AE_CALL rad(const T& deg) {
+		inline static constexpr floating_point_t<T> AE_CALL rad(const T& deg) {
 			return deg * RAD<T>;
 		}
 
@@ -217,7 +212,7 @@ namespace aurora {
 			return sq;
 		}
 		template<uint32_t N, typename In1, typename In2, typename Out = decltype((*(In1*)0) + (*(In2*)0))>
-		inline static Out AE_CALL distanceSq(const FloatType<In1>(&v1)[N], const FloatType<In2>(&v2)[N]) {
+		inline static Out AE_CALL distanceSq(const floating_point_t<In1>(&v1)[N], const floating_point_t<In2>(&v2)[N]) {
 			Out sq = 0;
 			for (uint32_t i = 0; i < N; ++i) {
 				Out d = v1[i] - v2[i];

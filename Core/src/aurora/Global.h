@@ -143,6 +143,9 @@
 #if __has_include(<charconv>)
 #	include <charconv>
 #endif
+#if __has_include(<bit>)
+#	include <bit>
+#endif
 #include <iostream>
 #include <mutex>
 #include <string>
@@ -228,21 +231,23 @@ inline constexpr __ENUM__& AE_CALL operator^=(__ENUM__& e1, __ENUM__ e2) { \
 }
 
 
+#ifndef __cpp_lib_endian
 namespace std {
-	union EndianTest {
+	union _EndianTest {
 		struct {
 			bool isLittle;
 			uint8_t fill;
 		};
 		uint16_t value;
 	};
-	constexpr EndianTest _endianTest = { (uint16_t)1 };
+	constexpr _EndianTest _endianTest = { (uint16_t)1 };
 	enum class endian {
 		little = 0,
 		big = 1,
 		native = _endianTest.isLittle ? little : big
 	};
 }
+#endif
 
 
 namespace aurora {
@@ -250,32 +255,32 @@ namespace aurora {
 	using f64 = double;
 
 
-	template<bool Test, class T = void, class F = void>
-	struct if_else {};
-
-	template<class T, class F>
-	struct if_else<true, T, F> { typedef T type; };
-
-	template<class T, class F>
-	struct if_else<false, T, F> { typedef F type; };
-
-	template<bool Test, class T = void, class F = void>
-	using if_else_t = typename if_else<Test, T, F>::type;
+	template<typename T> constexpr bool is_unsigned_integral_v = std::is_integral_v<T> && std::is_unsigned_v<T>;
 
 
-	template<typename T>
-	constexpr bool is_string_v = std::is_same_v<T, std::string> || std::is_same_v<T, std::string_view>;
+	template<typename T> using arithmetic_t = typename std::enable_if_t<std::is_arithmetic_v<T>, T>;
+	template<typename T> using floating_point_t = typename std::enable_if_t<std::is_floating_point_v<T>, T>;
+	template<typename T> using integral_t = typename std::enable_if_t<std::is_integral_v<T>, T>;
+	template<typename T> using unsigned_integral_t = typename std::enable_if_t<is_unsigned_integral_v<T>, T>;
 
-	template<typename T>
-	constexpr bool is_wstring_v = std::is_same_v<T, std::wstring> || std::is_same_v<T, std::wstring_view>;
+
+	template<bool Test, class T = void, class F = void> struct if_else {};
+	template<class T, class F> struct if_else<true, T, F> { using type = T; };
+	template<class T, class F> struct if_else<false, T, F> { using type = F; };
+	template<bool Test, class T = void, class F = void> using if_else_t = typename if_else<Test, T, F>::type;
+
+
+	template<typename T> constexpr bool is_string_data_v = std::is_same_v<T, std::string> || std::is_same_v<T, std::string_view>;
+	template<typename T> constexpr bool is_wstring_data_v = std::is_same_v<T, std::wstring> || std::is_same_v<T, std::wstring_view>;
+	template<typename T> using string_data_t = typename std::enable_if_t<is_string_data_v<T>, T>;
+	template<typename T> using wstring_data_t = typename std::enable_if_t<is_wstring_data_v<T>, T>;
 
 
 	template<size_t Bits> using int_t = if_else_t<Bits >= 0 && Bits <= 8, int8_t, if_else_t<Bits >= 9 && Bits <= 16, int16_t, if_else_t<Bits >= 17 && Bits <= 32, int32_t, if_else_t<Bits >= 33 && Bits <= 64, int64_t, void>>>>;
 	template<size_t Bits> using uint_t = if_else_t<Bits >= 0 && Bits <= 8, uint8_t, if_else_t<Bits >= 9 && Bits <= 16, uint16_t, if_else_t<Bits >= 17 && Bits <= 32, uint32_t, if_else_t<Bits >= 33 && Bits <= 64, uint64_t, void>>>>;
 
 
-	template<typename T>
-	struct Recognitor {};
+	template<typename T> struct Recognitor {};
 
 
 	template<size_t Bits>
@@ -360,14 +365,14 @@ namespace aurora {
 		return byteswap<Bytes>((uint8_t*)&val);
 	}
 
-	template<typename F, typename = typename std::enable_if_t<std::is_floating_point_v<F>, F>>
+	template<typename F, typename = typename floating_point_t<F>>
 	inline F AE_CALL byteswap(F val) {
 		auto v = byteswap<sizeof(F)>((uint8_t*)&val);
 		return *(F*)&v;
 	}
 
 
-	template<typename T, typename = typename std::enable_if_t<std::is_integral_v<T> && std::is_unsigned_v<T>, T>>
+	template<typename T, typename = typename unsigned_integral_t<T>>
 	inline T AE_CALL rotl(T val, size_t shift) {
 		if constexpr (std::is_same_v<T, uint8_t>) {
 #if AE_COMPILER == AE_COMPILER_MSVC
@@ -649,7 +654,7 @@ namespace aurora {
 				out.write(L"nullptr");
 			} else if constexpr (std::is_convertible_v<T, char const*> || std::is_convertible_v<T, wchar_t const*>) {
 				out.write(value);
-			} else if constexpr (is_string_v<T> || is_wstring_v<T>) {
+			} else if constexpr (is_string_data_v<T> || is_wstring_data_v<T>) {
 				out.write(value.data(), value.size());
 			} else if constexpr (std::is_same_v<T, bool>) {
 				out.write(value ? L"true" : L"false");

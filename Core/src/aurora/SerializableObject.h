@@ -11,6 +11,13 @@ namespace aurora {
 
 	class AE_DLL SerializableObject {
 	public:
+		class IPackFilter {
+		public:
+			virtual bool AE_CALL packable(const SerializableObject* parent, size_t depth, size_t index, const SerializableObject& val) const = 0;
+			virtual bool AE_CALL packable(const SerializableObject* parent, size_t depth, const SerializableObject& key, const SerializableObject& val) const = 0;
+		};
+
+
 		enum class Type : uint8_t {
 			INVALID,
 
@@ -129,6 +136,9 @@ namespace aurora {
 		inline bool AE_CALL isFloatingPoint() const {
 			return _type == Type::FLOAT || _type == Type::DOUBLE;
 		}
+		inline bool AE_CALL isBytes() const {
+			return _type == Type::BYTES || _type == Type::EXT_BYTES;
+		}
 
 		size_t AE_CALL getSize() const;
 		void AE_CALL clear();
@@ -190,7 +200,13 @@ namespace aurora {
 		}
 
 		std::string AE_CALL toString(const std::string& defaultValue = "") const;
+		std::string_view AE_CALL toStringView() const;
 		const uint8_t* AE_CALL toBytes() const;
+		inline std::string AE_CALL toJson() const {
+			std::string json;
+			_toJson(json);
+			return std::move(json);
+		}
 
 		inline void AE_CALL set(bool value) {
 			_set<bool, Type::BOOL>(value);
@@ -234,7 +250,8 @@ namespace aurora {
 
 		SerializableObject& AE_CALL at(size_t index);
 		SerializableObject AE_CALL tryAt(size_t index) const;
-		void AE_CALL push(const SerializableObject& value);
+		SerializableObject& AE_CALL push();
+		SerializableObject& AE_CALL push(const SerializableObject& value);
 		SerializableObject AE_CALL removeAt(size_t index);
 		void AE_CALL insertAt(size_t index, const SerializableObject& value);
 
@@ -248,7 +265,10 @@ namespace aurora {
 		void AE_CALL forEach(const std::function<bool(const SerializableObject& key, const SerializableObject& value)>& callback) const;
 		void AE_CALL forEach(const std::function<ForEachOperation(const SerializableObject& key, SerializableObject& value)>& callback);
 
-		void AE_CALL pack(ByteArray& ba) const;
+		template<typename T = std::nullptr_t, typename = std::enable_if_t<std::is_null_pointer_v<T> || std::is_base_of_v<IPackFilter, T>, T>>
+		inline void AE_CALL pack(ByteArray& ba, const T& filter = nullptr) const {
+			_pack(nullptr, 0, ba, filter);
+		}
 		void AE_CALL unpack(ByteArray& ba);
 
 		bool AE_CALL isEqual(const SerializableObject& target) const;
@@ -314,6 +334,7 @@ namespace aurora {
 			ARRAY_48BITS,
 			ARRAY_56BITS,
 			ARRAY_64BITS,
+			ARRAY_END,
 			MAP_0 = 140,
 			MAP_8BITS,
 			MAP_16BITS,
@@ -323,6 +344,7 @@ namespace aurora {
 			MAP_48BITS,
 			MAP_56BITS,
 			MAP_64BITS,
+			MAP_END,
 			BYTES_0 = 160,
 			BYTES_8BITS,
 			BYTES_16BITS,
@@ -331,7 +353,8 @@ namespace aurora {
 			BYTES_40BITS,
 			BYTES_48BITS,
 			BYTES_56BITS,
-			BYTES_64BITS
+			BYTES_64BITS,
+			END = 255
 		};
 
 
@@ -574,10 +597,208 @@ namespace aurora {
 			return _isContentEqual((uint8_t*)s1, strlen(s1), (uint8_t*)s2, strlen(s2));
 		}
 
+		template<typename T = std::nullptr_t, typename = std::enable_if_t<std::is_null_pointer_v<T> || std::is_base_of_v<IPackFilter, T>, T>>
+		void AE_CALL _pack(const SerializableObject* parent, size_t depth, ByteArray& ba, const T& filter) const {
+			switch (_type) {
+			case Type::INVALID:
+				ba.write<ba_t::UI8>((uint8_t)_type);
+				break;
+			case Type::BOOL:
+				ba.write<ba_t::UI8>((uint8_t)(_getValue<bool>() ? InternalType::BOOL_TRUE : InternalType::BOOL_FALSE));
+				break;
+			case Type::INT:
+			{
+				auto v = _getValue<int64_t>();
+				if (v < 0) {
+					if (v == -1) {
+						ba.write<ba_t::UI8>((uint8_t)InternalType::N_INT_1);
+					} else {
+						_packUInt(ba, -v, (uint8_t)InternalType::N_INT_8BITS);
+					}
+				} else {
+					if (v == 0) {
+						ba.write<ba_t::UI8>((uint8_t)InternalType::P_INT_0);
+					} else if (v == 1) {
+						ba.write<ba_t::UI8>((uint8_t)InternalType::P_INT_1);
+					} else {
+						_packUInt(ba, v, (uint8_t)InternalType::P_INT_8BITS);
+					}
+				}
+
+				break;
+			}
+			case Type::UINT:
+			{
+				auto v = _getValue<uint64_t>();
+				if (v == 0) {
+					ba.write<ba_t::UI8>((uint8_t)InternalType::P_INT_0);
+				} else if (v == 1) {
+					ba.write<ba_t::UI8>((uint8_t)InternalType::P_INT_1);
+				} else {
+					_packUInt(ba, v, (uint8_t)InternalType::P_INT_8BITS);
+				}
+
+				break;
+			}
+			case Type::FLOAT:
+			{
+
+				f32 f = _getValue<f32>();
+				if (f == 0.0f) {
+					ba.write<ba_t::UI8>((uint8_t)InternalType::FLT_0);
+				} else if (f == 0.5f) {
+					ba.write<ba_t::UI8>((uint8_t)InternalType::FLT_0_5);
+				} else if (f == 1.0f) {
+					ba.write<ba_t::UI8>((uint8_t)InternalType::FLT_1);
+				} else {
+					ba.write<ba_t::UI8>((uint8_t)_type);
+					ba.write<ba_t::F32>(f);
+				}
+
+				break;
+			}
+			case Type::DOUBLE:
+			{
+				f64 d = _getValue<f64>();
+				if (d == 0.0) {
+					ba.write<ba_t::UI8>((uint8_t)InternalType::DBL_0);
+				} else if (d == 0.5) {
+					ba.write<ba_t::UI8>((uint8_t)InternalType::DBL_0_5);
+				} else if (d == 1.0) {
+					ba.write<ba_t::UI8>((uint8_t)InternalType::DBL_1);
+				} else {
+					ba.write<ba_t::UI8>((uint8_t)_type);
+					ba.write<ba_t::F64>(d);
+				}
+
+				break;
+			}
+			case Type::STRING:
+			{
+				auto& s = *_getValue<std::string*>();
+				if (s.empty()) {
+					ba.write<ba_t::UI8>((uint8_t)InternalType::STRING_EMPTY);
+				} else {
+					ba.write<ba_t::UI8>((uint8_t)_type);
+					ba.write<ba_t::STR>(s);
+				}
+
+				break;
+			}
+			case Type::SHORT_STRING:
+			{
+				auto size = strlen((char*)_value);
+				if (size == 0) {
+					ba.write<ba_t::UI8>((uint8_t)InternalType::STRING_EMPTY);
+				} else {
+					ba.write<ba_t::UI8>((uint8_t)Type::STRING);
+					ba.write<ba_t::STR>((char*)_value, size);
+				}
+
+				break;
+			}
+			case Type::ARRAY:
+			{
+				Array* arr = _getValue<Array*>();
+				auto size = arr->value.size();
+
+				if constexpr (std::is_null_pointer_v<T>) {
+					if (size == 0) {
+						ba.write<ba_t::UI8>((uint8_t)InternalType::ARRAY_0);
+					} else {
+						_packUInt(ba, size, (uint8_t)InternalType::ARRAY_8BITS);
+						for (auto& i : arr->value) i.pack(ba);
+					}
+				} else {
+					if (size == 0) {
+						ba.write<ba_t::UI8>((uint8_t)InternalType::ARRAY_0);
+					} else {
+						ba.write<ba_t::UI8>((uint8_t)InternalType::ARRAY_END);
+
+						size_t i = 0;
+						size_t d = depth + 1;
+						for (auto& e : arr->value) {
+							if (filter.packable(parent, depth, i++, e)) e._pack(this, d, ba, filter);
+						}
+
+						ba.write<ba_t::UI8>((uint8_t)InternalType::END);
+					}
+				}
+
+				break;
+			}
+			case Type::MAP:
+			{
+				Map* map = _getValue<Map*>();
+				auto size = map->value.size();
+
+				if constexpr (std::is_null_pointer_v<T>) {
+					if (size == 0) {
+						ba.write<ba_t::UI8>((uint8_t)InternalType::MAP_0);
+					} else {
+						_packUInt(ba, size, (uint8_t)InternalType::MAP_8BITS);
+						for (auto& i : map->value) {
+							i.first.pack(ba);
+							i.second.pack(ba);
+						}
+					}
+				} else {
+					if (size == 0) {
+						ba.write<ba_t::UI8>((uint8_t)InternalType::MAP_0);
+					} else {
+						ba.write<ba_t::UI8>((uint8_t)InternalType::MAP_END);
+
+						size_t d = depth + 1;
+						for (auto& i : map->value) {
+							if (filter.packable(parent, depth, i.first, i.second)) {
+								i.first._pack(this, d, ba, filter);
+								i.second._pack(this, d, ba, filter);
+							}
+						}
+						
+						ba.write<ba_t::UI8>((uint8_t)InternalType::END);
+					}
+				}
+
+				break;
+			}
+			case Type::BYTES:
+			{
+				uint32_t size = _getValue<Bytes<false>*>()->getSize();
+				if (size == 0) {
+					ba.write<ba_t::UI8>((uint8_t)InternalType::BYTES_0);
+					break;
+				} else if (size <= BitUInt<8>::MAX) {
+					_packUInt(ba, size, (uint8_t)InternalType::BYTES_8BITS);
+				}
+
+				ba.write<ba_t::BYTE>(_getValue<Bytes<false>*>()->getValue(), size);
+
+				break;
+			}
+			case Type::EXT_BYTES:
+			{
+				uint32_t size = _getValue<Bytes<true>*>()->getSize();
+				if (size == 0) {
+					ba.write<ba_t::UI8>((uint8_t)InternalType::BYTES_0);
+					break;
+				} else {
+					_packUInt(ba, size, (uint8_t)InternalType::BYTES_8BITS);
+				}
+
+				ba.write<ba_t::BYTE>(_getValue<Bytes<true>*>()->getValue(), size);
+
+				break;
+			}
+			default:
+				break;
+			}
+		}
+
+		void AE_CALL _toJson(std::string& json) const;
+
 		void AE_CALL _packUInt(ByteArray& ba, uint64_t val, uint8_t typeBegin) const;
 
-		void AE_CALL _unpackArray(ByteArray& ba, size_t size);
-		void AE_CALL _unpackMap(ByteArray& ba, size_t size);
 		void AE_CALL _unpackBytes(ByteArray& ba, size_t size);
 
 		//friend Hash;

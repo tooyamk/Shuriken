@@ -78,12 +78,12 @@ namespace aurora {
 		}
 
 		template<typename T>
-		inline ShaderParameter& AE_CALL set(Math::NumberType<T> value, ShaderParameterUpdateBehavior updateBehavior = ShaderParameterUpdateBehavior::CHECK) {
+		inline ShaderParameter& AE_CALL set(arithmetic_t<T> value, ShaderParameterUpdateBehavior updateBehavior = ShaderParameterUpdateBehavior::CHECK) {
 			_set<sizeof(value)>(&value, sizeof(value), sizeof(value), ShaderParameterType::DATA, true, updateBehavior);
 			return *this;
 		}
 		template<typename T>
-		inline ShaderParameter& AE_CALL set(Math::NumberType<T>* value, uint32_t size, uint16_t perElementSize, bool copy, ShaderParameterUpdateBehavior updateBehavior = ShaderParameterUpdateBehavior::CHECK) {
+		inline ShaderParameter& AE_CALL set(arithmetic_t<T>* value, uint32_t size, uint16_t perElementSize, bool copy, ShaderParameterUpdateBehavior updateBehavior = ShaderParameterUpdateBehavior::CHECK) {
 			_set<sizeof(value)>(value, size, perElementSize, ShaderParameterType::DATA, copy, updateBehavior);
 			return *this;
 		}

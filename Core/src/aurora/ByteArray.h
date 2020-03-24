@@ -337,7 +337,7 @@ namespace aurora {
 			return _read<f64>();
 		}
 
-		template<typename T, bool CheckEndMark = true, bool CheckBOM = false, typename = typename std::enable_if_t<is_string_v<T>, bool>>
+		template<typename T, bool CheckEndMark = true, bool CheckBOM = false, typename = string_data_t<T>>
 		inline T AE_CALL read(size_t size = (std::numeric_limits<size_t>::max)()) {
 			return _read<T, CheckEndMark, CheckBOM>(size);
 		}
@@ -603,7 +603,7 @@ namespace aurora {
 			}
 		}
 
-		template<Type T, typename V, typename = typename std::enable_if_t<T == Type::BYTE && is_string_v<V>, bool>>
+		template<Type T, typename V, typename = typename std::enable_if_t<T == Type::BYTE && is_string_data_v<V>, bool>>
 		inline void AE_CALL write(const V& str) {
 			write<T>(str.data(), str.size());
 		}
@@ -719,7 +719,7 @@ namespace aurora {
 			}
 		}
 
-		template<typename T, bool CheckEndMark, bool CheckBOM, typename = typename std::enable_if_t<is_string_v<T>, T>>
+		template<typename T, bool CheckEndMark, bool CheckBOM, typename = string_data_t<T>>
 		inline T AE_CALL _read(size_t size) {
 			auto [begin, num, pos] = read<Type::STR, CheckEndMark, CheckBOM>(_position, size);
 			_position = pos;
