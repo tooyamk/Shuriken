@@ -66,6 +66,19 @@ namespace aurora {
 	}
 
 
+	SerializableObject::Str::Str(const char* data, size_t size) :
+		size(size) {
+		ref();
+		value = new char[size + 1];
+		value[size] = 0;
+		memcpy(value, data, size);
+	}
+
+	SerializableObject::Str::~Str() {
+		delete[] value;
+	}
+
+
 	SerializableObject::SerializableObject() :
 		_type(Type::INVALID) {
 	}
@@ -74,8 +87,12 @@ namespace aurora {
 		_type(value) {
 		switch (_type) {
 		case Type::STRING:
+		{
 			_value[0] = 0;
+			_type = Type::SHORT_STRING;
+
 			break;
+		}
 		case Type::ARRAY:
 			_getValue<Array*>() = new Array();
 			break;
@@ -149,35 +166,32 @@ namespace aurora {
 		_getValue<f64>() = value;
 	}
 
-	SerializableObject::SerializableObject(const char* value) :
-		_type(Type::STRING) {
+	SerializableObject::SerializableObject(const char* value) {
 		if (auto size = strlen(value); size < VALUE_SIZE) {
 			_writeShortString(value, size);
 			_type = Type::SHORT_STRING;
 		} else {
-			_getValue<std::string*>() = new std::string(value);
+			_getValue<Str*>() = new Str(value, size);
 			_type = Type::STRING;
 		}
 	}
 
-	SerializableObject::SerializableObject(const std::string& value) :
-		_type(Type::STRING) {
+	SerializableObject::SerializableObject(const std::string& value) {
 		if (auto size = value.size(); size < VALUE_SIZE) {
 			_writeShortString(value.data(), size);
 			_type = Type::SHORT_STRING;
 		} else {
-			_getValue<std::string*>() = new std::string(value);
+			_getValue<Str*>() = new Str(value.data(), size);
 			_type = Type::STRING;
 		}
 	}
 
-	SerializableObject::SerializableObject(const std::string_view& value) :
-		_type(Type::STRING) {
+	SerializableObject::SerializableObject(const std::string_view& value) {
 		if (auto size = value.size(); size < VALUE_SIZE) {
 			_writeShortString(value.data(), size);
 			_type = Type::SHORT_STRING;
 		} else {
-			_getValue<std::string*>() = new std::string(value);
+			_getValue<Str*>() = new Str(value.data(), size);
 			_type = Type::STRING;
 		}
 	}
@@ -207,8 +221,21 @@ namespace aurora {
 		_type(value._type) {
 		switch (_type) {
 		case Type::STRING:
-			_getValue<std::string*>() = new std::string(*value._getValue<std::string*>());
+			_getValue<Str*>() = (value._getValue<Str*>())->ref<Str>();
 			break;
+		case Type::STD_SV:
+		{
+			auto sv = value._getValue<std::string_view*>();
+			if (auto size = sv->size(); size < VALUE_SIZE) {
+				_writeShortString(sv->data(), size);
+				_type = Type::SHORT_STRING;
+			} else {
+				_getValue<Str*>() = new Str(sv->data(), size);
+				_type = Type::STRING;
+			}
+
+			break;
+		}
 		case Type::ARRAY:
 		{
 			auto arr = value._getValue<Array*>();
@@ -287,21 +314,64 @@ namespace aurora {
 			return target._type == Type::DOUBLE && _getValue<f64>() == target._getValue<f64>();
 		case Type::STRING:
 		{
-			if (target._type == Type::STRING) {
-				return *_getValue<std::string*>() == *target._getValue<std::string*>();
-			} else if (target._type == Type::SHORT_STRING) {
-				return _isContentEqual(*_getValue<std::string*>(), (char*)target._value);
-			} else {
+			switch (target._type) {
+			case Type::STRING:
+			{
+				auto s1 = _getValue<Str*>();
+				auto s2 = target._getValue<Str*>();
+				return _isContentEqual(s1->value, s1->size, s2->value, s2->size);
+			}
+			case Type::SHORT_STRING:
+			{
+				auto s = _getValue<Str*>();
+				return _isContentEqual(s->value, s->size, target._value, strlen((char*)target._value));
+			}
+			case Type::STD_SV:
+			{
+				auto s = _getValue<Str*>();
+				auto sv = target._getValue<std::string_view*>();
+				return _isContentEqual(s->value, s->size, sv->data(), sv->size());
+			}
+			default:
 				return false;
 			}
 		}
 		case Type::SHORT_STRING:
 		{
-			if (target._type == Type::STRING) {
-				return _isContentEqual(*target._getValue<std::string*>(), (char*)_value);
-			} else if (target._type == Type::SHORT_STRING) {
-				return _isContentEqual((char*)_value, (char*)target._value);
-			} else {
+			switch (target._type) {
+			case Type::STRING:
+			{
+				auto s = target._getValue<Str*>();
+				return _isContentEqual(s->value, s->size, _value, strlen((char*)_value));
+			}
+			case Type::SHORT_STRING:
+				return _isContentEqual(_value, strlen((char*)_value), target._value, strlen((char*)target._value));
+			case Type::STD_SV:
+			{
+				auto sv = target._getValue<std::string_view*>();
+				return _isContentEqual(_value, strlen((char*)_value), sv->data(), sv->size());
+			}
+			default:
+				return false;
+			}
+		}
+		case Type::STD_SV:
+		{
+			switch (target._type) {
+			case Type::STRING:
+			{
+				auto s = target._getValue<Str*>();
+				auto sv = _getValue<std::string_view*>();
+				return _isContentEqual(s->value, s->size, sv->data(), sv->size());
+			}
+			case Type::SHORT_STRING:
+			{
+				auto sv = _getValue<std::string_view*>();
+				return _isContentEqual(sv->data(), sv->size(), target._value, strlen((char*)target._value));
+			}
+			case Type::STD_SV:
+				return *_getValue<std::string_view*>() == *target._getValue<std::string_view*>();
+			default:
 				return false;
 			}
 		}
@@ -334,21 +404,64 @@ namespace aurora {
 			return _isEqual<f64>(target);
 		case Type::STRING:
 		{
-			if (target._type == Type::STRING) {
-				return *_getValue<std::string*>() == *target._getValue<std::string*>();
-			} else if (target._type == Type::SHORT_STRING) {
-				return _isContentEqual(*_getValue<std::string*>(), (char*)target._value);
-			} else {
+			switch (target._type) {
+			case Type::STRING:
+			{
+				auto s1 = _getValue<Str*>();
+				auto s2 = target._getValue<Str*>();
+				return _isContentEqual(s1->value, s1->size, s2->value, s2->size);
+			}
+			case Type::SHORT_STRING:
+			{
+				auto s = _getValue<Str*>();
+				return _isContentEqual(s->value, s->size, target._value, strlen((char*)target._value));
+			}
+			case Type::STD_SV:
+			{
+				auto s = _getValue<Str*>();
+				auto sv = target._getValue<std::string_view*>();
+				return _isContentEqual(s->value, s->size, sv->data(), sv->size());
+			}
+			default:
 				return false;
 			}
 		}
 		case Type::SHORT_STRING:
 		{
-			if (target._type == Type::STRING) {
-				return _isContentEqual(*target._getValue<std::string*>(), (char*)_value);
-			} else if (target._type == Type::SHORT_STRING) {
-				return _isContentEqual((char*)_value, (char*)target._value);
-			} else {
+			switch (target._type) {
+			case Type::STRING:
+			{
+				auto s = target._getValue<Str*>();
+				return _isContentEqual(s->value, s->size, _value, strlen((char*)_value));
+			}
+			case Type::SHORT_STRING:
+				return _isContentEqual(_value, strlen((char*)_value), target._value, strlen((char*)target._value));
+			case Type::STD_SV:
+			{
+				auto sv = target._getValue<std::string_view*>();
+				return _isContentEqual(_value, strlen((char*)_value), sv->data(), sv->size());
+			}
+			default:
+				return false;
+			}
+		}
+		case Type::STD_SV:
+		{
+			switch (target._type) {
+			case Type::STRING:
+			{
+				auto s = target._getValue<Str*>();
+				auto sv = _getValue<std::string_view*>();
+				return _isContentEqual(s->value, s->size, sv->data(), sv->size());
+			}
+			case Type::SHORT_STRING:
+			{
+				auto sv = _getValue<std::string_view*>();
+				return _isContentEqual(sv->data(), sv->size(), target._value, strlen((char*)target._value));
+			}
+			case Type::STD_SV:
+				return *_getValue<std::string_view*>() == *target._getValue<std::string_view*>();
+			default:
 				return false;
 			}
 		}
@@ -381,53 +494,6 @@ namespace aurora {
 		}
 	}
 
-	bool SerializableObject::operator==(const SerializableObject& right) const {
-		switch (_type) {
-		case Type::INVALID:
-			return right._type == Type::INVALID;
-		case Type::BOOL:
-			return right._type == Type::BOOL && _getValue<bool>() == right._getValue<bool>();
-		case Type::INT:
-			return _isEqual<int64_t>(right);
-		case Type::UINT:
-			return _isEqual<uint64_t>(right);
-		case Type::FLOAT:
-			return _isEqual<f32>(right);
-		case Type::DOUBLE:
-			return _isEqual<f64>(right);
-		case Type::STRING:
-		{
-			if (right._type == Type::STRING) {
-				return *_getValue<std::string*>() == *right._getValue<std::string*>();
-			} else if (right._type == Type::SHORT_STRING) {
-				return _isContentEqual(*_getValue<std::string*>(), (char*)right._value);
-			} else {
-				return false;
-			}
-		}
-		case Type::SHORT_STRING:
-		{
-			if (right._type == Type::STRING) {
-				return _isContentEqual(*right._getValue<std::string*>(), (char*)_value);
-			} else if (right._type == Type::SHORT_STRING) {
-				return _isContentEqual((char*)_value, (char*)right._value);
-			} else {
-				return false;
-			}
-		}
-		case Type::ARRAY:
-			return right._type == Type::ARRAY && _getValue<Array*>() == right._getValue<Array*>();
-		case Type::MAP:
-			return right._type == Type::MAP && _getValue<Map*>() == right._getValue<Map*>();
-		case Type::BYTES:
-			return right._type == Type::BYTES && _getValue<Bytes<false>*>() == right._getValue<Bytes<false>*>();
-		case Type::EXT_BYTES:
-			return right._type == Type::EXT_BYTES && _getValue<Bytes<true>*>()->getValue() == right._getValue<Bytes<true>*>()->getValue() && _getValue<Bytes<true>*>()->getSize() == right._getValue<Bytes<true>*>()->getSize();
-		default:
-			return false;
-		}
-	}
-
 	size_t SerializableObject::getSize() const {
 		switch (_type) {
 		case Type::ARRAY:
@@ -439,7 +505,7 @@ namespace aurora {
 		case Type::EXT_BYTES:
 			return _getValue<Bytes<true>*>()->getSize();
 		case Type::STRING:
-			return _getValue<std::string*>()->size();
+			return _getValue<Str*>()->size;
 		case Type::SHORT_STRING:
 			return strlen((char*)_value);
 		default:
@@ -462,8 +528,13 @@ namespace aurora {
 			_getValue<Bytes<true>*>()->clear();
 			break;
 		case Type::STRING:
-			_getValue<std::string*>()->clear();
+		{
+			_getValue<Str*>()->unref();
+			_value[0] = 0;
+			_type = Type::SHORT_STRING;
+
 			break;
+		}
 		case Type::SHORT_STRING:
 			_value[0] = 0;
 			break;
@@ -540,7 +611,10 @@ namespace aurora {
 		case Type::DOUBLE:
 			return String::toString<f64>(_getValue<f64>());
 		case Type::STRING:
-			return *_getValue<std::string*>();
+		{
+			auto s = _getValue<Str*>();
+			return std::string(s->value, s->size);
+		}
 		case Type::SHORT_STRING:
 			return (char*)_value;
 		case Type::INVALID:
@@ -553,7 +627,10 @@ namespace aurora {
 	std::string_view SerializableObject::toStringView() const {
 		switch (_type) {
 		case Type::STRING:
-			return std::string_view(*_getValue<std::string*>());
+		{
+			auto s = _getValue<Str*>();
+			return std::string_view(s->value, s->size);
+		}
 		case Type::SHORT_STRING:
 			return std::string_view((char*)_value);
 		default:
@@ -583,8 +660,13 @@ namespace aurora {
 		case Type::STRING:
 		case Type::SHORT_STRING:
 		case Type::INVALID:
-			json += '"' + toString() + '"';
+		{
+			json += '"';
+			json += toStringView();
+			json += '"';
+
 			break;
+		}
 		case Type::ARRAY:
 		{
 			json += '[';
@@ -637,60 +719,20 @@ namespace aurora {
 		}
 	}
 
-	void SerializableObject::set(const char* value) {
-		if (_type == Type::STRING) {
-			*_getValue<std::string*>() = value;
-		} else if (_type == Type::SHORT_STRING) {
-			if (auto size = strlen(value); size < VALUE_SIZE) {
-				_writeShortString(value, size);
-			} else {
-				_getValue<std::string*>() = new std::string(value);
-				_type = Type::STRING;
-			}
-		} else {
-			_freeValue();
-
-			if (auto size = strlen(value); size < VALUE_SIZE) {
-				_writeShortString(value, size);
-				_type = Type::SHORT_STRING;
-			} else {
-				_getValue<std::string*>() = new std::string(value);
-				_type = Type::STRING;
-			}
-		}
-	}
-
-	void SerializableObject::set(const std::string& value) {
-		if (_type == Type::STRING) {
-			*_getValue<std::string*>() = value;
-		} else if (_type == Type::SHORT_STRING) {
-			if (auto size = value.size(); size < VALUE_SIZE) {
-				_writeShortString(value.data(), size);
-			} else {
-				_getValue<std::string*>() = new std::string(value);
-				_type = Type::STRING;
-			}
-		} else {
-			_freeValue();
-
-			if (auto size = value.size(); size < VALUE_SIZE) {
-				_writeShortString(value.data(), size);
-				_type = Type::SHORT_STRING;
-			} else {
-				_getValue<std::string*>() = new std::string(value);
-				_type = Type::STRING;
-			}
-		}
-	}
-
 	void SerializableObject::set(const std::string_view& value) {
 		if (_type == Type::STRING) {
-			*_getValue<std::string*>() = value;
+			_getValue<Str*>()->unref();
+			if (auto size = value.size(); size < VALUE_SIZE) {
+				_writeShortString(value.data(), size);
+				_type = Type::SHORT_STRING;
+			} else {
+				_getValue<Str*>() = new Str(value.data(), size);
+			}
 		} else if (_type == Type::SHORT_STRING) {
 			if (auto size = value.size(); size < VALUE_SIZE) {
 				_writeShortString(value.data(), size);
 			} else {
-				_getValue<std::string*>() = new std::string(value);
+				_getValue<Str*>() = new Str(value.data(), size);
 				_type = Type::STRING;
 			}
 		} else {
@@ -700,7 +742,7 @@ namespace aurora {
 				_writeShortString(value.data(), size);
 				_type = Type::SHORT_STRING;
 			} else {
-				_getValue<std::string*>() = new std::string(value);
+				_getValue<Str*>() = new Str(value.data(), size);
 				_type = Type::STRING;
 			}
 		}
@@ -719,10 +761,17 @@ namespace aurora {
 	void SerializableObject::set(const SerializableObject& value, bool copy) {
 		switch (value._type) {
 		case Type::STRING:
-			set(*value._getValue<std::string*>());
+		{
+			auto s = value._getValue<Str*>();
+			set(std::string_view(s->value, s->size));
+
 			break;
+		}
 		case Type::SHORT_STRING:
 			set((const char*)value._value);
+			break;
+		case Type::STD_SV:
+			set(*value._getValue<std::string_view*>());
 			break;
 		case Type::ARRAY:
 		{
@@ -1152,7 +1201,7 @@ namespace aurora {
 		switch (_type) {
 		case Type::STRING:
 		{
-			delete _getValue<std::string*>();
+			_getValue<Str*>()->unref();
 			_type = Type::INVALID;
 
 			return true;

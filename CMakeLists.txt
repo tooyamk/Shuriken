@@ -4,7 +4,7 @@ set(CMAKE_DEBUG_POSTFIX d)
 set(CMAKE_RELEASE_POSTFIX "")
 set(CMAKE_RELWITHDEBINFO_POSTFIX "")#rd)
 set(CMAKE_MINSIZEREL_POSTFIX "")#rs)
-set(AE_BUILD_TYPE_POSTFIX $<$<CONFIG:Debug>:${CMAKE_DEBUG_POSTFIX}>$<$<CONFIG:Release>:${CMAKE_RELEASE_POSTFIX}>$<$<CONFIG:RelWithDebInfo>:${CMAKE_RELWITHDEBINFO_POSTFIX}>$<$<CONFIG:MinSizeRel>:${CMAKE_MINSIZEREL_POSTFIX}>)
+set(AE_BUILD_TYPE_SUFFIX $<$<CONFIG:Debug>:${CMAKE_DEBUG_POSTFIX}>$<$<CONFIG:Release>:${CMAKE_RELEASE_POSTFIX}>$<$<CONFIG:RelWithDebInfo>:${CMAKE_RELWITHDEBINFO_POSTFIX}>$<$<CONFIG:MinSizeRel>:${CMAKE_MINSIZEREL_POSTFIX}>)
 
 set(CMAKE_SHARED_LIBRARY_PREFIX "")
 set(CMAKE_STATIC_LIBRARY_PREFIX "")
@@ -58,14 +58,14 @@ function(__add_executable_source_group)
     add_executable(${ARGV})
 endfunction(__add_executable_source_group)
 
-function(__target_link_library_external_project target lib_prerix)
-    set(tmp_dumy_lib tmp_dumy_lib_${target}_${lib_prerix})
+function(__target_link_library_external_project target lib_prefix)
+    set(tmp_dumy_lib tmp_dumy_lib_${target}_${lib_prefix})
     add_library(${tmp_dumy_lib} UNKNOWN IMPORTED)
-    get_property(tmp_var GLOBAL PROPERTY ${lib_prerix}_R)
+    get_property(tmp_var GLOBAL PROPERTY ${lib_prefix}_R)
     if (tmp_var)
         set_property(TARGET ${tmp_dumy_lib} PROPERTY IMPORTED_LOCATION ${tmp_var})
     endif()
-    get_property(tmp_var GLOBAL PROPERTY ${lib_prerix}_D)
+    get_property(tmp_var GLOBAL PROPERTY ${lib_prefix}_D)
     if (tmp_var)
         set_property(TARGET ${tmp_dumy_lib} PROPERTY IMPORTED_LOCATION_DEBUG ${tmp_var})
     endif()
@@ -103,7 +103,7 @@ macro(__create_external_project_cmake_args target)
         -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
         -DCMAKE_DEBUG_POSTFIX=${CMAKE_DEBUG_POSTFIX}
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-        -DCMAKE_CONFIGURATION_TYPES=${CMAKE_CONFIGURATION_TYPES}
+        #-DCMAKE_CONFIGURATION_TYPES=${CMAKE_CONFIGURATION_TYPES}
         -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
         -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
         -DANDROID_ABI=${ANDROID_ABI}

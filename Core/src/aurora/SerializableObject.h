@@ -36,7 +36,8 @@ namespace aurora {
 			BYTES,
 			EXT_BYTES,
 
-			SHORT_STRING
+			SHORT_STRING,
+			STD_SV
 		};
 
 
@@ -68,9 +69,11 @@ namespace aurora {
 				case Type::MAP:
 					return std::hash<Map*>{}(value._getValue<Map*>());
 				case Type::STRING:
-					return std::hash<std::string>{}(*value._getValue<std::string*>());
+					return std::hash<std::string>{}(value._getValue<Str*>()->value);
 				case Type::SHORT_STRING:
 					return std::hash<std::string>{}((char*)value._value);
+				case Type::STD_SV:
+					return std::hash<std::string_view>{}(*value._getValue<std::string_view*>());
 				default:
 					return 0;
 				}
@@ -176,8 +179,7 @@ namespace aurora {
 
 		bool AE_CALL toBool(bool defaultValue = false) const;
 
-		template<typename T,
-		typename = typename std::enable_if_t<std::is_arithmetic_v<T>, T>>
+		template<typename T, typename = typename std::enable_if_t<std::is_arithmetic_v<T>, T>>
 		T AE_CALL toNumber(T defaultValue = 0) const {
 			switch (_type) {
 			case Type::BOOL:
@@ -191,7 +193,10 @@ namespace aurora {
 			case Type::DOUBLE:
 				return _getValue<f64>();
 			case Type::STRING:
-				return String::toNumber<T>(*_getValue<std::string*>());
+			{
+				auto s = _getValue<Str*>();
+				return String::toNumber<T>(std::string_view(s->value, s->size));
+			}
 			case Type::SHORT_STRING:
 				return String::toNumber<T>(std::string_view((char*)_value, strlen((char*)_value)));
 			default:
@@ -206,6 +211,21 @@ namespace aurora {
 			std::string json;
 			_toJson(json);
 			return std::move(json);
+		}
+
+		template<typename T>
+		T AE_CALL toValue() {
+			if constexpr (std::is_arithmetic_v<T>) {
+				return toNumber<T>();
+			} else if constexpr (std::is_base_of_v<std::string, T>) {
+				return toString();
+			} else if constexpr (std::is_base_of_v<std::string_view, T>) {
+				return toStringView();
+			} else if constexpr (std::is_base_of_v<bool, T>) {
+				return toBool();
+			} else {
+				return (T)0;
+			}
 		}
 
 		inline void AE_CALL set(bool value) {
@@ -241,8 +261,12 @@ namespace aurora {
 		inline void AE_CALL set(const f64& value) {
 			_set<f64, Type::DOUBLE>(value);
 		}
-		void AE_CALL set(const char* value);
-		void AE_CALL set(const std::string& value);
+		inline void AE_CALL set(const char* value) {
+			set(std::string_view(value, strlen(value)));
+		}
+		inline void AE_CALL set(const std::string& value) {
+			set(std::string_view(value));
+		}
 		void AE_CALL set(const std::string_view& value);
 		void AE_CALL set(const uint8_t* value, size_t size, bool copy);
 
@@ -256,10 +280,70 @@ namespace aurora {
 		void AE_CALL insertAt(size_t index, const SerializableObject& value);
 
 		SerializableObject& AE_CALL get(const SerializableObject& key);
+		inline SerializableObject& AE_CALL get(const char* key) {
+			return get(std::string_view(key, strlen(key)));
+		}
+		inline SerializableObject& AE_CALL get(const std::string& key) {
+			return get(std::string_view(key));
+		}
+		inline SerializableObject& AE_CALL get(const std::string_view& key) {
+			SerializableObject so;
+			so._type = Type::STD_SV;
+			so._getValue<const std::string_view*>() = &key;
+			return get(so);
+		}
 		SerializableObject AE_CALL tryGet(const SerializableObject& key) const;
+		inline SerializableObject AE_CALL tryGet(const char* key) const {
+			return tryGet(std::string_view(key, strlen(key)));
+		}
+		inline SerializableObject AE_CALL tryGet(const std::string& key) const {
+			return tryGet(std::string_view(key));
+		}
+		inline SerializableObject AE_CALL tryGet(const std::string_view& key) const {
+			SerializableObject so;
+			so._type = Type::STD_SV;
+			so._getValue<const std::string_view*>() = &key;
+			return tryGet(so);
+		}
 		SerializableObject& AE_CALL insert(const SerializableObject& key, const SerializableObject& value);
+		inline SerializableObject& AE_CALL insert(const char* key, const SerializableObject& value) {
+			return insert(std::string_view(key, strlen(key)), value);
+		}
+		inline SerializableObject& AE_CALL insert(const std::string& key, const SerializableObject& value) {
+			return insert(std::string_view(key), value);
+		}
+		inline SerializableObject& AE_CALL insert(const std::string_view& key, const SerializableObject& value) {
+			SerializableObject so;
+			so._type = Type::STD_SV;
+			so._getValue<const std::string_view*>() = &key;
+			return insert(so, value);
+		}
 		SerializableObject AE_CALL remove(const SerializableObject& key);
+		inline SerializableObject AE_CALL remove(const char* key) {
+			return remove(std::string_view(key, strlen(key)));
+		}
+		inline SerializableObject AE_CALL remove(const std::string& key) {
+			return remove(std::string_view(key));
+		}
+		inline SerializableObject AE_CALL remove(const std::string_view& key) {
+			SerializableObject so;
+			so._type = Type::STD_SV;
+			so._getValue<const std::string_view*>() = &key;
+			return remove(so);
+		}
 		bool AE_CALL has(const SerializableObject& key) const;
+		inline bool AE_CALL has(const char* key) const {
+			return has(std::string_view(key, strlen(key)));
+		}
+		inline bool AE_CALL has(const std::string& key) const {
+			return has(std::string_view(key));
+		}
+		inline bool AE_CALL has(const std::string_view& key) const {
+			SerializableObject so;
+			so._type = Type::STD_SV;
+			so._getValue<const std::string_view*>() = &key;
+			return has(so);
+		}
 
 		void AE_CALL forEach(const std::function<void(const SerializableObject& key, const SerializableObject& value)>& callback) const;
 		void AE_CALL forEach(const std::function<bool(const SerializableObject& key, const SerializableObject& value)>& callback) const;
@@ -274,7 +358,9 @@ namespace aurora {
 		bool AE_CALL isEqual(const SerializableObject& target) const;
 		bool AE_CALL isContentEqual(const SerializableObject& target) const;
 
-		bool operator==(const SerializableObject& right) const;
+		inline bool operator==(const SerializableObject& right) const {
+			return isEqual(right);
+		}
 
 	private:
 		enum class InternalType : uint8_t {
@@ -378,6 +464,16 @@ namespace aurora {
 			void AE_CALL unpack(ByteArray& ba, uint32_t size);
 
 			std::unordered_map<SerializableObject, SerializableObject, HashKey, HashCompare> value;
+		};
+
+
+		class Str : public Ref {
+		public:
+			Str(const char* data, size_t size);
+			virtual ~Str();
+
+			char* value;
+			size_t size;
 		};
 
 
@@ -544,8 +640,7 @@ namespace aurora {
 			return _getValue<Bytes<Ext>*>();
 		}
 
-		template<typename T,
-		typename = typename std::enable_if_t<std::is_arithmetic_v<T>, T>>
+		template<typename T, typename = typename std::enable_if_t<std::is_arithmetic_v<T>, T>>
 		inline bool AE_CALL _isEqual(const SerializableObject& target) const {
 			switch (target._type) {
 			case Type::INT:
@@ -578,23 +673,8 @@ namespace aurora {
 			_value[size] = 0;
 		}
 
-		inline bool AE_CALL _isContentEqual(const uint8_t* s1, size_t size1, const uint8_t* s2, size_t size2) const {
-			if (size1 == size2) {
-				for (size_t i = 0; i < size1; ++i) {
-					if (s1[i] != s2[i]) return false;
-				}
-				return true;
-			} else {
-				return false;
-			}
-		}
-
-		inline bool AE_CALL _isContentEqual(const std::string& s1, const char* s2) const {
-			return _isContentEqual((uint8_t*)s1.data(), s1.size(), (uint8_t*)s2, strlen(s2));
-		}
-
-		inline bool AE_CALL _isContentEqual(const char* s1, const char* s2) const {
-			return _isContentEqual((uint8_t*)s1, strlen(s1), (uint8_t*)s2, strlen(s2));
+		inline bool AE_CALL _isContentEqual(const void* s1, size_t size1, const void* s2, size_t size2) const {
+			return size1 == size2 ? memEqual(s1, s2, size1) : false;
 		}
 
 		template<typename T = std::nullptr_t, typename = std::enable_if_t<std::is_null_pointer_v<T> || std::is_base_of_v<IPackFilter, T>, T>>
@@ -675,12 +755,12 @@ namespace aurora {
 			}
 			case Type::STRING:
 			{
-				auto& s = *_getValue<std::string*>();
-				if (s.empty()) {
-					ba.write<ba_t::UI8>((uint8_t)InternalType::STRING_EMPTY);
-				} else {
+				auto s = _getValue<Str*>();
+				if (s->size) {
 					ba.write<ba_t::UI8>((uint8_t)_type);
-					ba.write<ba_t::STR>(s);
+					ba.write<ba_t::STR>(s->value, s->size);
+				} else {
+					ba.write<ba_t::UI8>((uint8_t)InternalType::STRING_EMPTY);
 				}
 
 				break;

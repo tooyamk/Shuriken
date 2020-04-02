@@ -69,11 +69,11 @@ endif ()
 set(__OUTPUT_LIBS_FOLDER ${AE_BUILD_DIR}/libs)
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${__OUTPUT_LIBS_FOLDER}
     COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/../Resources/ ${AE_BUILD_DIR}/Resources/ 
 )
 
 set(test_pre_build_commands
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${__OUTPUT_LIBS_FOLDER}
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_AE_CORE_DLL} ${AE_BUILD_DIR}
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_AE_PNG_CONVERTER_DLL} ${__OUTPUT_LIBS_FOLDER}
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_AE_FBX_CONVERTER_DLL} ${__OUTPUT_LIBS_FOLDER}
