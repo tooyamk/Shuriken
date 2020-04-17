@@ -7,17 +7,17 @@ namespace aurora::components::lights {
 	public:
 		PointLight();
 
-		inline f32 AE_CALL getRadius() const {
+		inline float32_t AE_CALL getRadius() const {
 			return _radius;
 		}
 
-		inline void AE_CALL setRadius(f32 radius) {
+		inline void AE_CALL setRadius(float32_t radius) {
 			_radius = radius;
 		}
 
 	protected:
 		AE_RTTI_DECLARE_DERIVED(ILight);
 
-		f32 _radius;
+		float32_t _radius;
 	};
 }

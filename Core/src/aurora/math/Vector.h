@@ -478,19 +478,19 @@ namespace aurora {
 	}
 
 	template<typename T> using Vec1 = Vector<1, T>;
-	using Vec1f32 = Vec1<f32>;
+	using Vec1f32 = Vec1<float32_t>;
 	using Vec1i32 = Vec1<int32_t>;
 	using Vec1ui32 = Vec1<uint32_t>;
 	template<typename T> using Vec2 = Vector<2, T>;
-	using Vec2f32 = Vec2<f32>;
+	using Vec2f32 = Vec2<float32_t>;
 	using Vec2i32 = Vec2<int32_t>;
 	using Vec2ui32 = Vec2<uint32_t>;
 	template<typename T> using Vec3 = Vector<3, T>;
-	using Vec3f32 = Vec3<f32>;
+	using Vec3f32 = Vec3<float32_t>;
 	using Vec3i32 = Vec3<int32_t>;
 	using Vec3ui32 = Vec3<uint32_t>;
 	template<typename T> using Vec4 = Vector<4, T>;
-	using Vec4f32 = Vec4<f32>;
+	using Vec4f32 = Vec4<float32_t>;
 	using Vec4i32 = Vec4<int32_t>;
 	using Vec4ui32 = Vec4<uint32_t>;
 }

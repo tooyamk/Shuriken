@@ -90,7 +90,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		DXGI_FORMAT fmt = DXGI_FORMAT_R8G8B8A8_UNORM;
 
 		uint32_t maxResolutionArea = 0;
-		f32 maxRefreshRate = 0.f;
+		float32_t maxRefreshRate = 0.f;
 		for (UINT i = 0;; ++i) {
 			IDXGIOutput* output = nullptr;
 			if (dxgAdapter->EnumOutputs(i, &output) == DXGI_ERROR_NOT_FOUND) break;
@@ -112,9 +112,9 @@ namespace aurora::modules::graphics::win_d3d11 {
 					maxResolutionArea = area;
 					_refreshRate.Numerator = 0;
 					_refreshRate.Denominator = 1;
-					maxRefreshRate = (f32)m.RefreshRate.Numerator / (f32)m.RefreshRate.Denominator;
+					maxRefreshRate = (float32_t)m.RefreshRate.Numerator / (float32_t)m.RefreshRate.Denominator;
 				} else if (maxResolutionArea == area) {
-					f32 rr = (f32)m.RefreshRate.Numerator / (f32)m.RefreshRate.Denominator;
+					float32_t rr = (float32_t)m.RefreshRate.Numerator / (float32_t)m.RefreshRate.Denominator;
 					if (rr > maxRefreshRate) {
 						maxRefreshRate = rr;
 
@@ -544,7 +544,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		}
 	}
 
-	void Graphics::clear(ClearFlag flags, const Vec4f32& color, f32 depth, size_t stencil) {
+	void Graphics::clear(ClearFlag flags, const Vec4f32& color, float32_t depth, size_t stencil) {
 		if (_context) {
 			if ((flags & ClearFlag::COLOR) != ClearFlag::NONE) {
 				if (_curIsBackBuffer) {

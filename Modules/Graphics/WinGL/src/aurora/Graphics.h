@@ -52,7 +52,7 @@ namespace aurora::modules::graphics::win_gl {
 		virtual void AE_CALL present() override;
 
 		virtual void AE_CALL setRenderTarget(IRenderTarget* rt) override;
-		virtual void AE_CALL clear(ClearFlag flags, const Vec4f32& color, f32 depth, size_t stencil) override;
+		virtual void AE_CALL clear(ClearFlag flags, const Vec4f32& color, float32_t depth, size_t stencil) override;
 
 		bool AE_CALL createDevice(Ref* loader, Application* app, IProgramSourceTranslator* trans, const GraphicsAdapter* adapter, SampleCount sampleCount);
 
@@ -118,7 +118,7 @@ namespace aurora::modules::graphics::win_gl {
 
 			struct {
 				Vec4f32 color;
-				f32 depth;
+				float32_t depth;
 				size_t stencil;
 			} clear;
 

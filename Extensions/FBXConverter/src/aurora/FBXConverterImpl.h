@@ -18,7 +18,7 @@ namespace aurora::extensions::fbx_converter {
 
 
 #define AE_FBX_CONVERTER_DECLARE_ENUM(__NAME__, __BASE__, ...) \
-enum class __NAME__ :__BASE__  {__VA_ARGS__}; \
+enum class __NAME__ : __BASE__  {__VA_ARGS__}; \
 inline static const std::vector<std::string> __NAME__##_Members = { AE_FBX_CONVERTER_TO_STR_ARRAY(__VA_ARGS__) }; \
 inline static std::unordered_map<std::string_view, __NAME__> __NAME__##_RefDataGenerator() { \
 	std::unordered_map<std::string_view, __NAME__> map; \
@@ -191,8 +191,8 @@ inline static __NAME__ get##__NAME__(const std::string_view& name) { \
 				int16_t i16Val;
 				int32_t i32Val;
 				int64_t i64Val;
-				f32 f32Val;
-				f64 f64Val;
+				float32_t f32Val;
+				float64_t f64Val;
 				struct {
 					uint8_t* data;
 					size_t size;
@@ -656,9 +656,9 @@ inline static __NAME__ get##__NAME__(const std::string_view& name) { \
 					vs->format.size = modules::graphics::VertexSize::THREE;
 					vs->format.type = modules::graphics::VertexType::F32;
 					if (p.type == Node::Property::Type::F32_ARR) {
-						vs->data = _buildPosition<f32, f32>(p, sourceIndices);
+						vs->data = _buildPosition<float32_t, float32_t>(p, sourceIndices);
 					} else {
-						vs->data = _buildPosition<f64, f32>(p, sourceIndices);
+						vs->data = _buildPosition<float64_t, float32_t>(p, sourceIndices);
 					}
 
 					mesh.setVertexSource(ShaderPredefine::POSITION0, vs);
@@ -812,9 +812,9 @@ inline static __NAME__ get##__NAME__(const std::string_view& name) { \
 				std::string_view mt((char*)mappingType->rawVal.data, mappingType->rawVal.size);
 				VertexResource* vs = nullptr;
 				if (values->type == Node::Property::Type::F32_ARR) {
-					vs = _buildVertexSource<f32, uint32_t, f32>(*values, nullptr, rt, mt, sourceIndices, 3);
+					vs = _buildVertexSource<float32_t, uint32_t, float32_t>(*values, nullptr, rt, mt, sourceIndices, 3);
 				} else {
-					vs = _buildVertexSource<f64, uint32_t, f32>(*values, nullptr, rt, mt, sourceIndices, 3);
+					vs = _buildVertexSource<float64_t, uint32_t, float32_t>(*values, nullptr, rt, mt, sourceIndices, 3);
 				}
 				if (vs) {
 					vs->format.size = modules::graphics::VertexSize::THREE;
@@ -860,15 +860,15 @@ inline static __NAME__ get##__NAME__(const std::string_view& name) { \
 				VertexResource* vs = nullptr;
 				if (values->type == Node::Property::Type::F32_ARR) {
 					if (indices->type == Node::Property::Type::I32_ARR) {
-						vs = _buildVertexSource<f32, uint32_t, f32>(*values, indices, rt, mt, sourceIndices, 2);
+						vs = _buildVertexSource<float32_t, uint32_t, float32_t>(*values, indices, rt, mt, sourceIndices, 2);
 					} else {
-						vs = _buildVertexSource<f32, uint64_t, f32>(*values, indices, rt, mt, sourceIndices, 2);
+						vs = _buildVertexSource<float32_t, uint64_t, float32_t>(*values, indices, rt, mt, sourceIndices, 2);
 					}
 				} else {
 					if (indices->type == Node::Property::Type::I32_ARR) {
-						vs = _buildVertexSource<f64, uint32_t, f32>(*values, indices, rt, mt, sourceIndices, 2);
+						vs = _buildVertexSource<float64_t, uint32_t, float32_t>(*values, indices, rt, mt, sourceIndices, 2);
 					} else {
-						vs = _buildVertexSource<f64, uint64_t, f32>(*values, indices, rt, mt, sourceIndices, 2);
+						vs = _buildVertexSource<float64_t, uint64_t, float32_t>(*values, indices, rt, mt, sourceIndices, 2);
 					}
 				}
 				if (vs) {

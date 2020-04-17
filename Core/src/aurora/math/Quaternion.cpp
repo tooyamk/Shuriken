@@ -26,7 +26,7 @@ namespace aurora {
 		w(q.w) {
 	}
 
-	Quaternion::Quaternion(f32 x, f32 y, f32 z, f32 w) :
+	Quaternion::Quaternion(float32_t x, float32_t y, float32_t z, float32_t w) :
 		x(x),
 		y(y),
 		z(z),
@@ -42,7 +42,7 @@ namespace aurora {
 		auto n = x * x + y * y + z * z + w * w;
 
 		if (n == 1.f) return;
-		if (n = std::sqrt(n); n < Math::TOLERANCE<f32>) return;
+		if (n = std::sqrt(n); n < Math::TOLERANCE<float32_t>) return;
 
 		n = 1.f / n;
 
@@ -52,7 +52,7 @@ namespace aurora {
 		w *= n;
 	}
 
-	void Quaternion::toEuler(f32(&dst)[3]) const {
+	void Quaternion::toEuler(float32_t(&dst)[3]) const {
 		auto y2 = y * y;
 		auto ex = std::atan2(2.f * (w * x + y * z), (1.f - 2.f * (x * x + y2)));
 		auto ey = std::asin(2.f * (w * y - z * x));
@@ -88,7 +88,7 @@ namespace aurora {
 		m[2][2] = 1.f - xx - yy;
 	}
 
-	void Quaternion::createFromEuler(const f32(&radians)[3], Quaternion& dst) {
+	void Quaternion::createFromEuler(const float32_t(&radians)[3], Quaternion& dst) {
 		auto x = radians[0] * .5f;
 		auto y = radians[1] * .5f;
 		auto z = radians[2] * .5f;
@@ -108,19 +108,19 @@ namespace aurora {
 		dst.set(sxcy * cz - cxsy * sz, cxsy * cz + sxcy * sz, cxcy * sz - sxsy * cz, cxcy * cz + sxsy * sz);
 	}
 
-	void Quaternion::createFromAxis(const f32(&axis)[3], f32 radian, Quaternion& dst) {
+	void Quaternion::createFromAxis(const float32_t(&axis)[3], float32_t radian, Quaternion& dst) {
 		radian *= .5f;
 		auto s = std::sin(radian);
 
 		dst.set(-axis[0] * s, -axis[1] * s, -axis[2] * s, std::cos(radian));
 	}
 
-	void Quaternion::createLookAt(const f32(&forward)[3], const f32(&upward)[3], Quaternion& dst) {
+	void Quaternion::createLookAt(const float32_t(&forward)[3], const float32_t(&upward)[3], Quaternion& dst) {
 		auto& zaxis = forward;
-		f32 xaxis[3], yaxis[3];
-		Math::cross<f32, f32>(upward, zaxis, xaxis);
-		Math::normalize<3, f32, f32>(xaxis, xaxis);
-		Math::cross<f32, f32>(zaxis, xaxis, yaxis);
+		float32_t xaxis[3], yaxis[3];
+		Math::cross<float32_t, float32_t>(upward, zaxis, xaxis);
+		Math::normalize<3, float32_t, float32_t>(xaxis, xaxis);
+		Math::cross<float32_t, float32_t>(zaxis, xaxis, yaxis);
 
 		auto w = std::sqrt(1.f + xaxis[0] + yaxis[1] + zaxis[2]) * .5f;
 		auto recip = .25f / w;

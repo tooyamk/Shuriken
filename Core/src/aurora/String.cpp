@@ -1,6 +1,29 @@
 #include "String.h"
 
 namespace aurora {
+	bool String::isUTF8(const char* data, size_t len) {
+		const auto buf = (uint8_t*)data;
+		size_t i = 0;
+		while (i < len) {
+			if (auto c = buf[i]; c < 0x80) {
+				++i;
+			} else if (c < 0xC0) {
+				return false;
+			} else if (c < 0xE0) {
+				if (i >= len - 1) break;
+				if ((buf[i + 1] & 0xC0) != 0x80) return false;
+				i += 2;
+			} else if (c < 0xF0) {
+				if (i >= len - 2) break;
+				if ((buf[i + 1] & 0xC0) != 0x80 || (buf[i + 2] & 0xC0) != 0x80) return false;
+				i += 3;
+			} else {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	std::string::size_type String::_UnicodeToUtf8(const wchar_t* in, std::wstring::size_type inLen, char* out) {
 		std::wstring::size_type s = 0;
 		std::string::size_type d = 0;

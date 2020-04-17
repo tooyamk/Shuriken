@@ -16,11 +16,11 @@ namespace aurora::components::lights {
 			_color = color;
 		}
 
-		inline f32 AE_CALL getIntensity() const {
+		inline float32_t AE_CALL getIntensity() const {
 			return _intensity;
 		}
 
-		inline void AE_CALL setIntensity(f32 intensity) {
+		inline void AE_CALL setIntensity(float32_t intensity) {
 			_intensity = intensity;
 		}
 
@@ -28,6 +28,6 @@ namespace aurora::components::lights {
 		AE_RTTI_DECLARE_DERIVED(IComponent);
 
 		Vec3f32 _color;
-		f32 _intensity;
+		float32_t _intensity;
 	};
 }

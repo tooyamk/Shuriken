@@ -49,9 +49,9 @@ namespace aurora::modules::graphics {
 
 	GraphicsAdapter* GraphicsAdapter::autoChoose(std::vector<GraphicsAdapter>& adapters) {
 		GraphicsAdapter* p = nullptr;
-		f64 highestScore = -1.;
+		float64_t highestScore = -1.;
 		for (auto& adapter : adapters) {
-			f64 score = _calcScore(adapter);
+			float64_t score = _calcScore(adapter);
 
 			if (highestScore < score) {
 				highestScore = score;
@@ -62,7 +62,7 @@ namespace aurora::modules::graphics {
 	}
 
 	void GraphicsAdapter::autoSort(const std::vector<GraphicsAdapter>& adapters, std::vector<uint32_t>& dst) {
-		std::vector<f64> scores;
+		std::vector<float64_t> scores;
 		dst.clear();
 		for (uint32_t i = 0, n = adapters.size(); i < n; ++i) {
 			scores.emplace_back(_calcScore(adapters[i]));
@@ -74,10 +74,10 @@ namespace aurora::modules::graphics {
 		});
 	}
 
-	f64 GraphicsAdapter::_calcScore(const GraphicsAdapter& adapter) {
-		const auto K2G = f64(1024 * 1024 * 1024);
+	float64_t GraphicsAdapter::_calcScore(const GraphicsAdapter& adapter) {
+		const auto K2G = float64_t(1024 * 1024 * 1024);
 
-		f64 score = 0.;
+		float64_t score = 0.;
 
 		score += adapter.dedicatedVideoMemory / K2G * 0.2;
 		score += adapter.dedicatedSystemMemory / K2G * 0.1;

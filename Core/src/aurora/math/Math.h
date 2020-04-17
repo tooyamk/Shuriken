@@ -94,8 +94,8 @@ namespace aurora {
 			for (uint32_t i = 0; i < N; ++i) dst[i] = tmp[i];
 		}
 
-		static void AE_CALL slerpQuat(const f32* from, const f32* to, f32 t, f32* dst);
-		inline static void AE_CALL appendQuat(const f32(&lhs)[4], const f32(&rhs)[4], f32(&dst)[4]) {
+		static void AE_CALL slerpQuat(const float32_t* from, const float32_t* to, float32_t t, float32_t* dst);
+		inline static void AE_CALL appendQuat(const float32_t(&lhs)[4], const float32_t(&rhs)[4], float32_t(&dst)[4]) {
 			auto w = lhs[3] * rhs[3] - lhs[0] * rhs[0] - lhs[1] * rhs[1] - lhs[2] * rhs[2];
 			auto x = lhs[0] * rhs[3] + lhs[3] * rhs[0] + lhs[2] * rhs[1] - lhs[1] * rhs[2];
 			auto y = lhs[1] * rhs[3] + lhs[3] * rhs[1] + lhs[0] * rhs[2] - lhs[2] * rhs[0];
@@ -108,7 +108,7 @@ namespace aurora {
 		}
 
 		template<typename T>
-		inline static void AE_CALL quatRotate(const T(&q)[4], const T(&p)[3], f32(&dst)[3]) {
+		inline static void AE_CALL quatRotate(const T(&q)[4], const T(&p)[3], float32_t(&dst)[3]) {
 			auto w = -p[0] * q[0] - p[1] * q[1] - p[2] * q[2];
 			auto x = q[3] * p[0] + q[1] * p[2] - q[2] * p[1];
 			auto y = q[3] * p[1] - q[0] * p[2] + q[2] * p[0];
@@ -121,22 +121,22 @@ namespace aurora {
 			dst[2] = -w * q[2] - x * q[1] + y * q[0] + z * q[3];
 		}
 
-		static void AE_CALL transposeMat(const f32(&m)[3][4], f32(&dst)[4][4]);
-		static void AE_CALL transposeMat(const f32(&m)[4][4], f32(&dst)[4][4]);
+		static void AE_CALL transposeMat(const float32_t(&m)[3][4], float32_t(&dst)[4][4]);
+		static void AE_CALL transposeMat(const float32_t(&m)[4][4], float32_t(&dst)[4][4]);
 
-		static void AE_CALL appendMat(const f32(&lhs)[3][4], const f32(&rhs)[3][4], f32(&dst)[3][4]);
-		static void AE_CALL appendMat(const f32(&lhs)[3][4], const f32(&rhs)[3][4], f32(&dst)[4][4]);
-		static void AE_CALL appendMat(const f32(&lhs)[3][4], const f32(&rhs)[4][4], f32(&dst)[3][4]);
-		static void AE_CALL appendMat(const f32(&lhs)[3][4], const f32(&rhs)[4][4], f32(&dst)[4][4]);
-		static void AE_CALL appendMat(const f32(&lhs)[4][4], const f32(&rhs)[3][4], f32(&dst)[3][4]);
-		static void AE_CALL appendMat(const f32(&lhs)[4][4], const f32(&rhs)[3][4], f32(&dst)[4][4]);
-		static void AE_CALL appendMat(const f32(&lhs)[4][4], const f32(&rhs)[4][4], f32(&dst)[3][4]);
-		static void AE_CALL appendMat(const f32(&lhs)[4][4], const f32(&rhs)[4][4], f32(&dst)[4][4]);
+		static void AE_CALL appendMat(const float32_t(&lhs)[3][4], const float32_t(&rhs)[3][4], float32_t(&dst)[3][4]);
+		static void AE_CALL appendMat(const float32_t(&lhs)[3][4], const float32_t(&rhs)[3][4], float32_t(&dst)[4][4]);
+		static void AE_CALL appendMat(const float32_t(&lhs)[3][4], const float32_t(&rhs)[4][4], float32_t(&dst)[3][4]);
+		static void AE_CALL appendMat(const float32_t(&lhs)[3][4], const float32_t(&rhs)[4][4], float32_t(&dst)[4][4]);
+		static void AE_CALL appendMat(const float32_t(&lhs)[4][4], const float32_t(&rhs)[3][4], float32_t(&dst)[3][4]);
+		static void AE_CALL appendMat(const float32_t(&lhs)[4][4], const float32_t(&rhs)[3][4], float32_t(&dst)[4][4]);
+		static void AE_CALL appendMat(const float32_t(&lhs)[4][4], const float32_t(&rhs)[4][4], float32_t(&dst)[3][4]);
+		static void AE_CALL appendMat(const float32_t(&lhs)[4][4], const float32_t(&rhs)[4][4], float32_t(&dst)[4][4]);
 
-		static bool AE_CALL invertMat(const f32(&m)[3][4], f32(&dst)[3][4]);
-		static bool AE_CALL invertMat(const f32(&m)[4][4], f32(&dst)[4][4]);
+		static bool AE_CALL invertMat(const float32_t(&m)[3][4], float32_t(&dst)[3][4]);
+		static bool AE_CALL invertMat(const float32_t(&m)[4][4], float32_t(&dst)[4][4]);
 
-		inline static void AE_CALL matTransformPoint(const f32(&m)[3][4], const f32(&p)[3], f32(&dst)[3]) {
+		inline static void AE_CALL matTransformPoint(const float32_t(&m)[3][4], const float32_t(&p)[3], float32_t(&dst)[3]) {
 			auto x = p[0] * m[0][0] + p[1] * m[0][1] + p[2] * m[0][2] + m[0][3];
 			auto y = p[0] * m[1][0] + p[1] * m[1][1] + p[2] * m[1][2] + m[1][3];
 			auto z = p[0] * m[2][0] + p[1] * m[2][1] + p[2] * m[2][2] + m[2][3];
@@ -146,7 +146,7 @@ namespace aurora {
 			dst[2] = z;
 		}
 
-		inline static void AE_CALL matTransformPoint(const f32(&m)[4][4], const f32(&p)[4], f32(&dst)[4]) {
+		inline static void AE_CALL matTransformPoint(const float32_t(&m)[4][4], const float32_t(&p)[4], float32_t(&dst)[4]) {
 			auto x = p[0] * m[0][0] + p[1] * m[0][1] + p[2] * m[0][2] + p[3] * m[0][3];
 			auto y = p[0] * m[1][0] + p[1] * m[1][1] + p[2] * m[1][2] + p[3] * m[1][3];
 			auto z = p[0] * m[2][0] + p[1] * m[2][1] + p[2] * m[2][2] + p[3] * m[2][3];
@@ -158,7 +158,7 @@ namespace aurora {
 			dst[3] = w;
 		}
 
-		inline static void AE_CALL matTransformPoint(const f32(&m)[4][4], const f32(&p)[3], f32(&dst)[4]) {
+		inline static void AE_CALL matTransformPoint(const float32_t(&m)[4][4], const float32_t(&p)[3], float32_t(&dst)[4]) {
 			auto x = p[0] * m[0][0] + p[1] * m[0][1] + p[2] * m[0][2] + m[0][3];
 			auto y = p[0] * m[1][0] + p[1] * m[1][1] + p[2] * m[1][2] + m[1][3];
 			auto z = p[0] * m[2][0] + p[1] * m[2][1] + p[2] * m[2][2] + m[2][3];
@@ -170,7 +170,7 @@ namespace aurora {
 			dst[3] = w;
 		}
 
-		inline static void AE_CALL matTransformPoint(const f32(&m)[4][4], const f32(&p)[3], f32(&dst)[3]) {
+		inline static void AE_CALL matTransformPoint(const float32_t(&m)[4][4], const float32_t(&p)[3], float32_t(&dst)[3]) {
 			auto x = p[0] * m[0][0] + p[1] * m[0][1] + p[2] * m[0][2] + m[0][3];
 			auto y = p[0] * m[1][0] + p[1] * m[1][1] + p[2] * m[1][2] + m[1][3];
 			auto z = p[0] * m[2][0] + p[1] * m[2][1] + p[2] * m[2][2] + m[2][3];
@@ -221,10 +221,10 @@ namespace aurora {
 			return sq;
 		}
 
-		template<uint32_t N, typename In, typename Out = f32>
+		template<uint32_t N, typename In, typename Out = float32_t>
 		static void AE_CALL normalize(const In(&v)[N], Out(&dst)[N]) {
 			if constexpr (sizeof(In) >= sizeof(Out)) {
-				if (auto n = dot<N, In, In, f32>(v, v); !isEqual(n, 1, TOLERANCE<decltype(n)>)) {
+				if (auto n = dot<N, In, In, float32_t>(v, v); !isEqual(n, 1, TOLERANCE<decltype(n)>)) {
 					n = std::sqrt(n);
 					if (n > TOLERANCE<decltype(n)>) {
 						n = NUMBER_1<decltype(n)> / n;
@@ -250,7 +250,7 @@ namespace aurora {
 				}
 			} else {
 				Out tmp[N];
-				if (auto n = dot<N, In, In, f32>(v, v); !isEqual(n, 1, TOLERANCE<decltype(n)>)) {
+				if (auto n = dot<N, In, In, float32_t>(v, v); !isEqual(n, 1, TOLERANCE<decltype(n)>)) {
 					n = std::sqrt(n);
 					if (n > TOLERANCE<decltype(n)>) {
 						n = NUMBER_1<decltype(n)> / n;
@@ -266,7 +266,7 @@ namespace aurora {
 			}
 		}
 
-		template<uint32_t N, typename In1, typename In2, typename Out = f32>
+		template<uint32_t N, typename In1, typename In2, typename Out = float32_t>
 		static Out AE_CALL angleBetween(const In1(&v1)[N], const In2(&v2)[N]) {
 			Out n1[N];
 			Out n2[N];

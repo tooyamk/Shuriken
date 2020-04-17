@@ -2,12 +2,11 @@
 
 #include "../BaseTester.h"
 #include "aurora/SerializableObject.h"
+#include <string>
 
 class RenderPipelineTester : public BaseTester {
 public:
 	virtual int32_t AE_CALL run() override {
-		readFile("");
-
 		auto monitors = Monitor::getMonitors();
 		auto vms = monitors[0].getVideoModes();
 
@@ -65,7 +64,7 @@ public:
 						auto light = new PointLight();
 						//light->setRadius(1000);
 						lightNode->addComponent(light);
-						lightNode->localRotate(Quaternion::createFromEulerY(Math::PI_4<f32>));
+						lightNode->localRotate(Quaternion::createFromEulerY(Math::PI_4<float32_t>));
 						renderData.lights.emplace_back(light);
 						auto cameraNode = worldNode->addChild(new Node());
 						auto camera = new Camera();
@@ -77,7 +76,7 @@ public:
 
 						{
 							auto size = app->getInnerSize();
-							camera->setProjectionMatrix(Matrix44::createPerspectiveFovLH(Math::PI<f32> / 6.f, size[0] / size[1], 10, 10000));
+							camera->setProjectionMatrix(Matrix44::createPerspectiveFovLH(Math::PI<float32_t> / 6.f, size[0] / size[1], 10, 10000));
 							camera->getNode()->localTranslate(Vec3f32(0.f, 0.f, -200.f));
 						}
 
@@ -183,11 +182,11 @@ public:
 					})));
 
 					renderData.looper->getEventDispatcher().addEventListener(LooperEvent::TICKING, new EventListener(std::function([renderData](Event<LooperEvent>& e) {
-						auto dt = f32(*e.getData<int64_t>()) * 0.001f;
+						auto dt = float32_t(*e.getData<int64_t>()) * 0.001f;
 
 						renderData.app->pollEvents();
 
-						renderData.model->localRotate(Quaternion::createFromEulerY(Math::PI<f32> * dt * 0.5f));
+						renderData.model->localRotate(Quaternion::createFromEulerY(Math::PI<float32_t> * dt * 0.5f));
 
 						renderData.renderPipeline->render(renderData.g, renderData.camera, renderData.wrold, &renderData.lights);
 						renderData.g->present();

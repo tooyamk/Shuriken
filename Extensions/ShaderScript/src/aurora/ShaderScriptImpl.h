@@ -48,7 +48,7 @@ namespace aurora::extensions::shader_script {
 			auto fmtDef = String::trim(def, String::CharFlag::WHITE_SPACE);
 			if (fmtDef.empty()) continue;
 
-			auto pos = String::findFirst(fmtDef, String::CharFlag::WHITE_SPACE);
+			auto pos = String::find(fmtDef, String::CharFlag::WHITE_SPACE);
 
 			if constexpr (std::is_same_v<T, std::vector<ShaderDefine>> || std::is_same_v<T, ShaderDefineCollection>) {
 				if (pos == std::string_view::npos) {

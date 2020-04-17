@@ -94,6 +94,13 @@ namespace aurora {
 			return _data;
 		}
 
+		inline uint8_t* AE_CALL getCurrentSource() {
+			return _data + _position;
+		}
+		inline const uint8_t* AE_CALL getCurrentSource() const {
+			return _data + _position;
+		}
+
 		inline ByteArray AE_CALL slice(size_t start, size_t length, Usage usage = Usage::SHARED) const {
 			if (start >= _length) {
 				ByteArray ba(nullptr, 0, usage);
@@ -175,8 +182,8 @@ namespace aurora {
 			std::is_same_v<T, uint32_t> ||
 			std::is_same_v<T, int64_t> ||
 			std::is_same_v<T, uint64_t> ||
-			std::is_same_v<T, f32> ||
-			std::is_same_v<T, f64>, bool>>
+			std::is_same_v<T, float32_t> ||
+			std::is_same_v<T, float64_t>, bool>>
 		inline T AE_CALL read() {
 			return _read<T>();
 		}
@@ -328,13 +335,13 @@ namespace aurora {
 		}
 
 		template<Type T, typename = typename std::enable_if_t<T == Type::F32, bool>>
-		inline f32 AE_CALL read() {
-			return _read<f32>();
+		inline float32_t AE_CALL read() {
+			return _read<float32_t>();
 		}
 
 		template<Type T, typename = typename std::enable_if_t<T == Type::F64, bool>>
-		inline f64 AE_CALL read() {
-			return _read<f64>();
+		inline float64_t AE_CALL read() {
+			return _read<float64_t>();
 		}
 
 		template<typename T, bool CheckEndMark = true, bool CheckBOM = false, typename = string_data_t<T>>
@@ -418,8 +425,8 @@ namespace aurora {
 			std::is_same_v<T, uint32_t> ||
 			std::is_same_v<T, int64_t> ||
 			std::is_same_v<T, uint64_t> ||
-			std::is_same_v<T, f32> ||
-			std::is_same_v<T, f64>, bool>>
+			std::is_same_v<T, float32_t> ||
+			std::is_same_v<T, float64_t>, bool>>
 		inline void AE_CALL write(T value) {
 			_write<T>(value);
 		}
@@ -557,13 +564,13 @@ namespace aurora {
 		}
 
 		template<Type T, typename = typename std::enable_if_t<T == Type::F32, bool>>
-		inline void AE_CALL write(f32 value) {
-			_write<f32>(value);
+		inline void AE_CALL write(float32_t value) {
+			_write<float32_t>(value);
 		}
 
 		template<Type T, typename = typename std::enable_if_t<T == Type::F64, bool>>
-		inline void AE_CALL write(f64 value) {
-			_write<f64>(value);
+		inline void AE_CALL write(float64_t value) {
+			_write<float64_t>(value);
 		}
 
 		template<Type T, typename = typename std::enable_if_t<T == Type::STR, bool>>
@@ -686,8 +693,8 @@ namespace aurora {
 			std::is_same_v<T, uint32_t> ||
 			std::is_same_v<T, int64_t> ||
 			std::is_same_v<T, uint64_t> ||
-			std::is_same_v<T, f32> ||
-			std::is_same_v<T, f64>, T>>
+			std::is_same_v<T, float32_t> ||
+			std::is_same_v<T, float64_t>, T>>
 		T AE_CALL _read() {
 			if constexpr (sizeof(T) == 1) {
 				if (_position < _length) {
@@ -747,8 +754,8 @@ namespace aurora {
 			std::is_same_v<T, uint32_t> ||
 			std::is_same_v<T, int64_t> ||
 			std::is_same_v<T, uint64_t> ||
-			std::is_same_v<T, f32> ||
-			std::is_same_v<T, f64>, T>>
+			std::is_same_v<T, float32_t> ||
+			std::is_same_v<T, float64_t>, T>>
 		inline void AE_CALL _write(const T& value) {
 			_write((uint8_t*)&value, sizeof(T));
 		}

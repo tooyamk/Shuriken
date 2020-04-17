@@ -78,7 +78,7 @@ public:
 							vb->setFormat(VertexSize::TWO, VertexType::F32);
 							*/
 							///*
-							f32 vertices[] = {
+							float32_t vertices[] = {
 								-0.5f, -0.5f, .0f,
 								-0.5f, 0.5f, .0f,
 								0.45f, 0.45f, 0.2f,
@@ -94,7 +94,7 @@ public:
 
 						RefPtr uvBuffer = graphics->createVertexBuffer();
 						if (uvBuffer) {
-							f32 uvs[] = {
+							float32_t uvs[] = {
 								0.f, 1.f,
 								0.f, 0.f,
 								1.f, 0.f,
@@ -119,8 +119,8 @@ public:
 
 						RefPtr aabbccStruct = new ShaderParameterCollection();
 						aabbccStruct->set("val1", new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set(Vec4f32::ONE).setUpdated();
-						f32 val2[] = { 1.0f, 1.0f };
-						aabbccStruct->set("val2", new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set<f32>(val2, sizeof(val2), sizeof(f32), true).setUpdated();
+						float32_t val2[] = { 1.0f, 1.0f };
+						aabbccStruct->set("val2", new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set<float32_t>(val2, sizeof(val2), sizeof(float32_t), true).setUpdated();
 						aabbccStruct->set("val3", new ShaderParameter())->set(Vec4f32::ONE).setUpdated();
 						renderData.spc->set("blue", new ShaderParameter())->set(aabbccStruct.get());
 					}
@@ -231,14 +231,14 @@ public:
 					{
 						RefPtr ppVertexBuffer = graphics->createVertexBuffer();
 						{
-							f32 data[] = { -1.0f, 1.0f, 0.8f, 1.0f, 0.8f, -0.9f, -1.0f, -0.9f };
+							float32_t data[] = { -1.0f, 1.0f, 0.8f, 1.0f, 0.8f, -0.9f, -1.0f, -0.9f };
 							ppVertexBuffer->create(sizeof(data), Usage::NONE, data, sizeof(data));
 							ppVertexBuffer->setFormat(VertexFormat(VertexSize::TWO, VertexType::F32));
 						}
 
 						RefPtr ppUVBuffer = graphics->createVertexBuffer();
 						{
-							f32 data[] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f };
+							float32_t data[] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f };
 							ppUVBuffer->create(sizeof(data), Usage::NONE, data, sizeof(data));
 							ppUVBuffer->setFormat(VertexFormat(VertexSize::TWO, VertexType::F32));
 						}
@@ -263,7 +263,7 @@ public:
 					})));
 
 					renderData.looper->getEventDispatcher().addEventListener(LooperEvent::TICKING, new EventListener(std::function([renderData](Event<LooperEvent>& e) {
-						auto dt = f64(*e.getData<int64_t>());
+						auto dt = float64_t(*e.getData<int64_t>());
 
 						renderData.app->pollEvents();
 

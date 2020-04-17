@@ -26,8 +26,8 @@ namespace aurora {
 			INT,
 			UINT,
 
-			FLOAT,
-			DOUBLE,
+			FLOAT32,
+			FLOAT64,
 
 			STRING,
 			ARRAY,
@@ -57,10 +57,10 @@ namespace aurora {
 					return std::hash<Bytes<false>*>{}(value._getValue<Bytes<false>*>());
 				case Type::EXT_BYTES:
 					return std::hash<Bytes<true>*>{}(value._getValue<Bytes<true>*>());
-				case Type::FLOAT:
-					return std::hash<f32>{}(value._getValue<f32>());
-				case Type::DOUBLE:
-					return std::hash<f64>{}(value._getValue<f64>());
+				case Type::FLOAT32:
+					return std::hash<float32_t>{}(value._getValue<float32_t>());
+				case Type::FLOAT64:
+					return std::hash<float64_t>{}(value._getValue<float64_t>());
 				case Type::INT:
 				case Type::UINT:
 					return std::hash<uint64_t>{}(value._getValue<uint64_t>());
@@ -69,9 +69,12 @@ namespace aurora {
 				case Type::MAP:
 					return std::hash<Map*>{}(value._getValue<Map*>());
 				case Type::STRING:
-					return std::hash<std::string>{}(value._getValue<Str*>()->value);
+				{
+					auto str = value._getValue<Str*>();
+					return std::hash<std::string_view>{}(std::string_view(str->value, str->size));
+				}
 				case Type::SHORT_STRING:
-					return std::hash<std::string>{}((char*)value._value);
+					return std::hash<std::string_view>{}(std::string_view((char*)value._value));
 				case Type::STD_SV:
 					return std::hash<std::string_view>{}(*value._getValue<std::string_view*>());
 				default:
@@ -99,8 +102,8 @@ namespace aurora {
 		SerializableObject(uint32_t value);
 		SerializableObject(const int64_t& value);
 		SerializableObject(const uint64_t& value);
-		SerializableObject(f32 value);
-		SerializableObject(const f64& value);
+		SerializableObject(float32_t value);
+		SerializableObject(const float64_t& value);
 		SerializableObject(const char* value);
 		SerializableObject(const std::string& value);
 		SerializableObject(const std::string_view& value);
@@ -131,13 +134,13 @@ namespace aurora {
 			return _type != Type::INVALID;
 		}
 		inline bool AE_CALL isNumber() const {
-			return _type == Type::INT || _type == Type::UINT || _type == Type::FLOAT || _type == Type::DOUBLE;
+			return _type == Type::INT || _type == Type::UINT || _type == Type::FLOAT32 || _type == Type::FLOAT64;
 		}
 		inline bool AE_CALL isInteger() const {
 			return _type == Type::INT || _type == Type::UINT;
 		}
 		inline bool AE_CALL isFloatingPoint() const {
-			return _type == Type::FLOAT || _type == Type::DOUBLE;
+			return _type == Type::FLOAT32 || _type == Type::FLOAT64;
 		}
 		inline bool AE_CALL isBytes() const {
 			return _type == Type::BYTES || _type == Type::EXT_BYTES;
@@ -188,10 +191,10 @@ namespace aurora {
 				return _getValue<int64_t>();
 			case Type::UINT:
 				return _getValue<uint64_t>();
-			case Type::FLOAT:
-				return _getValue<f32>();
-			case Type::DOUBLE:
-				return _getValue<f64>();
+			case Type::FLOAT32:
+				return _getValue<float32_t>();
+			case Type::FLOAT64:
+				return _getValue<float64_t>();
 			case Type::STRING:
 			{
 				auto s = _getValue<Str*>();
@@ -255,11 +258,11 @@ namespace aurora {
 		inline void AE_CALL set(const uint64_t& value) {
 			_setUInt(value);
 		}
-		inline void AE_CALL set(f32 value) {
-			_set<f32, Type::FLOAT>(value);
+		inline void AE_CALL set(float32_t value) {
+			_set<float32_t, Type::FLOAT32>(value);
 		}
-		inline void AE_CALL set(const f64& value) {
-			_set<f64, Type::DOUBLE>(value);
+		inline void AE_CALL set(const float64_t& value) {
+			_set<float64_t, Type::FLOAT64>(value);
 		}
 		inline void AE_CALL set(const char* value) {
 			set(std::string_view(value, strlen(value)));
@@ -370,8 +373,8 @@ namespace aurora {
 			INT = (uint8_t)Type::INT,
 			UINT = (uint8_t)Type::UINT,
 
-			FLOAT = (uint8_t)Type::FLOAT,
-			DOUBLE = (uint8_t)Type::DOUBLE,
+			FLOAT = (uint8_t)Type::FLOAT32,
+			DOUBLE = (uint8_t)Type::FLOAT64,
 
 			STRING = (uint8_t)Type::STRING,
 			ARRAY = (uint8_t)Type::ARRAY,
@@ -647,10 +650,10 @@ namespace aurora {
 				return _getValue<T>() == target._getValue<int64_t>();
 			case Type::UINT:
 				return _getValue<T>() == target._getValue<uint64_t>();
-			case Type::FLOAT:
-				return _getValue<T>() == target._getValue<f32>();
-			case Type::DOUBLE:
-				return _getValue<T>() == target._getValue<f64>();
+			case Type::FLOAT32:
+				return _getValue<T>() == target._getValue<float32_t>();
+			case Type::FLOAT64:
+				return _getValue<T>() == target._getValue<float64_t>();
 			default:
 				return false;
 			}
@@ -720,10 +723,10 @@ namespace aurora {
 
 				break;
 			}
-			case Type::FLOAT:
+			case Type::FLOAT32:
 			{
 
-				f32 f = _getValue<f32>();
+				float32_t f = _getValue<float32_t>();
 				if (f == 0.0f) {
 					ba.write<ba_t::UI8>((uint8_t)InternalType::FLT_0);
 				} else if (f == 0.5f) {
@@ -737,9 +740,9 @@ namespace aurora {
 
 				break;
 			}
-			case Type::DOUBLE:
+			case Type::FLOAT64:
 			{
-				f64 d = _getValue<f64>();
+				float64_t d = _getValue<float64_t>();
 				if (d == 0.0) {
 					ba.write<ba_t::UI8>((uint8_t)InternalType::DBL_0);
 				} else if (d == 0.5) {

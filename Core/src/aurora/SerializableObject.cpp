@@ -156,14 +156,14 @@ namespace aurora {
 		_getValue<uint64_t>() = value;
 	}
 
-	SerializableObject::SerializableObject(f32 value) :
-		_type(Type::FLOAT) {
-		_getValue<f32>() = value;
+	SerializableObject::SerializableObject(float32_t value) :
+		_type(Type::FLOAT32) {
+		_getValue<float32_t>() = value;
 	}
 
-	SerializableObject::SerializableObject(const f64& value) :
-		_type(Type::DOUBLE) {
-		_getValue<f64>() = value;
+	SerializableObject::SerializableObject(const float64_t& value) :
+		_type(Type::FLOAT64) {
+		_getValue<float64_t>() = value;
 	}
 
 	SerializableObject::SerializableObject(const char* value) {
@@ -308,10 +308,10 @@ namespace aurora {
 				return false;
 			}
 		}
-		case Type::FLOAT:
-			return target._type == Type::FLOAT && _getValue<f32>() == target._getValue<f32>();
-		case Type::DOUBLE:
-			return target._type == Type::DOUBLE && _getValue<f64>() == target._getValue<f64>();
+		case Type::FLOAT32:
+			return target._type == Type::FLOAT32 && _getValue<float32_t>() == target._getValue<float32_t>();
+		case Type::FLOAT64:
+			return target._type == Type::FLOAT64 && _getValue<float64_t>() == target._getValue<float64_t>();
 		case Type::STRING:
 		{
 			switch (target._type) {
@@ -398,10 +398,10 @@ namespace aurora {
 			return _isEqual<int64_t>(target);
 		case Type::UINT:
 			return _isEqual<uint64_t>(target);
-		case Type::FLOAT:
-			return _isEqual<f32>(target);
-		case Type::DOUBLE:
-			return _isEqual<f64>(target);
+		case Type::FLOAT32:
+			return _isEqual<float32_t>(target);
+		case Type::FLOAT64:
+			return _isEqual<float64_t>(target);
 		case Type::STRING:
 		{
 			switch (target._type) {
@@ -587,10 +587,10 @@ namespace aurora {
 			return _getValue<int64_t>();
 		case Type::UINT:
 			return _getValue<uint64_t>();
-		case Type::FLOAT:
-			return _getValue<f32>() != 0.0f;
-		case Type::DOUBLE:
-			return _getValue<f64>() != 0.0;
+		case Type::FLOAT32:
+			return _getValue<float32_t>() != 0.0f;
+		case Type::FLOAT64:
+			return _getValue<float64_t>() != 0.0;
 		case Type::INVALID:
 			return false;
 		default:
@@ -606,10 +606,10 @@ namespace aurora {
 			return String::toString<int64_t>(_getValue<int64_t>());
 		case Type::UINT:
 			return String::toString<uint64_t>(_getValue<uint64_t>());
-		case Type::FLOAT:
-			return String::toString<f32>(_getValue<f32>());
-		case Type::DOUBLE:
-			return String::toString<f64>(_getValue<f64>());
+		case Type::FLOAT32:
+			return String::toString<float32_t>(_getValue<float32_t>());
+		case Type::FLOAT64:
+			return String::toString<float64_t>(_getValue<float64_t>());
 		case Type::STRING:
 		{
 			auto s = _getValue<Str*>();
@@ -653,8 +653,8 @@ namespace aurora {
 		case Type::BOOL:
 		case Type::INT:
 		case Type::UINT:
-		case Type::FLOAT:
-		case Type::DOUBLE:
+		case Type::FLOAT32:
+		case Type::FLOAT64:
 			json += toString();
 			break;
 		case Type::STRING:

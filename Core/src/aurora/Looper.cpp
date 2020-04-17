@@ -2,7 +2,7 @@
 #include "aurora/Time.h"
 
 namespace aurora {
-	Looper::Looper(f64 interval) :
+	Looper::Looper(float64_t interval) :
 		_isRunning(std::make_shared<bool>(false)),
 		_updatingCount(0),
 		_updatingTimePoint(0),
@@ -33,7 +33,7 @@ namespace aurora {
 
 		if (restriction) {
 			auto t1 = Time::now();
-			auto phase = f64(t1 - t0);
+			auto phase = float64_t(t1 - t0);
 
 			if (_updateTimeCompensationFrameCount) {
 				if (auto t = _updateTimeCompensationFrameCount * _interval - (t0 - _updateTimeCompensationTimePoint); t > 0.) {

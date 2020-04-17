@@ -83,7 +83,7 @@ namespace aurora {
 		bool AE_CALL removeFromParent();
 		void AE_CALL removeAllChildren();
 
-		inline void AE_CALL getLocalPosition(f32(&dst)[3]) const {
+		inline void AE_CALL getLocalPosition(float32_t(&dst)[3]) const {
 			auto x = _lm.data[0][3], y = _lm.data[1][3], z = _lm.data[2][3];
 			dst[0] = x;
 			dst[1] = y;
@@ -92,8 +92,8 @@ namespace aurora {
 		inline Vec3f32 AE_CALL getLocalPosition() const {
 			return Vec3f32(_lm.data[0][3], _lm.data[1][3], _lm.data[2][3]);
 		}
-		void AE_CALL setLocalPosition(const f32(&p)[3]);
-		void AE_CALL localTranslate(const f32(&p)[3]);
+		void AE_CALL setLocalPosition(const float32_t(&p)[3]);
+		void AE_CALL localTranslate(const float32_t(&p)[3]);
 
 		inline const Quaternion& AE_CALL getLocalRotation() const {
 			return _lr;
@@ -104,7 +104,7 @@ namespace aurora {
 		inline const Vec3f32& AE_CALL getLocalScale() const {
 			return _ls;
 		}
-		void AE_CALL setLocalScale(const f32(&s)[3]);
+		void AE_CALL setLocalScale(const float32_t(&s)[3]);
 
 		inline const Matrix34& AE_CALL getLocalMatrix() const {
 			updateLocalMatrix();
@@ -112,13 +112,13 @@ namespace aurora {
 			return _lm;
 		}
 		void AE_CALL setLocalMatrix(const Matrix34& m);
-		void AE_CALL setLocalTRS(const f32(&pos)[3], const Quaternion& rot, const f32(&scale)[3]);
+		void AE_CALL setLocalTRS(const float32_t(&pos)[3], const Quaternion& rot, const float32_t(&scale)[3]);
 
-		void AE_CALL parentTranslate(const f32(&p)[3]);
+		void AE_CALL parentTranslate(const float32_t(&p)[3]);
 
 		void AE_CALL parentRotate(const Quaternion& q);
 
-		inline void AE_CALL getWorldPosition(f32(&dst)[3]) const {
+		inline void AE_CALL getWorldPosition(float32_t(&dst)[3]) const {
 			updateWorldMatrix();
 
 			auto x = _wm.data[0][3], y = _wm.data[1][3], z = _wm.data[2][3];
@@ -131,8 +131,8 @@ namespace aurora {
 
 			return Vec3f32(_wm.data[0][3], _wm.data[1][3], _wm.data[2][3]);
 		}
-		void AE_CALL setWorldPosition(const f32(&p)[3]);
-		void AE_CALL worldTranslate(const f32(&p)[3]);
+		void AE_CALL setWorldPosition(const float32_t(&p)[3]);
+		void AE_CALL worldTranslate(const float32_t(&p)[3]);
 
 		inline const Quaternion& AE_CALL getWorldRotation() const {
 			updateWorldRotation();

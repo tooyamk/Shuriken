@@ -265,8 +265,8 @@ namespace aurora::modules::graphics {
 		}
 		virtual void AE_CALL setAddress(const SamplerAddress& address) = 0;
 
-		virtual void AE_CALL setMipLOD(f32 min, f32 max) = 0;
-		virtual void AE_CALL setMipLODBias(f32 bias) = 0;
+		virtual void AE_CALL setMipLOD(float32_t min, float32_t max) = 0;
+		virtual void AE_CALL setMipLODBias(float32_t bias) = 0;
 		virtual void AE_CALL setMaxAnisotropy (uint32_t max) = 0;
 
 		virtual void AE_CALL setBorderColor(const Vec4f32& color) = 0;
@@ -770,6 +770,6 @@ namespace aurora::modules::graphics {
 		virtual void AE_CALL present() = 0;
 
 		virtual void AE_CALL setRenderTarget(IRenderTarget* rt) = 0;
-		virtual void AE_CALL clear(ClearFlag flags, const Vec4f32& color, f32 depth, size_t stencil) = 0;
+		virtual void AE_CALL clear(ClearFlag flags, const Vec4f32& color, float32_t depth, size_t stencil) = 0;
 	};
 }

@@ -1,7 +1,7 @@
 #include "Math.h"
 
 namespace aurora {
-	void Math::slerpQuat(const f32* from, const f32* to, f32 t, f32* dst) {
+	void Math::slerpQuat(const float32_t* from, const float32_t* to, float32_t t, float32_t* dst) {
 		auto x = to[0], y = to[1], z = to[2], w = to[3];
 		auto cos = from[0] * x + from[1] * y + from[2] * z + from[3] * w;
 		if (cos < 0.f) {//shortest path
@@ -12,7 +12,7 @@ namespace aurora {
 			cos = -cos;
 		}
 
-		f32 k0, k1;
+		float32_t k0, k1;
 		if (cos > .9999f) {
 			k0 = 1 - t;
 			k1 = t;
@@ -34,8 +34,8 @@ namespace aurora {
 		dst[3] = from[3] * k0 + w * k1;
 	}
 
-	void Math::transposeMat(const f32(&m)[3][4], f32(&dst)[4][4]) {
-		f32 d[4][4];
+	void Math::transposeMat(const float32_t(&m)[3][4], float32_t(&dst)[4][4]) {
+		float32_t d[4][4];
 
 		for (uint8_t c = 0; c < 4; ++c) {
 			for (uint8_t r = 0; r < 3; ++r) d[c][r] = m[r][c];
@@ -49,8 +49,8 @@ namespace aurora {
 		memcpy(dst, d, sizeof(dst));
 	}
 
-	void Math::transposeMat(const f32(&m)[4][4], f32(&dst)[4][4]) {
-		f32 d[4][4];
+	void Math::transposeMat(const float32_t(&m)[4][4], float32_t(&dst)[4][4]) {
+		float32_t d[4][4];
 
 		for (uint8_t c = 0; c < 4; ++c) {
 			for (uint8_t r = 0; r < 4; ++r) d[c][r] = m[r][c];
@@ -59,8 +59,8 @@ namespace aurora {
 		memcpy(dst, d, sizeof(dst));
 	}
 
-	void Math::appendMat(const f32(&lhs)[3][4], const f32(&rhs)[3][4], f32(&dst)[3][4]) {
-		f32 m[3][4];
+	void Math::appendMat(const float32_t(&lhs)[3][4], const float32_t(&rhs)[3][4], float32_t(&dst)[3][4]) {
+		float32_t m[3][4];
 
 		for (uint8_t c = 0; c < 3; ++c) {
 			auto& mc = m[c];
@@ -74,8 +74,8 @@ namespace aurora {
 		memcpy(dst, m, sizeof(m));
 	}
 
-	void Math::appendMat(const f32(&lhs)[3][4], const f32(&rhs)[3][4], f32(&dst)[4][4]) {
-		appendMat(lhs, rhs, (f32(&)[3][4])dst);
+	void Math::appendMat(const float32_t(&lhs)[3][4], const float32_t(&rhs)[3][4], float32_t(&dst)[4][4]) {
+		appendMat(lhs, rhs, (float32_t(&)[3][4])dst);
 
 		dst[3][0] = 0.f;
 		dst[3][1] = 0.f;
@@ -83,12 +83,12 @@ namespace aurora {
 		dst[3][3] = 1.f;
 	}
 
-	void Math::appendMat(const f32(&lhs)[3][4], const f32(&rhs)[4][4], f32(&dst)[3][4]) {
-		appendMat(lhs, (f32(&)[3][4])rhs, (f32(&)[3][4])dst);
+	void Math::appendMat(const float32_t(&lhs)[3][4], const float32_t(&rhs)[4][4], float32_t(&dst)[3][4]) {
+		appendMat(lhs, (float32_t(&)[3][4])rhs, (float32_t(&)[3][4])dst);
 	}
 
-	void Math::appendMat(const f32(&lhs)[3][4], const f32(&rhs)[4][4], f32(&dst)[4][4]) {
-		f32 m[4][4];
+	void Math::appendMat(const float32_t(&lhs)[3][4], const float32_t(&rhs)[4][4], float32_t(&dst)[4][4]) {
+		float32_t m[4][4];
 
 		for (uint8_t c = 0; c < 4; ++c) {
 			auto& mc = m[c];
@@ -102,8 +102,8 @@ namespace aurora {
 		memcpy(dst, m, sizeof(m));
 	}
 
-	void Math::appendMat(const f32(&lhs)[4][4], const f32(&rhs)[3][4], f32(&dst)[3][4]) {
-		f32 m[3][4];
+	void Math::appendMat(const float32_t(&lhs)[4][4], const float32_t(&rhs)[3][4], float32_t(&dst)[3][4]) {
+		float32_t m[3][4];
 
 		for (uint8_t c = 0; c < 3; ++c) {
 			auto& mc = m[c];
@@ -117,8 +117,8 @@ namespace aurora {
 		memcpy(dst, m, sizeof(m));
 	}
 
-	void Math::appendMat(const f32(&lhs)[4][4], const f32(&rhs)[3][4], f32(&dst)[4][4]) {
-		appendMat(lhs, rhs, (f32(&)[3][4])dst);
+	void Math::appendMat(const float32_t(&lhs)[4][4], const float32_t(&rhs)[3][4], float32_t(&dst)[4][4]) {
+		appendMat(lhs, rhs, (float32_t(&)[3][4])dst);
 
 		dst[3][0] = lhs[3][0];
 		dst[3][1] = lhs[3][1];
@@ -126,12 +126,12 @@ namespace aurora {
 		dst[3][3] = lhs[3][3];
 	}
 
-	void Math::appendMat(const f32(&lhs)[4][4], const f32(&rhs)[4][4], f32(&dst)[3][4]) {
-		appendMat(lhs, (f32(&)[3][4])rhs, dst);
+	void Math::appendMat(const float32_t(&lhs)[4][4], const float32_t(&rhs)[4][4], float32_t(&dst)[3][4]) {
+		appendMat(lhs, (float32_t(&)[3][4])rhs, dst);
 	}
 
-	void Math::appendMat(const f32(&lhs)[4][4], const f32(&rhs)[4][4], f32(&dst)[4][4]) {
-		f32 m[4][4];
+	void Math::appendMat(const float32_t(&lhs)[4][4], const float32_t(&rhs)[4][4], float32_t(&dst)[4][4]) {
+		float32_t m[4][4];
 
 		for (uint8_t c = 0; c < 4; ++c) {
 			auto& mc = m[c];
@@ -145,15 +145,15 @@ namespace aurora {
 		memcpy(dst, m, sizeof(dst));
 	}
 
-	bool Math::invertMat(const f32(&m)[3][4], f32(&dst)[3][4]) {
+	bool Math::invertMat(const float32_t(&m)[3][4], float32_t(&dst)[3][4]) {
 		auto tmp0 = m[2][2] * m[1][1] - m[2][1] * m[1][2];
 		auto tmp1 = m[2][0] * m[1][2] - m[2][2] * m[1][0];
 		auto tmp2 = m[2][1] * m[1][0] - m[2][0] * m[1][1];
 
-		if (auto det = m[0][0] * tmp0 + m[0][1] * tmp1 + m[0][2] * tmp2; abs(det) > Math::TOLERANCE<f32>) {
+		if (auto det = m[0][0] * tmp0 + m[0][1] * tmp1 + m[0][2] * tmp2; abs(det) > Math::TOLERANCE<float32_t>) {
 			det = 1.f / det;
 
-			f32 d[3][4];
+			float32_t d[3][4];
 
 			d[0][0] = tmp0 * det;
 			d[1][0] = tmp1 * det;
@@ -191,7 +191,7 @@ namespace aurora {
 		}
 	}
 
-	bool Math::invertMat(const f32(&m)[4][4], f32(&dst)[4][4]) {
+	bool Math::invertMat(const float32_t(&m)[4][4], float32_t(&dst)[4][4]) {
 		auto tmp0 = m[2][2] * m[3][3];
 		auto tmp1 = m[2][3] * m[3][2];
 		auto tmp2 = m[2][1] * m[3][3];
@@ -210,10 +210,10 @@ namespace aurora {
 		auto d20 = tmp2 * m[1][0] + tmp7 * m[1][1] + tmp10 * m[1][3] - tmp3 * m[1][0] - tmp6 * m[1][1] - tmp11 * m[1][3];
 		auto d30 = tmp5 * m[1][0] + tmp8 * m[1][1] + tmp11 * m[1][2] - tmp4 * m[1][0] - tmp9 * m[1][1] - tmp10 * m[1][2];
 
-		if (auto det = m[0][0] * d00 + m[0][1] * d10 + m[0][2] * d20 + m[0][3] * d30; abs(det) > Math::TOLERANCE<f32>) {
+		if (auto det = m[0][0] * d00 + m[0][1] * d10 + m[0][2] * d20 + m[0][3] * d30; abs(det) > Math::TOLERANCE<float32_t>) {
 			det = 1.f / det;
 
-			f32 d[4][4];
+			float32_t d[4][4];
 
 			d[0][0] = d00 * det;
 			d[1][0] = d10 * det;

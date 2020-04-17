@@ -645,7 +645,7 @@ namespace aurora::modules::graphics::win_gl {
 		}
 	}
 
-	void Graphics::clear(ClearFlag flags, const Vec4f32& color, f32 depth, size_t stencil) {
+	void Graphics::clear(ClearFlag flags, const Vec4f32& color, float32_t depth, size_t stencil) {
 		GLbitfield mask = 0;
 		if ((flags & ClearFlag::COLOR) != ClearFlag::NONE) {
 			mask |= GL_COLOR_BUFFER_BIT;
@@ -1057,9 +1057,9 @@ namespace aurora::modules::graphics::win_gl {
 	void Graphics::_debugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam) {
 		std::string_view mv(message);
 
-		if (String::findFirst(mv, "error") != std::string::npos ||
-			String::findFirst(mv, "warning") != std::string::npos ||
-			String::findFirst(mv, "failed") != std::string::npos) {
+		if (String::find(mv, "error") != std::string::npos ||
+			String::find(mv, "warning") != std::string::npos ||
+			String::find(mv, "failed") != std::string::npos) {
 			((Graphics*)userParam)->error(std::string("OpenGL sys message : ") + message);
 		}
 	}

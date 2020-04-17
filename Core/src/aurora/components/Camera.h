@@ -17,18 +17,18 @@ namespace aurora::components {
 
 		modules::graphics::ClearFlag clearFlag;
 		Vec4f32 clearColor;
-		f32 clearDepthValue;
+		float32_t clearDepthValue;
 		size_t clearStencilValue;
 
-		inline f32 AE_CALL getAspectRatio() const {
+		inline float32_t AE_CALL getAspectRatio() const {
 			return _aspectRatio;
 		}
 
-		inline f32 AE_CALL getNearClipPlane() const {
+		inline float32_t AE_CALL getNearClipPlane() const {
 			return _zNear;
 		}
 
-		inline f32 AE_CALL getFarClipPlane() const {
+		inline float32_t AE_CALL getFarClipPlane() const {
 			return _zFar;
 		}
 
@@ -40,9 +40,9 @@ namespace aurora::components {
 	protected:
 		Matrix44 _pm;//projectionMatrix
 
-		f32 _aspectRatio;
-		f32 _zNear;
-		f32 _zFar;
+		float32_t _aspectRatio;
+		float32_t _zNear;
+		float32_t _zFar;
 
 		AE_RTTI_DECLARE_DERIVED(IComponent);
 	};

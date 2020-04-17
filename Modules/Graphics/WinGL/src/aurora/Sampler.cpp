@@ -54,7 +54,7 @@ namespace aurora::modules::graphics::win_gl {
 		}
 	}
 
-	void Sampler::setMipLOD(f32 min, f32 max) {
+	void Sampler::setMipLOD(float32_t min, float32_t max) {
 		if (_desc.LOD[0] != min || _desc.LOD[1] != max) {
 			_desc.LOD.set(min, max);
 
@@ -62,7 +62,7 @@ namespace aurora::modules::graphics::win_gl {
 		}
 	}
 
-	void Sampler::setMipLODBias(f32 bias) {
+	void Sampler::setMipLODBias(float32_t bias) {
 		if (_desc.LODBias != bias) {
 			_desc.LODBias = bias;
 

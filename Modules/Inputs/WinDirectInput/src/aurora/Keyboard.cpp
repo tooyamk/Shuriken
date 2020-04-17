@@ -8,7 +8,7 @@ namespace aurora::modules::inputs::win_direct_input {
 		memset(_state, 0, sizeof(StateBuffer));
 	}
 
-	uint32_t Keyboard::getKeyState (uint32_t keyCode, f32* data, uint32_t count) const {
+	uint32_t Keyboard::getKeyState (uint32_t keyCode, float32_t* data, uint32_t count) const {
 		if (data && count && keyCode < 256) {
 			switch (keyCode) {
 			case VK_SHIFT:
@@ -65,7 +65,7 @@ namespace aurora::modules::inputs::win_direct_input {
 				//auto layout = GetKeyboardLayout(0);
 				for (uint16_t i = 0; i < len; ++i) {
 					uint8_t key = changedBtns[i];
-					f32 value = (state[key] & 0x80) > 0 ? 1.f : 0.f;
+					float32_t value = (state[key] & 0x80) > 0 ? 1.f : 0.f;
 					_eventDispatcher.dispatchEvent(this, value > 0.f ? DeviceEvent::DOWN : DeviceEvent::UP, &Key({ SK_VK[key], 1, &value }));
 				}
 			}

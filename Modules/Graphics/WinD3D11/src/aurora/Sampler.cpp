@@ -48,7 +48,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		}
 	}
 
-	void Sampler::setMipLOD(f32 min, f32 max) {
+	void Sampler::setMipLOD(float32_t min, float32_t max) {
 		if (_desc.MinLOD != min || _desc.MaxLOD != max) {
 			_desc.MinLOD = min;
 			_desc.MaxLOD = max;
@@ -57,7 +57,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		}
 	}
 
-	void Sampler::setMipLODBias(f32 bias) {
+	void Sampler::setMipLODBias(float32_t bias) {
 		if (_desc.MipLODBias != bias) {
 			_desc.MipLODBias = bias;
 

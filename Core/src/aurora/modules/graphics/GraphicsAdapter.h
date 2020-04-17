@@ -20,6 +20,6 @@ namespace aurora::modules::graphics {
 		static void AE_CALL autoSort(const std::vector<GraphicsAdapter>& adapters, std::vector<uint32_t>& dst);
 
 	private:
-		static f64 AE_CALL _calcScore(const GraphicsAdapter& adapter);
+		static float64_t AE_CALL _calcScore(const GraphicsAdapter& adapter);
 	};
 }

@@ -71,7 +71,7 @@ public:
 							vb->setFormat(VertexSize::TWO, VertexType::F32);
 							*/
 							///*
-							f32 vertices[] = {
+							float32_t vertices[] = {
 								0.f, 0.f,
 								0.f, 1.f,
 								1.f, 1.f,
@@ -82,7 +82,7 @@ public:
 
 						auto uvBuffer = graphics->createVertexBuffer();
 						if (uvBuffer) {
-							f32 uvs[] = {
+							float32_t uvs[] = {
 								0.f, 1.f,
 								0.f, 0.f,
 								1.f, 0.f,
@@ -102,8 +102,8 @@ public:
 
 						auto aabbccStruct = new ShaderParameterCollection();
 						aabbccStruct->set("val1", new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set(Vec4f32::ONE).setUpdated();
-						f32 val2[] = { 1.0f, 1.0f };
-						aabbccStruct->set("val2", new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set<f32>(val2, sizeof(val2), sizeof(f32), true).setUpdated();
+						float32_t val2[] = { 1.0f, 1.0f };
+						aabbccStruct->set("val2", new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set<float32_t>(val2, sizeof(val2), sizeof(float32_t), true).setUpdated();
 						aabbccStruct->set("val3", new ShaderParameter())->set(Vec4f32::ONE).setUpdated();
 						renderData.spc->set("blue", new ShaderParameter())->set(aabbccStruct);
 					}
@@ -188,7 +188,7 @@ public:
 					})));
 
 					renderData.looper->getEventDispatcher().addEventListener(LooperEvent::TICKING, new EventListener(std::function([renderData](Event<LooperEvent>& e) {
-						auto dt = f64(*e.getData<int64_t>());
+						auto dt = float64_t(*e.getData<int64_t>());
 
 						renderData.app->pollEvents();
 						//println(dt);
@@ -205,19 +205,19 @@ public:
 						renderData.g->clear(ClearFlag::COLOR | ClearFlag::DEPTH | ClearFlag::STENCIL, Vec4f32(0.0f, 0.0f, 0.25f, 1.0f), 1.f, 0);
 
 						if (true) {
-							renderData.spc->get("red")->set(Vec4f32((f32)rand() / (f32)RAND_MAX, (f32)rand() / (f32)RAND_MAX)).setUpdated();
+							renderData.spc->get("red")->set(Vec4f32((float32_t)rand() / (float32_t)RAND_MAX, (float32_t)rand() / (float32_t)RAND_MAX)).setUpdated();
 
 							auto vb = renderData.vbf->get("POSITION0");
 							if (vb) {
 								auto cycle = 20000;
-								auto halfCycyle = f32(cycle / 2);
+								auto halfCycyle = float32_t(cycle / 2);
 								auto t = Time::now<std::chrono::milliseconds>() % cycle;
-								f32 vertices[] = {
+								float32_t vertices[] = {
 									0.f, 0.f,
 									0.f, 1.f,
 									1.f, 1.f,
 									1.f, 0.f };
-								f32 v = t <= halfCycyle ? 1.f - f32(t) / halfCycyle : (f32(t) - halfCycyle) / halfCycyle;
+								float32_t v = t <= halfCycyle ? 1.f - float32_t(t) / halfCycyle : (float32_t(t) - halfCycyle) / halfCycyle;
 								vertices[3] = v;
 								if ((vb->map(Usage::MAP_WRITE | Usage::MAP_SWAP) & Usage::DISCARD) == Usage::DISCARD) {
 									vb->write(0, vertices, sizeof(vertices));

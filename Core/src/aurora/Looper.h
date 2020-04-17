@@ -17,7 +17,7 @@ namespace aurora {
 
 	class AE_DLL Looper : public Ref {
 	public:
-		Looper(f64 interval);
+		Looper(float64_t interval);
 		virtual ~Looper();
 
 		inline events::IEventDispatcher<LooperEvent>& AE_CALL getEventDispatcher() {
@@ -31,10 +31,10 @@ namespace aurora {
 			return *_isRunning;
 		}
 
-		inline f64 AE_CALL getInterval() const {
+		inline float64_t AE_CALL getInterval() const {
 			return _interval;
 		}
-		inline void AE_CALL setInterval(f64 interval) {
+		inline void AE_CALL setInterval(float64_t interval) {
 			_interval = interval < 0. ? 0. : interval;
 		}
 
@@ -51,7 +51,7 @@ namespace aurora {
 		events::EventDispatcher<LooperEvent> _eventDispatcher;
 
 		std::shared_ptr<bool> _isRunning;
-		f64 _interval;
+		float64_t _interval;
 		size_t _updatingCount;
 		int64_t _updatingTimePoint;
 		int64_t _updateTimeCompensationTimePoint;

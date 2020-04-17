@@ -114,13 +114,13 @@ namespace aurora {
 		}
 	}
 
-	void Node::setLocalPosition(const f32(&p)[3]) {
+	void Node::setLocalPosition(const float32_t(&p)[3]) {
 		_lm.setPosition(p);
 
 		_checkNoticeUpdate(DirtyFlag::WMIM);
 	}
 
-	void Node::localTranslate(const f32(&p)[3]) {
+	void Node::localTranslate(const float32_t(&p)[3]) {
 		updateLocalMatrix();
 		_lm.prependTranslate(p);
 
@@ -139,7 +139,7 @@ namespace aurora {
 		_checkNoticeUpdate(DirtyFlag::LM_WRMIM, DirtyFlag::WRMIM);
 	}
 
-	void Node::setLocalScale(const f32(&s)[3]) {
+	void Node::setLocalScale(const float32_t(&s)[3]) {
 		_ls.set(s);
 
 		_checkNoticeUpdate(DirtyFlag::LM_WMIM, DirtyFlag::WMIM);
@@ -152,7 +152,7 @@ namespace aurora {
 		_checkNoticeUpdateNow((_dirty & DirtyFlag::NOT_LM) | DirtyFlag::WRMIM, DirtyFlag::WRMIM);
 	}
 
-	void Node::setLocalTRS(const f32(&pos)[3], const Quaternion& rot, const f32(&scale)[3]) {
+	void Node::setLocalTRS(const float32_t(&pos)[3], const Quaternion& rot, const float32_t(&scale)[3]) {
 		_lm.setPosition(pos);
 		_lr.set(rot);
 		_ls.set(scale);
@@ -160,7 +160,7 @@ namespace aurora {
 		_checkNoticeUpdate(DirtyFlag::LM_WRMIM, DirtyFlag::WRMIM);
 	}
 
-	void Node::parentTranslate(const f32(&p)[3]) {
+	void Node::parentTranslate(const float32_t(&p)[3]) {
 		auto& data = _lm.data;
 		data[0][3] += p[0];
 		data[1][3] += p[1];
@@ -175,7 +175,7 @@ namespace aurora {
 		_checkNoticeUpdate(DirtyFlag::LM_WRMIM, DirtyFlag::WRMIM);
 	}
 
-	void Node::setWorldPosition(const f32(&p)[3]) {
+	void Node::setWorldPosition(const float32_t(&p)[3]) {
 		auto old = _dirty;
 		updateWorldMatrix();
 		_wm.setPosition(p);
@@ -183,7 +183,7 @@ namespace aurora {
 		_worldPositionChanged(old);
 	}
 
-	void Node::worldTranslate(const f32(&p)[3]) {
+	void Node::worldTranslate(const float32_t(&p)[3]) {
 		auto old = _dirty;
 		updateWorldMatrix();
 		_wm.prependTranslate(p);
@@ -396,7 +396,7 @@ namespace aurora {
 		if (_parent) {
 			_parent->updateInverseWorldMatrix();
 
-			f32 tmp[3] = { _wm.data[0][3], _wm.data[1][3], _wm.data[2][3] };
+			float32_t tmp[3] = { _wm.data[0][3], _wm.data[1][3], _wm.data[2][3] };
 			Math::matTransformPoint(_parent->_iwm, tmp, tmp);
 
 			_lm.setPosition(tmp);

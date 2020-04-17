@@ -42,6 +42,8 @@ namespace aurora {
 			0, 0, 0, 0, 0, 0			   //250-255
 		};
 
+		static bool AE_CALL isUTF8(const char* data, size_t len);
+
 		//unicodeLen, utf8Len
 		template<typename T, typename = wstring_data_t<T>>
 		static std::tuple<std::wstring::size_type, std::string::size_type> AE_CALL calcUnicodeToUtf8Length(const T& in) {
@@ -326,9 +328,9 @@ namespace aurora {
 			auto rst = std::to_chars(buf, buf + sizeof(buf), value);
 			return std::move(std::string(buf, rst.ec == std::errc() ? rst.ptr - buf : 0));
 #else
-			if constexpr (std::is_same_v<T, f32>) {
+			if constexpr (std::is_same_v<T, float32_t>) {
 				snprintf(buf, sizeof(buf), "%f", value);
-			} else if constexpr (std::is_same_v<T, f64>) {
+			} else if constexpr (std::is_same_v<T, float64_t>) {
 				snprintf(buf, sizeof(buf), "%lf", value);
 			}
 
@@ -377,39 +379,23 @@ namespace aurora {
 		}
 
 		template<typename T, typename = string_data_t<T>>
-		inline static std::string::size_type AE_CALL findFirst(const T& src, char c) {
-			for (size_t i = 0, n = src.size(); i < n; ++i) {
-				if (src[i] == c) return i;
-			}
-			return std::string::npos;
+		inline static std::string::size_type AE_CALL find(const T& input, char c) {
+			auto p = (const char*)memchr(input.data(), c, input.size());
+			return p ? p - input.data() : std::string::npos;
 		}
 
-		template<typename Src, typename Compare, typename = string_data_t<Src>, typename = std::enable_if_t<is_string_data_v<Compare> || std::is_convertible_v<Compare, char const*>, Compare>>
-		static std::string::size_type AE_CALL findFirst(const Src& src, const Compare& value) {
+		template<typename Input, typename Compare, typename = string_data_t<Input>, typename = std::enable_if_t<is_string_data_v<Compare> || std::is_convertible_v<Compare, char const*>, Compare>>
+		inline static std::string::size_type AE_CALL find(const Input& input, const Compare& compare) {
 			if constexpr (is_string_data_v<Compare>) {
-				if (src.empty() || value.empty()) return std::string::npos;
-
-				auto valSize = value.size();
-				for (size_t i = 0, srcSize = src.size(); i < srcSize; ++i) {
-					if (src[i] == value[0]) {
-						bool equal = true;
-						for (size_t j = 1; j < valSize; ++j) {
-							if (src[i + j] != value[j]) {
-								equal = false;
-								break;
-							}
-						}
-						if (equal) return i;
-					}
-				}
-				return std::string::npos;
+				auto p = (const char*)memFind(input.data(), input.size(), compare.data(), compare.size());
+				return p ? p - input.data() : std::string::npos;
 			} else {
-				return findFirst(src, std::string_view(value));
+				return find(input, std::string_view(compare));
 			}
 		}
 
 		template<typename T, typename = string_data_t<T>>
-		inline static std::string::size_type AE_CALL findFirst(const T& input, uint8_t flags) {
+		inline static std::string::size_type AE_CALL find(const T& input, uint8_t flags) {
 			for (size_t i = 0, n = input.size(); i < n; ++i) {
 				if (CHARS[input[i]] & flags) return i;
 			}

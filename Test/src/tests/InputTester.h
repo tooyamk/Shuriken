@@ -92,7 +92,7 @@ public:
 								{
 									auto key = e.getData<Key>();
 									if (key->code == (uint32_t)KeyboardVirtualKeyCode::KEY_ENTER) {
-										f32 status;
+										float32_t status;
 										if (device->getKeyState((uint8_t)KeyboardVirtualKeyCode::KEY_RCTRL, &status, 1) && status != 0.f) {
 											app->toggleFullscreen();
 										}

@@ -25,7 +25,7 @@ namespace aurora::modules::inputs {
 	public:
 		uint32_t code;
 		uint32_t count;
-		f32* value;
+		float32_t* value;
 	};
 
 
@@ -44,10 +44,10 @@ namespace aurora::modules::inputs {
 
 		virtual events::IEventDispatcher<DeviceEvent>& AE_CALL getEventDispatcher() = 0;
 		virtual const DeviceInfo& AE_CALL getInfo() const = 0;
-		virtual uint32_t AE_CALL getKeyState (uint32_t keyCode, f32* data, uint32_t count) const = 0;
+		virtual uint32_t AE_CALL getKeyState (uint32_t keyCode, float32_t* data, uint32_t count) const = 0;
 		virtual void AE_CALL poll(bool dispatchEvent) = 0;
-		virtual void AE_CALL setDeadZone (uint32_t keyCode, f32 deadZone) = 0;
-		virtual void AE_CALL setVibration(f32 left, f32 right) = 0;
+		virtual void AE_CALL setDeadZone (uint32_t keyCode, float32_t deadZone) = 0;
+		virtual void AE_CALL setVibration(float32_t left, float32_t right) = 0;
 	};
 
 

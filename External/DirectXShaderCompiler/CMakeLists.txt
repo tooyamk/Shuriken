@@ -45,7 +45,6 @@ if (MSVC)
     set(path "nil")
     __find_dir(${CMAKE_CXX_COMPILER} path "Community" "Professional" "Enterprise")
     if (NOT (${path} STREQUAL "nil"))
-    message(${path})
         set(DIASDK_LIBRARIES "${path}/DIA SDK/lib")
         set(DIASDK_INCLUDE_DIR "${path}/DIA SDK/include")
     endif ()
@@ -110,7 +109,11 @@ ExternalProject_Add(
     SOURCE_DIR src
     BINARY_DIR ${AE_BUILD_DIR}
     UPDATE_COMMAND ""
-    PATCH_COMMAND ${CMAKE_COMMAND} -DSRC_DIR=${CMAKE_CURRENT_SOURCE_DIR} -DBIN_DIR=${CMAKE_CURRENT_BINARY_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/patch/patch.cmake
+    PATCH_COMMAND
+        ${CMAKE_COMMAND}
+        -DSRC_DIR=${CMAKE_CURRENT_SOURCE_DIR}
+        -DBIN_DIR=${CMAKE_CURRENT_BINARY_DIR}
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/patch/patch.cmake
     BUILD_BYPRODUCTS 
         ${LLVMDxcSupport_SLIB_R}
         ${LLVMDxcSupport_SLIB_D}

@@ -111,13 +111,6 @@
 #endif
 
 
-#if AE_COMPILER == AE_COMPILER_MSVC
-	#define AE_CALL __fastcall
-#else
-	#define AE_CALL
-#endif
-
-
 #define ae_internal_public public
 
 
@@ -156,14 +149,31 @@
 #endif
 
 
-#if AE_OS == AE_OS_WIN
+#if AE_COMPILER == AE_COMPILER_MSVC
+#	define AE_CALL __fastcall
+
 #	define AE_DLL_EXPORT __declspec(dllexport)
 #	define AE_DLL_IMPORT __declspec(dllimport)
-#else
-#	define AE_DLL_EXPORT
+#elif AE_COMPILER == AE_COMPILER_CLANG
+#	define AE_CALL
+
+#	define AE_DLL_EXPORT __attribute__((__visibility__("default")))
 #	define AE_DLL_IMPORT
-//#	define AE_DLL_EXPORT __attribute__((dllexport))
-//#	define AE_DLL_IMPORT __attribute__((dllimport))
+#elif AE_COMPILER == AE_COMPILER_GCC
+#	define AE_CALL
+
+#	if AE_OS == AE_OS_WIN
+#		define AE_DLL_EXPORT __attribute__((__dllexport__))
+#		define AE_DLL_IMPORT __attribute__((__dllimport__))
+#	else
+#		define AE_DLL_EXPORT __attribute__((__visibility__("default")))
+#		define AE_DLL_IMPORT
+#	endif
+#else
+#	define AE_CALL
+
+#	define AE_DLL_EXPORT __attribute__((__visibility__("default")))
+#	define AE_DLL_IMPORT
 #endif
 
 #define AE_MODULE_DLL_EXPORT AE_DLL_EXPORT
@@ -251,8 +261,8 @@ namespace std {
 
 
 namespace aurora {
-	using f32 = float;
-	using f64 = double;
+	using float32_t = float;
+	using float64_t = double;
 
 
 	template<typename T> constexpr bool is_unsigned_integral_v = std::is_integral_v<T> && std::is_unsigned_v<T>;
@@ -278,6 +288,7 @@ namespace aurora {
 
 	template<size_t Bits> using int_t = if_else_t<Bits >= 0 && Bits <= 8, int8_t, if_else_t<Bits >= 9 && Bits <= 16, int16_t, if_else_t<Bits >= 17 && Bits <= 32, int32_t, if_else_t<Bits >= 33 && Bits <= 64, int64_t, void>>>>;
 	template<size_t Bits> using uint_t = if_else_t<Bits >= 0 && Bits <= 8, uint8_t, if_else_t<Bits >= 9 && Bits <= 16, uint16_t, if_else_t<Bits >= 17 && Bits <= 32, uint32_t, if_else_t<Bits >= 33 && Bits <= 64, uint64_t, void>>>>;
+	template<size_t Bits> using float_t = if_else_t<Bits >= 0 && Bits <= 32, float32_t, if_else_t<Bits >= 33 && Bits <= 64, float64_t, void>>;
 
 
 	template<typename T> struct Recognitor {};
@@ -485,6 +496,31 @@ namespace aurora {
 	}
 
 
+	template<size_t Offset = 1>
+	inline void* memFind(void* val1, size_t val1Length, const void* val2, size_t val2Length) {
+		if (val2Length) {
+			auto inBuf = (uint8_t*)val1;
+
+			for (; val1Length >= Offset; val1Length -= Offset) {
+				if (val1Length < val2Length) return nullptr;
+
+				if (memEqual(inBuf, val2, val2Length)) return inBuf;
+
+				inBuf += Offset;
+			}
+
+			return nullptr;
+		} else {
+			return val1;
+		}
+	}
+
+	template<size_t Offset = 1>
+	inline const void* memFind(const void* val1, size_t val1Length, const void* val2, size_t val2Length) {
+		return memFind<Offset>((void*)val1, val1Length, val2, val2Length);
+	}
+
+
 	struct AE_DLL NoInit {};
 	inline const NoInit NO_INIT = NoInit();
 
@@ -654,7 +690,42 @@ namespace aurora {
 				out.write(L"nullptr");
 			} else if constexpr (std::is_convertible_v<T, char const*> || std::is_convertible_v<T, wchar_t const*>) {
 				out.write(value);
-			} else if constexpr (is_string_data_v<T> || is_wstring_data_v<T>) {
+			} else if constexpr (is_string_data_v<T>) {
+				const auto buf = (uint8_t*)value.data();
+				size_t i = 0, len = value.size();
+				bool isUTF8 = true;
+				while (i < len) {
+					if (auto c = buf[i]; c < 0x80) {
+						++i;
+					} else if (c < 0xC0) {
+						isUTF8 = false;
+						break;
+					} else if (c < 0xE0) {
+						if (i >= len - 1) break;
+						if ((buf[i + 1] & 0xC0) != 0x80) {
+							isUTF8 = false;
+							break;
+						}
+						i += 2;
+					} else if (c < 0xF0) {
+						if (i >= len - 2) break;
+						if ((buf[i + 1] & 0xC0) != 0x80 || (buf[i + 2] & 0xC0) != 0x80) {
+							isUTF8 = false;
+							break;
+						}
+						i += 3;
+					} else {
+						isUTF8 = false;
+						break;
+					}
+				}
+
+				if (isUTF8) {
+					out.write(value.data(), value.size());
+				} else {
+					out.write(L"<nonsupported encode>");
+				}
+			} else if constexpr (is_wstring_data_v<T>) {
 				out.write(value.data(), value.size());
 			} else if constexpr (std::is_same_v<T, bool>) {
 				out.write(value ? L"true" : L"false");

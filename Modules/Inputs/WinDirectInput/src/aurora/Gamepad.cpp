@@ -106,7 +106,7 @@ namespace aurora::modules::inputs::win_direct_input {
 		setDeadZone((uint8_t)GamepadKeyCode::RIGHT_TRIGGER, .05f);
 	}
 
-	uint32_t Gamepad::getKeyState (uint32_t keyCode, f32* data, uint32_t count) const {
+	uint32_t Gamepad::getKeyState (uint32_t keyCode, float32_t* data, uint32_t count) const {
 		if (data && count) {
 			switch ((GamepadKeyCode)keyCode) {
 			case GamepadKeyCode::LEFT_STICK:
@@ -233,7 +233,7 @@ namespace aurora::modules::inputs::win_direct_input {
 			for (uint8_t i = 0; i < changedPovLen; ++i) {
 				uint8_t key = changedPov[i];
 				if (key == 0) {
-					f32 value = _translateDpad(state.rgdwPOV[key]);
+					float32_t value = _translateDpad(state.rgdwPOV[key]);
 					_eventDispatcher.dispatchEvent(this, value >= 0.f ? DeviceEvent::DOWN : DeviceEvent::UP, &Key({ (uint8_t)GamepadKeyCode::DPAD, 1, &value }));
 				}
 			}
@@ -242,7 +242,7 @@ namespace aurora::modules::inputs::win_direct_input {
 		if (changedBtnsLen) {
 			for (uint8_t i = 0; i < changedBtnsLen; ++i) {
 				uint8_t key = changedBtns[i];
-				f32 value = _translateButton(state.rgbButtons[key]);
+				float32_t value = _translateButton(state.rgbButtons[key]);
 
 				auto itr = _keyMapping->BUTTONS.find(key);
 				key = itr == _keyMapping->BUTTONS.end() ? key + (uint8_t)GamepadKeyCode::UNDEFINED : (uint8_t)itr->second;
@@ -252,7 +252,7 @@ namespace aurora::modules::inputs::win_direct_input {
 		}
 	}
 
-	void Gamepad::setDeadZone (uint32_t keyCode, f32 deadZone) {
+	void Gamepad::setDeadZone (uint32_t keyCode, float32_t deadZone) {
 		if (deadZone < 0.f) deadZone = -deadZone;
 
 		if (auto itr = _deadZone.find(keyCode); itr == _deadZone.end()) {
@@ -276,8 +276,8 @@ namespace aurora::modules::inputs::win_direct_input {
 		return true;
 	}
 
-	f32 Gamepad::_translateStick(LONG value) {
-		auto v = f32(value - 32767);
+	float32_t Gamepad::_translateStick(LONG value) {
+		auto v = float32_t(value - 32767);
 		if (v < 0.f) {
 			v /= 32767.f;
 		} else if (v > 0.f) {
@@ -286,12 +286,12 @@ namespace aurora::modules::inputs::win_direct_input {
 		return v;
 	}
 
-	void Gamepad::_translateTrigger(LONG value, f32& l, f32& r) {
+	void Gamepad::_translateTrigger(LONG value, float32_t& l, float32_t& r) {
 		if (value < 32767) {
 			l = 0.f;
-			r = f32(32767 - value) / 32767.f;
+			r = float32_t(32767 - value) / 32767.f;
 		} else if (value > 32767) {
-			l =  f32(value - 32767) / 32768.f;
+			l =  float32_t(value - 32767) / 32768.f;
 			r = 0.f;
 		} else {
 			l = 0.f;
@@ -299,7 +299,7 @@ namespace aurora::modules::inputs::win_direct_input {
 		}
 	}
 
-	uint32_t Gamepad::_getStick(LONG x, LONG y, GamepadKeyCode key, f32* data, uint32_t count) const {
+	uint32_t Gamepad::_getStick(LONG x, LONG y, GamepadKeyCode key, float32_t* data, uint32_t count) const {
 		uint32_t c = 1;
 
 		auto dz = _getDeadZone(key);
@@ -315,18 +315,18 @@ namespace aurora::modules::inputs::win_direct_input {
 			data[0] = -1.0f;
 			if (count > 1) data[c++] = 0.f;
 		} else {
-			data[0] = std::atan2(dy, dx) + Math::PI_2<f32>;
-			if (data[0] < 0.f) data[0] += Math::PI2<f32>;
+			data[0] = std::atan2(dy, dx) + Math::PI_2<float32_t>;
+			if (data[0] < 0.f) data[0] += Math::PI2<float32_t>;
 			if (count > 1) data[c++] = _translateDeadZone0_1(d2 < 1.f ? std::sqrt(d2) : 1.f, dz, false);
 		}
 
 		return c;
 	}
 
-	uint32_t Gamepad::_getTrigger(LONG t, GamepadKeyCode key, uint8_t index, f32& data) const {
+	uint32_t Gamepad::_getTrigger(LONG t, GamepadKeyCode key, uint8_t index, float32_t& data) const {
 		auto dz = _getDeadZone(key);
 
-		f32 values[2];
+		float32_t values[2];
 		_translateTrigger(t, values[0], values[1]);
 		data = values[index];
 		data = _translateDeadZone0_1(data, dz, data <= dz);
@@ -334,7 +334,7 @@ namespace aurora::modules::inputs::win_direct_input {
 		return 1;
 	}
 
-	uint32_t Gamepad::_getTriggerSeparate(LONG t, GamepadKeyCode key, f32& data) const {
+	uint32_t Gamepad::_getTriggerSeparate(LONG t, GamepadKeyCode key, float32_t& data) const {
 		auto dz = _getDeadZone(key);
 
 		data = _translateTriggerSeparate(t);
@@ -344,7 +344,7 @@ namespace aurora::modules::inputs::win_direct_input {
 	}
 
 	void Gamepad::_updateStick(LONG oriX, LONG oriY, LONG curX, LONG curY, GamepadKeyCode key) {
-		f32 value[] = { _translateStick(curX) , _translateStick(curY) };
+		float32_t value[] = { _translateStick(curX) , _translateStick(curY) };
 		auto dz = _getDeadZone(key);
 		auto dz2 = dz * dz;
 		auto x = _translateStick(oriX), y = _translateStick(oriY);
@@ -357,8 +357,8 @@ namespace aurora::modules::inputs::win_direct_input {
 				value[0] = -1.f;
 				value[1] = 0.f;
 			} else {
-				value[0] = std::atan2(value[1], value[0]) + Math::PI_2<f32>;
-				if (value[0] < 0.f) value[0] += Math::PI2<f32>;
+				value[0] = std::atan2(value[1], value[0]) + Math::PI_2<float32_t>;
+				if (value[0] < 0.f) value[0] += Math::PI2<float32_t>;
 				value[1] = _translateDeadZone0_1(d2 < 1.f ? std::sqrt(d2) : 1.f, dz, false);
 			}
 			_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &Key({ (uint8_t)key, 2, value }));
@@ -366,7 +366,7 @@ namespace aurora::modules::inputs::win_direct_input {
 	}
 
 	void Gamepad::_updateTrigger(LONG ori, LONG cur, GamepadKeyCode lkey, GamepadKeyCode rkey) {
-		f32 oriValues[2], curValues[2];
+		float32_t oriValues[2], curValues[2];
 		_translateTrigger(ori, oriValues[0], oriValues[1]);
 		_translateTrigger(cur, curValues[0], curValues[1]);
 		auto ldz = _getDeadZone(lkey);
@@ -386,7 +386,7 @@ namespace aurora::modules::inputs::win_direct_input {
 	}
 
 	void Gamepad::_updateTriggerSeparate(LONG ori, LONG cur, GamepadKeyCode key) {
-		f32 value = _translateTriggerSeparate(cur);
+		float32_t value = _translateTriggerSeparate(cur);
 		auto dz = _getDeadZone(key);
 		auto oriDz = _translateTriggerSeparate(ori) <= dz;
 		auto curDz = value <= dz;
