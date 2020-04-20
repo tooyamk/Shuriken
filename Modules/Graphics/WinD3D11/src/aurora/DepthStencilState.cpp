@@ -98,14 +98,14 @@ namespace aurora::modules::graphics::win_d3d11 {
 				_oldDepthState = _depthState;
 				_oldStencilState = _stencilState;
 
-				_featureValue = 0x1ui64 << 63;
+				_featureValue = 0x1ULL << 63;
 				if (_depthState.enabled) {
-					_featureValue |= 0x1ui64 << 54;
-					if (_depthState.writeable) _featureValue |= 0x1ui64 << 53;
+					_featureValue |= 0x1ULL << 54;
+					if (_depthState.writeable) _featureValue |= 0x1ULL << 53;
 					_featureValue |= (uint64_t)_depthState.func << 49;
 				}
 				if (_stencilState.enabled) {
-					_featureValue |= 0x1ui64 << 48;
+					_featureValue |= 0x1ULL << 48;
 					_featureValue |= (uint64_t)(*((uint16_t*)&_stencilState.face.front.mask)) << 32;
 					_featureValue |= (uint64_t)_stencilState.face.front.op.fail << 28;
 					_featureValue |= (uint64_t)_stencilState.face.front.op.depthFail << 24;

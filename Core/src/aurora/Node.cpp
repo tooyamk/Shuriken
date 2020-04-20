@@ -30,35 +30,43 @@ namespace aurora {
 			child->ref();
 			_addNode(child);
 			child->_parentChanged(_root);
+
 			return child;
 		}
+
 		return nullptr;
 	}
 
 	Node* Node::insertChild(Node* child, Node* before) {
 		if (child && child != _root) {
-			if (child == before) return child;
-
 			if (before) {
 				if (before->_parent == this) {
 					if (child->_parent == this) {
-						if (child != before && child->_prev != before) {
-							_removeNode(child);
-							_insertNode(child, before);
-						}
+						if (child == before || child->_prev == before) return child;
+
+						_removeNode(child);
+						_insertNode(child, before);
+
+						return child;
 					} else if (!child->_parent) {
 						child->ref();
 						_insertNode(child, before);
-					}
 
-					return child;
+						return child;
+					}
 				}
 			} else {
 				if (child->_parent == this) {
 					_removeNode(child);
 					_addNode(child);
-				} else {
-					return addChild(child);
+
+					return child;
+				} else if (!child->_parent) {
+					child->ref();
+					_addNode(child);
+					child->_parentChanged(_root);
+
+					return child;
 				}
 			}
 		}
@@ -74,6 +82,7 @@ namespace aurora {
 
 			return true;
 		}
+
 		return false;
 	}
 
@@ -87,6 +96,7 @@ namespace aurora {
 
 			return iterator(next);
 		}
+
 		return iterator();
 	}
 

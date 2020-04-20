@@ -33,7 +33,7 @@ namespace aurora::modules::graphics::win_gl {
 	void DepthStencilState::_updateDepth() {
 		_internalDepthState.enabled = _depthState.enabled;
 		_internalDepthState.writeable = _depthState.writeable;
-		_internalDepthState .func = Graphics::convertComparisonFunc(_depthState.func);
+		_internalDepthState.func = Graphics::convertComparisonFunc(_depthState.func);
 	}
 
 	const StencilState& DepthStencilState::getStencilState() const {

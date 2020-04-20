@@ -6,7 +6,8 @@ namespace aurora::rtti {
 	class AE_DLL ClassInfo {
 	public:
 		ClassInfo(const ClassInfo* const base) :
-			_base(base) {
+			_base(base),
+			_depth(base ? base->_depth + 1 : 0) {
 		}
 
 		inline size_t AE_CALL id() const {
@@ -16,15 +17,20 @@ namespace aurora::rtti {
 		template<typename T>
 		inline bool AE_CALL isKindOf() const {
 			auto c = this;
-			do {
-				if (c == &T::__rttiClassInfo) return true;
-				c = c->_base;
-			} while (c);
-			return false;
+			auto t = &T::__rttiClassInfo;
+			auto td = t->_depth;
+
+			if (c->_depth < td) return false;
+			if (c->_depth > td) {
+				for (size_t i = 0, n = c->_depth - td; i < n; ++i) c = c->_base;
+			}
+
+			return c == t;
 		}
 
 	private:
 		const ClassInfo* const _base;
+		const uint64_t _depth;
 	};
 }
 

@@ -84,18 +84,32 @@ namespace aurora {
 			if (RefPtr p = _graphics->createProgram(); p) {
 				if (auto itr2 = _variants.find(fv); itr2 == _variants.end()) {
 					if (_vs && _ps) {
-						auto succeeded = p->create(*_vs, *_ps, _defines.data(), count, [this](const modules::graphics::IProgram&, ProgramStage stage, const std::string_view& name) {
+						if (auto succeeded = p->create(*_vs, *_ps, _defines.data(), count, [this](const modules::graphics::IProgram&, ProgramStage stage, const std::string_view& name) {
 							return _includeHhandler ? _includeHhandler(*this, stage, name) : ByteArray();
-						});
-						_programs.emplace(fv, succeeded ? p : nullptr);
+						}); succeeded) {
+							_programs.emplace(fv, p);
+
+							return p;
+						} else {
+							_programs.emplace(fv, nullptr);
+
+							return nullptr;
+						}
 					}
 				} else {
 					auto& variant = itr2->second;
 					if (variant.vs && variant.ps) {
-						auto succeeded = p->create(*variant.vs, *variant.ps, _defines.data(), count, [this](const modules::graphics::IProgram&, ProgramStage stage, const std::string_view& name) {
+						if (auto succeeded = p->create(*variant.vs, *variant.ps, _defines.data(), count, [this](const modules::graphics::IProgram&, ProgramStage stage, const std::string_view& name) {
 							return _includeHhandler ? _includeHhandler(*this, stage, name) : ByteArray();
-						});
-						_programs.emplace(fv, succeeded ? p : nullptr);
+						}); succeeded) {
+							_programs.emplace(fv, p);
+
+							return p;
+						} else {
+							_programs.emplace(fv, nullptr);
+
+							return nullptr;
+						}
 					}
 				}
 			} else {

@@ -3,6 +3,7 @@
 #include "../BaseTester.h"
 #include "aurora/SerializableObject.h"
 #include <string>
+#include <map>
 
 class RenderPipelineTester : public BaseTester {
 public:
@@ -59,13 +60,24 @@ public:
 						//auto lm = modelNode->getLocalMatrix();
 						//auto wm = modelNode->getWorldMatrix();
 						renderData.model = modelNode;
-						auto lightNode = worldNode->addChild(new Node());
-						lightNode->setLocalPosition(Vec3f32(-100, 0, -100));
-						auto light = new PointLight();
-						//light->setRadius(1000);
-						lightNode->addComponent(light);
-						lightNode->localRotate(Quaternion::createFromEulerY(Math::PI_4<float32_t>));
-						renderData.lights.emplace_back(light);
+						if (1) {
+							auto lightNode = worldNode->addChild(new Node());
+							lightNode->setLocalPosition(Vec3f32(-100, 0, -100));
+							auto light = new PointLight();
+							//light->setRadius(200);
+							lightNode->addComponent(light);
+							lightNode->localRotate(Quaternion::createFromEulerY(Math::PI_4<float32_t>));
+							renderData.lights.emplace_back(light);
+						}
+						if (0) {
+							auto lightNode = worldNode->addChild(new Node());
+							lightNode->setLocalPosition(Vec3f32(100, 0, -100));
+							auto light = new PointLight();
+							//light->setRadius(1000);
+							lightNode->addComponent(light);
+							lightNode->localRotate(Quaternion::createFromEulerY(-Math::PI_4<float32_t>));
+							renderData.lights.emplace_back(light);
+						}
 						auto cameraNode = worldNode->addChild(new Node());
 						auto camera = new Camera();
 						renderData.camera = camera;
@@ -80,21 +92,32 @@ public:
 							camera->getNode()->localTranslate(Vec3f32(0.f, 0.f, -200.f));
 						}
 
+						RenderTag forwardBaseTag("forward_base");
+						RenderTag forwardAddTag("forward_add");
+
 						auto parsed = extensions::FBXConverter::parse(readFile(app->getAppPath() + u8"Resources/teapot.fbx"));
 						for (auto& mr : parsed.meshes) {
 							if (mr) {
 								RefPtr rs = graphics->createRasterizerState();
 								rs->setFillMode(FillMode::SOLID);
 								rs->setFrontFace(FrontFace::CW);
-								rs->setCullMode(CullMode::NONE);
+								rs->setCullMode(CullMode::BACK);
 
 								auto renderableMesh = new RenderableMesh();
 								auto pass = new RenderPass();
 								pass->state = new RenderState();
 								pass->state->rasterizer.state = rs;
-								renderData.material = mat;
 								pass->material = mat;
+								pass->tags.emplace(forwardBaseTag);
 								renderableMesh->renderPasses.emplace_back(pass);
+								{
+									auto subPass = new RenderPass();
+									subPass->state = new RenderState();
+									subPass->state->rasterizer.state = rs;
+									subPass->material = mat;
+									subPass->tags.emplace(forwardAddTag);
+									pass->subPasses.emplace_back(subPass);
+								}
 								auto mesh = new Mesh();
 								renderableMesh->setMesh(mesh);
 								renderableMesh->setRenderer(renderer);
@@ -136,14 +159,14 @@ public:
 
 						renderData.wrold = worldNode;
 						renderData.renderPipeline = new StandardRenderPipeline();
-						renderData.renderPipeline->getShaderParameters().set(ShaderPredefine::AMBIENT_COLOR, new ShaderParameter())->set(Vec3f32(0.1f));
+						renderData.renderPipeline->getShaderParameters().set(ShaderPredefine::AMBIENT_COLOR, new ShaderParameter())->set(Vec3f32(0.0f));
 						renderData.renderPipeline->getShaderParameters().set(ShaderPredefine::DIFFUSE_COLOR, new ShaderParameter())->set(Vec3f32::ONE);
 					}
 
 					{
 						auto texRes = graphics->createTexture2DResource();
 						if (texRes) {
-							auto img0 = extensions::PNGConverter::parse(readFile(app->getAppPath() + u8"Resources/c4.png"));
+							auto img0 = extensions::PNGConverter::parse(readFile(app->getAppPath() + u8"Resources/white.png"));
 							auto mipLevels = Image::calcMipLevels(img0->size);
 							ByteArray mipsData0;
 							std::vector<void*> mipsData0Ptr;

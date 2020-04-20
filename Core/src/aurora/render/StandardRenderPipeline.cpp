@@ -64,8 +64,6 @@ namespace aurora::render {
 					}
 				});
 
-				camera->getProjectionMatrix();
-
 				graphics->beginRender();
 				graphics->clear(camera->clearFlag, camera->clearColor, camera->clearDepthValue, camera->clearStencilValue);
 

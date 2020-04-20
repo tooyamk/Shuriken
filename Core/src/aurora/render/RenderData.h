@@ -1,6 +1,7 @@
 #pragma once
 
 #include "aurora/math/Matrix.h"
+#include "aurora/render/RenderPass.h"
 #include "aurora/render/RenderPriority.h"
 
 namespace aurora {
@@ -29,6 +30,7 @@ namespace aurora::render {
 		Material* material;
 		const Mesh* mesh;
 		IRenderer* renderer;
+		std::vector<RefPtr<RenderPass>>* subPasses;
 
 		struct {
 			Matrix34 l2w;
@@ -43,6 +45,7 @@ namespace aurora::render {
 			material = data.material;
 			mesh = data.mesh;
 			renderer = data.renderer;
+			subPasses = data.subPasses;
 		}
 
 		inline void AE_CALL reset() {
@@ -52,6 +55,7 @@ namespace aurora::render {
 			material = nullptr;
 			mesh = nullptr;
 			renderer = nullptr;
+			subPasses = nullptr;
 		}
 	};
 }
