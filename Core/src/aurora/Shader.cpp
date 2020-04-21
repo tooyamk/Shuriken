@@ -25,8 +25,7 @@ namespace aurora {
 			_staticDefines[j] = sdef->name;
 			def.name = _staticDefines[j];
 
-			++j;
-			_staticDefines[j] = sdef->value;
+			_staticDefines[++j] = sdef->value;
 			def.value = _staticDefines[j];
 		}
 
@@ -52,16 +51,16 @@ namespace aurora {
 
 		size_t count = _staticDefines.size() >> 1;
 		if (getter) {
-			for (size_t i = 0, n = _dynamicDefines.size(); i < n; ++i) {
+			for (uint16_t i = 0, n = _dynamicDefines.size(); i < n; ++i) {
 				auto& d = _dynamicDefines[i];
 
 				fv = hash::CRC::update<64, false>(fv, &i, sizeof(i), _crcTable);
 
 				if (auto v = getter->get(d); v) {
-					if (auto size = v->size(); size) {
-						fv = hash::CRC::update<64, false>(fv, v->data(), v->size(), _crcTable);
-					} else {
+					if (v->empty()) {
 						fv = hash::CRC::update<64, false>(fv, &NULL_VALUE, sizeof(NULL_VALUE), _crcTable);
+					} else {
+						fv = hash::CRC::update<64, false>(fv, v->data(), v->size(), _crcTable);
 					}
 
 					auto& def = _defines[count++];
@@ -72,7 +71,7 @@ namespace aurora {
 				}
 			}
 		} else {
-			for (size_t i = 0, n = _dynamicDefines.size(); i < n; ++i) {
+			for (uint16_t i = 0, n = _dynamicDefines.size(); i < n; ++i) {
 				fv = hash::CRC::update<64, false>(fv, &i, sizeof(i), _crcTable);
 				fv = hash::CRC::update<64, false>(fv, &NO_VALUE, sizeof(NO_VALUE), _crcTable);
 			}
@@ -129,16 +128,16 @@ namespace aurora {
 
 			uint64_t fv = 0;
 
-			for (size_t i = 0, n = _dynamicDefines.size(); i < n; ++i) {
+			for (uint16_t i = 0, n = _dynamicDefines.size(); i < n; ++i) {
 				auto& d = _dynamicDefines[i];
 
 				fv = hash::CRC::update<64, false>(fv, &i, sizeof(i), _crcTable);
 
 				if (auto v = getter->get(d); v) {
-					if (auto size = v->size(); size) {
-						fv = hash::CRC::update<64, false>(fv, v->data(), v->size(), _crcTable);
-					} else {
+					if (v->empty()) {
 						fv = hash::CRC::update<64, false>(fv, &NULL_VALUE, sizeof(NULL_VALUE), _crcTable);
+					} else {
+						fv = hash::CRC::update<64, false>(fv, v->data(), v->size(), _crcTable);
 					}
 				} else {
 					fv = hash::CRC::update<64, false>(fv, &NO_VALUE, sizeof(NO_VALUE), _crcTable);

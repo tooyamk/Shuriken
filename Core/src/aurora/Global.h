@@ -274,21 +274,15 @@ namespace aurora {
 	template<typename T> using unsigned_integral_t = typename std::enable_if_t<is_unsigned_integral_v<T>, T>;
 
 
-	template<bool Test, class T = void, class F = void> struct if_else {};
-	template<class T, class F> struct if_else<true, T, F> { using type = T; };
-	template<class T, class F> struct if_else<false, T, F> { using type = F; };
-	template<bool Test, class T = void, class F = void> using if_else_t = typename if_else<Test, T, F>::type;
-
-
 	template<typename T> constexpr bool is_string_data_v = std::is_same_v<T, std::string> || std::is_same_v<T, std::string_view>;
 	template<typename T> constexpr bool is_wstring_data_v = std::is_same_v<T, std::wstring> || std::is_same_v<T, std::wstring_view>;
 	template<typename T> using string_data_t = typename std::enable_if_t<is_string_data_v<T>, T>;
 	template<typename T> using wstring_data_t = typename std::enable_if_t<is_wstring_data_v<T>, T>;
 
 
-	template<size_t Bits> using int_t = if_else_t<Bits >= 0 && Bits <= 8, int8_t, if_else_t<Bits >= 9 && Bits <= 16, int16_t, if_else_t<Bits >= 17 && Bits <= 32, int32_t, if_else_t<Bits >= 33 && Bits <= 64, int64_t, void>>>>;
-	template<size_t Bits> using uint_t = if_else_t<Bits >= 0 && Bits <= 8, uint8_t, if_else_t<Bits >= 9 && Bits <= 16, uint16_t, if_else_t<Bits >= 17 && Bits <= 32, uint32_t, if_else_t<Bits >= 33 && Bits <= 64, uint64_t, void>>>>;
-	template<size_t Bits> using float_t = if_else_t<Bits >= 0 && Bits <= 32, float32_t, if_else_t<Bits >= 33 && Bits <= 64, float64_t, void>>;
+	template<size_t Bits> using int_t = std::conditional_t<Bits >= 0 && Bits <= 8, int8_t, std::conditional_t<Bits >= 9 && Bits <= 16, int16_t, std::conditional_t<Bits >= 17 && Bits <= 32, int32_t, std::conditional_t<Bits >= 33 && Bits <= 64, int64_t, void>>>>;
+	template<size_t Bits> using uint_t = std::conditional_t<Bits >= 0 && Bits <= 8, uint8_t, std::conditional_t<Bits >= 9 && Bits <= 16, uint16_t, std::conditional_t<Bits >= 17 && Bits <= 32, uint32_t, std::conditional_t<Bits >= 33 && Bits <= 64, uint64_t, void>>>>;
+	template<size_t Bits> using float_t = std::conditional_t<Bits >= 0 && Bits <= 32, float32_t, std::conditional_t<Bits >= 33 && Bits <= 64, float64_t, void>>;
 
 
 	template<typename T> struct Recognitor {};
