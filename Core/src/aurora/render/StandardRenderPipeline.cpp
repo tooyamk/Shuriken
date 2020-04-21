@@ -28,6 +28,10 @@ namespace aurora::render {
 		_shaderParameters->set(ShaderPredefine::MATRIX_WV, _builtinShaderParameters.m34_w2v);
 		_shaderParameters->set(ShaderPredefine::MATRIX_WP, _builtinShaderParameters.m44_w2p);
 		_shaderParameters->set(ShaderPredefine::CAMERA_POS, _builtinShaderParameters.v3_camPos);
+
+		_shaderParameters->set(ShaderPredefine::AMBIENT_COLOR, new ShaderParameter())->set(Vec3f32::ZERO);
+		_shaderParameters->set(ShaderPredefine::DIFFUSE_COLOR, new ShaderParameter())->set(Vec3f32::ONE);
+		_shaderParameters->set(ShaderPredefine::SPECULAR_COLOR, new ShaderParameter())->set(Vec3f32::ONE);
 	}
 
 	void StandardRenderPipeline::render(modules::graphics::IGraphicsModule* graphics, components::Camera* camera, Node* node, const std::vector<components::lights::ILight*>* lights) {
@@ -112,7 +116,7 @@ namespace aurora::render {
 			_renderQueue.emplace_back(data);
 			data->set(collector.data);
 
-			if (_renderers.find(data->renderer) == _renderers.end()) _renderers.emplace(data->renderer);
+			_renderers.emplace(data->renderer);
 
 			data->matrix.l2w = data->renderable->getNode()->getWorldMatrix();
 			data->matrix.l2w.append(collector.matrix.w2v, data->matrix.l2v);

@@ -81,6 +81,8 @@ shader {
             #endif
 
             float3 _ambientColor;
+            float3 _diffuseColor;
+            float3 _specularColor;
 
             Texture2D _diffuseTex;
             SamplerState _diffuseTexSampler;
@@ -123,7 +125,7 @@ shader {
                 float3 viewDir = normalize(_cameraPos - input.pos);
                 float3 specularColor = BlinnPhoneFactor(input.normal, lightingDir, viewDir, 100);
 
-                c.xyz = (c.xyz * _ambientColor) + (c.xyz * diffuseColor + specularColor) * luminosity;
+                c.xyz = (c.xyz * _ambientColor) + (c.xyz * _diffuseColor * diffuseColor + specularColor * _specularColor) * luminosity;
 
                 #else
                 

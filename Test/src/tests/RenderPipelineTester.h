@@ -18,8 +18,8 @@ public:
 		if (app->createWindow(wndStype, u8"", Box2i32(Vec2i32({ 100, 100 }), Vec2i32({ 800, 600 })), false)) {
 			RefPtr gml = new GraphicsModuleLoader();
 
-			//if (gml->load(getDLLName("ae-win-gl"))) {
-			if (gml->load(getDLLName("ae-win-d3d11"))) {
+			if (gml->load(getDLLName("ae-win-gl"))) {
+			//if (gml->load(getDLLName("ae-win-d3d11"))) {
 				RefPtr gpstml = new ModuleLoader<IProgramSourceTranslator>();
 				gpstml->load(getDLLName("ae-program-source-translator"));
 				RefPtr gpst = gpstml->create(&Args().add("dxc", getDLLName("dxcompiler")));
@@ -42,6 +42,7 @@ public:
 						RefPtr<Node> model;
 						RefPtr<Camera> camera;
 						RefPtr<Material> material;
+						RefPtr<Material> material2;
 						RefPtr<StandardRenderPipeline> renderPipeline;
 						std::vector<ILight*> lights;
 					} renderData;
@@ -69,7 +70,7 @@ public:
 							lightNode->localRotate(Quaternion::createFromEulerY(Math::PI_4<float32_t>));
 							renderData.lights.emplace_back(light);
 						}
-						if (0) {
+						if (1) {
 							auto lightNode = worldNode->addChild(new Node());
 							lightNode->setLocalPosition(Vec3f32(100, 0, -100));
 							auto light = new PointLight();
@@ -84,6 +85,8 @@ public:
 						cameraNode->addComponent(camera);
 						auto mat = new Material();
 						renderData.material = mat;
+						auto mat2 = new Material();
+						renderData.material2 = mat2;
 						RefPtr renderer = new ForwardRenderer(*graphics);
 
 						{
@@ -152,8 +155,12 @@ public:
 								return readFile(shaderResourcesFolder + name.data());
 							});
 
+							mat2->setShader(s);
+							mat2->setParameters(new ShaderParameterCollection());
 							{
 								mat->getParameters()->set(ShaderPredefine::DIFFUSE_COLOR, new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set(Vec3f32::ONE);
+								//mat->getParameters()->set(ShaderPredefine::DIFFUSE_COLOR, new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set(Vec3f32(1, 0, 0));
+								//mat2->getParameters()->set(ShaderPredefine::DIFFUSE_COLOR, new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set(Vec3f32(0, 1, 0));
 							}
 						}
 
@@ -161,6 +168,7 @@ public:
 						renderData.renderPipeline = new StandardRenderPipeline();
 						renderData.renderPipeline->getShaderParameters().set(ShaderPredefine::AMBIENT_COLOR, new ShaderParameter())->set(Vec3f32(0.0f));
 						renderData.renderPipeline->getShaderParameters().set(ShaderPredefine::DIFFUSE_COLOR, new ShaderParameter())->set(Vec3f32::ONE);
+						renderData.renderPipeline->getShaderParameters().set(ShaderPredefine::SPECULAR_COLOR, new ShaderParameter())->set(Vec3f32::ONE);
 					}
 
 					{
@@ -185,6 +193,7 @@ public:
 							texView->create(texRes, 0, -1, 0, -1);
 
 							renderData.material->getParameters()->set(ShaderPredefine::DIFFUSE_TEXTURE, new ShaderParameter(ShaderParameterUsage::AUTO))->set(texView);
+							renderData.material2->getParameters()->set(ShaderPredefine::DIFFUSE_TEXTURE, new ShaderParameter(ShaderParameterUsage::AUTO))->set(texView);
 						}
 
 						auto sam = graphics->createSampler();
@@ -193,6 +202,7 @@ public:
 							//sam->setAddress(SamplerAddressMode::WRAP, SamplerAddressMode::WRAP, SamplerAddressMode::WRAP);
 							sam->setFilter(SamplerFilterOperation::NORMAL, SamplerFilterMode::POINT, SamplerFilterMode::POINT, SamplerFilterMode::POINT);
 							renderData.material->getParameters()->set(ShaderPredefine::DIFFUSE_TEXTURE + "Sampler", new ShaderParameter(ShaderParameterUsage::AUTO))->set(sam);
+							renderData.material2->getParameters()->set(ShaderPredefine::DIFFUSE_TEXTURE + "Sampler", new ShaderParameter(ShaderParameterUsage::AUTO))->set(sam);
 						}
 					}
 

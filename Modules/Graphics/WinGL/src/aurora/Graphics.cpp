@@ -609,14 +609,12 @@ namespace aurora::modules::graphics::win_gl {
 
 	void Graphics::draw(const IVertexBufferGetter* vertexBufferGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter, const IIndexBuffer* indexBuffer, uint32_t count, uint32_t offset) {
 		if (vertexBufferGetter && indexBuffer && program && program->getGraphics() == this && indexBuffer->getGraphics() == this && count > 0) {
-			auto ib = (IndexBuffer*)indexBuffer->getNative();
-			if (!ib) return;
+			if (auto ib = (const IndexBuffer*)indexBuffer->getNative(); ib) {
+				if (auto p = (Program*)program->getNative(); p && p->use(vertexBufferGetter, shaderParamGetter)) {
+					ib->draw(count, offset);
 
-			auto p = (Program*)program->getNative();
-			if (p && p->use(vertexBufferGetter, shaderParamGetter)) {
-				ib->draw(count, offset);
-
-				_constantBufferManager.resetUsedShareConstantBuffers();
+					_constantBufferManager.resetUsedShareConstantBuffers();
+				}
 			}
 		}
 	}
@@ -655,8 +653,10 @@ namespace aurora::modules::graphics::win_gl {
 			}
 		}
 
+		auto tmpDepthWrite = false;
 		if ((flags & ClearFlag::DEPTH) != ClearFlag::NONE) {
 			mask |= GL_DEPTH_BUFFER_BIT;
+			tmpDepthWrite = !_glStatus.depth.writeable;
 			if (_glStatus.clear.depth != depth) {
 				glClearDepth(depth);
 				_glStatus.clear.depth = depth;
@@ -671,14 +671,22 @@ namespace aurora::modules::graphics::win_gl {
 			}
 		}
 
-		if (mask) glClear(mask);
+		if (mask) {
+			if (tmpDepthWrite) {
+				glDepthMask(GL_TRUE);
+				glClear(mask);
+				glDepthMask(GL_FALSE);
+			} else {
+				glClear(mask);
+			}
+		}
 	}
 
 	bool Graphics::_glInit() {
-		bool initOk = false;
+		auto initOk = false;
 
 		auto hIns = GetModuleHandle(nullptr);
-		std::wstring className = L"OpenGL Temp Window " + String::Utf8ToUnicode(String::toString(Time::now()));
+		std::wstring className = L"Aurora OpenGL Temp Window " + String::Utf8ToUnicode(String::toString(Time::now()));
 
 		WNDCLASSEXW wnd;
 		memset(&wnd, 0, sizeof(wnd));

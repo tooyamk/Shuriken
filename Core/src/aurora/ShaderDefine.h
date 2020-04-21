@@ -40,7 +40,7 @@ namespace aurora {
 
 		virtual const std::string* AE_CALL get(const std::string& name) const override;
 
-		inline void AE_CALL set(const std::string& name, const std::string& value) {
+		inline void AE_CALL set(const std::string& name, const std::string_view& value) {
 			if (auto itr = _values.find(name); itr == _values.end()) {
 				_values.emplace(name, value);
 			} else {

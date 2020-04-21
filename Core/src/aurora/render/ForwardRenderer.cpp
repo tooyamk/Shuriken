@@ -21,18 +21,11 @@ namespace aurora::render {
 		_numLights(0),
 		_baseTag("forward_base"),
 		_addTag("forward_add"),
-		_nullLightData(new LightData()),
 		_m34_l2w(new ShaderParameter()),
 		_m34_l2v(new ShaderParameter()),
 		_m44_l2p(new ShaderParameter()),
 		_shaderDefines(new ShaderDefineCollection()),
 		_shaderParameters(new ShaderParameterCollection()) {
-			{
-				modules::graphics::RenderTargetBlendState bs;
-				bs.enabled = true;
-				bs.func = modules::graphics::BlendFunc(modules::graphics::BlendFactor::ONE, modules::graphics::BlendFactor::ONE);
-				_defaultBaseBlendState->setRenderTargetState(0, bs);
-			}
 		{
 			modules::graphics::RenderTargetBlendState bs;
 			bs.enabled = true;
@@ -41,14 +34,6 @@ namespace aurora::render {
 		}
 		{
 			modules::graphics::DepthState ds;
-			ds.enabled = false;
-			ds.func = modules::graphics::ComparisonFunc::LESS;
-			ds.writeable = true;
-			_defaultBaseDepthStencilState->setDepthState(ds);
-		}
-		{
-			modules::graphics::DepthState ds;
-			ds.enabled = false;
 			ds.func = modules::graphics::ComparisonFunc::LESS_EQUAL;
 			ds.writeable = false;
 			_defaultAddDepthStencilState->setDepthState(ds);
@@ -57,29 +42,33 @@ namespace aurora::render {
 		_shaderParameters->set(ShaderPredefine::MATRIX_LW, _m34_l2w);
 		_shaderParameters->set(ShaderPredefine::MATRIX_LV, _m34_l2v);
 		_shaderParameters->set(ShaderPredefine::MATRIX_LP, _m44_l2p);
+
+		_setLightType(LIGHT_TYPE_NONE);
+		_renderFn = &ForwardRenderer::_render<0>;
 	}
 
 	void ForwardRenderer::collectRenderData(IRenderDataCollector& collector) {
-		collector.data.renderer = this;
+		auto& data = collector.data;
+		data.renderer = this;
 
-		auto renderable = collector.data.renderable;
+		auto renderable = data.renderable;
 		for (auto& pass : renderable->renderPasses) {
 			if (pass && pass->material && pass->tags.find(_baseTag) != pass->tags.end()) {
-				collector.data.priority = pass->priority;
-				collector.data.state = pass->state;
-				collector.data.material = pass->material;
-				collector.data.subPasses = &pass->subPasses;
+				data.priority = pass->priority;
+				data.state = pass->state;
+				data.material = pass->material;
+				data.subPasses = &pass->subPasses;
 
 				renderable->collectRenderData(collector);
 
-				collector.data.priority.reset();
-				collector.data.state = nullptr;
-				collector.data.material = nullptr;
-				collector.data.subPasses = nullptr;
+				data.priority.reset();
+				data.state = nullptr;
+				data.material = nullptr;
+				data.subPasses = nullptr;
 			}
 		}
 
-		collector.data.renderer = nullptr;
+		data.renderer = nullptr;
 	}
 
 	bool ForwardRenderer::collectRenderDataConfirm(IRenderDataCollector& collector) const {
@@ -105,14 +94,14 @@ namespace aurora::render {
 						dir.normalize();
 						data->dir->set(dir);
 
-						data->lightType = "1";
+						data->lightType = LIGHT_TYPE_DIRECTION;
 					} else if (l->isKindOf<components::lights::PointLight>()) {
 						auto radius = ((const components::lights::PointLight*)l)->getRadius();
 
 						data->pos->set(l->getNode()->getWorldPosition());
 						data->attenuation->set(Vec3f32(1.f, 4.5f / radius, 75.f / (radius * radius)));
 
-						data->lightType = "2";
+						data->lightType = LIGHT_TYPE_POINT;
 					} else if (l->isKindOf<components::lights::SpotLight>()) {
 						auto sl = (const components::lights::SpotLight*)l;
 						auto radius = sl->getRadius();
@@ -125,7 +114,7 @@ namespace aurora::render {
 						data->pos->set(l->getNode()->getWorldPosition());
 						data->attenuation->set(Vec4f32(1.f, 4.5f / radius, 75.f / (radius * radius), std::cos(sl->getSpotAngle() * 0.5f)));
 
-						data->lightType = "3";
+						data->lightType = LIGHT_TYPE_SPOT;
 					} else {
 						--_numLights;
 					}
@@ -133,94 +122,31 @@ namespace aurora::render {
 			}
 		}
 
-		if (!_numLights) _shaderDefines->set("_LIGHT_TYPE", "0");
+		if (_numLights) {
+			if (_numLights > 1) {
+				_renderFn = &ForwardRenderer::_render<2>;
+			} else {
+				_renderFn = &ForwardRenderer::_render<1>;
+			}
+		} else {
+			_setLightType(LIGHT_TYPE_NONE);
+			_renderFn = &ForwardRenderer::_render<0>;
+		}
 	}
 
 	void ForwardRenderer::render(RenderData*const* data, size_t count, ShaderDefineGetterStack& shaderDefineStack, ShaderParameterGetterStack& shaderParameterStack) {
 		for (size_t i = 0; i < count; ++i) {
 			auto rd = data[i];
 
-			_m34_l2w->set(rd->matrix.l2w, ShaderParameterUpdateBehavior::FORCE);
-			_m34_l2v->set(rd->matrix.l2v, ShaderParameterUpdateBehavior::FORCE);
-			_m44_l2p->set(rd->matrix.l2p, ShaderParameterUpdateBehavior::FORCE);
-
-			if (_numLights) {
-				_switchLight(0);
-				_render(rd->material, rd->state, rd->mesh, shaderDefineStack, shaderParameterStack, _defaultBaseBlendState, _defaultBaseDepthStencilState);
-
-				if (_numLights > 1 && rd->subPasses && !rd->subPasses->empty()) {
-					for (auto& p : *rd->subPasses) {
-						if (p->tags.find(_addTag) != p->tags.end()) {
-							for (size_t i = 1; i < _numLights; ++i) {
-								_switchLight(i);
-								_render(p->material, p->state, rd->mesh, shaderDefineStack, shaderParameterStack, _defaultAddBlendState, _defaultAddDepthStencilState);
-							}
-						}
-					}
-				}
-			} else {
-				_render(rd->material, rd->state, rd->mesh, shaderDefineStack, shaderParameterStack, _defaultBaseBlendState, _defaultBaseDepthStencilState);
-			}
-
-
-			/*
-			auto material = rd->material;
-			if(!material) continue;
-
-			auto shader = rd->material->getShader();
-			if (!shader) continue;
-
-			modules::graphics::IProgram* program;
-
 			{
-				if (_numLights) {
-					auto& data = _lightsData[0];
-					_shaderDefines->set("_LIGHT_TYPE", data->lightType);
-					_shaderParameters->set("_light", data->param);
-				}
-
-				StackPopper<ShaderDefineGetterStack, StackPopperFlag::MULTI_POP> popper(shaderDefineStack, shaderDefineStack.push(&*_shaderDefines, rd->material->getDefines()));
-
-				program = shader->select(&shaderDefineStack);
-				if (!program) continue;
+				auto& m = rd->matrix;
+				_m34_l2w->set(m.l2w, ShaderParameterUpdateBehavior::FORCE);
+				_m34_l2v->set(m.l2v, ShaderParameterUpdateBehavior::FORCE);
+				_m44_l2p->set(m.l2p, ShaderParameterUpdateBehavior::FORCE);
 			}
 
-			if (rd->state) {
-				{
-					auto& bs = rd->state->blend;
-					_graphics->setBlendState(bs.state ? bs.state : _defaultBlendState, bs.constantFactors);
-				}
-
-				{
-					auto& ds = rd->state->depthStencil;
-					_graphics->setDepthStencilState(ds.state ? ds.state : _defaultDepthStencilState, ds.stencilFrontRef, ds.stencilBackRef);
-				}
-
-				{
-					auto& rs = rd->state->rasterizer;
-					_graphics->setRasterizerState(rs.state ? rs.state : _defaultRasterizerState);
-				}
-			} else {
-				_graphics->setBlendState(_defaultBlendState, Vec4f32::ZERO);
-				_graphics->setDepthStencilState(_defaultDepthStencilState, 0);
-				_graphics->setRasterizerState(_defaultRasterizerState);
-			}
-
-			StackPopper<ShaderParameterGetterStack, StackPopperFlag::MULTI_POP> popper(shaderParameterStack, shaderParameterStack.push(&*_shaderParameters, rd->material->getParameters()));
-
-			_m34_l2w->set(rd->matrix.l2w, ShaderParameterUpdateBehavior::FORCE);
-			_m34_l2v->set(rd->matrix.l2v, ShaderParameterUpdateBehavior::FORCE);
-			_m44_l2p->set(rd->matrix.l2p, ShaderParameterUpdateBehavior::FORCE);
-
-			_graphics->draw(&rd->mesh->getVertexBuffers(), program, &shaderParameterStack, rd->mesh->getIndexBuffer());
-			*/
+			(this->*_renderFn)(rd, shaderDefineStack, shaderParameterStack);
 		}
-	}
-
-	void ForwardRenderer::_switchLight(size_t index) {
-		auto& data = _lightsData[index];
-		_shaderDefines->set("_LIGHT_TYPE", data->lightType);
-		_shaderParameters->set("_light", data->param);
 	}
 
 	void ForwardRenderer::_render(Material* material, RenderState* state, const Mesh* mesh, ShaderDefineGetterStack& shaderDefineStack, ShaderParameterGetterStack& shaderParameterStack,

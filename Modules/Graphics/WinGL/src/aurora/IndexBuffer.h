@@ -24,7 +24,7 @@ namespace aurora::modules::graphics::win_gl {
 		virtual bool AE_CALL isSyncing() const override;
 		virtual void AE_CALL destroy() override;
 
-		void AE_CALL draw(uint32_t count = (std::numeric_limits<uint32_t>::max)(), uint32_t offset = 0);
+		void AE_CALL draw(uint32_t count = (std::numeric_limits<uint32_t>::max)(), uint32_t offset = 0) const;
 
 	protected:
 		IndexType _idxType;

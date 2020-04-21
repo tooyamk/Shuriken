@@ -93,7 +93,7 @@ namespace aurora::modules::graphics::win_gl {
 		}
 	}
 
-	void IndexBuffer::draw(uint32_t count, uint32_t offset) {
+	void IndexBuffer::draw(uint32_t count, uint32_t offset) const {
 		if (_numElements > 0 && offset < _numElements) {
 			uint32_t last = _numElements - offset;
 			if (count > _numElements) count = _numElements;
