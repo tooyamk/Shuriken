@@ -21,13 +21,10 @@ namespace aurora::events {
 		virtual bool AE_CALL addEventListener(const EvtType& type, IEventListener<EvtType>& listener) override {
 			bool rst = true;
 
-			if (auto itr = _listeners.find(type); itr == _listeners.end()) {
+			if (auto& pair = _listeners.emplace(std::piecewise_construct, std::forward_as_tuple(type), std::forward_as_tuple(&listener)); pair.second) {
 				listener.ref();
-				_listeners.emplace(std::piecewise_construct,
-					std::forward_as_tuple(type),
-					std::forward_as_tuple(&listener));
 			} else {
-				auto& tl = itr->second;
+				auto& tl = pair.first->second;
 				auto& list = tl.listeners;
 				if (tl.numValidListeners) {
 					if (tl.dispatching) {

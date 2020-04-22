@@ -874,8 +874,7 @@ namespace aurora {
 	SerializableObject& SerializableObject::get(const SerializableObject& key) {
 		Map* map = _getMap();
 
-		auto itr = map->value.find(key);
-		return itr == map->value.end() ? map->value.emplace(key, SerializableObject()).first->second : itr->second;
+		return map->value.emplace(std::piecewise_construct, std::forward_as_tuple(key), std::forward_as_tuple()).first->second;
 	}
 
 	SerializableObject SerializableObject::tryGet(const SerializableObject& key) const {
@@ -892,13 +891,7 @@ namespace aurora {
 	SerializableObject& SerializableObject::insert(const SerializableObject& key, const SerializableObject& value) {
 		Map* map = _getMap();
 
-		auto itr = map->value.find(key);
-		if (itr == map->value.end()) {
-			return map->value.emplace(key, value).first->second;
-		} else {
-			itr->second = value;
-			return itr->second;
-		}
+		return map->value.insert_or_assign(key, value).first->second;
 	}
 
 	bool SerializableObject::has(const SerializableObject& key) const {

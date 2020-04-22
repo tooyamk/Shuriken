@@ -228,14 +228,10 @@ namespace aurora {
 	}
 
 	void VertexBufferCollection::set(const std::string& name, modules::graphics::IVertexBuffer* buffer) {
-		if (auto itr = _buffers.find(name); buffer) {
-			if (itr == _buffers.end()) {
-				_buffers.emplace(name, buffer);
-			} else if (itr->second != buffer) {
-				itr->second = buffer;
-			}
-		} else if (itr != _buffers.end()) {
-			_buffers.erase(itr);
+		if (buffer) {
+			_buffers.insert_or_assign(name, buffer);
+		} else {
+			_buffers.erase(name);
 		}
 	}
 }

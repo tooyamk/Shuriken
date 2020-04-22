@@ -275,7 +275,7 @@ namespace aurora {
 		virtual modules::graphics::IVertexBuffer* AE_CALL get(const std::string& name) const override;
 		void AE_CALL set(const std::string& name, modules::graphics::IVertexBuffer* buffer);
 		inline void AE_CALL remove(const std::string& name) {
-			if (auto itr = _buffers.find(name); itr != _buffers.end()) _buffers.erase(itr);
+			_buffers.erase(name);
 		}
 		inline bool AE_CALL isEmpty() const {
 			return _buffers.empty();

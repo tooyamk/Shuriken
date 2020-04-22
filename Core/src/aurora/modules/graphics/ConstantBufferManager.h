@@ -112,13 +112,13 @@ namespace aurora::modules::graphics {
 		std::unordered_map<const ShaderParameter*, std::unordered_set<ExclusiveConstNode*>> _exclusiveConstNodes;
 
 
-		struct ExcLusiveConsts {
+		struct ExclusiveConsts {
 			uint32_t rc;
 			std::unordered_set<ExclusiveConstNode*> nodes;
 		};
 
 
-		std::unordered_map<uint64_t, ExcLusiveConsts> _exclusiveConstPool;
+		std::unordered_map<uint64_t, ExclusiveConsts> _exclusiveConstPool;
 
 
 		IConstantBuffer* AE_CALL _getExclusiveConstantBuffer(const ConstantBufferLayout& layout, const std::vector<ShaderParameter*>& parameters,

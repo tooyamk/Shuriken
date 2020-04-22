@@ -513,12 +513,7 @@ inline static __NAME__ get##__NAME__(const std::string_view& name) { \
 		bool _rightHanded;
 
 		void AE_CALL _addConnection(ConnectionType& connections, int64_t key, int64_t id, const std::string_view& relationship) {
-			auto itr = connections.find(key);
-			if (itr == connections.end()) {
-				connections.emplace(std::piecewise_construct, std::forward_as_tuple(key), std::forward_as_tuple()).first->second.emplace_back(id, relationship);
-			} else {
-				itr->second.emplace_back(id, relationship);
-			}
+			connections.emplace(std::piecewise_construct, std::forward_as_tuple(key), std::forward_as_tuple()).first->second.emplace_back(id, relationship);
 		}
 
 		template<size_t Size>

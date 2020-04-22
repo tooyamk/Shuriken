@@ -12,13 +12,10 @@ namespace aurora {
 		Args& add(const std::string& name, const T& val) {
 			if constexpr (std::is_convertible_v<T, char const*> || std::is_same_v<T, std::string_view>) {
 				add(name, std::string(val));
+			} else if constexpr (std::is_convertible_v<T, wchar_t const*> || std::is_same_v<T, std::wstring_view>) {
+				add(name, std::wstring(val));
 			} else {
-				auto itr = _args.find(name);
-				if (itr == _args.end()) {
-					_args.emplace(name, val);
-				} else {
-					itr->second = val;
-				}
+				_args.insert_or_assign(name, val);
 			}
 
 			return *this;

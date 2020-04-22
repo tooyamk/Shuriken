@@ -156,11 +156,7 @@ namespace aurora::modules::inputs::win_xinput {
 	void Gamepad::setDeadZone (uint32_t keyCode, float32_t deadZone) {
 		if (deadZone < 0.f) deadZone = -deadZone;
 
-		if (auto itr = _deadZone.find(keyCode); itr == _deadZone.end()) {
-			_deadZone.emplace(keyCode, deadZone);
-		} else {
-			itr->second = deadZone;
-		}
+		_deadZone.insert_or_assign(keyCode, deadZone);
 	}
 
 	void Gamepad::setVibration(float32_t left, float32_t right) {

@@ -7,7 +7,49 @@
 
 class RenderPipelineTester : public BaseTester {
 public:
+	struct TTT {
+		std::string_view sv;
+	};
+
+	struct std_compare11 {
+		using is_transparent = int;
+
+		template<typename Val1, typename Val2, typename = string_data_t<Val1>, typename = string_data_t<Val2>>
+		inline bool operator()(const Val1& value1, const Val2& value2) const {
+			return value1 < value2;
+		}
+		
+		inline bool operator()(const std::string& value1, const char* value2) const {
+			return value1 < std::string_view(value2);
+		}
+
+		inline bool operator()(const char* value1, const std::string& value2) const {
+			return std::string_view(value2) < value2;
+		}
+	};
+
+	struct less {
+		using is_transparent = int;
+
+		template <class _Ty1, class _Ty2>
+		constexpr auto operator()(_Ty1&& _Left, _Ty2&& _Right) const
+			noexcept(noexcept(static_cast<_Ty1&&>(_Left) < static_cast<_Ty2&&>(_Right))) // strengthened
+			-> decltype(static_cast<_Ty1&&>(_Left) < static_cast<_Ty2&&>(_Right)) {
+			return static_cast<_Ty1&&>(_Left) < static_cast<_Ty2&&>(_Right);
+		}
+	};
+
+
 	virtual int32_t AE_CALL run() override {
+		std::string val1 = "aaabbb";
+		std::string_view val2 = val1;
+
+		std::unordered_map<int, std::string> mapp;
+		auto& zz = mapp.emplace(1, "abc");
+		zz.first->second = "ccc";
+		auto& zz1 = mapp.emplace(1, val2);
+		auto rst = mapp.erase(11);
+
 		auto monitors = Monitor::getMonitors();
 		auto vms = monitors[0].getVideoModes();
 

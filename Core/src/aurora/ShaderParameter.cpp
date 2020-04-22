@@ -116,14 +116,10 @@ namespace aurora {
 	}
 
 	ShaderParameter* ShaderParameterCollection::set(const std::string& name, ShaderParameter* parameter) {
-		if (auto itr = _parameters.find(name); parameter) {
-			if (itr == _parameters.end()) {
-				_parameters.emplace(name, parameter);
-			} else if (itr->second != parameter) {
-				itr->second = parameter;
-			}
-		} else if (itr != _parameters.end()) {
-			_parameters.erase(itr);
+		if (parameter) {
+			_parameters.insert_or_assign(name, parameter);
+		} else {
+			_parameters.erase(name);
 		}
 
 		return parameter;

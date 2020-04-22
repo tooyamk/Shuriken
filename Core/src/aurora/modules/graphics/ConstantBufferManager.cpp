@@ -84,12 +84,13 @@ namespace aurora::modules::graphics {
 	}
 
 	void ConstantBufferManager::_registerShareConstantLayout(uint32_t size) {
-		if (auto itr = _shareConstBufferPool.find(size); itr == _shareConstBufferPool.end()) {
-			auto& pool = _shareConstBufferPool.emplace(std::piecewise_construct, std::forward_as_tuple(size), std::forward_as_tuple()).first->second;
+		auto& rst = _shareConstBufferPool.emplace(std::piecewise_construct, std::forward_as_tuple(size), std::forward_as_tuple());
+		auto& pool = rst.first->second;
+		if (rst.second) {
 			pool.rc = 1;
 			pool.idleIndex = 0;
 		} else {
-			++itr->second.rc;
+			++pool.rc;
 		}
 	}
 
@@ -136,10 +137,12 @@ namespace aurora::modules::graphics {
 	}
 
 	void ConstantBufferManager::_registerExclusiveConstantLayout(ConstantBufferLayout& layout) {
-		if (auto itr = _exclusiveConstPool.find(layout.featureValue); itr == _exclusiveConstPool.end()) {
-			_exclusiveConstPool.emplace(std::piecewise_construct, std::forward_as_tuple(layout.featureValue), std::forward_as_tuple()).first->second.rc = 1;
+		auto& rst = _exclusiveConstPool.emplace(std::piecewise_construct, std::forward_as_tuple(layout.featureValue), std::forward_as_tuple());
+		auto& pool = rst.first->second;
+		if (rst.second) {
+			pool.rc = 1;
 		} else {
-			++itr->second.rc;
+			++pool.rc;
 		}
 	}
 
@@ -164,20 +167,15 @@ namespace aurora::modules::graphics {
 		ExclusiveConstNode* node = nullptr;
 
 		if (param) {
-			if (auto itr = childContainer.find(param); itr == childContainer.end()) {
-				node = &childContainer.emplace(std::piecewise_construct, std::forward_as_tuple(param), std::forward_as_tuple()).first->second;
+			auto& rst = childContainer.emplace(std::piecewise_construct, std::forward_as_tuple(param), std::forward_as_tuple());
+			node = &rst.first->second;
+			if (rst.second) {
 				node->parameter = param;
 				node->parent = parent;
 
-				if (auto itr2 = _exclusiveConstNodes.find(param); itr2 == _exclusiveConstNodes.end()) {
-					_exclusiveConstNodes.emplace(std::piecewise_construct, std::forward_as_tuple(param), std::forward_as_tuple()).first->second.emplace(node);
-				} else {
-					itr2->second.emplace(node);
-				}
+				_exclusiveConstNodes.emplace(std::piecewise_construct, std::forward_as_tuple(param), std::forward_as_tuple()).first->second.emplace(node);
 
 				param->addReleaseExclusiveHandler(this, &ConstantBufferManager::_releaseExclusiveConstant);
-			} else {
-				node = &itr->second;
 			}
 		}
 
@@ -186,19 +184,22 @@ namespace aurora::modules::graphics {
 			if (!node) return nullptr;
 
 			IConstantBuffer* cb = nullptr;
-			if (auto itr = node->buffers.find(layout.featureValue); itr == node->buffers.end()) {
-				cb = node->buffers.emplace(layout.featureValue, createExclusiveConstantBufferCallback(cur + 1)).first->second;
-				cb->ref();
-				cb->create(layout.size, Usage::MAP_WRITE);
+			if (auto& rst = node->buffers.emplace(layout.featureValue, nullptr); rst.second) {
+				cb = createExclusiveConstantBufferCallback(cur + 1);
+				rst.first->second = cb;
+				if (cb) {
+					cb->ref();
+					cb->create(layout.size, Usage::MAP_WRITE);
 
-				_exclusiveConstPool.find(layout.featureValue)->second.nodes.emplace(node);
+					_exclusiveConstPool.find(layout.featureValue)->second.nodes.emplace(node);
 
-				do {
-					++node->numAssociativeBuffers;
-					node = node->parent;
-				} while (node);
+					do {
+						++node->numAssociativeBuffers;
+						node = node->parent;
+					} while (node);
+				}
 			} else {
-				cb = itr->second;
+				cb = rst.first->second;
 			}
 
 			return cb;

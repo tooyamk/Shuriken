@@ -25,7 +25,13 @@ namespace aurora {
 			return _vertices;
 		}
 
-		void AE_CALL setVertexSource(const std::string& name, VertexResource* res);
+		inline void AE_CALL setVertexSource(const std::string& name, VertexResource* res) {
+			if (res) {
+				_vertices.insert_or_assign(name, res);
+			} else {
+				_vertices.erase(name);
+			}
+		}
 
 		std::string name;
 		RefPtr<IndexResource> indexResource;

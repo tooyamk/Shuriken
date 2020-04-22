@@ -41,14 +41,10 @@ namespace aurora {
 		virtual const std::string* AE_CALL get(const std::string& name) const override;
 
 		inline void AE_CALL set(const std::string& name, const std::string_view& value) {
-			if (auto itr = _values.find(name); itr == _values.end()) {
-				_values.emplace(name, value);
-			} else {
-				itr->second = value;
-			}
+			_values.insert_or_assign(name, value);
 		}
 		inline void AE_CALL remove(const std::string& name) {
-			if (auto itr = _values.find(name); itr != _values.end()) _values.erase(itr);
+			_values.erase(name);
 		}
 		inline void AE_CALL clear() {
 			_values.clear();

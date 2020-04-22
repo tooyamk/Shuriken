@@ -341,7 +341,7 @@ namespace aurora {
 
 		ShaderParameter* AE_CALL set(const std::string& name, ShaderParameter* parameter);
 		inline void AE_CALL remove(const std::string& name) {
-			if (auto itr = _parameters.find(name); itr != _parameters.end()) _parameters.erase(itr);
+			_parameters.erase(name);
 		}
 		inline bool AE_CALL isEmpty() const {
 			return _parameters.empty();
