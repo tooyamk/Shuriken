@@ -53,7 +53,7 @@ namespace aurora::render {
 
 		auto renderable = data.renderable;
 		for (auto& pass : renderable->renderPasses) {
-			if (pass && pass->material && pass->tags.find(_baseTag) != pass->tags.end()) {
+			if (pass && pass->material && pass->tags && pass->tags->hasTag(_baseTag)) {
 				data.priority = pass->priority;
 				data.state = pass->state;
 				data.material = pass->material;
@@ -83,41 +83,39 @@ namespace aurora::render {
 			if (l) {
 				auto& data = _numLights >= _lightsData.size() ? _lightsData.emplace_back(new LightData()) : _lightsData[_numLights];
 				
-				if (l->isKindOf<components::lights::ILight>()) {
-					++_numLights;
+				++_numLights;
 
-					data->color->set(l->getColor() * l->getIntensity());
+				data->color->set(l->getColor() * l->getIntensity());
 
-					if (l->isKindOf<components::lights::DirectionLight>()) {
-						auto& wm = l->getNode()->getWorldMatrix();
-						Vec3f32 dir(wm[0][2], wm[1][2], wm[2][2]);
-						dir.normalize();
-						data->dir->set(dir);
+				if (l->isKindOf<components::lights::DirectionLight>()) {
+					auto& wm = l->getNode()->getWorldMatrix();
+					Vec3f32 dir(wm[0][2], wm[1][2], wm[2][2]);
+					dir.normalize();
+					data->dir->set(dir);
 
-						data->lightType = LIGHT_TYPE_DIRECTION;
-					} else if (l->isKindOf<components::lights::PointLight>()) {
-						auto radius = ((const components::lights::PointLight*)l)->getRadius();
+					data->lightType = LIGHT_TYPE_DIRECTION;
+				} else if (l->isKindOf<components::lights::PointLight>()) {
+					auto radius = ((const components::lights::PointLight*)l)->getRadius();
 
-						data->pos->set(l->getNode()->getWorldPosition());
-						data->attenuation->set(Vec3f32(1.f, 4.5f / radius, 75.f / (radius * radius)));
+					data->pos->set(l->getNode()->getWorldPosition());
+					data->attenuation->set(Vec3f32(1.f, 4.5f / radius, 75.f / (radius * radius)));
 
-						data->lightType = LIGHT_TYPE_POINT;
-					} else if (l->isKindOf<components::lights::SpotLight>()) {
-						auto sl = (const components::lights::SpotLight*)l;
-						auto radius = sl->getRadius();
+					data->lightType = LIGHT_TYPE_POINT;
+				} else if (l->isKindOf<components::lights::SpotLight>()) {
+					auto sl = (const components::lights::SpotLight*)l;
+					auto radius = sl->getRadius();
 
-						auto& wm = l->getNode()->getWorldMatrix();
-						Vec3f32 dir(wm[0][2], wm[1][2], wm[2][2]);
-						dir.normalize();
-						data->dir->set(dir);
+					auto& wm = l->getNode()->getWorldMatrix();
+					Vec3f32 dir(wm[0][2], wm[1][2], wm[2][2]);
+					dir.normalize();
+					data->dir->set(dir);
 
-						data->pos->set(l->getNode()->getWorldPosition());
-						data->attenuation->set(Vec4f32(1.f, 4.5f / radius, 75.f / (radius * radius), std::cos(sl->getSpotAngle() * 0.5f)));
+					data->pos->set(l->getNode()->getWorldPosition());
+					data->attenuation->set(Vec4f32(1.f, 4.5f / radius, 75.f / (radius * radius), std::cos(sl->getSpotAngle() * 0.5f)));
 
-						data->lightType = LIGHT_TYPE_SPOT;
-					} else {
-						--_numLights;
-					}
+					data->lightType = LIGHT_TYPE_SPOT;
+				} else {
+					--_numLights;
 				}
 			}
 		}

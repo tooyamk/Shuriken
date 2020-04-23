@@ -14,7 +14,7 @@ namespace aurora::render {
 		RefPtr<RenderState> state;
 		RefPtr<Material> material;
 
-		std::set<RenderTag, RenderTag::std_compare> tags;
+		RefPtr<RenderTagCollection> tags;
 		std::vector<RefPtr<RenderPass>> subPasses;
 		//std::map<RenderTag, RefPtr<RenderPass>, RenderTag::std_compare> subPasses;
 	};

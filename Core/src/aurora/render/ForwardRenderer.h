@@ -114,7 +114,7 @@ namespace aurora::render {
 				if constexpr (N > 1) {
 					if (rd->subPasses && !rd->subPasses->empty()) {
 						for (auto& p : *rd->subPasses) {
-							if (p && p->tags.find(_addTag) != p->tags.end()) {
+							if (p && p->tags && p->tags->hasTag(_addTag)) {
 								for (size_t i = 1; i < _numLights; ++i) {
 									_switchLight(i);
 									_render(p->material, p->state, rd->mesh, shaderDefineStack, shaderParameterStack, _defaultAddBlendState, _defaultAddDepthStencilState);

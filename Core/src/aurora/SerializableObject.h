@@ -48,8 +48,8 @@ namespace aurora {
 		};
 
 
-		struct HashKey {
-			inline size_t operator()(const SerializableObject& value) const {
+		struct std_unordered_hasher {
+			inline size_t AE_CALL operator()(const SerializableObject& value) const {
 				switch (value._type) {
 				case Type::BOOL:
 					return std::hash<bool>{}(value._getValue<bool>());
@@ -84,8 +84,8 @@ namespace aurora {
 		};
 
 
-		struct HashCompare {
-			inline bool operator()(const SerializableObject& value1, const SerializableObject& value2) const {
+		struct std_unordered_compare {
+			inline bool AE_CALL operator()(const SerializableObject& value1, const SerializableObject& value2) const {
 				return value1.isEqual(value2);
 			}
 		};
@@ -466,7 +466,7 @@ namespace aurora {
 			bool AE_CALL isContentEqual(Map* data) const;
 			void AE_CALL unpack(ByteArray& ba, uint32_t size);
 
-			std::unordered_map<SerializableObject, SerializableObject, HashKey, HashCompare> value;
+			std::unordered_map<SerializableObject, SerializableObject, std_unordered_hasher, std_unordered_compare> value;
 		};
 
 
