@@ -3,7 +3,7 @@
 namespace aurora::components {
 	IComponent::IComponent() :
 		_enabled(true),
-		layer(0xFFFFFFFF),
+		layer((std::numeric_limits<decltype(layer)>::max)()),
 		_node(nullptr) {
 		AE_RTTI_DEFINE();
 	}

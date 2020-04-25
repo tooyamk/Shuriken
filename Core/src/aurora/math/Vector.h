@@ -57,7 +57,7 @@ namespace aurora {
 
 		template<typename... Args, typename = typename std::enable_if_t<std::conjunction_v<std::is_convertible<Args, T>...>>>
 		Vector(Args... args) {
-			set(args...);
+			set(std::forward<Args>(args)...);
 			if constexpr (N > sizeof...(args)) memset(data + sizeof...(args), 0, sizeof(T) * (N - sizeof...(args)));
 		}
 
@@ -211,7 +211,7 @@ namespace aurora {
 					uint32_t i = 0;
 					((data[i++] = args), ...);
 				} else {
-					_set<0>(args...);
+					_set<0>(std::forward<Args>(args)...);
 				}
 			}
 			return *this;
@@ -393,7 +393,7 @@ namespace aurora {
 		inline void AE_CALL _set(const T& value, Args... args) {
 			if constexpr (I < N) {
 				data[I] = value;
-				_set<I + 1>(args...);
+				_set<I + 1>(std::forward<Args>(args)...);
 			}
 		}
 	};

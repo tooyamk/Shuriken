@@ -172,9 +172,7 @@ namespace aurora {
 
 	void Node::parentTranslate(const float32_t(&p)[3]) {
 		auto& data = _lm.data;
-		data[0][3] += p[0];
-		data[1][3] += p[1];
-		data[2][3] += p[2];
+		for (size_t i = 0; i < 3; ++i) data[i][3] += p[i];
 
 		_checkNoticeUpdate(DirtyFlag::WMIM);
 	}
@@ -317,9 +315,9 @@ namespace aurora {
 
 	void Node::getLocalRotationFromWorld(const Node& node, const Quaternion& worldRot, Quaternion& dst) {
 		if (node._parent) {
-			auto q = node._parent->getWorldRotation();
-			q.invert();
-			worldRot.append(q, dst);
+			auto& q = node._parent->getWorldRotation();
+			q.invert(dst);
+			worldRot.append(dst, dst);
 		} else {
 			dst.set(worldRot);
 		}
@@ -396,12 +394,6 @@ namespace aurora {
 		++_numChildren;
 	}
 
-	void Node::_parentChanged(Node* root) {
-		_root = root;
-
-		_checkNoticeUpdate(DirtyFlag::WRMIM);
-	}
-
 	void Node::_worldPositionChanged(DirtyType oldDirty) {
 		if (_parent) {
 			_parent->updateInverseWorldMatrix();
@@ -430,14 +422,6 @@ namespace aurora {
 		_dirty &= DirtyFlag::NOT_WR;
 		_dirty |= DirtyFlag::LM_WMIM;
 		if (oldDirty != _dirty) _noticeUpdate(DirtyFlag::WRMIM);
-	}
-
-	void Node::_checkNoticeUpdateNow(DirtyType nowDirty, DirtyType sendDirty) {
-		if (nowDirty != _dirty) {
-			_dirty = nowDirty;
-
-			_noticeUpdate(sendDirty);
-		}
 	}
 
 	void Node::_noticeUpdate(DirtyType dirty) {

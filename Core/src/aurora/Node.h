@@ -190,7 +190,7 @@ namespace aurora {
 		 */
 		static void AE_CALL getLocalRotationFromWorld(const Node& node, const Quaternion& worldRot, Quaternion& dst);
 		inline static Quaternion AE_CALL getLocalRotationFromWorld(const Node& node, const Quaternion& worldRot) {
-			Quaternion q;
+			Quaternion q(NO_INIT);
 			getLocalRotationFromWorld(node, worldRot, q);
 			return q;
 		}
@@ -223,6 +223,8 @@ namespace aurora {
 		Node* _childHead;
 		uint32_t _numChildren;
 
+		mutable DirtyType _dirty;
+
 		mutable Quaternion _lr;
 		mutable Vec3f32 _ls;
 		mutable Matrix34 _lm;
@@ -231,7 +233,6 @@ namespace aurora {
 		mutable Matrix34 _wm;
 		mutable Matrix34 _iwm;
 
-		mutable DirtyType _dirty;
 		std::vector<components::IComponent*> _components;
 
 		void AE_CALL _addNode(Node* child);
@@ -239,10 +240,14 @@ namespace aurora {
 		void AE_CALL _removeNode(Node* child);
 
 		void AE_CALL _addChild(Node* child);
-		void AE_CALL _parentChanged(Node* root);
+		inline void AE_CALL _parentChanged(Node* root) {
+			_root = root;
+
+			_checkNoticeUpdate(DirtyFlag::WRMIM);
+		}
 
 		inline void AE_CALL _localDecomposition() {
-			Matrix34 rot;
+			Matrix34 rot(NO_INIT);
 			_lm.decomposition(&rot, _ls);
 			rot.toQuaternion(_lr);
 		}
@@ -254,7 +259,13 @@ namespace aurora {
 		inline void AE_CALL _checkNoticeUpdate(DirtyType appendDirty, DirtyType sendDirty) {
 			_checkNoticeUpdateNow(_dirty | appendDirty, sendDirty);
 		}
-		void AE_CALL _checkNoticeUpdateNow(DirtyType nowDirty, DirtyType sendDirty);
+		inline void AE_CALL _checkNoticeUpdateNow(DirtyType nowDirty, DirtyType sendDirty) {
+			if (nowDirty != _dirty) {
+				_dirty = nowDirty;
+
+				_noticeUpdate(sendDirty);
+			}
+		}
 		void AE_CALL _noticeUpdate(DirtyType dirty);
 
 		void AE_CALL _removeComponent(components::IComponent* component);

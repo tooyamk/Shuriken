@@ -98,7 +98,7 @@ namespace aurora {
 
 		static void AE_CALL createScale(const float32_t(&scale)[3], Matrix34& dst);
 		static void AE_CALL createTranslation(const float32_t(&trans)[3], Matrix34& dst);
-		static void AE_CALL createTRS(const float32_t(&trans)[3], const Quaternion* rot, const float32_t(&scale)[3], Matrix34& dst);
+		static void AE_CALL createTRS(const float32_t(trans)[3], const Quaternion* rot, const float32_t(scale)[3], Matrix34& dst);
 
 		union {
 			//__m128 col[4];

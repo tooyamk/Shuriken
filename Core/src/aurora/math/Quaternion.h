@@ -71,7 +71,7 @@ namespace aurora {
 		}
 		void AE_CALL toEuler(float32_t(&dst)[3]) const;
 		inline bool AE_CALL isIdentity() const {
-			return x == 0.f && y == 0.f && z == 0.f && w == 1.f;
+			return memEqual<sizeof(Quaternion)>(this, &IDENTITY);
 		}
 		inline float32_t AE_CALL getRadian() const {
 			return std::acos(w);

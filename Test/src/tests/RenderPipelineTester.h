@@ -2,6 +2,19 @@
 
 #include "../BaseTester.h"
 #include "aurora/SerializableObject.h"
+#include <set>
+
+enum class EEE : uint8_t {
+	E0,
+	E1
+};
+
+template<typename T, T V> struct FFF {};
+
+template<typename T, T V>
+auto aaa() {
+	return __FUNCSIG__;
+}
 
 class RenderPipelineTester : public BaseTester {
 public:

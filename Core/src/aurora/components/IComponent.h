@@ -18,6 +18,7 @@ namespace aurora::components {
 			return _enabled;
 		}
 		void AE_CALL setEnabled(bool b);
+
 		inline Node* AE_CALL getNode() const {
 			return _node;
 		}
