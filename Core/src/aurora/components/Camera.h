@@ -9,7 +9,7 @@ namespace aurora::modules::graphics {
 }
 
 namespace aurora::components {
-	class AE_DLL Camera : public IComponent {
+	class AE_DLL Camera : public AE_COMPONENT_INHERIT(IComponent, false)
 	public:
 		Camera();
 
@@ -43,7 +43,5 @@ namespace aurora::components {
 		float32_t _aspectRatio;
 		float32_t _zNear;
 		float32_t _zFar;
-
-		AE_RTTI_DECLARE_DERIVED(IComponent);
 	};
 }

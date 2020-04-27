@@ -54,6 +54,22 @@ namespace aurora {
 		};
 
 
+		enum class Result : uint8_t {
+			SUCCESS,
+			NOT_FOUND,
+			ALREADY_EXISTS,
+			ALREADY_EXISTS_SINGLE,
+			NOT_NULL,
+			ALREADY_HAS_NODE,
+			NODE_NOT_SELF,
+			CANNOT_IS_SELF,
+			CANNOT_HAS_PARENT,
+			CANNOT_IS_ROOT_OF_SELF,
+			ISNOT_CHILD_OF_SELF,
+			BEFORE_ISNOT_CHILD_OF_SELF
+		};
+
+
 		Node();
 		virtual ~Node();
 
@@ -76,12 +92,18 @@ namespace aurora {
 			return _numChildren;
 		}
 
-		Node* AE_CALL addChild(Node* child);
-		Node* AE_CALL insertChild(Node* child, Node* before);
-		bool AE_CALL removeChild(Node* child);
+		template<typename T, typename... Args, typename = std::enable_if_t<std::is_base_of_v<Node, T>, T>>
+		inline T* AE_CALL addChild(Args... args) {
+			auto child = new T(std::forward<Args>(args)...);
+			_addChild(child);
+			return child;
+		}
+		Result AE_CALL addChild(Node* child);
+		Result AE_CALL insertChild(Node* child, Node* before);
+		Result AE_CALL removeChild(Node* child);
 		iterator AE_CALL removeChild(const iterator& itr);
 		bool AE_CALL removeFromParent();
-		void AE_CALL removeAllChildren();
+		size_t AE_CALL removeAllChildren();
 
 		inline void AE_CALL getLocalPosition(float32_t(&dst)[3]) const {
 			auto x = _lm.data[0][3], y = _lm.data[1][3], z = _lm.data[2][3];
@@ -161,9 +183,23 @@ namespace aurora {
 		void AE_CALL updateWorldMatrix() const;
 		void AE_CALL updateInverseWorldMatrix() const;
 
-		bool AE_CALL addComponent(components::IComponent* component);
-		bool AE_CALL removeComponent(components::IComponent* component);
-		void AE_CALL removeAllComponents();
+		Result AE_CALL addComponent(components::IComponent* component);
+
+		template<typename T, typename... Args, typename = std::enable_if_t<std::is_base_of_v<components::IComponent, T>, T>>
+		std::tuple<Node::Result, T*> AE_CALL addComponent(Args... args) {
+			if (auto& ci = T::rttiClassInfo; ci.getSingleBase()) {
+				for (auto c : _components) {
+					if (ci.getSingleBase() == c->getRttiClassInfo().getSingleBase()) return std::make_tuple(Result::ALREADY_EXISTS_SINGLE, nullptr);
+				}
+			}
+
+			auto component = new T(std::forward<Args>(args)...);
+			_addComponent(component);
+			return std::make_tuple(Result::SUCCESS, component);
+		}
+
+		Result AE_CALL removeComponent(components::IComponent* component);
+		size_t AE_CALL removeAllComponents();
 
 		template<typename T, typename = std::enable_if_t<std::is_base_of_v<components::IComponent, T>, T>>
 		inline T* AE_CALL getComponent() const {
@@ -235,11 +271,16 @@ namespace aurora {
 
 		std::vector<components::IComponent*> _components;
 
+		inline void AE_CALL _addChild(Node* child) {
+			child->ref();
+			_addNode(child);
+			child->_parentChanged(_root);
+		}
+
 		void AE_CALL _addNode(Node* child);
 		void AE_CALL _insertNode(Node* child, Node* before);
 		void AE_CALL _removeNode(Node* child);
 
-		void AE_CALL _addChild(Node* child);
 		inline void AE_CALL _parentChanged(Node* root) {
 			_root = root;
 
@@ -267,6 +308,12 @@ namespace aurora {
 			}
 		}
 		void AE_CALL _noticeUpdate(DirtyType dirty);
+
+		inline void AE_CALL _addComponent(components::IComponent* component) {
+			component->ref();
+			_components.emplace_back(component);
+			component->__setNode(this);
+		}
 
 		void AE_CALL _removeComponent(components::IComponent* component);
 	};

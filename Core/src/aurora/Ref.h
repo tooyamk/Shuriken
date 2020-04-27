@@ -4,7 +4,7 @@
 #include <atomic>
 
 namespace aurora {
-	class AE_TEMPLATE_DLL Ref {
+	class AE_DLL Ref {
 	public:
 		template<typename T>
 		//using RefType = std::enable_if_t<std::is_base_of_v<Ref, T>, T>;
@@ -27,12 +27,13 @@ namespace aurora {
 			return (T*)this;
 		}
 
+		template<bool CheckRelease = true>
 		inline void AE_CALL unref() {
-			if (_refCount.fetch_sub(1) <= 1) delete this;
-		}
-
-		inline void AE_CALL weakUnref() {
-			_refCount.fetch_sub(1);
+			if constexpr (CheckRelease) {
+				if (_refCount.fetch_sub(1) <= 1) delete this;
+			} else {
+				_refCount.fetch_sub(1);
+			}
 		}
 
 		inline uint32_t AE_CALL getReferenceCount() const {
@@ -159,15 +160,14 @@ namespace aurora {
 			}
 		}
 
+		template<bool DoUnref = true>
 		inline void AE_CALL reset() {
 			if (_target) {
-				_target->unref();
+				if constexpr (DoUnref) {
+					_target->unref();
+				}
 				_target = nullptr;
 			}
-		}
-
-		inline void AE_CALL weakReset() {
-			if (_target) _target = nullptr;
 		}
 
 		inline bool AE_CALL isEmpty() const {

@@ -7,13 +7,13 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_dirty(DirtyFlag::EMPTY),
 		_internalState(nullptr),
 		_featureValue(0) {
-		if (_isInternal) _graphics->weakUnref();
+		if (_isInternal) _graphics->unref<false>();
 		_updateDepth();
 		_updateStencil();
 	}
 
 	DepthStencilState::~DepthStencilState() {
-		if (_isInternal) _graphics.weakReset();
+		if (_isInternal) _graphics.reset<false>();
 		_releaseRes();
 	}
 

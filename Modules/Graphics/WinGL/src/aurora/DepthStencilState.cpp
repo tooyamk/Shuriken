@@ -6,11 +6,11 @@ namespace aurora::modules::graphics::win_gl {
 		_isInternal(isInternal),
 		_dirty(DirtyFlag::EMPTY),
 		_stencilFeatureValue(0) {
-		if (_isInternal) _graphics->weakUnref();
+		if (_isInternal) _graphics->unref<false>();
 	}
 
 	DepthStencilState::~DepthStencilState() {
-		if (_isInternal) _graphics.weakReset();
+		if (_isInternal) _graphics.reset<false>();
 	}
 
 	const void* DepthStencilState::getNative() const {

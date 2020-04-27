@@ -3,7 +3,7 @@
 #include "aurora/components/lights/ILight.h"
 
 namespace aurora::components::lights {
-	class AE_DLL PointLight : public ILight {
+	class AE_DLL PointLight : public AE_COMPONENT_INHERIT(ILight, false)
 	public:
 		PointLight();
 
@@ -16,8 +16,6 @@ namespace aurora::components::lights {
 		}
 
 	protected:
-		AE_RTTI_DECLARE_DERIVED(ILight);
-
 		float32_t _radius;
 	};
 }

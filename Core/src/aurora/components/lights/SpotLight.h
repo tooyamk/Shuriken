@@ -3,7 +3,7 @@
 #include "aurora/components/lights/ILight.h"
 
 namespace aurora::components::lights {
-	class AE_DLL SpotLight : public ILight {
+	class AE_DLL SpotLight : public AE_COMPONENT_INHERIT(ILight, false)
 	public:
 		SpotLight();
 
@@ -24,8 +24,6 @@ namespace aurora::components::lights {
 		}
 
 	protected:
-		AE_RTTI_DECLARE_DERIVED(ILight);
-
 		float32_t _radius;
 		float32_t _spotAngle;
 	};

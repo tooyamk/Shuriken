@@ -8,9 +8,34 @@ namespace aurora {
 }
 
 namespace aurora::components {
-	class AE_DLL IComponent : public Ref {
+	class AE_DLL ClassInfo : public rtti::ClassInfo {
 	public:
-		virtual ~IComponent() {}
+		ClassInfo(const ClassInfo* const base, bool single) : rtti::ClassInfo(base) {
+			if (base) {
+				if (base->_singleBase) {
+					_singleBase = base->_singleBase;
+				} else {
+					_singleBase = single ? this : nullptr;
+				}
+			} else {
+				_singleBase = single ? this : nullptr;
+			}
+		}
+
+		inline const ClassInfo* AE_CALL getSingleBase() const {
+			return _singleBase;
+		}
+
+	private:
+		const ClassInfo* _singleBase;
+	};
+
+
+	class AE_DLL IComponent : public Ref {
+	AE_RTTI_DECLARE_BASE(aurora::components::ClassInfo, false);
+
+	public:
+		virtual ~IComponent();
 
 		uint32_t layer;
 
@@ -22,8 +47,6 @@ namespace aurora::components {
 		inline Node* AE_CALL getNode() const {
 			return _node;
 		}
-
-		AE_RTTI_GEN_IS_KIND_OF_METHOD();
 
 	protected:
 		bool _enabled;
@@ -37,7 +60,9 @@ namespace aurora::components {
 
 		virtual void AE_CALL _nodeChanged(Node* old) {};
 		virtual void AE_CALL _enabledChanged() {};
-
-		AE_RTTI_DECLARE_BASE();
 	};
 }
+
+
+#define	AE_COMPONENT_INHERIT(__BASE__, __SINGLE__) \
+AE_RTTI_INHERIT(aurora::components::ClassInfo, __BASE__, __SINGLE__)

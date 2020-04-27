@@ -25,65 +25,64 @@ namespace aurora {
 		removeAllComponents();
 	}
 
-	Node* Node::addChild(Node* child) {
-		if (child && !child->_parent && child != _root) {
-			child->ref();
-			_addNode(child);
-			child->_parentChanged(_root);
+	Node::Result Node::addChild(Node* child) {
+		if (!child) return Result::NOT_NULL;
+		if (child->_parent) return Result::CANNOT_HAS_PARENT;
+		if (child == _root) return Result::CANNOT_IS_ROOT_OF_SELF;
 
-			return child;
-		}
+		_addChild(child);
 
-		return nullptr;
+		return Result::SUCCESS;
 	}
 
-	Node* Node::insertChild(Node* child, Node* before) {
-		if (child && child != _root) {
-			if (before) {
-				if (before->_parent == this) {
-					if (child->_parent == this) {
-						if (child == before || child->_prev == before) return child;
+	Node::Result Node::insertChild(Node* child, Node* before) {
+		if (!child) return Result::NOT_NULL;
 
-						_removeNode(child);
-						_insertNode(child, before);
+		if (before) {
+			if (before->_parent != this) return Result::BEFORE_ISNOT_CHILD_OF_SELF;
 
-						return child;
-					} else if (!child->_parent) {
-						child->ref();
-						_insertNode(child, before);
+			if (child->_parent == this) {
+				if (child == before || child->_prev == before) return Result::SUCCESS;
 
-						return child;
-					}
-				}
-			} else {
-				if (child->_parent == this) {
-					_removeNode(child);
-					_addNode(child);
+				_removeNode(child);
+				_insertNode(child, before);
 
-					return child;
-				} else if (!child->_parent) {
-					child->ref();
-					_addNode(child);
-					child->_parentChanged(_root);
+				return Result::SUCCESS;
+			} else if (!child->_parent) {
+				child->ref();
+				_insertNode(child, before);
 
-					return child;
-				}
+				return Result::SUCCESS;
 			}
-		}
 
-		return nullptr;
+			return Result::ISNOT_CHILD_OF_SELF;
+		} else {
+			if (child->_parent == this) {
+				_removeNode(child);
+				_addNode(child);
+
+				return Result::SUCCESS;
+			} else if (!child->_parent) {
+				child->ref();
+				_addNode(child);
+				child->_parentChanged(_root);
+
+				return Result::SUCCESS;
+			}
+
+			return Result::ISNOT_CHILD_OF_SELF;
+		}
 	}
 
-	bool Node::removeChild(Node* child) {
-		if (child && child->_parent == this) {
-			_removeNode(child);
-			child->_parentChanged(child);
-			child->unref();
+	Node::Result Node::removeChild(Node* child) {
+		if (!child) return Result::NOT_NULL;
+		if (child->_parent != this) return Result::ISNOT_CHILD_OF_SELF;
 
-			return true;
-		}
+		_removeNode(child);
+		child->_parentChanged(child);
+		child->unref();
 
-		return false;
+		return Result::SUCCESS;
 	}
 
 	Node::iterator Node::removeChild(const iterator& itr) {
@@ -101,10 +100,10 @@ namespace aurora {
 	}
 
 	bool Node::removeFromParent() {
-		return _parent ? _parent->removeChild(this) : false;
+		return _parent ? _parent->removeChild(this) == Result::SUCCESS : false;
 	}
 
-	void Node::removeAllChildren() {
+	size_t Node::removeAllChildren() {
 		if (_childHead) {
 			auto child = _childHead;
 			do {
@@ -120,8 +119,12 @@ namespace aurora {
 			} while (child);
 
 			_childHead = nullptr;
+			auto n = _numChildren;
 			_numChildren = 0;
+			return n;
 		}
+
+		return 0;
 	}
 
 	void Node::setLocalPosition(const float32_t(&p)[3]) {
@@ -230,7 +233,7 @@ namespace aurora {
 	}
 
 	void Node::setIdentity() {
-		if (!_lr.isIdentity() || !_ls.isEqual(1.f) || _lm.data[0][3] != 0.f || _lm.data[1][3] != 0.f || _lm.data[2][3] != 0.f) {
+		if (!_lr.isIdentity() || !memEqual<sizeof(_ls)>(&_ls, Vec3f32::ONE) || _lm.data[0][3] != 0.f || _lm.data[1][3] != 0.f || _lm.data[2][3] != 0.f) {
 			_lm.set34();
 			_lr.set();
 			_ls.set(1.f);
@@ -286,31 +289,41 @@ namespace aurora {
 		}
 	}
 
-	bool Node::addComponent(components::IComponent* component) {
-		if (component && !component->getNode()) {
-			component->ref();
-			_components.emplace_back(component);
-			component->__setNode(this);
-			return true;
+	Node::Result Node::addComponent(components::IComponent* component) {
+		if (!component) return Result::NOT_NULL;
+		if (component->getNode()) return Result::ALREADY_HAS_NODE;
+
+		if (auto& ci = component->getRttiClassInfo(); ci.getSingleBase()) {
+			for (auto c : _components) {
+				if (ci.getSingleBase() == c->getRttiClassInfo().getSingleBase()) return Result::ALREADY_EXISTS_SINGLE;
+			}
 		}
-		return false;
+
+		_addComponent(component);
+		return Result::SUCCESS;
 	}
 
-	bool Node::removeComponent(components::IComponent* component) {
-		if (component && component->getNode() == this) {
-			component->__setNode(nullptr);
-			_removeComponent(component);
-			return true;
-		}
-		return false;
+	Node::Result Node::removeComponent(components::IComponent* component) {
+		if (!component) return Result::NOT_NULL;
+		if (component->getNode() != this) return Result::NODE_NOT_SELF;
+
+		component->__setNode(nullptr);
+		_removeComponent(component);
+		return Result::SUCCESS;
 	}
 
-	void Node::removeAllComponents() {
-		for (auto c : _components) {
-			c->__setNode(nullptr);
-			c->unref();
+	size_t Node::removeAllComponents() {
+		if (auto n = _components.size(); n) {
+			for (auto c : _components) {
+				c->__setNode(nullptr);
+				c->unref();
+			}
+			_components.clear();
+			
+			return n;
 		}
-		_components.clear();
+
+		return 0;
 	}
 
 	void Node::getLocalRotationFromWorld(const Node& node, const Quaternion& worldRot, Quaternion& dst) {
@@ -376,22 +389,6 @@ namespace aurora {
 		child->_parent = nullptr;
 
 		--_numChildren;
-	}
-
-	void Node::_addChild(Node* child) {
-		if (_childHead) {
-			auto tail = _childHead->_prev;
-
-			tail->_next = child;
-			child->_prev = tail;
-			_childHead->_prev = child;
-		} else {
-			_childHead = child;
-			child->_prev = child;
-		}
-
-		child->_parent = this;
-		++_numChildren;
 	}
 
 	void Node::_worldPositionChanged(DirtyType oldDirty) {

@@ -17,37 +17,48 @@ namespace aurora::rtti {
 		template<typename T>
 		inline bool AE_CALL isKindOf() const {
 			auto c = this;
-			auto t = &T::__rttiClassInfo;
-			auto td = t->_depth;
+			auto t = &T::rttiClassInfo;
 
-			if (c->_depth < td) return false;
-			if (c->_depth > td) {
-				for (size_t i = 0, n = c->_depth - td; i < n; ++i) c = c->_base;
+			if (c->_depth > t->_depth) {
+				for (size_t i = 0, n = c->_depth - t->_depth; i < n; ++i) c = c->_base;
 			}
 
 			return c == t;
 		}
 
-	private:
+	protected:
 		const ClassInfo* const _base;
-		const uint64_t _depth;
+		const size_t _depth;
 	};
 }
 
 
-#define AE_RTTI_DECLARE_BASE() \
-inline static aurora::rtti::ClassInfo __rttiClassInfo = aurora::rtti::ClassInfo(nullptr); \
-friend aurora::rtti::ClassInfo; \
-aurora::rtti::ClassInfo* __rtti;
-
-#define AE_RTTI_DECLARE_DERIVED(__BASE__) \
-inline static aurora::rtti::ClassInfo __rttiClassInfo = aurora::rtti::ClassInfo(&__BASE__::__rttiClassInfo); \
-friend aurora::rtti::ClassInfo;
-
-#define AE_RTTI_DEFINE() __rtti = &__rttiClassInfo;
-
-#define AE_RTTI_GEN_IS_KIND_OF_METHOD() \
+#define AE_RTTI_DECLARE_BASE(__CLASS_INFO_T__, ...) \
+public: \
+inline static const __CLASS_INFO_T__ rttiClassInfo = __CLASS_INFO_T__(nullptr, ##__VA_ARGS__); \
 template<typename RTTI_CLASS> \
 inline bool AE_CALL isKindOf() const { \
 	return __rtti->isKindOf<RTTI_CLASS>(); \
-};
+}; \
+inline const __CLASS_INFO_T__& AE_CALL getRttiClassInfo() const { \
+	return *__rtti; \
+}; \
+protected: \
+friend aurora::rtti::ClassInfo; \
+friend __CLASS_INFO_T__; \
+const __CLASS_INFO_T__* __rtti; \
+private:
+
+#define AE_RTTI_DECLARE_DERIVED(__CLASS_INFO_T__, __BASE__, ...) \
+public: \
+inline static const __CLASS_INFO_T__ rttiClassInfo = __CLASS_INFO_T__(&__BASE__::rttiClassInfo, ##__VA_ARGS__); \
+protected: \
+friend aurora::rtti::ClassInfo; \
+friend __CLASS_INFO_T__; \
+private:
+
+#define AE_RTTI_DEFINE() __rtti = &rttiClassInfo;
+
+#define AE_RTTI_INHERIT(__CLASS_INFO_T__, __BASE__, ...) \
+__BASE__ { \
+AE_RTTI_DECLARE_DERIVED(__CLASS_INFO_T__, __BASE__, __VA_ARGS__)

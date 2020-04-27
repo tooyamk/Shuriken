@@ -16,9 +16,25 @@ auto aaa() {
 	return __FUNCSIG__;
 }
 
+class alignas(2) CVB {
+	 short a[6];
+	 char b;
+};
+
+class AABB {
+public:
+	AABB(int k, float l) {
+		int a = 1;
+	}
+};
+
 class RenderPipelineTester : public BaseTester {
 public:
 	virtual int32_t AE_CALL run() override {
+		Vec3f32 v3(1);
+		auto bb = memEqual<sizeof(v3)>(&v3, Vec3f32::ONE);
+		println(sizeof(CVB));
+
 		auto monitors = Monitor::getMonitors();
 		auto vms = monitors[0].getVideoModes();
 
@@ -63,7 +79,7 @@ public:
 
 					{
 						RefPtr worldNode = new Node();
-						auto modelNode = worldNode->addChild(new Node());
+						RefPtr modelNode = worldNode->addChild<Node>();
 						//modelNode = new Node();
 						//modelNode->setLocalScale(Vec3f32(4));
 						//modelNode->parentTranslate(Vec3f32(0, 3000.f, 0));
@@ -73,27 +89,26 @@ public:
 						//auto wm = modelNode->getWorldMatrix();
 						renderData.model = modelNode;
 						if (1) {
-							auto lightNode = worldNode->addChild(new Node());
+							RefPtr lightNode = worldNode->addChild<Node>();
 							lightNode->setLocalPosition(Vec3f32(-100, 0, -100));
-							auto light = new PointLight();
+							auto [_, light] = lightNode->addComponent<PointLight>();
 							//light->setRadius(200);
-							lightNode->addComponent(light);
 							lightNode->localRotate(Quaternion::createFromEulerY(Math::PI_4<float32_t>));
 							renderData.lights.emplace_back(light);
 						}
 						if (1) {
-							auto lightNode = worldNode->addChild(new Node());
+							RefPtr lightNode = worldNode->addChild<Node>();
 							lightNode->setLocalPosition(Vec3f32(100, 0, -100));
-							auto light = new PointLight();
+							auto [_, light] = lightNode->addComponent<PointLight>();
 							//light->setRadius(1000);
-							lightNode->addComponent(light);
 							lightNode->localRotate(Quaternion::createFromEulerY(-Math::PI_4<float32_t>));
 							renderData.lights.emplace_back(light);
 						}
-						auto cameraNode = worldNode->addChild(new Node());
-						auto camera = new Camera();
+						RefPtr cameraNode = worldNode->addChild<Node>();
+						//auto camera = new Camera();
+						//cameraNode->addComponent(camera);
+						auto [_, camera] = cameraNode->addComponent<Camera>();
 						renderData.camera = camera;
-						cameraNode->addComponent(camera);
 						auto mat = new Material();
 						renderData.material = mat;
 						auto mat2 = new Material();

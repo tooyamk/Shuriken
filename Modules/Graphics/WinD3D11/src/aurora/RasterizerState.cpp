@@ -13,7 +13,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_oldFrontFace(_frontFace),
 		_internalState(nullptr),
 		_featureValue(0) {
-		if (_isInternal) _graphics->weakUnref();
+		if (_isInternal) _graphics->unref<false>();
 		memset(&_desc, 0, sizeof(_desc));
 		_desc.FillMode = _convertFillMode(_fillMode);
 		_desc.CullMode = _convertCullMode(_cullMode);
@@ -22,7 +22,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	RasterizerState::~RasterizerState() {
-		if (_isInternal) _graphics.weakReset();
+		if (_isInternal) _graphics.reset<false>();
 		_releaseRes();
 	}
 

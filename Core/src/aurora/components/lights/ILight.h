@@ -4,7 +4,7 @@
 #include "aurora/math/Vector.h"
 
 namespace aurora::components::lights {
-	class AE_DLL ILight : public IComponent {
+	class AE_DLL ILight : public AE_COMPONENT_INHERIT(IComponent, false)
 	public:
 		ILight();
 
@@ -25,8 +25,6 @@ namespace aurora::components::lights {
 		}
 
 	protected:
-		AE_RTTI_DECLARE_DERIVED(IComponent);
-
 		Vec3f32 _color;
 		float32_t _intensity;
 	};

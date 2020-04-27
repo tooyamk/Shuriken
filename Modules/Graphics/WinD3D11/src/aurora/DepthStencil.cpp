@@ -5,11 +5,11 @@ namespace aurora::modules::graphics::win_d3d11 {
 	DepthStencil::DepthStencil(Graphics& graphics, bool internalView) : IDepthStencil(graphics),
 		_sampleCount(0),
 		_view(nullptr) {
-		if (_isInternal) _graphics->weakUnref();
+		if (_isInternal) _graphics->unref<false>();
 	}
 
 	DepthStencil::~DepthStencil() {
-		if (_isInternal) _graphics.weakReset();
+		if (_isInternal) _graphics.reset<false>();
 		destroy();
 	}
 

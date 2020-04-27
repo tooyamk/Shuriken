@@ -12,7 +12,7 @@ namespace aurora::render {
 }
 
 namespace aurora::components::renderables {
-	class AE_DLL IRenderable : public IComponent {
+	class AE_DLL IRenderable : public AE_COMPONENT_INHERIT(IComponent, false)
 	public:
 		IRenderable();
 
@@ -28,8 +28,6 @@ namespace aurora::components::renderables {
 		std::vector<RefPtr<render::RenderPass>> renderPasses;
 
 	protected:
-		AE_RTTI_DECLARE_DERIVED(IComponent);
-
 		RefPtr<render::IRenderer> _renderer;
 	};
 }

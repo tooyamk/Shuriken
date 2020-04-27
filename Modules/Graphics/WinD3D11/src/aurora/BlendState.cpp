@@ -9,13 +9,13 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_desc({ 0 }),
 		_internalState(nullptr),
 		_featureValue(0) {
-		if (_isInternal) _graphics->weakUnref();
+		if (_isInternal) _graphics->unref<false>();
 		_oldIndependentBlendEnabled = _desc.IndependentBlendEnable;
 		for (uint8_t i = 0; i < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i) _setRenderTargetState(i, _rtStatus[i]);
 	}
 
 	BlendState::~BlendState() {
-		if (_isInternal) _graphics.weakReset();
+		if (_isInternal) _graphics.reset<false>();
 		_releaseRes();
 	}
 

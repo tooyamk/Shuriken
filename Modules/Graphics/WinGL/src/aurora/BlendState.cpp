@@ -6,12 +6,12 @@ namespace aurora::modules::graphics::win_gl {
 		_isInternal(isInternal),
 		MAX_MRT_COUNT(graphics.getDeviceFeatures().simultaneousRenderTargetCount),
 		_status(MAX_MRT_COUNT) {
-		if (_isInternal) _graphics->weakUnref();
+		if (_isInternal) _graphics->unref<false>();
 		for (uint8_t i = 0; i < MAX_MRT_COUNT; ++i) _updateInternalState(i);
 	}
 
 	BlendState::~BlendState() {
-		if (_isInternal) _graphics.weakReset();
+		if (_isInternal) _graphics.reset<false>();
 	}
 
 	const void* BlendState::getNative() const {

@@ -6,7 +6,7 @@ namespace aurora::modules::graphics::win_gl {
 		_isInternal(isInternal),
 		_dirty(DirtyFlag::EMPTY),
 		_featureValue(0) {
-		if (_isInternal) _graphics->weakUnref();
+		if (_isInternal) _graphics->unref<false>();
 		_desc.fillMode = FillMode::SOLID;
 		_desc.cullMode = CullMode::BACK;
 		_desc.frontFace = FrontFace::CW;
@@ -14,7 +14,7 @@ namespace aurora::modules::graphics::win_gl {
 	}
 
 	RasterizerState::~RasterizerState() {
-		if (_isInternal) _graphics.weakReset();
+		if (_isInternal) _graphics.reset<false>();
 	}
 
 	const void* RasterizerState::getNative() const {
