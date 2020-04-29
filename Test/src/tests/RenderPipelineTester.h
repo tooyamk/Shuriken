@@ -3,6 +3,7 @@
 #include "../BaseTester.h"
 #include "aurora/SerializableObject.h"
 #include <set>
+#include <variant>
 
 enum class EEE : uint8_t {
 	E0,
@@ -16,25 +17,9 @@ auto aaa() {
 	return __FUNCSIG__;
 }
 
-class alignas(2) CVB {
-	 short a[6];
-	 char b;
-};
-
-class AABB {
-public:
-	AABB(int k, float l) {
-		int a = 1;
-	}
-};
-
 class RenderPipelineTester : public BaseTester {
 public:
 	virtual int32_t AE_CALL run() override {
-		Vec3f32 v3(1);
-		auto bb = memEqual<sizeof(v3)>(&v3, Vec3f32::ONE);
-		println(sizeof(CVB));
-
 		auto monitors = Monitor::getMonitors();
 		auto vms = monitors[0].getVideoModes();
 
@@ -56,7 +41,7 @@ public:
 				if (graphics) {
 					println("Graphics Version : ", graphics->getVersion());
 
-					graphics->getEventDispatcher().addEventListener(GraphicsEvent::ERR, new EventListener(Recognitor<GraphicsEvent>(),[](Event<GraphicsEvent>& e) {
+					graphics->getEventDispatcher().addEventListener(GraphicsEvent::ERR, new EventListener(TypeRecognizer<GraphicsEvent>(),[](Event<GraphicsEvent>& e) {
 						println(*(std::string_view*)e.getData());
 						int a = 1;
 					}));

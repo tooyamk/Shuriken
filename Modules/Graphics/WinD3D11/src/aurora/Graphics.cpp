@@ -33,7 +33,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_numRTVs(0),
 		_RTVs({ 0 }),
 		_DSV(nullptr),
-		_resizedListener(this, &Graphics::_resizedHandler) {
+		_resizedListener(&Graphics::_resizedHandler, this) {
 		_resizedListener.ref();
 		_constantBufferManager.createShareConstantBufferCallback = std::bind(&Graphics::_createdShareConstantBuffer, this);
 		_constantBufferManager.createExclusiveConstantBufferCallback = std::bind(&Graphics::_createdExclusiveConstantBuffer, this, std::placeholders::_1);

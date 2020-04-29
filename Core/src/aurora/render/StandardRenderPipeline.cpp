@@ -50,8 +50,7 @@ namespace aurora::render {
 				std::stable_sort(_renderQueue.begin(), _renderQueue.end(), [](const RenderData* lhs, const RenderData* rhs) {
 					if (lhs->priority.level1 == rhs->priority.level1) {
 						using Lv2_t = std::underlying_type<RenderPriority::Level2>::type;
-						auto val = (Lv2_t)lhs->priority.level2 - (Lv2_t)rhs->priority.level2;
-						if (val == 0) {
+						if (auto val = (Lv2_t)lhs->priority.level2 - (Lv2_t)rhs->priority.level2; val == 0) {
 							switch (lhs->priority.level2) {
 							case RenderPriority::Level2::FAR_TO_NEAR:
 								return lhs->matrix.l2v[2][3] > rhs->matrix.l2v[2][3];
@@ -88,16 +87,12 @@ namespace aurora::render {
 	}
 
 	void StandardRenderPipeline::_collectNode(Node* node, RenderDataCollector& collector) {
-		auto& components = node->getComponents();
-		for (auto& c : components) {
-			if (c->isKindOf<components::renderables::IRenderable>()) {
-				auto r = (const components::renderables::IRenderable*)c;
-				if (r->getRenderer()) {
-					collector.data.renderable = r;
-					r->getRenderer()->collectRenderData(collector);
-				}
+		node->getComponents<components::renderables::IRenderable>([&collector](components::renderables::IRenderable* r) {
+			if (r->getRenderer()) {
+				collector.data.renderable = r;
+				r->getRenderer()->collectRenderData(collector);
 			}
-		}
+		});
 
 		for (auto& child : *node) _collectNode(child, collector);
 	}

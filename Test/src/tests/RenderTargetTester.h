@@ -26,7 +26,7 @@ public:
 				if (graphics) {
 					println("Graphics Version : ", graphics->getVersion());
 
-					graphics->getEventDispatcher().addEventListener(GraphicsEvent::ERR, new EventListener(Recognitor<GraphicsEvent>(),[](Event<GraphicsEvent>& e) {
+					graphics->getEventDispatcher().addEventListener(GraphicsEvent::ERR, new EventListener(TypeRecognizer<GraphicsEvent>(),[](Event<GraphicsEvent>& e) {
 						println(*(std::string_view*)e.getData());
 						int a = 1;
 					}));

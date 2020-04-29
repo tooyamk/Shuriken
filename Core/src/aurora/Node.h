@@ -208,13 +208,14 @@ namespace aurora {
 			}
 			return nullptr;
 		}
-		inline const std::vector<components::IComponent*>& AE_CALL getComponents() const {
-			return _components;
-		}
-		template<typename T, typename = std::enable_if_t<std::is_base_of_v<components::IComponent, T>, T>>
-		inline void AE_CALL getComponents(std::vector<T*>& dst) const {
+		template<typename Com, typename Fn, typename = std::enable_if_t<std::is_base_of_v<components::IComponent, Com> && std::is_invocable_v<Fn, Com*>, Com>>
+		inline void AE_CALL getComponents(const Fn& fn) const {
 			for (auto c : _components) {
-				if (c->isKindOf<T>()) dst.emplace_back((T*)c);
+				if constexpr (std::is_same_v<components::IComponent, Com>) {
+					fn((Com*)c);
+				} else {
+					if (c->isKindOf<Com>()) fn((Com*)c);
+				}
 			}
 		}
 

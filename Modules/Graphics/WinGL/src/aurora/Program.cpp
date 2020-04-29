@@ -176,7 +176,7 @@ namespace aurora::modules::graphics::win_gl {
 
 					auto parentVars = &layout.variables;
 					varNames.clear();
-					String::split(child, std::string_view("."), varNames);
+					String::split(child, std::string_view("."), Invoker(&decltype(varNames)::emplace_back<const std::string_view&>, &varNames));
 					for (auto& sv : varNames) {
 						ConstantBufferLayout::Variables* foundMemVar = nullptr;
 						for (auto& memVar : *parentVars) {

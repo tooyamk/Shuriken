@@ -66,17 +66,17 @@ namespace aurora::events {
 	template<typename EvtType, typename Class>
 	class AE_TEMPLATE_DLL EventListener : public IEventListener<EvtType> {
 	public:
-		EventListener(Class* target, EvtMethod<EvtType, Class> method) :
-			_target(method ? target : nullptr),
-			_method(method) {
+		EventListener(EvtMethod<EvtType, Class> method, Class* target) :
+			_method(target ? _method : nullptr),
+			_target(target) {
 		}
 
 		virtual void AE_CALL onEvent(Event<EvtType>& e) override {
 			if (_target) (_target->*_method)(e);
 		}
 	private:
-		Class* _target;
 		EvtMethod<EvtType, Class> _method;
+		Class* _target;
 	};
 
 
@@ -117,7 +117,10 @@ namespace aurora::events {
 	template<typename EvtType, typename Fn>
 	class AE_TEMPLATE_DLL EventListener<EvtType, const Fn&> : public IEventListener<EvtType> {
 	public:
-		EventListener(const Recognitor<EvtType>& recognitor, const Fn& fn) :
+		EventListener(const Fn& fn) :
+			_fn(fn) {
+		}
+		EventListener(const TypeRecognizer<EvtType>&, const Fn& fn) :
 			_fn(fn) {
 		}
 
@@ -127,8 +130,8 @@ namespace aurora::events {
 	private:
 		Fn _fn;
 	};
-	template<typename EvtType, typename Fn, typename = std::enable_if_t<std::is_invocable_r<void, Fn, Event<EvtType>>::value, Fn>>
-	EventListener(Recognitor<EvtType>, Fn)->EventListener<EvtType, const Fn&>;
+	template<typename EvtType, typename Fn, typename = std::enable_if_t<std::is_invocable_v<Fn, Event<EvtType>>, Fn>>
+	EventListener(TypeRecognizer<EvtType>, Fn)->EventListener<EvtType, const Fn&>;
 
 
 	template<typename EvtType>

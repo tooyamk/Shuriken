@@ -285,7 +285,54 @@ namespace aurora {
 	template<size_t Bits> using float_t = std::conditional_t<Bits >= 0 && Bits <= 32, float32_t, std::conditional_t<Bits >= 33 && Bits <= 64, float64_t, void>>;
 
 
-	template<typename T> struct Recognitor {};
+	template<typename T> struct TypeRecognizer {};
+
+
+	template<typename F, typename T>
+	class AE_TEMPLATE_DLL Invoker {
+	public:
+		Invoker(F fn, T* target) :
+			_fn(fn),
+			_target(target) {
+		}
+
+		inline operator bool() const {
+			return _fn && _target;
+		}
+
+		template<typename... Args>
+		inline decltype(auto) operator()(Args... args) const {
+			return (_target->*_fn)(std::forward<Args>(args)...);
+		}
+
+	private:
+		F _fn;
+		T* _target;
+	};
+	template<typename F, typename T, typename = std::enable_if_t<std::is_member_function_pointer_v<F>, F>>
+	Invoker(F)->Invoker<F, T>;
+
+	template<typename F>
+	class AE_TEMPLATE_DLL Invoker<F, nullptr_t> {
+	public:
+		Invoker(F fn) :
+			_fn(fn) {
+		}
+
+		inline operator bool() const {
+			return _fn;
+		}
+
+		template<typename... Args>
+		inline decltype(auto) operator()(Args... args) const {
+			return _fn(std::forward<Args>(args)...);
+		}
+
+	private:
+		F _fn;
+	};
+	template<typename F, typename = std::enable_if_t<!std::is_member_function_pointer_v<F>, F>>
+	Invoker(F)->Invoker<F, nullptr_t>;
 
 
 	template<size_t Bits>

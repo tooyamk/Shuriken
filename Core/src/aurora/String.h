@@ -164,57 +164,63 @@ namespace aurora {
 			return len;
 		}
 
-		template<typename Input, typename Separator, typename = string_data_t<Input>, typename = std::enable_if_t<std::is_base_of_v<std::regex, Separator> || is_string_data_v<Separator> || std::is_convertible_v<Separator, char const*>, Separator>>
-		static void AE_CALL split(const Input& input, const Separator& separator, std::vector<std::string_view>& dst) {
+		template<typename Input, typename Separator, typename Fn, typename = string_data_t<Input>, typename = std::enable_if_t<(std::is_base_of_v<std::regex, Separator> || is_string_data_v<Separator> || std::is_convertible_v<Separator, char const*>) && std::is_invocable_v<Fn, const std::string&>, Separator>>
+		static void AE_CALL split(const Input& input, const Separator& separator, const Fn& fn) {
 			if constexpr (std::is_base_of_v<std::regex, Separator>) {
 				std::regex_token_iterator itr(input.begin(), input.end(), separator, -1);
 				std::regex_token_iterator<Input::const_iterator> end;
 				while (itr != end) {
-					dst.emplace_back(&*itr->first, itr->length());
+					fn(std::string_view(&*itr->first, itr->length()));
 					++itr;
 				}
 			} else if constexpr (is_string_data_v<Separator>) {
-				std::string::size_type i = 0, size = input.size(), step = separator.size();
-				while (i < size) {
-					auto f = input.find_first_of(separator, i);
-					if (f == std::string_view::npos) {
-						dst.emplace_back(input.data() + i, size - i);
-						return;
-					} else {
-						dst.emplace_back(input.data() + i, f - i);
+				if (auto step = separator.size(); step) {
+					size_t begin = 0, i = 0, size = input.size();
+					while (i < size) {
+						if (input[i] == separator[0]) {
+							auto found = true;
+							for (size_t j = 1; j < step; ++j) {
+								if (input[i + j] != separator[j]) {
+									found = false;
+									break;
+								}
+							}
+
+							if (found) {
+								fn(std::string_view(input.data() + begin, i - begin));
+								i += step;
+								begin = i;
+							} else {
+								++i;
+							}
+						} else {
+							++i;
+						}
 					}
 
-					i = f + step;
+					fn(std::string_view(input.data() + begin, i - begin));
+				} else {
+					fn(input);
 				}
-
-				dst.emplace_back(nullptr, 0);
 			} else {
-				split(input, std::string_view(separator), dst);
+				split(input, std::string_view(separator), fn);
 			}
 		}
 
-		template<bool SkipEmpty = false>
-		static void AE_CALL split(const std::string_view& input, uint8_t flags, std::vector<std::string_view>& dst) {
+		template<typename Input, typename Fn, typename = string_data_t<Input>, typename = std::enable_if_t<std::is_invocable_v<Fn, const std::string&>, Fn>>
+		static void AE_CALL split(const Input& input, uint8_t flags, const Fn& fn) {
 			size_t begin = 0, i = 0, size = input.size();
-				while (i < size) {
-					if (CHARS[input[i]] & flags) {
-						if constexpr (SkipEmpty) {
-							if (i > begin) dst.emplace_back(input.data() + begin, i - begin);
-						} else {
-							dst.emplace_back(input.data() + begin, i - begin);
-						}
-						++i;
-						begin = i;
-					} else {
-						++i;
-					}
-				}
-
-				if constexpr (SkipEmpty) {
-					if (i > begin) dst.emplace_back(input.data() + begin, i - begin);
+			while (i < size) {
+				if (CHARS[input[i]] & flags) {
+					fn(std::string_view(input.data() + begin, i - begin));
+					++i;
+					begin = i;
 				} else {
-					dst.emplace_back(input.data() + begin, i - begin);
+					++i;
 				}
+			}
+
+			fn(std::string_view(input.data() + begin, i - begin));
 		}
 
 		template<typename T, typename = string_data_t<T>>

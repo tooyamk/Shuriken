@@ -43,7 +43,9 @@ namespace aurora::extensions::shader_script {
 	inline bool AE_CALL parseDefineBlock(T& out, const std::string_view& content) {
 		auto fmtContent = String::trim(content, String::CharFlag::WHITE_SPACE);
 		std::vector<std::string_view> defs;
-		String::split<true>(content, String::CharFlag::NEW_LINE, defs);
+		String::split(content, String::CharFlag::NEW_LINE, [&defs](const std::string_view& sv) {
+			if (!sv.empty()) defs.emplace_back(sv);
+		});
 		for (auto& def : defs) {
 			auto fmtDef = String::trim(def, String::CharFlag::WHITE_SPACE);
 			if (fmtDef.empty()) continue;
