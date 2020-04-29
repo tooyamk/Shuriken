@@ -51,11 +51,11 @@ public:
 	}
 
 	virtual int32_t AE_CALL run() override {
-		RefPtr app = new Application(u8"TestApp");
+		RefPtr app = new Application("TestApp");
 
 		Application::Style wndStype;
 		wndStype.thickFrame = true;
-		if (app->createWindow(wndStype, u8"", Box2i32(Vec2i32({ 100, 100 }), Vec2i32({ 800, 600 })), false)) {
+		if (app->createWindow(wndStype, "", Box2i32(Vec2i32({ 100, 100 }), Vec2i32({ 800, 600 })), false)) {
 			Args args;
 			args.add("app", &*app);
 

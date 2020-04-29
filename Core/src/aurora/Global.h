@@ -75,33 +75,34 @@
 #define AE_CPP_VER_11      2
 #define AE_CPP_VER_14      3
 #define AE_CPP_VER_17      4
-#define AE_CPP_VER_20      5
+#define AE_CPP_VER_HIGHER  5
 
 #undef AE_CPP_VER
 #define AE_CPP_VER AE_CPP_VER_UNKNOWN
 
 #ifdef __cplusplus
 #	undef __ae_tmp_cpp_ver
+#	undef AE_CPP_VER
 #	if AE_COMPILER == AE_COMPILER_MSVC
 #		if __cplusplus != _MSVC_LANG
 #			define __ae_tmp_cpp_ver _MSVC_LANG
 #		endif
 #	endif
-#	if !defined(__ae_tmp_cpp_ver)
+#	ifndef __ae_tmp_cpp_ver
 #		define __ae_tmp_cpp_ver __cplusplus
 #	endif
-#	if __ae_tmp_cpp_ver == 199711L
-#		undef AE_CPP_VER
+#	if __ae_tmp_cpp_ver <= 199711L
 #		define AE_CPP_VER AE_CPP_VER_03
 #	elif __ae_tmp_cpp_ver == 201103L
-#		undef AE_CPP_VER
 #		define AE_CPP_VER AE_CPP_VER_14
 #	elif __ae_tmp_cpp_ver == 201402L
-#		undef AE_CPP_VER
 #		define AE_CPP_VER AE_CPP_VER_14
 #	elif __ae_tmp_cpp_ver == 201703L || __ae_tmp_cpp_ver == 201704L
-#		undef AE_CPP_VER
 #		define AE_CPP_VER AE_CPP_VER_17
+#	elif __ae_tmp_cpp_ver > 201704L
+#		define AE_CPP_VER AE_CPP_VER_HIGHER
+#   else
+#		define AE_CPP_VER AE_CPP_VER_UNKNOWN
 #	endif
 #undef __ae_tmp_cpp_ver
 #endif
@@ -771,7 +772,7 @@ namespace aurora {
 			} else if constexpr (std::is_same_v<T, bool>) {
 				out.write(value ? L"true" : L"false");
 			} else if constexpr (std::is_arithmetic_v<T>) {
-#if __cpp_lib_to_chars
+#ifdef __cpp_lib_to_chars
 				if constexpr (std::is_integral_v<T>) {
 					char buf[21];
 					auto rst = std::to_chars(buf, buf + sizeof(buf), value);

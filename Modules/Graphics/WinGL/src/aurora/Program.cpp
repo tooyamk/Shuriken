@@ -202,7 +202,7 @@ namespace aurora::modules::graphics::win_gl {
 					}
 
 					foundVar->stride = strides[j];
-					if (Math::isPOT(strides[j])) foundVar->stride |= 1ui32 << 31;
+					if (Math::isPot(strides[j])) foundVar->stride |= 1ui32 << 31;
 					foundVar->size = Graphics::getGLTypeSize(types[j]);
 					if (sizes[j] > 1) {
 						if (auto remainder = foundVar->size % strides[j]; remainder) {

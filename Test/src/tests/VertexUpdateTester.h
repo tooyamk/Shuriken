@@ -8,11 +8,11 @@ public:
 		auto monitors = Monitor::getMonitors();
 		auto vms = monitors[0].getVideoModes();
 
-		RefPtr app = new Application(u8"TestApp");
+		RefPtr app = new Application("TestApp");
 
 		Application::Style wndStype;
 		wndStype.thickFrame = true;
-		if (app->createWindow(wndStype, u8"", Box2i32(Vec2i32({ 100, 100 }), Vec2i32({ 800, 600 })), false)) {
+		if (app->createWindow(wndStype, "", Box2i32(Vec2i32({ 100, 100 }), Vec2i32({ 800, 600 })), false)) {
 			RefPtr gml = new GraphicsModuleLoader();
 
 			//if (gml->load(getDLLName("ae-win-gl"))) {
@@ -121,13 +121,13 @@ public:
 					{
 						auto texRes = graphics->createTexture2DResource();
 						if (texRes) {
-							auto img0 = extensions::PNGConverter::parse(readFile(app->getAppPath() + u8"Resources/c4.png"));
+							auto img0 = extensions::PNGConverter::parse(readFile(app->getAppPath() + "Resources/c4.png"));
 							auto mipLevels = Image::calcMipLevels(img0->size);
 							ByteArray mipsData0;
 							std::vector<void*> mipsData0Ptr;
 							img0->generateMips(img0->format, mipLevels, mipsData0, mipsData0Ptr);
 
-							auto img1 = extensions::PNGConverter::parse(readFile(app->getAppPath() + u8"Resources/red.png"));
+							auto img1 = extensions::PNGConverter::parse(readFile(app->getAppPath() + "Resources/red.png"));
 							ByteArray mipsData1;
 							std::vector<void*> mipsData1Ptr;
 							img1->generateMips(img1->format, mipLevels, mipsData1, mipsData1Ptr);

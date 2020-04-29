@@ -281,7 +281,7 @@ namespace aurora {
 			return std::acos(a);
 		}
 
-		inline static bool AE_CALL isPOT(uint32_t n) {
+		inline static bool AE_CALL isPot(uint32_t n) {
 			return n < 1 ? false : !(n & (n - 1));
 		}
 		inline static constexpr uint32_t AE_CALL potLog2(uint32_t pow) {

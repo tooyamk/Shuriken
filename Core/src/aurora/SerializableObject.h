@@ -348,9 +348,68 @@ namespace aurora {
 			return has(so);
 		}
 
-		void AE_CALL forEach(const std::function<void(const SerializableObject& key, const SerializableObject& value)>& callback) const;
-		void AE_CALL forEach(const std::function<bool(const SerializableObject& key, const SerializableObject& value)>& callback) const;
-		void AE_CALL forEach(const std::function<ForEachOperation(const SerializableObject& key, SerializableObject& value)>& callback);
+		template<typename Fn, typename = 
+			std::enable_if_t<std::is_invocable_v<Fn, const SerializableObject&, const SerializableObject&> &&
+			(std::is_same_v<std::invoke_result_t<Fn, const SerializableObject&, const SerializableObject&>, void> ||
+			std::is_same_v<std::invoke_result_t<Fn, const SerializableObject&, const SerializableObject&>, bool>), Fn>>
+		void AE_CALL forEach(const Fn& fn) const {
+			if (_type == Type::ARRAY) {
+				if (Array* arr = _getValue<Array*>(); arr) {
+					SerializableObject idx;
+					for (size_t i = 0, n = arr->value.size(); i < n; ++i) {
+						idx.set(i);
+						if constexpr (std::is_same_v<std::invoke_result_t<Fn, const SerializableObject&, const SerializableObject&>, void>) {
+							fn(idx, arr->value[i]);
+						} else {
+							if (!fn(idx, arr->value[i])) break;
+						}
+					}
+				}
+			} else if (_type == Type::MAP) {
+				if (Map* map = _getValue<Map*>(); map) {
+					for (auto& itr : map->value) {
+						if constexpr (std::is_same_v<std::invoke_result_t<Fn, const SerializableObject&, const SerializableObject&>, void>) {
+							fn(itr.first, itr.second);
+						} else {
+							if (!fn(itr.first, itr.second)) break;
+						}
+					}
+				}
+			}
+		}
+		
+		template<typename Fn, typename = 
+			std::enable_if_t<std::is_invocable_v<Fn, const SerializableObject&, const SerializableObject&> &&
+			std::is_same_v<std::invoke_result_t<Fn, const SerializableObject&, const SerializableObject&>, ForEachOperation>, Fn>>
+		void AE_CALL forEach(const Fn& fn) {
+			if (_type == Type::ARRAY) {
+				if (Array* arr = _getValue<Array*>(); arr) {
+					SerializableObject idx;
+					for (size_t i = 0, n = arr->value.size(); i < n; ++i) {
+						idx.set(i);
+						auto op = fn(idx, arr->value[i]);
+						if ((op & ForEachOperation::ERASE) == ForEachOperation::ERASE) {
+							arr->value.erase(arr->value.begin() + i);
+							--i;
+							--n;
+						}
+						if ((op & ForEachOperation::BREAK) == ForEachOperation::BREAK) break;
+					}
+				}
+			} else if (_type == Type::MAP) {
+				if (Map* map = _getValue<Map*>(); map) {
+					for (auto itr = map->value.begin(); itr != map->value.end();) {
+						auto op = fn(itr->first, itr->second);
+						if ((op & ForEachOperation::ERASE) == ForEachOperation::ERASE) {
+							itr = map->value.erase(itr);
+						} else {
+							++itr;
+						}
+						if ((op & ForEachOperation::BREAK) == ForEachOperation::BREAK) break;
+					}
+				}
+			}
+		}
 
 		template<typename T = std::nullptr_t, typename = std::enable_if_t<std::is_null_pointer_v<T> || std::is_base_of_v<IPackFilter, T>, T>>
 		inline void AE_CALL pack(ByteArray& ba, const T& filter = nullptr) const {

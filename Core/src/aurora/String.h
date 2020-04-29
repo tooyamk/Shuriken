@@ -273,7 +273,7 @@ namespace aurora {
 		template<typename T, typename = integral_t<T>>
 		inline static std::string AE_CALL toString(T value, uint8_t base = 10) {
 			char buf[21];
-#if __cpp_lib_to_chars
+#ifdef __cpp_lib_to_chars
 			auto rst = std::to_chars(buf, buf + sizeof(buf), value, base);
 			return std::move(std::string(buf, rst.ec == std::errc() ? rst.ptr - buf : 0));
 #else
@@ -330,7 +330,7 @@ namespace aurora {
 		template<typename T, typename = floating_point_t<T>>
 		inline static std::string AE_CALL toString(T value) {
 			char buf[33];
-#if __cpp_lib_to_chars
+#ifdef __cpp_lib_to_chars
 			auto rst = std::to_chars(buf, buf + sizeof(buf), value);
 			return std::move(std::string(buf, rst.ec == std::errc() ? rst.ptr - buf : 0));
 #else
@@ -349,7 +349,7 @@ namespace aurora {
 		template<typename Out, typename In, typename = string_data_t<In>, typename = integral_t<Out>>
 		inline static Out toNumber(const In& in, int32_t base = 10) {
 			Out value;
-#if __cpp_lib_to_chars
+#ifdef __cpp_lib_to_chars
 			auto begin = in.data();
 			return std::from_chars(begin, begin + in.size(), value, base).ec == std::errc() ? value : 0;
 #else
@@ -372,7 +372,7 @@ namespace aurora {
 		template<typename Out, typename In, typename = string_data_t<In>, typename = floating_point_t<Out>>
 		inline static Out toNumber(const In& in) {
 			Out value;
-#if __cpp_lib_to_chars
+#ifdef __cpp_lib_to_chars
 			auto begin = in.data();
 			return std::from_chars(begin, begin + in.size(), value).ec == std::errc() ? value : 0.;
 #else
