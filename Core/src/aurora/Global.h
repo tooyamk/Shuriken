@@ -217,16 +217,16 @@ __CLASS__& operator=(__CLASS__&&) = delete;
 
 #define AE_DEFINE_ENUM_BIT_OPERATIION(__ENUM__) \
 inline constexpr __ENUM__ AE_CALL operator&(__ENUM__ e1, __ENUM__ e2) { \
-	return (__ENUM__)((std::underlying_type<__ENUM__>::type)e1 & (std::underlying_type<__ENUM__>::type)e2); \
+	return (__ENUM__)((std::underlying_type_t<__ENUM__>)e1 & (std::underlying_type_t<__ENUM__>)e2); \
 } \
 inline constexpr __ENUM__ AE_CALL operator|(__ENUM__ e1, __ENUM__ e2) { \
-	return (__ENUM__)((std::underlying_type<__ENUM__>::type)e1 | (std::underlying_type<__ENUM__>::type)e2); \
+	return (__ENUM__)((std::underlying_type_t<__ENUM__>)e1 | (std::underlying_type_t<__ENUM__>)e2); \
 } \
 inline constexpr __ENUM__ AE_CALL operator^(__ENUM__ e1, __ENUM__ e2) { \
-	return (__ENUM__)((std::underlying_type<__ENUM__>::type)e1 ^ (std::underlying_type<__ENUM__>::type)e2); \
+	return (__ENUM__)((std::underlying_type_t<__ENUM__>)e1 ^ (std::underlying_type_t<__ENUM__>)e2); \
 } \
 inline constexpr __ENUM__ AE_CALL operator~(__ENUM__ e) { \
-	return (__ENUM__)(~(std::underlying_type<__ENUM__>::type)e); \
+	return (__ENUM__)(~(std::underlying_type_t<__ENUM__>)e); \
 } \
 inline constexpr __ENUM__& AE_CALL operator&=(__ENUM__& e1, __ENUM__ e2) { \
 	e1 = e1 & e2; \
@@ -244,18 +244,17 @@ inline constexpr __ENUM__& AE_CALL operator^=(__ENUM__& e1, __ENUM__ e2) { \
 
 #ifndef __cpp_lib_endian
 namespace std {
-	union _EndianTest {
-		struct {
-			bool isLittle;
-			uint8_t fill;
-		};
-		uint16_t value;
-	};
-	constexpr _EndianTest _endianTest = { (uint16_t)1 };
+	constexpr uint8_t endian_tester() {
+		union endian_tester {
+			uint8_t data[2];
+			uint16_t value;
+		} tester = { (uint16_t)1 };
+		return tester.data[0];
+	}
 	enum class endian {
 		little = 0,
 		big = 1,
-		native = _endianTest.isLittle ? little : big
+		native = endian_tester() == 1 ? little : big
 	};
 }
 #endif

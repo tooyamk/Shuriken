@@ -27,7 +27,11 @@ namespace aurora {
 			if (itr == _args.end()) {
 				return std::nullopt;
 			} else {
-				return itr->second.type() == typeid(T) ? std::make_optional<T>(std::any_cast<T>(itr->second)) : std::nullopt;
+				try {
+					return std::make_optional<T>(std::any_cast<T>(itr->second));
+				} catch (const std::bad_any_cast& e) {
+					return std::nullopt;
+				}
 			}
 		}
 	protected:

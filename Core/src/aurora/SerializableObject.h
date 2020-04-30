@@ -379,8 +379,8 @@ namespace aurora {
 		}
 		
 		template<typename Fn, typename = 
-			std::enable_if_t<std::is_invocable_v<Fn, const SerializableObject&, const SerializableObject&> &&
-			std::is_same_v<std::invoke_result_t<Fn, const SerializableObject&, const SerializableObject&>, ForEachOperation>, Fn>>
+			std::enable_if_t<std::is_invocable_v<Fn, const SerializableObject&, SerializableObject&> &&
+			std::is_same_v<std::invoke_result_t<Fn, const SerializableObject&, SerializableObject&>, ForEachOperation>, Fn>>
 		void AE_CALL forEach(const Fn& fn) {
 			if (_type == Type::ARRAY) {
 				if (Array* arr = _getValue<Array*>(); arr) {
