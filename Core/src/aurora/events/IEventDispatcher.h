@@ -67,7 +67,7 @@ namespace aurora::events {
 	class AE_TEMPLATE_DLL EventListener : public IEventListener<EvtType> {
 	public:
 		EventListener(EvtMethod<EvtType, Class> method, Class* target) :
-			_method(target ? _method : nullptr),
+			_method(target ? method : nullptr),
 			_target(target) {
 		}
 
