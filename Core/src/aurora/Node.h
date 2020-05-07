@@ -187,9 +187,9 @@ namespace aurora {
 
 		template<typename T, typename... Args, typename = std::enable_if_t<std::is_base_of_v<components::IComponent, T>, T>>
 		std::tuple<Node::Result, T*> AE_CALL addComponent(Args... args) {
-			if (auto& ci = T::rttiClassInfo; ci.getSingleBase()) {
+			if (auto& ci = T::rttiClassInfo; auto sb = ci.getSingleBase()) {
 				for (auto c : _components) {
-					if (ci.getSingleBase() == c->getRttiClassInfo().getSingleBase()) return std::make_tuple(Result::ALREADY_EXISTS_SINGLE, nullptr);
+					if (sb == c->getRttiClassInfo().getSingleBase()) return std::make_tuple(Result::ALREADY_EXISTS_SINGLE, nullptr);
 				}
 			}
 
@@ -208,13 +208,13 @@ namespace aurora {
 			}
 			return nullptr;
 		}
-		template<typename Com, typename Fn, typename = std::enable_if_t<std::is_base_of_v<components::IComponent, Com> && std::is_invocable_v<Fn, Com*>, Com>>
+		template<typename T, typename Fn, typename = std::enable_if_t<std::is_base_of_v<components::IComponent, T> && std::is_invocable_v<Fn, T*>, T>>
 		inline void AE_CALL getComponents(const Fn& fn) const {
 			for (auto c : _components) {
-				if constexpr (std::is_same_v<components::IComponent, Com>) {
-					fn((Com*)c);
+				if constexpr (std::is_same_v<components::IComponent, T>) {
+					fn((T*)c);
 				} else {
-					if (c->isKindOf<Com>()) fn((Com*)c);
+					if (c->isKindOf<T>()) fn((T*)c);
 				}
 			}
 		}

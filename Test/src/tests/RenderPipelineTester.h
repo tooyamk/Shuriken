@@ -17,13 +17,6 @@ auto aaa() {
 	return __FUNCSIG__;
 }
 
-struct aaaaaaaaaa {
-	template<typename T>
-	inline size_t AE_CALL operator()(const T& value) const {
-		return std::hash<T>{}(value);
-	}
-};
-
 class RenderPipelineTester : public BaseTester {
 public:
 	virtual int32_t AE_CALL run() override {

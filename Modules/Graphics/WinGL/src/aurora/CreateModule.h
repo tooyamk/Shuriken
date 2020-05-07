@@ -11,7 +11,7 @@ namespace aurora::modules::graphics {
 		}
 
 		auto app = args->get<Application*>("app");
-		if (!app && !app.value()) {
+		if (!app && !*app) {
 			println("GlewGraphicsModule create error : no app");
 			return nullptr;
 		}
@@ -20,7 +20,7 @@ namespace aurora::modules::graphics {
 		auto adapter = args->get<const GraphicsAdapter*>("adapter");
 		auto sc = args->get<SampleCount>("sampleCount");
 		auto g = new win_gl::Graphics();
-		if (!g->createDevice(loader, app.value(), trans.has_value() ? trans.value() : nullptr, adapter.has_value() ? adapter.value() : nullptr, sc ? *sc : 1)) {
+		if (!g->createDevice(loader, *app, trans ? *trans : nullptr, adapter ? *adapter : nullptr, sc ? *sc : 1)) {
 			g->unref();
 			g = nullptr;
 		}

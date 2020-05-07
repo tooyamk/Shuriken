@@ -49,7 +49,7 @@ namespace aurora::render {
 
 				std::stable_sort(_renderQueue.begin(), _renderQueue.end(), [](const RenderData* lhs, const RenderData* rhs) {
 					if (lhs->priority.level1 == rhs->priority.level1) {
-						using Lv2_t = std::underlying_type<RenderPriority::Level2>::type;
+						using Lv2_t = std::underlying_type_t<RenderPriority::Level2>;
 						if (auto val = (Lv2_t)lhs->priority.level2 - (Lv2_t)rhs->priority.level2; val == 0) {
 							switch (lhs->priority.level2) {
 							case RenderPriority::Level2::FAR_TO_NEAR:
