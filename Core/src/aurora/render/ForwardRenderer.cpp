@@ -53,7 +53,7 @@ namespace aurora::render {
 
 		auto renderable = data.renderable;
 		for (auto& pass : renderable->renderPasses) {
-			if (pass && pass->material && pass->tags && pass->tags->hasTag(_baseTag)) {
+			if (pass && pass->material && pass->tags && pass->tags->has(_baseTag)) {
 				data.priority = pass->priority;
 				data.state = pass->state;
 				data.material = pass->material;

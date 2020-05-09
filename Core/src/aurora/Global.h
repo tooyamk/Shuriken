@@ -242,8 +242,8 @@ inline constexpr __ENUM__& AE_CALL operator^=(__ENUM__& e1, __ENUM__ e2) { \
 }
 
 
-#ifndef __cpp_lib_endian
 namespace std {
+#ifndef __cpp_lib_endian
 	constexpr uint8_t endian_tester() {
 		union endian_tester {
 			uint8_t data[2];
@@ -256,8 +256,16 @@ namespace std {
 		big = 1,
 		native = endian_tester() == 1 ? little : big
 	};
-}
 #endif
+
+#ifndef __cpp_lib_remove_cvref
+	template<typename T>
+	using remove_cvref_t = std::remove_reference_t<std::remove_cv_t<T>>;
+
+	template<typename T>
+	struct remove_cvref { using type = remove_cvref_t<T>; };
+#endif
+}
 
 
 namespace aurora {
@@ -291,7 +299,7 @@ namespace aurora {
 	template<typename F, typename T>
 	class AE_TEMPLATE_DLL Invoker {
 	public:
-		Invoker(F fn, T* target) :
+		Invoker(F&& fn, T* target) :
 			_fn(fn),
 			_target(target) {
 		}
@@ -301,7 +309,7 @@ namespace aurora {
 		}
 
 		template<typename... Args>
-		inline decltype(auto) operator()(Args... args) const {
+		inline decltype(auto) operator()(Args&&... args) const {
 			return (_target->*_fn)(std::forward<Args>(args)...);
 		}
 
@@ -315,7 +323,7 @@ namespace aurora {
 	template<typename F>
 	class AE_TEMPLATE_DLL Invoker<F, nullptr_t> {
 	public:
-		Invoker(F fn) :
+		Invoker(F&& fn) :
 			_fn(fn) {
 		}
 
@@ -324,7 +332,7 @@ namespace aurora {
 		}
 
 		template<typename... Args>
-		inline decltype(auto) operator()(Args... args) const {
+		inline decltype(auto) operator()(Args&&... args) const {
 			return _fn(std::forward<Args>(args)...);
 		}
 
@@ -692,7 +700,7 @@ namespace aurora {
 
 	public:
 		template<bool Lock = true, bool ToConsole = false, typename... Args>
-		static void AE_CALL print(Args... args) {
+		static void AE_CALL print(Args&&... args) {
 			const uint32_t MAX_LEN = 256;
 			wchar_t wbuf[MAX_LEN];
 			Buf buf;
@@ -726,12 +734,14 @@ namespace aurora {
 		}
 
 		template<typename T>
-		static void AE_CALL _print(Buf& out, const T& value) {
-			if constexpr (std::is_null_pointer_v<T>) {
+		static void AE_CALL _print(Buf& out, T&& value) {
+			using Type = std::remove_cvref_t<T>;
+
+			if constexpr (std::is_null_pointer_v<Type>) {
 				out.write(L"nullptr");
-			} else if constexpr (std::is_convertible_v<T, char const*> || std::is_convertible_v<T, wchar_t const*>) {
+			} else if constexpr (std::is_convertible_v<Type, char const*> || std::is_convertible_v<Type, wchar_t const*>) {
 				out.write(value);
-			} else if constexpr (is_string_data_v<T>) {
+			} else if constexpr (is_string_data_v<Type>) {
 				const auto buf = (uint8_t*)value.data();
 				size_t i = 0, len = value.size();
 				bool isUTF8 = true;
@@ -766,13 +776,13 @@ namespace aurora {
 				} else {
 					out.write(L"<nonsupported encode>");
 				}
-			} else if constexpr (is_wstring_data_v<T>) {
+			} else if constexpr (is_wstring_data_v<Type>) {
 				out.write(value.data(), value.size());
-			} else if constexpr (std::is_same_v<T, bool>) {
+			} else if constexpr (std::is_same_v<Type, bool>) {
 				out.write(value ? L"true" : L"false");
-			} else if constexpr (std::is_arithmetic_v<T>) {
+			} else if constexpr (std::is_arithmetic_v<Type>) {
 #ifdef __cpp_lib_to_chars
-				if constexpr (std::is_integral_v<T>) {
+				if constexpr (std::is_integral_v<Type>) {
 					char buf[21];
 					auto rst = std::to_chars(buf, buf + sizeof(buf), value);
 					if (rst.ec == std::errc()) out.write(buf, rst.ptr - buf);
@@ -784,13 +794,13 @@ namespace aurora {
 #else
 				out.write(std::to_wstring(value));
 #endif
-			} else if constexpr (std::is_enum_v<T>) {
+			} else if constexpr (std::is_enum_v<Type>) {
 				out.write(L'[');
-				_print(out, (std::underlying_type_t<T>)value);
+				_print(out, (std::underlying_type_t<Type>)value);
 				out.write(L' ');
 				out.write(typeid(T).name());
 				out.write(L']');
-			} else if constexpr (std::is_pointer_v<T>) {
+			} else if constexpr (std::is_pointer_v<Type>) {
 				static constexpr uint32_t COUNT = sizeof(uintptr_t) << 1;
 				static constexpr wchar_t MAP[] = { L'0', L'1', L'2', L'3', L'4', L'5', L'6', L'7', L'8', L'9', L'A', L'B', L'C', L'D', L'E', L'F' };
 
@@ -818,12 +828,12 @@ namespace aurora {
 	};
 
 	template<bool Lock = true, bool ToConsole = false, typename... Args>
-	inline void AE_CALL print(Args... args) {
+	inline void AE_CALL print(Args&&... args) {
 		Console::print<Lock, ToConsole>(args...);
 	}
 
 	template<bool Lock = true, bool ToConsole = false, typename... Args>
-	inline void AE_CALL println(Args... args) {
+	inline void AE_CALL println(Args&&... args) {
 		Console::print<Lock, ToConsole>(args..., L"\n");
 	}
 }

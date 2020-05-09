@@ -9,7 +9,7 @@ namespace aurora {
 	class AE_DLL Args {
 	public:
 		template<typename T>
-		Args& add(const std::string& name, const T& val) {
+		Args& add(const std::string& name, T&& val) {
 			if constexpr (std::is_convertible_v<T, char const*> || std::is_same_v<T, std::string_view>) {
 				add(name, std::string(val));
 			} else if constexpr (std::is_convertible_v<T, wchar_t const*> || std::is_same_v<T, std::wstring_view>) {
@@ -29,7 +29,7 @@ namespace aurora {
 			} else {
 				try {
 					return std::make_optional<T>(std::any_cast<T>(itr->second));
-				} catch (const std::bad_any_cast& e) {
+				} catch (const std::bad_any_cast&) {
 					return std::nullopt;
 				}
 			}

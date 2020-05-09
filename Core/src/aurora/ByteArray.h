@@ -53,8 +53,8 @@ namespace aurora {
 		ByteArray& AE_CALL operator=(const ByteArray&) = delete;
 		ByteArray(ByteArray&& bytes) noexcept;
 		ByteArray(size_t capacity, size_t length = 0);
-		ByteArray(uint8_t* bytes, size_t size, Usage usage = Usage::SHARED);
-		ByteArray(uint8_t* bytes, size_t capacity, size_t length, Usage usage = Usage::SHARED);
+		ByteArray(void* bytes, size_t size, Usage usage = Usage::SHARED);
+		ByteArray(void* bytes, size_t capacity, size_t length, Usage usage = Usage::SHARED);
 		ByteArray& AE_CALL operator=(ByteArray&& value) noexcept;
 		~ByteArray();
 

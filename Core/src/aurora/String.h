@@ -165,7 +165,7 @@ namespace aurora {
 		}
 
 		template<typename Input, typename Separator, typename Fn, typename = string_data_t<Input>, typename = std::enable_if_t<(std::is_base_of_v<std::regex, Separator> || is_string_data_v<Separator> || std::is_convertible_v<Separator, char const*>) && std::is_invocable_v<Fn, const std::string&>, Separator>>
-		static void AE_CALL split(const Input& input, const Separator& separator, const Fn& fn) {
+		static void AE_CALL split(const Input& input, const Separator& separator, Fn&& fn) {
 			if constexpr (std::is_base_of_v<std::regex, Separator>) {
 				std::regex_token_iterator itr(input.begin(), input.end(), separator, -1);
 				std::regex_token_iterator<Input::const_iterator> end;
@@ -208,7 +208,7 @@ namespace aurora {
 		}
 
 		template<typename Input, typename Fn, typename = string_data_t<Input>, typename = std::enable_if_t<std::is_invocable_v<Fn, const std::string&>, Fn>>
-		static void AE_CALL split(const Input& input, uint8_t flags, const Fn& fn) {
+		static void AE_CALL split(const Input& input, uint8_t flags, Fn&& fn) {
 			size_t begin = 0, i = 0, size = input.size();
 			while (i < size) {
 				if (CHARS[input[i]] & flags) {

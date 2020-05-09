@@ -32,21 +32,25 @@ namespace aurora {
 		_data(capacity > 0 ? new uint8_t[capacity] : nullptr) {
 	}
 
-	ByteArray::ByteArray(uint8_t* bytes, size_t size, Usage usage) : ByteArray(bytes, size, size, usage) {
+	ByteArray::ByteArray(void* bytes, size_t size, Usage usage) : ByteArray(bytes, size, size, usage) {
 	}
 
-	ByteArray::ByteArray(uint8_t* bytes, size_t capacity, size_t length, Usage usage) :
+	ByteArray::ByteArray(void* bytes, size_t capacity, size_t length, Usage usage) :
 		_endian(std::endian::little),
 		_needReverse(std::endian::native != std::endian::little),
 		_capacity(capacity),
 		_length(length),
 		_position(0) {
 		if (usage == Usage::SHARED) {
-			this->_data = bytes;
+			this->_data = (uint8_t*)bytes;
 			_usage = Usage::SHARED;
 		} else if (usage == Usage::COPY) {
-			_data = new uint8_t[capacity];
-			memcpy(_data, bytes, length);
+			if (capacity) {
+				_data = new uint8_t[capacity];
+				memcpy(_data, bytes, length);
+			} else {
+				_data = nullptr;
+			}
 			_usage = Usage::EXCLUSIVE;
 		} else {
 			this->_data = (uint8_t*)bytes;

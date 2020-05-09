@@ -352,7 +352,7 @@ namespace aurora {
 			std::enable_if_t<std::is_invocable_v<Fn, const SerializableObject&, const SerializableObject&> &&
 			(std::is_same_v<std::invoke_result_t<Fn, const SerializableObject&, const SerializableObject&>, void> ||
 			std::is_same_v<std::invoke_result_t<Fn, const SerializableObject&, const SerializableObject&>, bool>), Fn>>
-		void AE_CALL forEach(const Fn& fn) const {
+		void AE_CALL forEach(Fn&& fn) const {
 			if (_type == Type::ARRAY) {
 				if (Array* arr = _getValue<Array*>(); arr) {
 					SerializableObject idx;
@@ -381,7 +381,7 @@ namespace aurora {
 		template<typename Fn, typename = 
 			std::enable_if_t<std::is_invocable_v<Fn, const SerializableObject&, SerializableObject&> &&
 			std::is_same_v<std::invoke_result_t<Fn, const SerializableObject&, SerializableObject&>, ForEachOperation>, Fn>>
-		void AE_CALL forEach(const Fn& fn) {
+		void AE_CALL forEach(Fn&& fn) {
 			if (_type == Type::ARRAY) {
 				if (Array* arr = _getValue<Array*>(); arr) {
 					SerializableObject idx;

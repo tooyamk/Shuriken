@@ -10,19 +10,16 @@ enum class EEE : uint8_t {
 	E1
 };
 
-template<typename T, T V> struct FFF {};
-
-template<typename T, T V>
-auto aaa() {
-	return __FUNCSIG__;
-}
-
 class RenderPipelineTester : public BaseTester {
 public:
 	virtual int32_t AE_CALL run() override {
+		int vala = 1;
+		auto pp1 = &vala;
+		auto ppp = std::addressof(vala);
+
 		auto monitors = Monitor::getMonitors();
 		auto vms = monitors[0].getVideoModes();
-
+		
 		RefPtr app = new Application("TestApp");
 
 		Application::Style wndStype;
@@ -110,10 +107,10 @@ public:
 						RenderTag forwardAddTag("forward_add");
 
 						RefPtr tag1 = new RenderTagCollection();
-						tag1->addTag(forwardBaseTag);
+						tag1->add(forwardBaseTag);
 
 						RefPtr tag2 = new RenderTagCollection();
-						tag2->addTag(forwardAddTag);
+						tag2->add(forwardAddTag);
 
 						auto parsed = extensions::FBXConverter::parse(readFile(app->getAppPath() + "Resources/teapot.fbx"));
 						for (auto& mr : parsed.meshes) {

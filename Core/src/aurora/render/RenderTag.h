@@ -62,15 +62,15 @@ namespace aurora::render {
 
 	class RenderTagCollection : public Ref {
 	public:
-		inline void AE_CALL addTag(const RenderTag& tag) {
+		inline void AE_CALL add(const RenderTag& tag) {
 			_tags.emplace(tag);
 		}
 
-		inline void AE_CALL removeTag(const RenderTag& tag) {
+		inline void AE_CALL remove(const RenderTag& tag) {
 			_tags.erase(tag);
 		}
 
-		inline bool AE_CALL hasTag(const RenderTag& tag) const {
+		inline bool AE_CALL has(const RenderTag& tag) const {
 			return _tags.find(tag) != _tags.end();
 		}
 
