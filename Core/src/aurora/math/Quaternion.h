@@ -141,13 +141,10 @@ namespace aurora {
 		static void AE_CALL createFromAxis(const float32_t(&axis)[3], float32_t radian, Quaternion& dst);
 		static void AE_CALL createLookAt(const float32_t(&forward)[3], const float32_t(&upward)[3], Quaternion& dst);
 		inline static void AE_CALL slerp(const Quaternion& from, const Quaternion& to, float32_t t, Quaternion& dst) {
-			Math::slerpQuat(&from.x, &to.x, t, &dst.x);
-		}
-		inline static float32_t AE_CALL dot(const Quaternion& q1, const Quaternion& q2) {
-			return q1.x * q2.x + q1.y * q2.y + q1.z * q2.z + q1.w * q2.w;
+			Math::slerp(from, to, t, dst);
 		}
 		inline static float32_t AE_CALL angleBetween(const Quaternion& q1, const Quaternion& q2) {
-			return std::acos(q1.x * q2.x + q1.y * q2.y + q1.z * q2.z + q1.w * q2.w);
+			return std::acos(Math::dot(q1.data, q2.data));
 		}
 
 		union {

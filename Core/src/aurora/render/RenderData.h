@@ -24,11 +24,52 @@ namespace aurora::render {
 			reset();
 		}
 
+		class MeshGetter {
+		public:
+			using Fn = const Mesh* (*)(void*);
+
+			MeshGetter(Fn fn = nullptr, void* target = nullptr) :
+				_fn(fn),
+				_target(target) {
+			}
+
+			inline AE_CALL operator bool() const {
+				return _fn;
+			}
+
+			inline MeshGetter& AE_CALL operator=(const MeshGetter& value) {
+				set(value._fn, value._target);
+				return *this;
+			}
+
+			inline MeshGetter& AE_CALL operator=(const nullptr_t) {
+				set(nullptr, nullptr);
+				return *this;
+			}
+
+			inline const Mesh* AE_CALL operator()() {
+				return _fn(_target);
+			}
+
+			inline void AE_CALL set(Fn fn, void* target) {
+				this->_fn = fn;
+				this->_target = target;
+			}
+
+			inline void AE_CALL reset() {
+				set(nullptr, nullptr);
+			}
+
+		private:
+			Fn _fn;
+			void* _target;
+		};
+
 		const components::renderables::IRenderable* renderable;
 		RenderPriority priority;
 		RenderState* state;
 		Material* material;
-		const Mesh* mesh;
+		MeshGetter meshGetter;
 		IRenderer* renderer;
 		std::vector<RefPtr<RenderPass>>* subPasses;
 
@@ -43,7 +84,7 @@ namespace aurora::render {
 			state = data.state;
 			priority = data.priority;
 			material = data.material;
-			mesh = data.mesh;
+			meshGetter = data.meshGetter;
 			renderer = data.renderer;
 			subPasses = data.subPasses;
 		}
@@ -53,7 +94,7 @@ namespace aurora::render {
 			state = nullptr;
 			priority.reset();
 			material = nullptr;
-			mesh = nullptr;
+			meshGetter = nullptr;
 			renderer = nullptr;
 			subPasses = nullptr;
 		}

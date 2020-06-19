@@ -16,13 +16,11 @@ namespace aurora {
 		_wr(),
 		_wm(),
 		_iwm(),
-		_dirty(0),
-		_components() {
+		_dirty(0) {
 	}
 
 	Node::~Node() {
 		removeAllChildren();
-		removeAllComponents();
 	}
 
 	Node::Result Node::addChild(Node* child) {
@@ -289,43 +287,6 @@ namespace aurora {
 		}
 	}
 
-	Node::Result Node::addComponent(components::IComponent* component) {
-		if (!component) return Result::NOT_NULL;
-		if (component->getNode()) return Result::ALREADY_HAS_NODE;
-
-		if (auto& ci = component->getRttiClassInfo(); ci.getSingleBase()) {
-			for (auto c : _components) {
-				if (ci.getSingleBase() == c->getRttiClassInfo().getSingleBase()) return Result::ALREADY_EXISTS_SINGLE;
-			}
-		}
-
-		_addComponent(component);
-		return Result::SUCCESS;
-	}
-
-	Node::Result Node::removeComponent(components::IComponent* component) {
-		if (!component) return Result::NOT_NULL;
-		if (component->getNode() != this) return Result::NODE_NOT_SELF;
-
-		component->__setNode(nullptr);
-		_removeComponent(component);
-		return Result::SUCCESS;
-	}
-
-	size_t Node::removeAllComponents() {
-		if (auto n = _components.size(); n) {
-			for (auto c : _components) {
-				c->__setNode(nullptr);
-				c->unref();
-			}
-			_components.clear();
-			
-			return n;
-		}
-
-		return 0;
-	}
-
 	void Node::getLocalRotationFromWorld(const Node& node, const Quaternion& worldRot, Quaternion& dst) {
 		if (node._parent) {
 			auto& q = node._parent->getWorldRotation();
@@ -427,10 +388,5 @@ namespace aurora {
 			node->_checkNoticeUpdate(dirty);
 			node = node->_next;
 		}
-	}
-
-	void Node::_removeComponent(components::IComponent* component) {
-		if (auto itr = std::find(_components.begin(), _components.end(), component); itr != _components.end()) _components.erase(itr);
-		component->unref();
 	}
 }

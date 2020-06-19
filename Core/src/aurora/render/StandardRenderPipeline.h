@@ -4,6 +4,7 @@
 #include "aurora/ShaderDefine.h"
 #include "aurora/ShaderParameter.h"
 #include "aurora/math/Matrix.h"
+#include "aurora/render/IRenderCollector.h"
 #include "aurora/render/IRenderDataCollector.h"
 #include "aurora/render/RenderData.h"
 #include "aurora/render/RenderEnvironment.h"
@@ -25,9 +26,22 @@ namespace aurora::render {
 			return *_shaderParameters;
 		}
 
-		virtual void AE_CALL render(modules::graphics::IGraphicsModule* graphics, components::Camera* camera, Node* node, const std::vector<components::lights::ILight*>* lights) override;
+		virtual void AE_CALL render(modules::graphics::IGraphicsModule* graphics, const std::function<void(IRenderCollector&)>& fn) override;
 
 	protected:
+		class RenderCollector : public IRenderCollector {
+		public:
+			RenderCollector(StandardRenderPipeline& pipeline);
+
+			virtual void AE_CALL addCamera(components::Camera* camera) override;
+			virtual void AE_CALL addRenderable(components::renderables::IRenderable* renderable) override;
+			virtual void AE_CALL addLight(components::lights::ILight* light) override;
+
+		private:
+			StandardRenderPipeline& _pipeline;
+		};
+
+
 		class RenderDataCollector : public IRenderDataCollector {
 		public:
 			RenderDataCollector(StandardRenderPipeline& pipeline);
@@ -44,9 +58,15 @@ namespace aurora::render {
 		};
 
 
-		void AE_CALL _collectNode(Node* node, RenderDataCollector& collector);
+		void AE_CALL _addCamera(components::Camera* camera);
+		void AE_CALL _addRenderable(components::renderables::IRenderable* renderable);
+		void AE_CALL _addLight(components::lights::ILight* light);
+
 		void AE_CALL _appendRenderData(RenderDataCollector& collector);
 		void AE_CALL _render();
+
+		std::vector<components::Camera*> _cameras;
+		std::vector<components::renderables::IRenderable*> _renderables;
 
 		std::vector<RenderData*> _renderDataPool;
 		size_t _renderDataPoolVernier;

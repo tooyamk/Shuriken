@@ -9,7 +9,7 @@ namespace aurora::modules::graphics {
 }
 
 namespace aurora::components {
-	class AE_DLL Camera : public AE_COMPONENT_INHERIT(IComponent, false)
+	class AE_DLL Camera : public AE_COMPONENT_INHERIT(IComponent)
 	public:
 		Camera();
 

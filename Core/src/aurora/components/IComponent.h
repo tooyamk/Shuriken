@@ -10,29 +10,12 @@ namespace aurora {
 namespace aurora::components {
 	class AE_DLL ClassInfo : public rtti::ClassInfo {
 	public:
-		ClassInfo(const ClassInfo* const base, bool single) : rtti::ClassInfo(base) {
-			if (base) {
-				if (base->_singleBase) {
-					_singleBase = base->_singleBase;
-				} else {
-					_singleBase = single ? this : nullptr;
-				}
-			} else {
-				_singleBase = single ? this : nullptr;
-			}
-		}
-
-		inline const ClassInfo* AE_CALL getSingleBase() const {
-			return _singleBase;
-		}
-
-	private:
-		const ClassInfo* _singleBase;
+		ClassInfo(const ClassInfo* const base) : rtti::ClassInfo(base) {}
 	};
 
 
 	class AE_DLL IComponent : public Ref {
-	AE_RTTI_DECLARE_BASE(aurora::components::ClassInfo, false);
+	AE_RTTI_DECLARE_BASE(aurora::components::ClassInfo);
 
 	public:
 		virtual ~IComponent();
@@ -42,21 +25,27 @@ namespace aurora::components {
 		inline bool AE_CALL isEnalbed() const {
 			return _enabled;
 		}
-		void AE_CALL setEnabled(bool b);
+		inline void AE_CALL setEnabled(bool b) {
+			if (_enabled != b) {
+				_enabled = b;
+				_enabledChanged();
+			}
+		}
 
 		inline Node* AE_CALL getNode() const {
 			return _node;
+		}
+		inline void AE_CALL attachNode(Node* node) {
+			auto old = _node;
+			_node = node;
+			_nodeChanged(old);
 		}
 
 	protected:
 		bool _enabled;
 		Node* _node;
 
-		friend Node;
-
 		IComponent();
-
-		void AE_CALL __setNode(Node* node);
 
 		virtual void AE_CALL _nodeChanged(Node* old) {};
 		virtual void AE_CALL _enabledChanged() {};
@@ -64,5 +53,5 @@ namespace aurora::components {
 }
 
 
-#define	AE_COMPONENT_INHERIT(__BASE__, __SINGLE__) \
-AE_RTTI_INHERIT(aurora::components::ClassInfo, __BASE__, __SINGLE__)
+#define	AE_COMPONENT_INHERIT(__BASE__) \
+AE_RTTI_INHERIT(aurora::components::ClassInfo, __BASE__)

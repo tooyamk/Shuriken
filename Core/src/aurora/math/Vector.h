@@ -60,7 +60,7 @@ namespace aurora {
 			return data;
 		}
 
-		inline AE_CALL operator const Data& () const {
+		inline AE_CALL operator const Data&() const {
 			return data;
 		}
 

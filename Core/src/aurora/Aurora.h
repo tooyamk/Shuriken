@@ -42,4 +42,5 @@
 #include "aurora/components/lights/SpotLight.h"
 
 #include "aurora/render/ForwardRenderer.h"
+#include "aurora/render/SpriteRenderer.h"
 #include "aurora/render/StandardRenderPipeline.h"

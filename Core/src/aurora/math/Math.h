@@ -71,7 +71,7 @@ namespace aurora {
 
 		template<uint32_t N, typename In1, typename In2, typename Out = decltype((*(In1*)0) + (*(In2*)0))>
 		inline static Out AE_CALL dot(const In1(&v1)[N], const In2(&v2)[N]) {
-			Out rst(0);
+			Out rst = NUMBER_0<Out>;
 			for (uint32_t i = 0; i < N; ++i) rst += v1[i] * v2[i];
 			return rst;
 		}
@@ -94,7 +94,6 @@ namespace aurora {
 			for (uint32_t i = 0; i < N; ++i) dst[i] = tmp[i];
 		}
 
-		static void AE_CALL slerpQuat(const float32_t* from, const float32_t* to, float32_t t, float32_t* dst);
 		inline static void AE_CALL appendQuat(const float32_t(&lhs)[4], const float32_t(&rhs)[4], float32_t(&dst)[4]) {
 			auto w = lhs[3] * rhs[3] - lhs[0] * rhs[0] - lhs[1] * rhs[1] - lhs[2] * rhs[2];
 			auto x = lhs[0] * rhs[3] + lhs[3] * rhs[0] + lhs[2] * rhs[1] - lhs[1] * rhs[2];
@@ -221,10 +220,10 @@ namespace aurora {
 			return sq;
 		}
 
-		template<uint32_t N, typename In, typename Out = float32_t>
+		template<uint32_t N, typename In, typename Out, typename = floating_point_t<Out>>
 		static void AE_CALL normalize(const In(&v)[N], Out(&dst)[N]) {
 			if constexpr (sizeof(In) >= sizeof(Out)) {
-				if (auto n = dot<N, In, In, float32_t>(v, v); !isEqual(n, 1, TOLERANCE<decltype(n)>)) {
+				if (auto n = dot<N, In, In, Out>(v, v); !isEqual(n, NUMBER_1<decltype(n)>, TOLERANCE<decltype(n)>)) {
 					n = std::sqrt(n);
 					if (n > TOLERANCE<decltype(n)>) {
 						n = NUMBER_1<decltype(n)> / n;
@@ -250,7 +249,7 @@ namespace aurora {
 				}
 			} else {
 				Out tmp[N];
-				if (auto n = dot<N, In, In, float32_t>(v, v); !isEqual(n, 1, TOLERANCE<decltype(n)>)) {
+				if (auto n = dot<N, In, In, Out>(v, v); !isEqual(n, NUMBER_1<decltype(n)>, TOLERANCE<decltype(n)>)) {
 					n = std::sqrt(n);
 					if (n > TOLERANCE<decltype(n)>) {
 						n = NUMBER_1<decltype(n)> / n;
@@ -266,19 +265,49 @@ namespace aurora {
 			}
 		}
 
-		template<uint32_t N, typename In1, typename In2, typename Out = float32_t>
+		template<uint32_t N, typename T, typename = floating_point_t<T>>
+		static void AE_CALL normalize(T(&val)[N]) {
+			if (auto n = dot(val, val); !isEqual(n, NUMBER_1<decltype(n)>, TOLERANCE<decltype(n)>)) {
+				n = std::sqrt(n);
+				if (n > TOLERANCE<decltype(n)>) {
+					n = NUMBER_1<decltype(n)> / n;
+
+					for (uint32_t i = 0; i < N; ++i) val[i] *= n;
+				}
+			}
+		}
+
+		template<uint32_t N, typename In1, typename In2, typename Out, typename = floating_point_t<Out>>
 		static Out AE_CALL angleBetween(const In1(&v1)[N], const In2(&v2)[N]) {
-			Out n1[N];
-			Out n2[N];
+			Out n1[N], n2[N];
 			normalize(v1, n1);
 			normalize(v2, n2);
-			Out a = dot<N, Out, Out, Out>(n1, n2);
-			if (a > NUMBER_1<Out>) {
-				a = NUMBER_1<Out>;
-			} else if (a < -NUMBER_1<Out>) {
-				a = -NUMBER_1<Out>;
+			return std::acos(std::clamp(dot(n1, n2), -NUMBER_1<Out>, NUMBER_1<Out>));
+		}
+
+		static void AE_CALL slerp(const float32_t(&from)[4], const float32_t(&to)[4], float32_t t, float32_t(&dst)[4]);
+
+		template<typename In1, typename In2, typename In3, typename Out, typename = floating_point_t<Out>>
+		static void AE_CALL slerp(const In1(&v1)[3], const In2(&v2)[3], const In3& t, Out(&out)[3]) {
+			auto a = std::sqrt(dot<3, In1, In1, Out>(v1, v1));
+			auto b = std::sqrt(dot<3, In2, In2, Out>(v2, v2));
+
+			Out nrmA[3], nrmB[3];
+			for (uint32_t i = 0; i < 3; ++i) {
+				nrmA[i] = v1[i] / a;
+				nrmB[i] = v2[i] / b;
 			}
-			return std::acos(a);
+
+			auto d = std::clamp(dot(nrmA, nrmB), -NUMBER_1<Out>, NUMBER_1<Out>);
+			auto theta = std::acos(d) * t;
+			Out tmp[3];
+			for (uint32_t i = 0; i < 3; ++i) tmp[i] = nrmB[i] - nrmA[i] * d;
+			normalize(tmp);
+
+			auto t1 = a + (b - a) * t;
+			auto s = std::sin(theta);
+			auto c = std::cos(theta);
+			for (uint32_t i = 0; i < 3; ++i) out[i] = nrmA[i] * c + tmp[i] * s;
 		}
 
 		inline static bool AE_CALL isPot(uint32_t n) {

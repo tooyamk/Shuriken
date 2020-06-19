@@ -17,6 +17,23 @@ namespace aurora::render {
 	}
 
 
+	StandardRenderPipeline::RenderCollector::RenderCollector(StandardRenderPipeline& pipeline) :
+		_pipeline(pipeline) {
+	}
+
+	void StandardRenderPipeline::RenderCollector::addCamera(components::Camera* camera) {
+		_pipeline._addCamera(camera);
+	}
+
+	void StandardRenderPipeline::RenderCollector::addRenderable(components::renderables::IRenderable* renderable) {
+		_pipeline._addRenderable(renderable);
+	}
+
+	void StandardRenderPipeline::RenderCollector::addLight(components::lights::ILight* light) {
+		_pipeline._addLight(light);
+	}
+
+
 	StandardRenderPipeline::StandardRenderPipeline() :
 		_renderDataPoolVernier(0),
 		_shaderParameters(new ShaderParameterCollection()),
@@ -34,18 +51,28 @@ namespace aurora::render {
 		_shaderParameters->set(ShaderPredefine::SPECULAR_COLOR, new ShaderParameter())->set(Vec3f32::ONE);
 	}
 
-	void StandardRenderPipeline::render(modules::graphics::IGraphicsModule* graphics, components::Camera* camera, Node* node, const std::vector<components::lights::ILight*>* lights) {
-		if (graphics && camera && node && camera->getNode() && camera->getNode()->getRoot() == node->getRoot()) {
-			RenderDataCollector collector(*this);
-			collector.matrix.w2v = camera->getNode()->getInverseWorldMatrix();
-			collector.matrix.w2v.append(camera->getProjectionMatrix(), collector.matrix.w2p);
+	void StandardRenderPipeline::render(modules::graphics::IGraphicsModule* graphics, const std::function<void(IRenderCollector&)>& fn) {
+		if (!graphics || !fn) return;
+		fn(RenderCollector(*this));
 
-			_collectNode(node, collector);
+		for (auto& cam : _cameras) {
+			auto camLayer = cam->layer;
+
+			RenderDataCollector collector(*this);
+			collector.matrix.w2v = cam->getNode()->getInverseWorldMatrix();
+			collector.matrix.w2v.append(cam->getProjectionMatrix(), collector.matrix.w2p);
+
+			for (auto& r : _renderables) {
+				if ((camLayer & r->layer) == 0) continue;
+
+				collector.data.renderable = r;
+				r->getRenderer()->collectRenderData(collector);
+			}
 
 			if (!_renderQueue.empty()) {
 				_builtinShaderParameters.m34_w2v->set(collector.matrix.w2v);
 				_builtinShaderParameters.m44_w2p->set(collector.matrix.w2p);
-				_builtinShaderParameters.v3_camPos->set(camera->getNode()->getWorldPosition());
+				_builtinShaderParameters.v3_camPos->set(cam->getNode()->getWorldPosition());
 
 				std::stable_sort(_renderQueue.begin(), _renderQueue.end(), [](const RenderData* lhs, const RenderData* rhs) {
 					if (lhs->priority.level1 == rhs->priority.level1) {
@@ -66,35 +93,32 @@ namespace aurora::render {
 						return lhs->priority.level1 < rhs->priority.level1;
 					}
 				});
-
-				graphics->beginRender();
-				graphics->clear(camera->clearFlag, camera->clearColor, camera->clearDepthValue, camera->clearStencilValue);
-
-				if (lights) {
-					auto root = node->getRoot();
-					for (auto l : *lights) {
-						if (l && l->getNode() && l->getNode()->getRoot() == root) _renderEnv.lights.emplace_back(l);
-					}
-				}
-
-				_render();
-
-				_renderEnv.reset();
-
-				graphics->endRender();
 			}
+
+			graphics->beginRender();
+			graphics->clear(cam->clearFlag, cam->clearColor, cam->clearDepthValue, cam->clearStencilValue);
+
+			_render();
+
+			_renderEnv.reset();
+
+			graphics->endRender();
 		}
+
+		_cameras.clear();
+		_renderables.clear();
 	}
 
-	void StandardRenderPipeline::_collectNode(Node* node, RenderDataCollector& collector) {
-		node->getComponents<components::renderables::IRenderable>([&collector](components::renderables::IRenderable* r) {
-			if (r->getRenderer()) {
-				collector.data.renderable = r;
-				r->getRenderer()->collectRenderData(collector);
-			}
-		});
+	void StandardRenderPipeline::_addCamera(components::Camera* camera) {
+		if (camera && camera->isEnalbed() && camera->layer && camera->getNode()) _cameras.emplace_back(camera);
+	}
 
-		for (auto& child : *node) _collectNode(child, collector);
+	void StandardRenderPipeline::_addRenderable(components::renderables::IRenderable* renderable) {
+		if (renderable && renderable->layer && renderable->getRenderer() && renderable->isEnalbed() && renderable->getNode()) _renderables.emplace_back(renderable);
+	}
+
+	void StandardRenderPipeline::_addLight(components::lights::ILight* light) {
+		if (light && light->layer && light->isEnalbed() && light->getNode()) _renderEnv.lights.emplace_back(light);
 	}
 
 	void StandardRenderPipeline::_appendRenderData(RenderDataCollector& collector) {

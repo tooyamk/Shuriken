@@ -3,7 +3,7 @@
 #include "aurora/components/lights/ILight.h"
 
 namespace aurora::components::lights {
-	class AE_DLL SpotLight : public AE_COMPONENT_INHERIT(ILight, false)
+	class AE_DLL SpotLight : public AE_COMPONENT_INHERIT(ILight)
 	public:
 		SpotLight();
 

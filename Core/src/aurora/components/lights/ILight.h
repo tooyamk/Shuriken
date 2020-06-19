@@ -4,7 +4,7 @@
 #include "aurora/math/Vector.h"
 
 namespace aurora::components::lights {
-	class AE_DLL ILight : public AE_COMPONENT_INHERIT(IComponent, false)
+	class AE_DLL ILight : public AE_COMPONENT_INHERIT(IComponent)
 	public:
 		ILight();
 

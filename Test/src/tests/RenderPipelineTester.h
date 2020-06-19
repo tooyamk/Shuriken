@@ -5,6 +5,12 @@
 #include <set>
 #include <variant>
 
+#ifdef AAA
+#endif
+
+#if !defined(AAA)
+#endif
+
 enum class EEE : uint8_t {
 	E0,
 	E1
@@ -13,10 +19,6 @@ enum class EEE : uint8_t {
 class RenderPipelineTester : public BaseTester {
 public:
 	virtual int32_t AE_CALL run() override {
-		int vala = 1;
-		auto pp1 = &vala;
-		auto ppp = std::addressof(vala);
-
 		auto monitors = Monitor::getMonitors();
 		auto vms = monitors[0].getVideoModes();
 		
@@ -27,8 +29,8 @@ public:
 		if (app->createWindow(wndStype, "", Box2i32(Vec2i32({ 100, 100 }), Vec2i32({ 800, 600 })), false)) {
 			RefPtr gml = new GraphicsModuleLoader();
 
-			if (gml->load(getDLLName("ae-win-gl"))) {
-			//if (gml->load(getDLLName("ae-win-d3d11"))) {
+			//if (gml->load(getDLLName("ae-win-gl"))) {
+			if (gml->load(getDLLName("ae-win-d3d11"))) {
 				RefPtr gpstml = new ModuleLoader<IProgramSourceTranslator>();
 				gpstml->load(getDLLName("ae-program-source-translator"));
 				RefPtr gpst = gpstml->create(&Args().add("dxc", getDLLName("dxcompiler")));
@@ -53,7 +55,8 @@ public:
 						RefPtr<Material> material;
 						RefPtr<Material> material2;
 						RefPtr<StandardRenderPipeline> renderPipeline;
-						std::vector<ILight*> lights;
+						std::vector<RefPtr<ILight>> lights;
+						std::vector<RefPtr<IRenderable>> renderables;
 					} renderData;
 					renderData.app = app;
 					renderData.looper = new Looper(1000.0 / 60.0);
@@ -73,7 +76,8 @@ public:
 						if (1) {
 							RefPtr lightNode = worldNode->addChild<Node>();
 							lightNode->setLocalPosition(Vec3f32(-100, 0, -100));
-							auto [_, light] = lightNode->addComponent<PointLight>();
+							auto light = renderData.lights.emplace_back(new PointLight());
+							light->attachNode(lightNode);
 							//light->setRadius(200);
 							lightNode->localRotate(Quaternion::createFromEulerY(Math::PI_4<float32_t>));
 							renderData.lights.emplace_back(light);
@@ -81,7 +85,8 @@ public:
 						if (1) {
 							RefPtr lightNode = worldNode->addChild<Node>();
 							lightNode->setLocalPosition(Vec3f32(100, 0, -100));
-							auto [_, light] = lightNode->addComponent<PointLight>();
+							auto light = renderData.lights.emplace_back(new PointLight());
+							light->attachNode(lightNode);
 							//light->setRadius(1000);
 							lightNode->localRotate(Quaternion::createFromEulerY(-Math::PI_4<float32_t>));
 							renderData.lights.emplace_back(light);
@@ -89,8 +94,8 @@ public:
 						RefPtr cameraNode = worldNode->addChild<Node>();
 						//auto camera = new Camera();
 						//cameraNode->addComponent(camera);
-						auto [_, camera] = cameraNode->addComponent<Camera>();
-						renderData.camera = camera;
+						renderData.camera = new Camera();
+						renderData.camera->attachNode(cameraNode);
 						auto mat = new Material();
 						renderData.material = mat;
 						auto mat2 = new Material();
@@ -99,8 +104,8 @@ public:
 
 						{
 							auto size = app->getInnerSize();
-							camera->setProjectionMatrix(Matrix44::createPerspectiveFovLH(Math::PI<float32_t> / 6.f, size[0] / size[1], 10, 10000));
-							camera->getNode()->localTranslate(Vec3f32(0.f, 0.f, -200.f));
+							renderData.camera->setProjectionMatrix(Matrix44::createPerspectiveFovLH(Math::PI<float32_t> / 6.f, size[0] / size[1], 10, 10000));
+							renderData.camera->getNode()->localTranslate(Vec3f32(0.f, 0.f, -200.f));
 						}
 
 						RenderTag forwardBaseTag("forward_base");
@@ -121,6 +126,8 @@ public:
 								rs->setCullMode(CullMode::BACK);
 
 								auto renderableMesh = new RenderableMesh();
+								renderData.renderables.emplace_back(renderableMesh);
+								renderableMesh->attachNode(modelNode);
 								auto pass = new RenderPass();
 								pass->state = new RenderState();
 								pass->state->rasterizer.state = rs;
@@ -138,7 +145,6 @@ public:
 								auto mesh = new Mesh();
 								renderableMesh->setMesh(mesh);
 								renderableMesh->setRenderer(renderer);
-								modelNode->addComponent(renderableMesh);
 
 								for (auto& itr : mr->getVertexResources()) {
 									auto vs = itr.second;
@@ -235,7 +241,11 @@ public:
 
 						renderData.model->localRotate(Quaternion::createFromEulerY(Math::PI<float32_t> * dt * 0.5f));
 
-						renderData.renderPipeline->render(renderData.g, renderData.camera, renderData.wrold, &renderData.lights);
+						renderData.renderPipeline->render(renderData.g, [renderData](render::IRenderCollector& collector) {
+							collector.addCamera(renderData.camera);
+							for (auto& r : renderData.renderables) collector.addRenderable(r);
+							for (auto& l : renderData.lights) collector.addLight(l);
+						});
 						renderData.g->present();
 					})));
 

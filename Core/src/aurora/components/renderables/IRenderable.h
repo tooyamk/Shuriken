@@ -12,7 +12,7 @@ namespace aurora::render {
 }
 
 namespace aurora::components::renderables {
-	class AE_DLL IRenderable : public AE_COMPONENT_INHERIT(IComponent, false)
+	class AE_DLL IRenderable : public AE_COMPONENT_INHERIT(IComponent)
 	public:
 		IRenderable();
 

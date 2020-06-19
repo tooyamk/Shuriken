@@ -4,7 +4,7 @@
 #include "aurora/Mesh.h"
 
 namespace aurora::components::renderables {
-	class AE_DLL RenderableMesh : public AE_COMPONENT_INHERIT(IRenderable, false)
+	class AE_DLL RenderableMesh : public AE_COMPONENT_INHERIT(IRenderable)
 	public:
 		RenderableMesh();
 
@@ -20,5 +20,7 @@ namespace aurora::components::renderables {
 
 	protected:
 		RefPtr<Mesh> _mesh;
+
+		static const Mesh* AE_CALL _meshGetter(void* target);
 	};
 }

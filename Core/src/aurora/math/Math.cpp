@@ -1,7 +1,7 @@
 #include "Math.h"
 
 namespace aurora {
-	void Math::slerpQuat(const float32_t* from, const float32_t* to, float32_t t, float32_t* dst) {
+	void Math::slerp(const float32_t(&from)[4], const float32_t(&to)[4], float32_t t, float32_t(&dst)[4]) {
 		auto x = to[0], y = to[1], z = to[2], w = to[3];
 		auto cos = from[0] * x + from[1] * y + from[2] * z + from[3] * w;
 		if (cos < 0.f) {//shortest path

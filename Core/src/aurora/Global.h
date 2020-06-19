@@ -707,7 +707,7 @@ namespace aurora {
 			buf.size = MAX_LEN;
 			buf.data = wbuf;
 
-			((_print(buf, args)), ...);
+			((_print(buf, std::forward<Args>(args))), ...);
 
 			buf.write(L'\0');
 
@@ -829,11 +829,11 @@ namespace aurora {
 
 	template<bool Lock = true, bool ToConsole = false, typename... Args>
 	inline void AE_CALL print(Args&&... args) {
-		Console::print<Lock, ToConsole>(args...);
+		Console::print<Lock, ToConsole>(std::forward<Args>(args)...);
 	}
 
 	template<bool Lock = true, bool ToConsole = false, typename... Args>
 	inline void AE_CALL println(Args&&... args) {
-		Console::print<Lock, ToConsole>(args..., L"\n");
+		Console::print<Lock, ToConsole>(std::forward<Args>(args)..., L"\n");
 	}
 }

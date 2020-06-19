@@ -72,8 +72,7 @@ namespace aurora::render {
 	}
 
 	bool ForwardRenderer::collectRenderDataConfirm(IRenderDataCollector& collector) const {
-		auto mesh = collector.data.mesh;
-		return mesh && !mesh->getVertexBuffers().isEmpty() && mesh->getIndexBuffer();
+		return collector.data.meshGetter;
 	}
 
 	void ForwardRenderer::preRender(const RenderEnvironment& env) {
