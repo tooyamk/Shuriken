@@ -38,4 +38,5 @@ if (WIN32)
 endif ()
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER ${AE_MODULES_FOLDER_NAME}/Graphics)
-set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${__OUTPUT_NAME}) 
+set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${__OUTPUT_NAME})
+__install(${PROJECT_NAME})

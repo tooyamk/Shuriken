@@ -24,4 +24,5 @@ target_link_libraries(${PROJECT_NAME}
     ${PROJECT_AE_FRAMEWORK_NAME}
 )
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER ${AE_MODULES_FOLDER_NAME}/Inputs)
-set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${__OUTPUT_NAME}) 
+set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${__OUTPUT_NAME})
+__install(${PROJECT_NAME})

@@ -1,18 +1,5 @@
 cmake_minimum_required (VERSION 3.10.0)
 
-set(CMAKE_DEBUG_POSTFIX d)
-set(CMAKE_RELEASE_POSTFIX "")
-set(CMAKE_RELWITHDEBINFO_POSTFIX "")#rd)
-set(CMAKE_MINSIZEREL_POSTFIX "")#rs)
-set(AE_BUILD_TYPE_SUFFIX $<$<CONFIG:Debug>:${CMAKE_DEBUG_POSTFIX}>$<$<CONFIG:Release>:${CMAKE_RELEASE_POSTFIX}>$<$<CONFIG:RelWithDebInfo>:${CMAKE_RELWITHDEBINFO_POSTFIX}>$<$<CONFIG:MinSizeRel>:${CMAKE_MINSIZEREL_POSTFIX}>)
-
-set(CMAKE_SHARED_LIBRARY_PREFIX "")
-set(CMAKE_STATIC_LIBRARY_PREFIX "")
-#set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "")
-#set(CMAKE_RELEASE_POSTFIX "" CACHE STRING "")
-#set(CMAKE_RELWITHDEBINFO_POSTFIX "rd" CACHE STRING "")
-#set(CMAKE_MINSIZEREL_POSTFIX "s" CACHE STRING "")
-
 option(ZLIB "" ON)
 option(LIBPNG "" ON)
 option(GLEW "" ON)
@@ -34,6 +21,21 @@ option(AE_FBX_CONVERTER "" ON)
 option(AE_SHADER_SCRIPT "" ON)
 
 option(AE_TESTS "" OFF)
+
+option(AE_INSTALL "" ON)
+
+set(CMAKE_DEBUG_POSTFIX d)
+set(CMAKE_RELEASE_POSTFIX "")
+set(CMAKE_RELWITHDEBINFO_POSTFIX "")#rd)
+set(CMAKE_MINSIZEREL_POSTFIX "")#rs)
+set(AE_BUILD_TYPE_SUFFIX $<$<CONFIG:Debug>:${CMAKE_DEBUG_POSTFIX}>$<$<CONFIG:Release>:${CMAKE_RELEASE_POSTFIX}>$<$<CONFIG:RelWithDebInfo>:${CMAKE_RELWITHDEBINFO_POSTFIX}>$<$<CONFIG:MinSizeRel>:${CMAKE_MINSIZEREL_POSTFIX}>)
+
+set(CMAKE_SHARED_LIBRARY_PREFIX "")
+set(CMAKE_STATIC_LIBRARY_PREFIX "")
+#set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "")
+#set(CMAKE_RELEASE_POSTFIX "" CACHE STRING "")
+#set(CMAKE_RELWITHDEBINFO_POSTFIX "rd" CACHE STRING "")
+#set(CMAKE_MINSIZEREL_POSTFIX "s" CACHE STRING "")
 
 macro(__set_project)
     get_filename_component(ProjectId ${CMAKE_CURRENT_SOURCE_DIR} NAME)
@@ -62,21 +64,21 @@ function(__assign_source_group)
         string(REPLACE "/" "\\" _source_path_msvc "${_source_path}")
         source_group("${_source_path_msvc}" FILES "${_source}")
     endforeach ()
-endfunction(__assign_source_group)
+endfunction()
  
 function(__add_library_source_group)
     foreach (_source IN ITEMS ${ARGN})
         __assign_source_group(${_source})
     endforeach ()
     add_library(${ARGV})
-endfunction(__add_library_source_group)
+endfunction()
 
 function(__add_executable_source_group)
     foreach (_source IN ITEMS ${ARGN})
         __assign_source_group(${_source})
     endforeach ()
     add_executable(${ARGV})
-endfunction(__add_executable_source_group)
+endfunction()
 
 function(__target_link_library_external_project target lib_prefix)
     set(tmp_dumy_lib tmp_dumy_lib_${target}_${lib_prefix})
@@ -90,9 +92,30 @@ function(__target_link_library_external_project target lib_prefix)
         set_property(TARGET ${tmp_dumy_lib} PROPERTY IMPORTED_LOCATION_DEBUG ${tmp_var})
     endif()
     target_link_libraries(${target} ${tmp_dumy_lib})
-    unset(tmp_var)
-    unset(tmp_dumy_lib)
-endfunction(__target_link_library_external_project)
+endfunction()
+
+function(__sub_dir_list cur dest)
+    file(GLOB children RELATIVE ${cur} ${cur}/*)
+    set(dirlist "")
+    foreach(child ${children})
+        if(IS_DIRECTORY ${cur}/${child})
+            LIST(APPEND dirlist ${child})
+        endif()
+    endforeach()
+    set(${dest} ${dirlist} PARENT_SCOPE)
+endfunction()
+
+function(__install name)
+    if (AE_INSTALL)
+        set(tmp_var ${CMAKE_INSTALL_PREFIX}/${name}/)
+        install(DIRECTORY "src/" DESTINATION ${tmp_var}include FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp")
+        install(TARGETS ${PROJECT_NAME}
+            RUNTIME DESTINATION "${tmp_var}bin"
+            ARCHIVE DESTINATION "${tmp_var}lib"
+            LIBRARY DESTINATION "${tmp_var}lib"
+        )
+    endif ()
+endfunction()
 
 set(CMAKE_CXX_STANDARD 17)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
@@ -118,6 +141,12 @@ else ()
     set(AE_DLL_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
 endif ()
 
+set(AE_EXTERNAL_FOLDER_NAME External)
+set(AE_MODULES_FOLDER_NAME Modules)
+set(AE_EXTENSIONS_FOLDER_NAME Extensions)
+
+set(AE_ROOT_FOLDER ${CMAKE_CURRENT_SOURCE_DIR})
+
 macro(__create_external_project_cmake_args target)
     set(${target}
         -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
@@ -135,12 +164,6 @@ macro(__create_external_project_cmake_args target)
         -DCMAKE_GENERATOR=${CMAKE_GENERATOR}
     )
 endmacro()
-
-set(AE_EXTERNAL_FOLDER_NAME External)
-set(AE_MODULES_FOLDER_NAME Modules)
-set(AE_EXTENSIONS_FOLDER_NAME Extensions)
-
-set(AE_ROOT_FOLDER ${CMAKE_CURRENT_SOURCE_DIR})
 
 if (ZLIB)
     add_subdirectory(${AE_EXTERNAL_FOLDER_NAME}/zlib)
@@ -199,4 +222,12 @@ endif ()
 
 if (AE_TESTS)
     add_subdirectory(Test)
+endif ()
+
+if (AE_INSTALL)
+    __sub_dir_list(${PROJECT_BINARY_DIR}/${AE_EXTERNAL_FOLDER_NAME} projs)
+    
+    foreach(proj ${projs})
+        install(DIRECTORY ${PROJECT_BINARY_DIR}/${AE_EXTERNAL_FOLDER_NAME}/${proj}/install/ DESTINATION ${CMAKE_INSTALL_PREFIX}/${AE_EXTERNAL_FOLDER_NAME}/${proj})
+    endforeach()
 endif ()
