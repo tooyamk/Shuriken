@@ -4,7 +4,7 @@
 #include <cmath>
 
 namespace aurora {
-	class AE_DLL Math {
+	class AE_CORE_DLL Math {
 	public:
 		AE_DECLARE_CANNOT_INSTANTIATE(Math);
 

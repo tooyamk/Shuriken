@@ -3,7 +3,7 @@
 #include "aurora/Global.h"
 
 namespace aurora {
-	class AE_DLL DynamicLib {
+	class AE_CORE_DLL DynamicLib {
 	public:
 		DynamicLib();
 		virtual ~DynamicLib();

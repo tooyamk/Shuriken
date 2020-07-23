@@ -4,7 +4,7 @@
 #include <atomic>
 
 namespace aurora {
-	class AE_DLL Ref {
+	class AE_CORE_DLL Ref {
 	public:
 		template<typename T>
 		//using RefType = std::enable_if_t<std::is_base_of_v<Ref, T>, T>;
@@ -66,7 +66,7 @@ namespace aurora {
 
 
 	template<typename T>
-	class AE_TEMPLATE_DLL RefPtr {
+	class AE_CORE_TMPL_DLL RefPtr {
 	public:
 		RefPtr() :
 			_target(nullptr) {

@@ -61,7 +61,7 @@ namespace aurora::hash {
 		CRC64_WE             false           false            0x42F0E1EBA9EA3693  0xFFFFFFFFFFFFFFFF  0xFFFFFFFFFFFFFFFF
 		CRC64_XZ             true            true             0x42F0E1EBA9EA3693  0xFFFFFFFFFFFFFFFF  0xFFFFFFFFFFFFFFFF
 	*/
-	class AE_TEMPLATE_DLL CRC {
+	class AE_CORE_TMPL_DLL CRC {
 	private:
 		class Helper {
 		public:

@@ -5,7 +5,7 @@
 
 namespace aurora {
 	template<uint32_t N, typename T>
-	class AE_TEMPLATE_DLL Vector {
+	class AE_CORE_TMPL_DLL Vector {
 	public:
 		using Data = T[N];
 

@@ -6,7 +6,7 @@
 #include <vector>
 
 namespace aurora {
-	class AE_DLL TimeWheel : public std::enable_shared_from_this<TimeWheel> {
+	class AE_CORE_DLL TimeWheel : public std::enable_shared_from_this<TimeWheel> {
 	public:
 		enum class TimeWheelEvent : uint8_t {
 			TRIGGER
@@ -18,7 +18,7 @@ namespace aurora {
 		};
 
 
-		class AE_DLL Timer : public Ref {
+		class AE_CORE_DLL Timer : public Ref {
 		public:
 			Timer();
 			~Timer();
@@ -95,7 +95,7 @@ namespace aurora {
 		};
 
 
-		struct AE_DLL Trigger {
+		struct AE_CORE_DLL Trigger {
 			Trigger(Timer& timer, const uint64_t id) :
 				timer(timer),
 				tickID(id) {

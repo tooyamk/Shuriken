@@ -3,7 +3,7 @@
 #include "aurora/Global.h"
 
 namespace aurora::hash {
-	class AE_DLL MD5 {
+	class AE_CORE_DLL MD5 {
 	public:
 		MD5();
 		std::string AE_CALL calc(const void* input, size_t length);

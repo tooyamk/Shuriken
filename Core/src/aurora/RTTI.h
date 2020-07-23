@@ -3,7 +3,7 @@
 #include "aurora/Global.h"
 
 namespace aurora::rtti {
-	class AE_DLL ClassInfo {
+	class AE_CORE_TMPL_DLL ClassInfo {
 	public:
 		ClassInfo(const ClassInfo* const base) :
 			_base(base),

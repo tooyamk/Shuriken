@@ -1,6 +1,5 @@
 #pragma once
 
-#include "aurora/Aurora.h"
 #include "Helper.h"
 
 #include "Extensions/PNGConverter/src/aurora/PNGConverter.h"

@@ -6,7 +6,7 @@
 #include <unordered_map>
 
 namespace aurora {
-	class AE_DLL Args {
+	class AE_CORE_TMPL_DLL Args {
 	public:
 		template<typename T>
 		Args& add(const std::string& name, T&& val) {

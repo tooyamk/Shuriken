@@ -4,7 +4,7 @@
 #include <chrono>
 
 namespace aurora {
-	class AE_TEMPLATE_DLL Time {
+	class AE_CORE_TMPL_DLL Time {
 	public:
 		AE_DECLARE_CANNOT_INSTANTIATE(Time);
 

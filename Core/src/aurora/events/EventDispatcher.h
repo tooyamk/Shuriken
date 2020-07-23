@@ -6,7 +6,7 @@
 
 namespace aurora::events {
 	template<typename EvtType>
-	class AE_TEMPLATE_DLL EventDispatcher : public IEventDispatcher<EvtType> {
+	class AE_CORE_TMPL_DLL EventDispatcher : public IEventDispatcher<EvtType> {
 	public:
 		EventDispatcher() {
 		}

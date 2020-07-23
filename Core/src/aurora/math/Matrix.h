@@ -16,7 +16,7 @@ namespace aurora {
 	 * m03 m13 m23
 	 * tx  ty  tz
 	 */
-	class AE_DLL Matrix34 {
+	class AE_CORE_DLL Matrix34 {
 	public:
 		using Data = float32_t[3][4];
 
@@ -116,7 +116,7 @@ namespace aurora {
 	 * m03 m13 m23 m33
 	 * tx  ty  tz
 	 */
-	class AE_DLL Matrix44 {
+	class AE_CORE_DLL Matrix44 {
 	public:
 		using Data34 = float32_t[3][4];
 		using Data44 = float32_t[4][4];

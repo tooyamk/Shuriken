@@ -5,7 +5,7 @@
 
 namespace aurora::events {
 	template<typename EvtType>
-	class AE_TEMPLATE_DLL Event {
+	class AE_CORE_TMPL_DLL Event {
 	public:
 		Event(const EvtType& type, void* data = nullptr) :
 			_type(type),
@@ -57,14 +57,14 @@ namespace aurora::events {
 
 
 	template<typename EvtType>
-	class AE_TEMPLATE_DLL IEventListener : public Ref {
+	class AE_CORE_TMPL_DLL IEventListener : public Ref {
 	public:
 		virtual void AE_CALL onEvent(Event<EvtType>& e) = 0;
 	};
 
 
 	template<typename EvtType, typename Class>
-	class AE_TEMPLATE_DLL EventListener : public IEventListener<EvtType> {
+	class AE_CORE_TMPL_DLL EventListener : public IEventListener<EvtType> {
 	public:
 		EventListener(EvtMethod<EvtType, Class> method, Class* target) :
 			_method(target ? method : nullptr),
@@ -81,7 +81,7 @@ namespace aurora::events {
 
 
 	template<typename EvtType>
-	class AE_TEMPLATE_DLL EventListener<EvtType, EvtFn<EvtType>> : public IEventListener<EvtType> {
+	class AE_CORE_TMPL_DLL EventListener<EvtType, EvtFn<EvtType>> : public IEventListener<EvtType> {
 	public:
 		EventListener(EvtFn<EvtType> fn) :
 			_fn(fn) {
@@ -98,7 +98,7 @@ namespace aurora::events {
 
 
 	template<typename EvtType>
-	class AE_TEMPLATE_DLL EventListener<EvtType, EvtFunc<EvtType>> : public IEventListener<EvtType> {
+	class AE_CORE_TMPL_DLL EventListener<EvtType, EvtFunc<EvtType>> : public IEventListener<EvtType> {
 	public:
 		EventListener(const EvtFunc<EvtType>& fn) :
 			_fn(fn) {
@@ -115,7 +115,7 @@ namespace aurora::events {
 
 
 	template<typename EvtType, typename Fn>
-	class AE_TEMPLATE_DLL EventListener<EvtType, const Fn&> : public IEventListener<EvtType> {
+	class AE_CORE_TMPL_DLL EventListener<EvtType, const Fn&> : public IEventListener<EvtType> {
 	public:
 		EventListener(const Fn& fn) :
 			_fn(fn) {
@@ -135,7 +135,7 @@ namespace aurora::events {
 
 
 	template<typename EvtType>
-	class AE_TEMPLATE_DLL IEventDispatcher : public Ref {
+	class AE_CORE_TMPL_DLL IEventDispatcher : public Ref {
 	public:
 		inline bool AE_CALL addEventListener(const EvtType& type, IEventListener<EvtType>* listener) {
 			return listener ? addEventListener(type, *listener) : false;

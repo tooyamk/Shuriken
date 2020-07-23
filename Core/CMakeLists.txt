@@ -5,7 +5,7 @@ set_property(GLOBAL PROPERTY PROJECT_AE_CORE_SRC_DIR ${PROJECT_SOURCE_DIR})
 set_property(GLOBAL PROPERTY PROJECT_AE_CORE_DLL ${AE_BUILD_DIR}/${__OUTPUT_NAME}${AE_BUILD_TYPE_SUFFIX}${AE_DLL_SUFFIX})
 
 include_directories(src)
-add_definitions(-DAE_EXPORTS)
+add_definitions(-DAE_CORE_EXPORTS)
 file(GLOB SRC_FILES
     "src/*.h" "src/*.cpp"
     "src/*/*.h" "src/*/*.cpp"

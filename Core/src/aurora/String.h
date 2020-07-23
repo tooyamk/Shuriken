@@ -5,9 +5,9 @@
 #include <string_view>
 
 namespace aurora {
-	class AE_DLL String {
+	class AE_CORE_DLL String {
 	public:
-		struct AE_DLL CharFlag {
+		struct AE_CORE_DLL CharFlag {
 			inline static constexpr uint8_t WHITE_SPACE = 0b1;
 			inline static constexpr uint8_t NEW_LINE = 0b10;
 		};

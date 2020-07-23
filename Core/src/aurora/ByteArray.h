@@ -5,7 +5,7 @@
 #include <string_view>
 
 namespace aurora {
-	class AE_DLL ByteArray {
+	class AE_CORE_DLL ByteArray {
 	public:
 		enum class Usage : uint8_t {
 			SHARED,

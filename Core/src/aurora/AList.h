@@ -6,7 +6,7 @@
 
 namespace aurora {
 	template<typename T>
-	class AE_TEMPLATE_DLL AList {
+	class AE_CORE_TMPL_DLL AList {
 	public:
 		class Element {
 		public:

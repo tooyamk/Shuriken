@@ -180,18 +180,26 @@
 #define AE_MODULE_DLL_EXPORT AE_DLL_EXPORT
 #define AE_MODULE_DLL_IMPORT AE_DLL_IMPORT
 
-#define AE_TEMPLATE_DLL_EXPORT AE_DLL_EXPORT
-#define AE_TEMPLATE_DLL_IMPORT
+#define AE_TMPL_DLL_EXPORT AE_DLL_EXPORT
+#define AE_TMPL_DLL_IMPORT
 
 #define AE_EXTENSION_DLL_EXPORT AE_DLL_EXPORT
 #define AE_EXTENSION_DLL_IMPORT AE_DLL_IMPORT
 
-#ifdef AE_EXPORTS
-#	define AE_DLL AE_DLL_EXPORT
-#	define AE_TEMPLATE_DLL AE_TEMPLATE_DLL_EXPORT
+#ifdef AE_CORE_EXPORTS
+#	define AE_CORE_DLL AE_DLL_EXPORT
+#	define AE_CORE_TMPL_DLL AE_TMPL_DLL_EXPORT
 #else
-#	define AE_DLL AE_DLL_IMPORT
-#	define AE_TEMPLATE_DLL AE_TEMPLATE_DLL_IMPORT
+#	define AE_CORE_DLL AE_DLL_IMPORT
+#	define AE_CORE_TMPL_DLL AE_TMPL_DLL_IMPORT
+#endif
+
+#ifdef AE_FW_EXPORTS
+#	define AE_FW_DLL AE_DLL_EXPORT
+#	define AE_FW_TMPL_DLL AE_TMPL_DLL_EXPORT
+#else
+#	define AE_FW_DLL AE_DLL_IMPORT
+#	define AE_FW_TMPL_DLL AE_TMPL_DLL_IMPORT
 #endif
 
 #ifdef AE_MODULE_EXPORTS
@@ -297,7 +305,7 @@ namespace aurora {
 
 
 	template<typename F, typename T>
-	class AE_TEMPLATE_DLL Invoker {
+	class AE_CORE_TMPL_DLL Invoker {
 	public:
 		Invoker(F&& fn, T* target) :
 			_fn(fn),
@@ -321,7 +329,7 @@ namespace aurora {
 	Invoker(F)->Invoker<F, T>;
 
 	template<typename F>
-	class AE_TEMPLATE_DLL Invoker<F, nullptr_t> {
+	class AE_CORE_TMPL_DLL Invoker<F, nullptr_t> {
 	public:
 		Invoker(F&& fn) :
 			_fn(fn) {
@@ -570,7 +578,7 @@ namespace aurora {
 	}
 
 
-	struct AE_DLL NoInit {};
+	struct AE_CORE_DLL NoInit {};
 	inline const NoInit NO_INIT = NoInit();
 
 
@@ -594,7 +602,7 @@ namespace aurora {
 	}
 
 
-	class AE_TEMPLATE_DLL Console {
+	class AE_CORE_TMPL_DLL Console {
 	private:
 		struct Buf {
 			Buf() :

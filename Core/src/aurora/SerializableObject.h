@@ -9,7 +9,7 @@
 namespace aurora {
 	class SerializationValueMapElement;
 
-	class AE_DLL SerializableObject {
+	class AE_CORE_DLL SerializableObject {
 	public:
 		class IPackFilter {
 		public:

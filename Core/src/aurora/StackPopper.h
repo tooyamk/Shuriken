@@ -11,7 +11,7 @@ namespace aurora {
 
 
 	template<typename T, StackPopperFlag flags = (StackPopperFlag)0>
-	class AE_TEMPLATE_DLL StackPopper {
+	class AE_CORE_TMPL_DLL StackPopper {
 	public:
 		StackPopper(T& stack) :
 			_stack(stack) {
@@ -27,7 +27,7 @@ namespace aurora {
 
 
 	template<typename T>
-	class AE_TEMPLATE_DLL StackPopper<T, StackPopperFlag::CHECK_POP> {
+	class AE_CORE_TMPL_DLL StackPopper<T, StackPopperFlag::CHECK_POP> {
 	public:
 		StackPopper(T& stack, bool doPop) :
 			_doPop(doPop),
@@ -45,7 +45,7 @@ namespace aurora {
 
 
 	template<typename T>
-	class AE_TEMPLATE_DLL StackPopper<T, StackPopperFlag::MULTI_POP> {
+	class AE_CORE_TMPL_DLL StackPopper<T, StackPopperFlag::MULTI_POP> {
 	public:
 		StackPopper(T& stack, size_t count) :
 			_count(count),
@@ -63,7 +63,7 @@ namespace aurora {
 
 
 	template<typename T>
-	class AE_TEMPLATE_DLL StackPopper<T, StackPopperFlag::CHECK_POP | StackPopperFlag::MULTI_POP> {
+	class AE_CORE_TMPL_DLL StackPopper<T, StackPopperFlag::CHECK_POP | StackPopperFlag::MULTI_POP> {
 	public:
 		StackPopper(T& stack, size_t count, bool doPop) :
 			_doPop(doPop),

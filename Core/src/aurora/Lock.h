@@ -5,7 +5,7 @@
 #include <thread>
 
 namespace aurora {
-	class AE_DLL EmptyLock {
+	class AE_CORE_DLL EmptyLock {
 	public:
 		inline void AE_CALL lock() {};
 		inline void AE_CALL unlock() {};
@@ -13,7 +13,7 @@ namespace aurora {
 
 
 	template<bool GlobalBlock, bool Recursive>
-	class AE_TEMPLATE_DLL AtomicLock {
+	class AE_CORE_TMPL_DLL AtomicLock {
 	public:
 		AtomicLock() = default;
 		AtomicLock(const AtomicLock&) = delete;
@@ -39,7 +39,7 @@ namespace aurora {
 
 
 	template<bool GlobalBlock>
-	class AE_TEMPLATE_DLL AtomicLock<GlobalBlock, true> {
+	class AE_CORE_TMPL_DLL AtomicLock<GlobalBlock, true> {
 	public:
 		AtomicLock() = default;
 		AtomicLock(const AtomicLock&) = delete;
@@ -115,7 +115,7 @@ namespace aurora {
 
 
 	template<bool ReadGlobalBlock, bool WriteGlobalBlock>
-	class AE_TEMPLATE_DLL RWAtomicLock {
+	class AE_CORE_TMPL_DLL RWAtomicLock {
 	public:
 		RWAtomicLock() = default;
 		RWAtomicLock(const RWAtomicLock&) = delete;

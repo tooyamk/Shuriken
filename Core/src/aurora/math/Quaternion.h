@@ -6,7 +6,7 @@ namespace aurora {
 	class Matrix34;
 	class Matrix44;
 
-	class AE_DLL Quaternion {
+	class AE_CORE_DLL Quaternion {
 	public:
 		using Data = float32_t[4];
 
