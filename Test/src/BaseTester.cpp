@@ -8,14 +8,10 @@ void Stats::run(Looper* looper) {
 
 		std::thread([this, looper]() {
 			auto tw = std::make_shared<TimeWheel>(100, 100);
-			tw->getEventDispatcher().addEventListener(TimeWheel::TimeWheelEvent::TRIGGER, new EventListener(std::function([](Event<TimeWheel::TimeWheelEvent>& e) {
-				auto trigger = e.getData<TimeWheel::Trigger>();
-				trigger->timer.doTick(trigger->tickID);
-			})));
 
 			auto frameTime = Time::now();
 			TimeWheel::Timer timer;
-			timer.getEventDispatcher().addEventListener(TimeWheel::TimerEvent::TICK, new EventListener(std::function([this, looper, &frameTime](Event<TimeWheel::TimerEvent>& e) {
+			timer.onTick = [this, looper, &frameTime](TimeWheel::Timer& timer, size_t count) {
 				auto t = Time::now();
 
 				auto fps = _frameCount / ((t - frameTime) * 0.001);
@@ -23,7 +19,7 @@ void Stats::run(Looper* looper) {
 
 				_frameCount = 0;
 				frameTime = t;
-			})));
+			};
 			tw->startTimer(timer, 1000000, 0, false);
 
 			auto t0 = Time::now<std::chrono::microseconds>();
@@ -40,7 +36,9 @@ void Stats::run(Looper* looper) {
 						d = 0;
 					}
 
-					tw->tick(e);
+					tw->tick(e, [](TimeWheel::Timer& timer, uint64_t tickID) {
+						timer.doTick(tickID);
+					});
 				}
 				t0 = t;
 

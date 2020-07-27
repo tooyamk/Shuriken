@@ -8,20 +8,12 @@
 namespace aurora {
 	class AE_CORE_DLL TimeWheel : public std::enable_shared_from_this<TimeWheel> {
 	public:
-		enum class TimeWheelEvent : uint8_t {
-			TRIGGER
-		};
-
-
-		enum class TimerEvent : uint8_t {
-			TICK
-		};
-
-
 		class AE_CORE_DLL Timer : public Ref {
 		public:
 			Timer();
 			~Timer();
+
+			using OnTickFn = std::function<void(Timer& timer, size_t count)>;
 
 			inline void AE_CALL stop() {
 				ref();
@@ -46,15 +38,14 @@ namespace aurora {
 
 			inline bool AE_CALL isRunning() const {
 				std::scoped_lock lck(_mutex);
-				return !_tickIDs.empty();
-			}
 
-			inline events::IEventDispatcher<TimerEvent>& AE_CALL getEventDispatcher() {
-				return _eventDispatcher;
-			}
+				if (!_tickIDs.empty()) return true;
 
-			inline const events::IEventDispatcher<TimerEvent>& AE_CALL getEventDispatcher() const {
-				return _eventDispatcher;
+				if (_wheel.lock()) {
+					return true;
+				} else {
+					return false;
+				}
 			}
 
 			inline void AE_CALL doTick(uint64_t tickID) {
@@ -64,9 +55,11 @@ namespace aurora {
 				if (itr != _tickIDs.end()) {
 					_tickIDs.erase(itr);
 
-					_eventDispatcher.dispatchEvent(this, TimerEvent::TICK);
+					if (onTick) onTick(*this, _count);
 				}
 			}
+
+			OnTickFn onTick;
 
 		private:
 			bool _isStrict;
@@ -84,8 +77,6 @@ namespace aurora {
 			Timer* _prev;
 			Timer* _next;
 
-			events::EventDispatcher<TimerEvent> _eventDispatcher;
-
 			inline void AE_CALL _stop() {
 				if (auto p = _wheel.lock(); p) p->stopTimer(*this);
 				_tickIDs.clear();
@@ -95,32 +86,14 @@ namespace aurora {
 		};
 
 
-		struct AE_CORE_DLL Trigger {
-			Trigger(Timer& timer, const uint64_t id) :
-				timer(timer),
-				tickID(id) {
-			}
-
-			Timer& timer;
-			uint64_t tickID;
-		};
-
-
 		TimeWheel(uint64_t interval, size_t numSlots);
-
-		inline events::IEventDispatcher<TimeWheelEvent>& AE_CALL getEventDispatcher() {
-			return _eventDispatcher;
-		}
-
-		inline const events::IEventDispatcher<TimeWheelEvent>& AE_CALL getEventDispatcher() const {
-			return _eventDispatcher;
-		}
 
 		inline uint64_t AE_CALL getInterval() const {
 			return _interval;
 		}
 
 		void AE_CALL startTimer(Timer& timer, uint64_t delay, size_t count, bool strict);
+		void AE_CALL startTimer(uint64_t delay, size_t count, bool strict, const Timer::OnTickFn& fn);
 
 		inline void AE_CALL stopTimer(Timer& timer) {
 			std::scoped_lock lck(_mutex);
@@ -128,7 +101,54 @@ namespace aurora {
 			_stopTimer(timer);
 		}
 
-		void AE_CALL tick(uint64_t elapsed);
+		template<typename Fn, typename =
+			std::enable_if_t<std::is_invocable_v<Fn, Timer&, uint64_t> &&
+			(std::is_same_v<std::invoke_result_t<Fn, Timer&, uint64_t>, void> ||
+			std::is_same_v<std::invoke_result_t<Fn, Timer&, uint64_t>, bool>), Fn>>
+		void AE_CALL tick(uint64_t elapsed, Fn&& fn) {
+			{
+				std::scoped_lock lck(_mutex);
+
+				_tickingLastTime = elapsed;
+
+				if (_slotElapsed) {
+					auto last = _interval - _slotElapsed;
+					if (_tickingLastTime >= last) {
+						_tickingElapsed = last;
+						_slots[_curSlotIndex].tick(*this, true, _tickingElapsed, fn);
+						_tickingElapsed = 0;
+
+						_slotElapsed = 0;
+						_tickingLastTime -= last;
+						_rollPointer();
+					}
+				}
+			}
+
+			if (_tickingLastTime) {
+				while (_tickingLastTime >= _interval) {
+					std::scoped_lock lck(_mutex);
+
+					_tickingElapsed = _interval;
+					_slots[_curSlotIndex].tick(*this, true, _tickingElapsed, fn);
+					_tickingElapsed = 0;
+
+					_tickingLastTime -= _interval;
+					_rollPointer();
+				}
+
+				if (_tickingLastTime) {
+					std::scoped_lock lck(_mutex);
+
+					_tickingElapsed = _tickingLastTime;
+					_slots[_curSlotIndex].tick(*this, false, _tickingElapsed, fn);
+					_tickingElapsed = 0;
+
+					_slotElapsed += _tickingLastTime;
+					_tickingLastTime = 0;
+				}
+			}
+		}
 
 	private:
 		struct Slot {
@@ -168,7 +188,8 @@ namespace aurora {
 				t->_next = nullptr;
 			}
 
-			void AE_CALL tick(TimeWheel& wheel, bool skip, uint64_t elapsed) {
+			template<typename Fn>
+			void AE_CALL tick(TimeWheel& wheel, bool skip, uint64_t elapsed, Fn&& fn) {
 				if (head) {
 					auto& tickingTimer = wheel._tickingTimer;
 					auto t = head;
@@ -192,11 +213,9 @@ namespace aurora {
 								this->remove(tickingTimer, t);
 								t->_wheel.reset();
 								t->unref();
-								Trigger trigger(*t, id);
-								wheel._eventDispatcher.dispatchEvent(&wheel, TimeWheelEvent::TRIGGER, &trigger);
+								fn(*t, id);
 							} else {
-								Trigger trigger(*t, id);
-								wheel._eventDispatcher.dispatchEvent(&wheel, TimeWheelEvent::TRIGGER, &trigger);
+								fn(*t, id);
 								if (t == tickingTimer) wheel._repeatTimer(*t, e);
 							}
 
@@ -227,8 +246,6 @@ namespace aurora {
 
 		uint64_t _tickingLastTime;
 		Timer* _tickingTimer;
-
-		events::EventDispatcher<TimeWheelEvent> _eventDispatcher;
 
 		inline void AE_CALL _rollPointer() {
 			if (++_curSlotIndex == _numSlots) _curSlotIndex = 0;

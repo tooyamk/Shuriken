@@ -2,9 +2,12 @@
 
 #include "aurora/AList.h"
 #include "aurora/ByteArray.h"
+#include "aurora/DynamicLib.h"
 #include "aurora/Lock.h"
 #include "aurora/RTTI.h"
+#include "aurora/SerializableObject.h"
 #include "aurora/String.h"
+#include "aurora/ThreadPool.h"
 #include "aurora/Time.h"
 #include "aurora/TimeWheel.h"
 

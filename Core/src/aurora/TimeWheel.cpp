@@ -41,6 +41,12 @@ namespace aurora {
 		_addTimer(timer, delay, _tickingElapsed, strict);
 	}
 
+	void TimeWheel::startTimer(uint64_t delay, size_t count, bool strict, const Timer::OnTickFn& fn) {
+		auto timer = new Timer();
+		timer->onTick = fn;
+		startTimer(*timer, delay, count, strict);
+	}
+
 	void TimeWheel::_repeatTimer(TimeWheel::Timer& timer, uint64_t elapsed) {
 		auto oldIdx = timer._slotIndex;
 
@@ -83,51 +89,6 @@ namespace aurora {
 			}
 
 			timer._wheel.reset();
-		}
-	}
-
-	void TimeWheel::tick(uint64_t elapsed) {
-		{
-			std::scoped_lock lck(_mutex);
-
-			_tickingLastTime = elapsed;
-
-			if (_slotElapsed) {
-				auto last = _interval - _slotElapsed;
-				if (_tickingLastTime >= last) {
-					_tickingElapsed = last;
-					_slots[_curSlotIndex].tick(*this, true, _tickingElapsed);
-					_tickingElapsed = 0;
-
-					_slotElapsed = 0;
-					_tickingLastTime -= last;
-					_rollPointer();
-				}
-			}
-		}
-
-		if (_tickingLastTime) {
-			while (_tickingLastTime >= _interval) {
-				std::scoped_lock lck(_mutex);
-
-				_tickingElapsed = _interval;
-				_slots[_curSlotIndex].tick(*this, true, _tickingElapsed);
-				_tickingElapsed = 0;
-
-				_tickingLastTime -= _interval;
-				_rollPointer();
-			}
-
-			if (_tickingLastTime) {
-				std::scoped_lock lck(_mutex);
-
-				_tickingElapsed = _tickingLastTime;
-				_slots[_curSlotIndex].tick(*this, false, _tickingElapsed);
-				_tickingElapsed = 0;
-
-				_slotElapsed += _tickingLastTime;
-				_tickingLastTime = 0;
-			}
 		}
 	}
 }
