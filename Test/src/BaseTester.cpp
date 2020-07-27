@@ -11,7 +11,7 @@ void Stats::run(Looper* looper) {
 
 			auto frameTime = Time::now();
 			TimeWheel::Timer timer;
-			timer.onTick = [this, looper, &frameTime](TimeWheel::Timer& timer, size_t count) {
+			timer.onTick = [this, looper, &frameTime](TimeWheel::Timer& timer) {
 				auto t = Time::now();
 
 				auto fps = _frameCount / ((t - frameTime) * 0.001);

@@ -13,7 +13,7 @@ namespace aurora {
 			Timer();
 			~Timer();
 
-			using OnTickFn = std::function<void(Timer& timer, size_t count)>;
+			using OnTickFn = std::function<void(Timer& timer)>;
 
 			inline void AE_CALL stop() {
 				ref();
@@ -55,7 +55,7 @@ namespace aurora {
 				if (itr != _tickIDs.end()) {
 					_tickIDs.erase(itr);
 
-					if (onTick) onTick(*this, _count);
+					if (onTick) onTick(*this);
 				}
 			}
 
