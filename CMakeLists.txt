@@ -108,7 +108,7 @@ endfunction()
 function(__install name)
     if (AE_INSTALL)
         set(tmp_var ${CMAKE_INSTALL_PREFIX}/${name}/)
-        install(DIRECTORY "src/" DESTINATION ${tmp_var}include FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp")
+        install(DIRECTORY "src/" DESTINATION ${tmp_var}include FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp" PATTERN "*impl*.*" EXCLUDE)
         install(TARGETS ${PROJECT_NAME}
             RUNTIME DESTINATION "${tmp_var}bin"
             ARCHIVE DESTINATION "${tmp_var}lib"

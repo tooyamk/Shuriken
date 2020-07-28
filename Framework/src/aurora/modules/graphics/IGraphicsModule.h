@@ -267,7 +267,7 @@ namespace aurora::modules::graphics {
 
 		virtual void AE_CALL setMipLOD(float32_t min, float32_t max) = 0;
 		virtual void AE_CALL setMipLODBias(float32_t bias) = 0;
-		virtual void AE_CALL setMaxAnisotropy (uint32_t max) = 0;
+		virtual void AE_CALL setMaxAnisotropy(uint32_t max) = 0;
 
 		virtual void AE_CALL setBorderColor(const Vec4f32& color) = 0;
 	};
