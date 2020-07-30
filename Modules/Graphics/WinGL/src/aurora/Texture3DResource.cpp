@@ -25,6 +25,10 @@ namespace aurora::modules::graphics::win_gl {
 		return _baseTex.sampleCount;
 	}
 
+	TextureFormat Texture3DResource::getFormat() const {
+		return _baseTex.format;
+	}
+
 	uint16_t Texture3DResource::getPerPixelByteSize() const {
 		return _baseTex.perPixelSize;
 	}
@@ -65,7 +69,15 @@ namespace aurora::modules::graphics::win_gl {
 		return _baseTex.update(arraySlice, mipSlice, range, data);
 	}
 
+	bool Texture3DResource::copyFrom(const Vec3ui32& dstPos, uint32_t dstArraySlice, uint32_t dstMipSlice, const ITextureResource* src, uint32_t srcArraySlice, uint32_t srcMipSlice, const Box3ui32& srcRange) {
+		return _baseTex.copyFrom(*_graphics.get<Graphics>(), dstPos, dstArraySlice, dstMipSlice, src, srcArraySlice, srcMipSlice, srcRange);
+	}
+
 	bool Texture3DResource::copyFrom(uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const IPixelBuffer* pixelBuffer) {
 		return _baseTex.copyFrom(*_graphics.get<Graphics>(), arraySlice, mipSlice, range, pixelBuffer);
+	}
+
+	bool Texture3DResource::copyTo(uint32_t mipSlice, const IPixelBuffer* pixelBuffer) {
+		return _baseTex.copyTo(*_graphics.get<Graphics>(), mipSlice, pixelBuffer);
 	}
 }

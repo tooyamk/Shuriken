@@ -12,6 +12,7 @@ namespace aurora::modules::graphics::win_gl {
 		virtual bool AE_CALL isCreated() const override;
 		virtual const void* AE_CALL getNative() const override;
 		virtual SampleCount AE_CALL getSampleCount() const override;
+		virtual TextureFormat AE_CALL getFormat() const override;
 		virtual uint16_t AE_CALL getPerPixelByteSize() const override;
 		virtual uint32_t AE_CALL getSize() const override;
 		virtual bool AE_CALL create(uint32_t width, uint32_t arraySize, uint32_t mipLevels, TextureFormat format, Usage resUsage, const void* const* data = nullptr) override;
@@ -22,7 +23,9 @@ namespace aurora::modules::graphics::win_gl {
 		virtual uint32_t AE_CALL write(uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, const void* data, uint32_t length) override;
 		virtual void AE_CALL destroy() override;
 		virtual bool AE_CALL update(uint32_t arraySlice, uint32_t mipSlice, const Box1ui32& range, const void* data) override;
-		virtual bool AE_CALL copyFrom(uint32_t arraySlice, uint32_t mipSlice, const Box1ui32& range, const IPixelBuffer* pixelBuffer) override;
+		virtual bool AE_CALL copyFrom(const Vec3ui32& dstPos, uint32_t dstArraySlice, uint32_t dstMipSlice, const ITextureResource* src, uint32_t srcArraySlice, uint32_t srcMipSlice, const Box3ui32& srcRange) override;
+		virtual bool AE_CALL copyFrom(uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const IPixelBuffer* pixelBuffer) override;
+		virtual bool AE_CALL copyTo(uint32_t mipSlice, const IPixelBuffer* pixelBuffer) override;
 
 	protected:
 		BaseTexture _baseTex;

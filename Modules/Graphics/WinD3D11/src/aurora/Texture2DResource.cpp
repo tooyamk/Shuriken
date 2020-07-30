@@ -26,6 +26,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return _baseTexRes.sampleCount;
 	}
 
+	TextureFormat Texture2DResource::getFormat() const {
+		return _baseTexRes.format;
+	}
+
 	uint16_t Texture2DResource::getPerPixelByteSize() const {
 		return _baseTexRes.perPixelSize;
 	}
@@ -74,7 +78,15 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return _baseTexRes.update(*_graphics.get<Graphics>(), arraySlice, mipSlice, box, data);
 	}
 
-	bool Texture2DResource::copyFrom(uint32_t arraySlice, uint32_t mipSlice, const Box2ui32& range, const IPixelBuffer* pixelBuffer) {
+	bool Texture2DResource::copyFrom(const Vec3ui32& dstPos, uint32_t dstArraySlice, uint32_t dstMipSlice, const ITextureResource* src, uint32_t srcArraySlice, uint32_t srcMipSlice, const Box3ui32& srcRange) {
+		return _baseTexRes.copyFrom(*_graphics.get<Graphics>(), dstPos, dstArraySlice, dstMipSlice, src, srcArraySlice, srcMipSlice, srcRange);
+	}
+
+	bool Texture2DResource::copyFrom(uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const IPixelBuffer* pixelBuffer) {
+		return false;
+	}
+
+	bool Texture2DResource::copyTo(uint32_t mipSlice, const IPixelBuffer* pixelBuffer) {
 		return false;
 	}
 }

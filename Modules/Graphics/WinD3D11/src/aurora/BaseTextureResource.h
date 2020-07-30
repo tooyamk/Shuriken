@@ -16,6 +16,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		uint32_t AE_CALL read(uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, void* dst, uint32_t dstLen);
 		uint32_t AE_CALL write(uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, const void* data, uint32_t length);
 		bool AE_CALL update(Graphics& graphics, uint32_t arraySlice, uint32_t mipSlice, const D3D11_BOX& range, const void* data);
+		bool AE_CALL copyFrom(Graphics& graphics, const Vec3ui32& dstPos, uint32_t dstArraySlice, uint32_t dstMipSlice, const ITextureResource* src, uint32_t srcArraySlice, uint32_t srcMipSlice, const Box3ui32& srcRange);
 		void AE_CALL releaseTex(Graphics& graphics);
 
 		inline static constexpr UINT AE_CALL calcSubresource(UINT mipSlice, UINT arraySlice, UINT mipLevels) {
@@ -29,6 +30,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		uint32_t perRowPixelSize;
 		Vec3ui32 texSize;
 		uint32_t arraySize;
+		uint32_t internalArraySize;
 		uint32_t mipLevels;
 
 		struct MappedRes {

@@ -240,6 +240,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_deviceFeatures.nativeRenderView = true;
 		_deviceFeatures.pixelBuffer = false;
 		_deviceFeatures.constantBuffer = true;
+		_deviceFeatures.textureMap = true;
 		_deviceFeatures.persistentMap = false;
 		_deviceFeatures.independentBlend = true;
 		_deviceFeatures.stencilIndependentRef = false;

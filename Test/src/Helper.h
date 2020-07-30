@@ -46,6 +46,18 @@ inline ByteArray AE_CALL readFile(const std::string& path) {
 	return std::move(dst);
 }
 
+inline bool AE_CALL writeFile(const std::string& path, const ByteArray& data) {
+	auto rst = false;
+	ByteArray dst;
+	std::ofstream stream(path, std::ios::out | std::ios::binary);
+	if (stream.is_open()) {
+		stream.write((const char*)data.getSource(), data.getLength());
+		rst = true;
+	}
+	stream.close();
+	return rst;
+}
+
 inline ProgramSource AE_CALL readProgramSource(const std::string& path, ProgramStage type) {
 	ProgramSource s;
 	s.language = ProgramLanguage::HLSL;

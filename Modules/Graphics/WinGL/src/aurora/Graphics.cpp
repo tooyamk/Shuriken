@@ -167,6 +167,7 @@ namespace aurora::modules::graphics::win_gl {
 		_internalFeatures.supportTexStorage = isGreatThanOrEqualVersion(4, 2) || glewIsSupported("GL_ARB_texture_storage");
 		_deviceFeatures.nativeTextureView = isGreatThanOrEqualVersion(4, 3) || glewIsSupported("ARB_texture_view");
 		_deviceFeatures.nativeRenderView = _deviceFeatures.nativeTextureView;
+		_deviceFeatures.textureMap = false;
 		_deviceFeatures.persistentMap = isGreatThanOrEqualVersion(4, 4) || glewIsSupported("GL_ARB_buffer_storage");
 		_deviceFeatures.stencilIndependentRef = true;
 		_deviceFeatures.stencilIndependentMask = true;

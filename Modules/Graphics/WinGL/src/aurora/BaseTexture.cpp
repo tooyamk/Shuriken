@@ -10,6 +10,7 @@ namespace aurora::modules::graphics::win_gl {
 		dirty(false),
 		sampleCount(0),
 		texType(texType),
+		format(TextureFormat::UNKNOWN),
 		resUsage(Usage::NONE),
 		mapUsage(Usage::NONE),
 		size(0),
@@ -268,6 +269,8 @@ namespace aurora::modules::graphics::win_gl {
 				if (sampleCount == 1) glTexParameteri(glTexInfo.target, GL_TEXTURE_MAX_LEVEL, mipLevels - 1);
 				glBindTexture(glTexInfo.target, 0);
 
+				this->format = format;
+				internalArraySize = arraySize;
 				this->arraySize = isArray ? arraySize : 0;
 				this->mipLevels = mipLevels;
 				this->sampleCount = sampleCount;
@@ -344,6 +347,76 @@ namespace aurora::modules::graphics::win_gl {
 		return false;
 	}
 
+	bool BaseTexture::copyFrom(Graphics& graphics, const Vec3ui32& dstPos, uint32_t dstArraySlice, uint32_t dstMipSlice, const ITextureResource* src, uint32_t srcArraySlice, uint32_t srcMipSlice, const Box3ui32& srcRange) {
+		if (dstArraySlice >= internalArraySize || dstMipSlice >= mipLevels || !src || src->getGraphics() != &graphics) return false;
+
+		auto srcBase = (BaseTexture*)src->getNative();
+		if (srcArraySlice >= srcBase->internalArraySize || srcMipSlice >= srcBase->mipLevels) return false;
+
+		GLuint fbo;
+		glGenFramebuffers(1, &fbo);
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);
+		switch (srcBase->texType) {
+		case TextureType::TEX1D:
+			glFramebufferTexture1D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, srcBase->glTexInfo.target, srcBase->handle, srcMipSlice);
+		case TextureType::TEX2D:
+			glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, srcBase->glTexInfo.target, srcBase->handle, srcMipSlice);
+		case TextureType::TEX3D:
+			glFramebufferTexture3D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, srcBase->glTexInfo.target, srcBase->handle, srcMipSlice, srcRange.pos[2]);
+		default:
+			break;
+		}
+
+		GLenum bindTarget;
+		auto isArray = arraySize && texType != TextureType::TEX3D;
+		switch (texType) {
+		case TextureType::TEX1D:
+		{
+			if (isArray) {
+				bindTarget = GL_TEXTURE_1D_ARRAY;
+				glBindTexture(bindTarget, handle);
+				glCopyTexSubImage2D(GL_TEXTURE_1D_ARRAY, dstMipSlice, dstPos[0], dstArraySlice, srcRange.pos[0], srcRange.pos[1], srcRange.size[0], srcRange.size[1]);
+			} else {
+				bindTarget = GL_TEXTURE_1D;
+				glBindTexture(bindTarget, handle);
+				glCopyTexSubImage1D(GL_TEXTURE_1D, dstMipSlice, dstPos[0], srcRange.pos[0], srcRange.pos[1], srcRange.size[0]);
+			}
+
+			break;
+		}
+		case TextureType::TEX2D:
+		{
+			if (isArray) {
+				bindTarget = GL_TEXTURE_2D_ARRAY;
+				glBindTexture(bindTarget, handle);
+				glCopyTexSubImage3D(GL_TEXTURE_2D_ARRAY, dstMipSlice, dstPos[0], dstPos[1], dstArraySlice, srcRange.pos[0], srcRange.pos[1], srcRange.size[0], srcRange.size[1]);
+			} else {
+				bindTarget = GL_TEXTURE_2D;
+				glBindTexture(bindTarget, handle);
+				glCopyTexSubImage2D(GL_TEXTURE_1D, dstMipSlice, dstPos[0], dstPos[1], srcRange.pos[0], srcRange.pos[1], srcRange.size[0], srcRange.size[1]);
+			}
+
+			break;
+		}
+		case TextureType::TEX3D:
+		{
+			bindTarget = GL_TEXTURE_3D;
+			glBindTexture(bindTarget, handle);
+			glCopyTexSubImage3D(GL_TEXTURE_3D, dstMipSlice, dstPos[0], dstPos[1], dstPos[2], srcRange.pos[0], srcRange.pos[1], srcRange.size[0], srcRange.size[1]);
+
+			break;
+		}
+		default:
+			break;
+		}
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glDeleteFramebuffers(1, &fbo);
+		glBindTexture(bindTarget, 0);
+
+		return true;
+	}
+
 	bool BaseTexture::copyFrom(Graphics& graphics, uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const IPixelBuffer* pixelBuffer) {
 		if (pixelBuffer && &graphics == pixelBuffer->getGraphics()) {
 			if (auto pb = (PixelBuffer*)pixelBuffer->getNative(); pb) {
@@ -355,10 +428,37 @@ namespace aurora::modules::graphics::win_gl {
 						pb->getBaseBuffer()->doSync<true>();
 
 						return rst;
+					} else {
+						graphics.error("OpenGL Texture::copyFrom error : need Usage::MAP_WRITE or Usage::UPDATE of PixelBuffer");
 					}
 				}
 			}
 		}
+
+		return false;
+	}
+
+	bool BaseTexture::copyTo(Graphics& graphics, uint32_t mipSlice, const IPixelBuffer* pixelBuffer) {
+		if (pixelBuffer && &graphics == pixelBuffer->getGraphics()) {
+			if (auto pb = (PixelBuffer*)pixelBuffer->getNative(); pb) {
+				if (auto buf = pb->getInternalBuffer(); buf) {
+					if (auto pbType = pb->getInternalType(); pbType == GL_PIXEL_PACK_BUFFER) {
+						glBindBuffer(pbType, buf);
+
+						glBindTexture(glTexInfo.target, handle);
+						glGetTexImage(glTexInfo.target, mipSlice, glTexInfo.format, glTexInfo.type, nullptr);
+						
+						glBindBuffer(pbType, 0);
+						pb->getBaseBuffer()->doSync<true>();
+
+						return true;
+					} else {
+						graphics.error("OpenGL Texture::copyTo error : need Usage::MAP_READ of PixelBuffer");
+					}
+				}
+			}
+		}
+
 		return false;
 	}
 
@@ -386,10 +486,12 @@ namespace aurora::modules::graphics::win_gl {
 			dirty = false;
 			memset(&glTexInfo, 0, sizeof(glTexInfo));
 			arraySize = 0;
+			internalArraySize = 0;
 			mipLevels = 0;
 			texSize.set(0);
 		}
 
+		format = TextureFormat::UNKNOWN;
 		sampleCount = 0;
 		size = 0;
 		resUsage = Usage::NONE;
@@ -440,10 +542,8 @@ namespace aurora::modules::graphics::win_gl {
 			glTexSubImage3D(glTexInfo.target, mipSlice, range.pos[0], range.pos[1], range.pos[2], range.size[0], range.size[1], range.size[2], glTexInfo.format, glTexInfo.type, data);
 			break;
 		default:
-		{
 			glBindTexture(glTexInfo.target, 0);
 			return false;
-		}
 		}
 
 		glBindTexture(glTexInfo.target, 0);

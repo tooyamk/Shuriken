@@ -108,8 +108,8 @@ public:
 							uvBuffer->setFormat(VertexFormat(VertexSize::TWO, VertexType::F32));
 						}
 
-						renderData.vbf->set("POSITION0", vertexBuffer.get());
-						renderData.vbf->set("TEXCOORD0", uvBuffer.get());
+						renderData.vbf->set("POSITION0", vertexBuffer);
+						renderData.vbf->set("TEXCOORD0", uvBuffer);
 					}
 
 					{
@@ -122,7 +122,7 @@ public:
 						float32_t val2[] = { 1.0f, 1.0f };
 						aabbccStruct->set("val2", new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set<float32_t>(val2, sizeof(val2), sizeof(float32_t), true).setUpdated();
 						aabbccStruct->set("val3", new ShaderParameter())->set(Vec4f32::ONE).setUpdated();
-						renderData.spc->set("blue", new ShaderParameter())->set(aabbccStruct.get());
+						renderData.spc->set("blue", new ShaderParameter())->set(aabbccStruct);
 					}
 
 					renderData.bs = graphics->createBlendState();
@@ -137,28 +137,28 @@ public:
 
 					{
 						RefPtr rts = graphics->createTexture2DResource();
-						rts->create(Vec2ui32(800, 600), 0, 1, 4, TextureFormat::R8G8B8A8, Usage::RENDERABLE);
+						rts->create(Vec2ui32(800, 600), 0, 1, 1, TextureFormat::R8G8B8A8, Usage::RENDERABLE);
 
 						{
 							RefPtr rv = graphics->createRenderView();
-							rv->create(rts.get(), 0, 0, 0);
+							rv->create(rts, 0, 0, 0);
 
 							RefPtr ds = graphics->createDepthStencil();
 							ds->create(rts->getSize(), DepthStencilFormat::D24S8, rts->getSampleCount());
 
 							renderData.rt = graphics->createRenderTarget();
-							renderData.rt->setRenderView(0, rv.get());
-							renderData.rt->setDepthStencil(ds.get());
+							renderData.rt->setRenderView(0, rv);
+							renderData.rt->setDepthStencil(ds);
 						}
 
 						{
 							RefPtr tv = graphics->createTextureView();
-							tv->create(rts.get(), 0, 1, 0, 0);
+							tv->create(rts, 0, 1, 0, 0);
 
 							RefPtr s = graphics->createSampler();
 
-							renderData.spc->set("ppTex", new ShaderParameter(ShaderParameterUsage::AUTO))->set(tv.get()).setUpdated();
-							renderData.spc->set("ppTexSampler", new ShaderParameter(ShaderParameterUsage::AUTO))->set(s.get()).setUpdated();
+							renderData.spc->set("ppTex", new ShaderParameter(ShaderParameterUsage::AUTO))->set(tv).setUpdated();
+							renderData.spc->set("ppTexSampler", new ShaderParameter(ShaderParameterUsage::AUTO))->set(s).setUpdated();
 						}
 					}
 
@@ -177,11 +177,12 @@ public:
 							img1->generateMips(img1->format, mipLevels, mipsData1, mipsData1Ptr);
 
 							mipsData0Ptr.insert(mipsData0Ptr.end(), mipsData1Ptr.begin(), mipsData1Ptr.end());
-
-							auto hr = texRes->create(img0->size, 0, 1, 1, img0->format, Usage::IGNORE_UNSUPPORTED | Usage::UPDATE, mipsData0Ptr.data());
+							
+							auto hr = texRes->create(img0->size, 0, 1, 1, img0->format, Usage::IGNORE_UNSUPPORTED | Usage::UPDATE);
+							auto bbb = texRes->update(0, 0, Box2ui32(Vec2ui32::ZERO, img0->size), mipsData0Ptr.data()[0]);
 
 							RefPtr texView = graphics->createTextureView();
-							texView->create(texRes.get(), 0, -1, 0, -1);
+							texView->create(texRes, 0, -1, 0, -1);
 
 							RefPtr pb = graphics->createPixelBuffer();
 							if (pb) {
@@ -195,7 +196,7 @@ public:
 							//texRes->unmap(0, 0);
 							//texRes->update(0, 0, Box2ui32(Vec2ui32(1, 1), Vec2ui32(2, 2)), texData);
 
-							renderData.spc->set("texDiffuse", new ShaderParameter(ShaderParameterUsage::AUTO))->set(texView.get()).setUpdated();
+							renderData.spc->set("texDiffuse", new ShaderParameter(ShaderParameterUsage::AUTO))->set(texView).setUpdated();
 						}
 
 						RefPtr sam = graphics->createSampler();
@@ -243,8 +244,8 @@ public:
 							ppUVBuffer->setFormat(VertexFormat(VertexSize::TWO, VertexType::F32));
 						}
 
-						renderData.pp.vbf->set("POSITION0", ppVertexBuffer.get());
-						renderData.pp.vbf->set("TEXCOORD0", ppUVBuffer.get());
+						renderData.pp.vbf->set("POSITION0", ppVertexBuffer);
+						renderData.pp.vbf->set("TEXCOORD0", ppUVBuffer);
 					}
 					//
 
@@ -267,24 +268,66 @@ public:
 
 						renderData.app->pollEvents();
 
-						renderData.g->setRenderTarget(renderData.rt.get());
+						renderData.g->setRenderTarget(renderData.rt);
 						renderData.g->beginRender();
 						renderData.g->clear(ClearFlag::COLOR | ClearFlag::DEPTH | ClearFlag::STENCIL, Vec4f32(0.0f, 0.0f, 0.25f, 1.0f), 1.f, 0);
 
-						renderData.g->setBlendState(renderData.bs.get(), Vec4f32::ZERO);
-						renderData.g->setDepthStencilState(renderData.dss.get(), 0);
-						renderData.g->draw(renderData.vbf.get(), renderData.p.get(), renderData.spc.get(), renderData.ib.get());
+						renderData.g->setBlendState(renderData.bs, Vec4f32::ZERO);
+						renderData.g->setDepthStencilState(renderData.dss, 0);
+						renderData.g->draw(renderData.vbf, renderData.p, renderData.spc, renderData.ib);
 
 						renderData.g->endRender();
+
+						auto tr = (ITexture2DResource*)renderData.rt->getRenderView(0)->getResource();
+						auto& trSize = tr->getSize();
+						auto pixelsSize = trSize.getMultiplies() * 4;
+						auto& features = renderData.g->getDeviceFeatures();
+						if (features.textureMap) {
+							RefPtr tex = renderData.g->createTexture2DResource();
+							if (tex->create(trSize, 0, 1, 1, tr->getFormat(), Usage::MAP_READ)) {
+								if (tex->copyFrom(Vec3ui32::ZERO, 0, 0, tr, 0, 0, Box3ui32(Vec3ui32::ZERO, Vec3ui32(trSize[0], trSize[1], 1)))) {
+									if (tex->map(0, 0, Usage::MAP_READ) != Usage::NONE) {
+										ByteArray pixels(pixelsSize, pixelsSize);
+										tex->read(0, 0, 0, pixels.getSource(), pixels.getLength());
+
+										tex->unmap(0, 0);
+
+										Image png;
+										png.format = TextureFormat::R8G8B8A8;
+										png.size.set(trSize);
+										png.source = pixels.slice();
+										if (auto bin = extensions::PNGConverter::encode(png); bin.isValid()) writeFile("D:/Users/Sephiroth/Desktop/test.png", bin);
+									}
+								}
+							}
+						} else if (features.pixelBuffer) {
+							RefPtr pb = renderData.g->createPixelBuffer();
+							if (pb->create(pixelsSize, Usage::MAP_READ)) {
+								if (tr->copyTo(0, pb)) {
+									if (pb->map(Usage::MAP_READ) != Usage::NONE) {
+										ByteArray pixels(pixelsSize, pixelsSize);
+										pb->read(0, pixels.getSource(), pixels.getLength());
+
+										pb->unmap();
+
+										Image png;
+										png.format = TextureFormat::R8G8B8A8;
+										png.size.set(trSize);
+										png.source = pixels.slice();
+										if (auto bin = extensions::PNGConverter::encode(png); bin.isValid()) writeFile("D:/Users/Sephiroth/Desktop/test2.png", bin);
+									}
+								}
+							}
+						}
 
 						//===================================
 						renderData.g->setRenderTarget(nullptr);
 						renderData.g->beginRender();
 						renderData.g->clear(ClearFlag::COLOR | ClearFlag::DEPTH | ClearFlag::STENCIL, Vec4f32(0.0f, 0.0f, 0.0f, 1.0f), 1.f, 0);
 
-						renderData.g->setBlendState(renderData.bs.get(), Vec4f32::ZERO);
-						renderData.g->setDepthStencilState(renderData.dss.get(), 0);
-						renderData.g->draw(renderData.pp.vbf, renderData.pp.p.get(), renderData.spc.get(), renderData.pp.ib.get());
+						renderData.g->setBlendState(renderData.bs, Vec4f32::ZERO);
+						renderData.g->setDepthStencilState(renderData.dss, 0);
+						renderData.g->draw(renderData.pp.vbf, renderData.pp.p, renderData.spc, renderData.pp.ib);
 
 						renderData.g->endRender();
 

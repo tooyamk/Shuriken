@@ -297,11 +297,16 @@ namespace aurora::modules::graphics {
 		virtual const void* AE_CALL getNative() const = 0;
 		virtual SampleCount AE_CALL getSampleCount() const = 0;
 		virtual uint16_t AE_CALL getPerPixelByteSize() const = 0;
+		virtual TextureFormat AE_CALL getFormat() const = 0;
 		virtual Usage AE_CALL getUsage() const = 0;
+		virtual bool AE_CALL create(const Vec3ui32& size, uint32_t arraySize, uint32_t mipLevels, SampleCount sampleCount, TextureFormat format, Usage resUsage, const void* const* data = nullptr) = 0;
 		virtual Usage AE_CALL map(uint32_t arraySlice, uint32_t mipSlice, Usage expectMapUsage) = 0;
 		virtual void AE_CALL unmap(uint32_t arraySlice, uint32_t mipSlice) = 0;
 		virtual uint32_t AE_CALL read(uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, void* dst, uint32_t dstLen) = 0;
 		virtual uint32_t AE_CALL write(uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, const void* data, uint32_t length) = 0;
+		virtual bool AE_CALL copyFrom(const Vec3ui32& dstPos, uint32_t dstArraySlice, uint32_t dstMipSlice, const ITextureResource* src, uint32_t srcArraySlice, uint32_t srcMipSlice, const Box3ui32& srcRange) = 0;
+		virtual bool AE_CALL copyFrom(uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const IPixelBuffer* pixelBuffer) = 0;
+		virtual bool AE_CALL copyTo(uint32_t mipSlice, const IPixelBuffer* pixelBuffer) = 0;
 		virtual void AE_CALL destroy() = 0;
 	};
 
@@ -314,7 +319,10 @@ namespace aurora::modules::graphics {
 		virtual uint32_t AE_CALL getSize() const = 0;
 		virtual bool AE_CALL create(uint32_t width, uint32_t arraySize, uint32_t mipLevels, TextureFormat format, Usage resUsage, const void*const* data = nullptr) = 0;
 		virtual bool AE_CALL update(uint32_t arraySlice, uint32_t mipSlice, const Box1ui32& range, const void* data) = 0;
-		virtual bool AE_CALL copyFrom(uint32_t arraySlice, uint32_t mipSlice, const Box1ui32& range, const IPixelBuffer* pixelBuffer) = 0;
+
+		virtual bool AE_CALL create(const Vec3ui32& size, uint32_t arraySize, uint32_t mipLevels, SampleCount sampleCount, TextureFormat format, Usage resUsage, const void* const* data = nullptr) override {
+			return create(size[0], arraySize, mipLevels, format, resUsage, data);
+		}
 	};
 
 
@@ -326,7 +334,10 @@ namespace aurora::modules::graphics {
 		virtual const Vec2ui32& AE_CALL getSize() const = 0;
 		virtual bool AE_CALL create(const Vec2ui32& size, uint32_t arraySize, uint32_t mipLevels, SampleCount sampleCount, TextureFormat format, Usage resUsage, const void*const* data = nullptr) = 0;
 		virtual bool AE_CALL update(uint32_t arraySlice, uint32_t mipSlice, const Box2ui32& range, const void* data) = 0;
-		virtual bool AE_CALL copyFrom(uint32_t arraySlice, uint32_t mipSlice, const Box2ui32& range, const IPixelBuffer* pixelBuffer) = 0;
+
+		virtual bool AE_CALL create(const Vec3ui32& size, uint32_t arraySize, uint32_t mipLevels, SampleCount sampleCount, TextureFormat format, Usage resUsage, const void* const* data = nullptr) override {
+			return create((const Vec2ui32&)size, arraySize, mipLevels, sampleCount, format, resUsage, data);
+		}
 	};
 
 
@@ -338,7 +349,10 @@ namespace aurora::modules::graphics {
 		virtual const Vec3ui32& AE_CALL getSize() const = 0;
 		virtual bool AE_CALL create(const Vec3ui32& size, uint32_t arraySize, uint32_t mipLevels, TextureFormat format, Usage resUsage, const void*const* data = nullptr) = 0;
 		virtual bool AE_CALL update(uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const void* data) = 0;
-		virtual bool AE_CALL copyFrom(uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const IPixelBuffer* pixelBuffer) = 0;
+
+		virtual bool AE_CALL create(const Vec3ui32& size, uint32_t arraySize, uint32_t mipLevels, SampleCount sampleCount, TextureFormat format, Usage resUsage, const void* const* data = nullptr) override {
+			return create(size, arraySize, mipLevels, format, resUsage, data);
+		}
 	};
 
 
@@ -694,6 +708,7 @@ namespace aurora::modules::graphics {
 		bool nativeRenderView;
 		bool pixelBuffer;
 		bool constantBuffer;
+		bool textureMap;
 		bool persistentMap;
 		bool independentBlend;
 		bool stencilIndependentRef;
@@ -709,6 +724,7 @@ namespace aurora::modules::graphics {
 			nativeRenderView = false;
 			pixelBuffer = false;
 			constantBuffer = false;
+			textureMap = false;
 			persistentMap = false;
 			independentBlend = false;
 			stencilIndependentRef = false;
