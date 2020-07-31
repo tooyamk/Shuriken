@@ -7,6 +7,9 @@ namespace aurora {
 	template<uint32_t N, typename T>
 	class AE_CORE_TMPL_DLL Vector {
 	public:
+		static constexpr uint32_t DIMENSION = N;
+		using ElementType = T;
+		
 		using Data = T[N];
 
 		template<uint32_t COUNT>
