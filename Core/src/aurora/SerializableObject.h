@@ -743,25 +743,25 @@ namespace aurora {
 		void AE_CALL _pack(const SerializableObject* parent, size_t depth, ByteArray& ba, const T& filter) const {
 			switch (_type) {
 			case Type::INVALID:
-				ba.write<ba_t::UI8>((uint8_t)_type);
+				ba.write<ba_vt::UI8>((uint8_t)_type);
 				break;
 			case Type::BOOL:
-				ba.write<ba_t::UI8>((uint8_t)(_getValue<bool>() ? InternalType::BOOL_TRUE : InternalType::BOOL_FALSE));
+				ba.write<ba_vt::UI8>((uint8_t)(_getValue<bool>() ? InternalType::BOOL_TRUE : InternalType::BOOL_FALSE));
 				break;
 			case Type::INT:
 			{
 				auto v = _getValue<int64_t>();
 				if (v < 0) {
 					if (v == -1) {
-						ba.write<ba_t::UI8>((uint8_t)InternalType::N_INT_1);
+						ba.write<ba_vt::UI8>((uint8_t)InternalType::N_INT_1);
 					} else {
 						_packUInt(ba, -v, (uint8_t)InternalType::N_INT_8BITS);
 					}
 				} else {
 					if (v == 0) {
-						ba.write<ba_t::UI8>((uint8_t)InternalType::P_INT_0);
+						ba.write<ba_vt::UI8>((uint8_t)InternalType::P_INT_0);
 					} else if (v == 1) {
-						ba.write<ba_t::UI8>((uint8_t)InternalType::P_INT_1);
+						ba.write<ba_vt::UI8>((uint8_t)InternalType::P_INT_1);
 					} else {
 						_packUInt(ba, v, (uint8_t)InternalType::P_INT_8BITS);
 					}
@@ -773,9 +773,9 @@ namespace aurora {
 			{
 				auto v = _getValue<uint64_t>();
 				if (v == 0) {
-					ba.write<ba_t::UI8>((uint8_t)InternalType::P_INT_0);
+					ba.write<ba_vt::UI8>((uint8_t)InternalType::P_INT_0);
 				} else if (v == 1) {
-					ba.write<ba_t::UI8>((uint8_t)InternalType::P_INT_1);
+					ba.write<ba_vt::UI8>((uint8_t)InternalType::P_INT_1);
 				} else {
 					_packUInt(ba, v, (uint8_t)InternalType::P_INT_8BITS);
 				}
@@ -787,14 +787,14 @@ namespace aurora {
 
 				float32_t f = _getValue<float32_t>();
 				if (f == 0.0f) {
-					ba.write<ba_t::UI8>((uint8_t)InternalType::FLT_0);
+					ba.write<ba_vt::UI8>((uint8_t)InternalType::FLT_0);
 				} else if (f == 0.5f) {
-					ba.write<ba_t::UI8>((uint8_t)InternalType::FLT_0_5);
+					ba.write<ba_vt::UI8>((uint8_t)InternalType::FLT_0_5);
 				} else if (f == 1.0f) {
-					ba.write<ba_t::UI8>((uint8_t)InternalType::FLT_1);
+					ba.write<ba_vt::UI8>((uint8_t)InternalType::FLT_1);
 				} else {
-					ba.write<ba_t::UI8>((uint8_t)_type);
-					ba.write<ba_t::F32>(f);
+					ba.write<ba_vt::UI8>((uint8_t)_type);
+					ba.write<ba_vt::F32>(f);
 				}
 
 				break;
@@ -803,14 +803,14 @@ namespace aurora {
 			{
 				float64_t d = _getValue<float64_t>();
 				if (d == 0.0) {
-					ba.write<ba_t::UI8>((uint8_t)InternalType::DBL_0);
+					ba.write<ba_vt::UI8>((uint8_t)InternalType::DBL_0);
 				} else if (d == 0.5) {
-					ba.write<ba_t::UI8>((uint8_t)InternalType::DBL_0_5);
+					ba.write<ba_vt::UI8>((uint8_t)InternalType::DBL_0_5);
 				} else if (d == 1.0) {
-					ba.write<ba_t::UI8>((uint8_t)InternalType::DBL_1);
+					ba.write<ba_vt::UI8>((uint8_t)InternalType::DBL_1);
 				} else {
-					ba.write<ba_t::UI8>((uint8_t)_type);
-					ba.write<ba_t::F64>(d);
+					ba.write<ba_vt::UI8>((uint8_t)_type);
+					ba.write<ba_vt::F64>(d);
 				}
 
 				break;
@@ -819,10 +819,10 @@ namespace aurora {
 			{
 				auto s = _getValue<Str*>();
 				if (s->size) {
-					ba.write<ba_t::UI8>((uint8_t)_type);
-					ba.write<ba_t::STR>(s->value, s->size);
+					ba.write<ba_vt::UI8>((uint8_t)_type);
+					ba.write<ba_vt::STR>(s->value, s->size);
 				} else {
-					ba.write<ba_t::UI8>((uint8_t)InternalType::STRING_EMPTY);
+					ba.write<ba_vt::UI8>((uint8_t)InternalType::STRING_EMPTY);
 				}
 
 				break;
@@ -831,10 +831,10 @@ namespace aurora {
 			{
 				auto size = strlen((char*)_value);
 				if (size == 0) {
-					ba.write<ba_t::UI8>((uint8_t)InternalType::STRING_EMPTY);
+					ba.write<ba_vt::UI8>((uint8_t)InternalType::STRING_EMPTY);
 				} else {
-					ba.write<ba_t::UI8>((uint8_t)Type::STRING);
-					ba.write<ba_t::STR>((char*)_value, size);
+					ba.write<ba_vt::UI8>((uint8_t)Type::STRING);
+					ba.write<ba_vt::STR>((char*)_value, size);
 				}
 
 				break;
@@ -846,16 +846,16 @@ namespace aurora {
 
 				if constexpr (std::is_null_pointer_v<T>) {
 					if (size == 0) {
-						ba.write<ba_t::UI8>((uint8_t)InternalType::ARRAY_0);
+						ba.write<ba_vt::UI8>((uint8_t)InternalType::ARRAY_0);
 					} else {
 						_packUInt(ba, size, (uint8_t)InternalType::ARRAY_8BITS);
 						for (auto& i : arr->value) i.pack(ba);
 					}
 				} else {
 					if (size == 0) {
-						ba.write<ba_t::UI8>((uint8_t)InternalType::ARRAY_0);
+						ba.write<ba_vt::UI8>((uint8_t)InternalType::ARRAY_0);
 					} else {
-						ba.write<ba_t::UI8>((uint8_t)InternalType::ARRAY_END);
+						ba.write<ba_vt::UI8>((uint8_t)InternalType::ARRAY_END);
 
 						size_t i = 0;
 						size_t d = depth + 1;
@@ -863,7 +863,7 @@ namespace aurora {
 							if (filter.packable(parent, depth, i++, e)) e._pack(this, d, ba, filter);
 						}
 
-						ba.write<ba_t::UI8>((uint8_t)InternalType::END);
+						ba.write<ba_vt::UI8>((uint8_t)InternalType::END);
 					}
 				}
 
@@ -876,7 +876,7 @@ namespace aurora {
 
 				if constexpr (std::is_null_pointer_v<T>) {
 					if (size == 0) {
-						ba.write<ba_t::UI8>((uint8_t)InternalType::MAP_0);
+						ba.write<ba_vt::UI8>((uint8_t)InternalType::MAP_0);
 					} else {
 						_packUInt(ba, size, (uint8_t)InternalType::MAP_8BITS);
 						for (auto& i : map->value) {
@@ -886,9 +886,9 @@ namespace aurora {
 					}
 				} else {
 					if (size == 0) {
-						ba.write<ba_t::UI8>((uint8_t)InternalType::MAP_0);
+						ba.write<ba_vt::UI8>((uint8_t)InternalType::MAP_0);
 					} else {
-						ba.write<ba_t::UI8>((uint8_t)InternalType::MAP_END);
+						ba.write<ba_vt::UI8>((uint8_t)InternalType::MAP_END);
 
 						size_t d = depth + 1;
 						for (auto& i : map->value) {
@@ -898,7 +898,7 @@ namespace aurora {
 							}
 						}
 						
-						ba.write<ba_t::UI8>((uint8_t)InternalType::END);
+						ba.write<ba_vt::UI8>((uint8_t)InternalType::END);
 					}
 				}
 
@@ -908,13 +908,13 @@ namespace aurora {
 			{
 				uint32_t size = _getValue<Bytes<false>*>()->getSize();
 				if (size == 0) {
-					ba.write<ba_t::UI8>((uint8_t)InternalType::BYTES_0);
+					ba.write<ba_vt::UI8>((uint8_t)InternalType::BYTES_0);
 					break;
 				} else if (size <= BitUInt<8>::MAX) {
 					_packUInt(ba, size, (uint8_t)InternalType::BYTES_8BITS);
 				}
 
-				ba.write<ba_t::BYTE>(_getValue<Bytes<false>*>()->getValue(), size);
+				ba.write<ba_vt::BYTE>(_getValue<Bytes<false>*>()->getValue(), size);
 
 				break;
 			}
@@ -922,13 +922,13 @@ namespace aurora {
 			{
 				uint32_t size = _getValue<Bytes<true>*>()->getSize();
 				if (size == 0) {
-					ba.write<ba_t::UI8>((uint8_t)InternalType::BYTES_0);
+					ba.write<ba_vt::UI8>((uint8_t)InternalType::BYTES_0);
 					break;
 				} else {
 					_packUInt(ba, size, (uint8_t)InternalType::BYTES_8BITS);
 				}
 
-				ba.write<ba_t::BYTE>(_getValue<Bytes<true>*>()->getValue(), size);
+				ba.write<ba_vt::BYTE>(_getValue<Bytes<true>*>()->getValue(), size);
 
 				break;
 			}

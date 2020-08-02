@@ -923,35 +923,35 @@ namespace aurora {
 
 	void SerializableObject::_packUInt(ByteArray& ba, uint64_t val, uint8_t typeBegin) const {
 		if (val <= BitUInt<8>::MAX) {
-			ba.write<ba_t::UI8>(typeBegin);
-			ba.write<ba_t::UI8>(val);
+			ba.write<ba_vt::UI8>(typeBegin);
+			ba.write<ba_vt::UI8>(val);
 		} else if (val <= BitUInt<16>::MAX) {
-			ba.write<ba_t::UI8>(typeBegin + 1);
-			ba.write<ba_t::UI16>(val);
+			ba.write<ba_vt::UI8>(typeBegin + 1);
+			ba.write<ba_vt::UI16>(val);
 		} else if (val <= BitUInt<24>::MAX) {
-			ba.write<ba_t::UI8>(typeBegin + 2);
-			ba.write<ba_t::UIX>(val, 3);
+			ba.write<ba_vt::UI8>(typeBegin + 2);
+			ba.write<ba_vt::UIX>(val, 3);
 		} else if (val <= BitUInt<32>::MAX) {
-			ba.write<ba_t::UI8>(typeBegin + 3);
-			ba.write<ba_t::UI32>(val);
+			ba.write<ba_vt::UI8>(typeBegin + 3);
+			ba.write<ba_vt::UI32>(val);
 		} else if (val <= BitUInt<40>::MAX) {
-			ba.write<ba_t::UI8>(typeBegin + 4);
-			ba.write<ba_t::UIX>(val, 5);
+			ba.write<ba_vt::UI8>(typeBegin + 4);
+			ba.write<ba_vt::UIX>(val, 5);
 		} else if (val <= BitUInt<48>::MAX) {
-			ba.write<ba_t::UI8>(typeBegin + 5);
-			ba.write<ba_t::UIX>(val, 6);
+			ba.write<ba_vt::UI8>(typeBegin + 5);
+			ba.write<ba_vt::UIX>(val, 6);
 		} else if (val <= BitUInt<56>::MAX) {
-			ba.write<ba_t::UI8>(typeBegin + 6);
-			ba.write<ba_t::UIX>(val, 7);
+			ba.write<ba_vt::UI8>(typeBegin + 6);
+			ba.write<ba_vt::UIX>(val, 7);
 		} else {
-			ba.write<ba_t::UI8>(typeBegin + 7);
-			ba.write<ba_t::UI64>(val);
+			ba.write<ba_vt::UI8>(typeBegin + 7);
+			ba.write<ba_vt::UI64>(val);
 		}
 	}
 
 	void SerializableObject::unpack(ByteArray& ba) {
 		if (ba.getBytesAvailable() > 0) {
-			InternalType type = (InternalType)ba.read<ba_t::UI8>();
+			InternalType type = (InternalType)ba.read<ba_vt::UI8>();
 			switch (type) {
 			case InternalType::UNVALID:
 				setInvalid();
@@ -969,7 +969,7 @@ namespace aurora {
 				set(1.0f);
 				break;
 			case InternalType::FLOAT:
-				set(ba.read<ba_t::F32>());
+				set(ba.read<ba_vt::F32>());
 				break;
 			case InternalType::DBL_0:
 				set(0.0);
@@ -981,14 +981,14 @@ namespace aurora {
 				set(1.0);
 				break;
 			case InternalType::DOUBLE:
-				set(ba.read<ba_t::F64>());
+				set(ba.read<ba_vt::F64>());
 				break;
 			case InternalType::STRING_EMPTY:
 				set("");
 				break;
 			case InternalType::STRING:
 			case InternalType::SHORT_STRING:
-				set(ba.read<ba_t::STR_V>());
+				set(ba.read<std::string_view>());
 				break;
 			case InternalType::BOOL_TRUE:
 				set(true);
@@ -1008,7 +1008,7 @@ namespace aurora {
 			case InternalType::N_INT_56BITS:
 			case InternalType::N_INT_64BITS:
 			{
-				set(-(int64_t)ba.read<ba_t::UIX>((uint8_t)type - (uint8_t)InternalType::N_INT_8BITS + 1));
+				set(-(int64_t)ba.read<ba_vt::UIX>((uint8_t)type - (uint8_t)InternalType::N_INT_8BITS + 1));
 				break;
 			}
 			case InternalType::P_INT_0:
@@ -1026,7 +1026,7 @@ namespace aurora {
 			case InternalType::P_INT_56BITS:
 			case InternalType::P_INT_64BITS:
 			{
-				set(ba.read<ba_t::UIX>((uint8_t)type - (uint8_t)InternalType::P_INT_8BITS + 1));
+				set(ba.read<ba_vt::UIX>((uint8_t)type - (uint8_t)InternalType::P_INT_8BITS + 1));
 				break;
 			}
 			case InternalType::ARRAY_0:
@@ -1039,7 +1039,7 @@ namespace aurora {
 			case InternalType::ARRAY_56BITS:
 			case InternalType::ARRAY_64BITS:
 			{
-				size_t size = ba.read<ba_t::UIX>((uint8_t)type - (uint8_t)InternalType::ARRAY_0);
+				size_t size = ba.read<ba_vt::UIX>((uint8_t)type - (uint8_t)InternalType::ARRAY_0);
 				auto& arr = _getArray()->value;
 				arr.resize(size);
 				for (size_t i = 0; i < size; ++i) arr[i].unpack(ba);
@@ -1073,7 +1073,7 @@ namespace aurora {
 			case InternalType::MAP_56BITS:
 			case InternalType::MAP_64BITS:
 			{
-				_getMap()->unpack(ba, ba.read<ba_t::UIX>((uint8_t)type - (uint8_t)InternalType::MAP_0));
+				_getMap()->unpack(ba, ba.read<ba_vt::UIX>((uint8_t)type - (uint8_t)InternalType::MAP_0));
 				break;
 			}
 			case InternalType::MAP_END:
@@ -1104,7 +1104,7 @@ namespace aurora {
 			case InternalType::BYTES_56BITS:
 			case InternalType::BYTES_64BITS:
 			{
-				_unpackBytes(ba, ba.read<ba_t::UIX>((uint8_t)type - (uint8_t)InternalType::BYTES_0));
+				_unpackBytes(ba, ba.read<ba_vt::UIX>((uint8_t)type - (uint8_t)InternalType::BYTES_0));
 				break;
 			}
 			default:

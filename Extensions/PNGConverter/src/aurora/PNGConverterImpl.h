@@ -103,7 +103,7 @@ namespace aurora::extensions::png_converter {
 
 	inline void AE_CALL writeDataCallback(png_structp png_ptr, png_bytep data, png_size_t length) {
 		auto isource = (ByteArray*)png_get_io_ptr(png_ptr);
-		isource->write<ba_t::BYTE>(data, length);
+		isource->write<ba_vt::BYTE>(data, length);
 	}
 
 	inline ByteArray AE_CALL encode(const Image& img) {

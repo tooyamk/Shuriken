@@ -77,7 +77,7 @@ namespace aurora::modules::graphics::program_source_translator {
 			dst.stage = source.stage;
 			dst.version = targetVersion.empty() ? source.version : targetVersion;
 			dst.data.setCapacity(source.data.getLength());
-			dst.data.write<ba_t::BYTE>(source.data.getSource(), source.data.getLength());
+			dst.data.write<ba_vt::BYTE>(source.data.getSource(), source.data.getLength());
 			return std::move(dst);
 		}
 
@@ -185,7 +185,7 @@ namespace aurora::modules::graphics::program_source_translator {
 			dst.stage = source.stage;
 			if (targetLanguage == ProgramLanguage::DXIL) dst.version = targetVersion.empty() ? source.version : targetVersion;
 			dst.data.setCapacity(sourceDataSize);
-			dst.data.write<ba_t::BYTE>(sourceData, sourceDataSize);
+			dst.data.write<ba_vt::BYTE>(sourceData, sourceDataSize);
 
 			break;
 		}
@@ -269,7 +269,7 @@ namespace aurora::modules::graphics::program_source_translator {
 				dst.stage = source.stage;
 				dst.version = String::toString(opts.version);
 				dst.data.setCapacity(str.size());
-				dst.data.write<ba_t::BYTE>((uint8_t*)str.data(), str.size());
+				dst.data.write<ba_vt::BYTE>((uint8_t*)str.data(), str.size());
 			} catch (spirv_cross::CompilerError& error) {
 				println("spirv to glsl/gssl error : ", error.what());
 			}
@@ -307,7 +307,7 @@ namespace aurora::modules::graphics::program_source_translator {
 				dst.stage = source.stage;
 				dst.version = String::toString(mslOpts.msl_version);
 				dst.data.setCapacity(str.size());
-				dst.data.write<ba_t::BYTE>((uint8_t*)str.data(), str.size());
+				dst.data.write<ba_vt::BYTE>((uint8_t*)str.data(), str.size());
 			} catch (spirv_cross::CompilerError& error) {
 				println(error.what());
 			}

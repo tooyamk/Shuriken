@@ -618,7 +618,7 @@ inline static __NAME__ get##__NAME__(const std::string_view& name) { \
 					size_t start = 0;
 					sourceIndices.resize(count);
 					for (size_t i = 0; i < count; ++i) {
-						auto idx = src.read<ba_t::I32>();
+						auto idx = src.read<ba_vt::I32>();
 						if (idx < 0) {
 							idx = ~idx;
 							auto n = i - start + 1;
@@ -1004,37 +1004,37 @@ inline static __NAME__ get##__NAME__(const std::string_view& name) { \
 	};
 
 	inline bool AE_CALL parseNodeProperty(FBX& fbx, ByteArray& source, Node::Property& p) {
-		auto type = (Node::Property::Type)source.read<ba_t::UI8>();
+		auto type = (Node::Property::Type)source.read<ba_vt::UI8>();
 		p.type = type;
 		switch (type) {
 		case Node::Property::Type::BOOL:
-			p.boolVal = source.read<ba_t::BOOL>();
+			p.boolVal = source.read<ba_vt::BOOL>();
 			break;
 		case Node::Property::Type::I16:
 		{
 			p.type = Node::Property::Type::I64;
-			p.i64Val = source.read<ba_t::I16>();
+			p.i64Val = source.read<ba_vt::I16>();
 			break;
 		}
 		case Node::Property::Type::I32:
 		{
 			p.type = Node::Property::Type::I64;
-			p.i64Val = source.read<ba_t::I32>();
+			p.i64Val = source.read<ba_vt::I32>();
 			break;
 		}
 		case Node::Property::Type::I64:
-			p.i64Val = source.read<ba_t::I64>();
+			p.i64Val = source.read<ba_vt::I64>();
 			break;
 		case Node::Property::Type::F32:
-			p.f32Val = source.read<ba_t::F32>();
+			p.f32Val = source.read<ba_vt::F32>();
 			break;
 		case Node::Property::Type::F64:
-			p.f64Val = source.read<ba_t::F64>();
+			p.f64Val = source.read<ba_vt::F64>();
 			break;
 		case Node::Property::Type::BYTES:
 		case Node::Property::Type::STR:
 		{
-			auto size = source.read<ba_t::UI32>();
+			auto size = source.read<ba_vt::UI32>();
 			p.rawVal.size = size;
 			p.rawVal.data = source.getSource() + source.getPosition();
 			source.skip(size);
@@ -1048,9 +1048,9 @@ inline static __NAME__ get##__NAME__(const std::string_view& name) { \
 		case Node::Property::Type::F32_ARR:
 		case Node::Property::Type::F64_ARR:
 		{
-			auto arrSize = source.read<ba_t::I32>();
-			auto encoding = source.read<ba_t::I32>();
-			auto compressedLength = source.read<ba_t::I32>();
+			auto arrSize = source.read<ba_vt::I32>();
+			auto encoding = source.read<ba_vt::I32>();
+			auto compressedLength = source.read<ba_vt::I32>();
 
 			ByteArray* uncompressData = nullptr;
 			if (encoding == 1) {
@@ -1099,16 +1099,16 @@ inline static __NAME__ get##__NAME__(const std::string_view& name) { \
 	inline bool AE_CALL parseNode(FBX& fbx, ByteArray& source, Node* parent) {
 		uint64_t endOffset, numProperties, propertyListLen;
 		if (fbx.ver < 7500) {
-			endOffset = source.read<ba_t::UI32>();
-			numProperties = source.read<ba_t::UI32>();
-			propertyListLen = source.read<ba_t::UI32>();
+			endOffset = source.read<ba_vt::UI32>();
+			numProperties = source.read<ba_vt::UI32>();
+			propertyListLen = source.read<ba_vt::UI32>();
 		} else {
-			endOffset = source.read<ba_t::UI64>();
-			numProperties = source.read<ba_t::UI64>();
-			propertyListLen = source.read<ba_t::UI64>();
+			endOffset = source.read<ba_vt::UI64>();
+			numProperties = source.read<ba_vt::UI64>();
+			propertyListLen = source.read<ba_vt::UI64>();
 		}
-		auto nameSize = source.read<ba_t::UI8>();
-		auto name = source.read<ba_t::STR_V, false>(nameSize);
+		auto nameSize = source.read<ba_vt::UI8>();
+		auto name = source.read<ba_vt::STR_V, false>(nameSize);
 
 		if (!endOffset) return true;
 
@@ -1144,16 +1144,16 @@ inline static __NAME__ get##__NAME__(const std::string_view& name) { \
 
 		constexpr size_t HEADER_LEN = 12;
 
-		if (src.read<ba_t::STR_V, false>(HEADER_LEN) == "Kaydara FBX ") {
+		if (src.read<ba_vt::STR_V, false>(HEADER_LEN) == "Kaydara FBX ") {
 			constexpr size_t BINARY_FLAG_LEN = 8;
-			if (src.read<ba_t::STR_V, false>(BINARY_FLAG_LEN) == "Binary  ") {
+			if (src.read<ba_vt::STR_V, false>(BINARY_FLAG_LEN) == "Binary  ") {
 				src.skip(3);
 
-				FBX fbx(src.read<ba_t::UI32>());
+				FBX fbx(src.read<ba_vt::UI32>());
 
 				auto parseOk = true;
 				while (src.getBytesAvailable() > 4) {
-					if (src.read<ba_t::UI32>() < src.getLength()) {
+					if (src.read<ba_vt::UI32>() < src.getLength()) {
 						src.setPosition(src.getPosition() - 4);
 						if (!parseNode(fbx, src, &fbx.root)) {
 							parseOk = false;
