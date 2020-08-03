@@ -114,6 +114,33 @@ namespace aurora::modules::graphics {
 			type(type) {
 		}
 
+		template<uint32_t Size, typename Type>
+		void AE_CALL set() {
+			if constexpr (Size <= (decltype(Size))VertexSize::FOUR) {
+				size = (VertexSize)Size;
+			} else {
+				size = VertexSize::UNKNOWN;
+			}
+
+			if constexpr (std::is_same_v<Type, int8_t>) {
+				type = VertexType::I8;
+			} else if constexpr (std::is_same_v<Type, uint8_t>) {
+				type = VertexType::UI8;
+			} else if constexpr (std::is_same_v<Type, int16_t>) {
+				type = VertexType::I16;
+			} else if constexpr (std::is_same_v<Type, uint16_t>) {
+				type = VertexType::UI16;
+			} else if constexpr (std::is_same_v<Type, int32_t>) {
+				type = VertexType::I32;
+			} else if constexpr (std::is_same_v<Type, uint32_t>) {
+				type = VertexType::UI32;
+			} else if constexpr (std::is_same_v<Type, float32_t>) {
+				type = VertexType::F32;
+			} else {
+				type = VertexType::UNKNOWN;
+			}
+		}
+
 		VertexSize size;
 		VertexType type;
 	};
