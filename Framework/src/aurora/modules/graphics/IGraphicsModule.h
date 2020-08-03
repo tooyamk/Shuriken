@@ -171,6 +171,19 @@ namespace aurora::modules::graphics {
 
 		virtual IndexType AE_CALL getFormat() const = 0;
 		virtual void AE_CALL setFormat(IndexType type) = 0;
+
+		template<typename T>
+		void AE_CALL setFormat() {
+			if constexpr (std::is_same_v<T, uint8_t>) {
+				setFormat(IndexType::UI8);
+			} else if constexpr (std::is_same_v<T, uint16_t>) {
+				setFormat(IndexType::UI16);
+			} else if constexpr (std::is_same_v<T, uint32_t>) {
+				setFormat(IndexType::UI32);
+			} else {
+				setFormat(IndexType::UNKNOWN);
+			}
+		}
 	};
 
 
