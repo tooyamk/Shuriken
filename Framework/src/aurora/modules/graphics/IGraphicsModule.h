@@ -115,7 +115,7 @@ namespace aurora::modules::graphics {
 		}
 
 		template<uint32_t Size, typename Type>
-		void AE_CALL set() {
+		inline void AE_CALL set() {
 			if constexpr (Size <= (decltype(Size))VertexSize::FOUR) {
 				size = (VertexSize)Size;
 			} else {
@@ -173,7 +173,7 @@ namespace aurora::modules::graphics {
 		virtual void AE_CALL setFormat(IndexType type) = 0;
 
 		template<typename T>
-		void AE_CALL setFormat() {
+		inline void AE_CALL setFormat() {
 			if constexpr (std::is_same_v<T, uint8_t>) {
 				setFormat(IndexType::UI8);
 			} else if constexpr (std::is_same_v<T, uint16_t>) {

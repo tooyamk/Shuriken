@@ -220,13 +220,13 @@ namespace aurora {
 			return sq;
 		}
 
-		template<uint32_t N, typename In, typename Out, typename = floating_point_t<Out>>
-		static void AE_CALL normalize(const In(&v)[N], Out(&dst)[N]) {
+		template<uint32_t N, typename In, typename Out, typename L, typename = floating_point_t<Out>, typename = floating_point_t<L>>
+		static void AE_CALL normalize(const In(&v)[N], Out(&dst)[N], L length) {
 			if constexpr (sizeof(In) >= sizeof(Out)) {
 				if (auto n = dot<N, In, In, Out>(v, v); !isEqual(n, NUMBER_1<decltype(n)>, TOLERANCE<decltype(n)>)) {
 					n = std::sqrt(n);
 					if (n > TOLERANCE<decltype(n)>) {
-						n = NUMBER_1<decltype(n)> / n;
+						n = length / n;
 
 						if ((void*)&v >= (void*)&dst) {
 							for (uint32_t i = 0; i < N; ++i) dst[i] = v[i] * n;
@@ -252,7 +252,7 @@ namespace aurora {
 				if (auto n = dot<N, In, In, Out>(v, v); !isEqual(n, NUMBER_1<decltype(n)>, TOLERANCE<decltype(n)>)) {
 					n = std::sqrt(n);
 					if (n > TOLERANCE<decltype(n)>) {
-						n = NUMBER_1<decltype(n)> / n;
+						n = length / n;
 
 						for (uint32_t i = 0; i < N; ++i) tmp[i] = v[i] * n;
 					} else {
@@ -265,12 +265,12 @@ namespace aurora {
 			}
 		}
 
-		template<uint32_t N, typename T, typename = floating_point_t<T>>
-		static void AE_CALL normalize(T(&val)[N]) {
+		template<uint32_t N, typename T, typename L, typename = floating_point_t<T>, typename = floating_point_t<L>>
+		static void AE_CALL normalize(T(&val)[N], L length) {
 			if (auto n = dot(val, val); !isEqual(n, NUMBER_1<decltype(n)>, TOLERANCE<decltype(n)>)) {
 				n = std::sqrt(n);
 				if (n > TOLERANCE<decltype(n)>) {
-					n = NUMBER_1<decltype(n)> / n;
+					n = length / n;
 
 					for (uint32_t i = 0; i < N; ++i) val[i] *= n;
 				}
@@ -302,7 +302,7 @@ namespace aurora {
 			auto theta = std::acos(d) * t;
 			Out tmp[3];
 			for (uint32_t i = 0; i < 3; ++i) tmp[i] = nrmB[i] - nrmA[i] * d;
-			normalize(tmp);
+			normalize(tmp, NUMBER_1<float32_t>);
 
 			auto t1 = a + (b - a) * t;
 			auto s = std::sin(theta);

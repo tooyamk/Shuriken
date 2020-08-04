@@ -308,14 +308,15 @@ namespace aurora {
 			return Math::isEqual(data, value.data, tolerance);
 		}
 
-		inline Vector& AE_CALL normalize() {
-			Math::normalize(data, data);
+		template<typename L = std::conditional_t<std::is_floating_point_v<T>, T, float32_t>, typename = floating_point_t<L>>
+		inline Vector& AE_CALL normalize(L length = Math::NUMBER_1<L>) {
+			Math::normalize(data, length);
 			return *this;
 		}
 
-		template<typename Ret = T>
-		inline void AE_CALL normalize(Vector<N, Ret>& dst) const {
-			Math::normalize<N, T, Ret>(data, dst.data);
+		template<typename L = std::conditional_t<std::is_floating_point_v<T>, T, float32_t>, typename Ret = T, typename = floating_point_t<L>>
+		inline void AE_CALL normalize(Vector<N, Ret>& dst, L length = Math::NUMBER_1<L>) const {
+			Math::normalize<N, T, Ret>(data, dst.data, length);
 		}
 
 		template<typename Ret = T>

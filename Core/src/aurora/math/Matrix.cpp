@@ -231,7 +231,7 @@ namespace aurora {
 		auto& zaxis = forward;
 		float32_t xaxis[3], yaxis[3];
 		Math::cross<float32_t, float32_t>(upward, zaxis, xaxis);
-		Math::normalize<3, float32_t, float32_t>(xaxis, xaxis);
+		Math::normalize(xaxis, 1.0f);
 		Math::cross<float32_t, float32_t>(zaxis, xaxis, yaxis);
 
 		dst.set34(
