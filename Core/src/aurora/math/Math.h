@@ -223,7 +223,7 @@ namespace aurora {
 		template<uint32_t N, typename In, typename Out, typename L, typename = floating_point_t<Out>, typename = floating_point_t<L>>
 		static void AE_CALL normalize(const In(&v)[N], Out(&dst)[N], L length) {
 			if constexpr (sizeof(In) >= sizeof(Out)) {
-				if (auto n = dot<N, In, In, Out>(v, v); !isEqual(n, NUMBER_1<decltype(n)>, TOLERANCE<decltype(n)>)) {
+				if (auto n = dot<N, In, In, Out>(v, v); !isEqual(n, length, TOLERANCE<decltype(n)>)) {
 					n = std::sqrt(n);
 					if (n > TOLERANCE<decltype(n)>) {
 						n = length / n;
@@ -249,7 +249,7 @@ namespace aurora {
 				}
 			} else {
 				Out tmp[N];
-				if (auto n = dot<N, In, In, Out>(v, v); !isEqual(n, NUMBER_1<decltype(n)>, TOLERANCE<decltype(n)>)) {
+				if (auto n = dot<N, In, In, Out>(v, v); !isEqual(n, length, TOLERANCE<decltype(n)>)) {
 					n = std::sqrt(n);
 					if (n > TOLERANCE<decltype(n)>) {
 						n = length / n;
@@ -265,9 +265,14 @@ namespace aurora {
 			}
 		}
 
+		template<uint32_t N, typename In, typename Out, typename = floating_point_t<Out>>
+		inline static void AE_CALL normalize(const In(&v)[N], Out(&dst)[N]) {
+			normalize(v, dst, NUMBER_1<std::remove_cvref_t<Out>>);
+		}
+
 		template<uint32_t N, typename T, typename L, typename = floating_point_t<T>, typename = floating_point_t<L>>
 		static void AE_CALL normalize(T(&val)[N], L length) {
-			if (auto n = dot(val, val); !isEqual(n, NUMBER_1<decltype(n)>, TOLERANCE<decltype(n)>)) {
+			if (auto n = dot(val, val); !isEqual(n, length, TOLERANCE<decltype(n)>)) {
 				n = std::sqrt(n);
 				if (n > TOLERANCE<decltype(n)>) {
 					n = length / n;
@@ -277,7 +282,12 @@ namespace aurora {
 			}
 		}
 
-		template<uint32_t N, typename In1, typename In2, typename Out, typename = floating_point_t<Out>>
+		template<uint32_t N, typename T, typename = floating_point_t<T>>
+		inline static void AE_CALL normalize(T(&val)[N]) {
+			normalize(val, NUMBER_1<std::remove_cvref_t<T>>);
+		}
+
+		template<uint32_t N, typename In1, typename In2, typename Out = decltype((*(In1*)0) + (*(In2*)0)), typename = floating_point_t<Out>>
 		static Out AE_CALL angleBetween(const In1(&v1)[N], const In2(&v2)[N]) {
 			Out n1[N], n2[N];
 			normalize(v1, n1);
