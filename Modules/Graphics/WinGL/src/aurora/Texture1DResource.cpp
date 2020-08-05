@@ -33,8 +33,8 @@ namespace aurora::modules::graphics::win_gl {
 		return _baseTex.perPixelSize;
 	}
 
-	uint32_t Texture1DResource::getSize() const {
-		return _baseTex.texSize[0];
+	const Vec3ui32& Texture1DResource::getSize() const {
+		return _baseTex.texSize;
 	}
 
 	bool Texture1DResource::create(uint32_t width, uint32_t arraySize, uint32_t mipLevels, TextureFormat format, Usage resUsage, const void* const* data) {

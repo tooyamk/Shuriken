@@ -12,7 +12,7 @@ public:
 
 		Application::Style wndStype;
 		wndStype.thickFrame = true;
-		if (app->createWindow(wndStype, "", Box2i32(Vec2i32({ 100, 100 }), Vec2i32({ 800, 600 })), false)) {
+		if (app->createWindow(wndStype, "", Box2i32ui32(Vec2i32({ 100, 100 }), Vec2ui32({ 800, 600 })), false)) {
 			RefPtr gml = new GraphicsModuleLoader();
 
 			if (gml->load(getDLLName("ae-win-gl"))) {
@@ -137,7 +137,7 @@ public:
 
 					{
 						RefPtr rts = graphics->createTexture2DResource();
-						rts->create(Vec2ui32(800, 600), 0, 1, 1, TextureFormat::R8G8B8A8, Usage::RENDERABLE);
+						rts->create(Vec2ui32(800 * 2, 600 * 2), 0, 1, 1, TextureFormat::R8G8B8A8, Usage::RENDERABLE);
 
 						{
 							RefPtr rv = graphics->createRenderView();
@@ -269,6 +269,7 @@ public:
 						renderData.app->pollEvents();
 
 						renderData.g->setRenderTarget(renderData.rt);
+						renderData.g->setViewport(Box2i32ui32(Vec2i32::ZERO, renderData.rt->getSize()));
 						renderData.g->beginRender();
 						renderData.g->clear(ClearFlag::COLOR | ClearFlag::DEPTH | ClearFlag::STENCIL, Vec4f32(0.0f, 0.0f, 0.25f, 1.0f), 1.f, 0);
 
@@ -278,6 +279,7 @@ public:
 
 						renderData.g->endRender();
 
+						/*
 						auto tr = (ITexture2DResource*)renderData.rt->getRenderView(0)->getResource();
 						auto& trSize = tr->getSize();
 						auto pixelsSize = trSize.getMultiplies() * 4;
@@ -319,9 +321,11 @@ public:
 								}
 							}
 						}
+						*/
 
 						//===================================
 						renderData.g->setRenderTarget(nullptr);
+						renderData.g->setViewport(Box2i32ui32(Vec2i32::ZERO, renderData.app->getInnerSize()));
 						renderData.g->beginRender();
 						renderData.g->clear(ClearFlag::COLOR | ClearFlag::DEPTH | ClearFlag::STENCIL, Vec4f32(0.0f, 0.0f, 0.0f, 1.0f), 1.f, 0);
 

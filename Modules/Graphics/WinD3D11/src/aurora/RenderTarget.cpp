@@ -14,6 +14,21 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return this;
 	}
 
+	Vec2ui32 RenderTarget::getSize() const {
+		Vec2ui32 size;
+
+		for (size_t i = 0; i < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i) {
+			if (_views[i]) {
+				if (auto res = _views[i]->getResource(); res && res->isCreated()) {
+					size = res->getSize();
+					break;
+				}
+			}
+		}
+
+		return size;
+	}
+
 	IRenderView* RenderTarget::getRenderView(uint8_t index) const {
 		return index < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT ? _views[index].get() : nullptr;
 	}

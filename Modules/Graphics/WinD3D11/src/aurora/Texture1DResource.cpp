@@ -34,8 +34,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return _baseTexRes.perPixelSize;
 	}
 
-	uint32_t Texture1DResource::getSize() const {
-		return _baseTexRes.texSize[0];
+	const Vec3ui32& Texture1DResource::getSize() const {
+		return _baseTexRes.texSize;
 	}
 
 	bool Texture1DResource::create(uint32_t width, uint32_t arraySize, uint32_t mipLevels, TextureFormat format, Usage resUsage, const void*const* data) {

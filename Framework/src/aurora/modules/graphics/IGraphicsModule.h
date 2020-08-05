@@ -339,6 +339,7 @@ namespace aurora::modules::graphics {
 		virtual uint16_t AE_CALL getPerPixelByteSize() const = 0;
 		virtual TextureFormat AE_CALL getFormat() const = 0;
 		virtual Usage AE_CALL getUsage() const = 0;
+		virtual const Vec3ui32& AE_CALL getSize() const = 0;
 		virtual bool AE_CALL create(const Vec3ui32& size, uint32_t arraySize, uint32_t mipLevels, SampleCount sampleCount, TextureFormat format, Usage resUsage, const void* const* data = nullptr) = 0;
 		virtual Usage AE_CALL map(uint32_t arraySlice, uint32_t mipSlice, Usage expectMapUsage) = 0;
 		virtual void AE_CALL unmap(uint32_t arraySlice, uint32_t mipSlice) = 0;
@@ -356,7 +357,6 @@ namespace aurora::modules::graphics {
 		ITexture1DResource(IGraphicsModule& graphics) : ITextureResource(graphics) {}
 		virtual ~ITexture1DResource() {}
 
-		virtual uint32_t AE_CALL getSize() const = 0;
 		virtual bool AE_CALL create(uint32_t width, uint32_t arraySize, uint32_t mipLevels, TextureFormat format, Usage resUsage, const void*const* data = nullptr) = 0;
 		virtual bool AE_CALL update(uint32_t arraySlice, uint32_t mipSlice, const Box1ui32& range, const void* data) = 0;
 
@@ -371,7 +371,6 @@ namespace aurora::modules::graphics {
 		ITexture2DResource(IGraphicsModule& graphics) : ITextureResource(graphics) {}
 		virtual ~ITexture2DResource() {}
 
-		virtual const Vec2ui32& AE_CALL getSize() const = 0;
 		virtual bool AE_CALL create(const Vec2ui32& size, uint32_t arraySize, uint32_t mipLevels, SampleCount sampleCount, TextureFormat format, Usage resUsage, const void*const* data = nullptr) = 0;
 		virtual bool AE_CALL update(uint32_t arraySlice, uint32_t mipSlice, const Box2ui32& range, const void* data) = 0;
 
@@ -386,7 +385,6 @@ namespace aurora::modules::graphics {
 		ITexture3DResource(IGraphicsModule& graphics) : ITextureResource(graphics) {}
 		virtual ~ITexture3DResource() {}
 
-		virtual const Vec3ui32& AE_CALL getSize() const = 0;
 		virtual bool AE_CALL create(const Vec3ui32& size, uint32_t arraySize, uint32_t mipLevels, TextureFormat format, Usage resUsage, const void*const* data = nullptr) = 0;
 		virtual bool AE_CALL update(uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const void* data) = 0;
 
@@ -457,6 +455,7 @@ namespace aurora::modules::graphics {
 
 		virtual const void* AE_CALL getNative() const = 0;
 
+		virtual Vec2ui32 AE_CALL getSize() const = 0;
 		virtual IRenderView* AE_CALL getRenderView(uint8_t index) const = 0;
 		virtual bool AE_CALL setRenderView(uint8_t index, IRenderView* view) = 0;
 		virtual void AE_CALL eraseRenderViews(uint8_t begin, uint8_t size) = 0;
@@ -812,6 +811,8 @@ namespace aurora::modules::graphics {
 		virtual ITextureView* AE_CALL createTextureView() = 0;
 		virtual IVertexBuffer* AE_CALL createVertexBuffer() = 0;
 
+		virtual Box2i32ui32 AE_CALL getViewport() const = 0;
+		virtual void AE_CALL setViewport(const Box2i32ui32& vp) = 0;
 		virtual void AE_CALL setBlendState(IBlendState* state, const Vec4f32& constantFactors, uint32_t sampleMask = (std::numeric_limits<uint32_t>::max)()) = 0;//unrealized all sampleMask
 		virtual void AE_CALL setDepthStencilState(IDepthStencilState* state, uint32_t stencilFrontRef, uint32_t stencilBackRef) = 0;
 		inline void AE_CALL setDepthStencilState(IDepthStencilState* state, uint32_t stencilRef) {

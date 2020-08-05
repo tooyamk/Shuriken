@@ -41,6 +41,8 @@ namespace aurora::modules::graphics::win_gl {
 		virtual IVertexBuffer* AE_CALL createVertexBuffer() override;
 		virtual IPixelBuffer* AE_CALL createPixelBuffer() override;
 
+		virtual Box2i32ui32 AE_CALL getViewport() const override;
+		virtual void AE_CALL setViewport(const Box2i32ui32& vp) override;
 		virtual void AE_CALL setBlendState(IBlendState* state, const Vec4f32& constantFactors, uint32_t sampleMask = (std::numeric_limits<uint32_t>::max)()) override;
 		virtual void AE_CALL setDepthStencilState(IDepthStencilState* state, uint32_t stencilFrontRef, uint32_t stencilBackRef) override;
 		virtual void AE_CALL setRasterizerState(IRasterizerState* state) override;
@@ -137,6 +139,11 @@ namespace aurora::modules::graphics::win_gl {
 				} ref;
 				InternalStencilState state;
 			} stencil;
+
+			bool isBack;
+			Vec2ui32 backSize;
+			Vec2ui32 canvasSize;
+			Box2i32ui32 vp;
 		} _glStatus;
 
 
@@ -168,9 +175,13 @@ namespace aurora::modules::graphics::win_gl {
 
 		events::EventDispatcher<GraphicsEvent> _eventDispatcher;
 
+		events::EventListener<ApplicationEvent, Graphics> _resizedListener;
+		void AE_CALL _resizedHandler(events::Event<ApplicationEvent>& e);
+
 		bool AE_CALL _glInit();
 		void AE_CALL _setInitState();
 		void AE_CALL _release();
+		void AE_CALL _resize(const Vec2ui32& size);
 
 		void AE_CALL _setBlendState(BlendState& state, const Vec4f32& constantFactors, uint32_t sampleMask);
 		void AE_CALL _setDepthStencilState(DepthStencilState& state, uint32_t stencilFrontRef, uint32_t stencilBackRef);
@@ -185,6 +196,9 @@ namespace aurora::modules::graphics::win_gl {
 
 		template<bool SupportIndependentBlend>
 		void AE_CALL _setDependentBlendState(const InternalRenderTargetBlendState& rt);
+
+		void AE_CALL _updateCanvasSize(const Vec2ui32& size);
+		void AE_CALL _updateViewport();
 
 		static void GLAPIENTRY _debugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam);
 	};

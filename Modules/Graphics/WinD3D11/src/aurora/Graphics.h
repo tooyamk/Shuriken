@@ -36,6 +36,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual IVertexBuffer* AE_CALL createVertexBuffer() override;
 		virtual IPixelBuffer* AE_CALL createPixelBuffer() override;
 
+		virtual Box2i32ui32 AE_CALL getViewport() const override;
+		virtual void AE_CALL setViewport(const Box2i32ui32& vp) override;
 		virtual void AE_CALL setBlendState(IBlendState* state, const Vec4f32& constantFactors, uint32_t sampleMask = (std::numeric_limits<uint32_t>::max)()) override;
 		virtual void AE_CALL setDepthStencilState(IDepthStencilState* state, uint32_t stencilFrontRef, uint32_t stencilBackRef) override;
 		virtual void AE_CALL setRasterizerState(IRasterizerState* state) override;
@@ -290,7 +292,9 @@ namespace aurora::modules::graphics::win_d3d11 {
 			} depthStencil;
 
 			Vec2<UINT> backSize;
+			Box2i32ui32 vp;
 		} _d3dStatus;
+
 
 		ConstantBufferManager _constantBufferManager;
 
@@ -314,7 +318,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		}
 
 		void AE_CALL _release();
-		void AE_CALL _resize(const Vec2<UINT>& size);
+		void AE_CALL _resize(const Vec2ui32& size);
 
 		template<typename T>
 		void AE_CALL _clearD3D11DeviceChildren(std::vector<ProgramUsingSlots::Slot>& slots, void(ID3D11DeviceContext::*fn)(UINT, UINT, T*const*)) {

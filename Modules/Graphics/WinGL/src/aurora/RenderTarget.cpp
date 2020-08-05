@@ -26,6 +26,21 @@ namespace aurora::modules::graphics::win_gl {
 		return this;
 	}
 
+	Vec2ui32 RenderTarget::getSize() const {
+		Vec2ui32 size;
+
+		for (auto& v : _views) {
+			if (v) {
+				if (auto res = v->getResource(); res && res->isCreated()) {
+					size = res->getSize();
+					break;
+				}
+			}
+		}
+
+		return size;
+	}
+
 	IRenderView* RenderTarget::getRenderView(uint8_t index) const {
 		return index < _views.size() ? _views[index].get() : nullptr;
 	}

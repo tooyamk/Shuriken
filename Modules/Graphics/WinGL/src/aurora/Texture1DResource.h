@@ -14,7 +14,7 @@ namespace aurora::modules::graphics::win_gl {
 		virtual SampleCount AE_CALL getSampleCount() const override;
 		virtual TextureFormat AE_CALL getFormat() const override;
 		virtual uint16_t AE_CALL getPerPixelByteSize() const override;
-		virtual uint32_t AE_CALL getSize() const override;
+		virtual const Vec3ui32& AE_CALL getSize() const override;
 		virtual bool AE_CALL create(uint32_t width, uint32_t arraySize, uint32_t mipLevels, TextureFormat format, Usage resUsage, const void* const* data = nullptr) override;
 		virtual Usage AE_CALL getUsage() const override;
 		virtual Usage AE_CALL map(uint32_t arraySlice, uint32_t mipSlice, Usage expectMapUsage) override;

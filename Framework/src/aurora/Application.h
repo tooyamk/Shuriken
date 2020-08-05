@@ -41,17 +41,17 @@ namespace aurora {
 			return _eventDispatcher;
 		}
 
-		bool AE_CALL createWindow(const Style& style, const std::string_view& title, const Box2i32& windowedRect, bool fullscreen);
+		bool AE_CALL createWindow(const Style& style, const std::string_view& title, const Box2i32ui32& windowedRect, bool fullscreen);
 		bool AE_CALL isWindowed() const;
 		void AE_CALL toggleFullscreen();
-		inline Vec2i32 AE_CALL getInnerSize() const {
-			Vec2i32 size(NO_INIT);
+		inline Vec2ui32 AE_CALL getInnerSize() const {
+			Vec2ui32 size(NO_INIT);
 			getInnerSize(size);
 			return size;
 		}
-		void AE_CALL getInnerSize(Vec2i32& size) const;
-		void AE_CALL getWindowedRect(Box2i32& dst) const;
-		void AE_CALL setWindowedRect(const Box2i32& rect);
+		void AE_CALL getInnerSize(Vec2ui32& size) const;
+		void AE_CALL getWindowedRect(Box2i32ui32& dst) const;
+		void AE_CALL setWindowedRect(const Box2i32ui32& rect);
 		void AE_CALL setWindowTitle(const std::string_view& title);
 		void AE_CALL setCursorVisible(bool isVisible);
 		bool AE_CALL hasFocus() const;
@@ -81,12 +81,12 @@ namespace aurora {
 
 		events::EventDispatcher<ApplicationEvent> _eventDispatcher;
 
-		mutable Box2i32 _windowedRect;
-		Box2i32 _wndRect;
+		mutable Box2i32ui32 _windowedRect;
+		Box2i32ui32 _wndRect;
 		
 		mutable std::string _appPath;
 
-		bool AE_CALL _adjustWindowRect(const Box2i32& in, Box2i32& out);
+		bool AE_CALL _adjustWindowRect(const Box2i32ui32& in, Box2i32ui32& out);
 		void AE_CALL _recordWindowedRect() const;
 
 #if AE_OS == AE_OS_WIN

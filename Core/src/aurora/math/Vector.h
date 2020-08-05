@@ -24,18 +24,18 @@ namespace aurora {
 
 		Vector(const NoInit&) {}
 
-		template<typename K, typename = ConvertibleType<K>>
-		Vector(const Vector<N, K>& vec) {
+		template<uint32_t L, typename K, typename = ConvertibleType<K>>
+		Vector(const Vector<L, K>& vec) {
 			set(vec.data);
 		}
 
-		template<typename K, typename = ConvertibleType<K>>
-		Vector(Vector<N, K>&& vec) noexcept {
+		template<uint32_t L, typename K, typename = ConvertibleType<K>>
+		Vector(Vector<L, K>&& vec) noexcept {
 			set(vec.data);
 		}
 
-		template<typename K, typename = ConvertibleType<K>>
-		Vector(const K(&values)[N]) {
+		template<uint32_t L, typename K, typename = ConvertibleType<K>>
+		Vector(const K(&values)[L]) {
 			set(values);
 		}
 
@@ -56,7 +56,6 @@ namespace aurora {
 		template<typename... Args, typename = typename std::enable_if_t<std::conjunction_v<std::is_convertible<Args, T>...>>>
 		Vector(Args&&... args) {
 			set(std::forward<Args>(args)...);
-			if constexpr (N > sizeof...(args) && sizeof...(args) > 1) memset(data + sizeof...(args), 0, sizeof(T) * (N - sizeof...(args)));
 		}
 
 		inline AE_CALL operator Data&() {
@@ -75,13 +74,13 @@ namespace aurora {
 			return data[i];
 		}
 
-		template<typename K, typename = ConvertibleType<K>>
-		inline Vector& AE_CALL operator=(const Vector<N, K>& value) {
+		template<uint32_t L, typename K, typename = ConvertibleType<K>>
+		inline Vector& AE_CALL operator=(const Vector<L, K>& value) {
 			return set(value.data);
 		}
 
-		template<typename K, typename = ConvertibleType<K>>
-		inline Vector& AE_CALL operator=(Vector<N, K>&& value) noexcept {
+		template<uint32_t L, typename K, typename = ConvertibleType<K>>
+		inline Vector& AE_CALL operator=(Vector<L, K>&& value) noexcept {
 			return set(value.data);
 		}
 
@@ -169,25 +168,41 @@ namespace aurora {
 			return N;
 		}
 
-		template<typename K, typename = ConvertibleType<K>>
-		inline Vector& AE_CALL set(const Vector<N, K>& vec) {
+		template<uint32_t L, typename K, typename = ConvertibleType<K>>
+		inline Vector& AE_CALL set(const Vector<L, K>& vec) {
 			return set(vec.data);
 		}
 
-		template<typename K, typename = ConvertibleType<K>>
-		inline Vector& AE_CALL set(const K(&values)[N]) {
+		template<uint32_t L, typename K, typename = ConvertibleType<K>>
+		inline Vector& AE_CALL set(const K(&values)[L]) {
 			if constexpr (std::is_same_v<T, K>) {
-				memcpy(data, values, sizeof(T) * N);
+				if constexpr (L >= N) {
+					memcpy(data, values, sizeof(T) * N);
+				} else {
+					memcpy(data, values, sizeof(T) * L);
+				}
 			} else {
-				for (uint32_t i = 0; i < N; ++i) data[i] = values[i];
+				if constexpr (L >= N) {
+					for (uint32_t i = 0; i < N; ++i) data[i] = values[i];
+				} else {
+					for (uint32_t i = 0; i < L; ++i) data[i] = values[i];
+				}
 			}
+
+			if constexpr (L < N) memset(data + L, 0, sizeof(T) * (N - L));
 
 			return *this;
 		}
 
 		template<typename K, typename = ConvertibleType<K>>
 		inline Vector& AE_CALL set(const K* values, uint32_t len) {
-			for (uint32_t i = 0, n = N > len ? len : N; i < n; ++i) data[i] = values[i];
+			if (len >= N) {
+				for (uint32_t i = 0; i < N; ++i) data[i] = values[i];
+			} else {
+				for (uint32_t i = 0; i < len; ++i) data[i] = values[i];
+				memset(data + len, 0, sizeof(T) * (N - len));
+			}
+
 			return *this;
 		}
 
@@ -204,6 +219,7 @@ namespace aurora {
 				} if constexpr (N >= sizeof...(args)) {
 					uint32_t i = 0;
 					((data[i++] = args), ...);
+					memset(data + sizeof...(args), 0, sizeof(T) * (N - sizeof...(args)));
 				} else {
 					_set<0>(std::forward<Args>(args)...);
 				}

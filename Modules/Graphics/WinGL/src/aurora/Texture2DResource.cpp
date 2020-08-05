@@ -33,8 +33,8 @@ namespace aurora::modules::graphics::win_gl {
 		return _baseTex.perPixelSize;
 	}
 
-	const Vec2ui32& Texture2DResource::getSize() const {
-		return (Vec2ui32&)_baseTex.texSize;
+	const Vec3ui32& Texture2DResource::getSize() const {
+		return _baseTex.texSize;
 	}
 
 	bool Texture2DResource::create(const Vec2ui32& size, uint32_t arraySize, uint32_t mipLevels, SampleCount sampleCount, TextureFormat format, Usage resUsage, const void*const* data) {

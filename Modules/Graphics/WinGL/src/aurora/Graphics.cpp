@@ -31,13 +31,16 @@ namespace aurora::modules::graphics::win_gl {
 		_rc(nullptr),
 		_majorVer(0),
 		_minorVer(0),
-		_intVer(0) {
+		_intVer(0),
+		_resizedListener(&Graphics::_resizedHandler, this) {
+		_resizedListener.ref();
 		_constantBufferManager.createShareConstantBufferCallback = std::bind(&Graphics::_createdShareConstantBuffer, this);
 		_constantBufferManager.createExclusiveConstantBufferCallback = std::bind(&Graphics::_createdExclusiveConstantBuffer, this, std::placeholders::_1);
 		memset(&_internalFeatures, 0, sizeof(InternalFeatures));
 	}
 
 	Graphics::~Graphics() {
+		if (_app) _app->getEventDispatcher().removeEventListener(ApplicationEvent::RESIZED, _resizedListener);
 		_release();
 	}
 
@@ -188,8 +191,6 @@ namespace aurora::modules::graphics::win_gl {
 		//glEnable(GL_MULTISAMPLE);
 		//glDisable(GL_MULTISAMPLE);
 
-		_setInitState();
-
 		_defaultBlendState = new BlendState(*this, true);
 		_defaultDepthStencilState = new DepthStencilState(*this, true);
 		_defaultRasterizerState = new RasterizerState(*this, true);
@@ -197,6 +198,10 @@ namespace aurora::modules::graphics::win_gl {
 		_loader = loader;
 		_app = app;
 		_trans = trans;
+		_app->getEventDispatcher().addEventListener(ApplicationEvent::RESIZED, _resizedListener);
+
+		_setInitState();
+		_resize(_app->getInnerSize());
 
 		return true;
 	}
@@ -287,6 +292,20 @@ namespace aurora::modules::graphics::win_gl {
 
 	IPixelBuffer* Graphics::createPixelBuffer() {
 		return new PixelBuffer(*this);
+	}
+
+	Box2i32ui32 Graphics::getViewport() const {
+		return _glStatus.vp;
+	}
+
+	void Graphics::setViewport(const Box2i32ui32& vp) {
+		if (_app) {
+			if (!memEqual<sizeof(vp)>(&_glStatus.vp, &vp)) {
+				_glStatus.vp = vp;
+
+				_updateViewport();
+			}
+		}
 	}
 
 	void Graphics::setBlendState(IBlendState* state, const Vec4f32& constantFactors, uint32_t sampleMask) {
@@ -439,6 +458,18 @@ namespace aurora::modules::graphics::win_gl {
 			if (needChange) glColorMask(rt.internalWriteMask.rgba[0], rt.internalWriteMask.rgba[1], rt.internalWriteMask.rgba[2], rt.internalWriteMask.rgba[3]);
 			blend.isWriteMaskSame = true;
 		}
+	}
+
+	void Graphics::_updateCanvasSize(const Vec2ui32& size) {
+		if (_glStatus.canvasSize != size) {
+			_glStatus.canvasSize = size;
+			_updateViewport();
+		}
+	}
+
+	void Graphics::_updateViewport() {
+		auto& vp = _glStatus.vp;
+		glViewport(vp.pos[0], (int32_t)_glStatus.canvasSize[1] - (vp.pos[1] + (int32_t)vp.size[1]), vp.size[0], vp.size[1]);
 	}
 
 	void Graphics::setDepthStencilState(IDepthStencilState* state, uint32_t stencilFrontRef, uint32_t stencilBackRef) {
@@ -602,10 +633,6 @@ namespace aurora::modules::graphics::win_gl {
 
 	void Graphics::beginRender() {
 		wglMakeCurrent(_dc, _rc);
-
-		Vec2i32 size;
-		_app->getInnerSize(size);
-		glViewport(0, 0, size[0], size[1]);
 	}
 
 	void Graphics::draw(const IVertexBufferGetter* vertexBufferGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter, const IIndexBuffer* indexBuffer, uint32_t count, uint32_t offset) {
@@ -636,11 +663,14 @@ namespace aurora::modules::graphics::win_gl {
 			if (auto native = (RenderTarget*)rt->getNative(); native) {
 				native->update();
 				glBindFramebuffer(GL_FRAMEBUFFER, native->getInternalBuffer());
+				_updateCanvasSize(rt->getSize());
 			} else {
 				glBindFramebuffer(GL_FRAMEBUFFER, 0);
+				_updateCanvasSize(_glStatus.backSize);
 			}
 		} else {
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			_updateCanvasSize(_glStatus.backSize);
 		}
 	}
 
@@ -734,6 +764,17 @@ namespace aurora::modules::graphics::win_gl {
 	}
 
 	void Graphics::_setInitState() {
+		{
+			_glStatus.isBack = true;
+			_glStatus.backSize = _app->getInnerSize();
+			_glStatus.canvasSize = _glStatus.backSize;
+
+			GLint vp[4];
+			glGetIntegerv(GL_VIEWPORT, vp);
+
+			_glStatus.vp.pos.set(vp[0], (int32_t)_glStatus.canvasSize[1] - (vp[1] + vp[3]));
+			_glStatus.vp.size.set(vp[2], vp[3]);
+		}
 		{
 			auto& clear = _glStatus.clear;
 
@@ -903,6 +944,10 @@ namespace aurora::modules::graphics::win_gl {
 		}
 	}
 
+	void Graphics::_resizedHandler(events::Event<ApplicationEvent>& e) {
+		_resize(_app->getInnerSize());
+	}
+
 	void Graphics::_release() {
 		if (wglGetCurrentContext() == _rc) wglMakeCurrent(nullptr, nullptr);
 
@@ -920,6 +965,11 @@ namespace aurora::modules::graphics::win_gl {
 		_deviceFeatures.reset();
 		_deviceVersion = "OpenGL Unknown";
 		_bufferCreateUsageMask = Usage::NONE;
+	}
+
+	void Graphics::_resize(const Vec2ui32& size) {
+		_glStatus.backSize = size;
+		_updateViewport();
 	}
 
 	void Graphics::_checkBlendFuncIsSame() {

@@ -256,8 +256,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			if (numQualityLevels) _deviceFeatures.maxSampleCount = i;
 		}
 
-		Vec2i32 size;
-		app->getInnerSize(size);
+		auto size = app->getInnerSize();
 
 		_backBufferSampleCount = sampleCount > _deviceFeatures.maxSampleCount ? _deviceFeatures.maxSampleCount : sampleCount;
 		DXGI_SWAP_CHAIN_DESC swapChainDesc = { 0 };
@@ -282,6 +281,15 @@ namespace aurora::modules::graphics::win_d3d11 {
 			return false;
 		}
 
+		{
+			UINT n = 1;
+			D3D11_VIEWPORT dvp;
+			_context->RSGetViewports(&n, &dvp);
+
+			_d3dStatus.vp.pos.set(dvp.TopLeftX, dvp.TopLeftY);
+			_d3dStatus.vp.size.set(dvp.Width, dvp.Height);
+		}
+
 		_defaultBlendState = new BlendState(*this, true);
 		_defaultDepthStencilState = new DepthStencilState(*this, true);
 		_defaultRasterizerState = new RasterizerState(*this, true);
@@ -291,7 +299,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_app = app;
 		_app->getEventDispatcher().addEventListener(ApplicationEvent::RESIZED, _resizedListener);
 
-		_resize((Vec2<UINT>&)size);
+		_resize(size);
 
 		return true;
 	}
@@ -374,6 +382,28 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 	IPixelBuffer* Graphics::createPixelBuffer() {
 		return nullptr;
+	}
+
+	Box2i32ui32 Graphics::getViewport() const {
+		return _d3dStatus.vp;
+	}
+
+	void Graphics::setViewport(const Box2i32ui32& vp) {
+		if (_context) {
+			if (!memEqual<sizeof(vp)>(&_d3dStatus.vp, &vp)) {
+				_d3dStatus.vp = vp;
+
+				D3D11_VIEWPORT dvp;
+				dvp.Width = vp.size[0];
+				dvp.Height = vp.size[1];
+				dvp.MinDepth = 0.0f;
+				dvp.MaxDepth = 1.0f;
+				dvp.TopLeftX = vp.pos[0];
+				dvp.TopLeftY = vp.pos[1];
+
+				_context->RSSetViewports(1, &dvp);
+			}
+		}
 	}
 
 	void Graphics::setBlendState(IBlendState* state, const Vec4f32& constantFactors, uint32_t sampleMask) {
@@ -583,9 +613,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	void Graphics::_resizedHandler(events::Event<ApplicationEvent>& e) {
-		Vec2i32 size;
-		_app->getInnerSize(size);
-		_resize((Vec2<UINT>&)size);
+		_resize(_app->getInnerSize());
 	}
 
 	void Graphics::_release() {
@@ -619,8 +647,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_deviceVersion = "D3D Unknown";
 	}
 
-	void Graphics::_resize(const Vec2<UINT>& size) {
-		if (!_swapChain || size == Vec2<UINT>::ZERO || _d3dStatus.backSize == size) return;
+	void Graphics::_resize(const Vec2ui32& size) {
+		if (!_swapChain || size == Vec2ui32::ZERO || _d3dStatus.backSize == size) return;
 
 		_d3dStatus.backSize = size;
 

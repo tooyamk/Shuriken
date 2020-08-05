@@ -30,7 +30,7 @@ namespace aurora {
 #endif
 	}
 
-	bool Application::createWindow(const Style& style, const std::string_view& title, const Box2i32& windowedRect, bool fullscreen) {
+	bool Application::createWindow(const Style& style, const std::string_view& title, const Box2i32ui32& windowedRect, bool fullscreen) {
 		_windowedRect.set(windowedRect);
 		_isWindowed = !fullscreen;
 		_style = style;
@@ -96,7 +96,7 @@ namespace aurora {
 #endif
 	}
 
-	void Application::getInnerSize(Vec2i32& size) const {
+	void Application::getInnerSize(Vec2ui32& size) const {
 #if AE_OS == AE_OS_WIN
 		RECT rect;
 		GetClientRect(_hWnd, &rect);
@@ -106,15 +106,15 @@ namespace aurora {
 #endif
 	}
 
-	void Application::getWindowedRect(Box2i32& dst) const {
+	void Application::getWindowedRect(Box2i32ui32& dst) const {
 #if AE_OS == AE_OS_WIN
 		if (_isWindowed) _recordWindowedRect();
 #endif
 		dst.set(_windowedRect);
 	}
 
-	void Application::setWindowedRect(const Box2i32& rect) {
-		Box2i32 out;
+	void Application::setWindowedRect(const Box2i32ui32& rect) {
+		Box2i32ui32 out;
 		if (_adjustWindowRect(rect, out)) {
 #if AE_OS == AE_OS_WIN
 			_lastWndInnerRect.left = rect.pos[0];
@@ -204,7 +204,7 @@ namespace aurora {
 		return _appPath;
 	}
 
-	bool Application::_adjustWindowRect(const Box2i32& in, Box2i32& out) {
+	bool Application::_adjustWindowRect(const Box2i32ui32& in, Box2i32ui32& out) {
 #if AE_OS == AE_OS_WIN
 		RECT rect = { in.pos[0], in.pos[1], in.pos[0] + in.size[0], in.pos[1] + in.size[1] };
 		auto rst = AdjustWindowRectEx(&rect, _getWindowStyle(), FALSE, _getWindowExStyle());
