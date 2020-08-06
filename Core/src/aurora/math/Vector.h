@@ -216,7 +216,7 @@ namespace aurora {
 			if constexpr (N > 0) {
 				if constexpr (sizeof...(args) == 1) {
 					_setAll(std::forward<Args>(args)...);
-				} if constexpr (N >= sizeof...(args)) {
+				} else if constexpr (N >= sizeof...(args)) {
 					uint32_t i = 0;
 					((data[i++] = args), ...);
 					memset(data + sizeof...(args), 0, sizeof(T) * (N - sizeof...(args)));

@@ -692,16 +692,6 @@ namespace aurora::modules::graphics::win_d3d11 {
 				_context->OMSetRenderTargets(1, (ID3D11RenderTargetView**)&_backBufferView, _backDepthStencil->getInternalView());
 			}
 
-			D3D11_VIEWPORT vp;
-			vp.Width = (FLOAT)size[0];
-			vp.Height = (FLOAT)size[1];
-			vp.MinDepth = 0.0f;
-			vp.MaxDepth = 1.0f;
-			vp.TopLeftX = 0.0f;
-			vp.TopLeftY = 0.0f;
-
-			_context->RSSetViewports(1, &vp);
-
 			InvalidateRect(nullptr, nullptr, TRUE);
 		}
 	}
