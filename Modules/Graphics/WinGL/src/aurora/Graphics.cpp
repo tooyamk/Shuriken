@@ -663,13 +663,16 @@ namespace aurora::modules::graphics::win_gl {
 			if (auto native = (RenderTarget*)rt->getNative(); native) {
 				native->update();
 				glBindFramebuffer(GL_FRAMEBUFFER, native->getInternalBuffer());
+				_glStatus.isBack = false;
 				_updateCanvasSize(rt->getSize());
 			} else {
 				glBindFramebuffer(GL_FRAMEBUFFER, 0);
+				_glStatus.isBack = true;
 				_updateCanvasSize(_glStatus.backSize);
 			}
 		} else {
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			_glStatus.isBack = true;
 			_updateCanvasSize(_glStatus.backSize);
 		}
 	}
@@ -969,7 +972,7 @@ namespace aurora::modules::graphics::win_gl {
 
 	void Graphics::_resize(const Vec2ui32& size) {
 		_glStatus.backSize = size;
-		_updateViewport();
+		if (_glStatus.isBack) _updateCanvasSize(_glStatus.backSize);
 	}
 
 	void Graphics::_checkBlendFuncIsSame() {
