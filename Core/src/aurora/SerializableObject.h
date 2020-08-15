@@ -438,6 +438,10 @@ namespace aurora {
 			return isEqual(right);
 		}
 
+		inline bool operator!=(const SerializableObject& right) const {
+			return !isEqual(right);
+		}
+
 	private:
 		enum class InternalType : uint8_t {
 			UNVALID = (uint8_t)Type::INVALID,
