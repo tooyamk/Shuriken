@@ -838,6 +838,15 @@ namespace aurora {
 		}
 	}
 
+	SerializableObject* SerializableObject::tryAtPtr(size_t index) const {
+		if (_type == Type::ARRAY) {
+			Array* arr = _getValue<Array*>();
+			return index < arr->value.size() ? &arr->value[index] : nullptr;
+		} else {
+			return nullptr;
+		}
+	}
+
 	SerializableObject& SerializableObject::push() {
 		return _getArray()->value.emplace_back();
 	}
@@ -877,7 +886,18 @@ namespace aurora {
 		return map->value.emplace(std::piecewise_construct, std::forward_as_tuple(key), std::forward_as_tuple()).first->second;
 	}
 
-	SerializableObject* SerializableObject::tryGet(const SerializableObject& key) const {
+	SerializableObject SerializableObject::tryGet(const SerializableObject& key) const {
+		if (_type == Type::MAP) {
+			Map* map = _getValue<Map*>();
+
+			auto itr = map->value.find(key);
+			return itr == map->value.end() ? std::move(SerializableObject()) : itr->second;
+		} else {
+			return std::move(SerializableObject());
+		}
+	}
+
+	SerializableObject* SerializableObject::tryGetPtr(const SerializableObject& key) const {
 		if (_type == Type::MAP) {
 			Map* map = _getValue<Map*>();
 

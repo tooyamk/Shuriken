@@ -277,6 +277,7 @@ namespace aurora {
 
 		SerializableObject& AE_CALL at(size_t index);
 		SerializableObject AE_CALL tryAt(size_t index) const;
+		SerializableObject* AE_CALL tryAtPtr(size_t index) const;
 		SerializableObject& AE_CALL push();
 		SerializableObject& AE_CALL push(const SerializableObject& value);
 		SerializableObject AE_CALL removeAt(size_t index);
@@ -295,18 +296,31 @@ namespace aurora {
 			so._getValue<const std::string_view*>() = &key;
 			return get(so);
 		}
-		SerializableObject* AE_CALL tryGet(const SerializableObject& key) const;
-		inline SerializableObject* AE_CALL tryGet(const char* key) const {
+		SerializableObject AE_CALL tryGet(const SerializableObject& key) const;
+		inline SerializableObject AE_CALL tryGet(const char* key) const {
 			return tryGet(std::string_view(key, strlen(key)));
 		}
-		inline SerializableObject* AE_CALL tryGet(const std::string& key) const {
+		inline SerializableObject AE_CALL tryGet(const std::string& key) const {
 			return tryGet(std::string_view(key));
 		}
-		inline SerializableObject* AE_CALL tryGet(const std::string_view& key) const {
+		inline SerializableObject AE_CALL tryGet(const std::string_view& key) const {
 			SerializableObject so;
 			so._type = Type::STD_SV;
 			so._getValue<const std::string_view*>() = &key;
 			return tryGet(so);
+		}
+		SerializableObject* AE_CALL tryGetPtr(const SerializableObject& key) const;
+		inline SerializableObject* AE_CALL tryGetPtr(const char* key) const {
+			return tryGetPtr(std::string_view(key, strlen(key)));
+		}
+		inline SerializableObject* AE_CALL tryGetPtr(const std::string& key) const {
+			return tryGetPtr(std::string_view(key));
+		}
+		inline SerializableObject* AE_CALL tryGetPtr(const std::string_view& key) const {
+			SerializableObject so;
+			so._type = Type::STD_SV;
+			so._getValue<const std::string_view*>() = &key;
+			return tryGetPtr(so);
 		}
 		SerializableObject& AE_CALL insert(const SerializableObject& key, const SerializableObject& value);
 		inline SerializableObject& AE_CALL insert(const char* key, const SerializableObject& value) {
