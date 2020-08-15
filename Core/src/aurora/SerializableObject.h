@@ -295,14 +295,14 @@ namespace aurora {
 			so._getValue<const std::string_view*>() = &key;
 			return get(so);
 		}
-		SerializableObject AE_CALL tryGet(const SerializableObject& key) const;
-		inline SerializableObject AE_CALL tryGet(const char* key) const {
+		SerializableObject* AE_CALL tryGet(const SerializableObject& key) const;
+		inline SerializableObject* AE_CALL tryGet(const char* key) const {
 			return tryGet(std::string_view(key, strlen(key)));
 		}
-		inline SerializableObject AE_CALL tryGet(const std::string& key) const {
+		inline SerializableObject* AE_CALL tryGet(const std::string& key) const {
 			return tryGet(std::string_view(key));
 		}
-		inline SerializableObject AE_CALL tryGet(const std::string_view& key) const {
+		inline SerializableObject* AE_CALL tryGet(const std::string_view& key) const {
 			SerializableObject so;
 			so._type = Type::STD_SV;
 			so._getValue<const std::string_view*>() = &key;

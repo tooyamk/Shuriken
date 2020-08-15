@@ -877,14 +877,14 @@ namespace aurora {
 		return map->value.emplace(std::piecewise_construct, std::forward_as_tuple(key), std::forward_as_tuple()).first->second;
 	}
 
-	SerializableObject SerializableObject::tryGet(const SerializableObject& key) const {
+	SerializableObject* SerializableObject::tryGet(const SerializableObject& key) const {
 		if (_type == Type::MAP) {
 			Map* map = _getValue<Map*>();
 
 			auto itr = map->value.find(key);
-			return itr == map->value.end() ? std::move(SerializableObject()) : itr->second;
+			return itr == map->value.end() ? nullptr : &itr->second;
 		} else {
-			return std::move(SerializableObject());
+			return nullptr;
 		}
 	}
 

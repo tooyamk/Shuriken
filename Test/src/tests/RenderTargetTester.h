@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../BaseTester.h"
+#include <random>
 
 class RenderTargetTester : public BaseTester {
 public:
