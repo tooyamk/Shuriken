@@ -272,13 +272,9 @@ namespace aurora {
 
 		template<uint32_t N, typename T, typename L, typename = floating_point_t<T>, typename = floating_point_t<L>>
 		static void AE_CALL normalize(T(&val)[N], L length) {
-			if (auto n = dot(val, val); !isEqual(n, length, TOLERANCE<decltype(n)>)) {
-				n = std::sqrt(n);
-				if (n > TOLERANCE<decltype(n)>) {
-					n = length / n;
-
-					for (uint32_t i = 0; i < N; ++i) val[i] *= n;
-				}
+			if (auto n = dot(val, val); !isEqual(n, NUMBER_1<L>, TOLERANCE<decltype(n)>)) {
+				auto k = length / std::sqrt(n);
+				for (uint32_t i = 0; i < N; ++i) val[i] *= k;
 			}
 		}
 
