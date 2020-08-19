@@ -119,7 +119,7 @@ namespace aurora {
 		auto& zaxis = forward;
 		float32_t xaxis[3], yaxis[3];
 		Math::cross<float32_t, float32_t>(upward, zaxis, xaxis);
-		Math::normalize(xaxis, 1.0f);
+		Math::normalize(xaxis);
 		Math::cross<float32_t, float32_t>(zaxis, xaxis, yaxis);
 
 		auto w = std::sqrt(1.f + xaxis[0] + yaxis[1] + zaxis[2]) * .5f;

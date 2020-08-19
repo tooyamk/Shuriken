@@ -220,13 +220,13 @@ namespace aurora {
 			return sq;
 		}
 
-		template<uint32_t N, typename In, typename Out, typename L, typename = floating_point_t<Out>, typename = floating_point_t<L>>
-		static void AE_CALL normalize(const In(&v)[N], Out(&dst)[N], L length) {
+		template<uint32_t N, typename In, typename Out>
+		static void AE_CALL normalize(const In(&v)[N], Out(&dst)[N]) {
 			if constexpr (sizeof(In) >= sizeof(Out)) {
-				if (auto n = dot<N, In, In, Out>(v, v); !isEqual(n, length, TOLERANCE<decltype(n)>)) {
+				if (auto n = dot<N, In, In, Out>(v, v); !isEqual(n, NUMBER_1<decltype(n)>, TOLERANCE<decltype(n)>)) {
 					n = std::sqrt(n);
 					if (n > TOLERANCE<decltype(n)>) {
-						n = length / n;
+						n = NUMBER_1<decltype(n)> / n;
 
 						if ((void*)&v >= (void*)&dst) {
 							for (uint32_t i = 0; i < N; ++i) dst[i] = v[i] * n;
@@ -249,10 +249,10 @@ namespace aurora {
 				}
 			} else {
 				Out tmp[N];
-				if (auto n = dot<N, In, In, Out>(v, v); !isEqual(n, length, TOLERANCE<decltype(n)>)) {
+				if (auto n = dot<N, In, In, Out>(v, v); !isEqual(n, NUMBER_1<decltype(n)>, TOLERANCE<decltype(n)>)) {
 					n = std::sqrt(n);
 					if (n > TOLERANCE<decltype(n)>) {
-						n = length / n;
+						n = NUMBER_1<decltype(n)> / n;
 
 						for (uint32_t i = 0; i < N; ++i) tmp[i] = v[i] * n;
 					} else {
@@ -265,22 +265,16 @@ namespace aurora {
 			}
 		}
 
-		template<uint32_t N, typename In, typename Out, typename = floating_point_t<Out>>
-		inline static void AE_CALL normalize(const In(&v)[N], Out(&dst)[N]) {
-			normalize(v, dst, NUMBER_1<std::remove_cvref_t<Out>>);
-		}
+		template<uint32_t N, typename T>
+		static void AE_CALL normalize(T(&val)[N]) {
+			if (auto n = dot(val, val); !isEqual(n, NUMBER_1<decltype(n)>, TOLERANCE<decltype(n)>)) {
+				n = std::sqrt(n);
+				if (n > TOLERANCE<decltype(n)>) {
+					n = NUMBER_1<decltype(n)> / n;
 
-		template<uint32_t N, typename T, typename L, typename = floating_point_t<T>, typename = floating_point_t<L>>
-		static void AE_CALL normalize(T(&val)[N], L length) {
-			if (auto n = dot(val, val); !isEqual(n, NUMBER_1<L>, TOLERANCE<decltype(n)>)) {
-				auto k = length / std::sqrt(n);
-				for (uint32_t i = 0; i < N; ++i) val[i] *= k;
+					for (uint32_t i = 0; i < N; ++i) val[i] *= n;
+				}
 			}
-		}
-
-		template<uint32_t N, typename T, typename = floating_point_t<T>>
-		inline static void AE_CALL normalize(T(&val)[N]) {
-			normalize(val, NUMBER_1<std::remove_cvref_t<T>>);
 		}
 
 		template<uint32_t N, typename In1, typename In2, typename Out = decltype((*(In1*)0) + (*(In2*)0)), typename = floating_point_t<Out>>
