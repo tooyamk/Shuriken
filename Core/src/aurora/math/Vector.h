@@ -164,6 +164,12 @@ namespace aurora {
 			div(vec);
 		}
 
+		inline Vector<N, T> AE_CALL operator-() const {
+			Vector<N, T> val(NO_INIT);
+			for (size_t i = 0; i < N; ++i) val.data[i] = -data[i];
+			return val;
+		}
+
 		inline constexpr uint32_t AE_CALL getSize() const {
 			return N;
 		}
