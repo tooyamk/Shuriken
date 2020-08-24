@@ -56,7 +56,6 @@ namespace aurora::modules::graphics {
 
 	RenderTargetBlendState::RenderTargetBlendState() :
 		enabled(false),
-		op({ BlendOp::ADD, BlendOp::ADD } ),
 		writeMask(true) {
 	}
 }

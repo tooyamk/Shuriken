@@ -159,14 +159,14 @@ namespace aurora::modules::graphics::win_gl {
 
 		_internalFeatures.maxAnisotropy = 1.f;
 		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &_internalFeatures.maxAnisotropy);
-		
+
 		_deviceFeatures.pixelBuffer = true;
 		_deviceFeatures.constantBuffer = isGreatThanOrEqualVersion(3, 1) || glewIsSupported("GL_ARB_uniform_buffer_object");
 		_deviceFeatures.sampler = isGreatThanOrEqualVersion(3, 3) || glewIsSupported("GL_ARB_sampler_objects");
 		_deviceFeatures.independentBlend = isGreatThanOrEqualVersion(4, 0) ||
 			(isGreatThanOrEqualVersion(3, 0) &&
-			glewIsSupported("GL_EXT_blend_func_separate") &&
-			glewIsSupported("GL_EXT_blend_equation_separate"));
+				glewIsSupported("GL_EXT_blend_func_separate") &&
+				glewIsSupported("GL_EXT_blend_equation_separate"));
 		_internalFeatures.supportTexStorage = isGreatThanOrEqualVersion(4, 2) || glewIsSupported("GL_ARB_texture_storage");
 		_deviceFeatures.nativeTextureView = isGreatThanOrEqualVersion(4, 3) || glewIsSupported("ARB_texture_view");
 		_deviceFeatures.nativeRenderView = _deviceFeatures.nativeTextureView;
@@ -300,7 +300,7 @@ namespace aurora::modules::graphics::win_gl {
 
 	void Graphics::setViewport(const Box2i32ui32& vp) {
 		if (_app) {
-			if (!memEqual<sizeof(vp)>(&_glStatus.vp, &vp)) {
+			if (_glStatus.vp != vp) {
 				_glStatus.vp = vp;
 
 				_updateViewport();
@@ -370,7 +370,7 @@ namespace aurora::modules::graphics::win_gl {
 			_setDependentBlendState<false>(state.getInternalRenderTargetState(0));
 		}
 
-		if (blend.enabled && !memEqual<sizeof(Vec4f32)>(&blend.constantFactors, &constantFactors)) {
+		if (blend.enabled && blend.constantFactors != constantFactors) {
 			glBlendColor(constantFactors.data[0], constantFactors.data[1], constantFactors.data[2], constantFactors.data[3]);
 			memcpy(&blend.constantFactors, &constantFactors, sizeof(Vec4f32));
 		}
@@ -560,10 +560,10 @@ namespace aurora::modules::graphics::win_gl {
 				if (stencil.state.face.front.mask.write != iss.face.front.mask.write) glStencilMaskSeparate(GL_FRONT, iss.face.front.mask.write);
 				if (stencil.state.face.back.mask.write != iss.face.back.mask.write) glStencilMaskSeparate(GL_BACK, iss.face.back.mask.write);
 
-				if (!memEqual<sizeof(stencil.state.face.front.op)>(&stencil.state.face.front.op, &iss.face.front.op))
+				if (stencil.state.face.front.op.featureValue != iss.face.front.op.featureValue)
 					glStencilOpSeparate(GL_FRONT, iss.face.front.op.fail, iss.face.front.op.depthFail, iss.face.front.op.pass);
 
-				if (!memEqual<sizeof(stencil.state.face.back.op)>(&stencil.state.face.back.op, &iss.face.back.op))
+				if (stencil.state.face.back.op.featureValue != iss.face.back.op.featureValue)
 					glStencilOpSeparate(GL_BACK, iss.face.back.op.fail, iss.face.back.op.depthFail, iss.face.back.op.pass);
 
 				stencil.state.face = iss.face;
@@ -681,7 +681,7 @@ namespace aurora::modules::graphics::win_gl {
 		GLbitfield mask = 0;
 		if ((flags & ClearFlag::COLOR) != ClearFlag::NONE) {
 			mask |= GL_COLOR_BUFFER_BIT;
-			if (!memEqual<sizeof(Vec4f32)>(_glStatus.clear.color.data, color.data)) {
+			if (_glStatus.clear.color != color) {
 				glClearColor(color.data[0], color.data[1], color.data[2], color.data[3]);
 				memcpy(_glStatus.clear.color.data, color.data, sizeof(Vec4f32));
 			}

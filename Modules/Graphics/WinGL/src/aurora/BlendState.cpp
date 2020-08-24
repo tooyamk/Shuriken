@@ -32,7 +32,7 @@ namespace aurora::modules::graphics::win_gl {
 
 	bool BlendState::setRenderTargetState(uint8_t index, const RenderTargetBlendState& state) {
 		if (index < MAX_MRT_COUNT) {
-			if (!memEqual<sizeof(state)>(&_status[index].state, &state)) {
+			if (_status[index].state != state) {
 				_status[index].state = state;
 				_updateInternalState(index);
 			}
@@ -110,7 +110,7 @@ namespace aurora::modules::graphics::win_gl {
 		internalFunc.srcAlpha = _convertBlendFactor(func.srcAlpha);
 		internalFunc.dstAlpha = _convertBlendFactor(func.dstAlpha);
 
-		auto& op = rt.state.op;
+		auto& op = rt.state.equation;
 		auto& internalOp = rt.internalOp;
 		internalOp.color = _convertBlendOp(op.color);
 		internalOp.alpha = _convertBlendOp(op.alpha);

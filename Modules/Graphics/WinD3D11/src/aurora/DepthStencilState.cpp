@@ -26,11 +26,11 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	void DepthStencilState::setDepthState(const DepthState& depthState) {
-		if (!memEqual<sizeof(_depthState)>(&_depthState, &depthState)) {
+		if (_depthState != depthState) {
 			_depthState = depthState;
 			_updateDepth();
 
-			_setDirty(!memEqual<sizeof(_depthState)>(&_depthState, &_oldDepthState), DirtyFlag::DEPTH);
+			_setDirty(_depthState != _oldDepthState, DirtyFlag::DEPTH);
 		}
 	}
 
@@ -45,11 +45,11 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	void DepthStencilState::setStencilState(const StencilState& stencilState) {
-		if (!memEqual<sizeof(_stencilState)>(&_stencilState, &stencilState)) {
+		if (_stencilState != stencilState) {
 			_stencilState = stencilState;
 			_updateStencil();
 
-			_setDirty(!memEqual<sizeof(_stencilState)>(&_stencilState, &_oldStencilState), DirtyFlag::STENCIL);
+			_setDirty(_stencilState != _oldStencilState, DirtyFlag::STENCIL);
 		}
 	}
 

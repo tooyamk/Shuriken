@@ -55,11 +55,21 @@ namespace aurora::modules::graphics::win_gl {
 
 
 	struct InternalRasterizerState {
-		bool cullEnabled;
-		uint8_t unused = 0;
-		uint16_t fillMode;
-		uint16_t cullMode;
-		uint16_t frontFace;
+		InternalRasterizerState() :
+			featureValue(0) {
+		}
+
+		union {
+			uint64_t featureValue;
+
+			struct {
+				bool cullEnabled;
+				uint8_t reserved;
+				uint16_t fillMode;
+				uint16_t cullMode;
+				uint16_t frontFace;
+			};
+		};
 	};
 
 
@@ -77,22 +87,39 @@ namespace aurora::modules::graphics::win_gl {
 
 
 	struct InternalStencilFaceState {
+		InternalStencilFaceState() {
+			mask.featureValue = 0;
+			op.featureValue = 0;
+		}
+
 		uint16_t func;
+
 		struct {
-			uint16_t fail;
-			uint16_t depthFail;
-			uint16_t pass;
-		} op;
-		struct {
-			uint8_t read;
-			uint8_t write;
+			union {
+				uint16_t featureValue;
+
+				uint8_t read;
+				uint8_t write;
+			};
 		} mask;
+
+		struct {
+			union {
+				uint64_t featureValue;
+
+				struct {
+					uint16_t fail;
+					uint16_t depthFail;
+					uint16_t pass;
+					uint16_t reserved;
+				};
+			};
+		} op;
 	};
 
 
 	struct InternalStencilState {
 		bool enabled;
-		uint8_t unused = 0;
 		
 		struct {
 			InternalStencilFaceState front;

@@ -41,12 +41,12 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 	bool BlendState::setRenderTargetState(uint8_t index, const RenderTargetBlendState& state) {
 		if (index < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT) {
-			if (!memEqual<sizeof(state)>(&_rtStatus[index], &state)) {
+			if (_rtStatus[index] != state) {
 				_rtStatus[index] = state;
 
 				_setRenderTargetState(index, state);
 
-				_setDirty(!memEqual<sizeof(state)>(&_oldRtStatus[index], &_rtStatus[index]), DirtyFlag::RT_STATE);
+				_setDirty(_oldRtStatus[index] != _rtStatus[index], DirtyFlag::RT_STATE);
 			}
 
 			return true;
@@ -61,8 +61,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 		stateDesc.SrcBlendAlpha = _convertBlendFactor(state.func.srcAlpha);
 		stateDesc.DestBlend = _convertBlendFactor(state.func.dstColor);
 		stateDesc.DestBlendAlpha = _convertBlendFactor(state.func.dstAlpha);
-		stateDesc.BlendOp = _convertBlendOp(state.op.color);
-		stateDesc.BlendOpAlpha = _convertBlendOp(state.op.alpha);
+		stateDesc.BlendOp = _convertBlendOp(state.equation.color);
+		stateDesc.BlendOpAlpha = _convertBlendOp(state.equation.alpha);
 		stateDesc.RenderTargetWriteMask =
 			(state.writeMask.data[0] ? D3D11_COLOR_WRITE_ENABLE_RED : 0) |
 			(state.writeMask.data[1] ? D3D11_COLOR_WRITE_ENABLE_GREEN : 0) |

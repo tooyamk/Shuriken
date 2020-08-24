@@ -390,7 +390,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 	void Graphics::setViewport(const Box2i32ui32& vp) {
 		if (_context) {
-			if (!memEqual<sizeof(vp)>(&_d3dStatus.vp, &vp)) {
+			if (_d3dStatus.vp != vp) {
 				_d3dStatus.vp = vp;
 
 				D3D11_VIEWPORT dvp;
@@ -422,7 +422,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		state.update();
 		auto& blend = _d3dStatus.blend;
 		if (auto internalState = state.getInternalState(); internalState &&
-			(blend.featureValue != state.getFeatureValue() || !memEqual<sizeof(blend.constantFactors)>(&blend.constantFactors, &constantFactors) || blend.sampleMask != sampleMask)) {
+			(blend.featureValue != state.getFeatureValue() || blend.constantFactors != constantFactors || blend.sampleMask != sampleMask)) {
 			blend.featureValue = state.getFeatureValue();
 			blend.constantFactors.set(constantFactors);
 			blend.sampleMask = sampleMask;

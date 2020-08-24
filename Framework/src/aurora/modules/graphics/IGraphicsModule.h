@@ -114,6 +114,18 @@ namespace aurora::modules::graphics {
 			type(type) {
 		}
 
+		inline bool AE_CALL operator==(const VertexFormat& val) const {
+			return featureValue == val.featureValue;
+		}
+
+		inline bool AE_CALL operator!=(const VertexFormat& val) const {
+			return featureValue != val.featureValue;
+		}
+
+		inline void AE_CALL operator=(const VertexFormat& val) {
+			featureValue = val.featureValue;
+		}
+
 		template<uint32_t Size, typename Type>
 		inline void AE_CALL set() {
 			if constexpr (Size <= (decltype(Size))VertexSize::FOUR) {
@@ -141,8 +153,14 @@ namespace aurora::modules::graphics {
 			}
 		}
 
-		VertexSize size;
-		VertexType type;
+		union {
+			uint16_t featureValue;
+
+			struct {
+				VertexSize size;
+				VertexType type;
+			};
+		};
 	};
 
 
@@ -246,21 +264,29 @@ namespace aurora::modules::graphics {
 		SamplerFilter(const SamplerFilter& filter);
 
 		inline bool AE_CALL operator==(const SamplerFilter& val) const {
-			return memEqual<sizeof(SamplerFilter)>(this, &val);
+			return featureValue == val.featureValue;
 		}
 
 		inline bool AE_CALL operator!=(const SamplerFilter& val) const {
-			return !memEqual<sizeof(SamplerFilter)>(this, &val);
+			return featureValue != val.featureValue;
 		}
 
 		inline void AE_CALL operator=(const SamplerFilter& val) {
-			memcpy(this, &val, sizeof(SamplerFilter));
+			featureValue = val.featureValue;
 		}
 
-		SamplerFilterOperation operation;
-		SamplerFilterMode minification;
-		SamplerFilterMode magnification;
-		SamplerFilterMode mipmap;
+		union {
+			uint32_t featureValue;
+
+			struct {
+				SamplerFilterOperation operation;
+				SamplerFilterMode minification;
+				SamplerFilterMode magnification;
+				SamplerFilterMode mipmap;
+			};
+		};
+
+		
 	};
 
 
@@ -522,15 +548,15 @@ namespace aurora::modules::graphics {
 		BlendFunc(const BlendFunc& func);
 
 		inline bool AE_CALL operator==(const BlendFunc& val) const {
-			return memEqual<sizeof(BlendFunc)>(this, &val);
+			return featureValue == val.featureValue;
 		}
 
 		inline bool AE_CALL operator!=(const BlendFunc& val) const {
-			return !memEqual<sizeof(BlendFunc)>(this, &val);
+			return featureValue != val.featureValue;
 		}
 
 		inline void AE_CALL operator=(const BlendFunc& val) {
-			memcpy(this, &val, sizeof(BlendFunc));
+			featureValue = val.featureValue;
 		}
 		
 		inline BlendFunc& AE_CALL set(BlendFactor src, BlendFactor dst) {
@@ -546,10 +572,16 @@ namespace aurora::modules::graphics {
 			return *this;
 		}
 
-		BlendFactor srcColor;
-		BlendFactor dstColor;
-		BlendFactor srcAlpha;
-		BlendFactor dstAlpha;
+		union {
+			uint32_t featureValue;
+
+			struct {
+				BlendFactor srcColor;
+				BlendFactor dstColor;
+				BlendFactor srcAlpha;
+				BlendFactor dstAlpha;
+			};
+		};
 	};
 
 
@@ -560,15 +592,15 @@ namespace aurora::modules::graphics {
 		BlendEquation(const BlendEquation& op);
 
 		inline bool AE_CALL operator==(const BlendEquation& val) const {
-			return memEqual<sizeof(BlendEquation)>(this, &val);
+			return featureValue == val.featureValue;
 		}
 
 		inline bool AE_CALL operator!=(const BlendEquation& val) const {
-			return !memEqual<sizeof(BlendEquation)>(this, &val);
+			return featureValue != val.featureValue;
 		}
 
 		inline void AE_CALL operator=(const BlendEquation& val) {
-			memcpy(this, &val, sizeof(BlendEquation));
+			featureValue = val.featureValue;
 		}
 
 		inline BlendEquation& AE_CALL set(BlendOp op) {
@@ -582,8 +614,14 @@ namespace aurora::modules::graphics {
 			return *this;
 		}
 
-		BlendOp color;
-		BlendOp alpha;
+		union {
+			uint16_t featureValue;
+
+			struct {
+				BlendOp color;
+				BlendOp alpha;
+			};
+		};
 	};
 
 
@@ -592,12 +630,17 @@ namespace aurora::modules::graphics {
 		RenderTargetBlendState();
 
 		bool enabled;
-		BlendFunc func;
-		struct {
-			BlendOp color;
-			BlendOp alpha;
-		} op;
+		BlendEquation equation;
 		Vec4<bool> writeMask;
+		BlendFunc func;
+
+		inline bool AE_CALL operator==(const RenderTargetBlendState& val) const {
+			return enabled == val.enabled && func == val.func && equation == val.equation && writeMask == val.writeMask;
+		}
+
+		inline bool AE_CALL operator!=(const RenderTargetBlendState& val) const {
+			return enabled != val.enabled || func != val.func || equation != val.equation || writeMask != val.writeMask;
+		}
 	};
 
 
@@ -678,10 +721,35 @@ namespace aurora::modules::graphics {
 
 
 	struct AE_FW_DLL DepthState {
-		bool enabled = true;
-		bool writeable = true;
-		ComparisonFunc func = ComparisonFunc::LESS;
-		uint8_t unused = 0;
+		DepthState() :
+			enabled(true),
+			writeable(true),
+			func(ComparisonFunc::LESS),
+			reserved(0) {
+		}
+
+		inline bool AE_CALL operator==(const DepthState& val) const {
+			return featureValue == val.featureValue;
+		}
+
+		inline bool AE_CALL operator!=(const DepthState& val) const {
+			return featureValue != val.featureValue;
+		}
+
+		inline void AE_CALL operator=(const DepthState& val) {
+			featureValue = val.featureValue;
+		}
+
+		union {
+			uint32_t featureValue;
+
+			struct {
+				bool enabled;
+				bool writeable;
+				ComparisonFunc func;
+				uint8_t reserved;
+			};
+		};
 	};
 
 
@@ -698,26 +766,66 @@ namespace aurora::modules::graphics {
 
 
 	struct AE_FW_DLL StencilFaceState {
-		ComparisonFunc func = ComparisonFunc::ALWAYS;
-		struct {
-			StencilOp fail = StencilOp::KEEP;
-			StencilOp depthFail = StencilOp::KEEP;
-			StencilOp pass = StencilOp::KEEP;
-		} op;
-		struct {
-			uint8_t read = 0xFF;
-			uint8_t write = 0xFF;
-		} mask;	
+		StencilFaceState() :
+			func(ComparisonFunc::ALWAYS),
+			op({ StencilOp::KEEP, StencilOp::KEEP, StencilOp::KEEP}),
+			mask({ 0xFF, 0xFF }),
+			reserved(0) {
+		}
+
+		inline bool AE_CALL operator==(const StencilFaceState& val) const {
+			return featureValue == val.featureValue;
+		}
+
+		inline bool AE_CALL operator!=(const StencilFaceState& val) const {
+			return featureValue != val.featureValue;
+		}
+
+		inline void AE_CALL operator=(const StencilFaceState& val) {
+			featureValue = val.featureValue;
+		}
+
+		union {
+			uint64_t featureValue;
+
+			struct {
+				ComparisonFunc func;
+				struct {
+					StencilOp fail;
+					StencilOp depthFail;
+					StencilOp pass;
+				} op;
+				struct {
+					uint8_t read;
+					uint8_t write;
+				} mask;
+
+				uint16_t reserved;
+			};
+		};
 	};
 
 
 	struct AE_FW_DLL StencilState {
 		bool enabled = false;
-		uint8_t unused = 0;
 		struct {
 			StencilFaceState front;
 			StencilFaceState back;
 		} face;
+
+		inline bool AE_CALL operator==(const StencilState& val) const {
+			return enabled == val.enabled && face.front == val.face.front && face.back == val.face.back;
+		}
+
+		inline bool AE_CALL operator!=(const StencilState& val) const {
+			return enabled != val.enabled || face.front != val.face.front || face.back != val.face.back;
+		}
+
+		inline void AE_CALL operator=(const StencilState& val) {
+			enabled = val.enabled;
+			face.front = val.face.front;
+			face.back = val.face.back;
+		}
 	};
 
 

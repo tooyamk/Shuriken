@@ -231,7 +231,7 @@ namespace aurora {
 	}
 
 	void Node::setIdentity() {
-		if (!_lr.isIdentity() || !memEqual<sizeof(_ls)>(&_ls, Vec3f32::ONE) || _lm.data[0][3] != 0.f || _lm.data[1][3] != 0.f || _lm.data[2][3] != 0.f) {
+		if (!_lr.isIdentity() || _ls != decltype(_ls)::ONE || _lm.data[0][3] != 0.f || _lm.data[1][3] != 0.f || _lm.data[2][3] != 0.f) {
 			_lm.set34();
 			_lr.set();
 			_ls.set(1.f);

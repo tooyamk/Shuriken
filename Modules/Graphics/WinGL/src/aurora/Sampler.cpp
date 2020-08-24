@@ -58,7 +58,7 @@ namespace aurora::modules::graphics::win_gl {
 		if (_desc.LOD[0] != min || _desc.LOD[1] != max) {
 			_desc.LOD.set(min, max);
 
-			_setDirty(!memEqual<sizeof(_desc.LOD)>(&_oldDesc.LOD, &_desc.LOD), DirtyFlag::LOD);
+			_setDirty(_oldDesc.LOD != _desc.LOD, DirtyFlag::LOD);
 		}
 	}
 
@@ -83,7 +83,7 @@ namespace aurora::modules::graphics::win_gl {
 		if (_desc.borderColor != color) {
 			_desc.borderColor.set(color);
 
-			_setDirty(!memEqual<sizeof(_desc.borderColor)>(&_oldDesc.borderColor, &_desc.borderColor), DirtyFlag::BORDER_COLOR);
+			_setDirty(_oldDesc.borderColor != _desc.borderColor, DirtyFlag::BORDER_COLOR);
 		}
 	}
 

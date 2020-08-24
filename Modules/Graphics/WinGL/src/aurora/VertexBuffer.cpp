@@ -69,9 +69,8 @@ namespace aurora::modules::graphics::win_gl {
 	}
 
 	void VertexBuffer::setFormat(const VertexFormat& format) {
-		if (!memEqual<sizeof(_format)>(&_format, &format)) {
-			_format.size = format.size;
-			_format.type = format.type;
+		if (_format != format) {
+			_format = format;
 
 			switch (_format.size) {
 			case VertexSize::ONE:

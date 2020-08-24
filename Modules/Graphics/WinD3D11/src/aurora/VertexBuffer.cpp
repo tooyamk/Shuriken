@@ -68,7 +68,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	void VertexBuffer::setFormat(const VertexFormat& format) {
-		if (!memEqual<sizeof(_format)>(&_format, &format)) {
+		if (_format != format) {
 			_format.size = format.size;
 			_format.type = format.type;
 
