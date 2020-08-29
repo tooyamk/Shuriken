@@ -928,7 +928,7 @@ namespace aurora {
 				if (size == 0) {
 					ba.write<ba_vt::UI8>((uint8_t)InternalType::BYTES_0);
 					break;
-				} else if (size <= BitUInt<8>::MAX) {
+				} else {
 					_packUInt(ba, size, (uint8_t)InternalType::BYTES_8BITS);
 				}
 

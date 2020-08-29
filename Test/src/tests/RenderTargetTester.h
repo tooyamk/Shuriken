@@ -59,7 +59,7 @@ public:
 						rs->setFillMode(FillMode::SOLID);
 						rs->setFrontFace(FrontFace::CW);
 						rs->setCullMode(CullMode::NONE);
-						graphics->setRasterizerState(&*rs);
+						graphics->setRasterizerState(rs);
 					}
 
 					renderData.dss = graphics->createDepthStencilState();
