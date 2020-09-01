@@ -10,6 +10,27 @@ using namespace aurora::modules;
 using namespace aurora::modules::graphics;
 using namespace aurora::modules::inputs;
 
+struct std_string_unordered_comparer {
+	using is_transparent = void;
+	inline bool AE_CALL operator()(const std::string& key1, const std::string_view& key2) const {
+		return key1 == key2;
+	}
+	inline bool AE_CALL operator()(const std::string_view& key1, const std::string_view& key2) const {
+		return key1 == key2;
+	}
+};
+
+struct std_string_unordered_hasher {
+	using is_transparent = void;
+	using transparent_key_equal = std_string_unordered_comparer;
+	inline size_t AE_CALL operator()(const std::string_view& key) const {
+		return std::hash<std::string_view>{}(key);
+	}
+	inline size_t AE_CALL operator()(const std::string& key) const {
+		return std::hash<std::string>{}(key);
+	}
+};
+
 inline std::string AE_CALL getDLLName(const std::string& name) {
 #if defined(AE_DEBUG)
 #if AE_OS == AE_OS_WIN

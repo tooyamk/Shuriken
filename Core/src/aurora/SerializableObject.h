@@ -96,7 +96,7 @@ namespace aurora {
 		};
 
 
-		struct std_unordered_compare {
+		struct std_unordered_comparer {
 			inline bool AE_CALL operator()(const SerializableObject& value1, const SerializableObject& value2) const {
 				return value1.isEqual(value2);
 			}
@@ -538,7 +538,7 @@ namespace aurora {
 			bool AE_CALL isContentEqual(Map* data) const;
 			void AE_CALL unpack(ByteArray& ba, uint32_t size, Flag flag);
 
-			std::unordered_map<SerializableObject, SerializableObject, std_unordered_hasher, std_unordered_compare> value;
+			std::unordered_map<SerializableObject, SerializableObject, std_unordered_hasher, std_unordered_comparer> value;
 		};
 
 

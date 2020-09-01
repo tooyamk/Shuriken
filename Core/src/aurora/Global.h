@@ -301,7 +301,7 @@ namespace aurora {
 	template<size_t Bits> using float_t = std::conditional_t<Bits >= 0 && Bits <= 32, float32_t, std::conditional_t<Bits >= 33 && Bits <= 64, float64_t, void>>;
 
 
-	template<typename T> struct TypeRecognizer {};
+	template<typename T> struct AE_CORE_TMPL_DLL TypeRecognizer {};
 
 
 	template<typename F, typename T>
@@ -372,13 +372,13 @@ namespace aurora {
 	
 
 	template<size_t Bits>
-	struct BitInt {
+	struct AE_CORE_TMPL_DLL BitInt {
 		static constexpr int_t<Bits> MIN = _intMin<Bits>();
 		static constexpr int_t<Bits> MAX = _intMax<Bits>();
 	};
 
 	template<size_t Bits>
-	struct BitUInt {
+	struct AE_CORE_TMPL_DLL BitUInt {
 		static constexpr uint_t<Bits> MAX = _uintMax<Bits>();
 	};
 
@@ -596,13 +596,13 @@ namespace aurora {
 		std::wstring str;
 		str += cDrive;
 		str += cDir;
-		return str;
+		return std::move(str);
 #endif
 		return L"";
 	}
 
 
-	class AE_CORE_TMPL_DLL Console {
+	class AE_CORE_DLL Console {
 	private:
 		struct Buf {
 			Buf() :
