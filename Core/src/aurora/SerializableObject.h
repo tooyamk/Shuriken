@@ -57,7 +57,7 @@ namespace aurora {
 		};
 
 
-		struct std_unordered_hasher {
+		struct AE_CORE_DLL std_unordered_hasher {
 			inline size_t AE_CALL operator()(const SerializableObject& value) const {
 				switch (value._type) {
 				case Type::BOOL:
@@ -96,7 +96,7 @@ namespace aurora {
 		};
 
 
-		struct std_unordered_comparer {
+		struct AE_CORE_DLL std_unordered_comparer {
 			inline bool AE_CALL operator()(const SerializableObject& value1, const SerializableObject& value2) const {
 				return value1.isEqual(value2);
 			}

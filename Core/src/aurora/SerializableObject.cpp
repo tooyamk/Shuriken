@@ -865,14 +865,22 @@ namespace aurora {
 		switch (value._type) {
 		case Type::STRING:
 		{
-			auto s = value._getValue<Str*>();
-			set(std::string_view(s->data, s->size), flag);
+			_freeValue();
+			_type = Type::STRING;
+
+			_getValue<Str*>() = (value._getValue<Str*>())->ref<Str>();
 
 			break;
 		}
 		case Type::SHORT_STRING:
-			set((const char*)value._value, flag);
+		{
+			_freeValue();
+			_type = Type::SHORT_STRING;
+
+			memcpy(_value, value._value, strlen((const char*)value._value));
+
 			break;
+		}
 		case Type::STRING_VIEW:
 		{
 			auto& sv = value._getValue<StrView>();
