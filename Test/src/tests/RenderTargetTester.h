@@ -2,7 +2,6 @@
 
 #include "../BaseTester.h"
 #include <random>
-#include <map>
 
 class RenderTargetTester : public BaseTester {
 public:

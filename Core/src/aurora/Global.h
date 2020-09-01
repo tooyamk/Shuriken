@@ -250,6 +250,9 @@ inline constexpr __ENUM__& AE_CALL operator^=(__ENUM__& e1, __ENUM__ e2) { \
 }
 
 
+using namespace std::literals;
+
+
 namespace std {
 #ifndef __cpp_lib_endian
 	constexpr uint8_t endian_tester() {
