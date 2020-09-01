@@ -9,7 +9,7 @@ namespace aurora {
 		Array* arr = new Array();
 		arr->value.resize(this->value.size());
 		uint32_t idx = 0;
-		for (auto& e : this->value) arr->value[idx++].set(e, true);
+		for (auto& e : this->value) arr->value[idx++].set(e, Flag::COPY);
 		return arr;
 	}
 
@@ -31,13 +31,9 @@ namespace aurora {
 		ref();
 	}
 
-	SerializableObject::Map::Map(const SerializableObject& key, const SerializableObject& value) : Map() {
-		this->value.emplace(key, value);
-	}
-
 	SerializableObject::Map* SerializableObject::Map::copy() const {
 		Map* map = new Map();
-		for (auto& itr : this->value) map->value.emplace(SerializableObject(itr.first, true), SerializableObject(itr.second, true));
+		for (auto& itr : this->value) map->value.emplace(SerializableObject(itr.first, Flag::COPY), SerializableObject(itr.second, Flag::COPY));
 		return map;
 	}
 
@@ -54,13 +50,13 @@ namespace aurora {
 		}
 	}
 
-	void SerializableObject::Map::unpack(ByteArray& ba, uint32_t size) {
+	void SerializableObject::Map::unpack(ByteArray& ba, uint32_t size, bool copy) {
 		value.clear();
 
 		SerializableObject k, v;
 		for (uint32_t i = 0; i < size; ++i) {
-			k.unpack(ba);
-			v.unpack(ba);
+			k.unpack(ba, copy);
+			v.unpack(ba, copy);
 			value.emplace(std::move(k), std::move(v));
 		}
 	}
@@ -69,27 +65,38 @@ namespace aurora {
 	SerializableObject::Str::Str(const char* data, size_t size) :
 		size(size) {
 		ref();
-		value = new char[size + 1];
-		value[size] = 0;
-		memcpy(value, data, size);
+		this->data = new char[size + 1];
+		this->data[size] = 0;
+		memcpy(this->data, data, size);
 	}
 
 	SerializableObject::Str::~Str() {
-		delete[] value;
+		delete[] data;
 	}
 
 
 	SerializableObject::SerializableObject() :
-		_type(Type::INVALID) {
+		_type(Type::INVALID),
+		_flag(Flag::NONE) {
 	}
 
 	SerializableObject::SerializableObject(Type value) :
-		_type(value) {
+		_type(value),
+		_flag(Flag::NONE) {
 		switch (_type) {
 		case Type::STRING:
+		case Type::SHORT_STRING:
 		{
 			_value[0] = 0;
 			_type = Type::SHORT_STRING;
+
+			break;
+		}
+		case Type::STRING_VIEW:
+		{
+			auto& sv = _getValue<StrView>();
+			sv.data = nullptr;
+			sv.size = 0;
 
 			break;
 		}
@@ -112,92 +119,112 @@ namespace aurora {
 	}
 
 	SerializableObject::SerializableObject(bool value) :
-		_type(Type::BOOL) {
+		_type(Type::BOOL),
+		_flag(Flag::NONE) {
 		_getValue<bool>() = value;
 	}
 
 	SerializableObject::SerializableObject(int8_t value) :
-		_type(Type::INT) {
+		_type(Type::INT),
+		_flag(Flag::NONE) {
 		_getValue<int64_t>() = value;
 	}
 
 	SerializableObject::SerializableObject(uint8_t value) :
-		_type(Type::UINT) {
+		_type(Type::UINT),
+		_flag(Flag::NONE) {
 		_getValue<uint64_t>() = value;
 	}
 
 	SerializableObject::SerializableObject(int16_t value) :
-		_type(Type::INT) {
+		_type(Type::INT),
+		_flag(Flag::NONE) {
 		_getValue<int64_t>() = value;
 	}
 
 	SerializableObject::SerializableObject(uint16_t value) :
-		_type(Type::UINT) {
+		_type(Type::UINT),
+		_flag(Flag::NONE) {
 		_getValue<uint64_t>() = value;
 	}
 
 	SerializableObject::SerializableObject(int32_t value) :
-		_type(Type::INT) {
+		_type(Type::INT),
+		_flag(Flag::NONE) {
 		_getValue<int64_t>() = value;
 	}
 
 	SerializableObject::SerializableObject(uint32_t value) :
-		_type(Type::UINT) {
+		_type(Type::UINT),
+		_flag(Flag::NONE) {
 		_getValue<uint64_t>() = value;
 	}
 
 	SerializableObject::SerializableObject(const int64_t& value) :
-		_type(Type::INT) {
+		_type(Type::INT),
+		_flag(Flag::NONE) {
 		_getValue<int64_t>() = value;
 	}
 
 	SerializableObject::SerializableObject(const uint64_t& value) :
-		_type(Type::UINT) {
+		_type(Type::UINT),
+		_flag(Flag::NONE) {
 		_getValue<uint64_t>() = value;
 	}
 
 	SerializableObject::SerializableObject(float32_t value) :
-		_type(Type::FLOAT32) {
+		_type(Type::FLOAT32),
+		_flag(Flag::NONE) {
 		_getValue<float32_t>() = value;
 	}
 
 	SerializableObject::SerializableObject(const float64_t& value) :
-		_type(Type::FLOAT64) {
+		_type(Type::FLOAT64),
+		_flag(Flag::NONE) {
 		_getValue<float64_t>() = value;
 	}
 
-	SerializableObject::SerializableObject(const char* value) {
-		if (auto size = strlen(value); size < VALUE_SIZE) {
-			_writeShortString(value, size);
-			_type = Type::SHORT_STRING;
+	SerializableObject::SerializableObject(const char* value, Flag flag) {
+		if ((flag & Flag::COPY) == Flag::COPY) {
+			if (auto size = strlen(value); size < VALUE_SIZE) {
+				_writeShortString(value, size);
+				_type = Type::SHORT_STRING;
+				_flag = Flag::NONE;
+			} else {
+				_getValue<Str*>() = new Str(value, size);
+				_type = Type::STRING;
+				_flag = Flag::NONE;
+			}
 		} else {
-			_getValue<Str*>() = new Str(value, size);
-			_type = Type::STRING;
+			_writeStringView(value, strlen(value));
+			_type = Type::STRING_VIEW;
+			_flag = flag & Flag::SV_STORE_MASK;
 		}
 	}
 
-	SerializableObject::SerializableObject(const std::string& value) {
-		if (auto size = value.size(); size < VALUE_SIZE) {
-			_writeShortString(value.data(), size);
-			_type = Type::SHORT_STRING;
+	SerializableObject::SerializableObject(const std::string& value, Flag flag) : SerializableObject(std::string_view(value), flag) {
+	}
+
+	SerializableObject::SerializableObject(const std::string_view& value, Flag flag) {
+		if ((flag & Flag::COPY) == Flag::COPY) {
+			if (auto size = value.size(); size < VALUE_SIZE) {
+				_writeShortString(value.data(), size);
+				_type = Type::SHORT_STRING;
+				_flag = Flag::NONE;
+			} else {
+				_getValue<Str*>() = new Str(value.data(), size);
+				_type = Type::STRING;
+				_flag = Flag::NONE;
+			}
 		} else {
-			_getValue<Str*>() = new Str(value.data(), size);
-			_type = Type::STRING;
+			_writeStringView(value.data(), value.size());
+			_type = Type::STRING_VIEW;
+			_flag = flag & Flag::SV_STORE_MASK;
 		}
 	}
 
-	SerializableObject::SerializableObject(const std::string_view& value) {
-		if (auto size = value.size(); size < VALUE_SIZE) {
-			_writeShortString(value.data(), size);
-			_type = Type::SHORT_STRING;
-		} else {
-			_getValue<Str*>() = new Str(value.data(), size);
-			_type = Type::STRING;
-		}
-	}
-
-	SerializableObject::SerializableObject(const uint8_t* value, size_t size, bool copy) {
-		if (copy) {
+	SerializableObject::SerializableObject(const uint8_t* value, size_t size, Flag flag) {
+		if ((flag & Flag::COPY) == Flag::COPY) {
 			_getValue<Bytes<false>*>() = new Bytes<false>(value, size);
 			_type = Type::BYTES;
 		} else {
@@ -206,32 +233,33 @@ namespace aurora {
 		}
 	}
 
-	SerializableObject::SerializableObject(ByteArray& ba, bool copy) : SerializableObject(ba.getSource(), ba.getLength(), copy) {
+	SerializableObject::SerializableObject(ByteArray& ba, Flag flag) : SerializableObject(ba.getSource(), ba.getLength(), flag) {
 	}
 
-	SerializableObject::SerializableObject(const SerializableObject& key, const SerializableObject& value) :
-		_type(Type::MAP) {
-		_getValue<Map*>() = new Map(key, value);
+	SerializableObject::SerializableObject(const SerializableObject& value) : SerializableObject(value, Flag::NONE) {
 	}
 
-	SerializableObject::SerializableObject(const SerializableObject& value) : SerializableObject(value, false) {
-	}
-
-	SerializableObject::SerializableObject(const SerializableObject& value, bool copy) :
-		_type(value._type) {
+	SerializableObject::SerializableObject(const SerializableObject& value, Flag flag) :
+		_type(value._type),
+		_flag(Flag::NONE) {
 		switch (_type) {
 		case Type::STRING:
 			_getValue<Str*>() = (value._getValue<Str*>())->ref<Str>();
 			break;
-		case Type::STD_SV:
+		case Type::STRING_VIEW:
 		{
-			auto sv = value._getValue<std::string_view*>();
-			if (auto size = sv->size(); size < VALUE_SIZE) {
-				_writeShortString(sv->data(), size);
-				_type = Type::SHORT_STRING;
+			auto& sv = value._getValue<StrView>();
+			if ((flag & Flag::COPY) != Flag::NONE || (value._flag & Flag::SV_TO_S) != Flag::NONE) {
+				if (sv.size < VALUE_SIZE) {
+					_writeShortString(sv.data, sv.size);
+					_type = Type::SHORT_STRING;
+				} else {
+					_getValue<Str*>() = new Str(sv.data, sv.size);
+					_type = Type::STRING;
+				}
 			} else {
-				_getValue<Str*>() = new Str(sv->data(), size);
-				_type = Type::STRING;
+				_getValue<StrView>() = sv;
+				_flag = flag & Flag::SV_STORE_MASK;
 			}
 
 			break;
@@ -239,28 +267,28 @@ namespace aurora {
 		case Type::ARRAY:
 		{
 			auto arr = value._getValue<Array*>();
-			_getValue<Array*>() = copy ? arr->copy() : arr->ref<Array>();
+			_getValue<Array*>() = (flag & Flag::COPY) == Flag::COPY ? arr->copy() : arr->ref<Array>();
 
 			break;
 		}
 		case Type::MAP:
 		{
 			auto map = value._getValue<Map*>();
-			_getValue<Map*>() = copy ? map->copy() : map->ref<Map>();
+			_getValue<Map*>() = (flag & Flag::COPY) == Flag::COPY ? map->copy() : map->ref<Map>();
 
 			break;
 		}
 		case Type::BYTES:
 		{
 			auto bytes = value._getValue<Bytes<false>*>();
-			_getValue<Bytes<false>*>() = copy ? bytes->copy() : bytes->ref<Bytes<false>>();
+			_getValue<Bytes<false>*>() = (flag & Flag::COPY) == Flag::COPY ? bytes->copy() : bytes->ref<Bytes<false>>();
 
 			break;
 		}
 		case Type::EXT_BYTES:
 		{
 			auto bytes = value._getValue<Bytes<true>*>();
-			_getValue<Bytes<true>*>() = copy ? bytes->copy() : bytes->ref<Bytes<true>>();
+			_getValue<Bytes<true>*>() = (flag & Flag::COPY) == Flag::COPY ? bytes->copy() : bytes->ref<Bytes<true>>();
 
 			break;
 		}
@@ -271,9 +299,11 @@ namespace aurora {
 	}
 
 	SerializableObject::SerializableObject(SerializableObject&& value) :
-		_type(value._type) {
+		_type(value._type),
+		_flag(value._flag) {
 		memcpy(_value, value._value, VALUE_SIZE);
 		value._type = Type::INVALID;
+		value._flag = Flag::NONE;
 	}
 
 	SerializableObject::~SerializableObject() {
@@ -319,18 +349,18 @@ namespace aurora {
 			{
 				auto s1 = _getValue<Str*>();
 				auto s2 = target._getValue<Str*>();
-				return _isContentEqual(s1->value, s1->size, s2->value, s2->size);
+				return _isContentEqual(s1->data, s1->size, s2->data, s2->size);
 			}
 			case Type::SHORT_STRING:
 			{
 				auto s = _getValue<Str*>();
-				return _isContentEqual(s->value, s->size, target._value, strlen((char*)target._value));
+				return _isContentEqual(s->data, s->size, target._value, strlen((char*)target._value));
 			}
-			case Type::STD_SV:
+			case Type::STRING_VIEW:
 			{
 				auto s = _getValue<Str*>();
-				auto sv = target._getValue<std::string_view*>();
-				return _isContentEqual(s->value, s->size, sv->data(), sv->size());
+				auto& sv = target._getValue<StrView>();
+				return _isContentEqual(s->data, s->size, sv.data, sv.size);
 			}
 			default:
 				return false;
@@ -342,35 +372,39 @@ namespace aurora {
 			case Type::STRING:
 			{
 				auto s = target._getValue<Str*>();
-				return _isContentEqual(s->value, s->size, _value, strlen((char*)_value));
+				return _isContentEqual(s->data, s->size, _value, strlen((char*)_value));
 			}
 			case Type::SHORT_STRING:
 				return _isContentEqual(_value, strlen((char*)_value), target._value, strlen((char*)target._value));
-			case Type::STD_SV:
+			case Type::STRING_VIEW:
 			{
-				auto sv = target._getValue<std::string_view*>();
-				return _isContentEqual(_value, strlen((char*)_value), sv->data(), sv->size());
+				auto& sv = target._getValue<StrView>();
+				return _isContentEqual(_value, strlen((char*)_value), sv.data, sv.size);
 			}
 			default:
 				return false;
 			}
 		}
-		case Type::STD_SV:
+		case Type::STRING_VIEW:
 		{
 			switch (target._type) {
 			case Type::STRING:
 			{
 				auto s = target._getValue<Str*>();
-				auto sv = _getValue<std::string_view*>();
-				return _isContentEqual(s->value, s->size, sv->data(), sv->size());
+				auto& sv = _getValue<StrView>();
+				return _isContentEqual(s->data, s->size, sv.data, sv.size);
 			}
 			case Type::SHORT_STRING:
 			{
 				auto sv = _getValue<std::string_view*>();
 				return _isContentEqual(sv->data(), sv->size(), target._value, strlen((char*)target._value));
 			}
-			case Type::STD_SV:
-				return *_getValue<std::string_view*>() == *target._getValue<std::string_view*>();
+			case Type::STRING_VIEW:
+			{
+				auto& sv1 = _getValue<StrView>();
+				auto& sv2 = target._getValue<StrView>();
+				return _isContentEqual(sv1.data, sv1.size, sv2.data, sv2.size);
+			}
 			default:
 				return false;
 			}
@@ -409,18 +443,18 @@ namespace aurora {
 			{
 				auto s1 = _getValue<Str*>();
 				auto s2 = target._getValue<Str*>();
-				return _isContentEqual(s1->value, s1->size, s2->value, s2->size);
+				return _isContentEqual(s1->data, s1->size, s2->data, s2->size);
 			}
 			case Type::SHORT_STRING:
 			{
 				auto s = _getValue<Str*>();
-				return _isContentEqual(s->value, s->size, target._value, strlen((char*)target._value));
+				return _isContentEqual(s->data, s->size, target._value, strlen((char*)target._value));
 			}
-			case Type::STD_SV:
+			case Type::STRING_VIEW:
 			{
 				auto s = _getValue<Str*>();
-				auto sv = target._getValue<std::string_view*>();
-				return _isContentEqual(s->value, s->size, sv->data(), sv->size());
+				auto& sv = target._getValue<StrView>();
+				return _isContentEqual(s->data, s->size, sv.data, sv.size);
 			}
 			default:
 				return false;
@@ -432,35 +466,39 @@ namespace aurora {
 			case Type::STRING:
 			{
 				auto s = target._getValue<Str*>();
-				return _isContentEqual(s->value, s->size, _value, strlen((char*)_value));
+				return _isContentEqual(s->data, s->size, _value, strlen((char*)_value));
 			}
 			case Type::SHORT_STRING:
 				return _isContentEqual(_value, strlen((char*)_value), target._value, strlen((char*)target._value));
-			case Type::STD_SV:
+			case Type::STRING_VIEW:
 			{
-				auto sv = target._getValue<std::string_view*>();
-				return _isContentEqual(_value, strlen((char*)_value), sv->data(), sv->size());
+				auto& sv = target._getValue<StrView>();
+				return _isContentEqual(_value, strlen((char*)_value), sv.data, sv.size);
 			}
 			default:
 				return false;
 			}
 		}
-		case Type::STD_SV:
+		case Type::STRING_VIEW:
 		{
 			switch (target._type) {
 			case Type::STRING:
 			{
 				auto s = target._getValue<Str*>();
-				auto sv = _getValue<std::string_view*>();
-				return _isContentEqual(s->value, s->size, sv->data(), sv->size());
+				auto& sv = _getValue<StrView>();
+				return _isContentEqual(s->data, s->size, sv.data, sv.size);
 			}
 			case Type::SHORT_STRING:
 			{
 				auto sv = _getValue<std::string_view*>();
 				return _isContentEqual(sv->data(), sv->size(), target._value, strlen((char*)target._value));
 			}
-			case Type::STD_SV:
-				return *_getValue<std::string_view*>() == *target._getValue<std::string_view*>();
+			case Type::STRING_VIEW:
+			{
+				auto& sv1 = _getValue<StrView>();
+				auto& sv2 = target._getValue<StrView>();
+				return _isContentEqual(sv1.data, sv1.size, sv2.data, sv2.size);
+			}
 			default:
 				return false;
 			}
@@ -508,6 +546,8 @@ namespace aurora {
 			return _getValue<Str*>()->size;
 		case Type::SHORT_STRING:
 			return strlen((char*)_value);
+		case Type::STRING_VIEW:
+			return _getValue<StrView>().size;
 		default:
 			return 0;
 		}
@@ -538,6 +578,14 @@ namespace aurora {
 		case Type::SHORT_STRING:
 			_value[0] = 0;
 			break;
+		case Type::STRING_VIEW:
+		{
+			auto& sv = _getValue<StrView>();
+			sv.data = nullptr;
+			sv.size = 0;
+
+			break;
+		}
 		default:
 			_getValue<uint64_t>() = 0;
 			break;
@@ -613,10 +661,15 @@ namespace aurora {
 		case Type::STRING:
 		{
 			auto s = _getValue<Str*>();
-			return std::string(s->value, s->size);
+			return std::string(s->data, s->size);
 		}
 		case Type::SHORT_STRING:
 			return (char*)_value;
+		case Type::STRING_VIEW:
+		{
+			auto& sv = _getValue<StrView>();
+			return std::string(sv.data, sv.size);
+		}
 		case Type::INVALID:
 			return "";
 		default:
@@ -629,10 +682,15 @@ namespace aurora {
 		case Type::STRING:
 		{
 			auto s = _getValue<Str*>();
-			return std::string_view(s->value, s->size);
+			return std::string_view(s->data, s->size);
 		}
 		case Type::SHORT_STRING:
 			return std::string_view((char*)_value);
+		case Type::STRING_VIEW:
+		{
+			auto& sv = _getValue<StrView>();
+			return std::string_view(sv.data, sv.size);
+		}
 		default:
 			return std::string_view();
 		}
@@ -659,6 +717,7 @@ namespace aurora {
 			break;
 		case Type::STRING:
 		case Type::SHORT_STRING:
+		case Type::STRING_VIEW:
 		case Type::INVALID:
 		{
 			json += '"';
@@ -708,9 +767,16 @@ namespace aurora {
 			break;
 		}
 		case Type::BYTES:
+		{
+			auto bin = _getValue<Bytes<false>*>();
+			json += "\"" + String::toString(bin->getValue(), bin->getSize()) + "\"";
+
+			break;
+		}
 		case Type::EXT_BYTES:
 		{
-			json += "\"\"";
+			auto bin = _getValue<Bytes<true>*>();
+			json += "\"" + String::toString(bin->getValue(), bin->getSize()) + "\"";
 
 			break;
 		}
@@ -719,37 +785,88 @@ namespace aurora {
 		}
 	}
 
-	void SerializableObject::set(const std::string_view& value) {
-		if (_type == Type::STRING) {
+	void SerializableObject::set(const std::string_view& value, Flag flag) {
+		_flag = Flag::NONE;
+		switch (_type) {
+		case Type::STRING:
+		{
 			_getValue<Str*>()->unref();
-			if (auto size = value.size(); size < VALUE_SIZE) {
-				_writeShortString(value.data(), size);
-				_type = Type::SHORT_STRING;
+
+			if ((flag & Flag::COPY) == Flag::COPY) {
+				if (auto size = value.size(); size < VALUE_SIZE) {
+					_writeShortString(value.data(), size);
+					_type = Type::SHORT_STRING;
+				} else {
+					_getValue<Str*>() = new Str(value.data(), size);
+				}
 			} else {
-				_getValue<Str*>() = new Str(value.data(), size);
+				_writeStringView(value.data(), value.size());
+				_type = Type::STRING_VIEW;
+				_flag = flag & Flag::SV_STORE_MASK;
 			}
-		} else if (_type == Type::SHORT_STRING) {
-			if (auto size = value.size(); size < VALUE_SIZE) {
-				_writeShortString(value.data(), size);
+
+			break;
+		}
+		case Type::SHORT_STRING:
+		{
+			if ((flag & Flag::COPY) == Flag::COPY) {
+				if (auto size = value.size(); size < VALUE_SIZE) {
+					_writeShortString(value.data(), size);
+				} else {
+					_getValue<Str*>() = new Str(value.data(), size);
+					_type = Type::STRING;
+				}
 			} else {
-				_getValue<Str*>() = new Str(value.data(), size);
-				_type = Type::STRING;
+				_writeStringView(value.data(), value.size());
+				_type = Type::STRING_VIEW;
+				_flag = flag & Flag::SV_STORE_MASK;
 			}
-		} else {
+
+			break;
+		}
+		case Type::STRING_VIEW:
+		{
+			if ((flag & Flag::COPY) == Flag::COPY) {
+				if (auto size = value.size(); size < VALUE_SIZE) {
+					_writeShortString(value.data(), size);
+					_type = Type::SHORT_STRING;
+				} else {
+					_getValue<Str*>() = new Str(value.data(), size);
+					_type = Type::STRING;
+				}
+			} else {
+				_writeStringView(value.data(), value.size());
+				_flag = flag & Flag::SV_STORE_MASK;
+			}
+
+			break;
+		}
+		default:
+		{
 			_freeValue();
 
-			if (auto size = value.size(); size < VALUE_SIZE) {
-				_writeShortString(value.data(), size);
-				_type = Type::SHORT_STRING;
+			if ((flag & Flag::COPY) == Flag::COPY) {
+				if (auto size = value.size(); size < VALUE_SIZE) {
+					_writeShortString(value.data(), size);
+					_type = Type::SHORT_STRING;
+				} else {
+					_getValue<Str*>() = new Str(value.data(), size);
+					_type = Type::STRING;
+				}
 			} else {
-				_getValue<Str*>() = new Str(value.data(), size);
-				_type = Type::STRING;
+				_writeStringView(value.data(), value.size());
+				_type = Type::STRING_VIEW;
+				_flag = flag & Flag::SV_STORE_MASK;
 			}
+
+			break;
+		}
 		}
 	}
 
-	void SerializableObject::set(const uint8_t* value, size_t size, bool copy) {
-		if (copy) {
+	void SerializableObject::set(const uint8_t* value, size_t size, Flag flag) {
+		_flag = Flag::NONE;
+		if ((flag & Flag::COPY) == Flag::COPY) {
 			setBytes<false>();
 			_getValue<Bytes<false>*>()->setValue(value, size);
 		} else {
@@ -758,28 +875,33 @@ namespace aurora {
 		}
 	}
 
-	void SerializableObject::set(const SerializableObject& value, bool copy) {
+	void SerializableObject::set(const SerializableObject& value, Flag flag) {
+		_flag = Flag::NONE;
 		switch (value._type) {
 		case Type::STRING:
 		{
 			auto s = value._getValue<Str*>();
-			set(std::string_view(s->value, s->size));
+			set(std::string_view(s->data, s->size), flag);
 
 			break;
 		}
 		case Type::SHORT_STRING:
-			set((const char*)value._value);
+			set((const char*)value._value, flag);
 			break;
-		case Type::STD_SV:
-			set(*value._getValue<std::string_view*>());
+		case Type::STRING_VIEW:
+		{
+			auto& sv = value._getValue<StrView>();
+			set(std::string_view(sv.data, sv.size), flag | ((value._flag & Flag::SV_TO_S) != Flag::NONE ? Flag::COPY : Flag::NONE));
+
 			break;
+		}
 		case Type::ARRAY:
 		{
 			_freeValue();
 			_type = Type::ARRAY;
 
 			auto arr = value._getValue<Array*>();
-			_getValue<Array*>() = copy ? arr->copy() : arr->ref<Array>();
+			_getValue<Array*>() = (flag & Flag::COPY) == Flag::COPY ? arr->copy() : arr->ref<Array>();
 
 			break;
 		}
@@ -789,7 +911,7 @@ namespace aurora {
 			_type = Type::MAP;
 
 			auto map = value._getValue<Map*>();
-			_getValue<Map*>() = copy ? map->copy() : map->ref<Map>();
+			_getValue<Map*>() = (flag & Flag::COPY) == Flag::COPY ? map->copy() : map->ref<Map>();
 
 			break;
 		}
@@ -799,7 +921,7 @@ namespace aurora {
 			_type = Type::BYTES;
 
 			auto bytes = value._getValue<Bytes<false>*>();
-			_getValue<Bytes<false>*>() = copy ? bytes->copy() : bytes->ref<Bytes<false>>();
+			_getValue<Bytes<false>*>() = (flag & Flag::COPY) == Flag::COPY ? bytes->copy() : bytes->ref<Bytes<false>>();
 
 			break;
 		}
@@ -809,7 +931,7 @@ namespace aurora {
 			_type = Type::EXT_BYTES;
 
 			auto bytes = value._getValue<Bytes<true>*>();
-			_getValue<Bytes<true>*>() = copy ? bytes->copy() : bytes->ref<Bytes<true>>();
+			_getValue<Bytes<true>*>() = (flag & Flag::COPY) == Flag::COPY ? bytes->copy() : bytes->ref<Bytes<true>>();
 
 			break;
 		}
@@ -969,7 +1091,7 @@ namespace aurora {
 		}
 	}
 
-	void SerializableObject::unpack(ByteArray& ba) {
+	void SerializableObject::unpack(ByteArray& ba, bool copy) {
 		if (ba.getBytesAvailable() > 0) {
 			InternalType type = (InternalType)ba.read<ba_vt::UI8>();
 			switch (type) {
@@ -989,7 +1111,7 @@ namespace aurora {
 				set(1.0f);
 				break;
 			case InternalType::FLOAT:
-				set(ba.read<ba_vt::F32>());
+				set(ba.read<float32_t>());
 				break;
 			case InternalType::DBL_0:
 				set(0.0);
@@ -1007,8 +1129,7 @@ namespace aurora {
 				set("");
 				break;
 			case InternalType::STRING:
-			case InternalType::SHORT_STRING:
-				set(ba.read<std::string_view>());
+				set(ba.read<std::string_view>(), copy ? Flag::COPY : Flag::NONE);
 				break;
 			case InternalType::BOOL_TRUE:
 				set(true);
@@ -1062,7 +1183,7 @@ namespace aurora {
 				size_t size = ba.read<ba_vt::UIX>((uint8_t)type - (uint8_t)InternalType::ARRAY_0);
 				auto& arr = _getArray()->value;
 				arr.resize(size);
-				for (size_t i = 0; i < size; ++i) arr[i].unpack(ba);
+				for (size_t i = 0; i < size; ++i) arr[i].unpack(ba, copy);
 
 				break;
 			}
@@ -1076,7 +1197,7 @@ namespace aurora {
 						break;
 					} else {
 						SerializableObject e;
-						e.unpack(ba);
+						e.unpack(ba, copy);
 						arr.emplace_back(e);
 					}
 				}
@@ -1093,7 +1214,7 @@ namespace aurora {
 			case InternalType::MAP_56BITS:
 			case InternalType::MAP_64BITS:
 			{
-				_getMap()->unpack(ba, ba.read<ba_vt::UIX>((uint8_t)type - (uint8_t)InternalType::MAP_0));
+				_getMap()->unpack(ba, ba.read<ba_vt::UIX>((uint8_t)type - (uint8_t)InternalType::MAP_0), copy);
 				break;
 			}
 			case InternalType::MAP_END:
@@ -1106,8 +1227,8 @@ namespace aurora {
 						ba.skip(1);
 						break;
 					} else {
-						k.unpack(ba);
-						v.unpack(ba);
+						k.unpack(ba, copy);
+						v.unpack(ba, copy);
 						map.emplace(std::move(k), std::move(v));
 					}
 				}
@@ -1124,7 +1245,7 @@ namespace aurora {
 			case InternalType::BYTES_56BITS:
 			case InternalType::BYTES_64BITS:
 			{
-				_unpackBytes(ba, ba.read<ba_vt::UIX>((uint8_t)type - (uint8_t)InternalType::BYTES_0));
+				_unpackBytes(ba, ba.read<ba_vt::UIX>((uint8_t)type - (uint8_t)InternalType::BYTES_0), copy);
 				break;
 			}
 			default:
@@ -1135,8 +1256,12 @@ namespace aurora {
 		}
 	}
 
-	void SerializableObject::_unpackBytes(ByteArray& ba, size_t size) {
-		_getBytes<false>()->setValue(ba.getSource() + ba.getPosition(), size);
+	void SerializableObject::_unpackBytes(ByteArray& ba, size_t size, bool copy) {
+		if (copy) {
+			_getBytes<false>()->setValue(ba.getSource() + ba.getPosition(), size);
+		} else {
+			_getBytes<true>()->setValue(ba.getSource() + ba.getPosition(), size);
+		}
 		ba.setPosition(ba.getPosition() + size);
 	}
 

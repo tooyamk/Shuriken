@@ -93,12 +93,24 @@ namespace aurora {
 
 	std::string String::toString(const uint8_t* value, size_t size) {
 		std::string str(size << 1, 0);
-		char buf[3];
+
 		for (size_t i = 0; i < size; ++i) {
-			snprintf(buf, sizeof(buf), "%02x", value[i]);
+			auto q = value[i] >> 4;
+			auto r = value[i] & 0b1111;
 			size_t idx = i << 1;
-			str[idx++] = buf[0];
-			str[idx] = buf[1];
+
+			if (q < 10) {
+				str[idx] = '0' + q;
+			} else {
+				str[idx] = '7' + q;
+			}
+
+			++idx;
+			if (r < 10) {
+				str[idx] = '0' + r;
+			} else {
+				str[idx] = '7' + r;
+			}
 		}
 		return std::move(str);
 	}

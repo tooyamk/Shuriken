@@ -37,7 +37,7 @@ namespace aurora {
 			EXT_BYTES,
 
 			SHORT_STRING,
-			STD_SV
+			STRING_VIEW
 		};
 
 
@@ -45,6 +45,15 @@ namespace aurora {
 			CONTINUE,
 			BREAK,
 			ERASE
+		};
+
+
+		enum class Flag : uint8_t {
+			NONE = 0,
+			COPY = 0b1,
+			SV_TO_S = 0b10,
+
+			SV_STORE_MASK = SV_TO_S
 		};
 
 
@@ -71,12 +80,15 @@ namespace aurora {
 				case Type::STRING:
 				{
 					auto str = value._getValue<Str*>();
-					return std::hash<std::string_view>{}(std::string_view(str->value, str->size));
+					return std::hash<std::string_view>{}(std::string_view(str->data, str->size));
 				}
 				case Type::SHORT_STRING:
 					return std::hash<std::string_view>{}(std::string_view((char*)value._value));
-				case Type::STD_SV:
-					return std::hash<std::string_view>{}(*value._getValue<std::string_view*>());
+				case Type::STRING_VIEW:
+				{
+					auto& sv = value._getValue<StrView>();
+					return std::hash<std::string_view>{}(std::string_view(sv.data, sv.size));
+				}
 				default:
 					return 0;
 				}
@@ -104,14 +116,13 @@ namespace aurora {
 		SerializableObject(const uint64_t& value);
 		SerializableObject(float32_t value);
 		SerializableObject(const float64_t& value);
-		SerializableObject(const char* value);
-		SerializableObject(const std::string& value);
-		SerializableObject(const std::string_view& value);
-		SerializableObject(const uint8_t* value, size_t size, bool copy);
-		SerializableObject(ByteArray& ba, bool copy);
-		SerializableObject(const SerializableObject& key, const SerializableObject& value);
+		SerializableObject(const char* value, Flag flag = Flag::COPY);
+		SerializableObject(const std::string& value, Flag flag = Flag::COPY);
+		SerializableObject(const std::string_view& value, Flag flag = Flag::COPY);
+		SerializableObject(const uint8_t* value, size_t size, Flag flag = Flag::COPY);
+		SerializableObject(ByteArray& ba, Flag flag = Flag::COPY);
 		SerializableObject(const SerializableObject& value);
-		SerializableObject(const SerializableObject& value, bool copy);
+		SerializableObject(const SerializableObject& value, Flag flag);
 		SerializableObject(SerializableObject&& value);
 		~SerializableObject();
 
@@ -121,8 +132,10 @@ namespace aurora {
 		}
 		inline SerializableObject& AE_CALL operator=(SerializableObject&& value) noexcept {
 			_type = value._type;
+			_flag = value._flag;
 			memcpy(_value, value._value, VALUE_SIZE);
 			value._type = Type::INVALID;
+			value._flag = Flag::NONE;
 
 			return *this;
 		}
@@ -141,6 +154,9 @@ namespace aurora {
 		}
 		inline bool AE_CALL isFloatingPoint() const {
 			return _type == Type::FLOAT32 || _type == Type::FLOAT64;
+		}
+		inline bool AE_CALL isString() const {
+			return _type == Type::STRING || _type == Type::SHORT_STRING || _type == Type::STRING_VIEW;
 		}
 		inline bool AE_CALL isBytes() const {
 			return _type == Type::BYTES || _type == Type::EXT_BYTES;
@@ -182,7 +198,7 @@ namespace aurora {
 
 		bool AE_CALL toBool(bool defaultValue = false) const;
 
-		template<typename T, typename = typename std::enable_if_t<std::is_arithmetic_v<T>, T>>
+		template<typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>, T>>
 		T AE_CALL toNumber(T defaultValue = 0) const {
 			switch (_type) {
 			case Type::BOOL:
@@ -198,7 +214,7 @@ namespace aurora {
 			case Type::STRING:
 			{
 				auto s = _getValue<Str*>();
-				return String::toNumber<T>(std::string_view(s->value, s->size));
+				return String::toNumber<T>(std::string_view(s->data, s->size));
 			}
 			case Type::SHORT_STRING:
 				return String::toNumber<T>(std::string_view((char*)_value, strlen((char*)_value)));
@@ -217,7 +233,7 @@ namespace aurora {
 		}
 
 		template<typename T>
-		T AE_CALL toValue() {
+		inline T AE_CALL toValue() {
 			if constexpr (std::is_arithmetic_v<T>) {
 				return toNumber<T>();
 			} else if constexpr (std::is_base_of_v<std::string, T>) {
@@ -264,16 +280,16 @@ namespace aurora {
 		inline void AE_CALL set(const float64_t& value) {
 			_set<float64_t, Type::FLOAT64>(value);
 		}
-		inline void AE_CALL set(const char* value) {
-			set(std::string_view(value, strlen(value)));
+		inline void AE_CALL set(const char* value, Flag flag = Flag::COPY) {
+			set(std::string_view(value, strlen(value)), flag);
 		}
-		inline void AE_CALL set(const std::string& value) {
-			set(std::string_view(value));
+		inline void AE_CALL set(const std::string& value, Flag flag = Flag::COPY) {
+			set(std::string_view(value), flag);
 		}
-		void AE_CALL set(const std::string_view& value);
-		void AE_CALL set(const uint8_t* value, size_t size, bool copy);
+		void AE_CALL set(const std::string_view& value, Flag flag = Flag::COPY);
+		void AE_CALL set(const uint8_t* value, size_t size, Flag flag);
 
-		void AE_CALL set(const SerializableObject& value, bool copy = false);
+		void AE_CALL set(const SerializableObject& value, Flag flag = Flag::NONE);
 
 		SerializableObject& AE_CALL at(size_t index);
 		SerializableObject AE_CALL tryAt(size_t index) const;
@@ -291,10 +307,7 @@ namespace aurora {
 			return get(std::string_view(key));
 		}
 		inline SerializableObject& AE_CALL get(const std::string_view& key) {
-			SerializableObject so;
-			so._type = Type::STD_SV;
-			so._getValue<const std::string_view*>() = &key;
-			return get(so);
+			return get(SerializableObject(key, Flag::NONE));
 		}
 		SerializableObject AE_CALL tryGet(const SerializableObject& key) const;
 		inline SerializableObject AE_CALL tryGet(const char* key) const {
@@ -304,10 +317,7 @@ namespace aurora {
 			return tryGet(std::string_view(key));
 		}
 		inline SerializableObject AE_CALL tryGet(const std::string_view& key) const {
-			SerializableObject so;
-			so._type = Type::STD_SV;
-			so._getValue<const std::string_view*>() = &key;
-			return tryGet(so);
+			return tryGet(SerializableObject(key, Flag::NONE));
 		}
 		SerializableObject* AE_CALL tryGetPtr(const SerializableObject& key) const;
 		inline SerializableObject* AE_CALL tryGetPtr(const char* key) const {
@@ -317,10 +327,7 @@ namespace aurora {
 			return tryGetPtr(std::string_view(key));
 		}
 		inline SerializableObject* AE_CALL tryGetPtr(const std::string_view& key) const {
-			SerializableObject so;
-			so._type = Type::STD_SV;
-			so._getValue<const std::string_view*>() = &key;
-			return tryGetPtr(so);
+			return tryGetPtr(SerializableObject(key, Flag::NONE));
 		}
 		SerializableObject& AE_CALL insert(const SerializableObject& key, const SerializableObject& value);
 		inline SerializableObject& AE_CALL insert(const char* key, const SerializableObject& value) {
@@ -330,10 +337,7 @@ namespace aurora {
 			return insert(std::string_view(key), value);
 		}
 		inline SerializableObject& AE_CALL insert(const std::string_view& key, const SerializableObject& value) {
-			SerializableObject so;
-			so._type = Type::STD_SV;
-			so._getValue<const std::string_view*>() = &key;
-			return insert(so, value);
+			return insert(SerializableObject(key, Flag::SV_TO_S), value);
 		}
 		SerializableObject AE_CALL remove(const SerializableObject& key);
 		inline SerializableObject AE_CALL remove(const char* key) {
@@ -343,10 +347,7 @@ namespace aurora {
 			return remove(std::string_view(key));
 		}
 		inline SerializableObject AE_CALL remove(const std::string_view& key) {
-			SerializableObject so;
-			so._type = Type::STD_SV;
-			so._getValue<const std::string_view*>() = &key;
-			return remove(so);
+			return remove(SerializableObject(key, Flag::NONE));
 		}
 		bool AE_CALL has(const SerializableObject& key) const;
 		inline bool AE_CALL has(const char* key) const {
@@ -356,10 +357,7 @@ namespace aurora {
 			return has(std::string_view(key));
 		}
 		inline bool AE_CALL has(const std::string_view& key) const {
-			SerializableObject so;
-			so._type = Type::STD_SV;
-			so._getValue<const std::string_view*>() = &key;
-			return has(so);
+			return has(SerializableObject(key, Flag::NONE));
 		}
 
 		template<typename Fn, typename = 
@@ -429,7 +427,7 @@ namespace aurora {
 		inline void AE_CALL pack(ByteArray& ba, const T& filter = nullptr) const {
 			_pack(nullptr, 0, ba, filter);
 		}
-		void AE_CALL unpack(ByteArray& ba);
+		void AE_CALL unpack(ByteArray& ba, bool copy = true);
 
 		bool AE_CALL isEqual(const SerializableObject& target) const;
 		bool AE_CALL isContentEqual(const SerializableObject& target) const;
@@ -459,8 +457,6 @@ namespace aurora {
 
 			BYTES = (uint8_t)Type::BYTES,
 			EXT_BYTES = (uint8_t)Type::EXT_BYTES,
-
-			SHORT_STRING = (uint8_t)Type::SHORT_STRING,
 
 			BOOL_TRUE = 18,
 			BOOL_FALSE,
@@ -537,11 +533,10 @@ namespace aurora {
 		class Map : public Ref {
 		public:
 			Map();
-			Map(const SerializableObject& key, const SerializableObject& value);
 
 			Map* AE_CALL copy() const;
 			bool AE_CALL isContentEqual(Map* data) const;
-			void AE_CALL unpack(ByteArray& ba, uint32_t size);
+			void AE_CALL unpack(ByteArray& ba, uint32_t size, bool copy);
 
 			std::unordered_map<SerializableObject, SerializableObject, std_unordered_hasher, std_unordered_compare> value;
 		};
@@ -552,7 +547,12 @@ namespace aurora {
 			Str(const char* data, size_t size);
 			virtual ~Str();
 
-			char* value;
+			char* data;
+			size_t size;
+		};
+
+		struct StrView {
+			const char* data;
 			size_t size;
 		};
 
@@ -654,26 +654,11 @@ namespace aurora {
 			size_t _size;
 		};
 
-		static constexpr const uint8_t VALUE_SIZE = 8;
+		static constexpr const uint8_t VALUE_SIZE = 16;
 
 		Type _type;
+		Flag _flag;
 		uint8_t _value[VALUE_SIZE];
-
-		/*
-		union {
-			uint64_t uint64;
-			bool boolean;
-			Array* array;
-			Map* map;
-			Bytes<true>* externalBytes;
-			Bytes<false>* internalBytes;
-			std::string* string;
-			f32 number32;
-			f64 number64;
-			i8 shortString[SHORT_STRING_MAX_SIZE];
-		} _value;
-		*/
-
 
 		bool AE_CALL _freeValue();
 
@@ -720,7 +705,7 @@ namespace aurora {
 			return _getValue<Bytes<Ext>*>();
 		}
 
-		template<typename T, typename = typename std::enable_if_t<std::is_arithmetic_v<T>, T>>
+		template<typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>, T>>
 		inline bool AE_CALL _isEqual(const SerializableObject& target) const {
 			switch (target._type) {
 			case Type::INT:
@@ -736,21 +721,15 @@ namespace aurora {
 			}
 		}
 
-		/*
-		inline Bytes<false>* AE_CALL _getInternalBytes() {
-			setBytes<false>();
-			return _getValue<Bytes<false>*>();
-		}
-
-		inline Bytes<true>* AE_CALL _getExternalBytes() {
-			setBytes<true>();
-			return _getValue<Bytes<true>*>();
-		}
-		*/
-
 		inline void AE_CALL _writeShortString(const char* s, uint32_t size) {
 			memcpy(_value, s, size);
 			_value[size] = 0;
+		}
+
+		inline void AE_CALL _writeStringView(const char* s, uint32_t size) {
+			auto& sv = _getValue<StrView>();
+			sv.data = s;
+			sv.size = size;
 		}
 
 		inline bool AE_CALL _isContentEqual(const void* s1, size_t size1, const void* s2, size_t size2) const {
@@ -835,10 +814,9 @@ namespace aurora {
 			}
 			case Type::STRING:
 			{
-				auto s = _getValue<Str*>();
-				if (s->size) {
-					ba.write<ba_vt::UI8>((uint8_t)_type);
-					ba.write<ba_vt::STR>(s->value, s->size);
+				if (auto s = _getValue<Str*>(); s->size) {
+					ba.write<ba_vt::UI8>((uint8_t)Type::STRING);
+					ba.write<ba_vt::STR>(s->data, s->size);
 				} else {
 					ba.write<ba_vt::UI8>((uint8_t)InternalType::STRING_EMPTY);
 				}
@@ -847,12 +825,22 @@ namespace aurora {
 			}
 			case Type::SHORT_STRING:
 			{
-				auto size = strlen((char*)_value);
-				if (size == 0) {
-					ba.write<ba_vt::UI8>((uint8_t)InternalType::STRING_EMPTY);
-				} else {
+				if (auto size = strlen((char*)_value); size) {
 					ba.write<ba_vt::UI8>((uint8_t)Type::STRING);
 					ba.write<ba_vt::STR>((char*)_value, size);
+				} else {
+					ba.write<ba_vt::UI8>((uint8_t)InternalType::STRING_EMPTY);
+				}
+
+				break;
+			}
+			case Type::STRING_VIEW:
+			{
+				if (auto& sv = _getValue<StrView>(); sv.size) {
+					ba.write<ba_vt::UI8>((uint8_t)Type::STRING);
+					ba.write<ba_vt::STR>(sv.data, sv.size);
+				} else {
+					ba.write<ba_vt::UI8>((uint8_t)InternalType::STRING_EMPTY);
 				}
 
 				break;
@@ -959,12 +947,13 @@ namespace aurora {
 
 		void AE_CALL _packUInt(ByteArray& ba, uint64_t val, uint8_t typeBegin) const;
 
-		void AE_CALL _unpackBytes(ByteArray& ba, size_t size);
+		void AE_CALL _unpackBytes(ByteArray& ba, size_t size, bool copy);
 
 		//friend Hash;
 	};
 
 	AE_DEFINE_ENUM_BIT_OPERATIION(SerializableObject::ForEachOperation);
+	AE_DEFINE_ENUM_BIT_OPERATIION(SerializableObject::Flag);
 
 	using SO = SerializableObject;
 }
