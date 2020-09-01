@@ -51,9 +51,9 @@ namespace aurora {
 		enum class Flag : uint8_t {
 			NONE = 0,
 			COPY = 0b1,
-			SV_TO_S = 0b10,
+			TO_COPY = 0b10,
 
-			SV_STORE_MASK = SV_TO_S
+			SV_STORE_MASK = TO_COPY
 		};
 
 
@@ -123,7 +123,7 @@ namespace aurora {
 		SerializableObject(ByteArray& ba, Flag flag = Flag::COPY);
 		SerializableObject(const SerializableObject& value);
 		SerializableObject(const SerializableObject& value, Flag flag);
-		SerializableObject(SerializableObject&& value);
+		SerializableObject(SerializableObject&& value) noexcept;
 		~SerializableObject();
 
 		inline SerializableObject& AE_CALL operator=(const SerializableObject& value) {
@@ -337,7 +337,7 @@ namespace aurora {
 			return insert(std::string_view(key), value);
 		}
 		inline SerializableObject& AE_CALL insert(const std::string_view& key, const SerializableObject& value) {
-			return insert(SerializableObject(key, Flag::SV_TO_S), value);
+			return insert(SerializableObject(key, Flag::TO_COPY), value);
 		}
 		SerializableObject AE_CALL remove(const SerializableObject& key);
 		inline SerializableObject AE_CALL remove(const char* key) {
@@ -427,7 +427,7 @@ namespace aurora {
 		inline void AE_CALL pack(ByteArray& ba, const T& filter = nullptr) const {
 			_pack(nullptr, 0, ba, filter);
 		}
-		void AE_CALL unpack(ByteArray& ba, bool copy = true);
+		void AE_CALL unpack(ByteArray& ba, Flag flag = Flag::COPY);
 
 		bool AE_CALL isEqual(const SerializableObject& target) const;
 		bool AE_CALL isContentEqual(const SerializableObject& target) const;
@@ -536,7 +536,7 @@ namespace aurora {
 
 			Map* AE_CALL copy() const;
 			bool AE_CALL isContentEqual(Map* data) const;
-			void AE_CALL unpack(ByteArray& ba, uint32_t size, bool copy);
+			void AE_CALL unpack(ByteArray& ba, uint32_t size, Flag flag);
 
 			std::unordered_map<SerializableObject, SerializableObject, std_unordered_hasher, std_unordered_compare> value;
 		};
@@ -660,7 +660,7 @@ namespace aurora {
 		Flag _flag;
 		uint8_t _value[VALUE_SIZE];
 
-		bool AE_CALL _freeValue();
+		void AE_CALL _freeValue();
 
 		template<typename T>
 		inline T& AE_CALL _getValue() {
@@ -947,7 +947,7 @@ namespace aurora {
 
 		void AE_CALL _packUInt(ByteArray& ba, uint64_t val, uint8_t typeBegin) const;
 
-		void AE_CALL _unpackBytes(ByteArray& ba, size_t size, bool copy);
+		void AE_CALL _unpackBytes(ByteArray& ba, size_t size, Flag flag);
 
 		//friend Hash;
 	};
