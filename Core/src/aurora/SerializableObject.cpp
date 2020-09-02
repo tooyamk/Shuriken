@@ -50,14 +50,14 @@ namespace aurora {
 		}
 	}
 
-	void SerializableObject::Map::unpack(ByteArray& ba, uint32_t size, Flag flag) {
+	void SerializableObject::Map::unpack(ByteArray& ba, size_t size, Flag flag) {
 		value.clear();
 
 		SerializableObject k, v;
-		for (uint32_t i = 0; i < size; ++i) {
+		for (size_t i = 0; i < size; ++i) {
 			k.unpack(ba, flag);
 			v.unpack(ba, flag);
-			value.emplace(k, v);
+			value.emplace(std::move(k), std::move(v));
 		}
 	}
 
@@ -1185,7 +1185,7 @@ namespace aurora {
 				auto& arr = _getArray()->value;
 				arr.clear();
 				while (ba.getBytesAvailable()) {
-					if ((InternalType)*(ba.getSource() + ba.getPosition()) == InternalType::END) {
+					if ((InternalType)*ba.getCurrentSource() == InternalType::END) {
 						ba.skip(1);
 						break;
 					} else {
@@ -1214,13 +1214,13 @@ namespace aurora {
 				map.clear();
 				SerializableObject k, v;
 				while (ba.getBytesAvailable()) {
-					if ((InternalType) * (ba.getSource() + ba.getPosition()) == InternalType::END) {
+					if ((InternalType)*ba.getCurrentSource() == InternalType::END) {
 						ba.skip(1);
 						break;
 					} else {
 						k.unpack(ba, flag);
 						v.unpack(ba, flag);
-						map.emplace(k, v);
+						map.emplace(std::move(k), std::move(v));
 					}
 				}
 

@@ -536,7 +536,7 @@ namespace aurora {
 
 			Map* AE_CALL copy() const;
 			bool AE_CALL isContentEqual(Map* data) const;
-			void AE_CALL unpack(ByteArray& ba, uint32_t size, Flag flag);
+			void AE_CALL unpack(ByteArray& ba, size_t size, Flag flag);
 
 			std::unordered_map<SerializableObject, SerializableObject, std_unordered_hasher, std_unordered_comparer> value;
 		};
@@ -721,12 +721,12 @@ namespace aurora {
 			}
 		}
 
-		inline void AE_CALL _writeShortString(const char* s, uint32_t size) {
+		inline void AE_CALL _writeShortString(const char* s, size_t size) {
 			memcpy(_value, s, size);
 			_value[size] = 0;
 		}
 
-		inline void AE_CALL _writeStringView(const char* s, uint32_t size) {
+		inline void AE_CALL _writeStringView(const char* s, size_t size) {
 			auto& sv = _getValue<StrView>();
 			sv.data = s;
 			sv.size = size;
@@ -912,7 +912,7 @@ namespace aurora {
 			}
 			case Type::BYTES:
 			{
-				uint32_t size = _getValue<Bytes<false>*>()->getSize();
+				auto size = _getValue<Bytes<false>*>()->getSize();
 				if (size == 0) {
 					ba.write<ba_vt::UI8>((uint8_t)InternalType::BYTES_0);
 					break;
@@ -926,7 +926,7 @@ namespace aurora {
 			}
 			case Type::EXT_BYTES:
 			{
-				uint32_t size = _getValue<Bytes<true>*>()->getSize();
+				auto size = _getValue<Bytes<true>*>()->getSize();
 				if (size == 0) {
 					ba.write<ba_vt::UI8>((uint8_t)InternalType::BYTES_0);
 					break;
