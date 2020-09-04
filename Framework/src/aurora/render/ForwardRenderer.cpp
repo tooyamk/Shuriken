@@ -165,12 +165,12 @@ namespace aurora::render {
 		if (state) {
 			{
 				auto& bs = state->blend;
-				_graphics->setBlendState(bs.state ? bs.state : defaultBlendState, bs.constantFactors);
+				_graphics->setBlendState(bs.state ? &*bs.state : defaultBlendState, bs.constantFactors);
 			}
 
 			{
 				auto& ds = state->depthStencil;
-				_graphics->setDepthStencilState(ds.state ? ds.state : defaultDepthStencilState, ds.stencilFrontRef, ds.stencilBackRef);
+				_graphics->setDepthStencilState(ds.state ? &*ds.state : defaultDepthStencilState, ds.stencilFrontRef, ds.stencilBackRef);
 			}
 
 			{

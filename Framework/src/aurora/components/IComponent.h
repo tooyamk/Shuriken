@@ -53,5 +53,4 @@ namespace aurora::components {
 }
 
 
-#define	AE_COMPONENT_INHERIT(__BASE__) \
-AE_RTTI_INHERIT(aurora::components::ClassInfo, __BASE__)
+#define	AE_COMPONENT_INHERIT(__BASE__) AE_RTTI_INHERIT(aurora::components::ClassInfo, __BASE__)

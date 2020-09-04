@@ -4,6 +4,7 @@
 #include "aurora/ShaderDefine.h"
 #include "aurora/ShaderParameter.h"
 #include "aurora/modules/graphics/IGraphicsModule.h"
+#include "aurora/render/RenderData.h"
 #include "aurora/render/RenderTag.h"
 
 namespace aurora {

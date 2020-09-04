@@ -53,7 +53,11 @@ namespace aurora::render {
 
 	void StandardRenderPipeline::render(modules::graphics::IGraphicsModule* graphics, const std::function<void(IRenderCollector&)>& fn) {
 		if (!graphics || !fn) return;
-		fn(RenderCollector(*this));
+
+		{
+			RenderCollector rc(*this);
+			fn(rc);
+		}
 
 		for (auto& cam : _cameras) {
 			auto camLayer = cam->layer;

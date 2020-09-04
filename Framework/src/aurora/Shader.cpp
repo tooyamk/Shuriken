@@ -79,7 +79,7 @@ namespace aurora {
 
 		fv = hash::CRC::finish<64, false>(fv, 0);
 
-		if (auto& rst = _programs.emplace(fv, nullptr); rst.second) {
+		if (auto rst = _programs.emplace(fv, nullptr); rst.second) {
 			if (RefPtr p = _graphics->createProgram(); p) {
 				if (auto itr2 = _variants.find(fv); itr2 == _variants.end()) {
 					if (_vs && _ps) {

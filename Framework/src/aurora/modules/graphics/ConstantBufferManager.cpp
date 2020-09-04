@@ -84,7 +84,7 @@ namespace aurora::modules::graphics {
 	}
 
 	void ConstantBufferManager::_registerShareConstantLayout(uint32_t size) {
-		auto& rst = _shareConstBufferPool.emplace(std::piecewise_construct, std::forward_as_tuple(size), std::forward_as_tuple());
+		auto rst = _shareConstBufferPool.emplace(std::piecewise_construct, std::forward_as_tuple(size), std::forward_as_tuple());
 		auto& pool = rst.first->second;
 		if (rst.second) {
 			pool.rc = 1;
@@ -137,7 +137,7 @@ namespace aurora::modules::graphics {
 	}
 
 	void ConstantBufferManager::_registerExclusiveConstantLayout(ConstantBufferLayout& layout) {
-		auto& rst = _exclusiveConstPool.emplace(std::piecewise_construct, std::forward_as_tuple(layout.featureValue), std::forward_as_tuple());
+		auto rst = _exclusiveConstPool.emplace(std::piecewise_construct, std::forward_as_tuple(layout.featureValue), std::forward_as_tuple());
 		auto& pool = rst.first->second;
 		if (rst.second) {
 			pool.rc = 1;
@@ -162,20 +162,23 @@ namespace aurora::modules::graphics {
 	}
 
 	IConstantBuffer* ConstantBufferManager::_getExclusiveConstantBuffer(const ConstantBufferLayout& layout, const std::vector<ShaderParameter*>& parameters,
-		uint32_t cur, uint32_t max, ExclusiveConstNode* parent, std::unordered_map<const ShaderParameter*, ExclusiveConstNode>& childContainer) {
+		uint32_t cur, uint32_t max, ExclusiveConstNode* parent, std::unordered_map<const ShaderParameter*, RefPtr<ExclusiveConstNode>>& childContainer) {
 		auto param = parameters[cur];
-		ExclusiveConstNode* node = nullptr;
+		RefPtr<ExclusiveConstNode> node;
 
 		if (param) {
-			auto& rst = childContainer.emplace(std::piecewise_construct, std::forward_as_tuple(param), std::forward_as_tuple());
-			node = &rst.first->second;
+			auto rst = childContainer.emplace(std::piecewise_construct, std::forward_as_tuple(param), std::forward_as_tuple(nullptr));
 			if (rst.second) {
+				node = new ExclusiveConstNode();
+				rst.first->second = node;
 				node->parameter = param;
 				node->parent = parent;
 
 				_exclusiveConstNodes.emplace(std::piecewise_construct, std::forward_as_tuple(param), std::forward_as_tuple()).first->second.emplace(node);
 
 				param->addReleaseExclusiveHandler(this, &ConstantBufferManager::_releaseExclusiveConstant);
+			} else {
+				node = rst.first->second;
 			}
 		}
 
@@ -184,7 +187,7 @@ namespace aurora::modules::graphics {
 			if (!node) return nullptr;
 
 			IConstantBuffer* cb = nullptr;
-			if (auto& rst = node->buffers.emplace(layout.featureValue, nullptr); rst.second) {
+			if (auto rst = node->buffers.emplace(layout.featureValue, nullptr); rst.second) {
 				cb = createExclusiveConstantBufferCallback(cur + 1);
 				rst.first->second = cb;
 				if (cb) {
@@ -236,19 +239,19 @@ namespace aurora::modules::graphics {
 				parent->numAssociativeBuffers -= releaseNumAssociativeBuffers;
 				if (releaseChild) {
 					_releaseExclusiveConstantSelf(*releaseChild, releaseParam);
-					parent->children.erase(parent->children.find(releaseChild->parameter));
+					parent->children.erase(releaseChild->parameter);
 				}
 				_releaseExclusiveConstantToRoot(parent->parent, nullptr, releaseNumAssociativeBuffers, releaseParam);
 			}
 		} else if (releaseChild) {
 			_releaseExclusiveConstantSelf(*releaseChild, releaseParam);
-			_exclusiveConstRoots.erase(_exclusiveConstRoots.find(releaseChild->parameter));
+			_exclusiveConstRoots.erase(releaseChild->parameter);
 		}
 	}
 
 	void ConstantBufferManager::_releaseExclusiveConstantToLeaf(ExclusiveConstNode& node, bool releaseParam) {
 		_releaseExclusiveConstantSelf(node, releaseParam);
-		for (auto& itr : node.children) _releaseExclusiveConstantToLeaf(itr.second, releaseParam);
+		for (auto& itr : node.children) _releaseExclusiveConstantToLeaf(*itr.second, releaseParam);
 	}
 
 	void ConstantBufferManager::_releaseExclusiveConstantSelf(ExclusiveConstNode& node, bool releaseParam) {
@@ -260,7 +263,7 @@ namespace aurora::modules::graphics {
 		uint32_t size = param.getSize();
 		if (!size) return;
 
-		if (uint16_t pes = param.getPerElementSize(); pes < size) {
+		if (auto pes = param.getPerElementSize(); pes < size) {
 			auto stride = var.stride & 0x7FFFFFFFU;
 			if (auto remainder = var.stride >= 0x80000000U ? (pes & (stride - 1)) : pes % var.stride; remainder) {
 				auto offset = pes + stride - remainder;

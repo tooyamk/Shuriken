@@ -1,6 +1,7 @@
 #pragma once
 
 #include "aurora/Global.h"
+#include <aurora/Ref.h>
 #include "aurora/hash/CRC.h"
 #include <functional>
 #include <unordered_map>
@@ -93,7 +94,8 @@ namespace aurora::modules::graphics {
 		void AE_CALL _unregisterShareConstantLayout(uint32_t size);
 
 
-		struct ExclusiveConstNode {
+		class ExclusiveConstNode : public Ref {
+		public:
 			ExclusiveConstNode() :
 				numAssociativeBuffers(0),
 				parameter(nullptr),
@@ -101,14 +103,14 @@ namespace aurora::modules::graphics {
 			}
 
 			uint32_t numAssociativeBuffers;
-			std::unordered_map<const ShaderParameter*, ExclusiveConstNode> children;
+			std::unordered_map<const ShaderParameter*, RefPtr<ExclusiveConstNode>> children;
 			std::unordered_map<uint64_t, IConstantBuffer*> buffers;
 			ShaderParameter* parameter;
-			ExclusiveConstNode* parent;
+			RefPtr<ExclusiveConstNode> parent;
 		};
 
 
-		std::unordered_map<const ShaderParameter*, ExclusiveConstNode> _exclusiveConstRoots;
+		std::unordered_map<const ShaderParameter*, RefPtr<ExclusiveConstNode>> _exclusiveConstRoots;
 		std::unordered_map<const ShaderParameter*, std::unordered_set<ExclusiveConstNode*>> _exclusiveConstNodes;
 
 
@@ -122,7 +124,7 @@ namespace aurora::modules::graphics {
 
 
 		IConstantBuffer* AE_CALL _getExclusiveConstantBuffer(const ConstantBufferLayout& layout, const std::vector<ShaderParameter*>& parameters,
-			uint32_t cur, uint32_t max, ExclusiveConstNode* parent, std::unordered_map <const ShaderParameter*, ExclusiveConstNode>& childContainer);
+			uint32_t cur, uint32_t max, ExclusiveConstNode* parent, std::unordered_map<const ShaderParameter*, RefPtr<ExclusiveConstNode>>& childContainer);
 		void AE_CALL _registerExclusiveConstantLayout(ConstantBufferLayout& layout);
 		void AE_CALL _unregisterExclusiveConstantLayout(ConstantBufferLayout& layout);
 		static void _releaseExclusiveConstant(void* target, const ShaderParameter& param);

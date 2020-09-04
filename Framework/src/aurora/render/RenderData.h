@@ -42,7 +42,7 @@ namespace aurora::render {
 				return *this;
 			}
 
-			inline MeshGetter& AE_CALL operator=(const nullptr_t) {
+			inline MeshGetter& AE_CALL operator=(const std::nullptr_t) {
 				set(nullptr, nullptr);
 				return *this;
 			}

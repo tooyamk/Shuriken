@@ -61,4 +61,4 @@ private:
 
 #define AE_RTTI_INHERIT(__CLASS_INFO_T__, __BASE__, ...) \
 __BASE__ { \
-AE_RTTI_DECLARE_DERIVED(__CLASS_INFO_T__, __BASE__, __VA_ARGS__)
+AE_RTTI_DECLARE_DERIVED(__CLASS_INFO_T__, __BASE__, ##__VA_ARGS__)
