@@ -42,4 +42,4 @@ ExternalProject_Add(
         <SOURCE_DIR>/build/cmake
 )
 
-set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER ${AE_EXTERNAL_FOLDER_NAME})
+set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER ${AE_EXTERNAL_DIR_NAME})

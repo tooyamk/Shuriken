@@ -142,11 +142,12 @@
 #endif
 #include <iostream>
 #include <mutex>
+#include <cstring>
 #include <string>
 
 
 #if defined(DEBUG) || defined(_DEBUG)
-	#define AE_DEBUG
+#define AE_DEBUG
 #endif
 
 
@@ -287,16 +288,16 @@ namespace aurora {
 	template<typename T> constexpr bool is_unsigned_integral_v = std::is_integral_v<T> && std::is_unsigned_v<T>;
 
 
-	template<typename T> using arithmetic_t = typename std::enable_if_t<std::is_arithmetic_v<T>, T>;
-	template<typename T> using floating_point_t = typename std::enable_if_t<std::is_floating_point_v<T>, T>;
-	template<typename T> using integral_t = typename std::enable_if_t<std::is_integral_v<T>, T>;
-	template<typename T> using unsigned_integral_t = typename std::enable_if_t<is_unsigned_integral_v<T>, T>;
+	template<typename T> using arithmetic_t = std::enable_if_t<std::is_arithmetic_v<T>, T>;
+	template<typename T> using floating_point_t = std::enable_if_t<std::is_floating_point_v<T>, T>;
+	template<typename T> using integral_t = std::enable_if_t<std::is_integral_v<T>, T>;
+	template<typename T> using unsigned_integral_t = std::enable_if_t<is_unsigned_integral_v<T>, T>;
 
 
 	template<typename T> constexpr bool is_string_data_v = std::is_same_v<T, std::string> || std::is_same_v<T, std::string_view>;
 	template<typename T> constexpr bool is_wstring_data_v = std::is_same_v<T, std::wstring> || std::is_same_v<T, std::wstring_view>;
-	template<typename T> using string_data_t = typename std::enable_if_t<is_string_data_v<T>, T>;
-	template<typename T> using wstring_data_t = typename std::enable_if_t<is_wstring_data_v<T>, T>;
+	template<typename T> using string_data_t = std::enable_if_t<is_string_data_v<T>, T>;
+	template<typename T> using wstring_data_t = std::enable_if_t<is_wstring_data_v<T>, T>;
 
 
 	template<size_t Bits> using int_t = std::conditional_t<Bits >= 0 && Bits <= 8, int8_t, std::conditional_t<Bits >= 9 && Bits <= 16, int16_t, std::conditional_t<Bits >= 17 && Bits <= 32, int32_t, std::conditional_t<Bits >= 33 && Bits <= 64, int64_t, void>>>>;
@@ -328,11 +329,9 @@ namespace aurora {
 		F _fn;
 		T* _target;
 	};
-	template<typename F, typename T, typename = std::enable_if_t<std::is_member_function_pointer_v<F>, F>>
-	Invoker(F)->Invoker<F, T>;
 
 	template<typename F>
-	class AE_CORE_TMPL_DLL Invoker<F, nullptr_t> {
+	class AE_CORE_TMPL_DLL Invoker<F, std::nullptr_t> {
 	public:
 		Invoker(F&& fn) :
 			_fn(fn) {
@@ -351,7 +350,7 @@ namespace aurora {
 		F _fn;
 	};
 	template<typename F, typename = std::enable_if_t<!std::is_member_function_pointer_v<F>, F>>
-	Invoker(F)->Invoker<F, nullptr_t>;
+	Invoker(F)->Invoker<F, std::nullptr_t>;
 
 
 	template<size_t Bits>
@@ -372,7 +371,7 @@ namespace aurora {
 	inline constexpr int_t<Bits> AE_CALL _intMin() {
 		return -_intMax<Bits>() - 1;
 	}
-	
+
 
 	template<size_t Bits>
 	struct AE_CORE_TMPL_DLL BitInt {
@@ -436,14 +435,14 @@ namespace aurora {
 		return byteswap<Bytes>((uint8_t*)&val);
 	}
 
-	template<typename F, typename = typename floating_point_t<F>>
+	template<typename F, typename = floating_point_t<F>>
 	inline F AE_CALL byteswap(F val) {
 		auto v = byteswap<sizeof(F)>((uint8_t*)&val);
 		return *(F*)&v;
 	}
 
 
-	template<typename T, typename = typename unsigned_integral_t<T>>
+	template<typename T, typename = unsigned_integral_t<T>>
 	inline T AE_CALL rotl(T val, size_t shift) {
 		if constexpr (std::is_same_v<T, uint8_t>) {
 #if AE_COMPILER == AE_COMPILER_MSVC

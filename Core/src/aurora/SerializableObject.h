@@ -11,7 +11,7 @@ namespace aurora {
 
 	class AE_CORE_DLL SerializableObject {
 	public:
-		class IPackFilter {
+		class AE_CORE_DLL IPackFilter {
 		public:
 			virtual bool AE_CALL packable(const SerializableObject* parent, size_t depth, size_t index, const SerializableObject& val) const = 0;
 			virtual bool AE_CALL packable(const SerializableObject* parent, size_t depth, const SerializableObject& key, const SerializableObject& val) const = 0;
@@ -530,16 +530,44 @@ namespace aurora {
 		};
 
 
-		class Map : public Ref {
+		template<typename K, typename V, typename Hash, typename Com>
+		class TmplMap : public Ref {
 		public:
-			Map();
+			TmplMap() {
+				ref();
+			}
 
-			Map* AE_CALL copy() const;
-			bool AE_CALL isContentEqual(Map* data) const;
-			void AE_CALL unpack(ByteArray& ba, size_t size, Flag flag);
+			auto AE_CALL copy() const {
+				auto map = new TmplMap();
+				for (auto& itr : this->value) map->value.emplace(SerializableObject(itr.first, Flag::COPY), SerializableObject(itr.second, Flag::COPY));
+				return map;
+			}
+			bool AE_CALL isContentEqual(TmplMap* data) const {
+				auto size = this->value.size();
+				if (size == data->value.size()) {
+					for (auto& itr : this->value) {
+						if (auto itr2 = data->value.find(itr.first); itr2 == data->value.end() || !itr.second.isContentEqual(itr2->second)) return false;
+					}
 
-			std::unordered_map<SerializableObject, SerializableObject, std_unordered_hasher, std_unordered_comparer> value;
+					return true;
+				} else {
+					return false;
+				}
+			}
+			void AE_CALL unpack(ByteArray& ba, size_t size, Flag flag) {
+				value.clear();
+
+				SerializableObject k, v;
+				for (size_t i = 0; i < size; ++i) {
+					k.unpack(ba, flag);
+					v.unpack(ba, flag);
+					value.emplace(std::move(k), std::move(v));
+				}
+			}
+
+			std::unordered_map<K, V, Hash, Com> value;
 		};
+		using Map = TmplMap<SerializableObject, SerializableObject, std_unordered_hasher, std_unordered_comparer>;
 
 
 		class Str : public Ref {
@@ -600,7 +628,7 @@ namespace aurora {
 			}
 
 			bool AE_CALL isContentEqual(const uint8_t* data, size_t size) const {
-				if (_size == _size) {
+				if (_size == size) {
 					for (size_t i = 0; i < _size; ++i) {
 						if (_data[i] != data[i]) return false;
 					}

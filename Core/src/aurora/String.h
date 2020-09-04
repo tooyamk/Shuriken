@@ -2,7 +2,6 @@
 
 #include "aurora/Global.h"
 #include <regex>
-#include <string_view>
 
 namespace aurora {
 	class AE_CORE_DLL String {
@@ -12,7 +11,7 @@ namespace aurora {
 			inline static constexpr uint8_t NEW_LINE = 0b10;
 		};
 
-		
+
 		inline static constexpr uint8_t CHARS[] = {
 			0, 0, 0, 0, 0, 0, 0, 0, 0, CharFlag::WHITE_SPACE,  //  0-9 9=\t
 			CharFlag::WHITE_SPACE | CharFlag::NEW_LINE, CharFlag::WHITE_SPACE, CharFlag::WHITE_SPACE, CharFlag::WHITE_SPACE | CharFlag::NEW_LINE, 0, 0, 0, 0, 0, 0,  // 10- 19 10=\n, 11=\v, 12=\f, 13=\r
@@ -85,7 +84,7 @@ namespace aurora {
 
 			return _UnicodeToUtf8(in.data(), unicodeLen, outBuffer);
 		}
-		
+
 		template<typename T, typename = wstring_data_t<T>>
 		static std::string AE_CALL UnicodeToUtf8(const T& in) {
 			auto [unicodeLen, utf8Len] = calcUnicodeToUtf8Length(in);
@@ -136,7 +135,7 @@ namespace aurora {
 
 			return _Utf8ToUnicode(in, utf8Len, outBuffer);
 		}
-		
+
 		template<typename T, typename = string_data_t<T>>
 		static std::wstring AE_CALL Utf8ToUnicode(const T& in) {
 			auto [utf8Len, unicodeLen] = calcUtf8ToUnicodeLength(in);
@@ -168,7 +167,7 @@ namespace aurora {
 		static void AE_CALL split(const Input& input, const Separator& separator, Fn&& fn) {
 			if constexpr (std::is_base_of_v<std::regex, Separator>) {
 				std::regex_token_iterator itr(input.begin(), input.end(), separator, -1);
-				std::regex_token_iterator<Input::const_iterator> end;
+				std::regex_token_iterator<typename Input::const_iterator> end;
 				while (itr != end) {
 					fn(std::string_view(&*itr->first, itr->length()));
 					++itr;
@@ -280,7 +279,7 @@ namespace aurora {
 			if constexpr (std::is_same_v<T, int8_t>) {
 				snprintf(buf, sizeof(buf), "%hhd", value);
 			} else if constexpr (std::is_same_v<T, uint8_t>) {
-				switch(base) {
+				switch (base) {
 				case 8:
 					snprintf(buf, sizeof(buf), "%hho", value);
 				case 16:
@@ -336,7 +335,7 @@ namespace aurora {
 #else
 			if constexpr (std::is_same_v<T, float32_t>) {
 				snprintf(buf, sizeof(buf), "%f", value);
-			} else if constexpr (std::is_same_v<T, float64_t>) {
+			} else {
 				snprintf(buf, sizeof(buf), "%lf", value);
 			}
 
@@ -353,14 +352,14 @@ namespace aurora {
 			auto begin = in.data();
 			return std::from_chars(begin, begin + in.size(), value, base).ec == std::errc() ? value : 0;
 #else
-			if constexpr (std::is_unsigned_v<T>) {
-				if constexpr (sizeof(T) <= 4) {
+			if constexpr (std::is_unsigned_v<In>) {
+				if constexpr (sizeof(In) <= sizeof(uint32_t)) {
 					return std::stoul(in.data(), nullptr, base);
 				} else {
 					return std::stoull(in.data(), nullptr, base);
 				}
 			} else {
-				if constexpr (sizeof(T) <= 4) {
+				if constexpr (sizeof(In) <= sizeof(uint32_t)) {
 					return std::stol(in.data(), nullptr, base);
 				} else {
 					return std::stoll(in.data(), nullptr, base);
@@ -376,7 +375,7 @@ namespace aurora {
 			auto begin = in.data();
 			return std::from_chars(begin, begin + in.size(), value).ec == std::errc() ? value : 0.;
 #else
-			if constexpr (sizeof(T) <= 4) {
+			if constexpr (std::is_same_v<In, float32_t>) {
 				return std::stof(in.data(), nullptr);
 			} else {
 				return std::stod(in.data(), nullptr);

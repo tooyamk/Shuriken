@@ -32,6 +32,6 @@ target_link_libraries(${PROJECT_NAME}
     ${PROJECT_AE_FRAMEWORK_NAME}
 )
 __target_link_library_external_project(${PROJECT_NAME} "PROJECT_LIBPNG_LIB")
-set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER ${AE_EXTENSIONS_FOLDER_NAME})
+set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER ${AE_EXTENSIONS_DIR_NAME})
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${__OUTPUT_NAME})
 __install(${PROJECT_NAME})

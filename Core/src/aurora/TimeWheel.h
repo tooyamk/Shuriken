@@ -2,6 +2,7 @@
 
 #include "aurora/events/EventDispatcher.h"
 #include <functional>
+#include <memory>
 #include <mutex>
 #include <vector>
 

@@ -45,7 +45,7 @@ endif ()
 include_directories(
     ${PROJECT_AE_CORE_SRC_DIR}/src/
     ${PROJECT_AE_FRAMEWORK_SRC_DIR}/src/
-    ${AE_ROOT_FOLDER}/
+    ${AE_SOURCE_DIR}/
 )
 file(GLOB SRC_FILES "src/*.h" "src/*.cpp" "src/*/*.h" "src/*/*.cpp")
 __add_executable_source_group(${PROJECT_NAME} ${SRC_FILES})
@@ -72,24 +72,24 @@ if (WIN32)
     __set_delayload(${PROJECT_AE_SHADER_SCRIPT_OUTPUT_NAME})
 endif ()
 
-set(__OUTPUT_LIBS_FOLDER ${AE_BUILD_DIR}/libs)
+set(__OUTPUT_LIBS_DIR ${AE_BUILD_DIR}/libs)
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/../Resources/ ${AE_BUILD_DIR}/Resources/ 
 )
 
 set(test_pre_build_commands
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${__OUTPUT_LIBS_FOLDER}
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${__OUTPUT_LIBS_DIR}
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_AE_CORE_DLL} ${AE_BUILD_DIR}
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_AE_FRAMEWORK_DLL} ${AE_BUILD_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_AE_PNG_CONVERTER_DLL} ${__OUTPUT_LIBS_FOLDER}
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_AE_FBX_CONVERTER_DLL} ${__OUTPUT_LIBS_FOLDER}
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_AE_SHADER_SCRIPT_DLL} ${__OUTPUT_LIBS_FOLDER}
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_ZLIB_DLL} ${__OUTPUT_LIBS_FOLDER}
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_LIBPNG_DLL} ${__OUTPUT_LIBS_FOLDER}
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_GLEW_DLL} ${__OUTPUT_LIBS_FOLDER}
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_DX_SHADER_COMPILER_DLL} ${__OUTPUT_LIBS_FOLDER}
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_AE_PST_DLL} ${__OUTPUT_LIBS_FOLDER}
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_AE_PNG_CONVERTER_DLL} ${__OUTPUT_LIBS_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_AE_FBX_CONVERTER_DLL} ${__OUTPUT_LIBS_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_AE_SHADER_SCRIPT_DLL} ${__OUTPUT_LIBS_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_ZLIB_DLL} ${__OUTPUT_LIBS_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_LIBPNG_DLL} ${__OUTPUT_LIBS_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_GLEW_DLL} ${__OUTPUT_LIBS_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_DX_SHADER_COMPILER_DLL} ${__OUTPUT_LIBS_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_AE_PST_DLL} ${__OUTPUT_LIBS_DIR}
 )
 set(test_pre_build_depends
     ${PROJECT_AE_FRAMEWORK_NAME}
@@ -100,10 +100,10 @@ set(test_pre_build_depends
 )
 if (WIN32)
     list(APPEND test_pre_build_commands
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_AE_WIN_GL_DLL} ${__OUTPUT_LIBS_FOLDER}
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_AE_WIN_D3D11_DLL} ${__OUTPUT_LIBS_FOLDER}
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_AE_WIN_DIRECT_INPUT_DLL} ${__OUTPUT_LIBS_FOLDER}
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_AE_WIN_XINPUT_DLL} ${__OUTPUT_LIBS_FOLDER}
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_AE_WIN_GL_DLL} ${__OUTPUT_LIBS_DIR}
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_AE_WIN_D3D11_DLL} ${__OUTPUT_LIBS_DIR}
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_AE_WIN_DIRECT_INPUT_DLL} ${__OUTPUT_LIBS_DIR}
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_AE_WIN_XINPUT_DLL} ${__OUTPUT_LIBS_DIR}
     )
     list(APPEND test_pre_build_depends
         ${PROJECT_AE_WIN_GL_NAME}

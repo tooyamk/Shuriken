@@ -27,41 +27,6 @@ namespace aurora {
 	}
 
 
-	SerializableObject::Map::Map() {
-		ref();
-	}
-
-	SerializableObject::Map* SerializableObject::Map::copy() const {
-		Map* map = new Map();
-		for (auto& itr : this->value) map->value.emplace(SerializableObject(itr.first, Flag::COPY), SerializableObject(itr.second, Flag::COPY));
-		return map;
-	}
-
-	bool SerializableObject::Map::isContentEqual(Map* data) const {
-		int size = this->value.size();
-		if (size == data->value.size()) {
-			for (auto& itr : this->value) {
-				if (auto itr2 = data->value.find(itr.first); itr2 == data->value.end() || !itr.second.isContentEqual(itr2->second)) return false;
-			}
-
-			return true;
-		} else {
-			return false;
-		}
-	}
-
-	void SerializableObject::Map::unpack(ByteArray& ba, size_t size, Flag flag) {
-		value.clear();
-
-		SerializableObject k, v;
-		for (size_t i = 0; i < size; ++i) {
-			k.unpack(ba, flag);
-			v.unpack(ba, flag);
-			value.emplace(std::move(k), std::move(v));
-		}
-	}
-
-
 	SerializableObject::Str::Str(const char* data, size_t size) :
 		size(size) {
 		ref();

@@ -23,6 +23,9 @@ option(AE_SHADER_SCRIPT "" ON)
 option(AE_TESTS "" OFF)
 
 option(AE_INSTALL "" ON)
+set(AE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
+
+message(${AE_INSTALL_PREFIX})
 
 set(CMAKE_DEBUG_POSTFIX d)
 set(CMAKE_RELEASE_POSTFIX "")
@@ -107,12 +110,11 @@ endfunction()
 
 function(__install name)
     if (AE_INSTALL)
-        set(tmp_var ${CMAKE_INSTALL_PREFIX}/${name}/)
-        install(DIRECTORY "src/" DESTINATION ${tmp_var}include FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp" PATTERN "*impl*.*" EXCLUDE)
+        install(DIRECTORY "src/" DESTINATION ${name}/include FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp" PATTERN "*impl*.*" EXCLUDE)
         install(TARGETS ${PROJECT_NAME}
-            RUNTIME DESTINATION "${tmp_var}bin"
-            ARCHIVE DESTINATION "${tmp_var}lib"
-            LIBRARY DESTINATION "${tmp_var}lib"
+            RUNTIME DESTINATION ${name}/bin
+            ARCHIVE DESTINATION ${name}/lib
+            LIBRARY DESTINATION ${name}/lib
         )
     endif ()
 endfunction()
@@ -128,7 +130,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES Clang)
 endif ()
 
 project(Aurora)
-
+set(CMAKE_INSTALL_PREFIX ${AE_INSTALL_PREFIX})
 #cmake_policy(SET CMP0060 NEW)
 
 if (WIN32)
@@ -141,11 +143,11 @@ else ()
     set(AE_DLL_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
 endif ()
 
-set(AE_EXTERNAL_FOLDER_NAME External)
-set(AE_MODULES_FOLDER_NAME Modules)
-set(AE_EXTENSIONS_FOLDER_NAME Extensions)
+set(AE_EXTERNAL_DIR_NAME External)
+set(AE_MODULES_DIR_NAME Modules)
+set(AE_EXTENSIONS_DIR_NAME Extensions)
 
-set(AE_ROOT_FOLDER ${CMAKE_CURRENT_SOURCE_DIR})
+set(AE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
 macro(__create_external_project_cmake_args target)
     set(${target}
@@ -166,22 +168,22 @@ macro(__create_external_project_cmake_args target)
 endmacro()
 
 if (ZLIB)
-    add_subdirectory(${AE_EXTERNAL_FOLDER_NAME}/zlib)
+    add_subdirectory(${AE_EXTERNAL_DIR_NAME}/zlib)
 endif ()
 if (LIBPNG)
-    add_subdirectory(${AE_EXTERNAL_FOLDER_NAME}/libpng)
+    add_subdirectory(${AE_EXTERNAL_DIR_NAME}/libpng)
 endif ()
 if (GLEW)
-    add_subdirectory(${AE_EXTERNAL_FOLDER_NAME}/glew)
+    add_subdirectory(${AE_EXTERNAL_DIR_NAME}/glew)
 endif ()
 if (DX_SHADER_COMPILER)
-    add_subdirectory(${AE_EXTERNAL_FOLDER_NAME}/DirectXShaderCompiler)
+    add_subdirectory(${AE_EXTERNAL_DIR_NAME}/DirectXShaderCompiler)
 endif ()
 if (SPIRV_CROSS)
-    add_subdirectory(${AE_EXTERNAL_FOLDER_NAME}/SPIRV-Cross)
+    add_subdirectory(${AE_EXTERNAL_DIR_NAME}/SPIRV-Cross)
 endif ()
 if (BOOST_PREPROCESSOR)
-    add_subdirectory(${AE_EXTERNAL_FOLDER_NAME}/BoostPreprocessor)
+    add_subdirectory(${AE_EXTERNAL_DIR_NAME}/BoostPreprocessor)
 endif ()
 
 if (AE_CORE)
@@ -192,32 +194,32 @@ if (AE_FRAMEWORK)
 endif ()
 
 if (AE_PROGRAM_SOURCE_TRANSLATOR)
-    add_subdirectory(${AE_MODULES_FOLDER_NAME}/Graphics/ProgramSourceTranslator)#??only x64
+    add_subdirectory(${AE_MODULES_DIR_NAME}/Graphics/ProgramSourceTranslator)#??only x64
 endif ()
 if (WIN32)
     if (AE_WIN_D3D11)
-        add_subdirectory(${AE_MODULES_FOLDER_NAME}/Graphics/WinD3D11)
+        add_subdirectory(${AE_MODULES_DIR_NAME}/Graphics/WinD3D11)
     endif ()
     if (AE_WIN_GL)
-        add_subdirectory(${AE_MODULES_FOLDER_NAME}/Graphics/WinGL)
+        add_subdirectory(${AE_MODULES_DIR_NAME}/Graphics/WinGL)
     endif ()
 
     if (AE_WIN_DIRECT_INPUT)
-        add_subdirectory(${AE_MODULES_FOLDER_NAME}/Inputs/WinDirectInput)
+        add_subdirectory(${AE_MODULES_DIR_NAME}/Inputs/WinDirectInput)
     endif ()
     if (AE_WIN_XINPUT)
-        add_subdirectory(${AE_MODULES_FOLDER_NAME}/Inputs/WinXInput)
+        add_subdirectory(${AE_MODULES_DIR_NAME}/Inputs/WinXInput)
     endif ()
 endif ()
 
 if (AE_PNG_CONVERTER)
-    add_subdirectory(${AE_EXTENSIONS_FOLDER_NAME}/PNGConverter)
+    add_subdirectory(${AE_EXTENSIONS_DIR_NAME}/PNGConverter)
 endif ()
 if (AE_FBX_CONVERTER)
-    add_subdirectory(${AE_EXTENSIONS_FOLDER_NAME}/FBXConverter)
+    add_subdirectory(${AE_EXTENSIONS_DIR_NAME}/FBXConverter)
 endif ()
 if (AE_SHADER_SCRIPT)
-    add_subdirectory(${AE_EXTENSIONS_FOLDER_NAME}/ShaderScript)
+    add_subdirectory(${AE_EXTENSIONS_DIR_NAME}/ShaderScript)
 endif ()
 
 if (AE_TESTS)
@@ -225,9 +227,9 @@ if (AE_TESTS)
 endif ()
 
 if (AE_INSTALL)
-    __sub_dir_list(${PROJECT_BINARY_DIR}/${AE_EXTERNAL_FOLDER_NAME} projs)
+    __sub_dir_list(${PROJECT_BINARY_DIR}/${AE_EXTERNAL_DIR_NAME} projs)
     
     foreach(proj ${projs})
-        install(DIRECTORY ${PROJECT_BINARY_DIR}/${AE_EXTERNAL_FOLDER_NAME}/${proj}/install/ DESTINATION ${CMAKE_INSTALL_PREFIX}/${AE_EXTERNAL_FOLDER_NAME}/${proj})
+        install(DIRECTORY ${PROJECT_BINARY_DIR}/${AE_EXTERNAL_DIR_NAME}/${proj}/install/ DESTINATION ${AE_EXTERNAL_DIR_NAME}/${proj})
     endforeach()
 endif ()
