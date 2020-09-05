@@ -4,6 +4,7 @@
 #include "aurora/SerializableObject.h"
 #include <set>
 #include <variant>
+#include <direct.h>
 
 class RenderPipelineTester : public BaseTester {
 public:
@@ -106,7 +107,7 @@ public:
 						RefPtr tag2 = new RenderTagCollection();
 						tag2->add(forwardAddTag);
 
-						auto parsed = extensions::FBXConverter::parse(readFile(app->getAppPath() + "Resources/teapot.fbx"));
+						auto parsed = extensions::FBXConverter::parse(readFile(app->getAppPath().parent_path().u8string() + "/Resources/teapot.fbx"));
 						for (auto& mr : parsed.meshes) {
 							if (mr) {
 								RefPtr rs = graphics->createRasterizerState();
@@ -157,9 +158,9 @@ public:
 
 							mat->setShader(s);
 							mat->setParameters(new ShaderParameterCollection());
-							std::string shaderResourcesFolder = app->getAppPath() + "Resources/shaders/";
-							//s->upload(std::filesystem::path(app->getAppPath() + u8"Resources/shaders/test.shader"));
-							extensions::ShaderScript::set(s, graphics, readFile(app->getAppPath() + "Resources/shaders/lighting.shader"),
+							std::string shaderResourcesFolder = app->getAppPath().parent_path().u8string() + "/Resources/shaders/";
+							//s->upload(std::filesystem::path(app->getAppPath().parent_path().u8string() + "/Resources/shaders/test.shader"));
+							extensions::ShaderScript::set(s, graphics, readFile(app->getAppPath().parent_path().u8string() + "/Resources/shaders/lighting.shader"),
 								[shaderResourcesFolder](const Shader& shader, ProgramStage stage, const std::string_view& name) {
 								return readFile(shaderResourcesFolder + name.data());
 							});
@@ -183,13 +184,13 @@ public:
 					{
 						auto texRes = graphics->createTexture2DResource();
 						if (texRes) {
-							auto img0 = extensions::PNGConverter::parse(readFile(app->getAppPath() + "Resources/white.png"));
+							auto img0 = extensions::PNGConverter::parse(readFile(app->getAppPath().parent_path().u8string() + "/Resources/white.png"));
 							auto mipLevels = Image::calcMipLevels(img0->size);
 							ByteArray mipsData0;
 							std::vector<void*> mipsData0Ptr;
 							img0->generateMips(img0->format, mipLevels, mipsData0, mipsData0Ptr);
 
-							auto img1 = extensions::PNGConverter::parse(readFile(app->getAppPath() + "Resources/red.png"));
+							auto img1 = extensions::PNGConverter::parse(readFile(app->getAppPath().parent_path().u8string() + "/Resources/red.png"));
 							ByteArray mipsData1;
 							std::vector<void*> mipsData1Ptr;
 							img1->generateMips(img1->format, mipLevels, mipsData1, mipsData1Ptr);
@@ -230,6 +231,7 @@ public:
 
 						renderData.model->localRotate(Quaternion::createFromEulerY(Math::PI<float32_t> * dt * 0.5f));
 
+						renderData.g->setViewport(Box2i32ui32(Vec2i32::ZERO, renderData.app->getInnerSize()));
 						renderData.renderPipeline->render(renderData.g, [renderData](render::IRenderCollector& collector) {
 							collector.addCamera(renderData.camera);
 							for (auto& r : renderData.renderables) collector.addRenderable(r);

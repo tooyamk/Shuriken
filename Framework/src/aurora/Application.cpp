@@ -197,13 +197,6 @@ namespace aurora {
 #endif
 	}
 
-	const std::string& Application::getAppPath() const {
-#if AE_OS == AE_OS_WIN
-		if (_appPath.empty()) _appPath = String::UnicodeToUtf8(::aurora::getAppPath());
-#endif
-		return _appPath;
-	}
-
 	bool Application::_adjustWindowRect(const Box2i32ui32& in, Box2i32ui32& out) {
 #if AE_OS == AE_OS_WIN
 		RECT rect = { in.pos[0], in.pos[1], in.pos[0] + in.size[0], in.pos[1] + in.size[1] };

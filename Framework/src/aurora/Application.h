@@ -65,7 +65,10 @@ namespace aurora {
 			return _appId;
 		}
 
-		const std::string& getAppPath() const;
+		inline const std::filesystem::path& getAppPath() const {
+			if (_appPath.empty()) _appPath = ::aurora::getAppPath();
+			return _appPath;
+		}
 
 #if AE_OS == AE_OS_WIN
 		inline HWND AE_CALL Win_getHWnd() const {
@@ -84,7 +87,7 @@ namespace aurora {
 		mutable Box2i32ui32 _windowedRect;
 		Box2i32ui32 _wndRect;
 		
-		mutable std::string _appPath;
+		mutable std::filesystem::path _appPath;
 
 		bool AE_CALL _adjustWindowRect(const Box2i32ui32& in, Box2i32ui32& out);
 		void AE_CALL _recordWindowedRect() const;

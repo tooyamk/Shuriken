@@ -126,10 +126,16 @@
 #	ifndef WIN32_LEAN_AND_MEAN
 #		define WIN32_LEAN_AND_MEAN
 #	endif
+#endif
+
+
+#if __has_include(<windows.h>)
 #	include <windows.h>
-#elif AE_OS == AE_OS_MAC
+#endif
+#if __has_include(<unistd.h>)
 #	include <unistd.h>
-#elif AE_OS == AE_OS_ANDROID
+#endif
+#if __has_include(<android/log.h>)
 #	include <android/log.h>
 #endif
 
@@ -140,6 +146,7 @@
 #if __has_include(<bit>)
 #	include <bit>
 #endif
+#include <filesystem>
 #include <iostream>
 #include <mutex>
 #include <cstring>
@@ -584,23 +591,16 @@ namespace aurora {
 	inline const NoInit NO_INIT = NoInit();
 
 
-	inline std::wstring AE_CALL getAppPath() {
+	inline std::filesystem::path AE_CALL getAppPath() {
 #if AE_OS == AE_OS_WIN
-		const uint32_t SIZE = 1024;
-		wchar_t path[SIZE];
-		GetModuleFileNameW(nullptr, path, SIZE);
-		wchar_t cDir[500] = L"";
-		wchar_t cDrive[100] = L"";
-		wchar_t cf[100] = L"";
-		wchar_t cExt[50] = L"";
-		_wsplitpath_s(path, cDrive, cDir, cf, cExt);
-
-		std::wstring str;
-		str += cDrive;
-		str += cDir;
-		return std::move(str);
+		wchar_t path[FILENAME_MAX] = { 0 };
+		auto count = GetModuleFileNameW(nullptr, path, FILENAME_MAX);
+		return std::filesystem::path(std::wstring(path, (count > 0) ? count : 0));
+#else
+		char path[FILENAME_MAX];
+		auto count = readlink("/proc/self/exe", path, FILENAME_MAX);
+		return std::filesystem::path(std::string(path, (count > 0) ? count : 0));
 #endif
-		return L"";
 	}
 
 
@@ -694,7 +694,7 @@ namespace aurora {
 			void AE_CALL dilatation(uint32_t size) {
 				if (size > this->size - pos) {
 					this->size = pos + size + (size >> 1);
-					wchar_t* buf = new wchar_t[this->size];
+					auto buf = new wchar_t[this->size];
 					memcpy(buf, data, pos * sizeof(wchar_t));
 					if (needFree) {
 						delete[] data;

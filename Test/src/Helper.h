@@ -88,7 +88,7 @@ inline ProgramSource AE_CALL readProgramSource(const std::string& path, ProgramS
 }
 
 inline bool AE_CALL programCreate(IProgram& program, const std::string_view& vert, const std::string_view& frag) {
-	std::string appPath = String::UnicodeToUtf8(getAppPath()) + "Resources/shaders/";
+	std::string appPath = getAppPath().parent_path().u8string() + "/Resources/shaders/";
 	if (program.create(readProgramSource(appPath + vert.data(), ProgramStage::VS), readProgramSource(appPath + frag.data(), ProgramStage::PS), nullptr, 0,
 		[&appPath](const IProgram& program, ProgramStage stage, const std::string_view& name) {
 		return readFile(appPath + name.data());

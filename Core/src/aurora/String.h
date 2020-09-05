@@ -51,7 +51,7 @@ namespace aurora {
 
 			auto inSize = in.size();
 			while (s < inSize) {
-				if (wchar_t c = in[s++]; c == 0) {
+				if (uint_t<sizeof(wchar_t) * 8> c = in[s++]; c == 0) {
 					break;
 				} else if (c < 0x80) {  //
 					//length = 1;
@@ -406,20 +406,6 @@ namespace aurora {
 			}
 			return std::string::npos;
 		}
-
-		/*
-		inline static std::string AE_CALL toString(const unsigned char* value, unsigned int size) {
-			std::string str(size << 1, 0);
-			char buf[3];
-			for (unsigned int i = 0; i < size; ++i) {
-				snprintf(buf, sizeof(buf), "%02x", value[i]);
-				unsigned int idx = i << 1;
-				str[idx++] = buf[0];
-				str[idx] = buf[1];
-			}
-			return std::move(str);
-		}
-		*/
 
 		static bool AE_CALL isEqual(const char* str1, const char* str2);
 
