@@ -109,20 +109,20 @@ namespace aurora::extensions::png_converter {
 	inline ByteArray AE_CALL encode(const Image& img) {
 		ByteArray out;
 
-		if (img.format != modules::graphics::TextureFormat::R8G8B8A8) goto Finish;
+		if (img.format != modules::graphics::TextureFormat::R8G8B8A8) return out;
 
 		auto png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
-		if (!png_ptr) goto Finish;
+		if (!png_ptr) return out;
 
 		auto info_ptr = png_create_info_struct(png_ptr);
 		if (!info_ptr) {
 			png_destroy_write_struct(&png_ptr, nullptr);
-			goto Finish;
+			return out;
 		}
 
 		if (setjmp(png_jmpbuf(png_ptr))) {
 			png_destroy_write_struct(&png_ptr, &info_ptr);
-			goto Finish;
+			return out;
 		}
 
 		png_set_write_fn(png_ptr, &out, writeDataCallback, nullptr);
@@ -141,7 +141,7 @@ namespace aurora::extensions::png_converter {
 		auto row_pointers = (png_bytep*)malloc(h * sizeof(png_bytep));
 		if (!row_pointers) {
 			png_destroy_write_struct(&png_ptr, &info_ptr);
-			goto Finish;
+			return out;
 		}
 
 		auto raw = img.source.getSource();
@@ -157,7 +157,6 @@ namespace aurora::extensions::png_converter {
 
 		png_destroy_write_struct(&png_ptr, &info_ptr);
 
-	Finish:
 		return out;
 	}
 }

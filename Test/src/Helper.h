@@ -10,6 +10,14 @@ using namespace aurora::modules;
 using namespace aurora::modules::graphics;
 using namespace aurora::modules::inputs;
 
+#ifdef __cpp_lib_char8_t
+inline std::u8string AE_CALL operator+(const std::u8string& s1, const char* s2) {
+	auto s = s1;
+	s += std::u8string_view((const char8_t*)s2);
+	return std::move(s);
+}
+#endif
+
 struct std_string_unordered_comparer {
 	using is_transparent = void;
 	inline bool AE_CALL operator()(const std::string& key1, const std::string_view& key2) const {
@@ -47,7 +55,8 @@ inline std::string AE_CALL getDLLName(const std::string& name) {
 #endif
 }
 
-inline ByteArray AE_CALL readFile(const std::string& path) {
+template<typename T>
+inline ByteArray AE_CALL readFile(const T& path) {
 	ByteArray dst;
 	std::ifstream stream(path, std::ios::in | std::ios::binary);
 	if (stream.good()) {
@@ -79,7 +88,8 @@ inline bool AE_CALL writeFile(const std::string& path, const ByteArray& data) {
 	return rst;
 }
 
-inline ProgramSource AE_CALL readProgramSource(const std::string& path, ProgramStage type) {
+template<typename T>
+inline ProgramSource AE_CALL readProgramSource(const T& path, ProgramStage type) {
 	ProgramSource s;
 	s.language = ProgramLanguage::HLSL;
 	s.stage = type;
@@ -88,7 +98,7 @@ inline ProgramSource AE_CALL readProgramSource(const std::string& path, ProgramS
 }
 
 inline bool AE_CALL programCreate(IProgram& program, const std::string_view& vert, const std::string_view& frag) {
-	std::string appPath = getAppPath().parent_path().u8string() + "/Resources/shaders/";
+	auto appPath = getAppPath().parent_path().u8string() + "/Resources/shaders/";
 	if (program.create(readProgramSource(appPath + vert.data(), ProgramStage::VS), readProgramSource(appPath + frag.data(), ProgramStage::PS), nullptr, 0,
 		[&appPath](const IProgram& program, ProgramStage stage, const std::string_view& name) {
 		return readFile(appPath + name.data());

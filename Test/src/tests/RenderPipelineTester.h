@@ -158,7 +158,7 @@ public:
 
 							mat->setShader(s);
 							mat->setParameters(new ShaderParameterCollection());
-							std::string shaderResourcesFolder = app->getAppPath().parent_path().u8string() + "/Resources/shaders/";
+							auto shaderResourcesFolder = app->getAppPath().parent_path().u8string() + "/Resources/shaders/";
 							//s->upload(std::filesystem::path(app->getAppPath().parent_path().u8string() + "/Resources/shaders/test.shader"));
 							extensions::ShaderScript::set(s, graphics, readFile(app->getAppPath().parent_path().u8string() + "/Resources/shaders/lighting.shader"),
 								[shaderResourcesFolder](const Shader& shader, ProgramStage stage, const std::string_view& name) {

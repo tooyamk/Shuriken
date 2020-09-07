@@ -11,10 +11,12 @@ option(AE_CORE "" ON)
 option(AE_FRAMEWORK "" ON)
 
 option(AE_PROGRAM_SOURCE_TRANSLATOR "" ON)
-option(AE_WIN_D3D11 "" ON)
-option(AE_WIN_GL "" ON)
-option(AE_WIN_DIRECT_INPUT "" ON)
-option(AE_WIN_XINPUT "" ON)
+if (WIN32)
+    option(AE_WIN_D3D11 "" ON)
+    option(AE_WIN_GL "" ON)
+    option(AE_WIN_DIRECT_INPUT "" ON)
+    option(AE_WIN_XINPUT "" ON)
+endif ()
 
 option(AE_PNG_CONVERTER "" ON)
 option(AE_FBX_CONVERTER "" ON)
@@ -23,6 +25,53 @@ option(AE_SHADER_SCRIPT "" ON)
 option(AE_TESTS "" OFF)
 
 option(AE_INSTALL "" ON)
+
+if (AE_SHADER_SCRIPT)
+    set(AE_FRAMEWORK ON)
+endif ()
+
+if (AE_FBX_CONVERTER)
+    set(ZLIB ON)
+    set(BOOST_PREPROCESSOR ON)
+    set(AE_FRAMEWORK ON)
+endif ()
+
+if (AE_PNG_CONVERTER)
+    set(LIBPNG ON)
+    set(AE_FRAMEWORK ON)
+endif ()
+
+if (WIN32)
+    if (AE_WIN_XINPUT)
+        set(AE_FRAMEWORK ON)
+    endif ()
+
+    if (AE_WIN_DIRECT_INPUT)
+        set(AE_FRAMEWORK ON)
+    endif ()
+
+    if (AE_WIN_GL)
+        set(GLEW ON)
+        set(AE_FRAMEWORK ON)
+    endif ()
+
+    if (AE_WIN_D3D11)
+        set(AE_FRAMEWORK ON)
+    endif ()
+endif ()
+
+if (AE_PROGRAM_SOURCE_TRANSLATOR)
+    set(DX_SHADER_COMPILER ON)
+    set(SPIRV_CROSS ON)
+endif ()
+
+if (AE_FRAMEWORK)
+    set(AE_CORE ON)
+endif ()
+
+if (LIBPNG)
+    set(ZLIB ON)
+endif ()
 
 set(AE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
 

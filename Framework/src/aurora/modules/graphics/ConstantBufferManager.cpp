@@ -167,8 +167,7 @@ namespace aurora::modules::graphics {
 		RefPtr<ExclusiveConstNode> node;
 
 		if (param) {
-			auto rst = childContainer.emplace(std::piecewise_construct, std::forward_as_tuple(param), std::forward_as_tuple(nullptr));
-			if (rst.second) {
+			if (auto rst = childContainer.emplace(param, nullptr); rst.second) {
 				node = new ExclusiveConstNode();
 				rst.first->second = node;
 				node->parameter = param;
