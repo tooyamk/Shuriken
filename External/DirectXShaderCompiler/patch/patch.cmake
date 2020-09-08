@@ -8,5 +8,10 @@ file(WRITE ${cpp} "#include <ios>\n${content}")
 
 set(cpp ${BIN_DIR}/src/external/SPIRV-Tools/source/val/validate.cpp)
 file(READ ${cpp} content)
-string(REPLACE "for (const auto " "for (const auto& " content ${content})
-file(WRITE ${cpp} ${content})
+string(REPLACE "for (const auto " "for (const auto& " content "${content}")
+file(WRITE ${cpp} "${content}")
+
+set(cpp ${BIN_DIR}/src/external/SPIRV-Tools/source/val/validation_state.cpp)
+file(READ ${cpp} content)
+string(REPLACE "for (const Function " "for (const Function& " content "${content}")
+file(WRITE ${cpp} "${content}")

@@ -35,4 +35,4 @@ function(__get_predefined_config_params args)
         -DLLVM_DEFAULT_TARGET_TRIPLE=dxil-ms-dx
         PARENT_SCOPE
     )
-endfunction(__get_predefined_config_params)
+endfunction()
