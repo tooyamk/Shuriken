@@ -1,6 +1,8 @@
 __set_project()
+set(dxcompiler dxcompiler)
 set(LLVMDxcSupport LLVMDxcSupport)
 if (UNIX)
+    set(dxcompiler lib${dxcompiler})
     set(LLVMDxcSupport lib${LLVMDxcSupport})
 endif ()
 set(LLVMDxcSupport_SLIB_PREFIX ${PROJECT_BINARY_DIR}/install/lib/${LLVMDxcSupport})
@@ -11,7 +13,7 @@ set_property(GLOBAL PROPERTY PROJECT_DX_SHADER_COMPILER_INCLUDE ${PROJECT_BINARY
 set_property(GLOBAL PROPERTY PROJECT_DX_SHADER_COMPILER_PLATFORM_INCLUDE ${PROJECT_BINARY_DIR}/src/include)
 set_property(GLOBAL PROPERTY PROJECT_DX_SHADER_COMPILER_LLVMDxcSupport_SLIB_R ${LLVMDxcSupport_SLIB_R})
 set_property(GLOBAL PROPERTY PROJECT_DX_SHADER_COMPILER_LLVMDxcSupport_SLIB_D ${LLVMDxcSupport_SLIB_D})
-set_property(GLOBAL PROPERTY PROJECT_DX_SHADER_COMPILER_DLL ${PROJECT_BINARY_DIR}/install/bin/dxcompiler${AE_BUILD_TYPE_SUFFIX}${AE_DLL_SUFFIX})
+set_property(GLOBAL PROPERTY PROJECT_DX_SHADER_COMPILER_DLL ${PROJECT_BINARY_DIR}/install/${AE_INSTALL_DLL_DIR_NAME}/${dxcompiler}${AE_BUILD_TYPE_SUFFIX}${AE_DLL_SUFFIX})
 
 function(__find_dir in out names)
     set(cond TRUE)

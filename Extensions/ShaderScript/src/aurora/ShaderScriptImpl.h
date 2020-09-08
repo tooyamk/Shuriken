@@ -21,7 +21,7 @@ namespace aurora::extensions::shader_script {
 
 	struct VariantShader {
 		VariantShader() {}
-		VariantShader(VariantShader& value) : 
+		VariantShader(const VariantShader& value) : 
 			program(value.program),
 			defines(value.defines) {
 		}
