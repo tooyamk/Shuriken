@@ -163,7 +163,7 @@ namespace aurora {
 			return len;
 		}
 
-		template<typename Input, typename Separator, typename Fn, typename = string_data_t<Input>, typename = std::enable_if_t<(std::is_base_of_v<std::regex, Separator> || is_string_data_v<Separator> || std::is_convertible_v<Separator, char const*>) && std::is_invocable_v<Fn, const std::string_view&>, Separator>>
+		template<typename Input, typename Separator, typename Fn, typename = std::enable_if_t<(is_string_data_v<Input> || std::is_convertible_v<Input, char const*>), Input>, typename = std::enable_if_t<(std::is_base_of_v<std::regex, Separator> || is_string_data_v<Separator> || std::is_convertible_v<Separator, char const*>) && std::is_invocable_v<Fn, const std::string_view&>, Separator>>
 		static void AE_CALL split(const Input& input, const Separator& separator, Fn&& fn) {
 			if constexpr (std::is_base_of_v<std::regex, Separator>) {
 				std::regex_token_iterator itr(input.begin(), input.end(), separator, -1);
@@ -172,7 +172,7 @@ namespace aurora {
 					fn(std::string_view(&*itr->first, itr->length()));
 					++itr;
 				}
-			} else if constexpr (is_string_data_v<Separator>) {
+			} else if constexpr (is_string_data_v<Input> && is_string_data_v<Separator>) {
 				if (auto step = separator.size(); step) {
 					size_t begin = 0, i = 0, size = input.size();
 					while (i < size) {
@@ -199,27 +199,31 @@ namespace aurora {
 
 					fn(std::string_view(input.data() + begin, i - begin));
 				} else {
-					fn(std::string_view(input));
+					fn(input);
 				}
 			} else {
-				split(input, std::string_view(separator), fn);
+				split(std::string_view(input), std::string_view(separator), fn);
 			}
 		}
 
-		template<typename Input, typename Fn, typename = string_data_t<Input>, typename = std::enable_if_t<std::is_invocable_v<Fn, const std::string_view&>, Fn>>
+		template<typename Input, typename Fn, typename = std::enable_if_t<(is_string_data_v<Input> || std::is_convertible_v<Input, char const*>), Input>, typename = std::enable_if_t<std::is_invocable_v<Fn, const std::string_view&>, Fn>>
 		static void AE_CALL split(const Input& input, uint8_t flags, Fn&& fn) {
-			size_t begin = 0, i = 0, size = input.size();
-			while (i < size) {
-				if (CHARS[input[i]] & flags) {
-					fn(std::string_view(input.data() + begin, i - begin));
-					++i;
-					begin = i;
-				} else {
-					++i;
+			if constexpr (is_string_data_v<Input>) {
+				size_t begin = 0, i = 0, size = input.size();
+				while (i < size) {
+					if (CHARS[input[i]] & flags) {
+						fn(std::string_view(input.data() + begin, i - begin));
+						++i;
+						begin = i;
+					} else {
+						++i;
+					}
 				}
-			}
 
-			fn(std::string_view(input.data() + begin, i - begin));
+				fn(std::string_view(input.data() + begin, i - begin));
+			} else {
+				split(std::string_view(input), flags, fn);
+			}
 		}
 
 		template<typename T, typename = string_data_t<T>>
