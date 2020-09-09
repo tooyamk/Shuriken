@@ -199,7 +199,7 @@ namespace aurora {
 
 					fn(std::string_view(input.data() + begin, i - begin));
 				} else {
-					fn(input);
+					fn(std::string_view(input));
 				}
 			} else {
 				split(input, std::string_view(separator), fn);
