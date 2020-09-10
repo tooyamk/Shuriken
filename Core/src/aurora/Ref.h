@@ -66,7 +66,7 @@ namespace aurora {
 
 
 	template<typename T>
-	class AE_CORE_TMPL_DLL RefPtr {
+	class RefPtr {
 	public:
 		RefPtr() :
 			_target(nullptr) {

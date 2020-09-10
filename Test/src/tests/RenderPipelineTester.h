@@ -3,8 +3,7 @@
 #include "../BaseTester.h"
 #include "aurora/SerializableObject.h"
 #include <set>
-#include <variant>
-#include <direct.h>
+#include <variant>;
 
 class RenderPipelineTester : public BaseTester {
 public:
@@ -30,10 +29,15 @@ public:
 				if (graphics) {
 					println("Graphics Version : ", graphics->getVersion());
 
-					graphics->getEventDispatcher().addEventListener(GraphicsEvent::ERR, new EventListener(TypeRecognizer<GraphicsEvent>(),[](Event<GraphicsEvent>& e) {
+					graphics->getEventDispatcher().addEventListener(GraphicsEvent::ERR, createEventListener<GraphicsEvent>([](Event<GraphicsEvent>& e) {
 						println(*(std::string_view*)e.getData());
 						int a = 1;
 					}));
+
+					//graphics->getEventDispatcher().addEventListener(GraphicsEvent::ERR, new EventListener([](Event<GraphicsEvent>& e) {
+					//	println(*(std::string_view*)e.getData());
+					//	int a = 1;
+					//}));
 
 					struct {
 						RefPtr<Application> app;

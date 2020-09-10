@@ -5,7 +5,7 @@
 
 namespace aurora {
 	template<uint32_t N, typename Pos, typename Size>
-	class AE_CORE_TMPL_DLL Box {
+	class Box {
 	public:
 		template<typename S, typename T>
 		using ConvertibleType = typename std::enable_if_t<std::is_convertible_v<S, T>, S>;

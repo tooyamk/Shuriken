@@ -4,7 +4,7 @@
 
 namespace aurora::modules::inputs {
 	template<uint32_t N>
-	class AE_CORE_TMPL_DLL GUID {
+	class GUID {
 	public:
 		using Data = uint8_t[N];
 

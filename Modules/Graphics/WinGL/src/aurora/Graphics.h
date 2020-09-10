@@ -175,7 +175,7 @@ namespace aurora::modules::graphics::win_gl {
 
 		events::EventDispatcher<GraphicsEvent> _eventDispatcher;
 
-		events::EventListener<ApplicationEvent, Graphics> _resizedListener;
+		events::EventListener<ApplicationEvent, events::EvtMethod<ApplicationEvent, Graphics>> _resizedListener;
 		void AE_CALL _resizedHandler(events::Event<ApplicationEvent>& e);
 
 		bool AE_CALL _glInit();

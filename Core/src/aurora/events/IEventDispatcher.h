@@ -5,7 +5,7 @@
 
 namespace aurora::events {
 	template<typename EvtType>
-	class AE_CORE_TMPL_DLL Event {
+	class Event {
 	public:
 		Event(const EvtType& type, void* data = nullptr) :
 			_type(type),
@@ -57,14 +57,19 @@ namespace aurora::events {
 
 
 	template<typename EvtType>
-	class AE_CORE_TMPL_DLL IEventListener : public Ref {
+	class IEventListener : public Ref {
 	public:
 		virtual void AE_CALL onEvent(Event<EvtType>& e) = 0;
 	};
 
 
+	template<typename EvtType, typename...>
+	class EventListener : public IEventListener<EvtType> {
+	};
+
+
 	template<typename EvtType, typename Class>
-	class AE_CORE_TMPL_DLL EventListener : public IEventListener<EvtType> {
+	class EventListener<EvtType, EvtMethod<EvtType, Class>> : public IEventListener<EvtType> {
 	public:
 		EventListener(EvtMethod<EvtType, Class> method, Class* target) :
 			_method(target ? method : nullptr),
@@ -78,10 +83,12 @@ namespace aurora::events {
 		EvtMethod<EvtType, Class> _method;
 		Class* _target;
 	};
+	template<typename EvtType, typename Class, typename = std::enable_if_t<std::is_member_function_pointer_v<EvtMethod<EvtType, Class>>>>
+	EventListener(EvtMethod<EvtType, Class>, Class*)->EventListener<EvtType, EvtMethod<EvtType, Class>>;
 
 
 	template<typename EvtType>
-	class AE_CORE_TMPL_DLL EventListener<EvtType, EvtFn<EvtType>> : public IEventListener<EvtType> {
+	class EventListener<EvtType, EvtFn<EvtType>> : public IEventListener<EvtType> {
 	public:
 		EventListener(EvtFn<EvtType> fn) :
 			_fn(fn) {
@@ -96,9 +103,8 @@ namespace aurora::events {
 	template<typename EvtType>
 	EventListener(EvtFn<EvtType>)->EventListener<EvtType, EvtFn<EvtType>>;
 
-
 	template<typename EvtType>
-	class AE_CORE_TMPL_DLL EventListener<EvtType, EvtFunc<EvtType>> : public IEventListener<EvtType> {
+	class EventListener<EvtType, EvtFunc<EvtType>> : public IEventListener<EvtType> {
 	public:
 		EventListener(const EvtFunc<EvtType>& fn) :
 			_fn(fn) {
@@ -115,12 +121,9 @@ namespace aurora::events {
 
 
 	template<typename EvtType, typename Fn>
-	class AE_CORE_TMPL_DLL EventListener<EvtType, const Fn&> : public IEventListener<EvtType> {
+	class EventListener<EvtType, Fn> : public IEventListener<EvtType> {
 	public:
-		EventListener(const Fn& fn) :
-			_fn(fn) {
-		}
-		EventListener(const TypeRecognizer<EvtType>&, const Fn& fn) :
+		EventListener(Fn&& fn) :
 			_fn(fn) {
 		}
 
@@ -130,12 +133,15 @@ namespace aurora::events {
 	private:
 		Fn _fn;
 	};
-	template<typename EvtType, typename Fn, typename = std::enable_if_t<std::is_invocable_v<Fn, Event<EvtType>>, Fn>>
-	EventListener(TypeRecognizer<EvtType>, Fn)->EventListener<EvtType, const Fn&>;
+	
+	template<typename EvtType, typename Fn, typename = std::enable_if_t<std::is_invocable_v<Fn, Event<EvtType>&>>>
+	inline EventListener<EvtType, Fn>* createEventListener(Fn&& u) {
+		return new EventListener<EvtType, Fn>(std::forward<Fn>(u));
+	}
 
 
 	template<typename EvtType>
-	class AE_CORE_TMPL_DLL IEventDispatcher : public Ref {
+	class IEventDispatcher : public Ref {
 	public:
 		inline bool AE_CALL addEventListener(const EvtType& type, IEventListener<EvtType>* listener) {
 			return listener ? addEventListener(type, *listener) : false;

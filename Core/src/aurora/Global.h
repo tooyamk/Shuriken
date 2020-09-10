@@ -188,26 +188,19 @@
 #define AE_MODULE_DLL_EXPORT AE_DLL_EXPORT
 #define AE_MODULE_DLL_IMPORT AE_DLL_IMPORT
 
-#define AE_TMPL_DLL_EXPORT AE_DLL_EXPORT
-#define AE_TMPL_DLL_IMPORT
-
 #define AE_EXTENSION_DLL_EXPORT AE_DLL_EXPORT
 #define AE_EXTENSION_DLL_IMPORT AE_DLL_IMPORT
 
 #ifdef AE_CORE_EXPORTS
 #	define AE_CORE_DLL AE_DLL_EXPORT
-#	define AE_CORE_TMPL_DLL AE_TMPL_DLL_EXPORT
 #else
 #	define AE_CORE_DLL AE_DLL_IMPORT
-#	define AE_CORE_TMPL_DLL AE_TMPL_DLL_IMPORT
 #endif
 
 #ifdef AE_FW_EXPORTS
 #	define AE_FW_DLL AE_DLL_EXPORT
-#	define AE_FW_TMPL_DLL AE_TMPL_DLL_EXPORT
 #else
 #	define AE_FW_DLL AE_DLL_IMPORT
-#	define AE_FW_TMPL_DLL AE_TMPL_DLL_IMPORT
 #endif
 
 #ifdef AE_MODULE_EXPORTS
@@ -312,11 +305,8 @@ namespace aurora {
 	template<size_t Bits> using float_t = std::conditional_t<Bits >= 0 && Bits <= 32, float32_t, std::conditional_t<Bits >= 33 && Bits <= 64, float64_t, void>>;
 
 
-	template<typename T> struct AE_CORE_TMPL_DLL TypeRecognizer {};
-
-
 	template<typename F, typename T>
-	class AE_CORE_TMPL_DLL Invoker {
+	class Invoker {
 	public:
 		Invoker(F&& fn, T* target) :
 			_fn(fn),
@@ -338,7 +328,7 @@ namespace aurora {
 	};
 
 	template<typename F>
-	class AE_CORE_TMPL_DLL Invoker<F, std::nullptr_t> {
+	class Invoker<F, std::nullptr_t> {
 	public:
 		Invoker(F&& fn) :
 			_fn(fn) {
@@ -381,13 +371,13 @@ namespace aurora {
 
 
 	template<size_t Bits>
-	struct AE_CORE_TMPL_DLL BitInt {
+	struct BitInt {
 		static constexpr int_t<Bits> MIN = _intMin<Bits>();
 		static constexpr int_t<Bits> MAX = _intMax<Bits>();
 	};
 
 	template<size_t Bits>
-	struct AE_CORE_TMPL_DLL BitUInt {
+	struct BitUInt {
 		static constexpr uint_t<Bits> MAX = _uintMax<Bits>();
 	};
 

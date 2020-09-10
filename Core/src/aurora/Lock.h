@@ -13,7 +13,7 @@ namespace aurora {
 
 
 	template<bool GlobalBlock, bool Recursive>
-	class AE_CORE_TMPL_DLL AtomicLock {
+	class AtomicLock {
 	public:
 		AtomicLock() = default;
 		AtomicLock(const AtomicLock&) = delete;
@@ -39,7 +39,7 @@ namespace aurora {
 
 
 	template<bool GlobalBlock>
-	class AE_CORE_TMPL_DLL AtomicLock<GlobalBlock, true> {
+	class AtomicLock<GlobalBlock, true> {
 	public:
 		AtomicLock() = default;
 		AtomicLock(const AtomicLock&) = delete;
@@ -115,7 +115,7 @@ namespace aurora {
 
 
 	template<bool ReadGlobalBlock, bool WriteGlobalBlock>
-	class AE_CORE_TMPL_DLL RWAtomicLock {
+	class RWAtomicLock {
 	public:
 		RWAtomicLock() = default;
 		RWAtomicLock(const RWAtomicLock&) = delete;

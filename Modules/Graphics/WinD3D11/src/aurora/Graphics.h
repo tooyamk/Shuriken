@@ -300,7 +300,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		events::EventDispatcher<GraphicsEvent> _eventDispatcher;
 
-		events::EventListener<ApplicationEvent, Graphics> _resizedListener;
+		events::EventListener<ApplicationEvent, events::EvtMethod<ApplicationEvent, Graphics>> _resizedListener;
 		void AE_CALL _resizedHandler(events::Event<ApplicationEvent>& e);
 
 		bool AE_CALL _createDevice(Ref* loader, Application* app, const GraphicsAdapter& adapter, SampleCount sampleCount);

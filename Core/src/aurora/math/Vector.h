@@ -5,7 +5,7 @@
 
 namespace aurora {
 	template<uint32_t N, typename T>
-	class AE_CORE_TMPL_DLL Vector {
+	class Vector {
 	public:
 		static constexpr uint32_t DIMENSION = N;
 		using ElementType = T;
@@ -53,7 +53,7 @@ namespace aurora {
 		Vector(const std::initializer_list<const K>& list) : Vector(list.begin(), list.size()) {
 		}
 
-		template<typename... Args, typename = typename std::enable_if_t<std::conjunction_v<std::is_convertible<Args, T>...>>>
+		template<typename... Args, typename = std::enable_if_t<std::conjunction_v<std::is_convertible<Args, T>...>>>
 		Vector(Args&&... args) {
 			set(std::forward<Args>(args)...);
 		}
@@ -225,7 +225,7 @@ namespace aurora {
 			return set(list.begin(), list.size());
 		}
 
-		template<typename... Args, typename = typename std::enable_if_t<std::conjunction_v<std::is_convertible<Args, T>...>>>
+		template<typename... Args, typename = std::enable_if_t<std::conjunction_v<std::is_convertible<Args, T>...>>>
 		inline Vector& AE_CALL set(Args&&... args) {
 			if constexpr (N > 0) {
 				if constexpr (sizeof...(args) == 1) {

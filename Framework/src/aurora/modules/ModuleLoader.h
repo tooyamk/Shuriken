@@ -6,7 +6,7 @@
 
 namespace aurora::modules {
 	template<typename RetType>
-	class AE_FW_TMPL_DLL ModuleLoader : public Ref {
+	class ModuleLoader : public Ref {
 	public:
 		using CreateModuleFn = RetType*(*)(Ref* loader, const Args*);
 

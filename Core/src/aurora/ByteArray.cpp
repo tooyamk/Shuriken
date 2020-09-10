@@ -1,4 +1,6 @@
 #include "ByteArray.h"
+#include "aurora/events/EventDispatcher.h"
+#include "aurora/math/Vector.h"
 
 namespace aurora {
 	ByteArray::ByteArray() :

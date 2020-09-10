@@ -4,7 +4,7 @@
 
 namespace aurora::render::commands {
 	template<typename T>
-	class AE_FW_TMPL_DLL BaseRenderCommand : public IRenderCommand {
+	class BaseRenderCommand : public IRenderCommand {
 	protected:
 		BaseRenderCommand() {
 			_fn = &T::execute;

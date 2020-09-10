@@ -5,7 +5,7 @@
 
 namespace aurora {
 	template<typename T>
-	class AE_FW_TMPL_DLL MultipleBuffer : public modules::graphics::IObject {
+	class MultipleBuffer : public modules::graphics::IObject {
 	public:
 		struct Node {
 			RefPtr<T> target;
