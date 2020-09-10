@@ -4,7 +4,7 @@
 
 class InputTester : public BaseTester {
 public:
-	static char* AE_CALL printGamepadKey(GamepadKeyCode code) {
+	static std::string_view AE_CALL printGamepadKey(GamepadKeyCode code) {
 		switch (code) {
 		case GamepadKeyCode::LEFT_STICK:
 			return "left stick";

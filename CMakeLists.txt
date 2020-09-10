@@ -175,7 +175,7 @@ set(CMAKE_STATIC_LIBRARY_PREFIX "")
 set(CMAKE_CXX_STANDARD 17)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-set(clangFlags "-fms-extensions -fPIC -ldl -lpthread")
+set(clangFlags "-fms-extensions -fPIC -ldl -lpthread -Wno-unused-command-line-argument -Wno-switch")
 
 if (CMAKE_C_COMPILER_ID MATCHES Clang)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${clangFlags}")

@@ -2,8 +2,6 @@
 
 #include "../BaseTester.h"
 #include "aurora/SerializableObject.h"
-#include <set>
-#include <variant>;
 
 class RenderPipelineTester : public BaseTester {
 public:
