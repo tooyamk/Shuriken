@@ -50,13 +50,23 @@ include_directories(
 file(GLOB SRC_FILES "src/*.h" "src/*.cpp" "src/*/*.h" "src/*/*.cpp")
 __add_executable_source_group(${PROJECT_NAME} ${SRC_FILES})
 
-target_link_libraries(${PROJECT_NAME}
+set(linkLibs
     ${PROJECT_AE_CORE_NAME}
     ${PROJECT_AE_FRAMEWORK_NAME}
     ${PROJECT_AE_PNG_CONVERTER_NAME}
     ${PROJECT_AE_FBX_CONVERTER_NAME}
     ${PROJECT_AE_SHADER_SCRIPT_NAME}
 )
+
+if (NOT WIN32)
+    list(APPEND linkLibs
+        X11
+        dl
+        pthread
+    )
+endif ()
+
+target_link_libraries(${PROJECT_NAME} ${linkLibs})
 
 if (WIN32)
     macro(__set_delayload)
