@@ -211,7 +211,7 @@ public:
 							if (vb) {
 								auto cycle = 20000;
 								auto halfCycyle = float32_t(cycle / 2);
-								auto t = Time::now<std::chrono::milliseconds>() % cycle;
+								auto t = aurora::Time::now<std::chrono::milliseconds>() % cycle;
 								float32_t vertices[] = {
 									0.f, 0.f,
 									0.f, 1.f,

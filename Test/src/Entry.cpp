@@ -3,6 +3,7 @@
 #include "tests/RenderPipelineTester.h"
 #include "tests/RenderTargetTester.h"
 #include "tests/VertexUpdateTester.h"
+#include "tests/WindowTester.h"
 
 /*
 int main() {
@@ -30,24 +31,14 @@ int main() {
 #include <immintrin.h>
 //#include <type_traits>
 
-//int main(int argc, char* argv[]) {
-//	HMODULE HIn = GetModuleHandle(NULL);
-//	FreeConsole();
+#if AE_OS == AE_OS_WIN
 int32_t WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
 //#pragma comment(linker, "/subsystem:console")
 //int32_t main() {
-#if AE_OS == AE_OS_WIN
 	SetDllDirectoryW((getAppPath().parent_path().wstring() + L"/libs/").data());
+#else
+int32_t main() {
 #endif
-	/*
-	abc
-	*/
-
-	//new EventListener11(1);
-
-	//println(String::toString(hash::CRC::calc<64>((uint8_t*)strr.data(), strr.size(), 0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL, true, true, hash::CRC::createTable<64>(0x42F0E1EBA9EA3693ULL)), 16));
-	
-
 	/*
 	__declspec(align(16)) float a[] = { 1.5, 2.5, 3.5, 4.5 };
 	__declspec(align(16)) float b[] = { 1.2, 2.3, 3.4, 4.5 };
@@ -69,6 +60,7 @@ int32_t WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstanc
 	//return (new DepthTestTester())->run();
 	//return (new InputTester())->run();
 	//return (new RenderPipelineTester())->run();
-	return (new RenderTargetTester())->run();
+	//return (new RenderTargetTester())->run();
 	//return (new VertexUpdateTester())->run();
+	return (new WindowTester())->run();
 }
