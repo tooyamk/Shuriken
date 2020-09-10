@@ -175,12 +175,16 @@ set(CMAKE_STATIC_LIBRARY_PREFIX "")
 set(CMAKE_CXX_STANDARD 17)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
+set(clangFlags "-fms-extensions -fPIC -ldl -lpthread")
+
 if (CMAKE_C_COMPILER_ID MATCHES Clang)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fms-extensions -fPIC")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${clangFlags}")
 endif ()
 if (CMAKE_CXX_COMPILER_ID MATCHES Clang)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fms-extensions -fPIC")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${clangFlags}")
 endif ()
+
+unset(clangFlags)
 #cmake_policy(SET CMP0060 NEW)
 
 if (WIN32)

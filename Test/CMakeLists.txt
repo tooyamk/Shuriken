@@ -75,7 +75,7 @@ endif ()
 set(__OUTPUT_LIBS_DIR ${AE_BUILD_DIR}/libs)
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/../Resources/ ${AE_BUILD_DIR}/Resources/ 
+    COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/../Resources/ ${AE_BUILD_DIR}Resources
 )
 
 set(test_pre_build_commands
