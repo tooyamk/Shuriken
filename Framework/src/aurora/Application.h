@@ -5,14 +5,15 @@
 #include "aurora/events/EventDispatcher.h"
 
 #if AE_OS == AE_OS_WIN
-#include "mmsystem.h"
-#pragma comment( lib, "Winmm.lib")
+#	include "mmsystem.h"
+#	pragma comment( lib, "Winmm.lib")
+#elif AE_OS == AE_OS_LINUX
+#	include <X11/Xlib.h>
+#	include <X11/Xatom.h>
+#	include <X11/Xutil.h>
 #endif
 
 namespace aurora {
-	class IClocker;
-
-
 	enum class ApplicationEvent : uint8_t {
 		RESIZED,
 		FOCUS_IN,
@@ -29,6 +30,7 @@ namespace aurora {
 			bool maximizeButton = false;
 			bool minimizeButton = true;
 			bool thickFrame = false;
+			Vec3<uint8_t> backgroundColor;
 		};
 
 		Application(const std::string_view& appId);
@@ -72,7 +74,7 @@ namespace aurora {
 
 #if AE_OS == AE_OS_WIN
 		inline HWND AE_CALL Win_getHWnd() const {
-			return _hWnd;
+			return _win.hWnd;
 		}
 #endif
 
@@ -86,17 +88,20 @@ namespace aurora {
 
 		mutable Box2i32ui32 _windowedRect;
 		Box2i32ui32 _wndRect;
-		
+
 		mutable std::filesystem::path _appPath;
 
 		bool AE_CALL _adjustWindowRect(const Box2i32ui32& in, Box2i32ui32& out);
 		void AE_CALL _recordWindowedRect() const;
 
 #if AE_OS == AE_OS_WIN
-		HINSTANCE _hIns;
-		HWND _hWnd;
+		struct {
+			HINSTANCE hIns;
+			HWND hWnd;
+			RECT lastWndInnerRect;
+			HBRUSH bkBrush;
+		} _win;
 
-		RECT _lastWndInnerRect;
 
 		DWORD AE_CALL _getWindowStyle() const;
 		DWORD AE_CALL _getWindowExStyle() const;
@@ -104,6 +109,41 @@ namespace aurora {
 		void AE_CALL _changeWindow(bool style, bool posOrSize);
 
 		static LRESULT CALLBACK _wndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+#elif AE_OS == AE_OS_LINUX
+		struct MwmHints {
+			uint64_t flags;
+			uint64_t functions;
+			uint64_t decorations;
+			int64_t input_mode;
+			uint64_t status;
+
+			static const uint64_t MWM_HINTS_FUNCTIONS = 1L << 0;
+			static const uint64_t MWM_HINTS_DECORATIONS = 1L << 1;
+
+			static const uint64_t MWM_FUNC_ALL = 1L << 0;
+			static const uint64_t MWM_FUNC_RESIZE = 1L << 1;
+			static const uint64_t MWM_FUNC_MOVE = 1L << 2;
+			static const uint64_t MWM_FUNC_MINIMIZE = 1L << 3;
+			static const uint64_t MWM_FUNC_MAXIMIZE = 1L << 4;
+			static const uint64_t MWM_FUNC_CLOSE = 1L << 5;
+
+			static const uint64_t MWM_DECOR_ALL = 1L << 0;
+			static const uint64_t MWM_DECOR_BORDER = 1L << 1;
+			static const uint64_t MWM_DECOR_RESIZEH = 1L << 2;
+			static const uint64_t MWM_DECOR_TITLE = 1L << 3;
+			static const uint64_t MWM_DECOR_MENU = 1L << 4;
+			static const uint64_t MWM_DECOR_MINIMIZE = 1L << 5;
+			static const uint64_t MWM_DECOR_MAXIMIZE = 1L << 6;
+		};
+
+
+		struct {
+			bool isVisible;
+			Display* dis;
+			Window window;
+
+			Atom MOTIF_WM_HINTS;
+		} _linux;
 #endif
 	};
 }

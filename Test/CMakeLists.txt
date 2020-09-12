@@ -58,7 +58,8 @@ set(linkLibs
     ${PROJECT_AE_SHADER_SCRIPT_NAME}
 )
 
-if (NOT WIN32)
+if (APPLE)
+elseif (UNIX)
     list(APPEND linkLibs
         X11
         dl

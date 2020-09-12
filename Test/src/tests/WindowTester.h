@@ -15,12 +15,28 @@ public:
 
 			RefPtr looper = new Looper(1000.0 / 60.0);
 
+			auto t = aurora::Time::now();
+			int step = 0;
+
 			app->getEventDispatcher().addEventListener(ApplicationEvent::CLOSED, createEventListener<ApplicationEvent>([looper](Event<ApplicationEvent>& e) {
 				looper->stop();
 			}));
 
-			looper->getEventDispatcher().addEventListener(LooperEvent::TICKING, createEventListener<LooperEvent>([app](Event<LooperEvent>& e) {
+			looper->getEventDispatcher().addEventListener(LooperEvent::TICKING, createEventListener<LooperEvent>([app, &t, &step](Event<LooperEvent>& e) {
 				app->pollEvents();
+
+				auto tt = aurora::Time::now();
+				auto d = tt - t;
+				if (d >= 2000) {
+					t = tt;
+					if (step == 0) {
+						step = 1;
+						//app->setVisible(false);
+					} else if (step == 1) {
+						step = 2;
+						//app->setVisible(true);
+					}
+				}
 
 				//app->setWindowTitle(String::toString(GetKeyboardType(0)) + "  " + String::toString(GetKeyboardType(1)) + "  " + String::toString(GetKeyboardType(2)));
 			}));

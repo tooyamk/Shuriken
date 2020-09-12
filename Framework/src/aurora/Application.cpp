@@ -1,31 +1,44 @@
 #include "Application.h"
 #include "aurora/String.h"
-#include "aurora/Time.h"
-#include <thread>
 
 namespace aurora {
 	Application::Application(const std::string_view& appId) :
 		_appId(appId),
 		_isClosing(false),
 #if AE_OS == AE_OS_WIN
-		_hIns(nullptr),
-		_hWnd(nullptr),
-		_lastWndInnerRect({0, 0, 0, 0}),
+		_win({ nullptr, nullptr, {0, 0, 0, 0}, nullptr }),
+#elif AE_OS == AE_OS_LINUX
+		_linux({ false, nullptr, 0 }),
 #endif
 		_isWindowed(true) {
 	}
 
 	Application::~Application() {
 #if AE_OS == AE_OS_WIN
-		if (_hWnd) {
-			DestroyWindow(_hWnd);
-			_hWnd = nullptr;
+		if (_win.hWnd) {
+			DestroyWindow(_win.hWnd);
+			_win.hWnd = nullptr;
 		}
 
-		if (_hIns) {
+		if (_win.bkBrush) {
+			DeleteObject(_win.bkBrush);
+			_win.bkBrush = nullptr;
+		}
+
+		if (_win.hIns) {
 			auto appIdW = String::Utf8ToUnicode(_appId);
-			UnregisterClassW(appIdW.data(), _hIns);
-			_hIns = nullptr;
+			UnregisterClassW(appIdW.data(), _win.hIns);
+			_win.hIns = nullptr;
+		}
+#elif AE_OS == AE_OS_LINUX
+		if (_linux.window) {
+			XDestroyWindow(_linux.dis, _linux.window);
+			_linux.window = 0;
+		}
+
+		if (_linux.dis) {
+			XCloseDisplay(_linux.dis);
+			_linux.dis = nullptr;
 		}
 #endif
 	}
@@ -36,7 +49,8 @@ namespace aurora {
 		_style = style;
 
 #if AE_OS == AE_OS_WIN
-		_hIns = GetModuleHandle(nullptr);
+		_win.hIns = GetModuleHandle(nullptr);
+		_win.bkBrush = CreateSolidBrush(RGB(style.backgroundColor[0], style.backgroundColor[1], style.backgroundColor[2]));
 
 		WNDCLASSEXW wnd;
 		memset(&wnd, 0, sizeof(wnd));
@@ -45,10 +59,10 @@ namespace aurora {
 		wnd.lpfnWndProc = Application::_wndProc;
 		wnd.cbClsExtra = 0;
 		wnd.cbWndExtra = 0;
-		wnd.hInstance = _hIns;
+		wnd.hInstance = _win.hIns;
 		wnd.hIcon = nullptr;//LoadIcon(NULL, IDI_APPLICATION);
 		wnd.hCursor = LoadCursor(nullptr, IDC_ARROW);
-		wnd.hbrBackground = nullptr;//static_cast<HBRUSH>(GetStockObject(WHITE_BRUSH));
+		wnd.hbrBackground = _win.bkBrush;
 		wnd.lpszMenuName = nullptr;//NULL;
 		auto appIdW = String::Utf8ToUnicode(_appId);
 		wnd.lpszClassName = appIdW.data();
@@ -59,15 +73,67 @@ namespace aurora {
 		_adjustWindowRect(_windowedRect, _windowedRect);
 		_updateWindowRectValue();
 
-		_hWnd = CreateWindowExW(_getWindowExStyle(), wnd.lpszClassName, String::Utf8ToUnicode(title).data(), _getWindowStyle(),
+		_win.hWnd = CreateWindowExW(_getWindowExStyle(), wnd.lpszClassName, String::Utf8ToUnicode(title).data(), _getWindowStyle(),
 			_wndRect.pos[0], _wndRect.pos[1], _wndRect.size[0], _wndRect.size[1],
-			GetDesktopWindow(), nullptr, _hIns, nullptr);
-		SetWindowLongPtr(_hWnd, GWLP_USERDATA, (LONG_PTR)this);
-		if (_hWnd) GetClientRect(_hWnd, &_lastWndInnerRect);
+			GetDesktopWindow(), nullptr, _win.hIns, nullptr);
+		SetWindowLongPtr(_win.hWnd, GWLP_USERDATA, (LONG_PTR)this);
+		if (_win.hWnd) GetClientRect(_win.hWnd, &_win.lastWndInnerRect);
 
-		return _hWnd;
+		//DeleteObject(bkBrush);
+
+		return _win.hWnd;
+#elif AE_OS == AE_OS_LINUX
+		if (!_linux.dis) _linux.dis = XOpenDisplay(nullptr);
+		if (!_linux.dis) return false;
+
+		auto s = DefaultScreen(_linux.dis);
+
+		XSetWindowAttributes attr = { 0 };
+		attr.border_pixel = 0;
+		attr.background_pixel = style.backgroundColor[0] < 16 | style.backgroundColor[1] < 8 | style.backgroundColor[2];
+
+		_linux.window = XCreateWindow(_linux.dis, RootWindow(_linux.dis, s),
+			windowedRect.pos[0], windowedRect.pos[1], windowedRect.size[0], windowedRect.size[1], 1,
+			DefaultDepth(_linux.dis, 0), InputOutput, DefaultVisual(_linux.dis, 0), CWBackPixel, &attr);
+
+		_linux.MOTIF_WM_HINTS = XInternAtom(_linux.dis, "_MOTIF_WM_HINTS", False);
+
+		{
+			// auto hints = XAllocSizeHints();
+			// hints->flags = PMinSize | PMaxSize;
+			// hints->min_width = 10;
+			// hints->min_height = 10;
+			// hints->max_width = 100;
+			// hints->max_height = 100;
+			// XSetWMNormalHints(_linux.dis, _linux.window, hints);
+			// XFree(hints);
+		}
+
+		// Atom window_type = XInternAtom(_linux.dis, "_NET_WM_WINDOW_TYPE", False);
+		// int64_t value = XInternAtom(_linux.dis, "_NET_WM_WINDOW_TYPE_NORMAL", False);
+		// XChangeProperty(_linux.dis, _linux.window, window_type, XA_ATOM, 32, PropModeReplace, (uint8_t*)&value, 1);
+
+		{
+			MwmHints hints = { 0 };
+
+			hints.flags = MwmHints::MWM_HINTS_FUNCTIONS | MwmHints::MWM_HINTS_DECORATIONS;
+			hints.functions = MwmHints::MWM_FUNC_MOVE | MwmHints::MWM_FUNC_CLOSE | MwmHints::MWM_FUNC_RESIZE;
+			hints.decorations = MwmHints::MWM_DECOR_BORDER | MwmHints::MWM_DECOR_RESIZEH | MwmHints::MWM_DECOR_TITLE | MwmHints::MWM_DECOR_MENU;
+			if (style.minimizeButton) {
+				hints.functions |= MwmHints::MWM_FUNC_MINIMIZE;
+				hints.decorations |= MwmHints::MWM_DECOR_MINIMIZE;
+			}
+			if (style.maximizeButton) {
+				hints.functions |= MwmHints::MWM_FUNC_MAXIMIZE;
+				hints.decorations |= MwmHints::MWM_DECOR_MAXIMIZE;
+			}
+
+			XChangeProperty(_linux.dis, _linux.window, _linux.MOTIF_WM_HINTS, XA_ATOM, 32, PropModeReplace, (uint8_t*)&hints, 5);
+		}
+
+		return true;
 #endif
-		
+
 		return false;
 	}
 
@@ -77,20 +143,20 @@ namespace aurora {
 
 	void Application::toggleFullscreen() {
 #if AE_OS == AE_OS_WIN
-		if (_hWnd) {
+		if (_win.hWnd) {
 			_isWindowed = !_isWindowed;
 
 			bool visibled = isVisible();
 
 			if (!_isWindowed) {
-				GetClientRect(_hWnd, &_lastWndInnerRect);
+				GetClientRect(_win.hWnd, &_win.lastWndInnerRect);
 				_recordWindowedRect();
 			}
 
 			_updateWindowRectValue();
 			_changeWindow(true, true);
-			if (visibled) ShowWindow(_hWnd, SW_SHOWDEFAULT);
-			
+			if (visibled) ShowWindow(_win.hWnd, SW_SHOWDEFAULT);
+
 			_eventDispatcher.dispatchEvent(this, ApplicationEvent::RESIZED);
 		}
 #endif
@@ -99,7 +165,7 @@ namespace aurora {
 	void Application::getInnerSize(Vec2ui32& size) const {
 #if AE_OS == AE_OS_WIN
 		RECT rect;
-		GetClientRect(_hWnd, &rect);
+		GetClientRect(_win.hWnd, &rect);
 		size.set(rect.right - rect.left, rect.bottom - rect.top);
 #else
 		size.set(0);
@@ -117,10 +183,10 @@ namespace aurora {
 		Box2i32ui32 out;
 		if (_adjustWindowRect(rect, out)) {
 #if AE_OS == AE_OS_WIN
-			_lastWndInnerRect.left = rect.pos[0];
-			_lastWndInnerRect.right = rect.pos[0] + rect.size[0];
-			_lastWndInnerRect.top = rect.pos[1];
-			_lastWndInnerRect.bottom = rect.pos[1] + rect.size[1];
+			_win.lastWndInnerRect.left = rect.pos[0];
+			_win.lastWndInnerRect.right = rect.pos[0] + rect.size[0];
+			_win.lastWndInnerRect.top = rect.pos[1];
+			_win.lastWndInnerRect.bottom = rect.pos[1] + rect.size[1];
 
 			if (!_windowedRect.isEqual(out)) {
 				bool isResize = _windowedRect.size != rect.size;
@@ -137,7 +203,7 @@ namespace aurora {
 
 	void Application::setWindowTitle(const std::string_view& title) {
 #if AE_OS == AE_OS_WIN
-		if (_hWnd) SetWindowTextW(_hWnd, String::Utf8ToUnicode(title).data());
+		if (_win.hWnd) SetWindowTextW(_win.hWnd, String::Utf8ToUnicode(title).data());
 #endif
 	}
 
@@ -149,7 +215,7 @@ namespace aurora {
 
 	bool Application::hasFocus() const {
 #if AE_OS == AE_OS_WIN
-		return GetForegroundWindow() == _hWnd;
+		return GetForegroundWindow() == _win.hWnd;
 #endif
 		return true;
 	}
@@ -167,26 +233,45 @@ namespace aurora {
 				DispatchMessage(&msg);
 			}
 		}
+#elif AE_OS == AE_OS_LINUX
+		XEvent e = { 0 };
+
+		while (XCheckIfEvent(_linux.dis, &e, [](Display*, XEvent*, XPointer) {
+			return 1;
+		}, nullptr)) {}
 #endif
 	}
 
 	bool Application::isVisible() const {
 #if AE_OS == AE_OS_WIN
-		return _hWnd ? IsWindowVisible(_hWnd) : false;
+		return _win.hWnd ? IsWindowVisible(_win.hWnd) : false;
+#elif AE_OS == AE_OS_LINUX
+		return _linux.isVisible;
 #endif
 		return false;
 	}
 
 	void Application::setVisible(bool b) {
 #if AE_OS == AE_OS_WIN
-		if (_hWnd) {
+		if (_win.hWnd) {
 			if (b) {
-				ShowWindow(_hWnd, SW_SHOWDEFAULT);
+				ShowWindow(_win.hWnd, SW_SHOWDEFAULT);
 			} else {
-				ShowWindow(_hWnd, SW_HIDE);
+				ShowWindow(_win.hWnd, SW_HIDE);
 			}
 
-			UpdateWindow(_hWnd);
+			UpdateWindow(_win.hWnd);
+		}
+#elif AE_OS == AE_OS_LINUX
+		if (_linux.dis) {
+			if (_linux.isVisible != b) {
+				_linux.isVisible = b;
+				if (b) {
+					XMapWindow(_linux.dis, _linux.window);
+				} else {
+					XUnmapWindow(_linux.dis, _linux.window);
+				}
+			}
 		}
 #endif
 	}
@@ -212,7 +297,7 @@ namespace aurora {
 	void Application::_recordWindowedRect() const {
 #if AE_OS == AE_OS_WIN
 		RECT rect;
-		GetWindowRect(_hWnd, &rect);
+		GetWindowRect(_win.hWnd, &rect);
 		_windowedRect.set(Vec2i32({ rect.left, rect.top }), Vec2i32({ rect.right - rect.left, rect.bottom - rect.top }));
 #endif
 	}
@@ -253,8 +338,8 @@ namespace aurora {
 
 	void Application::_changeWindow(bool style, bool posOrSize) {
 		if (style) {
-			SetWindowLongPtr(_hWnd, GWL_STYLE, _getWindowStyle());
-			SetWindowLongPtr(_hWnd, GWL_EXSTYLE, _getWindowExStyle());
+			SetWindowLongPtr(_win.hWnd, GWL_STYLE, _getWindowStyle());
+			SetWindowLongPtr(_win.hWnd, GWL_EXSTYLE, _getWindowExStyle());
 		}
 		if (posOrSize) {
 			uint32_t flags = SWP_NOACTIVATE;
@@ -263,7 +348,7 @@ namespace aurora {
 			} else {
 				flags |= SWP_NOCOPYBITS;
 			}
-			SetWindowPos(_hWnd, HWND_NOTOPMOST, _wndRect.pos[0], _wndRect.pos[1], _wndRect.size[0], _wndRect.size[1], flags);
+			SetWindowPos(_win.hWnd, HWND_NOTOPMOST, _wndRect.pos[0], _wndRect.pos[1], _wndRect.size[0], _wndRect.size[1], flags);
 		}
 	}
 
@@ -288,7 +373,7 @@ namespace aurora {
 		case WM_DESTROY:
 		{
 			PostQuitMessage(0);
-			
+
 			return 0;
 		}
 		case WM_SIZE:

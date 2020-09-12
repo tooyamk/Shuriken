@@ -9,10 +9,10 @@ void Stats::run(Looper* looper) {
 		std::thread([this, looper]() {
 			auto tw = std::make_shared<TimeWheel>(100, 100);
 
-			auto frameTime = Time::now();
+			auto frameTime = aurora::Time::now();
 			TimeWheel::Timer timer;
 			timer.onTick = [this, looper, &frameTime](TimeWheel::Timer& timer) {
-				auto t = Time::now();
+				auto t = aurora::Time::now();
 
 				auto fps = _frameCount / ((t - frameTime) * 0.001);
 				println("fps : ", fps);
@@ -22,9 +22,9 @@ void Stats::run(Looper* looper) {
 			};
 			tw->startTimer(timer, 1000000, 0, false);
 
-			auto t0 = Time::now<std::chrono::microseconds>();
+			auto t0 = aurora::Time::now<std::chrono::microseconds>();
 			while (true) {
-				auto t = Time::now<std::chrono::microseconds>();
+				auto t = aurora::Time::now<std::chrono::microseconds>();
 				uint64_t d = t - t0;
 				while (d) {
 					uint64_t e;
