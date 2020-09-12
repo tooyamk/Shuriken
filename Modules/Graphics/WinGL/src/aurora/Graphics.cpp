@@ -201,7 +201,7 @@ namespace aurora::modules::graphics::win_gl {
 		_app->getEventDispatcher().addEventListener(ApplicationEvent::RESIZED, _resizedListener);
 
 		_setInitState();
-		_resize(_app->getInnerSize());
+		_resize(_app->getClientSize());
 
 		return true;
 	}
@@ -769,7 +769,7 @@ namespace aurora::modules::graphics::win_gl {
 	void Graphics::_setInitState() {
 		{
 			_glStatus.isBack = true;
-			_glStatus.backSize = _app->getInnerSize();
+			_glStatus.backSize = _app->getClientSize();
 			_glStatus.canvasSize = _glStatus.backSize;
 
 			GLint vp[4];
@@ -948,7 +948,7 @@ namespace aurora::modules::graphics::win_gl {
 	}
 
 	void Graphics::_resizedHandler(events::Event<ApplicationEvent>& e) {
-		_resize(_app->getInnerSize());
+		_resize(_app->getClientSize());
 	}
 
 	void Graphics::_release() {

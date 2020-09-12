@@ -10,7 +10,7 @@ namespace aurora {
 #elif AE_OS == AE_OS_LINUX
 		_linux({ false, nullptr, 0 }),
 #endif
-		_isWindowed(true) {
+		_isFullscreen(false) {
 	}
 
 	Application::~Application() {
@@ -43,9 +43,8 @@ namespace aurora {
 #endif
 	}
 
-	bool Application::createWindow(const Style& style, const std::string_view& title, const Box2i32ui32& windowedRect, bool fullscreen) {
-		_windowedRect.set(windowedRect);
-		_isWindowed = !fullscreen;
+	bool Application::createWindow(const Style& style, const std::string_view& title, const Box2i32ui32& clientRect, bool fullscreen) {
+		_isFullscreen = fullscreen;
 		_style = style;
 
 #if AE_OS == AE_OS_WIN
@@ -70,14 +69,14 @@ namespace aurora {
 
 		RegisterClassExW(&wnd);
 
-		_adjustWindowRect(_windowedRect, _windowedRect);
+		_adjustWindowRect(clientRect, _windowRect);
 		_updateWindowRectValue();
 
 		_win.hWnd = CreateWindowExW(_getWindowExStyle(), wnd.lpszClassName, String::Utf8ToUnicode(title).data(), _getWindowStyle(),
 			_wndRect.pos[0], _wndRect.pos[1], _wndRect.size[0], _wndRect.size[1],
 			GetDesktopWindow(), nullptr, _win.hIns, nullptr);
 		SetWindowLongPtr(_win.hWnd, GWLP_USERDATA, (LONG_PTR)this);
-		if (_win.hWnd) GetClientRect(_win.hWnd, &_win.lastWndInnerRect);
+		if (_win.hWnd) GetClientRect(_win.hWnd, &_win.lastWndClientRect);
 
 		//DeleteObject(bkBrush);
 
@@ -133,24 +132,19 @@ namespace aurora {
 
 		return true;
 #endif
-
 		return false;
-	}
-
-	bool Application::isWindowed() const {
-		return _isWindowed;
 	}
 
 	void Application::toggleFullscreen() {
 #if AE_OS == AE_OS_WIN
 		if (_win.hWnd) {
-			_isWindowed = !_isWindowed;
+			_isFullscreen = !_isFullscreen;
 
 			bool visibled = isVisible();
 
-			if (!_isWindowed) {
-				GetClientRect(_win.hWnd, &_win.lastWndInnerRect);
-				_recordWindowedRect();
+			if (_isFullscreen) {
+				GetClientRect(_win.hWnd, &_win.lastWndClientRect);
+				_recordWindowRect();
 			}
 
 			_updateWindowRectValue();
@@ -162,7 +156,7 @@ namespace aurora {
 #endif
 	}
 
-	void Application::getInnerSize(Vec2ui32& size) const {
+	void Application::getClientSize(Vec2ui32& size) const {
 #if AE_OS == AE_OS_WIN
 		RECT rect;
 		GetClientRect(_win.hWnd, &rect);
@@ -172,27 +166,26 @@ namespace aurora {
 #endif
 	}
 
-	void Application::getWindowedRect(Box2i32ui32& dst) const {
+	void Application::getWindowRect(Box2i32ui32& dst) const {
 #if AE_OS == AE_OS_WIN
-		if (_isWindowed) _recordWindowedRect();
+		if (!_isFullscreen) _recordWindowRect();
 #endif
-		dst.set(_windowedRect);
+		dst = _windowRect;
 	}
 
-	void Application::setWindowedRect(const Box2i32ui32& rect) {
+	void Application::setWindowRect(const Box2i32ui32& clientRect) {
 		Box2i32ui32 out;
-		if (_adjustWindowRect(rect, out)) {
+		if (_adjustWindowRect(clientRect, out)) {
 #if AE_OS == AE_OS_WIN
-			_win.lastWndInnerRect.left = rect.pos[0];
-			_win.lastWndInnerRect.right = rect.pos[0] + rect.size[0];
-			_win.lastWndInnerRect.top = rect.pos[1];
-			_win.lastWndInnerRect.bottom = rect.pos[1] + rect.size[1];
+			_win.lastWndClientRect.left = clientRect.pos[0];
+			_win.lastWndClientRect.right = clientRect.pos[0] + clientRect.size[0];
+			_win.lastWndClientRect.top = clientRect.pos[1];
+			_win.lastWndClientRect.bottom = clientRect.pos[1] + clientRect.size[1];
 
-			if (!_windowedRect.isEqual(out)) {
-				bool isResize = _windowedRect.size != rect.size;
-				_windowedRect.set(rect);
+			if (_windowRect != out) {
+				_windowRect = out;
 
-				if (_isWindowed) {
+				if (!_isFullscreen) {
 					_updateWindowRectValue();
 					_changeWindow(false, true);
 				}
@@ -207,9 +200,9 @@ namespace aurora {
 #endif
 	}
 
-	void Application::setCursorVisible(bool isVisible) {
+	void Application::setCursorVisible(bool visible) {
 #if AE_OS == AE_OS_WIN
-		ShowCursor(isVisible);
+		ShowCursor(visible);
 #endif
 	}
 
@@ -286,7 +279,7 @@ namespace aurora {
 #if AE_OS == AE_OS_WIN
 		RECT rect = { in.pos[0], in.pos[1], in.pos[0] + in.size[0], in.pos[1] + in.size[1] };
 		auto rst = AdjustWindowRectEx(&rect, _getWindowStyle(), FALSE, _getWindowExStyle());
-		out.set(Vec2i32({ rect.left, rect.top }), Vec2i32({ rect.right - rect.left, rect.bottom - rect.top }));
+		out.set(Vec2i32(rect.left, rect.top), Vec2i32(rect.right - rect.left, rect.bottom - rect.top));
 		return rst;
 #else
 		out.set(in);
@@ -294,11 +287,11 @@ namespace aurora {
 #endif
 	}
 
-	void Application::_recordWindowedRect() const {
+	void Application::_recordWindowRect() const {
 #if AE_OS == AE_OS_WIN
 		RECT rect;
 		GetWindowRect(_win.hWnd, &rect);
-		_windowedRect.set(Vec2i32({ rect.left, rect.top }), Vec2i32({ rect.right - rect.left, rect.bottom - rect.top }));
+		_windowRect.set(Vec2i32(rect.left, rect.top), Vec2i32(rect.right - rect.left, rect.bottom - rect.top));
 #endif
 	}
 
@@ -306,13 +299,13 @@ namespace aurora {
 	DWORD Application::_getWindowStyle() const {
 		DWORD style = WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
 
-		if (_isWindowed) {
+		if (_isFullscreen) {
+			style |= WS_POPUP;
+		} else {
 			style |= WS_CAPTION | WS_SYSMENU;
 			if (_style.minimizeButton) style |= WS_MINIMIZEBOX;
 			if (_style.maximizeButton) style |= WS_MAXIMIZEBOX;
 			if (_style.thickFrame) style |= WS_THICKFRAME;
-		} else {
-			style |= WS_POPUP;
 		}
 
 		return style;
@@ -321,7 +314,7 @@ namespace aurora {
 	DWORD Application::_getWindowExStyle() const {
 		DWORD style = WS_EX_APPWINDOW;
 
-		if (!_isWindowed) {
+		if (_isFullscreen) {
 			//style |= WS_EX_TOPMOST;
 		}
 
@@ -329,10 +322,10 @@ namespace aurora {
 	}
 
 	void Application::_updateWindowRectValue() {
-		if (_isWindowed) {
-			_wndRect.set(_windowedRect);
+		if (_isFullscreen) {
+			_wndRect.set(Vec2i32::ZERO, Vec2i32(GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN)));
 		} else {
-			_wndRect.set(Vec2i32::ZERO, Vec2i32({ GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN) }));
+			_wndRect = _windowRect;
 		}
 	}
 
@@ -343,10 +336,10 @@ namespace aurora {
 		}
 		if (posOrSize) {
 			uint32_t flags = SWP_NOACTIVATE;
-			if (_isWindowed) {
-				flags |= SWP_NOOWNERZORDER | SWP_NOZORDER;
-			} else {
+			if (_isFullscreen) {
 				flags |= SWP_NOCOPYBITS;
+			} else {
+				flags |= SWP_NOOWNERZORDER | SWP_NOZORDER;
 			}
 			SetWindowPos(_win.hWnd, HWND_NOTOPMOST, _wndRect.pos[0], _wndRect.pos[1], _wndRect.size[0], _wndRect.size[1], flags);
 		}
@@ -371,31 +364,29 @@ namespace aurora {
 			break;
 		}
 		case WM_DESTROY:
-		{
 			PostQuitMessage(0);
-
 			return 0;
-		}
 		case WM_SIZE:
-		{
 			if (app) app->_eventDispatcher.dispatchEvent(app, ApplicationEvent::RESIZED);
-
 			break;
-		}
 		case WM_SETFOCUS:
-		{
 			if (app) app->_eventDispatcher.dispatchEvent(app, ApplicationEvent::FOCUS_IN);
-
 			break;
-		}
 		case WM_KILLFOCUS:
-		{
 			if (app) app->_eventDispatcher.dispatchEvent(app, ApplicationEvent::FOCUS_OUT);
-
 			break;
-		}
 		case WM_DEVICECHANGE:
+			break;
+		case WM_GETMINMAXINFO:
 		{
+			/*
+			auto info = (tagMINMAXINFO*)lParam;
+			info->ptMinTrackSize.x = 10;
+			info->ptMinTrackSize.y = 10;
+			info->ptMaxTrackSize.x = 400;
+			info->ptMaxTrackSize.y = 400;
+			*/
+
 			break;
 		}
 		default:

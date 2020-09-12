@@ -256,7 +256,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			if (numQualityLevels) _deviceFeatures.maxSampleCount = i;
 		}
 
-		auto size = app->getInnerSize();
+		auto size = app->getClientSize();
 
 		_backBufferSampleCount = sampleCount > _deviceFeatures.maxSampleCount ? _deviceFeatures.maxSampleCount : sampleCount;
 		DXGI_SWAP_CHAIN_DESC swapChainDesc = { 0 };
@@ -613,7 +613,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	void Graphics::_resizedHandler(events::Event<ApplicationEvent>& e) {
-		_resize(_app->getInnerSize());
+		_resize(_app->getClientSize());
 	}
 
 	void Graphics::_release() {

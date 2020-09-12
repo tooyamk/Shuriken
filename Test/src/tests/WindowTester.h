@@ -31,6 +31,7 @@ public:
 					t = tt;
 					if (step == 0) {
 						step = 1;
+						app->getClientSize();
 						//app->setVisible(false);
 					} else if (step == 1) {
 						step = 2;

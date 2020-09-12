@@ -95,7 +95,7 @@ public:
 						RefPtr renderer = new ForwardRenderer(*graphics);
 
 						{
-							auto size = app->getInnerSize();
+							auto size = app->getClientSize();
 							renderData.camera->setProjectionMatrix(Matrix44::createPerspectiveFovLH(Math::PI<float32_t> / 6.f, size[0] / size[1], 10, 10000));
 							renderData.camera->getNode()->localTranslate(Vec3f32(0.f, 0.f, -200.f));
 						}
@@ -233,7 +233,7 @@ public:
 
 						renderData.model->localRotate(Quaternion::createFromEulerY(Math::PI<float32_t> * dt * 0.5f));
 
-						renderData.g->setViewport(Box2i32ui32(Vec2i32::ZERO, renderData.app->getInnerSize()));
+						renderData.g->setViewport(Box2i32ui32(Vec2i32::ZERO, renderData.app->getClientSize()));
 						renderData.renderPipeline->render(renderData.g, [renderData](render::IRenderCollector& collector) {
 							collector.addCamera(renderData.camera);
 							for (auto& r : renderData.renderables) collector.addRenderable(r);
