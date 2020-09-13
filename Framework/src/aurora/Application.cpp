@@ -62,7 +62,7 @@ namespace aurora {
 		wnd.hIcon = nullptr;//LoadIcon(NULL, IDI_APPLICATION);
 		wnd.hCursor = LoadCursor(nullptr, IDC_ARROW);
 		wnd.hbrBackground = _win.bkBrush;
-		wnd.lpszMenuName = nullptr;//NULL;
+		wnd.lpszMenuName = nullptr;;
 		auto appIdW = String::Utf8ToUnicode(_appId);
 		wnd.lpszClassName = appIdW.data();
 		wnd.hIconSm = nullptr;
@@ -302,7 +302,7 @@ namespace aurora {
 		if (_isFullscreen) {
 			style |= WS_POPUP;
 		} else {
-			style |= WS_CAPTION | WS_SYSMENU;
+			style |= WS_BORDER | WS_DLGFRAME | WS_SYSMENU;
 			if (_style.minimizeButton) style |= WS_MINIMIZEBOX;
 			if (_style.maximizeButton) style |= WS_MAXIMIZEBOX;
 			if (_style.thickFrame) style |= WS_THICKFRAME;
@@ -393,7 +393,7 @@ namespace aurora {
 			break;
 		}
 
-		return DefWindowProc(hWnd, msg, wParam, lParam);
+		return DefWindowProcW(hWnd, msg, wParam, lParam);
 	}
 #endif
 }
