@@ -20,9 +20,9 @@ public:
 			if (gml->load(getDLLName("ae-win-d3d11"))) {
 				RefPtr gpstml = new ModuleLoader<IProgramSourceTranslator>();
 				gpstml->load(getDLLName("ae-program-source-translator"));
-				RefPtr gpst = gpstml->create(&Args().add("dxc", getDLLName("dxcompiler")));
+				auto gpst = gpstml->create(&Args().add("dxc", getDLLName("dxcompiler")));
 
-				RefPtr graphics = gml->create(&Args().add("app", &*app).add("sampleCount", SampleCount(4)).add("trans", &*gpst));
+				auto graphics = gml->create(&Args().add("app", &*app).add("sampleCount", SampleCount(4)).add("trans", &*gpst));
 
 				if (graphics) {
 					println("Graphics Version : ", graphics->getVersion());
@@ -95,7 +95,7 @@ public:
 						RefPtr renderer = new ForwardRenderer(*graphics);
 
 						{
-							auto size = app->getClientSize();
+							auto size = app->getCurrentClientSize();
 							renderData.camera->setProjectionMatrix(Matrix44::createPerspectiveFovLH(Math::PI<float32_t> / 6.f, size[0] / size[1], 10, 10000));
 							renderData.camera->getNode()->localTranslate(Vec3f32(0.f, 0.f, -200.f));
 						}
@@ -112,7 +112,7 @@ public:
 						auto parsed = extensions::FBXConverter::parse(readFile(app->getAppPath().parent_path().u8string() + "/Resources/teapot.fbx"));
 						for (auto& mr : parsed.meshes) {
 							if (mr) {
-								RefPtr rs = graphics->createRasterizerState();
+								auto rs = graphics->createRasterizerState();
 								rs->setFillMode(FillMode::SOLID);
 								rs->setFrontFace(FrontFace::CW);
 								rs->setCullMode(CullMode::BACK);
@@ -233,7 +233,7 @@ public:
 
 						renderData.model->localRotate(Quaternion::createFromEulerY(Math::PI<float32_t> * dt * 0.5f));
 
-						renderData.g->setViewport(Box2i32ui32(Vec2i32::ZERO, renderData.app->getClientSize()));
+						renderData.g->setViewport(Box2i32ui32(Vec2i32::ZERO, renderData.app->getCurrentClientSize()));
 						renderData.renderPipeline->render(renderData.g, [renderData](render::IRenderCollector& collector) {
 							collector.addCamera(renderData.camera);
 							for (auto& r : renderData.renderables) collector.addRenderable(r);

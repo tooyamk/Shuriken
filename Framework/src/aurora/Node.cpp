@@ -78,7 +78,7 @@ namespace aurora {
 
 		_removeNode(child);
 		child->_parentChanged(child);
-		child->unref();
+		Ref::unref(*child);
 
 		return Result::SUCCESS;
 	}
@@ -89,7 +89,7 @@ namespace aurora {
 
 			_removeNode(child);
 			child->_parentChanged(child);
-			child->unref();
+			Ref::unref(*child);
 
 			return iterator(next);
 		}
@@ -111,7 +111,7 @@ namespace aurora {
 				child->_next = nullptr;
 				child->_parent = nullptr;
 				child->_parentChanged(child);
-				child->unref();
+				Ref::unref(*child);
 
 				child = next;
 			} while (child);

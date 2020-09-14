@@ -51,6 +51,7 @@ namespace aurora {
 		inline const Vec4ui32& AE_CALL getBorder() const {
 			return _border;
 		}
+		Vec2ui32 AE_CALL getCurrentClientSize() const;
 		inline const Vec2ui32& AE_CALL getClientSize() const {
 			return _clientSize;
 		}

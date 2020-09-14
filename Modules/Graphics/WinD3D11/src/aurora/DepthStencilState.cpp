@@ -7,7 +7,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_dirty(DirtyFlag::EMPTY),
 		_internalState(nullptr),
 		_featureValue(0) {
-		if (_isInternal) _graphics->unref<false>();
+		if (_isInternal) Ref::unref<false>(*_graphics);
 		_updateDepth();
 		_updateStencil();
 	}

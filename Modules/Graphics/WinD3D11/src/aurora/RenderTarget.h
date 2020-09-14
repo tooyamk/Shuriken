@@ -13,11 +13,11 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual const void* AE_CALL getNative() const override;
 		
 		virtual Vec2ui32 AE_CALL getSize() const override;
-		virtual IRenderView* AE_CALL getRenderView(uint8_t index) const override;
+		virtual RefPtr<IRenderView> AE_CALL getRenderView(uint8_t index) const override;
 		virtual bool AE_CALL setRenderView(uint8_t index, IRenderView* view) override;
 		virtual void AE_CALL eraseRenderViews(uint8_t begin, uint8_t size) override;
 
-		virtual IDepthStencil* AE_CALL getDepthStencil() const override;
+		virtual RefPtr<IDepthStencil> AE_CALL getDepthStencil() const override;
 		virtual void AE_CALL setDepthStencil(IDepthStencil* ds) override;
 
 		uint8_t AE_CALL getNumRenderViews();

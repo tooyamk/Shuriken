@@ -15,8 +15,8 @@ namespace aurora::modules::graphics::win_gl {
 		return _base.handle;
 	}
 
-	ITextureResource* RenderView::getResource() const {
-		return _base.res.get();
+	RefPtr<ITextureResource> RenderView::getResource() const {
+		return _base.res;
 	}
 
 	const void* RenderView::getNative() const {

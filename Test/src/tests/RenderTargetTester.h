@@ -20,9 +20,9 @@ public:
 			//if (gml->load(getDLLName("ae-win-d3d11"))) {
 				RefPtr gpstml = new ModuleLoader<IProgramSourceTranslator>();
 				gpstml->load(getDLLName("ae-program-source-translator"));
-				RefPtr gpst = gpstml->create(&Args().add("dxc", getDLLName("dxcompiler")));
+				auto gpst = gpstml->create(&Args().add("dxc", getDLLName("dxcompiler")));
 
-				RefPtr graphics = gml->create(&Args().add("app", &*app).add("sampleCount", SampleCount(1)).add("trans", &*gpst));
+				auto graphics = gml->create(&Args().add("app", &*app).add("sampleCount", SampleCount(1)).add("trans", &*gpst));
 
 				if (graphics) {
 					println("Graphics Version : ", graphics->getVersion());
@@ -55,7 +55,7 @@ public:
 					renderData.g = graphics;
 
 					{
-						RefPtr rs = graphics->createRasterizerState();
+						auto rs = graphics->createRasterizerState();
 						rs->setFillMode(FillMode::SOLID);
 						rs->setFrontFace(FrontFace::CW);
 						rs->setCullMode(CullMode::NONE);
@@ -93,7 +93,7 @@ public:
 							vertexBuffer->setFormat(VertexFormat(VertexSize::THREE, VertexType::F32));
 						}
 
-						RefPtr uvBuffer = graphics->createVertexBuffer();
+						auto uvBuffer = graphics->createVertexBuffer();
 						if (uvBuffer) {
 							float32_t uvs[] = {
 								0.f, 1.f,
@@ -137,14 +137,14 @@ public:
 					}
 
 					{
-						RefPtr rts = graphics->createTexture2DResource();
+						auto rts = graphics->createTexture2DResource();
 						rts->create(Vec2ui32(800 * 2, 600 * 2), 0, 1, 1, TextureFormat::R8G8B8A8, Usage::RENDERABLE);
 
 						{
-							RefPtr rv = graphics->createRenderView();
+							auto rv = graphics->createRenderView();
 							rv->create(rts, 0, 0, 0);
 
-							RefPtr ds = graphics->createDepthStencil();
+							auto ds = graphics->createDepthStencil();
 							ds->create(rts->getSize(), DepthStencilFormat::D24S8, rts->getSampleCount());
 
 							renderData.rt = graphics->createRenderTarget();
@@ -153,10 +153,10 @@ public:
 						}
 
 						{
-							RefPtr tv = graphics->createTextureView();
+							auto tv = graphics->createTextureView();
 							tv->create(rts, 0, 1, 0, 0);
 
-							RefPtr s = graphics->createSampler();
+							auto s = graphics->createSampler();
 
 							renderData.spc->set("ppTex", new ShaderParameter(ShaderParameterUsage::AUTO))->set(tv).setUpdated();
 							renderData.spc->set("ppTexSampler", new ShaderParameter(ShaderParameterUsage::AUTO))->set(s).setUpdated();
@@ -182,10 +182,10 @@ public:
 							auto hr = texRes->create(img0->size, 0, 1, 1, img0->format, Usage::IGNORE_UNSUPPORTED | Usage::UPDATE);
 							auto bbb = texRes->update(0, 0, Box2ui32(Vec2ui32::ZERO, img0->size), mipsData0Ptr.data()[0]);
 
-							RefPtr texView = graphics->createTextureView();
+							auto texView = graphics->createTextureView();
 							texView->create(texRes, 0, -1, 0, -1);
 
-							RefPtr pb = graphics->createPixelBuffer();
+							auto pb = graphics->createPixelBuffer();
 							if (pb) {
 								//pb->create(img0->size.getMultiplies() * 4, Usage::MAP_WRITE | Usage::PERSISTENT_MAP, mipsData0Ptr.data()[0], img0->size.getMultiplies() * 4);
 								//texRes->copyFrom(0, 0, Box2ui32(Vec2ui32(0, 0), Vec2ui32(4, 4)), pb);
@@ -200,7 +200,7 @@ public:
 							renderData.spc->set("texDiffuse", new ShaderParameter(ShaderParameterUsage::AUTO))->set(texView).setUpdated();
 						}
 
-						RefPtr sam = graphics->createSampler();
+						auto sam = graphics->createSampler();
 						if (sam) {
 							//sam->setMipLOD(0, 0);
 							//sam->setAddress(SamplerAddressMode::WRAP, SamplerAddressMode::WRAP, SamplerAddressMode::WRAP);
@@ -326,7 +326,7 @@ public:
 
 						//===================================
 						renderData.g->setRenderTarget(nullptr);
-						renderData.g->setViewport(Box2i32ui32(Vec2i32::ZERO, renderData.app->getClientSize()));
+						renderData.g->setViewport(Box2i32ui32(Vec2i32::ZERO, renderData.app->getCurrentClientSize()));
 						renderData.g->beginRender();
 						renderData.g->clear(ClearFlag::COLOR | ClearFlag::DEPTH | ClearFlag::STENCIL, Vec4f32(0.0f, 0.0f, 0.0f, 1.0f), 1.f, 0);
 

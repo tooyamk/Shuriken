@@ -519,7 +519,7 @@ namespace aurora {
 			break;
 		case Type::STRING:
 		{
-			_getValue<Str*>()->unref();
+			Ref::unref(*_getValue<Str*>());
 			_value[0] = 0;
 			_type = Type::SHORT_STRING;
 
@@ -740,7 +740,7 @@ namespace aurora {
 		switch (_type) {
 		case Type::STRING:
 		{
-			_getValue<Str*>()->unref();
+			Ref::unref(*_getValue<Str*>());
 
 			if ((flag & Flag::COPY) == Flag::COPY) {
 				if (auto size = value.size(); size < VALUE_SIZE) {
@@ -1225,35 +1225,35 @@ namespace aurora {
 		switch (_type) {
 		case Type::STRING:
 		{
-			_getValue<Str*>()->unref();
+			Ref::unref(*_getValue<Str*>());
 			_type = Type::INVALID;
 
 			break;
 		}
 		case Type::ARRAY:
 		{
-			_getValue<Array*>()->unref();
+			Ref::unref(*_getValue<Array*>());
 			_type = Type::INVALID;
 
 			break;
 		}
 		case Type::MAP:
 		{
-			_getValue<Map*>()->unref();
+			Ref::unref(*_getValue<Map*>());
 			_type = Type::INVALID;
 
 			break;
 		}
 		case Type::BYTES:
 		{
-			_getValue<Bytes<false>*>()->unref();
+			Ref::unref(*_getValue<Bytes<false>*>());
 			_type = Type::INVALID;
 
 			break;
 		}
 		case Type::EXT_BYTES:
 		{
-			_getValue<Bytes<true>*>()->unref();
+			Ref::unref(*_getValue<Bytes<true>*>());
 			_type = Type::INVALID;
 
 			break;

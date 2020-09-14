@@ -201,7 +201,7 @@ namespace aurora::modules::graphics::win_gl {
 		_app->getEventDispatcher().addEventListener(ApplicationEvent::RESIZED, _resizedListener);
 
 		_setInitState();
-		_resize(_app->getClientSize());
+		_resize(_app->getCurrentClientSize());
 
 		return true;
 	}
@@ -222,39 +222,39 @@ namespace aurora::modules::graphics::win_gl {
 		return _deviceFeatures;
 	}
 
-	IBlendState* Graphics::createBlendState() {
+	RefPtr<IBlendState> Graphics::createBlendState() {
 		return new BlendState(*this, false);
 	}
 
-	IConstantBuffer* Graphics::createConstantBuffer() {
+	RefPtr<IConstantBuffer> Graphics::createConstantBuffer() {
 		return _deviceFeatures.constantBuffer ? new ConstantBuffer(*this) : nullptr;
 	}
 
-	IDepthStencil* Graphics::createDepthStencil() {
+	RefPtr<IDepthStencil> Graphics::createDepthStencil() {
 		return new DepthStencil(*this);
 	}
 
-	IDepthStencilState* Graphics::createDepthStencilState() {
+	RefPtr<IDepthStencilState> Graphics::createDepthStencilState() {
 		return new DepthStencilState(*this, false);
 	}
 
-	IIndexBuffer* Graphics::createIndexBuffer() {
+	RefPtr<IIndexBuffer> Graphics::createIndexBuffer() {
 		return new IndexBuffer(*this);
 	}
 
-	IProgram* Graphics::createProgram() {
+	RefPtr<IProgram> Graphics::createProgram() {
 		return new Program(*this);
 	}
 
-	IRasterizerState* Graphics::createRasterizerState() {
+	RefPtr<IRasterizerState> Graphics::createRasterizerState() {
 		return new RasterizerState(*this, false);
 	}
 
-	IRenderTarget* Graphics::createRenderTarget() {
+	RefPtr<IRenderTarget> Graphics::createRenderTarget() {
 		return new RenderTarget(*this);
 	}
 
-	IRenderView* Graphics::createRenderView() {
+	RefPtr<IRenderView> Graphics::createRenderView() {
 		if (_deviceFeatures.nativeRenderView) {
 			return new RenderView(*this);
 		} else {
@@ -262,23 +262,23 @@ namespace aurora::modules::graphics::win_gl {
 		}
 	}
 
-	ISampler* Graphics::createSampler() {
+	RefPtr<ISampler> Graphics::createSampler() {
 		return _deviceFeatures.sampler ? new Sampler(*this) : nullptr;
 	}
 
-	ITexture1DResource* Graphics::createTexture1DResource() {
+	RefPtr<ITexture1DResource> Graphics::createTexture1DResource() {
 		return new Texture1DResource(*this);
 	}
 
-	ITexture2DResource* Graphics::createTexture2DResource() {
+	RefPtr<ITexture2DResource> Graphics::createTexture2DResource() {
 		return new Texture2DResource(*this);
 	}
 
-	ITexture3DResource* Graphics::createTexture3DResource() {
+	RefPtr<ITexture3DResource> Graphics::createTexture3DResource() {
 		return new Texture3DResource(*this);
 	}
 
-	ITextureView* Graphics::createTextureView() {
+	RefPtr<ITextureView> Graphics::createTextureView() {
 		if (_deviceFeatures.nativeTextureView) {
 			return new TextureView(*this);
 		} else {
@@ -286,11 +286,11 @@ namespace aurora::modules::graphics::win_gl {
 		}
 	}
 
-	IVertexBuffer* Graphics::createVertexBuffer() {
+	RefPtr<IVertexBuffer> Graphics::createVertexBuffer() {
 		return new VertexBuffer(*this);
 	}
 
-	IPixelBuffer* Graphics::createPixelBuffer() {
+	RefPtr<IPixelBuffer> Graphics::createPixelBuffer() {
 		return new PixelBuffer(*this);
 	}
 
@@ -769,7 +769,7 @@ namespace aurora::modules::graphics::win_gl {
 	void Graphics::_setInitState() {
 		{
 			_glStatus.isBack = true;
-			_glStatus.backSize = _app->getClientSize();
+			_glStatus.backSize = _app->getCurrentClientSize();
 			_glStatus.canvasSize = _glStatus.backSize;
 
 			GLint vp[4];
@@ -948,7 +948,7 @@ namespace aurora::modules::graphics::win_gl {
 	}
 
 	void Graphics::_resizedHandler(events::Event<ApplicationEvent>& e) {
-		_resize(_app->getClientSize());
+		_resize(_app->getCurrentClientSize());
 	}
 
 	void Graphics::_release() {

@@ -22,8 +22,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return _view;
 	}
 
-	ITextureResource* TextureView::getResource() const {
-		return _res.get();
+	RefPtr<ITextureResource> TextureView::getResource() const {
+		return _res;
 	}
 
 	const void* TextureView::getNative() const {

@@ -256,7 +256,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 			if (numQualityLevels) _deviceFeatures.maxSampleCount = i;
 		}
 
-		auto size = app->getClientSize();
+		auto size = app->getCurrentClientSize();
 
 		_backBufferSampleCount = sampleCount > _deviceFeatures.maxSampleCount ? _deviceFeatures.maxSampleCount : sampleCount;
 		DXGI_SWAP_CHAIN_DESC swapChainDesc = { 0 };
@@ -320,67 +320,67 @@ namespace aurora::modules::graphics::win_d3d11 {
 		return _deviceFeatures;
 	}
 
-	IBlendState* Graphics::createBlendState() {
+	RefPtr<IBlendState> Graphics::createBlendState() {
 		return new BlendState(*this, false);
 	}
 
-	IConstantBuffer* Graphics::createConstantBuffer() {
+	RefPtr<IConstantBuffer> Graphics::createConstantBuffer() {
 		return new ConstantBuffer(*this);
 	}
 
-	IDepthStencil* Graphics::createDepthStencil() {
+	RefPtr<IDepthStencil> Graphics::createDepthStencil() {
 		return new DepthStencil(*this, false);
 	}
 
-	IDepthStencilState* Graphics::createDepthStencilState() {
+	RefPtr<IDepthStencilState> Graphics::createDepthStencilState() {
 		return new DepthStencilState(*this, false);
 	}
 
-	IIndexBuffer* Graphics::createIndexBuffer() {
+	RefPtr<IIndexBuffer> Graphics::createIndexBuffer() {
 		return new IndexBuffer(*this);
 	}
 
-	IProgram* Graphics::createProgram() {
+	RefPtr<IProgram> Graphics::createProgram() {
 		return new Program(*this);
 	}
 
-	IRasterizerState* Graphics::createRasterizerState() {
+	RefPtr<IRasterizerState> Graphics::createRasterizerState() {
 		return new RasterizerState(*this, false);
 	}
 
-	IRenderTarget* Graphics::createRenderTarget() {
+	RefPtr<IRenderTarget> Graphics::createRenderTarget() {
 		return new RenderTarget(*this);
 	}
 
-	IRenderView* Graphics::createRenderView() {
+	RefPtr<IRenderView> Graphics::createRenderView() {
 		return new RenderView(*this);
 	}
 
-	ISampler* Graphics::createSampler() {
+	RefPtr<ISampler> Graphics::createSampler() {
 		return new Sampler(*this);
 	}
 
-	ITexture1DResource* Graphics::createTexture1DResource() {
+	RefPtr<ITexture1DResource> Graphics::createTexture1DResource() {
 		return new Texture1DResource(*this);
 	}
 
-	ITexture2DResource* Graphics::createTexture2DResource() {
+	RefPtr<ITexture2DResource> Graphics::createTexture2DResource() {
 		return new Texture2DResource(*this);
 	}
 
-	ITexture3DResource* Graphics::createTexture3DResource() {
+	RefPtr<ITexture3DResource> Graphics::createTexture3DResource() {
 		return new Texture3DResource(*this);
 	}
 
-	ITextureView* Graphics::createTextureView() {
+	RefPtr<ITextureView> Graphics::createTextureView() {
 		return new TextureView(*this);
 	}
 
-	IVertexBuffer* Graphics::createVertexBuffer() {
+	RefPtr<IVertexBuffer> Graphics::createVertexBuffer() {
 		return new VertexBuffer(*this);
 	}
 
-	IPixelBuffer* Graphics::createPixelBuffer() {
+	RefPtr<IPixelBuffer> Graphics::createPixelBuffer() {
 		return nullptr;
 	}
 
@@ -613,7 +613,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	void Graphics::_resizedHandler(events::Event<ApplicationEvent>& e) {
-		_resize(_app->getClientSize());
+		_resize(_app->getCurrentClientSize());
 	}
 
 	void Graphics::_release() {

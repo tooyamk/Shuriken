@@ -6,7 +6,7 @@ namespace aurora::modules::graphics::win_gl {
 		_isInternal(isInternal),
 		MAX_MRT_COUNT(graphics.getDeviceFeatures().simultaneousRenderTargetCount),
 		_status(MAX_MRT_COUNT) {
-		if (_isInternal) _graphics->unref<false>();
+		if (_isInternal) Ref::unref<false>(*_graphics);
 		for (uint8_t i = 0; i < MAX_MRT_COUNT; ++i) _updateInternalState(i);
 	}
 

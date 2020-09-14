@@ -97,7 +97,7 @@ namespace aurora::events {
 							if (f.rawListener == &listener) {
 								if (f.valid) {
 									f.valid = false;
-									f.rawListener->unref();
+									Ref::unref(*f.rawListener);
 									--tl.numValidListeners;
 
 									return true;
@@ -109,7 +109,7 @@ namespace aurora::events {
 					} else {
 						for (auto itr = list.begin(); itr != list.end(); ++itr) {
 							if (&listener == (*itr).rawListener) {
-								(*itr).rawListener->unref();
+								Ref::unref(*(*itr).rawListener);
 
 								list.erase(itr);
 								--tl.numValidListeners;
@@ -199,12 +199,12 @@ namespace aurora::events {
 					for (auto& f : list) {
 						if (f.valid) {
 							f.valid = false;
-							f.rawListener->unref();
+							Ref::unref(*f.rawListener);
 							--typeListeners.numValidListeners;
 						}
 					}
 				} else {
-					for (auto& f : list) f.rawListener->unref();
+					for (auto& f : list) Ref::unref(*f.rawListener);
 					list.clear();
 					typeListeners.numValidListeners = 0;
 					typeListeners.numTotalListeners = 0;

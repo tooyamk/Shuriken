@@ -41,8 +41,8 @@ namespace aurora::modules::graphics::win_gl {
 		return size;
 	}
 
-	IRenderView* RenderTarget::getRenderView(uint8_t index) const {
-		return index < _views.size() ? _views[index].get() : nullptr;
+	RefPtr<IRenderView> RenderTarget::getRenderView(uint8_t index) const {
+		return index < _views.size() ? _views[index] : nullptr;
 	}
 
 	bool RenderTarget::setRenderView(uint8_t index, IRenderView* view) {
@@ -68,8 +68,8 @@ namespace aurora::modules::graphics::win_gl {
 		if (!_numViewsDirty && _numViews >= begin + 1) _numViewsDirty = true;
 	} 
 
-	IDepthStencil* RenderTarget::getDepthStencil() const {
-		return _ds.get();
+	RefPtr<IDepthStencil> RenderTarget::getDepthStencil() const {
+		return _ds;
 	}
 
 	void RenderTarget::setDepthStencil(IDepthStencil* ds) {

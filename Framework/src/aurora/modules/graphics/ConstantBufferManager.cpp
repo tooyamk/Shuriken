@@ -98,7 +98,7 @@ namespace aurora::modules::graphics {
 		if (auto itr = _shareConstBufferPool.find(size); itr != _shareConstBufferPool.end() && !--itr->second.rc) {
 			//_graphics->ref();
 
-			for (auto cb : itr->second.buffers) cb->unref();
+			for (auto cb : itr->second.buffers) Ref::unref(*cb);
 			_shareConstBufferPool.erase(itr);
 
 			//_graphics->unref();
@@ -254,7 +254,7 @@ namespace aurora::modules::graphics {
 	}
 
 	void ConstantBufferManager::_releaseExclusiveConstantSelf(ExclusiveConstNode& node, bool releaseParam) {
-		for (auto& itr : node.buffers) itr.second->unref();
+		for (auto& itr : node.buffers) Ref::unref(*itr.second);
 		if (releaseParam) node.parameter->removeReleaseExclusiveHandler(this, &ConstantBufferManager::_releaseExclusiveConstant);
 	}
 

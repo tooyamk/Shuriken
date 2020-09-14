@@ -17,7 +17,7 @@ namespace aurora {
 		if (_storageType == StorageType::INTERNAL) {
 			delete[] _data.internalData;
 		} else if (_storageType == StorageType::EXTERNAL && _data.externalRef && _data.externalData) {
-			((Ref*)_data.externalData)->unref();
+			Ref::unref(*(Ref*)_data.externalData);
 		}
 	}
 
@@ -94,7 +94,7 @@ namespace aurora {
 
 	void ShaderParameter::clear() {
 		if (_storageType == StorageType::EXTERNAL && _data.externalData) {
-			if (_data.externalRef) ((Ref*)_data.externalData)->unref();
+			if (_data.externalRef) Ref::unref(*(Ref*)_data.externalData);
 			_data.externalData = nullptr;
 			_data.externalRef = false;
 		}

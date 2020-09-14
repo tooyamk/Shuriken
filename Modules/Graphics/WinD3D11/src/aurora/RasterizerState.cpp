@@ -13,7 +13,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_oldFrontFace(_frontFace),
 		_internalState(nullptr),
 		_featureValue(0) {
-		if (_isInternal) _graphics->unref<false>();
+		if (_isInternal) Ref::unref<false>(*_graphics);
 		memset(&_desc, 0, sizeof(_desc));
 		_desc.FillMode = _convertFillMode(_fillMode);
 		_desc.CullMode = _convertCullMode(_cullMode);

@@ -276,7 +276,7 @@ namespace aurora {
 			case StorageType::EXTERNAL:
 			{
 				if (copy) {
-					if (_data.externalRef && _data.externalData) ((Ref*)data)->unref();
+					if (_data.externalRef && _data.externalData) Ref::unref(*(Ref*)data);
 
 					if (size <= DEFAULT_DATA_SIZE) {
 						_storageType = StorageType::DEFAULT;
@@ -303,7 +303,7 @@ namespace aurora {
 						}
 					} else {
 						if (isRefObj && data) ((Ref*)data)->ref();
-						if (_data.externalRef && _data.externalData) ((Ref*)_data.externalData)->unref();
+						if (_data.externalRef && _data.externalData) Ref::unref(*(Ref*)_data.externalData);
 						_data.externalData = data;
 						_data.externalRef = isRefObj;
 						if (updateBehavior != ShaderParameterUpdateBehavior::NOT) setUpdated();

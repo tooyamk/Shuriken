@@ -19,9 +19,9 @@ public:
 			if (gml->load(getDLLName("ae-win-d3d11"))) {
 				RefPtr gpstml = new ModuleLoader<IProgramSourceTranslator>();
 				gpstml->load(getDLLName("ae-program-source-translator"));
-				RefPtr gpst = gpstml->create(&Args().add("dxc", getDLLName("dxcompiler")));
+				auto gpst = gpstml->create(&Args().add("dxc", getDLLName("dxcompiler")));
 
-				RefPtr graphics = gml->create(&Args().add("app", &*app).add("sampleCount", SampleCount(4)).add("trans", &*gpst));
+				auto graphics = gml->create(&Args().add("app", &*app).add("sampleCount", SampleCount(4)).add("trans", &*gpst));
 
 				if (graphics) {
 					println("Graphics Version : ", graphics->getVersion());
@@ -47,7 +47,7 @@ public:
 					renderData.g = graphics;
 
 					{
-						RefPtr<IRasterizerState> rs = graphics->createRasterizerState();
+						auto rs = graphics->createRasterizerState();
 						rs->setFillMode(FillMode::SOLID);
 						rs->setFrontFace(FrontFace::CW);
 						rs->setCullMode(CullMode::NONE);

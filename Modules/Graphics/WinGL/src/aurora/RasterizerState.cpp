@@ -6,7 +6,7 @@ namespace aurora::modules::graphics::win_gl {
 		_isInternal(isInternal),
 		_dirty(DirtyFlag::EMPTY),
 		_featureValue(0) {
-		if (_isInternal) _graphics->unref<false>();
+		if (_isInternal) Ref::unref<false>(*_graphics);
 		_desc.fillMode = FillMode::SOLID;
 		_desc.cullMode = CullMode::BACK;
 		_desc.frontFace = FrontFace::CW;

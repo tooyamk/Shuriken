@@ -40,7 +40,7 @@ namespace aurora {
 		}
 
 		inline RefPtr<T>& AE_CALL operator=(RefPtr<T>&& ptr) noexcept {
-			if (_target) _target->unref();
+			if (_target) Ref::unref(*_target);
 			_target = ptr._target;
 			ptr._target = nullptr;
 			return *this;
@@ -86,7 +86,7 @@ namespace aurora {
 		inline void AE_CALL set(T* target) {
 			if (_target != target) {
 				if (target) target->ref();
-				if (_target) _target->unref();
+				if (_target) Ref::unref(*_target);
 				_target = target;
 			}
 		}
@@ -94,7 +94,7 @@ namespace aurora {
 		inline void AE_CALL set(T& target) {
 			if (_target != &target) {
 				target.ref();
-				if (_target) _target->unref();
+				if (_target) Ref::unref(*_target);
 				_target = &target;
 			}
 		}
@@ -103,7 +103,7 @@ namespace aurora {
 		inline void AE_CALL reset() {
 			if (_target) {
 				if constexpr (DoUnref) {
-					_target->unref();
+					Ref::unref(*_target);
 				}
 				_target = nullptr;
 			}
@@ -148,48 +148,25 @@ namespace aurora {
 			return (T*)this;
 		}
 
-		template<bool CheckRelease = true>
-		inline RefPtr<Ref> AE_CALL unref() {
-			if constexpr (CheckRelease) {
-				if (_refCount.fetch_sub(1) <= 1) {
-					auto rst = _destruct();
-					delete this;
-					return std::move(rst);
-				}
-			} else {
-				_refCount.fetch_sub(1);
-			}
-
-			return nullptr;
-		}
-
 		inline uint32_t AE_CALL getReferenceCount() const {
 			return _refCount.load(std::memory_order_acquire);
 		}
 
-		template<typename P1, typename P2>
-		inline static void AE_CALL set(P1*& ptr, P2* target) {
-			if (ptr != target) {
-				if (target) target->ref();
-				if (ptr) ptr->unref();
-				ptr = target;
+		template<bool AutoDelete = true>
+		inline static void AE_CALL unref(const Ref& target) {
+			if constexpr (AutoDelete) {
+				if (target._refCount.fetch_sub(1) <= 1) {
+					auto d = target._destruction();
+					delete &target;
+				}
+			} else {
+				target._refCount.fetch_sub(1);
 			}
 		}
 
-		template<typename P>
-		inline static void AE_CALL setNull(P*& ptr) {
-			ptr->unref();
-			ptr = nullptr;
-		}
-
-		template<typename P>
-		inline static void AE_CALL checkSetNull(P*& ptr) {
-			if (ptr) setNull(ptr);
-		}
-
 	protected:
-		std::atomic_uint32_t _refCount;
+		mutable std::atomic_uint32_t _refCount;
 
-		virtual RefPtr<Ref> AE_CALL _destruct() { return nullptr; }
+		virtual RefPtr<Ref> AE_CALL _destruction() const { return nullptr; }
 	};
 }

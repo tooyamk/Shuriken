@@ -22,7 +22,7 @@ namespace aurora {
 					std::scoped_lock lock(_mutex);
 					_stop();
 				}
-				unref();
+				Ref::unref(*this);
 			}
 
 			inline uint64_t AE_CALL getDelay() const {
@@ -213,7 +213,7 @@ namespace aurora {
 							if (t->_count && t->_count <= t->_runningCount) {
 								this->remove(tickingTimer, t);
 								t->_wheel.reset();
-								t->unref();
+								Ref::unref(*t);
 								fn(*t, id);
 							} else {
 								fn(*t, id);

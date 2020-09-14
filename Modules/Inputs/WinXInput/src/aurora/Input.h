@@ -14,7 +14,7 @@ namespace aurora::modules::inputs::win_xinput {
 		virtual IInputDevice* AE_CALL createDevice(const DeviceGUID& guid) override;
 
 	protected:
-		virtual RefPtr<Ref> AE_CALL _destruct() override { return _loader; }
+		virtual RefPtr<Ref> AE_CALL _destruction() const override { return _loader; }
 
 	private:
 		RefPtr<Ref> _loader;

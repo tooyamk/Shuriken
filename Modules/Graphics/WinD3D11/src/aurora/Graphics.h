@@ -19,22 +19,22 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		virtual const std::string& AE_CALL getVersion() const override;
 		virtual const GraphicsDeviceFeatures& AE_CALL getDeviceFeatures() const override;
-		virtual IBlendState* AE_CALL createBlendState() override;
-		virtual IConstantBuffer* AE_CALL createConstantBuffer() override;
-		virtual IDepthStencil* AE_CALL createDepthStencil() override;
-		virtual IDepthStencilState* AE_CALL createDepthStencilState() override;
-		virtual IIndexBuffer* AE_CALL createIndexBuffer() override;
-		virtual IProgram* AE_CALL createProgram() override;
-		virtual IRasterizerState* AE_CALL createRasterizerState() override;
-		virtual IRenderTarget* AE_CALL createRenderTarget() override;
-		virtual IRenderView* AE_CALL createRenderView() override;
-		virtual ISampler* AE_CALL createSampler() override;
-		virtual ITexture1DResource* AE_CALL createTexture1DResource() override;
-		virtual ITexture2DResource* AE_CALL createTexture2DResource() override;
-		virtual ITexture3DResource* AE_CALL createTexture3DResource() override;
-		virtual ITextureView* AE_CALL createTextureView() override;
-		virtual IVertexBuffer* AE_CALL createVertexBuffer() override;
-		virtual IPixelBuffer* AE_CALL createPixelBuffer() override;
+		virtual RefPtr<IBlendState> AE_CALL createBlendState() override;
+		virtual RefPtr<IConstantBuffer> AE_CALL createConstantBuffer() override;
+		virtual RefPtr<IDepthStencil> AE_CALL createDepthStencil() override;
+		virtual RefPtr<IDepthStencilState> AE_CALL createDepthStencilState() override;
+		virtual RefPtr<IIndexBuffer> AE_CALL createIndexBuffer() override;
+		virtual RefPtr<IProgram> AE_CALL createProgram() override;
+		virtual RefPtr<IRasterizerState> AE_CALL createRasterizerState() override;
+		virtual RefPtr<IRenderTarget> AE_CALL createRenderTarget() override;
+		virtual RefPtr<IRenderView> AE_CALL createRenderView() override;
+		virtual RefPtr<ISampler> AE_CALL createSampler() override;
+		virtual RefPtr<ITexture1DResource> AE_CALL createTexture1DResource() override;
+		virtual RefPtr<ITexture2DResource> AE_CALL createTexture2DResource() override;
+		virtual RefPtr<ITexture3DResource> AE_CALL createTexture3DResource() override;
+		virtual RefPtr<ITextureView> AE_CALL createTextureView() override;
+		virtual RefPtr<IVertexBuffer> AE_CALL createVertexBuffer() override;
+		virtual RefPtr<IPixelBuffer> AE_CALL createPixelBuffer() override;
 
 		virtual Box2i32ui32 AE_CALL getViewport() const override;
 		virtual void AE_CALL setViewport(const Box2i32ui32& vp) override;
@@ -226,7 +226,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		static D3D11_COMPARISON_FUNC AE_CALL convertComparisonFunc(ComparisonFunc func);
 
 	protected:
-		virtual RefPtr<Ref> AE_CALL _destruct() override { return _loader; }
+		virtual RefPtr<Ref> AE_CALL _destruction() const override { return _loader; }
 
 	private:
 		bool _curIsBackBuffer;

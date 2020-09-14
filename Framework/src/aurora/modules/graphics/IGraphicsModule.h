@@ -29,8 +29,12 @@ namespace aurora::modules::graphics {
 	public:
 		virtual ~IObject() {}
 
-		inline IGraphicsModule* AE_CALL getGraphics() const {
-			return _graphics.get();
+		inline const RefPtr<IGraphicsModule>& AE_CALL getGraphics() const {
+			return _graphics;
+		}
+
+		inline RefPtr<IGraphicsModule> AE_CALL getGraphics() {
+			return _graphics;
 		}
 
 	protected:
@@ -427,7 +431,7 @@ namespace aurora::modules::graphics {
 
 		//virtual TextureType AE_CALL getType() const = 0;
 		virtual bool AE_CALL isCreated() const = 0;
-		virtual ITextureResource* AE_CALL getResource() const = 0;
+		virtual RefPtr<ITextureResource> AE_CALL getResource() const = 0;
 		virtual const void* AE_CALL getNative() const = 0;
 		virtual uint32_t AE_CALL getArraySize() const = 0;
 		virtual uint32_t AE_CALL getMipLevels() const = 0;
@@ -442,7 +446,7 @@ namespace aurora::modules::graphics {
 		virtual ~IRenderView() {}
 
 		virtual bool AE_CALL isCreated() const = 0;
-		virtual ITextureResource* AE_CALL getResource() const = 0;
+		virtual RefPtr<ITextureResource> AE_CALL getResource() const = 0;
 		virtual const void* AE_CALL getNative() const = 0;
 		virtual uint32_t AE_CALL getArraySize() const = 0;
 		virtual uint32_t AE_CALL getMipSlice() const = 0;
@@ -482,11 +486,11 @@ namespace aurora::modules::graphics {
 		virtual const void* AE_CALL getNative() const = 0;
 
 		virtual Vec2ui32 AE_CALL getSize() const = 0;
-		virtual IRenderView* AE_CALL getRenderView(uint8_t index) const = 0;
+		virtual RefPtr<IRenderView> AE_CALL getRenderView(uint8_t index) const = 0;
 		virtual bool AE_CALL setRenderView(uint8_t index, IRenderView* view) = 0;
 		virtual void AE_CALL eraseRenderViews(uint8_t begin, uint8_t size) = 0;
 
-		virtual IDepthStencil* AE_CALL getDepthStencil() const = 0;
+		virtual RefPtr<IDepthStencil> AE_CALL getDepthStencil() const = 0;
 		virtual void AE_CALL setDepthStencil(IDepthStencil* ds) = 0;
 	};
 
@@ -902,22 +906,22 @@ namespace aurora::modules::graphics {
 
 		virtual const std::string& AE_CALL getVersion() const = 0;
 		virtual const GraphicsDeviceFeatures& AE_CALL getDeviceFeatures() const = 0;
-		virtual IBlendState* AE_CALL createBlendState() = 0;
-		virtual IConstantBuffer* AE_CALL createConstantBuffer() = 0;
-		virtual IDepthStencil* AE_CALL createDepthStencil() = 0;
-		virtual IDepthStencilState* AE_CALL createDepthStencilState() = 0;
-		virtual IIndexBuffer* AE_CALL createIndexBuffer() = 0;
-		virtual IPixelBuffer* AE_CALL createPixelBuffer() = 0;
-		virtual IProgram* AE_CALL createProgram() = 0;
-		virtual IRasterizerState* AE_CALL createRasterizerState() = 0;
-		virtual IRenderTarget* AE_CALL createRenderTarget() = 0;
-		virtual IRenderView* AE_CALL createRenderView() = 0;
-		virtual ISampler* AE_CALL createSampler() = 0;
-		virtual ITexture1DResource* AE_CALL createTexture1DResource() = 0;//unrealized wingl
-		virtual ITexture2DResource* AE_CALL createTexture2DResource() = 0;
-		virtual ITexture3DResource* AE_CALL createTexture3DResource() = 0;//unrealized wingl
-		virtual ITextureView* AE_CALL createTextureView() = 0;
-		virtual IVertexBuffer* AE_CALL createVertexBuffer() = 0;
+		virtual RefPtr<IBlendState> AE_CALL createBlendState() = 0;
+		virtual RefPtr<IConstantBuffer> AE_CALL createConstantBuffer() = 0;
+		virtual RefPtr<IDepthStencil> AE_CALL createDepthStencil() = 0;
+		virtual RefPtr<IDepthStencilState> AE_CALL createDepthStencilState() = 0;
+		virtual RefPtr<IIndexBuffer> AE_CALL createIndexBuffer() = 0;
+		virtual RefPtr<IPixelBuffer> AE_CALL createPixelBuffer() = 0;
+		virtual RefPtr<IProgram> AE_CALL createProgram() = 0;
+		virtual RefPtr<IRasterizerState> AE_CALL createRasterizerState() = 0;
+		virtual RefPtr<IRenderTarget> AE_CALL createRenderTarget() = 0;
+		virtual RefPtr<IRenderView> AE_CALL createRenderView() = 0;
+		virtual RefPtr<ISampler> AE_CALL createSampler() = 0;
+		virtual RefPtr<ITexture1DResource> AE_CALL createTexture1DResource() = 0;
+		virtual RefPtr<ITexture2DResource> AE_CALL createTexture2DResource() = 0;
+		virtual RefPtr<ITexture3DResource> AE_CALL createTexture3DResource() = 0;
+		virtual RefPtr<ITextureView> AE_CALL createTextureView() = 0;
+		virtual RefPtr<IVertexBuffer> AE_CALL createVertexBuffer() = 0;
 
 		virtual Box2i32ui32 AE_CALL getViewport() const = 0;
 		virtual void AE_CALL setViewport(const Box2i32ui32& vp) = 0;

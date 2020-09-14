@@ -158,6 +158,16 @@ namespace aurora {
 #endif
 	}
 
+	Vec2ui32 Application::getCurrentClientSize() const {
+#if AE_OS == AE_OS_WIN
+		RECT rect;
+		GetClientRect(_win.hWnd, &rect);
+		return Vec2ui32(rect.right - rect.left, rect.bottom - rect.top);
+#else
+		return Vec2ui32();
+#endif
+	}
+
 	void Application::setClientSize(const Vec2ui32& size) {
 		if (_clientSize != size) {
 			_clientSize = size;
@@ -332,7 +342,7 @@ namespace aurora {
 		case WM_SIZE:
 		{
 			if (app) {
-				app->_clientSize.set(LOWORD(lParam), HIWORD(lParam));
+				if (!app->_isFullscreen) app->_clientSize.set(LOWORD(lParam), HIWORD(lParam));
 				app->_eventDispatcher.dispatchEvent(app, ApplicationEvent::RESIZED);
 			}
 

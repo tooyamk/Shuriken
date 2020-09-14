@@ -20,7 +20,7 @@ namespace aurora::modules::graphics {
 		auto adapter = args->get<const GraphicsAdapter*>("adapter");
 		auto sc = args->get<SampleCount>("sampleCount");
 		if (!g->createDevice(loader, *app, adapter ? *adapter : nullptr, sc ? *sc : 1)) {
-			g->unref();
+			Ref::unref(*g);
 			g = nullptr;
 		}
 

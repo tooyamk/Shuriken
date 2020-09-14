@@ -21,7 +21,7 @@ namespace aurora::modules::graphics {
 		auto sc = args->get<SampleCount>("sampleCount");
 		auto g = new win_gl::Graphics();
 		if (!g->createDevice(loader, *app, trans ? *trans : nullptr, adapter ? *adapter : nullptr, sc ? *sc : 1)) {
-			g->unref();
+			Ref::unref(*g);
 			g = nullptr;
 		}
 
