@@ -29,7 +29,7 @@ namespace aurora::modules {
 			_lib.release();
 		}
 
-		RetType* AE_CALL create(const Args* args) {
+		RefPtr<RetType> AE_CALL create(const Args* args) {
 			if (_createFn && _lib.isLoaded()) {
 				return (RetType*)_createFn(this, args);
 			} else {

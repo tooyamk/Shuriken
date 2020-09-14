@@ -10,8 +10,8 @@ public:
 		Application::Style wndStype;
 		wndStype.thickFrame = true;
 		wndStype.backgroundColor.set(255, 255, 0);
-		if (app->createWindow(wndStype, "Fucker", Box2i32ui32(Vec2i32(100, 100), Vec2ui32(800, 600)), false)) {
-
+		if (app->createWindow(wndStype, "Fucker", Vec2ui32(800, 600), false)) {
+			app->setWindowPosition({200, 300});
 			Args args;
 			args.add("app", &*app);
 

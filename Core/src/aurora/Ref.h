@@ -4,67 +4,6 @@
 #include <atomic>
 
 namespace aurora {
-	class AE_CORE_DLL Ref {
-	public:
-		template<typename T>
-		//using RefType = std::enable_if_t<std::is_base_of_v<Ref, T>, T>;
-		using Type = T;
-
-		Ref() :
-			_refCount(0) {
-		}
-
-		virtual ~Ref() {
-		}
-
-		inline void AE_CALL ref() {
-			_refCount.fetch_add(1, std::memory_order_release);
-		}
-
-		template<typename T>
-		inline Type<T>* AE_CALL ref() {
-			ref();
-			return (T*)this;
-		}
-
-		template<bool CheckRelease = true>
-		inline void AE_CALL unref() {
-			if constexpr (CheckRelease) {
-				if (_refCount.fetch_sub(1) <= 1) delete this;
-			} else {
-				_refCount.fetch_sub(1);
-			}
-		}
-
-		inline uint32_t AE_CALL getReferenceCount() const {
-			return _refCount.load(std::memory_order_acquire);
-		}
-
-		template<typename P1, typename P2>
-		inline static void AE_CALL set(Type<P1>*& ptr, Type<P2>* target) {
-			if (ptr != target) {
-				if (target) target->ref();
-				if (ptr) ptr->unref();
-				ptr = target;
-			}
-		}
-
-		template<typename P>
-		inline static void AE_CALL setNull(Type<P>*& ptr) {
-			ptr->unref();
-			ptr = nullptr;
-		}
-
-		template<typename P>
-		inline static void AE_CALL checkSetNull(Type<P>*& ptr) {
-			if (ptr) setNull(ptr);
-		}
-
-	protected:
-		std::atomic_uint32_t _refCount;
-	};
-
-
 	template<typename T>
 	class RefPtr {
 	public:
@@ -135,7 +74,7 @@ namespace aurora {
 			return this != ptr;
 		}
 
-		inline AE_CALL operator T*() const {
+		inline AE_CALL operator T* () const {
 			return _target;
 		}
 
@@ -175,7 +114,7 @@ namespace aurora {
 		}
 
 	private:
-		Ref::Type<T>* _target;
+		T* _target;
 	};
 
 
@@ -188,4 +127,69 @@ namespace aurora {
 	inline bool AE_CALL operator!=(const T& lhs, const RefPtr<T>& rhs) {
 		return rhs != &lhs;
 	}
+
+
+	class AE_CORE_DLL Ref {
+	public:
+		Ref() :
+			_refCount(0) {
+		}
+
+		virtual ~Ref() {
+		}
+
+		inline void AE_CALL ref() {
+			_refCount.fetch_add(1, std::memory_order_release);
+		}
+
+		template<typename T>
+		inline T* AE_CALL ref() {
+			ref();
+			return (T*)this;
+		}
+
+		template<bool CheckRelease = true>
+		inline RefPtr<Ref> AE_CALL unref() {
+			if constexpr (CheckRelease) {
+				if (_refCount.fetch_sub(1) <= 1) {
+					auto rst = _destruct();
+					delete this;
+					return std::move(rst);
+				}
+			} else {
+				_refCount.fetch_sub(1);
+			}
+
+			return nullptr;
+		}
+
+		inline uint32_t AE_CALL getReferenceCount() const {
+			return _refCount.load(std::memory_order_acquire);
+		}
+
+		template<typename P1, typename P2>
+		inline static void AE_CALL set(P1*& ptr, P2* target) {
+			if (ptr != target) {
+				if (target) target->ref();
+				if (ptr) ptr->unref();
+				ptr = target;
+			}
+		}
+
+		template<typename P>
+		inline static void AE_CALL setNull(P*& ptr) {
+			ptr->unref();
+			ptr = nullptr;
+		}
+
+		template<typename P>
+		inline static void AE_CALL checkSetNull(P*& ptr) {
+			if (ptr) setNull(ptr);
+		}
+
+	protected:
+		std::atomic_uint32_t _refCount;
+
+		virtual RefPtr<Ref> AE_CALL _destruct() { return nullptr; }
+	};
 }

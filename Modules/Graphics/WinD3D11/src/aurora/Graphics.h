@@ -225,6 +225,9 @@ namespace aurora::modules::graphics::win_d3d11 {
 		static DXGI_FORMAT AE_CALL convertInternalFormat(TextureFormat fmt);
 		static D3D11_COMPARISON_FUNC AE_CALL convertComparisonFunc(ComparisonFunc func);
 
+	protected:
+		virtual RefPtr<Ref> AE_CALL _destruct() override { return _loader; }
+
 	private:
 		bool _curIsBackBuffer;
 		SampleCount _backBufferSampleCount;

@@ -105,6 +105,9 @@ namespace aurora::modules::graphics::win_gl {
 		static GLenum AE_CALL convertComparisonFunc(ComparisonFunc func);
 		static uint32_t AE_CALL getGLTypeSize(GLenum type);
 
+	protected:
+		virtual RefPtr<Ref> AE_CALL _destruct() override { return _loader; }
+
 	private:
 		struct {
 			struct {

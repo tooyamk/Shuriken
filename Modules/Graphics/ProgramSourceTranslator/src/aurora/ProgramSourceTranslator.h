@@ -17,6 +17,9 @@ namespace aurora::modules::graphics::program_source_translator {
 
 		virtual ProgramSource AE_CALL translate(const ProgramSource& source, ProgramLanguage targetLanguage, const std::string_view& targetVersion, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& handler) override;
 
+	protected:
+		virtual RefPtr<Ref> AE_CALL _destruct() override { return _loader; }
+
 	private:
 		class MyIncludeHandler : public IDxcIncludeHandler {
 		public:

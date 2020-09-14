@@ -27,9 +27,9 @@ namespace aurora {
 	public:
 		class AE_FW_DLL Style {
 		public:
-			bool maximizeButton = false;
+			bool maximizeButton = true;
 			bool minimizeButton = true;
-			bool thickFrame = false;
+			bool thickFrame = true;
 			Vec3<uint8_t> backgroundColor;
 		};
 
@@ -43,20 +43,20 @@ namespace aurora {
 			return _eventDispatcher;
 		}
 
-		bool AE_CALL createWindow(const Style& style, const std::string_view& title, const Box2i32ui32& clientRect, bool fullscreen);
+		bool AE_CALL createWindow(const Style& style, const std::string_view& title, const Vec2ui32& clientSize, bool fullscreen);
 		inline bool AE_CALL isFullscreen() const {
 			return _isFullscreen;
 		}
 		void AE_CALL toggleFullscreen();
-		inline Vec2ui32 AE_CALL getClientSize() const {
-			Vec2ui32 size(NO_INIT);
-			getClientSize(size);
-			return size;
+		inline const Vec4ui32& AE_CALL getBorder() const {
+			return _border;
 		}
-		void AE_CALL getClientSize(Vec2ui32& size) const;
-		void AE_CALL getWindowRect(Box2i32ui32& dst) const;
-		void AE_CALL setWindowRect(const Box2i32ui32& clientRect);
+		inline const Vec2ui32& AE_CALL getClientSize() const {
+			return _clientSize;
+		}
+		void AE_CALL setClientSize(const Vec2ui32& size);
 		void AE_CALL setWindowTitle(const std::string_view& title);
+		void AE_CALL setWindowPosition(const Vec2i32& pos);
 		void AE_CALL setCursorVisible(bool visible);
 		bool AE_CALL hasFocus() const;
 		void AE_CALL pollEvents();
@@ -85,30 +85,41 @@ namespace aurora {
 		bool _isClosing;
 		Style _style;
 		std::string _appId;
+		Vec2ui32 _clientSize;
+		Vec4ui32 _border;//left, right, up, down
 
 		events::EventDispatcher<ApplicationEvent> _eventDispatcher;
 
-		mutable Box2i32ui32 _windowRect;
-		Box2i32ui32 _wndRect;
-
 		mutable std::filesystem::path _appPath;
 
-		bool AE_CALL _adjustWindowRect(const Box2i32ui32& in, Box2i32ui32& out);
-		void AE_CALL _recordWindowRect() const;
+		void AE_CALL _calcBorder();
 
 #if AE_OS == AE_OS_WIN
 		struct {
 			HINSTANCE hIns;
 			HWND hWnd;
-			RECT lastWndClientRect;
+			Vec2i32 clinetPos;
 			HBRUSH bkBrush;
 		} _win;
 
 
-		DWORD AE_CALL _getWindowStyle() const;
-		DWORD AE_CALL _getWindowExStyle() const;
-		void AE_CALL _updateWindowRectValue();
-		void AE_CALL _changeWindow(bool style, bool posOrSize);
+		Box2i32ui32 AE_CALL _calcWindowRect() const;
+		static DWORD AE_CALL _getWindowStyle(const Style& style, bool fullscreen);
+		static DWORD AE_CALL _getWindowExStyle(bool fullscreen);
+
+		template<bool FS>
+		inline static consteval UINT AE_CALL _getWindowPosFlags() {
+			UINT flags = SWP_NOACTIVATE;
+			if constexpr (FS) {
+				flags |= SWP_NOCOPYBITS;
+			} else {
+				flags |= SWP_NOOWNERZORDER | SWP_NOZORDER;
+			}
+			return flags;
+		}
+		inline UINT AE_CALL _getWindowPosFlags() {
+			return _isFullscreen ? _getWindowPosFlags<true>() : _getWindowPosFlags<false>();
+		}
 
 		static LRESULT CALLBACK _wndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 #elif AE_OS == AE_OS_LINUX
@@ -142,7 +153,7 @@ namespace aurora {
 		struct {
 			bool isVisible;
 			Display* dis;
-			Window window;
+			Window wnd;
 
 			Atom MOTIF_WM_HINTS;
 		} _linux;

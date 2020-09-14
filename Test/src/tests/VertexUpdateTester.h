@@ -12,7 +12,7 @@ public:
 
 		Application::Style wndStype;
 		wndStype.thickFrame = true;
-		if (app->createWindow(wndStype, "", Box2i32ui32(Vec2i32(100, 100), Vec2ui32(800, 600)), false)) {
+		if (app->createWindow(wndStype, "", Vec2ui32(800, 600), false)) {
 			RefPtr gml = new GraphicsModuleLoader();
 
 			//if (gml->load(getDLLName("ae-win-gl"))) {
