@@ -6,7 +6,7 @@
 #include <algorithm>
 
 namespace aurora::modules::inputs::win_direct_input {
-	Input::Input(Ref* loader, Application* app) :
+	Input::Input(Ref* loader, IApplication* app) :
 		_loader(loader),
 		_app(app),
 		_di(nullptr) {
@@ -90,7 +90,7 @@ namespace aurora::modules::inputs::win_direct_input {
 	}
 
 	HWND Input::getHWND() const {
-		return _app->Win_getHWnd();
+		return (HWND)_app->getWindow();
 	}
 
 	BOOL Input::_enumDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, LPVOID pContext) {

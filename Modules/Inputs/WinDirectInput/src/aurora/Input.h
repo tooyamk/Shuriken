@@ -6,7 +6,7 @@
 namespace aurora::modules::inputs::win_direct_input {
 	class AE_MODULE_DLL Input : public IInputModule {
 	public:
-		Input(Ref* loader, Application* app);
+		Input(Ref* loader, IApplication* app);
 		virtual ~Input();
 
 		virtual events::IEventDispatcher<ModuleEvent>& AE_CALL getEventDispatcher() override;
@@ -20,7 +20,7 @@ namespace aurora::modules::inputs::win_direct_input {
 
 	private:
 		RefPtr<Ref> _loader;
-		RefPtr<Application> _app;
+		RefPtr<IApplication> _app;
 
 		LPDIRECTINPUT8 _di;
 

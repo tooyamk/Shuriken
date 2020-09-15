@@ -11,13 +11,14 @@ namespace aurora {
 		_linux({ false, nullptr, 0 }),
 #endif
 		_isFullscreen(false) {
+		_appPath = aurora::getAppPath();
 	}
 
 	Application::~Application() {
 #if AE_OS == AE_OS_WIN
-		if (_win.hWnd) {
-			DestroyWindow(_win.hWnd);
-			_win.hWnd = nullptr;
+		if (_win.wnd) {
+			DestroyWindow(_win.wnd);
+			_win.wnd = nullptr;
 		}
 
 		if (_win.bkBrush) {
@@ -25,10 +26,10 @@ namespace aurora {
 			_win.bkBrush = nullptr;
 		}
 
-		if (_win.hIns) {
+		if (_win.ins) {
 			auto appIdW = String::Utf8ToUnicode(_appId);
-			UnregisterClassW(appIdW.data(), _win.hIns);
-			_win.hIns = nullptr;
+			UnregisterClassW(appIdW.data(), _win.ins);
+			_win.ins = nullptr;
 		}
 #elif AE_OS == AE_OS_LINUX
 		if (_linux.wnd) {
@@ -43,13 +44,21 @@ namespace aurora {
 #endif
 	}
 
-	bool Application::createWindow(const Style& style, const std::string_view& title, const Vec2ui32& clientSize, bool fullscreen) {
+	events::IEventDispatcher<ApplicationEvent>& Application::getEventDispatcher() {
+		return _eventDispatcher;
+	}
+
+	const events::IEventDispatcher<ApplicationEvent>& Application::getEventDispatcher() const {
+		return _eventDispatcher;
+	}
+
+	bool Application::createWindow(const ApplicationStyle& style, const std::string_view& title, const Vec2ui32& clientSize, bool fullscreen) {
 		_clientSize = clientSize;
 		_isFullscreen = fullscreen;
 		_style = style;
 
 #if AE_OS == AE_OS_WIN
-		_win.hIns = GetModuleHandle(nullptr);
+		_win.ins = GetModuleHandle(nullptr);
 		_win.bkBrush = CreateSolidBrush(RGB(style.backgroundColor[0], style.backgroundColor[1], style.backgroundColor[2]));
 
 		WNDCLASSEXW wnd;
@@ -59,7 +68,7 @@ namespace aurora {
 		wnd.lpfnWndProc = Application::_wndProc;
 		wnd.cbClsExtra = 0;
 		wnd.cbWndExtra = 0;
-		wnd.hInstance = _win.hIns;
+		wnd.hInstance = _win.ins;
 		wnd.hIcon = nullptr;//LoadIcon(NULL, IDI_APPLICATION);
 		wnd.hCursor = LoadCursor(nullptr, IDC_ARROW);
 		wnd.hbrBackground = _win.bkBrush;
@@ -73,15 +82,26 @@ namespace aurora {
 		_calcBorder();
 
 		auto rect = _calcWindowRect();
-		if (!_isFullscreen) rect.pos.set(_border[0], _border[1]);
-		_win.hWnd = CreateWindowExW(_getWindowExStyle(_isFullscreen), wnd.lpszClassName, String::Utf8ToUnicode(title).data(), _getWindowStyle(_style, _isFullscreen),
+		{
+			_win.clinetPos.set((GetSystemMetrics(SM_CXSCREEN) - rect.size[0]) / 2, (GetSystemMetrics(SM_CYSCREEN) - rect.size[1]) / 2);
+
+			tagPOINT p{ 0 };
+			if (auto monitor = MonitorFromPoint(p, MONITOR_DEFAULTTONEAREST); monitor) {
+				MONITORINFO info{ 0 };
+				info.cbSize = sizeof(info);
+				if (GetMonitorInfo(monitor, &info)) _win.clinetPos.set(info.rcWork.left + ((info.rcWork.right - info.rcWork.left) - rect.size[0]) / 2, info.rcWork.top + ((info.rcWork.bottom - info.rcWork.top) - rect.size[1]) / 2);
+			}
+		}
+		
+		if (!_isFullscreen) rect.pos.set(_win.clinetPos[0], _win.clinetPos[1]);
+		_win.wnd = CreateWindowExW(_getWindowExStyle(_isFullscreen), wnd.lpszClassName, String::Utf8ToUnicode(title).data(), _getWindowStyle(_style, _isFullscreen),
 			rect.pos[0], rect.pos[1], rect.size[0], rect.size[1],
-			GetDesktopWindow(), nullptr, _win.hIns, nullptr);
-		SetWindowLongPtr(_win.hWnd, GWLP_USERDATA, (LONG_PTR)this);
+			GetDesktopWindow(), nullptr, _win.ins, nullptr);
+		SetWindowLongPtr(_win.wnd, GWLP_USERDATA, (LONG_PTR)this);
 
 		//DeleteObject(bkBrush);
 
-		return _win.hWnd;
+		return _win.wnd;
 #elif AE_OS == AE_OS_LINUX
 		if (!_linux.dis) _linux.dis = XOpenDisplay(nullptr);
 		if (!_linux.dis) return false;
@@ -138,20 +158,38 @@ namespace aurora {
 		return false;
 	}
 
+	uint64_t Application::getWindow() const {
+#if AE_OS == AE_OS_WIN
+		return (uint64_t)_win.wnd;
+#elif AE_OS == AE_OS_LINUX
+		return _linux.wnd;
+#else
+		return 0;
+#endif
+	}
+
+	bool Application::isFullscreen() const {
+		return _isFullscreen;
+	}
+
+	Vec4ui32 Application::getBorder() const {
+		return _border;
+	}
+
 	void Application::toggleFullscreen() {
 #if AE_OS == AE_OS_WIN
-		if (_win.hWnd) {
+		if (_win.wnd) {
 			_isFullscreen = !_isFullscreen;
 
 			bool visibled = isVisible();
 
-			SetWindowLongPtr(_win.hWnd, GWL_STYLE, _getWindowStyle(_style, _isFullscreen));
-			SetWindowLongPtr(_win.hWnd, GWL_EXSTYLE, _getWindowExStyle(_isFullscreen));
+			SetWindowLongPtr(_win.wnd, GWL_STYLE, _getWindowStyle(_style, _isFullscreen));
+			SetWindowLongPtr(_win.wnd, GWL_EXSTYLE, _getWindowExStyle(_isFullscreen));
 
 			auto rect = _calcWindowRect();
-			::SetWindowPos(_win.hWnd, HWND_NOTOPMOST, rect.pos[0], rect.pos[1], rect.size[0], rect.size[1], _getWindowPosFlags());
+			::SetWindowPos(_win.wnd, HWND_NOTOPMOST, rect.pos[0], rect.pos[1], rect.size[0], rect.size[1], _getWindowPosFlags());
 
-			if (visibled) ShowWindow(_win.hWnd, SW_SHOWDEFAULT);
+			if (visibled) ShowWindow(_win.wnd, SW_SHOWDEFAULT);
 
 			_eventDispatcher.dispatchEvent(this, ApplicationEvent::RESIZED);
 		}
@@ -161,11 +199,15 @@ namespace aurora {
 	Vec2ui32 Application::getCurrentClientSize() const {
 #if AE_OS == AE_OS_WIN
 		RECT rect;
-		GetClientRect(_win.hWnd, &rect);
+		GetClientRect(_win.wnd, &rect);
 		return Vec2ui32(rect.right - rect.left, rect.bottom - rect.top);
 #else
 		return Vec2ui32();
 #endif
+	}
+
+	Vec2ui32 Application::getClientSize() const {
+		return _clientSize;
 	}
 
 	void Application::setClientSize(const Vec2ui32& size) {
@@ -174,7 +216,7 @@ namespace aurora {
 #if AE_OS == AE_OS_WIN
 			if (!_isFullscreen) {
 				auto rect = _calcWindowRect();
-				::SetWindowPos(_win.hWnd, HWND_NOTOPMOST, rect.pos[0], rect.pos[1], rect.size[0], rect.size[1], _getWindowPosFlags<false>());
+				::SetWindowPos(_win.wnd, HWND_NOTOPMOST, rect.pos[0], rect.pos[1], rect.size[0], rect.size[1], _getWindowPosFlags<false>());
 			}
 #endif
 		}
@@ -182,7 +224,7 @@ namespace aurora {
 
 	void Application::setWindowTitle(const std::string_view& title) {
 #if AE_OS == AE_OS_WIN
-		if (_win.hWnd) SetWindowTextW(_win.hWnd, String::Utf8ToUnicode(title).data());
+		if (_win.wnd) SetWindowTextW(_win.wnd, String::Utf8ToUnicode(title).data());
 #elif AE_OS == AE_OS_LINUX
 		if (_linux.wnd) XStoreName(_linux.dis, _linux.wnd, title.data());
 #endif
@@ -190,11 +232,11 @@ namespace aurora {
 
 	void Application::setWindowPosition(const Vec2i32& pos) {
 #if AE_OS == AE_OS_WIN
-		if (_win.hWnd) {
+		if (_win.wnd) {
 			_win.clinetPos.set(pos[0] + _border[0], pos[1] + _border[2]);
 			if (!_isFullscreen) {
 				auto rect = _calcWindowRect();
-				::SetWindowPos(_win.hWnd, HWND_NOTOPMOST, rect.pos[0], rect.pos[1], rect.size[0], rect.size[1], _getWindowPosFlags<false>());
+				::SetWindowPos(_win.wnd, HWND_NOTOPMOST, rect.pos[0], rect.pos[1], rect.size[0], rect.size[1], _getWindowPosFlags<false>());
 			}
 		}
 #endif
@@ -208,7 +250,7 @@ namespace aurora {
 
 	bool Application::hasFocus() const {
 #if AE_OS == AE_OS_WIN
-		return GetForegroundWindow() == _win.hWnd;
+		return GetForegroundWindow() == _win.wnd;
 #endif
 		return true;
 	}
@@ -238,7 +280,7 @@ namespace aurora {
 
 	bool Application::isVisible() const {
 #if AE_OS == AE_OS_WIN
-		return _win.hWnd ? IsWindowVisible(_win.hWnd) : false;
+		return _win.wnd ? IsWindowVisible(_win.wnd) : false;
 #elif AE_OS == AE_OS_LINUX
 		return _linux.wnd ? _linux.isVisible : false;
 #endif
@@ -247,14 +289,14 @@ namespace aurora {
 
 	void Application::setVisible(bool b) {
 #if AE_OS == AE_OS_WIN
-		if (_win.hWnd) {
+		if (_win.wnd) {
 			if (b) {
-				ShowWindow(_win.hWnd, SW_SHOWDEFAULT);
+				ShowWindow(_win.wnd, SW_SHOWDEFAULT);
 			} else {
-				ShowWindow(_win.hWnd, SW_HIDE);
+				ShowWindow(_win.wnd, SW_HIDE);
 			}
 
-			UpdateWindow(_win.hWnd);
+			UpdateWindow(_win.wnd);
 		}
 #elif AE_OS == AE_OS_LINUX
 		if (_linux.wnd) {
@@ -276,6 +318,14 @@ namespace aurora {
 #endif
 	}
 
+	std::string_view Application::getAppId() const {
+		return _appId;
+	}
+
+	const std::filesystem::path& Application::getAppPath() const {
+		return _appPath;
+	}
+
 	void Application::_calcBorder() {
 #if AE_OS == AE_OS_WIN
 		RECT rect = { 0, 0, 100, 100 };
@@ -293,7 +343,7 @@ namespace aurora {
 		}
 	}
 
-	DWORD Application::_getWindowStyle(const Style& style, bool fullscreen) {
+	DWORD Application::_getWindowStyle(const ApplicationStyle& style, bool fullscreen) {
 		DWORD val = WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
 
 		if (fullscreen) {

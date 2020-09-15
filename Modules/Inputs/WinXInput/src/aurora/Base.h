@@ -1,7 +1,7 @@
 #pragma once
 
 #include "aurora/modules/inputs/IInputModule.h"
-#include "aurora/Application.h"
+#include "aurora/IApplication.h"
 
 #include <Xinput.h>
 #pragma comment(lib, "Xinput.lib")

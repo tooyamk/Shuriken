@@ -56,7 +56,7 @@ namespace aurora::modules::graphics::win_gl {
 		virtual void AE_CALL setRenderTarget(IRenderTarget* rt) override;
 		virtual void AE_CALL clear(ClearFlag flags, const Vec4f32& color, float32_t depth, size_t stencil) override;
 
-		bool AE_CALL createDevice(Ref* loader, Application* app, IProgramSourceTranslator* trans, const GraphicsAdapter* adapter, SampleCount sampleCount);
+		bool AE_CALL createDevice(Ref* loader, IApplication* app, IProgramSourceTranslator* trans, const GraphicsAdapter* adapter, SampleCount sampleCount);
 
 		inline void AE_CALL error(const std::string_view& msg) {
 			_eventDispatcher.dispatchEvent(this, GraphicsEvent::ERR, (std::string_view*)&msg);
@@ -154,7 +154,7 @@ namespace aurora::modules::graphics::win_gl {
 		Usage _texCreateUsageMask;
 
 		RefPtr<Ref> _loader;
-		RefPtr<Application> _app;
+		RefPtr<IApplication> _app;
 		RefPtr<IProgramSourceTranslator> _trans;
 
 		RefPtr<BlendState> _defaultBlendState;

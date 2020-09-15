@@ -11,18 +11,25 @@ public:
 		
 		RefPtr app = new Application("TestApp");
 
-		Application::Style wndStype;
+		ApplicationStyle wndStype;
 		wndStype.thickFrame = true;
 		if (app->createWindow(wndStype, "", Vec2ui32(800, 600), false)) {
 			RefPtr gml = new GraphicsModuleLoader();
 
 			//if (gml->load(getDLLName("ae-win-gl"))) {
 			if (gml->load(getDLLName("ae-win-d3d11"))) {
+				SerializableObject args;
+				
 				RefPtr gpstml = new ModuleLoader<IProgramSourceTranslator>();
 				gpstml->load(getDLLName("ae-program-source-translator"));
-				auto gpst = gpstml->create(&Args().add("dxc", getDLLName("dxcompiler")));
 
-				auto graphics = gml->create(&Args().add("app", &*app).add("sampleCount", SampleCount(4)).add("trans", &*gpst));
+				args.insert("dxc", getDLLName("dxcompiler"));
+				auto gpst = gpstml->create(&args);
+
+				args.insert("app", (uint64_t)&*app);
+				args.insert("sampleCount", 4);
+				args.insert("trans", (uint64_t)&*gpst);
+				auto graphics = gml->create(&args);
 
 				if (graphics) {
 					println("Graphics Version : ", graphics->getVersion());

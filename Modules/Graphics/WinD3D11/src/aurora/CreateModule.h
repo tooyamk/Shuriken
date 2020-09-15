@@ -4,22 +4,23 @@
 
 #ifdef AE_MODULE_EXPORTS
 namespace aurora::modules::graphics {
-	extern "C" AE_MODULE_DLL_EXPORT void* AE_CREATE_MODULE_FN_NAME(Ref* loader, const Args* args) {
+	extern "C" AE_MODULE_DLL_EXPORT void* AE_CREATE_MODULE_FN_NAME(Ref* loader, const SerializableObject* args) {
 		if (!args) {
 			println("DX11GraphicsModule create error : no args");
 			return nullptr;
 		}
 
-		auto app = args->get<Application*>("app");
-		if (!app && !*app) {
+		auto app = (IApplication*)args->tryGet("app").toNumber<uint64_t>();
+		if (!app) {
 			println("DX11GraphicsModule create error : no app");
 			return nullptr;
 		}
 
+		auto adapter = (const GraphicsAdapter*)args->tryGet("adapter").toNumber<uint64_t>();
+		auto sc = args->tryGet("sampleCount").toNumber<SampleCount>(1);
+
 		auto g = new win_d3d11::Graphics();
-		auto adapter = args->get<const GraphicsAdapter*>("adapter");
-		auto sc = args->get<SampleCount>("sampleCount");
-		if (!g->createDevice(loader, *app, adapter ? *adapter : nullptr, sc ? *sc : 1)) {
+		if (!g->createDevice(loader, app, adapter, sc)) {
 			Ref::unref(*g);
 			g = nullptr;
 		}

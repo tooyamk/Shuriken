@@ -8,7 +8,7 @@ namespace aurora::modules {
 	template<typename RetType>
 	class ModuleLoader : public Ref {
 	public:
-		using CreateModuleFn = RetType*(*)(Ref* loader, const Args*);
+		using CreateModuleFn = RetType*(*)(Ref* loader, const SerializableObject*);
 
 		ModuleLoader() : _createFn(nullptr) {}
 		virtual ~ModuleLoader() {}
@@ -29,7 +29,7 @@ namespace aurora::modules {
 			_lib.release();
 		}
 
-		RefPtr<RetType> AE_CALL create(const Args* args) {
+		RefPtr<RetType> AE_CALL create(const SerializableObject* args) {
 			if (_createFn && _lib.isLoaded()) {
 				return (RetType*)_createFn(this, args);
 			} else {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "aurora/Args.h"
+#include "aurora/SerializableObject.h"
 #include "aurora/Ref.h"
 
 namespace aurora::modules {

@@ -7,13 +7,11 @@ public:
 	virtual int32_t AE_CALL run() override {
 		RefPtr app = new Application("TestApp");
 
-		Application::Style wndStype;
+		ApplicationStyle wndStype;
 		wndStype.thickFrame = true;
 		wndStype.backgroundColor.set(255, 255, 0);
 		if (app->createWindow(wndStype, "Fucker", Vec2ui32(800, 600), false)) {
 			app->setWindowPosition({200, 300});
-			Args args;
-			args.add("app", &*app);
 
 			RefPtr looper = new Looper(1000.0 / 60.0);
 

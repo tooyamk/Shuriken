@@ -2,11 +2,13 @@
 
 #include "aurora/modules/graphics/IGraphicsModule.h"
 #include "aurora/modules/graphics/IProgramSourceTranslator.h"
-#include "aurora/Application.h"
+#include "aurora/IApplication.h"
 #include "aurora/hash/xxHash.h"
 
 #include "GL/glew.h"
 #include <GL/GL.h>
+
+#include <optional>
 
 //#include "GL/eglew.h"
 

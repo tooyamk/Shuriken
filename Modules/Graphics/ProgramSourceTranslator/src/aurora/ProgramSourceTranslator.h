@@ -50,19 +50,20 @@ namespace aurora::modules::graphics::program_source_translator {
 
 #ifdef AE_MODULE_EXPORTS
 namespace aurora::modules::graphics {
-	extern "C" AE_MODULE_DLL_EXPORT void* AE_CREATE_MODULE_FN_NAME(Ref* loader, const Args* args) {
+	extern "C" AE_MODULE_DLL_EXPORT void* AE_CREATE_MODULE_FN_NAME(Ref* loader, const SerializableObject* args) {
 		if (!args) {
 			println("Module create err, no args");
 			return nullptr;
 		}
 
-		auto dxc = args->get<const std::string>("dxc");
-		if (!dxc) {
+		std::string_view dxc;
+		if (auto so = args->tryGetPtr("dxc"); so) dxc = so->toStringView();
+		if (dxc.empty()) {
 			println("Module create err, no dxc");
 			return nullptr;
 		}
 
-		return new program_source_translator::ProgramSourceTranslator(loader, dxc.value().data());
+		return new program_source_translator::ProgramSourceTranslator(loader, dxc);
 	}
 }
 #endif

@@ -43,7 +43,7 @@ public:
 		}
 	}
 
-	void AE_CALL initInputModule(std::vector<RefPtr<IInputModule>>& modules, const std::string_view& dll, const Args* args) {
+	void AE_CALL initInputModule(std::vector<RefPtr<IInputModule>>& modules, const std::string_view& dll, const SerializableObject* args) {
 		RefPtr loader = new InputModuleLoader();
 		if (loader->load(dll)) {
 			if (auto im = loader->create(args); im) modules.emplace_back(im);
@@ -53,11 +53,11 @@ public:
 	virtual int32_t AE_CALL run() override {
 		RefPtr app = new Application("TestApp");
 
-		Application::Style wndStype;
+		ApplicationStyle wndStype;
 		wndStype.thickFrame = true;
 		if (app->createWindow(wndStype, "", Vec2ui32(800, 600), false)) {
-			Args args;
-			args.add("app", &*app);
+			SerializableObject args;
+			args.insert("app", (uint64_t)&*app);
 
 			std::vector<RefPtr<IInputModule>> inputModules;
 

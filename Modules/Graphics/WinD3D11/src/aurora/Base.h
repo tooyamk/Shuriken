@@ -1,7 +1,7 @@
 #pragma once
 
 #include "aurora/modules/graphics/IGraphicsModule.h"
-#include "aurora/Application.h"
+#include "aurora/IApplication.h"
 
 #include <d3d11_4.h>
 #pragma comment(lib, "d3d11.lib")

@@ -18,7 +18,6 @@
 #include "TextureView.h"
 #include "TextureViewSimulative.h"
 #include "VertexBuffer.h"
-#include "aurora/Application.h"
 #include "aurora/String.h"
 #include "aurora/Time.h"
 #include "GL/wglew.h"
@@ -44,8 +43,8 @@ namespace aurora::modules::graphics::win_gl {
 		_release();
 	}
 
-	bool Graphics::createDevice(Ref* loader, Application* app, IProgramSourceTranslator* trans, const GraphicsAdapter* adapter, SampleCount sampleCount) {
-		if (_dc || !app->Win_getHWnd()) return false;
+	bool Graphics::createDevice(Ref* loader, IApplication* app, IProgramSourceTranslator* trans, const GraphicsAdapter* adapter, SampleCount sampleCount) {
+		if (_dc || !app->getWindow()) return false;
 
 		/*
 		pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
@@ -84,7 +83,7 @@ namespace aurora::modules::graphics::win_gl {
 			return false;
 		}
 
-		_dc = GetDC(app->Win_getHWnd());
+		_dc = GetDC((HWND)app->getWindow());
 		if (!_dc) {
 			_release();
 			return false;
@@ -960,7 +959,7 @@ namespace aurora::modules::graphics::win_gl {
 		}
 
 		if (_dc) {
-			ReleaseDC(_app->Win_getHWnd(), _dc);
+			ReleaseDC((HWND)_app->getWindow(), _dc);
 			_dc = nullptr;
 		}
 

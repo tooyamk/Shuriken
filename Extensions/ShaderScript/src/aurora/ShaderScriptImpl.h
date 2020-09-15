@@ -211,6 +211,8 @@ namespace aurora::extensions::shader_script {
 		if (shader) {
 			shader->unset();
 
+			if (!source.getLength()) return false;
+
 			auto src = std::regex_replace((const char*)source.getSource(), std::regex("//.*|/\\*[\\s\\S]*?\\*/|"), "");
 			//for (auto& c : src) {
 			//	if (c == '\r') c = '\n';
