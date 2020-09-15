@@ -7,6 +7,7 @@
 #include "dxc/dxcapi.h"
 
 #include "aurora/modules/graphics/IProgramSourceTranslator.h"
+#include "aurora/Debug.h"
 #include "aurora/DynamicLib.h"
 
 namespace aurora::modules::graphics::program_source_translator {
@@ -55,14 +56,14 @@ namespace aurora::modules::graphics::program_source_translator {
 namespace aurora::modules::graphics {
 	extern "C" AE_MODULE_DLL_EXPORT void* AE_CREATE_MODULE_FN_NAME(Ref* loader, const SerializableObject* args) {
 		if (!args) {
-			println("Module create err, no args");
+			printdln("Module create err, no args");
 			return nullptr;
 		}
 
 		std::string_view dxc;
 		if (auto so = args->tryGetPtr("dxc"); so) dxc = so->toStringView();
 		if (dxc.empty()) {
-			println("Module create err, no dxc");
+			printdln("Module create err, no dxc");
 			return nullptr;
 		}
 

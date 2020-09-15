@@ -82,7 +82,7 @@ namespace aurora {
 			auto [unicodeLen, utf8Len] = calcUnicodeToUtf8Length(in);
 			if (outBufferSize < unicodeLen) return std::string::npos;
 
-			return _UnicodeToUtf8(in.data(), unicodeLen, outBuffer);
+			return UnicodeToUtf8(in.data(), unicodeLen, outBuffer);
 		}
 
 		template<typename T, typename = wstring_data_t<T>>
@@ -90,7 +90,7 @@ namespace aurora {
 			auto [unicodeLen, utf8Len] = calcUnicodeToUtf8Length(in);
 			std::string s;
 			s.resize(utf8Len);
-			_UnicodeToUtf8(in.data(), unicodeLen, (char*)s.data());
+			UnicodeToUtf8(in.data(), unicodeLen, (char*)s.data());
 
 			return std::move(s);
 		}
@@ -133,15 +133,17 @@ namespace aurora {
 			auto [utf8Len, unicodeLen] = calcUtf8ToUnicodeLength(in);
 			if (outBufferSize < unicodeLen) return std::wstring::npos;
 
-			return _Utf8ToUnicode(in, utf8Len, outBuffer);
+			return Utf8ToUnicode(in, utf8Len, outBuffer);
 		}
+
+		static std::wstring::size_type AE_CALL Utf8ToUnicode(const char* in, std::string::size_type inLen, wchar_t* out);
 
 		template<typename T, typename = string_data_t<T>>
 		static std::wstring AE_CALL Utf8ToUnicode(const T& in) {
 			auto [utf8Len, unicodeLen] = calcUtf8ToUnicodeLength(in);
 			std::wstring s;
 			s.resize(unicodeLen);
-			_Utf8ToUnicode(in.data(), utf8Len, s.data());
+			Utf8ToUnicode(in.data(), utf8Len, s.data());
 
 			return std::move(s);
 		}
@@ -157,11 +159,13 @@ namespace aurora {
 			auto [utf8Len, unicodeLen] = calcUtf8ToUnicodeLength(in);
 			++unicodeLen;
 			out = new wchar_t[unicodeLen];
-			auto len = _Utf8ToUnicode(in.data(), utf8Len, out);
+			auto len = Utf8ToUnicode(in.data(), utf8Len, out);
 			out[len] = 0;
 
 			return len;
 		}
+
+		static std::string::size_type AE_CALL UnicodeToUtf8(const wchar_t* in, std::wstring::size_type inLen, char* out);
 
 		template<typename Input, typename Separator, typename Fn, typename = std::enable_if_t<(is_string_data_v<Input> || std::is_convertible_v<Input, char const*>), Input>, typename = std::enable_if_t<(std::is_base_of_v<std::regex, Separator> || is_string_data_v<Separator> || std::is_convertible_v<Separator, char const*>) && std::is_invocable_v<Fn, const std::string_view&>, Separator>>
 		static void AE_CALL split(const Input& input, const Separator& separator, Fn&& fn) {
@@ -412,9 +416,5 @@ namespace aurora {
 		}
 
 		static bool AE_CALL isEqual(const char* str1, const char* str2);
-
-	private:
-		static std::string::size_type AE_CALL _UnicodeToUtf8(const wchar_t* in, std::wstring::size_type inLen, char* out);
-		static std::wstring::size_type AE_CALL _Utf8ToUnicode(const char* in, std::string::size_type inLen, wchar_t* out);
 	};
 }

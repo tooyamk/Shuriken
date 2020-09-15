@@ -2,6 +2,7 @@
 
 #include "FBXConverter.h"
 #include "aurora/ByteArray.h"
+#include "aurora/Debug.h"
 #include "aurora/MeshResource.h"
 #include "aurora/ShaderPredefine.h"
 #include "boost/preprocessor.hpp"
@@ -1070,7 +1071,7 @@ inline static __NAME__ get##__NAME__(const std::string_view& name) { \
 						if (rst == Z_BUF_ERROR) {
 							++inflateVal;
 						} else {
-							println("FBX parse error : uncompress error ");
+							printdln("FBX parse error : uncompress error ");
 							return false;
 						}
 					}
@@ -1089,7 +1090,7 @@ inline static __NAME__ get##__NAME__(const std::string_view& name) { \
 			break;
 		}
 		default:
-			println("FBX parse error : Unknown property type ", type);
+			printdln("FBX parse error : Unknown property type ", type);
 			return false;
 		}
 
@@ -1170,10 +1171,10 @@ inline static __NAME__ get##__NAME__(const std::string_view& name) { \
 					return std::move(rst);
 				}
 			} else {
-				println("FBX parse error : only support binary format");
+				printdln("FBX parse error : only support binary format");
 			}
 		} else {
-			println("FBX parse error : not a fbx file");
+			printdln("FBX parse error : not a fbx file");
 		}
 
 		return FBXConverter::Result();

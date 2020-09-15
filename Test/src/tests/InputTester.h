@@ -82,7 +82,7 @@ public:
 					if ((info->type & (DeviceType::KEYBOARD | DeviceType::GAMEPAD)) != DeviceType::UNKNOWN) {
 						auto im = e.getTarget<IInputModule>();
 						if (getNumInputeDevice(DeviceType::GAMEPAD) > 0) return;
-						println("create device : ", (uint32_t)info->type, " guid size = ", info->guid.getSize());
+						printdln("create device : ", (uint32_t)info->type, " guid size = ", info->guid.getSize());
 						auto device = im->createDevice(info->guid);
 						if (device) {
 							device->getEventDispatcher().addEventListener(DeviceEvent::DOWN, new EventListener(std::function([app](Event<DeviceEvent>& e) {
@@ -98,14 +98,14 @@ public:
 										}
 									}
 
-									println("keyboard down -> key : ", key->code, "    value : ", key->value[0]);
+									printdln("keyboard down -> key : ", key->code, "    value : ", key->value[0]);
 
 									break;
 								}
 								case DeviceType::GAMEPAD:
 								{
 									auto key = e.getData<Key>();
-									println("gamepad down : ", printGamepadKey((GamepadKeyCode)key->code), "  ", key->value[0]);
+									printdln("gamepad down : ", printGamepadKey((GamepadKeyCode)key->code), "  ", key->value[0]);
 									if (key->code == (uint32_t)GamepadKeyCode::CROSS) {
 										device->setVibration(0.5f, 0.5f);
 									}
@@ -125,7 +125,7 @@ public:
 								case DeviceType::GAMEPAD:
 								{
 									auto key = e.getData<Key>();
-									println("gamepad up : ", printGamepadKey((GamepadKeyCode)key->code), "  ", key->value[0]);
+									printdln("gamepad up : ", printGamepadKey((GamepadKeyCode)key->code), "  ", key->value[0]);
 									if (key->code == (uint32_t)GamepadKeyCode::CROSS) {
 										device->setVibration(0.0f, 0.0f);
 									}
@@ -143,7 +143,7 @@ public:
 									if (key->code == 4) {
 										//f32 curPos[2];
 										//(e.getTarget<InputDevice>())->getKeyState(key->code, curPos, 2);
-										println("input device move : ", key->code, key->value[0], key->value[1], key->value[2]);
+										printdln("input device move : ", key->code, key->value[0], key->value[1], key->value[2]);
 									} else if (key->code == 1) {
 										//println("input device wheel : %d   %f", key->code, *(f32*)key->value);
 									}
@@ -153,9 +153,9 @@ public:
 								case DeviceType::GAMEPAD:
 								{
 									auto key = e.getData<Key>();
-									print("gamepad move : ", printGamepadKey((GamepadKeyCode)key->code), " ", key->value[0]);
-									if (key->count > 1) print("  ", key->value[1]);
-									println();
+									printd("gamepad move : ", printGamepadKey((GamepadKeyCode)key->code), " ", key->value[0]);
+									if (key->count > 1) printd("  ", key->value[1]);
+									printdln();
 
 									break;
 								}
@@ -166,7 +166,7 @@ public:
 							inputDevices.emplace_back(device);
 						}
 					}
-					println("input device connected : ", info->type);
+					printdln("input device connected : ", info->type);
 				})));
 
 				im->getEventDispatcher().addEventListener(ModuleEvent::DISCONNECTED, new EventListener(std::function([&inputDevices](Event<ModuleEvent>& e) {
@@ -177,7 +177,7 @@ public:
 							break;
 						}
 					}
-					println("input device disconnected : ", info->type);
+					printdln("input device disconnected : ", info->type);
 				})));
 			}
 

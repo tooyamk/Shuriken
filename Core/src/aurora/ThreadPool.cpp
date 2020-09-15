@@ -1,4 +1,5 @@
 #include "ThreadPool.h"
+#include "aurora/Debug.h"
 
 namespace aurora {
 	ThreadPool::ThreadPool(size_t maxThreads) :
@@ -41,7 +42,7 @@ namespace aurora {
 				} while (true);
 			}).detach();
 		} catch (std::exception& e) {
-			println("start threads pool error : ", e.what());
+			printdln("start threads pool error : ", e.what());
 		}
 	}
 
@@ -52,7 +53,7 @@ namespace aurora {
 				t->start();
 				_idleTasks.emplace_back(t);
 			} catch (std::exception& e) { //exceed max thread num of process
-				println("allocate threads error : ", e.what());
+				printdln("allocate threads error : ", e.what());
 				break;
 			}
 		}
@@ -120,9 +121,9 @@ namespace aurora {
 					try {
 						_task(); //run task
 					} catch (std::exception& e) {
-						println("thread start error : ", e.what());
+						printdln("thread start error : ", e.what());
 					} catch (...) {
-						println("thread start error : unknown");
+						printdln("thread start error : unknown");
 					}
 
 					_task = nullptr;

@@ -32,10 +32,10 @@ public:
 				auto graphics = gml->create(&args);
 
 				if (graphics) {
-					println("Graphics Version : ", graphics->getVersion());
+					printdln("Graphics Version : ", graphics->getVersion());
 
 					graphics->getEventDispatcher().addEventListener(GraphicsEvent::ERR, createEventListener<GraphicsEvent>([](Event<GraphicsEvent>& e) {
-						println(*(std::string_view*)e.getData());
+						printdln(*(std::string_view*)e.getData());
 						int a = 1;
 					}));
 

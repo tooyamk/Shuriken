@@ -6,10 +6,10 @@
 #include "IndexBuffer.h"
 #include "Sampler.h"
 #include "VertexBuffer.h"
+#include "aurora/Debug.h"
 #include "aurora/GraphicsBuffer.h"
 #include "aurora/ShaderDefine.h"
 #include "aurora/ShaderParameter.h"
-#include "aurora/String.h"
 
 namespace aurora::modules::graphics::win_gl {
 	Program::Program(Graphics& graphics) : IProgram(graphics),
@@ -360,7 +360,7 @@ namespace aurora::modules::graphics::win_gl {
 			}
 		}
 
-		println("------ glsl shader code(", (type == GL_VERTEX_SHADER ? "vert" : "frag"), ") ------\n", 
+		printdln("------ glsl shader code(", (type == GL_VERTEX_SHADER ? "vert" : "frag"), ") ------\n", 
 			std::string_view((char*)source.data.getSource(), source.data.getLength()), "\n------------------------------------");
 
 		GLuint shader = glCreateShader(type);

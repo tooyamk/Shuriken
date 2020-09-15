@@ -131,7 +131,7 @@ namespace aurora::modules::graphics::program_source_translator {
 			IFT(compileResult->GetErrorBuffer(&errors));
 			if (errors != nullptr) {
 				if (errors->GetBufferSize() > 0) {
-					println("ProgramSourceTranslator::translate error or warning : ", std::string_view((char*)errors->GetBufferPointer(), errors->GetBufferSize()));
+					printdln("ProgramSourceTranslator::translate error or warning : ", std::string_view((char*)errors->GetBufferPointer(), errors->GetBufferSize()));
 					//ret.errorWarningMsg = CreateBlob(errors->GetBufferPointer(), static_cast<uint32_t>(errors->GetBufferSize()));
 				}
 				errors = nullptr;
@@ -271,7 +271,7 @@ namespace aurora::modules::graphics::program_source_translator {
 				dst.data.setCapacity(str.size());
 				dst.data.write<ba_vt::BYTE>((uint8_t*)str.data(), str.size());
 			} catch (spirv_cross::CompilerError& error) {
-				println("spirv to glsl/gssl error : ", error.what());
+				printdln("spirv to glsl/gssl error : ", error.what());
 			}
 
 			break;
@@ -309,7 +309,7 @@ namespace aurora::modules::graphics::program_source_translator {
 				dst.data.setCapacity(str.size());
 				dst.data.write<ba_vt::BYTE>((uint8_t*)str.data(), str.size());
 			} catch (spirv_cross::CompilerError& error) {
-				println(error.what());
+				printdln(error.what());
 			}
 
 			break;

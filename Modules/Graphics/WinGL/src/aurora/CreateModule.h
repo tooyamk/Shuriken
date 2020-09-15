@@ -1,18 +1,19 @@
 #pragma once
 
 #include "Graphics.h"
+#include "aurora/Debug.h"
 
 #ifdef AE_MODULE_EXPORTS
 namespace aurora::modules::graphics {
 	extern "C" AE_MODULE_DLL_EXPORT void* AE_CREATE_MODULE_FN_NAME(Ref* loader, const SerializableObject* args) {
 		if (!args) {
-			println("GlewGraphicsModule create error : no args");
+			printdln("GlewGraphicsModule create error : no args");
 			return nullptr;
 		}
 
 		auto app = (IApplication*)args->tryGet("app").toNumber<uint64_t>();
 		if (!app) {
-			println("GlewGraphicsModule create error : no app");
+			printdln("GlewGraphicsModule create error : no app");
 			return nullptr;
 		}
 

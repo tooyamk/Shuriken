@@ -1,6 +1,7 @@
 #pragma once
 
 #include "aurora/Framework.h"
+#include "aurora/Debug.h"
 #include <fstream>
 
 using namespace aurora;
@@ -103,7 +104,7 @@ inline bool AE_CALL programCreate(IProgram& program, const std::string_view& ver
 		[&appPath](const IProgram& program, ProgramStage stage, const std::string_view& name) {
 		return readFile(appPath + name.data());
 	})) {
-		println(L"program create error");
+		printdln(L"program create error");
 		return false;
 	}
 	return true;

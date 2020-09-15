@@ -3,6 +3,7 @@
 #include "aurora/AList.h"
 #include "aurora/ByteArray.h"
 #include "aurora/DynamicLib.h"
+#include "aurora/Debug.h"
 #include "aurora/Lock.h"
 #include "aurora/RTTI.h"
 #include "aurora/SerializableObject.h"

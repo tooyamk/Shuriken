@@ -24,7 +24,7 @@ namespace aurora {
 		return true;
 	}
 
-	std::string::size_type String::_UnicodeToUtf8(const wchar_t* in, std::wstring::size_type inLen, char* out) {
+	std::string::size_type String::UnicodeToUtf8(const wchar_t* in, std::wstring::size_type inLen, char* out) {
 		std::wstring::size_type s = 0;
 		std::string::size_type d = 0;
 
@@ -53,7 +53,7 @@ namespace aurora {
 		return d;
 	}
 
-	std::wstring::size_type String::_Utf8ToUnicode(const char* in, std::string::size_type inLen, wchar_t* out) {
+	std::wstring::size_type String::Utf8ToUnicode(const char* in, std::string::size_type inLen, wchar_t* out) {
 		std::string::size_type s = 0;
 		std::wstring::size_type d = 0;
 

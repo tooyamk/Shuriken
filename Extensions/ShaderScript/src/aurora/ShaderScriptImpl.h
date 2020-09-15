@@ -1,5 +1,6 @@
 #pragma once
 
+#include "aurora/Debug.h"
 #include "aurora/Shader.h"
 #include "aurora/String.h"
 #include <regex>
@@ -72,7 +73,7 @@ namespace aurora::extensions::shader_script {
 				if (pos == std::string_view::npos) {
 					out.emplace_back(fmtDef);
 				} else {
-					println("ShaderScript::parseDefines error : parse dynamic defines error, value has white space");
+					printdln("ShaderScript::parseDefines error : parse dynamic defines error, value has white space");
 					return false;
 				}
 			}
