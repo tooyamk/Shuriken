@@ -106,14 +106,12 @@ namespace aurora {
 		if (!_linux.dis) _linux.dis = XOpenDisplay(nullptr);
 		if (!_linux.dis) return false;
 
-		auto s = DefaultScreen(_linux.dis);
-
 		XSetWindowAttributes attr = { 0 };
 		attr.border_pixel = 0;
 		attr.background_pixel = style.backgroundColor[0] < 16 | style.backgroundColor[1] < 8 | style.backgroundColor[2];
 
-		_linux.wnd = XCreateWindow(_linux.dis, RootWindow(_linux.dis, s),
-			clientRect.pos[0], clientRect.pos[1], clientRect.size[0], clientRect.size[1], 0,
+		_linux.wnd = XCreateWindow(_linux.dis, RootWindow(_linux.dis, DefaultScreen(_linux.dis)),
+			0, 0, _clientSize[0], _clientSize[1], , 0,
 			DefaultDepth(_linux.dis, 0), InputOutput, DefaultVisual(_linux.dis, 0), CWBackPixel, &attr);
 
 		_linux.MOTIF_WM_HINTS = XInternAtom(_linux.dis, "_MOTIF_WM_HINTS", False);
