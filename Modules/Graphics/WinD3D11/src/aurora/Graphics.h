@@ -226,7 +226,10 @@ namespace aurora::modules::graphics::win_d3d11 {
 		static D3D11_COMPARISON_FUNC AE_CALL convertComparisonFunc(ComparisonFunc func);
 
 	protected:
-		virtual RefPtr<Ref> AE_CALL _destruction() const override { return _loader; }
+		virtual ScopeGuard AE_CALL _destruction() const override {
+			auto l = _loader;
+			return [l]() {};
+		}
 
 	private:
 		bool _curIsBackBuffer;

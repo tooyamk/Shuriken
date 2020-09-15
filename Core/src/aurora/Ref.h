@@ -1,9 +1,52 @@
 #pragma once
 
 #include "aurora/Global.h"
+#include "aurora/ScopeGuard.h"
 #include <atomic>
 
 namespace aurora {
+	class AE_CORE_DLL Ref {
+	public:
+		Ref() :
+			_refCount(0) {
+		}
+
+		virtual ~Ref() {
+		}
+
+		inline void AE_CALL ref() {
+			_refCount.fetch_add(1, std::memory_order_release);
+		}
+
+		template<typename T>
+		inline T* AE_CALL ref() {
+			ref();
+			return (T*)this;
+		}
+
+		inline uint32_t AE_CALL getReferenceCount() const {
+			return _refCount.load(std::memory_order_acquire);
+		}
+
+		template<bool AutoDelete = true>
+		inline static void AE_CALL unref(const Ref& target) {
+			if constexpr (AutoDelete) {
+				if (target._refCount.fetch_sub(1) <= 1) {
+					auto d = target._destruction();
+					delete& target;
+				}
+			} else {
+				target._refCount.fetch_sub(1);
+			}
+		}
+
+	protected:
+		mutable std::atomic_uint32_t _refCount;
+
+		virtual ScopeGuard AE_CALL _destruction() const { return nullptr; }
+	};
+
+
 	template<typename T>
 	class RefPtr {
 	public:
@@ -127,46 +170,4 @@ namespace aurora {
 	inline bool AE_CALL operator!=(const T& lhs, const RefPtr<T>& rhs) {
 		return rhs != &lhs;
 	}
-
-
-	class AE_CORE_DLL Ref {
-	public:
-		Ref() :
-			_refCount(0) {
-		}
-
-		virtual ~Ref() {
-		}
-
-		inline void AE_CALL ref() {
-			_refCount.fetch_add(1, std::memory_order_release);
-		}
-
-		template<typename T>
-		inline T* AE_CALL ref() {
-			ref();
-			return (T*)this;
-		}
-
-		inline uint32_t AE_CALL getReferenceCount() const {
-			return _refCount.load(std::memory_order_acquire);
-		}
-
-		template<bool AutoDelete = true>
-		inline static void AE_CALL unref(const Ref& target) {
-			if constexpr (AutoDelete) {
-				if (target._refCount.fetch_sub(1) <= 1) {
-					auto d = target._destruction();
-					delete &target;
-				}
-			} else {
-				target._refCount.fetch_sub(1);
-			}
-		}
-
-	protected:
-		mutable std::atomic_uint32_t _refCount;
-
-		virtual RefPtr<Ref> AE_CALL _destruction() const { return nullptr; }
-	};
 }

@@ -16,7 +16,10 @@ namespace aurora::modules::inputs::win_direct_input {
 		HWND AE_CALL getHWND() const;
 
 	protected:
-		virtual RefPtr<Ref> AE_CALL _destruction() const override { return _loader; }
+		virtual ScopeGuard AE_CALL _destruction() const override {
+			auto l = _loader;
+			return [l]() {};
+		}
 
 	private:
 		RefPtr<Ref> _loader;

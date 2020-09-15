@@ -106,7 +106,10 @@ namespace aurora::modules::graphics::win_gl {
 		static uint32_t AE_CALL getGLTypeSize(GLenum type);
 
 	protected:
-		virtual RefPtr<Ref> AE_CALL _destruction() const override { return _loader; }
+		virtual ScopeGuard AE_CALL _destruction() const override {
+			auto l = _loader;
+			return [l]() {};
+		}
 
 	private:
 		struct {
