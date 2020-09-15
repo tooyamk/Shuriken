@@ -91,6 +91,8 @@ namespace aurora {
 				info.cbSize = sizeof(info);
 				if (GetMonitorInfo(monitor, &info)) _win.clinetPos.set(info.rcWork.left + ((info.rcWork.right - info.rcWork.left) - rect.size[0]) / 2, info.rcWork.top + ((info.rcWork.bottom - info.rcWork.top) - rect.size[1]) / 2);
 			}
+
+			if (_win.clinetPos[1] < _border[2]) _win.clinetPos[1] = _border[2];
 		}
 		
 		if (!_isFullscreen) rect.pos.set(_win.clinetPos[0], _win.clinetPos[1]);
@@ -111,7 +113,7 @@ namespace aurora {
 		attr.background_pixel = style.backgroundColor[0] < 16 | style.backgroundColor[1] < 8 | style.backgroundColor[2];
 
 		_linux.wnd = XCreateWindow(_linux.dis, RootWindow(_linux.dis, DefaultScreen(_linux.dis)),
-			0, 0, _clientSize[0], _clientSize[1], , 0,
+			0, 0, _clientSize[0], _clientSize[1], 0,
 			DefaultDepth(_linux.dis, 0), InputOutput, DefaultVisual(_linux.dis, 0), CWBackPixel, &attr);
 
 		_linux.MOTIF_WM_HINTS = XInternAtom(_linux.dis, "_MOTIF_WM_HINTS", False);
