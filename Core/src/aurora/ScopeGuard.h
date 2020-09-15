@@ -3,7 +3,7 @@
 #include <functional>
 
 namespace aurora {
-	class ScopeGuard {
+	class AE_CORE_DLL ScopeGuard {
 	public:
 		template<typename Fn>
 		ScopeGuard(Fn&& fn) : _fn(std::forward<Fn>(fn)) {}

@@ -139,14 +139,7 @@
 #if __has_include(<unistd.h>)
 #	include <unistd.h>
 #endif
-#if __has_include(<android/log.h>)
-#	include <android/log.h>
-#endif
 
-
-#if __has_include(<charconv>)
-#	include <charconv>
-#endif
 #if __has_include(<bit>)
 #	include <bit>
 #endif

@@ -1,6 +1,11 @@
 #pragma once
 
 #include "aurora/Global.h"
+
+#if __has_include(<charconv>)
+#	include <charconv>
+#endif
+
 #include <regex>
 
 namespace aurora {

@@ -2,6 +2,10 @@
 
 #include "aurora/String.h"
 
+#if __has_include(<android/log.h>)
+#	include <android/log.h>
+#endif
+
 namespace aurora {
 	class AE_CORE_DLL Debug {
 	public:
@@ -131,19 +135,7 @@ namespace aurora {
 			} else if constexpr (std::is_same_v<Type, bool>) {
 				out.write(value ? L"true" : L"false");
 			} else if constexpr (std::is_arithmetic_v<Type>) {
-#ifdef __cpp_lib_to_chars
-				if constexpr (std::is_integral_v<Type>) {
-					char buf[21];
-					auto rst = std::to_chars(buf, buf + sizeof(buf), value);
-					if (rst.ec == std::errc()) out.write(buf, rst.ptr - buf);
-				} else {
-					char buf[33];
-					auto rst = std::to_chars(buf, buf + sizeof(buf), value, std::chars_format::general);
-					if (rst.ec == std::errc()) out.write(buf, rst.ptr - buf);
-				}
-#else
 				out.write(std::to_wstring(value));
-#endif
 			} else if constexpr (std::is_enum_v<Type>) {
 				out.write(L'[');
 				_print(out, (std::underlying_type_t<Type>)value);
