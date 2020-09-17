@@ -18,8 +18,21 @@ public:
 			auto t = aurora::Time::now();
 			int step = 0;
 
+			app->getEventDispatcher().addEventListener(ApplicationEvent::CLOSING, createEventListener<ApplicationEvent>([looper](Event<ApplicationEvent>& e) {
+				//auto val = (bool*)e.getData();
+				//*val = true;
+			}));
+
 			app->getEventDispatcher().addEventListener(ApplicationEvent::CLOSED, createEventListener<ApplicationEvent>([looper](Event<ApplicationEvent>& e) {
 				looper->stop();
+			}));
+
+			app->getEventDispatcher().addEventListener(ApplicationEvent::FOCUS_IN, createEventListener<ApplicationEvent>([looper](Event<ApplicationEvent>& e) {
+				printdln("focus in");
+			}));
+
+			app->getEventDispatcher().addEventListener(ApplicationEvent::FOCUS_OUT, createEventListener<ApplicationEvent>([looper](Event<ApplicationEvent>& e) {
+				printdln("focus out");
 			}));
 
 			looper->getEventDispatcher().addEventListener(LooperEvent::TICKING, createEventListener<LooperEvent>([app, &t, &step](Event<LooperEvent>& e) {
@@ -31,10 +44,18 @@ public:
 					t = tt;
 					if (step == 0) {
 						step = 1;
-						app->getCurrentClientSize();
+						//app->getCurrentClientSize();
+						//app->setClientSize(Vec2ui32(400, 400));
+						//ShowWindow((HWND)app->getWindow(), SW_MAXIMIZE);
 						//app->setVisible(false);
+						//app->setWindowPosition(Vec2i32(800, 10));
+						//app->setMaximum();
+						//app->shutdown();
+						//ShowWindow((HWND)app->getWindow(), SW_MAXIMIZE);
+						//UpdateWindow((HWND)app->getWindow());
 					} else if (step == 1) {
 						step = 2;
+						//ShowWindow((HWND)app->getWindow(), SW_SHOWNA);
 						//app->setVisible(true);
 					}
 				}
@@ -45,6 +66,10 @@ public:
 			//evtDispatcher.addEventListener(ApplicationEvent::CLOSING, *appClosingListener);
 
 			app->setVisible(true);
+			//app->setMaximum();
+			//app->setWindowPosition(Vec2i32(-400, 10));
+			//ShowWindow((HWND)app->getWindow(), SW_MAXIMIZE);
+			//app->setFocus();
 			looper->run(true);
 		}
 

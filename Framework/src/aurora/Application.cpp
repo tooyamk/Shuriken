@@ -1,5 +1,6 @@
 #include "Application.h"
 #include "aurora/String.h"
+#include "aurora/Debug.h"
 
 namespace aurora {
 	Application::Application(const std::string_view& appId) :
@@ -8,7 +9,6 @@ namespace aurora {
 #if AE_OS == AE_OS_WIN
 		_win({ nullptr, nullptr, {0, 0, 0, 0}, nullptr }),
 #elif AE_OS == AE_OS_LINUX
-		_linux({ false, nullptr, 0 }),
 #endif
 		_isFullscreen(false) {
 		_appPath = aurora::getAppPath();
@@ -83,18 +83,18 @@ namespace aurora {
 
 		auto rect = _calcWindowRect();
 		{
-			_win.clinetPos.set((GetSystemMetrics(SM_CXSCREEN) - rect.size[0]) / 2, (GetSystemMetrics(SM_CYSCREEN) - rect.size[1]) / 2);
+			_win.clinetPos.set((GetSystemMetrics(SM_CXSCREEN) - (int32_t)rect.size[0]) / 2 + _border[0], (GetSystemMetrics(SM_CYSCREEN) - (int32_t)rect.size[1]) / 2 + _border[2]);
 
 			tagPOINT p{ 0 };
 			if (auto monitor = MonitorFromPoint(p, MONITOR_DEFAULTTONEAREST); monitor) {
 				MONITORINFO info{ 0 };
 				info.cbSize = sizeof(info);
-				if (GetMonitorInfo(monitor, &info)) _win.clinetPos.set(info.rcWork.left + ((info.rcWork.right - info.rcWork.left) - rect.size[0]) / 2, info.rcWork.top + ((info.rcWork.bottom - info.rcWork.top) - rect.size[1]) / 2);
+				if (GetMonitorInfo(monitor, &info)) _win.clinetPos.set(info.rcWork.left + ((info.rcWork.right - info.rcWork.left) - (int32_t)rect.size[0]) / 2 + _border[0], info.rcWork.top + ((info.rcWork.bottom - info.rcWork.top) - (int32_t)rect.size[1]) / 2 + _border[2]);
 			}
 
-			if (_win.clinetPos[1] < _border[2]) _win.clinetPos[1] = _border[2];
+			if (_win.clinetPos[1] < (decltype(_win.clinetPos)::ElementType)_border[2]) _win.clinetPos[1] = _border[2];
 		}
-		
+
 		if (!_isFullscreen) rect.pos.set(_win.clinetPos[0], _win.clinetPos[1]);
 		_win.wnd = CreateWindowExW(_getWindowExStyle(_isFullscreen), wnd.lpszClassName, String::Utf8ToUnicode(title).data(), _getWindowStyle(_style, _isFullscreen),
 			rect.pos[0], rect.pos[1], rect.size[0], rect.size[1],
@@ -108,15 +108,32 @@ namespace aurora {
 		if (!_linux.dis) _linux.dis = XOpenDisplay(nullptr);
 		if (!_linux.dis) return false;
 
+		_linux.MOTIF_WM_HINTS = XInternAtom(_linux.dis, "_MOTIF_WM_HINTS", False);
+		_linux.WM_PROTOCOLS = XInternAtom(_linux.dis, "WM_PROTOCOLS", False);
+		_linux.WM_DELETE_WINDOW = XInternAtom(_linux.dis, "WM_DELETE_WINDOW", False);
+		_linux.NET_WM_PING = XInternAtom(_linux.dis, "_NET_WM_PING", False);
+		_linux.NET_WM_WINDOW_TYPE = XInternAtom(_linux.dis, "_NET_WM_WINDOW_TYPE", False);
+		_linux.NET_WM_WINDOW_TYPE_NORMAL = XInternAtom(_linux.dis, "_NET_WM_WINDOW_TYPE_NORMAL", False);
+		_linux.NET_REQUEST_FRAME_EXTENTS = XInternAtom(_linux.dis, "_NET_REQUEST_FRAME_EXTENTS", False);
+		_linux.NET_FRAME_EXTENTS = XInternAtom(_linux.dis, "_NET_FRAME_EXTENTS", False);
+
 		XSetWindowAttributes attr = { 0 };
 		attr.border_pixel = 0;
 		attr.background_pixel = style.backgroundColor[0] < 16 | style.backgroundColor[1] < 8 | style.backgroundColor[2];
+		attr.event_mask = StructureNotifyMask | KeyPressMask | KeyReleaseMask |
+			PointerMotionMask | ButtonPressMask | ButtonReleaseMask |
+			ExposureMask | FocusChangeMask | VisibilityChangeMask |
+			EnterWindowMask | LeaveWindowMask | PropertyChangeMask;
 
-		_linux.wnd = XCreateWindow(_linux.dis, RootWindow(_linux.dis, DefaultScreen(_linux.dis)),
+		_linux.root = RootWindow(_linux.dis, DefaultScreen(_linux.dis));
+		_linux.wnd = XCreateWindow(_linux.dis, _linux.root,
 			0, 0, _clientSize[0], _clientSize[1], 0,
-			DefaultDepth(_linux.dis, 0), InputOutput, DefaultVisual(_linux.dis, 0), CWBackPixel, &attr);
+			DefaultDepth(_linux.dis, 0), InputOutput, DefaultVisual(_linux.dis, 0), CWBorderPixel | CWColormap | CWEventMask, &attr);
 
-		_linux.MOTIF_WM_HINTS = XInternAtom(_linux.dis, "_MOTIF_WM_HINTS", False);
+		//XSelectInput(_linux.dis, _linux.wnd, ExposureMask | ButtonPressMask | KeyPressMask | PropertyChangeMask);
+
+		//auto sd = ScreenOfDisplay(_linux.dis, DefaultScreen(_linux.dis));
+		//printcln(sd->width, "   ", sd->height);
 
 		{
 			// auto hints = XAllocSizeHints();
@@ -132,6 +149,16 @@ namespace aurora {
 		// Atom window_type = XInternAtom(_linux.dis, "_NET_WM_WINDOW_TYPE", False);
 		// int64_t value = XInternAtom(_linux.dis, "_NET_WM_WINDOW_TYPE_NORMAL", False);
 		// XChangeProperty(_linux.dis, _linux.wnd, window_type, XA_ATOM, 32, PropModeReplace, (uint8_t*)&value, 1);
+
+		{
+			Atom protocols[] = { _linux.WM_DELETE_WINDOW, _linux.NET_WM_PING };
+			XSetWMProtocols(_linux.dis, _linux.wnd, protocols, sizeof(protocols) / sizeof(Atom));
+		}
+
+		{
+			Atom type = _linux.NET_WM_WINDOW_TYPE_NORMAL;
+			XChangeProperty(_linux.dis, _linux.wnd, _linux.NET_WM_WINDOW_TYPE, XA_ATOM, 32, PropModeReplace, (uint8_t*)&type, 1);
+		}
 
 		{
 			MwmHints hints = { 0 };
@@ -151,7 +178,43 @@ namespace aurora {
 			XChangeProperty(_linux.dis, _linux.wnd, _linux.MOTIF_WM_HINTS, XA_ATOM, 32, PropModeReplace, (uint8_t*)&hints, 5);
 		}
 
+		{
+			auto hints = XAllocWMHints();
+			hints->flags = StateHint;
+			hints->initial_state = NormalState;
+
+			XSetWMHints(_linux.dis, _linux.wnd, hints);
+			XFree(hints);
+		}
+
 		setWindowTitle(title);
+
+		XFlush(_linux.dis);
+
+		{
+			_linux.waitFrameEXTENTS = true;
+
+			XEvent e = { ClientMessage };
+			auto& c = e.xclient;
+			c.window = _linux.wnd;
+			c.format = 32; // Data is 32-bit longs
+			c.message_type = _linux.NET_REQUEST_FRAME_EXTENTS;
+			c.data.l[0] = 0;
+			c.data.l[1] = 0;
+			c.data.l[2] = 0;
+			c.data.l[3] = 0;
+			c.data.l[4] = 0;
+			XSendEvent(_linux.dis, _linux.root, False, SubstructureNotifyMask | SubstructureRedirectMask, &e);
+
+			_waitEvent(_linux.waitFrameEXTENTS);
+		}
+
+		{
+			auto sd = ScreenOfDisplay(_linux.dis, DefaultScreen(_linux.dis));
+			_linux.wndPos.set((sd->width - _clientSize[0] - _border[0] - _border[1]) / 2, (sd->height - _clientSize[1] - _border[2] - _border[3]) / 2);
+
+			if (_linux.wndPos[1] < (decltype(_linux.wndPos)::ElementType)_border[2]) _linux.wndPos[1] = _border[2];
+		}
 
 		return true;
 #endif
@@ -211,15 +274,32 @@ namespace aurora {
 	}
 
 	void Application::setClientSize(const Vec2ui32& size) {
-		if (_clientSize != size) {
-			_clientSize = size;
 #if AE_OS == AE_OS_WIN
-			if (!_isFullscreen) {
-				auto rect = _calcWindowRect();
-				::SetWindowPos(_win.wnd, HWND_NOTOPMOST, rect.pos[0], rect.pos[1], rect.size[0], rect.size[1], _getWindowPosFlags<false>());
+		if (_win.wnd) {
+			if (_isFullscreen) {
+				_clientSize = size;
+			} else {
+				setRestore();
+				if (_clientSize != size) {
+					_clientSize = size;
+					auto rect = _calcWindowRect();
+					::SetWindowPos(_win.wnd, HWND_NOTOPMOST, rect.pos[0], rect.pos[1], rect.size[0], rect.size[1], _getWindowPosFlags<false>());
+				}
 			}
-#endif
 		}
+#elif AE_OS == AE_OS_LINUX
+		if (_linux.wnd) {
+			if (_isFullscreen) {
+				_clientSize = size;
+			} else {
+				setRestore();
+				if (_clientSize != size) {
+					_clientSize = size;
+					XResizeWindow(_linux.dis, _linux.wnd, _clientSize[0], _clientSize[1]);
+				}
+			}
+		}
+#endif
 	}
 
 	void Application::setWindowTitle(const std::string_view& title) {
@@ -233,10 +313,23 @@ namespace aurora {
 	void Application::setWindowPosition(const Vec2i32& pos) {
 #if AE_OS == AE_OS_WIN
 		if (_win.wnd) {
-			_win.clinetPos.set(pos[0] + _border[0], pos[1] + _border[2]);
-			if (!_isFullscreen) {
+			if (_isFullscreen) {
+				_win.clinetPos.set(pos[0] + _border[0], pos[1] + _border[2]);
+			} else {
+				setRestore();
+				_win.clinetPos.set(pos[0] + _border[0], pos[1] + _border[2]);
 				auto rect = _calcWindowRect();
 				::SetWindowPos(_win.wnd, HWND_NOTOPMOST, rect.pos[0], rect.pos[1], rect.size[0], rect.size[1], _getWindowPosFlags<false>());
+			}
+		}
+#elif AE_OS == AE_OS_LINUX
+		if (_linux.wnd) {
+			if (_isFullscreen) {
+				_linux.wndPos = pos;
+			} else {
+				setRestore();
+				_linux.wndPos = pos;
+				if (_linux.isVisible) XMoveWindow(_linux.dis, _linux.wnd, _linux.wndPos[0], _linux.wndPos[1]);
 			}
 		}
 #endif
@@ -250,9 +343,66 @@ namespace aurora {
 
 	bool Application::hasFocus() const {
 #if AE_OS == AE_OS_WIN
-		return GetForegroundWindow() == _win.wnd;
+		return GetFocus() == _win.wnd;
+#elif AE_OS == AE_OS_LINUX
+		if (_linux.wnd) {
+			Window focused;
+			int revertTo;
+
+			XGetInputFocus(_linux.dis, &focused, &revertTo);
+			return focused == _linux.wnd;
+		}
 #endif
-		return true;
+		return false;
+	}
+
+	void Application::setFocus() {
+#if AE_OS == AE_OS_WIN
+		if (_win.wnd) SetFocus(_win.wnd);
+#endif
+	}
+
+	bool Application::isMaximum() const {
+#if AE_OS == AE_OS_WIN
+		return _win.wnd ? IsZoomed(_win.wnd) : false;
+#endif
+		return false;
+	}
+
+	void Application::setMaximum() {
+#if AE_OS == AE_OS_WIN
+		if (_win.wnd && !IsZoomed(_win.wnd)) {
+			auto b = IsWindowVisible(_win.wnd);
+			ShowWindow(_win.wnd, SW_SHOWMAXIMIZED);
+			if (!b) ShowWindow(_win.wnd, SW_HIDE);
+		}
+#endif
+	}
+
+	bool Application::isMinimum() const {
+#if AE_OS == AE_OS_WIN
+		return _win.wnd ? IsIconic(_win.wnd) : false;
+#endif
+	}
+
+	void Application::setMinimum() {
+#if AE_OS == AE_OS_WIN
+		if (_win.wnd && !IsIconic(_win.wnd)) {
+			auto b = IsWindowVisible(_win.wnd);
+			ShowWindow(_win.wnd, SW_SHOWMINIMIZED);
+			if (!b) ShowWindow(_win.wnd, SW_HIDE);
+		}
+#endif
+	}
+
+	void Application::setRestore() {
+#if AE_OS == AE_OS_WIN
+		if (_win.wnd && (IsZoomed(_win.wnd) || IsIconic(_win.wnd))) {
+			auto b = IsWindowVisible(_win.wnd);
+			ShowWindow(_win.wnd, SW_RESTORE);
+			if (!b) ShowWindow(_win.wnd, SW_HIDE);
+		}
+#endif
 	}
 
 	void Application::pollEvents() {
@@ -262,7 +412,7 @@ namespace aurora {
 
 		while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
 			if (msg.message == WM_QUIT) {
-				_isClosing = true;
+				shutdown();
 			} else {
 				TranslateMessage(&msg);
 				DispatchMessage(&msg);
@@ -270,11 +420,7 @@ namespace aurora {
 		}
 #elif AE_OS == AE_OS_LINUX
 		XEvent e = { 0 };
-
-		while (XCheckIfEvent(_linux.dis, &e, [](Display*, XEvent*, XPointer) {
-			return 1;
-		}, nullptr)) {
-		}
+		while (XCheckIfEvent(_linux.dis, &e, &Application::_eventPredicate, (XPointer)this)) { _doEvent(e); }
 #endif
 	}
 
@@ -290,13 +436,21 @@ namespace aurora {
 	void Application::setVisible(bool b) {
 #if AE_OS == AE_OS_WIN
 		if (_win.wnd) {
+			int32_t state;
 			if (b) {
-				ShowWindow(_win.wnd, SW_SHOWDEFAULT);
+				if (isMaximum()) {
+					state = SW_SHOWMAXIMIZED;
+				} else if (isMinimum()) {
+					state = SW_SHOWMINIMIZED;
+				} else {
+					state = SW_RESTORE;
+				}
 			} else {
-				ShowWindow(_win.wnd, SW_HIDE);
+				state = SW_HIDE;
 			}
+			ShowWindow(_win.wnd, state);
 
-			UpdateWindow(_win.wnd);
+			//UpdateWindow(_win.wnd);
 		}
 #elif AE_OS == AE_OS_LINUX
 		if (_linux.wnd) {
@@ -304,6 +458,7 @@ namespace aurora {
 				_linux.isVisible = b;
 				if (b) {
 					XMapWindow(_linux.dis, _linux.wnd);
+					XMoveWindow(_linux.dis, _linux.wnd, _linux.wndPos[0], _linux.wndPos[1]);
 				} else {
 					XUnmapWindow(_linux.dis, _linux.wnd);
 				}
@@ -313,9 +468,11 @@ namespace aurora {
 	}
 
 	void Application::shutdown() {
-#if AE_OS == AE_OS_WIN
-		PostQuitMessage(0);
-#endif
+		if (!_isClosing) {
+			_isClosing = true;
+			_eventDispatcher.dispatchEvent(this, ApplicationEvent::CLOSED);
+			std::exit(0);
+		}
 	}
 
 	std::string_view Application::getAppId() const {
@@ -326,15 +483,13 @@ namespace aurora {
 		return _appPath;
 	}
 
-	void Application::_calcBorder() {
 #if AE_OS == AE_OS_WIN
+	void Application::_calcBorder() {
 		RECT rect = { 0, 0, 100, 100 };
 		auto rst = AdjustWindowRectEx(&rect, _getWindowStyle(_style, false), FALSE, _getWindowExStyle(false));
 		_border.set(-rect.left, rect.right - 100, -rect.top, rect.bottom - 100);
-#endif
 	}
 
-#if AE_OS == AE_OS_WIN
 	Box2i32ui32 Application::_calcWindowRect() const {
 		if (_isFullscreen) {
 			return Box2i32ui32(Vec2i32::ZERO, Vec2i32(GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN)));
@@ -380,7 +535,7 @@ namespace aurora {
 				if (isCanceled) {
 					return 0;
 				} else {
-					app->_eventDispatcher.dispatchEvent(app, ApplicationEvent::CLOSED);
+					app->shutdown();
 				}
 			}
 
@@ -392,8 +547,16 @@ namespace aurora {
 		case WM_SIZE:
 		{
 			if (app) {
-				if (!app->_isFullscreen) app->_clientSize.set(LOWORD(lParam), HIWORD(lParam));
-				app->_eventDispatcher.dispatchEvent(app, ApplicationEvent::RESIZED);
+				if (app->_isFullscreen) {
+					app->_eventDispatcher.dispatchEvent(app, ApplicationEvent::RESIZED);
+				} else {
+					auto w = LOWORD(lParam);
+					auto h = HIWORD(lParam);
+					if (app->_clientSize[0] != w || app->_clientSize[1] != h) {
+						app->_clientSize.set(w, h);
+						app->_eventDispatcher.dispatchEvent(app, ApplicationEvent::RESIZED);
+					}
+				}
 			}
 
 			break;
@@ -431,6 +594,109 @@ namespace aurora {
 		}
 
 		return DefWindowProcW(hWnd, msg, wParam, lParam);
+	}
+#elif AE_OS == AE_OS_LINUX
+	Bool Application::_eventPredicate(Display* display, XEvent* event, XPointer pointer) {
+		return True;
+	}
+
+	void Application::_waitEvent(bool& value) {
+		do {
+			XEvent e = { 0 };
+			if (XCheckIfEvent(_linux.dis, &e, &Application::_eventPredicate, (XPointer)this)) _doEvent(e);
+		} while (value);
+	}
+
+	void Application::_doEvent(XEvent& e) {
+		switch (e.type) {
+		case ClientMessage:
+		{
+			auto msgType = e.xclient.message_type;
+
+			if (msgType == _linux.WM_PROTOCOLS) {
+				auto protocol = (Atom)e.xclient.data.l[0];
+
+				if (protocol == _linux.WM_DELETE_WINDOW) {
+					auto isCanceled = false;
+					_eventDispatcher.dispatchEvent(this, ApplicationEvent::CLOSING, &isCanceled);
+					if (!isCanceled) shutdown();
+				} else if (protocol == _linux.NET_WM_PING) {
+					XEvent reply = e;
+					reply.xclient.window = _linux.root;
+
+					XSendEvent(_linux.dis, _linux.root, False, SubstructureNotifyMask | SubstructureRedirectMask, &reply);
+				}
+			}
+
+			break;
+		}
+		case ConfigureNotify:
+		{
+			auto& conf = e.xconfigure;
+
+			int x, y;
+			Window dummy;
+			XTranslateCoordinates(_linux.dis, _linux.wnd, _linux.root, 0, 0, &x, &y, &dummy);
+
+			_linux.wndPos.set(x - _border[0], y - _border[2]);
+
+			if (_clientSize[0] != conf.width || _clientSize[1] != conf.height) {
+				_clientSize.set(conf.width, conf.height);
+				XSetWindowBackground(_linux.dis, _linux.wnd, _style.backgroundColor[0] < 16 | _style.backgroundColor[1] < 8 | _style.backgroundColor[2]);
+
+				_eventDispatcher.dispatchEvent(this, ApplicationEvent::RESIZED);
+			}
+
+			break;
+		}
+		case Expose:
+		{
+			//XFlush(_linux.dis);
+
+			break;
+		}
+		case FocusIn:
+		{
+			auto mode = e.xfocus.mode;
+			if (mode == NotifyGrab || mode == NotifyUngrab) return;
+
+			_eventDispatcher.dispatchEvent(this, ApplicationEvent::FOCUS_IN);
+
+			break;
+		}
+		case FocusOut:
+		{
+			auto mode = e.xfocus.mode;
+			if (mode == NotifyGrab || mode == NotifyUngrab) return;
+
+			_eventDispatcher.dispatchEvent(this, ApplicationEvent::FOCUS_OUT);
+
+			break;
+		}
+		case PropertyNotify:
+		{
+			auto& prop = e.xproperty;
+			if (prop.atom == _linux.NET_FRAME_EXTENTS && prop.state == PropertyNewValue && prop.window == _linux.wnd) {
+				Atom type;
+				int format;
+				unsigned long nitems, bytes_after;
+				unsigned char* property = nullptr;
+
+				XGetWindowProperty(_linux.dis, _linux.wnd, _linux.NET_FRAME_EXTENTS, 0, 16, False, XA_CARDINAL, &type, &format, &nitems, &bytes_after, &property);
+				if (format) {
+					for (size_t i = 0; i < 4; ++i) _border[i] = ((long*)property)[i];
+				}
+
+				if (property) XFree(property);
+
+				_linux.waitFrameEXTENTS = false;
+			}
+
+			break;
+		}
+		default:
+			break;
+		}
 	}
 #endif
 }

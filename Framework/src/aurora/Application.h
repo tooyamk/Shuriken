@@ -33,8 +33,13 @@ namespace aurora {
 		virtual void AE_CALL setWindowPosition(const Vec2i32& pos) override;
 		virtual void AE_CALL setCursorVisible(bool visible) override;
 		virtual bool AE_CALL hasFocus() const override;
+		virtual void AE_CALL setFocus() override;
+		virtual bool AE_CALL isMaximum() const override;
+		virtual void AE_CALL setMaximum() override;
+		virtual bool AE_CALL isMinimum() const override;
 		virtual void AE_CALL pollEvents() override;
-
+		virtual void AE_CALL setMinimum() override;
+		virtual void AE_CALL setRestore() override;
 		virtual bool AE_CALL isVisible() const override;
 		virtual void AE_CALL setVisible(bool b) override;
 		virtual void AE_CALL shutdown() override;
@@ -53,9 +58,6 @@ namespace aurora {
 		events::EventDispatcher<ApplicationEvent> _eventDispatcher;
 
 		mutable std::filesystem::path _appPath;
-
-		void AE_CALL _calcBorder();
-
 #if AE_OS == AE_OS_WIN
 		struct {
 			HINSTANCE ins;
@@ -65,6 +67,7 @@ namespace aurora {
 		} _win;
 
 
+		void AE_CALL _calcBorder();
 		Box2i32ui32 AE_CALL _calcWindowRect() const;
 		static DWORD AE_CALL _getWindowStyle(const ApplicationStyle& style, bool fullscreen);
 		static DWORD AE_CALL _getWindowExStyle(bool fullscreen);
@@ -113,12 +116,28 @@ namespace aurora {
 
 
 		struct {
-			bool isVisible;
-			Display* dis;
-			Window wnd;
+			bool isVisible = false;
+			Display* dis = nullptr;
+			Window root = 0;
+			Window wnd = 0;
+			Vec2i32 wndPos;
+
+			bool waitFrameEXTENTS = false;
 
 			Atom MOTIF_WM_HINTS;
+			Atom WM_DELETE_WINDOW;
+			Atom WM_PROTOCOLS;
+			Atom NET_WM_PING;
+			Atom NET_WM_WINDOW_TYPE;
+			Atom NET_WM_WINDOW_TYPE_NORMAL;
+			Atom NET_REQUEST_FRAME_EXTENTS;
+			Atom NET_FRAME_EXTENTS;
 		} _linux;
+
+		void AE_CALL _waitEvent(bool& value);
+
+		static Bool AE_CALL _eventPredicate(Display* display, XEvent* event, XPointer pointer);
+		void AE_CALL _doEvent(XEvent& e);
 #endif
 	};
 }

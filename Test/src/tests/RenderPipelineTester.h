@@ -16,8 +16,8 @@ public:
 		if (app->createWindow(wndStype, "", Vec2ui32(800, 600), false)) {
 			RefPtr gml = new GraphicsModuleLoader();
 
-			//if (gml->load(getDLLName("ae-win-gl"))) {
-			if (gml->load(getDLLName("ae-win-d3d11"))) {
+			if (gml->load(getDLLName("ae-win-gl"))) {
+			//if (gml->load(getDLLName("ae-win-d3d11"))) {
 				SerializableObject args;
 				
 				RefPtr gpstml = new ModuleLoader<IProgramSourceTranslator>();
@@ -102,8 +102,6 @@ public:
 						RefPtr renderer = new ForwardRenderer(*graphics);
 
 						{
-							auto size = app->getCurrentClientSize();
-							renderData.camera->setProjectionMatrix(Matrix44::createPerspectiveFovLH(Math::PI<float32_t> / 6.f, size[0] / size[1], 10, 10000));
 							renderData.camera->getNode()->localTranslate(Vec3f32(0.f, 0.f, -200.f));
 						}
 
@@ -233,6 +231,11 @@ public:
 						renderData.looper->stop();
 					})));
 
+					app->getEventDispatcher().addEventListener(ApplicationEvent::RESIZED, new EventListener(std::function([this, renderData](Event<ApplicationEvent>& e) {
+						auto app = (IApplication*)e.getTarget();
+						_resize(*renderData.camera, app->getCurrentClientSize());
+					})));
+
 					renderData.looper->getEventDispatcher().addEventListener(LooperEvent::TICKING, new EventListener(std::function([renderData](Event<LooperEvent>& e) {
 						auto dt = float32_t(*e.getData<int64_t>()) * 0.001f;
 
@@ -250,6 +253,7 @@ public:
 					})));
 
 					(new Stats())->run(renderData.looper);
+					_resize(*renderData.camera, app->getCurrentClientSize());
 					app->setVisible(true);
 					renderData.looper->run(true);
 				}
@@ -261,4 +265,10 @@ public:
 
 private:
 	RefPtr<Node> _worldRoot;
+
+	void _resize(Camera& cam, const Vec2ui32& size) {
+		constexpr auto& zero = Math::NUMBER_0<std::remove_cvref_t<decltype(size)>::ElementType>;
+		if (size[0] == zero || size[1] == zero) return;
+		cam.setProjectionMatrix(Matrix44::createPerspectiveFovLH(Math::PI<float32_t> / 6.f, (float32_t)size[0] / (float32_t)size[1], 10, 10000));
+	}
 };
