@@ -2,9 +2,6 @@
 #include "aurora/String.h"
 #include "aurora/Debug.h"
 
-#include "dwmapi.h"
-#pragma comment(lib, "Dwmapi.lib")
-
 namespace aurora {
 	Application::Application(const std::string_view& appId) :
 		_isFullscreen(false),

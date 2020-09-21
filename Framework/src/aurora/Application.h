@@ -133,6 +133,7 @@ namespace aurora {
 			Window root = 0;
 			Window wnd = 0;
 			Vec2i32 wndPos;
+			uint32_t bgColor = 0;
 
 			bool waitFrameEXTENTS = false;
 

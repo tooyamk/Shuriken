@@ -135,7 +135,7 @@ namespace aurora::events {
 	};
 	
 	template<typename EvtType, typename Fn, typename = std::enable_if_t<std::is_invocable_v<Fn, Event<EvtType>&>>>
-	inline EventListener<EvtType, Fn>* createEventListener(Fn&& u) {
+	inline RefPtr<EventListener<EvtType, Fn>> createEventListener(Fn&& u) {
 		return new EventListener<EvtType, Fn>(std::forward<Fn>(u));
 	}
 
