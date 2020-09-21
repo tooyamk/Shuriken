@@ -5,13 +5,17 @@
 class WindowTester : public BaseTester {
 public:
 	virtual int32_t AE_CALL run() override {
+		char zzz[15];
+		char fff[15];
+		memEqual(zzz, fff, 15);
+
 		RefPtr app = new Application("TestApp");
 
 		ApplicationStyle wndStype;
 		wndStype.thickFrame = true;
 		wndStype.backgroundColor.set(255, 255, 0);
 		if (app->createWindow(wndStype, "Fucker", Vec2ui32(800, 600), false)) {
-			app->setWindowPosition({200, 300});
+			//app->setWindowPosition({200, 300});
 
 			RefPtr looper = new Looper(1000.0 / 60.0);
 
@@ -35,6 +39,12 @@ public:
 				printdln("focus out");
 			}));
 
+			app->getEventDispatcher().addEventListener(ApplicationEvent::RESIZED, createEventListener<ApplicationEvent>([looper](Event<ApplicationEvent>& e) {
+				auto app = (IApplication*)e.getTarget();
+				auto size = app->getCurrentClientSize();
+				printdln("resize  ", size[0], "   ", size[1]);
+			}));
+
 			looper->getEventDispatcher().addEventListener(LooperEvent::TICKING, createEventListener<LooperEvent>([app, &t, &step](Event<LooperEvent>& e) {
 				app->pollEvents();
 
@@ -44,6 +54,8 @@ public:
 					t = tt;
 					if (step == 0) {
 						step = 1;
+						//app->toggleFullscreen();
+						app->setMaximum();
 						//app->getCurrentClientSize();
 						//app->setClientSize(Vec2ui32(400, 400));
 						//ShowWindow((HWND)app->getWindow(), SW_MAXIMIZE);
@@ -55,8 +67,13 @@ public:
 						//UpdateWindow((HWND)app->getWindow());
 					} else if (step == 1) {
 						step = 2;
+						app->toggleFullscreen();
 						//ShowWindow((HWND)app->getWindow(), SW_SHOWNA);
 						//app->setVisible(true);
+					} else if (step == 2) {
+						step = 3;
+						app->toggleFullscreen();
+						app->setVisible(true);
 					}
 				}
 
@@ -65,7 +82,7 @@ public:
 
 			//evtDispatcher.addEventListener(ApplicationEvent::CLOSING, *appClosingListener);
 
-			app->setVisible(true);
+			//app->setVisible(true);
 			//app->setMaximum();
 			//app->setWindowPosition(Vec2i32(-400, 10));
 			//ShowWindow((HWND)app->getWindow(), SW_MAXIMIZE);

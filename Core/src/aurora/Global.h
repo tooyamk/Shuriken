@@ -254,7 +254,7 @@ using namespace std::literals;
 namespace std {
 #ifndef __cpp_lib_endian
 	constexpr uint8_t endian_tester() {
-		union endian_tester {
+		union {
 			uint8_t data[2];
 			uint16_t value;
 		} tester = { (uint16_t)1 };
@@ -328,7 +328,7 @@ namespace aurora {
 	class Invoker<F, std::nullptr_t> {
 	public:
 		Invoker(F&& fn) :
-			_fn(fn) {
+			_fn(std::forward<F>(fn)) {
 		}
 
 		inline operator bool() const {
@@ -343,7 +343,7 @@ namespace aurora {
 	private:
 		F _fn;
 	};
-	template<typename F, typename = std::enable_if_t<!std::is_member_function_pointer_v<F>, F>>
+	template<typename F, typename = std::enable_if_t<!std::is_member_function_pointer_v<F>>>
 	Invoker(F)->Invoker<F, std::nullptr_t>;
 
 
@@ -507,31 +507,23 @@ namespace aurora {
 	}
 
 
-	inline bool AE_CALL _memEqual8(const void* val1, const void* val2, size_t length) {
+	template<size_t Bytes>
+	inline bool AE_CALL _memEqual(const void* val1, const void* val2, size_t length) {
+		using T = uint_t<Bytes * 8>;
+		if (length >= Bytes) {
+			if (*(T*)val1 != *(T*)val2) return false;
+
+			length -= Bytes;
+			return length ? _memEqual<Bytes / 2>(((T*)val1) + 1, ((T*)val2) + 1, length) : true;
+		} else {
+			return _memEqual<Bytes / 2>(val1, val2, length);
+		}
+	}
+
+	template<>
+	inline bool AE_CALL _memEqual<1>(const void* val1, const void* val2, size_t length) {
 		if (*(uint8_t*)val1 != *(uint8_t*)val2) return false;
 		return true;
-	}
-
-	inline bool AE_CALL _memEqual16(const void* val1, const void* val2, size_t length) {
-		if (length >= 2) {
-			if (*(uint16_t*)val1 != *(uint16_t*)val2) return false;
-
-			length -= 2;
-			return length ? _memEqual8(((uint16_t*)val1) + 1, ((uint16_t*)val2) + 1, length) : true;
-		} else {
-			return _memEqual8(val1, val2, length);
-		}
-	}
-
-	inline bool AE_CALL _memEqual32(const void* val1, const void* val2, size_t length) {
-		if (length >= 4) {
-			if (*(uint32_t*)val1 != *(uint32_t*)val2) return false;
-
-			length -= 4;
-			return length ? _memEqual16(((uint32_t*)val1) + 1, ((uint32_t*)val2) + 1, length) : true;
-		} else {
-			return _memEqual16(val1, val2, length);
-		}
 	}
 
 	inline bool AE_CALL memEqual(const void* val1, const void* val2, size_t length) {
@@ -542,9 +534,9 @@ namespace aurora {
 				if (((uint64_t*)val1)[i] != ((uint64_t*)val2)[i]) return false;
 			}
 
-			return length ? _memEqual32(((uint64_t*)val1) + n64, ((uint64_t*)val2) + n64, length) : true;
+			return length ? _memEqual<4>(((uint64_t*)val1) + n64, ((uint64_t*)val2) + n64, length) : true;
 		} else {
-			return length ? _memEqual32(val1, val2, length) : true;
+			return length ? _memEqual<4>(val1, val2, length) : true;
 		}
 	}
 

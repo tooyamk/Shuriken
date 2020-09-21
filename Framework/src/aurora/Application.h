@@ -50,25 +50,37 @@ namespace aurora {
 	protected:
 		bool _isFullscreen;
 		bool _isClosing;
+		bool _isVisible;
 		ApplicationStyle _style;
 		std::string _appId;
 		Vec2ui32 _clientSize;
-		Vec4ui32 _border;//left, right, up, down
+		Vec4i32 _border;//left, right, up, down
 
 		events::EventDispatcher<ApplicationEvent> _eventDispatcher;
 
 		mutable std::filesystem::path _appPath;
 #if AE_OS == AE_OS_WIN
+		enum class WindowState : uint8_t {
+			NORMAL,
+			MAXIMUM,
+			MINIMUM
+		};
+
 		struct {
-			HINSTANCE ins;
-			HWND wnd;
+			WindowState wndState = WindowState::NORMAL;
+			bool wndDirty = false;
+			HINSTANCE ins = nullptr;
+			HWND wnd = nullptr;
 			Vec2i32 clinetPos;
-			HBRUSH bkBrush;
+			Vec2ui32 sentSize;
+			HBRUSH bkBrush = nullptr;
 		} _win;
 
 
 		void AE_CALL _calcBorder();
-		Box2i32ui32 AE_CALL _calcWindowRect() const;
+		Box2i32 AE_CALL _calcWindowRect() const;
+		void AE_CALL _sendResizedEvent();
+		void AE_CALL _updateWindowPlacement(UINT showCmd = (std::numeric_limits<UINT>::max)());
 		static DWORD AE_CALL _getWindowStyle(const ApplicationStyle& style, bool fullscreen);
 		static DWORD AE_CALL _getWindowExStyle(bool fullscreen);
 

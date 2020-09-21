@@ -68,13 +68,16 @@ namespace aurora {
 	template<typename P, typename S> using Box1 = Box<1, P, S>;
 	using Box1f32 = Box1<float32_t, float32_t>;
 	using Box1i32ui32 = Box1<int32_t, uint32_t>;
+	using Box1i32 = Box1<int32_t, int32_t>;
 	using Box1ui32 = Box1<uint32_t, uint32_t>;
 	template<typename P, typename S> using Box2 = Box<2, P, S>;
 	using Box2f32 = Box2<float32_t, float32_t>;
 	using Box2i32ui32 = Box2<int32_t, uint32_t>;
+	using Box2i32 = Box2<int32_t, int32_t>;
 	using Box2ui32 = Box2<uint32_t, uint32_t>;
 	template<typename P, typename S> using Box3 = Box<3, P, S>;
 	using Box3f32 = Box3<float32_t, float32_t>;
 	using Box3i32ui32 = Box3<int32_t, uint32_t>;
+	using Box3i32 = Box3<int32_t, int32_t>;
 	using Box3ui32 = Box3<uint32_t, uint32_t>;
 }
