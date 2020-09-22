@@ -95,7 +95,7 @@ namespace aurora {
 				if (GetMonitorInfo(monitor, &info)) _win.clinetPos.set(info.rcWork.left + ((info.rcWork.right - info.rcWork.left) - rect.size[0]) / 2 + _border[0], info.rcWork.top + ((info.rcWork.bottom - info.rcWork.top) - rect.size[1]) / 2 + _border[2]);
 			}
 
-			if (_win.clinetPos[1] < (decltype(_win.clinetPos)::ElementType)_border[2]) _win.clinetPos[1] = _border[2];
+			if (_win.clinetPos[1] < GetSystemMetrics(SM_CYCAPTION)) _win.clinetPos[1] = GetSystemMetrics(SM_CYCAPTION);
 		}
 
 		if (!_isFullscreen) rect.pos.set(_win.clinetPos[0], _win.clinetPos[1]);

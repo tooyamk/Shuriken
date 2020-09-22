@@ -32,17 +32,17 @@ public:
 			}));
 
 			app->getEventDispatcher().addEventListener(ApplicationEvent::FOCUS_IN, createEventListener<ApplicationEvent>([looper](Event<ApplicationEvent>& e) {
-				printdln("focus in");
+				printaln("focus in");
 			}));
 
 			app->getEventDispatcher().addEventListener(ApplicationEvent::FOCUS_OUT, createEventListener<ApplicationEvent>([looper](Event<ApplicationEvent>& e) {
-				printdln("focus out");
+				printaln("focus out");
 			}));
 
 			app->getEventDispatcher().addEventListener(ApplicationEvent::RESIZED, createEventListener<ApplicationEvent>([looper](Event<ApplicationEvent>& e) {
 				auto app = (IApplication*)e.getTarget();
 				auto size = app->getCurrentClientSize();
-				printdln("resize  ", size[0], "   ", size[1]);
+				printaln("resize  ", size[0], "   ", size[1]);
 			}));
 
 			looper->getEventDispatcher().addEventListener(LooperEvent::TICKING, createEventListener<LooperEvent>([app, &t, &step](Event<LooperEvent>& e) {

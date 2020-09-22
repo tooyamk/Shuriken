@@ -59,7 +59,7 @@ namespace aurora::events {
 	template<typename EvtType>
 	class IEventListener : public Ref {
 	public:
-		virtual void AE_CALL onEvent(Event<EvtType>& e) = 0;
+		virtual void AE_CALL operator()(Event<EvtType>& e) const = 0;
 	};
 
 
@@ -76,7 +76,7 @@ namespace aurora::events {
 			_target(target) {
 		}
 
-		virtual void AE_CALL onEvent(Event<EvtType>& e) override {
+		virtual void AE_CALL operator()(Event<EvtType>& e) const override {
 			if (_target) (_target->*_method)(e);
 		}
 	private:
@@ -90,11 +90,11 @@ namespace aurora::events {
 	template<typename EvtType>
 	class EventListener<EvtType, EvtFn<EvtType>> : public IEventListener<EvtType> {
 	public:
-		EventListener(EvtFn<EvtType> fn) :
-			_fn(fn) {
+		EventListener(EvtFn<EvtType>&& fn) :
+			_fn(std::forward<EvtFn<EvtType>>(fn)) {
 		}
 
-		virtual void AE_CALL onEvent(Event<EvtType>& e) override {
+		virtual void AE_CALL operator()(Event<EvtType>& e) const override {
 			if (_fn) _fn(e);
 		}
 	private:
@@ -106,11 +106,11 @@ namespace aurora::events {
 	template<typename EvtType>
 	class EventListener<EvtType, EvtFunc<EvtType>> : public IEventListener<EvtType> {
 	public:
-		EventListener(const EvtFunc<EvtType>& fn) :
-			_fn(fn) {
+		EventListener(EvtFunc<EvtType>&& fn) :
+			_fn(std::forward<EvtFunc<EvtType>>(fn)) {
 		}
 
-		virtual void AE_CALL onEvent(Event<EvtType>& e) override {
+		virtual void AE_CALL operator()(Event<EvtType>& e) const override {
 			if (_fn) _fn(e);
 		}
 	private:
@@ -127,16 +127,32 @@ namespace aurora::events {
 			_fn(fn) {
 		}
 
-		virtual void AE_CALL onEvent(Event<EvtType>& e) override {
+		virtual void AE_CALL operator()(Event<EvtType>& e) const override {
 			_fn(e);
 		}
 	private:
 		Fn _fn;
 	};
+
+
+	template<typename EvtType, typename Class>
+	inline RefPtr<EventListener<EvtType, EvtMethod<EvtType, Class>>> AE_CALL createEventListener(EvtMethod<EvtType, Class> fn, Class* target) {
+		return new EventListener<EvtType, EvtMethod<EvtType, Class>>(fn, target);
+	}
+
+	template<typename EvtType>
+	inline RefPtr<EventListener<EvtType, EvtFn<EvtType>>> AE_CALL createEventListener(EvtFn<EvtType>&& fn) {
+		return new EventListener<EvtType, EvtFn<EvtType>>(std::forward<EvtFn<EvtType>>(fn));
+	}
+
+	template<typename EvtType>
+	inline RefPtr<EventListener<EvtType, EvtFunc<EvtType>>> AE_CALL createEventListener(EvtFunc<EvtType>&& fn) {
+		return new EventListener<EvtType, EvtFunc<EvtType>>(std::forward<EvtFunc<EvtType>>(fn));
+	}
 	
 	template<typename EvtType, typename Fn, typename = std::enable_if_t<std::is_invocable_v<Fn, Event<EvtType>&>>>
-	inline RefPtr<EventListener<EvtType, Fn>> createEventListener(Fn&& u) {
-		return new EventListener<EvtType, Fn>(std::forward<Fn>(u));
+	inline RefPtr<EventListener<EvtType, Fn>> AE_CALL createEventListener(Fn&& fn) {
+		return new EventListener<EvtType, Fn>(std::forward<Fn>(fn));
 	}
 
 

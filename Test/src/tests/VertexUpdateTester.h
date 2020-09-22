@@ -31,10 +31,10 @@ public:
 				auto graphics = gml->create(&args);
 
 				if (graphics) {
-					printdln("Graphics Version : ", graphics->getVersion());
+					printaln("Graphics Version : ", graphics->getVersion());
 
 					graphics->getEventDispatcher().addEventListener(GraphicsEvent::ERR, createEventListener<GraphicsEvent>([](Event<GraphicsEvent>& e) {
-						printdln(*(std::string_view*)e.getData());
+						printaln(*(std::string_view*)e.getData());
 						int a = 1;
 					}));
 
@@ -184,7 +184,7 @@ public:
 					}
 
 					renderData.p = graphics->createProgram();
-					programCreate(*renderData.p, "vert.hlsl", "frag.hlsl");
+					createProgram(*renderData.p, "vert.hlsl", "frag.hlsl");
 
 					app->getEventDispatcher().addEventListener(ApplicationEvent::CLOSING, new EventListener(std::function([](Event<ApplicationEvent>& e) {
 						//*e.getData<bool>() = true;

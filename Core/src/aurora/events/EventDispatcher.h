@@ -145,7 +145,7 @@ namespace aurora::events {
 					Event<EvtType> evt(target, type, data);
 					auto& list = tl.listeners;
 					for (auto& f : list) {
-						if (f.valid) f.rawListener->onEvent(evt);
+						if (f.valid) (*f.rawListener)(evt);
 					}
 
 					--tl.dispatching;

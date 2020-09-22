@@ -69,7 +69,7 @@ public:
 			std::vector<RefPtr<IInputDevice>> inputDevices;
 
 			for (auto& im : inputModules) {
-				im->getEventDispatcher().addEventListener(ModuleEvent::CONNECTED, new EventListener(std::function([&inputDevices, app](Event<ModuleEvent>& e) {
+				im->getEventDispatcher().addEventListener(ModuleEvent::CONNECTED, createEventListener(std::function([&inputDevices, app](Event<ModuleEvent>& e) {
 					auto getNumInputeDevice = [&inputDevices](DeviceType type) {
 						uint32_t n = 0;
 						for (auto& dev : inputDevices) {
@@ -82,10 +82,10 @@ public:
 					if ((info->type & (DeviceType::KEYBOARD | DeviceType::GAMEPAD)) != DeviceType::UNKNOWN) {
 						auto im = e.getTarget<IInputModule>();
 						if (getNumInputeDevice(DeviceType::GAMEPAD) > 0) return;
-						printdln("create device : ", (uint32_t)info->type, " guid size = ", info->guid.getSize());
+						printaln("create device : ", (uint32_t)info->type, " guid size = ", info->guid.getSize());
 						auto device = im->createDevice(info->guid);
 						if (device) {
-							device->getEventDispatcher().addEventListener(DeviceEvent::DOWN, new EventListener(std::function([app](Event<DeviceEvent>& e) {
+							device->getEventDispatcher().addEventListener(DeviceEvent::DOWN, createEventListener(std::function([app](Event<DeviceEvent>& e) {
 								auto device = e.getTarget<IInputDevice>();
 								switch (device->getInfo().type) {
 								case DeviceType::KEYBOARD:
@@ -98,14 +98,14 @@ public:
 										}
 									}
 
-									printdln("keyboard down -> key : ", key->code, "    value : ", key->value[0]);
+									printaln("keyboard down -> key : ", key->code, "    value : ", key->value[0]);
 
 									break;
 								}
 								case DeviceType::GAMEPAD:
 								{
 									auto key = e.getData<Key>();
-									printdln("gamepad down : ", printGamepadKey((GamepadKeyCode)key->code), "  ", key->value[0]);
+									printaln("gamepad down : ", printGamepadKey((GamepadKeyCode)key->code), "  ", key->value[0]);
 									if (key->code == (uint32_t)GamepadKeyCode::CROSS) {
 										device->setVibration(0.5f, 0.5f);
 									}
@@ -115,7 +115,7 @@ public:
 								}
 							})));
 
-							device->getEventDispatcher().addEventListener(DeviceEvent::UP, new EventListener(std::function([](Event<DeviceEvent>& e) {
+							device->getEventDispatcher().addEventListener(DeviceEvent::UP, createEventListener(std::function([](Event<DeviceEvent>& e) {
 								auto device = e.getTarget<IInputDevice>();
 								switch (device->getInfo().type) {
 								case DeviceType::KEYBOARD:
@@ -125,7 +125,7 @@ public:
 								case DeviceType::GAMEPAD:
 								{
 									auto key = e.getData<Key>();
-									printdln("gamepad up : ", printGamepadKey((GamepadKeyCode)key->code), "  ", key->value[0]);
+									printaln("gamepad up : ", printGamepadKey((GamepadKeyCode)key->code), "  ", key->value[0]);
 									if (key->code == (uint32_t)GamepadKeyCode::CROSS) {
 										device->setVibration(0.0f, 0.0f);
 									}
@@ -135,7 +135,7 @@ public:
 								}
 							})));
 
-							device->getEventDispatcher().addEventListener(DeviceEvent::MOVE, new EventListener(std::function([](Event<DeviceEvent>& e) {
+							device->getEventDispatcher().addEventListener(DeviceEvent::MOVE, createEventListener(std::function([](Event<DeviceEvent>& e) {
 								switch (e.getTarget<IInputDevice>()->getInfo().type) {
 								case DeviceType::MOUSE:
 								{
@@ -155,7 +155,7 @@ public:
 									auto key = e.getData<Key>();
 									printd("gamepad move : ", printGamepadKey((GamepadKeyCode)key->code), " ", key->value[0]);
 									if (key->count > 1) printd("  ", key->value[1]);
-									printdln();
+									printaln();
 
 									break;
 								}
@@ -166,10 +166,10 @@ public:
 							inputDevices.emplace_back(device);
 						}
 					}
-					printdln("input device connected : ", info->type);
+					printaln("input device connected : ", info->type);
 				})));
 
-				im->getEventDispatcher().addEventListener(ModuleEvent::DISCONNECTED, new EventListener(std::function([&inputDevices](Event<ModuleEvent>& e) {
+				im->getEventDispatcher().addEventListener(ModuleEvent::DISCONNECTED, createEventListener(std::function([&inputDevices](Event<ModuleEvent>& e) {
 					auto info = e.getData<DeviceInfo>();
 					for (uint32_t i = 0, n = inputDevices.size(); i < n; ++i) {
 						if (inputDevices[i]->getInfo().guid == info->guid) {
@@ -177,17 +177,17 @@ public:
 							break;
 						}
 					}
-					printdln("input device disconnected : ", info->type);
+					printaln("input device disconnected : ", info->type);
 				})));
 			}
 
 			RefPtr looper = new Looper(1000.0 / 60.0);
 
-			app->getEventDispatcher().addEventListener(ApplicationEvent::CLOSED, new EventListener(std::function([looper](Event<ApplicationEvent>& e) {
+			app->getEventDispatcher().addEventListener(ApplicationEvent::CLOSED, createEventListener(std::function([looper](Event<ApplicationEvent>& e) {
 				looper->stop();
 			})));
 
-			looper->getEventDispatcher().addEventListener(LooperEvent::TICKING, new EventListener(std::function([app, &inputModules, &inputDevices](Event<LooperEvent>& e) {
+			looper->getEventDispatcher().addEventListener(LooperEvent::TICKING, createEventListener(std::function([app, &inputModules, &inputDevices](Event<LooperEvent>& e) {
 				app->pollEvents();
 
 				for (auto& im : inputModules) im->poll();

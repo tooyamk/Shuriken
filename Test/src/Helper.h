@@ -11,6 +11,19 @@ using namespace aurora::modules;
 using namespace aurora::modules::graphics;
 using namespace aurora::modules::inputs;
 
+template<typename... Args>
+inline void AE_CALL printaln(Args&&... args) {
+#if AE_OS == AE_OS_WIN
+	if (IsDebuggerPresent()) {
+		Debug::print<Debug::DebuggerOutput>(std::forward<Args>(args)..., L"\n");
+	} else {
+		Debug::print<Debug::ConsoleOutput>(std::forward<Args>(args)..., L"\n");
+	}
+#else
+	Debug::print<Debug::ConsoleOutput>(std::forward<Args>(args)..., L"\n");
+#endif
+}
+
 #ifdef __cpp_lib_char8_t
 inline std::u8string AE_CALL operator+(const std::u8string& s1, const char* s2) {
 	auto s = s1;
@@ -57,7 +70,7 @@ inline std::string AE_CALL getDLLName(const std::string& name) {
 }
 
 template<typename T>
-inline ByteArray AE_CALL readFile(const T& path) {
+inline ByteArray AE_CALL readFile(T&& path) {
 	ByteArray dst;
 	std::ifstream stream(path, std::ios::in | std::ios::binary);
 	if (stream.good()) {
@@ -90,21 +103,21 @@ inline bool AE_CALL writeFile(const std::string& path, const ByteArray& data) {
 }
 
 template<typename T>
-inline ProgramSource AE_CALL readProgramSource(const T& path, ProgramStage type) {
+inline ProgramSource AE_CALL readProgramSource(T&& path, ProgramStage type) {
 	ProgramSource s;
 	s.language = ProgramLanguage::HLSL;
 	s.stage = type;
-	s.data = readFile(path);
+	s.data = readFile(std::forward<T>(path));
 	return std::move(s);
 }
 
-inline bool AE_CALL programCreate(IProgram& program, const std::string_view& vert, const std::string_view& frag) {
+inline bool AE_CALL createProgram(IProgram& program, const std::string_view& vert, const std::string_view& frag) {
 	auto appPath = getAppPath().parent_path().u8string() + "/Resources/shaders/";
 	if (program.create(readProgramSource(appPath + vert.data(), ProgramStage::VS), readProgramSource(appPath + frag.data(), ProgramStage::PS), nullptr, 0,
 		[&appPath](const IProgram& program, ProgramStage stage, const std::string_view& name) {
 		return readFile(appPath + name.data());
 	})) {
-		printdln(L"program create error");
+		printaln(L"program create error");
 		return false;
 	}
 	return true;

@@ -347,41 +347,42 @@ namespace aurora {
 	Invoker(F)->Invoker<F, std::nullptr_t>;
 
 
-	template<size_t Bits>
-	inline constexpr uint_t<Bits> AE_CALL _uintMax() {
-		static_assert(Bits <= 64, "error");
-
+	template<size_t Bits, typename = std::enable_if_t<Bits <= 64>>
+	inline constexpr uint_t<Bits> AE_CALL uintMax() {
 		uint_t<Bits> val = 0;
 		for (size_t i = 0; i < Bits; ++i) val |= (uint_t<Bits>)1 << i;
 		return val;
 	}
 
 	template<size_t Bits>
-	inline constexpr int_t<Bits> AE_CALL _intMax() {
-		return _uintMax<Bits>() >> 1;
+	inline constexpr int_t<Bits> AE_CALL intMax() {
+		return uintMax<Bits>() >> 1;
 	}
 
 	template<size_t Bits>
-	inline constexpr int_t<Bits> AE_CALL _intMin() {
-		return -_intMax<Bits>() - 1;
+	inline constexpr int_t<Bits> AE_CALL intMin() {
+		return -intMax<Bits>() - 1;
 	}
 
 
 	template<size_t Bits>
 	struct BitInt {
-		static constexpr int_t<Bits> MIN = _intMin<Bits>();
-		static constexpr int_t<Bits> MAX = _intMax<Bits>();
+		using Type = int_t<Bits>;
+		static constexpr Type MIN = intMin<Bits>();
+		static constexpr Type MAX = intMax<Bits>();
 	};
 
 	template<size_t Bits>
 	struct BitUInt {
-		static constexpr uint_t<Bits> MAX = _uintMax<Bits>();
+		using Type = uint_t<Bits>;
+		static constexpr Type MIN = 0;
+		static constexpr Type MAX = uintMax<Bits>();
 	};
 
 
-	template<size_t Bytes>
+	template<size_t Bytes, typename = std::enable_if_t<Bytes <= 8>>
 	inline uint_t<Bytes * 8> AE_CALL byteswap(const uint8_t* data) {
-		using t = uint_t<Bytes * 8>;
+		using T = uint_t<Bytes * 8>;
 
 		if constexpr (Bytes == 0) {
 			return 0;
@@ -389,38 +390,36 @@ namespace aurora {
 			return data[0];
 		} else if constexpr (Bytes == 2) {
 #if AE_COMPILER == AE_COMPILER_MSVC
-			return _byteswap_ushort(*((t*)data));
+			return _byteswap_ushort(*((T*)data));
 #elif AE_COMPILER == AE_COMPILER_GCC || AE_COMPILER == AE_COMPILER_CLANG
-			return __builtin_bswap16(*((t*)data));
+			return __builtin_bswap16(*((T*)data));
 #else
-			return (t)data[0] << 8 | (t)data[1];
+			return (T)data[0] << 8 | (T)data[1];
 #endif
 		} else if constexpr (Bytes == 3) {
-			return (t)data[0] << 16 | (t)data[1] << 8 | (t)data[2];
+			return (T)data[0] << 16 | (T)data[1] << 8 | (T)data[2];
 		} else if constexpr (Bytes == 4) {
 #if AE_COMPILER == AE_COMPILER_MSVC
-			return _byteswap_ulong(*((t*)data));
+			return _byteswap_ulong(*((T*)data));
 #elif AE_COMPILER == AE_COMPILER_GCC || AE_COMPILER == AE_COMPILER_CLANG
-			return __builtin_bswap32(*((t*)data));
+			return __builtin_bswap32(*((T*)data));
 #else
-			return (t)data[0] << 32 | (t)data[1] << 16 | (t)data[2] << 8 | (t)data[3];
+			return (T)data[0] << 32 | (T)data[1] << 16 | (T)data[2] << 8 | (T)data[3];
 #endif
 		} else if constexpr (Bytes == 5) {
-			return (t)data[0] << 32 | (t)data[1] << 24 | (t)data[2] << 16 | (t)data[3] << 8 | (t)data[4];
+			return (T)data[0] << 32 | (T)data[1] << 24 | (T)data[2] << 16 | (T)data[3] << 8 | (T)data[4];
 		} else if constexpr (Bytes == 6) {
-			return (t)data[0] << 40 | (t)data[1] << 32 | (t)data[2] << 24 | (t)data[3] << 16 | (t)data[4] << 8 | (t)data[5];
+			return (T)data[0] << 40 | (T)data[1] << 32 | (T)data[2] << 24 | (T)data[3] << 16 | (T)data[4] << 8 | (T)data[5];
 		} else if constexpr (Bytes == 7) {
-			return (t)data[0] << 48 | (t)data[1] << 40 | (t)data[2] << 32 | (t)data[3] << 24 | (t)data[4] << 16 | (t)data[5] << 8 | (t)data[6];
-		} else if constexpr (Bytes == 8) {
-#if AE_COMPILER == AE_COMPILER_MSVC
-			return _byteswap_uint64(*((t*)data));
-#elif AE_COMPILER == AE_COMPILER_GCC || AE_COMPILER == AE_COMPILER_CLANG
-			return __builtin_bswap64(*((t*)data));
-#else
-			return (t)data[0] << 56 | (t)data[1] << 48 | (t)data[2] << 40 | (t)data[3] << 32 | (t)data[4] << 24 | (t)data[5] << 16 | (t)data[6] << 8 | (t)data[7];
-#endif
+			return (T)data[0] << 48 | (T)data[1] << 40 | (T)data[2] << 32 | (T)data[3] << 24 | (T)data[4] << 16 | (T)data[5] << 8 | (T)data[6];
 		} else {
-			static_assert(Bytes <= 8, "not support > 8 Bytes value");
+#if AE_COMPILER == AE_COMPILER_MSVC
+			return _byteswap_uint64(*((T*)data));
+#elif AE_COMPILER == AE_COMPILER_GCC || AE_COMPILER == AE_COMPILER_CLANG
+			return __builtin_bswap64(*((T*)data));
+#else
+			return (T)data[0] << 56 | (T)data[1] << 48 | (T)data[2] << 40 | (T)data[3] << 32 | (T)data[4] << 24 | (T)data[5] << 16 | (T)data[6] << 8 | (T)data[7];
+#endif
 		}
 	}
 
@@ -467,7 +466,7 @@ namespace aurora {
 			return val << shift | val >> (64 - shift);
 #endif
 		} else {
-			static_assert(sizeof(T) <= 8, "not support type");
+			static_assert(sizeof(T) <= 8, "rotl not support type");
 		}
 	}
 
