@@ -22,7 +22,7 @@ namespace aurora {
 		virtual const events::IEventDispatcher<ApplicationEvent>& AE_CALL getEventDispatcher() const override;
 
 		virtual bool AE_CALL createWindow(const ApplicationStyle& style, const std::string_view& title, const Vec2ui32& clientSize, bool fullscreen) override;
-		virtual uint64_t AE_CALL getWindow() const override;
+		virtual void* AE_CALL getNativeWindow() const override;
 		virtual bool AE_CALL isFullscreen() const override;
 		virtual void AE_CALL toggleFullscreen() override;
 		virtual Vec4ui32 AE_CALL getBorder() const override;
@@ -54,7 +54,7 @@ namespace aurora {
 		ApplicationStyle _style;
 		std::string _appId;
 		Vec2ui32 _clientSize;
-		Vec4i32 _border;//left, right, up, down
+		Vec4i32 _border;//left, right, top, bottom
 
 		events::EventDispatcher<ApplicationEvent> _eventDispatcher;
 
@@ -66,9 +66,12 @@ namespace aurora {
 			MINIMUM
 		};
 
+
 		struct {
 			WindowState wndState = WindowState::NORMAL;
+			WindowState prevWndState = WindowState::NORMAL;
 			bool wndDirty = false;
+			bool ignoreEvtSize = false;
 			HINSTANCE ins = nullptr;
 			HWND wnd = nullptr;
 			Vec2i32 clinetPos;
@@ -78,8 +81,10 @@ namespace aurora {
 
 
 		void AE_CALL _calcBorder();
-		Box2i32 AE_CALL _calcWindowRect() const;
+		Box2i32 AE_CALL _calcWindowRect(bool fullscreen) const;
 		void AE_CALL _sendResizedEvent();
+		Box2i32 AE_CALL _calcWorkArea() const;
+		bool AE_CALL _setWndState(WindowState state);
 		void AE_CALL _updateWindowPlacement(UINT showCmd = (std::numeric_limits<UINT>::max)());
 		static DWORD AE_CALL _getWindowStyle(const ApplicationStyle& style, bool fullscreen);
 		static DWORD AE_CALL _getWindowExStyle(bool fullscreen);
@@ -94,12 +99,20 @@ namespace aurora {
 			}
 			return flags;
 		}
+
 		inline UINT AE_CALL _getWindowPosFlags() {
 			return _isFullscreen ? _getWindowPosFlags<true>() : _getWindowPosFlags<false>();
 		}
 
 		static LRESULT CALLBACK _wndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 #elif AE_OS == AE_OS_LINUX
+		enum class WindowState : uint8_t {
+			NORMAL,
+			MAXIMUM,
+			MINIMUM
+		};
+
+
 		struct MwmHints {
 			uint64_t flags;
 			uint64_t functions;
@@ -128,14 +141,22 @@ namespace aurora {
 
 
 		struct {
-			bool isVisible = false;
+			WindowState wndState = WindowState::NORMAL;
+			bool wndDirty = false;
+			bool xMapped = false;
+			bool xFullscreen = false;
+			WindowState xWndState = WindowState::NORMAL;
+			bool ignoreEvtPos = false;
 			Display* dis = nullptr;
+			int32_t screen = 0;
 			Window root = 0;
 			Window wnd = 0;
 			Vec2i32 wndPos;
 			uint32_t bgColor = 0;
+			Vec2ui32 sentSize;
 
 			bool waitFrameEXTENTS = false;
+			bool waitVisibility = false;
 
 			Atom MOTIF_WM_HINTS;
 			Atom WM_DELETE_WINDOW;
@@ -143,11 +164,22 @@ namespace aurora {
 			Atom NET_WM_PING;
 			Atom NET_WM_WINDOW_TYPE;
 			Atom NET_WM_WINDOW_TYPE_NORMAL;
+			Atom NET_WM_STATE;
+			Atom NET_WM_STATE_FULLSCREEN;
+			Atom NET_WM_STATE_MAXIMIZED_HORZ;
+			Atom NET_WM_STATE_MAXIMIZED_VERT;
 			Atom NET_REQUEST_FRAME_EXTENTS;
 			Atom NET_FRAME_EXTENTS;
+			Atom NET_WORKAREA;
+			Atom NET_CURRENT_DESKTOP;
 		} _linux;
 
+		void AE_CALL _sendClientEventToWM(Atom msgType, long a = 0, long b = 0, long c = 0, long d = 0, long e = 0);
+		void AE_CALL _sendResizedEvent();
 		void AE_CALL _waitEvent(bool& value);
+		Box2i32 AE_CALL _calcWorkArea() const;
+		size_t AE_CALL _getWindowProperty(Window wnd, Atom property, Atom type, uint8_t** value) const;
+		void AE_CALL _updateWindowPlacement();
 
 		static Bool AE_CALL _eventPredicate(Display* display, XEvent* event, XPointer pointer);
 		void AE_CALL _doEvent(XEvent& e);

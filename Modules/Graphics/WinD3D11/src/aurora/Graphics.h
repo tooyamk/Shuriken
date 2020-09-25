@@ -36,6 +36,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 		virtual RefPtr<IVertexBuffer> AE_CALL createVertexBuffer() override;
 		virtual RefPtr<IPixelBuffer> AE_CALL createPixelBuffer() override;
 
+		virtual const Vec2ui32& AE_CALL getBackBufferSize() const override;
+		virtual void AE_CALL setBackBufferSize(const Vec2ui32& size) override;
 		virtual Box2i32ui32 AE_CALL getViewport() const override;
 		virtual void AE_CALL setViewport(const Box2i32ui32& vp) override;
 		virtual void AE_CALL setBlendState(IBlendState* state, const Vec4f32& constantFactors, uint32_t sampleMask = (std::numeric_limits<uint32_t>::max)()) override;
@@ -305,9 +307,6 @@ namespace aurora::modules::graphics::win_d3d11 {
 		ConstantBufferManager _constantBufferManager;
 
 		events::EventDispatcher<GraphicsEvent> _eventDispatcher;
-
-		events::EventListener<ApplicationEvent, events::EvtMethod<ApplicationEvent, Graphics>> _resizedListener;
-		void AE_CALL _resizedHandler(events::Event<ApplicationEvent>& e);
 
 		bool AE_CALL _createDevice(Ref* loader, IApplication* app, const GraphicsAdapter& adapter, SampleCount sampleCount);
 

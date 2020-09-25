@@ -30,21 +30,18 @@ namespace aurora::modules::graphics::win_gl {
 		_rc(nullptr),
 		_majorVer(0),
 		_minorVer(0),
-		_intVer(0),
-		_resizedListener(&Graphics::_resizedHandler, this) {
-		_resizedListener.ref();
+		_intVer(0) {
 		_constantBufferManager.createShareConstantBufferCallback = std::bind(&Graphics::_createdShareConstantBuffer, this);
 		_constantBufferManager.createExclusiveConstantBufferCallback = std::bind(&Graphics::_createdExclusiveConstantBuffer, this, std::placeholders::_1);
 		memset(&_internalFeatures, 0, sizeof(InternalFeatures));
 	}
 
 	Graphics::~Graphics() {
-		if (_app) _app->getEventDispatcher().removeEventListener(ApplicationEvent::RESIZED, _resizedListener);
 		_release();
 	}
 
 	bool Graphics::createDevice(Ref* loader, IApplication* app, IProgramSourceTranslator* trans, const GraphicsAdapter* adapter, SampleCount sampleCount) {
-		if (_dc || !app->getWindow()) return false;
+		if (_dc || !app->getNativeWindow()) return false;
 
 		/*
 		pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
@@ -83,7 +80,7 @@ namespace aurora::modules::graphics::win_gl {
 			return false;
 		}
 
-		_dc = GetDC((HWND)app->getWindow());
+		_dc = GetDC((HWND)app->getNativeWindow());
 		if (!_dc) {
 			_release();
 			return false;
@@ -197,7 +194,6 @@ namespace aurora::modules::graphics::win_gl {
 		_loader = loader;
 		_app = app;
 		_trans = trans;
-		_app->getEventDispatcher().addEventListener(ApplicationEvent::RESIZED, _resizedListener);
 
 		_setInitState();
 		_resize(_app->getCurrentClientSize());
@@ -291,6 +287,14 @@ namespace aurora::modules::graphics::win_gl {
 
 	RefPtr<IPixelBuffer> Graphics::createPixelBuffer() {
 		return new PixelBuffer(*this);
+	}
+
+	const Vec2ui32& Graphics::getBackBufferSize() const {
+		return _glStatus.backSize;
+	}
+
+	void Graphics::setBackBufferSize(const Vec2ui32& size) {
+		_resize(size);
 	}
 
 	Box2i32ui32 Graphics::getViewport() const {
@@ -946,10 +950,6 @@ namespace aurora::modules::graphics::win_gl {
 		}
 	}
 
-	void Graphics::_resizedHandler(events::Event<ApplicationEvent>& e) {
-		_resize(_app->getCurrentClientSize());
-	}
-
 	void Graphics::_release() {
 		if (wglGetCurrentContext() == _rc) wglMakeCurrent(nullptr, nullptr);
 
@@ -959,7 +959,7 @@ namespace aurora::modules::graphics::win_gl {
 		}
 
 		if (_dc) {
-			ReleaseDC((HWND)_app->getWindow(), _dc);
+			ReleaseDC((HWND)_app->getNativeWindow(), _dc);
 			_dc = nullptr;
 		}
 

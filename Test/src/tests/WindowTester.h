@@ -5,16 +5,12 @@
 class WindowTester : public BaseTester {
 public:
 	virtual int32_t AE_CALL run() override {
-		char zzz[15];
-		char fff[15];
-		memEqual(zzz, fff, 15);
-
 		RefPtr app = new Application("TestApp");
 
 		ApplicationStyle wndStype;
 		wndStype.thickFrame = true;
 		wndStype.backgroundColor.set(255, 255, 0);
-		if (app->createWindow(wndStype, "Fucker", Vec2ui32(800, 600), false)) {
+		if (app->createWindow(wndStype, "Fucker", Vec2ui32(800, 600), true)) {
 			//app->setWindowPosition({200, 300});
 
 			RefPtr looper = new Looper(1000.0 / 60.0);
@@ -54,8 +50,9 @@ public:
 					t = tt;
 					if (step == 0) {
 						step = 1;
-						//app->toggleFullscreen();
 						app->setMaximum();
+						//app->toggleFullscreen();
+						//app->setRestore();
 						//app->getCurrentClientSize();
 						//app->setClientSize(Vec2ui32(400, 400));
 						//ShowWindow((HWND)app->getWindow(), SW_MAXIMIZE);
@@ -67,13 +64,13 @@ public:
 						//UpdateWindow((HWND)app->getWindow());
 					} else if (step == 1) {
 						step = 2;
-						app->toggleFullscreen();
+						//app->toggleFullscreen();
 						//ShowWindow((HWND)app->getWindow(), SW_SHOWNA);
 						//app->setVisible(true);
 					} else if (step == 2) {
 						step = 3;
-						app->toggleFullscreen();
-						app->setVisible(true);
+						//app->toggleFullscreen();
+						//app->setVisible(true);
 					}
 				}
 
@@ -82,7 +79,8 @@ public:
 
 			//evtDispatcher.addEventListener(ApplicationEvent::CLOSING, *appClosingListener);
 
-			//app->setVisible(true);
+			app->setVisible(true);
+			//app->setMaximum();
 			//app->setMaximum();
 			//app->setWindowPosition(Vec2i32(-400, 10));
 			//ShowWindow((HWND)app->getWindow(), SW_MAXIMIZE);

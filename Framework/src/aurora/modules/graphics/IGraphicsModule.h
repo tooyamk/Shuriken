@@ -923,6 +923,8 @@ namespace aurora::modules::graphics {
 		virtual RefPtr<ITextureView> AE_CALL createTextureView() = 0;
 		virtual RefPtr<IVertexBuffer> AE_CALL createVertexBuffer() = 0;
 
+		virtual const Vec2ui32& AE_CALL getBackBufferSize() const = 0;
+		virtual void AE_CALL setBackBufferSize(const Vec2ui32& size) = 0;
 		virtual Box2i32ui32 AE_CALL getViewport() const = 0;
 		virtual void AE_CALL setViewport(const Box2i32ui32& vp) = 0;
 		virtual void AE_CALL setBlendState(IBlendState* state, const Vec4f32& constantFactors, uint32_t sampleMask = (std::numeric_limits<uint32_t>::max)()) = 0;//unrealized all sampleMask

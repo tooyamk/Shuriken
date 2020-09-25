@@ -38,6 +38,10 @@ public:
 						int a = 1;
 					}));
 
+					app->getEventDispatcher().addEventListener(ApplicationEvent::RESIZED, createEventListener<ApplicationEvent>([graphics](Event<ApplicationEvent>& e) {
+						graphics->setBackBufferSize(((IApplication*)e.getTarget())->getCurrentClientSize());
+					}));
+
 					struct {
 						RefPtr<Application> app;
 						RefPtr<Looper> looper;

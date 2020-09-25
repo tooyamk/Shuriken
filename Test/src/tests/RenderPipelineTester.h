@@ -39,6 +39,10 @@ public:
 						int a = 1;
 					}));
 
+					app->getEventDispatcher().addEventListener(ApplicationEvent::RESIZED, createEventListener<ApplicationEvent>([graphics](Event<ApplicationEvent>& e) {
+						graphics->setBackBufferSize(((IApplication*)e.getTarget())->getCurrentClientSize());
+					}));
+
 					//graphics->getEventDispatcher().addEventListener(GraphicsEvent::ERR, new EventListener([](Event<GraphicsEvent>& e) {
 					//	println(*(std::string_view*)e.getData());
 					//	int a = 1;

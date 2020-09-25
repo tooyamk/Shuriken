@@ -7,13 +7,12 @@ namespace aurora {
 		_isFullscreen(false),
 		_isClosing(false),
 		_isVisible(false),
-#if AE_OS == AE_OS_WIN
-#elif AE_OS == AE_OS_LINUX
-#endif
 		_appId(appId) {
 		_appPath = aurora::getAppPath();
 #if AE_OS == AE_OS_WIN
 		_win.sentSize.set((std::numeric_limits<decltype(_win.sentSize)::ElementType>::max)());
+#elif AE_OS == AE_OS_LINUX
+		_linux.sentSize.set((std::numeric_limits<decltype(_linux.sentSize)::ElementType>::max)());
 #endif
 	}
 
@@ -84,21 +83,22 @@ namespace aurora {
 
 		_calcBorder();
 
-		auto rect = _calcWindowRect();
+		auto rect = _calcWindowRect(false);
 		{
 			_win.clinetPos.set((GetSystemMetrics(SM_CXSCREEN) - rect.size[0]) / 2 + _border[0], (GetSystemMetrics(SM_CYSCREEN) - rect.size[1]) / 2 + _border[2]);
 
-			tagPOINT p{ 0 };
-			if (auto monitor = MonitorFromPoint(p, MONITOR_DEFAULTTONEAREST); monitor) {
-				MONITORINFO info{ 0 };
-				info.cbSize = sizeof(info);
-				if (GetMonitorInfo(monitor, &info)) _win.clinetPos.set(info.rcWork.left + ((info.rcWork.right - info.rcWork.left) - rect.size[0]) / 2 + _border[0], info.rcWork.top + ((info.rcWork.bottom - info.rcWork.top) - rect.size[1]) / 2 + _border[2]);
-			}
+			auto area = _calcWorkArea();
+			_win.clinetPos.set(area.pos[0] + (area.size[0] - rect.size[0]) / 2 + _border[0], area.pos[1] + (area.size[1] - rect.size[1]) / 2 + _border[2]);
 
 			if (_win.clinetPos[1] < GetSystemMetrics(SM_CYCAPTION)) _win.clinetPos[1] = GetSystemMetrics(SM_CYCAPTION);
 		}
 
-		if (!_isFullscreen) rect.pos.set(_win.clinetPos[0], _win.clinetPos[1]);
+		if (_isFullscreen) {
+			rect = _calcWindowRect(true);
+		} else {
+			rect.pos.set(_win.clinetPos[0], _win.clinetPos[1]);
+		}
+
 		_win.wnd = CreateWindowExW(_getWindowExStyle(_isFullscreen), wnd.lpszClassName, String::Utf8ToUnicode(title).data(), _getWindowStyle(_style, _isFullscreen),
 			rect.pos[0], rect.pos[1], rect.size[0], rect.size[1],
 			GetDesktopWindow(), nullptr, _win.ins, nullptr);
@@ -117,8 +117,14 @@ namespace aurora {
 		_linux.NET_WM_PING = XInternAtom(_linux.dis, "_NET_WM_PING", False);
 		_linux.NET_WM_WINDOW_TYPE = XInternAtom(_linux.dis, "_NET_WM_WINDOW_TYPE", False);
 		_linux.NET_WM_WINDOW_TYPE_NORMAL = XInternAtom(_linux.dis, "_NET_WM_WINDOW_TYPE_NORMAL", False);
+		_linux.NET_WM_STATE = XInternAtom(_linux.dis, "_NET_WM_STATE", False);
+		_linux.NET_WM_STATE_FULLSCREEN = XInternAtom(_linux.dis, "_NET_WM_STATE_FULLSCREEN", False);
+		_linux.NET_WM_STATE_MAXIMIZED_HORZ = XInternAtom(_linux.dis, "_NET_WM_STATE_MAXIMIZED_HORZ", False);
+		_linux.NET_WM_STATE_MAXIMIZED_VERT = XInternAtom(_linux.dis, "_NET_WM_STATE_MAXIMIZED_VERT", False);
 		_linux.NET_REQUEST_FRAME_EXTENTS = XInternAtom(_linux.dis, "_NET_REQUEST_FRAME_EXTENTS", False);
 		_linux.NET_FRAME_EXTENTS = XInternAtom(_linux.dis, "_NET_FRAME_EXTENTS", False);
+		_linux.NET_WORKAREA = XInternAtom(_linux.dis, "_NET_WORKAREA", False);
+		_linux.NET_CURRENT_DESKTOP = XInternAtom(_linux.dis, "_NET_CURRENT_DESKTOP", False);
 
 		_linux.bgColor = _style.backgroundColor[0] < 16 | _style.backgroundColor[1] < 8 | _style.backgroundColor[2];
 
@@ -130,14 +136,15 @@ namespace aurora {
 			ExposureMask | FocusChangeMask | VisibilityChangeMask |
 			EnterWindowMask | LeaveWindowMask | PropertyChangeMask;
 
-		_linux.root = RootWindow(_linux.dis, DefaultScreen(_linux.dis));
+		_linux.screen = DefaultScreen(_linux.dis);
+		_linux.root = RootWindow(_linux.dis, _linux.screen);
 		_linux.wnd = XCreateWindow(_linux.dis, _linux.root,
 			0, 0, _clientSize[0], _clientSize[1], 0,
 			DefaultDepth(_linux.dis, 0), InputOutput, DefaultVisual(_linux.dis, 0), CWBorderPixel | CWColormap | CWEventMask, &attr);
 
 		//XSelectInput(_linux.dis, _linux.wnd, ExposureMask | ButtonPressMask | KeyPressMask | PropertyChangeMask);
 
-		//auto sd = ScreenOfDisplay(_linux.dis, DefaultScreen(_linux.dis));
+		//auto sd = ScreenOfDisplay(_linux.dis, _linux.screen);
 		//printcln(sd->width, "   ", sd->height);
 
 		{
@@ -199,40 +206,32 @@ namespace aurora {
 		{
 			_linux.waitFrameEXTENTS = true;
 
-			XEvent e = { ClientMessage };
-			auto& c = e.xclient;
-			c.window = _linux.wnd;
-			c.format = 32; // Data is 32-bit longs
-			c.message_type = _linux.NET_REQUEST_FRAME_EXTENTS;
-			c.data.l[0] = 0;
-			c.data.l[1] = 0;
-			c.data.l[2] = 0;
-			c.data.l[3] = 0;
-			c.data.l[4] = 0;
-			XSendEvent(_linux.dis, _linux.root, False, SubstructureNotifyMask | SubstructureRedirectMask, &e);
-
+			_sendClientEventToWM(_linux.NET_REQUEST_FRAME_EXTENTS);
 			_waitEvent(_linux.waitFrameEXTENTS);
 		}
 
 		{
-			auto sd = ScreenOfDisplay(_linux.dis, DefaultScreen(_linux.dis));
-			_linux.wndPos.set((sd->width - _clientSize[0] - _border[0] - _border[1]) / 2, (sd->height - _clientSize[1] - _border[2] - _border[3]) / 2);
+			auto area = _calcWorkArea();
+			//auto sd = ScreenOfDisplay(_linux.dis, _linux.screen);
+			_linux.wndPos.set((area.size[0] - _clientSize[0] - _border[0] - _border[1]) / 2, (area.size[1] - _clientSize[1] - _border[2] - _border[3]) / 2);
 
-			if (_linux.wndPos[1] < (decltype(_linux.wndPos)::ElementType)_border[2]) _linux.wndPos[1] = _border[2];
+			if (auto top = area.pos[1] + _border[2]; _linux.wndPos[1] < top) _linux.wndPos[1] = top;
 		}
+
+		_updateWindowPlacement();
 
 		return true;
 #endif
 		return false;
 	}
 
-	uint64_t Application::getWindow() const {
+	void* Application::getNativeWindow() const {
 #if AE_OS == AE_OS_WIN
-		return (uint64_t)_win.wnd;
+		return _win.wnd;
 #elif AE_OS == AE_OS_LINUX
-		return _linux.wnd;
+		return (void*)_linux.wnd;
 #else
-		return 0;
+		return nullptr;
 #endif
 	}
 
@@ -252,31 +251,27 @@ namespace aurora {
 
 			SetWindowLongPtrW(_win.wnd, GWL_STYLE, _getWindowStyle(_style, _isFullscreen));
 			SetWindowLongPtrW(_win.wnd, GWL_EXSTYLE, _getWindowExStyle(_isFullscreen));
-			
-			if (_isVisible) _updateWindowPlacement();
+
+			if (_isVisible) {
+				_win.ignoreEvtSize = true;
+				_updateWindowPlacement();
+				_win.ignoreEvtSize = false;
+			}
 			_sendResizedEvent();
 		}
 #elif AE_OS == AE_OS_LINUX
-		printcln("fs");
-		XEvent e = { ClientMessage };
-		auto& c = e.xclient;
-		c.window = _linux.wnd;
-		c.format = 32; // Data is 32-bit longs
-		c.message_type = XInternAtom(_linux.dis, "_NET_WM_STATE", False);
-		c.data.l[0] = 1;
-		c.data.l[1] = XInternAtom(_linux.dis, "_NET_WM_STATE_FULLSCREEN", False);
-		c.data.l[2] = 0;
-		c.data.l[3] = 1;
-		c.data.l[4] = 0;
-		XSendEvent(_linux.dis, _linux.root, False, SubstructureNotifyMask | SubstructureRedirectMask, &e);
+		if (_linux.wnd) {
+			_isFullscreen = !_isFullscreen;
+			_updateWindowPlacement();
+		}
 #endif
 	}
 
 	Vec2ui32 Application::getCurrentClientSize() const {
-#if AE_OS == AE_OS_WIN
 		Vec2ui32 size;
+#if AE_OS == AE_OS_WIN
 		if (_win.wnd) {
-			if (_isVisible) {
+			if (_isVisible && _win.wndState != WindowState::MINIMUM) {
 				RECT rect;
 				GetClientRect(_win.wnd, &rect);
 				size.set(rect.right - rect.left, rect.bottom - rect.top);
@@ -284,32 +279,29 @@ namespace aurora {
 				if (_isFullscreen) {
 					size.set(GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
 				} else {
-					switch (_win.wndState) {
-					case WindowState::MINIMUM:
-						break;
-					case WindowState::MAXIMUM:
-					{
-						tagPOINT p{ 0 };
-						if (auto monitor = MonitorFromPoint(p, MONITOR_DEFAULTTONEAREST); monitor) {
-							MONITORINFO info{ 0 };
-							info.cbSize = sizeof(info);
-							if (GetMonitorInfo(monitor, &info)) size.set(std::max<int32_t>(info.rcWork.right - info.rcWork.left, 0), std::max<int32_t>(info.rcWork.bottom - info.rcWork.top - GetSystemMetrics(SM_CYCAPTION), 0));
-						}
-
-						break;
-					}
-					default:
+					if (_win.wndState == WindowState::MAXIMUM || (_win.wndState == WindowState::MINIMUM && _win.prevWndState == WindowState::MAXIMUM)) {
+						auto area = _calcWorkArea();
+						size.set(std::max<int32_t>(area.size[0], 0), std::max<int32_t>(area.size[1] - GetSystemMetrics(SM_CYCAPTION), 0));
+					} else {
 						size = _clientSize;
-						break;
 					}
 				}
 			}
 		}
+#elif AE_OS == AE_OS_LINUX
+		if (_linux.wnd) {
+			if (_isFullscreen) {
+				auto sd = ScreenOfDisplay(_linux.dis, _linux.screen);
+				size.set(sd->width, sd->height);
+			} else {
+				if (_win.wndState == WindowState::MAXIMUM) {
+				} else {
 
-		return size;
-#else
-		return Vec2ui32();
+				}
+			}
+		}
 #endif
+		return size;
 	}
 
 	Vec2ui32 Application::getClientSize() const {
@@ -326,16 +318,10 @@ namespace aurora {
 			_sendResizedEvent();
 		}
 #elif AE_OS == AE_OS_LINUX
-		if (_linux.wnd) {
-			if (_isFullscreen) {
-				_clientSize = size;
-			} else {
-				setRestore();
-				if (_clientSize != size) {
-					_clientSize = size;
-					XResizeWindow(_linux.dis, _linux.wnd, _clientSize[0], _clientSize[1]);
-				}
-			}
+		if (_linux.wnd && _clientSize != size) {
+			_clientSize = size;
+			_updateWindowPlacement();
+			_sendResizedEvent();
 		}
 #endif
 	}
@@ -351,20 +337,17 @@ namespace aurora {
 	void Application::setWindowPosition(const Vec2i32& pos) {
 #if AE_OS == AE_OS_WIN
 		if (_win.wnd) {
-			_win.clinetPos.set(pos[0] + _border[0], pos[1] + _border[2]);
-			_win.wndDirty = true;
+			if (auto p = pos + _border.components(0, 2); _win.clinetPos != p) {
+				_win.clinetPos = p;
+				_win.wndDirty = true;
 
-			if (!_isFullscreen && _isVisible && _win.wndState == WindowState::NORMAL) _updateWindowPlacement(SW_SHOWNA);
+				if (!_isFullscreen && _isVisible && _win.wndState == WindowState::NORMAL) _updateWindowPlacement(SW_SHOWNA);
+			}
 		}
 #elif AE_OS == AE_OS_LINUX
-		if (_linux.wnd) {
-			if (_isFullscreen) {
-				_linux.wndPos = pos;
-			} else {
-				setRestore();
-				_linux.wndPos = pos;
-				if (_linux.isVisible) XMoveWindow(_linux.dis, _linux.wnd, _linux.wndPos[0], _linux.wndPos[1]);
-			}
+		if (_linux.wnd && _linux.wndPos != pos) {
+			_linux.wndPos = pos;
+			_updateWindowPlacement();
 		}
 #endif
 	}
@@ -405,11 +388,15 @@ namespace aurora {
 
 	void Application::setMaximum() {
 #if AE_OS == AE_OS_WIN
-		if (_win.wnd && _win.wndState != WindowState::MAXIMUM) {
-			_win.wndState = WindowState::MAXIMUM;
+		if (_win.wnd && _setWndState(WindowState::MAXIMUM)) {
 			_win.wndDirty = true;
 			if (!_isFullscreen && _isVisible) _updateWindowPlacement();
 			_sendResizedEvent();
+		}
+#elif AE_OS == AE_OS_LINUX
+		if (_linux.wnd && _linux.wndState != WindowState::MAXIMUM) {
+			_linux.wndState = WindowState::MAXIMUM;
+			_updateWindowPlacement();
 		}
 #endif
 	}
@@ -423,30 +410,37 @@ namespace aurora {
 
 	void Application::setMinimum() {
 #if AE_OS == AE_OS_WIN
-		if (_win.wnd && _win.wndState != WindowState::MINIMUM) {
-			_win.wndState = WindowState::MINIMUM;
+		if (_win.wnd && _setWndState(WindowState::MINIMUM)) {
 			_win.wndDirty = true;
 			if (!_isFullscreen && _isVisible) _updateWindowPlacement();
 			_sendResizedEvent();
+		}
+#elif AE_OS == AE_OS_LINUX
+		if (_linux.wnd && _linux.wndState != WindowState::MINIMUM) {
+			_linux.wndState = WindowState::MINIMUM;
+			_updateWindowPlacement();
 		}
 #endif
 	}
 
 	void Application::setRestore() {
 #if AE_OS == AE_OS_WIN
-		if (_win.wnd && _isFullscreen && _win.wndState != WindowState::NORMAL) {
-			_win.wndState = WindowState::NORMAL;
+		if (_win.wnd && _setWndState(WindowState::NORMAL)) {
 			_win.wndDirty = true;
 			if (!_isFullscreen && _isVisible) _updateWindowPlacement();
 			_sendResizedEvent();
+		}
+#elif AE_OS == AE_OS_LINUX
+		if (_linux.wnd && _linux.wndState != WindowState::NORMAL) {
+			_linux.wndState = WindowState::NORMAL;
+			_updateWindowPlacement();
 		}
 #endif
 	}
 
 	void Application::pollEvents() {
 #if AE_OS == AE_OS_WIN
-		MSG msg;
-		memset(&msg, 0, sizeof(msg));
+		MSG msg = { 0 };
 
 		while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
 			if (msg.message == WM_QUIT) {
@@ -458,7 +452,7 @@ namespace aurora {
 		}
 #elif AE_OS == AE_OS_LINUX
 		XEvent e = { 0 };
-		while (XCheckIfEvent(_linux.dis, &e, &Application::_eventPredicate, (XPointer)this)) { _doEvent(e); }
+		while (XCheckIfEvent(_linux.dis, &e, &Application::_eventPredicate, (XPointer)this)) _doEvent(e);
 #endif
 	}
 
@@ -466,7 +460,7 @@ namespace aurora {
 #if AE_OS == AE_OS_WIN
 		return _win.wnd ? _isVisible : false;
 #elif AE_OS == AE_OS_LINUX
-		return _linux.wnd ? _linux.isVisible : false;
+		return _linux.wnd ? _isVisible : false;
 #endif
 		return false;
 	}
@@ -479,16 +473,9 @@ namespace aurora {
 			_updateWindowPlacement();
 		}
 #elif AE_OS == AE_OS_LINUX
-		if (_linux.wnd) {
-			if (_linux.isVisible != b) {
-				_linux.isVisible = b;
-				if (b) {
-					XMapWindow(_linux.dis, _linux.wnd);
-					XMoveWindow(_linux.dis, _linux.wnd, _linux.wndPos[0], _linux.wndPos[1]);
-				} else {
-					XUnmapWindow(_linux.dis, _linux.wnd);
-				}
-			}
+		if (_linux.wnd && _isVisible != b) {
+			_isVisible = b;
+			_updateWindowPlacement();
 		}
 #endif
 	}
@@ -516,8 +503,8 @@ namespace aurora {
 		_border.set(-rect.left, rect.right - 100, -rect.top, rect.bottom - 100);
 	}
 
-	Box2i32 Application::_calcWindowRect() const {
-		if (_isFullscreen) {
+	Box2i32 Application::_calcWindowRect(bool fullscreen) const {
+		if (fullscreen) {
 			return Box2i32(Vec2i32::ZERO, Vec2i32(GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN)));
 		} else {
 			return Box2i32(Vec2i32(_win.clinetPos[0] - _border[0], _win.clinetPos[1] - _border[2]), Vec2i32((Vec2i32::ElementType)_clientSize[0] + _border[0] + _border[1], (Vec2i32::ElementType)_clientSize[1] + _border[2] + _border[3]));
@@ -529,6 +516,33 @@ namespace aurora {
 			_win.sentSize = size;
 			_eventDispatcher.dispatchEvent(this, ApplicationEvent::RESIZED);
 		}
+	}
+
+	Box2i32 Application::_calcWorkArea() const {
+		Box2i32 area;
+
+		tagPOINT p{ 0 };
+		if (auto monitor = MonitorFromPoint(p, MONITOR_DEFAULTTONEAREST); monitor) {
+			MONITORINFO info{ 0 };
+			info.cbSize = sizeof(info);
+			if (GetMonitorInfo(monitor, &info)) {
+				auto& rcWork = info.rcWork;
+				area.pos.set(rcWork.left, rcWork.top);
+				area.size.set(rcWork.right - rcWork.left, rcWork.bottom - rcWork.top);
+			}
+		}
+
+		return std::move(area);
+	}
+
+	bool Application::_setWndState(WindowState state) {
+		if (_win.wndState != state) {
+			_win.prevWndState = _win.wndState;
+			_win.wndState = state;
+			return true;
+		}
+
+		return false;
 	}
 
 	void Application::_updateWindowPlacement(UINT showCmd) {
@@ -560,9 +574,9 @@ namespace aurora {
 		if (_win.wndDirty || info.showCmd != showCmd) {
 			_win.wndDirty = false;
 
-			if (showCmd != (std::numeric_limits<UINT>::max)()) info.showCmd = showCmd;
+			if (showCmd != (std::numeric_limits<decltype(showCmd)>::max)()) info.showCmd = showCmd;
 
-			auto rect = _calcWindowRect();
+			auto rect = _calcWindowRect(_isFullscreen);
 			info.rcNormalPosition.left = rect.pos[0];
 			info.rcNormalPosition.top = rect.pos[1];
 			info.rcNormalPosition.right = rect.pos[0] + rect.size[0];
@@ -588,13 +602,11 @@ namespace aurora {
 	}
 
 	DWORD Application::_getWindowExStyle(bool fullscreen) {
-		DWORD style = WS_EX_APPWINDOW;
+		DWORD val = WS_EX_APPWINDOW;
 
-		if (fullscreen) {
-			//style |= WS_EX_TOPMOST;
-		}
+		//if (fullscreen) val |= WS_EX_TOPMOST;
 
-		return style;
+		return val;
 	}
 
 	LRESULT Application::_wndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
@@ -625,16 +637,18 @@ namespace aurora {
 		case WM_SIZE:
 		{
 			if (app) {
+				if (app->_win.ignoreEvtSize) return 0;
+
 				if (!app->_isFullscreen) {
 					switch (wParam) {
 					case SIZE_MINIMIZED:
-						app->_win.wndState = WindowState::MINIMUM;
+						app->_setWndState(WindowState::MINIMUM);
 						break;
 					case SIZE_MAXIMIZED:
-						app->_win.wndState = WindowState::MAXIMUM;
+						app->_setWndState(WindowState::MAXIMUM);
 						break;
 					case SIZE_RESTORED:
-						app->_win.wndState = WindowState::NORMAL;
+						app->_setWndState(WindowState::NORMAL);
 						break;
 					default:
 						break;
@@ -678,15 +692,137 @@ namespace aurora {
 		return DefWindowProcW(hWnd, msg, wParam, lParam);
 	}
 #elif AE_OS == AE_OS_LINUX
+	void Application::_sendClientEventToWM(Atom msgType, long a, long b, long c, long d, long e) {
+		XEvent evt = { ClientMessage };
+		auto& client = evt.xclient;
+		client.window = _linux.wnd;
+		client.format = 32; // Data is 32-bit longs
+		client.message_type = msgType;
+		client.data.l[0] = a;
+		client.data.l[1] = b;
+		client.data.l[2] = c;
+		client.data.l[3] = d;
+		client.data.l[4] = e;
+		XSendEvent(_linux.dis, _linux.root, False, SubstructureNotifyMask | SubstructureRedirectMask, &evt);
+	}
+
+	void Application::_sendResizedEvent() {
+		if (auto size = getCurrentClientSize(); _linux.sentSize != size) {
+			_linux.sentSize = size;
+			_eventDispatcher.dispatchEvent(this, ApplicationEvent::RESIZED);
+		}
+	}
+
 	Bool Application::_eventPredicate(Display* display, XEvent* event, XPointer pointer) {
 		return True;
 	}
 
 	void Application::_waitEvent(bool& value) {
-		do {
+		while (value) {
 			XEvent e = { 0 };
 			if (XCheckIfEvent(_linux.dis, &e, &Application::_eventPredicate, (XPointer)this)) _doEvent(e);
-		} while (value);
+		};
+	}
+
+	size_t Application::_getWindowProperty(Window wnd, Atom property, Atom type, uint8_t** value) const {
+		Atom actualType;
+		int actualFormat;
+		unsigned long count, bytesAfter;
+
+		XGetWindowProperty(_linux.dis, wnd, property, 0, LONG_MAX, False, type, &actualType, &actualFormat, &count, &bytesAfter, value);
+
+		return count;
+	}
+
+	Box2i32 Application::_calcWorkArea() const {
+		Box2i32 area;
+
+		Atom* extents = nullptr;
+		Atom* desktop = nullptr;
+
+		if (auto extentCount = _getWindowProperty(_linux.root, _linux.NET_WORKAREA, XA_CARDINAL, (unsigned char**)&extents); extentCount >= 4) {
+			if (_getWindowProperty(_linux.root, _linux.NET_CURRENT_DESKTOP, XA_CARDINAL, (unsigned char**)&desktop) > 0) {
+				if (*desktop < extentCount / 4) {
+					area.pos.set(extents[*desktop * 4 + 0], extents[*desktop * 4 + 1]);
+					area.size.set(extents[*desktop * 4 + 2], extents[*desktop * 4 + 3]);
+				}
+			}
+		}
+
+		if (extents) XFree(extents);
+		if (desktop) XFree(desktop);
+
+		return std::move(area);
+	}
+
+	void Application::_updateWindowPlacement() {
+		if (_isVisible) {
+			if (!_linux.xMapped) {
+				_linux.xMapped = true;
+				_linux.waitVisibility = true;
+				XMapWindow(_linux.dis, _linux.wnd);
+			}
+
+			if (_isFullscreen) {
+				if (!_linux.xFullscreen) {
+					_linux.xFullscreen = true;
+					_sendClientEventToWM(_linux.NET_WM_STATE, 1, _linux.NET_WM_STATE_FULLSCREEN, 0, 1);
+				}
+			} else {
+				if (_linux.xFullscreen) {
+					_linux.xFullscreen = false;
+					_sendClientEventToWM(_linux.NET_WM_STATE, 0, _linux.NET_WM_STATE_FULLSCREEN, 0, 1);
+				}
+
+				switch (_linux.wndState) {
+				case WindowState::MAXIMUM:
+				{
+					if (_linux.xWndState != WindowState::MAXIMUM) {
+						_linux.xWndState = WindowState::MAXIMUM;
+						_sendClientEventToWM(_linux.NET_WM_STATE, 1, _linux.NET_WM_STATE_MAXIMIZED_VERT, _linux.NET_WM_STATE_MAXIMIZED_HORZ, 1);
+					}
+
+					break;
+				}
+				case WindowState::MINIMUM:
+				{
+					if (_linux.xWndState != WindowState::MINIMUM) {
+						if (_linux.xWndState == WindowState::MAXIMUM) {
+							_sendClientEventToWM(_linux.NET_WM_STATE, 0, _linux.NET_WM_STATE_MAXIMIZED_VERT, _linux.NET_WM_STATE_MAXIMIZED_HORZ, 1);
+						}
+
+						_linux.xWndState = WindowState::MINIMUM;
+						XIconifyWindow(_linux.dis, _linux.wnd, _linux.screen);
+					}
+
+					break;
+				}
+				default:
+				{
+					if (_linux.xWndState == WindowState::MINIMUM) {
+						_linux.xWndState = WindowState::NORMAL;
+						_linux.waitVisibility = true;
+						XMapWindow(_linux.dis, _linux.wnd);
+						_waitEvent(_linux.waitVisibility);
+					} else if (_linux.xWndState == WindowState::MAXIMUM) {
+						_sendClientEventToWM(_linux.NET_WM_STATE, 0, _linux.NET_WM_STATE_MAXIMIZED_VERT, _linux.NET_WM_STATE_MAXIMIZED_HORZ, 1);
+					}
+
+					XMoveWindow(_linux.dis, _linux.wnd, _linux.wndPos[0], _linux.wndPos[1]);
+
+					break;
+				}
+				}
+			}
+		} else {
+			if (_linux.xMapped) {
+				_linux.xMapped = false;
+				_linux.waitVisibility = true;
+				XUnmapWindow(_linux.dis, _linux.wnd);
+			}
+		}
+
+		_waitEvent(_linux.waitVisibility);
 	}
 
 	void Application::_doEvent(XEvent& e) {
@@ -721,13 +857,10 @@ namespace aurora {
 			XTranslateCoordinates(_linux.dis, _linux.wnd, _linux.root, 0, 0, &x, &y, &dummy);
 
 			_linux.wndPos.set(x - _border[0], y - _border[2]);
-			printcln(_linux.wndPos[0], "   ", _linux.wndPos[1], "   ", conf.width, "   ", conf.height);
-			if (_clientSize[0] != conf.width || _clientSize[1] != conf.height) {
-				_clientSize.set(conf.width, conf.height);
-				//XSetWindowBackground(_linux.dis, _linux.wnd, _linux.bgColor);
+			_clientSize.set(conf.width, conf.height);
+			printcln(L"ConfigureNotify   ", _linux.wndPos[0], "   ", _linux.wndPos[1], "   ", conf.width, "   ", conf.height);
 
-				_eventDispatcher.dispatchEvent(this, ApplicationEvent::RESIZED);
-			}
+			_sendResizedEvent();
 
 			break;
 		}
@@ -760,13 +893,8 @@ namespace aurora {
 		{
 			auto& prop = e.xproperty;
 			if (prop.atom == _linux.NET_FRAME_EXTENTS && prop.state == PropertyNewValue && prop.window == _linux.wnd) {
-				Atom type;
-				int format;
-				unsigned long nitems, bytes_after;
 				unsigned char* property = nullptr;
-
-				XGetWindowProperty(_linux.dis, _linux.wnd, _linux.NET_FRAME_EXTENTS, 0, 16, False, XA_CARDINAL, &type, &format, &nitems, &bytes_after, &property);
-				if (format) {
+				if (auto count = _getWindowProperty(_linux.wnd, _linux.NET_FRAME_EXTENTS, XA_CARDINAL, &property); count >= 4) {
 					for (size_t i = 0; i < 4; ++i) _border[i] = ((long*)property)[i];
 				}
 
@@ -774,6 +902,12 @@ namespace aurora {
 
 				_linux.waitFrameEXTENTS = false;
 			}
+
+			break;
+		}
+		case VisibilityNotify:
+		{
+			_linux.waitVisibility = false;
 
 			break;
 		}

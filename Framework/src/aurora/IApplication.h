@@ -30,7 +30,7 @@ namespace aurora {
 		virtual const events::IEventDispatcher<ApplicationEvent>& AE_CALL getEventDispatcher() const = 0;
 
 		virtual bool AE_CALL createWindow(const ApplicationStyle& style, const std::string_view& title, const Vec2ui32& clientSize, bool fullscreen) = 0;
-		virtual uint64_t AE_CALL getWindow() const = 0;
+		virtual void* AE_CALL getNativeWindow() const = 0;
 		virtual bool AE_CALL isFullscreen() const = 0;
 		virtual void AE_CALL toggleFullscreen() = 0;
 		virtual Vec4ui32 AE_CALL getBorder() const = 0;

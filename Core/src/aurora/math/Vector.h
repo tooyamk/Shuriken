@@ -338,6 +338,14 @@ namespace aurora {
 			return Math::isEqual(data, value.data, tolerance);
 		}
 
+		template<typename... Indices, typename = std::enable_if_t<std::conjunction_v<std::is_convertible<Indices, uint32_t>...>>>
+		inline const Vector<sizeof...(Indices), T> AE_CALL components(Indices&&... indices) const {
+			Vector<sizeof...(Indices), T> v(NO_INIT);
+			uint32_t i = 0;
+			((v.data[i++] = data[indices]), ...);
+			return std::move(v);
+		}
+
 		inline Vector& AE_CALL normalize() {
 			Math::normalize(data);
 			return *this;
