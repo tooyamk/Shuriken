@@ -16,7 +16,7 @@ namespace aurora {
 		using SliceType = T[COUNT];
 
 		template<typename K>
-		using ConvertibleType = typename std::enable_if_t<std::is_convertible_v<K, T>, K>;
+		using ConvertibleType = typename std::enable_if_t<std::is_convertible_v<K, T>>;
 
 		Vector() {
 			memset(this, 0, sizeof(T) * N);

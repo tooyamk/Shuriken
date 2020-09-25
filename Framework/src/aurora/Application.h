@@ -34,9 +34,9 @@ namespace aurora {
 		virtual void AE_CALL setCursorVisible(bool visible) override;
 		virtual bool AE_CALL hasFocus() const override;
 		virtual void AE_CALL setFocus() override;
-		virtual bool AE_CALL isMaximum() const override;
+		virtual bool AE_CALL isMaximzed() const override;
 		virtual void AE_CALL setMaximum() override;
-		virtual bool AE_CALL isMinimum() const override;
+		virtual bool AE_CALL isMinimzed() const override;
 		virtual void AE_CALL pollEvents() override;
 		virtual void AE_CALL setMinimum() override;
 		virtual void AE_CALL setRestore() override;
@@ -142,6 +142,7 @@ namespace aurora {
 
 		struct {
 			WindowState wndState = WindowState::NORMAL;
+			WindowState prevWndState = WindowState::NORMAL;
 			bool wndDirty = false;
 			bool xMapped = false;
 			bool xFullscreen = false;
@@ -159,6 +160,7 @@ namespace aurora {
 			bool waitVisibility = false;
 
 			Atom MOTIF_WM_HINTS;
+			Atom WM_STATE;
 			Atom WM_DELETE_WINDOW;
 			Atom WM_PROTOCOLS;
 			Atom NET_WM_PING;
@@ -174,11 +176,15 @@ namespace aurora {
 			Atom NET_CURRENT_DESKTOP;
 		} _linux;
 
-		void AE_CALL _sendClientEventToWM(Atom msgType, long a = 0, long b = 0, long c = 0, long d = 0, long e = 0);
+		void AE_CALL _sendClientEventToWM(Atom msgType, int64_t a = 0, int64_t b = 0, int64_t c = 0, int64_t d = 0, int64_t e = 0);
 		void AE_CALL _sendResizedEvent();
 		void AE_CALL _waitEvent(bool& value);
 		Box2i32 AE_CALL _calcWorkArea() const;
-		size_t AE_CALL _getWindowProperty(Window wnd, Atom property, Atom type, uint8_t** value) const;
+		bool AE_CALL _setWndState(WindowState state);
+		size_t AE_CALL _getXWndProperty(Window wnd, Atom property, Atom type, uint8_t** value) const;
+		bool AE_CALL _isMaximized() const;
+		bool AE_CALL _isMinimized() const;
+		int32_t AE_CALL _getXWndState() const;
 		void AE_CALL _updateWindowPlacement();
 
 		static Bool AE_CALL _eventPredicate(Display* display, XEvent* event, XPointer pointer);

@@ -112,6 +112,7 @@ namespace aurora {
 		if (!_linux.dis) return false;
 
 		_linux.MOTIF_WM_HINTS = XInternAtom(_linux.dis, "_MOTIF_WM_HINTS", False);
+		_linux.WM_STATE = XInternAtom(_linux.dis, "WM_STATE", False);
 		_linux.WM_PROTOCOLS = XInternAtom(_linux.dis, "WM_PROTOCOLS", False);
 		_linux.WM_DELETE_WINDOW = XInternAtom(_linux.dis, "WM_DELETE_WINDOW", False);
 		_linux.NET_WM_PING = XInternAtom(_linux.dis, "_NET_WM_PING", False);
@@ -220,6 +221,8 @@ namespace aurora {
 
 		_updateWindowPlacement();
 
+		printcln("state :   ", _getXWndState(), "   ", NormalState, "   ", IconicState);
+
 		return true;
 #endif
 		return false;
@@ -294,9 +297,11 @@ namespace aurora {
 				auto sd = ScreenOfDisplay(_linux.dis, _linux.screen);
 				size.set(sd->width, sd->height);
 			} else {
-				if (_win.wndState == WindowState::MAXIMUM) {
+				if (_linux.wndState == WindowState::MAXIMUM || (_linux.wndState == WindowState::MINIMUM && _linux.prevWndState == WindowState::MAXIMUM)) {
+					auto area = _calcWorkArea();
+					size.set(std::max<int32_t>(area.size[0], 0), std::max<int32_t>(area.size[1] - _border[2], 0));
 				} else {
-
+					size = _clientSize;
 				}
 			}
 		}
@@ -360,11 +365,11 @@ namespace aurora {
 
 	bool Application::hasFocus() const {
 #if AE_OS == AE_OS_WIN
-		return GetFocus() == _win.wnd;
+		if (_win.wnd) return GetFocus() == _win.wnd;
 #elif AE_OS == AE_OS_LINUX
 		if (_linux.wnd) {
 			Window focused;
-			int revertTo;
+			int32_t revertTo;
 
 			XGetInputFocus(_linux.dis, &focused, &revertTo);
 			return focused == _linux.wnd;
@@ -376,12 +381,16 @@ namespace aurora {
 	void Application::setFocus() {
 #if AE_OS == AE_OS_WIN
 		if (_win.wnd) SetFocus(_win.wnd);
+#elif AE_OS == AE_OS_LINUX
+		if (_linux.wnd && _isVisible) XSetInputFocus(_linux.dis, _linux.wnd, RevertToParent, CurrentTime);
 #endif
 	}
 
-	bool Application::isMaximum() const {
+	bool Application::isMaximzed() const {
 #if AE_OS == AE_OS_WIN
-		return _win.wnd ? _win.wndState == WindowState::MAXIMUM : false;
+		if (_win.wnd) return _win.wndState == WindowState::MAXIMUM;
+#elif AE_OS == AE_OS_LINUX
+		if (_linux.wnd) return _linux.wndState == WindowState::MAXIMUM;
 #endif
 		return false;
 	}
@@ -394,16 +403,15 @@ namespace aurora {
 			_sendResizedEvent();
 		}
 #elif AE_OS == AE_OS_LINUX
-		if (_linux.wnd && _linux.wndState != WindowState::MAXIMUM) {
-			_linux.wndState = WindowState::MAXIMUM;
-			_updateWindowPlacement();
-		}
+		if (_linux.wnd && _setWndState(WindowState::MAXIMUM)) _updateWindowPlacement();
 #endif
 	}
 
-	bool Application::isMinimum() const {
+	bool Application::isMinimzed() const {
 #if AE_OS == AE_OS_WIN
-		return _win.wnd ? _win.wndState == WindowState::MINIMUM : false;
+		if (_win.wnd) return _win.wndState == WindowState::MINIMUM;
+#elif AE_OS == AE_OS_LINUX
+		if (_linux.wnd) return _linux.wndState == WindowState::MINIMUM;
 #endif
 		return false;
 	}
@@ -416,10 +424,7 @@ namespace aurora {
 			_sendResizedEvent();
 		}
 #elif AE_OS == AE_OS_LINUX
-		if (_linux.wnd && _linux.wndState != WindowState::MINIMUM) {
-			_linux.wndState = WindowState::MINIMUM;
-			_updateWindowPlacement();
-		}
+		if (_linux.wnd && _setWndState(WindowState::MINIMUM)) _updateWindowPlacement();
 #endif
 	}
 
@@ -431,10 +436,7 @@ namespace aurora {
 			_sendResizedEvent();
 		}
 #elif AE_OS == AE_OS_LINUX
-		if (_linux.wnd && _linux.wndState != WindowState::NORMAL) {
-			_linux.wndState = WindowState::NORMAL;
-			_updateWindowPlacement();
-		}
+		if (_linux.wnd && _setWndState(WindowState::NORMAL)) _updateWindowPlacement();
 #endif
 	}
 
@@ -692,7 +694,7 @@ namespace aurora {
 		return DefWindowProcW(hWnd, msg, wParam, lParam);
 	}
 #elif AE_OS == AE_OS_LINUX
-	void Application::_sendClientEventToWM(Atom msgType, long a, long b, long c, long d, long e) {
+	void Application::_sendClientEventToWM(Atom msgType, int64_t a, int64_t b, int64_t c, int64_t d, int64_t e) {
 		XEvent evt = { ClientMessage };
 		auto& client = evt.xclient;
 		client.window = _linux.wnd;
@@ -724,14 +726,50 @@ namespace aurora {
 		};
 	}
 
-	size_t Application::_getWindowProperty(Window wnd, Atom property, Atom type, uint8_t** value) const {
+	size_t Application::_getXWndProperty(Window wnd, Atom property, Atom type, uint8_t** value) const {
 		Atom actualType;
-		int actualFormat;
-		unsigned long count, bytesAfter;
+		int32_t actualFormat;
+		uint64_t count, bytesAfter;
 
-		XGetWindowProperty(_linux.dis, wnd, property, 0, LONG_MAX, False, type, &actualType, &actualFormat, &count, &bytesAfter, value);
+		XGetWindowProperty(_linux.dis, wnd, property, 0, (~0), False, type, &actualType, &actualFormat, &count, &bytesAfter, value);
 
 		return count;
+	}
+
+	bool Application::_isMaximized() const {
+		Atom* states = nullptr;
+		bool maximized = false;
+
+		auto count = _getXWndProperty(_linux.wnd, _linux.NET_WM_STATE, XA_ATOM, (uint8_t**)&states);
+
+		for (size_t i = 0; i < count; i++) {
+			if (states[i] == _linux.NET_WM_STATE_MAXIMIZED_VERT || states[i] == _linux.NET_WM_STATE_MAXIMIZED_HORZ) {
+				maximized = true;
+				break;
+			}
+		}
+
+		if (states) XFree(states);
+
+		return maximized;
+	}
+
+	bool Application::_isMinimized() const {
+		return _getXWndState() == IconicState;
+	}
+
+	int32_t Application::_getXWndState() const {
+		int32_t result = WithdrawnState;
+		struct {
+			uint32_t state;
+			Window icon;
+		}*state = nullptr;
+
+		if (_getXWndProperty(_linux.wnd, _linux.WM_STATE, _linux.WM_STATE, (uint8_t**)&state) >= 2) result = state->state;
+
+		if (state) XFree(state);
+
+		return result;
 	}
 
 	Box2i32 Application::_calcWorkArea() const {
@@ -740,8 +778,8 @@ namespace aurora {
 		Atom* extents = nullptr;
 		Atom* desktop = nullptr;
 
-		if (auto extentCount = _getWindowProperty(_linux.root, _linux.NET_WORKAREA, XA_CARDINAL, (unsigned char**)&extents); extentCount >= 4) {
-			if (_getWindowProperty(_linux.root, _linux.NET_CURRENT_DESKTOP, XA_CARDINAL, (unsigned char**)&desktop) > 0) {
+		if (auto extentCount = _getXWndProperty(_linux.root, _linux.NET_WORKAREA, XA_CARDINAL, (uint8_t**)&extents); extentCount >= 4) {
+			if (_getXWndProperty(_linux.root, _linux.NET_CURRENT_DESKTOP, XA_CARDINAL, (uint8_t**)&desktop) > 0) {
 				if (*desktop < extentCount / 4) {
 					area.pos.set(extents[*desktop * 4 + 0], extents[*desktop * 4 + 1]);
 					area.size.set(extents[*desktop * 4 + 2], extents[*desktop * 4 + 3]);
@@ -753,6 +791,16 @@ namespace aurora {
 		if (desktop) XFree(desktop);
 
 		return std::move(area);
+	}
+
+	bool Application::_setWndState(WindowState state) {
+		if (_linux.wndState != state) {
+			_linux.prevWndState = _linux.wndState;
+			_linux.wndState = state;
+			return true;
+		}
+
+		return false;
 	}
 
 	void Application::_updateWindowPlacement() {
@@ -850,15 +898,28 @@ namespace aurora {
 		}
 		case ConfigureNotify:
 		{
+			auto isNormal = false;
 			auto& conf = e.xconfigure;
 
-			int x, y;
-			Window dummy;
-			XTranslateCoordinates(_linux.dis, _linux.wnd, _linux.root, 0, 0, &x, &y, &dummy);
+			if (!_isFullscreen) {
+				if (_isMaximized()) {
+					_setWndState(WindowState::MAXIMUM);
+				} else if (_isMinimized()) {
+					_setWndState(WindowState::MINIMUM);
+				} else {
+					isNormal = true;
+					_setWndState(WindowState::NORMAL);
+				}
+			}
 
-			_linux.wndPos.set(x - _border[0], y - _border[2]);
-			_clientSize.set(conf.width, conf.height);
-			printcln(L"ConfigureNotify   ", _linux.wndPos[0], "   ", _linux.wndPos[1], "   ", conf.width, "   ", conf.height);
+			if (isNormal) {
+				int32_t x, y;
+				Window dummy;
+				XTranslateCoordinates(_linux.dis, _linux.wnd, _linux.root, 0, 0, &x, &y, &dummy);
+
+				_linux.wndPos.set(x - _border[0], y - _border[2]);
+				_clientSize.set(conf.width, conf.height);
+			}
 
 			_sendResizedEvent();
 
@@ -892,15 +953,28 @@ namespace aurora {
 		case PropertyNotify:
 		{
 			auto& prop = e.xproperty;
-			if (prop.atom == _linux.NET_FRAME_EXTENTS && prop.state == PropertyNewValue && prop.window == _linux.wnd) {
-				unsigned char* property = nullptr;
-				if (auto count = _getWindowProperty(_linux.wnd, _linux.NET_FRAME_EXTENTS, XA_CARDINAL, &property); count >= 4) {
-					for (size_t i = 0; i < 4; ++i) _border[i] = ((long*)property)[i];
+			auto& atom = prop.atom;
+			if (atom == _linux.NET_FRAME_EXTENTS) {
+				if (prop.state == PropertyNewValue && prop.window == _linux.wnd) {
+					uint8_t* property = nullptr;
+					if (auto count = _getXWndProperty(_linux.wnd, _linux.NET_FRAME_EXTENTS, XA_CARDINAL, &property); count >= 4) {
+						for (size_t i = 0; i < 4; ++i) _border[i] = ((int64_t*)property)[i];
+					}
+
+					if (property) XFree(property);
+
+					_linux.waitFrameEXTENTS = false;
 				}
-
-				if (property) XFree(property);
-
-				_linux.waitFrameEXTENTS = false;
+			} else if (atom == _linux.WM_STATE) {
+				if (!_isFullscreen) {
+					if (auto state = _getXWndState(); state == IconicState) {
+						_setWndState(WindowState::MINIMUM);
+					} else if (state == NormalState) {
+						_setWndState(WindowState::NORMAL);
+					}
+				}
+			} else if (atom == _linux.NET_WM_STATE) {
+				if (!_isFullscreen && _isMaximized()) _setWndState(WindowState::MAXIMUM);
 			}
 
 			break;

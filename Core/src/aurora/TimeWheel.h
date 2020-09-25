@@ -12,7 +12,7 @@ namespace aurora {
 		class AE_CORE_DLL Timer : public Ref {
 		public:
 			Timer();
-			~Timer();
+			virtual ~Timer();
 
 			using OnTickFn = std::function<void(Timer& timer)>;
 
@@ -94,7 +94,7 @@ namespace aurora {
 		}
 
 		void AE_CALL startTimer(Timer& timer, uint64_t delay, size_t count, bool strict);
-		void AE_CALL startTimer(uint64_t delay, size_t count, bool strict, const Timer::OnTickFn& fn);
+		RefPtr<Timer> AE_CALL startTimer(uint64_t delay, size_t count, bool strict, const Timer::OnTickFn& fn);
 
 		inline void AE_CALL stopTimer(Timer& timer) {
 			std::scoped_lock lck(_mutex);
@@ -105,7 +105,7 @@ namespace aurora {
 		template<typename Fn, typename =
 			std::enable_if_t<std::is_invocable_v<Fn, Timer&, uint64_t> &&
 			(std::is_same_v<std::invoke_result_t<Fn, Timer&, uint64_t>, void> ||
-			std::is_same_v<std::invoke_result_t<Fn, Timer&, uint64_t>, bool>), Fn>>
+			std::is_same_v<std::invoke_result_t<Fn, Timer&, uint64_t>, bool>)>>
 		void AE_CALL tick(uint64_t elapsed, Fn&& fn) {
 			{
 				std::scoped_lock lck(_mutex);

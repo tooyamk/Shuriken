@@ -5,34 +5,10 @@
 #include "tests/VertexUpdateTester.h"
 #include "tests/WindowTester.h"
 
-/*
-int main() {
-	createWindow();
-	std::cout << "Hello World!\n";
-}
-*/
-
-#include <unordered_map>
-#include <vector>
-#include <functional>
-#include <atomic>
-#include <thread>
-#include <assert.h>
-#include <mutex>
-#include <any>
-#include <fstream>
-#include <bitset>
-
-//#include <version>
-#include <type_traits>
-//#include <bit>
-
-#include <any>
 #include <immintrin.h>
-//#include <type_traits>
 
 #if AE_OS == AE_OS_WIN
-int32_t WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
+int32_t WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int32_t nCmdShow) {
 //#pragma comment(linker, "/subsystem:console")
 //int32_t main() {
 	SetDllDirectoryW((getAppPath().parent_path().wstring() + L"/libs/").data());

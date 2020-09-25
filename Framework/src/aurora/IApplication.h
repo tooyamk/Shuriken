@@ -42,9 +42,9 @@ namespace aurora {
 		virtual void AE_CALL setCursorVisible(bool visible) = 0;
 		virtual bool AE_CALL hasFocus() const = 0;
 		virtual void AE_CALL setFocus() = 0;
-		virtual bool AE_CALL isMaximum() const = 0;
+		virtual bool AE_CALL isMaximzed() const = 0;
 		virtual void AE_CALL setMaximum() = 0;
-		virtual bool AE_CALL isMinimum() const = 0;
+		virtual bool AE_CALL isMinimzed() const = 0;
 		virtual void AE_CALL setMinimum() = 0;
 		virtual void AE_CALL setRestore() = 0;
 		virtual void AE_CALL pollEvents() = 0;

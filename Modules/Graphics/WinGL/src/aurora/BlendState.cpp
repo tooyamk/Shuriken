@@ -5,7 +5,7 @@ namespace aurora::modules::graphics::win_gl {
 	BlendState::BlendState(Graphics& graphics, bool isInternal) : IBlendState(graphics),
 		_isInternal(isInternal),
 		MAX_MRT_COUNT(graphics.getDeviceFeatures().simultaneousRenderTargetCount),
-		_status(MAX_MRT_COUNT) {
+		_states(MAX_MRT_COUNT) {
 		if (_isInternal) Ref::unref<false>(*_graphics);
 		for (uint8_t i = 0; i < MAX_MRT_COUNT; ++i) _updateInternalState(i);
 	}
@@ -27,13 +27,13 @@ namespace aurora::modules::graphics::win_gl {
 	}
 
 	const RenderTargetBlendState* BlendState::getRenderTargetState(uint8_t index) const {
-		return index < MAX_MRT_COUNT ? &_status[index].state : nullptr;
+		return index < MAX_MRT_COUNT ? &_states[index].state : nullptr;
 	}
 
 	bool BlendState::setRenderTargetState(uint8_t index, const RenderTargetBlendState& state) {
 		if (index < MAX_MRT_COUNT) {
-			if (_status[index].state != state) {
-				_status[index].state = state;
+			if (_states[index].state != state) {
+				_states[index].state = state;
 				_updateInternalState(index);
 			}
 
@@ -101,7 +101,7 @@ namespace aurora::modules::graphics::win_gl {
 	}
 
 	void BlendState::_updateInternalState(uint8_t index) {
-		auto& rt = _status[index];
+		auto& rt = _states[index];
 		
 		auto& func = rt.state.func;
 		auto& internalFunc = rt.internalFunc;
