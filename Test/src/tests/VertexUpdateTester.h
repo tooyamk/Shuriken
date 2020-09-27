@@ -28,6 +28,9 @@ public:
 				args.insert("app", (uint64_t)&*app);
 				args.insert("sampleCount", 4);
 				args.insert("trans", (uint64_t)&*gpst);
+#ifdef AE_DEBUG
+				args.insert("debug", true);
+#endif
 				auto graphics = gml->create(&args);
 
 				if (graphics) {
@@ -212,6 +215,7 @@ public:
 						//println("%lf", dt);
 						//app->setWindowTitle(String::toString(dt));
 
+						renderData.g->setViewport(Box2i32ui32(Vec2i32::ZERO, renderData.app->getCurrentClientSize()));
 						renderData.g->beginRender();
 						renderData.g->clear(ClearFlag::COLOR | ClearFlag::DEPTH | ClearFlag::STENCIL, Vec4f32(0.0f, 0.0f, 0.25f, 1.0f), 1.f, 0);
 

@@ -22,7 +22,7 @@ namespace aurora::modules::graphics {
 		auto sc = args->tryGet("sampleCount").toNumber<SampleCount>(1);
 
 		auto g = new win_gl::Graphics();
-		if (!g->createDevice(loader, app, trans, adapter, sc)) {
+		if (!g->createDevice(loader, app, trans, adapter, sc, args->tryGet("debug").toBool())) {
 			Ref::unref(*g);
 			g = nullptr;
 		}

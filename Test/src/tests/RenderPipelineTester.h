@@ -29,6 +29,9 @@ public:
 				args.insert("app", (uint64_t)&*app);
 				args.insert("sampleCount", 4);
 				args.insert("trans", (uint64_t)&*gpst);
+#ifdef AE_DEBUG
+				args.insert("debug", true);
+#endif
 				auto graphics = gml->create(&args);
 
 				if (graphics) {

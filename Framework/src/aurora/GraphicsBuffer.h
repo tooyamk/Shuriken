@@ -166,7 +166,7 @@ namespace aurora {
 		Node* _head;
 		Node* _cur;
 
-		T* AE_CALL _createBuffer() {
+		RefPtr<T> AE_CALL _createBuffer() {
 			if constexpr (std::is_base_of_v<modules::graphics::IVertexBuffer, T>) {
 				return _graphics->createVertexBuffer();
 			} else if constexpr (std::is_base_of_v<modules::graphics::IIndexBuffer, T>) {

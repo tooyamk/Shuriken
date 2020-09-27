@@ -41,11 +41,11 @@ namespace aurora::modules::graphics::win_d3d11 {
 		_release();
 	}
 
-	bool Graphics::createDevice(Ref* loader, IApplication* app, const GraphicsAdapter* adapter, SampleCount sampleCount) {
+	bool Graphics::createDevice(Ref* loader, IApplication* app, const GraphicsAdapter* adapter, SampleCount sampleCount, bool debug) {
 		if (_device || !app->getNativeWindow()) return false;
 
 		if (adapter) {
-			return _createDevice(loader, app, *adapter, sampleCount);
+			return _createDevice(loader, app, *adapter, sampleCount, debug);
 		} else {
 			std::vector<GraphicsAdapter> adapters;
 			GraphicsAdapter::query(adapters);
@@ -53,13 +53,13 @@ namespace aurora::modules::graphics::win_d3d11 {
 			GraphicsAdapter::autoSort(adapters, indices);
 
 			for (auto& idx : indices) {
-				if (_createDevice(loader, app, adapters[idx], sampleCount)) return true;
+				if (_createDevice(loader, app, adapters[idx], sampleCount, debug)) return true;
 			}
 			return false;
 		}
 	}
 
-	bool Graphics::_createDevice(Ref* loader, IApplication* app, const GraphicsAdapter& adapter, SampleCount sampleCount) {
+	bool Graphics::_createDevice(Ref* loader, IApplication* app, const GraphicsAdapter& adapter, SampleCount sampleCount, bool debug) {
 		DXObjGuard objs;
 
 		IDXGIFactory2* dxgFctory = nullptr;
@@ -145,9 +145,8 @@ namespace aurora::modules::graphics::win_d3d11 {
 		uint32_t totalFeatureLevels = ARRAYSIZE(featureLevels);
 
 		uint32_t creationFlags = 0;
-#ifdef AE_DEBUG
-		creationFlags |= D3D11_CREATE_DEVICE_DEBUG;
-#endif
+		if (debug) creationFlags |= D3D11_CREATE_DEVICE_DEBUG;
+
 		/*
 		for (uint32_t i = 0; i < totalDriverTypes; ++i) {
 			auto hr = D3D11CreateDevice(dxgAdapter, D3D_DRIVER_TYPE_UNKNOWN, nullptr, creationFlags,

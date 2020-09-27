@@ -21,7 +21,7 @@ namespace aurora::modules::graphics {
 		auto sc = args->tryGet("sampleCount").toNumber<SampleCount>(1);
 
 		auto g = new win_d3d11::Graphics();
-		if (!g->createDevice(loader, app, adapter, sc)) {
+		if (!g->createDevice(loader, app, adapter, sc, args->tryGet("debug").toBool())) {
 			Ref::unref(*g);
 			g = nullptr;
 		}

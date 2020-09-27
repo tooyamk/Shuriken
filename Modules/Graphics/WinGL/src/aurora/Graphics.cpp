@@ -40,7 +40,7 @@ namespace aurora::modules::graphics::win_gl {
 		_release();
 	}
 
-	bool Graphics::createDevice(Ref* loader, IApplication* app, IProgramSourceTranslator* trans, const GraphicsAdapter* adapter, SampleCount sampleCount) {
+	bool Graphics::createDevice(Ref* loader, IApplication* app, IProgramSourceTranslator* trans, const GraphicsAdapter* adapter, SampleCount sampleCount, bool debug) {
 		if (_dc || !app->getNativeWindow()) return false;
 
 		/*
@@ -117,17 +117,14 @@ namespace aurora::modules::graphics::win_gl {
 			return false;
 		}
 		
-		GLint attribs[] = {
-			//WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
-			//WGL_CONTEXT_MINOR_VERSION_ARB, 1,
-			WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB,//兼容模式环境
-			//WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_ES_PROFILE_BIT_EXT,
-			//WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,//核心功能环境
-#ifdef AE_DEBUG
-			WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_DEBUG_BIT_ARB,
-#endif
-			0
-		};
+		GLint attribs[5] = { 0 };
+		attribs[0] = WGL_CONTEXT_PROFILE_MASK_ARB;
+		attribs[1] = WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB;
+
+		if (debug) {
+			attribs[2] = WGL_CONTEXT_FLAGS_ARB;
+			attribs[3] = WGL_CONTEXT_DEBUG_BIT_ARB;
+		}
 
 		_rc = wglCreateContextAttribsARB(_dc, nullptr, attribs);
 		if (!_rc) {
@@ -144,14 +141,14 @@ namespace aurora::modules::graphics::win_gl {
 		_strVer = String::toString(_intVer);
 		_deviceVersion = "OpenGL " + String::toString(_majorVer) + "." + String::toString(_minorVer);
 
-#ifdef AE_DEBUG
-		if (isGreatThanOrEqualVersion(4, 3) || glewIsSupported("GL_KHR_debug") || glewIsSupported("GL_ARB_debug_output")) {
-			glEnable(GL_DEBUG_OUTPUT);
-			glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-			glDebugMessageCallback(&Graphics::_debugCallback, this);
-			glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
+		if (debug) {
+			if (isGreatThanOrEqualVersion(4, 3) || glewIsSupported("GL_KHR_debug") || glewIsSupported("GL_ARB_debug_output")) {
+				glEnable(GL_DEBUG_OUTPUT);
+				glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+				glDebugMessageCallback(&Graphics::_debugCallback, this);
+				glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
+			}
 		}
-#endif
 
 		_internalFeatures.maxAnisotropy = 1.f;
 		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &_internalFeatures.maxAnisotropy);

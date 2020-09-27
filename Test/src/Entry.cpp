@@ -37,6 +37,6 @@ int32_t main() {
 	//return (new InputTester())->run();
 	//return (new RenderPipelineTester())->run();
 	//return (new RenderTargetTester())->run();
-	//return (new VertexUpdateTester())->run();
-	return (new WindowTester())->run();
+	return (new VertexUpdateTester())->run();
+	//return (new WindowTester())->run();
 }
