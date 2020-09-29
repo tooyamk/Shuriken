@@ -1,7 +1,7 @@
 #include "PixelBuffer.h"
 #include "Graphics.h"
 
-namespace aurora::modules::graphics::win_gl {
+namespace aurora::modules::graphics::gl {
 	PixelBuffer::PixelBuffer(Graphics& graphics) : IPixelBuffer(graphics),
 		_baseBuffer(0) {
 	}

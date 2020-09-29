@@ -2,7 +2,7 @@
 #include "Graphics.h"
 #include "aurora/hash/xxHash.h"
 
-namespace aurora::modules::graphics::win_d3d11 {
+namespace aurora::modules::graphics::d3d11 {
 	BlendState::BlendState(Graphics& graphics, bool isInternal) : IBlendState(graphics),
 		_isInternal(isInternal),
 		_dirty(DirtyFlag::EMPTY),

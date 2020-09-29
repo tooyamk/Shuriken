@@ -5,7 +5,7 @@
 #include "aurora/Image.h"
 #include <algorithm>
 
-namespace aurora::modules::graphics::win_gl {
+namespace aurora::modules::graphics::gl {
 	BaseTexture::BaseTexture(TextureType texType) :
 		dirty(false),
 		sampleCount(0),

@@ -2,7 +2,7 @@
 
 #include "Base.h"
 
-namespace aurora::modules::graphics::win_d3d11 {
+namespace aurora::modules::graphics::d3d11 {
 	class Graphics;
 
 	class AE_MODULE_DLL Sampler : public ISampler {

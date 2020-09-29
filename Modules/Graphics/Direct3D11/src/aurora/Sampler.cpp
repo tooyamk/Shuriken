@@ -2,7 +2,7 @@
 #include "Graphics.h"
 #include "aurora/ByteArray.h"
 
-namespace aurora::modules::graphics::win_d3d11 {
+namespace aurora::modules::graphics::d3d11 {
 	Sampler::Sampler(Graphics& graphics) : ISampler(graphics),
 		_dirty(DirtyFlag::EMPTY),
 		_samplerState(nullptr) {

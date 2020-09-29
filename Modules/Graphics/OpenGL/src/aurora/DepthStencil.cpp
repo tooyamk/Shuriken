@@ -1,7 +1,7 @@
 #include "DepthStencil.h"
 #include "Graphics.h"
 
-namespace aurora::modules::graphics::win_gl {
+namespace aurora::modules::graphics::gl {
 	DepthStencil::DepthStencil(Graphics& graphics) : IDepthStencil(graphics),
 		_sampleCount(0),
 		_handle(0),

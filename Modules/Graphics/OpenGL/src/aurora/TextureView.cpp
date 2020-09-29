@@ -2,7 +2,7 @@
 #include "BaseTexture.h"
 #include "Graphics.h"
 
-namespace aurora::modules::graphics::win_gl {
+namespace aurora::modules::graphics::gl {
 	TextureView::TextureView(Graphics& graphics) : ITextureView(graphics),
 		_base(false) {
 	}

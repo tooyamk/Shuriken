@@ -3,7 +3,7 @@
 #include "Base.h"
 #include "aurora/modules/graphics/ConstantBufferManager.h"
 
-namespace aurora::modules::graphics::win_gl {
+namespace aurora::modules::graphics::gl {
 	class Graphics;
 	class ConstantBuffer;
 

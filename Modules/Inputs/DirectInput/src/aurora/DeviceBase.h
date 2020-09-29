@@ -3,7 +3,7 @@
 #include "Base.h"
 #include "aurora/events/EventDispatcher.h"
 
-namespace aurora::modules::inputs::win_direct_input {
+namespace aurora::modules::inputs::direct_input {
 	class Input;
 
 	class AE_MODULE_DLL DeviceBase : public IInputDevice {

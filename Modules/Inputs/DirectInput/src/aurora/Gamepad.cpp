@@ -9,7 +9,7 @@
 #define SAFE_RELEASE(p)       { if (p) { (p)->Release();  (p) = nullptr; } }
 #endif
 
-namespace aurora::modules::inputs::win_direct_input {
+namespace aurora::modules::inputs::direct_input {
 	const Gamepad::KeyMapping Gamepad::DIRECT{
 			0, 1, 2, 5, 3, 4,
 			{

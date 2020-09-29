@@ -3,7 +3,7 @@
 #include "RenderView.h"
 #include "Graphics.h"
 
-namespace aurora::modules::graphics::win_gl {
+namespace aurora::modules::graphics::gl {
 	RenderTarget::RenderTarget(Graphics& graphics) : IRenderTarget(graphics),
 		_numViewsDirty(true),
 		_numViews(0),

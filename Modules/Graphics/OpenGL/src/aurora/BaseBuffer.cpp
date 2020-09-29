@@ -2,7 +2,7 @@
 #include "Graphics.h"
 #include <algorithm>
 
-namespace aurora::modules::graphics::win_gl {
+namespace aurora::modules::graphics::gl {
 	BaseBuffer::BaseBuffer(GLenum bufferType) :
 		dirty(false),
 		resUsage(Usage::NONE),

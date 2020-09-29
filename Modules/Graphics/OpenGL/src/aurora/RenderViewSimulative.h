@@ -2,7 +2,7 @@
 
 #include "BaseRenderView.h"
 
-namespace aurora::modules::graphics::win_gl {
+namespace aurora::modules::graphics::gl {
 	class Graphics;
 
 	class AE_MODULE_DLL RenderViewSimulative : public IRenderView {

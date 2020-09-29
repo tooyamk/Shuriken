@@ -21,7 +21,7 @@ namespace aurora::modules::graphics {
 		auto adapter = (const GraphicsAdapter*)args->tryGet("adapter").toNumber<uint64_t>();
 		auto sc = args->tryGet("sampleCount").toNumber<SampleCount>(1);
 
-		auto g = new win_gl::Graphics();
+		auto g = new gl::Graphics();
 		if (!g->createDevice(loader, app, trans, adapter, sc, args->tryGet("debug").toBool())) {
 			Ref::unref(*g);
 			g = nullptr;

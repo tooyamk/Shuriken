@@ -1,7 +1,7 @@
 #include "Texture1DResource.h"
 #include "Graphics.h"
 
-namespace aurora::modules::graphics::win_d3d11 {
+namespace aurora::modules::graphics::d3d11 {
 	Texture1DResource::Texture1DResource(Graphics& graphics) : ITexture1DResource(graphics),
 		_baseTexRes(D3D11_BIND_SHADER_RESOURCE) {
 	}

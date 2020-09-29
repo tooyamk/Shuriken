@@ -8,7 +8,7 @@
 #include <dxgi1_6.h>
 
 
-namespace aurora::modules::graphics::win_d3d11 {
+namespace aurora::modules::graphics::d3d11 {
 	class DXObjGuard {
 	public:
 		~DXObjGuard() {

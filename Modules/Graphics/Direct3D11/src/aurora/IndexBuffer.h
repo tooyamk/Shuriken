@@ -2,7 +2,7 @@
 
 #include "BaseBuffer.h"
 
-namespace aurora::modules::graphics::win_d3d11 {
+namespace aurora::modules::graphics::d3d11 {
 	class AE_MODULE_DLL IndexBuffer : public IIndexBuffer {
 	public:
 		IndexBuffer(Graphics& graphics);

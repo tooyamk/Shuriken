@@ -3,7 +3,7 @@
 #include "BaseResource.h"
 #include <unordered_set>
 
-namespace aurora::modules::graphics::win_d3d11 {
+namespace aurora::modules::graphics::d3d11 {
 	class BaseTextureResource : public BaseResource {
 	public:
 		BaseTextureResource(UINT resType);

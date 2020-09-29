@@ -17,7 +17,7 @@ namespace aurora::modules::inputs {
 			return nullptr;
 		}
 
-		return new win_direct_input::Input(loader, app);
+		return new direct_input::Input(loader, app);
 	}
 }
 #endif

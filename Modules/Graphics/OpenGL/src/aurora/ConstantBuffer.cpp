@@ -1,7 +1,7 @@
 #include "ConstantBuffer.h"
 #include "Graphics.h"
 
-namespace aurora::modules::graphics::win_gl {
+namespace aurora::modules::graphics::gl {
 	ConstantBuffer::ConstantBuffer(Graphics& graphics) : IConstantBuffer(graphics),
 		_baseBuffer(GL_UNIFORM_BUFFER),
 		recordUpdateIds(nullptr) {

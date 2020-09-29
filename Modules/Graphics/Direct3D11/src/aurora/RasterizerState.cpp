@@ -1,7 +1,7 @@
 #include "RasterizerState.h"
 #include "Graphics.h"
 
-namespace aurora::modules::graphics::win_d3d11 {
+namespace aurora::modules::graphics::d3d11 {
 	RasterizerState::RasterizerState(Graphics& graphics, bool isInternal) : IRasterizerState(graphics),
 		_isInternal(isInternal),
 		_dirty(DirtyFlag::EMPTY),

@@ -1,7 +1,7 @@
 #include "VertexBuffer.h"
 #include "Graphics.h"
 
-namespace aurora::modules::graphics::win_d3d11 {
+namespace aurora::modules::graphics::d3d11 {
 	VertexBuffer::VertexBuffer(Graphics& graphics) : IVertexBuffer(graphics),
 		_internalFormat(DXGI_FORMAT_UNKNOWN),
 		_stride(0),

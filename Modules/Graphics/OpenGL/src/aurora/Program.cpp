@@ -11,7 +11,7 @@
 #include "aurora/ShaderDefine.h"
 #include "aurora/ShaderParameter.h"
 
-namespace aurora::modules::graphics::win_gl {
+namespace aurora::modules::graphics::gl {
 	Program::Program(Graphics& graphics) : IProgram(graphics),
 		_handle(0) {
 	}

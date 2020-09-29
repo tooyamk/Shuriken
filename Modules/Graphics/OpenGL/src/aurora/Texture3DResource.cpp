@@ -1,7 +1,7 @@
 #include "Texture3DResource.h"
 #include "Graphics.h"
 
-namespace aurora::modules::graphics::win_gl {
+namespace aurora::modules::graphics::gl {
 	Texture3DResource::Texture3DResource(Graphics& graphics) : ITexture3DResource(graphics),
 		_baseTex(TextureType::TEX3D) {
 	}

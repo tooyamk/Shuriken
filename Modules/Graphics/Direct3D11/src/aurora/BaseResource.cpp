@@ -2,7 +2,7 @@
 #include "Graphics.h"
 #include <algorithm>
 
-namespace aurora::modules::graphics::win_d3d11 {
+namespace aurora::modules::graphics::d3d11 {
 	BaseResource::BaseResource(UINT resType) :
 		size(0),
 		resType(resType),

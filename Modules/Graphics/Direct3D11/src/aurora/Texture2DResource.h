@@ -2,7 +2,7 @@
 
 #include "BaseTextureResource.h"
 
-namespace aurora::modules::graphics::win_d3d11 {
+namespace aurora::modules::graphics::d3d11 {
 	class AE_MODULE_DLL Texture2DResource : public ITexture2DResource {
 	public:
 		Texture2DResource(Graphics& graphics);

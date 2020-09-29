@@ -2,7 +2,7 @@
 #include "Graphics.h"
 #include <algorithm>
 
-namespace aurora::modules::graphics::win_d3d11 {
+namespace aurora::modules::graphics::d3d11 {
 	BaseBuffer::BaseBuffer(UINT bufferType) : BaseResource(bufferType),
 		mapUsage(Usage::NONE),
 		mappedRes() {

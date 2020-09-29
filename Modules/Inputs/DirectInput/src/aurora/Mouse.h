@@ -2,7 +2,7 @@
 
 #include "DeviceBase.h"
 
-namespace aurora::modules::inputs::win_direct_input {
+namespace aurora::modules::inputs::direct_input {
 	class AE_MODULE_DLL Mouse : public DeviceBase {
 	public:
 		Mouse(Input& input, LPDIRECTINPUTDEVICE8 dev, const DeviceInfo& info);

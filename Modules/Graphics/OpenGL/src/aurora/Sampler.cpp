@@ -1,7 +1,7 @@
 #include "Sampler.h"
 #include "Graphics.h"
 
-namespace aurora::modules::graphics::win_gl {
+namespace aurora::modules::graphics::gl {
 	Sampler::Sampler(Graphics& graphics) : ISampler(graphics),
 		_handle(0),
 		_dirty(DirtyFlag::EMPTY) {

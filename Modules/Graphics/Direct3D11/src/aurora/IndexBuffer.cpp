@@ -1,7 +1,7 @@
 #include "IndexBuffer.h"
 #include "Graphics.h"
 
-namespace aurora::modules::graphics::win_d3d11 {
+namespace aurora::modules::graphics::d3d11 {
 	IndexBuffer::IndexBuffer(Graphics& graphics) : IIndexBuffer(graphics),
 		_idxType(IndexType::UNKNOWN),
 		_internalFormat(DXGI_FORMAT_UNKNOWN),

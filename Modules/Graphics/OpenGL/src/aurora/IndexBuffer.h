@@ -2,7 +2,7 @@
 
 #include "BaseBuffer.h"
 
-namespace aurora::modules::graphics::win_gl {
+namespace aurora::modules::graphics::gl {
 	class AE_MODULE_DLL IndexBuffer : public IIndexBuffer {
 	public:
 		IndexBuffer(Graphics& graphics);

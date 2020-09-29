@@ -21,7 +21,7 @@
 #include "aurora/String.h"
 #include "aurora/Time.h"
 
-namespace aurora::modules::graphics::win_gl {
+namespace aurora::modules::graphics::gl {
 	Graphics::Graphics() :
 		_bufferCreateUsageMask(Usage::NONE),
 		_texCreateUsageMask(Usage::NONE),

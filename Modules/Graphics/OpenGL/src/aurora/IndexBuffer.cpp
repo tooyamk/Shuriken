@@ -1,7 +1,7 @@
 #include "IndexBuffer.h"
 #include "Graphics.h"
 
-namespace aurora::modules::graphics::win_gl {
+namespace aurora::modules::graphics::gl {
 	IndexBuffer::IndexBuffer(Graphics& graphics) : IIndexBuffer(graphics),
 		_idxType(IndexType::UNKNOWN),
 		_internalType(0),

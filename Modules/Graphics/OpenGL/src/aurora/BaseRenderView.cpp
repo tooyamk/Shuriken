@@ -1,6 +1,6 @@
 #include "BaseRenderView.h"
 
-namespace aurora::modules::graphics::win_gl {
+namespace aurora::modules::graphics::gl {
 	BaseRenderView::BaseRenderView(bool simulative) :
 		simulative(simulative),
 		mipSlice(0),

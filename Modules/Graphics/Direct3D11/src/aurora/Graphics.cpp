@@ -17,7 +17,7 @@
 #include "aurora/ProgramSource.h"
 #include "aurora/modules/graphics/GraphicsAdapter.h"
 
-namespace aurora::modules::graphics::win_d3d11 {
+namespace aurora::modules::graphics::d3d11 {
 	Graphics::Graphics() :
 		_curIsBackBuffer(true),
 		_backBufferSampleCount(1),

@@ -1,7 +1,7 @@
 #include "BlendState.h"
 #include "Graphics.h"
 
-namespace aurora::modules::graphics::win_gl {
+namespace aurora::modules::graphics::gl {
 	BlendState::BlendState(Graphics& graphics, bool isInternal) : IBlendState(graphics),
 		_isInternal(isInternal),
 		MAX_MRT_COUNT(graphics.getDeviceFeatures().simultaneousRenderTargetCount),

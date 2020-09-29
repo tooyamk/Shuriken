@@ -1,14 +1,5 @@
 #pragma once
 
-#pragma warning(disable : 4244)
-#pragma warning(disable : 4251)
-#pragma warning(disable : 4267)
-#pragma warning(disable : 4275)
-#pragma warning(disable : 4838)
-#pragma warning(disable : 4996)
-#pragma warning(disable : 26812)
-
-
 #define AE_OS_UNKNOWN 0
 #define AE_OS_WIN     1
 #define AE_OS_MAC     2

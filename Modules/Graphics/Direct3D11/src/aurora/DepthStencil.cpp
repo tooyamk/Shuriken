@@ -1,7 +1,7 @@
 #include "DepthStencil.h"
 #include "Graphics.h"
 
-namespace aurora::modules::graphics::win_d3d11 {
+namespace aurora::modules::graphics::d3d11 {
 	DepthStencil::DepthStencil(Graphics& graphics, bool internalView) : IDepthStencil(graphics),
 		_sampleCount(0),
 		_view(nullptr) {

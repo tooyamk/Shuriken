@@ -182,16 +182,23 @@ set(AE_INSTALL_DLL_DIR_NAME $<IF:$<PLATFORM_ID:Windows>,bin,lib>)
 set(CMAKE_CXX_STANDARD 17)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-set(clangFlags "-fms-extensions -fPIC -Wno-unused-command-line-argument -Wno-switch")
-
+set(compilerFlags "-fms-extensions -fPIC -Wno-unused-command-line-argument -Wno-switch")
 if (CMAKE_C_COMPILER_ID MATCHES Clang)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${clangFlags}")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${compilerFlags}")
 endif ()
 if (CMAKE_CXX_COMPILER_ID MATCHES Clang)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${clangFlags}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${compilerFlags}")
 endif ()
 
-unset(clangFlags)
+set(compilerFlags " /wd4244 /wd4251 /wd4267 /wd4275 /wd4819 /wd4838 /wd4996 /wd26812")
+if (CMAKE_C_COMPILER_ID MATCHES MSVC)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${compilerFlags}")
+endif ()
+if (CMAKE_CXX_COMPILER_ID MATCHES MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${compilerFlags}")
+endif ()
+
+unset(compilerFlags)
 #cmake_policy(SET CMP0060 NEW)
 
 set(AE_DEFINITIONS)

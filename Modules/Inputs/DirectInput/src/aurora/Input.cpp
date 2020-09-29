@@ -5,7 +5,7 @@
 #include "CreateModule.h"
 #include <algorithm>
 
-namespace aurora::modules::inputs::win_direct_input {
+namespace aurora::modules::inputs::direct_input {
 	Input::Input(Ref* loader, IApplication* app) :
 		_loader(loader),
 		_app(app),

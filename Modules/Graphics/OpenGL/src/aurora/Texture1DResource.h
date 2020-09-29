@@ -2,7 +2,7 @@
 
 #include "BaseTexture.h"
 
-namespace aurora::modules::graphics::win_gl {
+namespace aurora::modules::graphics::gl {
 	class AE_MODULE_DLL Texture1DResource : public ITexture1DResource {
 	public:
 		Texture1DResource(Graphics& graphics);

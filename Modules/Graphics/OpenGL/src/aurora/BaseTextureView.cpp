@@ -1,6 +1,6 @@
 #include "BaseTextureView.h"
 
-namespace aurora::modules::graphics::win_gl {
+namespace aurora::modules::graphics::gl {
 	BaseTextureView::BaseTextureView(bool simulative) :
 		simulative(simulative),
 		mipBegin(0),

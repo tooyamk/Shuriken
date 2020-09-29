@@ -3,7 +3,7 @@
 #include "Graphics.h"
 #include <algorithm>
 
-namespace aurora::modules::graphics::win_d3d11 {
+namespace aurora::modules::graphics::d3d11 {
 	RenderView::RenderView(Graphics& graphics) : IRenderView(graphics),
 		_mipSlice(0),
 		_arrayBegin(0),

@@ -3,7 +3,7 @@
 #include "TextureView.h"
 #include "aurora/Image.h"
 
-namespace aurora::modules::graphics::win_d3d11 {
+namespace aurora::modules::graphics::d3d11 {
 	BaseTextureResource::BaseTextureResource(UINT resType) : BaseResource(resType),
 		format(TextureFormat::UNKNOWN),
 		internalFormat(DXGI_FORMAT_UNKNOWN),

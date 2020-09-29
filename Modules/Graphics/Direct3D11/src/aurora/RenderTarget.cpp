@@ -1,7 +1,7 @@
 #include "RenderTarget.h"
 #include "Graphics.h"
 
-namespace aurora::modules::graphics::win_d3d11 {
+namespace aurora::modules::graphics::d3d11 {
 	RenderTarget::RenderTarget(Graphics& graphics) : IRenderTarget(graphics),
 		_numViewsDirty(true),
 		_numViews(0) {

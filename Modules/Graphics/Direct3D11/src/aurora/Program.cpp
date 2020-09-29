@@ -9,7 +9,7 @@
 #include "aurora/String.h"
 #include <vector>
 
-namespace aurora::modules::graphics::win_d3d11 {
+namespace aurora::modules::graphics::d3d11 {
 	Program::InLayout::InLayout(uint32_t numInElements) :
 		formats(numInElements),
 		layout(nullptr) {

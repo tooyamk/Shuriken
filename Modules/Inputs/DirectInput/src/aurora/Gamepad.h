@@ -3,7 +3,7 @@
 #include "DeviceBase.h"
 #include "aurora/math/Math.h"
 
-namespace aurora::modules::inputs::win_direct_input {
+namespace aurora::modules::inputs::direct_input {
 	class AE_MODULE_DLL Gamepad : public DeviceBase {
 	public:
 		Gamepad(Input& input, LPDIRECTINPUTDEVICE8 dev, const DeviceInfo& info);

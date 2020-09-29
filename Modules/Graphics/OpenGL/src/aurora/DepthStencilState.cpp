@@ -1,7 +1,7 @@
 #include "DepthStencilState.h"
 #include "Graphics.h"
 
-namespace aurora::modules::graphics::win_gl {
+namespace aurora::modules::graphics::gl {
 	DepthStencilState::DepthStencilState(Graphics& graphics, bool isInternal) : IDepthStencilState(graphics),
 		_isInternal(isInternal),
 		_dirty(DirtyFlag::EMPTY),

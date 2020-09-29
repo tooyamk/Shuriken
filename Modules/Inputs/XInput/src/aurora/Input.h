@@ -3,7 +3,7 @@
 #include "Base.h"
 #include "aurora/events/EventDispatcher.h"
 
-namespace aurora::modules::inputs::win_xinput {
+namespace aurora::modules::inputs::xinput {
 	class AE_MODULE_DLL Input : public IInputModule {
 	public:
 		Input(Ref* loader);

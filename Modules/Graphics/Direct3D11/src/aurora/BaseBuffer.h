@@ -2,7 +2,7 @@
 
 #include "BaseResource.h"
 
-namespace aurora::modules::graphics::win_d3d11 {
+namespace aurora::modules::graphics::d3d11 {
 	class BaseBuffer : public BaseResource {
 	public:
 		BaseBuffer(UINT bufferType);

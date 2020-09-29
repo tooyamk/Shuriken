@@ -3,7 +3,7 @@
 #include "Graphics.h"
 #include <algorithm>
 
-namespace aurora::modules::graphics::win_d3d11 {
+namespace aurora::modules::graphics::d3d11 {
 	TextureView::TextureView(Graphics& graphics) : ITextureView(graphics),
 		_mipBegin(0),
 		_mipLevels(0),

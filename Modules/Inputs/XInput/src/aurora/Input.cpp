@@ -3,7 +3,7 @@
 #include "CreateModule.h"
 #include <algorithm>
 
-namespace aurora::modules::inputs::win_xinput {
+namespace aurora::modules::inputs::xinput {
 	Input::Input(Ref* loader) :
 		_loader(loader) {
 	}

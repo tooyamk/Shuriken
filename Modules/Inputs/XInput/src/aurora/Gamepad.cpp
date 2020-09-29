@@ -2,7 +2,7 @@
 #include "Input.h"
 #include "aurora/math/Math.h"
 
-namespace aurora::modules::inputs::win_xinput {
+namespace aurora::modules::inputs::xinput {
 	Gamepad::Gamepad(Input& input, const DeviceInfo& info) :
 		_index(((InternalGUID&)*info.guid.getData()).index - 1),
 		_input(input),

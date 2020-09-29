@@ -5,7 +5,7 @@
 #include "TextureView.h"
 #include "aurora/modules/graphics/ConstantBufferManager.h"
 
-namespace aurora::modules::graphics::win_d3d11 {
+namespace aurora::modules::graphics::d3d11 {
 	class AE_MODULE_DLL Program : public IProgram {
 	public:
 		Program(Graphics& graphics);
