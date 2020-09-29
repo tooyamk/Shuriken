@@ -6,9 +6,9 @@
 #include "aurora/hash/xxHash.h"
 
 #include "GL/glew.h"
-#include <GL/GL.h>
 
 #if AE_OS == AE_OS_WIN
+#	include <GL/GL.h>
 #	include "GL/wglew.h"
 #elif AE_OS == AE_OS_LINUX
 #	include <GL/glx.h>

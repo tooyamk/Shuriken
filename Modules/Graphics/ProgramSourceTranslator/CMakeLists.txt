@@ -42,6 +42,6 @@ __target_link_library_external_project(${PROJECT_NAME} "PROJECT_SPIRV_CROSS_CORE
 __target_link_library_external_project(${PROJECT_NAME} "PROJECT_SPIRV_CROSS_GLSL_SLIB")
 __target_link_library_external_project(${PROJECT_NAME} "PROJECT_SPIRV_CROSS_MSL_SLIB")
 __target_link_library_external_project(${PROJECT_NAME} "PROJECT_DX_SHADER_COMPILER_LLVMDxcSupport_SLIB")
-set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER ${AE_MODULES_DIR_NAME}/Graphics)
+set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER ${AE_GRAPHICS_MODULES_DIR})
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${__OUTPUT_NAME})
-__install(${PROJECT_NAME})
+__install(${AE_GRAPHICS_MODULES_DIR}/${PROJECT_NAME})

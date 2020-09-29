@@ -25,6 +25,6 @@ target_link_libraries(${PROJECT_NAME}
     dinput8.lib
     dxguid.lib
 )
-set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER ${AE_MODULES_DIR_NAME}/Inputs)
+set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER ${AE_INPUT_MODULES_DIR})
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${__OUTPUT_NAME})
-__install(${PROJECT_NAME})
+__install(${AE_INPUT_MODULES_DIR}/${PROJECT_NAME})
