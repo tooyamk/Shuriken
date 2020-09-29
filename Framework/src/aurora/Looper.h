@@ -4,8 +4,7 @@
 #include <thread>
 
 #if AE_OS == AE_OS_WIN
-#include "mmsystem.h"
-#pragma comment( lib, "Winmm.lib")
+#	include "mmsystem.h"
 #endif
 
 namespace aurora {

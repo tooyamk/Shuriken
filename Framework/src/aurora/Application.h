@@ -3,10 +3,7 @@
 #include "aurora/IApplication.h"
 #include "aurora/math/Box.h"
 
-#if AE_OS == AE_OS_WIN
-#	include "mmsystem.h"
-#	pragma comment( lib, "Winmm.lib")
-#elif AE_OS == AE_OS_LINUX
+#if AE_OS == AE_OS_LINUX
 #	include <X11/Xlib.h>
 #	include <X11/Xatom.h>
 #	include <X11/Xutil.h>
@@ -22,7 +19,7 @@ namespace aurora {
 		virtual const events::IEventDispatcher<ApplicationEvent>& AE_CALL getEventDispatcher() const override;
 
 		virtual bool AE_CALL createWindow(const ApplicationStyle& style, const std::string_view& title, const Vec2ui32& clientSize, bool fullscreen) override;
-		virtual void* AE_CALL getNativeWindow() const override;
+		virtual void* AE_CALL getNative(ApplicationNative native) const override;
 		virtual bool AE_CALL isFullscreen() const override;
 		virtual void AE_CALL toggleFullscreen() override;
 		virtual Vec4ui32 AE_CALL getBorder() const override;

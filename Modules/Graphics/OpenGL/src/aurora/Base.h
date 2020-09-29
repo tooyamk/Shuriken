@@ -8,9 +8,13 @@
 #include "GL/glew.h"
 #include <GL/GL.h>
 
-#include <optional>
+#if AE_OS == AE_OS_WIN
+#	include "GL/wglew.h"
+#elif AE_OS == AE_OS_LINUX
+#	include <GL/glx.h>
+#endif
 
-//#include "GL/eglew.h"
+#include <optional>
 
 namespace aurora::modules::graphics::win_gl {
 	struct InternalBlendFunc {

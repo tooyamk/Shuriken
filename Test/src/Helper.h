@@ -54,17 +54,17 @@ struct std_string_unordered_hasher {
 };
 
 inline std::string AE_CALL getDLLName(const std::string& name) {
-#if defined(AE_DEBUG)
+#ifdef AE_DEBUG
 #if AE_OS == AE_OS_WIN
 	return name + "d.dll";
 #else
-	return name + "d.so";
+	return "lib" + name + "d.so";
 #endif
 #else
 #if AE_OS == AE_OS_WIN
 	return name + ".dll";
 #else
-	return name + ".so";
+	return "lib" + name + ".so";
 #endif
 #endif
 }
@@ -113,7 +113,7 @@ inline ProgramSource AE_CALL readProgramSource(T&& path, ProgramStage type) {
 
 inline bool AE_CALL createProgram(IProgram& program, const std::string_view& vert, const std::string_view& frag) {
 	auto appPath = getAppPath().parent_path().u8string() + "/Resources/shaders/";
-	if (program.create(readProgramSource(appPath + vert.data(), ProgramStage::VS), readProgramSource(appPath + frag.data(), ProgramStage::PS), nullptr, 0,
+	if (!program.create(readProgramSource(appPath + vert.data(), ProgramStage::VS), readProgramSource(appPath + frag.data(), ProgramStage::PS), nullptr, 0,
 		[&appPath](const IProgram& program, ProgramStage stage, const std::string_view& name) {
 		return readFile(appPath + name.data());
 	})) {

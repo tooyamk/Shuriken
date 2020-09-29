@@ -150,8 +150,10 @@
 #include <string>
 
 
-#if defined(DEBUG) || defined(_DEBUG)
-#define AE_DEBUG
+#ifndef AE_DEBUG
+#	if defined(DEBUG) || defined(_DEBUG)
+#		define AE_DEBUG
+#	endif
 #endif
 
 
@@ -269,7 +271,7 @@ namespace std {
 
 #ifndef __cpp_lib_remove_cvref
 	template<typename T>
-	using remove_cvref_t = std::remove_reference_t<std::remove_cv_t<T>>;
+	using remove_cvref_t = std::remove_cv_t<std::remove_reference_t<T>>;
 
 	template<typename T>
 	struct remove_cvref { using type = remove_cvref_t<T>; };

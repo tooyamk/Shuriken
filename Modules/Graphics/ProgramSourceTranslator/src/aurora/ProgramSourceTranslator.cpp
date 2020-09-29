@@ -52,19 +52,28 @@ namespace aurora::modules::graphics::program_source_translator {
 	}
 
 
-	ProgramSourceTranslator::ProgramSourceTranslator(Ref* loader, const std::string_view& dxc) :
-		_loader(loader),
+	ProgramSourceTranslator::ProgramSourceTranslator() :
+		_loader(),
 		_dxcLib(nullptr),
 		_dxcompiler(nullptr) {
-		if (_dxcDll.load(dxc)) {
-			if (auto fn = (DxcCreateInstanceProc)_dxcDll.getSymbolAddress("DxcCreateInstance"); fn) {
-				IFT(fn(CLSID_DxcLibrary, __uuidof(IDxcLibrary), (void**)&_dxcLib));
-				IFT(fn(CLSID_DxcCompiler, __uuidof(IDxcCompiler), (void**)&_dxcompiler));
-			}
-		}
+		
 	}
 
 	ProgramSourceTranslator::~ProgramSourceTranslator() {
+	}
+
+	bool ProgramSourceTranslator::init(Ref* loader, const std::string_view& dxc) {
+		if (_dxcDll.load(dxc)) {
+			if (auto fn = (DxcCreateInstanceProc)_dxcDll.getSymbolAddress("DxcCreateInstance"); fn) {
+				if (auto hr = fn(CLSID_DxcLibrary, __uuidof(IDxcLibrary), (void**)&_dxcLib); hr < 0) return false;
+				if (auto hr = fn(CLSID_DxcCompiler, __uuidof(IDxcCompiler), (void**)&_dxcompiler); hr < 0) return false;
+
+				_loader = loader;
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	ProgramSource ProgramSourceTranslator::translate(const ProgramSource& source, ProgramLanguage targetLanguage, const std::string_view& targetVersion, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& handler) {
@@ -100,7 +109,10 @@ namespace aurora::modules::graphics::program_source_translator {
 			}
 
 			CComPtr<IDxcBlobEncoding> sourceBlob;
-			IFT(_dxcLib->CreateBlobWithEncodingOnHeapCopy(source.data.getSource(), source.data.getLength(), CP_UTF8, &sourceBlob));
+			if (auto hr = _dxcLib->CreateBlobWithEncodingOnHeapCopy(source.data.getSource(), source.data.getLength(), CP_UTF8, &sourceBlob); hr < 0) {
+				printdln(L"program source translate failed");
+				return std::move(dst);
+			}
 			IFTARG(sourceBlob->GetBufferSize() >= 4);
 
 			//std::wstring shaderNameUtf16;

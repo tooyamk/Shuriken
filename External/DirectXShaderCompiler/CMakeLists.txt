@@ -1,10 +1,7 @@
 __set_project()
-set(dxcompiler dxcompiler)
-set(LLVMDxcSupport LLVMDxcSupport)
-if (UNIX)
-    set(dxcompiler lib${dxcompiler})
-    set(LLVMDxcSupport lib${LLVMDxcSupport})
-endif ()
+set(dxcompiler ${CMAKE_SHARED_LIBRARY_PREFIX}dxcompiler)
+set(LLVMDxcSupport ${CMAKE_STATIC_LIBRARY_PREFIX}LLVMDxcSupport)
+
 set(LLVMDxcSupport_SLIB_PREFIX ${PROJECT_BINARY_DIR}/install/lib/${LLVMDxcSupport})
 set(LLVMDxcSupport_SLIB_R ${LLVMDxcSupport_SLIB_PREFIX}${AE_SLIB_SUFFIX})
 set(LLVMDxcSupport_SLIB_D ${LLVMDxcSupport_SLIB_PREFIX}d${AE_SLIB_SUFFIX})
@@ -115,6 +112,7 @@ ExternalProject_Add(
         ${CMAKE_COMMAND}
         -DSRC_DIR=${CMAKE_CURRENT_SOURCE_DIR}
         -DBIN_DIR=${CMAKE_CURRENT_BINARY_DIR}
+        -DDXCOMPILER_CMAKE_LISTS_FILE=${CMAKE_CURRENT_BINARY_DIR}/src/tools/clang/tools/dxcompiler/CMakeLists.txt
         -P ${CMAKE_CURRENT_SOURCE_DIR}/patch/patch.cmake
     BUILD_BYPRODUCTS 
         ${LLVMDxcSupport_SLIB_R}

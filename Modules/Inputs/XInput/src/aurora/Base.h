@@ -4,7 +4,6 @@
 #include "aurora/IApplication.h"
 
 #include <Xinput.h>
-#pragma comment(lib, "Xinput.lib")
 
 namespace aurora::modules::inputs::win_xinput {
 	struct InternalGUID {

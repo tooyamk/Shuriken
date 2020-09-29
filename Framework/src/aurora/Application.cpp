@@ -60,7 +60,7 @@ namespace aurora {
 		_style = style;
 
 #if AE_OS == AE_OS_WIN
-		_win.ins = GetModuleHandle(nullptr);
+		_win.ins = GetModuleHandleW(nullptr);
 		_win.bkBrush = CreateSolidBrush(RGB(style.backgroundColor[0], style.backgroundColor[1], style.backgroundColor[2]));
 
 		WNDCLASSEXW wnd;
@@ -221,21 +221,30 @@ namespace aurora {
 
 		_updateWindowPlacement();
 
-		printcln("state :   ", _getXWndState(), "   ", NormalState, "   ", IconicState);
+		//printcln("state :   ", _getXWndState(), "   ", NormalState, "   ", IconicState);
 
 		return true;
 #endif
 		return false;
 	}
 
-	void* Application::getNativeWindow() const {
+	void* Application::getNative(ApplicationNative native) const {
 #if AE_OS == AE_OS_WIN
-		return _win.wnd;
+		switch (native) {
+		case ApplicationNative::HINSTANCE:
+			return _win.ins;
+		case ApplicationNative::HWND:
+			return _win.wnd;
+		}
 #elif AE_OS == AE_OS_LINUX
-		return (void*)_linux.wnd;
-#else
-		return nullptr;
+		switch (native) {
+		case ApplicationNative::DISPLAY:
+			return _linux.dis;
+		case ApplicationNative::WINDOW:
+			return (void*)_linux.wnd;
+		}
 #endif
+		return nullptr;
 	}
 
 	bool Application::isFullscreen() const {

@@ -8,7 +8,7 @@ namespace aurora {
 		template<typename Fn>
 		ScopeGuard(Fn&& fn) : _fn(std::forward<Fn>(fn)) {}
 
-		ScopeGuard(ScopeGuard&& other) : _fn(std::move(other._fn)) {
+		ScopeGuard(ScopeGuard&& other) noexcept : _fn(std::move(other._fn)) {
 			other._fn = nullptr;
 		}
 

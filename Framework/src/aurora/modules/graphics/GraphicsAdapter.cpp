@@ -2,8 +2,7 @@
 #include "aurora/String.h"
 
 #if AE_OS == AE_OS_WIN
-#include <dxgi.h>
-#pragma comment(lib,"dxgi.lib")
+#	include <dxgi.h>
 #endif
 
 namespace aurora::modules::graphics {

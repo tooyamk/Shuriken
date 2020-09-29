@@ -62,8 +62,8 @@ public:
 			std::vector<RefPtr<IInputModule>> inputModules;
 
 #if AE_OS == AE_OS_WIN
-			initInputModule(inputModules, getDLLName("ae-win-direct-input"), &args);
-			initInputModule(inputModules, getDLLName("ae-win-xinput"), &args);
+			initInputModule(inputModules, "libs/" + getDLLName("ae-input-direct-input"), &args);
+			initInputModule(inputModules, "libs/" + getDLLName("ae-input-xinput"), &args);
 #endif
 
 			std::vector<RefPtr<IInputDevice>> inputDevices;

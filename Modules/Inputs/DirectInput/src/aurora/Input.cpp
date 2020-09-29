@@ -21,7 +21,7 @@ namespace aurora::modules::inputs::win_direct_input {
 	}
 
 	void Input::poll() {
-		if (!_di && FAILED(DirectInput8Create(GetModuleHandle(nullptr), DIRECTINPUT_VERSION, IID_IDirectInput8, (LPVOID*)&_di, nullptr))) return;
+		if (!_di && FAILED(DirectInput8Create((HINSTANCE)_app->getNative(ApplicationNative::HINSTANCE), DIRECTINPUT_VERSION, IID_IDirectInput8, (LPVOID*)&_di, nullptr))) return;
 
 		_di->EnumDevices(DI8DEVCLASS_ALL, _enumDevicesCallback, this, DIEDFL_ATTACHEDONLY);
 
@@ -90,7 +90,7 @@ namespace aurora::modules::inputs::win_direct_input {
 	}
 
 	HWND Input::getHWND() const {
-		return (HWND)_app->getNativeWindow();
+		return (HWND)_app->getNative(ApplicationNative::HWND);
 	}
 
 	BOOL Input::_enumDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, LPVOID pContext) {

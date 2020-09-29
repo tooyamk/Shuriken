@@ -20,14 +20,17 @@
 #include "VertexBuffer.h"
 #include "aurora/String.h"
 #include "aurora/Time.h"
-#include "GL/wglew.h"
 
 namespace aurora::modules::graphics::win_gl {
 	Graphics::Graphics() :
 		_bufferCreateUsageMask(Usage::NONE),
 		_texCreateUsageMask(Usage::NONE),
+#if AE_OS == AE_OS_WIN
 		_dc(nullptr),
 		_rc(nullptr),
+#elif AE_OS == AE_OS_LINUX
+		_context(nullptr),
+#endif
 		_majorVer(0),
 		_minorVer(0),
 		_intVer(0) {
@@ -41,18 +44,22 @@ namespace aurora::modules::graphics::win_gl {
 	}
 
 	bool Graphics::createDevice(Ref* loader, IApplication* app, IProgramSourceTranslator* trans, const GraphicsAdapter* adapter, SampleCount sampleCount, bool debug) {
-		if (_dc || !app->getNativeWindow()) return false;
+#if AE_OS == AE_OS_WIN
+		if (_dc || !app->getNative(ApplicationNative::HWND)) return false;
+#elif AE_OS == AE_OS_LINUX
+		if (_context || !app->getNative(ApplicationNative::WINDOW)) return false;
+#endif
 
 		/*
 		pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
 		pfd.nVersion = 1;
 		pfd.dwFlags =
-			PFD_DRAW_TO_WINDOW |            //¸ñÊ½Ö§³Ö´°¿Ú
-			PFD_SUPPORT_OPENGL |            //¸ñÊ½±ØÐëÖ§³ÖOpenGL
-			PFD_DOUBLEBUFFER;               //±ØÐëÖ§³ÖË«»º³å
-		pfd.iPixelType = PFD_TYPE_RGBA;     //ÉêÇëRGBA ¸ñÊ½
-		pfd.cColorBits = 24;                //Ñ¡¶¨É«²ÊÉî¶È
-		pfd.cRedBits = 0;                   //ºöÂÔRGBA
+			PFD_DRAW_TO_WINDOW |            //æ ¼å¼æ”¯æŒçª—å£
+			PFD_SUPPORT_OPENGL |            //æ ¼å¼å¿…é¡»æ”¯æŒOpenGL
+			PFD_DOUBLEBUFFER;               //å¿…é¡»æ”¯æŒåŒç¼“å†²
+		pfd.iPixelType = PFD_TYPE_RGBA;     //ç”³è¯·RGBA æ ¼å¼
+		pfd.cColorBits = 24;                //é€‰å®šè‰²å½©æ·±åº¦
+		pfd.cRedBits = 0;                   //å¿½ç•¥RGBA
 		pfd.cRedShift = 0;
 		pfd.cGreenBits = 0;
 		pfd.cGreenShift = 0;
@@ -60,54 +67,57 @@ namespace aurora::modules::graphics::win_gl {
 		pfd.cBlueShift = 0;
 		pfd.cAlphaBits = 0;
 		pfd.cAlphaShift = 0;
-		pfd.cAccumBits = 0;                 //ÎÞÀÛ¼Ó»º´æ
-		pfd.cAccumRedBits = 0;              //ºöÂÔ¾Û¼¯Î»
+		pfd.cAccumBits = 0;                 //æ— ç´¯åŠ ç¼“å­˜
+		pfd.cAccumRedBits = 0;              //å¿½ç•¥èšé›†ä½
 		pfd.cAccumGreenBits = 0;
 		pfd.cAccumBlueBits = 0;
 		pfd.cAccumAlphaBits = 0;
-		pfd.cDepthBits = 32;                //32Î»Z-»º´æ(Éî¶È»º´æ)
-		pfd.cStencilBits = 0;               //ÎÞÃÉ°å»º´æ
-		pfd.cAuxBuffers = 0;                //ÎÞ¸¨Öú»º´æ
-		pfd.iLayerType = PFD_MAIN_PLANE;    //Ö÷»æÍ¼²ã
+		pfd.cDepthBits = 32;                //32ä½Z-ç¼“å­˜(æ·±åº¦ç¼“å­˜)
+		pfd.cStencilBits = 0;               //æ— è’™æ¿ç¼“å­˜
+		pfd.cAuxBuffers = 0;                //æ— è¾…åŠ©ç¼“å­˜
+		pfd.iLayerType = PFD_MAIN_PLANE;    //ä¸»ç»˜å›¾å±‚
 		pfd.bReserved = 0;                  //Reserved
-		pfd.dwLayerMask = 0;                //ºöÂÔ²ãÕÚÕÖ
+		pfd.dwLayerMask = 0;                //å¿½ç•¥å±‚é®ç½©
 		pfd.dwVisibleMask = 0;
 		pfd.dwDamageMask = 0;
 		*/
 
-		if (!_glInit()) {
-			_release();
-			return false;
-		}
-
-		_dc = GetDC((HWND)app->getNativeWindow());
-		if (!_dc) {
-			_release();
+		if (!_glInit(app)) {
+			_release(app);
 			return false;
 		}
 
 		if (sampleCount > _deviceFeatures.maxSampleCount) sampleCount = _deviceFeatures.maxSampleCount;
 
-		int32_t iAttribIList[] = {
+#if AE_OS == AE_OS_WIN
+		_dc = GetDC((HWND)app->getNative(ApplicationNative::HWND));
+		if (!_dc) {
+			_release(app);
+			return false;
+		}
+
+		if (sampleCount > _deviceFeatures.maxSampleCount) sampleCount = _deviceFeatures.maxSampleCount;
+
+		int32_t attrList[] = {
 			WGL_SUPPORT_OPENGL_ARB, 1,
 			WGL_DRAW_TO_WINDOW_ARB, 1,
-			WGL_ACCELERATION_ARB, WGL_FULL_ACCELERATION_ARB,
-			WGL_COLOR_BITS_ARB, 32,
-			WGL_DEPTH_BITS_ARB, 24,
-			WGL_STENCIL_BITS_ARB, 8,
-			WGL_DOUBLE_BUFFER_ARB, GL_TRUE,
-			WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB,
+			WGL_ACCELERATION_ARB,   WGL_FULL_ACCELERATION_ARB,
+			WGL_COLOR_BITS_ARB,     32,
+			WGL_DEPTH_BITS_ARB,     24,
+			WGL_STENCIL_BITS_ARB,   8,
+			WGL_DOUBLE_BUFFER_ARB,  GL_TRUE,
+			WGL_PIXEL_TYPE_ARB,     WGL_TYPE_RGBA_ARB,
 			WGL_SAMPLE_BUFFERS_ARB, sampleCount > 1 ? GL_TRUE : GL_FALSE,
-			WGL_SAMPLES_ARB, sampleCount > 1 ? sampleCount : 0,
+			WGL_SAMPLES_ARB,        sampleCount > 1 ? sampleCount : 0,
 			//WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB,
 			0 };
 
 		int32_t nPixelFormat = -1;
 		uint32_t nPixCount = 0;
 
-		wglChoosePixelFormatARB(_dc, iAttribIList, nullptr, 1, &nPixelFormat, &nPixCount);
+		wglChoosePixelFormatARB(_dc, attrList, nullptr, 1, &nPixelFormat, &nPixCount);
 		if (nPixelFormat == -1) {
-			_release();
+			_release(app);
 			return false;
 		}
 
@@ -128,11 +138,46 @@ namespace aurora::modules::graphics::win_gl {
 
 		_rc = wglCreateContextAttribsARB(_dc, nullptr, attribs);
 		if (!_rc) {
-			_release();
+			_release(app);
 			return false;
 		}
 
 		wglMakeCurrent(_dc, _rc);
+#elif AE_OS == AE_OS_LINUX
+		int32_t attrListDouble[] = {
+			GLX_RGBA,       GLX_DOUBLEBUFFER,
+			GLX_RED_SIZE,   4,
+			GLX_GREEN_SIZE, 4,
+			GLX_BLUE_SIZE,  4,
+			GLX_DEPTH_SIZE, 16,
+			None
+		};
+
+		auto dis = (Display*)app->getNative(ApplicationNative::DISPLAY);
+		auto vi = glXChooseVisual(dis, DefaultScreen(dis), attrListDouble);//XVisualInfo*
+		if (vi) {
+			int32_t attrListSingle[] = {
+				GLX_RED_SIZE,   4,
+				GLX_GREEN_SIZE, 4,
+				GLX_BLUE_SIZE,  4,
+				GLX_DEPTH_SIZE, 16,
+				None
+			};
+			vi = glXChooseVisual(dis, DefaultScreen(dis), attrListSingle);
+			if (!vi) {
+				_release(app);
+				return false;
+			}
+		}
+
+		_context = glXCreateContext(dis, vi, nullptr, True);
+		XFree(vi);
+
+		glXMakeCurrent(dis, (Window)app->getNative(ApplicationNative::WINDOW), _context);
+#else
+		_release(app);
+		return false;
+#endif
 
 		glGetIntegerv(GL_MAJOR_VERSION, &_majorVer);
 		glGetIntegerv(GL_MINOR_VERSION, &_minorVer);
@@ -632,7 +677,11 @@ namespace aurora::modules::graphics::win_gl {
 	}
 
 	void Graphics::beginRender() {
+#if AE_OS == AE_OS_WIN
 		wglMakeCurrent(_dc, _rc);
+#elif AE_OS == AE_OS_LINUX
+		glXMakeCurrent((Display*)_app->getNative(ApplicationNative::DISPLAY), (Window)_app->getNative(ApplicationNative::WINDOW), _context);
+#endif
 	}
 
 	void Graphics::draw(const IVertexBufferGetter* vertexBufferGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter, const IIndexBuffer* indexBuffer, uint32_t count, uint32_t offset) {
@@ -648,14 +697,19 @@ namespace aurora::modules::graphics::win_gl {
 	}
 
 	void Graphics::endRender() {
-		//½»»»µ±Ç°»º³åÇøºÍºóÌ¨»º³åÇø
+		//äº¤æ¢å½“å‰ç¼“å†²åŒºå’ŒåŽå°ç¼“å†²åŒº
 		//SwapBuffers(_dc);
 
 		//if (wglGetCurrentContext() == _rc) wglMakeCurrent(nullptr, nullptr);
 	}
 
 	void Graphics::present() {
+#if AE_OS == AE_OS_WIN
 		SwapBuffers(_dc);
+#elif AE_OS == AE_OS_LINUX
+		glXSwapBuffers((Display*)_app->getNative(ApplicationNative::DISPLAY), (Window)_app->getNative(ApplicationNative::WINDOW));
+#endif
+		
 	}
 
 	void Graphics::setRenderTarget(IRenderTarget* rt) {
@@ -716,41 +770,32 @@ namespace aurora::modules::graphics::win_gl {
 		}
 	}
 
-	bool Graphics::_glInit() {
+	bool Graphics::_glInit(IApplication* app) {
 		auto initOk = false;
 
-		auto hIns = GetModuleHandle(nullptr);
+#if AE_OS == AE_OS_WIN
+		auto hIns = (HINSTANCE)app->getNative(ApplicationNative::HINSTANCE);
 		std::wstring className = L"Aurora OpenGL Temp Window " + String::Utf8ToUnicode(String::toString(Time::now()));
 
 		WNDCLASSEXW wnd;
 		memset(&wnd, 0, sizeof(wnd));
 		wnd.cbSize = sizeof(wnd);
 		wnd.lpfnWndProc = [](HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-			return DefWindowProc(hWnd, msg, wParam, lParam);
+			return DefWindowProcW(hWnd, msg, wParam, lParam);
 		};
 		wnd.hInstance = hIns;
 		wnd.lpszClassName = className.data();
 
 		RegisterClassExW(&wnd);
 
-		auto hwnd = CreateWindowExW(0, className.data(), L"", 0, 0, 0, 40, 40, nullptr, nullptr, nullptr, nullptr);
-		if (hwnd) {
-			auto dc = GetDC(hwnd);
-			if (dc) {
+		if (auto hwnd = CreateWindowExW(0, className.data(), L"", 0, 0, 0, 40, 40, nullptr, nullptr, nullptr, nullptr); hwnd) {
+			if (auto dc = GetDC(hwnd); dc) {
 				PIXELFORMATDESCRIPTOR pfd = { 0 };
 				if (SetPixelFormat(dc, 1, &pfd)) {
-					auto rc = wglCreateContext(dc);
-					if (rc) {
+					if (auto rc = wglCreateContext(dc); rc) {
 						wglMakeCurrent(dc, rc);
-						initOk = glewInit() == GLEW_OK;
 
-						if (glewInit() == GLEW_OK) {
-							initOk = true;
-
-							GLint val;
-							glGetIntegerv(GL_MAX_SAMPLES, &val);
-							_deviceFeatures.maxSampleCount = val;
-						}
+						initOk = _glewInit();
 
 						wglMakeCurrent(nullptr, nullptr);
 						wglDeleteContext(rc);
@@ -762,8 +807,47 @@ namespace aurora::modules::graphics::win_gl {
 		}
 
 		UnregisterClassW(className.data(), hIns);
+#elif AE_OS == AE_OS_LINUX
+		auto dis = (Display*)app->getNative(ApplicationNative::DISPLAY);
+		auto screen = DefaultScreen(dis);
+		if (auto wnd = XCreateSimpleWindow(dis, RootWindow(dis, screen), 0, 0, 100, 100, 0, 0, 0); wnd) {
+			int32_t attrList[] = {
+				GLX_RED_SIZE,   4,
+				GLX_GREEN_SIZE, 4,
+				GLX_BLUE_SIZE,  4,
+				GLX_DEPTH_SIZE, 16,
+				None
+			};
+
+			if (auto vi = glXChooseVisual(dis, screen, attrList); vi) {
+				auto context = glXCreateContext(dis, vi, nullptr, True);
+				XFree(vi);
+
+				glXMakeCurrent(dis, wnd, context);
+
+				initOk = _glewInit();
+
+				glXMakeCurrent(dis, None, nullptr);
+				glXDestroyContext(dis, context);
+			}
+
+			XDestroyWindow(dis, wnd);
+		}
+#endif
 
 		return initOk;
+	}
+
+	bool Graphics::_glewInit() {
+		if (glewInit() == GLEW_OK) {
+			GLint val;
+			glGetIntegerv(GL_MAX_SAMPLES, &val);
+			_deviceFeatures.maxSampleCount = val;
+
+			return true;
+		}
+
+		return false;
 	}
 
 	void Graphics::_setInitState() {
@@ -947,7 +1031,10 @@ namespace aurora::modules::graphics::win_gl {
 		}
 	}
 
-	void Graphics::_release() {
+	void Graphics::_release(IApplication* app) {
+		if (!app) app = _app;
+
+#if AE_OS == AE_OS_WIN
 		if (wglGetCurrentContext() == _rc) wglMakeCurrent(nullptr, nullptr);
 
 		if (_rc) {
@@ -956,9 +1043,17 @@ namespace aurora::modules::graphics::win_gl {
 		}
 
 		if (_dc) {
-			ReleaseDC((HWND)_app->getNativeWindow(), _dc);
+			ReleaseDC((HWND)app->getNative(ApplicationNative::HWND), _dc);
 			_dc = nullptr;
 		}
+#elif AE_OS == AE_OS_LINUX
+		if (glXGetCurrentContext() == _context) glXMakeCurrent((Display*)_app->getNative(ApplicationNative::DISPLAY), None, nullptr);
+
+		if (_context) {
+			glXDestroyContext((Display*)_app->getNative(ApplicationNative::DISPLAY), _context);
+			_context = nullptr;
+		}
+#endif
 
 		memset(&_internalFeatures, 0, sizeof(_internalFeatures));
 		_deviceFeatures.reset();

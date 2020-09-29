@@ -12,8 +12,9 @@ set_property(GLOBAL PROPERTY PROJECT_GLEW_DLL ${PROJECT_BINARY_DIR}/install/${AE
 include(ExternalProject)
 
 if (MSVC)
-    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /DYNAMICBASE \"msvcurt.lib\"")
-    set(CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} /DYNAMICBASE \"msvcurt.lib\"")
+set(flags "/DYNAMICBASE \"msvcurt.lib\"")
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${flags}")
+set(CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} ${flags}")
 endif ()
 
 __create_external_project_cmake_args(__CMAKE_ARGS)

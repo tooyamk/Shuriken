@@ -16,14 +16,14 @@ public:
 		if (app->createWindow(wndStype, "", Vec2ui32(800, 600), false)) {
 			RefPtr gml = new GraphicsModuleLoader();
 
-			if (gml->load(getDLLName("ae-win-gl"))) {
-			//if (gml->load(getDLLName("ae-win-d3d11"))) {
+			if (gml->load("libs/" + getDLLName("ae-graphics-gl"))) {
+			//if (gml->load("libs/" + getDLLName("ae-graphics-d3d11"))) {
 				SerializableObject args;
 
 				RefPtr gpstml = new ModuleLoader<IProgramSourceTranslator>();
-				gpstml->load(getDLLName("ae-program-source-translator"));
+				gpstml->load("libs/" + getDLLName("ae-program-source-translator"));
 
-				args.insert("dxc", getDLLName("dxcompiler"));
+				args.insert("dxc", "libs/" + getDLLName("dxcompiler"));
 				auto gpst = gpstml->create(&args);
 
 				args.insert("app", (uint64_t)&*app);

@@ -42,7 +42,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 	}
 
 	bool Graphics::createDevice(Ref* loader, IApplication* app, const GraphicsAdapter* adapter, SampleCount sampleCount, bool debug) {
-		if (_device || !app->getNativeWindow()) return false;
+		if (_device || !app->getNative(ApplicationNative::HWND)) return false;
 
 		if (adapter) {
 			return _createDevice(loader, app, *adapter, sampleCount, debug);
@@ -66,7 +66,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 
 		if (FAILED(CreateDXGIFactory1(__uuidof(IDXGIFactory2), (void**)&dxgFctory))) return false;
 		objs.add(dxgFctory);
-		dxgFctory->MakeWindowAssociation((HWND)app->getNativeWindow(), DXGI_MWA_NO_WINDOW_CHANGES | DXGI_MWA_NO_ALT_ENTER);
+		dxgFctory->MakeWindowAssociation((HWND)app->getNative(ApplicationNative::HWND), DXGI_MWA_NO_WINDOW_CHANGES | DXGI_MWA_NO_ALT_ENTER);
 
 		IDXGIAdapter* dxgAdapter = nullptr;
 		for (UINT i = 0;; ++i) {
@@ -265,7 +265,7 @@ namespace aurora::modules::graphics::win_d3d11 {
 		swapChainDesc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
 		swapChainDesc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
 		swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-		swapChainDesc.OutputWindow = (HWND)app->getNativeWindow();
+		swapChainDesc.OutputWindow = (HWND)app->getNative(ApplicationNative::HWND);
 		swapChainDesc.Windowed = true;
 		swapChainDesc.SampleDesc.Count = _backBufferSampleCount;
 		swapChainDesc.SampleDesc.Quality = 0;

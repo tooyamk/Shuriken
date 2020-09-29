@@ -13,9 +13,10 @@
 namespace aurora::modules::graphics::program_source_translator {
 	class ProgramSourceTranslator : public IProgramSourceTranslator {
 	public:
-		ProgramSourceTranslator(Ref* loader, const std::string_view& dxc);
+		ProgramSourceTranslator();
 		virtual ~ProgramSourceTranslator();
 
+		bool AE_CALL init(Ref* loader, const std::string_view& dxc);
 		virtual ProgramSource AE_CALL translate(const ProgramSource& source, ProgramLanguage targetLanguage, const std::string_view& targetVersion, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& handler) override;
 
 	protected:
@@ -67,7 +68,13 @@ namespace aurora::modules::graphics {
 			return nullptr;
 		}
 
-		return new program_source_translator::ProgramSourceTranslator(loader, dxc);
+		auto translator = new program_source_translator::ProgramSourceTranslator();
+		if (!translator->init(loader, dxc)) {
+			delete translator;
+			translator = nullptr;
+		}
+
+		return translator;
 	}
 }
 #endif

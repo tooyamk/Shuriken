@@ -1,7 +1,7 @@
 __set_project()
-set(__OUTPUT_NAME ae-win-d3d11)
-set_property(GLOBAL PROPERTY PROJECT_AE_WIN_D3D11_NAME ${PROJECT_NAME})
-set_property(GLOBAL PROPERTY PROJECT_AE_WIN_D3D11_DLL ${AE_BUILD_DIR}/${__OUTPUT_NAME}${AE_BUILD_TYPE_SUFFIX}${AE_DLL_SUFFIX})
+set(__OUTPUT_NAME ae-graphics-d3d11)
+set_property(GLOBAL PROPERTY PROJECT_AE_GRAPHICS_D3D11_NAME ${PROJECT_NAME})
+set_property(GLOBAL PROPERTY PROJECT_AE_GRAPHICS_D3D11_DLL ${AE_BUILD_DIR}/${CMAKE_SHARED_LIBRARY_PREFIX}${__OUTPUT_NAME}${AE_BUILD_TYPE_SUFFIX}${AE_DLL_SUFFIX})
 
 get_property(PROJECT_AE_CORE_NAME GLOBAL PROPERTY "PROJECT_AE_CORE_NAME")
 get_property(PROJECT_AE_CORE_SRC_DIR GLOBAL PROPERTY "PROJECT_AE_CORE_SRC_DIR")
@@ -13,7 +13,7 @@ include_directories(
     ${PROJECT_AE_CORE_SRC_DIR}/src/
     ${PROJECT_AE_FRAMEWORK_SRC_DIR}/src/
 )
-add_definitions(-DAE_MODULE_EXPORTS)
+add_definitions(${AE_MODULE_DEFINITIONS})
 file(GLOB SRC_FILES
     "src/*.h" "src/*.cpp"
     "src/*/*.h" "src/*/*.cpp")
@@ -22,6 +22,10 @@ add_dependencies(${PROJECT_NAME} ${PROJECT_AE_FRAMEWORK_NAME})
 target_link_libraries(${PROJECT_NAME}
     ${PROJECT_AE_CORE_NAME}
     ${PROJECT_AE_FRAMEWORK_NAME}
+    d3d11.lib
+    d3dcompiler.lib
+    dxgi.lib
+    dxguid.lib
 )
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER ${AE_MODULES_DIR_NAME}/Graphics)
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${__OUTPUT_NAME})

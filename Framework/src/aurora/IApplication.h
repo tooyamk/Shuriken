@@ -22,6 +22,17 @@ namespace aurora {
 	};
 
 
+	enum class ApplicationNative : uint8_t {
+#if AE_OS == AE_OS_WIN
+		HINSTANCE,
+		HWND
+#elif AE_OS == AE_OS_LINUX
+		DISPLAY,
+		WINDOW
+#endif
+	};
+
+
 	class AE_FW_DLL IApplication : public Ref {
 	public:
 		virtual ~IApplication() {};
@@ -30,7 +41,7 @@ namespace aurora {
 		virtual const events::IEventDispatcher<ApplicationEvent>& AE_CALL getEventDispatcher() const = 0;
 
 		virtual bool AE_CALL createWindow(const ApplicationStyle& style, const std::string_view& title, const Vec2ui32& clientSize, bool fullscreen) = 0;
-		virtual void* AE_CALL getNativeWindow() const = 0;
+		virtual void* AE_CALL getNative(ApplicationNative native) const = 0;
 		virtual bool AE_CALL isFullscreen() const = 0;
 		virtual void AE_CALL toggleFullscreen() = 0;
 		virtual Vec4ui32 AE_CALL getBorder() const = 0;

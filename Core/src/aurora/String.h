@@ -295,10 +295,13 @@ namespace aurora {
 				switch (base) {
 				case 8:
 					snprintf(buf, sizeof(buf), "%hho", value);
+					break;
 				case 16:
 					snprintf(buf, sizeof(buf), "%hhx", value);
+					break;
 				default:
 					snprintf(buf, sizeof(buf), "%hhu", value);
+					break;
 				}
 			} else if constexpr (std::is_same_v<T, int16_t>) {
 				snprintf(buf, sizeof(buf), "%hd", value);
@@ -306,10 +309,13 @@ namespace aurora {
 				switch (base) {
 				case 8:
 					snprintf(buf, sizeof(buf), "%ho", value);
+					break;
 				case 16:
 					snprintf(buf, sizeof(buf), "%hx", value);
+					break;
 				default:
 					snprintf(buf, sizeof(buf), "%hu", value);
+					break;
 				}
 			} else if constexpr (std::is_same_v<T, int32_t>) {
 				snprintf(buf, sizeof(buf), "%d", value);
@@ -317,21 +323,52 @@ namespace aurora {
 				switch (base) {
 				case 8:
 					snprintf(buf, sizeof(buf), "%o", value);
+					break;
 				case 16:
 					snprintf(buf, sizeof(buf), "%x", value);
+					break;
 				default:
 					snprintf(buf, sizeof(buf), "%u", value);
+					break;
 				}
 			} else if constexpr (std::is_same_v<T, int64_t>) {
-				snprintf(buf, sizeof(buf), "%lld", value);
+				if constexpr (sizeof(long) == sizeof(int64_t)) {
+					snprintf(buf, sizeof(buf), "%ld", value);
+				} else {
+					snprintf(buf, sizeof(buf), "%lld", value);
+				}
 			} else if constexpr (std::is_same_v<T, uint64_t>) {
 				switch (base) {
 				case 8:
-					snprintf(buf, sizeof(buf), "%llo", value);
+				{
+					if constexpr (sizeof(long) == sizeof(uint64_t)) {
+						snprintf(buf, sizeof(buf), "%lo", value);
+					} else {
+						snprintf(buf, sizeof(buf), "%llo", value);
+					}
+
+					break;
+				}
 				case 16:
-					snprintf(buf, sizeof(buf), "%llx", value);
+				{
+					if constexpr (sizeof(long) == sizeof(uint64_t)) {
+						snprintf(buf, sizeof(buf), "%lx", value);
+					} else {
+						snprintf(buf, sizeof(buf), "%llx", value);
+					}
+
+					break;
+				}
 				default:
-					snprintf(buf, sizeof(buf), "%llu", value);
+				{
+					if constexpr (sizeof(long) == sizeof(uint64_t)) {
+						snprintf(buf, sizeof(buf), "%lu", value);
+					} else {
+						snprintf(buf, sizeof(buf), "%llu", value);
+					}
+
+					break;
+				}
 				}
 			}
 

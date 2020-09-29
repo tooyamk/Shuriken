@@ -169,8 +169,13 @@ namespace aurora::modules::graphics::win_gl {
 		InternalFeatures _internalFeatures;
 		GraphicsDeviceFeatures _deviceFeatures;
 
+
+#if AE_OS == AE_OS_WIN
 		HDC _dc;
 		HGLRC _rc;
+#elif AE_OS == AE_OS_LINUX
+		GLXContext _context;
+#endif
 
 		GLint _majorVer;
 		GLint _minorVer;
@@ -183,9 +188,10 @@ namespace aurora::modules::graphics::win_gl {
 
 		events::EventDispatcher<GraphicsEvent> _eventDispatcher;
 
-		bool AE_CALL _glInit();
+		bool AE_CALL _glInit(IApplication* app);
+		bool AE_CALL _glewInit();
 		void AE_CALL _setInitState();
-		void AE_CALL _release();
+		void AE_CALL _release(IApplication* app = nullptr);
 		void AE_CALL _resize(const Vec2ui32& size);
 
 		void AE_CALL _setBlendState(BlendState& state, const Vec4f32& constantFactors, uint32_t sampleMask);
