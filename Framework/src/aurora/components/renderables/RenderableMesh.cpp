@@ -7,12 +7,14 @@ namespace aurora::components::renderables {
 	}
 
 	void RenderableMesh::collectRenderData(render::IRenderDataCollector& collector) const {
-		if (_mesh && !_mesh->getVertexBuffers().isEmpty() && _mesh->getIndexBuffer()) {
-			collector.data.meshGetter.set(&RenderableMesh::_meshGetter, (void*)this);
+		if (_mesh) {
+			if (auto buffer = _mesh->getBuffer(); buffer && !buffer->getVertices().isEmpty()) {
+				collector.data.mesh.set(&RenderableMesh::_meshGetter, (void*)this);
 
-			collector.commit();
+				collector.commit();
 
-			collector.data.meshGetter = nullptr;
+				collector.data.mesh = nullptr;
+			}
 		}
 	}
 

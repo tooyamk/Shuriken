@@ -41,7 +41,7 @@ namespace aurora::components::renderables {
 			return _color;
 		}
 		inline void AE_CALL setColor(const Vec4f32& color) {
-			_color.set(color);
+			_color = color;
 		}
 
 		inline Vec2f32& AE_CALL getAnchor() {
@@ -51,7 +51,7 @@ namespace aurora::components::renderables {
 			return _anchor;
 		}
 		inline void AE_CALL setAnchor(const Vec2f32& anchor) {
-			_anchor.set(anchor);
+			_anchor = anchor;
 		}
 
 	protected:

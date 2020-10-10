@@ -1,6 +1,7 @@
 #pragma once
 
 #include "aurora/render/IRenderer.h"
+#include "aurora/Mesh.h"
 #include "aurora/ShaderDefine.h"
 #include "aurora/ShaderParameter.h"
 #include "aurora/modules/graphics/IGraphicsModule.h"
@@ -9,7 +10,6 @@
 
 namespace aurora {
 	class Material;
-	class Mesh;
 }
 
 namespace aurora::render {
@@ -103,30 +103,32 @@ namespace aurora::render {
 			}
 		}
 
-		void AE_CALL _render(Material* material, RenderState* state, const Mesh* mesh, ShaderDefineGetterStack& shaderDefineStack, ShaderParameterGetterStack& shaderParameterStack, 
+		void AE_CALL _render(Material* material, RenderState* state, const MeshBuffer* meshBuffer, ShaderDefineGetterStack& shaderDefineStack, ShaderParameterGetterStack& shaderParameterStack, 
 			modules::graphics::IBlendState* defaultBlendState, modules::graphics::IDepthStencilState* defaultDepthStencilState);
 
 		template<size_t N>
 		void AE_CALL _render(RenderData* rd, ShaderDefineGetterStack& shaderDefineStack, ShaderParameterGetterStack& shaderParameterStack) {
-			if (auto mesh = rd->meshGetter(); mesh) {
-				if constexpr (N > 0) {
-					_switchLight(0);
-					_render(rd->material, rd->state, mesh, shaderDefineStack, shaderParameterStack, _defaultBaseBlendState, _defaultBaseDepthStencilState);
+			if (auto mesh = rd->mesh(); mesh) {
+				if (auto meshBuffer = mesh->getBuffer(); meshBuffer) {
+					if constexpr (N > 0) {
+						_switchLight(0);
+						_render(rd->material, rd->state, meshBuffer, shaderDefineStack, shaderParameterStack, _defaultBaseBlendState, _defaultBaseDepthStencilState);
 
-					if constexpr (N > 1) {
-						if (rd->subPasses && !rd->subPasses->empty()) {
-							for (auto& p : *rd->subPasses) {
-								if (p && p->tags && p->tags->has(_addTag)) {
-									for (size_t i = 1; i < _numLights; ++i) {
-										_switchLight(i);
-										_render(p->material, p->state, mesh, shaderDefineStack, shaderParameterStack, _defaultAddBlendState, _defaultAddDepthStencilState);
+						if constexpr (N > 1) {
+							if (rd->subPasses && !rd->subPasses->empty()) {
+								for (auto& p : *rd->subPasses) {
+									if (p && p->tags && p->tags->has(_addTag)) {
+										for (size_t i = 1; i < _numLights; ++i) {
+											_switchLight(i);
+											_render(p->material, p->state, meshBuffer, shaderDefineStack, shaderParameterStack, _defaultAddBlendState, _defaultAddDepthStencilState);
+										}
 									}
 								}
 							}
 						}
+					} else {
+						_render(rd->material, rd->state, meshBuffer, shaderDefineStack, shaderParameterStack, _defaultBaseBlendState, _defaultBaseDepthStencilState);
 					}
-				} else {
-					_render(rd->material, rd->state, mesh, shaderDefineStack, shaderParameterStack, _defaultBaseBlendState, _defaultBaseDepthStencilState);
 				}
 			}
 		}

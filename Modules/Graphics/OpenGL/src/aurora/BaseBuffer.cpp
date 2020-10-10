@@ -18,7 +18,7 @@ namespace aurora::modules::graphics::gl {
 		releaseBuffer();
 	}
 
-	bool BaseBuffer::create(Graphics& graphics, uint32_t size, Usage resUsage, const void* data, GLenum internalUsage) {
+	bool BaseBuffer::create(Graphics& graphics, size_t size, Usage resUsage, const void* data, GLenum internalUsage) {
 		releaseBuffer();
 
 		this->resUsage = resUsage & graphics.getBufferCreateUsageMask();
@@ -109,10 +109,10 @@ namespace aurora::modules::graphics::gl {
 		}
 	}
 
-	uint32_t BaseBuffer::read(uint32_t offset, void* dst, uint32_t dstLen) {
+	size_t BaseBuffer::read(size_t offset, void* dst, size_t dstLen) {
 		if ((mapUsage & Usage::MAP_READ)== Usage::MAP_READ) {
 			if (dst && dstLen && offset < size) {
-				dstLen = std::min<uint32_t>(dstLen, size - offset);
+				dstLen = std::min<size_t>(dstLen, size - offset);
 				memcpy(dst, (uint8_t*)mapData + offset, dstLen);
 				return dstLen;
 			}
@@ -121,11 +121,11 @@ namespace aurora::modules::graphics::gl {
 		return -1;
 	}
 
-	uint32_t BaseBuffer::write(uint32_t offset, const void* data, uint32_t length) {
+	size_t BaseBuffer::write(size_t offset, const void* data, size_t length) {
 		if ((mapUsage & Usage::MAP_WRITE) == Usage::MAP_WRITE) {
 			if (data && length && offset < size) {
 				dirty = true;
-				length = std::min<uint32_t>(length, size - offset);
+				length = std::min<size_t>(length, size - offset);
 				memcpy((uint8_t*)mapData + offset, data, length);
 				return length;
 			}
@@ -134,10 +134,10 @@ namespace aurora::modules::graphics::gl {
 		return -1;
 	}
 
-	uint32_t BaseBuffer::update(uint32_t offset, const void* data, uint32_t length) {
+	size_t BaseBuffer::update(size_t offset, const void* data, size_t length) {
 		if ((resUsage & Usage::UPDATE) == Usage::UPDATE) {
 			if (data && length && offset < size) {
-				length = std::min<uint32_t>(length, size - offset);
+				length = std::min<size_t>(length, size - offset);
 
 				glBindBuffer(bufferType, handle);
 				glBufferSubData(bufferType, offset, length, data);

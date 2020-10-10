@@ -1,6 +1,6 @@
 #pragma once
 
-#include "aurora/MeshResource.h"
+#include "aurora/Mesh.h"
 
 namespace aurora::extensions {
 	class AE_EXTENSION_DLL FBXConverter {

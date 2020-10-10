@@ -102,10 +102,6 @@
 #	error compile aurora library need c++17
 #endif
 
-#if AE_CPP_VER <= AE_CPP_VER_17
-#	define consteval constexpr
-#endif
-
 
 #define ae_internal_public public
 

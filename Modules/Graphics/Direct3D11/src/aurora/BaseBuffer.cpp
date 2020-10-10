@@ -11,7 +11,7 @@ namespace aurora::modules::graphics::d3d11 {
 	BaseBuffer::~BaseBuffer() {
 	}
 
-	bool BaseBuffer::create(Graphics& graphics, uint32_t size, Usage resUsage, const void* data, uint32_t dataSize) {
+	bool BaseBuffer::create(Graphics& graphics, size_t size, Usage resUsage, const void* data, size_t dataSize) {
 		releaseBuffer(graphics);
 
 		this->size = size;
@@ -52,11 +52,11 @@ namespace aurora::modules::graphics::d3d11 {
 		BaseResource::unmap(graphics, mapUsage, 0);
 	}
 
-	uint32_t BaseBuffer::read(uint32_t offset, void* dst, uint32_t dstLen) {
+	size_t BaseBuffer::read(size_t offset, void* dst, size_t dstLen) {
 		if ((mapUsage & Usage::MAP_READ) == Usage::MAP_READ) {
 			if (!dstLen || offset >= size) return 0;
 			if (dst) {
-				auto readLen = std::min<uint32_t>(size - offset, dstLen);
+				auto readLen = std::min<size_t>(size - offset, dstLen);
 				memcpy(dst, (uint8_t*)mappedRes.pData + offset, readLen);
 				return readLen;
 			}
@@ -64,10 +64,10 @@ namespace aurora::modules::graphics::d3d11 {
 		return -1;
 	}
 
-	uint32_t BaseBuffer::write(Graphics& graphics, uint32_t offset, const void* data, uint32_t length) {
+	size_t BaseBuffer::write(Graphics& graphics, size_t offset, const void* data, size_t length) {
 		if ((mapUsage & Usage::MAP_WRITE) == Usage::MAP_WRITE) {
 			if (data && length && offset < size) {
-				length = std::min<uint32_t>(length, size - offset);
+				length = std::min<size_t>(length, size - offset);
 				memcpy((uint8_t*)mappedRes.pData + offset, data, length);
 				return length;
 			}
@@ -76,10 +76,10 @@ namespace aurora::modules::graphics::d3d11 {
 		return -1;
 	}
 
-	uint32_t BaseBuffer::update(Graphics& graphics, uint32_t offset, const void* data, uint32_t length) {
+	size_t BaseBuffer::update(Graphics& graphics, size_t offset, const void* data, size_t length) {
 		if ((resUsage & Usage::UPDATE) == Usage::UPDATE) {
 			if (data && length && offset < size) {
-				length = std::min<uint32_t>(length, size - offset);
+				length = std::min<size_t>(length, size - offset);
 				if (length == size) {
 					graphics.getContext()->UpdateSubresource(handle, 0, nullptr, data, 0, 0);
 				} else {

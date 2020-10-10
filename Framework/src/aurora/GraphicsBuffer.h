@@ -32,7 +32,7 @@ namespace aurora {
 			return _cur ? _cur->target->getNative() : nullptr;
 		}
 
-		bool AE_CALL create(uint32_t size, modules::graphics::Usage bufferUsage, const void* data, uint32_t dataSize) {
+		bool AE_CALL create(size_t size, modules::graphics::Usage bufferUsage, const void* data, size_t dataSize) {
 			destroy();
 
 			if (auto buf = _createBuffer(); buf) {
@@ -51,7 +51,7 @@ namespace aurora {
 			return false;
 		}
 
-		inline uint32_t AE_CALL getSize() const {
+		inline size_t AE_CALL getSize() const {
 			return _cur ? _cur->target->getSize() : 0;
 		}
 
@@ -115,15 +115,15 @@ namespace aurora {
 			if (_cur) _cur->target->unmap();
 		}
 
-		inline uint32_t AE_CALL read(uint32_t offset, void* dst, uint32_t dstLen) {
+		inline size_t AE_CALL read(size_t offset, void* dst, size_t dstLen) {
 			return _cur ? _cur->target->read(offset, dst, dstLen) : -1;
 		}
 
-		inline uint32_t AE_CALL write(uint32_t offset, const void* data, uint32_t length) {
+		inline size_t AE_CALL write(size_t offset, const void* data, size_t length) {
 			return _cur ? _cur->target->write(offset, data, length) : -1;
 		}
 
-		inline uint32_t AE_CALL update(uint32_t offset, const void* data, uint32_t length) {
+		inline size_t AE_CALL update(size_t offset, const void* data, size_t length) {
 			return _cur ? _cur->target->update(offset, data, length) : -1;
 		}
 
@@ -187,14 +187,14 @@ namespace aurora {
 
 		virtual bool AE_CALL isCreated() const override;
 		virtual const void* AE_CALL getNative() const override;
-		virtual bool AE_CALL create(uint32_t size, modules::graphics::Usage bufferUsage, const void* data = nullptr, uint32_t dataSize = 0) override;
-		virtual uint32_t AE_CALL getSize() const override;
+		virtual bool AE_CALL create(size_t size, modules::graphics::Usage bufferUsage, const void* data = nullptr, size_t dataSize = 0) override;
+		virtual size_t AE_CALL getSize() const override;
 		virtual modules::graphics::Usage AE_CALL getUsage() const override;
 		virtual modules::graphics::Usage AE_CALL map(modules::graphics::Usage expectMapUsage) override;
 		virtual void AE_CALL unmap() override;
-		virtual uint32_t AE_CALL read(uint32_t offset, void* dst, uint32_t dstLen) override;
-		virtual uint32_t AE_CALL write(uint32_t offset, const void* data, uint32_t length) override;
-		virtual uint32_t AE_CALL update(uint32_t offset, const void* data, uint32_t length) override;
+		virtual size_t AE_CALL read(size_t offset, void* dst, size_t dstLen) override;
+		virtual size_t AE_CALL write(size_t offset, const void* data, size_t length) override;
+		virtual size_t AE_CALL update(size_t offset, const void* data, size_t length) override;
 		virtual const modules::graphics::VertexFormat& AE_CALL getFormat() const override;
 		virtual void AE_CALL setFormat(const modules::graphics::VertexFormat& format) override;
 		//virtual void AE_CALL flush() override;
@@ -215,14 +215,14 @@ namespace aurora {
 
 		virtual bool AE_CALL isCreated() const override;
 		virtual const void* AE_CALL getNative() const override;
-		virtual bool AE_CALL create(uint32_t size, modules::graphics::Usage bufferUsage, const void* data = nullptr, uint32_t dataSize = 0) override;
-		virtual uint32_t AE_CALL getSize() const override;
+		virtual bool AE_CALL create(size_t size, modules::graphics::Usage bufferUsage, const void* data = nullptr, size_t dataSize = 0) override;
+		virtual size_t AE_CALL getSize() const override;
 		virtual modules::graphics::Usage AE_CALL getUsage() const override;
 		virtual modules::graphics::Usage AE_CALL map(modules::graphics::Usage expectMapUsage) override;
 		virtual void AE_CALL unmap() override;
-		virtual uint32_t AE_CALL read(uint32_t offset, void* dst, uint32_t dstLen) override;
-		virtual uint32_t AE_CALL write(uint32_t offset, const void* data, uint32_t length) override;
-		virtual uint32_t AE_CALL update(uint32_t offset, const void* data, uint32_t length) override;
+		virtual size_t AE_CALL read(size_t offset, void* dst, size_t dstLen) override;
+		virtual size_t AE_CALL write(size_t offset, const void* data, size_t length) override;
+		virtual size_t AE_CALL update(size_t offset, const void* data, size_t length) override;
 		virtual modules::graphics::IndexType AE_CALL getFormat() const override;
 		virtual void AE_CALL setFormat(modules::graphics::IndexType type) override;
 		//virtual void AE_CALL flush() override;
@@ -243,14 +243,14 @@ namespace aurora {
 
 		virtual bool AE_CALL isCreated() const override;
 		virtual const void* AE_CALL getNative() const override;
-		virtual bool AE_CALL create(uint32_t size, modules::graphics::Usage bufferUsage, const void* data = nullptr, uint32_t dataSize = 0) override;
-		virtual uint32_t AE_CALL getSize() const override;
+		virtual bool AE_CALL create(size_t size, modules::graphics::Usage bufferUsage, const void* data = nullptr, size_t dataSize = 0) override;
+		virtual size_t AE_CALL getSize() const override;
 		virtual modules::graphics::Usage AE_CALL getUsage() const override;
 		virtual modules::graphics::Usage AE_CALL map(modules::graphics::Usage expectMapUsage) override;
 		virtual void AE_CALL unmap() override;
-		virtual uint32_t AE_CALL read(uint32_t offset, void* dst, uint32_t dstLen) override;
-		virtual uint32_t AE_CALL write(uint32_t offset, const void* data, uint32_t length) override;
-		virtual uint32_t AE_CALL update(uint32_t offset, const void* data, uint32_t length) override;
+		virtual size_t AE_CALL read(size_t offset, void* dst, size_t dstLen) override;
+		virtual size_t AE_CALL write(size_t offset, const void* data, size_t length) override;
+		virtual size_t AE_CALL update(size_t offset, const void* data, size_t length) override;
 		//virtual void AE_CALL flush() override;
 		virtual bool AE_CALL isSyncing() const override;
 		virtual void AE_CALL destroy() override;

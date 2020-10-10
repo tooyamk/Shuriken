@@ -87,7 +87,7 @@ namespace aurora {
 		static DWORD AE_CALL _getWindowExStyle(bool fullscreen);
 
 		template<bool FS>
-		inline static consteval UINT AE_CALL _getWindowPosFlags() {
+		inline static constexpr UINT AE_CALL _getWindowPosFlags() {
 			UINT flags = SWP_NOACTIVATE;
 			if constexpr (FS) {
 				flags |= SWP_NOCOPYBITS;

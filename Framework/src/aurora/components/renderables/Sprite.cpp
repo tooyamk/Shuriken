@@ -10,11 +10,11 @@ namespace aurora::components::renderables {
 
 	void Sprite::collectRenderData(render::IRenderDataCollector& collector) const {
 		if (_frame) {
-			collector.data.meshGetter.set(&Sprite::_meshGetter, (void*)this);
+			collector.data.mesh.set(&Sprite::_meshGetter, (void*)this);
 
 			collector.commit();
 
-			collector.data.meshGetter = nullptr;
+			collector.data.mesh = nullptr;
 		}
 	}
 

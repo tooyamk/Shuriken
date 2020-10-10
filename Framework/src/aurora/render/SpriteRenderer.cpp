@@ -1,4 +1,5 @@
 #include "SpriteRenderer.h"
+#include "aurora/Mesh.h"
 #include "aurora/components/renderables/IRenderable.h"
 #include "aurora/render/IRenderDataCollector.h"
 
@@ -34,15 +35,53 @@ namespace aurora::render {
 	}
 
 	bool SpriteRenderer::collectRenderDataConfirm(IRenderDataCollector& collector) const {
-		return collector.data.meshGetter;
+		return collector.data.mesh;
 	}
 
 	void SpriteRenderer::preRender(const RenderEnvironment& env) {
 	}
 
-	void SpriteRenderer::render(RenderData* const* data, size_t count, ShaderDefineGetterStack& shaderDefineStack, ShaderParameterGetterStack& shaderParameterStack) {
+	void SpriteRenderer::render(RenderData*const* data, size_t count, ShaderDefineGetterStack& shaderDefineStack, ShaderParameterGetterStack& shaderParameterStack) {
+		Material* material = nullptr;
+
+		for (size_t i = 0; i < count; ++i) {
+			auto rd = data[i];
+
+			auto mat = rd->material;
+			if (!mat) continue;
+
+			if (auto mesh = rd->mesh(); mesh) {
+				if (auto meshResource = mesh->getResource(); meshResource) {
+					if (mat != material) {
+						_flush(material);
+						material = mat;
+
+						auto shader = material->getShader();
+						if (!shader) {
+							material = nullptr;
+							continue;
+						}
+
+						{
+							//StackPopper<ShaderDefineGetterStack, StackPopperFlag::MULTI_POP> popper(shaderDefineStack, shaderDefineStack.push(&*_shaderDefines, material->getDefines()));
+
+							//program = shader->select(&shaderDefineStack);
+							//if (!program) return;
+						}
+					}
+				}
+			}
+		}
+
+		_flush(material);
 	}
 
 	void SpriteRenderer::postRender() {
+	}
+
+	void SpriteRenderer::_flush(Material* matrial) {
+		if (matrial) {
+
+		}
 	}
 }

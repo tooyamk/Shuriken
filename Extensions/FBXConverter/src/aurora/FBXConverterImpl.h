@@ -3,7 +3,7 @@
 #include "FBXConverter.h"
 #include "aurora/ByteArray.h"
 #include "aurora/Debug.h"
-#include "aurora/MeshResource.h"
+#include "aurora/Mesh.h"
 #include "aurora/ShaderPredefine.h"
 #include "boost/preprocessor.hpp"
 #include "zlib.h"
@@ -492,13 +492,13 @@ inline static __NAME__ get##__NAME__(const std::string_view& name) { \
 								}
 							}
 
-							if (mesh->indexResource) {
-								switch (mesh->indexResource->type) {
+							if (mesh->index) {
+								switch (mesh->index->type) {
 								case modules::graphics::IndexType::UI16:
-									_transformXZY<2>(mesh->indexResource->data);
+									_transformXZY<2>(mesh->index->data);
 									break;
 								case modules::graphics::IndexType::UI32:
-									_transformXZY<4>(mesh->indexResource->data);
+									_transformXZY<4>(mesh->index->data);
 									break;
 								default:
 									break;
@@ -657,7 +657,7 @@ inline static __NAME__ get##__NAME__(const std::string_view& name) { \
 						vs->data = _buildPosition<float64_t, float32_t>(p, sourceIndices);
 					}
 
-					mesh.setVertexSource(ShaderPredefine::POSITION0, vs);
+					mesh.setVertex(ShaderPredefine::POSITION0, vs);
 
 					if (auto count = sourceIndices.size(); p.rawVal.size <= BitUInt<16>::MAX) {
 						_buildIndices<uint16_t>(mesh, faces, count, triangulate, numTriangulateIndices);
@@ -776,7 +776,7 @@ inline static __NAME__ get##__NAME__(const std::string_view& name) { \
 				is->type = modules::graphics::IndexType::UI32;
 			}
 			is->data = std::move(dst);
-			mesh.indexResource = is;
+			mesh.index = is;
 		}
 
 		template<Node::Type Type>
@@ -815,7 +815,7 @@ inline static __NAME__ get##__NAME__(const std::string_view& name) { \
 				if (vs) {
 					vs->format.size = modules::graphics::VertexSize::THREE;
 					vs->format.type = modules::graphics::VertexType::F32;
-					mesh.setVertexSource(key, vs);
+					mesh.setVertex(key, vs);
 				}
 			}
 		}
@@ -870,7 +870,7 @@ inline static __NAME__ get##__NAME__(const std::string_view& name) { \
 				if (vs) {
 					vs->format.size = modules::graphics::VertexSize::TWO;
 					vs->format.type = modules::graphics::VertexType::F32;
-					mesh.setVertexSource(ShaderPredefine::UV0, vs);
+					mesh.setVertex(ShaderPredefine::UV0, vs);
 				}
 			}
 		}

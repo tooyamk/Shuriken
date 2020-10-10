@@ -72,14 +72,14 @@ namespace aurora::modules::graphics {
 
 		virtual bool AE_CALL isCreated() const = 0;
 		virtual const void* AE_CALL getNative() const = 0;
-		virtual bool AE_CALL create(uint32_t size, Usage bufferUsage, const void* data = nullptr, uint32_t dataSize = 0) = 0;
-		virtual uint32_t AE_CALL getSize() const = 0;
+		virtual bool AE_CALL create(size_t size, Usage bufferUsage, const void* data = nullptr, size_t dataSize = 0) = 0;
+		virtual size_t AE_CALL getSize() const = 0;
 		virtual Usage AE_CALL getUsage() const = 0;
 		virtual Usage AE_CALL map(Usage expectMapUsage) = 0;
 		virtual void AE_CALL unmap() = 0;
-		virtual uint32_t AE_CALL read(uint32_t offset, void* dst, uint32_t dstLen) = 0;
-		virtual uint32_t AE_CALL write(uint32_t offset, const void* data, uint32_t length) = 0;
-		virtual uint32_t AE_CALL update(uint32_t offset, const void* data, uint32_t length) = 0;
+		virtual size_t AE_CALL read(size_t offset, void* dst, size_t dstLen) = 0;
+		virtual size_t AE_CALL write(size_t offset, const void* data, size_t length) = 0;
+		virtual size_t AE_CALL update(size_t offset, const void* data, size_t length) = 0;
 		//virtual void AE_CALL flush() = 0;
 		virtual bool AE_CALL isSyncing() const = 0;
 		virtual void AE_CALL destroy() = 0;

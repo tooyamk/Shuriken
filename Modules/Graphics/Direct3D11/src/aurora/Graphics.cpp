@@ -41,32 +41,35 @@ namespace aurora::modules::graphics::d3d11 {
 		_release();
 	}
 
-	bool Graphics::createDevice(Ref* loader, IApplication* app, const GraphicsAdapter* adapter, SampleCount sampleCount, bool debug) {
-		if (_device || !app->getNative(ApplicationNative::HWND)) return false;
+	bool Graphics::createDevice(const CreateConfig& conf) {
+		if (_device || !conf.app || !conf.app->getNative(ApplicationNative::HWND)) return false;
 
-		if (adapter) {
-			return _createDevice(loader, app, *adapter, sampleCount, debug);
+		if (conf.adapter) {
+			return _createDevice(conf);
 		} else {
 			std::vector<GraphicsAdapter> adapters;
 			GraphicsAdapter::query(adapters);
 			std::vector<uint32_t> indices;
 			GraphicsAdapter::autoSort(adapters, indices);
 
+			auto conf2 = conf;
+
 			for (auto& idx : indices) {
-				if (_createDevice(loader, app, adapters[idx], sampleCount, debug)) return true;
+				conf2.adapter = &adapters[idx];
+				if (_createDevice(conf2)) return true;
 			}
 			return false;
 		}
 	}
 
-	bool Graphics::_createDevice(Ref* loader, IApplication* app, const GraphicsAdapter& adapter, SampleCount sampleCount, bool debug) {
+	bool Graphics::_createDevice(const CreateConfig& conf) {
 		DXObjGuard objs;
 
 		IDXGIFactory2* dxgFctory = nullptr;
 
 		if (FAILED(CreateDXGIFactory1(__uuidof(IDXGIFactory2), (void**)&dxgFctory))) return false;
 		objs.add(dxgFctory);
-		dxgFctory->MakeWindowAssociation((HWND)app->getNative(ApplicationNative::HWND), DXGI_MWA_NO_WINDOW_CHANGES | DXGI_MWA_NO_ALT_ENTER);
+		dxgFctory->MakeWindowAssociation((HWND)conf.app->getNative(ApplicationNative::HWND), DXGI_MWA_NO_WINDOW_CHANGES | DXGI_MWA_NO_ALT_ENTER);
 
 		IDXGIAdapter* dxgAdapter = nullptr;
 		for (UINT i = 0;; ++i) {
@@ -74,7 +77,7 @@ namespace aurora::modules::graphics::d3d11 {
 			objs.add(dxgAdapter);
 
 			DXGI_ADAPTER_DESC desc = { 0 };
-			if (FAILED(dxgAdapter->GetDesc(&desc)) || desc.DeviceId != adapter.deviceId || desc.VendorId != adapter.vendorId) {
+			if (FAILED(dxgAdapter->GetDesc(&desc)) || desc.DeviceId != conf.adapter->deviceId || desc.VendorId != conf.adapter->vendorId) {
 				dxgAdapter = nullptr;
 				continue;
 			} else {
@@ -145,7 +148,7 @@ namespace aurora::modules::graphics::d3d11 {
 		uint32_t totalFeatureLevels = ARRAYSIZE(featureLevels);
 
 		uint32_t creationFlags = 0;
-		if (debug) creationFlags |= D3D11_CREATE_DEVICE_DEBUG;
+		if (conf.debug) creationFlags |= D3D11_CREATE_DEVICE_DEBUG;
 
 		/*
 		for (uint32_t i = 0; i < totalDriverTypes; ++i) {
@@ -252,9 +255,9 @@ namespace aurora::modules::graphics::d3d11 {
 			if (numQualityLevels) _deviceFeatures.maxSampleCount = i;
 		}
 
-		auto size = app->getCurrentClientSize();
+		auto size = conf.app->getCurrentClientSize();
 
-		_backBufferSampleCount = sampleCount > _deviceFeatures.maxSampleCount ? _deviceFeatures.maxSampleCount : sampleCount;
+		_backBufferSampleCount = conf.sampleCount > _deviceFeatures.maxSampleCount ? _deviceFeatures.maxSampleCount : conf.sampleCount;
 		DXGI_SWAP_CHAIN_DESC swapChainDesc = { 0 };
 		swapChainDesc.BufferCount = 1;
 		swapChainDesc.BufferDesc.Width = size[0];
@@ -265,7 +268,7 @@ namespace aurora::modules::graphics::d3d11 {
 		swapChainDesc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
 		swapChainDesc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
 		swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-		swapChainDesc.OutputWindow = (HWND)app->getNative(ApplicationNative::HWND);
+		swapChainDesc.OutputWindow = (HWND)conf.app->getNative(ApplicationNative::HWND);
 		swapChainDesc.Windowed = true;
 		swapChainDesc.SampleDesc.Count = _backBufferSampleCount;
 		swapChainDesc.SampleDesc.Quality = 0;
@@ -291,8 +294,8 @@ namespace aurora::modules::graphics::d3d11 {
 		_defaultRasterizerState = new RasterizerState(*this, true);
 		_backDepthStencil = new DepthStencil(*this, true);
 
-		_loader = loader;
-		_app = app;
+		_loader = conf.loader;
+		_app = conf.app;
 
 		_resize(size);
 

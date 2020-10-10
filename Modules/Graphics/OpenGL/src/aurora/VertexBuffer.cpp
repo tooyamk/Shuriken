@@ -20,11 +20,11 @@ namespace aurora::modules::graphics::gl {
 		return this;
 	}
 
-	bool VertexBuffer::create(uint32_t size, Usage bufferUsage, const void* data, uint32_t dataSize) {
+	bool VertexBuffer::create(size_t size, Usage bufferUsage, const void* data, size_t dataSize) {
 		return _baseBuffer.create(*_graphics.get<Graphics>(), size, bufferUsage, data);
 	}
 
-	uint32_t VertexBuffer::getSize() const {
+	size_t VertexBuffer::getSize() const {
 		return _baseBuffer.size;
 	}
 
@@ -40,15 +40,15 @@ namespace aurora::modules::graphics::gl {
 		_baseBuffer.unmap();
 	}
 
-	uint32_t VertexBuffer::read(uint32_t offset, void* dst, uint32_t dstLen) {
+	size_t VertexBuffer::read(size_t offset, void* dst, size_t dstLen) {
 		return _baseBuffer.read(offset, dst, dstLen);
 	}
 
-	uint32_t VertexBuffer::write(uint32_t offset, const void* data, uint32_t length) {
+	size_t VertexBuffer::write(size_t offset, const void* data, size_t length) {
 		return _baseBuffer.write(offset, data, length);
 	}
 
-	uint32_t VertexBuffer::update(uint32_t offset, const void* data, uint32_t length) {
+	size_t VertexBuffer::update(size_t offset, const void* data, size_t length) {
 		return _baseBuffer.update(offset, data, length);
 	}
 

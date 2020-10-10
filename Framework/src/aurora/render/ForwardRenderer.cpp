@@ -72,7 +72,7 @@ namespace aurora::render {
 	}
 
 	bool ForwardRenderer::collectRenderDataConfirm(IRenderDataCollector& collector) const {
-		return collector.data.meshGetter;
+		return collector.data.mesh;
 	}
 
 	void ForwardRenderer::preRender(const RenderEnvironment& env) {
@@ -146,7 +146,7 @@ namespace aurora::render {
 		}
 	}
 
-	void ForwardRenderer::_render(Material* material, RenderState* state, const Mesh* mesh, ShaderDefineGetterStack& shaderDefineStack, ShaderParameterGetterStack& shaderParameterStack,
+	void ForwardRenderer::_render(Material* material, RenderState* state, const MeshBuffer* meshBuffer, ShaderDefineGetterStack& shaderDefineStack, ShaderParameterGetterStack& shaderParameterStack,
 		modules::graphics::IBlendState* defaultBlendState, modules::graphics::IDepthStencilState* defaultDepthStencilState) {
 		if (!material) return;
 
@@ -185,7 +185,7 @@ namespace aurora::render {
 
 		StackPopper<ShaderParameterGetterStack, StackPopperFlag::MULTI_POP> popper(shaderParameterStack, shaderParameterStack.push(&*_shaderParameters, material->getParameters()));
 
-		_graphics->draw(&mesh->getVertexBuffers(), program, &shaderParameterStack, mesh->getIndexBuffer());
+		_graphics->draw(&meshBuffer->getVertices(), program, &shaderParameterStack, meshBuffer->getIndex());
 	}
 
 	void ForwardRenderer::postRender() {

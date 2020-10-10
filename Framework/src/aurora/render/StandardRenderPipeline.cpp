@@ -51,6 +51,10 @@ namespace aurora::render {
 		_shaderParameters->set(ShaderPredefine::SPECULAR_COLOR, new ShaderParameter())->set(Vec3f32::ONE);
 	}
 
+	StandardRenderPipeline::~StandardRenderPipeline() {
+		for (auto e : _renderDataPool) delete e;
+	}
+
 	void StandardRenderPipeline::render(modules::graphics::IGraphicsModule* graphics, const std::function<void(IRenderCollector&)>& fn) {
 		if (!graphics || !fn) return;
 
@@ -114,15 +118,15 @@ namespace aurora::render {
 	}
 
 	void StandardRenderPipeline::_addCamera(components::Camera* camera) {
-		if (camera && camera->isEnalbed() && camera->layer && camera->getNode()) _cameras.emplace_back(camera);
+		if (_isValidComponent(camera)) _cameras.emplace_back(camera);
 	}
 
 	void StandardRenderPipeline::_addRenderable(components::renderables::IRenderable* renderable) {
-		if (renderable && renderable->layer && renderable->getRenderer() && renderable->isEnalbed() && renderable->getNode()) _renderables.emplace_back(renderable);
+		if (_isValidComponent(renderable) && renderable->getRenderer()) _renderables.emplace_back(renderable);
 	}
 
 	void StandardRenderPipeline::_addLight(components::lights::ILight* light) {
-		if (light && light->layer && light->isEnalbed() && light->getNode()) _renderEnv.lights.emplace_back(light);
+		if (_isValidComponent(light)) _renderEnv.lights.emplace_back(light);
 	}
 
 	void StandardRenderPipeline::_appendRenderData(RenderDataCollector& collector) {
@@ -156,8 +160,7 @@ namespace aurora::render {
 			auto renderer = _renderQueue[0]->renderer;
 			size_t begin = 0;
 			for (size_t i = 1; i < size; ++i) {
-				auto& data = _renderQueue[i];
-				if (data->renderer != renderer) {
+				if (auto data = _renderQueue[i]; data->renderer != renderer) {
 					if (renderer) renderer->render(_renderQueue.data() + begin, i - begin, *_shaderDefineStack, *_shaderParameterStack);
 					renderer = data->renderer;
 					begin = i;

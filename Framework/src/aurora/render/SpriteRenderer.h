@@ -3,6 +3,10 @@
 #include "aurora/render/IRenderer.h"
 #include "aurora/modules/graphics/IGraphicsModule.h"
 
+namespace aurora {
+	class Material;
+}
+
 namespace aurora::render {
 	class AE_FW_DLL SpriteRenderer : public IRenderer {
 	public:
@@ -11,9 +15,10 @@ namespace aurora::render {
 		virtual void AE_CALL collectRenderData(IRenderDataCollector& collector) override;
 		virtual bool AE_CALL collectRenderDataConfirm(IRenderDataCollector& collector) const override;
 		virtual void AE_CALL preRender(const RenderEnvironment& env) override;
-		virtual void AE_CALL render(RenderData* const* data, size_t count, ShaderDefineGetterStack& shaderDefineStack, ShaderParameterGetterStack& shaderParameterStack) override;
+		virtual void AE_CALL render(RenderData*const* data, size_t count, ShaderDefineGetterStack& shaderDefineStack, ShaderParameterGetterStack& shaderParameterStack) override;
 		virtual void AE_CALL postRender() override;
 
 	protected:
+		void AE_CALL _flush(Material* matrial);
 	};
 }

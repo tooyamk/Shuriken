@@ -21,6 +21,7 @@ namespace aurora::render {
 	class AE_FW_DLL StandardRenderPipeline : public IRenderPipeline {
 	public:
 		StandardRenderPipeline();
+		virtual ~StandardRenderPipeline();
 
 		inline ShaderParameterCollection& getShaderParameters() const {
 			return *_shaderParameters;
@@ -61,6 +62,10 @@ namespace aurora::render {
 		void AE_CALL _addCamera(components::Camera* camera);
 		void AE_CALL _addRenderable(components::renderables::IRenderable* renderable);
 		void AE_CALL _addLight(components::lights::ILight* light);
+
+		inline bool AE_CALL _isValidComponent(components::IComponent* com) const {
+			return com && com->isEnalbed() && com->layer && com->getNode();
+		}
 
 		void AE_CALL _appendRenderData(RenderDataCollector& collector);
 		void AE_CALL _render();

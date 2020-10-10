@@ -16,6 +16,16 @@ namespace aurora::modules::graphics::gl {
 		};
 
 
+		struct CreateConfig {
+			Ref* loader = nullptr;
+			IApplication* app = nullptr;
+			IProgramSourceTranslator* trans = nullptr;
+			GraphicsAdapter* adapter = nullptr;
+			SampleCount sampleCount = 1;
+			bool debug = false;
+		};
+
+
 		Graphics();
 		virtual ~Graphics();
 
@@ -58,7 +68,7 @@ namespace aurora::modules::graphics::gl {
 		virtual void AE_CALL setRenderTarget(IRenderTarget* rt) override;
 		virtual void AE_CALL clear(ClearFlag flags, const Vec4f32& color, float32_t depth, size_t stencil) override;
 
-		bool AE_CALL createDevice(Ref* loader, IApplication* app, IProgramSourceTranslator* trans, const GraphicsAdapter* adapter, SampleCount sampleCount, bool debug);
+		bool AE_CALL createDevice(const CreateConfig& conf);
 
 		inline void AE_CALL error(const std::string_view& msg) {
 			_eventDispatcher.dispatchEvent(this, GraphicsEvent::ERR, (std::string_view*)&msg);

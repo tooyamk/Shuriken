@@ -25,9 +25,9 @@ public:
 				args.insert("dxc", "libs/" + getDLLName("dxcompiler"));
 				auto gpst = gpstml->create(&args);
 
-				args.insert("app", (uint64_t)&*app);
+				args.insert("app", (uintptr_t)&*app);
 				args.insert("sampleCount", 4);
-				args.insert("trans", (uint64_t)&*gpst);
+				args.insert("trans", (uintptr_t)&*gpst);
 #ifdef AE_DEBUG
 				args.insert("debug", true);
 #endif

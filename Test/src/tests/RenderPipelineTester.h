@@ -26,9 +26,9 @@ public:
 				args.insert("dxc", "libs/" + getDLLName("dxcompiler"));
 				auto gpst = gpstml->create(&args);
 
-				args.insert("app", (uint64_t)&*app);
+				args.insert("app", (uintptr_t)&*app);
 				args.insert("sampleCount", 4);
-				args.insert("trans", (uint64_t)&*gpst);
+				args.insert("trans", (uintptr_t)&*gpst);
 #ifdef AE_DEBUG
 				args.insert("debug", true);
 #endif
@@ -147,6 +147,7 @@ public:
 									pass->subPasses.emplace_back(subPass);
 								}
 								auto mesh = new Mesh();
+								mesh->setBuffer(new MeshBuffer());
 								renderableMesh->setMesh(mesh);
 								renderableMesh->setRenderer(renderer);
 
@@ -155,14 +156,14 @@ public:
 									auto vb = graphics->createVertexBuffer();
 									vb->create(vs->data.getLength(), Usage::NONE, vs->data.getSource(), vs->data.getLength());
 									vb->setFormat(vs->format);
-									mesh->getVertexBuffers().set(itr.first, vb);
+									mesh->getBuffer()->getVertices().set(itr.first, vb);
 								}
 
-								if (auto is = mr->indexResource; is) {
+								if (auto is = mr->index; is) {
 									auto ib = graphics->createIndexBuffer();
 									ib->create(is->data.getLength(), Usage::NONE, is->data.getSource(), is->data.getLength());
 									ib->setFormat(is->type);
-									mesh->setIndexBuffer(ib);
+									mesh->getBuffer()->setIndex(ib);
 								}
 							}
 						}

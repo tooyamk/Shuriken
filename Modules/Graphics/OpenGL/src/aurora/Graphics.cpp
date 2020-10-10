@@ -43,9 +43,10 @@ namespace aurora::modules::graphics::gl {
 		_release();
 	}
 
-	bool Graphics::createDevice(Ref* loader, IApplication* app, IProgramSourceTranslator* trans, const GraphicsAdapter* adapter, SampleCount sampleCount, bool debug) {
+	bool Graphics::createDevice(const CreateConfig& conf) {
+		if (!conf.app) return false;
 #if AE_OS == AE_OS_WIN
-		if (_dc || !app->getNative(ApplicationNative::HWND)) return false;
+		if (_dc || !conf.app->getNative(ApplicationNative::HWND)) return false;
 #elif AE_OS == AE_OS_LINUX
 		if (_context || !app->getNative(ApplicationNative::WINDOW)) return false;
 #endif
@@ -82,17 +83,18 @@ namespace aurora::modules::graphics::gl {
 		pfd.dwDamageMask = 0;
 		*/
 
-		if (!_glInit(app)) {
-			_release(app);
+		if (!_glInit(conf.app)) {
+			_release(conf.app);
 			return false;
 		}
 
+		auto sampleCount = conf.sampleCount;
 		if (sampleCount > _deviceFeatures.maxSampleCount) sampleCount = _deviceFeatures.maxSampleCount;
 
 #if AE_OS == AE_OS_WIN
-		_dc = GetDC((HWND)app->getNative(ApplicationNative::HWND));
+		_dc = GetDC((HWND)conf.app->getNative(ApplicationNative::HWND));
 		if (!_dc) {
-			_release(app);
+			_release(conf.app);
 			return false;
 		}
 
@@ -117,13 +119,13 @@ namespace aurora::modules::graphics::gl {
 
 		wglChoosePixelFormatARB(_dc, attrList, nullptr, 1, &nPixelFormat, &nPixCount);
 		if (nPixelFormat == -1) {
-			_release(app);
+			_release(conf.app);
 			return false;
 		}
 
 		PIXELFORMATDESCRIPTOR pfd = { 0 };
 		if (!SetPixelFormat(_dc, nPixelFormat, &pfd)) {
-			_release();
+			_release(conf.app);
 			return false;
 		}
 		
@@ -131,14 +133,14 @@ namespace aurora::modules::graphics::gl {
 		attribs[0] = WGL_CONTEXT_PROFILE_MASK_ARB;
 		attribs[1] = WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB;
 
-		if (debug) {
+		if (conf.debug) {
 			attribs[2] = WGL_CONTEXT_FLAGS_ARB;
 			attribs[3] = WGL_CONTEXT_DEBUG_BIT_ARB;
 		}
 
 		_rc = wglCreateContextAttribsARB(_dc, nullptr, attribs);
 		if (!_rc) {
-			_release(app);
+			_release(conf.app);
 			return false;
 		}
 
@@ -186,7 +188,7 @@ namespace aurora::modules::graphics::gl {
 		_strVer = String::toString(_intVer);
 		_deviceVersion = "OpenGL " + String::toString(_majorVer) + "." + String::toString(_minorVer);
 
-		if (debug) {
+		if (conf.debug) {
 			if (isGreatThanOrEqualVersion(4, 3) || glewIsSupported("GL_KHR_debug") || glewIsSupported("GL_ARB_debug_output")) {
 				glEnable(GL_DEBUG_OUTPUT);
 				glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
@@ -233,9 +235,9 @@ namespace aurora::modules::graphics::gl {
 		_defaultDepthStencilState = new DepthStencilState(*this, true);
 		_defaultRasterizerState = new RasterizerState(*this, true);
 
-		_loader = loader;
-		_app = app;
-		_trans = trans;
+		_loader = conf.loader;
+		_app = conf.app;
+		_trans = conf.trans;
 
 		_setInitState();
 		_resize(_app->getCurrentClientSize());

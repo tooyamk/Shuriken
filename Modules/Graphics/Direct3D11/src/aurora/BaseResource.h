@@ -94,12 +94,10 @@ namespace aurora::modules::graphics::d3d11 {
 		void AE_CALL unmap(Graphics& graphics, Usage& mapUsage, UINT subresource);
 		void AE_CALL releaseRes();
 
-		uint32_t size;
 		UINT resType;
-
 		UINT bindType;
-		
 		Usage resUsage;
+		size_t size;
 
 		ID3D11Resource* handle;
 	};

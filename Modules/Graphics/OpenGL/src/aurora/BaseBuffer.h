@@ -10,12 +10,12 @@ namespace aurora::modules::graphics::gl {
 		BaseBuffer(GLenum bufferType);
 		virtual ~BaseBuffer();
 
-		bool AE_CALL create(Graphics& graphics, uint32_t size, Usage resUsage, const void* data = nullptr, GLenum internalUsage = 0);
+		bool AE_CALL create(Graphics& graphics, size_t size, Usage resUsage, const void* data = nullptr, GLenum internalUsage = 0);
 		Usage AE_CALL map(Usage expectMapUsage, GLenum access = 0);
 		void AE_CALL unmap();
-		uint32_t AE_CALL read(uint32_t offset, void* dst, uint32_t dstLen);
-		uint32_t AE_CALL write(uint32_t offset, const void* data, uint32_t length);
-		uint32_t AE_CALL update(uint32_t offset, const void* data, uint32_t length);
+		size_t AE_CALL read(size_t offset, void* dst, size_t dstLen);
+		size_t AE_CALL write(size_t offset, const void* data, size_t length);
+		size_t AE_CALL update(size_t offset, const void* data, size_t length);
 		void AE_CALL releaseBuffer();
 
 		template<bool Force>
@@ -50,7 +50,7 @@ namespace aurora::modules::graphics::gl {
 		Usage resUsage;
 		Usage mapUsage;
 		GLenum bufferType;
-		uint32_t size;
+		size_t size;
 
 		GLuint handle;
 		void* mapData;
