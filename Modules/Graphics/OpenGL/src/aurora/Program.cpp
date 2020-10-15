@@ -71,13 +71,77 @@ namespace aurora::modules::graphics::gl {
 
 		GLint atts;
 		glGetProgramiv(_handle, GL_ACTIVE_ATTRIBUTES, &atts);
-		_inVertexBufferLayouts.resize(atts);
+		_info.vertices.resize(atts);
+		_inVertexBufferLocations.resize(atts);
 		for (GLint i = 0; i < atts; ++i) {
-			auto& info = _inVertexBufferLayouts[i];
-			glGetActiveAttrib(_handle, i, sizeof(charBuffer), &len, &info.size, &info.type, charBuffer);
+			auto& info = _info.vertices[i];
+
+			GLenum type;
+			GLint size;
+			glGetActiveAttrib(_handle, i, sizeof(charBuffer), &len, &size, &type, charBuffer);
+			switch (type) {
+			case GL_INT:
+			{
+				info.format.type = VertexType::I32;
+				info.format.size = VertexSize::ONE;
+
+				break;
+			}
+			case GL_INT_VEC2:
+			{
+				info.format.type = VertexType::I32;
+				info.format.size = VertexSize::TWO;
+
+				break;
+			}
+			case GL_INT_VEC3:
+			{
+				info.format.type = VertexType::I32;
+				info.format.size = VertexSize::THREE;
+
+				break;
+			}
+			case GL_INT_VEC4:
+			{
+				info.format.type = VertexType::I32;
+				info.format.size = VertexSize::FOUR;
+
+				break;
+			}
+			case GL_FLOAT:
+			{
+				info.format.type = VertexType::F32;
+				info.format.size = VertexSize::ONE;
+
+				break;
+			}
+			case GL_FLOAT_VEC2:
+			{
+				info.format.type = VertexType::F32;
+				info.format.size = VertexSize::TWO;
+
+				break;
+			}
+			case GL_FLOAT_VEC3:
+			{
+				info.format.type = VertexType::F32;
+				info.format.size = VertexSize::THREE;
+
+				break;
+			}
+			case GL_FLOAT_VEC4:
+			{
+				info.format.type = VertexType::F32;
+				info.format.size = VertexSize::FOUR;
+
+				break;
+			}
+			default:
+				break;
+			}
 			
 			info.name = charBuffer;// +7;//in_var_
-			info.location = glGetAttribLocation(_handle, charBuffer);
+			_inVertexBufferLocations[i] = glGetAttribLocation(_handle, charBuffer);
 		}
 
 		GLint uniforms;
@@ -223,13 +287,18 @@ namespace aurora::modules::graphics::gl {
 		return true;
 	}
 
+	const ProgramInfo& Program::getInfo() const {
+		return _info;
+	}
+
 	bool Program::use(const IVertexBufferGetter* vertexBufferGetter, const IShaderParameterGetter* shaderParamGetter) {
 		if (_handle) {
 			glUseProgram(_handle);
 
-			for (auto& info : _inVertexBufferLayouts) {
+			for (size_t i = 0, n = _info.vertices.size(); i < n; ++i) {
+				auto& info = _info.vertices[i];
 				if (auto vb = vertexBufferGetter->get(info.name); vb && _graphics == vb->getGraphics()) {
-					if (auto vb1 = (VertexBuffer*)vb->getNative(); vb1) vb1->use(info.location);
+					if (auto vb1 = (VertexBuffer*)vb->getNative(); vb1) vb1->use(_inVertexBufferLocations[i]);
 				}
 			}
 
@@ -337,8 +406,9 @@ namespace aurora::modules::graphics::gl {
 			glDeleteProgram(_handle);
 			_handle = 0;
 		}
-		_inVertexBufferLayouts.clear();
+		_inVertexBufferLocations.clear();
 		_uniformLayouts.clear();
+		_info.clear();
 
 		auto& cbm = _graphics.get<Graphics>()->getConstantBufferManager();
 		for (auto& layout : _uniformBlockLayouts) cbm.unregisterConstantLayout(layout);

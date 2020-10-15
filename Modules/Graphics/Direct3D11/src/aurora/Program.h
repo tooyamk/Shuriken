@@ -13,6 +13,7 @@ namespace aurora::modules::graphics::d3d11 {
 
 		virtual const void* AE_CALL getNative() const override;
 		virtual bool AE_CALL create(const ProgramSource& vert, const ProgramSource& frag, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& handler) override;
+		virtual const ProgramInfo& getInfo() const override;
 		virtual void AE_CALL destroy() override;
 
 		bool AE_CALL use(const IVertexBufferGetter* vertexBufferGetter, const IShaderParameterGetter* shaderParamGetter);
@@ -42,17 +43,6 @@ namespace aurora::modules::graphics::d3d11 {
 		};
 
 
-		struct InVertexBufferInfo {
-			InVertexBufferInfo() :
-				name(),
-				slot(0) {
-			}
-
-			std::string name;
-			uint32_t slot;
-		};
-
-
 		struct InLayout {
 			InLayout (uint32_t numInElements);
 			~InLayout();
@@ -72,7 +62,7 @@ namespace aurora::modules::graphics::d3d11 {
 		D3D11_INPUT_ELEMENT_DESC* _inElements;
 		uint32_t _numInElements;
 
-		std::vector<InVertexBufferInfo> _inVerBufInfos;
+		std::vector<uint32_t> _inVerBufSlots;
 		std::vector<InLayout> _inLayouts;
 
 
@@ -96,6 +86,8 @@ namespace aurora::modules::graphics::d3d11 {
 			void clear(Graphics& g);
 		};
 
+
+		ProgramInfo _info;
 
 		ParameterLayout _vsParamLayout;
 		ParameterLayout _psParamLayout;

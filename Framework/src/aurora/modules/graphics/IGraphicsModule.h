@@ -662,6 +662,23 @@ namespace aurora::modules::graphics {
 	};
 
 
+	class AE_FW_DLL ProgramInfo {
+	public:
+		class AE_FW_DLL Vertex {
+		public:
+			std::string name;
+			VertexFormat format;
+		};
+
+
+		std::vector<Vertex> vertices;
+
+		inline void AE_CALL clear() {
+			vertices.clear();
+		}
+	};
+
+
 	class AE_FW_DLL IProgram : public IObject {
 	public:
 		using IncludeHandler = std::function<ByteArray(const IProgram&, ProgramStage, const std::string_view&)>;
@@ -671,6 +688,7 @@ namespace aurora::modules::graphics {
 
 		virtual const void* AE_CALL getNative() const = 0;
 		virtual bool AE_CALL create(const ProgramSource& vert, const ProgramSource& frag, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& handler) = 0;
+		virtual const ProgramInfo& getInfo() const = 0;
 		virtual void AE_CALL destroy() = 0;
 	};
 

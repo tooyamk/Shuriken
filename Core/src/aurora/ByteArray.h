@@ -426,7 +426,7 @@ namespace aurora {
 			std::is_same_v<T, int64_t> ||
 			std::is_same_v<T, uint64_t> ||
 			std::is_same_v<T, float32_t> ||
-			std::is_same_v<T, float64_t>, bool>>
+			std::is_same_v<T, float64_t>>>
 		inline void AE_CALL write(T value) {
 			_write<T>(value);
 		}

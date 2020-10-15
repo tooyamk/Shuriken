@@ -1,5 +1,6 @@
 #include "SpriteRenderer.h"
 #include "aurora/Mesh.h"
+#include "aurora/StackPopper.h"
 #include "aurora/components/renderables/IRenderable.h"
 #include "aurora/render/IRenderDataCollector.h"
 
@@ -63,10 +64,15 @@ namespace aurora::render {
 						}
 
 						{
-							//StackPopper<ShaderDefineGetterStack, StackPopperFlag::MULTI_POP> popper(shaderDefineStack, shaderDefineStack.push(&*_shaderDefines, material->getDefines()));
+							StackPopper<ShaderDefineGetterStack, StackPopperFlag::MULTI_POP> popper(shaderDefineStack, shaderDefineStack.push(material->getDefines()));
 
-							//program = shader->select(&shaderDefineStack);
-							//if (!program) return;
+							auto program = shader->select(&shaderDefineStack);
+							if (program) {
+								//todo
+							} else {
+								material = nullptr;
+								continue;
+							}
 						}
 					}
 				}

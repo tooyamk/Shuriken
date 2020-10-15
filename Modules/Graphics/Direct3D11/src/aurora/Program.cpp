@@ -153,6 +153,10 @@ namespace aurora::modules::graphics::d3d11 {
 		return true;
 	}
 
+	const ProgramInfo& Program::getInfo() const {
+		return _info;
+	}
+
 	bool Program::use(const IVertexBufferGetter* vertexBufferGetter, const IShaderParameterGetter* shaderParamGetter) {
 		if (_vs) {
 			auto g = _graphics.get<Graphics>();
@@ -162,15 +166,15 @@ namespace aurora::modules::graphics::d3d11 {
 			auto context = g->getContext();
 
 			bool inElementsDirty = false;
-			for (uint32_t i = 0, n = _inVerBufInfos.size(); i < n; ++i) {
-				auto& info = _inVerBufInfos[i];
+			for (size_t i = 0, n = _info.vertices.size(); i < n; ++i) {
+				auto& info = _info.vertices[i];
 				if (auto vb = vertexBufferGetter->get(info.name); vb && _graphics == vb->getGraphics()) {
 					if (auto native = (VertexBuffer*)vb->getNative(); native) {
 						if (auto buf = native->getInternalBuffer(); buf) {
 							if (auto fmt = native->getInternalFormat(); fmt != DXGI_FORMAT_UNKNOWN) {
 								auto stride = native->getStride();
 								UINT offset = 0;
-								g->useVertexBuffers(info.slot, 1, &buf, &stride, &offset);
+								g->useVertexBuffers(_inVerBufSlots[i], 1, &buf, &stride, &offset);
 
 								auto& ie = _inElements[i];
 								if (ie.Format != fmt) {
@@ -266,8 +270,9 @@ namespace aurora::modules::graphics::d3d11 {
 
 	void Program::destroy() {
 		_curInLayout = nullptr;
-		_inVerBufInfos.clear();
+		_inVerBufSlots.clear();
 		_inLayouts.clear();
+		_info.clear();
 
 		if (_numInElements > 0) {
 			for (uint32_t i = 0; i < _numInElements; ++i) delete[] _inElements[i].SemanticName;
@@ -363,44 +368,61 @@ namespace aurora::modules::graphics::d3d11 {
 				ieDesc.InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
 				ieDesc.InstanceDataStepRate = 0;
 
-				auto& info = _inVerBufInfos.emplace_back();
+				_inVerBufSlots.emplace_back(i);
+
+				auto& info = _info.vertices.emplace_back();
 				info.name = pDesc.SemanticName + String::toString(pDesc.SemanticIndex);
-				info.slot = i;
 
 				if (pDesc.Mask == 1) {
+					info.format.size = VertexSize::ONE;
 					if (pDesc.ComponentType == D3D_REGISTER_COMPONENT_UINT32) {
 						ieDesc.Format = DXGI_FORMAT_R32_UINT;
+						info.format.type = VertexType::UI32;
 					} else if (pDesc.ComponentType == D3D_REGISTER_COMPONENT_SINT32) {
 						ieDesc.Format = DXGI_FORMAT_R32_SINT;
+						info.format.type = VertexType::I32;
 					} else if (pDesc.ComponentType == D3D_REGISTER_COMPONENT_FLOAT32) {
 						ieDesc.Format = DXGI_FORMAT_R32_FLOAT;
+						info.format.type = VertexType::F32;
 					}
 					offset += 4;
 				} else if (pDesc.Mask <= 3) {
+					info.format.size = VertexSize::TWO;
 					if (pDesc.ComponentType == D3D_REGISTER_COMPONENT_UINT32) {
 						ieDesc.Format = DXGI_FORMAT_R32G32_UINT;
+						info.format.type = VertexType::UI32;
 					} else if (pDesc.ComponentType == D3D_REGISTER_COMPONENT_SINT32) {
 						ieDesc.Format = DXGI_FORMAT_R32G32_SINT;
+						info.format.type = VertexType::I32;
 					} else if (pDesc.ComponentType == D3D_REGISTER_COMPONENT_FLOAT32) {
 						ieDesc.Format = DXGI_FORMAT_R32G32_FLOAT;
+						info.format.type = VertexType::F32;
 					}
 					offset += 8;
 				} else if (pDesc.Mask <= 7) {
+					info.format.size = VertexSize::THREE;
 					if (pDesc.ComponentType == D3D_REGISTER_COMPONENT_UINT32) {
 						ieDesc.Format = DXGI_FORMAT_R32G32B32_UINT;
+						info.format.type = VertexType::UI32;
 					} else if (pDesc.ComponentType == D3D_REGISTER_COMPONENT_SINT32) {
 						ieDesc.Format = DXGI_FORMAT_R32G32B32_SINT;
+						info.format.type = VertexType::I32;
 					} else if (pDesc.ComponentType == D3D_REGISTER_COMPONENT_FLOAT32) {
 						ieDesc.Format = DXGI_FORMAT_R32G32B32_FLOAT;
+						info.format.type = VertexType::F32;
 					}
 					offset += 12;
 				} else if (pDesc.Mask <= 15) {
+					info.format.size = VertexSize::FOUR;
 					if (pDesc.ComponentType == D3D_REGISTER_COMPONENT_UINT32) {
 						ieDesc.Format = DXGI_FORMAT_R32G32B32A32_UINT;
+						info.format.type = VertexType::UI32;
 					} else if (pDesc.ComponentType == D3D_REGISTER_COMPONENT_SINT32) {
 						ieDesc.Format = DXGI_FORMAT_R32G32B32A32_SINT;
+						info.format.type = VertexType::I32;
 					} else if (pDesc.ComponentType == D3D_REGISTER_COMPONENT_FLOAT32) {
 						ieDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+						info.format.type = VertexType::F32;
 					}
 					offset += 16;
 				}
