@@ -285,7 +285,7 @@ namespace aurora {
 			return std::acos(clamp(dot(n1, n2), -NUMBER_1<Out>, NUMBER_1<Out>));
 		}
 
-		template<uint32_t N, typename In1, typename In2, typename Out = decltype((*(In1*)0) + (*(In2*)0)), typename = floating_point_t<Out>, typename = std::enable_if_t<N >= 2 && N <= 3, bool>>
+		template<uint32_t N, typename In1, typename In2, typename Out = decltype((*(In1*)0) + (*(In2*)0)), typename = floating_point_t<Out>, typename = std::enable_if_t<N >= 2 && N <= 3>>
 		static Out AE_CALL singedAngle(const In1(&v1)[N], const In2(&v2)[N]) {
 			Out n1[N], n2[N];
 			normalize(v1, n1);

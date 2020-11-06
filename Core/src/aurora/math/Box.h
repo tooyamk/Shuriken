@@ -8,10 +8,10 @@ namespace aurora {
 	class Box {
 	public:
 		template<typename S, typename T>
-		using ConvertibleType = typename std::enable_if_t<std::is_convertible_v<S, T>, S>;
+		using ConvertibleType = typename std::enable_if_t<std::is_convertible_v<S, T>>;
 
 		template<typename S1, typename T1, typename S2, typename T2>
-		using ConvertibleTypes = typename std::enable_if_t<std::is_convertible_v<S1, T1> && std::is_convertible_v<S2, T2>, bool>;
+		using ConvertibleTypes = typename std::enable_if_t<std::is_convertible_v<S1, T1> && std::is_convertible_v<S2, T2>>;
 
 		Box() {
 		}

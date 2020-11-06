@@ -198,7 +198,7 @@ namespace aurora {
 
 		bool AE_CALL toBool(bool defaultValue = false) const;
 
-		template<typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>, T>>
+		template<typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>>
 		T AE_CALL toNumber(T defaultValue = 0) const {
 			switch (_type) {
 			case Type::BOOL:
@@ -733,7 +733,7 @@ namespace aurora {
 			return _getValue<Bytes<Ext>*>();
 		}
 
-		template<typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>, T>>
+		template<typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>>
 		inline bool AE_CALL _isEqual(const SerializableObject& target) const {
 			switch (target._type) {
 			case Type::INT:
@@ -764,7 +764,7 @@ namespace aurora {
 			return size1 == size2 ? memEqual(s1, s2, size1) : false;
 		}
 
-		template<typename T = std::nullptr_t, typename = std::enable_if_t<std::is_null_pointer_v<T> || std::is_base_of_v<IPackFilter, T>, T>>
+		template<typename T = std::nullptr_t, typename = std::enable_if_t<std::is_null_pointer_v<T> || std::is_base_of_v<IPackFilter, T>>>
 		void AE_CALL _pack(const SerializableObject* parent, size_t depth, ByteArray& ba, const T& filter) const {
 			switch (_type) {
 			case Type::INVALID:

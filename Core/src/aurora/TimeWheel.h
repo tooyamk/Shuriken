@@ -52,8 +52,7 @@ namespace aurora {
 			inline void AE_CALL doTick(uint64_t tickID) {
 				std::scoped_lock lck(_mutex);
 
-				auto itr = std::find(_tickIDs.begin(), _tickIDs.end(), tickID);
-				if (itr != _tickIDs.end()) {
+				if (auto itr = std::find(_tickIDs.begin(), _tickIDs.end(), tickID); itr != _tickIDs.end()) {
 					_tickIDs.erase(itr);
 
 					if (onTick) onTick(*this);

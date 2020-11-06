@@ -172,7 +172,7 @@ namespace aurora {
 
 		static std::string::size_type AE_CALL UnicodeToUtf8(const wchar_t* in, std::wstring::size_type inLen, char* out);
 
-		template<typename Input, typename Separator, typename Fn, typename = std::enable_if_t<(is_string_data_v<Input> || std::is_convertible_v<Input, char const*>), Input>, typename = std::enable_if_t<(std::is_base_of_v<std::regex, Separator> || is_string_data_v<Separator> || std::is_convertible_v<Separator, char const*>) && std::is_invocable_v<Fn, const std::string_view&>, Separator>>
+		template<typename Input, typename Separator, typename Fn, typename = std::enable_if_t<is_string_data_v<Input> || std::is_convertible_v<Input, char const*>>, typename = std::enable_if_t<(std::is_base_of_v<std::regex, Separator> || is_string_data_v<Separator> || std::is_convertible_v<Separator, char const*>) && std::is_invocable_v<Fn, const std::string_view&>>>
 		static void AE_CALL split(const Input& input, const Separator& separator, Fn&& fn) {
 			if constexpr (std::is_base_of_v<std::regex, Separator>) {
 				std::regex_token_iterator itr(input.begin(), input.end(), separator, -1);
@@ -215,7 +215,7 @@ namespace aurora {
 			}
 		}
 
-		template<typename Input, typename Fn, typename = std::enable_if_t<(is_string_data_v<Input> || std::is_convertible_v<Input, char const*>), Input>, typename = std::enable_if_t<std::is_invocable_v<Fn, const std::string_view&>, Fn>>
+		template<typename Input, typename Fn, typename = std::enable_if_t<is_string_data_v<Input> || std::is_convertible_v<Input, char const*>>, typename = std::enable_if_t<std::is_invocable_v<Fn, const std::string_view&>>>
 		static void AE_CALL split(const Input& input, uint8_t flags, Fn&& fn) {
 			if constexpr (is_string_data_v<Input>) {
 				size_t begin = 0, i = 0, size = input.size();
@@ -439,7 +439,7 @@ namespace aurora {
 			return p ? p - input.data() : std::string::npos;
 		}
 
-		template<typename Input, typename Compare, typename = string_data_t<Input>, typename = std::enable_if_t<is_string_data_v<Compare> || std::is_convertible_v<Compare, char const*>, Compare>>
+		template<typename Input, typename Compare, typename = string_data_t<Input>, typename = std::enable_if_t<is_string_data_v<Compare> || std::is_convertible_v<Compare, char const*>>>
 		inline static std::string::size_type AE_CALL find(const Input& input, const Compare& compare) {
 			if constexpr (is_string_data_v<Compare>) {
 				auto p = (const char*)memFind(input.data(), input.size(), compare.data(), compare.size());

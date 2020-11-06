@@ -61,7 +61,7 @@ namespace aurora {
 	}
 
 	ByteArray& ByteArray::operator=(ByteArray&& value) noexcept {
-		_dispose(true);
+		_dispose();
 
 		_endian = value._endian;
 		_needReverse = value._needReverse;

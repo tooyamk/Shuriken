@@ -647,10 +647,10 @@ namespace aurora {
 			return length;
 		}
 
-		inline static bool isEqual(const ByteArray& data1, const ByteArray& data2) {
+		inline static bool AE_CALL isEqual(const ByteArray& data1, const ByteArray& data2) {
 			return data1.getLength() == data2.getLength() ? isEqual(data1.getSource(), data2.getSource(), data1.getLength()) : false;
 		}
-		static bool isEqual(const uint8_t* data1, const uint8_t* data2, size_t len);
+		static bool AE_CALL isEqual(const uint8_t* data1, const uint8_t* data2, size_t len);
 
 	private:
 		Usage _usage;

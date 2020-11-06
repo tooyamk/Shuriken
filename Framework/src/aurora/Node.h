@@ -92,7 +92,7 @@ namespace aurora {
 			return _numChildren;
 		}
 
-		template<typename T, typename... Args, typename = std::enable_if_t<std::is_base_of_v<Node, T>, T>>
+		template<typename T, typename... Args, typename = std::enable_if_t<std::is_base_of_v<Node, T>>>
 		inline T* AE_CALL addChild(Args&&... args) {
 			auto child = new T(std::forward<Args>(args)...);
 			_addChild(child);
