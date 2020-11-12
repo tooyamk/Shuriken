@@ -7,8 +7,6 @@
 #include <functional>
 
 namespace aurora {
-	class SerializationValueMapElement;
-
 	class AE_CORE_DLL SerializableObject {
 	public:
 		class AE_CORE_DLL IPackFilter {
@@ -19,25 +17,26 @@ namespace aurora {
 
 
 		enum class Type : uint8_t {
+			//universal
 			INVALID,
-
 			BOOL,
-
 			INT,
-			UINT,
-
-			FLOAT32,
-			FLOAT64,
-
+			FLOAT,
 			STRING,
 			ARRAY,
 			MAP,
-
 			BYTES,
-			EXT_BYTES,
+
+			//exclusive
+			UINT,
+
+			FLOAT32 = FLOAT,
+			FLOAT64 = UINT + 1,
 
 			SHORT_STRING,
-			STRING_VIEW
+			STRING_VIEW,
+
+			EXT_BYTES,
 		};
 
 
@@ -63,9 +62,15 @@ namespace aurora {
 				case Type::BOOL:
 					return std::hash<bool>{}(value._getValue<bool>());
 				case Type::BYTES:
-					return std::hash<Bytes<false>*>{}(value._getValue<Bytes<false>*>());
+				{
+					auto val = value._getValue<Bytes*>();
+					return std::hash<void*>{}((void*)val->getValue());
+				}
 				case Type::EXT_BYTES:
-					return std::hash<Bytes<true>*>{}(value._getValue<Bytes<true>*>());
+				{
+					auto& val = value._getValue<BytesView>();
+					return std::hash<void*>{}((void*)val.data);
+				}
 				case Type::FLOAT32:
 					return std::hash<float32_t>{}(value._getValue<float32_t>());
 				case Type::FLOAT64:
@@ -120,7 +125,7 @@ namespace aurora {
 		SerializableObject(const std::string& value, Flag flag = Flag::COPY);
 		SerializableObject(const std::string_view& value, Flag flag = Flag::COPY);
 		SerializableObject(const uint8_t* value, size_t size, Flag flag = Flag::COPY);
-		SerializableObject(ByteArray& ba, Flag flag = Flag::COPY);
+		SerializableObject(const ByteArray& ba, Flag flag = Flag::COPY);
 		SerializableObject(const SerializableObject& value);
 		SerializableObject(const SerializableObject& value, Flag flag);
 		SerializableObject(SerializableObject&& value) noexcept;
@@ -177,7 +182,10 @@ namespace aurora {
 				} else {
 					_freeValue();
 
-					_getValue<Bytes<true>*>() = new Bytes<Ext>();
+					auto& bv = _getValue<BytesView>();
+					bv.data = nullptr;
+					bv.size = 0;
+
 					_type = Type::EXT_BYTES;
 
 					return true;
@@ -188,7 +196,7 @@ namespace aurora {
 				} else {
 					_freeValue();
 
-					_getValue<Bytes<false>*>() = new Bytes<Ext>();
+					_getValue<Bytes*>() = new Bytes();
 					_type = Type::BYTES;
 
 					return true;
@@ -441,83 +449,15 @@ namespace aurora {
 		}
 
 	private:
-		enum class InternalType : uint8_t {
-			UNVALID = (uint8_t)Type::INVALID,
-
-			BOOL = (uint8_t)Type::BOOL,
-			INT = (uint8_t)Type::INT,
-			UINT = (uint8_t)Type::UINT,
-
-			FLOAT = (uint8_t)Type::FLOAT32,
-			DOUBLE = (uint8_t)Type::FLOAT64,
-
-			STRING = (uint8_t)Type::STRING,
-			ARRAY = (uint8_t)Type::ARRAY,
-			MAP = (uint8_t)Type::MAP,
-
-			BYTES = (uint8_t)Type::BYTES,
-			EXT_BYTES = (uint8_t)Type::EXT_BYTES,
-
-			BOOL_TRUE = 18,
-			BOOL_FALSE,
-
-			N_INT_1 = 20,
-			N_INT_8BITS,
-			N_INT_16BITS,
-			N_INT_24BITS,
-			N_INT_32BITS,
-			N_INT_40BITS,
-			N_INT_48BITS,
-			N_INT_56BITS,
-			N_INT_64BITS,
-			P_INT_0 = 40,
-			P_INT_1,
-			P_INT_8BITS,
-			P_INT_16BITS,
-			P_INT_24BITS,
-			P_INT_32BITS,
-			P_INT_40BITS,
-			P_INT_48BITS,
-			P_INT_56BITS,
-			P_INT_64BITS,
-			FLT_0 = 60,
-			FLT_0_5,
-			FLT_1,
-			DBL_0 = 80,
-			DBL_0_5,
-			DBL_1,
-			STRING_EMPTY = 100,
-			ARRAY_0 = 120,
-			ARRAY_8BITS,
-			ARRAY_16BITS,
-			ARRAY_24BITS,
-			ARRAY_32BITS,
-			ARRAY_40BITS,
-			ARRAY_48BITS,
-			ARRAY_56BITS,
-			ARRAY_64BITS,
-			ARRAY_END,
-			MAP_0 = 140,
-			MAP_8BITS,
-			MAP_16BITS,
-			MAP_24BITS,
-			MAP_32BITS,
-			MAP_40BITS,
-			MAP_48BITS,
-			MAP_56BITS,
-			MAP_64BITS,
-			MAP_END,
-			BYTES_0 = 160,
-			BYTES_8BITS,
-			BYTES_16BITS,
-			BYTES_24BITS,
-			BYTES_32BITS,
-			BYTES_40BITS,
-			BYTES_48BITS,
-			BYTES_56BITS,
-			BYTES_64BITS,
-			END = 255
-		};
+		static constexpr uint8_t BOOL_FALSE = ((uint8_t)Type::INVALID << 5) | 1;
+		static constexpr uint8_t BOOL_TRUE = ((uint8_t)Type::INVALID << 5) | 2;
+		static constexpr uint8_t END = ((uint8_t)Type::INVALID << 5) | 3;
+		static constexpr uint8_t VAL4_MAX = 0b1111;
+		static constexpr uint8_t VAL4_BITS8 = VAL4_MAX - 8;
+		static constexpr uint8_t VAL4_BITS64 = VAL4_MAX;
+		static constexpr uint8_t VAL5_MAX = 0b11111;
+		static constexpr uint8_t VAL5_BITS8 = VAL5_MAX - 8;
+		static constexpr uint8_t VAL5_BITS64 = VAL5_MAX;
 
 
 		class Array : public Ref {
@@ -579,13 +519,23 @@ namespace aurora {
 			size_t size;
 		};
 
+
 		struct StrView {
 			const char* data;
 			size_t size;
 		};
 
 
-		template<bool Ext>
+		struct BytesView {
+			const uint8_t* data;
+			size_t size;
+
+			inline bool operator==(const BytesView& right) const {
+				return data == right.data && size == right.size;
+			}
+		};
+
+
 		class Bytes : public Ref {
 		public:
 			Bytes() :
@@ -596,47 +546,23 @@ namespace aurora {
 
 			Bytes(const uint8_t* data, size_t size) :
 				_size(size) {
-				if constexpr (Ext) {
-					_data = (uint8_t*)data;
+
+				if (size) {
+					_data = new uint8_t[size];
+					memcpy(_data, data, size);
 				} else {
-					if (size) {
-						_data = new uint8_t[size];
-						memcpy(_data, data, size);
-					} else {
-						_data = nullptr;
-					}
+					_data = nullptr;
 				}
+
 				ref();
 			}
 
 			virtual ~Bytes() {
-				if constexpr (!Ext) {
-					if (_data != nullptr) delete[] _data;
-				}
+				if (_data != nullptr) delete[] _data;
 			}
 
 			inline Bytes* AE_CALL copy() const {
-				return new Bytes<Ext>(_data, _size);
-			}
-
-			inline bool AE_CALL isContentEqual(const Bytes<false>& data) const {
-				return isContentEqual(data._data, _size);
-			}
-
-			inline bool AE_CALL isContentEqual(const Bytes<true>& data) const {
-				return isContentEqual(data._data, _size);
-			}
-
-			bool AE_CALL isContentEqual(const uint8_t* data, size_t size) const {
-				if (_size == size) {
-					for (size_t i = 0; i < _size; ++i) {
-						if (_data[i] != data[i]) return false;
-					}
-
-					return true;
-				} else {
-					return false;
-				}
+				return new Bytes(_data, _size);
 			}
 
 			inline const uint8_t* AE_CALL getValue() const { return _data; }
@@ -646,43 +572,36 @@ namespace aurora {
 				if (!size) {
 					clear();
 				} else {
-					if constexpr (Ext) {
-						_data = (uint8_t*)data;
+					if (_data == nullptr) {
 						_size = size;
+						_data = new uint8_t[_size];
+						if (data) memcpy(_data, data, _size);
+					} else if (_size == size) {
+						if (data) memcpy(_data, data, _size);
 					} else {
-						if (_data == nullptr) {
-							_size = size;
-							_data = new uint8_t[_size];
-							if (data) memcpy(_data, data, _size);
-						} else if (_size == size) {
-							if (data) memcpy(_data, data, _size);
-						} else {
-							delete[] _data;
-							_size = size;
-							_data = new uint8_t[_size];
-							if (data) memcpy(_data, data, size);
-						}
+						delete[] _data;
+						_size = size;
+						_data = new uint8_t[_size];
+						if (data) memcpy(_data, data, size);
 					}
 				}
 			}
 
 			inline void AE_CALL clear() {
 				if (_data != nullptr) {
-					if constexpr (!Ext) delete[] _data;
+					delete[] _data;
 
 					_data = nullptr;
 					_size = 0;
 				}
 			}
 
-			friend class Bytes<false>;
-			friend class Bytes<true>;
 		private:
 			uint8_t* _data;
 			size_t _size;
 		};
 
-		static constexpr const uint8_t VALUE_SIZE = 16;
+		static constexpr uint8_t VALUE_SIZE = 16;
 
 		Type _type;
 		Flag _flag;
@@ -727,12 +646,6 @@ namespace aurora {
 			return _getValue<Map*>();
 		}
 
-		template<bool Ext>
-		inline Bytes<Ext>* AE_CALL _getBytes() {
-			setBytes<Ext>();
-			return _getValue<Bytes<Ext>*>();
-		}
-
 		template<typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>>
 		inline bool AE_CALL _isEqual(const SerializableObject& target) const {
 			switch (target._type) {
@@ -768,27 +681,25 @@ namespace aurora {
 		void AE_CALL _pack(const SerializableObject* parent, size_t depth, ByteArray& ba, const T& filter) const {
 			switch (_type) {
 			case Type::INVALID:
-				ba.write<ba_vt::UI8>((uint8_t)_type);
+				ba.write<uint8_t>((uint8_t)_type);
 				break;
 			case Type::BOOL:
-				ba.write<ba_vt::UI8>((uint8_t)(_getValue<bool>() ? InternalType::BOOL_TRUE : InternalType::BOOL_FALSE));
+				ba.write<uint8_t>((uint8_t)(_getValue<bool>() ? BOOL_TRUE : BOOL_FALSE));
 				break;
 			case Type::INT:
 			{
 				auto v = _getValue<int64_t>();
 				if (v < 0) {
-					if (v == -1) {
-						ba.write<ba_vt::UI8>((uint8_t)InternalType::N_INT_1);
+					if (-v >= VAL4_BITS8) {
+						_packUInt(ba, -v, ((uint8_t)Type::INT << 5) | 0b10000, VAL4_BITS8);
 					} else {
-						_packUInt(ba, -v, (uint8_t)InternalType::N_INT_8BITS);
+						ba.write<uint8_t>(((uint8_t)Type::INT << 5) | 0b10000 | -v);
 					}
 				} else {
-					if (v == 0) {
-						ba.write<ba_vt::UI8>((uint8_t)InternalType::P_INT_0);
-					} else if (v == 1) {
-						ba.write<ba_vt::UI8>((uint8_t)InternalType::P_INT_1);
+					if (v >= VAL4_BITS8) {
+						_packUInt(ba, v, (uint8_t)Type::INT << 5, VAL4_BITS8);
 					} else {
-						_packUInt(ba, v, (uint8_t)InternalType::P_INT_8BITS);
+						ba.write<uint8_t>(((uint8_t)Type::INT << 5) | v);
 					}
 				}
 
@@ -797,107 +708,104 @@ namespace aurora {
 			case Type::UINT:
 			{
 				auto v = _getValue<uint64_t>();
-				if (v == 0) {
-					ba.write<ba_vt::UI8>((uint8_t)InternalType::P_INT_0);
-				} else if (v == 1) {
-					ba.write<ba_vt::UI8>((uint8_t)InternalType::P_INT_1);
+				if (v >= VAL4_BITS8) {
+					_packUInt(ba, v, (uint8_t)Type::INT << 5, VAL4_BITS8);
 				} else {
-					_packUInt(ba, v, (uint8_t)InternalType::P_INT_8BITS);
+					ba.write<uint8_t>(((uint8_t)Type::INT << 5) | v);
 				}
 
 				break;
 			}
 			case Type::FLOAT32:
 			{
-
-				float32_t f = _getValue<float32_t>();
-				if (f == 0.0f) {
-					ba.write<ba_vt::UI8>((uint8_t)InternalType::FLT_0);
-				} else if (f == 0.5f) {
-					ba.write<ba_vt::UI8>((uint8_t)InternalType::FLT_0_5);
-				} else if (f == 1.0f) {
-					ba.write<ba_vt::UI8>((uint8_t)InternalType::FLT_1);
+				auto v = _getValue<float32_t>();
+				if (v == 0.0f) {
+					ba.write<uint8_t>((uint8_t)Type::FLOAT << 5);
 				} else {
-					ba.write<ba_vt::UI8>((uint8_t)_type);
-					ba.write<ba_vt::F32>(f);
+					auto tpos = ba.getPosition();
+					ba.write<ba_vt::PADDING>(1);
+					uint8_t t = (uint8_t)Type::FLOAT << 5;
+					auto p = (uint8_t*)&v;
+					for (size_t i = 0; i < 4; ++i) {
+						if (p[i] != 0) {
+							t |= 0b1 << i;
+							ba.write<uint8_t>(p[i]);
+						}
+					}
+					ba.getSource()[tpos] = t;
 				}
 
 				break;
 			}
 			case Type::FLOAT64:
 			{
-				float64_t d = _getValue<float64_t>();
-				if (d == 0.0) {
-					ba.write<ba_vt::UI8>((uint8_t)InternalType::DBL_0);
-				} else if (d == 0.5) {
-					ba.write<ba_vt::UI8>((uint8_t)InternalType::DBL_0_5);
-				} else if (d == 1.0) {
-					ba.write<ba_vt::UI8>((uint8_t)InternalType::DBL_1);
+				auto v = _getValue<float64_t>();
+				if (v == 0.0) {
+					ba.write<uint8_t>(((uint8_t)Type::FLOAT << 5) | 0b10000);
 				} else {
-					ba.write<ba_vt::UI8>((uint8_t)_type);
-					ba.write<ba_vt::F64>(d);
+					auto tpos = ba.getPosition();
+					ba.write<ba_vt::PADDING>(1);
+					uint8_t t = ((uint8_t)Type::FLOAT << 5) | 0b10000;
+					auto p = (uint8_t*)&v;
+					auto wp = (uint16_t*)&v;
+					for (size_t i = 0; i < 4; ++i) {
+						if (wp[i] != 0) {
+							auto ii = i << 1;
+							t |= 0b1 << i;
+							ba.write<uint8_t>(p[ii]);
+							ba.write<uint8_t>(p[++ii]);
+						}
+					}
+					ba.getSource()[tpos] = t;
 				}
 
 				break;
 			}
 			case Type::STRING:
 			{
-				if (auto s = _getValue<Str*>(); s->size) {
-					ba.write<ba_vt::UI8>((uint8_t)Type::STRING);
-					ba.write<ba_vt::STR>(s->data, s->size);
-				} else {
-					ba.write<ba_vt::UI8>((uint8_t)InternalType::STRING_EMPTY);
-				}
+				auto s = _getValue<Str*>();
+				_packString(ba, s->data, s->size);
 
 				break;
 			}
 			case Type::SHORT_STRING:
-			{
-				if (auto size = strlen((char*)_value); size) {
-					ba.write<ba_vt::UI8>((uint8_t)Type::STRING);
-					ba.write<ba_vt::STR>((char*)_value, size);
-				} else {
-					ba.write<ba_vt::UI8>((uint8_t)InternalType::STRING_EMPTY);
-				}
-
+				_packString(ba, (char*)_value, strlen((char*)_value));
 				break;
-			}
 			case Type::STRING_VIEW:
 			{
-				if (auto& sv = _getValue<StrView>(); sv.size) {
-					ba.write<ba_vt::UI8>((uint8_t)Type::STRING);
-					ba.write<ba_vt::STR>(sv.data, sv.size);
-				} else {
-					ba.write<ba_vt::UI8>((uint8_t)InternalType::STRING_EMPTY);
-				}
+				auto& sv = _getValue<StrView>();
+				_packString(ba, sv.data, sv.size);
 
 				break;
 			}
 			case Type::ARRAY:
 			{
-				Array* arr = _getValue<Array*>();
+				auto arr = _getValue<Array*>();
 				auto size = arr->value.size();
 
 				if constexpr (std::is_null_pointer_v<T>) {
-					if (size == 0) {
-						ba.write<ba_vt::UI8>((uint8_t)InternalType::ARRAY_0);
-					} else {
-						_packUInt(ba, size, (uint8_t)InternalType::ARRAY_8BITS);
+					if (size < VAL5_MAX) {
+						ba.write<uint8_t>(((uint8_t)Type::ARRAY << 5) | size);
 						for (auto& i : arr->value) i.pack(ba);
+					} else {
+						ba.write<uint8_t>(((uint8_t)Type::ARRAY << 5) | VAL5_MAX);
+						for (auto& i : arr->value) i.pack(ba);
+						ba.write<uint8_t>(END);
 					}
 				} else {
-					if (size == 0) {
-						ba.write<ba_vt::UI8>((uint8_t)InternalType::ARRAY_0);
+					size_t d = depth + 1;
+					std::vector<size_t> indices;
+					for (size_t i = 0, n = arr->value.size(); i < n;  ++i) {
+						if (filter.packable(parent, depth, i, arr->value[i])) indices.emplace_back(i);
+					}
+
+					if (indices.size() < VAL5_MAX) {
+						ba.write<uint8_t>(((uint8_t)Type::ARRAY << 5) | size);
+						for (auto& i : indices) arr->value[i]._pack(this, d, ba, filter);
 					} else {
-						ba.write<ba_vt::UI8>((uint8_t)InternalType::ARRAY_END);
-
-						size_t i = 0;
-						size_t d = depth + 1;
-						for (auto& e : arr->value) {
-							if (filter.packable(parent, depth, i++, e)) e._pack(this, d, ba, filter);
-						}
-
-						ba.write<ba_vt::UI8>((uint8_t)InternalType::END);
+						ba.write<uint8_t>(((uint8_t)Type::ARRAY << 5) | VAL5_MAX);
+						for (auto& i : arr->value) arr->value[i]._pack(this, d, ba, filter);
+						ba.write<uint8_t>(END);
 					}
 				}
 
@@ -905,34 +813,42 @@ namespace aurora {
 			}
 			case Type::MAP:
 			{
-				Map* map = _getValue<Map*>();
+				auto map = _getValue<Map*>();
 				auto size = map->value.size();
 
 				if constexpr (std::is_null_pointer_v<T>) {
-					if (size == 0) {
-						ba.write<ba_vt::UI8>((uint8_t)InternalType::MAP_0);
-					} else {
-						_packUInt(ba, size, (uint8_t)InternalType::MAP_8BITS);
+					if (size < VAL5_MAX) {
+						ba.write<uint8_t>(((uint8_t)Type::MAP << 5) | size);
 						for (auto& i : map->value) {
 							i.first.pack(ba);
 							i.second.pack(ba);
 						}
+					} else {
+						ba.write<uint8_t>(((uint8_t)Type::MAP << 5) | VAL5_MAX);
+						for (auto& i : map->value) {
+							i.first.pack(ba);
+							i.second.pack(ba);
+						}
+						ba.write<uint8_t>(END);
 					}
 				} else {
-					if (size == 0) {
-						ba.write<ba_vt::UI8>((uint8_t)InternalType::MAP_0);
-					} else {
-						ba.write<ba_vt::UI8>((uint8_t)InternalType::MAP_END);
-
-						size_t d = depth + 1;
-						for (auto& i : map->value) {
-							if (filter.packable(parent, depth, i.first, i.second)) {
-								i.first._pack(this, d, ba, filter);
-								i.second._pack(this, d, ba, filter);
-							}
+					size_t d = depth + 1;
+					std::vector<SerializableObject*> data;
+					for (auto& i : map->value) {
+						if (filter.packable(parent, depth, i.first, i.second)) {
+							data.emplace_back(&i.first);
+							data.emplace_back(&i.second);
 						}
-						
-						ba.write<ba_vt::UI8>((uint8_t)InternalType::END);
+					}
+
+					size_t size = data.size() >> 1;
+					if (size < VAL5_MAX) {
+						ba.write<uint8_t>(((uint8_t)Type::ARRAY << 5) | size);
+						for (auto& i : data) i->_pack(this, d, ba, filter);
+					} else {
+						ba.write<uint8_t>(((uint8_t)Type::ARRAY << 5) | VAL5_MAX);
+						for (auto& i : data) i->_pack(this, d, ba, filter);
+						ba.write<uint8_t>(END);
 					}
 				}
 
@@ -940,29 +856,15 @@ namespace aurora {
 			}
 			case Type::BYTES:
 			{
-				auto size = _getValue<Bytes<false>*>()->getSize();
-				if (size == 0) {
-					ba.write<ba_vt::UI8>((uint8_t)InternalType::BYTES_0);
-					break;
-				} else {
-					_packUInt(ba, size, (uint8_t)InternalType::BYTES_8BITS);
-				}
-
-				ba.write<ba_vt::BYTE>(_getValue<Bytes<false>*>()->getValue(), size);
+				auto val = _getValue<Bytes*>();
+				_packBytes(ba, val->getValue(), val->getSize());
 
 				break;
 			}
 			case Type::EXT_BYTES:
 			{
-				auto size = _getValue<Bytes<true>*>()->getSize();
-				if (size == 0) {
-					ba.write<ba_vt::UI8>((uint8_t)InternalType::BYTES_0);
-					break;
-				} else {
-					_packUInt(ba, size, (uint8_t)InternalType::BYTES_8BITS);
-				}
-
-				ba.write<ba_vt::BYTE>(_getValue<Bytes<true>*>()->getValue(), size);
+				auto& bv = _getValue<BytesView>();
+				_packBytes(ba, bv.data, bv.size);
 
 				break;
 			}
@@ -973,11 +875,11 @@ namespace aurora {
 
 		void AE_CALL _toJson(std::string& json) const;
 
-		void AE_CALL _packUInt(ByteArray& ba, uint64_t val, uint8_t typeBegin) const;
+		void AE_CALL _packUInt(ByteArray& ba, uint64_t val, uint8_t typeBegin, uint8_t typeEnd) const;
+		void AE_CALL _packString(ByteArray& ba, const char* data, size_t size) const;
+		void AE_CALL _packBytes(ByteArray& ba, const uint8_t* data, size_t size) const;
 
 		void AE_CALL _unpackBytes(ByteArray& ba, size_t size, Flag flag);
-
-		//friend Hash;
 	};
 
 	AE_DEFINE_ENUM_BIT_OPERATIION(SerializableObject::ForEachOperation);
