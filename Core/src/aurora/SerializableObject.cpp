@@ -554,7 +554,7 @@ namespace aurora {
 			_getValue<Bytes*>()->clear();
 			break;
 		case Type::EXT_BYTES:
-			_getValue<BytesView*>()->size = 0;
+			_getValue<BytesView>().size = 0;
 			break;
 		case Type::STRING:
 		{
@@ -715,7 +715,7 @@ namespace aurora {
 			json += '[';
 
 			auto& arr = _getValue<Array*>()->value;
-			bool first = true;
+			auto first = true;
 			for (auto& i : arr) {
 				if (first) {
 					first = false;
@@ -734,7 +734,7 @@ namespace aurora {
 			json += '{';
 
 			auto& map = _getValue<Map*>()->value;
-			bool first = true;
+			auto first = true;
 			for (auto& itr : map) {
 				if (first) {
 					first = false;
