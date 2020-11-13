@@ -1259,10 +1259,12 @@ namespace aurora {
 		_freeValue();
 		if ((flag & Flag::COPY) == Flag::COPY) {
 			_getValue<Bytes*>() = new Bytes(ba.getCurrentSource(), size);
+			_type = Type::BYTES;
 		} else {
 			auto& val = _getValue<BytesView>();
 			val.data = ba.getCurrentSource();
 			val.size = size;
+			_type = Type::EXT_BYTES;
 		}
 		ba.skip(size);
 	}
