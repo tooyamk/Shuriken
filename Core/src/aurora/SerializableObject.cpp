@@ -710,6 +710,13 @@ namespace aurora {
 		case Type::STRING:
 		case Type::SHORT_STRING:
 		case Type::STRING_VIEW:
+		{
+			json += '"';
+			json += toStringView();
+			json += '"';
+
+			break;
+		}
 		case Type::ARRAY:
 		{
 			json += '[';
