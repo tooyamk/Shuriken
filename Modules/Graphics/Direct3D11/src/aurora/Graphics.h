@@ -16,6 +16,7 @@ namespace aurora::modules::graphics::d3d11 {
 			IApplication* app = nullptr;
 			GraphicsAdapter* adapter = nullptr;
 			SampleCount sampleCount = 1;
+			std::string driverType;
 			bool debug = false;
 		};
 

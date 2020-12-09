@@ -473,7 +473,7 @@ inline static __NAME__ get##__NAME__(const std::string_view& name) { \
 						rst.meshes.emplace_back(mesh);
 
 						if (_rightHanded) {
-							for (auto& itr : mesh->getVertexResources()) {
+							for (auto& itr : mesh->getVerteices()) {
 								auto& vr = itr.second;
 								if (vr->format.size == modules::graphics::VertexSize::THREE) {
 									switch (vr->format.type) {

@@ -129,6 +129,13 @@ namespace aurora::modules::graphics::d3d11 {
 
 		if (maxResolutionArea == 0) return false;
 
+		auto driverType = D3D_DRIVER_TYPE_UNKNOWN;
+		if (conf.driverType == "HARDWARE") {
+			driverType = D3D_DRIVER_TYPE_HARDWARE;
+		} else if (conf.driverType == "SOFTWARE") {
+			driverType = D3D_DRIVER_TYPE_WARP;
+		}
+
 		/*
 		D3D_DRIVER_TYPE driverTypes[] =
 		{
@@ -163,7 +170,7 @@ namespace aurora::modules::graphics::d3d11 {
 		}
 		*/
 
-		if (FAILED(D3D11CreateDevice(dxgAdapter, D3D_DRIVER_TYPE_UNKNOWN, nullptr, creationFlags,
+		if (FAILED(D3D11CreateDevice(driverType == D3D_DRIVER_TYPE_UNKNOWN ? dxgAdapter : nullptr, driverType, nullptr, creationFlags,
 			featureLevels, totalFeatureLevels,
 			D3D11_SDK_VERSION, (ID3D11Device**)&_device, nullptr, (ID3D11DeviceContext**)&_context))) {
 			_release();

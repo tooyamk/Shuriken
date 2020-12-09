@@ -19,7 +19,7 @@ namespace aurora {
 
 	class AE_FW_DLL MeshResource : public Ref {
 	public:
-		inline const std::unordered_map<std::string, RefPtr<VertexResource>>& AE_CALL getVertexResources() const {
+		inline const std::unordered_map<std::string, RefPtr<VertexResource>>& AE_CALL getVerteices() const {
 			return _vertices;
 		}
 
@@ -48,19 +48,19 @@ namespace aurora {
 	public:
 		MeshBuffer();
 
-		inline VertexBufferCollection& AE_CALL getVertices() {
-			return *_vertices;
+		inline RefPtr<VertexBufferCollection> AE_CALL getVertices() {
+			return _vertices;
 		}
 
-		inline const VertexBufferCollection& AE_CALL getVertices() const {
-			return *_vertices;
+		inline const RefPtr<VertexBufferCollection>& AE_CALL getVertices() const {
+			return _vertices;
 		}
 
 		inline void AE_CALL setVertices(VertexBufferCollection* buffers) {
 			_vertices = buffers;
 		}
 
-		inline modules::graphics::IIndexBuffer* AE_CALL getIndex() const {
+		inline const RefPtr<modules::graphics::IIndexBuffer>& AE_CALL getIndex() const {
 			return _index;
 		}
 
@@ -76,7 +76,7 @@ namespace aurora {
 
 	class AE_FW_DLL Mesh : public Ref {
 	public:
-		inline MeshBuffer* AE_CALL getBuffer() const {
+		inline const RefPtr<MeshBuffer>& AE_CALL getBuffer() const {
 			return _buffer;
 		}
 
@@ -84,7 +84,7 @@ namespace aurora {
 			_buffer = buffer;
 		}
 
-		inline MeshResource* AE_CALL getResource() const {
+		inline const RefPtr<MeshResource>& AE_CALL getResource() const {
 			return _resource;
 		}
 

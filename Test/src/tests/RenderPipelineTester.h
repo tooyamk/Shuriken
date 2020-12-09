@@ -29,6 +29,7 @@ public:
 				args.insert("app", (uintptr_t)&*app);
 				args.insert("sampleCount", 4);
 				args.insert("trans", (uintptr_t)&*gpst);
+				//args.insert("driverType", "SOFTWARE");
 #ifdef AE_DEBUG
 				args.insert("debug", true);
 #endif
@@ -151,12 +152,12 @@ public:
 								renderableMesh->setMesh(mesh);
 								renderableMesh->setRenderer(renderer);
 
-								for (auto& itr : mr->getVertexResources()) {
+								for (auto& itr : mr->getVerteices()) {
 									auto vs = itr.second;
 									auto vb = graphics->createVertexBuffer();
 									vb->create(vs->data.getLength(), Usage::NONE, vs->data.getSource(), vs->data.getLength());
 									vb->setFormat(vs->format);
-									mesh->getBuffer()->getVertices().set(itr.first, vb);
+									mesh->getBuffer()->getVertices()->set(itr.first, vb);
 								}
 
 								if (auto is = mr->index; is) {

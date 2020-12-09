@@ -114,7 +114,7 @@ namespace aurora {
 
 		float32_t d[3][3];
 
-		float32_t xyz[3] = { m[0][0], m[0][0], m[0][0] };
+		float32_t xyz[3] = { m[0][0], m[1][0], m[2][0] };
 		for (size_t i = 0; i < 3; ++i) d[i][0] = xyz[i];
 
 		auto dot = xyz[0] * xyz[0] + xyz[1] * xyz[1] + xyz[2] * xyz[2];

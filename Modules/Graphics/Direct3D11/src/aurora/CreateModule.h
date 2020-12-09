@@ -23,6 +23,7 @@ namespace aurora::modules::graphics {
 		conf.adapter = (GraphicsAdapter*)args->tryGet("adapter").toNumber<uintptr_t>();
 		conf.sampleCount = args->tryGet("sampleCount").toNumber<SampleCount>(1);
 		conf.debug = args->tryGet("debug").toBool();
+		conf.driverType = args->tryGet("driverType").toStringView();
 
 		auto g = new d3d11::Graphics();
 		if (!g->createDevice(conf)) {

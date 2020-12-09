@@ -7,22 +7,16 @@ namespace aurora::events {
 	template<typename EvtType>
 	class Event {
 	public:
-		Event(const EvtType& type, void* data = nullptr) :
-			_type(type),
-			_data(data),
-			_target(nullptr) {
-		}
-
 		Event(void* target, const EvtType& type, void* data = nullptr) :
 			_type(type),
 			_data(data),
 			_target(target) {
 		}
 
-		Event(void* target, const Event& e) :
-			_type(e.getType()),
-			_data(e.getData()),
-			_target(target) {
+		Event(const EvtType& type, void* data = nullptr) : Event(nullptr, type, data) {
+		}
+
+		Event(void* target, const Event& e) : Event(target, e._type, e._data) {
 		}
 
 		template<typename T = void>
