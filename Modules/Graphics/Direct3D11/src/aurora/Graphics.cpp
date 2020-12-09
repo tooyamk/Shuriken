@@ -45,8 +45,11 @@ namespace aurora::modules::graphics::d3d11 {
 		if (_device || !conf.app || !conf.app->getNative(ApplicationNative::HWND)) return false;
 
 		if (conf.adapter) {
+			conf.createProcessInfo("specific adapter create device...");
 			return _createDevice(conf);
 		} else {
+			conf.createProcessInfo("search adapter create device...");
+
 			std::vector<GraphicsAdapter> adapters;
 			GraphicsAdapter::query(adapters);
 			std::vector<uint32_t> indices;
@@ -59,7 +62,7 @@ namespace aurora::modules::graphics::d3d11 {
 				if (_createDevice(conf2)) return true;
 			}
 
-			conf.createError("search adapter and create device failed");
+			conf.createProcessInfo("search adapter create device failed");
 
 			return false;
 		}
@@ -71,7 +74,7 @@ namespace aurora::modules::graphics::d3d11 {
 		IDXGIFactory2* dxgFctory = nullptr;
 
 		if (FAILED(CreateDXGIFactory1(__uuidof(IDXGIFactory2), (void**)&dxgFctory))) {
-			conf.createError("CreateDXGIFactory failed");
+			conf.createProcessInfo("CreateDXGIFactory failed");
 			return false;
 		}
 		objs.add(dxgFctory);
@@ -92,7 +95,7 @@ namespace aurora::modules::graphics::d3d11 {
 		}
 
 		if (!dxgAdapter) {
-			conf.createError("not found dxgAdapter");
+			conf.createProcessInfo("not found dxgAdapter");
 			return false;
 		}
 
@@ -102,16 +105,25 @@ namespace aurora::modules::graphics::d3d11 {
 		float32_t maxRefreshRate = 0.f;
 		for (UINT i = 0;; ++i) {
 			IDXGIOutput* output = nullptr;
-			if (dxgAdapter->EnumOutputs(i, &output) == DXGI_ERROR_NOT_FOUND) break;
+			if (dxgAdapter->EnumOutputs(i, &output) == DXGI_ERROR_NOT_FOUND) {
+				conf.createProcessInfo("search adapter end");
+				break;
+			}
 			objs.add(output);
 
+			conf.createProcessInfo("found adapter, check mode...");
+
 			uint32_t numSupportedModes = 0;
-			if (FAILED(output->GetDisplayModeList(fmt, 0, &numSupportedModes, nullptr))) continue;
+			if (FAILED(output->GetDisplayModeList(fmt, 0, &numSupportedModes, nullptr))) {
+				conf.createProcessInfo("adapter GetDisplayModeList failed, skip");
+				continue;
+			}
 
 			auto supportedModes = new DXGI_MODE_DESC[numSupportedModes];
 			memset(supportedModes, 0, sizeof(DXGI_MODE_DESC) * numSupportedModes);
 			if (FAILED(output->GetDisplayModeList(fmt, 0, &numSupportedModes, supportedModes))) {
 				delete[] supportedModes;
+				conf.createProcessInfo("adapter GetDisplayModeList whit supportedModes failed, skip");
 				continue;
 			}
 
@@ -137,7 +149,7 @@ namespace aurora::modules::graphics::d3d11 {
 		}
 
 		if (maxResolutionArea == 0) {
-			conf.createError("not found suitable mode");
+			conf.createProcessInfo("not found suitable mode");
 			return false;
 		}
 
@@ -185,7 +197,7 @@ namespace aurora::modules::graphics::d3d11 {
 		if (FAILED(D3D11CreateDevice(driverType == D3D_DRIVER_TYPE_UNKNOWN ? dxgAdapter : nullptr, driverType, nullptr, creationFlags,
 			featureLevels, totalFeatureLevels,
 			D3D11_SDK_VERSION, (ID3D11Device**)&_device, nullptr, (ID3D11DeviceContext**)&_context))) {
-			conf.createError("CreateDevice failed");
+			conf.createProcessInfo("CreateDevice failed");
 			_release();
 			return false;
 		}
@@ -296,7 +308,7 @@ namespace aurora::modules::graphics::d3d11 {
 		swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
 		if (FAILED(dxgFctory->CreateSwapChain(_device, &swapChainDesc, (IDXGISwapChain**)&_swapChain))) {
-			conf.createError("CreateSwapChain failed");
+			conf.createProcessInfo("CreateSwapChain failed");
 			_release();
 			return false;
 		}

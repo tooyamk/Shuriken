@@ -24,7 +24,7 @@ namespace aurora::modules::graphics {
 		conf.sampleCount = args->tryGet("sampleCount").toNumber<decltype(conf.sampleCount)>(1);
 		conf.debug = args->tryGet("debug").toBool();
 		conf.driverType = args->tryGet("driverType").toStringView();
-		conf.createErrorHandler = (decltype(conf.createErrorHandler))args->tryGet("createErrorHandler").toNumber<uintptr_t>();
+		conf.createProcessInfoHandler = (decltype(conf.createProcessInfoHandler))args->tryGet("createProcessInfoHandler").toNumber<uintptr_t>();
 
 		auto g = new d3d11::Graphics();
 		if (!g->createDevice(conf)) {
