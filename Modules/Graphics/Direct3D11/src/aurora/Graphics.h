@@ -17,7 +17,12 @@ namespace aurora::modules::graphics::d3d11 {
 			GraphicsAdapter* adapter = nullptr;
 			SampleCount sampleCount = 1;
 			std::string driverType;
+			std::function<void(const std::string_view&)>* createErrorHandler;
 			bool debug = false;
+
+			inline void AE_CALL createError(const std::string_view& msg) const {
+				if (createErrorHandler && *createErrorHandler) (*createErrorHandler)(msg);
+			}
 		};
 
 

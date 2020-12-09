@@ -14,15 +14,15 @@ namespace aurora::modules::graphics {
 			return nullptr;
 		}
 
-		conf.app = (IApplication*)args->tryGet("app").toNumber<uintptr_t>();
+		conf.app = (decltype(conf.app))args->tryGet("app").toNumber<uintptr_t>();
 		if (!conf.app) {
 			printdln("GlewGraphicsModule create error : no app");
 			return nullptr;
 		}
 
-		conf.trans = (IProgramSourceTranslator*)args->tryGet("trans").toNumber<uintptr_t>();
-		conf.adapter = (GraphicsAdapter*)args->tryGet("adapter").toNumber<uintptr_t>();
-		conf.sampleCount = args->tryGet("sampleCount").toNumber<SampleCount>(1);
+		conf.trans = (decltype(conf.trans))args->tryGet("trans").toNumber<uintptr_t>();
+		conf.adapter = (decltype(conf.adapter))args->tryGet("adapter").toNumber<uintptr_t>();
+		conf.sampleCount = args->tryGet("sampleCount").toNumber<decltype(conf.sampleCount)>(1);
 		conf.debug = args->tryGet("debug").toBool();
 
 		auto g = new gl::Graphics();

@@ -58,6 +58,9 @@ namespace aurora::modules::graphics::d3d11 {
 				conf2.adapter = &adapters[idx];
 				if (_createDevice(conf2)) return true;
 			}
+
+			conf.createError("search adapter and create device failed");
+
 			return false;
 		}
 	}
@@ -67,7 +70,10 @@ namespace aurora::modules::graphics::d3d11 {
 
 		IDXGIFactory2* dxgFctory = nullptr;
 
-		if (FAILED(CreateDXGIFactory1(__uuidof(IDXGIFactory2), (void**)&dxgFctory))) return false;
+		if (FAILED(CreateDXGIFactory1(__uuidof(IDXGIFactory2), (void**)&dxgFctory))) {
+			conf.createError("CreateDXGIFactory failed");
+			return false;
+		}
 		objs.add(dxgFctory);
 		dxgFctory->MakeWindowAssociation((HWND)conf.app->getNative(ApplicationNative::HWND), DXGI_MWA_NO_WINDOW_CHANGES | DXGI_MWA_NO_ALT_ENTER);
 
@@ -85,7 +91,10 @@ namespace aurora::modules::graphics::d3d11 {
 			}
 		}
 
-		if (!dxgAdapter) return false;
+		if (!dxgAdapter) {
+			conf.createError("not found dxgAdapter");
+			return false;
+		}
 
 		DXGI_FORMAT fmt = DXGI_FORMAT_R8G8B8A8_UNORM;
 
@@ -127,7 +136,10 @@ namespace aurora::modules::graphics::d3d11 {
 			delete[] supportedModes;
 		}
 
-		if (maxResolutionArea == 0) return false;
+		if (maxResolutionArea == 0) {
+			conf.createError("not found suitable mode");
+			return false;
+		}
 
 		auto driverType = D3D_DRIVER_TYPE_UNKNOWN;
 		if (conf.driverType == "HARDWARE") {
@@ -173,6 +185,7 @@ namespace aurora::modules::graphics::d3d11 {
 		if (FAILED(D3D11CreateDevice(driverType == D3D_DRIVER_TYPE_UNKNOWN ? dxgAdapter : nullptr, driverType, nullptr, creationFlags,
 			featureLevels, totalFeatureLevels,
 			D3D11_SDK_VERSION, (ID3D11Device**)&_device, nullptr, (ID3D11DeviceContext**)&_context))) {
+			conf.createError("CreateDevice failed");
 			_release();
 			return false;
 		}
@@ -283,6 +296,7 @@ namespace aurora::modules::graphics::d3d11 {
 		swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
 		if (FAILED(dxgFctory->CreateSwapChain(_device, &swapChainDesc, (IDXGISwapChain**)&_swapChain))) {
+			conf.createError("CreateSwapChain failed");
 			_release();
 			return false;
 		}
