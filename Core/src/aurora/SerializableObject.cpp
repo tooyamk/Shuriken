@@ -161,7 +161,7 @@ namespace aurora {
 	}
 
 	SerializableObject::SerializableObject(const std::string_view& value, Flag flag) {
-		if ((flag & (Flag::COPY | Flag::TO_COPY)) == Flag::COPY) {
+		if ((flag & Flag::COPY) == Flag::COPY) {
 			if (auto size = value.size(); size < VALUE_SIZE) {
 				_writeShortString(value.data(), size);
 				_type = Type::SHORT_STRING;
@@ -174,7 +174,7 @@ namespace aurora {
 		} else {
 			_writeStringView(value.data(), value.size());
 			_type = Type::STRING_VIEW;
-			_flag = flag & Flag::SV_STORE_MASK;
+			_flag = flag & Flag::TO_COPY;
 		}
 	}
 
@@ -182,11 +182,13 @@ namespace aurora {
 		if ((flag & Flag::COPY) == Flag::COPY) {
 			_getValue<Bytes*>() = new Bytes(value, size);
 			_type = Type::BYTES;
+			_flag = Flag::NONE;
 		} else {
 			auto& bv = _getValue<BytesView>();
 			bv.data = value;
 			bv.size = size;
 			_type = Type::EXT_BYTES;
+			_flag = flag & Flag::TO_COPY;
 		}
 	}
 
@@ -216,7 +218,7 @@ namespace aurora {
 				}
 			} else {
 				_getValue<StrView>() = sv;
-				_flag = flag & Flag::SV_STORE_MASK;
+				_flag = flag & Flag::TO_COPY;
 			}
 
 			break;
@@ -793,7 +795,7 @@ namespace aurora {
 			} else {
 				_writeStringView(value.data(), value.size());
 				_type = Type::STRING_VIEW;
-				_flag = flag & Flag::SV_STORE_MASK;
+				_flag = flag & Flag::TO_COPY;
 			}
 
 			break;
@@ -810,7 +812,7 @@ namespace aurora {
 			} else {
 				_writeStringView(value.data(), value.size());
 				_type = Type::STRING_VIEW;
-				_flag = flag & Flag::SV_STORE_MASK;
+				_flag = flag & Flag::TO_COPY;
 			}
 
 			break;
@@ -827,7 +829,7 @@ namespace aurora {
 				}
 			} else {
 				_writeStringView(value.data(), value.size());
-				_flag = flag & Flag::SV_STORE_MASK;
+				_flag = flag & Flag::TO_COPY;
 			}
 
 			break;
@@ -847,7 +849,7 @@ namespace aurora {
 			} else {
 				_writeStringView(value.data(), value.size());
 				_type = Type::STRING_VIEW;
-				_flag = flag & Flag::SV_STORE_MASK;
+				_flag = flag & Flag::TO_COPY;
 			}
 
 			break;

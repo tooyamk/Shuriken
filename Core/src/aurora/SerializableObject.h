@@ -50,9 +50,7 @@ namespace aurora {
 		enum class Flag : uint8_t {
 			NONE = 0,
 			COPY = 0b1,
-			TO_COPY = 0b10,
-
-			SV_STORE_MASK = TO_COPY
+			TO_COPY = 0b10
 		};
 
 
