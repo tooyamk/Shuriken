@@ -612,7 +612,13 @@ namespace aurora::modules::graphics::d3d11 {
 
 		if (setToBack && !_curIsBackBuffer) {
 			_curIsBackBuffer = true;
-			if (_context) _context->OMSetRenderTargets(1, (ID3D11RenderTargetView**)&_backBufferView, _backDepthStencil->getInternalView());
+			if (_context) {
+				if (_backBufferView) {
+					_context->OMSetRenderTargets(1, (ID3D11RenderTargetView**)&_backBufferView, _backDepthStencil->getInternalView());
+				} else {
+					_context->OMSetRenderTargets(0, nullptr, nullptr);
+				}
+			}
 		}
 	}
 
