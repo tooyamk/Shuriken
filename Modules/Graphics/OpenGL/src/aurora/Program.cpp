@@ -416,7 +416,10 @@ namespace aurora::modules::graphics::gl {
 	}
 
 	GLuint Program::_compileShader(const ProgramSource& source, GLenum type, ProgramStage stage, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& handler) {
-		if (!source.isValid()) return 0;
+		if (!source.isValid()) {
+			_graphics.get<Graphics>()->error("glsl compile failed, source is invalid");
+			return 0;
+		}
 
 		if (source.language != ProgramLanguage::GLSL) {
 			auto g = _graphics.get<Graphics>();

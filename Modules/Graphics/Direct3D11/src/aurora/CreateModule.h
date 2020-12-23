@@ -23,6 +23,7 @@ namespace aurora::modules::graphics {
 		conf.adapter = (decltype(conf.adapter))args->tryGet("adapter").toNumber<uintptr_t>();
 		conf.sampleCount = args->tryGet("sampleCount").toNumber<decltype(conf.sampleCount)>(1);
 		conf.debug = args->tryGet("debug").toBool();
+		conf.offscreen = args->tryGet("offscreen").toBool();
 		conf.driverType = args->tryGet("driverType").toStringView();
 		conf.createProcessInfoHandler = (decltype(conf.createProcessInfoHandler))args->tryGet("createProcessInfoHandler").toNumber<uintptr_t>();
 

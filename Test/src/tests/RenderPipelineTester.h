@@ -86,7 +86,7 @@ public:
 							auto light = renderData.lights.emplace_back(new PointLight());
 							light->attachNode(lightNode);
 							//light->setRadius(200);
-							lightNode->localRotate(Quaternion::createFromEulerY(Math::PI_4<float32_t>));
+							lightNode->localRotate(Quaternion::createEulerY(Math::PI_4<float32_t>));
 							renderData.lights.emplace_back(light);
 						}
 						if (1) {
@@ -95,7 +95,7 @@ public:
 							auto light = renderData.lights.emplace_back(new PointLight());
 							light->attachNode(lightNode);
 							//light->setRadius(1000);
-							lightNode->localRotate(Quaternion::createFromEulerY(-Math::PI_4<float32_t>));
+							lightNode->localRotate(Quaternion::createEulerY(-Math::PI_4<float32_t>));
 							renderData.lights.emplace_back(light);
 						}
 						RefPtr cameraNode = worldNode->addChild<Node>();
@@ -250,7 +250,7 @@ public:
 
 						renderData.app->pollEvents();
 
-						renderData.model->localRotate(Quaternion::createFromEulerY(Math::PI<float32_t> * dt * 0.5f));
+						renderData.model->localRotate(Quaternion::createEulerY(Math::PI<float32_t> * dt * 0.5f));
 
 						renderData.g->setViewport(Box2i32ui32(Vec2i32::ZERO, renderData.app->getCurrentClientSize()));
 						renderData.renderPipeline->render(renderData.g, [renderData](render::IRenderCollector& collector) {

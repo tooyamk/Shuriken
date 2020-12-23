@@ -24,7 +24,7 @@ namespace aurora {
 		void AE_CALL set(modules::graphics::IGraphicsModule* graphics, ProgramSource* vs, ProgramSource* ps, 
 			const ShaderDefine* staticDefines, size_t numStaticDefines, const std::string_view* dynamicDefines, size_t numDynamicDefines,
 			const IncludeHandler& handler);
-		modules::graphics::IProgram* AE_CALL select(const IShaderDefineGetter* getter);
+		RefPtr<modules::graphics::IProgram> AE_CALL select(const IShaderDefineGetter* getter);
 
 		void AE_CALL unset();
 

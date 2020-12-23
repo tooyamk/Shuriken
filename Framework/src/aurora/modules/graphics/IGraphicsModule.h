@@ -130,14 +130,17 @@ namespace aurora::modules::graphics {
 			featureValue = val.featureValue;
 		}
 
-		template<uint32_t Size, typename Type>
+		template<uint32_t Size>
 		inline void AE_CALL set() {
 			if constexpr (Size <= (decltype(Size))VertexSize::FOUR) {
 				size = (VertexSize)Size;
 			} else {
 				size = VertexSize::UNKNOWN;
 			}
+		}
 
+		template<typename Type>
+		inline void AE_CALL set() {
 			if constexpr (std::is_same_v<Type, int8_t>) {
 				type = VertexType::I8;
 			} else if constexpr (std::is_same_v<Type, uint8_t>) {
@@ -155,6 +158,12 @@ namespace aurora::modules::graphics {
 			} else {
 				type = VertexType::UNKNOWN;
 			}
+		}
+
+		template<uint32_t Size, typename Type>
+		inline void AE_CALL set() {
+			set<Size>();
+			set<Type>();
 		}
 
 		union {
@@ -868,9 +877,7 @@ namespace aurora::modules::graphics {
 
 
 	struct AE_FW_DLL GraphicsDeviceFeatures {
-		GraphicsDeviceFeatures() {
-			reset();
-		}
+		GraphicsDeviceFeatures();
 
 		bool sampler;
 		bool nativeTextureView;
@@ -887,22 +894,7 @@ namespace aurora::modules::graphics {
 		std::vector<IndexType> indexTypes;
 		std::vector<TextureFormat> textureFormats;
 
-		void AE_CALL reset() {
-			sampler = false;
-			nativeTextureView = false;
-			nativeRenderView = false;
-			pixelBuffer = false;
-			constantBuffer = false;
-			textureMap = false;
-			persistentMap = false;
-			independentBlend = false;
-			stencilIndependentRef = false;
-			stencilIndependentMask = false;
-			maxSampleCount = 0;
-			simultaneousRenderTargetCount = 0;
-			indexTypes.clear();
-			textureFormats.clear();
-		}
+		void AE_CALL reset();
 	};
 
 

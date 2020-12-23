@@ -96,49 +96,49 @@ namespace aurora {
 			toMatrix((Matrix34&)dst);
 		}
 
-		static void AE_CALL createFromEulerX(float32_t radian, Quaternion& dst) {
+		static void AE_CALL createEulerX(float32_t radian, Quaternion& dst) {
 			radian *= .5f;
 			auto x = std::sin(radian);
 			auto w = std::cos(radian);
 
 			dst.set(x, 0.f, 0.f, w);
 		}
-		inline static Quaternion createFromEulerX(float32_t radian) {
+		inline static Quaternion createEulerX(float32_t radian) {
 			Quaternion q(NO_INIT);
-			createFromEulerX(radian, q);
+			createEulerX(radian, q);
 			return q;
 		}
-		inline static void AE_CALL createFromEulerY(float32_t radian, Quaternion& dst) {
+		inline static void AE_CALL createEulerY(float32_t radian, Quaternion& dst) {
 			radian *= .5f;
 			auto y = std::sin(radian);
 			auto w = std::cos(radian);
 
 			dst.set(0.f, y, 0.f, w);
 		}
-		inline static Quaternion AE_CALL createFromEulerY(float32_t radian) {
+		inline static Quaternion AE_CALL createEulerY(float32_t radian) {
 			Quaternion q(NO_INIT);
-			createFromEulerY(radian, q);
+			createEulerY(radian, q);
 			return q;
 		}
-		inline static void AE_CALL createFromEulerZ(float32_t radian, Quaternion& dst) {
+		inline static void AE_CALL createEulerZ(float32_t radian, Quaternion& dst) {
 			radian *= .5f;
 			auto z = std::sin(radian);
 			auto w = std::cos(radian);
 
 			dst.set(0.f, 0.f, z, w);
 		}
-		inline static Quaternion AE_CALL createFromEulerZ(float32_t radian) {
+		inline static Quaternion AE_CALL createEulerZ(float32_t radian) {
 			Quaternion q(NO_INIT);
-			createFromEulerZ(radian, q);
+			createEulerZ(radian, q);
 			return q;
 		}
-		static void AE_CALL createFromEuler(const float32_t(&radians)[3], Quaternion& dst);
-		inline static Quaternion AE_CALL createFromEuler(const float32_t(&radians)[3]) {
+		static void AE_CALL createEuler(const float32_t(&radians)[3], Quaternion& dst);
+		inline static Quaternion AE_CALL createEuler(const float32_t(&radians)[3]) {
 			Quaternion q(NO_INIT);
-			createFromEuler(radians, q);
+			createEuler(radians, q);
 			return q;
 		}
-		static void AE_CALL createFromAxis(const float32_t(&axis)[3], float32_t radian, Quaternion& dst);
+		static void AE_CALL createAxis(const float32_t(&axis)[3], float32_t radian, Quaternion& dst);
 		static void AE_CALL createLookAt(const float32_t(&forward)[3], const float32_t(&upward)[3], Quaternion& dst);
 		inline static void AE_CALL slerp(const Quaternion& from, const Quaternion& to, float32_t t, Quaternion& dst) {
 			Math::slerp(from, to, t, dst);

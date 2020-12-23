@@ -59,6 +59,7 @@ namespace aurora::modules::graphics::d3d11 {
 
 			for (auto& idx : indices) {
 				conf2.adapter = &adapters[idx];
+				conf.createProcessInfo("found adapter create device...");
 				if (_createDevice(conf2)) return true;
 			}
 
@@ -99,23 +100,23 @@ namespace aurora::modules::graphics::d3d11 {
 			return false;
 		}
 
-		DXGI_FORMAT fmt = DXGI_FORMAT_R8G8B8A8_UNORM;
+		auto fmt = DXGI_FORMAT_R8G8B8A8_UNORM;
 
 		uint32_t maxResolutionArea = 0;
 		float32_t maxRefreshRate = 0.f;
 		for (UINT i = 0;; ++i) {
 			IDXGIOutput* output = nullptr;
 			if (dxgAdapter->EnumOutputs(i, &output) == DXGI_ERROR_NOT_FOUND) {
-				conf.createProcessInfo("search adapter end");
+				conf.createProcessInfo("adapter enum outputs end");
 				break;
 			}
 			objs.add(output);
 
-			conf.createProcessInfo("found adapter, check mode...");
+			conf.createProcessInfo("adapter output check mode...");
 
-			uint32_t numSupportedModes = 0;
+			UINT numSupportedModes = 0;
 			if (FAILED(output->GetDisplayModeList(fmt, 0, &numSupportedModes, nullptr))) {
-				conf.createProcessInfo("adapter GetDisplayModeList failed, skip");
+				conf.createProcessInfo("adapter output GetDisplayModeList failed, skip");
 				continue;
 			}
 
@@ -123,11 +124,11 @@ namespace aurora::modules::graphics::d3d11 {
 			memset(supportedModes, 0, sizeof(DXGI_MODE_DESC) * numSupportedModes);
 			if (FAILED(output->GetDisplayModeList(fmt, 0, &numSupportedModes, supportedModes))) {
 				delete[] supportedModes;
-				conf.createProcessInfo("adapter GetDisplayModeList whit supportedModes failed, skip");
+				conf.createProcessInfo("adapter output GetDisplayModeList whit supportedModes failed, skip");
 				continue;
 			}
 
-			for (uint32_t i = 0; i < numSupportedModes; ++i) {
+			for (decltype(numSupportedModes) i = 0; i < numSupportedModes; ++i) {
 				auto& m = supportedModes[i];
 				if  (uint32_t area = m.Width * m.Height; maxResolutionArea < area) {
 					maxResolutionArea = area;
@@ -135,8 +136,7 @@ namespace aurora::modules::graphics::d3d11 {
 					_refreshRate.Denominator = 1;
 					maxRefreshRate = (float32_t)m.RefreshRate.Numerator / (float32_t)m.RefreshRate.Denominator;
 				} else if (maxResolutionArea == area) {
-					float32_t rr = (float32_t)m.RefreshRate.Numerator / (float32_t)m.RefreshRate.Denominator;
-					if (rr > maxRefreshRate) {
+					if (decltype(maxRefreshRate) rr = (float32_t)m.RefreshRate.Numerator / (float32_t)m.RefreshRate.Denominator; rr > maxRefreshRate) {
 						maxRefreshRate = rr;
 
 						_refreshRate.Numerator = m.RefreshRate.Numerator;
@@ -148,15 +148,15 @@ namespace aurora::modules::graphics::d3d11 {
 			delete[] supportedModes;
 		}
 
-		if (maxResolutionArea == 0) {
+		if (maxResolutionArea == 0 && !conf.offscreen) {
 			conf.createProcessInfo("not found suitable mode");
 			return false;
 		}
 
 		auto driverType = D3D_DRIVER_TYPE_UNKNOWN;
-		if (conf.driverType == "HARDWARE") {
+		if (conf.driverType == "hardware") {
 			driverType = D3D_DRIVER_TYPE_HARDWARE;
-		} else if (conf.driverType == "SOFTWARE") {
+		} else if (conf.driverType == "software") {
 			driverType = D3D_DRIVER_TYPE_WARP;
 		}
 
@@ -176,9 +176,9 @@ namespace aurora::modules::graphics::d3d11 {
 			D3D_FEATURE_LEVEL_10_1,
 			D3D_FEATURE_LEVEL_10_0
 		};
-		uint32_t totalFeatureLevels = ARRAYSIZE(featureLevels);
+		UINT totalFeatureLevels = ARRAYSIZE(featureLevels);
 
-		uint32_t creationFlags = 0;
+		UINT creationFlags = 0;
 		if (conf.debug) creationFlags |= D3D11_CREATE_DEVICE_DEBUG;
 
 		/*
@@ -281,7 +281,7 @@ namespace aurora::modules::graphics::d3d11 {
 		_deviceFeatures.indexTypes.emplace_back(IndexType::UI32);
 		_deviceFeatures.textureFormats.emplace_back(TextureFormat::R8G8B8A8);
 
-		for (size_t i = 1; i <= D3D11_MAX_MULTISAMPLE_SAMPLE_COUNT; i <<= 1) {
+		for (UINT i = 1; i <= D3D11_MAX_MULTISAMPLE_SAMPLE_COUNT; i <<= 1) {
 			UINT numQualityLevels = 0;
 			_device->CheckMultisampleQualityLevels(fmt, i, &numQualityLevels);
 			if (numQualityLevels) _deviceFeatures.maxSampleCount = i;
@@ -289,28 +289,30 @@ namespace aurora::modules::graphics::d3d11 {
 
 		auto size = conf.app->getCurrentClientSize();
 
-		_backBufferSampleCount = conf.sampleCount > _deviceFeatures.maxSampleCount ? _deviceFeatures.maxSampleCount : conf.sampleCount;
-		DXGI_SWAP_CHAIN_DESC swapChainDesc = { 0 };
-		swapChainDesc.BufferCount = 1;
-		swapChainDesc.BufferDesc.Width = size[0];
-		swapChainDesc.BufferDesc.Height = size[1];
-		swapChainDesc.BufferDesc.Format = fmt;
-		swapChainDesc.BufferDesc.RefreshRate.Numerator = _refreshRate.Numerator;
-		swapChainDesc.BufferDesc.RefreshRate.Denominator = _refreshRate.Denominator;
-		swapChainDesc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
-		swapChainDesc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
-		swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-		swapChainDesc.OutputWindow = (HWND)conf.app->getNative(ApplicationNative::HWND);
-		swapChainDesc.Windowed = true;
-		swapChainDesc.SampleDesc.Count = _backBufferSampleCount;
-		swapChainDesc.SampleDesc.Quality = 0;
-		swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
-		swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
-
-		if (FAILED(dxgFctory->CreateSwapChain(_device, &swapChainDesc, (IDXGISwapChain**)&_swapChain))) {
-			conf.createProcessInfo("CreateSwapChain failed");
-			_release();
-			return false;
+		if (!conf.offscreen) {
+			_backBufferSampleCount = conf.sampleCount > _deviceFeatures.maxSampleCount ? _deviceFeatures.maxSampleCount : conf.sampleCount;
+			DXGI_SWAP_CHAIN_DESC swapChainDesc = { 0 };
+			swapChainDesc.BufferCount = 1;
+			swapChainDesc.BufferDesc.Width = size[0];
+			swapChainDesc.BufferDesc.Height = size[1];
+			swapChainDesc.BufferDesc.Format = fmt;
+			swapChainDesc.BufferDesc.RefreshRate.Numerator = _refreshRate.Numerator;
+			swapChainDesc.BufferDesc.RefreshRate.Denominator = _refreshRate.Denominator;
+			swapChainDesc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+			swapChainDesc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+			swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+			swapChainDesc.OutputWindow = (HWND)conf.app->getNative(ApplicationNative::HWND);
+			swapChainDesc.Windowed = true;
+			swapChainDesc.SampleDesc.Count = _backBufferSampleCount;
+			swapChainDesc.SampleDesc.Quality = 0;
+			swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+			swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+		
+			if (FAILED(dxgFctory->CreateSwapChain(_device, &swapChainDesc, (IDXGISwapChain**)&_swapChain))) {
+				conf.createProcessInfo("CreateSwapChain failed");
+				_release();
+				return false;
+			}
 		}
 
 		{
@@ -331,6 +333,8 @@ namespace aurora::modules::graphics::d3d11 {
 		_app = conf.app;
 
 		_resize(size);
+
+		conf.createProcessInfo("create device succeeded");
 
 		return true;
 	}
@@ -428,20 +432,18 @@ namespace aurora::modules::graphics::d3d11 {
 	}
 
 	void Graphics::setViewport(const Box2i32ui32& vp) {
-		if (_context) {
-			if (_d3dStatus.vp != vp) {
-				_d3dStatus.vp = vp;
+		if (_context && _d3dStatus.vp != vp) {
+			_d3dStatus.vp = vp;
 
-				D3D11_VIEWPORT dvp;
-				dvp.Width = vp.size[0];
-				dvp.Height = vp.size[1];
-				dvp.MinDepth = 0.0f;
-				dvp.MaxDepth = 1.0f;
-				dvp.TopLeftX = vp.pos[0];
-				dvp.TopLeftY = vp.pos[1];
+			D3D11_VIEWPORT dvp;
+			dvp.Width = vp.size[0];
+			dvp.Height = vp.size[1];
+			dvp.MinDepth = 0.0f;
+			dvp.MaxDepth = 1.0f;
+			dvp.TopLeftX = vp.pos[0];
+			dvp.TopLeftY = vp.pos[1];
 
-				_context->RSSetViewports(1, &dvp);
-			}
+			_context->RSSetViewports(1, &dvp);
 		}
 	}
 
@@ -577,7 +579,7 @@ namespace aurora::modules::graphics::d3d11 {
 	}
 
 	void Graphics::setRenderTarget(IRenderTarget* rt) {
-		bool setToBack = true;
+		auto setToBack = true;
 
 		if (rt && rt->getGraphics() == this) {
 			if (auto rtt = (RenderTarget*)rt->getNative(); rtt) {
@@ -620,7 +622,7 @@ namespace aurora::modules::graphics::d3d11 {
 				if (_curIsBackBuffer) {
 					if (_backBufferView) _context->ClearRenderTargetView(_backBufferView, color.data);
 				} else {
-					for (uint8_t i = 0; i < _numRTVs; ++i) {
+					for (decltype(_numRTVs) i = 0; i < _numRTVs; ++i) {
 						auto view = _RTVs[i];
 						if (view) _context->ClearRenderTargetView(view, color.data);
 					}
@@ -692,7 +694,7 @@ namespace aurora::modules::graphics::d3d11 {
 
 		auto& bufferDesc = swapChainDesc.BufferDesc;
 
-		bool sizeChange = bufferDesc.Width != size[0] || bufferDesc.Height != size[1];
+		auto sizeChange = bufferDesc.Width != size[0] || bufferDesc.Height != size[1];
 
 		if (sizeChange || !_backBufferView || !_backDepthStencil->getInternalView()) {
 			bufferDesc.Width = size[0];

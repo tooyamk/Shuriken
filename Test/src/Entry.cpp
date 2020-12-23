@@ -1,5 +1,6 @@
 #include "tests/DepthTestTester.h"
 #include "tests/InputTester.h"
+#include "tests/OffscreenTester.h"
 #include "tests/RenderPipelineTester.h"
 #include "tests/RenderTargetTester.h"
 #include "tests/VertexUpdateTester.h"
@@ -8,9 +9,9 @@
 #include <immintrin.h>
 
 #if AE_OS == AE_OS_WIN
-int32_t WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int32_t nCmdShow) {
-//#pragma comment(linker, "/subsystem:console")
-//int32_t main() {
+//int32_t WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int32_t nCmdShow) {
+#pragma comment(linker, "/subsystem:console")
+int32_t main() {
 	SetDllDirectoryW((getAppPath().parent_path().wstring() + L"/libs/").data());
 #else
 int32_t main() {
@@ -35,7 +36,8 @@ int32_t main() {
 	
 	//return (new DepthTestTester())->run();
 	//return (new InputTester())->run();
-	return (new RenderPipelineTester())->run();
+	return (new OffscreenTester())->run();
+	//return (new RenderPipelineTester())->run();
 	//return (new RenderTargetTester())->run();
 	//return (new VertexUpdateTester())->run();
 	//return (new WindowTester())->run();

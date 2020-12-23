@@ -9,9 +9,14 @@ namespace aurora {
 	public:
 		Material();
 
-		inline Shader* AE_CALL getShader() const {
+		inline const RefPtr<Shader> AE_CALL getShader() const {
 			return _shader;
 		}
+
+		inline RefPtr<Shader> AE_CALL getShader() {
+			return _shader;
+		}
+
 		inline void AE_CALL setShader(Shader* shader) {
 			_shader = shader;
 		}

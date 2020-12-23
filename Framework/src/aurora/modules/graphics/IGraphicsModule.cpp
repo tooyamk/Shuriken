@@ -58,4 +58,26 @@ namespace aurora::modules::graphics {
 		enabled(false),
 		writeMask(true) {
 	}
+
+
+	GraphicsDeviceFeatures::GraphicsDeviceFeatures() {
+		reset();
+	}
+
+	void GraphicsDeviceFeatures::reset() {
+		sampler = false;
+		nativeTextureView = false;
+		nativeRenderView = false;
+		pixelBuffer = false;
+		constantBuffer = false;
+		textureMap = false;
+		persistentMap = false;
+		independentBlend = false;
+		stencilIndependentRef = false;
+		stencilIndependentMask = false;
+		maxSampleCount = 0;
+		simultaneousRenderTargetCount = 0;
+		indexTypes.clear();
+		textureFormats.clear();
+	}
 }

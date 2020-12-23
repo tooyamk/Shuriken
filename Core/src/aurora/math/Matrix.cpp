@@ -32,7 +32,7 @@ namespace aurora {
 			for (auto e : data) *e = *(p++);
 		} else {
 			auto m0 = (float32_t*)data;
-			for (uint8_t i = 0; i < size; ++i) m0[i] = *(p++);
+			for (decltype(size) i = 0; i < size; ++i) m0[i] = *(p++);
 
 			size *= sizeof(float32_t);
 			memset(((uint8_t*)data) + size, 0, sizeof(m) - size);
@@ -53,15 +53,15 @@ namespace aurora {
 	const Matrix34 Matrix34::IDENTITY = Matrix34();
 
 	void Matrix34::set33(const Matrix34& m) {
-		for (size_t i = 0; i < 3; ++i) memcpy(&data[i][0], &m.data[i][0], sizeof(float32_t) * 3);
+		for (auto i = 0; i < 3; ++i) memcpy(&data[i][0], &m.data[i][0], sizeof(float32_t) * 3);
 	}
 
 	void Matrix34::set33(const Matrix44& m) {
-		for (size_t i = 0; i < 3; ++i) memcpy(&data[i][0], &m.data[i][0], sizeof(float32_t) * 3);
+		for (auto i = 0; i < 3; ++i) memcpy(&data[i][0], &m.data[i][0], sizeof(float32_t) * 3);
 	}
 
 	void Matrix34::set33(const float32_t(&m)[3][3]) {
-		for (size_t i = 0; i < 3; ++i) memcpy(&data[i][0], &m[i][0], sizeof(float32_t) * 3);
+		for (auto i = 0; i < 3; ++i) memcpy(&data[i][0], &m[i][0], sizeof(float32_t) * 3);
 	}
 
 	void Matrix34::set33(
@@ -115,19 +115,19 @@ namespace aurora {
 		float32_t d[3][3];
 
 		float32_t xyz[3] = { m[0][0], m[1][0], m[2][0] };
-		for (size_t i = 0; i < 3; ++i) d[i][0] = xyz[i];
+		for (auto i = 0; i < 3; ++i) d[i][0] = xyz[i];
 
 		auto dot = xyz[0] * xyz[0] + xyz[1] * xyz[1] + xyz[2] * xyz[2];
 		if (dot != 1.f) {
 			if (dot = std::sqrt(dot); dot > Math::TOLERANCE<float32_t>) {
 				dot = 1.f / dot;
-				for (size_t i = 0; i < 3; ++i) d[i][0] *= dot;
+				for (auto i = 0; i < 3; ++i) d[i][0] *= dot;
 			}
 		}
 
-		for (size_t i = 0; i < 3; ++i) xyz[i] = m[i][1];
+		for (auto i = 0; i < 3; ++i) xyz[i] = m[i][1];
 		dot = d[0][0] * xyz[0] + d[1][0] * xyz[1] + d[2][0] * xyz[2];
-		for (size_t i = 0; i < 3; ++i) {
+		for (auto i = 0; i < 3; ++i) {
 			xyz[i] -= d[i][0] * dot;
 			d[i][1] = xyz[i];
 		}
@@ -136,22 +136,22 @@ namespace aurora {
 		if (dot != 1.f) {
 			if (dot = std::sqrt(dot); dot > Math::TOLERANCE<float32_t>) {
 				dot = 1.f / dot;
-				for (size_t i = 0; i < 3; ++i) d[i][1] *= dot;
+				for (auto i = 0; i < 3; ++i) d[i][1] *= dot;
 			}
 		}
 
-		for (size_t i = 0; i < 3; ++i) xyz[i] = m[i][2];
+		for (auto i = 0; i < 3; ++i) xyz[i] = m[i][2];
 		dot = d[0][0] * xyz[0] + d[1][0] * xyz[1] + d[2][0] * xyz[2];
-		for (size_t i = 0; i < 3; ++i) d[i][2] = xyz[i] - d[i][0] * dot;
+		for (auto i = 0; i < 3; ++i) d[i][2] = xyz[i] - d[i][0] * dot;
 
 		dot = d[0][1] * xyz[0] + d[1][1] * xyz[1] + d[2][1] * xyz[2];
-		for (size_t i = 0; i < 3; ++i) d[i][2] -= d[i][1] * dot;
+		for (auto i = 0; i < 3; ++i) d[i][2] -= d[i][1] * dot;
 
 		dot = d[0][2] * xyz[0] + d[1][2] * xyz[1] + d[2][2] * xyz[2];
 		if (dot != 1.f) {
 			if (dot = std::sqrt(dot); dot > Math::TOLERANCE<float32_t>) {
 				dot = 1.f / dot;
-				for (size_t i = 0; i < 3; ++i) d[i][2] *= dot;
+				for (auto i = 0; i < 3; ++i) d[i][2] *= dot;
 			}
 		}
 
@@ -163,15 +163,15 @@ namespace aurora {
 			  d[0][0] * d[1][2] * d[2][1];
 
 		if (dot < 0.f) {
-			for (size_t i = 0; i < 3; ++i) {
-				for (size_t j = 0; j < 3; ++j) d[i][j] = -d[i][j];
+			for (auto i = 0; i < 3; ++i) {
+				for (auto j = 0; j < 3; ++j) d[i][j] = -d[i][j];
 			}
 		}
 
 		if (dstRot) {
 			dstRot->set33(d);
 			auto& mm = dstRot->data;
-			for (size_t i = 0; i < 3; ++i) mm[i][3] = 0.f;
+			for (auto i = 0; i < 3; ++i) mm[i][3] = 0.f;
 		}
 
 		if (dstScale) {
@@ -311,16 +311,12 @@ namespace aurora {
 
 		auto& m = dst.data;
 
-		if (scale) dst.prependScale((const float32_t(&)[3])scale);
+		if (scale) dst.prependScale(*(const float32_t(*)[3])scale);
 
 		if (trans) {
-			m[0][3] = trans[0];
-			m[1][3] = trans[1];
-			m[2][3] = trans[2];
+			for (auto i = 0; i < 3; ++i) m[i][3] = trans[i];
 		} else {
-			m[0][3] = 0.f;
-			m[1][3] = 0.f;
-			m[2][3] = 0.f;
+			for (auto i = 0; i < 3; ++i) m[i][3] = 0.0f;
 		}
 	}
 
@@ -353,12 +349,12 @@ namespace aurora {
 
 	Matrix44::Matrix44(const std::initializer_list<float32_t>& m) {
 		auto p = m.begin();
-		if (uint32_t size = m.size(); size >= 16) {
+		if (auto size = m.size(); size >= 16) {
 			auto p = m.begin();
 			for (auto e : data) *e = *(p++);
 		} else {
 			auto m0 = (float32_t*)data;
-			for (uint8_t i = 0; i < size; ++i) m0[i] = *(p++);
+			for (decltype(size) i = 0; i < size; ++i) m0[i] = *(p++);
 
 			size *= sizeof(float32_t);
 			memset(((uint8_t*)data) + size, 0, sizeof(m) - size);
@@ -383,15 +379,15 @@ namespace aurora {
 	const Matrix44 Matrix44::IDENTITY = Matrix44();
 
 	void Matrix44::set33(const Matrix34& m) {
-		for (size_t i = 0; i < 3; ++i) memcpy(&data[i][0], &m.data[i][0], sizeof(float32_t) * 3);
+		for (auto i = 0; i < 3; ++i) memcpy(&data[i][0], &m.data[i][0], sizeof(float32_t) * 3);
 	}
 
 	void Matrix44::set33(const Matrix44& m) {
-		for (size_t i = 0; i < 3; ++i) memcpy(&data[i][0], &m.data[i][0], sizeof(float32_t) * 3);
+		for (auto i = 0; i < 3; ++i) memcpy(&data[i][0], &m.data[i][0], sizeof(float32_t) * 3);
 	}
 
 	void Matrix44::set33(const float32_t(&m)[3][3]) {
-		for (size_t i = 0; i < 3; ++i) memcpy(&data[i][0], &m[i][0], sizeof(float32_t) * 3);
+		for (auto i = 0; i < 3; ++i) memcpy(&data[i][0], &m[i][0], sizeof(float32_t) * 3);
 	}
 
 	void Matrix44::set33(

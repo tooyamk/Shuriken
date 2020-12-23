@@ -95,7 +95,7 @@ namespace aurora::modules::graphics::program_source_translator {
 
 			std::vector<std::wstring> defineStrs(numDefines << 1);
 			std::vector<DxcDefine> dxcDefines(numDefines);
-			for (size_t i = 0; i < numDefines; ++i) {
+			for (decltype(numDefines) i = 0; i < numDefines; ++i) {
 				auto& dxcDef = dxcDefines[i];
 
 				auto j = i << 1;
@@ -141,7 +141,7 @@ namespace aurora::modules::graphics::program_source_translator {
 
 			CComPtr<IDxcBlobEncoding> errors;
 			IFT(compileResult->GetErrorBuffer(&errors));
-			if (errors != nullptr) {
+			if (errors) {
 				if (errors->GetBufferSize() > 0) {
 					printdln("ProgramSourceTranslator::translate error or warning : ", std::string_view((char*)errors->GetBufferPointer(), errors->GetBufferSize()));
 					//ret.errorWarningMsg = CreateBlob(errors->GetBufferPointer(), static_cast<uint32_t>(errors->GetBufferSize()));
@@ -248,7 +248,7 @@ namespace aurora::modules::graphics::program_source_translator {
 
 			for (auto& val : resources.stage_inputs) {
 				auto& name = compiler.get_name(val.id);
-				if (name.size() > 7 && std::string_view(name.data(), 7) == "in_var_") {
+				if (name.size() > 7 && std::string_view(name.data(), 7) == "in_var_"sv) {
 					compiler.set_name(val.id, std::string(name.data() + 7));
 				}
 			}

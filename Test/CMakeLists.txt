@@ -72,6 +72,7 @@ elseif (UNIX)
 endif ()
 
 target_link_libraries(${PROJECT_NAME} ${linkLibs})
+set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${PROJECT_NAME}${AE_BUILD_TYPE_SUFFIX})
 
 if (WIN32)
     macro(__set_delayload)

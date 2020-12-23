@@ -17,7 +17,7 @@ namespace aurora {
 		_defines.resize(numStaticDefines + numDynamicDefines);
 
 		_staticDefines.resize(numStaticDefines << 1);
-		for (size_t i = 0; i < numStaticDefines; ++i) {
+		for (decltype(numStaticDefines) i = 0; i < numStaticDefines; ++i) {
 			auto sdef = staticDefines + i;
 			auto& def = _defines[i];
 
@@ -30,7 +30,7 @@ namespace aurora {
 		}
 
 		_dynamicDefines.resize(numDynamicDefines);
-		for (size_t i = 0; i < numDynamicDefines; ++i) _dynamicDefines[i] = *dynamicDefines;
+		for (decltype(numDynamicDefines) i = 0; i < numDynamicDefines; ++i) _dynamicDefines[i] = *dynamicDefines;
 	}
 
 	void Shader::unset() {
@@ -41,7 +41,7 @@ namespace aurora {
 		_variants.clear();
 	}
 
-	modules::graphics::IProgram* Shader::select(const IShaderDefineGetter* getter) {
+	RefPtr<modules::graphics::IProgram> Shader::select(const IShaderDefineGetter* getter) {
 		if (!_graphics) return nullptr;
 
 		constexpr uint8_t NULL_VALUE = 0;
@@ -80,7 +80,7 @@ namespace aurora {
 		fv = hash::CRC::finish<64, false>(fv, 0);
 
 		if (auto rst = _programs.emplace(fv, nullptr); rst.second) {
-			if (RefPtr p = _graphics->createProgram(); p) {
+			if (auto p = _graphics->createProgram(); p) {
 				if (auto itr2 = _variants.find(fv); itr2 == _variants.end()) {
 					if (_vs && _ps) {
 						if (auto succeeded = p->create(*_vs, *_ps, _defines.data(), count, [this](const modules::graphics::IProgram&, ProgramStage stage, const std::string_view& name) {

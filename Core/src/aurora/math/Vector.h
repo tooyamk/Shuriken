@@ -400,6 +400,11 @@ namespace aurora {
 			return (SliceType<COUNT>&)*(data + start);
 		}
 
+		template<uint32_t COUNT = N>
+		inline Vector<COUNT, T>& AE_CALL cast() const {
+			return (Vector<COUNT, T>&)data;
+		}
+
 		template<typename Ret = T>
 		inline Ret AE_CALL getMultiplies() const {
 			return Math::multiplies<N, T, Ret>(data);

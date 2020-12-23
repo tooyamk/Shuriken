@@ -88,7 +88,7 @@ namespace aurora {
 		m[2][2] = 1.f - xx - yy;
 	}
 
-	void Quaternion::createFromEuler(const float32_t(&radians)[3], Quaternion& dst) {
+	void Quaternion::createEuler(const float32_t(&radians)[3], Quaternion& dst) {
 		auto x = radians[0] * .5f;
 		auto y = radians[1] * .5f;
 		auto z = radians[2] * .5f;
@@ -108,7 +108,7 @@ namespace aurora {
 		dst.set(sxcy * cz - cxsy * sz, cxsy * cz + sxcy * sz, cxcy * sz - sxsy * cz, cxcy * cz + sxsy * sz);
 	}
 
-	void Quaternion::createFromAxis(const float32_t(&axis)[3], float32_t radian, Quaternion& dst) {
+	void Quaternion::createAxis(const float32_t(&axis)[3], float32_t radian, Quaternion& dst) {
 		radian *= .5f;
 		auto s = std::sin(radian);
 

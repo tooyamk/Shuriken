@@ -19,6 +19,7 @@ namespace aurora::modules::graphics::d3d11 {
 			std::string driverType;
 			std::function<void(const std::string_view&)>* createProcessInfoHandler;
 			bool debug = false;
+			bool offscreen = false;
 
 			inline void AE_CALL createProcessInfo(const std::string_view& msg) const {
 				if (createProcessInfoHandler && *createProcessInfoHandler) (*createProcessInfoHandler)(msg);
