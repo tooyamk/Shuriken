@@ -12,9 +12,6 @@ namespace aurora {
 		
 		using Data = T[N];
 
-		template<uint32_t COUNT>
-		using SliceType = T[COUNT];
-
 		template<typename K>
 		using ConvertibleType = typename std::enable_if_t<std::is_convertible_v<K, T>>;
 
@@ -391,18 +388,23 @@ namespace aurora {
 		}
 
 		template<uint32_t COUNT = N>
-		inline SliceType<COUNT>& AE_CALL slice() const {
-			return (SliceType<COUNT>&)data;
-		}
-
-		template<uint32_t COUNT>
-		inline SliceType<COUNT>& AE_CALL slice(uint32_t start) const {
-			return (SliceType<COUNT>&)*(data + start);
+		inline Vector<COUNT, T>& AE_CALL cast() {
+			return *(Vector<COUNT, T>*)data;
 		}
 
 		template<uint32_t COUNT = N>
-		inline Vector<COUNT, T>& AE_CALL cast() const {
-			return (Vector<COUNT, T>&)data;
+		inline const Vector<COUNT, T>& AE_CALL cast() const {
+			return *(const Vector<COUNT, T>*)data;
+		}
+
+		template<uint32_t COUNT = N>
+		inline Vector<COUNT, T>& AE_CALL cast(uint32_t start) {
+			return *(Vector<COUNT, T>*)(data + start);
+		}
+
+		template<uint32_t COUNT = N>
+		inline const Vector<COUNT, T>& AE_CALL cast(uint32_t start) const {
+			return *(const Vector<COUNT, T>*)(data + start);
 		}
 
 		template<typename Ret = T>

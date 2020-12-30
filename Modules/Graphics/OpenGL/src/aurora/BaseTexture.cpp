@@ -130,7 +130,7 @@ namespace aurora::modules::graphics::gl {
 				}
 				case TextureType::TEX2D:
 				{
-					Vec2ui32 size2(size.slice<2>());
+					Vec2ui32 size2(size.cast<2>());
 					if (isArray) {
 						glTexInfo.target = sampleCount > 1 ? GL_TEXTURE_2D_MULTISAMPLE_ARRAY : GL_TEXTURE_2D_ARRAY;
 						glBindTexture(glTexInfo.target, handle);

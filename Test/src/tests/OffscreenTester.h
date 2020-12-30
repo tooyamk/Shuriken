@@ -108,26 +108,30 @@ float4 main(PS_INPUT input) : SV_TARGET {
 
 						RefPtr vertexBuffers = new VertexBufferCollection();
 						{
-							modules::graphics::VertexFormat vf;
-							vf.set<2, float32_t>();
-
 							float32_t vd[] = {
 									-1.f, 1.f,
 									1.f, 1.f,
 									1.f, -1.f,
 									-1.f, -1.f };
+
+							using type = std::remove_cvref_t<decltype(vd[0])>;
+							constexpr auto size = std::extent_v<decltype(vd)> * sizeof(type);
+
+							modules::graphics::VertexFormat vf;
+							vf.set<2, type>();
+							
 							auto vb = graphics->createVertexBuffer();
-							vb->create(32, modules::graphics::Usage::NONE, vd, 32);
+							vb->create(size, modules::graphics::Usage::NONE, vd, size);
 							vb->setFormat(vf);
 							vertexBuffers->set("POSITION0", vb);
 
-							float32_t uvd[] = {
+							type uvd[] = {
 									0.f, 0.f,
 									1.f, 0.f,
 									1.f, 1.f,
 									0.f, 1.f };
 							auto uvb = graphics->createVertexBuffer();
-							uvb->create(32, modules::graphics::Usage::NONE, uvd, 32);
+							uvb->create(size, modules::graphics::Usage::NONE, uvd, size);
 							uvb->setFormat(vf);
 							vertexBuffers->set("TEXCOORD0", uvb);
 						}
@@ -143,8 +147,12 @@ float4 main(PS_INPUT input) : SV_TARGET {
 							uint16_t id[] = {
 									0, 1, 2,
 									0, 2, 3 };
-							indices->create(12, modules::graphics::Usage::NONE, id, 12);
-							indices->setFormat<uint16_t>();
+
+							using type = std::remove_cvref_t<decltype(id[0])>;
+							constexpr auto size = std::extent_v<decltype(id)> * sizeof(type);
+
+							indices->create(size, modules::graphics::Usage::NONE, id, size);
+							indices->setFormat<type>();
 						}
 
 						graphics->setRenderTarget(rt);
@@ -168,7 +176,7 @@ float4 main(PS_INPUT input) : SV_TARGET {
 
 										Image img;
 										img.format = modules::graphics::TextureFormat::R8G8B8A8;
-										img.size = tr->getSize().slice<2>();
+										img.size = tr->getSize().cast<2>();
 										img.source = std::move(pixels);
 
 										writeFile(getAppPath().parent_path().string() + "/offscreen.png", extensions::PNGConverter::encode(img));

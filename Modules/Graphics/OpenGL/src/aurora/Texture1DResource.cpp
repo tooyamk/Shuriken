@@ -67,8 +67,8 @@ namespace aurora::modules::graphics::gl {
 
 	bool Texture1DResource::update(uint32_t arraySlice, uint32_t mipSlice, const Box1ui32& range, const void* data) {
 		Box3ui32 box;
-		((Vec1ui32&)box.pos).set(range.pos.slice<1>());
-		((Vec1ui32&)box.size).set(range.size.slice<1>());
+		((Vec1ui32&)box.pos).set(range.pos.cast<1>());
+		((Vec1ui32&)box.size).set(range.size.cast<1>());
 
 		return _baseTex.update(arraySlice, mipSlice, box, data);
 	}

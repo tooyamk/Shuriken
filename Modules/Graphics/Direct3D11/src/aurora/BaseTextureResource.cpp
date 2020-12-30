@@ -127,7 +127,7 @@ namespace aurora::modules::graphics::d3d11 {
 				hr = _createInternalTexture(graphics, texType, texDesc, &res);
 			} else {
 				std::vector<D3D11_SUBRESOURCE_DATA> resArr(mipLevels * arraySize);
-				Vec2ui32 size2(size.slice<2>());
+				Vec2ui32 size2(size.cast<2>());
 				for (uint32_t i = 0; i < mipLevels; ++i) {
 					auto& res = resArr[i];
 					res.pSysMem = data[i];
