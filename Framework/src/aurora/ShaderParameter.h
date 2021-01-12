@@ -223,7 +223,13 @@ namespace aurora {
 				} else {
 					_storageType = StorageType::EXTERNAL;
 					_data.externalData = data;
-					if (isRefObj && data) ((Ref*)data)->ref();
+					if (isRefObj) {
+						_data.externalRef = true;
+						if (data) ((Ref*)data)->ref();
+					} else {
+						_data.externalRef = false;
+					}
+					
 					if (updateBehavior != ShaderParameterUpdateBehavior::NOT) setUpdated();
 				}
 
@@ -267,7 +273,13 @@ namespace aurora {
 					delete[] _data.internalData;
 					_storageType = StorageType::EXTERNAL;
 					_data.externalData = data;
-					if (isRefObj && data) ((Ref*)data)->ref();
+					if (isRefObj) {
+						_data.externalRef = true;
+						if (data) ((Ref*)data)->ref();
+					} else {
+						_data.externalRef = false;
+					}
+
 					if (updateBehavior != ShaderParameterUpdateBehavior::NOT) setUpdated();
 				}
 
