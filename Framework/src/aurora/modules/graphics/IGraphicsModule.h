@@ -948,6 +948,7 @@ namespace aurora::modules::graphics {
 		virtual void AE_CALL draw(const IVertexBufferGetter* vertexBufferGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
 			const IIndexBuffer* indexBuffer, uint32_t count = (std::numeric_limits<uint32_t>::max)(), uint32_t offset = 0) = 0;
 		virtual void AE_CALL endRender() = 0;
+		virtual void AE_CALL flush() = 0;
 		virtual void AE_CALL present() = 0;
 
 		virtual void AE_CALL setRenderTarget(IRenderTarget* rt) = 0;

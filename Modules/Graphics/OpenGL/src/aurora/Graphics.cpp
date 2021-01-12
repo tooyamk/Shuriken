@@ -705,6 +705,10 @@ namespace aurora::modules::graphics::gl {
 		//if (wglGetCurrentContext() == _rc) wglMakeCurrent(nullptr, nullptr);
 	}
 
+	void Graphics::flush() {
+		glFlush();
+	}
+
 	void Graphics::present() {
 #if AE_OS == AE_OS_WIN
 		SwapBuffers(_dc);

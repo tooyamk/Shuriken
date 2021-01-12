@@ -574,8 +574,12 @@ namespace aurora::modules::graphics::d3d11 {
 	void Graphics::endRender() {
 	}
 
+	void Graphics::flush() {
+		if (_context) _context->Flush();
+	}
+
 	void Graphics::present() {
-		_swapChain->Present(0, 0);
+		if (_swapChain) _swapChain->Present(0, 0);
 	}
 
 	void Graphics::setRenderTarget(IRenderTarget* rt) {
