@@ -15,11 +15,6 @@ namespace aurora::modules::graphics {
 		}
 
 		conf.app = (decltype(conf.app))args->tryGet("app").toNumber<uintptr_t>();
-		if (!conf.app) {
-			printdln("DX11GraphicsModule create error : no app");
-			return nullptr;
-		}
-
 		conf.adapter = (decltype(conf.adapter))args->tryGet("adapter").toNumber<uintptr_t>();
 		conf.sampleCount = args->tryGet("sampleCount").toNumber<decltype(conf.sampleCount)>(1);
 		conf.debug = args->tryGet("debug").toBool();

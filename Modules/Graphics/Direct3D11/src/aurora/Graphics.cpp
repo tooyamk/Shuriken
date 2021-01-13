@@ -42,7 +42,12 @@ namespace aurora::modules::graphics::d3d11 {
 	}
 
 	bool Graphics::createDevice(const CreateConfig& conf) {
-		if (_device || !conf.app || !conf.app->getNative(ApplicationNative::HWND)) return false;
+		if (_device) return false;
+		if (conf.app) {
+			if (!conf.app->getNative(ApplicationNative::HWND)) return false;
+		} else {
+			if (!conf.offscreen) return false;
+		}
 
 		if (conf.adapter) {
 			conf.createProcessInfo("specific adapter create device...");
@@ -73,84 +78,88 @@ namespace aurora::modules::graphics::d3d11 {
 		DXObjGuard objs;
 
 		IDXGIFactory2* dxgFctory = nullptr;
-
-		if (FAILED(CreateDXGIFactory1(__uuidof(IDXGIFactory2), (void**)&dxgFctory))) {
-			conf.createProcessInfo("CreateDXGIFactory failed");
-			return false;
-		}
-		objs.add(dxgFctory);
-		dxgFctory->MakeWindowAssociation((HWND)conf.app->getNative(ApplicationNative::HWND), DXGI_MWA_NO_WINDOW_CHANGES | DXGI_MWA_NO_ALT_ENTER);
-
 		IDXGIAdapter* dxgAdapter = nullptr;
-		for (UINT i = 0;; ++i) {
-			if (dxgFctory->EnumAdapters(i, &dxgAdapter) == DXGI_ERROR_NOT_FOUND) break;
-			objs.add(dxgAdapter);
 
-			DXGI_ADAPTER_DESC desc = { 0 };
-			if (FAILED(dxgAdapter->GetDesc(&desc)) || desc.DeviceId != conf.adapter->deviceId || desc.VendorId != conf.adapter->vendorId) {
-				dxgAdapter = nullptr;
-				continue;
-			} else {
-				break;
+		if (conf.app || !conf.offscreen) {
+			if (FAILED(CreateDXGIFactory1(__uuidof(IDXGIFactory2), (void**)&dxgFctory))) {
+				conf.createProcessInfo("CreateDXGIFactory failed");
+				return false;
+			}
+			objs.add(dxgFctory);
+			dxgFctory->MakeWindowAssociation((HWND)conf.app->getNative(ApplicationNative::HWND), DXGI_MWA_NO_WINDOW_CHANGES | DXGI_MWA_NO_ALT_ENTER);
+
+			for (UINT i = 0;; ++i) {
+				if (dxgFctory->EnumAdapters(i, &dxgAdapter) == DXGI_ERROR_NOT_FOUND) break;
+				objs.add(dxgAdapter);
+
+				DXGI_ADAPTER_DESC desc = { 0 };
+				if (FAILED(dxgAdapter->GetDesc(&desc)) || desc.DeviceId != conf.adapter->deviceId || desc.VendorId != conf.adapter->vendorId) {
+					dxgAdapter = nullptr;
+					continue;
+				} else {
+					break;
+				}
 			}
 		}
 
-		if (!dxgAdapter) {
+		if (!dxgAdapter && !conf.offscreen) {
 			conf.createProcessInfo("not found dxgAdapter");
 			return false;
 		}
 
 		auto fmt = DXGI_FORMAT_R8G8B8A8_UNORM;
 
-		uint32_t maxResolutionArea = 0;
-		float32_t maxRefreshRate = 0.f;
-		for (UINT i = 0;; ++i) {
-			IDXGIOutput* output = nullptr;
-			if (dxgAdapter->EnumOutputs(i, &output) == DXGI_ERROR_NOT_FOUND) {
-				conf.createProcessInfo("adapter enum outputs end");
-				break;
-			}
-			objs.add(output);
+		if (dxgAdapter || !conf.offscreen) {
+			uint32_t maxResolutionArea = 0;
+			float32_t maxRefreshRate = 0.f;
+			for (UINT i = 0;; ++i) {
+				IDXGIOutput* output = nullptr;
+				if (dxgAdapter->EnumOutputs(i, &output) == DXGI_ERROR_NOT_FOUND) {
+					conf.createProcessInfo("adapter enum outputs end");
+					break;
+				}
+				objs.add(output);
 
-			conf.createProcessInfo("adapter output check mode...");
+				conf.createProcessInfo("adapter output check mode...");
 
-			UINT numSupportedModes = 0;
-			if (FAILED(output->GetDisplayModeList(fmt, 0, &numSupportedModes, nullptr))) {
-				conf.createProcessInfo("adapter output GetDisplayModeList failed, skip");
-				continue;
-			}
+				UINT numSupportedModes = 0;
+				if (FAILED(output->GetDisplayModeList(fmt, 0, &numSupportedModes, nullptr))) {
+					conf.createProcessInfo("adapter output GetDisplayModeList failed, skip");
+					continue;
+				}
 
-			auto supportedModes = new DXGI_MODE_DESC[numSupportedModes];
-			memset(supportedModes, 0, sizeof(DXGI_MODE_DESC) * numSupportedModes);
-			if (FAILED(output->GetDisplayModeList(fmt, 0, &numSupportedModes, supportedModes))) {
-				delete[] supportedModes;
-				conf.createProcessInfo("adapter output GetDisplayModeList whit supportedModes failed, skip");
-				continue;
-			}
+				auto supportedModes = new DXGI_MODE_DESC[numSupportedModes];
+				memset(supportedModes, 0, sizeof(DXGI_MODE_DESC) * numSupportedModes);
+				if (FAILED(output->GetDisplayModeList(fmt, 0, &numSupportedModes, supportedModes))) {
+					delete[] supportedModes;
+					conf.createProcessInfo("adapter output GetDisplayModeList whit supportedModes failed, skip");
+					continue;
+				}
 
-			for (decltype(numSupportedModes) i = 0; i < numSupportedModes; ++i) {
-				auto& m = supportedModes[i];
-				if  (uint32_t area = m.Width * m.Height; maxResolutionArea < area) {
-					maxResolutionArea = area;
-					_refreshRate.Numerator = 0;
-					_refreshRate.Denominator = 1;
-					maxRefreshRate = (float32_t)m.RefreshRate.Numerator / (float32_t)m.RefreshRate.Denominator;
-				} else if (maxResolutionArea == area) {
-					if (decltype(maxRefreshRate) rr = (float32_t)m.RefreshRate.Numerator / (float32_t)m.RefreshRate.Denominator; rr > maxRefreshRate) {
-						maxRefreshRate = rr;
+				for (decltype(numSupportedModes) i = 0; i < numSupportedModes; ++i) {
+					auto& m = supportedModes[i];
+					if (uint32_t area = m.Width * m.Height; maxResolutionArea < area) {
+						maxResolutionArea = area;
+						_refreshRate.Numerator = 0;
+						_refreshRate.Denominator = 1;
+						maxRefreshRate = (float32_t)m.RefreshRate.Numerator / (float32_t)m.RefreshRate.Denominator;
+					} else if (maxResolutionArea == area) {
+						if (decltype(maxRefreshRate) rr = (float32_t)m.RefreshRate.Numerator / (float32_t)m.RefreshRate.Denominator; rr > maxRefreshRate) {
+							maxRefreshRate = rr;
 
-						_refreshRate.Numerator = m.RefreshRate.Numerator;
-						_refreshRate.Denominator = m.RefreshRate.Denominator;
+							_refreshRate.Numerator = m.RefreshRate.Numerator;
+							_refreshRate.Denominator = m.RefreshRate.Denominator;
+						}
 					}
 				}
+
+				delete[] supportedModes;
 			}
 
-			delete[] supportedModes;
-		}
-
-		if (maxResolutionArea == 0 && !conf.offscreen) {
-			conf.createProcessInfo("not found suitable mode");
-			return false;
+			if (maxResolutionArea == 0 && !conf.offscreen) {
+				conf.createProcessInfo("not found suitable mode");
+				return false;
+			}
 		}
 
 		auto driverType = D3D_DRIVER_TYPE_UNKNOWN;
@@ -287,7 +296,7 @@ namespace aurora::modules::graphics::d3d11 {
 			if (numQualityLevels) _deviceFeatures.maxSampleCount = i;
 		}
 
-		auto size = conf.app->getCurrentClientSize();
+		auto size = conf.offscreen ? Vec2ui32::ZERO : conf.app->getCurrentClientSize();
 
 		if (!conf.offscreen) {
 			_backBufferSampleCount = conf.sampleCount > _deviceFeatures.maxSampleCount ? _deviceFeatures.maxSampleCount : conf.sampleCount;

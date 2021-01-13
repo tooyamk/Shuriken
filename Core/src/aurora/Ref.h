@@ -33,7 +33,7 @@ namespace aurora {
 			if constexpr (AutoDelete) {
 				if (target._refCount.fetch_sub(1) <= 1) {
 					auto d = target._destruction();
-					delete& target;
+					delete &target;
 				}
 			} else {
 				target._refCount.fetch_sub(1);
