@@ -173,7 +173,7 @@ float4 main(PS_INPUT input) : SV_TARGET {
 									img.size = tr->getSize().cast<2>();
 									img.source = std::move(pixels);
 
-									writeFile(getAppPath().parent_path().string() + "/offscreen.png", extensions::PNGConverter::encode(img));
+									//writeFile(getAppPath().parent_path().string() + "/offscreen.png", extensions::PNGConverter::encode(img));
 								}
 							}
 						}

@@ -52,6 +52,9 @@ namespace aurora::modules::graphics::d3d11 {
 		if (conf.adapter) {
 			conf.createProcessInfo("specific adapter create device...");
 			return _createDevice(conf);
+		} else if (conf.offscreen) {
+			conf.createProcessInfo("null adapter create offscreen device...");
+			return _createDevice(conf);
 		} else {
 			conf.createProcessInfo("search adapter create device...");
 
@@ -80,7 +83,7 @@ namespace aurora::modules::graphics::d3d11 {
 		IDXGIFactory2* dxgFctory = nullptr;
 		IDXGIAdapter* dxgAdapter = nullptr;
 
-		if (conf.app || !conf.offscreen) {
+		if (conf.adapter && (conf.app || !conf.offscreen)) {
 			if (FAILED(CreateDXGIFactory1(__uuidof(IDXGIFactory2), (void**)&dxgFctory))) {
 				conf.createProcessInfo("CreateDXGIFactory failed");
 				return false;
