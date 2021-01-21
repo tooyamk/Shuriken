@@ -43,6 +43,6 @@ namespace aurora::extensions {
 			EXHAUSTIVE
 		};
 
-		static ByteArray AE_CALL encode(const Image& img, BlockSize blockSize, Preset preset);
+		static ByteArray AE_CALL encode(const Image& img, BlockSize blockSize, Preset preset, size_t threadCount = 0);
 	};
 }

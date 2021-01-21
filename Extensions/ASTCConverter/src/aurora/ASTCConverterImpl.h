@@ -1,15 +1,23 @@
 #pragma once
 
 #include "aurora/ByteArray.h"
-#include <vector>
+#include "aurora/modules/graphics/IGraphicsModule.h"
 #include "ASTCConverter.h"
 #include "astcenc.h"
 #include "astcenc_lib.h"
 
+#include <vector>
+
 namespace aurora::extensions::astc_converter {
-	ByteArray AE_CALL encode(const Image& img, ASTCConverter::BlockSize blockSize, ASTCConverter::Preset preset) {
-		std::vector<std::string> opts(1);
-		opts[0] = "-silent";
+	ByteArray AE_CALL encode(const Image& img, ASTCConverter::BlockSize blockSize, ASTCConverter::Preset preset, size_t threadCount) {
+		if (img.format != modules::graphics::TextureFormat::R8G8B8A8) return ByteArray();
+
+		std::vector<std::string> opts;
+		opts.emplace_back("-silent");
+		if (threadCount) {
+			opts.emplace_back("-j");
+			opts.emplace_back(std::to_string(threadCount));
+		}
 
 		auto data = (void*)img.source.getSource();
 
