@@ -44,6 +44,7 @@ namespace aurora::render {
 
 	void SpriteRenderer::render(RenderData*const* data, size_t count, ShaderDefineGetterStack& shaderDefineStack, ShaderParameterGetterStack& shaderParameterStack) {
 		Material* material = nullptr;
+		modules::graphics::IProgram* prog = nullptr;
 
 		for (size_t i = 0; i < count; ++i) {
 			auto rd = data[i];
@@ -68,6 +69,10 @@ namespace aurora::render {
 
 							auto program = shader->select(&shaderDefineStack);
 							if (program) {
+								auto& info = program->getInfo();
+								for (auto& v : info.vertices) {
+									v.format;
+								}
 								//todo
 							} else {
 								material = nullptr;

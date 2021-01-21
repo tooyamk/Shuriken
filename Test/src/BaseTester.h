@@ -2,6 +2,7 @@
 
 #include "Helper.h"
 
+#include "Extensions/ASTCConverter/src/aurora/ASTCConverter.h"
 #include "Extensions/PNGConverter/src/aurora/PNGConverter.h"
 #include "Extensions/FBXConverter/src/aurora/FBXConverter.h"
 #include "Extensions/ShaderScript/src/aurora/ShaderScript.h"

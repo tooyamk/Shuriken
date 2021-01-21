@@ -77,6 +77,8 @@ namespace aurora {
 
 		static void AE_CALL generateMips_UInt8s(const Vec2ui32& size, modules::graphics::TextureFormat format, uint32_t mipLevels, uint8_t numChannels, uint8_t* dst, void** dataPtr);
 
+		bool AE_CALL flipY();
+
 	private:
 		static void AE_CALL _convertFormat_R8G8B8_R8G8B8A8(const Vec2ui32& size, const uint8_t* src, uint8_t* dst);
 		static void AE_CALL _convertFormat_R8G8B8A8_R8G8B8(const Vec2ui32& size, const uint8_t* src, uint8_t* dst);

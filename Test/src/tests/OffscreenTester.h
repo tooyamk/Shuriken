@@ -173,6 +173,17 @@ float4 main(PS_INPUT input) : SV_TARGET {
 									img.size = tr->getSize().cast<2>();
 									img.source = std::move(pixels);
 
+									auto aaa = extensions::PNGConverter::parse(readFile("D:/Users/Sephiroth/Desktop/6735555522214232065.png"));
+									aaa->flipY();
+
+									auto t0 = Time::now();
+									auto out = extensions::ASTCConverter::encode(*aaa, extensions::ASTCConverter::BlockSize::BLOCK_4x4, extensions::ASTCConverter::Preset::FASTEST);
+									if (out.isValid()) {
+										printcln("use time : ", Time::now() - t0);
+										writeFile("D:/Users/Sephiroth/Desktop/aabbcc.astc", out);
+										printcln("doneeeeeeeeeeeeeeeeee");
+									}
+
 									//writeFile(getAppPath().parent_path().string() + "/offscreen.png", extensions::PNGConverter::encode(img));
 								}
 							}

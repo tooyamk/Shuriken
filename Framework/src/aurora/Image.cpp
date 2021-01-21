@@ -230,6 +230,42 @@ namespace aurora {
 		}
 	}
 
+	bool Image::flipY() {
+		size_t bytesPrePixel = 0;
+		switch (format) {
+		case TextureFormat::R8G8B8:
+			bytesPrePixel = 3;
+			break;
+		case TextureFormat::R8G8B8A8:
+			bytesPrePixel = 4;
+			break;
+		default:
+			break;
+		}
+
+		if (bytesPrePixel == 0) return false;
+
+		auto data = source.getSource();
+		size_t bytesPreRow = bytesPrePixel * size[0];
+		auto n = size[1] >> 1;
+		decltype(n) top = 0, bottom = size[1] - 1;
+		for (decltype(n) i = 0; i < n; ++i) {
+			auto topBegin = top * bytesPreRow;
+			auto bottomBegin = bottom * bytesPreRow;
+
+			for (size_t j = 0; j < bytesPreRow; ++j) {
+				auto val = data[topBegin + j];
+				data[topBegin + j] = data[bottomBegin + j];
+				data[bottomBegin + j] = val;
+			}
+
+			++top;
+			--bottom;
+		}
+
+		return true;
+	}
+
 	void Image::_mipPixelsBlend(uint8_t* c, uint8_t numChannels, uint8_t numPixels) {
 		auto c0 = c;
 		uint8_t c1[4] = { 0 };
