@@ -3,6 +3,7 @@
 #include "ConstantBuffer.h"
 #include "Sampler.h"
 #include "TextureView.h"
+#include "aurora/ShaderParameter.h"
 #include "aurora/modules/graphics/ConstantBufferManager.h"
 
 namespace aurora::modules::graphics::d3d11 {

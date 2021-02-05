@@ -148,7 +148,8 @@ namespace aurora::modules::graphics::d3d11 {
 
 		_parseParameterLayout(sDesc, *psr, _psParamLayout);
 
-		_calcConstantLayoutSameBuffers(std::vector<std::vector<MyConstantBufferLayout>*>({ &_vsParamLayout.constantBuffers, &_psParamLayout.constantBuffers }));
+		std::vector<std::vector<MyConstantBufferLayout>*> layouts = { &_vsParamLayout.constantBuffers, &_psParamLayout.constantBuffers };
+		_calcConstantLayoutSameBuffers(layouts);
 
 		return true;
 	}

@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.10.0)
+cmake_minimum_required (VERSION 3.15.0)
 
 set(AE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
 project(Aurora)
@@ -186,7 +186,7 @@ set(AE_INSTALL_DLL_DIR_NAME $<IF:$<PLATFORM_ID:Windows>,bin,lib>)
 #set(CMAKE_RELWITHDEBINFO_POSTFIX "rd" CACHE STRING "")
 #set(CMAKE_MINSIZEREL_POSTFIX "s" CACHE STRING "")
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 set(compilerFlags "-fms-extensions -fPIC -Wno-unused-command-line-argument -Wno-switch")

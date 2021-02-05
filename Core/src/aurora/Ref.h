@@ -32,7 +32,9 @@ namespace aurora {
 		inline static void AE_CALL unref(const Ref& target) {
 			if constexpr (AutoDelete) {
 				if (target._refCount.fetch_sub(1) <= 1) {
+#ifndef __cpp_lib_destroying_delete
 					auto d = target._destruction();
+#endif
 					delete &target;
 				}
 			} else {
@@ -43,7 +45,9 @@ namespace aurora {
 	protected:
 		mutable std::atomic_uint32_t _refCount;
 
+#ifndef __cpp_lib_destroying_delete
 		virtual ScopeGuard AE_CALL _destruction() const { return nullptr; }
+#endif
 	};
 
 

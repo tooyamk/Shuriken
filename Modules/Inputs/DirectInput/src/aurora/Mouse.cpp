@@ -95,18 +95,21 @@ namespace aurora::modules::inputs::direct_input {
 			if (ox || oy) {
 				//increment, right bottom positive orientation.
 				float32_t value[] = { (float32_t)ox, (float32_t)oy };
-				_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &Key({ (uint32_t)MouseKeyCode::POSITION, 2, value }));
+				Key k = { (uint32_t)MouseKeyCode::POSITION, 2, value };
+				_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &k);
 			}
 
 			if (state.lZ != 0) {
 				float32_t value = state.lZ > 0 ? 1.f : -1.f;
-				_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &Key({ (uint32_t)MouseKeyCode::WHEEL, 1, &value }));
+				Key k = { (uint32_t)MouseKeyCode::WHEEL, 1, &value };
+				_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &k);
 			}
 
 			for (uint8_t i = 0; i < len; ++i) {
 				uint8_t key = changeBtns[i];
 				float32_t value = (state.rgbButtons[key] & 0x80) > 0 ? 1.f : 0.f;
-				_eventDispatcher.dispatchEvent(this, value > 0 ? DeviceEvent::DOWN : DeviceEvent::UP, &Key({ key + (uint32_t)MouseKeyCode::L_BUTTON, 1, &value }));
+				Key k = { key + (uint32_t)MouseKeyCode::L_BUTTON, 1, &value };
+				_eventDispatcher.dispatchEvent(this, value > 0 ? DeviceEvent::DOWN : DeviceEvent::UP, &k);
 			}
 		}
 	}

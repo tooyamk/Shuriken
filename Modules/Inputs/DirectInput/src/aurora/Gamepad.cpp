@@ -234,7 +234,8 @@ namespace aurora::modules::inputs::direct_input {
 				uint8_t key = changedPov[i];
 				if (key == 0) {
 					float32_t value = _translateDpad(state.rgdwPOV[key]);
-					_eventDispatcher.dispatchEvent(this, value >= 0.f ? DeviceEvent::DOWN : DeviceEvent::UP, &Key({ (uint8_t)GamepadKeyCode::DPAD, 1, &value }));
+					Key k = { (uint8_t)GamepadKeyCode::DPAD, 1, &value };
+					_eventDispatcher.dispatchEvent(this, value >= 0.f ? DeviceEvent::DOWN : DeviceEvent::UP, &k);
 				}
 			}
 		}
@@ -247,7 +248,8 @@ namespace aurora::modules::inputs::direct_input {
 				auto itr = _keyMapping->BUTTONS.find(key);
 				key = itr == _keyMapping->BUTTONS.end() ? key + (uint8_t)GamepadKeyCode::UNDEFINED : (uint8_t)itr->second;
 
-				_eventDispatcher.dispatchEvent(this, value > 0.f ? DeviceEvent::DOWN : DeviceEvent::UP, &Key({ key, 1, &value }));
+				Key k = { key, 1, &value };
+				_eventDispatcher.dispatchEvent(this, value > 0.f ? DeviceEvent::DOWN : DeviceEvent::UP, &k);
 			}
 		}
 	}
@@ -357,7 +359,9 @@ namespace aurora::modules::inputs::direct_input {
 				if (value[0] < 0.f) value[0] += Math::PI2<float32_t>;
 				value[1] = _translateDeadZone0_1(d2 < 1.f ? std::sqrt(d2) : 1.f, dz, false);
 			}
-			_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &Key({ (uint8_t)key, 2, value }));
+
+			Key k = { (uint8_t)key, 2, value };
+			_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &k);
 		}
 	}
 
@@ -373,11 +377,13 @@ namespace aurora::modules::inputs::direct_input {
 		auto curRDz = curValues[1] <= rdz;
 		if (!curLDz || oriLDz != curLDz) {
 			curValues[0] = _translateDeadZone0_1(curValues[0], ldz, curLDz);
-			_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &Key({ (uint8_t)lkey, 1, &curValues[0] }));
+			Key k = { (uint8_t)lkey, 1, &curValues[0] };
+			_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &k);
 		}
 		if (!curRDz || oriRDz != curRDz) {
 			curValues[1] = _translateDeadZone0_1(curValues[1], rdz, curRDz);
-			_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &Key({ (uint8_t)rkey, 1, &curValues[1] }));
+			Key k = { (uint8_t)rkey, 1, &curValues[1] };
+			_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &k);
 		}
 	}
 
@@ -389,7 +395,8 @@ namespace aurora::modules::inputs::direct_input {
 		ori = cur;
 		if (!curDz || oriDz != curDz) {
 			value = _translateDeadZone0_1(value, dz, curDz);
-			_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &Key({ (uint8_t)key, 1, &value }));
+			Key k = { (uint8_t)key, 1, &value };
+			_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &k);
 		}
 	}
 

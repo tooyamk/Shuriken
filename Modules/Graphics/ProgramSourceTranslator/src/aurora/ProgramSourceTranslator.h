@@ -19,11 +19,20 @@ namespace aurora::modules::graphics::program_source_translator {
 		bool AE_CALL init(Ref* loader, const std::string_view& dxc);
 		virtual ProgramSource AE_CALL translate(const ProgramSource& source, ProgramLanguage targetLanguage, const std::string_view& targetVersion, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& handler) override;
 
+	public:
+#ifdef __cpp_lib_destroying_delete
+		void operator delete(ProgramSourceTranslator* p, std::destroying_delete_t) {
+			auto l = p->_loader;
+			p->~ProgramSourceTranslator();
+			::operator delete(p);
+		}
 	protected:
+#else
 		virtual ScopeGuard AE_CALL _destruction() const override {
 			auto l = _loader;
 			return [l]() {};
 		}
+#endif
 
 	private:
 		class MyIncludeHandler : public IDxcIncludeHandler {

@@ -73,7 +73,7 @@ namespace aurora::modules::graphics::d3d11 {
 		bool AE_CALL createDevice(const CreateConfig& conf);
 
 		inline void AE_CALL error(const std::string_view& msg) {
-			_eventDispatcher.dispatchEvent(this, GraphicsEvent::ERR, (std::string_view*) & msg);
+			_eventDispatcher.dispatchEvent(this, GraphicsEvent::ERR, (std::string_view*)&msg);
 		}
 
 		inline ID3D11Device5* AE_CALL getDevice() const {
@@ -244,11 +244,20 @@ namespace aurora::modules::graphics::d3d11 {
 		static DXGI_FORMAT AE_CALL convertInternalFormat(TextureFormat fmt);
 		static D3D11_COMPARISON_FUNC AE_CALL convertComparisonFunc(ComparisonFunc func);
 
+	public:
+#ifdef __cpp_lib_destroying_delete
+		void operator delete(Graphics* p, std::destroying_delete_t) {
+			auto l = p->_loader;
+			p->~Graphics();
+			::operator delete(p);
+		}
 	protected:
+#else
 		virtual ScopeGuard AE_CALL _destruction() const override {
 			auto l = _loader;
 			return [l]() {};
 		}
+#endif
 
 	private:
 		bool _curIsBackBuffer;

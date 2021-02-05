@@ -66,7 +66,9 @@ namespace aurora::modules::inputs::direct_input {
 				for (uint16_t i = 0; i < len; ++i) {
 					uint8_t key = changedBtns[i];
 					float32_t value = (state[key] & 0x80) > 0 ? 1.f : 0.f;
-					_eventDispatcher.dispatchEvent(this, value > 0.f ? DeviceEvent::DOWN : DeviceEvent::UP, &Key({ SK_VK[key], 1, &value }));
+
+					Key k = { SK_VK[key], 1, &value };
+					_eventDispatcher.dispatchEvent(this, value > 0.f ? DeviceEvent::DOWN : DeviceEvent::UP, &k);
 				}
 			}
 		}

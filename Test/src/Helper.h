@@ -32,26 +32,26 @@ inline std::u8string AE_CALL operator+(const std::u8string& s1, const char* s2) 
 }
 #endif
 
-struct std_string_unordered_comparer {
+#ifdef __cpp_lib_generic_unordered_lookup
+/*
+struct std_generic_unordered_comparer {
 	using is_transparent = void;
-	inline bool AE_CALL operator()(const std::string& key1, const std::string_view& key2) const {
-		return key1 == key2;
-	}
-	inline bool AE_CALL operator()(const std::string_view& key1, const std::string_view& key2) const {
+	template<typename K1, typename K2>
+	inline bool AE_CALL operator()(K1&& key1, K2&& key2) const {
 		return key1 == key2;
 	}
 };
 
-struct std_string_unordered_hasher {
+template<typename T>
+struct transparent_hash {
 	using is_transparent = void;
-	using transparent_key_equal = std_string_unordered_comparer;
-	inline size_t AE_CALL operator()(const std::string_view& key) const {
-		return std::hash<std::string_view>{}(key);
-	}
-	inline size_t AE_CALL operator()(const std::string& key) const {
-		return std::hash<std::string>{}(key);
+	template<typename K>
+	inline size_t AE_CALL operator()(K&& key) const {
+		return std::hash<T>{}(key);
 	}
 };
+*/
+#endif
 
 inline std::string AE_CALL getDLLName(const std::string& name) {
 #ifdef AE_DEBUG

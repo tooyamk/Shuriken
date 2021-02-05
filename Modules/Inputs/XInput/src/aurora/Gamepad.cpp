@@ -137,7 +137,8 @@ namespace aurora::modules::inputs::xinput {
 
 			if (dpad) {
 				float32_t value = _translateDpad(curPad.wButtons);
-				_eventDispatcher.dispatchEvent(this, value >= 0.f ? DeviceEvent::DOWN : DeviceEvent::UP, &Key({ (uint8_t)GamepadKeyCode::DPAD, 1, &value }));
+				Key k = { (uint8_t)GamepadKeyCode::DPAD, 1, &value };
+				_eventDispatcher.dispatchEvent(this, value >= 0.f ? DeviceEvent::DOWN : DeviceEvent::UP, &k);
 			}
 
 			_updateButton(oriBtns, curBtns, XINPUT_GAMEPAD_A, GamepadKeyCode::A);
@@ -243,7 +244,8 @@ namespace aurora::modules::inputs::xinput {
 				if (value[0] < 0.f) value[0] += Math::PI2<float32_t>;
 				value[1] = _translateDeadZone0_1(d2 < 1.f ? std::sqrt(d2) : 1.f, dz, false);
 			}
-			_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &Key({ (uint8_t)key, 2, value }));
+			Key k = { (uint8_t)key, 2, value };
+			_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &k);
 		}
 	}
 
@@ -255,7 +257,8 @@ namespace aurora::modules::inputs::xinput {
 		ori = cur;
 		if (!curDz || oriDz != curDz) {
 			value = _translateDeadZone0_1(value, dz, curDz);
-			_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &Key({ (uint8_t)key, 1, &value }));
+			Key k = { (uint8_t)key, 1, &value };
+			_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &k);
 		}
 	}
 
@@ -263,7 +266,8 @@ namespace aurora::modules::inputs::xinput {
 		auto curDown = cur & flags;
 		if ((ori & flags) != curDown) {
 			float32_t value = curDown ? 1.f : 0.f;
-			_eventDispatcher.dispatchEvent(this, curDown ? DeviceEvent::DOWN : DeviceEvent::UP, &Key({ (uint8_t)key, 1, &value }));
+			Key k = { (uint8_t)key, 1, &value };
+			_eventDispatcher.dispatchEvent(this, curDown ? DeviceEvent::DOWN : DeviceEvent::UP, &k);
 		}
 	}
 }

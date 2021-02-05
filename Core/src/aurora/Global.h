@@ -66,7 +66,8 @@
 #define AE_CPP_VER_11      2
 #define AE_CPP_VER_14      3
 #define AE_CPP_VER_17      4
-#define AE_CPP_VER_HIGHER  5
+#define AE_CPP_VER_20      5
+#define AE_CPP_VER_HIGHER  6
 
 #undef AE_CPP_VER
 #define AE_CPP_VER AE_CPP_VER_UNKNOWN
@@ -82,16 +83,18 @@
 #	ifndef __ae_tmp_cpp_ver
 #		define __ae_tmp_cpp_ver __cplusplus
 #	endif
-#	if __ae_tmp_cpp_ver <= 199711L
-#		define AE_CPP_VER AE_CPP_VER_03
-#	elif __ae_tmp_cpp_ver == 201103L
-#		define AE_CPP_VER AE_CPP_VER_14
-#	elif __ae_tmp_cpp_ver == 201402L
-#		define AE_CPP_VER AE_CPP_VER_14
-#	elif __ae_tmp_cpp_ver == 201703L || __ae_tmp_cpp_ver == 201704L
-#		define AE_CPP_VER AE_CPP_VER_17
-#	elif __ae_tmp_cpp_ver > 201704L
+#	if __ae_tmp_cpp_ver > 202002L
 #		define AE_CPP_VER AE_CPP_VER_HIGHER
+#	elif __ae_tmp_cpp_ver > 201703L
+#		define AE_CPP_VER AE_CPP_VER_20
+#	elif __ae_tmp_cpp_ver > 201402L
+#		define AE_CPP_VER AE_CPP_VER_17
+#	elif __ae_tmp_cpp_ver > 201103L
+#		define AE_CPP_VER AE_CPP_VER_14
+#	elif __ae_tmp_cpp_ver > 199711L
+#		define AE_CPP_VER AE_CPP_VER_11
+#	elif __ae_tmp_cpp_ver == 199711L
+#		define AE_CPP_VER AE_CPP_VER_03
 #   else
 #		define AE_CPP_VER AE_CPP_VER_UNKNOWN
 #	endif
@@ -289,6 +292,17 @@ namespace aurora {
 	template<size_t Bits> using int_t = std::conditional_t<Bits >= 0 && Bits <= 8, int8_t, std::conditional_t<Bits >= 9 && Bits <= 16, int16_t, std::conditional_t<Bits >= 17 && Bits <= 32, int32_t, std::conditional_t<Bits >= 33 && Bits <= 64, int64_t, void>>>>;
 	template<size_t Bits> using uint_t = std::conditional_t<Bits >= 0 && Bits <= 8, uint8_t, std::conditional_t<Bits >= 9 && Bits <= 16, uint16_t, std::conditional_t<Bits >= 17 && Bits <= 32, uint32_t, std::conditional_t<Bits >= 33 && Bits <= 64, uint64_t, void>>>>;
 	template<size_t Bits> using float_t = std::conditional_t<Bits >= 0 && Bits <= 32, float32_t, std::conditional_t<Bits >= 33 && Bits <= 64, float64_t, void>>;
+
+
+	template<typename T>
+	struct transparent_hash {
+		using is_transparent = void;
+
+		template<typename K>
+		inline size_t AE_CALL operator()(K&& key) const {
+			return std::hash<T>{}(key);
+		}
+	};
 
 
 	template<typename F, typename T>

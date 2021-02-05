@@ -630,8 +630,6 @@ namespace aurora {
 			return _getValue<float32_t>() != 0.0f;
 		case Type::FLOAT64:
 			return _getValue<float64_t>() != 0.0;
-		case Type::INVALID:
-			return false;
 		default:
 			return defaultValue;
 		}

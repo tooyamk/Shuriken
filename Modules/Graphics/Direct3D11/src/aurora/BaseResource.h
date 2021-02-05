@@ -1,10 +1,9 @@
 #pragma once
 
 #include "Base.h"
+#include "Graphics.h"
 
 namespace aurora::modules::graphics::d3d11 {
-	class Graphics;
-
 	class BaseResource {
 	public:
 		BaseResource(UINT resType);
