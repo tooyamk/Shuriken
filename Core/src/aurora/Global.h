@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #define AE_OS_UNKNOWN 0
 #define AE_OS_WIN     1
@@ -306,6 +306,31 @@ namespace aurora {
 
 #ifdef __cpp_lib_char8_t
 	template<typename L, typename R, typename = std::enable_if_t<
+		((std::is_same_v<L, std::string>) && (is_u8string_data_v<std::remove_cvref_t<R>> || std::is_convertible_v<std::remove_cvref_t<R>, char8_t const*>)) ||
+		((std::is_same_v<L, std::u8string>) && (is_string_data_v<std::remove_cvref_t<R>> || std::is_convertible_v<std::remove_cvref_t<R>, char const*>))>>
+	inline auto& AE_CALL operator+=(L& left, R&& right) {
+		if constexpr (std::is_same_v<L, std::string>) {
+			if constexpr (std::is_same_v<std::remove_cvref_t<R>, std::u8string>) {
+				left += (const std::string&)right;
+			} else if constexpr (std::is_same_v<std::remove_cvref_t<R>, std::u8string_view>) {
+				left += (const std::string_view&)right;
+			} else if constexpr (std::is_convertible_v<std::remove_cvref_t<R>, char8_t const*>) {
+				left += (const char*)right;
+			}
+		} else {
+			if constexpr (std::is_same_v<std::remove_cvref_t<R>, std::string>) {
+				left += (const std::u8string&)right;
+			} else if constexpr (std::is_same_v<std::remove_cvref_t<R>, std::string_view>) {
+				left += (const std::u8string_view&)right;
+			} else if constexpr (std::is_convertible_v<std::remove_cvref_t<R>, char const*>) {
+				left += (const char8_t*)right;
+			}
+		}
+
+		return left;
+	}
+
+	template<typename L, typename R, typename = std::enable_if_t<
 		((is_u8string_data_v<std::remove_cvref_t<L>> && is_string_data_v<std::remove_cvref_t<R>>) || (is_string_data_v<std::remove_cvref_t<L>> && is_u8string_data_v<std::remove_cvref_t<R>>)) ||
 		(is_u8string_data_v<std::remove_cvref_t<L>> && std::is_convertible_v<std::remove_cvref_t<R>, char const*>) ||
 		(std::is_convertible_v<std::remove_cvref_t<L>, char const*> && is_u8string_data_v<std::remove_cvref_t<R>>) ||
@@ -316,16 +341,16 @@ namespace aurora {
 			std::u8string s;
 			s.reserve(left.size() + right.size());
 			if constexpr (std::is_same_v<std::remove_cvref_t<L>, std::string>) {
-				s += (std::u8string&)left;
-			} else if  constexpr (std::is_same_v<std::remove_cvref_t<L>, std::string_view>) {
-				s += (std::u8string_view&)left;
+				s += (const std::u8string&)left;
+			} else if constexpr (std::is_same_v<std::remove_cvref_t<L>, std::string_view>) {
+				s += (const std::u8string_view&)left;
 			} else {
 				s += left;
 			}
 			if constexpr (std::is_same_v<std::remove_cvref_t<R>, std::string>) {
-				s += (std::u8string&)right;
-			} else if  constexpr (std::is_same_v<std::remove_cvref_t<R>, std::string_view>) {
-				s += (std::u8string_view&)right;
+				s += (const std::u8string&)right;
+			} else if constexpr (std::is_same_v<std::remove_cvref_t<R>, std::string_view>) {
+				s += (const std::u8string_view&)right;
 			} else {
 				s += right;
 			}
