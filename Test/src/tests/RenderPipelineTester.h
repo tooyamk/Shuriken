@@ -178,7 +178,7 @@ public:
 							//s->upload(std::filesystem::path(app->getAppPath().parent_path().u8string() + "/Resources/shaders/test.shader"));
 							extensions::ShaderScript::set(s, graphics, readFile(app->getAppPath().parent_path().u8string() + "/Resources/shaders/lighting.shader"),
 								[shaderResourcesFolder](const Shader& shader, ProgramStage stage, const std::string_view& name) {
-								return readFile(shaderResourcesFolder + name.data());
+								return readFile(shaderResourcesFolder + name);
 							});
 
 							mat2->setShader(s);

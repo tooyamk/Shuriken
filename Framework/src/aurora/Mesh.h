@@ -19,28 +19,27 @@ namespace aurora {
 
 	class AE_FW_DLL MeshResource : public Ref {
 	public:
-		inline const std::unordered_map<std::string, RefPtr<VertexResource>>& AE_CALL getVerteices() const {
+		inline const auto& AE_CALL getVerteices() const {
 			return _vertices;
 		}
 
-		inline VertexResource* AE_CALL getVertex(const std::string& name) const {
+		inline RefPtr<VertexResource> AE_CALL getVertex(const query_string& name) const {
 			auto itr = _vertices.find(name);
 			return itr == _vertices.end() ? nullptr : itr->second;
 		}
 
-		inline void AE_CALL setVertex(const std::string& name, VertexResource* res) {
-			if (res) {
-				_vertices.insert_or_assign(name, res);
-			} else {
-				_vertices.erase(name);
-			}
+		void AE_CALL setVertex(const query_string& name, VertexResource* res);
+		inline RefPtr<VertexResource> AE_CALL remove(const query_string& name) {
+			return _remove(name);
 		}
 
 		std::string name;
 		RefPtr<IndexResource> index;
 
 	private:
-		std::unordered_map<std::string, RefPtr<VertexResource>> _vertices;
+		string_unordered_map<RefPtr<VertexResource>> _vertices;
+
+		VertexResource* AE_CALL _remove(const query_string& name);
 	};
 
 

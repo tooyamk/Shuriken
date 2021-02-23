@@ -24,14 +24,6 @@ inline void AE_CALL printaln(Args&&... args) {
 #endif
 }
 
-#ifdef __cpp_lib_char8_t
-inline std::u8string AE_CALL operator+(const std::u8string& s1, const char* s2) {
-	auto s = s1;
-	s += std::u8string_view((const char8_t*)s2);
-	return std::move(s);
-}
-#endif
-
 #ifdef __cpp_lib_generic_unordered_lookup
 /*
 struct std_generic_unordered_comparer {
@@ -113,9 +105,9 @@ inline ProgramSource AE_CALL readProgramSource(T&& path, ProgramStage type) {
 
 inline bool AE_CALL createProgram(IProgram& program, const std::string_view& vert, const std::string_view& frag) {
 	auto appPath = getAppPath().parent_path().u8string() + "/Resources/shaders/";
-	if (!program.create(readProgramSource(appPath + vert.data(), ProgramStage::VS), readProgramSource(appPath + frag.data(), ProgramStage::PS), nullptr, 0,
+	if (!program.create(readProgramSource(appPath + vert, ProgramStage::VS), readProgramSource(appPath + frag, ProgramStage::PS), nullptr, 0,
 		[&appPath](const IProgram& program, ProgramStage stage, const std::string_view& name) {
-		return readFile(appPath + name.data());
+		return readFile(appPath + name);
 	})) {
 		printaln(L"program create error");
 		return false;

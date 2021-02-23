@@ -121,7 +121,7 @@ namespace aurora {
 			return this != ptr;
 		}
 
-		inline AE_CALL operator T* () const {
+		inline AE_CALL operator T*() const {
 			return _target;
 		}
 

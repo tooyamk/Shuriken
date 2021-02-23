@@ -51,9 +51,15 @@ namespace aurora {
 				auto [utf8Len, unicodeLen] = String::calcUtf8ToUnicodeLength(std::string_view(buf, size));
 				if (unicodeLen != std::wstring::npos) {
 					dilatation(unicodeLen);
-					pos += String::Utf8ToUnicode(buf, size, data + pos);
+					pos += String::Utf8ToUnicode(buf, utf8Len, data + pos);
 				}
 			}
+
+#ifdef __cpp_lib_char8_t
+			inline void AE_CALL write(const std::u8string_view& str) {
+				write((const char*)str.data(), str.size());
+			}
+#endif
 
 			inline void AE_CALL write(const wchar_t* buf) {
 				if (buf) write(buf, wcslen(buf));
@@ -161,6 +167,12 @@ namespace aurora {
 				out.unsafeWrite(L' ');
 				out.write(typeid(T).name());
 				out.write(L']');
+#ifdef __cpp_lib_char8_t
+			} else if constexpr (std::is_convertible_v<Type, char8_t const*>) {
+				_print(out, std::u8string_view(value));
+			} else if constexpr (is_u8string_data_v<Type>) {
+				out.write(value);
+#endif
 			} else {
 				out.write(L'[');
 				out.write(typeid(T).name());

@@ -222,16 +222,30 @@ namespace aurora {
 		clear();
 	}
 
-	modules::graphics::IVertexBuffer* VertexBufferCollection::get(const std::string& name) const {
+	RefPtr<modules::graphics::IVertexBuffer> VertexBufferCollection::get(const query_string& name) const {
 		auto itr = _buffers.find(name);
 		return itr == _buffers.end() ? nullptr : itr->second;
 	}
 
-	void VertexBufferCollection::set(const std::string& name, modules::graphics::IVertexBuffer* buffer) {
+	void VertexBufferCollection::set(const query_string& name, modules::graphics::IVertexBuffer* buffer) {
 		if (buffer) {
-			_buffers.insert_or_assign(name, buffer);
+			if (auto itr = _buffers.find(name); itr == _buffers.end()) {
+				_buffers.emplace(name, buffer);
+			} else {
+				itr->second = buffer;
+			}
 		} else {
-			_buffers.erase(name);
+			remove(name);
 		}
+	}
+
+	modules::graphics::IVertexBuffer* VertexBufferCollection::_remove(const query_string& name) {
+		if (auto itr = _buffers.find(name); itr == _buffers.end()) {
+			auto val = itr->second;
+			_buffers.erase(itr);
+			return val;
+		}
+
+		return nullptr;
 	}
 }

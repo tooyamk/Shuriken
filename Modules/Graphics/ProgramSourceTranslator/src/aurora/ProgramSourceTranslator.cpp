@@ -18,7 +18,7 @@ namespace aurora::modules::graphics::program_source_translator {
 		if ((pFilename[0] == L'.') && (pFilename[1] == L'/')) pFilename += 2;
 
 		if (_handler) {
-			 ByteArray data = _handler(String::UnicodeToUtf8(std::wstring_view(pFilename)));
+			 ByteArray data = _handler(String::UnicodeToUtf8<std::wstring_view, std::string>(std::wstring_view(pFilename)));
 			 return _lib->CreateBlobWithEncodingOnHeapCopy(data.getSource(), data.getLength(), CP_UTF8, reinterpret_cast<IDxcBlobEncoding**>(ppIncludeSource));
 		}
 
@@ -64,7 +64,7 @@ namespace aurora::modules::graphics::program_source_translator {
 
 	bool ProgramSourceTranslator::init(Ref* loader, const std::string_view& dxc) {
 		if (_dxcDll.load(dxc)) {
-			if (auto fn = (DxcCreateInstanceProc)_dxcDll.getSymbolAddress("DxcCreateInstance"); fn) {
+			if (auto fn = (DxcCreateInstanceProc)_dxcDll.getSymbolAddress("DxcCreateInstance"sv); fn) {
 				if (auto hr = fn(CLSID_DxcLibrary, __uuidof(IDxcLibrary), (void**)&_dxcLib); hr < 0) return false;
 				if (auto hr = fn(CLSID_DxcCompiler, __uuidof(IDxcCompiler), (void**)&_dxcompiler); hr < 0) return false;
 

@@ -339,8 +339,8 @@ namespace aurora {
 	public:
 		virtual ~IShaderParameterGetter() {}
 
-		virtual ShaderParameter* AE_CALL get(const std::string& name) const = 0;
-		virtual ShaderParameter* AE_CALL get(const std::string& name, ShaderParameterType type) const = 0;
+		virtual RefPtr<ShaderParameter> AE_CALL get(const query_string& name) const = 0;
+		virtual RefPtr<ShaderParameter> AE_CALL get(const query_string& name, ShaderParameterType type) const = 0;
 	};
 
 
@@ -348,12 +348,12 @@ namespace aurora {
 	public:
 		virtual ~ShaderParameterCollection() {}
 
-		virtual ShaderParameter* AE_CALL get(const std::string& name) const override;
-		virtual ShaderParameter* AE_CALL get(const std::string& name, ShaderParameterType type) const override;
+		virtual RefPtr<ShaderParameter> AE_CALL get(const query_string& name) const override;
+		virtual RefPtr<ShaderParameter> AE_CALL get(const query_string& name, ShaderParameterType type) const override;
 
-		ShaderParameter* AE_CALL set(const std::string& name, ShaderParameter* parameter);
-		inline void AE_CALL remove(const std::string& name) {
-			_parameters.erase(name);
+		ShaderParameter* AE_CALL set(const query_string& name, ShaderParameter* parameter);
+		inline RefPtr<ShaderParameter> AE_CALL remove(const query_string& name) {
+			return _remove(name);
 		}
 		inline bool AE_CALL isEmpty() const {
 			return _parameters.empty();
@@ -363,7 +363,9 @@ namespace aurora {
 		}
 
 	protected:
-		std::unordered_map<std::string, RefPtr<ShaderParameter>> _parameters;
+		string_unordered_map<RefPtr<ShaderParameter>> _parameters;
+
+		ShaderParameter* AE_CALL _remove(const query_string& name);
 	};
 
 
@@ -371,8 +373,8 @@ namespace aurora {
 	public:
 		virtual ~ShaderParameterGetterStack() {}
 
-		virtual ShaderParameter* AE_CALL get(const std::string& name) const override;
-		virtual ShaderParameter* AE_CALL get(const std::string& name, ShaderParameterType type) const override;
+		virtual RefPtr<ShaderParameter> AE_CALL get(const query_string& name) const override;
+		virtual RefPtr<ShaderParameter> AE_CALL get(const query_string& name, ShaderParameterType type) const override;
 
 		inline bool AE_CALL push(IShaderParameterGetter* getter) {
 			if (getter) {

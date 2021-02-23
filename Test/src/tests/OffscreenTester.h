@@ -2,9 +2,38 @@
 
 #include "../BaseTester.h"
 
+template<typename L, typename R, typename = std::enable_if_t<
+	((std::is_same_v<L, std::string>) && (is_u8string_data_v<std::remove_cvref_t<R>> || std::is_convertible_v<std::remove_cvref_t<R>, char8_t const*>)) ||
+	((std::is_same_v<L, std::u8string>) && (is_string_data_v<std::remove_cvref_t<R>> || std::is_convertible_v<std::remove_cvref_t<R>, char const*>))>>
+inline auto& AE_CALL operator+=(L& left, R&& right) {
+	if constexpr (std::is_same_v<L, std::string>) {
+		if constexpr (std::is_same_v<std::remove_cvref_t<R>, std::u8string>) {
+			left += (std::string&)right;
+		} else if constexpr (std::is_same_v<std::remove_cvref_t<R>, std::u8string_view>) {
+			left += (std::string_view&)right;
+		} else if constexpr (std::is_convertible_v<std::remove_cvref_t<R>, char8_t const*>) {
+			left += (const char*)right;
+		}
+	} else {
+		if constexpr (std::is_same_v<std::remove_cvref_t<R>, std::string>) {
+			left += (std::u8string&)right;
+		} else if constexpr (std::is_same_v<std::remove_cvref_t<R>, std::string_view>) {
+			left += (std::u8string_view&)right;
+		} else if constexpr (std::is_convertible_v<std::remove_cvref_t<R>, char const*>) {
+			left += (const char8_t*)right;
+		}
+	}
+	
+	return left;
+}
+
 class OffscreenTester : public BaseTester {
 public:
 	virtual int32_t AE_CALL run() override {
+		std::string sss = "123";
+		sss += u8"°¡"s;
+		printdln(sss);
+
 		auto monitors = Monitor::getMonitors();
 		auto vms = monitors[0].getVideoModes();
 

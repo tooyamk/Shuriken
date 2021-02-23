@@ -105,28 +105,42 @@ namespace aurora {
 	}
 
 
-	ShaderParameter* ShaderParameterCollection::get(const std::string& name) const {
+	RefPtr<ShaderParameter> ShaderParameterCollection::get(const query_string& name) const {
 		auto itr = _parameters.find(name);
 		return itr == _parameters.end() ? nullptr : itr->second;
 	}
 
-	ShaderParameter* ShaderParameterCollection::get(const std::string& name, ShaderParameterType type) const {
+	RefPtr<ShaderParameter> ShaderParameterCollection::get(const query_string& name, ShaderParameterType type) const {
 		auto itr = _parameters.find(name);
 		return itr == _parameters.end() ? nullptr : (itr->second->getType() == type ? itr->second : nullptr);
 	}
 
-	ShaderParameter* ShaderParameterCollection::set(const std::string& name, ShaderParameter* parameter) {
+	ShaderParameter* AE_CALL ShaderParameterCollection::set(const query_string& name, ShaderParameter* parameter) {
 		if (parameter) {
-			_parameters.insert_or_assign(name, parameter);
+			if (auto itr = _parameters.find(name); itr == _parameters.end()) {
+				_parameters.emplace(name, parameter);
+			} else {
+				itr->second = parameter;
+			}
 		} else {
-			_parameters.erase(name);
+			remove(name);
 		}
 
 		return parameter;
 	}
 
+	ShaderParameter* ShaderParameterCollection::_remove(const query_string& name) {
+		if (auto itr = _parameters.find(name); itr == _parameters.end()) {
+			auto val = itr->second;
+			_parameters.erase(itr);
+			return val;
+		}
 
-	ShaderParameter* ShaderParameterGetterStack::get(const std::string& name) const {
+		return nullptr;
+	}
+
+
+	RefPtr<ShaderParameter> ShaderParameterGetterStack::get(const query_string& name) const {
 		auto i = _stack.size();
 		while (i--) {
 			if (_stack[i]) {
@@ -136,7 +150,7 @@ namespace aurora {
 		return nullptr;
 	}
 
-	ShaderParameter* ShaderParameterGetterStack::get(const std::string& name, ShaderParameterType type) const {
+	RefPtr<ShaderParameter> ShaderParameterGetterStack::get(const query_string& name, ShaderParameterType type) const {
 		auto i = _stack.size();
 		while (i--) {
 			if (_stack[i]) {

@@ -52,7 +52,7 @@ namespace aurora {
 		template<typename T, typename = wstring_data_t<T>>
 		static std::tuple<std::wstring::size_type, std::string::size_type> AE_CALL calcUnicodeToUtf8Length(const T& in) {
 			std::wstring::size_type s = 0;
-			std::string::size_type d = 0;
+			std::u8string::size_type d = 0;
 
 			auto inSize = in.size();
 			while (s < inSize) {
@@ -76,34 +76,34 @@ namespace aurora {
 			return std::make_tuple(s, d);
 		}
 
-		template<typename T, typename = wstring_data_t<T>>
-		static std::string::size_type AE_CALL UnicodeToUtf8(const T& in, char* outBuffer, std::string::size_type outBufferSize) {
-			if (!outBuffer || !outBufferSize) return std::string::npos;
+		template<typename In, typename Out, typename = std::enable_if_t<is_wstring_data_v<In> && (std::is_same_v<Out, char> || std::is_same_v<Out, char8_t>)>>
+		static std::u8string::size_type AE_CALL UnicodeToUtf8(const In& in, Out* outBuffer, std::u8string::size_type outBufferSize) {
+			if (!outBuffer || !outBufferSize) return std::u8string::npos;
 			if (in.empty()) {
 				outBuffer[0] = 0;
 				return 0;
 			}
 
 			auto [unicodeLen, utf8Len] = calcUnicodeToUtf8Length(in);
-			if (outBufferSize < unicodeLen) return std::string::npos;
+			if (outBufferSize < unicodeLen) return std::u8string::npos;
 
 			return UnicodeToUtf8(in.data(), unicodeLen, outBuffer);
 		}
 
-		template<typename T, typename = wstring_data_t<T>>
-		static std::string AE_CALL UnicodeToUtf8(const T& in) {
+		template<typename In, typename Out = std::u8string, typename = std::enable_if_t< is_wstring_data_v<In> && (std::is_same_v<Out, std::string> || std::is_same_v<Out, std::u8string>)>>
+		static auto AE_CALL UnicodeToUtf8(const In& in) {
 			auto [unicodeLen, utf8Len] = calcUnicodeToUtf8Length(in);
-			std::string s;
+			Out s;
 			s.resize(utf8Len);
-			UnicodeToUtf8(in.data(), unicodeLen, (char*)s.data());
+			UnicodeToUtf8(in.data(), unicodeLen, s.data());
 
 			return std::move(s);
 		}
 
 		//utf8Len, unicodeLen
-		template<typename T, typename = string_data_t<T>>
-		static std::tuple<std::string::size_type, std::wstring::size_type> AE_CALL calcUtf8ToUnicodeLength(const T& in) {
-			std::string::size_type s = 0;
+		template<typename T, typename = string8_data_t<T>>
+		static std::tuple<std::u8string::size_type, std::wstring::size_type> AE_CALL calcUtf8ToUnicodeLength(const T& in) {
+			std::u8string::size_type s = 0;
 			std::wstring::size_type d = 0;
 
 			auto inSize = in.size();
@@ -127,7 +127,7 @@ namespace aurora {
 			return std::make_tuple(s, d);
 		}
 
-		template<typename T, typename = string_data_t<T>>
+		template<typename T, typename = string8_data_t<T>>
 		static std::wstring::size_type AE_CALL Utf8ToUnicode(const T& in, wchar_t* outBuffer, std::wstring::size_type outBufferSize) {
 			if (!outBuffer || !outBufferSize) return std::wstring::npos;
 			if (in.empty()) {
@@ -141,9 +141,46 @@ namespace aurora {
 			return Utf8ToUnicode(in, utf8Len, outBuffer);
 		}
 
-		static std::wstring::size_type AE_CALL Utf8ToUnicode(const char* in, std::string::size_type inLen, wchar_t* out);
+		template<typename In, typename = std::enable_if_t<std::is_same_v<In, char> || std::is_same_v<In, char8_t>>>
+		static std::wstring::size_type AE_CALL Utf8ToUnicode(const In* in, std::u8string::size_type inLen, wchar_t* out) {
+			std::u8string::size_type s = 0;
+			std::wstring::size_type d = 0;
 
-		template<typename T, typename = string_data_t<T>>
+			while (s < inLen) {
+				if (uint8_t c = in[s]; (c & 0x80) == 0) {
+					out[d++] = in[s++];
+				} else if ((c & 0xE0) == 0xC0) {// 110x-xxxx 10xx-xxxx
+					out[d++] = ((c & 0x3F) << 6) | (in[s + 1] & 0x3F);
+					s += 2;
+				} else if ((c & 0xF0) == 0xE0) {// 1110-xxxx 10xx-xxxx 10xx-xxxx
+					out[d++] = ((c & 0x1F) << 12) | ((in[s + 1] & 0x3F) << 6) | (in[s + 2] & 0x3F);
+					s += 3;
+				} else if ((c & 0xF8) == 0xF0) {// 1111-0xxx 10xx-xxxx 10xx-xxxx 10xx-xxxx 
+					out[d++] = ((in[s + 1] & 0x3F) << 12) | ((in[s + 2] & 0x3F) << 6) | (in[s + 3] & 0x3F);
+					/*
+					//wideChar = (in[s + 0] & 0x0F) << 18;
+					wideChar = (in[s + 1] & 0x3F) << 12;
+					wideChar |= (in[s + 2] & 0x3F) << 6;
+					wideChar |= (in[s + 3] & 0x3F);
+					*/
+					s += 4;
+				} else {// 1111-10xx 10xx-xxxx 10xx-xxxx 10xx-xxxx 10xx-xxxx 
+					out[d++] = ((in[s + 2] & 0x3F) << 12) | ((in[s + 3] & 0x3F) << 6) | (in[s + 4] & 0x3F);
+					/*
+					//wideChar = (in[s + 0] & 0x07) << 24;
+					//wideChar = (in[s + 1] & 0x3F) << 18;
+					wideChar = (in[s + 2] & 0x3F) << 12;
+					wideChar |= (in[s + 3] & 0x3F) << 6;
+					wideChar |= (in[s + 4] & 0x3F);
+					*/
+					s += 5;
+				}
+			}
+
+			return d;
+		}
+
+		template<typename T, typename = string8_data_t<T>>
 		static std::wstring AE_CALL Utf8ToUnicode(const T& in) {
 			auto [utf8Len, unicodeLen] = calcUtf8ToUnicodeLength(in);
 			std::wstring s;
@@ -153,7 +190,7 @@ namespace aurora {
 			return std::move(s);
 		}
 
-		template<typename T, typename = string_data_t<T>>
+		template<typename T, typename = string8_data_t<T>>
 		static std::wstring::size_type AE_CALL Utf8ToUnicode(const T& in, wchar_t*& out) {
 			if (in.empty()) {
 				out = new wchar_t[1];
@@ -170,9 +207,38 @@ namespace aurora {
 			return len;
 		}
 
-		static std::string::size_type AE_CALL UnicodeToUtf8(const wchar_t* in, std::wstring::size_type inLen, char* out);
+		template<typename Out, typename = std::enable_if_t<std::is_same_v<Out, char> || std::is_same_v<Out, char8_t>>>
+		static std::u8string::size_type AE_CALL UnicodeToUtf8(const wchar_t* in, std::wstring::size_type inLen, Out* out) {
+			std::wstring::size_type s = 0;
+			std::u8string::size_type d = 0;
 
-		template<typename Input, typename Separator, typename Fn, typename = std::enable_if_t<is_string_data_v<Input> || std::is_convertible_v<Input, char const*>>, typename = std::enable_if_t<(std::is_base_of_v<std::regex, Separator> || is_string_data_v<Separator> || std::is_convertible_v<Separator, char const*>) && std::is_invocable_v<Fn, const std::string_view&>>>
+			while (s < inLen) {
+				if (wchar_t c = in[s++]; c < 0x80) {  //
+					//length = 1;
+					out[d++] = (char)c;
+				} else if (c < 0x800) {
+					//length = 2;
+					out[d++] = 0xC0 | (c >> 6);
+					out[d++] = 0x80 | (c & 0x3F);
+				} else if (c < 0x10000) {
+					//length = 3;
+					out[d++] = 0xE0 | (c >> 12);
+					out[d++] = 0x80 | ((c >> 6) & 0x3F);
+					out[d++] = 0x80 | (c & 0x3F);
+				} else if (c < 0x200000) {
+					//length = 4;
+					out[d++] = 0xF0 | ((int)c >> 18);
+					out[d++] = 0x80 | ((c >> 12) & 0x3F);
+					out[d++] = 0x80 | ((c >> 6) & 0x3F);
+					out[d++] = 0x80 | (c & 0x3F);
+				}
+			}
+
+			return d;
+		}
+
+		template<typename Input, typename Separator, typename Fn, typename = std::enable_if_t<is_string_data_v<Input> || std::is_convertible_v<Input, char const*>>, 
+			typename = std::enable_if_t<(std::is_base_of_v<std::regex, Separator> || is_string_data_v<Separator> || std::is_convertible_v<Separator, char const*>) && std::is_invocable_v<Fn, const std::string_view&>>>
 		static void AE_CALL split(const Input& input, const Separator& separator, Fn&& fn) {
 			if constexpr (std::is_base_of_v<std::regex, Separator>) {
 				std::regex_token_iterator itr(input.begin(), input.end(), separator, -1);

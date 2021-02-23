@@ -98,20 +98,20 @@ namespace aurora {
 
 					auto strLen = String::UnicodeToUtf8(std::wstring_view(adapter.DeviceName, sizeof(adapter.DeviceName)), strBuf, strBufLen);
 					strBuf[strLen] = 0;
-					monitor._adapterName = strBuf;
+					monitor._adapterName = (char*)strBuf;
 
 					strLen = String::UnicodeToUtf8(std::wstring_view(adapter.DeviceString, sizeof(adapter.DeviceString)), strBuf, strBufLen);
 					strBuf[strLen] = 0;
-					monitor._adapterDesc = strBuf;
+					monitor._adapterDesc = (char*)strBuf;
 
 					if (hasDisplay) {
 						strLen = String::UnicodeToUtf8(std::wstring_view(display.DeviceName, sizeof(display.DeviceName)), strBuf, strBufLen);
 						strBuf[strLen] = 0;
-						monitor._deviceName = strBuf;
+						monitor._deviceName = (char*)strBuf;
 
 						strLen = String::UnicodeToUtf8(std::wstring_view(display.DeviceString, sizeof(display.DeviceString)), strBuf, strBufLen);
 						strBuf[strLen] = 0;
-						monitor._deviceDesc = strBuf;
+						monitor._deviceDesc = (char*)strBuf;
 					}
 
 					HDC dc = CreateDCW(L"DISPLAY", adapter.DeviceName, nullptr, nullptr);

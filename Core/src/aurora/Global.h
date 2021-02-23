@@ -138,6 +138,8 @@
 #include <mutex>
 #include <cstring>
 #include <string>
+#include <unordered_map>
+#include <unordered_set>
 
 
 #ifndef AE_DEBUG
@@ -243,6 +245,11 @@ inline constexpr __ENUM__& AE_CALL operator^=(__ENUM__& e1, __ENUM__ e2) { \
 using namespace std::literals;
 
 
+#ifndef __cpp_lib_char8_t
+using char8_t = char;
+#endif
+
+
 namespace std {
 #ifndef __cpp_lib_endian
 	constexpr uint8_t endian_tester() {
@@ -266,6 +273,10 @@ namespace std {
 	template<typename T>
 	struct remove_cvref { using type = remove_cvref_t<T>; };
 #endif
+
+#ifndef __cpp_lib_char8_t
+	using u8string = string;
+#endif
 }
 
 
@@ -284,16 +295,61 @@ namespace aurora {
 
 
 	template<typename T> constexpr bool is_string_data_v = std::is_same_v<T, std::string> || std::is_same_v<T, std::string_view>;
+	template<typename T> constexpr bool is_u8string_data_v = std::is_same_v<T, std::u8string> || std::is_same_v<T, std::u8string_view>;
+	template<typename T> constexpr bool is_string8_data_v = is_string_data_v<T> || is_u8string_data_v<T>;
 	template<typename T> constexpr bool is_wstring_data_v = std::is_same_v<T, std::wstring> || std::is_same_v<T, std::wstring_view>;
 	template<typename T> using string_data_t = std::enable_if_t<is_string_data_v<T>, T>;
+	template<typename T> using u8string_data_t = std::enable_if_t<is_u8string_data_v<T>, T>;
+	template<typename T> using string8_data_t = std::enable_if_t<is_string8_data_v<T>, T>;
 	template<typename T> using wstring_data_t = std::enable_if_t<is_wstring_data_v<T>, T>;
 
+
+#ifdef __cpp_lib_char8_t
+	template<typename L, typename R, typename = std::enable_if_t<
+		((is_u8string_data_v<std::remove_cvref_t<L>> && is_string_data_v<std::remove_cvref_t<R>>) || (is_string_data_v<std::remove_cvref_t<L>> && is_u8string_data_v<std::remove_cvref_t<R>>)) ||
+		(is_u8string_data_v<std::remove_cvref_t<L>> && std::is_convertible_v<std::remove_cvref_t<R>, char const*>) ||
+		(std::is_convertible_v<std::remove_cvref_t<L>, char const*> && is_u8string_data_v<std::remove_cvref_t<R>>) ||
+		(std::is_convertible_v<std::remove_cvref_t<L>, char8_t const*> && is_string_data_v<std::remove_cvref_t<R>>) ||
+		(is_string_data_v<std::remove_cvref_t<L>> && std::is_convertible_v<std::remove_cvref_t<R>, char8_t const*>)>>
+	inline std::u8string AE_CALL operator+(L&& left, R&& right) {
+		if constexpr ((is_u8string_data_v<std::remove_cvref_t<L>> && is_string_data_v<std::remove_cvref_t<R>>) || (is_string_data_v<std::remove_cvref_t<L>> && is_u8string_data_v<std::remove_cvref_t<R>>)) {
+			std::u8string s;
+			s.reserve(left.size() + right.size());
+			if constexpr (std::is_same_v<std::remove_cvref_t<L>, std::string>) {
+				s += (std::u8string&)left;
+			} else if  constexpr (std::is_same_v<std::remove_cvref_t<L>, std::string_view>) {
+				s += (std::u8string_view&)left;
+			} else {
+				s += left;
+			}
+			if constexpr (std::is_same_v<std::remove_cvref_t<R>, std::string>) {
+				s += (std::u8string&)right;
+			} else if  constexpr (std::is_same_v<std::remove_cvref_t<R>, std::string_view>) {
+				s += (std::u8string_view&)right;
+			} else {
+				s += right;
+			}
+			return std::move(s);
+		} else if constexpr (is_u8string_data_v<std::remove_cvref_t<L>> && std::is_convertible_v<std::remove_cvref_t<R>, char const*>) {
+			return std::move(left + std::string_view(std::forward<R>(right)));
+		} else if constexpr (std::is_convertible_v<std::remove_cvref_t<L>, char const*> && is_u8string_data_v<std::remove_cvref_t<R>>) {
+			return std::move(std::string_view(std::forward<L>(left)) + right);
+		} else if constexpr (std::is_convertible_v<std::remove_cvref_t<L>, char8_t const*> && is_string_data_v<std::remove_cvref_t<R>>) {
+			return std::move(std::u8string_view(std::forward<L>(left)) + right);
+		} else if constexpr (is_string_data_v<std::remove_cvref_t<L>> && std::is_convertible_v<std::remove_cvref_t<R>, char8_t const*>) {
+			return std::move(left + std::u8string_view(std::forward<R>(right)));
+		} else {
+			return std::u8string();
+		}
+	}
+#endif
+	
 
 	template<size_t Bits> using int_t = std::conditional_t<Bits >= 0 && Bits <= 8, int8_t, std::conditional_t<Bits >= 9 && Bits <= 16, int16_t, std::conditional_t<Bits >= 17 && Bits <= 32, int32_t, std::conditional_t<Bits >= 33 && Bits <= 64, int64_t, void>>>>;
 	template<size_t Bits> using uint_t = std::conditional_t<Bits >= 0 && Bits <= 8, uint8_t, std::conditional_t<Bits >= 9 && Bits <= 16, uint16_t, std::conditional_t<Bits >= 17 && Bits <= 32, uint32_t, std::conditional_t<Bits >= 33 && Bits <= 64, uint64_t, void>>>>;
 	template<size_t Bits> using float_t = std::conditional_t<Bits >= 0 && Bits <= 32, float32_t, std::conditional_t<Bits >= 33 && Bits <= 64, float64_t, void>>;
 
-
+#ifdef __cpp_lib_generic_unordered_lookup
 	template<typename T>
 	struct transparent_hash {
 		using is_transparent = void;
@@ -303,6 +359,21 @@ namespace aurora {
 			return std::hash<T>{}(key);
 		}
 	};
+
+	using query_string = std::string_view;
+
+	using string_unordered_set = std::unordered_set<std::string, transparent_hash<std::string_view>, std::equal_to<>>;
+
+	template<typename T>
+	using string_unordered_map = std::unordered_map<std::string, T, transparent_hash<std::string_view>, std::equal_to<>>;
+#else
+	using query_string = std::string;
+
+	using string_unordered_set = std::unordered_set<std::string>;
+
+	template<typename T>
+	using string_unordered_map = std::unordered_map<std::string, T>;
+#endif
 
 
 	template<typename F, typename T>
