@@ -61,10 +61,6 @@ namespace aurora::modules::graphics::gl {
 
 
 	struct InternalRasterizerState {
-		InternalRasterizerState() :
-			featureValue(0) {
-		}
-
 		union {
 			uint64_t featureValue;
 
@@ -80,6 +76,10 @@ namespace aurora::modules::graphics::gl {
 
 
 	struct InternalDepthState {
+		InternalDepthState() :
+			featureValue(0) {
+		}
+
 		union {
 			uint32_t featureValue;
 
@@ -93,7 +93,8 @@ namespace aurora::modules::graphics::gl {
 
 
 	struct InternalStencilFaceState {
-		InternalStencilFaceState() {
+		InternalStencilFaceState() :
+			func(GL_NEVER) {
 			mask.featureValue = 0;
 			op.featureValue = 0;
 		}

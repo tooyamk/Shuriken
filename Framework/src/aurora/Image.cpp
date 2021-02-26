@@ -45,7 +45,7 @@ namespace aurora {
 			pixels += w * h;
 		}
 
-		return calcByteSize(pixels, perPixelByteSize);
+		return calcPixelsByteSize(pixels, perPixelByteSize);
 	}
 
 	uint32_t Image::calcMipsByteSize(const Vec3ui32& size, uint32_t mipLevels, uint32_t perPixelByteSize) {
@@ -59,7 +59,7 @@ namespace aurora {
 			pixels += w * h * d;
 		}
 
-		return calcByteSize(pixels, perPixelByteSize);
+		return calcPixelsByteSize(pixels, perPixelByteSize);
 	}
 
 	bool Image::convertFormat(const Vec2ui32& size, TextureFormat srcFormat, const uint8_t* src, TextureFormat dstFormat, uint8_t* dst) {
@@ -68,7 +68,7 @@ namespace aurora {
 		{
 			switch (srcFormat) {
 			case TextureFormat::R8G8B8:
-				memcpy(dst, src, calcByteSize(size, dstFormat));
+				memcpy(dst, src, calcPixelsByteSize(size, dstFormat));
 				return true;
 			case TextureFormat::R8G8B8A8:
 				_convertFormat_R8G8B8A8_R8G8B8(size, src, dst);
@@ -76,6 +76,8 @@ namespace aurora {
 			default:
 				break;
 			}
+
+			break;
 		}
 		case TextureFormat::R8G8B8A8:
 		{
@@ -84,11 +86,13 @@ namespace aurora {
 				_convertFormat_R8G8B8_R8G8B8A8(size, src, dst);
 				return true;
 			case TextureFormat::R8G8B8A8:
-				memcpy(dst, src, calcByteSize(size, dstFormat));
+				memcpy(dst, src, calcPixelsByteSize(size, dstFormat));
 				return true;
 			default:
 				break;
 			}
+
+			break;
 		}
 		default:
 			break;
@@ -106,8 +110,8 @@ namespace aurora {
 		auto s = size;
 
 		for (uint32_t lv = 1; lv < mipLevels; ++lv) {
-			src += calcByteSize(s, srcPerPixelSize);
-			dst += calcByteSize(s, dstPerPixelSize);
+			src += calcPixelsByteSize(s, srcPerPixelSize);
+			dst += calcPixelsByteSize(s, dstPerPixelSize);
 			s.set(calcNextMipPixelSize(s[0]), calcNextMipPixelSize(s[1]));
 
 			if (!convertFormat(s, srcFormat, src, dstFormat, dst)) return false;
@@ -174,12 +178,12 @@ namespace aurora {
 
 		uint8_t c[16];
 		for (uint32_t lv = 1; lv < mipLevels; ++lv) {
-			dst += calcByteSize(s, perPixelByteSize);
+			dst += calcPixelsByteSize(s, perPixelByteSize);
 			if (dataPtr) dataPtr[lv] = dst;
 			auto w = calcNextMipPixelSize(s[0]);
 			auto h = calcNextMipPixelSize(s[1]);
-			uint32_t srcRowByteSize = calcByteSize(s[0], perPixelByteSize);
-			uint32_t dstRowByteSize = calcByteSize(w, perPixelByteSize);
+			uint32_t srcRowByteSize = calcPixelsByteSize(s[0], perPixelByteSize);
+			uint32_t dstRowByteSize = calcPixelsByteSize(w, perPixelByteSize);
 
 			if (w == s[0]) {
 				if (h == s[1]) {

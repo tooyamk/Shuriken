@@ -8,20 +8,13 @@
 
 #include <immintrin.h>
 
-#if AE_OS == AE_OS_WIN
-//int32_t WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int32_t nCmdShow) {
-#pragma comment(linker, "/subsystem:console")
-int32_t main() {
-	SetDllDirectoryW((getAppPath().parent_path().wstring() + L"/libs/").data());
-#else
-int32_t main() {
-#endif
+int32_t run() {
 	/*
 	__declspec(align(16)) float a[] = { 1.5, 2.5, 3.5, 4.5 };
 	__declspec(align(16)) float b[] = { 1.2, 2.3, 3.4, 4.5 };
 	__declspec(align(16)) float c[] = { 0.0, 0.0, 0.0, 0.0 };
 
-	
+
 	__m128 m128_a = _mm_load_ps(a);
 	__m128 m128_b = _mm_load_ps(b);
 	__m128 m128_c = _mm_add_ps(m128_a, m128_b);
@@ -33,7 +26,7 @@ int32_t main() {
 	}
 	printf("\n");
 	*/
-	
+
 	//return (new DepthTestTester())->run();
 	//return (new InputTester())->run();
 	return (new OffscreenTester())->run();
@@ -41,4 +34,15 @@ int32_t main() {
 	//return (new RenderTargetTester())->run();
 	//return (new VertexUpdateTester())->run();
 	//return (new WindowTester())->run();
+}
+
+#if AE_OS == AE_OS_WIN
+#pragma comment(linker, "/subsystem:console")
+int32_t WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int32_t nCmdShow) {
+	return run();
+}
+#endif
+
+int32_t main() {
+	return run();
 }

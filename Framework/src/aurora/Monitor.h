@@ -21,27 +21,27 @@ namespace aurora {
 
 		Monitor();
 
-		inline bool isPrimary() const {
+		inline bool AE_CALL isPrimary() const {
 			return _primary;
 		}
 
-		inline bool isModesPruned() const {
+		inline bool AE_CALL isModesPruned() const {
 			return _modesPruned;
 		}
 
-		inline const std::string& getDeviceName() const {
+		inline const std::string& AE_CALL getDeviceName() const {
 			return _deviceName;
 		}
 
-		inline const std::string& getDeviceDescription() const {
+		inline const std::string& AE_CALL getDeviceDescription() const {
 			return _deviceDesc;
 		}
 
-		inline const std::string& getAdapterName() const {
+		inline const std::string& AE_CALL getAdapterName() const {
 			return _adapterName;
 		}
 
-		inline const std::string& getAdapterDescription() const {
+		inline const std::string& AE_CALL getAdapterDescription() const {
 			return _adapterDesc;
 		}
 

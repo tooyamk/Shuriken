@@ -64,8 +64,8 @@ namespace aurora {
 		virtual void AE_CALL setVisible(bool b) = 0;
 		virtual void AE_CALL shutdown() = 0;
 
-		virtual std::string_view getAppId() const = 0;
-		virtual const std::filesystem::path& getAppPath() const = 0;
+		virtual std::string_view AE_CALL getAppId() const = 0;
+		virtual const std::filesystem::path& AE_CALL getAppPath() const = 0;
 
 	protected:
 		IApplication() {};

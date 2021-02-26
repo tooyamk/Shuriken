@@ -7,7 +7,6 @@ namespace aurora {
 		CHECK_POP = 0b1,
 		MULTI_POP = 0b10
 	};
-	AE_DEFINE_ENUM_BIT_OPERATIION(StackPopperFlag);
 
 
 	template<typename T, StackPopperFlag flags = (StackPopperFlag)0>
@@ -63,7 +62,7 @@ namespace aurora {
 
 
 	template<typename T>
-	class StackPopper<T, StackPopperFlag::CHECK_POP | StackPopperFlag::MULTI_POP> {
+	class StackPopper<T, (StackPopperFlag)((std::underlying_type_t<StackPopperFlag>)StackPopperFlag::CHECK_POP | (std::underlying_type_t<StackPopperFlag>)StackPopperFlag::MULTI_POP)> {
 	public:
 		StackPopper(T& stack, size_t count, bool doPop) :
 			_doPop(doPop),

@@ -10,6 +10,10 @@
 #include "aurora/Debug.h"
 #include "aurora/DynamicLib.h"
 
+namespace spv {
+	enum ExecutionModel;
+}
+
 namespace aurora::modules::graphics::program_source_translator {
 	class ProgramSourceTranslator : public IProgramSourceTranslator {
 	public:
@@ -57,8 +61,12 @@ namespace aurora::modules::graphics::program_source_translator {
 		CComPtr<IDxcLibrary> _dxcLib;
 		CComPtr<IDxcCompiler> _dxcompiler;
 
-		void _spirvTo(const ProgramSource& source, const uint8_t* sourceData, uint32_t sourceDataSize,
+		void AE_CALL _spirvTo(const ProgramSource& source, const uint8_t* sourceData, uint32_t sourceDataSize,
 			ProgramLanguage targetLanguage, const std::string_view& targetVersion, ProgramSource& dst);
+		void AE_CALL _spirvToGLSL(const ProgramSource& source, const uint8_t* sourceData, uint32_t sourceDataSize,
+			ProgramLanguage targetLanguage, const std::string_view& targetVersion, ProgramSource& dst, spv::ExecutionModel model);
+		void AE_CALL _spirvToMSL(const ProgramSource& source, const uint8_t* sourceData, uint32_t sourceDataSize,
+			ProgramLanguage targetLanguage, const std::string_view& targetVersion, ProgramSource& dst, spv::ExecutionModel model);
 	};
 }
 

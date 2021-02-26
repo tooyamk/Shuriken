@@ -62,7 +62,6 @@ namespace aurora::modules::graphics {
 		MAP_READ_WRITE = MAP_READ | MAP_WRITE,
 		MAP_WRITE_UPDATE = MAP_WRITE | UPDATE
 	};
-	AE_DEFINE_ENUM_BIT_OPERATIION(Usage);
 
 
 	class AE_FW_DLL IBuffer : public IObject {
@@ -308,11 +307,11 @@ namespace aurora::modules::graphics {
 
 
 		inline bool AE_CALL operator==(const SamplerAddress& val) const {
-			return memEqual<sizeof(SamplerAddress)>(this, &val);
+			return !memcmp(this, &val, sizeof(SamplerAddress));
 		}
 
 		inline bool AE_CALL operator!=(const SamplerAddress& val) const {
-			return !memEqual<sizeof(SamplerAddress)>(this, &val);
+			return memcmp(this, &val, sizeof(SamplerAddress));
 		}
 
 		inline void AE_CALL operator=(const SamplerAddress& val) {
@@ -748,7 +747,6 @@ namespace aurora::modules::graphics {
 		DEPTH_STENCIL = DEPTH | STENCIL,
 		ALL = COLOR | DEPTH_STENCIL
 	};
-	AE_DEFINE_ENUM_BIT_OPERATIION(ClearFlag);
 
 
 	struct AE_FW_DLL DepthState {

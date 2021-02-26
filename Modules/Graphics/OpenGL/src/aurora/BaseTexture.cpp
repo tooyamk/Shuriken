@@ -28,6 +28,8 @@ namespace aurora::modules::graphics::gl {
 
 	bool BaseTexture::create(Graphics& graphics, const Vec3ui32& size, uint32_t arraySize, uint32_t mipLevels, SampleCount sampleCount,
 		TextureFormat format, Usage resUsage, const void*const* data) {
+		using namespace aurora::enum_operators;
+
 		releaseTex();
 
 		if (sampleCount > 1 && texType != TextureType::TEX2D) {
@@ -341,6 +343,8 @@ namespace aurora::modules::graphics::gl {
 	}
 
 	bool BaseTexture::update(uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const void* data) {
+		using namespace aurora::enum_operators;
+
 		if (handle && (resUsage & Usage::UPDATE) == Usage::UPDATE && (arraySize ? arraySlice < arraySize : arraySlice == 0) && mipSlice < mipLevels) {
 			return _update(arraySlice, mipSlice, range, data);
 		}

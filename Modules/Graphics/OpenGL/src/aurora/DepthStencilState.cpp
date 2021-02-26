@@ -5,7 +5,8 @@ namespace aurora::modules::graphics::gl {
 	DepthStencilState::DepthStencilState(Graphics& graphics, bool isInternal) : IDepthStencilState(graphics),
 		_isInternal(isInternal),
 		_dirty(DirtyFlag::EMPTY),
-		_stencilFeatureValue(0) {
+		_stencilFeatureValue(0),
+		_internalDepthState() {
 		if (_isInternal) Ref::unref<false>(*_graphics);
 	}
 

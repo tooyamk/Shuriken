@@ -18,6 +18,8 @@ namespace aurora::modules::graphics::gl {
 	}
 
 	bool PixelBuffer::create(size_t size, Usage bufferUsage, const void* data, size_t dataSize) {
+		using namespace aurora::enum_operators;
+
 		destroy();
 
 		bool read = (bufferUsage & Usage::MAP_READ) == Usage::MAP_READ;

@@ -19,6 +19,7 @@
 
 namespace aurora::modules::graphics::d3d11 {
 	Graphics::Graphics() :
+		_isDebug(false),
 		_curIsBackBuffer(true),
 		_backBufferSampleCount(1),
 		_refreshRate({0, 1}),
@@ -78,6 +79,8 @@ namespace aurora::modules::graphics::d3d11 {
 	}
 
 	bool Graphics::_createDevice(const CreateConfig& conf) {
+		_isDebug = conf.debug;
+
 		DXObjGuard objs;
 
 		IDXGIFactory2* dxgFctory = nullptr;
@@ -639,6 +642,8 @@ namespace aurora::modules::graphics::d3d11 {
 	}
 
 	void Graphics::clear(ClearFlag flags, const Vec4f32& color, float32_t depth, size_t stencil) {
+		using namespace aurora::enum_operators;
+
 		if (_context) {
 			if ((flags & ClearFlag::COLOR) != ClearFlag::NONE) {
 				if (_curIsBackBuffer) {
@@ -693,6 +698,8 @@ namespace aurora::modules::graphics::d3d11 {
 			_device->Release();
 			_device = nullptr;
 		}
+
+		_isDebug = false;
 
 		_refreshRate.Numerator = 0;
 		_refreshRate.Denominator = 1;

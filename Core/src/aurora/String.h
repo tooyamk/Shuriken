@@ -350,7 +350,7 @@ namespace aurora {
 
 		template<typename T, typename = integral_t<T>>
 		inline static std::string AE_CALL toString(T value, uint8_t base = 10) {
-			char buf[21];
+			char buf[sizeof(T) * 8 + 1];
 #ifdef __cpp_lib_to_chars
 			auto rst = std::to_chars(buf, buf + sizeof(buf), value, base);
 			return std::move(std::string(buf, rst.ec == std::errc() ? rst.ptr - buf : 0));

@@ -1,10 +1,88 @@
 ﻿#pragma once
 
 #include "../BaseTester.h"
+#include <concepts>
+#include <ranges>
+
+template<typename T>
+concept Integral = std::is_integral<T>::value;
+
+template<typename T>
+concept StringData = is_string_data_v<T>;
+
+template<typename T>
+concept U8StringData = is_u8string_data_v<T>;
+
+template<Integral T>
+T Add(T a, T b) {
+	return b;
+}
+
+template<typename R>
+requires requires { typename string_data_t<std::remove_cvref_t<R>>; }
+//requires StringData<std::remove_cvref_t<R>>
+inline auto& AE_CALL operator+=(std::u8string& left, R&& right) {
+	if constexpr (std::is_same_v<std::remove_cvref_t<R>, std::string>) {
+		left += (const std::u8string&)right;
+	} else if constexpr (std::is_same_v<std::remove_cvref_t<R>, std::string_view>) {
+		left += (const std::u8string_view&)right;
+	} else if constexpr (std::is_convertible_v<std::remove_cvref_t<R>, char const*>) {
+		left += (const char8_t*)right;
+	}
+
+	return left;
+}
+
+namespace test {
+	template<typename T, typename = unsigned_integral_t<T>>
+	inline constexpr T AE_CALL rotl(T x, size_t s) {
+		if constexpr (std::is_same_v<T, uint8_t>) {
+			if (!std::is_constant_evaluated() && environment::current_compiler == environment::compiler::msvc) {
+				return _rotl8(x, s);
+			} else {
+				s &= (size_t)0x7;
+				return x << s | x >> (8 - s);
+			}
+		} else if constexpr (std::is_same_v<T, uint16_t>) {
+			if (!std::is_constant_evaluated() && environment::current_compiler == environment::compiler::msvc) {
+				return _rotl16(x, s);
+			} else {
+				s &= (size_t)0xF;
+				return x << s | x >> (16 - s);
+			}
+		} else if constexpr (std::is_same_v<T, uint32_t>) {
+			if (!std::is_constant_evaluated() && environment::current_compiler == environment::compiler::msvc) {
+				return _rotl(x, s);
+			} else {
+				s &= (size_t)0x1F;
+				return x << s | x >> (32 - s);
+			}
+		} else if constexpr (std::is_same_v<T, uint64_t>) {
+			if (!std::is_constant_evaluated() && environment::current_compiler == environment::compiler::msvc) {
+				return _rotl64(x, s);
+			} else {
+				s &= (size_t)0x3F;
+				return x << s | x >> (64 - s);
+			}
+		} else {
+			static_assert(sizeof(T) <= 8, "rotl not support type");
+		}
+	}
+
+	template<typename T, typename = unsigned_integral_t<T>>
+	inline T AE_CALL rotr(T x, int32_t s) {
+		int a = 1;
+	}
+}
+
+//[[deprecated("Will remove in next release")]] void test() {}
 
 class OffscreenTester : public BaseTester {
 public:
 	virtual int32_t AE_CALL run() override {
+		int n = 3;
+		auto zzz = test::rotl(0b1_ui8, 1);
+
 		auto monitors = Monitor::getMonitors();
 		auto vms = monitors[0].getVideoModes();
 
@@ -29,9 +107,8 @@ public:
 			args.insert("offscreen", true);
 			args.insert("driverType", "software");
 			args.insert("createProcessInfoHandler", (uintptr_t)&createProcessInfoHandler);
-#ifdef AE_DEBUG
-			args.insert("debug", true);
-#endif
+			args.insert("debug", environment::is_debug);
+
 			auto graphics = gml->create(&args);
 
 			if (graphics) {

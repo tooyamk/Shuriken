@@ -138,6 +138,12 @@ namespace aurora {
 				}
 			} else if constexpr (is_wstring_data_v<Type>) {
 				out.write(value.data(), value.size());
+#ifdef __cpp_lib_char8_t
+			} else if constexpr (std::is_convertible_v<Type, char8_t const*>) {
+				_print(out, std::u8string_view(value));
+			} else if constexpr (is_u8string_data_v<Type>) {
+				out.write(value);
+#endif
 			} else if constexpr (std::is_same_v<Type, bool>) {
 				out.write(value ? L"true" : L"false");
 			} else if constexpr (std::is_arithmetic_v<Type>) {
@@ -167,12 +173,6 @@ namespace aurora {
 				out.unsafeWrite(L' ');
 				out.write(typeid(T).name());
 				out.write(L']');
-#ifdef __cpp_lib_char8_t
-			} else if constexpr (std::is_convertible_v<Type, char8_t const*>) {
-				_print(out, std::u8string_view(value));
-			} else if constexpr (is_u8string_data_v<Type>) {
-				out.write(value);
-#endif
 			} else {
 				out.write(L'[');
 				out.write(typeid(T).name());

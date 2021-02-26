@@ -672,7 +672,7 @@ namespace aurora {
 		}
 
 		inline bool AE_CALL _isContentEqual(const void* s1, size_t size1, const void* s2, size_t size2) const {
-			return size1 == size2 ? memEqual(s1, s2, size1) : false;
+			return size1 == size2 ? !memcmp(s1, s2, size1) : false;
 		}
 
 		template<typename T = std::nullptr_t, typename = std::enable_if_t<std::is_null_pointer_v<T> || std::is_base_of_v<IPackFilter, T>>>
@@ -879,9 +879,6 @@ namespace aurora {
 
 		void AE_CALL _unpackBytes(ByteArray& ba, size_t size, Flag flag);
 	};
-
-	AE_DEFINE_ENUM_BIT_OPERATIION(SerializableObject::ForEachOperation);
-	AE_DEFINE_ENUM_BIT_OPERATIION(SerializableObject::Flag);
 
 	using SO = SerializableObject;
 }

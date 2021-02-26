@@ -60,6 +60,8 @@ namespace aurora {
 		}
 
 		modules::graphics::Usage AE_CALL map(modules::graphics::Usage expectMapUsage) {
+			using namespace aurora::enum_operators;
+
 			if (_cur && expectMapUsage != modules::graphics::Usage::NONE) {
 				if (auto buf = _cur->target.get(); _max > 1 && (expectMapUsage & modules::graphics::Usage::MAP_SWAP) == modules::graphics::Usage::MAP_SWAP) {
 					if (auto forceSwap = (expectMapUsage & modules::graphics::Usage::MAP_FORCE_SWAP) == modules::graphics::Usage::MAP_FORCE_SWAP; forceSwap || buf->isSyncing()) {
@@ -147,15 +149,15 @@ namespace aurora {
 			}
 		}
 
-		inline Node* getBegin() const {
+		inline Node* AE_CALL getBegin() const {
 			return _head;
 		}
 
-		inline Node* getCurrent() const {
+		inline Node* AE_CALL getCurrent() const {
 			return _cur;
 		}
 
-		inline uint8_t getCount() const {
+		inline uint8_t AE_CALL getCount() const {
 			return _count;
 		}
 

@@ -35,7 +35,6 @@ namespace aurora::modules::inputs {
 		MOUSE = 0b10,
 		GAMEPAD = 0b100
 	};
-	AE_DEFINE_ENUM_BIT_OPERATIION(DeviceType);
 
 
 	class AE_FW_DLL IInputDevice : public Ref {

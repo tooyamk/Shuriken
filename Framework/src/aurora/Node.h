@@ -21,12 +21,12 @@ namespace aurora {
 				_node(node) {
 			}
 
-			inline iterator& operator=(const iterator& itr) {
+			inline iterator& AE_CALL operator=(const iterator& itr) {
 				_node = itr._node;
 				return *this;
 			}
 
-			inline bool operator==(const iterator& itr) const {
+			inline bool AE_CALL operator==(const iterator& itr) const {
 				return _node == itr._node;
 			}
 

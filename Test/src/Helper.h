@@ -11,6 +11,10 @@ using namespace aurora::modules;
 using namespace aurora::modules::graphics;
 using namespace aurora::modules::inputs;
 
+using namespace std::literals;
+using namespace aurora::literals;
+using namespace aurora::enum_operators;
+
 template<typename... Args>
 inline void AE_CALL printaln(Args&&... args) {
 #if AE_OS == AE_OS_WIN
@@ -46,19 +50,19 @@ struct transparent_hash {
 #endif
 
 inline std::string AE_CALL getDLLName(const std::string& name) {
-#ifdef AE_DEBUG
+	if constexpr (environment::is_debug) {
 #if AE_OS == AE_OS_WIN
-	return name + "d.dll";
+		return name + "d.dll";
 #else
-	return "lib" + name + "d.so";
+		return "lib" + name + "d.so";
 #endif
-#else
+	} else {
 #if AE_OS == AE_OS_WIN
-	return name + ".dll";
+		return name + ".dll";
 #else
-	return "lib" + name + ".so";
+		return "lib" + name + ".so";
 #endif
-#endif
+	}
 }
 
 template<typename T>

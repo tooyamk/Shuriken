@@ -59,16 +59,16 @@ namespace aurora {
 			size.set(calcNextMipPixelSize(size[0]), calcNextMipPixelSize(size[1]), calcNextMipPixelSize(size[2]));
 		}
 
-		inline static uint32_t AE_CALL calcByteSize(const Vec2ui32& size, modules::graphics::TextureFormat format) {
-			return calcByteSize(size.getMultiplies(), format);
+		inline static uint32_t AE_CALL calcPixelsByteSize(const Vec2ui32& size, modules::graphics::TextureFormat format) {
+			return calcPixelsByteSize(size.getMultiplies(), format);
 		}
-		inline constexpr static uint32_t AE_CALL calcByteSize(const Vec2ui32& size, uint32_t perPixelByteSize) {
-			return calcByteSize(size.getMultiplies(), perPixelByteSize);
+		inline constexpr static uint32_t AE_CALL calcPixelsByteSize(const Vec2ui32& size, uint32_t perPixelByteSize) {
+			return calcPixelsByteSize(size.getMultiplies(), perPixelByteSize);
 		}
-		inline static uint32_t AE_CALL calcByteSize(uint32_t numPixels, modules::graphics::TextureFormat format) {
-			return calcByteSize(numPixels, calcPerPixelByteSize(format));
+		inline static uint32_t AE_CALL calcPixelsByteSize(uint32_t numPixels, modules::graphics::TextureFormat format) {
+			return calcPixelsByteSize(numPixels, calcPerPixelByteSize(format));
 		}
-		inline constexpr static uint32_t AE_CALL calcByteSize(uint32_t numPixels, uint32_t perPixelByteSize) {
+		inline constexpr static uint32_t AE_CALL calcPixelsByteSize(uint32_t numPixels, uint32_t perPixelByteSize) {
 			return numPixels * perPixelByteSize;
 		}
 

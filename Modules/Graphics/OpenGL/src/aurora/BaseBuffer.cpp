@@ -19,6 +19,8 @@ namespace aurora::modules::graphics::gl {
 	}
 
 	bool BaseBuffer::create(Graphics& graphics, size_t size, Usage resUsage, const void* data, GLenum internalUsage) {
+		using namespace aurora::enum_operators;
+
 		releaseBuffer();
 
 		this->resUsage = resUsage & graphics.getBufferCreateUsageMask();
@@ -56,6 +58,8 @@ namespace aurora::modules::graphics::gl {
 	}
 
 	Usage BaseBuffer::map(Usage expectMapUsage, GLenum access) {
+		using namespace aurora::enum_operators;
+
 		Usage ret = Usage::NONE;
 
 		if (handle) {
@@ -95,6 +99,8 @@ namespace aurora::modules::graphics::gl {
 	}
 
 	void BaseBuffer::unmap() {
+		using namespace aurora::enum_operators;
+
 		if (mapUsage != Usage::NONE) {
 			mapUsage = Usage::NONE;
 
@@ -110,6 +116,8 @@ namespace aurora::modules::graphics::gl {
 	}
 
 	size_t BaseBuffer::read(size_t offset, void* dst, size_t dstLen) {
+		using namespace aurora::enum_operators;
+
 		if ((mapUsage & Usage::MAP_READ)== Usage::MAP_READ) {
 			if (dst && dstLen && offset < size) {
 				dstLen = std::min<size_t>(dstLen, size - offset);
@@ -122,6 +130,8 @@ namespace aurora::modules::graphics::gl {
 	}
 
 	size_t BaseBuffer::write(size_t offset, const void* data, size_t length) {
+		using namespace aurora::enum_operators;
+
 		if ((mapUsage & Usage::MAP_WRITE) == Usage::MAP_WRITE) {
 			if (data && length && offset < size) {
 				dirty = true;
@@ -135,6 +145,8 @@ namespace aurora::modules::graphics::gl {
 	}
 
 	size_t BaseBuffer::update(size_t offset, const void* data, size_t length) {
+		using namespace aurora::enum_operators;
+
 		if ((resUsage & Usage::UPDATE) == Usage::UPDATE) {
 			if (data && length && offset < size) {
 				length = std::min<size_t>(length, size - offset);

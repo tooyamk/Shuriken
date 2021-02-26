@@ -161,6 +161,8 @@ namespace aurora {
 	}
 
 	SerializableObject::SerializableObject(const std::string_view& value, Flag flag) {
+		using namespace aurora::enum_operators;
+
 		if ((flag & Flag::COPY) == Flag::COPY) {
 			if (auto size = value.size(); size < VALUE_SIZE) {
 				_writeShortString(value.data(), size);
@@ -179,6 +181,8 @@ namespace aurora {
 	}
 
 	SerializableObject::SerializableObject(const uint8_t* value, size_t size, Flag flag) {
+		using namespace aurora::enum_operators;
+
 		if ((flag & Flag::COPY) == Flag::COPY) {
 			_getValue<Bytes*>() = new Bytes(value, size);
 			_type = Type::BYTES;
@@ -201,6 +205,8 @@ namespace aurora {
 	SerializableObject::SerializableObject(const SerializableObject& value, Flag flag) :
 		_type(value._type),
 		_flag(Flag::NONE) {
+		using namespace aurora::enum_operators;
+
 		switch (_type) {
 		case Type::STRING:
 			_getValue<Str*>() = (value._getValue<Str*>())->ref<Str>();
@@ -495,11 +501,11 @@ namespace aurora {
 			if (target._type == Type::BYTES) {
 				auto val1 = _getValue<Bytes*>();
 				auto val2 = target._getValue<Bytes*>();
-				return val1->getSize() == val2->getSize() && memEqual(val1->getValue(), val2->getValue(), val1->getSize());
+				return val1->getSize() == val2->getSize() && !memcmp(val1->getValue(), val2->getValue(), val1->getSize());
 			} else if (target._type == Type::EXT_BYTES) {
 				auto val1 = _getValue<Bytes*>();
 				auto& val2 = target._getValue<BytesView>();
-				return val1->getSize() == val2.size && memEqual(val1->getValue(), val2.data, val2.size);
+				return val1->getSize() == val2.size && !memcmp(val1->getValue(), val2.data, val2.size);
 			} else {
 				return false;
 			}
@@ -509,11 +515,11 @@ namespace aurora {
 			if (target._type == Type::BYTES) {
 				auto& val1 = _getValue<BytesView>();
 				auto val2 = target._getValue<Bytes*>();
-				return val1.size == val2->getSize() && memEqual(val1.data, val2->getValue(), val1.size);
+				return val1.size == val2->getSize() && !memcmp(val1.data, val2->getValue(), val1.size);
 			} else if (target._type == Type::EXT_BYTES) {
 				auto& val1 = _getValue<BytesView>();
 				auto& val2 = target._getValue<BytesView>();
-				return val1.size == val2.size && memEqual(val1.data, val2.data, val1.size);
+				return val1.size == val2.size && !memcmp(val1.data, val2.data, val1.size);
 			} else {
 				return false;
 			}
@@ -777,6 +783,8 @@ namespace aurora {
 	}
 
 	void SerializableObject::set(const std::string_view& value, Flag flag) {
+		using namespace aurora::enum_operators;
+
 		_flag = Flag::NONE;
 		switch (_type) {
 		case Type::STRING:
@@ -856,6 +864,8 @@ namespace aurora {
 	}
 
 	void SerializableObject::set(const uint8_t* value, size_t size, Flag flag) {
+		using namespace aurora::enum_operators;
+
 		_flag = Flag::NONE;
 		if ((flag & Flag::COPY) == Flag::COPY) {
 			setBytes<false>();
@@ -869,6 +879,8 @@ namespace aurora {
 	}
 
 	void SerializableObject::set(const SerializableObject& value, Flag flag) {
+		using namespace aurora::enum_operators;
+
 		_flag = Flag::NONE;
 		switch (value._type) {
 		case Type::STRING:
@@ -1263,6 +1275,8 @@ namespace aurora {
 	}
 
 	void SerializableObject::_unpackBytes(ByteArray& ba, size_t size, Flag flag) {
+		using namespace aurora::enum_operators;
+
 		_freeValue();
 		if ((flag & Flag::COPY) == Flag::COPY) {
 			_getValue<Bytes*>() = new Bytes(ba.getCurrentSource(), size);

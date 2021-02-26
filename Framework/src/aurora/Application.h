@@ -13,6 +13,9 @@ namespace aurora {
 	class AE_FW_DLL Application : public IApplication {
 	public:
 		Application(const std::string_view& appId);
+#ifdef __cpp_lib_char8_t
+		Application(const std::u8string_view& appId) : Application((const std::string_view&)appId) {}
+#endif
 		virtual ~Application();
 
 		virtual events::IEventDispatcher<ApplicationEvent>& AE_CALL getEventDispatcher() override;
@@ -41,8 +44,8 @@ namespace aurora {
 		virtual void AE_CALL setVisible(bool b) override;
 		virtual void AE_CALL shutdown() override;
 
-		virtual std::string_view getAppId() const override;
-		virtual const std::filesystem::path& getAppPath() const override;
+		virtual std::string_view AE_CALL getAppId() const override;
+		virtual const std::filesystem::path& AE_CALL getAppPath() const override;
 
 	protected:
 		bool _isFullscreen;

@@ -9,7 +9,9 @@ namespace aurora::modules::graphics::d3d11 {
 		internalFormat(DXGI_FORMAT_UNKNOWN),
 		sampleCount(0),
 		perPixelSize(0),
+		perRowPixelSize(0),
 		arraySize(0),
+		internalArraySize(0),
 		mipLevels(0) {
 	}
 
@@ -18,6 +20,8 @@ namespace aurora::modules::graphics::d3d11 {
 
 	bool BaseTextureResource::create(Graphics& graphics, TextureType texType, const Vec3ui32& size, uint32_t arraySize, uint32_t mipLevels, SampleCount sampleCount,
 		TextureFormat format, Usage resUsage, const void* const* data) {
+		using namespace aurora::enum_operators;
+
 		releaseTex(graphics);
 
 		if (sampleCount > 1 && texType != TextureType::TEX2D) {
@@ -160,15 +164,15 @@ namespace aurora::modules::graphics::d3d11 {
 		if ((this->resUsage & Usage::MAP_READ_WRITE) != Usage::NONE) {
 			mappedRes.resize(mipLevels * arraySize);
 			Vec3ui32 size3(size);
-			for (uint32_t i = 0; i < mipLevels; ++i) {
+			for (decltype(mipLevels) i = 0; i < mipLevels; ++i) {
 				auto& mapped = mappedRes[i];
 				mapped.size = size3.getMultiplies() * perPixelSize;
 				mapped.usage = Usage::NONE;
 
 				Image::calcNextMipPixelSize(size3);
 
-				for (uint32_t j = 1; j < arraySize; ++j) {
-					auto& mapped1 = mappedRes[i + j * arraySize];
+				for (decltype(arraySize) j = 1; j < arraySize; ++j) {
+					auto& mapped1 = mappedRes[calcSubresource(i, j, mipLevels)];
 					mapped1.size = mapped.size;
 					mapped1.usage = Usage::NONE;
 				}
@@ -208,7 +212,7 @@ namespace aurora::modules::graphics::d3d11 {
 	}
 
 	Usage BaseTextureResource::map(Graphics& graphics, uint32_t arraySlice, uint32_t mipSlice, Usage expectMapUsage) {
-		if (uint32_t subresource = calcSubresource(mipSlice, arraySlice, mipLevels); subresource < mappedRes.size()) {
+		if (auto subresource = calcSubresource(mipSlice, arraySlice, mipLevels); subresource < mappedRes.size()) {
 			auto& mapped = mappedRes[subresource];
 			return BaseResource::map(graphics, expectMapUsage, mapped.usage, subresource, mapped.res);
 		}
@@ -216,11 +220,13 @@ namespace aurora::modules::graphics::d3d11 {
 	}
 
 	void BaseTextureResource::unmap(Graphics& graphics, uint32_t arraySlice, uint32_t mipSlice) {
-		if (uint32_t subresource = calcSubresource(mipSlice, arraySlice, mipLevels); subresource < mappedRes.size()) BaseResource::unmap(graphics, mappedRes[subresource].usage, subresource);
+		if (auto subresource = calcSubresource(mipSlice, arraySlice, mipLevels); subresource < mappedRes.size()) BaseResource::unmap(graphics, mappedRes[subresource].usage, subresource);
 	}
 
 	uint32_t BaseTextureResource::read(uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, void* dst, uint32_t dstLen) {
-		if (uint32_t subresource = calcSubresource(mipSlice, arraySlice, mipLevels); subresource < mappedRes.size()) {
+		using namespace aurora::enum_operators;
+
+		if (auto subresource = calcSubresource(mipSlice, arraySlice, mipLevels); subresource < mappedRes.size()) {
 			if (auto& mapped = mappedRes[subresource]; (mapped.usage & Usage::MAP_READ) == Usage::MAP_READ) {
 				if (dst && dstLen && offset < mapped.size) {
 					auto length = std::min<uint32_t>(mapped.size - offset, dstLen);
@@ -260,7 +266,9 @@ namespace aurora::modules::graphics::d3d11 {
 	}
 
 	uint32_t BaseTextureResource::write(uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, const void* data, uint32_t length) {
-		if (uint32_t subresource = calcSubresource(mipSlice, arraySlice, mipLevels); subresource < mappedRes.size()) {
+		using namespace aurora::enum_operators;
+
+		if (auto subresource = calcSubresource(mipSlice, arraySlice, mipLevels); subresource < mappedRes.size()) {
 			if (auto& mapped = mappedRes[subresource]; (mapped.usage & Usage::MAP_WRITE) == Usage::MAP_WRITE) {
 				if (data && length && offset < mapped.size) {
 					length = std::min<uint32_t>(length, mapped.size - offset);
@@ -300,6 +308,8 @@ namespace aurora::modules::graphics::d3d11 {
 	}
 
 	bool BaseTextureResource::update(Graphics& graphics, uint32_t arraySlice, uint32_t mipSlice, const D3D11_BOX& range, const void* data) {
+		using namespace aurora::enum_operators;
+
 		if ((resUsage & Usage::UPDATE) == Usage::UPDATE) {
 			if (data && !arraySlice && mipSlice < mipLevels) {
 				auto rowByteSize = (range.right - range.left) * perPixelSize;

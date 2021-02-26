@@ -94,6 +94,8 @@ namespace aurora::modules::inputs::direct_input {
 	}
 
 	BOOL Input::_enumDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, LPVOID pContext) {
+		using namespace aurora::enum_operators;
+
 		uint32_t type = pdidInstance->dwDevType & 0xFF;
 		if (type == DI8DEVTYPE_MOUSE || type == DI8DEVTYPE_KEYBOARD || type == DI8DEVTYPE_GAMEPAD) {
 			auto im = (Input*)pContext;

@@ -107,11 +107,11 @@ namespace aurora::modules::inputs {
 		}
 
 		inline bool AE_CALL operator==(const GUID& val) const {
-			return memEqual<sizeof(GUID)>(this, &val);
+			return !memcmp(this, &val, sizeof(GUID));
 		}
 
 		inline bool AE_CALL operator!=(const GUID& val) const {
-			return !memEqual<sizeof(GUID)>(this, &val);
+			return memcmp(this, &val, sizeof(GUID));
 		}
 
 	private:

@@ -29,9 +29,8 @@ public:
 				args.insert("app", (uintptr_t)&*app);
 				args.insert("sampleCount", 4);
 				args.insert("trans", (uintptr_t)&*gpst);
-#ifdef AE_DEBUG
-				args.insert("debug", true);
-#endif
+				args.insert("debug", environment::is_debug);
+
 				auto graphics = gml->create(&args);
 
 				if (graphics) {

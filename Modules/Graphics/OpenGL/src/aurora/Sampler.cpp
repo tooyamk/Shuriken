@@ -32,7 +32,7 @@ namespace aurora::modules::graphics::gl {
 			_filter = f;
 
 			_updateFilter();
-			_setDirty(!memEqual<sizeof(_desc.filter)>(&_oldDesc.filter, &_desc.filter), DirtyFlag::FILTER);
+			_setDirty(memcmp(&_oldDesc.filter, &_desc.filter, sizeof(_desc.filter)), DirtyFlag::FILTER);
 		}
 	}
 
@@ -50,7 +50,7 @@ namespace aurora::modules::graphics::gl {
 			_address = address;
 
 			_updateAddress();
-			_setDirty(!memEqual<sizeof(_desc.address)>(&_oldDesc.address, &_desc.address), DirtyFlag::ADDRESS);
+			_setDirty(memcmp(&_oldDesc.address, &_desc.address, sizeof(_desc.address)), DirtyFlag::ADDRESS);
 		}
 	}
 

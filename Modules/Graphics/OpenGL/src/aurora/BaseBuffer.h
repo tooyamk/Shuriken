@@ -20,6 +20,8 @@ namespace aurora::modules::graphics::gl {
 
 		template<bool Force>
 		void AE_CALL doSync() {
+			using namespace aurora::enum_operators;
+
 			if constexpr (Force) {
 				releaseSync();
 

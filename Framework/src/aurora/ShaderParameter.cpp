@@ -104,6 +104,133 @@ namespace aurora {
 		_perElementSize = 0;
 	}
 
+	void ShaderParameter::_set(const void* data, uint32_t size, uint16_t perElementSize, ShaderParameterType type, bool copy, ShaderParameterUpdateBehavior updateBehavior) {
+		if (type >= ShaderParameterType::SAMPLER) copy = false;
+		bool isRefObj = type >= ShaderParameterType::SAMPLER;
+
+		switch (_storageType) {
+		case StorageType::DEFAULT:
+		{
+			if (copy) {
+				if (size <= DEFAULT_DATA_SIZE) {
+					if (updateBehavior == ShaderParameterUpdateBehavior::CHECK) {
+						if (memcmp(_data.data, data, size)) {
+							memcpy(_data.data, data, size);
+							setUpdated();
+						}
+					} else {
+						memcpy(_data.data, data, size);
+						if (updateBehavior == ShaderParameterUpdateBehavior::FORCE) setUpdated();
+					}
+				} else {
+					_storageType = StorageType::INTERNAL;
+					_data.internalData = new uint8_t[size];
+					_data.internalSize = size;
+					memcpy(_data.internalData, data, size);
+					if (updateBehavior != ShaderParameterUpdateBehavior::NOT) setUpdated();
+				}
+			} else {
+				_storageType = StorageType::EXTERNAL;
+				_data.externalData = data;
+				if (isRefObj) {
+					_data.externalRef = true;
+					if (data) ((Ref*)data)->ref();
+				} else {
+					_data.externalRef = false;
+				}
+
+				if (updateBehavior != ShaderParameterUpdateBehavior::NOT) setUpdated();
+			}
+
+			break;
+		}
+		case StorageType::INTERNAL:
+		{
+			if (copy) {
+				if (size <= DEFAULT_DATA_SIZE) {
+					delete[] _data.internalData;
+					_storageType = StorageType::DEFAULT;
+					memcpy(_data.data, data, size);
+					if (updateBehavior != ShaderParameterUpdateBehavior::NOT) setUpdated();
+				} else {
+					if (_data.internalSize < size) {
+						delete[] _data.internalData;
+						_data.internalData = new uint8_t[size];
+						_data.internalSize = size;
+						memcpy(_data.internalData, data, size);
+						if (updateBehavior != ShaderParameterUpdateBehavior::NOT) setUpdated();
+					} else {
+						if (updateBehavior == ShaderParameterUpdateBehavior::CHECK) {
+							if (memcmp(_data.internalData, data, size)) {
+								memcpy(_data.internalData, data, size);
+								setUpdated();
+							}
+						} else {
+							memcpy(_data.internalData, data, size);
+							if (updateBehavior == ShaderParameterUpdateBehavior::FORCE) setUpdated();
+						}
+					}
+				}
+			} else {
+				delete[] _data.internalData;
+				_storageType = StorageType::EXTERNAL;
+				_data.externalData = data;
+				if (isRefObj) {
+					_data.externalRef = true;
+					if (data) ((Ref*)data)->ref();
+				} else {
+					_data.externalRef = false;
+				}
+
+				if (updateBehavior != ShaderParameterUpdateBehavior::NOT) setUpdated();
+			}
+
+			break;
+		}
+		case StorageType::EXTERNAL:
+		{
+			if (copy) {
+				if (_data.externalRef && _data.externalData) Ref::unref(*(Ref*)data);
+
+				if (size <= DEFAULT_DATA_SIZE) {
+					_storageType = StorageType::DEFAULT;
+					memcpy(&_data, data, size);
+				} else {
+					_storageType = StorageType::INTERNAL;
+					_data.internalData = new uint8_t[size];
+					_data.internalSize = size;
+					memcpy(&_data.internalData, data, size);
+				}
+				if (updateBehavior != ShaderParameterUpdateBehavior::NOT) setUpdated();
+			} else {
+				if (_data.externalData == data) {
+					if (updateBehavior != ShaderParameterUpdateBehavior::NOT) {
+						if (_size == size) {
+							if (memcmp(_data.externalData, data, size)) setUpdated();
+						} else {
+							setUpdated();
+						}
+					}
+				} else {
+					if (isRefObj && data) ((Ref*)data)->ref();
+					if (_data.externalRef && _data.externalData) Ref::unref(*(Ref*)_data.externalData);
+					_data.externalData = data;
+					_data.externalRef = isRefObj;
+					if (updateBehavior != ShaderParameterUpdateBehavior::NOT) setUpdated();
+				}
+			}
+
+			break;
+		}
+		default:
+			break;
+		}
+
+		_type = type;
+		_size = size;
+		_perElementSize = perElementSize;
+	}
+
 
 	RefPtr<ShaderParameter> ShaderParameterCollection::get(const query_string& name) const {
 		auto itr = _parameters.find(name);

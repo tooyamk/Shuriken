@@ -310,11 +310,11 @@ namespace aurora::modules::graphics::d3d11 {
 	ID3DBlob* Program::_compileShader(const ProgramSource& source, ProgramStage stage, const std::string_view& target, const D3D_SHADER_MACRO* defines, const IncludeHandler& handler) {
 		DWORD shaderFlags = D3DCOMPILE_ENABLE_STRICTNESS;
 
-#ifdef AE_DEBUG
-		shaderFlags |= D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
-#else
-		shaderFlags |= D3DCOMPILE_OPTIMIZATION_LEVEL3;
-#endif
+		if (_graphics.get<Graphics>()->isDebug()) {
+			shaderFlags |= D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
+		} else {
+			shaderFlags |= D3DCOMPILE_OPTIMIZATION_LEVEL3;
+		}
 
 		ID3DBlob* buffer = nullptr, *errorBuffer = nullptr;
 		MyIncludeHandler include(*this, stage, handler);
@@ -343,7 +343,7 @@ namespace aurora::modules::graphics::d3d11 {
 		}
 
 		auto& il = _inLayouts.emplace_back(_numInElements);
-		for (uint32_t i = 0; i < _numInElements; ++i) il.formats[i] = _inElements[i].Format;
+		for (decltype(_numInElements) i = 0; i < _numInElements; ++i) il.formats[i] = _inElements[i].Format;
 		auto hr = _graphics.get<Graphics>()->getDevice()->CreateInputLayout(_inElements, _numInElements, _vertBlob->GetBufferPointer(), _vertBlob->GetBufferSize(), &il.layout);
 		return il.layout;
 	}
@@ -353,11 +353,11 @@ namespace aurora::modules::graphics::d3d11 {
 			uint32_t offset = 0;
 			_inElements = new D3D11_INPUT_ELEMENT_DESC[desc.InputParameters];
 			D3D11_SIGNATURE_PARAMETER_DESC pDesc;
-			for (uint32_t i = 0; i < _numInElements; ++i) {
+			for (decltype(_numInElements) i = 0; i < _numInElements; ++i) {
 				ref.GetInputParameterDesc(i, &pDesc);
 
 				auto& ieDesc = _inElements[i];
-				uint32_t len = strlen(pDesc.SemanticName);
+				auto len = strlen(pDesc.SemanticName);
 				auto name = new char[len + 1];
 				ieDesc.SemanticName = name;
 				name[len] = 0;

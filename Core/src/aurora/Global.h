@@ -215,36 +215,6 @@ __CLASS__& operator=(const __CLASS__&) = delete; \
 __CLASS__& operator=(__CLASS__&&) = delete;
 
 
-#define AE_DEFINE_ENUM_BIT_OPERATIION(__ENUM__) \
-inline constexpr __ENUM__ AE_CALL operator&(__ENUM__ e1, __ENUM__ e2) { \
-	return (__ENUM__)((std::underlying_type_t<__ENUM__>)e1 & (std::underlying_type_t<__ENUM__>)e2); \
-} \
-inline constexpr __ENUM__ AE_CALL operator|(__ENUM__ e1, __ENUM__ e2) { \
-	return (__ENUM__)((std::underlying_type_t<__ENUM__>)e1 | (std::underlying_type_t<__ENUM__>)e2); \
-} \
-inline constexpr __ENUM__ AE_CALL operator^(__ENUM__ e1, __ENUM__ e2) { \
-	return (__ENUM__)((std::underlying_type_t<__ENUM__>)e1 ^ (std::underlying_type_t<__ENUM__>)e2); \
-} \
-inline constexpr __ENUM__ AE_CALL operator~(__ENUM__ e) { \
-	return (__ENUM__)(~(std::underlying_type_t<__ENUM__>)e); \
-} \
-inline constexpr __ENUM__& AE_CALL operator&=(__ENUM__& e1, __ENUM__ e2) { \
-	e1 = e1 & e2; \
-	return e1; \
-} \
-inline constexpr __ENUM__& AE_CALL operator|=(__ENUM__& e1, __ENUM__ e2) { \
-	e1 = e1 | e2; \
-	return e1; \
-} \
-inline constexpr __ENUM__& AE_CALL operator^=(__ENUM__& e1, __ENUM__ e2) { \
-	e1 = e1 ^ e2; \
-	return e1; \
-}
-
-
-using namespace std::literals;
-
-
 #ifndef __cpp_lib_char8_t
 using char8_t = char;
 #endif
@@ -275,14 +245,117 @@ namespace std {
 #endif
 
 #ifndef __cpp_lib_char8_t
-	using u8string = string;
+	using u8string = std::string;
+	using u8string_view = std::string_view;
+#endif
+
+#ifndef __cpp_lib_is_scoped_enum
+	template<typename>
+	struct is_scoped_enum : std::false_type {};
+
+	template<typename T>
+	requires std::is_enum_v<T>
+	struct is_scoped_enum<T> : std::bool_constant<!std::is_convertible_v<T, std::underlying_type_t<T>>> {};
+
+	template<typename T>
+	inline constexpr bool is_scoped_enum_v = is_scoped_enum<T>::value;
 #endif
 }
 
 
 namespace aurora {
+	namespace environment {
+#ifdef AE_DEBUG
+		inline constexpr bool is_debug = true;
+#else
+		inline constexpr bool is_debug = false;
+#endif
+
+		enum class compiler : uint8_t {
+			unknown,
+			msvc,
+			gcc,
+			clang
+		};
+
+
+#if AE_COMPILER == AE_COMPILER_MSVC
+		inline constexpr compiler current_compiler = compiler::msvc;
+#elif AE_COMPILER == AE_COMPILER_GCC
+		inline constexpr compiler current_compiler = compiler::gcc;
+#elif AE_COMPILER == AE_COMPILER_CLANG
+		inline constexpr compiler current_compiler = compiler::clang;
+#else
+		inline constexpr compiler current_compiler = compiler::unknown;
+#endif
+	}
+
+
 	using float32_t = float;
 	using float64_t = double;
+
+
+	namespace literals {
+		inline constexpr int8_t operator"" _i8(uint64_t n) noexcept {
+			return (int8_t)n;
+		}
+		inline constexpr uint8_t operator"" _ui8(uint64_t n) noexcept {
+			return (uint8_t)n;
+		}
+		inline constexpr int16_t operator"" _i16(uint64_t n) noexcept {
+			return (int16_t)n;
+		}
+		inline constexpr uint16_t operator"" _ui16(uint64_t n) noexcept {
+			return (uint16_t)n;
+		}
+		inline constexpr int32_t operator"" _i32(uint64_t n) noexcept {
+			return (int32_t)n;
+		}
+		inline constexpr uint32_t operator"" _ui32(uint64_t n) noexcept {
+			return (uint32_t)n;
+		}
+		inline constexpr int64_t operator"" _i64(uint64_t n) noexcept {
+			return (int64_t)n;
+		}
+		inline constexpr uint64_t operator"" _ui64(uint64_t n) noexcept {
+			return (uint64_t)n;
+		}
+	}
+
+
+	namespace enum_operators {
+		template<typename T, typename = std::enable_if_t<std::is_scoped_enum_v<T>>>
+		inline constexpr T AE_CALL operator&(T e1, T e2) noexcept {
+			return (T)((std::underlying_type_t<T>)e1 & (std::underlying_type_t<T>)e2);
+		}
+		template<typename T, typename = std::enable_if_t<std::is_scoped_enum_v<T>>>
+		inline constexpr T AE_CALL operator|(T e1, T e2) noexcept {
+			return (T)((std::underlying_type_t<T>)e1 | (std::underlying_type_t<T>)e2);
+		}
+		template<typename T, typename = std::enable_if_t<std::is_scoped_enum_v<T>>>
+		inline constexpr T AE_CALL operator^(T e1, T e2) noexcept {
+			return (T)((std::underlying_type_t<T>)e1 ^ (std::underlying_type_t<T>)e2);
+		}
+		template<typename T, typename = std::enable_if_t<std::is_scoped_enum_v<T>>>
+		inline constexpr T AE_CALL operator~(T e) noexcept {
+			return (T)(~(std::underlying_type_t<T>)e);
+		}
+		template<typename T, typename = std::enable_if_t<std::is_scoped_enum_v<T>>>
+		inline constexpr T& AE_CALL operator&=(T& e1, T e2) noexcept {
+			(std::underlying_type_t<T>&)e1 &= (std::underlying_type_t<T>)e2;
+			return e1;
+		}
+		template<typename T, typename = std::enable_if_t<std::is_scoped_enum_v<T>>>
+		inline constexpr T& AE_CALL operator|=(T& e1, T e2) noexcept {
+			(std::underlying_type_t<T>&)e1 |= (std::underlying_type_t<T>)e2;
+			return e1;
+		}
+		template<typename T, typename = std::enable_if_t<std::is_scoped_enum_v<T>>>
+		inline constexpr T& AE_CALL operator^=(T& e1, T e2) noexcept {
+			(std::underlying_type_t<T>&)e1 ^= (std::underlying_type_t<T>)e2;
+			return e1;
+		}
+	}
 
 
 	template<typename T> constexpr bool is_unsigned_integral_v = std::is_integral_v<T> && std::is_unsigned_v<T>;
@@ -306,8 +379,8 @@ namespace aurora {
 
 #ifdef __cpp_lib_char8_t
 	template<typename L, typename R, typename = std::enable_if_t<
-		((std::is_same_v<L, std::string>) && (is_u8string_data_v<std::remove_cvref_t<R>> || std::is_convertible_v<std::remove_cvref_t<R>, char8_t const*>)) ||
-		((std::is_same_v<L, std::u8string>) && (is_string_data_v<std::remove_cvref_t<R>> || std::is_convertible_v<std::remove_cvref_t<R>, char const*>))>>
+		((std::is_same_v<L, std::string>) && (is_u8string_data_v<std::remove_cvref_t<R>> || std::is_convertible_v<std::remove_cvref_t<R>, char8_t const*>) || std::is_same_v<std::remove_cvref_t<R>, char8_t>) ||
+		((std::is_same_v<L, std::u8string>) && (is_string_data_v<std::remove_cvref_t<R>> || std::is_convertible_v<std::remove_cvref_t<R>, char const*>) || std::is_same_v<std::remove_cvref_t<R>, char>)>>
 	inline auto& AE_CALL operator+=(L& left, R&& right) {
 		if constexpr (std::is_same_v<L, std::string>) {
 			if constexpr (std::is_same_v<std::remove_cvref_t<R>, std::u8string>) {
@@ -316,6 +389,8 @@ namespace aurora {
 				left += (const std::string_view&)right;
 			} else if constexpr (std::is_convertible_v<std::remove_cvref_t<R>, char8_t const*>) {
 				left += (const char*)right;
+			} else if constexpr (std::is_same_v<std::remove_cvref_t<R>, char8_t>) {
+				left += (char)right;
 			}
 		} else {
 			if constexpr (std::is_same_v<std::remove_cvref_t<R>, std::string>) {
@@ -324,6 +399,8 @@ namespace aurora {
 				left += (const std::u8string_view&)right;
 			} else if constexpr (std::is_convertible_v<std::remove_cvref_t<R>, char const*>) {
 				left += (const char8_t*)right;
+			} else if constexpr (std::is_same_v<std::remove_cvref_t<R>, char>) {
+				left += (char8_t)right;
 			}
 		}
 
@@ -332,10 +409,10 @@ namespace aurora {
 
 	template<typename L, typename R, typename = std::enable_if_t<
 		((is_u8string_data_v<std::remove_cvref_t<L>> && is_string_data_v<std::remove_cvref_t<R>>) || (is_string_data_v<std::remove_cvref_t<L>> && is_u8string_data_v<std::remove_cvref_t<R>>)) ||
-		(is_u8string_data_v<std::remove_cvref_t<L>> && std::is_convertible_v<std::remove_cvref_t<R>, char const*>) ||
-		(std::is_convertible_v<std::remove_cvref_t<L>, char const*> && is_u8string_data_v<std::remove_cvref_t<R>>) ||
-		(std::is_convertible_v<std::remove_cvref_t<L>, char8_t const*> && is_string_data_v<std::remove_cvref_t<R>>) ||
-		(is_string_data_v<std::remove_cvref_t<L>> && std::is_convertible_v<std::remove_cvref_t<R>, char8_t const*>)>>
+		((is_u8string_data_v<std::remove_cvref_t<L>> && std::is_same_v<std::remove_cvref_t<R>, char>) || (std::is_same_v<std::remove_cvref_t<L>, char> && is_u8string_data_v<std::remove_cvref_t<R>>)) ||
+		((is_string_data_v<std::remove_cvref_t<L>> && std::is_same_v<std::remove_cvref_t<R>, char8_t>) || (std::is_same_v<std::remove_cvref_t<L>, char8_t> && is_string_data_v<std::remove_cvref_t<R>>)) ||
+		((is_u8string_data_v<std::remove_cvref_t<L>> && std::is_convertible_v<std::remove_cvref_t<R>, char const*>) || (std::is_convertible_v<std::remove_cvref_t<L>, char const*> && is_u8string_data_v<std::remove_cvref_t<R>>)) ||
+		((is_string_data_v<std::remove_cvref_t<L>> && std::is_convertible_v<std::remove_cvref_t<R>, char8_t const*>) || (std::is_convertible_v<std::remove_cvref_t<L>, char8_t const*> && is_string_data_v<std::remove_cvref_t<R>>))>>
 	inline std::u8string AE_CALL operator+(L&& left, R&& right) {
 		if constexpr ((is_u8string_data_v<std::remove_cvref_t<L>> && is_string_data_v<std::remove_cvref_t<R>>) || (is_string_data_v<std::remove_cvref_t<L>> && is_u8string_data_v<std::remove_cvref_t<R>>)) {
 			std::u8string s;
@@ -355,6 +432,14 @@ namespace aurora {
 				s += right;
 			}
 			return std::move(s);
+		} else if constexpr (is_u8string_data_v<std::remove_cvref_t<L>> && std::is_same_v<std::remove_cvref_t<R>, char>) {
+			return std::move(left + std::string_view(&right, 1));
+		} else if constexpr (std::is_same_v<std::remove_cvref_t<L>, char> && is_u8string_data_v<std::remove_cvref_t<R>>) {
+			return std::move(std::string_view(&left, 1) + right);
+		} else if constexpr (is_string_data_v<std::remove_cvref_t<L>> && std::is_same_v<std::remove_cvref_t<R>, char8_t>) {
+			return std::move(left + std::u8string_view(&right, 1));
+		} else if constexpr (std::is_same_v<std::remove_cvref_t<L>, char8_t> && is_string_data_v<std::remove_cvref_t<R>>) {
+			return std::move(std::u8string_view(&left, 1) + right);
 		} else if constexpr (is_u8string_data_v<std::remove_cvref_t<L>> && std::is_convertible_v<std::remove_cvref_t<R>, char const*>) {
 			return std::move(left + std::string_view(std::forward<R>(right)));
 		} else if constexpr (std::is_convertible_v<std::remove_cvref_t<L>, char const*> && is_u8string_data_v<std::remove_cvref_t<R>>) {
@@ -409,12 +494,12 @@ namespace aurora {
 			_target(target) {
 		}
 
-		inline operator bool() const {
+		inline AE_CALL operator bool() const {
 			return _fn && _target;
 		}
 
 		template<typename... Args>
-		inline decltype(auto) operator()(Args&&... args) const {
+		inline decltype(auto) AE_CALL operator()(Args&&... args) const {
 			return (_target->*_fn)(std::forward<Args>(args)...);
 		}
 
@@ -430,12 +515,12 @@ namespace aurora {
 			_fn(std::forward<F>(fn)) {
 		}
 
-		inline operator bool() const {
+		inline AE_CALL operator bool() const {
 			return _fn;
 		}
 
 		template<typename... Args>
-		inline decltype(auto) operator()(Args&&... args) const {
+		inline decltype(auto) AE_CALL operator()(Args&&... args) const {
 			return _fn(std::forward<Args>(args)...);
 		}
 
@@ -570,84 +655,15 @@ namespace aurora {
 	}
 
 
-	template<size_t N>
-	inline bool AE_CALL memEqual(const void* val1, const void* val2) {
-		constexpr size_t n64 = N / sizeof(uint64_t);
-
-		if constexpr (n64 > 0) {
-			for (size_t i = 0; i < n64; ++i) {
-				if (((uint64_t*)val1)[i] != ((uint64_t*)val2)[i]) return false;
-			}
-		}
-
-		constexpr size_t offset32 = n64 * sizeof(uint64_t);
-		constexpr size_t n32 = n64 ? N % sizeof(uint64_t) : N;
-
-		if constexpr (n32 >= sizeof(uint32_t)) {
-			if (*((uint32_t*)(((uint8_t*)val1) + offset32)) != *((uint32_t*)(((uint8_t*)val2) + offset32))) return false;
-		}
-
-		constexpr size_t offset16 = n32 >= sizeof(uint32_t) ? offset32 + sizeof(uint32_t) : offset32;
-		constexpr size_t n16 = n32 >= sizeof(uint32_t) ? n32 - sizeof(uint32_t) : n32;
-
-		if constexpr (n16 >= sizeof(uint16_t)) {
-			if (*((uint16_t*)(((uint8_t*)val1) + offset16)) != *((uint16_t*)(((uint8_t*)val2) + offset16))) return false;
-		}
-
-		constexpr size_t offset8 = n16 >= sizeof(uint16_t) ? offset16 + sizeof(uint16_t) : offset16;
-		constexpr size_t n8 = n16 >= sizeof(uint16_t) ? n16 - sizeof(uint16_t) : n16;
-
-		if constexpr (n8 > 0) {
-			if (*((uint8_t*)(((uint8_t*)val1) + offset8)) != *((uint8_t*)(((uint8_t*)val2) + offset8))) return false;
-		}
-
-		return true;
-	}
-
-
-	template<size_t Bytes>
-	inline bool AE_CALL _memEqual(const void* val1, const void* val2, size_t length) {
-		using T = uint_t<Bytes * 8>;
-		if (length >= Bytes) {
-			if (*(T*)val1 != *(T*)val2) return false;
-
-			length -= Bytes;
-			return length ? _memEqual<Bytes / 2>(((T*)val1) + 1, ((T*)val2) + 1, length) : true;
-		} else {
-			return _memEqual<Bytes / 2>(val1, val2, length);
-		}
-	}
-
-	template<>
-	inline bool AE_CALL _memEqual<1>(const void* val1, const void* val2, size_t length) {
-		if (*(uint8_t*)val1 != *(uint8_t*)val2) return false;
-		return true;
-	}
-
-	inline bool AE_CALL memEqual(const void* val1, const void* val2, size_t length) {
-		size_t n64 = length >> 3;
-		length &= 0b111;
-		if (n64) {
-			for (size_t i = 0; i < n64; ++i) {
-				if (((uint64_t*)val1)[i] != ((uint64_t*)val2)[i]) return false;
-			}
-
-			return length ? _memEqual<4>(((uint64_t*)val1) + n64, ((uint64_t*)val2) + n64, length) : true;
-		} else {
-			return length ? _memEqual<4>(val1, val2, length) : true;
-		}
-	}
-
-
 	template<size_t Offset = 1>
-	inline void* memFind(void* val1, size_t val1Length, const void* val2, size_t val2Length) {
+	inline void* AE_CALL memFind(void* val1, size_t val1Length, const void* val2, size_t val2Length) {
 		if (val2Length) {
 			auto inBuf = (uint8_t*)val1;
 
 			for (; val1Length >= Offset; val1Length -= Offset) {
 				if (val1Length < val2Length) return nullptr;
 
-				if (memEqual(inBuf, val2, val2Length)) return inBuf;
+				if (!memcmp(inBuf, val2, val2Length)) return inBuf;
 
 				inBuf += Offset;
 			}
@@ -659,7 +675,7 @@ namespace aurora {
 	}
 
 	template<size_t Offset = 1>
-	inline const void* memFind(const void* val1, size_t val1Length, const void* val2, size_t val2Length) {
+	inline const void* AE_CALL memFind(const void* val1, size_t val1Length, const void* val2, size_t val2Length) {
 		return memFind<Offset>((void*)val1, val1Length, val2, val2Length);
 	}
 

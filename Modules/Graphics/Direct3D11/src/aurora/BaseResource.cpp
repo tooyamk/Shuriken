@@ -15,6 +15,8 @@ namespace aurora::modules::graphics::d3d11 {
 	}
 
 	Usage BaseResource::map(Graphics& graphics, Usage expectMapUsage, Usage& mapUsage, UINT subresource, D3D11_MAPPED_SUBRESOURCE& mappedRes) {
+		using namespace aurora::enum_operators;
+
 		Usage ret = Usage::NONE;
 
 		if (handle) {
@@ -61,6 +63,8 @@ namespace aurora::modules::graphics::d3d11 {
 	}
 
 	void BaseResource::unmap(Graphics& graphics, Usage& mapUsage, UINT subresource) {
+		using namespace aurora::enum_operators;
+
 		if ((mapUsage & Usage::MAP_READ_WRITE) != Usage::NONE) {
 			graphics.getContext()->Unmap(handle, subresource);
 		}

@@ -24,7 +24,7 @@ namespace aurora {
 	public:
 		virtual ~IShaderDefineGetter() {}
 
-		virtual const std::string* AE_CALL get(const std::string& name) const = 0;
+		virtual const std::string* AE_CALL get(const query_string& name) const = 0;
 	};
 
 
@@ -38,20 +38,29 @@ namespace aurora {
 			_values = other._values;
 		}
 
-		virtual const std::string* AE_CALL get(const std::string& name) const override;
+		virtual const std::string* AE_CALL get(const query_string& name) const override;
 
-		inline void AE_CALL set(const std::string& name, const std::string_view& value) {
-			_values.insert_or_assign(name, value);
+		inline void AE_CALL set(const query_string& name, const std::string_view& value) {
+			if (auto itr = _values.find(name); itr == _values.end()) {
+				_values.emplace(name, value);
+			} else {
+				itr->second = value;
+			}
 		}
-		inline void AE_CALL remove(const std::string& name) {
-			_values.erase(name);
+		inline bool AE_CALL remove(const query_string& name) {
+			if (auto itr = _values.find(name); itr != _values.end()) {
+				_values.erase(itr);
+				return true;
+			}
+
+			return false;
 		}
 		inline void AE_CALL clear() {
 			_values.clear();
 		}
 
 	protected:
-		std::unordered_map<std::string, std::string> _values;
+		string_unordered_map<std::string> _values;
 	};
 
 
@@ -59,7 +68,7 @@ namespace aurora {
 	public:
 		virtual ~ShaderDefineGetterStack() {}
 
-		virtual const std::string* AE_CALL get(const std::string& name) const override;
+		virtual const std::string* AE_CALL get(const query_string& name) const override;
 
 		inline bool AE_CALL push(IShaderDefineGetter* getter) {
 			if (getter) {

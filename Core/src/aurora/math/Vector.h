@@ -89,7 +89,7 @@ namespace aurora {
 		template<typename K, typename = ConvertibleType<K>>
 		inline bool AE_CALL operator==(const Vector<N, K>& value) const {
 			if constexpr (std::is_same_v<T, K>) {
-				return memEqual<sizeof(Data)>(data, value.data);
+				return !memcmp(data, value.data, sizeof(Data));
 			} else {
 				return Math::isEqual(data, value.data);
 			}
@@ -103,7 +103,7 @@ namespace aurora {
 		template<typename K, typename = ConvertibleType<K>>
 		inline bool AE_CALL operator!=(const Vector<N, K>& value) const {
 			if constexpr (std::is_same_v<T, K>) {
-				return !memEqual<sizeof(Data)>(data, value.data);
+				return memcmp(data, value.data, sizeof(Data));
 			} else {
 				return !Math::isEqual(data, value.data);
 			}

@@ -11,6 +11,8 @@ namespace aurora::modules::graphics::d3d11 {
 
 		template<bool Tex>
 		bool AE_CALL createInit(Graphics& graphics, Usage resUsage, uint32_t resSize, uint32_t dataSize, UINT mipLevels, UINT& cpuUsage, D3D11_USAGE& d3dUsage) {
+			using namespace aurora::enum_operators;
+
 			if constexpr (!Tex) {
 				if ((resUsage & Usage::RENDERABLE) == Usage::RENDERABLE) {
 					if ((resUsage & Usage::IGNORE_UNSUPPORTED) == Usage::NONE) {

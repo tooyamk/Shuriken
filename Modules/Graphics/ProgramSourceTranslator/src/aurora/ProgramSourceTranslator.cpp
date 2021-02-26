@@ -20,6 +20,8 @@ namespace aurora::modules::graphics::program_source_translator {
 		if (_handler) {
 			 ByteArray data = _handler(String::UnicodeToUtf8<std::wstring_view, std::string>(std::wstring_view(pFilename)));
 			 return _lib->CreateBlobWithEncodingOnHeapCopy(data.getSource(), data.getLength(), CP_UTF8, reinterpret_cast<IDxcBlobEncoding**>(ppIncludeSource));
+		} else {
+			*ppIncludeSource = nullptr;
 		}
 
 		return E_FAIL;
@@ -63,6 +65,8 @@ namespace aurora::modules::graphics::program_source_translator {
 	}
 
 	bool ProgramSourceTranslator::init(Ref* loader, const std::string_view& dxc) {
+		using namespace std::literals;
+
 		if (_dxcDll.load(dxc)) {
 			if (auto fn = (DxcCreateInstanceProc)_dxcDll.getSymbolAddress("DxcCreateInstance"sv); fn) {
 				if (auto hr = fn(CLSID_DxcLibrary, __uuidof(IDxcLibrary), (void**)&_dxcLib); hr < 0) return false;
@@ -164,6 +168,7 @@ namespace aurora::modules::graphics::program_source_translator {
 
 	void ProgramSourceTranslator::_spirvTo(const ProgramSource& source, const uint8_t* sourceData, uint32_t sourceDataSize, 
 		ProgramLanguage targetLanguage, const std::string_view& targetVersion, ProgramSource& dst) {
+		using namespace std::literals;
 
 		spv::ExecutionModel model;
 		switch (source.stage) {
@@ -203,131 +208,136 @@ namespace aurora::modules::graphics::program_source_translator {
 		}
 		case ProgramLanguage::GLSL:
 		case ProgramLanguage::GSSL:
-		{
-			spirv_cross::CompilerGLSL compiler((uint32_t*)sourceData, sourceDataSize / sizeof(uint32_t));
-
-			compiler.set_entry_point(ProgramSource::getEntryPoint(source), model);
-			//compiler.require_extension("GL_ARB_fragment_coord_conventions");
-			//compiler.set_execution_mode(spv::ExecutionModeOriginUpperLeft);
-			auto opts = compiler.get_common_options();
-			if (!targetVersion.empty()) opts.version = String::toNumber<decltype(opts.version)>(targetVersion);
-			opts.es = targetLanguage == ProgramLanguage::GSSL;
-			opts.force_temporary = false;
-			opts.separate_shader_objects = true;
-			opts.flatten_multidimensional_arrays = false;
-			opts.enable_420pack_extension = targetLanguage == ProgramLanguage::GLSL && (targetVersion.empty() || opts.version >= 420);
-			opts.vulkan_semantics = false;
-			opts.vertex.fixup_clipspace = false;
-			opts.vertex.flip_vert_y = false;
-			opts.vertex.support_nonzero_base_instance = true;
-			//opts.emit_uniform_buffer_as_plain_uniforms = true;
-			compiler.set_common_options(opts);
-
-			auto resources = compiler.get_shader_resources();
-
-			for (auto& val : resources.uniform_buffers) {
-				compiler.unset_decoration(val.id, spv::DecorationBinding);
-				if (val.name == "type__Globals") {
-					compiler.set_name(val.base_type_id, val.name + String::toString((std::underlying_type_t<ProgramStage>)source.stage));
-				}
-			}
-			/*
-			for (auto& val : resources.uniform_buffers) {
-				auto& type = compiler.get_type(val.base_type_id);
-				auto numMembers = type.member_types.size();
-				for (size_t i = 0; i < numMembers; ++i) {
-					//auto& name = compiler.get_member_name(type.self, i);
-					//auto& memberType = compiler.get_type(type.member_types[i]);
-					if (compiler.has_member_decoration(type.self, i, spv::DecorationRowMajor)) {
-						compiler.unset_member_decoration(type.self, i, spv::DecorationRowMajor);
-						compiler.set_member_decoration(type.self, i, spv::DecorationColMajor);
-					}
-				}
-			}
-			*/
-
-			for (auto& val : resources.stage_inputs) {
-				auto& name = compiler.get_name(val.id);
-				if (name.size() > 7 && std::string_view(name.data(), 7) == "in_var_"sv) {
-					compiler.set_name(val.id, std::string(name.data() + 7));
-				}
-			}
-			
-			if (auto sampler = compiler.build_dummy_sampler_for_combined_images(); (uint32_t)sampler != 0) {
-				compiler.set_decoration(sampler, spv::DecorationDescriptorSet, 0);
-				compiler.set_decoration(sampler, spv::DecorationBinding, 0);
-			}
-
-			//auto sr = compiler.get_shader_resources();
-			//for (auto& in : sr.stage_inputs) compiler.set_name(in.id, in.name.substr(7));
-			//for (auto& in : sr.stage_outputs) compiler.set_name(in.id, in.name.substr(8));
-
-			compiler.build_combined_image_samplers();
-			for (auto& remap : compiler.get_combined_image_samplers()) {
-				auto& texName = compiler.get_name(remap.image_id);
-				auto& samplerName = compiler.get_name(remap.sampler_id);
-
-				if (samplerName.rfind("DummySampler") == std::string::npos) {
-					compiler.set_name(remap.combined_id, COMBINED_TEXTURE_SAMPLER + String::toString(texName.size()) + "s" + texName + "s" + samplerName);
-				} else {
-					compiler.set_name(remap.combined_id, texName);
-				}
-			}
-
-			try {
-				auto str = compiler.compile();
-
-				dst.language = targetLanguage;
-				dst.stage = source.stage;
-				dst.version = String::toString(opts.version);
-				dst.data.setCapacity(str.size());
-				dst.data.write<ba_vt::BYTE>((uint8_t*)str.data(), str.size());
-			} catch (spirv_cross::CompilerError& error) {
-				printdln("spirv to glsl/gssl error : ", error.what());
-			}
-
+			_spirvToGLSL(source, sourceData, sourceDataSize, targetLanguage, targetVersion, dst, model);
 			break;
-		}
 		case ProgramLanguage::MSL:
-		{
-			spirv_cross::CompilerMSL compiler((uint32_t*)sourceData, sourceDataSize / sizeof(uint32_t));
-
-			compiler.set_entry_point(ProgramSource::getEntryPoint(source), model);
-
-			auto opts = compiler.get_common_options();
-			if (!targetVersion.empty()) opts.version = String::toNumber<decltype(opts.version)>(targetVersion);
-			opts.es = false;
-			opts.force_temporary = false;
-			opts.separate_shader_objects = true;
-			opts.flatten_multidimensional_arrays = false;
-			opts.enable_420pack_extension = false;
-			opts.vulkan_semantics = false;
-			opts.vertex.fixup_clipspace = false;
-			opts.vertex.flip_vert_y = false;
-			opts.vertex.support_nonzero_base_instance = true;
-			compiler.set_common_options(opts);
-
-			auto mslOpts = compiler.get_msl_options();
-			if (!targetVersion.empty()) mslOpts.msl_version = String::toNumber<decltype(mslOpts.msl_version)>(targetVersion);
-			mslOpts.swizzle_texture_samples = false;
-			compiler.set_msl_options(mslOpts);
-
-			try {
-				auto str = compiler.compile();
-
-				dst.language = targetLanguage;
-				dst.stage = source.stage;
-				dst.version = String::toString(mslOpts.msl_version);
-				dst.data.setCapacity(str.size());
-				dst.data.write<ba_vt::BYTE>((uint8_t*)str.data(), str.size());
-			} catch (spirv_cross::CompilerError& error) {
-				printdln(error.what());
-			}
-
+			_spirvToMSL(source, sourceData, sourceDataSize, targetLanguage, targetVersion, dst, model);
 			break;
-		}
 		default:
 			break;
+		}
+	}
+
+	void ProgramSourceTranslator::_spirvToGLSL(const ProgramSource& source, const uint8_t* sourceData, uint32_t sourceDataSize, 
+		ProgramLanguage targetLanguage, const std::string_view& targetVersion, ProgramSource& dst, spv::ExecutionModel model) {
+		using namespace std::literals;
+
+		spirv_cross::CompilerGLSL compiler((uint32_t*)sourceData, sourceDataSize / sizeof(uint32_t));
+
+		compiler.set_entry_point(ProgramSource::getEntryPoint(source), model);
+		//compiler.require_extension("GL_ARB_fragment_coord_conventions");
+		//compiler.set_execution_mode(spv::ExecutionModeOriginUpperLeft);
+		auto opts = compiler.get_common_options();
+		if (!targetVersion.empty()) opts.version = String::toNumber<decltype(opts.version)>(targetVersion);
+		opts.es = targetLanguage == ProgramLanguage::GSSL;
+		opts.force_temporary = false;
+		opts.separate_shader_objects = true;
+		opts.flatten_multidimensional_arrays = false;
+		opts.enable_420pack_extension = targetLanguage == ProgramLanguage::GLSL && (targetVersion.empty() || opts.version >= 420);
+		opts.vulkan_semantics = false;
+		opts.vertex.fixup_clipspace = false;
+		opts.vertex.flip_vert_y = false;
+		opts.vertex.support_nonzero_base_instance = true;
+		//opts.emit_uniform_buffer_as_plain_uniforms = true;
+		compiler.set_common_options(opts);
+
+		auto resources = compiler.get_shader_resources();
+
+		for (auto& val : resources.uniform_buffers) {
+			compiler.unset_decoration(val.id, spv::DecorationBinding);
+			if (val.name == "type__Globals") {
+				compiler.set_name(val.base_type_id, val.name + String::toString((std::underlying_type_t<ProgramStage>)source.stage));
+			}
+		}
+		/*
+		for (auto& val : resources.uniform_buffers) {
+			auto& type = compiler.get_type(val.base_type_id);
+			auto numMembers = type.member_types.size();
+			for (size_t i = 0; i < numMembers; ++i) {
+				//auto& name = compiler.get_member_name(type.self, i);
+				//auto& memberType = compiler.get_type(type.member_types[i]);
+				if (compiler.has_member_decoration(type.self, i, spv::DecorationRowMajor)) {
+					compiler.unset_member_decoration(type.self, i, spv::DecorationRowMajor);
+					compiler.set_member_decoration(type.self, i, spv::DecorationColMajor);
+				}
+			}
+		}
+		*/
+		for (auto& val : resources.stage_inputs) {
+			auto& name = compiler.get_name(val.id);
+			if (name.size() > 7 && std::string_view(name.data(), 7) == "in_var_"sv) {
+				compiler.set_name(val.id, std::string(name.data() + 7));
+			}
+		}
+
+		if (auto sampler = compiler.build_dummy_sampler_for_combined_images(); (uint32_t)sampler != 0) {
+			compiler.set_decoration(sampler, spv::DecorationDescriptorSet, 0);
+			compiler.set_decoration(sampler, spv::DecorationBinding, 0);
+		}
+
+		//auto sr = compiler.get_shader_resources();
+		//for (auto& in : sr.stage_inputs) compiler.set_name(in.id, in.name.substr(7));
+		//for (auto& in : sr.stage_outputs) compiler.set_name(in.id, in.name.substr(8));
+
+		compiler.build_combined_image_samplers();
+		for (auto& remap : compiler.get_combined_image_samplers()) {
+			auto& texName = compiler.get_name(remap.image_id);
+			auto& samplerName = compiler.get_name(remap.sampler_id);
+
+			if (samplerName.rfind("DummySampler") == std::string::npos) {
+				compiler.set_name(remap.combined_id, COMBINED_TEXTURE_SAMPLER + String::toString(texName.size()) + "s" + texName + "s" + samplerName);
+			} else {
+				compiler.set_name(remap.combined_id, texName);
+			}
+		}
+
+		try {
+			auto str = compiler.compile();
+
+			dst.language = targetLanguage;
+			dst.stage = source.stage;
+			dst.version = String::toString(opts.version);
+			dst.data.setCapacity(str.size());
+			dst.data.write<ba_vt::BYTE>((uint8_t*)str.data(), str.size());
+		} catch (spirv_cross::CompilerError& error) {
+			printdln("spirv to glsl/gssl error : ", error.what());
+		}
+	}
+
+	void ProgramSourceTranslator::_spirvToMSL(const ProgramSource& source, const uint8_t* sourceData, uint32_t sourceDataSize,
+		ProgramLanguage targetLanguage, const std::string_view& targetVersion, ProgramSource& dst, spv::ExecutionModel model) {
+		spirv_cross::CompilerMSL compiler((uint32_t*)sourceData, sourceDataSize / sizeof(uint32_t));
+
+		compiler.set_entry_point(ProgramSource::getEntryPoint(source), model);
+
+		auto opts = compiler.get_common_options();
+		if (!targetVersion.empty()) opts.version = String::toNumber<decltype(opts.version)>(targetVersion);
+		opts.es = false;
+		opts.force_temporary = false;
+		opts.separate_shader_objects = true;
+		opts.flatten_multidimensional_arrays = false;
+		opts.enable_420pack_extension = false;
+		opts.vulkan_semantics = false;
+		opts.vertex.fixup_clipspace = false;
+		opts.vertex.flip_vert_y = false;
+		opts.vertex.support_nonzero_base_instance = true;
+		compiler.set_common_options(opts);
+
+		auto mslOpts = compiler.get_msl_options();
+		if (!targetVersion.empty()) mslOpts.msl_version = String::toNumber<decltype(mslOpts.msl_version)>(targetVersion);
+		mslOpts.swizzle_texture_samples = false;
+		compiler.set_msl_options(mslOpts);
+
+		try {
+			auto str = compiler.compile();
+
+			dst.language = targetLanguage;
+			dst.stage = source.stage;
+			dst.version = String::toString(mslOpts.msl_version);
+			dst.data.setCapacity(str.size());
+			dst.data.write<ba_vt::BYTE>((uint8_t*)str.data(), str.size());
+		} catch (spirv_cross::CompilerError& error) {
+			printdln(error.what());
 		}
 	}
 }

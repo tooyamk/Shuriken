@@ -69,13 +69,13 @@ namespace aurora::modules::graphics::d3d11 {
 
 		struct TextureLayout {
 			std::string name;
-			uint32_t bindPoint;
+			uint32_t bindPoint = 0;
 		};
 
 
 		struct SamplerLayout {
 			std::string name;
-			uint32_t bindPoint;
+			uint32_t bindPoint = 0;
 		};
 
 

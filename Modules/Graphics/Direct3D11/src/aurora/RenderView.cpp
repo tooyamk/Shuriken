@@ -37,6 +37,8 @@ namespace aurora::modules::graphics::d3d11 {
 	}
 
 	bool RenderView::create(ITextureResource* res, uint32_t mipSlice, uint32_t arrayBegin, uint32_t arraySize) {
+		using namespace aurora::enum_operators;
+
 		RefPtr guard(res);
 
 		destroy();

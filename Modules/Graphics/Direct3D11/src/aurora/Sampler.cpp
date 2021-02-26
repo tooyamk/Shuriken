@@ -77,7 +77,7 @@ namespace aurora::modules::graphics::d3d11 {
 		if (!Math::isEqual(_desc.BorderColor, color.data)) {
 			color.copyTo(_desc.BorderColor);
 
-			_setDirty(!memEqual<sizeof(_desc.BorderColor)>(_oldDesc.BorderColor, _desc.BorderColor), DirtyFlag::BORDER_COLOR);
+			_setDirty(memcmp(_oldDesc.BorderColor, _desc.BorderColor, sizeof(_desc.BorderColor)), DirtyFlag::BORDER_COLOR);
 		}
 	}
 

@@ -79,51 +79,51 @@ namespace aurora {
 
 		template<typename T>
 		inline ShaderParameter& AE_CALL set(arithmetic_t<T> value, ShaderParameterUpdateBehavior updateBehavior = ShaderParameterUpdateBehavior::CHECK) {
-			_set<sizeof(value)>(&value, sizeof(value), sizeof(value), ShaderParameterType::DATA, true, updateBehavior);
+			_set(&value, sizeof(value), sizeof(value), ShaderParameterType::DATA, true, updateBehavior);
 			return *this;
 		}
 		template<typename T>
 		inline ShaderParameter& AE_CALL set(arithmetic_t<T>* value, uint32_t size, uint16_t perElementSize, bool copy, ShaderParameterUpdateBehavior updateBehavior = ShaderParameterUpdateBehavior::CHECK) {
-			_set<sizeof(value)>(value, size, perElementSize, ShaderParameterType::DATA, copy, updateBehavior);
+			_set(value, size, perElementSize, ShaderParameterType::DATA, copy, updateBehavior);
 			return *this;
 		}
 		template<typename T>
 		inline ShaderParameter& AE_CALL set(const Vec2<T>& value, ShaderParameterUpdateBehavior updateBehavior = ShaderParameterUpdateBehavior::CHECK) {
-			_set<sizeof(value)>(&value, sizeof(value), sizeof(value), ShaderParameterType::DATA, true, updateBehavior);
+			_set(&value, sizeof(value), sizeof(value), ShaderParameterType::DATA, true, updateBehavior);
 			return *this;
 		}
 		template<typename T>
 		inline ShaderParameter& AE_CALL set(const Vec3<T>& value, ShaderParameterUpdateBehavior updateBehavior = ShaderParameterUpdateBehavior::CHECK) {
-			_set<sizeof(value)>(&value, sizeof(value), sizeof(value), ShaderParameterType::DATA, true, updateBehavior);
+			_set(&value, sizeof(value), sizeof(value), ShaderParameterType::DATA, true, updateBehavior);
 			return *this;
 		}
 		template<typename T>
 		inline ShaderParameter& AE_CALL set(const Vec4<T>& value, ShaderParameterUpdateBehavior updateBehavior = ShaderParameterUpdateBehavior::CHECK) {
-			_set<sizeof(value)>(&value, sizeof(value), sizeof(value), ShaderParameterType::DATA, true, updateBehavior);
+			_set(&value, sizeof(value), sizeof(value), ShaderParameterType::DATA, true, updateBehavior);
 			return *this;
 		}
 		inline ShaderParameter& AE_CALL set(const Matrix34& value, ShaderParameterUpdateBehavior updateBehavior = ShaderParameterUpdateBehavior::CHECK) {
-			_set<sizeof(value)>(&value, sizeof(value), sizeof(value), ShaderParameterType::DATA, true, updateBehavior);
+			_set(&value, sizeof(value), sizeof(value), ShaderParameterType::DATA, true, updateBehavior);
 			return *this;
 		}
 		inline ShaderParameter& AE_CALL set(const Matrix44& value, ShaderParameterUpdateBehavior updateBehavior = ShaderParameterUpdateBehavior::CHECK) {
-			_set<sizeof(value)>(&value, sizeof(value), sizeof(value), ShaderParameterType::DATA, true, updateBehavior);
+			_set(&value, sizeof(value), sizeof(value), ShaderParameterType::DATA, true, updateBehavior);
 			return *this;
 		}
 		inline ShaderParameter& AE_CALL set(const modules::graphics::ISampler* value, ShaderParameterUpdateBehavior updateBehavior = ShaderParameterUpdateBehavior::CHECK) {
-			_set<sizeof(value)>(value, sizeof(value), sizeof(value), ShaderParameterType::SAMPLER, false, updateBehavior);
+			_set(value, sizeof(value), sizeof(value), ShaderParameterType::SAMPLER, false, updateBehavior);
 			return *this;
 		}
 		inline ShaderParameter& AE_CALL set(const modules::graphics::ITextureView* value, ShaderParameterUpdateBehavior updateBehavior = ShaderParameterUpdateBehavior::CHECK) {
-			_set<sizeof(value)>(value, sizeof(value), sizeof(value), ShaderParameterType::TEXTURE, false, updateBehavior);
+			_set(value, sizeof(value), sizeof(value), ShaderParameterType::TEXTURE, false, updateBehavior);
 			return *this;
 		}
 		inline ShaderParameter& AE_CALL set(const IShaderParameterGetter* value, ShaderParameterUpdateBehavior updateBehavior = ShaderParameterUpdateBehavior::CHECK) {
-			_set<sizeof(value)>(value, sizeof(value), sizeof(value), ShaderParameterType::GETTER, false, updateBehavior);
+			_set(value, sizeof(value), sizeof(value), ShaderParameterType::GETTER, false, updateBehavior);
 			return *this;
 		}
 		inline ShaderParameter& AE_CALL set(const void* data, uint32_t size, uint16_t perElementSize, ShaderParameterType type, bool copy, ShaderParameterUpdateBehavior updateBehavior) {
-			_set<0>(data, size, perElementSize, type, copy, updateBehavior);
+			_set(data, size, perElementSize, type, copy, updateBehavior);
 			return *this;
 		}
 
@@ -187,151 +187,7 @@ namespace aurora {
 
 		HandlerNode _handlers;
 
-		template<size_t Size>
-		void AE_CALL _set(const void* data, uint32_t size, uint16_t perElementSize, ShaderParameterType type, bool copy, ShaderParameterUpdateBehavior updateBehavior) {
-			if (type >= ShaderParameterType::SAMPLER) copy = false;
-			bool isRefObj = type >= ShaderParameterType::SAMPLER;
-
-			switch (_storageType) {
-			case StorageType::DEFAULT:
-			{
-				if (copy) {
-					if (size <= DEFAULT_DATA_SIZE) {
-						if (updateBehavior == ShaderParameterUpdateBehavior::CHECK) {
-							if constexpr (Size == 0) {
-								if (!memEqual(_data.data, data, size)) {
-									memcpy(_data.data, data, size);
-									setUpdated();
-								}
-							} else {
-								if (!memEqual<Size>(_data.data, data)) {
-									memcpy(_data.data, data, size);
-									setUpdated();
-								}
-							}
-						} else {
-							memcpy(_data.data, data, size);
-							if (updateBehavior == ShaderParameterUpdateBehavior::FORCE) setUpdated();
-						}
-					} else {
-						_storageType = StorageType::INTERNAL;
-						_data.internalData = new uint8_t[size];
-						_data.internalSize = size;
-						memcpy(_data.internalData, data, size);
-						if (updateBehavior != ShaderParameterUpdateBehavior::NOT) setUpdated();
-					}
-				} else {
-					_storageType = StorageType::EXTERNAL;
-					_data.externalData = data;
-					if (isRefObj) {
-						_data.externalRef = true;
-						if (data) ((Ref*)data)->ref();
-					} else {
-						_data.externalRef = false;
-					}
-					
-					if (updateBehavior != ShaderParameterUpdateBehavior::NOT) setUpdated();
-				}
-
-				break;
-			}
-			case StorageType::INTERNAL:
-			{
-				if (copy) {
-					if (size <= DEFAULT_DATA_SIZE) {
-						delete[] _data.internalData;
-						_storageType = StorageType::DEFAULT;
-						memcpy(_data.data, data, size);
-						if (updateBehavior != ShaderParameterUpdateBehavior::NOT) setUpdated();
-					} else {
-						if (_data.internalSize < size) {
-							delete[] _data.internalData;
-							_data.internalData = new uint8_t[size];
-							_data.internalSize = size;
-							memcpy(_data.internalData, data, size);
-							if (updateBehavior != ShaderParameterUpdateBehavior::NOT) setUpdated();
-						} else {
-							if (updateBehavior == ShaderParameterUpdateBehavior::CHECK) {
-								if constexpr (Size == 0) {
-									if (!memEqual(_data.internalData, data, size)) {
-										memcpy(_data.internalData, data, size);
-										setUpdated();
-									}
-								} else {
-									if (!memEqual<Size>(_data.internalData, data)) {
-										memcpy(_data.internalData, data, size);
-										setUpdated();
-									}
-								}
-							} else {
-								memcpy(_data.internalData, data, size);
-								if (updateBehavior == ShaderParameterUpdateBehavior::FORCE) setUpdated();
-							}
-						}
-					}
-				} else {
-					delete[] _data.internalData;
-					_storageType = StorageType::EXTERNAL;
-					_data.externalData = data;
-					if (isRefObj) {
-						_data.externalRef = true;
-						if (data) ((Ref*)data)->ref();
-					} else {
-						_data.externalRef = false;
-					}
-
-					if (updateBehavior != ShaderParameterUpdateBehavior::NOT) setUpdated();
-				}
-
-				break;
-			}
-			case StorageType::EXTERNAL:
-			{
-				if (copy) {
-					if (_data.externalRef && _data.externalData) Ref::unref(*(Ref*)data);
-
-					if (size <= DEFAULT_DATA_SIZE) {
-						_storageType = StorageType::DEFAULT;
-						memcpy(&_data, data, size);
-					} else {
-						_storageType = StorageType::INTERNAL;
-						_data.internalData = new uint8_t[size];
-						_data.internalSize = size;
-						memcpy(&_data.internalData, data, size);
-					}
-					if (updateBehavior != ShaderParameterUpdateBehavior::NOT) setUpdated();
-				} else {
-					if (_data.externalData == data) {
-						if (updateBehavior != ShaderParameterUpdateBehavior::NOT) {
-							if (_size == size) {
-								if constexpr (Size == 0) {
-									if (!memEqual(_data.externalData, data, size)) setUpdated();
-								} else {
-									if (!memEqual<Size>(_data.externalData, data)) setUpdated();
-								}
-							} else {
-								setUpdated();
-							}
-						}
-					} else {
-						if (isRefObj && data) ((Ref*)data)->ref();
-						if (_data.externalRef && _data.externalData) Ref::unref(*(Ref*)_data.externalData);
-						_data.externalData = data;
-						_data.externalRef = isRefObj;
-						if (updateBehavior != ShaderParameterUpdateBehavior::NOT) setUpdated();
-					}
-				}
-
-				break;
-			}
-			default:
-				break;
-			}
-
-			_type = type;
-			_size = size;
-			_perElementSize = perElementSize;
-		}
+		void AE_CALL _set(const void* data, uint32_t size, uint16_t perElementSize, ShaderParameterType type, bool copy, ShaderParameterUpdateBehavior updateBehavior);
 	};
 
 

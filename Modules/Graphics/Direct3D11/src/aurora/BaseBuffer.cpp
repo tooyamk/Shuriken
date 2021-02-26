@@ -53,6 +53,8 @@ namespace aurora::modules::graphics::d3d11 {
 	}
 
 	size_t BaseBuffer::read(size_t offset, void* dst, size_t dstLen) {
+		using namespace aurora::enum_operators;
+
 		if ((mapUsage & Usage::MAP_READ) == Usage::MAP_READ) {
 			if (!dstLen || offset >= size) return 0;
 			if (dst) {
@@ -65,6 +67,8 @@ namespace aurora::modules::graphics::d3d11 {
 	}
 
 	size_t BaseBuffer::write(Graphics& graphics, size_t offset, const void* data, size_t length) {
+		using namespace aurora::enum_operators;
+
 		if ((mapUsage & Usage::MAP_WRITE) == Usage::MAP_WRITE) {
 			if (data && length && offset < size) {
 				length = std::min<size_t>(length, size - offset);
@@ -77,6 +81,8 @@ namespace aurora::modules::graphics::d3d11 {
 	}
 
 	size_t BaseBuffer::update(Graphics& graphics, size_t offset, const void* data, size_t length) {
+		using namespace aurora::enum_operators;
+
 		if ((resUsage & Usage::UPDATE) == Usage::UPDATE) {
 			if (data && length && offset < size) {
 				length = std::min<size_t>(length, size - offset);

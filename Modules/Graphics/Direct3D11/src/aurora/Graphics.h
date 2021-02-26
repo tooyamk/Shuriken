@@ -76,6 +76,10 @@ namespace aurora::modules::graphics::d3d11 {
 			_eventDispatcher.dispatchEvent(this, GraphicsEvent::ERR, (std::string_view*)&msg);
 		}
 
+		inline bool AE_CALL isDebug() const {
+			return _isDebug;
+		}
+
 		inline ID3D11Device5* AE_CALL getDevice() const {
 			return _device;
 		}
@@ -260,6 +264,7 @@ namespace aurora::modules::graphics::d3d11 {
 #endif
 
 	private:
+		bool _isDebug;
 		bool _curIsBackBuffer;
 		SampleCount _backBufferSampleCount;
 		RefPtr<Ref> _loader;

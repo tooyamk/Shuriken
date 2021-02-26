@@ -44,6 +44,8 @@ namespace aurora::modules::graphics::gl {
 	}
 
 	bool Graphics::createDevice(const CreateConfig& conf) {
+		using namespace aurora::enum_operators;
+
 		if (!conf.app) return false;
 #if AE_OS == AE_OS_WIN
 		if (_dc || !conf.app->getNative(ApplicationNative::HWND)) return false;
@@ -738,6 +740,8 @@ namespace aurora::modules::graphics::gl {
 	}
 
 	void Graphics::clear(ClearFlag flags, const Vec4f32& color, float32_t depth, size_t stencil) {
+		using namespace aurora::enum_operators;
+
 		GLbitfield mask = 0;
 		if ((flags & ClearFlag::COLOR) != ClearFlag::NONE) {
 			mask |= GL_COLOR_BUFFER_BIT;
