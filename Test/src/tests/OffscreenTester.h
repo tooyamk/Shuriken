@@ -33,46 +33,14 @@ inline auto& AE_CALL operator+=(std::u8string& left, R&& right) {
 	return left;
 }
 
-namespace test {
-	template<typename T, typename = unsigned_integral_t<T>>
-	inline constexpr T AE_CALL rotl(T x, size_t s) {
-		if constexpr (std::is_same_v<T, uint8_t>) {
-			if (!std::is_constant_evaluated() && environment::current_compiler == environment::compiler::msvc) {
-				return _rotl8(x, s);
-			} else {
-				s &= (size_t)0x7;
-				return x << s | x >> (8 - s);
-			}
-		} else if constexpr (std::is_same_v<T, uint16_t>) {
-			if (!std::is_constant_evaluated() && environment::current_compiler == environment::compiler::msvc) {
-				return _rotl16(x, s);
-			} else {
-				s &= (size_t)0xF;
-				return x << s | x >> (16 - s);
-			}
-		} else if constexpr (std::is_same_v<T, uint32_t>) {
-			if (!std::is_constant_evaluated() && environment::current_compiler == environment::compiler::msvc) {
-				return _rotl(x, s);
-			} else {
-				s &= (size_t)0x1F;
-				return x << s | x >> (32 - s);
-			}
-		} else if constexpr (std::is_same_v<T, uint64_t>) {
-			if (!std::is_constant_evaluated() && environment::current_compiler == environment::compiler::msvc) {
-				return _rotl64(x, s);
-			} else {
-				s &= (size_t)0x3F;
-				return x << s | x >> (64 - s);
-			}
-		} else {
-			static_assert(sizeof(T) <= 8, "rotl not support type");
-		}
-	}
-
-	template<typename T, typename = unsigned_integral_t<T>>
-	inline T AE_CALL rotr(T x, int32_t s) {
-		int a = 1;
-	}
+template <typename T, typename = std::enable_if_t<std::is_integral_v<T> && std::is_unsigned_v<T>>>
+constexpr int32_t Popcount_fallback(T val) noexcept {
+	constexpr auto digits = std::numeric_limits<T>::digits;
+	val = (T)(val - ((val >> 1) & (T)(0x5555'5555'5555'5555ull)));
+	val = (T)((val & (T)(0x3333'3333'3333'3333ull)) + ((val >> 2) & (T)(0x3333'3333'3333'3333ull)));
+	val = (T)((val + (val >> 4)) & (T)(0x0F0F'0F0F'0F0F'0F0Full));
+	for (int32_t shiftDigits = 8; shiftDigits < digits; shiftDigits <<= 1) val += (T)(val >> shiftDigits);
+	return val & (T)(digits + digits - 1);
 }
 
 //[[deprecated("Will remove in next release")]] void test() {}
@@ -80,8 +48,15 @@ namespace test {
 class OffscreenTester : public BaseTester {
 public:
 	virtual int32_t AE_CALL run() override {
-		int n = 3;
-		auto zzz = test::rotl(0b1_ui8, 1);
+		const int n = 3;
+
+		constexpr auto nnnnnn = Popcount_fallback(0b1011_ui32);
+		auto bbbbbb = std::is_integral_v<const int&>;
+		auto zz1 = std::rotl(0b1_ui8, 15);
+		auto zz2 = std::rotr(0b1_ui8, -1);
+		auto bbb = std::popcount(0b1_ui8);
+		printdln(String::toString(zz1, 2));
+		printdln(String::toString(zz2, 2));
 
 		auto monitors = Monitor::getMonitors();
 		auto vms = monitors[0].getVideoModes();

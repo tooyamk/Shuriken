@@ -320,9 +320,6 @@ namespace aurora {
 			for (uint32_t i = 0; i < 3; ++i) out[i] = nrmA[i] * c + tmp[i] * s;
 		}
 
-		inline static bool AE_CALL isPot(uint32_t n) {
-			return n < 1 ? false : !(n & (n - 1));
-		}
 		inline static constexpr uint32_t AE_CALL potLog2(uint32_t pow) {
 			return ((pow >> 23) & 0xFF) - 127;
 		}

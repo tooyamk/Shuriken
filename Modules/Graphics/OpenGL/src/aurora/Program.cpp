@@ -266,7 +266,7 @@ namespace aurora::modules::graphics::gl {
 					}
 
 					foundVar->stride = strides[j];
-					if (Math::isPot(strides[j])) foundVar->stride |= 1ui32 << 31;
+					if (std::has_single_bit((std::make_unsigned<decltype(strides)::value_type>::type)strides[j])) foundVar->stride |= 1ui32 << 31;
 					foundVar->size = Graphics::getGLTypeSize(types[j]);
 					if (sizes[j] > 1) {
 						if (auto remainder = foundVar->size % strides[j]; remainder) {

@@ -221,6 +221,11 @@ using char8_t = char;
 
 
 namespace std {
+#ifndef __cpp_lib_char8_t
+	using u8string = std::string;
+	using u8string_view = std::string_view;
+#endif
+
 #ifndef __cpp_lib_endian
 	constexpr uint8_t endian_tester() {
 		union {
@@ -244,21 +249,35 @@ namespace std {
 	struct remove_cvref { using type = remove_cvref_t<T>; };
 #endif
 
-#ifndef __cpp_lib_char8_t
-	using u8string = std::string;
-	using u8string_view = std::string_view;
+#ifndef __cpp_lib_is_scoped_enum
+	template<typename T>
+	struct is_scoped_enum {
+		constexpr static bool value = std::is_enum_v<T> && !std::is_convertible_v<T, std::underlying_type_t<T>>;
+	};
+
+	template<typename T>
+	inline constexpr bool is_scoped_enum_v = std::is_scoped_enum<T>::value;
 #endif
 
-#ifndef __cpp_lib_is_scoped_enum
-	template<typename>
-	struct is_scoped_enum : std::false_type {};
+#ifndef __cpp_lib_bitops
+	template<typename T, typename = std::enable_if_t<std::is_integral_v<T> && std::is_unsigned_v<T>>>
+	[[nodiscard]] inline constexpr T rotl(T x, int32_t s) noexcept {
+		constexpr auto bits = sizeof(T) << 3;
+		s &= bits - 1;
+		return x << s | x >> (bits - s);
+	}
 
-	template<typename T>
-	requires std::is_enum_v<T>
-	struct is_scoped_enum<T> : std::bool_constant<!std::is_convertible_v<T, std::underlying_type_t<T>>> {};
+	template<typename T, typename = std::enable_if_t<std::is_integral_v<T> && std::is_unsigned_v<T>>>
+	[[nodiscard]] inline constexpr T rotr(T x, int32_t s) noexcept {
+		constexpr auto bits = sizeof(T) << 3;
+		s &= bits - 1;
+		return x >> s | x << (bits - s);
+	}
 
-	template<typename T>
-	inline constexpr bool is_scoped_enum_v = is_scoped_enum<T>::value;
+	template<typename T, typename = std::enable_if_t<std::is_integral_v<T> && std::is_unsigned_v<T>>>
+	constexpr bool has_single_bit(T val) noexcept {
+		return val != 0 && (val & (val - 1)) == 0;
+	}
 #endif
 }
 
@@ -287,6 +306,31 @@ namespace aurora {
 		inline constexpr compiler current_compiler = compiler::clang;
 #else
 		inline constexpr compiler current_compiler = compiler::unknown;
+#endif
+
+
+		enum class operating_system : uint8_t {
+			unknown,
+			windows,
+			mac,
+			linux,
+			ios,
+			android
+		};
+
+
+#if AE_OS == AE_OS_WIN
+		inline constexpr operating_system current_operating_system = operating_system::windows;
+#elif AE_OS == AE_OS_MAC
+		inline constexpr operating_system current_operating_system = operating_system::mac;
+#elif AE_OS == AE_OS_LINUX
+		inline constexpr operating_system current_operating_system = operating_system::linux;
+#elif AE_OS == AE_OS_IOS
+		inline constexpr operating_system current_operating_system = operating_system::ios;
+#elif AE_OS == AE_OS_ANDROID
+		inline constexpr operating_system current_operating_system = operating_system::android;
+#else
+		inline constexpr operating_system current_operating_system = operating_system::unknown;
 #endif
 	}
 
@@ -616,42 +660,6 @@ namespace aurora {
 	inline F AE_CALL byteswap(F val) {
 		auto v = byteswap<sizeof(F)>((uint8_t*)&val);
 		return *(F*)&v;
-	}
-
-
-	template<typename T, typename = unsigned_integral_t<T>>
-	inline T AE_CALL rotl(T val, size_t shift) {
-		if constexpr (std::is_same_v<T, uint8_t>) {
-#if AE_COMPILER == AE_COMPILER_MSVC
-			return _rotl8(val, shift);
-#else
-			shift &= (size_t)0x7;
-			return val << shift | val >> (8 - shift);
-#endif
-		} else if constexpr (std::is_same_v<T, uint16_t>) {
-#if AE_COMPILER == AE_COMPILER_MSVC
-			return _rotl16(val, shift);
-#else
-			shift &= (size_t)0xF;
-			return val << shift | val >> (16 - shift);
-#endif
-		} else if constexpr (std::is_same_v<T, uint32_t>) {
-#if AE_COMPILER == AE_COMPILER_MSVC
-			return _rotl(val, shift);
-#else
-			shift &= (size_t)0x1F;
-			return val << shift | val >> (32 - shift);
-#endif
-		} else if constexpr (std::is_same_v<T, uint64_t>) {
-#if AE_COMPILER == AE_COMPILER_MSVC
-			return _rotl64(val, shift);
-#else
-			shift &= (size_t)0x3F;
-			return val << shift | val >> (64 - shift);
-#endif
-		} else {
-			static_assert(sizeof(T) <= 8, "rotl not support type");
-		}
 	}
 
 

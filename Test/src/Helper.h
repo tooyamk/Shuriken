@@ -51,17 +51,17 @@ struct transparent_hash {
 
 inline std::string AE_CALL getDLLName(const std::string& name) {
 	if constexpr (environment::is_debug) {
-#if AE_OS == AE_OS_WIN
-		return name + "d.dll";
-#else
-		return "lib" + name + "d.so";
-#endif
+		if constexpr (environment::current_operating_system == environment::operating_system::windows) {
+			return name + "d.dll";
+		} else {
+			return "lib" + name + "d.so";
+		}
 	} else {
-#if AE_OS == AE_OS_WIN
-		return name + ".dll";
-#else
-		return "lib" + name + ".so";
-#endif
+		if constexpr (environment::current_operating_system == environment::operating_system::windows) {
+			return name + ".dll";
+		} else {
+			return "lib" + name + ".so";
+		}
 	}
 }
 

@@ -35,7 +35,7 @@ namespace aurora::hash {
 					v4 = _round<Bits>(v4, _readUInt<Bits, DataEndian>(src)); src += OFFSET;
 				} while (src <= (dataEnd - HALF_BITS));
 
-				ret = rotl(v1, 1) + rotl(v2, 7) + rotl(v3, 12) + rotl(v4, 18);
+				ret = std::rotl(v1, 1) + std::rotl(v2, 7) + std::rotl(v3, 12) + std::rotl(v4, 18);
 
 				_subMergeRound<Bits>(ret, v1, v2, v3, v4);
 			} else { 
@@ -67,7 +67,7 @@ namespace aurora::hash {
 			constexpr size_t SHIFT = Bits == 32 ? 13 : 31;
 
 			seed += x * Prime<Bits>::VALUE[1];
-			seed = rotl(seed, SHIFT);
+			seed = std::rotl(seed, SHIFT);
 			seed *= Prime<Bits>::VALUE[0];
 			return seed;
 		}
@@ -103,7 +103,7 @@ namespace aurora::hash {
 
 				while (data < dataEnd) {
 					ret += (*data) * Prime<Bits>::VALUE[4];
-					ret = rotl(ret, 11) * Prime<Bits>::VALUE[0];
+					ret = std::rotl(ret, 11) * Prime<Bits>::VALUE[0];
 					++data;
 				}
 
@@ -117,19 +117,19 @@ namespace aurora::hash {
 			} else if constexpr (Bits == 64) {
 				while (data + 8 <= dataEnd) {
 					ret ^= _round<Bits>(0, _readUInt<Bits, DataEndian>(data));
-					ret = rotl(ret, 27) * Prime<Bits>::VALUE[0] + Prime<Bits>::VALUE[3];
+					ret = std::rotl(ret, 27) * Prime<Bits>::VALUE[0] + Prime<Bits>::VALUE[3];
 					data += 8;
 				}
 
 				if (data + 4 <= dataEnd) {
 					ret ^= (uint_t<Bits>)_readUInt<Bits / 2, DataEndian>(data) * Prime<Bits>::VALUE[0];
-					ret = rotl(ret, 23) * Prime<Bits>::VALUE[1] + Prime<Bits>::VALUE[2];
+					ret = std::rotl(ret, 23) * Prime<Bits>::VALUE[1] + Prime<Bits>::VALUE[2];
 					data += 4;
 				}
 
 				while (data < dataEnd) {
 					ret ^= (*data) * Prime<Bits>::VALUE[4];
-					ret = rotl(ret, 11) * Prime<Bits>::VALUE[0];
+					ret = std::rotl(ret, 11) * Prime<Bits>::VALUE[0];
 					++data;
 				}
 
