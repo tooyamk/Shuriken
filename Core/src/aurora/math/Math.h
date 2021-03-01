@@ -11,12 +11,16 @@ namespace aurora {
 		template<typename T> inline static constexpr arithmetic_t<T> NUMBER_0 = 0;
 		template<typename T> inline static constexpr arithmetic_t<T> NUMBER_1 = 1;
 		template<typename T> inline static constexpr floating_point_t<T> TOLERANCE = T(2e-37);
+		template<typename T> inline static constexpr floating_point_t<T> E = T(2.718281828459045);
 		template<typename T> inline static constexpr floating_point_t<T> PI = T(3.14159265358979323846);
 		template<typename T> inline static constexpr floating_point_t<T> PI_2 = PI<T> * T(.5);
 		template<typename T> inline static constexpr floating_point_t<T> PI_4 = PI<T> * T(.25);
-		template<typename T> inline static constexpr floating_point_t<T> PI_6 = PI<T> / T(6.0);
+		template<typename T> inline static constexpr floating_point_t<T> PI_6 = PI<T> / T(6.);
 		template<typename T> inline static constexpr floating_point_t<T> PI_8 = PI<T> * T(.125);
 		template<typename T> inline static constexpr floating_point_t<T> PI2 = PI<T> * T(2.);
+		template<typename T> inline static constexpr floating_point_t<T> INV_PI = T(1.) / PI<T>;
+		template<typename T> inline static constexpr floating_point_t<T> SQRT2 = T(1.4142135623730951);
+		template<typename T> inline static constexpr floating_point_t<T> SQRT3 = T(0.5773502691896257);
 		template<typename T> inline static constexpr floating_point_t<T> DEG = T(180.) / PI<T>;
 		template<typename T> inline static constexpr floating_point_t<T> RAD = PI<T> / T(180.);
 

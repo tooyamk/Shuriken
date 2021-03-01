@@ -14,7 +14,7 @@ namespace aurora {
 		release();
 	}
 
-	bool DynamicLib::load(const std::string_view& path) {
+	bool DynamicLib::_load(const std::string_view& path) {
 		release();
 #if AE_OS == AE_OS_WIN
 		auto wpath = String::Utf8ToUnicode(path);

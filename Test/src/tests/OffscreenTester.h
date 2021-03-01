@@ -45,18 +45,19 @@ constexpr int32_t Popcount_fallback(T val) noexcept {
 
 //[[deprecated("Will remove in next release")]] void test() {}
 
+template<typename T, typename = std::enable_if_t<is_any_string8_type_v<T>>>
+inline std::conditional_t<is_string8_view_v<T>, std::remove_reference_t<T>&, string8_view_t<T>> to_string8_view(T&& val) {
+	if constexpr (is_string8_view_v<T>) {
+		return val;
+	} else {
+		return std::move(string8_view_t<T>(std::forward<T>(val)));
+	}
+}
+
 class OffscreenTester : public BaseTester {
 public:
 	virtual int32_t AE_CALL run() override {
-		const int n = 3;
-
-		constexpr auto nnnnnn = Popcount_fallback(0b1011_ui32);
-		auto bbbbbb = std::is_integral_v<const int&>;
-		auto zz1 = std::rotl(0b1_ui8, 15);
-		auto zz2 = std::rotr(0b1_ui8, -1);
-		auto bbb = std::popcount(0b1_ui8);
-		printdln(String::toString(zz1, 2));
-		printdln(String::toString(zz2, 2));
+		constexpr std::string_view γ{ "0.5" };
 
 		auto monitors = Monitor::getMonitors();
 		auto vms = monitors[0].getVideoModes();
@@ -64,7 +65,7 @@ public:
 		RefPtr gml = new GraphicsModuleLoader();
 
 		//if (gml->load(getDLLName("ae-graphics-gl"))) {
-		if (gml->load("libs/" + getDLLName("ae-graphics-d3d11"))) {
+		if (gml->load("libs/" + getDLLName(u8"ae-graphics-d3d11"))) {
 			SerializableObject args;
 
 			RefPtr gpstml = new ModuleLoader<IProgramSourceTranslator>();

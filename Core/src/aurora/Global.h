@@ -275,7 +275,7 @@ namespace std {
 	}
 
 	template<typename T, typename = std::enable_if_t<std::is_integral_v<T> && std::is_unsigned_v<T>>>
-	constexpr bool has_single_bit(T val) noexcept {
+	inline constexpr bool has_single_bit(T val) noexcept {
 		return val != 0 && (val & (val - 1)) == 0;
 	}
 #endif
@@ -402,7 +402,7 @@ namespace aurora {
 	}
 
 
-	template<typename T> constexpr bool is_unsigned_integral_v = std::is_integral_v<T> && std::is_unsigned_v<T>;
+	template<typename T> inline constexpr bool is_unsigned_integral_v = std::is_integral_v<T> && std::is_unsigned_v<T>;
 
 
 	template<typename T> using arithmetic_t = std::enable_if_t<std::is_arithmetic_v<T>, T>;
@@ -411,13 +411,19 @@ namespace aurora {
 	template<typename T> using unsigned_integral_t = std::enable_if_t<is_unsigned_integral_v<T>, T>;
 
 
-	template<typename T> constexpr bool is_string_data_v = std::is_same_v<T, std::string> || std::is_same_v<T, std::string_view>;
-	template<typename T> constexpr bool is_u8string_data_v = std::is_same_v<T, std::u8string> || std::is_same_v<T, std::u8string_view>;
-	template<typename T> constexpr bool is_string8_data_v = is_string_data_v<T> || is_u8string_data_v<T>;
-	template<typename T> constexpr bool is_wstring_data_v = std::is_same_v<T, std::wstring> || std::is_same_v<T, std::wstring_view>;
+	template<typename T> inline constexpr bool is_string_data_v = std::is_same_v<T, std::string> || std::is_same_v<T, std::string_view>;
+	template<typename T> inline constexpr bool is_u8string_data_v = std::is_same_v<T, std::u8string> || std::is_same_v<T, std::u8string_view>;
+	template<typename T> inline constexpr bool is_any_string_type_v = std::is_same_v<std::remove_cvref_t<T>, std::string> || std::is_same_v<std::remove_cvref_t<T>, std::string_view> || std::is_convertible_v<std::remove_cvref_t<T>, char const*>;
+	template<typename T> inline constexpr bool is_any_u8string_type_v = std::is_same_v<std::remove_cvref_t<T>, std::u8string> || std::is_same_v<std::remove_cvref_t<T>, std::u8string_view> || std::is_convertible_v<std::remove_cvref_t<T>, char8_t const*>;
+	template<typename T> inline constexpr bool is_any_string8_type_v = is_any_string_type_v<T> || is_any_u8string_type_v<T>;
+	template<typename T> inline constexpr bool is_string8_data_v = is_string_data_v<T> || is_u8string_data_v<T>;
+	template<typename T> inline constexpr bool is_string8_view_v = std::is_same_v<std::remove_cvref_t<T>, std::string_view> || std::is_same_v<std::remove_cvref_t<T>, std::u8string_view>;
+	template<typename T> inline constexpr bool is_convertible_string8_view_v = std::is_convertible_v<T, std::string_view> || std::is_convertible_v<T, std::u8string_view>;
+	template<typename T> inline constexpr bool is_wstring_data_v = std::is_same_v<T, std::wstring> || std::is_same_v<T, std::wstring_view>;
 	template<typename T> using string_data_t = std::enable_if_t<is_string_data_v<T>, T>;
 	template<typename T> using u8string_data_t = std::enable_if_t<is_u8string_data_v<T>, T>;
 	template<typename T> using string8_data_t = std::enable_if_t<is_string8_data_v<T>, T>;
+	template<typename T> using string8_view_t = std::enable_if_t<is_any_string8_type_v<T>, std::conditional_t<is_any_u8string_type_v<T>, std::u8string_view, std::string_view>>;
 	template<typename T> using wstring_data_t = std::enable_if_t<is_wstring_data_v<T>, T>;
 
 
@@ -696,11 +702,11 @@ namespace aurora {
 #if AE_OS == AE_OS_WIN
 		wchar_t path[FILENAME_MAX] = { 0 };
 		auto count = GetModuleFileNameW(nullptr, path, FILENAME_MAX);
-		return std::filesystem::path(std::wstring(path, (count > 0) ? count : 0));
+		return std::filesystem::path(std::wstring(path, count > 0 ? count : 0));
 #else
 		char path[FILENAME_MAX];
 		auto count = readlink("/proc/self/exe", path, FILENAME_MAX);
-		return std::filesystem::path(std::string(path, (count > 0) ? count : 0));
+		return std::filesystem::path(std::string(path, count > 0 ? count : 0));
 #endif
 	}
 }

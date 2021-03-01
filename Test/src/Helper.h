@@ -49,20 +49,45 @@ struct transparent_hash {
 */
 #endif
 
-inline std::string AE_CALL getDLLName(const std::string& name) {
+template<typename T, typename = std::enable_if_t<is_string8_data_v<T> || std::is_convertible_v<T, const char*> || std::is_convertible_v<T, const char8_t*>>>
+inline auto AE_CALL getDLLName(T&& name) {
+	size_t size = 0;
+	if constexpr (is_string8_data_v<T>) {
+		size = name.size();
+	} else {
+		size = strlen((const char*)name);
+	}
+	if constexpr (environment::is_debug) size++;
+	if constexpr (environment::current_operating_system != environment::operating_system::windows) {
+		size += 4;
+	} else {
+		size += 6;
+	}
+
+	std::conditional_t<is_u8string_data_v<T> || std::is_convertible_v<T, const char8_t*>, std::u8string, std::string> s;
+	s.reserve(size);
+
 	if constexpr (environment::is_debug) {
 		if constexpr (environment::current_operating_system == environment::operating_system::windows) {
-			return name + "d.dll";
+			s += name;
+			s += "d.dll";
 		} else {
-			return "lib" + name + "d.so";
+			s += "lib";
+			s += name;
+			s += "d.so";
 		}
 	} else {
 		if constexpr (environment::current_operating_system == environment::operating_system::windows) {
-			return name + ".dll";
+			s += name;
+			s += ".dll";
 		} else {
-			return "lib" + name + ".so";
+			s += "lib";
+			s += name;
+			s += ".so";
 		}
 	}
+
+	return std::move(s);
 }
 
 template<typename T>
