@@ -17,7 +17,7 @@ namespace aurora::modules::graphics::d3d11 {
 			GraphicsAdapter* adapter = nullptr;
 			SampleCount sampleCount = 1;
 			std::string driverType;
-			std::function<void(const std::string_view&)>* createProcessInfoHandler;
+			std::function<void(const std::string_view&)>* createProcessInfoHandler = nullptr;
 			bool debug = false;
 			bool offscreen = false;
 

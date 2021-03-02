@@ -8,7 +8,7 @@
 namespace aurora::extensions::shader_script {
 	struct Block : public Ref {
 		std::string_view name;
-		size_t contentBegin;
+		size_t contentBegin = 0;
 		std::string_view content;
 		std::vector<RefPtr<Block>> chindren;
 	};
@@ -42,6 +42,8 @@ namespace aurora::extensions::shader_script {
 
 	template<typename T>
 	inline bool AE_CALL parseDefineBlock(T& out, const std::string_view& content) {
+		using namespace std::literals;
+
 		auto fmtContent = String::trim(content, String::CharFlag::WHITE_SPACE);
 		std::vector<std::string_view> defs;
 		String::split(content, String::CharFlag::NEW_LINE, [&defs](const std::string_view& sv) {
@@ -73,7 +75,7 @@ namespace aurora::extensions::shader_script {
 				if (pos == std::string_view::npos) {
 					out.emplace_back(fmtDef);
 				} else {
-					printdln("ShaderScript::parseDefines error : parse dynamic defines error, value has white space");
+					printdln(L"ShaderScript::parseDefines error : parse dynamic defines error, value has white space"sv);
 					return false;
 				}
 			}

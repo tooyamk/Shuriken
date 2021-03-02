@@ -14,6 +14,8 @@ namespace aurora {
 	}
 
 	void ThreadPool::_init() {
+		using namespace std::literals;
+
 		try {
 			_allocateTasks();
 
@@ -42,18 +44,20 @@ namespace aurora {
 				} while (true);
 			}).detach();
 		} catch (std::exception& e) {
-			printdln("start threads pool error : ", e.what());
+			printdln(L"start threads pool error : "sv, e.what());
 		}
 	}
 
 	void ThreadPool::_allocateTasks() {
+		using namespace std::literals;
+
 		for (size_t i = 0; i < _maxThreads; ++i) {
 			auto t = std::make_shared<Task>();
 			try {
 				t->start();
 				_idleTasks.emplace_back(t);
 			} catch (std::exception& e) { //exceed max thread num of process
-				printdln("allocate threads error : ", e.what());
+				printdln(L"allocate threads error : "sv, e.what());
 				break;
 			}
 		}
@@ -112,6 +116,8 @@ namespace aurora {
 
 
 	void ThreadPool::Task::start() {
+		using namespace std::literals;
+
 		std::thread([this]() {
 			while (!_exit) {
 				std::unique_lock<std::mutex> lock(_mutex);
@@ -121,9 +127,9 @@ namespace aurora {
 					try {
 						_task(); //run task
 					} catch (std::exception& e) {
-						printdln("thread start error : ", e.what());
+						printdln(L"thread start error : "sv, e.what());
 					} catch (...) {
-						printdln("thread start error : unknown");
+						printdln(L"thread start error : unknown"sv);
 					}
 
 					_task = nullptr;

@@ -29,8 +29,8 @@ namespace aurora::modules::graphics::gl {
 
 		
 		struct UniformInfo {
-			GLuint location;
-			GLenum type;
+			GLuint location = 0;
+			GLenum type = 0;
 			GLint size;
 			std::vector<std::string> names;
 		};

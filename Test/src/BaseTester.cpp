@@ -15,7 +15,7 @@ void Stats::run(Looper* looper) {
 				auto t = aurora::Time::now();
 
 				auto fps = _frameCount / ((t - frameTime) * 0.001);
-				printdln("fps : ", fps);
+				printdln(L"fps : "sv, fps);
 
 				_frameCount = 0;
 				frameTime = t;

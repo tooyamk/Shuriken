@@ -139,12 +139,4 @@ namespace aurora {
 			}
 		}
 	}
-
-	bool ByteArray::isEqual(const uint8_t* data1, const uint8_t* data2, size_t len) {
-		for (size_t i = 0; i < len; ++i) {
-			if (data1[i] != data2[i]) return false;
-		}
-
-		return true;
-	}
 }

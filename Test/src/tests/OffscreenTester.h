@@ -43,14 +43,12 @@ constexpr int32_t Popcount_fallback(T val) noexcept {
 	return val & (T)(digits + digits - 1);
 }
 
-//[[deprecated("Will remove in next release")]] void test() {}
-
-template<typename T, typename = std::enable_if_t<is_any_string8_type_v<T>>>
-inline std::conditional_t<is_string8_view_v<T>, std::remove_reference_t<T>&, string8_view_t<T>> to_string8_view(T&& val) {
-	if constexpr (is_string8_view_v<T>) {
+template<typename T, typename = std::enable_if_t<is_convertible_string8_data_v<std::remove_cvref_t<T>>>>
+inline std::conditional_t<is_string8_view_v<std::remove_cvref_t<T>>, std::remove_reference_t<T>&, convert_to_string8_view_t<std::remove_cvref_t<T>>> to_string8_view(T&& val) {
+	if constexpr (is_string8_view_v<std::remove_cvref_t<T>>) {
 		return val;
 	} else {
-		return std::move(string8_view_t<T>(std::forward<T>(val)));
+		return std::move(convert_to_string8_view_t<std::remove_cvref_t<T>>(std::forward<T>(val)));
 	}
 }
 
@@ -58,6 +56,17 @@ class OffscreenTester : public BaseTester {
 public:
 	virtual int32_t AE_CALL run() override {
 		constexpr std::string_view γ{ "0.5" };
+
+		auto wgfwe = u8"abc"sv;
+
+		ByteArray ba;
+		ba.setEndian(std::endian::big);
+		ba.write(0x0201_ui16);
+		auto sss = ba.getSource();
+		auto v1 = sss[0];
+		auto v2 = sss[1];
+		auto llll = ba.getLength();
+		auto pppp = ba.getPosition();
 
 		auto monitors = Monitor::getMonitors();
 		auto vms = monitors[0].getVideoModes();

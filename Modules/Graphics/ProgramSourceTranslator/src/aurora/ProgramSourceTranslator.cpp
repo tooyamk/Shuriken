@@ -81,6 +81,8 @@ namespace aurora::modules::graphics::program_source_translator {
 	}
 
 	ProgramSource ProgramSourceTranslator::translate(const ProgramSource& source, ProgramLanguage targetLanguage, const std::string_view& targetVersion, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& handler) {
+		using namespace std::literals;
+
 		ProgramSource dst;
 
 		if (!source.isValid() || targetLanguage == ProgramLanguage::UNKNOWN) return std::move(dst);
@@ -114,7 +116,7 @@ namespace aurora::modules::graphics::program_source_translator {
 
 			CComPtr<IDxcBlobEncoding> sourceBlob;
 			if (auto hr = _dxcLib->CreateBlobWithEncodingOnHeapCopy(source.data.getSource(), source.data.getLength(), CP_UTF8, &sourceBlob); hr < 0) {
-				printdln(L"program source translate failed");
+				printdln(L"program source translate failed"sv);
 				return std::move(dst);
 			}
 			IFTARG(sourceBlob->GetBufferSize() >= 4);
@@ -147,7 +149,7 @@ namespace aurora::modules::graphics::program_source_translator {
 			IFT(compileResult->GetErrorBuffer(&errors));
 			if (errors) {
 				if (errors->GetBufferSize() > 0) {
-					printdln("ProgramSourceTranslator::translate error or warning : ", std::string_view((char*)errors->GetBufferPointer(), errors->GetBufferSize()));
+					printdln(L"ProgramSourceTranslator::translate error or warning : "sv, std::string_view((char*)errors->GetBufferPointer(), errors->GetBufferSize()));
 					//ret.errorWarningMsg = CreateBlob(errors->GetBufferPointer(), static_cast<uint32_t>(errors->GetBufferSize()));
 				}
 				errors = nullptr;
@@ -300,7 +302,7 @@ namespace aurora::modules::graphics::program_source_translator {
 			dst.data.setCapacity(str.size());
 			dst.data.write<ba_vt::BYTE>((uint8_t*)str.data(), str.size());
 		} catch (spirv_cross::CompilerError& error) {
-			printdln("spirv to glsl/gssl error : ", error.what());
+			printdln(L"spirv to glsl/gssl error : "sv, error.what());
 		}
 	}
 

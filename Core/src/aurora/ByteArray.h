@@ -172,18 +172,7 @@ namespace aurora {
 		void AE_CALL popBack(size_t len);
 		void AE_CALL insert(size_t len);
 
-		template<typename T, typename = std::enable_if_t<
-			std::is_same_v<T, bool> ||
-			std::is_same_v<T, int8_t> ||
-			std::is_same_v<T, uint8_t> ||
-			std::is_same_v<T, int16_t> ||
-			std::is_same_v<T, uint16_t> ||
-			std::is_same_v<T, int32_t> ||
-			std::is_same_v<T, uint32_t> ||
-			std::is_same_v<T, int64_t> ||
-			std::is_same_v<T, uint64_t> ||
-			std::is_same_v<T, float32_t> ||
-			std::is_same_v<T, float64_t>>>
+		template<typename T, typename = any_of_t<T, bool, int8_t, uint8_t, int16_t, uint16_t, int32_t, uint32_t, int64_t, uint64_t, float32_t, float64_t>>
 		inline T AE_CALL read() {
 			return _read<T>();
 		}
@@ -415,18 +404,7 @@ namespace aurora {
 			return length;
 		}
 
-		template<typename T, typename = std::enable_if_t<
-			std::is_same_v<T, bool> ||
-			std::is_same_v<T, int8_t> ||
-			std::is_same_v<T, uint8_t> ||
-			std::is_same_v<T, int16_t> ||
-			std::is_same_v<T, uint16_t> ||
-			std::is_same_v<T, int32_t> ||
-			std::is_same_v<T, uint32_t> ||
-			std::is_same_v<T, int64_t> ||
-			std::is_same_v<T, uint64_t> ||
-			std::is_same_v<T, float32_t> ||
-			std::is_same_v<T, float64_t>>>
+		template<typename T, typename = any_of_t<T, bool, int8_t, uint8_t, int16_t, uint16_t, int32_t, uint32_t, int64_t, uint64_t, float32_t, float64_t>>
 		inline void AE_CALL write(T value) {
 			_write<T>(value);
 		}
@@ -573,30 +551,37 @@ namespace aurora {
 			_write<float64_t>(value);
 		}
 
-		template<ValueType T, typename = std::enable_if_t<T == ValueType::STR>>
-		inline void AE_CALL write(const std::string& value) {
-			write<std::string>(value);
+		template<ValueType T, typename V, typename = std::enable_if_t<(T == ValueType::STR || T == ValueType::BYTE) && is_convertible_string8_data_v<std::remove_cvref_t<V>>>>
+		inline void AE_CALL write(V&& value) {
+			if constexpr (T == ValueType::STR) {
+				write(value);
+			} else {
+				if constexpr (is_string8_data_v<std::remove_cvref_t<V>>) {
+					write<T>(value.data(), value.size());
+				} else {
+					write<T>(convert_to_string8_view_t<std::remove_cvref_t<V>>(std::forward<V>(value)));
+				}
+			}
 		}
 
-		template<ValueType T, typename = std::enable_if_t<T == ValueType::STR>>
-		inline void AE_CALL write(const std::string_view& value) {
-			write<std::string_view>(value);
+		template<typename T, typename = convertible_string8_data_t<std::remove_cvref_t<T>>>
+		inline void AE_CALL write(T&& value) {
+			if constexpr (is_string8_data_v<std::remove_cvref_t<T>>) {
+				auto size = value.size();
+
+				_checkLength(size + 1);
+
+				memmove(_data + _position, value.data(), size);
+				_position += size;
+				_data[_position++] = '\0';
+			} else {
+				write(convert_to_string8_view_t<std::remove_cvref_t<T>>(std::forward<T>(value)));
+			}
 		}
 
-		template<typename T, typename = std::enable_if_t<std::is_same_v<T, std::string> || std::is_same_v<T, std::string_view>>>
-		void AE_CALL write(const T& value) {
-			auto size = value.size();
-
-			_checkLength(size + 1);
-
-			memmove(_data + _position, value.data(), size);
-			_position += size;
-			_data[_position++] = '\0';
-		}
-
-		template<ValueType T, typename = std::enable_if_t<T == ValueType::STR>>
-		inline void AE_CALL write(const char* value, size_t size) {
-			write<std::string_view>(std::string_view(value, size));
+		template<ValueType T, typename V, typename = std::enable_if_t<T == ValueType::STR && is_any_of_v<V, char, char8_t>>>
+		inline void AE_CALL write(const V* value, size_t size) {
+			write(convert_to_string8_view_t<V*>(value, size));
 		}
 
 		template<ValueType T, bool Reverse = false, typename = std::enable_if_t<T == ValueType::BYTE>>
@@ -620,16 +605,6 @@ namespace aurora {
 			}
 		}
 
-		template<ValueType T, typename V, typename = std::enable_if_t<T == ValueType::BYTE && is_string_data_v<V>>>
-		inline void AE_CALL write(const V& str) {
-			write<T>(str.data(), str.size());
-		}
-
-		template<ValueType T, typename = std::enable_if_t<T == ValueType::BYTE>>
-		inline void AE_CALL write(const char* str) {
-			write<T>(str, strlen(str));
-		}
-
 		template<ValueType T, typename = std::enable_if_t<T == ValueType::BYTE>>
 		size_t AE_CALL write(const ByteArray& ba, size_t offset = 0, size_t length = (std::numeric_limits<size_t>::max)()) {
 			if (!length) return 0;
@@ -650,7 +625,9 @@ namespace aurora {
 		inline static bool AE_CALL isEqual(const ByteArray& data1, const ByteArray& data2) {
 			return data1.getLength() == data2.getLength() ? isEqual(data1.getSource(), data2.getSource(), data1.getLength()) : false;
 		}
-		static bool AE_CALL isEqual(const uint8_t* data1, const uint8_t* data2, size_t len);
+		inline static bool AE_CALL isEqual(const void* data1, const void* data2, size_t len) {
+			return memcmp(data1, data2, len) == 0;
+		}
 
 	private:
 		Usage _usage;
@@ -693,18 +670,7 @@ namespace aurora {
 			}
 		}
 
-		template<typename T, typename = std::enable_if_t<
-			std::is_same_v<T, bool> ||
-			std::is_same_v<T, int8_t> ||
-			std::is_same_v<T, uint8_t> ||
-			std::is_same_v<T, int16_t> ||
-			std::is_same_v<T, uint16_t> ||
-			std::is_same_v<T, int32_t> ||
-			std::is_same_v<T, uint32_t> ||
-			std::is_same_v<T, int64_t> ||
-			std::is_same_v<T, uint64_t> ||
-			std::is_same_v<T, float32_t> ||
-			std::is_same_v<T, float64_t>>>
+		template<typename T, typename = any_of_t<T, bool, int8_t, uint8_t, int16_t, uint16_t, int32_t, uint32_t, int64_t, uint64_t, float32_t, float64_t>>
 		T AE_CALL _read() {
 			if constexpr (sizeof(T) == 1) {
 				if (_position < _length) {
@@ -714,7 +680,7 @@ namespace aurora {
 					return (T)0;
 				}
 			} else {
-				constexpr uint32_t TYPE_BYTES = sizeof(T);
+				constexpr auto TYPE_BYTES = sizeof(T);
 				if (_position + TYPE_BYTES > _length) {
 					_position = _length;
 					return (T)0;
@@ -743,15 +709,16 @@ namespace aurora {
 			return std::move(T((char*)_data + begin, num));
 		}
 
-		inline void AE_CALL _write(const uint8_t* p, uint32_t len) {
+		inline void AE_CALL _write(const uint8_t* p, size_t len) {
 			_checkLength(len);
 
 			if (_needReverse) {
-				for (int32_t i = len - 1; i >= 0; --i) _data[_position++] = p[i];
+				for (size_t i = 0, j = len; i < len; ++i) _data[_position + --j] = p[i];
 			} else {
 				memmove(_data + _position, p, len);
-				_position += len;
 			}
+
+			_position += len;
 		}
 
 		template<typename T, typename = std::enable_if_t<

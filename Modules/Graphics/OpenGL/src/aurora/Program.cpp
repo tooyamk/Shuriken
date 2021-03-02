@@ -265,17 +265,19 @@ namespace aurora::modules::graphics::gl {
 						}
 					}
 
-					foundVar->stride = strides[j];
-					if (std::has_single_bit((std::make_unsigned<decltype(strides)::value_type>::type)strides[j])) foundVar->stride |= 1ui32 << 31;
-					foundVar->size = Graphics::getGLTypeSize(types[j]);
-					if (sizes[j] > 1) {
-						if (auto remainder = foundVar->size % strides[j]; remainder) {
-							foundVar->size += (foundVar->size + strides[j] - remainder) * (sizes[j] - 1);
-						} else {
-							foundVar->size *= sizes[j];
+					if (foundVar) {
+						foundVar->stride = strides[j];
+						if (std::has_single_bit((std::make_unsigned<decltype(strides)::value_type>::type)strides[j])) foundVar->stride |= 1ui32 << 31;
+						foundVar->size = Graphics::getGLTypeSize(types[j]);
+						if (sizes[j] > 1) {
+							if (auto remainder = foundVar->size % strides[j]; remainder) {
+								foundVar->size += (foundVar->size + strides[j] - remainder) * (sizes[j] - 1);
+							} else {
+								foundVar->size *= sizes[j];
+							}
 						}
+						foundVar->offset = offsets[j];
 					}
-					foundVar->offset = offsets[j];
 				}
 
 				layout.calcFeatureValue();
@@ -354,12 +356,12 @@ namespace aurora::modules::graphics::gl {
 					layout.collectUsingInfo(*shaderParamGetter, statistics, (std::vector<const ShaderParameter*>&)_tempParams, _tempVars);
 
 					ConstantBuffer* cb = nullptr;
-					uint32_t numVars = _tempVars.size();
+					auto numVars = _tempVars.size();
 					if (statistics.unknownCount < numVars) {
 						if (statistics.exclusiveCount > 0 && !statistics.shareCount) {
 							if (cb = (ConstantBuffer*)g->getConstantBufferManager().getExclusiveConstantBuffer(_tempParams, layout); cb) {
 								bool isMapping = false;
-								for (uint32_t i = 0; i < numVars; ++i) {
+								for (decltype(numVars) i = 0; i < numVars; ++i) {
 									if (auto param = _tempParams[i]; param && param->getUpdateId() != cb->recordUpdateIds[i]) {
 										if (!isMapping) {
 											if (cb->map(Usage::MAP_WRITE) == Usage::NONE) break;
@@ -416,6 +418,8 @@ namespace aurora::modules::graphics::gl {
 	}
 
 	GLuint Program::_compileShader(const ProgramSource& source, GLenum type, ProgramStage stage, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& handler) {
+		using namespace std::literals;
+
 		if (!source.isValid()) {
 			_graphics.get<Graphics>()->error("glsl compile failed, source is invalid");
 			return 0;
@@ -433,8 +437,8 @@ namespace aurora::modules::graphics::gl {
 			}
 		}
 
-		printdln("------ glsl shader code(", (type == GL_VERTEX_SHADER ? "vert" : "frag"), ") ------\n", 
-			std::string_view((char*)source.data.getSource(), source.data.getLength()), "\n------------------------------------");
+		printdln(L"------ glsl shader code("sv, (type == GL_VERTEX_SHADER ? L"vert"sv : L"frag"sv), L") ------\n"sv, 
+			std::string_view((char*)source.data.getSource(), source.data.getLength()), L"\n------------------------------------"sv);
 
 		GLuint shader = glCreateShader(type);
 		auto s = (const char*)source.data.getSource();

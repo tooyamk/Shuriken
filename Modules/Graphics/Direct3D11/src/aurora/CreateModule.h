@@ -6,11 +6,13 @@
 #ifdef AE_MODULE_EXPORTS
 namespace aurora::modules::graphics {
 	extern "C" AE_MODULE_DLL_EXPORT void* AE_CREATE_MODULE_FN_NAME(Ref* loader, const SerializableObject* args) {
+		using namespace std::literals;
+
 		d3d11::Graphics::CreateConfig conf;
 		conf.loader = loader;
 
 		if (!args) {
-			printdln("DX11GraphicsModule create error : no args");
+			printdln(L"DX11GraphicsModule create error : no args"sv);
 			return nullptr;
 		}
 

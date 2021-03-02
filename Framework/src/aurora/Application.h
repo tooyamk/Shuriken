@@ -15,6 +15,10 @@ namespace aurora {
 		Application(const std::string_view& appId);
 #ifdef __cpp_lib_char8_t
 		Application(const std::u8string_view& appId) : Application((const std::string_view&)appId) {}
+
+		inline void AE_CALL setWindowTitle(const std::u8string_view& title) {
+			setWindowTitle((const std::string_view&)title);
+		}
 #endif
 		virtual ~Application();
 

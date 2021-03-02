@@ -183,6 +183,7 @@ inline static __NAME__ get##__NAME__(const std::string_view& name) { \
 			};
 
 			Property() :
+				type(Type::UNKNOWN),
 				rawVal{ nullptr, 0 } {
 			}
 
@@ -619,7 +620,7 @@ inline static __NAME__ get##__NAME__(const std::string_view& name) { \
 					size_t start = 0;
 					sourceIndices.resize(count);
 					for (size_t i = 0; i < count; ++i) {
-						auto idx = src.read<ba_vt::I32>();
+						auto idx = src.read<int32_t>();
 						if (idx < 0) {
 							idx = ~idx;
 							auto n = i - start + 1;
@@ -1005,37 +1006,39 @@ inline static __NAME__ get##__NAME__(const std::string_view& name) { \
 	};
 
 	inline bool AE_CALL parseNodeProperty(FBX& fbx, ByteArray& source, Node::Property& p) {
-		auto type = (Node::Property::Type)source.read<ba_vt::UI8>();
+		using namespace std::literals;
+
+		auto type = (Node::Property::Type)source.read<uint8_t>();
 		p.type = type;
 		switch (type) {
 		case Node::Property::Type::BOOL:
-			p.boolVal = source.read<ba_vt::BOOL>();
+			p.boolVal = source.read<bool>();
 			break;
 		case Node::Property::Type::I16:
 		{
 			p.type = Node::Property::Type::I64;
-			p.i64Val = source.read<ba_vt::I16>();
+			p.i64Val = source.read<int16_t>();
 			break;
 		}
 		case Node::Property::Type::I32:
 		{
 			p.type = Node::Property::Type::I64;
-			p.i64Val = source.read<ba_vt::I32>();
+			p.i64Val = source.read<int32_t>();
 			break;
 		}
 		case Node::Property::Type::I64:
-			p.i64Val = source.read<ba_vt::I64>();
+			p.i64Val = source.read<int64_t>();
 			break;
 		case Node::Property::Type::F32:
-			p.f32Val = source.read<ba_vt::F32>();
+			p.f32Val = source.read<float32_t>();
 			break;
 		case Node::Property::Type::F64:
-			p.f64Val = source.read<ba_vt::F64>();
+			p.f64Val = source.read<float64_t>();
 			break;
 		case Node::Property::Type::BYTES:
 		case Node::Property::Type::STR:
 		{
-			auto size = source.read<ba_vt::UI32>();
+			auto size = source.read<uint32_t>();
 			p.rawVal.size = size;
 			p.rawVal.data = source.getSource() + source.getPosition();
 			source.skip(size);
@@ -1049,9 +1052,9 @@ inline static __NAME__ get##__NAME__(const std::string_view& name) { \
 		case Node::Property::Type::F32_ARR:
 		case Node::Property::Type::F64_ARR:
 		{
-			auto arrSize = source.read<ba_vt::I32>();
-			auto encoding = source.read<ba_vt::I32>();
-			auto compressedLength = source.read<ba_vt::I32>();
+			auto arrSize = source.read<int32_t>();
+			auto encoding = source.read<int32_t>();
+			auto compressedLength = source.read<int32_t>();
 
 			ByteArray* uncompressData = nullptr;
 			if (encoding == 1) {
@@ -1071,7 +1074,7 @@ inline static __NAME__ get##__NAME__(const std::string_view& name) { \
 						if (rst == Z_BUF_ERROR) {
 							++inflateVal;
 						} else {
-							printdln("FBX parse error : uncompress error ");
+							printdln(L"FBX parse error : uncompress error "sv);
 							return false;
 						}
 					}
@@ -1090,7 +1093,7 @@ inline static __NAME__ get##__NAME__(const std::string_view& name) { \
 			break;
 		}
 		default:
-			printdln("FBX parse error : Unknown property type ", type);
+			printdln(L"FBX parse error : Unknown property type "sv, type);
 			return false;
 		}
 
@@ -1100,16 +1103,16 @@ inline static __NAME__ get##__NAME__(const std::string_view& name) { \
 	inline bool AE_CALL parseNode(FBX& fbx, ByteArray& source, Node* parent) {
 		uint64_t endOffset, numProperties, propertyListLen;
 		if (fbx.ver < 7500) {
-			endOffset = source.read<ba_vt::UI32>();
-			numProperties = source.read<ba_vt::UI32>();
-			propertyListLen = source.read<ba_vt::UI32>();
+			endOffset = source.read<uint32_t>();
+			numProperties = source.read<uint32_t>();
+			propertyListLen = source.read<uint32_t>();
 		} else {
-			endOffset = source.read<ba_vt::UI64>();
-			numProperties = source.read<ba_vt::UI64>();
-			propertyListLen = source.read<ba_vt::UI64>();
+			endOffset = source.read<uint64_t>();
+			numProperties = source.read<uint64_t>();
+			propertyListLen = source.read<uint64_t>();
 		}
-		auto nameSize = source.read<ba_vt::UI8>();
-		auto name = source.read<ba_vt::STR_V, false>(nameSize);
+		auto nameSize = source.read<uint8_t>();
+		auto name = source.read<std::string_view, false>(nameSize);
 
 		if (!endOffset) return true;
 
@@ -1140,21 +1143,23 @@ inline static __NAME__ get##__NAME__(const std::string_view& name) { \
 	}
 
 	inline FBXConverter::Result AE_CALL parse(const ByteArray& source) {
+		using namespace std::literals;
+
 		ByteArray src = source.slice();
 		src.setEndian(std::endian::little);
 
 		constexpr size_t HEADER_LEN = 12;
 
-		if (src.read<ba_vt::STR_V, false>(HEADER_LEN) == "Kaydara FBX ") {
+		if (src.read<std::string_view, false>(HEADER_LEN) == "Kaydara FBX ") {
 			constexpr size_t BINARY_FLAG_LEN = 8;
-			if (src.read<ba_vt::STR_V, false>(BINARY_FLAG_LEN) == "Binary  ") {
+			if (src.read<std::string_view, false>(BINARY_FLAG_LEN) == "Binary  ") {
 				src.skip(3);
 
-				FBX fbx(src.read<ba_vt::UI32>());
+				FBX fbx(src.read<uint32_t>());
 
 				auto parseOk = true;
 				while (src.getBytesAvailable() > 4) {
-					if (src.read<ba_vt::UI32>() < src.getLength()) {
+					if (src.read<uint32_t>() < src.getLength()) {
 						src.setPosition(src.getPosition() - 4);
 						if (!parseNode(fbx, src, &fbx.root)) {
 							parseOk = false;
@@ -1171,10 +1176,10 @@ inline static __NAME__ get##__NAME__(const std::string_view& name) { \
 					return std::move(rst);
 				}
 			} else {
-				printdln("FBX parse error : only support binary format");
+				printdln(L"FBX parse error : only support binary format"sv);
 			}
 		} else {
-			printdln("FBX parse error : not a fbx file");
+			printdln(L"FBX parse error : not a fbx file"sv);
 		}
 
 		return FBXConverter::Result();

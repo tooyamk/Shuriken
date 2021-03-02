@@ -49,99 +49,119 @@ namespace aurora {
 		static bool AE_CALL isUTF8(const char* data, size_t len);
 
 		//unicodeLen, utf8Len
-		template<typename T, typename = wstring_data_t<T>>
-		static std::tuple<std::wstring::size_type, std::string::size_type> AE_CALL calcUnicodeToUtf8Length(const T& in) {
-			std::wstring::size_type s = 0;
-			std::u8string::size_type d = 0;
+		template<typename In, typename = convertible_wstring_data_t<std::remove_cvref_t<In>>>
+		static std::tuple<std::wstring::size_type, std::string::size_type> AE_CALL calcUnicodeToUtf8Length(In&& in) {
+			if constexpr (is_wstring_data_v<std::remove_cvref_t<In>>) {
+				std::wstring::size_type s = 0;
+				std::u8string::size_type d = 0;
 
-			auto inSize = in.size();
-			while (s < inSize) {
-				if (uint_t<sizeof(wchar_t) * 8> c = in[s++]; c == 0) {
-					break;
-				} else if (c < 0x80) {  //
-					//length = 1;
-					++d;
-				} else if (c < 0x800) {
-					//length = 2;
-					d += 2;
-				} else if (c < 0x10000) {
-					//length = 3;
-					d += 3;
-				} else if (c < 0x200000) {
-					//length = 4;
-					d += 4;
+				auto inSize = in.size();
+				while (s < inSize) {
+					if (uint_t<sizeof(wchar_t) * 8> c = in[s++]; c == 0) {
+						break;
+					} else if (c < 0x80) {  //
+						//length = 1;
+						++d;
+					} else if (c < 0x800) {
+						//length = 2;
+						d += 2;
+					} else if (c < 0x10000) {
+						//length = 3;
+						d += 3;
+					} else if (c < 0x200000) {
+						//length = 4;
+						d += 4;
+					}
 				}
-			}
 
-			return std::make_tuple(s, d);
+				return std::make_tuple(s, d);
+			} else {
+				return calcUnicodeToUtf8Length(std::wstring_view(std::forward<In>(in)));
+			}
 		}
 
-		template<typename In, typename Out, typename = std::enable_if_t<is_wstring_data_v<In> && (std::is_same_v<Out, char> || std::is_same_v<Out, char8_t>)>>
-		static std::u8string::size_type AE_CALL UnicodeToUtf8(const In& in, Out* outBuffer, std::u8string::size_type outBufferSize) {
-			if (!outBuffer || !outBufferSize) return std::u8string::npos;
-			if (in.empty()) {
-				outBuffer[0] = 0;
-				return 0;
+		template<typename In, typename Out, typename = std::enable_if_t<is_convertible_wstring_data_v<std::remove_cvref_t<In>> && is_any_of_v<Out, char, char8_t>>>
+		static std::u8string::size_type AE_CALL UnicodeToUtf8(In&& in, Out* outBuffer, std::u8string::size_type outBufferSize) {
+			if constexpr (is_wstring_data_v<std::remove_cvref_t<In>>) {
+				if (!outBuffer || !outBufferSize) return std::u8string::npos;
+				if (in.empty()) {
+					outBuffer[0] = 0;
+					return 0;
+				}
+
+				auto [unicodeLen, utf8Len] = calcUnicodeToUtf8Length(in);
+				if (outBufferSize < unicodeLen) return std::u8string::npos;
+
+				return UnicodeToUtf8(in.data(), unicodeLen, outBuffer);
+			} else {
+				return UnicodeToUtf8(std::wstring_view(std::forward<In>(in)), outBuffer, outBufferSize);
 			}
-
-			auto [unicodeLen, utf8Len] = calcUnicodeToUtf8Length(in);
-			if (outBufferSize < unicodeLen) return std::u8string::npos;
-
-			return UnicodeToUtf8(in.data(), unicodeLen, outBuffer);
 		}
 
-		template<typename In, typename Out = std::u8string, typename = std::enable_if_t< is_wstring_data_v<In> && (std::is_same_v<Out, std::string> || std::is_same_v<Out, std::u8string>)>>
-		static auto AE_CALL UnicodeToUtf8(const In& in) {
-			auto [unicodeLen, utf8Len] = calcUnicodeToUtf8Length(in);
-			Out s;
-			s.resize(utf8Len);
-			UnicodeToUtf8(in.data(), unicodeLen, s.data());
+		template<typename In, typename Out = std::u8string, typename = std::enable_if_t<is_convertible_wstring_data_v<std::remove_cvref_t<In>> && is_string8_v<Out>>>
+		static auto AE_CALL UnicodeToUtf8(In&& in) {
+			if constexpr (is_wstring_data_v<std::remove_cvref_t<In>>) {
+				auto [unicodeLen, utf8Len] = calcUnicodeToUtf8Length(in);
+				Out s;
+				s.resize(utf8Len);
+				UnicodeToUtf8(in.data(), unicodeLen, s.data());
 
-			return std::move(s);
+				return std::move(s);
+			} else {
+				return UnicodeToUtf8(std::wstring_view(std::forward<In>(in)));
+			}
 		}
 
 		//utf8Len, unicodeLen
-		template<typename T, typename = string8_data_t<T>>
-		static std::tuple<std::u8string::size_type, std::wstring::size_type> AE_CALL calcUtf8ToUnicodeLength(const T& in) {
-			std::u8string::size_type s = 0;
-			std::wstring::size_type d = 0;
+		template<typename In, typename = convertible_string8_data_t<std::remove_cvref_t<In>>>
+		static std::tuple<std::u8string::size_type, std::wstring::size_type> AE_CALL calcUtf8ToUnicodeLength(In&& in) {
+			if constexpr (is_string8_data_v<std::remove_cvref_t<In>>) {
+				std::u8string::size_type s = 0;
+				std::wstring::size_type d = 0;
 
-			auto inSize = in.size();
-			while (s < inSize) {
-				if (uint8_t c = in[s]; c == 0) {
-					break;
-				} else if ((c & 0x80) == 0) {
-					++s;
-				} else if ((c & 0xE0) == 0xC0) {// 110x-xxxx 10xx-xxxx
-					s += 2;
-				} else if ((c & 0xF0) == 0xE0) {// 1110-xxxx 10xx-xxxx 10xx-xxxx
-					s += 3;
-				} else if ((c & 0xF8) == 0xF0) {// 1111-0xxx 10xx-xxxx 10xx-xxxx 10xx-xxxx 
-					s += 4;
-				} else {// 1111-10xx 10xx-xxxx 10xx-xxxx 10xx-xxxx 10xx-xxxx 
-					s += 5;
+				auto inSize = in.size();
+				while (s < inSize) {
+					if (uint8_t c = in[s]; c == 0) {
+						break;
+					} else if ((c & 0x80) == 0) {
+						++s;
+					} else if ((c & 0xE0) == 0xC0) {// 110x-xxxx 10xx-xxxx
+						s += 2;
+					} else if ((c & 0xF0) == 0xE0) {// 1110-xxxx 10xx-xxxx 10xx-xxxx
+						s += 3;
+					} else if ((c & 0xF8) == 0xF0) {// 1111-0xxx 10xx-xxxx 10xx-xxxx 10xx-xxxx 
+						s += 4;
+					} else {// 1111-10xx 10xx-xxxx 10xx-xxxx 10xx-xxxx 10xx-xxxx 
+						s += 5;
+					}
+					++d;
 				}
-				++d;
-			}
 
-			return std::make_tuple(s, d);
+				return std::make_tuple(s, d);
+			} else {
+				return calcUtf8ToUnicodeLength(convert_to_string8_view_t<std::remove_cvref_t<In>>(std::forward<In>(in)));
+			}
 		}
 
-		template<typename T, typename = string8_data_t<T>>
-		static std::wstring::size_type AE_CALL Utf8ToUnicode(const T& in, wchar_t* outBuffer, std::wstring::size_type outBufferSize) {
-			if (!outBuffer || !outBufferSize) return std::wstring::npos;
-			if (in.empty()) {
-				outBuffer[0] = 0;
-				return 0;
+		template<typename In, typename = convertible_string8_data_t<std::remove_cvref_t<In>>>
+		static std::wstring::size_type AE_CALL Utf8ToUnicode(In&& in, wchar_t* outBuffer, std::wstring::size_type outBufferSize) {
+			if constexpr (is_string8_data_v<std::remove_cvref_t<In>>) {
+				if (!outBuffer || !outBufferSize) return std::wstring::npos;
+				if (in.empty()) {
+					outBuffer[0] = 0;
+					return 0;
+				}
+
+				auto [utf8Len, unicodeLen] = calcUtf8ToUnicodeLength(in);
+				if (outBufferSize < unicodeLen) return std::wstring::npos;
+
+				return Utf8ToUnicode(in, utf8Len, outBuffer);
+			} else {
+				return Utf8ToUnicode(convert_to_string8_view_t<std::remove_cvref_t<In>>(std::forward<In>(in)), outBuffer, outBufferSize);
 			}
-
-			auto [utf8Len, unicodeLen] = calcUtf8ToUnicodeLength(in);
-			if (outBufferSize < unicodeLen) return std::wstring::npos;
-
-			return Utf8ToUnicode(in, utf8Len, outBuffer);
 		}
 
-		template<typename In, typename = std::enable_if_t<std::is_same_v<In, char> || std::is_same_v<In, char8_t>>>
+		template<typename In, typename = std::enable_if_t<is_any_of_v<In, char, char8_t>>>
 		static std::wstring::size_type AE_CALL Utf8ToUnicode(const In* in, std::u8string::size_type inLen, wchar_t* out) {
 			std::u8string::size_type s = 0;
 			std::wstring::size_type d = 0;
@@ -180,35 +200,43 @@ namespace aurora {
 			return d;
 		}
 
-		template<typename T, typename = string8_data_t<T>>
-		static std::wstring AE_CALL Utf8ToUnicode(const T& in) {
-			auto [utf8Len, unicodeLen] = calcUtf8ToUnicodeLength(in);
-			std::wstring s;
-			s.resize(unicodeLen);
-			Utf8ToUnicode(in.data(), utf8Len, s.data());
+		template<typename In, typename = convertible_string8_data_t<std::remove_cvref_t<In>>>
+		static std::wstring AE_CALL Utf8ToUnicode(In&& in) {
+			if constexpr (is_string8_data_v<std::remove_cvref_t<In>>) {
+				auto [utf8Len, unicodeLen] = calcUtf8ToUnicodeLength(in);
+				std::wstring s;
+				s.resize(unicodeLen);
+				Utf8ToUnicode(in.data(), utf8Len, s.data());
 
-			return std::move(s);
-		}
-
-		template<typename T, typename = string8_data_t<T>>
-		static std::wstring::size_type AE_CALL Utf8ToUnicode(const T& in, wchar_t*& out) {
-			if (in.empty()) {
-				out = new wchar_t[1];
-				out[0] = 0;
-				return 0;
+				return std::move(s);
+			} else {
+				return Utf8ToUnicode(convert_to_string8_view_t<std::remove_cvref_t<In>>(std::forward<In>(in)));
 			}
-
-			auto [utf8Len, unicodeLen] = calcUtf8ToUnicodeLength(in);
-			++unicodeLen;
-			out = new wchar_t[unicodeLen];
-			auto len = Utf8ToUnicode(in.data(), utf8Len, out);
-			out[len] = 0;
-
-			return len;
 		}
 
-		template<typename Out, typename = std::enable_if_t<std::is_same_v<Out, char> || std::is_same_v<Out, char8_t>>>
-		static std::u8string::size_type AE_CALL UnicodeToUtf8(const wchar_t* in, std::wstring::size_type inLen, Out* out) {
+		template<typename In, typename = convertible_string8_data_t<std::remove_cvref_t<In>>>
+		static std::wstring::size_type AE_CALL Utf8ToUnicode(In&& in, wchar_t*& out) {
+			if constexpr (is_string8_data_v<std::remove_cvref_t<In>>) {
+				if (in.empty()) {
+					out = new wchar_t[1];
+					out[0] = 0;
+					return 0;
+				}
+
+				auto [utf8Len, unicodeLen] = calcUtf8ToUnicodeLength(in);
+				++unicodeLen;
+				out = new wchar_t[unicodeLen];
+				auto len = Utf8ToUnicode(in.data(), utf8Len, out);
+				out[len] = 0;
+
+				return len;
+			} else {
+				return Utf8ToUnicode(convert_to_string8_view_t<std::remove_cvref_t<In>>(std::forward<In>(in)), out);
+			}
+		}
+
+		template<typename Out, typename = std::enable_if_t<is_any_of_v<Out, char, char8_t>>>
+		static std::u8string::size_type AE_CALL UnicodeToUtf8(const wchar_t* const in, std::wstring::size_type inLen, Out* out) {
 			std::wstring::size_type s = 0;
 			std::u8string::size_type d = 0;
 
@@ -237,31 +265,35 @@ namespace aurora {
 			return d;
 		}
 
-		template<typename Input, typename Separator, typename Fn, typename = std::enable_if_t<is_string_data_v<Input> || std::is_convertible_v<Input, char const*>>, 
-			typename = std::enable_if_t<(std::is_base_of_v<std::regex, Separator> || is_string_data_v<Separator> || std::is_convertible_v<Separator, char const*>) && std::is_invocable_v<Fn, const std::string_view&>>>
-		static void AE_CALL split(const Input& input, const Separator& separator, Fn&& fn) {
-			if constexpr (std::is_base_of_v<std::regex, Separator>) {
-				std::regex_token_iterator itr(input.begin(), input.end(), separator, -1);
-				std::regex_token_iterator<typename Input::const_iterator> end;
-				while (itr != end) {
-					fn(std::string_view(&*itr->first, itr->length()));
-					++itr;
+		template<typename In, typename Separator, typename Fn, typename =
+			std::enable_if_t<is_convertible_string_data_v<std::remove_cvref_t<In>> && (std::is_base_of_v<std::regex, std::remove_cvref_t<Separator>> || is_convertible_string_data_v<std::remove_cvref_t<Separator>>) && std::is_invocable_v<Fn, const std::string_view&>>>
+		static void AE_CALL split(In&& in, Separator&& separator, Fn&& fn) {
+			if constexpr (std::is_base_of_v<std::regex, std::remove_cvref_t<Separator>>) {
+				if constexpr (is_string_data_v<std::remove_cvref_t<In>>) {
+					std::regex_token_iterator itr(in.begin(), in.end(), separator, -1);
+					std::regex_token_iterator<typename In::const_iterator> end;
+					while (itr != end) {
+						fn(std::string_view(&*itr->first, itr->length()));
+						++itr;
+					}
+				} else {
+					split(std::string_view(std::forward<In>(in)), std::forward<Separator>(separator), std::forward<Fn>(fn));
 				}
-			} else if constexpr (is_string_data_v<Input> && is_string_data_v<Separator>) {
+			} else if constexpr (is_string_data_v<std::remove_cvref_t<In>> && is_string_data_v<std::remove_cvref_t<Separator>>) {
 				if (auto step = separator.size(); step) {
-					size_t begin = 0, i = 0, size = input.size();
+					size_t begin = 0, i = 0, size = in.size();
 					while (i < size) {
-						if (input[i] == separator[0]) {
+						if (in[i] == separator[0]) {
 							auto found = true;
 							for (size_t j = 1; j < step; ++j) {
-								if (input[i + j] != separator[j]) {
+								if (in[i + j] != separator[j]) {
 									found = false;
 									break;
 								}
 							}
 
 							if (found) {
-								fn(std::string_view(input.data() + begin, i - begin));
+								fn(std::string_view(in.data() + begin, i - begin));
 								i += step;
 								begin = i;
 							} else {
@@ -272,22 +304,22 @@ namespace aurora {
 						}
 					}
 
-					fn(std::string_view(input.data() + begin, i - begin));
+					fn(std::string_view(in.data() + begin, i - begin));
 				} else {
-					fn(input);
+					fn(in);
 				}
 			} else {
-				split(std::string_view(input), std::string_view(separator), fn);
+				split(std::string_view(std::forward<In>(in)), std::string_view(std::forward<Separator>(separator)), std::forward<Fn>(fn));
 			}
 		}
 
-		template<typename Input, typename Fn, typename = std::enable_if_t<is_string_data_v<Input> || std::is_convertible_v<Input, char const*>>, typename = std::enable_if_t<std::is_invocable_v<Fn, const std::string_view&>>>
-		static void AE_CALL split(const Input& input, uint8_t flags, Fn&& fn) {
-			if constexpr (is_string_data_v<Input>) {
-				size_t begin = 0, i = 0, size = input.size();
+		template<typename In, typename Fn, typename = std::enable_if_t<is_convertible_string_data_v<std::remove_cvref_t<In>> && std::is_invocable_v<Fn, const std::string_view&>>>
+		static void AE_CALL split(In&& in, uint8_t flags, Fn&& fn) {
+			if constexpr (is_string_data_v<std::remove_cvref_t<In>>) {
+				size_t begin = 0, i = 0, size = in.size();
 				while (i < size) {
-					if (CHARS[input[i]] & flags) {
-						fn(std::string_view(input.data() + begin, i - begin));
+					if (CHARS[in[i]] & flags) {
+						fn(std::string_view(in.data() + begin, i - begin));
 						++i;
 						begin = i;
 					} else {
@@ -295,56 +327,64 @@ namespace aurora {
 					}
 				}
 
-				fn(std::string_view(input.data() + begin, i - begin));
+				fn(std::string_view(in.data() + begin, i - begin));
 			} else {
-				split(std::string_view(input), flags, fn);
+				split(std::string_view(std::forward<In>(in)), flags, std::forward<Fn>(fn));
 			}
 		}
 
-		template<typename T, typename = string_data_t<T>>
-		static std::string_view trimQuotation(const T& str) {
-			auto size = str.size();
+		template<typename In, typename = convertible_string8_data_t<std::remove_cvref_t<In>>>
+		static convert_to_string8_view_t<std::remove_cvref_t<In>> AE_CALL trimQuotation(In&& in) {
+			if constexpr (is_string_data_v<std::remove_cvref_t<In>>) {
+				auto size = in.size();
 
-			if (size >= 2) {
-				if (str[0] == '\"' && str[size - 1] == '\"') {
-					return std::string_view(str.data() + 1, size - 2);
+				if (size >= 2) {
+					if (in[0] == '\"' && in[size - 1] == '\"') {
+						return convert_to_string8_view_t<std::remove_cvref_t<In>>(in.data() + 1, size - 2);
+					} else {
+						return in;
+					}
+				} else if (size == 1 && in[0] == '\"') {
+					return convert_to_string8_view_t<std::remove_cvref_t<In>>();
 				} else {
-					return str;
+					return in;
 				}
-			} else if (size == 1 && str[0] == '\"') {
-				return std::string_view();
 			} else {
-				return str;
+				return trimQuotation(convert_to_string8_view_t<std::remove_cvref_t<In>>(std::forward<In>(in)));
 			}
 		}
 
-		template<typename T, typename = string_data_t<T>>
-		static std::string_view trim(const T& str, uint8_t flags) {
-			auto size = str.size();
+		template<typename In, typename = convertible_string8_data_t<std::remove_cvref_t<In>>>
+		static convert_to_string8_view_t<std::remove_cvref_t<In>> AE_CALL trim(In&& in, uint8_t flags) {
+			if constexpr (is_string_data_v<std::remove_cvref_t<In>>) {
+				auto size = in.size();
 
-			if (size) {
-				size_t left = 0, right = size - 1;
-				do {
-					if (CHARS[str[left]] & flags) {
-						++left;
-					} else {
-						break;
+				if (size) {
+					size_t left = 0, right = size - 1;
+					do {
+						if (CHARS[in[left]] & flags) {
+							++left;
+						} else {
+							break;
+						}
+					} while (left < size);
+
+					if (left == size) return convert_to_string8_view_t<std::remove_cvref_t<In>>();
+
+					while (right > left) {
+						if (CHARS[in[right]] & flags) {
+							--right;
+						} else {
+							break;
+						}
 					}
-				} while (left < size);
 
-				if (left == size) return std::string_view();
-
-				while (right > left) {
-					if (CHARS[str[right]] & flags) {
-						--right;
-					} else {
-						break;
-					}
+					return convert_to_string8_view_t<std::remove_cvref_t<In>>(in.data() + left, right - left + 1);
+				} else {
+					return in;
 				}
-
-				return std::string_view(str.data() + left, right - left + 1);
 			} else {
-				return str;
+				return trim(convert_to_string8_view_t<std::remove_cvref_t<In>>(std::forward<In>(in)));
 			}
 		}
 
@@ -461,66 +501,82 @@ namespace aurora {
 
 		static std::string AE_CALL toString(const uint8_t* value, size_t size);
 
-		template<typename Out, typename In, typename = string_data_t<In>, typename = integral_t<Out>>
-		inline static Out toNumber(const In& in, int32_t base = 10) {
-			Out value;
+		template<typename Out, typename In, typename = std::enable_if_t<is_convertible_string_data_v<std::remove_cvref_t<In>> && std::is_integral_v<Out>>>
+		inline static Out toNumber(In&& in, int32_t base = 10) {
+			if constexpr (is_string_data_v<std::remove_cvref_t<In>>) {
+				Out value;
 #ifdef __cpp_lib_to_chars
-			auto begin = in.data();
-			return std::from_chars(begin, begin + in.size(), value, base).ec == std::errc() ? value : 0;
+				auto begin = in.data();
+				return std::from_chars(begin, begin + in.size(), value, base).ec == std::errc() ? value : 0;
 #else
-			if constexpr (std::is_unsigned_v<In>) {
-				if constexpr (sizeof(In) <= sizeof(uint32_t)) {
-					return std::stoul(in.data(), nullptr, base);
+				if constexpr (std::is_unsigned_v<In>) {
+					if constexpr (sizeof(In) <= sizeof(uint32_t)) {
+						return std::stoul(in.data(), nullptr, base);
+					} else {
+						return std::stoull(in.data(), nullptr, base);
+					}
 				} else {
-					return std::stoull(in.data(), nullptr, base);
+					if constexpr (sizeof(In) <= sizeof(uint32_t)) {
+						return std::stol(in.data(), nullptr, base);
+					} else {
+						return std::stoll(in.data(), nullptr, base);
+					}
 				}
-			} else {
-				if constexpr (sizeof(In) <= sizeof(uint32_t)) {
-					return std::stol(in.data(), nullptr, base);
-				} else {
-					return std::stoll(in.data(), nullptr, base);
-				}
-			}
 #endif
+			} else {
+				return toNumber<Out>(std::string_view(std::forward<In>(in)), base);
+			}
 		}
 
-		template<typename Out, typename In, typename = string_data_t<In>, typename = floating_point_t<Out>>
+		template<typename Out, typename In, typename = std::enable_if_t<is_convertible_string_data_v<std::remove_cvref_t<In>> && std::is_floating_point_v<Out>>>
 		inline static Out toNumber(const In& in) {
-			Out value;
+			if constexpr (is_string_data_v<std::remove_cvref_t<In>>) {
+				Out value;
 #ifdef __cpp_lib_to_chars
-			auto begin = in.data();
-			return std::from_chars(begin, begin + in.size(), value).ec == std::errc() ? value : 0.;
+				auto begin = in.data();
+				return std::from_chars(begin, begin + in.size(), value).ec == std::errc() ? value : 0.;
 #else
-			if constexpr (std::is_same_v<In, float32_t>) {
-				return std::stof(in.data(), nullptr);
-			} else {
-				return std::stod(in.data(), nullptr);
-			}
+				if constexpr (std::is_same_v<In, float32_t>) {
+					return std::stof(in.data(), nullptr);
+				} else {
+					return std::stod(in.data(), nullptr);
+				}
 #endif
-		}
-
-		template<typename T, typename = string_data_t<T>>
-		inline static std::string::size_type AE_CALL find(const T& input, char c) {
-			auto p = (const char*)memchr(input.data(), c, input.size());
-			return p ? p - input.data() : std::string::npos;
-		}
-
-		template<typename Input, typename Compare, typename = string_data_t<Input>, typename = std::enable_if_t<is_string_data_v<Compare> || std::is_convertible_v<Compare, char const*>>>
-		inline static std::string::size_type AE_CALL find(const Input& input, const Compare& compare) {
-			if constexpr (is_string_data_v<Compare>) {
-				auto p = (const char*)memFind(input.data(), input.size(), compare.data(), compare.size());
-				return p ? p - input.data() : std::string::npos;
 			} else {
-				return find(input, std::string_view(compare));
+				return toNumber<Out>(std::string_view(std::forward<In>(in)));
 			}
 		}
 
-		template<typename T, typename = string_data_t<T>>
-		inline static std::string::size_type AE_CALL find(const T& input, uint8_t flags) {
-			for (size_t i = 0, n = input.size(); i < n; ++i) {
-				if (CHARS[input[i]] & flags) return i;
+		template<typename In, typename = convertible_string_data_t<std::remove_cvref_t<In>>>
+		inline static std::string::size_type AE_CALL find(In&& in, char c) {
+			if constexpr (is_string8_data_v<std::remove_cvref_t<In>>) {
+				auto p = (const In::value_type*)memchr(in.data(), c, in.size());
+				return p ? p - in.data() : std::string::npos;
+			} else {
+				return find(convert_to_string8_view_t<std::remove_cvref_t<In>>(std::forward<In>(in)), c);
 			}
-			return std::string::npos;
+		}
+
+		template<typename In, typename Compare, typename = std::enable_if_t<is_convertible_string_data_v<std::remove_cvref_t<In>> && is_convertible_string_data_v<std::remove_cvref_t<Compare>>>>
+		inline static std::string::size_type AE_CALL find(In&& in, Compare&& compare) {
+			if constexpr (is_string_data_v<std::remove_cvref_t<In>> && is_string_data_v<std::remove_cvref_t<Compare>>) {
+				auto p = (const In::value_type*)memFind(in.data(), in.size(), compare.data(), compare.size());
+				return p ? p - in.data() : std::string::npos;
+			} else {
+				return find(std::string_view(std::forward<In>(in)), std::string_view(std::forward<Compare>(compare)));
+			}
+		}
+
+		template<typename In, typename = convertible_string_data_t<std::remove_cvref_t<In>>>
+		inline static std::string::size_type AE_CALL find(In&& in, uint8_t flags) {
+			if constexpr (is_string8_data_v<std::remove_cvref_t<In>>) {
+				for (size_t i = 0, n = in.size(); i < n; ++i) {
+					if (CHARS[in[i]] & flags) return i;
+				}
+				return std::string::npos;
+			} else {
+				return find(convert_to_string8_view_t<std::remove_cvref_t<In>>(std::forward<In>(in)));
+			}
 		}
 
 		static bool AE_CALL isEqual(const char* str1, const char* str2);

@@ -73,15 +73,17 @@ namespace aurora::modules::graphics::program_source_translator {
 #ifdef AE_MODULE_EXPORTS
 namespace aurora::modules::graphics {
 	extern "C" AE_MODULE_DLL_EXPORT void* AE_CREATE_MODULE_FN_NAME(Ref* loader, const SerializableObject* args) {
+		using namespace std::literals;
+
 		if (!args) {
-			printdln("Module create err, no args");
+			printdln(L"Module create err, no args"sv);
 			return nullptr;
 		}
 
 		std::string_view dxc;
 		if (auto so = args->tryGetPtr("dxc"); so) dxc = so->toStringView();
 		if (dxc.empty()) {
-			printdln("Module create err, no dxc");
+			printdln(L"Module create err, no dxc"sv);
 			return nullptr;
 		}
 
