@@ -52,21 +52,94 @@ inline std::conditional_t<is_string8_view_v<std::remove_cvref_t<T>>, std::remove
 	}
 }
 
+template<typename T>
+void ccdd(T&& a) {
+	int b = 1;
+}
+
+template<typename T>
+void aabb(T&& a) {
+	ccdd(cast_forward<char>(a));
+}
+
+#include <variant>
+
+struct bad_type {};
+
+template<typename... Types>
+struct type_array {
+private:
+	template<bool B, size_t I, size_t N, typename PrevType, typename... OtherTypes>
+	struct _at;
+
+	template<bool B, size_t I, size_t N>
+	struct _at<B, I, N, bad_type> {
+		using type = bad_type;
+	};
+
+	template<size_t I, size_t N, typename PrevType, typename... OtherTypes>
+	struct _at<false, I, N, PrevType, OtherTypes...> {
+		using type = std::conditional_t<I - 1 == N, PrevType, bad_type>;
+	};
+
+	template<size_t I, size_t N, typename PrevType, typename CurType, typename... OtherTypes>
+	struct _at<true, I, N, PrevType, CurType, OtherTypes...> : public _at<(I < N) && (N < sizeof...(Types)), I + 1, N, CurType, OtherTypes...> {};
+
+	template<bool B, size_t I, typename T, typename PrevType, typename... OtherTypes>
+	struct _find;
+
+	template<bool B, size_t I, typename T>
+	struct _find<B, I, T, bad_type> {
+		inline static constexpr std::optional<size_t> index = std::nullopt;
+	};
+
+	template<size_t I, typename T, typename PrevType, typename... OtherTypes>
+	struct _find<false, I, T, PrevType, OtherTypes...> {
+		inline static constexpr std::optional<size_t> index = std::is_same_v<T, PrevType> ? std::make_optional<size_t>(I - 1) : std::nullopt;
+	};
+
+	template<size_t I, typename T, typename PrevType, typename CurType, typename... OtherTypes>
+	struct _find<true, I, T, PrevType, CurType, OtherTypes...> : public _find<!std::is_same_v<T, CurType> && (I + 1 < sizeof...(Types)), I + 1, T, CurType, OtherTypes...> {};
+
+public:
+	inline static constexpr size_t size = sizeof...(Types);
+
+	template<size_t I>
+	using at = typename _at<true, 0, I, bad_type, Types...>::type;
+
+	template<typename T>
+	inline static constexpr std::optional<size_t> find = _find<true, 0, T, bad_type, Types...>::index;
+
+	template<typename T>
+	inline static constexpr bool has = find<T> != std::nullopt;
+};
+
+//template<typename T, typename... Types> using convert_type = std::enable_if_t<type_array<Types...>::template has<T>, std::conditional_t<(type_array<Types...>::template find<T>.value() & 0b1) == 0b1, typename type_array<Types...>::template element<type_array<Types...>::template find<T>.value() - 1>, typename type_array<Types...>::template element<type_array<Types...>::template find<T>.value() + 1>>>;
+
+
 class OffscreenTester : public BaseTester {
 public:
 	virtual int32_t AE_CALL run() override {
 		constexpr std::string_view γ{ "0.5" };
 
-		auto wgfwe = u8"abc"sv;
+		const volatile char8_t dsfe[] = u8"abc";
 
-		ByteArray ba;
-		ba.setEndian(std::endian::big);
-		ba.write(0x0201_ui16);
-		auto sss = ba.getSource();
-		auto v1 = sss[0];
-		auto v2 = sss[1];
-		auto llll = ba.getLength();
-		auto pppp = ba.getPosition();
+		aabb(dsfe);
+
+		//constexpr auto i = type_array<int, std::string, std::string_view>::has<std::u8string_view>;
+
+		using ttttt = type_array<std::string, std::u8string, std::u8string, std::u8string_view, char*, char8_t*>;
+		//auto iiiii = ttttt::find<int> == std::nullopt;
+		using eeeeeeeeeee = ttttt::at<5>;
+		eeeeeeeeeee yyye;
+
+		constexpr auto ooooo = ttttt::has<const std::u8string_view>;
+
+		//ffffffff fv;
+		//auto nnn = (std::numeric_limits<size_t>::max)();
+
+		//convert_type<char*, std::string, std::u8string, std::u8string, std::u8string_view, char*, char8_t*> vvvv;
+		//constexpr bool bbbbb = convert_type_bbb<std::string, std::string, std::u8string, std::u8string, std::u8string_view, char*, char8_t*>;
 
 		auto monitors = Monitor::getMonitors();
 		auto vms = monitors[0].getVideoModes();

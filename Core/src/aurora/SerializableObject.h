@@ -122,7 +122,12 @@ namespace aurora {
 		SerializableObject(const char* value, Flag flag = Flag::COPY);
 		SerializableObject(const std::string& value, Flag flag = Flag::COPY);
 		SerializableObject(const std::string_view& value, Flag flag = Flag::COPY);
-		SerializableObject(const uint8_t* value, size_t size, Flag flag = Flag::COPY);
+#ifdef __cpp_lib_char8_t
+		SerializableObject(const char8_t* value, Flag flag = Flag::COPY) : SerializableObject((const char*)value, flag) {}
+		SerializableObject(const std::u8string& value, Flag flag = Flag::COPY) : SerializableObject((const std::string&)value, flag) {}
+		SerializableObject(const std::u8string_view& value, Flag flag = Flag::COPY) : SerializableObject((const std::string_view&)value, flag) {}
+#endif
+		SerializableObject(const void* value, size_t size, Flag flag = Flag::COPY);
 		SerializableObject(const ByteArray& ba, Flag flag = Flag::COPY);
 		SerializableObject(const SerializableObject& value);
 		SerializableObject(const SerializableObject& value, Flag flag);
@@ -286,14 +291,20 @@ namespace aurora {
 		inline void AE_CALL set(const float64_t& value) {
 			_set<float64_t, Type::FLOAT64>(value);
 		}
-		inline void AE_CALL set(const char* value, Flag flag = Flag::COPY) {
-			set(std::string_view(value, strlen(value)), flag);
-		}
-		inline void AE_CALL set(const std::string& value, Flag flag = Flag::COPY) {
-			set(std::string_view(value), flag);
-		}
 		void AE_CALL set(const std::string_view& value, Flag flag = Flag::COPY);
-		void AE_CALL set(const uint8_t* value, size_t size, Flag flag);
+
+		template<typename T, typename = std::enable_if_t<!std::is_same_v<std::remove_cvref_t<T>, std::string_view> && is_convertible_string8_data_v<std::remove_cvref_t<T>>>>
+		inline void AE_CALL set(T&& value, Flag flag = Flag::COPY) {
+			if constexpr (is_convertible_string_data_v<std::remove_cvref_t<T>>) {
+				set(std::string_view(std::forward<T>(value)), flag);
+			} else if constexpr (std::is_same_v<std::remove_cvref_t<T>, std::u8string_view>) {
+				set((const std::string_view&)value, flag);
+			} else {
+				set(std::u8string_view(std::forward<T>(value)), flag);
+			}
+		}
+
+		void AE_CALL set(const void* value, size_t size, Flag flag);
 
 		void AE_CALL set(const SerializableObject& value, Flag flag = Flag::NONE);
 
@@ -306,64 +317,99 @@ namespace aurora {
 		void AE_CALL insertAt(size_t index, const SerializableObject& value);
 
 		SerializableObject& AE_CALL get(const SerializableObject& key);
-		inline SerializableObject& AE_CALL get(const char* key) {
-			return get(std::string_view(key, strlen(key)));
-		}
-		inline SerializableObject& AE_CALL get(const std::string& key) {
-			return get(std::string_view(key));
-		}
 		inline SerializableObject& AE_CALL get(const std::string_view& key) {
 			return get(SerializableObject(key, Flag::NONE));
 		}
+
+		template<typename T, typename = std::enable_if_t<!std::is_same_v<std::remove_cvref_t<T>, std::string_view>&& is_convertible_string8_data_v<std::remove_cvref_t<T>>>>
+		inline SerializableObject& AE_CALL get(T&& key) {
+			if constexpr (is_convertible_string_data_v<std::remove_cvref_t<T>>) {
+				return get(std::string_view(std::forward<T>(key)));
+			} else if constexpr (std::is_same_v<std::remove_cvref_t<T>, std::u8string_view>) {
+				return get((const std::string_view&)key);
+			} else {
+				return get(std::u8string_view(std::forward<T>(key)));
+			}
+		}
+
 		SerializableObject AE_CALL tryGet(const SerializableObject& key) const;
-		inline SerializableObject AE_CALL tryGet(const char* key) const {
-			return tryGet(std::string_view(key, strlen(key)));
-		}
-		inline SerializableObject AE_CALL tryGet(const std::string& key) const {
-			return tryGet(std::string_view(key));
-		}
 		inline SerializableObject AE_CALL tryGet(const std::string_view& key) const {
 			return tryGet(SerializableObject(key, Flag::NONE));
 		}
+
+		template<typename T, typename = std::enable_if_t<!std::is_same_v<std::remove_cvref_t<T>, std::string_view>&& is_convertible_string8_data_v<std::remove_cvref_t<T>>>>
+		inline SerializableObject AE_CALL tryGet(T&& key) const {
+			if constexpr (is_convertible_string_data_v<std::remove_cvref_t<T>>) {
+				return tryGet(std::string_view(std::forward<T>(key)));
+			} else if constexpr (std::is_same_v<std::remove_cvref_t<T>, std::u8string_view>) {
+				return tryGet((const std::string_view&)key);
+			} else {
+				return tryGet(std::u8string_view(std::forward<T>(key)));
+			}
+		}
+
 		SerializableObject* AE_CALL tryGetPtr(const SerializableObject& key) const;
-		inline SerializableObject* AE_CALL tryGetPtr(const char* key) const {
-			return tryGetPtr(std::string_view(key, strlen(key)));
-		}
-		inline SerializableObject* AE_CALL tryGetPtr(const std::string& key) const {
-			return tryGetPtr(std::string_view(key));
-		}
 		inline SerializableObject* AE_CALL tryGetPtr(const std::string_view& key) const {
 			return tryGetPtr(SerializableObject(key, Flag::NONE));
 		}
+
+		template<typename T, typename = std::enable_if_t<!std::is_same_v<std::remove_cvref_t<T>, std::string_view>&& is_convertible_string8_data_v<std::remove_cvref_t<T>>>>
+		inline SerializableObject* AE_CALL tryGetPtr(T&& key) const {
+			if constexpr (is_convertible_string_data_v<std::remove_cvref_t<T>>) {
+				return tryGetPtr(std::string_view(std::forward<T>(key)));
+			} else if constexpr (std::is_same_v<std::remove_cvref_t<T>, std::u8string_view>) {
+				return tryGetPtr((const std::string_view&)key);
+			} else {
+				return tryGetPtr(std::u8string_view(std::forward<T>(key)));
+			}
+		}
+
 		SerializableObject& AE_CALL insert(const SerializableObject& key, const SerializableObject& value);
-		inline SerializableObject& AE_CALL insert(const char* key, const SerializableObject& value) {
-			return insert(std::string_view(key, strlen(key)), value);
-		}
-		inline SerializableObject& AE_CALL insert(const std::string& key, const SerializableObject& value) {
-			return insert(std::string_view(key), value);
-		}
 		inline SerializableObject& AE_CALL insert(const std::string_view& key, const SerializableObject& value) {
 			return insert(SerializableObject(key, Flag::TO_COPY), value);
 		}
+
+		template<typename T, typename = std::enable_if_t<!std::is_same_v<std::remove_cvref_t<T>, std::string_view>&& is_convertible_string8_data_v<std::remove_cvref_t<T>>>>
+		inline SerializableObject& AE_CALL insert(T&& key, const SerializableObject& value) {
+			if constexpr (is_convertible_string_data_v<std::remove_cvref_t<T>>) {
+				return insert(std::string_view(std::forward<T>(key)), value);
+			} else if constexpr (std::is_same_v<std::remove_cvref_t<T>, std::u8string_view>) {
+				return insert((const std::string_view&)key, value);
+			} else {
+				return insert(std::u8string_view(std::forward<T>(key)), value);
+			}
+		}
+
 		SerializableObject AE_CALL remove(const SerializableObject& key);
-		inline SerializableObject AE_CALL remove(const char* key) {
-			return remove(std::string_view(key, strlen(key)));
-		}
-		inline SerializableObject AE_CALL remove(const std::string& key) {
-			return remove(std::string_view(key));
-		}
 		inline SerializableObject AE_CALL remove(const std::string_view& key) {
 			return remove(SerializableObject(key, Flag::NONE));
 		}
+
+		template<typename T, typename = std::enable_if_t<!std::is_same_v<std::remove_cvref_t<T>, std::string_view>&& is_convertible_string8_data_v<std::remove_cvref_t<T>>>>
+		inline SerializableObject AE_CALL remove(T&& key) {
+			if constexpr (is_convertible_string_data_v<std::remove_cvref_t<T>>) {
+				return remove(std::string_view(std::forward<T>(key)));
+			} else if constexpr (std::is_same_v<std::remove_cvref_t<T>, std::u8string_view>) {
+				return remove((const std::string_view&)key);
+			} else {
+				return remove(std::u8string_view(std::forward<T>(key)));
+			}
+		}
+
 		bool AE_CALL has(const SerializableObject& key) const;
-		inline bool AE_CALL has(const char* key) const {
-			return has(std::string_view(key, strlen(key)));
-		}
-		inline bool AE_CALL has(const std::string& key) const {
-			return has(std::string_view(key));
-		}
 		inline bool AE_CALL has(const std::string_view& key) const {
 			return has(SerializableObject(key, Flag::NONE));
+		}
+
+		template<typename T, typename = std::enable_if_t<!std::is_same_v<std::remove_cvref_t<T>, std::string_view>&& is_convertible_string8_data_v<std::remove_cvref_t<T>>>>
+		inline bool AE_CALL has(T&& key) const {
+			if constexpr (is_convertible_string_data_v<std::remove_cvref_t<T>>) {
+				return has(std::string_view(std::forward<T>(key)));
+			} else if constexpr (std::is_same_v<std::remove_cvref_t<T>, std::u8string_view>) {
+				return has((const std::string_view&)key);
+			} else {
+				return has(std::u8string_view(std::forward<T>(key)));
+			}
 		}
 
 		template<typename Fn, typename = 

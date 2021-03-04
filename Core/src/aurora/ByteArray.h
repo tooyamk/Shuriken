@@ -488,7 +488,7 @@ namespace aurora {
 			case 3:
 			{
 				if (value < 0) value = BitUInt<24>::MAX + 1 + value;
-				_write((uint8_t*)&value, 3);
+				_write(&value, 3);
 
 				break;
 			}
@@ -498,21 +498,21 @@ namespace aurora {
 			case 5:
 			{
 				if (value < 0) value = BitUInt<40>::MAX + 1 + value;
-				_write((uint8_t*)&value, 5);
+				_write(&value, 5);
 
 				break;
 			}
 			case 6:
 			{
 				if (value < 0) value = BitUInt<48>::MAX + 1 + value;
-				_write((uint8_t*)&value, 6);
+				_write(&value, 6);
 
 				break;
 			}
 			case 7:
 			{
 				if (value < 0) value = BitUInt<56>::MAX + 1 + value;
-				_write((uint8_t*)&value, 7);
+				_write(&value, 7);
 
 				break;
 			}
@@ -526,7 +526,7 @@ namespace aurora {
 
 		template<ValueType T, typename = std::enable_if_t<T == ValueType::UIX>>
 		inline void AE_CALL write(uint64_t value, uint8_t numBytes) {
-			if (numBytes > 0 && numBytes < 9) _write((uint8_t*)&value, numBytes);
+			if (numBytes > 0 && numBytes < 9) _write(&value, numBytes);
 		}
 
 		template<ValueType T, typename = std::enable_if_t<T == ValueType::TWO_I12>>
@@ -709,7 +709,9 @@ namespace aurora {
 			return std::move(T((char*)_data + begin, num));
 		}
 
-		inline void AE_CALL _write(const uint8_t* p, size_t len) {
+		inline void AE_CALL _write(const void* data, size_t len) {
+			auto p = (const uint8_t*)data;
+
 			_checkLength(len);
 
 			if (_needReverse) {
@@ -721,20 +723,9 @@ namespace aurora {
 			_position += len;
 		}
 
-		template<typename T, typename = std::enable_if_t<
-			std::is_same_v<T, bool> ||
-			std::is_same_v<T, int8_t> ||
-			std::is_same_v<T, uint8_t> ||
-			std::is_same_v<T, int16_t> ||
-			std::is_same_v<T, uint16_t> ||
-			std::is_same_v<T, int32_t> ||
-			std::is_same_v<T, uint32_t> ||
-			std::is_same_v<T, int64_t> ||
-			std::is_same_v<T, uint64_t> ||
-			std::is_same_v<T, float32_t> ||
-			std::is_same_v<T, float64_t>>>
+		template<typename T, typename = any_of_t<T, bool, int8_t, uint8_t, int16_t, uint16_t, int32_t, uint32_t, int64_t, uint64_t, float32_t, float64_t>>
 		inline void AE_CALL _write(const T& value) {
-			_write((uint8_t*)&value, sizeof(T));
+			_write(&value, sizeof(T));
 		}
 
 		void AE_CALL _resize(size_t len);
@@ -751,7 +742,7 @@ namespace aurora {
 
 		inline uint8_t AE_CALL _bomOffset(size_t pos) const {
 			if (pos + 3 > _length) return 0;
-			return (uint8_t)_data[pos] == 0xEF && (uint8_t)_data[pos + 1] == 0xBB && (uint8_t)_data[pos + 2] == 0xBF ? 3 : 0;
+			return _data[pos] == 0xEF && _data[pos + 1] == 0xBB && _data[pos + 2] == 0xBF ? 3 : 0;
 		}
 	};
 

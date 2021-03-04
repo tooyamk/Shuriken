@@ -180,16 +180,16 @@ namespace aurora {
 		}
 	}
 
-	SerializableObject::SerializableObject(const uint8_t* value, size_t size, Flag flag) {
+	SerializableObject::SerializableObject(const void* value, size_t size, Flag flag) {
 		using namespace aurora::enum_operators;
 
 		if ((flag & Flag::COPY) == Flag::COPY) {
-			_getValue<Bytes*>() = new Bytes(value, size);
+			_getValue<Bytes*>() = new Bytes((const uint8_t*)value, size);
 			_type = Type::BYTES;
 			_flag = Flag::NONE;
 		} else {
 			auto& bv = _getValue<BytesView>();
-			bv.data = value;
+			bv.data = (const uint8_t*)value;
 			bv.size = size;
 			_type = Type::EXT_BYTES;
 			_flag = flag & Flag::TO_COPY;
@@ -704,7 +704,7 @@ namespace aurora {
 	void SerializableObject::_toJson(std::string& json) const {
 		switch (_type) {
 		case Type::INVALID:
-			json += "\"$undefined\"";
+			json += "\"$invalid\"";
 			break;
 		case Type::BOOL:
 		case Type::INT:
@@ -863,17 +863,17 @@ namespace aurora {
 		}
 	}
 
-	void SerializableObject::set(const uint8_t* value, size_t size, Flag flag) {
+	void SerializableObject::set(const void* value, size_t size, Flag flag) {
 		using namespace aurora::enum_operators;
 
 		_flag = Flag::NONE;
 		if ((flag & Flag::COPY) == Flag::COPY) {
 			setBytes<false>();
-			_getValue<Bytes*>()->setValue(value, size);
+			_getValue<Bytes*>()->setValue((const uint8_t*)value, size);
 		} else {
 			setBytes<true>();
 			auto& val = _getValue<BytesView>();
-			val.data = value;
+			val.data = (const uint8_t*)value;
 			val.size = size;
 		}
 	}

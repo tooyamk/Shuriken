@@ -402,8 +402,8 @@ namespace aurora {
 	}
 
 
-	template <typename T, typename... Types> inline constexpr bool is_any_of_v = std::disjunction_v<std::is_same<T, Types>...>;
-	template <typename T, typename... Types> using any_of_t = std::enable_if_t<is_any_of_v<T, Types...>, T>;
+	template<typename T, typename... Types> inline constexpr bool is_any_of_v = std::disjunction_v<std::is_same<T, Types>...>;
+	template<typename T, typename... Types> using any_of_t = std::enable_if_t<is_any_of_v<T, Types...>, T>;
 
 
 	template<typename T> inline constexpr bool is_signed_integral_v = std::is_signed_v<T> && std::is_integral_v<T>;
@@ -450,6 +450,18 @@ namespace aurora {
 
 	template<typename T> inline constexpr bool is_convertible_wstring_data_v = is_wstring_data_v<T> || std::is_convertible_v<T, wchar_t const*>;
 	template<typename T> using convertible_wstring_data_t = std::enable_if_t<is_convertible_wstring_data_v<T>, T>;
+
+
+	template<typename To, typename From>
+	inline constexpr auto&& cast_forward(From&& arg) {
+		using T0 = std::remove_cvref_t<From>;
+		using T1 = std::conditional_t<std::is_const_v<std::remove_reference_t<From>>, std::add_const_t<T0>, T0>;
+		using T2 = std::conditional_t<std::is_volatile_v<std::remove_reference_t<From>>, std::add_volatile_t<T1>, T1>;
+		using T3 = std::conditional_t<std::is_lvalue_reference_v<From>, std::add_lvalue_reference_t<T2>, T2>;
+		using T4 = std::conditional_t<std::is_rvalue_reference_v<From>, std::add_rvalue_reference_t<T3>, T3>;
+
+		return (T4&&)arg;
+	}
 	
 
 #ifdef __cpp_lib_char8_t
@@ -530,9 +542,10 @@ namespace aurora {
 #endif
 	
 
-	template<size_t Bits> using int_t = std::conditional_t<Bits >= 0 && Bits <= 8, int8_t, std::conditional_t<Bits >= 9 && Bits <= 16, int16_t, std::conditional_t<Bits >= 17 && Bits <= 32, int32_t, std::conditional_t<Bits >= 33 && Bits <= 64, int64_t, void>>>>;
-	template<size_t Bits> using uint_t = std::conditional_t<Bits >= 0 && Bits <= 8, uint8_t, std::conditional_t<Bits >= 9 && Bits <= 16, uint16_t, std::conditional_t<Bits >= 17 && Bits <= 32, uint32_t, std::conditional_t<Bits >= 33 && Bits <= 64, uint64_t, void>>>>;
-	template<size_t Bits> using float_t = std::conditional_t<Bits >= 0 && Bits <= 32, float32_t, std::conditional_t<Bits >= 33 && Bits <= 64, float64_t, void>>;
+	template<size_t Bits> using int_t = std::enable_if_t<Bits <= 64, std::conditional_t<Bits <= 8, int8_t, std::conditional_t<Bits <= 16, int16_t, std::conditional_t<Bits <= 32, int32_t, int64_t>>>>;
+	template<size_t Bits> using uint_t = std::enable_if_t<Bits <= 64, std::conditional_t<Bits <= 8, uint8_t, std::conditional_t<Bits <= 16, uint16_t, std::conditional_t<Bits <= 32, uint32_t, uint64_t>>>>;
+	template<size_t Bits> using float_t = std::enable_if_t<Bits <= 64, std::conditional_t<Bits <= 32, float32_t, float64_t>>;
+
 
 #ifdef __cpp_lib_generic_unordered_lookup
 	template<typename T>
