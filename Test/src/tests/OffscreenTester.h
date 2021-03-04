@@ -116,6 +116,41 @@ public:
 
 //template<typename T, typename... Types> using convert_type = std::enable_if_t<type_array<Types...>::template has<T>, std::conditional_t<(type_array<Types...>::template find<T>.value() & 0b1) == 0b1, typename type_array<Types...>::template element<type_array<Types...>::template find<T>.value() - 1>, typename type_array<Types...>::template element<type_array<Types...>::template find<T>.value() + 1>>>;
 
+namespace statical {
+	template < template <typename...> class base, typename derived>
+	struct _is_base_of_template {
+		template<typename... Ts>
+		static constexpr std::true_type  test(const base<Ts...>*);
+
+		static constexpr std::false_type test(...);
+		using type = decltype(test(std::declval<derived*>()));
+	};
+
+	template < template <typename...> class base, typename derived>
+	using is_base_of_template = typename _is_base_of_template<base, derived>::type;
+
+	struct bad_type {
+	};
+
+	struct bad_value {
+	};
+
+	template<typename T>
+	struct type_value {
+		using type = T;
+	};
+
+	template<auto Val, typename T = decltype(Val), typename = std::enable_if_t<std::is_convertible_v<decltype(Val), T>>>
+	struct nontype_value : public type_value<T> {
+		inline static constexpr T value = Val;
+	};
+
+	template<typename... Values>
+	requires requires { typename std::enable_if_t<std::conjunction_v<is_base_of_template<type_value, Values>...>>; }
+	struct array {
+	};
+}
+
 
 class OffscreenTester : public BaseTester {
 public:
@@ -125,6 +160,10 @@ public:
 		const volatile char8_t dsfe[] = u8"abc";
 
 		aabb(dsfe);
+
+		statical::is_base_of_template<statical::type_value, statical::nontype_value<1>>::value;
+
+		statical::array<statical::type_value<int>, statical::nontype_value<1>> arr;
 
 		//constexpr auto i = type_array<int, std::string, std::string_view>::has<std::u8string_view>;
 
