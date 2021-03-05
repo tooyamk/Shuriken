@@ -227,7 +227,7 @@ namespace std {
 #endif
 
 #ifndef __cpp_lib_endian
-	constexpr uint8_t endian_tester() {
+	constexpr uint8_t _endian_tester() {
 		union {
 			uint8_t data[2];
 			uint16_t value;
@@ -237,26 +237,18 @@ namespace std {
 	enum class endian {
 		little = 0,
 		big = 1,
-		native = endian_tester() == 1 ? little : big
+		native = _endian_tester() == 1 ? little : big
 	};
 #endif
 
 #ifndef __cpp_lib_remove_cvref
-	template<typename T>
-	using remove_cvref_t = std::remove_cv_t<std::remove_reference_t<T>>;
-
-	template<typename T>
-	struct remove_cvref { using type = remove_cvref_t<T>; };
+	template<typename T> using remove_cvref_t = std::remove_cv_t<std::remove_reference_t<T>>;
+	template<typename T> struct remove_cvref { using type = remove_cvref_t<T>; };
 #endif
 
 #ifndef __cpp_lib_is_scoped_enum
-	template<typename T>
-	struct is_scoped_enum {
-		constexpr static bool value = std::is_enum_v<T> && !std::is_convertible_v<T, std::underlying_type_t<T>>;
-	};
-
-	template<typename T>
-	inline constexpr bool is_scoped_enum_v = std::is_scoped_enum<T>::value;
+	template<typename T> inline constexpr bool is_scoped_enum_v = std::is_enum_v<T> && !std::is_convertible_v<T, std::underlying_type_t<T>>;
+	template<typename T> struct is_scoped_enum : bool_constant<is_scoped_enum_v<T>> {};
 #endif
 
 #ifndef __cpp_lib_bitops
@@ -403,52 +395,69 @@ namespace aurora {
 
 
 	template<typename T, typename... Types> inline constexpr bool is_any_of_v = std::disjunction_v<std::is_same<T, Types>...>;
+	template<typename T, typename... Types> struct is_any_of : std::bool_constant<is_any_of_v<T, Types...>> {};
 	template<typename T, typename... Types> using any_of_t = std::enable_if_t<is_any_of_v<T, Types...>, T>;
 
 
 	template<typename T> inline constexpr bool is_signed_integral_v = std::is_signed_v<T> && std::is_integral_v<T>;
+	template<typename T> struct is_signed_integral : std::bool_constant<is_signed_integral_v<T>>{};
+	template<typename T> using signed_integral_t = std::enable_if_t<is_signed_integral_v<T>, T>;
+
 	template<typename T> inline constexpr bool is_unsigned_integral_v = std::is_unsigned_v<T> && std::is_integral_v<T>;
+	template<typename T> struct is_unsigned_integral : std::bool_constant<is_unsigned_integral_v<T>>{};
+	template<typename T> using unsigned_integral_t = std::enable_if_t<is_unsigned_integral_v<T>, T>;
 
 
 	template<typename T> using arithmetic_t = std::enable_if_t<std::is_arithmetic_v<T>, T>;
 	template<typename T> using floating_point_t = std::enable_if_t<std::is_floating_point_v<T>, T>;
 	template<typename T> using integral_t = std::enable_if_t<std::is_integral_v<T>, T>;
-	template<typename T> using unsigned_integral_t = std::enable_if_t<is_unsigned_integral_v<T>, T>;
 
 
 	template<typename T> inline constexpr bool is_string8_v = is_any_of_v<T, std::string, std::u8string>;
+	template<typename T> struct is_string8 : std::bool_constant<is_string8_v<T>> {};
 	template<typename T> using string8_t = std::enable_if_t<is_string8_v<T>, T>;
 
 	template<typename T> inline constexpr bool is_string_data_v = is_any_of_v<T, std::string, std::string_view>;
+	template<typename T> struct is_string_data : std::bool_constant<is_string_data_v<T>> {};
 	template<typename T> using string_data_t = std::enable_if_t<is_string_data_v<T>, T>;
 
 	template<typename T> inline constexpr bool is_u8string_data_v = is_any_of_v<T, std::u8string, std::u8string_view>;
+	template<typename T> struct is_u8string_data : std::bool_constant<is_u8string_data_v<T>> {};
 	template<typename T> using u8string_data_t = std::enable_if_t<is_u8string_data_v<T>, T>;
 
 	template<typename T> inline constexpr bool is_convertible_string_data_v = is_string_data_v<T> || std::is_convertible_v<T, char const*>;
+	template<typename T> struct is_convertible_string_data : std::bool_constant<is_convertible_string_data_v<T>> {};
 	template<typename T> using convertible_string_data_t = std::enable_if_t<is_convertible_string_data_v<T>, T>;
 
 	template<typename T> inline constexpr bool is_convertible_u8string_data_v = is_u8string_data_v<T> || std::is_convertible_v<T, char8_t const*>;
+	template<typename T> struct is_convertible_u8string_data : std::bool_constant<is_convertible_u8string_data_v<T>> {};
 	template<typename T> using convertible_u8string_data_t = std::enable_if_t<is_convertible_u8string_data_v<T>, T>;
 
 	template<typename T> inline constexpr bool is_convertible_string8_data_v = is_convertible_string_data_v<T> || is_convertible_u8string_data_v<T>;
+	template<typename T> struct is_convertible_string8_data : std::bool_constant<is_convertible_string8_data_v<T>> {};
 	template<typename T> using convertible_string8_data_t = std::enable_if_t<is_convertible_string8_data_v<T>, T>;
 
 	template<typename T> inline constexpr bool is_string8_data_v = is_string_data_v<T> || is_u8string_data_v<T>;
+	template<typename T> struct is_string8_data : std::bool_constant<is_string8_data_v<T>> {};
 	template<typename T> using string8_data_t = std::enable_if_t<is_string8_data_v<T>, T>;
 
 	template<typename T> inline constexpr bool is_string8_view_v = is_any_of_v<T, std::string_view, std::u8string_view>;
+	template<typename T> struct is_string8_view : std::bool_constant<is_string8_view_v<T>> {};
 	template<typename T> using string8_view_t = std::enable_if_t<is_string8_view_v<T>, T>;
 
 	template<typename T> using convert_to_string8_view_t = std::enable_if_t<is_convertible_string8_data_v<T>, std::conditional_t<is_convertible_u8string_data_v<T>, std::u8string_view, std::string_view>>;
+	template<typename T> struct convert_to_string8_view { using type = convert_to_string8_view_t<T>; };
 
 	template<typename T> inline constexpr bool is_convertible_string8_view_v = std::is_convertible_v<T, std::string_view> || std::is_convertible_v<T, std::u8string_view>;
+	template<typename T> struct is_convertible_string8_view : std::bool_constant<is_convertible_string8_view_v<T>> {};
 	template<typename T> using convertible_string8_view_t = std::enable_if_t<is_convertible_string8_view_v<T>, T>;
 
 	template<typename T> inline constexpr bool is_wstring_data_v = is_any_of_v<T, std::wstring, std::wstring_view>;
+	template<typename T> struct is_wstring_data : std::bool_constant<is_wstring_data_v<T>> {};
 	template<typename T> using wstring_data_t = std::enable_if_t<is_wstring_data_v<T>, T>;
 
 	template<typename T> inline constexpr bool is_convertible_wstring_data_v = is_wstring_data_v<T> || std::is_convertible_v<T, wchar_t const*>;
+	template<typename T> struct is_convertible_wstring_data : std::bool_constant<is_convertible_wstring_data_v<T>> {};
 	template<typename T> using convertible_wstring_data_t = std::enable_if_t<is_convertible_wstring_data_v<T>, T>;
 
 
