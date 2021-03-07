@@ -118,50 +118,58 @@ public:
 
 namespace statical {
 	template<template<typename...> typename Base, typename Derived>
-	struct _is_base_of_template_impl {
-		template<typename... Args> static constexpr std::true_type test(const Base<Args...>*);
-		static constexpr std::false_type test(...);
-		using type = decltype(test(std::declval<Derived*>()));
-	};
+	struct is_base_of_template {
+	private:
+		template<template<typename...> typename Base, typename Derived>
+		struct _impl {
+			template<typename... Args> static constexpr std::true_type test(const Base<Args...>*);
+			static constexpr std::false_type test(...);
+			using type = decltype(test(std::declval<Derived*>()));
+		};
 
-	template<template<typename...> typename Base, typename Derived>
-	using is_base_of_template = typename _is_base_of_template_impl<Base, Derived>::type;
+	public:
+		static constexpr bool value = _impl<Base, Derived>::type::value;
+	};
 
 	template<template<typename...> typename Base, typename Derived>
 	inline static constexpr bool is_base_of_template_v = is_base_of_template<Base, Derived>::value;
-
-	struct bad_type {
-	};
-
-	struct bad_value {
-	};
 
 	struct bad_element {};
 
 	template<auto Val, typename T = decltype(Val), typename = std::enable_if_t<std::is_convertible_v<decltype(Val), T>>>
 	struct nontype_value {
 		using type = T;
-		inline static constexpr T value = Val;
+		static constexpr T value = Val;
 	};
 
 	template<size_t I, typename T>
 	struct index_element {
 		using type = T;
-		inline static constexpr size_t index = I;
+		static constexpr size_t index = I;
 	};
 
-	template<template<auto, typename...> typename Base, typename Derived>
-	struct _is_base_of_nontype_value_impl {
-		template<auto Val, typename... Args> static constexpr std::true_type test(const Base<Val, Args...>*);
-		static constexpr std::false_type test(...);
-		using type = decltype(test(std::declval<Derived*>()));
+	template<typename F, typename S>
+	struct pair_element {
+		using first = F;
+		using second = S;
 	};
 
-	template<template<auto, typename...> typename Base, typename Derived>
-	using is_base_of_nontype_value = typename _is_base_of_nontype_value_impl<Base, Derived>::type;
+	template<typename T>
+	struct is_base_of_nontype_value {
+	private:
+		template<typename T>
+		struct _impl {
+			template<auto Val, typename... Args> static constexpr std::true_type test(const nontype_value<Val, Args...>*);
+			static constexpr std::false_type test(...);
+			using type = decltype(test(std::declval<T*>()));
+		};
 
-	template<template<auto, typename...> typename Base, typename Derived>
-	inline static constexpr bool is_base_of_nontype_value_v = is_base_of_nontype_value<Base, Derived>::value;
+	public:
+		static constexpr bool value = _impl<T>::type::value;
+	};
+
+	template<typename T>
+	inline static constexpr bool is_base_of_nontype_value_v = is_base_of_nontype_value<T>::value;
 
 	//requires requires { typename std::enable_if_t<std::conjunction_v<is_base_of_template<type_value, Values>...>>; }
 
@@ -169,9 +177,9 @@ namespace statical {
 	struct array {
 	private:
 		template<typename T1, typename T2, bool Convertible>
-		inline static constexpr bool _is_equal() {
-			if constexpr (is_base_of_nontype_value_v<nontype_value, T1>) {
-				if constexpr (is_base_of_nontype_value_v<nontype_value, T2>) {
+		static constexpr bool _is_equal() {
+			if constexpr (is_base_of_nontype_value_v<T1>) {
+				if constexpr (is_base_of_nontype_value_v<T2>) {
 					if constexpr (Convertible) {
 						if constexpr (!(std::is_convertible_v<T1::type, T2::type> || std::is_convertible_v<T2::type, T1::type>)) {
 							return false;
@@ -187,7 +195,7 @@ namespace statical {
 					return false;
 				}
 			} else {
-				if constexpr (is_base_of_nontype_value_v<nontype_value, T2>) {
+				if constexpr (is_base_of_nontype_value_v<T2>) {
 					return false;
 				} else {
 					return Convertible ? (std::is_convertible_v<T1, T2> || std::is_convertible_v<T2, T1>) : std::is_same_v<T1, T2>;
@@ -215,6 +223,26 @@ namespace statical {
 			}
 		}
 
+		template<size_t CurIdx, typename Arr, size_t DstIdx, typename T, typename CurType, typename... OtherTypes>
+		static constexpr auto _set() {
+			using arr = Arr::template push_back<std::conditional_t<CurIdx == DstIdx, T, CurType>>;
+
+			if constexpr (CurIdx + 1 == sizeof...(Values)) {
+				return arr();
+			} else {
+				return _set<CurIdx + 1, arr, DstIdx, T, OtherTypes...>();
+			}
+		}
+
+		template<size_t DstIdx, typename T>
+		static constexpr auto _set() {
+			if constexpr (DstIdx < sizeof...(Values)) {
+				return _set<0, array<>, DstIdx, T, Values...>();
+			} else {
+				return array<Values..., T>();
+			}
+		}
+
 		template<typename T, bool Convertible, size_t I>
 		static constexpr auto _find_first() {
 			if constexpr (I < sizeof...(Values)) {
@@ -234,7 +262,7 @@ namespace statical {
 
 		template<typename T, bool Convertible, size_t I>
 		static constexpr auto _find_last() {
-			if constexpr (I) {
+			if constexpr (I > 0) {
 				using element = at<I - 1>;
 
 				if constexpr (_is_equal<T, element::type, Convertible>()) {
@@ -247,17 +275,41 @@ namespace statical {
 			}
 		}
 
+		template<size_t CurIdx, typename Arr, size_t DstIdx, typename T, typename CurType, typename... OtherTypes>
+		static constexpr auto _insert() {
+			using arr = std::conditional_t<CurIdx == DstIdx, Arr::template push_back<T, CurType>, Arr::template push_back<CurType>>;
+
+			if constexpr (CurIdx + 1 == sizeof...(Values)) {
+				return arr();
+			} else {
+				return _erase<CurIdx + 1, arr, DstIdx, OtherTypes...>();
+			}
+		}
+
+		template<size_t I, typename T>
+		static constexpr auto _insert() {
+			if constexpr (I < sizeof...(Values)) {
+				return _insert<0, array<>, I, T, Values...>();
+			} else {
+				return array<Values..., T>();
+			}
+		}
+
 		template<size_t CurIdx, typename Arr, size_t TargetIdx, typename CurType, typename... OtherTypes>
 		static constexpr auto _erase() {
 			if constexpr (CurIdx == TargetIdx) {
-				return _erase<CurIdx + 1, Arr, TargetIdx, OtherTypes...>();
+				if constexpr (CurIdx + 1 == sizeof...(Values)) {
+					return Arr();
+				} else {
+					return _erase<CurIdx + 1, Arr, TargetIdx, OtherTypes...>();
+				}
 			} else if constexpr (CurIdx < sizeof...(Values)) {
-				using T = Arr::template push_back<CurType>;
+				using arr = Arr::template push_back<CurType>;
 
 				if constexpr (CurIdx + 1 == sizeof...(Values)) {	
-					return T();
+					return arr();
 				} else {
-					return _erase<CurIdx + 1, T, TargetIdx, OtherTypes...>();
+					return _erase<CurIdx + 1, arr, TargetIdx, OtherTypes...>();
 				}
 			} else {
 				return Arr();
@@ -273,12 +325,25 @@ namespace statical {
 			}
 		}
 
+		template<typename...>
+		static constexpr auto _pop_back() {
+			if constexpr (sizeof...(Values) > 0) {
+				return _erase<sizeof...(Values) - 1>();
+			} else {
+				return array();
+			}
+		}
+
 	public:
-		inline static constexpr size_t size = sizeof...(Values);
+		static constexpr size_t size = sizeof...(Values);
 
 		//index_element<Index, Type> or bad_element
 		template<size_t I>
 		using at = decltype(_at<I>());
+
+		//new array<...>
+		template<size_t I, typename T>
+		using set = decltype(_set<I, T>());
 
 		//index_element<Index, Type> or bad_element
 		template<typename T, bool Convertible = false>
@@ -289,13 +354,125 @@ namespace statical {
 		using find_last = decltype(_find_last<T, Convertible, sizeof...(Values)>());
 
 		template<typename T, bool Convertible = false>
-		using has = std::bool_constant<find_first<T, Convertible> != std::nullopt>;
+		using has = std::bool_constant<!std::is_same_v<find_first<T, Convertible>, bad_element>>;
 
+		//new array<...>
 		template<typename... Args>
 		using push_back = array<Values..., Args...>;
 
+		//new array<...>
+		template<size_t I, typename T>
+		using insert = decltype(_insert<I, T>);
+
+		//new array<...>
 		template<size_t I>
 		using erase = decltype(_erase<I>());
+
+		//new array<...>
+		template<typename... Args>
+		using pop_back = decltype(_pop_back<Args...>());
+	};
+
+	template<typename... Values>
+	requires requires { typename std::enable_if_t<std::conjunction_v<is_base_of_template<pair_element, Values>...>>; }
+	struct map {
+	private:
+		template<typename... Args>
+		using _push_back = map<Values..., Args...>;
+
+		template<typename K, bool Convertible>
+		static constexpr auto _find() {
+			using arr = array<Values::first...>;
+			using element = arr::template find_first<K, Convertible>;
+
+			if constexpr (std::is_same_v<element, bad_element>) {
+				return bad_element();
+			} else {
+				return array<Values...>::at<element::index>::type();
+			}
+		}
+
+		template<typename Pair, bool Convertible>
+		static constexpr auto _insert() {
+			if constexpr (sizeof...(Values) > 0) {
+				using arr = array<Values::first...>;
+				using element = arr::template find_first<Pair::first, Convertible>;
+
+				if constexpr (std::is_same_v<element, bad_element>) {
+					return map<Values..., Pair>();
+				} else {
+					return _insert<0, map<>, element::index, Pair, Values...>();
+				}
+			} else {
+				return map<Pair>();
+			}
+		}
+
+		template<size_t CurIdx, typename M, size_t DstIdx, typename Pair, typename CurPair, typename... OtherPairs>
+		static constexpr auto _insert() {
+			using m = M::template _push_back<std::conditional_t<CurIdx == DstIdx, Pair, CurPair>>;
+
+			if constexpr (CurIdx + 1 == sizeof...(Values)) {
+				return m();
+			} else {
+				return _insert<CurIdx + 1, m, DstIdx, Pair, OtherPairs...>();
+			}
+		}
+
+		template<size_t CurIdx, typename M, size_t TargetIdx, typename CurType, typename... OtherTypes>
+		static constexpr auto _erase() {
+			if constexpr (CurIdx == TargetIdx) {
+				if constexpr (CurIdx + 1 == sizeof...(Values)) {
+					return M();
+				} else {
+					return _erase<CurIdx + 1, M, TargetIdx, OtherTypes...>();
+				}
+			} else if constexpr (CurIdx < sizeof...(Values)) {
+				using m = M::template _push_back<CurType>;
+
+				if constexpr (CurIdx + 1 == sizeof...(Values)) {
+					return m();
+				} else {
+					return _erase<CurIdx + 1, m, TargetIdx, OtherTypes...>();
+				}
+			} else {
+				return M();
+			}
+		}
+
+		template<typename K, bool Convertible>
+		static constexpr auto _erase() {
+			if constexpr (sizeof...(Values) > 0) {
+				using arr = array<Values::first...>;
+				using element = arr::template find_first<K, Convertible>;
+
+				if constexpr (std::is_same_v<element, bad_element>) {
+					return map<Values...>();
+				} else {
+					return _erase<0, map<>, element::index, Values...>();
+				}
+			} else {
+				return map<Values...>();
+			}
+		}
+
+	public:
+		static constexpr size_t size = sizeof...(Values);
+
+		//pair_element<K, V> or bad_element
+		template<typename K, bool Convertible = false>
+		using find = decltype(_find<K, Convertible>());
+
+		template<typename K, bool Convertible = false>
+		using has = std::bool_constant<!std::is_same_v<find<K, Convertible>, bad_element>>;
+
+		//new map<...>
+		template<typename K, typename V, bool Convertible = false>
+		using insert = decltype(_insert<pair_element<K, V>, Convertible>());
+
+		//new map<...>
+		template<typename K, bool Convertible = false>
+		using erase = decltype(_erase<K, Convertible>());
 	};
 }
 
@@ -327,7 +504,23 @@ public:
 		}
 
 		using arr1 = arr::push_back<char, bool>;
-		arr1::erase<1> aaa;
+		arr1::pop_back<> aaa;
+
+		using map = statical::map<>;
+		using map_i1 = map::insert<std::string, bool>;
+		map_i1 mm1;
+
+		using map_i2 = map_i1::insert<int, bool>;
+		map_i2 mm2;
+
+		using map_i3 = map_i2::insert<int, char>;
+		map_i3 mm3;
+
+		using map_f = map_i3::find<int, false>;
+		map_f mf;
+
+		using map_e = map_i3::erase<int, false>;
+		map_e me;
 
 		//constexpr auto i = type_array<int, std::string, std::string_view>::has<std::u8string_view>;
 
