@@ -399,6 +399,11 @@ namespace aurora {
 	template<typename T, typename... Types> using any_of_t = std::enable_if_t<is_any_of_v<T, Types...>, T>;
 
 
+	template<typename T, typename... Types> inline constexpr bool is_convertible_any_of_v = std::disjunction_v<std::is_convertible<T, Types>...>;
+	template<typename T, typename... Types> struct is_convertible_any_of : std::bool_constant<is_convertible_any_of_v<T, Types...>> {};
+	template<typename T, typename... Types> using convertible_any_of_t = std::enable_if_t<is_convertible_any_of_v<T, Types...>, T>;
+
+
 	template<typename T> inline constexpr bool is_signed_integral_v = std::is_signed_v<T> && std::is_integral_v<T>;
 	template<typename T> struct is_signed_integral : std::bool_constant<is_signed_integral_v<T>>{};
 	template<typename T> using signed_integral_t = std::enable_if_t<is_signed_integral_v<T>, T>;
@@ -448,7 +453,7 @@ namespace aurora {
 	template<typename T> using convert_to_string8_view_t = std::enable_if_t<is_convertible_string8_data_v<T>, std::conditional_t<is_convertible_u8string_data_v<T>, std::u8string_view, std::string_view>>;
 	template<typename T> struct convert_to_string8_view { using type = convert_to_string8_view_t<T>; };
 
-	template<typename T> inline constexpr bool is_convertible_string8_view_v = std::is_convertible_v<T, std::string_view> || std::is_convertible_v<T, std::u8string_view>;
+	template<typename T> inline constexpr bool is_convertible_string8_view_v = is_convertible_any_of_v<T, std::string_view, std::u8string_view>;
 	template<typename T> struct is_convertible_string8_view : std::bool_constant<is_convertible_string8_view_v<T>> {};
 	template<typename T> using convertible_string8_view_t = std::enable_if_t<is_convertible_string8_view_v<T>, T>;
 
