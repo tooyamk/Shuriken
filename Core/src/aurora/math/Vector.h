@@ -19,7 +19,7 @@ namespace aurora {
 			memset(this, 0, sizeof(T) * N);
 		}
 
-		Vector(const NoInit&) {}
+		Vector(const no_init&) {}
 
 		template<uint32_t L, typename K, typename = ConvertibleType<K>>
 		Vector(const Vector<L, K>& vec) {
@@ -39,10 +39,10 @@ namespace aurora {
 		template<typename K, typename = ConvertibleType<K>>
 		Vector(const K* values, uint32_t len) {
 			if (N > len) {
-				for (uint32_t i = 0; i < len; ++i) data[i] = values[i];
+				for (decltype(len) i = 0; i < len; ++i) data[i] = values[i];
 				memset(data + len, 0, sizeof(T) * (N - len));
 			} else {
-				for (uint32_t i = 0; i < N; ++i) data[i] = values[i];
+				for (decltype(len) i = 0; i < N; ++i) data[i] = values[i];
 			}
 		}
 
@@ -170,8 +170,8 @@ namespace aurora {
 		}
 
 		inline Vector<N, T> AE_CALL operator-() const {
-			Vector<N, T> val(NO_INIT);
-			for (size_t i = 0; i < N; ++i) val.data[i] = -data[i];
+			Vector<N, T> val(no_init_v);
+			for (decltype(N) i = 0; i < N; ++i) val.data[i] = -data[i];
 			return val;
 		}
 
@@ -194,9 +194,9 @@ namespace aurora {
 				}
 			} else {
 				if constexpr (L >= N) {
-					for (uint32_t i = 0; i < N; ++i) data[i] = values[i];
+					for (decltype(N) i = 0; i < N; ++i) data[i] = values[i];
 				} else {
-					for (uint32_t i = 0; i < L; ++i) data[i] = values[i];
+					for (decltype(N) i = 0; i < L; ++i) data[i] = values[i];
 				}
 			}
 
@@ -208,9 +208,9 @@ namespace aurora {
 		template<typename K, typename = ConvertibleType<K>>
 		inline Vector& AE_CALL set(const K* values, uint32_t len) {
 			if (len >= N) {
-				for (uint32_t i = 0; i < N; ++i) data[i] = values[i];
+				for (decltype(N) i = 0; i < N; ++i) data[i] = values[i];
 			} else {
-				for (uint32_t i = 0; i < len; ++i) data[i] = values[i];
+				for (decltype(len) i = 0; i < len; ++i) data[i] = values[i];
 				memset(data + len, 0, sizeof(T) * (N - len));
 			}
 
@@ -243,19 +243,19 @@ namespace aurora {
 			if constexpr (std::is_same_v<T, K>) {
 				memcpy(dst, data, sizeof(T) * N);
 			} else {
-				for (uint32_t i = 0; i < N; ++i) dst[i] = data[i];
+				for (decltype(N) i = 0; i < N; ++i) dst[i] = data[i];
 			}
 		}
 
 		template<typename K, typename = ConvertibleType<K>>
 		inline Vector& AE_CALL add(const K& value) {
-			for (uint32_t i = 0; i < N; ++i) data[i] += value;
+			for (decltype(N) i = 0; i < N; ++i) data[i] += value;
 			return *this;
 		}
 
 		template<typename K, typename = ConvertibleType<K>>
 		inline Vector& AE_CALL add(const K(&values)[N]) {
-			for (uint32_t i = 0; i < N; ++i) data[i] += values[i];
+			for (decltype(N) i = 0; i < N; ++i) data[i] += values[i];
 			return *this;
 		}
 
@@ -266,13 +266,13 @@ namespace aurora {
 
 		template<typename K, typename = ConvertibleType<K>>
 		inline Vector& AE_CALL sub(const K& value) {
-			for (uint32_t i = 0; i < N; ++i) data[i] -= value;
+			for (decltype(N) i = 0; i < N; ++i) data[i] -= value;
 			return *this;
 		}
 
 		template<typename K, typename = ConvertibleType<K>>
 		inline Vector& AE_CALL sub(const K(&values)[N]) {
-			for (uint32_t i = 0; i < N; ++i) data[i] -= values[i];
+			for (decltype(N) i = 0; i < N; ++i) data[i] -= values[i];
 			return *this;
 		}
 
@@ -283,7 +283,7 @@ namespace aurora {
 
 		template<typename K, typename = ConvertibleType<K>>
 		inline Vector& AE_CALL mul(const K& value) {
-			for (uint32_t i = 0; i < N; ++i) data[i] *= value;
+			for (decltype(N) i = 0; i < N; ++i) data[i] *= value;
 			return *this;
 		}
 
@@ -300,13 +300,13 @@ namespace aurora {
 
 		template<typename K, typename = ConvertibleType<K>>
 		inline Vector& AE_CALL div(const K& value) {
-			for (uint32_t i = 0; i < N; ++i) data[i] /= value;
+			for (decltype(N) i = 0; i < N; ++i) data[i] /= value;
 			return *this;
 		}
 
 		template<typename K, typename = ConvertibleType<K>>
 		inline Vector& AE_CALL div(const K(&values)[N]) {
-			for (uint32_t i = 0; i < N; ++i) data[i] /= values[i];
+			for (decltype(N) i = 0; i < N; ++i) data[i] /= values[i];
 			return *this;
 		}
 
@@ -337,8 +337,8 @@ namespace aurora {
 
 		template<typename... Indices, typename = std::enable_if_t<std::conjunction_v<std::is_convertible<Indices, uint32_t>...>>>
 		inline const Vector<sizeof...(Indices), T> AE_CALL components(Indices&&... indices) const {
-			Vector<sizeof...(Indices), T> v(NO_INIT);
-			uint32_t i = 0;
+			Vector<sizeof...(Indices), T> v(no_init_v);
+			decltype(N) i = 0;
 			((v.data[i++] = data[indices]), ...);
 			return std::move(v);
 		}
@@ -366,7 +366,7 @@ namespace aurora {
 		inline T AE_CALL getMin() const {
 			if constexpr (N > 0) {
 				T val = data[0];
-				for (uint32_t i = 1; i < N; ++i) {
+				for (decltype(N) i = 1; i < N; ++i) {
 					if (val > data[i]) val = data[i];
 				}
 				return val;
@@ -378,7 +378,7 @@ namespace aurora {
 		inline T AE_CALL getMax() const {
 			if constexpr (N > 0) {
 				T val = data[0];
-				for (uint32_t i = 1; i < N; ++i) {
+				for (decltype(N) i = 1; i < N; ++i) {
 					if (val < data[i]) val = data[i];
 				}
 				return val;
@@ -429,7 +429,7 @@ namespace aurora {
 
 	private:
 		template<uint32_t I, typename... Args>
-		inline void AE_CALL _set(const T& value, Args... args) {
+		inline void AE_CALL _set(const T& value, Args&&... args) {
 			if constexpr (I < N) {
 				data[I] = value;
 				_set<I + 1>(std::forward<Args>(args)...);

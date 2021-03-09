@@ -250,7 +250,7 @@ namespace aurora {
 			return true;
 		}
 		template<typename... Args, typename = std::enable_if_t<std::conjunction_v<std::is_base_of<IShaderParameterGetter, Args>...>>>
-		inline size_t AE_CALL push(Args&... args) {
+		inline size_t AE_CALL push(Args&&... args) {
 			((_stack.emplace_back(args)), ...);
 			return sizeof...(args);
 		}

@@ -125,6 +125,10 @@ namespace aurora {
 			return _target;
 		}
 
+		inline uintptr_t uintptr() const {
+			return (uintptr_t)_target;
+		}
+
 		template<typename S = T>
 		inline S* AE_CALL get() const {
 			return (S*)_target;

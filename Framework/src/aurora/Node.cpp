@@ -16,7 +16,7 @@ namespace aurora {
 		_wr(),
 		_wm(),
 		_iwm(),
-		_dirty(0) {
+		_dirty(DirtyFlag::EMPTY) {
 	}
 
 	Node::~Node() {
@@ -157,6 +157,8 @@ namespace aurora {
 	}
 
 	void Node::setLocalMatrix(const Matrix34& m) {
+		using namespace enum_operators;
+
 		_lm.set34(m);
 		_localDecomposition();
 
@@ -215,6 +217,8 @@ namespace aurora {
 	}
 
 	void Node::setWorldMatrix(const Matrix34& m) {
+		using namespace enum_operators;
+
 		_wm.set34(m);
 
 		auto now = (_dirty & DirtyFlag::NOT_WM) | DirtyFlag::WIM;
@@ -241,7 +245,9 @@ namespace aurora {
 	}
 
 	void Node::updateLocalMatrix() const {
-		if (_dirty & DirtyFlag::LM) {
+		using namespace enum_operators;
+
+		if ((_dirty & DirtyFlag::LM) != DirtyFlag::EMPTY) {
 			_dirty &= DirtyFlag::NOT_LM;
 
 			_lr.toMatrix(_lm);
@@ -250,7 +256,9 @@ namespace aurora {
 	}
 
 	void Node::updateWorldRotation() const {
-		if (_dirty & DirtyFlag::WR) {
+		using namespace enum_operators;
+
+		if ((_dirty & DirtyFlag::WR) != DirtyFlag::EMPTY) {
 			_dirty &= DirtyFlag::NOT_WR;
 
 			auto p = _parent;
@@ -264,7 +272,9 @@ namespace aurora {
 	}
 
 	void Node::updateWorldMatrix() const {
-		if (_dirty & DirtyFlag::WM) {
+		using namespace enum_operators;
+
+		if ((_dirty & DirtyFlag::WM) != DirtyFlag::EMPTY) {
 			_dirty &= DirtyFlag::NOT_WM;
 
 			updateLocalMatrix();
@@ -279,7 +289,9 @@ namespace aurora {
 	}
 
 	void Node::updateInverseWorldMatrix() const {
-		if (_dirty & DirtyFlag::WIM) {
+		using namespace enum_operators;
+
+		if ((_dirty & DirtyFlag::WIM) != DirtyFlag::EMPTY) {
 			_dirty &= DirtyFlag::NOT_WIM;
 
 			updateWorldMatrix();
@@ -352,7 +364,9 @@ namespace aurora {
 		--_numChildren;
 	}
 
-	void Node::_worldPositionChanged(DirtyType oldDirty) {
+	void Node::_worldPositionChanged(DirtyFlag oldDirty) {
+		using namespace enum_operators;
+
 		if (_parent) {
 			_parent->updateInverseWorldMatrix();
 
@@ -368,7 +382,9 @@ namespace aurora {
 		if (oldDirty != _dirty) _noticeUpdate(DirtyFlag::WMIM);
 	}
 
-	void Node::_worldRotationChanged(DirtyType oldDirty) {
+	void Node::_worldRotationChanged(DirtyFlag oldDirty) {
+		using namespace enum_operators;
+
 		if (_parent) {
 			_parent->updateWorldRotation();
 			_parent->_wr.invert(_lr);
@@ -382,7 +398,7 @@ namespace aurora {
 		if (oldDirty != _dirty) _noticeUpdate(DirtyFlag::WRMIM);
 	}
 
-	void Node::_noticeUpdate(DirtyType dirty) {
+	void Node::_noticeUpdate(DirtyFlag dirty) {
 		auto node = _childHead;
 		while (node) {
 			node->_checkNoticeUpdate(dirty);

@@ -9,6 +9,9 @@
 #include <immintrin.h>
 
 int32_t run() {
+#if AE_OS == AE_OS_WIN
+	SetDllDirectoryW((getAppPath().parent_path().wstring() + L"/libs/").data());
+#endif
 	/*
 	__declspec(align(16)) float a[] = { 1.5, 2.5, 3.5, 4.5 };
 	__declspec(align(16)) float b[] = { 1.2, 2.3, 3.4, 4.5 };
@@ -37,7 +40,7 @@ int32_t run() {
 }
 
 #if AE_OS == AE_OS_WIN
-#pragma comment(linker, "/subsystem:console")
+//#pragma comment(linker, "/subsystem:console")
 int32_t WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int32_t nCmdShow) {
 	return run();
 }

@@ -5,90 +5,98 @@
 #include "aurora/Debug.h"
 #include "aurora/Mesh.h"
 #include "aurora/ShaderPredefine.h"
-#include "boost/preprocessor.hpp"
 #include "zlib.h"
 #include <vector>
 #include <unordered_map>
 
 namespace aurora::extensions::fbx_converter {
-#define AE_FBX_CONVERTER_TO_STR_ARRAY_ELEM(r, data, i, elem) \
-    BOOST_PP_COMMA_IF(i) BOOST_PP_STRINGIZE(elem)
+	using namespace std::literals;
 
-#define AE_FBX_CONVERTER_TO_STR_ARRAY(...) \
-    BOOST_PP_SEQ_FOR_EACH_I(AE_FBX_CONVERTER_TO_STR_ARRAY_ELEM, ~, BOOST_PP_TUPLE_TO_SEQ((__VA_ARGS__)))
+#ifndef AE_FBX_ENUM
+#	define AE_FBX_ENUM
+#	define AE_FBX_ENUM_Type \
+			AE_FBX_ENUM_ELEMENT(Unknown) \
+			AE_FBX_ENUM_ELEMENT(AnimationCurve) \
+			AE_FBX_ENUM_ELEMENT(AnimationCurveNode) \
+			AE_FBX_ENUM_ELEMENT(AnimationLayer) \
+			AE_FBX_ENUM_ELEMENT(AnimationStack) \
+			AE_FBX_ENUM_ELEMENT(BlendWeights) \
+			AE_FBX_ENUM_ELEMENT(C) \
+			AE_FBX_ENUM_ELEMENT(Connections) \
+			AE_FBX_ENUM_ELEMENT(Deformer) \
+			AE_FBX_ENUM_ELEMENT(Geometry) \
+			AE_FBX_ENUM_ELEMENT(GlobalSettings) \
+			AE_FBX_ENUM_ELEMENT(Indexes) \
+			AE_FBX_ENUM_ELEMENT(KeyTime) \
+			AE_FBX_ENUM_ELEMENT(KeyValueFloat) \
+			AE_FBX_ENUM_ELEMENT(LayerElementBinormal) \
+			AE_FBX_ENUM_ELEMENT(LayerElementNormal) \
+			AE_FBX_ENUM_ELEMENT(LayerElementTangent) \
+			AE_FBX_ENUM_ELEMENT(LayerElementUV) \
+			AE_FBX_ENUM_ELEMENT(MappingInformationType) \
+			AE_FBX_ENUM_ELEMENT(Matrix) \
+			AE_FBX_ENUM_ELEMENT(Model) \
+			AE_FBX_ENUM_ELEMENT(Node) \
+			AE_FBX_ENUM_ELEMENT(Normals) \
+			AE_FBX_ENUM_ELEMENT(Tangents) \
+			AE_FBX_ENUM_ELEMENT(Binormals) \
+			AE_FBX_ENUM_ELEMENT(Objects) \
+			AE_FBX_ENUM_ELEMENT(P) \
+			AE_FBX_ENUM_ELEMENT(PolygonVertexIndex) \
+			AE_FBX_ENUM_ELEMENT(Pose) \
+			AE_FBX_ENUM_ELEMENT(PoseNode) \
+			AE_FBX_ENUM_ELEMENT(Properties70) \
+			AE_FBX_ENUM_ELEMENT(ReferenceInformationType) \
+			AE_FBX_ENUM_ELEMENT(Transform) \
+			AE_FBX_ENUM_ELEMENT(TransformLink) \
+			AE_FBX_ENUM_ELEMENT(UV) \
+			AE_FBX_ENUM_ELEMENT(UVIndex) \
+			AE_FBX_ENUM_ELEMENT(Vertices) \
+			AE_FBX_ENUM_ELEMENT(Weights) \
 
+#	define AE_FBX_ENUM_AttribType \
+			AE_FBX_ENUM_ELEMENT(Unknown) \
+			AE_FBX_ENUM_ELEMENT(Cluster) \
+			AE_FBX_ENUM_ELEMENT(LimbNode) \
+			AE_FBX_ENUM_ELEMENT(Root) \
+			AE_FBX_ENUM_ELEMENT(Null) \
+			AE_FBX_ENUM_ELEMENT(Mesh) \
+			AE_FBX_ENUM_ELEMENT(Skin) \
+			AE_FBX_ENUM_ELEMENT(T) \
+			AE_FBX_ENUM_ELEMENT(R) \
+			AE_FBX_ENUM_ELEMENT(S) \
 
-#define AE_FBX_CONVERTER_DECLARE_ENUM(__NAME__, __BASE__, ...) \
-enum class __NAME__ : __BASE__  {__VA_ARGS__}; \
-inline static const std::vector<std::string> __NAME__##_Members = { AE_FBX_CONVERTER_TO_STR_ARRAY(__VA_ARGS__) }; \
-inline static std::unordered_map<std::string_view, __NAME__> __NAME__##_RefDataGenerator() { \
-	std::unordered_map<std::string_view, __NAME__> map; \
-	for (__BASE__ i = 1, n = __NAME__##_Members.size(); i < n; ++i) map.emplace(__NAME__##_Members[i], (__NAME__)i); \
-	return map; \
-} \
-inline static const std::unordered_map<std::string_view, __NAME__> __NAME__##_ref = __NAME__##_RefDataGenerator(); \
-inline static __NAME__ get##__NAME__(const std::string_view& name) { \
-	auto itr = __NAME__##_ref.find(name); \
-	return itr == __NAME__##_ref.end() ? (__NAME__)0 : itr->second; \
-}
+#endif
 
 	class Node {
 	public:
-		AE_FBX_CONVERTER_DECLARE_ENUM(Type, uint8_t,
-			Unknown,
+		enum class Type : uint8_t {
+#define AE_FBX_ENUM_ELEMENT(a) a,
+			AE_FBX_ENUM_Type
+#undef AE_FBX_ENUM_ELEMENT
+			__end
+		};
 
-			AnimationCurve,
-			AnimationCurveNode,
-			AnimationLayer,
-			AnimationStack,
-			BlendWeights,
-			C,
-			Connections,
-			Deformer,
-			Geometry,
-			GlobalSettings,
-			Indexes,
-			KeyTime,
-			KeyValueFloat,
-			LayerElementBinormal,
-			LayerElementNormal,
-			LayerElementTangent,
-			LayerElementUV,
-			MappingInformationType,
-			Matrix,
-			Model,
-			Node,
-			Normals,
-			Tangents,
-			Binormals,
-			Objects,
-			P,
-			PolygonVertexIndex,
-			Pose,
-			PoseNode,
-			Properties70,
-			ReferenceInformationType,
-			Transform,
-			TransformLink,
-			UV,
-			UVIndex,
-			Vertices,
-			Weights
-		);
+		inline static const std::unordered_map<std::string_view, Type> TypeMap = {
+#define AE_FBX_ENUM_ELEMENT(a) { #a##sv, Type::a },
+			AE_FBX_ENUM_Type
+#undef AE_FBX_ENUM_ELEMENT
+			{ "__end", Type::Unknown }
+		};
 
-		AE_FBX_CONVERTER_DECLARE_ENUM(AttribType, uint8_t,
-			Unknown,
+		enum class AttribType : uint8_t {
+#define AE_FBX_ENUM_ELEMENT(a) a,
+			AE_FBX_ENUM_AttribType
+#undef AE_FBX_ENUM_ELEMENT
+			__end
+		};
 
-			Cluster,
-			LimbNode,
-			Root,
-			Null,
-			Mesh,
-			Skin,
-			T,
-			R,
-			S
-		);
+		inline static const std::unordered_map<std::string_view, AttribType> AttribTypeMap = {
+#define AE_FBX_ENUM_ELEMENT(a) { #a##sv, AttribType::a },
+			AE_FBX_ENUM_AttribType
+#undef AE_FBX_ENUM_ELEMENT
+			{ "__end", AttribType::Unknown }
+		};
 
 		class iterator {
 		public:
@@ -219,7 +227,10 @@ inline static __NAME__ get##__NAME__(const std::string_view& name) { \
 					if (auto& p = _properties[1]; p.type == Property::Type::STR) _attribName = std::string_view((char*)p.rawVal.data, p.rawVal.size);
 				}
 				if (numProperties > 2) {
-					if (auto& p = _properties[2]; p.type == Property::Type::STR) _attribType = getAttribType(std::string_view((char*)p.rawVal.data, p.rawVal.size));
+					if (auto& p = _properties[2]; p.type == Property::Type::STR) {
+						auto itr = AttribTypeMap.find(std::string_view((char*)p.rawVal.data, p.rawVal.size));
+						_attribType = itr != AttribTypeMap.end() ? itr->second : AttribType::Unknown;
+					}
 				}
 			}
 		}
@@ -1129,7 +1140,8 @@ inline static __NAME__ get##__NAME__(const std::string_view& name) { \
 			}
 		}
 
-		auto node = new Node(Node::getType(name), properties, numProperties);
+		auto itr = Node::TypeMap.find(name);
+		auto node = new Node(itr != Node::TypeMap.end() ? itr->second : Node::Type::Unknown, properties, numProperties);
 		parent->addChild(node);
 		fbx.addNode(node);
 

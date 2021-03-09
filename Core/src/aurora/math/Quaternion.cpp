@@ -10,7 +10,7 @@ namespace aurora {
 		w(1.f) {
 	}
 
-	Quaternion::Quaternion(const NoInit&) {}
+	Quaternion::Quaternion(const no_init&) {}
 
 	Quaternion::Quaternion(const Quaternion& q) :
 		x(q.x),

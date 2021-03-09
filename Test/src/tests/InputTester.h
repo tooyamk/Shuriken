@@ -57,7 +57,7 @@ public:
 		wndStype.thickFrame = true;
 		if (app->createWindow(wndStype, "", Vec2ui32(800, 600), false)) {
 			SerializableObject args;
-			args.insert("app", (uintptr_t)&*app);
+			args.insert("app", app.uintptr());
 
 			std::vector<RefPtr<IInputModule>> inputModules;
 

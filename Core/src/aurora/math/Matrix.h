@@ -21,7 +21,7 @@ namespace aurora {
 		using Data = float32_t[3][4];
 
 		Matrix34();
-		Matrix34(const NoInit&);
+		Matrix34(const no_init&);
 		Matrix34(
 			float32_t m00,       float32_t m01 = 0.f, float32_t m02 = 0.f, float32_t m03 = 0.f,
 			float32_t m10 = 0.f, float32_t m11 = 1.f, float32_t m12 = 0.f, float32_t m13 = 0.f,
@@ -122,7 +122,7 @@ namespace aurora {
 		using Data44 = float32_t[4][4];
 
 		Matrix44();
-		Matrix44(const NoInit&);
+		Matrix44(const no_init&);
 		Matrix44(
 			float32_t m00,       float32_t m01 = 0.f, float32_t m02 = 0.f, float32_t m03 = 0.f,
 			float32_t m10 = 0.f, float32_t m11 = 1.f, float32_t m12 = 0.f, float32_t m13 = 0.f,
@@ -181,7 +181,7 @@ namespace aurora {
 				0.f, 0.f, 1.f / (zFar - zNear), zNear / (zNear - zFar));
 		}
 		inline static Matrix44 AE_CALL createOrthoLH(float32_t width, float32_t height, float32_t zNear, float32_t zFar) {
-			Matrix44 m(NO_INIT);
+			Matrix44 m(no_init_v);
 			createOrthoLH(width, height, zNear, zFar, m);
 			return m;
 		}
@@ -192,7 +192,7 @@ namespace aurora {
 				0.f, 0.f, 1.f / (zFar - zNear), zNear / (zNear - zFar));
 		}
 		inline static Matrix44 AE_CALL createOrthoOffCenterLH(float32_t left, float32_t right, float32_t bottom, float32_t top, float32_t zNear, float32_t zFar) {
-			Matrix44 m(NO_INIT);
+			Matrix44 m(no_init_v);
 			createOrthoOffCenterLH(left, right, bottom, top, zNear, zFar, m);
 			return m;
 		}
@@ -205,7 +205,7 @@ namespace aurora {
 				0.f, 0.f, 1.f, 0.f);
 		}
 		inline static Matrix44 AE_CALL createPerspectiveFovLH(float32_t fieldOfViewY, float32_t aspectRatio, float32_t zNear, float32_t zFar) {
-			Matrix44 m(NO_INIT);
+			Matrix44 m(no_init_v);
 			createPerspectiveFovLH(fieldOfViewY, aspectRatio, zNear, zFar, m);
 			return m;
 		}
@@ -218,7 +218,7 @@ namespace aurora {
 				0.f, 0.f, 1.f, 0.f);
 		}
 		inline static Matrix44 AE_CALL createPerspectiveLH(float32_t width, float32_t height, float32_t zNear, float32_t zFar) {
-			Matrix44 m(NO_INIT);
+			Matrix44 m(no_init_v);
 			createPerspectiveLH(width, height, zNear, zFar, m);
 			return m;
 		}
@@ -231,7 +231,7 @@ namespace aurora {
 				0.f, 0.f, 1.f, 0.f);
 		}
 		inline static Matrix44 AE_CALL createPerspectiveOffCenterLH(float32_t left, float32_t right, float32_t bottom, float32_t top, float32_t zNear, float32_t zFar) {
-			Matrix44 m(NO_INIT);
+			Matrix44 m(no_init_v);
 			createPerspectiveOffCenterLH(left, right, bottom, top, zNear, zFar, m);
 			return m;
 		}

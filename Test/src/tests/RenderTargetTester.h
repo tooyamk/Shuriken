@@ -26,9 +26,9 @@ public:
 				args.insert("dxc", "libs/" + getDLLName("dxcompiler"));
 				auto gpst = gpstml->create(&args);
 
-				args.insert("app", (uintptr_t)&*app);
+				args.insert("app", app.uintptr());
 				args.insert("sampleCount", 4);
-				args.insert("trans", (uintptr_t)&*gpst);
+				args.insert("trans", gpst.uintptr());
 				args.insert("debug", environment::is_debug);
 
 				auto graphics = gml->create(&args);

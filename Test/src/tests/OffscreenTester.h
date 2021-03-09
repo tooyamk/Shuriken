@@ -62,32 +62,83 @@ void aabb(T&& a) {
 	ccdd(cast_forward<char>(a));
 }
 
-template<auto Val, size_t I>
-constexpr uint8_t get_mem_val() {
-	union {
-		uint8_t data[sizeof(Val)];
-		decltype(Val) value;
-	} tester = { Val };
-	return tester.data[I];
+template<auto V>
+void AE_CALL get_name() {
+	printdln(__FUNCSIG__);
 }
 
+inline constexpr uint8_t AE_CALL byteswap1(uint8_t val) {
+	return val;
+}
 
-enum class endian11 {
-	little = 0,
-	big = 1,
-	native = get_mem_val<(uint16_t)1, 0>() == 1 ? little : big
-};
+inline constexpr uint16_t AE_CALL byteswap1(uint16_t val) {
+	if (std::is_constant_evaluated()) {
+		uint16_t Hi = val << 8;
+		uint16_t Lo = val >> 8;
+		return Hi | Lo;
+	} else {
+#if AE_COMPILER == AE_COMPILER_MSVC
+		return _byteswap_ushort(val);
+#elif AE_COMPILER == AE_COMPILER_GCC || AE_COMPILER == AE_COMPILER_CLANG
+		return __builtin_bswap16(val);
+#else
+		uint16_t Hi = val << 8;
+		uint16_t Lo = val >> 8;
+		return Hi | Lo;
+#endif
+	}
+}
+
+inline constexpr uint32_t AE_CALL byteswap1(uint32_t val) {
+	if (std::is_constant_evaluated()) {
+		uint32_t Byte0 = val & 0x000000FF;
+		uint32_t Byte1 = val & 0x0000FF00;
+		uint32_t Byte2 = val & 0x00FF0000;
+		uint32_t Byte3 = val & 0xFF000000;
+		return (Byte0 << 24) | (Byte1 << 8) | (Byte2 >> 8) | (Byte3 >> 24);
+	} else {
+#if AE_COMPILER == AE_COMPILER_MSVC
+		return _byteswap_ulong(val);
+#elif AE_COMPILER == AE_COMPILER_GCC || AE_COMPILER == AE_COMPILER_CLANG
+		return __builtin_bswap32(val);
+#else
+		uint32_t Byte0 = val & 0x000000FF;
+		uint32_t Byte1 = val & 0x0000FF00;
+		uint32_t Byte2 = val & 0x00FF0000;
+		uint32_t Byte3 = val & 0xFF000000;
+		return (Byte0 << 24) | (Byte1 << 8) | (Byte2 >> 8) | (Byte3 >> 24);
+#endif
+	}
+}
+
+inline constexpr uint64_t AE_CALL byteswap1(uint64_t val) {
+	if (std::is_constant_evaluated()) {
+		uint64_t Hi = byteswap1(uint32_t(val));
+		uint32_t Lo = byteswap1(uint32_t(val >> 32));
+		return (Hi << 32) | Lo;
+	} else {
+#if AE_COMPILER == AE_COMPILER_MSVC
+		return _byteswap_uint64(val);
+#elif AE_COMPILER == AE_COMPILER_GCC || AE_COMPILER == AE_COMPILER_CLANG
+		return __builtin_bswap64(val);
+#else
+		uint64_t Hi = byteswap1(uint32_t(val));
+		uint32_t Lo = byteswap1(uint32_t(val >> 32));
+		return (Hi << 32) | Lo;
+#endif
+	}
+}
 
 class OffscreenTester : public BaseTester {
 public:
 	virtual int32_t AE_CALL run() override {
 		constexpr std::string_view γ{ "0.5" };
-
+		
 		const char8_t dsfe[] = u8"abc";
+		bool bbb = __builtin_is_constant_evaluated();
+		 uint16_t aa32 = byteswap1(uint16_t(0x0100));
 
-		auto cvsgfrwe = endian11::native;
-
-		printdln(dsfe);
+		get_name<123>();
 
 		aabb(dsfe);
 
@@ -130,7 +181,7 @@ public:
 			};
 
 			args.insert("sampleCount", 1);
-			args.insert("trans", (uintptr_t)&*gpst);
+			args.insert("trans", gpst.uintptr());
 			args.insert("offscreen", true);
 			args.insert("driverType", "software");
 			args.insert("createProcessInfoHandler", (uintptr_t)&createProcessInfoHandler);

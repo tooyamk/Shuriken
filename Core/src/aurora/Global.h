@@ -7,24 +7,18 @@
 #define AE_OS_IOS     4
 #define AE_OS_ANDROID 5
 
-#undef AE_OS
-#define AE_OS AE_OS_UNKNOWN
-
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(WIN64) || defined(_WIN64) || defined(__WIN64__)
-#	undef AE_OS
 #	define AE_OS AE_OS_WIN
 #elif defined(TARGET_OS_IPHONE)
-#	undef AE_OS
 #	define AE_OS AE_OS_IOS
 #elif defined(TARGET_OS_MAC)
-#	undef AE_OS
 #	define AE_OS AE_OS_MAC
 #elif defined(ANDROID)
-#	undef AE_OS
 #	define AE_OS AE_OS_ANDROID
 #elif defined(linux) || defined(__linux) || defined(__linux__)
-#	undef AE_OS
 #	define AE_OS AE_OS_LINUX
+#else
+#	define AE_OS AE_OS_UNKNOWN
 #endif
 
 
@@ -32,12 +26,10 @@
 #define AE_OS_BIT_32      1
 #define AE_OS_BIT_64      2
 
-#undef AE_OS_BIT
-#define AE_OS_BIT AE_OS_BIT_32
-
 #if defined(_M_X64) || defined(_M_AMD64) || defined(WIN64) || defined(_WIN64) || defined(__WIN64__) || defined(_LP64) || defined(__LP64__) || defined(__x86_64) || defined(__x86_64__) || defined(__amd64) || defined(__amd64__)
-#	undef AE_OS_BIT
 #	define AE_OS_BIT AE_OS_BIT_64
+#else
+#	define AE_OS_BIT AE_OS_BIT_32
 #endif
 
 
@@ -46,18 +38,48 @@
 #define AE_COMPILER_GCC     2
 #define AE_COMPILER_CLANG   3
 
-#undef AE_COMPILER
-#define AE_COMPILER AE_COMPILER_UNKNOWN
-
 #if defined(_MSC_VER)
-#	undef AE_COMPILER
 #	define AE_COMPILER AE_COMPILER_MSVC
 #elif defined(__clang__)
-#	undef AE_COMPILER
 #	define AE_COMPILER AE_COMPILER_CLANG
 #elif defined(__GNUC__)
-#	undef AE_COMPILER
 #	define AE_COMPILER AE_COMPILER_GCC
+#else
+#	define AE_COMPILER AE_COMPILER_UNKNOWN
+#endif
+
+
+#if defined(__linux__) || defined(__GNU__) || defined(__HAIKU__) || defined(__Fuchsia__) || defined(__EMSCRIPTEN__)
+#	include <endian.h>
+#elif defined(_AIX)
+#	include <sys/machine.h>
+#elif defined(__sun)
+#	include <sys/types.h>
+#	define BIG_ENDIAN 4321
+#	define LITTLE_ENDIAN 1234
+#	if defined(_BIG_ENDIAN)
+#		define BYTE_ORDER BIG_ENDIAN
+#	else
+#		define BYTE_ORDER LITTLE_ENDIAN
+#	endif
+#elif defined(__MVS__)
+#	define BIG_ENDIAN 4321
+#	define LITTLE_ENDIAN 1234
+#	define BYTE_ORDER BIG_ENDIAN
+#else
+#	if !defined(BYTE_ORDER) && !defined(_WIN32)
+#		include <machine/endian.h>
+#	endif
+#endif
+
+#define AE_ENDIAN_UNKNOWN 0
+#define AE_ENDIAN_LITTLE  1234
+#define AE_ENDIAN_BIG     4321
+
+#if defined(BYTE_ORDER) && defined(BIG_ENDIAN) && BYTE_ORDER == BIG_ENDIAN
+#	define AE_ENDIAN AE_ENDIAN_BIG
+#else
+#	define AE_ENDIAN AE_ENDIAN_LITTLE
 #endif
 
 
@@ -69,12 +91,7 @@
 #define AE_CPP_VER_20      5
 #define AE_CPP_VER_HIGHER  6
 
-#undef AE_CPP_VER
-#define AE_CPP_VER AE_CPP_VER_UNKNOWN
-
 #ifdef __cplusplus
-#	undef __ae_tmp_cpp_ver
-#	undef AE_CPP_VER
 #	if AE_COMPILER == AE_COMPILER_MSVC
 #		if __cplusplus != _MSVC_LANG
 #			define __ae_tmp_cpp_ver _MSVC_LANG
@@ -98,7 +115,9 @@
 #   else
 #		define AE_CPP_VER AE_CPP_VER_UNKNOWN
 #	endif
-#undef __ae_tmp_cpp_ver
+#	undef __ae_tmp_cpp_ver
+#else
+#	define AE_CPP_VER AE_CPP_VER_UNKNOWN
 #endif
 
 #if AE_CPP_VER < AE_CPP_VER_17
@@ -130,8 +149,10 @@
 #	include <unistd.h>
 #endif
 
-#if __has_include(<bit>)
-#	include <bit>
+#if AE_CPP_VER >= AE_CPP_VER_20
+#	if __has_include(<bit>)
+#		include <bit>
+#	endif
 #endif
 #include <filesystem>
 #include <iostream>
@@ -227,17 +248,14 @@ namespace std {
 #endif
 
 #ifndef __cpp_lib_endian
-	constexpr uint8_t _endian_tester() {
-		union {
-			uint8_t data[2];
-			uint16_t value;
-		} tester = { (uint16_t)1 };
-		return tester.data[0];
-	}
 	enum class endian {
 		little = 0,
 		big = 1,
-		native = _endian_tester() == 1 ? little : big
+#	if AE_ENDIAN == AE_ENDIAN_BIG
+		native = big
+#	else
+		native = little
+#	endif
 	};
 #endif
 
@@ -746,8 +764,8 @@ namespace aurora {
 	}
 
 
-	struct AE_CORE_DLL NoInit {};
-	inline const NoInit NO_INIT = NoInit();
+	struct AE_CORE_DLL no_init {};
+	inline constexpr no_init no_init_v = no_init();
 
 
 	inline std::filesystem::path AE_CALL getAppPath() {

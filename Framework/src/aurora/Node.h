@@ -191,27 +191,26 @@ namespace aurora {
 		 */
 		static void AE_CALL getLocalRotationFromWorld(const Node& node, const Quaternion& worldRot, Quaternion& dst);
 		inline static Quaternion AE_CALL getLocalRotationFromWorld(const Node& node, const Quaternion& worldRot) {
-			Quaternion q(NO_INIT);
+			Quaternion q(no_init_v);
 			getLocalRotationFromWorld(node, worldRot, q);
 			return q;
 		}
 
 	protected:
-		using DirtyType = uint8_t;
-
-		struct DirtyFlag {
-			static const DirtyType LM = 0b1;
-			static const DirtyType NOT_LM = ~LM;
-			static const DirtyType WM = 0b10;
-			static const DirtyType NOT_WM = ~WM;
-			static const DirtyType WIM = 0b100;
-			static const DirtyType NOT_WIM = ~WIM;
-			static const DirtyType WR = 0b1000;
-			static const DirtyType NOT_WR = ~WR;
-			static const DirtyType WMIM = WM | WIM;
-			static const DirtyType WRMIM = WMIM | WR;
-			static const DirtyType LM_WRMIM = LM | WRMIM;
-			static const DirtyType LM_WMIM = LM | WMIM;
+		enum class DirtyFlag : uint8_t {
+			EMPTY = 0,
+			LM = 0b1,
+			NOT_LM = (std::underlying_type_t<DirtyFlag>)~LM,
+			WM = 0b10,
+			NOT_WM = (std::underlying_type_t<DirtyFlag>)~WM,
+			WIM = 0b100,
+			NOT_WIM = (std::underlying_type_t<DirtyFlag>)~WIM,
+			WR = 0b1000,
+			NOT_WR = (std::underlying_type_t<DirtyFlag>)~WR,
+			WMIM = WM | WIM,
+			WRMIM = WMIM | WR,
+			LM_WRMIM = LM | WRMIM,
+			LM_WMIM = LM | WMIM
 		};
 
 
@@ -224,7 +223,7 @@ namespace aurora {
 		Node* _childHead;
 		uint32_t _numChildren;
 
-		mutable DirtyType _dirty;
+		mutable DirtyFlag _dirty;
 
 		mutable Quaternion _lr;
 		mutable Vec3f32 _ls;
@@ -251,25 +250,29 @@ namespace aurora {
 		}
 
 		inline void AE_CALL _localDecomposition() {
-			Matrix34 rot(NO_INIT);
+			Matrix34 rot(no_init_v);
 			_lm.decomposition(&rot, _ls);
 			rot.toQuaternion(_lr);
 		}
-		void AE_CALL _worldPositionChanged(DirtyType oldDirty);
-		void AE_CALL _worldRotationChanged(DirtyType oldDirty);
-		inline void AE_CALL _checkNoticeUpdate(DirtyType dirty) {
+		void AE_CALL _worldPositionChanged(DirtyFlag oldDirty);
+		void AE_CALL _worldRotationChanged(DirtyFlag oldDirty);
+		inline void AE_CALL _checkNoticeUpdate(DirtyFlag dirty) {
+			using namespace enum_operators;
+
 			_checkNoticeUpdateNow(_dirty | dirty, dirty);
 		}
-		inline void AE_CALL _checkNoticeUpdate(DirtyType appendDirty, DirtyType sendDirty) {
+		inline void AE_CALL _checkNoticeUpdate(DirtyFlag appendDirty, DirtyFlag sendDirty) {
+			using namespace enum_operators;
+
 			_checkNoticeUpdateNow(_dirty | appendDirty, sendDirty);
 		}
-		inline void AE_CALL _checkNoticeUpdateNow(DirtyType nowDirty, DirtyType sendDirty) {
+		inline void AE_CALL _checkNoticeUpdateNow(DirtyFlag nowDirty, DirtyFlag sendDirty) {
 			if (nowDirty != _dirty) {
 				_dirty = nowDirty;
 
 				_noticeUpdate(sendDirty);
 			}
 		}
-		void AE_CALL _noticeUpdate(DirtyType dirty);
+		void AE_CALL _noticeUpdate(DirtyFlag dirty);
 	};
 }
