@@ -89,7 +89,7 @@ namespace aurora {
 		if (_usage == Usage::SHARED) {
 			_usage = Usage::EXCLUSIVE;
 		} else {
-			if (_data != nullptr) delete[] _data;
+			if (_data) delete[] _data;
 		}
 
 		_data = newBytes;

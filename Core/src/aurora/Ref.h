@@ -54,7 +54,11 @@ namespace aurora {
 	template<typename T>
 	class RefPtr {
 	public:
-		RefPtr() :
+		RefPtr() noexcept :
+			_target(nullptr) {
+		}
+
+		RefPtr(std::nullptr_t) noexcept :
 			_target(nullptr) {
 		}
 
@@ -103,6 +107,10 @@ namespace aurora {
 
 		inline void AE_CALL operator=(const RefPtr<T>& ptr) {
 			set(ptr._target);
+		}
+
+		inline void AE_CALL operator=(std::nullptr_t) {
+			reset();
 		}
 
 		inline bool AE_CALL operator==(const T& target) const {

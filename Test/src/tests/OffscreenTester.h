@@ -73,40 +73,28 @@ inline constexpr uint8_t AE_CALL byteswap1(uint8_t val) {
 
 inline constexpr uint16_t AE_CALL byteswap1(uint16_t val) {
 	if (std::is_constant_evaluated()) {
-		uint16_t Hi = val << 8;
-		uint16_t Lo = val >> 8;
-		return Hi | Lo;
+		return uint16_t(val << 8) | uint16_t(val >> 8);
 	} else {
 #if AE_COMPILER == AE_COMPILER_MSVC
 		return _byteswap_ushort(val);
 #elif AE_COMPILER == AE_COMPILER_GCC || AE_COMPILER == AE_COMPILER_CLANG
 		return __builtin_bswap16(val);
 #else
-		uint16_t Hi = val << 8;
-		uint16_t Lo = val >> 8;
-		return Hi | Lo;
+		return uint16_t(val << 8) | uint16_t(val >> 8);
 #endif
 	}
 }
 
 inline constexpr uint32_t AE_CALL byteswap1(uint32_t val) {
 	if (std::is_constant_evaluated()) {
-		uint32_t Byte0 = val & 0x000000FF;
-		uint32_t Byte1 = val & 0x0000FF00;
-		uint32_t Byte2 = val & 0x00FF0000;
-		uint32_t Byte3 = val & 0xFF000000;
-		return (Byte0 << 24) | (Byte1 << 8) | (Byte2 >> 8) | (Byte3 >> 24);
+		return (val & 0x000000FFU << 24) | (val & 0x0000FF00U << 8) | (val & 0x00FF0000U >> 8) | (val & 0xFF000000U >> 24);
 	} else {
 #if AE_COMPILER == AE_COMPILER_MSVC
 		return _byteswap_ulong(val);
 #elif AE_COMPILER == AE_COMPILER_GCC || AE_COMPILER == AE_COMPILER_CLANG
 		return __builtin_bswap32(val);
 #else
-		uint32_t Byte0 = val & 0x000000FF;
-		uint32_t Byte1 = val & 0x0000FF00;
-		uint32_t Byte2 = val & 0x00FF0000;
-		uint32_t Byte3 = val & 0xFF000000;
-		return (Byte0 << 24) | (Byte1 << 8) | (Byte2 >> 8) | (Byte3 >> 24);
+		return (val & 0x000000FFU << 24) | (val & 0x0000FF00U << 8) | (val & 0x00FF0000U >> 8) | (val & 0xFF000000U >> 24);
 #endif
 	}
 }
@@ -114,8 +102,7 @@ inline constexpr uint32_t AE_CALL byteswap1(uint32_t val) {
 inline constexpr uint64_t AE_CALL byteswap1(uint64_t val) {
 	if (std::is_constant_evaluated()) {
 		uint64_t Hi = byteswap1(uint32_t(val));
-		uint32_t Lo = byteswap1(uint32_t(val >> 32));
-		return (Hi << 32) | Lo;
+		return (Hi << 32) | byteswap1(uint32_t(val >> 32));
 	} else {
 #if AE_COMPILER == AE_COMPILER_MSVC
 		return _byteswap_uint64(val);
@@ -123,8 +110,7 @@ inline constexpr uint64_t AE_CALL byteswap1(uint64_t val) {
 		return __builtin_bswap64(val);
 #else
 		uint64_t Hi = byteswap1(uint32_t(val));
-		uint32_t Lo = byteswap1(uint32_t(val >> 32));
-		return (Hi << 32) | Lo;
+		return (Hi << 32) | byteswap1(uint32_t(val >> 32));
 #endif
 	}
 }
@@ -135,7 +121,6 @@ public:
 		constexpr std::string_view γ{ "0.5" };
 		
 		const char8_t dsfe[] = u8"abc";
-		bool bbb = __builtin_is_constant_evaluated();
 		 uint16_t aa32 = byteswap1(uint16_t(0x0100));
 
 		get_name<123>();

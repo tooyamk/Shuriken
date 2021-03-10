@@ -274,14 +274,14 @@ namespace std {
 	[[nodiscard]] inline constexpr T rotl(T x, int32_t s) noexcept {
 		constexpr auto bits = sizeof(T) << 3;
 		s &= bits - 1;
-		return x << s | x >> (bits - s);
+		return T(x << s) | T(x >> (bits - s));
 	}
 
 	template<typename T, typename = std::enable_if_t<std::is_integral_v<T> && std::is_unsigned_v<T>>>
 	[[nodiscard]] inline constexpr T rotr(T x, int32_t s) noexcept {
 		constexpr auto bits = sizeof(T) << 3;
 		s &= bits - 1;
-		return x >> s | x << (bits - s);
+		return T(x >> s) | T(x << (bits - s));
 	}
 
 	template<typename T, typename = std::enable_if_t<std::is_integral_v<T> && std::is_unsigned_v<T>>>
@@ -685,8 +685,9 @@ namespace aurora {
 
 
 	template<size_t Bytes, typename = std::enable_if_t<Bytes <= 8>>
-	inline uint_t<Bytes * 8> AE_CALL byteswap(const uint8_t* data) {
+	inline uint_t<Bytes * 8> AE_CALL byteswap(const void* val) {
 		using T = uint_t<Bytes * 8>;
+		auto data = (const uint8_t*)val;
 
 		if constexpr (Bytes == 0) {
 			return 0;
@@ -727,40 +728,34 @@ namespace aurora {
 		}
 	}
 
-	template<size_t Bytes>
+	template<size_t Bytes, typename = std::enable_if_t<Bytes <= 8>>
 	inline uint_t<Bytes * 8> AE_CALL byteswap(uint_t<Bytes * 8> val) {
-		return byteswap<Bytes>((uint8_t*)&val);
+		return byteswap<Bytes>(&val);
 	}
 
 	template<typename F, typename = floating_point_t<F>>
 	inline F AE_CALL byteswap(F val) {
-		auto v = byteswap<sizeof(F)>((uint8_t*)&val);
+		auto v = byteswap<sizeof(F)>(&val);
 		return *(F*)&v;
 	}
 
 
-	template<size_t Offset = 1>
-	inline void* AE_CALL memFind(void* val1, size_t val1Length, const void* val2, size_t val2Length) {
-		if (val2Length) {
-			auto inBuf = (uint8_t*)val1;
+	template<size_t Offset = 1, typename = std::enable_if_t<Offset != 0>>
+	inline const void* AE_CALL memFind(const void* data, size_t dataLength, const void* compare, size_t compareLength) {
+		if (compareLength) {
+			auto buf = (const uint8_t*)data;
 
-			for (; val1Length >= Offset; val1Length -= Offset) {
-				if (val1Length < val2Length) return nullptr;
+			do {
+				if (dataLength < compareLength) return nullptr;
+				if (!memcmp(buf, compare, compareLength)) return buf;
+				if (dataLength < Offset) return nullptr;
 
-				if (!memcmp(inBuf, val2, val2Length)) return inBuf;
-
-				inBuf += Offset;
-			}
-
-			return nullptr;
+				buf += Offset;
+				dataLength -= Offset;
+			} while (true);
 		} else {
-			return val1;
+			return data;
 		}
-	}
-
-	template<size_t Offset = 1>
-	inline const void* AE_CALL memFind(const void* val1, size_t val1Length, const void* val2, size_t val2Length) {
-		return memFind<Offset>((void*)val1, val1Length, val2, val2Length);
 	}
 
 
