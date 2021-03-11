@@ -25,9 +25,9 @@ namespace aurora::components::renderables {
 
 		virtual void AE_CALL collectRenderData(render::IRenderDataCollector& collector) const = 0;
 
-		std::vector<RefPtr<render::RenderPass>> renderPasses;
+		std::vector<IntrusivePtr<render::RenderPass>> renderPasses;
 
 	protected:
-		RefPtr<render::IRenderer> _renderer;
+		IntrusivePtr<render::IRenderer> _renderer;
 	};
 }

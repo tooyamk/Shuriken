@@ -9,18 +9,18 @@ public:
 		auto monitors = Monitor::getMonitors();
 		auto vms = monitors[0].getVideoModes();
 		
-		RefPtr app = new Application("TestApp");
+		IntrusivePtr app = new Application("TestApp");
 
 		ApplicationStyle wndStype;
 		wndStype.thickFrame = true;
 		if (app->createWindow(wndStype, "", Vec2ui32(800, 600), false)) {
-			RefPtr gml = new GraphicsModuleLoader();
+			IntrusivePtr gml = new GraphicsModuleLoader();
 
 			//if (gml->load("libs/" + getDLLName("ae-graphics-gl"))) {
 			if (gml->load("libs/" + getDLLName("ae-graphics-d3d11"))) {
 				SerializableObject args;
 				
-				RefPtr gpstml = new ModuleLoader<IProgramSourceTranslator>();
+				IntrusivePtr gpstml = new ModuleLoader<IProgramSourceTranslator>();
 				gpstml->load("libs/" + getDLLName("ae-program-source-translator"));
 
 				args.insert("dxc", "libs/" + getDLLName("dxcompiler"));
@@ -52,25 +52,25 @@ public:
 					//}));
 
 					struct {
-						RefPtr<Application> app;
-						RefPtr<Looper> looper;
-						RefPtr<IGraphicsModule> g;
-						RefPtr<Node> wrold;
-						RefPtr<Node> model;
-						RefPtr<Camera> camera;
-						RefPtr<Material> material;
-						RefPtr<Material> material2;
-						RefPtr<StandardRenderPipeline> renderPipeline;
-						std::vector<RefPtr<ILight>> lights;
-						std::vector<RefPtr<IRenderable>> renderables;
+						IntrusivePtr<Application> app;
+						IntrusivePtr<Looper> looper;
+						IntrusivePtr<IGraphicsModule> g;
+						IntrusivePtr<Node> wrold;
+						IntrusivePtr<Node> model;
+						IntrusivePtr<Camera> camera;
+						IntrusivePtr<Material> material;
+						IntrusivePtr<Material> material2;
+						IntrusivePtr<StandardRenderPipeline> renderPipeline;
+						std::vector<IntrusivePtr<ILight>> lights;
+						std::vector<IntrusivePtr<IRenderable>> renderables;
 					} renderData;
 					renderData.app = app;
 					renderData.looper = new Looper(1000.0 / 60.0);
 					renderData.g = graphics;
 
 					{
-						RefPtr worldNode = new Node();
-						RefPtr modelNode = worldNode->addChild<Node>();
+						IntrusivePtr worldNode = new Node();
+						IntrusivePtr modelNode = worldNode->addChild<Node>();
 						//modelNode = new Node();
 						//modelNode->setLocalScale(Vec3f32(4));
 						//modelNode->parentTranslate(Vec3f32(0, 3000.f, 0));
@@ -80,7 +80,7 @@ public:
 						//auto wm = modelNode->getWorldMatrix();
 						renderData.model = modelNode;
 						if (1) {
-							RefPtr lightNode = worldNode->addChild<Node>();
+							IntrusivePtr lightNode = worldNode->addChild<Node>();
 							lightNode->setLocalPosition(Vec3f32(-100, 0, -100));
 							auto light = renderData.lights.emplace_back(new PointLight());
 							light->attachNode(lightNode);
@@ -89,7 +89,7 @@ public:
 							renderData.lights.emplace_back(light);
 						}
 						if (1) {
-							RefPtr lightNode = worldNode->addChild<Node>();
+							IntrusivePtr lightNode = worldNode->addChild<Node>();
 							lightNode->setLocalPosition(Vec3f32(100, 0, -100));
 							auto light = renderData.lights.emplace_back(new PointLight());
 							light->attachNode(lightNode);
@@ -97,7 +97,7 @@ public:
 							lightNode->localRotate(Quaternion::createEulerY(-Math::PI_4<float32_t>));
 							renderData.lights.emplace_back(light);
 						}
-						RefPtr cameraNode = worldNode->addChild<Node>();
+						IntrusivePtr cameraNode = worldNode->addChild<Node>();
 						//auto camera = new Camera();
 						//cameraNode->addComponent(camera);
 						renderData.camera = new Camera();
@@ -106,7 +106,7 @@ public:
 						renderData.material = mat;
 						auto mat2 = new Material();
 						renderData.material2 = mat2;
-						RefPtr renderer = new ForwardRenderer(*graphics);
+						IntrusivePtr renderer = new ForwardRenderer(*graphics);
 
 						{
 							renderData.camera->getNode()->localTranslate(Vec3f32(0.f, 0.f, -200.f));
@@ -115,10 +115,10 @@ public:
 						RenderTag forwardBaseTag("forward_base");
 						RenderTag forwardAddTag("forward_add");
 
-						RefPtr tag1 = new RenderTagCollection();
+						IntrusivePtr tag1 = new RenderTagCollection();
 						tag1->add(forwardBaseTag);
 
-						RefPtr tag2 = new RenderTagCollection();
+						IntrusivePtr tag2 = new RenderTagCollection();
 						tag2->add(forwardAddTag);
 
 						auto parsed = extensions::FBXConverter::parse(readFile(app->getAppPath().parent_path().u8string() + "/Resources/teapot.fbx"));
@@ -169,7 +169,7 @@ public:
 						}
 
 						{
-							RefPtr s = new Shader();
+							IntrusivePtr s = new Shader();
 
 							mat->setShader(s);
 							mat->setParameters(new ShaderParameterCollection());
@@ -272,7 +272,7 @@ public:
 	}
 
 private:
-	RefPtr<Node> _worldRoot;
+	IntrusivePtr<Node> _worldRoot;
 
 	void _resize(Camera& cam, const Vec2ui32& size) {
 		constexpr auto& zero = Math::NUMBER_0<std::remove_cvref_t<decltype(size)>::ElementType>;

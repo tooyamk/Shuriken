@@ -1,7 +1,7 @@
 #pragma once
 
 #include "aurora/ByteArray.h"
-#include "aurora/Ref.h"
+#include "aurora/Intrusive.h"
 
 namespace aurora {
 	enum class ProgramStage : uint8_t {

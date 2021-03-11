@@ -41,8 +41,8 @@ namespace aurora {
 		_addTimer(timer, delay, _tickingElapsed, strict);
 	}
 
-	RefPtr<TimeWheel::Timer> TimeWheel::startTimer(uint64_t delay, size_t count, bool strict, const Timer::OnTickFn& fn) {
-		RefPtr timer = new Timer();
+	IntrusivePtr<TimeWheel::Timer> TimeWheel::startTimer(uint64_t delay, size_t count, bool strict, const Timer::OnTickFn& fn) {
+		IntrusivePtr timer = new Timer();
 		timer->onTick = fn;
 		startTimer(*timer, delay, count, strict);
 		return std::move(timer);

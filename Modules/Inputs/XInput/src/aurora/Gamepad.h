@@ -20,7 +20,7 @@ namespace aurora::modules::inputs::xinput {
 
 	private:
 		DWORD _index;
-		RefPtr<Input> _input;
+		IntrusivePtr<Input> _input;
 		events::EventDispatcher<DeviceEvent> _eventDispatcher;
 		DeviceInfo _info;
 

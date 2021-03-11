@@ -15,7 +15,7 @@ namespace aurora::modules::graphics::gl {
 		return _base.handle;
 	}
 
-	RefPtr<ITextureResource> TextureViewSimulative::getResource() const {
+	IntrusivePtr<ITextureResource> TextureViewSimulative::getResource() const {
 		return _base.res;
 	}
 
@@ -32,7 +32,7 @@ namespace aurora::modules::graphics::gl {
 	}
 
 	bool TextureViewSimulative::create(ITextureResource* res, uint32_t mipBegin, uint32_t mipLevels, uint32_t arrayBegin, uint32_t arraySize) {
-		RefPtr guard(res);
+		IntrusivePtr guard(res);
 
 		destroy();
 

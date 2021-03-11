@@ -1,6 +1,6 @@
 #pragma once
 
-#include "aurora/Ref.h"
+#include "aurora/Intrusive.h"
 #include "aurora/RTTI.h"
 
 namespace aurora {

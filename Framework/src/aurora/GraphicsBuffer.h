@@ -8,7 +8,7 @@ namespace aurora {
 	class MultipleBuffer : public modules::graphics::IObject {
 	public:
 		struct Node {
-			RefPtr<T> target;
+			IntrusivePtr<T> target;
 			Node* next = nullptr;
 		};
 
@@ -168,7 +168,7 @@ namespace aurora {
 		Node* _head;
 		Node* _cur;
 
-		RefPtr<T> AE_CALL _createBuffer() {
+		IntrusivePtr<T> AE_CALL _createBuffer() {
 			if constexpr (std::is_base_of_v<modules::graphics::IVertexBuffer, T>) {
 				return _graphics->createVertexBuffer();
 			} else if constexpr (std::is_base_of_v<modules::graphics::IIndexBuffer, T>) {
@@ -266,7 +266,7 @@ namespace aurora {
 	public:
 		virtual ~IVertexBufferGetter() {}
 
-		virtual RefPtr<modules::graphics::IVertexBuffer> AE_CALL get(const query_string& name) const = 0;
+		virtual IntrusivePtr<modules::graphics::IVertexBuffer> AE_CALL get(const query_string& name) const = 0;
 	};
 
 
@@ -274,10 +274,10 @@ namespace aurora {
 	public:
 		~VertexBufferCollection();
 
-		virtual RefPtr<modules::graphics::IVertexBuffer> AE_CALL get(const query_string& name) const override;
+		virtual IntrusivePtr<modules::graphics::IVertexBuffer> AE_CALL get(const query_string& name) const override;
 		void AE_CALL set(const query_string& name, modules::graphics::IVertexBuffer* buffer);
 
-		inline RefPtr<modules::graphics::IVertexBuffer> AE_CALL remove(const query_string& name) {
+		inline IntrusivePtr<modules::graphics::IVertexBuffer> AE_CALL remove(const query_string& name) {
 			return _remove(name);
 		}
 		inline bool AE_CALL isEmpty() const {
@@ -288,7 +288,7 @@ namespace aurora {
 		}
 
 	private:
-		string_unordered_map<RefPtr<modules::graphics::IVertexBuffer>> _buffers;
+		string_unordered_map<IntrusivePtr<modules::graphics::IVertexBuffer>> _buffers;
 
 		modules::graphics::IVertexBuffer* AE_CALL _remove(const query_string& name);
 	};

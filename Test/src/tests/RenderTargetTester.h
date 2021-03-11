@@ -9,18 +9,18 @@ public:
 		auto monitors = Monitor::getMonitors();
 		auto vms = monitors[0].getVideoModes();
 
-		RefPtr app = new Application("TestApp");
+		IntrusivePtr app = new Application("TestApp");
 
 		ApplicationStyle wndStype;
 		wndStype.thickFrame = true;
 		if (app->createWindow(wndStype, "", Vec2ui32(800, 600), false)) {
-			RefPtr gml = new GraphicsModuleLoader();
+			IntrusivePtr gml = new GraphicsModuleLoader();
 
 			if (gml->load("libs/" + getDLLName("ae-graphics-gl"))) {
 			//if (gml->load("libs/" + getDLLName("ae-graphics-d3d11"))) {
 				SerializableObject args;
 
-				RefPtr gpstml = new ModuleLoader<IProgramSourceTranslator>();
+				IntrusivePtr gpstml = new ModuleLoader<IProgramSourceTranslator>();
 				gpstml->load("libs/" + getDLLName("ae-program-source-translator"));
 
 				args.insert("dxc", "libs/" + getDLLName("dxcompiler"));
@@ -46,21 +46,21 @@ public:
 					}));
 
 					struct {
-						RefPtr<Application> app;
-						RefPtr<Looper> looper;
-						RefPtr<IGraphicsModule> g;
-						RefPtr<VertexBufferCollection> vbf;
-						RefPtr<ShaderParameterCollection> spc;
-						RefPtr<IProgram> p;
-						RefPtr<IIndexBuffer> ib;
-						RefPtr<IBlendState> bs;
-						RefPtr<IDepthStencilState> dss;
-						RefPtr<IRenderTarget> rt;
+						IntrusivePtr<Application> app;
+						IntrusivePtr<Looper> looper;
+						IntrusivePtr<IGraphicsModule> g;
+						IntrusivePtr<VertexBufferCollection> vbf;
+						IntrusivePtr<ShaderParameterCollection> spc;
+						IntrusivePtr<IProgram> p;
+						IntrusivePtr<IIndexBuffer> ib;
+						IntrusivePtr<IBlendState> bs;
+						IntrusivePtr<IDepthStencilState> dss;
+						IntrusivePtr<IRenderTarget> rt;
 
 						struct {
-							RefPtr<VertexBufferCollection> vbf;
-							RefPtr<IProgram> p;
-							RefPtr<IIndexBuffer> ib;
+							IntrusivePtr<VertexBufferCollection> vbf;
+							IntrusivePtr<IProgram> p;
+							IntrusivePtr<IIndexBuffer> ib;
 						} pp;
 					} renderData;
 					renderData.app = app;
@@ -81,7 +81,7 @@ public:
 
 					{
 						//auto vertexBuffer = graphics->createVertexBuffer();
-						RefPtr vertexBuffer = new MultipleVertexBuffer(*graphics, 3);
+						IntrusivePtr vertexBuffer = new MultipleVertexBuffer(*graphics, 3);
 						if (vertexBuffer) {
 							/*
 							f32 vertices[] = {
@@ -131,7 +131,7 @@ public:
 						renderData.spc->set("green", new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set(Vec4f32::ONE).setUpdated();
 						//cf->add("blue", new ShaderParameter())->set(Vec4f32::ONE).setUpdated();
 
-						RefPtr aabbccStruct = new ShaderParameterCollection();
+						IntrusivePtr aabbccStruct = new ShaderParameterCollection();
 						aabbccStruct->set("val1", new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set(Vec4f32::ONE).setUpdated();
 						float32_t val2[] = { 1.0f, 1.0f };
 						aabbccStruct->set("val2", new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set<float32_t>(val2, sizeof(val2), sizeof(float32_t), true).setUpdated();
@@ -177,7 +177,7 @@ public:
 					}
 
 					{
-						RefPtr texRes = graphics->createTexture2DResource();
+						IntrusivePtr texRes = graphics->createTexture2DResource();
 						if (texRes) {
 							auto img0 = extensions::PNGConverter::parse(readFile(app->getAppPath().parent_path().u8string() + "/Resources/c4.png"));
 							auto mipLevels = Image::calcMipLevels(img0->size);
@@ -244,14 +244,14 @@ public:
 
 					renderData.pp.vbf = new VertexBufferCollection();
 					{
-						RefPtr ppVertexBuffer = graphics->createVertexBuffer();
+						IntrusivePtr ppVertexBuffer = graphics->createVertexBuffer();
 						{
 							float32_t data[] = { -1.0f, 1.0f, 0.8f, 1.0f, 0.8f, -0.9f, -1.0f, -0.9f };
 							ppVertexBuffer->create(sizeof(data), Usage::NONE, data, sizeof(data));
 							ppVertexBuffer->setFormat(VertexFormat(VertexSize::TWO, VertexType::F32));
 						}
 
-						RefPtr ppUVBuffer = graphics->createVertexBuffer();
+						IntrusivePtr ppUVBuffer = graphics->createVertexBuffer();
 						{
 							float32_t data[] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f };
 							ppUVBuffer->create(sizeof(data), Usage::NONE, data, sizeof(data));

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "aurora/Ref.h"
+#include "aurora/Intrusive.h"
 #include "aurora/ByteArray.h"
 #include "aurora/String.h"
 #include <unordered_map>

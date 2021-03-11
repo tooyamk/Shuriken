@@ -11,11 +11,11 @@ namespace aurora::render {
 	class AE_FW_DLL RenderPass : public Ref {
 	public:
 		RenderPriority priority;
-		RefPtr<RenderState> state;
-		RefPtr<Material> material;
+		IntrusivePtr<RenderState> state;
+		IntrusivePtr<Material> material;
 
-		RefPtr<RenderTagCollection> tags;
-		std::vector<RefPtr<RenderPass>> subPasses;
+		IntrusivePtr<RenderTagCollection> tags;
+		std::vector<IntrusivePtr<RenderPass>> subPasses;
 		//std::map<RenderTag, RefPtr<RenderPass>, RenderTag::std_compare> subPasses;
 	};
 }

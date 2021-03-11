@@ -41,7 +41,7 @@ namespace aurora::modules::graphics::gl {
 		return size;
 	}
 
-	RefPtr<IRenderView> RenderTarget::getRenderView(uint8_t index) const {
+	IntrusivePtr<IRenderView> RenderTarget::getRenderView(uint8_t index) const {
 		return index < _views.size() ? _views[index] : nullptr;
 	}
 
@@ -68,7 +68,7 @@ namespace aurora::modules::graphics::gl {
 		if (!_numViewsDirty && _numViews >= begin + 1) _numViewsDirty = true;
 	} 
 
-	RefPtr<IDepthStencil> RenderTarget::getDepthStencil() const {
+	IntrusivePtr<IDepthStencil> RenderTarget::getDepthStencil() const {
 		return _ds;
 	}
 

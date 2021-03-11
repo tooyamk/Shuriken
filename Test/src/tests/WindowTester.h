@@ -5,7 +5,7 @@
 class WindowTester : public BaseTester {
 public:
 	virtual int32_t AE_CALL run() override {
-		RefPtr app = new Application("TestApp");
+		IntrusivePtr app = new Application("TestApp");
 
 		ApplicationStyle wndStype;
 		wndStype.thickFrame = true;
@@ -13,7 +13,7 @@ public:
 		if (app->createWindow(wndStype, "Fucker", Vec2ui32(800, 600), false)) {
 			//app->setWindowPosition({200, 300});
 
-			RefPtr looper = new Looper(1000.0 / 60.0);
+			IntrusivePtr looper = new Looper(1000.0 / 60.0);
 
 			auto t = aurora::Time::now();
 			int step = 0;

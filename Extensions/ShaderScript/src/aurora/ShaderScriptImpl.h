@@ -10,13 +10,13 @@ namespace aurora::extensions::shader_script {
 		std::string_view name;
 		size_t contentBegin = 0;
 		std::string_view content;
-		std::vector<RefPtr<Block>> chindren;
+		std::vector<IntrusivePtr<Block>> chindren;
 	};
 
 
 	struct ProgramData {
-		RefPtr<ProgramSource> vs;
-		RefPtr<ProgramSource> ps;
+		IntrusivePtr<ProgramSource> vs;
+		IntrusivePtr<ProgramSource> ps;
 	};
 
 
@@ -85,7 +85,7 @@ namespace aurora::extensions::shader_script {
 	}
 
 	template<ProgramStage Stage>
-	inline bool AE_CALL parseProgram(RefPtr<ProgramSource>& out, const std::string_view& content) {
+	inline bool AE_CALL parseProgram(IntrusivePtr<ProgramSource>& out, const std::string_view& content) {
 		out = new ProgramSource();
 		out->stage = Stage;
 		out->language = ProgramLanguage::HLSL;
@@ -155,19 +155,19 @@ namespace aurora::extensions::shader_script {
 		}
 	}
 
-	inline std::vector<RefPtr<Block>> AE_CALL parseBlocks(const std::string_view& data) {
-		std::vector<RefPtr<Block>> blocks;
+	inline std::vector<IntrusivePtr<Block>> AE_CALL parseBlocks(const std::string_view& data) {
+		std::vector<IntrusivePtr<Block>> blocks;
 
-		std::vector<RefPtr<Block>> stack;
+		std::vector<IntrusivePtr<Block>> stack;
 
-		RefPtr<Block> curBlock;
+		IntrusivePtr<Block> curBlock;
 
 		size_t begin = 0;
 		for (size_t i = 0, n = data.size(); i < n; ++i) {
 			switch (data[i]) {
 			case '{':
 			{
-				RefPtr block = new Block();
+				IntrusivePtr block = new Block();
 
 				if (curBlock) {
 					curBlock->chindren.emplace_back(block);
@@ -197,7 +197,7 @@ namespace aurora::extensions::shader_script {
 					}
 				} else {
 					//error
-					return std::vector<RefPtr<Block>>();
+					return std::vector<IntrusivePtr<Block>>();
 				}
 
 				break;

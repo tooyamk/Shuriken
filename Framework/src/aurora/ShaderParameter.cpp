@@ -232,12 +232,12 @@ namespace aurora {
 	}
 
 
-	RefPtr<ShaderParameter> ShaderParameterCollection::get(const query_string& name) const {
+	IntrusivePtr<ShaderParameter> ShaderParameterCollection::get(const query_string& name) const {
 		auto itr = _parameters.find(name);
 		return itr == _parameters.end() ? nullptr : itr->second;
 	}
 
-	RefPtr<ShaderParameter> ShaderParameterCollection::get(const query_string& name, ShaderParameterType type) const {
+	IntrusivePtr<ShaderParameter> ShaderParameterCollection::get(const query_string& name, ShaderParameterType type) const {
 		auto itr = _parameters.find(name);
 		return itr == _parameters.end() ? nullptr : (itr->second->getType() == type ? itr->second : nullptr);
 	}
@@ -267,7 +267,7 @@ namespace aurora {
 	}
 
 
-	RefPtr<ShaderParameter> ShaderParameterGetterStack::get(const query_string& name) const {
+	IntrusivePtr<ShaderParameter> ShaderParameterGetterStack::get(const query_string& name) const {
 		auto i = _stack.size();
 		while (i--) {
 			if (_stack[i]) {
@@ -277,7 +277,7 @@ namespace aurora {
 		return nullptr;
 	}
 
-	RefPtr<ShaderParameter> ShaderParameterGetterStack::get(const query_string& name, ShaderParameterType type) const {
+	IntrusivePtr<ShaderParameter> ShaderParameterGetterStack::get(const query_string& name, ShaderParameterType type) const {
 		auto i = _stack.size();
 		while (i--) {
 			if (_stack[i]) {

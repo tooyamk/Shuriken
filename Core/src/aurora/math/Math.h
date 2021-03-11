@@ -6,8 +6,6 @@
 namespace aurora {
 	class AE_CORE_DLL Math {
 	public:
-		AE_DECLARE_CANNOT_INSTANTIATE(Math);
-
 		template<typename T> inline static constexpr arithmetic_t<T> NUMBER_0 = 0;
 		template<typename T> inline static constexpr arithmetic_t<T> NUMBER_1 = 1;
 		template<typename T> inline static constexpr floating_point_t<T> TOLERANCE = T(2e-37);

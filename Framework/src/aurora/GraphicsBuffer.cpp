@@ -222,7 +222,7 @@ namespace aurora {
 		clear();
 	}
 
-	RefPtr<modules::graphics::IVertexBuffer> VertexBufferCollection::get(const query_string& name) const {
+	IntrusivePtr<modules::graphics::IVertexBuffer> VertexBufferCollection::get(const query_string& name) const {
 		auto itr = _buffers.find(name);
 		return itr == _buffers.end() ? nullptr : itr->second;
 	}

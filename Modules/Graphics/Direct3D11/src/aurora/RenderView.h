@@ -11,7 +11,7 @@ namespace aurora::modules::graphics::d3d11 {
 		virtual ~RenderView();
 
 		virtual bool AE_CALL isCreated() const override;
-		virtual RefPtr<ITextureResource> AE_CALL getResource() const override;
+		virtual IntrusivePtr<ITextureResource> AE_CALL getResource() const override;
 		virtual const void* AE_CALL getNative() const override;
 		virtual uint32_t AE_CALL getArraySize() const override;
 		virtual uint32_t AE_CALL getMipSlice() const override;
@@ -28,7 +28,7 @@ namespace aurora::modules::graphics::d3d11 {
 		uint32_t _arraySize;
 		uint32_t _createdArraySize;
 
-		RefPtr<ITextureResource> _res;
+		IntrusivePtr<ITextureResource> _res;
 		ID3D11RenderTargetView1* _view;
 
 		bool AE_CALL _createDone(bool succeeded, ITextureResource* res);

@@ -93,7 +93,7 @@ namespace aurora {
 		}
 
 		void AE_CALL startTimer(Timer& timer, uint64_t delay, size_t count, bool strict);
-		RefPtr<Timer> AE_CALL startTimer(uint64_t delay, size_t count, bool strict, const Timer::OnTickFn& fn);
+		IntrusivePtr<Timer> AE_CALL startTimer(uint64_t delay, size_t count, bool strict, const Timer::OnTickFn& fn);
 
 		inline void AE_CALL stopTimer(Timer& timer) {
 			std::scoped_lock lck(_mutex);
@@ -198,7 +198,7 @@ namespace aurora {
 						if (t->_runningCycle) {
 							if (skip) --t->_runningCycle;
 						} else if (t->_runningDelay <= elapsed) {
-							RefPtr<Timer> p = t;
+							IntrusivePtr<Timer> p = t;
 							++t->_runningCount;
 							auto e = t->_runningDelay;
 

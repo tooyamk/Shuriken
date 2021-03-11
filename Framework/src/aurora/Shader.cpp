@@ -41,7 +41,7 @@ namespace aurora {
 		_variants.clear();
 	}
 
-	RefPtr<modules::graphics::IProgram> Shader::select(const IShaderDefineGetter* getter) {
+	IntrusivePtr<modules::graphics::IProgram> Shader::select(const IShaderDefineGetter* getter) {
 		if (!_graphics) return nullptr;
 
 		constexpr uint8_t NULL_VALUE = 0;

@@ -6,8 +6,6 @@
 namespace aurora {
 	class Time {
 	public:
-		AE_DECLARE_CANNOT_INSTANTIATE(Time);
-
 		/**
 		 * system_clock : utc time.
 		 * steady_clock : monotonic time.

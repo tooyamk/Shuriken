@@ -153,7 +153,7 @@ namespace aurora::render {
 		auto shader = material->getShader();
 		if (!shader) return;
 
-		RefPtr<modules::graphics::IProgram> program;
+		IntrusivePtr<modules::graphics::IProgram> program;
 
 		{
 			StackPopper<ShaderDefineGetterStack, StackPopperFlag::MULTI_POP> popper(shaderDefineStack, shaderDefineStack.push(&*_shaderDefines, material->getDefines()));

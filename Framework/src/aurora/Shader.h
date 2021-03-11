@@ -24,7 +24,7 @@ namespace aurora {
 		void AE_CALL set(modules::graphics::IGraphicsModule* graphics, ProgramSource* vs, ProgramSource* ps, 
 			const ShaderDefine* staticDefines, size_t numStaticDefines, const std::string_view* dynamicDefines, size_t numDynamicDefines,
 			const IncludeHandler& handler);
-		RefPtr<modules::graphics::IProgram> AE_CALL select(const IShaderDefineGetter* getter);
+		IntrusivePtr<modules::graphics::IProgram> AE_CALL select(const IShaderDefineGetter* getter);
 
 		void AE_CALL unset();
 
@@ -35,14 +35,14 @@ namespace aurora {
 
 
 		struct Variant {
-			RefPtr<ProgramSource> vs;
-			RefPtr<ProgramSource> ps;
+			IntrusivePtr<ProgramSource> vs;
+			IntrusivePtr<ProgramSource> ps;
 		};
 
 
-		RefPtr<modules::graphics::IGraphicsModule> _graphics;
-		RefPtr<ProgramSource> _vs;
-		RefPtr<ProgramSource> _ps;
+		IntrusivePtr<modules::graphics::IGraphicsModule> _graphics;
+		IntrusivePtr<ProgramSource> _vs;
+		IntrusivePtr<ProgramSource> _ps;
 		IncludeHandler _includeHhandler;
 
 		std::unordered_map<uint64_t, Variant> _variants;
@@ -51,6 +51,6 @@ namespace aurora {
 		std::vector<std::string> _dynamicDefines;
 		std::vector<ShaderDefine> _defines;
 
-		std::unordered_map<uint64_t, RefPtr<modules::graphics::IProgram>> _programs;
+		std::unordered_map<uint64_t, IntrusivePtr<modules::graphics::IProgram>> _programs;
 	};
 }

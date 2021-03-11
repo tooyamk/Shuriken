@@ -154,7 +154,7 @@ namespace aurora::modules::inputs::direct_input {
 	}
 
 	void Gamepad::poll(bool dispatchEvent) {
-		if (auto hr = _dev->Poll(); hr == DIERR_NOTACQUIRED || DIERR_INPUTLOST) {
+		if (auto hr = _dev->Poll(); hr == DIERR_NOTACQUIRED || hr == DIERR_INPUTLOST) {
 			if (FAILED(_dev->Acquire())) return;
 			if (FAILED(_dev->Poll())) return;
 		}

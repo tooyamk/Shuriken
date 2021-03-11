@@ -29,7 +29,7 @@ namespace aurora::modules::inputs::xinput {
 #endif
 
 	private:
-		RefPtr<Ref> _loader;
+		IntrusivePtr<Ref> _loader;
 
 		std::vector<DeviceInfo> _devices;
 		std::vector<DeviceInfo> _connectedDevices;

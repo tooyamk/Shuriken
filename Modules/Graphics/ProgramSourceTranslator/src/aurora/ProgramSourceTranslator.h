@@ -55,7 +55,7 @@ namespace aurora::modules::graphics::program_source_translator {
 		};
 
 
-		RefPtr<Ref> _loader;
+		IntrusivePtr<Ref> _loader;
 		DynamicLib _dxcDll;
 
 		CComPtr<IDxcLibrary> _dxcLib;

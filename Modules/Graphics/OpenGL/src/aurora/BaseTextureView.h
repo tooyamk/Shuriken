@@ -17,7 +17,7 @@ namespace aurora::modules::graphics::gl {
 		uint32_t createdArraySize;
 		GLenum internalFormat;
 
-		RefPtr<ITextureResource> res;
+		IntrusivePtr<ITextureResource> res;
 		GLuint handle;
 
 		void AE_CALL destroy();

@@ -22,7 +22,7 @@ namespace aurora::modules::graphics::d3d11 {
 		return _view;
 	}
 
-	RefPtr<ITextureResource> TextureView::getResource() const {
+	IntrusivePtr<ITextureResource> TextureView::getResource() const {
 		return _res;
 	}
 
@@ -39,7 +39,7 @@ namespace aurora::modules::graphics::d3d11 {
 	}
 
 	bool TextureView::create(ITextureResource* res, uint32_t mipBegin, uint32_t mipLevels, uint32_t arrayBegin, uint32_t arraySize) {
-		RefPtr guard(res);
+		IntrusivePtr guard(res);
 
 		destroy();
 		

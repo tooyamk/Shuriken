@@ -2,7 +2,7 @@
 #include "PNGConverterImpl.h"
 
 namespace aurora::extensions {
-	RefPtr<Image> PNGConverter::parse(const ByteArray& source) {
+	IntrusivePtr<Image> PNGConverter::parse(const ByteArray& source) {
 		return png_converter::parse(source);
 	}
 

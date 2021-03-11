@@ -5,8 +5,6 @@
 namespace aurora::extensions {
 	class AE_EXTENSION_DLL ASTCConverter {
 	public:
-		AE_DECLARE_CANNOT_INSTANTIATE(ASTCConverter);
-
 		enum class BlockSize : uint8_t {
 			BLOCK_4x4,
 			BLOCK_5x4,

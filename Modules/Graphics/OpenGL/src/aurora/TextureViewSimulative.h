@@ -11,7 +11,7 @@ namespace aurora::modules::graphics::gl {
 		virtual ~TextureViewSimulative();
 
 		virtual bool AE_CALL isCreated() const override;
-		virtual RefPtr<ITextureResource> AE_CALL getResource() const override;
+		virtual IntrusivePtr<ITextureResource> AE_CALL getResource() const override;
 		virtual const void* AE_CALL getNative() const override;
 		virtual uint32_t AE_CALL getArraySize() const override;
 		virtual uint32_t AE_CALL getMipLevels() const override;

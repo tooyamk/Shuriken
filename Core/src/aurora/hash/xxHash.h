@@ -5,8 +5,6 @@
 namespace aurora::hash {
 	class  xxHash {
 	public:
-		AE_DECLARE_CANNOT_INSTANTIATE(xxHash);
-
 		template<size_t Bits, std::endian DataEndian>
 		static uint_t<Bits> AE_CALL calc(const void* data, size_t len, uint_t<Bits> seed) {
 			static_assert(Bits == 32 || Bits == 64, "only support 32, 64 bits mode");

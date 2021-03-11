@@ -162,9 +162,9 @@ namespace aurora::modules::graphics {
 	}
 
 	IConstantBuffer* ConstantBufferManager::_getExclusiveConstantBuffer(const ConstantBufferLayout& layout, const std::vector<ShaderParameter*>& parameters,
-		uint32_t cur, uint32_t max, ExclusiveConstNode* parent, std::unordered_map<const ShaderParameter*, RefPtr<ExclusiveConstNode>>& childContainer) {
+		uint32_t cur, uint32_t max, ExclusiveConstNode* parent, std::unordered_map<const ShaderParameter*, IntrusivePtr<ExclusiveConstNode>>& childContainer) {
 		auto param = parameters[cur];
-		RefPtr<ExclusiveConstNode> node;
+		IntrusivePtr<ExclusiveConstNode> node;
 
 		if (param) {
 			if (auto rst = childContainer.emplace(param, nullptr); rst.second) {

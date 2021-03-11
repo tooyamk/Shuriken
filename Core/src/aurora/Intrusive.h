@@ -51,34 +51,45 @@ namespace aurora {
 	};
 
 
+	inline void AE_CALL intrusivePtrAddRef(Ref& val) {
+		val.ref();
+	}
+
+	inline void AE_CALL intrusivePtrRelease(Ref& val) {
+		Ref::unref(val);
+	}
+
+
 	template<typename T>
-	class RefPtr {
+	class IntrusivePtr {
 	public:
-		RefPtr() noexcept :
+		IntrusivePtr() noexcept :
 			_target(nullptr) {
 		}
 
-		RefPtr(std::nullptr_t) noexcept :
+		IntrusivePtr(std::nullptr_t) noexcept :
 			_target(nullptr) {
 		}
 
-		RefPtr(const RefPtr<T>& ptr) : RefPtr(ptr._target) {
+		IntrusivePtr(const IntrusivePtr<T>& ptr) : IntrusivePtr(ptr._target) {
 		}
 
-		RefPtr(RefPtr<T>&& ptr) noexcept :
+		IntrusivePtr(IntrusivePtr<T>&& ptr) noexcept :
 			_target(ptr._target) {
 			ptr._target = nullptr;
 		}
 
-		RefPtr(T* target) :
-			_target(target ? target->template ref<T>() : nullptr) {
+		IntrusivePtr(T* target) :
+			_target(target) {
+			if (target) intrusivePtrAddRef(*_target);
 		}
 
-		RefPtr(T& target) :
-			_target(target.template ref<T>()) {
+		IntrusivePtr(T& target) :
+			_target(&target) {
+			intrusivePtrAddRef(*_target);
 		}
 
-		~RefPtr() {
+		~IntrusivePtr() {
 			reset();
 		}
 
@@ -90,8 +101,8 @@ namespace aurora {
 			return *_target;
 		}
 
-		inline RefPtr<T>& AE_CALL operator=(RefPtr<T>&& ptr) noexcept {
-			if (_target) Ref::unref(*_target);
+		inline IntrusivePtr<T>& AE_CALL operator=(IntrusivePtr<T>&& ptr) noexcept {
+			if (_target) intrusivePtrRelease(*_target);
 			_target = ptr._target;
 			ptr._target = nullptr;
 			return *this;
@@ -105,7 +116,7 @@ namespace aurora {
 			set(target);
 		}
 
-		inline void AE_CALL operator=(const RefPtr<T>& ptr) {
+		inline void AE_CALL operator=(const IntrusivePtr<T>& ptr) {
 			set(ptr._target);
 		}
 
@@ -117,7 +128,7 @@ namespace aurora {
 			return _target == &target;
 		}
 
-		inline bool AE_CALL operator==(const RefPtr<T>* ptr) const {
+		inline bool AE_CALL operator==(const IntrusivePtr<T>* ptr) const {
 			return this == ptr;
 		}
 
@@ -125,7 +136,7 @@ namespace aurora {
 			return _target != &target;
 		}
 
-		inline bool AE_CALL operator!=(const RefPtr<T>* ptr) const {
+		inline bool AE_CALL operator!=(const IntrusivePtr<T>* ptr) const {
 			return this != ptr;
 		}
 
@@ -144,16 +155,16 @@ namespace aurora {
 
 		inline void AE_CALL set(T* target) {
 			if (_target != target) {
-				if (target) target->ref();
-				if (_target) Ref::unref(*_target);
+				if (target) intrusivePtrAddRef(*_target);
+				if (_target) intrusivePtrRelease(*_target);
 				_target = target;
 			}
 		}
 
 		inline void AE_CALL set(T& target) {
 			if (_target != &target) {
-				target.ref();
-				if (_target) Ref::unref(*_target);
+				intrusivePtrAddRef(_target);
+				if (_target) intrusivePtrRelease(*_target);
 				_target = &target;
 			}
 		}
@@ -162,7 +173,7 @@ namespace aurora {
 		inline void AE_CALL reset() {
 			if (_target) {
 				if constexpr (DoUnref) {
-					Ref::unref(*_target);
+					intrusivePtrRelease(*_target);
 				}
 				_target = nullptr;
 			}
@@ -178,12 +189,12 @@ namespace aurora {
 
 
 	template<typename T>
-	inline bool AE_CALL operator==(const T& lhs, const RefPtr<T>& rhs) {
+	inline bool AE_CALL operator==(const T& lhs, const IntrusivePtr<T>& rhs) {
 		return rhs == &lhs;
 	}
 
 	template<typename T>
-	inline bool AE_CALL operator!=(const T& lhs, const RefPtr<T>& rhs) {
+	inline bool AE_CALL operator!=(const T& lhs, const IntrusivePtr<T>& rhs) {
 		return rhs != &lhs;
 	}
 }

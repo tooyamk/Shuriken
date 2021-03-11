@@ -35,22 +35,22 @@ namespace aurora::modules::graphics::d3d11 {
 
 		virtual const std::string& AE_CALL getVersion() const override;
 		virtual const GraphicsDeviceFeatures& AE_CALL getDeviceFeatures() const override;
-		virtual RefPtr<IBlendState> AE_CALL createBlendState() override;
-		virtual RefPtr<IConstantBuffer> AE_CALL createConstantBuffer() override;
-		virtual RefPtr<IDepthStencil> AE_CALL createDepthStencil() override;
-		virtual RefPtr<IDepthStencilState> AE_CALL createDepthStencilState() override;
-		virtual RefPtr<IIndexBuffer> AE_CALL createIndexBuffer() override;
-		virtual RefPtr<IProgram> AE_CALL createProgram() override;
-		virtual RefPtr<IRasterizerState> AE_CALL createRasterizerState() override;
-		virtual RefPtr<IRenderTarget> AE_CALL createRenderTarget() override;
-		virtual RefPtr<IRenderView> AE_CALL createRenderView() override;
-		virtual RefPtr<ISampler> AE_CALL createSampler() override;
-		virtual RefPtr<ITexture1DResource> AE_CALL createTexture1DResource() override;
-		virtual RefPtr<ITexture2DResource> AE_CALL createTexture2DResource() override;
-		virtual RefPtr<ITexture3DResource> AE_CALL createTexture3DResource() override;
-		virtual RefPtr<ITextureView> AE_CALL createTextureView() override;
-		virtual RefPtr<IVertexBuffer> AE_CALL createVertexBuffer() override;
-		virtual RefPtr<IPixelBuffer> AE_CALL createPixelBuffer() override;
+		virtual IntrusivePtr<IBlendState> AE_CALL createBlendState() override;
+		virtual IntrusivePtr<IConstantBuffer> AE_CALL createConstantBuffer() override;
+		virtual IntrusivePtr<IDepthStencil> AE_CALL createDepthStencil() override;
+		virtual IntrusivePtr<IDepthStencilState> AE_CALL createDepthStencilState() override;
+		virtual IntrusivePtr<IIndexBuffer> AE_CALL createIndexBuffer() override;
+		virtual IntrusivePtr<IProgram> AE_CALL createProgram() override;
+		virtual IntrusivePtr<IRasterizerState> AE_CALL createRasterizerState() override;
+		virtual IntrusivePtr<IRenderTarget> AE_CALL createRenderTarget() override;
+		virtual IntrusivePtr<IRenderView> AE_CALL createRenderView() override;
+		virtual IntrusivePtr<ISampler> AE_CALL createSampler() override;
+		virtual IntrusivePtr<ITexture1DResource> AE_CALL createTexture1DResource() override;
+		virtual IntrusivePtr<ITexture2DResource> AE_CALL createTexture2DResource() override;
+		virtual IntrusivePtr<ITexture3DResource> AE_CALL createTexture3DResource() override;
+		virtual IntrusivePtr<ITextureView> AE_CALL createTextureView() override;
+		virtual IntrusivePtr<IVertexBuffer> AE_CALL createVertexBuffer() override;
+		virtual IntrusivePtr<IPixelBuffer> AE_CALL createPixelBuffer() override;
 
 		virtual const Vec2ui32& AE_CALL getBackBufferSize() const override;
 		virtual void AE_CALL setBackBufferSize(const Vec2ui32& size) override;
@@ -267,8 +267,8 @@ namespace aurora::modules::graphics::d3d11 {
 		bool _isDebug;
 		bool _curIsBackBuffer;
 		SampleCount _backBufferSampleCount;
-		RefPtr<Ref> _loader;
-		RefPtr<IApplication> _app;
+		IntrusivePtr<Ref> _loader;
+		IntrusivePtr<IApplication> _app;
 
 		DXGI_RATIONAL _refreshRate;
 		D3D_FEATURE_LEVEL _featureLevel;
@@ -278,7 +278,7 @@ namespace aurora::modules::graphics::d3d11 {
 		ID3D11DeviceContext4* _context;
 		IDXGISwapChain4* _swapChain;
 		ID3D11RenderTargetView1* _backBufferView;
-		RefPtr<DepthStencil> _backDepthStencil;
+		IntrusivePtr<DepthStencil> _backDepthStencil;
 		D3D11_FEATURE_DATA_D3D11_OPTIONS _internalFeatures;
 
 		uint8_t _numRTVs;
@@ -307,9 +307,9 @@ namespace aurora::modules::graphics::d3d11 {
 		ProgramUsingSlots _programUsingSlotsVS;
 		std::vector<void*> _programClearData;
 
-		RefPtr<BlendState> _defaultBlendState;
-		RefPtr<DepthStencilState> _defaultDepthStencilState;
-		RefPtr<RasterizerState> _defaultRasterizerState;
+		IntrusivePtr<BlendState> _defaultBlendState;
+		IntrusivePtr<DepthStencilState> _defaultDepthStencilState;
+		IntrusivePtr<RasterizerState> _defaultRasterizerState;
 
 		GraphicsDeviceFeatures _deviceFeatures;
 		std::string _deviceVersion;

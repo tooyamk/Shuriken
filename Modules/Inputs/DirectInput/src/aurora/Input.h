@@ -31,8 +31,8 @@ namespace aurora::modules::inputs::direct_input {
 #endif
 
 	private:
-		RefPtr<Ref> _loader;
-		RefPtr<IApplication> _app;
+		IntrusivePtr<Ref> _loader;
+		IntrusivePtr<IApplication> _app;
 
 		LPDIRECTINPUT8 _di;
 

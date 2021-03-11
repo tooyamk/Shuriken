@@ -1,7 +1,7 @@
 #pragma once
 
 #include "aurora/SerializableObject.h"
-#include "aurora/Ref.h"
+#include "aurora/Intrusive.h"
 
 namespace aurora::modules {
 	enum class ModuleType : uint32_t {

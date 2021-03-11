@@ -83,7 +83,7 @@ namespace aurora::render {
 		Material* material;
 		Getter<Mesh> mesh;
 		IRenderer* renderer;
-		std::vector<RefPtr<RenderPass>>* subPasses;
+		std::vector<IntrusivePtr<RenderPass>>* subPasses;
 
 		struct {
 			Matrix34 l2w;

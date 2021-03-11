@@ -15,7 +15,7 @@ namespace aurora::modules::graphics::gl {
 		return _base.handle;
 	}
 
-	RefPtr<ITextureResource> RenderView::getResource() const {
+	IntrusivePtr<ITextureResource> RenderView::getResource() const {
 		return _base.res;
 	}
 
@@ -34,7 +34,7 @@ namespace aurora::modules::graphics::gl {
 	bool RenderView::create(ITextureResource* res, uint32_t mipSlice, uint32_t arrayBegin, uint32_t arraySize) {
 		using namespace aurora::enum_operators;
 
-		RefPtr guard(res);
+		IntrusivePtr guard(res);
 
 		destroy();
 

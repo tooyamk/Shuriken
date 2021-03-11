@@ -43,15 +43,15 @@ public:
 		}
 	}
 
-	void AE_CALL initInputModule(std::vector<RefPtr<IInputModule>>& modules, const std::string_view& dll, const SerializableObject* args) {
-		RefPtr loader = new InputModuleLoader();
+	void AE_CALL initInputModule(std::vector<IntrusivePtr<IInputModule>>& modules, const std::string_view& dll, const SerializableObject* args) {
+		IntrusivePtr loader = new InputModuleLoader();
 		if (loader->load(dll)) {
 			if (auto im = loader->create(args); im) modules.emplace_back(im);
 		}
 	}
 
 	virtual int32_t AE_CALL run() override {
-		RefPtr app = new Application("TestApp");
+		IntrusivePtr app = new Application("TestApp");
 
 		ApplicationStyle wndStype;
 		wndStype.thickFrame = true;
@@ -59,14 +59,14 @@ public:
 			SerializableObject args;
 			args.insert("app", app.uintptr());
 
-			std::vector<RefPtr<IInputModule>> inputModules;
+			std::vector<IntrusivePtr<IInputModule>> inputModules;
 
 			if constexpr (environment::current_operating_system == environment::operating_system::windows) {
 				initInputModule(inputModules, "libs/" + getDLLName("ae-input-direct-input"), &args);
 				initInputModule(inputModules, "libs/" + getDLLName("ae-input-xinput"), &args);
 			}
 
-			std::vector<RefPtr<IInputDevice>> inputDevices;
+			std::vector<IntrusivePtr<IInputDevice>> inputDevices;
 
 			for (auto& im : inputModules) {
 				im->getEventDispatcher().addEventListener(ModuleEvent::CONNECTED, createEventListener(std::function([&inputDevices, app](Event<ModuleEvent>& e) {
@@ -181,7 +181,7 @@ public:
 				})));
 			}
 
-			RefPtr looper = new Looper(1000.0 / 60.0);
+			IntrusivePtr looper = new Looper(1000.0 / 60.0);
 
 			app->getEventDispatcher().addEventListener(ApplicationEvent::CLOSED, createEventListener(std::function([looper](Event<ApplicationEvent>& e) {
 				looper->stop();

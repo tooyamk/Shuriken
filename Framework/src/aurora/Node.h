@@ -1,6 +1,6 @@
 #pragma once
 
-#include "aurora/Ref.h"
+#include "aurora/Intrusive.h"
 #include "aurora/math/Matrix.h"
 #include "aurora/math/Quaternion.h"
 #include "aurora/math/Vector.h"

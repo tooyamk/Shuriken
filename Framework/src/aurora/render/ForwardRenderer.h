@@ -45,13 +45,13 @@ namespace aurora::render {
 
 			std::string_view lightType;
 
-			RefPtr<ShaderParameter> param;
-			RefPtr<ShaderParameterCollection> paramCollection;
+			IntrusivePtr<ShaderParameter> param;
+			IntrusivePtr<ShaderParameterCollection> paramCollection;
 
-			RefPtr<ShaderParameter> color;
-			RefPtr<ShaderParameter> dir;
-			RefPtr<ShaderParameter> pos;
-			RefPtr<ShaderParameter> attenuation;
+			IntrusivePtr<ShaderParameter> color;
+			IntrusivePtr<ShaderParameter> dir;
+			IntrusivePtr<ShaderParameter> pos;
+			IntrusivePtr<ShaderParameter> attenuation;
 
 			void AE_CALL reset() {
 				//todo
@@ -66,27 +66,27 @@ namespace aurora::render {
 		inline static const std::string LIGHT_TYPE_SPOT = { "3" };
 		inline static const std::string LIGHT = { "_light" };
 
-		RefPtr<modules::graphics::IGraphicsModule> _graphics;
+		IntrusivePtr<modules::graphics::IGraphicsModule> _graphics;
 
-		RefPtr<modules::graphics::IBlendState> _defaultBaseBlendState;
-		RefPtr<modules::graphics::IBlendState> _defaultAddBlendState;
-		RefPtr<modules::graphics::IDepthStencilState> _defaultBaseDepthStencilState;
-		RefPtr<modules::graphics::IDepthStencilState> _defaultAddDepthStencilState;
-		RefPtr<modules::graphics::IRasterizerState> _defaultRasterizerState;
+		IntrusivePtr<modules::graphics::IBlendState> _defaultBaseBlendState;
+		IntrusivePtr<modules::graphics::IBlendState> _defaultAddBlendState;
+		IntrusivePtr<modules::graphics::IDepthStencilState> _defaultBaseDepthStencilState;
+		IntrusivePtr<modules::graphics::IDepthStencilState> _defaultAddDepthStencilState;
+		IntrusivePtr<modules::graphics::IRasterizerState> _defaultRasterizerState;
 
 		RenderTag _baseTag;
 		RenderTag _addTag;
 
-		std::vector<RefPtr<LightData>> _lightsData;
+		std::vector<IntrusivePtr<LightData>> _lightsData;
 		size_t _numLights;
 		std::string_view _curLightType;
 
-		RefPtr<ShaderParameter> _m34_l2w;
-		RefPtr<ShaderParameter> _m34_l2v;
-		RefPtr<ShaderParameter> _m44_l2p;
+		IntrusivePtr<ShaderParameter> _m34_l2w;
+		IntrusivePtr<ShaderParameter> _m34_l2v;
+		IntrusivePtr<ShaderParameter> _m44_l2p;
 
-		RefPtr<ShaderDefineCollection> _shaderDefines;
-		RefPtr<ShaderParameterCollection> _shaderParameters;
+		IntrusivePtr<ShaderDefineCollection> _shaderDefines;
+		IntrusivePtr<ShaderParameterCollection> _shaderParameters;
 
 		void(AE_CALL ForwardRenderer::*_renderFn)(RenderData*, ShaderDefineGetterStack&, ShaderParameterGetterStack&);
 

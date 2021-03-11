@@ -1,6 +1,6 @@
 #pragma once
 
-#include "aurora/Ref.h"
+#include "aurora/Intrusive.h"
 #include <functional>
 
 namespace aurora::events {
@@ -130,22 +130,22 @@ namespace aurora::events {
 
 
 	template<typename EvtType, typename Class>
-	inline RefPtr<EventListener<EvtType, EvtMethod<EvtType, Class>>> AE_CALL createEventListener(EvtMethod<EvtType, Class> fn, Class* target) {
+	inline IntrusivePtr<EventListener<EvtType, EvtMethod<EvtType, Class>>> AE_CALL createEventListener(EvtMethod<EvtType, Class> fn, Class* target) {
 		return new EventListener<EvtType, EvtMethod<EvtType, Class>>(fn, target);
 	}
 
 	template<typename EvtType>
-	inline RefPtr<EventListener<EvtType, EvtFn<EvtType>>> AE_CALL createEventListener(EvtFn<EvtType>&& fn) {
+	inline IntrusivePtr<EventListener<EvtType, EvtFn<EvtType>>> AE_CALL createEventListener(EvtFn<EvtType>&& fn) {
 		return new EventListener<EvtType, EvtFn<EvtType>>(std::forward<EvtFn<EvtType>>(fn));
 	}
 
 	template<typename EvtType>
-	inline RefPtr<EventListener<EvtType, EvtFunc<EvtType>>> AE_CALL createEventListener(EvtFunc<EvtType>&& fn) {
+	inline IntrusivePtr<EventListener<EvtType, EvtFunc<EvtType>>> AE_CALL createEventListener(EvtFunc<EvtType>&& fn) {
 		return new EventListener<EvtType, EvtFunc<EvtType>>(std::forward<EvtFunc<EvtType>>(fn));
 	}
 	
 	template<typename EvtType, typename Fn, typename = std::enable_if_t<std::is_invocable_v<Fn, Event<EvtType>&>>>
-	inline RefPtr<EventListener<EvtType, Fn>> AE_CALL createEventListener(Fn&& fn) {
+	inline IntrusivePtr<EventListener<EvtType, Fn>> AE_CALL createEventListener(Fn&& fn) {
 		return new EventListener<EvtType, Fn>(std::forward<Fn>(fn));
 	}
 

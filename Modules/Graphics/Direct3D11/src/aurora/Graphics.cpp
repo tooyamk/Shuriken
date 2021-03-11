@@ -370,67 +370,67 @@ namespace aurora::modules::graphics::d3d11 {
 		return _deviceFeatures;
 	}
 
-	RefPtr<IBlendState> Graphics::createBlendState() {
+	IntrusivePtr<IBlendState> Graphics::createBlendState() {
 		return new BlendState(*this, false);
 	}
 
-	RefPtr<IConstantBuffer> Graphics::createConstantBuffer() {
+	IntrusivePtr<IConstantBuffer> Graphics::createConstantBuffer() {
 		return new ConstantBuffer(*this);
 	}
 
-	RefPtr<IDepthStencil> Graphics::createDepthStencil() {
+	IntrusivePtr<IDepthStencil> Graphics::createDepthStencil() {
 		return new DepthStencil(*this, false);
 	}
 
-	RefPtr<IDepthStencilState> Graphics::createDepthStencilState() {
+	IntrusivePtr<IDepthStencilState> Graphics::createDepthStencilState() {
 		return new DepthStencilState(*this, false);
 	}
 
-	RefPtr<IIndexBuffer> Graphics::createIndexBuffer() {
+	IntrusivePtr<IIndexBuffer> Graphics::createIndexBuffer() {
 		return new IndexBuffer(*this);
 	}
 
-	RefPtr<IProgram> Graphics::createProgram() {
+	IntrusivePtr<IProgram> Graphics::createProgram() {
 		return new Program(*this);
 	}
 
-	RefPtr<IRasterizerState> Graphics::createRasterizerState() {
+	IntrusivePtr<IRasterizerState> Graphics::createRasterizerState() {
 		return new RasterizerState(*this, false);
 	}
 
-	RefPtr<IRenderTarget> Graphics::createRenderTarget() {
+	IntrusivePtr<IRenderTarget> Graphics::createRenderTarget() {
 		return new RenderTarget(*this);
 	}
 
-	RefPtr<IRenderView> Graphics::createRenderView() {
+	IntrusivePtr<IRenderView> Graphics::createRenderView() {
 		return new RenderView(*this);
 	}
 
-	RefPtr<ISampler> Graphics::createSampler() {
+	IntrusivePtr<ISampler> Graphics::createSampler() {
 		return new Sampler(*this);
 	}
 
-	RefPtr<ITexture1DResource> Graphics::createTexture1DResource() {
+	IntrusivePtr<ITexture1DResource> Graphics::createTexture1DResource() {
 		return new Texture1DResource(*this);
 	}
 
-	RefPtr<ITexture2DResource> Graphics::createTexture2DResource() {
+	IntrusivePtr<ITexture2DResource> Graphics::createTexture2DResource() {
 		return new Texture2DResource(*this);
 	}
 
-	RefPtr<ITexture3DResource> Graphics::createTexture3DResource() {
+	IntrusivePtr<ITexture3DResource> Graphics::createTexture3DResource() {
 		return new Texture3DResource(*this);
 	}
 
-	RefPtr<ITextureView> Graphics::createTextureView() {
+	IntrusivePtr<ITextureView> Graphics::createTextureView() {
 		return new TextureView(*this);
 	}
 
-	RefPtr<IVertexBuffer> Graphics::createVertexBuffer() {
+	IntrusivePtr<IVertexBuffer> Graphics::createVertexBuffer() {
 		return new VertexBuffer(*this);
 	}
 
-	RefPtr<IPixelBuffer> Graphics::createPixelBuffer() {
+	IntrusivePtr<IPixelBuffer> Graphics::createPixelBuffer() {
 		return nullptr;
 	}
 

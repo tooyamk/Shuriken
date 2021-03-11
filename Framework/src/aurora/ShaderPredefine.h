@@ -5,8 +5,6 @@
 namespace aurora {
 	class AE_FW_DLL ShaderPredefine {
 	public:
-		AE_DECLARE_CANNOT_INSTANTIATE(ShaderPredefine);
-
 		inline static const std::string BINORMAL0 = { "BINORMAL0" };
 		inline static const std::string COLOR0 = { "COLOR0" };
 		inline static const std::string NORMAL0 = { "NORMAL0" };

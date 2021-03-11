@@ -1,6 +1,6 @@
 #pragma once
 
-#include "aurora/Ref.h"
+#include "aurora/Intrusive.h"
 #include <unordered_map>
 #include <vector>
 
@@ -105,7 +105,7 @@ namespace aurora {
 		}
 
 	protected:
-		std::vector<RefPtr<IShaderDefineGetter>> _stack;
+		std::vector<IntrusivePtr<IShaderDefineGetter>> _stack;
 
 		inline void AE_CALL _push(size_t& n, IShaderDefineGetter* getter) {
 			if (getter) {

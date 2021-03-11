@@ -115,9 +115,35 @@ inline constexpr uint64_t AE_CALL byteswap1(uint64_t val) {
 	}
 }
 
+
+class AAA {
+public:
+	int a;
+};
+
+template<typename T>
+class IntrusiveList {
+public:
+
+private:
+	T _head;
+};
+
+
 class OffscreenTester : public BaseTester {
 public:
 	virtual int32_t AE_CALL run() override {
+		auto vv = &AAA::a;
+		///*
+		//std::list<std::function<void()>> funcs;
+		//std::packaged_task<int()> task(std::bind([]() {return 1; }));
+
+		//auto f = [task(std::move(task))]() mutable {};
+		//std::packaged_task task22(std::move(f));
+
+		//funcs.emplace_back(std::move([task1(std::move(task))]() mutable {}));
+		//*/
+
 		constexpr std::string_view γ{ "0.5" };
 		
 		const char8_t dsfe[] = u8"abc";
@@ -149,13 +175,13 @@ public:
 		auto monitors = Monitor::getMonitors();
 		auto vms = monitors[0].getVideoModes();
 
-		RefPtr gml = new GraphicsModuleLoader();
+		IntrusivePtr gml = new GraphicsModuleLoader();
 
 		//if (gml->load(getDLLName("ae-graphics-gl"))) {
 		if (gml->load("libs/" + getDLLName(u8"ae-graphics-d3d11"))) {
 			SerializableObject args;
 
-			RefPtr gpstml = new ModuleLoader<IProgramSourceTranslator>();
+			IntrusivePtr gpstml = new ModuleLoader<IProgramSourceTranslator>();
 			gpstml->load("libs/" + getDLLName("ae-program-source-translator"));
 
 			args.insert("dxc", "libs/" + getDLLName("dxcompiler"));
@@ -240,7 +266,7 @@ float4 main(PS_INPUT input) : SV_TARGET {
 						program->create(vs, ps, nullptr, 0, nullptr);
 					}
 
-					RefPtr vertexBuffers = new VertexBufferCollection();
+					IntrusivePtr vertexBuffers = new VertexBufferCollection();
 					{
 						float32_t vd[] = {
 								-1.f, 1.f,
@@ -270,7 +296,7 @@ float4 main(PS_INPUT input) : SV_TARGET {
 						vertexBuffers->set("TEXCOORD0", uvb);
 					}
 
-					RefPtr shaderParameters = new ShaderParameterCollection();
+					IntrusivePtr shaderParameters = new ShaderParameterCollection();
 					{
 						//shaderParameters->set("tex", new ShaderParameter(ShaderParameterUsage::AUTO))->set(tv, ShaderParameterUpdateBehavior::FORCE);
 						//shaderParameters->set("texSampler", new ShaderParameter(ShaderParameterUsage::AUTO))->set(_pointTexSampler, ShaderParameterUpdateBehavior::FORCE);
@@ -340,7 +366,7 @@ float4 main(PS_INPUT input) : SV_TARGET {
 					}
 				}
 
-				RefPtr looper = new Looper(1000.0 / 60.0);
+				IntrusivePtr looper = new Looper(1000.0 / 60.0);
 
 				looper->getEventDispatcher().addEventListener(LooperEvent::TICKING, new EventListener(std::function([](Event<LooperEvent>& e) {
 					auto dt = float64_t(*e.getData<int64_t>());

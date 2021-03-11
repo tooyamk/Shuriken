@@ -30,7 +30,7 @@ namespace aurora::modules {
 			_lib.release();
 		}
 
-		RefPtr<RetType> AE_CALL create(const SerializableObject* args) {
+		IntrusivePtr<RetType> AE_CALL create(const SerializableObject* args) {
 			if (_createFn && _lib.isLoaded()) {
 				return (RetType*)_createFn(this, args);
 			} else {

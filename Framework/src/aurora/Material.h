@@ -9,11 +9,11 @@ namespace aurora {
 	public:
 		Material();
 
-		inline const RefPtr<Shader> AE_CALL getShader() const {
+		inline const IntrusivePtr<Shader> AE_CALL getShader() const {
 			return _shader;
 		}
 
-		inline RefPtr<Shader> AE_CALL getShader() {
+		inline IntrusivePtr<Shader> AE_CALL getShader() {
 			return _shader;
 		}
 
@@ -36,8 +36,8 @@ namespace aurora {
 		}
 
 	protected:
-		RefPtr<Shader> _shader;
-		RefPtr<ShaderDefineCollection> _defines;
-		RefPtr<ShaderParameterCollection> _parameters;
+		IntrusivePtr<Shader> _shader;
+		IntrusivePtr<ShaderDefineCollection> _defines;
+		IntrusivePtr<ShaderParameterCollection> _parameters;
 	};
 }

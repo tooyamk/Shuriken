@@ -42,7 +42,7 @@ namespace aurora::modules::inputs::direct_input {
 
 	void Mouse::poll(bool dispatchEvent) {
 		HRESULT hr = _dev->Poll();
-		if (hr == DIERR_NOTACQUIRED || DIERR_INPUTLOST) {
+		if (hr == DIERR_NOTACQUIRED || hr == DIERR_INPUTLOST) {
 			if (FAILED(_dev->Acquire())) return;
 			if (FAILED(_dev->Poll())) return;
 		}

@@ -131,11 +131,12 @@ namespace aurora {
 			} else if constexpr (std::is_convertible_v<Type, char const*>) {
 				_print(out, std::string_view(value));
 			} else if constexpr (is_string_data_v<Type>) {
-				if (String::isUTF8(value.data(), value.size())) {
-					out.write(value.data(), value.size());
-				} else {
-					out.write(L"<nonsupported string encode>");
-				}
+				out.write(value.data(), value.size());
+				//if (String::isUTF8(value.data(), value.size())) {
+				//	out.write(value.data(), value.size());
+				//} else {
+				//	out.write(L"<nonsupported string encode>");
+				//}
 			} else if constexpr (is_wstring_data_v<Type>) {
 				out.write(value.data(), value.size());
 #ifdef __cpp_lib_char8_t

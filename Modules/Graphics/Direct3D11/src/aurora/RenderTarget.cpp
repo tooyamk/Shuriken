@@ -29,7 +29,7 @@ namespace aurora::modules::graphics::d3d11 {
 		return size;
 	}
 
-	RefPtr<IRenderView> RenderTarget::getRenderView(uint8_t index) const {
+	IntrusivePtr<IRenderView> RenderTarget::getRenderView(uint8_t index) const {
 		return index < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT ? _views[index].get() : nullptr;
 	}
 
@@ -58,7 +58,7 @@ namespace aurora::modules::graphics::d3d11 {
 		}
 	} 
 
-	RefPtr<IDepthStencil> RenderTarget::getDepthStencil() const {
+	IntrusivePtr<IDepthStencil> RenderTarget::getDepthStencil() const {
 		return _ds;
 	}
 

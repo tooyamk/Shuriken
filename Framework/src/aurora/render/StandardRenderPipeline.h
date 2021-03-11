@@ -82,15 +82,15 @@ namespace aurora::render {
 		RenderEnvironment _renderEnv;
 
 		struct {
-			RefPtr<ShaderParameter> m34_w2v;
-			RefPtr<ShaderParameter> m44_w2p;
-			RefPtr<ShaderParameter> v3_camPos;
+			IntrusivePtr<ShaderParameter> m34_w2v;
+			IntrusivePtr<ShaderParameter> m44_w2p;
+			IntrusivePtr<ShaderParameter> v3_camPos;
 		} _builtinShaderParameters;
 
-		RefPtr<ShaderParameterCollection> _shaderParameters;
+		IntrusivePtr<ShaderParameterCollection> _shaderParameters;
 
-		RefPtr<ShaderDefineGetterStack> _shaderDefineStack;
-		RefPtr<ShaderParameterGetterStack> _shaderParameterStack;
+		IntrusivePtr<ShaderDefineGetterStack> _shaderDefineStack;
+		IntrusivePtr<ShaderParameterGetterStack> _shaderParameterStack;
 
 		friend RenderDataCollector;
 	};

@@ -17,11 +17,10 @@ namespace aurora::modules::inputs::direct_input {
 		virtual void AE_CALL setVibration(float32_t left, float32_t right) override {}
 
 	protected:
-		RefPtr<Input> _input;
+		IntrusivePtr<Input> _input;
 		events::EventDispatcher<DeviceEvent> _eventDispatcher;
 		DeviceInfo _info;
 
 		LPDIRECTINPUTDEVICE8 _dev;
-		uint32_t _type;
 	};
 }

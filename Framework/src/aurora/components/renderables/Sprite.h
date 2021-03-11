@@ -13,7 +13,7 @@ namespace aurora::components::renderables {
         Vec2f32 offset;
         Vec2f32 sourceSize;
 		Vec2f32 textureSize;
-		RefPtr<modules::graphics::ITextureView> texture;
+		IntrusivePtr<modules::graphics::ITextureView> texture;
 
         /**
          * -1 = ccw, 0 = none, 1 = cw.
@@ -55,7 +55,7 @@ namespace aurora::components::renderables {
 		}
 
 	protected:
-		RefPtr<SpriteFrame> _frame;
+		IntrusivePtr<SpriteFrame> _frame;
 		Vec2f32 _anchor;
 		Vec4f32 _color;
 

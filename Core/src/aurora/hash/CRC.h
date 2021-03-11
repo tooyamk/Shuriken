@@ -77,8 +77,6 @@ namespace aurora::hash {
 
 
 	public:
-		AE_DECLARE_CANNOT_INSTANTIATE(CRC);
-
 		template<size_t Bits>
 		using TableType = std::array<uint_t<Bits>, 256>;
 

@@ -19,7 +19,7 @@ namespace aurora::components::renderables {
 		}
 
 	protected:
-		RefPtr<Mesh> _mesh;
+		IntrusivePtr<Mesh> _mesh;
 
 		static const Mesh* AE_CALL _meshGetter(void* target);
 	};

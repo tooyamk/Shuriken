@@ -8,18 +8,18 @@ public:
 		auto monitors = Monitor::getMonitors();
 		auto vms = monitors[0].getVideoModes();
 
-		RefPtr app = new Application("TestApp");
+		IntrusivePtr app = new Application("TestApp");
 
 		ApplicationStyle wndStype;
 		wndStype.thickFrame = true;
 		if (app->createWindow(wndStype, "", Vec2ui32(800, 600), false)) {
-			RefPtr gml = new GraphicsModuleLoader();
+			IntrusivePtr gml = new GraphicsModuleLoader();
 
 			//if (gml->load("libs/" + getDLLName("ae-graphics-gl"))) {
 			if (gml->load("libs/" + getDLLName("ae-graphics-d3d11"))) {
 				SerializableObject args;
 
-				RefPtr gpstml = new ModuleLoader<IProgramSourceTranslator>();
+				IntrusivePtr gpstml = new ModuleLoader<IProgramSourceTranslator>();
 				gpstml->load("libs/" + getDLLName("ae-program-source-translator"));
 
 				args.insert("dxc", "libs/" + getDLLName("dxcompiler"));
@@ -45,15 +45,15 @@ public:
 					}));
 
 					struct {
-						RefPtr<Application> app;
-						RefPtr<Looper> looper;
-						RefPtr<IGraphicsModule> g;
-						RefPtr<VertexBufferCollection> vbf;
-						RefPtr<ShaderParameterCollection> spc;
-						RefPtr<IProgram> p;
-						RefPtr<IIndexBuffer> ib;
-						RefPtr<IBlendState> bs;
-						RefPtr<IDepthStencilState> dss;
+						IntrusivePtr<Application> app;
+						IntrusivePtr<Looper> looper;
+						IntrusivePtr<IGraphicsModule> g;
+						IntrusivePtr<VertexBufferCollection> vbf;
+						IntrusivePtr<ShaderParameterCollection> spc;
+						IntrusivePtr<IProgram> p;
+						IntrusivePtr<IIndexBuffer> ib;
+						IntrusivePtr<IBlendState> bs;
+						IntrusivePtr<IDepthStencilState> dss;
 					} renderData;
 					renderData.app = app;
 					renderData.looper = new Looper(1000.0 / 60.0);
