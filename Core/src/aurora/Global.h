@@ -474,42 +474,22 @@ namespace aurora {
 	template<typename T> inline constexpr bool is_convertible_wstring_data_v = is_wstring_data_v<T> || std::is_convertible_v<T, wchar_t const*>;
 	template<typename T> struct is_convertible_wstring_data : std::bool_constant<is_convertible_wstring_data_v<T>> {};
 	template<typename T> using convertible_wstring_data_t = std::enable_if_t<is_convertible_wstring_data_v<T>, T>;
-
-
-	template<typename To, typename From>
-	inline constexpr auto&& cast_forward(From&& arg) {
-		using T0 = std::remove_cvref_t<From>;
-		using T1 = std::conditional_t<std::is_const_v<std::remove_reference_t<From>>, std::add_const_t<T0>, T0>;
-		using T2 = std::conditional_t<std::is_volatile_v<std::remove_reference_t<From>>, std::add_volatile_t<T1>, T1>;
-		using T3 = std::conditional_t<std::is_lvalue_reference_v<From>, std::add_lvalue_reference_t<T2>, T2>;
-		using T4 = std::conditional_t<std::is_rvalue_reference_v<From>, std::add_rvalue_reference_t<T3>, T3>;
-
-		return (T4&&)arg;
-	}
 	
 
 #ifdef __cpp_lib_char8_t
 	template<typename L, typename R, typename = std::enable_if_t<
-		((std::is_same_v<L, std::string>) && (is_u8string_data_v<std::remove_cvref_t<R>> || std::is_convertible_v<std::remove_cvref_t<R>, char8_t const*>) || std::is_same_v<std::remove_cvref_t<R>, char8_t>) ||
-		((std::is_same_v<L, std::u8string>) && (is_string_data_v<std::remove_cvref_t<R>> || std::is_convertible_v<std::remove_cvref_t<R>, char const*>) || std::is_same_v<std::remove_cvref_t<R>, char>)>>
+		(std::is_same_v<L, std::string> && (is_convertible_u8string_data_v<std::remove_cvref_t<R>> || std::is_same_v<std::remove_cvref_t<R>, char8_t>)) ||
+		(std::is_same_v<L, std::u8string> && (is_convertible_string_data_v<std::remove_cvref_t<R>> || std::is_same_v<std::remove_cvref_t<R>, char>))>>
 	inline auto& AE_CALL operator+=(L& left, R&& right) {
 		if constexpr (std::is_same_v<L, std::string>) {
-			if constexpr (std::is_same_v<std::remove_cvref_t<R>, std::u8string>) {
-				left += (const std::string&)right;
-			} else if constexpr (std::is_same_v<std::remove_cvref_t<R>, std::u8string_view>) {
-				left += (const std::string_view&)right;
-			} else if constexpr (std::is_convertible_v<std::remove_cvref_t<R>, char8_t const*>) {
-				left += (const char*)right;
+			if constexpr (is_convertible_u8string_data_v<std::remove_cvref_t<R>>) {
+				left += (const std::string_view&)convert_to_string8_view_t<std::remove_cvref_t<R>>(std::forward<R>(right));
 			} else if constexpr (std::is_same_v<std::remove_cvref_t<R>, char8_t>) {
 				left += (char)right;
 			}
 		} else {
-			if constexpr (std::is_same_v<std::remove_cvref_t<R>, std::string>) {
-				left += (const std::u8string&)right;
-			} else if constexpr (std::is_same_v<std::remove_cvref_t<R>, std::string_view>) {
-				left += (const std::u8string_view&)right;
-			} else if constexpr (std::is_convertible_v<std::remove_cvref_t<R>, char const*>) {
-				left += (const char8_t*)right;
+			if constexpr (is_convertible_string_data_v<std::remove_cvref_t<R>>) {
+				left += (const std::u8string_view&)convert_to_string8_view_t<std::remove_cvref_t<R>>(std::forward<R>(right));
 			} else if constexpr (std::is_same_v<std::remove_cvref_t<R>, char>) {
 				left += (char8_t)right;
 			}

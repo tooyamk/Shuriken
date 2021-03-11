@@ -52,16 +52,6 @@ inline std::conditional_t<is_string8_view_v<std::remove_cvref_t<T>>, std::remove
 	}
 }
 
-template<typename T>
-void ccdd(T&& a) {
-	int b = 1;
-}
-
-template<typename T>
-void aabb(T&& a) {
-	ccdd(cast_forward<char>(a));
-}
-
 template<auto V>
 void AE_CALL get_name() {
 	printdln(__FUNCSIG__);
@@ -150,8 +140,6 @@ public:
 		 uint16_t aa32 = byteswap1(uint16_t(0x0100));
 
 		get_name<123>();
-
-		aabb(dsfe);
 
 		//std::remove_cvref<int>;
 
