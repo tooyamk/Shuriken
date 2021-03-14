@@ -121,7 +121,7 @@ public:
 						IntrusivePtr tag2 = new RenderTagCollection();
 						tag2->add(forwardAddTag);
 
-						auto parsed = extensions::FBXConverter::parse(readFile(app->getAppPath().parent_path().u8string() + "/Resources/teapot.fbx"));
+						auto parsed = extensions::FBXConverter::decode(readFile(app->getAppPath().parent_path().u8string() + "/Resources/teapot.fbx"));
 						for (auto& mr : parsed.meshes) {
 							if (mr) {
 								auto rs = graphics->createRasterizerState();
@@ -199,13 +199,13 @@ public:
 					{
 						auto texRes = graphics->createTexture2DResource();
 						if (texRes) {
-							auto img0 = extensions::PNGConverter::parse(readFile(app->getAppPath().parent_path().u8string() + "/Resources/white.png"));
+							auto img0 = extensions::PNGConverter::decode(readFile(app->getAppPath().parent_path().u8string() + "/Resources/white.png"));
 							auto mipLevels = Image::calcMipLevels(img0->size);
 							ByteArray mipsData0;
 							std::vector<void*> mipsData0Ptr;
 							img0->generateMips(img0->format, mipLevels, mipsData0, mipsData0Ptr);
 
-							auto img1 = extensions::PNGConverter::parse(readFile(app->getAppPath().parent_path().u8string() + "/Resources/red.png"));
+							auto img1 = extensions::PNGConverter::decode(readFile(app->getAppPath().parent_path().u8string() + "/Resources/red.png"));
 							ByteArray mipsData1;
 							std::vector<void*> mipsData1Ptr;
 							img1->generateMips(img1->format, mipLevels, mipsData1, mipsData1Ptr);

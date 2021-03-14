@@ -9,6 +9,6 @@ namespace aurora::extensions {
 			std::vector<IntrusivePtr<MeshResource>> meshes;
 		};
 
-		static Result AE_CALL parse(const ByteArray& source);
+		static Result AE_CALL decode(const ByteArray& source);
 	};
 }

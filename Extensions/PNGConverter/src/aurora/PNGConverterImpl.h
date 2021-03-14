@@ -22,7 +22,7 @@ namespace aurora::extensions::png_converter {
 		}
 	}
 
-	inline Image* AE_CALL parse(const ByteArray& source) {
+	inline Image* AE_CALL decode(const ByteArray& source) {
 		ByteArray src = source.slice();
 		if (src.getLength() < 8 || png_sig_cmp((png_byte*)src.getSource(), 0, 8)) return nullptr;
 

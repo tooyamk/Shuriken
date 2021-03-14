@@ -36,6 +36,7 @@ ExternalProject_Add(
     UPDATE_COMMAND ""
     PATCH_COMMAND
         ${CMAKE_COMMAND}
+        -DGIT_ROOT=${PROJECT_BINARY_DIR}/src
         -DSRC_DIR=${CMAKE_CURRENT_SOURCE_DIR}/src/
         -DDST_DIR=${CMAKE_CURRENT_BINARY_DIR}/src/
         -P ${CMAKE_CURRENT_SOURCE_DIR}/patch.cmake

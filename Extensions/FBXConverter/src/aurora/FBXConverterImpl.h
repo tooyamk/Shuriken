@@ -1016,7 +1016,7 @@ namespace aurora::extensions::fbx_converter {
 		}
 	};
 
-	inline bool AE_CALL parseNodeProperty(FBX& fbx, ByteArray& source, Node::Property& p) {
+	inline bool AE_CALL decodeNodeProperty(FBX& fbx, ByteArray& source, Node::Property& p) {
 		using namespace std::literals;
 
 		auto type = (Node::Property::Type)source.read<uint8_t>();
@@ -1085,7 +1085,7 @@ namespace aurora::extensions::fbx_converter {
 						if (rst == Z_BUF_ERROR) {
 							++inflateVal;
 						} else {
-							printdln(L"FBX parse error : uncompress error "sv);
+							printdln(L"FBX decode error : uncompress error "sv);
 							return false;
 						}
 					}
@@ -1104,14 +1104,14 @@ namespace aurora::extensions::fbx_converter {
 			break;
 		}
 		default:
-			printdln(L"FBX parse error : Unknown property type "sv, type);
+			printdln(L"FBX decode error : Unknown property type "sv, type);
 			return false;
 		}
 
 		return true;
 	}
 
-	inline bool AE_CALL parseNode(FBX& fbx, ByteArray& source, Node* parent) {
+	inline bool AE_CALL decodeNode(FBX& fbx, ByteArray& source, Node* parent) {
 		uint64_t endOffset, numProperties, propertyListLen;
 		if (fbx.ver < 7500) {
 			endOffset = source.read<uint32_t>();
@@ -1133,7 +1133,7 @@ namespace aurora::extensions::fbx_converter {
 		if (numProperties) {
 			properties = new Node::Property[numProperties];
 			for (size_t i = 0; i < numProperties; ++i) {
-				if (!parseNodeProperty(fbx, source, properties[i])) {
+				if (!decodeNodeProperty(fbx, source, properties[i])) {
 					delete[] properties;
 					return false;
 				}
@@ -1148,13 +1148,13 @@ namespace aurora::extensions::fbx_converter {
 		source.setPosition(pos + propertyListLen);
 
 		while (source.getPosition() < endOffset) {
-			if (!parseNode(fbx, source, node)) return false;
+			if (!decodeNode(fbx, source, node)) return false;
 		}
 
 		return true;
 	}
 
-	inline FBXConverter::Result AE_CALL parse(const ByteArray& source) {
+	inline FBXConverter::Result AE_CALL decode(const ByteArray& source) {
 		using namespace std::literals;
 
 		ByteArray src = source.slice();
@@ -1173,7 +1173,7 @@ namespace aurora::extensions::fbx_converter {
 				while (src.getBytesAvailable() > 4) {
 					if (src.read<uint32_t>() < src.getLength()) {
 						src.setPosition(src.getPosition() - 4);
-						if (!parseNode(fbx, src, &fbx.root)) {
+						if (!decodeNode(fbx, src, &fbx.root)) {
 							parseOk = false;
 							break;
 						}
@@ -1188,10 +1188,10 @@ namespace aurora::extensions::fbx_converter {
 					return std::move(rst);
 				}
 			} else {
-				printdln(L"FBX parse error : only support binary format"sv);
+				printdln(L"FBX decode error : only support binary format"sv);
 			}
 		} else {
-			printdln(L"FBX parse error : not a fbx file"sv);
+			printdln(L"FBX decode error : not a fbx file"sv);
 		}
 
 		return FBXConverter::Result();

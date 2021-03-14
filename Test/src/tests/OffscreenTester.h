@@ -106,24 +106,9 @@ inline constexpr uint64_t AE_CALL byteswap1(uint64_t val) {
 }
 
 
-class AAA {
-public:
-	int a;
-};
-
-template<typename T>
-class IntrusiveList {
-public:
-
-private:
-	T _head;
-};
-
-
 class OffscreenTester : public BaseTester {
 public:
 	virtual int32_t AE_CALL run() override {
-		auto vv = &AAA::a;
 		///*
 		//std::list<std::function<void()>> funcs;
 		//std::packaged_task<int()> task(std::bind([]() {return 1; }));

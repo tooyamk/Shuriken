@@ -24,7 +24,8 @@ namespace aurora {
 			std::future<void> future = task.get_future();
 			{
 				std::unique_lock<std::mutex> lock(_queueMutex);
-				//if (_stop) throw std::runtime_error("enqueue on stopped ThreadPool");
+
+				if (_stop) return std::future<void>().share();
 
 				_tasks.emplace_back(std::move(task));
 			}
