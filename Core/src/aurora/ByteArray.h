@@ -226,7 +226,7 @@ namespace aurora {
 		}
 
 		template<ValueType T>
-		requires (T == ValueType::UI64 || T == ValueType::D_UI64 || T == ValueType::RD_UI64)
+		requires equal_any_of<T, ValueType::UI64, ValueType::D_UI64, ValueType::RD_UI64>
 		inline uint64_t AE_CALL read() {
 			if constexpr (T == ValueType::UI64) {
 				return _read<uint64_t>();
@@ -479,7 +479,7 @@ namespace aurora {
 		}
 
 		template<ValueType T>
-		requires (T == ValueType::UI64 || T == ValueType::D_UI64 || T == ValueType::RD_UI64 || T == ValueType::PADDING)
+		requires equal_any_of<T, ValueType::UI64, ValueType::D_UI64, ValueType::RD_UI64, ValueType::PADDING>
 		inline void AE_CALL write(uint64_t value) {
 			if constexpr (T == ValueType::UI64) {
 				_write<uint64_t>(value);
@@ -587,8 +587,8 @@ namespace aurora {
 			_write<float64_t>(value);
 		}
 
-		template<ValueType T, typename V>
-		requires (T == ValueType::STR || T == ValueType::BYTE) && convertible_string8_data<std::remove_cvref_t<V>>
+		template<ValueType T, packaged_concept<is_convertible_string8_data, std::remove_cvref> V>
+		requires (T == ValueType::STR || T == ValueType::BYTE)
 		inline void AE_CALL write(V&& value) {
 			if constexpr (T == ValueType::STR) {
 				write(value);
@@ -616,8 +616,8 @@ namespace aurora {
 			}
 		}
 
-		template<ValueType T, typename V>
-		requires (T == ValueType::STR) && same_any_of<V, char, char8_t>
+		template<ValueType T, same_any_of<char, char8_t> V>
+		requires (T == ValueType::STR)
 		inline void AE_CALL write(const V* value, size_t size) {
 			write(convert_to_string8_view_t<V*>(value, size));
 		}

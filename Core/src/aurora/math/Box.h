@@ -7,61 +7,50 @@ namespace aurora {
 	template<size_t N, typename Pos, typename Size>
 	class Box {
 	public:
-		template<typename P, typename S>
-		inline static constexpr bool ConvertibleTypes = std::convertible_to<P, Pos> && std::convertible_to<S, Size>;
-
 		Box() {
 		}
 
-		template<typename P, typename S>
-		requires ConvertibleTypes<P, S>
+		template<std::convertible_to<Pos> P, std::convertible_to<Size> S>
 		Box(const Box<N, P, S>& box) :
 			pos(box.pos),
 			size(box.size) {
 		}
 
-		template<typename P, typename S>
-		requires ConvertibleTypes<P, S>
+		template<std::convertible_to<Pos> P, std::convertible_to<Size> S>
 		Box(Box<N, P, S>&& box) :
 			pos(box.pos),
 			size(box.size) {
 		}
 
-		template<typename P, typename S>
-		requires ConvertibleTypes<P, S>
+		template<std::convertible_to<Pos> P, std::convertible_to<Size> S>
 		Box(const Vector<N, P>&pos, const Vector<N, S>& size) :
 			pos(pos),
 			size(size) {
 		}
 
-		template<typename P, typename S>
-		requires ConvertibleTypes<P, S>
+		template<std::convertible_to<Pos> P, std::convertible_to<Size> S>
 		inline bool AE_CALL operator==(const Box<N, P, S>& box) {
 			return pos == box.pos && size == box.size;
 		}
 
-		template<typename P, typename S>
-		requires ConvertibleTypes<P, S>
+		template<std::convertible_to<Pos> P, std::convertible_to<Size> S>
 		inline bool AE_CALL operator!=(const Box<N, P, S>& box) {
 			return pos != box.pos || size != box.size;
 		}
 
-		template<typename P, typename S>
-		requires ConvertibleTypes<P, S>
+		template<std::convertible_to<Pos> P, std::convertible_to<Size> S>
 		inline void AE_CALL set(const Box<N, P, S>& box) {
 			pos.set(box.pos);
 			size.set(box.size);
 		}
 
-		template<typename P, typename S>
-		requires ConvertibleTypes<P, S>
+		template<std::convertible_to<Pos> P, std::convertible_to<Size> S>
 		inline void AE_CALL set(const Vector<N, P>&pos, const Vector<N, S>& size) {
 			this->pos.set(pos);
 			this->size.set(size);
 		}
 
-		template<typename P, typename S>
-		requires ConvertibleTypes<P, S>
+		template<std::convertible_to<Pos> P, std::convertible_to<Size> S>
 		inline bool AE_CALL isEqual(const Box<N, P, S>& box) const {
 			return pos == box.pos && size == box.size;
 		}

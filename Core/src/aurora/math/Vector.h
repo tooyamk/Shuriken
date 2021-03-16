@@ -18,26 +18,22 @@ namespace aurora {
 
 		Vector(const no_init&) {}
 
-		template<size_t L, typename K>
-		requires std::convertible_to<K, T>
+		template<size_t L, std::convertible_to<T> K>
 		Vector(const Vector<L, K>& vec) {
 			set(vec.data);
 		}
 
-		template<size_t L, typename K>
-		requires std::convertible_to<K, T>
+		template<size_t L, std::convertible_to<T> K>
 		Vector(Vector<L, K>&& vec) noexcept {
 			set(vec.data);
 		}
 
-		template<size_t L, typename K>
-		requires std::convertible_to<K, T>
+		template<size_t L, std::convertible_to<T> K>
 		Vector(const K(&values)[L]) {
 			set(values);
 		}
 
-		template<typename K>
-		requires std::convertible_to<K, T>
+		template<std::convertible_to<T> K>
 		Vector(const K* values, size_t len) {
 			if (N > len) {
 				for (decltype(len) i = 0; i < len; ++i) data[i] = values[i];
@@ -47,13 +43,11 @@ namespace aurora {
 			}
 		}
 
-		template<typename K>
-		requires std::convertible_to<K, T>
+		template<std::convertible_to<T> K>
 		Vector(const std::initializer_list<const K>& list) : Vector(list.begin(), list.size()) {
 		}
 
-		template<typename... Args>
-		requires convertible_all_to<T, Args...>
+		template<std::convertible_to<T>... Args>
 		Vector(Args&&... args) {
 			set(std::forward<Args>(args)...);
 		}
@@ -76,26 +70,22 @@ namespace aurora {
 			return data[i];
 		}
 
-		template<size_t L, typename K>
-		requires std::convertible_to<K, T>
+		template<size_t L, std::convertible_to<T> K>
 		inline Vector& AE_CALL operator=(const Vector<L, K>& value) {
 			return set(value.data);
 		}
 
-		template<size_t L, typename K>
-		requires std::convertible_to<K, T>
+		template<size_t L, std::convertible_to<T> K>
 		inline Vector& AE_CALL operator=(Vector<L, K>&& value) noexcept {
 			return set(value.data);
 		}
 
-		template<typename K>
-		requires std::convertible_to<K, T>
+		template<std::convertible_to<T> K>
 		inline bool AE_CALL operator==(const K& value) const {
 			return Math::isEqual(data, value);
 		}
 
-		template<typename K>
-		requires std::convertible_to<K, T>
+		template<std::convertible_to<T> K>
 		inline bool AE_CALL operator==(const Vector<N, K>& value) const {
 			if constexpr (std::same_as<T, K>) {
 				return !memcmp(data, value.data, sizeof(Data));
@@ -104,14 +94,12 @@ namespace aurora {
 			}
 		}
 
-		template<typename K>
-		requires std::convertible_to<K, T>
+		template<std::convertible_to<T> K>
 		inline bool AE_CALL operator!=(const K& value) const {
 			return !Math::isEqual(data, value);
 		}
 
-		template<typename K>
-		requires std::convertible_to<K, T>
+		template<std::convertible_to<T> K>
 		inline bool AE_CALL operator!=(const Vector<N, K>& value) const {
 			if constexpr (std::same_as<T, K>) {
 				return memcmp(data, value.data, sizeof(Data));
@@ -120,74 +108,62 @@ namespace aurora {
 			}
 		}
 
-		template<typename K>
-		requires std::convertible_to<K, T>
+		template<std::convertible_to<T> K>
 		inline void AE_CALL operator+=(const K& value) {
 			add(value);
 		}
 
-		template<typename K>
-		requires std::convertible_to<K, T>
+		template<std::convertible_to<T> K>
 		inline void AE_CALL operator+=(const K(&values)[N]) {
 			add(values);
 		}
 
-		template<typename K>
-		requires std::convertible_to<K, T>
+		template<std::convertible_to<T> K>
 		inline void AE_CALL operator+=(const Vector<N, K>& vec) {
 			add(vec);
 		}
 
-		template<typename K>
-		requires std::convertible_to<K, T>
+		template<std::convertible_to<T> K>
 		inline void AE_CALL operator-=(const K& value) {
 			sub(value);
 		}
 
-		template<typename K>
-		requires std::convertible_to<K, T>
+		template<std::convertible_to<T> K>
 		inline void AE_CALL operator-=(const K(&values)[N]) {
 			sub(values);
 		}
 
-		template<typename K>
-		requires std::convertible_to<K, T>
+		template<std::convertible_to<T> K>
 		inline void AE_CALL operator-=(const Vector<N, K>& vec) {
 			sub(vec);
 		}
 
-		template<typename K>
-		requires std::convertible_to<K, T>
+		template<std::convertible_to<T> K>
 		inline void AE_CALL operator*=(const K& value) {
 			mul(value);
 		}
 
-		template<typename K>
-		requires std::convertible_to<K, T>
+		template<std::convertible_to<T> K>
 		inline void AE_CALL operator*=(const K(&values)[N]) {
 			mul(values);
 		}
 
-		template<typename K>
-		requires std::convertible_to<K, T>
+		template<std::convertible_to<T> K>
 		inline void AE_CALL operator*=(const Vector<N, K>& vec) {
 			mul(vec);
 		}
 
-		template<typename K>
-		requires std::convertible_to<K, T>
+		template<std::convertible_to<T> K>
 		inline void AE_CALL operator/=(const K& value) {
 			div(value);
 		}
 
-		template<typename K>
-		requires std::convertible_to<K, T>
+		template<std::convertible_to<T> K>
 		inline void AE_CALL operator/=(const K(&values)[N]) {
 			div(values);
 		}
 
-		template<typename K>
-		requires std::convertible_to<K, T>
+		template<std::convertible_to<T> K>
 		inline void AE_CALL operator/=(const Vector<N, K>& vec) {
 			div(vec);
 		}
@@ -202,14 +178,12 @@ namespace aurora {
 			return N;
 		}
 
-		template<size_t L, typename K>
-		requires std::convertible_to<K, T>
+		template<size_t L, std::convertible_to<T> K>
 		inline Vector& AE_CALL set(const Vector<L, K>& vec) {
 			return set(vec.data);
 		}
 
-		template<size_t L, typename K>
-		requires std::convertible_to<K, T>
+		template<size_t L, std::convertible_to<T> K>
 		inline Vector& AE_CALL set(const K(&values)[L]) {
 			if constexpr (std::same_as<T, K>) {
 				if constexpr (L >= N) {
@@ -230,8 +204,7 @@ namespace aurora {
 			return *this;
 		}
 
-		template<typename K>
-		requires std::convertible_to<K, T>
+		template<std::convertible_to<T> K>
 		inline Vector& AE_CALL set(const K* values, size_t len) {
 			if (len >= N) {
 				for (decltype(N) i = 0; i < N; ++i) data[i] = values[i];
@@ -243,14 +216,12 @@ namespace aurora {
 			return *this;
 		}
 
-		template<typename K>
-		requires std::convertible_to<K, T>
+		template<std::convertible_to<T> K>
 		inline Vector& AE_CALL set(const std::initializer_list<const K>& list) {
 			return set(list.begin(), list.size());
 		}
 
-		template<typename... Args>
-		requires convertible_all_to<T, Args...>
+		template<std::convertible_to<T>... Args>
 		inline Vector& AE_CALL set(Args&&... args) {
 			if constexpr (N > 0) {
 				if constexpr (sizeof...(args) == 1) {
@@ -266,8 +237,7 @@ namespace aurora {
 			return *this;
 		}
 
-		template<typename K>
-		requires std::convertible_to<K, T>
+		template<std::convertible_to<T> K>
 		inline void AE_CALL copyTo(K(&dst)[N]) const {
 			if constexpr (std::same_as<T, K>) {
 				memcpy(dst, data, sizeof(T) * N);
@@ -276,106 +246,90 @@ namespace aurora {
 			}
 		}
 
-		template<typename K>
-		requires std::convertible_to<K, T>
+		template<std::convertible_to<T> K>
 		inline Vector& AE_CALL add(const K& value) {
 			for (decltype(N) i = 0; i < N; ++i) data[i] += value;
 			return *this;
 		}
 
-		template<typename K>
-		requires std::convertible_to<K, T>
+		template<std::convertible_to<T> K>
 		inline Vector& AE_CALL add(const K(&values)[N]) {
 			for (decltype(N) i = 0; i < N; ++i) data[i] += values[i];
 			return *this;
 		}
 
-		template<typename K>
-		requires std::convertible_to<K, T>
+		template<std::convertible_to<T> K>
 		inline Vector& AE_CALL add(const Vector<N, K>& vec) {
 			return add(vec.data);
 		}
 
-		template<typename K>
-		requires std::convertible_to<K, T>
+		template<std::convertible_to<T> K>
 		inline Vector& AE_CALL sub(const K& value) {
 			for (decltype(N) i = 0; i < N; ++i) data[i] -= value;
 			return *this;
 		}
 
-		template<typename K>
-		requires std::convertible_to<K, T>
+		template<std::convertible_to<T> K>
 		inline Vector& AE_CALL sub(const K(&values)[N]) {
 			for (decltype(N) i = 0; i < N; ++i) data[i] -= values[i];
 			return *this;
 		}
 
-		template<typename K>
-		requires std::convertible_to<K, T>
+		template<std::convertible_to<T> K>
 		inline Vector& AE_CALL sub(const Vector<N, K>& vec) {
 			return sub(vec.data);
 		}
 
-		template<typename K>
-		requires std::convertible_to<K, T>
+		template<std::convertible_to<T> K>
 		inline Vector& AE_CALL mul(const K& value) {
 			for (decltype(N) i = 0; i < N; ++i) data[i] *= value;
 			return *this;
 		}
 
-		template<typename K>
-		requires std::convertible_to<K, T>
+		template<std::convertible_to<T> K>
 		inline Vector& AE_CALL mul(const K(&values)[N]) {
 			for (decltype(N) i = 0; i < N; ++i) data[i] *= values[i];
 			return *this;
 		}
 
-		template<typename K>
-		requires std::convertible_to<K, T>
+		template<std::convertible_to<T> K>
 		inline Vector& AE_CALL mul(const Vector<N, K>& vec) {
 			return mul(vec.data);
 		}
 
-		template<typename K>
-		requires std::convertible_to<K, T>
+		template<std::convertible_to<T> K>
 		inline Vector& AE_CALL div(const K& value) {
 			for (decltype(N) i = 0; i < N; ++i) data[i] /= value;
 			return *this;
 		}
 
-		template<typename K>
-		requires std::convertible_to<K, T>
+		template<std::convertible_to<T> K>
 		inline Vector& AE_CALL div(const K(&values)[N]) {
 			for (decltype(N) i = 0; i < N; ++i) data[i] /= values[i];
 			return *this;
 		}
 
-		template<typename K>
-		requires std::convertible_to<K, T>
+		template<std::convertible_to<T> K>
 		inline Vector& AE_CALL div(const Vector<N, K>& vec) {
 			return div(vec.data);
 		}
 
-		template<typename K>
-		requires std::convertible_to<K, T>
+		template<std::convertible_to<T> K>
 		inline bool AE_CALL isEqual(const K& value) const {
 			return Math::isEqual(data, value);
 		}
 
-		template<typename K, typename S>
-		requires std::convertible_to<K, T>
+		template<std::convertible_to<T> K, typename S>
 		inline bool AE_CALL isEqual(const K& value, const S& tolerance) const {
 			return Math::isEqual(data, value, tolerance);
 		}
 
-		template<typename K>
-		requires std::convertible_to<K, T>
+		template<std::convertible_to<T> K>
 		inline bool AE_CALL isEqual(const Vector<N, K>& value) const {
 			return Math::isEqual(data, value.data);
 		}
 
-		template<typename K, typename S>
-		requires std::convertible_to<K, T>
+		template<std::convertible_to<T> K, typename S>
 		inline bool AE_CALL isEqual(const Vector<N, K>& value, const S& tolerance) const {
 			return Math::isEqual(data, value.data, tolerance);
 		}

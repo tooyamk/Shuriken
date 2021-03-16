@@ -341,16 +341,16 @@ namespace aurora {
 
 
 	template<typename T, template<typename> typename... Modifiers>
-	struct pakaged_modification;
+	struct multi_modification;
 
 	template<typename T>
-	struct pakaged_modification<T> { using type = T; };
+	struct multi_modification<T> { using type = T; };
 
 	template<typename T, template<typename> typename Modifier, template<typename> typename... OtherModifiers>
-	struct pakaged_modification<T, Modifier, OtherModifiers...> : pakaged_modification<typename Modifier<T>::type, OtherModifiers...> {};
+	struct multi_modification<T, Modifier, OtherModifiers...> : multi_modification<typename Modifier<T>::type, OtherModifiers...> {};
 
 
-	template<typename T, template<typename> typename Condition, template<typename> typename... Modifiers> concept packaged_concept = Condition<typename pakaged_modification<T, Modifiers...>::type>::value;
+	template<typename T, template<typename> typename Condition, template<typename> typename... Modifiers> concept packaged_concept = Condition<typename multi_modification<T, Modifiers...>::type>::value;
 
 
 	template<typename T, typename Tuple>

@@ -6,36 +6,36 @@
 namespace aurora {
 	class AE_CORE_DLL Math {
 	public:
-		template<typename T> inline static constexpr arithmetic_t<T> NUMBER_0 = 0;
-		template<typename T> inline static constexpr arithmetic_t<T> NUMBER_1 = 1;
-		template<typename T> inline static constexpr floating_point_t<T> TOLERANCE = T(2e-37);
-		template<typename T> inline static constexpr floating_point_t<T> E = T(2.718281828459045);
-		template<typename T> inline static constexpr floating_point_t<T> PI = T(3.14159265358979323846);
-		template<typename T> inline static constexpr floating_point_t<T> PI_2 = PI<T> * T(.5);
-		template<typename T> inline static constexpr floating_point_t<T> PI_4 = PI<T> * T(.25);
-		template<typename T> inline static constexpr floating_point_t<T> PI_6 = PI<T> / T(6.);
-		template<typename T> inline static constexpr floating_point_t<T> PI_8 = PI<T> * T(.125);
-		template<typename T> inline static constexpr floating_point_t<T> PI2 = PI<T> * T(2.);
-		template<typename T> inline static constexpr floating_point_t<T> INV_PI = T(1.) / PI<T>;
-		template<typename T> inline static constexpr floating_point_t<T> SQRT2 = T(1.4142135623730951);
-		template<typename T> inline static constexpr floating_point_t<T> SQRT3 = T(0.5773502691896257);
-		template<typename T> inline static constexpr floating_point_t<T> DEG = T(180.) / PI<T>;
-		template<typename T> inline static constexpr floating_point_t<T> RAD = PI<T> / T(180.);
+		template<arithmetic T> inline static constexpr T NUMBER_0 = 0;
+		template<arithmetic T> inline static constexpr T NUMBER_1 = 1;
+		template<std::floating_point T> inline static constexpr T TOLERANCE = T(2e-37);
+		template<std::floating_point T> inline static constexpr T E = T(2.718281828459045);
+		template<std::floating_point T> inline static constexpr T PI = T(3.14159265358979323846);
+		template<std::floating_point T> inline static constexpr T PI_2 = PI<T> * T(.5);
+		template<std::floating_point T> inline static constexpr T PI_4 = PI<T> * T(.25);
+		template<std::floating_point T> inline static constexpr T PI_6 = PI<T> / T(6.);
+		template<std::floating_point T> inline static constexpr T PI_8 = PI<T> * T(.125);
+		template<std::floating_point T> inline static constexpr T PI2 = PI<T> * T(2.);
+		template<std::floating_point T> inline static constexpr T INV_PI = T(1.) / PI<T>;
+		template<std::floating_point T> inline static constexpr T SQRT2 = T(1.4142135623730951);
+		template<std::floating_point T> inline static constexpr T SQRT3 = T(0.5773502691896257);
+		template<std::floating_point T> inline static constexpr T DEG = T(180.) / PI<T>;
+		template<std::floating_point T> inline static constexpr T RAD = PI<T> / T(180.);
 
 		template<typename In1, typename In2>
 		inline static bool AE_CALL isEqual(const In1& v1, const In2& v2) {
 			return v1 == v2;
 		}
-		template<uint32_t N, typename In1, typename In2>
+		template<size_t N, typename In1, typename In2>
 		inline static bool AE_CALL isEqual(const In1(&v)[N], const In2& value) {
-			for (uint32_t i = 0; i < N; ++i) {
+			for (decltype(N) i = 0; i < N; ++i) {
 				if (v[i] != value) return false;
 			}
 			return true;
 		}
-		template<uint32_t N, typename In1, typename In2>
+		template<size_t N, typename In1, typename In2>
 		inline static bool AE_CALL isEqual(const In1(&v1)[N], const In2(&v2)[N]) {
-			for (uint32_t i = 0; i < N; ++i) {
+			for (decltype(N) i = 0; i < N; ++i) {
 				if (v1[i] != v2[i]) return false;
 			}
 			return true;
@@ -44,16 +44,16 @@ namespace aurora {
 		inline static bool AE_CALL isEqual(const In1& v1, const In2& v2, const In3& tolerance) {
 			return (v1 < v2 ? v2 - v1 : v1 - v2) <= tolerance;
 		}
-		template<uint32_t N, typename In1, typename In2, typename In3>
+		template<size_t N, typename In1, typename In2, typename In3>
 		inline static bool AE_CALL isEqual(const In1(&v)[N], const In2& value, const In3& tolerance) {
-			for (uint32_t i = 0; i < N; ++i) {
+			for (decltype(N) i = 0; i < N; ++i) {
 				if ((v[i] < value ? value - v[i] : v[i] - value) > tolerance) return false;
 			}
 			return true;
 		}
-		template<uint32_t N, typename In1, typename In2, typename In3>
+		template<size_t N, typename In1, typename In2, typename In3>
 		inline static bool AE_CALL isEqual(const In1(&v1)[N], const In2(&v2)[N], const In3& tolerance) {
-			for (uint32_t i = 0; i < N; ++i) {
+			for (decltype(N) i = 0; i < N; ++i) {
 				if ((v1[i] < v2[i] ? v2[i] - v1[i] : v1[i] - v2[i]) > tolerance) return false;
 			}
 			return true;
@@ -64,17 +64,17 @@ namespace aurora {
 			return v < min ? min : (v > max ? max : v);
 		}
 
-		template<uint32_t N, typename In1, typename In2, typename In3, typename Out>
+		template<size_t N, typename In1, typename In2, typename In3, typename Out>
 		inline static constexpr void AE_CALL clamp(const In1(&v)[N], const In2& min, const In3& max, Out(&dst)[N]) {
 			Out tmp[N];
-			for (uint32_t i = 0; i < N; ++i) tmp[i] = v[i] < min ? min : (v[i] > max ? max : v[i]);
-			for (uint32_t i = 0; i < N; ++i) dst[i] = tmp[i];
+			for (decltype(N) i = 0; i < N; ++i) tmp[i] = v[i] < min ? min : (v[i] > max ? max : v[i]);
+			for (decltype(N) i = 0; i < N; ++i) dst[i] = tmp[i];
 		}
 
-		template<uint32_t N, typename In1, typename In2, typename Out = decltype((*(In1*)0) + (*(In2*)0))>
+		template<size_t N, typename In1, typename In2, typename Out = decltype((*(In1*)0) + (*(In2*)0))>
 		inline static Out AE_CALL dot(const In1(&v1)[N], const In2(&v2)[N]) {
 			Out rst = NUMBER_0<Out>;
-			for (uint32_t i = 0; i < N; ++i) rst += v1[i] * v2[i];
+			for (decltype(N) i = 0; i < N; ++i) rst += v1[i] * v2[i];
 			return rst;
 		}
 
@@ -89,11 +89,11 @@ namespace aurora {
 			dst[2] = z;
 		}
 
-		template<uint32_t N, typename In1, typename In2, typename In3, typename Out>
+		template<size_t N, typename In1, typename In2, typename In3, typename Out>
 		inline static void AE_CALL lerp(const In1(&from)[N], const In2(&to)[N], const In3 t, Out(&dst)[N]) {
 			Out tmp[N];
-			for (uint32_t i = 0; i < N; ++i) tmp[i] = from[i] + (to[i] - from[i]) * t;
-			for (uint32_t i = 0; i < N; ++i) dst[i] = tmp[i];
+			for (decltype(N) i = 0; i < N; ++i) tmp[i] = from[i] + (to[i] - from[i]) * t;
+			for (decltype(N) i = 0; i < N; ++i) dst[i] = tmp[i];
 		}
 
 		inline static void AE_CALL appendQuat(const float32_t(&lhs)[4], const float32_t(&rhs)[4], float32_t(&dst)[4]) {
@@ -192,37 +192,37 @@ namespace aurora {
 			return deg * RAD<T>;
 		}
 
-		template<uint32_t N, typename In, typename Out = In>
+		template<size_t N, typename In, typename Out = In>
 		inline static constexpr Out AE_CALL multiplies(const In(&v)[N]) {
 			if constexpr (N == 0) {
 				return Out(0);
 			} else {
 				Out m = v[0];
-				for (uint32_t i = 1; i < N; ++i) m *= v[i];
+				for (decltype(N) i = 1; i < N; ++i) m *= v[i];
 				return m;
 			}
 		}
 
-		template<uint32_t N, typename In, typename Out = In>
+		template<size_t N, typename In, typename Out = In>
 		inline static Out AE_CALL distanceSq(const In(&v1)[N], const In(&v2)[N]) {
 			Out sq = 0;
-			for (uint32_t i = 0; i < N; ++i) {
+			for (decltype(N) i = 0; i < N; ++i) {
 				Out d = v1[i] < v2[i] ? v2[i] - v1[i] : v1[i] - v2[i];
 				sq += d * d;
 			}
 			return sq;
 		}
-		template<uint32_t N, typename In1, typename In2, typename Out = decltype((*(In1*)0) + (*(In2*)0))>
+		template<size_t N, typename In1, typename In2, typename Out = decltype((*(In1*)0) + (*(In2*)0))>
 		inline static Out AE_CALL distanceSq(const floating_point_t<In1>(&v1)[N], const floating_point_t<In2>(&v2)[N]) {
 			Out sq = 0;
-			for (uint32_t i = 0; i < N; ++i) {
+			for (decltype(N) i = 0; i < N; ++i) {
 				Out d = v1[i] - v2[i];
 				sq += d * d;
 			}
 			return sq;
 		}
 
-		template<uint32_t N, typename In, typename Out>
+		template<size_t N, typename In, typename Out>
 		static void AE_CALL normalize(const In(&v)[N], Out(&dst)[N]) {
 			if constexpr (sizeof(In) >= sizeof(Out)) {
 				if (auto n = dot<N, In, In, Out>(v, v); !isEqual(n, NUMBER_1<decltype(n)>, TOLERANCE<decltype(n)>)) {
@@ -231,22 +231,22 @@ namespace aurora {
 						n = NUMBER_1<decltype(n)> / n;
 
 						if ((void*)&v >= (void*)&dst) {
-							for (uint32_t i = 0; i < N; ++i) dst[i] = v[i] * n;
+							for (decltype(N) i = 0; i < N; ++i) dst[i] = v[i] * n;
 						} else {
-							for (uint32_t i = N - 1; i < N; --i) dst[i] = v[i] * n;
+							for (decltype(N) i = N - 1; i < N; --i) dst[i] = v[i] * n;
 						}
 					} else {
 						if ((void*)&v >= (void*)&dst) {
-							for (uint32_t i = 0; i < N; ++i) dst[i] = v[i];
+							for (decltype(N) i = 0; i < N; ++i) dst[i] = v[i];
 						} else {
-							for (uint32_t i = N - 1; i < N; --i) dst[i] = v[i];
+							for (decltype(N) i = N - 1; i < N; --i) dst[i] = v[i];
 						}
 					}
 				} else {
 					if ((void*)&v >= (void*)&dst) {
-						for (uint32_t i = 0; i < N; ++i) dst[i] = v[i];
+						for (decltype(N) i = 0; i < N; ++i) dst[i] = v[i];
 					} else {
-						for (uint32_t i = N - 1; i < N; --i) dst[i] = v[i];
+						for (decltype(N) i = N - 1; i < N; --i) dst[i] = v[i];
 					}
 				}
 			} else {
@@ -256,30 +256,30 @@ namespace aurora {
 					if (n > TOLERANCE<decltype(n)>) {
 						n = NUMBER_1<decltype(n)> / n;
 
-						for (uint32_t i = 0; i < N; ++i) tmp[i] = v[i] * n;
+						for (decltype(N) i = 0; i < N; ++i) tmp[i] = v[i] * n;
 					} else {
-						for (uint32_t i = 0; i < N; ++i) tmp[i] = v[i];
+						for (decltype(N) i = 0; i < N; ++i) tmp[i] = v[i];
 					}
 				} else {
-					for (uint32_t i = 0; i < N; ++i) tmp[i] = v[i];
+					for (decltype(N) i = 0; i < N; ++i) tmp[i] = v[i];
 				}
 				memcpy(dst, tmp, N * sizeof(tmp));
 			}
 		}
 
-		template<uint32_t N, typename T>
+		template<size_t N, typename T>
 		static void AE_CALL normalize(T(&val)[N]) {
 			if (auto n = dot(val, val); !isEqual(n, NUMBER_1<decltype(n)>, TOLERANCE<decltype(n)>)) {
 				n = std::sqrt(n);
 				if (n > TOLERANCE<decltype(n)>) {
 					n = NUMBER_1<decltype(n)> / n;
 
-					for (uint32_t i = 0; i < N; ++i) val[i] *= n;
+					for (decltype(N) i = 0; i < N; ++i) val[i] *= n;
 				}
 			}
 		}
 
-		template<uint32_t N, typename In1, typename In2, std::floating_point Out = decltype((*(In1*)0) + (*(In2*)0))>
+		template<size_t N, typename In1, typename In2, std::floating_point Out = decltype((*(In1*)0) + (*(In2*)0))>
 		static Out AE_CALL angle(const In1(&v1)[N], const In2(&v2)[N]) {
 			Out n1[N], n2[N];
 			normalize(v1, n1);
@@ -287,7 +287,7 @@ namespace aurora {
 			return std::acos(clamp(dot(n1, n2), -NUMBER_1<Out>, NUMBER_1<Out>));
 		}
 
-		template<uint32_t N, typename In1, typename In2, std::floating_point Out = decltype((*(In1*)0) + (*(In2*)0))>
+		template<size_t N, typename In1, typename In2, std::floating_point Out = decltype((*(In1*)0) + (*(In2*)0))>
 		requires (N >= 2 && N <= 3)
 		static Out AE_CALL singedAngle(const In1(&v1)[N], const In2(&v2)[N]) {
 			Out n1[N], n2[N];

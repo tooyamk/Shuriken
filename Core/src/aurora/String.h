@@ -80,8 +80,8 @@ namespace aurora {
 			}
 		}
 
-		template<typename In, typename Out>
-		requires convertible_wstring_data<std::remove_cvref_t<In>> && same_any_of<Out, char, char8_t>
+		template<typename In, same_any_of<char, char8_t> Out>
+		requires convertible_wstring_data<std::remove_cvref_t<In>>
 		static std::u8string::size_type AE_CALL UnicodeToUtf8(In&& in, Out* outBuffer, std::u8string::size_type outBufferSize) {
 			if constexpr (wstring_data<std::remove_cvref_t<In>>) {
 				if (!outBuffer || !outBufferSize) return std::u8string::npos;
@@ -99,8 +99,8 @@ namespace aurora {
 			}
 		}
 
-		template<typename In, typename Out = std::u8string>
-		requires convertible_wstring_data<std::remove_cvref_t<In>> && string8<Out>
+		template<typename In, string8 Out = std::u8string>
+		requires convertible_wstring_data<std::remove_cvref_t<In>>
 		static auto AE_CALL UnicodeToUtf8(In&& in) {
 			if constexpr (wstring_data<std::remove_cvref_t<In>>) {
 				auto [unicodeLen, utf8Len] = calcUnicodeToUtf8Length(in);
@@ -267,8 +267,8 @@ namespace aurora {
 			return d;
 		}
 
-		template<typename In, typename Separator, typename Fn>
-		requires convertible_string_data<std::remove_cvref_t<In>> && (std::derived_from<std::remove_cvref_t<Separator>, std::regex> || convertible_string_data<std::remove_cvref_t<Separator>>) && std::invocable<Fn, const std::string_view&>
+		template<typename In, typename Separator, std::invocable<const std::string_view&> Fn>
+		requires convertible_string_data<std::remove_cvref_t<In>> && (std::derived_from<std::remove_cvref_t<Separator>, std::regex> || convertible_string_data<std::remove_cvref_t<Separator>>)
 		static void AE_CALL split(In&& in, Separator&& separator, Fn&& fn) {
 			if constexpr (std::derived_from<std::remove_cvref_t<Separator>, std::regex>) {
 				if constexpr (string_data<std::remove_cvref_t<In>>) {
@@ -315,8 +315,8 @@ namespace aurora {
 			}
 		}
 
-		template<typename In, typename Fn>
-		requires convertible_string_data<std::remove_cvref_t<In>> && std::invocable<Fn, const std::string_view&>
+		template<typename In, std::invocable<const std::string_view&> Fn>
+		requires convertible_string_data<std::remove_cvref_t<In>>
 		static void AE_CALL split(In&& in, uint8_t flags, Fn&& fn) {
 			if constexpr (string_data<std::remove_cvref_t<In>>) {
 				size_t begin = 0, i = 0, size = in.size();
@@ -504,8 +504,8 @@ namespace aurora {
 
 		static std::string AE_CALL toString(const uint8_t* value, size_t size);
 
-		template<typename Out, typename In>
-		requires convertible_string_data<std::remove_cvref_t<In>> && std::integral<Out>
+		template<std::integral Out, typename In>
+		requires convertible_string_data<std::remove_cvref_t<In>>
 		inline static Out toNumber(In&& in, int32_t base = 10) {
 			if constexpr (string_data<std::remove_cvref_t<In>>) {
 				Out value;
@@ -532,8 +532,8 @@ namespace aurora {
 			}
 		}
 
-		template<typename Out, typename In>
-		requires convertible_string_data<std::remove_cvref_t<In>> && std::floating_point<Out>
+		template<std::floating_point Out, typename In>
+		requires convertible_string_data<std::remove_cvref_t<In>>
 		inline static Out toNumber(const In& in) {
 			if constexpr (string_data<std::remove_cvref_t<In>>) {
 				Out value;

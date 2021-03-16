@@ -175,7 +175,7 @@ public:
 
 		std::remove_const<const int&>::type fewfwe = zzz111;
 
-		pakaged_modification<const int&, std::remove_reference, std::remove_const>::type zzz = zzz111;
+		multi_modification<const int&, std::remove_reference, std::remove_const>::type zzz = zzz111;
 		//auto bbbbb = same_any_of_in_tuple<char, std::tuple<void, char>>;
 		///*
 		//std::list<std::function<void()>> funcs;
