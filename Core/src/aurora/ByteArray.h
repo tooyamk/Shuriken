@@ -172,52 +172,61 @@ namespace aurora {
 		void AE_CALL popBack(size_t len);
 		void AE_CALL insert(size_t len);
 
-		template<typename T, typename = any_of_t<T, bool, int8_t, uint8_t, int16_t, uint16_t, int32_t, uint32_t, int64_t, uint64_t, float32_t, float64_t>>
+		template<arithmetic T>
 		inline T AE_CALL read() {
 			return _read<T>();
 		}
 
-		template<ValueType T, typename = std::enable_if_t<T == ValueType::BOOL>>
+		template<ValueType T>
+		requires (T == ValueType::BOOL)
 		inline bool AE_CALL read() {
 			return _read<bool>();
 		}
 
-		template<ValueType T, typename = std::enable_if_t<T == ValueType::I8>>
+		template<ValueType T>
+		requires (T == ValueType::I8)
 		inline int8_t AE_CALL read() {
 			return _read<int8_t>();
 		}
 
-		template<ValueType T, typename = std::enable_if_t<T == ValueType::I16>>
+		template<ValueType T>
+		requires (T == ValueType::I16)
 		inline int16_t AE_CALL read() {
 			return _read<int16_t>();
 		}
 
-		template<ValueType T, typename = std::enable_if_t<T == ValueType::I32>>
+		template<ValueType T>
+		requires (T == ValueType::I32)
 		inline int32_t AE_CALL read() {
 			return _read<int32_t>();
 		}
 
-		template<ValueType T, typename = std::enable_if_t<T == ValueType::I64>>
+		template<ValueType T>
+		requires (T == ValueType::I64)
 		inline int64_t AE_CALL read() {
 			return _read<int64_t>();
 		}
 
-		template<ValueType T, typename = std::enable_if_t<T == ValueType::UI8>>
+		template<ValueType T>
+		requires (T == ValueType::UI8)
 		inline uint8_t AE_CALL read() {
 			return _read<uint8_t>();
 		}
 
-		template<ValueType T, typename = std::enable_if_t<T == ValueType::UI16>>
+		template<ValueType T>
+		requires (T == ValueType::UI16)
 		inline uint16_t AE_CALL read() {
 			return _read<uint16_t>();
 		}
 
-		template<ValueType T, typename = std::enable_if_t<T == ValueType::UI32>>
+		template<ValueType T>
+		requires (T == ValueType::UI32)
 		inline uint32_t AE_CALL read() {
 			return _read<uint32_t>();
 		}
 
-		template<ValueType T, typename = std::enable_if_t<T == ValueType::UI64 || T == ValueType::D_UI64 || T == ValueType::RD_UI64>>
+		template<ValueType T>
+		requires (T == ValueType::UI64 || T == ValueType::D_UI64 || T == ValueType::RD_UI64)
 		inline uint64_t AE_CALL read() {
 			if constexpr (T == ValueType::UI64) {
 				return _read<uint64_t>();
@@ -260,7 +269,8 @@ namespace aurora {
 			}
 		}
 
-		template<ValueType T, typename = std::enable_if_t<T == ValueType::IX>>
+		template<ValueType T>
+		requires (T == ValueType::IX)
 		int64_t AE_CALL read(uint8_t numBytes) {
 			switch (numBytes) {
 			case 1:
@@ -284,7 +294,8 @@ namespace aurora {
 			}
 		}
 
-		template<ValueType T, typename = std::enable_if_t<T == ValueType::UIX>>
+		template<ValueType T>
+		requires (T == ValueType::UIX)
 		uint64_t AE_CALL read(uint8_t numBytes) {
 			switch (numBytes) {
 			case 1:
@@ -308,13 +319,15 @@ namespace aurora {
 			}
 		}
 
-		template<ValueType T, typename = std::enable_if_t<T == ValueType::TWO_I12>>
+		template<ValueType T>
+		requires (T == ValueType::TWO_I12)
 		inline std::tuple<int16_t, int16_t> AE_CALL read() {
 			auto [v1, v2] = read<ValueType::TWO_UI12>();
 			return std::make_tuple<int16_t, int16_t>(v1 > BitInt<12>::MAX ? v1 - BitUInt<12>::MAX - 1 : v1, v2 > BitInt<12>::MAX ? v2 - BitUInt<12>::MAX - 1 : v2);
 		}
 
-		template<ValueType T, typename = std::enable_if_t<T == ValueType::TWO_UI12>>
+		template<ValueType T>
+		requires (T == ValueType::TWO_UI12)
 		inline std::tuple<uint16_t, uint16_t> AE_CALL read() {
 			auto v1 = read<ValueType::UI8>();
 			auto v2 = read<ValueType::UI8>();
@@ -323,32 +336,37 @@ namespace aurora {
 			return std::make_tuple<uint16_t, uint16_t>((v1 << 4) | ((v2 >> 4) & 0xF), ((v2 & 0xF) << 8) | v3);
 		}
 
-		template<ValueType T, typename = std::enable_if_t<T == ValueType::F32>>
+		template<ValueType T>
+		requires (T == ValueType::F32)
 		inline float32_t AE_CALL read() {
 			return _read<float32_t>();
 		}
 
-		template<ValueType T, typename = std::enable_if_t<T == ValueType::F64>>
+		template<ValueType T>
+		requires (T == ValueType::F64)
 		inline float64_t AE_CALL read() {
 			return _read<float64_t>();
 		}
 
-		template<typename T, bool CheckEndMark = true, bool CheckBOM = false, typename = string_data_t<T>>
+		template<string_data T, bool CheckEndMark = true, bool CheckBOM = false>
 		inline T AE_CALL read(size_t size = (std::numeric_limits<size_t>::max)()) {
 			return _read<T, CheckEndMark, CheckBOM>(size);
 		}
 
-		template<ValueType T, bool CheckEndMark = true, bool CheckBOM = false, typename = std::enable_if_t<T == ValueType::STR>>
+		template<ValueType T, bool CheckEndMark = true, bool CheckBOM = false>
+		requires (T == ValueType::STR)
 		inline std::string AE_CALL read(size_t size = (std::numeric_limits<size_t>::max)()) {
 			return _read<std::string, CheckEndMark, CheckBOM>(size);
 		}
 
-		template<ValueType T, bool CheckEndMark = true, bool CheckBOM = false, typename = std::enable_if_t<T == ValueType::STR_V>>
+		template<ValueType T, bool CheckEndMark = true, bool CheckBOM = false>
+		requires (T == ValueType::STR_V)
 		inline std::string_view AE_CALL read(size_t size = (std::numeric_limits<size_t>::max)()) {
 			return _read<std::string_view, CheckEndMark, CheckBOM>(size);
 		}
 
-		template<ValueType T, bool CheckEndMark = true, bool CheckBOM = false, typename = std::enable_if_t<T == ValueType::STR>>
+		template<ValueType T, bool CheckEndMark = true, bool CheckBOM = false>
+		requires (T == ValueType::STR)
 		//begin, size, position
 		inline std::tuple<size_t, size_t, size_t> AE_CALL read(size_t begin, size_t size) const {
 			if constexpr (CheckBOM) {
@@ -371,7 +389,8 @@ namespace aurora {
 			return std::make_tuple(begin, size, begin + size);
 		}
 
-		template<ValueType T, typename = std::enable_if_t<T == ValueType::STR>>
+		template<ValueType T>
+		requires (T == ValueType::STR)
 		//begin, size
 		inline std::tuple<size_t, size_t> AE_CALL read(size_t size) {
 			auto [begin, s, pos] = read<T>(_position, size);
@@ -379,7 +398,8 @@ namespace aurora {
 			return std::make_tuple(begin, s);
 		}
 
-		template<ValueType T, typename = std::enable_if_t<T == ValueType::BYTE>>
+		template<ValueType T>
+		requires (T == ValueType::BYTE)
 		size_t AE_CALL read(void* bytes, size_t length = (std::numeric_limits<size_t>::max)()) {
 			size_t len = _length - _position;
 			if (length > len) length = len;
@@ -390,7 +410,8 @@ namespace aurora {
 			return length;
 		}
 
-		template<ValueType T, typename = std::enable_if_t<T == ValueType::BYTE>>
+		template<ValueType T>
+		requires (T == ValueType::BYTE)
 		size_t AE_CALL read(ByteArray& ba, size_t offset = 0, size_t length = (std::numeric_limits<size_t>::max)()) {
 			size_t len = _length - _position;
 			if (length > len) length = len;
@@ -404,52 +425,61 @@ namespace aurora {
 			return length;
 		}
 
-		template<typename T, typename = any_of_t<T, bool, int8_t, uint8_t, int16_t, uint16_t, int32_t, uint32_t, int64_t, uint64_t, float32_t, float64_t>>
+		template<arithmetic T>
 		inline void AE_CALL write(T value) {
 			_write<T>(value);
 		}
 
-		template<ValueType T, typename = std::enable_if_t<T == ValueType::BOOL>>
+		template<ValueType T>
+		requires (T == ValueType::BOOL)
 		inline void AE_CALL write(bool value) {
 			_write<bool>(value);
 		}
 
-		template<ValueType T, typename = std::enable_if_t<T == ValueType::I8>>
+		template<ValueType T>
+		requires (T == ValueType::I8)
 		inline void AE_CALL write(int8_t value) {
 			_write<int8_t>(value);
 		}
 
-		template<ValueType T, typename = std::enable_if_t<T == ValueType::I16>>
+		template<ValueType T>
+		requires (T == ValueType::I16)
 		inline void AE_CALL write(int16_t value) {
 			_write<int16_t>(value);
 		}
 
-		template<ValueType T, typename = std::enable_if_t<T == ValueType::I32>>
+		template<ValueType T>
+		requires (T == ValueType::I32)
 		inline void AE_CALL write(int32_t value) {
 			_write<int32_t>(value);
 		}
 
-		template<ValueType T, typename = std::enable_if_t<T == ValueType::I64>>
+		template<ValueType T>
+		requires (T == ValueType::I64)
 		inline void AE_CALL write(int64_t value) {
 			_write<int64_t>(value);
 		}
 
-		template<ValueType T, typename = std::enable_if_t<T == ValueType::UI8>>
+		template<ValueType T>
+		requires (T == ValueType::UI8)
 		inline void AE_CALL write(uint8_t value) {
 			_write<uint8_t>(value);
 		}
 
-		template<ValueType T, typename = std::enable_if_t<T == ValueType::UI16>>
+		template<ValueType T>
+		requires (T == ValueType::UI16)
 		inline void AE_CALL write(uint16_t value) {
 			_write<uint16_t>(value);
 		}
 
-		template<ValueType T, typename = std::enable_if_t<T == ValueType::UI32>>
+		template<ValueType T>
+		requires (T == ValueType::UI32)
 		inline void AE_CALL write(uint32_t value) {
 			_write<uint32_t>(value);
 		}
 
-		template<ValueType T, typename = std::enable_if_t<T == ValueType::UI64 || T == ValueType::D_UI64 || T == ValueType::RD_UI64 || T == ValueType::PADDING>>
+		template<ValueType T>
+		requires (T == ValueType::UI64 || T == ValueType::D_UI64 || T == ValueType::RD_UI64 || T == ValueType::PADDING)
 		inline void AE_CALL write(uint64_t value) {
 			if constexpr (T == ValueType::UI64) {
 				_write<uint64_t>(value);
@@ -476,7 +506,8 @@ namespace aurora {
 			}
 		}
 
-		template<ValueType T, typename = std::enable_if_t<T == ValueType::IX>>
+		template<ValueType T>
+		requires (T == ValueType::IX)
 		void AE_CALL write(int64_t value, uint8_t numBytes) {
 			switch (numBytes) {
 			case 1:
@@ -524,39 +555,45 @@ namespace aurora {
 			}
 		}
 
-		template<ValueType T, typename = std::enable_if_t<T == ValueType::UIX>>
+		template<ValueType T>
+		requires (T == ValueType::UIX)
 		inline void AE_CALL write(uint64_t value, uint8_t numBytes) {
 			if (numBytes > 0 && numBytes < 9) _write(&value, numBytes);
 		}
 
-		template<ValueType T, typename = std::enable_if_t<T == ValueType::TWO_I12>>
+		template<ValueType T>
+		requires (T == ValueType::TWO_I12)
 		inline void AE_CALL write(int16_t value1, int16_t value2) {
 			write<ValueType::TWO_UI12>(value1 < 0 ? BitUInt<12>::MAX + 1 + value1 : value1, value2 < 0 ? BitUInt<12>::MAX + 1 + value2 : value2);
 		}
 
-		template<ValueType T, typename = std::enable_if_t<T == ValueType::TWO_UI12>>
+		template<ValueType T>
+		requires (T == ValueType::TWO_UI12)
 		inline void AE_CALL write(uint16_t value1, uint16_t value2) {
 			write<ValueType::UI8>((value1 >> 4) & 0xFF);
 			write<ValueType::UI8>(((value1 & 0xF) << 4) | ((value2 >> 8) & 0xF));
 			write<ValueType::UI8>(value2 & 0xFF);
 		}
 
-		template<ValueType T, typename = std::enable_if_t<T == ValueType::F32>>
+		template<ValueType T>
+		requires (T == ValueType::F32)
 		inline void AE_CALL write(float32_t value) {
 			_write<float32_t>(value);
 		}
 
-		template<ValueType T, typename = std::enable_if_t<T == ValueType::F64>>
+		template<ValueType T>
+		requires (T == ValueType::F64)
 		inline void AE_CALL write(float64_t value) {
 			_write<float64_t>(value);
 		}
 
-		template<ValueType T, typename V, typename = std::enable_if_t<(T == ValueType::STR || T == ValueType::BYTE) && is_convertible_string8_data_v<std::remove_cvref_t<V>>>>
+		template<ValueType T, typename V>
+		requires (T == ValueType::STR || T == ValueType::BYTE) && convertible_string8_data<std::remove_cvref_t<V>>
 		inline void AE_CALL write(V&& value) {
 			if constexpr (T == ValueType::STR) {
 				write(value);
 			} else {
-				if constexpr (is_string8_data_v<std::remove_cvref_t<V>>) {
+				if constexpr (string8_data<std::remove_cvref_t<V>>) {
 					write<T>(value.data(), value.size());
 				} else {
 					write<T>(convert_to_string8_view_t<std::remove_cvref_t<V>>(std::forward<V>(value)));
@@ -564,9 +601,9 @@ namespace aurora {
 			}
 		}
 
-		template<typename T, typename = convertible_string8_data_t<std::remove_cvref_t<T>>>
+		template<packaged_concept<is_convertible_string8_data, std::remove_cvref> T>
 		inline void AE_CALL write(T&& value) {
-			if constexpr (is_string8_data_v<std::remove_cvref_t<T>>) {
+			if constexpr (string8_data<std::remove_cvref_t<T>>) {
 				auto size = value.size();
 
 				_checkLength(size + 1);
@@ -579,12 +616,14 @@ namespace aurora {
 			}
 		}
 
-		template<ValueType T, typename V, typename = std::enable_if_t<T == ValueType::STR && is_any_of_v<V, char, char8_t>>>
+		template<ValueType T, typename V>
+		requires (T == ValueType::STR) && same_any_of<V, char, char8_t>
 		inline void AE_CALL write(const V* value, size_t size) {
 			write(convert_to_string8_view_t<V*>(value, size));
 		}
 
-		template<ValueType T, bool Reverse = false, typename = std::enable_if_t<T == ValueType::BYTE>>
+		template<ValueType T, bool Reverse = false>
+		requires (T == ValueType::BYTE)
 		inline void AE_CALL write(const void* bytes, size_t length) {
 			if (length > 0) {
 				_checkLength(length);
@@ -605,7 +644,8 @@ namespace aurora {
 			}
 		}
 
-		template<ValueType T, typename = std::enable_if_t<T == ValueType::BYTE>>
+		template<ValueType T>
+		requires (T == ValueType::BYTE)
 		size_t AE_CALL write(const ByteArray& ba, size_t offset = 0, size_t length = (std::numeric_limits<size_t>::max)()) {
 			if (!length) return 0;
 			auto len = ba.getLength();
@@ -670,7 +710,7 @@ namespace aurora {
 			}
 		}
 
-		template<typename T, typename = any_of_t<T, bool, int8_t, uint8_t, int16_t, uint16_t, int32_t, uint32_t, int64_t, uint64_t, float32_t, float64_t>>
+		template<arithmetic T>
 		T AE_CALL _read() {
 			if constexpr (sizeof(T) == 1) {
 				if (_position < _length) {
@@ -689,7 +729,7 @@ namespace aurora {
 				if (_needReverse) {
 					auto v = byteswap<TYPE_BYTES>(&_data[_position]);
 					_position += TYPE_BYTES;
-					if constexpr (std::is_integral_v<T>) {
+					if constexpr (std::integral<T>) {
 						return v;
 					} else {
 						return *(T*)&v;
@@ -702,7 +742,7 @@ namespace aurora {
 			}
 		}
 
-		template<typename T, bool CheckEndMark, bool CheckBOM, typename = string_data_t<T>>
+		template<string_data T, bool CheckEndMark, bool CheckBOM>
 		inline T AE_CALL _read(size_t size) {
 			auto [begin, num, pos] = read<ValueType::STR, CheckEndMark, CheckBOM>(_position, size);
 			_position = pos;
@@ -723,7 +763,7 @@ namespace aurora {
 			_position += len;
 		}
 
-		template<typename T, typename = any_of_t<T, bool, int8_t, uint8_t, int16_t, uint16_t, int32_t, uint32_t, int64_t, uint64_t, float32_t, float64_t>>
+		template<arithmetic T>
 		inline void AE_CALL _write(const T& value) {
 			_write(&value, sizeof(T));
 		}

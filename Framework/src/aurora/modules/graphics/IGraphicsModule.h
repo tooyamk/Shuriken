@@ -140,19 +140,19 @@ namespace aurora::modules::graphics {
 
 		template<typename Type>
 		inline void AE_CALL set() {
-			if constexpr (std::is_same_v<Type, int8_t>) {
+			if constexpr (std::same_as<Type, int8_t>) {
 				type = VertexType::I8;
-			} else if constexpr (std::is_same_v<Type, uint8_t>) {
+			} else if constexpr (std::same_as<Type, uint8_t>) {
 				type = VertexType::UI8;
-			} else if constexpr (std::is_same_v<Type, int16_t>) {
+			} else if constexpr (std::same_as<Type, int16_t>) {
 				type = VertexType::I16;
-			} else if constexpr (std::is_same_v<Type, uint16_t>) {
+			} else if constexpr (std::same_as<Type, uint16_t>) {
 				type = VertexType::UI16;
-			} else if constexpr (std::is_same_v<Type, int32_t>) {
+			} else if constexpr (std::same_as<Type, int32_t>) {
 				type = VertexType::I32;
-			} else if constexpr (std::is_same_v<Type, uint32_t>) {
+			} else if constexpr (std::same_as<Type, uint32_t>) {
 				type = VertexType::UI32;
-			} else if constexpr (std::is_same_v<Type, float32_t>) {
+			} else if constexpr (std::same_as<Type, float32_t>) {
 				type = VertexType::F32;
 			} else {
 				type = VertexType::UNKNOWN;
@@ -204,11 +204,11 @@ namespace aurora::modules::graphics {
 
 		template<typename T>
 		inline void AE_CALL setFormat() {
-			if constexpr (std::is_same_v<T, uint8_t>) {
+			if constexpr (std::same_as<T, uint8_t>) {
 				setFormat(IndexType::UI8);
-			} else if constexpr (std::is_same_v<T, uint16_t>) {
+			} else if constexpr (std::same_as<T, uint16_t>) {
 				setFormat(IndexType::UI16);
-			} else if constexpr (std::is_same_v<T, uint32_t>) {
+			} else if constexpr (std::same_as<T, uint32_t>) {
 				setFormat(IndexType::UI32);
 			} else {
 				setFormat(IndexType::UNKNOWN);

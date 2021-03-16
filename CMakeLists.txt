@@ -85,8 +85,6 @@ function(__install name)
     endif ()
 endfunction()
 
-option(USE_CXX_20 "" ON)
-
 option(ASTC_ENCODER "" OFF)
 option(ZLIB "" OFF)
 option(LIBPNG "" OFF)
@@ -186,11 +184,7 @@ set(AE_INSTALL_DLL_DIR_NAME $<IF:$<PLATFORM_ID:Windows>,bin,lib>)
 #set(CMAKE_RELWITHDEBINFO_POSTFIX "rd" CACHE STRING "")
 #set(CMAKE_MINSIZEREL_POSTFIX "s" CACHE STRING "")
 
-if (USE_CXX_20)
-    set(CMAKE_CXX_STANDARD 20)
-else ()
-    set(CMAKE_CXX_STANDARD 17)
-endif ()
+set(CMAKE_CXX_STANDARD 20)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 set(compilerFlags "-fms-extensions -fPIC -Wno-unused-command-line-argument -Wno-switch")

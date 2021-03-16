@@ -29,6 +29,12 @@ namespace aurora::modules::graphics::gl {
 		Graphics();
 		virtual ~Graphics();
 
+		void operator delete(Graphics* p, std::destroying_delete_t) {
+			auto l = p->_loader;
+			p->~Graphics();
+			::operator delete(p);
+		}
+
 		virtual events::IEventDispatcher<GraphicsEvent>& AE_CALL getEventDispatcher() override;
 		virtual const events::IEventDispatcher<GraphicsEvent>& AE_CALL getEventDispatcher() const override;
 
@@ -117,21 +123,6 @@ namespace aurora::modules::graphics::gl {
 		static std::optional<ConvertFormatResult> AE_CALL convertFormat(TextureFormat fmt);
 		static GLenum AE_CALL convertComparisonFunc(ComparisonFunc func);
 		static uint32_t AE_CALL getGLTypeSize(GLenum type);
-
-	public:
-#ifdef __cpp_lib_destroying_delete
-		void operator delete(Graphics* p, std::destroying_delete_t) {
-			auto l = p->_loader;
-			p->~Graphics();
-			::operator delete(p);
-		}
-	protected:
-#else
-		virtual ScopeGuard AE_CALL _destruction() const override {
-			auto l = _loader;
-			return [l]() {};
-		}
-#endif
 
 	private:
 		struct {

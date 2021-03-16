@@ -3,15 +3,10 @@
 #include "../BaseTester.h"
 #include <concepts>
 #include <ranges>
+#include "statical.h"
 
 template<typename T>
 concept Integral = std::is_integral<T>::value;
-
-template<typename T>
-concept StringData = is_string_data_v<T>;
-
-template<typename T>
-concept U8StringData = is_u8string_data_v<T>;
 
 template<Integral T>
 T Add(T a, T b) {
@@ -22,18 +17,18 @@ template<typename R>
 requires requires { typename string_data_t<std::remove_cvref_t<R>>; }
 //requires StringData<std::remove_cvref_t<R>>
 inline auto& AE_CALL operator+=(std::u8string& left, R&& right) {
-	if constexpr (std::is_same_v<std::remove_cvref_t<R>, std::string>) {
+	if constexpr (std::same_as<std::remove_cvref_t<R>, std::string>) {
 		left += (const std::u8string&)right;
-	} else if constexpr (std::is_same_v<std::remove_cvref_t<R>, std::string_view>) {
+	} else if constexpr (std::same_as<std::remove_cvref_t<R>, std::string_view>) {
 		left += (const std::u8string_view&)right;
-	} else if constexpr (std::is_convertible_v<std::remove_cvref_t<R>, char const*>) {
+	} else if constexpr (std::convertible_to<std::remove_cvref_t<R>, char const*>) {
 		left += (const char8_t*)right;
 	}
 
 	return left;
 }
 
-template <typename T, typename = std::enable_if_t<std::is_integral_v<T> && std::is_unsigned_v<T>>>
+template <std::unsigned_integral T>
 constexpr int32_t Popcount_fallback(T val) noexcept {
 	constexpr auto digits = std::numeric_limits<T>::digits;
 	val = (T)(val - ((val >> 1) & (T)(0x5555'5555'5555'5555ull)));
@@ -43,9 +38,9 @@ constexpr int32_t Popcount_fallback(T val) noexcept {
 	return val & (T)(digits + digits - 1);
 }
 
-template<typename T, typename = std::enable_if_t<is_convertible_string8_data_v<std::remove_cvref_t<T>>>>
-inline std::conditional_t<is_string8_view_v<std::remove_cvref_t<T>>, std::remove_reference_t<T>&, convert_to_string8_view_t<std::remove_cvref_t<T>>> to_string8_view(T&& val) {
-	if constexpr (is_string8_view_v<std::remove_cvref_t<T>>) {
+template<packaged_concept<is_convertible_string8_data, std::remove_cvref> T>
+inline std::conditional_t<string8_view<std::remove_cvref_t<T>>, std::remove_reference_t<T>&, convert_to_string8_view_t<std::remove_cvref_t<T>>> to_string8_view(T&& val) {
+	if constexpr (string8_view<std::remove_cvref_t<T>>) {
 		return val;
 	} else {
 		return std::move(convert_to_string8_view_t<std::remove_cvref_t<T>>(std::forward<T>(val)));
@@ -105,10 +100,83 @@ inline constexpr uint64_t AE_CALL byteswap1(uint64_t val) {
 	}
 }
 
+#define AE_REF_OBJECT(__CLASS__) \
+protected: \
+	mutable std::atomic_uint32_t _refCount = 0; \
+public: \
+	inline uint32_t AE_CALL getReferenceCount() const { return _refCount.load(std::memory_order_acquire); } \
+	inline void AE_CALL ref() { _refCount.fetch_add(1, std::memory_order_release); } \
+	inline static void AE_CALL unref(const __CLASS__& target) { \
+		if (target._refCount.fetch_sub(1) <= 1) { delete &target; } \
+	} \
+private:
+
+#define AE_REF_INTRUSIVE_PTR_OPERATE(__CLASS__) \
+	inline void AE_CALL intrusivePtrAddRef(__CLASS__& val) { val.ref(); } \
+	inline void AE_CALL intrusivePtrRelease(__CLASS__& val) { __CLASS__::unref(val); }
+
+
+namespace BBCCCXX {
+	class AABBCC {
+		AE_REF_OBJECT(AABBCC)
+	};
+
+	AE_REF_INTRUSIVE_PTR_OPERATE(AABBCC)
+}
+
+class AAA123 {
+
+};
+
+class BBB : public AAA123 {
+
+};
+
+template<typename D, typename B>
+concept BBSS = std::derived_from<D, B>;
+
+
+template<auto T>
+concept IIII = T == 1;
+
+
+template<int T>
+requires IIII<T>
+void zzzz() {
+
+}
+
+bool adfwefwe() {
+	return true;
+}
+
+
+template<typename T, template<typename> typename... Conditions>
+concept logic_or = std::disjunction_v<Conditions<T>...>;
+
+template<typename T, template<typename> typename... Conditions>
+struct is_logic_or : std::bool_constant<logic_or<T, Conditions...>>{};
+
 
 class OffscreenTester : public BaseTester {
 public:
 	virtual int32_t AE_CALL run() override {
+		{
+			IntrusivePtr aaa = new BBCCCXX::AABBCC();
+		}
+
+		 std::string ssss = "abc";
+		zzzz<1>();
+
+		int zzz111 = 1;
+
+		constexpr std::array aefew{ ba_vt::BOOL, ba_vt::BOOL, ba_vt::BYTE };
+
+
+		std::remove_const<const int&>::type fewfwe = zzz111;
+
+		pakaged_modification<const int&, std::remove_reference, std::remove_const>::type zzz = zzz111;
+		//auto bbbbb = same_any_of_in_tuple<char, std::tuple<void, char>>;
 		///*
 		//std::list<std::function<void()>> funcs;
 		//std::packaged_task<int()> task(std::bind([]() {return 1; }));
@@ -122,28 +190,15 @@ public:
 		constexpr std::string_view γ{ "0.5" };
 		
 		const char8_t dsfe[] = u8"abc";
-		 uint16_t aa32 = byteswap1(uint16_t(0x0100));
+		// uint16_t aa32 = byteswap1(uint16_t(0x0100));
 
 		get_name<123>();
 
-		//std::remove_cvref<int>;
-
-		//auto bbbbb = statical::is_base_of_nontype_value<statical::nontype_value, statical::nontype_value<1>>::value;
-
-		//constexpr auto i = type_array<int, std::string, std::string_view>::has<std::u8string_view>;
-
-		//using ttttt = type_array<std::string, std::u8string, std::u8string, std::u8string_view, char*, char8_t*>;
-		//auto iiiii = ttttt::find<int> == std::nullopt;
-		//using eeeeeeeeeee = ttttt::at<5>;
-		//eeeeeeeeeee yyye;
-
-		//constexpr auto ooooo = ttttt::has<const std::u8string_view>;
-
-		//ffffffff fv;
-		//auto nnn = (std::numeric_limits<size_t>::max)();
-
-		//convert_type<char*, std::string, std::u8string, std::u8string, std::u8string_view, char*, char8_t*> vvvv;
-		//constexpr bool bbbbb = convert_type_bbb<std::string, std::string, std::u8string, std::u8string, std::u8string_view, char*, char8_t*>;
+		using arr = statical::array<>;
+		using arr1 = arr::push_back<std::string>;
+		using arr2 = arr1::concat<arr>;
+		using arr3 = arr::pop_back;
+		arr3 a;
 
 		auto monitors = Monitor::getMonitors();
 		auto vms = monitors[0].getVideoModes();

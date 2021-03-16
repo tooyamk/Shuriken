@@ -684,7 +684,7 @@ namespace aurora::extensions::fbx_converter {
 		ByteArray AE_CALL _buildPosition(const Node::Property& p, const std::vector<uint32_t>& sourceIndices) {
 			auto count = sourceIndices.size();
 
-			if constexpr (std::is_same_v<SrcType, DstType>) {
+			if constexpr (std::same_as<SrcType, DstType>) {
 				auto src = p.rawVal.data;
 
 				constexpr size_t VERTEX_SIZE = sizeof(DstType) * 3;
@@ -897,7 +897,7 @@ namespace aurora::extensions::fbx_converter {
 
 			if (mappingType == Node::Property::Value::ByControlVertex) {
 				if (refType == Node::Property::Value::Direct) {
-					if constexpr (std::is_same_v<ValueType, DstType>) {
+					if constexpr (std::same_as<ValueType, DstType>) {
 						size_t dstOffset = 0;
 						for (size_t i = 0; i < size; ++i) {
 							memcpy(dst.getSource() + dstOffset, values + sourceIndices[i] * numDataPerVertex, DST_VERTEX_SIZE);
@@ -920,7 +920,7 @@ namespace aurora::extensions::fbx_converter {
 				} else if (refType == Node::Property::Value::IndexToDirect && indexProperty) {
 					auto indices = (IndexType*)indexProperty->rawVal.data;
 
-					if constexpr (std::is_same_v<ValueType, DstType>) {
+					if constexpr (std::same_as<ValueType, DstType>) {
 						size_t dstOffset = 0;
 						for (size_t i = 0; i < size; ++i) {
 							auto idx = *(indices + sourceIndices[i]);
@@ -953,7 +953,7 @@ namespace aurora::extensions::fbx_converter {
 				}
 			} else if (mappingType == Node::Property::Value::ByPolygonVertex) {
 				if (refType == Node::Property::Value::Direct) {
-					if constexpr (std::is_same_v<ValueType, DstType>) {
+					if constexpr (std::same_as<ValueType, DstType>) {
 						size_t cpyLen = size * DST_VERTEX_SIZE;
 						memcpy(dst.getSource(), values, cpyLen);
 						dst.setLength(cpyLen);
@@ -970,7 +970,7 @@ namespace aurora::extensions::fbx_converter {
 				} else if (refType == Node::Property::Value::IndexToDirect && indexProperty) {
 					auto indices = (IndexType*)indexProperty->rawVal.data;
 
-					if constexpr (std::is_same_v<ValueType, DstType>) {
+					if constexpr (std::same_as<ValueType, DstType>) {
 						size_t dstOffset = 0;
 						for (size_t i = 0; i < size; ++i) {
 							auto idx = *(indices + i);

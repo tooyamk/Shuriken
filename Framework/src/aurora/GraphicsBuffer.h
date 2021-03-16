@@ -87,7 +87,7 @@ namespace aurora {
 
 								newBuf->create(buf->getSize(), buf->getUsage());
 
-								if constexpr (std::is_base_of_v<modules::graphics::IVertexBuffer, T>) {
+								if constexpr (std::derived_from<T, modules::graphics::IVertexBuffer>) {
 									newBuf->setFormat(buf->getFormat());
 								}
 
@@ -169,11 +169,11 @@ namespace aurora {
 		Node* _cur;
 
 		IntrusivePtr<T> AE_CALL _createBuffer() {
-			if constexpr (std::is_base_of_v<modules::graphics::IVertexBuffer, T>) {
+			if constexpr (std::derived_from<T, modules::graphics::IVertexBuffer>) {
 				return _graphics->createVertexBuffer();
-			} else if constexpr (std::is_base_of_v<modules::graphics::IIndexBuffer, T>) {
+			} else if constexpr (std::derived_from<T, modules::graphics::IIndexBuffer>) {
 				return _graphics->createIndexBuffer();
-			} else if constexpr (std::is_base_of_v<modules::graphics::IConstantBuffer, T>) {
+			} else if constexpr (std::derived_from<T, modules::graphics::IConstantBuffer>) {
 				return _graphics->createConstantBuffer();
 			} else {
 				return nullptr;

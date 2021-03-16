@@ -92,7 +92,7 @@ namespace aurora {
 			return _numChildren;
 		}
 
-		template<typename T, typename... Args, typename = std::enable_if_t<std::is_base_of_v<Node, T>>>
+		template<std::derived_from<Node> T, typename... Args>
 		inline T* AE_CALL addChild(Args&&... args) {
 			auto child = new T(std::forward<Args>(args)...);
 			_addChild(child);
@@ -257,12 +257,12 @@ namespace aurora {
 		void AE_CALL _worldPositionChanged(DirtyFlag oldDirty);
 		void AE_CALL _worldRotationChanged(DirtyFlag oldDirty);
 		inline void AE_CALL _checkNoticeUpdate(DirtyFlag dirty) {
-			using namespace enum_operators;
+			using namespace aurora::enum_operators;
 
 			_checkNoticeUpdateNow(_dirty | dirty, dirty);
 		}
 		inline void AE_CALL _checkNoticeUpdate(DirtyFlag appendDirty, DirtyFlag sendDirty) {
-			using namespace enum_operators;
+			using namespace aurora::enum_operators;
 
 			_checkNoticeUpdateNow(_dirty | appendDirty, sendDirty);
 		}

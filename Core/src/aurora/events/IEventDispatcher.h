@@ -77,7 +77,8 @@ namespace aurora::events {
 		EvtMethod<EvtType, Class> _method;
 		Class* _target;
 	};
-	template<typename EvtType, typename Class, typename = std::enable_if_t<std::is_member_function_pointer_v<EvtMethod<EvtType, Class>>>>
+	template<typename EvtType, typename Class>
+	requires member_function_pointer<EvtMethod<EvtType, Class>>
 	EventListener(EvtMethod<EvtType, Class>, Class*)->EventListener<EvtType, EvtMethod<EvtType, Class>>;
 
 
@@ -144,7 +145,8 @@ namespace aurora::events {
 		return new EventListener<EvtType, EvtFunc<EvtType>>(std::forward<EvtFunc<EvtType>>(fn));
 	}
 	
-	template<typename EvtType, typename Fn, typename = std::enable_if_t<std::is_invocable_v<Fn, Event<EvtType>&>>>
+	template<typename EvtType, typename Fn>
+	requires std::invocable<Fn, Event<EvtType>&>
 	inline IntrusivePtr<EventListener<EvtType, Fn>> AE_CALL createEventListener(Fn&& fn) {
 		return new EventListener<EvtType, Fn>(std::forward<Fn>(fn));
 	}

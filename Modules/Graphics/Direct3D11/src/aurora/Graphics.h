@@ -30,6 +30,12 @@ namespace aurora::modules::graphics::d3d11 {
 		Graphics();
 		virtual ~Graphics();
 
+		void operator delete(Graphics* p, std::destroying_delete_t) {
+			auto l = p->_loader;
+			p->~Graphics();
+			::operator delete(p);
+		}
+
 		virtual events::IEventDispatcher<GraphicsEvent>& AE_CALL getEventDispatcher() override;
 		virtual const events::IEventDispatcher<GraphicsEvent>& AE_CALL getEventDispatcher() const override;
 
@@ -247,21 +253,6 @@ namespace aurora::modules::graphics::d3d11 {
 
 		static DXGI_FORMAT AE_CALL convertInternalFormat(TextureFormat fmt);
 		static D3D11_COMPARISON_FUNC AE_CALL convertComparisonFunc(ComparisonFunc func);
-
-	public:
-#ifdef __cpp_lib_destroying_delete
-		void operator delete(Graphics* p, std::destroying_delete_t) {
-			auto l = p->_loader;
-			p->~Graphics();
-			::operator delete(p);
-		}
-	protected:
-#else
-		virtual ScopeGuard AE_CALL _destruction() const override {
-			auto l = _loader;
-			return [l]() {};
-		}
-#endif
 
 	private:
 		bool _isDebug;

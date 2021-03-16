@@ -4,59 +4,64 @@
 #include "aurora/math/Vector.h"
 
 namespace aurora {
-	template<uint32_t N, typename Pos, typename Size>
+	template<size_t N, typename Pos, typename Size>
 	class Box {
 	public:
-		template<typename S, typename T>
-		using ConvertibleType = typename std::enable_if_t<std::is_convertible_v<S, T>>;
-
-		template<typename S1, typename T1, typename S2, typename T2>
-		using ConvertibleTypes = typename std::enable_if_t<std::is_convertible_v<S1, T1> && std::is_convertible_v<S2, T2>>;
+		template<typename P, typename S>
+		inline static constexpr bool ConvertibleTypes = std::convertible_to<P, Pos> && std::convertible_to<S, Size>;
 
 		Box() {
 		}
 
-		template<typename P, typename S, typename = ConvertibleTypes<P, Pos, S, Size>>
+		template<typename P, typename S>
+		requires ConvertibleTypes<P, S>
 		Box(const Box<N, P, S>& box) :
 			pos(box.pos),
 			size(box.size) {
 		}
 
-		template<typename P, typename S, typename = ConvertibleTypes<P, Pos, S, Size>>
+		template<typename P, typename S>
+		requires ConvertibleTypes<P, S>
 		Box(Box<N, P, S>&& box) :
 			pos(box.pos),
 			size(box.size) {
 		}
 
-		template<typename P, typename S, typename = ConvertibleTypes<P, Pos, S, Size>>
+		template<typename P, typename S>
+		requires ConvertibleTypes<P, S>
 		Box(const Vector<N, P>&pos, const Vector<N, S>& size) :
 			pos(pos),
 			size(size) {
 		}
 
-		template<typename P, typename S, typename = ConvertibleTypes<P, Pos, S, Size>>
+		template<typename P, typename S>
+		requires ConvertibleTypes<P, S>
 		inline bool AE_CALL operator==(const Box<N, P, S>& box) {
 			return pos == box.pos && size == box.size;
 		}
 
-		template<typename P, typename S, typename = ConvertibleTypes<P, Pos, S, Size>>
+		template<typename P, typename S>
+		requires ConvertibleTypes<P, S>
 		inline bool AE_CALL operator!=(const Box<N, P, S>& box) {
 			return pos != box.pos || size != box.size;
 		}
 
-		template<typename P, typename S, typename = ConvertibleTypes<P, Pos, S, Size>>
+		template<typename P, typename S>
+		requires ConvertibleTypes<P, S>
 		inline void AE_CALL set(const Box<N, P, S>& box) {
 			pos.set(box.pos);
 			size.set(box.size);
 		}
 
-		template<typename P, typename S, typename = ConvertibleTypes<P, Pos, S, Size>>
+		template<typename P, typename S>
+		requires ConvertibleTypes<P, S>
 		inline void AE_CALL set(const Vector<N, P>&pos, const Vector<N, S>& size) {
 			this->pos.set(pos);
 			this->size.set(size);
 		}
 
-		template<typename P, typename S, typename = ConvertibleTypes<P, Pos, S, Size>>
+		template<typename P, typename S>
+		requires ConvertibleTypes<P, S>
 		inline bool AE_CALL isEqual(const Box<N, P, S>& box) const {
 			return pos == box.pos && size == box.size;
 		}

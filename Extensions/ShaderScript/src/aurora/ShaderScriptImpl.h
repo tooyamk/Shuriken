@@ -55,9 +55,9 @@ namespace aurora::extensions::shader_script {
 
 			auto pos = String::find(fmtDef, String::CharFlag::WHITE_SPACE);
 
-			if constexpr (std::is_same_v<T, std::vector<ShaderDefine>> || std::is_same_v<T, ShaderDefineCollection>) {
+			if constexpr (std::same_as<T, std::vector<ShaderDefine>> || std::same_as<T, ShaderDefineCollection>) {
 				if (pos == std::string_view::npos) {
-					if constexpr (std::is_same_v<T, std::vector<ShaderDefine>>) {
+					if constexpr (std::same_as<T, std::vector<ShaderDefine>>) {
 						out.emplace_back(fmtDef, nullptr);
 					} else {
 						out.set(std::string(fmtDef), "");
@@ -65,7 +65,7 @@ namespace aurora::extensions::shader_script {
 				} else {
 					std::string_view k(fmtDef.data(), pos);
 					auto v = String::trim(std::string_view(fmtDef.data() + pos + 1, fmtDef.size() - pos - 1), String::CharFlag::WHITE_SPACE);
-					if constexpr (std::is_same_v<T, std::vector<ShaderDefine>>) {
+					if constexpr (std::same_as<T, std::vector<ShaderDefine>>) {
 						out.emplace_back(k, v);
 					} else {
 						out.set(std::string(k), std::string(v));

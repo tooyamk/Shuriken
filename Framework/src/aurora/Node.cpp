@@ -157,7 +157,7 @@ namespace aurora {
 	}
 
 	void Node::setLocalMatrix(const Matrix34& m) {
-		using namespace enum_operators;
+		using namespace aurora::enum_operators;
 
 		_lm.set34(m);
 		_localDecomposition();
@@ -217,7 +217,7 @@ namespace aurora {
 	}
 
 	void Node::setWorldMatrix(const Matrix34& m) {
-		using namespace enum_operators;
+		using namespace aurora::enum_operators;
 
 		_wm.set34(m);
 

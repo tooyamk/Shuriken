@@ -55,11 +55,9 @@ namespace aurora {
 				}
 			}
 
-#ifdef __cpp_lib_char8_t
 			inline void AE_CALL write(const std::u8string_view& str) {
 				write((const char*)str.data(), str.size());
 			}
-#endif
 
 			inline void AE_CALL write(const wchar_t* buf) {
 				if (buf) write(buf, wcslen(buf));
@@ -124,30 +122,28 @@ namespace aurora {
 		static void AE_CALL _print(Buf& out, T&& value) {
 			using Type = std::remove_cvref_t<T>;
 
-			if constexpr (std::is_null_pointer_v<Type>) {
+			if constexpr (null_pointer<Type>) {
 				out.write(L"nullptr");
-			} else if constexpr (std::is_convertible_v<Type, wchar_t const*>) {
+			} else if constexpr (std::convertible_to<Type, wchar_t const*>) {
 				out.write(value);
-			} else if constexpr (std::is_convertible_v<Type, char const*>) {
+			} else if constexpr (wstring_data<Type>) {
+				out.write(value.data(), value.size());
+			} else if constexpr (std::convertible_to<Type, char const*>) {
 				_print(out, std::string_view(value));
-			} else if constexpr (is_string_data_v<Type>) {
+			} else if constexpr (string_data<Type>) {
 				out.write(value.data(), value.size());
 				//if (String::isUTF8(value.data(), value.size())) {
 				//	out.write(value.data(), value.size());
 				//} else {
 				//	out.write(L"<nonsupported string encode>");
 				//}
-			} else if constexpr (is_wstring_data_v<Type>) {
-				out.write(value.data(), value.size());
-#ifdef __cpp_lib_char8_t
-			} else if constexpr (std::is_convertible_v<Type, char8_t const*>) {
+			} else if constexpr (std::convertible_to<Type, char8_t const*>) {
 				_print(out, std::u8string_view(value));
-			} else if constexpr (is_u8string_data_v<Type>) {
+			} else if constexpr (u8string_data<Type>) {
 				out.write(value);
-#endif
-			} else if constexpr (std::is_same_v<Type, bool>) {
+			} else if constexpr (std::same_as<Type, bool>) {
 				out.write(value ? L"true" : L"false");
-			} else if constexpr (std::is_arithmetic_v<Type>) {
+			} else if constexpr (arithmetic<Type>) {
 				out.write(std::to_wstring(value));
 			} else if constexpr (std::is_enum_v<Type>) {
 				out.write(L'[');

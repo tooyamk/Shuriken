@@ -13,13 +13,8 @@ namespace aurora {
 	class AE_FW_DLL Application : public IApplication {
 	public:
 		Application(const std::string_view& appId);
-#ifdef __cpp_lib_char8_t
 		Application(const std::u8string_view& appId) : Application((const std::string_view&)appId) {}
 
-		inline void AE_CALL setWindowTitle(const std::u8string_view& title) {
-			setWindowTitle((const std::string_view&)title);
-		}
-#endif
 		virtual ~Application();
 
 		virtual events::IEventDispatcher<ApplicationEvent>& AE_CALL getEventDispatcher() override;
@@ -34,6 +29,9 @@ namespace aurora {
 		virtual Vec2ui32 AE_CALL getClientSize() const override;
 		virtual void AE_CALL setClientSize(const Vec2ui32& size) override;
 		virtual void AE_CALL setWindowTitle(const std::string_view& title) override;
+		inline void AE_CALL setWindowTitle(const std::u8string_view& title) {
+			setWindowTitle((const std::string_view&)title);
+		}
 		virtual void AE_CALL setWindowPosition(const Vec2i32& pos) override;
 		virtual void AE_CALL setCursorVisible(bool visible) override;
 		virtual bool AE_CALL hasFocus() const override;

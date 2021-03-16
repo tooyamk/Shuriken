@@ -279,7 +279,7 @@ namespace aurora {
 			}
 		}
 
-		template<uint32_t N, typename In1, typename In2, typename Out = decltype((*(In1*)0) + (*(In2*)0)), typename = floating_point_t<Out>>
+		template<uint32_t N, typename In1, typename In2, std::floating_point Out = decltype((*(In1*)0) + (*(In2*)0))>
 		static Out AE_CALL angle(const In1(&v1)[N], const In2(&v2)[N]) {
 			Out n1[N], n2[N];
 			normalize(v1, n1);
@@ -287,7 +287,8 @@ namespace aurora {
 			return std::acos(clamp(dot(n1, n2), -NUMBER_1<Out>, NUMBER_1<Out>));
 		}
 
-		template<uint32_t N, typename In1, typename In2, typename Out = decltype((*(In1*)0) + (*(In2*)0)), typename = floating_point_t<Out>, typename = std::enable_if_t<N >= 2 && N <= 3>>
+		template<uint32_t N, typename In1, typename In2, std::floating_point Out = decltype((*(In1*)0) + (*(In2*)0))>
+		requires (N >= 2 && N <= 3)
 		static Out AE_CALL singedAngle(const In1(&v1)[N], const In2(&v2)[N]) {
 			Out n1[N], n2[N];
 			normalize(v1, n1);
@@ -299,7 +300,7 @@ namespace aurora {
 
 		static void AE_CALL slerp(const float32_t(&from)[4], const float32_t(&to)[4], float32_t t, float32_t(&dst)[4]);
 
-		template<typename In1, typename In2, typename In3, typename Out, typename = floating_point_t<Out>>
+		template<typename In1, typename In2, typename In3, std::floating_point Out>
 		static void AE_CALL slerp(const In1(&v1)[3], const In2(&v2)[3], const In3& t, Out(&out)[3]) {
 			auto a = std::sqrt(dot<3, In1, In1, Out>(v1, v1));
 			auto b = std::sqrt(dot<3, In2, In2, Out>(v2, v2));
