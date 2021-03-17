@@ -2,6 +2,22 @@
 
 struct bad_type {};
 
+
+template<template<typename...> typename Base, typename Derived>
+struct is_base_of_template {
+private:
+	struct _impl {
+		template<typename... Args> static constexpr std::true_type test(const Base<Args...>*);
+		static constexpr std::false_type test(...);
+		using type = decltype(test(std::declval<Derived*>()));
+	};
+
+public:
+	static constexpr bool value = _impl::type::value;
+};
+template<typename Derived, template<typename...> typename Base> concept derived_from_template = is_base_of_template<Base, Derived>::value;
+
+
 template<typename... Types>
 struct type_array {
 private:

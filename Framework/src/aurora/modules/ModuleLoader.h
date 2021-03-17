@@ -13,7 +13,8 @@ namespace aurora::modules {
 		ModuleLoader() : _createFn(nullptr) {}
 		virtual ~ModuleLoader() {}
 
-		template<packaged_concept<is_convertible_string8_data, std::remove_cvref> T>
+		template<typename T>
+		requires convertible_string8_data<std::remove_cvref_t<T>>
 		bool AE_CALL load(T&& path) {
 			if (_lib.isLoaded()) _lib.release();
 			if (_lib.load(std::forward<T>(path))) {

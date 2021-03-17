@@ -49,7 +49,8 @@ namespace aurora {
 		static bool AE_CALL isUTF8(const char* data, size_t len);
 
 		//unicodeLen, utf8Len
-		template<packaged_concept<is_convertible_wstring_data, std::remove_cvref> In>
+		template<typename In>
+		requires convertible_wstring_data<std::remove_cvref_t<In>>
 		static std::tuple<std::wstring::size_type, std::string::size_type> AE_CALL calcUnicodeToUtf8Length(In&& in) {
 			if constexpr (wstring_data<std::remove_cvref_t<In>>) {
 				std::wstring::size_type s = 0;
@@ -115,7 +116,8 @@ namespace aurora {
 		}
 
 		//utf8Len, unicodeLen
-		template<packaged_concept<is_convertible_string8_data, std::remove_cvref> In>
+		template<typename In>
+		requires is_convertible_string8_data<std::remove_cvref_t<In>>::value
 		static std::tuple<std::u8string::size_type, std::wstring::size_type> AE_CALL calcUtf8ToUnicodeLength(In&& in) {
 			if constexpr (string8_data<std::remove_cvref_t<In>>) {
 				std::u8string::size_type s = 0;
@@ -145,7 +147,8 @@ namespace aurora {
 			}
 		}
 
-		template<packaged_concept<is_convertible_string8_data, std::remove_cvref> In>
+		template<typename In>
+		requires convertible_string8_data<std::remove_cvref_t<In>>
 		static std::wstring::size_type AE_CALL Utf8ToUnicode(In&& in, wchar_t* outBuffer, std::wstring::size_type outBufferSize) {
 			if constexpr (string8_data<std::remove_cvref_t<In>>) {
 				if (!outBuffer || !outBufferSize) return std::wstring::npos;
@@ -202,7 +205,8 @@ namespace aurora {
 			return d;
 		}
 
-		template<packaged_concept<is_convertible_string8_data, std::remove_cvref> In>
+		template<typename In>
+		requires convertible_string8_data<std::remove_cvref_t<In>>
 		static std::wstring AE_CALL Utf8ToUnicode(In&& in) {
 			if constexpr (string8_data<std::remove_cvref_t<In>>) {
 				auto [utf8Len, unicodeLen] = calcUtf8ToUnicodeLength(in);
@@ -216,7 +220,8 @@ namespace aurora {
 			}
 		}
 
-		template<packaged_concept<is_convertible_string8_data, std::remove_cvref> In>
+		template<typename In>
+		requires convertible_string8_data<std::remove_cvref_t<In>>
 		static std::wstring::size_type AE_CALL Utf8ToUnicode(In&& in, wchar_t*& out) {
 			if constexpr (string8_data<std::remove_cvref_t<In>>) {
 				if (in.empty()) {
@@ -336,7 +341,8 @@ namespace aurora {
 			}
 		}
 
-		template<packaged_concept<is_convertible_string8_data, std::remove_cvref> In>
+		template<typename In>
+		requires convertible_string8_data<std::remove_cvref_t<In>>
 		static convert_to_string8_view_t<std::remove_cvref_t<In>> AE_CALL trimQuotation(In&& in) {
 			if constexpr (string_data<std::remove_cvref_t<In>>) {
 				auto size = in.size();
@@ -357,7 +363,8 @@ namespace aurora {
 			}
 		}
 
-		template<packaged_concept<is_convertible_string8_data, std::remove_cvref> In>
+		template<typename In>
+		requires convertible_string8_data<std::remove_cvref_t<In>>
 		static convert_to_string8_view_t<std::remove_cvref_t<In>> AE_CALL trim(In&& in, uint8_t flags) {
 			if constexpr (string_data<std::remove_cvref_t<In>>) {
 				auto size = in.size();
@@ -552,7 +559,8 @@ namespace aurora {
 			}
 		}
 
-		template<packaged_concept<is_convertible_string_data, std::remove_cvref> In>
+		template<typename In>
+		requires convertible_string_data<std::remove_cvref_t<In>>
 		inline static std::string::size_type AE_CALL find(In&& in, char c) {
 			if constexpr (string8_data<std::remove_cvref_t<In>>) {
 				auto p = (const In::value_type*)memchr(in.data(), c, in.size());
@@ -573,7 +581,8 @@ namespace aurora {
 			}
 		}
 
-		template<packaged_concept<is_convertible_string_data, std::remove_cvref> In>
+		template<typename In>
+		requires convertible_string_data<std::remove_cvref_t<In>>
 		inline static std::string::size_type AE_CALL find(In&& in, uint8_t flags) {
 			if constexpr (string8_data<std::remove_cvref_t<In>>) {
 				for (size_t i = 0, n = in.size(); i < n; ++i) {

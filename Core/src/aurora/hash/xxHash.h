@@ -91,7 +91,7 @@ namespace aurora::hash {
 		}
 
 		template<size_t Bits, std::endian DataEndian>
-		inline static uint_t<Bits> AE_CALL _subEnding(uint_t<Bits> ret, const uint8_t* data, const uint8_t* dataEnd) {
+		static uint_t<Bits> AE_CALL _subEnding(uint_t<Bits> ret, const uint8_t* data, const uint8_t* dataEnd) {
 			if constexpr (Bits == 32) {
 				while ((data + 4) <= dataEnd) {
 					ret += _readUInt<Bits, DataEndian>(data) * Prime<Bits>::VALUE[2];

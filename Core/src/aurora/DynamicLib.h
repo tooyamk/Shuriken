@@ -10,7 +10,8 @@ namespace aurora {
 
 		inline bool AE_CALL isLoaded() const { return _lib; }
 
-		template<packaged_concept<is_convertible_string8_data, std::remove_cvref> T>
+		template<typename T>
+		requires convertible_string8_data<std::remove_cvref_t<T>>
 		inline bool AE_CALL load(T&& path) {
 			return _load((const std::string_view&)convert_to_string8_view_t<std::remove_cvref_t<T>>(std::forward<T>(path)));
 		}

@@ -340,21 +340,7 @@ namespace aurora {
 	using float64_t = double;
 
 
-	template<typename T, template<typename> typename... Modifiers>
-	struct multi_modification;
-
-	template<typename T>
-	struct multi_modification<T> { using type = T; };
-
-	template<typename T, template<typename> typename Modifier, template<typename> typename... OtherModifiers>
-	struct multi_modification<T, Modifier, OtherModifiers...> : multi_modification<typename Modifier<T>::type, OtherModifiers...> {};
-
-
-	template<typename T, template<typename> typename Condition, template<typename> typename... Modifiers> concept packaged_concept = Condition<typename multi_modification<T, Modifiers...>::type>::value;
-
-
-	template<typename T, typename Tuple>
-	struct tuple_find_first;
+	template<typename T, typename... Args> struct tuple_find_first;
 
 	template<typename T, typename... Args>
 	struct tuple_find_first<T, std::tuple<Args...>> {
@@ -380,20 +366,29 @@ namespace aurora {
 	inline static constexpr auto tuple_find_first_v = tuple_find_first<T, Tuple>::value;
 
 
-	template<template<typename...> typename Base, typename Derived>
-	struct is_base_of_template {
+	template<size_t I, typename FailedType, typename... Args> struct tuple_try_at;
+
+	template<size_t I, typename FailedType, typename... Args>
+	struct tuple_try_at<I, FailedType, std::tuple<Args...>> {
 	private:
-		template<template<typename...> typename Base, typename Derived>
-		struct _impl {
-			template<typename... Args> static constexpr std::true_type test(const Base<Args...>*);
-			static constexpr std::false_type test(...);
-			using type = decltype(test(std::declval<Derived*>()));
+		template<bool IsOutOfBounds, size_t I>
+		struct _impl;
+
+		template<size_t I>
+		struct _impl<true, I> {
+			using type = FailedType;
+		};
+
+		template<size_t I>
+		struct _impl<false, I> {
+			using type = std::tuple_element_t<I, std::tuple<Args...>>;
 		};
 
 	public:
-		static constexpr bool value = _impl<Base, Derived>::type::value;
+		using type = typename _impl<I >= sizeof...(Args), I>::type;
 	};
-	template<typename Derived, template<typename...> typename Base> concept derived_from_template = is_base_of_template<Base, Derived>::value;
+	template<size_t I, typename FailedType, typename Tuple>
+	using tuple_try_at_t = typename tuple_try_at<I, FailedType, Tuple>::type;
 
 
 	template<typename T, typename... Types> concept same_any_of = std::disjunction_v<std::is_same<T, Types>...>;
@@ -419,9 +414,7 @@ namespace aurora {
 		};
 
 		template<bool IsFound, auto CurValue, auto... OtherValues>
-		struct _impl<IsFound, CurValue, OtherValues...> : _impl<Target == CurValue, OtherValues...> {
-
-		};
+		struct _impl<IsFound, CurValue, OtherValues...> : _impl<Target == CurValue, OtherValues...> {};
 
 	public:
 		static constexpr bool value = _impl<false, Values...>::value;

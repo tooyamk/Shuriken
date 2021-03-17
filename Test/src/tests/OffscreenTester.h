@@ -38,7 +38,8 @@ constexpr int32_t Popcount_fallback(T val) noexcept {
 	return val & (T)(digits + digits - 1);
 }
 
-template<packaged_concept<is_convertible_string8_data, std::remove_cvref> T>
+template<typename T>
+requires convertible_string8_data<std::remove_cvref_t<T>>
 inline std::conditional_t<string8_view<std::remove_cvref_t<T>>, std::remove_reference_t<T>&, convert_to_string8_view_t<std::remove_cvref_t<T>>> to_string8_view(T&& val) {
 	if constexpr (string8_view<std::remove_cvref_t<T>>) {
 		return val;
@@ -158,6 +159,111 @@ template<typename T, template<typename> typename... Conditions>
 struct is_logic_or : std::bool_constant<logic_or<T, Conditions...>>{};
 
 
+template<template<auto...> typename Base, typename Derived>
+struct is_base_of_nontype_template {
+private:
+	struct _impl {
+		template<auto... Args> static constexpr std::true_type test(const Base<Args...>*);
+		static constexpr std::false_type test(...);
+		using type = decltype(test(std::declval<Derived*>()));
+	};
+
+public:
+	static constexpr bool value = _impl::type::value;
+};
+template<typename Derived, template<auto...> typename Base> concept derived_from_nontype_template = is_base_of_nontype_template<Base, Derived>::value;
+
+template<size_t I>
+struct placeholder {
+	static constexpr size_t position = I;
+};
+
+template<typename... Parameters>
+struct parameter_pack {
+private:
+	template<typename T>
+	using push = parameter_pack<Parameters..., T>;
+
+	template<typename PP, typename Tuple, typename Cur>
+	struct _replace_placeholder {
+		using type = typename PP::template push<Cur>;
+	};
+
+	template<typename PP, typename Tuple, derived_from_nontype_template<placeholder> Cur>
+	struct _replace_placeholder<PP, Tuple, Cur> {
+		using type = typename PP::template push<tuple_try_at_t<Cur::position, Cur, Tuple>>;
+	};
+
+	template<typename PP, typename Tuple, typename... Args>
+	struct _try_replace_placeholders;
+
+	template<typename PP, typename Tuple>
+	struct _try_replace_placeholders<PP, Tuple> {
+		using type = PP;
+	};
+
+	template<typename PP, typename Tuple, typename Cur, typename... Others>
+	struct _try_replace_placeholders<PP, Tuple, Cur, Others...> : _try_replace_placeholders<typename _replace_placeholder<PP, Tuple, Cur>::type, Tuple, Others...> {};
+
+public:
+	template<template<typename...> typename Tmpl>
+	using substitute_template = Tmpl<Parameters...>;
+
+	template<typename... Values>
+	using replace_placeholders = typename _try_replace_placeholders<parameter_pack<>, std::tuple<Values...>, Parameters...>::type;
+};
+
+
+template<typename T>
+struct is_parameter_pack {
+private:
+	struct _impl {
+		template<typename... Args> static constexpr std::true_type test(const typename parameter_pack<Args...>*);
+		static constexpr std::false_type test(...);
+		using type = decltype(test(std::declval<T*>()));
+	};
+
+public:
+	static constexpr bool value = _impl::type::value;
+};
+template<typename T> concept parameter_pack_c = is_parameter_pack<T>::value;
+
+
+template<template<typename...> typename Tmpl, parameter_pack_c ParameterPack>
+struct packaged_template {
+	template<typename... Parameters>
+	using type = typename ParameterPack::template replace_placeholders<Parameters...>::template substitute_template<Tmpl>::type;
+	//using type = ParameterPack::template substitute_template<Tmpl>;
+
+	template<typename... Parameters>
+	static constexpr auto value = ParameterPack::template replace_placeholders<Parameters...>::template substitute_template<Tmpl>::value;
+};
+
+
+template<typename T>
+struct is_packaged_template {
+private:
+	struct _impl {
+		template<template<typename...> typename Tmpl, parameter_pack_c ParameterPack> static constexpr std::true_type test(const typename packaged_template<Tmpl, ParameterPack>*);
+		static constexpr std::false_type test(...);
+		using type = decltype(test(std::declval<T*>()));
+	};
+
+public:
+	static constexpr bool value = _impl::type::value;
+};
+template<typename T> concept packaged_template_c = is_packaged_template<T>::value;
+
+
+template<packaged_template_c K>
+struct ISSS {
+	
+};
+
+
+//template<typename T, typename Condition, typename... TypeModifiers, typename = std::enable_if_t<is_packaged_template<Condition>::value>> concept packaged_concept1 = Condition<typename multi_modification<T, Modifiers...>::type>::value<T>;
+
+
 class OffscreenTester : public BaseTester {
 public:
 	virtual int32_t AE_CALL run() override {
@@ -168,6 +274,15 @@ public:
 		 std::string ssss = "abc";
 		zzzz<1>();
 
+		using pt = packaged_template<std::remove_cvref, parameter_pack<placeholder<0>>>;
+		ISSS<pt> sdfewfgew;
+		using  bbbbbvvv = pt::type<const int&, bool>;
+		bbbbbvvv ewfeww;
+		//auto vvvvv = pt::value<int, bool>;
+		//auto bbbb = zzz::value;
+
+		//auto bbb = is_base_of_template11<std::set, std::set<int>>::value;
+
 		int zzz111 = 1;
 
 		constexpr std::array aefew{ ba_vt::BOOL, ba_vt::BOOL, ba_vt::BYTE };
@@ -175,7 +290,7 @@ public:
 
 		std::remove_const<const int&>::type fewfwe = zzz111;
 
-		multi_modification<const int&, std::remove_reference, std::remove_const>::type zzz = zzz111;
+		//multi_modification<const int&, std::remove_reference, std::remove_const>::type zzz = zzz111;
 		//auto bbbbb = same_any_of_in_tuple<char, std::tuple<void, char>>;
 		///*
 		//std::list<std::function<void()>> funcs;

@@ -587,8 +587,8 @@ namespace aurora {
 			_write<float64_t>(value);
 		}
 
-		template<ValueType T, packaged_concept<is_convertible_string8_data, std::remove_cvref> V>
-		requires (T == ValueType::STR || T == ValueType::BYTE)
+		template<ValueType T, typename V>
+		requires (T == ValueType::STR || T == ValueType::BYTE) && convertible_string8_data<std::remove_cvref_t<V>>
 		inline void AE_CALL write(V&& value) {
 			if constexpr (T == ValueType::STR) {
 				write(value);
@@ -601,7 +601,8 @@ namespace aurora {
 			}
 		}
 
-		template<packaged_concept<is_convertible_string8_data, std::remove_cvref> T>
+		template<typename T>
+		requires convertible_string8_data<std::remove_cvref_t<T>>
 		inline void AE_CALL write(T&& value) {
 			if constexpr (string8_data<std::remove_cvref_t<T>>) {
 				auto size = value.size();
