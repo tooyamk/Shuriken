@@ -1,4 +1,6 @@
-#include "Application.h"
+#include "ApplicationLinux.h"
+
+#if AE_OS == AE_OS_LINUX
 #include "aurora/String.h"
 #include "aurora/Debug.h"
 
@@ -9,31 +11,10 @@ namespace aurora {
 		_isVisible(false),
 		_appId(appId) {
 		_appPath = aurora::getAppPath();
-#if AE_OS == AE_OS_WIN
-		_win.sentSize.set((std::numeric_limits<decltype(_win.sentSize)::ElementType>::max)());
-#elif AE_OS == AE_OS_LINUX
 		_linux.sentSize.set((std::numeric_limits<decltype(_linux.sentSize)::ElementType>::max)());
-#endif
 	}
 
 	Application::~Application() {
-#if AE_OS == AE_OS_WIN
-		if (_win.wnd) {
-			DestroyWindow(_win.wnd);
-			_win.wnd = nullptr;
-		}
-
-		if (_win.bkBrush) {
-			DeleteObject(_win.bkBrush);
-			_win.bkBrush = nullptr;
-		}
-
-		if (_win.ins) {
-			auto appIdW = String::Utf8ToUnicode(_appId);
-			UnregisterClassW(appIdW.data(), _win.ins);
-			_win.ins = nullptr;
-		}
-#elif AE_OS == AE_OS_LINUX
 		if (_linux.wnd) {
 			XDestroyWindow(_linux.dis, _linux.wnd);
 			_linux.wnd = 0;
@@ -43,7 +24,6 @@ namespace aurora {
 			XCloseDisplay(_linux.dis);
 			_linux.dis = nullptr;
 		}
-#endif
 	}
 
 	events::IEventDispatcher<ApplicationEvent>& Application::getEventDispatcher() {
@@ -59,55 +39,6 @@ namespace aurora {
 		_isFullscreen = fullscreen;
 		_style = style;
 
-#if AE_OS == AE_OS_WIN
-		_win.ins = GetModuleHandleW(nullptr);
-		_win.bkBrush = CreateSolidBrush(RGB(style.backgroundColor[0], style.backgroundColor[1], style.backgroundColor[2]));
-
-		WNDCLASSEXW wnd;
-		memset(&wnd, 0, sizeof(wnd));
-		wnd.cbSize = sizeof(wnd);
-		wnd.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
-		wnd.lpfnWndProc = Application::_wndProc;
-		wnd.cbClsExtra = 0;
-		wnd.cbWndExtra = 0;
-		wnd.hInstance = _win.ins;
-		wnd.hIcon = nullptr;//LoadIcon(NULL, IDI_APPLICATION);
-		wnd.hCursor = LoadCursor(nullptr, IDC_ARROW);
-		wnd.hbrBackground = _win.bkBrush;
-		wnd.lpszMenuName = nullptr;;
-		auto appIdW = String::Utf8ToUnicode(_appId);
-		wnd.lpszClassName = appIdW.data();
-		wnd.hIconSm = nullptr;
-
-		RegisterClassExW(&wnd);
-
-		_calcBorder();
-
-		auto rect = _calcWindowRect(false);
-		{
-			_win.clinetPos.set((GetSystemMetrics(SM_CXSCREEN) - rect.size[0]) / 2 + _border[0], (GetSystemMetrics(SM_CYSCREEN) - rect.size[1]) / 2 + _border[2]);
-
-			auto area = _calcWorkArea();
-			_win.clinetPos.set(area.pos[0] + (area.size[0] - rect.size[0]) / 2 + _border[0], area.pos[1] + (area.size[1] - rect.size[1]) / 2 + _border[2]);
-
-			if (_win.clinetPos[1] < GetSystemMetrics(SM_CYCAPTION)) _win.clinetPos[1] = GetSystemMetrics(SM_CYCAPTION);
-		}
-
-		if (_isFullscreen) {
-			rect = _calcWindowRect(true);
-		} else {
-			rect.pos.set(_win.clinetPos[0], _win.clinetPos[1]);
-		}
-
-		_win.wnd = CreateWindowExW(_getWindowExStyle(_isFullscreen), wnd.lpszClassName, String::Utf8ToUnicode(title).data(), _getWindowStyle(_style, _isFullscreen),
-			rect.pos[0], rect.pos[1], rect.size[0], rect.size[1],
-			GetDesktopWindow(), nullptr, _win.ins, nullptr);
-		SetWindowLongPtr(_win.wnd, GWLP_USERDATA, (LONG_PTR)this);
-
-		//DeleteObject(bkBrush);
-
-		return _win.wnd;
-#elif AE_OS == AE_OS_LINUX
 		if (!_linux.dis) _linux.dis = XOpenDisplay(nullptr);
 		if (!_linux.dis) return false;
 
@@ -224,26 +155,16 @@ namespace aurora {
 		//printcln("state :   ", _getXWndState(), "   ", NormalState, "   ", IconicState);
 
 		return true;
-#endif
-		return false;
 	}
 
 	void* Application::getNative(ApplicationNative native) const {
-#if AE_OS == AE_OS_WIN
-		switch (native) {
-		case ApplicationNative::HINSTANCE:
-			return _win.ins;
-		case ApplicationNative::HWND:
-			return _win.wnd;
-		}
-#elif AE_OS == AE_OS_LINUX
 		switch (native) {
 		case ApplicationNative::DISPLAY:
 			return _linux.dis;
 		case ApplicationNative::WINDOW:
 			return (void*)_linux.wnd;
 		}
-#endif
+
 		return nullptr;
 	}
 
@@ -256,51 +177,15 @@ namespace aurora {
 	}
 
 	void Application::toggleFullscreen() {
-#if AE_OS == AE_OS_WIN
-		if (_win.wnd) {
-			_isFullscreen = !_isFullscreen;
-			_win.wndDirty = true;
-
-			SetWindowLongPtrW(_win.wnd, GWL_STYLE, _getWindowStyle(_style, _isFullscreen));
-			SetWindowLongPtrW(_win.wnd, GWL_EXSTYLE, _getWindowExStyle(_isFullscreen));
-
-			if (_isVisible) {
-				_win.ignoreEvtSize = true;
-				_updateWindowPlacement();
-				_win.ignoreEvtSize = false;
-			}
-			_sendResizedEvent();
-		}
-#elif AE_OS == AE_OS_LINUX
 		if (_linux.wnd) {
 			_isFullscreen = !_isFullscreen;
 			_updateWindowPlacement();
 		}
-#endif
 	}
 
 	Vec2ui32 Application::getCurrentClientSize() const {
 		Vec2ui32 size;
-#if AE_OS == AE_OS_WIN
-		if (_win.wnd) {
-			if (_isVisible && _win.wndState != WindowState::MINIMUM) {
-				RECT rect;
-				GetClientRect(_win.wnd, &rect);
-				size.set(rect.right - rect.left, rect.bottom - rect.top);
-			} else {
-				if (_isFullscreen) {
-					size.set(GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
-				} else {
-					if (_win.wndState == WindowState::MAXIMUM || (_win.wndState == WindowState::MINIMUM && _win.prevWndState == WindowState::MAXIMUM)) {
-						auto area = _calcWorkArea();
-						size.set(std::max<int32_t>(area.size[0], 0), std::max<int32_t>(area.size[1] - GetSystemMetrics(SM_CYCAPTION), 0));
-					} else {
-						size = _clientSize;
-					}
-				}
-			}
-		}
-#elif AE_OS == AE_OS_LINUX
+
 		if (_linux.wnd) {
 			if (_isFullscreen) {
 				auto sd = ScreenOfDisplay(_linux.dis, _linux.screen);
@@ -314,7 +199,7 @@ namespace aurora {
 				}
 			}
 		}
-#endif
+
 		return size;
 	}
 
@@ -323,59 +208,29 @@ namespace aurora {
 	}
 
 	void Application::setClientSize(const Vec2ui32& size) {
-#if AE_OS == AE_OS_WIN
-		if (_win.wnd && _clientSize != size) {
-			_clientSize = size;
-			_win.wndDirty = true;
-
-			if (!_isFullscreen && _isVisible && _win.wndState == WindowState::NORMAL) _updateWindowPlacement(SW_SHOWNA);
-			_sendResizedEvent();
-		}
-#elif AE_OS == AE_OS_LINUX
 		if (_linux.wnd && _clientSize != size) {
 			_clientSize = size;
 			_updateWindowPlacement();
 			_sendResizedEvent();
 		}
-#endif
 	}
 
 	void Application::setWindowTitle(const std::string_view& title) {
-#if AE_OS == AE_OS_WIN
-		if (_win.wnd) SetWindowTextW(_win.wnd, String::Utf8ToUnicode(title).data());
-#elif AE_OS == AE_OS_LINUX
 		if (_linux.wnd) XStoreName(_linux.dis, _linux.wnd, title.data());
-#endif
 	}
 
 	void Application::setWindowPosition(const Vec2i32& pos) {
-#if AE_OS == AE_OS_WIN
-		if (_win.wnd) {
-			if (auto p = pos + _border.components(0, 2); _win.clinetPos != p) {
-				_win.clinetPos = p;
-				_win.wndDirty = true;
-
-				if (!_isFullscreen && _isVisible && _win.wndState == WindowState::NORMAL) _updateWindowPlacement(SW_SHOWNA);
-			}
-		}
-#elif AE_OS == AE_OS_LINUX
 		if (_linux.wnd && _linux.wndPos != pos) {
 			_linux.wndPos = pos;
 			_updateWindowPlacement();
 		}
-#endif
 	}
 
 	void Application::setCursorVisible(bool visible) {
-#if AE_OS == AE_OS_WIN
-		ShowCursor(visible);
-#endif
+		//todo
 	}
 
 	bool Application::hasFocus() const {
-#if AE_OS == AE_OS_WIN
-		if (_win.wnd) return GetFocus() == _win.wnd;
-#elif AE_OS == AE_OS_LINUX
 		if (_linux.wnd) {
 			Window focused;
 			int32_t revertTo;
@@ -383,112 +238,50 @@ namespace aurora {
 			XGetInputFocus(_linux.dis, &focused, &revertTo);
 			return focused == _linux.wnd;
 		}
-#endif
+
 		return false;
 	}
 
 	void Application::setFocus() {
-#if AE_OS == AE_OS_WIN
-		if (_win.wnd) SetFocus(_win.wnd);
-#elif AE_OS == AE_OS_LINUX
 		if (_linux.wnd && _isVisible) XSetInputFocus(_linux.dis, _linux.wnd, RevertToParent, CurrentTime);
-#endif
 	}
 
 	bool Application::isMaximzed() const {
-#if AE_OS == AE_OS_WIN
-		if (_win.wnd) return _win.wndState == WindowState::MAXIMUM;
-#elif AE_OS == AE_OS_LINUX
 		if (_linux.wnd) return _linux.wndState == WindowState::MAXIMUM;
-#endif
 		return false;
 	}
 
 	void Application::setMaximum() {
-#if AE_OS == AE_OS_WIN
-		if (_win.wnd && _setWndState(WindowState::MAXIMUM)) {
-			_win.wndDirty = true;
-			if (!_isFullscreen && _isVisible) _updateWindowPlacement();
-			_sendResizedEvent();
-		}
-#elif AE_OS == AE_OS_LINUX
 		if (_linux.wnd && _setWndState(WindowState::MAXIMUM)) _updateWindowPlacement();
-#endif
 	}
 
 	bool Application::isMinimzed() const {
-#if AE_OS == AE_OS_WIN
-		if (_win.wnd) return _win.wndState == WindowState::MINIMUM;
-#elif AE_OS == AE_OS_LINUX
 		if (_linux.wnd) return _linux.wndState == WindowState::MINIMUM;
-#endif
 		return false;
 	}
 
 	void Application::setMinimum() {
-#if AE_OS == AE_OS_WIN
-		if (_win.wnd && _setWndState(WindowState::MINIMUM)) {
-			_win.wndDirty = true;
-			if (!_isFullscreen && _isVisible) _updateWindowPlacement();
-			_sendResizedEvent();
-		}
-#elif AE_OS == AE_OS_LINUX
 		if (_linux.wnd && _setWndState(WindowState::MINIMUM)) _updateWindowPlacement();
-#endif
 	}
 
 	void Application::setRestore() {
-#if AE_OS == AE_OS_WIN
-		if (_win.wnd && _setWndState(WindowState::NORMAL)) {
-			_win.wndDirty = true;
-			if (!_isFullscreen && _isVisible) _updateWindowPlacement();
-			_sendResizedEvent();
-		}
-#elif AE_OS == AE_OS_LINUX
 		if (_linux.wnd && _setWndState(WindowState::NORMAL)) _updateWindowPlacement();
-#endif
 	}
 
 	void Application::pollEvents() {
-#if AE_OS == AE_OS_WIN
-		MSG msg = { 0 };
-
-		while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
-			if (msg.message == WM_QUIT) {
-				shutdown();
-			} else {
-				TranslateMessage(&msg);
-				DispatchMessage(&msg);
-			}
-		}
-#elif AE_OS == AE_OS_LINUX
 		XEvent e = { 0 };
 		while (XCheckIfEvent(_linux.dis, &e, &Application::_eventPredicate, (XPointer)this)) _doEvent(e);
-#endif
 	}
 
 	bool Application::isVisible() const {
-#if AE_OS == AE_OS_WIN
-		return _win.wnd ? _isVisible : false;
-#elif AE_OS == AE_OS_LINUX
 		return _linux.wnd ? _isVisible : false;
-#endif
-		return false;
 	}
 
 	void Application::setVisible(bool b) {
-#if AE_OS == AE_OS_WIN
-		if (_win.wnd && _isVisible != b) {
-			_isVisible = b;
-			_win.wndDirty = true;
-			_updateWindowPlacement();
-		}
-#elif AE_OS == AE_OS_LINUX
 		if (_linux.wnd && _isVisible != b) {
 			_isVisible = b;
 			_updateWindowPlacement();
 		}
-#endif
 	}
 
 	void Application::shutdown() {
@@ -507,202 +300,7 @@ namespace aurora {
 		return _appPath;
 	}
 
-#if AE_OS == AE_OS_WIN
-	void Application::_calcBorder() {
-		RECT rect = { 0, 0, 100, 100 };
-		auto rst = AdjustWindowRectEx(&rect, _getWindowStyle(_style, false), FALSE, _getWindowExStyle(false));
-		_border.set(-rect.left, rect.right - 100, -rect.top, rect.bottom - 100);
-	}
-
-	Box2i32 Application::_calcWindowRect(bool fullscreen) const {
-		if (fullscreen) {
-			return Box2i32(Vec2i32::ZERO, Vec2i32(GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN)));
-		} else {
-			return Box2i32(Vec2i32(_win.clinetPos[0] - _border[0], _win.clinetPos[1] - _border[2]), Vec2i32((Vec2i32::ElementType)_clientSize[0] + _border[0] + _border[1], (Vec2i32::ElementType)_clientSize[1] + _border[2] + _border[3]));
-		}
-	}
-
-	void Application::_sendResizedEvent() {
-		if (auto size = getCurrentClientSize(); _win.sentSize != size) {
-			_win.sentSize = size;
-			_eventDispatcher.dispatchEvent(this, ApplicationEvent::RESIZED);
-		}
-	}
-
-	Box2i32 Application::_calcWorkArea() const {
-		Box2i32 area;
-
-		tagPOINT p{ 0 };
-		if (auto monitor = MonitorFromPoint(p, MONITOR_DEFAULTTONEAREST); monitor) {
-			MONITORINFO info{ 0 };
-			info.cbSize = sizeof(info);
-			if (GetMonitorInfo(monitor, &info)) {
-				auto& rcWork = info.rcWork;
-				area.pos.set(rcWork.left, rcWork.top);
-				area.size.set(rcWork.right - rcWork.left, rcWork.bottom - rcWork.top);
-			}
-		}
-
-		return std::move(area);
-	}
-
-	bool Application::_setWndState(WindowState state) {
-		if (_win.wndState != state) {
-			_win.prevWndState = _win.wndState;
-			_win.wndState = state;
-			return true;
-		}
-
-		return false;
-	}
-
-	void Application::_updateWindowPlacement(UINT showCmd) {
-		if (showCmd == (std::numeric_limits<UINT>::max)()) {
-			if (_isVisible) {
-				if (_isFullscreen) {
-					showCmd = SW_SHOWDEFAULT;
-				} else {
-					switch (_win.wndState) {
-					case WindowState::MAXIMUM:
-						showCmd = SW_SHOWMAXIMIZED;
-						break;
-					case WindowState::MINIMUM:
-						showCmd = SW_SHOWMINIMIZED;
-						break;
-					default:
-						showCmd = SW_RESTORE;
-						break;
-					}
-				}
-			} else {
-				showCmd = SW_HIDE;
-			}
-		}
-
-		WINDOWPLACEMENT info = { sizeof(info) };
-		GetWindowPlacement(_win.wnd, &info);
-
-		if (_win.wndDirty || info.showCmd != showCmd) {
-			_win.wndDirty = false;
-
-			if (showCmd != (std::numeric_limits<decltype(showCmd)>::max)()) info.showCmd = showCmd;
-
-			auto rect = _calcWindowRect(_isFullscreen);
-			info.rcNormalPosition.left = rect.pos[0];
-			info.rcNormalPosition.top = rect.pos[1];
-			info.rcNormalPosition.right = rect.pos[0] + rect.size[0];
-			info.rcNormalPosition.bottom = rect.pos[1] + rect.size[1];
-
-			SetWindowPlacement(_win.wnd, &info);
-		}
-	}
-
-	DWORD Application::_getWindowStyle(const ApplicationStyle& style, bool fullscreen) {
-		DWORD val = WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
-
-		if (fullscreen) {
-			val |= WS_POPUP;
-		} else {
-			val |= WS_BORDER | WS_DLGFRAME | WS_SYSMENU;
-			if (style.minimizeButton) val |= WS_MINIMIZEBOX;
-			if (style.maximizeButton) val |= WS_MAXIMIZEBOX;
-			if (style.thickFrame) val |= WS_THICKFRAME;
-		}
-
-		return val;
-	}
-
-	DWORD Application::_getWindowExStyle(bool fullscreen) {
-		DWORD val = WS_EX_APPWINDOW;
-
-		//if (fullscreen) val |= WS_EX_TOPMOST;
-
-		return val;
-	}
-
-	LRESULT Application::_wndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-		auto app = (Application*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
-
-		switch (msg) {
-		case WM_CLOSE:
-		{
-			if (app) {
-				auto isCanceled = false;
-				app->_eventDispatcher.dispatchEvent(app, ApplicationEvent::CLOSING, &isCanceled);
-				if (isCanceled) {
-					return 0;
-				} else {
-					app->shutdown();
-				}
-			}
-
-			break;
-		}
-		case WM_DESTROY:
-			PostQuitMessage(0);
-			return 0;
-		case WM_SIZING:
-			break;
-		case WM_WINDOWPOSCHANGED:
-			break;
-		case WM_SIZE:
-		{
-			if (app) {
-				if (app->_win.ignoreEvtSize) return 0;
-
-				if (!app->_isFullscreen) {
-					switch (wParam) {
-					case SIZE_MINIMIZED:
-						app->_setWndState(WindowState::MINIMUM);
-						break;
-					case SIZE_MAXIMIZED:
-						app->_setWndState(WindowState::MAXIMUM);
-						break;
-					case SIZE_RESTORED:
-						app->_setWndState(WindowState::NORMAL);
-						break;
-					default:
-						break;
-					}
-
-					if (wParam == SIZE_RESTORED) app->_clientSize.set(LOWORD(lParam), HIWORD(lParam));
-				}
-
-				app->_sendResizedEvent();
-			}
-
-			break;
-		}
-		case WM_SETFOCUS:
-			if (app) app->_eventDispatcher.dispatchEvent(app, ApplicationEvent::FOCUS_IN);
-			break;
-		case WM_KILLFOCUS:
-			if (app) app->_eventDispatcher.dispatchEvent(app, ApplicationEvent::FOCUS_OUT);
-			break;
-		case WM_DEVICECHANGE:
-			break;
-		case WM_GETMINMAXINFO:
-		{
-			/*
-			auto info = (tagMINMAXINFO*)lParam;
-			info->ptMinTrackSize.x = 10;
-			info->ptMinTrackSize.y = 10;
-			info->ptMaxTrackSize.x = 400;
-			info->ptMaxTrackSize.y = 400;
-			*/
-
-			break;
-		}
-		case WM_MOVE:
-			if (app && !app->_isFullscreen && !IsZoomed(app->_win.wnd) && !IsIconic(app->_win.wnd)) app->_win.clinetPos.set(LOWORD(lParam), HIWORD(lParam));
-			break;
-		default:
-			break;
-		}
-
-		return DefWindowProcW(hWnd, msg, wParam, lParam);
-	}
-#elif AE_OS == AE_OS_LINUX
+	//platform
 	void Application::_sendClientEventToWM(Atom msgType, int64_t a, int64_t b, int64_t c, int64_t d, int64_t e) {
 		XEvent evt = { ClientMessage };
 		auto& client = evt.xclient;
@@ -998,5 +596,5 @@ namespace aurora {
 			break;
 		}
 	}
-#endif
 }
+#endif
