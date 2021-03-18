@@ -49,26 +49,26 @@ struct transparent_hash {
 */
 #endif
 
-template<convertible_string8_data T>
+template<ConvertibleString8Data T>
 inline auto AE_CALL getDLLName(T&& name) {
 	size_t size = 0;
-	if constexpr (string8_data<T>) {
+	if constexpr (String8Data<T>) {
 		size = name.size();
 	} else {
 		size = strlen((const char*)name);
 	}
-	if constexpr (environment::is_debug) ++size;
-	if constexpr (environment::current_operating_system != environment::operating_system::windows) {
+	if constexpr (Environment::IS_DEBUG) ++size;
+	if constexpr (Environment::OPERATING_SYSTEM != Environment::OperatingSystem::WINDOWS) {
 		size += 4;
 	} else {
 		size += 6;
 	}
 
-	std::conditional_t<convertible_u8string_data<T>, std::u8string, std::string> s;
+	std::conditional_t<ConvertibleU8StringData<T>, std::u8string, std::string> s;
 	s.reserve(size);
 
-	if constexpr (environment::is_debug) {
-		if constexpr (environment::current_operating_system == environment::operating_system::windows) {
+	if constexpr (Environment::IS_DEBUG) {
+		if constexpr (Environment::OPERATING_SYSTEM == Environment::OperatingSystem::WINDOWS) {
 			s += name;
 			s += "d.dll";
 		} else {
@@ -77,7 +77,7 @@ inline auto AE_CALL getDLLName(T&& name) {
 			s += "d.so";
 		}
 	} else {
-		if constexpr (environment::current_operating_system == environment::operating_system::windows) {
+		if constexpr (Environment::OPERATING_SYSTEM == Environment::OperatingSystem::WINDOWS) {
 			s += name;
 			s += ".dll";
 		} else {

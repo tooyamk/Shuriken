@@ -284,66 +284,66 @@ namespace std {
 
 
 namespace aurora {
-	namespace environment {
+	struct Environment {
 #ifdef AE_DEBUG
-		inline constexpr bool is_debug = true;
+		static constexpr bool IS_DEBUG = true;
 #else
-		inline constexpr bool is_debug = false;
+		static constexpr bool IS_DEBUG = false;
 #endif
 
-		enum class compiler : uint8_t {
-			unknown,
-			msvc,
-			gcc,
-			clang
+		enum class Compiler : uint8_t {
+			UNKNOWN,
+			MSVC,
+			GCC,
+			CLANG
 		};
 
 
 #if AE_COMPILER == AE_COMPILER_MSVC
-		inline constexpr compiler current_compiler = compiler::msvc;
+		static constexpr Compiler COMPILER = Compiler::MSVC;
 #elif AE_COMPILER == AE_COMPILER_GCC
-		inline constexpr compiler current_compiler = compiler::gcc;
+		static constexpr Compiler COMPILER = Compiler::GCC;
 #elif AE_COMPILER == AE_COMPILER_CLANG
-		inline constexpr compiler current_compiler = compiler::clang;
+		static constexpr Compiler COMPILER = Compiler::CLANG;
 #else
-		inline constexpr compiler current_compiler = compiler::unknown;
+		static constexpr Compiler COMPILER = Compiler::UNKNOWN;
 #endif
 
 
-		enum class operating_system : uint8_t {
-			unknown,
-			windows,
-			mac,
-			linux,
-			ios,
-			android
+		enum class OperatingSystem : uint8_t {
+			UNKNOWN,
+			WINDOWS,
+			MAC,
+			LINUX,
+			IOS,
+			ANDROID
 		};
 
 
 #if AE_OS == AE_OS_WIN
-		inline constexpr operating_system current_operating_system = operating_system::windows;
+		static constexpr OperatingSystem OPERATING_SYSTEM = OperatingSystem::WINDOWS;
 #elif AE_OS == AE_OS_MAC
-		inline constexpr operating_system current_operating_system = operating_system::mac;
+		static constexpr OperatingSystem OPERATING_SYSTEM = OperatingSystem::MAC;
 #elif AE_OS == AE_OS_LINUX
-		inline constexpr operating_system current_operating_system = operating_system::linux;
+		static constexpr OperatingSystem OPERATING_SYSTEM = OperatingSystem::LINUX;
 #elif AE_OS == AE_OS_IOS
-		inline constexpr operating_system current_operating_system = operating_system::ios;
+		static constexpr OperatingSystem OPERATING_SYSTEM = OperatingSystem::IOS;
 #elif AE_OS == AE_OS_ANDROID
-		inline constexpr operating_system current_operating_system = operating_system::android;
+		static constexpr OperatingSystem OPERATING_SYSTEM = OperatingSystem::ANDROID;
 #else
-		inline constexpr operating_system current_operating_system = operating_system::unknown;
+		static constexpr OperatingSystem OPERATING_SYSTEM = OperatingSystem::UNKNOWN;
 #endif
-	}
+	};
 
 
 	using float32_t = float;
 	using float64_t = double;
 
 
-	template<typename T, typename... Args> struct tuple_find_first;
+	template<typename T, typename... Args> struct TupleFindFirst;
 
 	template<typename T, typename... Args>
-	struct tuple_find_first<T, std::tuple<Args...>> {
+	struct TupleFindFirst<T, std::tuple<Args...>> {
 	private:
 		template<size_t I>
 		static constexpr size_t _impl() {
@@ -354,22 +354,22 @@ namespace aurora {
 					return _impl<I + 1>();
 				}
 			} else {
-				return bad_index;
+				return BAD_INDEX;
 			}
 		}
 
 	public:
-		static constexpr size_t bad_index = (std::numeric_limits<size_t>::max)();
-		static constexpr size_t value = _impl<0>();
+		static constexpr size_t BAD_INDEX = (std::numeric_limits<size_t>::max)();
+		static constexpr size_t VALUE = _impl<0>();
 	};
 	template<typename T, typename Tuple>
-	inline static constexpr auto tuple_find_first_v = tuple_find_first<T, Tuple>::value;
+	inline static constexpr auto TUPLE_FIND_FIRST_VALUE = TupleFindFirst<T, Tuple>::VALUE;
 
 
-	template<size_t I, typename FailedType, typename... Args> struct tuple_try_at;
+	template<size_t I, typename FailedType, typename... Args> struct TupleTryAt;
 
 	template<size_t I, typename FailedType, typename... Args>
-	struct tuple_try_at<I, FailedType, std::tuple<Args...>> {
+	struct TupleTryAt<I, FailedType, std::tuple<Args...>> {
 	private:
 		template<bool IsOutOfBounds, size_t I>
 		struct _impl;
@@ -388,17 +388,17 @@ namespace aurora {
 		using type = typename _impl<I >= sizeof...(Args), I>::type;
 	};
 	template<size_t I, typename FailedType, typename Tuple>
-	using tuple_try_at_t = typename tuple_try_at<I, FailedType, Tuple>::type;
+	using TupleTryAtType = typename TupleTryAt<I, FailedType, Tuple>::type;
 
 
-	template<typename T, typename... Types> concept same_any_of = std::disjunction_v<std::is_same<T, Types>...>;
-	template<typename T, typename... Types> struct is_same_any_of : std::bool_constant<same_any_of<T, Types...>> {};
-	template<typename T, typename... Types> using same_any_of_t = std::enable_if_t<same_any_of<T, Types...>, T>;
-	template<typename T, typename Tuple> concept same_any_of_in_tuple = tuple_find_first_v<T, Tuple> != tuple_find_first<T, Tuple>::bad_index;
+	template<typename T, typename... Types> concept SameAnyOf = std::disjunction_v<std::is_same<T, Types>...>;
+	template<typename T, typename... Types> struct IsSameAnyOf : std::bool_constant<SameAnyOf<T, Types...>> {};
+	template<typename T, typename... Types> using SameAnyOfType = std::enable_if_t<SameAnyOf<T, Types...>, T>;
+	template<typename T, typename Tuple> concept SameAnyOfInTuple = TUPLE_FIND_FIRST_VALUE<T, Tuple> != TupleFindFirst<T, Tuple>::BAD_INDEX;
 
 
 	template<auto Target, auto... Values>
-	struct is_equal_any_of {
+	struct IsEqualAnyOf {
 	private:
 		template<bool IsFound, auto... Values>
 		struct _impl;
@@ -419,83 +419,83 @@ namespace aurora {
 	public:
 		static constexpr bool value = _impl<false, Values...>::value;
 	};
-	template<auto Target, auto... Values> concept equal_any_of = is_equal_any_of<Target, Values...>::value;
+	template<auto Target, auto... Values> concept EqualAnyOf = IsEqualAnyOf<Target, Values...>::value;
 
 
-	template<typename T, typename... Types> concept convertible_any_of = std::disjunction_v<std::is_convertible<T, Types>...>;
-	template<typename T, typename... Types> struct is_convertible_any_of : std::bool_constant<convertible_any_of<T, Types...>> {};
-	template<typename T, typename... Types> using convertible_any_of_t = std::enable_if_t<convertible_any_of<T, Types...>, T>;
-	template<typename To, typename... Types> concept convertible_all_to = std::conjunction_v<std::is_convertible<Types, To>...>;
+	template<typename T, typename... Types> concept ConvertibleAnyOf = std::disjunction_v<std::is_convertible<T, Types>...>;
+	template<typename T, typename... Types> struct IsConvertibleAnyOf : std::bool_constant<ConvertibleAnyOf<T, Types...>> {};
+	template<typename T, typename... Types> using ConvertibleAnyOfType = std::enable_if_t<ConvertibleAnyOf<T, Types...>, T>;
+	template<typename To, typename... Types> concept ConvertibleAllTo = std::conjunction_v<std::is_convertible<Types, To>...>;
 
 
-	template<typename T> concept scoped_enum = std::is_scoped_enum_v<T>;
-	template<typename T> concept boolean = std::same_as<T, bool>;
-	template<typename T> concept null_pointer = std::is_null_pointer_v<T>;
-	template<typename T> concept member_function_pointer = std::is_member_function_pointer_v<T>;
-	template<typename Derived, typename Base> concept null_or_derived_from = null_pointer<Derived> || std::derived_from<Derived, Base>;
-	template<typename T, typename R, typename... Args> concept invocable_r = std::is_invocable_r_v<R, T, Args...>;
-	template<typename T, typename ResultTuple, typename... Args> concept invocable_any_of_r = std::invocable<T, Args...> && same_any_of_in_tuple<std::invoke_result_t<T, Args...>, ResultTuple>;
+	template<typename T> concept ScopedEnum = std::is_scoped_enum_v<T>;
+	template<typename T> concept Boolean = std::same_as<T, bool>;
+	template<typename T> concept NullPointer = std::is_null_pointer_v<T>;
+	template<typename T> concept MemberFunctionPointer = std::is_member_function_pointer_v<T>;
+	template<typename Derived, typename Base> concept NullPointerOrDerivedFrom = NullPointer<Derived> || std::derived_from<Derived, Base>;
+	template<typename T, typename R, typename... Args> concept InvocableResult = std::is_invocable_r_v<R, T, Args...>;
+	template<typename T, typename ResultTuple, typename... Args> concept InvocableAnyOfResult = std::invocable<T, Args...> && SameAnyOfInTuple<std::invoke_result_t<T, Args...>, ResultTuple>;
 
 
-	template<typename T> struct is_signed_integral : std::bool_constant<std::signed_integral<T>>{};
-	template<typename T> using signed_integral_t = std::enable_if_t<std::signed_integral<T>, T>;
+	template<typename T> struct IsSignedIntegral : std::bool_constant<std::signed_integral<T>>{};
+	template<typename T> using SignedIntegralType = std::enable_if_t<std::signed_integral<T>, T>;
 
-	template<typename T> struct is_unsigned_integral : std::bool_constant<std::unsigned_integral<T>>{};
-	template<typename T> using unsigned_integral_t = std::enable_if_t<std::unsigned_integral<T>, T>;
-
-
-	template<typename T> concept arithmetic = std::is_arithmetic_v<T>;
-	template<typename T> using arithmetic_t = std::enable_if_t<arithmetic<T>, T>;
-	template<typename T> using floating_point_t = std::enable_if_t<std::floating_point<T>, T>;
-	template<typename T> using integral_t = std::enable_if_t<std::integral<T>, T>;
+	template<typename T> struct IsUnsignedIntegral : std::bool_constant<std::unsigned_integral<T>>{};
+	template<typename T> using UnsignedIntegralType = std::enable_if_t<std::unsigned_integral<T>, T>;
 
 
-	template<typename T> concept string8 = same_any_of<T, std::string, std::u8string>;
-	template<typename T> struct is_string8 : std::bool_constant<string8<T>> {};
-	template<typename T> using string8_t = std::enable_if_t<string8<T>, T>;
+	template<typename T> concept Arithmetic = std::is_arithmetic_v<T>;
+	template<typename T> using ArithmeticType = std::enable_if_t<Arithmetic<T>, T>;
+	template<typename T> using FloatingPointType = std::enable_if_t<std::floating_point<T>, T>;
+	template<typename T> using IntegralType = std::enable_if_t<std::integral<T>, T>;
 
-	template<typename T> concept string_data = same_any_of<T, std::string, std::string_view>;
-	template<typename T> struct is_string_data : std::bool_constant<string_data<T>> {};
-	template<typename T> using string_data_t = std::enable_if_t<string_data<T>, T>;
 
-	template<typename T> concept u8string_data = same_any_of<T, std::u8string, std::u8string_view>;
-	template<typename T> struct is_u8string_data : std::bool_constant<u8string_data<T>> {};
-	template<typename T> using u8string_data_t = std::enable_if_t<u8string_data<T>, T>;
+	template<typename T> concept String8 = SameAnyOf<T, std::string, std::u8string>;
+	template<typename T> struct IsString8 : std::bool_constant<String8<T>> {};
+	template<typename T> using String8Type = std::enable_if_t<String8<T>, T>;
 
-	template<typename T> concept convertible_string_data = string_data<T> || std::convertible_to<T, char const*>;
-	template<typename T> struct is_convertible_string_data : std::bool_constant<convertible_string_data<T>> {};
-	template<typename T> using convertible_string_data_t = std::enable_if_t<convertible_string_data<T>, T>;
+	template<typename T> concept StringData = SameAnyOf<T, std::string, std::string_view>;
+	template<typename T> struct IsStringData : std::bool_constant<StringData<T>> {};
+	template<typename T> using StringDataType = std::enable_if_t<StringData<T>, T>;
 
-	template<typename T> concept convertible_u8string_data = u8string_data<T> || std::convertible_to<T, char8_t const*>;
-	template<typename T> struct is_convertible_u8string_data : std::bool_constant<convertible_u8string_data<T>> {};
-	template<typename T> using convertible_u8string_data_t = std::enable_if_t<convertible_u8string_data<T>, T>;
+	template<typename T> concept U8StringData = SameAnyOf<T, std::u8string, std::u8string_view>;
+	template<typename T> struct IsU8StringData : std::bool_constant<U8StringData<T>> {};
+	template<typename T> using U8StringDataType = std::enable_if_t<U8StringData<T>, T>;
 
-	template<typename T> concept convertible_string8_data = convertible_string_data<T> || convertible_u8string_data<T>;
-	template<typename T> struct is_convertible_string8_data : std::bool_constant<convertible_string8_data<T>> {};
-	template<typename T> using convertible_string8_data_t = std::enable_if_t<convertible_string8_data<T>, T>;
+	template<typename T> concept ConvertibleStringData = StringData<T> || std::convertible_to<T, char const*>;
+	template<typename T> struct IsConvertibleStringData : std::bool_constant<ConvertibleStringData<T>> {};
+	template<typename T> using ConvertibleStringDataType = std::enable_if_t<ConvertibleStringData<T>, T>;
 
-	template<typename T> concept string8_data = string_data<T> || u8string_data<T>;
-	template<typename T> struct is_string8_data : std::bool_constant<string8_data<T>> {};
-	template<typename T> using string8_data_t = std::enable_if_t<string8_data<T>, T>;
+	template<typename T> concept ConvertibleU8StringData = U8StringData<T> || std::convertible_to<T, char8_t const*>;
+	template<typename T> struct IsConvertibleU8StringData : std::bool_constant<ConvertibleU8StringData<T>> {};
+	template<typename T> using ConvertibleU8StringDataType = std::enable_if_t<ConvertibleU8StringData<T>, T>;
 
-	template<typename T> concept string8_view = same_any_of<T, std::string_view, std::u8string_view>;
-	template<typename T> struct is_string8_view : std::bool_constant<string8_view<T>> {};
-	template<typename T> using string8_view_t = std::enable_if_t<string8_view<T>, T>;
+	template<typename T> concept ConvertibleString8Data = ConvertibleStringData<T> || ConvertibleU8StringData<T>;
+	template<typename T> struct IsConvertibleString8Data : std::bool_constant<ConvertibleString8Data<T>> {};
+	template<typename T> using ConvertibleString8DataType = std::enable_if_t<ConvertibleString8Data<T>, T>;
 
-	template<typename T> using convert_to_string8_view_t = std::enable_if_t<convertible_string8_data<T>, std::conditional_t<convertible_u8string_data<T>, std::u8string_view, std::string_view>>;
-	template<typename T> struct convert_to_string8_view { using type = convert_to_string8_view_t<T>; };
+	template<typename T> concept String8Data = StringData<T> || U8StringData<T>;
+	template<typename T> struct IsString8Data : std::bool_constant<String8Data<T>> {};
+	template<typename T> using String8DataType = std::enable_if_t<String8Data<T>, T>;
 
-	template<typename T> concept convertible_string8_view = convertible_any_of<T, std::string_view, std::u8string_view>;
-	template<typename T> struct is_convertible_string8_view : std::bool_constant<convertible_string8_view<T>> {};
-	template<typename T> using convertible_string8_view_t = std::enable_if_t<convertible_string8_view<T>, T>;
+	template<typename T> concept String8View = SameAnyOf<T, std::string_view, std::u8string_view>;
+	template<typename T> struct IsString8View : std::bool_constant<String8View<T>> {};
+	template<typename T> using String8ViewType = std::enable_if_t<String8View<T>, T>;
 
-	template<typename T> concept wstring_data = same_any_of<T, std::wstring, std::wstring_view>;
-	template<typename T> struct is_wstring_data : std::bool_constant<wstring_data<T>> {};
-	template<typename T> using wstring_data_t = std::enable_if_t<wstring_data<T>, T>;
+	template<typename T> using ConvertToString8ViewType = std::enable_if_t<ConvertibleString8Data<T>, std::conditional_t<ConvertibleU8StringData<T>, std::u8string_view, std::string_view>>;
+	template<typename T> struct ConvertToString8View { using type = ConvertToString8ViewType<T>; };
 
-	template<typename T> concept convertible_wstring_data = wstring_data<T> || std::convertible_to<T, wchar_t const*>;
-	template<typename T> struct is_convertible_wstring_data : std::bool_constant<convertible_wstring_data<T>> {};
-	template<typename T> using convertible_wstring_data_t = std::enable_if_t<convertible_wstring_data<T>, T>;
+	template<typename T> concept ConvertibleString8View = ConvertibleAnyOf<T, std::string_view, std::u8string_view>;
+	template<typename T> struct IsConvertibleString8View : std::bool_constant<ConvertibleString8View<T>> {};
+	template<typename T> using ConvertibleString8ViewType = std::enable_if_t<ConvertibleString8View<T>, T>;
+
+	template<typename T> concept WStringData = SameAnyOf<T, std::wstring, std::wstring_view>;
+	template<typename T> struct IsWStringData : std::bool_constant<WStringData<T>> {};
+	template<typename T> using WStringDataType = std::enable_if_t<WStringData<T>, T>;
+
+	template<typename T> concept ConvertibleWStringData = WStringData<T> || std::convertible_to<T, wchar_t const*>;
+	template<typename T> struct IsConvertibleWStringData : std::bool_constant<ConvertibleWStringData<T>> {};
+	template<typename T> using ConvertibleWStringDataType = std::enable_if_t<ConvertibleWStringData<T>, T>;
 
 
 	namespace literals {
@@ -527,33 +527,33 @@ namespace aurora {
 
 
 	namespace enum_operators {
-		template<scoped_enum T>
+		template<ScopedEnum T>
 		inline constexpr T AE_CALL operator&(T e1, T e2) noexcept {
 			return (T)((std::underlying_type_t<T>)e1 & (std::underlying_type_t<T>)e2);
 		}
-		template<scoped_enum T>
+		template<ScopedEnum T>
 		inline constexpr T AE_CALL operator|(T e1, T e2) noexcept {
 			return (T)((std::underlying_type_t<T>)e1 | (std::underlying_type_t<T>)e2);
 		}
-		template<scoped_enum T>
+		template<ScopedEnum T>
 		inline constexpr T AE_CALL operator^(T e1, T e2) noexcept {
 			return (T)((std::underlying_type_t<T>)e1 ^ (std::underlying_type_t<T>)e2);
 		}
-		template<scoped_enum T>
+		template<ScopedEnum T>
 		inline constexpr T AE_CALL operator~(T e) noexcept {
 			return (T)(~(std::underlying_type_t<T>)e);
 		}
-		template<scoped_enum T>
+		template<ScopedEnum T>
 		inline constexpr T& AE_CALL operator&=(T& e1, T e2) noexcept {
 			(std::underlying_type_t<T>&)e1 &= (std::underlying_type_t<T>)e2;
 			return e1;
 		}
-		template<scoped_enum T>
+		template<ScopedEnum T>
 		inline constexpr T& AE_CALL operator|=(T& e1, T e2) noexcept {
 			(std::underlying_type_t<T>&)e1 |= (std::underlying_type_t<T>)e2;
 			return e1;
 		}
-		template<scoped_enum T>
+		template<ScopedEnum T>
 		inline constexpr T& AE_CALL operator^=(T& e1, T e2) noexcept {
 			(std::underlying_type_t<T>&)e1 ^= (std::underlying_type_t<T>)e2;
 			return e1;
@@ -562,18 +562,18 @@ namespace aurora {
 	
 
 	template<typename L, typename R>
-	requires (std::same_as<L, std::string> && (convertible_u8string_data<std::remove_cvref_t<R>> || std::same_as<std::remove_cvref_t<R>, char8_t>)) ||
-			 (std::same_as<L, std::u8string> && (convertible_string_data<std::remove_cvref_t<R>> || std::same_as<std::remove_cvref_t<R>, char>))
+	requires (std::same_as<L, std::string> && (ConvertibleU8StringData<std::remove_cvref_t<R>> || std::same_as<std::remove_cvref_t<R>, char8_t>)) ||
+			 (std::same_as<L, std::u8string> && (ConvertibleStringData<std::remove_cvref_t<R>> || std::same_as<std::remove_cvref_t<R>, char>))
 	inline auto& AE_CALL operator+=(L& left, R&& right) {
 		if constexpr (std::same_as<L, std::string>) {
-			if constexpr (convertible_u8string_data<std::remove_cvref_t<R>>) {
-				left += (const std::string_view&)convert_to_string8_view_t<std::remove_cvref_t<R>>(std::forward<R>(right));
+			if constexpr (ConvertibleU8StringData<std::remove_cvref_t<R>>) {
+				left += (const std::string_view&)ConvertToString8ViewType<std::remove_cvref_t<R>>(std::forward<R>(right));
 			} else if constexpr (std::same_as<std::remove_cvref_t<R>, char8_t>) {
 				left += (char)right;
 			}
 		} else {
-			if constexpr (convertible_string_data<std::remove_cvref_t<R>>) {
-				left += (const std::u8string_view&)convert_to_string8_view_t<std::remove_cvref_t<R>>(std::forward<R>(right));
+			if constexpr (ConvertibleStringData<std::remove_cvref_t<R>>) {
+				left += (const std::u8string_view&)ConvertToString8ViewType<std::remove_cvref_t<R>>(std::forward<R>(right));
 			} else if constexpr (std::same_as<std::remove_cvref_t<R>, char>) {
 				left += (char8_t)right;
 			}
@@ -584,7 +584,7 @@ namespace aurora {
 
 
 	template<typename L, typename R>
-	requires convertible_u8string_data<std::remove_cvref_t<L>> || convertible_u8string_data<std::remove_cvref_t<R>>
+	requires ConvertibleU8StringData<std::remove_cvref_t<L>> || ConvertibleU8StringData<std::remove_cvref_t<R>>
 	inline std::u8string AE_CALL operator+(L&& left, R&& right) {
 		if constexpr (std::same_as<std::remove_cvref_t<L>, std::u8string_view> && std::same_as<std::remove_cvref_t<R>, std::u8string_view>) {
 			std::u8string s;
@@ -593,7 +593,7 @@ namespace aurora {
 			s += right;
 			return std::move(s);
 		} else {
-			return (const std::u8string_view&)convert_to_string8_view_t<std::remove_cvref_t<L>>(std::forward<L>(left)) + (const std::u8string_view&)convert_to_string8_view_t<std::remove_cvref_t<R>>(std::forward<R>(right));
+			return (const std::u8string_view&)ConvertToString8ViewType<std::remove_cvref_t<L>>(std::forward<L>(left)) + (const std::u8string_view&)ConvertToString8ViewType<std::remove_cvref_t<R>>(std::forward<R>(right));
 		}
 	}
 	
@@ -605,7 +605,7 @@ namespace aurora {
 
 #ifdef __cpp_lib_generic_unordered_lookup
 	template<typename T>
-	struct transparent_hash {
+	struct TransparentHash {
 		using is_transparent = void;
 
 		template<typename K>
@@ -614,19 +614,19 @@ namespace aurora {
 		}
 	};
 
-	using query_string = std::string_view;
+	using QueryString = std::string_view;
 
-	using string_unordered_set = std::unordered_set<std::string, transparent_hash<std::string_view>, std::equal_to<>>;
+	using StringUnorderedSet = std::unordered_set<std::string, TransparentHash<std::string_view>, std::equal_to<>>;
 
 	template<typename T>
-	using string_unordered_map = std::unordered_map<std::string, T, transparent_hash<std::string_view>, std::equal_to<>>;
+	using StringUnorderedMap = std::unordered_map<std::string, T, TransparentHash<std::string_view>, std::equal_to<>>;
 #else
-	using query_string = std::string;
+	using QueryString = std::string;
 
-	using string_unordered_set = std::unordered_set<std::string>;
+	using StringUnorderedSet = std::unordered_set<std::string>;
 
 	template<typename T>
-	using string_unordered_map = std::unordered_map<std::string, T>;
+	using StringUnorderedMap = std::unordered_map<std::string, T>;
 #endif
 
 
@@ -672,7 +672,7 @@ namespace aurora {
 		F _fn;
 	};
 	template<typename F>
-	requires (!member_function_pointer<F>)
+	requires (!MemberFunctionPointer<F>)
 	Invoker(F)->Invoker<F, std::nullptr_t>;
 
 
@@ -788,8 +788,8 @@ namespace aurora {
 	}
 
 
-	struct AE_CORE_DLL no_init {};
-	inline constexpr no_init no_init_v = no_init();
+	struct AE_CORE_DLL NoInit {};
+	inline constexpr NoInit NO_INIT = NoInit();
 
 
 	inline std::filesystem::path AE_CALL getAppPath() {

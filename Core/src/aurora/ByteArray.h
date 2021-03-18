@@ -172,7 +172,7 @@ namespace aurora {
 		void AE_CALL popBack(size_t len);
 		void AE_CALL insert(size_t len);
 
-		template<arithmetic T>
+		template<Arithmetic T>
 		inline T AE_CALL read() {
 			return _read<T>();
 		}
@@ -226,7 +226,7 @@ namespace aurora {
 		}
 
 		template<ValueType T>
-		requires equal_any_of<T, ValueType::UI64, ValueType::D_UI64, ValueType::RD_UI64>
+		requires EqualAnyOf<T, ValueType::UI64, ValueType::D_UI64, ValueType::RD_UI64>
 		inline uint64_t AE_CALL read() {
 			if constexpr (T == ValueType::UI64) {
 				return _read<uint64_t>();
@@ -348,7 +348,7 @@ namespace aurora {
 			return _read<float64_t>();
 		}
 
-		template<string_data T, bool CheckEndMark = true, bool CheckBOM = false>
+		template<StringData T, bool CheckEndMark = true, bool CheckBOM = false>
 		inline T AE_CALL read(size_t size = (std::numeric_limits<size_t>::max)()) {
 			return _read<T, CheckEndMark, CheckBOM>(size);
 		}
@@ -425,7 +425,7 @@ namespace aurora {
 			return length;
 		}
 
-		template<arithmetic T>
+		template<Arithmetic T>
 		inline void AE_CALL write(T value) {
 			_write<T>(value);
 		}
@@ -479,7 +479,7 @@ namespace aurora {
 		}
 
 		template<ValueType T>
-		requires equal_any_of<T, ValueType::UI64, ValueType::D_UI64, ValueType::RD_UI64, ValueType::PADDING>
+		requires EqualAnyOf<T, ValueType::UI64, ValueType::D_UI64, ValueType::RD_UI64, ValueType::PADDING>
 		inline void AE_CALL write(uint64_t value) {
 			if constexpr (T == ValueType::UI64) {
 				_write<uint64_t>(value);
@@ -588,23 +588,23 @@ namespace aurora {
 		}
 
 		template<ValueType T, typename V>
-		requires (T == ValueType::STR || T == ValueType::BYTE) && convertible_string8_data<std::remove_cvref_t<V>>
+		requires (T == ValueType::STR || T == ValueType::BYTE) && ConvertibleString8Data<std::remove_cvref_t<V>>
 		inline void AE_CALL write(V&& value) {
 			if constexpr (T == ValueType::STR) {
 				write(value);
 			} else {
-				if constexpr (string8_data<std::remove_cvref_t<V>>) {
+				if constexpr (String8Data<std::remove_cvref_t<V>>) {
 					write<T>(value.data(), value.size());
 				} else {
-					write<T>(convert_to_string8_view_t<std::remove_cvref_t<V>>(std::forward<V>(value)));
+					write<T>(ConvertToString8ViewType<std::remove_cvref_t<V>>(std::forward<V>(value)));
 				}
 			}
 		}
 
 		template<typename T>
-		requires convertible_string8_data<std::remove_cvref_t<T>>
+		requires ConvertibleString8Data<std::remove_cvref_t<T>>
 		inline void AE_CALL write(T&& value) {
-			if constexpr (string8_data<std::remove_cvref_t<T>>) {
+			if constexpr (String8Data<std::remove_cvref_t<T>>) {
 				auto size = value.size();
 
 				_checkLength(size + 1);
@@ -613,14 +613,14 @@ namespace aurora {
 				_position += size;
 				_data[_position++] = '\0';
 			} else {
-				write(convert_to_string8_view_t<std::remove_cvref_t<T>>(std::forward<T>(value)));
+				write(ConvertToString8ViewType<std::remove_cvref_t<T>>(std::forward<T>(value)));
 			}
 		}
 
-		template<ValueType T, same_any_of<char, char8_t> V>
+		template<ValueType T, SameAnyOf<char, char8_t> V>
 		requires (T == ValueType::STR)
 		inline void AE_CALL write(const V* value, size_t size) {
-			write(convert_to_string8_view_t<V*>(value, size));
+			write(ConvertToString8ViewType<V*>(value, size));
 		}
 
 		template<ValueType T, bool Reverse = false>
@@ -711,7 +711,7 @@ namespace aurora {
 			}
 		}
 
-		template<arithmetic T>
+		template<Arithmetic T>
 		T AE_CALL _read() {
 			if constexpr (sizeof(T) == 1) {
 				if (_position < _length) {
@@ -743,7 +743,7 @@ namespace aurora {
 			}
 		}
 
-		template<string_data T, bool CheckEndMark, bool CheckBOM>
+		template<StringData T, bool CheckEndMark, bool CheckBOM>
 		inline T AE_CALL _read(size_t size) {
 			auto [begin, num, pos] = read<ValueType::STR, CheckEndMark, CheckBOM>(_position, size);
 			_position = pos;
@@ -764,7 +764,7 @@ namespace aurora {
 			_position += len;
 		}
 
-		template<arithmetic T>
+		template<Arithmetic T>
 		inline void AE_CALL _write(const T& value) {
 			_write(&value, sizeof(T));
 		}

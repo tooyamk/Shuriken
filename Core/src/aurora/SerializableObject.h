@@ -54,7 +54,7 @@ namespace aurora {
 		};
 
 
-		struct AE_CORE_DLL std_unordered_hasher {
+		struct AE_CORE_DLL StdUnorderedHasher {
 			inline size_t AE_CALL operator()(const SerializableObject& value) const {
 				switch (value._type) {
 				case Type::BOOL:
@@ -99,7 +99,7 @@ namespace aurora {
 		};
 
 
-		struct AE_CORE_DLL std_unordered_comparer {
+		struct AE_CORE_DLL StdUnorderedComparer {
 			inline bool AE_CALL operator()(const SerializableObject& value1, const SerializableObject& value2) const {
 				return value1.isEqual(value2);
 			}
@@ -207,7 +207,7 @@ namespace aurora {
 
 		bool AE_CALL toBool(bool defaultValue = false) const;
 
-		template<arithmetic T>
+		template<Arithmetic T>
 		T AE_CALL toNumber(T defaultValue = 0) const {
 			switch (_type) {
 			case Type::BOOL:
@@ -243,7 +243,7 @@ namespace aurora {
 
 		template<typename T>
 		inline T AE_CALL toValue() {
-			if constexpr (arithmetic<T>) {
+			if constexpr (Arithmetic<T>) {
 				return toNumber<T>();
 			} else if constexpr (std::same_as<T, std::string>) {
 				return toString();
@@ -292,9 +292,9 @@ namespace aurora {
 		void AE_CALL set(const std::string_view& value, Flag flag = Flag::COPY);
 
 		template<typename T>
-		requires (!std::same_as<std::remove_cvref_t<T>, std::string_view>) && convertible_string8_data<std::remove_cvref_t<T>>
+		requires (!std::same_as<std::remove_cvref_t<T>, std::string_view>) && ConvertibleString8Data<std::remove_cvref_t<T>>
 		inline void AE_CALL set(T&& value, Flag flag = Flag::COPY) {
-			if constexpr (convertible_string_data<std::remove_cvref_t<T>>) {
+			if constexpr (ConvertibleStringData<std::remove_cvref_t<T>>) {
 				set(std::string_view(std::forward<T>(value)), flag);
 			} else if constexpr (std::same_as<std::remove_cvref_t<T>, std::u8string_view>) {
 				set((const std::string_view&)value, flag);
@@ -321,9 +321,9 @@ namespace aurora {
 		}
 
 		template<typename T>
-		requires (!std::same_as<std::remove_cvref_t<T>, std::string_view>) && convertible_string8_data<std::remove_cvref_t<T>>
+		requires (!std::same_as<std::remove_cvref_t<T>, std::string_view>) && ConvertibleString8Data<std::remove_cvref_t<T>>
 		inline SerializableObject& AE_CALL get(T&& key) {
-			if constexpr (convertible_string_data<std::remove_cvref_t<T>>) {
+			if constexpr (ConvertibleStringData<std::remove_cvref_t<T>>) {
 				return get(std::string_view(std::forward<T>(key)));
 			} else if constexpr (std::same_as<std::remove_cvref_t<T>, std::u8string_view>) {
 				return get((const std::string_view&)key);
@@ -338,9 +338,9 @@ namespace aurora {
 		}
 
 		template<typename T>
-		requires (!std::same_as<std::remove_cvref_t<T>, std::string_view>) && convertible_string8_data<std::remove_cvref_t<T>>
+		requires (!std::same_as<std::remove_cvref_t<T>, std::string_view>) && ConvertibleString8Data<std::remove_cvref_t<T>>
 		inline SerializableObject AE_CALL tryGet(T&& key) const {
-			if constexpr (convertible_string_data<std::remove_cvref_t<T>>) {
+			if constexpr (ConvertibleStringData<std::remove_cvref_t<T>>) {
 				return tryGet(std::string_view(std::forward<T>(key)));
 			} else if constexpr (std::same_as<std::remove_cvref_t<T>, std::u8string_view>) {
 				return tryGet((const std::string_view&)key);
@@ -355,9 +355,9 @@ namespace aurora {
 		}
 
 		template<typename T>
-		requires (!std::same_as<std::remove_cvref_t<T>, std::string_view>) && convertible_string8_data<std::remove_cvref_t<T>>
+		requires (!std::same_as<std::remove_cvref_t<T>, std::string_view>) && ConvertibleString8Data<std::remove_cvref_t<T>>
 		inline SerializableObject* AE_CALL tryGetPtr(T&& key) const {
-			if constexpr (convertible_string_data<std::remove_cvref_t<T>>) {
+			if constexpr (ConvertibleStringData<std::remove_cvref_t<T>>) {
 				return tryGetPtr(std::string_view(std::forward<T>(key)));
 			} else if constexpr (std::same_as<std::remove_cvref_t<T>, std::u8string_view>) {
 				return tryGetPtr((const std::string_view&)key);
@@ -372,9 +372,9 @@ namespace aurora {
 		}
 
 		template<typename T>
-		requires (!std::same_as<std::remove_cvref_t<T>, std::string_view>) && convertible_string8_data<std::remove_cvref_t<T>>
+		requires (!std::same_as<std::remove_cvref_t<T>, std::string_view>) && ConvertibleString8Data<std::remove_cvref_t<T>>
 		inline SerializableObject& AE_CALL insert(T&& key, const SerializableObject& value) {
-			if constexpr (convertible_string_data<std::remove_cvref_t<T>>) {
+			if constexpr (ConvertibleStringData<std::remove_cvref_t<T>>) {
 				return insert(std::string_view(std::forward<T>(key)), value);
 			} else if constexpr (std::same_as<std::remove_cvref_t<T>, std::u8string_view>) {
 				return insert((const std::string_view&)key, value);
@@ -389,9 +389,9 @@ namespace aurora {
 		}
 
 		template<typename T>
-		requires (!std::same_as<std::remove_cvref_t<T>, std::string_view>) && convertible_string8_data<std::remove_cvref_t<T>>
+		requires (!std::same_as<std::remove_cvref_t<T>, std::string_view>) && ConvertibleString8Data<std::remove_cvref_t<T>>
 		inline SerializableObject AE_CALL remove(T&& key) {
-			if constexpr (convertible_string_data<std::remove_cvref_t<T>>) {
+			if constexpr (ConvertibleStringData<std::remove_cvref_t<T>>) {
 				return remove(std::string_view(std::forward<T>(key)));
 			} else if constexpr (std::same_as<std::remove_cvref_t<T>, std::u8string_view>) {
 				return remove((const std::string_view&)key);
@@ -406,9 +406,9 @@ namespace aurora {
 		}
 
 		template<typename T>
-		requires (!std::same_as<std::remove_cvref_t<T>, std::string_view>) && convertible_string8_data<std::remove_cvref_t<T>>
+		requires (!std::same_as<std::remove_cvref_t<T>, std::string_view>) && ConvertibleString8Data<std::remove_cvref_t<T>>
 		inline bool AE_CALL has(T&& key) const {
-			if constexpr (convertible_string_data<std::remove_cvref_t<T>>) {
+			if constexpr (ConvertibleStringData<std::remove_cvref_t<T>>) {
 				return has(std::string_view(std::forward<T>(key)));
 			} else if constexpr (std::same_as<std::remove_cvref_t<T>, std::u8string_view>) {
 				return has((const std::string_view&)key);
@@ -417,7 +417,7 @@ namespace aurora {
 			}
 		}
 
-		template<invocable_any_of_r<std::tuple<void, bool>, const SerializableObject&, const SerializableObject&> Fn>
+		template<InvocableAnyOfResult<std::tuple<void, bool>, const SerializableObject&, const SerializableObject&> Fn>
 		void AE_CALL forEach(Fn&& fn) const {
 			if (_type == Type::ARRAY) {
 				if (Array* arr = _getValue<Array*>(); arr) {
@@ -444,7 +444,7 @@ namespace aurora {
 			}
 		}
 		
-		template<invocable_r<ForEachOperation, const SerializableObject&, SerializableObject&> Fn>
+		template<InvocableResult<ForEachOperation, const SerializableObject&, SerializableObject&> Fn>
 		void AE_CALL forEach(Fn&& fn) {
 			if (_type == Type::ARRAY) {
 				if (Array* arr = _getValue<Array*>(); arr) {
@@ -475,7 +475,7 @@ namespace aurora {
 			}
 		}
 
-		template<null_or_derived_from<IPackFilter> T = std::nullptr_t>
+		template<NullPointerOrDerivedFrom<IPackFilter> T = std::nullptr_t>
 		inline void AE_CALL pack(ByteArray& ba, const T& filter = nullptr) const {
 			_pack(nullptr, 0, ba, filter);
 		}
@@ -504,7 +504,8 @@ namespace aurora {
 		static constexpr uint8_t VAL5_BITS64 = VAL5_MAX;
 
 
-		class Array : public Ref {
+		class Array {
+			AE_REF_OBJECT(Array)
 		public:
 			Array();
 			Array* AE_CALL copy() const;
@@ -514,50 +515,23 @@ namespace aurora {
 		};
 
 
-		template<typename K, typename V, typename Hash, typename Com>
-		class TmplMap : public Ref {
+		class Map {
+			AE_REF_OBJECT(Map)
 		public:
-			TmplMap() {
-				ref();
-			}
+			Map();
+			Map* AE_CALL copy() const;
+			bool AE_CALL isContentEqual(Map* data) const;
+			void AE_CALL unpack(ByteArray& ba, size_t size, Flag flag);
 
-			auto AE_CALL copy() const {
-				auto map = new TmplMap();
-				for (auto& itr : this->value) map->value.emplace(SerializableObject(itr.first, Flag::COPY), SerializableObject(itr.second, Flag::COPY));
-				return map;
-			}
-			bool AE_CALL isContentEqual(TmplMap* data) const {
-				auto size = this->value.size();
-				if (size == data->value.size()) {
-					for (auto& itr : this->value) {
-						if (auto itr2 = data->value.find(itr.first); itr2 == data->value.end() || !itr.second.isContentEqual(itr2->second)) return false;
-					}
-
-					return true;
-				} else {
-					return false;
-				}
-			}
-			void AE_CALL unpack(ByteArray& ba, size_t size, Flag flag) {
-				value.clear();
-
-				SerializableObject k, v;
-				for (size_t i = 0; i < size; ++i) {
-					k.unpack(ba, flag);
-					v.unpack(ba, flag);
-					value.emplace(std::move(k), std::move(v));
-				}
-			}
-
-			std::unordered_map<K, V, Hash, Com> value;
+			std::unordered_map<SerializableObject, SerializableObject, StdUnorderedHasher, StdUnorderedComparer> value;
 		};
-		using Map = TmplMap<SerializableObject, SerializableObject, std_unordered_hasher, std_unordered_comparer>;
 
 
-		class Str : public Ref {
+		class Str {
+			AE_REF_OBJECT(Str)
 		public:
 			Str(const char* data, size_t size);
-			virtual ~Str();
+			~Str();
 
 			char* data;
 			size_t size;
@@ -580,30 +554,12 @@ namespace aurora {
 		};
 
 
-		class Bytes : public Ref {
+		class Bytes {
+			AE_REF_OBJECT(Bytes)
 		public:
-			Bytes() :
-				_data(nullptr),
-				_size(0) {
-				ref();
-			}
-
-			Bytes(const uint8_t* data, size_t size) :
-				_size(size) {
-
-				if (size) {
-					_data = new uint8_t[size];
-					memcpy(_data, data, size);
-				} else {
-					_data = nullptr;
-				}
-
-				ref();
-			}
-
-			virtual ~Bytes() {
-				if (_data != nullptr) delete[] _data;
-			}
+			Bytes();
+			Bytes(const uint8_t* data, size_t size);
+			~Bytes();
 
 			inline Bytes* AE_CALL copy() const {
 				return new Bytes(_data, _size);
@@ -612,24 +568,7 @@ namespace aurora {
 			inline const uint8_t* AE_CALL getValue() const { return _data; }
 			inline size_t AE_CALL getSize() const { return _size; }
 
-			void AE_CALL setValue(const uint8_t* data, size_t size) {
-				if (!size) {
-					clear();
-				} else {
-					if (_data == nullptr) {
-						_size = size;
-						_data = new uint8_t[_size];
-						if (data) memcpy(_data, data, _size);
-					} else if (_size == size) {
-						if (data) memcpy(_data, data, _size);
-					} else {
-						delete[] _data;
-						_size = size;
-						_data = new uint8_t[_size];
-						if (data) memcpy(_data, data, size);
-					}
-				}
-			}
+			void AE_CALL setValue(const uint8_t* data, size_t size);
 
 			inline void AE_CALL clear() {
 				if (_data != nullptr) {
@@ -690,7 +629,7 @@ namespace aurora {
 			return _getValue<Map*>();
 		}
 
-		template<arithmetic T>
+		template<Arithmetic T>
 		inline bool AE_CALL _isEqual(const SerializableObject& target) const {
 			switch (target._type) {
 			case Type::INT:
@@ -721,7 +660,7 @@ namespace aurora {
 			return size1 == size2 ? !memcmp(s1, s2, size1) : false;
 		}
 
-		template<null_or_derived_from<IPackFilter> T = std::nullptr_t>
+		template<NullPointerOrDerivedFrom<IPackFilter> T = std::nullptr_t>
 		void AE_CALL _pack(const SerializableObject* parent, size_t depth, ByteArray& ba, const T& filter) const {
 			switch (_type) {
 			case Type::INVALID:
@@ -827,7 +766,7 @@ namespace aurora {
 				auto arr = _getValue<Array*>();
 				auto size = arr->value.size();
 
-				if constexpr (null_pointer<T>) {
+				if constexpr (NullPointer<T>) {
 					if (size < VAL5_MAX) {
 						ba.write<uint8_t>(((uint8_t)Type::ARRAY << 5) | size);
 						for (auto& i : arr->value) i.pack(ba);
@@ -860,7 +799,7 @@ namespace aurora {
 				auto map = _getValue<Map*>();
 				auto size = map->value.size();
 
-				if constexpr (null_pointer<T>) {
+				if constexpr (NullPointer<T>) {
 					if (size < VAL5_MAX) {
 						ba.write<uint8_t>(((uint8_t)Type::MAP << 5) | size);
 						for (auto& i : map->value) {

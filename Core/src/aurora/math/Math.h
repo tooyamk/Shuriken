@@ -6,8 +6,8 @@
 namespace aurora {
 	class AE_CORE_DLL Math {
 	public:
-		template<arithmetic T> inline static constexpr T NUMBER_0 = 0;
-		template<arithmetic T> inline static constexpr T NUMBER_1 = 1;
+		template<Arithmetic T> inline static constexpr T NUMBER_0 = 0;
+		template<Arithmetic T> inline static constexpr T NUMBER_1 = 1;
 		template<std::floating_point T> inline static constexpr T TOLERANCE = T(2e-37);
 		template<std::floating_point T> inline static constexpr T E = T(2.718281828459045);
 		template<std::floating_point T> inline static constexpr T PI = T(3.14159265358979323846);
@@ -183,12 +183,12 @@ namespace aurora {
 		}
 
 		template<typename T>
-		inline static constexpr floating_point_t<T> AE_CALL deg(const T& rad) {
+		inline static constexpr FloatingPointType<T> AE_CALL deg(const T& rad) {
 			return rad * DEG<T>;
 		}
 
 		template<typename T>
-		inline static constexpr floating_point_t<T> AE_CALL rad(const T& deg) {
+		inline static constexpr FloatingPointType<T> AE_CALL rad(const T& deg) {
 			return deg * RAD<T>;
 		}
 
@@ -213,7 +213,7 @@ namespace aurora {
 			return sq;
 		}
 		template<size_t N, typename In1, typename In2, typename Out = decltype((*(In1*)0) + (*(In2*)0))>
-		inline static Out AE_CALL distanceSq(const floating_point_t<In1>(&v1)[N], const floating_point_t<In2>(&v2)[N]) {
+		inline static Out AE_CALL distanceSq(const FloatingPointType<In1>(&v1)[N], const FloatingPointType<In2>(&v2)[N]) {
 			Out sq = 0;
 			for (decltype(N) i = 0; i < N; ++i) {
 				Out d = v1[i] - v2[i];

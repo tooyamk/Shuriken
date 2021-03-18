@@ -1,4 +1,5 @@
 #include "tests/DepthTestTester.h"
+#include "tests/ExperimentTester.h"
 #include "tests/InputTester.h"
 #include "tests/OffscreenTester.h"
 #include "tests/RenderPipelineTester.h"
@@ -31,8 +32,9 @@ int32_t run() {
 	*/
 
 	//return (new DepthTestTester())->run();
+	return (new ExperimentTester())->run();
 	//return (new InputTester())->run();
-	return (new OffscreenTester())->run();
+	//return (new OffscreenTester())->run();
 	//return (new RenderPipelineTester())->run();
 	//return (new RenderTargetTester())->run();
 	//return (new VertexUpdateTester())->run();

@@ -78,7 +78,7 @@ namespace aurora::events {
 		Class* _target;
 	};
 	template<typename EvtType, typename Class>
-	requires member_function_pointer<EvtMethod<EvtType, Class>>
+	requires MemberFunctionPointer<EvtMethod<EvtType, Class>>
 	EventListener(EvtMethod<EvtType, Class>, Class*)->EventListener<EvtType, EvtMethod<EvtType, Class>>;
 
 

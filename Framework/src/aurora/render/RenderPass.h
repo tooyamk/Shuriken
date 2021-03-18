@@ -8,7 +8,8 @@
 #include <set>
 
 namespace aurora::render {
-	class AE_FW_DLL RenderPass : public Ref {
+	class AE_FW_DLL RenderPass {
+		AE_REF_OBJECT(RenderPass)
 	public:
 		RenderPriority priority;
 		IntrusivePtr<RenderState> state;

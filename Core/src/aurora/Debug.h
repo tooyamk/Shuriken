@@ -122,15 +122,15 @@ namespace aurora {
 		static void AE_CALL _print(Buf& out, T&& value) {
 			using Type = std::remove_cvref_t<T>;
 
-			if constexpr (null_pointer<Type>) {
+			if constexpr (NullPointer<Type>) {
 				out.write(L"nullptr");
 			} else if constexpr (std::convertible_to<Type, wchar_t const*>) {
 				out.write(value);
-			} else if constexpr (wstring_data<Type>) {
+			} else if constexpr (WStringData<Type>) {
 				out.write(value.data(), value.size());
 			} else if constexpr (std::convertible_to<Type, char const*>) {
 				_print(out, std::string_view(value));
-			} else if constexpr (string_data<Type>) {
+			} else if constexpr (StringData<Type>) {
 				out.write(value.data(), value.size());
 				//if (String::isUTF8(value.data(), value.size())) {
 				//	out.write(value.data(), value.size());
@@ -139,11 +139,11 @@ namespace aurora {
 				//}
 			} else if constexpr (std::convertible_to<Type, char8_t const*>) {
 				_print(out, std::u8string_view(value));
-			} else if constexpr (u8string_data<Type>) {
+			} else if constexpr (U8StringData<Type>) {
 				out.write(value);
 			} else if constexpr (std::same_as<Type, bool>) {
 				out.write(value ? L"true" : L"false");
-			} else if constexpr (arithmetic<Type>) {
+			} else if constexpr (Arithmetic<Type>) {
 				out.write(std::to_wstring(value));
 			} else if constexpr (std::is_enum_v<Type>) {
 				out.write(L'[');

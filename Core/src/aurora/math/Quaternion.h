@@ -11,7 +11,7 @@ namespace aurora {
 		using Data = float32_t[4];
 
 		Quaternion();
-		Quaternion(const no_init&);
+		Quaternion(const NoInit&);
 		Quaternion(const Quaternion& v);
 		Quaternion(Quaternion&& v) noexcept;
 		Quaternion(float32_t x, float32_t y = 0.f, float32_t z = 0.f, float32_t w = 1.f);
@@ -104,7 +104,7 @@ namespace aurora {
 			dst.set(x, 0.f, 0.f, w);
 		}
 		inline static Quaternion createEulerX(float32_t radian) {
-			Quaternion q(no_init_v);
+			Quaternion q(NO_INIT);
 			createEulerX(radian, q);
 			return q;
 		}
@@ -116,7 +116,7 @@ namespace aurora {
 			dst.set(0.f, y, 0.f, w);
 		}
 		inline static Quaternion AE_CALL createEulerY(float32_t radian) {
-			Quaternion q(no_init_v);
+			Quaternion q(NO_INIT);
 			createEulerY(radian, q);
 			return q;
 		}
@@ -128,13 +128,13 @@ namespace aurora {
 			dst.set(0.f, 0.f, z, w);
 		}
 		inline static Quaternion AE_CALL createEulerZ(float32_t radian) {
-			Quaternion q(no_init_v);
+			Quaternion q(NO_INIT);
 			createEulerZ(radian, q);
 			return q;
 		}
 		static void AE_CALL createEuler(const float32_t(&radians)[3], Quaternion& dst);
 		inline static Quaternion AE_CALL createEuler(const float32_t(&radians)[3]) {
-			Quaternion q(no_init_v);
+			Quaternion q(NO_INIT);
 			createEuler(radians, q);
 			return q;
 		}

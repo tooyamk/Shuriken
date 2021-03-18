@@ -6,7 +6,9 @@
 #include <regex>
 
 namespace aurora::extensions::shader_script {
-	struct Block : public Ref {
+	struct Block {
+		AE_REF_OBJECT(Block)
+	public:
 		std::string_view name;
 		size_t contentBegin = 0;
 		std::string_view content;

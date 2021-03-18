@@ -6,7 +6,7 @@ namespace aurora {
 	}
 
 
-	void AE_CALL MeshResource::setVertex(const query_string& name, VertexResource* res) {
+	void AE_CALL MeshResource::setVertex(const QueryString& name, VertexResource* res) {
 		if (res) {
 			if (auto itr = _vertices.find(name); itr == _vertices.end()) {
 				_vertices.emplace(name, res);
@@ -18,7 +18,7 @@ namespace aurora {
 		}
 	}
 
-	VertexResource* MeshResource::_remove(const query_string& name) {
+	VertexResource* MeshResource::_remove(const QueryString& name) {
 		if (auto itr = _vertices.find(name); itr == _vertices.end()) {
 			auto val = itr->second;
 			_vertices.erase(itr);

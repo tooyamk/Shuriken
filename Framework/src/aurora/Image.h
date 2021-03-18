@@ -10,7 +10,8 @@ namespace aurora {
 		enum class TextureFormat : uint8_t;
 	}
 
-	class AE_FW_DLL Image : public Ref {
+	class AE_FW_DLL Image {
+		AE_REF_OBJECT(Image)
 	public:
 		Image();
 

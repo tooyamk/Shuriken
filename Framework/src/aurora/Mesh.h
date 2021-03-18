@@ -23,13 +23,13 @@ namespace aurora {
 			return _vertices;
 		}
 
-		inline IntrusivePtr<VertexResource> AE_CALL getVertex(const query_string& name) const {
+		inline IntrusivePtr<VertexResource> AE_CALL getVertex(const QueryString& name) const {
 			auto itr = _vertices.find(name);
 			return itr == _vertices.end() ? nullptr : itr->second;
 		}
 
-		void AE_CALL setVertex(const query_string& name, VertexResource* res);
-		inline IntrusivePtr<VertexResource> AE_CALL remove(const query_string& name) {
+		void AE_CALL setVertex(const QueryString& name, VertexResource* res);
+		inline IntrusivePtr<VertexResource> AE_CALL remove(const QueryString& name) {
 			return _remove(name);
 		}
 
@@ -37,9 +37,9 @@ namespace aurora {
 		IntrusivePtr<IndexResource> index;
 
 	private:
-		string_unordered_map<IntrusivePtr<VertexResource>> _vertices;
+		StringUnorderedMap<IntrusivePtr<VertexResource>> _vertices;
 
-		VertexResource* AE_CALL _remove(const query_string& name);
+		VertexResource* AE_CALL _remove(const QueryString& name);
 	};
 
 

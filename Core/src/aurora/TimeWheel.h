@@ -101,7 +101,7 @@ namespace aurora {
 			_stopTimer(timer);
 		}
 
-		template<invocable_any_of_r<std::tuple<void, bool>, Timer&, uint64_t> Fn>
+		template<InvocableAnyOfResult<std::tuple<void, bool>, Timer&, uint64_t> Fn>
 		void AE_CALL tick(uint64_t elapsed, Fn&& fn) {
 			{
 				std::scoped_lock lck(_mutex);

@@ -7,7 +7,8 @@ namespace aurora {
 }
 
 namespace aurora::components::renderables {
-	class AE_FW_DLL SpriteFrame : public Ref {
+	class AE_FW_DLL SpriteFrame {
+		AE_REF_OBJECT(SpriteFrame)
 	public:
         Box2f32 rect;
         Vec2f32 offset;

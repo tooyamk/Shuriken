@@ -29,7 +29,7 @@ public:
 				args.insert("app", app.uintptr());
 				args.insert("sampleCount", 4);
 				args.insert("trans", gpst.uintptr());
-				args.insert("debug", environment::is_debug);
+				args.insert("debug", Environment::IS_DEBUG);
 
 				auto graphics = gml->create(&args);
 

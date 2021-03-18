@@ -27,6 +27,41 @@ namespace aurora {
 	}
 
 
+	SerializableObject::Map::Map() {
+		ref();
+	}
+
+	SerializableObject::Map* SerializableObject::Map::copy() const {
+		auto map = new Map();
+		for (auto& itr : this->value) map->value.emplace(SerializableObject(itr.first, Flag::COPY), SerializableObject(itr.second, Flag::COPY));
+		return map;
+	}
+
+	bool SerializableObject::Map::isContentEqual(Map* data) const {
+		auto size = this->value.size();
+		if (size == data->value.size()) {
+			for (auto& itr : this->value) {
+				if (auto itr2 = data->value.find(itr.first); itr2 == data->value.end() || !itr.second.isContentEqual(itr2->second)) return false;
+			}
+
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	void SerializableObject::Map::unpack(ByteArray& ba, size_t size, Flag flag) {
+		value.clear();
+
+		SerializableObject k, v;
+		for (size_t i = 0; i < size; ++i) {
+			k.unpack(ba, flag);
+			v.unpack(ba, flag);
+			value.emplace(std::move(k), std::move(v));
+		}
+	}
+
+
 	SerializableObject::Str::Str(const char* data, size_t size) :
 		size(size) {
 		ref();
@@ -37,6 +72,49 @@ namespace aurora {
 
 	SerializableObject::Str::~Str() {
 		delete[] data;
+	}
+
+
+	SerializableObject::Bytes::Bytes() :
+		_data(nullptr),
+		_size(0) {
+		ref();
+	}
+
+	SerializableObject::Bytes::Bytes(const uint8_t* data, size_t size) :
+		_size(size) {
+
+		if (size) {
+			_data = new uint8_t[size];
+			memcpy(_data, data, size);
+		} else {
+			_data = nullptr;
+		}
+
+		ref();
+	}
+
+	SerializableObject::Bytes::~Bytes() {
+		if (_data != nullptr) delete[] _data;
+	}
+
+	void SerializableObject::Bytes::setValue(const uint8_t* data, size_t size) {
+		if (!size) {
+			clear();
+		} else {
+			if (_data == nullptr) {
+				_size = size;
+				_data = new uint8_t[_size];
+				if (data) memcpy(_data, data, _size);
+			} else if (_size == size) {
+				if (data) memcpy(_data, data, _size);
+			} else {
+				delete[] _data;
+				_size = size;
+				_data = new uint8_t[_size];
+				if (data) memcpy(_data, data, size);
+			}
+		}
 	}
 
 
@@ -566,7 +644,7 @@ namespace aurora {
 			break;
 		case Type::STRING:
 		{
-			Ref::unref(*_getValue<Str*>());
+			intrusivePtrRelease(*_getValue<Str*>());
 			_value[0] = 0;
 			_type = Type::SHORT_STRING;
 
@@ -789,7 +867,7 @@ namespace aurora {
 		switch (_type) {
 		case Type::STRING:
 		{
-			Ref::unref(*_getValue<Str*>());
+			intrusivePtrRelease(*_getValue<Str*>());
 
 			if ((flag & Flag::COPY) == Flag::COPY) {
 				if (auto size = value.size(); size < VALUE_SIZE) {
@@ -1293,16 +1371,16 @@ namespace aurora {
 	void SerializableObject::_freeValue() {
 		switch (_type) {
 		case Type::STRING:
-			Ref::unref(*_getValue<Str*>());
+			intrusivePtrRelease(*_getValue<Str*>());
 			break;
 		case Type::ARRAY:
-			Ref::unref(*_getValue<Array*>());
+			intrusivePtrRelease(*_getValue<Array*>());
 			break;
 		case Type::MAP:
-			Ref::unref(*_getValue<Map*>());
+			intrusivePtrRelease(*_getValue<Map*>());
 			break;
 		case Type::BYTES:
-			Ref::unref(*_getValue<Bytes*>());
+			intrusivePtrRelease(*_getValue<Bytes*>());
 			break;
 		case Type::EXT_BYTES:
 			break;

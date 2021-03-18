@@ -7,21 +7,21 @@
 namespace aurora::render {
 	class AE_FW_DLL RenderTag {
 	public:
-		struct AE_FW_DLL std_comparer {
+		struct AE_FW_DLL StdComparer {
 			inline bool AE_CALL operator()(const RenderTag& value1, const RenderTag& value2) const {
 				return value1._value < value2._value;
 			}
 		};
 
 
-		struct AE_FW_DLL std_unordered_comparer {
+		struct AE_FW_DLL StdUnorderedComparer {
 			inline bool AE_CALL operator()(const RenderTag& value1, const RenderTag& value2) const {
 				return value1 == value2;
 			}
 		};
 
 
-		struct AE_FW_DLL std_unordered_hasher {
+		struct AE_FW_DLL StdUnorderedHasher {
 			inline size_t AE_CALL operator()(const RenderTag& value) const {
 				return std::hash<uint64_t>{}(value._value);
 			}
@@ -60,7 +60,8 @@ namespace aurora::render {
 	};
 
 
-	class AE_FW_DLL RenderTagCollection : public Ref {
+	class AE_FW_DLL RenderTagCollection {
+		AE_REF_OBJECT(RenderTagCollection)
 	public:
 		inline void AE_CALL add(const RenderTag& tag) {
 			_tags.emplace(tag);
@@ -75,6 +76,6 @@ namespace aurora::render {
 		}
 
 	private:
-		std::unordered_set<RenderTag, RenderTag::std_unordered_hasher, RenderTag::std_unordered_comparer> _tags;
+		std::unordered_set<RenderTag, RenderTag::StdUnorderedHasher, RenderTag::StdUnorderedComparer> _tags;
 	};
 }

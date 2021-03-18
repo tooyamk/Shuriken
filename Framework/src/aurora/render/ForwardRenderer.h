@@ -28,7 +28,9 @@ namespace aurora::render {
 		virtual void AE_CALL postRender() override;
 
 	protected:
-		struct LightData : public Ref {
+		struct LightData {
+			AE_REF_OBJECT(LightData)
+		public:
 			LightData() :
 				param(new ShaderParameter()),
 				paramCollection(new ShaderParameterCollection()),

@@ -266,7 +266,7 @@ namespace aurora {
 	public:
 		virtual ~IVertexBufferGetter() {}
 
-		virtual IntrusivePtr<modules::graphics::IVertexBuffer> AE_CALL get(const query_string& name) const = 0;
+		virtual IntrusivePtr<modules::graphics::IVertexBuffer> AE_CALL get(const QueryString& name) const = 0;
 	};
 
 
@@ -274,10 +274,10 @@ namespace aurora {
 	public:
 		~VertexBufferCollection();
 
-		virtual IntrusivePtr<modules::graphics::IVertexBuffer> AE_CALL get(const query_string& name) const override;
-		void AE_CALL set(const query_string& name, modules::graphics::IVertexBuffer* buffer);
+		virtual IntrusivePtr<modules::graphics::IVertexBuffer> AE_CALL get(const QueryString& name) const override;
+		void AE_CALL set(const QueryString& name, modules::graphics::IVertexBuffer* buffer);
 
-		inline IntrusivePtr<modules::graphics::IVertexBuffer> AE_CALL remove(const query_string& name) {
+		inline IntrusivePtr<modules::graphics::IVertexBuffer> AE_CALL remove(const QueryString& name) {
 			return _remove(name);
 		}
 		inline bool AE_CALL isEmpty() const {
@@ -288,8 +288,8 @@ namespace aurora {
 		}
 
 	private:
-		string_unordered_map<IntrusivePtr<modules::graphics::IVertexBuffer>> _buffers;
+		StringUnorderedMap<IntrusivePtr<modules::graphics::IVertexBuffer>> _buffers;
 
-		modules::graphics::IVertexBuffer* AE_CALL _remove(const query_string& name);
+		modules::graphics::IVertexBuffer* AE_CALL _remove(const QueryString& name);
 	};
 }

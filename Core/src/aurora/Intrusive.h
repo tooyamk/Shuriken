@@ -3,50 +3,51 @@
 #include "aurora/Global.h"
 #include <atomic>
 
+#define AE_REF_OBJECT(__CLASS__) \
+protected: \
+	std::atomic_uint32_t _refCount = 0; \
+public: \
+	inline uint32_t AE_CALL getReferenceCount() const { return _refCount.load(std::memory_order_acquire); } \
+	inline void AE_CALL ref() { _refCount.fetch_add(1, std::memory_order_release); } \
+	template<typename T> \
+	inline T* AE_CALL ref() { \
+		ref(); \
+		return (T*)this; \
+	} \
+	template<bool AutoDelete = true> \
+	inline static void AE_CALL unref(__CLASS__& target) { \
+		if constexpr (AutoDelete) { \
+			if (target._refCount.fetch_sub(1) <= 1) { delete &target; } \
+		} else { \
+			target._refCount.fetch_sub(1); \
+		} \
+	} \
+private:
+
 namespace aurora {
-	class AE_CORE_DLL Ref {
-	public:
-		Ref() :
-			_refCount(0) {
-		}
-
-		virtual ~Ref() {
-		}
-
-		inline void AE_CALL ref() {
-			_refCount.fetch_add(1, std::memory_order_release);
-		}
-
-		template<typename T>
-		inline T* AE_CALL ref() {
-			ref();
-			return (T*)this;
-		}
-
-		inline uint32_t AE_CALL getReferenceCount() const {
-			return _refCount.load(std::memory_order_acquire);
-		}
-
-		template<bool AutoDelete = true>
-		inline static void AE_CALL unref(const Ref& target) {
-			if constexpr (AutoDelete) {
-				if (target._refCount.fetch_sub(1) <= 1) delete &target;
-			} else {
-				target._refCount.fetch_sub(1);
-			}
-		}
-
-	protected:
-		mutable std::atomic_uint32_t _refCount;
+	template<typename T>
+	concept IntrusivePtrOperableObject = requires(T t) {
+		t.ref();
+		std::remove_cvref_t<T>::unref(t);
 	};
 
 
-	inline void AE_CALL intrusivePtrAddRef(Ref& val) {
+	class AE_CORE_DLL Ref {
+		AE_REF_OBJECT(Ref)
+	public:
+		virtual ~Ref() {
+		}
+	};
+
+
+	template<IntrusivePtrOperableObject T>
+	inline void AE_CALL intrusivePtrAddRef(T& val) {
 		val.ref();
 	}
 
-	inline void AE_CALL intrusivePtrRelease(Ref& val) {
-		Ref::unref(val);
+	template<IntrusivePtrOperableObject T>
+	inline void AE_CALL intrusivePtrRelease(T& val) {
+		std::remove_cvref_t<T>::unref(val);
 	}
 
 
@@ -71,12 +72,12 @@ namespace aurora {
 
 		IntrusivePtr(T* target) :
 			_target(target) {
-			if (target) intrusivePtrAddRef(*_target);
+			if (_target) intrusivePtrAddRef(*_target);
 		}
 
 		IntrusivePtr(T& target) :
 			_target(&target) {
-			intrusivePtrAddRef(*_target);
+			intrusivePtrAddRef(target);
 		}
 
 		~IntrusivePtr() {
@@ -145,7 +146,7 @@ namespace aurora {
 
 		inline void AE_CALL set(T* target) {
 			if (_target != target) {
-				if (target) intrusivePtrAddRef(*_target);
+				if (target) intrusivePtrAddRef(*target);
 				if (_target) intrusivePtrRelease(*_target);
 				_target = target;
 			}
@@ -153,7 +154,7 @@ namespace aurora {
 
 		inline void AE_CALL set(T& target) {
 			if (_target != &target) {
-				intrusivePtrAddRef(_target);
+				intrusivePtrAddRef(target);
 				if (_target) intrusivePtrRelease(*_target);
 				_target = &target;
 			}

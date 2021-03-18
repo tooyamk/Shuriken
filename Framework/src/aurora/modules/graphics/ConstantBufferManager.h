@@ -93,7 +93,8 @@ namespace aurora::modules::graphics {
 		void AE_CALL _unregisterShareConstantLayout(uint32_t size);
 
 
-		class ExclusiveConstNode : public Ref {
+		class ExclusiveConstNode {
+			AE_REF_OBJECT(ExclusiveConstNode)
 		public:
 			ExclusiveConstNode() :
 				numAssociativeBuffers(0),

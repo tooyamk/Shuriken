@@ -3,7 +3,8 @@
 #include "aurora/modules/graphics/IGraphicsModule.h"
 
 namespace aurora::render {
-	class AE_FW_DLL RenderState : public Ref {
+	class AE_FW_DLL RenderState {
+		AE_REF_OBJECT(RenderState)
 	public:
 		struct {
 			IntrusivePtr<modules::graphics::IBlendState> state;

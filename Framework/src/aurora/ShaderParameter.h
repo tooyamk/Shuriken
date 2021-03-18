@@ -37,7 +37,8 @@ namespace aurora {
 	};
 
 
-	class AE_FW_DLL ShaderParameter : public Ref {
+	class AE_FW_DLL ShaderParameter {
+		AE_REF_OBJECT(ShaderParameter)
 	public:
 		using EXCLUSIVE_FN = void(*)(void* data, const ShaderParameter& param);
 
@@ -78,12 +79,12 @@ namespace aurora {
 		}
 
 		template<typename T>
-		inline ShaderParameter& AE_CALL set(arithmetic_t<T> value, ShaderParameterUpdateBehavior updateBehavior = ShaderParameterUpdateBehavior::CHECK) {
+		inline ShaderParameter& AE_CALL set(ArithmeticType<T> value, ShaderParameterUpdateBehavior updateBehavior = ShaderParameterUpdateBehavior::CHECK) {
 			_set(&value, sizeof(value), sizeof(value), ShaderParameterType::DATA, true, updateBehavior);
 			return *this;
 		}
 		template<typename T>
-		inline ShaderParameter& AE_CALL set(arithmetic_t<T>* value, uint32_t size, uint16_t perElementSize, bool copy, ShaderParameterUpdateBehavior updateBehavior = ShaderParameterUpdateBehavior::CHECK) {
+		inline ShaderParameter& AE_CALL set(ArithmeticType<T>* value, uint32_t size, uint16_t perElementSize, bool copy, ShaderParameterUpdateBehavior updateBehavior = ShaderParameterUpdateBehavior::CHECK) {
 			_set(value, size, perElementSize, ShaderParameterType::DATA, copy, updateBehavior);
 			return *this;
 		}
@@ -195,8 +196,8 @@ namespace aurora {
 	public:
 		virtual ~IShaderParameterGetter() {}
 
-		virtual IntrusivePtr<ShaderParameter> AE_CALL get(const query_string& name) const = 0;
-		virtual IntrusivePtr<ShaderParameter> AE_CALL get(const query_string& name, ShaderParameterType type) const = 0;
+		virtual IntrusivePtr<ShaderParameter> AE_CALL get(const QueryString& name) const = 0;
+		virtual IntrusivePtr<ShaderParameter> AE_CALL get(const QueryString& name, ShaderParameterType type) const = 0;
 	};
 
 
@@ -204,11 +205,11 @@ namespace aurora {
 	public:
 		virtual ~ShaderParameterCollection() {}
 
-		virtual IntrusivePtr<ShaderParameter> AE_CALL get(const query_string& name) const override;
-		virtual IntrusivePtr<ShaderParameter> AE_CALL get(const query_string& name, ShaderParameterType type) const override;
+		virtual IntrusivePtr<ShaderParameter> AE_CALL get(const QueryString& name) const override;
+		virtual IntrusivePtr<ShaderParameter> AE_CALL get(const QueryString& name, ShaderParameterType type) const override;
 
-		ShaderParameter* AE_CALL set(const query_string& name, ShaderParameter* parameter);
-		inline IntrusivePtr<ShaderParameter> AE_CALL remove(const query_string& name) {
+		ShaderParameter* AE_CALL set(const QueryString& name, ShaderParameter* parameter);
+		inline IntrusivePtr<ShaderParameter> AE_CALL remove(const QueryString& name) {
 			return _remove(name);
 		}
 		inline bool AE_CALL isEmpty() const {
@@ -219,9 +220,9 @@ namespace aurora {
 		}
 
 	protected:
-		string_unordered_map<IntrusivePtr<ShaderParameter>> _parameters;
+		StringUnorderedMap<IntrusivePtr<ShaderParameter>> _parameters;
 
-		ShaderParameter* AE_CALL _remove(const query_string& name);
+		ShaderParameter* AE_CALL _remove(const QueryString& name);
 	};
 
 
@@ -229,8 +230,8 @@ namespace aurora {
 	public:
 		virtual ~ShaderParameterGetterStack() {}
 
-		virtual IntrusivePtr<ShaderParameter> AE_CALL get(const query_string& name) const override;
-		virtual IntrusivePtr<ShaderParameter> AE_CALL get(const query_string& name, ShaderParameterType type) const override;
+		virtual IntrusivePtr<ShaderParameter> AE_CALL get(const QueryString& name) const override;
+		virtual IntrusivePtr<ShaderParameter> AE_CALL get(const QueryString& name, ShaderParameterType type) const override;
 
 		inline bool AE_CALL push(IShaderParameterGetter* getter) {
 			if (getter) {

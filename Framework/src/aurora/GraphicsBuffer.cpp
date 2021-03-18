@@ -222,12 +222,12 @@ namespace aurora {
 		clear();
 	}
 
-	IntrusivePtr<modules::graphics::IVertexBuffer> VertexBufferCollection::get(const query_string& name) const {
+	IntrusivePtr<modules::graphics::IVertexBuffer> VertexBufferCollection::get(const QueryString& name) const {
 		auto itr = _buffers.find(name);
 		return itr == _buffers.end() ? nullptr : itr->second;
 	}
 
-	void VertexBufferCollection::set(const query_string& name, modules::graphics::IVertexBuffer* buffer) {
+	void VertexBufferCollection::set(const QueryString& name, modules::graphics::IVertexBuffer* buffer) {
 		if (buffer) {
 			if (auto itr = _buffers.find(name); itr == _buffers.end()) {
 				_buffers.emplace(name, buffer);
@@ -239,7 +239,7 @@ namespace aurora {
 		}
 	}
 
-	modules::graphics::IVertexBuffer* VertexBufferCollection::_remove(const query_string& name) {
+	modules::graphics::IVertexBuffer* VertexBufferCollection::_remove(const QueryString& name) {
 		if (auto itr = _buffers.find(name); itr == _buffers.end()) {
 			auto val = itr->second;
 			_buffers.erase(itr);

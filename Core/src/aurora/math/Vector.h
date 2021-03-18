@@ -16,7 +16,7 @@ namespace aurora {
 			memset(this, 0, sizeof(T) * N);
 		}
 
-		Vector(const no_init&) {}
+		Vector(const NoInit&) {}
 
 		template<size_t L, std::convertible_to<T> K>
 		Vector(const Vector<L, K>& vec) {
@@ -169,7 +169,7 @@ namespace aurora {
 		}
 
 		inline Vector<N, T> AE_CALL operator-() const {
-			Vector<N, T> val(no_init_v);
+			Vector<N, T> val(NO_INIT);
 			for (decltype(N) i = 0; i < N; ++i) val.data[i] = -data[i];
 			return val;
 		}
@@ -336,7 +336,7 @@ namespace aurora {
 
 		template<std::integral... Indices>
 		inline const Vector<sizeof...(Indices), T> AE_CALL components(Indices&&... indices) const {
-			Vector<sizeof...(Indices), T> v(no_init_v);
+			Vector<sizeof...(Indices), T> v(NO_INIT);
 			decltype(N) i = 0;
 			((v.data[i++] = data[indices]), ...);
 			return std::move(v);

@@ -61,7 +61,7 @@ public:
 
 			std::vector<IntrusivePtr<IInputModule>> inputModules;
 
-			if constexpr (environment::current_operating_system == environment::operating_system::windows) {
+			if constexpr (Environment::OPERATING_SYSTEM == Environment::OperatingSystem::WINDOWS) {
 				initInputModule(inputModules, "libs/" + getDLLName("ae-input-direct-input"), &args);
 				initInputModule(inputModules, "libs/" + getDLLName("ae-input-xinput"), &args);
 			}

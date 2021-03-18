@@ -191,7 +191,7 @@ namespace aurora {
 		 */
 		static void AE_CALL getLocalRotationFromWorld(const Node& node, const Quaternion& worldRot, Quaternion& dst);
 		inline static Quaternion AE_CALL getLocalRotationFromWorld(const Node& node, const Quaternion& worldRot) {
-			Quaternion q(no_init_v);
+			Quaternion q(NO_INIT);
 			getLocalRotationFromWorld(node, worldRot, q);
 			return q;
 		}
@@ -250,7 +250,7 @@ namespace aurora {
 		}
 
 		inline void AE_CALL _localDecomposition() {
-			Matrix34 rot(no_init_v);
+			Matrix34 rot(NO_INIT);
 			_lm.decomposition(&rot, _ls);
 			rot.toQuaternion(_lr);
 		}

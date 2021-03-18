@@ -232,17 +232,17 @@ namespace aurora {
 	}
 
 
-	IntrusivePtr<ShaderParameter> ShaderParameterCollection::get(const query_string& name) const {
+	IntrusivePtr<ShaderParameter> ShaderParameterCollection::get(const QueryString& name) const {
 		auto itr = _parameters.find(name);
 		return itr == _parameters.end() ? nullptr : itr->second;
 	}
 
-	IntrusivePtr<ShaderParameter> ShaderParameterCollection::get(const query_string& name, ShaderParameterType type) const {
+	IntrusivePtr<ShaderParameter> ShaderParameterCollection::get(const QueryString& name, ShaderParameterType type) const {
 		auto itr = _parameters.find(name);
 		return itr == _parameters.end() ? nullptr : (itr->second->getType() == type ? itr->second : nullptr);
 	}
 
-	ShaderParameter* AE_CALL ShaderParameterCollection::set(const query_string& name, ShaderParameter* parameter) {
+	ShaderParameter* AE_CALL ShaderParameterCollection::set(const QueryString& name, ShaderParameter* parameter) {
 		if (parameter) {
 			if (auto itr = _parameters.find(name); itr == _parameters.end()) {
 				_parameters.emplace(name, parameter);
@@ -256,7 +256,7 @@ namespace aurora {
 		return parameter;
 	}
 
-	ShaderParameter* ShaderParameterCollection::_remove(const query_string& name) {
+	ShaderParameter* ShaderParameterCollection::_remove(const QueryString& name) {
 		if (auto itr = _parameters.find(name); itr == _parameters.end()) {
 			auto val = itr->second;
 			_parameters.erase(itr);
@@ -267,7 +267,7 @@ namespace aurora {
 	}
 
 
-	IntrusivePtr<ShaderParameter> ShaderParameterGetterStack::get(const query_string& name) const {
+	IntrusivePtr<ShaderParameter> ShaderParameterGetterStack::get(const QueryString& name) const {
 		auto i = _stack.size();
 		while (i--) {
 			if (_stack[i]) {
@@ -277,7 +277,7 @@ namespace aurora {
 		return nullptr;
 	}
 
-	IntrusivePtr<ShaderParameter> ShaderParameterGetterStack::get(const query_string& name, ShaderParameterType type) const {
+	IntrusivePtr<ShaderParameter> ShaderParameterGetterStack::get(const QueryString& name, ShaderParameterType type) const {
 		auto i = _stack.size();
 		while (i--) {
 			if (_stack[i]) {
