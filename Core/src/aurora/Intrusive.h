@@ -7,8 +7,8 @@
 protected: \
 	std::atomic_uint32_t _refCount = 0; \
 public: \
-	inline uint32_t AE_CALL getReferenceCount() const { return _refCount.load(std::memory_order_acquire); } \
-	inline void AE_CALL ref() { _refCount.fetch_add(1, std::memory_order_release); } \
+	inline uint32_t AE_CALL getReferenceCount() const { return _refCount.load(std::memory_order::acquire); } \
+	inline void AE_CALL ref() { _refCount.fetch_add(1, std::memory_order::release); } \
 	template<typename T> \
 	inline T* AE_CALL ref() { \
 		ref(); \

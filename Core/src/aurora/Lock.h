@@ -23,14 +23,14 @@ namespace aurora {
 
 		template<bool LocalBlock = GlobalBlock>
 		inline bool AE_CALL lock() {
-			while (_flag.test_and_set(std::memory_order_acquire)) {
+			while (_flag.test_and_set(std::memory_order::acquire)) {
 				if constexpr (!LocalBlock) return false;
 			}
 			return true;
 		}
 
 		inline void AE_CALL unlock() {
-			_flag.clear(std::memory_order_release);
+			_flag.clear(std::memory_order::release);
 		}
 
 	private:
@@ -52,7 +52,7 @@ namespace aurora {
 			auto cur = std::this_thread::get_id();
 
 			do {
-				if (auto t = std::thread::id(); _owner.compare_exchange_weak(t, cur, std::memory_order_release, std::memory_order_relaxed) || t == cur) break;
+				if (auto t = std::thread::id(); _owner.compare_exchange_weak(t, cur, std::memory_order::release, std::memory_order::relaxed) || t == cur) break;
 
 				if constexpr (!LocalBlock) return false;
 			} while (true);
@@ -64,13 +64,13 @@ namespace aurora {
 			/*
 			do {
 				uint32_t zero = 0;
-				if (_rc.compare_exchange_weak(zero, 1, std::memory_order_acquire, std::memory_order_relaxed)) {
-					_owner.store(cur, std::memory_order_relaxed);
+				if (_rc.compare_exchange_weak(zero, 1, std::memory_order::acquire, std::memory_order::relaxed)) {
+					_owner.store(cur, std::memory_order::relaxed);
 					break;
 				}
 
-				if (_owner.load(std::memory_order_acquire) == cur) {
-					_rc.fetch_add(1, std::memory_order_relaxed);
+				if (_owner.load(std::memory_order::acquire) == cur) {
+					_rc.fetch_add(1, std::memory_order::relaxed);
 					break;
 				};
 
@@ -80,13 +80,13 @@ namespace aurora {
 
 			/*
 			do {
-				auto old = _lock.exchange(true, std::memory_order::memory_order_acquire);
+				auto old = _lock.exchange(true, std::memory_order::acquire);
 				if (!old) {
-					_owner.store(cur, std::memory_order::memory_order_relaxed);
+					_owner.store(cur, std::memory_order::relaxed);
 					break;
 				}
 
-				if (_owner.load(std::memory_order::memory_order_acquire) == cur) break;
+				if (_owner.load(std::memory_order::acquire) == cur) break;
 
 				if constexpr (!Spin) std::this_thread::yield();
 			} while (true);
@@ -96,12 +96,12 @@ namespace aurora {
 		}
 
 		inline void AE_CALL unlock() {
-			if (!--_rc) _owner.store(std::thread::id(), std::memory_order::memory_order_release);
-			//_rc.fetch_sub(1, std::memory_order_relaxed);
+			if (!--_rc) _owner.store(std::thread::id(), std::memory_order::release);
+			//_rc.fetch_sub(1, std::memory_order::relaxed);
 			/*
 			if (!--_rc) {
-				_owner.store(std::thread::id(), std::memory_order::memory_order_relaxed);
-				_lock.store(false, std::memory_order::memory_order_release);
+				_owner.store(std::thread::id(), std::memory_order::relaxed);
+				_lock.store(false, std::memory_order::release);
 			}
 			*/
 		}
@@ -128,7 +128,7 @@ namespace aurora {
 			//auto cur = std::this_thread::get_id();
 
 			do {
-				uint32_t rc = _rc.load(std::memory_order_acquire);
+				uint32_t rc = _rc.load(std::memory_order::acquire);
 				if (rc == 0) {
 					if constexpr (!LocalBlock) return false;
 					continue;
@@ -143,7 +143,7 @@ namespace aurora {
 		}
 
 		inline void AE_CALL readUnlock() {
-			_rc.fetch_sub(1, std::memory_order_release);
+			_rc.fetch_sub(1, std::memory_order::release);
 		}
 
 		template<bool LocalBlock = WriteGlobalBlock>
@@ -151,7 +151,7 @@ namespace aurora {
 			auto cur = std::this_thread::get_id();
 
 			do {
-				if (_rc.load(std::memory_order_acquire) > 1) {
+				if (_rc.load(std::memory_order::acquire) > 1) {
 					if constexpr (!LocalBlock) return false;
 					continue;
 				}
@@ -162,7 +162,7 @@ namespace aurora {
 					continue;
 				}
 
-				if (auto t = std::thread::id(); _writer.compare_exchange_weak(t, cur, std::memory_order_release, std::memory_order_relaxed) || t == cur) break;
+				if (auto t = std::thread::id(); _writer.compare_exchange_weak(t, cur, std::memory_order::release, std::memory_order::relaxed) || t == cur) break;
 
 				if constexpr (!LocalBlock) return false;
 			} while (true);
@@ -174,8 +174,8 @@ namespace aurora {
 
 		inline void AE_CALL writeUnlock() {
 			if (!--_wrc) {
-				_writer.store(std::thread::id(), std::memory_order_release);
-				_rc.store(1, std::memory_order_release);
+				_writer.store(std::thread::id(), std::memory_order::release);
+				_rc.store(1, std::memory_order::release);
 			}
 		}
 
