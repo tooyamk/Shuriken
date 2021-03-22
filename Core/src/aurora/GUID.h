@@ -30,7 +30,9 @@ namespace aurora::modules::inputs {
 		}
 
 		template<bool LowCompare, bool HighCompare>
-		bool AE_CALL isEqual(const uint8_t* data, uint32_t len, uint32_t offset = 0, uint8_t lowCompareVal = 0, uint8_t highCompareVal = 0) const {
+		bool AE_CALL isEqual(const void* data, uint32_t len, uint32_t offset = 0, uint8_t lowCompareVal = 0, uint8_t highCompareVal = 0) const {
+			auto data8 = (const uint8_t*)data;
+
 			if constexpr (LowCompare) {
 				if (offset) {
 					uint32_t end = offset > N ? N : offset;
@@ -44,9 +46,9 @@ namespace aurora::modules::inputs {
 				uint32_t end = offset + len;
 				if (end > N) end = N;
 
-				if (data) {
+				if (data8) {
 					for (uint32_t i = offset; i < end; ++i) {
-						if (_data[i] != data[i - offset]) return false;
+						if (_data[i] != data8[i - offset]) return false;
 					}
 				}
 

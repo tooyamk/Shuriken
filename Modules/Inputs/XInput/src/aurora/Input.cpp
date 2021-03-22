@@ -25,7 +25,7 @@ namespace aurora::modules::inputs::xinput {
 			if (XInputGetState(i, &state) == ERROR_SUCCESS) {
 				bool found = false;
 				for (size_t j = 0, n = _devices.size(); j < n; ++j) {
-					if (_devices[j].guid.isEqual<false, true>((const uint8_t*)&guid, sizeof(guid))) {
+					if (_devices[j].guid.isEqual<false, true>(&guid, sizeof(guid))) {
 						_keepDevices.emplace_back(j);
 						found = true;
 						break;
@@ -34,7 +34,7 @@ namespace aurora::modules::inputs::xinput {
 
 				if (!found) {
 					auto& info = _newDevices.emplace_back();
-					info.guid.set<false, true>((const uint8_t*)&guid, sizeof(guid));
+					info.guid.set<false, true>(&guid, sizeof(guid));
 					info.type = DeviceType::GAMEPAD;
 				}
 			}

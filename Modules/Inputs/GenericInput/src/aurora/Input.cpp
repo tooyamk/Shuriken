@@ -62,22 +62,29 @@ namespace aurora::modules::inputs::generic_input {
 	}
 
 	void Input::_checkDevice(libusb_device* device) {
+		using namespace std::literals;
+
 		libusb_device_handle* handle = nullptr;
 		
-		libusb_device_descriptor desc;
-		libusb_get_device_descriptor(device, &desc);
+		libusb_device_descriptor devDesc;
+		libusb_get_device_descriptor(device, &devDesc);
 
-		if (desc.bDeviceClass != libusb_class_code::LIBUSB_CLASS_PER_INTERFACE || desc.bDeviceSubClass != libusb_class_code::LIBUSB_CLASS_PER_INTERFACE || desc.bDeviceSubClass != libusb_class_code::LIBUSB_CLASS_PER_INTERFACE) return;
+		if (devDesc.bDeviceClass != libusb_class_code::LIBUSB_CLASS_PER_INTERFACE || devDesc.bDeviceSubClass != libusb_class_code::LIBUSB_CLASS_PER_INTERFACE || devDesc.bDeviceSubClass != libusb_class_code::LIBUSB_CLASS_PER_INTERFACE) return;
 
 		DeviceGUID guid(NO_INIT);
-		_calcGUID(device, desc, guid);
+		_calcGUID(device, devDesc, guid);
 
 		if (libusb_open(device, &handle) != LIBUSB_SUCCESS) return;
 
-		printdln("Device ", ": VendorID = ", desc.idVendor, "  ProductID = ", desc.idProduct, "  NumConfs = ", desc.bNumConfigurations, "  bus = ", libusb_get_bus_number(device), "  Device{Cls = ", desc.bDeviceClass, "  SubCls = ", desc.bDeviceSubClass, "  Protocol = ", desc.bDeviceProtocol, "}");
+		printdln("Device ", ": VendorID = ", devDesc.idVendor, "  ProductID = ", devDesc.idProduct, "  NumConfs = ", devDesc.bNumConfigurations, "  bus = ", libusb_get_bus_number(device), "  Device{Cls = ", devDesc.bDeviceClass, "  SubCls = ", devDesc.bDeviceSubClass, "  Protocol = ", devDesc.bDeviceProtocol, "}");
+
+		std::string_view HID_REPORT_ITEM_TYPE[] = {"main"sv, "global"sv, "local"sv};
+		std::string_view HID_REPORT_MAIN_ITEM_TAG[] = { "input"sv, "output"sv, "collection"sv, "feature"sv , "end_collection"sv };
+		std::string_view HID_REPORT_GLOBAL_ITEM_TAG[] = { "usage_page"sv, "logical_minimum"sv, "logical_maximum"sv, "physical_minimum"sv , "physical_maximum"sv, "unit_exponent"sv, "unit"sv, "report_size"sv, "report_id"sv, "report_count"sv };
+		std::string_view HID_REPORT_LOCAL_ITEM_TAG[] = { "usage"sv, "usage_minimum"sv, "uaage_maximum"sv };
 
 		InternalDeviceInfo best;
-		for (size_t i = 0; i < desc.bNumConfigurations; ++i) {
+		for (size_t i = 0; i < devDesc.bNumConfigurations; ++i) {
 			libusb_config_descriptor* conf = nullptr;
 			InternalDeviceInfo cur;
 
@@ -90,20 +97,108 @@ namespace aurora::modules::inputs::generic_input {
 					auto& interface = conf->interface[j];
 					
 					for (decltype(interface.num_altsetting) k = 0; k < interface.num_altsetting; ++k) {
-						auto& desc = interface.altsetting[k];
-						if (desc.bNumEndpoints && desc.bInterfaceClass == libusb_class_code::LIBUSB_CLASS_HID) {
-							if (desc.bInterfaceSubClass == 1) {
-								if (desc.bInterfaceProtocol == 1) {
+						auto& interfaceDesc = interface.altsetting[k];
+						if (interfaceDesc.bNumEndpoints && interfaceDesc.bInterfaceClass == libusb_class_code::LIBUSB_CLASS_HID) {
+							if (interfaceDesc.bInterfaceSubClass == 1) {
+								if (interfaceDesc.bInterfaceProtocol == 1) {
 									++cur.score;
-								} else if (desc.bInterfaceProtocol == 2) {
+								} else if (interfaceDesc.bInterfaceProtocol == 2) {
 									++cur.score;
 								}
 							}
 
-							printdln("    Interface ", j, " ", k, " : Len = ", desc.bLength, "  AlternateSetting = ", desc.bAlternateSetting, "  NumEps = ", desc.bNumEndpoints, "  Interface{Number = ", desc.bInterfaceNumber, "  Cls = ", desc.bInterfaceClass, "  SubCls = ", desc.bInterfaceSubClass, "  Protocol = ", desc.bInterfaceProtocol, "}");
+							//auto nnn = sizeof(Str1);
+							uint8_t buf[256];
+							if (auto ret = libusb_get_descriptor(handle, libusb_descriptor_type::LIBUSB_DT_HID, 0, buf, sizeof(buf)); ret) {
+								HIDDescriptor hidDesc;
+								hidDesc.set(buf, ret);
 
-							for (size_t l = 0; l < desc.bNumEndpoints; ++l) {
-								auto& ep = desc.endpoint[l];
+								if (hidDesc.bNumDescriptors > 0 && hidDesc.DescriptorList[0].bType == libusb_descriptor_type::LIBUSB_DT_REPORT) {
+									if (auto ret = libusb_get_descriptor(handle, libusb_descriptor_type::LIBUSB_DT_REPORT, 0, buf, sizeof(buf)); ret) {
+										ByteArray ba(buf, ret, ByteArray::Usage::SHARED);
+										while (ba.getBytesAvailable()) {
+											uint8_t item = ba.read<uint8_t>();
+											auto size = item & 0b11;
+											auto type = item >> 2 & 0b11;
+											auto tag = item >> 4 & 0b1111;
+
+											if (type == 3 && tag == 0xF) {
+												size = ba.read<uint8_t>();
+												tag = ba.read<uint8_t>();
+											}
+
+											std::string info = "item(";
+
+											switch ((HIDReportItemType)type) {
+											case HIDReportItemType::MAIN:
+											{
+												info += "main ";
+												if (tag >= (uint8_t)HIDReportMainItemTag::BEGIN && tag <= (uint8_t)HIDReportMainItemTag::END) {
+													info += HID_REPORT_MAIN_ITEM_TAG[tag - (uint8_t)HIDReportMainItemTag::BEGIN];
+												} else {
+													info += String::toString(tag);
+												}
+
+
+												break;
+											}
+											case HIDReportItemType::GLOBAL:
+											{
+												info += "global ";
+												if (tag >= (uint8_t)HIDReportGlobalItemTag::BEGIN && tag <= (uint8_t)HIDReportGlobalItemTag::END) {
+													info += HID_REPORT_GLOBAL_ITEM_TAG[tag - (uint8_t)HIDReportGlobalItemTag::BEGIN];
+												} else {
+													info += String::toString(tag);
+												}
+
+												break;
+											}
+											case HIDReportItemType::LOCAL:
+											{
+												info += "local ";
+												if (tag >= (uint8_t)HIDReportLocalItemTag::BEGIN && tag <= (uint8_t)HIDReportLocalItemTag::END) {
+													info += HID_REPORT_LOCAL_ITEM_TAG[tag - (uint8_t)HIDReportLocalItemTag::BEGIN];
+												} else {
+													info += String::toString(tag);
+												}
+
+												break;
+											}
+											default:
+												info += "unknown";
+												break;
+											}
+
+											info += " " + String::toString(size) + ")";
+
+											if (size) {
+												info += " ";
+												for (size_t i = 0; i < size; ++i) {
+													info += String::toString(ba.read<uint8_t>()) + " ";
+												}
+											}
+
+											printdln(info);
+
+											//printdln((type == 0 ? ""sv : (type == 1 ? "  "sv : "    "sv)), "type = ", HID_REPORT_ITEM_TYPE[type], "  tag = ", (tag < 8 || tag > 12 ? String::toString(tag) : HID_REPORT_MAIN_ITEM_TAG[tag - 8]));
+
+											//ba.skip(size);
+										}
+
+										int a = 1;
+									}
+
+									int a = 1;
+								}
+
+								int a = 1;
+							}
+
+
+							printdln("    Interface ", j, " ", k, " : Len = ", interfaceDesc.bLength, "  AlternateSetting = ", interfaceDesc.bAlternateSetting, "  NumEps = ", interfaceDesc.bNumEndpoints, "  Interface{Number = ", interfaceDesc.bInterfaceNumber, "  Cls = ", interfaceDesc.bInterfaceClass, "  SubCls = ", interfaceDesc.bInterfaceSubClass, "  Protocol = ", interfaceDesc.bInterfaceProtocol, "}");
+
+							for (size_t l = 0; l < interfaceDesc.bNumEndpoints; ++l) {
+								auto& ep = interfaceDesc.endpoint[l];
 
 								printdln("      Endpoint ", l, " : Len = ", ep.bLength, "  EpAddr = ", ep.bEndpointAddress, "  Interval = ", ep.bInterval, "  Attrs = ", ep.bmAttributes, "  Refresh = ", ep.bRefresh, "  MaxPktSize = ", ep.wMaxPacketSize);
 							}

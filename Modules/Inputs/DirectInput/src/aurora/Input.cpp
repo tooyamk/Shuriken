@@ -100,14 +100,14 @@ namespace aurora::modules::inputs::direct_input {
 			auto im = (Input*)pContext;
 
 			for (size_t i = 0, n = im->_devices.size(); i < n; ++i) {
-				if (im->_devices[i].guid.isEqual<false, true>((const uint8_t*)&pdidInstance->guidProduct, sizeof(::GUID))) {
+				if (im->_devices[i].guid.isEqual<false, true>(&pdidInstance->guidProduct, sizeof(::GUID))) {
 					im->_keepDevices.emplace_back(i);
 					return DIENUM_CONTINUE;
 				}
 			}
 
 			auto& info = im->_newDevices.emplace_back();
-			info.guid.set<false, true>((const uint8_t*)&pdidInstance->guidProduct, sizeof(::GUID));
+			info.guid.set<false, true>(&pdidInstance->guidProduct, sizeof(::GUID));
 			switch (type) {
 			case DI8DEVTYPE_MOUSE:
 				info.type |= DeviceType::MOUSE;
