@@ -24,7 +24,7 @@ namespace aurora::modules::inputs::xinput {
 
 			if (XInputGetState(i, &state) == ERROR_SUCCESS) {
 				bool found = false;
-				for (uint32_t j = 0, n = _devices.size(); j < n; ++j) {
+				for (size_t j = 0, n = _devices.size(); j < n; ++j) {
 					if (_devices[j].guid.isEqual<false, true>((const uint8_t*)&guid, sizeof(guid))) {
 						_keepDevices.emplace_back(j);
 						found = true;
@@ -33,7 +33,7 @@ namespace aurora::modules::inputs::xinput {
 				}
 
 				if (!found) {
-					auto& info = _connectedDevices.emplace_back();
+					auto& info = _newDevices.emplace_back();
 					info.guid.set<false, true>((const uint8_t*)&guid, sizeof(guid));
 					info.type = DeviceType::GAMEPAD;
 				}
@@ -42,14 +42,10 @@ namespace aurora::modules::inputs::xinput {
 
 		std::vector<DeviceInfo> changed;
 		if (_keepDevices.size() < _devices.size()) {
-			uint32_t size = _keepDevices.size();
-			if (size == 0) {
-				for (auto& e : _devices) changed.emplace_back(std::move(e));
-				_devices.clear();
-			} else {
+			if (auto size = _keepDevices.size(); size) {
 				std::sort(_keepDevices.begin(), _keepDevices.end());
 
-				uint32_t i = size - 1, idx = _devices.size() - 1;
+				auto i = size - 1, idx = _devices.size() - 1;
 				do {
 					do {
 						if (idx > i) {
@@ -64,21 +60,24 @@ namespace aurora::modules::inputs::xinput {
 
 					if (i-- == 0) break;
 				} while (true);
+			} else {
+				for (auto& e : _devices) changed.emplace_back(std::move(e));
+				_devices.clear();
 			}
 		}
 		_keepDevices.clear();
 
-		uint32_t connectedIdx = changed.size();
-		if (_connectedDevices.size() > 0) {
-			for (auto& e : _connectedDevices) {
+		auto connectedIdx = changed.size();
+		if (_newDevices.size() > 0) {
+			for (auto& e : _newDevices) {
 				_devices.emplace_back(e);
 				changed.emplace_back(std::move(e));
 			}
-			_connectedDevices.clear();
+			_newDevices.clear();
 		}
 
-		for (uint32_t i = 0; i < connectedIdx; ++i) _eventDispatcher.dispatchEvent(this, ModuleEvent::DISCONNECTED, &changed[i]);
-		for (uint32_t i = connectedIdx, n = changed.size(); i < n; ++i) _eventDispatcher.dispatchEvent(this, ModuleEvent::CONNECTED, &changed[i]);
+		for (decltype(connectedIdx) i = 0; i < connectedIdx; ++i) _eventDispatcher.dispatchEvent(this, ModuleEvent::DISCONNECTED, &changed[i]);
+		for (auto i = connectedIdx, n = changed.size(); i < n; ++i) _eventDispatcher.dispatchEvent(this, ModuleEvent::CONNECTED, &changed[i]);
 	}
 
 	IInputDevice* Input::createDevice(const DeviceGUID& guid) {

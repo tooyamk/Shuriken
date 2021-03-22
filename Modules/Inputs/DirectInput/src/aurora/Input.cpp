@@ -27,14 +27,10 @@ namespace aurora::modules::inputs::direct_input {
 
 		std::vector<DeviceInfo> changed;
 		if (_keepDevices.size() < _devices.size()) {
-			uint32_t size = _keepDevices.size();
-			if (size == 0) {
-				for (auto& e : _devices) changed.emplace_back(std::move(e));
-				_devices.clear();
-			} else {
+			if (auto size = _keepDevices.size(); size) {
 				std::sort(_keepDevices.begin(), _keepDevices.end());
 
-				uint32_t i = size - 1, idx = _devices.size() - 1;
+				auto i = size - 1, idx = _devices.size() - 1;
 				do {
 					do {
 						if (idx > i) {
@@ -49,21 +45,24 @@ namespace aurora::modules::inputs::direct_input {
 
 					if (i-- == 0) break;
 				} while (true);
+			} else {
+				for (auto& e : _devices) changed.emplace_back(std::move(e));
+				_devices.clear();
 			}
 		}
 		_keepDevices.clear();
 
-		uint32_t connectedIdx = changed.size();
-		if (_connectedDevices.size()) {
-			for (auto& e : _connectedDevices) {
+		auto connectedIdx = changed.size();
+		if (_newDevices.size()) {
+			for (auto& e : _newDevices) {
 				_devices.emplace_back(e);
 				changed.emplace_back(std::move(e));
 			}
-			_connectedDevices.clear();
+			_newDevices.clear();
 		}
 
-		for (uint32_t i = 0; i < connectedIdx; ++i) _eventDispatcher.dispatchEvent(this, ModuleEvent::DISCONNECTED, &changed[i]);
-		for (uint32_t i = connectedIdx, n = changed.size(); i < n; ++i) _eventDispatcher.dispatchEvent(this, ModuleEvent::CONNECTED, &changed[i]);
+		for (decltype(connectedIdx) i = 0; i < connectedIdx; ++i) _eventDispatcher.dispatchEvent(this, ModuleEvent::DISCONNECTED, &changed[i]);
+		for (auto i = connectedIdx, n = changed.size(); i < n; ++i) _eventDispatcher.dispatchEvent(this, ModuleEvent::CONNECTED, &changed[i]);
 	}
 
 	IInputDevice* Input::createDevice(const DeviceGUID& guid) {
@@ -100,14 +99,14 @@ namespace aurora::modules::inputs::direct_input {
 		if (type == DI8DEVTYPE_MOUSE || type == DI8DEVTYPE_KEYBOARD || type == DI8DEVTYPE_GAMEPAD) {
 			auto im = (Input*)pContext;
 
-			for (uint32_t i = 0, n = im->_devices.size(); i < n; ++i) {
+			for (size_t i = 0, n = im->_devices.size(); i < n; ++i) {
 				if (im->_devices[i].guid.isEqual<false, true>((const uint8_t*)&pdidInstance->guidProduct, sizeof(::GUID))) {
 					im->_keepDevices.emplace_back(i);
 					return DIENUM_CONTINUE;
 				}
 			}
 
-			auto& info = im->_connectedDevices.emplace_back();
+			auto& info = im->_newDevices.emplace_back();
 			info.guid.set<false, true>((const uint8_t*)&pdidInstance->guidProduct, sizeof(::GUID));
 			switch (type) {
 			case DI8DEVTYPE_MOUSE:

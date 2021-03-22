@@ -25,13 +25,13 @@ namespace aurora::modules::inputs::direct_input {
 		IntrusivePtr<Ref> _loader;
 		IntrusivePtr<IApplication> _app;
 
-		LPDIRECTINPUT8 _di;
+		events::EventDispatcher<ModuleEvent> _eventDispatcher;
 
 		std::vector<DeviceInfo> _devices;
-		std::vector<DeviceInfo> _connectedDevices;
+		std::vector<DeviceInfo> _newDevices;
 		std::vector<uint32_t> _keepDevices;
-	
-		events::EventDispatcher<ModuleEvent> _eventDispatcher;
+
+		LPDIRECTINPUT8 _di;
 
 		static BOOL CALLBACK _enumDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, LPVOID pContext);
 	};

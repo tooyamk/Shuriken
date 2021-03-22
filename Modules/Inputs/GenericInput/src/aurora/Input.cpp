@@ -1,13 +1,17 @@
 #include "Input.h"
 #include "CreateModule.h"
+#include "aurora/Debug.h"
 
 namespace aurora::modules::inputs::generic_input {
-	Input::Input(Ref* loader, IApplication* app) :
+	Input::Input(Ref* loader) :
 		_loader(loader),
-		_app(app) {
+		_context(nullptr) {
+		libusb_init(&_context);
+		libusb_set_debug(_context, 3);
 	}
 
 	Input::~Input() {
+		if (_context) libusb_exit(_context);
 	}
 
 	events::IEventDispatcher<ModuleEvent>& Input::getEventDispatcher() {
@@ -15,58 +19,102 @@ namespace aurora::modules::inputs::generic_input {
 	}
 
 	void Input::poll() {
+		if (!_context) return;
+
+		_findDevices();
+
+		//printdln("libusb Version:", LIBUSB_API_VERSION);
+
+		
 	}
 
 	IInputDevice* Input::createDevice(const DeviceGUID& guid) {
-		/*
-		printf("libusb Version:%d\n", LIBUSB_API_VERSION);
+		return nullptr;
+	}
 
-		libusb_device** devs = nullptr;
-		libusb_context* context = nullptr;
-		if (!libusb_init(&context)) {
-			auto numDevs = libusb_get_device_list(context, &devs);
-			for (size_t i = 0; i < numDevs; ++i) {
-				auto dev = devs[i];
+	void Input::_calcGUID(libusb_device* device, const libusb_device_descriptor& desc, DeviceGUID& guid) {
+		uint32_t offset = 0;
+		guid.set<false, false>(&desc.idVendor, sizeof(desc.idVendor), offset);
+		offset += sizeof(desc.idVendor);
+		guid.set<false, false>(&desc.idProduct, sizeof(desc.idProduct), offset);
+		offset += sizeof(desc.idProduct);
+		auto bus = libusb_get_bus_number(device);
+		guid.set<false, false>(&bus, sizeof(bus), offset);
+		offset += sizeof(bus);
 
-				libusb_device_handle* handle = nullptr;
-				//if (!libusb_open(dev, &handle)) {
-				libusb_device_descriptor desc;
-				libusb_get_device_descriptor(dev, &desc);
+		uint8_t ports[8];
+		auto count = libusb_get_port_numbers(device, ports, sizeof(ports));
+		if (count < 0) count = 0;
 
-				printf("Device %d: VendorID = %d  ProductID = %d  NumConfs = %d  Device{Cls = %d  SubCls = %d  Protocol = %d}\n", i, desc.idVendor, desc.idProduct, desc.bNumConfigurations, desc.bDeviceClass, desc.bDeviceSubClass, desc.bDeviceProtocol);
+		guid.set<false, true>(ports, count, offset);
+	}
 
-				for (size_t j = 0; j < desc.bNumConfigurations; ++j) {
-					libusb_config_descriptor* conf = nullptr;
-					if (!libusb_get_config_descriptor(dev, j, &conf)) {
-						printf("  Configuration %d : NumInterfaces = %d  ConfValue = %d\n", j, conf->bNumInterfaces, conf->bConfigurationValue);
+	void Input::_findDevices() {
+		libusb_device** devices = nullptr;
 
-						for (size_t k = 0; k < conf->bNumInterfaces; ++k) {
-							auto& interface = conf->interface[k];
+		auto numDevs = libusb_get_device_list(_context, &devices);
 
-							for (size_t l = 0; l < interface.num_altsetting; ++l) {
-								auto& desc = interface.altsetting[l];
-								printf("    Interface %d %d : Len = %d  AlternateSetting = %d  NumEps = %d  Interface{Number = %d  Cls = %d  SubCls = %d  Protocol = %d}\n", k, l, desc.bLength, desc.bAlternateSetting, desc.bNumEndpoints, desc.bInterfaceNumber, desc.bInterfaceClass, desc.bInterfaceSubClass, desc.bInterfaceProtocol);
+		for (size_t i = 0; i < numDevs; ++i) _checkDevice(devices[i]);
 
-								for (size_t m = 0; m < desc.bNumEndpoints; ++m) {
-									auto& ep = desc.endpoint[m];
+		libusb_free_device_list(devices, 0);
 
-									printf("      Endpoint %d : Len = %d  EpAddr = %d  Interval = %d  Attrs = %d  Refresh = %d  MaxPktSize = %d\n", m, ep.bLength, ep.bEndpointAddress, ep.bInterval, ep.bmAttributes, ep.bRefresh, ep.wMaxPacketSize);
+		int a = 1;
+	}
+
+	void Input::_checkDevice(libusb_device* device) {
+		libusb_device_handle* handle = nullptr;
+		
+		libusb_device_descriptor desc;
+		libusb_get_device_descriptor(device, &desc);
+
+		if (desc.bDeviceClass != libusb_class_code::LIBUSB_CLASS_PER_INTERFACE || desc.bDeviceSubClass != libusb_class_code::LIBUSB_CLASS_PER_INTERFACE || desc.bDeviceSubClass != libusb_class_code::LIBUSB_CLASS_PER_INTERFACE) return;
+
+		DeviceGUID guid(NO_INIT);
+		_calcGUID(device, desc, guid);
+
+		if (libusb_open(device, &handle) != LIBUSB_SUCCESS) return;
+
+		printdln("Device ", ": VendorID = ", desc.idVendor, "  ProductID = ", desc.idProduct, "  NumConfs = ", desc.bNumConfigurations, "  bus = ", libusb_get_bus_number(device), "  Device{Cls = ", desc.bDeviceClass, "  SubCls = ", desc.bDeviceSubClass, "  Protocol = ", desc.bDeviceProtocol, "}");
+
+		InternalDeviceInfo best;
+		for (size_t i = 0; i < desc.bNumConfigurations; ++i) {
+			libusb_config_descriptor* conf = nullptr;
+			InternalDeviceInfo cur;
+
+			uint8_t buf[256];
+			auto aaa = libusb_get_descriptor(handle, LIBUSB_DT_HID, 1, buf, 256);
+			if (libusb_get_config_descriptor(device, i, &conf) == LIBUSB_SUCCESS) {
+				printdln("  Configuration ", i, " : NumInterfaces = ", conf->bNumInterfaces, "  ConfValue = ", conf->bConfigurationValue);
+
+				for (decltype(conf->bNumInterfaces) j = 0; j < conf->bNumInterfaces; ++j) {
+					auto& interface = conf->interface[j];
+					
+					for (decltype(interface.num_altsetting) k = 0; k < interface.num_altsetting; ++k) {
+						auto& desc = interface.altsetting[k];
+						if (desc.bNumEndpoints && desc.bInterfaceClass == libusb_class_code::LIBUSB_CLASS_HID) {
+							if (desc.bInterfaceSubClass == 1) {
+								if (desc.bInterfaceProtocol == 1) {
+									++cur.score;
+								} else if (desc.bInterfaceProtocol == 2) {
+									++cur.score;
 								}
 							}
-						}
 
-						libusb_free_config_descriptor(conf);
+							printdln("    Interface ", j, " ", k, " : Len = ", desc.bLength, "  AlternateSetting = ", desc.bAlternateSetting, "  NumEps = ", desc.bNumEndpoints, "  Interface{Number = ", desc.bInterfaceNumber, "  Cls = ", desc.bInterfaceClass, "  SubCls = ", desc.bInterfaceSubClass, "  Protocol = ", desc.bInterfaceProtocol, "}");
+
+							for (size_t l = 0; l < desc.bNumEndpoints; ++l) {
+								auto& ep = desc.endpoint[l];
+
+								printdln("      Endpoint ", l, " : Len = ", ep.bLength, "  EpAddr = ", ep.bEndpointAddress, "  Interval = ", ep.bInterval, "  Attrs = ", ep.bmAttributes, "  Refresh = ", ep.bRefresh, "  MaxPktSize = ", ep.wMaxPacketSize);
+							}
+						}
 					}
 				}
 
-				//libusb_close(handle);
-			//}
+				libusb_free_config_descriptor(conf);
 			}
-
-			libusb_free_device_list(devs, 0);
-			libusb_exit(context);
 		}
-		*/
-		return nullptr;
+
+		libusb_close(handle);
 	}
 }

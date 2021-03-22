@@ -62,14 +62,15 @@ public:
 			std::vector<IntrusivePtr<IInputModule>> inputModules;
 
 			if constexpr (Environment::OPERATING_SYSTEM == Environment::OperatingSystem::WINDOWS) {
-				initInputModule(inputModules, "libs/" + getDLLName("ae-input-direct-input"), &args);
-				initInputModule(inputModules, "libs/" + getDLLName("ae-input-xinput"), &args);
+				//initInputModule(inputModules, "libs/" + getDLLName("ae-input-direct-input"), &args);
+				initInputModule(inputModules, "libs/" + getDLLName("ae-input-generic-input"), &args);
+				//initInputModule(inputModules, "libs/" + getDLLName("ae-input-xinput"), &args);
 			}
 
 			std::vector<IntrusivePtr<IInputDevice>> inputDevices;
 
 			for (auto& im : inputModules) {
-				im->getEventDispatcher().addEventListener(ModuleEvent::CONNECTED, createEventListener(std::function([&inputDevices, app](Event<ModuleEvent>& e) {
+				im->getEventDispatcher().addEventListener(ModuleEvent::CONNECTED, createEventListener<ModuleEvent>([&inputDevices, app](Event<ModuleEvent>& e) {
 					auto getNumInputeDevice = [&inputDevices](DeviceType type) {
 						uint32_t n = 0;
 						for (auto& dev : inputDevices) {
@@ -81,11 +82,11 @@ public:
 					auto info = e.getData<DeviceInfo>();
 					if ((info->type & (DeviceType::KEYBOARD | DeviceType::GAMEPAD)) != DeviceType::UNKNOWN) {
 						auto im = e.getTarget<IInputModule>();
-						if (getNumInputeDevice(DeviceType::GAMEPAD) > 0) return;
-						printaln("create device : ", (uint32_t)info->type, " guid size = ", info->guid.getSize());
+						//if (getNumInputeDevice(DeviceType::GAMEPAD) > 0) return;
+						printaln("create device : ", info->type, " guid size = ", info->guid.getSize());
 						auto device = im->createDevice(info->guid);
 						if (device) {
-							device->getEventDispatcher().addEventListener(DeviceEvent::DOWN, createEventListener(std::function([app](Event<DeviceEvent>& e) {
+							device->getEventDispatcher().addEventListener(DeviceEvent::DOWN, createEventListener<DeviceEvent>([app](Event<DeviceEvent>& e) {
 								auto device = e.getTarget<IInputDevice>();
 								switch (device->getInfo().type) {
 								case DeviceType::KEYBOARD:
@@ -113,9 +114,9 @@ public:
 									break;
 								}
 								}
-							})));
+							}));
 
-							device->getEventDispatcher().addEventListener(DeviceEvent::UP, createEventListener(std::function([](Event<DeviceEvent>& e) {
+							device->getEventDispatcher().addEventListener(DeviceEvent::UP, createEventListener<DeviceEvent>([](Event<DeviceEvent>& e) {
 								auto device = e.getTarget<IInputDevice>();
 								switch (device->getInfo().type) {
 								case DeviceType::KEYBOARD:
@@ -133,9 +134,9 @@ public:
 									break;
 								}
 								}
-							})));
+							}));
 
-							device->getEventDispatcher().addEventListener(DeviceEvent::MOVE, createEventListener(std::function([](Event<DeviceEvent>& e) {
+							device->getEventDispatcher().addEventListener(DeviceEvent::MOVE, createEventListener<DeviceEvent>([](Event<DeviceEvent>& e) {
 								switch (e.getTarget<IInputDevice>()->getInfo().type) {
 								case DeviceType::MOUSE:
 								{
@@ -161,15 +162,15 @@ public:
 								}
 								}
 
-							})));
+							}));
 
 							inputDevices.emplace_back(device);
 						}
 					}
 					printaln("input device connected : ", info->type);
-				})));
+				}));
 
-				im->getEventDispatcher().addEventListener(ModuleEvent::DISCONNECTED, createEventListener(std::function([&inputDevices](Event<ModuleEvent>& e) {
+				im->getEventDispatcher().addEventListener(ModuleEvent::DISCONNECTED, createEventListener<ModuleEvent>([&inputDevices](Event<ModuleEvent>& e) {
 					auto info = e.getData<DeviceInfo>();
 					for (uint32_t i = 0, n = inputDevices.size(); i < n; ++i) {
 						if (inputDevices[i]->getInfo().guid == info->guid) {
@@ -178,23 +179,23 @@ public:
 						}
 					}
 					printaln("input device disconnected : ", info->type);
-				})));
+				}));
 			}
 
 			IntrusivePtr looper = new Looper(1000.0 / 60.0);
 
-			app->getEventDispatcher().addEventListener(ApplicationEvent::CLOSED, createEventListener(std::function([looper](Event<ApplicationEvent>& e) {
+			app->getEventDispatcher().addEventListener(ApplicationEvent::CLOSED, createEventListener<ApplicationEvent>([looper](Event<ApplicationEvent>& e) {
 				looper->stop();
-			})));
+			}));
 
-			looper->getEventDispatcher().addEventListener(LooperEvent::TICKING, createEventListener(std::function([app, &inputModules, &inputDevices](Event<LooperEvent>& e) {
+			looper->getEventDispatcher().addEventListener(LooperEvent::TICKING, createEventListener<LooperEvent>([app, &inputModules, &inputDevices](Event<LooperEvent>& e) {
 				app->pollEvents();
 
 				for (auto& im : inputModules) im->poll();
 				for (auto& dev : inputDevices) dev->poll(true);
 
 				//app->setWindowTitle(String::toString(GetKeyboardType(0)) + "  " + String::toString(GetKeyboardType(1)) + "  " + String::toString(GetKeyboardType(2)));
-			})));
+			}));
 
 			//evtDispatcher.addEventListener(ApplicationEvent::CLOSING, *appClosingListener);
 

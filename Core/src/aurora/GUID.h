@@ -8,6 +8,7 @@ namespace aurora::modules::inputs {
 	public:
 		using Data = uint8_t[N];
 
+		GUID(const NoInit&) {}
 		GUID() {
 			memset(_data, 0, sizeof(Data));
 		}
@@ -62,7 +63,9 @@ namespace aurora::modules::inputs {
 		}
 
 		template<bool LowFill, bool HighFill>
-		void AE_CALL set(const uint8_t* data, uint32_t len, uint32_t offset = 0, uint8_t lowFillVal = 0, uint8_t highFillVal = 0) {
+		void AE_CALL set(const void* data, uint32_t len, uint32_t offset = 0, uint8_t lowFillVal = 0, uint8_t highFillVal = 0) {
+			auto data8 = (const uint8_t*)data;
+
 			if constexpr (LowFill) {
 				if (offset) {
 					uint32_t end = offset > N ? N : offset;
@@ -74,8 +77,8 @@ namespace aurora::modules::inputs {
 				uint32_t end = offset + len;
 				if (end > N) end = N;
 
-				if (data) {
-					for (uint32_t i = offset; i < end; ++i) _data[i] = data[i - offset];
+				if (data8) {
+					for (uint32_t i = offset; i < end; ++i) _data[i] = data8[i - offset];
 				}
 
 				if constexpr (HighFill) {

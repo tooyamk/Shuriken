@@ -32,8 +32,8 @@ int32_t run() {
 	*/
 
 	//return (new DepthTestTester())->run();
-	return (new ExperimentTester())->run();
-	//return (new InputTester())->run();
+	//return (new ExperimentTester())->run();
+	return (new InputTester())->run();
 	//return (new OffscreenTester())->run();
 	//return (new RenderPipelineTester())->run();
 	//return (new RenderTargetTester())->run();

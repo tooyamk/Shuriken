@@ -116,6 +116,10 @@ option(AE_TESTS "" OFF)
 
 option(AE_INSTALL "" ON)
 
+if (AE_INPUT_GENERIC_INPUT)
+    set(LIBUSB ON)
+endif ()
+
 if (AE_SHADER_SCRIPT)
     set(AE_FRAMEWORK ON)
 endif ()

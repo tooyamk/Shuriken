@@ -22,10 +22,10 @@ namespace aurora::modules::inputs::xinput {
 	private:
 		IntrusivePtr<Ref> _loader;
 
-		std::vector<DeviceInfo> _devices;
-		std::vector<DeviceInfo> _connectedDevices;
-		std::vector<uint32_t> _keepDevices;
-
 		events::EventDispatcher<ModuleEvent> _eventDispatcher;
+
+		std::vector<DeviceInfo> _devices;
+		std::vector<DeviceInfo> _newDevices;
+		std::vector<uint32_t> _keepDevices;
 	};
 }

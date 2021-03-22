@@ -15,7 +15,7 @@ namespace aurora::modules::inputs {
 
 		auto app = (IApplication*)args->tryGet("app").toNumber<uintptr_t>();
 		if (!app) {
-			//printdln(L"DirectInputModule create error : no app"sv);
+			printdln(L"DirectInputModule create error : no app"sv);
 			return nullptr;
 		}
 
