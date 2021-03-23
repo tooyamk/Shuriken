@@ -14,6 +14,7 @@ namespace aurora::extensions::fbx_converter {
 
 #ifndef AE_FBX_ENUM
 #	define AE_FBX_ENUM
+
 #	define AE_FBX_ENUM_Type \
 			AE_FBX_ENUM_ELEMENT(Unknown) \
 			AE_FBX_ENUM_ELEMENT(AnimationCurve) \
@@ -77,11 +78,11 @@ namespace aurora::extensions::fbx_converter {
 			__end
 		};
 
-		inline static const std::unordered_map<std::string_view, Type> TypeMap = {
+		inline static const std::unordered_map<std::string_view, Type> TYPE_MAP = {
 #define AE_FBX_ENUM_ELEMENT(a) { #a##sv, Type::a },
 			AE_FBX_ENUM_Type
 #undef AE_FBX_ENUM_ELEMENT
-			{ "__end", Type::Unknown }
+			{ "__end"sv, Type::Unknown }
 		};
 
 		enum class AttribType : uint8_t {
@@ -91,11 +92,11 @@ namespace aurora::extensions::fbx_converter {
 			__end
 		};
 
-		inline static const std::unordered_map<std::string_view, AttribType> AttribTypeMap = {
+		inline static const std::unordered_map<std::string_view, AttribType> ATTRIB_TYPE_MAP = {
 #define AE_FBX_ENUM_ELEMENT(a) { #a##sv, AttribType::a },
 			AE_FBX_ENUM_AttribType
 #undef AE_FBX_ENUM_ELEMENT
-			{ "__end", AttribType::Unknown }
+			{ "__end"sv, AttribType::Unknown }
 		};
 
 		class iterator {
@@ -228,8 +229,8 @@ namespace aurora::extensions::fbx_converter {
 				}
 				if (numProperties > 2) {
 					if (auto& p = _properties[2]; p.type == Property::Type::STR) {
-						auto itr = AttribTypeMap.find(std::string_view((char*)p.rawVal.data, p.rawVal.size));
-						_attribType = itr != AttribTypeMap.end() ? itr->second : AttribType::Unknown;
+						auto itr = ATTRIB_TYPE_MAP.find(std::string_view((char*)p.rawVal.data, p.rawVal.size));
+						_attribType = itr != ATTRIB_TYPE_MAP.end() ? itr->second : AttribType::Unknown;
 					}
 				}
 			}
@@ -1140,8 +1141,8 @@ namespace aurora::extensions::fbx_converter {
 			}
 		}
 
-		auto itr = Node::TypeMap.find(name);
-		auto node = new Node(itr != Node::TypeMap.end() ? itr->second : Node::Type::Unknown, properties, numProperties);
+		auto itr = Node::TYPE_MAP.find(name);
+		auto node = new Node(itr != Node::TYPE_MAP.end() ? itr->second : Node::Type::Unknown, properties, numProperties);
 		parent->addChild(node);
 		fbx.addNode(node);
 

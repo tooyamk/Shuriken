@@ -395,6 +395,7 @@ namespace aurora {
 	template<typename T, typename... Types> struct IsSameAnyOf : std::bool_constant<SameAnyOf<T, Types...>> {};
 	template<typename T, typename... Types> using SameAnyOfType = std::enable_if_t<SameAnyOf<T, Types...>, T>;
 	template<typename T, typename Tuple> concept SameAnyOfInTuple = TUPLE_FIND_FIRST_VALUE<T, Tuple> != TupleFindFirst<T, Tuple>::BAD_INDEX;
+	template<typename T, typename... Types> concept SameAllOf = std::conjunction_v<std::is_same<T, Types>...>;
 
 
 	template<auto Target, auto... Values>
@@ -425,7 +426,7 @@ namespace aurora {
 	template<typename T, typename... Types> concept ConvertibleAnyOf = std::disjunction_v<std::is_convertible<T, Types>...>;
 	template<typename T, typename... Types> struct IsConvertibleAnyOf : std::bool_constant<ConvertibleAnyOf<T, Types...>> {};
 	template<typename T, typename... Types> using ConvertibleAnyOfType = std::enable_if_t<ConvertibleAnyOf<T, Types...>, T>;
-	template<typename To, typename... Types> concept ConvertibleAllTo = std::conjunction_v<std::is_convertible<Types, To>...>;
+	template<typename T, typename... Types> concept ConvertibleAllOf = std::conjunction_v<std::is_convertible<Types, T>...>;
 
 
 	template<typename T> concept ScopedEnum = std::is_scoped_enum_v<T>;
@@ -584,16 +585,21 @@ namespace aurora {
 
 
 	template<typename L, typename R>
-	requires ConvertibleU8StringData<std::remove_cvref_t<L>> || ConvertibleU8StringData<std::remove_cvref_t<R>>
-	inline std::u8string AE_CALL operator+(L&& left, R&& right) {
-		if constexpr (std::same_as<std::remove_cvref_t<L>, std::u8string_view> && std::same_as<std::remove_cvref_t<R>, std::u8string_view>) {
-			std::u8string s;
+	requires (ConvertibleString8Data<std::remove_cvref_t<L>> && ConvertibleString8Data<std::remove_cvref_t<R>>) &&
+			  (
+				  ((ConvertibleU8StringData<std::remove_cvref_t<L>> || ConvertibleU8StringData<std::remove_cvref_t<R>>) && (ConvertibleStringData<std::remove_cvref_t<L>> || ConvertibleStringData<std::remove_cvref_t<R>>)) ||
+				  (String8View<std::remove_cvref_t<L>> || String8View<std::remove_cvref_t<R>>)
+			  )
+	inline std::conditional_t<ConvertibleU8StringData<std::remove_cvref_t<L>> || ConvertibleU8StringData<std::remove_cvref_t<R>>, std::u8string, std::string>  AE_CALL operator+(L&& left, R&& right) {
+		if constexpr (SameAllOf<std::u8string_view, std::remove_cvref_t<L>, std::remove_cvref_t<R>> || SameAllOf<std::string_view, std::remove_cvref_t<L>, std::remove_cvref_t<R>>) {
+			std::conditional_t<SameAllOf<std::u8string_view, std::remove_cvref_t<L>, std::remove_cvref_t<R>>, std::u8string, std::string> s;
 			s.reserve(left.size() + right.size());
 			s += left;
 			s += right;
 			return std::move(s);
 		} else {
-			return (const std::u8string_view&)ConvertToString8ViewType<std::remove_cvref_t<L>>(std::forward<L>(left)) + (const std::u8string_view&)ConvertToString8ViewType<std::remove_cvref_t<R>>(std::forward<R>(right));
+			using ConvertTo = std::conditional_t<ConvertibleU8StringData<std::remove_cvref_t<L>> || ConvertibleU8StringData<std::remove_cvref_t<R>>, std::u8string_view, std::string_view>;
+			return (const ConvertTo&)ConvertToString8ViewType<std::remove_cvref_t<L>>(std::forward<L>(left)) + (const ConvertTo&)ConvertToString8ViewType<std::remove_cvref_t<R>>(std::forward<R>(right));
 		}
 	}
 	
