@@ -1,6 +1,7 @@
 #include "Input.h"
 #include "CreateModule.h"
 #include "aurora/Debug.h"
+#include "aurora/hash/xxHash.h"
 
 namespace aurora::modules::inputs::generic_input {
 	Input::Input(Ref* loader) :
@@ -82,9 +83,11 @@ namespace aurora::modules::inputs::generic_input {
 		uint8_t product[256];
 		libusb_get_string_descriptor_ascii(handle, devDesc.iProduct, product, sizeof(product));
 
+		std::string indent = "";
+
 		auto isHID = false;
 
-		printdln("Device ", ": VendorID = ", devDesc.idVendor, "  ProductID = ", devDesc.idProduct, "  [", (const char*)manufacturer, "]  [", (const char*)product, "]  NumConfs = ", devDesc.bNumConfigurations, "  bus = ", libusb_get_bus_number(device), "  Device{Cls = ", devDesc.bDeviceClass, "  SubCls = ", devDesc.bDeviceSubClass, "  Protocol = ", devDesc.bDeviceProtocol, "}");
+		printdln(indent, "Device ", ": VendorID = ", devDesc.idVendor, "  ProductID = ", devDesc.idProduct, "  [", (const char*)manufacturer, "]  [", (const char*)product, "]  NumConfs = ", devDesc.bNumConfigurations, "  bus = ", libusb_get_bus_number(device), "  Device{Cls = ", devDesc.bDeviceClass, "  SubCls = ", devDesc.bDeviceSubClass, "  Protocol = ", devDesc.bDeviceProtocol, "}");
 
 		InternalDeviceInfo best;
 		for (size_t i = 0; i < devDesc.bNumConfigurations; ++i) {
@@ -92,288 +95,288 @@ namespace aurora::modules::inputs::generic_input {
 			InternalDeviceInfo cur;
 
 			if (libusb_get_config_descriptor(device, i, &conf) == LIBUSB_SUCCESS) {
-				//printdln("  Configuration ", i, " : NumInterfaces = ", conf->bNumInterfaces, "  ConfValue = ", conf->bConfigurationValue);
-
-				for (decltype(conf->bNumInterfaces) j = 0; j < conf->bNumInterfaces; ++j) {
-					auto& interface = conf->interface[j];
-					
-					for (decltype(interface.num_altsetting) k = 0; k < interface.num_altsetting; ++k) {
-						auto& interfaceDesc = interface.altsetting[k];
-						if (interfaceDesc.bNumEndpoints && interfaceDesc.bInterfaceClass == libusb_class_code::LIBUSB_CLASS_HID) {
-							isHID = true;
-							//break;
-
-							if (interfaceDesc.bInterfaceSubClass == 1) {
-								if (interfaceDesc.bInterfaceProtocol == 1) {
-									++cur.score;
-								} else if (interfaceDesc.bInterfaceProtocol == 2) {
-									++cur.score;
-								}
-							}
-
-							printdln("    Interface ", j, " ", k, " : Len = ", interfaceDesc.bLength, "  AlternateSetting = ", interfaceDesc.bAlternateSetting, "  NumEps = ", interfaceDesc.bNumEndpoints, "  Interface{Number = ", interfaceDesc.bInterfaceNumber, "  Cls = ", interfaceDesc.bInterfaceClass, "  SubCls = ", interfaceDesc.bInterfaceSubClass, "  Protocol = ", interfaceDesc.bInterfaceProtocol, "}");
-
-							for (size_t l = 0; l < interfaceDesc.bNumEndpoints; ++l) {
-								auto& ep = interfaceDesc.endpoint[l];
-
-								printdln("      Endpoint ", l, " : Len = ", ep.bLength, "  EpAddr = ", ep.bEndpointAddress, "  Interval = ", ep.bInterval, "  Attrs = ", ep.bmAttributes, "  Refresh = ", ep.bRefresh, "  MaxPktSize = ", ep.wMaxPacketSize);
-							}
-						}
-					}
-
-					//if (isHID) break;
-				}
+				_checkConfiguration(handle, *conf, i, indent + "  "sv);
 
 				libusb_free_config_descriptor(conf);
 			}
-
-			//if (isHID) break;
 		}
 
-		if (isHID) {
-			//auto nnn = sizeof(Str1);
-			uint8_t buf[256];
-			if (auto ret = libusb_get_descriptor(handle, libusb_descriptor_type::LIBUSB_DT_HID, 0, buf, sizeof(buf)); ret) {
-				HIDDescriptor hidDesc;
-				hidDesc.set(buf, ret);
-
-				if (hidDesc.bNumDescriptors > 0 && hidDesc.DescriptorList[0].bType == libusb_descriptor_type::LIBUSB_DT_REPORT) {
-					if (auto ret = libusb_get_descriptor(handle, libusb_descriptor_type::LIBUSB_DT_REPORT, 0, buf, sizeof(buf)); ret) {
-						std::string indent = "";
-						auto isFirstNotCollectionMain = true;
-						HIDReportUsagePageType usagePage = HIDReportUsagePageType::UNDEFINED;
-
-						ByteArray ba(buf, ret, ByteArray::Usage::SHARED);
-						while (ba.getBytesAvailable()) {
-							uint8_t item = ba.read<uint8_t>();
-							auto size = item & 0b11;
-							auto type = item >> 2 & 0b11;
-							auto tag = item >> 4 & 0b1111;
-
-							if (type == 3 && tag == 0xF) {
-								size = ba.read<uint8_t>();
-								tag = ba.read<uint8_t>();
-							}
-
-							auto data = ba.slice(size);
-							ba.skip(size);
-
-							std::string info = indent + "item("sv;
-
-							if (auto itr = HID_REPORT_ITEM_TYPE_MAP.find((HIDReportItemType)type); itr != HID_REPORT_ITEM_TYPE_MAP.end()) {
-								info += itr->second;
-								info += " ";
-
-								switch ((HIDReportItemType)type) {
-								case HIDReportItemType::MAIN:
-								{
-									if (auto itr = HID_REPORT_MAIN_ITEM_TAG_MAP.find((HIDReportMainItemTag)tag); itr != HID_REPORT_MAIN_ITEM_TAG_MAP.end()) {
-										info += itr->second;
-
-										switch ((HIDReportMainItemTag)tag) {
-										case HIDReportMainItemTag::COLLECTION:
-										{
-											indent += "  "sv;
-
-											if (data.getBytesAvailable()) {
-												auto val = data.read<uint8_t>();
-												info += " ";
-												if (val >= (uint16_t)HIDReportCollectionData::VENDOR_DEFINED_BEGIN && val <= (uint16_t)HIDReportCollectionData::VENDOR_DEFINED_END) {
-													info += "VENDOR_DEFINED"sv;
-												} else {
-													if (auto itr = HID_REPORT_COLLECTION_DATA_MAP.find((HIDReportCollectionData)val); itr != HID_REPORT_COLLECTION_DATA_MAP.end()) {
-														info += itr->second;
-													} else {
-														info += "RESERVED"sv;
-													}
-												}
-											}
-
-											break;
-										}
-										case HIDReportMainItemTag::END_COLLECTION:
-										{
-											auto n = isFirstNotCollectionMain ? 2 : 4;
-											indent = indent.substr(0, indent.size() - n);
-											info = info.substr(n);
-
-											break;
-										}
-										default:
-										{
-											if (isFirstNotCollectionMain) {
-												isFirstNotCollectionMain = false;
-
-												indent += "  "sv;
-											} else {
-												info = info.substr(2);
-											}
-
-											if (data.getBytesAvailable()) {
-												auto val = data.read<uint8_t>();
-
-												info += " ["sv;
-
-												info += val >> 0 & 0b1 ? "Constant "sv : "Data "sv;
-												info += val >> 1 & 0b1 ? "Variable "sv : "Array "sv;
-												info += val >> 2 & 0b1 ? "Relative "sv : "Absolute "sv;
-												info += val >> 3 & 0b1 ? "Wrap "sv : "NoWrap "sv;
-												info += val >> 4 & 0b1 ? "NonLinear "sv : "Linear "sv;
-												info += val >> 5 & 0b1 ? "NoPreferred "sv : "PreferredState "sv;
-												info += val >> 6 & 0b1 ? "NullState "sv : "NoNullPosition "sv;
-												info += val >> 7 & 0b1 ? "Volatile"sv : "NonVolatile"sv;
-
-												if (data.getBytesAvailable()) {
-													val = data.read<uint8_t>();
-													info += val >> 0 & 0b1 ? " BufferedBytes"sv : " BitField"sv;
-												}
-
-												info += "]"sv;
-											}
-
-											break;
-										}
-										}
-									} else {
-										info += String::toString(tag);
-									}
-
-
-									break;
-								}
-								case HIDReportItemType::GLOBAL:
-								{
-									if (auto itr = HID_REPORT_GLOBAL_ITEM_TAG_MAP.find((HIDReportGlobalItemTag)tag); itr != HID_REPORT_GLOBAL_ITEM_TAG_MAP.end()) {
-										info += itr->second;
-
-										switch ((HIDReportGlobalItemTag)tag) {
-										case HIDReportGlobalItemTag::USAGE_PAGE:
-										{
-											if (data.getBytesAvailable()) {
-												usagePage = (HIDReportUsagePageType)data.read<ba_vt::UIX>(data.getBytesAvailable());
-												info += " ";
-
-												if (usagePage >= HIDReportUsagePageType::POWER_PAGES_BEGIN && usagePage <= HIDReportUsagePageType::POWER_PAGES_END) {
-													info += "POWER_PAGES"sv;
-												} else if (usagePage >= HIDReportUsagePageType::VENDOR_DEFINED_BEGIN && usagePage <= HIDReportUsagePageType::VENDOR_DEFINED_END) {
-													info += "VENDOR_DEFINED"sv;
-												} else {
-													if (auto itr = HID_REPORT_USAGE_PAGE_TYPE_MAP.find(usagePage); itr != HID_REPORT_USAGE_PAGE_TYPE_MAP.end()) {
-														info += itr->second;
-													} else {
-														info += "RESERVED"sv;
-													}
-												}
-											}
-
-											break;
-										}
-										case HIDReportGlobalItemTag::REPORT_SIZE:
-										{
-											info += " "sv + String::toString(data.read<ba_vt::UIX>(data.getBytesAvailable())) + "bits"sv;
-											data.seekEnd();
-
-											break;
-										}
-										case HIDReportGlobalItemTag::REPORT_COUNT:
-										case HIDReportGlobalItemTag::LOGICAL_MINIMUM:
-										case HIDReportGlobalItemTag::LOGICAL_MAXIMUM:
-										{
-											info += " " + String::toString(data.read<ba_vt::UIX>(data.getBytesAvailable()));
-											data.seekEnd();
-
-											break;
-										}
-										default:
-											break;
-										}
-									} else {
-										info += String::toString(tag);
-									}
-
-									break;
-								}
-								case HIDReportItemType::LOCAL:
-								{
-									if (auto itr = HID_REPORT_LOCAL_ITEM_TAG_MAP.find((HIDReportLocalItemTag)tag); itr != HID_REPORT_LOCAL_ITEM_TAG_MAP.end()) {
-										info += itr->second;
-
-										switch (usagePage) {
-										case HIDReportUsagePageType::GENERIC_DESKTOP:
-										{
-											if (data.getBytesAvailable()) {
-												info += " ";
-												auto val = (HIDReportGenericDesktopPageType)data.read<ba_vt::UIX>(data.getBytesAvailable());
-												if (auto itr = HID_REPORT_GENERIC_DISKTOP_PAGE_TYPE_MAP.find(val); itr != HID_REPORT_GENERIC_DISKTOP_PAGE_TYPE_MAP.end()) {
-													info += itr->second;
-												} else {
-													info += "RESERVED"sv;
-												}
-											}
-
-											break;
-										}
-										case HIDReportUsagePageType::CONSUMER_DEVICES:
-										{
-											if (data.getBytesAvailable()) {
-												info += " ";
-												auto val = (HIDReportConsumerPageType)data.read<ba_vt::UIX>(data.getBytesAvailable());
-												if (auto itr = HID_REPORT_CONSUMER_PAGE_TYPE_MAP.find(val); itr != HID_REPORT_CONSUMER_PAGE_TYPE_MAP.end()) {
-													info += itr->second;
-												} else {
-													info += "RESERVED"sv;
-												}
-											}
-
-											break;
-										}
-										default:
-											break;
-										}
-									} else {
-										info += String::toString(tag);
-									}
-
-									break;
-								}
-								default:
-									break;
-								}
-							} else {
-								info += String::toString(type);
-							}
-
-							info += " "sv + String::toString(size) + ")"sv;
-
-							if (data.getBytesAvailable()) {
-								data.seekBegin();
-								info += " "sv;
-								do {
-									info += String::toString(data.read<uint8_t>()) + " "sv;
-								} while (data.getBytesAvailable());
-							} else {
-								info += "  ====="sv;
-							}
-
-							printdln(info);
-
-							//printdln((type == 0 ? ""sv : (type == 1 ? "  "sv : "    "sv)), "type = ", HID_REPORT_ITEM_TYPE[type], "  tag = ", (tag < 8 || tag > 12 ? String::toString(tag) : HID_REPORT_MAIN_ITEM_TAG[tag - 8]));
-
-							//ba.skip(size);
-						}
-
-						int a = 1;
-					}
-
-					int a = 1;
-				}
-
-				int a = 1;
-			}
-		}
-
-		libusb_close(handle);
+		if (handle) libusb_close(handle);
 
 		printdln();
+	}
+
+	void Input::_checkConfiguration(libusb_device_handle* handle, const libusb_config_descriptor& desc, size_t index, const std::string_view& indent) {
+		printdln(indent, "Configuration ", index, " : NumInterfaces = ", desc.bNumInterfaces, "  ConfValue = ", desc.bConfigurationValue, "  TotalLength = ", desc.wTotalLength);
+
+		for (decltype(desc.bNumInterfaces) i = 0; i < desc.bNumInterfaces; ++i) {
+			auto& interface = desc.interface[i];
+			for (decltype(interface.num_altsetting) j = 0; j < interface.num_altsetting; ++j) _checkInterface(handle, interface.altsetting[j], j, indent + "  "sv);
+		}
+	}
+
+	void Input::_checkInterface(libusb_device_handle* handle, const libusb_interface_descriptor& desc, size_t index, const std::string_view& indent) {
+		if (desc.bNumEndpoints && desc.bInterfaceClass == libusb_class_code::LIBUSB_CLASS_HID) {
+			printdln(indent, "Interface ", index, " : Len = ", desc.bLength, "  AlternateSetting = ", desc.bAlternateSetting, "  NumEps = ", desc.bNumEndpoints, "  Interface{Number = ", desc.bInterfaceNumber, "  Cls = ", desc.bInterfaceClass, "  SubCls = ", desc.bInterfaceSubClass, "  Protocol = ", desc.bInterfaceProtocol, "}");
+
+			if (desc.extra_length >= 9) {
+				HIDDescriptor hidDesc;
+				hidDesc.set(desc.extra, desc.extra_length);
+
+				_checkHID(handle, hidDesc, desc, indent + "  "sv);
+			}
+
+			for (decltype(desc.bNumEndpoints) i = 0; i < desc.bNumEndpoints; ++i) _checkEndpoint(handle, desc.endpoint[i], i, indent + "  "sv);
+		}
+	}
+
+	void Input::_checkEndpoint(libusb_device_handle* handle, const libusb_endpoint_descriptor& desc, size_t index, const std::string_view& indent) {
+		printdln(indent, "Endpoint ", index, " : Len = ", desc.bLength, "  EpAddr = ", desc.bEndpointAddress, "  Interval = ", desc.bInterval, "  Attrs = ", desc.bmAttributes, "  Refresh = ", desc.bRefresh, "  MaxPktSize = ", desc.wMaxPacketSize);
+	}
+
+	void Input::_checkHID(libusb_device_handle* handle, const HIDDescriptor& desc, const libusb_interface_descriptor& interface, const std::string_view& indent) {
+		printdln(indent, "HID : Len = ", desc.bLength, "  Ver = ", desc.bcdHID, "  Country = ", desc.bCountry, "  NumDescriptors = ", desc.bNumDescriptors, "  Type = ", desc.Descriptors[0].bType, "  Size = ", desc.Descriptors[0].wLength);
+
+		if (desc.bNumDescriptors && desc.Descriptors[0].bType == libusb_descriptor_type::LIBUSB_DT_REPORT) {
+			uint8_t buf[256];
+			libusb_claim_interface(handle, interface.bInterfaceNumber);
+			if (auto ret = libusb_control_transfer(handle, LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_STANDARD | LIBUSB_RECIPIENT_OTHER, LIBUSB_REQUEST_GET_DESCRIPTOR, LIBUSB_DT_REPORT << 8, 0, buf, sizeof(buf), 1000); ret > 0) {
+				auto subIndent = indent + "  ";
+				printdln(subIndent, "Report : Len = ", ret, "  Hash = ", hash::xxHash::calc<32, std::endian::native>(buf, ret, 0));
+
+				//_checkHIDReport(buf, ret, subIndent + "  ");
+			} else {
+				int a = 1;
+			}
+			libusb_release_interface(handle, interface.bInterfaceNumber);
+
+			//auto ret4 = libusb_control_transfer(handle, LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_STANDARD | LIBUSB_RECIPIENT_INTERFACE, LIBUSB_REQUEST_GET_DESCRIPTOR, (LIBUSB_DT_REPORT << 8) | interface.bInterfaceNumber, 0, buf, sizeof(buf), 1000);
+			int a = 1;
+		}
+	}
+
+	void Input::_checkHIDReport(const void* data, size_t size, const std::string_view& indent) {
+		std::string indent1(indent);
+		auto isFirstNotCollectionMain = true;
+		HIDReportUsagePageType usagePage = HIDReportUsagePageType::UNDEFINED;
+
+		ByteArray ba((void*)data, size, ByteArray::Usage::SHARED);
+		while (ba.getBytesAvailable()) {
+			uint8_t item = ba.read<uint8_t>();
+			auto size = item & 0b11;
+			auto type = item >> 2 & 0b11;
+			auto tag = item >> 4 & 0b1111;
+
+			if (type == 3 && tag == 0xF) {
+				size = ba.read<uint8_t>();
+				tag = ba.read<uint8_t>();
+			}
+
+			auto data = ba.slice(size);
+			ba.skip(size);
+
+			std::string info = indent1 + "item("sv;
+
+			if (auto itr = HID_REPORT_ITEM_TYPE_MAP.find((HIDReportItemType)type); itr != HID_REPORT_ITEM_TYPE_MAP.end()) {
+				info += itr->second;
+				info += " ";
+
+				switch ((HIDReportItemType)type) {
+				case HIDReportItemType::MAIN:
+				{
+					if (auto itr = HID_REPORT_MAIN_ITEM_TAG_MAP.find((HIDReportMainItemTag)tag); itr != HID_REPORT_MAIN_ITEM_TAG_MAP.end()) {
+						info += itr->second;
+
+						switch ((HIDReportMainItemTag)tag) {
+						case HIDReportMainItemTag::COLLECTION:
+						{
+							indent1 += "  "sv;
+
+							if (data.getBytesAvailable()) {
+								auto val = data.read<uint8_t>();
+								info += " ";
+								if (val >= (uint16_t)HIDReportCollectionData::VENDOR_DEFINED_BEGIN && val <= (uint16_t)HIDReportCollectionData::VENDOR_DEFINED_END) {
+									info += "VENDOR_DEFINED"sv;
+								} else {
+									if (auto itr = HID_REPORT_COLLECTION_DATA_MAP.find((HIDReportCollectionData)val); itr != HID_REPORT_COLLECTION_DATA_MAP.end()) {
+										info += itr->second;
+									} else {
+										info += "RESERVED"sv;
+									}
+								}
+							}
+
+							break;
+						}
+						case HIDReportMainItemTag::END_COLLECTION:
+						{
+							auto n = isFirstNotCollectionMain ? 2 : 4;
+							indent1 = indent1.substr(0, indent1.size() - n);
+							info = info.substr(n);
+
+							break;
+						}
+						default:
+						{
+							if (isFirstNotCollectionMain) {
+								isFirstNotCollectionMain = false;
+
+								indent1 += "  "sv;
+							} else {
+								info = info.substr(2);
+							}
+
+							if (data.getBytesAvailable()) {
+								auto val = data.read<uint8_t>();
+
+								info += " ["sv;
+
+								info += val >> 0 & 0b1 ? "Constant "sv : "Data "sv;
+								info += val >> 1 & 0b1 ? "Variable "sv : "Array "sv;
+								info += val >> 2 & 0b1 ? "Relative "sv : "Absolute "sv;
+								info += val >> 3 & 0b1 ? "Wrap "sv : "NoWrap "sv;
+								info += val >> 4 & 0b1 ? "NonLinear "sv : "Linear "sv;
+								info += val >> 5 & 0b1 ? "NoPreferred "sv : "PreferredState "sv;
+								info += val >> 6 & 0b1 ? "NullState "sv : "NoNullPosition "sv;
+								info += val >> 7 & 0b1 ? "Volatile"sv : "NonVolatile"sv;
+
+								if (data.getBytesAvailable()) {
+									val = data.read<uint8_t>();
+									info += val >> 0 & 0b1 ? " BufferedBytes"sv : " BitField"sv;
+								}
+
+								info += "]"sv;
+							}
+
+							break;
+						}
+						}
+					} else {
+						info += String::toString(tag);
+					}
+
+
+					break;
+				}
+				case HIDReportItemType::GLOBAL:
+				{
+					if (auto itr = HID_REPORT_GLOBAL_ITEM_TAG_MAP.find((HIDReportGlobalItemTag)tag); itr != HID_REPORT_GLOBAL_ITEM_TAG_MAP.end()) {
+						info += itr->second;
+
+						switch ((HIDReportGlobalItemTag)tag) {
+						case HIDReportGlobalItemTag::USAGE_PAGE:
+						{
+							if (data.getBytesAvailable()) {
+								usagePage = (HIDReportUsagePageType)data.read<ba_vt::UIX>(data.getBytesAvailable());
+								info += " ";
+
+								if (usagePage >= HIDReportUsagePageType::POWER_PAGES_BEGIN && usagePage <= HIDReportUsagePageType::POWER_PAGES_END) {
+									info += "POWER_PAGES"sv;
+								} else if (usagePage >= HIDReportUsagePageType::VENDOR_DEFINED_BEGIN && usagePage <= HIDReportUsagePageType::VENDOR_DEFINED_END) {
+									info += "VENDOR_DEFINED"sv;
+								} else {
+									if (auto itr = HID_REPORT_USAGE_PAGE_TYPE_MAP.find(usagePage); itr != HID_REPORT_USAGE_PAGE_TYPE_MAP.end()) {
+										info += itr->second;
+									} else {
+										info += "RESERVED"sv;
+									}
+								}
+							}
+
+							break;
+						}
+						case HIDReportGlobalItemTag::REPORT_SIZE:
+						{
+							info += " "sv + String::toString(data.read<ba_vt::UIX>(data.getBytesAvailable())) + "bits"sv;
+							data.seekEnd();
+
+							break;
+						}
+						case HIDReportGlobalItemTag::REPORT_COUNT:
+						case HIDReportGlobalItemTag::LOGICAL_MINIMUM:
+						case HIDReportGlobalItemTag::LOGICAL_MAXIMUM:
+						{
+							info += " " + String::toString(data.read<ba_vt::UIX>(data.getBytesAvailable()));
+							data.seekEnd();
+
+							break;
+						}
+						default:
+							break;
+						}
+					} else {
+						info += String::toString(tag);
+					}
+
+					break;
+				}
+				case HIDReportItemType::LOCAL:
+				{
+					if (auto itr = HID_REPORT_LOCAL_ITEM_TAG_MAP.find((HIDReportLocalItemTag)tag); itr != HID_REPORT_LOCAL_ITEM_TAG_MAP.end()) {
+						info += itr->second;
+
+						switch (usagePage) {
+						case HIDReportUsagePageType::GENERIC_DESKTOP:
+						{
+							if (data.getBytesAvailable()) {
+								info += " ";
+								auto val = (HIDReportGenericDesktopPageType)data.read<ba_vt::UIX>(data.getBytesAvailable());
+								if (auto itr = HID_REPORT_GENERIC_DISKTOP_PAGE_TYPE_MAP.find(val); itr != HID_REPORT_GENERIC_DISKTOP_PAGE_TYPE_MAP.end()) {
+									info += itr->second;
+								} else {
+									info += "RESERVED"sv;
+								}
+							}
+
+							break;
+						}
+						case HIDReportUsagePageType::CONSUMER_DEVICES:
+						{
+							if (data.getBytesAvailable()) {
+								info += " ";
+								auto val = (HIDReportConsumerPageType)data.read<ba_vt::UIX>(data.getBytesAvailable());
+								if (auto itr = HID_REPORT_CONSUMER_PAGE_TYPE_MAP.find(val); itr != HID_REPORT_CONSUMER_PAGE_TYPE_MAP.end()) {
+									info += itr->second;
+								} else {
+									info += "RESERVED"sv;
+								}
+							}
+
+							break;
+						}
+						default:
+							break;
+						}
+					} else {
+						info += String::toString(tag);
+					}
+
+					break;
+				}
+				default:
+					break;
+				}
+			} else {
+				info += String::toString(type);
+			}
+
+			info += " "sv + String::toString(size) + ")"sv;
+
+			if (data.getBytesAvailable()) {
+				data.seekBegin();
+				info += " "sv;
+				do {
+					info += String::toString(data.read<uint8_t>()) + " "sv;
+				} while (data.getBytesAvailable());
+			} else {
+				info += "  ====="sv;
+			}
+
+			printdln(info);
+
+			//printdln((type == 0 ? ""sv : (type == 1 ? "  "sv : "    "sv)), "type = ", HID_REPORT_ITEM_TYPE[type], "  tag = ", (tag < 8 || tag > 12 ? String::toString(tag) : HID_REPORT_MAIN_ITEM_TAG[tag - 8]));
+
+			//ba.skip(size);
+		}
 	}
 }

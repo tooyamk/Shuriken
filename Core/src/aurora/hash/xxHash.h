@@ -95,7 +95,7 @@ namespace aurora::hash {
 			if constexpr (Bits == 32) {
 				while ((data + 4) <= dataEnd) {
 					ret += _readUInt<Bits, DataEndian>(data) * Prime<Bits>::VALUE[2];
-					ret = rotl(ret, 17) * Prime<Bits>::VALUE[3];
+					ret = std::rotl(ret, 17) * Prime<Bits>::VALUE[3];
 					data += 4;
 				}
 

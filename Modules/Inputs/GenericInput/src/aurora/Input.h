@@ -365,17 +365,17 @@ namespace aurora::modules::inputs::generic_input {
 			uint16_t bcdHID;
 			uint8_t bCountry;
 			uint8_t bNumDescriptors;
-			Desc DescriptorList[2];
+			Desc Descriptors[2];
 
-			void AE_CALL set(void* data, size_t size) {
-				ByteArray ba(data, size, ByteArray::Usage::SHARED);
+			void AE_CALL set(const void* data, size_t size) {
+				ByteArray ba((void*)data, size, ByteArray::Usage::SHARED);
 				bLength = ba.read<decltype(bLength)>();
 				bDescriptorType = ba.read<decltype(bDescriptorType)>();
 				bcdHID = ba.read<decltype(bcdHID)>();
 				bCountry = ba.read<decltype(bCountry)>();
 				bNumDescriptors = ba.read<decltype(bNumDescriptors)>();
 				for (size_t i = 0; i < 2; ++i) {
-					auto& desc = DescriptorList[i];
+					auto& desc = Descriptors[i];
 					desc.bType = ba.read<decltype(desc.bType)>();
 					desc.wLength = ba.read<decltype(desc.wLength)>();
 				}
@@ -403,5 +403,10 @@ namespace aurora::modules::inputs::generic_input {
 		void AE_CALL _calcGUID(libusb_device* device, const libusb_device_descriptor& desc, DeviceGUID& guid);
 		void AE_CALL _findDevices();
 		void AE_CALL _checkDevice(libusb_device* device);
+		void AE_CALL _checkConfiguration(libusb_device_handle* handle, const libusb_config_descriptor& desc, size_t index, const std::string_view& indent);
+		void AE_CALL _checkInterface(libusb_device_handle* handle, const libusb_interface_descriptor& desc, size_t index, const std::string_view& indent);
+		void AE_CALL _checkEndpoint(libusb_device_handle* handle, const libusb_endpoint_descriptor& desc, size_t index, const std::string_view& indent);
+		void AE_CALL _checkHID(libusb_device_handle* handle, const HIDDescriptor& desc, const libusb_interface_descriptor& interface, const std::string_view& indent);
+		void AE_CALL _checkHIDReport(const void* data, size_t size, const std::string_view& indent);
 	};
 }
