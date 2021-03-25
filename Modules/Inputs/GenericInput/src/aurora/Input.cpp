@@ -3,15 +3,24 @@
 #include "aurora/Debug.h"
 #include "aurora/hash/xxHash.h"
 
+//#include <hidclass.h>
+//#include <winioctl.h>
+#include <hidsdi.h>
+#include <SetupAPI.h>
+
 namespace aurora::modules::inputs::generic_input {
 	Input::Input(Ref* loader) :
 		_loader(loader),
 		_context(nullptr) {
 		libusb_init(&_context);
-		libusb_set_debug(_context, 3);
+		//libusb_set_debug(_context, 3);
+
+		//hid_init();
 	}
 
 	Input::~Input() {
+		hid_exit();
+
 		if (_context) libusb_exit(_context);
 	}
 
@@ -22,7 +31,88 @@ namespace aurora::modules::inputs::generic_input {
 	void Input::poll() {
 		if (!_context) return;
 
-		_findDevices();
+		///*
+		printdln();
+
+		auto devicesInfo = hid_enumerate(0, 0);
+		for (auto devInfo = devicesInfo; devInfo; devInfo = devInfo->next) {
+			if (auto dev = hid_open_path(devInfo->path); dev) {
+				printdln("Device :", " vid = ", devInfo->vendor_id, " pid = ", devInfo->product_id, " [", devInfo->manufacturer_string, "]", "[", devInfo->product_string, "]");
+				
+				printdln("  path = ", devInfo->path);
+				printdln("  sn = ", devInfo->serial_number);
+				printdln("  interface_number = ", devInfo->interface_number);
+
+				{
+					std::string usagePageStr;
+
+					auto usagePage = (HIDReportUsagePageType)devInfo->usage_page;
+					if (usagePage >= HIDReportUsagePageType::POWER_PAGES_BEGIN && usagePage <= HIDReportUsagePageType::POWER_PAGES_END) {
+						usagePageStr = "POWER_PAGES";
+					} else if (usagePage >= HIDReportUsagePageType::VENDOR_DEFINED_BEGIN && usagePage <= HIDReportUsagePageType::VENDOR_DEFINED_END) {
+						usagePageStr = "VENDOR_DEFINED";
+					} else {
+						if (auto itr = HID_REPORT_USAGE_PAGE_TYPE_MAP.find(usagePage); itr != HID_REPORT_USAGE_PAGE_TYPE_MAP.end()) {
+							usagePageStr = itr->second;
+						} else {
+							usagePageStr = "RESERVED";
+						}
+					}
+
+					printdln("  usage_page = ", usagePageStr);
+				}
+
+				{
+					std::string usageStr;
+
+					switch ((HIDReportUsagePageType)devInfo->usage_page) {
+					case HIDReportUsagePageType::GENERIC_DESKTOP:
+					{
+						auto val = (HIDReportGenericDesktopPageType)devInfo->usage;
+						if (auto itr = HID_REPORT_GENERIC_DISKTOP_PAGE_TYPE_MAP.find(val); itr != HID_REPORT_GENERIC_DISKTOP_PAGE_TYPE_MAP.end()) {
+							usageStr = itr->second;
+						} else {
+							usageStr = "RESERVED";
+						}
+
+						break;
+					}
+					case HIDReportUsagePageType::CONSUMER_DEVICES:
+					{
+						auto val = (HIDReportConsumerPageType)devInfo->usage;
+						if (auto itr = HID_REPORT_CONSUMER_PAGE_TYPE_MAP.find(val); itr != HID_REPORT_CONSUMER_PAGE_TYPE_MAP.end()) {
+							usageStr = itr->second;
+						} else {
+							usageStr = "RESERVED";
+						}
+
+						break;
+					}
+					default:
+					{
+						usageStr = String::toString(devInfo->usage);
+
+						break;
+					}
+					}
+
+					printdln("  usage = ", usageStr);
+					printdln();
+				}
+
+				//uint8_t buf[256];
+				//auto ret = hid_get_feature_report(dev, buf, 256);
+				
+				hid_close(dev);
+			}
+		}
+
+		hid_free_enumeration(devicesInfo);
+		//*/
+
+		int a = 1;
+		//_findDevices();
+		//_findDevices2();
 
 		//printdln("libusb Version:", LIBUSB_API_VERSION);
 
@@ -48,6 +138,310 @@ namespace aurora::modules::inputs::generic_input {
 		if (count < 0) count = 0;
 
 		guid.set<false, true>(ports, count, offset);
+	}
+
+	void Input::_findDevices2() {
+		::GUID guid;
+		HidD_GetHidGuid(&guid);
+
+		auto hDevInfo = SetupDiGetClassDevs(&guid, nullptr, nullptr, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
+		if (!hDevInfo) return;
+
+		SP_DEVINFO_DATA devinfoData;
+		memset(&devinfoData, 0, sizeof(devinfoData));
+		devinfoData.cbSize = sizeof(SP_DEVINFO_DATA);
+
+		SP_DEVICE_INTERFACE_DATA deviceInterfaceData;
+		deviceInterfaceData.cbSize = sizeof(SP_DEVICE_INTERFACE_DATA);
+
+		char driverName[256];
+
+		HIDD_ATTRIBUTES attributes;
+		attributes.Size = sizeof(HIDD_ATTRIBUTES);
+
+		PSP_DEVICE_INTERFACE_DETAIL_DATA detail = nullptr;
+		size_t mallocDetailSize = 0;
+
+		PHIDP_LINK_COLLECTION_NODE linkCollectionNodes = nullptr;
+		size_t numAllocatedLinkCollectionNodes = 0;
+
+		PHIDP_BUTTON_CAPS buttonCaps = nullptr;
+		size_t numAllocatedButtonCaps = 0;
+
+		auto findButtonCap = [](const PHIDP_BUTTON_CAPS caps, size_t n, size_t begin, USHORT collection) {
+			for (; begin < n; ++begin) {
+				if (caps[begin].LinkCollection == collection) return begin;
+			}
+
+			return n + 1;
+		};
+
+		printdln();
+
+		for (int32_t i = 0; SetupDiEnumDeviceInterfaces(hDevInfo, nullptr, &guid, i, &deviceInterfaceData) != 0; ++i) {
+			HANDLE handle = nullptr;
+			PHIDP_PREPARSED_DATA preparsedData = nullptr;
+			DWORD requiredSize = 0;
+
+			unsigned char buf123[16] = { 18 };
+
+			SetupDiGetDeviceInterfaceDetail(hDevInfo, &deviceInterfaceData, nullptr, 0, &requiredSize, nullptr);
+			if (requiredSize == 0) goto next;
+
+			if (mallocDetailSize < requiredSize) {
+				if (detail) free(detail);
+
+				mallocDetailSize = requiredSize;
+				detail = (PSP_INTERFACE_DEVICE_DETAIL_DATA)malloc(requiredSize);
+				if (detail == nullptr) goto next;
+
+				detail->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA);
+			}
+
+			if (!SetupDiGetDeviceInterfaceDetail(hDevInfo, &deviceInterfaceData, detail, requiredSize, nullptr, nullptr)) goto next;
+
+			if (!SetupDiEnumDeviceInfo(hDevInfo, i, &devinfoData)) goto next;
+
+			if (!SetupDiGetDeviceRegistryProperty(hDevInfo, &devinfoData, SPDRP_DRIVER, nullptr, (PBYTE)driverName, sizeof(driverName), nullptr)) goto next;
+
+			handle = CreateFile(detail->DevicePath,
+				0,
+				//GENERIC_READ | GENERIC_WRITE,
+				FILE_SHARE_READ | FILE_SHARE_WRITE,
+				nullptr,
+				OPEN_EXISTING,
+				FILE_FLAG_OVERLAPPED,
+				nullptr);
+			if (handle == INVALID_HANDLE_VALUE) goto next;
+
+			if (!HidD_GetAttributes(handle, &attributes)) goto next;
+			if (!HidD_GetPreparsedData(handle, &preparsedData)) goto next;
+
+			HIDP_CAPS cap;
+			size_t numButtonCaps;
+			if (HidP_GetCaps(preparsedData, &cap) == HIDP_STATUS_SUCCESS) {
+				{
+					if (numAllocatedLinkCollectionNodes < cap.NumberLinkCollectionNodes) {
+						if (linkCollectionNodes) delete[] linkCollectionNodes;
+
+						numAllocatedLinkCollectionNodes = cap.NumberLinkCollectionNodes;
+						linkCollectionNodes = new HIDP_LINK_COLLECTION_NODE[cap.NumberLinkCollectionNodes];
+					}
+
+					ULONG num = numAllocatedLinkCollectionNodes;
+					HidP_GetLinkCollectionNodes(linkCollectionNodes, &num, preparsedData);
+				}
+
+				{
+					numButtonCaps = cap.NumberInputButtonCaps + cap.NumberOutputButtonCaps + cap.NumberFeatureButtonCaps;
+					if (numAllocatedButtonCaps < numButtonCaps) {
+						if (buttonCaps) delete[] buttonCaps;
+
+						numAllocatedButtonCaps = numButtonCaps;
+						buttonCaps = new HIDP_BUTTON_CAPS[numAllocatedButtonCaps];
+					}
+
+					USHORT last = numButtonCaps;
+					size_t offset = 0;
+					USHORT numInputCaps = last;
+					HidP_GetButtonCaps(HidP_Input, buttonCaps, &numInputCaps, preparsedData);
+
+					last -= numInputCaps;
+					offset += numInputCaps;
+					USHORT numOutputCaps = last;
+					HidP_GetButtonCaps(HidP_Output, buttonCaps + offset, &numOutputCaps, preparsedData);
+
+					last -= numOutputCaps;
+					offset += numOutputCaps;
+					USHORT numFeatureCaps = last;
+					HidP_GetButtonCaps(HidP_Feature, buttonCaps + offset, &numFeatureCaps, preparsedData);
+
+					last -= numFeatureCaps;
+					if (last != 0) {
+						//error
+						int a = 1;
+					}
+				}
+
+				auto pd = (uint8_t*)preparsedData;//45, 64, 109, 61, 47
+				for (size_t i = 0; i < 100; ++i) {
+					//printdln(pd[i]);
+				}
+
+			} else {
+				goto next;
+			}
+
+			{
+				WCHAR buf[256];
+
+				HidD_GetManufacturerString(handle, buf, sizeof(buf));
+				std::wstring manufacturer = buf;
+
+				HidD_GetProductString(handle, buf, sizeof(buf));
+				std::wstring product = buf;
+
+				printdln("Device :", " vid = ", attributes.VendorID, " pid = ", attributes.ProductID, " [", manufacturer, "]", " [", product, "]", " Path = ", detail->DevicePath);
+
+				{
+					std::string indent = "  ";
+
+					std::string info;
+
+					{
+						info += indent + "UsagePage (";
+
+						auto usagePage = (HIDReportUsagePageType)cap.UsagePage;
+						if (usagePage >= HIDReportUsagePageType::POWER_PAGES_BEGIN && usagePage <= HIDReportUsagePageType::POWER_PAGES_END) {
+							info += "POWER_PAGES"sv;
+						} else if (usagePage >= HIDReportUsagePageType::VENDOR_DEFINED_BEGIN && usagePage <= HIDReportUsagePageType::VENDOR_DEFINED_END) {
+							info += "VENDOR_DEFINED"sv;
+						} else {
+							if (auto itr = HID_REPORT_USAGE_PAGE_TYPE_MAP.find(usagePage); itr != HID_REPORT_USAGE_PAGE_TYPE_MAP.end()) {
+								info += itr->second;
+							} else {
+								info += "RESERVED"sv;
+							}
+						}
+
+						info += ")\n";
+					}
+
+					{
+						info += indent + "Usage (";
+
+						switch ((HIDReportUsagePageType)cap.UsagePage) {
+						case HIDReportUsagePageType::GENERIC_DESKTOP:
+						{
+							auto val = (HIDReportGenericDesktopPageType)cap.Usage;
+							if (auto itr = HID_REPORT_GENERIC_DISKTOP_PAGE_TYPE_MAP.find(val); itr != HID_REPORT_GENERIC_DISKTOP_PAGE_TYPE_MAP.end()) {
+								info += itr->second;
+							} else {
+								info += "RESERVED";
+							}
+
+							break;
+						}
+						case HIDReportUsagePageType::CONSUMER_DEVICES:
+						{
+							auto val = (HIDReportConsumerPageType)cap.Usage;
+							if (auto itr = HID_REPORT_CONSUMER_PAGE_TYPE_MAP.find(val); itr != HID_REPORT_CONSUMER_PAGE_TYPE_MAP.end()) {
+								info += itr->second;
+							} else {
+								info += "RESERVED";
+							}
+
+							break;
+						}
+						default:
+						{
+							info += String::toString(cap.Usage);
+
+							break;
+						}
+						}
+
+						info += ")\n";
+					}
+
+					{
+						if (linkCollectionNodes) {
+							if (cap.NumberLinkCollectionNodes > 1) {
+								int a = 1;
+							}
+
+							std::function<void(std::string&, PHIDP_LINK_COLLECTION_NODE, size_t, const std::string&)> parseCollection;
+							parseCollection = [&parseCollection, &findButtonCap, buttonCaps, &cap](std::string& info, PHIDP_LINK_COLLECTION_NODE linkCollectionNodes, size_t index, const std::string& indent) {
+								auto& collection = linkCollectionNodes[index];
+
+								info += indent + "Collection (";
+
+								auto indent1 = indent + "  ";
+
+								auto val = (HIDReportCollectionData)collection.CollectionType;
+								if (val >= HIDReportCollectionData::VENDOR_DEFINED_BEGIN && val <= HIDReportCollectionData::VENDOR_DEFINED_END) {
+									info += "VENDOR_DEFINED";
+								} else {
+									if (auto itr = HID_REPORT_COLLECTION_DATA_MAP.find(val); itr != HID_REPORT_COLLECTION_DATA_MAP.end()) {
+										info += itr->second;
+									} else {
+										info += "RESERVED";
+									}
+								}
+
+								info += ")\n";
+
+								size_t btnCapIndex = 0;
+								size_t end = cap.NumberInputButtonCaps;
+								do {
+									btnCapIndex = findButtonCap(buttonCaps, end, btnCapIndex, index);
+									if (btnCapIndex >= end) {
+										break;
+									} else {
+										info += indent1 + "Input ()\n";
+										++btnCapIndex;
+									}
+								} while (true);
+
+								btnCapIndex = end;
+								end += cap.NumberOutputButtonCaps;
+								do {
+									btnCapIndex = findButtonCap(buttonCaps, end, btnCapIndex, index);
+									if (btnCapIndex >= end) {
+										break;
+									} else {
+										info += indent1 + "Output ()\n";
+										++btnCapIndex;
+									}
+								} while (true);
+
+								btnCapIndex = end;
+								end += cap.NumberFeatureButtonCaps;
+								do {
+									btnCapIndex = findButtonCap(buttonCaps, end, btnCapIndex, index);
+									if (btnCapIndex >= end) {
+										break;
+									} else {
+										info += indent1 + "Feature ()\n";
+										++btnCapIndex;
+									}
+								} while (true);
+
+								auto c = collection.FirstChild;
+								while (c) {
+									parseCollection(info, linkCollectionNodes, c, indent1);
+									c = linkCollectionNodes[c].NextSibling;
+								}
+
+								info += indent + "EndCollection ()\n";
+							};
+
+							for (USHORT i = 0; i < cap.NumberLinkCollectionNodes; ++i) {
+								if (linkCollectionNodes[i].Parent != 0) continue;
+
+								parseCollection(info, linkCollectionNodes, i, indent);
+							}
+						}
+					}
+
+					printdln(info, "\n");
+				}
+			}
+
+		next:
+			if (preparsedData) HidD_FreePreparsedData(preparsedData);
+			if (handle != INVALID_HANDLE_VALUE) CloseHandle(handle);
+
+			int a = 1;
+		}
+
+		if (detail) free(detail);
+		if (linkCollectionNodes) delete[] linkCollectionNodes;
+		if (buttonCaps) delete[] buttonCaps;
+
+		SetupDiDestroyDeviceInfoList(hDevInfo);
+
+		int a = 1;
 	}
 
 	void Input::_findDevices() {
@@ -139,8 +533,8 @@ namespace aurora::modules::inputs::generic_input {
 
 		if (desc.bNumDescriptors && desc.Descriptors[0].bType == libusb_descriptor_type::LIBUSB_DT_REPORT) {
 			uint8_t buf[256];
-			libusb_claim_interface(handle, interface.bInterfaceNumber);
-			if (auto ret = libusb_control_transfer(handle, LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_STANDARD | LIBUSB_RECIPIENT_OTHER, LIBUSB_REQUEST_GET_DESCRIPTOR, LIBUSB_DT_REPORT << 8, 0, buf, sizeof(buf), 1000); ret > 0) {
+			//libusb_claim_interface(handle, interface.bInterfaceNumber);
+			if (auto ret = libusb_control_transfer(handle, 0x81, LIBUSB_REQUEST_GET_DESCRIPTOR, LIBUSB_DT_REPORT << 8, interface.bInterfaceNumber, buf, sizeof(buf), 1000); ret > 0) {
 				auto subIndent = indent + "  ";
 				printdln(subIndent, "Report : Len = ", ret, "  Hash = ", hash::xxHash::calc<32, std::endian::native>(buf, ret, 0));
 
@@ -148,7 +542,7 @@ namespace aurora::modules::inputs::generic_input {
 			} else {
 				int a = 1;
 			}
-			libusb_release_interface(handle, interface.bInterfaceNumber);
+			//libusb_release_interface(handle, interface.bInterfaceNumber);
 
 			//auto ret4 = libusb_control_transfer(handle, LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_STANDARD | LIBUSB_RECIPIENT_INTERFACE, LIBUSB_REQUEST_GET_DESCRIPTOR, (LIBUSB_DT_REPORT << 8) | interface.bInterfaceNumber, 0, buf, sizeof(buf), 1000);
 			int a = 1;

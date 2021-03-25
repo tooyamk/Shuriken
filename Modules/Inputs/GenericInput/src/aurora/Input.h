@@ -402,6 +402,7 @@ namespace aurora::modules::inputs::generic_input {
 
 		void AE_CALL _calcGUID(libusb_device* device, const libusb_device_descriptor& desc, DeviceGUID& guid);
 		void AE_CALL _findDevices();
+		void AE_CALL _findDevices2();
 		void AE_CALL _checkDevice(libusb_device* device);
 		void AE_CALL _checkConfiguration(libusb_device_handle* handle, const libusb_config_descriptor& desc, size_t index, const std::string_view& indent);
 		void AE_CALL _checkInterface(libusb_device_handle* handle, const libusb_interface_descriptor& desc, size_t index, const std::string_view& indent);
