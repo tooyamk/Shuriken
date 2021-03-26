@@ -15,7 +15,7 @@ namespace aurora::modules::inputs::generic_input {
 		libusb_init(&_context);
 		//libusb_set_debug(_context, 3);
 
-		//hid_init();
+		hid_init();
 	}
 
 	Input::~Input() {
@@ -37,11 +37,17 @@ namespace aurora::modules::inputs::generic_input {
 		auto devicesInfo = hid_enumerate(0, 0);
 		for (auto devInfo = devicesInfo; devInfo; devInfo = devInfo->next) {
 			if (auto dev = hid_open_path(devInfo->path); dev) {
-				printdln("Device :", " vid = ", devInfo->vendor_id, " pid = ", devInfo->product_id, " [", devInfo->manufacturer_string, "]", "[", devInfo->product_string, "]");
+				std::wstring wInfo;
+				auto fn = [&wInfo](const std::wstring_view& data) {
+					wInfo += data;
+				};
+
+				printlnTo(fn, "Device :", " vid = ", devInfo->vendor_id, " pid = ", devInfo->product_id, " [", devInfo->manufacturer_string, "]", "[", devInfo->product_string, "]");
 				
-				printdln("  path = ", devInfo->path);
-				printdln("  sn = ", devInfo->serial_number);
-				printdln("  interface_number = ", devInfo->interface_number);
+				printlnTo(fn, "  path = ", devInfo->path);
+				printlnTo(fn, "  hash = ", hash::xxHash::calc<64, std::endian::little>(devInfo->path, strlen(devInfo->path), 0));
+				printlnTo(fn, "  sn = ", devInfo->serial_number);
+				printlnTo(fn, "  interface_number = ", devInfo->interface_number);
 
 				{
 					std::string usagePageStr;
@@ -59,7 +65,7 @@ namespace aurora::modules::inputs::generic_input {
 						}
 					}
 
-					printdln("  usage_page = ", usagePageStr);
+					printlnTo(fn, "  usage_page = ", usagePageStr);
 				}
 
 				{
@@ -71,6 +77,10 @@ namespace aurora::modules::inputs::generic_input {
 						auto val = (HIDReportGenericDesktopPageType)devInfo->usage;
 						if (auto itr = HID_REPORT_GENERIC_DISKTOP_PAGE_TYPE_MAP.find(val); itr != HID_REPORT_GENERIC_DISKTOP_PAGE_TYPE_MAP.end()) {
 							usageStr = itr->second;
+
+							if (val != HIDReportGenericDesktopPageType::KEYBOARD &&
+								val != HIDReportGenericDesktopPageType::MOUSE &&
+								val != HIDReportGenericDesktopPageType::GAMEPAD) continue;
 						} else {
 							usageStr = "RESERVED";
 						}
@@ -86,19 +96,25 @@ namespace aurora::modules::inputs::generic_input {
 							usageStr = "RESERVED";
 						}
 
+						continue;
+
 						break;
 					}
 					default:
 					{
 						usageStr = String::toString(devInfo->usage);
 
+						continue;
+
 						break;
 					}
 					}
 
-					printdln("  usage = ", usageStr);
-					printdln();
+					printlnTo(fn, "  usage = ", usageStr);
+					printlnTo(fn);
 				}
+
+				printdln(wInfo);
 
 				//uint8_t buf[256];
 				//auto ret = hid_get_feature_report(dev, buf, 256);

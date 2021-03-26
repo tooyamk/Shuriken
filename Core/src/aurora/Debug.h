@@ -100,7 +100,14 @@ namespace aurora {
 
 	public:
 		template<typename Output, typename... Args>
-		static void AE_CALL print(Args&&... args) {
+		requires std::invocable<Output, const std::wstring_view&> && std::default_initializable<Output>
+		inline static void AE_CALL print(Args&&... args) {
+			Output out;
+			printTo(out, std::forward<Args>(args)...);
+		}
+
+		template<std::invocable<const std::wstring_view&> Output, typename... Args>
+		static void AE_CALL printTo(Output&& out, Args&&... args) {
 			std::scoped_lock lck(_mutex);
 
 			const uint32_t MAX_LEN = 256;
@@ -113,7 +120,6 @@ namespace aurora {
 
 			buf.write(L'\0');
 
-			Output out;
 			out(std::wstring_view(buf.data, buf.pos - 1));
 		}
 
@@ -179,13 +185,25 @@ namespace aurora {
 	};
 
 	template<typename Output, typename... Args>
+	requires std::invocable<Output, const std::wstring_view&> && std::default_initializable<Output>
 	inline void AE_CALL print(Args&&... args) {
 		Debug::print<Output>(std::forward<Args>(args)...);
 	}
 
+	template<std::invocable<const std::wstring_view&> Output, typename... Args>
+	inline void AE_CALL printTo(Output&& out, Args&&... args) {
+		Debug::printTo(std::forward<Output>(out), std::forward<Args>(args)...);
+	}
+
 	template<typename Output, typename... Args>
+	requires std::invocable<Output, const std::wstring_view&> && std::default_initializable<Output>
 	inline void AE_CALL println(Args&&... args) {
 		Debug::print<Output>(std::forward<Args>(args)..., L"\n");
+	}
+
+	template<std::invocable<const std::wstring_view&> Output, typename... Args>
+	inline void AE_CALL printlnTo(Output&& out, Args&&... args) {
+		Debug::printTo(std::forward<Output>(out), std::forward<Args>(args)..., L"\n");
 	}
 
 	template<typename... Args>
