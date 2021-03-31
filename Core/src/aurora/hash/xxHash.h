@@ -6,9 +6,8 @@ namespace aurora::hash {
 	class  xxHash {
 	public:
 		template<size_t Bits, std::endian DataEndian>
+		requires (Bits == 32 || Bits == 64)
 		static uint_t<Bits> AE_CALL calc(const void* data, size_t len, uint_t<Bits> seed) {
-			static_assert(Bits == 32 || Bits == 64, "only support 32, 64 bits mode");
-
 			using hash_t = uint_t<Bits>;
 
 			constexpr size_t OFFSET = Bits >> 3;

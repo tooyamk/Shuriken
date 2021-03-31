@@ -461,6 +461,9 @@ namespace aurora {
 		case WM_MOVE:
 			if (app && !app->_isFullscreen && !IsZoomed(app->_win.wnd) && !IsIconic(app->_win.wnd)) app->_win.clinetPos.set(LOWORD(lParam), HIWORD(lParam));
 			break;
+		case WM_INPUT:
+			printdln("input");
+			break;
 		default:
 			break;
 		}

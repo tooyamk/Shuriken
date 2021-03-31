@@ -18,15 +18,14 @@ get_property(PROJECT_LIBUSB_INCLUDE GLOBAL PROPERTY "PROJECT_LIBUSB_INCLUDE")
 get_property(PROJECT_LIBUSB_LIB GLOBAL PROPERTY "PROJECT_LIBUSB_LIB")
 
 include_directories(
+    src/aurora/
     ${PROJECT_AE_CORE_SRC_DIR}/src/
     ${PROJECT_AE_FRAMEWORK_SRC_DIR}/src/
     ${PROJECT_HIDAPI_INCLUDE}
     ${PROJECT_LIBUSB_INCLUDE}
 )
 add_definitions(${AE_MODULE_DEFINITIONS})
-file(GLOB SRC_FILES
-    "src/*.h" "src/*.cpp"
-    "src/*/*.h" "src/*/*.cpp")
+file(GLOB_RECURSE SRC_FILES "src/*.h" "src/*.cpp")
 __add_library_source_group(${PROJECT_NAME} SHARED ${SRC_FILES})
 add_dependencies(${PROJECT_NAME}
     ${PROJECT_AE_FRAMEWORK_NAME}

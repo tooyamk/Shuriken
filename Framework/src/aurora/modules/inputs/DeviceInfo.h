@@ -11,10 +11,12 @@ namespace aurora::modules::inputs {
 	class AE_FW_DLL DeviceInfo {
 	public:
 		DeviceInfo();
-		DeviceInfo(const DeviceGUID& guid, DeviceType type);
+		DeviceInfo(uint16_t vendorID, uint16_t productID, const DeviceGUID& guid, DeviceType type);
 		DeviceInfo(const DeviceInfo& value);
 		DeviceInfo(DeviceInfo&& value);
 
+		uint16_t vendorID;
+		uint16_t productID;
 		DeviceGUID guid;
 		DeviceType type;
 

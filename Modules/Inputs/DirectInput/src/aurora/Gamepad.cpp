@@ -106,7 +106,7 @@ namespace aurora::modules::inputs::direct_input {
 		setDeadZone((uint8_t)GamepadKeyCode::RIGHT_TRIGGER, .05f);
 	}
 
-	uint32_t Gamepad::getKeyState (uint32_t keyCode, float32_t* data, uint32_t count) const {
+	uint32_t Gamepad::getKeyState(uint32_t keyCode, float32_t* data, uint32_t count) const {
 		if (data && count) {
 			switch ((GamepadKeyCode)keyCode) {
 			case GamepadKeyCode::LEFT_STICK:
@@ -254,7 +254,7 @@ namespace aurora::modules::inputs::direct_input {
 		}
 	}
 
-	void Gamepad::setDeadZone (uint32_t keyCode, float32_t deadZone) {
+	void Gamepad::setDeadZone(uint32_t keyCode, float32_t deadZone) {
 		if (deadZone < 0.f) deadZone = -deadZone;
 
 		_deadZone.insert_or_assign(keyCode, deadZone);

@@ -2,6 +2,7 @@
 
 #include "Base.h"
 #include "aurora/events/EventDispatcher.h"
+#include <shared_mutex>
 
 namespace aurora::modules::inputs::xinput {
 	class AE_MODULE_DLL Input : public IInputModule {
@@ -17,15 +18,21 @@ namespace aurora::modules::inputs::xinput {
 
 		virtual events::IEventDispatcher<ModuleEvent>& AE_CALL getEventDispatcher() override;
 		virtual void AE_CALL poll() override;
-		virtual IInputDevice* AE_CALL createDevice(const DeviceGUID& guid) override;
+		virtual IntrusivePtr<IInputDevice> AE_CALL createDevice(const DeviceGUID& guid) override;
 
 	private:
 		IntrusivePtr<Ref> _loader;
-
 		events::EventDispatcher<ModuleEvent> _eventDispatcher;
 
+		std::shared_mutex _mutex;
 		std::vector<DeviceInfo> _devices;
-		std::vector<DeviceInfo> _newDevices;
-		std::vector<uint32_t> _keepDevices;
+
+		inline bool AE_CALL _hasDevice(const DeviceInfo& info, const std::vector<DeviceInfo>& devices) const {
+			for (auto& di : devices) {
+				if (info.guid == di.guid) return true;
+			}
+
+			return false;
+		}
 	};
 }

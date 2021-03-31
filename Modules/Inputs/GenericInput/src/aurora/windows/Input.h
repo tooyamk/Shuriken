@@ -1,13 +1,16 @@
 #pragma once
 
-#include "Base.h"
+#if AE_OS == AE_OS_WIN
+#include "windows/InternalDeviceInfo.h"
 #include "aurora/events/EventDispatcher.h"
 #include <shared_mutex>
 
-namespace aurora::modules::inputs::direct_input {
+namespace aurora::modules::inputs::generic_input {
+	using namespace std::literals;
+
 	class AE_MODULE_DLL Input : public IInputModule {
 	public:
-		Input(Ref* loader, IApplication* app);
+		Input(Ref* loader);
 		virtual ~Input();
 
 		void operator delete(Input* p, std::destroying_delete_t) {
@@ -20,21 +23,15 @@ namespace aurora::modules::inputs::direct_input {
 		virtual void AE_CALL poll() override;
 		virtual IntrusivePtr<IInputDevice> AE_CALL createDevice(const DeviceGUID& guid) override;
 
-		HWND AE_CALL getHWND() const;
-
 	private:
 		IntrusivePtr<Ref> _loader;
-		IntrusivePtr<IApplication> _app;
+
 		events::EventDispatcher<ModuleEvent> _eventDispatcher;
 
 		std::shared_mutex _mutex;
-		std::vector<DeviceInfo> _devices;
+		std::vector<InternalDeviceInfo> _devices;
 
-		LPDIRECTINPUT8 _di;
-
-		static BOOL CALLBACK _enumDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, LPVOID pContext);
-
-		inline bool AE_CALL _hasDevice(const DeviceInfo& info, const std::vector<DeviceInfo>& devices) const {
+		inline bool AE_CALL _hasDevice(const DeviceInfo& info, const std::vector<InternalDeviceInfo>& devices) const {
 			for (auto& di : devices) {
 				if (info.guid == di.guid) return true;
 			}
@@ -43,3 +40,4 @@ namespace aurora::modules::inputs::direct_input {
 		}
 	};
 }
+#endif

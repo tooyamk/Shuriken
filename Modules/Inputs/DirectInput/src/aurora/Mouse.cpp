@@ -11,7 +11,7 @@ namespace aurora::modules::inputs::direct_input {
 		GetCursorPos(&_pos);
 	}
 
-	uint32_t Mouse::getKeyState (uint32_t keyCode, float32_t* data, uint32_t count) const {
+	uint32_t Mouse::getKeyState(uint32_t keyCode, float32_t* data, uint32_t count) const {
 		if (data && count) {
 			switch (keyCode) {
 			case (uint32_t)MouseKeyCode::POSITION:

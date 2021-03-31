@@ -6,11 +6,7 @@ set_property(GLOBAL PROPERTY PROJECT_AE_CORE_DLL ${AE_BUILD_DIR}/${CMAKE_SHARED_
 
 include_directories(src)
 add_definitions(${AE_DEFINITIONS} -DAE_CORE_EXPORTS)
-file(GLOB SRC_FILES
-    "src/*.h" "src/*.cpp"
-    "src/*/*.h" "src/*/*.cpp"
-    "src/*/*/*.h" "src/*/*/*.cpp"
-    "src/*/*/*/*.h" "src/*/*/*/*.cpp")
+file(GLOB_RECURSE SRC_FILES "src/*.h" "src/*.cpp")
 __add_library_source_group(${PROJECT_NAME} SHARED ${SRC_FILES})
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${__OUTPUT_NAME})
 __install(${PROJECT_NAME})

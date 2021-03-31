@@ -1,14 +1,17 @@
 #pragma once
 
-#include "Base.h"
+#include "windows/InternalDeviceInfo.h"
 #include "aurora/events/EventDispatcher.h"
 
-namespace aurora::modules::inputs::direct_input {
+#include <hidsdi.h>
+#include <SetupAPI.h>
+
+namespace aurora::modules::inputs::generic_input {
 	class Input;
 
 	class AE_MODULE_DLL DeviceBase : public IInputDevice {
 	public:
-		DeviceBase(Input& input, LPDIRECTINPUTDEVICE8 dev, const DeviceInfo& info);
+		DeviceBase(Input& input, const InternalDeviceInfo& info);
 		virtual ~DeviceBase();
 
 		virtual events::IEventDispatcher<DeviceEvent>& AE_CALL getEventDispatcher() override;
@@ -16,11 +19,23 @@ namespace aurora::modules::inputs::direct_input {
 		virtual void AE_CALL setDeadZone(uint32_t keyCode, float32_t deadZone) override {}
 		virtual void AE_CALL setVibration(float32_t left, float32_t right) override {}
 
+		bool AE_CALL open();
+
 	protected:
 		IntrusivePtr<Input> _input;
 		events::EventDispatcher<DeviceEvent> _eventDispatcher;
-		DeviceInfo _info;
+		InternalDeviceInfo _info;
 
-		LPDIRECTINPUTDEVICE8 _dev;
+		HANDLE _handle;
+		BYTE* _inputBuffer;
+		USHORT _inputBufferLength;
+		OVERLAPPED _oRead;
+
+		bool _isReadPending;
+		DWORD _receivedLength;
+
+		void AE_CALL _read();
+
+		virtual void AE_CALL _parse() = 0;
 	};
 }

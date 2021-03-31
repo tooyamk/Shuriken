@@ -8,9 +8,9 @@ namespace aurora::modules::inputs::direct_input {
 	public:
 		Gamepad(Input& input, LPDIRECTINPUTDEVICE8 dev, const DeviceInfo& info);
 
-		virtual uint32_t AE_CALL getKeyState (uint32_t keyCode, float32_t* data, uint32_t count) const override;
+		virtual uint32_t AE_CALL getKeyState(uint32_t keyCode, float32_t* data, uint32_t count) const override;
 		virtual void AE_CALL poll(bool dispatchEvent) override;
-		virtual void AE_CALL setDeadZone (uint32_t keyCode, float32_t deadZone) override;
+		virtual void AE_CALL setDeadZone(uint32_t keyCode, float32_t deadZone) override;
 
 	private:
 		struct KeyMapping {

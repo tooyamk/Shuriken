@@ -16,6 +16,8 @@ namespace aurora::modules::inputs::xinput {
 	}
 
 	void Input::poll() {
+		std::vector<DeviceInfo> newDevices;
+
 		InternalGUID guid;
 
 		XINPUT_STATE state;
@@ -24,63 +26,36 @@ namespace aurora::modules::inputs::xinput {
 
 			if (XInputGetState(i, &state) == ERROR_SUCCESS) {
 				bool found = false;
-				for (size_t j = 0, n = _devices.size(); j < n; ++j) {
-					if (_devices[j].guid.isEqual<false, true>(&guid, sizeof(guid))) {
-						_keepDevices.emplace_back(j);
-						found = true;
-						break;
-					}
-				}
 
-				if (!found) {
-					auto& info = _newDevices.emplace_back();
-					info.guid.set<false, true>(&guid, sizeof(guid));
-					info.type = DeviceType::GAMEPAD;
-				}
+				auto& info = newDevices.emplace_back();
+				info.guid.set<false, true>(&guid, sizeof(guid));
+				info.type = DeviceType::GAMEPAD;
 			}
 		}
 
-		std::vector<DeviceInfo> changed;
-		if (_keepDevices.size() < _devices.size()) {
-			if (auto size = _keepDevices.size(); size) {
-				std::sort(_keepDevices.begin(), _keepDevices.end());
+		std::vector<DeviceInfo> add;
+		std::vector<DeviceInfo> remove;
+		{
+			std::scoped_lock lock(_mutex);
 
-				auto i = size - 1, idx = _devices.size() - 1;
-				do {
-					do {
-						if (idx > i) {
-							changed.emplace_back(std::move(_devices[idx]));
-							_devices.erase(_devices.begin() + idx);
-							--idx;
-						} else {
-							--idx;
-							break;
-						}
-					} while (true);
-
-					if (i-- == 0) break;
-				} while (true);
-			} else {
-				for (auto& e : _devices) changed.emplace_back(std::move(e));
-				_devices.clear();
+			for (auto& info : newDevices) {
+				if (!_hasDevice(info, _devices)) add.emplace_back(info);
 			}
-		}
-		_keepDevices.clear();
 
-		auto connectedIdx = changed.size();
-		if (_newDevices.size() > 0) {
-			for (auto& e : _newDevices) {
-				_devices.emplace_back(e);
-				changed.emplace_back(std::move(e));
+			for (auto& info : _devices) {
+				if (!_hasDevice(info, newDevices)) remove.emplace_back(info);
 			}
-			_newDevices.clear();
+
+			_devices = std::move(newDevices);
 		}
 
-		for (decltype(connectedIdx) i = 0; i < connectedIdx; ++i) _eventDispatcher.dispatchEvent(this, ModuleEvent::DISCONNECTED, &changed[i]);
-		for (auto i = connectedIdx, n = changed.size(); i < n; ++i) _eventDispatcher.dispatchEvent(this, ModuleEvent::CONNECTED, &changed[i]);
+		for (auto& info : remove) _eventDispatcher.dispatchEvent(this, ModuleEvent::DISCONNECTED, &info);
+		for (auto& info : add) _eventDispatcher.dispatchEvent(this, ModuleEvent::CONNECTED, &info);
 	}
 
-	IInputDevice* Input::createDevice(const DeviceGUID& guid) {
+	IntrusivePtr<IInputDevice> Input::createDevice(const DeviceGUID& guid) {
+		std::shared_lock lock(_mutex);
+
 		for (auto& info : _devices) {
 			if (info.guid == guid) return new Gamepad(*this, info);
 		}

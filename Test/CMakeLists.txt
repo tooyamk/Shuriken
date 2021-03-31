@@ -60,7 +60,7 @@ include_directories(
     ${AE_SOURCE_DIR}/
 )
 add_definitions(${AE_DEFINITIONS})
-file(GLOB SRC_FILES "src/*.h" "src/*.cpp" "src/*/*.h" "src/*/*.cpp")
+file(GLOB_RECURSE SRC_FILES "src/*.h" "src/*.cpp")
 __add_executable_source_group(${PROJECT_NAME} ${SRC_FILES})
 
 set(linkLibs

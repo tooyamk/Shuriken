@@ -8,7 +8,7 @@ namespace aurora::modules::inputs::direct_input {
 		memset(_state, 0, sizeof(StateBuffer));
 	}
 
-	uint32_t Keyboard::getKeyState (uint32_t keyCode, float32_t* data, uint32_t count) const {
+	uint32_t Keyboard::getKeyState(uint32_t keyCode, float32_t* data, uint32_t count) const {
 		if (data && count && keyCode < 256) {
 			switch (keyCode) {
 			case VK_SHIFT:

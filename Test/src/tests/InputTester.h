@@ -62,8 +62,8 @@ public:
 			std::vector<IntrusivePtr<IInputModule>> inputModules;
 
 			if constexpr (Environment::OPERATING_SYSTEM == Environment::OperatingSystem::WINDOWS) {
-				//initInputModule(inputModules, "libs/" + getDLLName("ae-input-direct-input"), &args);
-				initInputModule(inputModules, "libs/" + getDLLName("ae-input-generic-input"), &args);
+				initInputModule(inputModules, "libs/" + getDLLName("ae-input-direct-input"), &args);
+				//initInputModule(inputModules, "libs/" + getDLLName("ae-input-generic-input"), &args);
 				//initInputModule(inputModules, "libs/" + getDLLName("ae-input-xinput"), &args);
 			}
 
@@ -80,12 +80,13 @@ public:
 					};
 
 					auto info = e.getData<DeviceInfo>();
+					printaln("input device connected : ", info->type);
+
 					if ((info->type & (DeviceType::KEYBOARD | DeviceType::GAMEPAD)) != DeviceType::UNKNOWN) {
 						auto im = e.getTarget<IInputModule>();
 						//if (getNumInputeDevice(DeviceType::GAMEPAD) > 0) return;
 						printaln("create device : ", info->type, " guid size = ", info->guid.getSize());
-						auto device = im->createDevice(info->guid);
-						if (device) {
+						if (auto device = im->createDevice(info->guid); device) {
 							device->getEventDispatcher().addEventListener(DeviceEvent::DOWN, createEventListener<DeviceEvent>([app](Event<DeviceEvent>& e) {
 								auto device = e.getTarget<IInputDevice>();
 								switch (device->getInfo().type) {
@@ -167,18 +168,18 @@ public:
 							inputDevices.emplace_back(device);
 						}
 					}
-					printaln("input device connected : ", info->type);
 				}));
 
 				im->getEventDispatcher().addEventListener(ModuleEvent::DISCONNECTED, createEventListener<ModuleEvent>([&inputDevices](Event<ModuleEvent>& e) {
 					auto info = e.getData<DeviceInfo>();
+					printaln("input device disconnected : ", info->type);
+
 					for (uint32_t i = 0, n = inputDevices.size(); i < n; ++i) {
 						if (inputDevices[i]->getInfo().guid == info->guid) {
 							inputDevices.erase(inputDevices.begin() + i);
 							break;
 						}
 					}
-					printaln("input device disconnected : ", info->type);
 				}));
 			}
 
