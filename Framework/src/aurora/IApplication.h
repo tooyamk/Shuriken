@@ -10,7 +10,10 @@ namespace aurora {
 		FOCUS_IN,
 		FOCUS_OUT,
 		CLOSING,
-		CLOSED
+		CLOSED,
+#if AE_OS == AE_OS_WIN
+		RAW_INPUT
+#endif
 	};
 
 

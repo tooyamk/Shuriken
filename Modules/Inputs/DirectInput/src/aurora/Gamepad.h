@@ -25,13 +25,17 @@ namespace aurora::modules::inputs::direct_input {
 		};
 
 
+		mutable std::shared_mutex _mutex;
 		DIJOYSTATE2 _state;
 		const KeyMapping* _keyMapping;
 		std::unordered_map<GamepadKeyCode, uint8_t> _enumToKeyMapping;
 
+		mutable std::shared_mutex _deadZoneMutex;
 		std::unordered_map<uint32_t, float32_t> _deadZone;
 
 		inline float32_t AE_CALL _getDeadZone(GamepadKeyCode key) const {
+			std::shared_lock lock(_deadZoneMutex);
+
 			if (auto itr = _deadZone.find((uint32_t)key); itr == _deadZone.end()) {
 				return 0.f;
 			} else {
@@ -64,8 +68,6 @@ namespace aurora::modules::inputs::direct_input {
 		inline static float32_t AE_CALL _translateButton(DWORD value) {
 			return value & 0x80 ? 1.f : 0.f;
 		}
-
-		static bool AE_CALL _isXInputDevice(const ::GUID& guid);
 
 		static const KeyMapping DIRECT;
 		static const KeyMapping XINPUT;

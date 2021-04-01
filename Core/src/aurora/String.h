@@ -563,8 +563,8 @@ namespace aurora {
 		requires ConvertibleStringData<std::remove_cvref_t<In>>
 		inline static std::string::size_type AE_CALL find(In&& in, char c) {
 			if constexpr (String8Data<std::remove_cvref_t<In>>) {
-				auto p = (const In::value_type*)memchr(in.data(), c, in.size());
-				return p ? p - in.data() : std::string::npos;
+				auto p = (const std::remove_cvref_t<In>::value_type*)memchr(in.data(), c, in.size());
+				return p ? p - in.data() : std::remove_cvref_t<In>::npos;
 			} else {
 				return find(ConvertToString8ViewType<std::remove_cvref_t<In>>(std::forward<In>(in)), c);
 			}
@@ -574,8 +574,8 @@ namespace aurora {
 		requires ConvertibleStringData<std::remove_cvref_t<In>> && ConvertibleStringData<std::remove_cvref_t<Compare>>
 		inline static std::string::size_type AE_CALL find(In&& in, Compare&& compare) {
 			if constexpr (StringData<std::remove_cvref_t<In>> && StringData<std::remove_cvref_t<Compare>>) {
-				auto p = (const In::value_type*)memFind(in.data(), in.size(), compare.data(), compare.size());
-				return p ? p - in.data() : std::string::npos;
+				auto p = (const std::remove_cvref_t<In>::value_type*)memFind(in.data(), in.size(), compare.data(), compare.size());
+				return p ? p - in.data() : std::remove_cvref_t<In>::npos;
 			} else {
 				return find(std::string_view(std::forward<In>(in)), std::string_view(std::forward<Compare>(compare)));
 			}
@@ -588,7 +588,7 @@ namespace aurora {
 				for (size_t i = 0, n = in.size(); i < n; ++i) {
 					if (CHARS[in[i]] & flags) return i;
 				}
-				return std::string::npos;
+				return std::remove_cvref_t<In>::npos;
 			} else {
 				return find(ConvertToString8ViewType<std::remove_cvref_t<In>>(std::forward<In>(in)));
 			}

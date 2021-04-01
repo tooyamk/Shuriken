@@ -2,7 +2,6 @@
 
 #include "Base.h"
 #include "aurora/events/EventDispatcher.h"
-#include <shared_mutex>
 
 namespace aurora::modules::inputs::xinput {
 	class AE_MODULE_DLL Input : public IInputModule {

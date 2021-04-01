@@ -2,12 +2,11 @@
 
 #include "Base.h"
 #include "aurora/events/EventDispatcher.h"
-#include <shared_mutex>
 
 namespace aurora::modules::inputs::direct_input {
 	class AE_MODULE_DLL Input : public IInputModule {
 	public:
-		Input(Ref* loader, IApplication* app);
+		Input(Ref* loader, IApplication* app, bool ignoreXInputDevices);
 		virtual ~Input();
 
 		void operator delete(Input* p, std::destroying_delete_t) {
@@ -22,7 +21,15 @@ namespace aurora::modules::inputs::direct_input {
 
 		HWND AE_CALL getHWND() const;
 
+		static bool AE_CALL isXInputDevice(const ::GUID& guidProduct);
+
 	private:
+		struct EnumDevicesData {
+			bool ignoreXInputDevices;
+			std::vector<DeviceInfo>* devices;
+		};
+
+
 		IntrusivePtr<Ref> _loader;
 		IntrusivePtr<IApplication> _app;
 		events::EventDispatcher<ModuleEvent> _eventDispatcher;
@@ -30,6 +37,7 @@ namespace aurora::modules::inputs::direct_input {
 		std::shared_mutex _mutex;
 		std::vector<DeviceInfo> _devices;
 
+		bool _ignoreXInputDevices;
 		LPDIRECTINPUT8 _di;
 
 		static BOOL CALLBACK _enumDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, LPVOID pContext);

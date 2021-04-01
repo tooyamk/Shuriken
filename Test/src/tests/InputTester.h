@@ -62,8 +62,8 @@ public:
 			std::vector<IntrusivePtr<IInputModule>> inputModules;
 
 			if constexpr (Environment::OPERATING_SYSTEM == Environment::OperatingSystem::WINDOWS) {
-				initInputModule(inputModules, "libs/" + getDLLName("ae-input-direct-input"), &args);
-				//initInputModule(inputModules, "libs/" + getDLLName("ae-input-generic-input"), &args);
+				//initInputModule(inputModules, "libs/" + getDLLName("ae-input-direct-input"), &args);
+				initInputModule(inputModules, "libs/" + getDLLName("ae-input-raw-input"), &args);
 				//initInputModule(inputModules, "libs/" + getDLLName("ae-input-xinput"), &args);
 			}
 
@@ -101,6 +101,10 @@ public:
 									}
 
 									printaln("keyboard down -> key : ", key->code, "    value : ", key->value[0]);
+
+									float32_t vvv;
+									device->getKeyState((uint8_t)KeyboardVirtualKeyCode::KEY_CTRL, &vvv, 1);
+									printaln("ctrl is down ", vvv);
 
 									break;
 								}

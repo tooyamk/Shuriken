@@ -1,17 +1,14 @@
 #pragma once
 
-#include "windows/InternalDeviceInfo.h"
+#include "Base.h"
 #include "aurora/events/EventDispatcher.h"
 
-#include <hidsdi.h>
-#include <SetupAPI.h>
-
-namespace aurora::modules::inputs::generic_input {
+namespace aurora::modules::inputs::raw_input {
 	class Input;
 
 	class AE_MODULE_DLL DeviceBase : public IInputDevice {
 	public:
-		DeviceBase(Input& input, const InternalDeviceInfo& info);
+		DeviceBase(Input& input, IApplication& app, const InternalDeviceInfo& info);
 		virtual ~DeviceBase();
 
 		virtual events::IEventDispatcher<DeviceEvent>& AE_CALL getEventDispatcher() override;
@@ -19,23 +16,16 @@ namespace aurora::modules::inputs::generic_input {
 		virtual void AE_CALL setDeadZone(uint32_t keyCode, float32_t deadZone) override {}
 		virtual void AE_CALL setVibration(float32_t left, float32_t right) override {}
 
-		bool AE_CALL open();
-
 	protected:
 		IntrusivePtr<Input> _input;
+		IntrusivePtr<IApplication> _app;
 		events::EventDispatcher<DeviceEvent> _eventDispatcher;
 		InternalDeviceInfo _info;
 
-		HANDLE _handle;
-		BYTE* _inputBuffer;
-		USHORT _inputBufferLength;
-		OVERLAPPED _oRead;
+		IntrusivePtr<events::IEventListener<ApplicationEvent>> _rawIputHandler;
 
-		bool _isReadPending;
-		DWORD _receivedLength;
+		void AE_CALL _rawInputCallback(events::Event<ApplicationEvent>& e);
 
-		void AE_CALL _read();
-
-		virtual void AE_CALL _parse() = 0;
+		virtual void AE_CALL _rawInput(const RAWINPUT& rawInput) = 0;
 	};
 }

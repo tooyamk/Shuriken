@@ -1,7 +1,6 @@
 #include "Input.h"
 #include "Gamepad.h"
 #include "CreateModule.h"
-#include <algorithm>
 
 namespace aurora::modules::inputs::xinput {
 	Input::Input(Ref* loader) :

@@ -1,6 +1,5 @@
 #include "Mouse.h"
 #include "Input.h"
-#include <algorithm>
 
 namespace aurora::modules::inputs::direct_input {
 	Mouse::Mouse(Input& input, LPDIRECTINPUTDEVICE8 dev, const DeviceInfo& info) : DeviceBase(input, dev, info) {
@@ -28,6 +27,8 @@ namespace aurora::modules::inputs::direct_input {
 			default:
 			{
 				if (keyCode >= (uint32_t)MouseKeyCode::L_BUTTON && keyCode < (uint32_t)MouseKeyCode::L_BUTTON + sizeof(DIMOUSESTATE2::rgbButtons)) {
+					std::shared_lock lock(_mutex);
+
 					data[0] = _state.rgbButtons[keyCode - (uint32_t)10] & 0x80 ? 1.f : 0.f;
 
 					return 1;
@@ -48,6 +49,8 @@ namespace aurora::modules::inputs::direct_input {
 		}
 
 		if (!dispatchEvent) {
+			std::scoped_lock lock(_mutex);
+
 			_dev->GetDeviceState(sizeof(DIJOYSTATE2), &_state);
 			return;
 		}
@@ -57,16 +60,27 @@ namespace aurora::modules::inputs::direct_input {
 		if (SUCCEEDED(hr)) {
 			uint8_t changeBtns[sizeof(DIMOUSESTATE2::rgbButtons)];
 			uint8_t len = 0;
-			for (uint8_t i = 0; i < sizeof(DIMOUSESTATE2::rgbButtons); ++i) {
-				if (_state.rgbButtons[i] != state.rgbButtons[i]) {
-					_state.rgbButtons[i] = state.rgbButtons[i];
-					changeBtns[len++] = i;
-				}
-			}
 
 			POINT p;
 			GetCursorPos(&p);
-			int32_t ox = p.x - _pos.x, oy = p.y - _pos.y;
+			int32_t ox, oy;
+
+			{
+				std::scoped_lock lock(_mutex);
+
+				for (uint8_t i = 0; i < sizeof(DIMOUSESTATE2::rgbButtons); ++i) {
+					if (_state.rgbButtons[i] != state.rgbButtons[i]) {
+						_state.rgbButtons[i] = state.rgbButtons[i];
+						changeBtns[len++] = i;
+					}
+				}
+
+				ox = p.x - _pos.x;
+				oy = p.y - _pos.y;
+
+				_pos = p;
+			}
+
 			if (ox < 0) {
 				if (p.x == 0 && state.lX < ox) ox = state.lX;
 			} else if (ox == 0) {
@@ -90,7 +104,6 @@ namespace aurora::modules::inputs::direct_input {
 			} else if (oy > 0) {
 				if (p.y == GetSystemMetrics(SM_CYSCREEN) - 1 && state.lY > oy) oy = state.lY;
 			}
-			_pos = p;
 
 			if (ox || oy) {
 				//increment, right bottom positive orientation.

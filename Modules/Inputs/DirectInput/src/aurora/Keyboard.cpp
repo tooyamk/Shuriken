@@ -9,7 +9,9 @@ namespace aurora::modules::inputs::direct_input {
 	}
 
 	uint32_t Keyboard::getKeyState(uint32_t keyCode, float32_t* data, uint32_t count) const {
-		if (data && count && keyCode < 256) {
+		if (data && count && keyCode < sizeof(StateBuffer)) {
+			std::shared_lock lock(_mutex);
+
 			switch (keyCode) {
 			case VK_SHIFT:
 				data[0] = (_state[VK_SK[VK_LSHIFT]] & 0x80) || (_state[VK_SK[VK_RSHIFT]] & 0x80) ? 1.f : 0.f;
@@ -22,17 +24,17 @@ namespace aurora::modules::inputs::direct_input {
 				return 1;
 			default:
 			{
-				auto key = VK_SK[keyCode];
-				if (key) {
+				if (auto key = VK_SK[keyCode]; key) {
 					data[0] = _state[key] & 0x80 ? 1.f : 0.f;
 
 					return 1;
-				} else {
-					return 0;
 				}
+
+				break;
 			}
 			}
 		}
+
 		return 0;
 	}
 
@@ -44,6 +46,8 @@ namespace aurora::modules::inputs::direct_input {
 		}
 
 		if (!dispatchEvent) {
+			std::scoped_lock lock(_mutex);
+
 			_dev->GetDeviceState(sizeof(DIJOYSTATE2), _state);
 			return;
 		}
@@ -53,10 +57,15 @@ namespace aurora::modules::inputs::direct_input {
 		if (SUCCEEDED(hr)) {
 			StateBuffer changedBtns;
 			uint16_t len = 0;
-			for (uint16_t i = 0; i < sizeof(StateBuffer); ++i) {
-				if (_state[i] != state[i]) {
-					_state[i] = state[i];
-					changedBtns[len++] = uint8_t(i);
+
+			{
+				std::scoped_lock lock(_mutex);
+
+				for (uint16_t i = 0; i < sizeof(StateBuffer); ++i) {
+					if (_state[i] != state[i]) {
+						_state[i] = state[i];
+						changedBtns[len++] = uint8_t(i);
+					}
 				}
 			}
 

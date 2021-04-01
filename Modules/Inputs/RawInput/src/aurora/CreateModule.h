@@ -9,19 +9,17 @@ namespace aurora::modules::inputs {
 		using namespace std::literals;
 
 		if (!args) {
-			printdln(L"DirectInputModule create error : no args"sv);
+			printdln(L"RawInputModule create error : no args"sv);
 			return nullptr;
 		}
 
 		auto app = (IApplication*)args->tryGet("app").toNumber<uintptr_t>();
 		if (!app) {
-			printdln(L"DirectInputModule create error : no app"sv);
+			printdln(L"RawInputModule create error : no app"sv);
 			return nullptr;
 		}
 
-		auto ignoreXInputDevices = args->tryGet("ignoreXInputDevices").toBool();
-
-		return new direct_input::Input(loader, app, ignoreXInputDevices);
+		return new raw_input::Input(loader, app);
 	}
 }
 #endif

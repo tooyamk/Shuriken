@@ -13,6 +13,7 @@ namespace aurora::modules::inputs::direct_input {
 	private:
 		using StateBuffer = uint8_t[256];
 
+		mutable std::shared_mutex _mutex;
 		StateBuffer _state;
 
 		inline static const uint8_t SK_VK[] = {

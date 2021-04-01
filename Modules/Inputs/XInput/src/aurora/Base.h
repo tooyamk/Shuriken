@@ -4,6 +4,7 @@
 #include "aurora/IApplication.h"
 
 #include <Xinput.h>
+#include <shared_mutex>
 
 namespace aurora::modules::inputs::xinput {
 	struct InternalGUID {

@@ -2,19 +2,15 @@
 
 #include "DeviceBase.h"
 
-namespace aurora::modules::inputs::direct_input {
+namespace aurora::modules::inputs::raw_input {
 	class AE_MODULE_DLL Mouse : public DeviceBase {
 	public:
-		Mouse(Input& input, LPDIRECTINPUTDEVICE8 dev, const DeviceInfo& info);
+		Mouse(Input& input, IApplication& app, const InternalDeviceInfo& info);
 
 		virtual uint32_t AE_CALL getKeyState(uint32_t keyCode, float32_t* data, uint32_t count) const override;
 		virtual void AE_CALL poll(bool dispatchEvent) override;
 
-	private:
-		mutable std::shared_mutex _mutex;
-		DIMOUSESTATE2 _state;
-		POINT _pos;
-
-		POINT AE_CALL _getClientPos() const;
+	protected:
+		virtual void AE_CALL _rawInput(const RAWINPUT& rawInput) override;
 	};
 }

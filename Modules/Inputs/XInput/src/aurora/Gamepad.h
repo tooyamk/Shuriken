@@ -13,9 +13,9 @@ namespace aurora::modules::inputs::xinput {
 
 		virtual events::IEventDispatcher<DeviceEvent>& AE_CALL getEventDispatcher() override;
 		virtual const DeviceInfo& AE_CALL getInfo() const override;
-		virtual uint32_t AE_CALL getKeyState (uint32_t keyCode, float32_t* data, uint32_t count) const override;
+		virtual uint32_t AE_CALL getKeyState(uint32_t keyCode, float32_t* data, uint32_t count) const override;
 		virtual void AE_CALL poll(bool dispatchEvent) override;
-		virtual void AE_CALL setDeadZone (uint32_t keyCode, float32_t deadZone) override;
+		virtual void AE_CALL setDeadZone(uint32_t keyCode, float32_t deadZone) override;
 		virtual void AE_CALL setVibration(float32_t left, float32_t right) override;
 
 	private:
@@ -24,12 +24,16 @@ namespace aurora::modules::inputs::xinput {
 		events::EventDispatcher<DeviceEvent> _eventDispatcher;
 		DeviceInfo _info;
 
+		mutable std::shared_mutex _mutex;
 		XINPUT_STATE _state;
 		XINPUT_VIBRATION _vibration;
 
+		mutable std::shared_mutex _deadZoneMutex;
 		std::unordered_map<uint32_t, float32_t> _deadZone;
 
 		inline float32_t AE_CALL _getDeadZone(GamepadKeyCode key) const {
+			std::shared_lock lock(_deadZoneMutex);
+
 			if (auto itr = _deadZone.find((uint32_t)key); itr == _deadZone.end()) {
 				return 0.f;
 			} else {

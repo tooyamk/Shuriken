@@ -26,8 +26,10 @@ namespace aurora::modules::inputs::xinput {
 		return _info;
 	}
 
-	uint32_t Gamepad::getKeyState (uint32_t keyCode, float32_t* data, uint32_t count) const {
+	uint32_t Gamepad::getKeyState(uint32_t keyCode, float32_t* data, uint32_t count) const {
 		if (data && count) {
+			std::shared_lock lock(_mutex);
+
 			switch ((GamepadKeyCode)keyCode) {
 			case GamepadKeyCode::LEFT_STICK:
 				return _getStick(_state.Gamepad.sThumbLX, _state.Gamepad.sThumbLY, (GamepadKeyCode)keyCode, data, count);
@@ -79,55 +81,68 @@ namespace aurora::modules::inputs::xinput {
 
 	void Gamepad::poll(bool dispatchEvent) {
 		if (!dispatchEvent) {
+			std::scoped_lock lock(_mutex);
+
 			XInputGetState(_index, &_state);
 			return;
 		}
 
 		XINPUT_STATE state;
 		if (XInputGetState(_index, &state) == ERROR_SUCCESS) {
-			auto& oriPad = _state.Gamepad;
-			auto oriBtns = oriPad.wButtons;
+			DWORD oriBtns;
 
 			auto& curPad = state.Gamepad;
 			auto curBtns = curPad.wButtons;
 
 			SHORT oriLStickX, oriLStickY, oriRStickX, oriRStickY;
 			auto ls = false, rs = false;
-			if (oriPad.sThumbLX != curPad.sThumbLX || oriPad.sThumbLY != curPad.sThumbLY) {
-				oriLStickX = oriPad.sThumbLX;
-				oriLStickY = oriPad.sThumbLY;
-				oriPad.sThumbLX = curPad.sThumbLX;
-				oriPad.sThumbLY = curPad.sThumbLY;
-				ls = true;
-			}
-			if (oriPad.sThumbRX != curPad.sThumbRX || oriPad.sThumbRY != curPad.sThumbRY) {
-				oriRStickX = oriPad.sThumbRX;
-				oriRStickY = oriPad.sThumbRY;
-				oriPad.sThumbRX = curPad.sThumbRX;
-				oriPad.sThumbRY = curPad.sThumbRY;
-				rs = true;
-			}
 
-			auto lt = false, rt = false;
 			SHORT oriLT, oriRT;
-			if (oriPad.bLeftTrigger != curPad.bLeftTrigger) {
-				oriLT = oriPad.bLeftTrigger;
-				oriPad.bLeftTrigger = curPad.bLeftTrigger;
-				lt = true;
-			}
-			if (oriPad.bRightTrigger != curPad.bRightTrigger) {
-				oriRT = oriPad.bRightTrigger;
-				oriPad.bRightTrigger = curPad.bRightTrigger;
-				rt = true;
-			}
+			auto lt = false, rt = false;
 
-			auto dpad = 
-				(oriBtns & XINPUT_GAMEPAD_DPAD_UP) != (curBtns & XINPUT_GAMEPAD_DPAD_UP) ||
-				(oriBtns & XINPUT_GAMEPAD_DPAD_RIGHT) != (curBtns & XINPUT_GAMEPAD_DPAD_RIGHT) ||
-				(oriBtns & XINPUT_GAMEPAD_DPAD_DOWN) != (curBtns & XINPUT_GAMEPAD_DPAD_DOWN) ||
-				(oriBtns & XINPUT_GAMEPAD_DPAD_LEFT) != (curBtns & XINPUT_GAMEPAD_DPAD_LEFT);
+			bool dpad;
 
-			oriPad.wButtons = curPad.wButtons;
+			{
+				std::scoped_lock lock(_mutex);
+
+				auto& oriPad = _state.Gamepad;
+				oriBtns = oriPad.wButtons;
+
+				if (oriPad.sThumbLX != curPad.sThumbLX || oriPad.sThumbLY != curPad.sThumbLY) {
+					oriLStickX = oriPad.sThumbLX;
+					oriLStickY = oriPad.sThumbLY;
+					oriPad.sThumbLX = curPad.sThumbLX;
+					oriPad.sThumbLY = curPad.sThumbLY;
+					ls = true;
+				}
+				if (oriPad.sThumbRX != curPad.sThumbRX || oriPad.sThumbRY != curPad.sThumbRY) {
+					oriRStickX = oriPad.sThumbRX;
+					oriRStickY = oriPad.sThumbRY;
+					oriPad.sThumbRX = curPad.sThumbRX;
+					oriPad.sThumbRY = curPad.sThumbRY;
+					rs = true;
+				}
+
+
+				if (oriPad.bLeftTrigger != curPad.bLeftTrigger) {
+					oriLT = oriPad.bLeftTrigger;
+					oriPad.bLeftTrigger = curPad.bLeftTrigger;
+					lt = true;
+				}
+				if (oriPad.bRightTrigger != curPad.bRightTrigger) {
+					oriRT = oriPad.bRightTrigger;
+					oriPad.bRightTrigger = curPad.bRightTrigger;
+					rt = true;
+				}
+
+				dpad =
+					(oriBtns & XINPUT_GAMEPAD_DPAD_UP) != (curBtns & XINPUT_GAMEPAD_DPAD_UP) ||
+					(oriBtns & XINPUT_GAMEPAD_DPAD_RIGHT) != (curBtns & XINPUT_GAMEPAD_DPAD_RIGHT) ||
+					(oriBtns & XINPUT_GAMEPAD_DPAD_DOWN) != (curBtns & XINPUT_GAMEPAD_DPAD_DOWN) ||
+					(oriBtns & XINPUT_GAMEPAD_DPAD_LEFT) != (curBtns & XINPUT_GAMEPAD_DPAD_LEFT);
+
+				oriPad.wButtons = curPad.wButtons;
+			}
 
 			if (ls) _updateStick(oriLStickX, oriLStickY, curPad.sThumbLX, curPad.sThumbLY, GamepadKeyCode::LEFT_STICK);
 			if (rs) _updateStick(oriRStickX, oriRStickY, curPad.sThumbRX, curPad.sThumbRY, GamepadKeyCode::RIGHT_STICK);
@@ -154,8 +169,10 @@ namespace aurora::modules::inputs::xinput {
 		}
 	}
 
-	void Gamepad::setDeadZone (uint32_t keyCode, float32_t deadZone) {
+	void Gamepad::setDeadZone(uint32_t keyCode, float32_t deadZone) {
 		if (deadZone < 0.f) deadZone = -deadZone;
+
+		std::scoped_lock lock(_deadZoneMutex);
 
 		_deadZone.insert_or_assign(keyCode, deadZone);
 	}
