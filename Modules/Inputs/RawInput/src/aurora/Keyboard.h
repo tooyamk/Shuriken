@@ -20,5 +20,7 @@ namespace aurora::modules::inputs::raw_input {
 		StateBuffer _listenState;
 
 		virtual void AE_CALL _rawInput(const RAWINPUT& rawInput) override;
+
+		static int32_t AE_CALL _getStateIndex(const RAWKEYBOARD& raw);
 	};
 }

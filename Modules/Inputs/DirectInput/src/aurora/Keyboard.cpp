@@ -49,6 +49,7 @@ namespace aurora::modules::inputs::direct_input {
 			std::scoped_lock lock(_mutex);
 
 			_dev->GetDeviceState(sizeof(DIJOYSTATE2), _state);
+
 			return;
 		}
 

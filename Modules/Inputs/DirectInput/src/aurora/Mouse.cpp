@@ -14,7 +14,10 @@ namespace aurora::modules::inputs::direct_input {
 			switch ((MouseKeyCode)keyCode) {
 			case MouseKeyCode::POSITION:
 			{
-				auto p = _getClientPos();
+				POINT p;
+				GetCursorPos(&p);
+				ScreenToClient(_input->getHWND(), &p);
+
 				data[0] = float32_t(p.x);
 				uint32_t c = 1;
 				if (count > 1) data[c++] = float32_t(p.y);
@@ -33,10 +36,11 @@ namespace aurora::modules::inputs::direct_input {
 					return 1;
 				}
 
-				return 0;
+				break;
 			}
 			}
 		}
+
 		return 0;
 	}
 
@@ -47,10 +51,15 @@ namespace aurora::modules::inputs::direct_input {
 			if (FAILED(_dev->Poll())) return;
 		}
 
+		POINT p;
+		GetCursorPos(&p);
+
 		if (!dispatchEvent) {
 			std::scoped_lock lock(_mutex);
 
 			_dev->GetDeviceState(sizeof(DIJOYSTATE2), &_state);
+			_pos = p;
+
 			return;
 		}
 
@@ -60,8 +69,6 @@ namespace aurora::modules::inputs::direct_input {
 			uint8_t changeBtns[sizeof(DIMOUSESTATE2::rgbButtons)];
 			uint8_t len = 0;
 
-			POINT p;
-			GetCursorPos(&p);
 			int32_t ox, oy;
 
 			{
@@ -91,8 +98,8 @@ namespace aurora::modules::inputs::direct_input {
 			}
 
 			if (state.lZ != 0) {
-				float32_t value[] = { (float32_t)state.lZ, (float32_t)WHEEL_DELTA };
-				Key k = { (uint32_t)MouseKeyCode::WHEEL, 2, value };
+				float32_t value = state.lZ > 0 ? 1.f : -1.f;
+				Key k = { (uint32_t)MouseKeyCode::WHEEL, 1, &value };
 				_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &k);
 			}
 
@@ -103,13 +110,6 @@ namespace aurora::modules::inputs::direct_input {
 				_eventDispatcher.dispatchEvent(this, value > 0 ? DeviceEvent::DOWN : DeviceEvent::UP, &k);
 			}
 		}
-	}
-
-	POINT Mouse::_getClientPos() const {
-		POINT p;
-		GetCursorPos(&p);
-		ScreenToClient(_input->getHWND(), &p);
-		return p;
 	}
 
 	void Mouse::_amendmentRelativePos(int32_t& target, LONG absolutePos, LONG referenceRelativePos, int32_t nIndex) {

@@ -21,6 +21,8 @@ namespace aurora::modules::inputs::raw_input {
 		virtual void AE_CALL poll() override;
 		virtual IntrusivePtr<IInputDevice> AE_CALL createDevice(const DeviceGUID& guid) override;
 
+		HWND AE_CALL getHWND() const;
+
 		void AE_CALL registerRawInputDevices(DeviceType type);
 		void AE_CALL unregisterRawInputDevices(DeviceType type);
 

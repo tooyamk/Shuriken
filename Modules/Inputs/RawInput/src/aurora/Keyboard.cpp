@@ -33,6 +33,7 @@ namespace aurora::modules::inputs::raw_input {
 			std::shared_lock lock2(_listenMutex);
 
 			memcpy(_state, _listenState, sizeof(StateBuffer));
+
 			return;
 		}
 
@@ -59,7 +60,7 @@ namespace aurora::modules::inputs::raw_input {
 
 		if (len > 0) {
 			for (uint16_t i = 0; i < len; ++i) {
-				uint8_t key = changedBtns[i];
+				auto key = changedBtns[i];
 				float32_t value = state[key] ? 1.f : 0.f;
 
 				Key k = { key, 1, &value };
@@ -74,21 +75,7 @@ namespace aurora::modules::inputs::raw_input {
 		case WM_KEYDOWN:
 		case WM_SYSKEYDOWN:
 		{
-			int32_t i;
-			switch (kb.VKey) {
-			case (USHORT)KeyboardVirtualKeyCode::KEY_SHIFT:
-				i = (decltype(i))(kb.MakeCode == 0x2A ? KeyboardVirtualKeyCode::KEY_LSHIFT : KeyboardVirtualKeyCode::KEY_RSHIFT);
-				break;
-			case (USHORT)KeyboardVirtualKeyCode::KEY_CTRL:
-				i = (decltype(i))(kb.Flags & RI_KEY_E0 ? KeyboardVirtualKeyCode::KEY_RCTRL : KeyboardVirtualKeyCode::KEY_LCTRL);
-				break;
-			case (USHORT)KeyboardVirtualKeyCode::KEY_ALT:
-				i = (decltype(i))(kb.Flags & RI_KEY_E0 ? KeyboardVirtualKeyCode::KEY_RALT : KeyboardVirtualKeyCode::KEY_LALT);
-				break;
-			default:
-				i = kb.VKey;
-				break;
-			}
+			auto i = _getStateIndex(kb);
 
 			std::scoped_lock lock(_listenMutex);
 
@@ -99,14 +86,29 @@ namespace aurora::modules::inputs::raw_input {
 		case WM_KEYUP:
 		case WM_SYSKEYUP:
 		{
+			auto i = _getStateIndex(kb);
+
 			std::scoped_lock lock(_listenMutex);
 
-			_listenState[kb.VKey] = 0;
+			_listenState[i] = 0;
 
 			break;
 		}
 		default:
 			break;
+		}
+	}
+
+	int32_t Keyboard::_getStateIndex(const RAWKEYBOARD& raw) {
+		switch ((KeyboardVirtualKeyCode)raw.VKey) {
+		case KeyboardVirtualKeyCode::KEY_SHIFT:
+			return (int32_t)(raw.MakeCode == 0x2A ? KeyboardVirtualKeyCode::KEY_LSHIFT : KeyboardVirtualKeyCode::KEY_RSHIFT);
+		case KeyboardVirtualKeyCode::KEY_CTRL:
+			return (int32_t)(raw.Flags & RI_KEY_E0 ? KeyboardVirtualKeyCode::KEY_RCTRL : KeyboardVirtualKeyCode::KEY_LCTRL);
+		case KeyboardVirtualKeyCode::KEY_ALT:
+			return (int32_t)(raw.Flags & RI_KEY_E0 ? KeyboardVirtualKeyCode::KEY_RALT : KeyboardVirtualKeyCode::KEY_LALT);
+		default:
+			return raw.VKey;
 		}
 	}
 }

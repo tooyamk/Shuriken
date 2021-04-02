@@ -1,8 +1,9 @@
 #include "Mouse.h"
-#include "aurora/Debug.h"
+#include "Input.h"
 
 namespace aurora::modules::inputs::raw_input {
-	Mouse::Mouse(Input& input, IApplication& app, const InternalDeviceInfo& info) : DeviceBase(input, app, info) {
+	Mouse::Mouse(Input& input, IApplication& app, const InternalDeviceInfo& info) : DeviceBase(input, app, info),
+		_lastWheel(0) {
 		memset(_state, 0, sizeof(StateBuffer));
 		memset(_listenState, 0, sizeof(StateBuffer));
 		GetCursorPos(&_pos);
@@ -10,15 +11,51 @@ namespace aurora::modules::inputs::raw_input {
 	}
 
 	uint32_t Mouse::getKeyState(uint32_t keyCode, float32_t* data, uint32_t count) const {
+		if (data && count) {
+			switch ((MouseKeyCode)keyCode) {
+			case MouseKeyCode::POSITION:
+			{
+				POINT p;
+				GetCursorPos(&p);
+				ScreenToClient(_input->getHWND(), &p);
+
+				data[0] = float32_t(p.x);
+				uint32_t c = 1;
+				if (count > 1) data[c++] = float32_t(p.y);
+
+				return c;
+			}
+			case MouseKeyCode::WHEEL:
+				return 0;
+			default:
+			{
+				if (keyCode >= (uint32_t)MouseKeyCode::L_BUTTON && keyCode < (uint32_t)MouseKeyCode::L_BUTTON + sizeof(StateBuffer)) {
+					std::shared_lock lock(_mutex);
+
+					data[0] = _state[keyCode - (uint32_t)MouseKeyCode::L_BUTTON] ? 1.f : 0.f;
+
+					return 1;
+				}
+
+				break;
+			}
+			}
+		}
+
 		return 0;
 	}
 
 	void Mouse::poll(bool dispatchEvent) {
+		POINT p;
+		GetCursorPos(&p);
+
 		if (!dispatchEvent) {
 			std::scoped_lock lock(_mutex);
 			std::shared_lock lock2(_listenMutex);
 
 			memcpy(_state, _listenState, sizeof(StateBuffer));
+			_pos = p;
+
 			return;
 		}
 
@@ -34,9 +71,8 @@ namespace aurora::modules::inputs::raw_input {
 		StateBuffer changeBtns;
 		uint8_t len = 0;
 
-		POINT p;
-		GetCursorPos(&p);
 		int32_t ox, oy;
+		int32_t wheel = _lastWheel.exchange(0);
 
 		{
 			std::scoped_lock lock(_mutex);
@@ -64,6 +100,13 @@ namespace aurora::modules::inputs::raw_input {
 			_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &k);
 		}
 
+		if (wheel != 0) {
+			constexpr float32_t DELTA = WHEEL_DELTA;
+			float32_t value = (float32_t)wheel / DELTA;
+			Key k = { (uint32_t)MouseKeyCode::WHEEL, 1, &value };
+			_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &k);
+		}
+
 		for (uint8_t i = 0; i < len; ++i) {
 			uint8_t key = changeBtns[i];
 			float32_t value = state[key] ? 1.f : 0.f;
@@ -77,7 +120,8 @@ namespace aurora::modules::inputs::raw_input {
 
 		auto& m = rawInput.data.mouse;
 		
-		for (size_t i = 0; i < sizeof(m.usButtonFlags); ++i) {
+		constexpr size_t n = sizeof(m.usButtonFlags) * 8;
+		for (size_t i = 0; i < n; ++i) {
 			decltype(m.usButtonFlags) flag = 1 << i;
 			if ((m.usButtonFlags & flag) != flag) continue;
 
@@ -155,11 +199,8 @@ namespace aurora::modules::inputs::raw_input {
 				break;
 			}
 			case RI_MOUSE_WHEEL:
-			{
-				auto numTicks = (float32_t)(SHORT)m.usButtonData / WHEEL_DELTA;
-
+				_lastWheel = (SHORT)m.usButtonData;
 				break;
-			}
 			default:
 				break;
 			}

@@ -164,6 +164,7 @@ namespace aurora::modules::inputs::direct_input {
 			std::scoped_lock lock(_mutex);
 
 			memcpy(&_state, &state, sizeof(_state));
+
 			return;
 		}
 

@@ -84,6 +84,7 @@ namespace aurora::modules::inputs::xinput {
 			std::scoped_lock lock(_mutex);
 
 			XInputGetState(_index, &_state);
+
 			return;
 		}
 

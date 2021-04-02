@@ -105,6 +105,10 @@ namespace aurora::modules::inputs::raw_input {
 		return nullptr;
 	}
 
+	HWND Input::getHWND() const {
+		return (HWND)_app->getNative(ApplicationNative::HWND);
+	}
+
 	void Input::registerRawInputDevices(DeviceType type) {
 		if (auto n = _getNumVal(type); n) {
 			std::scoped_lock lock(_numMutex);
