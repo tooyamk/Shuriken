@@ -6,14 +6,13 @@ namespace aurora::modules::inputs::direct_input {
 		_dev->SetDataFormat(&c_dfDIMouse2);
 		_dev->SetCooperativeLevel(_input->getHWND(), DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
 		memset(&_state, 0, sizeof(DIMOUSESTATE2));
-
 		GetCursorPos(&_pos);
 	}
 
 	uint32_t Mouse::getKeyState(uint32_t keyCode, float32_t* data, uint32_t count) const {
 		if (data && count) {
-			switch (keyCode) {
-			case (uint32_t)MouseKeyCode::POSITION:
+			switch ((MouseKeyCode)keyCode) {
+			case MouseKeyCode::POSITION:
 			{
 				auto p = _getClientPos();
 				data[0] = float32_t(p.x);
@@ -22,7 +21,7 @@ namespace aurora::modules::inputs::direct_input {
 
 				return c;
 			}
-			case (uint32_t)MouseKeyCode::WHEEL:
+			case MouseKeyCode::WHEEL:
 				return 0;
 			default:
 			{
@@ -81,29 +80,8 @@ namespace aurora::modules::inputs::direct_input {
 				_pos = p;
 			}
 
-			if (ox < 0) {
-				if (p.x == 0 && state.lX < ox) ox = state.lX;
-			} else if (ox == 0) {
-				if (p.x == 0) {
-					if (state.lX < 0) ox = state.lX;
-				} else if (p.x == GetSystemMetrics(SM_CXSCREEN) - 1) {
-					if (state.lX > 0) ox = state.lX;
-				}
-			} else if (ox > 0) {
-				if (p.x == GetSystemMetrics(SM_CXSCREEN) - 1 && state.lX > ox) ox = state.lX;
-			}
-
-			if (oy < 0) {
-				if (p.y == 0 && state.lY < oy) oy = state.lY;
-			} else if (oy == 0) {
-				if (p.y == 0) {
-					if (state.lY < 0) oy = state.lY;
-				} else if (p.x == GetSystemMetrics(SM_CYSCREEN) - 1) {
-					if (state.lY > 0) oy = state.lY;
-				}
-			} else if (oy > 0) {
-				if (p.y == GetSystemMetrics(SM_CYSCREEN) - 1 && state.lY > oy) oy = state.lY;
-			}
+			_amendmentRelativePos(ox, p.x, state.lX, SM_CXSCREEN);
+			_amendmentRelativePos(oy, p.y, state.lY, SM_CYSCREEN);
 
 			if (ox || oy) {
 				//increment, right bottom positive orientation.
@@ -113,8 +91,8 @@ namespace aurora::modules::inputs::direct_input {
 			}
 
 			if (state.lZ != 0) {
-				float32_t value = state.lZ > 0 ? 1.f : -1.f;
-				Key k = { (uint32_t)MouseKeyCode::WHEEL, 1, &value };
+				float32_t value[] = { (float32_t)state.lZ, (float32_t)WHEEL_DELTA };
+				Key k = { (uint32_t)MouseKeyCode::WHEEL, 2, value };
 				_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &k);
 			}
 
@@ -132,5 +110,19 @@ namespace aurora::modules::inputs::direct_input {
 		GetCursorPos(&p);
 		ScreenToClient(_input->getHWND(), &p);
 		return p;
+	}
+
+	void Mouse::_amendmentRelativePos(int32_t& target, LONG absolutePos, LONG referenceRelativePos, int32_t nIndex) {
+		if (target < 0) {
+			if (absolutePos == 0 && referenceRelativePos < target) target = referenceRelativePos;
+		} else if (target == 0) {
+			if (absolutePos == 0) {
+				if (referenceRelativePos < 0) target = referenceRelativePos;
+			} else if (absolutePos == GetSystemMetrics(nIndex) - 1) {
+				if (referenceRelativePos > 0) target = referenceRelativePos;
+			}
+		} else if (target > 0) {
+			if (absolutePos == GetSystemMetrics(nIndex) - 1 && referenceRelativePos > target) target = referenceRelativePos;
+		}
 	}
 }

@@ -256,8 +256,14 @@ namespace std {
 #endif
 
 #ifndef __cpp_lib_is_scoped_enum
-	template<typename T> inline constexpr bool is_scoped_enum_v = std::is_enum_v<T> && !std::convertible_to<T, std::underlying_type_t<T>>;
-	template<typename T> struct is_scoped_enum : bool_constant<is_scoped_enum_v<T>> {};
+	template<class>
+	struct is_scoped_enum : std::false_type {};
+
+	template<class T>
+	requires std::is_enum_v<T>
+	struct is_scoped_enum<T> : std::bool_constant<!std::is_convertible_v<T, std::underlying_type_t<T>>> {};
+
+	template<typename T> inline constexpr bool is_scoped_enum_v = is_scoped_enum<T>::value;
 #endif
 
 #ifndef __cpp_lib_bitops
@@ -558,6 +564,23 @@ namespace aurora {
 		inline constexpr T& AE_CALL operator^=(T& e1, T e2) noexcept {
 			(std::underlying_type_t<T>&)e1 ^= (std::underlying_type_t<T>)e2;
 			return e1;
+		}
+
+		template<ScopedEnum E, std::integral I>
+		inline constexpr E AE_CALL operator+(E e, I i) noexcept {
+			return (E)((std::underlying_type_t<E>)e + i);
+		}
+		template<ScopedEnum E, std::integral I>
+		inline constexpr E AE_CALL operator+(I i, E e) noexcept {
+			return (E)(i + (std::underlying_type_t<E>)e);
+		}
+		template<ScopedEnum E, std::integral I>
+		inline constexpr E AE_CALL operator-(E e, I i) noexcept {
+			return (E)((std::underlying_type_t<E>)e - i);
+		}
+		template<ScopedEnum E, std::integral I>
+		inline constexpr E AE_CALL operator-(I i, E e) noexcept {
+			return (E)(i - (std::underlying_type_t<E>)e);
 		}
 	}
 	

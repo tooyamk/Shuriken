@@ -22,10 +22,10 @@ namespace aurora::modules::inputs::raw_input {
 	void Input::poll() {
 		std::vector<InternalDeviceInfo> newDevices;
 
-		UINT deviceCount = 0;
-		auto rst = GetRawInputDeviceList(nullptr, &deviceCount, sizeof(RAWINPUTDEVICELIST));
-		auto devices = new RAWINPUTDEVICELIST[deviceCount];
-		auto rst1 = GetRawInputDeviceList(devices, &deviceCount, sizeof(RAWINPUTDEVICELIST));
+		constexpr UINT ALLOC_DEV_COUNT = 32;
+		RAWINPUTDEVICELIST devices[ALLOC_DEV_COUNT];
+		auto deviceCount = ALLOC_DEV_COUNT;
+		deviceCount = GetRawInputDeviceList(devices, &deviceCount, sizeof(RAWINPUTDEVICELIST));
 
 		char buffer[256];
 		UINT pcbSize = sizeof(buffer);
@@ -91,7 +91,7 @@ namespace aurora::modules::inputs::raw_input {
 		std::shared_lock lock(_mutex);
 
 		for (auto& info : _devices) {
-			if (info.guid == guid && info.type == DeviceType::KEYBOARD || info.type == DeviceType::MOUSE) {
+			if (info.guid == guid && (info.type == DeviceType::KEYBOARD || info.type == DeviceType::MOUSE)) {
 				registerRawInputDevices(info.type);
 
 				if (info.type == DeviceType::KEYBOARD) {

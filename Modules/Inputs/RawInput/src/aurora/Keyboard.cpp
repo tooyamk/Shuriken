@@ -8,15 +8,15 @@ namespace aurora::modules::inputs::raw_input {
 
 	uint32_t Keyboard::getKeyState(uint32_t keyCode, float32_t* data, uint32_t count) const {
 		if (data && count && keyCode < sizeof(_state)) {
-			switch (keyCode) {
-			case (uint32_t)KeyboardVirtualKeyCode::KEY_SHIFT:
+			switch ((KeyboardVirtualKeyCode)keyCode) {
+			case KeyboardVirtualKeyCode::KEY_SHIFT:
 				data[0] = (_state[(uint32_t)KeyboardVirtualKeyCode::KEY_LSHIFT]) || (_state[(uint32_t)KeyboardVirtualKeyCode::KEY_RSHIFT]) ? 1.f : 0.f;
 				return 1;
-			case (uint32_t)KeyboardVirtualKeyCode::KEY_CTRL:
+			case KeyboardVirtualKeyCode::KEY_CTRL:
 				data[0] = (_state[(uint32_t)KeyboardVirtualKeyCode::KEY_LCTRL]) || (_state[(uint32_t)KeyboardVirtualKeyCode::KEY_RCTRL]) ? 1.f : 0.f;
 				return 1;
-			case VK_MENU:
-				//data[0] = (_state[VK_SK[VK_LMENU]] & 0x80) || (_state[VK_SK[VK_RMENU]] & 0x80) ? 1.f : 0.f;
+			case KeyboardVirtualKeyCode::KEY_ALT:
+				data[0] = (_state[(uint32_t)KeyboardVirtualKeyCode::KEY_LALT]) || (_state[(uint32_t)KeyboardVirtualKeyCode::KEY_RALT]) ? 1.f : 0.f;
 				return 1;
 			default:
 				data[0] = _state[keyCode] ? 1.f : 0.f;
@@ -38,7 +38,7 @@ namespace aurora::modules::inputs::raw_input {
 
 		StateBuffer state;
 		{
-			std::shared_lock lock2(_listenMutex);
+			std::shared_lock lock(_listenMutex);
 
 			memcpy(state, _listenState, sizeof(StateBuffer));
 		}
@@ -74,12 +74,25 @@ namespace aurora::modules::inputs::raw_input {
 		case WM_KEYDOWN:
 		case WM_SYSKEYDOWN:
 		{
+			int32_t i;
 			switch (kb.VKey) {
 			case (USHORT)KeyboardVirtualKeyCode::KEY_SHIFT:
+				i = (decltype(i))(kb.MakeCode == 0x2A ? KeyboardVirtualKeyCode::KEY_LSHIFT : KeyboardVirtualKeyCode::KEY_RSHIFT);
+				break;
+			case (USHORT)KeyboardVirtualKeyCode::KEY_CTRL:
+				i = (decltype(i))(kb.Flags & RI_KEY_E0 ? KeyboardVirtualKeyCode::KEY_RCTRL : KeyboardVirtualKeyCode::KEY_LCTRL);
+				break;
+			case (USHORT)KeyboardVirtualKeyCode::KEY_ALT:
+				i = (decltype(i))(kb.Flags & RI_KEY_E0 ? KeyboardVirtualKeyCode::KEY_RALT : KeyboardVirtualKeyCode::KEY_LALT);
+				break;
+			default:
+				i = kb.VKey;
+				break;
 			}
+
 			std::scoped_lock lock(_listenMutex);
 
-			_listenState[kb.VKey] = 1;
+			_listenState[i] = 1;
 
 			break;
 		}

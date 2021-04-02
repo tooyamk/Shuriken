@@ -16,5 +16,7 @@ namespace aurora::modules::inputs::direct_input {
 		POINT _pos;
 
 		POINT AE_CALL _getClientPos() const;
+
+		static void AE_CALL _amendmentRelativePos(int32_t& target, LONG absolutePos, LONG referenceRelativePos, int32_t nIndex);
 	};
 }

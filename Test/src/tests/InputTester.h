@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../BaseTester.h"
+#include <shared_mutex>
 
 class InputTester : public BaseTester {
 public:
@@ -62,17 +63,21 @@ public:
 			std::vector<IntrusivePtr<IInputModule>> inputModules;
 
 			if constexpr (Environment::OPERATING_SYSTEM == Environment::OperatingSystem::WINDOWS) {
-				//initInputModule(inputModules, "libs/" + getDLLName("ae-input-direct-input"), &args);
-				initInputModule(inputModules, "libs/" + getDLLName("ae-input-raw-input"), &args);
+				initInputModule(inputModules, "libs/" + getDLLName("ae-input-direct-input"), &args);
+				//initInputModule(inputModules, "libs/" + getDLLName("ae-input-raw-input"), &args);
 				//initInputModule(inputModules, "libs/" + getDLLName("ae-input-xinput"), &args);
 			}
 
+			std::shared_mutex inputDevicesMutex;
 			std::vector<IntrusivePtr<IInputDevice>> inputDevices;
 
 			for (auto& im : inputModules) {
-				im->getEventDispatcher().addEventListener(ModuleEvent::CONNECTED, createEventListener<ModuleEvent>([&inputDevices, app](Event<ModuleEvent>& e) {
-					auto getNumInputeDevice = [&inputDevices](DeviceType type) {
+				im->getEventDispatcher().addEventListener(ModuleEvent::CONNECTED, createEventListener<ModuleEvent>([&inputDevices, &inputDevicesMutex, app](Event<ModuleEvent>& e) {
+					auto getNumInputeDevice = [&inputDevices, &inputDevicesMutex](DeviceType type) {
 						uint32_t n = 0;
+
+						std::shared_lock lock(inputDevicesMutex);
+
 						for (auto& dev : inputDevices) {
 							if (dev->getInfo().type == type) ++n;
 						}
@@ -80,12 +85,12 @@ public:
 					};
 
 					auto info = e.getData<DeviceInfo>();
-					printaln("input device connected : ", info->type);
+					printaln("input device connected : ", info->type, " vid = ", info->vendorID, " pid = ", info->productID, " guid = ", String::toString(info->guid.getData(), info->guid.getSize()));
 
-					if ((info->type & (DeviceType::KEYBOARD | DeviceType::GAMEPAD)) != DeviceType::UNKNOWN) {
+					if ((info->type & (DeviceType::MOUSE | DeviceType::GAMEPAD)) != DeviceType::UNKNOWN) {
 						auto im = e.getTarget<IInputModule>();
 						//if (getNumInputeDevice(DeviceType::GAMEPAD) > 0) return;
-						printaln("create device : ", info->type, " guid size = ", info->guid.getSize());
+						printaln("create device : ", info->type, " guid = ", String::toString(info->guid.getData(), info->guid.getSize()));
 						if (auto device = im->createDevice(info->guid); device) {
 							device->getEventDispatcher().addEventListener(DeviceEvent::DOWN, createEventListener<DeviceEvent>([app](Event<DeviceEvent>& e) {
 								auto device = e.getTarget<IInputDevice>();
@@ -102,10 +107,6 @@ public:
 
 									printaln("keyboard down -> key : ", key->code, "    value : ", key->value[0]);
 
-									float32_t vvv;
-									device->getKeyState((uint8_t)KeyboardVirtualKeyCode::KEY_CTRL, &vvv, 1);
-									printaln("ctrl is down ", vvv);
-
 									break;
 								}
 								case DeviceType::GAMEPAD:
@@ -115,6 +116,14 @@ public:
 									if (key->code == (uint32_t)GamepadKeyCode::CROSS) {
 										device->setVibration(0.5f, 0.5f);
 									}
+
+									break;
+								}
+								case DeviceType::MOUSE:
+								{
+									auto key = e.getData<Key>();
+									
+									printaln("mouse down -> key : ", key->code, "    value : ", key->value[0]);
 
 									break;
 								}
@@ -146,12 +155,12 @@ public:
 								case DeviceType::MOUSE:
 								{
 									auto key = e.getData<Key>();
-									if (key->code == 4) {
+									if (key->code == 0) {
 										//f32 curPos[2];
 										//(e.getTarget<InputDevice>())->getKeyState(key->code, curPos, 2);
-										printdln("input device move : ", key->code, key->value[0], key->value[1], key->value[2]);
+										//printdln("input device move : ", key->value[0], " ", key->value[1]);
 									} else if (key->code == 1) {
-										//println("input device wheel : %d   %f", key->code, *(f32*)key->value);
+										printaln("input device wheel : ", key->value[0]);
 									}
 
 									break;
@@ -169,14 +178,18 @@ public:
 
 							}));
 
+							std::scoped_lock lock(inputDevicesMutex);
+
 							inputDevices.emplace_back(device);
 						}
 					}
 				}));
 
-				im->getEventDispatcher().addEventListener(ModuleEvent::DISCONNECTED, createEventListener<ModuleEvent>([&inputDevices](Event<ModuleEvent>& e) {
+				im->getEventDispatcher().addEventListener(ModuleEvent::DISCONNECTED, createEventListener<ModuleEvent>([&inputDevices, &inputDevicesMutex](Event<ModuleEvent>& e) {
 					auto info = e.getData<DeviceInfo>();
 					printaln("input device disconnected : ", info->type);
+
+					std::scoped_lock lock(inputDevicesMutex);
 
 					for (uint32_t i = 0, n = inputDevices.size(); i < n; ++i) {
 						if (inputDevices[i]->getInfo().guid == info->guid) {
@@ -193,11 +206,11 @@ public:
 				looper->stop();
 			}));
 
-			looper->getEventDispatcher().addEventListener(LooperEvent::TICKING, createEventListener<LooperEvent>([app, &inputModules, &inputDevices](Event<LooperEvent>& e) {
+			looper->getEventDispatcher().addEventListener(LooperEvent::TICKING, createEventListener<LooperEvent>([app, &inputModules, &inputDevices, &inputDevicesMutex](Event<LooperEvent>& e) {
 				app->pollEvents();
 
 				for (auto& im : inputModules) im->poll();
-				for (auto& dev : inputDevices) dev->poll(true);
+				//for (auto& dev : inputDevices) dev->poll(true);
 
 				//app->setWindowTitle(String::toString(GetKeyboardType(0)) + "  " + String::toString(GetKeyboardType(1)) + "  " + String::toString(GetKeyboardType(2)));
 			}));
@@ -205,6 +218,19 @@ public:
 			//evtDispatcher.addEventListener(ApplicationEvent::CLOSING, *appClosingListener);
 
 			app->setVisible(true);
+
+			std::thread([&inputDevices, &inputDevicesMutex]() {
+				while (true) {
+					{
+						std::shared_lock lock(inputDevicesMutex);
+
+						for (auto& dev : inputDevices) dev->poll(true);
+					}
+
+					std::this_thread::sleep_for(1ms);
+				}
+			}).detach();
+
 			looper->run(true);
 		}
 

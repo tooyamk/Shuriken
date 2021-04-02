@@ -8,18 +8,18 @@ namespace aurora::events {
 	template<typename EvtType>
 	class EventDispatcher : public IEventDispatcher<EvtType> {
 	public:
-		EventDispatcher() {
-		}
+		EventDispatcher() {}
 		EventDispatcher(const EventDispatcher&) = delete;
 		EventDispatcher(EventDispatcher&&) = delete;
 		EventDispatcher& operator=(const EventDispatcher&) = delete;
 		EventDispatcher& operator=(EventDispatcher&&) = delete;
 
-		virtual ~EventDispatcher() {
-		}
+		virtual ~EventDispatcher() {}
 
 		virtual bool AE_CALL addEventListener(const EvtType& type, IEventListener<EvtType>& listener) override {
 			bool rst = true;
+
+			std::scoped_lock lock(_mutex);
 
 			if (auto pair = _listeners.emplace(std::piecewise_construct, std::forward_as_tuple(type), std::forward_as_tuple(&listener)); pair.second) {
 				listener.ref();
@@ -62,16 +62,23 @@ namespace aurora::events {
 
 		virtual uint32_t AE_CALL getNumEventListeners() const override {
 			uint32_t n = 0;
+
+			std::scoped_lock lock(_mutex);
+
 			for (auto& itr : _listeners) n += itr.second.numValidListeners;
 			return n;
 		}
 
 		virtual uint32_t AE_CALL getNumEventListeners(const EvtType& type) const override {
+			std::scoped_lock lock(_mutex);
+
 			auto itr = _listeners.find(type);
 			return itr == _listeners.end() ? 0 : itr->second.numValidListeners;
 		}
 
 		virtual bool AE_CALL hasEventListener(const EvtType& type, const IEventListener<EvtType>& listener) const override {
+			std::scoped_lock lock(_mutex);
+
 			if (auto itr = _listeners.find(type); itr != _listeners.end()) {
 				if (auto& tl = itr->second; tl.numValidListeners) {
 					if (auto& list = tl.listeners; tl.dispatching) {
@@ -90,6 +97,8 @@ namespace aurora::events {
 		}
 
 		virtual bool AE_CALL removeEventListener(const EvtType& type, const IEventListener<EvtType>& listener) override {
+			std::scoped_lock lock(_mutex);
+
 			if (auto itr = _listeners.find(type); itr != _listeners.end()) {
 				if (auto& tl = itr->second; tl.numValidListeners) {
 					if (auto& list = tl.listeners; tl.dispatching) {
@@ -126,17 +135,24 @@ namespace aurora::events {
 		}
 
 		virtual uint32_t AE_CALL removeEventListeners(const EvtType& type) override {
+			std::scoped_lock lock(_mutex);
+
 			auto itr = _listeners.find(type);
 			return itr == _listeners.end() ? 0 : _removeEventListeners(itr->second);
 		}
 
 		virtual uint32_t AE_CALL removeEventListeners() override {
 			uint32_t n = 0;
+
+			std::scoped_lock lock(_mutex);
+
 			for (auto& itr : _listeners)  n += _removeEventListeners(itr.second);
 			return n;
 		}
 
 		virtual void AE_CALL dispatchEvent(void* target, const EvtType& type, void* data = nullptr) const override {
+			std::scoped_lock lock(_mutex);
+
 			if (auto itr = _listeners.find(type); itr != _listeners.end()) {
 				auto& tl = itr->second;
 				if (tl.numValidListeners) {
@@ -171,6 +187,7 @@ namespace aurora::events {
 				valid(true),
 				rawListener(rawListener) {
 			}
+
 			bool valid;
 			IEventListener<EvtType>* rawListener;
 		};
@@ -183,6 +200,14 @@ namespace aurora::events {
 				numTotalListeners(1) {
 				listeners.emplace_back(rawListener);
 			}
+
+			TypeListeners(TypeListeners&& other) :
+				dispatching(other.dispatching),
+				numValidListeners(other.numValidListeners),
+				numTotalListeners(other.numTotalListeners),
+				listeners(std::move(other.listeners)) {
+			}
+
 			uint32_t dispatching;
 			uint32_t numValidListeners;
 			uint32_t numTotalListeners;
@@ -190,10 +215,11 @@ namespace aurora::events {
 		};
 
 
+		mutable std::recursive_mutex _mutex;
 		mutable std::unordered_map<EvtType, TypeListeners> _listeners;
 
 		uint32_t AE_CALL _removeEventListeners(TypeListeners& typeListeners) {
-			uint32_t n = typeListeners.numValidListeners;
+			auto n = typeListeners.numValidListeners;
 			if (n) {
 				if (auto& list = typeListeners.listeners; typeListeners.dispatching) {
 					for (auto& f : list) {

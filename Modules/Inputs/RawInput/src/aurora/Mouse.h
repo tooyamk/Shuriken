@@ -11,6 +11,18 @@ namespace aurora::modules::inputs::raw_input {
 		virtual void AE_CALL poll(bool dispatchEvent) override;
 
 	protected:
+		using StateBuffer = uint8_t[16];
+
+		mutable std::shared_mutex _mutex;
+		StateBuffer _state;
+		POINT _pos;
+
+		mutable std::shared_mutex _listenMutex;
+		StateBuffer _listenState;
+		POINT _listenLastPos;
+
 		virtual void AE_CALL _rawInput(const RAWINPUT& rawInput) override;
+
+		static void AE_CALL _amendmentRelativePos(int32_t& target, LONG absolutePos, LONG referenceRelativePos, int32_t nIndex);
 	};
 }
