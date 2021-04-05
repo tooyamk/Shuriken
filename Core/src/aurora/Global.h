@@ -566,6 +566,15 @@ namespace aurora {
 			return e1;
 		}
 
+		template<ScopedEnum T>
+		inline constexpr T AE_CALL operator+(T e1, T e2) noexcept {
+			return (T)((std::underlying_type_t<T>)e1 + (std::underlying_type_t<T>)e2);
+		}
+		template<ScopedEnum T>
+		inline constexpr T AE_CALL operator-(T e1, T e2) noexcept {
+			return (T)((std::underlying_type_t<T>)e1 - (std::underlying_type_t<T>)e2);
+		}
+
 		template<ScopedEnum E, std::integral I>
 		inline constexpr E AE_CALL operator+(E e, I i) noexcept {
 			return (E)((std::underlying_type_t<E>)e + i);

@@ -123,7 +123,7 @@ namespace aurora::modules::inputs::direct_input {
 		if (FAILED(hr) || pEnumDevices == NULL) goto LCleanup;
 
 		// Loop over all devices
-		for (;; ) {
+		for (;;) {
 			// Get 20 at a time
 			hr = pEnumDevices->Next(10000, 20, pDevices, &uReturned);
 			if (FAILED(hr)) goto LCleanup;
@@ -161,7 +161,7 @@ namespace aurora::modules::inputs::direct_input {
 		if (bstrNamespace) SysFreeString(bstrNamespace);
 		if (bstrDeviceID) SysFreeString(bstrDeviceID);
 		if (bstrClassName) SysFreeString(bstrClassName);
-		for (iDevice = 0; iDevice < 20; iDevice++) SAFE_RELEASE(pDevices[iDevice]);
+		for (iDevice = 0; iDevice < 20; ++iDevice) SAFE_RELEASE(pDevices[iDevice]);
 		SAFE_RELEASE(pEnumDevices);
 		SAFE_RELEASE(pIWbemLocator);
 		SAFE_RELEASE(pIWbemServices);

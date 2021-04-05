@@ -3,11 +3,11 @@
 
 namespace aurora::modules::inputs::raw_input {
 	Mouse::Mouse(Input& input, IApplication& app, const InternalDeviceInfo& info) : DeviceBase(input, app, info),
+		_listenLastPos(0),
 		_lastWheel(0) {
 		memset(_state, 0, sizeof(StateBuffer));
 		memset(_listenState, 0, sizeof(StateBuffer));
 		GetCursorPos(&_pos);
-		memset(&_listenLastPos, 0, sizeof(POINT));
 	}
 
 	uint32_t Mouse::getKeyState(uint32_t keyCode, float32_t* data, uint32_t count) const {
@@ -60,12 +60,10 @@ namespace aurora::modules::inputs::raw_input {
 		}
 
 		StateBuffer state;
-		POINT lastPos;
 		{
 			std::shared_lock lock(_listenMutex);
 
 			memcpy(state, _listenState, sizeof(StateBuffer));
-			lastPos = _listenLastPos;
 		}
 
 		StateBuffer changeBtns;
@@ -73,6 +71,8 @@ namespace aurora::modules::inputs::raw_input {
 
 		int32_t ox, oy;
 		int32_t wheel = _lastWheel.exchange(0);
+		uint64_t lastPos = _listenLastPos.exchange(0);
+		auto lastPosXY = (int32_t*)&lastPos;
 
 		{
 			std::scoped_lock lock(_mutex);
@@ -90,8 +90,8 @@ namespace aurora::modules::inputs::raw_input {
 			_pos = p;
 		}
 
-		_amendmentRelativePos(ox, p.x, lastPos.x, SM_CXSCREEN);
-		_amendmentRelativePos(oy, p.y, lastPos.y, SM_CYSCREEN);
+		_amendmentRelativePos(ox, p.x, lastPosXY[0], SM_CXSCREEN);
+		_amendmentRelativePos(oy, p.y, lastPosXY[1], SM_CYSCREEN);
 
 		if (ox || oy) {
 			//increment, right bottom positive orientation.
@@ -213,18 +213,16 @@ namespace aurora::modules::inputs::raw_input {
 			}
 		}
 
-		POINT p;
+		uint64_t pos;
+		auto xy = (int32_t*)&pos;
 		if (m.usFlags == MOUSE_MOVE_RELATIVE) {
-			p.x = m.lLastX;
-			p.y = m.lLastY;
+			xy[0] = m.lLastX;
+			xy[1] = m.lLastY;
 		} else {
-			p.x = 0;
-			p.y = 0;
+			xy[0] = 0;
+			xy[1] = 0;
 		}
-
-		std::scoped_lock lock(_listenMutex);
-
-		_listenLastPos = p;
+		_listenLastPos = pos;
 	}
 
 	void Mouse::_amendmentRelativePos(int32_t& target, LONG absolutePos, LONG referenceRelativePos, int32_t nIndex) {

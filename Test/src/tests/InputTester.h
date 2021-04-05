@@ -63,8 +63,8 @@ public:
 			std::vector<IntrusivePtr<IInputModule>> inputModules;
 
 			if constexpr (Environment::OPERATING_SYSTEM == Environment::OperatingSystem::WINDOWS) {
-				//initInputModule(inputModules, "libs/" + getDLLName("ae-input-direct-input"), &args);
-				initInputModule(inputModules, "libs/" + getDLLName("ae-input-raw-input"), &args);
+				initInputModule(inputModules, "libs/" + getDLLName("ae-input-direct-input"), &args);
+				//initInputModule(inputModules, "libs/" + getDLLName("ae-input-raw-input"), &args);
 				//initInputModule(inputModules, "libs/" + getDLLName("ae-input-xinput"), &args);
 			}
 
@@ -87,7 +87,7 @@ public:
 					auto info = e.getData<DeviceInfo>();
 					printaln("input device connected : ", info->type, " vid = ", info->vendorID, " pid = ", info->productID, " guid = ", String::toString(info->guid.getData(), info->guid.getSize()));
 
-					if ((info->type & (DeviceType::MOUSE | DeviceType::GAMEPAD)) != DeviceType::UNKNOWN) {
+					if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN) {
 						auto im = e.getTarget<IInputModule>();
 						//if (getNumInputeDevice(DeviceType::GAMEPAD) > 0) return;
 						printaln("create device : ", info->type, " guid = ", String::toString(info->guid.getData(), info->guid.getSize()));

@@ -19,7 +19,7 @@ namespace aurora::modules::inputs::raw_input {
 
 		mutable std::shared_mutex _listenMutex;
 		StateBuffer _listenState;
-		POINT _listenLastPos;
+		std::atomic_uint64_t _listenLastPos;
 		std::atomic_int32_t _lastWheel;
 
 		virtual void AE_CALL _rawInput(const RAWINPUT& rawInput) override;
