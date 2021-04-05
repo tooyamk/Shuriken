@@ -441,8 +441,8 @@ namespace aurora {
 		}
 	};
 
-	template<size_t N, typename T> const Vector<N, T> Vector<N, T>::ZERO = Vector<N, T>(Math::NUMBER_0<T>);
-	template<size_t N, typename T> const Vector<N, T> Vector<N, T>::ONE = Vector<N, T>(Math::NUMBER_1<T>);
+	template<size_t N, typename T> const Vector<N, T> Vector<N, T>::ZERO = Vector<N, T>(Math::ZERO<T>);
+	template<size_t N, typename T> const Vector<N, T> Vector<N, T>::ONE = Vector<N, T>(Math::ONE<T>);
 
 	template<size_t N, typename T1, typename T2>
 	inline constexpr Vector<N, decltype((*(T1*)0) + (*(T2*)0))> AE_CALL operator+(const Vector<N, T1>& v1, const Vector<N, T2>& v2) {

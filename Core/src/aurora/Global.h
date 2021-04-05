@@ -591,6 +591,15 @@ namespace aurora {
 		inline constexpr E AE_CALL operator-(I i, E e) noexcept {
 			return (E)(i - (std::underlying_type_t<E>)e);
 		}
+
+		template<ScopedEnum E, std::integral I>
+		inline constexpr auto AE_CALL operator<=>(E e, I i) noexcept {
+			return (std::underlying_type_t<E>)e <=> i;
+		}
+		template<ScopedEnum E, std::integral I>
+		inline constexpr auto AE_CALL operator==(E e, I i) noexcept {
+			return (std::underlying_type_t<E>)e == i;
+		}
 	}
 	
 

@@ -8,24 +8,24 @@ namespace aurora::modules::inputs::direct_input {
 		memset(_state, 0, sizeof(StateBuffer));
 	}
 
-	uint32_t Keyboard::getKeyState(uint32_t keyCode, float32_t* data, uint32_t count) const {
+	Key::CountType Keyboard::getKeyState(Key::CodeType keyCode, Key::ValueType* data, Key::CountType count) const {
 		if (data && count && keyCode < sizeof(StateBuffer)) {
 			std::shared_lock lock(_mutex);
 
 			switch (keyCode) {
 			case VK_SHIFT:
-				data[0] = (_state[VK_SK[VK_LSHIFT]] & 0x80) || (_state[VK_SK[VK_RSHIFT]] & 0x80) ? 1.f : 0.f;
+				data[0] = (_state[VK_SK[VK_LSHIFT]] & 0x80) || (_state[VK_SK[VK_RSHIFT]] & 0x80) ? Math::ONE<Key::ValueType> : Math::ZERO<Key::ValueType>;
 				return 1;
 			case VK_CONTROL:
-				data[0] = (_state[VK_SK[VK_LCONTROL]] & 0x80) || (_state[VK_SK[VK_RCONTROL]] & 0x80) ? 1.f : 0.f;
+				data[0] = (_state[VK_SK[VK_LCONTROL]] & 0x80) || (_state[VK_SK[VK_RCONTROL]] & 0x80) ? Math::ONE<Key::ValueType> : Math::ZERO<Key::ValueType>;
 				return 1;
 			case VK_MENU:
-				data[0] = (_state[VK_SK[VK_LMENU]] & 0x80) || (_state[VK_SK[VK_RMENU]] & 0x80) ? 1.f : 0.f;
+				data[0] = (_state[VK_SK[VK_LMENU]] & 0x80) || (_state[VK_SK[VK_RMENU]] & 0x80) ? Math::ONE<Key::ValueType> : Math::ZERO<Key::ValueType>;
 				return 1;
 			default:
 			{
 				if (auto key = VK_SK[keyCode]; key) {
-					data[0] = _state[key] & 0x80 ? 1.f : 0.f;
+					data[0] = _state[key] & 0x80 ? Math::ONE<Key::ValueType> : Math::ZERO<Key::ValueType>;
 
 					return 1;
 				}
@@ -74,11 +74,11 @@ namespace aurora::modules::inputs::direct_input {
 				//MapVirtualKeyEx(DIK_RCONTROL, MAPVK_VSC_TO_VK_EX, GetKeyboardLayout(0));
 				//auto layout = GetKeyboardLayout(0);
 				for (uint16_t i = 0; i < len; ++i) {
-					uint8_t key = changedBtns[i];
-					float32_t value = (state[key] & 0x80) > 0 ? 1.f : 0.f;
+					auto key = changedBtns[i];
+					Key::ValueType value = (state[key] & 0x80) > 0 ? Math::ONE<Key::ValueType> : Math::ZERO<Key::ValueType>;
 
 					Key k = { SK_VK[key], 1, &value };
-					_eventDispatcher.dispatchEvent(this, value > 0.f ? DeviceEvent::DOWN : DeviceEvent::UP, &k);
+					_eventDispatcher.dispatchEvent(this, value > Math::ZERO<Key::ValueType> ? DeviceEvent::DOWN : DeviceEvent::UP, &k);
 				}
 			}
 		}

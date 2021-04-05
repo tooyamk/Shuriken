@@ -7,7 +7,7 @@ namespace aurora::modules::inputs::raw_input {
 	public:
 		Mouse(Input& input, IApplication& app, const InternalDeviceInfo& info);
 
-		virtual uint32_t AE_CALL getKeyState(uint32_t keyCode, float32_t* data, uint32_t count) const override;
+		virtual Key::CountType AE_CALL getKeyState(Key::CodeType keyCode, Key::ValueType* data, Key::CountType count) const override;
 		virtual void AE_CALL poll(bool dispatchEvent) override;
 
 	protected:

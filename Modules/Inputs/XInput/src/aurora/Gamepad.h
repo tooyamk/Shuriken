@@ -13,12 +13,16 @@ namespace aurora::modules::inputs::xinput {
 
 		virtual events::IEventDispatcher<DeviceEvent>& AE_CALL getEventDispatcher() override;
 		virtual const DeviceInfo& AE_CALL getInfo() const override;
-		virtual uint32_t AE_CALL getKeyState(uint32_t keyCode, float32_t* data, uint32_t count) const override;
+		virtual Key::CountType AE_CALL getKeyState(Key::CodeType keyCode, Key::ValueType* data, Key::CountType count) const override;
 		virtual void AE_CALL poll(bool dispatchEvent) override;
-		virtual void AE_CALL setDeadZone(uint32_t keyCode, float32_t deadZone) override;
-		virtual void AE_CALL setVibration(float32_t left, float32_t right) override;
+		virtual void AE_CALL setDeadZone(Key::CodeType keyCode, Key::ValueType deadZone) override;
+		virtual void AE_CALL setVibration(Key::ValueType left, Key::ValueType right) override;
 
 	private:
+		template<Arithmetic T> inline static constexpr T NUMBER_255 = T(255);
+		template<Arithmetic T> inline static constexpr T NUMBER_32767 = T(32767);
+		template<Arithmetic T> inline static constexpr T NUMBER_65535 = T(65535);
+
 		DWORD _index;
 		IntrusivePtr<Input> _input;
 		events::EventDispatcher<DeviceEvent> _eventDispatcher;
@@ -29,43 +33,43 @@ namespace aurora::modules::inputs::xinput {
 		XINPUT_VIBRATION _vibration;
 
 		mutable std::shared_mutex _deadZoneMutex;
-		std::unordered_map<uint32_t, float32_t> _deadZone;
+		std::unordered_map<Key::CodeType, Key::ValueType> _deadZone;
 
-		inline float32_t AE_CALL _getDeadZone(GamepadKeyCode key) const {
+		inline Key::ValueType AE_CALL _getDeadZone(GamepadKeyCode key) const {
 			std::shared_lock lock(_deadZoneMutex);
 
-			if (auto itr = _deadZone.find((uint32_t)key); itr == _deadZone.end()) {
-				return 0.f;
+			if (auto itr = _deadZone.find((Key::CodeType)key); itr == _deadZone.end()) {
+				return Math::ZERO<Key::ValueType>;
 			} else {
 				return itr->second;
 			}
 		}
 
-		uint32_t AE_CALL _getStick(SHORT x, SHORT y, GamepadKeyCode key, float32_t* data, uint32_t count) const;
-		uint32_t AE_CALL _getTrigger(SHORT t, GamepadKeyCode key, float32_t& data) const;
+		Key::CountType AE_CALL _getStick(SHORT x, SHORT y, GamepadKeyCode key, Key::ValueType* data, Key::CountType count) const;
+		Key::CountType AE_CALL _getTrigger(SHORT t, GamepadKeyCode key, Key::ValueType& data) const;
 
 		void AE_CALL _updateStick(SHORT oriX, SHORT oriY, SHORT curX, SHORT curY, GamepadKeyCode key);
 		void AE_CALL _updateTrigger(SHORT ori, SHORT cur, GamepadKeyCode key);
 		void AE_CALL _updateButton(WORD ori, WORD cur, uint16_t flags, GamepadKeyCode key);
 
-		inline static float32_t AE_CALL _translateDeadZone0_1(float32_t value, float32_t dz, bool inDz) {
-			return inDz ? 0.f : (value - dz) / (1.f - dz);
+		inline static Key::ValueType AE_CALL _translateDeadZone01(Key::ValueType value, Key::ValueType dz, bool inDz) {
+			return inDz ? Math::ZERO<Key::ValueType> : (value - dz) / (Math::ONE<Key::ValueType> - dz);
 		}
 
 		template<bool FLIP>
-		inline static float32_t AE_CALL _translateStick(SHORT value) {
+		inline static Key::ValueType AE_CALL _translateStick(SHORT value) {
 			if constexpr (FLIP) {
-				return float32_t(value) / -32767.f;
+				return Key::ValueType(value) * Math::NEGATIVE<Math::RECIPROCAL<NUMBER_32767<Key::ValueType>>>;
 			} else {
-				return float32_t(value) / 32767.f;
+				return Key::ValueType(value) * Math::RECIPROCAL<NUMBER_32767<Key::ValueType>>;
 			}
 		}
-		inline static float32_t AE_CALL _translateTrigger(SHORT value) {
-			return float32_t(value) / 255.f;
+		inline static Key::ValueType AE_CALL _translateTrigger(SHORT value) {
+			return Key::ValueType(value) * Math::RECIPROCAL<NUMBER_255<Key::ValueType>>;
 		}
-		static float32_t AE_CALL _translateDpad(WORD value);
-		inline static float32_t AE_CALL _translateButton(WORD value) {
-			return value ? 1.f : 0.f;
+		static Key::ValueType AE_CALL _translateDpad(WORD value);
+		inline static Key::ValueType AE_CALL _translateButton(WORD value) {
+			return value ? Math::ONE<Key::ValueType> : Math::ZERO<Key::ValueType>;
 		}
 	};
 }

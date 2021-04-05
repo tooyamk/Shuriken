@@ -6,20 +6,20 @@ namespace aurora::modules::inputs::raw_input {
 		memset(_listenState, 0, sizeof(StateBuffer));
 	}
 
-	uint32_t Keyboard::getKeyState(uint32_t keyCode, float32_t* data, uint32_t count) const {
+	Key::CountType Keyboard::getKeyState(Key::CodeType keyCode, Key::ValueType* data, Key::CountType count) const {
 		if (data && count && keyCode < sizeof(_state)) {
 			switch ((KeyboardVirtualKeyCode)keyCode) {
 			case KeyboardVirtualKeyCode::KEY_SHIFT:
-				data[0] = (_state[(uint32_t)KeyboardVirtualKeyCode::KEY_LSHIFT]) || (_state[(uint32_t)KeyboardVirtualKeyCode::KEY_RSHIFT]) ? 1.f : 0.f;
+				data[0] = (_state[(uint32_t)KeyboardVirtualKeyCode::KEY_LSHIFT]) || (_state[(uint32_t)KeyboardVirtualKeyCode::KEY_RSHIFT]) ? Math::ONE<Key::ValueType> : Math::ZERO<Key::ValueType>;
 				return 1;
 			case KeyboardVirtualKeyCode::KEY_CTRL:
-				data[0] = (_state[(uint32_t)KeyboardVirtualKeyCode::KEY_LCTRL]) || (_state[(uint32_t)KeyboardVirtualKeyCode::KEY_RCTRL]) ? 1.f : 0.f;
+				data[0] = (_state[(uint32_t)KeyboardVirtualKeyCode::KEY_LCTRL]) || (_state[(uint32_t)KeyboardVirtualKeyCode::KEY_RCTRL]) ? Math::ONE<Key::ValueType> : Math::ZERO<Key::ValueType>;
 				return 1;
 			case KeyboardVirtualKeyCode::KEY_ALT:
-				data[0] = (_state[(uint32_t)KeyboardVirtualKeyCode::KEY_LALT]) || (_state[(uint32_t)KeyboardVirtualKeyCode::KEY_RALT]) ? 1.f : 0.f;
+				data[0] = (_state[(uint32_t)KeyboardVirtualKeyCode::KEY_LALT]) || (_state[(uint32_t)KeyboardVirtualKeyCode::KEY_RALT]) ? Math::ONE<Key::ValueType> : Math::ZERO<Key::ValueType>;
 				return 1;
 			default:
-				data[0] = _state[keyCode] ? 1.f : 0.f;
+				data[0] = _state[keyCode] ? Math::ONE<Key::ValueType> : Math::ZERO<Key::ValueType>;
 				return 1;
 			}
 		}
@@ -61,10 +61,10 @@ namespace aurora::modules::inputs::raw_input {
 		if (len > 0) {
 			for (uint16_t i = 0; i < len; ++i) {
 				auto key = changedBtns[i];
-				float32_t value = state[key] ? 1.f : 0.f;
+				Key::ValueType value = state[key] ? Math::ONE<Key::ValueType> : Math::ZERO<Key::ValueType>;
 
 				Key k = { key, 1, &value };
-				_eventDispatcher.dispatchEvent(this, value > 0.f ? DeviceEvent::DOWN : DeviceEvent::UP, &k);
+				_eventDispatcher.dispatchEvent(this, value > Math::ZERO<Key::ValueType> ? DeviceEvent::DOWN : DeviceEvent::UP, &k);
 			}
 		}
 	}

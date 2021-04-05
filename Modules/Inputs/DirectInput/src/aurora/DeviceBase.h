@@ -13,8 +13,8 @@ namespace aurora::modules::inputs::direct_input {
 
 		virtual events::IEventDispatcher<DeviceEvent>& AE_CALL getEventDispatcher() override;
 		virtual const DeviceInfo& AE_CALL getInfo() const override;
-		virtual void AE_CALL setDeadZone(uint32_t keyCode, float32_t deadZone) override {}
-		virtual void AE_CALL setVibration(float32_t left, float32_t right) override {}
+		virtual void AE_CALL setDeadZone(Key::CodeType keyCode, Key::ValueType deadZone) override {}
+		virtual void AE_CALL setVibration(Key::ValueType left, Key::ValueType right) override {}
 
 	protected:
 		IntrusivePtr<Input> _input;

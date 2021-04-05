@@ -23,9 +23,13 @@ namespace aurora::modules::inputs {
 
 	class AE_FW_DLL Key {
 	public:
-		uint32_t code;
-		uint32_t count;
-		float32_t* value;
+		using CodeType = uint32_t;
+		using CountType = uint32_t;
+		using ValueType = float32_t;
+
+		CodeType code;
+		CountType count;
+		ValueType* value;
 	};
 
 
@@ -43,10 +47,10 @@ namespace aurora::modules::inputs {
 
 		virtual events::IEventDispatcher<DeviceEvent>& AE_CALL getEventDispatcher() = 0;
 		virtual const DeviceInfo& AE_CALL getInfo() const = 0;
-		virtual uint32_t AE_CALL getKeyState (uint32_t keyCode, float32_t* data, uint32_t count) const = 0;
+		virtual Key::CodeType AE_CALL getKeyState (Key::CodeType keyCode, Key::ValueType* data, Key::CodeType count) const = 0;
 		virtual void AE_CALL poll(bool dispatchEvent) = 0;
-		virtual void AE_CALL setDeadZone (uint32_t keyCode, float32_t deadZone) = 0;
-		virtual void AE_CALL setVibration(float32_t left, float32_t right) = 0;
+		virtual void AE_CALL setDeadZone (Key::CodeType keyCode, Key::ValueType deadZone) = 0;
+		virtual void AE_CALL setVibration(Key::ValueType left, Key::ValueType right) = 0;
 	};
 
 

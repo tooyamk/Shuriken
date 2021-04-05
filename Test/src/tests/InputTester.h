@@ -98,7 +98,7 @@ public:
 								case DeviceType::KEYBOARD:
 								{
 									auto key = e.getData<Key>();
-									if (key->code == (uint32_t)KeyboardVirtualKeyCode::KEY_ENTER) {
+									if (key->code == KeyboardVirtualKeyCode::KEY_ENTER) {
 										float32_t state = 0.0f;
 										if (device->getKeyState((uint8_t)KeyboardVirtualKeyCode::KEY_RCTRL, &state, 1) && state != 0.f) {
 											app->toggleFullscreen();
@@ -113,7 +113,7 @@ public:
 								{
 									auto key = e.getData<Key>();
 									printaln("gamepad down : ", printGamepadKey((GamepadKeyCode)key->code), "  ", key->value[0]);
-									if (key->code == (uint32_t)GamepadKeyCode::CROSS) {
+									if (key->code == GamepadKeyCode::CROSS) {
 										device->setVibration(0.5f, 0.5f);
 									}
 
@@ -141,7 +141,7 @@ public:
 								{
 									auto key = e.getData<Key>();
 									printaln("gamepad up : ", printGamepadKey((GamepadKeyCode)key->code), "  ", key->value[0]);
-									if (key->code == (uint32_t)GamepadKeyCode::CROSS) {
+									if (key->code == GamepadKeyCode::CROSS) {
 										device->setVibration(0.0f, 0.0f);
 									}
 
@@ -155,11 +155,11 @@ public:
 								case DeviceType::MOUSE:
 								{
 									auto key = e.getData<Key>();
-									if (key->code == 0) {
+									if (key->code == MouseKeyCode::POSITION) {
 										//f32 curPos[2];
 										//(e.getTarget<InputDevice>())->getKeyState(key->code, curPos, 2);
 										//printdln("input device move : ", key->value[0], " ", key->value[1]);
-									} else if (key->code == 1) {
+									} else if (key->code == MouseKeyCode::WHEEL) {
 										printaln("input device wheel : ", key->value[0]);
 									}
 

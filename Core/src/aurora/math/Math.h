@@ -6,8 +6,21 @@
 namespace aurora {
 	class AE_CORE_DLL Math {
 	public:
-		template<Arithmetic T> inline static constexpr T NUMBER_0 = 0;
-		template<Arithmetic T> inline static constexpr T NUMBER_1 = 1;
+		template<Arithmetic T> inline static constexpr T ZERO = 0;
+		template<Arithmetic T> inline static constexpr T ONE = 1;
+		template<Arithmetic T> inline static constexpr T NEGATIVE_ONE = -1;
+		template<std::floating_point T> inline static constexpr T TENTH = T(.1);
+		template<std::floating_point T> inline static constexpr T TWENTIETH = T(.05);
+		template<std::floating_point T> inline static constexpr T HUNDREDTH = T(.01);
+
+		template<auto Val>
+		requires Arithmetic<std::remove_cvref_t<decltype(Val)>>
+		inline static constexpr std::remove_cvref_t<decltype(Val)> NEGATIVE = -Val;
+
+		template<auto Val>
+		requires Arithmetic<std::remove_cvref_t<decltype(Val)>>
+		inline static constexpr std::remove_cvref_t<decltype(Val)> RECIPROCAL = Math::ONE<std::remove_cvref_t<decltype(Val)>> / Val;
+
 		template<std::floating_point T> inline static constexpr T TOLERANCE = T(2e-37);
 		template<std::floating_point T> inline static constexpr T E = T(2.718281828459045);
 		template<std::floating_point T> inline static constexpr T PI = T(3.14159265358979323846);
@@ -73,7 +86,7 @@ namespace aurora {
 
 		template<size_t N, typename In1, typename In2, typename Out = decltype((*(In1*)0) + (*(In2*)0))>
 		inline static Out AE_CALL dot(const In1(&v1)[N], const In2(&v2)[N]) {
-			Out rst = NUMBER_0<Out>;
+			Out rst = ZERO<Out>;
 			for (decltype(N) i = 0; i < N; ++i) rst += v1[i] * v2[i];
 			return rst;
 		}
@@ -225,10 +238,10 @@ namespace aurora {
 		template<size_t N, typename In, typename Out>
 		static void AE_CALL normalize(const In(&v)[N], Out(&dst)[N]) {
 			if constexpr (sizeof(In) >= sizeof(Out)) {
-				if (auto n = dot<N, In, In, Out>(v, v); !isEqual(n, NUMBER_1<decltype(n)>, TOLERANCE<decltype(n)>)) {
+				if (auto n = dot<N, In, In, Out>(v, v); !isEqual(n, ONE<decltype(n)>, TOLERANCE<decltype(n)>)) {
 					n = std::sqrt(n);
 					if (n > TOLERANCE<decltype(n)>) {
-						n = NUMBER_1<decltype(n)> / n;
+						n = ONE<decltype(n)> / n;
 
 						if ((void*)&v >= (void*)&dst) {
 							for (decltype(N) i = 0; i < N; ++i) dst[i] = v[i] * n;
@@ -251,10 +264,10 @@ namespace aurora {
 				}
 			} else {
 				Out tmp[N];
-				if (auto n = dot<N, In, In, Out>(v, v); !isEqual(n, NUMBER_1<decltype(n)>, TOLERANCE<decltype(n)>)) {
+				if (auto n = dot<N, In, In, Out>(v, v); !isEqual(n, ONE<decltype(n)>, TOLERANCE<decltype(n)>)) {
 					n = std::sqrt(n);
 					if (n > TOLERANCE<decltype(n)>) {
-						n = NUMBER_1<decltype(n)> / n;
+						n = ONE<decltype(n)> / n;
 
 						for (decltype(N) i = 0; i < N; ++i) tmp[i] = v[i] * n;
 					} else {
@@ -269,10 +282,10 @@ namespace aurora {
 
 		template<size_t N, typename T>
 		static void AE_CALL normalize(T(&val)[N]) {
-			if (auto n = dot(val, val); !isEqual(n, NUMBER_1<decltype(n)>, TOLERANCE<decltype(n)>)) {
+			if (auto n = dot(val, val); !isEqual(n, ONE<decltype(n)>, TOLERANCE<decltype(n)>)) {
 				n = std::sqrt(n);
 				if (n > TOLERANCE<decltype(n)>) {
-					n = NUMBER_1<decltype(n)> / n;
+					n = ONE<decltype(n)> / n;
 
 					for (decltype(N) i = 0; i < N; ++i) val[i] *= n;
 				}
@@ -284,7 +297,7 @@ namespace aurora {
 			Out n1[N], n2[N];
 			normalize(v1, n1);
 			normalize(v2, n2);
-			return std::acos(clamp(dot(n1, n2), -NUMBER_1<Out>, NUMBER_1<Out>));
+			return std::acos(clamp(dot(n1, n2), -ONE<Out>, ONE<Out>));
 		}
 
 		template<size_t N, typename In1, typename In2, std::floating_point Out = decltype((*(In1*)0) + (*(In2*)0))>
@@ -294,8 +307,8 @@ namespace aurora {
 			normalize(v1, n1);
 			normalize(v2, n2);
 			
-			auto a = std::acos(clamp(dot(n1, n2), -NUMBER_1<Out>, NUMBER_1<Out>));
-			return (n1[0] * n2[1]) - (n1[1] * n2[0]) < NUMBER_0<Out> ? -a : a;
+			auto a = std::acos(clamp(dot(n1, n2), -ONE<Out>, ONE<Out>));
+			return (n1[0] * n2[1]) - (n1[1] * n2[0]) < ZERO<Out> ? -a : a;
 		}
 
 		static void AE_CALL slerp(const float32_t(&from)[4], const float32_t(&to)[4], float32_t t, float32_t(&dst)[4]);
@@ -311,11 +324,11 @@ namespace aurora {
 				nrmB[i] = v2[i] / b;
 			}
 
-			auto d = clamp(dot(nrmA, nrmB), -NUMBER_1<Out>, NUMBER_1<Out>);
+			auto d = clamp(dot(nrmA, nrmB), -ONE<Out>, ONE<Out>);
 			auto theta = std::acos(d) * t;
 			Out tmp[3];
 			for (uint32_t i = 0; i < 3; ++i) tmp[i] = nrmB[i] - nrmA[i] * d;
-			normalize(tmp, NUMBER_1<float32_t>);
+			normalize(tmp, ONE<float32_t>);
 
 			auto t1 = a + (b - a) * t;
 			auto s = std::sin(theta);

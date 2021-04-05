@@ -9,7 +9,9 @@ namespace aurora::modules::inputs::direct_input {
 		GetCursorPos(&_pos);
 	}
 
-	uint32_t Mouse::getKeyState(uint32_t keyCode, float32_t* data, uint32_t count) const {
+	Key::CountType Mouse::getKeyState(Key::CodeType keyCode, Key::ValueType* data, Key::CountType count) const {
+		using namespace enum_operators;
+
 		if (data && count) {
 			switch ((MouseKeyCode)keyCode) {
 			case MouseKeyCode::POSITION:
@@ -18,9 +20,9 @@ namespace aurora::modules::inputs::direct_input {
 				GetCursorPos(&p);
 				ScreenToClient(_input->getHWND(), &p);
 
-				data[0] = float32_t(p.x);
-				uint32_t c = 1;
-				if (count > 1) data[c++] = float32_t(p.y);
+				data[0] = Key::ValueType(p.x);
+				Key::CountType c = 1;
+				if (count > 1) data[c++] = Key::ValueType(p.y);
 
 				return c;
 			}
@@ -28,10 +30,10 @@ namespace aurora::modules::inputs::direct_input {
 				return 0;
 			default:
 			{
-				if (keyCode >= (uint32_t)MouseKeyCode::L_BUTTON && keyCode < (uint32_t)MouseKeyCode::L_BUTTON + sizeof(DIMOUSESTATE2::rgbButtons)) {
+				if (keyCode >= MouseKeyCode::L_BUTTON && keyCode < MouseKeyCode::L_BUTTON + sizeof(DIMOUSESTATE2::rgbButtons)) {
 					std::shared_lock lock(_mutex);
 
-					data[0] = _state.rgbButtons[keyCode - (uint32_t)10] & 0x80 ? 1.f : 0.f;
+					data[0] = _state.rgbButtons[keyCode - 10] & 0x80 ? Math::ONE<Key::ValueType> : Math::ZERO<Key::ValueType>;
 
 					return 1;
 				}
@@ -92,21 +94,21 @@ namespace aurora::modules::inputs::direct_input {
 
 			if (ox || oy) {
 				//increment, right bottom positive orientation.
-				float32_t value[] = { (float32_t)ox, (float32_t)oy };
-				Key k = { (uint32_t)MouseKeyCode::POSITION, 2, value };
+				Key::ValueType value[] = { (Key::ValueType)ox, (Key::ValueType)oy };
+				Key k = { (Key::CodeType)MouseKeyCode::POSITION, 2, value };
 				_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &k);
 			}
 
 			if (state.lZ != 0) {
-				float32_t value = state.lZ > 0 ? 1.f : -1.f;
-				Key k = { (uint32_t)MouseKeyCode::WHEEL, 1, &value };
+				Key::ValueType value = state.lZ > 0 ? Math::ONE<Key::ValueType> : Math::NEGATIVE_ONE<Key::ValueType>;
+				Key k = { (Key::CodeType)MouseKeyCode::WHEEL, 1, &value };
 				_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &k);
 			}
 
 			for (uint8_t i = 0; i < len; ++i) {
-				uint8_t key = changeBtns[i];
-				float32_t value = (state.rgbButtons[key] & 0x80) > 0 ? 1.f : 0.f;
-				Key k = { key + (uint32_t)MouseKeyCode::L_BUTTON, 1, &value };
+				Key::CodeType key = changeBtns[i];
+				Key::ValueType value = (state.rgbButtons[key] & 0x80) > 0 ? Math::ONE<Key::ValueType> : Math::ZERO<Key::ValueType>;
+				Key k = { key + (Key::CodeType)MouseKeyCode::L_BUTTON, 1, &value };
 				_eventDispatcher.dispatchEvent(this, value > 0 ? DeviceEvent::DOWN : DeviceEvent::UP, &k);
 			}
 		}

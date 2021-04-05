@@ -275,7 +275,7 @@ private:
 	IntrusivePtr<Node> _worldRoot;
 
 	void _resize(Camera& cam, const Vec2ui32& size) {
-		constexpr auto& zero = Math::NUMBER_0<std::remove_cvref_t<decltype(size)>::ElementType>;
+		constexpr auto& zero = Math::ZERO<std::remove_cvref_t<decltype(size)>::ElementType>;
 		if (size[0] == zero || size[1] == zero) return;
 		cam.setProjectionMatrix(Matrix44::createPerspectiveFovLH(Math::PI<float32_t> / 6.f, (float32_t)size[0] / (float32_t)size[1], 10, 10000));
 	}

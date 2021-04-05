@@ -150,8 +150,8 @@ namespace aurora {
 		auto tmp1 = m[2][0] * m[1][2] - m[2][2] * m[1][0];
 		auto tmp2 = m[2][1] * m[1][0] - m[2][0] * m[1][1];
 
-		if (auto det = m[0][0] * tmp0 + m[0][1] * tmp1 + m[0][2] * tmp2; std::abs(det) > Math::TOLERANCE<float32_t>) {
-			det = 1.f / det;
+		if (auto det = m[0][0] * tmp0 + m[0][1] * tmp1 + m[0][2] * tmp2; std::abs(det) > TOLERANCE<float32_t>) {
+			det = ONE<float32_t> / det;
 
 			float32_t d[3][4];
 
@@ -210,8 +210,8 @@ namespace aurora {
 		auto d20 = tmp2 * m[1][0] + tmp7 * m[1][1] + tmp10 * m[1][3] - tmp3 * m[1][0] - tmp6 * m[1][1] - tmp11 * m[1][3];
 		auto d30 = tmp5 * m[1][0] + tmp8 * m[1][1] + tmp11 * m[1][2] - tmp4 * m[1][0] - tmp9 * m[1][1] - tmp10 * m[1][2];
 
-		if (auto det = m[0][0] * d00 + m[0][1] * d10 + m[0][2] * d20 + m[0][3] * d30; std::abs(det) > Math::TOLERANCE<float32_t>) {
-			det = 1.f / det;
+		if (auto det = m[0][0] * d00 + m[0][1] * d10 + m[0][2] * d20 + m[0][3] * d30; std::abs(det) > TOLERANCE<float32_t>) {
+			det = ONE<float32_t> / det;
 
 			float32_t d[4][4];
 
