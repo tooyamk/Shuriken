@@ -7,7 +7,9 @@ namespace aurora::modules::inputs::raw_input {
 		_lastWheel(0) {
 		memset(_state, 0, sizeof(StateBuffer));
 		memset(_listenState, 0, sizeof(StateBuffer));
-		GetCursorPos(&_pos);
+
+		auto p = _getCursorPos();
+		_pos = p.combined;
 	}
 
 	Key::CountType Mouse::getKeyState(Key::CodeType keyCode, Key::ValueType* data, Key::CountType count) const {
@@ -46,18 +48,7 @@ namespace aurora::modules::inputs::raw_input {
 	}
 
 	void Mouse::poll(bool dispatchEvent) {
-		POINT p;
-		GetCursorPos(&p);
-
-		if (!dispatchEvent) {
-			std::scoped_lock lock(_mutex);
-			std::shared_lock lock2(_listenMutex);
-
-			memcpy(_state, _listenState, sizeof(StateBuffer));
-			_pos = p;
-
-			return;
-		}
+		auto p = _getCursorPos();
 
 		StateBuffer state;
 		{
@@ -66,13 +57,27 @@ namespace aurora::modules::inputs::raw_input {
 			memcpy(state, _listenState, sizeof(StateBuffer));
 		}
 
+		if (!dispatchEvent) {
+			{
+				std::scoped_lock lock(_mutex);
+
+				memcpy(_state, state, sizeof(StateBuffer));
+			}
+
+			_pos = p.combined;
+
+			return;
+		}
+
 		StateBuffer changeBtns;
 		uint8_t len = 0;
-
-		int32_t ox, oy;
+		
 		int32_t wheel = _lastWheel.exchange(0);
-		uint64_t lastPos = _listenLastPos.exchange(0);
-		auto lastPosXY = (int32_t*)&lastPos;
+		Point pos, lastPos;
+		pos.combined = _pos.exchange(p.combined);
+		lastPos.combined = _listenLastPos.exchange(0);
+		int32_t ox = p.x - pos.x;
+		int32_t oy = p.y - pos.y;
 
 		{
 			std::scoped_lock lock(_mutex);
@@ -83,15 +88,10 @@ namespace aurora::modules::inputs::raw_input {
 					changeBtns[len++] = i;
 				}
 			}
-
-			ox = p.x - _pos.x;
-			oy = p.y - _pos.y;
-
-			_pos = p;
 		}
 
-		_amendmentRelativePos(ox, p.x, lastPosXY[0], SM_CXSCREEN);
-		_amendmentRelativePos(oy, p.y, lastPosXY[1], SM_CYSCREEN);
+		_amendmentRelativePos(ox, p.x, lastPos.x, SM_CXSCREEN);
+		_amendmentRelativePos(oy, p.y, lastPos.y, SM_CYSCREEN);
 
 		if (ox || oy) {
 			//increment, right bottom positive orientation.
@@ -115,7 +115,7 @@ namespace aurora::modules::inputs::raw_input {
 	}
 
 	void Mouse::_rawInput(const RAWINPUT& rawInput) {
-		using namespace enum_operators;
+		using namespace aurora::enum_operators;
 
 		auto& m = rawInput.data.mouse;
 		
@@ -212,16 +212,15 @@ namespace aurora::modules::inputs::raw_input {
 			}
 		}
 
-		uint64_t pos;
-		auto xy = (int32_t*)&pos;
+		Point pos;
 		if (m.usFlags == MOUSE_MOVE_RELATIVE) {
-			xy[0] = m.lLastX;
-			xy[1] = m.lLastY;
+			pos.x = m.lLastX;
+			pos.y = m.lLastY;
 		} else {
-			xy[0] = 0;
-			xy[1] = 0;
+			pos.x = 0;
+			pos.y = 0;
 		}
-		_listenLastPos = pos;
+		_listenLastPos = pos.combined;
 	}
 
 	void Mouse::_amendmentRelativePos(int32_t& target, LONG absolutePos, LONG referenceRelativePos, int32_t nIndex) {
@@ -236,5 +235,16 @@ namespace aurora::modules::inputs::raw_input {
 		} else if (target > 0) {
 			if (absolutePos == GetSystemMetrics(nIndex) - 1 && referenceRelativePos > target) target = referenceRelativePos;
 		}
+	}
+
+	Mouse::Point Mouse::_getCursorPos() {
+		Point p;
+
+		POINT p2;
+		GetCursorPos(&p2);
+		p.x = p.x;
+		p.y = p.y;
+
+		return p;
 	}
 }

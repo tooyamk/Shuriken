@@ -6,7 +6,7 @@
 namespace aurora::modules::inputs::xinput {
 	class AE_MODULE_DLL Input : public IInputModule {
 	public:
-		Input(Ref* loader);
+		Input(Ref* loader, DeviceType filter);
 		virtual ~Input();
 
 		void operator delete(Input* p, std::destroying_delete_t) {
@@ -21,6 +21,7 @@ namespace aurora::modules::inputs::xinput {
 
 	private:
 		IntrusivePtr<Ref> _loader;
+		DeviceType _filter;
 		events::EventDispatcher<ModuleEvent> _eventDispatcher;
 
 		std::shared_mutex _mutex;

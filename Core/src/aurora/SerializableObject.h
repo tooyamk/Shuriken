@@ -50,7 +50,8 @@ namespace aurora {
 		enum class Flag : uint8_t {
 			NONE = 0,
 			COPY = 0b1,
-			TO_COPY = 0b10
+			TO_COPY = 0b10,
+			DETACH_COPY = 0b100
 		};
 
 
@@ -130,6 +131,26 @@ namespace aurora {
 		SerializableObject(const SerializableObject& value);
 		SerializableObject(const SerializableObject& value, Flag flag);
 		SerializableObject(SerializableObject&& value) noexcept;
+
+		/*
+		template<std::signed_integral T>
+		SerializableObject::SerializableObject(T value) :
+			_type(Type::INT),
+			_flag(Flag::NONE) {
+			_getValue<int64_t>() = value;
+		}
+
+		template<std::unsigned_integral T>
+		SerializableObject::SerializableObject(T value) :
+			_type(Type::UINT),
+			_flag(Flag::NONE) {
+			_getValue<uint64_t>() = value;
+		}
+		*/
+		
+		template<ScopedEnum T>
+		SerializableObject(T value) : SerializableObject((std::underlying_type_t<T>)value) {}
+
 		~SerializableObject();
 
 		inline SerializableObject& AE_CALL operator=(const SerializableObject& value) {
@@ -232,6 +253,11 @@ namespace aurora {
 			}
 		}
 
+		template<ScopedEnum T>
+		inline T AE_CALL toEnum(T defaultValue = (T)0) const {
+			return (T)toNumber<std::underlying_type_t<T>>();
+		}
+
 		std::string AE_CALL toString(const std::string& defaultValue = "") const;
 		std::string_view AE_CALL toStringView() const;
 		const uint8_t* AE_CALL toBytes() const;
@@ -251,6 +277,8 @@ namespace aurora {
 				return toStringView();
 			} else if constexpr (std::same_as<T, bool>) {
 				return toBool();
+			} else if constexpr (ScopedEnum<T>) {
+				return toEnum<T>();
 			} else {
 				return (T)0;
 			}
@@ -259,30 +287,23 @@ namespace aurora {
 		inline void AE_CALL set(bool value) {
 			_set<bool, Type::BOOL>(value);
 		}
-		inline void AE_CALL set(int8_t value) {
+
+		template<std::signed_integral T>
+		inline void AE_CALL set(T value) {
 			_setInt(value);
 		}
-		inline void AE_CALL set(uint8_t value) {
+
+		template<std::unsigned_integral T>
+		inline void AE_CALL set(T value) {
 			_setUInt(value);
 		}
-		inline void AE_CALL set(int16_t value) {
-			_setInt(value);
+
+		template<ScopedEnum T>
+		inline void AE_CALL set(T value) {
+			using I = std::underlying_type_t<T>;
+			set<I>((I)value);
 		}
-		inline void AE_CALL set(uint16_t value) {
-			_setUInt(value);
-		}
-		inline void AE_CALL set(int32_t value) {
-			_setInt(value);
-		}
-		inline void AE_CALL set(uint32_t value) {
-			_setUInt(value);
-		}
-		inline void AE_CALL set(const int64_t& value) {
-			_setInt(value);
-		}
-		inline void AE_CALL set(const uint64_t& value) {
-			_setUInt(value);
-		}
+
 		inline void AE_CALL set(float32_t value) {
 			_set<float32_t, Type::FLOAT32>(value);
 		}
@@ -508,7 +529,7 @@ namespace aurora {
 			AE_REF_OBJECT(Array)
 		public:
 			Array();
-			Array* AE_CALL copy() const;
+			Array* AE_CALL copy(Flag flag) const;
 			bool AE_CALL isContentEqual(Array* data) const;
 
 			std::vector<SerializableObject> value;
@@ -519,7 +540,7 @@ namespace aurora {
 			AE_REF_OBJECT(Map)
 		public:
 			Map();
-			Map* AE_CALL copy() const;
+			Map* AE_CALL copy(Flag flag) const;
 			bool AE_CALL isContentEqual(Map* data) const;
 			void AE_CALL unpack(ByteArray& ba, size_t size, Flag flag);
 

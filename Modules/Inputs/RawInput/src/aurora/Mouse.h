@@ -13,9 +13,16 @@ namespace aurora::modules::inputs::raw_input {
 	protected:
 		using StateBuffer = uint8_t[16];
 
+		union Point {
+			uint64_t combined;
+			struct {
+				int32_t x, y;
+			};
+		};
+
 		mutable std::shared_mutex _mutex;
 		StateBuffer _state;
-		POINT _pos;
+		std::atomic_uint64_t _pos;
 
 		mutable std::shared_mutex _listenMutex;
 		StateBuffer _listenState;
@@ -25,5 +32,6 @@ namespace aurora::modules::inputs::raw_input {
 		virtual void AE_CALL _rawInput(const RAWINPUT& rawInput) override;
 
 		static void AE_CALL _amendmentRelativePos(int32_t& target, LONG absolutePos, LONG referenceRelativePos, int32_t nIndex);
+		static Point AE_CALL _getCursorPos();
 	};
 }

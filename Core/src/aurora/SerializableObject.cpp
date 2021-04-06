@@ -5,11 +5,11 @@ namespace aurora {
 		ref();
 	}
 
-	SerializableObject::Array* SerializableObject::Array::copy() const {
+	SerializableObject::Array* SerializableObject::Array::copy(Flag flag) const {
 		Array* arr = new Array();
 		arr->value.resize(this->value.size());
 		uint32_t idx = 0;
-		for (auto& e : this->value) arr->value[idx++].set(e, Flag::COPY);
+		for (auto& e : this->value) arr->value[idx++].set(e, flag);
 		return arr;
 	}
 
@@ -31,9 +31,9 @@ namespace aurora {
 		ref();
 	}
 
-	SerializableObject::Map* SerializableObject::Map::copy() const {
+	SerializableObject::Map* SerializableObject::Map::copy(Flag flag) const {
 		auto map = new Map();
-		for (auto& itr : this->value) map->value.emplace(SerializableObject(itr.first, Flag::COPY), SerializableObject(itr.second, Flag::COPY));
+		for (auto& itr : this->value) map->value.emplace(SerializableObject(itr.first, flag), SerializableObject(itr.second, flag));
 		return map;
 	}
 
@@ -310,14 +310,14 @@ namespace aurora {
 		case Type::ARRAY:
 		{
 			auto arr = value._getValue<Array*>();
-			_getValue<Array*>() = (flag & Flag::COPY) == Flag::COPY ? arr->copy() : arr->ref<Array>();
+			_getValue<Array*>() = (flag & (Flag::COPY | Flag::DETACH_COPY)) != Flag::NONE ? arr->copy(flag) : arr->ref<Array>();
 
 			break;
 		}
 		case Type::MAP:
 		{
 			auto map = value._getValue<Map*>();
-			_getValue<Map*>() = (flag & Flag::COPY) == Flag::COPY ? map->copy() : map->ref<Map>();
+			_getValue<Map*>() = (flag & (Flag::COPY | Flag::DETACH_COPY)) != Flag::NONE ? map->copy(flag) : map->ref<Map>();
 
 			break;
 		}
@@ -992,7 +992,7 @@ namespace aurora {
 			_type = Type::ARRAY;
 
 			auto arr = value._getValue<Array*>();
-			_getValue<Array*>() = (flag & Flag::COPY) == Flag::COPY ? arr->copy() : arr->ref<Array>();
+			_getValue<Array*>() = (flag & (Flag::COPY | Flag::DETACH_COPY)) != Flag::NONE ? arr->copy(flag) : arr->ref<Array>();
 
 			break;
 		}
@@ -1002,7 +1002,7 @@ namespace aurora {
 			_type = Type::MAP;
 
 			auto map = value._getValue<Map*>();
-			_getValue<Map*>() = (flag & Flag::COPY) == Flag::COPY ? map->copy() : map->ref<Map>();
+			_getValue<Map*>() = (flag & (Flag::COPY | Flag::DETACH_COPY)) != Flag::NONE ? map->copy(flag) : map->ref<Map>();
 
 			break;
 		}

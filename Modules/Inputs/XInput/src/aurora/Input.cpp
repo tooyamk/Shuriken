@@ -3,8 +3,9 @@
 #include "CreateModule.h"
 
 namespace aurora::modules::inputs::xinput {
-	Input::Input(Ref* loader) :
-		_loader(loader) {
+	Input::Input(Ref* loader, DeviceType filter) :
+		_loader(loader),
+		_filter(filter) {
 	}
 
 	Input::~Input() {
@@ -15,6 +16,10 @@ namespace aurora::modules::inputs::xinput {
 	}
 
 	void Input::poll() {
+		using namespace aurora::enum_operators;
+
+		if ((DeviceType::GAMEPAD & _filter) == DeviceType::UNKNOWN) return;
+
 		std::vector<DeviceInfo> newDevices;
 
 		InternalGUID guid;

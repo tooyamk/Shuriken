@@ -28,20 +28,19 @@ namespace aurora::modules::inputs::raw_input {
 	}
 
 	void Keyboard::poll(bool dispatchEvent) {
-		if (!dispatchEvent) {
-			std::scoped_lock lock(_mutex);
-			std::shared_lock lock2(_listenMutex);
-
-			memcpy(_state, _listenState, sizeof(StateBuffer));
-
-			return;
-		}
-
 		StateBuffer state;
 		{
 			std::shared_lock lock(_listenMutex);
 
 			memcpy(state, _listenState, sizeof(StateBuffer));
+		}
+
+		if (!dispatchEvent) {
+			std::scoped_lock lock(_mutex);
+
+			memcpy(_state, state, sizeof(StateBuffer));
+
+			return;
 		}
 
 		StateBuffer changedBtns;

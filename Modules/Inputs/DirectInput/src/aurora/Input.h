@@ -6,7 +6,7 @@
 namespace aurora::modules::inputs::direct_input {
 	class AE_MODULE_DLL Input : public IInputModule {
 	public:
-		Input(Ref* loader, IApplication* app, bool ignoreXInputDevices);
+		Input(Ref* loader, IApplication* app, DeviceType filter, bool ignoreXInputDevices);
 		virtual ~Input();
 
 		void operator delete(Input* p, std::destroying_delete_t) {
@@ -25,6 +25,7 @@ namespace aurora::modules::inputs::direct_input {
 
 	private:
 		struct EnumDevicesData {
+			DeviceType filter;
 			bool ignoreXInputDevices;
 			std::vector<DeviceInfo>* devices;
 		};
@@ -32,6 +33,7 @@ namespace aurora::modules::inputs::direct_input {
 
 		IntrusivePtr<Ref> _loader;
 		IntrusivePtr<IApplication> _app;
+		DeviceType _filter;
 		events::EventDispatcher<ModuleEvent> _eventDispatcher;
 
 		std::shared_mutex _mutex;

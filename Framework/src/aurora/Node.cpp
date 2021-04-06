@@ -245,7 +245,7 @@ namespace aurora {
 	}
 
 	void Node::updateLocalMatrix() const {
-		using namespace enum_operators;
+		using namespace aurora::enum_operators;
 
 		if ((_dirty & DirtyFlag::LM) != DirtyFlag::EMPTY) {
 			_dirty &= DirtyFlag::NOT_LM;
@@ -256,7 +256,7 @@ namespace aurora {
 	}
 
 	void Node::updateWorldRotation() const {
-		using namespace enum_operators;
+		using namespace aurora::enum_operators;
 
 		if ((_dirty & DirtyFlag::WR) != DirtyFlag::EMPTY) {
 			_dirty &= DirtyFlag::NOT_WR;
@@ -272,7 +272,7 @@ namespace aurora {
 	}
 
 	void Node::updateWorldMatrix() const {
-		using namespace enum_operators;
+		using namespace aurora::enum_operators;
 
 		if ((_dirty & DirtyFlag::WM) != DirtyFlag::EMPTY) {
 			_dirty &= DirtyFlag::NOT_WM;
@@ -289,7 +289,7 @@ namespace aurora {
 	}
 
 	void Node::updateInverseWorldMatrix() const {
-		using namespace enum_operators;
+		using namespace aurora::enum_operators;
 
 		if ((_dirty & DirtyFlag::WIM) != DirtyFlag::EMPTY) {
 			_dirty &= DirtyFlag::NOT_WIM;
@@ -365,7 +365,7 @@ namespace aurora {
 	}
 
 	void Node::_worldPositionChanged(DirtyFlag oldDirty) {
-		using namespace enum_operators;
+		using namespace aurora::enum_operators;
 
 		if (_parent) {
 			_parent->updateInverseWorldMatrix();
@@ -383,7 +383,7 @@ namespace aurora {
 	}
 
 	void Node::_worldRotationChanged(DirtyFlag oldDirty) {
-		using namespace enum_operators;
+		using namespace aurora::enum_operators;
 
 		if (_parent) {
 			_parent->updateWorldRotation();

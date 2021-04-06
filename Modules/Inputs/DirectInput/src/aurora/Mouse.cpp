@@ -6,11 +6,13 @@ namespace aurora::modules::inputs::direct_input {
 		_dev->SetDataFormat(&c_dfDIMouse2);
 		_dev->SetCooperativeLevel(_input->getHWND(), DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
 		memset(&_state, 0, sizeof(DIMOUSESTATE2));
-		GetCursorPos(&_pos);
+		
+		auto p = _getCursorPos();
+		_pos = p.combined;
 	}
 
 	Key::CountType Mouse::getKeyState(Key::CodeType keyCode, Key::ValueType* data, Key::CountType count) const {
-		using namespace enum_operators;
+		using namespace aurora::enum_operators;
 
 		if (data && count) {
 			switch ((MouseKeyCode)keyCode) {
@@ -53,14 +55,16 @@ namespace aurora::modules::inputs::direct_input {
 			if (FAILED(_dev->Poll())) return;
 		}
 
-		POINT p;
-		GetCursorPos(&p);
+		auto p = _getCursorPos();
 
 		if (!dispatchEvent) {
-			std::scoped_lock lock(_mutex);
+			{
+				std::scoped_lock lock(_mutex);
 
-			_dev->GetDeviceState(sizeof(DIJOYSTATE2), &_state);
-			_pos = p;
+				_dev->GetDeviceState(sizeof(DIJOYSTATE2), &_state);
+			}
+			
+			_pos = p.combined;
 
 			return;
 		}
@@ -71,7 +75,10 @@ namespace aurora::modules::inputs::direct_input {
 			uint8_t changeBtns[sizeof(DIMOUSESTATE2::rgbButtons)];
 			uint8_t len = 0;
 
-			int32_t ox, oy;
+			Point pos, lastPos;
+			pos.combined = _pos.exchange(p.combined);
+			int32_t ox = p.x - pos.x;
+			int32_t oy = p.y - pos.y;
 
 			{
 				std::scoped_lock lock(_mutex);
@@ -82,11 +89,6 @@ namespace aurora::modules::inputs::direct_input {
 						changeBtns[len++] = i;
 					}
 				}
-
-				ox = p.x - _pos.x;
-				oy = p.y - _pos.y;
-
-				_pos = p;
 			}
 
 			_amendmentRelativePos(ox, p.x, state.lX, SM_CXSCREEN);
@@ -109,7 +111,7 @@ namespace aurora::modules::inputs::direct_input {
 				Key::CodeType key = changeBtns[i];
 				Key::ValueType value = (state.rgbButtons[key] & 0x80) > 0 ? Math::ONE<Key::ValueType> : Math::ZERO<Key::ValueType>;
 				Key k = { key + (Key::CodeType)MouseKeyCode::L_BUTTON, 1, &value };
-				_eventDispatcher.dispatchEvent(this, value > 0 ? DeviceEvent::DOWN : DeviceEvent::UP, &k);
+				_eventDispatcher.dispatchEvent(this, value > Math::ZERO<Key::ValueType> ? DeviceEvent::DOWN : DeviceEvent::UP, &k);
 			}
 		}
 	}
@@ -126,5 +128,16 @@ namespace aurora::modules::inputs::direct_input {
 		} else if (target > 0) {
 			if (absolutePos == GetSystemMetrics(nIndex) - 1 && referenceRelativePos > target) target = referenceRelativePos;
 		}
+	}
+
+	Mouse::Point Mouse::_getCursorPos() {
+		Point p;
+
+		POINT p2;
+		GetCursorPos(&p2);
+		p.x = p.x;
+		p.y = p.y;
+
+		return p;
 	}
 }

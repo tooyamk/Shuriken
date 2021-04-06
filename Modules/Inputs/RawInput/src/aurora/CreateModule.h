@@ -7,6 +7,7 @@
 namespace aurora::modules::inputs {
 	extern "C" AE_MODULE_DLL_EXPORT void* AE_CREATE_MODULE_FN_NAME(Ref* loader, const SerializableObject* args) {
 		using namespace std::literals;
+		using namespace aurora::enum_operators;
 
 		if (!args) {
 			printdln(L"RawInputModule create error : no args"sv);
@@ -19,7 +20,9 @@ namespace aurora::modules::inputs {
 			return nullptr;
 		}
 
-		return new raw_input::Input(loader, app);
+		auto filter = args->tryGet("filter").toEnum<DeviceType>(DeviceType::KEYBOARD | DeviceType::MOUSE);
+
+		return new raw_input::Input(loader, app, filter);
 	}
 }
 #endif

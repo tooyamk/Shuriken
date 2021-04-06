@@ -5,7 +5,7 @@
 
 class InputTester : public BaseTester {
 public:
-	static std::string_view AE_CALL printGamepadKey(GamepadKeyCode code) {
+	static std::string_view AE_CALL getGamepadKeyString(GamepadKeyCode code) {
 		switch (code) {
 		case GamepadKeyCode::LEFT_STICK:
 			return "left stick";
@@ -44,6 +44,19 @@ public:
 		}
 	}
 
+	static std::string_view AE_CALL getDeviceTypeString(DeviceType type) {
+		switch (type) {
+		case DeviceType::KEYBOARD:
+			return "keyboard";
+		case DeviceType::MOUSE:
+			return "mouse";
+		case DeviceType::GAMEPAD:
+			return "gamepad";
+		default:
+			return "undefined";
+		}
+	}
+
 	void AE_CALL initInputModule(std::vector<IntrusivePtr<IInputModule>>& modules, const std::string_view& dll, const SerializableObject* args) {
 		IntrusivePtr loader = new InputModuleLoader();
 		if (loader->load(dll)) {
@@ -57,15 +70,28 @@ public:
 		ApplicationStyle wndStype;
 		wndStype.thickFrame = true;
 		if (app->createWindow(wndStype, "", Vec2ui32(800, 600), false)) {
-			SerializableObject args;
-			args.insert("app", app.uintptr());
-
 			std::vector<IntrusivePtr<IInputModule>> inputModules;
 
 			if constexpr (Environment::OPERATING_SYSTEM == Environment::OperatingSystem::WINDOWS) {
-				initInputModule(inputModules, "libs/" + getDLLName("ae-input-direct-input"), &args);
-				//initInputModule(inputModules, "libs/" + getDLLName("ae-input-raw-input"), &args);
-				//initInputModule(inputModules, "libs/" + getDLLName("ae-input-xinput"), &args);
+				if (1) {
+					SerializableObject args;
+					args.insert("app", app.uintptr());
+					args.insert("ignoreXInputDevices", true);
+					args.insert("filter", DeviceType::GAMEPAD);
+					initInputModule(inputModules, "libs/" + getDLLName("ae-input-direct-input"), &args);
+				}
+				if (1) {
+					SerializableObject args;
+					args.insert("app", app.uintptr());
+					args.insert("filter", DeviceType::KEYBOARD | DeviceType::MOUSE);
+					initInputModule(inputModules, "libs/" + getDLLName("ae-input-raw-input"), &args);
+				}
+				if (1) {
+					SerializableObject args;
+					args.insert("app", app.uintptr());
+					args.insert("filter", DeviceType::GAMEPAD);
+					initInputModule(inputModules, "libs/" + getDLLName("ae-input-xinput"), &args);
+				}
 			}
 
 			std::shared_mutex inputDevicesMutex;
@@ -85,12 +111,12 @@ public:
 					};
 
 					auto info = e.getData<DeviceInfo>();
-					printaln("input device connected : ", info->type, " vid = ", info->vendorID, " pid = ", info->productID, " guid = ", String::toString(info->guid.getData(), info->guid.getSize()));
+					printaln("input device connected : ", getDeviceTypeString(info->type), " vid = ", info->vendorID, " pid = ", info->productID, " guid = ", String::toString(info->guid.getData(), info->guid.getSize()));
 
 					if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN) {
 						auto im = e.getTarget<IInputModule>();
 						//if (getNumInputeDevice(DeviceType::GAMEPAD) > 0) return;
-						printaln("create device : ", info->type, " guid = ", String::toString(info->guid.getData(), info->guid.getSize()));
+						printaln("create device : ", getDeviceTypeString(info->type), " guid = ", String::toString(info->guid.getData(), info->guid.getSize()));
 						if (auto device = im->createDevice(info->guid); device) {
 							device->getEventDispatcher().addEventListener(DeviceEvent::DOWN, createEventListener<DeviceEvent>([app](Event<DeviceEvent>& e) {
 								auto device = e.getTarget<IInputDevice>();
@@ -112,7 +138,7 @@ public:
 								case DeviceType::GAMEPAD:
 								{
 									auto key = e.getData<Key>();
-									printaln("gamepad down : ", printGamepadKey((GamepadKeyCode)key->code), "  ", key->value[0]);
+									printaln("gamepad down : ", getGamepadKeyString((GamepadKeyCode)key->code), "  ", key->value[0]);
 									if (key->code == GamepadKeyCode::CROSS) {
 										device->setVibration(0.5f, 0.5f);
 									}
@@ -140,7 +166,7 @@ public:
 								case DeviceType::GAMEPAD:
 								{
 									auto key = e.getData<Key>();
-									printaln("gamepad up : ", printGamepadKey((GamepadKeyCode)key->code), "  ", key->value[0]);
+									printaln("gamepad up : ", getGamepadKeyString((GamepadKeyCode)key->code), "  ", key->value[0]);
 									if (key->code == GamepadKeyCode::CROSS) {
 										device->setVibration(0.0f, 0.0f);
 									}
@@ -168,7 +194,7 @@ public:
 								case DeviceType::GAMEPAD:
 								{
 									auto key = e.getData<Key>();
-									printd("gamepad move : ", printGamepadKey((GamepadKeyCode)key->code), " ", key->value[0]);
+									printd("gamepad move : ", getGamepadKeyString((GamepadKeyCode)key->code), " ", key->value[0]);
 									if (key->count > 1) printd("  ", key->value[1]);
 									printaln();
 
@@ -187,7 +213,7 @@ public:
 
 				im->getEventDispatcher().addEventListener(ModuleEvent::DISCONNECTED, createEventListener<ModuleEvent>([&inputDevices, &inputDevicesMutex](Event<ModuleEvent>& e) {
 					auto info = e.getData<DeviceInfo>();
-					printaln("input device disconnected : ", info->type);
+					printaln("input device disconnected : ", getDeviceTypeString(info->type));
 
 					std::scoped_lock lock(inputDevicesMutex);
 

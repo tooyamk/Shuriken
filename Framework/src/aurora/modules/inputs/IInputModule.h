@@ -37,7 +37,7 @@ namespace aurora::modules::inputs {
 		UNKNOWN,
 		KEYBOARD = 0b1,
 		MOUSE = 0b10,
-		GAMEPAD = 0b100
+		GAMEPAD = 0b100,
 	};
 
 

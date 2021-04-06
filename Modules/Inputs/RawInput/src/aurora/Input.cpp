@@ -5,9 +5,10 @@
 #include "aurora/hash/xxHash.h"
 
 namespace aurora::modules::inputs::raw_input {
-	Input::Input(Ref* loader, IApplication* app) :
+	Input::Input(Ref* loader, IApplication* app, DeviceType filter) :
 		_loader(loader),
 		_app(app),
+		_filter(filter),
 		_numKeyboards(0),
 		_numMouses(0) {
 	}
@@ -20,6 +21,8 @@ namespace aurora::modules::inputs::raw_input {
 	}
 
 	void Input::poll() {
+		using namespace aurora::enum_operators;
+
 		std::vector<InternalDeviceInfo> newDevices;
 
 		constexpr UINT ALLOC_DEV_COUNT = 32;
@@ -45,7 +48,7 @@ namespace aurora::modules::inputs::raw_input {
 				break;
 			}
 
-			if (dt == DeviceType::UNKNOWN) continue;
+			if ((dt & _filter) == DeviceType::UNKNOWN) continue;
 
 			auto& di = newDevices.emplace_back();
 			di.hDevice = dev.hDevice;

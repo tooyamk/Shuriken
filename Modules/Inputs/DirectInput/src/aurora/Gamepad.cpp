@@ -154,7 +154,7 @@ namespace aurora::modules::inputs::direct_input {
 	}
 
 	void Gamepad::poll(bool dispatchEvent) {
-		using namespace enum_operators;
+		using namespace aurora::enum_operators;
 
 		if (auto hr = _dev->Poll(); hr == DIERR_NOTACQUIRED || hr == DIERR_INPUTLOST) {
 			if (FAILED(_dev->Acquire())) return;

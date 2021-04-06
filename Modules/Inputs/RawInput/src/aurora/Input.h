@@ -8,7 +8,7 @@ namespace aurora::modules::inputs::raw_input {
 
 	class AE_MODULE_DLL Input : public IInputModule {
 	public:
-		Input(Ref* loader, IApplication* app);
+		Input(Ref* loader, IApplication* app, DeviceType filter);
 		virtual ~Input();
 
 		void operator delete(Input* p, std::destroying_delete_t) {
@@ -29,7 +29,7 @@ namespace aurora::modules::inputs::raw_input {
 	private:
 		IntrusivePtr<Ref> _loader;
 		IntrusivePtr<IApplication> _app;
-
+		DeviceType _filter;
 		events::EventDispatcher<ModuleEvent> _eventDispatcher;
 
 		std::shared_mutex _mutex;

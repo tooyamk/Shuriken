@@ -8,9 +8,10 @@
 #include <oleauto.h>
 
 namespace aurora::modules::inputs::direct_input {
-	Input::Input(Ref* loader, IApplication* app, bool ignoreXInputDevices) :
+	Input::Input(Ref* loader, IApplication* app, DeviceType filter, bool ignoreXInputDevices) :
 		_loader(loader),
 		_app(app),
+		_filter(filter),
 		_ignoreXInputDevices(ignoreXInputDevices),
 		_di(nullptr) {
 	}
@@ -29,6 +30,7 @@ namespace aurora::modules::inputs::direct_input {
 		std::vector<DeviceInfo> newDevices;
 
 		EnumDevicesData data;
+		data.filter = _filter;
 		data.ignoreXInputDevices = _ignoreXInputDevices;
 		data.devices = &newDevices;
 
@@ -178,23 +180,28 @@ namespace aurora::modules::inputs::direct_input {
 		if (type == DI8DEVTYPE_MOUSE || type == DI8DEVTYPE_KEYBOARD || type == DI8DEVTYPE_GAMEPAD) {
 			auto data = (EnumDevicesData*)pContext;
 
-			if (data->ignoreXInputDevices && type == DI8DEVTYPE_GAMEPAD && isXInputDevice(pdidInstance->guidProduct)) return DIENUM_CONTINUE;
-
-			auto& info = data->devices->emplace_back();
-			info.guid.set<false, true>(&pdidInstance->guidInstance, sizeof(::GUID));
+			DeviceType dt = DeviceType::UNKNOWN;
 			switch (type) {
 			case DI8DEVTYPE_MOUSE:
-				info.type |= DeviceType::MOUSE;
+				dt |= DeviceType::MOUSE;
 				break;
 			case DI8DEVTYPE_KEYBOARD:
-				info.type |= DeviceType::KEYBOARD;
+				dt |= DeviceType::KEYBOARD;
 				break;
 			case DI8DEVTYPE_GAMEPAD:
-				info.type |= DeviceType::GAMEPAD;
+				dt |= DeviceType::GAMEPAD;
 				break;
 			default:
 				break;
 			}
+
+			if ((dt & data->filter) == DeviceType::UNKNOWN) return DIENUM_CONTINUE;
+
+			if (data->ignoreXInputDevices && type == DI8DEVTYPE_GAMEPAD && isXInputDevice(pdidInstance->guidProduct)) return DIENUM_CONTINUE;
+
+			auto& info = data->devices->emplace_back();
+			info.guid.set<false, true>(&pdidInstance->guidInstance, sizeof(::GUID));
+			info.type = dt;
 		}
 
 		return DIENUM_CONTINUE;
