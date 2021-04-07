@@ -55,13 +55,17 @@ namespace aurora::modules::inputs::direct_input {
 			if (FAILED(_dev->Poll())) return;
 		}
 
+		DIMOUSESTATE2 state;
+		hr = _dev->GetDeviceState(sizeof(DIMOUSESTATE2), &state);
+		if (!SUCCEEDED(hr)) return;
+
 		auto p = _getCursorPos();
 
 		if (!dispatchEvent) {
 			{
 				std::scoped_lock lock(_mutex);
 
-				_dev->GetDeviceState(sizeof(DIJOYSTATE2), &_state);
+				memcpy(&_state, &state, sizeof(DIMOUSESTATE2));
 			}
 			
 			_pos = p.combined;
@@ -69,50 +73,46 @@ namespace aurora::modules::inputs::direct_input {
 			return;
 		}
 
-		DIMOUSESTATE2 state;
-		hr = _dev->GetDeviceState(sizeof(DIMOUSESTATE2), &state);
-		if (SUCCEEDED(hr)) {
-			uint8_t changeBtns[sizeof(DIMOUSESTATE2::rgbButtons)];
-			uint8_t len = 0;
+		uint8_t changeBtns[sizeof(DIMOUSESTATE2::rgbButtons)];
+		uint8_t len = 0;
 
-			Point pos, lastPos;
-			pos.combined = _pos.exchange(p.combined);
-			int32_t ox = p.x - pos.x;
-			int32_t oy = p.y - pos.y;
+		Point pos, lastPos;
+		pos.combined = _pos.exchange(p.combined);
+		int32_t ox = p.x - pos.x;
+		int32_t oy = p.y - pos.y;
 
-			{
-				std::scoped_lock lock(_mutex);
+		{
+			std::scoped_lock lock(_mutex);
 
-				for (uint8_t i = 0; i < sizeof(DIMOUSESTATE2::rgbButtons); ++i) {
-					if (_state.rgbButtons[i] != state.rgbButtons[i]) {
-						_state.rgbButtons[i] = state.rgbButtons[i];
-						changeBtns[len++] = i;
-					}
+			for (uint8_t i = 0; i < sizeof(DIMOUSESTATE2::rgbButtons); ++i) {
+				if (_state.rgbButtons[i] != state.rgbButtons[i]) {
+					_state.rgbButtons[i] = state.rgbButtons[i];
+					changeBtns[len++] = i;
 				}
 			}
+		}
 
-			_amendmentRelativePos(ox, p.x, state.lX, SM_CXSCREEN);
-			_amendmentRelativePos(oy, p.y, state.lY, SM_CYSCREEN);
+		_amendmentRelativePos(ox, p.x, state.lX, SM_CXSCREEN);
+		_amendmentRelativePos(oy, p.y, state.lY, SM_CYSCREEN);
 
-			if (ox || oy) {
-				//increment, right bottom positive orientation.
-				Key::ValueType value[] = { (Key::ValueType)ox, (Key::ValueType)oy };
-				Key k = { (Key::CodeType)MouseKeyCode::POSITION, 2, value };
-				_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &k);
-			}
+		if (ox || oy) {
+			//increment, right bottom positive orientation.
+			Key::ValueType value[] = { (Key::ValueType)ox, (Key::ValueType)oy };
+			Key k = { (Key::CodeType)MouseKeyCode::POSITION, 2, value };
+			_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &k);
+		}
 
-			if (state.lZ != 0) {
-				Key::ValueType value = state.lZ > 0 ? Math::ONE<Key::ValueType> : Math::NEGATIVE_ONE<Key::ValueType>;
-				Key k = { (Key::CodeType)MouseKeyCode::WHEEL, 1, &value };
-				_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &k);
-			}
+		if (state.lZ != 0) {
+			Key::ValueType value = state.lZ > 0 ? Math::ONE<Key::ValueType> : Math::NEGATIVE_ONE<Key::ValueType>;
+			Key k = { (Key::CodeType)MouseKeyCode::WHEEL, 1, &value };
+			_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &k);
+		}
 
-			for (uint8_t i = 0; i < len; ++i) {
-				Key::CodeType key = changeBtns[i];
-				Key::ValueType value = (state.rgbButtons[key] & 0x80) > 0 ? Math::ONE<Key::ValueType> : Math::ZERO<Key::ValueType>;
-				Key k = { key + (Key::CodeType)MouseKeyCode::L_BUTTON, 1, &value };
-				_eventDispatcher.dispatchEvent(this, value > Math::ZERO<Key::ValueType> ? DeviceEvent::DOWN : DeviceEvent::UP, &k);
-			}
+		for (uint8_t i = 0; i < len; ++i) {
+			Key::CodeType key = changeBtns[i];
+			Key::ValueType value = (state.rgbButtons[key] & 0x80) > 0 ? Math::ONE<Key::ValueType> : Math::ZERO<Key::ValueType>;
+			Key k = { key + (Key::CodeType)MouseKeyCode::L_BUTTON, 1, &value };
+			_eventDispatcher.dispatchEvent(this, value > Math::ZERO<Key::ValueType> ? DeviceEvent::DOWN : DeviceEvent::UP, &k);
 		}
 	}
 

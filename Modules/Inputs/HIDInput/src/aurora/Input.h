@@ -29,9 +29,9 @@ namespace aurora::modules::inputs::hid_input {
 		events::EventDispatcher<ModuleEvent> _eventDispatcher;
 
 		std::shared_mutex _mutex;
-		std::vector<DeviceInfo> _devices;
+		std::vector<InternalDeviceInfo> _devices;
 
-		inline bool AE_CALL _hasDevice(const DeviceInfo& info, const std::vector<DeviceInfo>& devices) const {
+		inline bool AE_CALL _hasDevice(const DeviceInfo& info, const std::vector<InternalDeviceInfo>& devices) const {
 			for (auto& di : devices) {
 				if (info.guid == di.guid) return true;
 			}

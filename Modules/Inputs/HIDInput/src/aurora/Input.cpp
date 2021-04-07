@@ -1,6 +1,7 @@
 #include "CreateModule.h"
 #include "Gamepad.h"
 #include "aurora/HID.h"
+#include "aurora/hash/xxHash.h"
 #include "aurora/Debug.h"
 //#include "aurora/hash/xxHash.h"
 
@@ -25,21 +26,48 @@ namespace aurora::modules::inputs::hid_input {
 
 	void Input::poll() {
 		using namespace aurora::extensions;
+		using namespace aurora::enum_operators;
 
-		std::vector<std::string> paths;
-		HID::enumDevices(&paths, [](const HIDDeviceInfo& info, void* custom) {
-			auto paths = (std::vector<std::string>*)custom;
+		if ((DeviceType::GAMEPAD & _filter) == DeviceType::UNKNOWN) return;
 
-			paths->emplace_back(HID::getPath(info));
+		std::vector<InternalDeviceInfo> newDevices;
+		HID::enumDevices(&newDevices, [](const HIDDeviceInfo& info, void* custom) {
+			auto newDevices = (std::vector<InternalDeviceInfo>*)custom;
+
+			if (HID::getUsagePage(info) == 1) {
+				if (HID::getUsage(info) == 5) {
+					auto& dev = newDevices->emplace_back();
+
+					auto path = HID::getPath(info);
+
+					auto hash = hash::xxHash::calc<64, std::endian::native>(path.data(), path.size(), 0);
+					dev.guid.set<false, true>(&hash, sizeof(hash), 0);
+					dev.vendorID = HID::getVendorID(info);
+					dev.productID = HID::getProductID(info);
+					dev.type = DeviceType::GAMEPAD;
+					dev.path = path;
+				}
+			}
 		});
 
-		for (auto& path : paths) {
-			auto dev = HID::open(path);
-			if (dev) {
-				int a = 1;
-				HID::close(*dev);
+		std::vector<DeviceInfo> add;
+		std::vector<DeviceInfo> remove;
+		{
+			std::scoped_lock lock(_mutex);
+
+			for (auto& info : newDevices) {
+				if (!_hasDevice(info, _devices)) add.emplace_back(info);
 			}
+
+			for (auto& info : _devices) {
+				if (!_hasDevice(info, newDevices)) remove.emplace_back(info);
+			}
+
+			_devices = std::move(newDevices);
 		}
+
+		for (auto& info : remove) _eventDispatcher.dispatchEvent(this, ModuleEvent::DISCONNECTED, &info);
+		for (auto& info : add) _eventDispatcher.dispatchEvent(this, ModuleEvent::CONNECTED, &info);
 
 		/*
 		using namespace aurora::enum_operators;
@@ -366,40 +394,23 @@ namespace aurora::modules::inputs::hid_input {
 		if (buttonCaps) delete[] buttonCaps;
 
 		SetupDiDestroyDeviceInfoList(hDevInfo);
-
-		std::vector<DeviceInfo> add;
-		std::vector<DeviceInfo> remove;
-		{
-			std::scoped_lock lock(_mutex);
-
-			for (auto& info : newDevices) {
-				if (!_hasDevice(info, _devices)) add.emplace_back(info);
-			}
-
-			for (auto& info : _devices) {
-				if (!_hasDevice(info, newDevices)) remove.emplace_back(info);
-			}
-
-			_devices = std::move(newDevices);
-		}
-
-		for (auto& info : remove) _eventDispatcher.dispatchEvent(this, ModuleEvent::DISCONNECTED, &info);
-		for (auto& info : add) _eventDispatcher.dispatchEvent(this, ModuleEvent::CONNECTED, &info);
-
-		int a = 1;
 		*/
 	}
 
 	IntrusivePtr<IInputDevice> Input::createDevice(const DeviceGUID& guid) {
-		/*
+		using namespace aurora::extensions;
+
 		std::shared_lock lock(_mutex);
 
-		DeviceBase* device = nullptr;
+		InternalDeviceInfo* di;
+		HIDDevice* hid = nullptr;
 		for (auto& info : _devices) {
 			if (info.guid == guid) {
+				di = &info;
+
 				switch (info.type) {
 				case DeviceType::GAMEPAD:
-					//device = new Gamepad(*this, info);
+					hid = HID::open(info.path);
 					break;
 				default:
 					break;
@@ -409,13 +420,10 @@ namespace aurora::modules::inputs::hid_input {
 			}
 		}
 
-		if (device && !device->open()) {
-			delete device;
-			device = nullptr;
-		}
+		if (!hid) return nullptr;
+
+		DeviceBase* device = new Gamepad(*this, *di, *hid);
 
 		return device;
-		*/
-		return nullptr;
 	}
 }

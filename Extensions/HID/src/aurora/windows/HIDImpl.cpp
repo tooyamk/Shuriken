@@ -6,19 +6,29 @@ namespace aurora::extensions {
 	HIDDeviceInfo::HIDDeviceInfo() :
 		_vendorID(0),
 		_productID(0),
+		_usagePage(0),
+		_usage(0),
 		handle(nullptr) {
 	}
 
 	uint16_t HIDDeviceInfo::getVendorID() const {
 		if (!_vendorID) _readAttrubutes();
-
 		return _vendorID;
 	}
 
 	uint16_t HIDDeviceInfo::getProductID() const {
 		if (!_vendorID) _readAttrubutes();
-
 		return _vendorID;
+	}
+
+	uint16_t HIDDeviceInfo::getUsagePage() const {
+		if (!_usagePage) _readCaps();
+		return _usagePage;
+	}
+
+	uint16_t HIDDeviceInfo::getUsage() const {
+		if (!_usage) _readCaps();
+		return _usage;
 	}
 
 	void HIDDeviceInfo::_readAttrubutes() const {
@@ -31,6 +41,22 @@ namespace aurora::extensions {
 			_vendorID = attrib.VendorID;
 			_productID = attrib.ProductID;
 		}
+	}
+
+	void HIDDeviceInfo::_readCaps() const {
+		if (!handle) return;
+
+		PHIDP_PREPARSED_DATA preparsedData = nullptr;
+		ScopeGuard preparsedDataGuard([&preparsedData]() {
+			if (preparsedData) HidD_FreePreparsedData(preparsedData);
+		});
+		if (!HidD_GetPreparsedData(handle, &preparsedData)) return;
+
+		HIDP_CAPS caps;
+		if (HidP_GetCaps(preparsedData, &caps) != HIDP_STATUS_SUCCESS) return;
+
+		_usagePage = caps.UsagePage;
+		_usage = caps.Usage;
 	}
 
 
@@ -174,6 +200,14 @@ namespace aurora::extensions {
 		return info.pathView;
 	}
 
+	uint16_t HID::getUsagePage(const HIDDeviceInfo& info) {
+		return info.getUsagePage();
+	}
+
+	uint16_t HID::getUsage(const HIDDeviceInfo& info) {
+		return info.getUsage();
+	}
+
 	HIDDevice* HID::open(const std::string_view& path) {
 		auto handle = CreateFileA(path.data(),
 			//0,
@@ -208,8 +242,8 @@ namespace aurora::extensions {
 		delete &device;
 	}
 
-	size_t AE_CALL read(HIDDevice& device, void* data, size_t dataLength, size_t timeout) {
-		if (!device.handle) return HID::OUT_ERROR;
+	size_t HID::read(HIDDevice& device, void* data, size_t dataLength, size_t timeout) {
+		if (!device.handle) return HID::READ_OUT_ERROR;
 
 		DWORD bytesReaded = 0;
 		bool err = false;
@@ -237,9 +271,9 @@ namespace aurora::extensions {
 		}
 
 		if (overlapped) {
-			auto blocking = timeout == HID::IN_TIMEOUT_BLOCKING;
+			auto blocking = timeout == HID::READ_IN_TIMEOUT_BLOCKING;
 			if (timeout && !blocking) {
-				if (WaitForSingleObject(device.oRead.hEvent, timeout) != WAIT_OBJECT_0) return HID::OUT_WAITTING;
+				if (WaitForSingleObject(device.oRead.hEvent, timeout) != WAIT_OBJECT_0) return HID::READ_OUT_WAITTING;
 			}
 
 			DWORD n;
@@ -255,11 +289,18 @@ namespace aurora::extensions {
 			}
 		}
 
-		if (err) return HID::OUT_ERROR;
-		if (device.readPending) HID::OUT_WAITTING;
+		if (err) return HID::READ_OUT_ERROR;
+		if (device.readPending) HID::READ_OUT_WAITTING;
+
+		uint8_t* src = device.readBuffer;
+		if (bytesReaded > 0 && device.readBuffer[0] == 0) {
+			--bytesReaded;
+			++src;
+		}
 
 		auto n = dataLength > bytesReaded ? bytesReaded : dataLength;
-		memcpy(data, device.readBuffer, n);
+		memcpy(data, src, n);
+
 		return n;
 	}
 }

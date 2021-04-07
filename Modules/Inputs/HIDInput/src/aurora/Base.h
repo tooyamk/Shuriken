@@ -3,7 +3,16 @@
 #include "aurora/modules/inputs/IInputModule.h"
 #include "aurora/IApplication.h"
 #include "aurora/HID.h"
+#include <shared_mutex>
 
+namespace aurora::modules::inputs::hid_input {
+	class InternalDeviceInfo : public DeviceInfo {
+	public:
+		std::string path;
+	};
+}
+
+/*
 #ifndef AE_GENERIC_INPUT_ENUM
 #	define AE_GENERIC_INPUT_ENUM
 
@@ -329,3 +338,4 @@ namespace aurora::modules::inputs::generic_input {
 			{ (HIDReportCollectionData)(std::numeric_limits<std::underlying_type_t<HIDReportCollectionData>>::max)(), "__end"sv }
 	};
 }
+*/

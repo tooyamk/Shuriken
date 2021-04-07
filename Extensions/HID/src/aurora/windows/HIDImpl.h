@@ -13,12 +13,17 @@ namespace aurora::extensions {
 
 		uint16_t AE_CALL getVendorID() const;
 		uint16_t AE_CALL getProductID() const;
+		uint16_t AE_CALL getUsagePage() const;
+		uint16_t AE_CALL getUsage() const;
 
 	private:
 		mutable uint16_t _vendorID;
 		mutable uint16_t _productID;
+		mutable uint16_t _usagePage;
+		mutable uint16_t _usage;
 
 		void AE_CALL _readAttrubutes() const;
+		void AE_CALL _readCaps() const;
 	};
 
 

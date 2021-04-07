@@ -31,10 +31,22 @@ namespace aurora::extensions {
 		return std::string_view();
 	}
 
+	uint16_t HID::getUsagePage(const HIDDeviceInfo& info) {
+		return 0;
+	}
+
+	uint16_t HID::getUsage(const HIDDeviceInfo& info) {
+		return 0;
+	}
+
 	HIDDevice* HID::open(const std::string_view& path) {
 		return nullptr;
 	}
 
 	void HID::close(HIDDevice& device) {}
+
+	size_t HID::read(HIDDevice& device, void* data, size_t dataLength, size_t timeout) {
+		return HID::READ_OUT_ERROR;
+	}
 }
 #endif

@@ -45,41 +45,41 @@ namespace aurora::modules::inputs::direct_input {
 			if (FAILED(_dev->Poll())) return;
 		}
 
+		StateBuffer state;
+		hr = _dev->GetDeviceState(sizeof(StateBuffer), state);
+		if (!SUCCEEDED(hr)) return;
+
 		if (!dispatchEvent) {
 			std::scoped_lock lock(_mutex);
 
-			_dev->GetDeviceState(sizeof(DIJOYSTATE2), _state);
+			memcpy(_state, state, sizeof(StateBuffer));
 
 			return;
 		}
 
-		StateBuffer state;
-		hr = _dev->GetDeviceState(sizeof(StateBuffer), state);
-		if (SUCCEEDED(hr)) {
-			StateBuffer changedBtns;
-			uint16_t len = 0;
+		StateBuffer changedBtns;
+		uint16_t len = 0;
 
-			{
-				std::scoped_lock lock(_mutex);
+		{
+			std::scoped_lock lock(_mutex);
 
-				for (uint16_t i = 0; i < sizeof(StateBuffer); ++i) {
-					if (_state[i] != state[i]) {
-						_state[i] = state[i];
-						changedBtns[len++] = uint8_t(i);
-					}
+			for (uint16_t i = 0; i < sizeof(StateBuffer); ++i) {
+				if (_state[i] != state[i]) {
+					_state[i] = state[i];
+					changedBtns[len++] = uint8_t(i);
 				}
 			}
+		}
 
-			if (len > 0) {
-				//MapVirtualKeyEx(DIK_RCONTROL, MAPVK_VSC_TO_VK_EX, GetKeyboardLayout(0));
-				//auto layout = GetKeyboardLayout(0);
-				for (uint16_t i = 0; i < len; ++i) {
-					auto key = changedBtns[i];
-					Key::ValueType value = (state[key] & 0x80) > 0 ? Math::ONE<Key::ValueType> : Math::ZERO<Key::ValueType>;
+		if (len > 0) {
+			//MapVirtualKeyEx(DIK_RCONTROL, MAPVK_VSC_TO_VK_EX, GetKeyboardLayout(0));
+			//auto layout = GetKeyboardLayout(0);
+			for (uint16_t i = 0; i < len; ++i) {
+				auto key = changedBtns[i];
+				Key::ValueType value = (state[key] & 0x80) > 0 ? Math::ONE<Key::ValueType> : Math::ZERO<Key::ValueType>;
 
-					Key k = { SK_VK[key], 1, &value };
-					_eventDispatcher.dispatchEvent(this, value > Math::ZERO<Key::ValueType> ? DeviceEvent::DOWN : DeviceEvent::UP, &k);
-				}
+				Key k = { SK_VK[key], 1, &value };
+				_eventDispatcher.dispatchEvent(this, value > Math::ZERO<Key::ValueType> ? DeviceEvent::DOWN : DeviceEvent::UP, &k);
 			}
 		}
 	}
