@@ -78,19 +78,25 @@ public:
 					args.insert("app", app.uintptr());
 					args.insert("ignoreXInputDevices", true);
 					args.insert("filter", DeviceType::GAMEPAD);
-					initInputModule(inputModules, "libs/" + getDLLName("ae-input-direct-input"), &args);
+					//initInputModule(inputModules, "libs/" + getDLLName("ae-input-direct-input"), &args);
 				}
 				if (1) {
 					SerializableObject args;
 					args.insert("app", app.uintptr());
 					args.insert("filter", DeviceType::KEYBOARD | DeviceType::MOUSE);
-					initInputModule(inputModules, "libs/" + getDLLName("ae-input-raw-input"), &args);
+					//initInputModule(inputModules, "libs/" + getDLLName("ae-input-raw-input"), &args);
 				}
 				if (1) {
 					SerializableObject args;
 					args.insert("app", app.uintptr());
 					args.insert("filter", DeviceType::GAMEPAD);
-					initInputModule(inputModules, "libs/" + getDLLName("ae-input-xinput"), &args);
+					//initInputModule(inputModules, "libs/" + getDLLName("ae-input-xinput"), &args);
+				}
+				if (1) {
+					SerializableObject args;
+					args.insert("app", app.uintptr());
+					args.insert("filter", DeviceType::GAMEPAD);
+					initInputModule(inputModules, "libs/" + getDLLName("ae-input-hid-input"), &args);
 				}
 			}
 

@@ -1,0 +1,31 @@
+__set_project()
+set(__OUTPUT_NAME ae-hid)
+set_property(GLOBAL PROPERTY PROJECT_AE_HID_NAME ${PROJECT_NAME})
+set_property(GLOBAL PROPERTY PROJECT_AE_HID_INCLUDE ${PROJECT_SOURCE_DIR}/src/)
+set_property(GLOBAL PROPERTY PROJECT_AE_HID_DLL ${AE_BUILD_DIR}/${CMAKE_SHARED_LIBRARY_PREFIX}${__OUTPUT_NAME}${AE_BUILD_TYPE_SUFFIX}${AE_DLL_SUFFIX})
+
+get_property(PROJECT_AE_CORE_NAME GLOBAL PROPERTY "PROJECT_AE_CORE_NAME")
+get_property(PROJECT_AE_CORE_INCLUDE GLOBAL PROPERTY "PROJECT_AE_CORE_INCLUDE")
+
+include_directories(
+    src/aurora/
+    ${PROJECT_AE_CORE_INCLUDE}
+)
+add_definitions(${AE_EXTENSION_DEFINITIONS})
+file(GLOB_RECURSE SRC_FILES "src/*.h" "src/*.cpp")
+__add_library_source_group(${PROJECT_NAME} SHARED ${SRC_FILES})
+add_dependencies(${PROJECT_NAME}
+    ${PROJECT_AE_CORE_NAME}
+)
+
+set(linkLibs
+    ${PROJECT_AE_CORE_NAME}
+)
+if (WIN32)
+    list(APPEND linkLibs "hid.lib" "SetupAPI.lib")
+endif ()
+target_link_libraries(${PROJECT_NAME} ${linkLibs})
+
+set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER ${AE_EXTENSIONS_DIR_NAME})
+set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${__OUTPUT_NAME})
+__install(${AE_INPUT_MODULES_DIR}/${PROJECT_NAME})

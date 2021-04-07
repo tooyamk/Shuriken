@@ -144,6 +144,10 @@ namespace aurora {
 			return (S*)_target;
 		}
 
+		inline void AE_CALL set(std::nullptr_t) {
+			reset();
+		}
+
 		inline void AE_CALL set(T* target) {
 			if (_target != target) {
 				if (target) intrusivePtrAddRef(*target);
@@ -153,11 +157,7 @@ namespace aurora {
 		}
 
 		inline void AE_CALL set(T& target) {
-			if (_target != &target) {
-				intrusivePtrAddRef(target);
-				if (_target) intrusivePtrRelease(*_target);
-				_target = &target;
-			}
+			set(&target);
 		}
 
 		template<bool DoUnref = true>

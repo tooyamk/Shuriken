@@ -5,6 +5,8 @@
 #include "aurora/Debug.h"
 #include "aurora/Lock.h"
 #include "aurora/RTTI.h"
+#include "aurora/ScopeGuard.h"
+#include "aurora/ScopePtr.h"
 #include "aurora/SerializableObject.h"
 #include "aurora/String.h"
 #include "aurora/ThreadPool.h"
