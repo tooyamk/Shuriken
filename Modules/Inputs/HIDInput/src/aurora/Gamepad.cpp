@@ -2,10 +2,13 @@
 
 namespace aurora::modules::inputs::hid_input {
 	Gamepad::Gamepad(Input& input, const DeviceInfo& info, extensions::HIDDevice& hid) : DeviceBase(input, info, hid) {
-		_init(_state, sizeof(_state));
 	}
 
-	uint32_t Gamepad::getKeyState(uint32_t keyCode, float32_t* data, uint32_t count) const {
+	Key::CountType Gamepad::getKeyState(Key::CodeType keyCode, Key::ValueType* data, Key::CountType count) const {
 		return 0;
+	}
+
+	void Gamepad::_parse(StateBuffer state, size_t size) {
+
 	}
 }

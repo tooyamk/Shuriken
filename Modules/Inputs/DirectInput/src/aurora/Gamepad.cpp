@@ -103,7 +103,7 @@ namespace aurora::modules::inputs::direct_input {
 		setDeadZone((Key::CodeType)GamepadKeyCode::RIGHT_TRIGGER, Math::TWENTIETH<Key::ValueType>);
 	}
 
-	Key::CodeType Gamepad::getKeyState(Key::CodeType keyCode, Key::ValueType* data, Key::CodeType count) const {
+	Key::CountType Gamepad::getKeyState(Key::CodeType keyCode, Key::ValueType* data, Key::CountType count) const {
 		if (data && count) {
 			std::shared_lock lock(_mutex);
 

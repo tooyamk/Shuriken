@@ -80,94 +80,91 @@ namespace aurora::modules::inputs::xinput {
 	}
 
 	void Gamepad::poll(bool dispatchEvent) {
+		XINPUT_STATE state;
+		if (XInputGetState(_index, &state) != ERROR_SUCCESS) return;
+
 		if (!dispatchEvent) {
 			std::scoped_lock lock(_mutex);
 
-			XInputGetState(_index, &_state);
+			memcpy(&_state, &state, sizeof(XINPUT_STATE));
 
 			return;
 		}
 
-		XINPUT_STATE state;
-		if (XInputGetState(_index, &state) == ERROR_SUCCESS) {
-			DWORD oriBtns;
+		DWORD oriBtns;
 
-			auto& curPad = state.Gamepad;
-			auto curBtns = curPad.wButtons;
+		auto& curPad = state.Gamepad;
+		auto curBtns = curPad.wButtons;
 
-			SHORT oriLStickX, oriLStickY, oriRStickX, oriRStickY;
-			auto ls = false, rs = false;
+		SHORT oriLStickX, oriLStickY, oriRStickX, oriRStickY;
+		auto ls = false, rs = false;
 
-			SHORT oriLT, oriRT;
-			auto lt = false, rt = false;
+		SHORT oriLT, oriRT;
+		auto lt = false, rt = false;
 
-			bool dpad;
+		{
+			std::scoped_lock lock(_mutex);
 
-			{
-				std::scoped_lock lock(_mutex);
+			auto& oriPad = _state.Gamepad;
+			oriBtns = oriPad.wButtons;
 
-				auto& oriPad = _state.Gamepad;
-				oriBtns = oriPad.wButtons;
-
-				if (oriPad.sThumbLX != curPad.sThumbLX || oriPad.sThumbLY != curPad.sThumbLY) {
-					oriLStickX = oriPad.sThumbLX;
-					oriLStickY = oriPad.sThumbLY;
-					oriPad.sThumbLX = curPad.sThumbLX;
-					oriPad.sThumbLY = curPad.sThumbLY;
-					ls = true;
-				}
-				if (oriPad.sThumbRX != curPad.sThumbRX || oriPad.sThumbRY != curPad.sThumbRY) {
-					oriRStickX = oriPad.sThumbRX;
-					oriRStickY = oriPad.sThumbRY;
-					oriPad.sThumbRX = curPad.sThumbRX;
-					oriPad.sThumbRY = curPad.sThumbRY;
-					rs = true;
-				}
-
-
-				if (oriPad.bLeftTrigger != curPad.bLeftTrigger) {
-					oriLT = oriPad.bLeftTrigger;
-					oriPad.bLeftTrigger = curPad.bLeftTrigger;
-					lt = true;
-				}
-				if (oriPad.bRightTrigger != curPad.bRightTrigger) {
-					oriRT = oriPad.bRightTrigger;
-					oriPad.bRightTrigger = curPad.bRightTrigger;
-					rt = true;
-				}
-
-				dpad =
-					(oriBtns & XINPUT_GAMEPAD_DPAD_UP) != (curBtns & XINPUT_GAMEPAD_DPAD_UP) ||
-					(oriBtns & XINPUT_GAMEPAD_DPAD_RIGHT) != (curBtns & XINPUT_GAMEPAD_DPAD_RIGHT) ||
-					(oriBtns & XINPUT_GAMEPAD_DPAD_DOWN) != (curBtns & XINPUT_GAMEPAD_DPAD_DOWN) ||
-					(oriBtns & XINPUT_GAMEPAD_DPAD_LEFT) != (curBtns & XINPUT_GAMEPAD_DPAD_LEFT);
-
-				oriPad.wButtons = curPad.wButtons;
+			if (oriPad.sThumbLX != curPad.sThumbLX || oriPad.sThumbLY != curPad.sThumbLY) {
+				oriLStickX = oriPad.sThumbLX;
+				oriLStickY = oriPad.sThumbLY;
+				oriPad.sThumbLX = curPad.sThumbLX;
+				oriPad.sThumbLY = curPad.sThumbLY;
+				ls = true;
+			}
+			if (oriPad.sThumbRX != curPad.sThumbRX || oriPad.sThumbRY != curPad.sThumbRY) {
+				oriRStickX = oriPad.sThumbRX;
+				oriRStickY = oriPad.sThumbRY;
+				oriPad.sThumbRX = curPad.sThumbRX;
+				oriPad.sThumbRY = curPad.sThumbRY;
+				rs = true;
 			}
 
-			if (ls) _updateStick(oriLStickX, oriLStickY, curPad.sThumbLX, curPad.sThumbLY, GamepadKeyCode::LEFT_STICK);
-			if (rs) _updateStick(oriRStickX, oriRStickY, curPad.sThumbRX, curPad.sThumbRY, GamepadKeyCode::RIGHT_STICK);
-
-			if (lt) _updateTrigger(oriLT, curPad.bLeftTrigger, GamepadKeyCode::LEFT_TRIGGER);
-			if (rt) _updateTrigger(oriRT, curPad.bRightTrigger, GamepadKeyCode::RIGHT_TRIGGER);
-
-			if (dpad) {
-				auto value = _translateDpad(curPad.wButtons);
-				Key k = { (Key::CodeType)GamepadKeyCode::DPAD, 1, &value };
-				_eventDispatcher.dispatchEvent(this, value >= Math::ZERO<Key::ValueType> ? DeviceEvent::DOWN : DeviceEvent::UP, &k);
+			if (oriPad.bLeftTrigger != curPad.bLeftTrigger) {
+				oriLT = oriPad.bLeftTrigger;
+				oriPad.bLeftTrigger = curPad.bLeftTrigger;
+				lt = true;
+			}
+			if (oriPad.bRightTrigger != curPad.bRightTrigger) {
+				oriRT = oriPad.bRightTrigger;
+				oriPad.bRightTrigger = curPad.bRightTrigger;
+				rt = true;
 			}
 
-			_updateButton(oriBtns, curBtns, XINPUT_GAMEPAD_A, GamepadKeyCode::A);
-			_updateButton(oriBtns, curBtns, XINPUT_GAMEPAD_B, GamepadKeyCode::B);
-			_updateButton(oriBtns, curBtns, XINPUT_GAMEPAD_X, GamepadKeyCode::X);
-			_updateButton(oriBtns, curBtns, XINPUT_GAMEPAD_Y, GamepadKeyCode::Y);
-			_updateButton(oriBtns, curBtns, XINPUT_GAMEPAD_LEFT_SHOULDER, GamepadKeyCode::LEFT_SHOULDER);
-			_updateButton(oriBtns, curBtns, XINPUT_GAMEPAD_RIGHT_SHOULDER, GamepadKeyCode::RIGHT_SHOULDER);
-			_updateButton(oriBtns, curBtns, XINPUT_GAMEPAD_BACK, GamepadKeyCode::BACK);
-			_updateButton(oriBtns, curBtns, XINPUT_GAMEPAD_START, GamepadKeyCode::START);
-			_updateButton(oriBtns, curBtns, XINPUT_GAMEPAD_LEFT_THUMB, GamepadKeyCode::LEFT_THUMB);
-			_updateButton(oriBtns, curBtns, XINPUT_GAMEPAD_RIGHT_THUMB, GamepadKeyCode::RIGHT_THUMB);
+			oriPad.wButtons = curPad.wButtons;
 		}
+
+		bool dpad =
+			(oriBtns & XINPUT_GAMEPAD_DPAD_UP) != (curBtns & XINPUT_GAMEPAD_DPAD_UP) ||
+			(oriBtns & XINPUT_GAMEPAD_DPAD_RIGHT) != (curBtns & XINPUT_GAMEPAD_DPAD_RIGHT) ||
+			(oriBtns & XINPUT_GAMEPAD_DPAD_DOWN) != (curBtns & XINPUT_GAMEPAD_DPAD_DOWN) ||
+			(oriBtns & XINPUT_GAMEPAD_DPAD_LEFT) != (curBtns & XINPUT_GAMEPAD_DPAD_LEFT);
+
+		if (ls) _updateStick(oriLStickX, oriLStickY, curPad.sThumbLX, curPad.sThumbLY, GamepadKeyCode::LEFT_STICK);
+		if (rs) _updateStick(oriRStickX, oriRStickY, curPad.sThumbRX, curPad.sThumbRY, GamepadKeyCode::RIGHT_STICK);
+
+		if (lt) _updateTrigger(oriLT, curPad.bLeftTrigger, GamepadKeyCode::LEFT_TRIGGER);
+		if (rt) _updateTrigger(oriRT, curPad.bRightTrigger, GamepadKeyCode::RIGHT_TRIGGER);
+
+		if (dpad) {
+			auto value = _translateDpad(curPad.wButtons);
+			Key k = { (Key::CodeType)GamepadKeyCode::DPAD, 1, &value };
+			_eventDispatcher.dispatchEvent(this, value >= Math::ZERO<Key::ValueType> ? DeviceEvent::DOWN : DeviceEvent::UP, &k);
+		}
+
+		_updateButton(oriBtns, curBtns, XINPUT_GAMEPAD_A, GamepadKeyCode::A);
+		_updateButton(oriBtns, curBtns, XINPUT_GAMEPAD_B, GamepadKeyCode::B);
+		_updateButton(oriBtns, curBtns, XINPUT_GAMEPAD_X, GamepadKeyCode::X);
+		_updateButton(oriBtns, curBtns, XINPUT_GAMEPAD_Y, GamepadKeyCode::Y);
+		_updateButton(oriBtns, curBtns, XINPUT_GAMEPAD_LEFT_SHOULDER, GamepadKeyCode::LEFT_SHOULDER);
+		_updateButton(oriBtns, curBtns, XINPUT_GAMEPAD_RIGHT_SHOULDER, GamepadKeyCode::RIGHT_SHOULDER);
+		_updateButton(oriBtns, curBtns, XINPUT_GAMEPAD_BACK, GamepadKeyCode::BACK);
+		_updateButton(oriBtns, curBtns, XINPUT_GAMEPAD_START, GamepadKeyCode::START);
+		_updateButton(oriBtns, curBtns, XINPUT_GAMEPAD_LEFT_THUMB, GamepadKeyCode::LEFT_THUMB);
+		_updateButton(oriBtns, curBtns, XINPUT_GAMEPAD_RIGHT_THUMB, GamepadKeyCode::RIGHT_THUMB);
 	}
 
 	void Gamepad::setDeadZone(Key::CodeType keyCode, Key::ValueType deadZone) {

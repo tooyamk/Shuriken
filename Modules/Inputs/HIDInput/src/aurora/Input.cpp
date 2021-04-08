@@ -422,7 +422,7 @@ namespace aurora::modules::inputs::hid_input {
 
 		if (!hid) return nullptr;
 
-		DeviceBase* device = new Gamepad(*this, *di, *hid);
+		IInputDevice* device = new Gamepad(*this, *di, *hid);
 
 		return device;
 	}

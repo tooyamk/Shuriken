@@ -47,7 +47,7 @@ namespace aurora::modules::inputs {
 
 		virtual events::IEventDispatcher<DeviceEvent>& AE_CALL getEventDispatcher() = 0;
 		virtual const DeviceInfo& AE_CALL getInfo() const = 0;
-		virtual Key::CodeType AE_CALL getKeyState (Key::CodeType keyCode, Key::ValueType* data, Key::CodeType count) const = 0;
+		virtual Key::CountType AE_CALL getKeyState (Key::CodeType keyCode, Key::ValueType* data, Key::CountType count) const = 0;
 		virtual void AE_CALL poll(bool dispatchEvent) = 0;
 		virtual void AE_CALL setDeadZone (Key::CodeType keyCode, Key::ValueType deadZone) = 0;
 		virtual void AE_CALL setVibration(Key::ValueType left, Key::ValueType right) = 0;
@@ -292,8 +292,9 @@ namespace aurora::modules::inputs {
 		BACK = SELECT,//XBOX360
 		VIEW = SELECT,//XBOXONE
 		SHARE = SELECT,//DS4
-		START,
 		MENU = SELECT,//XBOXONE
+
+		START,
 		OPTIONS = START,//DS4
 
 		A,
