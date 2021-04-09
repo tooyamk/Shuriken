@@ -1,14 +1,9 @@
 #include "CreateModule.h"
 #include "Gamepad.h"
+#include "GamepadDS4.h"
 #include "aurora/HID.h"
 #include "aurora/hash/xxHash.h"
 #include "aurora/Debug.h"
-//#include "aurora/hash/xxHash.h"
-
-//#include <hidclass.h>
-//#include <winioctl.h>
-//#include <hidsdi.h>
-//#include <SetupAPI.h>
 
 namespace aurora::modules::inputs::hid_input {
 	Input::Input(Ref* loader, IApplication* app, DeviceType filter) :
@@ -422,7 +417,19 @@ namespace aurora::modules::inputs::hid_input {
 
 		if (!hid) return nullptr;
 
-		IInputDevice* device = new Gamepad(*this, *di, *hid);
+		IInputDevice* device = nullptr;
+		switch (di->vendorID) {
+		case 0x54C:
+		{
+			if (di->productID == 0x5C4 || di->productID == 0x9CC) device = new GamepadDS4(*this, *di, *hid);
+
+			break;
+		}
+		default:
+			break;
+		}
+
+		if (!device) device = new Gamepad(*this, *di, *hid);
 
 		return device;
 	}

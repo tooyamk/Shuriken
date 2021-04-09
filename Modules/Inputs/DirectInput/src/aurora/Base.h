@@ -13,3 +13,10 @@
 #ifndef SAFE_RELEASE
 #	define SAFE_RELEASE(p) { if (p) { (p)->Release();  (p) = nullptr; } }
 #endif
+
+namespace aurora::modules::inputs::direct_input {
+	class AE_MODULE_DLL InternalDeviceInfo : public DeviceInfo {
+	public:
+		bool isXInput;
+	};
+}

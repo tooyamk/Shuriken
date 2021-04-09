@@ -27,7 +27,7 @@ namespace aurora::modules::inputs::direct_input {
 	void Input::poll() {
 		if (!_di && FAILED(DirectInput8Create((HINSTANCE)_app->getNative(ApplicationNative::HINSTANCE), DIRECTINPUT_VERSION, IID_IDirectInput8, (LPVOID*)&_di, nullptr))) return;
 
-		std::vector<DeviceInfo> newDevices;
+		std::vector<InternalDeviceInfo> newDevices;
 
 		EnumDevicesData data;
 		data.filter = _filter;
@@ -197,11 +197,16 @@ namespace aurora::modules::inputs::direct_input {
 
 			if ((dt & data->filter) == DeviceType::UNKNOWN) return DIENUM_CONTINUE;
 
-			if (data->ignoreXInputDevices && type == DI8DEVTYPE_GAMEPAD && isXInputDevice(pdidInstance->guidProduct)) return DIENUM_CONTINUE;
+			bool isXInput = false;
+			if (type == DI8DEVTYPE_GAMEPAD) {
+				isXInput = isXInputDevice(pdidInstance->guidProduct);
+				if (isXInput && data->ignoreXInputDevices) return DIENUM_CONTINUE;
+			}
 
 			auto& info = data->devices->emplace_back();
 			info.guid.set<false, true>(&pdidInstance->guidInstance, sizeof(::GUID));
 			info.type = dt;
+			info.isXInput = isXInput;
 		}
 
 		return DIENUM_CONTINUE;

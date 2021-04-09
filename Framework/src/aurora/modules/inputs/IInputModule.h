@@ -270,20 +270,26 @@ namespace aurora::modules::inputs {
 
 
 	enum class GamepadKeyCode : uint8_t {
-		LEFT_STICK,
-		RIGHT_STICK,
+		L_STICK,
+		R_STICK,
 
-		LEFT_THUMB,
-		RIGHT_THUMB,
+		L_THUMB,
+		L3 = L_THUMB,//DualShock
+		R_THUMB,
+		R3 = R_THUMB,//DualShock
 
 		DPAD,
 		//DPAD_CENTER,
 
-		LEFT_SHOULDER,
-		RIGHT_SHOULDER,
+		L_SHOULDER,
+		L1 = L_SHOULDER,//DualShock
+		R_SHOULDER,
+		R1 = R_SHOULDER,//DualShock
 
-		LEFT_TRIGGER,
-		RIGHT_TRIGGER,
+		L_TRIGGER,
+		L2 = L_TRIGGER,//DualShock
+		R_TRIGGER,
+		R2 = R_TRIGGER,//DualShock
 
 		//LEFT_THUMBSTICK,
 		//RIGHT_THUMBSTICK,
@@ -291,24 +297,24 @@ namespace aurora::modules::inputs {
 		SELECT,
 		BACK = SELECT,//XBOX360
 		VIEW = SELECT,//XBOXONE
-		SHARE = SELECT,//DS4
+		SHARE = SELECT,//DualShock4
 		MENU = SELECT,//XBOXONE
 
 		START,
-		OPTIONS = START,//DS4
+		OPTIONS = START,//DualShock4
 
 		A,
-		CROSS = A,//DS4
+		CROSS = A,//DualShock
 		B,
-		CIRCLE = B,//DS4
+		CIRCLE = B,//DualShock
 		//C,
 		X,
-		SQUARE = X,//DS4
+		SQUARE = X,//DualShock
 		Y,
-		TRIANGLE = Y,//DS4
+		TRIANGLE = Y,//DualShock
 		//Z,
 
-		TOUCH_PAD,//DS4
+		TOUCH_PAD,//DualShock4
 
 		UNDEFINED
 	};

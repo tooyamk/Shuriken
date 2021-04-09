@@ -6,7 +6,7 @@
 namespace aurora::modules::inputs::direct_input {
 	class AE_MODULE_DLL Gamepad : public DeviceBase {
 	public:
-		Gamepad(Input& input, LPDIRECTINPUTDEVICE8 dev, const DeviceInfo& info);
+		Gamepad(Input& input, LPDIRECTINPUTDEVICE8 dev, const InternalDeviceInfo& info);
 
 		virtual Key::CountType AE_CALL getKeyState(Key::CodeType keyCode, Key::ValueType* data, Key::CountType count) const override;
 		virtual void AE_CALL poll(bool dispatchEvent) override;
@@ -53,9 +53,9 @@ namespace aurora::modules::inputs::direct_input {
 		Key::CodeType AE_CALL _getTrigger(LONG t, GamepadKeyCode key, uint8_t index, Key::ValueType& data) const;
 		Key::CodeType AE_CALL _getTriggerSeparate(LONG t, GamepadKeyCode key, Key::ValueType& data) const;
 
-		void AE_CALL _updateStick(LONG oriX, LONG oriY, LONG curX, LONG curY, GamepadKeyCode key);
-		void AE_CALL _updateTrigger(LONG ori, LONG cur, GamepadKeyCode lkey, GamepadKeyCode rkey);
-		void AE_CALL _updateTriggerSeparate(LONG ori, LONG cur, GamepadKeyCode key);
+		void AE_CALL _dispatchStick(LONG oriX, LONG oriY, LONG curX, LONG curY, GamepadKeyCode key);
+		void AE_CALL _dispatchTrigger(LONG ori, LONG cur, GamepadKeyCode lkey, GamepadKeyCode rkey);
+		void AE_CALL _dispatchTriggerSeparate(LONG ori, LONG cur, GamepadKeyCode key);
 
 		inline static Key::ValueType AE_CALL _translateDeadZone01(Key::ValueType value, Key::ValueType dz, bool inDz) {
 			return inDz ? Math::ZERO<Key::ValueType> : (value - dz) / (Math::ONE<Key::ValueType> - dz);

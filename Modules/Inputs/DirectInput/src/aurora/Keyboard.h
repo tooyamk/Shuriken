@@ -5,7 +5,7 @@
 namespace aurora::modules::inputs::direct_input {
 	class AE_MODULE_DLL Keyboard : public DeviceBase {
 	public:
-		Keyboard(Input& input, LPDIRECTINPUTDEVICE8 dev, const DeviceInfo& info);
+		Keyboard(Input& input, LPDIRECTINPUTDEVICE8 dev, const InternalDeviceInfo& info);
 
 		virtual Key::CountType AE_CALL getKeyState(Key::CodeType keyCode, Key::ValueType* data, Key::CountType count) const override;
 		virtual void AE_CALL poll(bool dispatchEvent) override;

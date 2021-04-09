@@ -5,8 +5,6 @@
 #include <shared_mutex>
 
 namespace aurora::modules::inputs::hid_input {
-	using namespace std::literals;
-
 	class AE_MODULE_DLL Input : public IInputModule {
 	public:
 		Input(Ref* loader, IApplication* app, DeviceType filter);

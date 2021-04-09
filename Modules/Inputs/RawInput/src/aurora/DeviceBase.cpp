@@ -25,6 +25,8 @@ namespace aurora::modules::inputs::raw_input {
 	}
 
 	void DeviceBase::_rawInputCallback(events::Event<ApplicationEvent>& e) {
+		using namespace std::literals;
+
 		BYTE buf[128];
 		UINT dwSize = sizeof(buf);
 		if (auto size = GetRawInputData((HRAWINPUT)(*(LPARAM*)e.getData()), RID_INPUT, buf, &dwSize, sizeof(RAWINPUTHEADER)); size != -1) {

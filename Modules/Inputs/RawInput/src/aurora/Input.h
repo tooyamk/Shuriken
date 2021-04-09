@@ -4,8 +4,6 @@
 #include "aurora/events/EventDispatcher.h"
 
 namespace aurora::modules::inputs::raw_input {
-	using namespace std::literals;
-
 	class AE_MODULE_DLL Input : public IInputModule {
 	public:
 		Input(Ref* loader, IApplication* app, DeviceType filter);

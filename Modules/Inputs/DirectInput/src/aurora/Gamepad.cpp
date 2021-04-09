@@ -13,14 +13,14 @@ namespace aurora::modules::inputs::direct_input {
 			{ 1, GamepadKeyCode::A },
 			{ 2, GamepadKeyCode::B },
 			{ 3, GamepadKeyCode::Y },
-			{ 4, GamepadKeyCode::LEFT_SHOULDER },
-			{ 5, GamepadKeyCode::RIGHT_SHOULDER },
-			{ 6, GamepadKeyCode::LEFT_TRIGGER },
-			{ 7, GamepadKeyCode::RIGHT_TRIGGER },
+			{ 4, GamepadKeyCode::L_SHOULDER },
+			{ 5, GamepadKeyCode::R_SHOULDER },
+			{ 6, GamepadKeyCode::L_TRIGGER },
+			{ 7, GamepadKeyCode::R_TRIGGER },
 			{ 8, GamepadKeyCode::SELECT },
 			{ 9, GamepadKeyCode::START },
-			{ 10, GamepadKeyCode::LEFT_THUMB },
-			{ 11, GamepadKeyCode::RIGHT_THUMB }
+			{ 10, GamepadKeyCode::L_THUMB },
+			{ 11, GamepadKeyCode::R_THUMB }
 			}
 	};
 
@@ -31,12 +31,12 @@ namespace aurora::modules::inputs::direct_input {
 			{ 1, GamepadKeyCode::B },
 			{ 2, GamepadKeyCode::X },
 			{ 3, GamepadKeyCode::Y },
-			{ 4, GamepadKeyCode::LEFT_SHOULDER },
-			{ 5, GamepadKeyCode::RIGHT_SHOULDER },
+			{ 4, GamepadKeyCode::L_SHOULDER },
+			{ 5, GamepadKeyCode::R_SHOULDER },
 			{ 6, GamepadKeyCode::SELECT },
 			{ 7, GamepadKeyCode::START },
-			{ 8, GamepadKeyCode::LEFT_THUMB },
-			{ 9, GamepadKeyCode::RIGHT_THUMB }
+			{ 8, GamepadKeyCode::L_THUMB },
+			{ 9, GamepadKeyCode::R_THUMB }
 			}
 	};
 
@@ -47,30 +47,30 @@ namespace aurora::modules::inputs::direct_input {
 			{ 1, GamepadKeyCode::A },
 			{ 2, GamepadKeyCode::B },
 			{ 3, GamepadKeyCode::Y },
-			{ 4, GamepadKeyCode::LEFT_SHOULDER },
-			{ 5, GamepadKeyCode::RIGHT_SHOULDER },
-			{ 6, GamepadKeyCode::LEFT_TRIGGER },
-			{ 7, GamepadKeyCode::RIGHT_TRIGGER },
+			{ 4, GamepadKeyCode::L_SHOULDER },
+			{ 5, GamepadKeyCode::R_SHOULDER },
+			{ 6, GamepadKeyCode::L_TRIGGER },
+			{ 7, GamepadKeyCode::R_TRIGGER },
 			{ 8, GamepadKeyCode::SELECT },
 			{ 9, GamepadKeyCode::START },
-			{ 10, GamepadKeyCode::LEFT_THUMB },
-			{ 11, GamepadKeyCode::RIGHT_THUMB },
+			{ 10, GamepadKeyCode::L_THUMB },
+			{ 11, GamepadKeyCode::R_THUMB },
 			{ 13, GamepadKeyCode::TOUCH_PAD }
 			}
 	};
 
-	Gamepad::Gamepad(Input& input, LPDIRECTINPUTDEVICE8 dev, const DeviceInfo& info) : DeviceBase(input, dev, info),
+	Gamepad::Gamepad(Input& input, LPDIRECTINPUTDEVICE8 dev, const InternalDeviceInfo& info) : DeviceBase(input, dev, info),
 		_keyMapping(nullptr) {
 		_dev->SetDataFormat(&c_dfDIJoystick2);
 		_dev->SetCooperativeLevel(_input->getHWND(), DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
 
-		if (Input::isXInputDevice(*(const ::GUID*)info.guid.getData())) {
+		if (_info.isXInput) {
 			_keyMapping = &XINPUT;
 		} else {
 			auto data = (const uint16_t*)info.guid.getData();
 			auto vender = data[0];
 			auto product = data[1];
-			switch (data[0]) {
+			switch (vender) {
 			case 0x054C:
 			{
 				if (product == 0x05C4 || product == 0x09CC) _keyMapping = &DS4;
@@ -97,10 +97,10 @@ namespace aurora::modules::inputs::direct_input {
 		axis[_keyMapping->RSTICK_Y] = NUMBER_32767<AxisType>;
 		if (_keyMapping->LTRIGGER == _keyMapping->RTRIGGER) axis[_keyMapping->LTRIGGER] = NUMBER_32767<AxisType>;;
 
-		setDeadZone((Key::CodeType)GamepadKeyCode::LEFT_STICK, Math::TWENTIETH<Key::ValueType>);
-		setDeadZone((Key::CodeType)GamepadKeyCode::RIGHT_STICK, Math::TWENTIETH<Key::ValueType>);
-		setDeadZone((Key::CodeType)GamepadKeyCode::LEFT_TRIGGER, Math::TWENTIETH<Key::ValueType>);
-		setDeadZone((Key::CodeType)GamepadKeyCode::RIGHT_TRIGGER, Math::TWENTIETH<Key::ValueType>);
+		setDeadZone((Key::CodeType)GamepadKeyCode::L_STICK, Math::TWENTIETH<Key::ValueType>);
+		setDeadZone((Key::CodeType)GamepadKeyCode::R_STICK, Math::TWENTIETH<Key::ValueType>);
+		setDeadZone((Key::CodeType)GamepadKeyCode::L_TRIGGER, Math::TWENTIETH<Key::ValueType>);
+		setDeadZone((Key::CodeType)GamepadKeyCode::R_TRIGGER, Math::TWENTIETH<Key::ValueType>);
 	}
 
 	Key::CountType Gamepad::getKeyState(Key::CodeType keyCode, Key::ValueType* data, Key::CountType count) const {
@@ -108,22 +108,22 @@ namespace aurora::modules::inputs::direct_input {
 			std::shared_lock lock(_mutex);
 
 			switch ((GamepadKeyCode)keyCode) {
-			case GamepadKeyCode::LEFT_STICK:
+			case GamepadKeyCode::L_STICK:
 			{
 				auto axis = &_state.lX;
 				return _getStick(axis[_keyMapping->LSTICK_X], axis[_keyMapping->LSTICK_Y], (GamepadKeyCode)keyCode, data, count);
 			}
-			case GamepadKeyCode::RIGHT_STICK:
+			case GamepadKeyCode::R_STICK:
 			{
 				auto axis = &_state.lX;
 				return _getStick(axis[_keyMapping->RSTICK_X], axis[_keyMapping->RSTICK_Y], (GamepadKeyCode)keyCode, data, count);
 			}
-			case GamepadKeyCode::LEFT_TRIGGER:
+			case GamepadKeyCode::L_TRIGGER:
 			{
 				auto axis = &_state.lX;
 				return _keyMapping->LTRIGGER == _keyMapping->RTRIGGER ? _getTrigger(axis[_keyMapping->LTRIGGER], (GamepadKeyCode)keyCode, 0, data[0]) : _getTriggerSeparate(axis[_keyMapping->LTRIGGER], (GamepadKeyCode)keyCode, data[0]);
 			}
-			case GamepadKeyCode::RIGHT_TRIGGER:
+			case GamepadKeyCode::R_TRIGGER:
 			{
 				auto axis = &_state.lX;
 				return _keyMapping->LTRIGGER == _keyMapping->RTRIGGER ? _getTrigger(axis[_keyMapping->RTRIGGER], (GamepadKeyCode)keyCode, 1, data[0]) : _getTriggerSeparate(axis[_keyMapping->RTRIGGER], (GamepadKeyCode)keyCode, data[0]);
@@ -233,14 +233,14 @@ namespace aurora::modules::inputs::direct_input {
 			}
 		}
 
-		if (ls) _updateStick(oriLStickX, oriLStickY, curAxis[_keyMapping->LSTICK_X], curAxis[_keyMapping->LSTICK_Y], GamepadKeyCode::LEFT_STICK);
-		if (rs) _updateStick(oriRStickX, oriRStickY, curAxis[_keyMapping->RSTICK_X], curAxis[_keyMapping->RSTICK_Y], GamepadKeyCode::RIGHT_STICK);
+		if (ls) _dispatchStick(oriLStickX, oriLStickY, curAxis[_keyMapping->LSTICK_X], curAxis[_keyMapping->LSTICK_Y], GamepadKeyCode::L_STICK);
+		if (rs) _dispatchStick(oriRStickX, oriRStickY, curAxis[_keyMapping->RSTICK_X], curAxis[_keyMapping->RSTICK_Y], GamepadKeyCode::R_STICK);
 
 		if (_keyMapping->LTRIGGER == _keyMapping->RTRIGGER) {
-			if (lt) _updateTrigger(oriLT, curAxis[_keyMapping->LTRIGGER], GamepadKeyCode::LEFT_TRIGGER, GamepadKeyCode::RIGHT_TRIGGER);
+			if (lt) _dispatchTrigger(oriLT, curAxis[_keyMapping->LTRIGGER], GamepadKeyCode::L_TRIGGER, GamepadKeyCode::R_TRIGGER);
 		} else {
-			if (lt) _updateTriggerSeparate(oriLT, curAxis[_keyMapping->LTRIGGER], GamepadKeyCode::LEFT_TRIGGER);
-			if (rt) _updateTriggerSeparate(oriRT, curAxis[_keyMapping->RTRIGGER], GamepadKeyCode::RIGHT_TRIGGER);
+			if (lt) _dispatchTriggerSeparate(oriLT, curAxis[_keyMapping->LTRIGGER], GamepadKeyCode::L_TRIGGER);
+			if (rt) _dispatchTriggerSeparate(oriRT, curAxis[_keyMapping->RTRIGGER], GamepadKeyCode::R_TRIGGER);
 		}
 
 		if (changedPovLen) {
@@ -359,7 +359,7 @@ namespace aurora::modules::inputs::direct_input {
 		return 1;
 	}
 
-	void Gamepad::_updateStick(LONG oriX, LONG oriY, LONG curX, LONG curY, GamepadKeyCode key) {
+	void Gamepad::_dispatchStick(LONG oriX, LONG oriY, LONG curX, LONG curY, GamepadKeyCode key) {
 		Key::ValueType value[] = { _translateStick(curX) , _translateStick(curY) };
 		auto dz = _getDeadZone(key);
 		auto dz2 = dz * dz;
@@ -383,7 +383,7 @@ namespace aurora::modules::inputs::direct_input {
 		}
 	}
 
-	void Gamepad::_updateTrigger(LONG ori, LONG cur, GamepadKeyCode lkey, GamepadKeyCode rkey) {
+	void Gamepad::_dispatchTrigger(LONG ori, LONG cur, GamepadKeyCode lkey, GamepadKeyCode rkey) {
 		Key::ValueType oriValues[2], curValues[2];
 		_translateTrigger(ori, oriValues[0], oriValues[1]);
 		_translateTrigger(cur, curValues[0], curValues[1]);
@@ -405,12 +405,11 @@ namespace aurora::modules::inputs::direct_input {
 		}
 	}
 
-	void Gamepad::_updateTriggerSeparate(LONG ori, LONG cur, GamepadKeyCode key) {
-		Key::ValueType value = _translateTriggerSeparate(cur);
+	void Gamepad::_dispatchTriggerSeparate(LONG ori, LONG cur, GamepadKeyCode key) {
+		auto value = _translateTriggerSeparate(cur);
 		auto dz = _getDeadZone(key);
 		auto oriDz = _translateTriggerSeparate(ori) <= dz;
 		auto curDz = value <= dz;
-		ori = cur;
 		if (!curDz || oriDz != curDz) {
 			value = _translateDeadZone01(value, dz, curDz);
 			Key k = { (Key::CodeType)key, 1, &value };

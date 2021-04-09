@@ -9,10 +9,10 @@ namespace aurora::modules::inputs::xinput {
 		_info(info) {
 		memset(&_state, 0, sizeof(_state));
 
-		setDeadZone((uint8_t)GamepadKeyCode::LEFT_STICK, Math::TWENTIETH<Key::ValueType>);
-		setDeadZone((uint8_t)GamepadKeyCode::RIGHT_STICK, Math::TWENTIETH<Key::ValueType>);
-		setDeadZone((uint8_t)GamepadKeyCode::LEFT_TRIGGER, Math::TWENTIETH<Key::ValueType>);
-		setDeadZone((uint8_t)GamepadKeyCode::RIGHT_TRIGGER, Math::TWENTIETH<Key::ValueType>);
+		setDeadZone((uint8_t)GamepadKeyCode::L_STICK, Math::TWENTIETH<Key::ValueType>);
+		setDeadZone((uint8_t)GamepadKeyCode::R_STICK, Math::TWENTIETH<Key::ValueType>);
+		setDeadZone((uint8_t)GamepadKeyCode::L_TRIGGER, Math::TWENTIETH<Key::ValueType>);
+		setDeadZone((uint8_t)GamepadKeyCode::R_TRIGGER, Math::TWENTIETH<Key::ValueType>);
 	}
 
 	Gamepad::~Gamepad() {
@@ -31,13 +31,13 @@ namespace aurora::modules::inputs::xinput {
 			std::shared_lock lock(_mutex);
 
 			switch ((GamepadKeyCode)keyCode) {
-			case GamepadKeyCode::LEFT_STICK:
+			case GamepadKeyCode::L_STICK:
 				return _getStick(_state.Gamepad.sThumbLX, _state.Gamepad.sThumbLY, (GamepadKeyCode)keyCode, data, count);
-			case GamepadKeyCode::RIGHT_STICK:
+			case GamepadKeyCode::R_STICK:
 				return _getStick(_state.Gamepad.sThumbRX, _state.Gamepad.sThumbRY, (GamepadKeyCode)keyCode, data, count);
-			case GamepadKeyCode::LEFT_TRIGGER:
+			case GamepadKeyCode::L_TRIGGER:
 				return _getTrigger(_state.Gamepad.bLeftTrigger, (GamepadKeyCode)keyCode, data[0]);
-			case GamepadKeyCode::RIGHT_TRIGGER:
+			case GamepadKeyCode::R_TRIGGER:
 				return _getTrigger(_state.Gamepad.bRightTrigger, (GamepadKeyCode)keyCode, data[0]);
 			case GamepadKeyCode::DPAD:
 				data[0] = _translateDpad(_state.Gamepad.wButtons);
@@ -54,10 +54,10 @@ namespace aurora::modules::inputs::xinput {
 			case GamepadKeyCode::Y:
 				data[0] = _translateButton(_state.Gamepad.wButtons & XINPUT_GAMEPAD_Y);
 				return 1;
-			case GamepadKeyCode::LEFT_SHOULDER:
+			case GamepadKeyCode::L_SHOULDER:
 				data[0] = _translateButton(_state.Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_SHOULDER);
 				return 1;
-			case GamepadKeyCode::RIGHT_SHOULDER:
+			case GamepadKeyCode::R_SHOULDER:
 				data[0] = _translateButton(_state.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_SHOULDER);
 				return 1;
 			case GamepadKeyCode::BACK:
@@ -66,10 +66,10 @@ namespace aurora::modules::inputs::xinput {
 			case GamepadKeyCode::START:
 				data[0] = _translateButton(_state.Gamepad.wButtons & XINPUT_GAMEPAD_START);
 				return 1;
-			case GamepadKeyCode::LEFT_THUMB:
+			case GamepadKeyCode::L_THUMB:
 				data[0] = _translateButton(_state.Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_THUMB);
 				return 1;
-			case GamepadKeyCode::RIGHT_THUMB:
+			case GamepadKeyCode::R_THUMB:
 				data[0] = _translateButton(_state.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_THUMB);
 				return 1;
 			default:
@@ -143,11 +143,11 @@ namespace aurora::modules::inputs::xinput {
 			(oriBtns & XINPUT_GAMEPAD_DPAD_DOWN) != (curBtns & XINPUT_GAMEPAD_DPAD_DOWN) ||
 			(oriBtns & XINPUT_GAMEPAD_DPAD_LEFT) != (curBtns & XINPUT_GAMEPAD_DPAD_LEFT);
 
-		if (ls) _updateStick(oriLStickX, oriLStickY, curPad.sThumbLX, curPad.sThumbLY, GamepadKeyCode::LEFT_STICK);
-		if (rs) _updateStick(oriRStickX, oriRStickY, curPad.sThumbRX, curPad.sThumbRY, GamepadKeyCode::RIGHT_STICK);
+		if (ls) _dispatchStick(oriLStickX, oriLStickY, curPad.sThumbLX, curPad.sThumbLY, GamepadKeyCode::L_STICK);
+		if (rs) _dispatchStick(oriRStickX, oriRStickY, curPad.sThumbRX, curPad.sThumbRY, GamepadKeyCode::R_STICK);
 
-		if (lt) _updateTrigger(oriLT, curPad.bLeftTrigger, GamepadKeyCode::LEFT_TRIGGER);
-		if (rt) _updateTrigger(oriRT, curPad.bRightTrigger, GamepadKeyCode::RIGHT_TRIGGER);
+		if (lt) _dispatchTrigger(oriLT, curPad.bLeftTrigger, GamepadKeyCode::L_TRIGGER);
+		if (rt) _dispatchTrigger(oriRT, curPad.bRightTrigger, GamepadKeyCode::R_TRIGGER);
 
 		if (dpad) {
 			auto value = _translateDpad(curPad.wButtons);
@@ -155,16 +155,16 @@ namespace aurora::modules::inputs::xinput {
 			_eventDispatcher.dispatchEvent(this, value >= Math::ZERO<Key::ValueType> ? DeviceEvent::DOWN : DeviceEvent::UP, &k);
 		}
 
-		_updateButton(oriBtns, curBtns, XINPUT_GAMEPAD_A, GamepadKeyCode::A);
-		_updateButton(oriBtns, curBtns, XINPUT_GAMEPAD_B, GamepadKeyCode::B);
-		_updateButton(oriBtns, curBtns, XINPUT_GAMEPAD_X, GamepadKeyCode::X);
-		_updateButton(oriBtns, curBtns, XINPUT_GAMEPAD_Y, GamepadKeyCode::Y);
-		_updateButton(oriBtns, curBtns, XINPUT_GAMEPAD_LEFT_SHOULDER, GamepadKeyCode::LEFT_SHOULDER);
-		_updateButton(oriBtns, curBtns, XINPUT_GAMEPAD_RIGHT_SHOULDER, GamepadKeyCode::RIGHT_SHOULDER);
-		_updateButton(oriBtns, curBtns, XINPUT_GAMEPAD_BACK, GamepadKeyCode::BACK);
-		_updateButton(oriBtns, curBtns, XINPUT_GAMEPAD_START, GamepadKeyCode::START);
-		_updateButton(oriBtns, curBtns, XINPUT_GAMEPAD_LEFT_THUMB, GamepadKeyCode::LEFT_THUMB);
-		_updateButton(oriBtns, curBtns, XINPUT_GAMEPAD_RIGHT_THUMB, GamepadKeyCode::RIGHT_THUMB);
+		_dispatchButton(oriBtns, curBtns, XINPUT_GAMEPAD_A, GamepadKeyCode::A);
+		_dispatchButton(oriBtns, curBtns, XINPUT_GAMEPAD_B, GamepadKeyCode::B);
+		_dispatchButton(oriBtns, curBtns, XINPUT_GAMEPAD_X, GamepadKeyCode::X);
+		_dispatchButton(oriBtns, curBtns, XINPUT_GAMEPAD_Y, GamepadKeyCode::Y);
+		_dispatchButton(oriBtns, curBtns, XINPUT_GAMEPAD_LEFT_SHOULDER, GamepadKeyCode::L_SHOULDER);
+		_dispatchButton(oriBtns, curBtns, XINPUT_GAMEPAD_RIGHT_SHOULDER, GamepadKeyCode::R_SHOULDER);
+		_dispatchButton(oriBtns, curBtns, XINPUT_GAMEPAD_BACK, GamepadKeyCode::BACK);
+		_dispatchButton(oriBtns, curBtns, XINPUT_GAMEPAD_START, GamepadKeyCode::START);
+		_dispatchButton(oriBtns, curBtns, XINPUT_GAMEPAD_LEFT_THUMB, GamepadKeyCode::L_THUMB);
+		_dispatchButton(oriBtns, curBtns, XINPUT_GAMEPAD_RIGHT_THUMB, GamepadKeyCode::R_THUMB);
 	}
 
 	void Gamepad::setDeadZone(Key::CodeType keyCode, Key::ValueType deadZone) {
@@ -241,7 +241,7 @@ namespace aurora::modules::inputs::xinput {
 		return 1;
 	}
 
-	void Gamepad::_updateStick(SHORT oriX, SHORT oriY, SHORT curX, SHORT curY, GamepadKeyCode key) {
+	void Gamepad::_dispatchStick(SHORT oriX, SHORT oriY, SHORT curX, SHORT curY, GamepadKeyCode key) {
 		Key::ValueType value[] = { _translateStick<false>(curX) , _translateStick<true>(curY) };
 		auto dz = _getDeadZone(key);
 		auto dz2 = dz * dz;
@@ -264,12 +264,11 @@ namespace aurora::modules::inputs::xinput {
 		}
 	}
 
-	void Gamepad::_updateTrigger(SHORT ori, SHORT cur, GamepadKeyCode key) {
+	void Gamepad::_dispatchTrigger(SHORT ori, SHORT cur, GamepadKeyCode key) {
 		auto value = _translateTrigger(cur);
 		auto dz = _getDeadZone(key);
 		auto oriDz = _translateTrigger(ori) <= dz;
 		auto curDz = value <= dz;
-		ori = cur;
 		if (!curDz || oriDz != curDz) {
 			value = _translateDeadZone01(value, dz, curDz);
 			Key k = { (Key::CodeType)key, 1, &value };
@@ -277,10 +276,10 @@ namespace aurora::modules::inputs::xinput {
 		}
 	}
 
-	void Gamepad::_updateButton(WORD ori, WORD cur, uint16_t flags, GamepadKeyCode key) {
+	void Gamepad::_dispatchButton(WORD ori, WORD cur, uint16_t flags, GamepadKeyCode key) {
 		auto curDown = cur & flags;
 		if ((ori & flags) != curDown) {
-			float32_t value = curDown ? Math::ONE<Key::ValueType> : Math::ZERO<Key::ValueType>;
+			auto value = curDown ? Math::ONE<Key::ValueType> : Math::ZERO<Key::ValueType>;
 			Key k = { (Key::CodeType)key, 1, &value };
 			_eventDispatcher.dispatchEvent(this, curDown ? DeviceEvent::DOWN : DeviceEvent::UP, &k);
 		}

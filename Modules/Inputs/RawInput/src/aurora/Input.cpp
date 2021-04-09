@@ -21,6 +21,7 @@ namespace aurora::modules::inputs::raw_input {
 	}
 
 	void Input::poll() {
+		using namespace std::literals;
 		using namespace aurora::enum_operators;
 
 		std::vector<InternalDeviceInfo> newDevices;

@@ -27,7 +27,7 @@ namespace aurora::modules::inputs::direct_input {
 		struct EnumDevicesData {
 			DeviceType filter;
 			bool ignoreXInputDevices;
-			std::vector<DeviceInfo>* devices;
+			std::vector<InternalDeviceInfo>* devices;
 		};
 
 
@@ -37,14 +37,14 @@ namespace aurora::modules::inputs::direct_input {
 		events::EventDispatcher<ModuleEvent> _eventDispatcher;
 
 		std::shared_mutex _mutex;
-		std::vector<DeviceInfo> _devices;
+		std::vector<InternalDeviceInfo> _devices;
 
 		bool _ignoreXInputDevices;
 		LPDIRECTINPUT8 _di;
 
 		static BOOL CALLBACK _enumDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, LPVOID pContext);
 
-		inline bool AE_CALL _hasDevice(const DeviceInfo& info, const std::vector<DeviceInfo>& devices) const {
+		inline bool AE_CALL _hasDevice(const DeviceInfo& info, const std::vector<InternalDeviceInfo>& devices) const {
 			for (auto& di : devices) {
 				if (info.guid == di.guid) return true;
 			}

@@ -6,7 +6,7 @@
 #include <shared_mutex>
 
 namespace aurora::modules::inputs::hid_input {
-	class InternalDeviceInfo : public DeviceInfo {
+	class AE_MODULE_DLL InternalDeviceInfo : public DeviceInfo {
 	public:
 		std::string path;
 	};

@@ -38,7 +38,7 @@ namespace aurora::extensions {
 		USHORT outputReportLength;
 		USHORT featureReportLength;
 
-		uint8_t* readBuffer;
+		uint8_t* inputBuffer;
 
 		bool readPending;
 		OVERLAPPED oRead;

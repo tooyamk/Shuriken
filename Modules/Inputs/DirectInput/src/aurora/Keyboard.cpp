@@ -2,7 +2,7 @@
 #include "Input.h"
 
 namespace aurora::modules::inputs::direct_input {
-	Keyboard::Keyboard(Input& input, LPDIRECTINPUTDEVICE8 dev, const DeviceInfo& info) : DeviceBase(input, dev, info) {
+	Keyboard::Keyboard(Input& input, LPDIRECTINPUTDEVICE8 dev, const InternalDeviceInfo& info) : DeviceBase(input, dev, info) {
 		_dev->SetDataFormat(&c_dfDIKeyboard);
 		_dev->SetCooperativeLevel(_input->getHWND(), DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
 		memset(_state, 0, sizeof(StateBuffer));
@@ -71,16 +71,12 @@ namespace aurora::modules::inputs::direct_input {
 			}
 		}
 
-		if (len > 0) {
-			//MapVirtualKeyEx(DIK_RCONTROL, MAPVK_VSC_TO_VK_EX, GetKeyboardLayout(0));
-			//auto layout = GetKeyboardLayout(0);
-			for (uint16_t i = 0; i < len; ++i) {
-				auto key = changedBtns[i];
-				Key::ValueType value = (state[key] & 0x80) > 0 ? Math::ONE<Key::ValueType> : Math::ZERO<Key::ValueType>;
+		for (uint16_t i = 0; i < len; ++i) {
+			auto key = changedBtns[i];
+			Key::ValueType value = (state[key] & 0x80) > 0 ? Math::ONE<Key::ValueType> : Math::ZERO<Key::ValueType>;
 
-				Key k = { SK_VK[key], 1, &value };
-				_eventDispatcher.dispatchEvent(this, value > Math::ZERO<Key::ValueType> ? DeviceEvent::DOWN : DeviceEvent::UP, &k);
-			}
+			Key k = { SK_VK[key], 1, &value };
+			_eventDispatcher.dispatchEvent(this, value > Math::ZERO<Key::ValueType> ? DeviceEvent::DOWN : DeviceEvent::UP, &k);
 		}
 	}
 }

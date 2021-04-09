@@ -18,7 +18,7 @@ namespace aurora::extensions {
 
 	uint16_t HIDDeviceInfo::getProductID() const {
 		if (!_vendorID) _readAttrubutes();
-		return _vendorID;
+		return _productID;
 	}
 
 	uint16_t HIDDeviceInfo::getUsagePage() const {
@@ -67,15 +67,15 @@ namespace aurora::extensions {
 		featureReportLength(0),
 		readPending(false) {
 		memset(&oRead, 0, sizeof(oRead));
-		oRead.hEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+		oRead.hEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 		memset(&oWrite, 0, sizeof(oWrite));
-		oWrite.hEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+		oWrite.hEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 	}
 
 	HIDDevice::~HIDDevice() {
 		CloseHandle(oRead.hEvent);
 		CloseHandle(oWrite.hEvent);
-		delete[] readBuffer;
+		delete[] inputBuffer;
 	}
 
 
@@ -232,7 +232,7 @@ namespace aurora::extensions {
 		dev->inputReportLength = caps.InputReportByteLength;
 		dev->outputReportLength = caps.OutputReportByteLength;
 		dev->featureReportLength = caps.FeatureReportByteLength;
-		dev->readBuffer = new uint8_t[dev->inputReportLength];
+		dev->inputBuffer = new uint8_t[dev->inputReportLength];
 
 		return dev;
 	}
@@ -254,9 +254,9 @@ namespace aurora::extensions {
 		} else {
 			device.readPending = true;
 			DWORD n;
-			memset(device.readBuffer, 0, device.inputReportLength);
+			memset(device.inputBuffer, 0, device.inputReportLength);
 			ResetEvent(device.oRead.hEvent);
-			if (ReadFile(device.handle, device.readBuffer, (DWORD)device.inputReportLength, &n, &device.oRead)) {
+			if (ReadFile(device.handle, device.inputBuffer, (DWORD)device.inputReportLength, &n, &device.oRead)) {
 				bytesReaded = n;
 				device.readPending = false;
 			} else {
@@ -290,10 +290,10 @@ namespace aurora::extensions {
 		}
 
 		if (err) return HID::READ_OUT_ERROR;
-		if (device.readPending) HID::READ_OUT_WAITTING;
+		if (device.readPending) return HID::READ_OUT_WAITTING;
 
-		uint8_t* src = device.readBuffer;
-		if (bytesReaded > 0 && device.readBuffer[0] == 0) {
+		auto src = device.inputBuffer;
+		if (bytesReaded > 0 && device.inputBuffer[0] == 0) {
 			--bytesReaded;
 			++src;
 		}

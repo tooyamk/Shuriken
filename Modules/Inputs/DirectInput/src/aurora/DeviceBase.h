@@ -8,7 +8,7 @@ namespace aurora::modules::inputs::direct_input {
 
 	class AE_MODULE_DLL DeviceBase : public IInputDevice {
 	public:
-		DeviceBase(Input& input, LPDIRECTINPUTDEVICE8 dev, const DeviceInfo& info);
+		DeviceBase(Input& input, LPDIRECTINPUTDEVICE8 dev, const InternalDeviceInfo& info);
 		virtual ~DeviceBase();
 
 		virtual events::IEventDispatcher<DeviceEvent>& AE_CALL getEventDispatcher() override;
@@ -19,7 +19,7 @@ namespace aurora::modules::inputs::direct_input {
 	protected:
 		IntrusivePtr<Input> _input;
 		events::EventDispatcher<DeviceEvent> _eventDispatcher;
-		DeviceInfo _info;
+		InternalDeviceInfo _info;
 
 		LPDIRECTINPUTDEVICE8 _dev;
 	};

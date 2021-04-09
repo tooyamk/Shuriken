@@ -48,9 +48,9 @@ namespace aurora::modules::inputs::xinput {
 		Key::CountType AE_CALL _getStick(SHORT x, SHORT y, GamepadKeyCode key, Key::ValueType* data, Key::CountType count) const;
 		Key::CountType AE_CALL _getTrigger(SHORT t, GamepadKeyCode key, Key::ValueType& data) const;
 
-		void AE_CALL _updateStick(SHORT oriX, SHORT oriY, SHORT curX, SHORT curY, GamepadKeyCode key);
-		void AE_CALL _updateTrigger(SHORT ori, SHORT cur, GamepadKeyCode key);
-		void AE_CALL _updateButton(WORD ori, WORD cur, uint16_t flags, GamepadKeyCode key);
+		void AE_CALL _dispatchStick(SHORT oriX, SHORT oriY, SHORT curX, SHORT curY, GamepadKeyCode key);
+		void AE_CALL _dispatchTrigger(SHORT ori, SHORT cur, GamepadKeyCode key);
+		void AE_CALL _dispatchButton(WORD ori, WORD cur, uint16_t flags, GamepadKeyCode key);
 
 		inline static Key::ValueType AE_CALL _translateDeadZone01(Key::ValueType value, Key::ValueType dz, bool inDz) {
 			return inDz ? Math::ZERO<Key::ValueType> : (value - dz) / (Math::ONE<Key::ValueType> - dz);

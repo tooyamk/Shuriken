@@ -2,7 +2,7 @@
 #include "Input.h"
 
 namespace aurora::modules::inputs::direct_input {
-	DeviceBase::DeviceBase(Input& input, LPDIRECTINPUTDEVICE8 dev, const DeviceInfo& info) :
+	DeviceBase::DeviceBase(Input& input, LPDIRECTINPUTDEVICE8 dev, const InternalDeviceInfo& info) :
 		_input(input),
 		_dev(dev),
 		_info(info) {

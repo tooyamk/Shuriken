@@ -7,23 +7,23 @@ class InputTester : public BaseTester {
 public:
 	static std::string_view AE_CALL getGamepadKeyString(GamepadKeyCode code) {
 		switch (code) {
-		case GamepadKeyCode::LEFT_STICK:
+		case GamepadKeyCode::L_STICK:
 			return "left stick";
-		case GamepadKeyCode::RIGHT_STICK:
+		case GamepadKeyCode::R_STICK:
 			return "right stick";
-		case GamepadKeyCode::LEFT_THUMB:
+		case GamepadKeyCode::L_THUMB:
 			return "left thumb";
-		case GamepadKeyCode::RIGHT_THUMB:
+		case GamepadKeyCode::R_THUMB:
 			return "right thumb";
 		case GamepadKeyCode::DPAD:
 			return "dpad";
-		case GamepadKeyCode::LEFT_SHOULDER:
+		case GamepadKeyCode::L_SHOULDER:
 			return "left shoulder";
-		case GamepadKeyCode::RIGHT_SHOULDER:
+		case GamepadKeyCode::R_SHOULDER:
 			return "right shoulder";
-		case GamepadKeyCode::LEFT_TRIGGER:
+		case GamepadKeyCode::L_TRIGGER:
 			return "left trigger";
-		case GamepadKeyCode::RIGHT_TRIGGER:
+		case GamepadKeyCode::R_TRIGGER:
 			return "right trigger";
 		case GamepadKeyCode::SELECT:
 			return "select";
@@ -200,6 +200,7 @@ public:
 								case DeviceType::GAMEPAD:
 								{
 									auto key = e.getData<Key>();
+									//if (key->code != GamepadKeyCode::R_STICK) break;
 									printd("gamepad move : ", getGamepadKeyString((GamepadKeyCode)key->code), " ", key->value[0]);
 									if (key->count > 1) printd("  ", key->value[1]);
 									printaln();

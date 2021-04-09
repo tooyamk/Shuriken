@@ -57,14 +57,12 @@ namespace aurora::modules::inputs::raw_input {
 			}
 		}
 
-		if (len > 0) {
-			for (uint16_t i = 0; i < len; ++i) {
-				auto key = changedBtns[i];
-				Key::ValueType value = state[key] ? Math::ONE<Key::ValueType> : Math::ZERO<Key::ValueType>;
+		for (uint16_t i = 0; i < len; ++i) {
+			auto key = changedBtns[i];
+			Key::ValueType value = state[key] ? Math::ONE<Key::ValueType> : Math::ZERO<Key::ValueType>;
 
-				Key k = { key, 1, &value };
-				_eventDispatcher.dispatchEvent(this, value > Math::ZERO<Key::ValueType> ? DeviceEvent::DOWN : DeviceEvent::UP, &k);
-			}
+			Key k = { key, 1, &value };
+			_eventDispatcher.dispatchEvent(this, value > Math::ZERO<Key::ValueType> ? DeviceEvent::DOWN : DeviceEvent::UP, &k);
 		}
 	}
 
