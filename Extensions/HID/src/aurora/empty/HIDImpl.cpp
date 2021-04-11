@@ -46,7 +46,11 @@ namespace aurora::extensions {
 	void HID::close(HIDDevice& device) {}
 
 	size_t HID::read(HIDDevice& device, void* data, size_t dataLength, size_t timeout) {
-		return HID::READ_OUT_ERROR;
+		return HID::OUT_ERROR;
+	}
+
+	size_t HID::write(HIDDevice& device, void* data, size_t dataLength, size_t timeout) {
+		return HID::OUT_ERROR;
 	}
 }
 #endif

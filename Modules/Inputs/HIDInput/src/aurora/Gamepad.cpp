@@ -5,11 +5,40 @@ namespace aurora::modules::inputs::hid_input {
 	Gamepad::Gamepad(Input& input, const DeviceInfo& info, extensions::HIDDevice& hid) : GamepadBase(input, info, hid) {
 	}
 
-	Key::CountType Gamepad::getKeyState(Key::CodeType keyCode, Key::ValueType* data, Key::CountType count) const {
-		return 0;
+	DeviceState::CountType Gamepad::getState(DeviceStateType type, DeviceState::CodeType code, DeviceState::ValueType* data, DeviceState::CountType count) const {
+		switch (type) {
+		case DeviceStateType::DEAD_ZONE:
+		{
+			if (data && count) {
+				data[0] = _getDeadZone((GamepadKeyCode)code);
+
+				return 1;
+			}
+
+			return 0;
+		}
+		default:
+			return 0;
+		}
 	}
 
-	void Gamepad::_parse(bool dispatchEvent, ReadBuffer& readBuffer, size_t readBufferSize) {
+	DeviceState::CountType Gamepad::setState(DeviceStateType type, DeviceState::CodeType code, DeviceState::ValueType* data, DeviceState::CountType count) {
+		switch (type) {
+		case DeviceStateType::DEAD_ZONE:
+		{
+			if (data && count) {
+				_setDeadZone((GamepadKeyCode)code, data[0]);
+				return 1;
+			}
+
+			return 0;
+		}
+		default:
+			return 0;
+		}
+	}
+
+	void Gamepad::_doInput(bool dispatchEvent, InputBuffer& inputBuffer, size_t inputBufferSize) {
 		/*
 		auto first = state[0];
 		auto buf = state + 1;
@@ -29,5 +58,9 @@ namespace aurora::modules::inputs::hid_input {
 		//printdln(String::toString(state, 16));
 
 		int a = 1;
+	}
+
+	bool Gamepad::_doOutput() {
+		return false;
 	}
 }

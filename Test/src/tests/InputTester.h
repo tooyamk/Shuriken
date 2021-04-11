@@ -119,20 +119,22 @@ public:
 					auto info = e.getData<DeviceInfo>();
 					printaln("input device connected : ", getDeviceTypeString(info->type), " vid = ", info->vendorID, " pid = ", info->productID, " guid = ", String::toString(info->guid.getData(), info->guid.getSize()));
 
-					if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN) {
+					if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN && info->vendorID == 0x54C) {
 						auto im = e.getTarget<IInputModule>();
 						//if (getNumInputeDevice(DeviceType::GAMEPAD) > 0) return;
 						printaln("create device : ", getDeviceTypeString(info->type), " guid = ", String::toString(info->guid.getData(), info->guid.getSize()));
 						if (auto device = im->createDevice(info->guid); device) {
+							float32_t rgb[] = { 1.f, 1.f, 1.f };
+							device->setState(DeviceStateType::LED, 0, rgb, 3);
 							device->getEventDispatcher().addEventListener(DeviceEvent::DOWN, createEventListener<DeviceEvent>([app](Event<DeviceEvent>& e) {
 								auto device = e.getTarget<IInputDevice>();
 								switch (device->getInfo().type) {
 								case DeviceType::KEYBOARD:
 								{
-									auto key = e.getData<Key>();
+									auto key = e.getData<DeviceState>();
 									if (key->code == KeyboardVirtualKeyCode::KEY_ENTER) {
 										float32_t state = 0.0f;
-										if (device->getKeyState((uint8_t)KeyboardVirtualKeyCode::KEY_RCTRL, &state, 1) && state != 0.f) {
+										if (device->getState(DeviceStateType::KEY, KeyboardVirtualKeyCode::KEY_RCTRL, &state, 1) && state != 0.f) {
 											app->toggleFullscreen();
 										}
 									}
@@ -143,17 +145,18 @@ public:
 								}
 								case DeviceType::GAMEPAD:
 								{
-									auto key = e.getData<Key>();
+									auto key = e.getData<DeviceState>();
 									printaln("gamepad down : ", getGamepadKeyString((GamepadKeyCode)key->code), "  ", key->value[0]);
 									if (key->code == GamepadKeyCode::CROSS) {
-										device->setVibration(0.5f, 0.5f);
+										//DeviceState::ValueType vals[] = { 1.f, 1.f };
+										//device->setState(DeviceStateType::VIBRATION, 0, vals, 2);
 									}
 
 									break;
 								}
 								case DeviceType::MOUSE:
 								{
-									auto key = e.getData<Key>();
+									auto key = e.getData<DeviceState>();
 									
 									printaln("mouse down -> key : ", key->code, "    value : ", key->value[0]);
 
@@ -171,10 +174,11 @@ public:
 								}
 								case DeviceType::GAMEPAD:
 								{
-									auto key = e.getData<Key>();
+									auto key = e.getData<DeviceState>();
 									printaln("gamepad up : ", getGamepadKeyString((GamepadKeyCode)key->code), "  ", key->value[0]);
 									if (key->code == GamepadKeyCode::CROSS) {
-										device->setVibration(0.0f, 0.0f);
+										//DeviceState::ValueType vals[] = { 0.f, 0.f };
+										//device->setState(DeviceStateType::VIBRATION, 0, vals, 2);
 									}
 
 									break;
@@ -186,7 +190,7 @@ public:
 								switch (e.getTarget<IInputDevice>()->getInfo().type) {
 								case DeviceType::MOUSE:
 								{
-									auto key = e.getData<Key>();
+									auto key = e.getData<DeviceState>();
 									if (key->code == MouseKeyCode::POSITION) {
 										//f32 curPos[2];
 										//(e.getTarget<InputDevice>())->getKeyState(key->code, curPos, 2);
@@ -199,7 +203,7 @@ public:
 								}
 								case DeviceType::GAMEPAD:
 								{
-									auto key = e.getData<Key>();
+									auto key = e.getData<DeviceState>();
 									//if (key->code != GamepadKeyCode::R_STICK) break;
 									printd("gamepad move : ", getGamepadKeyString((GamepadKeyCode)key->code), " ", key->value[0]);
 									if (key->count > 1) printd("  ", key->value[1]);
@@ -257,7 +261,19 @@ public:
 					{
 						std::shared_lock lock(inputDevicesMutex);
 
-						for (auto& dev : inputDevices) dev->poll(true);
+						for (auto& dev : inputDevices) {
+							dev->poll(true);
+
+							if (dev->getInfo().type == DeviceType::GAMEPAD) {
+								DeviceState::ValueType vals[2];
+								dev->getState(DeviceStateType::KEY, GamepadKeyCode::SQUARE, vals, 2);
+								
+								DeviceState::ValueType vibration[2];
+								vibration[0] = vals[0];
+								vibration[1] = vals[1];
+								dev->setState(DeviceStateType::VIBRATION, 0, vibration, 2);
+							}
+						}
 					}
 
 					std::this_thread::sleep_for(1ms);

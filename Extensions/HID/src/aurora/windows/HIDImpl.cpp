@@ -65,7 +65,10 @@ namespace aurora::extensions {
 		inputReportLength(0),
 		outputReportLength(0),
 		featureReportLength(0),
-		readPending(false) {
+		inputBuffer(nullptr),
+		outputBuffer(nullptr),
+		readPending(false),
+		writePending(false) {
 		memset(&oRead, 0, sizeof(oRead));
 		oRead.hEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 		memset(&oWrite, 0, sizeof(oWrite));
@@ -75,7 +78,8 @@ namespace aurora::extensions {
 	HIDDevice::~HIDDevice() {
 		CloseHandle(oRead.hEvent);
 		CloseHandle(oWrite.hEvent);
-		delete[] inputBuffer;
+		if (inputBuffer) delete[] inputBuffer;
+		if (outputBuffer) delete[] outputBuffer;
 	}
 
 
@@ -233,6 +237,7 @@ namespace aurora::extensions {
 		dev->outputReportLength = caps.OutputReportByteLength;
 		dev->featureReportLength = caps.FeatureReportByteLength;
 		dev->inputBuffer = new uint8_t[dev->inputReportLength];
+		dev->outputBuffer = new uint8_t[dev->outputReportLength];
 
 		return dev;
 	}
@@ -243,10 +248,9 @@ namespace aurora::extensions {
 	}
 
 	size_t HID::read(HIDDevice& device, void* data, size_t dataLength, size_t timeout) {
-		if (!device.handle) return HID::READ_OUT_ERROR;
+		if (!device.handle) return HID::OUT_ERROR;
 
 		DWORD bytesReaded = 0;
-		bool err = false;
 		bool overlapped = false;
 
 		if (device.readPending) {
@@ -254,7 +258,7 @@ namespace aurora::extensions {
 		} else {
 			device.readPending = true;
 			DWORD n;
-			memset(device.inputBuffer, 0, device.inputReportLength);
+			//memset(device.inputBuffer, 0, device.inputReportLength);
 			ResetEvent(device.oRead.hEvent);
 			if (ReadFile(device.handle, device.inputBuffer, (DWORD)device.inputReportLength, &n, &device.oRead)) {
 				bytesReaded = n;
@@ -265,15 +269,15 @@ namespace aurora::extensions {
 				} else {
 					CancelIo(device.handle);
 					device.readPending = false;
-					err = true;
+					return HID::OUT_ERROR;
 				}
 			}
 		}
 
 		if (overlapped) {
-			auto blocking = timeout == HID::READ_IN_TIMEOUT_BLOCKING;
+			auto blocking = timeout == HID::IN_TIMEOUT_BLOCKING;
 			if (timeout && !blocking) {
-				if (WaitForSingleObject(device.oRead.hEvent, timeout) != WAIT_OBJECT_0) return HID::READ_OUT_WAITTING;
+				if (WaitForSingleObject(device.oRead.hEvent, timeout) != WAIT_OBJECT_0) return HID::OUT_WAITTING;
 			}
 
 			DWORD n;
@@ -284,13 +288,12 @@ namespace aurora::extensions {
 				if (GetLastError() != ERROR_IO_INCOMPLETE) {
 					CancelIo(device.handle);
 					device.readPending = false;
-					err = true;
+					return HID::OUT_ERROR;
 				}
 			}
 		}
 
-		if (err) return HID::READ_OUT_ERROR;
-		if (device.readPending) return HID::READ_OUT_WAITTING;
+		if (device.readPending) return HID::OUT_WAITTING;
 
 		auto src = device.inputBuffer;
 		if (bytesReaded > 0 && device.inputBuffer[0] == 0) {
@@ -302,6 +305,62 @@ namespace aurora::extensions {
 		memcpy(data, src, n);
 
 		return n;
+	}
+
+	size_t HID::write(HIDDevice& device, void* data, size_t dataLength, size_t timeout) {
+		if (!device.handle) return HID::OUT_ERROR;
+
+		DWORD bytesWrited = 0;
+		bool overlapped = false;
+
+		if (device.writePending) {
+			overlapped = true;
+		} else {
+			if (dataLength >= device.outputReportLength) {
+				memcpy(device.outputBuffer, data, device.outputReportLength);
+			} else {
+				memcpy(device.outputBuffer, data, dataLength);
+				memset(device.outputBuffer + dataLength, 0, device.outputReportLength - dataLength);
+			}
+
+			device.writePending = true;
+			DWORD n;
+			ResetEvent(device.oWrite.hEvent);
+			if (WriteFile(device.handle, device.outputBuffer, device.outputReportLength, &n, &device.oWrite)) {
+				bytesWrited = n;
+				device.writePending = false;
+			} else {
+				if (GetLastError() == ERROR_IO_PENDING) {
+					overlapped = true;
+				} else {
+					CancelIo(device.handle);
+					device.writePending = false;
+					return HID::OUT_ERROR;
+				}
+			}
+		}
+
+		if (overlapped) {
+			auto blocking = timeout == HID::IN_TIMEOUT_BLOCKING;
+			if (timeout && !blocking) {
+				if (WaitForSingleObject(device.oWrite.hEvent, timeout) != WAIT_OBJECT_0) return HID::OUT_WAITTING;
+			}
+
+			DWORD n;
+			if (GetOverlappedResult(device.handle, &device.oWrite, &n, blocking)) {
+				bytesWrited = n;
+				device.writePending = false;
+			} else {
+				if (GetLastError() != ERROR_IO_INCOMPLETE) {
+					CancelIo(device.handle);
+					device.writePending = false;
+					return HID::OUT_ERROR;
+				}
+			}
+		}
+
+		if (device.writePending) return HID::OUT_WAITTING;
+		return bytesWrited;
 	}
 }
 #endif

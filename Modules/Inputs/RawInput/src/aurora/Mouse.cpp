@@ -12,18 +12,22 @@ namespace aurora::modules::inputs::raw_input {
 		_pos = p.combined;
 	}
 
-	Key::CountType Mouse::getKeyState(Key::CodeType keyCode, Key::ValueType* data, Key::CountType count) const {
-		if (data && count) {
-			switch ((MouseKeyCode)keyCode) {
+	DeviceState::CountType Mouse::getState(DeviceStateType type, DeviceState::CodeType code, DeviceState::ValueType* data, DeviceState::CountType count) const {
+		using namespace aurora::enum_operators;
+
+		switch (type) {
+		case DeviceStateType::KEY:
+		{
+			switch ((MouseKeyCode)code) {
 			case MouseKeyCode::POSITION:
 			{
 				POINT p;
 				GetCursorPos(&p);
 				ScreenToClient(_input->getHWND(), &p);
 
-				data[0] = Key::ValueType(p.x);
-				Key::CountType c = 1;
-				if (count > 1) data[c++] = Key::ValueType(p.y);
+				data[0] = DeviceState::ValueType(p.x);
+				DeviceState::CountType c = 1;
+				if (count > 1) data[c++] = DeviceState::ValueType(p.y);
 
 				return c;
 			}
@@ -31,10 +35,10 @@ namespace aurora::modules::inputs::raw_input {
 				return 0;
 			default:
 			{
-				if (keyCode >= (uint32_t)MouseKeyCode::L_BUTTON && keyCode < (uint32_t)MouseKeyCode::L_BUTTON + sizeof(StateBuffer)) {
+				if (code >= MouseKeyCode::L_BUTTON && code < MouseKeyCode::L_BUTTON + sizeof(StateBuffer)) {
 					std::shared_lock lock(_mutex);
 
-					data[0] = _state[keyCode - (uint32_t)MouseKeyCode::L_BUTTON] ? Math::ONE<Key::ValueType> : Math::ZERO<Key::ValueType>;
+					data[0] = _state[code - (uint32_t)MouseKeyCode::L_BUTTON] ? Math::ONE<DeviceState::ValueType> : Math::ZERO<DeviceState::ValueType>;
 
 					return 1;
 				}
@@ -42,8 +46,15 @@ namespace aurora::modules::inputs::raw_input {
 				break;
 			}
 			}
-		}
 
+			return 0;
+		}
+		default:
+			return 0;
+		}
+	}
+
+	DeviceState::CountType Mouse::setState(DeviceStateType type, DeviceState::CodeType code, DeviceState::ValueType* data, DeviceState::CountType count) {
 		return 0;
 	}
 
@@ -95,21 +106,21 @@ namespace aurora::modules::inputs::raw_input {
 
 		if (ox || oy) {
 			//increment, right bottom positive orientation.
-			Key::ValueType value[] = { (Key::ValueType)ox, (Key::ValueType)oy };
-			Key k = { (Key::CodeType)MouseKeyCode::POSITION, 2, value };
+			DeviceState::ValueType value[] = { (DeviceState::ValueType)ox, (DeviceState::ValueType)oy };
+			DeviceState k = { (DeviceState::CodeType)MouseKeyCode::POSITION, 2, value };
 			_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &k);
 		}
 
 		if (wheel != 0) {
-			Key::ValueType value = (Key::ValueType)wheel * Math::RECIPROCAL<Key::ValueType(WHEEL_DELTA)>;
-			Key k = { (Key::CodeType)MouseKeyCode::WHEEL, 1, &value };
+			DeviceState::ValueType value = (DeviceState::ValueType)wheel * Math::RECIPROCAL<DeviceState::ValueType(WHEEL_DELTA)>;
+			DeviceState k = { (DeviceState::CodeType)MouseKeyCode::WHEEL, 1, &value };
 			_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &k);
 		}
 
 		for (uint8_t i = 0; i < len; ++i) {
-			Key::CodeType key = changeBtns[i];
-			Key::ValueType value = state[key] ? Math::ONE<Key::ValueType> : Math::ZERO<Key::ValueType>;
-			Key k = { key + (Key::CodeType)MouseKeyCode::L_BUTTON, 1, &value };
+			DeviceState::CodeType key = changeBtns[i];
+			DeviceState::ValueType value = state[key] ? Math::ONE<DeviceState::ValueType> : Math::ZERO<DeviceState::ValueType>;
+			DeviceState k = { key + (DeviceState::CodeType)MouseKeyCode::L_BUTTON, 1, &value };
 			_eventDispatcher.dispatchEvent(this, value > 0 ? DeviceEvent::DOWN : DeviceEvent::UP, &k);
 		}
 	}

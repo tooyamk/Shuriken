@@ -97,60 +97,93 @@ namespace aurora::modules::inputs::direct_input {
 		axis[_keyMapping->RSTICK_Y] = NUMBER_32767<AxisType>;
 		if (_keyMapping->LTRIGGER == _keyMapping->RTRIGGER) axis[_keyMapping->LTRIGGER] = NUMBER_32767<AxisType>;;
 
-		setDeadZone((Key::CodeType)GamepadKeyCode::L_STICK, Math::TWENTIETH<Key::ValueType>);
-		setDeadZone((Key::CodeType)GamepadKeyCode::R_STICK, Math::TWENTIETH<Key::ValueType>);
-		setDeadZone((Key::CodeType)GamepadKeyCode::L_TRIGGER, Math::TWENTIETH<Key::ValueType>);
-		setDeadZone((Key::CodeType)GamepadKeyCode::R_TRIGGER, Math::TWENTIETH<Key::ValueType>);
+		_setDeadZone(GamepadKeyCode::L_STICK, Math::TWENTIETH<DeviceState::ValueType>);
+		_setDeadZone(GamepadKeyCode::R_STICK, Math::TWENTIETH<DeviceState::ValueType>);
+		_setDeadZone(GamepadKeyCode::L_TRIGGER, Math::TWENTIETH<DeviceState::ValueType>);
+		_setDeadZone(GamepadKeyCode::R_TRIGGER, Math::TWENTIETH<DeviceState::ValueType>);
 	}
 
-	Key::CountType Gamepad::getKeyState(Key::CodeType keyCode, Key::ValueType* data, Key::CountType count) const {
-		if (data && count) {
-			std::shared_lock lock(_mutex);
+	DeviceState::CountType Gamepad::getState(DeviceStateType type, DeviceState::CodeType code, DeviceState::ValueType* data, DeviceState::CountType count) const {
+		switch (type) {
+		case DeviceStateType::KEY:
+		{
+			if (data && count) {
+				std::shared_lock lock(_mutex);
 
-			switch ((GamepadKeyCode)keyCode) {
-			case GamepadKeyCode::L_STICK:
-			{
-				auto axis = &_state.lX;
-				return _getStick(axis[_keyMapping->LSTICK_X], axis[_keyMapping->LSTICK_Y], (GamepadKeyCode)keyCode, data, count);
-			}
-			case GamepadKeyCode::R_STICK:
-			{
-				auto axis = &_state.lX;
-				return _getStick(axis[_keyMapping->RSTICK_X], axis[_keyMapping->RSTICK_Y], (GamepadKeyCode)keyCode, data, count);
-			}
-			case GamepadKeyCode::L_TRIGGER:
-			{
-				auto axis = &_state.lX;
-				return _keyMapping->LTRIGGER == _keyMapping->RTRIGGER ? _getTrigger(axis[_keyMapping->LTRIGGER], (GamepadKeyCode)keyCode, 0, data[0]) : _getTriggerSeparate(axis[_keyMapping->LTRIGGER], (GamepadKeyCode)keyCode, data[0]);
-			}
-			case GamepadKeyCode::R_TRIGGER:
-			{
-				auto axis = &_state.lX;
-				return _keyMapping->LTRIGGER == _keyMapping->RTRIGGER ? _getTrigger(axis[_keyMapping->RTRIGGER], (GamepadKeyCode)keyCode, 1, data[0]) : _getTriggerSeparate(axis[_keyMapping->RTRIGGER], (GamepadKeyCode)keyCode, data[0]);
-			}
-			case GamepadKeyCode::DPAD:
-				data[0] = _translateDpad(_state.rgdwPOV[0]);
-				return 1;
-			default:
-			{
-				if (auto itr = _enumToKeyMapping.find((GamepadKeyCode)keyCode); itr != _enumToKeyMapping.end()) {
-					data[0] = _translateButton(_state.rgbButtons[itr->second]);
-
-					return 1;
+				switch ((GamepadKeyCode)code) {
+				case GamepadKeyCode::L_STICK:
+				{
+					auto axis = &_state.lX;
+					return _getStick(axis[_keyMapping->LSTICK_X], axis[_keyMapping->LSTICK_Y], (GamepadKeyCode)code, data, count);
 				}
-
-				if (keyCode >= (uint8_t)GamepadKeyCode::UNDEFINED) {
-					data[0] = _translateButton(_state.rgbButtons[keyCode - (Key::CodeType)GamepadKeyCode::UNDEFINED]);
-
-					return 1;
+				case GamepadKeyCode::R_STICK:
+				{
+					auto axis = &_state.lX;
+					return _getStick(axis[_keyMapping->RSTICK_X], axis[_keyMapping->RSTICK_Y], (GamepadKeyCode)code, data, count);
 				}
+				case GamepadKeyCode::L_TRIGGER:
+				{
+					auto axis = &_state.lX;
+					return _keyMapping->LTRIGGER == _keyMapping->RTRIGGER ? _getTrigger(axis[_keyMapping->LTRIGGER], (GamepadKeyCode)code, 0, data[0]) : _getTriggerSeparate(axis[_keyMapping->LTRIGGER], (GamepadKeyCode)code, data[0]);
+				}
+				case GamepadKeyCode::R_TRIGGER:
+				{
+					auto axis = &_state.lX;
+					return _keyMapping->LTRIGGER == _keyMapping->RTRIGGER ? _getTrigger(axis[_keyMapping->RTRIGGER], (GamepadKeyCode)code, 1, data[0]) : _getTriggerSeparate(axis[_keyMapping->RTRIGGER], (GamepadKeyCode)code, data[0]);
+				}
+				case GamepadKeyCode::DPAD:
+					data[0] = _translateDpad(_state.rgdwPOV[0]);
+					return 1;
+				default:
+				{
+					if (auto itr = _enumToKeyMapping.find((GamepadKeyCode)code); itr != _enumToKeyMapping.end()) {
+						data[0] = _translateButton(_state.rgbButtons[itr->second]);
 
-				break;
+						return 1;
+					}
+
+					if (code >= (uint8_t)GamepadKeyCode::UNDEFINED) {
+						data[0] = _translateButton(_state.rgbButtons[code - (DeviceState::CodeType)GamepadKeyCode::UNDEFINED]);
+
+						return 1;
+					}
+
+					break;
+				}
+				}
 			}
-			}
+
+			return 0;
 		}
+		case DeviceStateType::DEAD_ZONE:
+		{
+			if (data && count) {
+				data[0] = _getDeadZone((GamepadKeyCode)code);
 
-		return 0;
+				return 1;
+			}
+
+			return 0;
+		}
+		default:
+			return 0;
+		}
+	}
+
+	DeviceState::CountType Gamepad::setState(DeviceStateType type, DeviceState::CodeType code, DeviceState::ValueType* data, DeviceState::CountType count) {
+		switch (type) {
+		case DeviceStateType::DEAD_ZONE:
+		{
+			if (data && count) {
+				_setDeadZone((GamepadKeyCode)code, data[0]);
+				return 1;
+			}
+
+			return 0;
+		}
+		default:
+			return 0;
+		}
 	}
 
 	void Gamepad::poll(bool dispatchEvent) {
@@ -245,31 +278,31 @@ namespace aurora::modules::inputs::direct_input {
 
 		if (changedPovLen) {
 			for (decltype(changedPovLen) i = 0; i < changedPovLen; ++i) {
-				Key::CodeType key = changedPov[i];
+				DeviceState::CodeType key = changedPov[i];
 				if (key == 0) {
 					auto value = _translateDpad(state.rgdwPOV[key]);
-					Key k = { (Key::CodeType)GamepadKeyCode::DPAD, 1, &value };
-					_eventDispatcher.dispatchEvent(this, value >= Math::ZERO<Key::ValueType> ? DeviceEvent::DOWN : DeviceEvent::UP, &k);
+					DeviceState k = { (DeviceState::CodeType)GamepadKeyCode::DPAD, 1, &value };
+					_eventDispatcher.dispatchEvent(this, value >= Math::ZERO<DeviceState::ValueType> ? DeviceEvent::DOWN : DeviceEvent::UP, &k);
 				}
 			}
 		}
 
 		if (changedBtnsLen) {
 			for (decltype(changedBtnsLen) i = 0; i < changedBtnsLen; ++i) {
-				Key::CodeType key = changedBtns[i];
+				DeviceState::CodeType key = changedBtns[i];
 				auto value = _translateButton(state.rgbButtons[key]);
 
 				auto itr = _keyMapping->BUTTONS.find(key);
-				key = (Key::CodeType)(itr == _keyMapping->BUTTONS.end() ? key + GamepadKeyCode::UNDEFINED : itr->second);
+				key = (DeviceState::CodeType)(itr == _keyMapping->BUTTONS.end() ? key + GamepadKeyCode::UNDEFINED : itr->second);
 
-				Key k = { key, 1, &value };
-				_eventDispatcher.dispatchEvent(this, value > Math::ZERO<Key::ValueType> ? DeviceEvent::DOWN : DeviceEvent::UP, &k);
+				DeviceState k = { key, 1, &value };
+				_eventDispatcher.dispatchEvent(this, value > Math::ZERO<DeviceState::ValueType> ? DeviceEvent::DOWN : DeviceEvent::UP, &k);
 			}
 		}
 	}
 
-	void Gamepad::setDeadZone(Key::CodeType keyCode, Key::ValueType deadZone) {
-		if (deadZone < Math::ZERO<Key::ValueType>) deadZone = -deadZone;
+	void Gamepad::_setDeadZone(GamepadKeyCode keyCode, DeviceState::ValueType deadZone) {
+		if (deadZone < Math::ZERO<DeviceState::ValueType>) deadZone = -deadZone;
 
 		std::scoped_lock lock(_deadZoneMutex);
 
@@ -290,33 +323,33 @@ namespace aurora::modules::inputs::direct_input {
 		return true;
 	}
 
-	Key::ValueType Gamepad::_translateStick(LONG value) {
-		auto v = Key::ValueType(value - NUMBER_32767<decltype(value)>);
-		if (v < Math::ZERO<Key::ValueType>) {
-			v *= Math::RECIPROCAL<NUMBER_32767<Key::ValueType>>;
-		} else if (v > Math::ZERO<Key::ValueType>) {
-			v *= Math::RECIPROCAL<NUMBER_32768<Key::ValueType>>;
+	DeviceState::ValueType Gamepad::_translateStick(LONG value) {
+		auto v = DeviceState::ValueType(value - NUMBER_32767<decltype(value)>);
+		if (v < Math::ZERO<DeviceState::ValueType>) {
+			v *= Math::RECIPROCAL<NUMBER_32767<DeviceState::ValueType>>;
+		} else if (v > Math::ZERO<DeviceState::ValueType>) {
+			v *= Math::RECIPROCAL<NUMBER_32768<DeviceState::ValueType>>;
 		}
 		return v;
 	}
 
-	void Gamepad::_translateTrigger(LONG value, Key::ValueType& l, Key::ValueType& r) {
+	void Gamepad::_translateTrigger(LONG value, DeviceState::ValueType& l, DeviceState::ValueType& r) {
 		using ValType = typename std::remove_cvref_t<decltype(value)>;
 
 		if (value < NUMBER_32767<ValType>) {
-			l = Math::ZERO<Key::ValueType>;
-			r = Key::ValueType(NUMBER_32767<ValType> - value) * Math::RECIPROCAL<NUMBER_32767<Key::ValueType>>;
+			l = Math::ZERO<DeviceState::ValueType>;
+			r = DeviceState::ValueType(NUMBER_32767<ValType> - value) * Math::RECIPROCAL<NUMBER_32767<DeviceState::ValueType>>;
 		} else if (value > NUMBER_32767<ValType>) {
-			l = Key::ValueType(value - NUMBER_32767<ValType>) * Math::RECIPROCAL<NUMBER_32768<Key::ValueType>>;
-			r = Math::ZERO<Key::ValueType>;
+			l = DeviceState::ValueType(value - NUMBER_32767<ValType>) * Math::RECIPROCAL<NUMBER_32768<DeviceState::ValueType>>;
+			r = Math::ZERO<DeviceState::ValueType>;
 		} else {
-			l = Math::ZERO<Key::ValueType>;
-			r = Math::ZERO<Key::ValueType>;
+			l = Math::ZERO<DeviceState::ValueType>;
+			r = Math::ZERO<DeviceState::ValueType>;
 		}
 	}
 
-	Key::CountType Gamepad::_getStick(LONG x, LONG y, GamepadKeyCode key, Key::ValueType* data, Key::CountType count) const {
-		Key::CountType c = 1;
+	DeviceState::CountType Gamepad::_getStick(LONG x, LONG y, GamepadKeyCode key, DeviceState::ValueType* data, DeviceState::CountType count) const {
+		DeviceState::CountType c = 1;
 
 		auto dz = _getDeadZone(key);
 		auto dz2 = dz * dz;
@@ -325,24 +358,24 @@ namespace aurora::modules::inputs::direct_input {
 		auto dy = _translateStick(y);
 
 		auto d2 = dx * dx + dy * dy;
-		if (d2 > Math::ONE<Key::ValueType>) d2 = Math::ONE<Key::ValueType>;
+		if (d2 > Math::ONE<DeviceState::ValueType>) d2 = Math::ONE<DeviceState::ValueType>;
 
 		if (d2 <= dz2) {
-			data[0] = Math::NEGATIVE_ONE<Key::ValueType>;
-			if (count > 1) data[c++] = Math::ZERO<Key::ValueType>;
+			data[0] = Math::NEGATIVE_ONE<DeviceState::ValueType>;
+			if (count > 1) data[c++] = Math::ZERO<DeviceState::ValueType>;
 		} else {
 			data[0] = std::atan2(dy, dx) + Math::PI_2<float32_t>;
 			if (data[0] < 0.f) data[0] += Math::PI2<float32_t>;
-			if (count > 1) data[c++] = _translateDeadZone01(d2 < Math::ONE<Key::ValueType> ? std::sqrt(d2) : Math::ONE<Key::ValueType>, dz, false);
+			if (count > 1) data[c++] = _translateDeadZone01(d2 < Math::ONE<DeviceState::ValueType> ? std::sqrt(d2) : Math::ONE<DeviceState::ValueType>, dz, false);
 		}
 
 		return c;
 	}
 
-	Key::CountType Gamepad::_getTrigger(LONG t, GamepadKeyCode key, uint8_t index, Key::ValueType& data) const {
+	DeviceState::CountType Gamepad::_getTrigger(LONG t, GamepadKeyCode key, uint8_t index, DeviceState::ValueType& data) const {
 		auto dz = _getDeadZone(key);
 
-		Key::ValueType values[2];
+		DeviceState::ValueType values[2];
 		_translateTrigger(t, values[0], values[1]);
 		data = values[index];
 		data = _translateDeadZone01(data, dz, data <= dz);
@@ -350,7 +383,7 @@ namespace aurora::modules::inputs::direct_input {
 		return 1;
 	}
 
-	Key::CountType Gamepad::_getTriggerSeparate(LONG t, GamepadKeyCode key, Key::ValueType& data) const {
+	DeviceState::CountType Gamepad::_getTriggerSeparate(LONG t, GamepadKeyCode key, DeviceState::ValueType& data) const {
 		auto dz = _getDeadZone(key);
 
 		data = _translateTriggerSeparate(t);
@@ -360,31 +393,31 @@ namespace aurora::modules::inputs::direct_input {
 	}
 
 	void Gamepad::_dispatchStick(LONG oriX, LONG oriY, LONG curX, LONG curY, GamepadKeyCode key) {
-		Key::ValueType value[] = { _translateStick(curX) , _translateStick(curY) };
+		DeviceState::ValueType value[] = { _translateStick(curX) , _translateStick(curY) };
 		auto dz = _getDeadZone(key);
 		auto dz2 = dz * dz;
 		auto x = _translateStick(oriX), y = _translateStick(oriY);
 		auto oriDz = x * x + y * y <= dz2;
 		auto d2 = value[0] * value[0] + value[1] * value[1];
-		if (d2 > Math::ONE<Key::ValueType>) d2 = Math::ONE<Key::ValueType>;
+		if (d2 > Math::ONE<DeviceState::ValueType>) d2 = Math::ONE<DeviceState::ValueType>;
 		auto curDz = d2 <= dz2;
 		if (!oriDz || oriDz != curDz) {
 			if (curDz) {
-				value[0] = Math::NEGATIVE_ONE<Key::ValueType>;
-				value[1] = Math::ZERO<Key::ValueType>;
+				value[0] = Math::NEGATIVE_ONE<DeviceState::ValueType>;
+				value[1] = Math::ZERO<DeviceState::ValueType>;
 			} else {
-				value[0] = std::atan2(value[1], value[0]) + Math::PI_2<Key::ValueType>;
-				if (value[0] < Math::ZERO<Key::ValueType>) value[0] += Math::PI2<Key::ValueType>;
-				value[1] = _translateDeadZone01(d2 < Math::ONE<Key::ValueType> ? std::sqrt(d2) : Math::ONE<Key::ValueType>, dz, false);
+				value[0] = std::atan2(value[1], value[0]) + Math::PI_2<DeviceState::ValueType>;
+				if (value[0] < Math::ZERO<DeviceState::ValueType>) value[0] += Math::PI2<DeviceState::ValueType>;
+				value[1] = _translateDeadZone01(d2 < Math::ONE<DeviceState::ValueType> ? std::sqrt(d2) : Math::ONE<DeviceState::ValueType>, dz, false);
 			}
 
-			Key k = { (Key::CodeType)key, 2, value };
+			DeviceState k = { (DeviceState::CodeType)key, 2, value };
 			_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &k);
 		}
 	}
 
 	void Gamepad::_dispatchTrigger(LONG ori, LONG cur, GamepadKeyCode lkey, GamepadKeyCode rkey) {
-		Key::ValueType oriValues[2], curValues[2];
+		DeviceState::ValueType oriValues[2], curValues[2];
 		_translateTrigger(ori, oriValues[0], oriValues[1]);
 		_translateTrigger(cur, curValues[0], curValues[1]);
 		auto ldz = _getDeadZone(lkey);
@@ -395,12 +428,12 @@ namespace aurora::modules::inputs::direct_input {
 		auto curRDz = curValues[1] <= rdz;
 		if (!curLDz || oriLDz != curLDz) {
 			curValues[0] = _translateDeadZone01(curValues[0], ldz, curLDz);
-			Key k = { (Key::CodeType)lkey, 1, &curValues[0] };
+			DeviceState k = { (DeviceState::CodeType)lkey, 1, &curValues[0] };
 			_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &k);
 		}
 		if (!curRDz || oriRDz != curRDz) {
 			curValues[1] = _translateDeadZone01(curValues[1], rdz, curRDz);
-			Key k = { (Key::CodeType)rkey, 1, &curValues[1] };
+			DeviceState k = { (DeviceState::CodeType)rkey, 1, &curValues[1] };
 			_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &k);
 		}
 	}
@@ -412,7 +445,7 @@ namespace aurora::modules::inputs::direct_input {
 		auto curDz = value <= dz;
 		if (!curDz || oriDz != curDz) {
 			value = _translateDeadZone01(value, dz, curDz);
-			Key k = { (Key::CodeType)key, 1, &value };
+			DeviceState k = { (DeviceState::CodeType)key, 1, &value };
 			_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &k);
 		}
 	}

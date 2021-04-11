@@ -3,13 +3,14 @@
 #include "Input.h"
 
 namespace aurora::modules::inputs::hid_input {
-	template<size_t StateBufferSize, size_t ReadBufferSize>
+	template<size_t InputStateBufferSize, size_t InputBufferSize, size_t OutputStateBufferSize>
 	class DeviceBase : public IInputDevice {
 	public:
 		DeviceBase(Input& input, const DeviceInfo& info, extensions::HIDDevice& hid) : _input(input),
 			_info(info),
-			_hid(&hid) {
-			memset(_state, 0, sizeof(StateBuffer));
+			_hid(&hid),
+			_needOutput(false) {
+			memset(_inputState, 0, sizeof(InputStateBuffer));
 		}
 
 		virtual ~DeviceBase() {
@@ -29,28 +30,39 @@ namespace aurora::modules::inputs::hid_input {
 		virtual void AE_CALL poll(bool dispatchEvent) override {
 			using namespace aurora::extensions;
 
-			ReadBuffer state;
-			auto rst = HID::read(*_hid, state, sizeof(ReadBuffer), 0);
-			if (!HID::isReadSuccess(rst)) return;
+			{
+				InputBuffer state;
+				auto rst = HID::read(*_hid, state, sizeof(InputBuffer), 0);
+				if (!HID::isSuccess(rst)) return;
 
-			if (rst) _parse(dispatchEvent, state, rst);
+				if (rst) _doInput(dispatchEvent, state, rst);
+			}
+
+			{
+				std::scoped_lock lock(_outputStateMutex);
+
+				_needOutput |= _doOutput();
+				if (_needOutput && HID::isSuccess(HID::write(*_hid, _outputState, sizeof(OutputStateBuffer), 0))) _needOutput = false;
+			}
 		}
 
-		virtual void AE_CALL setDeadZone(uint32_t keyCode, float32_t deadZone) override {}
-		virtual void AE_CALL setVibration(float32_t left, float32_t right) override {}
-
 	protected:
-		using StateBuffer = uint8_t[StateBufferSize];
-		using ReadBuffer = uint8_t[ReadBufferSize];
+		using InputStateBuffer = uint8_t[InputStateBufferSize];
+		using InputBuffer = uint8_t[InputBufferSize];
+		using OutputStateBuffer = uint8_t[OutputStateBufferSize];
 
 		IntrusivePtr<Input> _input;
 		events::EventDispatcher<DeviceEvent> _eventDispatcher;
 		DeviceInfo _info;
 		extensions::HIDDevice* _hid;
 
-		mutable std::shared_mutex _mutex;
-		StateBuffer _state;
+		InputStateBuffer _inputState;
 
-		virtual void AE_CALL _parse(bool dispatchEvent, ReadBuffer& readBuffer, size_t readBufferSize) = 0;
+		mutable std::shared_mutex _outputStateMutex;
+		bool _needOutput;
+		OutputStateBuffer _outputState;
+
+		virtual void AE_CALL _doInput(bool dispatchEvent, InputBuffer& inputBuffer, size_t inputBufferSize) = 0;
+		virtual bool AE_CALL _doOutput() = 0;
 	};
 }

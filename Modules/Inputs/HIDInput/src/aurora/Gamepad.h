@@ -3,13 +3,15 @@
 #include "GamepadBase.h"
 
 namespace aurora::modules::inputs::hid_input {
-	class AE_MODULE_DLL Gamepad : public GamepadBase<42, 42> {
+	class AE_MODULE_DLL Gamepad : public GamepadBase<64, 64, 64> {
 	public:
 		Gamepad(Input& input, const DeviceInfo& info, extensions::HIDDevice& hid);
 
-		virtual Key::CountType AE_CALL getKeyState(Key::CodeType keyCode, Key::ValueType* data, Key::CountType count) const override;
+		virtual DeviceState::CountType AE_CALL getState(DeviceStateType type, DeviceState::CodeType code, DeviceState::ValueType* data, DeviceState::CountType count) const override;
+		virtual DeviceState::CountType AE_CALL setState(DeviceStateType type, DeviceState::CodeType code, DeviceState::ValueType* data, DeviceState::CountType count) override;
 
 	protected:
-		virtual void AE_CALL _parse(bool dispatchEvent, ReadBuffer& readBuffer, size_t readBufferSize) override;
+		virtual void AE_CALL _doInput(bool dispatchEvent, InputBuffer& inputBuffer, size_t inputBufferSize) override;
+		virtual bool AE_CALL _doOutput() override;
 	};
 }
