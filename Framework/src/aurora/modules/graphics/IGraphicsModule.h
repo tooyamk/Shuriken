@@ -909,8 +909,8 @@ namespace aurora::modules::graphics {
 			return ModuleType::GRAPHICS;
 		}
 
-		virtual events::IEventDispatcher<GraphicsEvent>& AE_CALL getEventDispatcher() = 0;
-		virtual const events::IEventDispatcher<GraphicsEvent>& AE_CALL getEventDispatcher() const = 0;
+		virtual IntrusivePtr<events::IEventDispatcher<GraphicsEvent>> AE_CALL getEventDispatcher() = 0;
+		//virtual const events::IEventDispatcher<GraphicsEvent>& AE_CALL getEventDispatcher() const = 0;
 
 		virtual const std::string& AE_CALL getVersion() const = 0;
 		virtual const GraphicsDeviceFeatures& AE_CALL getDeviceFeatures() const = 0;

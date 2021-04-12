@@ -54,6 +54,8 @@ namespace aurora {
 	template<typename T>
 	class IntrusivePtr {
 	public:
+		using ValueType = T;
+
 		IntrusivePtr() noexcept :
 			_target(nullptr) {
 		}

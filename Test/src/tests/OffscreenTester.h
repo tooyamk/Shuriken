@@ -36,7 +36,7 @@ public:
 			if (graphics) {
 				printaln("Graphics Version : ", graphics->getVersion());
 
-				graphics->getEventDispatcher().addEventListener(GraphicsEvent::ERR, createEventListener<GraphicsEvent>([](Event<GraphicsEvent>& e) {
+				graphics->getEventDispatcher()->addEventListener(GraphicsEvent::ERR, createEventListener<GraphicsEvent>([](Event<GraphicsEvent>& e) {
 					printaln(*(std::string_view*)e.getData());
 					int a = 1;
 				}));
@@ -201,7 +201,7 @@ float4 main(PS_INPUT input) : SV_TARGET {
 
 				IntrusivePtr looper = new Looper(1000.0 / 60.0);
 
-				looper->getEventDispatcher().addEventListener(LooperEvent::TICKING, new EventListener(std::function([](Event<LooperEvent>& e) {
+				looper->getEventDispatcher()->addEventListener(LooperEvent::TICKING, new EventListener(std::function([](Event<LooperEvent>& e) {
 					auto dt = float64_t(*e.getData<int64_t>());
 				})));
 

@@ -6,23 +6,23 @@ namespace aurora::modules::inputs::raw_input {
 		memset(_listenState, 0, sizeof(StateBuffer));
 	}
 
-	DeviceState::CountType Keyboard::getState(DeviceStateType type, DeviceState::CodeType code, DeviceState::ValueType* data, DeviceState::CountType count) const {
+	DeviceState::CountType Keyboard::getState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count) const {
 		switch (type) {
 		case DeviceStateType::KEY:
 		{
-			if (data && count && code < sizeof(_state)) {
+			if (values && count && code < sizeof(_state)) {
 				switch ((KeyboardVirtualKeyCode)code) {
 				case KeyboardVirtualKeyCode::KEY_SHIFT:
-					data[0] = (_state[(uint32_t)KeyboardVirtualKeyCode::KEY_LSHIFT]) || (_state[(uint32_t)KeyboardVirtualKeyCode::KEY_RSHIFT]) ? Math::ONE<DeviceState::ValueType> : Math::ZERO<DeviceState::ValueType>;
+					((DeviceStateValue*)values)[0] = (_state[(uint32_t)KeyboardVirtualKeyCode::KEY_LSHIFT]) || (_state[(uint32_t)KeyboardVirtualKeyCode::KEY_RSHIFT]) ? Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;
 					return 1;
 				case KeyboardVirtualKeyCode::KEY_CTRL:
-					data[0] = (_state[(uint32_t)KeyboardVirtualKeyCode::KEY_LCTRL]) || (_state[(uint32_t)KeyboardVirtualKeyCode::KEY_RCTRL]) ? Math::ONE<DeviceState::ValueType> : Math::ZERO<DeviceState::ValueType>;
+					((DeviceStateValue*)values)[0] = (_state[(uint32_t)KeyboardVirtualKeyCode::KEY_LCTRL]) || (_state[(uint32_t)KeyboardVirtualKeyCode::KEY_RCTRL]) ? Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;
 					return 1;
 				case KeyboardVirtualKeyCode::KEY_ALT:
-					data[0] = (_state[(uint32_t)KeyboardVirtualKeyCode::KEY_LALT]) || (_state[(uint32_t)KeyboardVirtualKeyCode::KEY_RALT]) ? Math::ONE<DeviceState::ValueType> : Math::ZERO<DeviceState::ValueType>;
+					((DeviceStateValue*)values)[0] = (_state[(uint32_t)KeyboardVirtualKeyCode::KEY_LALT]) || (_state[(uint32_t)KeyboardVirtualKeyCode::KEY_RALT]) ? Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;
 					return 1;
 				default:
-					data[0] = _state[code] ? Math::ONE<DeviceState::ValueType> : Math::ZERO<DeviceState::ValueType>;
+					((DeviceStateValue*)values)[0] = _state[code] ? Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;
 					return 1;
 				}
 			}
@@ -32,7 +32,7 @@ namespace aurora::modules::inputs::raw_input {
 		}
 	}
 
-	DeviceState::CountType Keyboard::setState(DeviceStateType type, DeviceState::CodeType code, DeviceState::ValueType* data, DeviceState::CountType count) {
+	DeviceState::CountType Keyboard::setState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count) {
 		return 0;
 	}
 
@@ -68,10 +68,10 @@ namespace aurora::modules::inputs::raw_input {
 
 		for (uint16_t i = 0; i < len; ++i) {
 			auto key = changedBtns[i];
-			DeviceState::ValueType value = state[key] ? Math::ONE<DeviceState::ValueType> : Math::ZERO<DeviceState::ValueType>;
+			DeviceStateValue value = state[key] ? Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;
 
 			DeviceState k = { key, 1, &value };
-			_eventDispatcher.dispatchEvent(this, value > Math::ZERO<DeviceState::ValueType> ? DeviceEvent::DOWN : DeviceEvent::UP, &k);
+			_eventDispatcher->dispatchEvent(this, value > Math::ZERO<DeviceStateValue> ? DeviceEvent::DOWN : DeviceEvent::UP, &k);
 		}
 	}
 

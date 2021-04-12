@@ -35,12 +35,12 @@ public:
 				if (graphics) {
 					printaln("Graphics Version : ", graphics->getVersion());
 
-					graphics->getEventDispatcher().addEventListener(GraphicsEvent::ERR, createEventListener<GraphicsEvent>([](Event<GraphicsEvent>& e) {
+					graphics->getEventDispatcher()->addEventListener(GraphicsEvent::ERR, createEventListener<GraphicsEvent>([](Event<GraphicsEvent>& e) {
 						printaln(*(std::string_view*)e.getData());
 						int a = 1;
 					}));
 
-					app->getEventDispatcher().addEventListener(ApplicationEvent::RESIZED, createEventListener<ApplicationEvent>([graphics](Event<ApplicationEvent>& e) {
+					app->getEventDispatcher()->addEventListener(ApplicationEvent::RESIZED, createEventListener<ApplicationEvent>([graphics](Event<ApplicationEvent>& e) {
 						graphics->setBackBufferSize(((IApplication*)e.getTarget())->getCurrentClientSize());
 					}));
 
@@ -204,17 +204,17 @@ public:
 					renderData.p = graphics->createProgram();
 					createProgram(*renderData.p, "vert.hlsl", "frag.hlsl");
 
-					app->getEventDispatcher().addEventListener(ApplicationEvent::CLOSING, new EventListener(std::function([](Event<ApplicationEvent>& e) {
+					app->getEventDispatcher()->addEventListener(ApplicationEvent::CLOSING, new EventListener(std::function([](Event<ApplicationEvent>& e) {
 						//*e.getData<bool>() = true;
 					})));
 
-					app->getEventDispatcher().addEventListener(ApplicationEvent::CLOSED, new EventListener(std::function([renderData](Event<ApplicationEvent>& e) {
+					app->getEventDispatcher()->addEventListener(ApplicationEvent::CLOSED, new EventListener(std::function([renderData](Event<ApplicationEvent>& e) {
 						renderData.looper->stop();
 					})));
 
 					IntrusivePtr looper = new Looper(1000.0 / 60.0);
 
-					looper->getEventDispatcher().addEventListener(LooperEvent::TICKING, new EventListener(std::function([renderData](Event<LooperEvent>& e) {
+					looper->getEventDispatcher()->addEventListener(LooperEvent::TICKING, new EventListener(std::function([renderData](Event<LooperEvent>& e) {
 						auto dt = float64_t(*e.getData<int64_t>());
 
 						renderData.app->pollEvents();

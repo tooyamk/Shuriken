@@ -15,7 +15,7 @@ namespace aurora::modules::inputs::raw_input {
 			::operator delete(p);
 		}
 
-		virtual events::IEventDispatcher<ModuleEvent>& AE_CALL getEventDispatcher() override;
+		virtual IntrusivePtr<events::IEventDispatcher<ModuleEvent>> AE_CALL getEventDispatcher() override;
 		virtual void AE_CALL poll() override;
 		virtual IntrusivePtr<IInputDevice> AE_CALL createDevice(const DeviceGUID& guid) override;
 
@@ -28,7 +28,7 @@ namespace aurora::modules::inputs::raw_input {
 		IntrusivePtr<Ref> _loader;
 		IntrusivePtr<IApplication> _app;
 		DeviceType _filter;
-		events::EventDispatcher<ModuleEvent> _eventDispatcher;
+		IntrusivePtr<events::IEventDispatcher<ModuleEvent>> _eventDispatcher;
 
 		std::shared_mutex _mutex;
 		std::vector<InternalDeviceInfo> _devices;

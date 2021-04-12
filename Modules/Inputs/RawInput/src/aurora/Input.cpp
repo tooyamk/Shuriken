@@ -9,6 +9,7 @@ namespace aurora::modules::inputs::raw_input {
 		_loader(loader),
 		_app(app),
 		_filter(filter),
+		_eventDispatcher(new events::EventDispatcher<ModuleEvent>()),
 		_numKeyboards(0),
 		_numMouses(0) {
 	}
@@ -16,7 +17,7 @@ namespace aurora::modules::inputs::raw_input {
 	Input::~Input() {
 	}
 
-	events::IEventDispatcher<ModuleEvent>& Input::getEventDispatcher() {
+	IntrusivePtr<events::IEventDispatcher<ModuleEvent>> Input::getEventDispatcher() {
 		return _eventDispatcher;
 	}
 
@@ -85,8 +86,8 @@ namespace aurora::modules::inputs::raw_input {
 			_devices = std::move(newDevices);
 		}
 
-		for (auto& info : remove) _eventDispatcher.dispatchEvent(this, ModuleEvent::DISCONNECTED, &info);
-		for (auto& info : add) _eventDispatcher.dispatchEvent(this, ModuleEvent::CONNECTED, &info);
+		for (auto& info : remove) _eventDispatcher->dispatchEvent(this, ModuleEvent::DISCONNECTED, &info);
+		for (auto& info : add) _eventDispatcher->dispatchEvent(this, ModuleEvent::CONNECTED, &info);
 
 		int a = 1;
 	}

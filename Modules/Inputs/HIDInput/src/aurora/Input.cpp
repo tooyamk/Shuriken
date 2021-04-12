@@ -8,14 +8,15 @@
 namespace aurora::modules::inputs::hid_input {
 	Input::Input(Ref* loader, IApplication* app, DeviceType filter) :
 		_loader(loader),
+		_app(app),
 		_filter(filter),
-		_app(app) {
+		_eventDispatcher(new events::EventDispatcher<ModuleEvent>()) {
 	}
 
 	Input::~Input() {
 	}
 
-	events::IEventDispatcher<ModuleEvent>& Input::getEventDispatcher() {
+	IntrusivePtr<events::IEventDispatcher<ModuleEvent>> Input::getEventDispatcher() {
 		return _eventDispatcher;
 	}
 
@@ -61,8 +62,8 @@ namespace aurora::modules::inputs::hid_input {
 			_devices = std::move(newDevices);
 		}
 
-		for (auto& info : remove) _eventDispatcher.dispatchEvent(this, ModuleEvent::DISCONNECTED, &info);
-		for (auto& info : add) _eventDispatcher.dispatchEvent(this, ModuleEvent::CONNECTED, &info);
+		for (auto& info : remove) _eventDispatcher->dispatchEvent(this, ModuleEvent::DISCONNECTED, &info);
+		for (auto& info : add) _eventDispatcher->dispatchEvent(this, ModuleEvent::CONNECTED, &info);
 
 		/*
 		using namespace aurora::enum_operators;

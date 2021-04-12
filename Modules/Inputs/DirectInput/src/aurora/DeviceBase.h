@@ -11,12 +11,12 @@ namespace aurora::modules::inputs::direct_input {
 		DeviceBase(Input& input, LPDIRECTINPUTDEVICE8 dev, const InternalDeviceInfo& info);
 		virtual ~DeviceBase();
 
-		virtual events::IEventDispatcher<DeviceEvent>& AE_CALL getEventDispatcher() override;
+		virtual IntrusivePtr<events::IEventDispatcher<DeviceEvent>> AE_CALL getEventDispatcher() override;
 		virtual const DeviceInfo& AE_CALL getInfo() const override;
 
 	protected:
 		IntrusivePtr<Input> _input;
-		events::EventDispatcher<DeviceEvent> _eventDispatcher;
+		IntrusivePtr<events::IEventDispatcher<DeviceEvent>> _eventDispatcher;
 		InternalDeviceInfo _info;
 
 		LPDIRECTINPUTDEVICE8 _dev;

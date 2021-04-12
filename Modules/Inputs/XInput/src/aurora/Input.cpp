@@ -5,13 +5,14 @@
 namespace aurora::modules::inputs::xinput {
 	Input::Input(Ref* loader, DeviceType filter) :
 		_loader(loader),
-		_filter(filter) {
+		_filter(filter),
+		_eventDispatcher(new events::EventDispatcher<ModuleEvent>()) {
 	}
 
 	Input::~Input() {
 	}
 
-	events::IEventDispatcher<ModuleEvent>& Input::getEventDispatcher() {
+	IntrusivePtr<events::IEventDispatcher<ModuleEvent>> Input::getEventDispatcher() {
 		return _eventDispatcher;
 	}
 
@@ -53,8 +54,8 @@ namespace aurora::modules::inputs::xinput {
 			_devices = std::move(newDevices);
 		}
 
-		for (auto& info : remove) _eventDispatcher.dispatchEvent(this, ModuleEvent::DISCONNECTED, &info);
-		for (auto& info : add) _eventDispatcher.dispatchEvent(this, ModuleEvent::CONNECTED, &info);
+		for (auto& info : remove) _eventDispatcher->dispatchEvent(this, ModuleEvent::DISCONNECTED, &info);
+		for (auto& info : add) _eventDispatcher->dispatchEvent(this, ModuleEvent::CONNECTED, &info);
 	}
 
 	IntrusivePtr<IInputDevice> Input::createDevice(const DeviceGUID& guid) {

@@ -9,7 +9,8 @@ namespace aurora {
 		_isFullscreen(false),
 		_isClosing(false),
 		_isVisible(false),
-		_appId(appId) {
+		_appId(appId),
+		_eventDispatcher(new events::EventDispatcher<ApplicationEvent>()) {
 		_appPath = aurora::getAppPath();
 		_win.sentSize.set((std::numeric_limits<decltype(_win.sentSize)::ElementType>::max)());
 	}
@@ -32,13 +33,13 @@ namespace aurora {
 		}
 	}
 
-	events::IEventDispatcher<ApplicationEvent>& Application::getEventDispatcher() {
+	IntrusivePtr<events::IEventDispatcher<ApplicationEvent>> Application::getEventDispatcher() {
 		return _eventDispatcher;
 	}
 
-	const events::IEventDispatcher<ApplicationEvent>& Application::getEventDispatcher() const {
-		return _eventDispatcher;
-	}
+	//const events::IEventDispatcher<ApplicationEvent>& Application::getEventDispatcher() const {
+	//	return _eventDispatcher;
+	//}
 
 	bool Application::createWindow(const ApplicationStyle& style, const std::string_view& title, const Vec2ui32& clientSize, bool fullscreen) {
 		_clientSize = clientSize;
@@ -259,7 +260,7 @@ namespace aurora {
 	void Application::shutdown() {
 		if (!_isClosing) {
 			_isClosing = true;
-			_eventDispatcher.dispatchEvent(this, ApplicationEvent::CLOSED);
+			_eventDispatcher->dispatchEvent(this, ApplicationEvent::CLOSED);
 			std::exit(0);
 		}
 	}
@@ -290,7 +291,7 @@ namespace aurora {
 	void Application::_sendResizedEvent() {
 		if (auto size = getCurrentClientSize(); _win.sentSize != size) {
 			_win.sentSize = size;
-			_eventDispatcher.dispatchEvent(this, ApplicationEvent::RESIZED);
+			_eventDispatcher->dispatchEvent(this, ApplicationEvent::RESIZED);
 		}
 	}
 
@@ -393,7 +394,7 @@ namespace aurora {
 		{
 			if (app) {
 				auto isCanceled = false;
-				app->_eventDispatcher.dispatchEvent(app, ApplicationEvent::CLOSING, &isCanceled);
+				app->_eventDispatcher->dispatchEvent(app, ApplicationEvent::CLOSING, &isCanceled);
 				if (isCanceled) {
 					return 0;
 				} else {
@@ -439,10 +440,10 @@ namespace aurora {
 			break;
 		}
 		case WM_SETFOCUS:
-			if (app) app->_eventDispatcher.dispatchEvent(app, ApplicationEvent::FOCUS_IN);
+			if (app) app->_eventDispatcher->dispatchEvent(app, ApplicationEvent::FOCUS_IN);
 			break;
 		case WM_KILLFOCUS:
-			if (app) app->_eventDispatcher.dispatchEvent(app, ApplicationEvent::FOCUS_OUT);
+			if (app) app->_eventDispatcher->dispatchEvent(app, ApplicationEvent::FOCUS_OUT);
 			break;
 		case WM_DEVICECHANGE:
 			break;
@@ -462,7 +463,7 @@ namespace aurora {
 			if (app && !app->_isFullscreen && !IsZoomed(app->_win.wnd) && !IsIconic(app->_win.wnd)) app->_win.clinetPos.set(LOWORD(lParam), HIWORD(lParam));
 			break;
 		case WM_INPUT:
-			if (app) app->_eventDispatcher.dispatchEvent(app, ApplicationEvent::RAW_INPUT, &lParam);
+			if (app) app->_eventDispatcher->dispatchEvent(app, ApplicationEvent::RAW_INPUT, &lParam);
 			break;
 		default:
 			break;

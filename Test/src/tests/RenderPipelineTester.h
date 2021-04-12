@@ -37,12 +37,12 @@ public:
 				if (graphics) {
 					printaln("Graphics Version : ", graphics->getVersion());
 
-					graphics->getEventDispatcher().addEventListener(GraphicsEvent::ERR, createEventListener<GraphicsEvent>([](Event<GraphicsEvent>& e) {
+					graphics->getEventDispatcher()->addEventListener(GraphicsEvent::ERR, createEventListener<GraphicsEvent>([](Event<GraphicsEvent>& e) {
 						printaln(*(std::string_view*)e.getData());
 						int a = 1;
 					}));
 
-					app->getEventDispatcher().addEventListener(ApplicationEvent::RESIZED, createEventListener<ApplicationEvent>([graphics](Event<ApplicationEvent>& e) {
+					app->getEventDispatcher()->addEventListener(ApplicationEvent::RESIZED, createEventListener<ApplicationEvent>([graphics](Event<ApplicationEvent>& e) {
 						graphics->setBackBufferSize(((IApplication*)e.getTarget())->getCurrentClientSize());
 					}));
 
@@ -231,20 +231,20 @@ public:
 						}
 					}
 
-					app->getEventDispatcher().addEventListener(ApplicationEvent::CLOSING, new EventListener(std::function([](Event<ApplicationEvent>& e) {
+					app->getEventDispatcher()->addEventListener(ApplicationEvent::CLOSING, new EventListener(std::function([](Event<ApplicationEvent>& e) {
 						//*e.getData<bool>() = true;
 					})));
 
-					app->getEventDispatcher().addEventListener(ApplicationEvent::CLOSED, new EventListener(std::function([renderData](Event<ApplicationEvent>& e) {
+					app->getEventDispatcher()->addEventListener(ApplicationEvent::CLOSED, new EventListener(std::function([renderData](Event<ApplicationEvent>& e) {
 						renderData.looper->stop();
 					})));
 
-					app->getEventDispatcher().addEventListener(ApplicationEvent::RESIZED, new EventListener(std::function([this, renderData](Event<ApplicationEvent>& e) {
+					app->getEventDispatcher()->addEventListener(ApplicationEvent::RESIZED, new EventListener(std::function([this, renderData](Event<ApplicationEvent>& e) {
 						auto app = (IApplication*)e.getTarget();
 						_resize(*renderData.camera, app->getCurrentClientSize());
 					})));
 
-					renderData.looper->getEventDispatcher().addEventListener(LooperEvent::TICKING, new EventListener(std::function([renderData](Event<LooperEvent>& e) {
+					renderData.looper->getEventDispatcher()->addEventListener(LooperEvent::TICKING, new EventListener(std::function([renderData](Event<LooperEvent>& e) {
 						auto dt = float32_t(*e.getData<int64_t>()) * 0.001f;
 
 						renderData.app->pollEvents();

@@ -9,7 +9,8 @@ namespace aurora {
 		_isFullscreen(false),
 		_isClosing(false),
 		_isVisible(false),
-		_appId(appId) {
+		_appId(appId),
+		_eventDispatcher(new events::EventDispatcher<ApplicationEvent>()) {
 		_appPath = aurora::getAppPath();
 		_linux.sentSize.set((std::numeric_limits<decltype(_linux.sentSize)::ElementType>::max)());
 	}
@@ -26,11 +27,7 @@ namespace aurora {
 		}
 	}
 
-	events::IEventDispatcher<ApplicationEvent>& Application::getEventDispatcher() {
-		return _eventDispatcher;
-	}
-
-	const events::IEventDispatcher<ApplicationEvent>& Application::getEventDispatcher() const {
+	IntrusivePtr<events::IEventDispatcher<ApplicationEvent>> Application::getEventDispatcher() {
 		return _eventDispatcher;
 	}
 
@@ -287,7 +284,7 @@ namespace aurora {
 	void Application::shutdown() {
 		if (!_isClosing) {
 			_isClosing = true;
-			_eventDispatcher.dispatchEvent(this, ApplicationEvent::CLOSED);
+			_eventDispatcher->dispatchEvent(this, ApplicationEvent::CLOSED);
 			std::exit(0);
 		}
 	}
@@ -318,7 +315,7 @@ namespace aurora {
 	void Application::_sendResizedEvent() {
 		if (auto size = getCurrentClientSize(); _linux.sentSize != size) {
 			_linux.sentSize = size;
-			_eventDispatcher.dispatchEvent(this, ApplicationEvent::RESIZED);
+			_eventDispatcher->dispatchEvent(this, ApplicationEvent::RESIZED);
 		}
 	}
 
@@ -491,7 +488,7 @@ namespace aurora {
 
 				if (protocol == _linux.WM_DELETE_WINDOW) {
 					auto isCanceled = false;
-					_eventDispatcher.dispatchEvent(this, ApplicationEvent::CLOSING, &isCanceled);
+					_eventDispatcher->dispatchEvent(this, ApplicationEvent::CLOSING, &isCanceled);
 					if (!isCanceled) shutdown();
 				} else if (protocol == _linux.NET_WM_PING) {
 					XEvent reply = e;
@@ -544,7 +541,7 @@ namespace aurora {
 			auto mode = e.xfocus.mode;
 			if (mode == NotifyGrab || mode == NotifyUngrab) return;
 
-			_eventDispatcher.dispatchEvent(this, ApplicationEvent::FOCUS_IN);
+			_eventDispatcher->dispatchEvent(this, ApplicationEvent::FOCUS_IN);
 
 			break;
 		}
@@ -553,7 +550,7 @@ namespace aurora {
 			auto mode = e.xfocus.mode;
 			if (mode == NotifyGrab || mode == NotifyUngrab) return;
 
-			_eventDispatcher.dispatchEvent(this, ApplicationEvent::FOCUS_OUT);
+			_eventDispatcher->dispatchEvent(this, ApplicationEvent::FOCUS_OUT);
 
 			break;
 		}

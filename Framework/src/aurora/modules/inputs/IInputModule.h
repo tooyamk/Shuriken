@@ -2,6 +2,7 @@
 
 #include "aurora/modules/IModule.h"
 #include "aurora/modules/inputs/DeviceInfo.h"
+#include "aurora/math/Vector.h"
 
 namespace aurora::events {
 	template<typename EvtType> class IEventDispatcher;
@@ -17,7 +18,42 @@ namespace aurora::modules::inputs {
 	enum class DeviceEvent : uint8_t {
 		DOWN,
 		UP,
-		MOVE
+		MOVE,
+		TOUCH
+	};
+
+
+	using DeviceStateValue = float32_t;
+
+
+	enum class DeviceTouchPhase : uint8_t {
+		BEGIN,
+		MOVE,
+		END
+	};
+
+
+	class AE_FW_DLL DeviceTouchStateValue {
+	public:
+		using FingerIDType = uint32_t;
+		using CodeType = uint32_t;
+		using CountType = uint32_t;
+
+		FingerIDType fingerID;
+		DeviceTouchPhase phase;
+		DeviceTouchPhase deltaPhase;
+		CodeType code;
+		Vec2<DeviceStateValue> position;
+		DeviceStateValue deltaTime;
+		Vec2<DeviceStateValue> deltaPosition;
+
+		inline bool AE_CALL operator==(const DeviceTouchStateValue& value) const {
+			return fingerID == value.fingerID && phase == value.phase && deltaPhase == value.deltaPhase && code == value.code && position == value.position && deltaTime == value.deltaTime && deltaPosition == value.deltaPosition;
+		}
+
+		inline bool AE_CALL isEqualCurrent(const DeviceTouchStateValue& value) const {
+			return fingerID == value.fingerID && phase == value.phase && code == value.code && position == value.position;
+		}
 	};
 
 
@@ -25,11 +61,10 @@ namespace aurora::modules::inputs {
 	public:
 		using CodeType = uint32_t;
 		using CountType = uint32_t;
-		using ValueType = float32_t;
 
 		CodeType code;
 		CountType count;
-		ValueType* value;
+		void* values;
 	};
 
 
@@ -43,6 +78,7 @@ namespace aurora::modules::inputs {
 
 	enum class DeviceStateType : uint8_t {
 		KEY,
+		TOUCH,
 		DEAD_ZONE,
 		VIBRATION,
 		LED
@@ -300,29 +336,33 @@ namespace aurora::modules::inputs {
 	};
 
 
-	template<typename T> concept DeviceKeyCode = std::same_as<T, KeyboardVirtualKeyCode> || std::same_as<T, MouseKeyCode> || std::same_as<T, GamepadKeyCode>;;
+	template<typename T> concept DeviceCode = std::same_as<T, KeyboardVirtualKeyCode> || std::same_as<T, MouseKeyCode> || std::same_as<T, GamepadKeyCode>;;
 
 
 	class AE_FW_DLL IInputDevice : public Ref {
 	public:
 		virtual ~IInputDevice();
 
-		virtual events::IEventDispatcher<DeviceEvent>& AE_CALL getEventDispatcher() = 0;
+		virtual IntrusivePtr<events::IEventDispatcher<DeviceEvent>> AE_CALL getEventDispatcher() = 0;
 		virtual const DeviceInfo& AE_CALL getInfo() const = 0;
 
-		virtual DeviceState::CountType AE_CALL getState(DeviceStateType type, DeviceState::CodeType code, DeviceState::ValueType* data, DeviceState::CountType count) const = 0;
+		virtual DeviceState::CountType AE_CALL getState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count) const = 0;
 		
-		template<DeviceKeyCode T>
-		inline DeviceState::CountType AE_CALL getState(DeviceStateType type, T code, DeviceState::ValueType* data, DeviceState::CountType count) const {
-			return getState(type, (DeviceState::CodeType)code, data, count);
+		template<DeviceCode T>
+		inline DeviceState::CountType AE_CALL getState(DeviceStateType type, T code, void* values, DeviceState::CountType count) const {
+			return getState(type, (DeviceState::CodeType)code, values, count);
 		}
 
-		virtual DeviceState::CountType AE_CALL setState(DeviceStateType type, DeviceState::CodeType code, DeviceState::ValueType* data, DeviceState::CountType count) = 0;
+		void AE_CALL getStates(DeviceStateType type, DeviceState* states, size_t count) const;
 
-		template<DeviceKeyCode T>
-		inline DeviceState::CountType AE_CALL setState(DeviceStateType type, T code, DeviceState::ValueType* data, DeviceState::CountType count) {
-			return setState(type, (DeviceState::CodeType)code, data, count);
+		virtual DeviceState::CountType AE_CALL setState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count) = 0;
+
+		template<DeviceCode T>
+		inline DeviceState::CountType AE_CALL setState(DeviceStateType type, T code, void* values, DeviceState::CountType count) {
+			return setState(type, (DeviceState::CodeType)code, values, count);
 		}
+
+		void AE_CALL setStates(DeviceStateType type, DeviceState* states, size_t count);
 
 		virtual void AE_CALL poll(bool dispatchEvent) = 0;
 	};
@@ -337,7 +377,7 @@ namespace aurora::modules::inputs {
 			return ModuleType::INPUT;
 		}
 
-		virtual events::IEventDispatcher<ModuleEvent>& AE_CALL getEventDispatcher() = 0;
+		virtual IntrusivePtr<events::IEventDispatcher<ModuleEvent>> AE_CALL getEventDispatcher() = 0;
 		virtual void AE_CALL poll() = 0;
 		virtual IntrusivePtr<IInputDevice> AE_CALL createDevice(const DeviceGUID& guid) = 0;
 	};

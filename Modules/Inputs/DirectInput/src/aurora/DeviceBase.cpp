@@ -4,8 +4,9 @@
 namespace aurora::modules::inputs::direct_input {
 	DeviceBase::DeviceBase(Input& input, LPDIRECTINPUTDEVICE8 dev, const InternalDeviceInfo& info) :
 		_input(input),
-		_dev(dev),
-		_info(info) {
+		_eventDispatcher(new events::EventDispatcher<DeviceEvent>()),
+		_info(info),
+		_dev(dev) {
 	}
 
 	DeviceBase::~DeviceBase() {
@@ -13,7 +14,7 @@ namespace aurora::modules::inputs::direct_input {
 		_dev->Release();
 	}
 
-	events::IEventDispatcher<DeviceEvent>& DeviceBase::getEventDispatcher() {
+	IntrusivePtr<events::IEventDispatcher<DeviceEvent>> DeviceBase::getEventDispatcher() {
 		return _eventDispatcher;
 	}
 

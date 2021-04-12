@@ -11,10 +11,10 @@ namespace aurora::modules::inputs::xinput {
 		Gamepad(Input& input,  const DeviceInfo& info);
 		virtual ~Gamepad();
 
-		virtual events::IEventDispatcher<DeviceEvent>& AE_CALL getEventDispatcher() override;
+		virtual IntrusivePtr<events::IEventDispatcher<DeviceEvent>> AE_CALL getEventDispatcher() override;
 		virtual const DeviceInfo& AE_CALL getInfo() const override;
-		virtual DeviceState::CountType AE_CALL getState(DeviceStateType type, DeviceState::CodeType code, DeviceState::ValueType* data, DeviceState::CountType count) const override;
-		virtual DeviceState::CountType AE_CALL setState(DeviceStateType type, DeviceState::CodeType code, DeviceState::ValueType* data, DeviceState::CountType count) override;
+		virtual DeviceState::CountType AE_CALL getState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count) const override;
+		virtual DeviceState::CountType AE_CALL setState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count) override;
 		virtual void AE_CALL poll(bool dispatchEvent) override;
 
 	private:
@@ -24,14 +24,14 @@ namespace aurora::modules::inputs::xinput {
 
 		DWORD _index;
 		IntrusivePtr<Input> _input;
-		events::EventDispatcher<DeviceEvent> _eventDispatcher;
+		IntrusivePtr<events::IEventDispatcher<DeviceEvent>> _eventDispatcher;
 		DeviceInfo _info;
 
 		mutable std::shared_mutex _mutex;
 		XINPUT_STATE _state;
 
 		mutable std::shared_mutex _deadZoneMutex;
-		std::unordered_map<GamepadKeyCode, DeviceState::ValueType> _deadZone;
+		std::unordered_map<GamepadKeyCode, DeviceStateValue> _deadZone;
 
 		inline float32_t AE_CALL _getDeadZone(GamepadKeyCode key) const {
 			std::shared_lock lock(_deadZoneMutex);
@@ -43,35 +43,35 @@ namespace aurora::modules::inputs::xinput {
 			}
 		}
 
-		void AE_CALL _setDeadZone(GamepadKeyCode keyCode, DeviceState::ValueType deadZone);
+		void AE_CALL _setDeadZone(GamepadKeyCode keyCode, DeviceStateValue deadZone);
 
-		void AE_CALL _setVibration(DeviceState::ValueType left, DeviceState::ValueType right);
+		void AE_CALL _setVibration(DeviceStateValue left, DeviceStateValue right);
 
-		DeviceState::CountType AE_CALL _getStick(SHORT x, SHORT y, GamepadKeyCode key, DeviceState::ValueType* data, DeviceState::CountType count) const;
-		DeviceState::CountType AE_CALL _getTrigger(SHORT t, GamepadKeyCode key, DeviceState::ValueType& data) const;
+		DeviceState::CountType AE_CALL _getStick(SHORT x, SHORT y, GamepadKeyCode key, DeviceStateValue* data, DeviceState::CountType count) const;
+		DeviceState::CountType AE_CALL _getTrigger(SHORT t, GamepadKeyCode key, DeviceStateValue& data) const;
 
 		void AE_CALL _dispatchStick(SHORT oriX, SHORT oriY, SHORT curX, SHORT curY, GamepadKeyCode key);
 		void AE_CALL _dispatchTrigger(SHORT ori, SHORT cur, GamepadKeyCode key);
 		void AE_CALL _dispatchButton(WORD ori, WORD cur, uint16_t flags, GamepadKeyCode key);
 
-		inline static DeviceState::ValueType AE_CALL _translateDeadZone01(DeviceState::ValueType value, DeviceState::ValueType dz, bool inDz) {
-			return inDz ? Math::ZERO<DeviceState::ValueType> : (value - dz) / (Math::ONE<DeviceState::ValueType> - dz);
+		inline static DeviceStateValue AE_CALL _translateDeadZone01(DeviceStateValue value, DeviceStateValue dz, bool inDz) {
+			return inDz ? Math::ZERO<DeviceStateValue> : (value - dz) / (Math::ONE<DeviceStateValue> - dz);
 		}
 
 		template<bool FLIP>
-		inline static DeviceState::ValueType AE_CALL _translateStick(SHORT value) {
+		inline static DeviceStateValue AE_CALL _translateStick(SHORT value) {
 			if constexpr (FLIP) {
-				return DeviceState::ValueType(value) * Math::NEGATIVE<Math::RECIPROCAL<NUMBER_32767<DeviceState::ValueType>>>;
+				return DeviceStateValue(value) * Math::NEGATIVE<Math::RECIPROCAL<NUMBER_32767<DeviceStateValue>>>;
 			} else {
-				return DeviceState::ValueType(value) * Math::RECIPROCAL<NUMBER_32767<DeviceState::ValueType>>;
+				return DeviceStateValue(value) * Math::RECIPROCAL<NUMBER_32767<DeviceStateValue>>;
 			}
 		}
-		inline static DeviceState::ValueType AE_CALL _translateTrigger(SHORT value) {
-			return DeviceState::ValueType(value) * Math::RECIPROCAL<NUMBER_255<DeviceState::ValueType>>;
+		inline static DeviceStateValue AE_CALL _translateTrigger(SHORT value) {
+			return DeviceStateValue(value) * Math::RECIPROCAL<NUMBER_255<DeviceStateValue>>;
 		}
-		static DeviceState::ValueType AE_CALL _translateDpad(WORD value);
-		inline static DeviceState::ValueType AE_CALL _translateButton(WORD value) {
-			return value ? Math::ONE<DeviceState::ValueType> : Math::ZERO<DeviceState::ValueType>;
+		static DeviceStateValue AE_CALL _translateDpad(WORD value);
+		inline static DeviceStateValue AE_CALL _translateButton(WORD value) {
+			return value ? Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;
 		}
 	};
 }

@@ -6,17 +6,18 @@ namespace aurora::modules::inputs::raw_input {
 	DeviceBase::DeviceBase(Input& input, IApplication& app, const InternalDeviceInfo& info) :
 		_input(input),
 		_app(app),
+		_eventDispatcher(new events::EventDispatcher<DeviceEvent>()),
 		_info(info),
 		_rawIputHandler(events::createEventListener(&DeviceBase::_rawInputCallback, this)) {
-		_app->getEventDispatcher().addEventListener(ApplicationEvent::RAW_INPUT, _rawIputHandler);
+		_app->getEventDispatcher()->addEventListener(ApplicationEvent::RAW_INPUT, _rawIputHandler);
 	}
 
 	DeviceBase::~DeviceBase() {
-		if (_rawIputHandler) _app->getEventDispatcher().removeEventListener(ApplicationEvent::RAW_INPUT, _rawIputHandler);
+		if (_rawIputHandler) _app->getEventDispatcher()->removeEventListener(ApplicationEvent::RAW_INPUT, _rawIputHandler);
 		_input->unregisterRawInputDevices(_info.type);
 	}
 
-	events::IEventDispatcher<DeviceEvent>& DeviceBase::getEventDispatcher() {
+	IntrusivePtr<events::IEventDispatcher<DeviceEvent>> DeviceBase::getEventDispatcher() {
 		return _eventDispatcher;
 	}
 

@@ -3,6 +3,7 @@
 
 namespace aurora {
 	Looper::Looper(float64_t interval) :
+		_eventDispatcher(new events::EventDispatcher<LooperEvent>()),
 		_isRunning(std::make_shared<bool>(false)),
 		_updatingCount(0),
 		_updatingTimePoint(0),
@@ -28,8 +29,8 @@ namespace aurora {
 		auto dt = _updatingCount++ == 0 ? 0 : (t0 - _updatingTimePoint);
 		_updatingTimePoint = t0;
 
-		_eventDispatcher.dispatchEvent(this, LooperEvent::TICKING, &dt);
-		_eventDispatcher.dispatchEvent(this, LooperEvent::TICKED);
+		_eventDispatcher->dispatchEvent(this, LooperEvent::TICKING, &dt);
+		_eventDispatcher->dispatchEvent(this, LooperEvent::TICKED);
 
 		if (restriction) {
 			auto t1 = Time::now();

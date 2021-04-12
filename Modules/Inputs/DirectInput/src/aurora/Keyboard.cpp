@@ -8,27 +8,27 @@ namespace aurora::modules::inputs::direct_input {
 		memset(_state, 0, sizeof(StateBuffer));
 	}
 
-	DeviceState::CountType Keyboard::getState(DeviceStateType type, DeviceState::CodeType code, DeviceState::ValueType* data, DeviceState::CountType count) const {
+	DeviceState::CountType Keyboard::getState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count) const {
 		switch (type) {
 		case DeviceStateType::KEY:
 		{
-			if (data && count && code < sizeof(StateBuffer)) {
+			if (values && count && code < sizeof(StateBuffer)) {
 				std::shared_lock lock(_mutex);
 
 				switch (code) {
 				case VK_SHIFT:
-					data[0] = (_state[VK_SK[VK_LSHIFT]] & 0x80) || (_state[VK_SK[VK_RSHIFT]] & 0x80) ? Math::ONE<DeviceState::ValueType> : Math::ZERO<DeviceState::ValueType>;
+					((DeviceStateValue*)values)[0] = (_state[VK_SK[VK_LSHIFT]] & 0x80) || (_state[VK_SK[VK_RSHIFT]] & 0x80) ? Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;
 					return 1;
 				case VK_CONTROL:
-					data[0] = (_state[VK_SK[VK_LCONTROL]] & 0x80) || (_state[VK_SK[VK_RCONTROL]] & 0x80) ? Math::ONE<DeviceState::ValueType> : Math::ZERO<DeviceState::ValueType>;
+					((DeviceStateValue*)values)[0] = (_state[VK_SK[VK_LCONTROL]] & 0x80) || (_state[VK_SK[VK_RCONTROL]] & 0x80) ? Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;
 					return 1;
 				case VK_MENU:
-					data[0] = (_state[VK_SK[VK_LMENU]] & 0x80) || (_state[VK_SK[VK_RMENU]] & 0x80) ? Math::ONE<DeviceState::ValueType> : Math::ZERO<DeviceState::ValueType>;
+					((DeviceStateValue*)values)[0] = (_state[VK_SK[VK_LMENU]] & 0x80) || (_state[VK_SK[VK_RMENU]] & 0x80) ? Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;
 					return 1;
 				default:
 				{
 					if (auto key = VK_SK[code]; key) {
-						data[0] = _state[key] & 0x80 ? Math::ONE<DeviceState::ValueType> : Math::ZERO<DeviceState::ValueType>;
+						((DeviceStateValue*)values)[0] = _state[key] & 0x80 ? Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;
 
 						return 1;
 					}
@@ -45,7 +45,7 @@ namespace aurora::modules::inputs::direct_input {
 		}
 	}
 
-	DeviceState::CountType Keyboard::setState(DeviceStateType type, DeviceState::CodeType code, DeviceState::ValueType* data, DeviceState::CountType count) {
+	DeviceState::CountType Keyboard::setState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count) {
 		return 0;
 	}
 
@@ -84,10 +84,10 @@ namespace aurora::modules::inputs::direct_input {
 
 		for (uint16_t i = 0; i < len; ++i) {
 			auto key = changedBtns[i];
-			DeviceState::ValueType value = (state[key] & 0x80) > 0 ? Math::ONE<DeviceState::ValueType> : Math::ZERO<DeviceState::ValueType>;
+			DeviceStateValue value = (state[key] & 0x80) > 0 ? Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;
 
 			DeviceState k = { SK_VK[key], 1, &value };
-			_eventDispatcher.dispatchEvent(this, value > Math::ZERO<DeviceState::ValueType> ? DeviceEvent::DOWN : DeviceEvent::UP, &k);
+			_eventDispatcher->dispatchEvent(this, value > Math::ZERO<DeviceStateValue> ? DeviceEvent::DOWN : DeviceEvent::UP, &k);
 		}
 	}
 }

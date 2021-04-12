@@ -5,12 +5,12 @@ namespace aurora::modules::inputs::hid_input {
 	Gamepad::Gamepad(Input& input, const DeviceInfo& info, extensions::HIDDevice& hid) : GamepadBase(input, info, hid) {
 	}
 
-	DeviceState::CountType Gamepad::getState(DeviceStateType type, DeviceState::CodeType code, DeviceState::ValueType* data, DeviceState::CountType count) const {
+	DeviceState::CountType Gamepad::getState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count) const {
 		switch (type) {
 		case DeviceStateType::DEAD_ZONE:
 		{
-			if (data && count) {
-				data[0] = _getDeadZone((GamepadKeyCode)code);
+			if (values && count) {
+				((DeviceStateValue*)values)[0] = _getDeadZone((GamepadKeyCode)code);
 
 				return 1;
 			}
@@ -22,12 +22,12 @@ namespace aurora::modules::inputs::hid_input {
 		}
 	}
 
-	DeviceState::CountType Gamepad::setState(DeviceStateType type, DeviceState::CodeType code, DeviceState::ValueType* data, DeviceState::CountType count) {
+	DeviceState::CountType Gamepad::setState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count) {
 		switch (type) {
 		case DeviceStateType::DEAD_ZONE:
 		{
-			if (data && count) {
-				_setDeadZone((GamepadKeyCode)code, data[0]);
+			if (values && count) {
+				_setDeadZone((GamepadKeyCode)code, ((DeviceStateValue*)values)[0]);
 				return 1;
 			}
 

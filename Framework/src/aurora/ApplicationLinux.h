@@ -17,8 +17,8 @@ namespace aurora {
 
 		virtual ~Application();
 
-		virtual events::IEventDispatcher<ApplicationEvent>& AE_CALL getEventDispatcher() override;
-		virtual const events::IEventDispatcher<ApplicationEvent>& AE_CALL getEventDispatcher() const override;
+		virtual IntrusivePtr<events::IEventDispatcher<ApplicationEvent>> AE_CALL getEventDispatcher() override;
+		//virtual const events::IEventDispatcher<ApplicationEvent>& AE_CALL getEventDispatcher() const override;
 
 		virtual bool AE_CALL createWindow(const ApplicationStyle& style, const std::string_view& title, const Vec2ui32& clientSize, bool fullscreen) override;
 		virtual void* AE_CALL getNative(ApplicationNative native) const override;
@@ -58,7 +58,7 @@ namespace aurora {
 		Vec2ui32 _clientSize;
 		Vec4i32 _border;//left, right, top, bottom
 
-		events::EventDispatcher<ApplicationEvent> _eventDispatcher;
+		IntrusivePtr<events::IEventDispatcher<ApplicationEvent>> _eventDispatcher;
 
 		mutable std::filesystem::path _appPath;
 

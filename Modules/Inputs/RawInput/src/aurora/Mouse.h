@@ -7,8 +7,8 @@ namespace aurora::modules::inputs::raw_input {
 	public:
 		Mouse(Input& input, IApplication& app, const InternalDeviceInfo& info);
 
-		virtual DeviceState::CountType AE_CALL getState(DeviceStateType type, DeviceState::CodeType code, DeviceState::ValueType* data, DeviceState::CountType count) const override;
-		virtual DeviceState::CountType AE_CALL setState(DeviceStateType type, DeviceState::CodeType code, DeviceState::ValueType* data, DeviceState::CountType count) override;
+		virtual DeviceState::CountType AE_CALL getState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count) const override;
+		virtual DeviceState::CountType AE_CALL setState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count) override;
 		virtual void AE_CALL poll(bool dispatchEvent) override;
 
 	protected:

@@ -33,7 +33,8 @@ namespace aurora::modules::graphics::d3d11 {
 		_d3dStatus({ 0 }),
 		_numRTVs(0),
 		_RTVs({ 0 }),
-		_DSV(nullptr) {
+		_DSV(nullptr),
+		_eventDispatcher(new events::EventDispatcher<GraphicsEvent>()) {
 		_constantBufferManager.createShareConstantBufferCallback = std::bind(&Graphics::_createdShareConstantBuffer, this);
 		_constantBufferManager.createExclusiveConstantBufferCallback = std::bind(&Graphics::_createdExclusiveConstantBuffer, this, std::placeholders::_1);
 	}
@@ -354,13 +355,13 @@ namespace aurora::modules::graphics::d3d11 {
 		return true;
 	}
 
-	events::IEventDispatcher<GraphicsEvent>& Graphics::getEventDispatcher() {
+	IntrusivePtr<events::IEventDispatcher<GraphicsEvent>> Graphics::getEventDispatcher() {
 		return _eventDispatcher;
 	}
 
-	const events::IEventDispatcher<GraphicsEvent>& Graphics::getEventDispatcher() const {
-		return _eventDispatcher;
-	}
+	//const events::IEventDispatcher<GraphicsEvent>& Graphics::getEventDispatcher() const {
+	//	return _eventDispatcher;
+	//}
 
 	const std::string& Graphics::getVersion() const {
 		return _deviceVersion;

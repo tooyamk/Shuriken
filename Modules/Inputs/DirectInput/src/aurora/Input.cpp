@@ -12,6 +12,7 @@ namespace aurora::modules::inputs::direct_input {
 		_loader(loader),
 		_app(app),
 		_filter(filter),
+		_eventDispatcher(new events::EventDispatcher<ModuleEvent>()),
 		_ignoreXInputDevices(ignoreXInputDevices),
 		_di(nullptr) {
 	}
@@ -20,7 +21,7 @@ namespace aurora::modules::inputs::direct_input {
 		SAFE_RELEASE(_di);
 	}
 
-	events::IEventDispatcher<ModuleEvent>& Input::getEventDispatcher() {
+	IntrusivePtr<events::IEventDispatcher<ModuleEvent>> Input::getEventDispatcher() {
 		return _eventDispatcher;
 	}
 
@@ -52,8 +53,8 @@ namespace aurora::modules::inputs::direct_input {
 			_devices = std::move(newDevices);
 		}
 
-		for (auto& info : remove) _eventDispatcher.dispatchEvent(this, ModuleEvent::DISCONNECTED, &info);
-		for (auto& info : add) _eventDispatcher.dispatchEvent(this, ModuleEvent::CONNECTED, &info);
+		for (auto& info : remove) _eventDispatcher->dispatchEvent(this, ModuleEvent::DISCONNECTED, &info);
+		for (auto& info : add) _eventDispatcher->dispatchEvent(this, ModuleEvent::CONNECTED, &info);
 	}
 
 	IntrusivePtr<IInputDevice> Input::createDevice(const DeviceGUID& guid) {

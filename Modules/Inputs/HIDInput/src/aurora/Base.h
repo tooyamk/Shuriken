@@ -10,6 +10,12 @@ namespace aurora::modules::inputs::hid_input {
 	public:
 		std::string path;
 	};
+
+
+	class AE_MODULE_DLL InternalDeviceTouchStateValue : public DeviceTouchStateValue {
+	public:
+		DeviceStateValue time;
+	};
 }
 
 /*

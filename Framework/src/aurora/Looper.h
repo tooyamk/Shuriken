@@ -19,10 +19,7 @@ namespace aurora {
 		Looper(float64_t interval);
 		virtual ~Looper();
 
-		inline events::IEventDispatcher<LooperEvent>& AE_CALL getEventDispatcher() {
-			return _eventDispatcher;
-		}
-		inline const events::IEventDispatcher<LooperEvent>& AE_CALL getEventDispatcher() const {
+		inline IntrusivePtr<events::IEventDispatcher<LooperEvent>> AE_CALL getEventDispatcher() {
 			return _eventDispatcher;
 		}
 
@@ -47,7 +44,7 @@ namespace aurora {
 		void AE_CALL stop();
 
 	protected:
-		events::EventDispatcher<LooperEvent> _eventDispatcher;
+		IntrusivePtr<events::IEventDispatcher<LooperEvent>> _eventDispatcher;
 
 		std::shared_ptr<bool> _isRunning;
 		float64_t _interval;

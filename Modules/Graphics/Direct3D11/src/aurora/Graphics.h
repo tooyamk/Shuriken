@@ -36,8 +36,8 @@ namespace aurora::modules::graphics::d3d11 {
 			::operator delete(p);
 		}
 
-		virtual events::IEventDispatcher<GraphicsEvent>& AE_CALL getEventDispatcher() override;
-		virtual const events::IEventDispatcher<GraphicsEvent>& AE_CALL getEventDispatcher() const override;
+		virtual IntrusivePtr<events::IEventDispatcher<GraphicsEvent>> AE_CALL getEventDispatcher() override;
+		//virtual const events::IEventDispatcher<GraphicsEvent>& AE_CALL getEventDispatcher() const override;
 
 		virtual const std::string& AE_CALL getVersion() const override;
 		virtual const GraphicsDeviceFeatures& AE_CALL getDeviceFeatures() const override;
@@ -79,7 +79,7 @@ namespace aurora::modules::graphics::d3d11 {
 		bool AE_CALL createDevice(const CreateConfig& conf);
 
 		inline void AE_CALL error(const std::string_view& msg) {
-			_eventDispatcher.dispatchEvent(this, GraphicsEvent::ERR, (std::string_view*)&msg);
+			_eventDispatcher->dispatchEvent(this, GraphicsEvent::ERR, (std::string_view*)&msg);
 		}
 
 		inline bool AE_CALL isDebug() const {
@@ -328,7 +328,7 @@ namespace aurora::modules::graphics::d3d11 {
 
 		ConstantBufferManager _constantBufferManager;
 
-		events::EventDispatcher<GraphicsEvent> _eventDispatcher;
+		IntrusivePtr<events::IEventDispatcher<GraphicsEvent>> _eventDispatcher;
 
 		bool AE_CALL _createDevice(const CreateConfig& conf);
 

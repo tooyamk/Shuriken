@@ -33,7 +33,8 @@ namespace aurora::modules::graphics::gl {
 #endif
 		_majorVer(0),
 		_minorVer(0),
-		_intVer(0) {
+		_intVer(0),
+		_eventDispatcher(new events::EventDispatcher<GraphicsEvent>()) {
 		_constantBufferManager.createShareConstantBufferCallback = std::bind(&Graphics::_createdShareConstantBuffer, this);
 		_constantBufferManager.createExclusiveConstantBufferCallback = std::bind(&Graphics::_createdExclusiveConstantBuffer, this, std::placeholders::_1);
 		memset(&_internalFeatures, 0, sizeof(InternalFeatures));
@@ -247,11 +248,7 @@ namespace aurora::modules::graphics::gl {
 		return true;
 	}
 
-	events::IEventDispatcher<GraphicsEvent>& Graphics::getEventDispatcher() {
-		return _eventDispatcher;
-	}
-
-	const events::IEventDispatcher<GraphicsEvent>& Graphics::getEventDispatcher() const {
+	IntrusivePtr<events::IEventDispatcher<GraphicsEvent>> Graphics::getEventDispatcher() {
 		return _eventDispatcher;
 	}
 

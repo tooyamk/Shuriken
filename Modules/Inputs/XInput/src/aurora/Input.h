@@ -15,14 +15,14 @@ namespace aurora::modules::inputs::xinput {
 			::operator delete(p);
 		}
 
-		virtual events::IEventDispatcher<ModuleEvent>& AE_CALL getEventDispatcher() override;
+		virtual IntrusivePtr<events::IEventDispatcher<ModuleEvent>> AE_CALL getEventDispatcher() override;
 		virtual void AE_CALL poll() override;
 		virtual IntrusivePtr<IInputDevice> AE_CALL createDevice(const DeviceGUID& guid) override;
 
 	private:
 		IntrusivePtr<Ref> _loader;
 		DeviceType _filter;
-		events::EventDispatcher<ModuleEvent> _eventDispatcher;
+		IntrusivePtr<events::IEventDispatcher<ModuleEvent>> _eventDispatcher;
 
 		std::shared_mutex _mutex;
 		std::vector<DeviceInfo> _devices;

@@ -8,36 +8,36 @@ namespace aurora::modules::inputs::hid_input {
 	public:
 		GamepadBase(Input& input, const DeviceInfo& info, extensions::HIDDevice& hid) : 
 			DeviceBase<InputStateBufferSize, InputBufferSize, OutputStateBufferSize>(input, info, hid) {
-			_setDeadZone(GamepadKeyCode::L_STICK, Math::TWENTIETH<DeviceState::ValueType>);
-			_setDeadZone(GamepadKeyCode::R_STICK, Math::TWENTIETH<DeviceState::ValueType>);
-			_setDeadZone(GamepadKeyCode::L_TRIGGER, Math::TWENTIETH<DeviceState::ValueType>);
-			_setDeadZone(GamepadKeyCode::R_TRIGGER, Math::TWENTIETH<DeviceState::ValueType>);
+			_setDeadZone(GamepadKeyCode::L_STICK, Math::TWENTIETH<DeviceStateValue>);
+			_setDeadZone(GamepadKeyCode::R_STICK, Math::TWENTIETH<DeviceStateValue>);
+			_setDeadZone(GamepadKeyCode::L_TRIGGER, Math::TWENTIETH<DeviceStateValue>);
+			_setDeadZone(GamepadKeyCode::R_TRIGGER, Math::TWENTIETH<DeviceStateValue>);
 		}
 
 	protected:
 		mutable std::shared_mutex _deadZoneMutex;
-		std::unordered_map<GamepadKeyCode, DeviceState::ValueType> _deadZone;
+		std::unordered_map<GamepadKeyCode, DeviceStateValue> _deadZone;
 
-		inline DeviceState::ValueType AE_CALL _getDeadZone(GamepadKeyCode key) const {
+		inline DeviceStateValue AE_CALL _getDeadZone(GamepadKeyCode key) const {
 			std::shared_lock lock(_deadZoneMutex);
 
 			if (auto itr = _deadZone.find(key); itr == _deadZone.end()) {
-				return Math::ZERO<DeviceState::ValueType>;
+				return Math::ZERO<DeviceStateValue>;
 			} else {
 				return itr->second;
 			}
 		}
 
-		inline void AE_CALL _setDeadZone(GamepadKeyCode keyCode, DeviceState::ValueType deadZone) {
-			if (deadZone < Math::ZERO<DeviceState::ValueType>) deadZone = -deadZone;
+		inline void AE_CALL _setDeadZone(GamepadKeyCode keyCode, DeviceStateValue deadZone) {
+			if (deadZone < Math::ZERO<DeviceStateValue>) deadZone = -deadZone;
 
 			std::scoped_lock lock(_deadZoneMutex);
 
 			_deadZone.insert_or_assign(keyCode, deadZone);
 		}
 
-		inline static DeviceState::ValueType AE_CALL _translateDeadZone01(DeviceState::ValueType value, DeviceState::ValueType dz, bool inDz) {
-			return inDz ? Math::ZERO<DeviceState::ValueType> : (value - dz) / (Math::ONE<DeviceState::ValueType> - dz);
+		inline static DeviceStateValue AE_CALL _translateDeadZone01(DeviceStateValue value, DeviceStateValue dz, bool inDz) {
+			return inDz ? Math::ZERO<DeviceStateValue> : (value - dz) / (Math::ONE<DeviceStateValue> - dz);
 		}
 	};
 }

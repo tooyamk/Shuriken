@@ -57,6 +57,19 @@ public:
 		}
 	}
 
+	static std::string_view AE_CALL getDeviceTouchPhaseString(DeviceTouchPhase type) {
+		switch (type) {
+		case DeviceTouchPhase::BEGIN:
+			return "begin";
+		case DeviceTouchPhase::MOVE:
+			return "move";
+		case DeviceTouchPhase::END:
+			return "end";
+		default:
+			return "undefined";
+		}
+	}
+
 	void AE_CALL initInputModule(std::vector<IntrusivePtr<IInputModule>>& modules, const std::string_view& dll, const SerializableObject* args) {
 		IntrusivePtr loader = new InputModuleLoader();
 		if (loader->load(dll)) {
@@ -104,7 +117,7 @@ public:
 			std::vector<IntrusivePtr<IInputDevice>> inputDevices;
 
 			for (auto& im : inputModules) {
-				im->getEventDispatcher().addEventListener(ModuleEvent::CONNECTED, createEventListener<ModuleEvent>([&inputDevices, &inputDevicesMutex, app](Event<ModuleEvent>& e) {
+				im->getEventDispatcher()->addEventListener(ModuleEvent::CONNECTED, createEventListener<ModuleEvent>([&inputDevices, &inputDevicesMutex, app](Event<ModuleEvent>& e) {
 					auto getNumInputeDevice = [&inputDevices, &inputDevicesMutex](DeviceType type) {
 						uint32_t n = 0;
 
@@ -124,31 +137,31 @@ public:
 						//if (getNumInputeDevice(DeviceType::GAMEPAD) > 0) return;
 						printaln("create device : ", getDeviceTypeString(info->type), " guid = ", String::toString(info->guid.getData(), info->guid.getSize()));
 						if (auto device = im->createDevice(info->guid); device) {
-							float32_t rgb[] = { 1.f, 1.f, 1.f };
-							device->setState(DeviceStateType::LED, 0, rgb, 3);
-							device->getEventDispatcher().addEventListener(DeviceEvent::DOWN, createEventListener<DeviceEvent>([app](Event<DeviceEvent>& e) {
+							auto eventDispatcher = device->getEventDispatcher();
+
+							eventDispatcher->addEventListener(DeviceEvent::DOWN, createEventListener<DeviceEvent>([app](Event<DeviceEvent>& e) {
 								auto device = e.getTarget<IInputDevice>();
 								switch (device->getInfo().type) {
 								case DeviceType::KEYBOARD:
 								{
-									auto key = e.getData<DeviceState>();
-									if (key->code == KeyboardVirtualKeyCode::KEY_ENTER) {
+									auto state = e.getData<DeviceState>();
+									if (state->code == KeyboardVirtualKeyCode::KEY_ENTER) {
 										float32_t state = 0.0f;
 										if (device->getState(DeviceStateType::KEY, KeyboardVirtualKeyCode::KEY_RCTRL, &state, 1) && state != 0.f) {
 											app->toggleFullscreen();
 										}
 									}
 
-									printaln("keyboard down -> key : ", key->code, "    value : ", key->value[0]);
+									printaln("keyboard down -> key : ", state->code, "    value : ", ((DeviceStateValue*)state->values)[0]);
 
 									break;
 								}
 								case DeviceType::GAMEPAD:
 								{
-									auto key = e.getData<DeviceState>();
-									printaln("gamepad down : ", getGamepadKeyString((GamepadKeyCode)key->code), "  ", key->value[0]);
-									if (key->code == GamepadKeyCode::CROSS) {
-										//DeviceState::ValueType vals[] = { 1.f, 1.f };
+									auto state = e.getData<DeviceState>();
+									printaln("gamepad down : ", getGamepadKeyString((GamepadKeyCode)state->code), "  ", ((DeviceStateValue*)state->values)[0]);
+									if (state->code == GamepadKeyCode::CROSS) {
+										//DeviceStateValue vals[] = { 1.f, 1.f };
 										//device->setState(DeviceStateType::VIBRATION, 0, vals, 2);
 									}
 
@@ -156,16 +169,16 @@ public:
 								}
 								case DeviceType::MOUSE:
 								{
-									auto key = e.getData<DeviceState>();
+									auto state = e.getData<DeviceState>();
 									
-									printaln("mouse down -> key : ", key->code, "    value : ", key->value[0]);
+									printaln("mouse down -> key : ", state->code, "    value : ", ((DeviceStateValue*)state->values)[0]);
 
 									break;
 								}
 								}
 							}));
 
-							device->getEventDispatcher().addEventListener(DeviceEvent::UP, createEventListener<DeviceEvent>([](Event<DeviceEvent>& e) {
+							eventDispatcher->addEventListener(DeviceEvent::UP, createEventListener<DeviceEvent>([](Event<DeviceEvent>& e) {
 								auto device = e.getTarget<IInputDevice>();
 								switch (device->getInfo().type) {
 								case DeviceType::KEYBOARD:
@@ -174,10 +187,10 @@ public:
 								}
 								case DeviceType::GAMEPAD:
 								{
-									auto key = e.getData<DeviceState>();
-									printaln("gamepad up : ", getGamepadKeyString((GamepadKeyCode)key->code), "  ", key->value[0]);
-									if (key->code == GamepadKeyCode::CROSS) {
-										//DeviceState::ValueType vals[] = { 0.f, 0.f };
+									auto state = e.getData<DeviceState>();
+									printaln("gamepad up : ", getGamepadKeyString((GamepadKeyCode)state->code), "  ", ((DeviceStateValue*)state->values)[0]);
+									if (state->code == GamepadKeyCode::CROSS) {
+										//DeviceStateValue vals[] = { 0.f, 0.f };
 										//device->setState(DeviceStateType::VIBRATION, 0, vals, 2);
 									}
 
@@ -186,33 +199,53 @@ public:
 								}
 							}));
 
-							device->getEventDispatcher().addEventListener(DeviceEvent::MOVE, createEventListener<DeviceEvent>([](Event<DeviceEvent>& e) {
+							eventDispatcher->addEventListener(DeviceEvent::MOVE, createEventListener<DeviceEvent>([](Event<DeviceEvent>& e) {
 								switch (e.getTarget<IInputDevice>()->getInfo().type) {
 								case DeviceType::MOUSE:
 								{
-									auto key = e.getData<DeviceState>();
-									if (key->code == MouseKeyCode::POSITION) {
+									auto state = e.getData<DeviceState>();
+									if (state->code == MouseKeyCode::POSITION) {
 										//f32 curPos[2];
 										//(e.getTarget<InputDevice>())->getKeyState(key->code, curPos, 2);
 										//printdln("input device move : ", key->value[0], " ", key->value[1]);
-									} else if (key->code == MouseKeyCode::WHEEL) {
-										printaln("input device wheel : ", key->value[0]);
+									} else if (state->code == MouseKeyCode::WHEEL) {
+										printaln("input device wheel : ", ((DeviceStateValue*)state->values)[0]);
 									}
 
 									break;
 								}
 								case DeviceType::GAMEPAD:
 								{
-									auto key = e.getData<DeviceState>();
+									auto state = e.getData<DeviceState>();
 									//if (key->code != GamepadKeyCode::R_STICK) break;
-									printd("gamepad move : ", getGamepadKeyString((GamepadKeyCode)key->code), " ", key->value[0]);
-									if (key->count > 1) printd("  ", key->value[1]);
+									printd("gamepad move : ", getGamepadKeyString((GamepadKeyCode)state->code), " ", ((DeviceStateValue*)state->values)[0]);
+									if (state->count > 1) printd("  ", ((DeviceStateValue*)state->values)[1]);
 									printaln();
 
 									break;
 								}
 								}
 
+							}));
+
+							eventDispatcher->addEventListener(DeviceEvent::TOUCH, createEventListener<DeviceEvent>([](Event<DeviceEvent>& e) {
+								switch (e.getTarget<IInputDevice>()->getInfo().type) {
+								case DeviceType::MOUSE:
+								{
+									break;
+								}
+								case DeviceType::GAMEPAD:
+								{
+									auto state = e.getData<DeviceState>();
+									auto touches = (DeviceTouchStateValue*)state->values;
+									for (size_t i = 0; i < state->count; ++i) {
+										auto& touch = touches[i];
+										printdln("gamepad touch : ", "id = ", touch.fingerID, " phase = ", getDeviceTouchPhaseString(touch.phase), " x = ", touch.position[0], " y = ", touch.position[1]);
+									}
+
+									break;
+								}
+								}
 							}));
 
 							std::scoped_lock lock(inputDevicesMutex);
@@ -222,7 +255,7 @@ public:
 					}
 				}));
 
-				im->getEventDispatcher().addEventListener(ModuleEvent::DISCONNECTED, createEventListener<ModuleEvent>([&inputDevices, &inputDevicesMutex](Event<ModuleEvent>& e) {
+				im->getEventDispatcher()->addEventListener(ModuleEvent::DISCONNECTED, createEventListener<ModuleEvent>([&inputDevices, &inputDevicesMutex](Event<ModuleEvent>& e) {
 					auto info = e.getData<DeviceInfo>();
 					printaln("input device disconnected : ", getDeviceTypeString(info->type));
 
@@ -239,11 +272,11 @@ public:
 
 			IntrusivePtr looper = new Looper(1000.0 / 60.0);
 
-			app->getEventDispatcher().addEventListener(ApplicationEvent::CLOSED, createEventListener<ApplicationEvent>([looper](Event<ApplicationEvent>& e) {
+			app->getEventDispatcher()->addEventListener(ApplicationEvent::CLOSED, createEventListener<ApplicationEvent>([looper](Event<ApplicationEvent>& e) {
 				looper->stop();
 			}));
 
-			looper->getEventDispatcher().addEventListener(LooperEvent::TICKING, createEventListener<LooperEvent>([app, &inputModules, &inputDevices, &inputDevicesMutex](Event<LooperEvent>& e) {
+			looper->getEventDispatcher()->addEventListener(LooperEvent::TICKING, createEventListener<LooperEvent>([app, &inputModules, &inputDevices, &inputDevicesMutex](Event<LooperEvent>& e) {
 				app->pollEvents();
 
 				for (auto& im : inputModules) im->poll();
@@ -265,10 +298,10 @@ public:
 							dev->poll(true);
 
 							if (dev->getInfo().type == DeviceType::GAMEPAD) {
-								DeviceState::ValueType vals[2];
+								DeviceStateValue vals[2];
 								dev->getState(DeviceStateType::KEY, GamepadKeyCode::SQUARE, vals, 2);
 								
-								DeviceState::ValueType vibration[2];
+								DeviceStateValue vibration[2];
 								vibration[0] = vals[0];
 								vibration[1] = vals[1];
 								dev->setState(DeviceStateType::VIBRATION, 0, vibration, 2);

@@ -40,8 +40,8 @@ namespace aurora {
 	public:
 		virtual ~IApplication() {};
 
-		virtual events::IEventDispatcher<ApplicationEvent>& AE_CALL getEventDispatcher() = 0;
-		virtual const events::IEventDispatcher<ApplicationEvent>& AE_CALL getEventDispatcher() const = 0;
+		virtual IntrusivePtr<events::IEventDispatcher<ApplicationEvent>> AE_CALL getEventDispatcher() = 0;
+		//virtual const events::IEventDispatcher<ApplicationEvent>& AE_CALL getEventDispatcher() const = 0;
 
 		virtual bool AE_CALL createWindow(const ApplicationStyle& style, const std::string_view& title, const Vec2ui32& clientSize, bool fullscreen) = 0;
 		virtual void* AE_CALL getNative(ApplicationNative native) const = 0;

@@ -6,7 +6,9 @@ namespace aurora::modules::inputs::hid_input {
 	template<size_t InputStateBufferSize, size_t InputBufferSize, size_t OutputStateBufferSize>
 	class DeviceBase : public IInputDevice {
 	public:
-		DeviceBase(Input& input, const DeviceInfo& info, extensions::HIDDevice& hid) : _input(input),
+		DeviceBase(Input& input, const DeviceInfo& info, extensions::HIDDevice& hid) :
+			_input(input),
+			_eventDispatcher(new events::EventDispatcher<DeviceEvent>()),
 			_info(info),
 			_hid(&hid),
 			_needOutput(false) {
@@ -19,7 +21,7 @@ namespace aurora::modules::inputs::hid_input {
 			HID::close(*_hid);
 		}
 
-		virtual events::IEventDispatcher<DeviceEvent>& AE_CALL getEventDispatcher() override {
+		virtual IntrusivePtr<events::IEventDispatcher<DeviceEvent>> AE_CALL getEventDispatcher() override {
 			return _eventDispatcher;
 		}
 
@@ -52,7 +54,7 @@ namespace aurora::modules::inputs::hid_input {
 		using OutputStateBuffer = uint8_t[OutputStateBufferSize];
 
 		IntrusivePtr<Input> _input;
-		events::EventDispatcher<DeviceEvent> _eventDispatcher;
+		IntrusivePtr<events::IEventDispatcher<DeviceEvent>> _eventDispatcher;
 		DeviceInfo _info;
 		extensions::HIDDevice* _hid;
 

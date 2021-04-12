@@ -1,5 +1,6 @@
-#if AE_OS == AE_OS_WIN
 #include "windows/HIDImpl.h"
+
+#if AE_OS == AE_OS_WIN
 #include "aurora/ScopeGuard.h"
 
 namespace aurora::extensions {
@@ -249,6 +250,7 @@ namespace aurora::extensions {
 
 	size_t HID::read(HIDDevice& device, void* data, size_t dataLength, size_t timeout) {
 		if (!device.handle) return HID::OUT_ERROR;
+		if (device.inputReportLength == 0) return 0;
 
 		DWORD bytesReaded = 0;
 		bool overlapped = false;
@@ -309,6 +311,7 @@ namespace aurora::extensions {
 
 	size_t HID::write(HIDDevice& device, void* data, size_t dataLength, size_t timeout) {
 		if (!device.handle) return HID::OUT_ERROR;
+		if (device.outputReportLength == 0) return 0;
 
 		DWORD bytesWrited = 0;
 		bool overlapped = false;

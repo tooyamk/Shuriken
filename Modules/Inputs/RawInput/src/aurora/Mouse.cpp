@@ -12,7 +12,7 @@ namespace aurora::modules::inputs::raw_input {
 		_pos = p.combined;
 	}
 
-	DeviceState::CountType Mouse::getState(DeviceStateType type, DeviceState::CodeType code, DeviceState::ValueType* data, DeviceState::CountType count) const {
+	DeviceState::CountType Mouse::getState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count) const {
 		using namespace aurora::enum_operators;
 
 		switch (type) {
@@ -25,9 +25,9 @@ namespace aurora::modules::inputs::raw_input {
 				GetCursorPos(&p);
 				ScreenToClient(_input->getHWND(), &p);
 
-				data[0] = DeviceState::ValueType(p.x);
+				((DeviceStateValue*)values)[0] = DeviceStateValue(p.x);
 				DeviceState::CountType c = 1;
-				if (count > 1) data[c++] = DeviceState::ValueType(p.y);
+				if (count > 1) ((DeviceStateValue*)values)[c++] = DeviceStateValue(p.y);
 
 				return c;
 			}
@@ -38,7 +38,7 @@ namespace aurora::modules::inputs::raw_input {
 				if (code >= MouseKeyCode::L_BUTTON && code < MouseKeyCode::L_BUTTON + sizeof(StateBuffer)) {
 					std::shared_lock lock(_mutex);
 
-					data[0] = _state[code - (uint32_t)MouseKeyCode::L_BUTTON] ? Math::ONE<DeviceState::ValueType> : Math::ZERO<DeviceState::ValueType>;
+					((DeviceStateValue*)values)[0] = _state[code - (uint32_t)MouseKeyCode::L_BUTTON] ? Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;
 
 					return 1;
 				}
@@ -54,7 +54,7 @@ namespace aurora::modules::inputs::raw_input {
 		}
 	}
 
-	DeviceState::CountType Mouse::setState(DeviceStateType type, DeviceState::CodeType code, DeviceState::ValueType* data, DeviceState::CountType count) {
+	DeviceState::CountType Mouse::setState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count) {
 		return 0;
 	}
 
@@ -106,22 +106,22 @@ namespace aurora::modules::inputs::raw_input {
 
 		if (ox || oy) {
 			//increment, right bottom positive orientation.
-			DeviceState::ValueType value[] = { (DeviceState::ValueType)ox, (DeviceState::ValueType)oy };
+			DeviceStateValue value[] = { (DeviceStateValue)ox, (DeviceStateValue)oy };
 			DeviceState k = { (DeviceState::CodeType)MouseKeyCode::POSITION, 2, value };
-			_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &k);
+			_eventDispatcher->dispatchEvent(this, DeviceEvent::MOVE, &k);
 		}
 
 		if (wheel != 0) {
-			DeviceState::ValueType value = (DeviceState::ValueType)wheel * Math::RECIPROCAL<DeviceState::ValueType(WHEEL_DELTA)>;
+			DeviceStateValue value = (DeviceStateValue)wheel * Math::RECIPROCAL<DeviceStateValue(WHEEL_DELTA)>;
 			DeviceState k = { (DeviceState::CodeType)MouseKeyCode::WHEEL, 1, &value };
-			_eventDispatcher.dispatchEvent(this, DeviceEvent::MOVE, &k);
+			_eventDispatcher->dispatchEvent(this, DeviceEvent::MOVE, &k);
 		}
 
 		for (uint8_t i = 0; i < len; ++i) {
 			DeviceState::CodeType key = changeBtns[i];
-			DeviceState::ValueType value = state[key] ? Math::ONE<DeviceState::ValueType> : Math::ZERO<DeviceState::ValueType>;
+			DeviceStateValue value = state[key] ? Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;
 			DeviceState k = { key + (DeviceState::CodeType)MouseKeyCode::L_BUTTON, 1, &value };
-			_eventDispatcher.dispatchEvent(this, value > 0 ? DeviceEvent::DOWN : DeviceEvent::UP, &k);
+			_eventDispatcher->dispatchEvent(this, value > 0 ? DeviceEvent::DOWN : DeviceEvent::UP, &k);
 		}
 	}
 

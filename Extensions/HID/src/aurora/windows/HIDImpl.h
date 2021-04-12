@@ -1,5 +1,8 @@
-#if AE_OS == AE_OS_WIN
+#pragma once
+
 #include "HID.h"
+
+#if AE_OS == AE_OS_WIN
 #include <hidsdi.h>
 #include <SetupAPI.h>
 

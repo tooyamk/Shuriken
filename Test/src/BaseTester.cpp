@@ -2,7 +2,7 @@
 
 void Stats::run(Looper* looper) {
 	if (looper) {
-		looper->getEventDispatcher().addEventListener(LooperEvent::TICKING, new EventListener(std::function([this](Event<LooperEvent>& e) {
+		looper->getEventDispatcher()->addEventListener(LooperEvent::TICKING, new EventListener(std::function([this](Event<LooperEvent>& e) {
 			++_frameCount;
 		})));
 
