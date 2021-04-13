@@ -55,7 +55,13 @@ namespace aurora::modules::inputs::hid_input {
 		}
 		*/
 		//if (btnSrcVal != 128) printdln(btnSrcVal);
-		//printdln(String::toString(state, 16));
+		printdln(String::toString(inputBuffer, 16));
+
+		//028101810080FB7D0080 00 000000CCCC
+		//0281FF7F0080F97C0080 01 000000CCCC a
+		//028101810080F97C0080 02 000000CCCC b
+		//048201810080FB7D0080 04 000000CCCC x
+		//02810181FE7EF97C0080 08 000000CCCC y
 
 		int a = 1;
 	}

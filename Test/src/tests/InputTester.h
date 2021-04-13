@@ -132,7 +132,7 @@ public:
 					auto info = e.getData<DeviceInfo>();
 					printaln("input device connected : ", getDeviceTypeString(info->type), " vid = ", info->vendorID, " pid = ", info->productID, " guid = ", String::toString(info->guid.getData(), info->guid.getSize()));
 
-					if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN && info->vendorID == 0x54C) {
+					if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN && info->vendorID != 0x54C) {
 						auto im = e.getTarget<IInputModule>();
 						//if (getNumInputeDevice(DeviceType::GAMEPAD) > 0) return;
 						printaln("create device : ", getDeviceTypeString(info->type), " guid = ", String::toString(info->guid.getData(), info->guid.getSize()));
@@ -141,7 +141,8 @@ public:
 
 							eventDispatcher->addEventListener(DeviceEvent::DOWN, createEventListener<DeviceEvent>([app](Event<DeviceEvent>& e) {
 								auto device = e.getTarget<IInputDevice>();
-								switch (device->getInfo().type) {
+								auto& info = device->getInfo();
+								switch (info.type) {
 								case DeviceType::KEYBOARD:
 								{
 									auto state = e.getData<DeviceState>();
@@ -159,7 +160,7 @@ public:
 								case DeviceType::GAMEPAD:
 								{
 									auto state = e.getData<DeviceState>();
-									printaln("gamepad down : ", getGamepadKeyString((GamepadKeyCode)state->code), "  ", ((DeviceStateValue*)state->values)[0]);
+									printaln("gamepad down : ", " vid = ", info.vendorID, " pid = ", info.productID, getGamepadKeyString((GamepadKeyCode)state->code), "  ", ((DeviceStateValue*)state->values)[0]);
 									if (state->code == GamepadKeyCode::CROSS) {
 										//DeviceStateValue vals[] = { 1.f, 1.f };
 										//device->setState(DeviceStateType::VIBRATION, 0, vals, 2);
@@ -180,7 +181,8 @@ public:
 
 							eventDispatcher->addEventListener(DeviceEvent::UP, createEventListener<DeviceEvent>([](Event<DeviceEvent>& e) {
 								auto device = e.getTarget<IInputDevice>();
-								switch (device->getInfo().type) {
+								auto& info = device->getInfo();
+								switch (info.type) {
 								case DeviceType::KEYBOARD:
 								{
 									break;
@@ -188,7 +190,7 @@ public:
 								case DeviceType::GAMEPAD:
 								{
 									auto state = e.getData<DeviceState>();
-									printaln("gamepad up : ", getGamepadKeyString((GamepadKeyCode)state->code), "  ", ((DeviceStateValue*)state->values)[0]);
+									printaln("gamepad up : ", info.vendorID, " pid = ", info.productID, getGamepadKeyString((GamepadKeyCode)state->code), "  ", ((DeviceStateValue*)state->values)[0]);
 									if (state->code == GamepadKeyCode::CROSS) {
 										//DeviceStateValue vals[] = { 0.f, 0.f };
 										//device->setState(DeviceStateType::VIBRATION, 0, vals, 2);
@@ -200,7 +202,9 @@ public:
 							}));
 
 							eventDispatcher->addEventListener(DeviceEvent::MOVE, createEventListener<DeviceEvent>([](Event<DeviceEvent>& e) {
-								switch (e.getTarget<IInputDevice>()->getInfo().type) {
+								auto device = e.getTarget<IInputDevice>();
+								auto& info = device->getInfo();
+								switch (info.type) {
 								case DeviceType::MOUSE:
 								{
 									auto state = e.getData<DeviceState>();
@@ -218,7 +222,7 @@ public:
 								{
 									auto state = e.getData<DeviceState>();
 									//if (key->code != GamepadKeyCode::R_STICK) break;
-									printd("gamepad move : ", getGamepadKeyString((GamepadKeyCode)state->code), " ", ((DeviceStateValue*)state->values)[0]);
+									printd("gamepad move : ", info.vendorID, " pid = ", info.productID, getGamepadKeyString((GamepadKeyCode)state->code), " ", ((DeviceStateValue*)state->values)[0]);
 									if (state->count > 1) printd("  ", ((DeviceStateValue*)state->values)[1]);
 									printaln();
 
@@ -229,7 +233,9 @@ public:
 							}));
 
 							eventDispatcher->addEventListener(DeviceEvent::TOUCH, createEventListener<DeviceEvent>([](Event<DeviceEvent>& e) {
-								switch (e.getTarget<IInputDevice>()->getInfo().type) {
+								auto device = e.getTarget<IInputDevice>();
+								auto& info = device->getInfo();
+								switch (info.type) {
 								case DeviceType::MOUSE:
 								{
 									break;
@@ -240,7 +246,7 @@ public:
 									auto touches = (DeviceTouchStateValue*)state->values;
 									for (size_t i = 0; i < state->count; ++i) {
 										auto& touch = touches[i];
-										printdln("gamepad touch : ", "id = ", touch.fingerID, " phase = ", getDeviceTouchPhaseString(touch.phase), " x = ", touch.position[0], " y = ", touch.position[1]);
+										printdln("gamepad touch : ", info.vendorID, " pid = ", info.productID, "id = ", touch.fingerID, " phase = ", getDeviceTouchPhaseString(touch.phase), " x = ", touch.position[0], " y = ", touch.position[1]);
 									}
 
 									break;

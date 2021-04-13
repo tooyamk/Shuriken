@@ -269,6 +269,30 @@ namespace aurora::modules::inputs::hid_input {
 
 		for (size_t i = 0; i < 2; ++i) _dispatchStick(oldSticks[i], curBuf16[i], GamepadKeyCode::L_STICK + i);
 
+		{
+			/*
+			auto i = (std::underlying_type_t<InputBufferOffset>)InputBufferOffset::GYRO_X;
+			i = 12;
+
+			auto h_x = buf[i];
+			auto l_x = buf[i + 1];
+
+			auto h_y = buf[i + 2];
+			auto l_y = buf[i + 3];
+
+			auto h_z = buf[i + 4];
+			auto l_z = buf[i + 5];
+
+			int16_t gyro_x = h_x << 8 | l_x;
+			int16_t gyro_y = h_y << 8 | l_y;
+			int16_t gyro_z = h_z << 8 | l_z;
+
+			//printdln(gyro_x, "  ", gyro_y, "  ", gyro_z);
+
+			int a = 1;
+			*/
+		}
+
 		for (uint8_t i = 0; i < changedLen; ++i) {
 			auto oldState = changedOldState[i];
 			auto newState = buf[changedIndices[i]];
