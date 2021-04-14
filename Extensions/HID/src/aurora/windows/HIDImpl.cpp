@@ -1,6 +1,7 @@
 #include "windows/HIDImpl.h"
 
 #if AE_OS == AE_OS_WIN
+#include "aurora/ByteArray.h"
 #include "aurora/ScopeGuard.h"
 #include "aurora/Debug.h"
 
@@ -136,7 +137,7 @@ namespace aurora::extensions {
 			} while (true);
 		}
 
-		inline void AE_CALL _HIDReportCollectData(std::string& str, ReportData& data, size_t collectionIndex, const std::string& indent) {
+		inline void AE_CALL _HIDReportCollectData(std::string& str, ByteArray& raw, ReportData& data, size_t collectionIndex, const std::string& indent) {
 			std::vector<ReportDataInfo> vec;
 
 			_HIDReportCollectData(vec, data.buttonCaps, data.numberButtonCaps, collectionIndex);
@@ -169,8 +170,11 @@ namespace aurora::extensions {
 			}
 		}
 
-		inline void AE_CALL _HIDReportCollection(std::string& str, ReportInfo& info, size_t collectionIndex, const std::string& indent) {
+		inline void AE_CALL _HIDReportCollection(std::string& str, ByteArray& raw, ReportInfo& info, size_t collectionIndex, const std::string& indent) {
 			auto& collection = info.linkCollectionNodes[collectionIndex];
+
+			raw.write<uint8_t>(HID::generateReportShortItemHeader(HIDReportItemType::MAIN, HIDReportMainItemTag::COLLECTION, 1));
+			raw.write<uint8_t>(collection.CollectionType);
 
 			str += indent + "Collection (";
 
@@ -189,15 +193,17 @@ namespace aurora::extensions {
 
 			str += ")\n";
 
-			_HIDReportCollectData(str, info.inputData, collectionIndex, indent1);
-			_HIDReportCollectData(str, info.outputData, collectionIndex, indent1);
-			_HIDReportCollectData(str, info.featureData, collectionIndex, indent1);
+			_HIDReportCollectData(str, raw, info.inputData, collectionIndex, indent1);
+			_HIDReportCollectData(str, raw, info.outputData, collectionIndex, indent1);
+			_HIDReportCollectData(str, raw, info.featureData, collectionIndex, indent1);
 
 			auto c = collection.FirstChild;
 			while (c) {
-				_HIDReportCollection(str, info, c, indent1);
+				_HIDReportCollection(str, raw, info, c, indent1);
 				c = info.linkCollectionNodes[c].NextSibling;
 			}
+
+			raw.write<uint8_t>(HID::generateReportShortItemHeader(HIDReportItemType::MAIN, HIDReportMainItemTag::END_COLLECTION, 0));
 
 			str += indent + "EndCollection ()\n";
 		}
@@ -211,9 +217,17 @@ namespace aurora::extensions {
 		}
 
 		inline void AE_CALL _HIDReportDescriptor(ReportInfo& info) {
+			ByteArray raw;
+
 			std::string indent = "";
 
 			std::string str;
+
+			raw.write<uint8_t>(HID::generateReportShortItemHeader(HIDReportItemType::GLOBAL, HIDReportGlobalItemTag::USAGE_PAGE, 1));
+			raw.write<uint8_t>(info.usagePage);
+
+			raw.write<uint8_t>(HID::generateReportShortItemHeader(HIDReportItemType::LOCAL, HIDReportLocalItemTag::USAGE, 1));
+			raw.write<uint8_t>(info.usage);
 
 			str += indent + "UsagePage (" + getUsagePageString(info.usagePage) + ")\n";
 			str += indent + "Usage (" + getUsageString(info.usagePage, info.usage) + ")\n";
@@ -230,7 +244,7 @@ namespace aurora::extensions {
 					for (USHORT i = 0; i < info.numberLinkCollectionNodes; ++i) {
 						if (info.linkCollectionNodes[i].Parent != 0) continue;
 
-						_HIDReportCollection(str, info, i, indent);
+						_HIDReportCollection(str, raw, info, i, indent);
 					}
 				}
 			}
