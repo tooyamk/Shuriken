@@ -2,8 +2,243 @@
 
 #if AE_OS == AE_OS_WIN
 #include "aurora/ScopeGuard.h"
+#include "aurora/Debug.h"
 
 namespace aurora::extensions {
+	namespace hid {
+		inline std::string AE_CALL getUsagePageString(USHORT usagePage) {
+			auto val = (HIDReportUsagePageType)usagePage;
+			if (val >= HIDReportUsagePageType::POWER_PAGES_BEGIN && val <= HIDReportUsagePageType::POWER_PAGES_END) {
+				return "POWER_PAGES";
+			} else if (val >= HIDReportUsagePageType::VENDOR_DEFINED_BEGIN && val <= HIDReportUsagePageType::VENDOR_DEFINED_END) {
+				return "VENDOR_DEFINED";
+			} else {
+				if (auto itr = HID_REPORT_USAGE_PAGE_TYPE_MAP.find(val); itr != HID_REPORT_USAGE_PAGE_TYPE_MAP.end()) {
+					return std::string(itr->second);
+				} else {
+					return "RESERVED";
+				}
+			}
+		}
+
+		inline std::string AE_CALL getUsageString(USHORT usagePage, USHORT usage) {
+			switch ((HIDReportUsagePageType)usagePage) {
+			case HIDReportUsagePageType::GENERIC_DESKTOP:
+			{
+				auto val = (HIDReportGenericDesktopPageType)usage;
+				if (auto itr = HID_REPORT_GENERIC_DISKTOP_PAGE_TYPE_MAP.find(val); itr != HID_REPORT_GENERIC_DISKTOP_PAGE_TYPE_MAP.end()) {
+					return std::string(itr->second);
+				} else {
+					return "RESERVED";
+				}
+
+				break;
+			}
+			case HIDReportUsagePageType::CONSUMER_DEVICES:
+			{
+				auto val = (HIDReportConsumerPageType)usage;
+				if (auto itr = HID_REPORT_CONSUMER_PAGE_TYPE_MAP.find(val); itr != HID_REPORT_CONSUMER_PAGE_TYPE_MAP.end()) {
+					return std::string(itr->second);
+				} else {
+					return "RESERVED";
+				}
+
+				break;
+			}
+			case HIDReportUsagePageType::BUTTON:
+			{
+				if (usage == 0) {
+					return "NO_BUTTON_PRESED";
+				} else {
+					return "BUTTON_" + String::toString(usage);
+				}
+
+				break;
+			}
+			default:
+			{
+				return String::toString(usage);
+
+				break;
+			}
+			}
+		}
+
+		template<typename T>
+		inline size_t AE_CALL findDataCaps(const T* caps, size_t n, size_t begin, USHORT collection) {
+			for (; begin < n; ++begin) {
+				if (caps[begin].LinkCollection == collection) return begin;
+			}
+
+			return n + 1;
+		};
+
+		inline void AE_CALL _HIDReportDataCaps(std::string& str, HIDP_BUTTON_CAPS& caps, const std::string& indent) {
+			str += indent + "UsagePage (" + getUsagePageString(caps.UsagePage) + ")\n";
+			if (caps.IsRange) {
+				str += indent + "UsageMinimum (" + getUsageString(caps.UsagePage, caps.Range.UsageMin) + ")\n";
+				str += indent + "UsageMaximum (" + getUsageString(caps.UsagePage, caps.Range.UsageMax) + ")\n";
+			} else {
+				str += indent + "Usage (" + getUsageString(caps.UsagePage, caps.NotRange.Usage) + ")\n";
+			}
+			str += indent + "ReportID (" + String::toString(caps.ReportID) + ")\n";
+			str += indent + "LogicalMinimum (" + String::toString(0) + ")\n";
+			str += indent + "LogicalMaximum (" + String::toString(1) + ")\n";
+			str += indent + "ReportSize (" + String::toString(1) + ")\n";
+			str += indent + "ReportCount (" + String::toString(caps.Range.UsageMax - caps.Range.UsageMin + 1) + ")\n\n";
+
+			int a = 1;
+		}
+
+		inline void AE_CALL _HIDReportDataCaps(std::string& str, HIDP_VALUE_CAPS& caps, const std::string& indent) {
+			str += indent + "UsagePage (" + getUsagePageString(caps.UsagePage) + ")\n";
+			if (caps.IsRange) {
+				str += indent + "UsageMinimum (" + getUsageString(caps.UsagePage, caps.Range.UsageMin) + ")\n";
+				str += indent + "UsageMaximum (" + getUsageString(caps.UsagePage, caps.Range.UsageMax) + ")\n";
+			} else {
+				str += indent + "Usage (" + getUsageString(caps.UsagePage, caps.NotRange.Usage) + ")\n";
+			}
+			str += indent + "ReportID (" + String::toString(caps.ReportID) + ")\n";
+			str += indent + "LogicalMinimum (" + String::toString(caps.LogicalMin) + ")\n";
+			str += indent + "LogicalMaximum (" + String::toString(caps.LogicalMax) + ")\n";
+			str += indent + "PhysicalMinimum (" + String::toString(caps.PhysicalMin) + ")\n";
+			str += indent + "PhysicalMaximum (" + String::toString(caps.PhysicalMax) + ")\n";
+			str += indent + "ReportSize (" + String::toString(caps.BitSize) + ")\n";
+			str += indent + "ReportCount (" + String::toString(caps.ReportCount) + ")\n\n";
+
+			int a = 1;
+		}
+
+		template<typename T>
+		inline void AE_CALL _HIDReportCollectData(std::vector<ReportDataInfo>& vec, T* caps, size_t numberCaps, size_t collectionIndex) {
+			size_t i = 0;
+			do {
+				i = findDataCaps(caps, numberCaps, i, collectionIndex);
+				if (i >= numberCaps) {
+					break;
+				} else {
+					auto& info = vec.emplace_back();
+
+					auto& data = caps[i];
+					if (data.IsRange) {
+						info.index = data.Range.DataIndexMin;
+						info.length = data.Range.DataIndexMax - data.Range.DataIndexMin + 1;
+					} else {
+						info.index = data.NotRange.DataIndex;
+						info.length = 1;
+					}
+
+					info.isButton = std::same_as<std::remove_cvref_t<T>, HIDP_BUTTON_CAPS>;
+					info.data = &data;
+
+					++i;
+				}
+			} while (true);
+		}
+
+		inline void AE_CALL _HIDReportCollectData(std::string& str, ReportData& data, size_t collectionIndex, const std::string& indent) {
+			std::vector<ReportDataInfo> vec;
+
+			_HIDReportCollectData(vec, data.buttonCaps, data.numberButtonCaps, collectionIndex);
+			_HIDReportCollectData(vec, data.valueCaps, data.numberValueCaps, collectionIndex);
+
+			size_t index = 0;
+			size_t n = vec.size();
+			while (n) {
+				bool found = false;
+				for (auto& info : vec) {
+					if (index == info.index) {
+						data.infos.emplace_back(info);
+						index += info.length;
+						--n;
+						found = true;
+
+						break;
+					}
+				}
+
+				if (!found) break;
+			}
+
+			for (auto& info : data.infos) {
+				if (info.isButton) {
+					_HIDReportDataCaps(str, *(HIDP_BUTTON_CAPS*)info.data, indent);
+				} else {
+					_HIDReportDataCaps(str, *(HIDP_VALUE_CAPS*)info.data, indent);
+				}
+			}
+		}
+
+		inline void AE_CALL _HIDReportCollection(std::string& str, ReportInfo& info, size_t collectionIndex, const std::string& indent) {
+			auto& collection = info.linkCollectionNodes[collectionIndex];
+
+			str += indent + "Collection (";
+
+			auto indent1 = indent + "  ";
+
+			auto val = (HIDReportCollectionData)collection.CollectionType;
+			if (val >= HIDReportCollectionData::VENDOR_DEFINED_BEGIN && val <= HIDReportCollectionData::VENDOR_DEFINED_END) {
+				str += "VENDOR_DEFINED";
+			} else {
+				if (auto itr = HID_REPORT_COLLECTION_DATA_MAP.find(val); itr != HID_REPORT_COLLECTION_DATA_MAP.end()) {
+					str += itr->second;
+				} else {
+					str += "RESERVED";
+				}
+			}
+
+			str += ")\n";
+
+			_HIDReportCollectData(str, info.inputData, collectionIndex, indent1);
+			_HIDReportCollectData(str, info.outputData, collectionIndex, indent1);
+			_HIDReportCollectData(str, info.featureData, collectionIndex, indent1);
+
+			auto c = collection.FirstChild;
+			while (c) {
+				_HIDReportCollection(str, info, c, indent1);
+				c = info.linkCollectionNodes[c].NextSibling;
+			}
+
+			str += indent + "EndCollection ()\n";
+		}
+
+		inline void AE_CALL _HIDReportReadDataCaps(ReportData& data, HIDP_REPORT_TYPE reportType, ReportInfo& info) {
+			data.buttonCaps = new HIDP_BUTTON_CAPS[data.numberButtonCaps];
+			HidP_GetButtonCaps(HidP_Input, data.buttonCaps, &data.numberButtonCaps, info.preparsedData);
+
+			data.valueCaps = new HIDP_VALUE_CAPS[data.numberValueCaps];
+			HidP_GetValueCaps(HidP_Input, data.valueCaps, &data.numberValueCaps, info.preparsedData);
+		}
+
+		inline void AE_CALL _HIDReportDescriptor(ReportInfo& info) {
+			std::string indent = "";
+
+			std::string str;
+
+			str += indent + "UsagePage (" + getUsagePageString(info.usagePage) + ")\n";
+			str += indent + "Usage (" + getUsageString(info.usagePage, info.usage) + ")\n";
+
+			{
+				if (info.numberLinkCollectionNodes) {
+					info.linkCollectionNodes = new HIDP_LINK_COLLECTION_NODE[info.numberLinkCollectionNodes];
+					HidP_GetLinkCollectionNodes(info.linkCollectionNodes, &info.numberLinkCollectionNodes, info.preparsedData);
+
+					_HIDReportReadDataCaps(info.inputData, HidP_Input, info);
+					_HIDReportReadDataCaps(info.outputData, HidP_Output, info);
+					_HIDReportReadDataCaps(info.featureData, HidP_Feature, info);
+
+					for (USHORT i = 0; i < info.numberLinkCollectionNodes; ++i) {
+						if (info.linkCollectionNodes[i].Parent != 0) continue;
+
+						_HIDReportCollection(str, info, i, indent);
+					}
+				}
+			}
+
+			printdln(str);
+		}
+	}
+
 	HIDDeviceInfo::HIDDeviceInfo() :
 		_vendorID(0),
 		_productID(0),
@@ -239,6 +474,21 @@ namespace aurora::extensions {
 		dev->featureReportLength = caps.FeatureReportByteLength;
 		dev->inputBuffer = new uint8_t[dev->inputReportLength];
 		dev->outputBuffer = new uint8_t[dev->outputReportLength];
+
+		if (0) {
+			hid::ReportInfo info;
+			info.preparsedData = preparsedData;
+			info.usagePage = caps.UsagePage;
+			info.usage = caps.Usage;
+			info.numberLinkCollectionNodes = caps.NumberLinkCollectionNodes;
+			info.inputData.numberButtonCaps = caps.NumberInputButtonCaps;
+			info.inputData.numberValueCaps = caps.NumberInputValueCaps;
+			info.outputData.numberButtonCaps = caps.NumberOutputButtonCaps;
+			info.outputData.numberValueCaps = caps.NumberOutputValueCaps;
+			info.featureData.numberButtonCaps = caps.NumberFeatureButtonCaps;
+			info.featureData.numberValueCaps = caps.NumberFeatureValueCaps;
+			hid::_HIDReportDescriptor(info);
+		}
 
 		return dev;
 	}
