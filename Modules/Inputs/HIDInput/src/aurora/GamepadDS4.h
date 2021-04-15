@@ -18,8 +18,10 @@ namespace aurora::modules::inputs::hid_input {
 		template<Arithmetic T> inline static constexpr T NUMBER_128 = T(128);
 		template<Arithmetic T> inline static constexpr T NUMBER_255 = T(255);
 
-		inline static constexpr DeviceStateValue TOUCH_PAD_RESOLUTION_MAX_X = 1919;
-		inline static constexpr DeviceStateValue TOUCH_PAD_RESOLUTION_MAX_Y = 942;
+		inline static constexpr DeviceStateValue TOUCH_PAD_RESOLUTION_X = 1920;
+		inline static constexpr DeviceStateValue TOUCH_PAD_RESOLUTION_Y = 943;
+		inline static constexpr DeviceStateValue TOUCH_PAD_MAX_X = TOUCH_PAD_RESOLUTION_X - Math::ONE<DeviceStateValue>;
+		inline static constexpr DeviceStateValue TOUCH_PAD_MAX_Y = TOUCH_PAD_RESOLUTION_Y - Math::ONE<DeviceStateValue>;
 
 		enum class InputBufferOffset : uint8_t {
 			LX = 0,

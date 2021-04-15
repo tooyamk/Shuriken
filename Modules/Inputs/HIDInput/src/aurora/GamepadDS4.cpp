@@ -132,6 +132,22 @@ namespace aurora::modules::inputs::hid_input {
 
 			return 0;
 		}
+		case DeviceStateType::TOUCH_RESOLUTION:
+		{
+			if (values && count) {
+				DeviceState::CountType c = 1;
+
+				((DeviceStateValue*)values)[0] = TOUCH_PAD_RESOLUTION_X;
+				if (count > 1) {
+					((DeviceStateValue*)values)[1] = TOUCH_PAD_RESOLUTION_Y;
+					++c;
+				}
+
+				return c;
+			}
+
+			return 0;
+		}
 		default:
 			return 0;
 		}
@@ -505,8 +521,8 @@ namespace aurora::modules::inputs::hid_input {
 
 				auto isTouch = (data[offset] >> 7 & 0b1) == 0;
 				auto id = data[offset] & 0x7F;
-				auto x = (((data[offset + 2] & 0xF) << 8) | (data[offset + 1])) * Math::RECIPROCAL<TOUCH_PAD_RESOLUTION_MAX_X>;
-				auto y = ((data[offset + 3] << 4) | (data[offset + 2] >> 4 & 0xF)) * Math::RECIPROCAL<TOUCH_PAD_RESOLUTION_MAX_Y>;
+				auto x = (((data[offset + 2] & 0xF) << 8) | (data[offset + 1])) * Math::RECIPROCAL<TOUCH_PAD_MAX_X>;
+				auto y = ((data[offset + 3] << 4) | (data[offset + 2] >> 4 & 0xF)) * Math::RECIPROCAL<TOUCH_PAD_MAX_Y>;
 
 				state.code = 0;
 				if (state.fingerID == id) {

@@ -79,6 +79,7 @@ namespace aurora::modules::inputs {
 	enum class DeviceStateType : uint8_t {
 		KEY,
 		TOUCH,
+		TOUCH_RESOLUTION,
 		DEAD_ZONE,
 		VIBRATION,
 		LED

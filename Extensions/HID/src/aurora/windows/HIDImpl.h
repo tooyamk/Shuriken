@@ -3,8 +3,6 @@
 #include "HID.h"
 
 #if AE_OS == AE_OS_WIN
-#include <optional>
-
 #include <hidsdi.h>
 #include <SetupAPI.h>
 
@@ -13,104 +11,59 @@ namespace aurora::extensions {
 		using namespace std::literals;
 
 		inline static const std::unordered_map<HIDReportItemType, std::string_view> HID_REPORT_ITEM_TYPE_MAP = {
-#define AE_EXTENSIONS_HID_ENUM_ELEMENT(a, b) { HIDReportItemType::a, #a##sv },
-				AE_EXTENSIONS_HID_ENUM_HIDReportItemType
-#undef AE_EXTENSIONS_HID_ENUM_ELEMENT
+#define AE_EXTENSION_HID_ENUM_ELEMENT(a, b) { HIDReportItemType::a, #a##sv },
+				AE_EXTENSION_HID_ENUM_HIDReportItemType
+#undef AE_EXTENSION_HID_ENUM_ELEMENT
 				{ (HIDReportItemType)(std::numeric_limits<std::underlying_type_t<HIDReportItemType>>::max)(), "__end"sv }
 		};
 
 		inline static const std::unordered_map<HIDReportMainItemTag, std::string_view> HID_REPORT_MAIN_ITEM_TAG_MAP = {
-#define AE_EXTENSIONS_HID_ENUM_ELEMENT(a, b) { HIDReportMainItemTag::a, #a##sv },
-				AE_EXTENSIONS_HID_ENUM_HIDReportMainItemTag
-#undef AE_EXTENSIONS_HID_ENUM_ELEMENT
+#define AE_EXTENSION_HID_ENUM_ELEMENT(a, b) { HIDReportMainItemTag::a, #a##sv },
+				AE_EXTENSION_HID_ENUM_HIDReportMainItemTag
+#undef AE_EXTENSION_HID_ENUM_ELEMENT
 				{ (HIDReportMainItemTag)(std::numeric_limits<std::underlying_type_t<HIDReportMainItemTag>>::max)(), "__end"sv }
 		};
 
 		inline static const std::unordered_map<HIDReportGlobalItemTag, std::string_view> HID_REPORT_GLOBAL_ITEM_TAG_MAP = {
-#define AE_EXTENSIONS_HID_ENUM_ELEMENT(a, b) { HIDReportGlobalItemTag::a, #a##sv },
-				AE_EXTENSIONS_HID_ENUM_HIDReportGlobalItemTag
-#undef AE_EXTENSIONS_HID_ENUM_ELEMENT
+#define AE_EXTENSION_HID_ENUM_ELEMENT(a, b) { HIDReportGlobalItemTag::a, #a##sv },
+				AE_EXTENSION_HID_ENUM_HIDReportGlobalItemTag
+#undef AE_EXTENSION_HID_ENUM_ELEMENT
 				{ (HIDReportGlobalItemTag)(std::numeric_limits<std::underlying_type_t<HIDReportGlobalItemTag>>::max)(), "__end"sv }
 		};
 
 		inline static const std::unordered_map<HIDReportUsagePageType, std::string_view> HID_REPORT_USAGE_PAGE_TYPE_MAP = {
-#define AE_EXTENSIONS_HID_ENUM_ELEMENT(a, b) { HIDReportUsagePageType::a, #a##sv },
-				AE_EXTENSIONS_HID_ENUM_HIDReportUsagePageType
-#undef AE_EXTENSIONS_HID_ENUM_ELEMENT
+#define AE_EXTENSION_HID_ENUM_ELEMENT(a, b) { HIDReportUsagePageType::a, #a##sv },
+				AE_EXTENSION_HID_ENUM_HIDReportUsagePageType
+#undef AE_EXTENSION_HID_ENUM_ELEMENT
 				{ (HIDReportUsagePageType)(std::numeric_limits<std::underlying_type_t<HIDReportUsagePageType>>::max)(), "__end"sv }
 		};
 
 		inline static const std::unordered_map<HIDReportGenericDesktopPageType, std::string_view> HID_REPORT_GENERIC_DISKTOP_PAGE_TYPE_MAP = {
-#define AE_EXTENSIONS_HID_ENUM_ELEMENT(a, b) { HIDReportGenericDesktopPageType::a, #a##sv },
-				AE_EXTENSIONS_HID_ENUM_HIDReportGenericDesktopPageType
-#undef AE_EXTENSIONS_HID_ENUM_ELEMENT
+#define AE_EXTENSION_HID_ENUM_ELEMENT(a, b) { HIDReportGenericDesktopPageType::a, #a##sv },
+				AE_EXTENSION_HID_ENUM_HIDReportGenericDesktopPageType
+#undef AE_EXTENSION_HID_ENUM_ELEMENT
 				{ (HIDReportGenericDesktopPageType)(std::numeric_limits<std::underlying_type_t<HIDReportGenericDesktopPageType>>::max)(), "__end"sv }
 		};
 
 		inline static const std::unordered_map<HIDReportConsumerPageType, std::string_view> HID_REPORT_CONSUMER_PAGE_TYPE_MAP = {
-#define AE_EXTENSIONS_HID_ENUM_ELEMENT(a, b) { HIDReportConsumerPageType::a, #a##sv },
-				AE_EXTENSIONS_HID_ENUM_HIDReportConsumerPageType
-#undef AE_EXTENSIONS_HID_ENUM_ELEMENT
+#define AE_EXTENSION_HID_ENUM_ELEMENT(a, b) { HIDReportConsumerPageType::a, #a##sv },
+				AE_EXTENSION_HID_ENUM_HIDReportConsumerPageType
+#undef AE_EXTENSION_HID_ENUM_ELEMENT
 				{ (HIDReportConsumerPageType)(std::numeric_limits<std::underlying_type_t<HIDReportConsumerPageType>>::max)(), "__end"sv }
 		};
 
 		inline static const std::unordered_map<HIDReportLocalItemTag, std::string_view> HID_REPORT_LOCAL_ITEM_TAG_MAP = {
-#define AE_EXTENSIONS_HID_ENUM_ELEMENT(a, b) { HIDReportLocalItemTag::a, #a##sv },
-				AE_EXTENSIONS_HID_ENUM_HIDReportLocalItemTag
-#undef AE_EXTENSIONS_HID_ENUM_ELEMENT
+#define AE_EXTENSION_HID_ENUM_ELEMENT(a, b) { HIDReportLocalItemTag::a, #a##sv },
+				AE_EXTENSION_HID_ENUM_HIDReportLocalItemTag
+#undef AE_EXTENSION_HID_ENUM_ELEMENT
 				{ (HIDReportLocalItemTag)(std::numeric_limits<std::underlying_type_t<HIDReportLocalItemTag>>::max)(), "__end"sv }
 		};
 
 		inline static const std::unordered_map<HIDReportCollectionData, std::string_view> HID_REPORT_COLLECTION_DATA_MAP = {
-#define AE_EXTENSIONS_HID_ENUM_ELEMENT(a, b) { HIDReportCollectionData::a, #a##sv },
-				AE_EXTENSIONS_HID_ENUM_HIDReportCollectionData
-#undef AE_EXTENSIONS_HID_ENUM_ELEMENT
+#define AE_EXTENSION_HID_ENUM_ELEMENT(a, b) { HIDReportCollectionData::a, #a##sv },
+				AE_EXTENSION_HID_ENUM_HIDReportCollectionData
+#undef AE_EXTENSION_HID_ENUM_ELEMENT
 				{ (HIDReportCollectionData)(std::numeric_limits<std::underlying_type_t<HIDReportCollectionData>>::max)(), "__end"sv }
-		};
-
-
-		struct ReportScopeValues {
-			std::unordered_map<uint32_t, uint32_t> values;
-
-			inline void AE_CALL set(HIDReportGlobalItemTag tag, uint32_t val) {
-				values.insert_or_assign(_genKey(tag), val);
-			}
-
-			inline void AE_CALL set(HIDReportLocalItemTag tag, uint32_t val) {
-				values.insert_or_assign(_genKey(tag), val);
-			}
-
-			inline std::optional<uint32_t> AE_CALL get(HIDReportGlobalItemTag tag) const {
-				return _get(_genKey(tag));
-			}
-
-			inline std::optional<uint32_t> AE_CALL get(HIDReportLocalItemTag tag) const {
-				return _get(_genKey(tag));
-			}
-
-			void AE_CALL clearLocal() {
-				for (auto itr = values.begin(); itr != values.end();) {
-					if (itr->first <= 255) {
-						itr = values.erase(itr);
-					} else {
-						++itr;
-					}
-				}
-			}
-
-		private:
-			inline static uint32_t AE_CALL _genKey(HIDReportGlobalItemTag tag) {
-				return (uint32_t)tag << 16 | 0xFF00;
-			}
-
-			inline static uint32_t AE_CALL _genKey(HIDReportLocalItemTag tag) {
-				return (uint32_t)tag;
-			}
-
-			std::optional<uint32_t> AE_CALL _get(uint16_t key) const {
-				auto itr = values.find(key);
-				return itr == values.end() ? std::nullopt : std::optional(itr->second);
-			}
 		};
 
 
@@ -130,10 +83,9 @@ namespace aurora::extensions {
 
 			USHORT numberButtonCaps;
 			USHORT numberValueCaps;
+			HIDReportMainItemTag tag;
 			HIDP_BUTTON_CAPS* buttonCaps = nullptr;
 			HIDP_VALUE_CAPS* valueCaps = nullptr;
-
-			std::vector<ReportDataInfo> infos;
 		};
 
 
@@ -153,6 +105,73 @@ namespace aurora::extensions {
 			ReportData inputData;
 			ReportData outputData;
 			ReportData featureData;
+
+			HIDReportScopeValues scopeValues;
+			ByteArray raw;
+
+			template<HIDReportItemTag T>
+			inline void AE_CALL setRawItem(T tag, uint32_t val) {
+				if constexpr (std::same_as<T, HIDReportMainItemTag>) {
+					_setRawItem(tag, val);
+				} else {
+					if (scopeValues.set(tag, val)) _setRawItem(tag, val);
+				}
+
+				if constexpr (std::same_as<T, HIDReportMainItemTag>) scopeValues.clearLocal();
+			}
+
+			template<HIDReportItemType Type>
+			inline void AE_CALL setRawItem(uint8_t tag, uint32_t val) {
+				if constexpr (std::same_as<Type == HIDReportItemType::MAIN>) {
+					setRawItem((HIDReportMainItemTag)tag, val);
+				} else if constexpr (std::same_as<Type == HIDReportItemType::GLOBAL>) {
+					setRawItem((HIDReportGlobalItemTag)tag, val);
+				} else if constexpr (std::same_as<Type == HIDReportItemType::LOCAL>) {
+					setRawItem((HIDReportLocalItemTag)tag, val);
+				}
+			}
+
+			template<HIDReportItemTag T>
+			inline void AE_CALL setRawItem(T tag) {
+				raw.write<uint8_t>(HID::generateReportShortItemHeader(tag, 0));
+
+				if constexpr (std::same_as<T, HIDReportMainItemTag>) scopeValues.clearLocal();
+			}
+
+			template<HIDReportItemType Type>
+			inline void AE_CALL setRawItem(uint8_t tag) {
+				if constexpr (std::same_as<Type == HIDReportItemType::MAIN>) {
+					setRawItem((HIDReportMainItemTag)tag);
+				} else if constexpr (std::same_as<Type == HIDReportItemType::GLOBAL>) {
+					setRawItem((HIDReportGlobalItemTag)tag);
+				} else if constexpr (std::same_as<Type == HIDReportItemType::LOCAL>) {
+					setRawItem((HIDReportLocalItemTag)tag);
+				}
+			}
+
+		private:
+			template<HIDReportItemTag T>
+			void AE_CALL _setRawItem(T tag, uint32_t val) {
+				uint8_t bytes = 1;
+				if (val > (std::numeric_limits<uint16_t>::max)()) {
+					bytes = 4;
+				} else if (val > (std::numeric_limits<uint8_t>::max)()) {
+					bytes = 2;
+				}
+
+				raw.write<uint8_t>(HID::generateReportShortItemHeader(tag, bytes));
+				switch (bytes) {
+				case 1:
+					raw.write<uint8_t>(val);
+					break;
+				case 2:
+					raw.write<uint16_t>(val);
+					break;
+				case 4:
+					raw.write<uint32_t>(val);
+					break;
+				}
+			}
 		};
 	}
 
@@ -160,6 +179,7 @@ namespace aurora::extensions {
 	class HIDDeviceInfo {
 	public:
 		HIDDeviceInfo();
+		~HIDDeviceInfo();
 
 		std::string_view pathView;
 		HANDLE handle;
@@ -168,24 +188,27 @@ namespace aurora::extensions {
 		uint16_t AE_CALL getProductID() const;
 		uint16_t AE_CALL getUsagePage() const;
 		uint16_t AE_CALL getUsage() const;
+		ByteArray AE_CALL getRawReportDescriptor() const;
 
 	private:
 		mutable uint16_t _vendorID;
 		mutable uint16_t _productID;
 		mutable uint16_t _usagePage;
 		mutable uint16_t _usage;
+		mutable ByteArray _rawReportDescriptor;
 
+		mutable PHIDP_PREPARSED_DATA _preparsedData;
+
+		void AE_CALL _readPreparsedData() const;
 		void AE_CALL _readAttrubutes() const;
 		void AE_CALL _readCaps() const;
 	};
 
 
-	class HIDDevice {
+	class HIDDevice : public HIDDeviceInfo {
 	public:
 		HIDDevice(HANDLE handle);
 		~HIDDevice();
-
-		HANDLE handle;
 
 		USHORT inputReportLength;
 		USHORT outputReportLength;
