@@ -9,6 +9,13 @@ namespace aurora::events {
 }
 
 namespace aurora::modules::inputs {
+	/*++
+	DeviceStateType and DeviceEvent:
+	  TOUCH, values is DeviceTouchStateValue*
+	  others, values is DeviceStateValue*
+	--*/
+
+
 	enum class ModuleEvent : uint8_t {
 		CONNECTED,
 		DISCONNECTED
