@@ -84,6 +84,7 @@ namespace aurora::modules::inputs {
 
 
 	enum class DeviceStateType : uint8_t {
+		GENERIC,
 		KEY,
 		TOUCH,
 		TOUCH_RESOLUTION,
@@ -290,6 +291,20 @@ namespace aurora::modules::inputs {
 		R_BUTTON,
 		M_BUTTON,
 		FN_BUTTON_0
+	};
+
+
+	enum class GenericGamepadKeyCode : uint32_t {
+		UNKNOWN,
+		X,
+		Y,
+		Z,
+		RX,
+		RY,
+		RZ,
+		HAT_SWITCH,
+		BUTTON_1,
+		BUTTON_END = BUTTON_1 + 0xFFFF - 1
 	};
 
 

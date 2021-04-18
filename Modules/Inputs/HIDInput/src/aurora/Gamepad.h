@@ -12,13 +12,23 @@ namespace aurora::modules::inputs::hid_input {
 
 	protected:
 		struct InputReportItem {
-			aurora::extensions::HIDReportGenericDesktopPageType type = extensions::HIDReportGenericDesktopPageType::UNDEFINED;
-			Vec2<int32_t> logical;
-			Vec2<int32_t> physical;
+			uint16_t usagePage = 0;
+			uint16_t usage = 0;
+			Vec2i32 logical;
+			Vec2i32 physical;
 			uint32_t size = 0;
 			uint32_t count = 0;
 		};
 
+
+		struct KeyInfo {
+			Vec2i32 logical;
+			uint16_t bitIndex;
+			uint16_t bitCount;
+		};
+
+
+		std::unordered_map<GenericGamepadKeyCode, KeyInfo> _keyMapping;
 
 		mutable std::shared_mutex _inputStateMutex;
 

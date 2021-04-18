@@ -4,7 +4,17 @@
 #include "aurora/ScopeGuard.h"
 #include "aurora/Debug.h"
 
-//#define AE_EXTENSION_HID_PRINT_ENABLED
+//#include <winioctl.h>
+//#include <hidport.h>
+#include <hidclass.h>
+
+#include <winioctl.h>
+#define HID_OUT_CTL_CODE(id)  \
+		CTL_CODE(FILE_DEVICE_KEYBOARD, (id), METHOD_OUT_DIRECT,, FILE_ANY_ACCESS)
+#define IOCTL_HID_GET_FEATURE                   HID_OUT_CTL_CODE(100)
+#define IOCTL_HID_GET_INPUT_REPORT              HID_OUT_CTL_CODE(104)
+
+#define AE_EXTENSION_HID_PRINT_ENABLED
 
 namespace aurora::extensions {
 	namespace hid {
@@ -240,8 +250,18 @@ namespace aurora::extensions {
 			data.buttonCaps = new HIDP_BUTTON_CAPS[data.numberButtonCaps];
 			HidP_GetButtonCaps(HidP_Input, data.buttonCaps, &data.numberButtonCaps, info.preparsedData);
 
+			for (size_t i = 0; i < data.numberButtonCaps; ++i) {
+				auto& caps = data.buttonCaps[i];
+				int a = 1;
+			}
+
 			data.valueCaps = new HIDP_VALUE_CAPS[data.numberValueCaps];
 			HidP_GetValueCaps(HidP_Input, data.valueCaps, &data.numberValueCaps, info.preparsedData);
+
+			for (size_t i = 0; i < data.numberValueCaps; ++i) {
+				auto& caps = data.valueCaps[i];
+				int a = 1;
+			}
 		}
 
 		inline void AE_CALL _HIDReportDescriptor(ReportInfo& info) {
@@ -584,6 +604,43 @@ namespace aurora::extensions {
 		dev->featureReportLength = caps.FeatureReportByteLength;
 		dev->inputBuffer = new uint8_t[dev->inputReportLength];
 		dev->outputBuffer = new uint8_t[dev->outputReportLength];
+
+		if (1) {
+			auto data = new char[1024];
+			DWORD length = 1024;
+			data[0] = 0;
+
+			auto res1 = HidD_GetInputReport(handle, data, caps.InputReportByteLength);
+
+			DWORD bytes_returned = 0;
+
+			OVERLAPPED ol;
+			memset(&ol, 0, sizeof(ol));
+			HID_COLLECTION_INFORMATION info;
+			DWORD code = IOCTL_HID_GET_COLLECTION_INFORMATION;
+			auto method = code & 0b11;
+			auto func = code >> 2 & 0b111111111111;
+			auto res = DeviceIoControl(handle,
+				code,
+				NULL, 0,
+				//data, (DWORD)length,
+				data, (DWORD)length,
+				&bytes_returned, &ol);
+			if (res) {
+				if (bytes_returned >= 4) printdln(data[0], "  ", data[1], "  ", data[2], "  ", data[3]);
+
+				int a = 1;
+			}
+
+			if (!res) {
+				auto err = GetLastError();
+				auto bbb = err != ERROR_IO_PENDING;
+
+				int a = 1;
+			}
+
+			int a = 1;
+		}
 
 		return dev;
 	}
