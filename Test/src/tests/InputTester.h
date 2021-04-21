@@ -96,7 +96,7 @@ public:
 				if (1) {
 					SerializableObject args;
 					args.insert("app", app.uintptr());
-					args.insert("filter", DeviceType::KEYBOARD | DeviceType::MOUSE);
+					args.insert("filter", DeviceType::GAMEPAD);
 					//initInputModule(inputModules, "libs/" + getDLLName("ae-input-raw-input"), &args);
 				}
 				if (1) {
@@ -133,9 +133,9 @@ public:
 					printaln("input device connected : ", getDeviceTypeString(info->type), " vid = ", info->vendorID, " pid = ", info->productID, " guid = ", String::toString(info->guid.getData(), info->guid.getSize()));
 
 					//if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN) {
-					//if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN && info->vendorID != 0x54C) {
-					if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN && info->vendorID == 0xF0D) {
-					//if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN && info->vendorID == 0x45E) {
+					//if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN && info->vendorID == 0x54C) {
+					//if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN && info->vendorID == 0xF0D) {
+					if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN && info->vendorID == 0x45E) {
 						auto im = e.getTarget<IInputModule>();
 						//if (getNumInputeDevice(DeviceType::GAMEPAD) > 0) return;
 						printaln("create device : ", getDeviceTypeString(info->type), " guid = ", String::toString(info->guid.getData(), info->guid.getSize()));

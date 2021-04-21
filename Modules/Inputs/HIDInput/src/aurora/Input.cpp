@@ -422,7 +422,7 @@ namespace aurora::modules::inputs::hid_input {
 		switch (di->vendorID) {
 		case 0x54C:
 		{
-			if (di->productID == 0x5C4 || di->productID == 0x9CC) device = new GamepadDS4(*this, *di, *hid);
+			//if (di->productID == 0x5C4 || di->productID == 0x9CC) device = new GamepadDS4(*this, *di, *hid);
 
 			break;
 		}

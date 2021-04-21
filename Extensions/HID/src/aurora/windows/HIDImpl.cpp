@@ -4,15 +4,15 @@
 #include "aurora/ScopeGuard.h"
 #include "aurora/Debug.h"
 
+//#include <winusb.h>
 //#include <winioctl.h>
 //#include <hidport.h>
 #include <hidclass.h>
-
 #include <winioctl.h>
-#define HID_OUT_CTL_CODE(id)  \
-		CTL_CODE(FILE_DEVICE_KEYBOARD, (id), METHOD_OUT_DIRECT,, FILE_ANY_ACCESS)
-#define IOCTL_HID_GET_FEATURE                   HID_OUT_CTL_CODE(100)
-#define IOCTL_HID_GET_INPUT_REPORT              HID_OUT_CTL_CODE(104)
+//#define HID_OUT_CTL_CODE(id)  \
+//		CTL_CODE(FILE_DEVICE_KEYBOARD, (id), METHOD_OUT_DIRECT,, FILE_ANY_ACCESS)
+//#define IOCTL_HID_GET_FEATURE                   HID_OUT_CTL_CODE(100)
+//#define IOCTL_HID_GET_INPUT_REPORT              HID_OUT_CTL_CODE(104)
 
 #define AE_EXTENSION_HID_PRINT_ENABLED
 
@@ -91,19 +91,19 @@ namespace aurora::extensions {
 			info.setRawItem(HIDReportGlobalItemTag::USAGE_PAGE, caps.UsagePage);
 
 #ifdef AE_EXTENSION_HID_PRINT_ENABLED
-			str += indent + "UsagePage (" + getUsagePageString(caps.UsagePage) + ")\n";
+			str += indent + "UsagePage (" + getUsagePageString(caps.UsagePage) + ")(" + String::toString(caps.UsagePage) + ")\n";
 #endif
 			if (caps.IsRange) {
 				info.setRawItem(HIDReportLocalItemTag::USAGE_MINIMUM, caps.Range.UsageMin);
 				info.setRawItem(HIDReportLocalItemTag::USAGE_MAXIMUM, caps.Range.UsageMax);
 #ifdef AE_EXTENSION_HID_PRINT_ENABLED
-				str += indent + "UsageMinimum (" + getUsageString(caps.UsagePage, caps.Range.UsageMin) + ")\n";
-				str += indent + "UsageMaximum (" + getUsageString(caps.UsagePage, caps.Range.UsageMax) + ")\n";
+				str += indent + "UsageMinimum (" + getUsageString(caps.UsagePage, caps.Range.UsageMin) + ")(" + String::toString(caps.Range.UsageMin) + ")\n";
+				str += indent + "UsageMaximum (" + getUsageString(caps.UsagePage, caps.Range.UsageMax) + ")(" + String::toString(caps.Range.UsageMax) + ")\n";
 #endif
 			} else {
 				info.setRawItem(HIDReportLocalItemTag::USAGE, caps.NotRange.Usage);
 #ifdef AE_EXTENSION_HID_PRINT_ENABLED
-				str += indent + "Usage (" + getUsageString(caps.UsagePage, caps.NotRange.Usage) + ")\n";
+				str += indent + "Usage (" + getUsageString(caps.UsagePage, caps.NotRange.Usage) + ")(" + String::toString(caps.NotRange.Usage) + ")\n";
 #endif
 			}
 
@@ -143,11 +143,12 @@ namespace aurora::extensions {
 		}
 
 		template<typename T>
-		inline void AE_CALL _HIDReportCollectData(std::vector<ReportDataInfo>& vec, T* caps, size_t numberCaps, size_t collectionIndex) {
+		inline void AE_CALL _HIDReportCollectData(std::vector<ReportDataInfo>& vec, std::vector<T>& caps, size_t collectionIndex) {
+			auto max = caps.size();
 			size_t i = 0;
 			do {
-				i = findDataCaps(caps, numberCaps, i, collectionIndex);
-				if (i >= numberCaps) {
+				i = findDataCaps(caps.data(), max, i, collectionIndex);
+				if (i >= max) {
 					break;
 				} else {
 					auto& info = vec.emplace_back();
@@ -172,8 +173,8 @@ namespace aurora::extensions {
 		inline void AE_CALL _HIDReportCollectData(std::string& str, ReportInfo& info, ReportData& data, size_t collectionIndex, const std::string& indent) {
 			std::vector<ReportDataInfo> vec;
 
-			_HIDReportCollectData(vec, data.buttonCaps, data.numberButtonCaps, collectionIndex);
-			_HIDReportCollectData(vec, data.valueCaps, data.numberValueCaps, collectionIndex);
+			_HIDReportCollectData(vec, data.buttonCaps, collectionIndex);
+			_HIDReportCollectData(vec, data.valueCaps, collectionIndex);
 
 			std::sort(vec.begin(), vec.end(), [](const ReportDataInfo& left, const ReportDataInfo& right) {
 				return left.index < right.index;
@@ -247,21 +248,31 @@ namespace aurora::extensions {
 		}
 
 		inline void AE_CALL _HIDReportReadDataCaps(ReportData& data, HIDP_REPORT_TYPE reportType, ReportInfo& info) {
-			data.buttonCaps = new HIDP_BUTTON_CAPS[data.numberButtonCaps];
-			HidP_GetButtonCaps(HidP_Input, data.buttonCaps, &data.numberButtonCaps, info.preparsedData);
+			if (data.numberButtonCaps) {
+				data.buttonCaps.resize(data.numberButtonCaps);
+				if (HidP_GetButtonCaps(reportType, data.buttonCaps.data(), &data.numberButtonCaps, info.preparsedData) != HIDP_STATUS_SUCCESS) {
+					int a = 1;
+				}
 
-			for (size_t i = 0; i < data.numberButtonCaps; ++i) {
-				auto& caps = data.buttonCaps[i];
-				int a = 1;
+				for (size_t i = 0; i < data.numberButtonCaps; ++i) {
+					auto& caps = data.buttonCaps[i];
+					int a = 1;
+				}
 			}
 
-			data.valueCaps = new HIDP_VALUE_CAPS[data.numberValueCaps];
-			HidP_GetValueCaps(HidP_Input, data.valueCaps, &data.numberValueCaps, info.preparsedData);
+			if (data.numberValueCaps) {
+				data.valueCaps.resize(data.numberValueCaps);
+				if (HidP_GetValueCaps(reportType, data.valueCaps.data(), &data.numberValueCaps, info.preparsedData) != HIDP_STATUS_SUCCESS) {
+					int a = 1;
+				}
 
-			for (size_t i = 0; i < data.numberValueCaps; ++i) {
-				auto& caps = data.valueCaps[i];
-				int a = 1;
+				for (size_t i = 0; i < data.numberValueCaps; ++i) {
+					auto& caps = data.valueCaps[i];
+					int a = 1;
+				}
 			}
+
+			int a = 1;
 		}
 
 		inline void AE_CALL _HIDReportDescriptor(ReportInfo& info) {
@@ -273,8 +284,8 @@ namespace aurora::extensions {
 			info.setRawItem(HIDReportLocalItemTag::USAGE, info.usage);
 
 #ifdef AE_EXTENSION_HID_PRINT_ENABLED
-			str += indent + "UsagePage (" + getUsagePageString(info.usagePage) + ")\n";
-			str += indent + "Usage (" + getUsageString(info.usagePage, info.usage) + ")\n";
+			str += indent + "UsagePage (" + getUsagePageString(info.usagePage) + ")(" + String::toString(info.usagePage) + ")\n";
+			str += indent + "Usage (" + getUsageString(info.usagePage, info.usage) + ")(" + String::toString(info.usage) + ")\n";
 #endif
 
 			{
@@ -605,19 +616,25 @@ namespace aurora::extensions {
 		dev->inputBuffer = new uint8_t[dev->inputReportLength];
 		dev->outputBuffer = new uint8_t[dev->outputReportLength];
 
-		if (1) {
-			auto data = new char[1024];
-			DWORD length = 1024;
+		if (0) {
+			DWORD length = 61960;
+			auto data = new uint8_t[length];
+			
 			data[0] = 0;
 
 			auto res1 = HidD_GetInputReport(handle, data, caps.InputReportByteLength);
+			
+			length = 1024;
+			HIDP_EXTENDED_ATTRIBUTES atts[1024];
+			auto rst2 = HidP_GetExtendedAttributes(HidP_Input, 0, preparsedData, atts, &length);
+			auto bbbbbb = rst2 == HIDP_STATUS_SUCCESS;
 
 			DWORD bytes_returned = 0;
 
 			OVERLAPPED ol;
 			memset(&ol, 0, sizeof(ol));
 			HID_COLLECTION_INFORMATION info;
-			DWORD code = IOCTL_HID_GET_COLLECTION_INFORMATION;
+			DWORD code = 0xb0003;
 			auto method = code & 0b11;
 			auto func = code >> 2 & 0b111111111111;
 			auto res = DeviceIoControl(handle,
@@ -627,6 +644,19 @@ namespace aurora::extensions {
 				data, (DWORD)length,
 				&bytes_returned, &ol);
 			if (res) {
+				//printdln(String::toString(data, bytes_returned));
+				for (size_t i = 0; i < bytes_returned; ++i) {
+					if (data[i] == 0x9) {
+						if (i + 1 < bytes_returned) {
+							auto val2 = data[i + 1];
+							if (val2 == 0x30) {
+								int a = 1;
+							}
+							printdln(val2, " ", data[i + 2]);
+							int a = 1;
+						}
+					}
+				}
 				if (bytes_returned >= 4) printdln(data[0], "  ", data[1], "  ", data[2], "  ", data[3]);
 
 				int a = 1;

@@ -55,6 +55,9 @@ namespace aurora::modules::inputs::hid_input {
 			return;
 		}
 
+		auto val = buf[1] << 8 | buf[0];
+		printdln(val);
+
 		/*
 		auto first = state[0];
 		auto buf = state + 1;
@@ -71,7 +74,7 @@ namespace aurora::modules::inputs::hid_input {
 		}
 		*/
 		//if (btnSrcVal != 128) printdln(btnSrcVal);
-		printdln(String::toString(inputBuffer, 16));
+		//printdln(String::toString(inputBuffer, 16));
 
 		//028101810080FB7D0080 00 000000CCCC
 		//0281FF7F0080F97C0080 01 000000CCCC a

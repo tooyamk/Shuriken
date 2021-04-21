@@ -76,16 +76,11 @@ namespace aurora::extensions {
 
 
 		struct ReportData {
-			~ReportData() {
-				if (buttonCaps) delete[] buttonCaps;
-				if (valueCaps) delete[] valueCaps;
-			}
-
 			USHORT numberButtonCaps;
 			USHORT numberValueCaps;
 			HIDReportMainItemTag tag;
-			HIDP_BUTTON_CAPS* buttonCaps = nullptr;
-			HIDP_VALUE_CAPS* valueCaps = nullptr;
+			std::vector<HIDP_BUTTON_CAPS> buttonCaps;
+			std::vector<HIDP_VALUE_CAPS> valueCaps;
 		};
 
 
