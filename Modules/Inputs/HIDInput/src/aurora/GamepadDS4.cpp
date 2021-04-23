@@ -61,39 +61,39 @@ namespace aurora::modules::inputs::hid_input {
 			if (values && count) {
 				std::shared_lock lock(_inputStateMutex);
 
-				switch ((GamepadKeyCode)code) {
-				case GamepadKeyCode::DPAD:
+				switch ((GamepadVirtualKeyCode)code) {
+				case GamepadVirtualKeyCode::DPAD:
 					return _getDPad(_inputState[(int32_t)InputBufferOffset::D_PAD], (DeviceStateValue*)values);
-				case GamepadKeyCode::SQUARE:
+				case GamepadVirtualKeyCode::SQUARE:
 					return _getButton(_inputState[(int32_t)InputBufferOffset::SQUARE], InputMask::SQUARE, (DeviceStateValue*)values);
-				case GamepadKeyCode::CROSS:
+				case GamepadVirtualKeyCode::CROSS:
 					return _getButton(_inputState[(int32_t)InputBufferOffset::CROSS], InputMask::CROSS, (DeviceStateValue*)values);
-				case GamepadKeyCode::CIRCLE:
+				case GamepadVirtualKeyCode::CIRCLE:
 					return _getButton(_inputState[(int32_t)InputBufferOffset::CIRCLE], InputMask::CIRCLE, (DeviceStateValue*)values);
-				case GamepadKeyCode::TRIANGLE:
+				case GamepadVirtualKeyCode::TRIANGLE:
 					return _getButton(_inputState[(int32_t)InputBufferOffset::TRIANGLE], InputMask::TRIANGLE, (DeviceStateValue*)values);
-				case GamepadKeyCode::L1:
+				case GamepadVirtualKeyCode::L1:
 					return _getButton(_inputState[(int32_t)InputBufferOffset::L1], InputMask::L1, (DeviceStateValue*)values);
-				case GamepadKeyCode::R1:
+				case GamepadVirtualKeyCode::R1:
 					return _getButton(_inputState[(int32_t)InputBufferOffset::R1], InputMask::R1, (DeviceStateValue*)values);
-				case GamepadKeyCode::SHARE:
+				case GamepadVirtualKeyCode::SHARE:
 					return _getButton(_inputState[(int32_t)InputBufferOffset::SHARE], InputMask::SHARE, (DeviceStateValue*)values);
-				case GamepadKeyCode::OPTIONS:
+				case GamepadVirtualKeyCode::OPTIONS:
 					return _getButton(_inputState[(int32_t)InputBufferOffset::OPTIONS], InputMask::OPTIONS, (DeviceStateValue*)values);
-				case GamepadKeyCode::L3:
+				case GamepadVirtualKeyCode::L3:
 					return _getButton(_inputState[(int32_t)InputBufferOffset::L3], InputMask::L3, (DeviceStateValue*)values);
-				case GamepadKeyCode::R3:
+				case GamepadVirtualKeyCode::R3:
 					return _getButton(_inputState[(int32_t)InputBufferOffset::R3], InputMask::R3, (DeviceStateValue*)values);
-				case GamepadKeyCode::TOUCH_PAD:
+				case GamepadVirtualKeyCode::TOUCH_PAD:
 					return _getButton(_inputState[(int32_t)InputBufferOffset::TOUTCH_PAD], InputMask::TOUTCH_PAD_CLICK, (DeviceStateValue*)values);
-				case GamepadKeyCode::L2:
-					return _getTrigger(_inputState[(int32_t)InputBufferOffset::L2], GamepadKeyCode::L2, (DeviceStateValue*)values);
-				case GamepadKeyCode::R2:
-					return _getTrigger(_inputState[(int32_t)InputBufferOffset::R2], GamepadKeyCode::R2, (DeviceStateValue*)values);
-				case GamepadKeyCode::L_STICK:
-					return _getStick(_inputState[(int32_t)InputBufferOffset::LX], _inputState[(int32_t)InputBufferOffset::LY], GamepadKeyCode::L_STICK, (DeviceStateValue*)values, count);
-				case GamepadKeyCode::R_STICK:
-					return _getStick(_inputState[(int32_t)InputBufferOffset::RX], _inputState[(int32_t)InputBufferOffset::RY], GamepadKeyCode::R_STICK, (DeviceStateValue*)values, count);
+				case GamepadVirtualKeyCode::L2:
+					return _getTrigger(_inputState[(int32_t)InputBufferOffset::L2], GamepadVirtualKeyCode::L2, (DeviceStateValue*)values);
+				case GamepadVirtualKeyCode::R2:
+					return _getTrigger(_inputState[(int32_t)InputBufferOffset::R2], GamepadVirtualKeyCode::R2, (DeviceStateValue*)values);
+				case GamepadVirtualKeyCode::L_STICK:
+					return _getStick(_inputState[(int32_t)InputBufferOffset::LX], _inputState[(int32_t)InputBufferOffset::LY], GamepadVirtualKeyCode::L_STICK, (DeviceStateValue*)values, count);
+				case GamepadVirtualKeyCode::R_STICK:
+					return _getStick(_inputState[(int32_t)InputBufferOffset::RX], _inputState[(int32_t)InputBufferOffset::RY], GamepadVirtualKeyCode::R_STICK, (DeviceStateValue*)values, count);
 				default:
 					return 0;
 				}
@@ -104,7 +104,7 @@ namespace aurora::modules::inputs::hid_input {
 		case DeviceStateType::DEAD_ZONE:
 		{
 			if (values && count) {
-				((DeviceStateValue*)values)[0] = _getDeadZone((GamepadKeyCode)code);
+				((DeviceStateValue*)values)[0] = _getDeadZone((GamepadVirtualKeyCode)code);
 
 				return 1;
 			}
@@ -158,7 +158,7 @@ namespace aurora::modules::inputs::hid_input {
 		case DeviceStateType::DEAD_ZONE:
 		{
 			if (values && count) {
-				_setDeadZone((GamepadKeyCode)code, ((DeviceStateValue*)values)[0]);
+				_setDeadZone((GamepadVirtualKeyCode)code, ((DeviceStateValue*)values)[0]);
 				return 1;
 			}
 
@@ -283,7 +283,7 @@ namespace aurora::modules::inputs::hid_input {
 			}
 		}
 
-		for (size_t i = 0; i < 2; ++i) _dispatchStick(oldSticks[i], curBuf16[i], GamepadKeyCode::L_STICK + i);
+		for (size_t i = 0; i < 2; ++i) _dispatchStick(oldSticks[i], curBuf16[i], GamepadVirtualKeyCode::L_STICK + i);
 
 		{
 			/*
@@ -317,32 +317,32 @@ namespace aurora::modules::inputs::hid_input {
 			case InputBufferOffset::D_PAD:
 			{
 				_dispatchDPad(oldState, newState);
-				_dispatchButton(oldState, newState, InputMask::SQUARE, GamepadKeyCode::SQUARE);
-				_dispatchButton(oldState, newState, InputMask::CROSS, GamepadKeyCode::CROSS);
-				_dispatchButton(oldState, newState, InputMask::CIRCLE, GamepadKeyCode::CIRCLE);
-				_dispatchButton(oldState, newState, InputMask::TRIANGLE, GamepadKeyCode::TRIANGLE);
+				_dispatchButton(oldState, newState, InputMask::SQUARE, GamepadVirtualKeyCode::SQUARE);
+				_dispatchButton(oldState, newState, InputMask::CROSS, GamepadVirtualKeyCode::CROSS);
+				_dispatchButton(oldState, newState, InputMask::CIRCLE, GamepadVirtualKeyCode::CIRCLE);
+				_dispatchButton(oldState, newState, InputMask::TRIANGLE, GamepadVirtualKeyCode::TRIANGLE);
 
 				break;
 			}
 			case InputBufferOffset::L1:
 			{
-				_dispatchButton(oldState, newState, InputMask::L1, GamepadKeyCode::L1);
-				_dispatchButton(oldState, newState, InputMask::R1, GamepadKeyCode::R1);
-				_dispatchButton(oldState, newState, InputMask::SHARE, GamepadKeyCode::SHARE);
-				_dispatchButton(oldState, newState, InputMask::OPTIONS, GamepadKeyCode::OPTIONS);
-				_dispatchButton(oldState, newState, InputMask::L3, GamepadKeyCode::L3);
-				_dispatchButton(oldState, newState, InputMask::R3, GamepadKeyCode::R3);
+				_dispatchButton(oldState, newState, InputMask::L1, GamepadVirtualKeyCode::L1);
+				_dispatchButton(oldState, newState, InputMask::R1, GamepadVirtualKeyCode::R1);
+				_dispatchButton(oldState, newState, InputMask::SHARE, GamepadVirtualKeyCode::SHARE);
+				_dispatchButton(oldState, newState, InputMask::OPTIONS, GamepadVirtualKeyCode::OPTIONS);
+				_dispatchButton(oldState, newState, InputMask::L3, GamepadVirtualKeyCode::L3);
+				_dispatchButton(oldState, newState, InputMask::R3, GamepadVirtualKeyCode::R3);
 
 				break;
 			}
 			case InputBufferOffset::PS:
-				_dispatchButton(oldState, newState, InputMask::TOUTCH_PAD_CLICK, GamepadKeyCode::TOUCH_PAD);
+				_dispatchButton(oldState, newState, InputMask::TOUTCH_PAD_CLICK, GamepadVirtualKeyCode::TOUCH_PAD);
 				break;
 			case InputBufferOffset::L_TRIGGER:
-				_dispatchTrigger(oldState, newState, GamepadKeyCode::L2);
+				_dispatchTrigger(oldState, newState, GamepadVirtualKeyCode::L2);
 				break;
 			case InputBufferOffset::R_TRIGGER:
-				_dispatchTrigger(oldState, newState, GamepadKeyCode::R2);
+				_dispatchTrigger(oldState, newState, GamepadVirtualKeyCode::R2);
 				break;
 			default:
 				break;
@@ -378,7 +378,7 @@ namespace aurora::modules::inputs::hid_input {
 		return 1;
 	}
 
-	DeviceState::CountType GamepadDS4::_getTrigger(uint8_t state, GamepadKeyCode key, DeviceStateValue* data) const {
+	DeviceState::CountType GamepadDS4::_getTrigger(uint8_t state, GamepadVirtualKeyCode key, DeviceStateValue* data) const {
 		auto value = _translateTrigger(state);
 		auto dz = _getDeadZone(key);
 		data[0] = _translateDeadZone01(value, dz, value <= dz);
@@ -394,7 +394,7 @@ namespace aurora::modules::inputs::hid_input {
 		return 1;
 	}
 
-	DeviceState::CountType GamepadDS4::_getStick(uint8_t xstate, uint8_t ystate, GamepadKeyCode key, DeviceStateValue* data, DeviceState::CountType count) const {
+	DeviceState::CountType GamepadDS4::_getStick(uint8_t xstate, uint8_t ystate, GamepadVirtualKeyCode key, DeviceStateValue* data, DeviceState::CountType count) const {
 		DeviceState::CountType c = 1;
 
 		auto dz = _getDeadZone(key);
@@ -449,7 +449,7 @@ namespace aurora::modules::inputs::hid_input {
 		_outputDirty = true;
 	}
 
-	void GamepadDS4::_dispatchButton(uint8_t oldState, uint8_t newState, InputMask mask, GamepadKeyCode key) {
+	void GamepadDS4::_dispatchButton(uint8_t oldState, uint8_t newState, InputMask mask, GamepadVirtualKeyCode key) {
 		auto oldVal = oldState & (uint8_t)mask;
 		auto newVal = newState & (uint8_t)mask;
 		if (oldVal != newVal) {
@@ -459,7 +459,7 @@ namespace aurora::modules::inputs::hid_input {
 		}
 	}
 
-	void GamepadDS4::_dispatchTrigger(uint8_t oldState, uint8_t newState, GamepadKeyCode key) {
+	void GamepadDS4::_dispatchTrigger(uint8_t oldState, uint8_t newState, GamepadVirtualKeyCode key) {
 		auto value = _translateTrigger(newState);
 		auto dz = _getDeadZone(key);
 		auto oriDz = _translateTrigger(oldState) <= dz;
@@ -477,17 +477,17 @@ namespace aurora::modules::inputs::hid_input {
 		if (oldVal != newVal) {
 			if (newVal <= 7) {
 				auto value = newVal * Math::PI_4<DeviceStateValue>;
-				DeviceState k = { (DeviceState::CodeType)GamepadKeyCode::DPAD, 1, &value };
+				DeviceState k = { (DeviceState::CodeType)GamepadVirtualKeyCode::DPAD, 1, &value };
 				_eventDispatcher->dispatchEvent(this, DeviceEvent::DOWN, &k);
 			} else if (oldVal <= 7) {
 				auto value = Math::NEGATIVE_ONE<DeviceStateValue>;
-				DeviceState k = { (DeviceState::CodeType)GamepadKeyCode::DPAD, 1, &value };
+				DeviceState k = { (DeviceState::CodeType)GamepadVirtualKeyCode::DPAD, 1, &value };
 				_eventDispatcher->dispatchEvent(this, DeviceEvent::UP, &k);
 			}
 		}
 	}
 
-	void GamepadDS4::_dispatchStick(uint16_t oldState, uint16_t newState, GamepadKeyCode key) {
+	void GamepadDS4::_dispatchStick(uint16_t oldState, uint16_t newState, GamepadVirtualKeyCode key) {
 		if (oldState != newState) {
 			DeviceStateValue value[] = { _translateStick(newState & 0xFF) , _translateStick(newState >> 8 & 0xFF) };
 			auto dz = _getDeadZone(key);

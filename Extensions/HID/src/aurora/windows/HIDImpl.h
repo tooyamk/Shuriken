@@ -4,7 +4,6 @@
 
 #if AE_OS == AE_OS_WIN
 #include <hidsdi.h>
-#include <SetupAPI.h>
 
 namespace aurora::extensions {
 	namespace hid {
@@ -67,6 +66,7 @@ namespace aurora::extensions {
 		};
 
 
+		/*
 		struct ReportDataInfo {
 			uint16_t index;
 			uint16_t length;
@@ -168,6 +168,7 @@ namespace aurora::extensions {
 				}
 			}
 		};
+		*/
 	}
 
 
@@ -181,20 +182,20 @@ namespace aurora::extensions {
 
 		uint16_t AE_CALL getVendorID() const;
 		uint16_t AE_CALL getProductID() const;
-		uint16_t AE_CALL getUsagePage() const;
-		uint16_t AE_CALL getUsage() const;
-		ByteArray AE_CALL getRawReportDescriptor() const;
+		HIDUsagePage AE_CALL getUsagePage() const;
+		HIDUsage AE_CALL getUsage() const;
+		void* AE_CALL getPreparsedData() const;
+		//ByteArray AE_CALL getRawReportDescriptor() const;
 
-	private:
+	protected:
 		mutable uint16_t _vendorID;
 		mutable uint16_t _productID;
-		mutable uint16_t _usagePage;
-		mutable uint16_t _usage;
+		mutable HIDUsagePage _usagePage;
+		mutable HIDUsage _usage;
 		mutable ByteArray _rawReportDescriptor;
 
 		mutable PHIDP_PREPARSED_DATA _preparsedData;
 
-		void AE_CALL _readPreparsedData() const;
 		void AE_CALL _readAttrubutes() const;
 		void AE_CALL _readCaps() const;
 	};
@@ -202,7 +203,7 @@ namespace aurora::extensions {
 
 	class HIDDevice : public HIDDeviceInfo {
 	public:
-		HIDDevice(HANDLE handle);
+		HIDDevice(HANDLE handle, PHIDP_PREPARSED_DATA preparsedData);
 		~HIDDevice();
 
 		USHORT inputReportLength;
@@ -216,6 +217,9 @@ namespace aurora::extensions {
 		bool writePending;
 		OVERLAPPED oRead;
 		OVERLAPPED oWrite;
+
+		//ULONG AE_CALL parsePressedButtons(HIDP_REPORT_TYPE reportType, USAGE usagePage, const void* reportData, ULONG reportDataLength, USAGE* outUsages, ULONG usageLength) const;
+		//std::optional<ULONG> AE_CALL parseValue(HIDP_REPORT_TYPE reportType, USAGE usagePage, USAGE usage, const void* report, ULONG reportLength) const;
 	};
 }
 #endif

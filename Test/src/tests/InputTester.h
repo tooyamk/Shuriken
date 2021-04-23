@@ -5,42 +5,48 @@
 
 class InputTester : public BaseTester {
 public:
-	static std::string_view AE_CALL getGamepadKeyString(GamepadKeyCode code) {
+	static std::string AE_CALL getGamepadKeyString(GamepadVirtualKeyCode code) {
 		switch (code) {
-		case GamepadKeyCode::L_STICK:
+		case GamepadVirtualKeyCode::L_STICK:
 			return "left stick";
-		case GamepadKeyCode::R_STICK:
+		case GamepadVirtualKeyCode::R_STICK:
 			return "right stick";
-		case GamepadKeyCode::L_THUMB:
+		case GamepadVirtualKeyCode::L_THUMB:
 			return "left thumb";
-		case GamepadKeyCode::R_THUMB:
+		case GamepadVirtualKeyCode::R_THUMB:
 			return "right thumb";
-		case GamepadKeyCode::DPAD:
+		case GamepadVirtualKeyCode::DPAD:
 			return "dpad";
-		case GamepadKeyCode::L_SHOULDER:
+		case GamepadVirtualKeyCode::L_SHOULDER:
 			return "left shoulder";
-		case GamepadKeyCode::R_SHOULDER:
+		case GamepadVirtualKeyCode::R_SHOULDER:
 			return "right shoulder";
-		case GamepadKeyCode::L_TRIGGER:
+		case GamepadVirtualKeyCode::L_TRIGGER:
 			return "left trigger";
-		case GamepadKeyCode::R_TRIGGER:
+		case GamepadVirtualKeyCode::R_TRIGGER:
 			return "right trigger";
-		case GamepadKeyCode::SELECT:
+		case GamepadVirtualKeyCode::SELECT:
 			return "select";
-		case GamepadKeyCode::START:
+		case GamepadVirtualKeyCode::START:
 			return "start";
-		case GamepadKeyCode::A:
+		case GamepadVirtualKeyCode::A:
 			return "a";
-		case GamepadKeyCode::B:
+		case GamepadVirtualKeyCode::B:
 			return "b";
-		case GamepadKeyCode::X:
+		case GamepadVirtualKeyCode::X:
 			return "x";
-		case GamepadKeyCode::Y:
+		case GamepadVirtualKeyCode::Y:
 			return "y";
-		case GamepadKeyCode::TOUCH_PAD:
+		case GamepadVirtualKeyCode::TOUCH_PAD:
 			return "touch pad";
 		default:
-			return "undefined";
+		{
+			if (code >= GamepadVirtualKeyCode::UNDEFINED_BUTTON_1) {
+				return "undefined button " + String::toString((uint32_t)(code - GamepadVirtualKeyCode::UNDEFINED_BUTTON_1) + 1);
+			}
+
+			return "unknown";
+		}
 		}
 	}
 
@@ -89,7 +95,7 @@ public:
 				if (1) {
 					SerializableObject args;
 					args.insert("app", app.uintptr());
-					args.insert("ignoreXInputDevices", true);
+					//args.insert("ignoreXInputDevices", true);
 					args.insert("filter", DeviceType::GAMEPAD);
 					//initInputModule(inputModules, "libs/" + getDLLName("ae-input-direct-input"), &args);
 				}
@@ -140,6 +146,14 @@ public:
 						//if (getNumInputeDevice(DeviceType::GAMEPAD) > 0) return;
 						printaln("create device : ", getDeviceTypeString(info->type), " guid = ", String::toString(info->guid.getData(), info->guid.getSize()));
 						if (auto device = im->createDevice(info->guid); device) {
+							SerializableObject keyMapping;
+							keyMapping.get(GamepadVirtualKeyCode::L_STICK).push(GamepadKeyCode::RX, GamepadKeyCode::RY);
+							keyMapping.get(GamepadVirtualKeyCode::R_STICK).push(GamepadKeyCode::X, GamepadKeyCode::Y);
+							keyMapping.insert(GamepadVirtualKeyCode::L_TRIGGER, GamepadKeyCode::Z);
+							keyMapping.insert(GamepadVirtualKeyCode::R_TRIGGER, GamepadKeyCode::Z);
+							keyMapping.insert(GamepadVirtualKeyCode::A, GamepadKeyCode::BUTTON_1 + 2);
+							//device->setState(DeviceStateType::KEY_MAPPING, 0, &keyMapping, 1);
+
 							auto eventDispatcher = device->getEventDispatcher();
 
 							eventDispatcher->addEventListener(DeviceEvent::DOWN, createEventListener<DeviceEvent>([app](Event<DeviceEvent>& e) {
@@ -163,8 +177,8 @@ public:
 								case DeviceType::GAMEPAD:
 								{
 									auto state = e.getData<DeviceState>();
-									printaln("gamepad down : ", " vid = ", info.vendorID, " pid = ", info.productID, getGamepadKeyString((GamepadKeyCode)state->code), "  ", ((DeviceStateValue*)state->values)[0]);
-									if (state->code == GamepadKeyCode::CROSS) {
+									printaln("gamepad down : ", " vid = ", info.vendorID, " pid = ", info.productID, " ", getGamepadKeyString((GamepadVirtualKeyCode)state->code), "  ", ((DeviceStateValue*)state->values)[0]);
+									if (state->code == GamepadVirtualKeyCode::CROSS) {
 										//DeviceStateValue vals[] = { 1.f, 1.f };
 										//device->setState(DeviceStateType::VIBRATION, 0, vals, 2);
 									}
@@ -193,8 +207,8 @@ public:
 								case DeviceType::GAMEPAD:
 								{
 									auto state = e.getData<DeviceState>();
-									printaln("gamepad up : ", info.vendorID, " pid = ", info.productID, getGamepadKeyString((GamepadKeyCode)state->code), "  ", ((DeviceStateValue*)state->values)[0]);
-									if (state->code == GamepadKeyCode::CROSS) {
+									printaln("gamepad up : ", info.vendorID, " pid = ", info.productID, " ", getGamepadKeyString((GamepadVirtualKeyCode)state->code), "  ", ((DeviceStateValue*)state->values)[0]);
+									if (state->code == GamepadVirtualKeyCode::CROSS) {
 										//DeviceStateValue vals[] = { 0.f, 0.f };
 										//device->setState(DeviceStateType::VIBRATION, 0, vals, 2);
 									}
@@ -225,7 +239,7 @@ public:
 								{
 									auto state = e.getData<DeviceState>();
 									//if (key->code != GamepadKeyCode::R_STICK) break;
-									printd("gamepad move : ", info.vendorID, " pid = ", info.productID, getGamepadKeyString((GamepadKeyCode)state->code), " ", ((DeviceStateValue*)state->values)[0]);
+									printd("gamepad move : ", info.vendorID, " pid = ", info.productID, " ", getGamepadKeyString((GamepadVirtualKeyCode)state->code), " ", ((DeviceStateValue*)state->values)[0]);
 									if (state->count > 1) printd("  ", ((DeviceStateValue*)state->values)[1]);
 									printaln();
 
@@ -308,8 +322,8 @@ public:
 
 							if (dev->getInfo().type == DeviceType::GAMEPAD) {
 								DeviceStateValue vals[2];
-								dev->getState(DeviceStateType::KEY, GamepadKeyCode::SQUARE, vals, 2);
-								
+								dev->getState(DeviceStateType::KEY, GamepadVirtualKeyCode::SQUARE, vals, 2);
+
 								DeviceStateValue vibration[2];
 								vibration[0] = vals[0];
 								vibration[1] = vals[1];

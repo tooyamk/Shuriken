@@ -31,9 +31,9 @@ namespace aurora::modules::inputs::xinput {
 		XINPUT_STATE _state;
 
 		mutable std::shared_mutex _deadZoneMutex;
-		std::unordered_map<GamepadKeyCode, DeviceStateValue> _deadZone;
+		std::unordered_map<GamepadVirtualKeyCode, DeviceStateValue> _deadZone;
 
-		inline float32_t AE_CALL _getDeadZone(GamepadKeyCode key) const {
+		inline float32_t AE_CALL _getDeadZone(GamepadVirtualKeyCode key) const {
 			std::shared_lock lock(_deadZoneMutex);
 
 			if (auto itr = _deadZone.find(key); itr == _deadZone.end()) {
@@ -43,16 +43,16 @@ namespace aurora::modules::inputs::xinput {
 			}
 		}
 
-		void AE_CALL _setDeadZone(GamepadKeyCode keyCode, DeviceStateValue deadZone);
+		void AE_CALL _setDeadZone(GamepadVirtualKeyCode keyCode, DeviceStateValue deadZone);
 
 		void AE_CALL _setVibration(DeviceStateValue left, DeviceStateValue right);
 
-		DeviceState::CountType AE_CALL _getStick(SHORT x, SHORT y, GamepadKeyCode key, DeviceStateValue* data, DeviceState::CountType count) const;
-		DeviceState::CountType AE_CALL _getTrigger(SHORT t, GamepadKeyCode key, DeviceStateValue& data) const;
+		DeviceState::CountType AE_CALL _getStick(SHORT x, SHORT y, GamepadVirtualKeyCode key, DeviceStateValue* data, DeviceState::CountType count) const;
+		DeviceState::CountType AE_CALL _getTrigger(SHORT t, GamepadVirtualKeyCode key, DeviceStateValue& data) const;
 
-		void AE_CALL _dispatchStick(SHORT oriX, SHORT oriY, SHORT curX, SHORT curY, GamepadKeyCode key);
-		void AE_CALL _dispatchTrigger(SHORT ori, SHORT cur, GamepadKeyCode key);
-		void AE_CALL _dispatchButton(WORD ori, WORD cur, uint16_t flags, GamepadKeyCode key);
+		void AE_CALL _dispatchStick(SHORT oriX, SHORT oriY, SHORT curX, SHORT curY, GamepadVirtualKeyCode key);
+		void AE_CALL _dispatchTrigger(SHORT ori, SHORT cur, GamepadVirtualKeyCode key);
+		void AE_CALL _dispatchButton(WORD ori, WORD cur, uint16_t flags, GamepadVirtualKeyCode key);
 
 		inline static DeviceStateValue AE_CALL _translateDeadZone01(DeviceStateValue value, DeviceStateValue dz, bool inDz) {
 			return inDz ? Math::ZERO<DeviceStateValue> : (value - dz) / (Math::ONE<DeviceStateValue> - dz);

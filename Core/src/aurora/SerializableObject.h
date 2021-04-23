@@ -331,8 +331,17 @@ namespace aurora {
 		SerializableObject& AE_CALL at(size_t index);
 		SerializableObject AE_CALL tryAt(size_t index) const;
 		SerializableObject* AE_CALL tryAtPtr(size_t index) const;
+
 		SerializableObject& AE_CALL push();
 		SerializableObject& AE_CALL push(const SerializableObject& value);
+
+		template<typename... Args>
+		requires (sizeof...(Args) > 1)
+		inline SerializableObject& AE_CALL push(Args&&... args) {
+			(push(args), ...);
+			return *this;
+		}
+
 		SerializableObject AE_CALL removeAt(size_t index);
 		void AE_CALL insertAt(size_t index, const SerializableObject& value);
 

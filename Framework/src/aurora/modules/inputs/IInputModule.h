@@ -84,7 +84,8 @@ namespace aurora::modules::inputs {
 
 
 	enum class DeviceStateType : uint8_t {
-		GENERIC,
+		UNKNOWN,
+		KEY_MAPPING,
 		KEY,
 		TOUCH,
 		TOUCH_RESOLUTION,
@@ -294,41 +295,52 @@ namespace aurora::modules::inputs {
 	};
 
 
-	enum class GenericGamepadKeyCode : uint32_t {
+	enum class GamepadKeyCode : uint8_t {
 		UNKNOWN,
-		X,
+
+		AXIS_START,
+		X = AXIS_START,
 		Y,
 		Z,
 		RX,
 		RY,
 		RZ,
-		HAT_SWITCH,
-		BUTTON_1,
-		BUTTON_END = BUTTON_1 + 0xFFFF - 1
+		AXIS_END = RZ,
+
+		BUTTON_START,
+		BUTTON_1 = BUTTON_START,
+		BUTTON_END = 255
 	};
 
 
-	enum class GamepadKeyCode : uint8_t {
-		L_STICK,
+	enum class GamepadVirtualKeyCode : uint8_t {
+		UNKNOWN,
+
+		AXIS_START,
+
+		L_STICK = AXIS_START,
 		R_STICK,
-
-		L_THUMB,
-		L3 = L_THUMB,//DualShock
-		R_THUMB,
-		R3 = R_THUMB,//DualShock
-
-		DPAD,
-		//DPAD_CENTER,
-
-		L_SHOULDER,
-		L1 = L_SHOULDER,//DualShock
-		R_SHOULDER,
-		R1 = R_SHOULDER,//DualShock
 
 		L_TRIGGER,
 		L2 = L_TRIGGER,//DualShock
 		R_TRIGGER,
 		R2 = R_TRIGGER,//DualShock
+
+		AXIS_END = R_TRIGGER,
+
+		DPAD,
+		//DPAD_CENTER,
+
+		BUTTON_START,
+		L_THUMB = BUTTON_START,
+		L3 = L_THUMB,//DualShock
+		R_THUMB,
+		R3 = R_THUMB,//DualShock
+
+		L_SHOULDER,
+		L1 = L_SHOULDER,//DualShock
+		R_SHOULDER,
+		R1 = R_SHOULDER,//DualShock
 
 		//LEFT_THUMBSTICK,
 		//RIGHT_THUMBSTICK,
@@ -355,11 +367,13 @@ namespace aurora::modules::inputs {
 
 		TOUCH_PAD,//DualShock4
 
-		UNDEFINED
+		UNDEFINED_BUTTON,
+		UNDEFINED_BUTTON_1,
+		UNDEFINED_BUTTON_END = 255
 	};
 
 
-	template<typename T> concept DeviceCode = std::same_as<T, KeyboardVirtualKeyCode> || std::same_as<T, MouseKeyCode> || std::same_as<T, GamepadKeyCode>;;
+	template<typename T> concept DeviceCode = SameAnyOf<T, KeyboardVirtualKeyCode, MouseKeyCode, GamepadVirtualKeyCode>;
 
 
 	class AE_FW_DLL IInputDevice : public Ref {

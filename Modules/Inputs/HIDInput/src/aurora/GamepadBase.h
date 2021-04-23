@@ -8,17 +8,17 @@ namespace aurora::modules::inputs::hid_input {
 	public:
 		GamepadBase(Input& input, const DeviceInfo& info, extensions::HIDDevice& hid) : 
 			DeviceBase<InputStateBufferSize, InputBufferSize, OutputStateBufferSize>(input, info, hid) {
-			_setDeadZone(GamepadKeyCode::L_STICK, Math::TWENTIETH<DeviceStateValue>);
-			_setDeadZone(GamepadKeyCode::R_STICK, Math::TWENTIETH<DeviceStateValue>);
-			_setDeadZone(GamepadKeyCode::L_TRIGGER, Math::TWENTIETH<DeviceStateValue>);
-			_setDeadZone(GamepadKeyCode::R_TRIGGER, Math::TWENTIETH<DeviceStateValue>);
+			_setDeadZone(GamepadVirtualKeyCode::L_STICK, Math::TWENTIETH<DeviceStateValue>);
+			_setDeadZone(GamepadVirtualKeyCode::R_STICK, Math::TWENTIETH<DeviceStateValue>);
+			_setDeadZone(GamepadVirtualKeyCode::L_TRIGGER, Math::TWENTIETH<DeviceStateValue>);
+			_setDeadZone(GamepadVirtualKeyCode::R_TRIGGER, Math::TWENTIETH<DeviceStateValue>);
 		}
 
 	protected:
 		mutable std::shared_mutex _deadZoneMutex;
-		std::unordered_map<GamepadKeyCode, DeviceStateValue> _deadZone;
+		std::unordered_map<GamepadVirtualKeyCode, DeviceStateValue> _deadZone;
 
-		inline DeviceStateValue AE_CALL _getDeadZone(GamepadKeyCode key) const {
+		inline DeviceStateValue AE_CALL _getDeadZone(GamepadVirtualKeyCode key) const {
 			std::shared_lock lock(_deadZoneMutex);
 
 			if (auto itr = _deadZone.find(key); itr == _deadZone.end()) {
@@ -28,7 +28,7 @@ namespace aurora::modules::inputs::hid_input {
 			}
 		}
 
-		inline void AE_CALL _setDeadZone(GamepadKeyCode keyCode, DeviceStateValue deadZone) {
+		inline void AE_CALL _setDeadZone(GamepadVirtualKeyCode keyCode, DeviceStateValue deadZone) {
 			if (deadZone < Math::ZERO<DeviceStateValue>) deadZone = -deadZone;
 
 			std::scoped_lock lock(_deadZoneMutex);

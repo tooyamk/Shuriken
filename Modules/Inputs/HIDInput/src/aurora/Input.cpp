@@ -1,5 +1,6 @@
 #include "CreateModule.h"
 #include "Gamepad.h"
+#include "GamepadWindows.h"
 #include "GamepadDS4.h"
 #include "aurora/HID.h"
 #include "aurora/hash/xxHash.h"

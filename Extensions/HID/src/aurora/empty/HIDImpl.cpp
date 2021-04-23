@@ -53,5 +53,12 @@ namespace aurora::extensions {
 	size_t HID::write(HIDDevice& device, void* data, size_t dataLength, size_t timeout) {
 		return HID::OUT_ERROR;
 	}
+
+	void* HID::getPreparsedData(const HIDDeviceInfo& device) {
+		return nullptr;
+	}
+	void* HID::getPreparsedData(const HIDDevice& device) {
+		return nullptr;
+	}
 }
 #endif

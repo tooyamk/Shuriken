@@ -1,12 +1,14 @@
 #include "Gamepad.h"
+
+#if AE_OS != AE_OS_WIN
 #include "aurora/HID.h"
 #include "aurora/Debug.h"
 
 namespace aurora::modules::inputs::hid_input {
 	Gamepad::Gamepad(Input& input, const DeviceInfo& info, extensions::HIDDevice& hid) : GamepadBase(input, info, hid) {
-		auto raw = aurora::extensions::HID::getRawReportDescriptor(hid);
-		_parseRawReportDescriptor(raw);
-		int a = 1;
+		//auto raw = aurora::extensions::HID::getRawReportDescriptor(hid);
+		//_parseRawReportDescriptor(raw);
+		//int a = 1;
 	}
 
 	DeviceState::CountType Gamepad::getState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count) const {
@@ -14,7 +16,7 @@ namespace aurora::modules::inputs::hid_input {
 		case DeviceStateType::DEAD_ZONE:
 		{
 			if (values && count) {
-				((DeviceStateValue*)values)[0] = _getDeadZone((GamepadKeyCode)code);
+				((DeviceStateValue*)values)[0] = _getDeadZone((GamepadVirtualKeyCode)code);
 
 				return 1;
 			}
@@ -31,7 +33,7 @@ namespace aurora::modules::inputs::hid_input {
 		case DeviceStateType::DEAD_ZONE:
 		{
 			if (values && count) {
-				_setDeadZone((GamepadKeyCode)code, ((DeviceStateValue*)values)[0]);
+				_setDeadZone((GamepadVirtualKeyCode)code, ((DeviceStateValue*)values)[0]);
 				return 1;
 			}
 
@@ -43,6 +45,9 @@ namespace aurora::modules::inputs::hid_input {
 	}
 
 	void Gamepad::_doInput(bool dispatchEvent, InputBuffer& inputBuffer, size_t inputBufferSize) {
+		/*
+		using namespace aurora::extensions;
+
 		auto buf = inputBuffer;
 
 		if (inputBufferSize > sizeof(InputStateBuffer)) inputBufferSize = sizeof(InputStateBuffer);
@@ -55,10 +60,14 @@ namespace aurora::modules::inputs::hid_input {
 			return;
 		}
 
-		auto val = buf[1] << 8 | buf[0];
-		printdln(val);
+		uint16_t usages[128];
+		//auto nn = HID::parsePressedButtons(*_hid, HIDReportType::INPUT, 9, inputBuffer, inputBufferSize, usages, 128);
+		//auto val = HID::parseValue(*_hid, HIDReportType::INPUT, 1, 57, inputBuffer, inputBufferSize);
 
-		/*
+		//auto val = buf[1] << 8 | buf[0];
+		//printdln(val);
+
+		
 		auto first = state[0];
 		auto buf = state + 1;
 
@@ -89,6 +98,7 @@ namespace aurora::modules::inputs::hid_input {
 		return false;
 	}
 
+	/*
 	void Gamepad::_parseRawReportDescriptor(ByteArray& raw) {
 		using namespace aurora::enum_operators;
 		using namespace aurora::extensions;
@@ -220,4 +230,6 @@ namespace aurora::modules::inputs::hid_input {
 	void Gamepad::_parseRawReportItem(aurora::extensions::HIDReportScopeValues& scopeValues, aurora::extensions::HIDReportLocalItemTag tag, int32_t val) {
 		scopeValues.set(tag, val);
 	}
+	*/
 }
+#endif

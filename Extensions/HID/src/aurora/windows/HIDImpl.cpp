@@ -4,11 +4,13 @@
 #include "aurora/ScopeGuard.h"
 #include "aurora/Debug.h"
 
+#include <SetupAPI.h>
+
 //#include <winusb.h>
 //#include <winioctl.h>
 //#include <hidport.h>
-#include <hidclass.h>
-#include <winioctl.h>
+//#include <hidclass.h>
+//#include <winioctl.h>
 //#define HID_OUT_CTL_CODE(id)  \
 //		CTL_CODE(FILE_DEVICE_KEYBOARD, (id), METHOD_OUT_DIRECT,, FILE_ANY_ACCESS)
 //#define IOCTL_HID_GET_FEATURE                   HID_OUT_CTL_CODE(100)
@@ -17,6 +19,7 @@
 #define AE_EXTENSION_HID_PRINT_ENABLED
 
 namespace aurora::extensions {
+	/*
 	namespace hid {
 		inline std::string AE_CALL getUsagePageString(USHORT usagePage) {
 			auto val = (HIDReportUsagePageType)usagePage;
@@ -306,6 +309,7 @@ namespace aurora::extensions {
 #endif
 		}
 	}
+	*/
 
 	HIDDeviceInfo::HIDDeviceInfo() :
 		_vendorID(0),
@@ -340,6 +344,7 @@ namespace aurora::extensions {
 		return _usage;
 	}
 
+	/*
 	ByteArray HIDDeviceInfo::getRawReportDescriptor() const {
 		do {
 			if (!_rawReportDescriptor.isValid()) {
@@ -371,10 +376,12 @@ namespace aurora::extensions {
 
 		return _rawReportDescriptor.slice(0, _rawReportDescriptor.getLength(), ByteArray::Usage::SHARED);
 	}
+	*/
 
-	void HIDDeviceInfo::_readPreparsedData() const {
-		if (!handle) return;
+	void* HIDDeviceInfo::getPreparsedData() const {
+		if (!handle) return nullptr;
 		if (!_preparsedData) HidD_GetPreparsedData(handle, &_preparsedData);
+		return _preparsedData;
 	}
 
 	void HIDDeviceInfo::_readAttrubutes() const {
@@ -390,7 +397,7 @@ namespace aurora::extensions {
 	}
 
 	void HIDDeviceInfo::_readCaps() const {
-		_readPreparsedData();
+		getPreparsedData();
 		if (!_preparsedData) return;
 
 		HIDP_CAPS caps;
@@ -401,7 +408,7 @@ namespace aurora::extensions {
 	}
 
 
-	HIDDevice::HIDDevice(HANDLE handle) :
+	HIDDevice::HIDDevice(HANDLE handle, PHIDP_PREPARSED_DATA preparsedData) :
 		inputReportLength(0),
 		outputReportLength(0),
 		featureReportLength(0),
@@ -410,6 +417,8 @@ namespace aurora::extensions {
 		readPending(false),
 		writePending(false) {
 		this->handle = handle;
+		_preparsedData = preparsedData;
+
 		memset(&oRead, 0, sizeof(oRead));
 		oRead.hEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 		memset(&oWrite, 0, sizeof(oWrite));
@@ -422,6 +431,26 @@ namespace aurora::extensions {
 		if (inputBuffer) delete[] inputBuffer;
 		if (outputBuffer) delete[] outputBuffer;
 	}
+
+	/*
+	ULONG HIDDevice::parsePressedButtons(HIDP_REPORT_TYPE reportType, USAGE usagePage, const void* reportData, ULONG reportDataLength, USAGE* outUsages, ULONG usageLength) const {
+		_readPreparsedData();
+		if (!_preparsedData) return 0;
+
+		return HidP_GetUsages(reportType, usagePage, 0, outUsages, &usageLength, _preparsedData, (PCHAR)reportData, reportDataLength) == HIDP_STATUS_SUCCESS ? usageLength : 0;
+	}
+
+	std::optional<ULONG> HIDDevice::parseValue(HIDP_REPORT_TYPE reportType, USAGE usagePage, USAGE usage, const void* report, ULONG reportLength) const {
+		using namespace aurora::enum_operators;
+
+		_readPreparsedData();
+		if (!_preparsedData) return std::nullopt;
+
+		ULONG val;
+		auto rst = HidP_GetUsageValue(reportType, usagePage, 0, usage, &val, _preparsedData, (PCHAR)report, reportLength);
+		return HidP_GetUsageValue(reportType, usagePage, 0, usage, &val, _preparsedData, (PCHAR)report, reportLength) == HIDP_STATUS_SUCCESS ? std::make_optional(val) : std::nullopt;
+	}
+	*/
 
 
 	void HID::enumDevices(void* custom, HID::EnumDevicesCallback callback) {
@@ -448,17 +477,7 @@ namespace aurora::extensions {
 		PSP_DEVICE_INTERFACE_DETAIL_DATA_A detail = nullptr;
 		size_t mallocDetailSize = 0;
 
-		PHIDP_LINK_COLLECTION_NODE linkCollectionNodes = nullptr;
-		size_t numAllocatedLinkCollectionNodes = 0;
-
-		PHIDP_BUTTON_CAPS buttonCaps = nullptr;
-		size_t numAllocatedButtonCaps = 0;
-
 		for (int32_t i = 0; SetupDiEnumDeviceInterfaces(hDevInfo, nullptr, &guid, i, &deviceInterfaceData) != 0; ++i) {
-			PHIDP_PREPARSED_DATA preparsedData = nullptr;
-			ScopeGuard preparsedDataGuard([&]() {
-				if (preparsedData) HidD_FreePreparsedData(preparsedData);
-			});
 			DWORD requiredSize = 0;
 
 			SetupDiGetDeviceInterfaceDetailA(hDevInfo, &deviceInterfaceData, nullptr, 0, &requiredSize, nullptr);
@@ -499,8 +518,6 @@ namespace aurora::extensions {
 		}
 
 		if (detail) free(detail);
-		if (linkCollectionNodes) delete[] linkCollectionNodes;
-		if (buttonCaps) delete[] buttonCaps;
 
 		SetupDiDestroyDeviceInfoList(hDevInfo);
 	}
@@ -581,6 +598,7 @@ namespace aurora::extensions {
 		return HID::getUsage((const HIDDeviceInfo&)device);
 	}
 
+	/*
 	ByteArray HID::getRawReportDescriptor(const HIDDeviceInfo& info) {
 		return info.getRawReportDescriptor();
 	}
@@ -588,6 +606,7 @@ namespace aurora::extensions {
 	ByteArray HID::getRawReportDescriptor(const HIDDevice& device) {
 		return HID::getRawReportDescriptor((const HIDDeviceInfo&)device);
 	}
+	*/
 
 	HIDDevice* HID::open(const std::string_view& path) {
 		auto handle = CreateFileA(path.data(),
@@ -609,68 +628,14 @@ namespace aurora::extensions {
 		HIDP_CAPS caps;
 		if (HidP_GetCaps(preparsedData, &caps) != HIDP_STATUS_SUCCESS) return nullptr;
 
-		auto dev = new HIDDevice(handle);
+		preparsedDataGuard.dismiss();
+
+		auto dev = new HIDDevice(handle, preparsedData);
 		dev->inputReportLength = caps.InputReportByteLength;
 		dev->outputReportLength = caps.OutputReportByteLength;
 		dev->featureReportLength = caps.FeatureReportByteLength;
 		dev->inputBuffer = new uint8_t[dev->inputReportLength];
 		dev->outputBuffer = new uint8_t[dev->outputReportLength];
-
-		if (0) {
-			DWORD length = 61960;
-			auto data = new uint8_t[length];
-			
-			data[0] = 0;
-
-			auto res1 = HidD_GetInputReport(handle, data, caps.InputReportByteLength);
-			
-			length = 1024;
-			HIDP_EXTENDED_ATTRIBUTES atts[1024];
-			auto rst2 = HidP_GetExtendedAttributes(HidP_Input, 0, preparsedData, atts, &length);
-			auto bbbbbb = rst2 == HIDP_STATUS_SUCCESS;
-
-			DWORD bytes_returned = 0;
-
-			OVERLAPPED ol;
-			memset(&ol, 0, sizeof(ol));
-			HID_COLLECTION_INFORMATION info;
-			DWORD code = 0xb0003;
-			auto method = code & 0b11;
-			auto func = code >> 2 & 0b111111111111;
-			auto res = DeviceIoControl(handle,
-				code,
-				NULL, 0,
-				//data, (DWORD)length,
-				data, (DWORD)length,
-				&bytes_returned, &ol);
-			if (res) {
-				//printdln(String::toString(data, bytes_returned));
-				for (size_t i = 0; i < bytes_returned; ++i) {
-					if (data[i] == 0x9) {
-						if (i + 1 < bytes_returned) {
-							auto val2 = data[i + 1];
-							if (val2 == 0x30) {
-								int a = 1;
-							}
-							printdln(val2, " ", data[i + 2]);
-							int a = 1;
-						}
-					}
-				}
-				if (bytes_returned >= 4) printdln(data[0], "  ", data[1], "  ", data[2], "  ", data[3]);
-
-				int a = 1;
-			}
-
-			if (!res) {
-				auto err = GetLastError();
-				auto bbb = err != ERROR_IO_PENDING;
-
-				int a = 1;
-			}
-
-			int a = 1;
-		}
 
 		return dev;
 	}
@@ -729,14 +694,14 @@ namespace aurora::extensions {
 
 		if (device.readPending) return HID::OUT_WAITTING;
 
-		auto src = device.inputBuffer;
-		if (bytesReaded > 0 && device.inputBuffer[0] == 0) {
-			--bytesReaded;
-			++src;
-		}
+		//auto src = device.inputBuffer;
+		//if (bytesReaded > 0 && device.inputBuffer[0] == 0) {
+		//	--bytesReaded;
+		//	++src;
+		//}
 
 		auto n = dataLength > bytesReaded ? bytesReaded : dataLength;
-		memcpy(data, src, n);
+		memcpy(data, device.inputBuffer, n);
 
 		return n;
 	}
@@ -797,5 +762,23 @@ namespace aurora::extensions {
 		if (device.writePending) return HID::OUT_WAITTING;
 		return bytesWrited;
 	}
+
+	void* HID::getPreparsedData(const HIDDeviceInfo& device) {
+		return device.getPreparsedData();
+	}
+
+	void* HID::getPreparsedData(const HIDDevice& device) {
+		return device.getPreparsedData();
+	}
+
+	/*
+	size_t HID::parsePressedButtons(const HIDDevice& device, HIDReportType type, HIDUsagePage usagePage, const void* reportData, size_t reportDataLength, HIDUsage* outUsages, size_t usageLength) {
+		return device.parsePressedButtons((HIDP_REPORT_TYPE)type, usagePage, reportData, reportDataLength, outUsages, usageLength);
+	}
+
+	std::optional<uint32_t> HID::parseValue(const HIDDevice& device, HIDReportType type, HIDUsagePage usagePage, HIDUsage usage, const void* reportData, size_t reportDataLength) {
+		return device.parseValue((HIDP_REPORT_TYPE)type, usagePage, usage, reportData, reportDataLength);
+	}
+	*/
 }
 #endif

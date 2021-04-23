@@ -110,9 +110,9 @@
 			AE_EXTENSION_HID_ENUM_ELEMENT(X, 0x30) \
 			AE_EXTENSION_HID_ENUM_ELEMENT(Y, 0x31) \
 			AE_EXTENSION_HID_ENUM_ELEMENT(Z, 0x32) \
-			AE_EXTENSION_HID_ENUM_ELEMENT(R_X, 0x33) \
-			AE_EXTENSION_HID_ENUM_ELEMENT(R_Y, 0x34) \
-			AE_EXTENSION_HID_ENUM_ELEMENT(R_Z, 0x35) \
+			AE_EXTENSION_HID_ENUM_ELEMENT(RX, 0x33) \
+			AE_EXTENSION_HID_ENUM_ELEMENT(RY, 0x34) \
+			AE_EXTENSION_HID_ENUM_ELEMENT(RZ, 0x35) \
 			AE_EXTENSION_HID_ENUM_ELEMENT(SLIDER, 0x36) \
 			AE_EXTENSION_HID_ENUM_ELEMENT(DIAL, 0x37) \
 			AE_EXTENSION_HID_ENUM_ELEMENT(WHEEL, 0x38) \
@@ -295,6 +295,14 @@ namespace aurora::extensions {
 	};
 
 
+	/*
+	enum class HIDReportType : uint8_t {
+		INPUT,
+		OUTPUT,
+		FEATURE
+	};
+ 
+
 	template<typename T> concept HIDReportItemTag = SameAnyOf<T, HIDReportMainItemTag, HIDReportGlobalItemTag, HIDReportLocalItemTag>;
 
 
@@ -358,6 +366,11 @@ namespace aurora::extensions {
 			return false;
 		}
 	};
+	*/
+
+
+	using HIDUsagePage = uint16_t;
+	using HIDUsage = uint16_t;
 
 
 	class AE_EXTENSION_DLL HID {
@@ -383,13 +396,13 @@ namespace aurora::extensions {
 		static std::wstring AE_CALL getProductString(const HIDDevice& device);
 		static std::string_view AE_CALL getPath(const HIDDeviceInfo& info);
 		static std::string_view AE_CALL getPath(const HIDDevice& device);
-		static uint16_t AE_CALL getUsagePage(const HIDDeviceInfo& info);
-		static uint16_t AE_CALL getUsagePage(const HIDDevice& device);
-		static uint16_t AE_CALL getUsage(const HIDDeviceInfo& info);
-		static uint16_t AE_CALL getUsage(const HIDDevice& device);
+		static HIDUsagePage AE_CALL getUsagePage(const HIDDeviceInfo& info);
+		static HIDUsagePage AE_CALL getUsagePage(const HIDDevice& device);
+		static HIDUsage AE_CALL getUsage(const HIDDeviceInfo& info);
+		static HIDUsage AE_CALL getUsage(const HIDDevice& device);
 
-		static ByteArray AE_CALL getRawReportDescriptor(const HIDDeviceInfo& info);
-		static ByteArray AE_CALL getRawReportDescriptor(const HIDDevice& device);
+		//static ByteArray AE_CALL getRawReportDescriptor(const HIDDeviceInfo& info);
+		//static ByteArray AE_CALL getRawReportDescriptor(const HIDDevice& device);
 
 		static HIDDevice* AE_CALL open(const std::string_view& path);
 		static void AE_CALL close(HIDDevice& device);
@@ -400,6 +413,13 @@ namespace aurora::extensions {
 		inline static bool AE_CALL isSuccess(size_t rst) {
 			return rst < OUT_WAITTING;
 		}
+
+		static void* AE_CALL getPreparsedData(const HIDDeviceInfo& device);
+		static void* AE_CALL getPreparsedData(const HIDDevice& device);
+
+		/*
+		static size_t AE_CALL parsePressedButtons(const HIDDevice& device, HIDReportType type, HIDUsagePage usagePage, const void* reportData, size_t reportDataLength, HIDUsage* outUsages, size_t usageLength);
+		static std::optional<uint32_t> AE_CALL parseValue(const HIDDevice& device, HIDReportType type, HIDUsagePage usagePage, HIDUsage usage, const void* reportData, size_t reportDataLength);
 
 		template<HIDReportItemTag T>
 		inline static uint8_t AE_CALL generateReportShortItemHeader(T tag, uint8_t size) {
@@ -424,5 +444,6 @@ namespace aurora::extensions {
 		inline static uint8_t AE_CALL generateReportShortItemHeader(uint8_t type, uint8_t tag, uint8_t size) {
 			return tag << 4 | type << 2 | (size > 2 ? 3 : size);
 		}
+		*/
 	};
 }

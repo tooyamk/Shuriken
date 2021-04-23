@@ -99,15 +99,15 @@ namespace aurora::modules::inputs::hid_input {
 		void AE_CALL _setLed(DeviceStateValue red, DeviceStateValue green, DeviceStateValue blue);
 
 		static DeviceState::CountType AE_CALL _getButton(uint8_t state, InputMask mask, DeviceStateValue* data);
-		DeviceState::CountType AE_CALL _getTrigger(uint8_t state, GamepadKeyCode key, DeviceStateValue* data) const;
+		DeviceState::CountType AE_CALL _getTrigger(uint8_t state, GamepadVirtualKeyCode key, DeviceStateValue* data) const;
 		static DeviceState::CountType AE_CALL _getDPad(uint8_t state, DeviceStateValue* data);
-		DeviceState::CountType AE_CALL _getStick(uint8_t xstate, uint8_t ystate, GamepadKeyCode key, DeviceStateValue* data, DeviceState::CountType count) const;
+		DeviceState::CountType AE_CALL _getStick(uint8_t xstate, uint8_t ystate, GamepadVirtualKeyCode key, DeviceStateValue* data, DeviceState::CountType count) const;
 		static void AE_CALL _getTouch(const InternalDeviceTouchStateValue& in, size_t time, DeviceTouchStateValue& out);
 
-		void AE_CALL _dispatchButton(uint8_t oldState, uint8_t newState, InputMask mask, GamepadKeyCode key);
-		void AE_CALL _dispatchTrigger(uint8_t oldState, uint8_t newState, GamepadKeyCode key);
+		void AE_CALL _dispatchButton(uint8_t oldState, uint8_t newState, InputMask mask, GamepadVirtualKeyCode key);
+		void AE_CALL _dispatchTrigger(uint8_t oldState, uint8_t newState, GamepadVirtualKeyCode key);
 		void AE_CALL _dispatchDPad(uint8_t oldState, uint8_t newState);
-		void AE_CALL _dispatchStick(uint16_t oldState, uint16_t newState, GamepadKeyCode key);
+		void AE_CALL _dispatchStick(uint16_t oldState, uint16_t newState, GamepadVirtualKeyCode key);
 
 		inline static DeviceStateValue AE_CALL _translateTrigger(uint8_t value) {
 			return DeviceStateValue(value) * Math::RECIPROCAL<NUMBER_255<DeviceStateValue>>;
