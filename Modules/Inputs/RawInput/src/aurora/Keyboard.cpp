@@ -32,7 +32,7 @@ namespace aurora::modules::inputs::raw_input {
 		}
 	}
 
-	DeviceState::CountType Keyboard::setState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count) {
+	DeviceState::CountType Keyboard::setState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count) {
 		return 0;
 	}
 

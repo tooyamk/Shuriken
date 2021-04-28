@@ -13,12 +13,6 @@ namespace aurora::modules::inputs::direct_input {
 
 		_setKeyMapping(nullptr);
 
-		Vec2<DeviceStateValue> dz(Math::ZERO<DeviceStateValue>, Math::TWENTIETH<DeviceStateValue>);
-		_setDeadZone(GamepadVirtualKeyCode::L_STICK, &dz);
-		_setDeadZone(GamepadVirtualKeyCode::R_STICK, &dz);
-		_setDeadZone(GamepadVirtualKeyCode::L_TRIGGER, &dz);
-		_setDeadZone(GamepadVirtualKeyCode::R_TRIGGER, &dz);
-
 		_readState(_state);
 	}
 
@@ -38,21 +32,19 @@ namespace aurora::modules::inputs::direct_input {
 					return _getStick(GamepadVirtualKeyCode::R_STICK_X, (GamepadVirtualKeyCode)code, (DeviceStateValue*)values, count);
 				case GamepadVirtualKeyCode::L_TRIGGER:
 				{
-					auto axes = &_state.lX;
 					GamepadKeyCode mappingVals[2];
 					_keyMapping.get(GamepadVirtualKeyCode::L_TRIGGER, 2, mappingVals);
-					return mappingVals[0] == mappingVals[1] ? 
-						_getCombinedTrigger(_readAxisVal(axes, mappingVals[0], (std::numeric_limits<int16_t>::max)()), (GamepadVirtualKeyCode)code, 0, ((DeviceStateValue*)values)[0]) :
-						_getSeparateTrigger(_readAxisVal(axes, mappingVals[0], 0), (GamepadVirtualKeyCode)code, ((DeviceStateValue*)values)[0]);
+					return mappingVals[0] == mappingVals[1] ?
+						_getCombinedTrigger(mappingVals[0], (GamepadVirtualKeyCode)code, 0, ((DeviceStateValue*)values)[0]) :
+						_getAxis(mappingVals[0], (GamepadVirtualKeyCode)code, ((DeviceStateValue*)values)[0]);
 				}
 				case GamepadVirtualKeyCode::R_TRIGGER:
 				{
-					auto axes = &_state.lX;
 					GamepadKeyCode mappingVals[2];
 					_keyMapping.get(GamepadVirtualKeyCode::L_TRIGGER, 2, mappingVals);
 					return mappingVals[0] == mappingVals[1] ? 
-						_getCombinedTrigger(_readAxisVal(axes, mappingVals[0], (std::numeric_limits<int16_t>::max)()), (GamepadVirtualKeyCode)code, 1, ((DeviceStateValue*)values)[0]) :
-						_getSeparateTrigger(_readAxisVal(axes, mappingVals[1], 0), (GamepadVirtualKeyCode)code, ((DeviceStateValue*)values)[0]);
+						_getCombinedTrigger(mappingVals[0], (GamepadVirtualKeyCode)code, 1, ((DeviceStateValue*)values)[0]) :
+						_getAxis(mappingVals[1], (GamepadVirtualKeyCode)code, ((DeviceStateValue*)values)[0]);
 				}
 				case GamepadVirtualKeyCode::DPAD:
 					((DeviceStateValue*)values)[0] = _translateDpad(_state.rgdwPOV[0]);
@@ -60,7 +52,7 @@ namespace aurora::modules::inputs::direct_input {
 				default:
 				{
 					if (code >= GamepadVirtualKeyCode::SEPARATE_AXIS_START && code <= GamepadVirtualKeyCode::UNDEFINED_AXIS_END) {
-						((DeviceStateValue*)values)[0] = translate(_normalizeAxis(_readAxisVal(&_state.lX, _keyMapping.get((GamepadVirtualKeyCode)code), 0)), _getDeadZone((GamepadVirtualKeyCode)code));
+						_getAxis(_keyMapping.get((GamepadVirtualKeyCode)code), (GamepadVirtualKeyCode)code, ((DeviceStateValue*)values)[0]);
 						return 1;
 					} else if (code >= GamepadVirtualKeyCode::BUTTON_START && code <= GamepadVirtualKeyCode::BUTTON_END) {
 						((DeviceStateValue*)values)[0] = _translateButton(_readButtonVal(_state.rgbButtons, _keyMapping.get((GamepadVirtualKeyCode)code)));
@@ -70,6 +62,18 @@ namespace aurora::modules::inputs::direct_input {
 					return 0;
 				}
 				}
+			}
+
+			return 0;
+		}
+		case DeviceStateType::KEY_MAPPING:
+		{
+			if (values && count) {
+				std::shared_lock lock(_mutex);
+
+				*((GamepadKeyMapping*)values) = _keyMapping;
+
+				return 1;
 			}
 
 			return 0;
@@ -93,7 +97,7 @@ namespace aurora::modules::inputs::direct_input {
 		}
 	}
 
-	DeviceState::CountType Gamepad::setState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count) {
+	DeviceState::CountType Gamepad::setState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count) {
 		switch (type) {
 		case DeviceStateType::KEY_MAPPING:
 		{
@@ -293,23 +297,16 @@ namespace aurora::modules::inputs::direct_input {
 			_getDeadZone(key), data, count);
 	}
 
-	DeviceState::CountType Gamepad::_getCombinedTrigger(LONG t, GamepadVirtualKeyCode key, uint8_t index, DeviceStateValue& data) const {
-		auto dz = _getDeadZone(key);
-
+	DeviceState::CountType Gamepad::_getCombinedTrigger(GamepadKeyCode k, GamepadVirtualKeyCode vk, uint8_t index, DeviceStateValue& data) const {
 		DeviceStateValue values[2];
-		_normalizeCombinedAxis(t, values[1], values[0]);
-		data = values[index];
-		data = translate(data, dz);
+		_normalizeCombinedAxis(_readAxisVal(&_state.lX, k, (std::numeric_limits<int16_t>::max)()), values[1], values[0]);
+		data = translate(values[index], _getDeadZone(vk));
 
 		return 1;
 	}
 
-	DeviceState::CountType Gamepad::_getSeparateTrigger(LONG t, GamepadVirtualKeyCode key, DeviceStateValue& data) const {
-		auto dz = _getDeadZone(key);
-
-		data = _normalizeAxis(t);
-		data = translate(data, dz);
-
+	DeviceState::CountType Gamepad::_getAxis(GamepadKeyCode k, GamepadVirtualKeyCode vk, DeviceStateValue& data) const {
+		data = translate(_normalizeAxis(_readAxisVal(&_state.lX, k, 0)), _getDeadZone(vk));
 		return 1;
 	}
 

@@ -3,15 +3,19 @@
 #include "GamepadBase.h"
 
 namespace aurora::modules::inputs::hid_input {
-	class AE_MODULE_DLL GamepadDS4 : public GamepadBase<9, 45, 11> {
+	class AE_MODULE_DLL GamepadDS4 : public GamepadBase {
 	public:
 		GamepadDS4(Input& input, const DeviceInfo& info, extensions::HIDDevice& hid);
 
 		virtual DeviceState::CountType AE_CALL getState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count) const override;
-		virtual DeviceState::CountType AE_CALL setState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count) override;
+		virtual DeviceState::CountType AE_CALL setState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count) override;
+		virtual void AE_CALL poll(bool dispatchEvent) override;
 
 	protected:
-		using OutputBuffer = uint8_t[5];
+		using InputBuffer = uint8_t[45];
+		using InputState = uint8_t[9];
+		using OutputBuffer = uint8_t[9];
+		using OutputState = uint8_t[5];
 		using TouchBuffer = uint8_t[11];
 
 
@@ -106,17 +110,20 @@ namespace aurora::modules::inputs::hid_input {
 
 
 		bool _isBluetooth;
+		bool _needOutput;
 
-		mutable std::shared_mutex _inputStateMutex;
-		InternalDeviceTouchStateValue _touchStateValues[2];
+		mutable std::shared_mutex _inputMutex;
+		DeviceTouchStateValue _touchStateValues[2];
+		InputState _inputState;
 
-		mutable std::shared_mutex _outputBufferMutex;
+		mutable std::shared_mutex _outputMutex;
 		std::atomic_bool _outputDirty;
 		uint8_t _inputBufferOffset, _outputBufferOffset;
 		OutputBuffer _outputBuffer;
+		OutputState _outputState;
 
-		virtual void AE_CALL _doInput(bool dispatchEvent, InputBuffer& inputBuffer, size_t inputBufferSize) override;
-		virtual bool AE_CALL _doOutput() override;
+		void AE_CALL _doInput(bool dispatchEvent);
+		void AE_CALL _doOutput();
 
 		void AE_CALL _setKeyMapping(const GamepadKeyMapping* mapping);
 		void AE_CALL _setVibration(DeviceStateValue left, DeviceStateValue right);
@@ -136,12 +143,11 @@ namespace aurora::modules::inputs::hid_input {
 		}
 
 		static DeviceState::CountType AE_CALL _getButton(uint8_t state, InputMask mask, DeviceStateValue* data);
-		static DeviceState::CountType AE_CALL _getDPad(uint8_t state, DeviceStateValue* data);
+		static DeviceState::CountType AE_CALL _getDpad(uint8_t state, DeviceStateValue* data);
 		DeviceState::CountType AE_CALL _getStick(GamepadVirtualKeyCode stickX, GamepadVirtualKeyCode key, DeviceStateValue* data, DeviceState::CountType count) const;
-		static void AE_CALL _getTouch(const InternalDeviceTouchStateValue& in, size_t time, DeviceTouchStateValue& out);
 
 		void AE_CALL _dispatchButton(uint8_t oldState, uint8_t newState, InputMask mask, GamepadVirtualKeyCode key);
-		void AE_CALL _dispatchDPad(uint8_t oldState, uint8_t newState);
+		void AE_CALL _dispatchDpad(uint8_t oldState, uint8_t newState);
 		void AE_CALL _dispatchStick(uint8_t oldX, uint8_t oldY, uint8_t newX, uint8_t newY, GamepadVirtualKeyCode key);
 		void AE_CALL _dispatchAxis(uint8_t oldVal, uint8_t newVal, GamepadVirtualKeyCode key);
 
@@ -165,7 +171,7 @@ namespace aurora::modules::inputs::hid_input {
 			return DeviceStateValue(value) * Math::RECIPROCAL<DeviceStateValue((std::numeric_limits<uint8_t>::max)())>;
 		}
 
-		void static AE_CALL _translateTouch(uint8_t* data, InternalDeviceTouchStateValue* states, size_t time);
+		void static AE_CALL _translateTouch(uint8_t* data, DeviceTouchStateValue* states);
 
 		inline static DeviceStateValue AE_CALL _translateButton(uint8_t value) {
 			return value ? Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;

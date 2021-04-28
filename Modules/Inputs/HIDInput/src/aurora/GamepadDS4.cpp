@@ -1,10 +1,10 @@
 #include "GamepadDS4.h"
-#include "aurora/Time.h"
 #include "aurora/Debug.h"
 
 namespace aurora::modules::inputs::hid_input {
 	GamepadDS4::GamepadDS4(Input& input, const DeviceInfo& info, extensions::HIDDevice& hid) : GamepadBase(input, info, hid),
 		_isBluetooth(false),
+		_needOutput(false),
 		_outputDirty(false),
 		_inputBufferOffset(0),
 		_outputBufferOffset(0) {
@@ -22,31 +22,26 @@ namespace aurora::modules::inputs::hid_input {
 			}
 		} while (true);
 
-		memset(_outputState, 0, sizeof(OutputStateBuffer));
+		memset(_outputBuffer, 0, sizeof(_outputBuffer));
 		if (_isBluetooth) {
-			_outputState[0] = 0x11;
-			_outputState[1] = 0x80;
-			_outputState[3] = 0xFF;
+			_outputBuffer[0] = 0x11;
+			_outputBuffer[1] = 0x80;
+			_outputBuffer[3] = 0xFF;
 
 			_inputBufferOffset = 3;
 			_outputBufferOffset = 6;
 		} else {
-			_outputState[0] = 0x05;
-			_outputState[1] = 0xFF;
+			_outputBuffer[0] = 0x05;
+			_outputBuffer[1] = 0xFF;
 
 			_inputBufferOffset = 1;
 			_outputBufferOffset = 4;
 		}
 
 		memcpy(_inputState, buf + _inputBufferOffset, sizeof(_inputState));
-		memset(_outputBuffer, 0, sizeof(_outputBuffer));
+		memset(_outputState, 0, sizeof(_outputState));
 
-		auto time = Time::now();
-		for (size_t i = 0; i < 2; ++i) {
-			auto& state = _touchStateValues[i];
-			state.time = time;
-		}
-		_translateTouch(buf + _inputBufferOffset + (std::underlying_type_t<InputBufferOffset>)InputBufferOffset::TOUCHES, _touchStateValues, time);
+		_translateTouch(buf + _inputBufferOffset + (std::underlying_type_t<InputBufferOffset>)InputBufferOffset::TOUCHES, _touchStateValues);
 	}
 
 	DeviceState::CountType GamepadDS4::getState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count) const {
@@ -56,7 +51,7 @@ namespace aurora::modules::inputs::hid_input {
 		case DeviceStateType::KEY:
 		{
 			if (values && count) {
-				std::shared_lock lock(_inputStateMutex);
+				std::shared_lock lock(_inputMutex);
 
 				switch ((GamepadVirtualKeyCode)code) {
 				case GamepadVirtualKeyCode::L_STICK:
@@ -64,7 +59,7 @@ namespace aurora::modules::inputs::hid_input {
 				case GamepadVirtualKeyCode::R_STICK:
 					return _getStick(GamepadVirtualKeyCode::R_STICK_X, (GamepadVirtualKeyCode)code, (DeviceStateValue*)values, count);
 				case GamepadVirtualKeyCode::DPAD:
-					return _getDPad(_inputState[(int32_t)InputBufferOffset::D_PAD], (DeviceStateValue*)values);
+					return _getDpad(_inputState[(int32_t)InputBufferOffset::D_PAD], (DeviceStateValue*)values);
 				default:
 				{
 					if (code >= GamepadVirtualKeyCode::SEPARATE_AXIS_START && code <= GamepadVirtualKeyCode::UNDEFINED_AXIS_END) {
@@ -82,19 +77,30 @@ namespace aurora::modules::inputs::hid_input {
 
 			return 0;
 		}
+		case DeviceStateType::KEY_MAPPING:
+		{
+			if (values && count) {
+				std::shared_lock lock(_inputMutex);
+
+				*((GamepadKeyMapping*)values) = _keyMapping;
+
+				return 1;
+			}
+
+			return 0;
+		}
 		case DeviceStateType::TOUCH:
 		{
 			if (values && count) {
-				auto time = Time::now();
 				DeviceState::CountType c = 0;
 
-				std::shared_lock lock(_inputStateMutex);
+				std::shared_lock lock(_inputMutex);
 
 				for (size_t i = 0; i < 2; ++i) {
 					auto& state = _touchStateValues[i];
 					if (state.phase != DeviceTouchPhase::END) {
-						_getTouch(state, time, ((DeviceTouchStateValue*)values)[c++]);
-						if (c == count) break;
+						((DeviceTouchStateValue*)values)[c] = state;
+						if (++c == count) break;
 					}
 				}
 
@@ -120,18 +126,18 @@ namespace aurora::modules::inputs::hid_input {
 			return 0;
 		}
 		default:
-			return GamepadBaseType::getState(type, code, values, count);
+			return GamepadBase::getState(type, code, values, count);
 		}
 	}
 
-	DeviceState::CountType GamepadDS4::setState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count) {
+	DeviceState::CountType GamepadDS4::setState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count) {
 		switch (type) {
 		case DeviceStateType::KEY_MAPPING:
 		{
 			if (!count) values = nullptr;
 
 			{
-				std::scoped_lock lock(_inputStateMutex);
+				std::scoped_lock lock(_inputMutex);
 
 				_setKeyMapping((const GamepadKeyMapping*)values);
 			}
@@ -177,128 +183,131 @@ namespace aurora::modules::inputs::hid_input {
 			return 0;
 		}
 		default:
-			return GamepadBaseType::setState(type, code, values, count);
+			return GamepadBase::setState(type, code, values, count);
 		}
 	}
 
-	void GamepadDS4::_doInput(bool dispatchEvent, InputBuffer& inputBuffer, size_t inputBufferSize) {
+	void GamepadDS4::poll(bool dispatchEvent) {
+		_doInput(dispatchEvent);
+		_doOutput();
+	}
+
+	void GamepadDS4::_doInput(bool dispatchEvent) {
+		using namespace aurora::extensions;
 		using namespace aurora::enum_operators;
 
-		auto newState = inputBuffer + _inputBufferOffset;
-		inputBufferSize -= _inputBufferOffset;
+		InputBuffer inputBuffer;
+		auto inputBufferSize = HID::read(*_hid, inputBuffer, sizeof(InputBuffer), 0);
+		if (HID::isSuccess(inputBufferSize)) {
+			auto newState = inputBuffer + _inputBufferOffset;
 
-		auto time = Time::now();
-		
-		if (inputBufferSize > sizeof(InputStateBuffer)) inputBufferSize = sizeof(InputStateBuffer);
+			if (!dispatchEvent) {
+				std::scoped_lock lock(_inputMutex);
 
-		if (!dispatchEvent) {
-			std::scoped_lock lock(_inputStateMutex);
+				memcpy(_inputState, newState, sizeof(_inputState));
 
-			memcpy(_inputState, newState, inputBufferSize);
+				_translateTouch(newState + (std::underlying_type_t<InputBufferOffset>)InputBufferOffset::TOUCHES, _touchStateValues);
 
-			_translateTouch(newState + (std::underlying_type_t<InputBufferOffset>)InputBufferOffset::TOUCHES, _touchStateValues, time);
+				return;
+			}
 
-			return;
-		}
+			InputState oldState;
+			GamepadKeyMapping keyMapping(NO_INIT);
+			DeviceTouchStateValue touchStateValues[2];
+			bool changedTouchStates[] = { false, false };
+			DeviceState::CountType changedTouchCount = 0;
+			{
+				std::scoped_lock lock(_inputMutex);
 
-		InputStateBuffer oldState;
-		GamepadKeyMapping keyMapping(NO_INIT);
-		InternalDeviceTouchStateValue touchStateValues[2];
-		bool changedTouchStates[] = { false, false };
-		DeviceState::CountType changedTouchCount = 0;
-		{
-			std::scoped_lock lock(_inputStateMutex);
+				keyMapping = _keyMapping;
+				memcpy(oldState, _inputState, sizeof(_inputState));
+				memcpy(_inputState, newState, sizeof(_inputState));
 
-			keyMapping = _keyMapping;
-			memcpy(oldState, _inputState, sizeof(_inputState));
-			memcpy(_inputState, newState, sizeof(_inputState));
+				for (size_t i = 0; i < 2; ++i) touchStateValues[i] = _touchStateValues[i];
+				_translateTouch(newState + (std::underlying_type_t<InputBufferOffset>)InputBufferOffset::TOUCHES, touchStateValues);
+				for (size_t i = 0; i < 2; ++i) {
+					if (touchStateValues[i] != _touchStateValues[i]) {
+						if (_touchStateValues[i].phase != DeviceTouchPhase::END || touchStateValues[i].phase != DeviceTouchPhase::END || _touchStateValues[i].fingerID != 0) {
+							changedTouchStates[i] = true;
+							++changedTouchCount;
+						}
 
-			for (size_t i = 0; i < 2; ++i) touchStateValues[i] = _touchStateValues[i];
-			_translateTouch(newState + (std::underlying_type_t<InputBufferOffset>)InputBufferOffset::TOUCHES, touchStateValues, time);
-			for (size_t i = 0; i < 2; ++i) {
-				if (!touchStateValues[i].isSame(_touchStateValues[i])) {
-					if (_touchStateValues[i].phase != DeviceTouchPhase::END || touchStateValues[i].phase != DeviceTouchPhase::END || _touchStateValues[i].fingerID != 0) {
-						changedTouchStates[i] = true;
-						++changedTouchCount;
+						_touchStateValues[i] = touchStateValues[i];
 					}
-
-					_touchStateValues[i] = touchStateValues[i];
-				} else {
-					_touchStateValues[i].deltaTime = touchStateValues[i].deltaTime;
 				}
 			}
-		}
 
-		GamepadKeyCode mappingVals[4];
-		keyMapping.get(GamepadVirtualKeyCode::L_STICK_X, 4, mappingVals);
-		for (size_t i = 0; i < 2; ++i) {
-			auto idx = i << 1;
-			_dispatchStick(
-				_readAxisVal(oldState, mappingVals[idx], (std::numeric_limits<int8_t>::max)()),
-				_readAxisVal(oldState, mappingVals[idx + 1], (std::numeric_limits<int8_t>::max)()),
-				_readAxisVal(newState, mappingVals[idx], (std::numeric_limits<int8_t>::max)()),
-				_readAxisVal(newState, mappingVals[idx + 1], (std::numeric_limits<int8_t>::max)()),
-				GamepadVirtualKeyCode::L_STICK + i);
-		}
-
-		keyMapping.forEach([&](GamepadVirtualKeyCode vk, GamepadKeyCode k) {
-			if (vk >= GamepadVirtualKeyCode::L_TRIGGER && vk <= GamepadVirtualKeyCode::AXIS_END) {
-				_dispatchAxis(_readAxisVal(oldState, k, 0), _readAxisVal(newState, k, 0), vk);
-			} else if (vk >= GamepadVirtualKeyCode::BUTTON_START && vk <= GamepadVirtualKeyCode::BUTTON_END) {
-				if (auto newVal = _readButtonVal(newState, k); newVal != _readButtonVal(oldState, k)) {
-					auto value = _translateButton(newVal);
-					DeviceState ds = { (DeviceState::CodeType)vk, 1, &value };
-					_eventDispatcher->dispatchEvent(this, value > Math::ZERO<DeviceStateValue> ? DeviceEvent::DOWN : DeviceEvent::UP, &ds);
-				}
-			}
-		});
-
-		_dispatchDPad(oldState[(size_t)InputBufferOffset::D_PAD], newState[(size_t)InputBufferOffset::D_PAD]);
-
-		if (changedTouchCount) {
-			DeviceTouchStateValue touches[2];
-			DeviceState::CountType n = 0;
+			GamepadKeyCode mappingVals[4];
+			keyMapping.get(GamepadVirtualKeyCode::L_STICK_X, 4, mappingVals);
 			for (size_t i = 0; i < 2; ++i) {
-				if (changedTouchStates[i]) _getTouch(touchStateValues[i], time, touches[n++]);
+				auto idx = i << 1;
+				_dispatchStick(
+					_readAxisVal(oldState, mappingVals[idx], (std::numeric_limits<int8_t>::max)()),
+					_readAxisVal(oldState, mappingVals[idx + 1], (std::numeric_limits<int8_t>::max)()),
+					_readAxisVal(newState, mappingVals[idx], (std::numeric_limits<int8_t>::max)()),
+					_readAxisVal(newState, mappingVals[idx + 1], (std::numeric_limits<int8_t>::max)()),
+					GamepadVirtualKeyCode::L_STICK + i);
 			}
-			DeviceState k = { 0, changedTouchCount, touches };
-			_eventDispatcher->dispatchEvent(this, DeviceEvent::TOUCH, &k);
+
+			keyMapping.forEach([&](GamepadVirtualKeyCode vk, GamepadKeyCode k) {
+				if (vk >= GamepadVirtualKeyCode::L_TRIGGER && vk <= GamepadVirtualKeyCode::AXIS_END) {
+					_dispatchAxis(_readAxisVal(oldState, k, 0), _readAxisVal(newState, k, 0), vk);
+				} else if (vk >= GamepadVirtualKeyCode::BUTTON_START && vk <= GamepadVirtualKeyCode::BUTTON_END) {
+					if (auto newVal = _readButtonVal(newState, k); newVal != _readButtonVal(oldState, k)) {
+						auto value = _translateButton(newVal);
+						DeviceState ds = { (DeviceState::CodeType)vk, 1, &value };
+						_eventDispatcher->dispatchEvent(this, value > Math::ZERO<DeviceStateValue> ? DeviceEvent::DOWN : DeviceEvent::UP, &ds);
+					}
+				}
+			});
+
+			_dispatchDpad(oldState[(size_t)InputBufferOffset::D_PAD], newState[(size_t)InputBufferOffset::D_PAD]);
+
+			if (changedTouchCount) {
+				DeviceTouchStateValue touches[2];
+				DeviceState::CountType n = 0;
+				for (size_t i = 0; i < 2; ++i) {
+					if (changedTouchStates[i]) touches[n++] = touchStateValues[i];
+				}
+				DeviceState k = { 0, changedTouchCount, touches };
+				_eventDispatcher->dispatchEvent(this, DeviceEvent::TOUCH, &k);
+			}
 		}
-		{
-			/*
-			auto i = (std::underlying_type_t<InputBufferOffset>)InputBufferOffset::GYRO_X;
-			i = 12;
 
-			auto h_x = buf[i];
-			auto l_x = buf[i + 1];
+		/*
+		auto i = (std::underlying_type_t<InputBufferOffset>)InputBufferOffset::GYRO_X;
+		i = 12;
 
-			auto h_y = buf[i + 2];
-			auto l_y = buf[i + 3];
+		auto h_x = buf[i];
+		auto l_x = buf[i + 1];
 
-			auto h_z = buf[i + 4];
-			auto l_z = buf[i + 5];
+		auto h_y = buf[i + 2];
+		auto l_y = buf[i + 3];
 
-			int16_t gyro_x = h_x << 8 | l_x;
-			int16_t gyro_y = h_y << 8 | l_y;
-			int16_t gyro_z = h_z << 8 | l_z;
+		auto h_z = buf[i + 4];
+		auto l_z = buf[i + 5];
 
-			//printdln(gyro_x, "  ", gyro_y, "  ", gyro_z);
+		int16_t gyro_x = h_x << 8 | l_x;
+		int16_t gyro_y = h_y << 8 | l_y;
+		int16_t gyro_z = h_z << 8 | l_z;
 
-			int a = 1;
-			*/
-		}
+		//printdln(gyro_x, "  ", gyro_y, "  ", gyro_z);
+
+		int a = 1;
+		*/
 	}
 
-	bool GamepadDS4::_doOutput() {
+	void GamepadDS4::_doOutput() {
+		using namespace aurora::extensions;
+
 		if (_outputDirty.exchange(false)) {
-			std::shared_lock lock(_outputBufferMutex);
+			std::shared_lock lock(_outputMutex);
 
-			memcpy(_outputState + _outputBufferOffset, _outputBuffer, sizeof(OutputBuffer));
-
-			return true;
+			memcpy(_outputBuffer + _outputBufferOffset, _outputState, sizeof(_outputState));
+			_needOutput = true;
 		}
 
-		return false;
+		if (_needOutput && HID::isSuccess(HID::write(*_hid, _outputBuffer, sizeof(_outputBuffer), 0))) _needOutput = false;
 	}
 
 	void GamepadDS4::_setKeyMapping(const GamepadKeyMapping* mapping) {
@@ -359,7 +368,7 @@ namespace aurora::modules::inputs::hid_input {
 		return 1;
 	}
 
-	DeviceState::CountType GamepadDS4::_getDPad(uint8_t state, DeviceStateValue* data) {
+	DeviceState::CountType GamepadDS4::_getDpad(uint8_t state, DeviceStateValue* data) {
 		if (auto val = state & 0xF; val <= 7) {
 			data[0] = val * Math::PI_4<DeviceStateValue>;
 		} else {
@@ -378,19 +387,14 @@ namespace aurora::modules::inputs::hid_input {
 			_getDeadZone(key), data, count);
 	}
 
-	void GamepadDS4::_getTouch(const InternalDeviceTouchStateValue& in, size_t time, DeviceTouchStateValue& out) {
-		out = in;
-		out.deltaTime += time - in.time;
-	}
-
 	void GamepadDS4::_setVibration(DeviceStateValue left, DeviceStateValue right) {
 		auto l = (uint8_t)(Math::clamp(left, Math::ZERO<DeviceStateValue>, Math::ONE<DeviceStateValue>) * NUMBER_255<DeviceStateValue>);
 		auto r = (uint8_t)(Math::clamp(right, Math::ZERO<DeviceStateValue>, Math::ONE<DeviceStateValue>) * NUMBER_255<DeviceStateValue>);
 
-		std::scoped_lock lock(_outputBufferMutex);
+		std::scoped_lock lock(_outputMutex);
 
-		_outputBuffer[0] = l;
-		_outputBuffer[1] = r;
+		_outputState[0] = l;
+		_outputState[1] = r;
 
 		_outputDirty = true;
 	}
@@ -400,11 +404,11 @@ namespace aurora::modules::inputs::hid_input {
 		auto g = (uint8_t)(Math::clamp(green, Math::ZERO<DeviceStateValue>, Math::ONE<DeviceStateValue>) * NUMBER_255<DeviceStateValue>);
 		auto b = (uint8_t)(Math::clamp(blue, Math::ZERO<DeviceStateValue>, Math::ONE<DeviceStateValue>) * NUMBER_255<DeviceStateValue>);
 
-		std::scoped_lock lock(_outputBufferMutex);
+		std::scoped_lock lock(_outputMutex);
 
-		_outputBuffer[2] = r;
-		_outputBuffer[3] = g;
-		_outputBuffer[4] = b;
+		_outputState[2] = r;
+		_outputState[3] = g;
+		_outputState[4] = b;
 
 		_outputDirty = true;
 	}
@@ -419,7 +423,7 @@ namespace aurora::modules::inputs::hid_input {
 		}
 	}
 
-	void GamepadDS4::_dispatchDPad(uint8_t oldState, uint8_t newState) {
+	void GamepadDS4::_dispatchDpad(uint8_t oldState, uint8_t newState) {
 		auto oldVal = oldState & 0xF;
 		auto newVal = newState & 0xF;
 		if (oldVal != newVal) {
@@ -456,7 +460,7 @@ namespace aurora::modules::inputs::hid_input {
 		}
 	}
 
-	void GamepadDS4::_translateTouch(uint8_t* data, InternalDeviceTouchStateValue* states, size_t time) {
+	void GamepadDS4::_translateTouch(uint8_t* data, DeviceTouchStateValue* states) {
 		if (data[0]) {
 			size_t offset = 2;
 
@@ -470,23 +474,16 @@ namespace aurora::modules::inputs::hid_input {
 
 				state.code = 0;
 				if (state.fingerID == id) {
-					state.deltaPhase = state.phase;
 					if (isTouch) {
 						state.phase = state.phase == DeviceTouchPhase::END ? DeviceTouchPhase::BEGIN : DeviceTouchPhase::MOVE;
 					} else {
 						state.phase = DeviceTouchPhase::END;
 					}
-					state.deltaPosition.set(x - state.position[0], y - state.position[1]);
-					state.deltaTime = time - state.time;
 				} else {
 					state.fingerID = id;
 					state.phase = isTouch ? DeviceTouchPhase::BEGIN : DeviceTouchPhase::END;
-					state.deltaPhase = DeviceTouchPhase::END;
-					state.deltaPosition.set(Math::ZERO<DeviceStateValue>);
-					state.deltaTime = Math::ZERO<DeviceStateValue>;
 				}
 				state.position.set(x, y);
-				state.time = time;
 
 				offset += 4;
 			}
@@ -495,11 +492,8 @@ namespace aurora::modules::inputs::hid_input {
 				auto& state = states[i];
 
 				state.code = 0;
-				state.deltaPhase = state.phase;
 				state.phase = DeviceTouchPhase::END;
-				state.deltaPosition.set(Math::ZERO<DeviceStateValue>);
-				state.deltaTime = time - state.time;
-				state.time = time;
+				state.position.set(Math::ZERO<DeviceStateValue>);
 			}
 		}
 	}

@@ -9,7 +9,7 @@ namespace aurora::modules::inputs::direct_input {
 		Gamepad(Input& input, LPDIRECTINPUTDEVICE8 dev, const InternalDeviceInfo& info);
 
 		virtual DeviceState::CountType AE_CALL getState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count) const override;
-		virtual DeviceState::CountType AE_CALL setState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count) override;
+		virtual DeviceState::CountType AE_CALL setState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count) override;
 		virtual void AE_CALL poll(bool dispatchEvent) override;
 
 	private:
@@ -55,9 +55,9 @@ namespace aurora::modules::inputs::direct_input {
 			return k >= GamepadKeyCode::BUTTON_1 && k <= MAX_BUTTON_KEY ? buttons[(uint32_t)(k - GamepadKeyCode::BUTTON_1)] : 0;
 		}
 
-		DeviceState::CodeType AE_CALL _getStick(GamepadVirtualKeyCode stickX, GamepadVirtualKeyCode key, DeviceStateValue* data, DeviceState::CountType count) const;
-		DeviceState::CodeType AE_CALL _getCombinedTrigger(LONG t, GamepadVirtualKeyCode key, uint8_t index, DeviceStateValue& data) const;
-		DeviceState::CodeType AE_CALL _getSeparateTrigger(LONG t, GamepadVirtualKeyCode key, DeviceStateValue& data) const;
+		DeviceState::CountType AE_CALL _getStick(GamepadVirtualKeyCode stickX, GamepadVirtualKeyCode key, DeviceStateValue* data, DeviceState::CountType count) const;
+		DeviceState::CountType AE_CALL _getCombinedTrigger(GamepadKeyCode k, GamepadVirtualKeyCode vk, uint8_t index, DeviceStateValue& data) const;
+		DeviceState::CountType AE_CALL _getAxis(GamepadKeyCode k, GamepadVirtualKeyCode vk, DeviceStateValue& data) const;
 
 		void AE_CALL _dispatchStick(LONG oldX, LONG oldY, LONG newX, LONG newY, GamepadVirtualKeyCode key) const;
 		void AE_CALL _dispatchCombinedTrigger(LONG oldVal, LONG newVal) const;

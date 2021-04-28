@@ -45,7 +45,7 @@ namespace aurora::modules::inputs::direct_input {
 		}
 	}
 
-	DeviceState::CountType Keyboard::setState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count) {
+	DeviceState::CountType Keyboard::setState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count) {
 		return 0;
 	}
 

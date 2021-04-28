@@ -16,6 +16,8 @@ namespace aurora::modules::inputs {
 			if (k != GamepadKeyCode::IGNORED && (k < GamepadKeyCode::AXIS_START || k > GamepadKeyCode::AXIS_END)) return false;
 		} else if (vk >= GamepadVirtualKeyCode::BUTTON_START && vk <= GamepadVirtualKeyCode::BUTTON_END) {
 			if (k != GamepadKeyCode::IGNORED && (k < GamepadKeyCode::BUTTON_START || k > GamepadKeyCode::BUTTON_END)) return false;
+		} else {
+			return false;
 		}
 
 		_mapping[_getIndex(vk)] = k;
@@ -31,6 +33,18 @@ namespace aurora::modules::inputs {
 		}
 
 		return false;
+	}
+
+	void GamepadKeyMapping::removeUndefined() {
+		using namespace aurora::enum_operators;
+
+		for (size_t i = 0; i < COUNT; ++i) {
+			if (auto vk = VK_MIN + i;
+				(vk >= GamepadVirtualKeyCode::UNDEFINED_AXIS_1 && vk <= GamepadVirtualKeyCode::UNDEFINED_AXIS_END) ||
+				(vk >= GamepadVirtualKeyCode::UNDEFINED_BUTTON_1 && vk <= GamepadVirtualKeyCode::UNDEFINED_BUTTON_END)) {
+				_mapping[i] = GamepadKeyCode::UNDEFINED;
+			}
+		}
 	}
 
 	void GamepadKeyMapping::undefinedCompletion(size_t maxAxes, size_t maxButtons) {
@@ -76,7 +90,7 @@ namespace aurora::modules::inputs {
 			}
 		}
 
-		for (size_t i = 0; i < maxButtonKey; ++i) {
+		for (size_t i = 0; i < maxButtons; ++i) {
 			if (!kButtons[i]) {
 				for (size_t j = 0; j < vkButtons.size(); ++j) {
 					if (!vkButtons[j]) {

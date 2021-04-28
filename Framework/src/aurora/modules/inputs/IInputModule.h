@@ -49,17 +49,10 @@ namespace aurora::modules::inputs {
 
 		FingerIDType fingerID = 0;
 		DeviceTouchPhase phase = DeviceTouchPhase::END;
-		DeviceTouchPhase deltaPhase = DeviceTouchPhase::END;
 		CodeType code = 0;
 		Vec2<DeviceStateValue> position;
-		DeviceStateValue deltaTime = Math::ZERO<DeviceStateValue>;
-		Vec2<DeviceStateValue> deltaPosition;
 
 		inline bool AE_CALL operator==(const DeviceTouchStateValue& value) const {
-			return fingerID == value.fingerID && phase == value.phase && deltaPhase == value.deltaPhase && code == value.code && position == value.position && deltaTime == value.deltaTime && deltaPosition == value.deltaPosition;
-		}
-
-		inline bool AE_CALL isSame(const DeviceTouchStateValue& value) const {
 			return fingerID == value.fingerID && phase == value.phase && code == value.code && position == value.position;
 		}
 	};
@@ -392,6 +385,7 @@ namespace aurora::modules::inputs {
 
 		bool AE_CALL set(GamepadVirtualKeyCode vk, GamepadKeyCode k);
 		bool AE_CALL remove(GamepadVirtualKeyCode vk);
+		void AE_CALL removeUndefined();
 
 		inline void AE_CALL clear() {
 			memset(_mapping, (uint8_t)GamepadKeyCode::UNDEFINED, sizeof(_mapping));
@@ -452,10 +446,10 @@ namespace aurora::modules::inputs {
 
 		void AE_CALL getStates(DeviceStateType type, DeviceState* states, size_t count) const;
 
-		virtual DeviceState::CountType AE_CALL setState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count) = 0;
+		virtual DeviceState::CountType AE_CALL setState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count) = 0;
 
 		template<DeviceCode T>
-		inline DeviceState::CountType AE_CALL setState(DeviceStateType type, T code, void* values, DeviceState::CountType count) {
+		inline DeviceState::CountType AE_CALL setState(DeviceStateType type, T code, const void* values, DeviceState::CountType count) {
 			return setState(type, (DeviceState::CodeType)code, values, count);
 		}
 

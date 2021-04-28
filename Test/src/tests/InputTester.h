@@ -25,6 +25,10 @@ public:
 			return "left trigger";
 		case GamepadVirtualKeyCode::R_TRIGGER:
 			return "right trigger";
+		case GamepadVirtualKeyCode::L_TRIGGER_BUTTON:
+			return "left trigger button";
+		case GamepadVirtualKeyCode::R_TRIGGER_BUTTON:
+			return "right trigger button";
 		case GamepadVirtualKeyCode::SELECT:
 			return "select";
 		case GamepadVirtualKeyCode::START:
@@ -148,8 +152,30 @@ public:
 						//if (getNumInputeDevice(DeviceType::GAMEPAD) > 0) return;
 						printaln("create device : ", getDeviceTypeString(info->type), " guid = ", String::toString(info->guid.getData(), info->guid.getSize()));
 						if (auto device = im->createDevice(info->guid); device) {
+							{
+								device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::L_STICK, &Math::TWENTIETH<DeviceStateValue>, 1);
+								device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::R_STICK, &Math::TWENTIETH<DeviceStateValue>, 1);
+								device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::L_TRIGGER, &Math::TWENTIETH<DeviceStateValue>, 1);
+								device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::R_TRIGGER, &Math::TWENTIETH<DeviceStateValue>, 1);
+							}
+
+							/*
 							GamepadKeyMapping keyMapping;
-							//device->setState(DeviceStateType::KEY_MAPPING, 0, &keyMapping, 1);
+							device->getState(DeviceStateType::KEY_MAPPING, 0, &keyMapping, 1);
+							keyMapping.removeUndefined();
+
+							keyMapping.set(GamepadVirtualKeyCode::R_STICK_X, GamepadKeyCode::AXIS_1 + 2);
+							keyMapping.set(GamepadVirtualKeyCode::R_STICK_Y, GamepadKeyCode::AXIS_1 + 5);
+							keyMapping.set(GamepadVirtualKeyCode::L_TRIGGER, GamepadKeyCode::AXIS_1 + 3);
+							keyMapping.set(GamepadVirtualKeyCode::R_TRIGGER, GamepadKeyCode::AXIS_1 + 4);
+							keyMapping.set(GamepadVirtualKeyCode::L2_BUTTON, GamepadKeyCode::BUTTON_1 + 6);
+							keyMapping.set(GamepadVirtualKeyCode::R2_BUTTON, GamepadKeyCode::BUTTON_1 + 7);
+							keyMapping.set(GamepadVirtualKeyCode::SELECT, GamepadKeyCode::BUTTON_1 + 8);
+							keyMapping.set(GamepadVirtualKeyCode::START, GamepadKeyCode::BUTTON_1 + 9);
+							keyMapping.set(GamepadVirtualKeyCode::L_THUMB, GamepadKeyCode::BUTTON_1 + 10);
+							keyMapping.set(GamepadVirtualKeyCode::R_THUMB, GamepadKeyCode::BUTTON_1 + 11);
+							device->setState(DeviceStateType::KEY_MAPPING, 0, &keyMapping, 1);
+							*/
 
 							{
 								float32_t dz[] = { Math::ONE_HALF<DeviceStateValue> - Math::FORTIETH<DeviceStateValue>, Math::ONE_HALF<DeviceStateValue> + Math::FORTIETH<DeviceStateValue> };
@@ -329,7 +355,7 @@ public:
 								DeviceStateValue vibration[2];
 								vibration[0] = vals[0];
 								vibration[1] = vals[0];
-								//dev->setState(DeviceStateType::VIBRATION, 0, vibration, 2);
+								dev->setState(DeviceStateType::VIBRATION, 0, vibration, 2);
 							}
 						}
 					}

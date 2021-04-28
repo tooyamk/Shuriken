@@ -65,6 +65,18 @@ namespace aurora::modules::inputs::xinput {
 
 			return 0;
 		}
+		case DeviceStateType::KEY_MAPPING:
+		{
+			if (values && count) {
+				std::shared_lock lock(_mutex);
+
+				*((GamepadKeyMapping*)values) = _keyMapping;
+
+				return 1;
+			}
+
+			return 0;
+		}
 		case DeviceStateType::DEAD_ZONE:
 		{
 			if (values && count) {
@@ -84,7 +96,7 @@ namespace aurora::modules::inputs::xinput {
 		}
 	}
 
-	DeviceState::CountType Gamepad::setState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count) {
+	DeviceState::CountType Gamepad::setState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count) {
 		switch (type) {
 		case DeviceStateType::KEY_MAPPING:
 		{

@@ -8,6 +8,7 @@ namespace aurora {
 	public:
 		template<Arithmetic T> inline static constexpr T ZERO = 0;
 		template<Arithmetic T> inline static constexpr T ONE = 1;
+		template<Arithmetic T> inline static constexpr T TWO = 2;
 		template<Arithmetic T> inline static constexpr T NEGATIVE_ONE = -1;
 		template<std::floating_point T> inline static constexpr T ONE_HALF = T(.5);
 		template<std::floating_point T> inline static constexpr T TENTH = T(.1);

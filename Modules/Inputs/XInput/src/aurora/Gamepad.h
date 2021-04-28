@@ -14,7 +14,7 @@ namespace aurora::modules::inputs::xinput {
 		virtual IntrusivePtr<events::IEventDispatcher<DeviceEvent>> AE_CALL getEventDispatcher() override;
 		virtual const DeviceInfo& AE_CALL getInfo() const override;
 		virtual DeviceState::CountType AE_CALL getState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count) const override;
-		virtual DeviceState::CountType AE_CALL setState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count) override;
+		virtual DeviceState::CountType AE_CALL setState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count) override;
 		virtual void AE_CALL poll(bool dispatchEvent) override;
 
 	private:

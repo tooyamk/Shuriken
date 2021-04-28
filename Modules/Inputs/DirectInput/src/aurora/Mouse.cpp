@@ -55,7 +55,7 @@ namespace aurora::modules::inputs::direct_input {
 		}
 	}
 
-	DeviceState::CountType Mouse::setState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count) {
+	DeviceState::CountType Mouse::setState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count) {
 		return 0;
 	}
 
