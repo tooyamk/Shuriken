@@ -8,12 +8,16 @@ namespace aurora::modules::inputs::xinput {
 		_input(input),
 		_eventDispatcher(new events::EventDispatcher<DeviceEvent>()),
 		_info(info) {
-		memset(&_state, 0, sizeof(_state));
 
-		_setDeadZone(GamepadVirtualKeyCode::L_STICK, Math::TWENTIETH<DeviceStateValue>);
-		_setDeadZone(GamepadVirtualKeyCode::R_STICK, Math::TWENTIETH<DeviceStateValue>);
-		_setDeadZone(GamepadVirtualKeyCode::L_TRIGGER, Math::TWENTIETH<DeviceStateValue>);
-		_setDeadZone(GamepadVirtualKeyCode::R_TRIGGER, Math::TWENTIETH<DeviceStateValue>);
+		_setKeyMapping(nullptr);
+
+		Vec2<DeviceStateValue> dz(Math::ZERO<DeviceStateValue>, Math::TWENTIETH<DeviceStateValue>);
+		_setDeadZone(GamepadVirtualKeyCode::L_STICK, &dz);
+		_setDeadZone(GamepadVirtualKeyCode::R_STICK, &dz);
+		_setDeadZone(GamepadVirtualKeyCode::L_TRIGGER, &dz);
+		_setDeadZone(GamepadVirtualKeyCode::R_TRIGGER, &dz);
+
+		_readState(_state);
 	}
 
 	Gamepad::~Gamepad() {
@@ -28,6 +32,8 @@ namespace aurora::modules::inputs::xinput {
 	}
 
 	DeviceState::CountType Gamepad::getState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count) const {
+		using namespace aurora::enum_operators;
+
 		switch (type) {
 		case DeviceStateType::KEY:
 		{
@@ -36,48 +42,24 @@ namespace aurora::modules::inputs::xinput {
 
 				switch ((GamepadVirtualKeyCode)code) {
 				case GamepadVirtualKeyCode::L_STICK:
-					return _getStick(_state.Gamepad.sThumbLX, _state.Gamepad.sThumbLY, (GamepadVirtualKeyCode)code, (DeviceStateValue*)values, count);
+					return _getStick(GamepadVirtualKeyCode::L_STICK_X, (GamepadVirtualKeyCode)code, (DeviceStateValue*)values, count);
 				case GamepadVirtualKeyCode::R_STICK:
-					return _getStick(_state.Gamepad.sThumbRX, _state.Gamepad.sThumbRY, (GamepadVirtualKeyCode)code, (DeviceStateValue*)values, count);
-				case GamepadVirtualKeyCode::L_TRIGGER:
-					return _getTrigger(_state.Gamepad.bLeftTrigger, (GamepadVirtualKeyCode)code, ((DeviceStateValue*)values)[0]);
-				case GamepadVirtualKeyCode::R_TRIGGER:
-					return _getTrigger(_state.Gamepad.bRightTrigger, (GamepadVirtualKeyCode)code, ((DeviceStateValue*)values)[0]);
+					return _getStick(GamepadVirtualKeyCode::R_STICK_X, (GamepadVirtualKeyCode)code, (DeviceStateValue*)values, count);
 				case GamepadVirtualKeyCode::DPAD:
 					((DeviceStateValue*)values)[0] = _translateDpad(_state.Gamepad.wButtons);
 					return 1;
-				case GamepadVirtualKeyCode::A:
-					((DeviceStateValue*)values)[0] = _translateButton(_state.Gamepad.wButtons & XINPUT_GAMEPAD_A);
-					return 1;
-				case GamepadVirtualKeyCode::B:
-					((DeviceStateValue*)values)[0] = _translateButton(_state.Gamepad.wButtons & XINPUT_GAMEPAD_B);
-					return 1;
-				case GamepadVirtualKeyCode::X:
-					((DeviceStateValue*)values)[0] = _translateButton(_state.Gamepad.wButtons & XINPUT_GAMEPAD_X);
-					return 1;
-				case GamepadVirtualKeyCode::Y:
-					((DeviceStateValue*)values)[0] = _translateButton(_state.Gamepad.wButtons & XINPUT_GAMEPAD_Y);
-					return 1;
-				case GamepadVirtualKeyCode::L_SHOULDER:
-					((DeviceStateValue*)values)[0] = _translateButton(_state.Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_SHOULDER);
-					return 1;
-				case GamepadVirtualKeyCode::R_SHOULDER:
-					((DeviceStateValue*)values)[0] = _translateButton(_state.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_SHOULDER);
-					return 1;
-				case GamepadVirtualKeyCode::BACK:
-					((DeviceStateValue*)values)[0] = _translateButton(_state.Gamepad.wButtons & XINPUT_GAMEPAD_BACK);
-					return 1;
-				case GamepadVirtualKeyCode::START:
-					((DeviceStateValue*)values)[0] = _translateButton(_state.Gamepad.wButtons & XINPUT_GAMEPAD_START);
-					return 1;
-				case GamepadVirtualKeyCode::L_THUMB:
-					((DeviceStateValue*)values)[0] = _translateButton(_state.Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_THUMB);
-					return 1;
-				case GamepadVirtualKeyCode::R_THUMB:
-					((DeviceStateValue*)values)[0] = _translateButton(_state.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_THUMB);
-					return 1;
 				default:
+				{
+					if (code >= GamepadVirtualKeyCode::SEPARATE_AXIS_START && code <= GamepadVirtualKeyCode::UNDEFINED_AXIS_END) {
+						((DeviceStateValue*)values)[0] = translate(_normalizeAxis(_readAxisVal(_state.Gamepad, _keyMapping.get((GamepadVirtualKeyCode)code), 0)), _getDeadZone((GamepadVirtualKeyCode)code));
+						return 1;
+					} else if (code >= GamepadVirtualKeyCode::BUTTON_START && code <= GamepadVirtualKeyCode::BUTTON_END) {
+						((DeviceStateValue*)values)[0] = _translateButton(_readButtonVal(_state.Gamepad.wButtons, _keyMapping.get((GamepadVirtualKeyCode)code)));
+						return 1;
+					}
+
 					return 0;
+				}
 				}
 			}
 
@@ -86,9 +68,13 @@ namespace aurora::modules::inputs::xinput {
 		case DeviceStateType::DEAD_ZONE:
 		{
 			if (values && count) {
-				((DeviceStateValue*)values)[0] = _getDeadZone((GamepadVirtualKeyCode)code);
+				DeviceState::CountType c = 1;
 
-				return 1;
+				auto dz = _getDeadZone((GamepadVirtualKeyCode)code);
+				((DeviceStateValue*)values)[0] = dz[0];
+				if (count > 1) ((DeviceStateValue*)values)[c++] = dz[1];
+
+				return c;
 			}
 
 			return 0;
@@ -100,10 +86,34 @@ namespace aurora::modules::inputs::xinput {
 
 	DeviceState::CountType Gamepad::setState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count) {
 		switch (type) {
+		case DeviceStateType::KEY_MAPPING:
+		{
+			if (!count) values = nullptr;
+
+			{
+				std::scoped_lock lock(_mutex);
+
+				_setKeyMapping((const GamepadKeyMapping*)values);
+			}
+
+			return 1;
+		}
 		case DeviceStateType::DEAD_ZONE:
 		{
-			if (values && count) {
-				_setDeadZone((GamepadVirtualKeyCode)code, ((DeviceStateValue*)values)[0]);
+			if (!count) values = nullptr;
+
+			if (values) {
+				DeviceState::CountType c = 1;
+
+				Vec2<DeviceStateValue> dz;
+				dz[0] = ((DeviceStateValue*)values)[0];
+				if (count > 1) dz[c++] = ((DeviceStateValue*)values)[1];
+
+				_setDeadZone((GamepadVirtualKeyCode)code, &dz);
+
+				return c;
+			} else {
+				_setDeadZone((GamepadVirtualKeyCode)code, nullptr);
 				return 1;
 			}
 
@@ -129,106 +139,150 @@ namespace aurora::modules::inputs::xinput {
 	}
 
 	void Gamepad::poll(bool dispatchEvent) {
-		XINPUT_STATE state;
-		if (XInputGetState(_index, &state) != ERROR_SUCCESS) return;
+		using namespace aurora::enum_operators;
+
+		XINPUT_STATE newState;
+		if (!_readState(newState)) return;
 
 		if (!dispatchEvent) {
 			std::scoped_lock lock(_mutex);
 
-			memcpy(&_state, &state, sizeof(XINPUT_STATE));
+			memcpy(&_state, &newState, sizeof(XINPUT_STATE));
 
 			return;
 		}
 
-		DWORD oriBtns;
-
-		auto& curPad = state.Gamepad;
-		auto curBtns = curPad.wButtons;
-
-		SHORT oriLStickX, oriLStickY, oriRStickX, oriRStickY;
-		auto ls = false, rs = false;
-
-		SHORT oriLT, oriRT;
-		auto lt = false, rt = false;
-
+		XINPUT_STATE oldState;
+		GamepadKeyMapping keyMapping(NO_INIT);
 		{
 			std::scoped_lock lock(_mutex);
 
-			auto& oriPad = _state.Gamepad;
-			oriBtns = oriPad.wButtons;
-
-			if (oriPad.sThumbLX != curPad.sThumbLX || oriPad.sThumbLY != curPad.sThumbLY) {
-				oriLStickX = oriPad.sThumbLX;
-				oriLStickY = oriPad.sThumbLY;
-				oriPad.sThumbLX = curPad.sThumbLX;
-				oriPad.sThumbLY = curPad.sThumbLY;
-				ls = true;
-			}
-			if (oriPad.sThumbRX != curPad.sThumbRX || oriPad.sThumbRY != curPad.sThumbRY) {
-				oriRStickX = oriPad.sThumbRX;
-				oriRStickY = oriPad.sThumbRY;
-				oriPad.sThumbRX = curPad.sThumbRX;
-				oriPad.sThumbRY = curPad.sThumbRY;
-				rs = true;
-			}
-
-			if (oriPad.bLeftTrigger != curPad.bLeftTrigger) {
-				oriLT = oriPad.bLeftTrigger;
-				oriPad.bLeftTrigger = curPad.bLeftTrigger;
-				lt = true;
-			}
-			if (oriPad.bRightTrigger != curPad.bRightTrigger) {
-				oriRT = oriPad.bRightTrigger;
-				oriPad.bRightTrigger = curPad.bRightTrigger;
-				rt = true;
-			}
-
-			oriPad.wButtons = curPad.wButtons;
+			keyMapping = _keyMapping;
+			memcpy(&oldState, &_state, sizeof(_state));
+			memcpy(&_state, &newState, sizeof(_state));
 		}
 
-		bool dpad =
-			(oriBtns & XINPUT_GAMEPAD_DPAD_UP) != (curBtns & XINPUT_GAMEPAD_DPAD_UP) ||
-			(oriBtns & XINPUT_GAMEPAD_DPAD_RIGHT) != (curBtns & XINPUT_GAMEPAD_DPAD_RIGHT) ||
-			(oriBtns & XINPUT_GAMEPAD_DPAD_DOWN) != (curBtns & XINPUT_GAMEPAD_DPAD_DOWN) ||
-			(oriBtns & XINPUT_GAMEPAD_DPAD_LEFT) != (curBtns & XINPUT_GAMEPAD_DPAD_LEFT);
+		auto& oldGamepad = oldState.Gamepad;
+		auto oldBtns = oldGamepad.wButtons;
+		auto& newGamepad = newState.Gamepad;
+		auto newBtns = newGamepad.wButtons;
 
-		if (ls) _dispatchStick(oriLStickX, oriLStickY, curPad.sThumbLX, curPad.sThumbLY, GamepadVirtualKeyCode::L_STICK);
-		if (rs) _dispatchStick(oriRStickX, oriRStickY, curPad.sThumbRX, curPad.sThumbRY, GamepadVirtualKeyCode::R_STICK);
-
-		if (lt) _dispatchTrigger(oriLT, curPad.bLeftTrigger, GamepadVirtualKeyCode::L_TRIGGER);
-		if (rt) _dispatchTrigger(oriRT, curPad.bRightTrigger, GamepadVirtualKeyCode::R_TRIGGER);
-
-		if (dpad) {
-			auto value = _translateDpad(curPad.wButtons);
-			DeviceState k = { (DeviceState::CodeType)GamepadVirtualKeyCode::DPAD, 1, &value };
-			_eventDispatcher->dispatchEvent(this, value >= Math::ZERO<DeviceStateValue> ? DeviceEvent::DOWN : DeviceEvent::UP, &k);
+		GamepadKeyCode mappingVals[4];
+		keyMapping.get(GamepadVirtualKeyCode::L_STICK_X, 4, mappingVals);
+		for (size_t i = 0; i < 2; ++i) {
+			auto idx = i << 1;
+			_dispatchStick(
+				_readAxisVal(oldGamepad, mappingVals[idx], (std::numeric_limits<int16_t>::max)()), 
+				_readAxisVal(oldGamepad, mappingVals[idx + 1], (std::numeric_limits<int16_t>::max)()),
+				_readAxisVal(newGamepad, mappingVals[idx], (std::numeric_limits<int16_t>::max)()),
+				_readAxisVal(newGamepad, mappingVals[idx + 1], (std::numeric_limits<int16_t>::max)()),
+				GamepadVirtualKeyCode::L_STICK + i);
 		}
 
-		_dispatchButton(oriBtns, curBtns, XINPUT_GAMEPAD_A, GamepadVirtualKeyCode::A);
-		_dispatchButton(oriBtns, curBtns, XINPUT_GAMEPAD_B, GamepadVirtualKeyCode::B);
-		_dispatchButton(oriBtns, curBtns, XINPUT_GAMEPAD_X, GamepadVirtualKeyCode::X);
-		_dispatchButton(oriBtns, curBtns, XINPUT_GAMEPAD_Y, GamepadVirtualKeyCode::Y);
-		_dispatchButton(oriBtns, curBtns, XINPUT_GAMEPAD_LEFT_SHOULDER, GamepadVirtualKeyCode::L_SHOULDER);
-		_dispatchButton(oriBtns, curBtns, XINPUT_GAMEPAD_RIGHT_SHOULDER, GamepadVirtualKeyCode::R_SHOULDER);
-		_dispatchButton(oriBtns, curBtns, XINPUT_GAMEPAD_BACK, GamepadVirtualKeyCode::BACK);
-		_dispatchButton(oriBtns, curBtns, XINPUT_GAMEPAD_START, GamepadVirtualKeyCode::START);
-		_dispatchButton(oriBtns, curBtns, XINPUT_GAMEPAD_LEFT_THUMB, GamepadVirtualKeyCode::L_THUMB);
-		_dispatchButton(oriBtns, curBtns, XINPUT_GAMEPAD_RIGHT_THUMB, GamepadVirtualKeyCode::R_THUMB);
+		keyMapping.forEach([&](GamepadVirtualKeyCode vk, GamepadKeyCode k) {
+			if (vk >= GamepadVirtualKeyCode::L_TRIGGER && vk <= GamepadVirtualKeyCode::AXIS_END) {
+				_dispatchAxis(_readAxisVal(oldGamepad, k, 0), _readAxisVal(newGamepad, k, 0), vk);
+			} else if (vk >= GamepadVirtualKeyCode::BUTTON_START && vk <= GamepadVirtualKeyCode::BUTTON_END) {
+				if (auto newVal = _readButtonVal(newBtns, k); newVal != _readButtonVal(oldBtns, k)) {
+					auto value = _translateButton(newVal);
+					DeviceState ds = { (DeviceState::CodeType)vk, 1, &value };
+					_eventDispatcher->dispatchEvent(this, value > Math::ZERO<DeviceStateValue> ? DeviceEvent::DOWN : DeviceEvent::UP, &ds);
+				}
+			}
+		});
+
+		if ((oldBtns & XINPUT_GAMEPAD_DPAD_UP) != (newBtns & XINPUT_GAMEPAD_DPAD_UP) ||
+			(oldBtns & XINPUT_GAMEPAD_DPAD_RIGHT) != (newBtns & XINPUT_GAMEPAD_DPAD_RIGHT) ||
+			(oldBtns & XINPUT_GAMEPAD_DPAD_DOWN) != (newBtns & XINPUT_GAMEPAD_DPAD_DOWN) ||
+			(oldBtns & XINPUT_GAMEPAD_DPAD_LEFT) != (newBtns & XINPUT_GAMEPAD_DPAD_LEFT)) {
+			auto value = _translateDpad(newGamepad.wButtons);
+			DeviceState ds = { (DeviceState::CodeType)GamepadVirtualKeyCode::DPAD, 1, &value };
+			_eventDispatcher->dispatchEvent(this, value >= Math::ZERO<DeviceStateValue> ? DeviceEvent::DOWN : DeviceEvent::UP, &ds);
+		}
 	}
 
-	void Gamepad::_setDeadZone(GamepadVirtualKeyCode keyCode, DeviceStateValue deadZone) {
-		if (deadZone < Math::ZERO<DeviceStateValue>) deadZone = -deadZone;
+	bool Gamepad::_readState(XINPUT_STATE& state) {
+		return XInputGetState(_index, &state) == ERROR_SUCCESS;
+	}
 
-		std::scoped_lock lock(_deadZoneMutex);
+	void Gamepad::_setKeyMapping(const GamepadKeyMapping* mapping) {
+		using namespace aurora::enum_operators;
 
-		_deadZone.insert_or_assign(keyCode, deadZone);
+		if (mapping) {
+			_keyMapping = *mapping;
+		} else {
+			_keyMapping.clear();
+
+			_keyMapping.set(GamepadVirtualKeyCode::L_STICK_X, GamepadKeyCode::AXIS_1);
+			_keyMapping.set(GamepadVirtualKeyCode::L_STICK_Y, GamepadKeyCode::AXIS_1 + 1);
+			_keyMapping.set(GamepadVirtualKeyCode::R_STICK_X, GamepadKeyCode::AXIS_1 + 3);
+			_keyMapping.set(GamepadVirtualKeyCode::R_STICK_Y, GamepadKeyCode::AXIS_1 + 4);
+			_keyMapping.set(GamepadVirtualKeyCode::L_TRIGGER, GamepadKeyCode::AXIS_1 + 2);
+			_keyMapping.set(GamepadVirtualKeyCode::R_TRIGGER, GamepadKeyCode::AXIS_1 + 5);
+
+			_keyMapping.set(GamepadVirtualKeyCode::A, GamepadKeyCode::BUTTON_1);
+			_keyMapping.set(GamepadVirtualKeyCode::B, GamepadKeyCode::BUTTON_1 + 1);
+			_keyMapping.set(GamepadVirtualKeyCode::X, GamepadKeyCode::BUTTON_1 + 2);
+			_keyMapping.set(GamepadVirtualKeyCode::Y, GamepadKeyCode::BUTTON_1 + 3);
+			_keyMapping.set(GamepadVirtualKeyCode::L_SHOULDER, GamepadKeyCode::BUTTON_1 + 4);
+			_keyMapping.set(GamepadVirtualKeyCode::R_SHOULDER, GamepadKeyCode::BUTTON_1 + 5);
+			_keyMapping.set(GamepadVirtualKeyCode::SELECT, GamepadKeyCode::BUTTON_1 + 6);
+			_keyMapping.set(GamepadVirtualKeyCode::START, GamepadKeyCode::BUTTON_1 + 7);
+			_keyMapping.set(GamepadVirtualKeyCode::L_THUMB, GamepadKeyCode::BUTTON_1 + 8);
+			_keyMapping.set(GamepadVirtualKeyCode::R_THUMB, GamepadKeyCode::BUTTON_1 + 9);
+		}
+
+		_keyMapping.undefinedCompletion(MAX_AXES, MAX_BUTTONS);
+	}
+
+	void Gamepad::_setDeadZone(GamepadVirtualKeyCode keyCode, Vec2<DeviceStateValue>* deadZone) {
+		if (deadZone) {
+			auto& dzVal = *deadZone;
+
+			Math::clamp(dzVal.data, Math::ZERO<DeviceStateValue>, Math::ONE<DeviceStateValue>);
+
+			if (dzVal[1] < dzVal[0]) {
+				auto tmp = dzVal[0];
+				dzVal[0] = dzVal[1];
+				dzVal[1] = tmp;
+			}
+
+			std::scoped_lock lock(_deadZoneMutex);
+
+			_deadZone.insert_or_assign(keyCode, dzVal);
+		} else {
+			std::scoped_lock lock(_deadZoneMutex);
+
+			if (auto itr = _deadZone.find(keyCode); itr != _deadZone.end()) _deadZone.erase(itr);
+		}
 	}
 
 	void Gamepad::_setVibration(DeviceStateValue left, DeviceStateValue right) {
 		XINPUT_VIBRATION vibration;
-		vibration.wLeftMotorSpeed = Math::clamp(left, Math::ZERO<DeviceStateValue>, Math::ONE<DeviceStateValue>) * NUMBER_65535<decltype(vibration.wLeftMotorSpeed)>;
-		vibration.wRightMotorSpeed = Math::clamp(right, Math::ZERO<DeviceStateValue>, Math::ONE<DeviceStateValue>) * NUMBER_65535<decltype(vibration.wRightMotorSpeed)>;
+		vibration.wLeftMotorSpeed = Math::clamp(left, Math::ZERO<DeviceStateValue>, Math::ONE<DeviceStateValue>) * (std::numeric_limits<uint16_t>::max)();
+		vibration.wRightMotorSpeed = Math::clamp(right, Math::ZERO<DeviceStateValue>, Math::ONE<DeviceStateValue>) * (std::numeric_limits<uint16_t>::max)();
 		XInputSetState(_index, &vibration);
+	}
+
+	uint16_t Gamepad::_readAxisVal(const XINPUT_GAMEPAD& gamepad, GamepadKeyCode k, uint16_t defaultVal) {
+		using namespace aurora::enum_operators;
+
+		switch (k) {
+		case GamepadKeyCode::AXIS_1:
+			return _traslateRawThumbX(gamepad.sThumbLX);
+		case GamepadKeyCode::AXIS_1 + 1:
+			return _traslateRawThumbY(gamepad.sThumbLY);
+		case GamepadKeyCode::AXIS_1 + 2:
+			return _traslateRawTrigger(gamepad.bLeftTrigger);
+		case GamepadKeyCode::AXIS_1 + 3:
+			return _traslateRawThumbX(gamepad.sThumbRX);
+		case GamepadKeyCode::AXIS_1 + 4:
+			return _traslateRawThumbY(gamepad.sThumbRY);
+		case GamepadKeyCode::AXIS_1 + 5:
+			return _traslateRawTrigger(gamepad.bRightTrigger);
+		default:
+			return defaultVal;
+		}
 	}
 
 	DeviceStateValue Gamepad::_translateDpad(WORD value) {
@@ -258,80 +312,35 @@ namespace aurora::modules::inputs::xinput {
 		}
 	}
 
-	DeviceState::CountType Gamepad::_getStick(SHORT x, SHORT y, GamepadVirtualKeyCode key, DeviceStateValue* data, DeviceState::CountType count) const {
-		DeviceState::CountType c = 1;
+	DeviceState::CountType Gamepad::_getStick(GamepadVirtualKeyCode stickX, GamepadVirtualKeyCode key, DeviceStateValue* data, DeviceState::CountType count) const {
+		auto& gamepad = _state.Gamepad;
+		GamepadKeyCode mappingVals[2];
+		_keyMapping.get(stickX, 2, mappingVals);
 
-		auto dz = _getDeadZone(key);
-		auto dz2 = dz * dz;
-
-		auto dx = _translateStick<false>(x);
-		auto dy = _translateStick<true>(y);
-
-		auto d2 = dx * dx + dy * dy;
-		if (d2 > Math::ONE<DeviceStateValue>) d2 = Math::ONE<DeviceStateValue>;
-
-		if (d2 <= dz2) {
-			data[0] = Math::NEGATIVE_ONE<DeviceStateValue>;
-			if (count > 1) data[c++] = Math::ZERO<DeviceStateValue>;
-		} else {
-			data[0] = std::atan2(dy, dx) + Math::PI_2<DeviceStateValue>;
-			if (data[0] < Math::ZERO<DeviceStateValue>) data[0] += Math::PI2<DeviceStateValue>;
-			if (count > 1) data[c++] = _translateDeadZone01(d2 < Math::ONE<DeviceStateValue> ? std::sqrt(d2) : Math::ONE<DeviceStateValue>, dz, false);
-		}
-
-		return c;
+		return translate(
+			_normalizeStick(_readAxisVal(gamepad, mappingVals[0], (std::numeric_limits<int16_t>::max)())),
+			_normalizeStick(_readAxisVal(gamepad, mappingVals[1], (std::numeric_limits<int16_t>::max)())),
+			_getDeadZone(key), data, count);
 	}
 
-	DeviceState::CountType Gamepad::_getTrigger(SHORT t, GamepadVirtualKeyCode key, DeviceStateValue& data) const {
+	void Gamepad::_dispatchStick(uint16_t oldX, uint16_t oldY, uint16_t newX, uint16_t newY, GamepadVirtualKeyCode key) {
 		auto dz = _getDeadZone(key);
 
-		data = _translateTrigger(t);
-		data = _translateDeadZone01(data, dz, data <= dz);
+		DeviceStateValue oldDzVals[2], newDzVals[2];
+		translate(_normalizeStick(oldX), _normalizeStick(oldY), dz, oldDzVals, 2);
+		translate(_normalizeStick(newX), _normalizeStick(newY), dz, newDzVals, 2);
 
-		return 1;
-	}
-
-	void Gamepad::_dispatchStick(SHORT oriX, SHORT oriY, SHORT curX, SHORT curY, GamepadVirtualKeyCode key) {
-		DeviceStateValue value[] = { _translateStick<false>(curX) , _translateStick<true>(curY) };
-		auto dz = _getDeadZone(key);
-		auto dz2 = dz * dz;
-		auto x = _translateStick<false>(oriX), y = _translateStick<true>(oriY);
-		auto oriDz = x * x + y * y <= dz2;
-		auto d2 = value[0] * value[0] + value[1] * value[1];
-		if (d2 > Math::ONE<DeviceStateValue>) d2 = Math::ONE<DeviceStateValue>;
-		auto curDz = d2 <= dz2;
-		if (!oriDz || oriDz != curDz) {
-			if (curDz) {
-				value[0] = Math::NEGATIVE_ONE<DeviceStateValue>;
-				value[1] = Math::ZERO<DeviceStateValue>;
-			} else {
-				value[0] = std::atan2(value[1], value[0]) + Math::PI_2<float32_t>;
-				if (value[0] < Math::ZERO<DeviceStateValue>) value[0] += Math::PI2<float32_t>;
-				value[1] = _translateDeadZone01(d2 < Math::ONE<DeviceStateValue> ? std::sqrt(d2) : Math::ONE<DeviceStateValue>, dz, false);
-			}
-			DeviceState k = { (DeviceState::CodeType)key, 2, value };
-			_eventDispatcher->dispatchEvent(this, DeviceEvent::MOVE, &k);
+		if (oldDzVals[0] != newDzVals[0] || oldDzVals[1] != newDzVals[1]) {
+			DeviceState ds = { (DeviceState::CodeType)key, 2, newDzVals };
+			_eventDispatcher->dispatchEvent((void*)this, DeviceEvent::MOVE, &ds);
 		}
 	}
 
-	void Gamepad::_dispatchTrigger(SHORT ori, SHORT cur, GamepadVirtualKeyCode key) {
-		auto value = _translateTrigger(cur);
+	void Gamepad::_dispatchAxis(uint16_t oldVal, uint16_t newVal, GamepadVirtualKeyCode key) {
 		auto dz = _getDeadZone(key);
-		auto oriDz = _translateTrigger(ori) <= dz;
-		auto curDz = value <= dz;
-		if (!curDz || oriDz != curDz) {
-			value = _translateDeadZone01(value, dz, curDz);
-			DeviceState k = { (DeviceState::CodeType)key, 1, &value };
-			_eventDispatcher->dispatchEvent(this, DeviceEvent::MOVE, &k);
-		}
-	}
-
-	void Gamepad::_dispatchButton(WORD ori, WORD cur, uint16_t flags, GamepadVirtualKeyCode key) {
-		auto curDown = cur & flags;
-		if ((ori & flags) != curDown) {
-			auto value = curDown ? Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;
-			DeviceState k = { (DeviceState::CodeType)key, 1, &value };
-			_eventDispatcher->dispatchEvent(this, curDown ? DeviceEvent::DOWN : DeviceEvent::UP, &k);
+		if (auto newDzVal = translate(_normalizeAxis(newVal), dz); newDzVal != translate(_normalizeAxis(oldVal), dz)) {
+			DeviceState ds = { (DeviceState::CodeType)key, 1, &newDzVal };
+			_eventDispatcher->dispatchEvent((void*)this, DeviceEvent::MOVE, &ds);
 		}
 	}
 }

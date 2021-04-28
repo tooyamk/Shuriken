@@ -9,8 +9,10 @@ namespace aurora {
 		template<Arithmetic T> inline static constexpr T ZERO = 0;
 		template<Arithmetic T> inline static constexpr T ONE = 1;
 		template<Arithmetic T> inline static constexpr T NEGATIVE_ONE = -1;
+		template<std::floating_point T> inline static constexpr T ONE_HALF = T(.5);
 		template<std::floating_point T> inline static constexpr T TENTH = T(.1);
 		template<std::floating_point T> inline static constexpr T TWENTIETH = T(.05);
+		template<std::floating_point T> inline static constexpr T FORTIETH = T(.025);
 		template<std::floating_point T> inline static constexpr T HUNDREDTH = T(.01);
 
 		template<auto Val>
@@ -77,11 +79,27 @@ namespace aurora {
 			return v < min ? min : (v > max ? max : v);
 		}
 
+		template<ScopedEnum T>
+		inline static constexpr T AE_CALL clamp(T v, T min, T max) {
+			return v < min ? min : (v > max ? max : v);
+		}
+
 		template<size_t N, typename In1, typename In2, typename In3, typename Out>
 		inline static constexpr void AE_CALL clamp(const In1(&v)[N], const In2& min, const In3& max, Out(&dst)[N]) {
 			Out tmp[N];
 			for (decltype(N) i = 0; i < N; ++i) tmp[i] = v[i] < min ? min : (v[i] > max ? max : v[i]);
 			for (decltype(N) i = 0; i < N; ++i) dst[i] = tmp[i];
+		}
+
+		template<size_t N, typename In1, typename In2, typename In3>
+		inline static constexpr void AE_CALL clamp(In1(&v)[N], const In2& min, const In3& max) {
+			for (decltype(N) i = 0; i < N; ++i) {
+				if (v[i] < min) {
+					v[i] = min;
+				} else if (v[i] > max) {
+					v[i] = max;
+				}
+			}
 		}
 
 		template<size_t N, typename In1, typename In2, typename Out = decltype((*(In1*)0) + (*(In2*)0))>

@@ -8,36 +8,98 @@ namespace aurora::modules::inputs::hid_input {
 	public:
 		GamepadBase(Input& input, const DeviceInfo& info, extensions::HIDDevice& hid) : 
 			DeviceBase<InputStateBufferSize, InputBufferSize, OutputStateBufferSize>(input, info, hid) {
-			_setDeadZone(GamepadVirtualKeyCode::L_STICK, Math::TWENTIETH<DeviceStateValue>);
-			_setDeadZone(GamepadVirtualKeyCode::R_STICK, Math::TWENTIETH<DeviceStateValue>);
-			_setDeadZone(GamepadVirtualKeyCode::L_TRIGGER, Math::TWENTIETH<DeviceStateValue>);
-			_setDeadZone(GamepadVirtualKeyCode::R_TRIGGER, Math::TWENTIETH<DeviceStateValue>);
+			Vec2<DeviceStateValue> dz(Math::ZERO<DeviceStateValue>, Math::TWENTIETH<DeviceStateValue>);
+			_setDeadZone(GamepadVirtualKeyCode::L_STICK, &dz);
+			_setDeadZone(GamepadVirtualKeyCode::R_STICK, &dz);
+			_setDeadZone(GamepadVirtualKeyCode::L_TRIGGER, &dz);
+			_setDeadZone(GamepadVirtualKeyCode::R_TRIGGER, &dz);
+		}
+
+		virtual DeviceState::CountType AE_CALL getState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count) const override {
+			switch (type) {
+			case DeviceStateType::DEAD_ZONE:
+			{
+				if (values && count) {
+					DeviceState::CountType c = 1;
+
+					auto dz = _getDeadZone((GamepadVirtualKeyCode)code);
+					((DeviceStateValue*)values)[0] = dz[0];
+					if (count > 1) ((DeviceStateValue*)values)[c++] = dz[1];
+
+					return c;
+				}
+
+				return 0;
+			}
+			default:
+				return 0;
+			}
+		}
+		virtual DeviceState::CountType AE_CALL setState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count) override {
+			switch (type) {
+			case DeviceStateType::DEAD_ZONE:
+			{
+				if (!count) values = nullptr;
+
+				if (values) {
+					DeviceState::CountType c = 1;
+
+					Vec2<DeviceStateValue> dz;
+					dz[0] = ((DeviceStateValue*)values)[0];
+					if (count > 1) dz[c++] = ((DeviceStateValue*)values)[1];
+
+					_setDeadZone((GamepadVirtualKeyCode)code, &dz);
+
+					return c;
+				} else {
+					_setDeadZone((GamepadVirtualKeyCode)code, nullptr);
+					return 1;
+				}
+
+				return 0;
+			}
+			default:
+				return 0;
+			}
 		}
 
 	protected:
-		mutable std::shared_mutex _deadZoneMutex;
-		std::unordered_map<GamepadVirtualKeyCode, DeviceStateValue> _deadZone;
+		GamepadKeyMapping _keyMapping;
+		using GamepadBaseType = GamepadBase<InputStateBufferSize, InputBufferSize, OutputStateBufferSize>;
 
-		inline DeviceStateValue AE_CALL _getDeadZone(GamepadVirtualKeyCode key) const {
+		mutable std::shared_mutex _deadZoneMutex;
+		std::unordered_map<GamepadVirtualKeyCode, Vec2<DeviceStateValue>> _deadZone;
+
+		inline Vec2<DeviceStateValue> AE_CALL _getDeadZone(GamepadVirtualKeyCode key) const {
 			std::shared_lock lock(_deadZoneMutex);
 
 			if (auto itr = _deadZone.find(key); itr == _deadZone.end()) {
-				return Math::ZERO<DeviceStateValue>;
+				return Vec2<DeviceStateValue>::ZERO;
 			} else {
 				return itr->second;
 			}
 		}
 
-		inline void AE_CALL _setDeadZone(GamepadVirtualKeyCode keyCode, DeviceStateValue deadZone) {
-			if (deadZone < Math::ZERO<DeviceStateValue>) deadZone = -deadZone;
+		void AE_CALL _setDeadZone(GamepadVirtualKeyCode keyCode, Vec2<DeviceStateValue>* deadZone) {
+			if (deadZone) {
+				auto& dzVal = *deadZone;
 
-			std::scoped_lock lock(_deadZoneMutex);
+				Math::clamp(dzVal.data, Math::ZERO<DeviceStateValue>, Math::ONE<DeviceStateValue>);
 
-			_deadZone.insert_or_assign(keyCode, deadZone);
-		}
+				if (dzVal[1] < dzVal[0]) {
+					auto tmp = dzVal[0];
+					dzVal[0] = dzVal[1];
+					dzVal[1] = tmp;
+				}
 
-		inline static DeviceStateValue AE_CALL _translateDeadZone01(DeviceStateValue value, DeviceStateValue dz, bool inDz) {
-			return inDz ? Math::ZERO<DeviceStateValue> : (value - dz) / (Math::ONE<DeviceStateValue> - dz);
+				std::scoped_lock lock(_deadZoneMutex);
+
+				_deadZone.insert_or_assign(keyCode, dzVal);
+			} else {
+				std::scoped_lock lock(_deadZoneMutex);
+
+				if (auto itr = _deadZone.find(keyCode); itr != _deadZone.end()) _deadZone.erase(itr);
+			}
 		}
 	};
 }

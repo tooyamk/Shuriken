@@ -49,6 +49,8 @@ namespace aurora::modules::inputs::hid_input {
 		}
 
 	protected:
+		using DeviceBaseType = DeviceBase<InputStateBufferSize, InputBufferSize, OutputStateBufferSize>;
+
 		using InputStateBuffer = uint8_t[InputStateBufferSize];
 		using InputBuffer = uint8_t[InputBufferSize];
 		using OutputStateBuffer = uint8_t[OutputStateBufferSize];

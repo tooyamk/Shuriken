@@ -413,6 +413,14 @@ namespace aurora {
 			}
 		}
 
+		template<typename... Args>
+		requires (sizeof...(Args) > 2 && (sizeof...(Args) & 0b1) == 0)
+		inline SerializableObject& AE_CALL insert(Args&&... args) {
+			_insert(std::forward<Args>(args)...);
+			return *this;
+		}
+
+
 		SerializableObject AE_CALL remove(const SerializableObject& key);
 		inline SerializableObject AE_CALL remove(const std::string_view& key) {
 			return remove(SerializableObject(key, Flag::NONE));
@@ -884,6 +892,12 @@ namespace aurora {
 			default:
 				break;
 			}
+		}
+
+		template<typename K, typename V, typename... Args>
+		inline void AE_CALL _insert(K&& k, V&& v, Args&&... args) {
+			insert(k, v);
+			if constexpr (sizeof...(Args) > 0) _insert(std::forward<Args>(args)...);
 		}
 
 		void AE_CALL _toJson(std::string& json) const;

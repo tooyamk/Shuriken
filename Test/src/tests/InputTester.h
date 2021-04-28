@@ -41,7 +41,9 @@ public:
 			return "touch pad";
 		default:
 		{
-			if (code >= GamepadVirtualKeyCode::UNDEFINED_BUTTON_1) {
+			if (code >= GamepadVirtualKeyCode::UNDEFINED_AXIS_1 && code <= GamepadVirtualKeyCode::UNDEFINED_AXIS_END) {
+				return "undefined axis " + String::toString((uint32_t)(code - GamepadVirtualKeyCode::UNDEFINED_AXIS_1) + 1);
+			} else if (code >= GamepadVirtualKeyCode::UNDEFINED_BUTTON_1 && code <= GamepadVirtualKeyCode::UNDEFINED_BUTTON_END) {
 				return "undefined button " + String::toString((uint32_t)(code - GamepadVirtualKeyCode::UNDEFINED_BUTTON_1) + 1);
 			}
 
@@ -139,20 +141,20 @@ public:
 					printaln("input device connected : ", getDeviceTypeString(info->type), " vid = ", info->vendorID, " pid = ", info->productID, " guid = ", String::toString(info->guid.getData(), info->guid.getSize()));
 
 					//if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN) {
-					//if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN && info->vendorID == 0x54C) {
+					if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN && info->vendorID == 0x54C) {
 					//if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN && info->vendorID == 0xF0D) {
-					if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN && info->vendorID == 0x45E) {
+					//if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN && info->vendorID == 0x45E) {
 						auto im = e.getTarget<IInputModule>();
 						//if (getNumInputeDevice(DeviceType::GAMEPAD) > 0) return;
 						printaln("create device : ", getDeviceTypeString(info->type), " guid = ", String::toString(info->guid.getData(), info->guid.getSize()));
 						if (auto device = im->createDevice(info->guid); device) {
-							SerializableObject keyMapping;
-							keyMapping.get(GamepadVirtualKeyCode::L_STICK).push(GamepadKeyCode::RX, GamepadKeyCode::RY);
-							keyMapping.get(GamepadVirtualKeyCode::R_STICK).push(GamepadKeyCode::X, GamepadKeyCode::Y);
-							keyMapping.insert(GamepadVirtualKeyCode::L_TRIGGER, GamepadKeyCode::Z);
-							keyMapping.insert(GamepadVirtualKeyCode::R_TRIGGER, GamepadKeyCode::Z);
-							keyMapping.insert(GamepadVirtualKeyCode::A, GamepadKeyCode::BUTTON_1 + 2);
+							GamepadKeyMapping keyMapping;
 							//device->setState(DeviceStateType::KEY_MAPPING, 0, &keyMapping, 1);
+
+							{
+								float32_t dz[] = { Math::ONE_HALF<DeviceStateValue> - Math::FORTIETH<DeviceStateValue>, Math::ONE_HALF<DeviceStateValue> + Math::FORTIETH<DeviceStateValue> };
+								for (size_t i = 0; i < 10; ++i) device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::UNDEFINED_AXIS_1 + i, dz, 2);
+							}
 
 							auto eventDispatcher = device->getEventDispatcher();
 
@@ -263,7 +265,7 @@ public:
 									auto touches = (DeviceTouchStateValue*)state->values;
 									for (size_t i = 0; i < state->count; ++i) {
 										auto& touch = touches[i];
-										printdln("gamepad touch : ", info.vendorID, " pid = ", info.productID, "id = ", touch.fingerID, " phase = ", getDeviceTouchPhaseString(touch.phase), " x = ", touch.position[0], " y = ", touch.position[1]);
+										printdln("gamepad touch : ", info.vendorID, " pid = ", info.productID, " id = ", touch.fingerID, " phase = ", getDeviceTouchPhaseString(touch.phase), " x = ", touch.position[0], " y = ", touch.position[1]);
 									}
 
 									break;
@@ -326,8 +328,8 @@ public:
 
 								DeviceStateValue vibration[2];
 								vibration[0] = vals[0];
-								vibration[1] = vals[1];
-								dev->setState(DeviceStateType::VIBRATION, 0, vibration, 2);
+								vibration[1] = vals[0];
+								//dev->setState(DeviceStateType::VIBRATION, 0, vibration, 2);
 							}
 						}
 					}

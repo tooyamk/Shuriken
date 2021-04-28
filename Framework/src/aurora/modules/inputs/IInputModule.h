@@ -11,6 +11,7 @@ namespace aurora::events {
 namespace aurora::modules::inputs {
 	/*++
 	DeviceStateType and DeviceEvent:
+	  KEY_MAPPING, values is GamepadKeyMapping*
 	  TOUCH, values is DeviceTouchStateValue*
 	  others, values is DeviceStateValue*
 	--*/
@@ -46,19 +47,19 @@ namespace aurora::modules::inputs {
 		using CodeType = uint32_t;
 		using CountType = uint32_t;
 
-		FingerIDType fingerID;
-		DeviceTouchPhase phase;
-		DeviceTouchPhase deltaPhase;
-		CodeType code;
+		FingerIDType fingerID = 0;
+		DeviceTouchPhase phase = DeviceTouchPhase::END;
+		DeviceTouchPhase deltaPhase = DeviceTouchPhase::END;
+		CodeType code = 0;
 		Vec2<DeviceStateValue> position;
-		DeviceStateValue deltaTime;
+		DeviceStateValue deltaTime = Math::ZERO<DeviceStateValue>;
 		Vec2<DeviceStateValue> deltaPosition;
 
 		inline bool AE_CALL operator==(const DeviceTouchStateValue& value) const {
 			return fingerID == value.fingerID && phase == value.phase && deltaPhase == value.deltaPhase && code == value.code && position == value.position && deltaTime == value.deltaTime && deltaPosition == value.deltaPosition;
 		}
 
-		inline bool AE_CALL isEqualCurrent(const DeviceTouchStateValue& value) const {
+		inline bool AE_CALL isSame(const DeviceTouchStateValue& value) const {
 			return fingerID == value.fingerID && phase == value.phase && code == value.code && position == value.position;
 		}
 	};
@@ -296,20 +297,16 @@ namespace aurora::modules::inputs {
 
 
 	enum class GamepadKeyCode : uint8_t {
-		UNKNOWN,
+		UNDEFINED,
+		IGNORED,
 
 		AXIS_START,
-		X = AXIS_START,
-		Y,
-		Z,
-		RX,
-		RY,
-		RZ,
-		AXIS_END = RZ,
+		AXIS_1 = AXIS_START,
+		AXIS_END = AXIS_1 + 15,
 
 		BUTTON_START,
 		BUTTON_1 = BUTTON_START,
-		BUTTON_END = 255
+		BUTTON_END = BUTTON_1 + 31
 	};
 
 
@@ -321,40 +318,28 @@ namespace aurora::modules::inputs {
 		L_STICK = AXIS_START,
 		R_STICK,
 
+		SEPARATE_AXIS_START,
+		L_STICK_X = SEPARATE_AXIS_START,
+		L_STICK_Y,
+		R_STICK_X,
+		R_STICK_Y,
+
 		L_TRIGGER,
 		L2 = L_TRIGGER,//DualShock
 		R_TRIGGER,
 		R2 = R_TRIGGER,//DualShock
 
-		AXIS_END = R_TRIGGER,
+		UNDEFINED_AXIS_1,
+		UNDEFINED_AXIS_END = UNDEFINED_AXIS_1 + 15,
+		SEPARATE_AXIS_END = UNDEFINED_AXIS_END,
+		AXIS_END = UNDEFINED_AXIS_END,
 
 		DPAD,
 		//DPAD_CENTER,
 
 		BUTTON_START,
-		L_THUMB = BUTTON_START,
-		L3 = L_THUMB,//DualShock
-		R_THUMB,
-		R3 = R_THUMB,//DualShock
 
-		L_SHOULDER,
-		L1 = L_SHOULDER,//DualShock
-		R_SHOULDER,
-		R1 = R_SHOULDER,//DualShock
-
-		//LEFT_THUMBSTICK,
-		//RIGHT_THUMBSTICK,
-
-		SELECT,
-		BACK = SELECT,//XBOX360
-		VIEW = SELECT,//XBOXONE
-		SHARE = SELECT,//DualShock4
-		MENU = SELECT,//XBOXONE
-
-		START,
-		OPTIONS = START,//DualShock4
-
-		A,
+		A = BUTTON_START,
 		CROSS = A,//DualShock
 		B,
 		CIRCLE = B,//DualShock
@@ -365,11 +350,86 @@ namespace aurora::modules::inputs {
 		TRIANGLE = Y,//DualShock
 		//Z,
 
+		L_SHOULDER,
+		L_BUMPER = L_SHOULDER,//Xbox
+		L1 = L_SHOULDER,//DualShock
+		R_SHOULDER,
+		R_BUMPER = R_SHOULDER,//Xbox
+		R1 = R_SHOULDER,//DualShock
+
+		L_TRIGGER_BUTTON,
+		L2_BUTTON = L_TRIGGER_BUTTON,//DualShock
+		R_TRIGGER_BUTTON,
+		R2_BUTTON = R_TRIGGER_BUTTON,//DualShock
+
+		SELECT,
+		BACK = SELECT,//XBOX360
+		VIEW = SELECT,//XBOXONE
+		SHARE = SELECT,//DualShock4
+		MENU = SELECT,//XBOXONE
+
+		START,
+		OPTIONS = START,//DualShock4
+
+		L_THUMB,
+		L3 = L_THUMB,//DualShock
+		R_THUMB,
+		R3 = R_THUMB,//DualShock
+
 		TOUCH_PAD,//DualShock4
 
-		UNDEFINED_BUTTON,
 		UNDEFINED_BUTTON_1,
-		UNDEFINED_BUTTON_END = 255
+		UNDEFINED_BUTTON_END = UNDEFINED_BUTTON_1 + 31,
+		BUTTON_END = UNDEFINED_BUTTON_END
+	};
+
+
+	class AE_FW_DLL GamepadKeyMapping {
+	public:
+		GamepadKeyMapping(const NoInit&) {};
+		GamepadKeyMapping();
+		GamepadKeyMapping(const GamepadKeyMapping& other);
+
+		bool AE_CALL set(GamepadVirtualKeyCode vk, GamepadKeyCode k);
+		bool AE_CALL remove(GamepadVirtualKeyCode vk);
+
+		inline void AE_CALL clear() {
+			memset(_mapping, (uint8_t)GamepadKeyCode::UNDEFINED, sizeof(_mapping));
+		}
+
+		inline GamepadKeyCode AE_CALL get(GamepadVirtualKeyCode vk) const {
+			return vk >= VK_MIN && vk <= VK_MAX ? _mapping[_getIndex(vk)] : GamepadKeyCode::UNDEFINED;
+		}
+
+		inline void AE_CALL get(const GamepadVirtualKeyCode* vks, size_t n, GamepadKeyCode* out) const {
+			for (size_t i = 0; i < n; ++i) out[i] = get(vks[i]);
+		}
+
+		inline void AE_CALL get(GamepadVirtualKeyCode vkBegin, size_t n, GamepadKeyCode* out) const {
+			using namespace aurora::enum_operators;
+
+			for (size_t i = 0; i < n; ++i) out[i] = get(vkBegin + i);
+		}
+
+		template<std::invocable<GamepadVirtualKeyCode, GamepadKeyCode> Fn>
+		void AE_CALL forEach(Fn&& fn) const {
+			for (size_t i = 0; i < COUNT; ++i) {
+				if (_mapping[i] != GamepadKeyCode::UNDEFINED) fn((GamepadVirtualKeyCode)((std::underlying_type_t<GamepadVirtualKeyCode>)VK_MIN + i), _mapping[i]);
+			}
+		}
+
+		void AE_CALL undefinedCompletion(size_t maxAxes, size_t maxButtons);
+
+	private:
+		static constexpr GamepadVirtualKeyCode VK_MIN = GamepadVirtualKeyCode::SEPARATE_AXIS_START;
+		static constexpr GamepadVirtualKeyCode VK_MAX = GamepadVirtualKeyCode::BUTTON_END;
+		static constexpr size_t COUNT = (std::underlying_type_t<GamepadVirtualKeyCode>)VK_MAX - (std::underlying_type_t<GamepadVirtualKeyCode>)VK_MIN + 1;
+
+		GamepadKeyCode _mapping[COUNT];
+
+		inline static size_t AE_CALL _getIndex(GamepadVirtualKeyCode vk) {
+			return (std::underlying_type_t<GamepadVirtualKeyCode>)vk - (std::underlying_type_t<GamepadVirtualKeyCode>)VK_MIN;
+		}
 	};
 
 
@@ -402,6 +462,16 @@ namespace aurora::modules::inputs {
 		void AE_CALL setStates(DeviceStateType type, DeviceState* states, size_t count);
 
 		virtual void AE_CALL poll(bool dispatchEvent) = 0;
+
+		/*++
+		value is normalized,[0, 1].
+		--*/
+		static DeviceStateValue AE_CALL translate(DeviceStateValue value, const Vec2<DeviceStateValue>& deadZone);
+
+		/*++
+		x and y is normalized,[-1, 1], left up is (-1, -1).
+		--*/
+		static DeviceState::CountType AE_CALL translate(DeviceStateValue x, DeviceStateValue y, const Vec2<DeviceStateValue>& deadZone, DeviceStateValue* out, DeviceState::CountType outCount);
 	};
 
 

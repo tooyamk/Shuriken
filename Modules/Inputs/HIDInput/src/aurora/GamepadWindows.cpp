@@ -44,34 +44,15 @@ namespace aurora::modules::inputs::hid_input {
 
 	DeviceState::CountType Gamepad::getState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count) const {
 		switch (type) {
-		case DeviceStateType::DEAD_ZONE:
-		{
-			if (values && count) {
-				((DeviceStateValue*)values)[0] = _getDeadZone((GamepadVirtualKeyCode)code);
-
-				return 1;
-			}
-
-			return 0;
-		}
 		default:
-			return 0;
+			return GamepadBaseType::getState(type, code, values, count);
 		}
 	}
 
 	DeviceState::CountType Gamepad::setState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count) {
 		switch (type) {
-		case DeviceStateType::DEAD_ZONE:
-		{
-			if (values && count) {
-				_setDeadZone((GamepadVirtualKeyCode)code, ((DeviceStateValue*)values)[0]);
-				return 1;
-			}
-
-			return 0;
-		}
 		default:
-			return 0;
+			return GamepadBaseType::setState(type, code, values, count);
 		}
 	}
 
