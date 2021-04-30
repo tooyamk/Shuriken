@@ -1,5 +1,5 @@
 #include "Input.h"
-#include "Gamepad.h"
+#include "GamepadDriver.h"
 #include "CreateModule.h"
 
 namespace aurora::modules::inputs::xinput {
@@ -62,7 +62,7 @@ namespace aurora::modules::inputs::xinput {
 		std::shared_lock lock(_mutex);
 
 		for (auto& info : _devices) {
-			if (info.guid == guid) return new Gamepad(*this, info);
+			if (info.guid == guid) return new GenericGamepad(info, *new GamepadDriver(*this, info));
 		}
 
 		return nullptr;

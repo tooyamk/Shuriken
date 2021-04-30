@@ -706,7 +706,7 @@ namespace aurora::extensions {
 		return n;
 	}
 
-	size_t HID::write(HIDDevice& device, void* data, size_t dataLength, size_t timeout) {
+	size_t HID::write(HIDDevice& device, const void* data, size_t dataLength, size_t timeout) {
 		if (!device.handle) return HID::OUT_ERROR;
 		if (device.outputReportLength == 0) return 0;
 

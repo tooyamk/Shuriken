@@ -408,7 +408,7 @@ namespace aurora::extensions {
 		static void AE_CALL close(HIDDevice& device);
 
 		static size_t AE_CALL read(HIDDevice& device, void* data, size_t dataLength, size_t timeout);
-		static size_t AE_CALL write(HIDDevice& device, void* data, size_t dataLength, size_t timeout);
+		static size_t AE_CALL write(HIDDevice& device, const void* data, size_t dataLength, size_t timeout);
 
 		inline static bool AE_CALL isSuccess(size_t rst) {
 			return rst < OUT_WAITTING;

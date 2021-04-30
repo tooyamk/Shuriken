@@ -1,5 +1,5 @@
 #include "Input.h"
-#include "Gamepad.h"
+#include "GamepadDriver.h"
 #include "Keyboard.h"
 #include "Mouse.h"
 #include "CreateModule.h"
@@ -67,7 +67,7 @@ namespace aurora::modules::inputs::direct_input {
 
 				switch (info.type) {
 				case DeviceType::GAMEPAD:
-					return new Gamepad(*this, dev, info);
+					return new GenericGamepad(info, *new GamepadDriver(*this, dev));
 				case DeviceType::KEYBOARD:
 					return new Keyboard(*this, dev, info);
 				case DeviceType::MOUSE:

@@ -35,9 +35,9 @@ namespace aurora::modules::inputs {
 
 
 	enum class DeviceTouchPhase : uint8_t {
+		END,
 		BEGIN,
-		MOVE,
-		END
+		MOVE
 	};
 
 
@@ -303,6 +303,31 @@ namespace aurora::modules::inputs {
 	};
 
 
+	enum class GamepadKeyFlag : uint8_t {
+		NONE,
+
+		HALF_SMALL,
+		HALF_BIG,
+		FLIP
+	};
+
+
+	struct AE_FW_DLL GamepadKeyCodeAndFlags {
+		GamepadKeyCode code = GamepadKeyCode::UNDEFINED;
+		GamepadKeyFlag flags = GamepadKeyFlag::NONE;
+
+		inline void AE_CALL clear() {
+			code = GamepadKeyCode::UNDEFINED;
+			flags = GamepadKeyFlag::NONE;
+		}
+
+		inline void AE_CALL set(GamepadKeyCode code, GamepadKeyFlag flags = GamepadKeyFlag::NONE) {
+			this->code = code;
+			this->flags = flags;
+		}
+	};
+
+
 	enum class GamepadVirtualKeyCode : uint8_t {
 		UNKNOWN,
 
@@ -383,32 +408,31 @@ namespace aurora::modules::inputs {
 		GamepadKeyMapping();
 		GamepadKeyMapping(const GamepadKeyMapping& other);
 
-		bool AE_CALL set(GamepadVirtualKeyCode vk, GamepadKeyCode k);
+		void AE_CALL set(GamepadVirtualKeyCode vk, GamepadKeyCode k, GamepadKeyFlag flags = GamepadKeyFlag::NONE) {
+			_mapping[_getIndex(vk)].set(k, flags);
+		}
+
 		bool AE_CALL remove(GamepadVirtualKeyCode vk);
 		void AE_CALL removeUndefined();
 
 		inline void AE_CALL clear() {
-			memset(_mapping, (uint8_t)GamepadKeyCode::UNDEFINED, sizeof(_mapping));
+			memset(_mapping, 0, sizeof(_mapping));
 		}
 
-		inline GamepadKeyCode AE_CALL get(GamepadVirtualKeyCode vk) const {
-			return vk >= VK_MIN && vk <= VK_MAX ? _mapping[_getIndex(vk)] : GamepadKeyCode::UNDEFINED;
+		inline GamepadKeyCodeAndFlags AE_CALL get(GamepadVirtualKeyCode vk) const {
+			return vk >= VK_MIN && vk <= VK_MAX ? _mapping[_getIndex(vk)] : GamepadKeyCodeAndFlags();
 		}
 
-		inline void AE_CALL get(const GamepadVirtualKeyCode* vks, size_t n, GamepadKeyCode* out) const {
-			for (size_t i = 0; i < n; ++i) out[i] = get(vks[i]);
-		}
-
-		inline void AE_CALL get(GamepadVirtualKeyCode vkBegin, size_t n, GamepadKeyCode* out) const {
+		inline void AE_CALL get(GamepadVirtualKeyCode vkBegin, size_t n, GamepadKeyCodeAndFlags* out) const {
 			using namespace aurora::enum_operators;
 
 			for (size_t i = 0; i < n; ++i) out[i] = get(vkBegin + i);
 		}
 
-		template<std::invocable<GamepadVirtualKeyCode, GamepadKeyCode> Fn>
+		template<std::invocable<GamepadVirtualKeyCode, GamepadKeyCodeAndFlags> Fn>
 		void AE_CALL forEach(Fn&& fn) const {
 			for (size_t i = 0; i < COUNT; ++i) {
-				if (_mapping[i] != GamepadKeyCode::UNDEFINED) fn((GamepadVirtualKeyCode)((std::underlying_type_t<GamepadVirtualKeyCode>)VK_MIN + i), _mapping[i]);
+				if (_mapping[i].code != GamepadKeyCode::UNDEFINED) fn((GamepadVirtualKeyCode)((std::underlying_type_t<GamepadVirtualKeyCode>)VK_MIN + i), _mapping[i]);
 			}
 		}
 
@@ -419,7 +443,7 @@ namespace aurora::modules::inputs {
 		static constexpr GamepadVirtualKeyCode VK_MAX = GamepadVirtualKeyCode::BUTTON_END;
 		static constexpr size_t COUNT = (std::underlying_type_t<GamepadVirtualKeyCode>)VK_MAX - (std::underlying_type_t<GamepadVirtualKeyCode>)VK_MIN + 1;
 
-		GamepadKeyCode _mapping[COUNT];
+		GamepadKeyCodeAndFlags _mapping[COUNT];
 
 		inline static size_t AE_CALL _getIndex(GamepadVirtualKeyCode vk) {
 			return (std::underlying_type_t<GamepadVirtualKeyCode>)vk - (std::underlying_type_t<GamepadVirtualKeyCode>)VK_MIN;

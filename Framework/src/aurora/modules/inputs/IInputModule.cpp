@@ -11,23 +11,9 @@ namespace aurora::modules::inputs {
 		memcpy(_mapping, other._mapping, sizeof(_mapping));
 	}
 
-	bool GamepadKeyMapping::set(GamepadVirtualKeyCode vk, GamepadKeyCode k) {
-		if (vk >= GamepadVirtualKeyCode::SEPARATE_AXIS_START && vk <= GamepadVirtualKeyCode::SEPARATE_AXIS_END) {
-			if (k != GamepadKeyCode::IGNORED && (k < GamepadKeyCode::AXIS_START || k > GamepadKeyCode::AXIS_END)) return false;
-		} else if (vk >= GamepadVirtualKeyCode::BUTTON_START && vk <= GamepadVirtualKeyCode::BUTTON_END) {
-			if (k != GamepadKeyCode::IGNORED && (k < GamepadKeyCode::BUTTON_START || k > GamepadKeyCode::BUTTON_END)) return false;
-		} else {
-			return false;
-		}
-
-		_mapping[_getIndex(vk)] = k;
-
-		return true;
-	}
-
 	bool GamepadKeyMapping::remove(GamepadVirtualKeyCode vk) {
 		if (vk >= VK_MIN && vk <= VK_MAX) {
-			_mapping[_getIndex(vk)] = GamepadKeyCode::UNDEFINED;
+			_mapping[_getIndex(vk)].clear();
 
 			return true;
 		}
@@ -42,7 +28,7 @@ namespace aurora::modules::inputs {
 			if (auto vk = VK_MIN + i;
 				(vk >= GamepadVirtualKeyCode::UNDEFINED_AXIS_1 && vk <= GamepadVirtualKeyCode::UNDEFINED_AXIS_END) ||
 				(vk >= GamepadVirtualKeyCode::UNDEFINED_BUTTON_1 && vk <= GamepadVirtualKeyCode::UNDEFINED_BUTTON_END)) {
-				_mapping[i] = GamepadKeyCode::UNDEFINED;
+				_mapping[i].clear();
 			}
 		}
 	}
@@ -64,17 +50,21 @@ namespace aurora::modules::inputs {
 		std::bitset<64> kAxes, kButtons;
 
 		for (size_t i = 0; i < COUNT; ++i) {
-			auto k = _mapping[i];
-			if (k == GamepadKeyCode::UNDEFINED) continue;
+			auto& cf = _mapping[i];
+			if (cf.code == GamepadKeyCode::UNDEFINED) continue;
 
 			auto vk = VK_MIN + i;
 
-			if (vk >= GamepadVirtualKeyCode::SEPARATE_AXIS_START && vk <= GamepadVirtualKeyCode::SEPARATE_AXIS_END) {
-				if (vk >= GamepadVirtualKeyCode::UNDEFINED_AXIS_1) vkAxes[(size_t)(vk - GamepadVirtualKeyCode::UNDEFINED_AXIS_1)] = true;
-				if (k != GamepadKeyCode::IGNORED && k <= maxAxisKey) kAxes[(size_t)(k - GamepadKeyCode::AXIS_1)] = true;
-			} else if (vk >= GamepadVirtualKeyCode::BUTTON_START && vk <= GamepadVirtualKeyCode::BUTTON_END) {
-				if (vk >= GamepadVirtualKeyCode::UNDEFINED_BUTTON_1) vkButtons[(size_t)(vk - GamepadVirtualKeyCode::UNDEFINED_BUTTON_1)] = true;
-				if (k != GamepadKeyCode::IGNORED && k <= maxButtonKey) kButtons[(size_t)(k - GamepadKeyCode::BUTTON_1)] = true;
+			if (vk >= GamepadVirtualKeyCode::UNDEFINED_AXIS_1 && vk <= GamepadVirtualKeyCode::UNDEFINED_AXIS_END) {
+				vkAxes[(size_t)(vk - GamepadVirtualKeyCode::UNDEFINED_AXIS_1)] = true;
+			} else if (vk >= GamepadVirtualKeyCode::UNDEFINED_BUTTON_1 && vk <= GamepadVirtualKeyCode::UNDEFINED_BUTTON_END) {
+				vkButtons[(size_t)(vk - GamepadVirtualKeyCode::UNDEFINED_BUTTON_1)] = true;
+			}
+
+			if (cf.code >= GamepadKeyCode::AXIS_1 && cf.code <= maxAxisKey) {
+				kAxes[(size_t)(cf.code - GamepadKeyCode::AXIS_1)] = true;
+			} else if (cf.code >= GamepadKeyCode::BUTTON_1 && cf.code <= maxButtonKey) {
+				kButtons[(size_t)(cf.code - GamepadKeyCode::BUTTON_1)] = true;
 			}
 		}
 
@@ -83,7 +73,7 @@ namespace aurora::modules::inputs {
 				for (size_t j = 0; j < vkAxes.size(); ++j) {
 					if (!vkAxes[j]) {
 						vkAxes[j] = true;
-						_mapping[_getIndex(GamepadVirtualKeyCode::UNDEFINED_AXIS_1 + j)] = GamepadKeyCode::AXIS_1 + i;
+						_mapping[_getIndex(GamepadVirtualKeyCode::UNDEFINED_AXIS_1 + j)].set(GamepadKeyCode::AXIS_1 + i);
 						break;
 					}
 				}
@@ -95,7 +85,7 @@ namespace aurora::modules::inputs {
 				for (size_t j = 0; j < vkButtons.size(); ++j) {
 					if (!vkButtons[j]) {
 						vkButtons[j] = true;
-						_mapping[_getIndex(GamepadVirtualKeyCode::UNDEFINED_BUTTON_1 + j)] = GamepadKeyCode::BUTTON_1 + i;
+						_mapping[_getIndex(GamepadVirtualKeyCode::UNDEFINED_BUTTON_1 + j)].set(GamepadKeyCode::BUTTON_1 + i);
 						break;
 					}
 				}
