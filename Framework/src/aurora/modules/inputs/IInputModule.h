@@ -34,26 +34,19 @@ namespace aurora::modules::inputs {
 	using DeviceStateValue = float32_t;
 
 
-	enum class DeviceTouchPhase : uint8_t {
-		END,
-		BEGIN,
-		MOVE
-	};
-
-
 	class AE_FW_DLL DeviceTouchStateValue {
 	public:
 		using FingerIDType = uint32_t;
 		using CodeType = uint32_t;
 		using CountType = uint32_t;
 
+		bool isTouched = false;
 		FingerIDType fingerID = 0;
-		DeviceTouchPhase phase = DeviceTouchPhase::END;
 		CodeType code = 0;
 		Vec2<DeviceStateValue> position;
 
 		inline bool AE_CALL operator==(const DeviceTouchStateValue& value) const {
-			return fingerID == value.fingerID && phase == value.phase && code == value.code && position == value.position;
+			return fingerID == value.fingerID && isTouched == value.isTouched && code == value.code && position == value.position;
 		}
 	};
 
@@ -306,9 +299,9 @@ namespace aurora::modules::inputs {
 	enum class GamepadKeyFlag : uint8_t {
 		NONE,
 
-		HALF_SMALL,
-		HALF_BIG,
-		FLIP
+		HALF_SMALL = 0b1,
+		HALF_BIG = 0b10,
+		FLIP = 0b100
 	};
 
 

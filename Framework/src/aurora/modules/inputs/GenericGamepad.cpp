@@ -7,7 +7,7 @@ namespace aurora::modules::inputs {
 
 		std::underlying_type_t<GamepadKeyFlag> i = 0;
 		while (flags != GamepadKeyFlag::NONE) {
-			auto flag = (GamepadKeyFlag)(1 << i);
+			auto flag = (GamepadKeyFlag)(1 << (i++));
 			if ((flags & flag) != GamepadKeyFlag::NONE) {
 				flags &= ~flag;
 
@@ -35,17 +35,22 @@ namespace aurora::modules::inputs {
 		_eventDispatcher(new events::EventDispatcher<DeviceEvent>()),
 		_info(info),
 		_driver(driver),
+		_inputState(nullptr),
+		_oldInputState(nullptr),
+		_newInputState(nullptr),
 		_outputState(nullptr),
 		_outputBuffer(nullptr),
 		_outputDirty(false),
 		_needOutput(false) {
 		_inputLength = _driver->getInputLength();
-		_inputState = new uint8_t[_inputLength];
-		_oldInputState = new uint8_t[_inputLength];
-		_newInputState = new uint8_t[_inputLength];
-		memset(_inputState, 0, _inputLength);
-		memset(_oldInputState, 0, _inputLength);
-		memset(_newInputState, 0, _inputLength);
+		if (_inputLength) {
+			_inputState = new uint8_t[_inputLength];
+			_oldInputState = new uint8_t[_inputLength];
+			_newInputState = new uint8_t[_inputLength];
+			memset(_inputState, 0, _inputLength);
+			memset(_oldInputState, 0, _inputLength);
+			memset(_newInputState, 0, _inputLength);
+		}
 
 		_outputLength = _driver->getOutputLength();
 		if (_outputLength) {
@@ -54,12 +59,15 @@ namespace aurora::modules::inputs {
 		}
 
 		_driver->init(_inputState, _outputState);
+		_driver->setKeyMapping(_keyMapping, nullptr);
 	}
 
 	GenericGamepad::~GenericGamepad() {
-		delete[] _newInputState;
-		delete[] _oldInputState;
-		delete[] _inputState;
+		if (_inputState) {
+			delete[] _newInputState;
+			delete[] _oldInputState;
+			delete[] _inputState;
+		}
 
 		if (_outputState) {
 			delete[] _outputState;
@@ -229,6 +237,7 @@ namespace aurora::modules::inputs {
 				std::scoped_lock lock(self->_outputMutex);
 
 				memcpy(self->_outputState + outputStateOffset, data, dataLength);
+				self->_outputDirty = true;
 			});
 		}
 	}
@@ -274,40 +283,40 @@ namespace aurora::modules::inputs {
 
 			auto dz = _getDeadZone(vk);
 
-			DeviceStateValue oldDzVals[2], newDzVals[2];
+			DeviceStateValue oldVals[2], newVals[2];
 			translate(_normalizeStick(_driver->readDataFromInputState(_oldInputState, mappingVals[idx], Math::ONE_HALF<float32_t>)), 
-				_normalizeStick(_driver->readDataFromInputState(_oldInputState, mappingVals[idx + 1], Math::ONE_HALF<float32_t>)), dz, oldDzVals, 2);
+				_normalizeStick(_driver->readDataFromInputState(_oldInputState, mappingVals[idx + 1], Math::ONE_HALF<float32_t>)), dz, oldVals, 2);
 			translate(_normalizeStick(_driver->readDataFromInputState(_newInputState, mappingVals[idx], Math::ONE_HALF<float32_t>)), 
-				_normalizeStick(_driver->readDataFromInputState(_newInputState, mappingVals[idx + 1], Math::ONE_HALF<float32_t>)), dz, newDzVals, 2);
+				_normalizeStick(_driver->readDataFromInputState(_newInputState, mappingVals[idx + 1], Math::ONE_HALF<float32_t>)), dz, newVals, 2);
 
-			if (oldDzVals[0] != newDzVals[0] || oldDzVals[1] != newDzVals[1]) {
-				DeviceState ds = { (DeviceState::CodeType)vk, 2, newDzVals };
+			if (oldVals[0] != newVals[0] || oldVals[1] != newVals[1]) {
+				DeviceState ds = { (DeviceState::CodeType)vk, 2, newVals };
 				_eventDispatcher->dispatchEvent((void*)this, DeviceEvent::MOVE, &ds);
 			}
 		}
 
 		keyMapping.forEach([&](GamepadVirtualKeyCode vk, GamepadKeyCodeAndFlags cf) {
-			if (vk >= GamepadVirtualKeyCode::SEPARATE_AXIS_START && vk <= GamepadVirtualKeyCode::AXIS_END) {
+			if (vk >= GamepadVirtualKeyCode::L_TRIGGER && vk <= GamepadVirtualKeyCode::AXIS_END) {
 				auto dz = _getDeadZone(vk);
-				if (auto newDzVal = translate(_driver->readDataFromInputState(_newInputState, cf, Math::ZERO<float32_t>), dz); newDzVal != translate(_driver->readDataFromInputState(_oldInputState, cf, Math::ZERO<float32_t>), dz)) {
-					DeviceState ds = { (DeviceState::CodeType)vk, 1, &newDzVal };
-					_eventDispatcher->dispatchEvent((void*)this, DeviceEvent::MOVE, &ds);
+				if (auto newVal = translate(_driver->readDataFromInputState(_newInputState, cf, Math::ZERO<float32_t>), dz); newVal != translate(_driver->readDataFromInputState(_oldInputState, cf, Math::ZERO<float32_t>), dz)) {
+					DeviceStateValue val = newVal;
+					DeviceState ds = { (DeviceState::CodeType)vk, 1, &val };
+					_eventDispatcher->dispatchEvent(this, DeviceEvent::MOVE, &ds);
 				}
 			} else if (vk >= GamepadVirtualKeyCode::BUTTON_START && vk <= GamepadVirtualKeyCode::BUTTON_END) {
 				auto dz = _getDeadZone(vk);
 				if (auto newVal = _driver->readDataFromInputState(_newInputState, cf, Math::ZERO<float32_t>); newVal != _driver->readDataFromInputState(_oldInputState, cf, Math::ZERO<float32_t>)) {
-					DeviceState ds = { (DeviceState::CodeType)vk, 1, &newVal };
-					_eventDispatcher->dispatchEvent(this, newVal > Math::ZERO<DeviceStateValue> ? DeviceEvent::DOWN : DeviceEvent::UP, &ds);
+					DeviceStateValue val = newVal;
+					DeviceState ds = { (DeviceState::CodeType)vk, 1, &val };
+					_eventDispatcher->dispatchEvent(this, val > Math::ZERO<DeviceStateValue> ? DeviceEvent::DOWN : DeviceEvent::UP, &ds);
 				}
 			}
 		});
 
-		for (uint8_t i = 0; i < 4; ++i) {
-			if (auto newVal = _driver->readDpadDataFromInputState(_newInputState); newVal != _driver->readDpadDataFromInputState(_oldInputState)) {
-				DeviceStateValue val = newVal;
-				DeviceState ds = { (DeviceState::CodeType)GamepadVirtualKeyCode::DPAD, 1, &val };
-				_eventDispatcher->dispatchEvent(this, val >= Math::ZERO<DeviceStateValue> ? DeviceEvent::DOWN : DeviceEvent::UP, &ds);
-			}
+		if (auto newVal = _driver->readDpadDataFromInputState(_newInputState); newVal != _driver->readDpadDataFromInputState(_oldInputState)) {
+			DeviceStateValue val = newVal;
+			DeviceState ds = { (DeviceState::CodeType)GamepadVirtualKeyCode::DPAD, 1, &val };
+			_eventDispatcher->dispatchEvent(this, val >= Math::ZERO<DeviceStateValue> ? DeviceEvent::DOWN : DeviceEvent::UP, &ds);
 		}
 
 		_driver->customDispatch(_oldInputState, _newInputState, this, [](DeviceEvent evt, void* data, void* custom) {

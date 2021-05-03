@@ -61,8 +61,6 @@ namespace aurora::modules::inputs::hid_input {
 			TOUCH_PACKET_COUNTER = 33,
 			FINGER1 = 34,
 			FINGER2 = 38,
-			PREV_FINGER1 = 43,
-			PREV_FINGER2 = 47
 		};
 
 
@@ -91,12 +89,15 @@ namespace aurora::modules::inputs::hid_input {
 		template<size_t N>
 		class TouchCollection {
 		public:
-			TouchCollection(DeviceTouchStateValue* touches) {
+			TouchCollection(DeviceTouchStateValue* touches) :
+				_touches(touches) {
+				auto idsLen = 0;
 				for (size_t i = 0; i < N; ++i) {
 					auto& touch = touches[i];
+					if (touch.fingerID == 0) continue;
 
 					auto found = false;
-					for (size_t j = 0; j < _idsLen; ++j) {
+					for (size_t j = 0; j < idsLen; ++j) {
 						if (_ids[j] == touch.fingerID) {
 							_idIndices[i] = j;
 							found = true;
@@ -106,26 +107,59 @@ namespace aurora::modules::inputs::hid_input {
 					}
 
 					if (!found) {
-						_idIndices[i] = _idsLen;
-						_ids[_idsLen++] = touch.fingerID;
+						_idIndices[i] = idsLen;
+						_ids[idsLen++] = touch.fingerID;
 					}
 				}
 
+				memset(_map, 0, sizeof(_map));
+				for (size_t i = 0; i < N; ++i) {
+					auto& touch = touches[i];
+					if (touch.fingerID != 0) {
+						auto idIdx = _idIndices[i];
 
+						for (size_t j = 0, n = N >> 1; j < n; ++j) {
+							if (_map[idIdx][j] == 0) {
+								_map[idIdx][j] = i + 1;
+
+								break;
+							}
+						}
+					}
+				}
+			}
+
+			template<std::invocable<const uint8_t*, size_t> Fn>
+			void AE_CALL query(Fn&& fn) const {
+				size_t count;
+				uint8_t states[N];
+
+				for (size_t i = 0; i < N; ++i) {
+					count = 0;
+					for (size_t j = 0, n = N >> 1; j < n; ++j) {
+						auto idx = _map[i][j];
+						if (idx == 0) break;
+						
+						states[count++] = idx - 1;
+					}
+
+					if (count) fn(states, count);
+				}
 			}
 
 		private:
+			const DeviceTouchStateValue* _touches;
+
 			uint16_t _ids[N];
-			uint8_t _idsLen;
 
 			uint8_t _idIndices[N];
 
-			uint16_t _map[N];
+			uint8_t _map[N][N >> 1];
 		};
 
 
-		static constexpr size_t INPUT_BUFFER_LENGTH = 51;
-		static constexpr size_t OUTPUT_BUFFER_LENGTH = 9;
+		static constexpr size_t INPUT_BUFFER_LENGTH = 42;
+		static constexpr size_t OUTPUT_BUFFER_LENGTH = 11;
 		static constexpr size_t MAX_AXES = 6;
 		static constexpr size_t MAX_BUTTONS = 14;
 		static constexpr auto MAX_AXIS_KEY = (GamepadKeyCode)((std::underlying_type_t<GamepadKeyCode>)GamepadKeyCode::AXIS_1 + (MAX_AXES - 1));

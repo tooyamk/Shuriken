@@ -81,7 +81,7 @@ namespace aurora::modules::inputs::hid_input {
 		using namespace aurora::extensions;
 
 		uint8_t buf[128];
-		if (auto rst = HID::read(*_hid, buf, sizeof(buf), HID::IN_TIMEOUT_BLOCKING); HID::isSuccess(rst)) {
+		if (auto rst = HID::read(*_hid, buf, sizeof(buf), 0); HID::isSuccess(rst)) {
 			_parseInputState(*(InputState*)inputState, buf, rst);
 			return true;
 		}

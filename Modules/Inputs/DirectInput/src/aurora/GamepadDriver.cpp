@@ -7,7 +7,8 @@
 
 namespace aurora::modules::inputs::direct_input {
 	GamepadDriver::GamepadDriver(Input& input, LPDIRECTINPUTDEVICE8 dev) :
-		_input(input) {
+		_input(input),
+		_dev(dev) {
 		_dev->SetDataFormat(&c_dfDIJoystick);
 		_dev->SetCooperativeLevel(input.getHWND(), DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
 	}

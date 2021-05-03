@@ -69,19 +69,6 @@ public:
 		}
 	}
 
-	static std::string_view AE_CALL getDeviceTouchPhaseString(DeviceTouchPhase type) {
-		switch (type) {
-		case DeviceTouchPhase::BEGIN:
-			return "begin";
-		case DeviceTouchPhase::MOVE:
-			return "move";
-		case DeviceTouchPhase::END:
-			return "end";
-		default:
-			return "undefined";
-		}
-	}
-
 	void AE_CALL initInputModule(std::vector<IntrusivePtr<IInputModule>>& modules, const std::string_view& dll, const SerializableObject* args) {
 		IntrusivePtr loader = new InputModuleLoader();
 		if (loader->load(dll)) {
@@ -145,12 +132,12 @@ public:
 					printaln("input device connected : ", getDeviceTypeString(info->type), " vid = ", info->vendorID, " pid = ", info->productID, " guid = ", String::toString(info->guid.getData(), info->guid.getSize()));
 
 					//if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN) {
-					if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN && info->vendorID == 0x54C) {
+					//if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN && info->vendorID == 0x54C) {
 					//if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN && info->vendorID == 0xF0D) {
-					//if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN && info->vendorID == 0x45E) {
+					if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN && info->vendorID == 0x45E) {
 						auto im = e.getTarget<IInputModule>();
 						//if (getNumInputeDevice(DeviceType::GAMEPAD) > 0) return;
-						printaln("create device : ", getDeviceTypeString(info->type), " guid = ", String::toString(info->guid.getData(), info->guid.getSize()));
+						printaln("create device : ", getDeviceTypeString(info->type), " vid = ", info->vendorID, " pid = ", info->productID, " guid = ", String::toString(info->guid.getData(), info->guid.getSize()));
 						if (auto device = im->createDevice(info->guid); device) {
 							{
 								device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::L_STICK, &Math::TWENTIETH<DeviceStateValue>, 1);
@@ -291,7 +278,7 @@ public:
 									auto touches = (DeviceTouchStateValue*)state->values;
 									for (size_t i = 0; i < state->count; ++i) {
 										auto& touch = touches[i];
-										printdln("gamepad touch : ", info.vendorID, " pid = ", info.productID, " id = ", touch.fingerID, " phase = ", getDeviceTouchPhaseString(touch.phase), " x = ", touch.position[0], " y = ", touch.position[1]);
+										printdln("gamepad touch : ", info.vendorID, " pid = ", info.productID, " id = ", touch.fingerID, " isTouched = ", touch.isTouched, " x = ", touch.position[0], " y = ", touch.position[1]);
 									}
 
 									break;

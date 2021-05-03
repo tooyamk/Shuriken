@@ -56,7 +56,7 @@ namespace aurora::modules::inputs::hid_input {
 	bool GamepadDriverDS4::readStateFromDevice(void* inputState) const {
 		using namespace aurora::extensions;
 
-		return HID::isSuccess(HID::read(*_hid, inputState, sizeof(INPUT_BUFFER_LENGTH), 0));
+		return HID::isSuccess(HID::read(*_hid, inputState, INPUT_BUFFER_LENGTH, 0));
 	}
 
 	float32_t GamepadDriverDS4::readDataFromInputState(const void* inputState, GamepadKeyCodeAndFlags cf, float32_t defaultVal) const {
@@ -117,7 +117,25 @@ namespace aurora::modules::inputs::hid_input {
 
 			return 0;
 		} else if (type == DeviceStateType::TOUCH) {
-			//todo
+			if (values && count) {
+				DeviceTouchStateValue rawTouches[2], touches[2];
+				auto data = (const uint8_t*)inputState + _inputOffset + (size_t)InputOffset::FINGER1;
+
+				readStateStartCallback(custom);
+
+				_parseTouches(data, rawTouches);
+
+				readStateEndCallback(custom);
+
+				DeviceState::CountType c = 0;
+				for (size_t i = 0; i < 2; ++i) {
+					if (rawTouches[i].isTouched) ((DeviceTouchStateValue*)values)[c++] = rawTouches[i];
+					if (++c >= count) break;
+				}
+
+				return c;
+			}
+
 			return 0;
 		}
 
@@ -125,10 +143,62 @@ namespace aurora::modules::inputs::hid_input {
 	}
 
 	void GamepadDriverDS4::customDispatch(const void* oldInputState, const void* newInputState, void* custom, DispatchCallback dispatchCallback) const {
-		DeviceTouchStateValue touches[4];
+		DeviceTouchStateValue rawTouches[4];
 		size_t offset = _inputOffset + (size_t)InputOffset::FINGER1;
-		_parseTouches((const uint8_t*)oldInputState + offset, touches);
-		_parseTouches((const uint8_t*)newInputState + offset, touches + 2);
+		_parseTouches((const uint8_t*)oldInputState + offset, rawTouches);
+		_parseTouches((const uint8_t*)newInputState + offset, rawTouches + 2);
+
+		DeviceTouchStateValue touches[4];
+		size_t count = 0;
+		TouchCollection<4> tc(rawTouches);
+		tc.query([&](const uint8_t* indices, size_t n) {
+			auto idx1 = indices[0];
+			auto& t1 = rawTouches[idx1];
+
+			if (n == 1) {
+				if (idx1 < 2) {
+					if (t1.isTouched) {
+						t1.isTouched = false;
+						touches[count++] = t1;
+					}
+				} else {
+					if (t1.isTouched) touches[count++] = t1;
+				}
+			} else {
+				if (idx1 >= 2) {
+					if (t1.isTouched) {
+						touches[count++] = t1;
+					} else {
+						return;
+					}
+				}
+
+				for (size_t i = 1; i < n; ++i) {
+					auto idx2 = indices[i];
+					auto& t2 = rawTouches[idx2];
+
+					if (t1.isTouched == t2.isTouched) {
+						if (t2.isTouched) {
+							if (idx2 >= 2 && t1.position != t2.position) touches[count++] = t2;
+						}
+					} else {
+						if (!t2.isTouched) {
+							if (idx2 >= 2) touches[count++] = t2;
+							return;
+						}
+					}
+
+					t1 = t2;
+					idx1 = idx2;
+				}
+				
+			}
+		});
+
+		if (count) {
+			DeviceState ds = { (DeviceState::CodeType)0, count, touches };
+			dispatchCallback(DeviceEvent::TOUCH, &ds, custom);
+		}
 	}
 
 	bool GamepadDriverDS4::writeStateToDevice(const void* outputState) const {
@@ -228,15 +298,12 @@ namespace aurora::modules::inputs::hid_input {
 		for (size_t i = 0; i < 2; ++i) {
 			auto& state = states[i];
 
-			auto isTouch = (data[offset] >> 7 & 0b1) == 0;
-			auto id = data[offset] & 0x7F;
-			auto x = (((data[offset + 2] & 0xF) << 8) | (data[offset + 1])) * Math::RECIPROCAL<TOUCH_PAD_MAX_X>;
-			auto y = ((data[offset + 3] << 4) | (data[offset + 2] >> 4 & 0xF)) * Math::RECIPROCAL<TOUCH_PAD_MAX_Y>;
-
 			state.code = 0;
-			state.fingerID = id;
-			state.phase = isTouch ? DeviceTouchPhase::MOVE : DeviceTouchPhase::END;
-			state.position.set(x, y);
+			state.fingerID = data[offset] & 0x7F;
+			state.isTouched = (data[offset] >> 7 & 0b1) == 0;
+			state.position.set(
+				(((data[offset + 2] & 0xF) << 8) | (data[offset + 1])) * Math::RECIPROCAL<TOUCH_PAD_MAX_X>, 
+				((data[offset + 3] << 4) | (data[offset + 2] >> 4 & 0xF)) * Math::RECIPROCAL<TOUCH_PAD_MAX_Y>);
 
 			offset += 4;
 		}
