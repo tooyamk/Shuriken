@@ -1,14 +1,14 @@
 #pragma once
 
 #include "aurora/modules/inputs/IInputModule.h"
+#include <optional>
 #include <shared_mutex>
 
 namespace aurora::modules::inputs {
 	class AE_FW_DLL IGenericGamepadDriver : public Ref {
 	public:
-		using WriteToOutputStateCallback = void(*)(const void* data, size_t dataLength, size_t outputStateOffset, void* custom);
-		using ReadStateStartCallback = void(*)(void* custom);
-		using ReadStateEndCallback = void(*)(void* custom);
+		using ReadWriteStateStartCallback = void(*)(void* custom);
+		using ReadWriteStateEndCallback = void(*)(void* custom);
 		using DispatchCallback = void(*)(DeviceEvent evt, void* data, void* custom);
 
 		virtual size_t AE_CALL getInputLength() const = 0;
@@ -16,15 +16,18 @@ namespace aurora::modules::inputs {
 
 		virtual bool AE_CALL init(void* inputState, void* outputState) = 0;
 
+		virtual bool AE_CALL isStateReady(const void* state) const = 0;
+
 		virtual bool AE_CALL readStateFromDevice(void* inputState) const = 0;
 		virtual float32_t AE_CALL readDataFromInputState(const void* inputState, GamepadKeyCodeAndFlags cf, float32_t defaultVal) const = 0;
 		virtual float32_t AE_CALL readDpadDataFromInputState(const void* inputState) const = 0;
 		virtual DeviceState::CountType AE_CALL customGetState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count, 
-			const void* inputState, void* custom, ReadStateStartCallback readStateStartCallback, ReadStateEndCallback readStateEndCallback) const = 0;
+			const void* inputState, void* custom, ReadWriteStateStartCallback readStateStartCallback, ReadWriteStateStartCallback readStateEndCallback) const = 0;
 		virtual void AE_CALL customDispatch(const void* oldInputState, const void* newInputState, void* custom, DispatchCallback dispatchCallback) const = 0;
 
 		virtual bool AE_CALL writeStateToDevice(const void* outputState) const = 0;
-		virtual DeviceState::CountType AE_CALL customSetState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count, void* custom, WriteToOutputStateCallback writeToOutputStateCallback) const = 0;
+		virtual DeviceState::CountType AE_CALL customSetState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count, void* outputState, void* custom,
+			ReadWriteStateStartCallback writeStateStartCallback, ReadWriteStateStartCallback writeStateEndCallback) const = 0;
 
 		virtual void AE_CALL setKeyMapping(GamepadKeyMapping& dst, const GamepadKeyMapping* src) const = 0;
 

@@ -106,6 +106,7 @@ namespace aurora::modules::inputs {
 					{
 						std::shared_lock lock(_inputMutex);
 
+						if (!_driver->isStateReady(_inputState)) return 0;
 						x = _driver->readDataFromInputState(_inputState, mappingVals[0], Math::ONE_HALF<float32_t>);
 						y = _driver->readDataFromInputState(_inputState, mappingVals[1], Math::ONE_HALF<float32_t>);
 					}
@@ -116,6 +117,7 @@ namespace aurora::modules::inputs {
 				{
 					std::shared_lock lock(_inputMutex);
 
+					if (!_driver->isStateReady(_inputState)) return 0;
 					((DeviceStateValue*)values)[0] = _driver->readDpadDataFromInputState(_inputState);
 
 					return 1;
@@ -137,6 +139,7 @@ namespace aurora::modules::inputs {
 						{
 							std::shared_lock lock(_inputMutex);
 
+							if (!_driver->isStateReady(_inputState)) return 0;
 							val = _driver->readDataFromInputState(_inputState, cf, Math::ZERO<float32_t>);
 						}
 
@@ -231,14 +234,26 @@ namespace aurora::modules::inputs {
 			return 0;
 		}
 		default:
-			return _driver->customSetState(type, code, values, count, this, [](const void* data, size_t dataLength, size_t outputStateOffset, void* custom) {
-				auto self = (GenericGamepad*)custom;
+		{
+			std::unique_lock lock(_outputMutex, std::defer_lock);
+			void* custom[2];
+			custom[0] = &lock;
+			custom[1] = this;
 
-				std::scoped_lock lock(self->_outputMutex);
+			return _driver->customSetState(type, code, values, count, _outputState, custom,
+				[](void* custom) {
+				auto lock = (std::unique_lock<std::shared_mutex>*)((void**)custom)[0];
+				lock->lock();
+			},
+				[](void* custom) {
+				auto self = (GenericGamepad*)((void**)custom)[1];
 
-				memcpy(self->_outputState + outputStateOffset, data, dataLength);
 				self->_outputDirty = true;
+
+				auto lock = (std::unique_lock<std::shared_mutex>*)((void**)custom)[0];
+				lock->unlock();
 			});
+		}
 		}
 	}
 
@@ -274,6 +289,8 @@ namespace aurora::modules::inputs {
 			memcpy(_oldInputState, _inputState, _inputLength);
 			memcpy(_inputState, _newInputState, _inputLength);
 		}
+
+		if (!_driver->isStateReady(_oldInputState)) return;
 
 		GamepadKeyCodeAndFlags mappingVals[4];
 		keyMapping.get(GamepadVirtualKeyCode::L_STICK_X, 4, mappingVals);

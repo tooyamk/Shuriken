@@ -19,7 +19,7 @@ namespace aurora::modules::inputs::direct_input {
 	}
 
 	size_t GamepadDriver::getInputLength() const {
-		return sizeof(DIJOYSTATE);
+		return sizeof(DIJOYSTATE) + 1;
 	}
 
 	size_t GamepadDriver::getOutputLength() const {
@@ -27,7 +27,13 @@ namespace aurora::modules::inputs::direct_input {
 	}
 
 	bool GamepadDriver::init(void* inputState, void* outputState) {
-		return readStateFromDevice(inputState);
+		((uint8_t*)inputState)[0] = 0;
+
+		return true;
+	}
+
+	bool GamepadDriver::isStateReady(const void* state) const {
+		return ((const uint8_t*)state)[0];
 	}
 
 	bool GamepadDriver::readStateFromDevice(void* inputState) const {
@@ -36,7 +42,12 @@ namespace aurora::modules::inputs::direct_input {
 			if (FAILED(_dev->Poll())) return false;
 		}
 
-		if (FAILED(_dev->GetDeviceState(sizeof(DIJOYSTATE), inputState))) return false;
+		auto raw = (uint8_t*)inputState;
+		if (SUCCEEDED(_dev->GetDeviceState(sizeof(DIJOYSTATE), (DIJOYSTATE*)(raw + 1)))) {
+			raw[0] = 1;
+
+			return true;
+		}
 
 		return true;
 	}
@@ -44,14 +55,17 @@ namespace aurora::modules::inputs::direct_input {
 	float32_t GamepadDriver::readDataFromInputState(const void* inputState, GamepadKeyCodeAndFlags cf, float32_t defaultVal) const {
 		using namespace aurora::enum_operators;
 
-		auto data = (const DIJOYSTATE*)inputState;
-
 		float32_t val;
+		if (auto raw = (const uint8_t*)inputState; raw[0]) {
+			auto data = (const DIJOYSTATE*)(raw + 1);
 
-		if (cf.code >= GamepadKeyCode::AXIS_1 && cf.code <= MAX_AXIS_KEY) {
-			val = DeviceStateValue((&data->lX)[(uint32_t)(cf.code - GamepadKeyCode::AXIS_1)]) * Math::RECIPROCAL<DeviceStateValue((std::numeric_limits<uint16_t>::max)())>;
-		} else if (cf.code >= GamepadKeyCode::BUTTON_1 && cf.code <= MAX_BUTTON_KEY) {
-			val = data->rgbButtons[(uint32_t)(cf.code - GamepadKeyCode::BUTTON_1)] & 0x80 ? Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;
+			if (cf.code >= GamepadKeyCode::AXIS_1 && cf.code <= MAX_AXIS_KEY) {
+				val = DeviceStateValue((&data->lX)[(uint32_t)(cf.code - GamepadKeyCode::AXIS_1)]) * Math::RECIPROCAL<DeviceStateValue((std::numeric_limits<uint16_t>::max)())>;
+			} else if (cf.code >= GamepadKeyCode::BUTTON_1 && cf.code <= MAX_BUTTON_KEY) {
+				val = data->rgbButtons[(uint32_t)(cf.code - GamepadKeyCode::BUTTON_1)] & 0x80 ? Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;
+			} else {
+				val = defaultVal;
+			}
 		} else {
 			val = defaultVal;
 		}
@@ -60,14 +74,17 @@ namespace aurora::modules::inputs::direct_input {
 	}
 
 	float32_t GamepadDriver::readDpadDataFromInputState(const void* inputState) const {
-		auto data = (const DIJOYSTATE*)inputState;
+		if (auto raw = (const uint8_t*)inputState; raw[0]) {
+			auto data = (const DIJOYSTATE*)(raw + 1);
 
-		auto val = data->rgdwPOV[0];
-		return (val == (std::numeric_limits<DWORD>::max)()) ? Math::NEGATIVE_ONE<DeviceStateValue> : Math::rad(DeviceStateValue(val) * Math::HUNDREDTH<DeviceStateValue>);
+			if (auto val = data->rgdwPOV[0]; val != (std::numeric_limits<DWORD>::max)()) return Math::rad(DeviceStateValue(val) * Math::HUNDREDTH<DeviceStateValue>);
+		}
+
+		return Math::NEGATIVE_ONE<DeviceStateValue>;
 	}
 
 	DeviceState::CountType GamepadDriver::customGetState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count,
-		const void* inputState, void* custom, ReadStateStartCallback readStateStartCallback, ReadStateEndCallback readStateEndCallback) const {
+		const void* inputState, void* custom, ReadWriteStateStartCallback readStateStartCallback, ReadWriteStateStartCallback readStateEndCallback) const {
 		return 0;
 	}
 
@@ -78,7 +95,8 @@ namespace aurora::modules::inputs::direct_input {
 		return false;
 	}
 
-	DeviceState::CountType GamepadDriver::customSetState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count, void* custom, WriteToOutputStateCallback writeToOutputStateCallback) const {
+	DeviceState::CountType GamepadDriver::customSetState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count, void* outputState, void* custom,
+		ReadWriteStateStartCallback writeStateStartCallback, ReadWriteStateStartCallback writeStateEndCallback) const {
 		return 0;
 	}
 

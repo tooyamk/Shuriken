@@ -11,7 +11,7 @@ namespace aurora::modules::inputs::xinput {
 	}
 
 	size_t GamepadDriver::getInputLength() const {
-		return sizeof(XINPUT_STATE);
+		return sizeof(XINPUT_STATE) + 1;
 	}
 
 	size_t GamepadDriver::getOutputLength() const {
@@ -19,87 +19,105 @@ namespace aurora::modules::inputs::xinput {
 	}
 
 	bool GamepadDriver::init(void* inputState, void* outputState) {
-		return readStateFromDevice(inputState);
+		((uint8_t*)inputState)[0] = 0;
+
+		return true;
+	}
+
+	bool GamepadDriver::isStateReady(const void* state) const {
+		return ((const uint8_t*)state)[0];
 	}
 
 	bool GamepadDriver::readStateFromDevice(void* inputState) const {
-		return XInputGetState(_index, (XINPUT_STATE*)inputState) == ERROR_SUCCESS;
+		auto raw = (uint8_t*)inputState;
+		if (XInputGetState(_index, (XINPUT_STATE*)(raw + 1)) == ERROR_SUCCESS) {
+			raw[0] = 1;
+			
+			return true;
+		}
+
+		return false;
 	}
 
 	float32_t GamepadDriver::readDataFromInputState(const void* inputState, GamepadKeyCodeAndFlags cf, float32_t defaultVal) const {
 		using namespace aurora::enum_operators;
 
-		auto data = (const XINPUT_STATE*)inputState;
-
 		float32_t val;
+		if (auto raw = (const uint8_t*)inputState; raw[0]) {
+			auto data = (const XINPUT_STATE*)(raw + 1);
 
-		if (cf.code >= GamepadKeyCode::AXIS_1 && cf.code <= MAX_AXIS_KEY) {
-			switch (cf.code) {
-			case GamepadKeyCode::AXIS_1:
-				val = _normalizeThumb(data->Gamepad.sThumbLX);
-				break;
-			case GamepadKeyCode::AXIS_1 + 1:
-				val = _normalizeThumb(data->Gamepad.sThumbLY);
-				break;
-			case GamepadKeyCode::AXIS_1 + 2:
-				val = _normalizeTrigger(data->Gamepad.bLeftTrigger);
-				break;
-			case GamepadKeyCode::AXIS_1 + 3:
-				val = _normalizeThumb(data->Gamepad.sThumbRX);
-				break;
-			case GamepadKeyCode::AXIS_1 + 4:
-				val = _normalizeThumb(data->Gamepad.sThumbRY);
-				break;
-			case GamepadKeyCode::AXIS_1 + 5:
-				val = _normalizeTrigger(data->Gamepad.bRightTrigger);
-				break;
-			default:
+			if (cf.code >= GamepadKeyCode::AXIS_1 && cf.code <= MAX_AXIS_KEY) {
+				switch (cf.code) {
+				case GamepadKeyCode::AXIS_1:
+					val = _normalizeThumb(data->Gamepad.sThumbLX);
+					break;
+				case GamepadKeyCode::AXIS_1 + 1:
+					val = _normalizeThumb(data->Gamepad.sThumbLY);
+					break;
+				case GamepadKeyCode::AXIS_1 + 2:
+					val = _normalizeTrigger(data->Gamepad.bLeftTrigger);
+					break;
+				case GamepadKeyCode::AXIS_1 + 3:
+					val = _normalizeThumb(data->Gamepad.sThumbRX);
+					break;
+				case GamepadKeyCode::AXIS_1 + 4:
+					val = _normalizeThumb(data->Gamepad.sThumbRY);
+					break;
+				case GamepadKeyCode::AXIS_1 + 5:
+					val = _normalizeTrigger(data->Gamepad.bRightTrigger);
+					break;
+				default:
+					val = defaultVal;
+					break;
+				}
+			} else if (cf.code >= GamepadKeyCode::BUTTON_1 && cf.code <= MAX_BUTTON_KEY) {
+				val = data->Gamepad.wButtons & BUTTON_MASK[(size_t)(cf.code - GamepadKeyCode::BUTTON_1)] ? Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;
+			} else {
 				val = defaultVal;
-				break;
 			}
-		} else if (cf.code >= GamepadKeyCode::BUTTON_1 && cf.code <= MAX_BUTTON_KEY) {
-			val = data->Gamepad.wButtons & BUTTON_MASK[(size_t)(cf.code - GamepadKeyCode::BUTTON_1)] ? Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;
 		} else {
 			val = defaultVal;
 		}
-
-		
 
 		return translate(val, cf.flags);
 	}
 
 	float32_t GamepadDriver::readDpadDataFromInputState(const void* inputState) const {
-		auto data = (const XINPUT_STATE*)inputState;
+		if (auto raw = (const uint8_t*)inputState; raw[0]) {
+			auto data = (const XINPUT_STATE*)(raw + 1);
 
-		auto val = data->Gamepad.wButtons;
-		switch (val & (XINPUT_GAMEPAD_DPAD_UP | XINPUT_GAMEPAD_DPAD_RIGHT | XINPUT_GAMEPAD_DPAD_DOWN | XINPUT_GAMEPAD_DPAD_LEFT)) {
-		case XINPUT_GAMEPAD_DPAD_UP:
-		case XINPUT_GAMEPAD_DPAD_UP | XINPUT_GAMEPAD_DPAD_RIGHT | XINPUT_GAMEPAD_DPAD_LEFT:
-			return Math::ZERO<DeviceStateValue>;
-		case XINPUT_GAMEPAD_DPAD_UP | XINPUT_GAMEPAD_DPAD_RIGHT:
-			return Math::PI_4<DeviceStateValue>;
-		case XINPUT_GAMEPAD_DPAD_RIGHT:
-		case XINPUT_GAMEPAD_DPAD_UP | XINPUT_GAMEPAD_DPAD_DOWN | XINPUT_GAMEPAD_DPAD_RIGHT:
-			return Math::PI_2<DeviceStateValue>;
-		case XINPUT_GAMEPAD_DPAD_DOWN | XINPUT_GAMEPAD_DPAD_RIGHT:
-			return Math::PI<DeviceStateValue> -Math::PI_4<DeviceStateValue>;
-		case XINPUT_GAMEPAD_DPAD_DOWN:
-		case XINPUT_GAMEPAD_DPAD_DOWN | XINPUT_GAMEPAD_DPAD_RIGHT | XINPUT_GAMEPAD_DPAD_LEFT:
-			return Math::PI<DeviceStateValue>;
-		case XINPUT_GAMEPAD_DPAD_DOWN | XINPUT_GAMEPAD_DPAD_LEFT:
-			return Math::PI<DeviceStateValue> +Math::PI_4<DeviceStateValue>;
-		case XINPUT_GAMEPAD_DPAD_LEFT:
-		case XINPUT_GAMEPAD_DPAD_UP | XINPUT_GAMEPAD_DPAD_DOWN | XINPUT_GAMEPAD_DPAD_LEFT:
-			return Math::PI<DeviceStateValue> +Math::PI_2<DeviceStateValue>;
-		case XINPUT_GAMEPAD_DPAD_UP | XINPUT_GAMEPAD_DPAD_LEFT:
-			return Math::PI2<DeviceStateValue> -Math::PI_4<DeviceStateValue>;
-		default:
-			return Math::NEGATIVE_ONE<DeviceStateValue>;
+			auto val = data->Gamepad.wButtons;
+			switch (val & (XINPUT_GAMEPAD_DPAD_UP | XINPUT_GAMEPAD_DPAD_RIGHT | XINPUT_GAMEPAD_DPAD_DOWN | XINPUT_GAMEPAD_DPAD_LEFT)) {
+			case XINPUT_GAMEPAD_DPAD_UP:
+			case XINPUT_GAMEPAD_DPAD_UP | XINPUT_GAMEPAD_DPAD_RIGHT | XINPUT_GAMEPAD_DPAD_LEFT:
+				return Math::ZERO<DeviceStateValue>;
+			case XINPUT_GAMEPAD_DPAD_UP | XINPUT_GAMEPAD_DPAD_RIGHT:
+				return Math::PI_4<DeviceStateValue>;
+			case XINPUT_GAMEPAD_DPAD_RIGHT:
+			case XINPUT_GAMEPAD_DPAD_UP | XINPUT_GAMEPAD_DPAD_DOWN | XINPUT_GAMEPAD_DPAD_RIGHT:
+				return Math::PI_2<DeviceStateValue>;
+			case XINPUT_GAMEPAD_DPAD_DOWN | XINPUT_GAMEPAD_DPAD_RIGHT:
+				return Math::PI<DeviceStateValue> -Math::PI_4<DeviceStateValue>;
+			case XINPUT_GAMEPAD_DPAD_DOWN:
+			case XINPUT_GAMEPAD_DPAD_DOWN | XINPUT_GAMEPAD_DPAD_RIGHT | XINPUT_GAMEPAD_DPAD_LEFT:
+				return Math::PI<DeviceStateValue>;
+			case XINPUT_GAMEPAD_DPAD_DOWN | XINPUT_GAMEPAD_DPAD_LEFT:
+				return Math::PI<DeviceStateValue> +Math::PI_4<DeviceStateValue>;
+			case XINPUT_GAMEPAD_DPAD_LEFT:
+			case XINPUT_GAMEPAD_DPAD_UP | XINPUT_GAMEPAD_DPAD_DOWN | XINPUT_GAMEPAD_DPAD_LEFT:
+				return Math::PI<DeviceStateValue> +Math::PI_2<DeviceStateValue>;
+			case XINPUT_GAMEPAD_DPAD_UP | XINPUT_GAMEPAD_DPAD_LEFT:
+				return Math::PI2<DeviceStateValue> -Math::PI_4<DeviceStateValue>;
+			default:
+				return Math::NEGATIVE_ONE<DeviceStateValue>;
+			}
 		}
+
+		return Math::NEGATIVE_ONE<DeviceStateValue>;
 	}
 
 	DeviceState::CountType GamepadDriver::customGetState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count,
-		const void* inputState, void* custom, ReadStateStartCallback readStateStartCallback, ReadStateEndCallback readStateEndCallback) const {
+		const void* inputState, void* custom, ReadWriteStateStartCallback readStateStartCallback, ReadWriteStateStartCallback readStateEndCallback) const {
 		return 0;
 	}
 
@@ -110,7 +128,8 @@ namespace aurora::modules::inputs::xinput {
 		return false;
 	}
 
-	DeviceState::CountType GamepadDriver::customSetState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count, void* custom, WriteToOutputStateCallback writeToOutputStateCallback) const {
+	DeviceState::CountType GamepadDriver::customSetState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count, void* outputState, void* custom,
+		ReadWriteStateStartCallback writeStateStartCallback, ReadWriteStateStartCallback writeStateEndCallback) const {
 		if (type == DeviceStateType::VIBRATION) {
 			if (values && count) {
 				if (count < 2) {

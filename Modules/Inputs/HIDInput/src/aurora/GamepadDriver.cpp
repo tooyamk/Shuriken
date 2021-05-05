@@ -22,6 +22,10 @@ namespace aurora::modules::inputs::hid_input {
 		return false;
 	}
 
+	bool GamepadDriver::isStateReady(const void* state) const {
+		return false;
+	}
+
 	bool GamepadDriver::readStateFromDevice(void* inputState) const {
 		return false;
 	}
@@ -35,7 +39,7 @@ namespace aurora::modules::inputs::hid_input {
 	}
 
 	DeviceState::CountType GamepadDriver::customGetState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count,
-		const void* inputState, void* custom, ReadStateStartCallback readStateStartCallback, ReadStateEndCallback readStateEndCallback) const {
+		const void* inputState, void* custom, ReadWriteStateStartCallback readStateStartCallback, ReadWriteStateStartCallback readStateEndCallback) const {
 		return 0;
 	}
 
@@ -46,7 +50,8 @@ namespace aurora::modules::inputs::hid_input {
 		return false;
 	}
 
-	DeviceState::CountType GamepadDriver::customSetState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count, void* custom, WriteToOutputStateCallback writeToOutputStateCallback) const {
+	DeviceState::CountType GamepadDriver::customSetState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count, void* outputState, void* custom,
+		ReadWriteStateStartCallback writeStateStartCallback, ReadWriteStateStartCallback writeStateEndCallback) const {
 		return 0;
 	}
 

@@ -4,14 +4,18 @@
 #include "Input.h"
 
 namespace aurora::modules::inputs::hid_input {
-	GamepadDriver::GamepadDriver(Input& input, extensions::HIDDevice& hid) : GamepadDriverBase(input, hid) {
+	GamepadDriver::GamepadDriver(Input& input, extensions::HIDDevice& hid) : GamepadDriverBase(input, hid),
+		_preparsedData(nullptr),
+		_maxValidAxes(0) {
+		memset(_axisCaps, 0, sizeof(_axisCaps));
+		_dpadCap.valid = false;
 	}
 
 	GamepadDriver::~GamepadDriver() {
 	}
 
 	size_t GamepadDriver::getInputLength() const {
-		return sizeof(InputState);
+		return sizeof(InputState) + 1;
 	}
 
 	size_t GamepadDriver::getOutputLength() const {
@@ -23,6 +27,8 @@ namespace aurora::modules::inputs::hid_input {
 		using namespace aurora::enum_operators;
 
 		_preparsedData = (PHIDP_PREPARSED_DATA)HID::getPreparsedData(*_hid);
+		_inputValueCaps.clear();
+		_maxValidAxes = 0;
 
 		memset(_axisCaps, 0, sizeof(_axisCaps));
 		_dpadCap.valid = false;
@@ -64,17 +70,13 @@ namespace aurora::modules::inputs::hid_input {
 			}
 		}
 
-		uint8_t buf[128];
-		do {
-			if (auto rst = HID::read(*_hid, buf, sizeof(buf), HID::IN_TIMEOUT_BLOCKING); HID::isSuccess(rst)) {
-				_parseInputState(*(InputState*)inputState, buf, rst);
-				break;
-			} else if (rst == HID::OUT_ERROR) {
-				return false;
-			}
-		} while (true);
+		((uint8_t*)inputState)[0] = false;
 
 		return true;
+	}
+
+	bool GamepadDriver::isStateReady(const void* state) const {
+		return ((const uint8_t*)state)[0];
 	}
 
 	bool GamepadDriver::readStateFromDevice(void* inputState) const {
@@ -82,7 +84,10 @@ namespace aurora::modules::inputs::hid_input {
 
 		uint8_t buf[128];
 		if (auto rst = HID::read(*_hid, buf, sizeof(buf), 0); HID::isSuccess(rst)) {
-			_parseInputState(*(InputState*)inputState, buf, rst);
+			auto raw = (uint8_t*)inputState;
+			_parseInputState(*(InputState*)(raw + 1), buf, rst);
+			raw[0] = 1;
+
 			return true;
 		}
 
@@ -92,14 +97,17 @@ namespace aurora::modules::inputs::hid_input {
 	float32_t GamepadDriver::readDataFromInputState(const void* inputState, GamepadKeyCodeAndFlags cf, float32_t defaultVal) const {
 		using namespace aurora::enum_operators;
 
-		auto data = (const InputState*)inputState;
-
 		float32_t val;
+		if (auto raw = (const uint8_t*)inputState; raw[0]) {
+			auto data = (const InputState*)(raw + 1);
 
-		if (cf.code >= GamepadKeyCode::AXIS_1 && cf.code <= MAX_AXIS_KEY) {
-			val = data->axes[(size_t)(cf.code - GamepadKeyCode::AXIS_1)];
-		} else if (cf.code >= GamepadKeyCode::BUTTON_1 && cf.code <= MAX_BUTTON_KEY) {
-			val = data->buttons & (Math::ONE<uint_t<MAX_BUTTONS>> << (size_t)(cf.code - GamepadKeyCode::BUTTON_1)) ? Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;
+			if (cf.code >= GamepadKeyCode::AXIS_1 && cf.code <= MAX_AXIS_KEY) {
+				val = data->axes[(size_t)(cf.code - GamepadKeyCode::AXIS_1)];
+			} else if (cf.code >= GamepadKeyCode::BUTTON_1 && cf.code <= MAX_BUTTON_KEY) {
+				val = data->buttons & (Math::ONE<uint_t<MAX_BUTTONS>> << (size_t)(cf.code - GamepadKeyCode::BUTTON_1)) ? Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;
+			} else {
+				val = defaultVal;
+			}
 		} else {
 			val = defaultVal;
 		}
@@ -108,11 +116,13 @@ namespace aurora::modules::inputs::hid_input {
 	}
 
 	float32_t GamepadDriver::readDpadDataFromInputState(const void* inputState) const {
-		auto data = (const InputState*)inputState;
+		if (auto raw = (const uint8_t*)inputState; raw[0]) {
+			auto data = (const InputState*)(raw + 1);
 
-		if (_dpadCap.valid && data->dpad >= _dpadCap.min && data->dpad <= _dpadCap.max) {
-			if (_dpadCap.max - _dpadCap.min + 1 == 8) {
-				return (data->dpad - _dpadCap.min) * Math::PI_8<DeviceStateValue>;
+			if (_dpadCap.valid && data->dpad >= _dpadCap.min && data->dpad <= _dpadCap.max) {
+				if (_dpadCap.max - _dpadCap.min + 1 == 8) {
+					return (data->dpad - _dpadCap.min) * Math::PI_8<DeviceStateValue>;
+				}
 			}
 		}
 
@@ -120,7 +130,7 @@ namespace aurora::modules::inputs::hid_input {
 	}
 
 	DeviceState::CountType GamepadDriver::customGetState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count,
-		const void* inputState, void* custom, ReadStateStartCallback readStateStartCallback, ReadStateEndCallback readStateEndCallback) const {
+		const void* inputState, void* custom, ReadWriteStateStartCallback readStateStartCallback, ReadWriteStateStartCallback readStateEndCallback) const {
 		return 0;
 	}
 
@@ -131,7 +141,8 @@ namespace aurora::modules::inputs::hid_input {
 		return false;
 	}
 
-	DeviceState::CountType GamepadDriver::customSetState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count, void* custom, WriteToOutputStateCallback writeToOutputStateCallback) const {
+	DeviceState::CountType GamepadDriver::customSetState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count, void* outputState, void* custom,
+		ReadWriteStateStartCallback writeStateStartCallback, ReadWriteStateStartCallback writeStateEndCallback) const {
 		return 0;
 	}
 

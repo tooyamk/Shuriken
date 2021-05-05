@@ -2,91 +2,101 @@
 #include "Input.h"
 
 namespace aurora::modules::inputs::hid_input {
-	GamepadDriverDS4::GamepadDriverDS4(Input& input, extensions::HIDDevice& hid) : GamepadDriverBase(input, hid) {
+	GamepadDriverDS4::GamepadDriverDS4(Input& input, extensions::HIDDevice& hid) : GamepadDriverBase(input, hid),
+		_state(0) {
 	}
 
 	GamepadDriverDS4::~GamepadDriverDS4() {
 	}
 
 	size_t GamepadDriverDS4::getInputLength() const {
-		return INPUT_BUFFER_LENGTH;
+		return INPUT_BUFFER_LENGTH + 1;
 	}
 
 	size_t GamepadDriverDS4::getOutputLength() const {
-		return OUTPUT_BUFFER_LENGTH;
+		return OUTPUT_BUFFER_LENGTH + 1;
 	}
 
 	bool GamepadDriverDS4::init(void* inputState, void* outputState) {
 		using namespace aurora::extensions;
 
-		auto isBluetooth = false;
-		uint8_t buf[65];
-		do {
-			if (auto rst = HID::read(*_hid, buf, sizeof(buf), HID::IN_TIMEOUT_BLOCKING); HID::isSuccess(rst)) {
-				isBluetooth = rst > 64;
-				break;
-			} else if (rst == HID::OUT_ERROR) {
-				return false;
-			}
-		} while (true);
-
-		auto op = (uint8_t*)outputState;
+		auto data = (uint8_t*)inputState;
+		data[0] = 0;
 
 		memset(outputState, 0, OUTPUT_BUFFER_LENGTH);
-		if (isBluetooth) {
-			op[0] = 0x11;
-			op[1] = 0x80;
-			op[3] = 0xFF;
 
-			_inputOffset = 3;
-			_outputOffset = 6;
-		} else {
-			op[0] = 0x05;
-			op[1] = 0xFF;
-
-			_inputOffset = 1;
-			_outputOffset = 4;
-		}
-
-		memcpy(inputState, buf, INPUT_BUFFER_LENGTH);
+		_state = 0;
 
 		return true;
+	}
+
+	bool GamepadDriverDS4::isStateReady(const void* state) const {
+		return ((const uint8_t*)state)[0];
 	}
 
 	bool GamepadDriverDS4::readStateFromDevice(void* inputState) const {
 		using namespace aurora::extensions;
 
-		return HID::isSuccess(HID::read(*_hid, inputState, INPUT_BUFFER_LENGTH, 0));
+		auto data = (uint8_t*)inputState;
+		if (auto s = _state.load(); s) {
+			if (HID::isSuccess(HID::read(*_hid, data + 1, INPUT_BUFFER_LENGTH, 0))) {
+				data[0] = s & 0b1111;
+				return true;
+			}
+		} else {
+			uint8_t buf[65];
+			if (auto rst = HID::read(*_hid, buf, sizeof(buf), 0); HID::isSuccess(rst)) {
+				uint8_t inputOffset, outputOffset;
+				if (rst > 64) {
+					inputOffset = 1 + 3;
+					outputOffset = 1 + 6;
+				} else {
+					inputOffset = 1 + 1;
+					outputOffset = 1 + 4;
+				}
+
+				data[0] = inputOffset;
+				memcpy(data + 1, buf, INPUT_BUFFER_LENGTH);
+
+				_state = outputOffset << 4 | inputOffset;
+
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	float32_t GamepadDriverDS4::readDataFromInputState(const void* inputState, GamepadKeyCodeAndFlags cf, float32_t defaultVal) const {
 		using namespace aurora::enum_operators;
 
 		auto data = (const uint8_t*)inputState;
-
 		float32_t val;
-
-		if (cf.code >= GamepadKeyCode::AXIS_1 && cf.code <= MAX_AXIS_KEY) {
-			switch (cf.code) {
-			case GamepadKeyCode::AXIS_1:
-			case GamepadKeyCode::AXIS_1 + 1:
-			case GamepadKeyCode::AXIS_1 + 2:
-				val = data[_inputOffset + (size_t)(cf.code - GamepadKeyCode::AXIS_1)] * Math::RECIPROCAL<float32_t((std::numeric_limits<uint8_t>::max)())>;
-				break;
-			case GamepadKeyCode::AXIS_1 + 3:
-			case GamepadKeyCode::AXIS_1 + 4:
-				val = data[_inputOffset + (size_t)InputOffset::L_TRIGGER + (size_t)(cf.code - GamepadKeyCode::AXIS_1 - 3)] * Math::RECIPROCAL<float32_t((std::numeric_limits<uint8_t>::max)())>;
-				break;
-			case GamepadKeyCode::AXIS_1 + 5:
-				val = data[_inputOffset + (size_t)InputOffset::RY] * Math::RECIPROCAL<float32_t((std::numeric_limits<uint8_t>::max)())>;
-				break;
-			default:
+		if (auto offset = data[0]; offset) {
+			if (cf.code >= GamepadKeyCode::AXIS_1 && cf.code <= MAX_AXIS_KEY) {
+				switch (cf.code) {
+				case GamepadKeyCode::AXIS_1:
+				case GamepadKeyCode::AXIS_1 + 1:
+				case GamepadKeyCode::AXIS_1 + 2:
+					val = data[offset + (size_t)(cf.code - GamepadKeyCode::AXIS_1)] * Math::RECIPROCAL<float32_t((std::numeric_limits<uint8_t>::max)())>;
+					break;
+				case GamepadKeyCode::AXIS_1 + 3:
+				case GamepadKeyCode::AXIS_1 + 4:
+					val = data[offset + (size_t)InputOffset::L_TRIGGER + (size_t)(cf.code - GamepadKeyCode::AXIS_1 - 3)] * Math::RECIPROCAL<float32_t((std::numeric_limits<uint8_t>::max)())>;
+					break;
+				case GamepadKeyCode::AXIS_1 + 5:
+					val = data[offset + (size_t)InputOffset::RY] * Math::RECIPROCAL<float32_t((std::numeric_limits<uint8_t>::max)())>;
+					break;
+				default:
+					val = defaultVal;
+					break;
+				}
+			} else if (cf.code >= GamepadKeyCode::BUTTON_1 && cf.code <= MAX_BUTTON_KEY) {
+				auto i = (size_t)(cf.code - GamepadKeyCode::BUTTON_1);
+				val = data[offset + BUTTON_OFFSET[i]] & BUTTON_MASK[i] ? Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;
+			} else {
 				val = defaultVal;
-				break;
 			}
-		} else if (cf.code >= GamepadKeyCode::BUTTON_1 && cf.code <= MAX_BUTTON_KEY) {
-			auto i = (size_t)(cf.code - GamepadKeyCode::BUTTON_1);
-			val = data[_inputOffset + BUTTON_OFFSET[i]] & BUTTON_MASK[i] ? Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;
 		} else {
 			val = defaultVal;
 		}
@@ -95,13 +105,16 @@ namespace aurora::modules::inputs::hid_input {
 	}
 
 	float32_t GamepadDriverDS4::readDpadDataFromInputState(const void* inputState) const {
-		if (auto val = ((const uint8_t*)inputState)[_inputOffset + (int32_t)InputOffset::D_PAD] & 0xF; val <= 7) return val * Math::PI_4<DeviceStateValue>;
+		auto data = (const uint8_t*)inputState;
+		if (auto offset = data[0]; offset) {
+			if (auto val = data[offset + (int32_t)InputOffset::D_PAD] & 0xF; val <= 7) return val * Math::PI_4<DeviceStateValue>;
+		}
 
 		return Math::NEGATIVE_ONE<DeviceStateValue>;
 	}
 
 	DeviceState::CountType GamepadDriverDS4::customGetState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count,
-		const void* inputState, void* custom, ReadStateStartCallback readStateStartCallback, ReadStateEndCallback readStateEndCallback) const {
+		const void* inputState, void* custom, ReadWriteStateStartCallback readStateStartCallback, ReadWriteStateStartCallback readStateEndCallback) const {
 		if (type == DeviceStateType::TOUCH_RESOLUTION) {
 			if (values && count) {
 				DeviceState::CountType c = 1;
@@ -118,22 +131,25 @@ namespace aurora::modules::inputs::hid_input {
 			return 0;
 		} else if (type == DeviceStateType::TOUCH) {
 			if (values && count) {
-				DeviceTouchStateValue rawTouches[2], touches[2];
-				auto data = (const uint8_t*)inputState + _inputOffset + (size_t)InputOffset::FINGER1;
+				auto data = (const uint8_t*)inputState;
+				if (auto offset = data[0]; offset) {
+					data += offset + (size_t)InputOffset::FINGER1;
+					DeviceTouchStateValue rawTouches[2], touches[2];
 
-				readStateStartCallback(custom);
+					readStateStartCallback(custom);
 
-				_parseTouches(data, rawTouches);
+					_parseTouches(data, rawTouches);
 
-				readStateEndCallback(custom);
+					readStateEndCallback(custom);
 
-				DeviceState::CountType c = 0;
-				for (size_t i = 0; i < 2; ++i) {
-					if (rawTouches[i].isTouched) ((DeviceTouchStateValue*)values)[c++] = rawTouches[i];
-					if (++c >= count) break;
+					DeviceState::CountType c = 0;
+					for (size_t i = 0; i < 2; ++i) {
+						if (rawTouches[i].isTouched) ((DeviceTouchStateValue*)values)[c++] = rawTouches[i];
+						if (++c >= count) break;
+					}
+
+					return c;
 				}
-
-				return c;
 			}
 
 			return 0;
@@ -143,10 +159,16 @@ namespace aurora::modules::inputs::hid_input {
 	}
 
 	void GamepadDriverDS4::customDispatch(const void* oldInputState, const void* newInputState, void* custom, DispatchCallback dispatchCallback) const {
+		auto oldData = (const uint8_t*)oldInputState;
+		auto newData = (const uint8_t*)newInputState;
+
+		auto oldOffset = oldData[0], newOffset = newData[0];
+
+		if (!oldOffset || !newOffset) return;
+
 		DeviceTouchStateValue rawTouches[4];
-		size_t offset = _inputOffset + (size_t)InputOffset::FINGER1;
-		_parseTouches((const uint8_t*)oldInputState + offset, rawTouches);
-		_parseTouches((const uint8_t*)newInputState + offset, rawTouches + 2);
+		_parseTouches(oldData + oldOffset + (size_t)InputOffset::FINGER1, rawTouches);
+		_parseTouches(oldData + newOffset + (size_t)InputOffset::FINGER1, rawTouches + 2);
 
 		DeviceTouchStateValue touches[4];
 		size_t count = 0;
@@ -204,55 +226,75 @@ namespace aurora::modules::inputs::hid_input {
 	bool GamepadDriverDS4::writeStateToDevice(const void* outputState) const {
 		using namespace aurora::extensions;
 
-		return HID::isSuccess(HID::write(*_hid, outputState, OUTPUT_BUFFER_LENGTH, 0));
+		return HID::isSuccess(HID::write(*_hid, ((const uint8_t*)outputState) + 1, OUTPUT_BUFFER_LENGTH, 0));
 	}
 
-	DeviceState::CountType GamepadDriverDS4::customSetState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count, void* custom, WriteToOutputStateCallback writeToOutputStateCallback) const {
-		if (type == DeviceStateType::VIBRATION) {
-			if (values && count) {
-				DeviceState::CodeType c = 1;
-				DeviceStateValue lr[2];
-				lr[0] = ((DeviceStateValue*)values)[0];
-				if (count >= 2) {
-					lr[1] = ((DeviceStateValue*)values)[1];
-					++c;
-				} else {
-					lr[1] = Math::ZERO<DeviceStateValue>;
-				}
+	DeviceState::CountType GamepadDriverDS4::customSetState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count, void* outputState, void* custom,
+		ReadWriteStateStartCallback writeStateStartCallback, ReadWriteStateStartCallback writeStateEndCallback) const {
 
-				constexpr auto MAX = DeviceStateValue(255);
+		auto data = (uint8_t*)outputState;
+		auto offset = data[0];
+		if (!offset) offset = _getOutputOffset(_state.load());
 
-				uint8_t data[2];
-				for (size_t i = 0; i < 2; ++i) data[i] = Math::clamp(lr[i], Math::ZERO<DeviceStateValue>, Math::ONE<DeviceStateValue>) * MAX;
-
-				writeToOutputStateCallback(data, sizeof(data), _outputOffset, custom);
-
-				return c;
-			}
-		} else if (type == DeviceStateType::LED) {
-			if (values && count) {
-				DeviceState::CodeType c = 1;
-				DeviceStateValue rgb[3];
-				rgb[0] = ((DeviceStateValue*)values)[0];
-				if (count >= 2) {
-					rgb[1] = ((DeviceStateValue*)values)[1];
-					++c;
-					if (count >= 3) {
-						rgb[2] = ((DeviceStateValue*)values)[2];
+		if (offset) {
+			if (type == DeviceStateType::VIBRATION) {
+				if (values && count) {
+					DeviceState::CodeType c = 1;
+					DeviceStateValue lr[2];
+					lr[0] = ((DeviceStateValue*)values)[0];
+					if (count >= 2) {
+						lr[1] = ((DeviceStateValue*)values)[1];
 						++c;
+					} else {
+						lr[1] = Math::ZERO<DeviceStateValue>;
 					}
+
+					constexpr auto MAX = DeviceStateValue(255);
+
+					uint8_t data[2];
+					for (size_t i = 0; i < 2; ++i) data[i] = Math::clamp(lr[i], Math::ZERO<DeviceStateValue>, Math::ONE<DeviceStateValue>) * MAX;
+
+					uint8_t expect = 1;
+
+					writeStateStartCallback(custom);
+
+					_writeOutputStateInit(outputState, offset);
+					memcpy((uint8_t*)outputState + offset, data, sizeof(data));
+
+					writeStateEndCallback(custom);
+
+					return c;
 				}
+			} else if (type == DeviceStateType::LED) {
+				if (values && count) {
+					DeviceState::CodeType c = 1;
+					DeviceStateValue rgb[3];
+					rgb[0] = ((DeviceStateValue*)values)[0];
+					if (count >= 2) {
+						rgb[1] = ((DeviceStateValue*)values)[1];
+						++c;
+						if (count >= 3) {
+							rgb[2] = ((DeviceStateValue*)values)[2];
+							++c;
+						}
+					}
 
-				for (size_t i = c; i < 3; ++i) rgb[i] = Math::ZERO<DeviceStateValue>;
+					for (size_t i = c; i < 3; ++i) rgb[i] = Math::ZERO<DeviceStateValue>;
 
-				constexpr auto MAX = DeviceStateValue(255);
+					constexpr auto MAX = DeviceStateValue(255);
 
-				uint8_t data[3];
-				for (size_t i = 0; i < 3; ++i) data[i] = Math::clamp(rgb[i], Math::ZERO<DeviceStateValue>, Math::ONE<DeviceStateValue>) * MAX;
+					uint8_t data[3];
+					for (size_t i = 0; i < 3; ++i) data[i] = Math::clamp(rgb[i], Math::ZERO<DeviceStateValue>, Math::ONE<DeviceStateValue>) * MAX;
 
-				writeToOutputStateCallback(data, sizeof(data), _outputOffset + 2, custom);
+					writeStateStartCallback(custom);
 
-				return c;
+					_writeOutputStateInit(outputState, offset);
+					memcpy((uint8_t*)outputState + offset + 2, data, sizeof(data));
+
+					writeStateEndCallback(custom);
+
+					return c;
+				}
 			}
 		}
 
@@ -291,6 +333,20 @@ namespace aurora::modules::inputs::hid_input {
 		}
 
 		dst.undefinedCompletion(MAX_AXES, MAX_BUTTONS);
+	}
+
+	void GamepadDriverDS4::_writeOutputStateInit(void* outputState, uint8_t offset) const {
+		auto data = (uint8_t*)outputState;
+
+		if (!data[0]) {
+			if (offset == 7) {
+				uint8_t data[] = { offset, 0x11, 0x80, 0, 0xFF };
+				memcpy(outputState, data, sizeof(data));
+			} else {
+				uint8_t data[] = { offset, 0x05, 0xFF };
+				memcpy(outputState, data, sizeof(data));
+			}
+		}
 	}
 
 	void GamepadDriverDS4::_parseTouches(const uint8_t* data, DeviceTouchStateValue* states) {
