@@ -30,8 +30,8 @@ namespace aurora::modules::inputs::hid_input {
 		HID::enumDevices(&newDevices, [](const HIDDeviceInfo& info, void* custom) {
 			auto newDevices = (std::vector<InternalDeviceInfo>*)custom;
 
-			if (HID::getUsagePage(info) == 1) {
-				if (HID::getUsage(info) == 5) {
+			if (HID::getUsagePage(info) == HIDReportUsagePageType::GENERIC_DESKTOP) {
+				if (auto usage = HID::getUsage(info); usage == HIDReportGenericDesktopPageType::JOYSTICK || usage == HIDReportGenericDesktopPageType::GAMEPAD) {
 					auto& dev = newDevices->emplace_back();
 
 					auto path = HID::getPath(info);
@@ -92,6 +92,8 @@ namespace aurora::modules::inputs::hid_input {
 		if (!hid) return nullptr;
 
 		IInputDevice* device = nullptr;
+		GamepadKeyMapping keyMapping;
+		auto definedKeyMapping = false;
 		switch (di->vendorID) {
 		case 0x54C:
 		{
@@ -103,7 +105,7 @@ namespace aurora::modules::inputs::hid_input {
 			break;
 		}
 
-		if (!device) device = new GenericGamepad(*di, *new GamepadDriver(*this, *hid));
+		if (!device) device = new GenericGamepad(*di, *new GamepadDriver(*this, *hid), definedKeyMapping ? &keyMapping : nullptr);
 
 		return device;
 	}

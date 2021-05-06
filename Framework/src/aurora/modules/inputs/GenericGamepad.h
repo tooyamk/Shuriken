@@ -36,7 +36,7 @@ namespace aurora::modules::inputs {
 
 	class AE_FW_DLL GenericGamepad : public IInputDevice {
 	public:
-		GenericGamepad(const DeviceInfo& info, IGenericGamepadDriver& driver);
+		GenericGamepad(const DeviceInfo& info, IGenericGamepadDriver& driver, const GamepadKeyMapping* keyMapping = nullptr);
 		virtual ~GenericGamepad();
 
 		virtual IntrusivePtr<events::IEventDispatcher<DeviceEvent>> AE_CALL getEventDispatcher() override;

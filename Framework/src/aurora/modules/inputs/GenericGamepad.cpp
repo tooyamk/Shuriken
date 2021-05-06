@@ -31,7 +31,7 @@ namespace aurora::modules::inputs {
 	}
 
 
-	GenericGamepad::GenericGamepad(const DeviceInfo& info, IGenericGamepadDriver& driver) :
+	GenericGamepad::GenericGamepad(const DeviceInfo& info, IGenericGamepadDriver& driver, const GamepadKeyMapping* keyMapping) :
 		_eventDispatcher(new events::EventDispatcher<DeviceEvent>()),
 		_info(info),
 		_driver(driver),
@@ -59,7 +59,7 @@ namespace aurora::modules::inputs {
 		}
 
 		_driver->init(_inputState, _outputState);
-		_driver->setKeyMapping(_keyMapping, nullptr);
+		_driver->setKeyMapping(_keyMapping, keyMapping);
 	}
 
 	GenericGamepad::~GenericGamepad() {
