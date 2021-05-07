@@ -420,16 +420,30 @@ namespace aurora::extensions {
 		_preparsedData = preparsedData;
 
 		memset(&oRead, 0, sizeof(oRead));
-		oRead.hEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 		memset(&oWrite, 0, sizeof(oWrite));
-		oWrite.hEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 	}
 
 	HIDDevice::~HIDDevice() {
-		CloseHandle(oRead.hEvent);
-		CloseHandle(oWrite.hEvent);
-		if (inputBuffer) delete[] inputBuffer;
-		if (outputBuffer) delete[] outputBuffer;
+		if (inputBuffer) {
+			CloseHandle(oRead.hEvent);
+			delete[] inputBuffer;
+
+		}
+		if (outputBuffer) {
+			CloseHandle(oWrite.hEvent);
+			delete[] outputBuffer;
+		}
+	}
+
+	void HIDDevice::init() {
+		if (inputReportLength) {
+			inputBuffer = new uint8_t[inputReportLength];
+			oRead.hEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+		}
+		if (outputReportLength) {
+			outputBuffer = new uint8_t[outputReportLength];
+			oWrite.hEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+		}
 	}
 
 	/*
@@ -634,8 +648,7 @@ namespace aurora::extensions {
 		dev->inputReportLength = caps.InputReportByteLength;
 		dev->outputReportLength = caps.OutputReportByteLength;
 		dev->featureReportLength = caps.FeatureReportByteLength;
-		dev->inputBuffer = new uint8_t[dev->inputReportLength];
-		dev->outputBuffer = new uint8_t[dev->outputReportLength];
+		dev->init();
 
 		return dev;
 	}

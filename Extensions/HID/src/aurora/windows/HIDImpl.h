@@ -218,6 +218,8 @@ namespace aurora::extensions {
 		OVERLAPPED oRead;
 		OVERLAPPED oWrite;
 
+		void AE_CALL init();
+
 		//ULONG AE_CALL parsePressedButtons(HIDP_REPORT_TYPE reportType, USAGE usagePage, const void* reportData, ULONG reportDataLength, USAGE* outUsages, ULONG usageLength) const;
 		//std::optional<ULONG> AE_CALL parseValue(HIDP_REPORT_TYPE reportType, USAGE usagePage, USAGE usage, const void* report, ULONG reportLength) const;
 	};

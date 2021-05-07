@@ -102,13 +102,13 @@ public:
 					SerializableObject args;
 					args.insert("app", app.uintptr());
 					args.insert("filter", DeviceType::GAMEPAD);
-					//initInputModule(inputModules, "libs/" + getDLLName("ae-input-xinput"), &args);
+					initInputModule(inputModules, "libs/" + getDLLName("ae-input-xinput"), &args);
 				}
 				if (1) {
 					SerializableObject args;
 					args.insert("app", app.uintptr());
 					args.insert("filter", DeviceType::GAMEPAD);
-					initInputModule(inputModules, "libs/" + getDLLName("ae-input-hid-input"), &args);
+					//initInputModule(inputModules, "libs/" + getDLLName("ae-input-hid-input"), &args);
 				}
 			}
 
@@ -131,10 +131,10 @@ public:
 					auto info = e.getData<DeviceInfo>();
 					printaln("input device connected : ", getDeviceTypeString(info->type), " vid = ", info->vendorID, " pid = ", info->productID, " guid = ", String::toString(info->guid.getData(), info->guid.getSize()));
 
-					//if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN) {
+					if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN) {
 					//if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN && info->vendorID == 0x54C) {
 					//if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN && info->vendorID == 0xF0D) {
-					if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN && info->vendorID == 0x45E) {
+					//if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN && info->vendorID == 0x45E) {
 						auto im = e.getTarget<IInputModule>();
 						//if (getNumInputeDevice(DeviceType::GAMEPAD) > 0) return;
 						printaln("createing device : ", getDeviceTypeString(info->type), " vid = ", info->vendorID, " pid = ", info->productID, " guid = ", String::toString(info->guid.getData(), info->guid.getSize()));

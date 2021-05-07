@@ -87,13 +87,13 @@ namespace aurora::modules::inputs::direct_input {
 	}
 
 	bool Input::isXInputDevice(const ::GUID& guidProduct) {
-		IWbemLocator* pIWbemLocator = NULL;
-		IEnumWbemClassObject* pEnumDevices = NULL;
+		IWbemLocator* pIWbemLocator = nullptr;
+		IEnumWbemClassObject* pEnumDevices = nullptr;
 		IWbemClassObject* pDevices[20] = { 0 };
-		IWbemServices* pIWbemServices = NULL;
-		BSTR                    bstrNamespace = NULL;
-		BSTR                    bstrDeviceID = NULL;
-		BSTR                    bstrClassName = NULL;
+		IWbemServices* pIWbemServices = nullptr;
+		BSTR                    bstrNamespace = nullptr;
+		BSTR                    bstrDeviceID = nullptr;
+		BSTR                    bstrClassName = nullptr;
 		DWORD                   uReturned = 0;
 		bool                    bIsXinputDevice = false;
 		UINT                    iDevice = 0;
@@ -101,29 +101,29 @@ namespace aurora::modules::inputs::direct_input {
 		HRESULT                 hr;
 
 		// CoInit if needed
-		hr = CoInitialize(NULL);
+		hr = CoInitialize(nullptr);
 		bool bCleanupCOM = SUCCEEDED(hr);
 
 		// So we can call VariantClear() later, even if we never had a successful IWbemClassObject::Get().
 		VariantInit(&var);
 
 		// Create WMI
-		hr = CoCreateInstance(__uuidof(WbemLocator), NULL, CLSCTX_INPROC_SERVER, __uuidof(IWbemLocator), (LPVOID*)&pIWbemLocator);
-		if (FAILED(hr) || pIWbemLocator == NULL) goto LCleanup;
+		hr = CoCreateInstance(__uuidof(WbemLocator), nullptr, CLSCTX_INPROC_SERVER, __uuidof(IWbemLocator), (LPVOID*)&pIWbemLocator);
+		if (FAILED(hr) || !pIWbemLocator) goto LCleanup;
 
-		bstrNamespace = SysAllocString(L"\\\\.\\root\\cimv2"); if (bstrNamespace == NULL) goto LCleanup;
-		bstrClassName = SysAllocString(L"Win32_PNPEntity");   if (bstrClassName == NULL) goto LCleanup;
-		bstrDeviceID = SysAllocString(L"DeviceID");          if (bstrDeviceID == NULL)  goto LCleanup;
+		bstrNamespace = SysAllocString(L"\\\\.\\root\\cimv2"); if (!bstrNamespace) goto LCleanup;
+		bstrClassName = SysAllocString(L"Win32_PNPEntity");   if (!bstrClassName) goto LCleanup;
+		bstrDeviceID = SysAllocString(L"DeviceID");          if (!bstrDeviceID)  goto LCleanup;
 
 		// Connect to WMI 
-		hr = pIWbemLocator->ConnectServer(bstrNamespace, NULL, NULL, 0L, 0L, NULL, NULL, &pIWbemServices);
-		if (FAILED(hr) || pIWbemServices == NULL) goto LCleanup;
+		hr = pIWbemLocator->ConnectServer(bstrNamespace, nullptr, nullptr, 0L, 0L, nullptr, nullptr, &pIWbemServices);
+		if (FAILED(hr) || !pIWbemServices) goto LCleanup;
 
 		// Switch security level to IMPERSONATE. 
-		CoSetProxyBlanket(pIWbemServices, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL, RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, EOAC_NONE);
+		CoSetProxyBlanket(pIWbemServices, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, nullptr, RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE, nullptr, EOAC_NONE);
 
-		hr = pIWbemServices->CreateInstanceEnum(bstrClassName, 0, NULL, &pEnumDevices);
-		if (FAILED(hr) || pEnumDevices == NULL) goto LCleanup;
+		hr = pIWbemServices->CreateInstanceEnum(bstrClassName, 0, nullptr, &pEnumDevices);
+		if (FAILED(hr) || pEnumDevices == nullptr) goto LCleanup;
 
 		// Loop over all devices
 		for (;;) {
@@ -134,8 +134,8 @@ namespace aurora::modules::inputs::direct_input {
 
 			for (iDevice = 0; iDevice < uReturned; ++iDevice) {
 				// For each device, get its device ID
-				hr = pDevices[iDevice]->Get(bstrDeviceID, 0L, &var, NULL, NULL);
-				if (SUCCEEDED(hr) && var.vt == VT_BSTR && var.bstrVal != NULL) {
+				hr = pDevices[iDevice]->Get(bstrDeviceID, 0L, &var, nullptr, nullptr);
+				if (SUCCEEDED(hr) && var.vt == VT_BSTR && var.bstrVal) {
 					// Check if the device ID contains "IG_".  If it does, then it's an XInput device
 						// This information can not be found from DirectInput 
 					if (wcsstr(var.bstrVal, L"IG_")) {
@@ -207,6 +207,8 @@ namespace aurora::modules::inputs::direct_input {
 			auto& info = data->devices->emplace_back();
 			info.guid.set<false, true>(&pdidInstance->guidInstance, sizeof(::GUID));
 			info.type = dt;
+			info.vendorID = pdidInstance->guidProduct.Data1 & 0xFFFF;
+			info.productID = pdidInstance->guidProduct.Data1 >> 16 & 0xFFFF;
 			info.isXInput = isXInput;
 		}
 
