@@ -33,6 +33,14 @@ get_property(PROJECT_GLEW_DLL GLOBAL PROPERTY "PROJECT_GLEW_DLL")
 get_property(PROJECT_LIBPNG_DLL GLOBAL PROPERTY "PROJECT_LIBPNG_DLL")
 get_property(PROJECT_ZLIB_DLL GLOBAL PROPERTY "PROJECT_ZLIB_DLL")
 
+get_property(PROJECT_MIMALLOC_NAME GLOBAL PROPERTY "PROJECT_MIMALLOC_NAME")
+get_property(PROJECT_MIMALLOC_LIB GLOBAL PROPERTY "PROJECT_MIMALLOC_LIB")
+get_property(PROJECT_MIMALLOC_DLL GLOBAL PROPERTY "PROJECT_MIMALLOC_DLL")
+
+get_property(PROJECT_TCMALLOC_NAME GLOBAL PROPERTY "PROJECT_TCMALLOC_NAME")
+get_property(PROJECT_TCMALLOC_LIB GLOBAL PROPERTY "PROJECT_TCMALLOC_LIB")
+get_property(PROJECT_TCMALLOC_DLL GLOBAL PROPERTY "PROJECT_TCMALLOC_DLL")
+
 get_property(PROJECT_DX_SHADER_COMPILER_DLL GLOBAL PROPERTY "PROJECT_DX_SHADER_COMPILER_DLL")
 if (WIN32)
     get_property(PROJECT_AE_GRAPHICS_GL_NAME GLOBAL PROPERTY "PROJECT_AE_GRAPHICS_GL_NAME")
@@ -76,7 +84,11 @@ set(linkLibs
     ${PROJECT_AE_SHADER_SCRIPT_NAME}
 )
 
-if (APPLE)
+set(USE_MIMALLOC ON)
+set(USE_TCMALLOC OFF)
+
+if (WIN32)
+elseif (APPLE)
 elseif (UNIX)
     list(APPEND linkLibs
         X11
@@ -84,9 +96,6 @@ elseif (UNIX)
         pthread
     )
 endif ()
-
-target_link_libraries(${PROJECT_NAME} ${linkLibs})
-set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${PROJECT_NAME}${AE_BUILD_TYPE_SUFFIX})
 
 if (WIN32)
     macro(__set_delayload)
@@ -124,6 +133,7 @@ set(test_pre_build_commands
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_ZLIB_DLL} ${__OUTPUT_LIBS_DIR}
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_AE_PST_DLL} ${__OUTPUT_LIBS_DIR}
 )
+
 set(test_pre_build_depends
     ${PROJECT_AE_FRAMEWORK_NAME}
     ${PROJECT_AE_PNG_CONVERTER_NAME}
@@ -168,7 +178,23 @@ if (WIN32)
     )
 endif ()
 
+if (USE_MIMALLOC)
+    list(APPEND linkLibs ${PROJECT_MIMALLOC_LIB})
+    list(APPEND test_pre_build_depends ${PROJECT_MIMALLOC_NAME})
+    list(APPEND test_pre_build_commands COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_MIMALLOC_DLL} ${AE_BUILD_DIR})
+endif ()
+if (USE_TCMALLOC)
+    if (CMAKE_CXX_COMPILER_ID MATCHES MSVC)
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /include:__tcmalloc")
+    endif ()
+    list(APPEND linkLibs ${PROJECT_TCMALLOC_LIB})
+    list(APPEND test_pre_build_depends ${PROJECT_TCMALLOC_NAME})
+    list(APPEND test_pre_build_commands COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_TCMALLOC_DLL} ${AE_BUILD_DIR})
+endif ()
+
 add_custom_target(test_pre_build ALL ${test_pre_build_commands})
 add_dependencies(test_pre_build ${test_pre_build_depends})
 
 add_dependencies(${PROJECT_NAME} test_pre_build)
+target_link_libraries(${PROJECT_NAME} ${linkLibs})
+set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${PROJECT_NAME}${AE_BUILD_TYPE_SUFFIX})
