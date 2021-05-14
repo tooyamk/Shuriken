@@ -35,6 +35,7 @@ namespace aurora::modules::inputs {
 		_eventDispatcher(new events::EventDispatcher<DeviceEvent>()),
 		_info(info),
 		_driver(driver),
+		_polling(false),
 		_inputState(nullptr),
 		_oldInputState(nullptr),
 		_newInputState(nullptr),
@@ -258,10 +259,12 @@ namespace aurora::modules::inputs {
 	}
 
 	void GenericGamepad::poll(bool dispatchEvent) {
-		std::scoped_lock lock(_pollMutex);
+		if (_polling.exchange(true)) return;
 
 		_doInput(dispatchEvent);
 		_doOutput();
+
+		_polling = false;
 	}
 
 	void GenericGamepad::_doInput(bool dispatchEvent) {

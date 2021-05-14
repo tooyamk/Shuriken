@@ -3,6 +3,152 @@
 #include "../BaseTester.h"
 #include <shared_mutex>
 
+enum class LockFreeQueueMode : uint8_t {
+	SPSC,
+	MPSC
+};
+
+template<typename T, LockFreeQueueMode Mode>
+class LockFreeQueue;
+
+template<typename T>
+class LockFreeQueue<T, LockFreeQueueMode::SPSC> {
+private:
+	struct Node {
+		Node* volatile next;
+		T item;
+
+		Node() :
+			next(nullptr) {
+		}
+
+		explicit Node(const T& item) :
+			next(nullptr),
+			item(item) {
+		}
+
+		explicit Node(T&& item) :
+			next(nullptr),
+			item(std::move(item)) {
+		}
+	};
+
+	Node* _head;
+	Node* _tail;
+
+public:
+	LockFreeQueue():
+		_head(new Node()),
+		_tail(_head) {
+
+	}
+
+	~LockFreeQueue() {
+		while (_tail) {
+			auto n = _tail;
+			_tail = _tail->next;
+
+			delete n;
+		}
+	}
+
+	bool enqueue(T&& item) {
+		auto n = new Node(std::forward<T>(item));
+		if (!n) return false;
+
+		auto oldHead = _head;
+		_head = n;
+		oldHead->next = n;
+
+		return true;	
+	}
+
+	bool dequeue(T& out) {
+		auto poped = _tail->next;
+		if (!poped) return false;
+
+		out = std::move(poped->item);
+
+		auto oldTail = _tail;
+		_tail = poped;
+		_tail->item = T();
+		delete oldTail;
+
+		return true;
+	}
+};
+
+template<typename T>
+class LockFreeQueue<T, LockFreeQueueMode::MPSC> {
+private:
+	struct Node {
+		std::atomic<Node*> volatile next;
+		T item;
+
+		Node() :
+			next(nullptr) {
+		}
+
+		explicit Node(const T& item) :
+			next(nullptr),
+			item(item) {
+		}
+
+		explicit Node(T&& item) :
+			next(nullptr),
+			item(std::move(item)) {
+		}
+	};
+
+	std::atomic<Node*> _head;
+	std::atomic<Node*> _tail;
+
+public:
+	LockFreeQueue() :
+		_head(new Node()),
+		_tail(_head) {
+
+	}
+
+	~LockFreeQueue() {
+		while (_tail) {
+			auto n = _tail;
+			_tail = _tail->next;
+
+			delete n;
+		}
+	}
+
+	bool enqueue(T&& item) {
+		auto n = new Node(std::forward<T>(item));
+		if (!n) return false;
+
+		auto oldHead = _head.exchange(n);
+		oldHead->_next.store(n);
+
+		return true;
+	}
+
+	bool dequeue(T& out) {
+		auto poped = _tail->next;
+		if (!poped) return false;
+
+		out = std::move(poped->item);
+
+		auto oldTail = _tail;
+		_tail = poped;
+		_tail->item = T();
+		delete oldTail;
+
+		return true;
+	}
+};
+
+struct AABBCC {
+	int64_t a;
+	int64_t b;
+};
+
 class InputTester : public BaseTester {
 public:
 	static std::string AE_CALL getGamepadKeyString(GamepadVirtualKeyCode code) {
@@ -77,6 +223,9 @@ public:
 	}
 
 	virtual int32_t AE_CALL run() override {
+		std::atomic<AABBCC> aa;
+		auto b = aa.is_lock_free();
+
 		IntrusivePtr app = new Application("TestApp");
 
 		ApplicationStyle wndStype;

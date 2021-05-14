@@ -51,7 +51,7 @@ namespace aurora::modules::inputs {
 
 		IntrusivePtr<IGenericGamepadDriver> _driver;
 
-		std::recursive_mutex _pollMutex;
+		std::atomic_bool _polling;
 		uint8_t* _oldInputState;
 		uint8_t* _newInputState;
 
