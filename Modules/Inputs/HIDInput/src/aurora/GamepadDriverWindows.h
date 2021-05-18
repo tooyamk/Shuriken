@@ -2,7 +2,7 @@
 
 #include "GamepadDriverBase.h"
 
-#if AE_OS == AE_OS_WIN
+#if AE_OS == AE_OS_WINDOWS
 #include <hidsdi.h>
 
 namespace aurora::modules::inputs::hid_input {

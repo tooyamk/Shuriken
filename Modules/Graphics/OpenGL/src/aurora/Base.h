@@ -7,7 +7,7 @@
 
 #include "GL/glew.h"
 
-#if AE_OS == AE_OS_WIN
+#if AE_OS == AE_OS_WINDOWS
 #	include <GL/GL.h>
 #	include "GL/wglew.h"
 #elif AE_OS == AE_OS_LINUX

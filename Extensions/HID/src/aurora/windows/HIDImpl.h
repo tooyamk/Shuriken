@@ -2,7 +2,7 @@
 
 #include "HID.h"
 
-#if AE_OS == AE_OS_WIN
+#if AE_OS == AE_OS_WINDOWS
 #include <hidsdi.h>
 
 namespace aurora::extensions {

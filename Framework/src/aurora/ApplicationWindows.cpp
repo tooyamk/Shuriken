@@ -1,6 +1,6 @@
 #include "ApplicationWindows.h"
 
-#if AE_OS == AE_OS_WIN
+#if AE_OS == AE_OS_WINDOWS
 #include "aurora/String.h"
 #include "aurora/Debug.h"
 

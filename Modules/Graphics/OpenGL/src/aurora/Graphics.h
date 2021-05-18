@@ -180,7 +180,7 @@ namespace aurora::modules::graphics::gl {
 		GraphicsDeviceFeatures _deviceFeatures;
 
 
-#if AE_OS == AE_OS_WIN
+#if AE_OS == AE_OS_WINDOWS
 		HDC _dc;
 		HGLRC _rc;
 #elif AE_OS == AE_OS_LINUX

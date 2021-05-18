@@ -25,7 +25,7 @@ namespace aurora::modules::graphics::gl {
 	Graphics::Graphics() :
 		_bufferCreateUsageMask(Usage::NONE),
 		_texCreateUsageMask(Usage::NONE),
-#if AE_OS == AE_OS_WIN
+#if AE_OS == AE_OS_WINDOWS
 		_dc(nullptr),
 		_rc(nullptr),
 #elif AE_OS == AE_OS_LINUX
@@ -48,7 +48,7 @@ namespace aurora::modules::graphics::gl {
 		using namespace aurora::enum_operators;
 
 		if (!conf.app) return false;
-#if AE_OS == AE_OS_WIN
+#if AE_OS == AE_OS_WINDOWS
 		if (_dc || !conf.app->getNative(ApplicationNative::HWND)) return false;
 #elif AE_OS == AE_OS_LINUX
 		if (_context || !app->getNative(ApplicationNative::WINDOW)) return false;
@@ -94,7 +94,7 @@ namespace aurora::modules::graphics::gl {
 		auto sampleCount = conf.sampleCount;
 		if (sampleCount > _deviceFeatures.maxSampleCount) sampleCount = _deviceFeatures.maxSampleCount;
 
-#if AE_OS == AE_OS_WIN
+#if AE_OS == AE_OS_WINDOWS
 		_dc = GetDC((HWND)conf.app->getNative(ApplicationNative::HWND));
 		if (!_dc) {
 			_release(conf.app);
@@ -678,7 +678,7 @@ namespace aurora::modules::graphics::gl {
 	}
 
 	void Graphics::beginRender() {
-#if AE_OS == AE_OS_WIN
+#if AE_OS == AE_OS_WINDOWS
 		wglMakeCurrent(_dc, _rc);
 #elif AE_OS == AE_OS_LINUX
 		glXMakeCurrent((Display*)_app->getNative(ApplicationNative::DISPLAY), (Window)_app->getNative(ApplicationNative::WINDOW), _context);
@@ -709,7 +709,7 @@ namespace aurora::modules::graphics::gl {
 	}
 
 	void Graphics::present() {
-#if AE_OS == AE_OS_WIN
+#if AE_OS == AE_OS_WINDOWS
 		SwapBuffers(_dc);
 #elif AE_OS == AE_OS_LINUX
 		glXSwapBuffers((Display*)_app->getNative(ApplicationNative::DISPLAY), (Window)_app->getNative(ApplicationNative::WINDOW));
@@ -780,7 +780,7 @@ namespace aurora::modules::graphics::gl {
 	bool Graphics::_glInit(IApplication* app) {
 		auto initOk = false;
 
-#if AE_OS == AE_OS_WIN
+#if AE_OS == AE_OS_WINDOWS
 		auto hIns = (HINSTANCE)app->getNative(ApplicationNative::HINSTANCE);
 		std::wstring className = L"Aurora OpenGL Temp Window " + String::Utf8ToUnicode(String::toString(Time::now()));
 
@@ -1041,7 +1041,7 @@ namespace aurora::modules::graphics::gl {
 	void Graphics::_release(IApplication* app) {
 		if (!app) app = _app;
 
-#if AE_OS == AE_OS_WIN
+#if AE_OS == AE_OS_WINDOWS
 		if (wglGetCurrentContext() == _rc) wglMakeCurrent(nullptr, nullptr);
 
 		if (_rc) {

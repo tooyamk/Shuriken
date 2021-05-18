@@ -2,7 +2,7 @@
 
 #include "GamepadDriverBase.h"
 
-#if AE_OS != AE_OS_WIN
+#if AE_OS != AE_OS_WINDOWS
 namespace aurora::modules::inputs::hid_input {
 	class AE_MODULE_DLL GamepadDriver : public GamepadDriverBase {
 	public:

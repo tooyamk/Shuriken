@@ -259,12 +259,12 @@ namespace aurora::modules::inputs {
 	}
 
 	void GenericGamepad::poll(bool dispatchEvent) {
-		if (_polling.exchange(true)) return;
+		if (_polling.exchange(true, std::memory_order::acquire)) return;
 
 		_doInput(dispatchEvent);
 		_doOutput();
 
-		_polling = false;
+		_polling.store(false, std::memory_order::release);
 	}
 
 	void GenericGamepad::_doInput(bool dispatchEvent) {
@@ -346,7 +346,7 @@ namespace aurora::modules::inputs {
 	}
 
 	void GenericGamepad::_doOutput() {
-		if (_outputDirty.exchange(false)) {
+		if (_outputDirty.exchange(false, std::memory_order::acquire)) {
 			_needOutput = true;
 
 			std::shared_lock lock(_outputMutex);

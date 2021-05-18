@@ -14,7 +14,7 @@ namespace aurora {
 	std::vector<Monitor::VideoMode> Monitor::getVideoModes() const {
 		std::vector<VideoMode> videoModes;
 
-#if AE_OS == AE_OS_WIN
+#if AE_OS == AE_OS_WINDOWS
 		DEVMODEW dm;
 
 		wchar_t* wadpName = nullptr;
@@ -69,7 +69,7 @@ namespace aurora {
 	std::vector<Monitor> Monitor::getMonitors() {
 		std::vector<Monitor> monitors;
 		
-#if AE_OS == AE_OS_WIN
+#if AE_OS == AE_OS_WINDOWS
 		DISPLAY_DEVICEW adapter, display;
 
 		const uint32_t strBufLen = sizeof(display.DeviceString) << 2;

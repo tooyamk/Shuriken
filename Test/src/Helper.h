@@ -17,7 +17,7 @@ using namespace aurora::enum_operators;
 
 template<typename... Args>
 inline void AE_CALL printaln(Args&&... args) {
-#if AE_OS == AE_OS_WIN
+#if AE_OS == AE_OS_WINDOWS
 	if (IsDebuggerPresent()) {
 		Debug::print<Debug::DebuggerOutput>(std::forward<Args>(args)..., L"\n"sv);
 	} else {

@@ -9,10 +9,10 @@ enum class LockFreeQueueMode : uint8_t {
 };
 
 template<typename T, LockFreeQueueMode Mode>
-class LockFreeQueue;
+class LockFreeLinkedQueue;
 
 template<typename T>
-class LockFreeQueue<T, LockFreeQueueMode::SPSC> {
+class LockFreeLinkedQueue<T, LockFreeQueueMode::SPSC> {
 private:
 	struct Node {
 		Node* volatile next;
@@ -37,13 +37,13 @@ private:
 	Node* _tail;
 
 public:
-	LockFreeQueue():
+	LockFreeLinkedQueue():
 		_head(new Node()),
 		_tail(_head) {
 
 	}
 
-	~LockFreeQueue() {
+	~LockFreeLinkedQueue() {
 		while (_tail) {
 			auto n = _tail;
 			_tail = _tail->next;
@@ -79,7 +79,7 @@ public:
 };
 
 template<typename T>
-class LockFreeQueue<T, LockFreeQueueMode::MPSC> {
+class LockFreeLinkedQueue<T, LockFreeQueueMode::MPSC> {
 private:
 	struct Node {
 		std::atomic<Node*> volatile next;
@@ -104,13 +104,13 @@ private:
 	std::atomic<Node*> _tail;
 
 public:
-	LockFreeQueue() :
+	LockFreeLinkedQueue() :
 		_head(new Node()),
 		_tail(_head) {
 
 	}
 
-	~LockFreeQueue() {
+	~LockFreeLinkedQueue() {
 		while (_tail) {
 			auto n = _tail;
 			_tail = _tail->next;

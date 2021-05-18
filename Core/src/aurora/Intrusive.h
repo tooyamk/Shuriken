@@ -7,8 +7,8 @@
 protected: \
 	std::atomic_uint32_t _refCount = 0; \
 public: \
-	inline uint32_t AE_CALL getReferenceCount() const { return _refCount.load(std::memory_order::acquire); } \
-	inline void AE_CALL ref() { _refCount.fetch_add(1, std::memory_order::release); } \
+	inline uint32_t AE_CALL getReferenceCount() const { return _refCount.load(std::memory_order::relaxed); } \
+	inline void AE_CALL ref() { _refCount.fetch_add(1, std::memory_order::relaxed); } \
 	template<typename T> \
 	inline T* AE_CALL ref() { \
 		ref(); \
@@ -17,9 +17,9 @@ public: \
 	template<bool AutoDelete = true> \
 	inline static void AE_CALL unref(__CLASS__& target) { \
 		if constexpr (AutoDelete) { \
-			if (target._refCount.fetch_sub(1) <= 1) { delete &target; } \
+			if (target._refCount.fetch_sub(1, std::memory_order::acquire) <= 1) { delete &target; } \
 		} else { \
-			target._refCount.fetch_sub(1); \
+			target._refCount.fetch_sub(1, std::memory_order::relaxed); \
 		} \
 	} \
 private:

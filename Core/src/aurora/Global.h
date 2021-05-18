@@ -1,87 +1,8 @@
 ﻿#pragma once
 
-#define AE_OS_UNKNOWN 0
-#define AE_OS_WIN     1
-#define AE_OS_MAC     2
-#define AE_OS_LINUX   3
-#define AE_OS_IOS     4
-#define AE_OS_ANDROID 5
-
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(WIN64) || defined(_WIN64) || defined(__WIN64__)
-#	define AE_OS AE_OS_WIN
-#elif defined(TARGET_OS_IPHONE)
-#	define AE_OS AE_OS_IOS
-#elif defined(TARGET_OS_MAC)
-#	define AE_OS AE_OS_MAC
-#elif defined(ANDROID)
-#	define AE_OS AE_OS_ANDROID
-#elif defined(linux) || defined(__linux) || defined(__linux__)
-#	define AE_OS AE_OS_LINUX
-#else
-#	define AE_OS AE_OS_UNKNOWN
-#endif
-
-
-#define AE_OS_BIT_UNKNOWN 0
-#define AE_OS_BIT_32      1
-#define AE_OS_BIT_64      2
-
-#if defined(_M_X64) || defined(_M_AMD64) || defined(WIN64) || defined(_WIN64) || defined(__WIN64__) || defined(_LP64) || defined(__LP64__) || defined(__x86_64) || defined(__x86_64__) || defined(__amd64) || defined(__amd64__)
-#	define AE_OS_BIT AE_OS_BIT_64
-#else
-#	define AE_OS_BIT AE_OS_BIT_32
-#endif
-
-
-#define AE_COMPILER_UNKNOWN 0
-#define AE_COMPILER_MSVC    1
-#define AE_COMPILER_GCC     2
-#define AE_COMPILER_CLANG   3
-
-#if defined(_MSC_VER)
-#	define AE_COMPILER AE_COMPILER_MSVC
-#elif defined(__clang__)
-#	define AE_COMPILER AE_COMPILER_CLANG
-#elif defined(__GNUC__)
-#	define AE_COMPILER AE_COMPILER_GCC
-#else
-#	define AE_COMPILER AE_COMPILER_UNKNOWN
-#endif
-
-
-#if defined(__linux__) || defined(__GNU__) || defined(__HAIKU__) || defined(__Fuchsia__) || defined(__EMSCRIPTEN__)
-#	include <endian.h>
-#elif defined(_AIX)
-#	include <sys/machine.h>
-#elif defined(__sun)
-#	include <sys/types.h>
-#	define BIG_ENDIAN 4321
-#	define LITTLE_ENDIAN 1234
-#	if defined(_BIG_ENDIAN)
-#		define BYTE_ORDER BIG_ENDIAN
-#	else
-#		define BYTE_ORDER LITTLE_ENDIAN
-#	endif
-#elif defined(__MVS__)
-#	define BIG_ENDIAN 4321
-#	define LITTLE_ENDIAN 1234
-#	define BYTE_ORDER BIG_ENDIAN
-#else
-#	if !defined(BYTE_ORDER) && !defined(_WIN32)
-#		include <machine/endian.h>
-#	endif
-#endif
-
-#define AE_ENDIAN_UNKNOWN 0
-#define AE_ENDIAN_LITTLE  1234
-#define AE_ENDIAN_BIG     4321
-
-#if defined(BYTE_ORDER) && defined(BIG_ENDIAN) && BYTE_ORDER == BIG_ENDIAN
-#	define AE_ENDIAN AE_ENDIAN_BIG
-#else
-#	define AE_ENDIAN AE_ENDIAN_LITTLE
-#endif
-
+#include "aurora/predefine/OS.h"
+#include "aurora/predefine/Compiler.h"
+#include "aurora/predefine/Endian.h"
 
 #define AE_CPP_VER_UNKNOWN 0
 #define AE_CPP_VER_03      1
@@ -135,7 +56,7 @@
 #define AE_TO_STRING(str) _AE_TO_STRING(str)
 
 
-#if AE_OS == AE_OS_WIN
+#if AE_OS == AE_OS_WINDOWS
 #	ifndef WIN32_LEAN_AND_MEAN
 #		define WIN32_LEAN_AND_MEAN
 #	endif
@@ -184,7 +105,7 @@
 #elif AE_COMPILER == AE_COMPILER_GCC
 #	define AE_CALL
 
-#	if AE_OS == AE_OS_WIN
+#	if AE_OS == AE_OS_WINDOWS
 #		define AE_DLL_EXPORT __attribute__((__dllexport__))
 #		define AE_DLL_IMPORT __attribute__((__dllimport__))
 #	else
@@ -299,18 +220,18 @@ namespace aurora {
 
 		enum class Compiler : uint8_t {
 			UNKNOWN,
-			MSVC,
+			CLANG,
 			GCC,
-			CLANG
+			MSVC
 		};
 
 
-#if AE_COMPILER == AE_COMPILER_MSVC
-		static constexpr Compiler COMPILER = Compiler::MSVC;
+#if AE_COMPILER == AE_COMPILER_CLANG
+		static constexpr Compiler COMPILER = Compiler::CLANG;
 #elif AE_COMPILER == AE_COMPILER_GCC
 		static constexpr Compiler COMPILER = Compiler::GCC;
-#elif AE_COMPILER == AE_COMPILER_CLANG
-		static constexpr Compiler COMPILER = Compiler::CLANG;
+#elif AE_COMPILER == AE_COMPILER_MSVC
+		static constexpr Compiler COMPILER = Compiler::MSVC;
 #else
 		static constexpr Compiler COMPILER = Compiler::UNKNOWN;
 #endif
@@ -318,24 +239,24 @@ namespace aurora {
 
 		enum class OperatingSystem : uint8_t {
 			UNKNOWN,
-			WINDOWS,
-			MAC,
-			LINUX,
+			ANDROID,
 			IOS,
-			ANDROID
+			LINUX,
+			MACOS,
+			WINDOWS
 		};
 
 
-#if AE_OS == AE_OS_WIN
-		static constexpr OperatingSystem OPERATING_SYSTEM = OperatingSystem::WINDOWS;
-#elif AE_OS == AE_OS_MAC
-		static constexpr OperatingSystem OPERATING_SYSTEM = OperatingSystem::MAC;
-#elif AE_OS == AE_OS_LINUX
-		static constexpr OperatingSystem OPERATING_SYSTEM = OperatingSystem::LINUX;
+#if AE_OS == AE_OS_ANDROID
+		static constexpr OperatingSystem OPERATING_SYSTEM = OperatingSystem::ANDROID;
 #elif AE_OS == AE_OS_IOS
 		static constexpr OperatingSystem OPERATING_SYSTEM = OperatingSystem::IOS;
-#elif AE_OS == AE_OS_ANDROID
-		static constexpr OperatingSystem OPERATING_SYSTEM = OperatingSystem::ANDROID;
+#elif AE_OS == AE_OS_LINUX
+		static constexpr OperatingSystem OPERATING_SYSTEM = OperatingSystem::LINUX;
+#elif AE_OS == AE_OS_MACOS
+		static constexpr OperatingSystem OPERATING_SYSTEM = OperatingSystem::MACOS;
+#elif AE_OS == AE_OS_WINDOWS
+		static constexpr OperatingSystem OPERATING_SYSTEM = OperatingSystem::WINDOWS;
 #else
 		static constexpr OperatingSystem OPERATING_SYSTEM = OperatingSystem::UNKNOWN;
 #endif
@@ -840,7 +761,7 @@ namespace aurora {
 
 
 	inline std::filesystem::path AE_CALL getAppPath() {
-#if AE_OS == AE_OS_WIN
+#if AE_OS == AE_OS_WINDOWS
 		wchar_t path[FILENAME_MAX] = { 0 };
 		auto count = GetModuleFileNameW(nullptr, path, FILENAME_MAX);
 		return std::filesystem::path(std::wstring(path, count > 0 ? count : 0));

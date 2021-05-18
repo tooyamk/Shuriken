@@ -3,7 +3,7 @@
 #include "aurora/events/EventDispatcher.h"
 #include <thread>
 
-#if AE_OS == AE_OS_WIN
+#if AE_OS == AE_OS_WINDOWS
 #	include "mmsystem.h"
 #endif
 
@@ -54,11 +54,11 @@ namespace aurora {
 		size_t _updateTimeCompensationFrameCount;
 
 		inline void AE_CALL _sleep(size_t milliseconds) {
-#if AE_OS == AE_OS_WIN
+#if AE_OS == AE_OS_WINDOWS
 			timeBeginPeriod(1);
 #endif
 			std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds));
-#if AE_OS == AE_OS_WIN
+#if AE_OS == AE_OS_WINDOWS
 			timeEndPeriod(1);
 #endif
 		}

@@ -1,6 +1,6 @@
 #include "windows/HIDImpl.h"
 
-#if AE_OS == AE_OS_WIN
+#if AE_OS == AE_OS_WINDOWS
 #include "aurora/ScopeGuard.h"
 #include "aurora/Debug.h"
 

@@ -1,6 +1,6 @@
 #include "empty/HIDImpl.h"
 
-#if AE_OS != AE_OS_WIN
+#if AE_OS != AE_OS_WINDOWS
 namespace aurora::extensions {
 	void HID::enumDevices(void*, EnumDevicesCallback) {}
 

@@ -1,6 +1,6 @@
 #include "GamepadDriverWindows.h"
 
-#if AE_OS == AE_OS_WIN
+#if AE_OS == AE_OS_WINDOWS
 #include "Input.h"
 
 namespace aurora::modules::inputs::hid_input {

@@ -2,7 +2,7 @@
 
 #include "aurora/IApplication.h"
 
-#if AE_OS == AE_OS_WIN
+#if AE_OS == AE_OS_WINDOWS
 #include "aurora/math/Box.h"
 
 namespace aurora {

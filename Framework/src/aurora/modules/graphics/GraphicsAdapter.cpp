@@ -1,7 +1,7 @@
 #include "GraphicsAdapter.h"
 #include "aurora/String.h"
 
-#if AE_OS == AE_OS_WIN
+#if AE_OS == AE_OS_WINDOWS
 #	include <dxgi.h>
 #endif
 
@@ -15,7 +15,7 @@ namespace aurora::modules::graphics {
 	}
 
 	void GraphicsAdapter::query(std::vector<GraphicsAdapter>& dst) {
-#if AE_OS == AE_OS_WIN
+#if AE_OS == AE_OS_WINDOWS
 		IDXGIFactory* factory = nullptr;
 		if (FAILED(CreateDXGIFactory1(__uuidof(IDXGIFactory), (void**)&factory))) return;
 

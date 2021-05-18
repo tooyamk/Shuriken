@@ -10,7 +10,7 @@
 #include <immintrin.h>
 
 int32_t run() {
-#if AE_OS == AE_OS_WIN
+#if AE_OS == AE_OS_WINDOWS
 	SetDllDirectoryW((getAppPath().parent_path().wstring() + L"/libs/").data());
 #endif
 	/*
@@ -41,7 +41,7 @@ int32_t run() {
 	//return (new WindowTester())->run();
 }
 
-#if AE_OS == AE_OS_WIN
+#if AE_OS == AE_OS_WINDOWS
 //#pragma comment(linker, "/subsystem:console")
 int32_t WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int32_t nCmdShow) {
 	return run();

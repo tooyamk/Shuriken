@@ -11,7 +11,7 @@ namespace aurora {
 	public:
 		struct AE_CORE_DLL DebuggerOutput {
 			inline void AE_CALL operator()(const std::wstring_view& data) const {
-#if AE_OS == AE_OS_WIN
+#if AE_OS == AE_OS_WINDOWS
 				OutputDebugStringW(data.data());
 #elif AE_OS == AE_OS_ANDROID
 				__android_log_print(ANDROID_LOG_INFO, "Aurora", "%ls", data.data());

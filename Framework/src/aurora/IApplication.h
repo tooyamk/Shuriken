@@ -11,7 +11,7 @@ namespace aurora {
 		FOCUS_OUT,
 		CLOSING,
 		CLOSED,
-#if AE_OS == AE_OS_WIN
+#if AE_OS == AE_OS_WINDOWS
 		RAW_INPUT
 #endif
 	};
@@ -26,7 +26,7 @@ namespace aurora {
 
 
 	enum class ApplicationNative : uint8_t {
-#if AE_OS == AE_OS_WIN
+#if AE_OS == AE_OS_WINDOWS
 		HINSTANCE,
 		HWND
 #elif AE_OS == AE_OS_LINUX
