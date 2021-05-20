@@ -548,11 +548,9 @@ namespace aurora {
 
 	template<typename L, typename R>
 	requires (ConvertibleString8Data<std::remove_cvref_t<L>> && ConvertibleString8Data<std::remove_cvref_t<R>>) &&
-			  (
-				  ((ConvertibleU8StringData<std::remove_cvref_t<L>> || ConvertibleU8StringData<std::remove_cvref_t<R>>) && (ConvertibleStringData<std::remove_cvref_t<L>> || ConvertibleStringData<std::remove_cvref_t<R>>)) ||
-				  (String8View<std::remove_cvref_t<L>> || String8View<std::remove_cvref_t<R>>)
-			  )
-	inline std::conditional_t<ConvertibleU8StringData<std::remove_cvref_t<L>> || ConvertibleU8StringData<std::remove_cvref_t<R>>, std::u8string, std::string>  AE_CALL operator+(L&& left, R&& right) {
+			 (((ConvertibleU8StringData<std::remove_cvref_t<L>> || ConvertibleU8StringData<std::remove_cvref_t<R>>) && (ConvertibleStringData<std::remove_cvref_t<L>> || ConvertibleStringData<std::remove_cvref_t<R>>)) ||
+			 (String8View<std::remove_cvref_t<L>> || String8View<std::remove_cvref_t<R>>))
+	inline std::conditional_t<ConvertibleU8StringData<std::remove_cvref_t<L>> || ConvertibleU8StringData<std::remove_cvref_t<R>>, std::u8string, std::string> AE_CALL operator+(L&& left, R&& right) {
 		if constexpr (SameAllOf<std::u8string_view, std::remove_cvref_t<L>, std::remove_cvref_t<R>> || SameAllOf<std::string_view, std::remove_cvref_t<L>, std::remove_cvref_t<R>>) {
 			std::conditional_t<SameAllOf<std::u8string_view, std::remove_cvref_t<L>, std::remove_cvref_t<R>>, std::u8string, std::string> s;
 			s.reserve(left.size() + right.size());

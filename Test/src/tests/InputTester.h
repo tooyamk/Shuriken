@@ -144,10 +144,13 @@ public:
 	}
 };
 
-struct AABBCC {
+struct alignas(16) AABBCC {
 	int64_t a;
 	int64_t b;
 };
+
+#if AE_OS == AE_OS_WINDOWS
+#endif
 
 class InputTester : public BaseTester {
 public:
@@ -224,7 +227,15 @@ public:
 
 	virtual int32_t AE_CALL run() override {
 		std::atomic<AABBCC> aa;
+		std::atomic<uint64_t> bbb;
 		auto b = aa.is_lock_free();
+		auto b1 = std::atomic<uint64_t>::is_always_lock_free;
+		auto b2 = std::atomic<AABBCC>::is_always_lock_free;
+		bbb.load();
+		auto dsfge = _STD_ATOMIC_ALWAYS_USE_CMPXCHG16B;
+
+		AABBCC bb, oldVal, newVal;
+		_InterlockedCompareExchange128((LONG64 volatile*)&bb, newVal.a, newVal.b, (LONG64*)&oldVal);
 
 		IntrusivePtr app = new Application("TestApp");
 

@@ -5,7 +5,7 @@
 #define AE_ENDIAN_BIG     4321
 
 #ifndef AE_ENDIAN
-#	if defined(__linux__) || defined(__GNU__) || defined(__HAIKU__) || defined(__Fuchsia__) || defined(__EMSCRIPTEN__)
+#	if defined(__linux__) || defined(__GNU__) || defined(__ANDROID__) || defined(__HAIKU__) || defined(__Fuchsia__) || defined(__EMSCRIPTEN__)
 #		include <endian.h>
 #	elif defined(_AIX)
 #		include <sys/machine.h>
