@@ -1,45 +1,6 @@
 ﻿#pragma once
 
-#include "aurora/predefine/OS.h"
-#include "aurora/predefine/Compiler.h"
-#include "aurora/predefine/Endian.h"
-
-#define AE_CPP_VER_UNKNOWN 0
-#define AE_CPP_VER_03      1
-#define AE_CPP_VER_11      2
-#define AE_CPP_VER_14      3
-#define AE_CPP_VER_17      4
-#define AE_CPP_VER_20      5
-#define AE_CPP_VER_HIGHER  6
-
-#ifdef __cplusplus
-#	if AE_COMPILER == AE_COMPILER_MSVC
-#		if __cplusplus != _MSVC_LANG
-#			define __ae_tmp_cpp_ver _MSVC_LANG
-#		endif
-#	endif
-#	ifndef __ae_tmp_cpp_ver
-#		define __ae_tmp_cpp_ver __cplusplus
-#	endif
-#	if __ae_tmp_cpp_ver > 202002L
-#		define AE_CPP_VER AE_CPP_VER_HIGHER
-#	elif __ae_tmp_cpp_ver > 201703L
-#		define AE_CPP_VER AE_CPP_VER_20
-#	elif __ae_tmp_cpp_ver > 201402L
-#		define AE_CPP_VER AE_CPP_VER_17
-#	elif __ae_tmp_cpp_ver > 201103L
-#		define AE_CPP_VER AE_CPP_VER_14
-#	elif __ae_tmp_cpp_ver > 199711L
-#		define AE_CPP_VER AE_CPP_VER_11
-#	elif __ae_tmp_cpp_ver == 199711L
-#		define AE_CPP_VER AE_CPP_VER_03
-#   else
-#		define AE_CPP_VER AE_CPP_VER_UNKNOWN
-#	endif
-#	undef __ae_tmp_cpp_ver
-#else
-#	define AE_CPP_VER AE_CPP_VER_UNKNOWN
-#endif
+#include "aurora/Std.h"
 
 #if AE_CPP_VER < AE_CPP_VER_20
 #	error compile aurora library need c++20
@@ -56,20 +17,6 @@
 #define AE_TO_STRING(str) _AE_TO_STRING(str)
 
 
-#if AE_OS == AE_OS_WINDOWS
-#	ifndef WIN32_LEAN_AND_MEAN
-#		define WIN32_LEAN_AND_MEAN
-#	endif
-#endif
-
-
-#if __has_include(<windows.h>)
-#	include <windows.h>
-#endif
-#if __has_include(<unistd.h>)
-#	include <unistd.h>
-#endif
-
 #if __has_include(<bit>)
 #	include <bit>
 #endif
@@ -78,46 +25,11 @@
 #endif
 #include <filesystem>
 #include <iostream>
-#include <mutex>
 #include <cstring>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 
-
-#ifndef AE_DEBUG
-#	if defined(DEBUG) || defined(_DEBUG)
-#		define AE_DEBUG
-#	endif
-#endif
-
-
-#if AE_COMPILER == AE_COMPILER_MSVC
-#	define AE_CALL __fastcall
-
-#	define AE_DLL_EXPORT __declspec(dllexport)
-#	define AE_DLL_IMPORT __declspec(dllimport)
-#elif AE_COMPILER == AE_COMPILER_CLANG
-#	define AE_CALL
-
-#	define AE_DLL_EXPORT __attribute__((__visibility__("default")))
-#	define AE_DLL_IMPORT
-#elif AE_COMPILER == AE_COMPILER_GCC
-#	define AE_CALL
-
-#	if AE_OS == AE_OS_WINDOWS
-#		define AE_DLL_EXPORT __attribute__((__dllexport__))
-#		define AE_DLL_IMPORT __attribute__((__dllimport__))
-#	else
-#		define AE_DLL_EXPORT __attribute__((__visibility__("default")))
-#		define AE_DLL_IMPORT
-#	endif
-#else
-#	define AE_CALL
-
-#	define AE_DLL_EXPORT __attribute__((__visibility__("default")))
-#	define AE_DLL_IMPORT
-#endif
 
 #define AE_MODULE_DLL_EXPORT AE_DLL_EXPORT
 #define AE_MODULE_DLL_IMPORT AE_DLL_IMPORT
@@ -156,59 +68,6 @@
 #ifndef __cpp_concepts
 #	error aurora library need Concepts feature
 #endif
-
-
-namespace std {
-#ifndef __cpp_lib_endian
-	enum class endian {
-		little = 0,
-		big = 1,
-#	if AE_ENDIAN == AE_ENDIAN_BIG
-		native = big
-#	else
-		native = little
-#	endif
-	};
-#endif
-
-#ifndef __cpp_lib_remove_cvref
-	template<typename T> using remove_cvref_t = std::remove_cv_t<std::remove_reference_t<T>>;
-	template<typename T> struct remove_cvref { using type = remove_cvref_t<T>; };
-#endif
-
-#ifndef __cpp_lib_is_scoped_enum
-	template<class>
-	struct is_scoped_enum : std::false_type {};
-
-	template<class T>
-	requires std::is_enum_v<T>
-	struct is_scoped_enum<T> : std::bool_constant<!std::is_convertible_v<T, std::underlying_type_t<T>>> {};
-
-	template<typename T> inline constexpr bool is_scoped_enum_v = is_scoped_enum<T>::value;
-#endif
-
-#ifndef __cpp_lib_bitops
-	template<std::unsigned_integral T>
-	[[nodiscard]] inline constexpr T rotl(T x, int32_t s) noexcept {
-		constexpr auto bits = sizeof(T) << 3;
-		s &= bits - 1;
-		return T(x << s) | T(x >> (bits - s));
-	}
-
-	template<std::unsigned_integral T>
-	[[nodiscard]] inline constexpr T rotr(T x, int32_t s) noexcept {
-		constexpr auto bits = sizeof(T) << 3;
-		s &= bits - 1;
-		return T(x >> s) | T(x << (bits - s));
-	}
-
-	template<std::unsigned_integral T>
-	inline constexpr bool has_single_bit(T val) noexcept {
-		return val != 0 && (val & (val - 1)) == 0;
-	}
-#endif
-}
-
 
 namespace aurora {
 	struct Environment {

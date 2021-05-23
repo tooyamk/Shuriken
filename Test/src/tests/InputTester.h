@@ -1,437 +1,13 @@
 #pragma once
 
 #include "../BaseTester.h"
-#include "aurora/predefine/Architecture.h"
 #include <shared_mutex>
 
-namespace std {
-#if AE_ARCH_WORD_BITS == AE_ARCH_WORD_BITS_64 && (AE_COMPILER == AE_COMPILER_MSVC || AE_COMPILER == AE_COMPILER_CLANG || AE_COMPILER == AE_COMPILER_GCC)
-	template<typename T>
-	requires (sizeof(T) == 16)
-		class atomic<T> {
-		public:
-			atomic() {
-			}
-
-			atomic(const T& value) :
-				_value(value) {
-			}
-
-			atomic(T&& value) :
-				_value(std::move(value)) {
-			}
-
-			inline T AE_CALL load(std::memory_order order = std::memory_order::seq_cst) const {
-				T val;
-				_compareExchange(_value, val, val);
-				return std::move(val);
-			}
-
-			inline void AE_CALL store(T desired, std::memory_order order = std::memory_order_seq_cst) {
-				T val = _value;
-				while (!_compareExchange(_value, val, desired)) {}
-			}
-
-			inline T AE_CALL exchange(T desired, std::memory_order order = std::memory_order_seq_cst) {
-				T old = _value;
-				while (!compare_exchange_strong(old, desired, order)) {}
-				return std::move(old);
-			}
-
-			inline bool AE_CALL compare_exchange_strong(T& expected, T desired, std::memory_order order = std::memory_order_seq_cst) {
-				return _compareExchange(_value, expected, desired);
-			}
-
-			inline bool AE_CALL compare_exchange_strong(T& expected, T desired, std::memory_order success, std::memory_order failure) {
-				return compare_exchange_strong(expected, desired, success);
-			}
-
-			inline bool AE_CALL compare_exchange_weak(T& expected, T desired, std::memory_order order = std::memory_order_seq_cst) {
-				return compare_exchange_strong(expected, desired, order);
-			}
-
-			inline bool AE_CALL compare_exchange_weak(T& expected, T desired, std::memory_order success, std::memory_order failure) {
-				return compare_exchange_strong(expected, desired, success, failure);
-			}
-
-		private:
-			T _value;
-
-			inline static bool AE_CALL _compareExchange(volatile T& dst, T& expected, const T& desired) {
-#	if AE_ARCH_WORD_BITS == AE_ARCH_WORD_BITS_64
-#		if AE_COMPILER == AE_COMPILER_MSVC
-				return _InterlockedCompareExchange128((volatile LONG64*)&dst, ((LONG64*)(&desired))[1], ((LONG64*)(&desired))[0], (LONG64*)(&expected));
-#		elif AE_COMPILER == AE_COMPILER_CLANG || AE_COMPILER == AE_COMPILER_GCC
-				return __sync_bool_compare_and_swap((volatile __uint128_t*)&storage, (__uint128_t&)expected, (const __uint128_t&)desired);
-#		endif
-#	else
-				static std::atomic_flag lock = ATOMIC_FLAG_INIT;
-
-				auto pdst = (volatile uint64_t*)&dst;
-				auto pexpected = (uint64_t*)&expected;
-				auto pdesired = (const uint64_t*)&desired;
-				bool rst;
-
-				while (lock.test_and_set(std::memory_order::acquire)) {}
-
-				if (pdst[0] == pexpected[0] && pdst[1] == pexpected[1]) {
-					pdst[0] = pdesired[0];
-					pdst[1] = pdesired[1];
-					rst = true;
-				} else {
-					pexpected[0] = pdst[0];
-					pexpected[1] = pdst[1];
-					rst = false;
-				}
-
-				lock.clear(std::memory_order::release);
-
-				return rst;
-#	endif
-			}
-	};
-#endif
-}
-
-template<typename T>
-class
-#if (AE_ARCH == AE_ARCH_X86 && AE_ARCH_WORD_BITS == AE_ARCH_WORD_BITS_64) || defined (__aarch64__)
-	alignas(8) TaggedPtr {
-public:
-	using CompressedPtr = uint64_t;
-	using Tag = uint16_t;
-
-	TaggedPtr() :
-		_ptr(0) {
-	}
-
-	TaggedPtr(const TaggedPtr& p) :
-		_ptr(p._ptr) {
-	}
-
-	TaggedPtr(T* ptr, Tag tag = 0) {
-		_packPtr(_ptr, ptr, tag);
-	}
-
-	inline T* AE_CALL operator->() const {
-		return _extractPtr(_ptr);
-	}
-
-	inline T& AE_CALL operator*() const {
-		return *_extractPtr(_ptr);
-	}
-
-	inline T* AE_CALL getPtr() const {
-		return _extractPtr(_ptr);
-	}
-
-	inline Tag AE_CALL getTag() const {
-		return _extractTag(_ptr);
-	}
-
-	inline void AE_CALL setTag(Tag tag) {
-		_packTag(_ptr, tag);
-	}
-
-	inline void AE_CALL set(T* ptr, Tag tag) {
-		_packPtr(_ptr, ptr, tag);
-	}
-
-private:
-	static constexpr CompressedPtr PTR_MASK = 0xFFFFFFFFFFFFULL;
-
-	CompressedPtr _ptr;
-
-	inline static CompressedPtr _packPtr(volatile CompressedPtr& i, T* ptr) {
-		auto tag = _extractTag(i);
-		i = (CompressedPtr)ptr;
-		_packTag(i, tag);
-	}
-
-	inline static CompressedPtr _packPtr(volatile CompressedPtr& i, T* ptr, Tag tag) {
-		i = (CompressedPtr)ptr;
-		_packTag(i, tag);
-	}
-
-	inline static CompressedPtr _packTag(volatile CompressedPtr& i, Tag tag) {
-		((Tag*)&i)[3] = tag;
-	}
-
-	inline static T* _extractPtr(volatile CompressedPtr const& i) {
-		return (T*)(i & PTR_MASK);
-	}
-
-	inline static Tag _extractTag(volatile CompressedPtr const& i) {
-		return ((Tag*)&i)[3];
-	}
-};
-#else
-#	if AE_ARCH_WORD_BITS == AE_ARCH_WORD_BITS_64
-	alignas(16)
-#	else
-	alignas(8)
-#	endif
-	TaggedPtr {
-public:
-	using Tag = size_t;
-
-	TaggedPtr() :
-		_ptr(nullptr),
-		_tag(0) {
-	}
-
-	TaggedPtr(const TaggedPtr& p) :
-		_ptr(p._ptr),
-		_tag(p._tag) {
-	}
-
-	TaggedPtr(T* ptr, Tag tag = 0) :
-		_ptr(ptr),
-		_tag(tag) {
-	}
-
-	inline T* AE_CALL operator->() const {
-		return _ptr;
-	}
-
-	inline T& AE_CALL operator*() const {
-		return *_ptr;
-	}
-
-	inline T* AE_CALL getPtr() const {
-		return _ptr;
-	}
-
-	inline Tag AE_CALL getTag() const {
-		return _tag;
-	}
-
-	inline void AE_CALL setTag(Tag tag) {
-		_tag = tag;
-	}
-
-	inline void AE_CALL set(T* ptr, Tag tag) {
-		_ptr = ptr;
-		_tag = tag;
-	}
-
-private:
-	T* _ptr;
-	Tag _tag;
-};
-#endif
-
-enum class LockFreeQueueMode : uint8_t {
-	SPSC,
-	MPSC,
-	MPMC
-};
-
-template<typename T, LockFreeQueueMode Mode>
-class LockFreeLinkedQueue;
-
-template<typename T>
-class LockFreeLinkedQueue<T, LockFreeQueueMode::SPSC> {
-private:
-	struct Node {
-		Node* volatile next;
-		T item;
-
-		Node() :
-			next(nullptr) {
-		}
-
-		explicit Node(const T& item) :
-			next(nullptr),
-			item(item) {
-		}
-
-		explicit Node(T&& item) :
-			next(nullptr),
-			item(std::move(item)) {
-		}
-	};
-
-	Node* _head;
-	Node* _tail;
-
-public:
-	LockFreeLinkedQueue():
-		_head(new Node()),
-		_tail(_head) {
-
-	}
-
-	~LockFreeLinkedQueue() {
-		while (_head) {
-			auto n = _head;
-			_head = _head->next;
-
-			delete n;
-		}
-	}
-
-	bool enqueue(T&& item) {
-		auto n = new Node(std::forward<T>(item));
-		if (!n) return false;
-
-		auto oldTail = _tail;
-		_tail = n;
-		oldTail->next = n;
-
-		return true;	
-	}
-
-	bool dequeue(T& out) {
-		auto poped = _head->next;
-		if (!poped) return false;
-
-		out = std::move(poped->item);
-
-		auto oldHead = _head;
-		_head = poped;
-		_head->item = T();
-		delete oldHead;
-
-		return true;
-	}
-};
-
-template<typename T>
-class LockFreeLinkedQueue<T, LockFreeQueueMode::MPSC> {
-private:
-	struct Node {
-		std::atomic<Node*> volatile next;
-		T item;
-
-		Node() :
-			next(nullptr) {
-		}
-
-		explicit Node(const T& item) :
-			next(nullptr),
-			item(item) {
-		}
-
-		explicit Node(T&& item) :
-			next(nullptr),
-			item(std::move(item)) {
-		}
-	};
-
-	Node* _head;
-	std::atomic<Node*> _tail;
-
-public:
-	LockFreeLinkedQueue() :
-		_head(new Node()),
-		_tail(_head) {
-
-	}
-
-	~LockFreeLinkedQueue() {
-		while (_head) {
-			auto n = _head;
-			_head = _head->next.load(std::memory_order::acquire);
-
-			delete n;
-		}
-	}
-
-	bool enqueue(T&& item) {
-		auto n = new Node(std::forward<T>(item));
-		if (!n) return false;
-
-		auto oldTail = _tail.exchange(n, std::memory_order::acquire);
-		oldTail->next.store(n, std::memory_order::release);
-
-		return true;
-	}
-
-	bool dequeue(T& out) {
-		auto poped = _head->next.load(std::memory_order::acquire);
-		if (!poped) return false;
-
-		out = std::move(poped->item);
-
-		auto oldHead = _head;
-		_head = poped;
-		_head->item = T();
-		delete oldHead;
-
-		return true;
-	}
-};
-
-template<typename T>
-class LockFreeLinkedQueue<T, LockFreeQueueMode::MPMC> {
-private:
-	struct Node {
-		std::atomic<Node*> volatile next;
-		T item;
-
-		Node() :
-			next(nullptr) {
-		}
-
-		explicit Node(const T& item) :
-			next(nullptr),
-			item(item) {
-		}
-
-		explicit Node(T&& item) :
-			next(nullptr),
-			item(std::move(item)) {
-		}
-	};
-
-	std::atomic<TaggedPtr<Node>> _head;
-	std::atomic<Node*> _tail;
-
-public:
-	LockFreeLinkedQueue() :
-		_head(new Node()),
-		_tail(_head) {
-
-	}
-
-	~LockFreeLinkedQueue() {
-		while (_head) {
-			auto n = _head;
-			_head = _head->next.load(std::memory_order::acquire);
-
-			delete n;
-		}
-	}
-
-	bool enqueue(T&& item) {
-		auto n = new Node(std::forward<T>(item));
-		if (!n) return false;
-
-		auto oldTail = _tail.exchange(n, std::memory_order::acquire);
-		oldTail->next.store(n, std::memory_order::release);
-
-		return true;
-	}
-
-	bool dequeue(T& out) {
-		TaggedPtr head = _head.load(std::memory_order::acquire), newHead;
-		Node* poped;
-
-		do {
-			poped = head.getPtr()->next.load(std::memory_order::acquire);
-			if (!poped) return false;
-
-			out = std::move(poped->item);
-			newHead.set(poped, head.getTag() + 1);
-		} while (!_head.compare_exchange_strong(head, newHead, std::memory_order::release, std::memory_order::relaxed));
-
-		out = std::move(poped->item);
-		delete poped;
-
-		return true;
-	}
-};
+lockfree::LinkedQueue<uint32_t, lockfree::QueueMode::MPMC> _queue;
+std::atomic_uint32_t _id = 0;
+std::vector<uint32_t> _tmpVec;
+std::uint32_t _accumulative = 0;
+std::mutex _tmpVecMtx;
 
 class InputTester : public BaseTester {
 public:
@@ -507,6 +83,84 @@ public:
 	}
 
 	virtual int32_t AE_CALL run() override {
+		{
+			for (auto j = 0; j < 10; ++j) {
+				std::thread([]() {
+					do {
+						auto id = _id.fetch_add(1);
+						if (id <= 999999) {
+							_queue.enqueue(id + 1);
+						} else {
+							break;
+						}
+					} while (true);
+
+					printaln("exit in");
+				}).detach();
+			}
+
+			for (auto j = 0; j < 10; ++j) {
+				std::thread([]() {
+					do {
+						uint32_t val;
+						while (_queue.dequeue(val)) {
+							std::scoped_lock lock(_tmpVecMtx);
+							_tmpVec.emplace_back(val);
+							if (val > 1000000) {
+								int a = 1;
+							}
+						}
+
+						{
+							std::scoped_lock lock(_tmpVecMtx);
+							if (_accumulative + _tmpVec.size() == 1000000) break;
+						}
+						std::this_thread::sleep_for(1ms);
+					} while (true);
+
+					printaln("exit out");
+				}).detach();
+			}
+
+			std::thread([]() {
+				do {
+					auto old = _accumulative;
+
+					{
+						do {
+							auto old1 = _accumulative;
+
+							std::scoped_lock lock(_tmpVecMtx);
+							if (!_tmpVec.empty()) {
+								auto next = _accumulative + 1;
+								auto q = &_queue;
+								for (size_t i = 0, n = _tmpVec.size(); i < n; ++i) {
+									if (auto val = _tmpVec[i]; val == next) {
+										++_accumulative;
+										_tmpVec.erase(_tmpVec.begin() + i);
+										break;
+									} else if (val <= _accumulative) {
+										//error
+										int a = 1;
+									}
+								}
+							}
+
+							if (old1 == _accumulative) break;
+						} while (true);
+					}
+
+					if (old != _accumulative) {
+						printaln("_accumulative : ", _accumulative);
+					}
+
+					std::this_thread::sleep_for(1ms);
+				} while (true);
+
+				printaln("exit print");
+			}).detach();
+		}
+
 		IntrusivePtr app = new Application("TestApp");
 
 		ApplicationStyle wndStype;

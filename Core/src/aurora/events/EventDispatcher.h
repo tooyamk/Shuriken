@@ -2,6 +2,7 @@
 
 #include "IEventDispatcher.h"
 #include <list>
+#include <mutex>
 #include <unordered_map>
 
 namespace aurora::events {

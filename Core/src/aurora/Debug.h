@@ -1,6 +1,7 @@
 #pragma once
 
 #include "aurora/String.h"
+#include <mutex>
 
 #if __has_include(<android/log.h>)
 #	include <android/log.h>

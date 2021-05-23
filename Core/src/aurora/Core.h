@@ -19,6 +19,8 @@
 #include "aurora/hash/MD5.h"
 #include "aurora/hash/xxHash.h"
 
+#include "aurora/lockfree/LinkedQueue.h"
+
 #include "aurora/math/Box.h"
 #include "aurora/math/Matrix.h"
 #include "aurora/math/Quaternion.h"
