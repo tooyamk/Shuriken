@@ -4,10 +4,10 @@
 
 namespace aurora::lockfree {
 	enum class QueueMode : uint8_t {
-		SPSC,
-		MPSC,
-		SPMC,
-		MPMC
+		SPSC = 0b00,
+		MPSC = 0b10,
+		SPMC = 0b01,
+		MPMC = 0b11
 	};
 
 	template<typename T, QueueMode Mode>
@@ -39,7 +39,7 @@ namespace aurora::lockfree {
 		Node* _tail;
 
 		template<typename I>
-		bool _enqueue(I&& item) {
+		bool _push(I&& item) {
 			auto n = new Node(std::forward<I>(item));
 			if (!n) return false;
 
@@ -52,6 +52,7 @@ namespace aurora::lockfree {
 
 	public:
 		using ValueType = T;
+		static constexpr QueueMode MODE = QueueMode::SPSC;
 
 		LinkedQueue() :
 			_head(new Node()),
@@ -68,15 +69,15 @@ namespace aurora::lockfree {
 			}
 		}
 
-		inline bool enqueue(const T& item) {
-			return _enqueue(item);
+		inline bool push(const T& item) {
+			return _push(item);
 		}
 
-		inline bool enqueue(T&& item) {
-			return _enqueue(item);
+		inline bool push(T&& item) {
+			return _push(item);
 		}
 
-		bool dequeue(T& out) {
+		bool pop(T& out) {
 			auto poped = _head->next;
 			if (!poped) return false;
 
@@ -117,7 +118,7 @@ namespace aurora::lockfree {
 		std::atomic<Node*> _tail;
 
 		template<typename I>
-		bool _enqueue(I&& item) {
+		bool _push(I&& item) {
 			auto n = new Node(std::forward<I>(item));
 			if (!n) return false;
 
@@ -129,6 +130,7 @@ namespace aurora::lockfree {
 
 	public:
 		using ValueType = T;
+		static constexpr QueueMode MODE = QueueMode::MPSC;
 
 		LinkedQueue() :
 			_head(new Node()),
@@ -145,15 +147,15 @@ namespace aurora::lockfree {
 			}
 		}
 
-		inline bool enqueue(const T& item) {
-			return _enqueue(item);
+		inline bool push(const T& item) {
+			return _push(item);
 		}
 
-		inline bool enqueue(T&& item) {
-			return _enqueue(item);
+		inline bool push(T&& item) {
+			return _push(item);
 		}
 
-		bool dequeue(T& out) {
+		bool pop(T& out) {
 			auto poped = _head->next.load(std::memory_order::acquire);
 			if (!poped) return false;
 
@@ -194,7 +196,7 @@ namespace aurora::lockfree {
 		Node* _tail;
 
 		template<typename I>
-		bool _enqueue(I&& item) {
+		bool _push(I&& item) {
 			auto n = new Node(std::forward<I>(item));
 			if (!n) return false;
 
@@ -207,6 +209,7 @@ namespace aurora::lockfree {
 
 	public:
 		using ValueType = T;
+		static constexpr QueueMode MODE = QueueMode::SPMC;
 
 		LinkedQueue() {
 			auto n = new Node();
@@ -224,26 +227,28 @@ namespace aurora::lockfree {
 			}
 		}
 
-		inline bool enqueue(const T& item) {
-			return _enqueue(item);
+		inline bool push(const T& item) {
+			return _push(item);
 		}
 
-		inline bool enqueue(T&& item) {
-			return _enqueue(item);
+		inline bool push(T&& item) {
+			return _push(item);
 		}
 
-		bool dequeue(T& out) {
-			TaggedPtr<Node> head = _head.load(std::memory_order::acquire), newHead;
-			Node* poped;
+		bool pop(T& out) {
+			TaggedPtr<Node> head;
 
 			do {
-				poped = head.getPtr()->next.load(std::memory_order::acquire);
+				head = _head.load(std::memory_order::acquire);
+				auto poped = head.getPtr()->next.load(std::memory_order::acquire);
 				if (!poped) return false;
 
-				newHead.set(poped, head.getTag() + 1);
-			} while (!_head.compare_exchange_strong(head, newHead, std::memory_order::release, std::memory_order::relaxed));
+				if (head == _head.load(std::memory_order::acquire)) {
+					out = poped->item;
+					if (_head.compare_exchange_strong(head, TaggedPtr(poped, head.getTag() + 1), std::memory_order::release, std::memory_order::relaxed)) break;
+				}
+			} while (true);
 
-			out = std::move(poped->item);
 			delete head.getPtr();
 
 			return true;
@@ -256,6 +261,7 @@ namespace aurora::lockfree {
 		struct Node {
 			volatile std::atomic<Node*> next;
 			T item;
+			std::atomic_size_t count = 2;
 
 			Node() :
 				next(nullptr) {
@@ -270,15 +276,23 @@ namespace aurora::lockfree {
 				next(nullptr),
 				item(std::move(item)) {
 			}
+
+			~Node() {
+				int a = 1;
+			}
+
+			void release() {
+				if (count.fetch_sub(1) <= 1) {
+					delete this;
+				}
+			}
 		};
 
 		std::atomic<TaggedPtr<Node>> _head;
 		std::atomic<Node*> _tail;
 
-		std::mutex _mtx;
-
 		template<typename I>
-		bool _enqueue(I&& item) {
+		bool _push(I&& item) {
 			auto n = new Node(std::forward<I>(item));
 			if (!n) return false;
 
@@ -290,6 +304,7 @@ namespace aurora::lockfree {
 
 	public:
 		using ValueType = T;
+		static constexpr QueueMode MODE = QueueMode::MPMC;
 
 		LinkedQueue() {
 			auto n = new Node();
@@ -307,44 +322,28 @@ namespace aurora::lockfree {
 			}
 		}
 
-		inline bool enqueue(const T& item) {
-			return _enqueue(item);
+		inline bool push(const T& item) {
+			return _push(item);
 		}
 
-		inline bool enqueue(T&& item) {
-			return _enqueue(item);
+		inline bool push(T&& item) {
+			return _push(item);
 		}
 
-		bool dequeue(T& out) {
-			//std::scoped_lock lock(_mtx);
+		bool pop(T& out) {
+			TaggedPtr<Node> head;
 
-			TaggedPtr<Node> head = _head.load(), newHead;
-			Node* poped;
-			T val;
-
-			size_t i = 0;
 			do {
-				++i;
-				poped = head.getPtr()->next.load();
+				head = _head.load(std::memory_order::acquire);
+				auto poped = head.getPtr()->next.load(std::memory_order::acquire);
 				if (!poped) return false;
-				if (poped->item == 3722304989) {
-					int a = 1;
+
+				if (head == _head.load(std::memory_order::acquire)) {
+					out = poped->item;
+					if (_head.compare_exchange_strong(head, TaggedPtr(poped, head.getTag() + 1), std::memory_order::release, std::memory_order::relaxed)) break;
 				}
+			} while (true);
 
-				val = poped->item;
-				newHead.set(poped, head.getTag() + 1);
-			} while (!_head.compare_exchange_strong(head, newHead));
-
-			out = std::move(poped->item);
-			if (out > 1000000) {
-				int a = 1;
-			}
-			if ((uint64_t)newHead.getPtr()->next.load() == 0xddddddddddddddddULL) {
-				int a = 1;
-			}
-			if (newHead.getPtr()->item == 3722304989) {
-				int a = 1;
-			}
 			delete head.getPtr();
 
 			return true;

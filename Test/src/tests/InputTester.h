@@ -3,7 +3,8 @@
 #include "../BaseTester.h"
 #include <shared_mutex>
 
-lockfree::LinkedQueue<uint32_t, lockfree::QueueMode::MPMC> _queue;
+lockfree::LinkedQueue<uint32_t, lockfree::QueueMode::SPMC> _queue;
+//test::Queue<uint32_t> _queue;
 std::atomic_uint32_t _id = 0;
 std::vector<uint32_t> _tmpVec;
 std::uint32_t _accumulative = 0;
@@ -84,12 +85,12 @@ public:
 
 	virtual int32_t AE_CALL run() override {
 		{
-			for (auto j = 0; j < 10; ++j) {
+			for (auto j = 0; j < (((uint8_t)(decltype(_queue)::MODE) & 0b10) ? 10 : 1); ++j) {
 				std::thread([]() {
 					do {
 						auto id = _id.fetch_add(1);
 						if (id <= 999999) {
-							_queue.enqueue(id + 1);
+							_queue.push(id + 1);
 						} else {
 							break;
 						}
@@ -99,11 +100,11 @@ public:
 				}).detach();
 			}
 
-			for (auto j = 0; j < 10; ++j) {
+			for (auto j = 0; j < (((uint8_t)(decltype(_queue)::MODE) & 0b1) ? 10 : 1); ++j) {
 				std::thread([]() {
 					do {
 						uint32_t val;
-						while (_queue.dequeue(val)) {
+						while (_queue.pop(val)) {
 							std::scoped_lock lock(_tmpVecMtx);
 							_tmpVec.emplace_back(val);
 							if (val > 1000000) {

@@ -5,7 +5,7 @@
 namespace aurora {
 	template<typename T>
 	class
-#if (AE_ARCH == AE_ARCH_X86 && AE_ARCH_WORD_BITS == AE_ARCH_WORD_BITS_64) && defined (__aarch64__)
+#if (AE_ARCH == AE_ARCH_X86 && AE_ARCH_WORD_BITS == AE_ARCH_WORD_BITS_64) || defined (__aarch64__)
 		alignas(8) TaggedPtr {
 	public:
 		using CompressedPtr = uint64_t;
@@ -17,6 +17,10 @@ namespace aurora {
 
 		TaggedPtr(T* ptr, Tag tag = 0) {
 			_packPtr(_ptr, ptr, tag);
+		}
+
+		inline bool AE_CALL operator==(const TaggedPtr& value) const {
+			return _ptr == value._ptr;
 		}
 
 		inline T* AE_CALL operator->() const {
@@ -89,6 +93,10 @@ namespace aurora {
 		TaggedPtr(T * ptr, Tag tag = 0) :
 			_ptr(ptr),
 			_tag(tag) {
+		}
+
+		inline bool AE_CALL operator==(const TaggedPtr& value) const {
+			return _ptr == value._ptr && _tag == value._tag;
 		}
 
 		inline T* AE_CALL operator->() const {
