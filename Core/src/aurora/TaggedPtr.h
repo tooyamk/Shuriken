@@ -23,6 +23,10 @@ namespace aurora {
 			return _ptr == value._ptr;
 		}
 
+		inline bool AE_CALL operator!=(const TaggedPtr& value) const {
+			return _ptr != value._ptr;
+		}
+
 		inline T* AE_CALL operator->() const {
 			return _extractPtr(_ptr);
 		}
@@ -99,6 +103,10 @@ namespace aurora {
 			return _ptr == value._ptr && _tag == value._tag;
 		}
 
+		inline bool AE_CALL operator!=(const TaggedPtr& value) const {
+			return _ptr != value._ptr || _tag != value._tag;
+		}
+
 		inline T* AE_CALL operator->() const {
 			return _ptr;
 		}
@@ -119,7 +127,7 @@ namespace aurora {
 			_tag = tag;
 		}
 
-		inline void AE_CALL set(T * ptr, Tag tag) {
+		inline void AE_CALL set(T* ptr, Tag tag) {
 			_ptr = ptr;
 			_tag = tag;
 		}

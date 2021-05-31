@@ -26,7 +26,7 @@ namespace aurora {
 
 					bool notify;
 					{
-						std::lock_guard<std::mutex> LockGuard(_queueMutex);
+						std::lock_guard<std::mutex> lock(_queueMutex);
 						--_activeThreads;
 						notify = _workCompletedUnlocked();
 					}

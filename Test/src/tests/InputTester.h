@@ -3,7 +3,7 @@
 #include "../BaseTester.h"
 #include <shared_mutex>
 
-lockfree::LinkedQueue<uint32_t, lockfree::QueueMode::SPMC> _queue;
+lockfree::LinkedQueue<uint32_t, lockfree::QueueMode::MPMC> _queue;
 //test::Queue<uint32_t> _queue;
 std::atomic_uint32_t _id = 0;
 std::vector<uint32_t> _tmpVec;
