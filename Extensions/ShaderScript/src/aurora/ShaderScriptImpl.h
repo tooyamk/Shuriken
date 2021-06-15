@@ -212,7 +212,7 @@ namespace aurora::extensions::shader_script {
 		return std::move(blocks);
 	}
 
-	inline bool AE_CALL set(Shader* shader, modules::graphics::IGraphicsModule* graphics, const ByteArray& source, const Shader::IncludeHandler& handler) {
+	inline bool AE_CALL set(Shader* shader, modules::graphics::IGraphicsModule* graphics, const ByteArray& source, const Shader::IncludeHandler& includeHandler, const Shader::InputHandler& inputHandler) {
 		if (shader) {
 			shader->unset();
 
@@ -232,7 +232,7 @@ namespace aurora::extensions::shader_script {
 				--size;
 				do {
 					if (parseShaderBlock(data, *blocks[size])) {
-						shader->set(graphics, data.mainProgram.vs, data.mainProgram.ps, data.staticDefines.data(), data.staticDefines.size(), data.dynamicDefines.data(), data.dynamicDefines.size(), handler);
+						shader->set(graphics, data.mainProgram.vs, data.mainProgram.ps, data.staticDefines.data(), data.staticDefines.size(), data.dynamicDefines.data(), data.dynamicDefines.size(), includeHandler, inputHandler);
 						for (auto& v : data.variantShaders) shader->setVariant(v.program.vs, v.program.ps, &v.defines);
 
 						return true;

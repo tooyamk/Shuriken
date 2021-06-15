@@ -24,7 +24,7 @@ namespace aurora::modules::graphics::gl {
 		virtual bool AE_CALL isSyncing() const override;
 		virtual void AE_CALL destroy() override;
 
-		bool AE_CALL use(GLuint index);
+		bool AE_CALL use(GLuint index, bool instanced);
 
 	protected:
 		VertexFormat _format;

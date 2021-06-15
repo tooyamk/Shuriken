@@ -697,6 +697,18 @@ namespace aurora::modules::graphics::gl {
 		}
 	}
 
+	void Graphics::drawInstanced(const IVertexBufferGetter* vertexBufferGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter, const IIndexBuffer* indexBuffer, uint32_t instancedCount, uint32_t count, uint32_t offset) {
+		if (vertexBufferGetter && indexBuffer && program && program->getGraphics() == this && indexBuffer->getGraphics() == this && count > 0) {
+			if (auto ib = (const IndexBuffer*)indexBuffer->getNative(); ib) {
+				if (auto p = (Program*)program->getNative(); p && p->use(vertexBufferGetter, shaderParamGetter)) {
+					ib->drawInstanced(instancedCount, count, offset);
+
+					_constantBufferManager.resetUsedShareConstantBuffers();
+				}
+			}
+		}
+	}
+
 	void Graphics::endRender() {
 		//交换当前缓冲区和后台缓冲区
 		//SwapBuffers(_dc);
@@ -1147,6 +1159,7 @@ namespace aurora::modules::graphics::gl {
 		case GL_UNSIGNED_BYTE:
 			return 1;
 		case GL_SHORT:
+		case GL_UNSIGNED_SHORT:
 		case GL_BOOL_VEC2:
 			return 2;
 		case GL_BOOL_VEC3:

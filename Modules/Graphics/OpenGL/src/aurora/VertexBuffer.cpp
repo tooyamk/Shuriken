@@ -121,11 +121,12 @@ namespace aurora::modules::graphics::gl {
 		}
 	}
 
-	bool VertexBuffer::use(GLuint index) {
+	bool VertexBuffer::use(GLuint index, bool instanced) {
 		if (_baseBuffer.handle && _validVertexFormat) {
 			glEnableVertexAttribArray(index);
 			glBindBuffer(GL_ARRAY_BUFFER, _baseBuffer.handle);
 			glVertexAttribPointer(index, _vertexSize, _vertexType, GL_FALSE, 0, 0);
+			glVertexAttribDivisor(index, instanced ? 1 : 0);
 		}
 		return false;
 	}

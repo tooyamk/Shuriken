@@ -178,6 +178,9 @@ public:
 							extensions::ShaderScript::set(s, graphics, readFile(app->getAppPath().parent_path().u8string() + "/Resources/shaders/lighting.shader"),
 								[shaderResourcesFolder](const Shader& shader, ProgramStage stage, const std::string_view& name) {
 								return readFile(shaderResourcesFolder + name);
+							},
+								[](const Shader& shader, const std::string_view& name) {
+								return modules::graphics::IProgram::InputDescription();
 							});
 
 							mat2->setShader(s);

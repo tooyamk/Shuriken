@@ -25,6 +25,7 @@ namespace aurora::modules::graphics::gl {
 		virtual void AE_CALL destroy() override;
 
 		void AE_CALL draw(uint32_t count = (std::numeric_limits<uint32_t>::max)(), uint32_t offset = 0) const;
+		void AE_CALL drawInstanced(uint32_t instancedCount, uint32_t count = (std::numeric_limits<uint32_t>::max)(), uint32_t offset = 0) const;
 
 	protected:
 		IndexType _idxType;

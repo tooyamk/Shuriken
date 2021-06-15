@@ -18,12 +18,13 @@ namespace aurora {
 	class AE_FW_DLL Shader : public Ref {
 	public:
 		using IncludeHandler = std::function<ByteArray(const Shader&, ProgramStage, const std::string_view&)>;
+		using InputHandler = std::function<modules::graphics::IProgram::InputDescription(const Shader&, const std::string_view&)>;
 
 		Shader();
 
 		void AE_CALL set(modules::graphics::IGraphicsModule* graphics, ProgramSource* vs, ProgramSource* ps, 
 			const ShaderDefine* staticDefines, size_t numStaticDefines, const std::string_view* dynamicDefines, size_t numDynamicDefines,
-			const IncludeHandler& handler);
+			const IncludeHandler& includeHandler, const InputHandler& inputHandler);
 		IntrusivePtr<modules::graphics::IProgram> AE_CALL select(const IShaderDefineGetter* getter);
 
 		void AE_CALL unset();
@@ -44,6 +45,7 @@ namespace aurora {
 		IntrusivePtr<ProgramSource> _vs;
 		IntrusivePtr<ProgramSource> _ps;
 		IncludeHandler _includeHhandler;
+		InputHandler _inputHandler;
 
 		std::unordered_map<uint64_t, Variant> _variants;
 

@@ -24,16 +24,16 @@ namespace aurora::modules::graphics::gl {
 		return this;
 	}
 
-	bool Program::create(const ProgramSource& vert, const ProgramSource& frag, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& handler) {
+	bool Program::create(const ProgramSource& vert, const ProgramSource& frag, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& includeHandler, const InputHandler& inputHandler) {
 		destroy();
 
-		auto vertexShader = _compileShader(vert, GL_VERTEX_SHADER, ProgramStage::VS, defines, numDefines, handler);
+		auto vertexShader = _compileShader(vert, GL_VERTEX_SHADER, ProgramStage::VS, defines, numDefines, includeHandler);
 		if (!vertexShader) {
 			destroy();
 			return false;
 		}
 
-		auto fragmentShader = _compileShader(frag, GL_FRAGMENT_SHADER, ProgramStage::PS, defines, numDefines, handler);
+		auto fragmentShader = _compileShader(frag, GL_FRAGMENT_SHADER, ProgramStage::PS, defines, numDefines, includeHandler);
 		if (!fragmentShader) {
 			glDeleteShader(vertexShader);
 			destroy();
@@ -72,7 +72,7 @@ namespace aurora::modules::graphics::gl {
 		GLint atts;
 		glGetProgramiv(_handle, GL_ACTIVE_ATTRIBUTES, &atts);
 		_info.vertices.resize(atts);
-		_inVertexBufferLocations.resize(atts);
+		_inputVertexBufferLocations.resize(atts);
 		for (GLint i = 0; i < atts; ++i) {
 			auto& info = _info.vertices[i];
 
@@ -141,7 +141,8 @@ namespace aurora::modules::graphics::gl {
 			}
 			
 			info.name = charBuffer;// +7;//in_var_
-			_inVertexBufferLocations[i] = glGetAttribLocation(_handle, charBuffer);
+			info.instanced = inputHandler ? inputHandler(*this, std::string_view(info.name)).instanced : false;
+			_inputVertexBufferLocations[i] = glGetAttribLocation(_handle, charBuffer);
 		}
 
 		GLint uniforms;
@@ -300,7 +301,7 @@ namespace aurora::modules::graphics::gl {
 			for (size_t i = 0, n = _info.vertices.size(); i < n; ++i) {
 				auto& info = _info.vertices[i];
 				if (auto vb = vertexBufferGetter->get(info.name); vb && _graphics == vb->getGraphics()) {
-					if (auto vb1 = (VertexBuffer*)vb->getNative(); vb1) vb1->use(_inVertexBufferLocations[i]);
+					if (auto vb1 = (VertexBuffer*)vb->getNative(); vb1) vb1->use(_inputVertexBufferLocations[i], info.instanced);
 				}
 			}
 
@@ -408,7 +409,7 @@ namespace aurora::modules::graphics::gl {
 			glDeleteProgram(_handle);
 			_handle = 0;
 		}
-		_inVertexBufferLocations.clear();
+		_inputVertexBufferLocations.clear();
 		_uniformLayouts.clear();
 		_info.clear();
 

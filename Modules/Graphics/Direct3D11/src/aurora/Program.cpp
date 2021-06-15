@@ -10,18 +10,18 @@
 #include <vector>
 
 namespace aurora::modules::graphics::d3d11 {
-	Program::InLayout::InLayout(uint32_t numInElements) :
+	Program::InputLayout::InputLayout(uint32_t numInElements) :
 		formats(numInElements),
 		layout(nullptr) {
 	}
 
-	Program::InLayout::~InLayout() {
+	Program::InputLayout::~InputLayout() {
 		if (layout) layout->Release();
 	}
 
-	bool Program::InLayout::isEqual(const D3D11_INPUT_ELEMENT_DESC* inElements, uint32_t num) const {
+	bool Program::InputLayout::isEqual(const D3D11_INPUT_ELEMENT_DESC* inputElements, uint32_t num) const {
 		for (uint32_t i = 0, n = num; i < n; ++i) {
-			if (formats[i] != inElements[i].Format) return false;
+			if (formats[i] != inputElements[i].Format) return false;
 		}
 		return true;
 	}
@@ -61,7 +61,7 @@ namespace aurora::modules::graphics::d3d11 {
 		_vertBlob(nullptr),
 		_vs(nullptr),
 		_ps(nullptr),
-		_inElements(nullptr),
+		_inputElements(nullptr),
 		_numInElements(0),
 		_curInLayout(nullptr) {
 	}
@@ -74,7 +74,7 @@ namespace aurora::modules::graphics::d3d11 {
 		return this;
 	}
 
-	bool Program::create(const ProgramSource& vert, const ProgramSource& frag, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& handler) {
+	bool Program::create(const ProgramSource& vert, const ProgramSource& frag, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& includeHandler, const InputHandler& inputHandler) {
 		destroy();
 
 		DXObjGuard objs;
@@ -97,10 +97,10 @@ namespace aurora::modules::graphics::d3d11 {
 			def.Definition = nullptr;
 		}
 
-		_vertBlob = _compileShader(vert, ProgramStage::VS, ProgramSource::toHLSLShaderModel(ProgramStage::VS, vert.version.empty() ? sm : vert.version), d3dDefines.data(), handler);
+		_vertBlob = _compileShader(vert, ProgramStage::VS, ProgramSource::toHLSLShaderModel(ProgramStage::VS, vert.version.empty() ? sm : vert.version), d3dDefines.data(), includeHandler);
 		if (!_vertBlob) return false;
 
-		auto pixelBlob = _compileShader(frag, ProgramStage::PS, ProgramSource::toHLSLShaderModel(ProgramStage::PS, frag.version.empty() ? sm : frag.version), d3dDefines.data(), handler);
+		auto pixelBlob = _compileShader(frag, ProgramStage::PS, ProgramSource::toHLSLShaderModel(ProgramStage::PS, frag.version.empty() ? sm : frag.version), d3dDefines.data(), includeHandler);
 		if (!pixelBlob) {
 			destroy();
 			return false;
@@ -109,8 +109,7 @@ namespace aurora::modules::graphics::d3d11 {
 
 		auto device = g->getDevice();
 
-		HRESULT hr = device->CreateVertexShader(_vertBlob->GetBufferPointer(), _vertBlob->GetBufferSize(), 0, &_vs);
-		if (FAILED(hr)) {
+		if (FAILED(device->CreateVertexShader(_vertBlob->GetBufferPointer(), _vertBlob->GetBufferSize(), nullptr, &_vs))) {
 			destroy();
 			return false;
 		}
@@ -125,7 +124,7 @@ namespace aurora::modules::graphics::d3d11 {
 		D3D11_SHADER_DESC sDesc;
 		vsr->GetDesc(&sDesc);
 		
-		_parseInLayout(sDesc, *vsr);
+		_parseInputLayout(sDesc, *vsr, inputHandler);
 
 		_curInLayout = _getOrCreateInputLayout();
 
@@ -177,7 +176,7 @@ namespace aurora::modules::graphics::d3d11 {
 								UINT offset = 0;
 								g->useVertexBuffers(_inVerBufSlots[i], 1, &buf, &stride, &offset);
 
-								auto& ie = _inElements[i];
+								auto& ie = _inputElements[i];
 								if (ie.Format != fmt) {
 									inElementsDirty = true;
 									ie.Format = fmt;
@@ -276,8 +275,8 @@ namespace aurora::modules::graphics::d3d11 {
 		_info.clear();
 
 		if (_numInElements > 0) {
-			for (uint32_t i = 0; i < _numInElements; ++i) delete[] _inElements[i].SemanticName;
-			delete[] _inElements;
+			for (uint32_t i = 0; i < _numInElements; ++i) delete[] _inputElements[i].SemanticName;
+			delete[] _inputElements;
 			_numInElements = 0;
 		}
 
@@ -339,40 +338,55 @@ namespace aurora::modules::graphics::d3d11 {
 
 	ID3D11InputLayout* Program::_getOrCreateInputLayout() {
 		for (uint32_t i = 0, n = _inLayouts.size(); i < n; ++i) {
-			if (auto& il = _inLayouts[i]; il.isEqual(_inElements, _numInElements)) return il.layout;
+			if (auto& il = _inLayouts[i]; il.isEqual(_inputElements, _numInElements)) return il.layout;
 		}
 
 		auto& il = _inLayouts.emplace_back(_numInElements);
-		for (decltype(_numInElements) i = 0; i < _numInElements; ++i) il.formats[i] = _inElements[i].Format;
-		auto hr = _graphics.get<Graphics>()->getDevice()->CreateInputLayout(_inElements, _numInElements, _vertBlob->GetBufferPointer(), _vertBlob->GetBufferSize(), &il.layout);
+		for (decltype(_numInElements) i = 0; i < _numInElements; ++i) il.formats[i] = _inputElements[i].Format;
+		auto hr = _graphics.get<Graphics>()->getDevice()->CreateInputLayout(_inputElements, _numInElements, _vertBlob->GetBufferPointer(), _vertBlob->GetBufferSize(), &il.layout);
 		return il.layout;
 	}
 
-	void Program::_parseInLayout(const D3D11_SHADER_DESC& desc, ID3D11ShaderReflection& ref) {
+	void Program::_parseInputLayout(const D3D11_SHADER_DESC& desc, ID3D11ShaderReflection& ref, const InputHandler& handler) {
 		if (_numInElements = desc.InputParameters; _numInElements > 0) {
 			uint32_t offset = 0;
-			_inElements = new D3D11_INPUT_ELEMENT_DESC[desc.InputParameters];
+			_inputElements = new D3D11_INPUT_ELEMENT_DESC[desc.InputParameters];
 			D3D11_SIGNATURE_PARAMETER_DESC pDesc;
+			char nameBuf[256];
 			for (decltype(_numInElements) i = 0; i < _numInElements; ++i) {
 				ref.GetInputParameterDesc(i, &pDesc);
 
-				auto& ieDesc = _inElements[i];
+				auto& ieDesc = _inputElements[i];
 				auto len = strlen(pDesc.SemanticName);
 				auto name = new char[len + 1];
 				ieDesc.SemanticName = name;
 				name[len] = 0;
 				memcpy(name, pDesc.SemanticName, len);
+
+				memcpy(nameBuf, pDesc.SemanticName, len);
+				auto nameSize = String::toString(nameBuf + len, sizeof(nameBuf) - len - 1, pDesc.SemanticIndex);
+				if (nameSize == std::string::npos) nameSize = 0;
+				nameSize += len;
+				nameBuf[nameSize] = 0;
+				auto inputDesc = handler ? handler(*this, std::string_view(nameBuf, nameSize)) : InputDescription();
+
 				//ieDesc.SemanticName = spDesc.SemanticName;
 				ieDesc.SemanticIndex = pDesc.SemanticIndex;
 				ieDesc.InputSlot = i;
 				ieDesc.AlignedByteOffset = 0;
-				ieDesc.InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-				ieDesc.InstanceDataStepRate = 0;
+				if (inputDesc.instanced) {
+					ieDesc.InputSlotClass = D3D11_INPUT_PER_INSTANCE_DATA;
+					ieDesc.InstanceDataStepRate = 1;
+				} else {
+					ieDesc.InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+					ieDesc.InstanceDataStepRate = 0;
+				}
 
 				_inVerBufSlots.emplace_back(i);
 
 				auto& info = _info.vertices.emplace_back();
-				info.name = pDesc.SemanticName + String::toString(pDesc.SemanticIndex);
+				info.name = std::move(std::string(nameBuf, nameSize));
+				info.instanced = inputDesc.instanced;
 
 				if (pDesc.Mask == 1) {
 					info.format.size = VertexSize::ONE;
@@ -432,6 +446,8 @@ namespace aurora::modules::graphics::d3d11 {
 	}
 
 	void Program::_parseParameterLayout(const D3D11_SHADER_DESC& desc, ID3D11ShaderReflection& ref, ParameterLayout& dst) {
+		using namespace aurora::literals;
+
 		D3D11_SHADER_INPUT_BIND_DESC ibDesc;
 		for (uint32_t i = 0; i < desc.BoundResources; ++i) {
 			ref.GetResourceBindingDesc(i, &ibDesc);
@@ -493,7 +509,7 @@ namespace aurora::modules::graphics::d3d11 {
 						v.name = vDesc.Name;
 						v.offset = vDesc.StartOffset;
 						v.size = vDesc.Size;
-						v.stride = (1ui32 << 31) | 16;
+						v.stride = (1_ui32 << 31) | 16;
 
 						_parseConstantVar(v, var->GetType());
 					}
@@ -507,6 +523,8 @@ namespace aurora::modules::graphics::d3d11 {
 	}
 
 	void Program::_parseConstantVar(ConstantBufferLayout::Variables& var, ID3D11ShaderReflectionType* type) {
+		using namespace aurora::literals;
+
 		D3D11_SHADER_TYPE_DESC desc;
 		type->GetDesc(&desc);
 		var.offset += desc.Offset;
@@ -517,7 +535,7 @@ namespace aurora::modules::graphics::d3d11 {
 				memberVar.name = type->GetMemberTypeName(i);
 				memberVar.offset = var.offset;
 				memberVar.size = 0;
-				memberVar.stride = (1ui32 << 31) | 16;
+				memberVar.stride = (1_ui32 << 31) | 16;
 				
 				_parseConstantVar(memberVar, type->GetMemberTypeByIndex(i));
 			}
@@ -525,11 +543,8 @@ namespace aurora::modules::graphics::d3d11 {
 			switch (desc.Type) {
 			case D3D_SVT_INT:
 			case D3D_SVT_FLOAT:
-			{
 				var.size = desc.Columns << 2;
-
 				break;
-			}
 			default:
 				break;
 			}

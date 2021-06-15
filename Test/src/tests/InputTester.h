@@ -3,13 +3,6 @@
 #include "../BaseTester.h"
 #include <shared_mutex>
 
-lockfree::LinkedQueue<uint32_t, lockfree::QueueMode::MPMC> _queue;
-//test::Queue<uint32_t> _queue;
-std::atomic_uint32_t _id = 0;
-std::vector<uint32_t> _tmpVec;
-std::uint32_t _accumulative = 0;
-std::mutex _tmpVecMtx;
-
 class InputTester : public BaseTester {
 public:
 	static std::string AE_CALL getGamepadKeyString(GamepadVirtualKeyCode code) {
@@ -84,84 +77,6 @@ public:
 	}
 
 	virtual int32_t AE_CALL run() override {
-		{
-			for (auto j = 0; j < (((uint8_t)(decltype(_queue)::MODE) & 0b10) ? 10 : 1); ++j) {
-				std::thread([]() {
-					do {
-						auto id = _id.fetch_add(1);
-						if (id <= 999999) {
-							_queue.push(id + 1);
-						} else {
-							break;
-						}
-					} while (true);
-
-					printaln("exit in");
-				}).detach();
-			}
-
-			for (auto j = 0; j < (((uint8_t)(decltype(_queue)::MODE) & 0b1) ? 10 : 1); ++j) {
-				std::thread([]() {
-					do {
-						uint32_t val;
-						while (_queue.pop(val)) {
-							std::scoped_lock lock(_tmpVecMtx);
-							_tmpVec.emplace_back(val);
-							if (val > 1000000) {
-								int a = 1;
-							}
-						}
-
-						{
-							std::scoped_lock lock(_tmpVecMtx);
-							if (_accumulative + _tmpVec.size() == 1000000) break;
-						}
-						std::this_thread::sleep_for(1ms);
-					} while (true);
-
-					printaln("exit out");
-				}).detach();
-			}
-
-			std::thread([]() {
-				do {
-					auto old = _accumulative;
-
-					{
-						do {
-							auto old1 = _accumulative;
-
-							std::scoped_lock lock(_tmpVecMtx);
-							if (!_tmpVec.empty()) {
-								auto next = _accumulative + 1;
-								auto q = &_queue;
-								for (size_t i = 0, n = _tmpVec.size(); i < n; ++i) {
-									if (auto val = _tmpVec[i]; val == next) {
-										++_accumulative;
-										_tmpVec.erase(_tmpVec.begin() + i);
-										break;
-									} else if (val <= _accumulative) {
-										//error
-										int a = 1;
-									}
-								}
-							}
-
-							if (old1 == _accumulative) break;
-						} while (true);
-					}
-
-					if (old != _accumulative) {
-						printaln("_accumulative : ", _accumulative);
-					}
-
-					std::this_thread::sleep_for(1ms);
-				} while (true);
-
-				printaln("exit print");
-			}).detach();
-		}
-
 		IntrusivePtr app = new Application("TestApp");
 
 		ApplicationStyle wndStype;

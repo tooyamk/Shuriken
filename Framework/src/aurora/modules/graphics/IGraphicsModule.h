@@ -676,6 +676,7 @@ namespace aurora::modules::graphics {
 		public:
 			std::string name;
 			VertexFormat format;
+			bool instanced = false;
 		};
 
 
@@ -689,13 +690,18 @@ namespace aurora::modules::graphics {
 
 	class AE_FW_DLL IProgram : public IObject {
 	public:
+		struct AE_FW_DLL InputDescription {
+			bool instanced = false;
+		};
+
 		using IncludeHandler = std::function<ByteArray(const IProgram&, ProgramStage, const std::string_view&)>;
+		using InputHandler = std::function<InputDescription(const IProgram&, const std::string_view&)>;
 
 		IProgram(IGraphicsModule& graphics) : IObject(graphics) {}
 		virtual ~IProgram() {}
 
 		virtual const void* AE_CALL getNative() const = 0;
-		virtual bool AE_CALL create(const ProgramSource& vert, const ProgramSource& frag, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& handler) = 0;
+		virtual bool AE_CALL create(const ProgramSource& vert, const ProgramSource& frag, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& includeHandler, const InputHandler& inputHandler) = 0;
 		virtual const ProgramInfo& getInfo() const = 0;
 		virtual void AE_CALL destroy() = 0;
 	};
@@ -945,6 +951,8 @@ namespace aurora::modules::graphics {
 		virtual void AE_CALL beginRender() = 0;
 		virtual void AE_CALL draw(const IVertexBufferGetter* vertexBufferGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
 			const IIndexBuffer* indexBuffer, uint32_t count = (std::numeric_limits<uint32_t>::max)(), uint32_t offset = 0) = 0;
+		virtual void AE_CALL drawInstanced(const IVertexBufferGetter* vertexBufferGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
+			const IIndexBuffer* indexBuffer, uint32_t instancedCount, uint32_t count = (std::numeric_limits<uint32_t>::max)(), uint32_t offset = 0) = 0;
 		virtual void AE_CALL endRender() = 0;
 		virtual void AE_CALL flush() = 0;
 		virtual void AE_CALL present() = 0;

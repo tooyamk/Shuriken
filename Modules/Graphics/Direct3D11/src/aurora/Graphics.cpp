@@ -587,6 +587,56 @@ namespace aurora::modules::graphics::d3d11 {
 		}
 	}
 
+	void Graphics::drawInstanced(const IVertexBufferGetter* vertexBufferGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
+		const IIndexBuffer* indexBuffer, uint32_t instancedCount, uint32_t count, uint32_t offset) {
+		if (vertexBufferGetter && indexBuffer && program && program->getGraphics() == this && indexBuffer->getGraphics() == this && count > 0) {
+			auto ib = (IndexBuffer*)indexBuffer->getNative();
+			if (!ib) return;
+			auto internalIndexBuffer = ib->getInternalBuffer();
+			auto fmt = ib->getInternalFormat();
+			if (!internalIndexBuffer || fmt == DXGI_FORMAT_UNKNOWN) return;
+			auto numIndexElements = ib->getNumElements();
+			if (!numIndexElements || offset >= numIndexElements) return;
+
+			auto p = (Program*)program->getNative();
+			if (p) {
+				if (p->use(vertexBufferGetter, shaderParamGetter)) {
+					uint32_t last = numIndexElements - offset;
+					if (count > numIndexElements) count = numIndexElements;
+					if (count > last) count = last;
+					_context->IASetIndexBuffer((ID3D11Buffer*)internalIndexBuffer, fmt, 0);
+					_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+					_context->DrawIndexedInstanced(count, instancedCount, offset, 0, 0);
+
+					p->useEnd();
+
+					_constantBufferManager.resetUsedShareConstantBuffers();
+				}
+
+				clearShaderResources<ProgramStage::CS>();
+				clearShaderResources<ProgramStage::DS>();
+				clearShaderResources<ProgramStage::GS>();
+				clearShaderResources<ProgramStage::HS>();
+				clearShaderResources<ProgramStage::PS>();
+				clearShaderResources<ProgramStage::VS>();
+
+				clearConstantBuffers<ProgramStage::CS>();
+				clearConstantBuffers<ProgramStage::DS>();
+				clearConstantBuffers<ProgramStage::GS>();
+				clearConstantBuffers<ProgramStage::HS>();
+				clearConstantBuffers<ProgramStage::PS>();
+				clearConstantBuffers<ProgramStage::VS>();
+
+				clearSamplers<ProgramStage::CS>();
+				clearSamplers<ProgramStage::DS>();
+				clearSamplers<ProgramStage::GS>();
+				clearSamplers<ProgramStage::HS>();
+				clearSamplers<ProgramStage::PS>();
+				clearSamplers<ProgramStage::VS>();
+			}
+		}
+	}
+
 	void Graphics::endRender() {
 	}
 

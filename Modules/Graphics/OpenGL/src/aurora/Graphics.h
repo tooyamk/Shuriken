@@ -67,6 +67,8 @@ namespace aurora::modules::graphics::gl {
 		virtual void AE_CALL beginRender() override;
 		virtual void AE_CALL draw(const IVertexBufferGetter* vertexBufferGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
 			const IIndexBuffer* indexBuffer, uint32_t count = (std::numeric_limits<uint32_t>::max)(), uint32_t offset = 0) override;
+		virtual void AE_CALL drawInstanced(const IVertexBufferGetter* vertexBufferGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
+			const IIndexBuffer* indexBuffer, uint32_t instancedCount, uint32_t count = (std::numeric_limits<uint32_t>::max)(), uint32_t offset = 0) override;
 		virtual void AE_CALL endRender() override;
 		virtual void AE_CALL flush() override;
 		virtual void AE_CALL present() override;

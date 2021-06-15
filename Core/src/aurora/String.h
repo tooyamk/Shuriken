@@ -401,94 +401,83 @@ namespace aurora {
 		template<std::integral T>
 		inline static std::string AE_CALL toString(T value, uint8_t base = 10) {
 			char buf[sizeof(T) * 8 + 1];
+			auto n = toString(buf, sizeof(buf), value, base);
+			return std::move(n == std::string::npos ? std::string() : std::string(buf, n));
+		}
+
+		template<std::integral T>
+		inline static std::string::size_type AE_CALL toString(char* dst, size_t dstSize, T value, uint8_t base = 10) {
 #ifdef __cpp_lib_to_chars
-			auto rst = std::to_chars(buf, buf + sizeof(buf), value, base);
-			return std::move(std::string(buf, rst.ec == std::errc() ? rst.ptr - buf : 0));
+			auto rst = std::to_chars(dst, dst + dstSize, value, base);
+			return rst.ec == std::errc() ? rst.ptr - dst : std::string::npos;
 #else
 			if constexpr (std::same_as<T, int8_t>) {
-				snprintf(buf, sizeof(buf), "%hhd", value);
+				return snprintf(dst, dstSize, "%hhd", value);
 			} else if constexpr (std::same_as<T, uint8_t>) {
 				switch (base) {
 				case 8:
-					snprintf(buf, sizeof(buf), "%hho", value);
-					break;
+					return snprintf(dst, dstSize, "%hho", value);
 				case 16:
-					snprintf(buf, sizeof(buf), "%hhx", value);
-					break;
+					return snprintf(dst, dstSize, "%hhx", value);
 				default:
-					snprintf(buf, sizeof(buf), "%hhu", value);
-					break;
+					return snprintf(dst, dstSize, "%hhu", value);
 				}
 			} else if constexpr (std::same_as<T, int16_t>) {
-				snprintf(buf, sizeof(buf), "%hd", value);
+				return snprintf(dst, dstSize, "%hd", value);
 			} else if constexpr (std::same_as<T, uint16_t>) {
 				switch (base) {
 				case 8:
-					snprintf(buf, sizeof(buf), "%ho", value);
-					break;
+					return snprintf(dst, dstSize, "%ho", value);
 				case 16:
-					snprintf(buf, sizeof(buf), "%hx", value);
-					break;
+					return snprintf(dst, dstSize, "%hx", value);
 				default:
-					snprintf(buf, sizeof(buf), "%hu", value);
-					break;
+					return snprintf(dst, dstSize, "%hu", value);
 				}
 			} else if constexpr (std::same_as<T, int32_t>) {
-				snprintf(buf, sizeof(buf), "%d", value);
+				return snprintf(dst, dstSize, "%d", value);
 			} else if constexpr (std::same_as<T, uint32_t>) {
 				switch (base) {
 				case 8:
-					snprintf(buf, sizeof(buf), "%o", value);
-					break;
+					return snprintf(dst, dstSize, "%o", value);
 				case 16:
-					snprintf(buf, sizeof(buf), "%x", value);
-					break;
+					return snprintf(dst, dstSize, "%x", value);
 				default:
-					snprintf(buf, sizeof(buf), "%u", value);
-					break;
+					return snprintf(dst, dstSize, "%u", value);
 				}
 			} else if constexpr (std::same_as<T, int64_t>) {
 				if constexpr (sizeof(long) == sizeof(int64_t)) {
-					snprintf(buf, sizeof(buf), "%ld", value);
+					return snprintf(dst, dstSize, "%ld", value);
 				} else {
-					snprintf(buf, sizeof(buf), "%lld", value);
+					return snprintf(dst, dstSize, "%lld", value);
 				}
 			} else if constexpr (std::same_as<T, uint64_t>) {
 				switch (base) {
 				case 8:
 				{
 					if constexpr (sizeof(long) == sizeof(uint64_t)) {
-						snprintf(buf, sizeof(buf), "%lo", value);
+						return snprintf(dst, dstSize, "%lo", value);
 					} else {
-						snprintf(buf, sizeof(buf), "%llo", value);
+						return snprintf(dst, dstSize, "%llo", value);
 					}
-
-					break;
 				}
 				case 16:
 				{
 					if constexpr (sizeof(long) == sizeof(uint64_t)) {
-						snprintf(buf, sizeof(buf), "%lx", value);
+						return snprintf(dst, dstSize, "%lx", value);
 					} else {
-						snprintf(buf, sizeof(buf), "%llx", value);
+						return snprintf(dst, dstSize, "%llx", value);
 					}
-
-					break;
 				}
 				default:
 				{
 					if constexpr (sizeof(long) == sizeof(uint64_t)) {
-						snprintf(buf, sizeof(buf), "%lu", value);
+						return snprintf(dst, dstSize, "%lu", value);
 					} else {
-						snprintf(buf, sizeof(buf), "%llu", value);
+						return snprintf(dst, dstSize, "%llu", value);
 					}
-
-					break;
 				}
 				}
 			}
-
-			return std::move(std::string(buf));
 #endif
 		}
 

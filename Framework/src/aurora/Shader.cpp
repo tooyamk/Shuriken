@@ -6,13 +6,14 @@ namespace aurora {
 
 	void Shader::set(modules::graphics::IGraphicsModule* graphics, ProgramSource* vs, ProgramSource* ps,
 		const ShaderDefine* staticDefines, size_t numStaticDefines, const std::string_view* dynamicDefines, size_t numDynamicDefines,
-		const IncludeHandler& handler) {
+		const IncludeHandler& includeHhandler, const InputHandler& inputHandler) {
 		unset();
 
 		_graphics = graphics;
 		_vs = vs;
 		_ps = ps;
-		_includeHhandler = handler;
+		_includeHhandler = includeHhandler;
+		_inputHandler = inputHandler;
 
 		_defines.resize(numStaticDefines + numDynamicDefines);
 
@@ -83,8 +84,12 @@ namespace aurora {
 			if (auto p = _graphics->createProgram(); p) {
 				if (auto itr2 = _variants.find(fv); itr2 == _variants.end()) {
 					if (_vs && _ps) {
-						if (auto succeeded = p->create(*_vs, *_ps, _defines.data(), count, [this](const modules::graphics::IProgram&, ProgramStage stage, const std::string_view& name) {
+						if (auto succeeded = p->create(*_vs, *_ps, _defines.data(), count,
+							[this](const modules::graphics::IProgram&, ProgramStage stage, const std::string_view& name) {
 							return _includeHhandler ? _includeHhandler(*this, stage, name) : ByteArray();
+						},
+							[this](const modules::graphics::IProgram&, const std::string_view& name) {
+							return _inputHandler ? _inputHandler(*this, name) : modules::graphics::IProgram::InputDescription();
 						}); succeeded) {
 							rst.first->second = p;
 
@@ -96,8 +101,12 @@ namespace aurora {
 				} else {
 					auto& variant = itr2->second;
 					if (variant.vs && variant.ps) {
-						if (auto succeeded = p->create(*variant.vs, *variant.ps, _defines.data(), count, [this](const modules::graphics::IProgram&, ProgramStage stage, const std::string_view& name) {
+						if (auto succeeded = p->create(*variant.vs, *variant.ps, _defines.data(), count,
+							[this](const modules::graphics::IProgram&, ProgramStage stage, const std::string_view& name) {
 							return _includeHhandler ? _includeHhandler(*this, stage, name) : ByteArray();
+						},
+							[this](const modules::graphics::IProgram&, const std::string_view& name) {
+							return _inputHandler ? _inputHandler(*this, name) : modules::graphics::IProgram::InputDescription();
 						}); succeeded) {
 							rst.first->second = p;
 

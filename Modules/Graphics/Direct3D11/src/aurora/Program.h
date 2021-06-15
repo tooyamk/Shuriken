@@ -13,7 +13,7 @@ namespace aurora::modules::graphics::d3d11 {
 		virtual ~Program();
 
 		virtual const void* AE_CALL getNative() const override;
-		virtual bool AE_CALL create(const ProgramSource& vert, const ProgramSource& frag, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& handler) override;
+		virtual bool AE_CALL create(const ProgramSource& vert, const ProgramSource& frag, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& includeHandler, const InputHandler& inputHandler) override;
 		virtual const ProgramInfo& getInfo() const override;
 		virtual void AE_CALL destroy() override;
 
@@ -44,14 +44,14 @@ namespace aurora::modules::graphics::d3d11 {
 		};
 
 
-		struct InLayout {
-			InLayout (uint32_t numInElements);
-			~InLayout();
+		struct InputLayout {
+			InputLayout (uint32_t numInElements);
+			~InputLayout();
 
 			std::vector<uint32_t> formats;
 			ID3D11InputLayout* layout;
 
-			bool isEqual(const D3D11_INPUT_ELEMENT_DESC* inElements, uint32_t num) const;
+			bool isEqual(const D3D11_INPUT_ELEMENT_DESC* inputElements, uint32_t num) const;
 		};
 
 
@@ -60,11 +60,11 @@ namespace aurora::modules::graphics::d3d11 {
 		ID3D11PixelShader* _ps;
 
 		ID3D11InputLayout* _curInLayout;
-		D3D11_INPUT_ELEMENT_DESC* _inElements;
+		D3D11_INPUT_ELEMENT_DESC* _inputElements;
 		uint32_t _numInElements;
 
 		std::vector<uint32_t> _inVerBufSlots;
-		std::vector<InLayout> _inLayouts;
+		std::vector<InputLayout> _inLayouts;
 
 
 		struct TextureLayout {
@@ -99,7 +99,7 @@ namespace aurora::modules::graphics::d3d11 {
 
 		ID3DBlob* AE_CALL _compileShader(const ProgramSource& source, ProgramStage stage, const std::string_view& target, const D3D_SHADER_MACRO* defines, const IncludeHandler& handler);
 		ID3D11InputLayout* _getOrCreateInputLayout();
-		void AE_CALL _parseInLayout(const D3D11_SHADER_DESC& desc, ID3D11ShaderReflection& ref);
+		void AE_CALL _parseInputLayout(const D3D11_SHADER_DESC& desc, ID3D11ShaderReflection& ref, const InputHandler& handler);
 		void AE_CALL _parseParameterLayout(const D3D11_SHADER_DESC& desc, ID3D11ShaderReflection& ref, ParameterLayout& dst);
 		void AE_CALL _parseConstantVar(ConstantBufferLayout::Variables& var, ID3D11ShaderReflectionType* type);
 		void AE_CALL _calcConstantLayoutSameBuffers(std::vector<std::vector<MyConstantBufferLayout>*>& constBufferLayouts);

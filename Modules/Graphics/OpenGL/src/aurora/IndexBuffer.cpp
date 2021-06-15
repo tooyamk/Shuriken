@@ -94,13 +94,24 @@ namespace aurora::modules::graphics::gl {
 	}
 
 	void IndexBuffer::draw(uint32_t count, uint32_t offset) const {
-		if (_numElements > 0 && offset < _numElements) {
+		if (_numElements && offset < _numElements) {
 			uint32_t last = _numElements - offset;
 			if (count > _numElements) count = _numElements;
 			if (count > last) count = last;
 
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _baseBuffer.handle);
 			glDrawRangeElements(GL_TRIANGLES, offset, _numElements, count, _internalType, nullptr);
+		}
+	}
+
+	void IndexBuffer::drawInstanced(uint32_t instancedCount, uint32_t count, uint32_t offset) const {
+		if (instancedCount && _numElements && offset < _numElements) {
+			uint32_t last = _numElements - offset;
+			if (count > _numElements) count = _numElements;
+			if (count > last) count = last;
+
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _baseBuffer.handle);
+			glDrawElementsInstanced(GL_TRIANGLES, count, _internalType, (const void*)(offset * Graphics::getGLTypeSize(_internalType)), instancedCount);
 		}
 	}
 

@@ -137,6 +137,9 @@ inline bool AE_CALL createProgram(IProgram& program, const std::string_view& ver
 	if (!program.create(readProgramSource(appPath + vert, ProgramStage::VS), readProgramSource(appPath + frag, ProgramStage::PS), nullptr, 0,
 		[&appPath](const IProgram& program, ProgramStage stage, const std::string_view& name) {
 		return readFile(appPath + name);
+	},
+		[](const IProgram& program, const std::string_view& name) {
+		return modules::graphics::IProgram::InputDescription();
 	})) {
 		printaln(L"program create error");
 		return false;

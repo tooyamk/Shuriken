@@ -94,7 +94,7 @@ namespace aurora {
 			_tag(0) {
 		}
 
-		TaggedPtr(T * ptr, Tag tag = 0) :
+		TaggedPtr(T* ptr, Tag tag = 0) :
 			_ptr(ptr),
 			_tag(tag) {
 		}

@@ -13,14 +13,14 @@ namespace aurora::modules::graphics::gl {
 		virtual ~Program();
 
 		virtual const void* AE_CALL getNative() const override;
-		virtual bool AE_CALL create(const ProgramSource& vert, const ProgramSource& frag, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& handler) override;
+		virtual bool AE_CALL create(const ProgramSource& vert, const ProgramSource& frag, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& includeHandler, const InputHandler& inputHandler) override;
 		virtual const ProgramInfo& getInfo() const override;
 		virtual void AE_CALL destroy() override;
 
 		bool AE_CALL use(const IVertexBufferGetter* vertexBufferGetter, const IShaderParameterGetter* shaderParamGetter);
 
 	protected:
-		struct InVertexBufferInfo {
+		struct InputVertexBufferInfo {
 			GLuint location;
 			GLenum type;
 			GLint size;
@@ -37,7 +37,7 @@ namespace aurora::modules::graphics::gl {
 
 
 		GLuint _handle;
-		std::vector<GLuint> _inVertexBufferLocations;
+		std::vector<GLuint> _inputVertexBufferLocations;
 		std::vector<UniformInfo> _uniformLayouts;
 		std::vector<ConstantBufferLayout> _uniformBlockLayouts;
 
