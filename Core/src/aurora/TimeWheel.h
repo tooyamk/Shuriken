@@ -112,7 +112,7 @@ namespace aurora {
 					auto last = _interval - _slotElapsed;
 					if (_tickingLastTime >= last) {
 						_tickingElapsed = last;
-						_slots[_curSlotIndex].tick(*this, true, _tickingElapsed, fn);
+						_slots[_curSlotIndex].tick(*this, true, _tickingElapsed, std::forward<Fn>(fn));
 						_tickingElapsed = 0;
 
 						_slotElapsed = 0;
@@ -127,7 +127,7 @@ namespace aurora {
 					std::scoped_lock lck(_mutex);
 
 					_tickingElapsed = _interval;
-					_slots[_curSlotIndex].tick(*this, true, _tickingElapsed, fn);
+					_slots[_curSlotIndex].tick(*this, true, _tickingElapsed, std::forward<Fn>(fn));
 					_tickingElapsed = 0;
 
 					_tickingLastTime -= _interval;
@@ -138,7 +138,7 @@ namespace aurora {
 					std::scoped_lock lck(_mutex);
 
 					_tickingElapsed = _tickingLastTime;
-					_slots[_curSlotIndex].tick(*this, false, _tickingElapsed, fn);
+					_slots[_curSlotIndex].tick(*this, false, _tickingElapsed, std::forward<Fn>(fn));
 					_tickingElapsed = 0;
 
 					_slotElapsed += _tickingLastTime;

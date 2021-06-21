@@ -3,7 +3,7 @@
 #include "aurora/Global.h"
 
 namespace aurora::hash {
-	class  xxHash {
+	class xxHash {
 	public:
 		template<size_t Bits, std::endian DataEndian>
 		requires (Bits == 32 || Bits == 64)
@@ -44,7 +44,7 @@ namespace aurora::hash {
 
 	private:
 		template<size_t Bits>
-		struct Prime { inline static constexpr uint_t<Bits> VALUE[] = { 0, 0, 0, 0 }; };
+		struct Prime;
 		template<>
 		struct Prime<32> { inline static constexpr uint_t<32> VALUE[] = { 2654435761U, 2246822519U, 3266489917U, 668265263U, 374761393U }; };
 		template<>
