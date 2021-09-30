@@ -3,10 +3,81 @@
 #include "../BaseTester.h"
 #include <shared_mutex>
 
+template<typename T>
+class LockFreeSinglyLinkedList {
+private:
+	struct Node {
+		volatile std::atomic<Node*> next;
+		T item;
+
+		Node() :
+			next(nullptr) {
+		}
+
+		explicit Node(const T& item) :
+			next(nullptr),
+			item(item) {
+		}
+
+		explicit Node(T&& item) :
+			next(nullptr),
+			item(std::move(item)) {
+		}
+	};
+
+	Node* _head;
+
+	template<typename I>
+	void _insertHead(I&& item) {
+		auto n = new Node(std::forward<I>(item));
+
+		do {
+			auto next = _head->next.load(std::memory_order::acquire);
+			n->next.store(next, std::memory_order::release);
+			if (_head->next.compare_exchange_strong(next, n, std::memory_order::release, std::memory_order::relaxed)) break;
+		} while (true);
+	}
+
+public:
+	LockFreeSinglyLinkedList() :
+		_head(new Node()) {
+	}
+
+	inline void insertHead(const T& item) {
+		_insertHead(item);
+	}
+
+	inline void insertHead(T&& item) {
+		_insertHead(item);
+	}
+};
+
 class LockfreeTester : public BaseTester {
 public:
 	virtual int32_t AE_CALL run() override {
 		IntrusivePtr app = new Application("TestApp");
+
+		uint32_t val = 0;
+		auto hash = hash::xxHash<64>::calc<std::endian::native>(&val, 4, 0);
+
+		hash::xxHash<64> s;
+		s.begin(0);
+		s.update(&val, 4);
+		auto hash2 = s.digest();
+
+		printFloat(0.0f);
+		printFloat(0.1f);
+		printFloat(0.2f);
+		printFloat(0.3f);
+		printFloat(0.4f);
+		printFloat(0.5f);
+		printFloat(0.6f);
+		printFloat(0.7f);
+		printFloat(0.8f);
+		printFloat(0.9f);
+		printFloat(1.0f);
+		printFloat(0.123f);
+		printFloat(0.111111111f);
 
 		ApplicationStyle wndStype;
 		wndStype.thickFrame = true;
@@ -23,7 +94,7 @@ public:
 
 			app->setVisible(true);
 
-			_testQueue();
+			//_testQueue();
 
 			looper->run(true);
 		}
@@ -31,11 +102,26 @@ public:
 		return 0;
 	}
 
+	void printFloat(float32_t f) {
+		auto iv = *(uint32_t*)&f;
+
+		std::string s = String::toString(iv >> 31) + " ";
+		for (auto i = 0; i < 8; ++i) {
+			s += String::toString(iv >> (30 - i) & 0b1);
+		}
+		s += " ";
+		for (auto i = 0; i < 23; ++i) {
+			s += String::toString(iv >> (22 - i) & 0b1);
+		}
+
+		printaln(f, "   ", s);
+	}
+
 private:
 	void AE_CALL _testQueue() {
 		using Class = lockfree::LinkedQueue<uint32_t, lockfree::QueueMode::MPMC>;
 		auto queue = std::make_shared<Class>();
-		auto tmpVec = std::make_shared<std::vector<uint32_t>>();
+		auto tmpSet = std::make_shared<std::unordered_set<uint32_t>>();
 		auto tmpVecMtx = std::make_shared<std::mutex>();
 		auto idGenerator = std::make_shared<std::atomic_uint32_t>(0);
 		auto accumulative = std::make_shared<std::uint32_t>(0);
@@ -56,12 +142,12 @@ private:
 		}
 
 		for (auto j = 0; j < (((uint8_t)(Class::MODE) & 0b1) ? 10 : 1); ++j) {
-			std::thread([queue, tmpVec, tmpVecMtx, accumulative]() {
+			std::thread([queue, tmpSet, tmpVecMtx, accumulative]() {
 				do {
 					uint32_t val;
 					while (queue->pop(val)) {
 						std::scoped_lock lock(*tmpVecMtx);
-						tmpVec->emplace_back(val);
+						tmpSet->emplace(val);
 						if (val > 1000000) {
 							int a = 1;
 						}
@@ -69,7 +155,7 @@ private:
 
 					{
 						std::scoped_lock lock(*tmpVecMtx);
-						if (*accumulative + tmpVec->size() == 1000000) break;
+						if (*accumulative + tmpSet->size() == 1000000) break;
 					}
 					std::this_thread::sleep_for(1ms);
 				} while (true);
@@ -78,7 +164,9 @@ private:
 			}).detach();
 		}
 
-		std::thread([queue, tmpVec, tmpVecMtx, accumulative]() {
+		std::thread([queue, tmpSet, tmpVecMtx, accumulative]() {
+			auto t0 = Time::now();
+
 			do {
 				auto old = *accumulative;
 
@@ -87,17 +175,12 @@ private:
 						auto old1 = *accumulative;
 
 						std::scoped_lock lock(*tmpVecMtx);
-						if (!tmpVec->empty()) {
+						if (!tmpSet->empty()) {
 							auto next = *accumulative + 1;
-							for (size_t i = 0, n = tmpVec->size(); i < n; ++i) {
-								if (auto val = (*tmpVec)[i]; val == next) {
-									++(*accumulative);
-									tmpVec->erase(tmpVec->begin() + i);
-									break;
-								} else if (val <= *accumulative) {
-									//error
-									int a = 1;
-								}
+							auto itr = tmpSet->find(next);
+							if (itr != tmpSet->end()) {
+								++(*accumulative);
+								tmpSet->erase(itr);
 							}
 						}
 
@@ -105,9 +188,14 @@ private:
 					} while (true);
 				}
 
-				if (old != *accumulative) {
+				auto t1 = Time::now();
+				auto forcePrint = t1 - t0 >= 2000;
+
+				if ((old != *accumulative) || forcePrint) {
 					printaln("_accumulative : ", *accumulative);
 				}
+
+				if (forcePrint) t0 = t1;
 
 				std::this_thread::sleep_for(1ms);
 			} while (true);

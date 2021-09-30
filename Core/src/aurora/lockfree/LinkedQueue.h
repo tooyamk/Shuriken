@@ -45,6 +45,7 @@ namespace aurora::lockfree {
 
 			auto oldTail = _tail;
 			_tail = n;
+			std::atomic_thread_fence(std::memory_order::release);
 			oldTail->next = n;
 
 			return true;

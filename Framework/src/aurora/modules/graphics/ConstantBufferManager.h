@@ -1,7 +1,7 @@
 #pragma once
 
 #include "aurora/Intrusive.h"
-#include "aurora/hash/CRC.h"
+#include "aurora/hash/xxHash.h"
 #include <functional>
 #include <unordered_map>
 #include <unordered_set>
@@ -49,9 +49,7 @@ namespace aurora::modules::graphics {
 			std::vector<const ShaderParameter*>& usingParams, std::vector<const ConstantBufferLayout::Variables*>& usingVars) const;
 
 	private:
-		inline static auto _crcTable = hash::CRC::createTable<64>(0x42F0E1EBA9EA3693ULL);
-
-		void AE_CALL _calcFeatureValue(const Variables& var, uint16_t& numValidVars);
+		void AE_CALL _calcFeatureValue(const Variables& var, uint16_t& numValidVars, hash::xxHash<64>& hasher);
 
 		void AE_CALL _collectUsingInfo(const ConstantBufferLayout::Variables& var, const IShaderParameterGetter& getter, ShaderParameterUsageStatistics& statistics,
 			std::vector<const ShaderParameter*>& usingParams, std::vector<const ConstantBufferLayout::Variables*>& usingVars) const;

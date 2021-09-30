@@ -136,7 +136,7 @@ namespace aurora::modules::graphics::gl {
 
 
 	inline uint64_t calcHash(const void* data, size_t size) {
-		return hash::xxHash::calc<64, std::endian::native>(data, size, 0);
+		return hash::xxHash<64>::calc<std::endian::native>(data, size, 0);
 	}
 
 	template<typename T>

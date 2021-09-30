@@ -3,6 +3,7 @@
 #include "aurora/Intrusive.h"
 #include "aurora/ByteArray.h"
 #include "aurora/String.h"
+#include "aurora/hash/xxHash.h"
 #include <unordered_map>
 #include <functional>
 
@@ -36,6 +37,8 @@ namespace aurora {
 			SHORT_STRING,
 			STRING_VIEW,
 
+			SHORT_BYTES_LE_15,
+			SHORT_BYTES16,
 			EXT_BYTES,
 		};
 
@@ -57,18 +60,28 @@ namespace aurora {
 
 		struct AE_CORE_DLL StdUnorderedHasher {
 			inline size_t AE_CALL operator()(const SerializableObject& value) const {
+				using namespace aurora::enum_operators;
+
 				switch (value._type) {
 				case Type::BOOL:
 					return std::hash<bool>{}(value._getValue<bool>());
 				case Type::BYTES:
 				{
 					auto val = value._getValue<Bytes*>();
-					return std::hash<void*>{}((void*)val->getValue());
+					return hash::xxHash<sizeof(size_t) * 8>::calc<std::endian::native>(val->getValue(), val->getSize(), 0);
 				}
+				case Type::SHORT_BYTES_LE_15:
+					return hash::xxHash<sizeof(size_t) * 8>::calc<std::endian::native>(value._value, value._value[VALUE_SIZE - 1], 0);
+				case Type::SHORT_BYTES16:
+					return hash::xxHash<sizeof(size_t) * 8>::calc<std::endian::native>(value._value, VALUE_SIZE, 0);
 				case Type::EXT_BYTES:
 				{
 					auto& val = value._getValue<BytesView>();
-					return std::hash<void*>{}((void*)val.data);
+					uint8_t data[sizeof(size_t) * 2];
+					auto p = (size_t*)&data;
+					p[0] = (size_t)val.data;
+					p[1] = val.size;
+					return hash::xxHash<sizeof(size_t) * 8>::calc<std::endian::native>(data, sizeof(data), 0);
 				}
 				case Type::FLOAT32:
 					return std::hash<float32_t>{}(value._getValue<float32_t>());
@@ -186,7 +199,7 @@ namespace aurora {
 			return _type == Type::STRING || _type == Type::SHORT_STRING || _type == Type::STRING_VIEW;
 		}
 		inline bool AE_CALL isBytes() const {
-			return _type == Type::BYTES || _type == Type::EXT_BYTES;
+			return _type == Type::BYTES || (_type >= Type::SHORT_BYTES_LE_15 && _type <= Type::EXT_BYTES);
 		}
 
 		size_t AE_CALL getSize() const;
@@ -196,7 +209,7 @@ namespace aurora {
 		bool AE_CALL setArray();
 		bool AE_CALL setMap();
 
-		template<bool Ext>
+		template<bool Ext, bool Short = false>
 		bool AE_CALL setBytes() {
 			if constexpr (Ext) {
 				if (_type == Type::EXT_BYTES) {
@@ -213,15 +226,28 @@ namespace aurora {
 					return true;
 				}
 			} else {
-				if (_type == Type::BYTES) {
-					return false;
+				if constexpr (Short) {
+					if (_type == Type::SHORT_BYTES_LE_15 || _type == Type::SHORT_BYTES16) {
+						return false;
+					} else {
+						_freeValue();
+
+						_value[VALUE_SIZE - 1] = 0;
+						_type = Type::SHORT_BYTES_LE_15;
+
+						return true;
+					}
 				} else {
-					_freeValue();
+					if (_type == Type::BYTES) {
+						return false;
+					} else {
+						_freeValue();
 
-					_getValue<Bytes*>() = new Bytes();
-					_type = Type::BYTES;
+						_getValue<Bytes*>() = new Bytes();
+						_type = Type::BYTES;
 
-					return true;
+						return true;
+					}
 				}
 			}
 		}
@@ -882,6 +908,12 @@ namespace aurora {
 
 				break;
 			}
+			case Type::SHORT_BYTES_LE_15:
+				_packBytes(ba, _value, _value[VALUE_SIZE - 1]);
+				break;
+			case Type::SHORT_BYTES16:
+				_packBytes(ba, _value, VALUE_SIZE);
+				break;
 			case Type::EXT_BYTES:
 			{
 				auto& bv = _getValue<BytesView>();

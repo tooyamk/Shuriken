@@ -146,8 +146,8 @@ namespace aurora::modules::inputs::direct_input {
 
 		POINT p2;
 		GetCursorPos(&p2);
-		p.x = p.x;
-		p.y = p.y;
+		p.x = p2.x;
+		p.y = p2.y;
 
 		return p;
 	}

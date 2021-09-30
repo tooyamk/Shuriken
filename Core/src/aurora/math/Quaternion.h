@@ -26,6 +26,20 @@ namespace aurora {
 			return data;
 		}
 
+		inline Quaternion& AE_CALL operator=(const Quaternion& q) noexcept {
+			for (auto i = 0; i < 4; ++i) data[i] = q.data[i];
+			return *this;
+		}
+
+		inline Quaternion& AE_CALL operator=(Quaternion&& q) noexcept {
+			for (auto i = 0; i < 4; ++i) data[i] = q.data[i];
+			return *this;
+		}
+
+		inline void AE_CALL operator*=(const Quaternion& q) {
+			append(q);
+		}
+
 		inline float32_t AE_CALL getLength() const {
 			return std::sqrt(getLengthSq());
 		}
@@ -139,6 +153,11 @@ namespace aurora {
 			return q;
 		}
 		static void AE_CALL createAxis(const float32_t(&axis)[3], float32_t radian, Quaternion& dst);
+		inline static Quaternion AE_CALL createAxis(const float32_t(&axis)[3], float32_t radian) {
+			Quaternion q(NO_INIT);
+			createAxis(axis, radian, q);
+			return q;
+		}
 		static void AE_CALL createLookAt(const float32_t(&forward)[3], const float32_t(&upward)[3], Quaternion& dst);
 		inline static void AE_CALL slerp(const Quaternion& from, const Quaternion& to, float32_t t, Quaternion& dst) {
 			Math::slerp(from, to, t, dst);
@@ -158,4 +177,10 @@ namespace aurora {
 			};
 		};
 	};
+
+	inline Quaternion AE_CALL operator*(const Quaternion& lhs, const Quaternion& rhs) {
+		Quaternion q(NO_INIT);
+		Math::appendQuat(lhs, rhs, q);
+		return q;
+	}
 }

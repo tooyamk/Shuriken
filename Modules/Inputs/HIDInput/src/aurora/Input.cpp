@@ -36,7 +36,7 @@ namespace aurora::modules::inputs::hid_input {
 
 					auto path = HID::getPath(info);
 
-					auto hash = hash::xxHash::calc<64, std::endian::native>(path.data(), path.size(), 0);
+					auto hash = hash::xxHash<64>::calc<std::endian::native>(path.data(), path.size(), 0);
 					dev.guid.set<false, true>(&hash, sizeof(hash), 0);
 					dev.vendorID = HID::getVendorID(info);
 					dev.productID = HID::getProductID(info);

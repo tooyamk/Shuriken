@@ -3,16 +3,65 @@
 #include "aurora/Global.h"
 
 namespace aurora::hash {
+	template<size_t Bits>
+	requires (Bits == 32 || Bits == 64)
 	class xxHash {
 	public:
-		template<size_t Bits, std::endian DataEndian>
-		requires (Bits == 32 || Bits == 64)
+		using hash_t = uint_t<Bits>;
+
+		void begin(uint_t<Bits> seed) {
+			_seed = seed;
+			_bufferCount = 0;
+			_length = 0;
+
+			auto& prime = Prime<Bits>::VALUE;
+			_hash[0] = _seed + prime[0] + prime[1];
+			_hash[1] = _seed + prime[1];
+			_hash[2] = _seed;
+			_hash[3] = _seed - prime[0];
+		}
+
+		template<std::endian DataEndian = std::endian::native>
+		void update(const void* data, size_t len) {
+			_length += len;
+
+			auto src = (const uint8_t*)data;
+
+			while (len > 0) {
+				size_t cpyLen = HALF_BITS - _bufferCount;
+				if (cpyLen > len) cpyLen = len;
+				len -= cpyLen;
+				memcpy(_buffer + _bufferCount, src, cpyLen);
+				src += cpyLen;
+				_bufferCount += cpyLen;
+
+				if (_bufferCount == HALF_BITS) {
+					auto dst = (const uint8_t*)_buffer;
+					_hash[0] = _round(_hash[0], _readUInt<Bits, DataEndian>(dst)); dst += OFFSET;
+					_hash[1] = _round(_hash[1], _readUInt<Bits, DataEndian>(dst)); dst += OFFSET;
+					_hash[2] = _round(_hash[2], _readUInt<Bits, DataEndian>(dst)); dst += OFFSET;
+					_hash[3] = _round(_hash[3], _readUInt<Bits, DataEndian>(dst)); dst += OFFSET;
+
+					_bufferCount = 0;
+				}
+			};
+		}
+
+		template<std::endian DataEndian = std::endian::native>
+		uint_t<Bits> digest() {
+			hash_t ret;
+			if (_length >= HALF_BITS) {
+				ret = std::rotl(_hash[0], 1) + std::rotl(_hash[1], 7) + std::rotl(_hash[2], 12) + std::rotl(_hash[3], 18);
+				_subMergeRound(ret, _hash[0], _hash[1], _hash[2], _hash[3]);
+			} else {
+				ret = _seed + Prime<Bits>::VALUE[4];
+			}
+
+			return _subEnding<DataEndian>(ret + (hash_t)_length, _buffer, _buffer + _bufferCount);
+		}
+
+		template<std::endian DataEndian = std::endian::native>
 		static uint_t<Bits> AE_CALL calc(const void* data, size_t len, uint_t<Bits> seed) {
-			using hash_t = uint_t<Bits>;
-
-			constexpr size_t OFFSET = Bits >> 3;
-			constexpr size_t HALF_BITS = Bits >> 1;
-
 			auto& prime = Prime<Bits>::VALUE;
 
 			auto src = (const uint8_t*)data;
@@ -26,23 +75,25 @@ namespace aurora::hash {
 				hash_t v4 = seed - prime[0];
 
 				do {
-					v1 = _round<Bits>(v1, _readUInt<Bits, DataEndian>(src)); src += OFFSET;
-					v2 = _round<Bits>(v2, _readUInt<Bits, DataEndian>(src)); src += OFFSET;
-					v3 = _round<Bits>(v3, _readUInt<Bits, DataEndian>(src)); src += OFFSET;
-					v4 = _round<Bits>(v4, _readUInt<Bits, DataEndian>(src)); src += OFFSET;
+					v1 = _round(v1, _readUInt<Bits, DataEndian>(src)); src += OFFSET;
+					v2 = _round(v2, _readUInt<Bits, DataEndian>(src)); src += OFFSET;
+					v3 = _round(v3, _readUInt<Bits, DataEndian>(src)); src += OFFSET;
+					v4 = _round(v4, _readUInt<Bits, DataEndian>(src)); src += OFFSET;
 				} while (src <= (dataEnd - HALF_BITS));
 
 				ret = std::rotl(v1, 1) + std::rotl(v2, 7) + std::rotl(v3, 12) + std::rotl(v4, 18);
-
-				_subMergeRound<Bits>(ret, v1, v2, v3, v4);
-			} else { 
+				_subMergeRound(ret, v1, v2, v3, v4);
+			} else {
 				ret = seed + prime[4];
 			}
 
-			return _subEnding<Bits, DataEndian>(ret + (hash_t)len, src, dataEnd);
+			return _subEnding<DataEndian>(ret + (hash_t)len, src, dataEnd);
 		}
 
 	private:
+		constexpr static size_t OFFSET = Bits >> 3;
+		constexpr static size_t HALF_BITS = Bits >> 1;
+
 		template<size_t Bits>
 		struct Prime;
 		template<>
@@ -50,16 +101,21 @@ namespace aurora::hash {
 		template<>
 		struct Prime<64> { inline static constexpr uint_t<64> VALUE[] = { 11400714785074694791ULL, 14029467366897019727ULL, 1609587929392839161ULL, 9650029242287828579ULL, 2870177450012600261ULL }; };
 
-		template<size_t Bits, std::endian DataEndian>
-		inline static uint_t<Bits> AE_CALL _readUInt(const uint8_t* data) {
+		uint_t<Bits> _seed;
+		uint8_t _buffer[HALF_BITS];
+		uint8_t _bufferCount;
+		hash_t _hash[4];
+		size_t _length;
+
+		template<size_t nBits, std::endian DataEndian>
+		inline static uint_t<nBits> AE_CALL _readUInt(const uint8_t* data) {
 			if constexpr (DataEndian == std::endian::native) {
-				return *(uint_t<Bits>*)data;
+				return *(uint_t<nBits>*)data;
 			} else {
-				return byteswap<Bits / 8>(data);
+				return byteswap<nBits / 8>(data);
 			}
 		}
 
-		template<size_t Bits>
 		inline static uint_t<Bits> AE_CALL _round(uint_t<Bits> seed, uint_t<Bits> x) {
 			constexpr size_t SHIFT = Bits == 32 ? 13 : 31;
 
@@ -69,27 +125,25 @@ namespace aurora::hash {
 			return seed;
 		}
 
-		template<size_t Bits>
 		inline static void AE_CALL _subMergeRound(uint_t<Bits>& ret, uint_t<Bits> v1, uint_t<Bits> v2, uint_t<Bits> v3, uint_t<Bits> v4) {
 			if constexpr (Bits == 64) {
-				ret = _mergeRound<Bits>(ret, v1);
-				ret = _mergeRound<Bits>(ret, v2);
-				ret = _mergeRound<Bits>(ret, v3);
-				ret = _mergeRound<Bits>(ret, v4);
+				ret = _mergeRound(ret, v1);
+				ret = _mergeRound(ret, v2);
+				ret = _mergeRound(ret, v3);
+				ret = _mergeRound(ret, v4);
 			}
 		}
 
-		template<size_t Bits>
 		inline static uint_t<Bits> AE_CALL _mergeRound(uint_t<Bits> acc, uint_t<Bits> val) {
 			if constexpr (Bits == 64) {
-				val = _round<Bits>(0, val);
+				val = _round(0, val);
 				acc ^= val;
 				acc = acc * Prime<Bits>::VALUE[0] + Prime<Bits>::VALUE[3];
 			}
 			return acc;
 		}
 
-		template<size_t Bits, std::endian DataEndian>
+		template<std::endian DataEndian>
 		static uint_t<Bits> AE_CALL _subEnding(uint_t<Bits> ret, const uint8_t* data, const uint8_t* dataEnd) {
 			if constexpr (Bits == 32) {
 				while ((data + 4) <= dataEnd) {
@@ -113,7 +167,7 @@ namespace aurora::hash {
 				return ret;
 			} else if constexpr (Bits == 64) {
 				while (data + 8 <= dataEnd) {
-					ret ^= _round<Bits>(0, _readUInt<Bits, DataEndian>(data));
+					ret ^= _round(0, _readUInt<Bits, DataEndian>(data));
 					ret = std::rotl(ret, 27) * Prime<Bits>::VALUE[0] + Prime<Bits>::VALUE[3];
 					data += 8;
 				}

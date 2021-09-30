@@ -262,8 +262,19 @@ namespace aurora {
 		using namespace aurora::enum_operators;
 
 		if ((flag & Flag::COPY) == Flag::COPY) {
-			_getValue<Bytes*>() = new Bytes((const uint8_t*)value, size);
-			_type = Type::BYTES;
+			if (size <= VALUE_SIZE) {
+				memcpy(_value, value, size);
+				if (size < VALUE_SIZE) {
+					_value[VALUE_SIZE - 1] = size;
+					_type = Type::SHORT_BYTES_LE_15;
+				} else {
+					_type = Type::SHORT_BYTES16;
+				}
+			} else {
+				_getValue<Bytes*>() = new Bytes((const uint8_t*)value, size);
+				_type = Type::BYTES;
+			}
+			
 			_flag = Flag::NONE;
 		} else {
 			auto& bv = _getValue<BytesView>();
@@ -358,6 +369,8 @@ namespace aurora {
 	}
 
 	bool SerializableObject::isEqual(const SerializableObject& target) const {
+		using namespace aurora::enum_operators;
+
 		switch (_type) {
 		case Type::INVALID:
 			return target._type == Type::INVALID;
@@ -462,27 +475,23 @@ namespace aurora {
 			return target._type == Type::MAP && _getValue<Map*>() == target._getValue<Map*>();
 		case Type::BYTES:
 		{
-			if (target._type == Type::BYTES) {
-				return _getValue<Bytes*>() == target._getValue<Bytes*>();
-			} else if (target._type == Type::EXT_BYTES) {
-				auto val1 = _getValue<Bytes*>();
-				auto& val2 = target._getValue<BytesView>();
-				return val1->getValue() == val2.data && val1->getSize() == val2.size;
-			} else {
-				return false;
-			}
+			if (target._type == Type::BYTES) return _getValue<Bytes*>() == target._getValue<Bytes*>();
+			return false;
+		}
+		case Type::SHORT_BYTES_LE_15:
+		{
+			if (target._type == Type::SHORT_BYTES_LE_15) return _value[VALUE_SIZE - 1] == target._value[VALUE_SIZE - 1] && !memcmp(_value, target._value, _value[VALUE_SIZE - 1]);
+			return false;
+		}
+		case Type::SHORT_BYTES16:
+		{
+			if (target._type == Type::SHORT_BYTES16) return !memcmp(_value, target._value, VALUE_SIZE);
+			return false;
 		}
 		case Type::EXT_BYTES:
 		{
-			if (target._type == Type::BYTES) {
-				auto& val1 = _getValue<BytesView>();
-				auto val2 = target._getValue<Bytes*>();
-				return val1.data == val2->getValue() && val1.size == val2->getSize();
-			} else if (target._type == Type::EXT_BYTES) {
-				return _getValue<BytesView>() == target._getValue<BytesView>();
-			} else {
-				return false;
-			}
+			if (target._type == Type::EXT_BYTES) return _getValue<BytesView>() == target._getValue<BytesView>();
+			return false;
 		}
 		default:
 			return false;
@@ -588,17 +597,54 @@ namespace aurora {
 				return false;
 			}
 		}
+		case Type::SHORT_BYTES_LE_15:
+		{
+			if (target._type == Type::SHORT_BYTES_LE_15) {
+				return _value[VALUE_SIZE - 1] == target._value[VALUE_SIZE - 1] && !memcmp(_value, target._value, _value[VALUE_SIZE - 1]);
+			} else if (target._type == Type::EXT_BYTES) {
+				auto& val2 = target._getValue<BytesView>();
+				return _value[VALUE_SIZE - 1] == val2.size && !memcmp(_value, val2.data, val2.size);
+			} else {
+				return false;
+			}
+		}
+		case Type::SHORT_BYTES16:
+		{
+			if (target._type == Type::SHORT_BYTES16) {
+				return !memcmp(_value, target._value, VALUE_SIZE);
+			} else if (target._type == Type::EXT_BYTES) {
+				auto& val2 = target._getValue<BytesView>();
+				return VALUE_SIZE == val2.size && !memcmp(_value, val2.data, VALUE_SIZE);
+			} else {
+				return false;
+			}
+		}
 		case Type::EXT_BYTES:
 		{
-			if (target._type == Type::BYTES) {
+			switch (target._type) {
+			case Type::BYTES:
+			{
 				auto& val1 = _getValue<BytesView>();
 				auto val2 = target._getValue<Bytes*>();
 				return val1.size == val2->getSize() && !memcmp(val1.data, val2->getValue(), val1.size);
-			} else if (target._type == Type::EXT_BYTES) {
+			}
+			case Type::SHORT_BYTES_LE_15:
+			{
+				auto& val1 = _getValue<BytesView>();
+				return val1.size == target._value[VALUE_SIZE - 1] && !memcmp(val1.data, target._value, val1.size);
+			}
+			case Type::SHORT_BYTES16:
+			{
+				auto& val1 = _getValue<BytesView>();
+				return val1.size == VALUE_SIZE && !memcmp(val1.data, target._value, VALUE_SIZE);
+			}
+			case Type::EXT_BYTES:
+			{
 				auto& val1 = _getValue<BytesView>();
 				auto& val2 = target._getValue<BytesView>();
 				return val1.size == val2.size && !memcmp(val1.data, val2.data, val1.size);
-			} else {
+			}
+			default:
 				return false;
 			}
 		}
@@ -617,6 +663,10 @@ namespace aurora {
 			return _getValue<Bytes*>()->getSize();
 		case Type::EXT_BYTES:
 			return _getValue<BytesView>().size;
+		case Type::SHORT_BYTES_LE_15:
+			return _value[VALUE_SIZE - 1];
+		case Type::SHORT_BYTES16:
+			return VALUE_SIZE;
 		case Type::STRING:
 			return _getValue<Str*>()->size;
 		case Type::SHORT_STRING:
@@ -770,11 +820,15 @@ namespace aurora {
 	}
 
 	const uint8_t* SerializableObject::toBytes() const {
-		if (_type == Type::BYTES) {
+		switch (_type) {
+		case Type::BYTES:
 			return _getValue<Bytes*>()->getValue();
-		} else if (_type == Type::EXT_BYTES) {
+		case Type::EXT_BYTES:
 			return _getValue<BytesView>().data;
-		} else {
+		case Type::SHORT_BYTES_LE_15:
+		case Type::SHORT_BYTES16:
+			return _value;
+		default:
 			return nullptr;
 		}
 	}
@@ -946,8 +1000,18 @@ namespace aurora {
 
 		_flag = Flag::NONE;
 		if ((flag & Flag::COPY) == Flag::COPY) {
-			setBytes<false>();
-			_getValue<Bytes*>()->setValue((const uint8_t*)value, size);
+			if (size < VALUE_SIZE) {
+				memcpy(_value, value, size);
+				if (size < VALUE_SIZE) {
+					_value[VALUE_SIZE - 1] = size;
+					_type = Type::SHORT_BYTES_LE_15;
+				} else {
+					_type = Type::SHORT_BYTES16;
+				}
+			} else {
+				setBytes<false, false>();
+				_getValue<Bytes*>()->setValue((const uint8_t*)value, size);
+			}
 		} else {
 			setBytes<true>();
 			auto& val = _getValue<BytesView>();
@@ -1357,8 +1421,18 @@ namespace aurora {
 
 		_freeValue();
 		if ((flag & Flag::COPY) == Flag::COPY) {
-			_getValue<Bytes*>() = new Bytes(ba.getCurrentSource(), size);
-			_type = Type::BYTES;
+			if (size <= VALUE_SIZE) {
+				memcpy(_value, ba.getCurrentSource(), size);
+				if (size < VALUE_SIZE) {
+					_value[VALUE_SIZE - 1] = size;
+					_type = Type::SHORT_BYTES_LE_15;
+				} else {
+					_type = Type::SHORT_BYTES16;
+				}
+			} else {
+				_getValue<Bytes*>() = new Bytes(ba.getCurrentSource(), size);
+				_type = Type::BYTES;
+			}
 		} else {
 			auto& val = _getValue<BytesView>();
 			val.data = ba.getCurrentSource();

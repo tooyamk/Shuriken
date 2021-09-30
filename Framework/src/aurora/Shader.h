@@ -2,7 +2,6 @@
 
 #include "aurora/ProgramSource.h"
 #include "aurora/ShaderDefine.h"
-#include "aurora/hash/CRC.h"
 #include "aurora/modules/graphics/IGraphicsModule.h"
 
 namespace aurora::modules::graphics {
@@ -32,9 +31,6 @@ namespace aurora {
 		void AE_CALL setVariant(ProgramSource* vs, ProgramSource* ps, const IShaderDefineGetter* getter);
 
 	protected:
-		inline static auto _crcTable = hash::CRC::createTable<64>(0x42F0E1EBA9EA3693ULL);
-
-
 		struct Variant {
 			IntrusivePtr<ProgramSource> vs;
 			IntrusivePtr<ProgramSource> ps;
