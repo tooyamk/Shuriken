@@ -97,7 +97,7 @@ ExternalProject_Add(
     PREFIX ${PROJECT_BINARY_DIR}
     GIT_REPOSITORY https://github.com/microsoft/DirectXShaderCompiler.git
     #GIT_TAG d0e9147ab86c8cb29a5fd81bd758e44d440c332c#release-1.5.1911
-    GIT_TAG release-1.5.2002
+    GIT_TAG release-1.6.2106
     GIT_SHALLOW 1
     GIT_PROGRESS 1
     GIT_CONFIG core.autocrlf=false core.eol=lf

@@ -172,25 +172,27 @@ float4 main(PS_INPUT input) : SV_TARGET {
 									img.size = tr->getSize().cast<2>();
 									img.source = std::move(pixels);
 
-									/*
-									auto aaa = extensions::PNGConverter::parse(readFile("D:/Users/Sephiroth/Desktop/6x6.png"));
-									if (aaa->format == modules::graphics::TextureFormat::R8G8B8) {
+									///*
+									auto aaa = extensions::PNGConverter::decode(readFile("D:/Users/Sephiroth/Desktop/wall.png"));
+									if (aaa && aaa->format == modules::graphics::TextureFormat::R8G8B8) {
 										ByteArray dst(aaa->size.getMultiplies() * 4);
 										dst.setLength(dst.getCapacity());
 										Image::convertFormat(aaa->size, aaa->format, aaa->source.getSource(), modules::graphics::TextureFormat::R8G8B8A8, dst.getSource());
 										aaa->format = modules::graphics::TextureFormat::R8G8B8A8;
 										aaa->source = std::move(dst);
 									}
-									aaa->flipY();
+									if (aaa) aaa->flipY();
+									//*/
 
+									///*
 									auto t0 = Time::now();
-									auto out = extensions::ASTCConverter::encode(*aaa, extensions::ASTCConverter::BlockSize::BLOCK_4x4, extensions::ASTCConverter::Preset::FASTEST);
+									auto out = extensions::ASTCConverter::encode(*aaa, Vec3ui32(4, 4, 1), extensions::ASTCConverter::Preset::FASTEST, extensions::ASTCConverter::Flags::NONE, 10);
 									if (out.isValid()) {
-										printcln("use time : ", Time::now() - t0);
+										printaln("use time : ", Time::now() - t0);
 										writeFile("D:/Users/Sephiroth/Desktop/6x6.astc", out);
-										printcln("doneeeeeeeeeeeeeeeeee");
+										printaln("doneeeeeeeeeeeeeeeeee");
 									}
-									*/
+									//*/
 
 									//writeFile(getAppPath().parent_path().string() + "/offscreen.png", extensions::PNGConverter::encode(img));
 								}

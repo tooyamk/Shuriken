@@ -57,14 +57,6 @@ public:
 	virtual int32_t AE_CALL run() override {
 		IntrusivePtr app = new Application("TestApp");
 
-		uint32_t val = 0;
-		auto hash = hash::xxHash<64>::calc<std::endian::native>(&val, 4, 0);
-
-		hash::xxHash<64> s;
-		s.begin(0);
-		s.update(&val, 4);
-		auto hash2 = s.digest();
-
 		printFloat(0.0f);
 		printFloat(0.1f);
 		printFloat(0.2f);
@@ -77,6 +69,7 @@ public:
 		printFloat(0.9f);
 		printFloat(1.0f);
 		printFloat(0.123f);
+		printFloat(0.125f);
 		printFloat(0.111111111f);
 
 		ApplicationStyle wndStype;
@@ -106,8 +99,13 @@ public:
 		auto iv = *(uint32_t*)&f;
 
 		std::string s = String::toString(iv >> 31) + " ";
-		for (auto i = 0; i < 8; ++i) {
-			s += String::toString(iv >> (30 - i) & 0b1);
+		{
+			uint8_t val = iv >> 23 & 0xFF;
+			val -= 127;
+			//s += String::toString(val, 2);
+			for (auto i = 0; i < 8; ++i) {
+				s += String::toString(val >> (7 - i) & 0b1);
+			}
 		}
 		s += " ";
 		for (auto i = 0; i < 23; ++i) {

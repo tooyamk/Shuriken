@@ -56,8 +56,6 @@ namespace aurora::modules::inputs::hid_input {
 	}
 
 	void GamepadDriver::setKeyMapping(GamepadKeyMapping& dst, const GamepadKeyMapping* src) const {
-		using namespace aurora::enum_operators;
-
 		if (src) {
 			dst = *src;
 		} else {

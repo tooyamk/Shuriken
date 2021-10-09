@@ -24,7 +24,7 @@ ExternalProject_Add(
     PREFIX ${PROJECT_BINARY_DIR}
     #URL https://nchc.dl.sourceforge.net/project/glew/glew/2.1.0/glew-2.1.0.zip
     GIT_REPOSITORY https://github.com/nigels-com/glew.git
-    GIT_TAG glew-2.1.0
+    GIT_TAG glew-2.2.0
     GIT_SHALLOW 1
     GIT_PROGRESS 1
     TMP_DIR tmp

@@ -1,4 +1,5 @@
 #include "GamepadDriverWindows.h"
+#include "aurora/Debug.h"
 
 #if AE_OS == AE_OS_WINDOWS
 #include "Input.h"
@@ -36,8 +37,7 @@ namespace aurora::modules::inputs::hid_input {
 		HIDP_CAPS caps;
 		if (HidP_GetCaps(_preparsedData, &caps) == HIDP_STATUS_SUCCESS) {
 			if (caps.NumberInputValueCaps) {
-				std::vector<HIDP_VALUE_CAPS> valueCaps;
-				valueCaps.resize(caps.NumberInputValueCaps);
+				std::vector<HIDP_VALUE_CAPS> valueCaps(caps.NumberInputValueCaps);
 				if (HidP_GetValueCaps(HidP_Input, valueCaps.data(), &caps.NumberInputValueCaps, _preparsedData) == HIDP_STATUS_SUCCESS) {
 					for (auto& caps : valueCaps) {
 						if (caps.UsagePage != HIDReportUsagePageType::GENERIC_DESKTOP) continue;
@@ -175,37 +175,36 @@ namespace aurora::modules::inputs::hid_input {
 			size_t lastAxes = _maxValidAxes;
 			for (size_t i = 0; i < 2; ++i) {
 				if (lastAxes >= 2) {
-					auto setStick = false;
 					auto sx = GamepadVirtualKeyCode::L_STICK_X + (i << 1);
 
 					if (!usedAxes[0] && !usedAxes[1]) {
 						dst.set(sx, GamepadKeyCode::AXIS_1);
 						dst.set(sx + 1, GamepadKeyCode::AXIS_1 + 1);
 
-						setStick = true;
 						usedAxes[0] = true;
 						usedAxes[1] = true;
 						lastAxes -= 2;
+						continue;
 					}
-					if (!setStick && !usedAxes[3] && !usedAxes[4]) {
+					if (!usedAxes[3] && !usedAxes[4]) {
 						dst.set(sx, GamepadKeyCode::AXIS_1 + 3);
 						dst.set(sx + 1, GamepadKeyCode::AXIS_1 + 4);
 
-						setStick = true;
 						usedAxes[3] = true;
 						usedAxes[4] = true;
 						lastAxes -= 2;
+						continue;
 					}
-					if (!setStick && !usedAxes[2] && !usedAxes[5]) {
+					if (!usedAxes[2] && !usedAxes[5]) {
 						dst.set(sx, GamepadKeyCode::AXIS_1 + 2);
 						dst.set(sx + 1, GamepadKeyCode::AXIS_1 + 5);
 
-						setStick = true;
 						usedAxes[2] = true;
 						usedAxes[5] = true;
 						lastAxes -= 2;
+						continue;
 					}
-					if (!setStick) {
+					{
 						dst.set(sx, GamepadKeyCode::AXIS_1 + getAndSet());
 						dst.set(sx + 1, GamepadKeyCode::AXIS_1 + getAndSet());
 

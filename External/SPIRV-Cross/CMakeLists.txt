@@ -33,7 +33,7 @@ ExternalProject_Add(
     ${PROJECT_NAME}
     PREFIX ${PROJECT_BINARY_DIR}
     GIT_REPOSITORY https://github.com/KhronosGroup/SPIRV-Cross.git
-    GIT_TAG 2020-02-26
+    GIT_TAG 2021-01-15
     GIT_SHALLOW 1
     GIT_PROGRESS 1
     TMP_DIR tmp

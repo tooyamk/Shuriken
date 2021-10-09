@@ -5,7 +5,7 @@
 namespace aurora::extensions {
 	class AE_EXTENSION_DLL ASTCConverter {
 	public:
-		enum class BlockSize : uint8_t {
+		/*enum class BlockSize : uint16_t {
 			BLOCK_4x4,
 			BLOCK_5x4,
 			BLOCK_5x5,
@@ -31,7 +31,7 @@ namespace aurora::extensions {
 			BLOCK_6x5x5,
 			BLOCK_6x6x5,
 			BLOCK_6x6x6
-		};
+		};*/
 
 		enum class Preset : uint8_t {
 			FASTEST,
@@ -41,6 +41,17 @@ namespace aurora::extensions {
 			EXHAUSTIVE
 		};
 
-		static ByteArray AE_CALL encode(const Image& img, BlockSize blockSize, Preset preset, size_t threadCount = 0);
+		enum class Flags : uint8_t {
+			NONE = 0,
+			MAP_NORMAL = 1 << 0,
+			MAP_MASK = 1 << 1,
+			USE_ALPHA_WEIGHT = 1 << 2,
+			USE_PERCEPTUAL = 1 << 3,
+			DECOMPRESS_ONLY = 1 << 4,
+			SELF_DECOMPRESS_ONLY = 1 << 5,
+			MAP_RGBM = 1 << 6
+		};
+
+		static ByteArray AE_CALL encode(const Image& img, Vector<3, uint8_t> blockSize, Preset preset, Flags flags, size_t threadCount = 0);
 	};
 }
