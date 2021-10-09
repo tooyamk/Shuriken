@@ -14,7 +14,7 @@ namespace aurora::hash {
 			_bufferCount = 0;
 			_length = 0;
 
-			auto& prime = Prime<Bits>::VALUE;
+			auto& prime = PRIME_VALUE;
 			_hash[0] = _seed + prime[0] + prime[1];
 			_hash[1] = _seed + prime[1];
 			_hash[2] = _seed;
@@ -54,7 +54,7 @@ namespace aurora::hash {
 				ret = std::rotl(_hash[0], 1) + std::rotl(_hash[1], 7) + std::rotl(_hash[2], 12) + std::rotl(_hash[3], 18);
 				_subMergeRound(ret, _hash[0], _hash[1], _hash[2], _hash[3]);
 			} else {
-				ret = _seed + Prime<Bits>::VALUE[4];
+				ret = _seed + PRIME_VALUE[4];
 			}
 
 			return _subEnding<DataEndian>(ret + (hash_t)_length, _buffer, _buffer + _bufferCount);
@@ -62,7 +62,7 @@ namespace aurora::hash {
 
 		template<std::endian DataEndian = std::endian::native>
 		static uint_t<Bits> AE_CALL calc(const void* data, size_t len, uint_t<Bits> seed) {
-			auto& prime = Prime<Bits>::VALUE;
+			auto& prime = PRIME_VALUE;
 
 			auto src = (const uint8_t*)data;
 			auto dataEnd = src + len;
@@ -94,12 +94,18 @@ namespace aurora::hash {
 		constexpr static size_t OFFSET = Bits >> 3;
 		constexpr static size_t HALF_BITS = Bits >> 1;
 
-		template<size_t Bits>
-		struct Prime;
-		template<>
-		struct Prime<32> { inline static constexpr uint_t<32> VALUE[] = { 2654435761U, 2246822519U, 3266489917U, 668265263U, 374761393U }; };
-		template<>
-		struct Prime<64> { inline static constexpr uint_t<64> VALUE[] = { 11400714785074694791ULL, 14029467366897019727ULL, 1609587929392839161ULL, 9650029242287828579ULL, 2870177450012600261ULL }; };
+		inline static constexpr auto AE_CALL _createPrimeValue() {
+			using T = std::array<uint_t<Bits>, 5>;
+			if constexpr (Bits == 32) {
+				T val = { 2654435761U, 2246822519U, 3266489917U, 668265263U, 374761393U };
+				return val;
+			} else {
+				T val = { 11400714785074694791ULL, 14029467366897019727ULL, 1609587929392839161ULL, 9650029242287828579ULL, 2870177450012600261ULL };
+				return val;
+			}
+		}
+
+		inline static constexpr auto PRIME_VALUE = _createPrimeValue();
 
 		uint_t<Bits> _seed;
 		uint8_t _buffer[HALF_BITS];
@@ -119,9 +125,9 @@ namespace aurora::hash {
 		inline static uint_t<Bits> AE_CALL _round(uint_t<Bits> seed, uint_t<Bits> x) {
 			constexpr size_t SHIFT = Bits == 32 ? 13 : 31;
 
-			seed += x * Prime<Bits>::VALUE[1];
+			seed += x * PRIME_VALUE[1];
 			seed = std::rotl(seed, SHIFT);
-			seed *= Prime<Bits>::VALUE[0];
+			seed *= PRIME_VALUE[0];
 			return seed;
 		}
 
@@ -138,7 +144,7 @@ namespace aurora::hash {
 			if constexpr (Bits == 64) {
 				val = _round(0, val);
 				acc ^= val;
-				acc = acc * Prime<Bits>::VALUE[0] + Prime<Bits>::VALUE[3];
+				acc = acc * PRIME_VALUE[0] + PRIME_VALUE[3];
 			}
 			return acc;
 		}
@@ -147,47 +153,47 @@ namespace aurora::hash {
 		static uint_t<Bits> AE_CALL _subEnding(uint_t<Bits> ret, const uint8_t* data, const uint8_t* dataEnd) {
 			if constexpr (Bits == 32) {
 				while ((data + 4) <= dataEnd) {
-					ret += _readUInt<Bits, DataEndian>(data) * Prime<Bits>::VALUE[2];
-					ret = std::rotl(ret, 17) * Prime<Bits>::VALUE[3];
+					ret += _readUInt<Bits, DataEndian>(data) * PRIME_VALUE[2];
+					ret = std::rotl(ret, 17) * PRIME_VALUE[3];
 					data += 4;
 				}
 
 				while (data < dataEnd) {
-					ret += (*data) * Prime<Bits>::VALUE[4];
-					ret = std::rotl(ret, 11) * Prime<Bits>::VALUE[0];
+					ret += (*data) * PRIME_VALUE[4];
+					ret = std::rotl(ret, 11) * PRIME_VALUE[0];
 					++data;
 				}
 
 				ret ^= ret >> 15;
-				ret *= Prime<Bits>::VALUE[1];
+				ret *= PRIME_VALUE[1];
 				ret ^= ret >> 13;
-				ret *= Prime<Bits>::VALUE[2];
+				ret *= PRIME_VALUE[2];
 				ret ^= ret >> 16;
 
 				return ret;
 			} else if constexpr (Bits == 64) {
 				while (data + 8 <= dataEnd) {
 					ret ^= _round(0, _readUInt<Bits, DataEndian>(data));
-					ret = std::rotl(ret, 27) * Prime<Bits>::VALUE[0] + Prime<Bits>::VALUE[3];
+					ret = std::rotl(ret, 27) * PRIME_VALUE[0] + PRIME_VALUE[3];
 					data += 8;
 				}
 
 				if (data + 4 <= dataEnd) {
-					ret ^= (uint_t<Bits>)_readUInt<Bits / 2, DataEndian>(data) * Prime<Bits>::VALUE[0];
-					ret = std::rotl(ret, 23) * Prime<Bits>::VALUE[1] + Prime<Bits>::VALUE[2];
+					ret ^= (uint_t<Bits>)_readUInt<Bits / 2, DataEndian>(data) * PRIME_VALUE[0];
+					ret = std::rotl(ret, 23) * PRIME_VALUE[1] + PRIME_VALUE[2];
 					data += 4;
 				}
 
 				while (data < dataEnd) {
-					ret ^= (*data) * Prime<Bits>::VALUE[4];
-					ret = std::rotl(ret, 11) * Prime<Bits>::VALUE[0];
+					ret ^= (*data) * PRIME_VALUE[4];
+					ret = std::rotl(ret, 11) * PRIME_VALUE[0];
 					++data;
 				}
 
 				ret ^= ret >> 33;
-				ret *= Prime<Bits>::VALUE[1];
+				ret *= PRIME_VALUE[1];
 				ret ^= ret >> 29;
-				ret *= Prime<Bits>::VALUE[2];
+				ret *= PRIME_VALUE[2];
 				ret ^= ret >> 32;
 
 				return ret;

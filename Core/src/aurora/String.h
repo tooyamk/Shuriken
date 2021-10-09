@@ -51,7 +51,7 @@ namespace aurora {
 		//unicodeLen, utf8Len
 		template<typename In>
 		requires ConvertibleWStringData<std::remove_cvref_t<In>>
-		static std::tuple<std::wstring::size_type, std::string::size_type> AE_CALL calcUnicodeToUtf8Length(In&& in) {
+			static std::tuple<std::wstring::size_type, std::string::size_type> AE_CALL calcUnicodeToUtf8Length(In&& in) {
 			if constexpr (WStringData<std::remove_cvref_t<In>>) {
 				std::wstring::size_type s = 0;
 				std::u8string::size_type d = 0;
@@ -83,7 +83,7 @@ namespace aurora {
 
 		template<typename In, SameAnyOf<char, char8_t> Out>
 		requires ConvertibleWStringData<std::remove_cvref_t<In>>
-		static std::u8string::size_type AE_CALL UnicodeToUtf8(In&& in, Out* outBuffer, std::u8string::size_type outBufferSize) {
+			static std::u8string::size_type AE_CALL UnicodeToUtf8(In&& in, Out* outBuffer, std::u8string::size_type outBufferSize) {
 			if constexpr (WStringData<std::remove_cvref_t<In>>) {
 				if (!outBuffer || !outBufferSize) return std::u8string::npos;
 				if (in.empty()) {
@@ -102,7 +102,7 @@ namespace aurora {
 
 		template<typename In, String8 Out = std::u8string>
 		requires ConvertibleWStringData<std::remove_cvref_t<In>>
-		static auto AE_CALL UnicodeToUtf8(In&& in) {
+			static auto AE_CALL UnicodeToUtf8(In&& in) {
 			if constexpr (WStringData<std::remove_cvref_t<In>>) {
 				auto [unicodeLen, utf8Len] = calcUnicodeToUtf8Length(in);
 				Out s;
@@ -118,7 +118,7 @@ namespace aurora {
 		//utf8Len, unicodeLen
 		template<typename In>
 		requires IsConvertibleString8Data<std::remove_cvref_t<In>>::value
-		static std::tuple<std::u8string::size_type, std::wstring::size_type> AE_CALL calcUtf8ToUnicodeLength(In&& in) {
+			static std::tuple<std::u8string::size_type, std::wstring::size_type> AE_CALL calcUtf8ToUnicodeLength(In&& in) {
 			if constexpr (String8Data<std::remove_cvref_t<In>>) {
 				std::u8string::size_type s = 0;
 				std::wstring::size_type d = 0;
@@ -149,7 +149,7 @@ namespace aurora {
 
 		template<typename In>
 		requires ConvertibleString8Data<std::remove_cvref_t<In>>
-		static std::wstring::size_type AE_CALL Utf8ToUnicode(In&& in, wchar_t* outBuffer, std::wstring::size_type outBufferSize) {
+			static std::wstring::size_type AE_CALL Utf8ToUnicode(In&& in, wchar_t* outBuffer, std::wstring::size_type outBufferSize) {
 			if constexpr (String8Data<std::remove_cvref_t<In>>) {
 				if (!outBuffer || !outBufferSize) return std::wstring::npos;
 				if (in.empty()) {
@@ -207,7 +207,7 @@ namespace aurora {
 
 		template<typename In>
 		requires ConvertibleString8Data<std::remove_cvref_t<In>>
-		static std::wstring AE_CALL Utf8ToUnicode(In&& in) {
+			static std::wstring AE_CALL Utf8ToUnicode(In&& in) {
 			if constexpr (String8Data<std::remove_cvref_t<In>>) {
 				auto [utf8Len, unicodeLen] = calcUtf8ToUnicodeLength(in);
 				std::wstring s;
@@ -222,7 +222,7 @@ namespace aurora {
 
 		template<typename In>
 		requires ConvertibleString8Data<std::remove_cvref_t<In>>
-		static std::wstring::size_type AE_CALL Utf8ToUnicode(In&& in, wchar_t*& out) {
+			static std::wstring::size_type AE_CALL Utf8ToUnicode(In&& in, wchar_t*& out) {
 			if constexpr (String8Data<std::remove_cvref_t<In>>) {
 				if (in.empty()) {
 					out = new wchar_t[1];
@@ -274,7 +274,7 @@ namespace aurora {
 
 		template<typename In, typename Separator, std::invocable<const std::string_view&> Fn>
 		requires ConvertibleStringData<std::remove_cvref_t<In>> && (std::derived_from<std::remove_cvref_t<Separator>, std::regex> || ConvertibleStringData<std::remove_cvref_t<Separator>>)
-		static void AE_CALL split(In&& in, Separator&& separator, Fn&& fn) {
+			static void AE_CALL split(In&& in, Separator&& separator, Fn&& fn) {
 			if constexpr (std::derived_from<std::remove_cvref_t<Separator>, std::regex>) {
 				if constexpr (StringData<std::remove_cvref_t<In>>) {
 					std::regex_token_iterator itr(in.begin(), in.end(), separator, -1);
@@ -322,7 +322,7 @@ namespace aurora {
 
 		template<typename In, std::invocable<const std::string_view&> Fn>
 		requires ConvertibleStringData<std::remove_cvref_t<In>>
-		static void AE_CALL split(In&& in, uint8_t flags, Fn&& fn) {
+			static void AE_CALL split(In&& in, uint8_t flags, Fn&& fn) {
 			if constexpr (StringData<std::remove_cvref_t<In>>) {
 				size_t begin = 0, i = 0, size = in.size();
 				while (i < size) {
@@ -343,7 +343,7 @@ namespace aurora {
 
 		template<typename In>
 		requires ConvertibleString8Data<std::remove_cvref_t<In>>
-		static ConvertToString8ViewType<std::remove_cvref_t<In>> AE_CALL trimQuotation(In&& in) {
+			static ConvertToString8ViewType<std::remove_cvref_t<In>> AE_CALL trimQuotation(In&& in) {
 			if constexpr (StringData<std::remove_cvref_t<In>>) {
 				auto size = in.size();
 
@@ -365,7 +365,7 @@ namespace aurora {
 
 		template<typename In>
 		requires ConvertibleString8Data<std::remove_cvref_t<In>>
-		static ConvertToString8ViewType<std::remove_cvref_t<In>> AE_CALL trim(In&& in, uint8_t flags) {
+			static ConvertToString8ViewType<std::remove_cvref_t<In>> AE_CALL trim(In&& in, uint8_t flags) {
 			if constexpr (StringData<std::remove_cvref_t<In>>) {
 				auto size = in.size();
 
@@ -502,7 +502,7 @@ namespace aurora {
 
 		template<std::integral Out, typename In>
 		requires ConvertibleStringData<std::remove_cvref_t<In>>
-		inline static Out toNumber(In&& in, int32_t base = 10) {
+			inline static Out toNumber(In&& in, int32_t base = 10) {
 			if constexpr (StringData<std::remove_cvref_t<In>>) {
 				Out value;
 #ifdef __cpp_lib_to_chars
@@ -530,7 +530,7 @@ namespace aurora {
 
 		template<std::floating_point Out, typename In>
 		requires ConvertibleStringData<std::remove_cvref_t<In>>
-		inline static Out toNumber(const In& in) {
+			inline static Out toNumber(const In& in) {
 			if constexpr (StringData<std::remove_cvref_t<In>>) {
 				Out value;
 #ifdef __cpp_lib_to_chars
@@ -550,9 +550,10 @@ namespace aurora {
 
 		template<typename In>
 		requires ConvertibleStringData<std::remove_cvref_t<In>>
-		inline static std::string::size_type AE_CALL find(In&& in, char c) {
+			inline static std::string::size_type AE_CALL find(In&& in, char c) {
 			if constexpr (String8Data<std::remove_cvref_t<In>>) {
-				auto p = (const std::remove_cvref_t<In>::value_type*)memchr(in.data(), c, in.size());
+				using T = std::remove_cvref_t<In>::value_type;
+				auto p = (const T*)memchr(in.data(), c, in.size());
 				return p ? p - in.data() : std::remove_cvref_t<In>::npos;
 			} else {
 				return find(ConvertToString8ViewType<std::remove_cvref_t<In>>(std::forward<In>(in)), c);
@@ -560,10 +561,11 @@ namespace aurora {
 		}
 
 		template<typename In, typename Compare>
-		requires ConvertibleStringData<std::remove_cvref_t<In>> && ConvertibleStringData<std::remove_cvref_t<Compare>>
-		inline static std::string::size_type AE_CALL find(In&& in, Compare&& compare) {
+		requires ConvertibleStringData<std::remove_cvref_t<In>>&& ConvertibleStringData<std::remove_cvref_t<Compare>>
+			inline static std::string::size_type AE_CALL find(In&& in, Compare&& compare) {
 			if constexpr (StringData<std::remove_cvref_t<In>> && StringData<std::remove_cvref_t<Compare>>) {
-				auto p = (const std::remove_cvref_t<In>::value_type*)memFind(in.data(), in.size(), compare.data(), compare.size());
+				using T = std::remove_cvref_t<In>::value_type;
+				auto p = (const T*)memFind(in.data(), in.size(), compare.data(), compare.size());
 				return p ? p - in.data() : std::remove_cvref_t<In>::npos;
 			} else {
 				return find(std::string_view(std::forward<In>(in)), std::string_view(std::forward<Compare>(compare)));
@@ -572,7 +574,7 @@ namespace aurora {
 
 		template<typename In>
 		requires ConvertibleStringData<std::remove_cvref_t<In>>
-		inline static std::string::size_type AE_CALL find(In&& in, uint8_t flags) {
+			inline static std::string::size_type AE_CALL find(In&& in, uint8_t flags) {
 			if constexpr (String8Data<std::remove_cvref_t<In>>) {
 				for (size_t i = 0, n = in.size(); i < n; ++i) {
 					if (CHARS[in[i]] & flags) return i;

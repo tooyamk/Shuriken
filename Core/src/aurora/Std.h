@@ -3,6 +3,7 @@
 #include "aurora/predefine/Architecture.h"
 #include "aurora/Config.h"
 #include <atomic>
+#include <bit>
 
 namespace std {
 #ifndef __cpp_lib_endian
@@ -111,7 +112,7 @@ namespace std {
 #		if AE_COMPILER == AE_COMPILER_MSVC
 				return _InterlockedCompareExchange128((volatile int64_t*)&dst, ((int64_t*)(&desired))[1], ((int64_t*)(&desired))[0], (int64_t*)(&expected));
 #		elif AE_COMPILER == AE_COMPILER_CLANG || AE_COMPILER == AE_COMPILER_GCC
-				return __sync_bool_compare_and_swap((volatile __uint128_t*)&storage, (__uint128_t&)expected, (const __uint128_t&)desired);
+				return __sync_bool_compare_and_swap((volatile __uint128_t*)&dst, (__uint128_t&)expected, (const __uint128_t&)desired);
 #		endif
 #	else
 				static std::atomic_flag lock = ATOMIC_FLAG_INIT;

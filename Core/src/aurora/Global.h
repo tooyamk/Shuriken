@@ -157,17 +157,17 @@ namespace aurora {
 	template<size_t I, typename FailedType, typename... Args>
 	struct TupleTryAt<I, FailedType, std::tuple<Args...>> {
 	private:
-		template<bool IsOutOfBounds, size_t I>
+		template<bool IsOutOfBounds, size_t I2>
 		struct _impl;
 
-		template<size_t I>
-		struct _impl<true, I> {
+		template<size_t I2>
+		struct _impl<true, I2> {
 			using type = FailedType;
 		};
 
-		template<size_t I>
-		struct _impl<false, I> {
-			using type = std::tuple_element_t<I, std::tuple<Args...>>;
+		template<size_t I2>
+		struct _impl<false, I2> {
+			using type = std::tuple_element_t<I2, std::tuple<Args...>>;
 		};
 
 	public:
@@ -187,24 +187,14 @@ namespace aurora {
 	template<auto Target, auto... Values>
 	struct IsEqualAnyOf {
 	private:
-		template<bool IsFound, auto... Values>
-		struct _impl;
-
-		template<bool IsFound>
-		struct _impl<IsFound> {
-			static constexpr bool value = IsFound;
-		};
-
-		template<auto... Values>
-		struct _impl<true, Values...> {
-			static constexpr bool value = true;
-		};
-
-		template<bool IsFound, auto CurValue, auto... OtherValues>
-		struct _impl<IsFound, CurValue, OtherValues...> : _impl<Target == CurValue, OtherValues...> {};
+		static constexpr bool _value() {
+			size_t i = 0;
+			((i += (size_t)(Target == Values)), ...);
+			return i;
+		}
 
 	public:
-		static constexpr bool value = _impl<false, Values...>::value;
+		static constexpr bool value = _value();
 	};
 	template<auto Target, auto... Values> concept EqualAnyOf = IsEqualAnyOf<Target, Values...>::value;
 
@@ -224,10 +214,10 @@ namespace aurora {
 	template<typename T, typename ResultTuple, typename... Args> concept InvocableAnyOfResult = std::invocable<T, Args...> && SameAnyOfInTuple<std::invoke_result_t<T, Args...>, ResultTuple>;
 
 
-	template<typename T> struct IsSignedIntegral : std::bool_constant<std::signed_integral<T>>{};
+	template<typename T> struct IsSignedIntegral : std::bool_constant<std::signed_integral<T>> {};
 	template<typename T> using SignedIntegralType = std::enable_if_t<std::signed_integral<T>, T>;
 
-	template<typename T> struct IsUnsignedIntegral : std::bool_constant<std::unsigned_integral<T>>{};
+	template<typename T> struct IsUnsignedIntegral : std::bool_constant<std::unsigned_integral<T>> {};
 	template<typename T> using UnsignedIntegralType = std::enable_if_t<std::unsigned_integral<T>, T>;
 
 
@@ -286,28 +276,28 @@ namespace aurora {
 
 
 	namespace literals {
-		inline constexpr int8_t operator"" _i8(uint64_t n) noexcept {
+		inline constexpr int8_t operator"" _i8(unsigned long long n) noexcept {
 			return (int8_t)n;
 		}
-		inline constexpr uint8_t operator"" _ui8(uint64_t n) noexcept {
+		inline constexpr uint8_t operator"" _ui8(unsigned long long n) noexcept {
 			return (uint8_t)n;
 		}
-		inline constexpr int16_t operator"" _i16(uint64_t n) noexcept {
+		inline constexpr int16_t operator"" _i16(unsigned long long n) noexcept {
 			return (int16_t)n;
 		}
-		inline constexpr uint16_t operator"" _ui16(uint64_t n) noexcept {
+		inline constexpr uint16_t operator"" _ui16(unsigned long long n) noexcept {
 			return (uint16_t)n;
 		}
-		inline constexpr int32_t operator"" _i32(uint64_t n) noexcept {
+		inline constexpr int32_t operator"" _i32(unsigned long long n) noexcept {
 			return (int32_t)n;
 		}
-		inline constexpr uint32_t operator"" _ui32(uint64_t n) noexcept {
+		inline constexpr uint32_t operator"" _ui32(unsigned long long n) noexcept {
 			return (uint32_t)n;
 		}
-		inline constexpr int64_t operator"" _i64(uint64_t n) noexcept {
+		inline constexpr int64_t operator"" _i64(unsigned long long n) noexcept {
 			return (int64_t)n;
 		}
-		inline constexpr uint64_t operator"" _ui64(uint64_t n) noexcept {
+		inline constexpr uint64_t operator"" _ui64(unsigned long long n) noexcept {
 			return (uint64_t)n;
 		}
 	}
@@ -381,12 +371,12 @@ namespace aurora {
 			return (std::underlying_type_t<E>)e == i;
 		}
 	}
-	
+
 
 	template<typename L, typename R>
 	requires (std::same_as<L, std::string> && (ConvertibleU8StringData<std::remove_cvref_t<R>> || std::same_as<std::remove_cvref_t<R>, char8_t>)) ||
-			 (std::same_as<L, std::u8string> && (ConvertibleStringData<std::remove_cvref_t<R>> || std::same_as<std::remove_cvref_t<R>, char>))
-	inline auto& AE_CALL operator+=(L& left, R&& right) {
+		(std::same_as<L, std::u8string> && (ConvertibleStringData<std::remove_cvref_t<R>> || std::same_as<std::remove_cvref_t<R>, char>))
+		inline auto & AE_CALL operator+=(L & left, R && right) {
 		if constexpr (std::same_as<L, std::string>) {
 			if constexpr (ConvertibleU8StringData<std::remove_cvref_t<R>>) {
 				left += (const std::string_view&)ConvertToString8ViewType<std::remove_cvref_t<R>>(std::forward<R>(right));
@@ -406,10 +396,10 @@ namespace aurora {
 
 
 	template<typename L, typename R>
-	requires (ConvertibleString8Data<std::remove_cvref_t<L>> && ConvertibleString8Data<std::remove_cvref_t<R>>) &&
-			 (((ConvertibleU8StringData<std::remove_cvref_t<L>> || ConvertibleU8StringData<std::remove_cvref_t<R>>) && (ConvertibleStringData<std::remove_cvref_t<L>> || ConvertibleStringData<std::remove_cvref_t<R>>)) ||
-			 (String8View<std::remove_cvref_t<L>> || String8View<std::remove_cvref_t<R>>))
-	inline std::conditional_t<ConvertibleU8StringData<std::remove_cvref_t<L>> || ConvertibleU8StringData<std::remove_cvref_t<R>>, std::u8string, std::string> AE_CALL operator+(L&& left, R&& right) {
+	requires (ConvertibleString8Data<std::remove_cvref_t<L>>&& ConvertibleString8Data<std::remove_cvref_t<R>>) &&
+		(((ConvertibleU8StringData<std::remove_cvref_t<L>> || ConvertibleU8StringData<std::remove_cvref_t<R>>) && (ConvertibleStringData<std::remove_cvref_t<L>> || ConvertibleStringData<std::remove_cvref_t<R>>)) ||
+			(String8View<std::remove_cvref_t<L>> || String8View<std::remove_cvref_t<R>>))
+		inline std::conditional_t<ConvertibleU8StringData<std::remove_cvref_t<L>> || ConvertibleU8StringData<std::remove_cvref_t<R>>, std::u8string, std::string> AE_CALL operator+(L&& left, R&& right) {
 		if constexpr (SameAllOf<std::u8string_view, std::remove_cvref_t<L>, std::remove_cvref_t<R>> || SameAllOf<std::string_view, std::remove_cvref_t<L>, std::remove_cvref_t<R>>) {
 			std::conditional_t<SameAllOf<std::u8string_view, std::remove_cvref_t<L>, std::remove_cvref_t<R>>, std::u8string, std::string> s;
 			s.reserve(left.size() + right.size());
@@ -421,7 +411,7 @@ namespace aurora {
 			return (const ConvertTo&)ConvertToString8ViewType<std::remove_cvref_t<L>>(std::forward<L>(left)) + (const ConvertTo&)ConvertToString8ViewType<std::remove_cvref_t<R>>(std::forward<R>(right));
 		}
 	}
-	
+
 
 	template<size_t Bits> using int_t = std::enable_if_t<Bits <= 64, std::conditional_t<Bits <= 8, int8_t, std::conditional_t<Bits <= 16, int16_t, std::conditional_t<Bits <= 32, int32_t, int64_t>>>>;
 	template<size_t Bits> using uint_t = std::enable_if_t<Bits <= 64, std::conditional_t<Bits <= 8, uint8_t, std::conditional_t<Bits <= 16, uint16_t, std::conditional_t<Bits <= 32, uint32_t, uint64_t>>>>;
@@ -498,12 +488,12 @@ namespace aurora {
 	};
 	template<typename F>
 	requires (!MemberFunctionPointer<F>)
-	Invoker(F)->Invoker<F, std::nullptr_t>;
+		Invoker(F)->Invoker<F, std::nullptr_t>;
 
 
 	template<size_t Bits>
 	requires (Bits <= 64)
-	inline constexpr uint_t<Bits> AE_CALL uintMax() {
+		inline constexpr uint_t<Bits> AE_CALL uintMax() {
 		uint_t<Bits> val = 0;
 		for (size_t i = 0; i < Bits; ++i) val |= (uint_t<Bits>)1 << i;
 		return val;
@@ -537,7 +527,7 @@ namespace aurora {
 
 	template<size_t Bytes>
 	requires (Bytes <= 8)
-	inline uint_t<Bytes * 8> AE_CALL byteswap(const void* val) {
+		inline uint_t<Bytes * 8> AE_CALL byteswap(const void* val) {
 		using T = uint_t<Bytes * 8>;
 		auto data = (const uint8_t*)val;
 
@@ -582,7 +572,7 @@ namespace aurora {
 
 	template<size_t Bytes>
 	requires (Bytes <= 8)
-	inline uint_t<Bytes * 8> AE_CALL byteswap(uint_t<Bytes * 8> val) {
+		inline uint_t<Bytes * 8> AE_CALL byteswap(uint_t<Bytes * 8> val) {
 		return byteswap<Bytes>(&val);
 	}
 
@@ -595,7 +585,7 @@ namespace aurora {
 
 	template<size_t Offset = 1>
 	requires (Offset != 0)
-	inline const void* AE_CALL memFind(const void* data, size_t dataLength, const void* compare, size_t compareLength) {
+		inline const void* AE_CALL memFind(const void* data, size_t dataLength, const void* compare, size_t compareLength) {
 		if (compareLength) {
 			auto buf = (const uint8_t*)data;
 
