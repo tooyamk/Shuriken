@@ -567,6 +567,49 @@ namespace aurora {
 		static constexpr uint8_t VAL5_BITS8 = VAL5_MAX - 8;
 		static constexpr uint8_t VAL5_BITS64 = VAL5_MAX;
 
+		static constexpr uint8_t VALUE_SIZE = 16;
+
+		Type _type;
+		Flag _flag;
+		uint8_t _value[VALUE_SIZE];
+
+
+		struct SerializableObjectWrapper {
+			Type _type;
+			Flag _flag;
+			uint8_t _value[VALUE_SIZE];
+
+			~SerializableObjectWrapper() {
+				((SerializableObject*)this)->_freeValue();
+			}
+
+			inline AE_CALL operator SerializableObject&() {
+				return *((SerializableObject*)this);
+			}
+
+			inline AE_CALL operator const SerializableObject&() const {
+				return *((const SerializableObject*)this);
+			}
+
+			inline SerializableObject& wrap() {
+				return *((SerializableObject*)this);
+			}
+
+			inline const SerializableObject& wrap() const {
+				return *((const SerializableObject*)this);
+			}
+
+			/*inline void AE_CALL pack(ByteArray& ba) const {
+				((SerializableObject*)this)->pack(ba);
+			}
+
+			template<NullPointerOrDerivedFrom<IPackFilter> T = std::nullptr_t>
+			inline void AE_CALL _pack(const SerializableObject* parent, size_t depth, ByteArray& ba, const T& filter) const {
+				((SerializableObject*)this)->_pack(parent, depth, ba, filter);
+			}
+			*/
+		};
+
 
 		class Array {
 			AE_REF_OBJECT(Array)
@@ -575,7 +618,7 @@ namespace aurora {
 			Array* AE_CALL copy(Flag flag) const;
 			bool AE_CALL isContentEqual(Array* data) const;
 
-			std::vector<SerializableObject> value;
+			std::vector<SerializableObjectWrapper> value;
 		};
 
 
@@ -587,7 +630,7 @@ namespace aurora {
 			bool AE_CALL isContentEqual(Map* data) const;
 			void AE_CALL unpack(ByteArray& ba, size_t size, Flag flag);
 
-			std::unordered_map<SerializableObject, SerializableObject, StdUnorderedHasher, StdUnorderedComparer> value;
+			std::unordered_map<SerializableObjectWrapper, SerializableObjectWrapper, StdUnorderedHasher, StdUnorderedComparer> value;
 		};
 
 
@@ -647,12 +690,6 @@ namespace aurora {
 			uint8_t* _data;
 			size_t _size;
 		};
-
-		static constexpr uint8_t VALUE_SIZE = 16;
-
-		Type _type;
-		Flag _flag;
-		uint8_t _value[VALUE_SIZE];
 
 		void AE_CALL _freeValue();
 
@@ -833,10 +870,10 @@ namespace aurora {
 				if constexpr (NullPointer<T>) {
 					if (size < VAL5_MAX) {
 						ba.write<uint8_t>(((uint8_t)Type::ARRAY << 5) | size);
-						for (auto& i : arr->value) i.pack(ba);
+						for (auto& i : arr->value) i.wrap().pack(ba);
 					} else {
 						ba.write<uint8_t>(((uint8_t)Type::ARRAY << 5) | VAL5_MAX);
-						for (auto& i : arr->value) i.pack(ba);
+						for (auto& i : arr->value) i.wrap().pack(ba);
 						ba.write<uint8_t>(END);
 					}
 				} else {
@@ -848,10 +885,10 @@ namespace aurora {
 
 					if (indices.size() < VAL5_MAX) {
 						ba.write<uint8_t>(((uint8_t)Type::ARRAY << 5) | size);
-						for (auto& i : indices) arr->value[i]._pack(this, d, ba, filter);
+						for (auto& i : indices) arr->value[i].wrap()._pack(this, d, ba, filter);
 					} else {
 						ba.write<uint8_t>(((uint8_t)Type::ARRAY << 5) | VAL5_MAX);
-						for (auto& i : arr->value) arr->value[i]._pack(this, d, ba, filter);
+						for (auto& i : arr->value) i.wrap()._pack(this, d, ba, filter);
 						ba.write<uint8_t>(END);
 					}
 				}
@@ -867,14 +904,14 @@ namespace aurora {
 					if (size < VAL5_MAX) {
 						ba.write<uint8_t>(((uint8_t)Type::MAP << 5) | size);
 						for (auto& i : map->value) {
-							i.first.pack(ba);
-							i.second.pack(ba);
+							i.first.wrap().pack(ba);
+							i.second.wrap().pack(ba);
 						}
 					} else {
 						ba.write<uint8_t>(((uint8_t)Type::MAP << 5) | VAL5_MAX);
 						for (auto& i : map->value) {
-							i.first.pack(ba);
-							i.second.pack(ba);
+							i.first.wrap().pack(ba);
+							i.second.wrap().pack(ba);
 						}
 						ba.write<uint8_t>(END);
 					}

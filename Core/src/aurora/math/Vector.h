@@ -407,7 +407,7 @@ namespace aurora {
 		}
 
 		template<typename Ret = T>
-		inline Ret AE_CALL getMultiplies() const {
+		inline constexpr Ret AE_CALL getMultiplies() const {
 			return Math::multiplies<N, T, Ret>(data);
 		}
 

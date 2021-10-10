@@ -26,7 +26,7 @@ private:
 
 namespace aurora {
 	template<typename T>
-	concept IntrusivePtrOperableObject = requires(T t) {
+	concept IntrusivePtrOperableObject = requires(T& t) {
 		t.ref();
 		std::remove_cvref_t<T>::unref(t);
 	};

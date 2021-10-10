@@ -9,7 +9,7 @@ namespace aurora {
 		Array* arr = new Array();
 		arr->value.resize(this->value.size());
 		uint32_t idx = 0;
-		for (auto& e : this->value) arr->value[idx++].set(e, flag);
+		for (auto& e : this->value) arr->value[idx++].wrap().set(e, flag);
 		return arr;
 	}
 
@@ -17,7 +17,7 @@ namespace aurora {
 		auto size = this->value.size();
 		if (size == data->value.size()) {
 			for (uint32_t i = 0; i < size; ++i) {
-				if (!this->value[i].isContentEqual(data->value[i])) return false;
+				if (!this->value[i].wrap().isContentEqual(data->value[i])) return false;
 			}
 
 			return true;
@@ -33,7 +33,7 @@ namespace aurora {
 
 	SerializableObject::Map* SerializableObject::Map::copy(Flag flag) const {
 		auto map = new Map();
-		for (auto& itr : this->value) map->value.emplace(SerializableObject(itr.first, flag), SerializableObject(itr.second, flag));
+		for (auto& itr : this->value) map->value.emplace((SerializableObjectWrapper&&)SerializableObject(itr.first, flag), (SerializableObjectWrapper&&)SerializableObject(itr.second, flag));
 		return map;
 	}
 
@@ -41,7 +41,7 @@ namespace aurora {
 		auto size = this->value.size();
 		if (size == data->value.size()) {
 			for (auto& itr : this->value) {
-				if (auto itr2 = data->value.find(itr.first); itr2 == data->value.end() || !itr.second.isContentEqual(itr2->second)) return false;
+				if (auto itr2 = data->value.find(itr.first); itr2 == data->value.end() || !itr.second.wrap().isContentEqual(itr2->second)) return false;
 			}
 
 			return true;
@@ -57,7 +57,7 @@ namespace aurora {
 		for (size_t i = 0; i < size; ++i) {
 			k.unpack(ba, flag);
 			v.unpack(ba, flag);
-			value.emplace(std::move(k), std::move(v));
+			value.emplace((SerializableObjectWrapper&&)std::move(k), (SerializableObjectWrapper&&)std::move(v));
 		}
 	}
 
@@ -867,7 +867,7 @@ namespace aurora {
 				} else {
 					json += ',';
 				}
-				i._toJson(json);
+				i.wrap()._toJson(json);
 			}
 
 			json += ']';
@@ -886,9 +886,9 @@ namespace aurora {
 				} else {
 					json += ',';
 				}
-				itr.first._toJson(json);
+				itr.first.wrap()._toJson(json);
 				json += ':';
-				itr.second._toJson(json);
+				itr.second.wrap()._toJson(json);
 			}
 
 			json += '}';
@@ -1110,7 +1110,7 @@ namespace aurora {
 	SerializableObject SerializableObject::tryAt(size_t index) const {
 		if (_type == Type::ARRAY) {
 			Array* arr = _getValue<Array*>();
-			return index < arr->value.size() ? arr->value[index] : std::move(SerializableObject());
+			return index < arr->value.size() ? arr->value[index].wrap() : std::move(SerializableObject());
 		} else {
 			return std::move(SerializableObject());
 		}
@@ -1119,7 +1119,7 @@ namespace aurora {
 	SerializableObject* SerializableObject::tryAtPtr(size_t index) const {
 		if (_type == Type::ARRAY) {
 			Array* arr = _getValue<Array*>();
-			return index < arr->value.size() ? &arr->value[index] : nullptr;
+			return index < arr->value.size() ? &arr->value[index].wrap() : nullptr;
 		} else {
 			return nullptr;
 		}
@@ -1130,7 +1130,7 @@ namespace aurora {
 	}
 
 	SerializableObject& SerializableObject::push(const SerializableObject& value) {
-		return _getArray()->value.emplace_back(value);
+		return _getArray()->value.emplace_back((const SerializableObjectWrapper&)value);
 	}
 
 	SerializableObject SerializableObject::removeAt(size_t index) {
@@ -1152,7 +1152,7 @@ namespace aurora {
 	void SerializableObject::insertAt(size_t index, const SerializableObject& value) {
 		Array* arr = _getArray();
 		if (index < arr->value.size()) {
-			arr->value.emplace(arr->value.begin() + index, value);
+			arr->value.emplace(arr->value.begin() + index, (const SerializableObjectWrapper&)value);
 		} else {
 			at(index) = value;
 		}
@@ -1161,14 +1161,14 @@ namespace aurora {
 	SerializableObject& SerializableObject::get(const SerializableObject& key) {
 		Map* map = _getMap();
 
-		return map->value.emplace(std::piecewise_construct, std::forward_as_tuple(key), std::forward_as_tuple()).first->second;
+		return map->value.emplace(std::piecewise_construct, std::forward_as_tuple((const SerializableObjectWrapper&)key), std::forward_as_tuple()).first->second;
 	}
 
 	SerializableObject SerializableObject::tryGet(const SerializableObject& key) const {
 		if (_type == Type::MAP) {
 			Map* map = _getValue<Map*>();
 
-			auto itr = map->value.find(key);
+			auto itr = map->value.find((const SerializableObjectWrapper&)key);
 			return itr == map->value.end() ? std::move(SerializableObject()) : itr->second;
 		} else {
 			return std::move(SerializableObject());
@@ -1179,8 +1179,8 @@ namespace aurora {
 		if (_type == Type::MAP) {
 			Map* map = _getValue<Map*>();
 
-			auto itr = map->value.find(key);
-			return itr == map->value.end() ? nullptr : &itr->second;
+			auto itr = map->value.find((const SerializableObjectWrapper&)key);
+			return itr == map->value.end() ? nullptr : &itr->second.wrap();
 		} else {
 			return nullptr;
 		}
@@ -1189,14 +1189,14 @@ namespace aurora {
 	SerializableObject& SerializableObject::insert(const SerializableObject& key, const SerializableObject& value) {
 		Map* map = _getMap();
 
-		return map->value.insert_or_assign(key, value).first->second;
+		return map->value.insert_or_assign((const SerializableObjectWrapper&)key, (const SerializableObjectWrapper&)value).first->second.wrap();
 	}
 
 	bool SerializableObject::has(const SerializableObject& key) const {
 		if (_type == Type::MAP) {
 			Map* map = _getValue<Map*>();
 
-			return map->value.find(key) != map->value.end();
+			return map->value.find((const SerializableObjectWrapper&)key) != map->value.end();
 		} else {
 			return false;
 		}
@@ -1206,11 +1206,11 @@ namespace aurora {
 		if (_type == Type::MAP) {
 			Map* map = _getValue<Map*>();
 
-			auto itr = map->value.find(key);
+			auto itr = map->value.find((const SerializableObjectWrapper&)key);
 			if (itr == map->value.end()) {
 				return std::move(SerializableObject());
 			} else {
-				SerializableObject v = itr->second;
+				SerializableObject v = itr->second.wrap();
 				map->value.erase(itr);
 				return std::move(v);
 			}
@@ -1366,12 +1366,12 @@ namespace aurora {
 							ba.skip(1);
 							break;
 						} else {
-							arr.emplace_back().unpack(ba, flag);
+							arr.emplace_back().wrap().unpack(ba, flag);
 						}
 					}
 				} else {
 					arr.resize(val);
-					for (size_t i = 0; i < val; ++i) arr[i].unpack(ba, flag);
+					for (size_t i = 0; i < val; ++i) arr[i].wrap().unpack(ba, flag);
 				}
 
 				break;
@@ -1389,7 +1389,7 @@ namespace aurora {
 						} else {
 							k.unpack(ba, flag);
 							v.unpack(ba, flag);
-							map.emplace(std::move(k), std::move(v));
+							map.emplace((SerializableObjectWrapper&&)std::move(k), (SerializableObjectWrapper&&)std::move(v));
 						}
 					}
 				} else {

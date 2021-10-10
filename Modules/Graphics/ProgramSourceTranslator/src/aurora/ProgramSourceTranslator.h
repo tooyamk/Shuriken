@@ -6,13 +6,11 @@
 
 #include "dxc/dxcapi.h"
 
+#include "spirv_cross/spirv.hpp"
+
 #include "aurora/modules/graphics/IProgramSourceTranslator.h"
 #include "aurora/Debug.h"
 #include "aurora/DynamicLib.h"
-
-namespace spv {
-	enum ExecutionModel;
-}
 
 namespace aurora::modules::graphics::program_source_translator {
 	class ProgramSourceTranslator : public IProgramSourceTranslator {
