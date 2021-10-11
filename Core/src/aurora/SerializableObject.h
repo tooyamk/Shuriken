@@ -579,8 +579,38 @@ namespace aurora {
 			Flag _flag;
 			uint8_t _value[VALUE_SIZE];
 
+			SerializableObjectWrapper() :
+				_type(Type::INVALID),
+				_flag(Flag::NONE) {
+			}
+
+			SerializableObjectWrapper(const SerializableObject& value) : SerializableObjectWrapper() {
+				(*((SerializableObject*)this)) = value;
+			}
+
+			SerializableObjectWrapper(const SerializableObjectWrapper& value) : SerializableObjectWrapper() {
+				(*((SerializableObject*)this)) = value.wrap();
+			}
+
+			SerializableObjectWrapper(SerializableObject&& value) noexcept : SerializableObjectWrapper() {
+				(*((SerializableObject*)this)) = value;
+			}
+
+			SerializableObjectWrapper(SerializableObjectWrapper&& value) noexcept : SerializableObjectWrapper() {
+				(*((SerializableObject*)this)) = std::move(value.wrap());
+			}
+
 			~SerializableObjectWrapper() {
 				((SerializableObject*)this)->_freeValue();
+			}
+
+			inline SerializableObjectWrapper& AE_CALL operator=(const SerializableObjectWrapper& value) {
+				wrap() = value.wrap();
+				return *this;
+			}
+			inline SerializableObjectWrapper& AE_CALL operator=(SerializableObjectWrapper&& value) noexcept {
+				wrap() = std::move(value.wrap());
+				return *this;
 			}
 
 			inline AE_CALL operator SerializableObject&() {

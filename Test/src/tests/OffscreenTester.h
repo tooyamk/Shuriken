@@ -185,10 +185,10 @@ float4 main(PS_INPUT input) : SV_TARGET {
 									//*/
 
 									///*
-									auto t0 = Time::now();
+									auto t0 = aurora::Time::now();
 									auto out = extensions::ASTCConverter::encode(*aaa, Vec3ui32(4, 4, 1), extensions::ASTCConverter::Preset::FASTEST, extensions::ASTCConverter::Flags::NONE, 10);
 									if (out.isValid()) {
-										printaln("use time : ", Time::now() - t0);
+										printaln("use time : ", aurora::Time::now() - t0);
 										writeFile("D:/Users/Sephiroth/Desktop/6x6.astc", out);
 										printaln("doneeeeeeeeeeeeeeeeee");
 									}

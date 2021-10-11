@@ -1133,7 +1133,7 @@ namespace aurora {
 	}
 
 	SerializableObject& SerializableObject::push(const SerializableObject& value) {
-		return _getArray()->value.emplace_back((const SerializableObjectWrapper&)value);
+		return _getArray()->value.emplace_back(value);
 	}
 
 	SerializableObject SerializableObject::removeAt(size_t index) {
@@ -1155,7 +1155,7 @@ namespace aurora {
 	void SerializableObject::insertAt(size_t index, const SerializableObject& value) {
 		Array* arr = _getArray();
 		if (index < arr->value.size()) {
-			arr->value.emplace(arr->value.begin() + index, (const SerializableObjectWrapper&)value);
+			arr->value.emplace(arr->value.begin() + index, value);
 		} else {
 			at(index) = value;
 		}
@@ -1164,7 +1164,7 @@ namespace aurora {
 	SerializableObject& SerializableObject::get(const SerializableObject& key) {
 		Map* map = _getMap();
 
-		return map->value.emplace(std::piecewise_construct, std::forward_as_tuple((const SerializableObjectWrapper&)key), std::forward_as_tuple()).first->second;
+		return map->value.emplace(std::piecewise_construct, std::forward_as_tuple(key), std::forward_as_tuple()).first->second;
 	}
 
 	SerializableObject SerializableObject::tryGet(const SerializableObject& key) const {
@@ -1172,7 +1172,7 @@ namespace aurora {
 			Map* map = _getValue<Map*>();
 
 			auto itr = map->value.find((const SerializableObjectWrapper&)key);
-			return itr == map->value.end() ? std::move(SerializableObject()) : itr->second;
+			return itr == map->value.end() ? std::move(SerializableObject()) : itr->second.wrap();
 		} else {
 			return std::move(SerializableObject());
 		}
@@ -1192,7 +1192,7 @@ namespace aurora {
 	SerializableObject& SerializableObject::insert(const SerializableObject& key, const SerializableObject& value) {
 		Map* map = _getMap();
 
-		return map->value.insert_or_assign((const SerializableObjectWrapper&)key, (const SerializableObjectWrapper&)value).first->second.wrap();
+		return map->value.insert_or_assign(key, value).first->second.wrap();
 	}
 
 	bool SerializableObject::has(const SerializableObject& key) const {

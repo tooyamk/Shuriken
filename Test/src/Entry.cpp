@@ -1,5 +1,9 @@
 #include "tests/DepthTestTester.h"
-#include "tests/ExperimentTester.h"
+
+#if AE_OS == AE_OS_WINDOWS
+#	include"tests/ExperimentTester.h"
+#endif
+
 #include "tests/InputTester.h"
 #include "tests/LockfreeTester.h"
 #include "tests/OffscreenTester.h"
@@ -35,9 +39,9 @@ int32_t run() {
 	//return (new DepthTestTester())->run();
 	//return (new ExperimentTester())->run();
 	//return (new InputTester())->run();
-	return (new LockfreeTester())->run();
+	//return (new LockfreeTester())->run();
 	//return (new OffscreenTester())->run();
-	//return (new RenderPipelineTester())->run();
+	return (new RenderPipelineTester())->run();
 	//return (new RenderTargetTester())->run();
 	//return (new VertexUpdateTester())->run();
 	//return (new WindowTester())->run();

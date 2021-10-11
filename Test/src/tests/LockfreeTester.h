@@ -163,7 +163,7 @@ private:
 		}
 
 		std::thread([queue, tmpSet, tmpVecMtx, accumulative]() {
-			auto t0 = Time::now();
+			auto t0 = aurora::Time::now();
 
 			do {
 				auto old = *accumulative;
@@ -186,7 +186,7 @@ private:
 					} while (true);
 				}
 
-				auto t1 = Time::now();
+				auto t1 = aurora::Time::now();
 				auto forcePrint = t1 - t0 >= 2000;
 
 				if ((old != *accumulative) || forcePrint) {
