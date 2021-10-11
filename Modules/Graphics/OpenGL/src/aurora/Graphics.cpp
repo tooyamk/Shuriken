@@ -51,7 +51,7 @@ namespace aurora::modules::graphics::gl {
 #if AE_OS == AE_OS_WINDOWS
 		if (_dc || !conf.app->getNative(ApplicationNative::HWND)) return false;
 #elif AE_OS == AE_OS_LINUX
-		if (_context || !app->getNative(ApplicationNative::WINDOW)) return false;
+		if (_context || !conf.app->getNative(ApplicationNative::WINDOW)) return false;
 #endif
 
 		/*
@@ -158,7 +158,7 @@ namespace aurora::modules::graphics::gl {
 			None
 		};
 
-		auto dis = (Display*)app->getNative(ApplicationNative::DISPLAY);
+		auto dis = (Display*)conf.app->getNative(ApplicationNative::DISPLAY);
 		auto vi = glXChooseVisual(dis, DefaultScreen(dis), attrListDouble);//XVisualInfo*
 		if (vi) {
 			int32_t attrListSingle[] = {
@@ -170,7 +170,7 @@ namespace aurora::modules::graphics::gl {
 			};
 			vi = glXChooseVisual(dis, DefaultScreen(dis), attrListSingle);
 			if (!vi) {
-				_release(app);
+				_release(conf.app);
 				return false;
 			}
 		}
@@ -178,9 +178,9 @@ namespace aurora::modules::graphics::gl {
 		_context = glXCreateContext(dis, vi, nullptr, True);
 		XFree(vi);
 
-		glXMakeCurrent(dis, (Window)app->getNative(ApplicationNative::WINDOW), _context);
+		glXMakeCurrent(dis, (Window)conf.app->getNative(ApplicationNative::WINDOW), _context);
 #else
-		_release(app);
+		_release(conf.app);
 		return false;
 #endif
 
@@ -1066,10 +1066,10 @@ namespace aurora::modules::graphics::gl {
 			_dc = nullptr;
 		}
 #elif AE_OS == AE_OS_LINUX
-		if (glXGetCurrentContext() == _context) glXMakeCurrent((Display*)_app->getNative(ApplicationNative::DISPLAY), None, nullptr);
+		if (glXGetCurrentContext() == _context) glXMakeCurrent((Display*)app->getNative(ApplicationNative::DISPLAY), None, nullptr);
 
 		if (_context) {
-			glXDestroyContext((Display*)_app->getNative(ApplicationNative::DISPLAY), _context);
+			glXDestroyContext((Display*)app->getNative(ApplicationNative::DISPLAY), _context);
 			_context = nullptr;
 		}
 #endif

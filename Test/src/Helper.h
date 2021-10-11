@@ -93,7 +93,7 @@ inline auto AE_CALL getDLLName(T&& name) {
 template<typename T>
 inline ByteArray AE_CALL readFile(T&& path) {
 	ByteArray dst;
-	std::ifstream stream(path, std::ios::in | std::ios::binary);
+	std::ifstream stream(std::filesystem::path(path), std::ios::in | std::ios::binary);
 	if (stream.good()) {
 		auto beg = stream.tellg();
 		stream.seekg(0, std::ios::end);
@@ -133,6 +133,10 @@ inline ProgramSource AE_CALL readProgramSource(T&& path, ProgramStage type) {
 }
 
 inline bool AE_CALL createProgram(IProgram& program, const std::string_view& vert, const std::string_view& frag) {
+	using Str = std::remove_cvref_t<std::u8string>;
+	using SSS = Str::value_type;
+	using SSS2 = Str::traits_type;
+
 	auto appPath = getAppPath().parent_path().u8string() + "/Resources/shaders/";
 	if (!program.create(readProgramSource(appPath + vert, ProgramStage::VS), readProgramSource(appPath + frag, ProgramStage::PS), nullptr, 0,
 		[&appPath](const IProgram& program, ProgramStage stage, const std::string_view& name) {

@@ -1,5 +1,5 @@
 __set_project()
-__set_output_name(__OUTPUT_NAME mimalloc)
+set(__OUTPUT_NAME ${CMAKE_SHARED_LIBRARY_PREFIX}mimalloc)
 set(LIB_PREFIX ${PROJECT_BINARY_DIR}/install/lib/mimalloc-2.0/${__OUTPUT_NAME})
 set(LIB_R ${LIB_PREFIX}${AE_LIB_SUFFIX})
 set(LIB_D ${LIB_PREFIX}d${AE_LIB_SUFFIX})
@@ -28,6 +28,11 @@ ExternalProject_Add(
     SOURCE_DIR src
     BINARY_DIR ${AE_BUILD_DIR}
     UPDATE_COMMAND ""
+    PATCH_COMMAND
+        ${CMAKE_COMMAND}
+        -DGIT_ROOT=${PROJECT_BINARY_DIR}/src
+        -DCMAKE_LISTS_FILE=${CMAKE_CURRENT_BINARY_DIR}/src/CMakeLists.txt
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/patch.cmake
     BUILD_BYPRODUCTS 
         ${LIB_R}
         ${LIB_D}

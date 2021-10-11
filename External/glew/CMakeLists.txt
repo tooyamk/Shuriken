@@ -1,9 +1,5 @@
 __set_project()
-if (WIN32)
-    set(__OUTPUT_NAME glew32)
-else ()
-    set(__OUTPUT_NAME libGLEW)
-endif ()
+set(__OUTPUT_NAME ${CMAKE_SHARED_LIBRARY_PREFIX}glew)
 set_property(GLOBAL PROPERTY PROJECT_GLEW_NAME ${PROJECT_NAME})
 set_property(GLOBAL PROPERTY PROJECT_GLEW_INCLUDE ${PROJECT_BINARY_DIR}/install/include)
 set_property(GLOBAL PROPERTY PROJECT_GLEW_LIB ${PROJECT_BINARY_DIR}/install/lib/${__OUTPUT_NAME}${AE_BUILD_TYPE_SUFFIX}${AE_LIB_SUFFIX})
@@ -37,6 +33,7 @@ ExternalProject_Add(
     PATCH_COMMAND
         ${CMAKE_COMMAND}
         -DGIT_ROOT=${PROJECT_BINARY_DIR}/src
+        -DCMAKE_LISTS_FILE=${CMAKE_CURRENT_BINARY_DIR}/src/build/cmake/CMakeLists.txt
         -DSRC_DIR=${CMAKE_CURRENT_SOURCE_DIR}/src/
         -DDST_DIR=${CMAKE_CURRENT_BINARY_DIR}/src/
         -P ${CMAKE_CURRENT_SOURCE_DIR}/patch.cmake

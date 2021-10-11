@@ -33,7 +33,10 @@ namespace aurora {
 
 	SerializableObject::Map* SerializableObject::Map::copy(Flag flag) const {
 		auto map = new Map();
-		for (auto& itr : this->value) map->value.emplace((SerializableObjectWrapper&&)SerializableObject(itr.first, flag), (SerializableObjectWrapper&&)SerializableObject(itr.second, flag));
+		for (auto& itr : this->value) {
+			SerializableObject k(itr.first, flag), v(itr.second, flag);
+			map->value.emplace((SerializableObjectWrapper&)k, (SerializableObjectWrapper&)v);
+		}
 		return map;
 	}
 

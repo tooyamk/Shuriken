@@ -379,13 +379,13 @@ namespace aurora {
 		inline auto & AE_CALL operator+=(L & left, R && right) {
 		if constexpr (std::same_as<L, std::string>) {
 			if constexpr (ConvertibleU8StringData<std::remove_cvref_t<R>>) {
-				left += (const std::string_view&)ConvertToString8ViewType<std::remove_cvref_t<R>>(std::forward<R>(right));
+				left += (const std::string_view&)(const ConvertToString8ViewType<std::remove_cvref_t<R>>&)(std::forward<R>(right));
 			} else if constexpr (std::same_as<std::remove_cvref_t<R>, char8_t>) {
 				left += (char)right;
 			}
 		} else {
 			if constexpr (ConvertibleStringData<std::remove_cvref_t<R>>) {
-				left += (const std::u8string_view&)ConvertToString8ViewType<std::remove_cvref_t<R>>(std::forward<R>(right));
+				left += (const std::u8string_view&)(const ConvertToString8ViewType<std::remove_cvref_t<R>>&)(std::forward<R>(right));
 			} else if constexpr (std::same_as<std::remove_cvref_t<R>, char>) {
 				left += (char8_t)right;
 			}
@@ -408,7 +408,7 @@ namespace aurora {
 			return std::move(s);
 		} else {
 			using ConvertTo = std::conditional_t<ConvertibleU8StringData<std::remove_cvref_t<L>> || ConvertibleU8StringData<std::remove_cvref_t<R>>, std::u8string_view, std::string_view>;
-			return (const ConvertTo&)ConvertToString8ViewType<std::remove_cvref_t<L>>(std::forward<L>(left)) + (const ConvertTo&)ConvertToString8ViewType<std::remove_cvref_t<R>>(std::forward<R>(right));
+			return (const ConvertTo&)(const ConvertToString8ViewType<std::remove_cvref_t<L>>&)(std::forward<L>(left)) + (const ConvertTo&)(const ConvertToString8ViewType<std::remove_cvref_t<R>>&)(std::forward<R>(right));
 		}
 	}
 

@@ -1,5 +1,5 @@
 __set_project()
-__set_output_name(__OUTPUT_NAME tcmalloc_minimal)
+set(__OUTPUT_NAME ${CMAKE_SHARED_LIBRARY_PREFIX}tcmalloc_minimal)
 set(LIB_PREFIX ${PROJECT_BINARY_DIR}/install/lib/${__OUTPUT_NAME})
 set(LIB_R ${LIB_PREFIX}${AE_LIB_SUFFIX})
 set(LIB_D ${LIB_PREFIX}d${AE_LIB_SUFFIX})
