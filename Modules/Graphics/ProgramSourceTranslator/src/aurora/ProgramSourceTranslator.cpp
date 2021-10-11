@@ -247,7 +247,7 @@ namespace aurora::modules::graphics::program_source_translator {
 
 		for (auto& val : resources.uniform_buffers) {
 			compiler.unset_decoration(val.id, spv::DecorationBinding);
-			if (val.name == "type__Globals") {
+			if (val.name == "type.$Globals"sv) {
 				compiler.set_name(val.base_type_id, val.name + String::toString((std::underlying_type_t<ProgramStage>)source.stage));
 			}
 		}
@@ -267,7 +267,7 @@ namespace aurora::modules::graphics::program_source_translator {
 		*/
 		for (auto& val : resources.stage_inputs) {
 			auto& name = compiler.get_name(val.id);
-			if (name.size() > 7 && std::string_view(name.data(), 7) == "in_var_"sv) {
+			if (name.size() > 7 && std::string_view(name.data(), 7) == "in.var."sv) {
 				compiler.set_name(val.id, std::string(name.data() + 7));
 			}
 		}

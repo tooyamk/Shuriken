@@ -33,11 +33,11 @@ shader {
             {
                 VS_OUTPUT output;
                 output.position = mul(float4(input.position, 1.0f), _matrix_lp);
-                output.normal = mul(input.normal, _matrix_lw);
+                output.normal = mul(input.normal, _matrix_lw).xyz;
                 output.uv = input.uv;
 
                 #if _LIGHT_TYPE >= 1 && _LIGHT_TYPE <= 3
-                output.pos = mul(input.position, _matrix_lw);
+                output.pos = mul(input.position, _matrix_lw).xyz;
                 #endif
 
                 return output;
