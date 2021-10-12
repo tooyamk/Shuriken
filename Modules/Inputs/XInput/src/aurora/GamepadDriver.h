@@ -52,11 +52,11 @@ namespace aurora::modules::inputs::xinput {
 		inline static float32_t AE_CALL _normalizeThumb(SHORT val) {
 			constexpr auto N = (int32_t)(std::numeric_limits<int16_t>::max)() + 1;
 
-			return float32_t((int32_t)val + N) * Math::RECIPROCAL<float32_t((std::numeric_limits<uint16_t>::max)())>;
+			return float32_t((int32_t)val + N) / 65535.0f;
 		}
 
 		inline static float32_t AE_CALL _normalizeTrigger(BYTE val) {
-			return float32_t(val) * Math::RECIPROCAL<float32_t((std::numeric_limits<uint8_t>::max)())>;
+			return float32_t(val) / 255.0f;
 		}
 	};
 }

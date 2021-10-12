@@ -112,7 +112,7 @@ namespace aurora::modules::inputs::raw_input {
 		}
 
 		if (wheel != 0) {
-			DeviceStateValue value = (DeviceStateValue)wheel * Math::RECIPROCAL<DeviceStateValue(WHEEL_DELTA)>;
+			DeviceStateValue value = (DeviceStateValue)wheel / DeviceStateValue(WHEEL_DELTA);
 			DeviceState k = { (DeviceState::CodeType)MouseKeyCode::WHEEL, 1, &value };
 			_eventDispatcher->dispatchEvent(this, DeviceEvent::MOVE, &k);
 		}

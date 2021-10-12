@@ -24,14 +24,21 @@ namespace std {
 #endif
 
 #ifndef __cpp_lib_is_scoped_enum
-	template<class>
+	template<typename>
 	struct is_scoped_enum : std::false_type {};
 
-	template<class T>
+	template<typename T>
 	requires std::is_enum_v<T>
-		struct is_scoped_enum<T> : std::bool_constant<!std::is_convertible_v<T, std::underlying_type_t<T>>> {};
+	struct is_scoped_enum<T> : std::bool_constant<!std::is_convertible_v<T, std::underlying_type_t<T>>> {};
 
 	template<typename T> inline constexpr bool is_scoped_enum_v = is_scoped_enum<T>::value;
+#endif
+
+#ifndef __cpp_lib_to_underlying
+	template <typename T>
+	inline constexpr std::underlying_type_t<T> to_underlying(T e) noexcept {
+		return (std::underlying_type_t<T>)e;
+	}
 #endif
 
 #ifndef __cpp_lib_bitops
@@ -58,7 +65,7 @@ namespace std {
 #if AE_ARCH_WORD_BITS == AE_ARCH_WORD_BITS_64 && (AE_COMPILER == AE_COMPILER_MSVC || AE_COMPILER == AE_COMPILER_CLANG || AE_COMPILER == AE_COMPILER_GCC)
 	template<typename T>
 	requires (sizeof(T) == 16)
-		class atomic<T> {
+	class atomic<T> {
 		public:
 			atomic() {
 			}

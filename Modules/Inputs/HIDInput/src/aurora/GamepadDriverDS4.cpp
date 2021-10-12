@@ -78,14 +78,14 @@ namespace aurora::modules::inputs::hid_input {
 				case GamepadKeyCode::AXIS_1:
 				case GamepadKeyCode::AXIS_1 + 1:
 				case GamepadKeyCode::AXIS_1 + 2:
-					val = data[offset + (size_t)(cf.code - GamepadKeyCode::AXIS_1)] * Math::RECIPROCAL<float32_t((std::numeric_limits<uint8_t>::max)())>;
+					val = data[offset + (size_t)(cf.code - GamepadKeyCode::AXIS_1)] / 255.0f;
 					break;
 				case GamepadKeyCode::AXIS_1 + 3:
 				case GamepadKeyCode::AXIS_1 + 4:
-					val = data[offset + (size_t)InputOffset::L_TRIGGER + (size_t)(cf.code - GamepadKeyCode::AXIS_1 - 3)] * Math::RECIPROCAL<float32_t((std::numeric_limits<uint8_t>::max)())>;
+					val = data[offset + (size_t)InputOffset::L_TRIGGER + (size_t)(cf.code - GamepadKeyCode::AXIS_1 - 3)] / 255.0f;
 					break;
 				case GamepadKeyCode::AXIS_1 + 5:
-					val = data[offset + (size_t)InputOffset::RY] * Math::RECIPROCAL<float32_t((std::numeric_limits<uint8_t>::max)())>;
+					val = data[offset + (size_t)InputOffset::RY] / 255.0f;
 					break;
 				default:
 					val = defaultVal;
@@ -358,8 +358,8 @@ namespace aurora::modules::inputs::hid_input {
 			state.fingerID = data[offset] & 0x7F;
 			state.isTouched = (data[offset] >> 7 & 0b1) == 0;
 			state.position.set(
-				(((data[offset + 2] & 0xF) << 8) | (data[offset + 1])) * Math::RECIPROCAL<TOUCH_PAD_MAX_X>, 
-				((data[offset + 3] << 4) | (data[offset + 2] >> 4 & 0xF)) * Math::RECIPROCAL<TOUCH_PAD_MAX_Y>);
+				(((data[offset + 2] & 0xF) << 8) | (data[offset + 1])) / TOUCH_PAD_MAX_X, 
+				((data[offset + 3] << 4) | (data[offset + 2] >> 4 & 0xF)) / TOUCH_PAD_MAX_Y);
 
 			offset += 4;
 		}

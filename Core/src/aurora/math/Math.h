@@ -16,14 +16,6 @@ namespace aurora {
 		template<std::floating_point T> inline static constexpr T FORTIETH = T(.025);
 		template<std::floating_point T> inline static constexpr T HUNDREDTH = T(.01);
 
-		template<auto Val>
-		requires Arithmetic<std::remove_cvref_t<decltype(Val)>>
-		inline static constexpr std::remove_cvref_t<decltype(Val)> NEGATIVE = -Val;
-
-		template<auto Val>
-		requires Arithmetic<std::remove_cvref_t<decltype(Val)>>
-		inline static constexpr std::remove_cvref_t<decltype(Val)> RECIPROCAL = Math::ONE<std::remove_cvref_t<decltype(Val)>> / Val;
-
 		template<std::floating_point T> inline static constexpr T TOLERANCE = T(2e-37);
 		template<std::floating_point T> inline static constexpr T E = T(2.718281828459045);
 		template<std::floating_point T> inline static constexpr T PI = T(3.14159265358979323846);
