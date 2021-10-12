@@ -8,6 +8,11 @@ include_directories(src)
 add_definitions(${AE_DEFINITIONS} -DAE_CORE_EXPORTS)
 file(GLOB_RECURSE SRC_FILES "src/*.h" "src/*.cpp")
 __add_library_source_group(${PROJECT_NAME} SHARED ${SRC_FILES})
+
+if (NOT WIN32)
+    target_link_libraries(${PROJECT_NAME} dl)
+endif ()
+
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${__OUTPUT_NAME})
 __install(${PROJECT_NAME})
 

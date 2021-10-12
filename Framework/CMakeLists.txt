@@ -20,6 +20,8 @@ add_dependencies(${PROJECT_NAME}
 set(linkLibs)
 if (WIN32)
     list(APPEND linkLibs dxgi.lib winmm.lib)
+elseif (UNIX)
+    list(APPEND linkLibs X11)
 endif ()
 target_link_libraries(${PROJECT_NAME}
     ${PROJECT_AE_CORE_NAME}
