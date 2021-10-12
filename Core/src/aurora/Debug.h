@@ -16,6 +16,8 @@ namespace aurora {
 				OutputDebugStringW(data.data());
 #elif AE_OS == AE_OS_ANDROID
 				__android_log_print(ANDROID_LOG_INFO, "Aurora", "%ls", data.data());
+#else
+				std::wcout << data.data();
 #endif
 			}
 		};

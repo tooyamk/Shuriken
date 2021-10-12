@@ -111,7 +111,7 @@ namespace aurora {
 
 				return std::move(s);
 			} else {
-				return UnicodeToUtf8(std::wstring_view(std::forward<In>(in)));
+				return UnicodeToUtf8<std::wstring_view, Out>(std::wstring_view(std::forward<In>(in)));
 			}
 		}
 
@@ -552,7 +552,7 @@ namespace aurora {
 		requires ConvertibleStringData<std::remove_cvref_t<In>>
 		inline static std::string::size_type AE_CALL find(In&& in, char c) {
 			if constexpr (String8Data<std::remove_cvref_t<In>>) {
-				using T = std::remove_cvref_t<In>::value_type;
+				using T = typename std::remove_cvref_t<In>::value_type;
 				auto p = (const T*)memchr(in.data(), c, in.size());
 				return p ? p - in.data() : std::remove_cvref_t<In>::npos;
 			} else {
@@ -564,7 +564,7 @@ namespace aurora {
 		requires ConvertibleStringData<std::remove_cvref_t<In>>&& ConvertibleStringData<std::remove_cvref_t<Compare>>
 		inline static std::string::size_type AE_CALL find(In&& in, Compare&& compare) {
 			if constexpr (StringData<std::remove_cvref_t<In>> && StringData<std::remove_cvref_t<Compare>>) {
-				using T = std::remove_cvref_t<In>::value_type;
+				using T = typename std::remove_cvref_t<In>::value_type;
 				auto p = (const T*)memFind(in.data(), in.size(), compare.data(), compare.size());
 				return p ? p - in.data() : std::remove_cvref_t<In>::npos;
 			} else {
