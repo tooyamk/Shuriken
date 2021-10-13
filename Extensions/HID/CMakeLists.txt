@@ -22,7 +22,9 @@ set(linkLibs
     ${PROJECT_AE_CORE_NAME}
 )
 if (WIN32)
-    list(APPEND linkLibs "hid.lib" "SetupAPI.lib")
+    list(APPEND linkLibs hid.lib SetupAPI.lib)
+elseif (UNIX)
+    list(APPEND linkLibs udev)
 endif ()
 target_link_libraries(${PROJECT_NAME} ${linkLibs})
 

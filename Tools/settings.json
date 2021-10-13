@@ -1,0 +1,6 @@
+{
+    "cmake.configureArgs" : [
+        "-DAE_TESTS=ON",
+        "-DCMAKE_INSTALL_PREFIX=\"install\""
+    ]
+}

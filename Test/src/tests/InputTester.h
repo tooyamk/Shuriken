@@ -110,6 +110,13 @@ public:
 					args.insert("filter", DeviceType::GAMEPAD);
 					initInputModule(inputModules, "libs/" + getDLLName("ae-input-hid-input"), &args);
 				}
+			} else if constexpr (Environment::OPERATING_SYSTEM == Environment::OperatingSystem::LINUX) {
+				if (1) {
+					SerializableObject args;
+					args.insert("app", app.uintptr());
+					args.insert("filter", DeviceType::GAMEPAD);
+					initInputModule(inputModules, "libs/" + getDLLName("ae-input-hid-input"), &args);
+				}
 			}
 
 			std::shared_mutex inputDevicesMutex;

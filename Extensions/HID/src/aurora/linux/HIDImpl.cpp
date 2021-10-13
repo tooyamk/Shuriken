@@ -1,8 +1,41 @@
-#include "empty/HIDImpl.h"
+#include "linux/HIDImpl.h"
 
-#if AE_OS != AE_OS_WINDOWS && AE_OS != AE_OS_LINUX
+#if AE_OS == AE_OS_LINUX
+#include "aurora/Debug.h"
+
+#include <libudev.h>
+
 namespace aurora::extensions {
-	void HID::enumDevices(void*, EnumDevicesCallback) {}
+	void HID::enumDevices(void*, HID::EnumDevicesCallback callback) {
+		if (!callback) return;
+
+		auto udev = udev_new();
+		auto enumerate = udev_enumerate_new(udev);
+
+		udev_enumerate_add_match_subsystem(enumerate, "hidraw");
+		udev_enumerate_scan_devices(enumerate);
+
+		for (auto device = udev_enumerate_get_list_entry(enumerate); device; device = udev_list_entry_get_next(device)) {
+			uint32_t busType;
+			uint16_t vid, pid;
+			char *serialNumber = nullptr, *productName = nullptr;
+
+			auto sysfsPath = udev_list_entry_get_name(device);
+			auto rawDev = udev_device_new_from_syspath(udev, sysfsPath);
+			auto hidDev = udev_device_get_parent_with_subsystem_devtype(rawDev, "hid", nullptr);
+			if (!hidDev) goto next;
+
+			//if (!parse_uevent_info(udev_device_get_sysattr_value(hidDev, "uevent"), &busType, &vid, &pid, &serialNumber, &productName)) goto next;
+
+		next:
+			udev_device_unref(rawDev);
+		}
+
+		udev_enumerate_unref(enumerate);
+		udev_unref(udev);
+
+		printaln(123);
+	}
 
 	bool HID::isValid(const HIDDeviceInfo& info) {
 		return false;

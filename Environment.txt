@@ -1,0 +1,11 @@
+dependences:
+  all:
+    cmake
+    git
+
+  linux:
+    Extensions/HID:
+      libudev-dev
+
+    Modules/Graphics/OpenGL:
+      libgl1-mesa-dev
