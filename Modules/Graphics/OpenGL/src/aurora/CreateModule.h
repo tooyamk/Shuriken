@@ -12,13 +12,13 @@ namespace aurora::modules::graphics {
 		conf.loader = loader;
 
 		if (!args) {
-			printdln(L"GlewGraphicsModule create error : no args"sv);
+			printaln(L"GlewGraphicsModule create error : no args"sv);
 			return nullptr;
 		}
 
 		conf.app = (decltype(conf.app))args->tryGet("app").toNumber<uintptr_t>();
 		if (!conf.app) {
-			printdln(L"GlewGraphicsModule create error : no app"sv);
+			printaln(L"GlewGraphicsModule create error : no app"sv);
 			return nullptr;
 		}
 

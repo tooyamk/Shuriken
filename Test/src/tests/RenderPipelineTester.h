@@ -16,8 +16,8 @@ public:
 		if (app->createWindow(wndStype, "", Vec2ui32(800, 600), false)) {
 			IntrusivePtr gml = new GraphicsModuleLoader();
 
-			//if (gml->load("libs/" + getDLLName("ae-graphics-gl"))) {
-			if (gml->load("libs/" + getDLLName("ae-graphics-d3d11"))) {
+			if (gml->load("libs/" + getDLLName("ae-graphics-gl"))) {
+			//if (gml->load("libs/" + getDLLName("ae-graphics-d3d11"))) {
 				SerializableObject args;
 				
 				IntrusivePtr gpstml = new ModuleLoader<IProgramSourceTranslator>();

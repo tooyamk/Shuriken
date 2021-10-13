@@ -9,13 +9,13 @@ namespace aurora::modules::inputs {
 		using namespace std::literals;
 
 		if (!args) {
-			printdln(L"HIDInputModule create error : no args"sv);
+			printaln(L"HIDInputModule create error : no args"sv);
 			return nullptr;
 		}
 
 		auto app = (IApplication*)args->tryGet("app").toNumber<uintptr_t>();
 		if (!app) {
-			printdln(L"HIDInputModule create error : no app"sv);
+			printaln(L"HIDInputModule create error : no app"sv);
 			return nullptr;
 		}
 

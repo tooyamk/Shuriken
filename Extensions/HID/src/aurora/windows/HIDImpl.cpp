@@ -305,7 +305,7 @@ namespace aurora::extensions {
 			}
 
 #ifdef AE_EXTENSION_HID_PRINT_ENABLED
-			printdln(str);
+			printaln(str);
 #endif
 		}
 	}

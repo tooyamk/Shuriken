@@ -244,7 +244,7 @@ public:
 									if (state->code == MouseKeyCode::POSITION) {
 										//f32 curPos[2];
 										//(e.getTarget<InputDevice>())->getKeyState(key->code, curPos, 2);
-										//printdln("input device move : ", key->value[0], " ", key->value[1]);
+										//printaln("input device move : ", key->value[0], " ", key->value[1]);
 									} else if (state->code == MouseKeyCode::WHEEL) {
 										printaln("input device wheel : ", ((DeviceStateValue*)state->values)[0]);
 									}
@@ -255,8 +255,8 @@ public:
 								{
 									auto state = e.getData<DeviceState>();
 									//if (key->code != GamepadKeyCode::R_STICK) break;
-									printd("gamepad move : ", info.vendorID, " pid = ", info.productID, " ", getGamepadKeyString((GamepadVirtualKeyCode)state->code), " ", ((DeviceStateValue*)state->values)[0]);
-									if (state->count > 1) printd("  ", ((DeviceStateValue*)state->values)[1]);
+									printa("gamepad move : ", info.vendorID, " pid = ", info.productID, " ", getGamepadKeyString((GamepadVirtualKeyCode)state->code), " ", ((DeviceStateValue*)state->values)[0]);
+									if (state->count > 1) printa("  ", ((DeviceStateValue*)state->values)[1]);
 									printaln();
 
 									break;
@@ -279,7 +279,7 @@ public:
 									auto touches = (DeviceTouchStateValue*)state->values;
 									for (size_t i = 0; i < state->count; ++i) {
 										auto& touch = touches[i];
-										printdln("gamepad touch : ", info.vendorID, " pid = ", info.productID, " id = ", touch.fingerID, " isTouched = ", touch.isTouched, " x = ", touch.position[0], " y = ", touch.position[1]);
+										printaln("gamepad touch : ", info.vendorID, " pid = ", info.productID, " id = ", touch.fingerID, " isTouched = ", touch.isTouched, " x = ", touch.position[0], " y = ", touch.position[1]);
 									}
 
 									break;

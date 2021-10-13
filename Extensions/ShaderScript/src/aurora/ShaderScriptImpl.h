@@ -77,7 +77,7 @@ namespace aurora::extensions::shader_script {
 				if (pos == std::string_view::npos) {
 					out.emplace_back(fmtDef);
 				} else {
-					printdln(L"ShaderScript::parseDefines error : parse dynamic defines error, value has white space"sv);
+					printaln(L"ShaderScript::parseDefines error : parse dynamic defines error, value has white space"sv);
 					return false;
 				}
 			}

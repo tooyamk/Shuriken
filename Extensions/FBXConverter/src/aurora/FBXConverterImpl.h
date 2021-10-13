@@ -1086,7 +1086,7 @@ namespace aurora::extensions::fbx_converter {
 						if (rst == Z_BUF_ERROR) {
 							++inflateVal;
 						} else {
-							printdln(L"FBX decode error : uncompress error "sv);
+							printaln(L"FBX decode error : uncompress error "sv);
 							return false;
 						}
 					}
@@ -1105,7 +1105,7 @@ namespace aurora::extensions::fbx_converter {
 			break;
 		}
 		default:
-			printdln(L"FBX decode error : Unknown property type "sv, type);
+			printaln(L"FBX decode error : Unknown property type "sv, type);
 			return false;
 		}
 
@@ -1189,10 +1189,10 @@ namespace aurora::extensions::fbx_converter {
 					return std::move(rst);
 				}
 			} else {
-				printdln(L"FBX decode error : only support binary format"sv);
+				printaln(L"FBX decode error : only support binary format"sv);
 			}
 		} else {
-			printdln(L"FBX decode error : not a fbx file"sv);
+			printaln(L"FBX decode error : not a fbx file"sv);
 		}
 
 		return FBXConverter::Result();

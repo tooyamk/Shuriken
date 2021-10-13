@@ -12,7 +12,7 @@ namespace aurora::modules::graphics {
 		conf.loader = loader;
 
 		if (!args) {
-			printdln(L"DX11GraphicsModule create error : no args"sv);
+			printaln(L"DX11GraphicsModule create error : no args"sv);
 			return nullptr;
 		}
 

@@ -438,7 +438,7 @@ namespace aurora::modules::graphics::gl {
 			}
 		}
 
-		printdln(L"------ glsl shader code("sv, (type == GL_VERTEX_SHADER ? L"vert"sv : L"frag"sv), L") ------\n"sv, 
+		printaln(L"------ glsl shader code("sv, (type == GL_VERTEX_SHADER ? L"vert"sv : L"frag"sv), L") ------\n"sv,
 			std::string_view((char*)source.data.getSource(), source.data.getLength()), L"\n------------------------------------"sv);
 
 		GLuint shader = glCreateShader(type);

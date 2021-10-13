@@ -65,14 +65,14 @@ namespace aurora::modules::graphics {
 		using namespace std::literals;
 
 		if (!args) {
-			printdln(L"Module create err, no args"sv);
+			printaln(L"Module create err, no args"sv);
 			return nullptr;
 		}
 
 		std::string_view dxc;
 		if (auto so = args->tryGetPtr("dxc"); so) dxc = so->toStringView();
 		if (dxc.empty()) {
-			printdln(L"Module create err, no dxc"sv);
+			printaln(L"Module create err, no dxc"sv);
 			return nullptr;
 		}
 

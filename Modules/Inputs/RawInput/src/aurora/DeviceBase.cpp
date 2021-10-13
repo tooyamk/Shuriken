@@ -34,7 +34,7 @@ namespace aurora::modules::inputs::raw_input {
 			auto& rawInput = *(RAWINPUT*)buf;
 			if (rawInput.header.hDevice == _info.hDevice) _rawInput(rawInput);
 		} else {
-			printdln(L"RawInputModule rawInputCallback error"sv);
+			printaln(L"RawInputModule rawInputCallback error"sv);
 		}
 	}
 }

@@ -10,13 +10,13 @@ namespace aurora::modules::inputs {
 		using namespace aurora::enum_operators;
 
 		if (!args) {
-			printdln(L"RawInputModule create error : no args"sv);
+			printaln(L"RawInputModule create error : no args"sv);
 			return nullptr;
 		}
 
 		auto app = (IApplication*)args->tryGet("app").toNumber<uintptr_t>();
 		if (!app) {
-			printdln(L"RawInputModule create error : no app"sv);
+			printaln(L"RawInputModule create error : no app"sv);
 			return nullptr;
 		}
 

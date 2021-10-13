@@ -4,27 +4,77 @@
 #include <mutex>
 
 #if __has_include(<android/log.h>)
+#define AE_HAS_ANDROID_LOG_H
 #	include <android/log.h>
+#endif
+
+#if __has_include(<sys/ptrace.h>)
+#define AE_HAS_SYS_PTRACE_H
+#	include <sys/ptrace.h>
 #endif
 
 namespace aurora {
 	class AE_CORE_DLL Debug {
 	public:
-		struct AE_CORE_DLL DebuggerOutput {
-			inline void AE_CALL operator()(const std::wstring_view& data) const {
+		inline static bool AE_CALL isDebuggerPresent() {
 #if AE_OS == AE_OS_WINDOWS
-				OutputDebugStringW(data.data());
-#elif AE_OS == AE_OS_ANDROID
-				__android_log_print(ANDROID_LOG_INFO, "Aurora", "%ls", data.data());
+			return ::IsDebuggerPresent();
+#elif defined(AE_HAS_SYS_PTRACE_H)
+			return ptrace(PTRACE_TRACEME, 0, NULL, 0) == -1;
 #else
-				std::wcout << data.data();
+			return false;
 #endif
+		}
+
+		struct AE_CORE_DLL DebuggerOutput {
+			inline bool AE_CALL operator()(const std::wstring_view& data) const {
+				if (isDebuggerPresent()) {
+#if AE_OS == AE_OS_WINDOWS
+					OutputDebugStringW(data.data());
+					return true;
+#elif AE_OS == AE_OS_ANDROID
+#	ifdef AE_HAS_ANDROID_LOG_H
+					__android_log_print(ANDROID_LOG_INFO, "Aurora", "%ls", data.data());
+					return true;
+#	endif
+#endif
+				}
+
+				return false;
 			}
 		};
 
 		struct AE_CORE_DLL ConsoleOutput {
-			inline void AE_CALL operator()(const std::wstring_view& data) const {
+			inline bool AE_CALL operator()(const std::wstring_view& data) const {
 				std::wcout << data.data();
+				return true;
+			}
+		};
+
+		template<typename... Outputs>
+		requires std::conjunction_v<std::is_invocable_r<bool, Outputs, const std::wstring_view&>...>&& std::conjunction_v<std::is_default_constructible<Outputs>...>
+		struct PriorityOutput {
+			inline bool AE_CALL operator()(const std::wstring_view& data) const {
+				if constexpr (sizeof...(Outputs) == 0) {
+					return false;
+				} else {
+					return _print<Outputs...>(data);
+				}
+			}
+
+		private:
+			template<typename Cur, typename... Others>
+			inline bool AE_CALL _print(const std::wstring_view& data) const {
+				Cur c;
+				if (c(data)) {
+					return true;
+				} else {
+					if constexpr (sizeof...(Others) == 0) {
+						return false;
+					} else {
+						return _print<Others...>(data);
+					}
+				}
 			}
 		};
 
@@ -216,7 +266,7 @@ namespace aurora {
 
 	template<typename... Args>
 	inline void AE_CALL printdln(Args&&... args) {
-		Debug::print<Debug::DebuggerOutput>(std::forward<Args>(args)..., L"\n");
+		printd(std::forward<Args>(args)..., L"\n");
 	}
 
 	template<typename... Args>
@@ -226,6 +276,16 @@ namespace aurora {
 
 	template<typename... Args>
 	inline void AE_CALL printcln(Args&&... args) {
-		Debug::print<Debug::ConsoleOutput>(std::forward<Args>(args)..., L"\n");
+		printc(std::forward<Args>(args)..., L"\n");
+	}
+
+	template<typename... Args>
+	inline void AE_CALL printa(Args&&... args) {
+		Debug::print<Debug::PriorityOutput<Debug::DebuggerOutput, Debug::ConsoleOutput>>(std::forward<Args>(args)...);
+	}
+
+	template<typename... Args>
+	inline void AE_CALL printaln(Args&&... args) {
+		printa(std::forward<Args>(args)..., L"\n");
 	}
 }

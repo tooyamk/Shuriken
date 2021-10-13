@@ -15,19 +15,6 @@ using namespace std::literals;
 using namespace aurora::literals;
 using namespace aurora::enum_operators;
 
-template<typename... Args>
-inline void AE_CALL printaln(Args&&... args) {
-#if AE_OS == AE_OS_WINDOWS
-	if (IsDebuggerPresent()) {
-		Debug::print<Debug::DebuggerOutput>(std::forward<Args>(args)..., L"\n"sv);
-	} else {
-		Debug::print<Debug::ConsoleOutput>(std::forward<Args>(args)..., L"\n"sv);
-	}
-#else
-	Debug::print<Debug::ConsoleOutput>(std::forward<Args>(args)..., L"\n"sv);
-#endif
-}
-
 #ifdef __cpp_lib_generic_unordered_lookup
 /*
 struct std_generic_unordered_comparer {

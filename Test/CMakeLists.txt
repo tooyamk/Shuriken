@@ -75,6 +75,14 @@ add_definitions(${AE_DEFINITIONS})
 file(GLOB_RECURSE SRC_FILES "src/*.h" "src/*.cpp")
 __add_executable_source_group(${PROJECT_NAME} ${SRC_FILES})
 
+set(compilerFlags "-Wl,-rpath=./libs/")
+if (CMAKE_C_COMPILER_ID MATCHES "(Clang)|(GNU)")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${compilerFlags}")
+endif ()
+if (CMAKE_CXX_COMPILER_ID MATCHES "(Clang)|(GNU)")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${compilerFlags}")
+endif ()
+
 set(linkLibs
     ${PROJECT_AE_CORE_NAME}
     ${PROJECT_AE_FRAMEWORK_NAME}
