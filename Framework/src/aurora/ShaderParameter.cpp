@@ -117,6 +117,8 @@ namespace aurora {
 						if (memcmp(_data.data, data, size)) {
 							memcpy(_data.data, data, size);
 							setUpdated();
+						} else if (_updateId == 0) {
+							setUpdated();
 						}
 					} else {
 						memcpy(_data.data, data, size);
@@ -163,6 +165,8 @@ namespace aurora {
 						if (updateBehavior == ShaderParameterUpdateBehavior::CHECK) {
 							if (memcmp(_data.internalData, data, size)) {
 								memcpy(_data.internalData, data, size);
+								setUpdated();
+							} else if (_updateId == 0) {
 								setUpdated();
 							}
 						} else {

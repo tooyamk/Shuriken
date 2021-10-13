@@ -420,7 +420,7 @@ namespace aurora {
 	template<typename L, typename R>
 	requires (std::same_as<L, std::string> && (ConvertibleU8StringData<std::remove_cvref_t<R>> || std::same_as<std::remove_cvref_t<R>, char8_t>)) ||
 		(std::same_as<L, std::u8string> && (ConvertibleStringData<std::remove_cvref_t<R>> || std::same_as<std::remove_cvref_t<R>, char>))
-		inline auto & AE_CALL operator+=(L & left, R && right) {
+	inline auto & AE_CALL operator+=(L & left, R && right) {
 		if constexpr (std::same_as<L, std::string>) {
 			if constexpr (ConvertibleU8StringData<std::remove_cvref_t<R>>) {
 				left += (const std::string_view&)(const ConvertToString8ViewType<std::remove_cvref_t<R>>&)(std::forward<R>(right));
@@ -443,7 +443,7 @@ namespace aurora {
 	requires (ConvertibleString8Data<std::remove_cvref_t<L>>&& ConvertibleString8Data<std::remove_cvref_t<R>>) &&
 		(((ConvertibleU8StringData<std::remove_cvref_t<L>> || ConvertibleU8StringData<std::remove_cvref_t<R>>) && (ConvertibleStringData<std::remove_cvref_t<L>> || ConvertibleStringData<std::remove_cvref_t<R>>)) ||
 			(String8View<std::remove_cvref_t<L>> || String8View<std::remove_cvref_t<R>>))
-		inline std::conditional_t<ConvertibleU8StringData<std::remove_cvref_t<L>> || ConvertibleU8StringData<std::remove_cvref_t<R>>, std::u8string, std::string> AE_CALL operator+(L&& left, R&& right) {
+	inline std::conditional_t<ConvertibleU8StringData<std::remove_cvref_t<L>> || ConvertibleU8StringData<std::remove_cvref_t<R>>, std::u8string, std::string> AE_CALL operator+(L&& left, R&& right) {
 		if constexpr (SameAllOf<std::u8string_view, std::remove_cvref_t<L>, std::remove_cvref_t<R>> || SameAllOf<std::string_view, std::remove_cvref_t<L>, std::remove_cvref_t<R>>) {
 			std::conditional_t<SameAllOf<std::u8string_view, std::remove_cvref_t<L>, std::remove_cvref_t<R>>, std::u8string, std::string> s;
 			s.reserve(left.size() + right.size());
@@ -532,12 +532,12 @@ namespace aurora {
 	};
 	template<typename F>
 	requires (!MemberFunctionPointer<F>)
-		Invoker(F)->Invoker<F, std::nullptr_t>;
+	Invoker(F)->Invoker<F, std::nullptr_t>;
 
 
 	template<size_t Bits>
 	requires (Bits <= 64)
-		inline constexpr uint_t<Bits> AE_CALL uintMax() {
+	inline constexpr uint_t<Bits> AE_CALL uintMax() {
 		uint_t<Bits> val = 0;
 		for (size_t i = 0; i < Bits; ++i) val |= (uint_t<Bits>)1 << i;
 		return val;
@@ -571,7 +571,7 @@ namespace aurora {
 
 	template<size_t Bytes>
 	requires (Bytes <= 8)
-		inline uint_t<Bytes * 8> AE_CALL byteswap(const void* val) {
+	inline uint_t<Bytes * 8> AE_CALL byteswap(const void* val) {
 		using T = uint_t<Bytes * 8>;
 		auto data = (const uint8_t*)val;
 
@@ -616,7 +616,7 @@ namespace aurora {
 
 	template<size_t Bytes>
 	requires (Bytes <= 8)
-		inline uint_t<Bytes * 8> AE_CALL byteswap(uint_t<Bytes * 8> val) {
+	inline uint_t<Bytes * 8> AE_CALL byteswap(uint_t<Bytes * 8> val) {
 		return byteswap<Bytes>(&val);
 	}
 
@@ -627,19 +627,19 @@ namespace aurora {
 	}
 
 
-	template<size_t Offset = 1>
-	requires (Offset != 0)
-		inline const void* AE_CALL memFind(const void* data, size_t dataLength, const void* compare, size_t compareLength) {
+	inline const void* AE_CALL memFind(const void* data, size_t dataLength, const void* compare, size_t compareLength, size_t stepLength = 1) {
+		if (stepLength < 1) stepLength = 1;
+
 		if (compareLength) {
 			auto buf = (const uint8_t*)data;
 
 			do {
 				if (dataLength < compareLength) return nullptr;
 				if (!memcmp(buf, compare, compareLength)) return buf;
-				if (dataLength < Offset) return nullptr;
+				if (dataLength < stepLength) return nullptr;
 
-				buf += Offset;
-				dataLength -= Offset;
+				buf += stepLength;
+				dataLength -= stepLength;
 			} while (true);
 		} else {
 			return data;
@@ -655,11 +655,11 @@ namespace aurora {
 #if AE_OS == AE_OS_WINDOWS
 		wchar_t path[FILENAME_MAX] = { 0 };
 		auto count = GetModuleFileNameW(nullptr, path, FILENAME_MAX);
-		return std::filesystem::path(std::wstring(path, count > 0 ? count : 0));
+		return std::filesystem::path(std::wstring_view(path, count > 0 ? count : 0));
 #else
 		char path[FILENAME_MAX];
 		auto count = readlink("/proc/self/exe", path, FILENAME_MAX);
-		return std::filesystem::path(std::string(path, count > 0 ? count : 0));
+		return std::filesystem::path(std::string_view(path, count > 0 ? count : 0));
 #endif
 	}
 }

@@ -172,7 +172,7 @@ namespace aurora {
 		uint32_t _updateId;
 		uint32_t _size;
 		union Data {
-			uint8_t data[sizeof(uintptr_t)];
+			uint8_t data[sizeof(float32_t) * 4];
 
 			struct {
 				uint8_t* internalData;
