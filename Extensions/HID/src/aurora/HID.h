@@ -387,19 +387,12 @@ namespace aurora::extensions {
 		static bool AE_CALL isValid(const HIDDevice& device);
 
 		static uint16_t AE_CALL getVendorID(const HIDDeviceInfo& info);
-		static uint16_t AE_CALL getVendorID(const HIDDevice& device);
 		static uint16_t AE_CALL getProductID(const HIDDeviceInfo& info);
-		static uint16_t AE_CALL getProductID(const HIDDevice& device);
-		static std::wstring AE_CALL getManufacturerString(const HIDDeviceInfo& info);
-		static std::wstring AE_CALL getManufacturerString(const HIDDevice& device);
-		static std::wstring AE_CALL getProductString(const HIDDeviceInfo& info);
-		static std::wstring AE_CALL getProductString(const HIDDevice& device);
+		static std::wstring_view AE_CALL getManufacturerString(const HIDDeviceInfo& info);
+		static std::wstring_view AE_CALL getProductString(const HIDDeviceInfo& info);
 		static std::string_view AE_CALL getPath(const HIDDeviceInfo& info);
-		static std::string_view AE_CALL getPath(const HIDDevice& device);
 		static HIDUsagePage AE_CALL getUsagePage(const HIDDeviceInfo& info);
-		static HIDUsagePage AE_CALL getUsagePage(const HIDDevice& device);
 		static HIDUsage AE_CALL getUsage(const HIDDeviceInfo& info);
-		static HIDUsage AE_CALL getUsage(const HIDDevice& device);
 
 		//static ByteArray AE_CALL getRawReportDescriptor(const HIDDeviceInfo& info);
 		//static ByteArray AE_CALL getRawReportDescriptor(const HIDDevice& device);
@@ -414,7 +407,6 @@ namespace aurora::extensions {
 			return rst < OUT_WAITTING;
 		}
 
-		static void* AE_CALL getPreparsedData(const HIDDeviceInfo& device);
 		static void* AE_CALL getPreparsedData(const HIDDevice& device);
 
 		/*

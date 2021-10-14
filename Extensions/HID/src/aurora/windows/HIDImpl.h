@@ -178,6 +178,8 @@ namespace aurora::extensions {
 		~HIDDeviceInfo();
 
 		std::string_view pathView;
+		mutable std::wstring manufacturer;
+		mutable std::wstring product;
 		HANDLE handle;
 
 		uint16_t AE_CALL getVendorID() const;
@@ -201,7 +203,7 @@ namespace aurora::extensions {
 	};
 
 
-	class HIDDevice : public HIDDeviceInfo {
+	class HIDDevice {
 	public:
 		HIDDevice(HANDLE handle, PHIDP_PREPARSED_DATA preparsedData);
 		~HIDDevice();
@@ -218,8 +220,10 @@ namespace aurora::extensions {
 		OVERLAPPED oRead;
 		OVERLAPPED oWrite;
 
-		void AE_CALL init();
+		HANDLE handle;
+		PHIDP_PREPARSED_DATA preparsedData;
 
+		void AE_CALL init();
 		//ULONG AE_CALL parsePressedButtons(HIDP_REPORT_TYPE reportType, USAGE usagePage, const void* reportData, ULONG reportDataLength, USAGE* outUsages, ULONG usageLength) const;
 		//std::optional<ULONG> AE_CALL parseValue(HIDP_REPORT_TYPE reportType, USAGE usagePage, USAGE usage, const void* report, ULONG reportLength) const;
 	};

@@ -417,7 +417,7 @@ namespace aurora::extensions {
 		readPending(false),
 		writePending(false) {
 		this->handle = handle;
-		_preparsedData = preparsedData;
+		this->preparsedData = preparsedData;
 
 		memset(&oRead, 0, sizeof(oRead));
 		memset(&oWrite, 0, sizeof(oWrite));
@@ -433,6 +433,8 @@ namespace aurora::extensions {
 			CloseHandle(oWrite.hEvent);
 			delete[] outputBuffer;
 		}
+
+		HidD_FreePreparsedData(preparsedData);
 	}
 
 	void HIDDevice::init() {
@@ -545,71 +547,46 @@ namespace aurora::extensions {
 	}
 
 	uint16_t HID::getVendorID(const HIDDeviceInfo& info) {
-		if (!info.handle) return 0;
-
-		return info.getVendorID();
-	}
-
-	uint16_t HID::getVendorID(const HIDDevice& device) {
-		return HID::getVendorID((const HIDDeviceInfo&)device);
+		return info.handle ? info.getVendorID() : 0;
 	}
 
 	uint16_t HID::getProductID(const HIDDeviceInfo& info) {
-		if (!info.handle) return 0;
-
-		return info.getProductID();
+		return info.handle ? info.getProductID() : 0;
 	}
 
-	uint16_t HID::getProductID(const HIDDevice& device) {
-		return HID::getProductID((const HIDDeviceInfo&)device);
+	std::wstring_view HID::getManufacturerString(const HIDDeviceInfo& info) {
+		if (info.manufacturer.empty()) {
+			if (!info.handle) return std::wstring_view();
+
+			WCHAR buf[256];
+			if (!HidD_GetManufacturerString(info.handle, buf, sizeof(buf))) return std::wstring_view();
+			info.manufacturer = buf;
+		}
+		return info.manufacturer;
 	}
 
-	std::wstring HID::getManufacturerString(const HIDDeviceInfo& info) {
-		if (!info.handle) return std::wstring();
+	std::wstring_view HID::getProductString(const HIDDeviceInfo& info) {
+		if (info.product.empty()) {
+			if (!info.handle) return std::wstring_view();
 
-		WCHAR buf[256];
-		if (!HidD_GetManufacturerString(info.handle, buf, sizeof(buf))) return std::wstring();
-		return std::wstring(buf);
-	}
+			WCHAR buf[256];
+			if (!HidD_GetProductString(info.handle, buf, sizeof(buf))) return std::wstring_view();
+			info.product = buf;
+		}
 
-	std::wstring HID::getManufacturerString(const HIDDevice& device) {
-		return HID::getManufacturerString((const HIDDeviceInfo&)device);
-	}
-
-	std::wstring HID::getProductString(const HIDDeviceInfo& info) {
-		if (!info.handle) return std::wstring();
-
-		WCHAR buf[256];
-		if (!HidD_GetProductString(info.handle, buf, sizeof(buf))) return std::wstring();
-		return std::wstring(buf);
-	}
-
-	std::wstring HID::getProductString(const HIDDevice& device) {
-		return HID::getProductString((const HIDDeviceInfo&)device);
+		return info.product;
 	}
 
 	std::string_view HID::getPath(const HIDDeviceInfo& info) {
 		return info.pathView;
 	}
 
-	std::string_view HID::getPath(const HIDDevice& device) {
-		return HID::getPath((const HIDDeviceInfo&)device);
-	}
-
 	uint16_t HID::getUsagePage(const HIDDeviceInfo& info) {
 		return info.getUsagePage();
 	}
 
-	uint16_t HID::getUsagePage(const HIDDevice& device) {
-		return HID::getUsagePage((const HIDDeviceInfo&)device);
-	}
-
 	uint16_t HID::getUsage(const HIDDeviceInfo& info) {
 		return info.getUsage();
-	}
-
-	uint16_t HID::getUsage(const HIDDevice& device) {
-		return HID::getUsage((const HIDDeviceInfo&)device);
 	}
 
 	/*
@@ -693,7 +670,7 @@ namespace aurora::extensions {
 			}
 
 			DWORD n;
-			if (GetOverlappedResult(device.handle, &device.oRead, &n, blocking)) { 
+			if (GetOverlappedResult(device.handle, &device.oRead, &n, blocking)) {
 				bytesReaded = n;
 				device.readPending = false;
 			} else {
@@ -723,7 +700,7 @@ namespace aurora::extensions {
 		if (!device.handle) return HID::OUT_ERROR;
 		if (device.outputReportLength == 0) return 0;
 
-		DWORD bytesWrited = 0;
+		DWORD bytesWriten = 0;
 		bool overlapped = false;
 
 		if (device.writePending) {
@@ -740,7 +717,7 @@ namespace aurora::extensions {
 			DWORD n;
 			ResetEvent(device.oWrite.hEvent);
 			if (WriteFile(device.handle, device.outputBuffer, device.outputReportLength, &n, &device.oWrite)) {
-				bytesWrited = n;
+				bytesWriten = n;
 				device.writePending = false;
 			} else {
 				if (GetLastError() == ERROR_IO_PENDING) {
@@ -761,7 +738,7 @@ namespace aurora::extensions {
 
 			DWORD n;
 			if (GetOverlappedResult(device.handle, &device.oWrite, &n, blocking)) {
-				bytesWrited = n;
+				bytesWriten = n;
 				device.writePending = false;
 			} else {
 				if (GetLastError() != ERROR_IO_INCOMPLETE) {
@@ -772,16 +749,11 @@ namespace aurora::extensions {
 			}
 		}
 
-		if (device.writePending) return HID::OUT_WAITTING;
-		return bytesWrited;
-	}
-
-	void* HID::getPreparsedData(const HIDDeviceInfo& device) {
-		return device.getPreparsedData();
+		return device.writePending ? HID::OUT_WAITTING : bytesWriten;
 	}
 
 	void* HID::getPreparsedData(const HIDDevice& device) {
-		return device.getPreparsedData();
+		return device.preparsedData;
 	}
 
 	/*

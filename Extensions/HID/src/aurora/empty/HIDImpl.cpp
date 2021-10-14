@@ -20,12 +20,12 @@ namespace aurora::extensions {
 		return 0;
 	}
 
-	std::wstring HID::getManufacturerString(const HIDDeviceInfo& info) {
-		return std::wstring();
+	std::wstring_view HID::getManufacturerString(const HIDDeviceInfo& info) {
+		return std::wstring_view();
 	}
 
-	std::wstring HID::getProductString(const HIDDeviceInfo& info) {
-		return std::wstring();
+	std::wstring_view HID::getProductString(const HIDDeviceInfo& info) {
+		return std::wstring_view();
 	}
 
 	std::string_view HID::getPath(const HIDDeviceInfo& info) {
@@ -54,9 +54,6 @@ namespace aurora::extensions {
 		return HID::OUT_ERROR;
 	}
 
-	void* HID::getPreparsedData(const HIDDeviceInfo& device) {
-		return nullptr;
-	}
 	void* HID::getPreparsedData(const HIDDevice& device) {
 		return nullptr;
 	}
