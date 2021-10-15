@@ -79,6 +79,8 @@ namespace aurora {
 
 			static const uint64_t MWM_HINTS_FUNCTIONS = 1L << 0;
 			static const uint64_t MWM_HINTS_DECORATIONS = 1L << 1;
+			static const uint64_t MWM_HINTS_INPUT_MODE = 1L << 2;
+			static const uint64_t MWM_HINTS_STATUS = 1L << 3;
 
 			static const uint64_t MWM_FUNC_ALL = 1L << 0;
 			static const uint64_t MWM_FUNC_RESIZE = 1L << 1;

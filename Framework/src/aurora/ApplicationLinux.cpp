@@ -55,11 +55,11 @@ namespace aurora {
 		_linux.NET_WORKAREA = XInternAtom(_linux.dis, "_NET_WORKAREA", False);
 		_linux.NET_CURRENT_DESKTOP = XInternAtom(_linux.dis, "_NET_CURRENT_DESKTOP", False);
 
-		_linux.bgColor = _style.backgroundColor[0] < 16 | _style.backgroundColor[1] < 8 | _style.backgroundColor[2];
+		_linux.bgColor = _style.backgroundColor[0] << 16 | _style.backgroundColor[1] << 8 | _style.backgroundColor[2];
 
 		XSetWindowAttributes attr = { 0 };
 		attr.border_pixel = 0;
-		attr.background_pixel = _linux.bgColor;
+		//attr.background_pixel = _linux.bgColor;
 		attr.event_mask = StructureNotifyMask | KeyPressMask | KeyReleaseMask |
 			PointerMotionMask | ButtonPressMask | ButtonReleaseMask |
 			ExposureMask | FocusChangeMask | VisibilityChangeMask |
@@ -71,20 +71,23 @@ namespace aurora {
 			0, 0, _clientSize[0], _clientSize[1], 0,
 			DefaultDepth(_linux.dis, 0), InputOutput, DefaultVisual(_linux.dis, 0), CWBorderPixel | CWColormap | CWEventMask, &attr);
 
+		XSetWindowBackground(_linux.dis, _linux.wnd, _linux.bgColor);
+		//XClearWindow(_linux.dis, _linux.wnd);
+
 		//XSelectInput(_linux.dis, _linux.wnd, ExposureMask | ButtonPressMask | KeyPressMask | PropertyChangeMask);
 
 		//auto sd = ScreenOfDisplay(_linux.dis, _linux.screen);
 		//printcln(sd->width, "   ", sd->height);
 
-		{
-			// auto hints = XAllocSizeHints();
-			// hints->flags = PMinSize | PMaxSize;
-			// hints->min_width = 10;
-			// hints->min_height = 10;
-			// hints->max_width = 100;
-			// hints->max_height = 100;
-			// XSetWMNormalHints(_linux.dis, _linux.wnd, hints);
-			// XFree(hints);
+		if (!_style.thickFrame) {
+			auto hints = XAllocSizeHints();
+			hints->flags = PMinSize | PMaxSize;
+			hints->min_width = _clientSize[0];
+			hints->min_height = _clientSize[1];
+			hints->max_width = _clientSize[0];
+			hints->max_height = _clientSize[1];
+			XSetWMNormalHints(_linux.dis, _linux.wnd, hints);
+			XFree(hints);
 		}
 
 		// Atom window_type = XInternAtom(_linux.dis, "_NET_WM_WINDOW_TYPE", False);
@@ -107,11 +110,11 @@ namespace aurora {
 			hints.flags = MwmHints::MWM_HINTS_FUNCTIONS | MwmHints::MWM_HINTS_DECORATIONS;
 			hints.functions = MwmHints::MWM_FUNC_MOVE | MwmHints::MWM_FUNC_CLOSE | MwmHints::MWM_FUNC_RESIZE;
 			hints.decorations = MwmHints::MWM_DECOR_BORDER | MwmHints::MWM_DECOR_RESIZEH | MwmHints::MWM_DECOR_TITLE | MwmHints::MWM_DECOR_MENU;
-			if (style.minimizeButton) {
+			if (_style.minimizeButton) {
 				hints.functions |= MwmHints::MWM_FUNC_MINIMIZE;
 				hints.decorations |= MwmHints::MWM_DECOR_MINIMIZE;
 			}
-			if (style.maximizeButton) {
+			if (_style.maximizeButton) {
 				hints.functions |= MwmHints::MWM_FUNC_MAXIMIZE;
 				hints.decorations |= MwmHints::MWM_DECOR_MAXIMIZE;
 			}
@@ -326,7 +329,12 @@ namespace aurora {
 	void Application::_waitEvent(bool& value) {
 		while (value) {
 			XEvent e = { 0 };
-			if (XCheckIfEvent(_linux.dis, &e, &Application::_eventPredicate, (XPointer)this)) _doEvent(e);
+			if (XCheckIfEvent(_linux.dis, &e, &Application::_eventPredicate, (XPointer)this)) {
+				_doEvent(e);
+			} else {
+				value = false;
+				break;
+			}
 		};
 	}
 
@@ -532,7 +540,7 @@ namespace aurora {
 		case Expose:
 		{
 			//XFlush(_linux.dis);
-			XSetWindowBackground(_linux.dis, _linux.wnd, _linux.bgColor);
+			//XSetWindowBackground(_linux.dis, _linux.wnd, _linux.bgColor);
 
 			break;
 		}
