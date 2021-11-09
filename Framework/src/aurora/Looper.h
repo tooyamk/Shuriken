@@ -32,6 +32,7 @@ namespace aurora {
 		}
 		inline void AE_CALL setInterval(float64_t interval) {
 			_interval = interval < 0. ? 0. : interval;
+			_internalInterval = _interval * 1000000000.;
 		}
 
 		inline void AE_CALL resetDeltaRecord() {
@@ -48,19 +49,12 @@ namespace aurora {
 
 		std::shared_ptr<bool> _isRunning;
 		float64_t _interval;
+		float64_t _internalInterval;
 		size_t _updatingCount;
 		int64_t _updatingTimePoint;
 		int64_t _updateTimeCompensationTimePoint;
 		size_t _updateTimeCompensationFrameCount;
 
-		inline void AE_CALL _sleep(size_t milliseconds) {
-#if AE_OS == AE_OS_WINDOWS
-			timeBeginPeriod(1);
-#endif
-			std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds));
-#if AE_OS == AE_OS_WINDOWS
-			timeEndPeriod(1);
-#endif
-		}
+		void AE_CALL _sleep(size_t nanoseconds);
 	};
 }

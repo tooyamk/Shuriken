@@ -42,7 +42,7 @@ void Stats::run(Looper* looper) {
 				}
 				t0 = t;
 
-				std::this_thread::sleep_for(1000us);
+				std::this_thread::sleep_for(1ms);
 			}
 		}).detach();
 	}

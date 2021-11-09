@@ -16,8 +16,8 @@ public:
 		if (app->createWindow(wndStype, "", Vec2ui32(800, 600), false)) {
 			IntrusivePtr gml = new GraphicsModuleLoader();
 
-			if (gml->load("libs/" + getDLLName("ae-graphics-gl"))) {
-			//if (gml->load("libs/" + getDLLName("ae-graphics-d3d11"))) {
+			//if (gml->load("libs/" + getDLLName("ae-graphics-gl"))) {
+			if (gml->load("libs/" + getDLLName("ae-graphics-d3d11"))) {
 				SerializableObject args;
 				
 				IntrusivePtr gpstml = new ModuleLoader<IProgramSourceTranslator>();
@@ -65,7 +65,7 @@ public:
 						std::vector<IntrusivePtr<IRenderable>> renderables;
 					} renderData;
 					renderData.app = app;
-					renderData.looper = new Looper(1000.0 / 60.0);
+					renderData.looper = new Looper(1.0 / 60.0);
 					renderData.g = graphics;
 
 					{
@@ -248,7 +248,7 @@ public:
 					})));
 
 					renderData.looper->getEventDispatcher()->addEventListener(LooperEvent::TICKING, new EventListener(std::function([renderData](Event<LooperEvent>& e) {
-						auto dt = float32_t(*e.getData<int64_t>()) * 0.001f;
+						auto dt = float32_t(*e.getData<float64_t>());
 
 						renderData.app->pollEvents();
 

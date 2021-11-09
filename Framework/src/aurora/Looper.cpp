@@ -25,48 +25,59 @@ namespace aurora {
 	}
 
 	void Looper::tick(bool restriction) {
-		auto t0 = Time::now();
-		auto dt = _updatingCount++ == 0 ? 0 : (t0 - _updatingTimePoint);
+		auto t0 = Time::now<std::chrono::nanoseconds, std::chrono::steady_clock>();
+		auto dt = _updatingCount++ == 0 ? 0. : (t0 - _updatingTimePoint) / 1000000000.;
 		_updatingTimePoint = t0;
 
 		_eventDispatcher->dispatchEvent(this, LooperEvent::TICKING, &dt);
 		_eventDispatcher->dispatchEvent(this, LooperEvent::TICKED);
 
 		if (restriction) {
-			auto t1 = Time::now();
+			auto t1 = Time::now<std::chrono::nanoseconds, std::chrono::steady_clock>();
 			auto phase = float64_t(t1 - t0);
 
 			if (_updateTimeCompensationFrameCount) {
-				if (auto t = _updateTimeCompensationFrameCount * _interval - (t0 - _updateTimeCompensationTimePoint); t > 0.) {
-					t += _interval - phase;
+				if (auto t = _updateTimeCompensationFrameCount * _internalInterval - (t0 - _updateTimeCompensationTimePoint); t > 0.) {
+					t += _internalInterval - phase;
 
 					if (t > 0.) {
 						++_updateTimeCompensationFrameCount;
 
-						if (size_t st = t; st > 1) _sleep(st - 1);
+						_sleep(t);
 					} else {
 						_updateTimeCompensationFrameCount = 0;
 					}
 				} else {
-					if (phase < _interval) {
+					if (phase < _internalInterval) {
 						_updateTimeCompensationTimePoint = t0;
 						_updateTimeCompensationFrameCount = 1;
 
-						if (size_t st = _interval - phase; st > 1) _sleep(st - 1);
+						_sleep(_internalInterval - phase);
 					} else {
 						_updateTimeCompensationFrameCount = 0;
 					}
 				}
 			} else {
-				if (phase < _interval) {
+				if (phase < _internalInterval) {
 					_updateTimeCompensationTimePoint = t0;
 					_updateTimeCompensationFrameCount = 1;
 
-					if (size_t st = _interval - phase; st > 1) _sleep(st - 1);
+					_sleep(_internalInterval - phase);
 				}
 			}
 		} else {
 			_updateTimeCompensationFrameCount = 0;
+		}
+	}
+
+	void Looper::_sleep(size_t nanoseconds) {
+		if (nanoseconds > 0) {
+			auto t0 = Time::now<std::chrono::nanoseconds, std::chrono::steady_clock>();
+			do {
+				std::this_thread::yield();
+				auto t1 = Time::now<std::chrono::nanoseconds, std::chrono::steady_clock>();
+				if (t1 - t0 >= nanoseconds) break;
+			} while (true);
 		}
 	}
 
