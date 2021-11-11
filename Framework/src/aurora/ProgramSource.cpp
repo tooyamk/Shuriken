@@ -63,7 +63,9 @@ namespace aurora {
 			sm += "5_0";
 		} else {
 			std::vector<std::string_view> vers;
-			String::split(version, ".", Invoker(&decltype(vers)::emplace_back<const std::string_view&>, &vers));
+			String::split(version, ".", [&vers](const std::string_view& data) {
+				vers.emplace_back(data);
+			});
 			uint32_t n = vers.size();
 			for (uint32_t i = 0; i < n; ++i) {
 				if (i != 0) sm.push_back('_');

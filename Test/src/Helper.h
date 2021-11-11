@@ -82,10 +82,8 @@ inline ByteArray AE_CALL readFile(T&& path) {
 	ByteArray dst;
 	std::ifstream stream(std::filesystem::path(path), std::ios::in | std::ios::binary);
 	if (stream.good()) {
-		auto beg = stream.tellg();
 		stream.seekg(0, std::ios::end);
-		auto end = stream.tellg();
-		auto size = end - beg;
+		auto size = stream.tellg();
 
 		auto data = new uint8_t[size];
 

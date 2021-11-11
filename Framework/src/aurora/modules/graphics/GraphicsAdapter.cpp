@@ -3,6 +3,7 @@
 
 #if AE_OS == AE_OS_WINDOWS
 #	include <dxgi.h>
+#	include <fstream>
 #endif
 
 namespace aurora::modules::graphics {
@@ -12,6 +13,26 @@ namespace aurora::modules::graphics {
 		dedicatedSystemMemory(0),
 		dedicatedVideoMemory(0),
 		sharedSystemMemory(0) {
+	}
+
+	GraphicsAdapter::GraphicsAdapter(GraphicsAdapter&& other) noexcept :
+		vendorId(other.vendorId),
+		deviceId(other.deviceId),
+		dedicatedSystemMemory(other.dedicatedSystemMemory),
+		dedicatedVideoMemory(other.dedicatedVideoMemory),
+		sharedSystemMemory(other.sharedSystemMemory),
+		description(std::move(other.description)) {
+	}
+
+	GraphicsAdapter& GraphicsAdapter::operator=(GraphicsAdapter&& other) noexcept {
+		vendorId = other.vendorId;
+		deviceId = other.deviceId;
+		dedicatedSystemMemory = other.dedicatedSystemMemory;
+		dedicatedVideoMemory = other.dedicatedVideoMemory;
+		sharedSystemMemory = other.sharedSystemMemory;
+		description = std::move(other.description);
+
+		return *this;
 	}
 
 	void GraphicsAdapter::query(std::vector<GraphicsAdapter>& dst) {
@@ -43,6 +64,115 @@ namespace aurora::modules::graphics {
 		}
 
 		factory->Release();
+#elif AE_OS == AE_OS_LINUX
+		std::filesystem::path devicesPath("/sys/bus/pci/devices");
+
+		if (std::filesystem::exists(devicesPath) && std::filesystem::is_directory(devicesPath)) {
+			std::filesystem::path className("/class");
+			std::filesystem::path vendorName("/vendor");
+			std::filesystem::path deviceName("/device");
+			std::filesystem::path resourceName("/resource");
+			std::filesystem::directory_iterator devicesItr(devicesPath);
+
+			std::vector<char> buf;
+
+			auto readFileToBuffer = [&buf](std::filesystem::path path, const std::filesystem::path& file) {
+				buf.clear();
+				path += file;
+				std::ifstream stream(path, std::ios::in | std::ios::binary);
+				auto good = stream.good();
+				if (good) {
+					stream.seekg(0, std::ios::end);
+					buf.resize(stream.tellg());
+					stream.seekg(0, std::ios::beg);
+					stream.read(buf.data(), buf.size());
+				}
+				stream.close();
+
+				return good;
+			};
+
+			for (auto& itr : devicesItr) {
+				auto& dirPath = itr.path();
+				if (std::filesystem::is_directory(dirPath)) {
+					struct {
+						uint32_t vid = 0;
+						uint32_t did = 0;
+						uint64_t dedicatedVideoMemory = 0;
+					} info;
+
+					if (readFileToBuffer(dirPath, className)) {
+						std::string_view val;
+						String::split(std::string_view(buf.data(), buf.size()), String::CharFlag::NEW_LINE, [&val](const std::string_view data) {
+							val = data;
+							return false;
+						});
+
+						if ((String::toNumber<uint32_t>(val.substr(2), 16) >> 16) != 3) continue;
+					} else {
+						continue;
+					}
+
+					if (readFileToBuffer(dirPath, vendorName)) {
+						std::string_view val;
+						String::split(std::string_view(buf.data(), buf.size()), String::CharFlag::NEW_LINE, [&val](const std::string_view data) {
+							val = data;
+							return false;
+						});
+
+						info.vid = String::toNumber<uint32_t>(val.substr(2), 16);
+					} else {
+						continue;
+					}
+
+					if (readFileToBuffer(dirPath, deviceName)) {
+						std::string_view val;
+						String::split(std::string_view(buf.data(), buf.size()), String::CharFlag::NEW_LINE, [&val](const std::string_view data) {
+							val = data;
+							return false;
+						});
+
+						info.did = String::toNumber<uint32_t>(val.substr(2), 16);
+					} else {
+						continue;
+					}
+
+					if (readFileToBuffer(dirPath, resourceName)) {
+						auto sssss = buf.size();
+						String::split(std::string_view(buf.data(), buf.size()), String::CharFlag::NEW_LINE, [&info](const std::string_view data) {
+							std::string_view arr[3];
+							size_t count = 0;
+							String::split(data, String::CharFlag::WHITE_SPACE, [&arr, &count](const std::string_view data) {
+								arr[count++] = data;
+								return count < 3;
+							});
+
+							if (count == 3) {
+								auto flags = String::toNumber<size_t>(arr[2].substr(2), 16);
+								if (flags & 0x200) {//IORESOURCE_MEM
+									auto prefetch = (flags & 0x2000) != 0;//IORESOURCE_PREFETCH
+									auto sizealign = (flags & 0x40000) != 0;//IORESOURCE_SIZEALIGN
+
+									if (prefetch) {
+										info.dedicatedVideoMemory = String::toNumber<uint64_t>(arr[1].substr(2), 16) - String::toNumber<uint64_t>(arr[0].substr(2), 16);
+										return false;
+									}
+								}
+							}
+
+							return true;
+						});
+					} else {
+						continue;
+					}
+
+					auto& ga = dst.emplace_back();
+					ga.vendorId = info.vid;
+					ga.deviceId = info.did;
+					ga.dedicatedVideoMemory = info.dedicatedVideoMemory;
+				}
+			}
+		}
 #endif
 	}
 
@@ -61,10 +191,11 @@ namespace aurora::modules::graphics {
 	}
 
 	void GraphicsAdapter::autoSort(const std::vector<GraphicsAdapter>& adapters, std::vector<uint32_t>& dst) {
-		std::vector<float64_t> scores;
+		auto size = adapters.size();
+		std::vector<float64_t> scores(size);
 		dst.clear();
-		for (uint32_t i = 0, n = adapters.size(); i < n; ++i) {
-			scores.emplace_back(_calcScore(adapters[i]));
+		for (decltype(size) i = 0; i < size; ++i) {
+			scores[i] = _calcScore(adapters[i]);
 			dst.emplace_back(i);
 		}
 
@@ -74,7 +205,7 @@ namespace aurora::modules::graphics {
 	}
 
 	float64_t GraphicsAdapter::_calcScore(const GraphicsAdapter& adapter) {
-		const auto K2G = float64_t(1024 * 1024 * 1024);
+		const auto K2G = float64_t(1024. * 1024. * 1024.);
 
 		float64_t score = 0.;
 

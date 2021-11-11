@@ -272,7 +272,7 @@ namespace aurora {
 			return d;
 		}
 
-		template<typename In, typename Separator, std::invocable<const std::string_view&> Fn>
+		template<typename In, typename Separator, InvocableAnyOfResult<std::tuple<void, bool>, const std::string_view&> Fn>
 		requires ConvertibleStringData<std::remove_cvref_t<In>> && (std::derived_from<std::remove_cvref_t<Separator>, std::regex> || ConvertibleStringData<std::remove_cvref_t<Separator>>)
 		static void AE_CALL split(In&& in, Separator&& separator, Fn&& fn) {
 			if constexpr (std::derived_from<std::remove_cvref_t<Separator>, std::regex>) {
@@ -280,7 +280,11 @@ namespace aurora {
 					std::regex_token_iterator itr(in.begin(), in.end(), separator, -1);
 					std::regex_token_iterator<typename In::const_iterator> end;
 					while (itr != end) {
-						fn(std::string_view(&*itr->first, itr->length()));
+						if constexpr (std::same_as<std::invoke_result_t<Fn, const std::string_view&>, void>) {
+							fn(std::string_view(&*itr->first, itr->length()));
+						} else {
+							if (!fn(std::string_view(&*itr->first, itr->length()))) return;
+						}
 						++itr;
 					}
 				} else {
@@ -300,7 +304,11 @@ namespace aurora {
 							}
 
 							if (found) {
-								fn(std::string_view(in.data() + begin, i - begin));
+								if constexpr (std::same_as<std::invoke_result_t<Fn, const std::string_view&>, void>) {
+									fn(std::string_view(in.data() + begin, i - begin));
+								} else {
+									if (!fn(std::string_view(in.data() + begin, i - begin))) return;
+								}
 								i += step;
 								begin = i;
 							} else {
@@ -320,14 +328,18 @@ namespace aurora {
 			}
 		}
 
-		template<typename In, std::invocable<const std::string_view&> Fn>
+		template<typename In, InvocableAnyOfResult<std::tuple<void, bool>, const std::string_view&> Fn>
 		requires ConvertibleStringData<std::remove_cvref_t<In>>
 		static void AE_CALL split(In&& in, uint8_t flags, Fn&& fn) {
 			if constexpr (StringData<std::remove_cvref_t<In>>) {
 				size_t begin = 0, i = 0, size = in.size();
 				while (i < size) {
 					if (CHARS[in[i]] & flags) {
-						fn(std::string_view(in.data() + begin, i - begin));
+						if constexpr (std::same_as<std::invoke_result_t<Fn, const std::string_view&>, void>) {
+							fn(std::string_view(in.data() + begin, i - begin));
+						} else {
+							if (!fn(std::string_view(in.data() + begin, i - begin))) return;
+						}
 						++i;
 						begin = i;
 					} else {

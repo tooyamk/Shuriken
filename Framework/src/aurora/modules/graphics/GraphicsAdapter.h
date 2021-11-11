@@ -7,6 +7,7 @@ namespace aurora::modules::graphics {
 	class AE_FW_DLL GraphicsAdapter {
 	public:
 		GraphicsAdapter();
+		GraphicsAdapter(GraphicsAdapter&& other) noexcept;
 
 		uint32_t vendorId;
 		uint32_t deviceId;
@@ -14,6 +15,8 @@ namespace aurora::modules::graphics {
 		uint64_t dedicatedVideoMemory;
 		uint64_t sharedSystemMemory;
 		std::string description;
+
+		GraphicsAdapter& AE_CALL operator=(GraphicsAdapter&& other) noexcept;
 
 		static void AE_CALL query(std::vector<GraphicsAdapter>& dst);
 		static GraphicsAdapter* AE_CALL autoChoose(std::vector<GraphicsAdapter>& adapters);
