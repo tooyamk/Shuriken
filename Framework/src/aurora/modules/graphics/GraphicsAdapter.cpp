@@ -3,6 +3,7 @@
 
 #if AE_OS == AE_OS_WINDOWS
 #	include <dxgi.h>
+#elif AE_OS == AE_OS_LINUX
 #	include <fstream>
 #endif
 
@@ -74,7 +75,9 @@ namespace aurora::modules::graphics {
 			std::filesystem::path resourceName("/resource");
 			std::filesystem::directory_iterator devicesItr(devicesPath);
 
-			std::vector<char> buf;
+			auto beginCount = dst.size();
+
+			std::string buf;
 
 			auto readFileToBuffer = [&buf](std::filesystem::path path, const std::filesystem::path& file) {
 				buf.clear();
@@ -172,6 +175,97 @@ namespace aurora::modules::graphics {
 					ga.dedicatedVideoMemory = info.dedicatedVideoMemory;
 				}
 			}
+
+			if (dst.size() > beginCount) {
+				std::array<std::filesystem::path, 6> paths = {
+						std::filesystem::path("/usr/share/misc/pci.ids"),
+						std::filesystem::path("/usr/share/hwdata/pci.ids"),
+						std::filesystem::path("/etc/pci.ids"),
+						std::filesystem::path("/usr/share/pci.ids"),
+						std::filesystem::path("/usr/local/share/pci.ids"),
+						std::filesystem::path("/usr/share/lshw-common/pci.ids")
+				};
+				std::filesystem::path* path = nullptr;
+				for (size_t i = 0; i < paths.size(); ++i) {
+					if (std::filesystem::exists(paths[i]) && std::filesystem::is_regular_file(paths[i])) {
+						path = &paths[i];
+						break;
+					}
+				}
+
+				if (path) {
+					std::string buf;
+					std::ifstream stream(*path, std::ios::in | std::ios::binary);
+					auto good = stream.good();
+					if (good) {
+						stream.seekg(0, std::ios::end);
+						buf.resize(stream.tellg());
+						stream.seekg(0, std::ios::beg);
+						stream.read(buf.data(), buf.size());
+					}
+					stream.close();
+					if (!buf.empty()) {
+						std::string findStr;
+						for (size_t i = beginCount, n = dst.size(); i < n; ++i) {
+							auto& ga = dst[i];
+							auto vidStr = String::toString(ga.vendorId, 16);
+							if (auto n = vidStr.size(); n < 4) {
+								n = 4 - n;
+								for (size_t j = 0; j < n; ++j) vidStr = "0" + vidStr;
+							}
+							auto didStr = String::toString(ga.deviceId, 16);
+							if (auto n = didStr.size(); n < 4) {
+								n = 4 - n;
+								for (size_t j = 0; j < n; ++j) didStr = "0" + didStr;
+							}
+
+							auto bufsv = std::string_view(buf);
+							findStr.clear();
+							findStr += '\n';
+							findStr += vidStr;
+							findStr += ' ';
+							if (auto pos = bufsv.find(findStr); pos != std::string_view::npos) {
+								pos += findStr.size();
+								auto beginPos = pos;
+								auto endPos = bufsv.size() - 1;
+								do {
+									auto p = bufsv.find('\n', beginPos);
+									if (p == std::string_view::npos) {
+										break;
+									} else {
+										endPos = p;
+										if (endPos + 1 == bufsv.size()) break;
+										if (bufsv.data()[endPos + 1] != '\t') break;
+										beginPos = endPos + 1;
+									}
+								} while (true);
+								auto sub = bufsv.substr(pos, endPos - pos);
+								findStr.clear();
+								findStr += "\n\t";
+								findStr += didStr;
+								findStr += ' ';
+								if (auto p = sub.find(findStr); p != std::string_view::npos) {
+									p += findStr.size();
+									ga.description = String::trim(sub.substr(p, sub.find('\n', p) - p), String::CharFlag::WHITE_SPACE);
+								}
+							}
+
+							if (ga.description.empty()) {
+								findStr.clear();
+								findStr += '\t';
+								findStr += vidStr;
+								findStr += ' ';
+								findStr += didStr;
+								findStr += ' ';
+								if (auto pos = bufsv.find(findStr); pos != std::string_view::npos) {
+									pos += findStr.size();
+									ga.description = String::trim(bufsv.substr(pos, bufsv.find('\n', pos) - pos), String::CharFlag::WHITE_SPACE);
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 #endif
 	}
@@ -193,13 +287,13 @@ namespace aurora::modules::graphics {
 	void GraphicsAdapter::autoSort(const std::vector<GraphicsAdapter>& adapters, std::vector<uint32_t>& dst) {
 		auto size = adapters.size();
 		std::vector<float64_t> scores(size);
-		dst.clear();
+		auto begin = dst.size();
 		for (decltype(size) i = 0; i < size; ++i) {
 			scores[i] = _calcScore(adapters[i]);
 			dst.emplace_back(i);
 		}
 
-		std::sort(dst.begin(), dst.end(), [&scores](const uint32_t idx1, const uint32_t idx2) {
+		std::sort(dst.begin() + begin, dst.end(), [&scores](const uint32_t idx1, const uint32_t idx2) {
 			return scores[idx1] > scores[idx2];
 		});
 	}

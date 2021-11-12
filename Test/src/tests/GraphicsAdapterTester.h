@@ -11,12 +11,12 @@ public:
 		GraphicsAdapter::query(gas);
 
 		for (auto& ga : gas) {
-			printdln(ga.description);
-			printdln("	vid = ", ga.vendorId);
-			printdln("	did = ", ga.deviceId);
-			printdln("	dedicatedVideoMemory = ", ga.dedicatedVideoMemory);
-			printdln("	dedicatedSystemMemory = ", ga.dedicatedSystemMemory);
-			printdln("	sharedSystemMemory = ", ga.sharedSystemMemory);
+			printaln(ga.description);
+			printaln("	vid = ", ga.vendorId);
+			printaln("	did = ", ga.deviceId);
+			printaln("	dedicatedVideoMemory = ", ga.dedicatedVideoMemory);
+			printaln("	dedicatedSystemMemory = ", ga.dedicatedSystemMemory);
+			printaln("	sharedSystemMemory = ", ga.sharedSystemMemory);
 		}
 
 		ApplicationStyle wndStype;

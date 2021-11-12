@@ -2,6 +2,8 @@ dependences:
   all:
     cmake
     git
+    Modules/Graphics/Vulkan:
+      VulkanSDK
 
   linux:
     Extensions/HID:
