@@ -26,13 +26,45 @@ namespace aurora::modules::graphics::vulkan {
 	}
 
 	bool Graphics::createDevice(const CreateConfig& conf) {
+		if (conf.app) {
+			if (!conf.app->getNative(ApplicationNative::HWND)) return false;
+		} else {
+			if (!conf.offscreen) return false;
+		}
+
+		if (conf.adapter) {
+			conf.createProcessInfo("specific adapter create device...");
+			return _createDevice(conf);
+		} else {
+			conf.createProcessInfo("search adapter create device...");
+
+			std::vector<GraphicsAdapter> adapters;
+			GraphicsAdapter::query(adapters);
+			std::vector<uint32_t> indices;
+			GraphicsAdapter::autoSort(adapters, indices);
+
+			auto conf2 = conf;
+
+			for (auto& idx : indices) {
+				conf2.adapter = &adapters[idx];
+				conf.createProcessInfo("found adapter create device...");
+				if (_createDevice(conf2)) return true;
+			}
+
+			conf.createProcessInfo("search adapter create device failed");
+
+			return false;
+		}
+	}
+
+	bool Graphics::_createDevice(const CreateConfig& conf) {
 		using namespace std::literals;
 
 		uint32_t enabledLayerCount = 0;
 		const char* enabledLayerNames[1];
 
-		uint32_t enabledExtensionCount = 0;
-		const char* enabledExtensionNames[64];
+		uint32_t enabledInstanceExtensionCount = 0;
+		const char* enabledInstanceExtensionNames[64];
 
 		if (conf.debug) {
 			do {
@@ -51,7 +83,7 @@ namespace aurora::modules::graphics::vulkan {
 			} while (false);
 		}
 
-		VkBool32 surfaceExtFound = 0, platformSurfaceExtFound = 0;
+		bool surfaceExtFound = false, platformSurfaceExtFound = false;
 		do {
 			uint32_t instanceExtensionCount;
 			if (auto err = vkEnumerateInstanceExtensionProperties(nullptr, &instanceExtensionCount, nullptr); err != VK_SUCCESS || !instanceExtensionCount) break;
@@ -61,26 +93,26 @@ namespace aurora::modules::graphics::vulkan {
 
 			for (auto& extension : instanceExtensions) {
 				if (!strcmp(VK_KHR_SURFACE_EXTENSION_NAME, extension.extensionName)) {
-					surfaceExtFound = 1;
-					enabledExtensionNames[enabledExtensionCount++] = VK_KHR_SURFACE_EXTENSION_NAME;
+					surfaceExtFound = true;
+					enabledInstanceExtensionNames[enabledInstanceExtensionCount++] = VK_KHR_SURFACE_EXTENSION_NAME;
 					continue;
 				}
 
 #if AE_OS == AE_OS_WINDOWS
 				if (!strcmp(VK_KHR_WIN32_SURFACE_EXTENSION_NAME, extension.extensionName)) {
-					platformSurfaceExtFound = 1;
-					enabledExtensionNames[enabledExtensionCount++] = VK_KHR_WIN32_SURFACE_EXTENSION_NAME;
+					platformSurfaceExtFound = true;
+					enabledInstanceExtensionNames[enabledInstanceExtensionCount++] = VK_KHR_WIN32_SURFACE_EXTENSION_NAME;
 					continue;
 				}
 #endif
 
 				if (!strcmp(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME, extension.extensionName)) {
-					enabledExtensionNames[enabledExtensionCount++] = VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME;
+					enabledInstanceExtensionNames[enabledInstanceExtensionCount++] = VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME;
 					continue;
 				}
 
 				if (conf.debug && !strcmp(VK_EXT_DEBUG_UTILS_EXTENSION_NAME, extension.extensionName)) {
-					enabledExtensionNames[enabledExtensionCount++] = VK_EXT_DEBUG_UTILS_EXTENSION_NAME;
+					enabledInstanceExtensionNames[enabledInstanceExtensionCount++] = VK_EXT_DEBUG_UTILS_EXTENSION_NAME;
 					continue;
 				}
 			}
@@ -107,8 +139,8 @@ namespace aurora::modules::graphics::vulkan {
 		.pApplicationInfo = &appInfo,
 		.enabledLayerCount = enabledLayerCount,
 		.ppEnabledLayerNames = enabledLayerNames,
-		.enabledExtensionCount = enabledExtensionCount,
-		.ppEnabledExtensionNames = enabledExtensionNames,
+		.enabledExtensionCount = enabledInstanceExtensionCount,
+		.ppEnabledExtensionNames = enabledInstanceExtensionNames,
 		};
 
 		VkDebugUtilsMessengerCreateInfoEXT debugMessengerCreateInfo;
@@ -131,6 +163,7 @@ namespace aurora::modules::graphics::vulkan {
 			return false;
 		}
 
+		VkPhysicalDevice physicalDevice = nullptr;
 		do {
 			uint32_t physicalDeviceCount = 0;
 			if (auto err = vkEnumeratePhysicalDevices(_vulkanStatus.instance, &physicalDeviceCount, nullptr); err != VK_SUCCESS || !physicalDeviceCount) break;
@@ -138,39 +171,71 @@ namespace aurora::modules::graphics::vulkan {
 			std::vector<VkPhysicalDevice> physicalDevices(physicalDeviceCount);
 			if (vkEnumeratePhysicalDevices(_vulkanStatus.instance, &physicalDeviceCount, physicalDevices.data()) != VK_SUCCESS) break;
 
-			/*uint32_t countDeviceType[VK_PHYSICAL_DEVICE_TYPE_CPU + 1];
-			memset(countDeviceType, 0, sizeof(countDeviceType));
-
 			VkPhysicalDeviceProperties physicalDeviceProperties;
 			if (conf.adapter) {
 				for (auto& device : physicalDevices) {
 					vkGetPhysicalDeviceProperties(device, &physicalDeviceProperties);
 					if (physicalDeviceProperties.vendorID == conf.adapter->vendorId && physicalDeviceProperties.deviceID == conf.adapter->deviceId) {
+						physicalDevice = device;
 						break;
 					}
 				}
 			} else {
+				uint32_t countDeviceType[VK_PHYSICAL_DEVICE_TYPE_CPU + 1];
+				memset(countDeviceType, 0, sizeof(countDeviceType));
 
+				for (auto& device : physicalDevices) {
+					vkGetPhysicalDeviceProperties(device, &physicalDeviceProperties);
+					if (physicalDeviceProperties.deviceType <= VK_PHYSICAL_DEVICE_TYPE_CPU) ++countDeviceType[physicalDeviceProperties.deviceType];
+				}
+
+				auto searchForDeviceType = VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
+				if (countDeviceType[VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU]) {
+					searchForDeviceType = VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
+				} else if (countDeviceType[VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU]) {
+					searchForDeviceType = VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU;
+				} else if (countDeviceType[VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU]) {
+					searchForDeviceType = VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU;
+				} else if (countDeviceType[VK_PHYSICAL_DEVICE_TYPE_CPU]) {
+					searchForDeviceType = VK_PHYSICAL_DEVICE_TYPE_CPU;
+				} else if (countDeviceType[VK_PHYSICAL_DEVICE_TYPE_OTHER]) {
+					searchForDeviceType = VK_PHYSICAL_DEVICE_TYPE_OTHER;
+				}
+
+				for (auto& device : physicalDevices) {
+					vkGetPhysicalDeviceProperties(device, &physicalDeviceProperties);
+					if (physicalDeviceProperties.deviceType <= searchForDeviceType) {
+						physicalDevice = device;
+						break;
+					}
+				}
 			}
-			for (auto& device : physicalDevices) {
-				vkGetPhysicalDeviceProperties(device, &physicalDeviceProperties);
-				if (physicalDeviceProperties.deviceType <= VK_PHYSICAL_DEVICE_TYPE_CPU) ++countDeviceType[physicalDeviceProperties.deviceType];
+		} while (false);
+
+		if (!physicalDevice) {
+			_release();
+			return false;
+		}
+
+		uint32_t enabledDeviceExtensionCount = 0;
+		const char* enabledDeviceExtensionNames[64];
+		bool swapchainExtFound = false;
+		do {
+			uint32_t deviceExtensionCount = 0;
+			if (auto err = vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &deviceExtensionCount, nullptr); err != VK_SUCCESS || !deviceExtensionCount) break;
+
+			std::vector<VkExtensionProperties> deviceExtensions(deviceExtensionCount);
+			if (vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &deviceExtensionCount, deviceExtensions.data()) != VK_SUCCESS) break;
+
+			for (auto& extension : deviceExtensions) {
+				if (!strcmp(VK_KHR_SWAPCHAIN_EXTENSION_NAME, extension.extensionName)) {
+					swapchainExtFound = true;
+					enabledDeviceExtensionNames[enabledDeviceExtensionCount++] = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
+				}
+				if (!strcmp("VK_KHR_portability_subset", extension.extensionName)) {
+					enabledDeviceExtensionNames[enabledDeviceExtensionCount++] = "VK_KHR_portability_subset";
+				}
 			}
-
-			auto searchForDeviceType = VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
-			if (countDeviceType[VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU]) {
-				searchForDeviceType = VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
-			} else if (countDeviceType[VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU]) {
-				searchForDeviceType = VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU;
-			} else if (countDeviceType[VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU]) {
-				searchForDeviceType = VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU;
-			} else if (countDeviceType[VK_PHYSICAL_DEVICE_TYPE_CPU]) {
-				searchForDeviceType = VK_PHYSICAL_DEVICE_TYPE_CPU;
-			} else if (countDeviceType[VK_PHYSICAL_DEVICE_TYPE_OTHER]) {
-				searchForDeviceType = VK_PHYSICAL_DEVICE_TYPE_OTHER;
-			}*/
-
-			int a = 1;
 		} while (false);
 
 		return false;

@@ -112,6 +112,7 @@ namespace aurora::modules::graphics::vulkan {
 
 		IntrusivePtr<events::IEventDispatcher<GraphicsEvent>> _eventDispatcher;
 
+		bool AE_CALL _createDevice(const CreateConfig& conf);
 		void AE_CALL _release();
 		void AE_CALL _resize(const Vec2ui32& size);
 	};

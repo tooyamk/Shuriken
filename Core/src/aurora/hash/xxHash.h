@@ -1,6 +1,7 @@
 #pragma once
 
 #include "aurora/Global.h"
+#include <array>
 
 namespace aurora::hash {
 	template<size_t Bits>
