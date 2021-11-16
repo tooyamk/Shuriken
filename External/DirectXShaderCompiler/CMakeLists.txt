@@ -113,7 +113,6 @@ ExternalProject_Add(
         -DGIT_ROOT=${PROJECT_BINARY_DIR}/src
         -DSRC_DIR=${CMAKE_CURRENT_SOURCE_DIR}
         -DBIN_DIR=${CMAKE_CURRENT_BINARY_DIR}
-        -DDXCOMPILER_CMAKE_LISTS_FILE=${CMAKE_CURRENT_BINARY_DIR}/src/tools/clang/tools/dxcompiler/CMakeLists.txt
         -P ${CMAKE_CURRENT_SOURCE_DIR}/patch/patch.cmake
     BUILD_BYPRODUCTS 
         ${LLVMDxcSupport_SLIB_R}
