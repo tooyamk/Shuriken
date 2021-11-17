@@ -14,6 +14,7 @@ namespace aurora::modules::graphics::vulkan {
 	}
 
 	Graphics::Graphics() :
+		_vulkanStatus({ 0 }),
 		_isDebug(false),
 		_curIsBackBuffer(true),
 		_backBufferSampleCount(1),
@@ -58,6 +59,22 @@ namespace aurora::modules::graphics::vulkan {
 	}
 
 	bool Graphics::_createDevice(const CreateConfig& conf) {
+		if (!_vulkanInit(conf)) return false;
+
+		//VkDeviceQueueCreateInfo queues[2];
+		//float32_t queuePriorities[1] = { 0.f };
+		//auto& queue = queues[0];
+		//queue.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+		//queue.pNext = nullptr;
+		//queue.queueFamilyIndex = 0;//
+		//queue.queueCount = 1;
+		//queue.pQueuePriorities = queuePriorities;
+		//queue.flags = 0;
+
+		return false;
+	}
+
+	bool Graphics::_vulkanInit(const CreateConfig& conf) {
 		using namespace std::literals;
 
 		uint32_t enabledLayerCount = 0;
@@ -83,7 +100,7 @@ namespace aurora::modules::graphics::vulkan {
 			} while (false);
 		}
 
-		bool surfaceExtFound = false, platformSurfaceExtFound = false;
+		auto surfaceExtFound = false, platformSurfaceExtFound = false;
 		do {
 			uint32_t instanceExtensionCount;
 			if (auto err = vkEnumerateInstanceExtensionProperties(nullptr, &instanceExtensionCount, nullptr); err != VK_SUCCESS || !instanceExtensionCount) break;
@@ -180,7 +197,8 @@ namespace aurora::modules::graphics::vulkan {
 						break;
 					}
 				}
-			} else {
+			}
+			else {
 				uint32_t countDeviceType[VK_PHYSICAL_DEVICE_TYPE_CPU + 1];
 				memset(countDeviceType, 0, sizeof(countDeviceType));
 
@@ -192,13 +210,17 @@ namespace aurora::modules::graphics::vulkan {
 				auto searchForDeviceType = VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
 				if (countDeviceType[VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU]) {
 					searchForDeviceType = VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
-				} else if (countDeviceType[VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU]) {
+				}
+				else if (countDeviceType[VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU]) {
 					searchForDeviceType = VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU;
-				} else if (countDeviceType[VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU]) {
+				}
+				else if (countDeviceType[VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU]) {
 					searchForDeviceType = VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU;
-				} else if (countDeviceType[VK_PHYSICAL_DEVICE_TYPE_CPU]) {
+				}
+				else if (countDeviceType[VK_PHYSICAL_DEVICE_TYPE_CPU]) {
 					searchForDeviceType = VK_PHYSICAL_DEVICE_TYPE_CPU;
-				} else if (countDeviceType[VK_PHYSICAL_DEVICE_TYPE_OTHER]) {
+				}
+				else if (countDeviceType[VK_PHYSICAL_DEVICE_TYPE_OTHER]) {
 					searchForDeviceType = VK_PHYSICAL_DEVICE_TYPE_OTHER;
 				}
 
@@ -219,7 +241,7 @@ namespace aurora::modules::graphics::vulkan {
 
 		uint32_t enabledDeviceExtensionCount = 0;
 		const char* enabledDeviceExtensionNames[64];
-		bool swapchainExtFound = false;
+		auto swapchainExtFound = false;
 		do {
 			uint32_t deviceExtensionCount = 0;
 			if (auto err = vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &deviceExtensionCount, nullptr); err != VK_SUCCESS || !deviceExtensionCount) break;
@@ -238,6 +260,32 @@ namespace aurora::modules::graphics::vulkan {
 			}
 		} while (false);
 
+		if (!swapchainExtFound) {
+			_release();
+			return false;
+		}
+
+		if (conf.debug) {
+			auto createDebugUtilsMessengerEXT = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(_vulkanStatus.instance, "vkCreateDebugUtilsMessengerEXT");
+			auto destroyDebugUtilsMessengerEXT = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(_vulkanStatus.instance, "vkDestroyDebugUtilsMessengerEXT");
+			auto submitDebugUtilsMessageEXT = vkGetInstanceProcAddr(_vulkanStatus.instance, "vkSubmitDebugUtilsMessageEXT");
+			auto cmdBeginDebugUtilsLabelEXT = vkGetInstanceProcAddr(_vulkanStatus.instance, "vkCmdBeginDebugUtilsLabelEXT");
+			auto cmdEndDebugUtilsLabelEXT = vkGetInstanceProcAddr(_vulkanStatus.instance, "vkCmdEndDebugUtilsLabelEXT");
+			auto cmdInsertDebugUtilsLabelEXT = vkGetInstanceProcAddr(_vulkanStatus.instance, "vkCmdInsertDebugUtilsLabelEXT");
+			auto setDebugUtilsObjectNameEXT = vkGetInstanceProcAddr(_vulkanStatus.instance, "vkSetDebugUtilsObjectNameEXT");
+
+			if (createDebugUtilsMessengerEXT && destroyDebugUtilsMessengerEXT && submitDebugUtilsMessageEXT &&
+				cmdBeginDebugUtilsLabelEXT && cmdEndDebugUtilsLabelEXT && cmdInsertDebugUtilsLabelEXT && setDebugUtilsObjectNameEXT) {
+				if (createDebugUtilsMessengerEXT(_vulkanStatus.instance, &debugMessengerCreateInfo, nullptr, &_vulkanStatus.debug.messenger) == VK_SUCCESS) {
+					_vulkanStatus.debug.destroyUtilsMessengerEXT = destroyDebugUtilsMessengerEXT;
+				}
+			}
+		}
+
+		return true;
+	}
+
+	bool Graphics::_vulkanInitSwapchain() {
 		return false;
 	}
 
@@ -372,6 +420,12 @@ namespace aurora::modules::graphics::vulkan {
 	}
 
 	void Graphics::_release() {
+		if (_vulkanStatus.debug.destroyUtilsMessengerEXT) {
+			_vulkanStatus.debug.destroyUtilsMessengerEXT(_vulkanStatus.instance, _vulkanStatus.debug.messenger, nullptr);
+			_vulkanStatus.debug.destroyUtilsMessengerEXT = nullptr;
+			_vulkanStatus.debug.messenger = nullptr;
+		}
+
 		if (_vulkanStatus.instance != nullptr) {
 			vkDestroyInstance(_vulkanStatus.instance, nullptr);
 			_vulkanStatus.instance = nullptr;

@@ -104,6 +104,12 @@ namespace aurora::modules::graphics::vulkan {
 
 		struct {
 			VkInstance instance;
+
+			struct {
+				PFN_vkDestroyDebugUtilsMessengerEXT destroyUtilsMessengerEXT;
+				VkDebugUtilsMessengerEXT messenger;
+			} debug;
+
 			Vec2<UINT> backSize;
 			Box2i32ui32 vp;
 		} _vulkanStatus;
@@ -113,6 +119,8 @@ namespace aurora::modules::graphics::vulkan {
 		IntrusivePtr<events::IEventDispatcher<GraphicsEvent>> _eventDispatcher;
 
 		bool AE_CALL _createDevice(const CreateConfig& conf);
+		bool AE_CALL _vulkanInit(const CreateConfig& conf);
+		bool AE_CALL _vulkanInitSwapchain();
 		void AE_CALL _release();
 		void AE_CALL _resize(const Vec2ui32& size);
 	};

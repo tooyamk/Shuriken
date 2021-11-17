@@ -17,8 +17,8 @@ public:
 			IntrusivePtr gml = new GraphicsModuleLoader();
 
 			//if (gml->load("libs/" + getDLLName("ae-graphics-d3d11"))) {
-			if (gml->load("libs/" + getDLLName("ae-graphics-gl"))) {
-			//if (gml->load("libs/" + getDLLName("ae-graphics-vulkan"))) {
+			//if (gml->load("libs/" + getDLLName("ae-graphics-gl"))) {
+			if (gml->load("libs/" + getDLLName("ae-graphics-vulkan"))) {
 				SerializableObject args;
 				
 				IntrusivePtr gpstml = new ModuleLoader<IProgramSourceTranslator>();
