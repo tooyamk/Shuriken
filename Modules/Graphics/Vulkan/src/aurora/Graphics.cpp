@@ -1,5 +1,6 @@
 #include "Graphics.h"
 #include "CreateModule.h"
+#include "RasterizerState.h"
 #include "aurora/ProgramSource.h"
 #include "aurora/modules/graphics/GraphicsAdapter.h"
 
@@ -28,7 +29,7 @@ namespace aurora::modules::graphics::vulkan {
 
 	bool Graphics::createDevice(const CreateConfig& conf) {
 		if (conf.app) {
-			if (!conf.app->getNative(ApplicationNative::HWND)) return false;
+			if (!conf.app->getNative(ApplicationNative::INSTANCE) || !conf.app->getNative(ApplicationNative::WINDOW)) return false;
 		} else {
 			if (!conf.offscreen) return false;
 		}
@@ -59,19 +60,19 @@ namespace aurora::modules::graphics::vulkan {
 	}
 
 	bool Graphics::_createDevice(const CreateConfig& conf) {
-		if (!_vulkanInit(conf)) return false;
+		auto success = false;
 
-		//VkDeviceQueueCreateInfo queues[2];
-		//float32_t queuePriorities[1] = { 0.f };
-		//auto& queue = queues[0];
-		//queue.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-		//queue.pNext = nullptr;
-		//queue.queueFamilyIndex = 0;//
-		//queue.queueCount = 1;
-		//queue.pQueuePriorities = queuePriorities;
-		//queue.flags = 0;
+		do {
+			if (!_vulkanInit(conf)) break;
+			if (!_vulkanCreateSurface(*conf.app)) break;
+			if (!_vulkanInitSwapchain()) break;
 
-		return false;
+			success = true;
+		} while (false);
+		
+		if (!success) _release();
+
+		return success;
 	}
 
 	bool Graphics::_vulkanInit(const CreateConfig& conf) {
@@ -135,10 +136,7 @@ namespace aurora::modules::graphics::vulkan {
 			}
 		} while (false);
 
-		if (!surfaceExtFound || !platformSurfaceExtFound) {
-			_release();
-			return false;
-		}
+		if (!surfaceExtFound || !platformSurfaceExtFound) return false;
 
 		const VkApplicationInfo appInfo = {
 		.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
@@ -175,10 +173,7 @@ namespace aurora::modules::graphics::vulkan {
 			instanceInfo.pNext = &debugMessengerCreateInfo;
 		}
 
-		if (vkCreateInstance(&instanceInfo, nullptr, &_vulkanStatus.instance) != VK_SUCCESS) {
-			_release();
-			return false;
-		}
+		if (vkCreateInstance(&instanceInfo, nullptr, &_vulkanStatus.instance) != VK_SUCCESS) return false;
 
 		VkPhysicalDevice physicalDevice = nullptr;
 		do {
@@ -234,13 +229,8 @@ namespace aurora::modules::graphics::vulkan {
 			}
 		} while (false);
 
-		if (!physicalDevice) {
-			_release();
-			return false;
-		}
+		if (!physicalDevice) return false;
 
-		uint32_t enabledDeviceExtensionCount = 0;
-		const char* enabledDeviceExtensionNames[64];
 		auto swapchainExtFound = false;
 		do {
 			uint32_t deviceExtensionCount = 0;
@@ -249,21 +239,17 @@ namespace aurora::modules::graphics::vulkan {
 			std::vector<VkExtensionProperties> deviceExtensions(deviceExtensionCount);
 			if (vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &deviceExtensionCount, deviceExtensions.data()) != VK_SUCCESS) break;
 
+			auto& data = _vulkanStatus.enabledDeviceExtensions;
 			for (auto& extension : deviceExtensions) {
 				if (!strcmp(VK_KHR_SWAPCHAIN_EXTENSION_NAME, extension.extensionName)) {
 					swapchainExtFound = true;
-					enabledDeviceExtensionNames[enabledDeviceExtensionCount++] = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
+					data.names[data.count++] = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
 				}
-				if (!strcmp("VK_KHR_portability_subset", extension.extensionName)) {
-					enabledDeviceExtensionNames[enabledDeviceExtensionCount++] = "VK_KHR_portability_subset";
-				}
+				if (!strcmp("VK_KHR_portability_subset", extension.extensionName)) data.names[data.count++] = "VK_KHR_portability_subset";
 			}
 		} while (false);
 
-		if (!swapchainExtFound) {
-			_release();
-			return false;
-		}
+		if (!swapchainExtFound) return false;
 
 		if (conf.debug) {
 			auto createDebugUtilsMessengerEXT = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(_vulkanStatus.instance, "vkCreateDebugUtilsMessengerEXT");
@@ -282,11 +268,112 @@ namespace aurora::modules::graphics::vulkan {
 			}
 		}
 
+		_vulkanStatus.physicalDevice = physicalDevice;
+
 		return true;
 	}
 
+	bool Graphics::_vulkanCreateSurface(IApplication& app) {
+		auto err = VK_ERROR_UNKNOWN;
+
+#if AE_OS == AE_OS_WINDOWS
+		VkWin32SurfaceCreateInfoKHR createInfo;
+		createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+		createInfo.pNext = nullptr;
+		createInfo.flags = 0;
+		createInfo.hinstance = (HINSTANCE)app.getNative(ApplicationNative::INSTANCE);
+		createInfo.hwnd = (HWND)app.getNative(ApplicationNative::WINDOW);
+
+		err = vkCreateWin32SurfaceKHR(_vulkanStatus.instance, &createInfo, nullptr, &_vulkanStatus.surface);
+#endif
+
+		return err == VK_SUCCESS;
+	}
+
 	bool Graphics::_vulkanInitSwapchain() {
-		return false;
+		constexpr auto max = (std::numeric_limits<uint32_t>::max)();
+		uint32_t graphicsQueueFamilyIndex = max, presentQueueFamilyIndex = max;
+		do {
+			uint32_t queueFamilyCount = 0;
+			vkGetPhysicalDeviceQueueFamilyProperties(_vulkanStatus.physicalDevice, &queueFamilyCount, nullptr);
+			if (queueFamilyCount < 1) return false;
+
+			std::vector<VkQueueFamilyProperties> queueProps(queueFamilyCount);
+			vkGetPhysicalDeviceQueueFamilyProperties(_vulkanStatus.physicalDevice, &queueFamilyCount, queueProps.data());
+
+			auto getPhysicalDeviceSurfaceSupportKHR = (PFN_vkGetPhysicalDeviceSurfaceSupportKHR)vkGetInstanceProcAddr(_vulkanStatus.instance, "vkGetPhysicalDeviceSurfaceSupportKHR");
+			if (!getPhysicalDeviceSurfaceSupportKHR) return false;
+
+			std::vector<VkBool32> supportsPresent(queueFamilyCount);
+			for (decltype(queueFamilyCount) i = 0; i < queueFamilyCount; ++i) getPhysicalDeviceSurfaceSupportKHR(_vulkanStatus.physicalDevice, i, _vulkanStatus.surface, &supportsPresent.data()[i]);
+
+			for (decltype(queueFamilyCount) i = 0; i < queueFamilyCount; ++i) {
+				if ((queueProps[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) != 0) {
+					if (graphicsQueueFamilyIndex == max) graphicsQueueFamilyIndex = i;
+
+					if (supportsPresent[i] == VK_TRUE) {
+						graphicsQueueFamilyIndex = i;
+						presentQueueFamilyIndex = i;
+
+						break;
+					}
+				}
+			}
+
+			if (presentQueueFamilyIndex == max) {
+				for (decltype(queueFamilyCount) i = 0; i < queueFamilyCount; ++i) {
+					if (supportsPresent[i] == VK_TRUE) {
+						presentQueueFamilyIndex = i;
+
+						break;
+					}
+				}
+			}
+
+			if (graphicsQueueFamilyIndex == max || presentQueueFamilyIndex == max) return false;
+		} while (false);
+
+		if (!_vulkanCreateDevice(graphicsQueueFamilyIndex, presentQueueFamilyIndex)) return false;
+
+		return true;
+	}
+
+	bool Graphics::_vulkanCreateDevice(uint32_t graphicsQueueFamilyIndex, uint32_t presentQueueFamilyIndex) {
+		float32_t queuePriorities[1] = { 0.0f };
+
+		VkDeviceQueueCreateInfo queues[2];
+		auto& queue = queues[0];
+		queue.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+		queue.pNext = nullptr;
+		queue.queueFamilyIndex = graphicsQueueFamilyIndex;
+		queue.queueCount = 1;
+		queue.pQueuePriorities = queuePriorities;
+		queue.flags = 0;
+
+		VkDeviceCreateInfo device = {
+			.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+			.pNext = nullptr,
+			.queueCreateInfoCount = 1,
+			.pQueueCreateInfos = queues,
+			.enabledLayerCount = 0,
+			.ppEnabledLayerNames = nullptr,
+			.enabledExtensionCount = _vulkanStatus.enabledDeviceExtensions.count,
+			.ppEnabledExtensionNames = (const char* const*)_vulkanStatus.enabledDeviceExtensions.names,
+			.pEnabledFeatures = nullptr,
+		};
+
+		if (graphicsQueueFamilyIndex != presentQueueFamilyIndex) {
+			queue = queues[1];
+			queue.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+			queue.pNext = nullptr;
+			queue.queueFamilyIndex = presentQueueFamilyIndex;
+			queue.queueCount = 1;
+			queue.pQueuePriorities = queuePriorities;
+			queue.flags = 0;
+			device.queueCreateInfoCount = 2;
+		}
+
+		return vkCreateDevice(_vulkanStatus.physicalDevice, &device, nullptr, &_vulkanStatus.device) == VK_SUCCESS;
 	}
 
 	IntrusivePtr<events::IEventDispatcher<GraphicsEvent>> Graphics::getEventDispatcher() {
@@ -330,7 +417,7 @@ namespace aurora::modules::graphics::vulkan {
 	}
 
 	IntrusivePtr<IRasterizerState> Graphics::createRasterizerState() {
-		return nullptr;
+		return new RasterizerState(*this, false);
 	}
 
 	IntrusivePtr<IRenderTarget> Graphics::createRenderTarget() {
@@ -420,16 +507,30 @@ namespace aurora::modules::graphics::vulkan {
 	}
 
 	void Graphics::_release() {
+		if (_vulkanStatus.device) {
+			vkDeviceWaitIdle(_vulkanStatus.device);
+			vkDestroyDevice(_vulkanStatus.device, nullptr);
+			_vulkanStatus.device = nullptr;
+		}
+
 		if (_vulkanStatus.debug.destroyUtilsMessengerEXT) {
 			_vulkanStatus.debug.destroyUtilsMessengerEXT(_vulkanStatus.instance, _vulkanStatus.debug.messenger, nullptr);
 			_vulkanStatus.debug.destroyUtilsMessengerEXT = nullptr;
 			_vulkanStatus.debug.messenger = nullptr;
 		}
 
+		if (_vulkanStatus.surface) {
+			vkDestroySurfaceKHR(_vulkanStatus.instance, _vulkanStatus.surface, nullptr);
+			_vulkanStatus.surface = nullptr;
+		}
+
 		if (_vulkanStatus.instance != nullptr) {
 			vkDestroyInstance(_vulkanStatus.instance, nullptr);
 			_vulkanStatus.instance = nullptr;
 		}
+
+		_vulkanStatus.enabledDeviceExtensions.count = 0;
+		_vulkanStatus.physicalDevice = nullptr;
 
 		_deviceFeatures.reset();
 

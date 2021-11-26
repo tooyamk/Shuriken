@@ -26,13 +26,8 @@ namespace aurora {
 
 
 	enum class ApplicationNative : uint8_t {
-#if AE_OS == AE_OS_WINDOWS
-		HINSTANCE,
-		HWND
-#elif AE_OS == AE_OS_LINUX
-		DISPLAY,
+		INSTANCE,
 		WINDOW
-#endif
 	};
 
 

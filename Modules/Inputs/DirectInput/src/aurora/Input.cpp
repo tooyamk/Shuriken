@@ -26,7 +26,7 @@ namespace aurora::modules::inputs::direct_input {
 	}
 
 	void Input::poll() {
-		if (!_di && FAILED(DirectInput8Create((HINSTANCE)_app->getNative(ApplicationNative::HINSTANCE), DIRECTINPUT_VERSION, IID_IDirectInput8, (LPVOID*)&_di, nullptr))) return;
+		if (!_di && FAILED(DirectInput8Create((HINSTANCE)_app->getNative(ApplicationNative::INSTANCE), DIRECTINPUT_VERSION, IID_IDirectInput8, (LPVOID*)&_di, nullptr))) return;
 
 		std::vector<InternalDeviceInfo> newDevices;
 
@@ -83,7 +83,7 @@ namespace aurora::modules::inputs::direct_input {
 	}
 
 	HWND Input::getHWND() const {
-		return (HWND)_app->getNative(ApplicationNative::HWND);
+		return (HWND)_app->getNative(ApplicationNative::WINDOW);
 	}
 
 	bool Input::isXInputDevice(const ::GUID& guidProduct) {

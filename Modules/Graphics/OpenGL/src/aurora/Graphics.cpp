@@ -47,11 +47,12 @@ namespace aurora::modules::graphics::gl {
 	bool Graphics::createDevice(const CreateConfig& conf) {
 		using namespace aurora::enum_operators;
 
-		if (!conf.app) return false;
+		if (!conf.app || !conf.app->getNative(ApplicationNative::INSTANCE) || !conf.app->getNative(ApplicationNative::WINDOW)) return false;
+
 #if AE_OS == AE_OS_WINDOWS
-		if (_dc || !conf.app->getNative(ApplicationNative::HWND)) return false;
+		if (_dc) return false;
 #elif AE_OS == AE_OS_LINUX
-		if (_context || !conf.app->getNative(ApplicationNative::WINDOW)) return false;
+		if (_context) return false;
 #endif
 
 		/*
@@ -95,7 +96,7 @@ namespace aurora::modules::graphics::gl {
 		if (sampleCount > _deviceFeatures.maxSampleCount) sampleCount = _deviceFeatures.maxSampleCount;
 
 #if AE_OS == AE_OS_WINDOWS
-		_dc = GetDC((HWND)conf.app->getNative(ApplicationNative::HWND));
+		_dc = GetDC((HWND)conf.app->getNative(ApplicationNative::WINDOW));
 		if (!_dc) {
 			_release(conf.app);
 			return false;
@@ -158,7 +159,7 @@ namespace aurora::modules::graphics::gl {
 			None
 		};
 
-		auto dis = (Display*)conf.app->getNative(ApplicationNative::DISPLAY);
+		auto dis = (Display*)conf.app->getNative(ApplicationNative::INSTANCE);
 		auto vi = glXChooseVisual(dis, DefaultScreen(dis), attrListDouble);//XVisualInfo*
 		if (vi) {
 			int32_t attrListSingle[] = {
@@ -681,7 +682,7 @@ namespace aurora::modules::graphics::gl {
 #if AE_OS == AE_OS_WINDOWS
 		wglMakeCurrent(_dc, _rc);
 #elif AE_OS == AE_OS_LINUX
-		glXMakeCurrent((Display*)_app->getNative(ApplicationNative::DISPLAY), (Window)_app->getNative(ApplicationNative::WINDOW), _context);
+		glXMakeCurrent((Display*)_app->getNative(ApplicationNative::INSTANCE), (Window)_app->getNative(ApplicationNative::WINDOW), _context);
 #endif
 	}
 
@@ -724,7 +725,7 @@ namespace aurora::modules::graphics::gl {
 #if AE_OS == AE_OS_WINDOWS
 		SwapBuffers(_dc);
 #elif AE_OS == AE_OS_LINUX
-		glXSwapBuffers((Display*)_app->getNative(ApplicationNative::DISPLAY), (Window)_app->getNative(ApplicationNative::WINDOW));
+		glXSwapBuffers((Display*)_app->getNative(ApplicationNative::INSTANCE), (Window)_app->getNative(ApplicationNative::WINDOW));
 #endif
 		
 	}
@@ -793,7 +794,7 @@ namespace aurora::modules::graphics::gl {
 		auto initOk = false;
 
 #if AE_OS == AE_OS_WINDOWS
-		auto hIns = (HINSTANCE)app->getNative(ApplicationNative::HINSTANCE);
+		auto hIns = (HINSTANCE)app->getNative(ApplicationNative::INSTANCE);
 		std::wstring className = L"Aurora OpenGL Temp Window " + String::Utf8ToUnicode(String::toString(Time::now()));
 
 		WNDCLASSEXW wnd;
@@ -827,7 +828,7 @@ namespace aurora::modules::graphics::gl {
 
 		UnregisterClassW(className.data(), hIns);
 #elif AE_OS == AE_OS_LINUX
-		auto dis = (Display*)app->getNative(ApplicationNative::DISPLAY);
+		auto dis = (Display*)app->getNative(ApplicationNative::INSTANCE);
 		auto screen = DefaultScreen(dis);
 		if (auto wnd = XCreateSimpleWindow(dis, RootWindow(dis, screen), 0, 0, 100, 100, 0, 0, 0); wnd) {
 			int32_t attrList[] = {
@@ -1062,14 +1063,14 @@ namespace aurora::modules::graphics::gl {
 		}
 
 		if (_dc) {
-			ReleaseDC((HWND)app->getNative(ApplicationNative::HWND), _dc);
+			ReleaseDC((HWND)app->getNative(ApplicationNative::WINDOW), _dc);
 			_dc = nullptr;
 		}
 #elif AE_OS == AE_OS_LINUX
-		if (glXGetCurrentContext() == _context) glXMakeCurrent((Display*)app->getNative(ApplicationNative::DISPLAY), None, nullptr);
+		if (glXGetCurrentContext() == _context) glXMakeCurrent((Display*)app->getNative(ApplicationNative::INSTANCE), None, nullptr);
 
 		if (_context) {
-			glXDestroyContext((Display*)app->getNative(ApplicationNative::DISPLAY), _context);
+			glXDestroyContext((Display*)app->getNative(ApplicationNative::INSTANCE), _context);
 			_context = nullptr;
 		}
 #endif

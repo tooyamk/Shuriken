@@ -97,9 +97,9 @@ namespace aurora {
 
 	void* Application::getNative(ApplicationNative native) const {
 		switch (native) {
-		case ApplicationNative::HINSTANCE:
+		case ApplicationNative::INSTANCE:
 			return _win.ins;
-		case ApplicationNative::HWND:
+		case ApplicationNative::WINDOW:
 			return _win.wnd;
 		}
 

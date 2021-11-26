@@ -145,6 +145,7 @@ public:
 									subPass->state->rasterizer.state = rs;
 									subPass->material = mat;
 									subPass->tags = tag2;
+
 									pass->subPasses.emplace_back(subPass);
 								}
 								auto mesh = new Mesh();

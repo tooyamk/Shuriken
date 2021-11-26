@@ -26,13 +26,13 @@ namespace aurora::render {
 		_m44_l2p(new ShaderParameter()),
 		_shaderDefines(new ShaderDefineCollection()),
 		_shaderParameters(new ShaderParameterCollection()) {
-		{
+		if (_defaultAddBlendState)  {
 			modules::graphics::RenderTargetBlendState bs;
 			bs.enabled = true;
 			bs.func = modules::graphics::BlendFunc(modules::graphics::BlendFactor::ONE, modules::graphics::BlendFactor::ONE);
 			_defaultAddBlendState->setRenderTargetState(0, bs);
 		}
-		{
+		if (_defaultAddDepthStencilState)  {
 			modules::graphics::DepthState ds;
 			ds.func = modules::graphics::ComparisonFunc::LESS_EQUAL;
 			ds.writeable = false;

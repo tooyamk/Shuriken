@@ -25,45 +25,24 @@ namespace aurora::modules::graphics::gl {
 			return _internalState;
 		}
 
-		inline const uint64_t& AE_CALL getFeatureValue() const {
+		inline uint32_t AE_CALL getFeatureValue() const {
 			return _featureValue;
 		}
 
 		void AE_CALL update();
 
 	protected:
-		using DirtyType = uint8_t;
-
-		struct DirtyFlag {
-			static const DirtyType EMPTY = 0b1;
-			static const DirtyType FILL_MODE = 0b1 << 1;
-			static const DirtyType CULL_MODE = 0b1 << 2;
-			static const DirtyType FRONT_FACE = 0b1 << 3;
-		};
-
-		struct Desc {
-			FillMode fillMode;
-			CullMode cullMode;
-			FrontFace frontFace;
-		};
-
 		bool _isInternal;
-		DirtyType _dirty;
-		Desc _desc;
-		Desc _oldDesc;
+		bool _dirty;
+
+		FillMode _fillMode;
+		CullMode _cullMode;
+		FrontFace _frontFace;
 		InternalRasterizerState _internalState;
-		uint64_t _featureValue;
+		uint32_t _featureValue;
 
 		static GLenum AE_CALL _convertFillMode(FillMode mode);
 		static GLenum AE_CALL _convertCullMode(CullMode mode);
 		static GLenum AE_CALL _convertFrontFace(FrontFace front);
-
-		inline void AE_CALL _setDirty(bool dirty, DirtyType val) {
-			if (dirty) {
-				_dirty |= val;
-			} else {
-				_dirty &= ~val;
-			}
-		}
 	};
 }

@@ -309,7 +309,7 @@ namespace aurora::modules::graphics::d3d11 {
 
 		struct {
 			struct {
-				uint64_t featureValue;
+				uint32_t featureValue;
 			} rasterizer;
 
 			struct {

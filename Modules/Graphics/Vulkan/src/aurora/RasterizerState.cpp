@@ -1,7 +1,7 @@
 #include "RasterizerState.h"
 #include "Graphics.h"
 
-namespace aurora::modules::graphics::gl {
+namespace aurora::modules::graphics::vulkan {
 	RasterizerState::RasterizerState(Graphics& graphics, bool isInternal) : IRasterizerState(graphics),
 		_isInternal(isInternal),
 		_dirty(true),
@@ -10,10 +10,15 @@ namespace aurora::modules::graphics::gl {
 		_frontFace(FrontFace::CW),
 		_featureValue(0) {
 		if (_isInternal) Ref::unref<false>(*_graphics);
-		_internalState.cullEnabled = _cullMode != CullMode::NONE;
-		_internalState.fillMode = _convertFillMode(_fillMode);
+		memset(&_internalState, 0, sizeof(_internalState));
+		_internalState.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+		_internalState.polygonMode = _convertFillMode(_fillMode);
 		_internalState.cullMode = _convertCullMode(_cullMode);
 		_internalState.frontFace = _convertFrontFace(_frontFace);
+		_internalState.depthClampEnable = VK_TRUE;
+		_internalState.rasterizerDiscardEnable = VK_TRUE;
+		_internalState.depthBiasEnable = VK_TRUE;
+		_internalState.lineWidth = 1.0f;
 	}
 
 	RasterizerState::~RasterizerState() {
@@ -31,7 +36,7 @@ namespace aurora::modules::graphics::gl {
 	void RasterizerState::setFillMode(FillMode fill) {
 		if (_fillMode != fill) {
 			_fillMode = fill;
-			_internalState.fillMode = _convertFillMode(_fillMode);
+			_internalState.polygonMode = _convertFillMode(_fillMode);
 			_dirty = true;
 		}
 	}
@@ -43,7 +48,6 @@ namespace aurora::modules::graphics::gl {
 	void RasterizerState::setCullMode(CullMode cull) {
 		if (_cullMode != cull) {
 			_cullMode = cull;
-			_internalState.cullEnabled = _cullMode != CullMode::NONE;
 			_internalState.cullMode = _convertCullMode(_cullMode);
 			_dirty = true;
 		}
@@ -61,37 +65,32 @@ namespace aurora::modules::graphics::gl {
 		}
 	}
 
-	GLenum RasterizerState::_convertFillMode(FillMode mode) {
+	VkPolygonMode RasterizerState::_convertFillMode(FillMode mode) {
 		switch (mode) {
 		case FillMode::WIREFRAME:
-			return GL_LINE;
+			return VK_POLYGON_MODE_LINE;
 		case FillMode::SOLID:
-			return GL_FILL;
+			return VK_POLYGON_MODE_FILL;
 		default:
-			return GL_FILL;
+			return VK_POLYGON_MODE_FILL;
 		}
 	}
 
-	GLenum RasterizerState::_convertCullMode(CullMode mode) {
+	VkCullModeFlagBits RasterizerState::_convertCullMode(CullMode mode) {
 		switch (mode) {
+		case CullMode::NONE:
+			return VK_CULL_MODE_NONE;
 		case CullMode::FRONT:
-			return GL_FRONT;
+			return VK_CULL_MODE_FRONT_BIT;
 		case CullMode::BACK:
-			return GL_BACK;
+			return VK_CULL_MODE_BACK_BIT;
 		default:
-			return GL_BACK;
+			return VK_CULL_MODE_NONE;
 		}
 	}
 
-	GLenum RasterizerState::_convertFrontFace(FrontFace front) {
-		switch (front) {
-		case FrontFace::CW:
-			return GL_CW;
-		case FrontFace::CCW:
-			return GL_CCW;
-		default:
-			return GL_CW;
-		}
+	VkFrontFace RasterizerState::_convertFrontFace(FrontFace mode) {
+		return mode == FrontFace::CW ? VK_FRONT_FACE_CLOCKWISE : VK_FRONT_FACE_COUNTER_CLOCKWISE;
 	}
 
 	void RasterizerState::update() {

@@ -104,6 +104,14 @@ namespace aurora::modules::graphics::vulkan {
 
 		struct {
 			VkInstance instance;
+			VkPhysicalDevice physicalDevice;
+			VkSurfaceKHR surface;
+			VkDevice device;
+
+			struct {
+				uint32_t count;
+				const char* names[64];
+			} enabledDeviceExtensions;
 
 			struct {
 				PFN_vkDestroyDebugUtilsMessengerEXT destroyUtilsMessengerEXT;
@@ -120,7 +128,9 @@ namespace aurora::modules::graphics::vulkan {
 
 		bool AE_CALL _createDevice(const CreateConfig& conf);
 		bool AE_CALL _vulkanInit(const CreateConfig& conf);
+		bool AE_CALL _vulkanCreateSurface(IApplication& app);
 		bool AE_CALL _vulkanInitSwapchain();
+		bool AE_CALL _vulkanCreateDevice(uint32_t graphicsQueueFamilyIndex, uint32_t presentQueueFamilyIndex);
 		void AE_CALL _release();
 		void AE_CALL _resize(const Vec2ui32& size);
 	};

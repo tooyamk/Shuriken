@@ -111,7 +111,7 @@ namespace aurora::modules::inputs::raw_input {
 	}
 
 	HWND Input::getHWND() const {
-		return (HWND)_app->getNative(ApplicationNative::HWND);
+		return (HWND)_app->getNative(ApplicationNative::WINDOW);
 	}
 
 	void Input::registerRawInputDevices(DeviceType type) {

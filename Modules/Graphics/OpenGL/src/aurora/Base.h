@@ -61,17 +61,10 @@ namespace aurora::modules::graphics::gl {
 
 
 	struct InternalRasterizerState {
-		union {
-			uint64_t featureValue;
-
-			struct {
-				bool cullEnabled;
-				uint8_t reserved;
-				uint16_t fillMode;
-				uint16_t cullMode;
-				uint16_t frontFace;
-			};
-		};
+		bool cullEnabled;
+		uint16_t fillMode;
+		uint16_t cullMode;
+		uint16_t frontFace;
 	};
 
 

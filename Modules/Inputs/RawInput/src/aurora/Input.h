@@ -52,7 +52,7 @@ namespace aurora::modules::inputs::raw_input {
 			} else {
 				dev.dwFlags = RIDEV_INPUTSINK;
 			}
-			dev.hwndTarget = (HWND)_app->getNative(ApplicationNative::HWND);
+			dev.hwndTarget = (HWND)_app->getNative(ApplicationNative::WINDOW);
 
 			RegisterRawInputDevices(&dev, 1, sizeof(RAWINPUTDEVICE));
 		}
