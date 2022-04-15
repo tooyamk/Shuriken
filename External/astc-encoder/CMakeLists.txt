@@ -64,7 +64,7 @@ ExternalProject_Add(
     ${PROJECT_NAME}
     PREFIX ${PROJECT_BINARY_DIR}
     GIT_REPOSITORY https://github.com/ARM-software/astc-encoder.git
-    GIT_TAG 3.2
+    GIT_TAG 3.6
     GIT_SHALLOW 1
     GIT_PROGRESS 1
     TMP_DIR tmp
