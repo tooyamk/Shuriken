@@ -11,8 +11,8 @@ namespace aurora::modules::graphics::d3d11 {
 		virtual ~BlendState();
 
 		virtual const void* AE_CALL getNative() const override;
-		virtual bool AE_CALL isIndependentBlendEnabled() const override;
-		virtual void AE_CALL setIndependentBlendEnabled(bool enalbed) override;
+		virtual uint8_t AE_CALL getCount() const override;
+		virtual void AE_CALL setCount(uint8_t count) override;
 
 		virtual const RenderTargetBlendState* AE_CALL getRenderTargetState(uint8_t index) const override;
 		virtual bool AE_CALL setRenderTargetState(uint8_t index, const RenderTargetBlendState& state) override;
@@ -32,13 +32,14 @@ namespace aurora::modules::graphics::d3d11 {
 
 		struct DirtyFlag {
 			static const DirtyType EMPTY = 0b1;
-			static const DirtyType INDEPENDENT_BLEND_ENABLE = 0b1 << 1;
+			static const DirtyType COUNT = 0b1 << 1;
 			static const DirtyType RT_STATE = 0b1 << 2;
 		};
 
 		bool _isInternal;
 		DirtyType _dirty;
-		bool _oldIndependentBlendEnabled;
+		uint8_t _count;
+		uint8_t _oldCount;
 		D3D11_BLEND_DESC1 _desc;
 		RenderTargetBlendState _rtStatus[D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT];
 		RenderTargetBlendState _oldRtStatus[D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT];

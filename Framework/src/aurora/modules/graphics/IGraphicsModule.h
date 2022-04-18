@@ -662,8 +662,8 @@ namespace aurora::modules::graphics {
 		virtual ~IBlendState() {}
 
 		virtual const void* AE_CALL getNative() const = 0;
-		virtual bool AE_CALL isIndependentBlendEnabled() const = 0;
-		virtual void AE_CALL setIndependentBlendEnabled(bool enalbed) = 0;
+		virtual uint8_t AE_CALL getCount() const = 0;
+		virtual void AE_CALL setCount(uint8_t count) = 0;
 
 		virtual const RenderTargetBlendState* AE_CALL getRenderTargetState(uint8_t index) const = 0;
 		virtual bool AE_CALL setRenderTargetState(uint8_t index, const RenderTargetBlendState& state) = 0;

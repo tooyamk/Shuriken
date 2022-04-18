@@ -1,5 +1,6 @@
 #include "Graphics.h"
 #include "CreateModule.h"
+#include "BlendState.h"
 #include "RasterizerState.h"
 #include "aurora/ProgramSource.h"
 #include "aurora/modules/graphics/GraphicsAdapter.h"
@@ -66,6 +67,11 @@ namespace aurora::modules::graphics::vulkan {
 			if (!_vulkanInit(conf)) break;
 			if (!_vulkanCreateSurface(*conf.app)) break;
 			if (!_vulkanInitSwapchain()) break;
+
+			VkPhysicalDeviceProperties physicalDeviceProperties;
+			vkGetPhysicalDeviceProperties(_vulkanStatus.physicalDevice, &physicalDeviceProperties);
+
+			_deviceFeatures.simultaneousRenderTargetCount = physicalDeviceProperties.limits.maxColorAttachments;
 
 			success = true;
 		} while (false);
@@ -393,7 +399,7 @@ namespace aurora::modules::graphics::vulkan {
 	}
 
 	IntrusivePtr<IBlendState> Graphics::createBlendState() {
-		return nullptr;
+		return new BlendState(*this, false);
 	}
 
 	IntrusivePtr<IConstantBuffer> Graphics::createConstantBuffer() {

@@ -371,50 +371,63 @@ namespace aurora::modules::graphics::gl {
 		auto& blend = _glStatus.blend;
 
 		if (_deviceFeatures.independentBlend) {
-			if (state.isIndependentBlendEnabled()) {
-				auto funcChanged = false, opChanged = false, writeMaskChanged = false;
-
-				for (size_t i = 0; i < _deviceFeatures.simultaneousRenderTargetCount; ++i) {
-					auto& rt = state.getInternalRenderTargetState(i);
-					if (bool(blend.enabled >> i & 0x1) != rt.state.enabled) {
-						if (rt.state.enabled) {
-							glEnablei(GL_BLEND, i);
-							blend.enabled |= 1 << i;
-						} else {
-							glDisablei(GL_BLEND, i);
-							blend.enabled &= ~(1 << i);
-						}
-					}
-
+			auto count = state.getCount();
+			for (size_t i = 0; i < count; ++i) {
+				auto& rt = state.getInternalRenderTargetState(i);
+				if (bool(blend.enabled >> i & 0x1) != rt.state.enabled) {
 					if (rt.state.enabled) {
+						glEnablei(GL_BLEND, i);
+						blend.enabled |= 1 << i;
+
 						if (blend.func[i].featureValue != rt.internalFunc.featureValue) {
 							glBlendFuncSeparatei(i, rt.internalFunc.srcColor, rt.internalFunc.dstColor, rt.internalFunc.srcAlpha, rt.internalFunc.dstAlpha);
 							blend.func[i].featureValue = rt.internalFunc.featureValue;
-							funcChanged = true;
 						}
 
 						if (blend.op[i].featureValue != rt.internalOp.featureValue) {
 							glBlendEquationSeparatei(i, rt.internalOp.color, rt.internalOp.alpha);
 							blend.op[i].featureValue = rt.internalOp.featureValue;
-							opChanged = true;
 						}
 					}
-
-					if (blend.writeMask[i].featureValue != rt.internalWriteMask.featureValue) {
-						glColorMaski(i, rt.internalWriteMask.rgba[0], rt.internalWriteMask.rgba[1], rt.internalWriteMask.rgba[2], rt.internalWriteMask.rgba[3]);
-						blend.writeMask[i].featureValue = rt.internalWriteMask.featureValue;
-						writeMaskChanged = true;
+					else {
+						glDisablei(GL_BLEND, i);
+						blend.enabled &= ~(1 << i);
 					}
 				}
 
-				if (funcChanged) _checkBlendFuncIsSame();
-				if (opChanged) _checkBlendOpIsSame();
-				if (writeMaskChanged) _checkBlendWriteMaskIsSame();
-			} else {
-				_setDependentBlendState<true>(state.getInternalRenderTargetState(0));
+				if (blend.writeMask[i].featureValue != rt.internalWriteMask.featureValue) {
+					glColorMaski(i, rt.internalWriteMask.rgba[0], rt.internalWriteMask.rgba[1], rt.internalWriteMask.rgba[2], rt.internalWriteMask.rgba[3]);
+					blend.writeMask[i].featureValue = rt.internalWriteMask.featureValue;
+				}
 			}
 		} else {
-			_setDependentBlendState<false>(state.getInternalRenderTargetState(0));
+			auto& rt = state.getInternalRenderTargetState(0);
+			if (rt.state.enabled) {
+				if (blend.enabled != 0xFF) {
+					glEnable(GL_BLEND);
+					blend.enabled = 0xFF;
+				}
+
+				if (blend.func[0].featureValue != rt.internalFunc.featureValue) {
+					glBlendFuncSeparate(rt.internalFunc.srcColor, rt.internalFunc.dstColor, rt.internalFunc.srcAlpha, rt.internalFunc.dstAlpha);
+					blend.func[0].featureValue = rt.internalFunc.featureValue;
+				}
+
+				if (blend.op[0].featureValue != rt.internalOp.featureValue) {
+					glBlendEquationSeparate(rt.internalOp.color, rt.internalOp.alpha);
+					blend.op[0].featureValue = rt.internalOp.featureValue;
+				}
+			} else {
+				if (blend.enabled) {
+					glDisable(GL_BLEND);
+					blend.enabled = 0;
+				}
+			}
+
+			if (blend.writeMask[0].featureValue != rt.internalWriteMask.featureValue) {
+				glColorMask(rt.internalWriteMask.rgba[0], rt.internalWriteMask.rgba[1], rt.internalWriteMask.rgba[2], rt.internalWriteMask.rgba[3]);
+				blend.writeMask[0].featureValue = rt.internalWriteMask.featureValue;
+			}
 		}
 
 		if (blend.enabled && blend.constantFactors != constantFactors) {
@@ -432,78 +445,25 @@ namespace aurora::modules::graphics::gl {
 				blend.enabled = 0xFF;
 			}
 
-			if constexpr (SupportIndependentBlend) {
-				if (blend.isFuncSame) {
-					if (blend.func[0].featureValue != rt.internalFunc.featureValue) {
-						glBlendFuncSeparate(rt.internalFunc.srcColor, rt.internalFunc.dstColor, rt.internalFunc.srcAlpha, rt.internalFunc.dstAlpha);
-						for (size_t i = 0; i < _deviceFeatures.simultaneousRenderTargetCount; ++i) blend.func[i].featureValue = rt.internalFunc.featureValue;
-					}
-				} else {
-					auto needChange = false;
-					for (size_t i = 0; i < _deviceFeatures.simultaneousRenderTargetCount; ++i) {
-						if (blend.func[i].featureValue != rt.internalFunc.featureValue) {
-							blend.func[i].featureValue = rt.internalFunc.featureValue;
-							needChange = true;
-						}
-					}
-					if (needChange) glBlendFuncSeparate(rt.internalFunc.srcColor, rt.internalFunc.dstColor, rt.internalFunc.srcAlpha, rt.internalFunc.dstAlpha);
-					blend.isFuncSame = true;
-				}
+			if (blend.func[0].featureValue != rt.internalFunc.featureValue) {
+				glBlendFuncSeparate(rt.internalFunc.srcColor, rt.internalFunc.dstColor, rt.internalFunc.srcAlpha, rt.internalFunc.dstAlpha);
+				blend.func[0].featureValue = rt.internalFunc.featureValue;
+			}
 
-				if (blend.isOpSame) {
-					if (blend.op[0].featureValue != rt.internalOp.featureValue) {
-						glBlendEquationSeparate(rt.internalOp.color, rt.internalOp.alpha);
-						for (size_t i = 0; i < _deviceFeatures.simultaneousRenderTargetCount; ++i) blend.op[i].featureValue = rt.internalOp.featureValue;
-					}
-				} else {
-					auto needChange = false;
-					for (size_t i = 0; i < _deviceFeatures.simultaneousRenderTargetCount; ++i) {
-						if (blend.op[i].featureValue != rt.internalOp.featureValue) {
-							blend.op[i].featureValue = rt.internalOp.featureValue;
-							needChange = true;
-						}
-					}
-					if (needChange) glBlendEquationSeparate(rt.internalOp.color, rt.internalOp.alpha);
-					blend.isOpSame = true;
-				}
-			} else {
-				if (blend.func[0].featureValue != rt.internalFunc.featureValue) {
-					glBlendFuncSeparate(rt.internalFunc.srcColor, rt.internalFunc.dstColor, rt.internalFunc.srcAlpha, rt.internalFunc.dstAlpha);
-					blend.func[0].featureValue = rt.internalFunc.featureValue;
-				}
+			if (blend.op[0].featureValue != rt.internalOp.featureValue) {
+				glBlendEquationSeparate(rt.internalOp.color, rt.internalOp.alpha);
+				blend.op[0].featureValue = rt.internalOp.featureValue;
+			}
 
-				if (blend.op[0].featureValue != rt.internalOp.featureValue) {
-					glBlendEquationSeparate(rt.internalOp.color, rt.internalOp.alpha);
-					blend.op[0].featureValue = rt.internalOp.featureValue;
-				}
-
-				if (blend.writeMask[0].featureValue != rt.internalWriteMask.featureValue) {
-					glColorMask(rt.internalWriteMask.rgba[0], rt.internalWriteMask.rgba[1], rt.internalWriteMask.rgba[2], rt.internalWriteMask.rgba[3]);
-					blend.writeMask[0].featureValue = rt.internalWriteMask.featureValue;
-				}
+			if (blend.writeMask[0].featureValue != rt.internalWriteMask.featureValue) {
+				glColorMask(rt.internalWriteMask.rgba[0], rt.internalWriteMask.rgba[1], rt.internalWriteMask.rgba[2], rt.internalWriteMask.rgba[3]);
+				blend.writeMask[0].featureValue = rt.internalWriteMask.featureValue;
 			}
 		} else {
 			if (blend.enabled) {
 				glDisable(GL_BLEND);
 				blend.enabled = 0;
 			}
-		}
-
-		if (blend.isWriteMaskSame) {
-			if (blend.writeMask[0].featureValue != rt.internalWriteMask.featureValue) {
-				glColorMask(rt.internalWriteMask.rgba[0], rt.internalWriteMask.rgba[1], rt.internalWriteMask.rgba[2], rt.internalWriteMask.rgba[3]);
-				for (size_t i = 0; i < _deviceFeatures.simultaneousRenderTargetCount; ++i) blend.writeMask[i].featureValue = rt.internalWriteMask.featureValue;
-			}
-		} else {
-			auto needChange = false;
-			for (size_t i = 0; i < _deviceFeatures.simultaneousRenderTargetCount; ++i) {
-				if (blend.writeMask[i].featureValue != rt.internalWriteMask.featureValue) {
-					blend.writeMask[i].featureValue = rt.internalWriteMask.featureValue;
-					needChange = true;
-				}
-			}
-			if (needChange) glColorMask(rt.internalWriteMask.rgba[0], rt.internalWriteMask.rgba[1], rt.internalWriteMask.rgba[2], rt.internalWriteMask.rgba[3]);
-			blend.isWriteMaskSame = true;
 		}
 	}
 
@@ -931,10 +891,6 @@ namespace aurora::modules::graphics::gl {
 					auto& wm = blend.writeMask[i];
 					memcpy(wm.rgba, wms, sizeof(wm.rgba));
 				}
-
-				_checkBlendFuncIsSame();
-				_checkBlendOpIsSame();
-				_checkBlendWriteMaskIsSame();
 			} else {
 				blend.enabled = glIsEnabled(GL_BLEND) ? 0xFF : 0;
 
@@ -966,9 +922,6 @@ namespace aurora::modules::graphics::gl {
 					blend.op[i].featureValue = op.featureValue;
 					blend.writeMask[i].featureValue = wm.featureValue;
 				}
-				blend.isFuncSame = true;
-				blend.isOpSame = true;
-				blend.isWriteMaskSame = true;
 			}
 
 			glGetFloatv(GL_BLEND_COLOR, blend.constantFactors.data);
@@ -1084,39 +1037,6 @@ namespace aurora::modules::graphics::gl {
 	void Graphics::_resize(const Vec2ui32& size) {
 		_glStatus.backSize = size;
 		if (_glStatus.isBack) _updateCanvasSize(_glStatus.backSize);
-	}
-
-	void Graphics::_checkBlendFuncIsSame() {
-		auto& blend = _glStatus.blend;
-		blend.isFuncSame = true;
-		for (size_t i = 1; i < _deviceFeatures.simultaneousRenderTargetCount; ++i) {
-			if (blend.func[0].featureValue != blend.func[i].featureValue) {
-				blend.isFuncSame = false;
-				break;
-			}
-		}
-	}
-
-	void Graphics::_checkBlendOpIsSame() {
-		auto& blend = _glStatus.blend;
-		blend.isOpSame = true;
-		for (size_t i = 1; i < _deviceFeatures.simultaneousRenderTargetCount; ++i) {
-			if (blend.op[0].featureValue != blend.op[i].featureValue) {
-				blend.isOpSame = false;
-				break;
-			}
-		}
-	}
-
-	void Graphics::_checkBlendWriteMaskIsSame() {
-		auto& blend = _glStatus.blend;
-		blend.isWriteMaskSame = true;
-		for (size_t i = 1; i < _deviceFeatures.simultaneousRenderTargetCount; ++i) {
-			if (blend.writeMask[0].featureValue != blend.writeMask[i].featureValue) {
-				blend.isWriteMaskSame = false;
-				break;
-			}
-		}
 	}
 
 	std::optional<Graphics::ConvertFormatResult> Graphics::convertFormat(TextureFormat fmt) {

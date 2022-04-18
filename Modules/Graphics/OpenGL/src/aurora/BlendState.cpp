@@ -4,8 +4,9 @@
 namespace aurora::modules::graphics::gl {
 	BlendState::BlendState(Graphics& graphics, bool isInternal) : IBlendState(graphics),
 		_isInternal(isInternal),
+		_count(1),
 		MAX_MRT_COUNT(graphics.getDeviceFeatures().simultaneousRenderTargetCount),
-		_states(MAX_MRT_COUNT) {
+		_status(MAX_MRT_COUNT) {
 		if (_isInternal) Ref::unref<false>(*_graphics);
 		for (uint8_t i = 0; i < MAX_MRT_COUNT; ++i) _updateInternalState(i);
 	}
@@ -18,22 +19,22 @@ namespace aurora::modules::graphics::gl {
 		return this;
 	}
 
-	bool BlendState::isIndependentBlendEnabled() const {
-		return _independentBlendEnabled;
+	uint8_t BlendState::getCount() const {
+		return _count;
 	}
 
-	void BlendState::setIndependentBlendEnabled(bool enalbed) {
-		_independentBlendEnabled = enalbed;
+	void BlendState::setCount(uint8_t count) {
+		_count = Math::clamp(count, 1, MAX_MRT_COUNT);
 	}
 
 	const RenderTargetBlendState* BlendState::getRenderTargetState(uint8_t index) const {
-		return index < MAX_MRT_COUNT ? &_states[index].state : nullptr;
+		return index < MAX_MRT_COUNT ? &_status[index].state : nullptr;
 	}
 
 	bool BlendState::setRenderTargetState(uint8_t index, const RenderTargetBlendState& state) {
 		if (index < MAX_MRT_COUNT) {
-			if (_states[index].state != state) {
-				_states[index].state = state;
+			if (_status[index].state != state) {
+				_status[index].state = state;
 				_updateInternalState(index);
 			}
 
@@ -101,7 +102,7 @@ namespace aurora::modules::graphics::gl {
 	}
 
 	void BlendState::_updateInternalState(uint8_t index) {
-		auto& rt = _states[index];
+		auto& rt = _status[index];
 		
 		auto& func = rt.state.func;
 		auto& internalFunc = rt.internalFunc;

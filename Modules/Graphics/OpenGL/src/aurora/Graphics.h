@@ -129,9 +129,6 @@ namespace aurora::modules::graphics::gl {
 		struct {
 			struct {
 				uint8_t enabled;
-				bool isFuncSame;
-				bool isOpSame;
-				bool isWriteMaskSame;
 				std::vector<InternalBlendFunc> func;
 				std::vector<InternalBlendOp> op;
 				std::vector<InternalBlendWriteMask> writeMask;
@@ -212,10 +209,6 @@ namespace aurora::modules::graphics::gl {
 
 		IConstantBuffer* AE_CALL _createdShareConstantBuffer();
 		IConstantBuffer* AE_CALL _createdExclusiveConstantBuffer(uint32_t numParameters);
-
-		void AE_CALL _checkBlendFuncIsSame();
-		void AE_CALL _checkBlendOpIsSame();
-		void AE_CALL _checkBlendWriteMaskIsSame();
 
 		template<bool SupportIndependentBlend>
 		void AE_CALL _setDependentBlendState(const InternalRenderTargetBlendState& rt);

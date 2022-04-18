@@ -6,12 +6,12 @@ namespace aurora::modules::graphics::d3d11 {
 	BlendState::BlendState(Graphics& graphics, bool isInternal) : IBlendState(graphics),
 		_isInternal(isInternal),
 		_dirty(DirtyFlag::EMPTY),
+		_count(1),
+		_oldCount(_count),
 		_desc({ 0 }),
 		_internalState(nullptr),
 		_featureValue(0) {
-		Ref& zzz = *_graphics;
 		if (_isInternal) Ref::unref<false>(*_graphics);
-		_oldIndependentBlendEnabled = _desc.IndependentBlendEnable;
 		for (uint8_t i = 0; i < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i) _setRenderTargetState(i, _rtStatus[i]);
 	}
 
@@ -24,15 +24,20 @@ namespace aurora::modules::graphics::d3d11 {
 		return this;
 	}
 
-	bool BlendState::isIndependentBlendEnabled() const {
-		return _desc.IndependentBlendEnable;
+	uint8_t BlendState::getCount() const {
+		return _count;
 	}
 
-	void BlendState::setIndependentBlendEnabled(bool enalbed) {
-		if (bool(_desc.IndependentBlendEnable) != enalbed) {
-			_desc.IndependentBlendEnable = enalbed;
+	void BlendState::setCount(uint8_t count) {
+		count = Math::clamp(count, 1, D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT);
+		if (_count == count) return;
 
-			_setDirty(_oldIndependentBlendEnabled != bool(_desc.IndependentBlendEnable), DirtyFlag::INDEPENDENT_BLEND_ENABLE);
+		_count = count;
+		auto independent = count > 1;
+		if (bool(_desc.IndependentBlendEnable) != independent) {
+			_desc.IndependentBlendEnable = independent;
+
+			_setDirty(_oldCount != _count, DirtyFlag::COUNT);
 		}
 	}
 
@@ -133,9 +138,9 @@ namespace aurora::modules::graphics::d3d11 {
 		if (_dirty) {
 			_releaseRes();
 			if (SUCCEEDED(_graphics.get<Graphics>()->getDevice()->CreateBlendState1(&_desc, &_internalState))) {
-				_oldIndependentBlendEnabled = _desc.IndependentBlendEnable;
+				_oldCount = _count;
 				memcpy(&_oldRtStatus, &_rtStatus, sizeof(_rtStatus));
-				_featureValue = hash::xxHash<sizeof(_featureValue) * 8>::calc<std::endian::native>(&_desc, _desc.IndependentBlendEnable ? sizeof(_desc) : sizeof(_desc) - sizeof(_desc.RenderTarget[0]) * 7, 0);
+				_featureValue = hash::xxHash<sizeof(_featureValue) * 8>::calc<std::endian::native>(&_desc, sizeof(_desc) - sizeof(_desc.RenderTarget[0]) * (D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT - _count), 0);
 				_dirty = 0;
 			}
 		}
