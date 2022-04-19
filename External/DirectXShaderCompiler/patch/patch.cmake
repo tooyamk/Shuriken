@@ -32,7 +32,7 @@ string(REPLACE "add_llvm_tool_subdirectory(llvm-diff)" "" content "${content}")
 string(REPLACE "add_llvm_tool_subdirectory(llvm-bcanalyzer)" "" content "${content}")
 string(REPLACE "add_llvm_tool_subdirectory(llvm-stress)" "" content "${content}")
 string(REPLACE "add_llvm_tool_subdirectory(verify-uselistorder)" "" content "${content}")
-string(REPLACE "add_llvm_external_project(clang)" "" content "${content}")
+#string(REPLACE "add_llvm_external_project(clang)" "" content "${content}")
 file(WRITE ${file} "${content}")
 
 #set(file ${BIN_DIR}/src/tools/clang/include/CMakeLists.txt)
