@@ -1,7 +1,5 @@
 __set_project()
 
-find_package(Vulkan)
-
 get_property(PROJECT_AE_CORE_NAME GLOBAL PROPERTY "PROJECT_AE_CORE_NAME")
 get_property(PROJECT_AE_CORE_INCLUDE GLOBAL PROPERTY "PROJECT_AE_CORE_INCLUDE")
 get_property(PROJECT_AE_CORE_DLL GLOBAL PROPERTY "PROJECT_AE_CORE_DLL")
@@ -44,34 +42,27 @@ get_property(PROJECT_TCMALLOC_LIB GLOBAL PROPERTY "PROJECT_TCMALLOC_LIB")
 get_property(PROJECT_TCMALLOC_DLL GLOBAL PROPERTY "PROJECT_TCMALLOC_DLL")
 
 get_property(PROJECT_DX_SHADER_COMPILER_DLL GLOBAL PROPERTY "PROJECT_DX_SHADER_COMPILER_DLL")
-if (WIN32)
-    get_property(PROJECT_AE_GRAPHICS_D3D11_NAME GLOBAL PROPERTY "PROJECT_AE_GRAPHICS_D3D11_NAME")
-    get_property(PROJECT_AE_GRAPHICS_D3D11_DLL GLOBAL PROPERTY "PROJECT_AE_GRAPHICS_D3D11_DLL")
 
-    get_property(PROJECT_AE_GRAPHICS_GL_NAME GLOBAL PROPERTY "PROJECT_AE_GRAPHICS_GL_NAME")
-    get_property(PROJECT_AE_GRAPHICS_GL_DLL GLOBAL PROPERTY "PROJECT_AE_GRAPHICS_GL_DLL")
+get_property(PROJECT_AE_GRAPHICS_D3D11_NAME GLOBAL PROPERTY "PROJECT_AE_GRAPHICS_D3D11_NAME")
+get_property(PROJECT_AE_GRAPHICS_D3D11_DLL GLOBAL PROPERTY "PROJECT_AE_GRAPHICS_D3D11_DLL")
 
-    if (Vulkan_FOUND)
-        get_property(PROJECT_AE_GRAPHICS_VULKAN_NAME GLOBAL PROPERTY "PROJECT_AE_GRAPHICS_VULKAN_NAME")
-        get_property(PROJECT_AE_GRAPHICS_VULKAN_DLL GLOBAL PROPERTY "PROJECT_AE_GRAPHICS_VULKAN_DLL")
-    endif ()
-elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
-    get_property(PROJECT_AE_GRAPHICS_GL_NAME GLOBAL PROPERTY "PROJECT_AE_GRAPHICS_GL_NAME")
-    get_property(PROJECT_AE_GRAPHICS_GL_DLL GLOBAL PROPERTY "PROJECT_AE_GRAPHICS_GL_DLL")
-endif ()
+get_property(PROJECT_AE_GRAPHICS_GL_NAME GLOBAL PROPERTY "PROJECT_AE_GRAPHICS_GL_NAME")
+get_property(PROJECT_AE_GRAPHICS_GL_DLL GLOBAL PROPERTY "PROJECT_AE_GRAPHICS_GL_DLL")
+
+get_property(PROJECT_AE_GRAPHICS_VULKAN_NAME GLOBAL PROPERTY "PROJECT_AE_GRAPHICS_VULKAN_NAME")
+get_property(PROJECT_AE_GRAPHICS_VULKAN_DLL GLOBAL PROPERTY "PROJECT_AE_GRAPHICS_VULKAN_DLL")
 
 get_property(PROJECT_AE_INPUT_HID_INPUT_NAME GLOBAL PROPERTY "PROJECT_AE_INPUT_HID_INPUT_NAME")
 get_property(PROJECT_AE_INPUT_HID_INPUT_DLL GLOBAL PROPERTY "PROJECT_AE_INPUT_HID_INPUT_DLL")
-if (WIN32)
-    get_property(PROJECT_AE_INPUT_DIRECT_INPUT_NAME GLOBAL PROPERTY "PROJECT_AE_INPUT_DIRECT_INPUT_NAME")
-    get_property(PROJECT_AE_INPUT_DIRECT_INPUT_DLL GLOBAL PROPERTY "PROJECT_AE_INPUT_DIRECT_INPUT_DLL")
 
-    get_property(PROJECT_AE_INPUT_RAW_INPUT_NAME GLOBAL PROPERTY "PROJECT_AE_INPUT_RAW_INPUT_NAME")
-    get_property(PROJECT_AE_INPUT_RAW_INPUT_DLL GLOBAL PROPERTY "PROJECT_AE_INPUT_RAW_INPUT_DLL")
+get_property(PROJECT_AE_INPUT_DIRECT_INPUT_NAME GLOBAL PROPERTY "PROJECT_AE_INPUT_DIRECT_INPUT_NAME")
+get_property(PROJECT_AE_INPUT_DIRECT_INPUT_DLL GLOBAL PROPERTY "PROJECT_AE_INPUT_DIRECT_INPUT_DLL")
 
-    get_property(PROJECT_AE_INPUT_XINPUT_NAME GLOBAL PROPERTY "PROJECT_AE_INPUT_XINPUT_NAME")
-    get_property(PROJECT_AE_INPUT_XINPUT_DLL GLOBAL PROPERTY "PROJECT_AE_INPUT_XINPUT_DLL")
-endif ()
+get_property(PROJECT_AE_INPUT_RAW_INPUT_NAME GLOBAL PROPERTY "PROJECT_AE_INPUT_RAW_INPUT_NAME")
+get_property(PROJECT_AE_INPUT_RAW_INPUT_DLL GLOBAL PROPERTY "PROJECT_AE_INPUT_RAW_INPUT_DLL")
+
+get_property(PROJECT_AE_INPUT_XINPUT_NAME GLOBAL PROPERTY "PROJECT_AE_INPUT_XINPUT_NAME")
+get_property(PROJECT_AE_INPUT_XINPUT_DLL GLOBAL PROPERTY "PROJECT_AE_INPUT_XINPUT_DLL")
 
 include_directories(
     ${PROJECT_AE_CORE_INCLUDE}
@@ -106,10 +97,13 @@ if (WIN32)
 elseif (APPLE)
 elseif (UNIX)
     list(APPEND linkLibs
-        X11
         dl
         pthread
     )
+    find_package(X11)
+    if (X11_FOUND)
+        list(APPEND linkLibs X11)
+    endif ()
 endif ()
 
 if (WIN32)
@@ -133,21 +127,28 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/../Resources/ ${AE_BUILD_DIR}Resources
 )
 
-set(test_pre_build_commands
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${__OUTPUT_LIBS_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_AE_CORE_DLL} ${AE_BUILD_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_AE_FRAMEWORK_DLL} ${AE_BUILD_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_AE_ASTC_CONVERTER_DLL} ${__OUTPUT_LIBS_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_AE_HID_DLL} ${__OUTPUT_LIBS_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_AE_PNG_CONVERTER_DLL} ${__OUTPUT_LIBS_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_AE_FBX_CONVERTER_DLL} ${__OUTPUT_LIBS_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_AE_SHADER_SCRIPT_DLL} ${__OUTPUT_LIBS_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_DX_SHADER_COMPILER_DLL} ${__OUTPUT_LIBS_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_GLEW_DLL} ${__OUTPUT_LIBS_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_LIBPNG_DLL} ${__OUTPUT_LIBS_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_ZLIB_DLL} ${__OUTPUT_LIBS_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_AE_PST_DLL} ${__OUTPUT_LIBS_DIR}
-)
+set(test_pre_build_commands COMMAND ${CMAKE_COMMAND} -E make_directory ${__OUTPUT_LIBS_DIR})
+
+__append_copy_file_cmd(test_pre_build_commands ${PROJECT_AE_CORE_DLL} ${AE_BUILD_DIR})
+__append_copy_file_cmd(test_pre_build_commands ${PROJECT_AE_FRAMEWORK_DLL} ${AE_BUILD_DIR})
+__append_copy_file_cmd(test_pre_build_commands ${PROJECT_AE_ASTC_CONVERTER_DLL} ${__OUTPUT_LIBS_DIR})
+__append_copy_file_cmd(test_pre_build_commands ${PROJECT_AE_HID_DLL} ${__OUTPUT_LIBS_DIR})
+__append_copy_file_cmd(test_pre_build_commands ${PROJECT_AE_PNG_CONVERTER_DLL} ${__OUTPUT_LIBS_DIR})
+__append_copy_file_cmd(test_pre_build_commands ${PROJECT_AE_FBX_CONVERTER_DLL} ${__OUTPUT_LIBS_DIR})
+__append_copy_file_cmd(test_pre_build_commands ${PROJECT_AE_SHADER_SCRIPT_DLL} ${__OUTPUT_LIBS_DIR})
+__append_copy_file_cmd(test_pre_build_commands ${PROJECT_DX_SHADER_COMPILER_DLL} ${__OUTPUT_LIBS_DIR})
+__append_copy_file_cmd(test_pre_build_commands ${PROJECT_LIBPNG_DLL} ${__OUTPUT_LIBS_DIR})
+__append_copy_file_cmd(test_pre_build_commands ${PROJECT_ZLIB_DLL} ${__OUTPUT_LIBS_DIR})
+__append_copy_file_cmd(test_pre_build_commands ${PROJECT_AE_PST_DLL} ${__OUTPUT_LIBS_DIR})
+
+__append_copy_file_cmd_if(GLEW test_pre_build_commands ${PROJECT_GLEW_DLL} ${__OUTPUT_LIBS_DIR})
+__append_copy_file_cmd_if(AE_GRAPHICS_GL test_pre_build_commands ${PROJECT_AE_GRAPHICS_GL_DLL} ${__OUTPUT_LIBS_DIR})
+__append_copy_file_cmd_if(AE_GRAPHICS_D3D11 test_pre_build_commands ${PROJECT_AE_GRAPHICS_D3D11_DLL} ${__OUTPUT_LIBS_DIR})
+__append_copy_file_cmd_if(AE_GRAPHICS_VULKAN test_pre_build_commands ${PROJECT_AE_GRAPHICS_VULKAN_DLL} ${__OUTPUT_LIBS_DIR})
+
+__append_copy_file_cmd_if(AE_INPUT_DIRECT_INPUT test_pre_build_commands ${PROJECT_AE_INPUT_DIRECT_INPUT_DLL} ${__OUTPUT_LIBS_DIR})
+__append_copy_file_cmd_if(AE_INPUT_RAW_INPUT test_pre_build_commands ${PROJECT_AE_INPUT_RAW_INPUT_DLL} ${__OUTPUT_LIBS_DIR})
+__append_copy_file_cmd_if(AE_INPUT_XINPUT test_pre_build_commands ${PROJECT_AE_INPUT_XINPUT_DLL} ${__OUTPUT_LIBS_DIR})
 
 set(test_pre_build_depends
     ${PROJECT_AE_FRAMEWORK_NAME}
@@ -156,51 +157,26 @@ set(test_pre_build_depends
     ${PROJECT_AE_SHADER_SCRIPT_NAME}
     ${PROJECT_AE_PST_NAME}
 )
+
+__append_if(AE_GRAPHICS_GL test_pre_build_depends ${PROJECT_AE_GRAPHICS_GL_NAME})
+__append_if(AE_GRAPHICS_D3D11 test_pre_build_depends ${PROJECT_AE_GRAPHICS_D3D11_NAME})
+__append_if(AE_GRAPHICS_VULKAN test_pre_build_depends ${PROJECT_AE_GRAPHICS_VULKAN_NAME})
+
+__append_if(AE_INPUT_DIRECT_INPUT test_pre_build_depends ${PROJECT_AE_INPUT_DIRECT_INPUT_NAME})
+__append_if(AE_INPUT_RAW_INPUT test_pre_build_depends ${PROJECT_AE_INPUT_RAW_INPUT_NAME})
+__append_if(AE_INPUT_XINPUT test_pre_build_depends ${PROJECT_AE_INPUT_XINPUT_NAME})
+
 if (WIN32)
-    list(APPEND test_pre_build_commands
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_AE_GRAPHICS_D3D11_DLL} ${__OUTPUT_LIBS_DIR}
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_AE_GRAPHICS_GL_DLL} ${__OUTPUT_LIBS_DIR}
-    )
-    list(APPEND test_pre_build_depends
-        ${PROJECT_AE_GRAPHICS_D3D11_NAME}
-        ${PROJECT_AE_GRAPHICS_GL_NAME}
-    )
-    if (Vulkan_FOUND)
-        list(APPEND test_pre_build_commands COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_AE_GRAPHICS_VULKAN_DLL} ${__OUTPUT_LIBS_DIR})
-        list(APPEND test_pre_build_depends ${PROJECT_AE_GRAPHICS_VULKAN_NAME})
-    endif ()
 elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
-    list(APPEND test_pre_build_commands
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_AE_GRAPHICS_GL_DLL} ${__OUTPUT_LIBS_DIR}
-    )
-    list(APPEND test_pre_build_depends
-        ${PROJECT_AE_GRAPHICS_GL_NAME}
-    )
 endif ()
 
-list(APPEND test_pre_build_commands
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_AE_INPUT_HID_INPUT_DLL} ${__OUTPUT_LIBS_DIR}
-)
-list(APPEND test_pre_build_depends
-    ${PROJECT_AE_INPUT_HID_INPUT_NAME}
-)
-if (WIN32)
-    list(APPEND test_pre_build_commands
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_AE_INPUT_DIRECT_INPUT_DLL} ${__OUTPUT_LIBS_DIR}
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_AE_INPUT_RAW_INPUT_DLL} ${__OUTPUT_LIBS_DIR}
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_AE_INPUT_XINPUT_DLL} ${__OUTPUT_LIBS_DIR}
-    )
-    list(APPEND test_pre_build_depends
-        ${PROJECT_AE_INPUT_DIRECT_INPUT_NAME}
-        ${PROJECT_AE_INPUT_RAW_INPUT_NAME}
-        ${PROJECT_AE_INPUT_XINPUT_NAME}
-    )
-endif ()
+__append_copy_file_cmd(test_pre_build_commands ${PROJECT_AE_INPUT_HID_INPUT_DLL} ${__OUTPUT_LIBS_DIR})
+list(APPEND test_pre_build_depends ${PROJECT_AE_INPUT_HID_INPUT_NAME})
 
 if (USE_MIMALLOC)
     list(APPEND linkLibs ${PROJECT_MIMALLOC_LIB})
     list(APPEND test_pre_build_depends ${PROJECT_MIMALLOC_NAME})
-    list(APPEND test_pre_build_commands COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_MIMALLOC_DLL} ${AE_BUILD_DIR})
+    __append_copy_file_cmd(test_pre_build_commands ${PROJECT_MIMALLOC_DLL} ${AE_BUILD_DIR})
 endif ()
 if (USE_TCMALLOC)
     if (CMAKE_CXX_COMPILER_ID MATCHES MSVC)
@@ -208,7 +184,7 @@ if (USE_TCMALLOC)
     endif ()
     list(APPEND linkLibs ${PROJECT_TCMALLOC_LIB})
     list(APPEND test_pre_build_depends ${PROJECT_TCMALLOC_NAME})
-    list(APPEND test_pre_build_commands COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_TCMALLOC_DLL} ${AE_BUILD_DIR})
+    __append_copy_file_cmd(test_pre_build_commands ${PROJECT_TCMALLOC_DLL} ${AE_BUILD_DIR})
 endif ()
 
 add_custom_target(test_pre_build ALL ${test_pre_build_commands})

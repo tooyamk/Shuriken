@@ -21,7 +21,10 @@ set(linkLibs)
 if (WIN32)
     list(APPEND linkLibs dxgi.lib winmm.lib)
 elseif (UNIX)
-    list(APPEND linkLibs X11)
+    find_package(X11)
+    if (X11_FOUND)
+        list(APPEND linkLibs X11)
+    endif ()
 endif ()
 target_link_libraries(${PROJECT_NAME}
     ${PROJECT_AE_CORE_NAME}

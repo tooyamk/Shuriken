@@ -12,10 +12,13 @@ namespace aurora {
 		_appId(appId),
 		_eventDispatcher(new events::EventDispatcher<ApplicationEvent>()) {
 		_appPath = aurora::getAppPath();
+#ifdef AE_HAS_X11
 		_linux.sentSize.set((std::numeric_limits<decltype(_linux.sentSize)::ElementType>::max)());
+#endif
 	}
 
 	Application::~Application() {
+#ifdef AE_HAS_X11
 		if (_linux.wnd) {
 			XDestroyWindow(_linux.dis, _linux.wnd);
 			_linux.wnd = 0;
@@ -25,6 +28,7 @@ namespace aurora {
 			XCloseDisplay(_linux.dis);
 			_linux.dis = nullptr;
 		}
+#endif
 	}
 
 	IntrusivePtr<events::IEventDispatcher<ApplicationEvent>> Application::getEventDispatcher() {
@@ -32,6 +36,7 @@ namespace aurora {
 	}
 
 	bool Application::createWindow(const ApplicationStyle& style, const std::string_view& title, const Vec2ui32& clientSize, bool fullscreen) {
+#ifdef AE_HAS_X11
 		_clientSize = clientSize;
 		_isFullscreen = fullscreen;
 		_style = style;
@@ -153,17 +158,20 @@ namespace aurora {
 		_updateWindowPlacement();
 
 		//printcln("state :   ", _getXWndState(), "   ", NormalState, "   ", IconicState);
+#endif
 
 		return true;
 	}
 
 	void* Application::getNative(ApplicationNative native) const {
+#ifdef AE_HAS_X11
 		switch (native) {
 		case ApplicationNative::INSTANCE:
 			return _linux.dis;
 		case ApplicationNative::WINDOW:
 			return (void*)_linux.wnd;
 		}
+#endif
 
 		return nullptr;
 	}
@@ -177,28 +185,34 @@ namespace aurora {
 	}
 
 	void Application::toggleFullscreen() {
+#ifdef AE_HAS_X11
 		if (_linux.wnd) {
 			_isFullscreen = !_isFullscreen;
 			_updateWindowPlacement();
 		}
+#endif
 	}
 
 	Vec2ui32 Application::getCurrentClientSize() const {
 		Vec2ui32 size;
 
+#ifdef AE_HAS_X11
 		if (_linux.wnd) {
 			if (_isFullscreen) {
 				auto sd = ScreenOfDisplay(_linux.dis, _linux.screen);
 				size.set(sd->width, sd->height);
-			} else {
+			}
+			else {
 				if (_linux.wndState == WindowState::MAXIMUM || (_linux.wndState == WindowState::MINIMUM && _linux.prevWndState == WindowState::MAXIMUM)) {
 					auto area = _calcWorkArea();
 					size.set(std::max<int32_t>(area.size[0], 0), std::max<int32_t>(area.size[1] - _border[2], 0));
-				} else {
+				}
+				else {
 					size = _clientSize;
 				}
 			}
 		}
+#endif
 
 		return size;
 	}
@@ -208,22 +222,28 @@ namespace aurora {
 	}
 
 	void Application::setClientSize(const Vec2ui32& size) {
+#ifdef AE_HAS_X11
 		if (_linux.wnd && _clientSize != size) {
 			_clientSize = size;
 			_updateWindowPlacement();
 			_sendResizedEvent();
 		}
+#endif
 	}
 
 	void Application::setWindowTitle(const std::string_view& title) {
+#ifdef AE_HAS_X11
 		if (_linux.wnd) XStoreName(_linux.dis, _linux.wnd, title.data());
+#endif
 	}
 
 	void Application::setWindowPosition(const Vec2i32& pos) {
+#ifdef AE_HAS_X11
 		if (_linux.wnd && _linux.wndPos != pos) {
 			_linux.wndPos = pos;
 			_updateWindowPlacement();
 		}
+#endif
 	}
 
 	void Application::setCursorVisible(bool visible) {
@@ -231,6 +251,7 @@ namespace aurora {
 	}
 
 	bool Application::hasFocus() const {
+#ifdef AE_HAS_X11
 		if (_linux.wnd) {
 			Window focused;
 			int32_t revertTo;
@@ -238,50 +259,70 @@ namespace aurora {
 			XGetInputFocus(_linux.dis, &focused, &revertTo);
 			return focused == _linux.wnd;
 		}
+#endif
 
 		return false;
 	}
 
 	void Application::setFocus() {
+#ifdef AE_HAS_X11
 		if (_linux.wnd && _isVisible) XSetInputFocus(_linux.dis, _linux.wnd, RevertToParent, CurrentTime);
+#endif
 	}
 
 	bool Application::isMaximzed() const {
+#ifdef AE_HAS_X11
 		if (_linux.wnd) return _linux.wndState == WindowState::MAXIMUM;
+#endif
 		return false;
 	}
 
 	void Application::setMaximum() {
+#ifdef AE_HAS_X11
 		if (_linux.wnd && _setWndState(WindowState::MAXIMUM)) _updateWindowPlacement();
+#endif
 	}
 
 	bool Application::isMinimzed() const {
+#ifdef AE_HAS_X11
 		if (_linux.wnd) return _linux.wndState == WindowState::MINIMUM;
+#endif
 		return false;
 	}
 
 	void Application::setMinimum() {
+#ifdef AE_HAS_X11
 		if (_linux.wnd && _setWndState(WindowState::MINIMUM)) _updateWindowPlacement();
+#endif
 	}
 
 	void Application::setRestore() {
+#ifdef AE_HAS_X11
 		if (_linux.wnd && _setWndState(WindowState::NORMAL)) _updateWindowPlacement();
+#endif
 	}
 
 	void Application::pollEvents() {
+#ifdef AE_HAS_X11
 		XEvent e = { 0 };
 		while (XCheckIfEvent(_linux.dis, &e, &Application::_eventPredicate, (XPointer)this)) _doEvent(e);
+#endif
 	}
 
 	bool Application::isVisible() const {
-		return _linux.wnd ? _isVisible : false;
+#ifdef AE_HAS_X11
+		if (_linux.wnd) return _isVisible;
+#endif
+		return false;
 	}
 
 	void Application::setVisible(bool b) {
+#ifdef AE_HAS_X11
 		if (_linux.wnd && _isVisible != b) {
 			_isVisible = b;
 			_updateWindowPlacement();
 		}
+#endif
 	}
 
 	void Application::shutdown() {
@@ -301,6 +342,7 @@ namespace aurora {
 	}
 
 	//platform
+#ifdef AE_HAS_X11
 	void Application::_sendClientEventToWM(Atom msgType, int64_t a, int64_t b, int64_t c, int64_t d, int64_t e) {
 		XEvent evt = { ClientMessage };
 		auto& client = evt.xclient;
@@ -331,7 +373,8 @@ namespace aurora {
 			XEvent e = { 0 };
 			if (XCheckIfEvent(_linux.dis, &e, &Application::_eventPredicate, (XPointer)this)) {
 				_doEvent(e);
-			} else {
+			}
+			else {
 				value = false;
 				break;
 			}
@@ -428,7 +471,8 @@ namespace aurora {
 					_linux.xFullscreen = true;
 					_sendClientEventToWM(_linux.NET_WM_STATE, 1, _linux.NET_WM_STATE_FULLSCREEN, 0, 1);
 				}
-			} else {
+			}
+			else {
 				if (_linux.xFullscreen) {
 					_linux.xFullscreen = false;
 					_sendClientEventToWM(_linux.NET_WM_STATE, 0, _linux.NET_WM_STATE_FULLSCREEN, 0, 1);
@@ -464,7 +508,8 @@ namespace aurora {
 						_linux.waitVisibility = true;
 						XMapWindow(_linux.dis, _linux.wnd);
 						_waitEvent(_linux.waitVisibility);
-					} else if (_linux.xWndState == WindowState::MAXIMUM) {
+					}
+					else if (_linux.xWndState == WindowState::MAXIMUM) {
 						_sendClientEventToWM(_linux.NET_WM_STATE, 0, _linux.NET_WM_STATE_MAXIMIZED_VERT, _linux.NET_WM_STATE_MAXIMIZED_HORZ, 1);
 					}
 
@@ -474,7 +519,8 @@ namespace aurora {
 				}
 				}
 			}
-		} else {
+		}
+		else {
 			if (_linux.xMapped) {
 				_linux.xMapped = false;
 				_linux.waitVisibility = true;
@@ -498,7 +544,8 @@ namespace aurora {
 					auto isCanceled = false;
 					_eventDispatcher->dispatchEvent(this, ApplicationEvent::CLOSING, &isCanceled);
 					if (!isCanceled) shutdown();
-				} else if (protocol == _linux.NET_WM_PING) {
+				}
+				else if (protocol == _linux.NET_WM_PING) {
 					XEvent reply = e;
 					reply.xclient.window = _linux.root;
 
@@ -516,9 +563,11 @@ namespace aurora {
 			if (!_isFullscreen) {
 				if (_isMaximized()) {
 					_setWndState(WindowState::MAXIMUM);
-				} else if (_isMinimized()) {
+				}
+				else if (_isMinimized()) {
 					_setWndState(WindowState::MINIMUM);
-				} else {
+				}
+				else {
 					isNormal = true;
 					_setWndState(WindowState::NORMAL);
 				}
@@ -577,15 +626,18 @@ namespace aurora {
 
 					_linux.waitFrameEXTENTS = false;
 				}
-			} else if (atom == _linux.WM_STATE) {
+			}
+			else if (atom == _linux.WM_STATE) {
 				if (!_isFullscreen) {
 					if (auto state = _getXWndState(); state == IconicState) {
 						_setWndState(WindowState::MINIMUM);
-					} else if (state == NormalState) {
+					}
+					else if (state == NormalState) {
 						_setWndState(WindowState::NORMAL);
 					}
 				}
-			} else if (atom == _linux.NET_WM_STATE) {
+			}
+			else if (atom == _linux.NET_WM_STATE) {
 				if (!_isFullscreen && _isMaximized()) _setWndState(WindowState::MAXIMUM);
 			}
 
@@ -601,5 +653,6 @@ namespace aurora {
 			break;
 		}
 	}
+#endif
 }
 #endif

@@ -5,9 +5,14 @@
 #if AE_OS == AE_OS_LINUX
 #include "aurora/math/Box.h"
 
-#include <X11/Xlib.h>
-#include <X11/Xatom.h>
-#include <X11/Xutil.h>
+#ifndef AE_HAS_X11
+#	if __has_include(<X11/Xlib.h>)
+#		include <X11/Xlib.h>
+#		include <X11/Xatom.h>
+#		include <X11/Xutil.h>
+#		define AE_HAS_X11
+#	endif
+#endif
 
 namespace aurora {
 	class AE_FW_DLL Application : public IApplication {
@@ -99,6 +104,7 @@ namespace aurora {
 		};
 
 
+#ifdef AE_HAS_X11
 		struct {
 			WindowState wndState = WindowState::NORMAL;
 			WindowState prevWndState = WindowState::NORMAL;
@@ -148,6 +154,7 @@ namespace aurora {
 
 		static Bool AE_CALL _eventPredicate(Display* display, XEvent* event, XPointer pointer);
 		void AE_CALL _doEvent(XEvent& e);
+#endif
 	};
 }
 #endif
