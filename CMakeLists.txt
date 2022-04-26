@@ -5,6 +5,11 @@ project(Aurora)
 set(CMAKE_INSTALL_PREFIX ${AE_INSTALL_PREFIX})
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/Tools/cmake/Modules")
 
+find_package(OpenGL)
+find_package(UDev)
+find_package(Vulkan)
+find_package(X11)
+
 macro(__set_project)
     get_filename_component(_projectId ${CMAKE_CURRENT_SOURCE_DIR} NAME)
     string(REPLACE " " "_" _projectId ${_projectId})
@@ -111,7 +116,6 @@ function(__add_subdirectory_if cond dir)
     endif ()
 endfunction()
 
-
 option(ASTC_ENCODER "" OFF)
 option(DX_SHADER_COMPILER "" OFF)
 option(GLEW "" OFF)
@@ -178,7 +182,6 @@ endif ()
 #validity check
 #==========
 if (GLEW OR AE_GRAPHICS_GL)
-    find_package(OpenGL)
     if (NOT OPENGL_FOUND)
         set(GLEW OFF)
         set(AE_GRAPHICS_GL OFF)
@@ -186,7 +189,6 @@ if (GLEW OR AE_GRAPHICS_GL)
 endif ()
 
 if (AE_GRAPHICS_VULKAN)
-    find_package(Vulkan)
     if (NOT Vulkan_FOUND)
         set(AE_GRAPHICS_VULKAN OFF)
     endif ()

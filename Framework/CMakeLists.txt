@@ -21,7 +21,6 @@ set(linkLibs)
 if (WIN32)
     list(APPEND linkLibs dxgi.lib winmm.lib)
 elseif (UNIX)
-    find_package(X11)
     __append_if(X11_FOUND linkLibs X11)
 endif ()
 target_link_libraries(${PROJECT_NAME}

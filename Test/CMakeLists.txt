@@ -100,7 +100,6 @@ elseif (UNIX)
         dl
         pthread
     )
-    find_package(X11)
     __append_if(X11_FOUND linkLibs X11)
 endif ()
 
