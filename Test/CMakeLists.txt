@@ -101,9 +101,7 @@ elseif (UNIX)
         pthread
     )
     find_package(X11)
-    if (X11_FOUND)
-        list(APPEND linkLibs X11)
-    endif ()
+    __append_if(X11_FOUND linkLibs X11)
 endif ()
 
 if (WIN32)
@@ -141,14 +139,14 @@ __append_copy_file_cmd(test_pre_build_commands ${PROJECT_LIBPNG_DLL} ${__OUTPUT_
 __append_copy_file_cmd(test_pre_build_commands ${PROJECT_ZLIB_DLL} ${__OUTPUT_LIBS_DIR})
 __append_copy_file_cmd(test_pre_build_commands ${PROJECT_AE_PST_DLL} ${__OUTPUT_LIBS_DIR})
 
-__append_copy_file_cmd_if(GLEW test_pre_build_commands ${PROJECT_GLEW_DLL} ${__OUTPUT_LIBS_DIR})
-__append_copy_file_cmd_if(AE_GRAPHICS_GL test_pre_build_commands ${PROJECT_AE_GRAPHICS_GL_DLL} ${__OUTPUT_LIBS_DIR})
-__append_copy_file_cmd_if(AE_GRAPHICS_D3D11 test_pre_build_commands ${PROJECT_AE_GRAPHICS_D3D11_DLL} ${__OUTPUT_LIBS_DIR})
-__append_copy_file_cmd_if(AE_GRAPHICS_VULKAN test_pre_build_commands ${PROJECT_AE_GRAPHICS_VULKAN_DLL} ${__OUTPUT_LIBS_DIR})
+__append_copy_file_cmd_if(GLEW test_pre_build_commands "${PROJECT_GLEW_DLL}" ${__OUTPUT_LIBS_DIR})
+__append_copy_file_cmd_if(AE_GRAPHICS_GL test_pre_build_commands "${PROJECT_AE_GRAPHICS_GL_DLL}" ${__OUTPUT_LIBS_DIR})
+__append_copy_file_cmd_if(AE_GRAPHICS_D3D11 test_pre_build_commands "${PROJECT_AE_GRAPHICS_D3D11_DLL}" ${__OUTPUT_LIBS_DIR})
+__append_copy_file_cmd_if(AE_GRAPHICS_VULKAN test_pre_build_commands "${PROJECT_AE_GRAPHICS_VULKAN_DLL}" ${__OUTPUT_LIBS_DIR})
 
-__append_copy_file_cmd_if(AE_INPUT_DIRECT_INPUT test_pre_build_commands ${PROJECT_AE_INPUT_DIRECT_INPUT_DLL} ${__OUTPUT_LIBS_DIR})
-__append_copy_file_cmd_if(AE_INPUT_RAW_INPUT test_pre_build_commands ${PROJECT_AE_INPUT_RAW_INPUT_DLL} ${__OUTPUT_LIBS_DIR})
-__append_copy_file_cmd_if(AE_INPUT_XINPUT test_pre_build_commands ${PROJECT_AE_INPUT_XINPUT_DLL} ${__OUTPUT_LIBS_DIR})
+__append_copy_file_cmd_if(AE_INPUT_DIRECT_INPUT test_pre_build_commands "${PROJECT_AE_INPUT_DIRECT_INPUT_DLL}" ${__OUTPUT_LIBS_DIR})
+__append_copy_file_cmd_if(AE_INPUT_RAW_INPUT test_pre_build_commands "${PROJECT_AE_INPUT_RAW_INPUT_DLL}" ${__OUTPUT_LIBS_DIR})
+__append_copy_file_cmd_if(AE_INPUT_XINPUT test_pre_build_commands "${PROJECT_AE_INPUT_XINPUT_DLL}" ${__OUTPUT_LIBS_DIR})
 
 set(test_pre_build_depends
     ${PROJECT_AE_FRAMEWORK_NAME}
@@ -158,13 +156,13 @@ set(test_pre_build_depends
     ${PROJECT_AE_PST_NAME}
 )
 
-__append_if(AE_GRAPHICS_GL test_pre_build_depends ${PROJECT_AE_GRAPHICS_GL_NAME})
-__append_if(AE_GRAPHICS_D3D11 test_pre_build_depends ${PROJECT_AE_GRAPHICS_D3D11_NAME})
-__append_if(AE_GRAPHICS_VULKAN test_pre_build_depends ${PROJECT_AE_GRAPHICS_VULKAN_NAME})
+__append_if(AE_GRAPHICS_GL test_pre_build_depends "${PROJECT_AE_GRAPHICS_GL_NAME}")
+__append_if(AE_GRAPHICS_D3D11 test_pre_build_depends "${PROJECT_AE_GRAPHICS_D3D11_NAME}")
+__append_if(AE_GRAPHICS_VULKAN test_pre_build_depends "${PROJECT_AE_GRAPHICS_VULKAN_NAME}")
 
-__append_if(AE_INPUT_DIRECT_INPUT test_pre_build_depends ${PROJECT_AE_INPUT_DIRECT_INPUT_NAME})
-__append_if(AE_INPUT_RAW_INPUT test_pre_build_depends ${PROJECT_AE_INPUT_RAW_INPUT_NAME})
-__append_if(AE_INPUT_XINPUT test_pre_build_depends ${PROJECT_AE_INPUT_XINPUT_NAME})
+__append_if(AE_INPUT_DIRECT_INPUT test_pre_build_depends "${PROJECT_AE_INPUT_DIRECT_INPUT_NAME}")
+__append_if(AE_INPUT_RAW_INPUT test_pre_build_depends "${PROJECT_AE_INPUT_RAW_INPUT_NAME}")
+__append_if(AE_INPUT_XINPUT test_pre_build_depends "${PROJECT_AE_INPUT_XINPUT_NAME}")
 
 if (WIN32)
 elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
