@@ -181,6 +181,23 @@ endif ()
 
 #validity check
 #==========
+if (NOT WIN32)
+    set(AE_GRAPHICS_D3D11 OFF)
+
+    set(AE_INPUT_DIRECT_INPUT OFF)
+    set(AE_INPUT_RAW_INPUT OFF)
+    set(AE_INPUT_XINPUT OFF)
+endif ()
+
+if (UNIX)
+    if (AE_HID OR AE_INPUT_HID_INPUT)
+        if (NOT UDEV_FOUND)
+            set(AE_HID OFF)
+            set(AE_INPUT_HID_INPUT OFF)
+        endif ()
+    endif ()
+endif ()
+
 if (GLEW OR AE_GRAPHICS_GL)
     if (NOT OPENGL_FOUND)
         set(GLEW OFF)
@@ -192,16 +209,6 @@ if (AE_GRAPHICS_VULKAN)
     if (NOT Vulkan_FOUND)
         set(AE_GRAPHICS_VULKAN OFF)
     endif ()
-endif ()
-
-if (WIN32)
-elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
-    set(AE_GRAPHICS_D3D11 OFF)
-    set(AE_GRAPHICS_VULKAN OFF)
-
-    set(AE_INPUT_DIRECT_INPUT OFF)
-    set(AE_INPUT_RAW_INPUT OFF)
-    set(AE_INPUT_XINPUT OFF)
 endif ()
 #==========
 

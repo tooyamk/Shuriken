@@ -129,7 +129,6 @@ set(test_pre_build_commands COMMAND ${CMAKE_COMMAND} -E make_directory ${__OUTPU
 __append_copy_file_cmd(test_pre_build_commands ${PROJECT_AE_CORE_DLL} ${AE_BUILD_DIR})
 __append_copy_file_cmd(test_pre_build_commands ${PROJECT_AE_FRAMEWORK_DLL} ${AE_BUILD_DIR})
 __append_copy_file_cmd(test_pre_build_commands ${PROJECT_AE_ASTC_CONVERTER_DLL} ${__OUTPUT_LIBS_DIR})
-__append_copy_file_cmd(test_pre_build_commands ${PROJECT_AE_HID_DLL} ${__OUTPUT_LIBS_DIR})
 __append_copy_file_cmd(test_pre_build_commands ${PROJECT_AE_PNG_CONVERTER_DLL} ${__OUTPUT_LIBS_DIR})
 __append_copy_file_cmd(test_pre_build_commands ${PROJECT_AE_FBX_CONVERTER_DLL} ${__OUTPUT_LIBS_DIR})
 __append_copy_file_cmd(test_pre_build_commands ${PROJECT_AE_SHADER_SCRIPT_DLL} ${__OUTPUT_LIBS_DIR})
@@ -143,7 +142,9 @@ __append_copy_file_cmd_if(AE_GRAPHICS_GL test_pre_build_commands "${PROJECT_AE_G
 __append_copy_file_cmd_if(AE_GRAPHICS_D3D11 test_pre_build_commands "${PROJECT_AE_GRAPHICS_D3D11_DLL}" ${__OUTPUT_LIBS_DIR})
 __append_copy_file_cmd_if(AE_GRAPHICS_VULKAN test_pre_build_commands "${PROJECT_AE_GRAPHICS_VULKAN_DLL}" ${__OUTPUT_LIBS_DIR})
 
+__append_copy_file_cmd_if(AE_HID test_pre_build_commands "${PROJECT_AE_HID_DLL}" ${__OUTPUT_LIBS_DIR})
 __append_copy_file_cmd_if(AE_INPUT_DIRECT_INPUT test_pre_build_commands "${PROJECT_AE_INPUT_DIRECT_INPUT_DLL}" ${__OUTPUT_LIBS_DIR})
+__append_copy_file_cmd_if(AE_INPUT_HID_INPUT test_pre_build_commands "${PROJECT_AE_INPUT_HID_INPUT_DLL}" ${__OUTPUT_LIBS_DIR})
 __append_copy_file_cmd_if(AE_INPUT_RAW_INPUT test_pre_build_commands "${PROJECT_AE_INPUT_RAW_INPUT_DLL}" ${__OUTPUT_LIBS_DIR})
 __append_copy_file_cmd_if(AE_INPUT_XINPUT test_pre_build_commands "${PROJECT_AE_INPUT_XINPUT_DLL}" ${__OUTPUT_LIBS_DIR})
 
@@ -160,15 +161,13 @@ __append_if(AE_GRAPHICS_D3D11 test_pre_build_depends "${PROJECT_AE_GRAPHICS_D3D1
 __append_if(AE_GRAPHICS_VULKAN test_pre_build_depends "${PROJECT_AE_GRAPHICS_VULKAN_NAME}")
 
 __append_if(AE_INPUT_DIRECT_INPUT test_pre_build_depends "${PROJECT_AE_INPUT_DIRECT_INPUT_NAME}")
+__append_if(AE_INPUT_HID_INPUT test_pre_build_depends "${PROJECT_AE_INPUT_HID_INPUT_NAME}")
 __append_if(AE_INPUT_RAW_INPUT test_pre_build_depends "${PROJECT_AE_INPUT_RAW_INPUT_NAME}")
 __append_if(AE_INPUT_XINPUT test_pre_build_depends "${PROJECT_AE_INPUT_XINPUT_NAME}")
 
 if (WIN32)
 elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
 endif ()
-
-__append_copy_file_cmd(test_pre_build_commands ${PROJECT_AE_INPUT_HID_INPUT_DLL} ${__OUTPUT_LIBS_DIR})
-list(APPEND test_pre_build_depends ${PROJECT_AE_INPUT_HID_INPUT_NAME})
 
 if (USE_MIMALLOC)
     list(APPEND linkLibs ${PROJECT_MIMALLOC_LIB})
