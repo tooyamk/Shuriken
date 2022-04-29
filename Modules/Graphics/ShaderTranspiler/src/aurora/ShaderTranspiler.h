@@ -8,19 +8,19 @@
 
 #include "spirv_cross/spirv.hpp"
 
-#include "aurora/modules/graphics/IProgramSourceTranslator.h"
+#include "aurora/modules/graphics/IShaderTranspiler.h"
 #include "aurora/Debug.h"
 #include "aurora/DynamicLib.h"
 
-namespace aurora::modules::graphics::program_source_translator {
-	class ProgramSourceTranslator : public IProgramSourceTranslator {
+namespace aurora::modules::graphics::shader_transpiler {
+	class ShaderTranspiler : public IShaderTranspiler {
 	public:
-		ProgramSourceTranslator();
-		virtual ~ProgramSourceTranslator();
+		ShaderTranspiler();
+		virtual ~ShaderTranspiler();
 
-		void operator delete(ProgramSourceTranslator* p, std::destroying_delete_t) {
+		void operator delete(ShaderTranspiler* p, std::destroying_delete_t) {
 			auto l = p->_loader;
-			p->~ProgramSourceTranslator();
+			p->~ShaderTranspiler();
 			::operator delete(p);
 		}
 
@@ -30,7 +30,7 @@ namespace aurora::modules::graphics::program_source_translator {
 	private:
 		class MyIncludeHandler : public IDxcIncludeHandler {
 		public:
-			MyIncludeHandler(IDxcLibrary* lib, const IProgramSourceTranslator::IncludeHandler& handler);
+			MyIncludeHandler(IDxcLibrary* lib, const IShaderTranspiler::IncludeHandler& handler);
 
 			HRESULT STDMETHODCALLTYPE LoadSource(_In_z_ LPCWSTR pFilename, _COM_Outptr_result_maybenull_ IDxcBlob** ppIncludeSource) override;
 			ULONG STDMETHODCALLTYPE AddRef() override;
@@ -39,7 +39,7 @@ namespace aurora::modules::graphics::program_source_translator {
 
 		private:
 			IDxcLibrary* _lib;
-			IProgramSourceTranslator::IncludeHandler _handler;
+			IShaderTranspiler::IncludeHandler _handler;
 			std::atomic<ULONG> _ref;
 		};
 
@@ -76,13 +76,13 @@ namespace aurora::modules::graphics {
 			return nullptr;
 		}
 
-		auto translator = new program_source_translator::ProgramSourceTranslator();
-		if (!translator->init(loader, dxc)) {
-			delete translator;
-			translator = nullptr;
+		auto transpiler = new shader_transpiler::ShaderTranspiler();
+		if (!transpiler->init(loader, dxc)) {
+			delete transpiler;
+			transpiler = nullptr;
 		}
 
-		return translator;
+		return transpiler;
 	}
 }
 #endif

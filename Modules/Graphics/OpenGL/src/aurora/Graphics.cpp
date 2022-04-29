@@ -241,7 +241,7 @@ namespace aurora::modules::graphics::gl {
 
 		_loader = conf.loader;
 		_app = conf.app;
-		_trans = conf.trans;
+		_transpiler = conf.transpiler;
 
 		_setInitState();
 		_resize(_app->getCurrentClientSize());

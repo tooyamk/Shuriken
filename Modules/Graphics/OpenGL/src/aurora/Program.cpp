@@ -165,8 +165,8 @@ namespace aurora::modules::graphics::gl {
 			if (len > sizeof(TYPE) - 1) {
 				if (std::string_view(charBuffer, sizeof(TYPE) - 1) == TYPE) {
 					info.names.emplace_back(charBuffer + sizeof(TYPE) - 1);
-				} else if (len > sizeof(IProgramSourceTranslator::COMBINED_TEXTURE_SAMPLER) - 1 && std::string_view(charBuffer, sizeof(IProgramSourceTranslator::COMBINED_TEXTURE_SAMPLER) - 1) == IProgramSourceTranslator::COMBINED_TEXTURE_SAMPLER) {
-					auto offset = sizeof(IProgramSourceTranslator::COMBINED_TEXTURE_SAMPLER) - 1;
+				} else if (len > sizeof(IShaderTranspiler::COMBINED_TEXTURE_SAMPLER) - 1 && std::string_view(charBuffer, sizeof(IShaderTranspiler::COMBINED_TEXTURE_SAMPLER) - 1) == IShaderTranspiler::COMBINED_TEXTURE_SAMPLER) {
+					auto offset = sizeof(IShaderTranspiler::COMBINED_TEXTURE_SAMPLER) - 1;
 					if (auto pos = String::find(std::string_view(charBuffer + offset, len - offset), 's'); pos == std::string::npos || !pos) {
 						info.names.emplace_back(charBuffer);
 					} else {
@@ -430,8 +430,8 @@ namespace aurora::modules::graphics::gl {
 
 		if (source.language != ProgramLanguage::GLSL) {
 			auto g = _graphics.get<Graphics>();
-			if (auto translator = g->getProgramSourceTranslator(); translator) {
-				return _compileShader(g->getProgramSourceTranslator()->translate(source, ProgramLanguage::GLSL, g->getStringVersion(), defines, numDefines, [this, stage, handler](const std::string_view& name) {
+			if (auto transpiler = g->getShaderTranspiler(); transpiler) {
+				return _compileShader(transpiler->translate(source, ProgramLanguage::GLSL, g->getStringVersion(), defines, numDefines, [this, stage, handler](const std::string_view& name) {
 					if (handler) return handler(*this, stage, name);
 					return ByteArray();
 				}), type, stage, defines, numDefines, handler);

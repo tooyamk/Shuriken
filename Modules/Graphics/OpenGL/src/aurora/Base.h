@@ -1,7 +1,7 @@
 #pragma once
 
 #include "aurora/modules/graphics/IGraphicsModule.h"
-#include "aurora/modules/graphics/IProgramSourceTranslator.h"
+#include "aurora/modules/graphics/IShaderTranspiler.h"
 #include "aurora/IApplication.h"
 #include "aurora/hash/xxHash.h"
 

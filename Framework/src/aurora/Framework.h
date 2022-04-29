@@ -18,7 +18,7 @@
 
 #include "aurora/modules/ModuleLoader.h"
 #include "aurora/modules/graphics/GraphicsAdapter.h"
-#include "aurora/modules/graphics/IProgramSourceTranslator.h"
+#include "aurora/modules/graphics/IShaderTranspiler.h"
 
 #include "aurora/components/Camera.h"
 #include "aurora/components/renderables/RenderableMesh.h"

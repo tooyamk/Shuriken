@@ -22,7 +22,7 @@ namespace aurora::modules::graphics {
 			return nullptr;
 		}
 
-		conf.trans = (decltype(conf.trans))args->tryGet("trans").toNumber<uintptr_t>();
+		conf.transpiler = (decltype(conf.transpiler))args->tryGet("transpiler").toNumber<uintptr_t>();
 		conf.adapter = (decltype(conf.adapter))args->tryGet("adapter").toNumber<uintptr_t>();
 		conf.sampleCount = args->tryGet("sampleCount").toNumber<decltype(conf.sampleCount)>(1);
 		conf.debug = args->tryGet("debug").toBool();

@@ -130,7 +130,7 @@ option(AE_FRAMEWORK "" ON)
 
 option(AE_ALL_MODULES "" OFF)
 
-option(AE_PROGRAM_SOURCE_TRANSLATOR "" OFF)
+option(AE_SHADER_TRANSPILER "" OFF)
 option(AE_GRAPHICS_D3D11 "" ON)
 option(AE_GRAPHICS_GL "" ON)
 option(AE_GRAPHICS_VULKAN "" ON)
@@ -160,7 +160,7 @@ if (AE_TESTS)
 endif ()
 
 if (AE_ALL_MODULES)
-    set(AE_PROGRAM_SOURCE_TRANSLATOR ON)
+    set(AE_SHADER_TRANSPILER ON)
     set(AE_GRAPHICS_D3D11 ON)
     set(AE_GRAPHICS_GL ON)
     set(AE_GRAPHICS_VULKAN ON)
@@ -263,7 +263,7 @@ if (AE_GRAPHICS_VULKAN)
     set(AE_FRAMEWORK ON)
 endif ()
 
-if (AE_PROGRAM_SOURCE_TRANSLATOR)
+if (AE_SHADER_TRANSPILER)
     set(DX_SHADER_COMPILER ON)
     set(SPIRV_CROSS ON)
 endif ()
@@ -369,7 +369,7 @@ __add_subdirectory_if(TCMALLOC ${AE_EXTERNAL_DIR_NAME}/tcmalloc)
 __add_subdirectory_if(AE_CORE Core)
 __add_subdirectory_if(AE_FRAMEWORK Framework)
 
-__add_subdirectory_if(AE_PROGRAM_SOURCE_TRANSLATOR ${AE_MODULES_DIR_NAME}/Graphics/ProgramSourceTranslator)#??only x64
+__add_subdirectory_if(AE_SHADER_TRANSPILER ${AE_MODULES_DIR_NAME}/Graphics/ShaderTranspiler)#??only x64
 
 __add_subdirectory_if(AE_GRAPHICS_D3D11 ${AE_MODULES_DIR_NAME}/Graphics/Direct3D11)
 __add_subdirectory_if(AE_GRAPHICS_GL ${AE_MODULES_DIR_NAME}/Graphics/OpenGL)

@@ -1,4 +1,4 @@
-#include "ProgramSourceTranslator.h"
+#include "ShaderTranspiler.h"
 //#include "spirv-tools/libspirv.h"
 //#include "spirv.hpp"
 //#include "spirv_cross.hpp"
@@ -7,14 +7,14 @@
 #include "aurora/String.h"
 #include "aurora/modules/graphics/IGraphicsModule.h"
 
-namespace aurora::modules::graphics::program_source_translator {
-	ProgramSourceTranslator::MyIncludeHandler::MyIncludeHandler(IDxcLibrary* lib, const IProgramSourceTranslator::IncludeHandler& handler) :
+namespace aurora::modules::graphics::shader_transpiler {
+	ShaderTranspiler::MyIncludeHandler::MyIncludeHandler(IDxcLibrary* lib, const IShaderTranspiler::IncludeHandler& handler) :
 		_lib(lib),
 		_handler(handler),
 		_ref(0) {
 	}
 
-	HRESULT ProgramSourceTranslator::MyIncludeHandler::LoadSource(_In_z_ LPCWSTR pFilename, _COM_Outptr_result_maybenull_ IDxcBlob** ppIncludeSource) {
+	HRESULT ShaderTranspiler::MyIncludeHandler::LoadSource(_In_z_ LPCWSTR pFilename, _COM_Outptr_result_maybenull_ IDxcBlob** ppIncludeSource) {
 		if ((pFilename[0] == L'.') && (pFilename[1] == L'/')) pFilename += 2;
 
 		if (_handler) {
@@ -27,19 +27,19 @@ namespace aurora::modules::graphics::program_source_translator {
 		return E_FAIL;
 	}
 
-	ULONG ProgramSourceTranslator::MyIncludeHandler::AddRef() {
+	ULONG ShaderTranspiler::MyIncludeHandler::AddRef() {
 		++_ref;
 		return _ref;
 	}
 
-	ULONG ProgramSourceTranslator::MyIncludeHandler::Release() {
+	ULONG ShaderTranspiler::MyIncludeHandler::Release() {
 		--_ref;
 		ULONG result = _ref;
 		if (result == 0) delete this;
 		return result;
 	}
 
-	HRESULT ProgramSourceTranslator::MyIncludeHandler::QueryInterface(REFIID riid, void** ppvObject) {
+	HRESULT ShaderTranspiler::MyIncludeHandler::QueryInterface(REFIID riid, void** ppvObject) {
 		if (IsEqualIID(riid, __uuidof(IDxcIncludeHandler))) {
 			*ppvObject = dynamic_cast<IDxcIncludeHandler*>(this);
 			this->AddRef();
@@ -54,17 +54,17 @@ namespace aurora::modules::graphics::program_source_translator {
 	}
 
 
-	ProgramSourceTranslator::ProgramSourceTranslator() :
+	ShaderTranspiler::ShaderTranspiler() :
 		_loader(),
 		_dxcLib(nullptr),
 		_dxcompiler(nullptr) {
 		
 	}
 
-	ProgramSourceTranslator::~ProgramSourceTranslator() {
+	ShaderTranspiler::~ShaderTranspiler() {
 	}
 
-	bool ProgramSourceTranslator::init(Ref* loader, const std::string_view& dxc) {
+	bool ShaderTranspiler::init(Ref* loader, const std::string_view& dxc) {
 		using namespace std::literals;
 
 		if (_dxcDll.load(dxc)) {
@@ -80,7 +80,7 @@ namespace aurora::modules::graphics::program_source_translator {
 		return false;
 	}
 
-	ProgramSource ProgramSourceTranslator::translate(const ProgramSource& source, ProgramLanguage targetLanguage, const std::string_view& targetVersion, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& handler) {
+	ProgramSource ShaderTranspiler::translate(const ProgramSource& source, ProgramLanguage targetLanguage, const std::string_view& targetVersion, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& handler) {
 		using namespace std::literals;
 
 		ProgramSource dst;
@@ -168,7 +168,7 @@ namespace aurora::modules::graphics::program_source_translator {
 		return std::move(dst);
 	}
 
-	void ProgramSourceTranslator::_spirvTo(const ProgramSource& source, const uint8_t* sourceData, uint32_t sourceDataSize, 
+	void ShaderTranspiler::_spirvTo(const ProgramSource& source, const uint8_t* sourceData, uint32_t sourceDataSize,
 		ProgramLanguage targetLanguage, const std::string_view& targetVersion, ProgramSource& dst) {
 		using namespace std::literals;
 
@@ -220,7 +220,7 @@ namespace aurora::modules::graphics::program_source_translator {
 		}
 	}
 
-	void ProgramSourceTranslator::_spirvToGLSL(const ProgramSource& source, const uint8_t* sourceData, uint32_t sourceDataSize, 
+	void ShaderTranspiler::_spirvToGLSL(const ProgramSource& source, const uint8_t* sourceData, uint32_t sourceDataSize,
 		ProgramLanguage targetLanguage, const std::string_view& targetVersion, ProgramSource& dst, spv::ExecutionModel model) {
 		using namespace std::literals;
 
@@ -306,7 +306,7 @@ namespace aurora::modules::graphics::program_source_translator {
 		}
 	}
 
-	void ProgramSourceTranslator::_spirvToMSL(const ProgramSource& source, const uint8_t* sourceData, uint32_t sourceDataSize,
+	void ShaderTranspiler::_spirvToMSL(const ProgramSource& source, const uint8_t* sourceData, uint32_t sourceDataSize,
 		ProgramLanguage targetLanguage, const std::string_view& targetVersion, ProgramSource& dst, spv::ExecutionModel model) {
 		using namespace std::literals;
 

@@ -14,18 +14,18 @@ public:
 		if (gml->load("libs/" + getDLLName(u8"ae-graphics-d3d11"))) {
 			SerializableObject args;
 
-			IntrusivePtr gpstml = new ModuleLoader<IProgramSourceTranslator>();
-			gpstml->load("libs/" + getDLLName("ae-program-source-translator"));
+			IntrusivePtr stml = new ModuleLoader<IShaderTranspiler>();
+			stml->load("libs/" + getDLLName("ae-shader-transpiler"));
 
 			args.insert("dxc", "libs/" + getDLLName("dxcompiler"));
-			auto gpst = gpstml->create(&args);
+			auto st = stml->create(&args);
 
 			std::function<void(const std::string_view&)> createProcessInfoHandler = [](const std::string_view& msg) {
 				printaln(msg);
 			};
 
 			args.insert("sampleCount", 1);
-			args.insert("trans", gpst.uintptr());
+			args.insert("transpiler", st.uintptr());
 			args.insert("offscreen", true);
 			args.insert("driverType", "software");
 			args.insert("createProcessInfoHandler", (uintptr_t)&createProcessInfoHandler);

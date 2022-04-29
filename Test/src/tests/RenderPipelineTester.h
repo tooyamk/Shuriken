@@ -21,15 +21,15 @@ public:
 			if (gml->load("libs/" + getDLLName("ae-graphics-vulkan"))) {
 				SerializableObject args;
 				
-				IntrusivePtr gpstml = new ModuleLoader<IProgramSourceTranslator>();
-				gpstml->load("libs/" + getDLLName("ae-program-source-translator"));
+				IntrusivePtr stml = new ModuleLoader<IShaderTranspiler>();
+				stml->load("libs/" + getDLLName("ae-shader-transpiler"));
 
 				args.insert("dxc", "libs/" + getDLLName("dxcompiler"));
-				auto gpst = gpstml->create(&args);
+				auto st = stml->create(&args);
 
 				args.insert("app", app.uintptr());
 				args.insert("sampleCount", 4);
-				args.insert("trans", gpst.uintptr());
+				args.insert("transpiler", st.uintptr());
 				//args.insert("driverType", "SOFTWARE");
 				args.insert("debug", Environment::IS_DEBUG);
 

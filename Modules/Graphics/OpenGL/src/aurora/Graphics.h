@@ -19,7 +19,7 @@ namespace aurora::modules::graphics::gl {
 		struct CreateConfig {
 			Ref* loader = nullptr;
 			IApplication* app = nullptr;
-			IProgramSourceTranslator* trans = nullptr;
+			IShaderTranspiler* transpiler = nullptr;
 			GraphicsAdapter* adapter = nullptr;
 			SampleCount sampleCount = 1;
 			bool debug = false;
@@ -82,8 +82,8 @@ namespace aurora::modules::graphics::gl {
 			_eventDispatcher->dispatchEvent(this, GraphicsEvent::ERR, (std::string_view*)&msg);
 		}
 
-		inline IProgramSourceTranslator* AE_CALL getProgramSourceTranslator() const {
-			return _trans.get();
+		inline IShaderTranspiler* AE_CALL getShaderTranspiler() const {
+			return _transpiler.get();
 		}
 
 		inline ConstantBufferManager& AE_CALL getConstantBufferManager() {
@@ -169,7 +169,7 @@ namespace aurora::modules::graphics::gl {
 
 		IntrusivePtr<Ref> _loader;
 		IntrusivePtr<IApplication> _app;
-		IntrusivePtr<IProgramSourceTranslator> _trans;
+		IntrusivePtr<IShaderTranspiler> _transpiler;
 
 		IntrusivePtr<BlendState> _defaultBlendState;
 		IntrusivePtr<DepthStencilState> _defaultDepthStencilState;

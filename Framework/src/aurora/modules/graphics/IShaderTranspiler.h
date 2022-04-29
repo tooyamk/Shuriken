@@ -9,7 +9,7 @@ namespace aurora {
 }
 
 namespace aurora::modules::graphics {
-	class AE_FW_DLL IProgramSourceTranslator : public IModule {
+	class AE_FW_DLL IShaderTranspiler : public IModule {
 	public:
 		inline constexpr static char COMBINED_TEXTURE_SAMPLER[25] = { "_CombinedTextureSampler_" };
 
