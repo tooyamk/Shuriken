@@ -4,7 +4,7 @@
 
 class GraphicsAdapterTester : public BaseTester {
 public:
-	virtual int32_t AE_CALL run() override {
+	virtual int32_t SRK_CALL run() override {
 		IntrusivePtr app = new Application("TestApp");
 
 		std::vector<GraphicsAdapter> gas;

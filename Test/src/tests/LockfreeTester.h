@@ -54,7 +54,7 @@ public:
 
 class LockfreeTester : public BaseTester {
 public:
-	virtual int32_t AE_CALL run() override {
+	virtual int32_t SRK_CALL run() override {
 		IntrusivePtr app = new Application("TestApp");
 
 		printFloat(0.0f);
@@ -116,7 +116,7 @@ public:
 	}
 
 private:
-	void AE_CALL _testQueue() {
+	void SRK_CALL _testQueue() {
 		using Class = lockfree::LinkedQueue<uint32_t, lockfree::QueueMode::MPMC>;
 		auto queue = std::make_shared<Class>();
 		auto tmpSet = std::make_shared<std::unordered_set<uint32_t>>();
@@ -163,7 +163,7 @@ private:
 		}
 
 		std::thread([queue, tmpSet, tmpVecMtx, accumulative]() {
-			auto t0 = aurora::Time::now();
+			auto t0 = srk::Time::now();
 
 			do {
 				auto old = *accumulative;
@@ -186,7 +186,7 @@ private:
 					} while (true);
 				}
 
-				auto t1 = aurora::Time::now();
+				auto t1 = srk::Time::now();
 				auto forcePrint = t1 - t0 >= 2000;
 
 				if ((old != *accumulative) || forcePrint) {

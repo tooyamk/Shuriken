@@ -5,7 +5,7 @@
 
 class InputTester : public BaseTester {
 public:
-	static std::string AE_CALL getGamepadKeyString(GamepadVirtualKeyCode code) {
+	static std::string SRK_CALL getGamepadKeyString(GamepadVirtualKeyCode code) {
 		switch (code) {
 		case GamepadVirtualKeyCode::L_STICK:
 			return "left stick";
@@ -56,7 +56,7 @@ public:
 		}
 	}
 
-	static std::string_view AE_CALL getDeviceTypeString(DeviceType type) {
+	static std::string_view SRK_CALL getDeviceTypeString(DeviceType type) {
 		switch (type) {
 		case DeviceType::KEYBOARD:
 			return "keyboard";
@@ -69,14 +69,14 @@ public:
 		}
 	}
 
-	void AE_CALL initInputModule(std::vector<IntrusivePtr<IInputModule>>& modules, const std::string_view& dll, const SerializableObject* args) {
+	void SRK_CALL initInputModule(std::vector<IntrusivePtr<IInputModule>>& modules, const std::string_view& dll, const SerializableObject* args) {
 		IntrusivePtr loader = new InputModuleLoader();
 		if (loader->load(dll)) {
 			if (auto im = loader->create(args); im) modules.emplace_back(im);
 		}
 	}
 
-	virtual int32_t AE_CALL run() override {
+	virtual int32_t SRK_CALL run() override {
 		IntrusivePtr app = new Application("TestApp");
 
 		ApplicationStyle wndStype;
@@ -90,32 +90,32 @@ public:
 					args.insert("app", app.uintptr());
 					//args.insert("ignoreXInputDevices", true);
 					args.insert("filter", DeviceType::GAMEPAD);
-					//initInputModule(inputModules, "libs/" + getDLLName("ae-input-direct-input"), &args);
+					//initInputModule(inputModules, "libs/" + getDLLName("srk-input-direct-input"), &args);
 				}
 				if (1) {
 					SerializableObject args;
 					args.insert("app", app.uintptr());
 					args.insert("filter", DeviceType::GAMEPAD);
-					//initInputModule(inputModules, "libs/" + getDLLName("ae-input-raw-input"), &args);
+					//initInputModule(inputModules, "libs/" + getDLLName("srk-input-raw-input"), &args);
 				}
 				if (1) {
 					SerializableObject args;
 					args.insert("app", app.uintptr());
 					args.insert("filter", DeviceType::GAMEPAD);
-					//initInputModule(inputModules, "libs/" + getDLLName("ae-input-xinput"), &args);
+					//initInputModule(inputModules, "libs/" + getDLLName("srk-input-xinput"), &args);
 				}
 				if (1) {
 					SerializableObject args;
 					args.insert("app", app.uintptr());
 					args.insert("filter", DeviceType::GAMEPAD);
-					initInputModule(inputModules, "libs/" + getDLLName("ae-input-hid-input"), &args);
+					initInputModule(inputModules, "libs/" + getDLLName("srk-input-hid-input"), &args);
 				}
 			} else if constexpr (Environment::OPERATING_SYSTEM == Environment::OperatingSystem::LINUX) {
 				if (1) {
 					SerializableObject args;
 					args.insert("app", app.uintptr());
 					args.insert("filter", DeviceType::GAMEPAD);
-					initInputModule(inputModules, "libs/" + getDLLName("ae-input-hid-input"), &args);
+					initInputModule(inputModules, "libs/" + getDLLName("srk-input-hid-input"), &args);
 				}
 			}
 

@@ -1,7 +1,7 @@
-#include "aurora/Global.h"
+#include "srk/Global.h"
 #include <optional>
 
-namespace aurora {
+namespace srk {
 	struct bad_type {};
 
 
@@ -495,7 +495,7 @@ namespace aurora {
 	template<typename R>
 	requires requires { typename StringDataType<std::remove_cvref_t<R>>; }
 	//requires StringData<std::remove_cvref_t<R>>
-	inline auto& AE_CALL operator+=(std::u8string& left, R&& right) {
+	inline auto& SRK_CALL operator+=(std::u8string& left, R&& right) {
 		if constexpr (std::same_as<std::remove_cvref_t<R>, std::string>) {
 			left += (const std::u8string&)right;
 		} else if constexpr (std::same_as<std::remove_cvref_t<R>, std::string_view>) {
@@ -528,17 +528,17 @@ namespace aurora {
 	}
 
 
-	inline constexpr uint8_t AE_CALL byteswap1(uint8_t val) {
+	inline constexpr uint8_t SRK_CALL byteswap1(uint8_t val) {
 		return val;
 	}
 
-	inline constexpr uint16_t AE_CALL byteswap1(uint16_t val) {
+	inline constexpr uint16_t SRK_CALL byteswap1(uint16_t val) {
 		if (std::is_constant_evaluated()) {
 			return uint16_t(val << 8) | uint16_t(val >> 8);
 		} else {
-#if AE_COMPILER == AE_COMPILER_MSVC
+#if SRK_COMPILER == SRK_COMPILER_MSVC
 			return _byteswap_ushort(val);
-#elif AE_COMPILER == AE_COMPILER_GCC || AE_COMPILER == AE_COMPILER_CLANG
+#elif SRK_COMPILER == SRK_COMPILER_GCC || SRK_COMPILER == SRK_COMPILER_CLANG
 			return __builtin_bswap16(val);
 #else
 			return uint16_t(val << 8) | uint16_t(val >> 8);
@@ -546,13 +546,13 @@ namespace aurora {
 		}
 	}
 
-	inline constexpr uint32_t AE_CALL byteswap1(uint32_t val) {
+	inline constexpr uint32_t SRK_CALL byteswap1(uint32_t val) {
 		if (std::is_constant_evaluated()) {
 			return (val & 0x000000FFU << 24) | (val & 0x0000FF00U << 8) | (val & 0x00FF0000U >> 8) | (val & 0xFF000000U >> 24);
 		} else {
-#if AE_COMPILER == AE_COMPILER_MSVC
+#if SRK_COMPILER == SRK_COMPILER_MSVC
 			return _byteswap_ulong(val);
-#elif AE_COMPILER == AE_COMPILER_GCC || AE_COMPILER == AE_COMPILER_CLANG
+#elif SRK_COMPILER == SRK_COMPILER_GCC || SRK_COMPILER == SRK_COMPILER_CLANG
 			return __builtin_bswap32(val);
 #else
 			return (val & 0x000000FFU << 24) | (val & 0x0000FF00U << 8) | (val & 0x00FF0000U >> 8) | (val & 0xFF000000U >> 24);
@@ -560,14 +560,14 @@ namespace aurora {
 		}
 	}
 
-	inline constexpr uint64_t AE_CALL byteswap1(uint64_t val) {
+	inline constexpr uint64_t SRK_CALL byteswap1(uint64_t val) {
 		if (std::is_constant_evaluated()) {
 			uint64_t Hi = byteswap1(uint32_t(val));
 			return (Hi << 32) | byteswap1(uint32_t(val >> 32));
 		} else {
-#if AE_COMPILER == AE_COMPILER_MSVC
+#if SRK_COMPILER == SRK_COMPILER_MSVC
 			return _byteswap_uint64(val);
-#elif AE_COMPILER == AE_COMPILER_GCC || AE_COMPILER == AE_COMPILER_CLANG
+#elif SRK_COMPILER == SRK_COMPILER_GCC || SRK_COMPILER == SRK_COMPILER_CLANG
 			return __builtin_bswap64(val);
 #else
 			uint64_t Hi = byteswap1(uint32_t(val));

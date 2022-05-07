@@ -4,7 +4,7 @@
 
 class VertexUpdateTester : public BaseTester {
 public:
-	virtual int32_t AE_CALL run() override {
+	virtual int32_t SRK_CALL run() override {
 		auto monitors = Monitor::getMonitors();
 		auto vms = monitors[0].getVideoModes();
 
@@ -15,12 +15,12 @@ public:
 		if (app->createWindow(wndStype, "", Vec2ui32(800, 600), false)) {
 			IntrusivePtr gml = new GraphicsModuleLoader();
 
-			//if (gml->load("libs/" + getDLLName("ae-graphics-gl"))) {
-			if (gml->load("libs/" + getDLLName("ae-graphics-d3d11"))) {
+			//if (gml->load("libs/" + getDLLName("srk-graphics-gl"))) {
+			if (gml->load("libs/" + getDLLName("srk-graphics-d3d11"))) {
 				SerializableObject args;
 
 				IntrusivePtr stml = new ModuleLoader<IShaderTranspiler>();
-				stml->load("libs/" + getDLLName("ae-shader-transpiler"));
+				stml->load("libs/" + getDLLName("srk-shader-transpiler"));
 
 				args.insert("dxc", "libs/" + getDLLName("dxcompiler"));
 				auto st = stml->create(&args);
@@ -225,7 +225,7 @@ public:
 							if (vb) {
 								auto cycle = 20000;
 								auto halfCycyle = float32_t(cycle / 2);
-								auto t = aurora::Time::now<std::chrono::milliseconds>() % cycle;
+								auto t = srk::Time::now<std::chrono::milliseconds>() % cycle;
 								float32_t vertices[] = {
 									0.f, 0.f,
 									0.f, 1.f,

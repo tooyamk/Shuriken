@@ -35,7 +35,7 @@ void aaa() {
 }
 
 template<auto V>
-void AE_CALL get_name() {
+void SRK_CALL get_name() {
 	printdln(__FUNCSIG__);
 }
 
@@ -45,7 +45,7 @@ auto print11 = [](auto const& view) {
 
 class ExperimentTester : public BaseTester {
 public:
-	virtual int32_t AE_CALL run() override {
+	virtual int32_t SRK_CALL run() override {
 		constexpr std::string_view hello{ "Hello C++ 20 !" };
 		//std::ranges::for_each(hello | std::views::split(' '), print11);
 

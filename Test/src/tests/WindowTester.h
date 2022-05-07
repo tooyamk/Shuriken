@@ -4,7 +4,7 @@
 
 class WindowTester : public BaseTester {
 public:
-	virtual int32_t AE_CALL run() override {
+	virtual int32_t SRK_CALL run() override {
 		IntrusivePtr app = new Application("TestApp");
 
 		ApplicationStyle wndStype;
@@ -15,7 +15,7 @@ public:
 
 			IntrusivePtr looper = new Looper(1000.0 / 60.0);
 
-			auto t = aurora::Time::now();
+			auto t = srk::Time::now();
 			int step = 0;
 
 			app->getEventDispatcher()->addEventListener(ApplicationEvent::CLOSING, createEventListener<ApplicationEvent>([looper](Event<ApplicationEvent>& e) {
@@ -44,7 +44,7 @@ public:
 			looper->getEventDispatcher()->addEventListener(LooperEvent::TICKING, createEventListener<LooperEvent>([app, &t, &step](Event<LooperEvent>& e) {
 				app->pollEvents();
 
-				auto tt = aurora::Time::now();
+				auto tt = srk::Time::now();
 				auto d = tt - t;
 				if (d >= 2000) {
 					t = tt;

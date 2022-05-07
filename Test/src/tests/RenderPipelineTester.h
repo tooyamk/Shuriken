@@ -1,11 +1,11 @@
 #pragma once
 
 #include "../BaseTester.h"
-#include "aurora/SerializableObject.h"
+#include "srk/SerializableObject.h"
 
 class RenderPipelineTester : public BaseTester {
 public:
-	virtual int32_t AE_CALL run() override {
+	virtual int32_t SRK_CALL run() override {
 		auto monitors = Monitor::getMonitors();
 		auto vms = monitors[0].getVideoModes();
 		
@@ -16,13 +16,13 @@ public:
 		if (app->createWindow(wndStype, "", Vec2ui32(800, 600), false)) {
 			IntrusivePtr gml = new GraphicsModuleLoader();
 
-			//if (gml->load("libs/" + getDLLName("ae-graphics-d3d11"))) {
-			//if (gml->load("libs/" + getDLLName("ae-graphics-gl"))) {
-			if (gml->load("libs/" + getDLLName("ae-graphics-vulkan"))) {
+			//if (gml->load("libs/" + getDLLName("srk-graphics-d3d11"))) {
+			//if (gml->load("libs/" + getDLLName("srk-graphics-gl"))) {
+			if (gml->load("libs/" + getDLLName("srk-graphics-vulkan"))) {
 				SerializableObject args;
 				
 				IntrusivePtr stml = new ModuleLoader<IShaderTranspiler>();
-				stml->load("libs/" + getDLLName("ae-shader-transpiler"));
+				stml->load("libs/" + getDLLName("srk-shader-transpiler"));
 
 				args.insert("dxc", "libs/" + getDLLName("dxcompiler"));
 				auto st = stml->create(&args);

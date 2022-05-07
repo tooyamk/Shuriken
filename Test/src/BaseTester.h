@@ -2,24 +2,24 @@
 
 #include "Helper.h"
 
-#include "Extensions/ASTCConverter/src/aurora/ASTCConverter.h"
-#include "Extensions/PNGConverter/src/aurora/PNGConverter.h"
-#include "Extensions/FBXConverter/src/aurora/FBXConverter.h"
-#include "Extensions/ShaderScript/src/aurora/ShaderScript.h"
+#include "Extensions/ASTCConverter/src/srk/ASTCConverter.h"
+#include "Extensions/PNGConverter/src/srk/PNGConverter.h"
+#include "Extensions/FBXConverter/src/srk/FBXConverter.h"
+#include "Extensions/ShaderScript/src/srk/ShaderScript.h"
 
-using namespace aurora;
-using namespace aurora::components;
-using namespace aurora::components::renderables;
-using namespace aurora::components::lights;
-using namespace aurora::events;
-using namespace aurora::modules;
-using namespace aurora::modules::graphics;
-using namespace aurora::modules::inputs;
-using namespace aurora::render;
+using namespace srk;
+using namespace srk::components;
+using namespace srk::components::renderables;
+using namespace srk::components::lights;
+using namespace srk::events;
+using namespace srk::modules;
+using namespace srk::modules::graphics;
+using namespace srk::modules::inputs;
+using namespace srk::render;
 
 class Stats {
 public:
-	void AE_CALL run(Looper* looper);
+	void SRK_CALL run(Looper* looper);
 
 private:
 	std::atomic_uint32_t _frameCount = 0;
@@ -28,5 +28,5 @@ private:
 
 class BaseTester {
 public:
-	virtual int32_t AE_CALL run();
+	virtual int32_t SRK_CALL run();
 };

@@ -4,18 +4,18 @@
 
 class OffscreenTester : public BaseTester {
 public:
-	virtual int32_t AE_CALL run() override {
+	virtual int32_t SRK_CALL run() override {
 		auto monitors = Monitor::getMonitors();
 		auto vms = monitors[0].getVideoModes();
 
 		IntrusivePtr gml = new GraphicsModuleLoader();
 
-		//if (gml->load(getDLLName("ae-graphics-gl"))) {
-		if (gml->load("libs/" + getDLLName(u8"ae-graphics-d3d11"))) {
+		//if (gml->load(getDLLName("srk-graphics-gl"))) {
+		if (gml->load("libs/" + getDLLName(u8"srk-graphics-d3d11"))) {
 			SerializableObject args;
 
 			IntrusivePtr stml = new ModuleLoader<IShaderTranspiler>();
-			stml->load("libs/" + getDLLName("ae-shader-transpiler"));
+			stml->load("libs/" + getDLLName("srk-shader-transpiler"));
 
 			args.insert("dxc", "libs/" + getDLLName("dxcompiler"));
 			auto st = stml->create(&args);
@@ -185,10 +185,10 @@ float4 main(PS_INPUT input) : SV_TARGET {
 									//*/
 
 									///*
-									auto t0 = aurora::Time::now();
+									auto t0 = srk::Time::now();
 									auto out = extensions::ASTCConverter::encode(*aaa, Vec3ui32(4, 4, 1), extensions::ASTCConverter::Preset::FASTEST, extensions::ASTCConverter::Flags::NONE, 10);
 									if (out.isValid()) {
-										printaln("use time : ", aurora::Time::now() - t0);
+										printaln("use time : ", srk::Time::now() - t0);
 										writeFile("D:/Users/Sephiroth/Desktop/6x6.astc", out);
 										printaln("doneeeeeeeeeeeeeeeeee");
 									}
