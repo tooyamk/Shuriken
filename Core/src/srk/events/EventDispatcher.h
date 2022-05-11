@@ -1,9 +1,9 @@
 #pragma once
 
 #include "IEventDispatcher.h"
-#include <list>
 #include <mutex>
 #include <unordered_map>
+#include <vector>
 
 namespace srk::events {
 	template<typename EvtType>
@@ -212,7 +212,7 @@ namespace srk::events {
 			uint32_t dispatching;
 			uint32_t numValidListeners;
 			uint32_t numTotalListeners;
-			std::list<Listener> listeners;
+			std::vector<Listener> listeners;
 		};
 
 
