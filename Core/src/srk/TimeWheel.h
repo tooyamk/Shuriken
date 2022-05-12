@@ -73,7 +73,7 @@ namespace srk {
 			size_t _runningCycle;
 			uint64_t _runningDelay;
 			size_t _slotIndex;
-			std::list<uint64_t> _tickIDs;
+			std::vector<uint64_t> _tickIDs;
 			Timer* _prev;
 			Timer* _next;
 
