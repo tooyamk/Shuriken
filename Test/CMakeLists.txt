@@ -31,6 +31,7 @@ get_property(PROJECT_SRK_SHADER_TRANSPILER_DLL GLOBAL PROPERTY "PROJECT_SRK_SHAD
 
 get_property(PROJECT_GLEW_DLL GLOBAL PROPERTY "PROJECT_GLEW_DLL")
 get_property(PROJECT_LIBPNG_DLL GLOBAL PROPERTY "PROJECT_LIBPNG_DLL")
+#get_property(PROJECT_SPIRV_CROSS_DLL GLOBAL PROPERTY "PROJECT_SPIRV_CROSS_DLL")
 get_property(PROJECT_ZLIB_DLL GLOBAL PROPERTY "PROJECT_ZLIB_DLL")
 
 get_property(PROJECT_MIMALLOC_NAME GLOBAL PROPERTY "PROJECT_MIMALLOC_NAME")
@@ -138,6 +139,7 @@ __append_copy_file_cmd(test_pre_build_commands ${PROJECT_ZLIB_DLL} ${__OUTPUT_LI
 __append_copy_file_cmd(test_pre_build_commands ${PROJECT_SRK_SHADER_TRANSPILER_DLL} ${__OUTPUT_LIBS_DIR})
 
 __append_copy_file_cmd_if(GLEW test_pre_build_commands "${PROJECT_GLEW_DLL}" ${__OUTPUT_LIBS_DIR})
+#__append_copy_file_cmd_if(SPIRV_CROSS test_pre_build_commands "${PROJECT_SPIRV_CROSS_DLL}" ${__OUTPUT_LIBS_DIR})
 __append_copy_file_cmd_if(SRK_GRAPHICS_GL test_pre_build_commands "${PROJECT_SRK_GRAPHICS_GL_DLL}" ${__OUTPUT_LIBS_DIR})
 __append_copy_file_cmd_if(SRK_GRAPHICS_D3D11 test_pre_build_commands "${PROJECT_SRK_GRAPHICS_D3D11_DLL}" ${__OUTPUT_LIBS_DIR})
 __append_copy_file_cmd_if(SRK_GRAPHICS_VULKAN test_pre_build_commands "${PROJECT_SRK_GRAPHICS_VULKAN_DLL}" ${__OUTPUT_LIBS_DIR})

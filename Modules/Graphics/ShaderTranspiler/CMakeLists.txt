@@ -36,6 +36,7 @@ target_link_libraries(${PROJECT_NAME}
     ${PROJECT_SRK_CORE_NAME}
     ${PROJECT_SRK_FRAMEWORK_NAME}
 )
+#__target_link_library_external_project(${PROJECT_NAME} "PROJECT_SPIRV_CROSS_LIB")
 __target_link_library_external_project(${PROJECT_NAME} "PROJECT_SPIRV_CROSS_CORE_SLIB")
 __target_link_library_external_project(${PROJECT_NAME} "PROJECT_SPIRV_CROSS_GLSL_SLIB")
 __target_link_library_external_project(${PROJECT_NAME} "PROJECT_SPIRV_CROSS_MSL_SLIB")

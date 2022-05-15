@@ -22,7 +22,7 @@ ExternalProject_Add(
     ${PROJECT_NAME}
     PREFIX ${PROJECT_BINARY_DIR}
     GIT_REPOSITORY https://github.com/madler/zlib.git
-    GIT_TAG v1.2.11
+    GIT_TAG v1.2.12
     GIT_SHALLOW 1
     GIT_PROGRESS 1
     TMP_DIR tmp
