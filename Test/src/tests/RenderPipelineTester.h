@@ -16,9 +16,9 @@ public:
 		if (app->createWindow(wndStype, "", Vec2ui32(800, 600), false)) {
 			IntrusivePtr gml = new GraphicsModuleLoader();
 
-			//if (gml->load("libs/" + getDLLName("srk-graphics-d3d11"))) {
+			if (gml->load("libs/" + getDLLName("srk-graphics-d3d11"))) {
 			//if (gml->load("libs/" + getDLLName("srk-graphics-gl"))) {
-			if (gml->load("libs/" + getDLLName("srk-graphics-vulkan"))) {
+			//if (gml->load("libs/" + getDLLName("srk-graphics-vulkan"))) {
 				SerializableObject args;
 				
 				IntrusivePtr stml = new ModuleLoader<IShaderTranspiler>();

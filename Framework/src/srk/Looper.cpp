@@ -73,11 +73,26 @@ namespace srk {
 	void Looper::_sleep(size_t nanoseconds) {
 		if (nanoseconds > 0) {
 			auto t0 = Time::now<std::chrono::nanoseconds, std::chrono::steady_clock>();
+
+#if SRK_OS == SRK_OS_WINDOWS
+			auto ms = nanoseconds / 1000000;
+			if (ms > 1)
+			{
+				timeBeginPeriod(1);
+				std::this_thread::sleep_for(std::chrono::milliseconds(ms - 1));
+				timeEndPeriod(1);
+			}
+			do {
+				auto t1 = Time::now<std::chrono::nanoseconds, std::chrono::steady_clock>();
+				if (t1 - t0 >= nanoseconds) break;
+			} while (true);
+#else
 			do {
 				std::this_thread::yield();
 				auto t1 = Time::now<std::chrono::nanoseconds, std::chrono::steady_clock>();
 				if (t1 - t0 >= nanoseconds) break;
 			} while (true);
+#endif
 		}
 	}
 
