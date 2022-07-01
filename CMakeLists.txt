@@ -252,8 +252,7 @@ function(srkAddSubdirectoryIf cond dir)
     endif ()
 endfunction()
 
-option(TOOL_7Z "" OFF)
-
+option(7Z "" OFF)
 option(ASTC_ENCODER "" OFF)
 option(DX_SHADER_COMPILER "" OFF)
 option(GLEW "" OFF)
@@ -349,7 +348,7 @@ if (SRK_GRAPHICS_VULKAN)
 endif ()
 
 if ((VULKAN_SDK) AND SRK_OS_WINDOWS)
-    set(TOOL_7Z ON)
+    set(7Z ON)
 endif ()
 #==========
 
@@ -498,8 +497,7 @@ macro(srkCreateExternalProjectCmakeArgs target)
     )
 endmacro()
 
-srkAddSubdirectoryIf(TOOL_7Z Tools/7z)
-
+srkAddSubdirectoryIf(7Z ${SRK_EXTERNAL_DIR_NAME}/7z)
 srkAddSubdirectoryIf(ASTC_ENCODER ${SRK_EXTERNAL_DIR_NAME}/astc-encoder)
 srkAddSubdirectoryIf(DX_SHADER_COMPILER ${SRK_EXTERNAL_DIR_NAME}/DirectXShaderCompiler)
 srkAddSubdirectoryIf(GLEW ${SRK_EXTERNAL_DIR_NAME}/glew)
