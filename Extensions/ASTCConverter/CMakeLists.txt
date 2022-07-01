@@ -1,4 +1,4 @@
-__set_project()
+srkSetProject()
 set(__OUTPUT_NAME srk-astc-converter)
 set_property(GLOBAL PROPERTY PROJECT_SRK_ASTC_CONVERTER_NAME ${PROJECT_NAME})
 set_property(GLOBAL PROPERTY PROJECT_SRK_ASTC_CONVERTER_INCLUDE ${PROJECT_SOURCE_DIR}/src/)
@@ -21,7 +21,7 @@ include_directories(
 )
 add_definitions(${SRK_EXTENSION_DEFINITIONS})
 file(GLOB_RECURSE SRC_FILES "src/*.h" "src/*.cpp")
-__add_library_source_group(${PROJECT_NAME} SHARED ${SRC_FILES})
+srkAddLibrarySourceGroup(${PROJECT_NAME} SHARED ${SRC_FILES})
 add_dependencies(${PROJECT_NAME} 
     ${PROJECT_SRK_FRAMEWORK_NAME}
     ${PROJECT_ASTC_ENCODER_NAME}
@@ -32,10 +32,10 @@ target_link_libraries(${PROJECT_NAME}
 )
 string(TOLOWER ${CMAKE_SYSTEM_PROCESSOR} val)
 if (val MATCHES "(amd)|(86)")
-    __target_link_library_external_project(${PROJECT_NAME} "PROJECT_ASTC_ENCODER_SSE2_SLIB")
+    srkTargetLinkLibraryExternalProject(${PROJECT_NAME} "PROJECT_ASTC_ENCODER_SSE2_SLIB")
 elseif (val MATCHES "aarch64")
-    __target_link_library_external_project(${PROJECT_NAME} "PROJECT_ASTC_ENCODER_NEON_SLIB")
+    srkTargetLinkLibraryExternalProject(${PROJECT_NAME} "PROJECT_ASTC_ENCODER_NEON_SLIB")
 endif ()
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER ${SRK_EXTENSIONS_DIR_NAME})
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${__OUTPUT_NAME})
-__install(${SRK_EXTENSIONS_DIR_NAME}/${PROJECT_NAME})
+srkInstall(${SRK_EXTENSIONS_DIR_NAME}/${PROJECT_NAME})

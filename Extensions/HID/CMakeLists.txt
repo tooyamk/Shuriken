@@ -1,4 +1,4 @@
-__set_project()
+srkSetProject()
 set(__OUTPUT_NAME srk-hid)
 set_property(GLOBAL PROPERTY PROJECT_SRK_HID_NAME ${PROJECT_NAME})
 set_property(GLOBAL PROPERTY PROJECT_SRK_HID_INCLUDE ${PROJECT_SOURCE_DIR}/src/)
@@ -13,7 +13,7 @@ include_directories(
 )
 add_definitions(${SRK_EXTENSION_DEFINITIONS})
 file(GLOB_RECURSE SRC_FILES "src/*.h" "src/*.cpp")
-__add_library_source_group(${PROJECT_NAME} SHARED ${SRC_FILES})
+srkAddLibrarySourceGroup(${PROJECT_NAME} SHARED ${SRC_FILES})
 add_dependencies(${PROJECT_NAME}
     ${PROJECT_SRK_CORE_NAME}
 )
@@ -21,13 +21,13 @@ add_dependencies(${PROJECT_NAME}
 set(linkLibs
     ${PROJECT_SRK_CORE_NAME}
 )
-if (WIN32)
+if (SRK_OS_WINDOWS)
     list(APPEND linkLibs hid.lib SetupAPI.lib)
-elseif (UNIX)
+elseif (SRK_OS_LINUX)
     list(APPEND linkLibs udev)
 endif ()
 target_link_libraries(${PROJECT_NAME} ${linkLibs})
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER ${SRK_EXTENSIONS_DIR_NAME})
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${__OUTPUT_NAME})
-__install(${SRK_INPUT_MODULES_DIR}/${PROJECT_NAME})
+srkInstall(${SRK_INPUT_MODULES_DIR}/${PROJECT_NAME})

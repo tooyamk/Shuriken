@@ -1,4 +1,4 @@
-__set_project()
+srkSetProject()
 set(__OUTPUT_NAME srk-shader-transpiler)
 set_property(GLOBAL PROPERTY PROJECT_SRK_SHADER_TRANSPILER_NAME ${PROJECT_NAME})
 set_property(GLOBAL PROPERTY PROJECT_SRK_SHADER_TRANSPILER_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
@@ -26,7 +26,7 @@ include_directories(
 )
 add_definitions(${SRK_MODULE_DEFINITIONS})
 file(GLOB_RECURSE SRC_FILES "src/*.h" "src/*.cpp")
-__add_library_source_group(${PROJECT_NAME} SHARED ${SRC_FILES})
+srkAddLibrarySourceGroup(${PROJECT_NAME} SHARED ${SRC_FILES})
 add_dependencies(${PROJECT_NAME}
     ${PROJECT_SRK_FRAMEWORK_NAME}
     ${PROJECT_DX_SHADER_COMPILER_NAME}
@@ -36,11 +36,11 @@ target_link_libraries(${PROJECT_NAME}
     ${PROJECT_SRK_CORE_NAME}
     ${PROJECT_SRK_FRAMEWORK_NAME}
 )
-#__target_link_library_external_project(${PROJECT_NAME} "PROJECT_SPIRV_CROSS_LIB")
-__target_link_library_external_project(${PROJECT_NAME} "PROJECT_SPIRV_CROSS_CORE_SLIB")
-__target_link_library_external_project(${PROJECT_NAME} "PROJECT_SPIRV_CROSS_GLSL_SLIB")
-__target_link_library_external_project(${PROJECT_NAME} "PROJECT_SPIRV_CROSS_MSL_SLIB")
-__target_link_library_external_project(${PROJECT_NAME} "PROJECT_DX_SHADER_COMPILER_LLVMDxcSupport_SLIB")
+#srkTargetLinkLibraryExternalProject(${PROJECT_NAME} "PROJECT_SPIRV_CROSS_LIB")
+srkTargetLinkLibraryExternalProject(${PROJECT_NAME} "PROJECT_SPIRV_CROSS_CORE_SLIB")
+srkTargetLinkLibraryExternalProject(${PROJECT_NAME} "PROJECT_SPIRV_CROSS_GLSL_SLIB")
+srkTargetLinkLibraryExternalProject(${PROJECT_NAME} "PROJECT_SPIRV_CROSS_MSL_SLIB")
+srkTargetLinkLibraryExternalProject(${PROJECT_NAME} "PROJECT_DX_SHADER_COMPILER_LLVMDxcSupport_SLIB")
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER ${SRK_GRAPHICS_MODULES_DIR})
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${__OUTPUT_NAME})
-__install(${SRK_GRAPHICS_MODULES_DIR}/${PROJECT_NAME})
+srkInstall(${SRK_GRAPHICS_MODULES_DIR}/${PROJECT_NAME})

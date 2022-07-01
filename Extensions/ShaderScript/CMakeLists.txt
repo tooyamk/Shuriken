@@ -1,4 +1,4 @@
-__set_project()
+srkSetProject()
 set(__OUTPUT_NAME srk-shader-script)
 set_property(GLOBAL PROPERTY PROJECT_SRK_SHADER_SCRIPT_NAME ${PROJECT_NAME})
 set_property(GLOBAL PROPERTY PROJECT_SRK_SHADER_SCRIPT_CONVERTER_INCLUDE ${PROJECT_SOURCE_DIR}/src/)
@@ -17,7 +17,7 @@ include_directories(
 )
 add_definitions(${SRK_EXTENSION_DEFINITIONS})
 file(GLOB_RECURSE SRC_FILES "src/*.h" "src/*.cpp")
-__add_library_source_group(${PROJECT_NAME} SHARED ${SRC_FILES})
+srkAddLibrarySourceGroup(${PROJECT_NAME} SHARED ${SRC_FILES})
 add_dependencies(${PROJECT_NAME} 
     ${PROJECT_SRK_FRAMEWORK_NAME}
 )
@@ -27,4 +27,4 @@ target_link_libraries(${PROJECT_NAME}
 )
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER ${SRK_EXTENSIONS_DIR_NAME})
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${__OUTPUT_NAME})
-__install(${SRK_EXTENSIONS_DIR_NAME}/${PROJECT_NAME})
+srkInstall(${SRK_EXTENSIONS_DIR_NAME}/${PROJECT_NAME})

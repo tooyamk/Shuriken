@@ -1,5 +1,5 @@
-__set_project()
-if (WIN32)
+srkSetProject()
+if (SRK_OS_WINDOWS)
     set(__OUTPUT_NAME zlib)
 else ()
     set(__OUTPUT_NAME libz)

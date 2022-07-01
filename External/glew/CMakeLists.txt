@@ -1,4 +1,4 @@
-__set_project()
+srkSetProject()
 set(__OUTPUT_NAME ${CMAKE_SHARED_LIBRARY_PREFIX}glew)
 set_property(GLOBAL PROPERTY PROJECT_GLEW_NAME ${PROJECT_NAME})
 set_property(GLOBAL PROPERTY PROJECT_GLEW_INCLUDE ${PROJECT_BINARY_DIR}/install/include)
@@ -7,7 +7,7 @@ set_property(GLOBAL PROPERTY PROJECT_GLEW_DLL ${PROJECT_BINARY_DIR}/install/${SR
 
 include(ExternalProject)
 
-#if (MSVC)
+#if (SRK_CXX_COMPILER_MSVC)
 #   set(flags "/DYNAMICBASE \"msvcurt.lib\"")
 #   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${flags}")
 #   set(CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} ${flags}")

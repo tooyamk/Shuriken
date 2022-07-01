@@ -1,4 +1,4 @@
-__set_project()
+srkSetProject()
 set(__OUTPUT_NAME srk-graphics-gl)
 set_property(GLOBAL PROPERTY PROJECT_SRK_GRAPHICS_GL_NAME ${PROJECT_NAME})
 set_property(GLOBAL PROPERTY PROJECT_SRK_GRAPHICS_GL_DLL ${SRK_BUILD_DIR}/${CMAKE_SHARED_LIBRARY_PREFIX}${__OUTPUT_NAME}${SRK_BUILD_TYPE_SUFFIX}${SRK_DLL_SUFFIX})
@@ -20,7 +20,7 @@ include_directories(
 )
 add_definitions(${SRK_MODULE_DEFINITIONS} -DGLEW_NO_GLU)
 file(GLOB_RECURSE SRC_FILES "src/*.h" "src/*.cpp")
-__add_library_source_group(${PROJECT_NAME} SHARED ${SRC_FILES})
+srkAddLibrarySourceGroup(${PROJECT_NAME} SHARED ${SRC_FILES})
 add_dependencies(${PROJECT_NAME}
     ${PROJECT_SRK_FRAMEWORK_NAME}
     ${PROJECT_GLEW_NAME}
@@ -31,10 +31,10 @@ target_link_libraries(${PROJECT_NAME}
     ${PROJECT_SRK_FRAMEWORK_NAME}
     ${PROJECT_GLEW_LIB}
 )
-if (WIN32)
+if (SRK_OS_WINDOWS)
     target_link_libraries(${PROJECT_NAME} opengl32.lib)
 endif ()
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER ${SRK_GRAPHICS_MODULES_DIR})
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${__OUTPUT_NAME})
-__install(${SRK_GRAPHICS_MODULES_DIR}/${PROJECT_NAME})
+srkInstall(${SRK_GRAPHICS_MODULES_DIR}/${PROJECT_NAME})

@@ -1,4 +1,4 @@
-__set_project()
+srkSetProject()
 set(__OUTPUT_NAME libpng)
 set(LIB_PREFIX ${PROJECT_BINARY_DIR}/install/lib/${__OUTPUT_NAME})
 set(LIB_R ${LIB_PREFIX}${SRK_LIB_SUFFIX})

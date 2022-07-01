@@ -1,4 +1,4 @@
-__set_project()
+srkSetProject()
 set(__OUTPUT_NAME_PREFIX ${CMAKE_STATIC_LIBRARY_PREFIX}astcenc-)
 set(__OUTPUT_NAME_SUFFIX -static)
 set(__OUTPUT_NAME_NONE ${__OUTPUT_NAME_PREFIX}none${__OUTPUT_NAME_SUFFIX})

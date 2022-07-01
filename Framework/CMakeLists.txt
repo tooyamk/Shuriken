@@ -1,4 +1,4 @@
-__set_project()
+srkSetProject()
 set(__OUTPUT_NAME srk-framework)
 set_property(GLOBAL PROPERTY PROJECT_SRK_FRAMEWORK_NAME ${PROJECT_NAME})
 set_property(GLOBAL PROPERTY PROJECT_SRK_FRAMEWORK_INCLUDE ${PROJECT_SOURCE_DIR}/src/)
@@ -13,22 +13,22 @@ include_directories(
 )
 add_definitions(${SRK_DEFINITIONS} -DSRK_FW_EXPORTS)
 file(GLOB_RECURSE SRC_FILES "src/*.h" "src/*.cpp")
-__add_library_source_group(${PROJECT_NAME} SHARED ${SRC_FILES})
+srkAddLibrarySourceGroup(${PROJECT_NAME} SHARED ${SRC_FILES})
 add_dependencies(${PROJECT_NAME} 
     ${PROJECT_SRK_CORE_NAME}
 )
 set(linkLibs)
-if (WIN32)
+if (SRK_OS_WINDOWS)
     list(APPEND linkLibs dxgi.lib winmm.lib)
-elseif (UNIX)
-    __append_if(X11_FOUND linkLibs X11)
+elseif (SRK_OS_LINUX)
+    srkAppendIf(X11_FOUND linkLibs X11)
 endif ()
 target_link_libraries(${PROJECT_NAME}
     ${PROJECT_SRK_CORE_NAME}
     ${linkLibs}
 )
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${__OUTPUT_NAME})
-__install(${PROJECT_NAME})
+srkInstall(${PROJECT_NAME})
 
 #set(CMAKE_INSTALL_PREFIX ${PROJECT_BINARY_DIR})
 #install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})

@@ -21,7 +21,7 @@ file(WRITE ${file} "${content}")
 
 set(file ${BIN_DIR}/src/utils/hct/hctgen.py)
 file(READ ${file} content)
-if (WIN32)
+if (CMAKE_SYSTEM_NAME MATCHES "Windows")
     string(REPLACE "def openOutput(args):" "def openOutput(args):\r\n  dir = os.path.dirname(args.output)\r\n  if not os.path.exists(dir):\r\n    os.makedirs(dir)" content "${content}")
 else ()
     string(REPLACE "def openOutput(args):" "def openOutput(args):\r  dir = os.path.dirname(args.output)\r  if not os.path.exists(dir):\r    os.makedirs(dir)" content "${content}")
