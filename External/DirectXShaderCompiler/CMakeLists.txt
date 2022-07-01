@@ -37,7 +37,7 @@ else()
     endif ()
 endif ()
 
-function(__detect_arch archPrefix archWordBitsPrefix arch)
+function(_detect_arch archPrefix archWordBitsPrefix arch)
     if (${${archPrefix}X86})
         if (${${archWordBitsPrefix}32})
             set(${arch} "X86" PARENT_SCOPE)
@@ -54,10 +54,10 @@ function(__detect_arch archPrefix archWordBitsPrefix arch)
 endfunction()
 #AArch64
 
-__detect_arch(SRK_ARCH_ SRK_ARCH_WORD_BITS_ arch)
-__detect_arch(SRK_HOST_ARCH_ SRK_HOST_ARCH_WORD_BITS_ host_arch)
+_detect_arch(SRK_ARCH_ SRK_ARCH_WORD_BITS_ arch)
+_detect_arch(SRK_HOST_ARCH_ SRK_HOST_ARCH_WORD_BITS_ host_arch)
 
-__create_external_project_cmake_args(__CMAKE_ARGS)
+srkCreateExternalProjectCmakeArgs(cmakeArgs)
 
 set(predefined_config_params_file ${CMAKE_CURRENT_SOURCE_DIR}/predefined-config-params.cmake)
 include(${predefined_config_params_file})
@@ -101,7 +101,7 @@ ExternalProject_Add(
         -DDIASDK_INCLUDE_DIR=${DIASDK_INCLUDE_DIR}
         #-DCMAKE_SHARED_LIBRARY_PREFIX=${CMAKE_SHARED_LIBRARY_PREFIX}
         #-DCMAKE_STATIC_LIBRARY_PREFIX=${CMAKE_STATIC_LIBRARY_PREFIX}
-        ${__CMAKE_ARGS}
+        ${cmakeArgs}
 )
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER ${SRK_EXTERNAL_DIR_NAME})

@@ -1,10 +1,10 @@
 srkSetProject()
 if (SRK_OS_WINDOWS)
-    set(__OUTPUT_NAME zlib)
+    set(OUTPUT_NAME zlib)
 else ()
-    set(__OUTPUT_NAME libz)
+    set(OUTPUT_NAME libz)
 endif ()
-set(LIB_PREFIX ${PROJECT_BINARY_DIR}/install/lib/${__OUTPUT_NAME})
+set(LIB_PREFIX ${PROJECT_BINARY_DIR}/install/lib/${OUTPUT_NAME})
 set(LIB_R ${LIB_PREFIX}${SRK_LIB_SUFFIX})
 set(LIB_D ${LIB_PREFIX}d${SRK_LIB_SUFFIX})
 set_property(GLOBAL PROPERTY PROJECT_ZLIB_NAME ${PROJECT_NAME})
@@ -12,11 +12,11 @@ set_property(GLOBAL PROPERTY PROJECT_ZLIB_INCLUDE ${PROJECT_BINARY_DIR}/install/
 set_property(GLOBAL PROPERTY PROJECT_ZLIB_LIB ${LIB_PREFIX}${SRK_BUILD_TYPE_SUFFIX}${SRK_LIB_SUFFIX})
 set_property(GLOBAL PROPERTY PROJECT_ZLIB_LIB_R ${LIB_R})
 set_property(GLOBAL PROPERTY PROJECT_ZLIB_LIB_D ${LIB_D})
-set_property(GLOBAL PROPERTY PROJECT_ZLIB_DLL ${PROJECT_BINARY_DIR}/install/${SRK_INSTALL_DLL_DIR_NAME}/${__OUTPUT_NAME}${SRK_BUILD_TYPE_SUFFIX}${SRK_DLL_SUFFIX})
+set_property(GLOBAL PROPERTY PROJECT_ZLIB_DLL ${PROJECT_BINARY_DIR}/install/${SRK_INSTALL_DLL_DIR_NAME}/${OUTPUT_NAME}${SRK_BUILD_TYPE_SUFFIX}${SRK_DLL_SUFFIX})
 
 include(ExternalProject)
 
-__create_external_project_cmake_args(__CMAKE_ARGS)
+srkCreateExternalProjectCmakeArgs(cmakeArgs)
 
 ExternalProject_Add(
     ${PROJECT_NAME}
@@ -43,7 +43,7 @@ ExternalProject_Add(
         ${LIB_D}
     CMAKE_ARGS
         -DBUILD_SHARED_LIBS=1
-        ${__CMAKE_ARGS}
+        ${cmakeArgs}
 )
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER ${SRK_EXTERNAL_DIR_NAME})

@@ -1,6 +1,6 @@
 srkSetProject()
-set(__OUTPUT_NAME ${CMAKE_SHARED_LIBRARY_PREFIX}tcmalloc_minimal)
-set(LIB_PREFIX ${PROJECT_BINARY_DIR}/install/lib/${__OUTPUT_NAME})
+set(OUTPUT_NAME ${CMAKE_SHARED_LIBRARY_PREFIX}tcmalloc_minimal)
+set(LIB_PREFIX ${PROJECT_BINARY_DIR}/install/lib/${OUTPUT_NAME})
 set(LIB_R ${LIB_PREFIX}${SRK_LIB_SUFFIX})
 set(LIB_D ${LIB_PREFIX}d${SRK_LIB_SUFFIX})
 set_property(GLOBAL PROPERTY PROJECT_TCMALLOC_NAME ${PROJECT_NAME})
@@ -8,11 +8,11 @@ set_property(GLOBAL PROPERTY PROJECT_TCMALLOC_INCLUDE ${PROJECT_BINARY_DIR}/inst
 set_property(GLOBAL PROPERTY PROJECT_TCMALLOC_LIB ${LIB_PREFIX}${SRK_BUILD_TYPE_SUFFIX}${SRK_LIB_SUFFIX})
 set_property(GLOBAL PROPERTY PROJECT_TCMALLOC_LIB_R ${LIB_R})
 set_property(GLOBAL PROPERTY PROJECT_TCMALLOC_LIB_D ${LIB_D})
-set_property(GLOBAL PROPERTY PROJECT_TCMALLOC_DLL ${PROJECT_BINARY_DIR}/install/${SRK_INSTALL_DLL_DIR_NAME}/${__OUTPUT_NAME}${SRK_BUILD_TYPE_SUFFIX}${SRK_DLL_SUFFIX})
+set_property(GLOBAL PROPERTY PROJECT_TCMALLOC_DLL ${PROJECT_BINARY_DIR}/install/${SRK_INSTALL_DLL_DIR_NAME}/${OUTPUT_NAME}${SRK_BUILD_TYPE_SUFFIX}${SRK_DLL_SUFFIX})
 
 include(ExternalProject)
 
-__create_external_project_cmake_args(__CMAKE_ARGS)
+srkCreateExternalProjectCmakeArgs(cmakeArgs)
 
 ExternalProject_Add(
     ${PROJECT_NAME}
@@ -39,7 +39,7 @@ ExternalProject_Add(
         -Dgperftools_build_minimal=ON
         -Dgperftools_build_benchmark=OFF
         -DBUILD_TESTING=OFF
-        ${__CMAKE_ARGS}
+        ${cmakeArgs}
 )
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER ${SRK_EXTERNAL_DIR_NAME})

@@ -32,7 +32,7 @@ set_property(GLOBAL PROPERTY PROJECT_SPIRV_CROSS_MSL_SLIB_D ${MSL_SLIB_D})
 
 include(ExternalProject)
 
-__create_external_project_cmake_args(__CMAKE_ARGS)
+srkCreateExternalProjectCmakeArgs(cmakeArgs)
 
 ExternalProject_Add(
     ${PROJECT_NAME}
@@ -64,7 +64,7 @@ ExternalProject_Add(
         -DSPIRV_CROSS_ENABLE_TESTS=OFF
         -DCMAKE_SHARED_LIBRARY_PREFIX=${CMAKE_SHARED_LIBRARY_PREFIX}
         -DCMAKE_STATIC_LIBRARY_PREFIX=${CMAKE_STATIC_LIBRARY_PREFIX}
-        ${__CMAKE_ARGS}
+        ${cmakeArgs}
 )
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER ${SRK_EXTERNAL_DIR_NAME})

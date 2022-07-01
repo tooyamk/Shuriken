@@ -480,7 +480,7 @@ set(SRK_EXTENSIONS_DIR_NAME Extensions)
 
 set(SRK_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
-macro(__create_external_project_cmake_args target)
+macro(srkCreateExternalProjectCmakeArgs target)
     set(${target}
         -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
         -DCMAKE_DEBUG_POSTFIX=${CMAKE_DEBUG_POSTFIX}
@@ -498,9 +498,7 @@ macro(__create_external_project_cmake_args target)
     )
 endmacro()
 
-if (CMAKE_SYSTEM_NAME MATCHES "Windows")
-    add_subdirectory(Tools/7z)
-endif ()
+srkAddSubdirectoryIf(TOOL_7Z Tools/7z)
 
 srkAddSubdirectoryIf(SRK_GRAPHICS_VULKAN ${SRK_EXTERNAL_DIR_NAME}/VulkanSDK)
 
