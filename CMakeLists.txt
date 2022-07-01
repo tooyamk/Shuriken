@@ -500,8 +500,6 @@ endmacro()
 
 srkAddSubdirectoryIf(TOOL_7Z Tools/7z)
 
-srkAddSubdirectoryIf(SRK_GRAPHICS_VULKAN ${SRK_EXTERNAL_DIR_NAME}/VulkanSDK)
-
 srkAddSubdirectoryIf(ASTC_ENCODER ${SRK_EXTERNAL_DIR_NAME}/astc-encoder)
 srkAddSubdirectoryIf(DX_SHADER_COMPILER ${SRK_EXTERNAL_DIR_NAME}/DirectXShaderCompiler)
 srkAddSubdirectoryIf(GLEW ${SRK_EXTERNAL_DIR_NAME}/glew)
@@ -510,6 +508,7 @@ srkAddSubdirectoryIf(LIBPNG ${SRK_EXTERNAL_DIR_NAME}/libpng)
 srkAddSubdirectoryIf(MIMALLOC ${SRK_EXTERNAL_DIR_NAME}/mimalloc)
 srkAddSubdirectoryIf(SPIRV_CROSS ${SRK_EXTERNAL_DIR_NAME}/SPIRV-Cross)
 srkAddSubdirectoryIf(TCMALLOC ${SRK_EXTERNAL_DIR_NAME}/tcmalloc)
+srkAddSubdirectoryIf(VULKAN_SDK ${SRK_EXTERNAL_DIR_NAME}/VulkanSDK)
 
 srkAddSubdirectoryIf(SRK_CORE Core)
 srkAddSubdirectoryIf(SRK_FRAMEWORK Framework)
