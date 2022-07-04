@@ -62,7 +62,7 @@ namespace std {
 	}
 #endif
 
-#if SRK_ARCH_WORD_BITS == SRK_ARCH_WORD_BITS_64 && (SRK_COMPILER == SRK_COMPILER_MSVC || SRK_COMPILER == SRK_COMPILER_CLANG || SRK_COMPILER == SRK_COMPILER_GCC)
+#if SRK_ARCH_WORD_BITS == SRK_ARCH_WORD_BITS_64 && (SRK_COMPILER == SRK_COMPILER_MSVC || SRK_COMPILER == SRK_COMPILER_CLANG || SRK_COMPILER == SRK_COMPILER_GNU)
 	template<typename T>
 	requires (sizeof(T) == 16)
 	class atomic<T> {
@@ -118,7 +118,7 @@ namespace std {
 #	if SRK_ARCH_WORD_BITS == SRK_ARCH_WORD_BITS_64
 #		if SRK_COMPILER == SRK_COMPILER_MSVC
 				return _InterlockedCompareExchange128((volatile int64_t*)&dst, ((int64_t*)(&desired))[1], ((int64_t*)(&desired))[0], (int64_t*)(&expected));
-#		elif SRK_COMPILER == SRK_COMPILER_CLANG || SRK_COMPILER == SRK_COMPILER_GCC
+#		elif SRK_COMPILER == SRK_COMPILER_CLANG || SRK_COMPILER == SRK_COMPILER_GNU
 				return __sync_bool_compare_and_swap((volatile __uint128_t*)&dst, (__uint128_t&)expected, (const __uint128_t&)desired);
 #		endif
 #	else

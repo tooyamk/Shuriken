@@ -343,12 +343,8 @@ if (GLEW OR SRK_GRAPHICS_GL)
     endif ()
 endif ()
 
-if (SRK_GRAPHICS_VULKAN)
-    set(VULKAN_SDK ON)
-endif ()
-
-if ((VULKAN_SDK) AND SRK_OS_WINDOWS)
-    set(7Z ON)
+if (NOT X11_FOUND)
+    set(SRK_GRAPHICS_VULKAN OFF)
 endif ()
 #==========
 
@@ -401,6 +397,7 @@ endif ()
 
 if (SRK_GRAPHICS_VULKAN)
     set(SRK_FRAMEWORK ON)
+    set(VULKAN_SDK ON)
 endif ()
 
 if (SRK_SHADER_TRANSPILER)
@@ -414,6 +411,10 @@ endif ()
 
 if (LIBPNG)
     set(ZLIB ON)
+endif ()
+
+if (VULKAN_SDK AND SRK_OS_WINDOWS)
+    set(7Z ON)
 endif ()
 #==========
 

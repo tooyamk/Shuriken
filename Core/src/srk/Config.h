@@ -75,7 +75,7 @@
 
 #	define SRK_DLL_EXPORT __attribute__((__visibility__("default")))
 #	define SRK_DLL_IMPORT
-#elif SRK_COMPILER == SRK_COMPILER_GCC
+#elif SRK_COMPILER == SRK_COMPILER_GNU
 #	define SRK_CALL
 
 #	if SRK_OS == SRK_OS_WINDOWS

@@ -2,12 +2,13 @@ dependences:
   all:
     cmake
     git
-    Modules/Graphics/Vulkan:
-      VulkanSDK
-
+    
   linux:
     Extensions/HID:
       libudev-dev
 
     Modules/Graphics/OpenGL:
       libgl1-mesa-dev
+
+    Modules/Graphics/Vulkan:
+      libx11-dev
