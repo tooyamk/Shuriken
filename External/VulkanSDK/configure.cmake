@@ -1,5 +1,7 @@
 file(REMOVE_RECURSE ${SRC_DIR})
 
 if (SRK_OS_WINDOWS)
-    execute_process(COMMAND ${7Z_EXE} x ${FILE_PATH} -o${SRC_DIR})  
+    execute_process(COMMAND ${7Z_EXE} x ${FILE_PATH} -o${SRC_DIR})
+elseif (SRK_OS_LINUX)
+    file(ARCHIVE_EXTRACT INPUT ${FILE_PATH} DESTINATION ${SRC_DIR})
 endif ()

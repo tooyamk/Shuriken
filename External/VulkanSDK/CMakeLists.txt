@@ -8,12 +8,24 @@ set_property(GLOBAL PROPERTY SRKPROJ_VULKAN_SDK_INCLUDE ${installDir}/include)
 get_property(SRKPROJ_7Z_NAME GLOBAL PROPERTY "SRKPROJ_7Z_NAME")
 get_property(SRKPROJ_HOST_7Z_EXE GLOBAL PROPERTY "SRKPROJ_HOST_7Z_EXE")
 
+set(ver 1.3.216.0)
+set(urlBase https://sdk.lunarg.com/sdk/download/${ver}/)
+set(src nil)
+
 if (SRK_OS_WINDOWS)
-    set(dlName VulkanSDK-1.3.216.0-Installer.exe)
-    set(url https://sdk.lunarg.com/sdk/download/1.3.216.0/windows/${dlName})
+    set(dlName VulkanSDK-${ver}-Installer.exe)
+    set(url ${urlBase}windows/${dlName})
     set(urlHash 32c0bba765bd42d6e321fbb14a0abbb6d305da06f53db7d369a3cc295de111f8)
+    set(src ${PROJECT_BINARY_DIR}/src)
 
     set_property(GLOBAL PROPERTY SRKPROJ_VULKAN_SDK_SLIB ${installDir}/lib/vulkan-1.lib ${installDir}/lib/VkLayer_utils.lib)
+elseif (SRK_OS_LINUX)
+    set(dlName vulkansdk-linux-x86_64-${ver}.tar.gz)
+    set(url ${urlBase}linux/${dlName})
+    set(urlHash 2cb10cb94ac656e9e454f1f5ae48e8a833253af5fe22562d27310db45b579212)
+    set(src ${PROJECT_BINARY_DIR}/src/${ver}/x86_64)
+
+    set_property(GLOBAL PROPERTY SRKPROJ_VULKAN_SDK_SLIB ${installDir}/lib/libvku.a)
 endif ()
 
 include(ExternalProject)
@@ -36,15 +48,18 @@ ExternalProject_Add(
         -DSRC_DIR=${PROJECT_BINARY_DIR}/src
         -DFILE_PATH=${PROJECT_BINARY_DIR}/download/${dlName}
         -DSRK_OS_WINDOWS=${SRK_OS_WINDOWS}
+        -DSRK_OS_LINUX=${SRK_OS_LINUX}
         -D7Z_EXE=${SRKPROJ_HOST_7Z_EXE}
         -P ${CMAKE_CURRENT_SOURCE_DIR}/configure.cmake
     BUILD_COMMAND ""
     INSTALL_COMMAND
         ${CMAKE_COMMAND}
-        -DSRC_DIR=${PROJECT_BINARY_DIR}/src
+        -DSRC_DIR=${src}
         -DINSTALL_DIR=${installDir}
         -P ${CMAKE_CURRENT_SOURCE_DIR}/install.cmake
 )
 
-add_dependencies(${PROJECT_NAME} ${SRKPROJ_7Z_NAME})
+if (SRK_OS_WINDOWS)
+    add_dependencies(${PROJECT_NAME} ${SRKPROJ_7Z_NAME})
+endif ()
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER ${SRK_EXTERNAL_DIR_NAME})

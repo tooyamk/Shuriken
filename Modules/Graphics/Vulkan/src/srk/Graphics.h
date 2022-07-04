@@ -118,7 +118,7 @@ namespace srk::modules::graphics::vulkan {
 				VkDebugUtilsMessengerEXT messenger;
 			} debug;
 
-			Vec2<UINT> backSize;
+			Vec2<uint32_t> backSize;
 			Box2i32ui32 vp;
 		} _vulkanStatus;
 
