@@ -3,7 +3,7 @@ cmake_minimum_required (VERSION 3.15.0)
 set(SRK_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
 project(Shuriken)
 set(CMAKE_INSTALL_PREFIX ${SRK_INSTALL_PREFIX})
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/Tools/cmake/Modules")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/Tools/CMake/Modules")
 
 find_package(OpenGL)
 find_package(UDev)
@@ -327,6 +327,12 @@ if (NOT SRK_OS_WINDOWS)
     set(SRK_INPUT_XINPUT OFF)
 endif ()
 
+if (SRK_OS_LINUX)
+    if (NOT X11_FOUND)
+        set(SRK_GRAPHICS_VULKAN OFF)
+    endif ()
+endif ()
+
 if (UNIX)
     if (SRK_HID OR SRK_INPUT_HID_INPUT)
         if (NOT UDEV_FOUND)
@@ -341,10 +347,6 @@ if (GLEW OR SRK_GRAPHICS_GL)
         set(GLEW OFF)
         set(SRK_GRAPHICS_GL OFF)
     endif ()
-endif ()
-
-if (NOT X11_FOUND)
-    set(SRK_GRAPHICS_VULKAN OFF)
 endif ()
 #==========
 
