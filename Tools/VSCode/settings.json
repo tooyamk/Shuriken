@@ -1,0 +1,6 @@
+{
+    "cmake.configureArgs" : [
+        "-DSRK_TESTS=ON",
+        "-DCMAKE_INSTALL_PREFIX=\"install\""
+    ]
+}
