@@ -204,8 +204,8 @@ namespace srk::modules::graphics::gl {
 							/*
 							const GLbitfield flags =
 								GL_MAP_WRITE_BIT |
-								GL_MAP_PERSISTENT_BIT | //�ڱ�ӳ��״̬�²�ͬ��
-								GL_MAP_COHERENT_BIT;    //���ݶ�GPU�����ɼ�
+								GL_MAP_PERSISTENT_BIT |
+								GL_MAP_COHERENT_BIT;
 
 							///*
 							GLuint bufID = 0;

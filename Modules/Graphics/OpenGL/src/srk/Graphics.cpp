@@ -755,7 +755,7 @@ namespace srk::modules::graphics::gl {
 
 #if SRK_OS == SRK_OS_WINDOWS
 		auto hIns = (HINSTANCE)app->getNative(ApplicationNative::INSTANCE);
-		std::wstring className = L"Aurora OpenGL Temp Window " + String::Utf8ToUnicode(String::toString(Time::now()));
+		std::wstring className = L"Shuriken OpenGL Temp Window " + String::Utf8ToUnicode(String::toString(Time::now()));
 
 		WNDCLASSEXW wnd;
 		memset(&wnd, 0, sizeof(wnd));

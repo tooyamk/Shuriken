@@ -4,6 +4,7 @@
 #include "srk/Config.h"
 #include <atomic>
 #include <bit>
+#include <concepts>
 
 namespace std {
 #ifndef __cpp_lib_endian

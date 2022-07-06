@@ -435,6 +435,8 @@ set(SRK_INSTALL_DLL_DIR_NAME $<IF:$<PLATFORM_ID:Windows>,bin,lib>)
 #set(CMAKE_MINSIZEREL_POSTFIX "s" CACHE STRING "")
 
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD c++20)
+
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 set(compilerFlags "-fms-extensions -fPIC -Wno-unused-command-line-argument -Wno-switch")

@@ -20,9 +20,6 @@
 #if __has_include(<bit>)
 #	include <bit>
 #endif
-#if __has_include(<concepts>)
-#	include <concepts>
-#endif
 #include <filesystem>
 #include <iostream>
 #include <cstring>
