@@ -1,0 +1,11 @@
+if (SRK_HOST_OS_MACOS)
+    set(path ${PROJ_DIR}/../../Common/FileStreams.cpp)
+    file(READ ${path} content)
+    string(REPLACE "<sys/sysmacros.h>" "<sys/types.h>" content "${content}")
+    file(WRITE ${path} "${content}")
+
+    set(path ${PROJ_DIR}/../../UI/Common/UpdateCallback.cpp)
+    file(READ ${path} content)
+    string(REPLACE "<sys/sysmacros.h>" "<sys/types.h>" content "${content}")
+    file(WRITE ${path} "${content}")
+endif ()

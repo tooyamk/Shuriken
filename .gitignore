@@ -10,7 +10,8 @@
 [Dd]ebug/
 [Dd]ebugPublic/
 [Rr]elease/
-build/
+[Bb]uild/
+/[Bb]uild*/
 !External/glew/src/build/
 bld/
 [Bb]in/

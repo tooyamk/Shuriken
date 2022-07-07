@@ -6,6 +6,8 @@ set_property(GLOBAL PROPERTY SRKPROJ_7Z_NAME ${PROJECT_NAME})
 
 if (SRK_HOST_OS_WINDOWS)
     set_property(GLOBAL PROPERTY SRKPROJ_HOST_7Z_EXE ${installDir}/7zz.exe)
+elseif (SRK_HOST_OS_MACOS)
+    set_property(GLOBAL PROPERTY SRKPROJ_HOST_7Z_EXE ${installDir}/7zz)
 endif ()
 
 set(vcvarsall "nil")
@@ -33,8 +35,15 @@ ExternalProject_Add(
     BINARY_DIR ${SRK_BUILD_DIR}
     UPDATE_COMMAND ""
     CONFIGURE_COMMAND ""
+    PATCH_COMMAND
+        ${CMAKE_COMMAND}
+        -DSRK_HOST_OS_MACOS=${SRK_HOST_OS_MACOS}
+        -DPROJ_DIR=${projDir}
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/patch.cmake
     BUILD_COMMAND
         ${CMAKE_COMMAND}
+        -DSRK_HOST_OS_WINDOWS=${SRK_HOST_OS_WINDOWS}
+        -DSRK_HOST_OS_MACOS=${SRK_HOST_OS_MACOS}
         -DCMAKE_CUR_SRC_DIR=${CMAKE_CURRENT_SOURCE_DIR}
         -DPROJ_DIR=${projDir}
         -DBUILD_DIR=${SRK_BUILD_DIR}
@@ -50,6 +59,7 @@ ExternalProject_Add(
         -DBUILD_DIR=${SRK_BUILD_DIR}
         -DINSTALL_DIR=${installDir}
         -DSRK_HOST_OS_WINDOWS=${SRK_HOST_OS_WINDOWS}
+        -DSRK_HOST_OS_MACOS=${SRK_HOST_OS_MACOS}
         -P ${CMAKE_CURRENT_SOURCE_DIR}/install.cmake
 )
 

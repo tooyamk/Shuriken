@@ -415,7 +415,7 @@ if (LIBPNG)
     set(ZLIB ON)
 endif ()
 
-if (VULKAN_SDK AND SRK_OS_WINDOWS)
+if (VULKAN_SDK AND (SRK_OS_WINDOWS OR SRK_OS_MACOS))
     set(7Z ON)
 endif ()
 #==========
