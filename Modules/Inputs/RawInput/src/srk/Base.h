@@ -1,7 +1,7 @@
 #pragma once
 
 #include "srk/modules/inputs/IInputModule.h"
-#include "srk/IApplication.h"
+#include "srk/applications/IApplication.h"
 #include <shared_mutex>
 
 namespace srk::modules::inputs::raw_input {

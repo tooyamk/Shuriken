@@ -1,7 +1,7 @@
 #pragma once
 
 #include "srk/modules/graphics/IGraphicsModule.h"
-#include "srk/IApplication.h"
+#include "srk/applications/IApplication.h"
 
 #include <d3d11_4.h>
 #include <d3dcompiler.h>

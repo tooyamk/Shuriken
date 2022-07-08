@@ -1,6 +1,6 @@
 #pragma once
 
-#include "srk/IApplication.h"
+#include "srk/applications/IApplication.h"
 
 #if SRK_OS == SRK_OS_WINDOWS
 #include "srk/math/Box.h"
@@ -25,9 +25,6 @@ namespace srk {
 		virtual Vec2ui32 SRK_CALL getClientSize() const override;
 		virtual void SRK_CALL setClientSize(const Vec2ui32& size) override;
 		virtual void SRK_CALL setWindowTitle(const std::string_view& title) override;
-		inline void SRK_CALL setWindowTitle(const std::u8string_view& title) {
-			setWindowTitle((const std::string_view&)title);
-		}
 		virtual void SRK_CALL setWindowPosition(const Vec2i32& pos) override;
 		virtual void SRK_CALL setCursorVisible(bool visible) override;
 		virtual bool SRK_CALL hasFocus() const override;
@@ -56,7 +53,7 @@ namespace srk {
 
 		IntrusivePtr<events::IEventDispatcher<ApplicationEvent>> _eventDispatcher;
 
-		mutable std::filesystem::path _appPath;
+		std::filesystem::path _appPath;
 
 		//platform
 		enum class WindowState : uint8_t {

@@ -13,7 +13,7 @@ public:
 		if (app->createWindow(wndStype, "Fucker", Vec2ui32(800, 600), false)) {
 			//app->setWindowPosition({200, 300});
 
-			IntrusivePtr looper = new Looper(1000.0 / 60.0);
+			IntrusivePtr looper = new Looper(1.0 / 60.0);
 
 			auto t = srk::Time::now();
 			int step = 0;

@@ -42,6 +42,8 @@ namespace srk {
 	//}
 
 	bool Application::createWindow(const ApplicationStyle& style, const std::string_view& title, const Vec2ui32& clientSize, bool fullscreen) {
+		if (_win.ins) return false;
+
 		_clientSize = clientSize;
 		_isFullscreen = fullscreen;
 		_style = style;
@@ -92,7 +94,7 @@ namespace srk {
 
 		//DeleteObject(bkBrush);
 
-		return _win.wnd;
+		return true;
 	}
 
 	void* Application::getNative(ApplicationNative native) const {

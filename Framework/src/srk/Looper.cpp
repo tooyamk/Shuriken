@@ -75,7 +75,7 @@ namespace srk {
 			auto t0 = Time::now<std::chrono::nanoseconds, std::chrono::steady_clock>();
 
 #if SRK_OS == SRK_OS_WINDOWS
-			auto ms = nanoseconds / 1000000;
+			auto ms = nanoseconds / 1000000ull;
 			if (ms > 1)
 			{
 				timeBeginPeriod(1);

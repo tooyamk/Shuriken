@@ -5,6 +5,7 @@
 #include "srk/Debug.h"
 
 namespace srk {
+#ifdef SRK_HAS_X11
 	Application::Application(const std::string_view& appId) :
 		_isFullscreen(false),
 		_isClosing(false),
@@ -37,10 +38,16 @@ namespace srk {
 
 	bool Application::createWindow(const ApplicationStyle& style, const std::string_view& title, const Vec2ui32& clientSize, bool fullscreen) {
 #ifdef SRK_HAS_X11
+		if (_linux.dis) return false;
+#else
+		if (_windowCreated) return false;
+#endif
+
 		_clientSize = clientSize;
 		_isFullscreen = fullscreen;
 		_style = style;
 
+#ifdef SRK_HAS_X11
 		if (!_linux.dis) _linux.dis = XOpenDisplay(nullptr);
 		if (!_linux.dis) return false;
 
@@ -158,6 +165,8 @@ namespace srk {
 		_updateWindowPlacement();
 
 		//printcln("state :   ", _getXWndState(), "   ", NormalState, "   ", IconicState);
+#else
+		_windowCreated = true;
 #endif
 
 		return true;
@@ -190,6 +199,8 @@ namespace srk {
 			_isFullscreen = !_isFullscreen;
 			_updateWindowPlacement();
 		}
+#else
+		_isFullscreen = !_isFullscreen;
 #endif
 	}
 
@@ -228,6 +239,8 @@ namespace srk {
 			_updateWindowPlacement();
 			_sendResizedEvent();
 		}
+#else
+		_clientSize = size;
 #endif
 	}
 
@@ -322,6 +335,8 @@ namespace srk {
 			_isVisible = b;
 			_updateWindowPlacement();
 		}
+#else
+		_isVisible = b;
 #endif
 	}
 
@@ -654,5 +669,7 @@ namespace srk {
 		}
 	}
 #endif
+#else//====
+#endif//====
 }
 #endif

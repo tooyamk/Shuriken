@@ -121,7 +121,7 @@ namespace srk {
 	}
 
 
-	SerializableObject::SerializableObject() :
+	SerializableObject::SerializableObject() noexcept :
 		_type(Type::INVALID),
 		_flag(Flag::NONE) {
 	}
@@ -169,76 +169,70 @@ namespace srk {
 		}
 	}
 
-	SerializableObject::SerializableObject(bool value) :
+	SerializableObject::SerializableObject(bool value) noexcept :
 		_type(Type::BOOL),
 		_flag(Flag::NONE) {
 		_getValue<bool>() = value;
 	}
 
-	SerializableObject::SerializableObject(int8_t value) :
+	SerializableObject::SerializableObject(int8_t value) noexcept :
 		_type(Type::INT),
 		_flag(Flag::NONE) {
 		_getValue<int64_t>() = value;
 	}
 
-	SerializableObject::SerializableObject(uint8_t value) :
+	SerializableObject::SerializableObject(uint8_t value) noexcept :
 		_type(Type::UINT),
 		_flag(Flag::NONE) {
 		_getValue<uint64_t>() = value;
 	}
 
-	SerializableObject::SerializableObject(int16_t value) :
+	SerializableObject::SerializableObject(int16_t value) noexcept :
 		_type(Type::INT),
 		_flag(Flag::NONE) {
 		_getValue<int64_t>() = value;
 	}
 
-	SerializableObject::SerializableObject(uint16_t value) :
+	SerializableObject::SerializableObject(uint16_t value) noexcept :
 		_type(Type::UINT),
 		_flag(Flag::NONE) {
 		_getValue<uint64_t>() = value;
 	}
 
-	SerializableObject::SerializableObject(int32_t value) :
+	SerializableObject::SerializableObject(int32_t value) noexcept :
 		_type(Type::INT),
 		_flag(Flag::NONE) {
 		_getValue<int64_t>() = value;
 	}
 
-	SerializableObject::SerializableObject(uint32_t value) :
+	SerializableObject::SerializableObject(uint32_t value) noexcept :
 		_type(Type::UINT),
 		_flag(Flag::NONE) {
 		_getValue<uint64_t>() = value;
 	}
 
-	SerializableObject::SerializableObject(const int64_t& value) :
+	SerializableObject::SerializableObject(int64_t value) noexcept :
 		_type(Type::INT),
 		_flag(Flag::NONE) {
 		_getValue<int64_t>() = value;
 	}
 
-	SerializableObject::SerializableObject(const uint64_t& value) :
+	SerializableObject::SerializableObject(uint64_t value) noexcept :
 		_type(Type::UINT),
 		_flag(Flag::NONE) {
 		_getValue<uint64_t>() = value;
 	}
 
-	SerializableObject::SerializableObject(float32_t value) :
+	SerializableObject::SerializableObject(float32_t value) noexcept :
 		_type(Type::FLOAT32),
 		_flag(Flag::NONE) {
 		_getValue<float32_t>() = value;
 	}
 
-	SerializableObject::SerializableObject(const float64_t& value) :
+	SerializableObject::SerializableObject(float64_t value) noexcept :
 		_type(Type::FLOAT64),
 		_flag(Flag::NONE) {
 		_getValue<float64_t>() = value;
-	}
-
-	SerializableObject::SerializableObject(const char* value, Flag flag) : SerializableObject(std::string_view(value), flag) {
-	}
-
-	SerializableObject::SerializableObject(const std::string& value, Flag flag) : SerializableObject(std::string_view(value), flag) {
 	}
 
 	SerializableObject::SerializableObject(const std::string_view& value, Flag flag) {

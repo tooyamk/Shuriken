@@ -119,22 +119,29 @@ namespace srk {
 			}
 		};
 
+	private:
+		struct Invalid {};
+		struct InvalidUIntptr : Invalid {};
 
-		SerializableObject();
+		SerializableObject(Invalid) noexcept : SerializableObject() {}
+
+	public:
+		SerializableObject() noexcept;
 		SerializableObject(Type value);
-		SerializableObject(bool value);
-		SerializableObject(int8_t value);
-		SerializableObject(uint8_t value);
-		SerializableObject(int16_t value);
-		SerializableObject(uint16_t value);
-		SerializableObject(int32_t value);
-		SerializableObject(uint32_t value);
-		SerializableObject(const int64_t& value);
-		SerializableObject(const uint64_t& value);
-		SerializableObject(float32_t value);
-		SerializableObject(const float64_t& value);
-		SerializableObject(const char* value, Flag flag = Flag::COPY);
-		SerializableObject(const std::string& value, Flag flag = Flag::COPY);
+		SerializableObject(bool value) noexcept;
+		SerializableObject(int8_t value) noexcept;
+		SerializableObject(uint8_t value) noexcept;
+		SerializableObject(int16_t value) noexcept;
+		SerializableObject(uint16_t value) noexcept;
+		SerializableObject(int32_t value) noexcept;
+		SerializableObject(uint32_t value) noexcept;
+		SerializableObject(int64_t value) noexcept;
+		SerializableObject(uint64_t value) noexcept;
+		SerializableObject(float32_t value) noexcept;
+		SerializableObject(float64_t value) noexcept;
+		SerializableObject(std::conditional_t<IsSameAnyOf<uintptr_t, uint32_t, uint64_t>::value, InvalidUIntptr, uintptr_t> value) noexcept : SerializableObject((std::conditional_t<IsSameAnyOf<uintptr_t, uint32_t, uint64_t>::value, Invalid, uint_t<sizeof(uintptr_t) * 8>>)value) {}
+		SerializableObject(const char* value, Flag flag = Flag::COPY) : SerializableObject(std::string_view(value), flag) {}
+		SerializableObject(const std::string& value, Flag flag = Flag::COPY) : SerializableObject(std::string_view(value), flag) {}
 		SerializableObject(const std::string_view& value, Flag flag = Flag::COPY);
 		SerializableObject(const char8_t* value, Flag flag = Flag::COPY) : SerializableObject((const char*)value, flag) {}
 		SerializableObject(const std::u8string& value, Flag flag = Flag::COPY) : SerializableObject((const std::string&)value, flag) {}

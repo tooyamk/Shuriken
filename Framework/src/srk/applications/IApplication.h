@@ -47,6 +47,9 @@ namespace srk {
 		virtual Vec2ui32 SRK_CALL getClientSize() const = 0;
 		virtual void SRK_CALL setClientSize(const Vec2ui32& size) = 0;
 		virtual void SRK_CALL setWindowTitle(const std::string_view& title) = 0;
+		inline void SRK_CALL setWindowTitle(const std::u8string_view& title) {
+			setWindowTitle((const std::string_view&)title);
+		}
 		virtual void SRK_CALL setWindowPosition(const Vec2i32& pos) = 0;
 		virtual void SRK_CALL setCursorVisible(bool visible) = 0;
 		virtual bool SRK_CALL hasFocus() const = 0;

@@ -33,6 +33,8 @@ target_link_libraries(${PROJECT_NAME}
 )
 if (SRK_OS_WINDOWS)
     target_link_libraries(${PROJECT_NAME} opengl32.lib)
+elseif (SRK_OS_MACOS)
+    target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES})
 endif ()
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER ${SRK_GRAPHICS_MODULES_DIR})
