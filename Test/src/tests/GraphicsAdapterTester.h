@@ -6,6 +6,7 @@ class GraphicsAdapterTester : public BaseTester {
 public:
 	virtual int32_t SRK_CALL run() override {
 		IntrusivePtr app = new Application("TestApp");
+		IntrusivePtr win = new Window();
 
 		std::vector<GraphicsAdapter> gas;
 		GraphicsAdapter::query(gas);
@@ -19,28 +20,28 @@ public:
 			printaln("	sharedSystemMemory = ", ga.sharedSystemMemory);
 		}
 
-		ApplicationStyle wndStype;
+		WindowStyle wndStype;
 		wndStype.thickFrame = true;
 		wndStype.backgroundColor.set(255, 255, 0);
-		if (app->createWindow(wndStype, "Fucker", Vec2ui32(800, 600), false)) {
+		if (win->create(*app, wndStype, "Fucker", Vec2ui32(800, 600), false)) {
 			//app->setWindowPosition({200, 300});
 
 			IntrusivePtr looper = new Looper(1000.0 / 60.0);
 
-			app->getEventDispatcher()->addEventListener(ApplicationEvent::CLOSING, createEventListener<ApplicationEvent>([looper](Event<ApplicationEvent>& e) {
+			win->getEventDispatcher()->addEventListener(WindowEvent::CLOSING, createEventListener<WindowEvent>([looper](Event<WindowEvent>& e) {
 				//auto val = (bool*)e.getData();
 				//*val = true;
 			}));
 
-			app->getEventDispatcher()->addEventListener(ApplicationEvent::CLOSED, createEventListener<ApplicationEvent>([looper](Event<ApplicationEvent>& e) {
+			win->getEventDispatcher()->addEventListener(WindowEvent::CLOSED, createEventListener<WindowEvent>([looper](Event<WindowEvent>& e) {
 				looper->stop();
 			}));
 
-			looper->getEventDispatcher()->addEventListener(LooperEvent::TICKING, createEventListener<LooperEvent>([app](Event<LooperEvent>& e) {
-				app->pollEvents();
+			looper->getEventDispatcher()->addEventListener(LooperEvent::TICKING, createEventListener<LooperEvent>([win](Event<LooperEvent>& e) {
+				win->pollEvents();
 			}));
 
-			app->setVisible(true);
+			win->setVisible(true);
 			looper->run(true);
 		}
 

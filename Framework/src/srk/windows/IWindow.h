@@ -1,11 +1,11 @@
 #pragma once
 
-#include "srk/Intrusive.h"
+#include "srk/Application.h"
 #include "srk/math/Vector.h"
 #include "srk/events/EventDispatcher.h"
 
 namespace srk {
-	enum class ApplicationEvent : uint8_t {
+	enum class WindowEvent : uint8_t {
 		RESIZED,
 		FOCUS_IN,
 		FOCUS_OUT,
@@ -17,7 +17,7 @@ namespace srk {
 	};
 
 
-	struct SRK_FW_DLL ApplicationStyle {
+	struct SRK_FW_DLL WindowStyle {
 		bool maximizeButton = true;
 		bool minimizeButton = true;
 		bool thickFrame = true;
@@ -25,32 +25,32 @@ namespace srk {
 	};
 
 
-	enum class ApplicationNative : uint8_t {
-		INSTANCE,
+	enum class WindowNative : uint8_t {
+		X_DISPLAY,
 		WINDOW
 	};
 
 
-	class SRK_FW_DLL IApplication : public Ref {
+	class SRK_FW_DLL IWindow : public Ref {
 	public:
-		virtual ~IApplication() {};
+		virtual ~IWindow() {};
 
-		virtual IntrusivePtr<events::IEventDispatcher<ApplicationEvent>> SRK_CALL getEventDispatcher() = 0;
-		//virtual const events::IEventDispatcher<ApplicationEvent>& SRK_CALL getEventDispatcher() const = 0;
+		virtual IntrusivePtr<Application> SRK_CALL getApplication() const = 0;
+		virtual IntrusivePtr<events::IEventDispatcher<WindowEvent>> SRK_CALL getEventDispatcher() = 0;
 
-		virtual bool SRK_CALL createWindow(const ApplicationStyle& style, const std::string_view& title, const Vec2ui32& clientSize, bool fullscreen) = 0;
-		virtual void* SRK_CALL getNative(ApplicationNative native) const = 0;
+		virtual bool SRK_CALL create(Application& app, const WindowStyle& style, const std::string_view& title, const Vec2ui32& clientSize, bool fullscreen) = 0;
+		virtual void* SRK_CALL getNative(WindowNative native) const = 0;
 		virtual bool SRK_CALL isFullscreen() const = 0;
 		virtual void SRK_CALL toggleFullscreen() = 0;
 		virtual Vec4ui32 SRK_CALL getBorder() const = 0;
 		virtual Vec2ui32 SRK_CALL getCurrentClientSize() const = 0;
 		virtual Vec2ui32 SRK_CALL getClientSize() const = 0;
 		virtual void SRK_CALL setClientSize(const Vec2ui32& size) = 0;
-		virtual void SRK_CALL setWindowTitle(const std::string_view& title) = 0;
-		inline void SRK_CALL setWindowTitle(const std::u8string_view& title) {
-			setWindowTitle((const std::string_view&)title);
+		virtual void SRK_CALL setTitle(const std::string_view& title) = 0;
+		inline void SRK_CALL setTitle(const std::u8string_view& title) {
+			setTitle((const std::string_view&)title);
 		}
-		virtual void SRK_CALL setWindowPosition(const Vec2i32& pos) = 0;
+		virtual void SRK_CALL setPosition(const Vec2i32& pos) = 0;
 		virtual void SRK_CALL setCursorVisible(bool visible) = 0;
 		virtual bool SRK_CALL hasFocus() const = 0;
 		virtual void SRK_CALL setFocus() = 0;
@@ -60,15 +60,11 @@ namespace srk {
 		virtual void SRK_CALL setMinimum() = 0;
 		virtual void SRK_CALL setRestore() = 0;
 		virtual void SRK_CALL pollEvents() = 0;
-
 		virtual bool SRK_CALL isVisible() const = 0;
 		virtual void SRK_CALL setVisible(bool b) = 0;
-		virtual void SRK_CALL shutdown() = 0;
-
-		virtual std::string_view SRK_CALL getAppId() const = 0;
-		virtual const std::filesystem::path& SRK_CALL getAppPath() const = 0;
+		virtual void SRK_CALL close() = 0;
 
 	protected:
-		IApplication() {};
+		IWindow() {};
 	};
 }

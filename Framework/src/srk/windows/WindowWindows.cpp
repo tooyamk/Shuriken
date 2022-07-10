@@ -1,39 +1,29 @@
-#include "ApplicationWindows.h"
+#include "WindowWindows.h"
 
 #if SRK_OS == SRK_OS_WINDOWS
 #include "srk/String.h"
 #include "srk/Debug.h"
 
 namespace srk {
-	Application::Application(const std::string_view& appId) :
+	Window::Window() :
 		_isFullscreen(false),
 		_isClosing(false),
 		_isVisible(false),
-		_appId(appId),
-		_eventDispatcher(new events::EventDispatcher<ApplicationEvent>()) {
-		_appPath = srk::getAppPath();
+		_eventDispatcher(new events::EventDispatcher<WindowEvent>()) {
 		_win.sentSize.set((std::numeric_limits<decltype(_win.sentSize)::ElementType>::max)());
 	}
 
-	Application::~Application() {
-		if (_win.wnd) {
-			DestroyWindow(_win.wnd);
-			_win.wnd = nullptr;
-		}
-
-		if (_win.bkBrush) {
-			DeleteObject(_win.bkBrush);
-			_win.bkBrush = nullptr;
-		}
-
-		if (_win.ins) {
-			auto appIdW = String::Utf8ToUnicode(_appId);
-			UnregisterClassW(appIdW.data(), _win.ins);
-			_win.ins = nullptr;
-		}
+	Window::~Window() {
+		close();
 	}
 
-	IntrusivePtr<events::IEventDispatcher<ApplicationEvent>> Application::getEventDispatcher() {
+	std::atomic_uint32_t Window::_counter = 0;
+
+	IntrusivePtr<Application> Window::getApplication() const {
+		return _app;
+	}
+
+	IntrusivePtr<events::IEventDispatcher<WindowEvent>> Window::getEventDispatcher() {
 		return _eventDispatcher;
 	}
 
@@ -41,30 +31,33 @@ namespace srk {
 	//	return _eventDispatcher;
 	//}
 
-	bool Application::createWindow(const ApplicationStyle& style, const std::string_view& title, const Vec2ui32& clientSize, bool fullscreen) {
-		if (_win.ins) return false;
+	bool Window::create(Application& app, const WindowStyle& style, const std::string_view& title, const Vec2ui32& clientSize, bool fullscreen) {
+		if (_app) return false;
+		auto ins = (HINSTANCE)app.getNative();
+		if (!ins) return false;
 
+		_app = app;
 		_clientSize = clientSize;
 		_isFullscreen = fullscreen;
 		_style = style;
 
-		_win.ins = GetModuleHandleW(nullptr);
 		_win.bkBrush = CreateSolidBrush(RGB(style.backgroundColor[0], style.backgroundColor[1], style.backgroundColor[2]));
 
 		WNDCLASSEXW wnd;
 		memset(&wnd, 0, sizeof(wnd));
 		wnd.cbSize = sizeof(wnd);
 		wnd.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
-		wnd.lpfnWndProc = Application::_wndProc;
+		wnd.lpfnWndProc = Window::_wndProc;
 		wnd.cbClsExtra = 0;
 		wnd.cbWndExtra = 0;
-		wnd.hInstance = _win.ins;
+		wnd.hInstance = ins;
 		wnd.hIcon = nullptr;//LoadIcon(NULL, IDI_APPLICATION);
 		wnd.hCursor = LoadCursor(nullptr, IDC_ARROW);
 		wnd.hbrBackground = _win.bkBrush;
-		wnd.lpszMenuName = nullptr;;
-		auto appIdW = String::Utf8ToUnicode(_appId);
-		wnd.lpszClassName = appIdW.data();
+		wnd.lpszMenuName = nullptr;
+		_className = String::Utf8ToUnicode(_app->getIdentity());
+		_className += String::Utf8ToUnicode(String::toString(_counter.fetch_add(1)));
+		wnd.lpszClassName = _className.data();
 		wnd.hIconSm = nullptr;
 
 		RegisterClassExW(&wnd);
@@ -89,7 +82,7 @@ namespace srk {
 
 		_win.wnd = CreateWindowExW(_getWindowExStyle(_isFullscreen), wnd.lpszClassName, String::Utf8ToUnicode(title).data(), _getWindowStyle(_style, _isFullscreen),
 			rect.pos[0], rect.pos[1], rect.size[0], rect.size[1],
-			GetDesktopWindow(), nullptr, _win.ins, nullptr);
+			GetDesktopWindow(), nullptr, ins, nullptr);
 		SetWindowLongPtr(_win.wnd, GWLP_USERDATA, (LONG_PTR)this);
 
 		//DeleteObject(bkBrush);
@@ -97,26 +90,24 @@ namespace srk {
 		return true;
 	}
 
-	void* Application::getNative(ApplicationNative native) const {
+	void* Window::getNative(WindowNative native) const {
 		switch (native) {
-		case ApplicationNative::INSTANCE:
-			return _win.ins;
-		case ApplicationNative::WINDOW:
+		case WindowNative::WINDOW:
 			return _win.wnd;
 		}
 
 		return nullptr;
 	}
 
-	bool Application::isFullscreen() const {
+	bool Window::isFullscreen() const {
 		return _isFullscreen;
 	}
 
-	Vec4ui32 Application::getBorder() const {
+	Vec4ui32 Window::getBorder() const {
 		return _border;
 	}
 
-	void Application::toggleFullscreen() {
+	void Window::toggleFullscreen() {
 		if (_win.wnd) {
 			_isFullscreen = !_isFullscreen;
 			_win.wndDirty = true;
@@ -133,7 +124,7 @@ namespace srk {
 		}
 	}
 
-	Vec2ui32 Application::getCurrentClientSize() const {
+	Vec2ui32 Window::getCurrentClientSize() const {
 		Vec2ui32 size;
 
 		if (_win.wnd) {
@@ -158,11 +149,11 @@ namespace srk {
 		return size;
 	}
 
-	Vec2ui32 Application::getClientSize() const {
+	Vec2ui32 Window::getClientSize() const {
 		return _clientSize;
 	}
 
-	void Application::setClientSize(const Vec2ui32& size) {
+	void Window::setClientSize(const Vec2ui32& size) {
 		if (_win.wnd && _clientSize != size) {
 			_clientSize = size;
 			_win.wndDirty = true;
@@ -172,11 +163,11 @@ namespace srk {
 		}
 	}
 
-	void Application::setWindowTitle(const std::string_view& title) {
+	void Window::setTitle(const std::string_view& title) {
 		if (_win.wnd) SetWindowTextW(_win.wnd, String::Utf8ToUnicode(title).data());
 	}
 
-	void Application::setWindowPosition(const Vec2i32& pos) {
+	void Window::setPosition(const Vec2i32& pos) {
 		if (_win.wnd) {
 			if (auto p = pos + _border.components(0, 2); _win.clinetPos != p) {
 				_win.clinetPos = p;
@@ -187,25 +178,25 @@ namespace srk {
 		}
 	}
 
-	void Application::setCursorVisible(bool visible) {
+	void Window::setCursorVisible(bool visible) {
 		ShowCursor(visible);
 	}
 
-	bool Application::hasFocus() const {
+	bool Window::hasFocus() const {
 		if (_win.wnd) return GetFocus() == _win.wnd;
 		return false;
 	}
 
-	void Application::setFocus() {
+	void Window::setFocus() {
 		if (_win.wnd) SetFocus(_win.wnd);
 	}
 
-	bool Application::isMaximzed() const {
+	bool Window::isMaximzed() const {
 		if (_win.wnd) return _win.wndState == WindowState::MAXIMUM;
 		return false;
 	}
 
-	void Application::setMaximum() {
+	void Window::setMaximum() {
 		if (_win.wnd && _setWndState(WindowState::MAXIMUM)) {
 			_win.wndDirty = true;
 			if (!_isFullscreen && _isVisible) _updateWindowPlacement();
@@ -213,12 +204,12 @@ namespace srk {
 		}
 	}
 
-	bool Application::isMinimzed() const {
+	bool Window::isMinimzed() const {
 		if (_win.wnd) return _win.wndState == WindowState::MINIMUM;
 		return false;
 	}
 
-	void Application::setMinimum() {
+	void Window::setMinimum() {
 		if (_win.wnd && _setWndState(WindowState::MINIMUM)) {
 			_win.wndDirty = true;
 			if (!_isFullscreen && _isVisible) _updateWindowPlacement();
@@ -226,7 +217,7 @@ namespace srk {
 		}
 	}
 
-	void Application::setRestore() {
+	void Window::setRestore() {
 		if (_win.wnd && _setWndState(WindowState::NORMAL)) {
 			_win.wndDirty = true;
 			if (!_isFullscreen && _isVisible) _updateWindowPlacement();
@@ -234,12 +225,14 @@ namespace srk {
 		}
 	}
 
-	void Application::pollEvents() {
+	void Window::pollEvents() {
+		if (!_win.wnd) return;
+
 		MSG msg = { 0 };
 
-		while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
+		while (PeekMessage(&msg, _win.wnd, 0, 0, PM_REMOVE)) {
 			if (msg.message == WM_QUIT) {
-				shutdown();
+				close();
 			} else {
 				TranslateMessage(&msg);
 				DispatchMessage(&msg);
@@ -247,11 +240,11 @@ namespace srk {
 		}
 	}
 
-	bool Application::isVisible() const {
+	bool Window::isVisible() const {
 		return _win.wnd ? _isVisible : false;
 	}
 
-	void Application::setVisible(bool b) {
+	void Window::setVisible(bool b) {
 		if (_win.wnd && _isVisible != b) {
 			_isVisible = b;
 			_win.wndDirty = true;
@@ -259,30 +252,37 @@ namespace srk {
 		}
 	}
 
-	void Application::shutdown() {
-		if (!_isClosing) {
-			_isClosing = true;
-			_eventDispatcher->dispatchEvent(this, ApplicationEvent::CLOSED);
-			std::exit(0);
+	void Window::close() {
+		if (!_app) return;
+
+		if (_win.wnd) {
+			DestroyWindow(_win.wnd);
+			_win.wnd = nullptr;
 		}
-	}
 
-	std::string_view Application::getAppId() const {
-		return _appId;
-	}
+		if (_win.bkBrush) {
+			DeleteObject(_win.bkBrush);
+			_win.bkBrush = nullptr;
+		}
 
-	const std::filesystem::path& Application::getAppPath() const {
-		return _appPath;
+		if (!_className.empty()) {
+			UnregisterClassW(_className.data(), (HINSTANCE)_app->getNative());
+			_className = L"";
+		}
+
+		_app.reset();
+
+		_eventDispatcher->dispatchEvent(this, WindowEvent::CLOSED);
 	}
 
 	//platform
-	void Application::_calcBorder() {
+	void Window::_calcBorder() {
 		RECT rect = { 0, 0, 100, 100 };
 		auto rst = AdjustWindowRectEx(&rect, _getWindowStyle(_style, false), FALSE, _getWindowExStyle(false));
 		_border.set(-rect.left, rect.right - 100, -rect.top, rect.bottom - 100);
 	}
 
-	Box2i32 Application::_calcWindowRect(bool fullscreen) const {
+	Box2i32 Window::_calcWindowRect(bool fullscreen) const {
 		if (fullscreen) {
 			return Box2i32(Vec2i32::ZERO, Vec2i32(GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN)));
 		} else {
@@ -290,14 +290,14 @@ namespace srk {
 		}
 	}
 
-	void Application::_sendResizedEvent() {
+	void Window::_sendResizedEvent() {
 		if (auto size = getCurrentClientSize(); _win.sentSize != size) {
 			_win.sentSize = size;
-			_eventDispatcher->dispatchEvent(this, ApplicationEvent::RESIZED);
+			_eventDispatcher->dispatchEvent(this, WindowEvent::RESIZED);
 		}
 	}
 
-	Box2i32 Application::_calcWorkArea() const {
+	Box2i32 Window::_calcWorkArea() const {
 		Box2i32 area;
 
 		tagPOINT p{ 0 };
@@ -314,7 +314,7 @@ namespace srk {
 		return std::move(area);
 	}
 
-	bool Application::_setWndState(WindowState state) {
+	bool Window::_setWndState(WindowState state) {
 		if (_win.wndState != state) {
 			_win.prevWndState = _win.wndState;
 			_win.wndState = state;
@@ -324,7 +324,7 @@ namespace srk {
 		return false;
 	}
 
-	void Application::_updateWindowPlacement(UINT showCmd) {
+	void Window::_updateWindowPlacement(UINT showCmd) {
 		if (showCmd == (std::numeric_limits<UINT>::max)()) {
 			if (_isVisible) {
 				if (_isFullscreen) {
@@ -365,7 +365,7 @@ namespace srk {
 		}
 	}
 
-	DWORD Application::_getWindowStyle(const ApplicationStyle& style, bool fullscreen) {
+	DWORD Window::_getWindowStyle(const WindowStyle& style, bool fullscreen) {
 		DWORD val = WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
 
 		if (fullscreen) {
@@ -380,7 +380,7 @@ namespace srk {
 		return val;
 	}
 
-	DWORD Application::_getWindowExStyle(bool fullscreen) {
+	DWORD Window::_getWindowExStyle(bool fullscreen) {
 		DWORD val = WS_EX_APPWINDOW;
 
 		//if (fullscreen) val |= WS_EX_TOPMOST;
@@ -388,19 +388,19 @@ namespace srk {
 		return val;
 	}
 
-	LRESULT Application::_wndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-		auto app = (Application*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+	LRESULT Window::_wndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+		auto win = (Window*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
 
 		switch (msg) {
 		case WM_CLOSE:
 		{
-			if (app) {
+			if (win) {
 				auto isCanceled = false;
-				app->_eventDispatcher->dispatchEvent(app, ApplicationEvent::CLOSING, &isCanceled);
+				win->_eventDispatcher->dispatchEvent(win, WindowEvent::CLOSING, &isCanceled);
 				if (isCanceled) {
 					return 0;
 				} else {
-					app->shutdown();
+					win->close();
 				}
 			}
 
@@ -415,37 +415,37 @@ namespace srk {
 			break;
 		case WM_SIZE:
 		{
-			if (app) {
-				if (app->_win.ignoreEvtSize) return 0;
+			if (win) {
+				if (win->_win.ignoreEvtSize) return 0;
 
-				if (!app->_isFullscreen) {
+				if (!win->_isFullscreen) {
 					switch (wParam) {
 					case SIZE_MINIMIZED:
-						app->_setWndState(WindowState::MINIMUM);
+						win->_setWndState(WindowState::MINIMUM);
 						break;
 					case SIZE_MAXIMIZED:
-						app->_setWndState(WindowState::MAXIMUM);
+						win->_setWndState(WindowState::MAXIMUM);
 						break;
 					case SIZE_RESTORED:
-						app->_setWndState(WindowState::NORMAL);
+						win->_setWndState(WindowState::NORMAL);
 						break;
 					default:
 						break;
 					}
 
-					if (wParam == SIZE_RESTORED) app->_clientSize.set(LOWORD(lParam), HIWORD(lParam));
+					if (wParam == SIZE_RESTORED) win->_clientSize.set(LOWORD(lParam), HIWORD(lParam));
 				}
 
-				app->_sendResizedEvent();
+				win->_sendResizedEvent();
 			}
 
 			break;
 		}
 		case WM_SETFOCUS:
-			if (app) app->_eventDispatcher->dispatchEvent(app, ApplicationEvent::FOCUS_IN);
+			if (win) win->_eventDispatcher->dispatchEvent(win, WindowEvent::FOCUS_IN);
 			break;
 		case WM_KILLFOCUS:
-			if (app) app->_eventDispatcher->dispatchEvent(app, ApplicationEvent::FOCUS_OUT);
+			if (win) win->_eventDispatcher->dispatchEvent(win, WindowEvent::FOCUS_OUT);
 			break;
 		case WM_DEVICECHANGE:
 			break;
@@ -462,10 +462,10 @@ namespace srk {
 			break;
 		}
 		case WM_MOVE:
-			if (app && !app->_isFullscreen && !IsZoomed(app->_win.wnd) && !IsIconic(app->_win.wnd)) app->_win.clinetPos.set(LOWORD(lParam), HIWORD(lParam));
+			if (win && !win->_isFullscreen && !IsZoomed(win->_win.wnd) && !IsIconic(win->_win.wnd)) win->_win.clinetPos.set(LOWORD(lParam), HIWORD(lParam));
 			break;
 		case WM_INPUT:
-			if (app) app->_eventDispatcher->dispatchEvent(app, ApplicationEvent::RAW_INPUT, &lParam);
+			if (win) win->_eventDispatcher->dispatchEvent(win, WindowEvent::RAW_INPUT, &lParam);
 			break;
 		default:
 			break;

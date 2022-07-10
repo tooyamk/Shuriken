@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Base.h"
+#include "srk/windows/IWindow.h"
 #include "srk/modules/graphics/ConstantBufferManager.h"
 
 namespace srk::modules::graphics::gl {
@@ -18,7 +19,7 @@ namespace srk::modules::graphics::gl {
 
 		struct CreateConfig {
 			Ref* loader = nullptr;
-			IApplication* app = nullptr;
+			IWindow* win = nullptr;
 			IShaderTranspiler* transpiler = nullptr;
 			GraphicsAdapter* adapter = nullptr;
 			SampleCount sampleCount = 1;
@@ -168,7 +169,7 @@ namespace srk::modules::graphics::gl {
 		Usage _texCreateUsageMask;
 
 		IntrusivePtr<Ref> _loader;
-		IntrusivePtr<IApplication> _app;
+		IntrusivePtr<IWindow> _win;
 		IntrusivePtr<IShaderTranspiler> _transpiler;
 
 		IntrusivePtr<BlendState> _defaultBlendState;
@@ -197,10 +198,10 @@ namespace srk::modules::graphics::gl {
 
 		IntrusivePtr<events::IEventDispatcher<GraphicsEvent>> _eventDispatcher;
 
-		bool SRK_CALL _glInit(IApplication* app);
+		bool SRK_CALL _glInit(IWindow* win);
 		bool SRK_CALL _glewInit();
 		void SRK_CALL _setInitState();
-		void SRK_CALL _release(IApplication* app = nullptr);
+		void SRK_CALL _release(IWindow* win = nullptr);
 		void SRK_CALL _resize(const Vec2ui32& size);
 
 		void SRK_CALL _setBlendState(BlendState& state, const Vec4f32& constantFactors, uint32_t sampleMask);

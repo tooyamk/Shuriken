@@ -1,7 +1,6 @@
 #pragma once
 
 #include "srk/modules/inputs/IInputModule.h"
-#include "srk/applications/IApplication.h"
 
 #include <Xinput.h>
 #include <shared_mutex>

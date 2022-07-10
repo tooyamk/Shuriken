@@ -2,7 +2,7 @@
 
 #include "srk/Core.h"
 
-#include "srk/applications/Application.h"
+#include "srk/Application.h"
 #include "srk/GraphicsBuffer.h"
 #include "srk/Image.h"
 #include "srk/Looper.h"
@@ -29,3 +29,5 @@
 #include "srk/render/ForwardRenderer.h"
 #include "srk/render/SpriteRenderer.h"
 #include "srk/render/StandardRenderPipeline.h"
+
+#include "srk/windows/Window.h"

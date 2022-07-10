@@ -9,10 +9,11 @@ public:
 		auto vms = monitors[0].getVideoModes();
 
 		IntrusivePtr app = new Application("TestApp");
+		IntrusivePtr win = new Window();
 
-		ApplicationStyle wndStype;
+		WindowStyle wndStype;
 		wndStype.thickFrame = true;
-		if (app->createWindow(wndStype, "", Vec2ui32(800, 600), false)) {
+		if (win->create(*app, wndStype, "", Vec2ui32(800, 600), false)) {
 			IntrusivePtr gml = new GraphicsModuleLoader();
 
 			//if (gml->load(getDLLName("srk-graphics-gl"))) {
@@ -25,7 +26,7 @@ public:
 				args.insert("dxc", "libs/" + getDLLName("dxcompiler"));
 				auto st = stml->create(&args);
 
-				args.insert("app", app.uintptr());
+				args.insert("win", win.uintptr());
 				args.insert("sampleCount", 4);
 				args.insert("transpiler", st.uintptr());
 				args.insert("debug", Environment::IS_DEBUG);
@@ -40,12 +41,12 @@ public:
 						int a = 1;
 					}));
 
-					app->getEventDispatcher()->addEventListener(ApplicationEvent::RESIZED, createEventListener<ApplicationEvent>([graphics](Event<ApplicationEvent>& e) {
-						graphics->setBackBufferSize(((IApplication*)e.getTarget())->getCurrentClientSize());
+					win->getEventDispatcher()->addEventListener(WindowEvent::RESIZED, createEventListener<WindowEvent>([graphics](Event<WindowEvent>& e) {
+						graphics->setBackBufferSize(((IWindow*)e.getTarget())->getCurrentClientSize());
 					}));
 
 					struct {
-						IntrusivePtr<Application> app;
+						IntrusivePtr<IWindow> win;
 						IntrusivePtr<Looper> looper;
 						IntrusivePtr<IGraphicsModule> g;
 						IntrusivePtr<VertexBufferCollection> vbf;
@@ -55,7 +56,7 @@ public:
 						IntrusivePtr<IBlendState> bs;
 						IntrusivePtr<IDepthStencilState> dss;
 					} renderData;
-					renderData.app = app;
+					renderData.win = win;
 					renderData.looper = new Looper(1000.0 / 60.0);
 					renderData.g = graphics;
 
@@ -147,13 +148,13 @@ public:
 					{
 						auto texRes = graphics->createTexture2DResource();
 						if (texRes) {
-							auto img0 = extensions::PNGConverter::decode(readFile(app->getAppPath().parent_path().u8string() + "/Resources/c4.png"));
+							auto img0 = extensions::PNGConverter::decode(readFile(app->getPath().parent_path().u8string() + "/Resources/c4.png"));
 							auto mipLevels = Image::calcMipLevels(img0->size);
 							ByteArray mipsData0;
 							std::vector<void*> mipsData0Ptr;
 							img0->generateMips(img0->format, mipLevels, mipsData0, mipsData0Ptr);
 
-							auto img1 = extensions::PNGConverter::decode(readFile(app->getAppPath().parent_path().u8string() + "/Resources/red.png"));
+							auto img1 = extensions::PNGConverter::decode(readFile(app->getPath().parent_path().u8string() + "/Resources/red.png"));
 							ByteArray mipsData1;
 							std::vector<void*> mipsData1Ptr;
 							img1->generateMips(img1->format, mipLevels, mipsData1, mipsData1Ptr);
@@ -204,11 +205,11 @@ public:
 					renderData.p = graphics->createProgram();
 					createProgram(*renderData.p, "vert.hlsl", "frag.hlsl");
 
-					app->getEventDispatcher()->addEventListener(ApplicationEvent::CLOSING, new EventListener(std::function([](Event<ApplicationEvent>& e) {
+					win->getEventDispatcher()->addEventListener(WindowEvent::CLOSING, new EventListener(std::function([](Event<WindowEvent>& e) {
 						//*e.getData<bool>() = true;
 					})));
 
-					app->getEventDispatcher()->addEventListener(ApplicationEvent::CLOSED, new EventListener(std::function([renderData](Event<ApplicationEvent>& e) {
+					win->getEventDispatcher()->addEventListener(WindowEvent::CLOSED, new EventListener(std::function([renderData](Event<WindowEvent>& e) {
 						renderData.looper->stop();
 					})));
 
@@ -217,9 +218,9 @@ public:
 					looper->getEventDispatcher()->addEventListener(LooperEvent::TICKING, new EventListener(std::function([renderData](Event<LooperEvent>& e) {
 						auto dt = float64_t(*e.getData<int64_t>());
 
-						renderData.app->pollEvents();
+						renderData.win->pollEvents();
 
-						renderData.g->setViewport(Box2i32ui32(Vec2i32::ZERO, renderData.app->getCurrentClientSize()));
+						renderData.g->setViewport(Box2i32ui32(Vec2i32::ZERO, renderData.win->getCurrentClientSize()));
 						renderData.g->beginRender();
 						renderData.g->clear(ClearFlag::COLOR | ClearFlag::DEPTH | ClearFlag::STENCIL, Vec4f32(0.0f, 0.0f, 0.25f, 1.0f), 1.0f, 0);
 
@@ -232,7 +233,7 @@ public:
 					})));
 
 					(new Stats())->run(looper);
-					app->setVisible(true);
+					win->setVisible(true);
 					looper->run(true);
 				}
 			}

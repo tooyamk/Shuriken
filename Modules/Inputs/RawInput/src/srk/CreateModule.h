@@ -14,15 +14,15 @@ namespace srk::modules::inputs {
 			return nullptr;
 		}
 
-		auto app = (IApplication*)args->tryGet("app").toNumber<uintptr_t>();
-		if (!app) {
-			printaln(L"RawInputModule create error : no app"sv);
+		auto win = (IWindow*)args->tryGet("win").toNumber<uintptr_t>();
+		if (!win) {
+			printaln(L"RawInputModule create error : no win"sv);
 			return nullptr;
 		}
 
 		auto filter = args->tryGet("filter").toEnum<DeviceType>(DeviceType::KEYBOARD | DeviceType::MOUSE);
 
-		return new raw_input::Input(loader, app, filter);
+		return new raw_input::Input(loader, win, filter);
 	}
 }
 #endif

@@ -78,42 +78,43 @@ public:
 
 	virtual int32_t SRK_CALL run() override {
 		IntrusivePtr app = new Application("TestApp");
+		IntrusivePtr win = new Window();
 
-		ApplicationStyle wndStype;
+		WindowStyle wndStype;
 		wndStype.thickFrame = true;
-		if (app->createWindow(wndStype, "", Vec2ui32(800, 600), false)) {
+		if (win->create(*app, wndStype, "", Vec2ui32(800, 600), false)) {
 			std::vector<IntrusivePtr<IInputModule>> inputModules;
 
 			if constexpr (Environment::OPERATING_SYSTEM == Environment::OperatingSystem::WINDOWS) {
 				if (1) {
 					SerializableObject args;
-					args.insert("app", app.uintptr());
+					args.insert("win", win.uintptr());
 					//args.insert("ignoreXInputDevices", true);
 					args.insert("filter", DeviceType::GAMEPAD);
 					//initInputModule(inputModules, "libs/" + getDLLName("srk-input-direct-input"), &args);
 				}
 				if (1) {
 					SerializableObject args;
-					args.insert("app", app.uintptr());
+					args.insert("win", win.uintptr());
 					args.insert("filter", DeviceType::GAMEPAD);
 					//initInputModule(inputModules, "libs/" + getDLLName("srk-input-raw-input"), &args);
 				}
 				if (1) {
 					SerializableObject args;
-					args.insert("app", app.uintptr());
+					args.insert("win", win.uintptr());
 					args.insert("filter", DeviceType::GAMEPAD);
 					//initInputModule(inputModules, "libs/" + getDLLName("srk-input-xinput"), &args);
 				}
 				if (1) {
 					SerializableObject args;
-					args.insert("app", app.uintptr());
+					args.insert("win", win.uintptr());
 					args.insert("filter", DeviceType::GAMEPAD);
 					initInputModule(inputModules, "libs/" + getDLLName("srk-input-hid-input"), &args);
 				}
 			} else if constexpr (Environment::OPERATING_SYSTEM == Environment::OperatingSystem::LINUX) {
 				if (1) {
 					SerializableObject args;
-					args.insert("app", app.uintptr());
+					args.insert("win", win.uintptr());
 					args.insert("filter", DeviceType::GAMEPAD);
 					initInputModule(inputModules, "libs/" + getDLLName("srk-input-hid-input"), &args);
 				}
@@ -123,7 +124,7 @@ public:
 			std::vector<IntrusivePtr<IInputDevice>> inputDevices;
 
 			for (auto& im : inputModules) {
-				im->getEventDispatcher()->addEventListener(ModuleEvent::CONNECTED, createEventListener<ModuleEvent>([&inputDevices, &inputDevicesMutex, app](Event<ModuleEvent>& e) {
+				im->getEventDispatcher()->addEventListener(ModuleEvent::CONNECTED, createEventListener<ModuleEvent>([&inputDevices, &inputDevicesMutex, win](Event<ModuleEvent>& e) {
 					auto getNumInputeDevice = [&inputDevices, &inputDevicesMutex](DeviceType type) {
 						uint32_t n = 0;
 
@@ -179,7 +180,7 @@ public:
 
 							auto eventDispatcher = device->getEventDispatcher();
 
-							eventDispatcher->addEventListener(DeviceEvent::DOWN, createEventListener<DeviceEvent>([app](Event<DeviceEvent>& e) {
+							eventDispatcher->addEventListener(DeviceEvent::DOWN, createEventListener<DeviceEvent>([win](Event<DeviceEvent>& e) {
 								auto device = e.getTarget<IInputDevice>();
 								auto& info = device->getInfo();
 								switch (info.type) {
@@ -189,7 +190,7 @@ public:
 									if (state->code == KeyboardVirtualKeyCode::KEY_ENTER) {
 										float32_t state = 0.0f;
 										if (device->getState(DeviceStateType::KEY, KeyboardVirtualKeyCode::KEY_RCTRL, &state, 1) && state != 0.f) {
-											app->toggleFullscreen();
+											win->toggleFullscreen();
 										}
 									}
 
@@ -320,12 +321,12 @@ public:
 
 			IntrusivePtr looper = new Looper(1000.0 / 60.0);
 
-			app->getEventDispatcher()->addEventListener(ApplicationEvent::CLOSED, createEventListener<ApplicationEvent>([looper](Event<ApplicationEvent>& e) {
+			win->getEventDispatcher()->addEventListener(WindowEvent::CLOSED, createEventListener<WindowEvent>([looper](Event<WindowEvent>& e) {
 				looper->stop();
 			}));
 
-			looper->getEventDispatcher()->addEventListener(LooperEvent::TICKING, createEventListener<LooperEvent>([app, &inputModules, &inputDevices, &inputDevicesMutex](Event<LooperEvent>& e) {
-				app->pollEvents();
+			looper->getEventDispatcher()->addEventListener(LooperEvent::TICKING, createEventListener<LooperEvent>([win, &inputModules, &inputDevices, &inputDevicesMutex](Event<LooperEvent>& e) {
+				win->pollEvents();
 
 				for (auto& im : inputModules) im->poll();
 				//for (auto& dev : inputDevices) dev->poll(true);
@@ -335,7 +336,7 @@ public:
 
 			//evtDispatcher.addEventListener(ApplicationEvent::CLOSING, *appClosingListener);
 
-			app->setVisible(true);
+			win->setVisible(true);
 
 			std::thread([&inputDevices, &inputDevicesMutex]() {
 				while (true) {

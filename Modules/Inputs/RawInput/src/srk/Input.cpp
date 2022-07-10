@@ -5,9 +5,9 @@
 #include "srk/hash/xxHash.h"
 
 namespace srk::modules::inputs::raw_input {
-	Input::Input(Ref* loader, IApplication* app, DeviceType filter) :
+	Input::Input(Ref* loader, IWindow* win, DeviceType filter) :
 		_loader(loader),
-		_app(app),
+		_win(win),
 		_filter(filter),
 		_eventDispatcher(new events::EventDispatcher<ModuleEvent>()),
 		_numKeyboards(0),
@@ -100,9 +100,9 @@ namespace srk::modules::inputs::raw_input {
 				registerRawInputDevices(info.type);
 
 				if (info.type == DeviceType::KEYBOARD) {
-					return new Keyboard(*this, *_app, info);
+					return new Keyboard(*this, *_win, info);
 				} else {
-					return new Mouse(*this, *_app, info);
+					return new Mouse(*this, *_win, info);
 				}
 			}
 		}
@@ -111,7 +111,7 @@ namespace srk::modules::inputs::raw_input {
 	}
 
 	HWND Input::getHWND() const {
-		return (HWND)_app->getNative(ApplicationNative::WINDOW);
+		return (HWND)_win->getNative(WindowNative::WINDOW);
 	}
 
 	void Input::registerRawInputDevices(DeviceType type) {

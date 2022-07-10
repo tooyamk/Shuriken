@@ -45,8 +45,8 @@ namespace srk::modules::graphics::d3d11 {
 
 	bool Graphics::createDevice(const CreateConfig& conf) {
 		if (_device) return false;
-		if (conf.app) {
-			if (!conf.app->getNative(ApplicationNative::WINDOW)) return false;
+		if (conf.win) {
+			if (!conf.win->getNative(WindowNative::WINDOW)) return false;
 		} else {
 			if (!conf.offscreen) return false;
 		}
@@ -87,13 +87,13 @@ namespace srk::modules::graphics::d3d11 {
 		IDXGIFactory2* dxgFctory = nullptr;
 		IDXGIAdapter* dxgAdapter = nullptr;
 
-		if (conf.adapter && (conf.app || !conf.offscreen)) {
+		if (conf.adapter && (conf.win || !conf.offscreen)) {
 			if (FAILED(CreateDXGIFactory1(__uuidof(IDXGIFactory2), (void**)&dxgFctory))) {
 				conf.createProcessInfo("CreateDXGIFactory failed");
 				return false;
 			}
 			objs.add(dxgFctory);
-			dxgFctory->MakeWindowAssociation((HWND)conf.app->getNative(ApplicationNative::WINDOW), DXGI_MWA_NO_WINDOW_CHANGES | DXGI_MWA_NO_ALT_ENTER);
+			dxgFctory->MakeWindowAssociation((HWND)conf.win->getNative(WindowNative::WINDOW), DXGI_MWA_NO_WINDOW_CHANGES | DXGI_MWA_NO_ALT_ENTER);
 
 			for (UINT i = 0;; ++i) {
 				if (dxgFctory->EnumAdapters(i, &dxgAdapter) == DXGI_ERROR_NOT_FOUND) break;
@@ -303,7 +303,7 @@ namespace srk::modules::graphics::d3d11 {
 			if (numQualityLevels) _deviceFeatures.maxSampleCount = i;
 		}
 
-		auto size = conf.offscreen ? Vec2ui32::ZERO : conf.app->getCurrentClientSize();
+		auto size = conf.offscreen ? Vec2ui32::ZERO : conf.win->getCurrentClientSize();
 
 		if (!conf.offscreen) {
 			_backBufferSampleCount = conf.sampleCount > _deviceFeatures.maxSampleCount ? _deviceFeatures.maxSampleCount : conf.sampleCount;
@@ -317,7 +317,7 @@ namespace srk::modules::graphics::d3d11 {
 			swapChainDesc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
 			swapChainDesc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
 			swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-			swapChainDesc.OutputWindow = (HWND)conf.app->getNative(ApplicationNative::WINDOW);
+			swapChainDesc.OutputWindow = (HWND)conf.win->getNative(WindowNative::WINDOW);
 			swapChainDesc.Windowed = true;
 			swapChainDesc.SampleDesc.Count = _backBufferSampleCount;
 			swapChainDesc.SampleDesc.Quality = 0;
@@ -346,7 +346,7 @@ namespace srk::modules::graphics::d3d11 {
 		_backDepthStencil = new DepthStencil(*this, true);
 
 		_loader = conf.loader;
-		_app = conf.app;
+		_win = conf.win;
 
 		_resize(size);
 

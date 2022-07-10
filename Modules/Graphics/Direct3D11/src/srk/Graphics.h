@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Base.h"
+#include "srk/windows/IWindow.h"
 #include "srk/modules/graphics/ConstantBufferManager.h"
 
 namespace srk::modules::graphics::d3d11 {
@@ -13,7 +14,7 @@ namespace srk::modules::graphics::d3d11 {
 	public:
 		struct CreateConfig {
 			Ref* loader = nullptr;
-			IApplication* app = nullptr;
+			IWindow* win = nullptr;
 			GraphicsAdapter* adapter = nullptr;
 			SampleCount sampleCount = 1;
 			std::string driverType;
@@ -261,7 +262,7 @@ namespace srk::modules::graphics::d3d11 {
 		bool _curIsBackBuffer;
 		SampleCount _backBufferSampleCount;
 		IntrusivePtr<Ref> _loader;
-		IntrusivePtr<IApplication> _app;
+		IntrusivePtr<IWindow> _win;
 
 		DXGI_RATIONAL _refreshRate;
 		D3D_FEATURE_LEVEL _featureLevel;

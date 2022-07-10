@@ -1,13 +1,14 @@
 #pragma once
 
 #include "Base.h"
+#include "srk/windows/IWindow.h"
 #include "srk/events/EventDispatcher.h"
 #include <shared_mutex>
 
 namespace srk::modules::inputs::hid_input {
 	class SRK_MODULE_DLL Input : public IInputModule {
 	public:
-		Input(Ref* loader, IApplication* app, DeviceType filter);
+		Input(Ref* loader, IWindow* win, DeviceType filter);
 		virtual ~Input();
 
 		void operator delete(Input* p, std::destroying_delete_t) {
@@ -22,7 +23,7 @@ namespace srk::modules::inputs::hid_input {
 
 	private:
 		IntrusivePtr<Ref> _loader;
-		IntrusivePtr<IApplication> _app;
+		IntrusivePtr<IWindow> _win;
 		DeviceType _filter;
 		IntrusivePtr<events::IEventDispatcher<ModuleEvent>> _eventDispatcher;
 

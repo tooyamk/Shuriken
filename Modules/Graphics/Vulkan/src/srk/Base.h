@@ -1,7 +1,6 @@
 #pragma once
 
 #include "srk/modules/graphics/IGraphicsModule.h"
-#include "srk/applications/IApplication.h"
 #include "vulkan/vulkan.h"
 
 #if SRK_OS == SRK_OS_WINDOWS

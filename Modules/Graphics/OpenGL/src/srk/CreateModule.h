@@ -16,9 +16,9 @@ namespace srk::modules::graphics {
 			return nullptr;
 		}
 
-		conf.app = (decltype(conf.app))args->tryGet("app").toNumber<uintptr_t>();
-		if (!conf.app) {
-			printaln(L"GlewGraphicsModule create error : no app"sv);
+		conf.win = (decltype(conf.win))args->tryGet("win").toNumber<uintptr_t>();
+		if (!conf.win) {
+			printaln(L"GlewGraphicsModule create error : no window"sv);
 			return nullptr;
 		}
 

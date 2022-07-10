@@ -6,11 +6,14 @@ class WindowTester : public BaseTester {
 public:
 	virtual int32_t SRK_CALL run() override {
 		IntrusivePtr app = new Application("TestApp");
+		IntrusivePtr win = new Window();
+		IntrusivePtr win2 = new Window();
 
-		ApplicationStyle wndStype;
+		WindowStyle wndStype;
 		wndStype.thickFrame = true;
 		wndStype.backgroundColor.set(255, 255, 0);
-		if (app->createWindow(wndStype, "Fucker", Vec2ui32(800, 600), false)) {
+		if (win->create(*app, wndStype, "Fucker", Vec2ui32(800, 600), false)) {
+			win2->create(*app, wndStype, "Fucker2", Vec2ui32(800, 600), false);
 			//app->setWindowPosition({200, 300});
 
 			IntrusivePtr looper = new Looper(1.0 / 60.0);
@@ -18,39 +21,41 @@ public:
 			auto t = srk::Time::now();
 			int step = 0;
 
-			app->getEventDispatcher()->addEventListener(ApplicationEvent::CLOSING, createEventListener<ApplicationEvent>([looper](Event<ApplicationEvent>& e) {
+			win->getEventDispatcher()->addEventListener(WindowEvent::CLOSING, createEventListener<WindowEvent>([looper](Event<WindowEvent>& e) {
 				//auto val = (bool*)e.getData();
 				//*val = true;
 			}));
 
-			app->getEventDispatcher()->addEventListener(ApplicationEvent::CLOSED, createEventListener<ApplicationEvent>([looper](Event<ApplicationEvent>& e) {
+			win->getEventDispatcher()->addEventListener(WindowEvent::CLOSED, createEventListener<WindowEvent>([looper](Event<WindowEvent>& e) {
 				looper->stop();
 			}));
 
-			app->getEventDispatcher()->addEventListener(ApplicationEvent::FOCUS_IN, createEventListener<ApplicationEvent>([looper](Event<ApplicationEvent>& e) {
+			win->getEventDispatcher()->addEventListener(WindowEvent::FOCUS_IN, createEventListener<WindowEvent>([looper](Event<WindowEvent>& e) {
 				printaln("focus in");
 			}));
 
-			app->getEventDispatcher()->addEventListener(ApplicationEvent::FOCUS_OUT, createEventListener<ApplicationEvent>([looper](Event<ApplicationEvent>& e) {
+			win->getEventDispatcher()->addEventListener(WindowEvent::FOCUS_OUT, createEventListener<WindowEvent>([looper](Event<WindowEvent>& e) {
 				printaln("focus out");
 			}));
 
-			app->getEventDispatcher()->addEventListener(ApplicationEvent::RESIZED, createEventListener<ApplicationEvent>([looper](Event<ApplicationEvent>& e) {
-				auto app = (IApplication*)e.getTarget();
-				auto size = app->getCurrentClientSize();
+			win->getEventDispatcher()->addEventListener(WindowEvent::RESIZED, createEventListener<WindowEvent>([looper](Event<WindowEvent>& e) {
+				auto win = (IWindow*)e.getTarget();
+				auto size = win->getCurrentClientSize();
 				printaln("resize  ", size[0], "   ", size[1]);
 			}));
 
-			looper->getEventDispatcher()->addEventListener(LooperEvent::TICKING, createEventListener<LooperEvent>([app, &t, &step](Event<LooperEvent>& e) {
-				app->pollEvents();
+			looper->getEventDispatcher()->addEventListener(LooperEvent::TICKING, createEventListener<LooperEvent>([win, win2, &t, &step](Event<LooperEvent>& e) {
+				win->pollEvents();
+				win2->pollEvents();
 
+				return;
 				auto tt = srk::Time::now();
 				auto d = tt - t;
 				if (d >= 2000) {
 					t = tt;
 					if (step == 0) {
 						step = 1;
-						app->setMaximum();
+						win->setMaximum();
 						//app->toggleFullscreen();
 						//app->setRestore();
 						//app->getCurrentClientSize();
@@ -73,7 +78,8 @@ public:
 				//app->setWindowTitle(String::toString(GetKeyboardType(0)) + "  " + String::toString(GetKeyboardType(1)) + "  " + String::toString(GetKeyboardType(2)));
 			}));
 
-			app->setVisible(true);
+			win->setVisible(true);
+			win2->setVisible(true);
 			//app->setMaximum();
 			//app->setMaximum();
 			//app->setWindowPosition(Vec2i32(-400, 10));

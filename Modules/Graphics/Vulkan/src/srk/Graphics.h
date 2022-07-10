@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Base.h"
+#include "srk/windows/IWindow.h"
 #include "srk/modules/graphics/ConstantBufferManager.h"
 
 namespace srk::modules::graphics::vulkan {
@@ -13,7 +14,7 @@ namespace srk::modules::graphics::vulkan {
 	public:
 		struct CreateConfig {
 			Ref* loader = nullptr;
-			IApplication* app = nullptr;
+			IWindow* win = nullptr;
 			GraphicsAdapter* adapter = nullptr;
 			SampleCount sampleCount = 1;
 			std::string driverType;
@@ -97,7 +98,7 @@ namespace srk::modules::graphics::vulkan {
 		bool _curIsBackBuffer;
 		SampleCount _backBufferSampleCount;
 		IntrusivePtr<Ref> _loader;
-		IntrusivePtr<IApplication> _app;
+		IntrusivePtr<IWindow> _win;
 
 		GraphicsDeviceFeatures _deviceFeatures;
 		std::string _deviceVersion;
@@ -128,7 +129,7 @@ namespace srk::modules::graphics::vulkan {
 
 		bool SRK_CALL _createDevice(const CreateConfig& conf);
 		bool SRK_CALL _vulkanInit(const CreateConfig& conf);
-		bool SRK_CALL _vulkanCreateSurface(IApplication& app);
+		bool SRK_CALL _vulkanCreateSurface(IWindow& win);
 		bool SRK_CALL _vulkanInitSwapchain();
 		bool SRK_CALL _vulkanCreateDevice(uint32_t graphicsQueueFamilyIndex, uint32_t presentQueueFamilyIndex);
 		void SRK_CALL _release();

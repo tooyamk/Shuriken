@@ -5,7 +5,7 @@
 namespace srk::modules::inputs::raw_input {
 	class SRK_MODULE_DLL Keyboard : public DeviceBase {
 	public:
-		Keyboard(Input& input, IApplication& app, const InternalDeviceInfo& info);
+		Keyboard(Input& input, IWindow& win, const InternalDeviceInfo& info);
 
 		virtual DeviceState::CountType SRK_CALL getState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count) const override;
 		virtual DeviceState::CountType SRK_CALL setState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count) override;

@@ -2,7 +2,6 @@
 
 #include "srk/modules/graphics/IGraphicsModule.h"
 #include "srk/modules/graphics/IShaderTranspiler.h"
-#include "srk/applications/IApplication.h"
 #include "srk/hash/xxHash.h"
 
 #include "GL/glew.h"

@@ -195,7 +195,9 @@ endif ()
 
 add_custom_target(test_pre_build ALL ${test_pre_build_commands})
 add_dependencies(test_pre_build ${test_pre_build_depends})
+set_property(TARGET test_pre_build PROPERTY FOLDER Tests)
 
 add_dependencies(${PROJECT_NAME} test_pre_build)
 target_link_libraries(${PROJECT_NAME} ${linkLibs})
+set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER Tests)
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${PROJECT_NAME}${SRK_BUILD_TYPE_SUFFIX})

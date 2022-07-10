@@ -6,7 +6,7 @@
 namespace srk::modules::inputs::raw_input {
 	class SRK_MODULE_DLL Input : public IInputModule {
 	public:
-		Input(Ref* loader, IApplication* app, DeviceType filter);
+		Input(Ref* loader, IWindow* win, DeviceType filter);
 		virtual ~Input();
 
 		void operator delete(Input* p, std::destroying_delete_t) {
@@ -26,7 +26,7 @@ namespace srk::modules::inputs::raw_input {
 
 	private:
 		IntrusivePtr<Ref> _loader;
-		IntrusivePtr<IApplication> _app;
+		IntrusivePtr<IWindow> _win;
 		DeviceType _filter;
 		IntrusivePtr<events::IEventDispatcher<ModuleEvent>> _eventDispatcher;
 
@@ -52,7 +52,7 @@ namespace srk::modules::inputs::raw_input {
 			} else {
 				dev.dwFlags = RIDEV_INPUTSINK;
 			}
-			dev.hwndTarget = (HWND)_app->getNative(ApplicationNative::WINDOW);
+			dev.hwndTarget = getHWND();
 
 			RegisterRawInputDevices(&dev, 1, sizeof(RAWINPUTDEVICE));
 		}

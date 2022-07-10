@@ -5,7 +5,7 @@
 namespace srk::modules::inputs::raw_input {
 	class SRK_MODULE_DLL Mouse : public DeviceBase {
 	public:
-		Mouse(Input& input, IApplication& app, const InternalDeviceInfo& info);
+		Mouse(Input& input, IWindow& win, const InternalDeviceInfo& info);
 
 		virtual DeviceState::CountType SRK_CALL getState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count) const override;
 		virtual DeviceState::CountType SRK_CALL setState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count) override;

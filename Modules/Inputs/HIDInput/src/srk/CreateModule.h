@@ -13,15 +13,15 @@ namespace srk::modules::inputs {
 			return nullptr;
 		}
 
-		auto app = (IApplication*)args->tryGet("app").toNumber<uintptr_t>();
-		if (!app) {
-			printaln(L"HIDInputModule create error : no app"sv);
+		auto win = (IWindow*)args->tryGet("win").toNumber<uintptr_t>();
+		if (!win) {
+			printaln(L"HIDInputModule create error : no win"sv);
 			return nullptr;
 		}
 
 		auto filter = args ? args->tryGet("filter").toEnum<DeviceType>(DeviceType::GAMEPAD) : DeviceType::GAMEPAD;
 
-		return new hid_input::Input(loader, app, filter);
+		return new hid_input::Input(loader, win, filter);
 	}
 }
 #endif

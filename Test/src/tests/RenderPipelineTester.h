@@ -10,10 +10,11 @@ public:
 		auto vms = monitors[0].getVideoModes();
 		
 		IntrusivePtr app = new Application("TestApp");
+		IntrusivePtr win = new Window();
 
-		ApplicationStyle wndStype;
+		WindowStyle wndStype;
 		wndStype.thickFrame = true;
-		if (app->createWindow(wndStype, "", Vec2ui32(800, 600), false)) {
+		if (win->create(*app, wndStype, "", Vec2ui32(800, 600), false)) {
 			IntrusivePtr gml = new GraphicsModuleLoader();
 
 			if (gml->load("libs/" + getDLLName("srk-graphics-d3d11"))) {
@@ -27,7 +28,7 @@ public:
 				args.insert("dxc", "libs/" + getDLLName("dxcompiler"));
 				auto st = stml->create(&args);
 
-				args.insert("app", app.uintptr());
+				args.insert("win", win.uintptr());
 				args.insert("sampleCount", 4);
 				args.insert("transpiler", st.uintptr());
 				//args.insert("driverType", "SOFTWARE");
@@ -43,8 +44,8 @@ public:
 						int a = 1;
 					}));
 
-					app->getEventDispatcher()->addEventListener(ApplicationEvent::RESIZED, createEventListener<ApplicationEvent>([graphics](Event<ApplicationEvent>& e) {
-						graphics->setBackBufferSize(((IApplication*)e.getTarget())->getCurrentClientSize());
+					win->getEventDispatcher()->addEventListener(WindowEvent::RESIZED, createEventListener<WindowEvent>([graphics](Event<WindowEvent>& e) {
+						graphics->setBackBufferSize(((IWindow*)e.getTarget())->getCurrentClientSize());
 					}));
 
 					//graphics->getEventDispatcher().addEventListener(GraphicsEvent::ERR, new EventListener([](Event<GraphicsEvent>& e) {
@@ -53,7 +54,7 @@ public:
 					//}));
 
 					struct {
-						IntrusivePtr<Application> app;
+						IntrusivePtr<IWindow> win;
 						IntrusivePtr<Looper> looper;
 						IntrusivePtr<IGraphicsModule> g;
 						IntrusivePtr<Node> wrold;
@@ -65,7 +66,7 @@ public:
 						std::vector<IntrusivePtr<ILight>> lights;
 						std::vector<IntrusivePtr<IRenderable>> renderables;
 					} renderData;
-					renderData.app = app;
+					renderData.win = win;
 					renderData.looper = new Looper(1.0 / 60.0);
 					renderData.g = graphics;
 
@@ -122,7 +123,7 @@ public:
 						IntrusivePtr tag2 = new RenderTagCollection();
 						tag2->add(forwardAddTag);
 
-						auto parsed = extensions::FBXConverter::decode(readFile(app->getAppPath().parent_path().u8string() + "/Resources/teapot.fbx"));
+						auto parsed = extensions::FBXConverter::decode(readFile(app->getPath().parent_path().u8string() + "/Resources/teapot.fbx"));
 						for (auto& mr : parsed.meshes) {
 							if (mr) {
 								auto rs = graphics->createRasterizerState();
@@ -175,9 +176,9 @@ public:
 
 							mat->setShader(s);
 							mat->setParameters(new ShaderParameterCollection());
-							auto shaderResourcesFolder = app->getAppPath().parent_path().u8string() + "/Resources/shaders/";
+							auto shaderResourcesFolder = app->getPath().parent_path().u8string() + "/Resources/shaders/";
 							//s->upload(std::filesystem::path(app->getAppPath().parent_path().u8string() + "/Resources/shaders/test.shader"));
-							extensions::ShaderScript::set(s, graphics, readFile(app->getAppPath().parent_path().u8string() + "/Resources/shaders/lighting.shader"),
+							extensions::ShaderScript::set(s, graphics, readFile(app->getPath().parent_path().u8string() + "/Resources/shaders/lighting.shader"),
 								[shaderResourcesFolder](const Shader& shader, ProgramStage stage, const std::string_view& name) {
 								return readFile(shaderResourcesFolder + name);
 							},
@@ -204,13 +205,13 @@ public:
 					{
 						auto texRes = graphics->createTexture2DResource();
 						if (texRes) {
-							auto img0 = extensions::PNGConverter::decode(readFile(app->getAppPath().parent_path().u8string() + "/Resources/white.png"));
+							auto img0 = extensions::PNGConverter::decode(readFile(app->getPath().parent_path().u8string() + "/Resources/white.png"));
 							auto mipLevels = Image::calcMipLevels(img0->size);
 							ByteArray mipsData0;
 							std::vector<void*> mipsData0Ptr;
 							img0->generateMips(img0->format, mipLevels, mipsData0, mipsData0Ptr);
 
-							auto img1 = extensions::PNGConverter::decode(readFile(app->getAppPath().parent_path().u8string() + "/Resources/red.png"));
+							auto img1 = extensions::PNGConverter::decode(readFile(app->getPath().parent_path().u8string() + "/Resources/red.png"));
 							ByteArray mipsData1;
 							std::vector<void*> mipsData1Ptr;
 							img1->generateMips(img1->format, mipLevels, mipsData1, mipsData1Ptr);
@@ -236,27 +237,27 @@ public:
 						}
 					}
 
-					app->getEventDispatcher()->addEventListener(ApplicationEvent::CLOSING, new EventListener(std::function([](Event<ApplicationEvent>& e) {
+					win->getEventDispatcher()->addEventListener(WindowEvent::CLOSING, new EventListener(std::function([](Event<WindowEvent>& e) {
 						//*e.getData<bool>() = true;
 					})));
 
-					app->getEventDispatcher()->addEventListener(ApplicationEvent::CLOSED, new EventListener(std::function([renderData](Event<ApplicationEvent>& e) {
+					win->getEventDispatcher()->addEventListener(WindowEvent::CLOSED, new EventListener(std::function([renderData](Event<WindowEvent>& e) {
 						renderData.looper->stop();
 					})));
 
-					app->getEventDispatcher()->addEventListener(ApplicationEvent::RESIZED, new EventListener(std::function([this, renderData](Event<ApplicationEvent>& e) {
-						auto app = (IApplication*)e.getTarget();
-						_resize(*renderData.camera, app->getCurrentClientSize());
+					win->getEventDispatcher()->addEventListener(WindowEvent::RESIZED, new EventListener(std::function([this, renderData](Event<WindowEvent>& e) {
+						auto win = (IWindow*)e.getTarget();
+						_resize(*renderData.camera, win->getCurrentClientSize());
 					})));
 
 					renderData.looper->getEventDispatcher()->addEventListener(LooperEvent::TICKING, new EventListener(std::function([renderData](Event<LooperEvent>& e) {
 						auto dt = float32_t(*e.getData<float64_t>());
 
-						renderData.app->pollEvents();
+						renderData.win->pollEvents();
 
 						renderData.model->localRotate(Quaternion::createEulerY(Math::PI<float32_t> * dt * 0.5f));
 
-						renderData.g->setViewport(Box2i32ui32(Vec2i32::ZERO, renderData.app->getCurrentClientSize()));
+						renderData.g->setViewport(Box2i32ui32(Vec2i32::ZERO, renderData.win->getCurrentClientSize()));
 						renderData.renderPipeline->render(renderData.g, [renderData](render::IRenderCollector& collector) {
 							collector.addCamera(renderData.camera);
 							for (auto& r : renderData.renderables) collector.addRenderable(r);
@@ -266,8 +267,8 @@ public:
 					})));
 
 					(new Stats())->run(renderData.looper);
-					_resize(*renderData.camera, app->getCurrentClientSize());
-					app->setVisible(true);
+					_resize(*renderData.camera, win->getCurrentClientSize());
+					win->setVisible(true);
 					renderData.looper->run(true);
 				}
 			}
