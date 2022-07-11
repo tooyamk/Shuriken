@@ -57,7 +57,7 @@ public:
 						IntrusivePtr<IDepthStencilState> dss;
 					} renderData;
 					renderData.win = win;
-					renderData.looper = new Looper(1000.0 / 60.0);
+					renderData.looper = new Looper(1.0 / 60.0);
 					renderData.g = graphics;
 
 					{

@@ -15,54 +15,46 @@
 
 namespace srk {
 #ifdef SRK_HAS_X11
-	class SRK_FW_DLL Application : public IApplication {
+	class SRK_FW_DLL Window : public IWindow {
 	public:
-		Application(const std::string_view& appId);
-		Application(const std::u8string_view& appId) : Application((const std::string_view&)appId) {}
+		Window();
+		virtual ~Window();
 
-		virtual ~Application();
+		virtual IntrusivePtr<Application> SRK_CALL getApplication() const override;
+		virtual IntrusivePtr<events::IEventDispatcher<WindowEvent>> SRK_CALL getEventDispatcher() override;
 
-		virtual IntrusivePtr<events::IEventDispatcher<ApplicationEvent>> SRK_CALL getEventDispatcher() override;
-		//virtual const events::IEventDispatcher<ApplicationEvent>& SRK_CALL getEventDispatcher() const override;
-
-		virtual bool SRK_CALL createWindow(const ApplicationStyle& style, const std::string_view& title, const Vec2ui32& clientSize, bool fullscreen) override;
-		virtual void* SRK_CALL getNative(ApplicationNative native) const override;
+		virtual bool SRK_CALL create(Application& app, const WindowStyle& style, const std::string_view& title, const Vec2ui32& clientSize, bool fullscreen) override;
+		virtual void* SRK_CALL getNative(WindowNative native) const override;
 		virtual bool SRK_CALL isFullscreen() const override;
 		virtual void SRK_CALL toggleFullscreen() override;
 		virtual Vec4ui32 SRK_CALL getBorder() const override;
 		virtual Vec2ui32 SRK_CALL getCurrentClientSize() const override;
 		virtual Vec2ui32 SRK_CALL getClientSize() const override;
 		virtual void SRK_CALL setClientSize(const Vec2ui32& size) override;
-		virtual void SRK_CALL setWindowTitle(const std::string_view& title) override;
-		virtual void SRK_CALL setWindowPosition(const Vec2i32& pos) override;
+		virtual void SRK_CALL setTitle(const std::string_view& title) override;
+		virtual void SRK_CALL setPosition(const Vec2i32& pos) override;
 		virtual void SRK_CALL setCursorVisible(bool visible) override;
 		virtual bool SRK_CALL hasFocus() const override;
 		virtual void SRK_CALL setFocus() override;
 		virtual bool SRK_CALL isMaximzed() const override;
 		virtual void SRK_CALL setMaximum() override;
 		virtual bool SRK_CALL isMinimzed() const override;
-		virtual void SRK_CALL pollEvents() override;
 		virtual void SRK_CALL setMinimum() override;
 		virtual void SRK_CALL setRestore() override;
 		virtual bool SRK_CALL isVisible() const override;
 		virtual void SRK_CALL setVisible(bool b) override;
-		virtual void SRK_CALL shutdown() override;
-
-		virtual std::string_view SRK_CALL getAppId() const override;
-		virtual const std::filesystem::path& SRK_CALL getAppPath() const override;
+		virtual void SRK_CALL pollEvents() override;
+		virtual void SRK_CALL close() override;
 
 	protected:
 		bool _isFullscreen;
-		bool _isClosing;
 		bool _isVisible;
-		ApplicationStyle _style;
-		std::string _appId;
+		WindowStyle _style;
 		Vec2ui32 _clientSize;
 		Vec4i32 _border;//left, right, top, bottom
 
-		IntrusivePtr<events::IEventDispatcher<ApplicationEvent>> _eventDispatcher;
-
-		std::filesystem::path _appPath;
+		IntrusivePtr<Application> _app;
+		IntrusivePtr<events::IEventDispatcher<WindowEvent>> _eventDispatcher;
 
 		//platform
 		enum class WindowState : uint8_t {
@@ -150,7 +142,9 @@ namespace srk {
 
 		static Bool SRK_CALL _eventPredicate(Display* display, XEvent* event, XPointer pointer);
 		void SRK_CALL _doEvent(XEvent& e);
+	};
 #else
+	class SRK_FW_DLL Window : public EmptyWindow {};
 #endif
 }
 

@@ -6,48 +6,34 @@
 
 namespace srk {
 #ifdef SRK_HAS_X11
-	Application::Application(const std::string_view& appId) :
+	Window::Window(const std::string_view& appId) :
 		_isFullscreen(false),
-		_isClosing(false),
 		_isVisible(false),
-		_appId(appId),
-		_eventDispatcher(new events::EventDispatcher<ApplicationEvent>()) {
-		_appPath = srk::getAppPath();
-#ifdef SRK_HAS_X11
+		_eventDispatcher(new events::EventDispatcher<WindowEvent>()) {
 		_linux.sentSize.set((std::numeric_limits<decltype(_linux.sentSize)::ElementType>::max)());
-#endif
 	}
 
-	Application::~Application() {
-#ifdef SRK_HAS_X11
-		if (_linux.wnd) {
-			XDestroyWindow(_linux.dis, _linux.wnd);
-			_linux.wnd = 0;
-		}
-
-		if (_linux.dis) {
-			XCloseDisplay(_linux.dis);
-			_linux.dis = nullptr;
-		}
-#endif
+	Window::~Window() {
+		close();
 	}
 
-	IntrusivePtr<events::IEventDispatcher<ApplicationEvent>> Application::getEventDispatcher() {
+	IntrusivePtr<Application> Window::getApplication() const {
+		return _app;
+	}
+
+	IntrusivePtr<events::IEventDispatcher<WindowEvent>> Window::getEventDispatcher() {
 		return _eventDispatcher;
 	}
 
-	bool Application::createWindow(const ApplicationStyle& style, const std::string_view& title, const Vec2ui32& clientSize, bool fullscreen) {
-#ifdef SRK_HAS_X11
-		if (_linux.dis) return false;
-#else
-		if (_windowCreated) return false;
-#endif
+	bool Application::createWindow(Application& app, const WindowStyle& style, const std::string_view& title, const Vec2ui32& clientSize, bool fullscreen) {
+		if (_app) return false;
 
+		_app = app;
 		_clientSize = clientSize;
 		_isFullscreen = fullscreen;
 		_style = style;
+		_isVisible = false;
 
-#ifdef SRK_HAS_X11
 		if (!_linux.dis) _linux.dis = XOpenDisplay(nullptr);
 		if (!_linux.dis) return false;
 
@@ -143,7 +129,7 @@ namespace srk {
 			XFree(hints);
 		}
 
-		setWindowTitle(title);
+		setTitle(title);
 
 		XFlush(_linux.dis);
 
@@ -164,50 +150,38 @@ namespace srk {
 
 		_updateWindowPlacement();
 
-		//printcln("state :   ", _getXWndState(), "   ", NormalState, "   ", IconicState);
-#else
-		_windowCreated = true;
-#endif
-
 		return true;
 	}
 
-	void* Application::getNative(ApplicationNative native) const {
-#ifdef SRK_HAS_X11
+	void* Window::getNative(WindowNative native) const {
 		switch (native) {
-		case ApplicationNative::INSTANCE:
+		case WindowNative::X_DISPLAY:
 			return _linux.dis;
-		case ApplicationNative::WINDOW:
+		case WindowNative::WINDOW:
 			return (void*)_linux.wnd;
 		}
-#endif
 
 		return nullptr;
 	}
 
-	bool Application::isFullscreen() const {
+	bool Window::isFullscreen() const {
 		return _isFullscreen;
 	}
 
-	Vec4ui32 Application::getBorder() const {
+	Vec4ui32 Window::getBorder() const {
 		return _border;
 	}
 
-	void Application::toggleFullscreen() {
-#ifdef SRK_HAS_X11
+	void Window::toggleFullscreen() {
 		if (_linux.wnd) {
 			_isFullscreen = !_isFullscreen;
 			_updateWindowPlacement();
 		}
-#else
-		_isFullscreen = !_isFullscreen;
-#endif
 	}
 
-	Vec2ui32 Application::getCurrentClientSize() const {
+	Vec2ui32 Window::getCurrentClientSize() const {
 		Vec2ui32 size;
 
-#ifdef SRK_HAS_X11
 		if (_linux.wnd) {
 			if (_isFullscreen) {
 				auto sd = ScreenOfDisplay(_linux.dis, _linux.screen);
@@ -223,142 +197,116 @@ namespace srk {
 				}
 			}
 		}
-#endif
 
 		return size;
 	}
 
-	Vec2ui32 Application::getClientSize() const {
+	Vec2ui32 Window::getClientSize() const {
 		return _clientSize;
 	}
 
-	void Application::setClientSize(const Vec2ui32& size) {
-#ifdef SRK_HAS_X11
+	void Window::setClientSize(const Vec2ui32& size) {
 		if (_linux.wnd && _clientSize != size) {
 			_clientSize = size;
 			_updateWindowPlacement();
 			_sendResizedEvent();
 		}
-#else
-		_clientSize = size;
-#endif
 	}
 
-	void Application::setWindowTitle(const std::string_view& title) {
-#ifdef SRK_HAS_X11
+	void Window::setTitle(const std::string_view& title) {
 		if (_linux.wnd) XStoreName(_linux.dis, _linux.wnd, title.data());
-#endif
 	}
 
-	void Application::setWindowPosition(const Vec2i32& pos) {
-#ifdef SRK_HAS_X11
+	void Window::setPosition(const Vec2i32& pos) {
 		if (_linux.wnd && _linux.wndPos != pos) {
 			_linux.wndPos = pos;
 			_updateWindowPlacement();
 		}
-#endif
 	}
 
-	void Application::setCursorVisible(bool visible) {
+	void Window::setCursorVisible(bool visible) {
 		//todo
 	}
 
-	bool Application::hasFocus() const {
-#ifdef SRK_HAS_X11
-		if (_linux.wnd) {
-			Window focused;
-			int32_t revertTo;
+	bool Window::hasFocus() const {
+		if (!_linux.wnd) return false;
 
-			XGetInputFocus(_linux.dis, &focused, &revertTo);
-			return focused == _linux.wnd;
-		}
-#endif
+		Window focused;
+		int32_t revertTo;
 
-		return false;
+		XGetInputFocus(_linux.dis, &focused, &revertTo);
+		return focused == _linux.wnd;
 	}
 
-	void Application::setFocus() {
-#ifdef SRK_HAS_X11
+	void Window::setFocus() {
 		if (_linux.wnd && _isVisible) XSetInputFocus(_linux.dis, _linux.wnd, RevertToParent, CurrentTime);
-#endif
 	}
 
-	bool Application::isMaximzed() const {
-#ifdef SRK_HAS_X11
+	bool Window::isMaximzed() const {
 		if (_linux.wnd) return _linux.wndState == WindowState::MAXIMUM;
-#endif
 		return false;
 	}
 
-	void Application::setMaximum() {
-#ifdef SRK_HAS_X11
+	void Window::setMaximum() {
 		if (_linux.wnd && _setWndState(WindowState::MAXIMUM)) _updateWindowPlacement();
-#endif
 	}
 
-	bool Application::isMinimzed() const {
-#ifdef SRK_HAS_X11
+	bool Window::isMinimzed() const {
 		if (_linux.wnd) return _linux.wndState == WindowState::MINIMUM;
-#endif
 		return false;
 	}
 
-	void Application::setMinimum() {
-#ifdef SRK_HAS_X11
+	void Window::setMinimum() {
 		if (_linux.wnd && _setWndState(WindowState::MINIMUM)) _updateWindowPlacement();
-#endif
 	}
 
-	void Application::setRestore() {
-#ifdef SRK_HAS_X11
+	void Window::setRestore() {
 		if (_linux.wnd && _setWndState(WindowState::NORMAL)) _updateWindowPlacement();
-#endif
 	}
 
-	void Application::pollEvents() {
-#ifdef SRK_HAS_X11
-		XEvent e = { 0 };
-		while (XCheckIfEvent(_linux.dis, &e, &Application::_eventPredicate, (XPointer)this)) _doEvent(e);
-#endif
-	}
-
-	bool Application::isVisible() const {
-#ifdef SRK_HAS_X11
+	bool Window::isVisible() const {
 		if (_linux.wnd) return _isVisible;
-#endif
 		return false;
 	}
 
-	void Application::setVisible(bool b) {
-#ifdef SRK_HAS_X11
+	void Window::setVisible(bool b) {
 		if (_linux.wnd && _isVisible != b) {
 			_isVisible = b;
 			_updateWindowPlacement();
 		}
-#else
-		_isVisible = b;
-#endif
 	}
 
-	void Application::shutdown() {
-		if (!_isClosing) {
-			_isClosing = true;
-			_eventDispatcher->dispatchEvent(this, ApplicationEvent::CLOSED);
-			std::exit(0);
+	void Window::pollEvents() {
+		if (!_linux.dis) return;
+		XEvent e = { 0 };
+		while (XCheckIfEvent(_linux.dis, &e, &Application::_eventPredicate, (XPointer)this)) _doEvent(e);
+	}
+
+	void Window::close() {
+		if (!_app) return;
+
+		if (_linux.wnd) {
+			XDestroyWindow(_linux.dis, _linux.wnd);
+			_linux.wnd = 0;
 		}
-	}
 
-	std::string_view Application::getAppId() const {
-		return _appId;
-	}
+		if (_linux.dis) {
+			XCloseDisplay(_linux.dis);
+			_linux.dis = nullptr;
+		}
 
-	const std::filesystem::path& Application::getAppPath() const {
-		return _appPath;
+		_isFullscreen = false;
+		_clientSize = Vec2ui32();
+		_border = Vec4i32();
+		_isVisible = false;
+
+		_app.reset();
+
+		_eventDispatcher->dispatchEvent(this, WindowEvent::CLOSED);
 	}
 
 	//platform
-#ifdef SRK_HAS_X11
-	void Application::_sendClientEventToWM(Atom msgType, int64_t a, int64_t b, int64_t c, int64_t d, int64_t e) {
+	void Window::_sendClientEventToWM(Atom msgType, int64_t a, int64_t b, int64_t c, int64_t d, int64_t e) {
 		XEvent evt = { ClientMessage };
 		auto& client = evt.xclient;
 		client.window = _linux.wnd;
@@ -372,18 +320,18 @@ namespace srk {
 		XSendEvent(_linux.dis, _linux.root, False, SubstructureNotifyMask | SubstructureRedirectMask, &evt);
 	}
 
-	void Application::_sendResizedEvent() {
+	void Window::_sendResizedEvent() {
 		if (auto size = getCurrentClientSize(); _linux.sentSize != size) {
 			_linux.sentSize = size;
 			_eventDispatcher->dispatchEvent(this, ApplicationEvent::RESIZED);
 		}
 	}
 
-	Bool Application::_eventPredicate(Display* display, XEvent* event, XPointer pointer) {
+	Bool Window::_eventPredicate(Display* display, XEvent* event, XPointer pointer) {
 		return True;
 	}
 
-	void Application::_waitEvent(bool& value) {
+	void Window::_waitEvent(bool& value) {
 		while (value) {
 			XEvent e = { 0 };
 			if (XCheckIfEvent(_linux.dis, &e, &Application::_eventPredicate, (XPointer)this)) {
@@ -396,7 +344,7 @@ namespace srk {
 		};
 	}
 
-	size_t Application::_getXWndProperty(Window wnd, Atom property, Atom type, uint8_t** value) const {
+	size_t Window::_getXWndProperty(Window wnd, Atom property, Atom type, uint8_t** value) const {
 		Atom actualType;
 		int32_t actualFormat;
 		uint64_t count, bytesAfter;
@@ -406,7 +354,7 @@ namespace srk {
 		return count;
 	}
 
-	bool Application::_isMaximized() const {
+	bool Window::_isMaximized() const {
 		Atom* states = nullptr;
 		bool maximized = false;
 
@@ -424,11 +372,11 @@ namespace srk {
 		return maximized;
 	}
 
-	bool Application::_isMinimized() const {
+	bool Window::_isMinimized() const {
 		return _getXWndState() == IconicState;
 	}
 
-	int32_t Application::_getXWndState() const {
+	int32_t Window::_getXWndState() const {
 		int32_t result = WithdrawnState;
 		struct {
 			uint32_t state;
@@ -442,7 +390,7 @@ namespace srk {
 		return result;
 	}
 
-	Box2i32 Application::_calcWorkArea() const {
+	Box2i32 Window::_calcWorkArea() const {
 		Box2i32 area;
 
 		Atom* extents = nullptr;
@@ -463,7 +411,7 @@ namespace srk {
 		return std::move(area);
 	}
 
-	bool Application::_setWndState(WindowState state) {
+	bool Window::_setWndState(WindowState state) {
 		if (_linux.wndState != state) {
 			_linux.prevWndState = _linux.wndState;
 			_linux.wndState = state;
@@ -473,7 +421,7 @@ namespace srk {
 		return false;
 	}
 
-	void Application::_updateWindowPlacement() {
+	void Window::_updateWindowPlacement() {
 		if (_isVisible) {
 			if (!_linux.xMapped) {
 				_linux.xMapped = true;
@@ -546,7 +494,7 @@ namespace srk {
 		_waitEvent(_linux.waitVisibility);
 	}
 
-	void Application::_doEvent(XEvent& e) {
+	void Window::_doEvent(XEvent& e) {
 		switch (e.type) {
 		case ClientMessage:
 		{
@@ -557,8 +505,8 @@ namespace srk {
 
 				if (protocol == _linux.WM_DELETE_WINDOW) {
 					auto isCanceled = false;
-					_eventDispatcher->dispatchEvent(this, ApplicationEvent::CLOSING, &isCanceled);
-					if (!isCanceled) shutdown();
+					_eventDispatcher->dispatchEvent(this, WindowEvent::CLOSING, &isCanceled);
+					if (!isCanceled) close();
 				}
 				else if (protocol == _linux.NET_WM_PING) {
 					XEvent reply = e;
@@ -613,7 +561,7 @@ namespace srk {
 			auto mode = e.xfocus.mode;
 			if (mode == NotifyGrab || mode == NotifyUngrab) return;
 
-			_eventDispatcher->dispatchEvent(this, ApplicationEvent::FOCUS_IN);
+			_eventDispatcher->dispatchEvent(this, WindowEvent::FOCUS_IN);
 
 			break;
 		}
@@ -622,7 +570,7 @@ namespace srk {
 			auto mode = e.xfocus.mode;
 			if (mode == NotifyGrab || mode == NotifyUngrab) return;
 
-			_eventDispatcher->dispatchEvent(this, ApplicationEvent::FOCUS_OUT);
+			_eventDispatcher->dispatchEvent(this, WindowEvent::FOCUS_OUT);
 
 			break;
 		}
@@ -669,7 +617,5 @@ namespace srk {
 		}
 	}
 #endif
-#else//====
-#endif//====
 }
 #endif

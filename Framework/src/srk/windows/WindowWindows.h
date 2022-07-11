@@ -9,7 +9,6 @@ namespace srk {
 	class SRK_FW_DLL Window : public IWindow {
 	public:
 		Window();
-
 		virtual ~Window();
 
 		virtual IntrusivePtr<Application> SRK_CALL getApplication() const override;
@@ -31,25 +30,23 @@ namespace srk {
 		virtual bool SRK_CALL isMaximzed() const override;
 		virtual void SRK_CALL setMaximum() override;
 		virtual bool SRK_CALL isMinimzed() const override;
-		virtual void SRK_CALL pollEvents() override;
 		virtual void SRK_CALL setMinimum() override;
 		virtual void SRK_CALL setRestore() override;
 		virtual bool SRK_CALL isVisible() const override;
 		virtual void SRK_CALL setVisible(bool b) override;
+		virtual void SRK_CALL pollEvents() override;
 		virtual void SRK_CALL close() override;
 
 	protected:
 		static std::atomic_uint32_t _counter;
 		bool _isFullscreen;
-		bool _isClosing;
 		bool _isVisible;
 		WindowStyle _style;
 		Vec2ui32 _clientSize;
 		Vec4i32 _border;//left, right, top, bottom
 
-		IntrusivePtr<events::IEventDispatcher<WindowEvent>> _eventDispatcher;
-
 		IntrusivePtr<Application> _app;
+		IntrusivePtr<events::IEventDispatcher<WindowEvent>> _eventDispatcher;
 
 		//platform
 		std::wstring _className;

@@ -7,7 +7,6 @@
 namespace srk {
 	Window::Window() :
 		_isFullscreen(false),
-		_isClosing(false),
 		_isVisible(false),
 		_eventDispatcher(new events::EventDispatcher<WindowEvent>()) {
 		_win.sentSize.set((std::numeric_limits<decltype(_win.sentSize)::ElementType>::max)());
@@ -40,6 +39,7 @@ namespace srk {
 		_clientSize = clientSize;
 		_isFullscreen = fullscreen;
 		_style = style;
+		_isVisible = false;
 
 		_win.bkBrush = CreateSolidBrush(RGB(style.backgroundColor[0], style.backgroundColor[1], style.backgroundColor[2]));
 
@@ -179,6 +179,7 @@ namespace srk {
 	}
 
 	void Window::setCursorVisible(bool visible) {
+		if (!_app) return;
 		ShowCursor(visible);
 	}
 
@@ -225,21 +226,6 @@ namespace srk {
 		}
 	}
 
-	void Window::pollEvents() {
-		if (!_win.wnd) return;
-
-		MSG msg = { 0 };
-
-		while (PeekMessage(&msg, _win.wnd, 0, 0, PM_REMOVE)) {
-			if (msg.message == WM_QUIT) {
-				close();
-			} else {
-				TranslateMessage(&msg);
-				DispatchMessage(&msg);
-			}
-		}
-	}
-
 	bool Window::isVisible() const {
 		return _win.wnd ? _isVisible : false;
 	}
@@ -249,6 +235,22 @@ namespace srk {
 			_isVisible = b;
 			_win.wndDirty = true;
 			_updateWindowPlacement();
+		}
+	}
+
+	void Window::pollEvents() {
+		if (!_win.wnd) return;
+
+		MSG msg = { 0 };
+
+		while (PeekMessage(&msg, _win.wnd, 0, 0, PM_REMOVE)) {
+			if (msg.message == WM_QUIT) {
+				close();
+			}
+			else {
+				TranslateMessage(&msg);
+				DispatchMessage(&msg);
+			}
 		}
 	}
 
@@ -269,6 +271,11 @@ namespace srk {
 			UnregisterClassW(_className.data(), (HINSTANCE)_app->getNative());
 			_className = L"";
 		}
+
+		_isFullscreen = false;
+		_clientSize = Vec2ui32();
+		_border = Vec4i32();
+		_isVisible = false;
 
 		_app.reset();
 
