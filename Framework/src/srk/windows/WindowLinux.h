@@ -3,12 +3,10 @@
 #include "srk/windows/IWindow.h"
 
 #if SRK_OS == SRK_OS_LINUX
+#include "srk/math/Box.h"
 
 #ifndef SRK_HAS_X11
 #	if __has_include(<X11/Xlib.h>)
-#		include <X11/Xlib.h>
-#		include <X11/Xatom.h>
-#		include <X11/Xutil.h>
 #		define SRK_HAS_X11
 #	endif
 #endif
@@ -47,6 +45,9 @@ namespace srk {
 		virtual void SRK_CALL close() override;
 
 	protected:
+		using X11_Atom = size_t;
+		using X11_Window = size_t;
+
 		bool _isFullscreen;
 		bool _isVisible;
 		WindowStyle _style;
@@ -101,10 +102,10 @@ namespace srk {
 			bool xFullscreen = false;
 			WindowState xWndState = WindowState::NORMAL;
 			bool ignoreEvtPos = false;
-			Display* dis = nullptr;
+			void* dis = nullptr;
 			int32_t screen = 0;
-			Window root = 0;
-			Window wnd = 0;
+			X11_Window root = 0;
+			X11_Window wnd = 0;
 			Vec2i32 wndPos;
 			uint32_t bgColor = 0;
 			Vec2ui32 sentSize;
@@ -112,36 +113,35 @@ namespace srk {
 			bool waitFrameEXTENTS = false;
 			bool waitVisibility = false;
 
-			Atom MOTIF_WM_HINTS;
-			Atom WM_STATE;
-			Atom WM_DELETE_WINDOW;
-			Atom WM_PROTOCOLS;
-			Atom NET_WM_PING;
-			Atom NET_WM_WINDOW_TYPE;
-			Atom NET_WM_WINDOW_TYPE_NORMAL;
-			Atom NET_WM_STATE;
-			Atom NET_WM_STATE_FULLSCREEN;
-			Atom NET_WM_STATE_MAXIMIZED_HORZ;
-			Atom NET_WM_STATE_MAXIMIZED_VERT;
-			Atom NET_REQUEST_FRAME_EXTENTS;
-			Atom NET_FRAME_EXTENTS;
-			Atom NET_WORKAREA;
-			Atom NET_CURRENT_DESKTOP;
+			X11_Atom MOTIF_WM_HINTS;
+			X11_Atom WM_STATE;
+			X11_Atom WM_DELETE_WINDOW;
+			X11_Atom WM_PROTOCOLS;
+			X11_Atom NET_WM_PING;
+			X11_Atom NET_WM_WINDOW_TYPE;
+			X11_Atom NET_WM_WINDOW_TYPE_NORMAL;
+			X11_Atom NET_WM_STATE;
+			X11_Atom NET_WM_STATE_FULLSCREEN;
+			X11_Atom NET_WM_STATE_MAXIMIZED_HORZ;
+			X11_Atom NET_WM_STATE_MAXIMIZED_VERT;
+			X11_Atom NET_REQUEST_FRAME_EXTENTS;
+			X11_Atom NET_FRAME_EXTENTS;
+			X11_Atom NET_WORKAREA;
+			X11_Atom NET_CURRENT_DESKTOP;
 		} _linux;
 
-		void SRK_CALL _sendClientEventToWM(Atom msgType, int64_t a = 0, int64_t b = 0, int64_t c = 0, int64_t d = 0, int64_t e = 0);
+		void SRK_CALL _sendClientEventToWM(X11_Atom msgType, int64_t a = 0, int64_t b = 0, int64_t c = 0, int64_t d = 0, int64_t e = 0);
 		void SRK_CALL _sendResizedEvent();
 		void SRK_CALL _waitEvent(bool& value);
 		Box2i32 SRK_CALL _calcWorkArea() const;
 		bool SRK_CALL _setWndState(WindowState state);
-		size_t SRK_CALL _getXWndProperty(Window wnd, Atom property, Atom type, uint8_t** value) const;
+		size_t SRK_CALL _getXWndProperty(X11_Window wnd, X11_Atom property, X11_Atom type, uint8_t** value) const;
 		bool SRK_CALL _isMaximized() const;
 		bool SRK_CALL _isMinimized() const;
 		int32_t SRK_CALL _getXWndState() const;
 		void SRK_CALL _updateWindowPlacement();
 
-		static Bool SRK_CALL _eventPredicate(Display* display, XEvent* event, XPointer pointer);
-		void SRK_CALL _doEvent(XEvent& e);
+		void SRK_CALL _doEvent(void* evt);//XEvent*
 	};
 #else
 	class SRK_FW_DLL Window : public EmptyWindow {};

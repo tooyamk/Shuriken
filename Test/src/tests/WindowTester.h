@@ -9,10 +9,15 @@ public:
 		IntrusivePtr win = new Window();
 		IntrusivePtr win2 = new Window();
 
+		/*printaln("==>>>>", GetCurrentProcess(), "     ", GetCurrentProcessId());
+		auto ppp = OpenProcess(PROCESS_ALL_ACCESS, false, GetCurrentProcessId());
+		TerminateProcess(ppp, 0);*/
+
 		WindowStyle wndStype;
 		wndStype.thickFrame = true;
 		wndStype.backgroundColor.set(255, 255, 0);
 		if (win->create(*app, wndStype, "Fucker", Vec2ui32(800, 600), false)) {
+			wndStype.backgroundColor.set(255, 0, 0);
 			win2->create(*app, wndStype, "Fucker2", Vec2ui32(800, 600), false);
 			//app->setWindowPosition({200, 300});
 
