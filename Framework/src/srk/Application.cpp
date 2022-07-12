@@ -6,7 +6,7 @@
 
 namespace srk {
 	Application::Application(const std::string_view& appId, void* native, const std::filesystem::path& appPath) :
-		_id(appId),
+		_appId(appId),
 		_native(native),
 		_path(appPath.empty() ? srk::getAppPath() : appPath) {
 		if (!_native) {

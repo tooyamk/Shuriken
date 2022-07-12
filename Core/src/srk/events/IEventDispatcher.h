@@ -172,12 +172,22 @@ namespace srk::events {
 		virtual uint32_t SRK_CALL removeEventListeners(const EvtType& type) = 0;
 		virtual uint32_t SRK_CALL removeEventListeners() = 0;
 
-		inline void SRK_CALL dispatchEvent(const Event<EvtType>& e) const {
-			dispatchEvent(e.getTarget(), e.getType(), e.getData());
-		}
 		inline void SRK_CALL dispatchEvent(void* target, const Event<EvtType>& e) const {
 			dispatchEvent(target, e.getType(), e.getData());
 		}
+
+		template<IntrusivePtrOperableObject T>
+		inline void SRK_CALL dispatchEvent(T* target, const Event<EvtType>& e) {
+			IntrusivePtr p = target;
+			dispatchEvent((void*)target, e);
+		}
+
 		virtual void SRK_CALL dispatchEvent(void* target, const EvtType& type, void* data = nullptr) const = 0;
+
+		template<IntrusivePtrOperableObject T>
+		inline void SRK_CALL dispatchEvent(T* target, const EvtType& type, void* data = nullptr) {
+			IntrusivePtr p = target;
+			dispatchEvent((void*)target, type, data);
+		}
 	};
 }

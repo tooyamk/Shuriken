@@ -83,6 +83,10 @@ public:
 		WindowStyle wndStype;
 		wndStype.thickFrame = true;
 		if (win->create(*app, wndStype, "", Vec2ui32(800, 600), false)) {
+			win->getEventDispatcher()->addEventListener(WindowEvent::CLOSED, createEventListener<WindowEvent>([app](Event<WindowEvent>& e) {
+				app->terminate();
+			}));
+
 			std::vector<IntrusivePtr<IInputModule>> inputModules;
 
 			if constexpr (Environment::OPERATING_SYSTEM == Environment::OperatingSystem::WINDOWS) {

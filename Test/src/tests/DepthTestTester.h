@@ -45,6 +45,10 @@ public:
 						graphics->setBackBufferSize(((IWindow*)e.getTarget())->getCurrentClientSize());
 					}));
 
+					win->getEventDispatcher()->addEventListener(WindowEvent::CLOSED, createEventListener<WindowEvent>([app](Event<WindowEvent>& e) {
+						app->terminate();
+					}));
+
 					struct {
 						IntrusivePtr<IWindow> win;
 						IntrusivePtr<Looper> looper;

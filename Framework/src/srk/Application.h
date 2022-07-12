@@ -13,12 +13,12 @@ namespace srk {
 			return _native;
 		}
 
-		inline void SRK_CALL shutdown() const {
-			std::exit(0);
+		inline void SRK_CALL terminate(int32_t code = 0) const {
+			std::exit(code);
 		}
 
-		inline std::string_view SRK_CALL getIdentity() const {
-			return _id;
+		inline std::string_view SRK_CALL getApplicationId() const {
+			return _appId;
 		}
 
 		inline const std::filesystem::path& SRK_CALL getPath() const {
@@ -26,7 +26,7 @@ namespace srk {
 		}
 
 	private:
-		std::string _id;
+		std::string _appId;
 		void* _native;
 		std::filesystem::path _path;
 	};

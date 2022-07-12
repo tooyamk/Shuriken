@@ -231,8 +231,15 @@ namespace srk {
 		}
 	}
 
+	std::string_view Window::getTitle() const {
+		return _linux.title;
+	}
+
 	void Window::setTitle(const std::string_view& title) {
-		if (_linux.wnd) XStoreName((Display*)_linux.dis, _linux.wnd, title.data());
+		if (_linux.wnd) {
+			_linux.title = title;
+			XStoreName((Display*)_linux.dis, _linux.wnd, _linux.title.data());
+		}
 	}
 
 	void Window::setPosition(const Vec2i32& pos) {
@@ -306,6 +313,7 @@ namespace srk {
 		if (_linux.wnd) {
 			XDestroyWindow((Display*)_linux.dis, _linux.wnd);
 			_linux.wnd = 0;
+			_linux.title.clear();
 		}
 
 		if (_linux.dis) {

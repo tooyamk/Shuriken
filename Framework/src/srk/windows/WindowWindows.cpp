@@ -55,7 +55,7 @@ namespace srk {
 		wnd.hCursor = LoadCursor(nullptr, IDC_ARROW);
 		wnd.hbrBackground = _win.bkBrush;
 		wnd.lpszMenuName = nullptr;
-		_className = String::Utf8ToUnicode(_app->getIdentity());
+		_className = String::Utf8ToUnicode(_app->getApplicationId());
 		_className += String::Utf8ToUnicode(String::toString(_counter.fetch_add(1)));
 		wnd.lpszClassName = _className.data();
 		wnd.hIconSm = nullptr;
@@ -84,6 +84,8 @@ namespace srk {
 			rect.pos[0], rect.pos[1], rect.size[0], rect.size[1],
 			GetDesktopWindow(), nullptr, ins, nullptr);
 		SetWindowLongPtr(_win.wnd, GWLP_USERDATA, (LONG_PTR)this);
+
+		_win.title = title;
 
 		//DeleteObject(bkBrush);
 
@@ -163,8 +165,16 @@ namespace srk {
 		}
 	}
 
+	std::string_view Window::getTitle() const {
+		return _win.title;
+	}
+
 	void Window::setTitle(const std::string_view& title) {
-		if (_win.wnd) SetWindowTextW(_win.wnd, String::Utf8ToUnicode(title).data());
+		if (_win.wnd)
+		{
+			_win.title = title;
+			SetWindowTextW(_win.wnd, String::Utf8ToUnicode(title).data());
+		}
 	}
 
 	void Window::setPosition(const Vec2i32& pos) {
@@ -246,8 +256,8 @@ namespace srk {
 		while (PeekMessage(&msg, _win.wnd, 0, 0, PM_REMOVE)) {
 			if (msg.message == WM_QUIT) {
 				close();
-			}
-			else {
+				break;
+			} else {
 				TranslateMessage(&msg);
 				DispatchMessage(&msg);
 			}
@@ -260,6 +270,7 @@ namespace srk {
 		if (_win.wnd) {
 			DestroyWindow(_win.wnd);
 			_win.wnd = nullptr;
+			_win.title.clear();
 		}
 
 		if (_win.bkBrush) {
@@ -404,17 +415,13 @@ namespace srk {
 			if (win) {
 				auto isCanceled = false;
 				win->_eventDispatcher->dispatchEvent(win, WindowEvent::CLOSING, &isCanceled);
-				if (isCanceled) {
-					return 0;
-				} else {
-					win->close();
-				}
+				if (!isCanceled) win->close();
 			}
 
-			break;
+			return 0;
 		}
 		case WM_DESTROY:
-			PostQuitMessage(0);
+			//PostQuitMessage(0);
 			return 0;
 		case WM_SIZING:
 			break;

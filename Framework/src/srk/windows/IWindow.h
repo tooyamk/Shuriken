@@ -46,6 +46,7 @@ namespace srk {
 		virtual Vec2ui32 SRK_CALL getCurrentClientSize() const = 0;
 		virtual Vec2ui32 SRK_CALL getClientSize() const = 0;
 		virtual void SRK_CALL setClientSize(const Vec2ui32& size) = 0;
+		virtual std::string_view SRK_CALL getTitle() const = 0;
 		virtual void SRK_CALL setTitle(const std::string_view& title) = 0;
 		inline void SRK_CALL setTitle(const std::u8string_view& title) {
 			setTitle((const std::string_view&)title);

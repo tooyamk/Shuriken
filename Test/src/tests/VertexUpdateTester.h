@@ -41,6 +41,10 @@ public:
 						int a = 1;
 					}));
 
+					win->getEventDispatcher()->addEventListener(WindowEvent::CLOSED, createEventListener<WindowEvent>([app](Event<WindowEvent>& e) {
+						app->terminate();
+					}));
+
 					win->getEventDispatcher()->addEventListener(WindowEvent::RESIZED, createEventListener<WindowEvent>([graphics](Event<WindowEvent>& e) {
 						graphics->setBackBufferSize(((IWindow*)e.getTarget())->getCurrentClientSize());
 					}));

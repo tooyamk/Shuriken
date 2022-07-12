@@ -29,8 +29,9 @@ namespace srk {
 		auto dt = _updatingCount++ == 0 ? 0. : (t0 - _updatingTimePoint) / 1000000000.;
 		_updatingTimePoint = t0;
 
-		_eventDispatcher->dispatchEvent(this, LooperEvent::TICKING, &dt);
-		_eventDispatcher->dispatchEvent(this, LooperEvent::TICKED);
+		IntrusivePtr self = *this;
+		_eventDispatcher->dispatchEvent((void*)this, LooperEvent::TICKING, &dt);
+		_eventDispatcher->dispatchEvent((void*)this, LooperEvent::TICKED);
 
 		if (restriction) {
 			auto t1 = Time::now<std::chrono::nanoseconds, std::chrono::steady_clock>();
