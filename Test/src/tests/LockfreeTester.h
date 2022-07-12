@@ -55,7 +55,6 @@ public:
 class LockfreeTester : public BaseTester {
 public:
 	virtual int32_t SRK_CALL run() override {
-		IntrusivePtr app = new Application("TestApp");
 		IntrusivePtr win = new Window();
 
 		printFloat(0.0f);
@@ -75,7 +74,7 @@ public:
 
 		WindowStyle wndStype;
 		wndStype.thickFrame = true;
-		if (win->create(*app, wndStype, "", Vec2ui32(800, 600), false)) {
+		if (win->create(wndStype, "", Vec2ui32(800, 600), false)) {
 			IntrusivePtr looper = new Looper(1000.0 / 60.0);
 
 			win->getEventDispatcher()->addEventListener(WindowEvent::CLOSED, createEventListener<WindowEvent>([looper](Event<WindowEvent>& e) {

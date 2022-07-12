@@ -17,6 +17,9 @@
 #define SRK_TO_STRING(str) _SRK_TO_STRING(str)
 
 
+#if __has_include(<signal.h>)
+#	include <signal.h>
+#endif
 #if __has_include(<bit>)
 #	include <bit>
 #endif
@@ -646,6 +649,15 @@ namespace srk {
 
 	struct SRK_CORE_DLL NoInit {};
 	inline constexpr NoInit NO_INIT = NoInit();
+
+
+	inline uint32_t SRK_CALL getCurrentProcessId() {
+#if SRK_OS == SRK_OS_WINDOWS
+		return ::GetCurrentProcessId();
+#else
+		return ::getpid();
+#endif
+	}
 
 
 	inline std::filesystem::path SRK_CALL getAppPath() {

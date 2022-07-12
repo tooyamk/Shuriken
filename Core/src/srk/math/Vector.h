@@ -12,6 +12,12 @@ namespace srk {
 		
 		using Data = T[N];
 
+		template<std::convertible_to<T> K>
+		struct All {
+			All(const K& v) : value(v) {}
+			T value;
+		};
+
 		Vector() {
 			memset(this, 0, sizeof(T) * N);
 		}
@@ -52,6 +58,11 @@ namespace srk {
 			set(std::forward<Args>(args)...);
 		}
 
+		template<std::convertible_to<T> K>
+		Vector(All<K>&& v) {
+			setAll(v.value);
+		}
+
 		inline SRK_CALL operator Data&() {
 			return data;
 		}
@@ -71,13 +82,18 @@ namespace srk {
 		}
 
 		template<size_t L, std::convertible_to<T> K>
-		inline Vector& SRK_CALL operator=(const Vector<L, K>& value) {
+		inline Vector& SRK_CALL operator=(const Vector<L, K>& value) noexcept {
 			return set(value.data);
 		}
 
 		template<size_t L, std::convertible_to<T> K>
 		inline Vector& SRK_CALL operator=(Vector<L, K>&& value) noexcept {
 			return set(value.data);
+		}
+
+		template<std::convertible_to<T> K>
+		inline Vector& SRK_CALL operator=(K&& v) noexcept {
+			return setAll(std::forward(v));
 		}
 
 		template<std::convertible_to<T> K>
@@ -224,9 +240,7 @@ namespace srk {
 		template<std::convertible_to<T>... Args>
 		inline Vector& SRK_CALL set(Args&&... args) {
 			if constexpr (N > 0) {
-				if constexpr (sizeof...(args) == 1) {
-					_setAll(std::forward<Args>(args)...);
-				} else if constexpr (N >= sizeof...(args)) {
+				if constexpr (N >= sizeof...(args)) {
 					size_t i = 0;
 					((data[i++] = args), ...);
 					memset(data + sizeof...(args), 0, sizeof(T) * (N - sizeof...(args)));
@@ -234,6 +248,12 @@ namespace srk {
 					_set<0>(std::forward<Args>(args)...);
 				}
 			}
+			return *this;
+		}
+
+		template<std::convertible_to<T> K>
+		inline Vector& SRK_CALL setAll(K&& v) {
+			for (decltype(N) i = 0; i < N; ++i) data[i] = v;
 			return *this;
 		}
 
@@ -434,15 +454,10 @@ namespace srk {
 				_set<I + 1>(std::forward<Args>(args)...);
 			}
 		}
-
-		template<typename V>
-		inline void SRK_CALL _setAll(V&& v) {
-			for (decltype(N) i = 0; i < N; ++i) data[i] = v;
-		}
 	};
 
-	template<size_t N, typename T> const Vector<N, T> Vector<N, T>::ZERO = Vector<N, T>(Math::ZERO<T>);
-	template<size_t N, typename T> const Vector<N, T> Vector<N, T>::ONE = Vector<N, T>(Math::ONE<T>);
+	template<size_t N, typename T> const Vector<N, T> Vector<N, T>::ZERO = Vector<N, T>(Vector<N, T>::All<T>(Math::ZERO<T>));
+	template<size_t N, typename T> const Vector<N, T> Vector<N, T>::ONE = Vector<N, T>(Vector<N, T>::All<T>(Math::ONE<T>));
 
 	template<size_t N, typename T1, typename T2>
 	inline constexpr Vector<N, decltype((*(T1*)0) + (*(T2*)0))> SRK_CALL operator+(const Vector<N, T1>& v1, const Vector<N, T2>& v2) {

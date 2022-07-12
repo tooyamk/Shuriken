@@ -10,10 +10,10 @@ namespace srk {
 
 		virtual ~EmptyWindow();
 
-		virtual IntrusivePtr<Application> SRK_CALL getApplication() const override;
 		virtual IntrusivePtr<events::IEventDispatcher<WindowEvent>> SRK_CALL getEventDispatcher() override;
 
-		virtual bool SRK_CALL create(Application& app, const WindowStyle& style, const std::string_view& title, const Vec2ui32& clientSize, bool fullscreen) override;
+		virtual bool SRK_CALL create(const WindowStyle& style, const std::string_view& title, const Vec2ui32& clientSize, bool fullscreen) override;
+		virtual bool SRK_CALL isCreated() const override;
 		virtual void* SRK_CALL getNative(WindowNative native) const override;
 		virtual bool SRK_CALL isFullscreen() const override;
 		virtual void SRK_CALL toggleFullscreen() override;
@@ -37,12 +37,11 @@ namespace srk {
 		virtual void SRK_CALL close() override;
 
 	protected:
-		bool _isClosing;
-
 		IntrusivePtr<events::IEventDispatcher<WindowEvent>> _eventDispatcher;
-		IntrusivePtr<Application> _app;
 
 		//platform
-		bool _windowCreated = false;
+		struct {
+			bool isCreated = false;
+		} _data;
 	};
 }

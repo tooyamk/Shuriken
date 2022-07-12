@@ -27,9 +27,8 @@ namespace srk::modules::inputs::direct_input {
 
 	void Input::poll() {
 		if (!_di) return;
-		auto app = _win->getApplication();
-		if (!app) return;
-		if (FAILED(DirectInput8Create((HINSTANCE)app->getNative(), DIRECTINPUT_VERSION, IID_IDirectInput8, (LPVOID*)&_di, nullptr))) return;
+		auto m = (HMODULE)_win->getNative(WindowNative::MODULE);
+		if (FAILED(DirectInput8Create(m, DIRECTINPUT_VERSION, IID_IDirectInput8, (LPVOID*)&_di, nullptr))) return;
 
 		std::vector<InternalDeviceInfo> newDevices;
 

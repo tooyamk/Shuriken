@@ -56,7 +56,7 @@ namespace srk::modules::graphics {
 
 	RenderTargetBlendState::RenderTargetBlendState() :
 		enabled(false),
-		writeMask(true) {
+		writeMask(decltype(writeMask)::All<bool>(true)) {
 	}
 
 

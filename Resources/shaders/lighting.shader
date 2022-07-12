@@ -132,7 +132,7 @@ shader {
                 c.xyz = c.xyz * _ambientColor;
 
                 #endif
-
+                
                 return c;
             }
         }

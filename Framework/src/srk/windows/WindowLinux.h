@@ -18,10 +18,10 @@ namespace srk {
 		Window();
 		virtual ~Window();
 
-		virtual IntrusivePtr<Application> SRK_CALL getApplication() const override;
 		virtual IntrusivePtr<events::IEventDispatcher<WindowEvent>> SRK_CALL getEventDispatcher() override;
 
 		virtual bool SRK_CALL create(Application& app, const WindowStyle& style, const std::string_view& title, const Vec2ui32& clientSize, bool fullscreen) override;
+		virtual bool SRK_CALL isCreated() const override;
 		virtual void* SRK_CALL getNative(WindowNative native) const override;
 		virtual bool SRK_CALL isFullscreen() const override;
 		virtual void SRK_CALL toggleFullscreen() override;
@@ -49,13 +49,6 @@ namespace srk {
 		using X11_Atom = size_t;
 		using X11_Window = size_t;
 
-		bool _isFullscreen;
-		bool _isVisible;
-		WindowStyle _style;
-		Vec2ui32 _clientSize;
-		Vec4i32 _border;//left, right, top, bottom
-
-		IntrusivePtr<Application> _app;
 		IntrusivePtr<events::IEventDispatcher<WindowEvent>> _eventDispatcher;
 
 		//platform
@@ -96,21 +89,31 @@ namespace srk {
 
 
 		struct {
-			std::string title;
-			WindowState wndState = WindowState::NORMAL;
-			WindowState prevWndState = WindowState::NORMAL;
+			bool isCreated = false;
+			bool isFullscreen = false;
+			bool isVisible = false;
 			bool wndDirty = false;
 			bool xMapped = false;
 			bool xFullscreen = false;
-			WindowState xWndState = WindowState::NORMAL;
 			bool ignoreEvtPos = false;
+
+			WindowStyle style;
+			WindowState wndState = WindowState::NORMAL;
+			WindowState prevWndState = WindowState::NORMAL;
+			WindowState xWndState = WindowState::NORMAL;
+			
 			void* dis = nullptr;
+
+			std::string title;
+
 			int32_t screen = 0;
 			X11_Window root = 0;
 			X11_Window wnd = 0;
 			Vec2i32 wndPos;
+			Vec2ui32 clientSize;
 			uint32_t bgColor = 0;
 			Vec2ui32 sentSize;
+			Vec4i32 border;//left, right, top, bottom
 
 			bool waitFrameEXTENTS = false;
 			bool waitVisibility = false;
@@ -130,7 +133,7 @@ namespace srk {
 			X11_Atom NET_FRAME_EXTENTS;
 			X11_Atom NET_WORKAREA;
 			X11_Atom NET_CURRENT_DESKTOP;
-		} _linux;
+		} _data;
 
 		void SRK_CALL _sendClientEventToWM(X11_Atom msgType, int64_t a = 0, int64_t b = 0, int64_t c = 0, int64_t d = 0, int64_t e = 0);
 		void SRK_CALL _sendResizedEvent();

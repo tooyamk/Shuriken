@@ -1,6 +1,6 @@
 #pragma once
 
-#include "srk/Application.h"
+#include "srk/Intrusive.h"
 #include "srk/math/Vector.h"
 #include "srk/events/EventDispatcher.h"
 
@@ -26,6 +26,7 @@ namespace srk {
 
 
 	enum class WindowNative : uint8_t {
+		MODULE,
 		X_DISPLAY,
 		WINDOW
 	};
@@ -35,10 +36,10 @@ namespace srk {
 	public:
 		virtual ~IWindow() {};
 
-		virtual IntrusivePtr<Application> SRK_CALL getApplication() const = 0;
 		virtual IntrusivePtr<events::IEventDispatcher<WindowEvent>> SRK_CALL getEventDispatcher() = 0;
 
-		virtual bool SRK_CALL create(Application& app, const WindowStyle& style, const std::string_view& title, const Vec2ui32& clientSize, bool fullscreen) = 0;
+		virtual bool SRK_CALL create(const WindowStyle& style, const std::string_view& title, const Vec2ui32& clientSize, bool fullscreen) = 0;
+		virtual bool SRK_CALL isCreated() const = 0;
 		virtual void* SRK_CALL getNative(WindowNative native) const = 0;
 		virtual bool SRK_CALL isFullscreen() const = 0;
 		virtual void SRK_CALL toggleFullscreen() = 0;

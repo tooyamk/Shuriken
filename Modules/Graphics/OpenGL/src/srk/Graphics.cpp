@@ -50,7 +50,7 @@ namespace srk::modules::graphics::gl {
 		if (!conf.win || !conf.win->getNative(WindowNative::WINDOW)) return false;
 
 #if SRK_OS == SRK_OS_WINDOWS
-		if (_dc || !conf.win->getApplication()) return false;
+		if (_dc || !conf.win->getNative(WindowNative::MODULE)) return false;
 #elif SRK_OS == SRK_OS_LINUX
 		if (_context || !conf.win->getNative(WindowNative::X_DISPLAY)) return false;
 #endif
@@ -754,7 +754,7 @@ namespace srk::modules::graphics::gl {
 		auto initOk = false;
 
 #if SRK_OS == SRK_OS_WINDOWS
-		auto hIns = (HINSTANCE)win->getApplication()->getNative();
+		auto hIns = (HMODULE)win->getNative(WindowNative::MODULE);
 		std::wstring className = L"Shuriken OpenGL Temp Window " + String::Utf8ToUnicode(String::toString(Time::now()));
 
 		WNDCLASSEXW wnd;

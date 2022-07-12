@@ -2,7 +2,6 @@
 
 #include "srk/Core.h"
 
-#include "srk/Application.h"
 #include "srk/GraphicsBuffer.h"
 #include "srk/Image.h"
 #include "srk/Looper.h"

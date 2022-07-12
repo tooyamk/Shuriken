@@ -8,12 +8,11 @@ public:
 		auto monitors = Monitor::getMonitors();
 		auto vms = monitors[0].getVideoModes();
 
-		IntrusivePtr app = new Application("TestApp");
 		IntrusivePtr win = new Window();
 
 		WindowStyle wndStype;
 		wndStype.thickFrame = true;
-		if (win->create(*app, wndStype, "", Vec2ui32(800, 600), false)) {
+		if (win->create(wndStype, "", Vec2ui32(800, 600), false)) {
 			IntrusivePtr gml = new GraphicsModuleLoader();
 
 			//if (gml->load(getDLLName("srk-graphics-gl"))) {
@@ -45,8 +44,8 @@ public:
 						graphics->setBackBufferSize(((IWindow*)e.getTarget())->getCurrentClientSize());
 					}));
 
-					win->getEventDispatcher()->addEventListener(WindowEvent::CLOSED, createEventListener<WindowEvent>([app](Event<WindowEvent>& e) {
-						app->terminate();
+					win->getEventDispatcher()->addEventListener(WindowEvent::CLOSED, createEventListener<WindowEvent>([](Event<WindowEvent>& e) {
+						std::exit(0);
 					}));
 
 					struct {
@@ -152,13 +151,13 @@ public:
 					{
 						auto texRes = graphics->createTexture2DResource();
 						if (texRes) {
-							auto img0 = extensions::PNGConverter::decode(readFile(app->getPath().parent_path().u8string() + "/Resources/c4.png"));
+							auto img0 = extensions::PNGConverter::decode(readFile(getAppPath().parent_path().u8string() + "/Resources/c4.png"));
 							auto mipLevels = Image::calcMipLevels(img0->size);
 							ByteArray mipsData0;
 							std::vector<void*> mipsData0Ptr;
 							img0->generateMips(img0->format, mipLevels, mipsData0, mipsData0Ptr);
 
-							auto img1 = extensions::PNGConverter::decode(readFile(app->getPath().parent_path().u8string() + "/Resources/red.png"));
+							auto img1 = extensions::PNGConverter::decode(readFile(getAppPath().parent_path().u8string() + "/Resources/red.png"));
 							ByteArray mipsData1;
 							std::vector<void*> mipsData1Ptr;
 							img1->generateMips(img1->format, mipLevels, mipsData1, mipsData1Ptr);

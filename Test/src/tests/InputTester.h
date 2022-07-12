@@ -77,14 +77,13 @@ public:
 	}
 
 	virtual int32_t SRK_CALL run() override {
-		IntrusivePtr app = new Application("TestApp");
 		IntrusivePtr win = new Window();
 
 		WindowStyle wndStype;
 		wndStype.thickFrame = true;
-		if (win->create(*app, wndStype, "", Vec2ui32(800, 600), false)) {
-			win->getEventDispatcher()->addEventListener(WindowEvent::CLOSED, createEventListener<WindowEvent>([app](Event<WindowEvent>& e) {
-				app->terminate();
+		if (win->create(wndStype, "", Vec2ui32(800, 600), false)) {
+			win->getEventDispatcher()->addEventListener(WindowEvent::CLOSED, createEventListener<WindowEvent>([](Event<WindowEvent>& e) {
+				std::exit(0);
 			}));
 
 			std::vector<IntrusivePtr<IInputModule>> inputModules;

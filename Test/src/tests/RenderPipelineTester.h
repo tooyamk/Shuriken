@@ -9,12 +9,11 @@ public:
 		auto monitors = Monitor::getMonitors();
 		auto vms = monitors[0].getVideoModes();
 		
-		IntrusivePtr app = new Application("TestApp");
 		IntrusivePtr win = new Window();
 
 		WindowStyle wndStype;
 		wndStype.thickFrame = true;
-		if (win->create(*app, wndStype, "", Vec2ui32(800, 600), false)) {
+		if (win->create(wndStype, "", Vec2ui32(800, 600), false)) {
 			IntrusivePtr gml = new GraphicsModuleLoader();
 
 			if (gml->load("libs/" + getDLLName("srk-graphics-d3d11"))) {
@@ -104,6 +103,7 @@ public:
 						//cameraNode->addComponent(camera);
 						renderData.camera = new Camera();
 						renderData.camera->attachNode(cameraNode);
+						//renderData.camera->clearColor.set(1.0f, 0, 0, 1.0f);
 						auto mat = new Material();
 						renderData.material = mat;
 						auto mat2 = new Material();
@@ -123,7 +123,7 @@ public:
 						IntrusivePtr tag2 = new RenderTagCollection();
 						tag2->add(forwardAddTag);
 
-						auto parsed = extensions::FBXConverter::decode(readFile(app->getPath().parent_path().u8string() + "/Resources/teapot.fbx"));
+						auto parsed = extensions::FBXConverter::decode(readFile(getAppPath().parent_path().u8string() + "/Resources/teapot.fbx"));
 						for (auto& mr : parsed.meshes) {
 							if (mr) {
 								auto rs = graphics->createRasterizerState();
@@ -176,9 +176,9 @@ public:
 
 							mat->setShader(s);
 							mat->setParameters(new ShaderParameterCollection());
-							auto shaderResourcesFolder = app->getPath().parent_path().u8string() + "/Resources/shaders/";
+							auto shaderResourcesFolder = getAppPath().parent_path().u8string() + "/Resources/shaders/";
 							//s->upload(std::filesystem::path(app->getAppPath().parent_path().u8string() + "/Resources/shaders/test.shader"));
-							extensions::ShaderScript::set(s, graphics, readFile(app->getPath().parent_path().u8string() + "/Resources/shaders/lighting.shader"),
+							extensions::ShaderScript::set(s, graphics, readFile(getAppPath().parent_path().u8string() + "/Resources/shaders/lighting.shader"),
 								[shaderResourcesFolder](const Shader& shader, ProgramStage stage, const std::string_view& name) {
 								return readFile(shaderResourcesFolder + name);
 							},
@@ -197,7 +197,7 @@ public:
 
 						renderData.wrold = worldNode;
 						renderData.renderPipeline = new StandardRenderPipeline();
-						renderData.renderPipeline->getShaderParameters().set(ShaderPredefine::AMBIENT_COLOR, new ShaderParameter())->set(Vec3f32(0.0f));
+						renderData.renderPipeline->getShaderParameters().set(ShaderPredefine::AMBIENT_COLOR, new ShaderParameter())->set(Vec3f32());
 						renderData.renderPipeline->getShaderParameters().set(ShaderPredefine::DIFFUSE_COLOR, new ShaderParameter())->set(Vec3f32::ONE);
 						renderData.renderPipeline->getShaderParameters().set(ShaderPredefine::SPECULAR_COLOR, new ShaderParameter())->set(Vec3f32::ONE);
 					}
@@ -205,13 +205,13 @@ public:
 					{
 						auto texRes = graphics->createTexture2DResource();
 						if (texRes) {
-							auto img0 = extensions::PNGConverter::decode(readFile(app->getPath().parent_path().u8string() + "/Resources/white.png"));
+							auto img0 = extensions::PNGConverter::decode(readFile(getAppPath().parent_path().u8string() + "/Resources/white.png"));
 							auto mipLevels = Image::calcMipLevels(img0->size);
 							ByteArray mipsData0;
 							std::vector<void*> mipsData0Ptr;
 							img0->generateMips(img0->format, mipLevels, mipsData0, mipsData0Ptr);
 
-							auto img1 = extensions::PNGConverter::decode(readFile(app->getPath().parent_path().u8string() + "/Resources/red.png"));
+							auto img1 = extensions::PNGConverter::decode(readFile(getAppPath().parent_path().u8string() + "/Resources/red.png"));
 							ByteArray mipsData1;
 							std::vector<void*> mipsData1Ptr;
 							img1->generateMips(img1->format, mipLevels, mipsData1, mipsData1Ptr);

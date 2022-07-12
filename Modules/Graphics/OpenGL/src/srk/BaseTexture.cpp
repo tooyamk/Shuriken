@@ -492,7 +492,7 @@ namespace srk::modules::graphics::gl {
 			arraySize = 0;
 			internalArraySize = 0;
 			mipLevels = 0;
-			texSize.set(0);
+			texSize.setAll(0);
 		}
 
 		format = TextureFormat::UNKNOWN;

@@ -22,18 +22,12 @@
 namespace srk {
 #ifdef SRK_HAS_X11
 	Window::Window() :
-		_isFullscreen(false),
-		_isVisible(false),
 		_eventDispatcher(new events::EventDispatcher<WindowEvent>()) {
-		_linux.sentSize.set((std::numeric_limits<decltype(_linux.sentSize)::ElementType>::max)());
+		_data.sentSize.setAll((std::numeric_limits<decltype(_data.sentSize)::ElementType>::max)());
 	}
 
 	Window::~Window() {
 		close();
-	}
-
-	IntrusivePtr<Application> Window::getApplication() const {
-		return _app;
 	}
 
 	IntrusivePtr<events::IEventDispatcher<WindowEvent>> Window::getEventDispatcher() {
@@ -41,37 +35,35 @@ namespace srk {
 	}
 
 	bool Window::create(Application& app, const WindowStyle& style, const std::string_view& title, const Vec2ui32& clientSize, bool fullscreen) {
-		if (_app) return false;
+		if (_data.isCreated) return false;
 
-		_app = app;
-		_clientSize = clientSize;
-		_isFullscreen = fullscreen;
-		_style = style;
-		_isVisible = false;
+		_data.clientSize = clientSize;
+		_data.isFullscreen = fullscreen;
+		_data.style = style;
 
-		if (!_linux.dis) _linux.dis = XOpenDisplay(nullptr);
-		if (!_linux.dis) {
+		_data.dis = XOpenDisplay(nullptr);
+		if (!_data.dis) {
 			close();
 			return false;
 		}
 
-		_linux.MOTIF_WM_HINTS = XInternAtom((Display*)_linux.dis, "_MOTIF_WM_HINTS", False);
-		_linux.WM_STATE = XInternAtom((Display*)_linux.dis, "WM_STATE", False);
-		_linux.WM_PROTOCOLS = XInternAtom((Display*)_linux.dis, "WM_PROTOCOLS", False);
-		_linux.WM_DELETE_WINDOW = XInternAtom((Display*)_linux.dis, "WM_DELETE_WINDOW", False);
-		_linux.NET_WM_PING = XInternAtom((Display*)_linux.dis, "_NET_WM_PING", False);
-		_linux.NET_WM_WINDOW_TYPE = XInternAtom((Display*)_linux.dis, "_NET_WM_WINDOW_TYPE", False);
-		_linux.NET_WM_WINDOW_TYPE_NORMAL = XInternAtom((Display*)_linux.dis, "_NET_WM_WINDOW_TYPE_NORMAL", False);
-		_linux.NET_WM_STATE = XInternAtom((Display*)_linux.dis, "_NET_WM_STATE", False);
-		_linux.NET_WM_STATE_FULLSCREEN = XInternAtom((Display*)_linux.dis, "_NET_WM_STATE_FULLSCREEN", False);
-		_linux.NET_WM_STATE_MAXIMIZED_HORZ = XInternAtom((Display*)_linux.dis, "_NET_WM_STATE_MAXIMIZED_HORZ", False);
-		_linux.NET_WM_STATE_MAXIMIZED_VERT = XInternAtom((Display*)_linux.dis, "_NET_WM_STATE_MAXIMIZED_VERT", False);
-		_linux.NET_REQUEST_FRAME_EXTENTS = XInternAtom((Display*)_linux.dis, "_NET_REQUEST_FRAME_EXTENTS", False);
-		_linux.NET_FRAME_EXTENTS = XInternAtom((Display*)_linux.dis, "_NET_FRAME_EXTENTS", False);
-		_linux.NET_WORKAREA = XInternAtom((Display*)_linux.dis, "_NET_WORKAREA", False);
-		_linux.NET_CURRENT_DESKTOP = XInternAtom((Display*)_linux.dis, "_NET_CURRENT_DESKTOP", False);
+		_data.MOTIF_WM_HINTS = XInternAtom((Display*)_data.dis, "_MOTIF_WM_HINTS", False);
+		_data.WM_STATE = XInternAtom((Display*)_data.dis, "WM_STATE", False);
+		_data.WM_PROTOCOLS = XInternAtom((Display*)_data.dis, "WM_PROTOCOLS", False);
+		_data.WM_DELETE_WINDOW = XInternAtom((Display*)_data.dis, "WM_DELETE_WINDOW", False);
+		_data.NET_WM_PING = XInternAtom((Display*)_data.dis, "_NET_WM_PING", False);
+		_data.NET_WM_WINDOW_TYPE = XInternAtom((Display*)_data.dis, "_NET_WM_WINDOW_TYPE", False);
+		_data.NET_WM_WINDOW_TYPE_NORMAL = XInternAtom((Display*)_data.dis, "_NET_WM_WINDOW_TYPE_NORMAL", False);
+		_data.NET_WM_STATE = XInternAtom((Display*)_data.dis, "_NET_WM_STATE", False);
+		_data.NET_WM_STATE_FULLSCREEN = XInternAtom((Display*)_data.dis, "_NET_WM_STATE_FULLSCREEN", False);
+		_data.NET_WM_STATE_MAXIMIZED_HORZ = XInternAtom((Display*)_data.dis, "_NET_WM_STATE_MAXIMIZED_HORZ", False);
+		_data.NET_WM_STATE_MAXIMIZED_VERT = XInternAtom((Display*)_data.dis, "_NET_WM_STATE_MAXIMIZED_VERT", False);
+		_data.NET_REQUEST_FRAME_EXTENTS = XInternAtom((Display*)_data.dis, "_NET_REQUEST_FRAME_EXTENTS", False);
+		_data.NET_FRAME_EXTENTS = XInternAtom((Display*)_data.dis, "_NET_FRAME_EXTENTS", False);
+		_data.NET_WORKAREA = XInternAtom((Display*)_data.dis, "_NET_WORKAREA", False);
+		_data.NET_CURRENT_DESKTOP = XInternAtom((Display*)_data.dis, "_NET_CURRENT_DESKTOP", False);
 
-		_linux.bgColor = _style.backgroundColor[0] << 16 | _style.backgroundColor[1] << 8 | _style.backgroundColor[2];
+		_data.bgColor = _data.style.backgroundColor[0] << 16 | _data.style.backgroundColor[1] << 8 | _data.style.backgroundColor[2];
 
 		XSetWindowAttributes attr = { 0 };
 		attr.border_pixel = 0;
@@ -81,13 +73,13 @@ namespace srk {
 			ExposureMask | FocusChangeMask | VisibilityChangeMask |
 			EnterWindowMask | LeaveWindowMask | PropertyChangeMask;
 
-		_linux.screen = DefaultScreen((Display*)_linux.dis);
-		_linux.root = RootWindow((Display*)_linux.dis, _linux.screen);
-		_linux.wnd = XCreateWindow((Display*)_linux.dis, _linux.root,
-			0, 0, _clientSize[0], _clientSize[1], 0,
-			DefaultDepth((Display*)_linux.dis, 0), InputOutput, DefaultVisual((Display*)_linux.dis, 0), CWBorderPixel | CWColormap | CWEventMask, &attr);
+		_data.screen = DefaultScreen((Display*)_data.dis);
+		_data.root = RootWindow((Display*)_data.dis, _data.screen);
+		_data.wnd = XCreateWindow((Display*)_data.dis, _data.root,
+			0, 0, _data.clientSize[0], _data.clientSize[1], 0,
+			DefaultDepth((Display*)_data.dis, 0), InputOutput, DefaultVisual((Display*)_data.dis, 0), CWBorderPixel | CWColormap | CWEventMask, &attr);
 
-		XSetWindowBackground((Display*)_linux.dis, _linux.wnd, _linux.bgColor);
+		XSetWindowBackground((Display*)_data.dis, _data.wnd, _data.bgColor);
 		//XClearWindow((Display*)_linux.dis, _linux.wnd);
 
 		//XSelectInput((Display*)_linux.dis, _linux.wnd, ExposureMask | ButtonPressMask | KeyPressMask | PropertyChangeMask);
@@ -95,14 +87,14 @@ namespace srk {
 		//auto sd = ScreenOfDisplay((Display*)_linux.dis, _linux.screen);
 		//printcln(sd->width, "   ", sd->height);
 
-		if (!_style.thickFrame) {
+		if (!_data.style.thickFrame) {
 			auto hints = XAllocSizeHints();
 			hints->flags = PMinSize | PMaxSize;
 			hints->min_width = _clientSize[0];
 			hints->min_height = _clientSize[1];
 			hints->max_width = _clientSize[0];
 			hints->max_height = _clientSize[1];
-			XSetWMNormalHints((Display*)_linux.dis, _linux.wnd, hints);
+			XSetWMNormalHints((Display*)_data.dis, _data.wnd, hints);
 			XFree(hints);
 		}
 
@@ -111,13 +103,13 @@ namespace srk {
 		// XChangeProperty((Display*)_linux.dis, _linux.wnd, window_type, XA_ATOM, 32, PropModeReplace, (uint8_t*)&value, 1);
 
 		{
-			Atom protocols[] = { _linux.WM_DELETE_WINDOW, _linux.NET_WM_PING };
-			XSetWMProtocols((Display*)_linux.dis, _linux.wnd, protocols, sizeof(protocols) / sizeof(Atom));
+			Atom protocols[] = { _data.WM_DELETE_WINDOW, _data.NET_WM_PING };
+			XSetWMProtocols((Display*)_data.dis, _data.wnd, protocols, sizeof(protocols) / sizeof(Atom));
 		}
 
 		{
 			Atom type = _linux.NET_WM_WINDOW_TYPE_NORMAL;
-			XChangeProperty((Display*)_linux.dis, _linux.wnd, _linux.NET_WM_WINDOW_TYPE, XA_ATOM, 32, PropModeReplace, (uint8_t*)&type, 1);
+			XChangeProperty((Display*)_data.dis, _data.wnd, _data.NET_WM_WINDOW_TYPE, XA_ATOM, 32, PropModeReplace, (uint8_t*)&type, 1);
 		}
 
 		{
@@ -126,16 +118,16 @@ namespace srk {
 			hints.flags = MwmHints::MWM_HINTS_FUNCTIONS | MwmHints::MWM_HINTS_DECORATIONS;
 			hints.functions = MwmHints::MWM_FUNC_MOVE | MwmHints::MWM_FUNC_CLOSE | MwmHints::MWM_FUNC_RESIZE;
 			hints.decorations = MwmHints::MWM_DECOR_BORDER | MwmHints::MWM_DECOR_RESIZEH | MwmHints::MWM_DECOR_TITLE | MwmHints::MWM_DECOR_MENU;
-			if (_style.minimizeButton) {
+			if (_data.style.minimizeButton) {
 				hints.functions |= MwmHints::MWM_FUNC_MINIMIZE;
 				hints.decorations |= MwmHints::MWM_DECOR_MINIMIZE;
 			}
-			if (_style.maximizeButton) {
+			if (_data.style.maximizeButton) {
 				hints.functions |= MwmHints::MWM_FUNC_MAXIMIZE;
 				hints.decorations |= MwmHints::MWM_DECOR_MAXIMIZE;
 			}
 
-			XChangeProperty((Display*)_linux.dis, _linux.wnd, _linux.MOTIF_WM_HINTS, XA_ATOM, 32, PropModeReplace, (uint8_t*)&hints, 5);
+			XChangeProperty((Display*)_data.dis, _data.wnd, _data.MOTIF_WM_HINTS, XA_ATOM, 32, PropModeReplace, (uint8_t*)&hints, 5);
 		}
 
 		{
@@ -143,27 +135,27 @@ namespace srk {
 			hints->flags = StateHint;
 			hints->initial_state = NormalState;
 
-			XSetWMHints((Display*)_linux.dis, _linux.wnd, hints);
+			XSetWMHints((Display*)_data.dis, _data.wnd, hints);
 			XFree(hints);
 		}
 
 		setTitle(title);
 
-		XFlush((Display*)_linux.dis);
+		XFlush((Display*)_data.dis);
 
 		{
-			_linux.waitFrameEXTENTS = true;
+			_data.waitFrameEXTENTS = true;
 
-			_sendClientEventToWM(_linux.NET_REQUEST_FRAME_EXTENTS);
-			_waitEvent(_linux.waitFrameEXTENTS);
+			_sendClientEventToWM(_data.NET_REQUEST_FRAME_EXTENTS);
+			_waitEvent(_data.waitFrameEXTENTS);
 		}
 
 		{
 			auto area = _calcWorkArea();
 			//auto sd = ScreenOfDisplay((Display*)_linux.dis, _linux.screen);
-			_linux.wndPos.set((area.size[0] - _clientSize[0] - _border[0] - _border[1]) / 2, (area.size[1] - _clientSize[1] - _border[2] - _border[3]) / 2);
+			_data.wndPos.set((area.size[0] - _data.clientSize[0] - _data.border[0] - _data.border[1]) / 2, (area.size[1] - _data.clientSize[1] - _data.border[2] - _data.border[3]) / 2);
 
-			if (auto top = area.pos[1] + _border[2]; _linux.wndPos[1] < top) _linux.wndPos[1] = top;
+			if (auto top = area.pos[1] + _border[2]; _data.wndPos[1] < top) _data.wndPos[1] = top;
 		}
 
 		_updateWindowPlacement();
@@ -171,28 +163,32 @@ namespace srk {
 		return true;
 	}
 
+	bool Window::isCreated() const {
+		return _data.isCreated;
+	}
+
 	void* Window::getNative(WindowNative native) const {
 		switch (native) {
 		case WindowNative::X_DISPLAY:
-			return _linux.dis;
+			return _data.dis;
 		case WindowNative::WINDOW:
-			return (void*)_linux.wnd;
+			return (void*)_data.wnd;
 		}
 
 		return nullptr;
 	}
 
 	bool Window::isFullscreen() const {
-		return _isFullscreen;
+		return _data.isFullscreen;
 	}
 
 	Vec4ui32 Window::getBorder() const {
-		return _border;
+		return _data.border;
 	}
 
 	void Window::toggleFullscreen() {
-		if (_linux.wnd) {
-			_isFullscreen = !_isFullscreen;
+		if (_data.wnd) {
+			_data.isFullscreen = !_data.isFullscreen;
 			_updateWindowPlacement();
 		}
 	}
@@ -200,18 +196,16 @@ namespace srk {
 	Vec2ui32 Window::getCurrentClientSize() const {
 		Vec2ui32 size;
 
-		if (_linux.wnd) {
-			if (_isFullscreen) {
-				auto sd = ScreenOfDisplay((Display*)_linux.dis, _linux.screen);
+		if (_data.wnd) {
+			if (_data.isFullscreen) {
+				auto sd = ScreenOfDisplay((Display*)_data.dis, _data.screen);
 				size.set(sd->width, sd->height);
-			}
-			else {
-				if (_linux.wndState == WindowState::MAXIMUM || (_linux.wndState == WindowState::MINIMUM && _linux.prevWndState == WindowState::MAXIMUM)) {
+			} else {
+				if (_data.wndState == WindowState::MAXIMUM || (_data.wndState == WindowState::MINIMUM && _data.prevWndState == WindowState::MAXIMUM)) {
 					auto area = _calcWorkArea();
-					size.set(std::max<int32_t>(area.size[0], 0), std::max<int32_t>(area.size[1] - _border[2], 0));
-				}
-				else {
-					size = _clientSize;
+					size.set(std::max<int32_t>(area.size[0], 0), std::max<int32_t>(area.size[1] - _data.border[2], 0));
+				} else {
+					size = _data.clientSize;
 				}
 			}
 		}
@@ -220,31 +214,31 @@ namespace srk {
 	}
 
 	Vec2ui32 Window::getClientSize() const {
-		return _clientSize;
+		return _data.clientSize;
 	}
 
 	void Window::setClientSize(const Vec2ui32& size) {
-		if (_linux.wnd && _clientSize != size) {
-			_clientSize = size;
+		if (_data.wnd && _data.clientSize != size) {
+			_data.clientSize = size;
 			_updateWindowPlacement();
 			_sendResizedEvent();
 		}
 	}
 
 	std::string_view Window::getTitle() const {
-		return _linux.title;
+		return _data.title;
 	}
 
 	void Window::setTitle(const std::string_view& title) {
-		if (_linux.wnd) {
-			_linux.title = title;
-			XStoreName((Display*)_linux.dis, _linux.wnd, _linux.title.data());
+		if (_data.wnd) {
+			_data.title = title;
+			XStoreName((Display*)_data.dis, _data.wnd, _data.title.data());
 		}
 	}
 
 	void Window::setPosition(const Vec2i32& pos) {
-		if (_linux.wnd && _linux.wndPos != pos) {
-			_linux.wndPos = pos;
+		if (_data.wnd && _data.wndPos != pos) {
+			_data.wndPos = pos;
 			_updateWindowPlacement();
 		}
 	}
@@ -254,79 +248,65 @@ namespace srk {
 	}
 
 	bool Window::hasFocus() const {
-		if (!_linux.wnd) return false;
+		if (!_data.wnd) return false;
 
 		::Window focused;
 		int32_t revertTo;
 
-		XGetInputFocus((Display*)_linux.dis, &focused, &revertTo);
-		return focused == _linux.wnd;
+		XGetInputFocus((Display*)_data.dis, &focused, &revertTo);
+		return focused == _data.wnd;
 	}
 
 	void Window::setFocus() {
-		if (_linux.wnd && _isVisible) XSetInputFocus((Display*)_linux.dis, _linux.wnd, RevertToParent, CurrentTime);
+		if (_data.wnd && _data.isVisible) XSetInputFocus((Display*)_data.dis, _data.wnd, RevertToParent, CurrentTime);
 	}
 
 	bool Window::isMaximzed() const {
-		if (_linux.wnd) return _linux.wndState == WindowState::MAXIMUM;
+		if (_data.wnd) return _data.wndState == WindowState::MAXIMUM;
 		return false;
 	}
 
 	void Window::setMaximum() {
-		if (_linux.wnd && _setWndState(WindowState::MAXIMUM)) _updateWindowPlacement();
+		if (_data.wnd && _setWndState(WindowState::MAXIMUM)) _updateWindowPlacement();
 	}
 
 	bool Window::isMinimzed() const {
-		if (_linux.wnd) return _linux.wndState == WindowState::MINIMUM;
+		if (_data.wnd) return _data.wndState == WindowState::MINIMUM;
 		return false;
 	}
 
 	void Window::setMinimum() {
-		if (_linux.wnd && _setWndState(WindowState::MINIMUM)) _updateWindowPlacement();
+		if (_data.wnd && _setWndState(WindowState::MINIMUM)) _updateWindowPlacement();
 	}
 
 	void Window::setRestore() {
-		if (_linux.wnd && _setWndState(WindowState::NORMAL)) _updateWindowPlacement();
+		if (_data.wnd && _setWndState(WindowState::NORMAL)) _updateWindowPlacement();
 	}
 
 	bool Window::isVisible() const {
-		if (_linux.wnd) return _isVisible;
+		if (_data.wnd) return _data.isVisible;
 		return false;
 	}
 
 	void Window::setVisible(bool b) {
-		if (_linux.wnd && _isVisible != b) {
-			_isVisible = b;
+		if (_data.wnd && _data.isVisible != b) {
+			_data.isVisible = b;
 			_updateWindowPlacement();
 		}
 	}
 
 	void Window::pollEvents() {
-		if (!_linux.dis) return;
 		XEvent e = { 0 };
-		while (XCheckIfEvent((Display*)_linux.dis, &e, [](Display* display, XEvent* event, XPointer pointer) { return True; }, (XPointer)this)) _doEvent(&e);
+		while (_data.dis && XCheckIfEvent((Display*)_data.dis, &e, [](Display* display, XEvent* event, XPointer pointer) { return True; }, (XPointer)this)) _doEvent(&e);
 	}
 
 	void Window::close() {
-		if (!_app) return;
+		if (!_data.isCreated) return;
 
-		if (_linux.wnd) {
-			XDestroyWindow((Display*)_linux.dis, _linux.wnd);
-			_linux.wnd = 0;
-			_linux.title.clear();
-		}
+		if (_data.wnd) XDestroyWindow((Display*)_data.dis, _data.wnd);
+		if (_data.dis) XCloseDisplay((Display*)_data.dis);
 
-		if (_linux.dis) {
-			XCloseDisplay((Display*)_linux.dis);
-			_linux.dis = nullptr;
-		}
-
-		_isFullscreen = false;
-		_clientSize = Vec2ui32();
-		_border = Vec4i32();
-		_isVisible = false;
-
-		_app.reset();
+		_data = decltype(_data)();
 
 		_eventDispatcher->dispatchEvent(this, WindowEvent::CLOSED);
 	}
@@ -335,7 +315,7 @@ namespace srk {
 	void Window::_sendClientEventToWM(X11_Atom msgType, int64_t a, int64_t b, int64_t c, int64_t d, int64_t e) {
 		XEvent evt = { ClientMessage };
 		auto& client = evt.xclient;
-		client.window = _linux.wnd;
+		client.window = _data.wnd;
 		client.format = 32; // Data is 32-bit longs
 		client.message_type = msgType;
 		client.data.l[0] = a;
@@ -343,12 +323,12 @@ namespace srk {
 		client.data.l[2] = c;
 		client.data.l[3] = d;
 		client.data.l[4] = e;
-		XSendEvent((Display*)_linux.dis, _linux.root, False, SubstructureNotifyMask | SubstructureRedirectMask, &evt);
+		XSendEvent((Display*)_data.dis, _data.root, False, SubstructureNotifyMask | SubstructureRedirectMask, &evt);
 	}
 
 	void Window::_sendResizedEvent() {
-		if (auto size = getCurrentClientSize(); _linux.sentSize != size) {
-			_linux.sentSize = size;
+		if (auto size = getCurrentClientSize(); _data.sentSize != size) {
+			_data.sentSize = size;
 			_eventDispatcher->dispatchEvent(this, WindowEvent::RESIZED);
 		}
 	}
@@ -356,10 +336,9 @@ namespace srk {
 	void Window::_waitEvent(bool& value) {
 		while (value) {
 			XEvent e = { 0 };
-			if (XCheckIfEvent((Display*)_linux.dis, &e, [](Display* display, XEvent* event, XPointer pointer) { return True; }, (XPointer)this)) {
+			if (_data.dis && XCheckIfEvent((Display*)_data.dis, &e, [](Display* display, XEvent* event, XPointer pointer) { return True; }, (XPointer)this)) {
 				_doEvent(&e);
-			}
-			else {
+			} else {
 				value = false;
 				break;
 			}
@@ -371,7 +350,7 @@ namespace srk {
 		int32_t actualFormat;
 		uint64_t count, bytesAfter;
 
-		XGetWindowProperty((Display*)_linux.dis, wnd, property, 0, (~0), False, type, &actualType, &actualFormat, &count, &bytesAfter, value);
+		XGetWindowProperty((Display*)_data.dis, wnd, property, 0, (~0), False, type, &actualType, &actualFormat, &count, &bytesAfter, value);
 
 		return count;
 	}
@@ -380,10 +359,10 @@ namespace srk {
 		Atom* states = nullptr;
 		bool maximized = false;
 
-		auto count = _getXWndProperty(_linux.wnd, _linux.NET_WM_STATE, XA_ATOM, (uint8_t**)&states);
+		auto count = _getXWndProperty(_data.wnd, _data.NET_WM_STATE, XA_ATOM, (uint8_t**)&states);
 
-		for (size_t i = 0; i < count; i++) {
-			if (states[i] == _linux.NET_WM_STATE_MAXIMIZED_VERT || states[i] == _linux.NET_WM_STATE_MAXIMIZED_HORZ) {
+		for (size_t i = 0; i < count; ++i) {
+			if (states[i] == _data.NET_WM_STATE_MAXIMIZED_VERT || states[i] == _data.NET_WM_STATE_MAXIMIZED_HORZ) {
 				maximized = true;
 				break;
 			}
@@ -405,7 +384,7 @@ namespace srk {
 			Window icon;
 		}*state = nullptr;
 
-		if (_getXWndProperty(_linux.wnd, _linux.WM_STATE, _linux.WM_STATE, (uint8_t**)&state) >= 2) result = state->state;
+		if (_getXWndProperty(_data.wnd, _data.WM_STATE, _data.WM_STATE, (uint8_t**)&state) >= 2) result = state->state;
 
 		if (state) XFree(state);
 
@@ -418,8 +397,8 @@ namespace srk {
 		Atom* extents = nullptr;
 		Atom* desktop = nullptr;
 
-		if (auto extentCount = _getXWndProperty(_linux.root, _linux.NET_WORKAREA, XA_CARDINAL, (uint8_t**)&extents); extentCount >= 4) {
-			if (_getXWndProperty(_linux.root, _linux.NET_CURRENT_DESKTOP, XA_CARDINAL, (uint8_t**)&desktop) > 0) {
+		if (auto extentCount = _getXWndProperty(_data.root, _data.NET_WORKAREA, XA_CARDINAL, (uint8_t**)&extents); extentCount >= 4) {
+			if (_getXWndProperty(_data.root, _data.NET_CURRENT_DESKTOP, XA_CARDINAL, (uint8_t**)&desktop) > 0) {
 				if (*desktop < extentCount / 4) {
 					area.pos.set(extents[*desktop * 4 + 0], extents[*desktop * 4 + 1]);
 					area.size.set(extents[*desktop * 4 + 2], extents[*desktop * 4 + 3]);
@@ -434,9 +413,9 @@ namespace srk {
 	}
 
 	bool Window::_setWndState(WindowState state) {
-		if (_linux.wndState != state) {
-			_linux.prevWndState = _linux.wndState;
-			_linux.wndState = state;
+		if (_data.wndState != state) {
+			_data.prevWndState = _data.wndState;
+			_data.wndState = state;
 			return true;
 		}
 
@@ -444,76 +423,73 @@ namespace srk {
 	}
 
 	void Window::_updateWindowPlacement() {
-		if (_isVisible) {
-			if (!_linux.xMapped) {
-				_linux.xMapped = true;
-				_linux.waitVisibility = true;
-				XMapWindow((Display*)_linux.dis, _linux.wnd);
+		if (_data.isVisible) {
+			if (!_data.xMapped) {
+				_data.xMapped = true;
+				_data.waitVisibility = true;
+				XMapWindow((Display*)_data.dis, _data.wnd);
 			}
 
-			if (_isFullscreen) {
-				if (!_linux.xFullscreen) {
-					_linux.xFullscreen = true;
-					_sendClientEventToWM(_linux.NET_WM_STATE, 1, _linux.NET_WM_STATE_FULLSCREEN, 0, 1);
+			if (_data.isFullscreen) {
+				if (!_data.xFullscreen) {
+					_data.xFullscreen = true;
+					_sendClientEventToWM(_data.NET_WM_STATE, 1, _data.NET_WM_STATE_FULLSCREEN, 0, 1);
 				}
-			}
-			else {
-				if (_linux.xFullscreen) {
-					_linux.xFullscreen = false;
-					_sendClientEventToWM(_linux.NET_WM_STATE, 0, _linux.NET_WM_STATE_FULLSCREEN, 0, 1);
+			} else {
+				if (_data.xFullscreen) {
+					_data.xFullscreen = false;
+					_sendClientEventToWM(_data.NET_WM_STATE, 0, _data.NET_WM_STATE_FULLSCREEN, 0, 1);
 				}
 
-				switch (_linux.wndState) {
+				switch (_data.wndState) {
 				case WindowState::MAXIMUM:
 				{
-					if (_linux.xWndState != WindowState::MAXIMUM) {
-						_linux.xWndState = WindowState::MAXIMUM;
-						_sendClientEventToWM(_linux.NET_WM_STATE, 1, _linux.NET_WM_STATE_MAXIMIZED_VERT, _linux.NET_WM_STATE_MAXIMIZED_HORZ, 1);
+					if (_data.xWndState != WindowState::MAXIMUM) {
+						_data.xWndState = WindowState::MAXIMUM;
+						_sendClientEventToWM(_data.NET_WM_STATE, 1, _data.NET_WM_STATE_MAXIMIZED_VERT, _data.NET_WM_STATE_MAXIMIZED_HORZ, 1);
 					}
 
 					break;
 				}
 				case WindowState::MINIMUM:
 				{
-					if (_linux.xWndState != WindowState::MINIMUM) {
-						if (_linux.xWndState == WindowState::MAXIMUM) {
-							_sendClientEventToWM(_linux.NET_WM_STATE, 0, _linux.NET_WM_STATE_MAXIMIZED_VERT, _linux.NET_WM_STATE_MAXIMIZED_HORZ, 1);
+					if (_data.xWndState != WindowState::MINIMUM) {
+						if (_data.xWndState == WindowState::MAXIMUM) {
+							_sendClientEventToWM(_data.NET_WM_STATE, 0, _data.NET_WM_STATE_MAXIMIZED_VERT, _data.NET_WM_STATE_MAXIMIZED_HORZ, 1);
 						}
 
-						_linux.xWndState = WindowState::MINIMUM;
-						XIconifyWindow((Display*)_linux.dis, _linux.wnd, _linux.screen);
+						_data.xWndState = WindowState::MINIMUM;
+						XIconifyWindow((Display*)_data.dis, _data.wnd, _data.screen);
 					}
 
 					break;
 				}
 				default:
 				{
-					if (_linux.xWndState == WindowState::MINIMUM) {
-						_linux.xWndState = WindowState::NORMAL;
-						_linux.waitVisibility = true;
-						XMapWindow((Display*)_linux.dis, _linux.wnd);
-						_waitEvent(_linux.waitVisibility);
-					}
-					else if (_linux.xWndState == WindowState::MAXIMUM) {
-						_sendClientEventToWM(_linux.NET_WM_STATE, 0, _linux.NET_WM_STATE_MAXIMIZED_VERT, _linux.NET_WM_STATE_MAXIMIZED_HORZ, 1);
+					if (_data.xWndState == WindowState::MINIMUM) {
+						_data.xWndState = WindowState::NORMAL;
+						_data.waitVisibility = true;
+						XMapWindow((Display*)_data.dis, _data.wnd);
+						_waitEvent(_data.waitVisibility);
+					} else if (_data.xWndState == WindowState::MAXIMUM) {
+						_sendClientEventToWM(_data.NET_WM_STATE, 0, _data.NET_WM_STATE_MAXIMIZED_VERT, _data.NET_WM_STATE_MAXIMIZED_HORZ, 1);
 					}
 
-					XMoveWindow((Display*)_linux.dis, _linux.wnd, _linux.wndPos[0], _linux.wndPos[1]);
+					XMoveWindow((Display*)_data.dis, _data.wnd, _data.wndPos[0], _data.wndPos[1]);
 
 					break;
 				}
 				}
 			}
-		}
-		else {
-			if (_linux.xMapped) {
-				_linux.xMapped = false;
-				_linux.waitVisibility = true;
-				XUnmapWindow((Display*)_linux.dis, _linux.wnd);
+		} else {
+			if (_data.xMapped) {
+				_data.xMapped = false;
+				_data.waitVisibility = true;
+				XUnmapWindow((Display*)_data.dis, _data.wnd);
 			}
 		}
 
-		_waitEvent(_linux.waitVisibility);
+		_waitEvent(_data.waitVisibility);
 	}
 
 	void Window::_doEvent(void* evt) {
@@ -523,19 +499,18 @@ namespace srk {
 		{
 			auto msgType = e.xclient.message_type;
 
-			if (msgType == _linux.WM_PROTOCOLS) {
+			if (msgType == _data.WM_PROTOCOLS) {
 				auto protocol = (Atom)e.xclient.data.l[0];
 
-				if (protocol == _linux.WM_DELETE_WINDOW) {
+				if (protocol == _data.WM_DELETE_WINDOW) {
 					auto isCanceled = false;
 					_eventDispatcher->dispatchEvent(this, WindowEvent::CLOSING, &isCanceled);
 					if (!isCanceled) close();
-				}
-				else if (protocol == _linux.NET_WM_PING) {
+				} else if (protocol == _data.NET_WM_PING) {
 					XEvent reply = e;
-					reply.xclient.window = _linux.root;
+					reply.xclient.window = _data.root;
 
-					XSendEvent((Display*)_linux.dis, _linux.root, False, SubstructureNotifyMask | SubstructureRedirectMask, &reply);
+					XSendEvent((Display*)_data.dis, _data.root, False, SubstructureNotifyMask | SubstructureRedirectMask, &reply);
 				}
 			}
 
@@ -546,14 +521,12 @@ namespace srk {
 			auto isNormal = false;
 			auto& conf = e.xconfigure;
 
-			if (!_isFullscreen) {
+			if (!_data.isFullscreen) {
 				if (_isMaximized()) {
 					_setWndState(WindowState::MAXIMUM);
-				}
-				else if (_isMinimized()) {
+				} else if (_isMinimized()) {
 					_setWndState(WindowState::MINIMUM);
-				}
-				else {
+				} else {
 					isNormal = true;
 					_setWndState(WindowState::NORMAL);
 				}
@@ -562,10 +535,10 @@ namespace srk {
 			if (isNormal) {
 				int32_t x, y;
 				::Window dummy;
-				XTranslateCoordinates((Display*)_linux.dis, _linux.wnd, _linux.root, 0, 0, &x, &y, &dummy);
+				XTranslateCoordinates((Display*)_data.dis, _data.wnd, _data.root, 0, 0, &x, &y, &dummy);
 
-				_linux.wndPos.set(x - _border[0], y - _border[2]);
-				_clientSize.set(conf.width, conf.height);
+				_data.wndPos.set(x - _data.border[0], y - _data.border[2]);
+				_data.clientSize.set(conf.width, conf.height);
 			}
 
 			_sendResizedEvent();
@@ -601,37 +574,34 @@ namespace srk {
 		{
 			auto& prop = e.xproperty;
 			auto& atom = prop.atom;
-			if (atom == _linux.NET_FRAME_EXTENTS) {
-				if (prop.state == PropertyNewValue && prop.window == _linux.wnd) {
+			if (atom == _data.NET_FRAME_EXTENTS) {
+				if (prop.state == PropertyNewValue && prop.window == _data.wnd) {
 					uint8_t* property = nullptr;
-					if (auto count = _getXWndProperty(_linux.wnd, _linux.NET_FRAME_EXTENTS, XA_CARDINAL, &property); count >= 4) {
-						for (size_t i = 0; i < 4; ++i) _border[i] = ((int64_t*)property)[i];
+					if (auto count = _getXWndProperty(_data.wnd, _data.NET_FRAME_EXTENTS, XA_CARDINAL, &property); count >= 4) {
+						for (size_t i = 0; i < 4; ++i) _data.border[i] = ((int64_t*)property)[i];
 					}
 
 					if (property) XFree(property);
 
-					_linux.waitFrameEXTENTS = false;
+					_data.waitFrameEXTENTS = false;
 				}
-			}
-			else if (atom == _linux.WM_STATE) {
-				if (!_isFullscreen) {
+			} else if (atom == _data.WM_STATE) {
+				if (!_data.isFullscreen) {
 					if (auto state = _getXWndState(); state == IconicState) {
 						_setWndState(WindowState::MINIMUM);
-					}
-					else if (state == NormalState) {
+					} else if (state == NormalState) {
 						_setWndState(WindowState::NORMAL);
 					}
 				}
-			}
-			else if (atom == _linux.NET_WM_STATE) {
-				if (!_isFullscreen && _isMaximized()) _setWndState(WindowState::MAXIMUM);
+			} else if (atom == _data.NET_WM_STATE) {
+				if (!_data.isFullscreen && _isMaximized()) _setWndState(WindowState::MAXIMUM);
 			}
 
 			break;
 		}
 		case VisibilityNotify:
 		{
-			_linux.waitVisibility = false;
+			_data.waitVisibility = false;
 
 			break;
 		}

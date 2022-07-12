@@ -11,10 +11,10 @@ namespace srk {
 		Window();
 		virtual ~Window();
 
-		virtual IntrusivePtr<Application> SRK_CALL getApplication() const override;
 		virtual IntrusivePtr<events::IEventDispatcher<WindowEvent>> SRK_CALL getEventDispatcher() override;
 
-		virtual bool SRK_CALL create(Application& app, const WindowStyle& style, const std::string_view& title, const Vec2ui32& clientSize, bool fullscreen) override;
+		virtual bool SRK_CALL create(const WindowStyle& style, const std::string_view& title, const Vec2ui32& clientSize, bool fullscreen) override;
+		virtual bool SRK_CALL isCreated() const override;
 		virtual void* SRK_CALL getNative(WindowNative native) const override;
 		virtual bool SRK_CALL isFullscreen() const override;
 		virtual void SRK_CALL toggleFullscreen() override;
@@ -40,18 +40,10 @@ namespace srk {
 
 	protected:
 		static std::atomic_uint32_t _counter;
-		bool _isFullscreen;
-		bool _isVisible;
-		WindowStyle _style;
-		Vec2ui32 _clientSize;
-		Vec4i32 _border;//left, right, top, bottom
 
-		IntrusivePtr<Application> _app;
 		IntrusivePtr<events::IEventDispatcher<WindowEvent>> _eventDispatcher;
 
 		//platform
-		std::wstring _className;
-
 		enum class WindowState : uint8_t {
 			NORMAL,
 			MAXIMUM,
@@ -60,16 +52,28 @@ namespace srk {
 
 
 		struct {
-			std::string title;
-			WindowState wndState = WindowState::NORMAL;
-			WindowState prevWndState = WindowState::NORMAL;
+			bool isCreated = false;
+			bool isFullscreen = false;
+			bool isVisible = false;
 			bool wndDirty = false;
 			bool ignoreEvtSize = false;
+
+			WindowStyle style;
+			WindowState wndState = WindowState::NORMAL;
+			WindowState prevWndState = WindowState::NORMAL;
+			
+			HMODULE module = nullptr;
 			HWND wnd = nullptr;
-			Vec2i32 clinetPos;
-			Vec2ui32 sentSize;
 			HBRUSH bkBrush = nullptr;
-		} _win;
+
+			std::string title;
+			std::wstring className;
+
+			Vec2i32 clinetPos;
+			Vec2ui32 clientSize;
+			Vec2ui32 sentSize;
+			Vec4i32 border;//left, right, top, bottom
+		} _data;
 
 
 		void SRK_CALL _calcBorder();
@@ -93,7 +97,7 @@ namespace srk {
 		}
 
 		inline UINT SRK_CALL _getWindowPosFlags() {
-			return _isFullscreen ? _getWindowPosFlags<true>() : _getWindowPosFlags<false>();
+			return _data.isFullscreen ? _getWindowPosFlags<true>() : _getWindowPosFlags<false>();
 		}
 
 		static LRESULT CALLBACK _wndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);

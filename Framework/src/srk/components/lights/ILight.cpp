@@ -2,7 +2,7 @@
 
 namespace srk::components::lights {
 	ILight::ILight() :
-		_color(1.0f),
+		_color(1.0f, 1.0f, 1.0f),
 		_intensity(1.0f) {
 		SRK_RTTI_DEFINE();
 	}

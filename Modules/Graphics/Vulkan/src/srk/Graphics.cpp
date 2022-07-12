@@ -32,8 +32,7 @@ namespace srk::modules::graphics::vulkan {
 		if (conf.win) {
 			if (!conf.win->getNative(WindowNative::WINDOW)) return false;
 #if SRK_OS == SRK_OS_WINDOWS
-			auto app = conf.win->getApplication();
-			if (!app || !app->getNative()) return false;
+			if (!conf.win->getNative(WindowNative::MODULE)) return false;
 #endif
 		} else {
 			if (!conf.offscreen) return false;
@@ -291,7 +290,7 @@ namespace srk::modules::graphics::vulkan {
 		createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
 		createInfo.pNext = nullptr;
 		createInfo.flags = 0;
-		createInfo.hinstance = (HINSTANCE)win.getApplication()->getNative();
+		createInfo.hinstance = (HMODULE)win.getNative(WindowNative::MODULE);
 		createInfo.hwnd = (HWND)win.getNative(WindowNative::WINDOW);
 
 		err = vkCreateWin32SurfaceKHR(_vulkanStatus.instance, &createInfo, nullptr, &_vulkanStatus.surface);

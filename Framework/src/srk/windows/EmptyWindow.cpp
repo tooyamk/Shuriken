@@ -2,7 +2,6 @@
 
 namespace srk {
 	EmptyWindow::EmptyWindow() :
-		_isClosing(false),
 		_eventDispatcher(new events::EventDispatcher<WindowEvent>()) {
 	}
 
@@ -10,20 +9,19 @@ namespace srk {
 		close();
 	}
 
-	IntrusivePtr<Application> EmptyWindow::getApplication() const {
-		return _app;
-	}
-
 	IntrusivePtr<events::IEventDispatcher<WindowEvent>> EmptyWindow::getEventDispatcher() {
 		return _eventDispatcher;
 	}
 
-	bool EmptyWindow::create(Application& app, const WindowStyle& style, const std::string_view& title, const Vec2ui32& clientSize, bool fullscreen) {
-		if (_app) return false;
+	bool EmptyWindow::create(const WindowStyle& style, const std::string_view& title, const Vec2ui32& clientSize, bool fullscreen) {
+		if (_data.isCreated) return false;
 
-		_app = app;
-
+		_data.isCreated = true;
 		return true;
+	}
+
+	bool EmptyWindow::isCreated() const {
+		return _data.isCreated;
 	}
 
 	void* EmptyWindow::getNative(WindowNative native) const {
@@ -96,6 +94,10 @@ namespace srk {
 	}
 
 	void EmptyWindow::close() {
-		if (_app) _app.reset();
+		if (!_data.isCreated) return;
+
+		_data = decltype(_data)();
+
+		_eventDispatcher->dispatchEvent(this, WindowEvent::CLOSED);
 	}
 }

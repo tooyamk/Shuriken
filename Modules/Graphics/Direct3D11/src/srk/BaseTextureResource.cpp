@@ -350,7 +350,7 @@ namespace srk::modules::graphics::d3d11 {
 		internalFormat = DXGI_FORMAT_UNKNOWN;
 		sampleCount = 0;
 		perPixelSize = 0;
-		texSize.set(0);
+		texSize.setAll(0);
 		arraySize = 0;
 		internalArraySize = 0;
 		mipLevels = 0;

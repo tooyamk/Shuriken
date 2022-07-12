@@ -11,7 +11,7 @@ namespace srk {
 		_childHead(nullptr),
 		_numChildren(0),
 		_lr(),
-		_ls(1.f),
+		_ls(decltype(_ls)::ONE),
 		_lm(),
 		_wr(),
 		_wm(),

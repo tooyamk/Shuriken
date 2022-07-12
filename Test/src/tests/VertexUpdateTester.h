@@ -8,12 +8,11 @@ public:
 		auto monitors = Monitor::getMonitors();
 		auto vms = monitors[0].getVideoModes();
 
-		IntrusivePtr app = new Application("TestApp");
 		IntrusivePtr win = new Window();
 
 		WindowStyle wndStype;
 		wndStype.thickFrame = true;
-		if (win->create(*app, wndStype, "", Vec2ui32(800, 600), false)) {
+		if (win->create(wndStype, "", Vec2ui32(800, 600), false)) {
 			IntrusivePtr gml = new GraphicsModuleLoader();
 
 			//if (gml->load("libs/" + getDLLName("srk-graphics-gl"))) {
@@ -41,8 +40,8 @@ public:
 						int a = 1;
 					}));
 
-					win->getEventDispatcher()->addEventListener(WindowEvent::CLOSED, createEventListener<WindowEvent>([app](Event<WindowEvent>& e) {
-						app->terminate();
+					win->getEventDispatcher()->addEventListener(WindowEvent::CLOSED, createEventListener<WindowEvent>([](Event<WindowEvent>& e) {
+						std::exit(0);
 					}));
 
 					win->getEventDispatcher()->addEventListener(WindowEvent::RESIZED, createEventListener<WindowEvent>([graphics](Event<WindowEvent>& e) {
@@ -61,7 +60,7 @@ public:
 						IntrusivePtr<IDepthStencilState> dss;
 					} renderData;
 					renderData.win = win;
-					renderData.looper = new Looper(1000.0 / 60.0);
+					renderData.looper = new Looper(1.0 / 60.0);
 					renderData.g = graphics;
 
 					{
@@ -139,13 +138,13 @@ public:
 					{
 						auto texRes = graphics->createTexture2DResource();
 						if (texRes) {
-							auto img0 = extensions::PNGConverter::decode(readFile(app->getPath().parent_path().u8string() + "/Resources/c4.png"));
+							auto img0 = extensions::PNGConverter::decode(readFile(getAppPath().parent_path().u8string() + "/Resources/c4.png"));
 							auto mipLevels = Image::calcMipLevels(img0->size);
 							ByteArray mipsData0;
 							std::vector<void*> mipsData0Ptr;
 							img0->generateMips(img0->format, mipLevels, mipsData0, mipsData0Ptr);
 
-							auto img1 = extensions::PNGConverter::decode(readFile(app->getPath().parent_path().u8string() + "/Resources/red.png"));
+							auto img1 = extensions::PNGConverter::decode(readFile(getAppPath().parent_path().u8string() + "/Resources/red.png"));
 							ByteArray mipsData1;
 							std::vector<void*> mipsData1Ptr;
 							img1->generateMips(img1->format, mipLevels, mipsData1, mipsData1Ptr);

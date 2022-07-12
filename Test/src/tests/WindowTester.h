@@ -5,17 +5,15 @@
 class WindowTester : public BaseTester {
 public:
 	virtual int32_t SRK_CALL run() override {
-		IntrusivePtr app = new Application("TestApp");
-
 		/*printaln("==>>>>", GetCurrentProcess(), "     ", GetCurrentProcessId());
 		auto ppp = OpenProcess(PROCESS_ALL_ACCESS, false, GetCurrentProcessId());
 		TerminateProcess(ppp, 0);*/
 
 		std::vector<IntrusivePtr<IWindow>> activedWindows;
 
-		auto tryCreateWndFn = [&activedWindows, app](const WindowStyle& style, const std::string_view& title) {
+		auto tryCreateWndFn = [&activedWindows](const WindowStyle& style, const std::string_view& title) {
 			IntrusivePtr win = new Window();
-			if (win->create(*app, style, title, Vec2ui32(800, 600), false)) {
+			if (win->create(style, title, Vec2ui32(800, 600), false)) {
 				activedWindows.emplace_back(win);
 
 				win->getEventDispatcher()->addEventListener(WindowEvent::CLOSING, createEventListener<WindowEvent>([](Event<WindowEvent>& e) {
@@ -23,7 +21,7 @@ public:
 					//*val = true;
 				}));
 
-				win->getEventDispatcher()->addEventListener(WindowEvent::CLOSED, createEventListener<WindowEvent>([&activedWindows, app](Event<WindowEvent>& e) {
+				win->getEventDispatcher()->addEventListener(WindowEvent::CLOSED, createEventListener<WindowEvent>([&activedWindows](Event<WindowEvent>& e) {
 					/*printaln("closed start");
 					auto win = (IWindow*)e.getTarget();
 					for (size_t i = 0, n = activedWindows.size(); i < n; ++i)
@@ -77,7 +75,7 @@ public:
 				for (auto itr = activedWindows.begin(); itr != activedWindows.end();) {
 					auto win = *itr;
 					win->pollEvents();
-					if (win->getApplication()) {
+					if (win->isCreated()) {
 						++itr;
 					} else {
 						itr = activedWindows.erase(itr);
