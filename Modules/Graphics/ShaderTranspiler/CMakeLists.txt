@@ -25,8 +25,8 @@ include_directories(
     ${SRKPROJ_SPIRV_CROSS_INCLUDE}
 )
 add_definitions(${SRK_MODULE_DEFINITIONS})
-file(GLOB_RECURSE SRC_FILES "src/*.h" "src/*.cpp")
-srkAddLibrarySourceGroup(${PROJECT_NAME} SHARED ${SRC_FILES})
+file(GLOB_RECURSE srcFiles "src/*.h" "src/*.cpp")
+srkAddLibrarySourceGroup(${PROJECT_NAME} SHARED ${srcFiles})
 add_dependencies(${PROJECT_NAME}
     ${SRKPROJ_SRK_FRAMEWORK_NAME}
     ${SRKPROJ_DX_SHADER_COMPILER_NAME}

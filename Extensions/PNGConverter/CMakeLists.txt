@@ -20,8 +20,8 @@ include_directories(
     ${SRKPROJ_LIBPNG_INCLUDE}
 )
 add_definitions(${SRK_EXTENSION_DEFINITIONS})
-file(GLOB_RECURSE SRC_FILES "src/*.h" "src/*.cpp")
-srkAddLibrarySourceGroup(${PROJECT_NAME} SHARED ${SRC_FILES})
+file(GLOB_RECURSE srcFiles "src/*.h" "src/*.cpp")
+srkAddLibrarySourceGroup(${PROJECT_NAME} SHARED ${srcFiles})
 add_dependencies(${PROJECT_NAME} 
     ${SRKPROJ_SRK_FRAMEWORK_NAME}
     ${SRKPROJ_LIBPNG_NAME}

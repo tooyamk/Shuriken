@@ -73,8 +73,8 @@ include_directories(
     ${SRK_SOURCE_DIR}/
 )
 add_definitions(${SRK_DEFINITIONS})
-file(GLOB_RECURSE SRC_FILES "src/*.h" "src/*.cpp")
-srkAddExecutableSourceGroup(${PROJECT_NAME} ${SRC_FILES})
+file(GLOB_RECURSE srcFiles "src/*.h" "src/*.cpp")
+srkAddExecutableSourceGroup(${PROJECT_NAME} ${srcFiles})
 
 set(compilerFlags "-Wl,-rpath=./libs/")
 if (SRK_C_COMPILER_CLANG OR SRK_C_COMPILER_GNU)

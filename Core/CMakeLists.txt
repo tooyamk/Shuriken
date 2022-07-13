@@ -6,8 +6,8 @@ set_property(GLOBAL PROPERTY SRKPROJ_SRK_CORE_DLL ${SRK_BUILD_DIR}/${CMAKE_SHARE
 
 include_directories(src)
 add_definitions(${SRK_DEFINITIONS} -DSRK_CORE_EXPORTS)
-file(GLOB_RECURSE SRC_FILES "src/*.h" "src/*.cpp")
-srkAddLibrarySourceGroup(${PROJECT_NAME} SHARED ${SRC_FILES})
+file(GLOB_RECURSE srcFiles "src/*.h" "src/*.cpp")
+srkAddLibrarySourceGroup(${PROJECT_NAME} SHARED ${srcFiles})
 
 if (NOT SRK_OS_WINDOWS)
     target_link_libraries(${PROJECT_NAME} dl)

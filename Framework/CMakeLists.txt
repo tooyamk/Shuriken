@@ -13,8 +13,8 @@ include_directories(
 )
 
 add_definitions(${SRK_DEFINITIONS} -DSRK_FW_EXPORTS)
-file(GLOB_RECURSE SRC_FILES "src/*.h" "src/*.cpp")
-srkAddLibrarySourceGroup(${PROJECT_NAME} SHARED ${SRC_FILES})
+file(GLOB_RECURSE srcFiles "src/*.h" "src/*.cpp" "src/*.mm")
+srkAddLibrarySourceGroup(${PROJECT_NAME} SHARED ${srcFiles})
 add_dependencies(${PROJECT_NAME} 
     ${SRKPROJ_SRK_CORE_NAME}
 )

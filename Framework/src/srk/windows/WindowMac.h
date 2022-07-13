@@ -1,14 +1,16 @@
 #pragma once
 
 #include "srk/windows/IWindow.h"
-#include "srk/math/Vector.h"
+
+#if SRK_OS == SRK_OS_MACOS
+#include "srk/math/Box.h"
 
 namespace srk {
-	class SRK_FW_DLL EmptyWindow : public IWindow {
+	class SRK_FW_DLL Window : public IWindow {
 	public:
-		EmptyWindow();
+		Window();
 
-		virtual ~EmptyWindow();
+		virtual ~Window();
 
 		virtual IntrusivePtr<events::IEventDispatcher<WindowEvent>> SRK_CALL getEventDispatcher() override;
 
@@ -45,3 +47,4 @@ namespace srk {
 		} _data;
 	};
 }
+#endif
