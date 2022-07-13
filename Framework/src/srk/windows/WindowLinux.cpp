@@ -155,7 +155,7 @@ namespace srk {
 			//auto sd = ScreenOfDisplay((Display*)_linux.dis, _linux.screen);
 			_data.wndPos.set((area.size[0] - _data.clientSize[0] - _data.border[0] - _data.border[1]) / 2, (area.size[1] - _data.clientSize[1] - _data.border[2] - _data.border[3]) / 2);
 
-			if (auto top = area.pos[1] + _linux.border[2]; _data.wndPos[1] < top) _data.wndPos[1] = top;
+			if (auto top = area.pos[1] + _data.border[2]; _data.wndPos[1] < top) _data.wndPos[1] = top;
 		}
 
 		_updateWindowPlacement();

@@ -216,24 +216,24 @@ function(srkFindParentDir in out names)
     endwhile()
 endfunction()
 
-#[[function(srkCollectSrcFiles rst)
+function(srkCollectSrcFiles rst)
     if (SRK_OS_MACOS)
         file(GLOB_RECURSE _files "src/*.h" "src/*.cpp" "src/*.mm")
     else ()
         file(GLOB_RECURSE _files "src/*.h" "src/*.cpp")
         
-        file(GLOB_RECURSE tmp "src/*.mm")
+        #[[file(GLOB_RECURSE tmp "src/*.mm")
         list(LENGTH tmp count)
         if (${count} GREATER 0)
             foreach(item ${tmp})
                 string(REGEX REPLACE ".+/(.+)\\..*" "\\1" _fileName ${item})
                 list(FILTER tmp1 EXCLUDE REGEX ${_fileName}.h)
             endforeach()
-        endif ()
+        endif ()]]
     endif ()
     
     set(${rst} ${_files} PARENT_SCOPE)
-endfunction()]]
+endfunction()
 
 function(srkTryDownloadFile url dst hash)
     if (EXISTS ${dst})
