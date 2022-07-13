@@ -34,7 +34,7 @@ namespace srk {
 		return _eventDispatcher;
 	}
 
-	bool Window::create(Application& app, const WindowStyle& style, const std::string_view& title, const Vec2ui32& clientSize, bool fullscreen) {
+	bool Window::create(const WindowStyle& style, const std::string_view& title, const Vec2ui32& clientSize, bool fullscreen) {
 		if (_data.isCreated) return false;
 
 		_data.clientSize = clientSize;
@@ -90,10 +90,10 @@ namespace srk {
 		if (!_data.style.thickFrame) {
 			auto hints = XAllocSizeHints();
 			hints->flags = PMinSize | PMaxSize;
-			hints->min_width = _clientSize[0];
-			hints->min_height = _clientSize[1];
-			hints->max_width = _clientSize[0];
-			hints->max_height = _clientSize[1];
+			hints->min_width = _data.clientSize[0];
+			hints->min_height = _data.clientSize[1];
+			hints->max_width = _data.clientSize[0];
+			hints->max_height = _data.clientSize[1];
 			XSetWMNormalHints((Display*)_data.dis, _data.wnd, hints);
 			XFree(hints);
 		}
@@ -108,7 +108,7 @@ namespace srk {
 		}
 
 		{
-			Atom type = _linux.NET_WM_WINDOW_TYPE_NORMAL;
+			Atom type = _data.NET_WM_WINDOW_TYPE_NORMAL;
 			XChangeProperty((Display*)_data.dis, _data.wnd, _data.NET_WM_WINDOW_TYPE, XA_ATOM, 32, PropModeReplace, (uint8_t*)&type, 1);
 		}
 
@@ -155,11 +155,12 @@ namespace srk {
 			//auto sd = ScreenOfDisplay((Display*)_linux.dis, _linux.screen);
 			_data.wndPos.set((area.size[0] - _data.clientSize[0] - _data.border[0] - _data.border[1]) / 2, (area.size[1] - _data.clientSize[1] - _data.border[2] - _data.border[3]) / 2);
 
-			if (auto top = area.pos[1] + _border[2]; _data.wndPos[1] < top) _data.wndPos[1] = top;
+			if (auto top = area.pos[1] + _linux.border[2]; _data.wndPos[1] < top) _data.wndPos[1] = top;
 		}
 
 		_updateWindowPlacement();
 
+		_data.isCreated = true;
 		return true;
 	}
 

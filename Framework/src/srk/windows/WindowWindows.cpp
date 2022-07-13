@@ -73,8 +73,7 @@ namespace srk {
 			GetDesktopWindow(), nullptr, _data.module, nullptr);
 		SetWindowLongPtr(_data.wnd, GWLP_USERDATA, (LONG_PTR)this);
 
-		//DeleteObject(bkBrush);
-
+		_data.isCreated = true;
 		return true;
 	}
 
