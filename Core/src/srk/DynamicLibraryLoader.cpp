@@ -1,4 +1,4 @@
-#include "DynamicLib.h"
+#include "DynamicLibraryLoader.h"
 #include "srk/String.h"
 
 #if SRK_OS != SRK_OS_WINDOWS
@@ -6,15 +6,15 @@
 #endif
 
 namespace srk {
-	DynamicLib::DynamicLib() :
+	DynamicLibraryLoader::DynamicLibraryLoader() :
 		_lib(nullptr) {
 	}
 
-	DynamicLib::~DynamicLib() {
+	DynamicLibraryLoader::~DynamicLibraryLoader() {
 		release();
 	}
 
-	bool DynamicLib::_load(const std::string_view& path) {
+	bool DynamicLibraryLoader::_load(const std::string_view& path) {
 		release();
 #if SRK_OS == SRK_OS_WINDOWS
 		auto wpath = String::Utf8ToUnicode(path);
@@ -26,7 +26,7 @@ namespace srk {
 		return _lib;
 	}
 
-	void DynamicLib::release() {
+	void DynamicLibraryLoader::release() {
 		if (_lib) {
 #if SRK_OS == SRK_OS_WINDOWS
 			FreeLibrary((HMODULE)_lib);
@@ -37,7 +37,7 @@ namespace srk {
 		}
 	}
 
-	void* DynamicLib::getSymbolAddress(const std::string_view& name) const {
+	void* DynamicLibraryLoader::getSymbolAddress(const std::string_view& name) const {
 		if (_lib) {
 #if SRK_OS == SRK_OS_WINDOWS
 			return GetProcAddress((HMODULE)_lib, name.data());

@@ -21,6 +21,7 @@ namespace srk {
 		virtual Vec2ui32 SRK_CALL getCurrentClientSize() const override;
 		virtual Vec2ui32 SRK_CALL getClientSize() const override;
 		virtual void SRK_CALL setClientSize(const Vec2ui32& size) override;
+		virtual std::string_view SRK_CALL getTitle() const override;
 		virtual void SRK_CALL setTitle(const std::string_view& title) override;
 		virtual void SRK_CALL setPosition(const Vec2i32& pos) override;
 		virtual void SRK_CALL setCursorVisible(bool visible) override;
@@ -42,6 +43,7 @@ namespace srk {
 		//platform
 		struct {
 			bool isCreated = false;
+			std::string title;
 		} _data;
 	};
 }

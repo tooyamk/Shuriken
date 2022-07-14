@@ -3,10 +3,10 @@
 #include "srk/Global.h"
 
 namespace srk {
-	class SRK_CORE_DLL DynamicLib {
+	class SRK_CORE_DLL DynamicLibraryLoader {
 	public:
-		DynamicLib();
-		virtual ~DynamicLib();
+		DynamicLibraryLoader();
+		virtual ~DynamicLibraryLoader();
 
 		inline bool SRK_CALL isLoaded() const { return _lib; }
 

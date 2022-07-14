@@ -67,6 +67,8 @@ get_property(SRKPROJ_SRK_INPUT_RAW_INPUT_DLL GLOBAL PROPERTY "SRKPROJ_SRK_INPUT_
 get_property(SRKPROJ_SRK_INPUT_XINPUT_NAME GLOBAL PROPERTY "SRKPROJ_SRK_INPUT_XINPUT_NAME")
 get_property(SRKPROJ_SRK_INPUT_XINPUT_DLL GLOBAL PROPERTY "SRKPROJ_SRK_INPUT_XINPUT_DLL")
 
+set(CMAKE_BUILD_RPATH $ORIGIN/libs)
+
 include_directories(
     ${SRKPROJ_SRK_CORE_INCLUDE}
     ${SRKPROJ_SRK_FRAMEWORK_INCLUDE}
@@ -75,14 +77,6 @@ include_directories(
 add_definitions(${SRK_DEFINITIONS})
 file(GLOB_RECURSE srcFiles "src/*.h" "src/*.cpp")
 srkAddExecutableSourceGroup(${PROJECT_NAME} ${srcFiles})
-
-set(compilerFlags "-Wl,-rpath=./libs/")
-if (SRK_C_COMPILER_CLANG OR SRK_C_COMPILER_GNU)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${compilerFlags}")
-endif ()
-if (SRK_CXX_COMPILER_CLANG OR SRK_CXX_COMPILER_GNU)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${compilerFlags}")
-endif ()
 
 set(linkLibs
     ${SRKPROJ_SRK_CORE_NAME}
@@ -106,31 +100,37 @@ elseif (UNIX)
     srkAppendIf(X11_FOUND linkLibs X11)
 endif ()
 
-if (SRK_CXX_COMPILER_MSVC)
-    macro(_setDelayload)
-        set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} /DELAYLOAD:${ARGV0}${CMAKE_DEBUG_POSTFIX}${CMAKE_SHARED_LIBRARY_SUFFIX}")
-        set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /DELAYLOAD:${ARGV0}${CMAKE_RELEASE_POSTFIX}${CMAKE_SHARED_LIBRARY_SUFFIX}")
-        set(CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO} /DELAYLOAD:${ARGV0}${CMAKE_RELWITHDEBINFO_POSTFIX}${CMAKE_SHARED_LIBRARY_SUFFIX}")
-        set(CMAKE_EXE_LINKER_FLAGS_MINSIZEREL "${CMAKE_EXE_LINKER_FLAGS_MINSIZEREL} /DELAYLOAD:${ARGV0}${CMAKE_MINSIZEREL_POSTFIX}${CMAKE_SHARED_LIBRARY_SUFFIX}")
-    endmacro()
+srkDelayLoadImport(${SRKPROJ_SRK_ASTC_CONVERTER_OUTPUT_NAME})
+srkDelayLoadImport(${SRKPROJ_SRK_PNG_CONVERTER_OUTPUT_NAME})
+srkDelayLoadImport(${SRKPROJ_SRK_FBX_CONVERTER_OUTPUT_NAME})
+srkDelayLoadImport(${SRKPROJ_SRK_SHADER_SCRIPT_OUTPUT_NAME})
 
+if (SRK_CXX_COMPILER_MSVC)
     set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS /SUBSYSTEM:WINDOWS)
-    _setDelayload(${SRKPROJ_SRK_ASTC_CONVERTER_OUTPUT_NAME})
-    _setDelayload(${SRKPROJ_SRK_PNG_CONVERTER_OUTPUT_NAME})
-    _setDelayload(${SRKPROJ_SRK_FBX_CONVERTER_OUTPUT_NAME})
-    _setDelayload(${SRKPROJ_SRK_SHADER_SCRIPT_OUTPUT_NAME})
 endif ()
 
-set(OUTPUT_LIBS_DIR ${SRK_BUILD_DIR}/libs)
+set(OUTPUT_LIBS_DIR ${SRK_PROJECT_BUILD_DIR}/libs)
+if (SRK_OS_WINDOWS)
+    set(OUTPUT_ROOT_OR_LIBS_DIR ${SRK_PROJECT_BUILD_DIR})
+else ()
+    set(OUTPUT_ROOT_OR_LIBS_DIR ${OUTPUT_LIBS_DIR})
+endif ()
 
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/../Resources/ ${SRK_BUILD_DIR}Resources
-)
+if (SRK_OS_WINDOWS)
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E remove_directory ${SRK_PROJECT_BUILD_DIR}/Resources
+        COMMAND mklink /J \"${SRK_PROJECT_BUILD_DIR}/Resources\" \"${SRK_SOURCE_DIR}/Resources\"
+    )
+else ()
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E create_symlink ${SRK_SOURCE_DIR}/Resources ${SRK_PROJECT_BUILD_DIR}/Resources
+    )
+endif ()
 
 set(test_pre_build_commands COMMAND ${CMAKE_COMMAND} -E make_directory ${OUTPUT_LIBS_DIR})
 
-srkAppendCopyFileCmd(test_pre_build_commands ${SRKPROJ_SRK_CORE_DLL} ${SRK_BUILD_DIR})
-srkAppendCopyFileCmd(test_pre_build_commands ${SRKPROJ_SRK_FRAMEWORK_DLL} ${SRK_BUILD_DIR})
+srkAppendCopyFileCmd(test_pre_build_commands ${SRKPROJ_SRK_CORE_DLL} ${OUTPUT_ROOT_OR_LIBS_DIR})
+srkAppendCopyFileCmd(test_pre_build_commands ${SRKPROJ_SRK_FRAMEWORK_DLL} ${OUTPUT_ROOT_OR_LIBS_DIR})
 srkAppendCopyFileCmd(test_pre_build_commands ${SRKPROJ_SRK_ASTC_CONVERTER_DLL} ${OUTPUT_LIBS_DIR})
 srkAppendCopyFileCmd(test_pre_build_commands ${SRKPROJ_SRK_FBX_CONVERTER_DLL} ${OUTPUT_LIBS_DIR})
 srkAppendCopyFileCmd(test_pre_build_commands ${SRKPROJ_SRK_PNG_CONVERTER_DLL} ${OUTPUT_LIBS_DIR})
@@ -182,7 +182,7 @@ endif ()
 if (USE_MIMALLOC)
     list(APPEND linkLibs ${SRKPROJ_MIMALLOC_LIB})
     list(APPEND test_pre_build_depends ${SRKPROJ_MIMALLOC_NAME})
-    srkAppendCopyFileCmd(test_pre_build_commands ${SRKPROJ_MIMALLOC_DLL} ${SRK_BUILD_DIR})
+    srkAppendCopyFileCmd(test_pre_build_commands ${SRKPROJ_MIMALLOC_DLL} ${OUTPUT_ROOT_OR_LIBS_DIR})
 endif ()
 if (USE_TCMALLOC)
     if (SRK_CXX_COMPILER_MSVC)
@@ -190,7 +190,7 @@ if (USE_TCMALLOC)
     endif ()
     list(APPEND linkLibs ${SRKPROJ_TCMALLOC_LIB})
     list(APPEND test_pre_build_depends ${SRKPROJ_TCMALLOC_NAME})
-    srkAppendCopyFileCmd(test_pre_build_commands ${SRKPROJ_TCMALLOC_DLL} ${SRK_BUILD_DIR})
+    srkAppendCopyFileCmd(test_pre_build_commands ${SRKPROJ_TCMALLOC_DLL} ${OUTPUT_ROOT_OR_LIBS_DIR})
 endif ()
 
 add_custom_target(test_pre_build ALL ${test_pre_build_commands})

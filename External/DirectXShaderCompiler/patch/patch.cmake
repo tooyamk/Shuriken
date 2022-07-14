@@ -5,6 +5,16 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${SRC_DIR}/patch/G
 execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${SRC_DIR}/patch/CrossCompile.cmake ${BIN_DIR}/src/cmake/modules)
 execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${SRC_DIR}/patch/TableGen.cmake ${BIN_DIR}/src/cmake/modules)
 
+set(file ${BIN_DIR}/src/cmake/modules/AddLLVM.cmake)
+file(READ ${file} content)
+string(REGEX REPLACE "set_target_properties\\(\\$\\{name}[^\r\n]*[\r\n]+[^\r\n]*PROPERTIES[^\r\n]*[\r\n]+[^\r\n]*SOVERSION[^\r\n]+[\r\n]+[^\r\n]*VERSION \\$\\{LLVM_VERSION_MAJOR}\\.\\$\\{LLVM_VERSION_MINOR}\\.\\$\\{LLVM_VERSION_PATCH}\\$\\{LLVM_VERSION_SUFFIX}\\)" "" content "${content}")
+file(WRITE ${file} "${content}")
+
+set(file ${BIN_DIR}/src/tools/clang/tools/dxcompiler/CMakeLists.txt)
+file(READ ${file} content)
+string(REPLACE "VERSION \${LIBCLANG_LIBRARY_VERSION}" "" content "${content}")
+file(WRITE ${file} "${content}")
+
 set(file ${BIN_DIR}/src/lib/DxilRootSignature/DxilRootSignatureValidator.cpp)
 file(READ ${file} content)
 file(WRITE ${file} "#include <ios>\n${content}")

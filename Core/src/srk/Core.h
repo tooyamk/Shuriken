@@ -1,7 +1,7 @@
 #pragma once
 
 #include "srk/ByteArray.h"
-#include "srk/DynamicLib.h"
+#include "srk/DynamicLibraryLoader.h"
 #include "srk/Debug.h"
 #include "srk/Lock.h"
 #include "srk/RTTI.h"

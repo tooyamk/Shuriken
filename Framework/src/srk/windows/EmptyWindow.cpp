@@ -17,6 +17,8 @@ namespace srk {
 		if (_data.isCreated) return false;
 
 		_data.isCreated = true;
+		setTitle(title);
+
 		return true;
 	}
 
@@ -50,7 +52,12 @@ namespace srk {
 	void EmptyWindow::setClientSize(const Vec2ui32& size) {
 	}
 
+	std::string_view EmptyWindow::getTitle() const {
+		return _data.title;
+	}
+
 	void EmptyWindow::setTitle(const std::string_view& title) {
+		if (_data.isCreated) _data.title = title;
 	}
 
 	void EmptyWindow::setPosition(const Vec2i32& pos) {

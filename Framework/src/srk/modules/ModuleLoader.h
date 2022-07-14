@@ -1,11 +1,11 @@
 #pragma once
 
-#include "srk/DynamicLib.h"
+#include "srk/DynamicLibraryLoader.h"
 #include "srk/modules/graphics/IGraphicsModule.h"
 #include "srk/modules/inputs/IInputModule.h"
 
 namespace srk::modules {
-	template<typename RetType>
+	template<IntrusivePtrOperableObject RetType>
 	class ModuleLoader : public Ref {
 	public:
 		using CreateModuleFn = RetType*(*)(Ref* loader, const SerializableObject*);
@@ -40,7 +40,7 @@ namespace srk::modules {
 		}
 
 	protected:
-		DynamicLib _lib;
+		DynamicLibraryLoader _lib;
 		CreateModuleFn _createFn;
 	};
 

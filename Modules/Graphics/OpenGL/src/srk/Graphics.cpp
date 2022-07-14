@@ -171,7 +171,7 @@ namespace srk::modules::graphics::gl {
 			};
 			vi = glXChooseVisual(dis, DefaultScreen(dis), attrListSingle);
 			if (!vi) {
-				_release(conf.app);
+				_release(conf.win);
 				return false;
 			}
 		}
@@ -181,7 +181,7 @@ namespace srk::modules::graphics::gl {
 
 		glXMakeCurrent(dis, (Window)conf.win->getNative(WindowNative::WINDOW), _context);
 #else
-		_release(conf.app);
+		_release(conf.win);
 		return false;
 #endif
 

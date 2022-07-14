@@ -139,8 +139,6 @@ namespace srk {
 			XFree(hints);
 		}
 
-		setTitle(title);
-
 		XFlush((Display*)_data.dis);
 
 		{
@@ -161,6 +159,8 @@ namespace srk {
 		_updateWindowPlacement();
 
 		_data.isCreated = true;
+		setTitle(title);
+
 		return true;
 	}
 

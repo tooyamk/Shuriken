@@ -10,7 +10,7 @@
 
 #include "srk/modules/graphics/IShaderTranspiler.h"
 #include "srk/Debug.h"
-#include "srk/DynamicLib.h"
+#include "srk/DynamicLibraryLoader.h"
 
 namespace srk::modules::graphics::shader_transpiler {
 	class ShaderTranspiler : public IShaderTranspiler {
@@ -45,7 +45,7 @@ namespace srk::modules::graphics::shader_transpiler {
 
 
 		IntrusivePtr<Ref> _loader;
-		DynamicLib _dxcDll;
+		DynamicLibraryLoader _dxcDll;
 
 		CComPtr<IDxcLibrary> _dxcLib;
 		CComPtr<IDxcCompiler> _dxcompiler;

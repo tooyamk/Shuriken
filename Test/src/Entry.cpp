@@ -13,7 +13,7 @@
 #include "tests/VertexUpdateTester.h"
 #include "tests/WindowTester.h"
 
-#include <immintrin.h>
+//#include <immintrin.h>
 
 int32_t run() {
 #if SRK_OS == SRK_OS_WINDOWS
