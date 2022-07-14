@@ -67,16 +67,27 @@ get_property(SRKPROJ_SRK_INPUT_RAW_INPUT_DLL GLOBAL PROPERTY "SRKPROJ_SRK_INPUT_
 get_property(SRKPROJ_SRK_INPUT_XINPUT_NAME GLOBAL PROPERTY "SRKPROJ_SRK_INPUT_XINPUT_NAME")
 get_property(SRKPROJ_SRK_INPUT_XINPUT_DLL GLOBAL PROPERTY "SRKPROJ_SRK_INPUT_XINPUT_DLL")
 
-set(CMAKE_BUILD_RPATH $ORIGIN/libs)
+#set(CMAKE_SKIP_BUILD_RPATH False)
+#set(CMAKE_BUILD_RPATH ./libs)
 
 include_directories(
     ${SRKPROJ_SRK_CORE_INCLUDE}
     ${SRKPROJ_SRK_FRAMEWORK_INCLUDE}
-    ${SRK_SOURCE_DIR}/
+    ${SRK_SOURCE_DIR}
 )
 add_definitions(${SRK_DEFINITIONS})
 file(GLOB_RECURSE srcFiles "src/*.h" "src/*.cpp")
 srkAddExecutableSourceGroup(${PROJECT_NAME} ${srcFiles})
+
+#target_link_options(${PROJECT_NAME} PRIVATE -Wl,-rpath=./libs)
+
+set(compilerFlags "-Wl,-rpath=./libs")
+if (SRK_C_COMPILER_GNU OR SRK_C_COMPILER_CLANG)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${compilerFlags}")
+endif ()
+if (SRK_CXX_COMPILER_GNU OR SRK_CXX_COMPILER_CLANG)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${compilerFlags}")
+endif ()
 
 set(linkLibs
     ${SRKPROJ_SRK_CORE_NAME}

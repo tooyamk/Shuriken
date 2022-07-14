@@ -3,11 +3,8 @@ cmake_minimum_required (VERSION 3.15.0)
 set(SRK_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
 project(Shuriken)
 set(CMAKE_INSTALL_PREFIX ${SRK_INSTALL_PREFIX})
+set(CMAKE_SKIP_RPATH True)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/Tools/CMake/Modules")
-
-file(READ D:/Work/Shuriken/c++/build/External/DirectXShaderCompiler/src/cmake/modules/AddLLVM.cmake aabb)
-string(REGEX REPLACE "set_target_properties\\(\\$\\{name}[^\r\n]*[\r\n]+[^\r\n]*PROPERTIES[^\r\n]*[\r\n]+[^\r\n]*SOVERSION[^\r\n]+[\r\n]+[^\r\n]*VERSION \\$\\{LLVM_VERSION_MAJOR}\\.\\$\\{LLVM_VERSION_MINOR}\\.\\$\\{LLVM_VERSION_PATCH}\\$\\{LLVM_VERSION_SUFFIX}\\)" "" aabb "${aabb}")
-file(WRITE D:/Users/Sephiroth/Desktop/aabb.txt "${aabb}")
 
 set(SRK_OS_WINDOWS False)
 set(SRK_OS_LINUX False)
@@ -536,6 +533,7 @@ macro(srkCreateExternalProjectCmakeArgs target)
         -DCMAKE_MINSIZEREL_POSTFIX=${CMAKE_MINSIZEREL_POSTFIX}
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
         #-DCMAKE_CONFIGURATION_TYPES=${CMAKE_CONFIGURATION_TYPES}
+        -DCMAKE_SKIP_RPATH=${CMAKE_SKIP_RPATH}
         -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
         -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
         -DANDROID_ABI=${ANDROID_ABI}
