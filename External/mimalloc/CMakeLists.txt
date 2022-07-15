@@ -31,8 +31,7 @@ ExternalProject_Add(
     UPDATE_COMMAND ""
     PATCH_COMMAND
         ${CMAKE_COMMAND}
-        -DGIT_ROOT=${PROJECT_BINARY_DIR}/src
-        -DCMAKE_LISTS_FILE=${CMAKE_CURRENT_BINARY_DIR}/src/CMakeLists.txt
+        -DSRC_DIR=${PROJECT_BINARY_DIR}/src
         -P ${CMAKE_CURRENT_SOURCE_DIR}/patch.cmake
     BUILD_BYPRODUCTS 
         ${LIB_R}

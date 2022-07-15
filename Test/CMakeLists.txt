@@ -79,15 +79,7 @@ add_definitions(${SRK_DEFINITIONS})
 file(GLOB_RECURSE srcFiles "src/*.h" "src/*.cpp")
 srkAddExecutableSourceGroup(${PROJECT_NAME} ${srcFiles})
 
-#target_link_options(${PROJECT_NAME} PRIVATE -Wl,-rpath=./libs)
-
-set(compilerFlags "-Wl,-rpath=./libs")
-if (SRK_C_COMPILER_GNU OR SRK_C_COMPILER_CLANG)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${compilerFlags}")
-endif ()
-if (SRK_CXX_COMPILER_GNU OR SRK_CXX_COMPILER_CLANG)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${compilerFlags}")
-endif ()
+srkSetTargetRpath(${PROJECT_NAME} "./libs")
 
 set(linkLibs
     ${SRKPROJ_SRK_CORE_NAME}

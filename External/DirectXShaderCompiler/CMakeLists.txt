@@ -83,9 +83,8 @@ ExternalProject_Add(
     UPDATE_COMMAND ""
     PATCH_COMMAND
         ${CMAKE_COMMAND}
-        -DGIT_ROOT=${PROJECT_BINARY_DIR}/src
-        -DSRC_DIR=${CMAKE_CURRENT_SOURCE_DIR}
-        -DBIN_DIR=${CMAKE_CURRENT_BINARY_DIR}
+        -DSRC_DIR=${CMAKE_CURRENT_BINARY_DIR}/src
+        -DPATCH_DIR=${CMAKE_CURRENT_SOURCE_DIR}/patch
         -P ${CMAKE_CURRENT_SOURCE_DIR}/patch/patch.cmake
     BUILD_BYPRODUCTS 
         ${LLVMDxcSupport_SLIB_R}

@@ -1,7 +1,8 @@
-execute_process(COMMAND git -C ${GIT_ROOT} clean -xfd)
-execute_process(COMMAND git -C ${GIT_ROOT} reset --hard)
+execute_process(COMMAND git -C ${SRC_DIR} clean -xfd)
+execute_process(COMMAND git -C ${SRC_DIR} reset --hard)
 
-file(READ ${CMAKE_LISTS_FILE} content)
+set(file ${SRC_DIR}/CMakeLists.txt)
+file(READ ${file} content)
 
 string(REPLACE "set(PNG_LIB_NAME png\${PNGLIB_MAJOR}\${PNGLIB_MINOR})" "set(PNG_LIB_NAME png)" content "${content}")
 
@@ -12,4 +13,4 @@ string(REGEX REPLACE "# SET UP LINKS[\r\n]+if\\(PNG_SHARED" "if(False" content "
 string(REPLACE "if(CYGWIN OR MINGW)" "if(False)" content "${content}")
 string(REPLACE "if(NOT WIN32)" "if(False)" content "${content}")
 
-file(WRITE ${CMAKE_LISTS_FILE} "${content}")
+file(WRITE ${file} "${content}")

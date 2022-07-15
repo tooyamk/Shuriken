@@ -1,10 +1,14 @@
-cmake_minimum_required (VERSION 3.15.0)
+cmake_minimum_required (VERSION 3.20.0)
 
 set(SRK_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
 project(Shuriken)
 set(CMAKE_INSTALL_PREFIX ${SRK_INSTALL_PREFIX})
 set(CMAKE_SKIP_RPATH True)
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/Tools/CMake/Modules")
+set(CMAKE_XCODE_ATTRIBUTE_DYLIB_INSTALL_NAME_BASE @rpath)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake/Modules")
+cmake_policy(SET CMP0042 NEW)
+cmake_policy(SET CMP0068 NEW)
+cmake_policy(SET CMP0114 NEW)
 
 set(SRK_OS_WINDOWS False)
 set(SRK_OS_LINUX False)
@@ -256,6 +260,19 @@ function(srkTryDownloadFile url dst hash)
     endif ()
 endfunction()
 
+function(srkSetTargetRpath target rpath)
+    if (SRK_OS_MACOS OR SRK_OS_IOS)
+        string(REGEX REPLACE ":" ";" rpath "${rpath}")
+    else (SRK_OS_LINUX)
+        string(REGEX REPLACE ";" ":" rpath "${rpath}")
+    endif ()
+    
+    set_target_properties(${target} PROPERTIES XCODE_ATTRIBUTE_LD_RUNPATH_SEARCH_PATHS ${rpath})
+    if (SRK_C_COMPILER_GNU OR SRK_C_COMPILER_CLANG OR SRK_CXX_COMPILER_GNU OR SRK_CXX_COMPILER_CLANG)
+        target_link_options(${target} PRIVATE "-Wl,-rpath=${rpath}")
+    endif ()
+endfunction()
+
 function(srkInstall name)
     if (SRK_INSTALL)
         install(DIRECTORY "src/" DESTINATION ${name}/include FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp" PATTERN "*impl*.*" EXCLUDE)
@@ -496,7 +513,6 @@ if (SRK_CXX_COMPILER_MSVC)
 endif ()
 
 unset(compilerFlags)
-#cmake_policy(SET CMP0060 NEW)
 
 set(SRK_DEFINITIONS)
 if (CMAKE_BUILD_TYPE MATCHES "Deb")
@@ -526,6 +542,9 @@ set(SRK_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
 macro(srkCreateExternalProjectCmakeArgs target)
     set(${target}
+        -DCMAKE_POLICY_DEFAULT_CMP0042=NEW
+        -DCMAKE_POLICY_DEFAULT_CMP0068=NEW
+        -DCMAKE_POLICY_DEFAULT_CMP0114=NEW
         -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
         -DCMAKE_DEBUG_POSTFIX=${CMAKE_DEBUG_POSTFIX}
         -DCMAKE_RELEASE_POSTFIX=${CMAKE_RELEASE_POSTFIX}
@@ -534,6 +553,7 @@ macro(srkCreateExternalProjectCmakeArgs target)
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
         #-DCMAKE_CONFIGURATION_TYPES=${CMAKE_CONFIGURATION_TYPES}
         -DCMAKE_SKIP_RPATH=${CMAKE_SKIP_RPATH}
+        -DCMAKE_XCODE_ATTRIBUTE_DYLIB_INSTALL_NAME_BASE=${CMAKE_XCODE_ATTRIBUTE_DYLIB_INSTALL_NAME_BASE}
         -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
         -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
         -DANDROID_ABI=${ANDROID_ABI}
