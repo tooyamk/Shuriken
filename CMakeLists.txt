@@ -268,7 +268,7 @@ function(srkSetTargetRpath target rpath)
     endif ()
     
     set_target_properties(${target} PROPERTIES XCODE_ATTRIBUTE_LD_RUNPATH_SEARCH_PATHS ${rpath})
-    if (SRK_C_COMPILER_GNU OR SRK_C_COMPILER_CLANG OR SRK_CXX_COMPILER_GNU OR SRK_CXX_COMPILER_CLANG)
+    if ((NOT ${CMAKE_GENERATOR} STREQUAL Xcode) AND (SRK_C_COMPILER_GNU OR SRK_C_COMPILER_CLANG OR SRK_CXX_COMPILER_GNU OR SRK_CXX_COMPILER_CLANG))
         target_link_options(${target} PRIVATE "-Wl,-rpath=${rpath}")
     endif ()
 endfunction()
