@@ -47,7 +47,7 @@ ExternalProject_Add(
     DOWNLOAD_DIR download
     INSTALL_DIR install
     SOURCE_DIR src
-    BINARY_DIR ${SRK_PROJECT_BUILD_DIR}
+    BINARY_DIR ${SRK_PROJECT_BUILD_ROOT_DIR}
     UPDATE_COMMAND ""
     BUILD_BYPRODUCTS
         #${LIB_R}

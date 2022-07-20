@@ -59,10 +59,11 @@ public:
 		WindowStyle wndStype;
 		wndStype.thickFrame = true;
 		wndStype.backgroundColor.set(255, 255, 0);
-		tryCreateWndFn(wndStype, "Fucker1");
+		auto deb = Debug::isDebuggerPresent() ? "debugger link"sv : ""sv;
+		tryCreateWndFn(wndStype, "Fucker1 " + deb);
 
 		wndStype.backgroundColor.set(255, 0, 0);
-		tryCreateWndFn(wndStype, "Fucker2");
+		tryCreateWndFn(wndStype, "Fucker2 " + deb);
 		if (!activedWindows.empty()) {
 			//app->setWindowPosition({200, 300});
 
