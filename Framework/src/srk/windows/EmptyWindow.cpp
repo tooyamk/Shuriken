@@ -90,14 +90,14 @@ namespace srk {
 	void EmptyWindow::setRestore() {
 	}
 
-	void EmptyWindow::pollEvents() {
-	}
-
 	bool EmptyWindow::isVisible() const {
 		return false;
 	}
 
 	void EmptyWindow::setVisible(bool b) {
+	}
+
+	void EmptyWindow::processEvent(void* data) {
 	}
 
 	void EmptyWindow::close() {

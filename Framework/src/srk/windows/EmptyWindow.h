@@ -32,9 +32,9 @@ namespace srk {
 		virtual bool SRK_CALL isMinimzed() const override;
 		virtual void SRK_CALL setMinimum() override;
 		virtual void SRK_CALL setRestore() override;
-		virtual void SRK_CALL pollEvents() override;
 		virtual bool SRK_CALL isVisible() const override;
 		virtual void SRK_CALL setVisible(bool b) override;
+		virtual void SRK_CALL processEvent(void* data) override;
 		virtual void SRK_CALL close() override;
 
 	protected:

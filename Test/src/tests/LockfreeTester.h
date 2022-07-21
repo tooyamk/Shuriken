@@ -81,8 +81,8 @@ public:
 				looper->stop();
 			}));
 
-			looper->getEventDispatcher()->addEventListener(LooperEvent::TICKING, createEventListener<LooperEvent>([win](Event<LooperEvent>& e) {
-				win->pollEvents();
+			looper->getEventDispatcher()->addEventListener(LooperEvent::TICKING, createEventListener<LooperEvent>([](Event<LooperEvent>& e) {
+				IWindow::pollEvents();
 			}));
 
 			win->setVisible(true);

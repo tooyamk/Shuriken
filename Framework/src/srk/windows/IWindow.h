@@ -62,12 +62,20 @@ namespace srk {
 		virtual bool SRK_CALL isMinimzed() const = 0;
 		virtual void SRK_CALL setMinimum() = 0;
 		virtual void SRK_CALL setRestore() = 0;
-		virtual void SRK_CALL pollEvents() = 0;
 		virtual bool SRK_CALL isVisible() const = 0;
 		virtual void SRK_CALL setVisible(bool b) = 0;
+		virtual void SRK_CALL processEvent(void* data) = 0;
 		virtual void SRK_CALL close() = 0;
+
+		static void pollEvents();
 
 	protected:
 		IWindow() {};
+
+		static void _register(void* nativeWindow, IWindow* window);
+		static void _unregister(void* nativeWindow);
+
+	private:
+		static std::unordered_map<void*, IWindow*> _windows;
 	};
 }

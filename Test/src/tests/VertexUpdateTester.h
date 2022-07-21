@@ -207,7 +207,7 @@ public:
 					renderData.looper->getEventDispatcher()->addEventListener(LooperEvent::TICKING, new EventListener(std::function([renderData](Event<LooperEvent>& e) {
 						auto dt = float64_t(*e.getData<int64_t>());
 
-						renderData.win->pollEvents();
+						IWindow::pollEvents();
 						//println(dt);
 
 						//for (auto& im : inputModules) im->poll();

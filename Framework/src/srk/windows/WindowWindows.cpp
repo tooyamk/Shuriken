@@ -72,9 +72,11 @@ namespace srk {
 		_data.wnd = CreateWindowExW(_getWindowExStyle(_data.isFullscreen), wnd.lpszClassName, String::Utf8ToUnicode(title).data(), _getWindowStyle(_data.style, _data.isFullscreen),
 			rect.pos[0], rect.pos[1], rect.size[0], rect.size[1],
 			GetDesktopWindow(), nullptr, _data.module, nullptr);
-		SetWindowLongPtr(_data.wnd, GWLP_USERDATA, (LONG_PTR)this);
+		SetWindowLongPtrW(_data.wnd, GWLP_USERDATA, (LONG_PTR)this);
 
 		_data.isCreated = true;
+		_register(_data.wnd, this);
+
 		return true;
 	}
 
@@ -239,22 +241,22 @@ namespace srk {
 		}
 	}
 
-	void Window::pollEvents() {
-		MSG msg = { 0 };
-		while (_data.wnd && PeekMessage(&msg, _data.wnd, 0, 0, PM_REMOVE)) {
-			if (msg.message == WM_QUIT) {
-				close();
-				break;
-			} else {
-				TranslateMessage(&msg);
-				DispatchMessage(&msg);
-			}
+	void Window::processEvent(void* data) {
+		if (!_data.isCreated) return;
+
+		auto& msg =*(MSG*)data;
+		if (msg.message == WM_QUIT) {
+			close();
+		} else {
+			TranslateMessage(&msg);
+			DispatchMessageW(&msg);
 		}
 	}
 
 	void Window::close() {
 		if (!_data.isCreated) return;
 
+		_unregister(_data.wnd);
 		if (_data.wnd) DestroyWindow(_data.wnd);
 		if (_data.bkBrush) DeleteObject(_data.bkBrush);
 		if (!_data.className.empty()) UnregisterClassW(_data.className.data(), _data.module);
@@ -262,6 +264,13 @@ namespace srk {
 		_data = decltype(_data)();
 
 		_eventDispatcher->dispatchEvent(this, WindowEvent::CLOSED);
+	}
+
+	void IWindow::pollEvents() {
+		MSG msg = { 0 };
+		while (::PeekMessageW(&msg, 0, 0, 0, PM_REMOVE)) {
+			if (auto itr = _windows.find(msg.hwnd); itr != _windows.end()) itr->second->processEvent(&msg);
+		}
 	}
 
 	//platform
@@ -378,7 +387,7 @@ namespace srk {
 	}
 
 	LRESULT Window::_wndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-		auto win = (Window*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+		auto win = (Window*)GetWindowLongPtrW(hWnd, GWLP_USERDATA);
 
 		switch (msg) {
 		case WM_CLOSE:
