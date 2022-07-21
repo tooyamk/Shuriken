@@ -116,7 +116,7 @@ namespace srk {
 			MwmHints hints = { 0 };
 
 			hints.flags = MwmHints::MWM_HINTS_FUNCTIONS | MwmHints::MWM_HINTS_DECORATIONS;
-			hints.functions = MwmHints::MWM_FUNC_MOVE | MwmHints::MWM_FUNC_CLOSE | MwmHints::MWM_FUNC_RESIZE;
+			hints.functions = MwmHints::MWM_FUNC_MOVE | MwmHints::MWM_FUNC_RESIZE;
 			hints.decorations = MwmHints::MWM_DECOR_BORDER | MwmHints::MWM_DECOR_RESIZEH | MwmHints::MWM_DECOR_TITLE | MwmHints::MWM_DECOR_MENU;
 			if (_data.style.minimizable) {
 				hints.functions |= MwmHints::MWM_FUNC_MINIMIZE;
@@ -126,6 +126,7 @@ namespace srk {
 				hints.functions |= MwmHints::MWM_FUNC_MAXIMIZE;
 				hints.decorations |= MwmHints::MWM_DECOR_MAXIMIZE;
 			}
+			if (_data.style.closable) hints.functions |= MwmHints::MWM_FUNC_CLOSE;
 
 			XChangeProperty((Display*)_data.dis, _data.wnd, _data.MOTIF_WM_HINTS, XA_ATOM, 32, PropModeReplace, (uint8_t*)&hints, 5);
 		}
