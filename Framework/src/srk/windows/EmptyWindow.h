@@ -34,8 +34,8 @@ namespace srk {
 		virtual void SRK_CALL setRestore() override;
 		virtual bool SRK_CALL isVisible() const override;
 		virtual void SRK_CALL setVisible(bool b) override;
-		virtual void SRK_CALL processEvent(void* data) override;
 		virtual void SRK_CALL close() override;
+		virtual void SRK_CALL processEvent(void* data) override;
 
 	protected:
 		IntrusivePtr<events::IEventDispatcher<WindowEvent>> _eventDispatcher;

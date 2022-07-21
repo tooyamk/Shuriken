@@ -30,6 +30,9 @@ namespace srk {
 		close();
 	}
 
+	uint32_t Window::_displayRefCount = 0;
+	void* Window::_display = nullptr;
+
 	IntrusivePtr<events::IEventDispatcher<WindowEvent>> Window::getEventDispatcher() {
 		return _eventDispatcher;
 	}
@@ -41,27 +44,31 @@ namespace srk {
 		_data.isFullscreen = fullscreen;
 		_data.style = style;
 
-		_data.dis = XOpenDisplay(nullptr);
-		if (!_data.dis) {
+		if (_display == nullptr) _display = XOpenDisplay(nullptr);
+
+		if (_display) {
+			_data.useDisplay = true;
+			++_displayRefCount;
+		} else {
 			close();
 			return false;
 		}
 
-		_data.MOTIF_WM_HINTS = XInternAtom((Display*)_data.dis, "_MOTIF_WM_HINTS", False);
-		_data.WM_STATE = XInternAtom((Display*)_data.dis, "WM_STATE", False);
-		_data.WM_PROTOCOLS = XInternAtom((Display*)_data.dis, "WM_PROTOCOLS", False);
-		_data.WM_DELETE_WINDOW = XInternAtom((Display*)_data.dis, "WM_DELETE_WINDOW", False);
-		_data.NET_WM_PING = XInternAtom((Display*)_data.dis, "_NET_WM_PING", False);
-		_data.NET_WM_WINDOW_TYPE = XInternAtom((Display*)_data.dis, "_NET_WM_WINDOW_TYPE", False);
-		_data.NET_WM_WINDOW_TYPE_NORMAL = XInternAtom((Display*)_data.dis, "_NET_WM_WINDOW_TYPE_NORMAL", False);
-		_data.NET_WM_STATE = XInternAtom((Display*)_data.dis, "_NET_WM_STATE", False);
-		_data.NET_WM_STATE_FULLSCREEN = XInternAtom((Display*)_data.dis, "_NET_WM_STATE_FULLSCREEN", False);
-		_data.NET_WM_STATE_MAXIMIZED_HORZ = XInternAtom((Display*)_data.dis, "_NET_WM_STATE_MAXIMIZED_HORZ", False);
-		_data.NET_WM_STATE_MAXIMIZED_VERT = XInternAtom((Display*)_data.dis, "_NET_WM_STATE_MAXIMIZED_VERT", False);
-		_data.NET_REQUEST_FRAME_EXTENTS = XInternAtom((Display*)_data.dis, "_NET_REQUEST_FRAME_EXTENTS", False);
-		_data.NET_FRAME_EXTENTS = XInternAtom((Display*)_data.dis, "_NET_FRAME_EXTENTS", False);
-		_data.NET_WORKAREA = XInternAtom((Display*)_data.dis, "_NET_WORKAREA", False);
-		_data.NET_CURRENT_DESKTOP = XInternAtom((Display*)_data.dis, "_NET_CURRENT_DESKTOP", False);
+		_data.MOTIF_WM_HINTS = XInternAtom((Display*)_display, "_MOTIF_WM_HINTS", False);
+		_data.WM_STATE = XInternAtom((Display*)_display, "WM_STATE", False);
+		_data.WM_PROTOCOLS = XInternAtom((Display*)_display, "WM_PROTOCOLS", False);
+		_data.WM_DELETE_WINDOW = XInternAtom((Display*)_display, "WM_DELETE_WINDOW", False);
+		_data.NET_WM_PING = XInternAtom((Display*)_display, "_NET_WM_PING", False);
+		_data.NET_WM_WINDOW_TYPE = XInternAtom((Display*)_display, "_NET_WM_WINDOW_TYPE", False);
+		_data.NET_WM_WINDOW_TYPE_NORMAL = XInternAtom((Display*)_display, "_NET_WM_WINDOW_TYPE_NORMAL", False);
+		_data.NET_WM_STATE = XInternAtom((Display*)_display, "_NET_WM_STATE", False);
+		_data.NET_WM_STATE_FULLSCREEN = XInternAtom((Display*)_display, "_NET_WM_STATE_FULLSCREEN", False);
+		_data.NET_WM_STATE_MAXIMIZED_HORZ = XInternAtom((Display*)_display, "_NET_WM_STATE_MAXIMIZED_HORZ", False);
+		_data.NET_WM_STATE_MAXIMIZED_VERT = XInternAtom((Display*)_display, "_NET_WM_STATE_MAXIMIZED_VERT", False);
+		_data.NET_REQUEST_FRAME_EXTENTS = XInternAtom((Display*)_display, "_NET_REQUEST_FRAME_EXTENTS", False);
+		_data.NET_FRAME_EXTENTS = XInternAtom((Display*)_display, "_NET_FRAME_EXTENTS", False);
+		_data.NET_WORKAREA = XInternAtom((Display*)_display, "_NET_WORKAREA", False);
+		_data.NET_CURRENT_DESKTOP = XInternAtom((Display*)_display, "_NET_CURRENT_DESKTOP", False);
 
 		_data.bgColor = _data.style.backgroundColor[0] << 16 | _data.style.backgroundColor[1] << 8 | _data.style.backgroundColor[2];
 
@@ -73,13 +80,13 @@ namespace srk {
 			ExposureMask | FocusChangeMask | VisibilityChangeMask |
 			EnterWindowMask | LeaveWindowMask | PropertyChangeMask;
 
-		_data.screen = DefaultScreen((Display*)_data.dis);
-		_data.root = RootWindow((Display*)_data.dis, _data.screen);
-		_data.wnd = XCreateWindow((Display*)_data.dis, _data.root,
+		_data.screen = DefaultScreen((Display*)_display);
+		_data.root = RootWindow((Display*)_display, _data.screen);
+		_data.wnd = XCreateWindow((Display*)_display, _data.root,
 			0, 0, _data.clientSize[0], _data.clientSize[1], 0,
-			DefaultDepth((Display*)_data.dis, 0), InputOutput, DefaultVisual((Display*)_data.dis, 0), CWBorderPixel | CWColormap | CWEventMask, &attr);
+			DefaultDepth((Display*)_display, 0), InputOutput, DefaultVisual((Display*)_display, 0), CWBorderPixel | CWColormap | CWEventMask, &attr);
 
-		XSetWindowBackground((Display*)_data.dis, _data.wnd, _data.bgColor);
+		XSetWindowBackground((Display*)_display, _data.wnd, _data.bgColor);
 		//XClearWindow((Display*)_linux.dis, _linux.wnd);
 
 		//XSelectInput((Display*)_linux.dis, _linux.wnd, ExposureMask | ButtonPressMask | KeyPressMask | PropertyChangeMask);
@@ -94,7 +101,7 @@ namespace srk {
 			hints->min_height = _data.clientSize[1];
 			hints->max_width = _data.clientSize[0];
 			hints->max_height = _data.clientSize[1];
-			XSetWMNormalHints((Display*)_data.dis, _data.wnd, hints);
+			XSetWMNormalHints((Display*)_display, _data.wnd, hints);
 			XFree(hints);
 		}
 
@@ -104,12 +111,12 @@ namespace srk {
 
 		{
 			Atom protocols[] = { _data.WM_DELETE_WINDOW, _data.NET_WM_PING };
-			XSetWMProtocols((Display*)_data.dis, _data.wnd, protocols, sizeof(protocols) / sizeof(Atom));
+			XSetWMProtocols((Display*)_display, _data.wnd, protocols, sizeof(protocols) / sizeof(Atom));
 		}
 
 		{
 			Atom type = _data.NET_WM_WINDOW_TYPE_NORMAL;
-			XChangeProperty((Display*)_data.dis, _data.wnd, _data.NET_WM_WINDOW_TYPE, XA_ATOM, 32, PropModeReplace, (uint8_t*)&type, 1);
+			XChangeProperty((Display*)_display, _data.wnd, _data.NET_WM_WINDOW_TYPE, XA_ATOM, 32, PropModeReplace, (uint8_t*)&type, 1);
 		}
 
 		{
@@ -128,7 +135,7 @@ namespace srk {
 			}
 			if (_data.style.closable) hints.functions |= MwmHints::MWM_FUNC_CLOSE;
 
-			XChangeProperty((Display*)_data.dis, _data.wnd, _data.MOTIF_WM_HINTS, XA_ATOM, 32, PropModeReplace, (uint8_t*)&hints, 5);
+			XChangeProperty((Display*)_display, _data.wnd, _data.MOTIF_WM_HINTS, XA_ATOM, 32, PropModeReplace, (uint8_t*)&hints, 5);
 		}
 
 		{
@@ -136,11 +143,11 @@ namespace srk {
 			hints->flags = StateHint;
 			hints->initial_state = NormalState;
 
-			XSetWMHints((Display*)_data.dis, _data.wnd, hints);
+			XSetWMHints((Display*)_display, _data.wnd, hints);
 			XFree(hints);
 		}
 
-		XFlush((Display*)_data.dis);
+		XFlush((Display*)_display);
 
 		{
 			_data.waitFrameEXTENTS = true;
@@ -160,6 +167,7 @@ namespace srk {
 		_updateWindowPlacement();
 
 		_data.isCreated = true;
+		_register((void*)_data.wnd, this);
 		setTitle(title);
 
 		return true;
@@ -172,7 +180,7 @@ namespace srk {
 	void* Window::getNative(WindowNative native) const {
 		switch (native) {
 		case WindowNative::X_DISPLAY:
-			return _data.dis;
+			return _display;
 		case WindowNative::WINDOW:
 			return (void*)_data.wnd;
 		}
@@ -200,7 +208,7 @@ namespace srk {
 
 		if (_data.wnd) {
 			if (_data.isFullscreen) {
-				auto sd = ScreenOfDisplay((Display*)_data.dis, _data.screen);
+				auto sd = ScreenOfDisplay((Display*)_display, _data.screen);
 				size.set(sd->width, sd->height);
 			} else {
 				if (_data.wndState == WindowState::MAXIMUM || (_data.wndState == WindowState::MINIMUM && _data.prevWndState == WindowState::MAXIMUM)) {
@@ -234,7 +242,7 @@ namespace srk {
 	void Window::setTitle(const std::string_view& title) {
 		if (_data.wnd) {
 			_data.title = title;
-			XStoreName((Display*)_data.dis, _data.wnd, _data.title.data());
+			XStoreName((Display*)_display, _data.wnd, _data.title.data());
 		}
 	}
 
@@ -255,12 +263,12 @@ namespace srk {
 		::Window focused;
 		int32_t revertTo;
 
-		XGetInputFocus((Display*)_data.dis, &focused, &revertTo);
+		XGetInputFocus((Display*)_display, &focused, &revertTo);
 		return focused == _data.wnd;
 	}
 
 	void Window::setFocus() {
-		if (_data.wnd && _data.isVisible) XSetInputFocus((Display*)_data.dis, _data.wnd, RevertToParent, CurrentTime);
+		if (_data.wnd && _data.isVisible) XSetInputFocus((Display*)_display, _data.wnd, RevertToParent, CurrentTime);
 	}
 
 	bool Window::isMaximzed() const {
@@ -297,20 +305,30 @@ namespace srk {
 		}
 	}
 
-	void Window::pollEvents() {
-		XEvent e = { 0 };
-		while (_data.dis && XCheckIfEvent((Display*)_data.dis, &e, [](Display* display, XEvent* event, XPointer pointer) { return True; }, (XPointer)this)) _doEvent(&e);
-	}
-
 	void Window::close() {
 		if (!_data.isCreated) return;
 
-		if (_data.wnd) XDestroyWindow((Display*)_data.dis, _data.wnd);
-		if (_data.dis) XCloseDisplay((Display*)_data.dis);
+		_unregister((void*)_data.wnd);
+		if (_data.wnd) XDestroyWindow((Display*)_display, _data.wnd);
+		if (_data.useDisplay && --_displayRefCount == 0) {
+			XCloseDisplay((Display*)_display);
+			_display = nullptr;
+		}
 
 		_data = decltype(_data)();
 
 		_eventDispatcher->dispatchEvent(this, WindowEvent::CLOSED);
+	}
+
+	void Window::processEvent(void* data) {
+		if (!_data.isCreated) return;
+
+		_doEvent(data);
+	}
+
+	void IWindow::pollEvents() {
+		XEvent e = { 0 };
+		while (Window::_checkIfEvent(&e)) sendEvent((void*)e.xclient.window, &e);
 	}
 
 	//platform
@@ -325,7 +343,7 @@ namespace srk {
 		client.data.l[2] = c;
 		client.data.l[3] = d;
 		client.data.l[4] = e;
-		XSendEvent((Display*)_data.dis, _data.root, False, SubstructureNotifyMask | SubstructureRedirectMask, &evt);
+		XSendEvent((Display*)_display, _data.root, False, SubstructureNotifyMask | SubstructureRedirectMask, &evt);
 	}
 
 	void Window::_sendResizedEvent() {
@@ -335,11 +353,15 @@ namespace srk {
 		}
 	}
 
+	bool Window::_checkIfEvent(void* evt) {
+		return Window::_display && XCheckIfEvent((Display*)Window::_display, (XEvent*)evt, [](Display* display, XEvent* event, XPointer pointer) { return True; }, nullptr);
+	}
+
 	void Window::_waitEvent(bool& value) {
+		XEvent e = { 0 };
 		while (value) {
-			XEvent e = { 0 };
-			if (_data.dis && XCheckIfEvent((Display*)_data.dis, &e, [](Display* display, XEvent* event, XPointer pointer) { return True; }, (XPointer)this)) {
-				_doEvent(&e);
+			if (_checkIfEvent(&e)) {
+				sendEvent((void*)e.xclient.window, &e);
 			} else {
 				value = false;
 				break;
@@ -352,7 +374,7 @@ namespace srk {
 		int32_t actualFormat;
 		uint64_t count, bytesAfter;
 
-		XGetWindowProperty((Display*)_data.dis, wnd, property, 0, (~0), False, type, &actualType, &actualFormat, &count, &bytesAfter, value);
+		XGetWindowProperty((Display*)_display, wnd, property, 0, (~0), False, type, &actualType, &actualFormat, &count, &bytesAfter, value);
 
 		return count;
 	}
@@ -383,7 +405,7 @@ namespace srk {
 		int32_t result = WithdrawnState;
 		struct {
 			uint32_t state;
-			Window icon;
+			::Window icon;
 		}*state = nullptr;
 
 		if (_getXWndProperty(_data.wnd, _data.WM_STATE, _data.WM_STATE, (uint8_t**)&state) >= 2) result = state->state;
@@ -429,7 +451,7 @@ namespace srk {
 			if (!_data.xMapped) {
 				_data.xMapped = true;
 				_data.waitVisibility = true;
-				XMapWindow((Display*)_data.dis, _data.wnd);
+				XMapWindow((Display*)_display, _data.wnd);
 			}
 
 			if (_data.isFullscreen) {
@@ -461,7 +483,7 @@ namespace srk {
 						}
 
 						_data.xWndState = WindowState::MINIMUM;
-						XIconifyWindow((Display*)_data.dis, _data.wnd, _data.screen);
+						XIconifyWindow((Display*)_display, _data.wnd, _data.screen);
 					}
 
 					break;
@@ -471,13 +493,13 @@ namespace srk {
 					if (_data.xWndState == WindowState::MINIMUM) {
 						_data.xWndState = WindowState::NORMAL;
 						_data.waitVisibility = true;
-						XMapWindow((Display*)_data.dis, _data.wnd);
+						XMapWindow((Display*)_display, _data.wnd);
 						_waitEvent(_data.waitVisibility);
 					} else if (_data.xWndState == WindowState::MAXIMUM) {
 						_sendClientEventToWM(_data.NET_WM_STATE, 0, _data.NET_WM_STATE_MAXIMIZED_VERT, _data.NET_WM_STATE_MAXIMIZED_HORZ, 1);
 					}
 
-					XMoveWindow((Display*)_data.dis, _data.wnd, _data.wndPos[0], _data.wndPos[1]);
+					XMoveWindow((Display*)_display, _data.wnd, _data.wndPos[0], _data.wndPos[1]);
 
 					break;
 				}
@@ -487,7 +509,7 @@ namespace srk {
 			if (_data.xMapped) {
 				_data.xMapped = false;
 				_data.waitVisibility = true;
-				XUnmapWindow((Display*)_data.dis, _data.wnd);
+				XUnmapWindow((Display*)_display, _data.wnd);
 			}
 		}
 
@@ -512,7 +534,7 @@ namespace srk {
 					XEvent reply = e;
 					reply.xclient.window = _data.root;
 
-					XSendEvent((Display*)_data.dis, _data.root, False, SubstructureNotifyMask | SubstructureRedirectMask, &reply);
+					XSendEvent((Display*)_display, _data.root, False, SubstructureNotifyMask | SubstructureRedirectMask, &reply);
 				}
 			}
 
@@ -537,7 +559,7 @@ namespace srk {
 			if (isNormal) {
 				int32_t x, y;
 				::Window dummy;
-				XTranslateCoordinates((Display*)_data.dis, _data.wnd, _data.root, 0, 0, &x, &y, &dummy);
+				XTranslateCoordinates((Display*)_display, _data.wnd, _data.root, 0, 0, &x, &y, &dummy);
 
 				_data.wndPos.set(x - _data.border[0], y - _data.border[2]);
 				_data.clientSize.set(conf.width, conf.height);
@@ -610,6 +632,9 @@ namespace srk {
 		default:
 			break;
 		}
+	}
+#else
+	void IWindow::pollEvents() {
 	}
 #endif
 }

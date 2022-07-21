@@ -42,10 +42,11 @@ namespace srk {
 		virtual void SRK_CALL setRestore() override;
 		virtual bool SRK_CALL isVisible() const override;
 		virtual void SRK_CALL setVisible(bool b) override;
-		virtual void SRK_CALL pollEvents() override;
 		virtual void SRK_CALL close() override;
+		virtual void SRK_CALL processEvent(void* data) override;
 
 	protected:
+		friend IWindow;
 		using X11_Atom = size_t;
 		using X11_Window = size_t;
 
@@ -96,13 +97,12 @@ namespace srk {
 			bool xMapped = false;
 			bool xFullscreen = false;
 			bool ignoreEvtPos = false;
+			bool useDisplay = false;
 
 			WindowStyle style;
 			WindowState wndState = WindowState::NORMAL;
 			WindowState prevWndState = WindowState::NORMAL;
 			WindowState xWndState = WindowState::NORMAL;
-			
-			void* dis = nullptr;
 
 			std::string title;
 
@@ -135,6 +135,9 @@ namespace srk {
 			X11_Atom NET_CURRENT_DESKTOP;
 		} _data;
 
+		static uint32_t _displayRefCount;
+		static void* _display;
+
 		void SRK_CALL _sendClientEventToWM(X11_Atom msgType, int64_t a = 0, int64_t b = 0, int64_t c = 0, int64_t d = 0, int64_t e = 0);
 		void SRK_CALL _sendResizedEvent();
 		void SRK_CALL _waitEvent(bool& value);
@@ -147,6 +150,8 @@ namespace srk {
 		void SRK_CALL _updateWindowPlacement();
 
 		void SRK_CALL _doEvent(void* evt);//XEvent*
+
+		static bool SRK_CALL _checkIfEvent(void* evt);//XEvent*
 	};
 #else
 	class SRK_FW_DLL Window : public EmptyWindow {};

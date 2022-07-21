@@ -241,18 +241,6 @@ namespace srk {
 		}
 	}
 
-	void Window::processEvent(void* data) {
-		if (!_data.isCreated) return;
-
-		auto& msg =*(MSG*)data;
-		if (msg.message == WM_QUIT) {
-			close();
-		} else {
-			TranslateMessage(&msg);
-			DispatchMessageW(&msg);
-		}
-	}
-
 	void Window::close() {
 		if (!_data.isCreated) return;
 
@@ -266,11 +254,21 @@ namespace srk {
 		_eventDispatcher->dispatchEvent(this, WindowEvent::CLOSED);
 	}
 
+	void Window::processEvent(void* data) {
+		if (!_data.isCreated) return;
+
+		auto& msg =*(MSG*)data;
+		if (msg.message == WM_QUIT) {
+			close();
+		} else {
+			TranslateMessage(&msg);
+			DispatchMessageW(&msg);
+		}
+	}
+
 	void IWindow::pollEvents() {
 		MSG msg = { 0 };
-		while (::PeekMessageW(&msg, 0, 0, 0, PM_REMOVE)) {
-			if (auto itr = _windows.find(msg.hwnd); itr != _windows.end()) itr->second->processEvent(&msg);
-		}
+		while (PeekMessageW(&msg, 0, 0, 0, PM_REMOVE)) sendEvent(msg.hwnd, &msg);
 	}
 
 	//platform

@@ -97,14 +97,14 @@ namespace srk {
 	void EmptyWindow::setVisible(bool b) {
 	}
 
-	void EmptyWindow::processEvent(void* data) {
-	}
-
 	void EmptyWindow::close() {
 		if (!_data.isCreated) return;
 
 		_data = decltype(_data)();
 
 		_eventDispatcher->dispatchEvent(this, WindowEvent::CLOSED);
+	}
+
+	void EmptyWindow::processEvent(void* data) {
 	}
 }

@@ -64,10 +64,11 @@ namespace srk {
 		virtual void SRK_CALL setRestore() = 0;
 		virtual bool SRK_CALL isVisible() const = 0;
 		virtual void SRK_CALL setVisible(bool b) = 0;
-		virtual void SRK_CALL processEvent(void* data) = 0;
 		virtual void SRK_CALL close() = 0;
+		virtual void SRK_CALL processEvent(void* data) = 0;
 
 		static void pollEvents();
+		static void sendEvent(void* nativeWindow, void* data);
 
 	protected:
 		IWindow() {};
