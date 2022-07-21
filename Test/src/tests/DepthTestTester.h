@@ -11,7 +11,7 @@ public:
 		IntrusivePtr win = new Window();
 
 		WindowStyle wndStype;
-		wndStype.thickFrame = true;
+		wndStype.resizable = true;
 		if (win->create(wndStype, "", Vec2ui32(800, 600), false)) {
 			IntrusivePtr gml = new GraphicsModuleLoader();
 

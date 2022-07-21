@@ -20,7 +20,7 @@ ExternalProject_Add(
     ${PROJECT_NAME}
     PREFIX ${PROJECT_BINARY_DIR}
     GIT_REPOSITORY https://github.com/gperftools/gperftools.git
-    GIT_TAG gperftools-2.9.1
+    GIT_TAG gperftools-2.10
     GIT_SHALLOW 1
     GIT_PROGRESS 1
     TMP_DIR tmp

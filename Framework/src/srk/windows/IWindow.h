@@ -18,9 +18,10 @@ namespace srk {
 
 
 	struct SRK_FW_DLL WindowStyle {
-		bool maximizeButton = true;
-		bool minimizeButton = true;
-		bool thickFrame = true;
+		bool minimizable = true;
+		bool maximizable = true;
+		bool closable = true;
+		bool resizable = true;
 		Vec3<uint8_t> backgroundColor;
 	};
 

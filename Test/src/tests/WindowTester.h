@@ -57,7 +57,8 @@ public:
 		};
 
 		WindowStyle wndStype;
-		wndStype.thickFrame = true;
+		wndStype.resizable = true;
+		wndStype.maximizable = true;
 		wndStype.backgroundColor.set(255, 255, 0);
 		auto deb = Debug::isDebuggerPresent() ? "debugger link"sv : ""sv;
 		tryCreateWndFn(wndStype, "Fucker1 " + deb);

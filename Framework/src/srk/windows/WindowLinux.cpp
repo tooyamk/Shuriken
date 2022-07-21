@@ -87,7 +87,7 @@ namespace srk {
 		//auto sd = ScreenOfDisplay((Display*)_linux.dis, _linux.screen);
 		//printcln(sd->width, "   ", sd->height);
 
-		if (!_data.style.thickFrame) {
+		if (!_data.style.resizable) {
 			auto hints = XAllocSizeHints();
 			hints->flags = PMinSize | PMaxSize;
 			hints->min_width = _data.clientSize[0];
@@ -118,11 +118,11 @@ namespace srk {
 			hints.flags = MwmHints::MWM_HINTS_FUNCTIONS | MwmHints::MWM_HINTS_DECORATIONS;
 			hints.functions = MwmHints::MWM_FUNC_MOVE | MwmHints::MWM_FUNC_CLOSE | MwmHints::MWM_FUNC_RESIZE;
 			hints.decorations = MwmHints::MWM_DECOR_BORDER | MwmHints::MWM_DECOR_RESIZEH | MwmHints::MWM_DECOR_TITLE | MwmHints::MWM_DECOR_MENU;
-			if (_data.style.minimizeButton) {
+			if (_data.style.minimizable) {
 				hints.functions |= MwmHints::MWM_FUNC_MINIMIZE;
 				hints.decorations |= MwmHints::MWM_DECOR_MINIMIZE;
 			}
-			if (_data.style.maximizeButton) {
+			if (_data.style.maximizable) {
 				hints.functions |= MwmHints::MWM_FUNC_MAXIMIZE;
 				hints.decorations |= MwmHints::MWM_DECOR_MAXIMIZE;
 			}

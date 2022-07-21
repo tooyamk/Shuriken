@@ -124,8 +124,8 @@ find_package(UDev)
 find_package(X11)
 
 if (SRK_OS_MACOS)
-    find_library(FRAMEWORK_OpenGL PATHS ${CMAKE_OSX_SYSROOT}/System/Library)
-    if (${FRAMEWORK_OpenGL} STREQUAL FRAMEWORK_OpenGL_NOTFOUND)
+    find_library(FRAMEWORK_OpenGL NAMES OpenGL PATHS ${CMAKE_OSX_SYSROOT}/System/Library)
+    if (${FRAMEWORK_OpenGL} STREQUAL FRAMEWORK_OpenGL-NOTFOUND)
         set(OPENGL_FOUND False)
     else ()
         set(OPENGL_FOUND True)
@@ -497,6 +497,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD c++20)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
+set(CMAKE_XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC NO)
 
 set(compilerFlags "-fms-extensions -fPIC -Wno-unused-command-line-argument -Wno-switch")
 if (SRK_C_COMPILER_CLANG OR SRK_C_COMPILER_GNU)

@@ -37,6 +37,7 @@ namespace srk {
 		memset(&wnd, 0, sizeof(wnd));
 		wnd.cbSize = sizeof(wnd);
 		wnd.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+		if (!style.closable) wnd.style |= CS_NOCLOSE;
 		wnd.lpfnWndProc = Window::_wndProc;
 		wnd.cbClsExtra = 0;
 		wnd.cbWndExtra = 0;
@@ -360,9 +361,9 @@ namespace srk {
 			val |= WS_POPUP;
 		} else {
 			val |= WS_BORDER | WS_DLGFRAME | WS_SYSMENU;
-			if (style.minimizeButton) val |= WS_MINIMIZEBOX;
-			if (style.maximizeButton) val |= WS_MAXIMIZEBOX;
-			if (style.thickFrame) val |= WS_THICKFRAME;
+			if (style.minimizable) val |= WS_MINIMIZEBOX;
+			if (style.maximizable) val |= WS_MAXIMIZEBOX;
+			if (style.resizable) val |= WS_THICKFRAME;
 		}
 
 		return val;

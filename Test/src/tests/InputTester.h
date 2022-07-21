@@ -80,7 +80,7 @@ public:
 		IntrusivePtr win = new Window();
 
 		WindowStyle wndStype;
-		wndStype.thickFrame = true;
+		wndStype.resizable = true;
 		if (win->create(wndStype, "", Vec2ui32(800, 600), false)) {
 			win->getEventDispatcher()->addEventListener(WindowEvent::CLOSED, createEventListener<WindowEvent>([](Event<WindowEvent>& e) {
 				std::exit(0);

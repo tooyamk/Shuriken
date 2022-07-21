@@ -20,7 +20,7 @@ public:
 		}
 
 		WindowStyle wndStype;
-		wndStype.thickFrame = true;
+		wndStype.resizable = true;
 		wndStype.backgroundColor.set(255, 255, 0);
 		if (win->create(wndStype, "Fucker", Vec2ui32(800, 600), false)) {
 			//app->setWindowPosition({200, 300});

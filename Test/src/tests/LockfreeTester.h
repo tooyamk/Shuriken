@@ -73,7 +73,7 @@ public:
 		printFloat(0.111111111f);
 
 		WindowStyle wndStype;
-		wndStype.thickFrame = true;
+		wndStype.resizable = true;
 		if (win->create(wndStype, "", Vec2ui32(800, 600), false)) {
 			IntrusivePtr looper = new Looper(1000.0 / 60.0);
 
