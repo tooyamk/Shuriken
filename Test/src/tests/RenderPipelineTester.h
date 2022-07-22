@@ -253,7 +253,7 @@ public:
 					renderData.looper->getEventDispatcher()->addEventListener(LooperEvent::TICKING, new EventListener(std::function([renderData](Event<LooperEvent>& e) {
 						auto dt = float32_t(*e.getData<float64_t>());
 
-						IWindow::pollEvents();
+						Window::getManager()->pollEvents();
 
 						renderData.model->localRotate(Quaternion::createEulerY(Math::PI<float32_t> * dt * 0.5f));
 

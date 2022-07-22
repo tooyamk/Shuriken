@@ -329,7 +329,7 @@ public:
 			}));
 
 			looper->getEventDispatcher()->addEventListener(LooperEvent::TICKING, createEventListener<LooperEvent>([&inputModules, &inputDevices, &inputDevicesMutex](Event<LooperEvent>& e) {
-				IWindow::pollEvents();
+				Window::getManager()->pollEvents();
 
 				for (auto& im : inputModules) im->poll();
 				//for (auto& dev : inputDevices) dev->poll(true);

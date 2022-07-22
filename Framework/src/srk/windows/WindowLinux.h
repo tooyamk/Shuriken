@@ -13,6 +13,7 @@
 
 namespace srk {
 #ifdef SRK_HAS_X11
+#	define SRK_WINDOW_SUPPORTED
 	class SRK_FW_DLL Window : public IWindow {
 	public:
 		Window();
@@ -45,8 +46,14 @@ namespace srk {
 		virtual void SRK_CALL close() override;
 		virtual void SRK_CALL processEvent(void* data) override;
 
+		inline static WindowManager* getManager() {
+			return _manager;
+		}
+
 	protected:
-		friend IWindow;
+		static WindowManager* _manager;
+
+		friend WindowManager;
 		using X11_Atom = size_t;
 		using X11_Window = size_t;
 
@@ -153,8 +160,6 @@ namespace srk {
 
 		static bool SRK_CALL _checkIfEvent(void* evt);//XEvent*
 	};
-#else
-	class SRK_FW_DLL Window : public EmptyWindow {};
 #endif
 }
 

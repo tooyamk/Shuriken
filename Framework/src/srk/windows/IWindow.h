@@ -5,6 +5,8 @@
 #include "srk/events/EventDispatcher.h"
 
 namespace srk {
+	class WindowManager;
+
 	enum class WindowEvent : uint8_t {
 		RESIZED,
 		FOCUS_IN,
@@ -66,17 +68,5 @@ namespace srk {
 		virtual void SRK_CALL setVisible(bool b) = 0;
 		virtual void SRK_CALL close() = 0;
 		virtual void SRK_CALL processEvent(void* data) = 0;
-
-		static void pollEvents();
-		static void sendEvent(void* nativeWindow, void* data);
-
-	protected:
-		IWindow() {};
-
-		static void _register(void* nativeWindow, IWindow* window);
-		static void _unregister(void* nativeWindow);
-
-	private:
-		static std::unordered_map<void*, IWindow*> _windows;
 	};
 }

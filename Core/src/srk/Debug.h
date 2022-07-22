@@ -6,7 +6,7 @@
 namespace srk {
 	class SRK_CORE_DLL Debug {
 	public:
-		static bool SRK_CALL isDebuggerPresent();
+		static bool SRK_CALL isDebuggerAttached();
 
 		struct SRK_CORE_DLL DebuggerOutput {
 			bool SRK_CALL operator()(const std::wstring_view& data) const;

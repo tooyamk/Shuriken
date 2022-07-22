@@ -1,14 +1,13 @@
 #pragma once
 
-#include "srk/windows/IWindow.h"
+#include "srk/windows/WindowLinux.h"
+#include "srk/windows/WindowMac.h"
+#include "srk/windows/WindowWindows.h"
 
-#if SRK_OS == SRK_OS_MACOS
-#define SRK_WINDOW_SUPPORTED
-#include "srk/math/Box.h"
+#if !defined(SRK_WINDOW_SUPPORTED)
+#include "srk/math/Vector.h"
 
 namespace srk {
-	class WindowManager;
-
 	class SRK_FW_DLL Window : public IWindow {
 	public:
 		Window();
@@ -40,7 +39,7 @@ namespace srk {
 		virtual bool SRK_CALL isVisible() const override;
 		virtual void SRK_CALL setVisible(bool b) override;
 		virtual void SRK_CALL close() override;
-        virtual void SRK_CALL processEvent(void* data) override;
+		virtual void SRK_CALL processEvent(void* data) override;
 
 		inline static WindowManager* getManager() {
 			return _manager;
@@ -55,7 +54,6 @@ namespace srk {
 		struct {
 			bool isCreated = false;
 			std::string title;
-            void* wnd = nullptr;
 		} _data;
 	};
 }

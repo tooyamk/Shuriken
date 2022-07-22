@@ -326,7 +326,7 @@ namespace srk {
 		_doEvent(data);
 	}
 
-	void IWindow::pollEvents() {
+	void WindowManager::pollEvents() {
 		XEvent e = { 0 };
 		while (Window::_checkIfEvent(&e)) sendEvent((void*)e.xclient.window, &e);
 	}
@@ -632,9 +632,6 @@ namespace srk {
 		default:
 			break;
 		}
-	}
-#else
-	void IWindow::pollEvents() {
 	}
 #endif
 }

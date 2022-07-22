@@ -23,6 +23,8 @@ if (SRK_OS_WINDOWS)
     list(APPEND linkLibs dxgi.lib winmm.lib)
 elseif (SRK_OS_LINUX)
     srkAppendIf(X11_FOUND linkLibs X11)
+elseif (SRK_OS_MACOS)
+    list(APPEND linkLibs "-framework Cocoa")
 endif ()
 target_link_libraries(${PROJECT_NAME}
     ${SRKPROJ_SRK_CORE_NAME}

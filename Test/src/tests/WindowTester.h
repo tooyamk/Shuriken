@@ -60,7 +60,7 @@ public:
 		wndStype.resizable = true;
 		wndStype.maximizable = true;
 		wndStype.backgroundColor.set(255, 255, 0);
-		auto deb = Debug::isDebuggerPresent() ? "debugger link"sv : ""sv;
+		auto deb = Debug::isDebuggerAttached() ? "debugger attached"sv : ""sv;
 		tryCreateWndFn(wndStype, "Fucker1 " + deb);
 
 		wndStype.backgroundColor.set(255, 0, 0);
@@ -74,7 +74,7 @@ public:
 			int step = 0;
 
 			looper->getEventDispatcher()->addEventListener(LooperEvent::TICKING, createEventListener<LooperEvent>([&activedWindows, &t, &step, looper](Event<LooperEvent>& e) {
-				IWindow::pollEvents();
+				Window::getManager()->pollEvents();
 
 				for (auto itr = activedWindows.begin(); itr != activedWindows.end();) {
 					auto win = *itr;

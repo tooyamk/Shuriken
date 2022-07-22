@@ -3,9 +3,12 @@
 #include "srk/windows/IWindow.h"
 
 #if SRK_OS == SRK_OS_WINDOWS
+#define SRK_WINDOW_SUPPORTED
 #include "srk/math/Box.h"
 
 namespace srk {
+	class WindowManager;
+
 	class SRK_FW_DLL Window : public IWindow {
 	public:
 		Window();
@@ -38,7 +41,13 @@ namespace srk {
 		virtual void SRK_CALL close() override;
 		virtual void SRK_CALL processEvent(void* data) override;
 
+		inline static WindowManager* getManager() {
+			return _manager;
+		}
+
 	protected:
+		static WindowManager* _manager;
+
 		static std::atomic_uint32_t _counter;
 
 		IntrusivePtr<events::IEventDispatcher<WindowEvent>> _eventDispatcher;
@@ -82,8 +91,8 @@ namespace srk {
 		Box2i32 SRK_CALL _calcWorkArea() const;
 		bool SRK_CALL _setWndState(WindowState state);
 		void SRK_CALL _updateWindowPlacement(UINT showCmd = (std::numeric_limits<UINT>::max)());
-		static DWORD SRK_CALL _getWindowStyle(const WindowStyle& style, bool fullscreen);
-		static DWORD SRK_CALL _getWindowExStyle(bool fullscreen);
+		static DWORD SRK_CALL _getNativeStyle(const WindowStyle& style, bool fullscreen);
+		static DWORD SRK_CALL _getNativeExStyle(bool fullscreen);
 
 		template<bool FS>
 		inline static constexpr UINT SRK_CALL _getWindowPosFlags() {

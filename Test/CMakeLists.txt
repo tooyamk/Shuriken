@@ -78,9 +78,13 @@ include_directories(
 )
 add_definitions(${SRK_DEFINITIONS})
 file(GLOB_RECURSE srcFiles "src/*.h" "src/*.cpp")
-srkAddExecutableSourceGroup(${PROJECT_NAME} ${srcFiles})
+srkAddExecutableSourceGroup(${PROJECT_NAME} MACOSX_BUNDLE ${srcFiles})
 
-srkSetTargetRpath(${PROJECT_NAME} "./libs")
+if (SRK_OS_MACOS)
+    srkSetTargetRpath(${PROJECT_NAME} "@executable_path/../../../libs")
+else ()
+    srkSetTargetRpath(${PROJECT_NAME} "./libs")
+endif ()
 
 set(linkLibs
     ${SRKPROJ_SRK_CORE_NAME}

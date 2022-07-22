@@ -271,9 +271,11 @@ endfunction()
 
 function(srkSetTargetRpath target rpath)
     if (SRK_OS_MACOS OR SRK_OS_IOS)
-        string(REGEX REPLACE ":" ";" rpath "${rpath}")
+        string(REPLACE ":" ";" rpath "${rpath}")
+        string(REGEX REPLACE "^[    ]*\./" "@executable_path/" rpath "${rpath}")
+        string(REGEX REPLACE ";[    ]*\./" ";@executable_path/" rpath "${rpath}")
     else (SRK_OS_LINUX)
-        string(REGEX REPLACE ";" ":" rpath "${rpath}")
+        string(REPLACE ";" ":" rpath "${rpath}")
     endif ()
     
     set_target_properties(${target} PROPERTIES XCODE_ATTRIBUTE_LD_RUNPATH_SEARCH_PATHS ${rpath})
@@ -494,6 +496,7 @@ endif ()
 #set(CMAKE_MINSIZEREL_POSTFIX "s" CACHE STRING "")
 
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_XCODE_ATTRIBUTE_GCC_C_LANGUAGE_STANDARD c11)
 set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD c++20)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)

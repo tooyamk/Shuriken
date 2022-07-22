@@ -221,7 +221,7 @@ public:
 					looper->getEventDispatcher()->addEventListener(LooperEvent::TICKING, new EventListener(std::function([renderData](Event<LooperEvent>& e) {
 						auto dt = float64_t(*e.getData<int64_t>());
 
-						IWindow::pollEvents();
+						Window::getManager()->pollEvents();
 
 						renderData.g->setViewport(Box2i32ui32(Vec2i32::ZERO, renderData.win->getCurrentClientSize()));
 						renderData.g->beginRender();
