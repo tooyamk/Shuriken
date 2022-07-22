@@ -18,6 +18,7 @@
 
 #include "srk/String.h"
 #include "srk/Debug.h"
+#include "srk/windows/WindowManager.h"
 
 namespace srk {
 #ifdef SRK_HAS_X11
@@ -30,6 +31,7 @@ namespace srk {
 		close();
 	}
 
+	WindowManager* Window::_manager = new WindowManager();
 	uint32_t Window::_displayRefCount = 0;
 	void* Window::_display = nullptr;
 
@@ -167,7 +169,7 @@ namespace srk {
 		_updateWindowPlacement();
 
 		_data.isCreated = true;
-		_register((void*)_data.wnd, this);
+		_manager->add((void*)_data.wnd, this);
 		setTitle(title);
 
 		return true;
@@ -308,7 +310,7 @@ namespace srk {
 	void Window::close() {
 		if (!_data.isCreated) return;
 
-		_unregister((void*)_data.wnd);
+		_manager->remove((void*)_data.wnd);
 		if (_data.wnd) XDestroyWindow((Display*)_display, _data.wnd);
 		if (_data.useDisplay && --_displayRefCount == 0) {
 			XCloseDisplay((Display*)_display);
@@ -361,7 +363,7 @@ namespace srk {
 		XEvent e = { 0 };
 		while (value) {
 			if (_checkIfEvent(&e)) {
-				sendEvent((void*)e.xclient.window, &e);
+				_manager->sendEvent((void*)e.xclient.window, &e);
 			} else {
 				value = false;
 				break;

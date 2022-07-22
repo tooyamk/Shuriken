@@ -1,6 +1,7 @@
 #include "WindowMac.h"
 
 #if SRK_OS == SRK_OS_MACOS
+#	include "srk/windows/WindowManager.h"
 #   import <Cocoa/Cocoa.h>
 
 namespace srk {
@@ -31,7 +32,7 @@ namespace srk {
         _data.wnd = wnd;
 
 		_data.isCreated = true;
-        _register(wnd, this);
+        _manager->add(wnd, this);
 		setTitle(title);
 
 		return true;
@@ -128,7 +129,7 @@ namespace srk {
 	void Window::close() {
 		if (!_data.isCreated) return;
         
-        _unregister(_data.wnd);
+        _manager->remove(_data.wnd);
         if (_data.wnd) [(NSWindow*)_data.wnd release];
 
 		_data = decltype(_data)();
