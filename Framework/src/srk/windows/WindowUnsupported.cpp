@@ -111,7 +111,8 @@ namespace srk {
 	void Window::processEvent(void* data) {
 	}
 
-	void WindowManager::pollEvents() {
+	bool WindowManager::processEvent(const WindowManager::EventFn& fn) const {
+		return false;
 	}
 }
 #endif
