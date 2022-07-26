@@ -265,9 +265,15 @@ namespace srk {
 		}
 	}
 
-	void WindowManager::pollEvents() {
+	bool WindowManager::processEvent(const WindowManager::EventFn& fn) const {
 		MSG msg = { 0 };
-		while (PeekMessageW(&msg, 0, 0, 0, PM_REMOVE)) sendEvent(msg.hwnd, &msg);
+		if (!PeekMessageW(&msg, 0, 0, 0, PM_REMOVE)) return false;
+
+		if (sendEvent(msg.hwnd, &msg, fn)) {
+			TranslateMessage(&msg);
+			DispatchMessageW(&msg);
+		}
+		return true;
 	}
 
 	//platform

@@ -147,7 +147,7 @@ namespace srk {
 
 		void SRK_CALL _sendClientEventToWM(X11_Atom msgType, int64_t a = 0, int64_t b = 0, int64_t c = 0, int64_t d = 0, int64_t e = 0);
 		void SRK_CALL _sendResizedEvent();
-		void SRK_CALL _waitEvent(bool& value);
+		//void SRK_CALL _waitEvent(bool& value);
 		Box2i32 SRK_CALL _calcWorkArea() const;
 		bool SRK_CALL _setWndState(WindowState state);
 		size_t SRK_CALL _getXWndProperty(X11_Window wnd, X11_Atom property, X11_Atom type, uint8_t** value) const;

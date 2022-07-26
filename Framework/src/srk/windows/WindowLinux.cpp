@@ -155,7 +155,7 @@ namespace srk {
 			_data.waitFrameEXTENTS = true;
 
 			_sendClientEventToWM(_data.NET_REQUEST_FRAME_EXTENTS);
-			_waitEvent(_data.waitFrameEXTENTS);
+			//_waitEvent(_data.waitFrameEXTENTS);
 		}
 
 		{
@@ -328,9 +328,12 @@ namespace srk {
 		_doEvent(data);
 	}
 
-	void WindowManager::pollEvents() {
+	bool WindowManager::processEvent(const WindowManager::EventFn& fn) const {
 		XEvent e = { 0 };
-		while (Window::_checkIfEvent(&e)) sendEvent((void*)e.xclient.window, &e);
+		if (!Window::_checkIfEvent(&e)) return false;
+
+		sendEvent((void*)e.xclient.window, &e, fn));
+		return true;
 	}
 
 	//platform
@@ -359,7 +362,7 @@ namespace srk {
 		return Window::_display && XCheckIfEvent((Display*)Window::_display, (XEvent*)evt, [](Display* display, XEvent* event, XPointer pointer) { return True; }, nullptr);
 	}
 
-	void Window::_waitEvent(bool& value) {
+	/*void Window::_waitEvent(bool& value) {
 		XEvent e = { 0 };
 		while (value) {
 			if (_checkIfEvent(&e)) {
@@ -369,7 +372,7 @@ namespace srk {
 				break;
 			}
 		};
-	}
+	}*/
 
 	size_t Window::_getXWndProperty(X11_Window wnd, X11_Atom property, X11_Atom type, uint8_t** value) const {
 		Atom actualType;
@@ -496,7 +499,7 @@ namespace srk {
 						_data.xWndState = WindowState::NORMAL;
 						_data.waitVisibility = true;
 						XMapWindow((Display*)_display, _data.wnd);
-						_waitEvent(_data.waitVisibility);
+						//_waitEvent(_data.waitVisibility);
 					} else if (_data.xWndState == WindowState::MAXIMUM) {
 						_sendClientEventToWM(_data.NET_WM_STATE, 0, _data.NET_WM_STATE_MAXIMIZED_VERT, _data.NET_WM_STATE_MAXIMIZED_HORZ, 1);
 					}
@@ -515,7 +518,7 @@ namespace srk {
 			}
 		}
 
-		_waitEvent(_data.waitVisibility);
+		//_waitEvent(_data.waitVisibility);
 	}
 
 	void Window::_doEvent(void* evt) {

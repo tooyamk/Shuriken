@@ -14,7 +14,17 @@ namespace srk {
 		_windows.erase(nativeWindow);
 	}
 
-	void WindowManager::sendEvent(void* nativeWindow, void* data) {
-		if (auto itr = _windows.find(nativeWindow); itr != _windows.end()) itr->second->processEvent(data);
+	bool WindowManager::processEvent() const {
+		return processEvent([](IWindow* win, void* data) {
+			if (!win) return true;
+			
+			win->processEvent(data);
+			return false;
+		});
+	}
+
+	bool WindowManager::sendEvent(void* nativeWindow, void* data, const EventFn& fn) const {
+		auto itr = _windows.find(nativeWindow);
+		return fn(itr == _windows.end() ? nullptr : itr->second, data);
 	}
 }

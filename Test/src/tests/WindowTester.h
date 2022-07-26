@@ -74,7 +74,7 @@ public:
 			int step = 0;
 
 			looper->getEventDispatcher()->addEventListener(LooperEvent::TICKING, createEventListener<LooperEvent>([&activedWindows, &t, &step, looper](Event<LooperEvent>& e) {
-				Window::getManager()->pollEvents();
+				while (Window::getManager()->processEvent()) {};
 
 				for (auto itr = activedWindows.begin(); itr != activedWindows.end();) {
 					auto win = *itr;

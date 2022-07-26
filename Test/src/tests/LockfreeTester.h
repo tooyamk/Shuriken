@@ -82,7 +82,7 @@ public:
 			}));
 
 			looper->getEventDispatcher()->addEventListener(LooperEvent::TICKING, createEventListener<LooperEvent>([](Event<LooperEvent>& e) {
-				Window::getManager()->pollEvents();
+				while (Window::getManager()->processEvent()) {};
 			}));
 
 			win->setVisible(true);
