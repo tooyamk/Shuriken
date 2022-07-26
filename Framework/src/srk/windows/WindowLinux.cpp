@@ -332,7 +332,7 @@ namespace srk {
 		XEvent e = { 0 };
 		if (!Window::_checkIfEvent(&e)) return false;
 
-		sendEvent((void*)e.xclient.window, &e, fn));
+		sendEvent((void*)e.xclient.window, &e, fn);
 		return true;
 	}
 
