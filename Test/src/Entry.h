@@ -1,3 +1,5 @@
+#pragma once
+
 #include "tests/DepthTestTester.h"
 
 #if SRK_OS == SRK_OS_WINDOWS

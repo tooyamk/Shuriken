@@ -56,7 +56,10 @@ namespace srk {
 			bool isCreated = false;
 			std::string title;
             void* wnd = nullptr;
+            void* delegate = nullptr;
 		} _data;
+        
+        static void SRK_CALL _proc(void* target, uint32_t msg, void* param);
 	};
 }
 #endif

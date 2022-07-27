@@ -77,7 +77,7 @@ include_directories(
     ${SRK_SOURCE_DIR}
 )
 add_definitions(${SRK_DEFINITIONS})
-file(GLOB_RECURSE srcFiles "src/*.h" "src/*.cpp")
+srkCollectSrcFiles(srcFiles)
 srkAddExecutableSourceGroup(${PROJECT_NAME} MACOSX_BUNDLE ${srcFiles})
 
 if (SRK_OS_MACOS)
@@ -98,14 +98,11 @@ set(linkLibs
 set(USE_MIMALLOC ON)
 set(USE_TCMALLOC OFF)
 
-if (SRK_OS_WINDOWS)
-elseif (APPLE)
-elseif (UNIX)
-    list(APPEND linkLibs
-        dl
-        pthread
-    )
+if (SRK_OS_LINUX)
+    list(APPEND linkLibs dl pthread)
     srkAppendIf(X11_FOUND linkLibs X11)
+elseif (SRK_OS_MACOS)
+    list(APPEND linkLibs "-framework Cocoa")
 endif ()
 
 srkDelayLoadImport(${SRKPROJ_SRK_ASTC_CONVERTER_OUTPUT_NAME})
@@ -182,10 +179,6 @@ srkAppendIf(SRK_INPUT_DIRECT_INPUT test_pre_build_depends "${SRKPROJ_SRK_INPUT_D
 srkAppendIf(SRK_INPUT_HID_INPUT test_pre_build_depends "${SRKPROJ_SRK_INPUT_HID_INPUT_NAME}")
 srkAppendIf(SRK_INPUT_RAW_INPUT test_pre_build_depends "${SRKPROJ_SRK_INPUT_RAW_INPUT_NAME}")
 srkAppendIf(SRK_INPUT_XINPUT test_pre_build_depends "${SRKPROJ_SRK_INPUT_XINPUT_NAME}")
-
-if (SRK_OS_WINDOWS)
-elseif (SRK_OS_LINUX)
-endif ()
 
 if (USE_MIMALLOC)
     list(APPEND linkLibs ${SRKPROJ_MIMALLOC_LIB})
