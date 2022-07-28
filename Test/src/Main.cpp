@@ -4,6 +4,7 @@
 #	if SRK_OS == SRK_OS_WINDOWS
 //#pragma comment(linker, "/subsystem:console")
 int32_t WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int32_t nCmdShow) {
+	SetDllDirectoryW((getAppPath().parent_path().wstring() + L"/libs/").data());
 #	else
 int32_t main() {
 #	endif

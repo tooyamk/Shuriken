@@ -13,7 +13,7 @@ namespace srk {
 		return _eventDispatcher;
 	}
 
-	bool EmptyWindow::create(const WindowStyle& style, const std::string_view& title, const Vec2ui32& clientSize, bool fullscreen) {
+	bool EmptyWindow::create(const WindowStyle& style, const std::string_view& title, const Vec2ui32& contentSize, bool fullscreen) {
 		if (_data.isCreated) return false;
 
 		_data.isCreated = true;
@@ -34,22 +34,22 @@ namespace srk {
 		return false;
 	}
 
-	Vec4ui32 EmptyWindow::getBorder() const {
+	Vec4ui32 EmptyWindow::getFrameExtents() const {
 		return Vec4ui32();
 	}
 
 	void EmptyWindow::toggleFullscreen() {
 	}
 
-	Vec2ui32 EmptyWindow::getCurrentClientSize() const {
+	Vec2ui32 EmptyWindow::getCurrentContentSize() const {
 		return Vec2ui32();
 	}
 
-	Vec2ui32 EmptyWindow::getClientSize() const {
+	Vec2ui32 EmptyWindow::getContentSize() const {
 		return Vec2ui32();
 	}
 
-	void EmptyWindow::setClientSize(const Vec2ui32& size) {
+	void EmptyWindow::setContentSize(const Vec2ui32& size) {
 	}
 
 	std::string_view EmptyWindow::getTitle() const {

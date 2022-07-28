@@ -99,8 +99,8 @@ public:
 				if (1) {
 					SerializableObject args;
 					args.insert("win", win.uintptr());
-					args.insert("filter", DeviceType::GAMEPAD);
-					//initInputModule(inputModules, "libs/" + getDLLName("srk-input-raw-input"), &args);
+					args.insert("filter", DeviceType::KEYBOARD);
+					initInputModule(inputModules, "libs/" + getDLLName("srk-input-raw-input"), &args);
 				}
 				if (1) {
 					SerializableObject args;
@@ -112,7 +112,7 @@ public:
 					SerializableObject args;
 					args.insert("win", win.uintptr());
 					args.insert("filter", DeviceType::GAMEPAD);
-					initInputModule(inputModules, "libs/" + getDLLName("srk-input-hid-input"), &args);
+					//initInputModule(inputModules, "libs/" + getDLLName("srk-input-hid-input"), &args);
 				}
 			} else if constexpr (Environment::OPERATING_SYSTEM == Environment::OperatingSystem::LINUX) {
 				if (1) {
@@ -142,8 +142,9 @@ public:
 					auto info = e.getData<DeviceInfo>();
 					printaln("input device connected : ", getDeviceTypeString(info->type), " vid = ", info->vendorID, " pid = ", info->productID, " guid = ", String::toString(info->guid.getData(), info->guid.getSize()));
 
+					if ((info->type & (DeviceType::KEYBOARD)) != DeviceType::UNKNOWN) {
 					//if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN) {
-					if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN && info->vendorID == 0x54C) {
+					//if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN && info->vendorID == 0x54C) {
 					//if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN && info->vendorID == 0xF0D) {
 					//if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN && info->vendorID == 0x45E) {
 						auto im = e.getTarget<IInputModule>();
@@ -198,6 +199,15 @@ public:
 									}
 
 									printaln("keyboard down -> key : ", state->code, "    value : ", ((DeviceStateValue*)state->values)[0]);
+
+									if (state->code == KeyboardVirtualKeyCode::KEY_ENTER) {
+										float val[2];
+										device->getState(DeviceStateType::KEY, KeyboardVirtualKeyCode::KEY_CTRL, &val[0], 1);
+										device->getState(DeviceStateType::KEY, KeyboardVirtualKeyCode::KEY_ALT, &val[1], 1);
+										if (val[0] == 1.0f && val[1] == 1.0f) {
+											win->toggleFullscreen();
+										}
+									}
 
 									break;
 								}
@@ -322,7 +332,7 @@ public:
 				}));
 			}
 
-			IntrusivePtr looper = new Looper(1000.0 / 60.0);
+			IntrusivePtr looper = new Looper(1.0 / 60.0);
 
 			win->getEventDispatcher()->addEventListener(WindowEvent::CLOSED, createEventListener<WindowEvent>([looper](Event<WindowEvent>& e) {
 				looper->stop();

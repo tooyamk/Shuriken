@@ -41,7 +41,7 @@ public:
 					}));
 
 					win->getEventDispatcher()->addEventListener(WindowEvent::RESIZED, createEventListener<WindowEvent>([graphics](Event<WindowEvent>& e) {
-						graphics->setBackBufferSize(((IWindow*)e.getTarget())->getCurrentClientSize());
+						graphics->setBackBufferSize(((IWindow*)e.getTarget())->getCurrentContentSize());
 					}));
 
 					win->getEventDispatcher()->addEventListener(WindowEvent::CLOSED, createEventListener<WindowEvent>([](Event<WindowEvent>& e) {
@@ -223,7 +223,7 @@ public:
 
 						while (Window::getManager()->processEvent()) {};
 
-						renderData.g->setViewport(Box2i32ui32(Vec2i32::ZERO, renderData.win->getCurrentClientSize()));
+						renderData.g->setViewport(Box2i32ui32(Vec2i32::ZERO, renderData.win->getCurrentContentSize()));
 						renderData.g->beginRender();
 						renderData.g->clear(ClearFlag::COLOR | ClearFlag::DEPTH | ClearFlag::STENCIL, Vec4f32(0.0f, 0.0f, 0.25f, 1.0f), 1.0f, 0);
 

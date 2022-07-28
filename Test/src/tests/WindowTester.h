@@ -14,6 +14,8 @@ public:
 		auto tryCreateWndFn = [&activedWindows](const WindowStyle& style, const std::string_view& title) {
 			IntrusivePtr win = new Window();
 			if (win->create(style, title, Vec2ui32(800, 600), false)) {
+				auto border = win->getFrameExtents();
+				printaln("border ", border[0], " ", border[1], " ", border[2], " ", border[3]);
 				activedWindows.emplace_back(win);
 
 				win->getEventDispatcher()->addEventListener(WindowEvent::CLOSING, createEventListener<WindowEvent>([](Event<WindowEvent>& e) {
@@ -50,7 +52,7 @@ public:
 
 				win->getEventDispatcher()->addEventListener(WindowEvent::RESIZED, createEventListener<WindowEvent>([](Event<WindowEvent>& e) {
 					auto win = (IWindow*)e.getTarget();
-					auto size = win->getCurrentClientSize();
+					auto size = win->getCurrentContentSize();
 					printaln("wnd : ", win->getTitle(), " => resize  ", size[0], "   ", size[1]);
 				}));
 			}
@@ -85,34 +87,37 @@ public:
 					}
 				}
 
-				if (activedWindows.empty()) looper->stop();
+				if (activedWindows.empty()) {
+					looper->stop();
+					return;
+				}
 
-				return;
-				//auto tt = srk::Time::now();
-				//auto d = tt - t;
-				//if (d >= 2000) {
-				//	t = tt;
-				//	if (step == 0) {
-				//		step = 1;
-				//		win->setMaximum();
-				//		//app->toggleFullscreen();
-				//		//app->setRestore();
-				//		//app->getCurrentClientSize();
-				//		//app->setClientSize(Vec2ui32(400, 400));
-				//		//app->setVisible(false);
-				//		//app->setWindowPosition(Vec2i32(800, 10));
-				//		//app->setMaximum();
-				//		//app->shutdown();
-				//	} else if (step == 1) {
-				//		step = 2;
-				//		//app->toggleFullscreen();
-				//		//app->setVisible(true);
-				//	} else if (step == 2) {
-				//		step = 3;
-				//		//app->toggleFullscreen();
-				//		//app->setVisible(true);
-				//	}
-				//}
+				//return;
+				auto tt = srk::Time::now();
+				auto d = tt - t;
+				if (d >= 2000) {
+					t = tt;
+					if (step == 0) {
+						step = 1;
+						activedWindows[0]->setFocus();
+						//app->toggleFullscreen();
+						//app->setRestore();
+						//app->getCurrentClientSize();
+						//app->setClientSize(Vec2ui32(400, 400));
+						//app->setVisible(false);
+						//app->setWindowPosition(Vec2i32(800, 10));
+						//app->setMaximum();
+						//app->shutdown();
+					} else if (step == 1) {
+						step = 2;
+						//app->toggleFullscreen();
+						//app->setVisible(true);
+					} else if (step == 2) {
+						step = 3;
+						//app->toggleFullscreen();
+						//app->setVisible(true);
+					}
+				}
 
 				//app->setWindowTitle(String::toString(GetKeyboardType(0)) + "  " + String::toString(GetKeyboardType(1)) + "  " + String::toString(GetKeyboardType(2)));
 			}));

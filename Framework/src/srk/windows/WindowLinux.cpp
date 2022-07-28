@@ -24,7 +24,6 @@ namespace srk {
 #ifdef SRK_HAS_X11
 	Window::Window() :
 		_eventDispatcher(new events::EventDispatcher<WindowEvent>()) {
-		_data.sentSize.setAll((std::numeric_limits<decltype(_data.sentSize)::ElementType>::max)());
 	}
 
 	Window::~Window() {
@@ -39,10 +38,10 @@ namespace srk {
 		return _eventDispatcher;
 	}
 
-	bool Window::create(const WindowStyle& style, const std::string_view& title, const Vec2ui32& clientSize, bool fullscreen) {
+	bool Window::create(const WindowStyle& style, const std::string_view& title, const Vec2ui32& contentSize, bool fullscreen) {
 		if (_data.isCreated) return false;
 
-		_data.clientSize = clientSize;
+		_data.contentSize = contentSize;
 		_data.isFullscreen = fullscreen;
 		_data.style = style;
 
@@ -85,7 +84,7 @@ namespace srk {
 		_data.screen = DefaultScreen((Display*)_display);
 		_data.root = RootWindow((Display*)_display, _data.screen);
 		_data.wnd = XCreateWindow((Display*)_display, _data.root,
-			0, 0, _data.clientSize[0], _data.clientSize[1], 0,
+			0, 0, _data.contentSize[0], _data.contentSize[1], 0,
 			DefaultDepth((Display*)_display, 0), InputOutput, DefaultVisual((Display*)_display, 0), CWBorderPixel | CWColormap | CWEventMask, &attr);
 
 		XSetWindowBackground((Display*)_display, _data.wnd, _data.bgColor);
@@ -99,10 +98,10 @@ namespace srk {
 		if (!_data.style.resizable) {
 			auto hints = XAllocSizeHints();
 			hints->flags = PMinSize | PMaxSize;
-			hints->min_width = _data.clientSize[0];
-			hints->min_height = _data.clientSize[1];
-			hints->max_width = _data.clientSize[0];
-			hints->max_height = _data.clientSize[1];
+			hints->min_width = _data.contentSize[0];
+			hints->min_height = _data.contentSize[1];
+			hints->max_width = _data.contentSize[0];
+			hints->max_height = _data.contentSize[1];
 			XSetWMNormalHints((Display*)_display, _data.wnd, hints);
 			XFree(hints);
 		}
@@ -155,20 +154,21 @@ namespace srk {
 			_data.waitFrameEXTENTS = true;
 
 			_sendClientEventToWM(_data.NET_REQUEST_FRAME_EXTENTS);
-			//_waitEvent(_data.waitFrameEXTENTS);
+			//_waitEvent(_data.waitFrameEXTENTS, false);
 		}
 
 		{
 			auto area = _calcWorkArea();
 			//auto sd = ScreenOfDisplay((Display*)_linux.dis, _linux.screen);
-			_data.wndPos.set((area.size[0] - _data.clientSize[0] - _data.border[0] - _data.border[1]) / 2, (area.size[1] - _data.clientSize[1] - _data.border[2] - _data.border[3]) / 2);
+			_data.wndPos.set((area.size[0] - _data.contentSize[0] - _data.frameExtends[0] - _data.frameExtends[1]) / 2, (area.size[1] - _data.contentSize[1] - _data.frameExtends[2] - _data.frameExtends[3]) / 2);
 
-			if (auto top = area.pos[1] + _data.border[2]; _data.wndPos[1] < top) _data.wndPos[1] = top;
+			if (auto top = area.pos[1] + _data.frameExtends[2]; _data.wndPos[1] < top) _data.wndPos[1] = top;
 		}
 
 		_updateWindowPlacement();
 
 		_data.isCreated = true;
+		_data.sentContentSize = getCurrentContentSize();
 		_manager->add((void*)_data.wnd, this);
 		setTitle(title);
 
@@ -194,8 +194,9 @@ namespace srk {
 		return _data.isFullscreen;
 	}
 
-	Vec4ui32 Window::getBorder() const {
-		return _data.border;
+	Vec4ui32 Window::getFrameExtents() const {
+		((Window*)this)->_waitFrameExtents();
+		return _data.frameExtends;
 	}
 
 	void Window::toggleFullscreen() {
@@ -205,7 +206,7 @@ namespace srk {
 		}
 	}
 
-	Vec2ui32 Window::getCurrentClientSize() const {
+	Vec2ui32 Window::getCurrentContentSize() const {
 		Vec2ui32 size;
 
 		if (_data.wnd) {
@@ -214,10 +215,11 @@ namespace srk {
 				size.set(sd->width, sd->height);
 			} else {
 				if (_data.wndState == WindowState::MAXIMUM || (_data.wndState == WindowState::MINIMUM && _data.prevWndState == WindowState::MAXIMUM)) {
+					((Window*)this)->_waitFrameExtents();
 					auto area = _calcWorkArea();
-					size.set(std::max<int32_t>(area.size[0], 0), std::max<int32_t>(area.size[1] - _data.border[2], 0));
+					size.set(std::max<int32_t>(area.size[0], 0), std::max<int32_t>(area.size[1] - _data.frameExtends[2], 0));
 				} else {
-					size = _data.clientSize;
+					size = _data.contentSize;
 				}
 			}
 		}
@@ -225,13 +227,13 @@ namespace srk {
 		return size;
 	}
 
-	Vec2ui32 Window::getClientSize() const {
-		return _data.clientSize;
+	Vec2ui32 Window::getContentSize() const {
+		return _data.contentSize;
 	}
 
-	void Window::setClientSize(const Vec2ui32& size) {
-		if (_data.wnd && _data.clientSize != size) {
-			_data.clientSize = size;
+	void Window::setContentSize(const Vec2ui32& size) {
+		if (_data.wnd && _data.contentSize != size) {
+			_data.contentSize = size;
 			_updateWindowPlacement();
 			_sendResizedEvent();
 		}
@@ -352,27 +354,27 @@ namespace srk {
 	}
 
 	void Window::_sendResizedEvent() {
-		if (auto size = getCurrentClientSize(); _data.sentSize != size) {
-			_data.sentSize = size;
+		if (auto size = getCurrentContentSize(); _data.sentContentSize != size) {
+			_data.sentContentSize = size;
 			_eventDispatcher->dispatchEvent(this, WindowEvent::RESIZED);
 		}
 	}
 
 	bool Window::_checkIfEvent(void* evt) {
-		return Window::_display && XCheckIfEvent((Display*)Window::_display, (XEvent*)evt, [](Display* display, XEvent* event, XPointer pointer) { return True; }, nullptr);
+		return _display && XCheckIfEvent((Display*)_display, (XEvent*)evt, [](Display* dis, XEvent* e, XPointer ptr) { return True; }, nullptr);
 	}
 
-	/*void Window::_waitEvent(bool& value) {
-		XEvent e = { 0 };
+	void Window::_waitEvent(bool& value, bool canBreak) {
+		XEvent evt = { 0 };
 		while (value) {
-			if (_checkIfEvent(&e)) {
-				_manager->sendEvent((void*)e.xclient.window, &e);
-			} else {
+			if (_display && XCheckIfEvent((Display*)_display, &evt, [](Display* dis, XEvent* e, XPointer ptr) { return (int32_t)((XPointer)e->xclient.window == ptr); }, (XPointer)_data.wnd)) {
+				_doEvent(&evt);
+			} else if (canBreak) {
 				value = false;
 				break;
 			}
 		};
-	}*/
+	}
 
 	size_t Window::_getXWndProperty(X11_Window wnd, X11_Atom property, X11_Atom type, uint8_t** value) const {
 		Atom actualType;
@@ -521,6 +523,12 @@ namespace srk {
 		//_waitEvent(_data.waitVisibility);
 	}
 
+	void Window::_waitFrameExtents() {
+		if (!_data.waitFrameEXTENTS) return;
+
+		_waitEvent(_data.waitFrameEXTENTS, false);
+	}
+
 	void Window::_doEvent(void* evt) {
 		auto& e = *((XEvent*)evt);
 		switch (e.type) {
@@ -566,8 +574,8 @@ namespace srk {
 				::Window dummy;
 				XTranslateCoordinates((Display*)_display, _data.wnd, _data.root, 0, 0, &x, &y, &dummy);
 
-				_data.wndPos.set(x - _data.border[0], y - _data.border[2]);
-				_data.clientSize.set(conf.width, conf.height);
+				_data.wndPos.set(x - _data.frameExtends[0], y - _data.frameExtends[2]);
+				_data.contentSize.set(conf.width, conf.height);
 			}
 
 			_sendResizedEvent();
@@ -607,7 +615,7 @@ namespace srk {
 				if (prop.state == PropertyNewValue && prop.window == _data.wnd) {
 					uint8_t* property = nullptr;
 					if (auto count = _getXWndProperty(_data.wnd, _data.NET_FRAME_EXTENTS, XA_CARDINAL, &property); count >= 4) {
-						for (size_t i = 0; i < 4; ++i) _data.border[i] = ((int64_t*)property)[i];
+						for (size_t i = 0; i < 4; ++i) _data.frameExtends[i] = ((int64_t*)property)[i];
 					}
 
 					if (property) XFree(property);

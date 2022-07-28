@@ -16,15 +16,15 @@ namespace srk {
 
 		virtual IntrusivePtr<events::IEventDispatcher<WindowEvent>> SRK_CALL getEventDispatcher() override;
 
-		virtual bool SRK_CALL create(const WindowStyle& style, const std::string_view& title, const Vec2ui32& clientSize, bool fullscreen) override;
+		virtual bool SRK_CALL create(const WindowStyle& style, const std::string_view& title, const Vec2ui32& contentSize, bool fullscreen) override;
 		virtual bool SRK_CALL isCreated() const override;
 		virtual void* SRK_CALL getNative(WindowNative native) const override;
 		virtual bool SRK_CALL isFullscreen() const override;
 		virtual void SRK_CALL toggleFullscreen() override;
-		virtual Vec4ui32 SRK_CALL getBorder() const override;
-		virtual Vec2ui32 SRK_CALL getCurrentClientSize() const override;
-		virtual Vec2ui32 SRK_CALL getClientSize() const override;
-		virtual void SRK_CALL setClientSize(const Vec2ui32& size) override;
+		virtual Vec4ui32 SRK_CALL getFrameExtents() const override;
+		virtual Vec2ui32 SRK_CALL getCurrentContentSize() const override;
+		virtual Vec2ui32 SRK_CALL getContentSize() const override;
+		virtual void SRK_CALL setContentSize(const Vec2ui32& size) override;
 		virtual std::string_view SRK_CALL getTitle() const override;
 		virtual void SRK_CALL setTitle(const std::string_view& title) override;
 		virtual void SRK_CALL setPosition(const Vec2i32& pos) override;
@@ -78,10 +78,9 @@ namespace srk {
 			std::string title;
 			std::wstring className;
 
-			Vec2i32 clinetPos;
-			Vec2ui32 clientSize;
-			Vec2ui32 sentSize;
-			Vec4i32 border;//left, right, top, bottom
+			Box2i32ui32 contentRect;
+			Vec2ui32 sentContentSize;
+			Vec4i32 frameExtends;//left, right, top, bottom
 		} _data;
 
 

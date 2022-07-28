@@ -1,8 +1,9 @@
 #include "WindowMac.h"
 
 #if SRK_OS == SRK_OS_MACOS
-#	include "srk/windows/WindowManager.h"
 #   import <Cocoa/Cocoa.h>
+#   include "srk/Debug.h"
+#	include "srk/windows/WindowManager.h"
 
 #ifndef SRK_WINMAC_MSG
 #   define SRK_WINMAC_MSG
@@ -11,6 +12,7 @@
 #   define SRK_WINMAC_CLOSED 2
 #   define SRK_WINMAC_FOCUS_IN 3
 #   define SRK_WINMAC_FOCUS_OUT 4
+#   define SRK_WINMAC_RESIZED 5
 #endif
 
 @interface SrkWindowDelegate : NSObject<NSWindowDelegate> {
@@ -41,12 +43,12 @@
 }
 
 - (void)windowDidBecomeMain:(NSNotification*)notification {
-    //NSLog(@"windowDidBecomeMain");
+    NSLog(@"windowDidBecomeMain");
     _proc(_target, SRK_WINMAC_FOCUS_IN, nullptr);
 }
 
 - (void)windowDidResignMain:(NSNotification*)notification {
-    //NSLog(@"windowDidResignMain");
+    NSLog(@"windowDidResignMain");
     _proc(_target, SRK_WINMAC_FOCUS_OUT, nullptr);
 }
 
@@ -58,6 +60,11 @@
 - (void)windowDidResignKey:(NSNotification*)notification {
     //NSLog(@"windowDidResignKey");
     //_proc(_target, SRK_WINMAC_FOCUS_OUT, nullptr);
+}
+
+- (void)windowDidResize:(NSNotification*)notification {
+    //NSLog(@"windowDidResize");
+    _proc(_target, SRK_WINMAC_RESIZED, nullptr);
 }
 
 - (BOOL)windowShouldClose:(NSWindow*)sender {
@@ -87,7 +94,7 @@ namespace srk {
 		return _eventDispatcher;
 	}
 
-	bool Window::create(const WindowStyle& style, const std::string_view& title, const Vec2ui32& clientSize, bool fullscreen) {
+	bool Window::create(const WindowStyle& style, const std::string_view& title, const Vec2ui32& contentSize, bool fullscreen) {
 		if (_data.isCreated) return false;
         
         NSUInteger styleMask = NSWindowStyleMaskTitled;
@@ -95,11 +102,12 @@ namespace srk {
         if (style.closable) styleMask |=NSWindowStyleMaskClosable;
         if (style.resizable) styleMask |= NSWindowStyleMaskResizable;
         
-        auto wnd = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, clientSize[0], clientSize[1]) styleMask:styleMask backing:NSBackingStoreBuffered defer:false];
+        auto wnd = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, contentSize[0], contentSize[1]) styleMask:styleMask backing:NSBackingStoreBuffered defer:false];
         [wnd setBackgroundColor:[NSColor colorWithRed:style.backgroundColor[0] / 255.0f green:style.backgroundColor[1] / 255.0f blue:style.backgroundColor[2] / 255.0f alpha:1.0f]];
         auto delegate = [[SrkWindowDelegate alloc] initWithProc:_proc Target:this];
         //NSLog(@"1 retainCount : %lu", [delegate retainCount]);
         [wnd setDelegate:delegate];
+        [wnd center];
         //[wnd makeKeyAndOrderFront:nil];
         //delegate = [wnd delegate];
         //NSLog(@"2 retainCount : %lu", [delegate retainCount]);
@@ -109,6 +117,7 @@ namespace srk {
         _data.delegate = delegate;
 
 		_data.isCreated = true;
+		_data.sentContentSize = getCurrentContentSize();
         _manager->add(wnd, this);
 		setTitle(title);
 
@@ -132,22 +141,38 @@ namespace srk {
 		return false;
 	}
 
-	Vec4ui32 Window::getBorder() const {
+	Vec4ui32 Window::getFrameExtents() const {
 		return Vec4ui32();
 	}
 
 	void Window::toggleFullscreen() {
+        if (!_data.isCreated) return;
+        
+        [(NSWindow*)_data.wnd toggleFullScreen:nil];
 	}
 
-	Vec2ui32 Window::getCurrentClientSize() const {
+	Vec2ui32 Window::getCurrentContentSize() const {
+        Vec2ui32 size;
+        
+        if (_data.wnd) {
+            auto rect = [(NSWindow*)_data.wnd contentLayoutRect];
+            size.set(rect.size.width, rect.size.height);
+        }
+        
+        return size;
+	}
+
+	Vec2ui32 Window::getContentSize() const {
 		return Vec2ui32();
 	}
 
-	Vec2ui32 Window::getClientSize() const {
-		return Vec2ui32();
-	}
-
-	void Window::setClientSize(const Vec2ui32& size) {
+	void Window::setContentSize(const Vec2ui32& size) {
+        if (!_data.isCreated) return;
+        
+        NSSize s;
+        s.width = size[0];
+        s.height = size[1];
+        [(NSWindow*)_data.wnd setContentSize:s];
 	}
 
 	std::string_view Window::getTitle() const {
@@ -162,16 +187,29 @@ namespace srk {
 	}
 
 	void Window::setPosition(const Vec2i32& pos) {
+        if (!_data.isCreated) return;
+        
+        NSPoint p;
+        p.x = pos[0];
+        p.y = pos[1];
+        [(NSWindow*)_data.wnd setFrameOrigin:p];
 	}
 
 	void Window::setCursorVisible(bool visible) {
 	}
 
 	bool Window::hasFocus() const {
-		return false;
+        return _data.wnd ? [(NSWindow*)_data.wnd isMainWindow] : false;
 	}
 
 	void Window::setFocus() {
+        if (!_data.isCreated) return;
+        
+        auto wnd = (NSWindow*)_data.wnd;
+        if (![wnd canBecomeMainWindow]) return;
+        
+        [NSApp activateIgnoringOtherApps:true];
+        [wnd makeMainWindow];
 	}
 
 	bool Window::isMaximzed() const {
@@ -234,9 +272,9 @@ namespace srk {
 	}
 
     void Window::processEvent(void* data) {
-        if (!_data.isCreated) return;
-        
-        [(NSWindow*)_data.wnd sendEvent:(NSEvent*)data];
+        //if (!_data.isCreated) return;
+        [NSApp sendEvent:(NSEvent*)data];
+        //[(NSWindow*)_data.wnd sendEvent:(NSEvent*)data];
     }
 
     bool WindowManager::processEvent(const WindowManager::EventFn& fn) const {
@@ -250,6 +288,13 @@ namespace srk {
     }
 
     //platform
+    void Window::_sendResizedEvent() {
+        if (auto size = getCurrentContentSize(); _data.sentContentSize != size) {
+            _data.sentContentSize = size;
+            _eventDispatcher->dispatchEvent(this, WindowEvent::RESIZED);
+        }
+    }
+
     void Window::_proc(void* target, uint32_t msg, void* param) {
         auto win = (Window*)target;
         if (!win) return;
@@ -266,6 +311,9 @@ namespace srk {
                 break;
             case SRK_WINMAC_CLOSED:
                 win->close();
+                break;
+            case SRK_WINMAC_RESIZED:
+                win->_sendResizedEvent();
                 break;
         }
     }
