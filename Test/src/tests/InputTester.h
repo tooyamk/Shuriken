@@ -194,7 +194,7 @@ public:
 									if (state->code == KeyboardVirtualKeyCode::KEY_ENTER) {
 										float32_t state = 0.0f;
 										if (device->getState(DeviceStateType::KEY, KeyboardVirtualKeyCode::KEY_RCTRL, &state, 1) && state != 0.f) {
-											win->toggleFullscreen();
+											win->toggleFullScreen();
 										}
 									}
 
@@ -205,7 +205,7 @@ public:
 										device->getState(DeviceStateType::KEY, KeyboardVirtualKeyCode::KEY_CTRL, &val[0], 1);
 										device->getState(DeviceStateType::KEY, KeyboardVirtualKeyCode::KEY_ALT, &val[1], 1);
 										if (val[0] == 1.0f && val[1] == 1.0f) {
-											win->toggleFullscreen();
+											win->toggleFullScreen();
 										}
 									}
 

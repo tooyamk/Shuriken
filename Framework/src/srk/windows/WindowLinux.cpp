@@ -38,11 +38,11 @@ namespace srk {
 		return _eventDispatcher;
 	}
 
-	bool Window::create(const WindowStyle& style, const std::string_view& title, const Vec2ui32& contentSize, bool fullscreen) {
+	bool Window::create(const WindowStyle& style, const std::string_view& title, const Vec2ui32& contentSize, bool fullScreen) {
 		if (_data.isCreated) return false;
 
 		_data.contentSize = contentSize;
-		_data.isFullscreen = fullscreen;
+		_data.isFullScreen = fullScreen;
 		_data.style = style;
 
 		if (_display == nullptr) _display = XOpenDisplay(nullptr);
@@ -190,8 +190,15 @@ namespace srk {
 		return nullptr;
 	}
 
-	bool Window::isFullscreen() const {
-		return _data.isFullscreen;
+	bool Window::isFullScreen() const {
+		return _data.isFullScreen;
+	}
+
+	void Window::toggleFullScreen() {
+		if (_data.wnd) {
+			_data.isFullScreen = !_data.isFullScreen;
+			_updateWindowPlacement();
+		}
 	}
 
 	Vec4ui32 Window::getFrameExtents() const {
@@ -199,18 +206,11 @@ namespace srk {
 		return _data.frameExtends;
 	}
 
-	void Window::toggleFullscreen() {
-		if (_data.wnd) {
-			_data.isFullscreen = !_data.isFullscreen;
-			_updateWindowPlacement();
-		}
-	}
-
 	Vec2ui32 Window::getCurrentContentSize() const {
 		Vec2ui32 size;
 
 		if (_data.wnd) {
-			if (_data.isFullscreen) {
+			if (_data.isFullScreen) {
 				auto sd = ScreenOfDisplay((Display*)_display, _data.screen);
 				size.set(sd->width, sd->height);
 			} else {
@@ -461,7 +461,7 @@ namespace srk {
 				XMapWindow((Display*)_display, _data.wnd);
 			}
 
-			if (_data.isFullscreen) {
+			if (_data.isFullScreen) {
 				if (!_data.xFullscreen) {
 					_data.xFullscreen = true;
 					_sendClientEventToWM(_data.NET_WM_STATE, 1, _data.NET_WM_STATE_FULLSCREEN, 0, 1);
@@ -558,7 +558,7 @@ namespace srk {
 			auto isNormal = false;
 			auto& conf = e.xconfigure;
 
-			if (!_data.isFullscreen) {
+			if (!_data.isFullScreen) {
 				if (_isMaximized()) {
 					_setWndState(WindowState::MAXIMUM);
 				} else if (_isMinimized()) {
@@ -623,7 +623,7 @@ namespace srk {
 					_data.waitFrameEXTENTS = false;
 				}
 			} else if (atom == _data.WM_STATE) {
-				if (!_data.isFullscreen) {
+				if (!_data.isFullScreen) {
 					if (auto state = _getXWndState(); state == IconicState) {
 						_setWndState(WindowState::MINIMUM);
 					} else if (state == NormalState) {
@@ -631,7 +631,7 @@ namespace srk {
 					}
 				}
 			} else if (atom == _data.NET_WM_STATE) {
-				if (!_data.isFullscreen && _isMaximized()) _setWndState(WindowState::MAXIMUM);
+				if (!_data.isFullScreen && _isMaximized()) _setWndState(WindowState::MAXIMUM);
 			}
 
 			break;

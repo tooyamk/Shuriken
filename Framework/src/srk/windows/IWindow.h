@@ -41,11 +41,11 @@ namespace srk {
 
 		virtual IntrusivePtr<events::IEventDispatcher<WindowEvent>> SRK_CALL getEventDispatcher() = 0;
 
-		virtual bool SRK_CALL create(const WindowStyle& style, const std::string_view& title, const Vec2ui32& contentSize, bool fullscreen) = 0;
+		virtual bool SRK_CALL create(const WindowStyle& style, const std::string_view& title, const Vec2ui32& contentSize, bool fullScreen) = 0;
 		virtual bool SRK_CALL isCreated() const = 0;
 		virtual void* SRK_CALL getNative(WindowNative native) const = 0;
-		virtual bool SRK_CALL isFullscreen() const = 0;
-		virtual void SRK_CALL toggleFullscreen() = 0;
+		virtual bool SRK_CALL isFullScreen() const = 0;
+		virtual void SRK_CALL toggleFullScreen() = 0;
 		virtual Vec4ui32 SRK_CALL getFrameExtents() const = 0;
 		virtual Vec2ui32 SRK_CALL getCurrentContentSize() const = 0;
 		virtual Vec2ui32 SRK_CALL getContentSize() const = 0;

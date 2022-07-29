@@ -16,11 +16,11 @@ namespace srk {
 
 		virtual IntrusivePtr<events::IEventDispatcher<WindowEvent>> SRK_CALL getEventDispatcher() override;
 
-		virtual bool SRK_CALL create(const WindowStyle& style, const std::string_view& title, const Vec2ui32& contentSize, bool fullscreen) override;
+		virtual bool SRK_CALL create(const WindowStyle& style, const std::string_view& title, const Vec2ui32& contentSize, bool fullScreen) override;
 		virtual bool SRK_CALL isCreated() const override;
 		virtual void* SRK_CALL getNative(WindowNative native) const override;
-		virtual bool SRK_CALL isFullscreen() const override;
-		virtual void SRK_CALL toggleFullscreen() override;
+		virtual bool SRK_CALL isFullScreen() const override;
+		virtual void SRK_CALL toggleFullScreen() override;
 		virtual Vec4ui32 SRK_CALL getFrameExtents() const override;
 		virtual Vec2ui32 SRK_CALL getCurrentContentSize() const override;
 		virtual Vec2ui32 SRK_CALL getContentSize() const override;
@@ -62,7 +62,7 @@ namespace srk {
 
 		struct {
 			bool isCreated = false;
-			bool isFullscreen = false;
+			bool isFullScreen = false;
 			bool isVisible = false;
 			bool wndDirty = false;
 			bool ignoreEvtSize = false;
@@ -105,7 +105,7 @@ namespace srk {
 		}
 
 		inline UINT SRK_CALL _getWindowPosFlags() {
-			return _data.isFullscreen ? _getWindowPosFlags<true>() : _getWindowPosFlags<false>();
+			return _data.isFullScreen ? _getWindowPosFlags<true>() : _getWindowPosFlags<false>();
 		}
 
 		static LRESULT CALLBACK _wndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);

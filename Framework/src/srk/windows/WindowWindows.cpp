@@ -21,11 +21,11 @@ namespace srk {
 		return _eventDispatcher;
 	}
 
-	bool Window::create(const WindowStyle& style, const std::string_view& title, const Vec2ui32& contentSize, bool fullscreen) {
+	bool Window::create(const WindowStyle& style, const std::string_view& title, const Vec2ui32& contentSize, bool fullScreen) {
 		if (_data.isCreated) return false;
 
 		_data.contentRect.size = contentSize;
-		_data.isFullscreen = fullscreen;
+		_data.isFullScreen = fullScreen;
 		_data.title = title;
 		_data.module = GetModuleHandleW(nullptr);
 		_data.style = style;
@@ -64,13 +64,13 @@ namespace srk {
 			if (_data.contentRect.pos[1] < GetSystemMetrics(SM_CYCAPTION)) _data.contentRect.pos[1] = GetSystemMetrics(SM_CYCAPTION);
 		}
 
-		if (_data.isFullscreen) {
+		if (_data.isFullScreen) {
 			rect = _calcWindowRect(true);
 		} else {
 			rect.pos.set(_data.contentRect.pos[0], _data.contentRect.pos[1]);
 		}
 
-		_data.wnd = CreateWindowExW(_getNativeExStyle(_data.isFullscreen), wnd.lpszClassName, String::Utf8ToUnicode(title).data(), _getNativeStyle(_data.style, _data.isFullscreen),
+		_data.wnd = CreateWindowExW(_getNativeExStyle(_data.isFullScreen), wnd.lpszClassName, String::Utf8ToUnicode(title).data(), _getNativeStyle(_data.style, _data.isFullScreen),
 			rect.pos[0], rect.pos[1], rect.size[0], rect.size[1],
 			GetDesktopWindow(), nullptr, _data.module, nullptr);
 		SetWindowLongPtrW(_data.wnd, GWLP_USERDATA, (LONG_PTR)this);
@@ -97,21 +97,17 @@ namespace srk {
 		return nullptr;
 	}
 
-	bool Window::isFullscreen() const {
-		return _data.isFullscreen;
+	bool Window::isFullScreen() const {
+		return _data.isFullScreen;
 	}
 
-	Vec4ui32 Window::getFrameExtents() const {
-		return _data.frameExtends;
-	}
-
-	void Window::toggleFullscreen() {
+	void Window::toggleFullScreen() {
 		if (_data.wnd) {
-			_data.isFullscreen = !_data.isFullscreen;
+			_data.isFullScreen = !_data.isFullScreen;
 			_data.wndDirty = true;
 
-			SetWindowLongPtrW(_data.wnd, GWL_STYLE, _getNativeStyle(_data.style, _data.isFullscreen));
-			SetWindowLongPtrW(_data.wnd, GWL_EXSTYLE, _getNativeExStyle(_data.isFullscreen));
+			SetWindowLongPtrW(_data.wnd, GWL_STYLE, _getNativeStyle(_data.style, _data.isFullScreen));
+			SetWindowLongPtrW(_data.wnd, GWL_EXSTYLE, _getNativeExStyle(_data.isFullScreen));
 
 			if (_data.isVisible) {
 				_data.ignoreEvtSize = true;
@@ -120,6 +116,10 @@ namespace srk {
 			}
 			_sendResizedEvent();
 		}
+	}
+
+	Vec4ui32 Window::getFrameExtents() const {
+		return _data.frameExtends;
 	}
 
 	Vec2ui32 Window::getCurrentContentSize() const {
@@ -131,7 +131,7 @@ namespace srk {
 				GetClientRect(_data.wnd, &rect);
 				size.set(rect.right - rect.left, rect.bottom - rect.top);
 			} else {
-				if (_data.isFullscreen) {
+				if (_data.isFullScreen) {
 					size.set(GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
 				} else {
 					if (_data.wndState == WindowState::MAXIMUM || (_data.wndState == WindowState::MINIMUM && _data.prevWndState == WindowState::MAXIMUM)) {
@@ -157,7 +157,7 @@ namespace srk {
 		_data.contentRect.size = size;
 		_data.wndDirty = true;
 
-		if (!_data.isFullscreen && _data.isVisible && _data.wndState == WindowState::NORMAL) _updateWindowPlacement(SW_SHOWNA);
+		if (!_data.isFullScreen && _data.isVisible && _data.wndState == WindowState::NORMAL) _updateWindowPlacement(SW_SHOWNA);
 		_sendResizedEvent();
 	}
 
@@ -179,7 +179,7 @@ namespace srk {
 			_data.contentRect.pos = p;
 			_data.wndDirty = true;
 
-			if (!_data.isFullscreen && _data.isVisible && _data.wndState == WindowState::NORMAL) _updateWindowPlacement(SW_SHOWNA);
+			if (!_data.isFullScreen && _data.isVisible && _data.wndState == WindowState::NORMAL) _updateWindowPlacement(SW_SHOWNA);
 		}
 	}
 
@@ -203,7 +203,7 @@ namespace srk {
 	void Window::setMaximum() {
 		if (_data.wnd && _setWndState(WindowState::MAXIMUM)) {
 			_data.wndDirty = true;
-			if (!_data.isFullscreen && _data.isVisible) _updateWindowPlacement();
+			if (!_data.isFullScreen && _data.isVisible) _updateWindowPlacement();
 			_sendResizedEvent();
 		}
 	}
@@ -215,7 +215,7 @@ namespace srk {
 	void Window::setMinimum() {
 		if (_data.wnd && _setWndState(WindowState::MINIMUM)) {
 			_data.wndDirty = true;
-			if (!_data.isFullscreen && _data.isVisible) _updateWindowPlacement();
+			if (!_data.isFullScreen && _data.isVisible) _updateWindowPlacement();
 			_sendResizedEvent();
 		}
 	}
@@ -223,7 +223,7 @@ namespace srk {
 	void Window::setRestore() {
 		if (_data.wnd && _setWndState(WindowState::NORMAL)) {
 			_data.wndDirty = true;
-			if (!_data.isFullscreen && _data.isVisible) _updateWindowPlacement();
+			if (!_data.isFullScreen && _data.isVisible) _updateWindowPlacement();
 			_sendResizedEvent();
 		}
 	}
@@ -331,7 +331,7 @@ namespace srk {
 	void Window::_updateWindowPlacement(UINT showCmd) {
 		if (showCmd == (std::numeric_limits<UINT>::max)()) {
 			if (_data.isVisible) {
-				if (_data.isFullscreen) {
+				if (_data.isFullScreen) {
 					showCmd = SW_SHOWDEFAULT;
 				} else {
 					switch (_data.wndState) {
@@ -359,7 +359,7 @@ namespace srk {
 
 			if (showCmd != (std::numeric_limits<decltype(showCmd)>::max)()) info.showCmd = showCmd;
 
-			auto rect = _calcWindowRect(_data.isFullscreen);
+			auto rect = _calcWindowRect(_data.isFullScreen);
 			info.rcNormalPosition.left = rect.pos[0];
 			info.rcNormalPosition.top = rect.pos[1];
 			info.rcNormalPosition.right = rect.pos[0] + rect.size[0];
@@ -418,7 +418,7 @@ namespace srk {
 			if (win) {
 				if (win->_data.ignoreEvtSize) return 0;
 
-				if (!win->_data.isFullscreen) {
+				if (!win->_data.isFullScreen) {
 					switch (wParam) {
 					case SIZE_MINIMIZED:
 						win->_setWndState(WindowState::MINIMUM);
@@ -462,7 +462,7 @@ namespace srk {
 			break;
 		}
 		case WM_MOVE:
-			if (win && !win->_data.isFullscreen && !IsZoomed(win->_data.wnd) && !IsIconic(win->_data.wnd)) win->_data.contentRect.pos.set(LOWORD(lParam), HIWORD(lParam));
+			if (win && !win->_data.isFullScreen && !IsZoomed(win->_data.wnd) && !IsIconic(win->_data.wnd)) win->_data.contentRect.pos.set(LOWORD(lParam), HIWORD(lParam));
 			break;
 		case WM_INPUT:
 			if (win) win->_eventDispatcher->dispatchEvent(win, WindowEvent::RAW_INPUT, &lParam);
