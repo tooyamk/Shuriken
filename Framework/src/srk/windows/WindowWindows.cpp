@@ -17,7 +17,7 @@ namespace srk {
 	WindowManager* Window::_manager = new WindowManager();
 	std::atomic_uint32_t Window::_counter = 0;
 
-	IntrusivePtr<events::IEventDispatcher<WindowEvent>> Window::getEventDispatcher() {
+	IntrusivePtr<events::IEventDispatcher<WindowEvent>> Window::getEventDispatcher() const {
 		return _eventDispatcher;
 	}
 
@@ -52,12 +52,10 @@ namespace srk {
 
 		RegisterClassExW(&wnd);
 
-		_calcBorder();
+		_calcFrameExtends();
 
-		auto rect = _calcWindowRect(false);
+		auto rect = _calcFrameRect(false);
 		{
-			_data.contentRect.pos.set((GetSystemMetrics(SM_CXSCREEN) - rect.size[0]) / 2 + _data.frameExtends[0], (GetSystemMetrics(SM_CYSCREEN) - rect.size[1]) / 2 + _data.frameExtends[2]);
-
 			auto area = _calcWorkArea();
 			_data.contentRect.pos.set(area.pos[0] + (area.size[0] - rect.size[0]) / 2 + _data.frameExtends[0], area.pos[1] + (area.size[1] - rect.size[1]) / 2 + _data.frameExtends[2]);
 
@@ -65,7 +63,7 @@ namespace srk {
 		}
 
 		if (_data.isFullScreen) {
-			rect = _calcWindowRect(true);
+			rect = _calcFrameRect(true);
 		} else {
 			rect.pos.set(_data.contentRect.pos[0], _data.contentRect.pos[1]);
 		}
@@ -196,11 +194,11 @@ namespace srk {
 		if (_data.wnd) SetFocus(_data.wnd);
 	}
 
-	bool Window::isMaximzed() const {
+	bool Window::isMaximized() const {
 		return _data.wnd ? _data.wndState == WindowState::MAXIMUM : false;
 	}
 
-	void Window::setMaximum() {
+	void Window::setMaximized() {
 		if (_data.wnd && _setWndState(WindowState::MAXIMUM)) {
 			_data.wndDirty = true;
 			if (!_data.isFullScreen && _data.isVisible) _updateWindowPlacement();
@@ -208,11 +206,11 @@ namespace srk {
 		}
 	}
 
-	bool Window::isMinimzed() const {
+	bool Window::isMinimized() const {
 		return _data.wnd ? _data.wndState == WindowState::MINIMUM : false;
 	}
 
-	void Window::setMinimum() {
+	void Window::setMinimized() {
 		if (_data.wnd && _setWndState(WindowState::MINIMUM)) {
 			_data.wndDirty = true;
 			if (!_data.isFullScreen && _data.isVisible) _updateWindowPlacement();
@@ -277,13 +275,13 @@ namespace srk {
 	}
 
 	//platform
-	void Window::_calcBorder() {
+	void Window::_calcFrameExtends() {
 		RECT rect = { 0, 0, 100, 100 };
 		auto rst = AdjustWindowRectEx(&rect, _getNativeStyle(_data.style, false), FALSE, _getNativeExStyle(false));
 		_data.frameExtends.set(-rect.left, rect.right - 100, -rect.top, rect.bottom - 100);
 	}
 
-	Box2i32 Window::_calcWindowRect(bool fullscreen) const {
+	Box2i32 Window::_calcFrameRect(bool fullscreen) const {
 		if (fullscreen) {
 			return Box2i32(Vec2i32::ZERO, Vec2i32(GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN)));
 		} else {
@@ -359,7 +357,7 @@ namespace srk {
 
 			if (showCmd != (std::numeric_limits<decltype(showCmd)>::max)()) info.showCmd = showCmd;
 
-			auto rect = _calcWindowRect(_data.isFullScreen);
+			auto rect = _calcFrameRect(_data.isFullScreen);
 			info.rcNormalPosition.left = rect.pos[0];
 			info.rcNormalPosition.top = rect.pos[1];
 			info.rcNormalPosition.right = rect.pos[0] + rect.size[0];

@@ -34,7 +34,7 @@ namespace srk {
 	uint32_t Window::_displayRefCount = 0;
 	void* Window::_display = nullptr;
 
-	IntrusivePtr<events::IEventDispatcher<WindowEvent>> Window::getEventDispatcher() {
+	IntrusivePtr<events::IEventDispatcher<WindowEvent>> Window::getEventDispatcher() const {
 		return _eventDispatcher;
 	}
 
@@ -275,21 +275,21 @@ namespace srk {
 		if (_data.wnd && _data.isVisible) XSetInputFocus((Display*)_display, _data.wnd, RevertToParent, CurrentTime);
 	}
 
-	bool Window::isMaximzed() const {
+	bool Window::isMaximized() const {
 		if (_data.wnd) return _data.wndState == WindowState::MAXIMUM;
 		return false;
 	}
 
-	void Window::setMaximum() {
+	void Window::setMaximized() {
 		if (_data.wnd && _setWndState(WindowState::MAXIMUM)) _updateWindowPlacement();
 	}
 
-	bool Window::isMinimzed() const {
+	bool Window::isMinimized() const {
 		if (_data.wnd) return _data.wndState == WindowState::MINIMUM;
 		return false;
 	}
 
-	void Window::setMinimum() {
+	void Window::setMinimized() {
 		if (_data.wnd && _setWndState(WindowState::MINIMUM)) _updateWindowPlacement();
 	}
 

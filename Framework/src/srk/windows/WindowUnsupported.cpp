@@ -12,7 +12,7 @@ namespace srk {
 
 	WindowManager* Window::_manager = new WindowManager();
 
-	IntrusivePtr<events::IEventDispatcher<WindowEvent>> Window::getEventDispatcher() {
+	IntrusivePtr<events::IEventDispatcher<WindowEvent>> Window::getEventDispatcher() const {
 		return _eventDispatcher;
 	}
 
@@ -76,18 +76,18 @@ namespace srk {
 	void Window::setFocus() {
 	}
 
-	bool Window::isMaximzed() const {
+	bool Window::isMaximized() const {
 		return false;
 	}
 
-	void Window::setMaximum() {
+	void Window::setMaximized() {
 	}
 
-	bool Window::isMinimzed() const {
+	bool Window::isMinimized() const {
 		return false;
 	}
 
-	void Window::setMinimum() {
+	void Window::setMinimized() {
 	}
 
 	void Window::setRestore() {

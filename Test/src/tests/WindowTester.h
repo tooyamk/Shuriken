@@ -66,7 +66,7 @@ public:
 		tryCreateWndFn(wndStype, "Fucker1 " + deb);
 
 		wndStype.backgroundColor.set(255, 0, 0);
-		tryCreateWndFn(wndStype, "Fucker2 " + deb);
+		//tryCreateWndFn(wndStype, "Fucker2 " + deb);
 		if (!activedWindows.empty()) {
 			//app->setWindowPosition({200, 300});
 
@@ -93,26 +93,33 @@ public:
 				}
 
 				//return;
-				auto tt = srk::Time::now();
+				auto tt = srk::Time::now(); 
 				auto d = tt - t;
 				if (d >= 2000) {
 					t = tt;
 					if (step == 0) {
 						step = 1;
-						activedWindows[0]->setFocus();
+						activedWindows[0]->toggleFullScreen();
+						//printaln("is visible ", activedWindows[0]->isVisible());
+						//activedWindows[0]->toggleFullScreen();
 						//app->toggleFullscreen();
 						//app->setRestore();
 						//app->getCurrentClientSize();
-						//app->setClientSize(Vec2ui32(400, 400));
+						//app->setClientSize(Vec2ui32(400, 400)); 
 						//app->setVisible(false);
 						//app->setWindowPosition(Vec2i32(800, 10));
 						//app->setMaximum();
 						//app->shutdown();
 					} else if (step == 1) {
+						//activedWindows[0]->setMinimum();
+						//printaln("is min ", activedWindows[0]->isMinimzed());
+						//printaln("is visible ", activedWindows[0]->isVisible());
 						step = 2;
+						//activedWindows[0]->setMaximum();
 						//app->toggleFullscreen();
 						//app->setVisible(true);
 					} else if (step == 2) {
+						//printaln("is visible ", activedWindows[0]->isVisible());
 						step = 3;
 						//app->toggleFullscreen();
 						//app->setVisible(true);
@@ -123,6 +130,7 @@ public:
 			}));
 
 			for (auto& win : activedWindows) win->setVisible(true);
+			//for (auto& win : activedWindows) win->setVisible(false);
 			//app->setMaximum();
 			//app->setMaximum();
 			//app->setWindowPosition(Vec2i32(-400, 10));

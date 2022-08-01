@@ -9,7 +9,7 @@ namespace srk {
 		close();
 	}
 
-	IntrusivePtr<events::IEventDispatcher<WindowEvent>> EmptyWindow::getEventDispatcher() {
+	IntrusivePtr<events::IEventDispatcher<WindowEvent>> EmptyWindow::getEventDispatcher() const {
 		return _eventDispatcher;
 	}
 
@@ -73,18 +73,18 @@ namespace srk {
 	void EmptyWindow::setFocus() {
 	}
 
-	bool EmptyWindow::isMaximzed() const {
+	bool EmptyWindow::isMaximized() const {
 		return false;
 	}
 
-	void EmptyWindow::setMaximum() {
+	void EmptyWindow::setMaximized() {
 	}
 
-	bool EmptyWindow::isMinimzed() const {
+	bool EmptyWindow::isMinimized() const {
 		return false;
 	}
 
-	void EmptyWindow::setMinimum() {
+	void EmptyWindow::setMinimized() {
 	}
 
 	void EmptyWindow::setRestore() {

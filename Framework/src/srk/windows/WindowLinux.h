@@ -19,7 +19,7 @@ namespace srk {
 		Window();
 		virtual ~Window();
 
-		virtual IntrusivePtr<events::IEventDispatcher<WindowEvent>> SRK_CALL getEventDispatcher() override;
+		virtual IntrusivePtr<events::IEventDispatcher<WindowEvent>> SRK_CALL getEventDispatcher() const override;
 
 		virtual bool SRK_CALL create(const WindowStyle& style, const std::string_view& title, const Vec2ui32& contentSize, bool fullScreen) override;
 		virtual bool SRK_CALL isCreated() const override;
@@ -36,10 +36,10 @@ namespace srk {
 		virtual void SRK_CALL setCursorVisible(bool visible) override;
 		virtual bool SRK_CALL hasFocus() const override;
 		virtual void SRK_CALL setFocus() override;
-		virtual bool SRK_CALL isMaximzed() const override;
-		virtual void SRK_CALL setMaximum() override;
-		virtual bool SRK_CALL isMinimzed() const override;
-		virtual void SRK_CALL setMinimum() override;
+		virtual bool SRK_CALL isMaximized() const override;
+		virtual void SRK_CALL setMaximized() override;
+		virtual bool SRK_CALL isMinimized() const override;
+		virtual void SRK_CALL setMinimized() override;
 		virtual void SRK_CALL setRestore() override;
 		virtual bool SRK_CALL isVisible() const override;
 		virtual void SRK_CALL setVisible(bool b) override;
@@ -100,7 +100,6 @@ namespace srk {
 			bool isCreated = false;
 			bool isFullScreen = false;
 			bool isVisible = false;
-			bool wndDirty = false;
 			bool xMapped = false;
 			bool xFullscreen = false;
 			bool ignoreEvtPos = false;

@@ -39,7 +39,7 @@ namespace srk {
 	public:
 		virtual ~IWindow() {};
 
-		virtual IntrusivePtr<events::IEventDispatcher<WindowEvent>> SRK_CALL getEventDispatcher() = 0;
+		virtual IntrusivePtr<events::IEventDispatcher<WindowEvent>> SRK_CALL getEventDispatcher() const = 0;
 
 		virtual bool SRK_CALL create(const WindowStyle& style, const std::string_view& title, const Vec2ui32& contentSize, bool fullScreen) = 0;
 		virtual bool SRK_CALL isCreated() const = 0;
@@ -59,10 +59,10 @@ namespace srk {
 		virtual void SRK_CALL setCursorVisible(bool visible) = 0;
 		virtual bool SRK_CALL hasFocus() const = 0;
 		virtual void SRK_CALL setFocus() = 0;
-		virtual bool SRK_CALL isMaximzed() const = 0;
-		virtual void SRK_CALL setMaximum() = 0;
-		virtual bool SRK_CALL isMinimzed() const = 0;
-		virtual void SRK_CALL setMinimum() = 0;
+		virtual bool SRK_CALL isMaximized() const = 0;
+		virtual void SRK_CALL setMaximized() = 0;
+		virtual bool SRK_CALL isMinimized() const = 0;
+		virtual void SRK_CALL setMinimized() = 0;
 		virtual void SRK_CALL setRestore() = 0;
 		virtual bool SRK_CALL isVisible() const = 0;
 		virtual void SRK_CALL setVisible(bool b) = 0;
