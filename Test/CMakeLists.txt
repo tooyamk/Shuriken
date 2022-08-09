@@ -1,4 +1,5 @@
 srkSetProject(${SRK_PROJ_PREFIX})
+set(OUTPUT_NAME srk-test)
 
 get_property(SRKPROJ_SRK_CORE_NAME GLOBAL PROPERTY "SRKPROJ_SRK_CORE_NAME")
 get_property(SRKPROJ_SRK_CORE_INCLUDE GLOBAL PROPERTY "SRKPROJ_SRK_CORE_INCLUDE")
@@ -211,11 +212,12 @@ if (USE_TCMALLOC)
     srkAppendCopyFileCmd(test_pre_build_commands ${SRKPROJ_TCMALLOC_DLL} ${OUTPUT_ROOT_OR_LIBS_DIR})
 endif ()
 
-add_custom_target(test_pre_build ALL ${test_pre_build_commands})
-add_dependencies(test_pre_build ${test_pre_build_depends})
-set_property(TARGET test_pre_build PROPERTY FOLDER Tests)
+set(prebuildProj ${PROJECT_NAME}-Prebuild)
+add_custom_target(${prebuildProj} ALL ${test_pre_build_commands})
+add_dependencies(${prebuildProj} ${test_pre_build_depends})
+set_property(TARGET ${prebuildProj} PROPERTY FOLDER Tests)
 
-add_dependencies(${PROJECT_NAME} test_pre_build)
+add_dependencies(${PROJECT_NAME} ${prebuildProj})
 target_link_libraries(${PROJECT_NAME} ${linkLibs})
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER Tests)
-set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${PROJECT_NAME}${SRK_BUILD_TYPE_SUFFIX})
+set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${OUTPUT_NAME}${SRK_BUILD_TYPE_SUFFIX})

@@ -5,7 +5,7 @@
 #include "srk/events/EventDispatcher.h"
 
 @implementation SrkWindowDelegate
-- (id)initWithProc:(void(*)(void*, uint32_t, void*))proc Target:(void*)target {
+- (id)initWithProc:(void(*)(void*, srk::modules::windows::cocoa::Msg, void*))proc Target:(void*)target {
     if (self = [super init]) {
         _proc = proc;
         _target = target;
@@ -24,12 +24,12 @@
 
 - (void)windowDidBecomeMain:(NSNotification*)notification {
     NSLog(@"windowDidBecomeMain");
-    _proc(_target, SRK_WINMAC_FOCUS_IN, nullptr);
+    _proc(_target, srk::modules::windows::cocoa::Msg::FOCUS_IN, nullptr);
 }
 
 - (void)windowDidResignMain:(NSNotification*)notification {
     NSLog(@"windowDidResignMain");
-    _proc(_target, SRK_WINMAC_FOCUS_OUT, nullptr);
+    _proc(_target, srk::modules::windows::cocoa::Msg::FOCUS_OUT, nullptr);
 }
 
 - (void)windowDidBecomeKey:(NSNotification*)notification {
@@ -44,17 +44,17 @@
 
 - (void)windowDidResize:(NSNotification*)notification {
     //NSLog(@"windowDidResize");
-    _proc(_target, SRK_WINMAC_RESIZED, nullptr);
+    _proc(_target, srk::modules::windows::cocoa::Msg::RESIZED, nullptr);
 }
 
 - (BOOL)windowShouldClose:(NSWindow*)sender {
     bool isCanceled = false;
-    _proc(_target, SRK_WINMAC_CLOSING, &isCanceled);
+    _proc(_target, srk::modules::windows::cocoa::Msg::CLOSING, &isCanceled);
     return !isCanceled;
 }
 
 - (void)windowWillClose:(NSNotification*)notification {
-    _proc(_target, SRK_WINMAC_CLOSED, nullptr);
+    _proc(_target, srk::modules::windows::cocoa::Msg::CLOSED, nullptr);
 }
 
 @end
@@ -69,20 +69,20 @@ namespace srk::modules::windows::cocoa {
 		close();
 	}
 
-	IntrusivePtr<events::IEventDispatcher<WindowEvent>> Window::getEventDispatcher() {
+	IntrusivePtr<events::IEventDispatcher<WindowEvent>> Window::getEventDispatcher() const {
 		return _eventDispatcher;
 	}
 
-	bool Window::create(const WindowStyle& style, const std::string_view& title, const Vec2ui32& contentSize, bool fullscreen) {
+	bool Window::create(const CreateWindowDesc& desc) {
 		if (_data.isCreated) return false;
         
         NSUInteger styleMask = NSWindowStyleMaskTitled;
-        if (style.minimizable) styleMask |= NSWindowStyleMaskMiniaturizable;
-        if (style.closable) styleMask |=NSWindowStyleMaskClosable;
-        if (style.resizable) styleMask |= NSWindowStyleMaskResizable;
+        if (desc.style.minimizable) styleMask |= NSWindowStyleMaskMiniaturizable;
+        if (desc.style.closable) styleMask |=NSWindowStyleMaskClosable;
+        if (desc.style.resizable) styleMask |= NSWindowStyleMaskResizable;
         
-        auto wnd = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, contentSize[0], contentSize[1]) styleMask:styleMask backing:NSBackingStoreBuffered defer:false];
-        [wnd setBackgroundColor:[NSColor colorWithRed:style.backgroundColor[0] / 255.0f green:style.backgroundColor[1] / 255.0f blue:style.backgroundColor[2] / 255.0f alpha:1.0f]];
+        auto wnd = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, desc.contentSize[0], desc.contentSize[1]) styleMask:styleMask backing:NSBackingStoreBuffered defer:false];
+        [wnd setBackgroundColor:[NSColor colorWithRed:desc.style.backgroundColor[0] / 255.0f green:desc.style.backgroundColor[1] / 255.0f blue:desc.style.backgroundColor[2] / 255.0f alpha:1.0f]];
         auto delegate = [[SrkWindowDelegate alloc] initWithProc:_proc Target:this];
         //NSLog(@"1 retainCount : %lu", [delegate retainCount]);
         [wnd setDelegate:delegate];
@@ -97,7 +97,7 @@ namespace srk::modules::windows::cocoa {
 
 		_data.isCreated = true;
 		_data.sentContentSize = getCurrentContentSize();
-		setTitle(title);
+		setTitle(desc.title);
 
 		_manager->add(_data.wnd, this);
 
@@ -117,7 +117,7 @@ namespace srk::modules::windows::cocoa {
 		return nullptr;
 	}
 
-	bool Window::isFullscreen() const {
+	bool Window::isFullScreen() const {
 		return false;
 	}
 
@@ -125,7 +125,7 @@ namespace srk::modules::windows::cocoa {
 		return Vec4ui32();
 	}
 
-	void Window::toggleFullscreen() {
+	void Window::toggleFullScreen() {
         if (!_data.isCreated) return;
         
         [(NSWindow*)_data.wnd toggleFullScreen:nil];
@@ -192,18 +192,18 @@ namespace srk::modules::windows::cocoa {
         [wnd makeMainWindow];
 	}
 
-	bool Window::isMaximzed() const {
+	bool Window::isMaximized() const {
 		return false;
 	}
 
-	void Window::setMaximum() {
+	void Window::setMaximized() {
 	}
 
-	bool Window::isMinimzed() const {
+	bool Window::isMinimized() const {
 		return false;
 	}
 
-	void Window::setMinimum() {
+	void Window::setMinimized() {
 	}
 
 	void Window::setRestore() {
@@ -258,16 +258,6 @@ namespace srk::modules::windows::cocoa {
         //[(NSWindow*)_data.wnd sendEvent:(NSEvent*)data];
     }
 
-    bool WindowManager::processEvent(const WindowManager::EventFn& fn) const {
-        //[NSApp finishLaunching];
-        auto e = [NSApp nextEventMatchingMask:NSEventMaskAny untilDate:nil inMode:NSDefaultRunLoopMode dequeue:true];
-        if (!e) return false;
-
-        if (sendEvent(e.window, e, fn)) [NSApp sendEvent:e];
-        [e release];
-        return true;
-    }
-
     //platform
     void Window::_sendResizedEvent() {
         if (auto size = getCurrentContentSize(); _data.sentContentSize != size) {
@@ -276,24 +266,24 @@ namespace srk::modules::windows::cocoa {
         }
     }
 
-    void Window::_proc(void* target, uint32_t msg, void* param) {
+    void Window::_proc(void* target, Msg msg, void* param) {
         auto win = (Window*)target;
         if (!win) return;
         
         switch (msg) {
-            case SRK_WINMAC_FOCUS_IN:
+            case Msg::FOCUS_IN:
                 win->_eventDispatcher->dispatchEvent(win, WindowEvent::FOCUS_IN);
                 break;
-            case SRK_WINMAC_FOCUS_OUT:
+            case Msg::FOCUS_OUT:
                 win->_eventDispatcher->dispatchEvent(win, WindowEvent::FOCUS_OUT);
                 break;
-            case SRK_WINMAC_CLOSING:
+            case Msg::CLOSING:
                 win->_eventDispatcher->dispatchEvent(win, WindowEvent::CLOSING, param);
                 break;
-            case SRK_WINMAC_CLOSED:
+            case Msg::CLOSED:
                 win->close();
                 break;
-            case SRK_WINMAC_RESIZED:
+            case Msg::RESIZED:
                 win->_sendResizedEvent();
                 break;
         }

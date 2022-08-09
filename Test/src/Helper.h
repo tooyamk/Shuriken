@@ -47,33 +47,26 @@ inline std::conditional_t<ConvertibleU8StringData<std::remove_cvref_t<T>>, std::
 		size = strlen((const char*)name);
 	}
 	if constexpr (Environment::IS_DEBUG) ++size;
-	if constexpr (Environment::OPERATING_SYSTEM != Environment::OperatingSystem::WINDOWS) {
+	if constexpr (Environment::OPERATING_SYSTEM == Environment::OperatingSystem::WINDOWS) {
 		size += 4;
-	} else {
+	} else if (Environment::OPERATING_SYSTEM == Environment::OperatingSystem::MACOS) {
 		size += 6;
+	} else {
+		size += 9;
 	}
 
 	std::conditional_t<ConvertibleU8StringData<std::remove_cvref_t<T>>, std::u8string, std::string> s;
 	s.reserve(size);
 
-	if constexpr (Environment::IS_DEBUG) {
-		if constexpr (Environment::OPERATING_SYSTEM == Environment::OperatingSystem::WINDOWS) {
-			s += name;
-			s += "d.dll";
-		} else {
-			s += "lib";
-			s += name;
-			s += "d.so";
-		}
+	if constexpr (Environment::OPERATING_SYSTEM != Environment::OperatingSystem::WINDOWS) s += "lib";
+	s += name;
+	if constexpr (Environment::IS_DEBUG) s += '.';
+	if constexpr (Environment::OPERATING_SYSTEM == Environment::OperatingSystem::WINDOWS) {
+		s += "dll";
+	} else if (Environment::OPERATING_SYSTEM == Environment::OperatingSystem::MACOS) {
+		s += "dylib";
 	} else {
-		if constexpr (Environment::OPERATING_SYSTEM == Environment::OperatingSystem::WINDOWS) {
-			s += name;
-			s += ".dll";
-		} else {
-			s += "lib";
-			s += name;
-			s += ".so";
-		}
+		s += "so";
 	}
 
 	return std::move(s);

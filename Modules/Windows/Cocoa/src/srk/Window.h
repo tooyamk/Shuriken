@@ -4,12 +4,22 @@
 #include "srk/math/Box.h"
 #import <Cocoa/Cocoa.h>
 
+namespace srk::modules::windows::cocoa {
+    enum class Msg {
+        CLOSING,
+        CLOSED,
+        FOCUS_IN,
+        FOCUS_OUT,
+        RESIZED
+    };
+}
+
 @interface SrkWindowDelegate : NSObject<NSWindowDelegate> {
     @private
-    void(*_proc)(void*, uint32_t, void*);
+    void(*_proc)(void*, srk::modules::windows::cocoa::Msg, void*);
     void* _target;
 }
-- (id)initWithProc:(void(*)(void*, uint32_t, void*))proc Target:(void*)target;
+- (id)initWithProc:(void(*)(void*, srk::modules::windows::cocoa::Msg, void*))proc Target:(void*)target;
 - (void)setTarget:(void*)target;
 @end
 
@@ -70,6 +80,6 @@ namespace srk::modules::windows::cocoa {
 		} _data;
         
 		void SRK_CALL _sendResizedEvent();
-        static void SRK_CALL _proc(void* target, uint32_t msg, void* param);
+        static void SRK_CALL _proc(void* target, Msg msg, void* param);
 	};
 }
