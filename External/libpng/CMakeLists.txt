@@ -1,4 +1,4 @@
-srkSetProject()
+srkSetProject("")
 set(OUTPUT_NAME libpng)
 set(LIB_PREFIX ${PROJECT_BINARY_DIR}/install/lib/${OUTPUT_NAME})
 set(LIB_R ${LIB_PREFIX}${CMAKE_RELEASE_POSTFIX}${SRK_LIB_SUFFIX})

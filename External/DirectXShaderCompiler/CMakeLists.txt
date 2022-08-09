@@ -1,4 +1,4 @@
-srkSetProject()
+srkSetProject("")
 set(dxcompiler ${CMAKE_SHARED_LIBRARY_PREFIX}dxcompiler)
 set(LLVMDxcSupport ${CMAKE_STATIC_LIBRARY_PREFIX}LLVMDxcSupport)
 

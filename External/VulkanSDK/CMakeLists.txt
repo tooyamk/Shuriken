@@ -1,4 +1,4 @@
-srkSetProject()
+srkSetProject("")
 
 set(installDir ${PROJECT_BINARY_DIR}/install)
 

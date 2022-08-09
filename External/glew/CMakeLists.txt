@@ -1,4 +1,4 @@
-srkSetProject()
+srkSetProject("")
 set(OUTPUT_NAME ${CMAKE_SHARED_LIBRARY_PREFIX}glew)
 set_property(GLOBAL PROPERTY SRKPROJ_GLEW_NAME ${PROJECT_NAME})
 set_property(GLOBAL PROPERTY SRKPROJ_GLEW_INCLUDE ${PROJECT_BINARY_DIR}/install/include)
