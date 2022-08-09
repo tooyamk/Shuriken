@@ -15,13 +15,13 @@ namespace srk::modules::windows::x11 {
 	}
 
 	uint32_t Window::_displayRefCount = 0;
-	void* Window::_display = nullptr;
+	Display* Window::_display = nullptr;
 
 	IntrusivePtr<events::IEventDispatcher<WindowEvent>> Window::getEventDispatcher() const {
 		return _eventDispatcher;
 	}
 
-	bool Window::create(Manager& manager, const CreateWindowDesc& desc) {
+	bool Window::create(const CreateWindowDesc& desc) {
 		if (_data.isCreated) return false;
 
 		_data.contentSize = desc.contentSize;
@@ -154,7 +154,7 @@ namespace srk::modules::windows::x11 {
 		_data.sentContentSize = getCurrentContentSize();
 		setTitle(desc.title);
 
-		_manager->add(_data.wnd, this);
+		_manager->add((void*)_data.wnd, this);
 
 		return true;
 	}
@@ -296,8 +296,7 @@ namespace srk::modules::windows::x11 {
 	void Window::close() {
 		if (!_data.isCreated) return;
 
-		_manager->remove(_data.wnd);
-		_manager.reset();
+		_manager->remove((void*)_data.wnd);
 
 		if (_data.wnd) XDestroyWindow(_display, _data.wnd);
 		if (_data.useDisplay && --_displayRefCount == 0) {
@@ -317,7 +316,7 @@ namespace srk::modules::windows::x11 {
 	void Window::processEvent(void* data) {
 		if (!_data.isCreated) return;
 
-		_doEvent(data);
+		_doEvent((XEvent*)data);
 	}
 
 	//platform

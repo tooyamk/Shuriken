@@ -137,7 +137,7 @@ namespace srk::modules::windows::x11 {
 		} _data;
 
 		static uint32_t _displayRefCount;
-		static void* _display;
+		static Display* _display;
 
 		void SRK_CALL _sendClientEventToWM(Atom msgType, int64_t a = 0, int64_t b = 0, int64_t c = 0, int64_t d = 0, int64_t e = 0);
 		void SRK_CALL _sendResizedEvent();
