@@ -86,9 +86,9 @@ include_directories(
     ${SRKPROJ_SRK_FRAMEWORK_INCLUDE}
     ${SRK_SOURCE_DIR}
 )
-add_definitions(${SRK_DEFINITIONS})
 srkCollectSrcFiles(srcFiles)
 srkAddExecutableSourceGroup(${PROJECT_NAME} MACOSX_BUNDLE ${srcFiles})
+target_compile_definitions(${PROJECT_NAME} PRIVATE ${SRK_DEFINITIONS})
 
 if (SRK_OS_MACOS)
     srkSetTargetRpath(${PROJECT_NAME} "@executable_path/../../../libs")
@@ -221,3 +221,6 @@ add_dependencies(${PROJECT_NAME} ${prebuildProj})
 target_link_libraries(${PROJECT_NAME} ${linkLibs})
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER Tests)
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${OUTPUT_NAME}${SRK_BUILD_TYPE_SUFFIX})
+
+message("========================")
+message("${CMAKE_INTDIR}")

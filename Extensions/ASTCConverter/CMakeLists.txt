@@ -19,9 +19,9 @@ include_directories(
     ${SRKPROJ_SRK_FRAMEWORK_INCLUDE}
     ${SRKPROJ_ASTC_ENCODER_INCLUDE}
 )
-add_definitions(${SRK_EXTENSION_DEFINITIONS})
 file(GLOB_RECURSE srcFiles "src/*.h" "src/*.cpp")
 srkAddLibrarySourceGroup(${PROJECT_NAME} SHARED ${srcFiles})
+target_compile_definitions(${PROJECT_NAME} PRIVATE ${SRK_EXTENSION_DEFINITIONS})
 add_dependencies(${PROJECT_NAME} 
     ${SRKPROJ_SRK_FRAMEWORK_NAME}
     ${SRKPROJ_ASTC_ENCODER_NAME}

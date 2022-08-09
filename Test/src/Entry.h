@@ -6,6 +6,7 @@
 #	include"tests/ExperimentTester.h"
 #endif
 
+#include "tests/CompressTextureTester.h"
 #include "tests/GraphicsAdapterTester.h"
 #include "tests/InputTester.h"
 #include "tests/LockfreeTester.h"
@@ -38,15 +39,16 @@ public:
 		printf("\n");
 		*/
 
-		//return (new DepthTestTester())->run();
-		//return (new ExperimentTester())->run();
-		//return (new GraphicsAdapterTester())->run();
-		//return (new InputTester())->run();
-		//return (new LockfreeTester())->run();
-		//return (new OffscreenTester())->run();
-		//return (new RenderPipelineTester())->run();
-		//return (new RenderTargetTester())->run();
-		//return (new VertexUpdateTester())->run();
-		return (new WindowTester())->run();
+		//return CompressTextureTester().run();
+		//return DepthTestTester().run();
+		//return ExperimentTester().run();
+		//return GraphicsAdapterTester().run();
+		//return InputTester().run();
+		//return LockfreeTester().run();
+		//return OffscreenTester().run();
+		//return RenderPipelineTester().run();
+		//return RenderTargetTester().run();
+		//return VertexUpdateTester().run();
+		return WindowTester().run();
 	}
 };

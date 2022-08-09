@@ -18,9 +18,9 @@ include_directories(
     ${SRKPROJ_SRK_FRAMEWORK_INCLUDE}
     ${SRKPROJ_SRK_HID_INCLUDE}
 )
-add_definitions(${SRK_MODULE_DEFINITIONS})
 file(GLOB_RECURSE srcFiles "src/*.h" "src/*.cpp")
 srkAddLibrarySourceGroup(${PROJECT_NAME} SHARED ${srcFiles})
+target_compile_definitions(${PROJECT_NAME} PRIVATE ${SRK_MODULE_DEFINITIONS})
 add_dependencies(${PROJECT_NAME}
     ${SRKPROJ_SRK_FRAMEWORK_NAME}
     ${SRKPROJ_SRK_HID_NAME}

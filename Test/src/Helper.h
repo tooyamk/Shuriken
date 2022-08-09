@@ -60,7 +60,8 @@ inline std::conditional_t<ConvertibleU8StringData<std::remove_cvref_t<T>>, std::
 
 	if constexpr (Environment::OPERATING_SYSTEM != Environment::OperatingSystem::WINDOWS) s += "lib";
 	s += name;
-	if constexpr (Environment::IS_DEBUG) s += '.';
+	if constexpr (Environment::IS_DEBUG) s += 'd';
+	s += '.';
 	if constexpr (Environment::OPERATING_SYSTEM == Environment::OperatingSystem::WINDOWS) {
 		s += "dll";
 	} else if (Environment::OPERATING_SYSTEM == Environment::OperatingSystem::MACOS) {

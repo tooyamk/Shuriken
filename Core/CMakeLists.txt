@@ -5,9 +5,9 @@ set_property(GLOBAL PROPERTY SRKPROJ_SRK_CORE_INCLUDE ${PROJECT_SOURCE_DIR}/src/
 set_property(GLOBAL PROPERTY SRKPROJ_SRK_CORE_DLL ${SRK_PROJECT_BUILD_DIR}/${CMAKE_SHARED_LIBRARY_PREFIX}${OUTPUT_NAME}${SRK_BUILD_TYPE_SUFFIX}${SRK_DLL_SUFFIX})
 
 include_directories(src)
-add_definitions(${SRK_DEFINITIONS} -DSRK_CORE_EXPORTS)
 file(GLOB_RECURSE srcFiles "src/*.h" "src/*.cpp")
 srkAddLibrarySourceGroup(${PROJECT_NAME} SHARED ${srcFiles})
+target_compile_definitions(${PROJECT_NAME} PRIVATE ${SRK_DEFINITIONS} -DSRK_CORE_EXPORTS)
 
 if (NOT SRK_OS_WINDOWS)
     target_link_libraries(${PROJECT_NAME} dl)
