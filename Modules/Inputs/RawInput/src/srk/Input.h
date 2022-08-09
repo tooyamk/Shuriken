@@ -6,7 +6,7 @@
 namespace srk::modules::inputs::raw_input {
 	class SRK_MODULE_DLL Input : public IInputModule {
 	public:
-		Input(Ref* loader, IWindow* win, DeviceType filter);
+		Input(Ref* loader, windows::IWindow* win, DeviceType filter);
 		virtual ~Input();
 
 		void operator delete(Input* p, std::destroying_delete_t) {
@@ -26,7 +26,7 @@ namespace srk::modules::inputs::raw_input {
 
 	private:
 		IntrusivePtr<Ref> _loader;
-		IntrusivePtr<IWindow> _win;
+		IntrusivePtr<windows::IWindow> _win;
 		DeviceType _filter;
 		IntrusivePtr<events::IEventDispatcher<ModuleEvent>> _eventDispatcher;
 

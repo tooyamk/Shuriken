@@ -5,8 +5,6 @@
 class GraphicsAdapterTester : public BaseTester {
 public:
 	virtual int32_t SRK_CALL run() override {
-		IntrusivePtr win = new Window();
-
 		std::vector<GraphicsAdapter> gas;
 		GraphicsAdapter::query(gas);
 
@@ -19,30 +17,35 @@ public:
 			printaln("	sharedSystemMemory = ", ga.sharedSystemMemory);
 		}
 
-		WindowStyle wndStype;
-		wndStype.resizable = true;
-		wndStype.backgroundColor.set(255, 255, 0);
-		if (win->create(wndStype, "Fucker", Vec2ui32(800, 600), false)) {
-			//app->setWindowPosition({200, 300});
+		IntrusivePtr wml = new WindowModuleLoader();
+		if (!wml->load(getWindowDllPath())) return 0;
 
-			IntrusivePtr looper = new Looper(1.0 / 60.0);
+		auto wm = wml->create(nullptr);
+		if (!wm) return 0;
 
-			win->getEventDispatcher()->addEventListener(WindowEvent::CLOSING, createEventListener<WindowEvent>([looper](Event<WindowEvent>& e) {
-				//auto val = (bool*)e.getData();
-				//*val = true;
+		CreateWindowDesc desc;
+		desc.style.resizable = true;
+		desc.contentSize.set(800, 600);
+		auto win = wm->crerateWindow(desc);
+		if (!win) return 0;
+
+		IntrusivePtr looper = new Looper(1.0 / 60.0);
+
+		win->getEventDispatcher()->addEventListener(WindowEvent::CLOSING, createEventListener<WindowEvent>([looper](Event<WindowEvent>& e) {
+			//auto val = (bool*)e.getData();
+			//*val = true;
 			}));
 
-			win->getEventDispatcher()->addEventListener(WindowEvent::CLOSED, createEventListener<WindowEvent>([looper](Event<WindowEvent>& e) {
-				looper->stop();
+		win->getEventDispatcher()->addEventListener(WindowEvent::CLOSED, createEventListener<WindowEvent>([looper](Event<WindowEvent>& e) {
+			looper->stop();
 			}));
 
-			looper->getEventDispatcher()->addEventListener(LooperEvent::TICKING, createEventListener<LooperEvent>([](Event<LooperEvent>& e) {
-				while (Window::getManager()->processEvent()) {};
+		looper->getEventDispatcher()->addEventListener(LooperEvent::TICKING, createEventListener<LooperEvent>([wm](Event<LooperEvent>& e) {
+			while (wm->processEvent()) {};
 			}));
 
-			win->setVisible(true);
-			looper->run(true);
-		}
+		win->setVisible(true);
+		looper->run(true);
 
 		return 0;
 	}

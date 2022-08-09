@@ -1,8 +1,9 @@
 #pragma once
 
 #include "Base.h"
-#include "srk/windows/IWindow.h"
+#include "srk/events/EventDispatcher.h"
 #include "srk/modules/graphics/ConstantBufferManager.h"
+#include "srk/modules/windows/IWindowModule.h"
 
 namespace srk::modules::graphics::gl {
 	class BlendState;
@@ -19,7 +20,7 @@ namespace srk::modules::graphics::gl {
 
 		struct CreateConfig {
 			Ref* loader = nullptr;
-			IWindow* win = nullptr;
+			windows::IWindow* win = nullptr;
 			IShaderTranspiler* transpiler = nullptr;
 			GraphicsAdapter* adapter = nullptr;
 			SampleCount sampleCount = 1;
@@ -169,7 +170,7 @@ namespace srk::modules::graphics::gl {
 		Usage _texCreateUsageMask;
 
 		IntrusivePtr<Ref> _loader;
-		IntrusivePtr<IWindow> _win;
+		IntrusivePtr<windows::IWindow> _win;
 		IntrusivePtr<IShaderTranspiler> _transpiler;
 
 		IntrusivePtr<BlendState> _defaultBlendState;
@@ -198,10 +199,10 @@ namespace srk::modules::graphics::gl {
 
 		IntrusivePtr<events::IEventDispatcher<GraphicsEvent>> _eventDispatcher;
 
-		bool SRK_CALL _glInit(IWindow* win);
+		bool SRK_CALL _glInit(windows::IWindow* win);
 		bool SRK_CALL _glewInit();
 		void SRK_CALL _setInitState();
-		void SRK_CALL _release(IWindow* win = nullptr);
+		void SRK_CALL _release(windows::IWindow* win = nullptr);
 		void SRK_CALL _resize(const Vec2ui32& size);
 
 		void SRK_CALL _setBlendState(BlendState& state, const Vec4f32& constantFactors, uint32_t sampleMask);

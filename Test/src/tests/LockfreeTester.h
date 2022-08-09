@@ -55,7 +55,11 @@ public:
 class LockfreeTester : public BaseTester {
 public:
 	virtual int32_t SRK_CALL run() override {
-		IntrusivePtr win = new Window();
+		IntrusivePtr wml = new WindowModuleLoader();
+		if (!wml->load(getWindowDllPath())) return 0;
+
+		auto wm = wml->create(nullptr);
+		if (!wm) return 0;
 
 		printFloat(0.0f);
 		printFloat(0.1f);
@@ -72,25 +76,27 @@ public:
 		printFloat(0.125f);
 		printFloat(0.111111111f);
 
-		WindowStyle wndStype;
-		wndStype.resizable = true;
-		if (win->create(wndStype, "", Vec2ui32(800, 600), false)) {
-			IntrusivePtr looper = new Looper(1000.0 / 60.0);
+		CreateWindowDesc desc;
+		desc.style.resizable = true;
+		desc.contentSize.set(800, 600);
+		auto win = wm->crerateWindow(desc);
+		if (!win) return 0;
 
-			win->getEventDispatcher()->addEventListener(WindowEvent::CLOSED, createEventListener<WindowEvent>([looper](Event<WindowEvent>& e) {
-				looper->stop();
+		IntrusivePtr looper = new Looper(1.0 / 60.0);
+
+		win->getEventDispatcher()->addEventListener(WindowEvent::CLOSED, createEventListener<WindowEvent>([looper](Event<WindowEvent>& e) {
+			looper->stop();
 			}));
 
-			looper->getEventDispatcher()->addEventListener(LooperEvent::TICKING, createEventListener<LooperEvent>([](Event<LooperEvent>& e) {
-				while (Window::getManager()->processEvent()) {};
+		looper->getEventDispatcher()->addEventListener(LooperEvent::TICKING, createEventListener<LooperEvent>([wm](Event<LooperEvent>& e) {
+			while (wm->processEvent()) {};
 			}));
 
-			win->setVisible(true);
+		win->setVisible(true);
 
-			//_testQueue();
+		//_testQueue();
 
-			looper->run(true);
-		}
+		looper->run(true);
 
 		return 0;
 	}

@@ -8,7 +8,7 @@
 #include <oleauto.h>
 
 namespace srk::modules::inputs::direct_input {
-	Input::Input(Ref* loader, IWindow* win, DeviceType filter, bool ignoreXInputDevices) :
+	Input::Input(Ref* loader, windows::IWindow* win, DeviceType filter, bool ignoreXInputDevices) :
 		_loader(loader),
 		_win(win),
 		_filter(filter),
@@ -27,7 +27,7 @@ namespace srk::modules::inputs::direct_input {
 
 	void Input::poll() {
 		if (!_di) return;
-		auto m = (HMODULE)_win->getNative(WindowNative::MODULE);
+		auto m = GetModuleHandleW(nullptr);
 		if (FAILED(DirectInput8Create(m, DIRECTINPUT_VERSION, IID_IDirectInput8, (LPVOID*)&_di, nullptr))) return;
 
 		std::vector<InternalDeviceInfo> newDevices;
@@ -85,7 +85,7 @@ namespace srk::modules::inputs::direct_input {
 	}
 
 	HWND Input::getHWND() const {
-		return (HWND)_win->getNative(WindowNative::WINDOW);
+		return (HWND)_win->getNative(windows::WindowNative::WINDOW);
 	}
 
 	bool Input::isXInputDevice(const ::GUID& guidProduct) {

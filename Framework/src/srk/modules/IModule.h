@@ -7,7 +7,8 @@ namespace srk::modules {
 	enum class ModuleType : uint32_t {
 		UNKNOWN = 0,
 		GRAPHICS = 0b1,
-		INPUT = 0b10
+		INPUT = 0b10,
+		WINDOW = 0b100
 	};
 
 

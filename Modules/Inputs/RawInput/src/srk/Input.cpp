@@ -5,7 +5,7 @@
 #include "srk/hash/xxHash.h"
 
 namespace srk::modules::inputs::raw_input {
-	Input::Input(Ref* loader, IWindow* win, DeviceType filter) :
+	Input::Input(Ref* loader, windows::IWindow* win, DeviceType filter) :
 		_loader(loader),
 		_win(win),
 		_filter(filter),
@@ -111,7 +111,7 @@ namespace srk::modules::inputs::raw_input {
 	}
 
 	HWND Input::getHWND() const {
-		return (HWND)_win->getNative(WindowNative::WINDOW);
+		return (HWND)_win->getNative(windows::WindowNative::WINDOW);
 	}
 
 	void Input::registerRawInputDevices(DeviceType type) {

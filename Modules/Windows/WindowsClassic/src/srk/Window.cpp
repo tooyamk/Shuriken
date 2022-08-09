@@ -1,11 +1,10 @@
-#include "WindowWindows.h"
-
-#if SRK_OS == SRK_OS_WINDOWS
+#include "Window.h"
+#include "Manager.h"
 #include "srk/String.h"
 #include "srk/Debug.h"
-#include "srk/windows/WindowManager.h"
+#include "srk/events/EventDispatcher.h"
 
-namespace srk {
+namespace srk::modules::windows::windows_classic {
 	Window::Window() :
 		_eventDispatcher(new events::EventDispatcher<WindowEvent>()) {
 	}
@@ -14,23 +13,22 @@ namespace srk {
 		close();
 	}
 
-	WindowManager* Window::_manager = new WindowManager();
 	std::atomic_uint32_t Window::_counter = 0;
 
 	IntrusivePtr<events::IEventDispatcher<WindowEvent>> Window::getEventDispatcher() const {
 		return _eventDispatcher;
 	}
 
-	bool Window::create(const WindowStyle& style, const std::string_view& title, const Vec2ui32& contentSize, bool fullScreen) {
+	bool Window::create(Manager& manager, const CreateWindowDesc& desc) {
 		if (_data.isCreated) return false;
 
-		_data.contentRect.size = contentSize;
-		_data.isFullScreen = fullScreen;
-		_data.title = title;
+		_data.contentRect.size = desc.contentSize;
+		_data.isFullScreen = desc.fullScreen;
+		_data.title = desc.title;
 		_data.module = GetModuleHandleW(nullptr);
-		_data.style = style;
-		_data.bkBrush = CreateSolidBrush(RGB(style.backgroundColor[0], style.backgroundColor[1], style.backgroundColor[2]));
-		_data.className = String::Utf8ToUnicode(String::toString(GetCurrentProcessId()));
+		_data.style = desc.style;
+		_data.bkBrush = CreateSolidBrush(RGB(desc.style.backgroundColor[0], desc.style.backgroundColor[1], desc.style.backgroundColor[2]));
+		_data.className = String::Utf8ToUnicode(String::toString(getCurrentProcessId()));
 		_data.className += L'-';
 		_data.className += String::Utf8ToUnicode(String::toString(_counter.fetch_add(1)));
 
@@ -38,11 +36,11 @@ namespace srk {
 		memset(&wnd, 0, sizeof(wnd));
 		wnd.cbSize = sizeof(wnd);
 		wnd.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
-		if (!style.closable) wnd.style |= CS_NOCLOSE;
+		if (!desc.style.closable) wnd.style |= CS_NOCLOSE;
 		wnd.lpfnWndProc = Window::_wndProc;
 		wnd.cbClsExtra = 0;
 		wnd.cbWndExtra = 0;
-		wnd.hInstance = _data.module;
+		wnd.hInstance = GetModuleHandleW(nullptr);
 		wnd.hIcon = nullptr;//LoadIcon(NULL, IDI_APPLICATION);
 		wnd.hCursor = LoadCursor(nullptr, IDC_ARROW);
 		wnd.hbrBackground = _data.bkBrush;
@@ -68,26 +66,26 @@ namespace srk {
 			rect.pos.set(_data.contentRect.pos[0], _data.contentRect.pos[1]);
 		}
 
-		_data.wnd = CreateWindowExW(_getNativeExStyle(_data.isFullScreen), wnd.lpszClassName, String::Utf8ToUnicode(title).data(), _getNativeStyle(_data.style, _data.isFullScreen),
+		_data.wnd = CreateWindowExW(_getNativeExStyle(_data.isFullScreen), wnd.lpszClassName, String::Utf8ToUnicode(desc.title).data(), _getNativeStyle(_data.style, _data.isFullScreen),
 			rect.pos[0], rect.pos[1], rect.size[0], rect.size[1],
 			GetDesktopWindow(), nullptr, _data.module, nullptr);
 		SetWindowLongPtrW(_data.wnd, GWLP_USERDATA, (LONG_PTR)this);
 
 		_data.isCreated = true;
 		_data.sentContentSize = getCurrentContentSize();
-		_manager->add(_data.wnd, this);
+
+		_manager = manager;
+		manager.add(_data.wnd, this);
 
 		return true;
 	}
 
-	bool Window::isCreated() const {
+	bool Window::isValid() const {
 		return _data.isCreated;
 	}
 
 	void* Window::getNative(WindowNative native) const {
 		switch (native) {
-		case WindowNative::MODULE:
-			return _data.module;
 		case WindowNative::WINDOW:
 			return _data.wnd;
 		}
@@ -242,13 +240,19 @@ namespace srk {
 		if (!_data.isCreated) return;
 
 		_manager->remove(_data.wnd);
+		_manager.reset();
+
 		if (_data.wnd) DestroyWindow(_data.wnd);
 		if (_data.bkBrush) DeleteObject(_data.bkBrush);
 		if (!_data.className.empty()) UnregisterClassW(_data.className.data(), _data.module);
 
 		_data = decltype(_data)();
 
-		_eventDispatcher->dispatchEvent(this, WindowEvent::CLOSED);
+		if (this->getReferenceCount()) {
+			_eventDispatcher->dispatchEvent(this, WindowEvent::CLOSED);
+		} else {
+			_eventDispatcher->dispatchEvent((void*)this, WindowEvent::CLOSED);
+		}
 	}
 
 	void Window::processEvent(void* data) {
@@ -261,17 +265,6 @@ namespace srk {
 			TranslateMessage(&msg);
 			DispatchMessageW(&msg);
 		}
-	}
-
-	bool WindowManager::processEvent(const WindowManager::EventFn& fn) const {
-		MSG msg = { 0 };
-		if (!PeekMessageW(&msg, 0, 0, 0, PM_REMOVE)) return false;
-
-		if (sendEvent(msg.hwnd, &msg, fn)) {
-			TranslateMessage(&msg);
-			DispatchMessageW(&msg);
-		}
-		return true;
 	}
 
 	//platform
@@ -472,4 +465,3 @@ namespace srk {
 		return DefWindowProcW(hWnd, msg, wParam, lParam);
 	}
 }
-#endif

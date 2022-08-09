@@ -341,10 +341,14 @@ option(SRK_GRAPHICS_D3D11 "" ON)
 option(SRK_GRAPHICS_GL "" ON)
 option(SRK_GRAPHICS_VULKAN "" ON)
 
-option(SRK_INPUT_HID_INPUT "" OFF)
-option(SRK_INPUT_DIRECT_INPUT "" OFF)
-option(SRK_INPUT_RAW_INPUT "" OFF)
-option(SRK_INPUT_XINPUT "" OFF)
+option(SRK_INPUTS_DIRECT_INPUT "" OFF)
+option(SRK_INPUTS_HID_INPUT "" OFF)
+option(SRK_INPUTS_RAW_INPUT "" OFF)
+option(SRK_INPUTS_XINPUT "" OFF)
+
+option(SRK_WINDOWS_COCOA "" OFF)
+option(SRK_WINDOWS_WINDOWS_CLASSIC "" OFF)
+option(SRK_WINDOWS_X11 "" OFF)
 
 option(SRK_ALL_EXTENSIONS "" OFF)
 
@@ -371,10 +375,14 @@ if (SRK_ALL_MODULES)
     set(SRK_GRAPHICS_GL ON)
     set(SRK_GRAPHICS_VULKAN ON)
 
-    set(SRK_INPUT_DIRECT_INPUT ON)
-    set(SRK_INPUT_HID_INPUT ON)
-    set(SRK_INPUT_RAW_INPUT ON)
-    set(SRK_INPUT_XINPUT ON)
+    set(SRK_INPUTS_DIRECT_INPUT ON)
+    set(SRK_INPUTS_HID_INPUT ON)
+    set(SRK_INPUTS_RAW_INPUT ON)
+    set(SRK_INPUTS_XINPUT ON)
+
+    set(SRK_WINDOWS_COCOA ON)
+    set(SRK_WINDOWS_WINDOWS_CLASSIC ON)
+    set(SRK_WINDOWS_X11 ON)
 endif ()
 
 if (SRK_ALL_EXTENSIONS)
@@ -390,22 +398,30 @@ endif ()
 if (NOT SRK_OS_WINDOWS)
     set(SRK_GRAPHICS_D3D11 OFF)
 
-    set(SRK_INPUT_DIRECT_INPUT OFF)
-    set(SRK_INPUT_RAW_INPUT OFF)
-    set(SRK_INPUT_XINPUT OFF)
+    set(SRK_INPUTS_DIRECT_INPUT OFF)
+    set(SRK_INPUTS_RAW_INPUT OFF)
+    set(SRK_INPUTS_XINPUT OFF)
+
+    set(SRK_WINDOWS_WINDOWS_CLASSIC OFF)
 endif ()
 
 if (SRK_OS_LINUX)
     if (NOT X11_FOUND)
         set(SRK_GRAPHICS_VULKAN OFF)
     endif ()
+else ()
+    set(SRK_WINDOWS_X11 OFF)
+endif ()
+
+if (NOT SRK_OS_MACOS)
+    set(SRK_WINDOWS_COCOA OFF)
 endif ()
 
 if (UNIX)
-    if (SRK_HID OR SRK_INPUT_HID_INPUT)
+    if (SRK_HID OR SRK_INPUTS_HID_INPUT)
         if (NOT UDEV_FOUND)
             set(SRK_HID OFF)
-            set(SRK_INPUT_HID_INPUT OFF)
+            set(SRK_INPUTS_HID_INPUT OFF)
         endif ()
     endif ()
 endif ()
@@ -434,25 +450,8 @@ if (SRK_FBX_CONVERTER)
     set(SRK_FRAMEWORK ON)
 endif ()
 
-if (SRK_INPUT_HID_INPUT)
-    set(SRK_FRAMEWORK ON)
-    set(SRK_HID ON)
-endif ()
-
 if (SRK_PNG_CONVERTER)
     set(LIBPNG ON)
-    set(SRK_FRAMEWORK ON)
-endif ()
-
-if (SRK_INPUT_DIRECT_INPUT)
-    set(SRK_FRAMEWORK ON)
-endif ()
-
-if (SRK_INPUT_RAW_INPUT)
-    set(SRK_FRAMEWORK ON)
-endif ()
-
-if (SRK_INPUT_XINPUT)
     set(SRK_FRAMEWORK ON)
 endif ()
 
@@ -473,6 +472,35 @@ endif ()
 if (SRK_SHADER_TRANSPILER)
     set(DX_SHADER_COMPILER ON)
     set(SPIRV_CROSS ON)
+endif ()
+
+if (SRK_INPUTS_HID_INPUT)
+    set(SRK_FRAMEWORK ON)
+    set(SRK_HID ON)
+endif ()
+
+if (SRK_INPUTS_DIRECT_INPUT)
+    set(SRK_FRAMEWORK ON)
+endif ()
+
+if (SRK_INPUTS_RAW_INPUT)
+    set(SRK_FRAMEWORK ON)
+endif ()
+
+if (SRK_INPUTS_XINPUT)
+    set(SRK_FRAMEWORK ON)
+endif ()
+
+if (SRK_WINDOWS_COCOA)
+    set(SRK_FRAMEWORK ON)
+endif ()
+
+if (SRK_WINDOWS_WINDOWS_CLASSIC)
+    set(SRK_FRAMEWORK ON)
+endif ()
+
+if (SRK_WINDOWS_X11)
+    set(SRK_FRAMEWORK ON)
 endif ()
 
 if (SRK_FRAMEWORK)
@@ -542,7 +570,8 @@ endif ()
 set(SRK_EXTERNAL_DIR_NAME External)
 set(SRK_MODULES_DIR_NAME Modules)
 set(SRK_GRAPHICS_MODULES_DIR ${SRK_MODULES_DIR_NAME}/Graphics)
-set(SRK_INPUT_MODULES_DIR ${SRK_MODULES_DIR_NAME}/Inputs)
+set(SRK_INPUTS_MODULES_DIR ${SRK_MODULES_DIR_NAME}/Inputs)
+set(SRK_WINDOWS_MODULES_DIR ${SRK_MODULES_DIR_NAME}/Windows)
 set(SRK_EXTENSIONS_DIR_NAME Extensions)
 
 set(SRK_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
@@ -589,18 +618,21 @@ srkAddSubdirectoryIf(VULKAN_SDK ${SRK_EXTERNAL_DIR_NAME}/VulkanSDK)
 srkAddSubdirectoryIf(SRK_CORE Core)
 srkAddSubdirectoryIf(SRK_FRAMEWORK Framework)
 
-srkAddSubdirectoryIf(SRK_SHADER_TRANSPILER ${SRK_MODULES_DIR_NAME}/Graphics/ShaderTranspiler)#??only x64
+srkAddSubdirectoryIf(SRK_SHADER_TRANSPILER ${SRK_GRAPHICS_MODULES_DIR}/ShaderTranspiler)#??only x64
 
-srkAddSubdirectoryIf(SRK_GRAPHICS_D3D11 ${SRK_MODULES_DIR_NAME}/Graphics/Direct3D11)
-srkAddSubdirectoryIf(SRK_GRAPHICS_GL ${SRK_MODULES_DIR_NAME}/Graphics/OpenGL)
-srkAddSubdirectoryIf(SRK_GRAPHICS_VULKAN ${SRK_MODULES_DIR_NAME}/Graphics/Vulkan)
+srkAddSubdirectoryIf(SRK_GRAPHICS_D3D11 ${SRK_GRAPHICS_MODULES_DIR}/Direct3D11)
+srkAddSubdirectoryIf(SRK_GRAPHICS_GL ${SRK_GRAPHICS_MODULES_DIR}/OpenGL)
+srkAddSubdirectoryIf(SRK_GRAPHICS_VULKAN ${SRK_GRAPHICS_MODULES_DIR}/Vulkan)
 
 srkAddSubdirectoryIf(SRK_HID ${SRK_EXTENSIONS_DIR_NAME}/HID)
 
-srkAddSubdirectoryIf(SRK_INPUT_DIRECT_INPUT ${SRK_MODULES_DIR_NAME}/Inputs/DirectInput)
-srkAddSubdirectoryIf(SRK_INPUT_HID_INPUT ${SRK_MODULES_DIR_NAME}/Inputs/HIDInput)
-srkAddSubdirectoryIf(SRK_INPUT_RAW_INPUT ${SRK_MODULES_DIR_NAME}/Inputs/RawInput)
-srkAddSubdirectoryIf(SRK_INPUT_XINPUT ${SRK_MODULES_DIR_NAME}/Inputs/XInput)
+srkAddSubdirectoryIf(SRK_INPUTS_DIRECT_INPUT ${SRK_INPUTS_MODULES_DIR}/DirectInput)
+srkAddSubdirectoryIf(SRK_INPUTS_HID_INPUT ${SRK_INPUTS_MODULES_DIR}/HIDInput)
+srkAddSubdirectoryIf(SRK_INPUTS_RAW_INPUT ${SRK_INPUTS_MODULES_DIR}/RawInput)
+srkAddSubdirectoryIf(SRK_INPUTS_XINPUT ${SRK_INPUTS_MODULES_DIR}/XInput)
+
+srkAddSubdirectoryIf(SRK_WINDOWS_WINDOWS_CLASSIC ${SRK_WINDOWS_MODULES_DIR}/WindowsClassic)
+srkAddSubdirectoryIf(SRK_WINDOWS_X11 ${SRK_WINDOWS_MODULES_DIR}/X11)
 
 srkAddSubdirectoryIf(SRK_ASTC_CONVERTER ${SRK_EXTENSIONS_DIR_NAME}/ASTCConverter)
 srkAddSubdirectoryIf(SRK_PNG_CONVERTER ${SRK_EXTENSIONS_DIR_NAME}/PNGConverter)

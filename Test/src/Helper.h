@@ -10,6 +10,7 @@ using namespace srk::events;
 using namespace srk::modules;
 using namespace srk::modules::graphics;
 using namespace srk::modules::inputs;
+using namespace srk::modules::windows;
 
 using namespace std::literals;
 using namespace srk::literals;
@@ -36,8 +37,9 @@ struct transparent_hash {
 */
 #endif
 
-template<ConvertibleString8Data T>
-inline auto SRK_CALL getDLLName(T&& name) {
+template<typename T>
+requires ConvertibleString8Data<std::remove_cvref_t<T>>
+inline std::conditional_t<ConvertibleU8StringData<std::remove_cvref_t<T>>, std::u8string, std::string> SRK_CALL getDllName(T&& name) {
 	size_t size = 0;
 	if constexpr (String8Data<T>) {
 		size = name.size();
@@ -51,7 +53,7 @@ inline auto SRK_CALL getDLLName(T&& name) {
 		size += 6;
 	}
 
-	std::conditional_t<ConvertibleU8StringData<T>, std::u8string, std::string> s;
+	std::conditional_t<ConvertibleU8StringData<std::remove_cvref_t<T>>, std::u8string, std::string> s;
 	s.reserve(size);
 
 	if constexpr (Environment::IS_DEBUG) {
@@ -75,6 +77,21 @@ inline auto SRK_CALL getDLLName(T&& name) {
 	}
 
 	return std::move(s);
+}
+
+template<typename T>
+requires ConvertibleString8Data<std::remove_cvref_t<T>>
+inline std::conditional_t<ConvertibleU8StringData<std::remove_cvref_t<T>>, std::u8string, std::string> getDllPath(T&& name) {
+	return "libs/" + getDllName(std::forward<T>(name));
+}
+
+inline std::string getWindowDllPath() {
+#if SRK_OS == SRK_OS_WINDOWS
+	auto name = "windows-classic"sv;
+#else
+	auto name = ""sv;
+#endif
+	return getDllPath("srk-windows-" + name);
 }
 
 template<typename T>

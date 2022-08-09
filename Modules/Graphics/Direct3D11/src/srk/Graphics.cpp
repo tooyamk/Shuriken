@@ -46,7 +46,7 @@ namespace srk::modules::graphics::d3d11 {
 	bool Graphics::createDevice(const CreateConfig& conf) {
 		if (_device) return false;
 		if (conf.win) {
-			if (!conf.win->getNative(WindowNative::WINDOW)) return false;
+			if (!conf.win->getNative(windows::WindowNative::WINDOW)) return false;
 		} else {
 			if (!conf.offscreen) return false;
 		}
@@ -93,7 +93,7 @@ namespace srk::modules::graphics::d3d11 {
 				return false;
 			}
 			objs.add(dxgFctory);
-			dxgFctory->MakeWindowAssociation((HWND)conf.win->getNative(WindowNative::WINDOW), DXGI_MWA_NO_WINDOW_CHANGES | DXGI_MWA_NO_ALT_ENTER);
+			dxgFctory->MakeWindowAssociation((HWND)conf.win->getNative(windows::WindowNative::WINDOW), DXGI_MWA_NO_WINDOW_CHANGES | DXGI_MWA_NO_ALT_ENTER);
 
 			for (UINT i = 0;; ++i) {
 				if (dxgFctory->EnumAdapters(i, &dxgAdapter) == DXGI_ERROR_NOT_FOUND) break;
@@ -317,7 +317,7 @@ namespace srk::modules::graphics::d3d11 {
 			swapChainDesc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
 			swapChainDesc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
 			swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-			swapChainDesc.OutputWindow = (HWND)conf.win->getNative(WindowNative::WINDOW);
+			swapChainDesc.OutputWindow = (HWND)conf.win->getNative(windows::WindowNative::WINDOW);
 			swapChainDesc.Windowed = true;
 			swapChainDesc.SampleDesc.Count = _backBufferSampleCount;
 			swapChainDesc.SampleDesc.Quality = 0;

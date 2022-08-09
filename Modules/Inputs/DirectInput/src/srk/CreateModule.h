@@ -14,7 +14,7 @@ namespace srk::modules::inputs {
 			return nullptr;
 		}
 
-		auto app = (IWindow*)args->tryGet("win").toNumber<uintptr_t>();
+		auto app = (windows::IWindow*)args->tryGet("win").toNumber<uintptr_t>();
 		if (!app) {
 			printaln(L"DirectInputModule create error : no win"sv);
 			return nullptr;

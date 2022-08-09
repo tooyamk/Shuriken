@@ -47,12 +47,12 @@ namespace srk::modules::graphics::gl {
 	bool Graphics::createDevice(const CreateConfig& conf) {
 		using namespace srk::enum_operators;
 
-		if (!conf.win || !conf.win->getNative(WindowNative::WINDOW)) return false;
+		if (!conf.win || !conf.win->getNative(windows::WindowNative::WINDOW)) return false;
 
 #if SRK_OS == SRK_OS_WINDOWS
-		if (_dc || !conf.win->getNative(WindowNative::MODULE)) return false;
+		if (_dc) return false;
 #elif SRK_OS == SRK_OS_LINUX
-		if (_context || !conf.win->getNative(WindowNative::X_DISPLAY)) return false;
+		if (_context || !conf.win->getNative(windows::WindowNative::X_DISPLAY)) return false;
 #endif
 
 		/*
@@ -96,7 +96,7 @@ namespace srk::modules::graphics::gl {
 		if (sampleCount > _deviceFeatures.maxSampleCount) sampleCount = _deviceFeatures.maxSampleCount;
 
 #if SRK_OS == SRK_OS_WINDOWS
-		_dc = GetDC((HWND)conf.win->getNative(WindowNative::WINDOW));
+		_dc = GetDC((HWND)conf.win->getNative(windows::WindowNative::WINDOW));
 		if (!_dc) {
 			_release(conf.win);
 			return false;
@@ -159,7 +159,7 @@ namespace srk::modules::graphics::gl {
 			None
 		};
 
-		auto dis = (Display*)conf.win->getNative(WindowNative::X_DISPLAY);
+		auto dis = (Display*)conf.win->getNative(windows::WindowNative::X_DISPLAY);
 		auto vi = glXChooseVisual(dis, DefaultScreen(dis), attrListDouble);//XVisualInfo*
 		if (vi) {
 			int32_t attrListSingle[] = {
@@ -179,7 +179,7 @@ namespace srk::modules::graphics::gl {
 		_context = glXCreateContext(dis, vi, nullptr, True);
 		XFree(vi);
 
-		glXMakeCurrent(dis, (Window)conf.win->getNative(WindowNative::WINDOW), _context);
+		glXMakeCurrent(dis, (Window)conf.win->getNative(windows::WindowNative::WINDOW), _context);
 #else
 		_release(conf.win);
 		return false;
@@ -642,7 +642,7 @@ namespace srk::modules::graphics::gl {
 #if SRK_OS == SRK_OS_WINDOWS
 		wglMakeCurrent(_dc, _rc);
 #elif SRK_OS == SRK_OS_LINUX
-		glXMakeCurrent((Display*)_win->getNative(WindowNative::X_DISPLAY), (Window)_win->getNative(WindowNative::WINDOW), _context);
+		glXMakeCurrent((Display*)_win->getNative(windows::WindowNative::X_DISPLAY), (Window)_win->getNative(windows::WindowNative::WINDOW), _context);
 #endif
 	}
 
@@ -685,7 +685,7 @@ namespace srk::modules::graphics::gl {
 #if SRK_OS == SRK_OS_WINDOWS
 		SwapBuffers(_dc);
 #elif SRK_OS == SRK_OS_LINUX
-		glXSwapBuffers((Display*)_win->getNative(WindowNative::X_DISPLAY), (Window)_win->getNative(WindowNative::WINDOW));
+		glXSwapBuffers((Display*)_win->getNative(windows::WindowNative::X_DISPLAY), (Window)_win->getNative(windows::WindowNative::WINDOW));
 #endif
 		
 	}
@@ -750,12 +750,12 @@ namespace srk::modules::graphics::gl {
 		}
 	}
 
-	bool Graphics::_glInit(IWindow* win) {
+	bool Graphics::_glInit(windows::IWindow* win) {
 		auto initOk = false;
 
 #if SRK_OS == SRK_OS_WINDOWS
-		auto hIns = (HMODULE)win->getNative(WindowNative::MODULE);
-		std::wstring className = L"Shuriken OpenGL Temp Window " + String::Utf8ToUnicode(String::toString(Time::now()));
+		auto hIns = GetModuleHandleW(nullptr);
+		auto className = L"Shuriken OpenGL Temp Window";
 
 		WNDCLASSEXW wnd;
 		memset(&wnd, 0, sizeof(wnd));
@@ -764,11 +764,11 @@ namespace srk::modules::graphics::gl {
 			return DefWindowProcW(hWnd, msg, wParam, lParam);
 		};
 		wnd.hInstance = hIns;
-		wnd.lpszClassName = className.data();
+		wnd.lpszClassName = className;
 
 		RegisterClassExW(&wnd);
 
-		if (auto hwnd = CreateWindowExW(0, className.data(), L"", 0, 0, 0, 40, 40, nullptr, nullptr, nullptr, nullptr); hwnd) {
+		if (auto hwnd = CreateWindowExW(0, className, L"", 0, 0, 0, 40, 40, nullptr, nullptr, nullptr, nullptr); hwnd) {
 			if (auto dc = GetDC(hwnd); dc) {
 				PIXELFORMATDESCRIPTOR pfd = { 0 };
 				if (SetPixelFormat(dc, 1, &pfd)) {
@@ -786,9 +786,9 @@ namespace srk::modules::graphics::gl {
 			DestroyWindow(hwnd);
 		}
 
-		UnregisterClassW(className.data(), hIns);
+		UnregisterClassW(className, hIns);
 #elif SRK_OS == SRK_OS_LINUX
-		auto dis = (Display*)win->getNative(WindowNative::X_DISPLAY);
+		auto dis = XOpenDisplay(nullptr);
 		auto screen = DefaultScreen(dis);
 		if (auto wnd = XCreateSimpleWindow(dis, RootWindow(dis, screen), 0, 0, 100, 100, 0, 0, 0); wnd) {
 			int32_t attrList[] = {
@@ -813,6 +813,7 @@ namespace srk::modules::graphics::gl {
 
 			XDestroyWindow(dis, wnd);
 		}
+		XCloseDisplay(dis);
 #endif
 
 		return initOk;
@@ -1004,7 +1005,7 @@ namespace srk::modules::graphics::gl {
 		}
 	}
 
-	void Graphics::_release(IWindow* win) {
+	void Graphics::_release(windows::IWindow* win) {
 		if (!win) win = _win;
 
 #if SRK_OS == SRK_OS_WINDOWS
@@ -1016,14 +1017,14 @@ namespace srk::modules::graphics::gl {
 		}
 
 		if (_dc) {
-			ReleaseDC((HWND)win->getNative(WindowNative::WINDOW), _dc);
+			ReleaseDC((HWND)win->getNative(windows::WindowNative::WINDOW), _dc);
 			_dc = nullptr;
 		}
 #elif SRK_OS == SRK_OS_LINUX
-		if (glXGetCurrentContext() == _context) glXMakeCurrent((Display*)win->getNative(WindowNative::X_DISPLAY), None, nullptr);
+		if (glXGetCurrentContext() == _context) glXMakeCurrent((Display*)win->getNative(windows::WindowNative::X_DISPLAY), None, nullptr);
 
 		if (_context) {
-			glXDestroyContext((Display*)win->getNative(WindowNative::X_DISPLAY), _context);
+			glXDestroyContext((Display*)win->getNative(windows::WindowNative::X_DISPLAY), _context);
 			_context = nullptr;
 		}
 #endif

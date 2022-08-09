@@ -1,8 +1,9 @@
 #pragma once
 
 #include "Base.h"
-#include "srk/windows/IWindow.h"
+#include "srk/events/EventDispatcher.h"
 #include "srk/modules/graphics/ConstantBufferManager.h"
+#include "srk/modules/windows/IWindowModule.h"
 
 namespace srk::modules::graphics::d3d11 {
 	class BlendState;
@@ -14,7 +15,7 @@ namespace srk::modules::graphics::d3d11 {
 	public:
 		struct CreateConfig {
 			Ref* loader = nullptr;
-			IWindow* win = nullptr;
+			windows::IWindow* win = nullptr;
 			GraphicsAdapter* adapter = nullptr;
 			SampleCount sampleCount = 1;
 			std::string driverType;
@@ -262,7 +263,7 @@ namespace srk::modules::graphics::d3d11 {
 		bool _curIsBackBuffer;
 		SampleCount _backBufferSampleCount;
 		IntrusivePtr<Ref> _loader;
-		IntrusivePtr<IWindow> _win;
+		IntrusivePtr<windows::IWindow> _win;
 
 		DXGI_RATIONAL _refreshRate;
 		D3D_FEATURE_LEVEL _featureLevel;

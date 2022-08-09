@@ -1,7 +1,7 @@
 #include "Keyboard.h"
 
 namespace srk::modules::inputs::raw_input {
-	Keyboard::Keyboard(Input& input, IWindow& win, const InternalDeviceInfo& info) : DeviceBase(input, win, info) {
+	Keyboard::Keyboard(Input& input, windows::IWindow& win, const InternalDeviceInfo& info) : DeviceBase(input, win, info) {
 		memset(_state, 0, sizeof(StateBuffer));
 		memset(_listenState, 0, sizeof(StateBuffer));
 	}

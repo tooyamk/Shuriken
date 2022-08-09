@@ -1,23 +1,21 @@
 #pragma once
 
-#include "srk/windows/IWindow.h"
-
-#if SRK_OS == SRK_OS_WINDOWS
-#define SRK_WINDOW_SUPPORTED
+#include "srk/modules/windows/IWindowModule.h"
 #include "srk/math/Box.h"
 
-namespace srk {
-	class WindowManager;
+namespace srk::modules::windows::windows_classic {
+	class Manager;
 
-	class SRK_FW_DLL Window : public IWindow {
+	class SRK_MODULE_DLL Window : public IWindow {
 	public:
 		Window();
 		virtual ~Window();
 
 		virtual IntrusivePtr<events::IEventDispatcher<WindowEvent>> SRK_CALL getEventDispatcher() const override;
 
-		virtual bool SRK_CALL create(const WindowStyle& style, const std::string_view& title, const Vec2ui32& contentSize, bool fullScreen) override;
-		virtual bool SRK_CALL isCreated() const override;
+		bool SRK_CALL create(Manager& manager, const CreateWindowDesc& desc);
+
+		virtual bool SRK_CALL isValid() const override;
 		virtual void* SRK_CALL getNative(WindowNative native) const override;
 		virtual bool SRK_CALL isFullScreen() const override;
 		virtual void SRK_CALL toggleFullScreen() override;
@@ -41,15 +39,10 @@ namespace srk {
 		virtual void SRK_CALL close() override;
 		virtual void SRK_CALL processEvent(void* data) override;
 
-		inline static WindowManager* getManager() {
-			return _manager;
-		}
-
 	protected:
-		static WindowManager* _manager;
-
 		static std::atomic_uint32_t _counter;
 
+		IntrusivePtr<Manager> _manager;
 		IntrusivePtr<events::IEventDispatcher<WindowEvent>> _eventDispatcher;
 
 		//platform
@@ -70,7 +63,7 @@ namespace srk {
 			WindowStyle style;
 			WindowState wndState = WindowState::NORMAL;
 			WindowState prevWndState = WindowState::NORMAL;
-			
+
 			HMODULE module = nullptr;
 			HWND wnd = nullptr;
 			HBRUSH bkBrush = nullptr;
@@ -111,4 +104,3 @@ namespace srk {
 		static LRESULT CALLBACK _wndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 	};
 }
-#endif

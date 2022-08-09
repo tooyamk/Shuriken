@@ -3,6 +3,7 @@
 #include "srk/DynamicLibraryLoader.h"
 #include "srk/modules/graphics/IGraphicsModule.h"
 #include "srk/modules/inputs/IInputModule.h"
+#include "srk/modules/windows/IWindowModule.h"
 
 namespace srk::modules {
 	template<IntrusivePtrOperableObject RetType>
@@ -16,27 +17,28 @@ namespace srk::modules {
 		template<typename T>
 		requires ConvertibleString8Data<std::remove_cvref_t<T>>
 		bool SRK_CALL load(T&& path) {
-			if (_lib.isLoaded()) _lib.release();
 			if (_lib.load(std::forward<T>(path))) {
 				_createFn = (CreateModuleFn)_lib.getSymbolAddress(SRK_TO_STRING(SRK_CREATE_MODULE_FN_NAME));
-				return _createFn;
+				if (_createFn) {
+					return true;
+				} else {
+					free();
+					return false;
+				}
 			} else {
 				_createFn = nullptr;
 				return false;
 			}
-			return false;
 		}
 
 		inline void SRK_CALL free() {
 			_lib.release();
+			_createFn = nullptr;
 		}
 
 		IntrusivePtr<RetType> SRK_CALL create(const SerializableObject* args) {
-			if (_createFn && _lib.isLoaded()) {
-				return (RetType*)_createFn(this, args);
-			} else {
-				return nullptr;
-			}
+			if (!_createFn) return nullptr;
+			return (RetType*)_createFn(this, args);
 		}
 
 	protected:
@@ -46,4 +48,5 @@ namespace srk::modules {
 
 	using GraphicsModuleLoader = ModuleLoader<graphics::IGraphicsModule>;
 	using InputModuleLoader = ModuleLoader<inputs::IInputModule>;
+	using WindowModuleLoader = ModuleLoader<windows::IWindowModule>;
 }

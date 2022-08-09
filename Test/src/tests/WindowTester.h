@@ -9,11 +9,16 @@ public:
 		auto ppp = OpenProcess(PROCESS_ALL_ACCESS, false, GetCurrentProcessId());
 		TerminateProcess(ppp, 0);*/
 
+		IntrusivePtr wml = new WindowModuleLoader();
+		if (!wml->load(getWindowDllPath())) return 0;
+
+		auto wm = wml->create(nullptr);
+		if (!wm) return 0;
+
 		std::vector<IntrusivePtr<IWindow>> activedWindows;
 
-		auto tryCreateWndFn = [&activedWindows](const WindowStyle& style, const std::string_view& title) {
-			IntrusivePtr win = new Window();
-			if (win->create(style, title, Vec2ui32(800, 600), false)) {
+		auto tryCreateWndFn = [wm, &activedWindows](const CreateWindowDesc& desc) {
+			if (auto win = wm->crerateWindow(desc); win) {
 				auto border = win->getFrameExtents();
 				printaln("border ", border[0], " ", border[1], " ", border[2], " ", border[3]);
 				activedWindows.emplace_back(win);
@@ -21,7 +26,7 @@ public:
 				win->getEventDispatcher()->addEventListener(WindowEvent::CLOSING, createEventListener<WindowEvent>([](Event<WindowEvent>& e) {
 					//auto val = (bool*)e.getData();
 					//*val = true;
-				}));
+					}));
 
 				win->getEventDispatcher()->addEventListener(WindowEvent::CLOSED, createEventListener<WindowEvent>([&activedWindows](Event<WindowEvent>& e) {
 					/*printaln("closed start");
@@ -38,35 +43,41 @@ public:
 					if (activedWindows.empty()) {
 						app->terminate();
 					}*/
-				}));
+					}));
 
 				win->getEventDispatcher()->addEventListener(WindowEvent::FOCUS_IN, createEventListener<WindowEvent>([](Event<WindowEvent>& e) {
 					auto win = (IWindow*)e.getTarget();
 					printaln("wnd : ", win->getTitle(), " => focus in");
-				}));
+					}));
 
 				win->getEventDispatcher()->addEventListener(WindowEvent::FOCUS_OUT, createEventListener<WindowEvent>([](Event<WindowEvent>& e) {
 					auto win = (IWindow*)e.getTarget();
 					printaln("wnd : ", win->getTitle(), " => focus out");
-				}));
+					}));
 
 				win->getEventDispatcher()->addEventListener(WindowEvent::RESIZED, createEventListener<WindowEvent>([](Event<WindowEvent>& e) {
 					auto win = (IWindow*)e.getTarget();
 					auto size = win->getCurrentContentSize();
 					printaln("wnd : ", win->getTitle(), " => resize  ", size[0], "   ", size[1]);
-				}));
+					}));
 			}
 		};
 
-		WindowStyle wndStype;
-		wndStype.resizable = true;
-		wndStype.maximizable = true;
-		wndStype.backgroundColor.set(255, 255, 0);
 		auto deb = Debug::isDebuggerAttached() ? "debugger attached"sv : ""sv;
-		tryCreateWndFn(wndStype, "Fucker1 " + deb);
+		auto title = "Fucker1 " + deb;;
+		CreateWindowDesc desc;
+		desc.style.resizable = true;
+		desc.style.maximizable = true;
+		desc.style.backgroundColor.set(255, 255, 0);
+		desc.contentSize.set(800, 600);
+		desc.title = title;
+			
+		tryCreateWndFn(desc);
 
-		wndStype.backgroundColor.set(255, 0, 0);
-		//tryCreateWndFn(wndStype, "Fucker2 " + deb);
+		title = "Fucker2 " + deb;;
+		desc.style.backgroundColor.set(255, 0, 0);
+		desc.title = title;
+		tryCreateWndFn(desc);
 		if (!activedWindows.empty()) {
 			//app->setWindowPosition({200, 300});
 
@@ -75,12 +86,12 @@ public:
 			auto t = srk::Time::now();
 			int step = 0;
 
-			looper->getEventDispatcher()->addEventListener(LooperEvent::TICKING, createEventListener<LooperEvent>([&activedWindows, &t, &step, looper](Event<LooperEvent>& e) {
-				while (Window::getManager()->processEvent()) {};
+			looper->getEventDispatcher()->addEventListener(LooperEvent::TICKING, createEventListener<LooperEvent>([wm, &activedWindows, &t, &step, looper](Event<LooperEvent>& e) {
+				while (wm->processEvent()) {};
 
 				for (auto itr = activedWindows.begin(); itr != activedWindows.end();) {
 					auto win = *itr;
-					if (win->isCreated()) {
+					if (win->isValid()) {
 						++itr;
 					} else {
 						itr = activedWindows.erase(itr);
@@ -93,13 +104,13 @@ public:
 				}
 
 				//return;
-				auto tt = srk::Time::now(); 
+				auto tt = srk::Time::now();
 				auto d = tt - t;
 				if (d >= 2000) {
 					t = tt;
 					if (step == 0) {
 						step = 1;
-						activedWindows[0]->toggleFullScreen();
+						//activedWindows[0]->toggleFullScreen();
 						//printaln("is visible ", activedWindows[0]->isVisible());
 						//activedWindows[0]->toggleFullScreen();
 						//app->toggleFullscreen();
@@ -127,7 +138,7 @@ public:
 				}
 
 				//app->setWindowTitle(String::toString(GetKeyboardType(0)) + "  " + String::toString(GetKeyboardType(1)) + "  " + String::toString(GetKeyboardType(2)));
-			}));
+				}));
 
 			for (auto& win : activedWindows) win->setVisible(true);
 			//for (auto& win : activedWindows) win->setVisible(false);

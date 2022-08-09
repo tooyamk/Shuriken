@@ -1,27 +1,23 @@
 #pragma once
 
-#include "srk/windows/IWindow.h"
-
-#if SRK_OS == SRK_OS_LINUX
+#include "srk/modules/windows/IWindowModule.h"
 #include "srk/math/Box.h"
+#include <X11/Xlib.h>
+#include <X11/Xatom.h>
+#include <X11/Xutil.h>
 
-#ifndef SRK_HAS_X11
-#	if __has_include(<X11/Xlib.h>)
-#		define SRK_HAS_X11
-#	endif
-#endif
+namespace srk::modules::windows::x11 {
+	class Manager;
 
-namespace srk {
-#ifdef SRK_HAS_X11
-#	define SRK_WINDOW_SUPPORTED
-	class SRK_FW_DLL Window : public IWindow {
+	class SRK_MODULE_DLL Window : public IWindow {
 	public:
 		Window();
 		virtual ~Window();
 
 		virtual IntrusivePtr<events::IEventDispatcher<WindowEvent>> SRK_CALL getEventDispatcher() const override;
 
-		virtual bool SRK_CALL create(const WindowStyle& style, const std::string_view& title, const Vec2ui32& contentSize, bool fullScreen) override;
+		bool SRK_CALL create(Manager& manager, const CreateWindowDesc& desc);
+
 		virtual bool SRK_CALL isCreated() const override;
 		virtual void* SRK_CALL getNative(WindowNative native) const override;
 		virtual bool SRK_CALL isFullScreen() const override;
@@ -46,17 +42,10 @@ namespace srk {
 		virtual void SRK_CALL close() override;
 		virtual void SRK_CALL processEvent(void* data) override;
 
-		inline static WindowManager* getManager() {
-			return _manager;
-		}
+		static bool SRK_CALL checkIfEvent(XEvent* evt);
 
 	protected:
-		static WindowManager* _manager;
-
-		friend WindowManager;
-		using X11_Atom = size_t;
-		using X11_Window = size_t;
-
+		IntrusivePtr<Manager> _manager;
 		IntrusivePtr<events::IEventDispatcher<WindowEvent>> _eventDispatcher;
 
 		//platform
@@ -113,8 +102,8 @@ namespace srk {
 			std::string title;
 
 			int32_t screen = 0;
-			X11_Window root = 0;
-			X11_Window wnd = 0;
+			::Window root = 0;
+			::Window wnd = 0;
 			Vec2i32 wndPos;
 			Vec2ui32 contentSize;
 			uint32_t bgColor = 0;
@@ -124,43 +113,38 @@ namespace srk {
 			bool waitFrameEXTENTS = false;
 			bool waitVisibility = false;
 
-			X11_Atom MOTIF_WM_HINTS;
-			X11_Atom WM_STATE;
-			X11_Atom WM_DELETE_WINDOW;
-			X11_Atom WM_PROTOCOLS;
-			X11_Atom NET_WM_PING;
-			X11_Atom NET_WM_WINDOW_TYPE;
-			X11_Atom NET_WM_WINDOW_TYPE_NORMAL;
-			X11_Atom NET_WM_STATE;
-			X11_Atom NET_WM_STATE_FULLSCREEN;
-			X11_Atom NET_WM_STATE_MAXIMIZED_HORZ;
-			X11_Atom NET_WM_STATE_MAXIMIZED_VERT;
-			X11_Atom NET_REQUEST_FRAME_EXTENTS;
-			X11_Atom NET_FRAME_EXTENTS;
-			X11_Atom NET_WORKAREA;
-			X11_Atom NET_CURRENT_DESKTOP;
+			Atom MOTIF_WM_HINTS;
+			Atom WM_STATE;
+			Atom WM_DELETE_WINDOW;
+			Atom WM_PROTOCOLS;
+			Atom NET_WM_PING;
+			Atom NET_WM_WINDOW_TYPE;
+			Atom NET_WM_WINDOW_TYPE_NORMAL;
+			Atom NET_WM_STATE;
+			Atom NET_WM_STATE_FULLSCREEN;
+			Atom NET_WM_STATE_MAXIMIZED_HORZ;
+			Atom NET_WM_STATE_MAXIMIZED_VERT;
+			Atom NET_REQUEST_FRAME_EXTENTS;
+			Atom NET_FRAME_EXTENTS;
+			Atom NET_WORKAREA;
+			Atom NET_CURRENT_DESKTOP;
 		} _data;
 
 		static uint32_t _displayRefCount;
 		static void* _display;
 
-		void SRK_CALL _sendClientEventToWM(X11_Atom msgType, int64_t a = 0, int64_t b = 0, int64_t c = 0, int64_t d = 0, int64_t e = 0);
+		void SRK_CALL _sendClientEventToWM(Atom msgType, int64_t a = 0, int64_t b = 0, int64_t c = 0, int64_t d = 0, int64_t e = 0);
 		void SRK_CALL _sendResizedEvent();
 		void SRK_CALL _waitEvent(bool& value, bool canBreak);
 		Box2i32 SRK_CALL _calcWorkArea() const;
 		bool SRK_CALL _setWndState(WindowState state);
-		size_t SRK_CALL _getXWndProperty(X11_Window wnd, X11_Atom property, X11_Atom type, uint8_t** value) const;
+		size_t SRK_CALL _getXWndProperty(::Window wnd, Atom property, Atom type, uint8_t** value) const;
 		bool SRK_CALL _isMaximized() const;
 		bool SRK_CALL _isMinimized() const;
 		int32_t SRK_CALL _getXWndState() const;
 		void SRK_CALL _updateWindowPlacement();
 		void SRK_CALL _waitFrameExtents();
 
-		void SRK_CALL _doEvent(void* evt);//XEvent*
-
-		static bool SRK_CALL _checkIfEvent(void* evt);//XEvent*
+		void SRK_CALL _doEvent(XEvent* evt);
 	};
-#endif
 }
-
-#endif

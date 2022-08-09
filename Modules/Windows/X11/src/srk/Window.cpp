@@ -1,27 +1,10 @@
-#include "srk/predefine/OS.h"
-
-#if SRK_OS == SRK_OS_LINUX
-
-#ifndef SRK_HAS_X11
-#	if __has_include(<X11/Xlib.h>)
-#		define SRK_HAS_X11
-#	endif
-#endif
-
-#ifdef SRK_HAS_X11
-#	include <X11/Xlib.h>
-#	include <X11/Xatom.h>
-#	include <X11/Xutil.h>
-#endif
-
-#include "WindowLinux.h"
-
+#include "Window.h"
+#include "Manager.h"
 #include "srk/String.h"
 #include "srk/Debug.h"
-#include "srk/windows/WindowManager.h"
+#include "srk/events/EventDispatcher.h"
 
-namespace srk {
-#ifdef SRK_HAS_X11
+namespace srk::modules::windows::x11 {
 	Window::Window() :
 		_eventDispatcher(new events::EventDispatcher<WindowEvent>()) {
 	}
@@ -30,7 +13,6 @@ namespace srk {
 		close();
 	}
 
-	WindowManager* Window::_manager = new WindowManager();
 	uint32_t Window::_displayRefCount = 0;
 	void* Window::_display = nullptr;
 
@@ -38,14 +20,14 @@ namespace srk {
 		return _eventDispatcher;
 	}
 
-	bool Window::create(const WindowStyle& style, const std::string_view& title, const Vec2ui32& contentSize, bool fullScreen) {
+	bool Window::create(Manager& manager, const CreateWindowDesc& desc) {
 		if (_data.isCreated) return false;
 
-		_data.contentSize = contentSize;
-		_data.isFullScreen = fullScreen;
-		_data.style = style;
+		_data.contentSize = desc.contentSize;
+		_data.isFullScreen = desc.fullScreen;
+		_data.style = desc.style;
 
-		if (_display == nullptr) _display = XOpenDisplay(nullptr);
+		if (!_display) _display = XOpenDisplay(nullptr);
 
 		if (_display) {
 			_data.useDisplay = true;
@@ -55,21 +37,21 @@ namespace srk {
 			return false;
 		}
 
-		_data.MOTIF_WM_HINTS = XInternAtom((Display*)_display, "_MOTIF_WM_HINTS", False);
-		_data.WM_STATE = XInternAtom((Display*)_display, "WM_STATE", False);
-		_data.WM_PROTOCOLS = XInternAtom((Display*)_display, "WM_PROTOCOLS", False);
-		_data.WM_DELETE_WINDOW = XInternAtom((Display*)_display, "WM_DELETE_WINDOW", False);
-		_data.NET_WM_PING = XInternAtom((Display*)_display, "_NET_WM_PING", False);
-		_data.NET_WM_WINDOW_TYPE = XInternAtom((Display*)_display, "_NET_WM_WINDOW_TYPE", False);
-		_data.NET_WM_WINDOW_TYPE_NORMAL = XInternAtom((Display*)_display, "_NET_WM_WINDOW_TYPE_NORMAL", False);
-		_data.NET_WM_STATE = XInternAtom((Display*)_display, "_NET_WM_STATE", False);
-		_data.NET_WM_STATE_FULLSCREEN = XInternAtom((Display*)_display, "_NET_WM_STATE_FULLSCREEN", False);
-		_data.NET_WM_STATE_MAXIMIZED_HORZ = XInternAtom((Display*)_display, "_NET_WM_STATE_MAXIMIZED_HORZ", False);
-		_data.NET_WM_STATE_MAXIMIZED_VERT = XInternAtom((Display*)_display, "_NET_WM_STATE_MAXIMIZED_VERT", False);
-		_data.NET_REQUEST_FRAME_EXTENTS = XInternAtom((Display*)_display, "_NET_REQUEST_FRAME_EXTENTS", False);
-		_data.NET_FRAME_EXTENTS = XInternAtom((Display*)_display, "_NET_FRAME_EXTENTS", False);
-		_data.NET_WORKAREA = XInternAtom((Display*)_display, "_NET_WORKAREA", False);
-		_data.NET_CURRENT_DESKTOP = XInternAtom((Display*)_display, "_NET_CURRENT_DESKTOP", False);
+		_data.MOTIF_WM_HINTS = XInternAtom(_display, "_MOTIF_WM_HINTS", False);
+		_data.WM_STATE = XInternAtom(_display, "WM_STATE", False);
+		_data.WM_PROTOCOLS = XInternAtom(_display, "WM_PROTOCOLS", False);
+		_data.WM_DELETE_WINDOW = XInternAtom(_display, "WM_DELETE_WINDOW", False);
+		_data.NET_WM_PING = XInternAtom(_display, "_NET_WM_PING", False);
+		_data.NET_WM_WINDOW_TYPE = XInternAtom(_display, "_NET_WM_WINDOW_TYPE", False);
+		_data.NET_WM_WINDOW_TYPE_NORMAL = XInternAtom(_display, "_NET_WM_WINDOW_TYPE_NORMAL", False);
+		_data.NET_WM_STATE = XInternAtom(_display, "_NET_WM_STATE", False);
+		_data.NET_WM_STATE_FULLSCREEN = XInternAtom(_display, "_NET_WM_STATE_FULLSCREEN", False);
+		_data.NET_WM_STATE_MAXIMIZED_HORZ = XInternAtom(_display, "_NET_WM_STATE_MAXIMIZED_HORZ", False);
+		_data.NET_WM_STATE_MAXIMIZED_VERT = XInternAtom(_display, "_NET_WM_STATE_MAXIMIZED_VERT", False);
+		_data.NET_REQUEST_FRAME_EXTENTS = XInternAtom(_display, "_NET_REQUEST_FRAME_EXTENTS", False);
+		_data.NET_FRAME_EXTENTS = XInternAtom(_display, "_NET_FRAME_EXTENTS", False);
+		_data.NET_WORKAREA = XInternAtom(_display, "_NET_WORKAREA", False);
+		_data.NET_CURRENT_DESKTOP = XInternAtom(_display, "_NET_CURRENT_DESKTOP", False);
 
 		_data.bgColor = _data.style.backgroundColor[0] << 16 | _data.style.backgroundColor[1] << 8 | _data.style.backgroundColor[2];
 
@@ -81,18 +63,18 @@ namespace srk {
 			ExposureMask | FocusChangeMask | VisibilityChangeMask |
 			EnterWindowMask | LeaveWindowMask | PropertyChangeMask;
 
-		_data.screen = DefaultScreen((Display*)_display);
-		_data.root = RootWindow((Display*)_display, _data.screen);
-		_data.wnd = XCreateWindow((Display*)_display, _data.root,
+		_data.screen = DefaultScreen(_display);
+		_data.root = RootWindow(_display, _data.screen);
+		_data.wnd = XCreateWindow(_display, _data.root,
 			0, 0, _data.contentSize[0], _data.contentSize[1], 0,
-			DefaultDepth((Display*)_display, 0), InputOutput, DefaultVisual((Display*)_display, 0), CWBorderPixel | CWColormap | CWEventMask, &attr);
+			DefaultDepth(_display, 0), InputOutput, DefaultVisual(_display, 0), CWBorderPixel | CWColormap | CWEventMask, &attr);
 
-		XSetWindowBackground((Display*)_display, _data.wnd, _data.bgColor);
-		//XClearWindow((Display*)_linux.dis, _linux.wnd);
+		XSetWindowBackground(_display, _data.wnd, _data.bgColor);
+		//XClearWindow(_linux.dis, _linux.wnd);
 
-		//XSelectInput((Display*)_linux.dis, _linux.wnd, ExposureMask | ButtonPressMask | KeyPressMask | PropertyChangeMask);
+		//XSelectInput(_linux.dis, _linux.wnd, ExposureMask | ButtonPressMask | KeyPressMask | PropertyChangeMask);
 
-		//auto sd = ScreenOfDisplay((Display*)_linux.dis, _linux.screen);
+		//auto sd = ScreenOfDisplay(_linux.dis, _linux.screen);
 		//printcln(sd->width, "   ", sd->height);
 
 		if (!_data.style.resizable) {
@@ -102,22 +84,22 @@ namespace srk {
 			hints->min_height = _data.contentSize[1];
 			hints->max_width = _data.contentSize[0];
 			hints->max_height = _data.contentSize[1];
-			XSetWMNormalHints((Display*)_display, _data.wnd, hints);
+			XSetWMNormalHints(_display, _data.wnd, hints);
 			XFree(hints);
 		}
 
-		// Atom window_type = XInternAtom((Display*)_linux.dis, "_NET_WM_WINDOW_TYPE", False);
-		// int64_t value = XInternAtom((Display*)_linux.dis, "_NET_WM_WINDOW_TYPE_NORMAL", False);
-		// XChangeProperty((Display*)_linux.dis, _linux.wnd, window_type, XA_ATOM, 32, PropModeReplace, (uint8_t*)&value, 1);
+		// Atom window_type = XInternAtom(_linux.dis, "_NET_WM_WINDOW_TYPE", False);
+		// int64_t value = XInternAtom(_linux.dis, "_NET_WM_WINDOW_TYPE_NORMAL", False);
+		// XChangeProperty(_linux.dis, _linux.wnd, window_type, XA_ATOM, 32, PropModeReplace, (uint8_t*)&value, 1);
 
 		{
 			Atom protocols[] = { _data.WM_DELETE_WINDOW, _data.NET_WM_PING };
-			XSetWMProtocols((Display*)_display, _data.wnd, protocols, sizeof(protocols) / sizeof(Atom));
+			XSetWMProtocols(_display, _data.wnd, protocols, sizeof(protocols) / sizeof(Atom));
 		}
 
 		{
 			Atom type = _data.NET_WM_WINDOW_TYPE_NORMAL;
-			XChangeProperty((Display*)_display, _data.wnd, _data.NET_WM_WINDOW_TYPE, XA_ATOM, 32, PropModeReplace, (uint8_t*)&type, 1);
+			XChangeProperty(_display, _data.wnd, _data.NET_WM_WINDOW_TYPE, XA_ATOM, 32, PropModeReplace, (uint8_t*)&type, 1);
 		}
 
 		{
@@ -136,7 +118,7 @@ namespace srk {
 			}
 			if (_data.style.closable) hints.functions |= MwmHints::MWM_FUNC_CLOSE;
 
-			XChangeProperty((Display*)_display, _data.wnd, _data.MOTIF_WM_HINTS, XA_ATOM, 32, PropModeReplace, (uint8_t*)&hints, 5);
+			XChangeProperty(_display, _data.wnd, _data.MOTIF_WM_HINTS, XA_ATOM, 32, PropModeReplace, (uint8_t*)&hints, 5);
 		}
 
 		{
@@ -144,11 +126,11 @@ namespace srk {
 			hints->flags = StateHint;
 			hints->initial_state = NormalState;
 
-			XSetWMHints((Display*)_display, _data.wnd, hints);
+			XSetWMHints(_display, _data.wnd, hints);
 			XFree(hints);
 		}
 
-		XFlush((Display*)_display);
+		XFlush(_display);
 
 		{
 			_data.waitFrameEXTENTS = true;
@@ -159,7 +141,7 @@ namespace srk {
 
 		{
 			auto area = _calcWorkArea();
-			//auto sd = ScreenOfDisplay((Display*)_linux.dis, _linux.screen);
+			//auto sd = ScreenOfDisplay(_linux.dis, _linux.screen);
 			_data.wndPos.set((area.size[0] - _data.contentSize[0] - _data.frameExtends[0] - _data.frameExtends[1]) / 2, (area.size[1] - _data.contentSize[1] - _data.frameExtends[2] - _data.frameExtends[3]) / 2);
 
 			if (auto top = area.pos[1] + _data.frameExtends[2]; _data.wndPos[1] < top) _data.wndPos[1] = top;
@@ -169,8 +151,10 @@ namespace srk {
 
 		_data.isCreated = true;
 		_data.sentContentSize = getCurrentContentSize();
-		_manager->add((void*)_data.wnd, this);
-		setTitle(title);
+		setTitle(desc.title);
+
+		_manager = manager;
+		manager.add(_data.wnd, this);
 
 		return true;
 	}
@@ -211,7 +195,7 @@ namespace srk {
 
 		if (_data.wnd) {
 			if (_data.isFullScreen) {
-				auto sd = ScreenOfDisplay((Display*)_display, _data.screen);
+				auto sd = ScreenOfDisplay(_display, _data.screen);
 				size.set(sd->width, sd->height);
 			} else {
 				if (_data.wndState == WindowState::MAXIMUM || (_data.wndState == WindowState::MINIMUM && _data.prevWndState == WindowState::MAXIMUM)) {
@@ -246,7 +230,7 @@ namespace srk {
 	void Window::setTitle(const std::string_view& title) {
 		if (_data.wnd) {
 			_data.title = title;
-			XStoreName((Display*)_display, _data.wnd, _data.title.data());
+			XStoreName(_display, _data.wnd, _data.title.data());
 		}
 	}
 
@@ -267,12 +251,12 @@ namespace srk {
 		::Window focused;
 		int32_t revertTo;
 
-		XGetInputFocus((Display*)_display, &focused, &revertTo);
+		XGetInputFocus(_display, &focused, &revertTo);
 		return focused == _data.wnd;
 	}
 
 	void Window::setFocus() {
-		if (_data.wnd && _data.isVisible) XSetInputFocus((Display*)_display, _data.wnd, RevertToParent, CurrentTime);
+		if (_data.wnd && _data.isVisible) XSetInputFocus(_display, _data.wnd, RevertToParent, CurrentTime);
 	}
 
 	bool Window::isMaximized() const {
@@ -312,16 +296,22 @@ namespace srk {
 	void Window::close() {
 		if (!_data.isCreated) return;
 
-		_manager->remove((void*)_data.wnd);
-		if (_data.wnd) XDestroyWindow((Display*)_display, _data.wnd);
+		_manager->remove(_data.wnd);
+		_manager.reset();
+
+		if (_data.wnd) XDestroyWindow(_display, _data.wnd);
 		if (_data.useDisplay && --_displayRefCount == 0) {
-			XCloseDisplay((Display*)_display);
+			XCloseDisplay(_display);
 			_display = nullptr;
 		}
 
 		_data = decltype(_data)();
 
-		_eventDispatcher->dispatchEvent(this, WindowEvent::CLOSED);
+		if (this->getReferenceCount()) {
+			_eventDispatcher->dispatchEvent(this, WindowEvent::CLOSED);
+		} else {
+			_eventDispatcher->dispatchEvent((void*)this, WindowEvent::CLOSED);
+		}
 	}
 
 	void Window::processEvent(void* data) {
@@ -330,16 +320,12 @@ namespace srk {
 		_doEvent(data);
 	}
 
-	bool WindowManager::processEvent(const WindowManager::EventFn& fn) const {
-		XEvent e = { 0 };
-		if (!Window::_checkIfEvent(&e)) return false;
-
-		sendEvent((void*)e.xclient.window, &e, fn);
-		return true;
+	//platform
+	bool Window::checkIfEvent(XEvent* evt) {
+		return _display && XCheckIfEvent(_display, evt, [](Display* dis, XEvent* e, XPointer ptr) { return True; }, nullptr);
 	}
 
-	//platform
-	void Window::_sendClientEventToWM(X11_Atom msgType, int64_t a, int64_t b, int64_t c, int64_t d, int64_t e) {
+	void Window::_sendClientEventToWM(Atom msgType, int64_t a, int64_t b, int64_t c, int64_t d, int64_t e) {
 		XEvent evt = { ClientMessage };
 		auto& client = evt.xclient;
 		client.window = _data.wnd;
@@ -350,7 +336,7 @@ namespace srk {
 		client.data.l[2] = c;
 		client.data.l[3] = d;
 		client.data.l[4] = e;
-		XSendEvent((Display*)_display, _data.root, False, SubstructureNotifyMask | SubstructureRedirectMask, &evt);
+		XSendEvent(_display, _data.root, False, SubstructureNotifyMask | SubstructureRedirectMask, &evt);
 	}
 
 	void Window::_sendResizedEvent() {
@@ -360,14 +346,10 @@ namespace srk {
 		}
 	}
 
-	bool Window::_checkIfEvent(void* evt) {
-		return _display && XCheckIfEvent((Display*)_display, (XEvent*)evt, [](Display* dis, XEvent* e, XPointer ptr) { return True; }, nullptr);
-	}
-
 	void Window::_waitEvent(bool& value, bool canBreak) {
 		XEvent evt = { 0 };
 		while (value) {
-			if (_display && XCheckIfEvent((Display*)_display, &evt, [](Display* dis, XEvent* e, XPointer ptr) { return (int32_t)((XPointer)e->xclient.window == ptr); }, (XPointer)_data.wnd)) {
+			if (_display && XCheckIfEvent(_display, &evt, [](Display* dis, XEvent* e, XPointer ptr) { return (int32_t)((XPointer)e->xclient.window == ptr); }, (XPointer)_data.wnd)) {
 				_doEvent(&evt);
 			} else if (canBreak) {
 				value = false;
@@ -376,12 +358,12 @@ namespace srk {
 		};
 	}
 
-	size_t Window::_getXWndProperty(X11_Window wnd, X11_Atom property, X11_Atom type, uint8_t** value) const {
+	size_t Window::_getXWndProperty(::Window wnd, Atom property, Atom type, uint8_t** value) const {
 		Atom actualType;
 		int32_t actualFormat;
 		uint64_t count, bytesAfter;
 
-		XGetWindowProperty((Display*)_display, wnd, property, 0, (~0), False, type, &actualType, &actualFormat, &count, &bytesAfter, value);
+		XGetWindowProperty(_display, wnd, property, 0, (~0), False, type, &actualType, &actualFormat, &count, &bytesAfter, value);
 
 		return count;
 	}
@@ -458,7 +440,7 @@ namespace srk {
 			if (!_data.xMapped) {
 				_data.xMapped = true;
 				_data.waitVisibility = true;
-				XMapWindow((Display*)_display, _data.wnd);
+				XMapWindow(_display, _data.wnd);
 			}
 
 			if (_data.isFullScreen) {
@@ -490,7 +472,7 @@ namespace srk {
 						}
 
 						_data.xWndState = WindowState::MINIMUM;
-						XIconifyWindow((Display*)_display, _data.wnd, _data.screen);
+						XIconifyWindow(_display, _data.wnd, _data.screen);
 					}
 
 					break;
@@ -500,13 +482,13 @@ namespace srk {
 					if (_data.xWndState == WindowState::MINIMUM) {
 						_data.xWndState = WindowState::NORMAL;
 						_data.waitVisibility = true;
-						XMapWindow((Display*)_display, _data.wnd);
+						XMapWindow(_display, _data.wnd);
 						//_waitEvent(_data.waitVisibility);
 					} else if (_data.xWndState == WindowState::MAXIMUM) {
 						_sendClientEventToWM(_data.NET_WM_STATE, 0, _data.NET_WM_STATE_MAXIMIZED_VERT, _data.NET_WM_STATE_MAXIMIZED_HORZ, 1);
 					}
 
-					XMoveWindow((Display*)_display, _data.wnd, _data.wndPos[0], _data.wndPos[1]);
+					XMoveWindow(_display, _data.wnd, _data.wndPos[0], _data.wndPos[1]);
 
 					break;
 				}
@@ -516,7 +498,7 @@ namespace srk {
 			if (_data.xMapped) {
 				_data.xMapped = false;
 				_data.waitVisibility = true;
-				XUnmapWindow((Display*)_display, _data.wnd);
+				XUnmapWindow(_display, _data.wnd);
 			}
 		}
 
@@ -529,8 +511,8 @@ namespace srk {
 		_waitEvent(_data.waitFrameEXTENTS, false);
 	}
 
-	void Window::_doEvent(void* evt) {
-		auto& e = *((XEvent*)evt);
+	void Window::_doEvent(XEvent* evt) {
+		auto& e = *evt;
 		switch (e.type) {
 		case ClientMessage:
 		{
@@ -547,7 +529,7 @@ namespace srk {
 					XEvent reply = e;
 					reply.xclient.window = _data.root;
 
-					XSendEvent((Display*)_display, _data.root, False, SubstructureNotifyMask | SubstructureRedirectMask, &reply);
+					XSendEvent(_display, _data.root, False, SubstructureNotifyMask | SubstructureRedirectMask, &reply);
 				}
 			}
 
@@ -572,7 +554,7 @@ namespace srk {
 			if (isNormal) {
 				int32_t x, y;
 				::Window dummy;
-				XTranslateCoordinates((Display*)_display, _data.wnd, _data.root, 0, 0, &x, &y, &dummy);
+				XTranslateCoordinates(_display, _data.wnd, _data.root, 0, 0, &x, &y, &dummy);
 
 				_data.wndPos.set(x - _data.frameExtends[0], y - _data.frameExtends[2]);
 				_data.contentSize.set(conf.width, conf.height);
@@ -584,8 +566,8 @@ namespace srk {
 		}
 		case Expose:
 		{
-			//XFlush((Display*)_linux.dis);
-			//XSetWindowBackground((Display*)_linux.dis, _linux.wnd, _linux.bgColor);
+			//XFlush(_linux.dis);
+			//XSetWindowBackground(_linux.dis, _linux.wnd, _linux.bgColor);
 
 			break;
 		}
@@ -646,6 +628,4 @@ namespace srk {
 			break;
 		}
 	}
-#endif
 }
-#endif

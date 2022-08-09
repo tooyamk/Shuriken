@@ -6,7 +6,7 @@
 #include "srk/hash/xxHash.h"
 
 namespace srk::modules::inputs::hid_input {
-	Input::Input(Ref* loader, IWindow* win, DeviceType filter) :
+	Input::Input(Ref* loader, windows::IWindow* win, DeviceType filter) :
 		_loader(loader),
 		_win(win),
 		_filter(filter),

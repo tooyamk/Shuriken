@@ -30,9 +30,9 @@ namespace srk::modules::graphics::vulkan {
 
 	bool Graphics::createDevice(const CreateConfig& conf) {
 		if (conf.win) {
-			if (!conf.win->getNative(WindowNative::WINDOW)) return false;
+			if (!conf.win->getNative(windows::WindowNative::WINDOW)) return false;
 #if SRK_OS == SRK_OS_WINDOWS
-			if (!conf.win->getNative(WindowNative::MODULE)) return false;
+			//if (!conf.win->getNative(windows::WindowNative::MODULE)) return false;
 #endif
 		} else {
 			if (!conf.offscreen) return false;
@@ -282,7 +282,7 @@ namespace srk::modules::graphics::vulkan {
 		return true;
 	}
 
-	bool Graphics::_vulkanCreateSurface(IWindow& win) {
+	bool Graphics::_vulkanCreateSurface(windows::IWindow& win) {
 		auto err = VK_ERROR_UNKNOWN;
 
 #if SRK_OS == SRK_OS_WINDOWS
@@ -290,8 +290,8 @@ namespace srk::modules::graphics::vulkan {
 		createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
 		createInfo.pNext = nullptr;
 		createInfo.flags = 0;
-		createInfo.hinstance = (HMODULE)win.getNative(WindowNative::MODULE);
-		createInfo.hwnd = (HWND)win.getNative(WindowNative::WINDOW);
+		createInfo.hinstance = GetModuleHandleW(nullptr);
+		createInfo.hwnd = (HWND)win.getNative(windows::WindowNative::WINDOW);
 
 		err = vkCreateWin32SurfaceKHR(_vulkanStatus.instance, &createInfo, nullptr, &_vulkanStatus.surface);
 #endif

@@ -1,12 +1,13 @@
 #pragma once
 
-#include "srk/Intrusive.h"
+#include "srk/modules/IModule.h"
 #include "srk/math/Vector.h"
-#include "srk/events/EventDispatcher.h"
 
-namespace srk {
-	class WindowManager;
+namespace srk::events {
+	template<typename EvtType> class IEventDispatcher;
+}
 
+namespace srk::modules::windows {
 	enum class WindowEvent : uint8_t {
 		RESIZED,
 		FOCUS_IN,
@@ -28,8 +29,15 @@ namespace srk {
 	};
 
 
+	struct SRK_FW_DLL CreateWindowDesc {
+		WindowStyle style;
+		std::string_view title;
+		Vec2ui32 contentSize;
+		bool fullScreen = false;
+	};
+
+
 	enum class WindowNative : uint8_t {
-		MODULE,
 		X_DISPLAY,
 		WINDOW
 	};
@@ -41,9 +49,9 @@ namespace srk {
 
 		virtual IntrusivePtr<events::IEventDispatcher<WindowEvent>> SRK_CALL getEventDispatcher() const = 0;
 
-		virtual bool SRK_CALL create(const WindowStyle& style, const std::string_view& title, const Vec2ui32& contentSize, bool fullScreen) = 0;
-		virtual bool SRK_CALL isCreated() const = 0;
+		virtual bool SRK_CALL isValid() const = 0;
 		virtual void* SRK_CALL getNative(WindowNative native) const = 0;
+		//virtual void* SRK_CALL getNativeWindow() const = 0;
 		virtual bool SRK_CALL isFullScreen() const = 0;
 		virtual void SRK_CALL toggleFullScreen() = 0;
 		virtual Vec4ui32 SRK_CALL getFrameExtents() const = 0;
@@ -68,5 +76,36 @@ namespace srk {
 		virtual void SRK_CALL setVisible(bool b) = 0;
 		virtual void SRK_CALL close() = 0;
 		virtual void SRK_CALL processEvent(void* data) = 0;
+	};
+
+
+	class SRK_FW_DLL IWindowModule : public IModule {
+	public:
+		using EventFn = std::function<bool(IWindow*, void*)>;
+
+		virtual ModuleType SRK_CALL getType() const override {
+			return ModuleType::WINDOW;
+		}
+
+		virtual IntrusivePtr<IWindow> SRK_CALL crerateWindow(const CreateWindowDesc& desc) = 0;
+
+		virtual bool SRK_CALL processEvent() const = 0;
+		virtual bool SRK_CALL processEvent(const EventFn& fn) const = 0;
+		virtual bool SRK_CALL sendEvent(void* nativeWindow, void* data, const EventFn& fn) const = 0;
+	};
+
+
+	class SRK_FW_DLL DefaultWindowModule : public IWindowModule {
+	public:
+		virtual bool SRK_CALL processEvent() const override;
+		using IWindowModule::processEvent;
+		virtual bool SRK_CALL sendEvent(void* nativeWindow, void* data, const IWindowModule::EventFn& fn) const override;
+
+
+	protected:
+		std::unordered_map<void*, IWindow*> _windows;
+
+		void SRK_CALL _add(void* nativeWindow, IWindow* window);
+		void SRK_CALL _remove(void* nativeWindow);
 	};
 }

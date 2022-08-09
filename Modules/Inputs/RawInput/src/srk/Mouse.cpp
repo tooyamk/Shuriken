@@ -2,7 +2,7 @@
 #include "Input.h"
 
 namespace srk::modules::inputs::raw_input {
-	Mouse::Mouse(Input& input, IWindow& win, const InternalDeviceInfo& info) : DeviceBase(input, win, info),
+	Mouse::Mouse(Input& input, windows::IWindow& win, const InternalDeviceInfo& info) : DeviceBase(input, win, info),
 		_listenLastPos(0),
 		_lastWheel(0) {
 		memset(_state, 0, sizeof(StateBuffer));

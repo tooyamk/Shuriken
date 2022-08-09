@@ -13,7 +13,7 @@ namespace srk::modules::inputs {
 			return nullptr;
 		}
 
-		auto win = (IWindow*)args->tryGet("win").toNumber<uintptr_t>();
+		auto win = (windows::IWindow*)args->tryGet("win").toNumber<uintptr_t>();
 		if (!win) {
 			printaln(L"HIDInputModule create error : no win"sv);
 			return nullptr;

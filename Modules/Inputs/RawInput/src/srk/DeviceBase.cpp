@@ -3,17 +3,17 @@
 #include "srk/Debug.h"
 
 namespace srk::modules::inputs::raw_input {
-	DeviceBase::DeviceBase(Input& input, IWindow& win, const InternalDeviceInfo& info) :
+	DeviceBase::DeviceBase(Input& input, windows::IWindow& win, const InternalDeviceInfo& info) :
 		_input(input),
 		_win(win),
 		_eventDispatcher(new events::EventDispatcher<DeviceEvent>()),
 		_info(info),
 		_rawIputHandler(events::createEventListener(&DeviceBase::_rawInputCallback, this)) {
-		_win->getEventDispatcher()->addEventListener(WindowEvent::RAW_INPUT, _rawIputHandler);
+		_win->getEventDispatcher()->addEventListener(windows::WindowEvent::RAW_INPUT, _rawIputHandler);
 	}
 
 	DeviceBase::~DeviceBase() {
-		if (_rawIputHandler) _win->getEventDispatcher()->removeEventListener(WindowEvent::RAW_INPUT, _rawIputHandler);
+		if (_rawIputHandler) _win->getEventDispatcher()->removeEventListener(windows::WindowEvent::RAW_INPUT, _rawIputHandler);
 		_input->unregisterRawInputDevices(_info.type);
 	}
 
@@ -25,7 +25,7 @@ namespace srk::modules::inputs::raw_input {
 		return _info;
 	}
 
-	void DeviceBase::_rawInputCallback(events::Event<WindowEvent>& e) {
+	void DeviceBase::_rawInputCallback(events::Event<windows::WindowEvent>& e) {
 		using namespace std::literals;
 
 		BYTE buf[128];

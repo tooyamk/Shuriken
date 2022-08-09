@@ -28,5 +28,3 @@
 #include "srk/render/ForwardRenderer.h"
 #include "srk/render/SpriteRenderer.h"
 #include "srk/render/StandardRenderPipeline.h"
-
-#include "srk/windows/Window.h"
