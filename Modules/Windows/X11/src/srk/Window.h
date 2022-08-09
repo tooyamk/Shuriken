@@ -11,14 +11,20 @@ namespace srk::modules::windows::x11 {
 
 	class SRK_MODULE_DLL Window : public IWindow {
 	public:
-		Window();
+		Window(Manager& manager);
 		virtual ~Window();
+
+		void operator delete(Window* p, std::destroying_delete_t) {
+			auto m = p->_manager;
+			p->~Window();
+			::operator delete(p);
+		}
 
 		virtual IntrusivePtr<events::IEventDispatcher<WindowEvent>> SRK_CALL getEventDispatcher() const override;
 
-		bool SRK_CALL create(Manager& manager, const CreateWindowDesc& desc);
+		bool SRK_CALL create(const CreateWindowDesc& desc);
 
-		virtual bool SRK_CALL isCreated() const override;
+		virtual bool SRK_CALL isValid() const override;
 		virtual void* SRK_CALL getNative(WindowNative native) const override;
 		virtual bool SRK_CALL isFullScreen() const override;
 		virtual void SRK_CALL toggleFullScreen() override;

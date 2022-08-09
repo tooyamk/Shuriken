@@ -13,7 +13,7 @@ include_directories(
 )
 
 add_definitions(${SRK_DEFINITIONS} -DSRK_FW_EXPORTS)
-srkCollectSrcFiles(srcFiles)
+file(GLOB_RECURSE srcFiles "src/*.h" "src/*.cpp")
 srkAddLibrarySourceGroup(${PROJECT_NAME} SHARED ${srcFiles})
 add_dependencies(${PROJECT_NAME} 
     ${SRKPROJ_SRK_CORE_NAME}
@@ -21,10 +21,6 @@ add_dependencies(${PROJECT_NAME}
 set(linkLibs)
 if (SRK_OS_WINDOWS)
     list(APPEND linkLibs dxgi.lib winmm.lib)
-elseif (SRK_OS_LINUX)
-    srkAppendIf(X11_FOUND linkLibs X11)
-elseif (SRK_OS_MACOS)
-    list(APPEND linkLibs "-framework Cocoa")
 endif ()
 target_link_libraries(${PROJECT_NAME}
     ${SRKPROJ_SRK_CORE_NAME}

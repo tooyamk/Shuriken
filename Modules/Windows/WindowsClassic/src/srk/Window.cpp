@@ -5,7 +5,8 @@
 #include "srk/events/EventDispatcher.h"
 
 namespace srk::modules::windows::windows_classic {
-	Window::Window() :
+	Window::Window(Manager& manager) :
+		_manager(manager),
 		_eventDispatcher(new events::EventDispatcher<WindowEvent>()) {
 	}
 
@@ -19,7 +20,7 @@ namespace srk::modules::windows::windows_classic {
 		return _eventDispatcher;
 	}
 
-	bool Window::create(Manager& manager, const CreateWindowDesc& desc) {
+	bool Window::create(const CreateWindowDesc& desc) {
 		if (_data.isCreated) return false;
 
 		_data.contentRect.size = desc.contentSize;
@@ -74,8 +75,7 @@ namespace srk::modules::windows::windows_classic {
 		_data.isCreated = true;
 		_data.sentContentSize = getCurrentContentSize();
 
-		_manager = manager;
-		manager.add(_data.wnd, this);
+		_manager->add(_data.wnd, this);
 
 		return true;
 	}
@@ -240,7 +240,6 @@ namespace srk::modules::windows::windows_classic {
 		if (!_data.isCreated) return;
 
 		_manager->remove(_data.wnd);
-		_manager.reset();
 
 		if (_data.wnd) DestroyWindow(_data.wnd);
 		if (_data.bkBrush) DeleteObject(_data.bkBrush);

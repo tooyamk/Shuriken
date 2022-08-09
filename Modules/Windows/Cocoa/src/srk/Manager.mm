@@ -2,7 +2,7 @@
 #include "Window.h"
 #include "CreateModule.h"
 
-namespace srk::modules::windows::windows_classic {
+namespace srk::modules::windows::cocoa {
 	Manager::Manager(Ref* loader) :
 		_loader(loader) {
 	}
@@ -21,13 +21,11 @@ namespace srk::modules::windows::windows_classic {
 	}
 
 	bool Manager::processEvent(const IWindowModule::EventFn& fn) const {
-		MSG msg = { 0 };
-		if (!PeekMessageW(&msg, 0, 0, 0, PM_REMOVE)) return false;
+		auto e = [NSApp nextEventMatchingMask:NSEventMaskAny untilDate:nil inMode:NSDefaultRunLoopMode dequeue:true];
+        if (!e) return false;
 
-		if (sendEvent(msg.hwnd, &msg, fn)) {
-			TranslateMessage(&msg);
-			DispatchMessageW(&msg);
-		}
-		return true;
+        if (sendEvent(e.window, e, fn)) [NSApp sendEvent:e];
+        [e release];
+        return true;
 	}
 }

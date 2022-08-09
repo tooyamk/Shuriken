@@ -5,7 +5,8 @@
 #include "srk/events/EventDispatcher.h"
 
 namespace srk::modules::windows::x11 {
-	Window::Window() :
+	Window::Window(Manager& manager) :
+		_manager(manager),
 		_eventDispatcher(new events::EventDispatcher<WindowEvent>()) {
 	}
 
@@ -153,13 +154,12 @@ namespace srk::modules::windows::x11 {
 		_data.sentContentSize = getCurrentContentSize();
 		setTitle(desc.title);
 
-		_manager = manager;
-		manager.add(_data.wnd, this);
+		_manager->add(_data.wnd, this);
 
 		return true;
 	}
 
-	bool Window::isCreated() const {
+	bool Window::isValid() const {
 		return _data.isCreated;
 	}
 

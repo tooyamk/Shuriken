@@ -11,8 +11,8 @@ namespace srk::modules::windows::x11 {
 	}
 
 	IntrusivePtr<IWindow> Manager::crerateWindow(const CreateWindowDesc& desc) {
-		auto win = new Window();
-		if (!win->create(*this, desc)) {
+		auto win = new Window(*this);
+		if (!win->create(desc)) {
 			delete win;
 			win = nullptr;
 		}
