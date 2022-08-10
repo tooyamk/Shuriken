@@ -80,7 +80,7 @@ namespace srk {
 		enum class Compiler : uint8_t {
 			UNKNOWN,
 			CLANG,
-			GCC,
+			GNU,
 			MSVC
 		};
 
@@ -88,7 +88,7 @@ namespace srk {
 #if SRK_COMPILER == SRK_COMPILER_CLANG
 		static constexpr Compiler COMPILER = Compiler::CLANG;
 #elif SRK_COMPILER == SRK_COMPILER_GNU
-		static constexpr Compiler COMPILER = Compiler::GCC;
+		static constexpr Compiler COMPILER = Compiler::GNU;
 #elif SRK_COMPILER == SRK_COMPILER_MSVC
 		static constexpr Compiler COMPILER = Compiler::MSVC;
 #else

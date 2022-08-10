@@ -93,6 +93,7 @@ inline std::string getWindowDllPath() {
 }
 
 template<typename T>
+requires ConvertibleString8Data<std::remove_cvref_t<T>>
 inline ByteArray SRK_CALL readFile(T&& path) {
 	ByteArray dst;
 	std::ifstream stream(std::filesystem::path(path), std::ios::in | std::ios::binary);
@@ -111,10 +112,19 @@ inline ByteArray SRK_CALL readFile(T&& path) {
 	return std::move(dst);
 }
 
-inline bool SRK_CALL writeFile(const std::string& path, const ByteArray& data) {
+template<typename T>
+requires ConvertibleString8Data<std::remove_cvref_t<T>>
+inline bool SRK_CALL writeFile(T&& path, const ByteArray& data) {
+	const char* p;
+	if constexpr (String8Data<std::remove_cvref_t<T>>) {
+		p = (const char*)path.data();
+	} else {
+		p = (const char*)path;
+	}
+
 	auto rst = false;
 	ByteArray dst;
-	std::ofstream stream(path, std::ios::out | std::ios::binary);
+	std::ofstream stream(p, std::ios::out | std::ios::binary);
 	if (stream.is_open()) {
 		stream.write((const char*)data.getSource(), data.getLength());
 		rst = true;

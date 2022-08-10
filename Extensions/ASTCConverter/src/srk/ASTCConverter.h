@@ -33,6 +33,13 @@ namespace srk::extensions {
 			BLOCK_6x6x6
 		};*/
 
+		enum class Profile : uint8_t {
+			LDR_SRGB = 0,
+			LDR,
+			HDR_RGB_LDR_A,
+			HDR
+		};
+
 		enum class Preset : uint8_t {
 			FASTEST,
 			FAST,
@@ -49,9 +56,13 @@ namespace srk::extensions {
 			USE_PERCEPTUAL = 1 << 3,
 			DECOMPRESS_ONLY = 1 << 4,
 			SELF_DECOMPRESS_ONLY = 1 << 5,
-			MAP_RGBM = 1 << 6
+			MAP_RGBM = 1 << 6,
+
+			WRITE_HEADER = 1 << 7
 		};
 
-		static ByteArray SRK_CALL encode(const Image& img, Vector<3, uint8_t> blockSize, Preset preset, Flags flags, size_t threadCount = 0);
+		static bool SRK_CALL encode(const Image& img, const Vector<3, uint8_t>& blockSize, Profile profile, Preset preset, Flags flags, size_t threadCount, void** outBuffer, size_t& outBufferSize);
+
+		static ByteArray SRK_CALL encode(const Image& img, const Vector<3, uint8_t>& blockSize, Profile profile, Preset preset, Flags flags, size_t threadCount);
 	};
 }

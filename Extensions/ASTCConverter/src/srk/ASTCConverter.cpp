@@ -2,7 +2,15 @@
 #include "ASTCConverterImpl.h"
 
 namespace srk::extensions {
-	ByteArray ASTCConverter::encode(const Image& img, Vec3<uint8_t> blockSize, ASTCConverter::Preset preset, ASTCConverter::Flags flags, size_t threadCount) {
-		return astc_converter::encode(img, blockSize, preset, flags, threadCount);
+	bool ASTCConverter::encode(const Image& img, const Vec3<uint8_t>& blockSize, Profile profile, Preset preset, Flags flags, size_t threadCount, void** outBuffer, size_t& outBufferSize) {
+		return astc_converter::Impl::encode(img, blockSize, profile, preset, flags, threadCount, outBuffer, outBufferSize);
+	}
+
+	ByteArray ASTCConverter::encode(const Image& img, const Vector<3, uint8_t>& blockSize, Profile profile, Preset preset, Flags flags, size_t threadCount) {
+		void* buffer = nullptr;
+		size_t bufferSize;
+		if (!astc_converter::Impl::encode(img, blockSize, profile, preset, flags, threadCount, &buffer, bufferSize)) return ByteArray();
+
+		return ByteArray(buffer, bufferSize, ByteArray::Usage::EXCLUSIVE);
 	}
 }
