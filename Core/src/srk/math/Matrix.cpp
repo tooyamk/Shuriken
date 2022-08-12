@@ -311,7 +311,7 @@ namespace srk {
 
 		auto& m = dst.data;
 
-		if (scale) dst.prependScale(*(const float32_t(*)[3])scale);
+		if (scale) dst.appendScale(*(const float32_t(*)[3])scale);
 
 		if (trans) {
 			for (auto i = 0; i < 3; ++i) m[i][3] = trans[i];

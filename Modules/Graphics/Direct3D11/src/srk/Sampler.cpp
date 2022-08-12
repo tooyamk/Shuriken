@@ -74,7 +74,7 @@ namespace srk::modules::graphics::d3d11 {
 	}
 
 	void Sampler::setBorderColor(const Vec4f32& color) {
-		if (!Math::isEqual(_desc.BorderColor, color.data)) {
+		if (!Math::equal(_desc.BorderColor, color.data)) {
 			color.copyTo(_desc.BorderColor);
 
 			_setDirty(memcmp(_oldDesc.BorderColor, _desc.BorderColor, sizeof(_desc.BorderColor)), DirtyFlag::BORDER_COLOR);

@@ -597,6 +597,6 @@ namespace srk {
 			}
 		}
 
-		static bool SRK_CALL isEqual(const char* str1, const char* str2);
+		static bool SRK_CALL equal(const char* str1, const char* str2);
 	};
 }

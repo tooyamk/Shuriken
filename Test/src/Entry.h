@@ -39,7 +39,7 @@ public:
 		printf("\n");
 		*/
 
-		//return CompressTextureTester().run();
+		return CompressTextureTester().run();
 		//return DepthTestTester().run();
 		//return ExperimentTester().run();
 		//return GraphicsAdapterTester().run();
@@ -49,6 +49,6 @@ public:
 		//return RenderPipelineTester().run();
 		//return RenderTargetTester().run();
 		//return VertexUpdateTester().run();
-		return WindowTester().run();
+		//return WindowTester().run();
 	}
 };

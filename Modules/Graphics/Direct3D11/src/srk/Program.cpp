@@ -19,7 +19,7 @@ namespace srk::modules::graphics::d3d11 {
 		if (layout) layout->Release();
 	}
 
-	bool Program::InputLayout::isEqual(const D3D11_INPUT_ELEMENT_DESC* inputElements, uint32_t num) const {
+	bool Program::InputLayout::equal(const D3D11_INPUT_ELEMENT_DESC* inputElements, uint32_t num) const {
 		for (uint32_t i = 0, n = num; i < n; ++i) {
 			if (formats[i] != inputElements[i].Format) return false;
 		}
@@ -338,7 +338,7 @@ namespace srk::modules::graphics::d3d11 {
 
 	ID3D11InputLayout* Program::_getOrCreateInputLayout() {
 		for (uint32_t i = 0, n = _inLayouts.size(); i < n; ++i) {
-			if (auto& il = _inLayouts[i]; il.isEqual(_inputElements, _numInElements)) return il.layout;
+			if (auto& il = _inLayouts[i]; il.equal(_inputElements, _numInElements)) return il.layout;
 		}
 
 		auto& il = _inLayouts.emplace_back(_numInElements);
@@ -491,7 +491,7 @@ namespace srk::modules::graphics::d3d11 {
 			MyConstantBufferLayout* buffer = nullptr;
 			int16_t idx = -1;
 			for (int16_t j = 0, n = dst.constantBuffers.size(); j < n;  ++j) {
-				if (String::isEqual(dst.constantBuffers[j].name.data(), bDesc.Name)) {
+				if (String::equal(dst.constantBuffers[j].name.data(), bDesc.Name)) {
 					idx = j;
 					buffer = &dst.constantBuffers[j];
 					buffer->size = bDesc.Size;

@@ -115,7 +115,7 @@ namespace srk {
 
 		struct SRK_CORE_DLL StdUnorderedComparer {
 			inline bool SRK_CALL operator()(const SerializableObject& value1, const SerializableObject& value2) const {
-				return value1.isEqual(value2);
+				return value1.equal(value2);
 			}
 		};
 
@@ -552,15 +552,15 @@ namespace srk {
 		}
 		void SRK_CALL unpack(ByteArray& ba, Flag flag = Flag::COPY);
 
-		bool SRK_CALL isEqual(const SerializableObject& target) const;
+		bool SRK_CALL equal(const SerializableObject& target) const;
 		bool SRK_CALL isContentEqual(const SerializableObject& target) const;
 
 		inline bool operator==(const SerializableObject& right) const {
-			return isEqual(right);
+			return equal(right);
 		}
 
 		inline bool operator!=(const SerializableObject& right) const {
-			return !isEqual(right);
+			return !equal(right);
 		}
 
 	private:
@@ -768,7 +768,7 @@ namespace srk {
 		}
 
 		template<Arithmetic T>
-		inline bool SRK_CALL _isEqual(const SerializableObject& target) const {
+		inline bool SRK_CALL _equal(const SerializableObject& target) const {
 			switch (target._type) {
 			case Type::INT:
 				return _getValue<T>() == target._getValue<int64_t>();

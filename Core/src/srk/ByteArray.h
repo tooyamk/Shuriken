@@ -663,10 +663,10 @@ namespace srk {
 			return length;
 		}
 
-		inline static bool SRK_CALL isEqual(const ByteArray& data1, const ByteArray& data2) {
-			return data1.getLength() == data2.getLength() ? isEqual(data1.getSource(), data2.getSource(), data1.getLength()) : false;
+		inline static bool SRK_CALL equal(const ByteArray& data1, const ByteArray& data2) {
+			return data1.getLength() == data2.getLength() ? equal(data1.getSource(), data2.getSource(), data1.getLength()) : false;
 		}
-		inline static bool SRK_CALL isEqual(const void* data1, const void* data2, size_t len) {
+		inline static bool SRK_CALL equal(const void* data1, const void* data2, size_t len) {
 			return memcmp(data1, data2, len) == 0;
 		}
 

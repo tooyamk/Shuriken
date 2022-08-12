@@ -128,32 +128,32 @@ namespace srk {
 	void Node::setLocalPosition(const float32_t(&p)[3]) {
 		_lm.setPosition(p);
 
-		_checkNoticeUpdate(DirtyFlag::WMIM);
+		_checkNoticeUpdate(DirtyFlag::WM_IWM);
 	}
 
 	void Node::localTranslate(const float32_t(&p)[3]) {
 		updateLocalMatrix();
-		_lm.prependTranslate(p);
+		_lm.appendTranslate(p);
 
-		_checkNoticeUpdate(DirtyFlag::WMIM);
+		_checkNoticeUpdate(DirtyFlag::WM_IWM);
 	}
 
 	void Node::setLocalRotation(const Quaternion& q) {
 		_lr.set(q);
 
-		_checkNoticeUpdate(DirtyFlag::LM_WRMIM, DirtyFlag::WRMIM);
+		_checkNoticeUpdate(DirtyFlag::LM_WM_IWM_WQ, DirtyFlag::WM_IWM_WQ);
 	}
 
 	void Node::localRotate(const Quaternion& q) {
 		q.append(_lr, _lr);
 
-		_checkNoticeUpdate(DirtyFlag::LM_WRMIM, DirtyFlag::WRMIM);
+		_checkNoticeUpdate(DirtyFlag::LM_WM_IWM_WQ, DirtyFlag::WM_IWM_WQ);
 	}
 
 	void Node::setLocalScale(const float32_t(&s)[3]) {
 		_ls.set(s);
 
-		_checkNoticeUpdate(DirtyFlag::LM_WMIM, DirtyFlag::WMIM);
+		_checkNoticeUpdate(DirtyFlag::LM_WM_IWM, DirtyFlag::WM_IWM);
 	}
 
 	void Node::setLocalMatrix(const Matrix34& m) {
@@ -162,7 +162,7 @@ namespace srk {
 		_lm.set34(m);
 		_localDecomposition();
 
-		_checkNoticeUpdateNow((_dirty & DirtyFlag::NOT_LM) | DirtyFlag::WRMIM, DirtyFlag::WRMIM);
+		_checkNoticeUpdateNow((_dirty & DirtyFlag::NOT_LM) | DirtyFlag::WM_IWM_WQ, DirtyFlag::WM_IWM_WQ);
 	}
 
 	void Node::setLocalTRS(const float32_t(&pos)[3], const Quaternion& rot, const float32_t(&scale)[3]) {
@@ -170,20 +170,20 @@ namespace srk {
 		_lr.set(rot);
 		_ls.set(scale);
 
-		_checkNoticeUpdate(DirtyFlag::LM_WRMIM, DirtyFlag::WRMIM);
+		_checkNoticeUpdate(DirtyFlag::LM_WM_IWM_WQ, DirtyFlag::WM_IWM_WQ);
 	}
 
 	void Node::parentTranslate(const float32_t(&p)[3]) {
 		auto& data = _lm.data;
 		for (size_t i = 0; i < 3; ++i) data[i][3] += p[i];
 
-		_checkNoticeUpdate(DirtyFlag::WMIM);
+		_checkNoticeUpdate(DirtyFlag::WM_IWM);
 	}
 
 	void Node::parentRotate(const Quaternion& q) {
 		_lr.append(q);
 
-		_checkNoticeUpdate(DirtyFlag::LM_WRMIM, DirtyFlag::WRMIM);
+		_checkNoticeUpdate(DirtyFlag::LM_WM_IWM_WQ, DirtyFlag::WM_IWM_WQ);
 	}
 
 	void Node::setWorldPosition(const float32_t(&p)[3]) {
@@ -197,7 +197,7 @@ namespace srk {
 	void Node::worldTranslate(const float32_t(&p)[3]) {
 		auto old = _dirty;
 		updateWorldMatrix();
-		_wm.prependTranslate(p);
+		_wm.appendTranslate(p);
 
 		_worldPositionChanged(old);
 	}
@@ -221,26 +221,29 @@ namespace srk {
 
 		_wm.set34(m);
 
-		auto now = (_dirty & DirtyFlag::NOT_WM) | DirtyFlag::WIM;
+		auto now = _dirty & DirtyFlag::NOT_WM;
 
 		if (_parent) {
-			_wm.append(getInverseWorldMatrix(), _lm);
+			now &= DirtyFlag::NOT_IWM;
+			_wm.invert(_iwm);
+			_wm.prepend(_iwm, _lm);
 		} else {
+			now |= DirtyFlag::IWM;
 			_lm.set34(_wm);
 		}
 
 		_localDecomposition();
 
-		_checkNoticeUpdateNow((now & DirtyFlag::NOT_LM) | DirtyFlag::WR, DirtyFlag::WRMIM);
+		_checkNoticeUpdateNow((now & DirtyFlag::NOT_LM) | DirtyFlag::WQ, DirtyFlag::WM_IWM_WQ);
 	}
 
 	void Node::setIdentity() {
 		if (!_lr.isIdentity() || _ls != decltype(_ls)::ONE || _lm.data[0][3] != 0.f || _lm.data[1][3] != 0.f || _lm.data[2][3] != 0.f) {
 			_lm.set34();
 			_lr.set();
-			_ls.set(1.f);
+			_ls.setAll(1.f);
 
-			_checkNoticeUpdate(DirtyFlag::LM_WRMIM, DirtyFlag::WRMIM);
+			_checkNoticeUpdate(DirtyFlag::LM_WM_IWM_WQ, DirtyFlag::WM_IWM_WQ);
 		}
 	}
 
@@ -251,15 +254,15 @@ namespace srk {
 			_dirty &= DirtyFlag::NOT_LM;
 
 			_lr.toMatrix(_lm);
-			_lm.prependScale(_ls);
+			_lm.appendScale(_ls);
 		}
 	}
 
 	void Node::updateWorldRotation() const {
 		using namespace srk::enum_operators;
 
-		if ((_dirty & DirtyFlag::WR) != DirtyFlag::EMPTY) {
-			_dirty &= DirtyFlag::NOT_WR;
+		if ((_dirty & DirtyFlag::WQ) != DirtyFlag::EMPTY) {
+			_dirty &= DirtyFlag::NOT_WQ;
 
 			auto p = _parent;
 			if (p) {
@@ -281,7 +284,7 @@ namespace srk {
 			
 			if (_parent) {
 				_parent->updateWorldMatrix();
-				_lm.append(_parent->_wm, _wm);
+				_lm.prepend(_parent->_wm, _wm);
 			} else {
 				_wm.set34(_lm);
 			}
@@ -291,8 +294,8 @@ namespace srk {
 	void Node::updateInverseWorldMatrix() const {
 		using namespace srk::enum_operators;
 
-		if ((_dirty & DirtyFlag::WIM) != DirtyFlag::EMPTY) {
-			_dirty &= DirtyFlag::NOT_WIM;
+		if ((_dirty & DirtyFlag::IWM) != DirtyFlag::EMPTY) {
+			_dirty &= DirtyFlag::NOT_IWM;
 
 			updateWorldMatrix();
 			_wm.invert(_iwm);
@@ -371,15 +374,15 @@ namespace srk {
 			_parent->updateInverseWorldMatrix();
 
 			float32_t tmp[3] = { _wm.data[0][3], _wm.data[1][3], _wm.data[2][3] };
-			Math::matTransformPoint(_parent->_iwm, tmp, tmp);
+			Math::mul(_parent->_iwm, tmp, tmp);
 
 			_lm.setPosition(tmp);
 		} else {
 			_lm.setPosition(_wm);
 		}
 
-		_dirty |= DirtyFlag::WIM;
-		if (oldDirty != _dirty) _noticeUpdate(DirtyFlag::WMIM);
+		_dirty |= DirtyFlag::IWM;
+		if (oldDirty != _dirty) _noticeUpdate(DirtyFlag::WM_IWM);
 	}
 
 	void Node::_worldRotationChanged(DirtyFlag oldDirty) {
@@ -393,9 +396,9 @@ namespace srk {
 			_lr.set(_wr);
 		}
 
-		_dirty &= DirtyFlag::NOT_WR;
-		_dirty |= DirtyFlag::LM_WMIM;
-		if (oldDirty != _dirty) _noticeUpdate(DirtyFlag::WRMIM);
+		_dirty &= DirtyFlag::NOT_WQ;
+		_dirty |= DirtyFlag::LM_WM_IWM;
+		if (oldDirty != _dirty) _noticeUpdate(DirtyFlag::WM_IWM_WQ);
 	}
 
 	void Node::_noticeUpdate(DirtyFlag dirty) {

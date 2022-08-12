@@ -203,14 +203,14 @@ namespace srk {
 			NOT_LM = (std::underlying_type_t<DirtyFlag>)~LM,
 			WM = 0b10,
 			NOT_WM = (std::underlying_type_t<DirtyFlag>)~WM,
-			WIM = 0b100,
-			NOT_WIM = (std::underlying_type_t<DirtyFlag>)~WIM,
-			WR = 0b1000,
-			NOT_WR = (std::underlying_type_t<DirtyFlag>)~WR,
-			WMIM = WM | WIM,
-			WRMIM = WMIM | WR,
-			LM_WRMIM = LM | WRMIM,
-			LM_WMIM = LM | WMIM
+			IWM = 0b100,
+			NOT_IWM = (std::underlying_type_t<DirtyFlag>)~IWM,
+			WQ = 0b1000,
+			NOT_WQ = (std::underlying_type_t<DirtyFlag>)~WQ,
+			WM_IWM = WM | IWM,
+			WM_IWM_WQ = WM_IWM | WQ,
+			LM_WM_IWM_WQ = LM | WM_IWM_WQ,
+			LM_WM_IWM = LM | WM_IWM
 		};
 
 
@@ -246,7 +246,7 @@ namespace srk {
 		inline void SRK_CALL _parentChanged(Node* root) {
 			_root = root;
 
-			_checkNoticeUpdate(DirtyFlag::WRMIM);
+			_checkNoticeUpdate(DirtyFlag::WM_IWM_WQ);
 		}
 
 		inline void SRK_CALL _localDecomposition() {

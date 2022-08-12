@@ -40,7 +40,7 @@ namespace srk::extensions {
 			HDR
 		};
 
-		enum class Preset : uint8_t {
+		enum class Quality : uint8_t {
 			FASTEST,
 			FAST,
 			MEDIUM,
@@ -61,8 +61,8 @@ namespace srk::extensions {
 			WRITE_HEADER = 1 << 7
 		};
 
-		static bool SRK_CALL encode(const Image& img, const Vector<3, uint8_t>& blockSize, Profile profile, Preset preset, Flags flags, size_t threadCount, void** outBuffer, size_t& outBufferSize);
+		static bool SRK_CALL encode(const Image& img, const Vector<3, uint8_t>& blockSize, Profile profile, Quality quality, Flags flags, size_t threadCount, void** outBuffer, size_t& outBufferSize);
 
-		static ByteArray SRK_CALL encode(const Image& img, const Vector<3, uint8_t>& blockSize, Profile profile, Preset preset, Flags flags, size_t threadCount);
+		static ByteArray SRK_CALL encode(const Image& img, const Vector<3, uint8_t>& blockSize, Profile profile, Quality quality, Flags flags, size_t threadCount);
 	};
 }

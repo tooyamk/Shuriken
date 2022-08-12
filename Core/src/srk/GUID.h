@@ -30,7 +30,7 @@ namespace srk::modules::inputs {
 		}
 
 		template<bool LowCompare, bool HighCompare>
-		bool SRK_CALL isEqual(const void* data, uint32_t len, uint32_t offset = 0, uint8_t lowCompareVal = 0, uint8_t highCompareVal = 0) const {
+		bool SRK_CALL equal(const void* data, uint32_t len, uint32_t offset = 0, uint8_t lowCompareVal = 0, uint8_t highCompareVal = 0) const {
 			auto data8 = (const uint8_t*)data;
 
 			if constexpr (LowCompare) {

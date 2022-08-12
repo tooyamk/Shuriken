@@ -51,7 +51,7 @@ namespace srk::modules::graphics::d3d11 {
 			std::vector<uint32_t> formats;
 			ID3D11InputLayout* layout;
 
-			bool isEqual(const D3D11_INPUT_ELEMENT_DESC* inputElements, uint32_t num) const;
+			bool equal(const D3D11_INPUT_ELEMENT_DESC* inputElements, uint32_t num) const;
 		};
 
 

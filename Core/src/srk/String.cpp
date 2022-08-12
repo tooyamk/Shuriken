@@ -40,7 +40,7 @@ namespace srk {
 		return std::move(str);
 	}
 
-	bool String::isEqual(const char* str1, const char* str2) {
+	bool String::equal(const char* str1, const char* str2) {
 		if (str1 == str2) return true;
 		
 		size_t i = 0;

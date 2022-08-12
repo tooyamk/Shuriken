@@ -100,10 +100,10 @@ namespace srk {
 			append(q, *this);
 		}
 		inline void SRK_CALL append(const Quaternion& q, Quaternion& dst) const {
-			Math::appendQuat(*this, q, dst);
+			Math::appendQuat(data, q.data, dst.data);
 		}
 		inline void SRK_CALL rotate(const float32_t(&p)[3], float32_t(&dst)[3]) const {
-			Math::quatRotate<float32_t>(data, p, dst);
+			Math::rotateQuat<float32_t>(data, p, dst);
 		}
 		void SRK_CALL toMatrix(Matrix34& dst) const;
 		inline void SRK_CALL toMatrix(Matrix44& dst) const {
@@ -160,7 +160,7 @@ namespace srk {
 		}
 		static void SRK_CALL createLookAt(const float32_t(&forward)[3], const float32_t(&upward)[3], Quaternion& dst);
 		inline static void SRK_CALL slerp(const Quaternion& from, const Quaternion& to, float32_t t, Quaternion& dst) {
-			Math::slerp(from, to, t, dst);
+			Math::slerp(from.data, to.data, t, dst.data);
 		}
 		inline static float32_t SRK_CALL angleBetween(const Quaternion& q1, const Quaternion& q2) {
 			return std::acos(Math::dot(q1.data, q2.data));
@@ -180,7 +180,7 @@ namespace srk {
 
 	inline Quaternion SRK_CALL operator*(const Quaternion& lhs, const Quaternion& rhs) {
 		Quaternion q(NO_INIT);
-		Math::appendQuat(lhs, rhs, q);
+		Math::appendQuat(lhs.data, rhs.data, q.data);
 		return q;
 	}
 }

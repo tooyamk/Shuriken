@@ -35,8 +35,21 @@ namespace srk {
 
 		static const Matrix34 IDENTITY;
 
-		inline SRK_CALL operator Data& ();
-		inline SRK_CALL operator const Data& () const;
+		inline SRK_CALL operator Data& () {
+			return data;
+		}
+		inline SRK_CALL operator const Data& () const {
+			return data;
+		}
+
+		template<std::integral I, std::integral J>
+		inline float32_t& SRK_CALL operator()(I i, J j) {
+			return data[i][j];
+		}
+		template<std::integral I, std::integral J>
+		inline const float32_t& SRK_CALL operator()(I i, J j) const {
+			return data[i][j];
+		}
 
 		void SRK_CALL set33(const Matrix34& m);
 		void SRK_CALL set33(const Matrix44& m);
@@ -62,12 +75,19 @@ namespace srk {
 
 		void SRK_CALL toQuaternion(Quaternion& dst) const;
 
-		inline void SRK_CALL append(const Matrix34& rhs);
+		/*inline void SRK_CALL append(const Matrix34& rhs);
 		inline void SRK_CALL append(const Matrix44& rhs);
 		inline void SRK_CALL append(const Matrix34& rhs, Matrix34& dst) const;
 		inline void SRK_CALL append(const Matrix34& rhs, Matrix44& dst) const;
 		inline void SRK_CALL append(const Matrix44& rhs, Matrix34& dst) const;
-		inline void SRK_CALL append(const Matrix44& rhs, Matrix44& dst) const;
+		inline void SRK_CALL append(const Matrix44& rhs, Matrix44& dst) const;*/
+
+		inline void SRK_CALL prepend(const Matrix34& rhs);
+		inline void SRK_CALL prepend(const Matrix44& rhs);
+		inline void SRK_CALL prepend(const Matrix34& rhs, Matrix34& dst) const;
+		inline void SRK_CALL prepend(const Matrix34& rhs, Matrix44& dst) const;
+		inline void SRK_CALL prepend(const Matrix44& rhs, Matrix34& dst) const;
+		inline void SRK_CALL prepend(const Matrix44& rhs, Matrix44& dst) const;
 
 		inline void SRK_CALL appendTranslate(const float32_t(&t)[3]);
 		inline void SRK_CALL prependTranslate(const float32_t(&t)[3]);
@@ -76,7 +96,7 @@ namespace srk {
 		inline void SRK_CALL setPosition(const Matrix44& m);
 		inline void SRK_CALL setPosition(float32_t x, float32_t y, float32_t z);
 
-		inline void SRK_CALL prependScale(const float32_t(&s)[3]);
+		inline void SRK_CALL appendScale(const float32_t(&s)[3]);
 
 		static void SRK_CALL createLookAt(const float32_t(&forward)[3], const float32_t(&upward)[3], Matrix34& dst);
 		static void SRK_CALL createRotationAxis(const float32_t(&axis)[3], float32_t radian, Matrix34& dst);
@@ -137,8 +157,21 @@ namespace srk {
 
 		static const Matrix44 IDENTITY;
 
-		inline SRK_CALL operator Data44& ();
-		inline SRK_CALL operator const Data44& () const;
+		inline SRK_CALL operator Data44& () {
+			return data;
+		}
+		inline SRK_CALL operator const Data44& () const {
+			return data;
+		}
+
+		template<std::integral I, std::integral J>
+		inline float32_t& SRK_CALL operator()(I i, J j) {
+			return data[i][j];
+		}
+		template<std::integral I, std::integral J>
+		inline const float32_t& SRK_CALL operator()(I i, J j) const {
+			return data[i][j];
+		}
 
 		void SRK_CALL set33(const Matrix34& m);
 		void SRK_CALL set33(const Matrix44& m);
@@ -167,12 +200,19 @@ namespace srk {
 		inline bool SRK_CALL invert();
 		inline bool SRK_CALL invert(Matrix44& dst) const;
 
-		inline void SRK_CALL append(const Matrix34& rhs);
+		/*inline void SRK_CALL append(const Matrix34& rhs);
 		inline void SRK_CALL append(const Matrix44& rhs);
 		inline void SRK_CALL append(const Matrix34& rhs, Matrix34& dst) const;
 		inline void SRK_CALL append(const Matrix34& rhs, Matrix44& dst) const;
 		inline void SRK_CALL append(const Matrix44& rhs, Matrix34& dst) const;
-		inline void SRK_CALL append(const Matrix44& rhs, Matrix44& dst) const;
+		inline void SRK_CALL append(const Matrix44& rhs, Matrix44& dst) const;*/
+
+		inline void SRK_CALL prepend(const Matrix34& rhs);
+		inline void SRK_CALL prepend(const Matrix44& rhs);
+		inline void SRK_CALL prepend(const Matrix34& rhs, Matrix34& dst) const;
+		inline void SRK_CALL prepend(const Matrix34& rhs, Matrix44& dst) const;
+		inline void SRK_CALL prepend(const Matrix44& rhs, Matrix34& dst) const;
+		inline void SRK_CALL prepend(const Matrix44& rhs, Matrix44& dst) const;
 
 		inline static void SRK_CALL createOrthoLH(float32_t width, float32_t height, float32_t zNear, float32_t zFar, Matrix44& dst) {
 			dst.set44(
@@ -263,66 +303,57 @@ namespace srk {
 		};
 	};
 
-
-	inline SRK_CALL Matrix34::operator Matrix34::Data& () {
-		return data;
-	}
-
-	inline SRK_CALL Matrix34::operator const Matrix34::Data& () const {
-		return data;
-	}
-
 	inline void SRK_CALL Matrix34::transpose(Matrix44& dst) const {
-		Math::transposeMat(data, dst.data);
+		Math::transpose<Math::Hint::MEM_OVERLAP>(data, dst.data);
 	}
 
 	inline bool SRK_CALL Matrix34::invert() {
-		return Math::invertMat(data, data);
+		return Math::invert<Math::Hint::MEM_OVERLAP>(data, data);
 	}
 
 	inline bool SRK_CALL Matrix34::invert(Matrix34& dst) const {
-		return Math::invertMat(data, dst.data);
+		return Math::invert<Math::Hint::MEM_OVERLAP>(data, dst.data);
 	}
 
 	inline bool SRK_CALL Matrix34::invert(Matrix44& dst) const {
-		return Math::invertMat(data, ((Matrix34&)dst).data);
+		return Math::invert<Math::Hint::MEM_OVERLAP>(data, ((Matrix34&)dst).data);
 	}
 
-	inline void SRK_CALL Matrix34::append(const Matrix34& rhs) {
-		append(rhs, *this);
+	inline void SRK_CALL Matrix34::prepend(const Matrix34& rhs) {
+		prepend(rhs, *this);
 	}
 
-	inline void SRK_CALL Matrix34::append(const Matrix44& rhs) {
-		append(rhs, *this);
+	inline void SRK_CALL Matrix34::prepend(const Matrix44& rhs) {
+		prepend(rhs, *this);
 	}
 
-	inline void SRK_CALL Matrix34::append(const Matrix34& rhs, Matrix34& dst) const {
-		Math::appendMat(data, rhs.data, dst.data);
+	inline void SRK_CALL Matrix34::prepend(const Matrix34& rhs, Matrix34& dst) const {
+		Math::mul(data, rhs.data, dst.data);
 	}
 
-	inline void SRK_CALL Matrix34::append(const Matrix34& rhs, Matrix44& dst) const {
-		Math::appendMat(data, rhs.data, dst.data);
+	inline void SRK_CALL Matrix34::prepend(const Matrix34& rhs, Matrix44& dst) const {
+		Math::mul(data, rhs.data, dst.data);
 	}
 
-	inline void SRK_CALL Matrix34::append(const Matrix44& rhs, Matrix34& dst) const {
-		Math::appendMat(data, rhs.data, dst.data);
+	inline void SRK_CALL Matrix34::prepend(const Matrix44& rhs, Matrix34& dst) const {
+		Math::mul(data, rhs.data, dst.data);
 	}
 
-	inline void SRK_CALL Matrix34::append(const Matrix44& rhs, Matrix44& dst) const {
-		Math::appendMat(data, rhs.data, dst.data);
+	inline void SRK_CALL Matrix34::prepend(const Matrix44& rhs, Matrix44& dst) const {
+		Math::mul(data, rhs.data, dst.data);
 	}
 
 	inline void SRK_CALL Matrix34::appendTranslate(const float32_t(&t)[3]) {
-		data[0][3] += t[0];
-		data[1][3] += t[1];
-		data[2][3] += t[2];
-	}
-
-	inline void SRK_CALL Matrix34::prependTranslate(const float32_t(&t)[3]) {
 		auto x = t[0], y = t[1], z = t[2];
 		data[0][3] += x * data[0][0] + y * data[0][1] + z * data[0][2];
 		data[1][3] += x * data[1][0] + y * data[1][1] + z * data[1][2];
 		data[2][3] += x * data[2][0] + y * data[2][1] + z * data[2][2];
+	}
+
+	inline void SRK_CALL Matrix34::prependTranslate(const float32_t(&t)[3]) {
+		data[0][3] += t[0];
+		data[1][3] += t[1];
+		data[2][3] += t[2];
 	}
 
 	inline void SRK_CALL Matrix34::setPosition(const float32_t(&p)[3]) {
@@ -345,7 +376,7 @@ namespace srk {
 		data[2][3] = z;
 	}
 
-	inline void SRK_CALL Matrix34::prependScale(const float32_t(&s)[3]) {
+	inline void SRK_CALL Matrix34::appendScale(const float32_t(&s)[3]) {
 		auto x = s[0], y = s[1], z = s[2];
 
 		data[0][0] *= x;
@@ -361,51 +392,43 @@ namespace srk {
 		data[2][2] *= z;
 	}
 
-	inline SRK_CALL Matrix44::operator Matrix44::Data44& () {
-		return data;
-	}
-
-	inline SRK_CALL Matrix44::operator const Matrix44::Data44& () const {
-		return data;
-	}
-
 	inline void SRK_CALL Matrix44::transpose() {
-		Math::transposeMat(data, this->data);
+		Math::transpose<Math::Hint::MEM_OVERLAP>(data, data);
 	}
 
 	inline void SRK_CALL Matrix44::transpose(Matrix44& dst) const {
-		Math::transposeMat(data, dst.data);
+		Math::transpose<Math::Hint::MEM_OVERLAP>(data, dst.data);
 	}
 
 	inline bool SRK_CALL Matrix44::invert() {
-		return Math::invertMat(data, data);
+		return Math::invert<Math::Hint::MEM_OVERLAP>(data, data);
 	}
 
 	inline bool SRK_CALL Matrix44::invert(Matrix44& dst) const {
-		return Math::invertMat(data, dst.data);
+		return Math::invert<Math::Hint::MEM_OVERLAP>(data, dst.data);
 	}
 
-	inline void SRK_CALL Matrix44::append(const Matrix34& rhs) {
-		append(rhs, *this);
+	inline void SRK_CALL Matrix44::prepend(const Matrix34& rhs) {
+		prepend(rhs, *this);
 	}
 
-	inline void SRK_CALL Matrix44::append(const Matrix44& rhs) {
-		append(rhs, *this);
+	inline void SRK_CALL Matrix44::prepend(const Matrix44& rhs) {
+		prepend(rhs, *this);
 	}
 
-	inline void SRK_CALL Matrix44::append(const Matrix34& rhs, Matrix34& dst) const {
-		Math::appendMat(data, rhs.data, dst.data);
+	inline void SRK_CALL Matrix44::prepend(const Matrix34& rhs, Matrix34& dst) const {
+		Math::mul(data, rhs.data, dst.data);
 	}
 
-	inline void SRK_CALL Matrix44::append(const Matrix34& rhs, Matrix44& dst) const {
-		Math::appendMat(data, rhs.data, dst.data);
+	inline void SRK_CALL Matrix44::prepend(const Matrix34& rhs, Matrix44& dst) const {
+		Math::mul(data, rhs.data, dst.data);
 	}
 
-	inline void SRK_CALL Matrix44::append(const Matrix44& rhs, Matrix34& dst) const {
-		Math::appendMat(data, rhs.data, dst.data);
+	inline void SRK_CALL Matrix44::prepend(const Matrix44& rhs, Matrix34& dst) const {
+		Math::mul(data, rhs.data, dst.data);
 	}
 
-	inline void SRK_CALL Matrix44::append(const Matrix44& rhs, Matrix44& dst) const {
-		Math::appendMat(data, rhs.data, dst.data);
+	inline void SRK_CALL Matrix44::prepend(const Matrix44& rhs, Matrix44& dst) const {
+		Math::mul(data, rhs.data, dst.data);
 	}
 }

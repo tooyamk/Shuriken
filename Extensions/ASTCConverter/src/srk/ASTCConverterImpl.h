@@ -13,7 +13,7 @@ namespace srk::extensions::astc_converter {
 		static constexpr size_t HEADER_SIZE = 16;
 		static constexpr uint32_t HEADER_MAGIC_ID = 0x5CA1AB13;
 
-		static bool SRK_CALL encode(const Image& img, const Vec3<uint8_t>& blockSize, ASTCConverter::Profile profile, ASTCConverter::Preset preset, ASTCConverter::Flags flags, size_t threadCount, void** outBuffer, size_t& outBufferSize) {
+		static bool SRK_CALL encode(const Image& img, const Vec3<uint8_t>& blockSize, ASTCConverter::Profile profile, ASTCConverter::Quality quality, ASTCConverter::Flags flags, size_t threadCount, void** outBuffer, size_t& outBufferSize) {
 			using namespace enum_operators;
 
 			outBufferSize = 0;
@@ -31,31 +31,31 @@ namespace srk::extensions::astc_converter {
 			in.data_type = ASTCENC_TYPE_U8;
 			in.data = &data;
 
-			float32_t presetVal;
-			switch (preset) {
-			case ASTCConverter::Preset::FAST:
-				presetVal = ASTCENC_PRE_FAST;
+			float32_t qlty;
+			switch (quality) {
+			case ASTCConverter::Quality::FAST:
+				qlty = ASTCENC_PRE_FAST;
 				break;
-			case ASTCConverter::Preset::MEDIUM:
-				presetVal = ASTCENC_PRE_MEDIUM;
+			case ASTCConverter::Quality::MEDIUM:
+				qlty = ASTCENC_PRE_MEDIUM;
 				break;
-			case ASTCConverter::Preset::THOROUGH:
-				presetVal = ASTCENC_PRE_THOROUGH;
+			case ASTCConverter::Quality::THOROUGH:
+				qlty = ASTCENC_PRE_THOROUGH;
 				break;
-			case ASTCConverter::Preset::EXHAUSTIVE:
-				presetVal = ASTCENC_PRE_EXHAUSTIVE;
+			case ASTCConverter::Quality::EXHAUSTIVE:
+				qlty = ASTCENC_PRE_EXHAUSTIVE;
 				break;
 			default:
-				presetVal = ASTCENC_PRE_FASTEST;
+				qlty = ASTCENC_PRE_FASTEST;
 				break;
 			}
 
 			astcenc_config config{};
-			if (astcenc_config_init((astcenc_profile)profile, blockSize[0], blockSize[1], blockSize[2], presetVal, ((uint32_t)flags & 0x7F), &config) != ASTCENC_SUCCESS) return false;
+			if (astcenc_config_init((astcenc_profile)profile, blockSize[0], blockSize[1], blockSize[2], qlty, ((uint32_t)flags & 0x7F), &config) != ASTCENC_SUCCESS) return false;
 
-			auto isWriteHeader = (flags & ASTCConverter::Flags::WRITE_HEADER) == ASTCConverter::Flags::WRITE_HEADER;
 			Vec3<size_t> blocks((in.dim_x + config.block_x - 1) / config.block_x, (in.dim_y + config.block_y - 1) / config.block_y, (in.dim_z + config.block_z - 1) / config.block_z);
 			auto needBufferSize = blocks.getMultiplies() * 16;
+			auto isWriteHeader = (flags & ASTCConverter::Flags::WRITE_HEADER) == ASTCConverter::Flags::WRITE_HEADER;
 			if (isWriteHeader) needBufferSize += HEADER_SIZE;
 
 			if (outBuffer == nullptr) {
@@ -96,7 +96,7 @@ namespace srk::extensions::astc_converter {
 				for (decltype(threadCount) i = 0; i < threadCount; ++i) {
 					threads[i] = std::thread([context, &in, &swizzle, dataBuffer, dataBufferSize, i, &error]() {
 						if (auto err = astcenc_compress_image(context, &in, &swizzle, dataBuffer, dataBufferSize, i); err != ASTCENC_SUCCESS) error = err;
-						});
+					});
 				}
 
 				for (decltype(threadCount) i = 0; i < threadCount; ++i) threads[i].join();

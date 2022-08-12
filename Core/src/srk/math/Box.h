@@ -51,7 +51,7 @@ namespace srk {
 		}
 
 		template<std::convertible_to<Pos> P, std::convertible_to<Size> S>
-		inline bool SRK_CALL isEqual(const Box<N, P, S>& box) const {
+		inline bool SRK_CALL equal(const Box<N, P, S>& box) const {
 			return pos == box.pos && size == box.size;
 		}
 

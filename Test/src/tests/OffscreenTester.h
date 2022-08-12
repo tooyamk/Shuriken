@@ -187,7 +187,7 @@ float4 main(PS_INPUT input) : SV_TARGET {
 
 							///*
 							auto t0 = srk::Time::now();
-							auto out = extensions::ASTCConverter::encode(*aaa, Vec3ui32(4, 4, 1), extensions::ASTCConverter::Profile::LDR, extensions::ASTCConverter::Preset::FASTEST, extensions::ASTCConverter::Flags::NONE, 10);
+							auto out = extensions::ASTCConverter::encode(*aaa, Vec3ui32(4, 4, 1), extensions::ASTCConverter::Profile::LDR, extensions::ASTCConverter::Quality::FASTEST, extensions::ASTCConverter::Flags::NONE, 10);
 							if (out.isValid()) {
 								printaln("use time : ", srk::Time::now() - t0);
 								writeFile("D:/Users/Sephiroth/Desktop/6x6.astc", out);

@@ -365,7 +365,7 @@ namespace srk {
 		_freeValue();
 	}
 
-	bool SerializableObject::isEqual(const SerializableObject& target) const {
+	bool SerializableObject::equal(const SerializableObject& target) const {
 		using namespace srk::enum_operators;
 
 		switch (_type) {
@@ -502,13 +502,13 @@ namespace srk {
 		case Type::BOOL:
 			return target._type == Type::BOOL && _getValue<bool>() == target._getValue<bool>();
 		case Type::INT:
-			return _isEqual<int64_t>(target);
+			return _equal<int64_t>(target);
 		case Type::UINT:
-			return _isEqual<uint64_t>(target);
+			return _equal<uint64_t>(target);
 		case Type::FLOAT32:
-			return _isEqual<float32_t>(target);
+			return _equal<float32_t>(target);
 		case Type::FLOAT64:
-			return _isEqual<float64_t>(target);
+			return _equal<float64_t>(target);
 		case Type::STRING:
 		{
 			switch (target._type) {
