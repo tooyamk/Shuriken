@@ -221,6 +221,3 @@ add_dependencies(${PROJECT_NAME} ${prebuildProj})
 target_link_libraries(${PROJECT_NAME} ${linkLibs})
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER Tests)
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${OUTPUT_NAME}${SRK_BUILD_TYPE_SUFFIX})
-
-message("========================")
-message("${CMAKE_INTDIR}")
