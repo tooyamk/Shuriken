@@ -81,7 +81,7 @@ inline std::conditional_t<ConvertibleU8StringData<std::remove_cvref_t<T>>, std::
 
 inline std::string getWindowDllPath() {
 #if SRK_OS == SRK_OS_WINDOWS
-	auto name = "windows-classic"sv;
+	auto name = "win32api"sv;
 #elif SRK_OS == SRK_OS_LINUX
 	auto name = "x11"sv;
 #elif SRK_OS == SRK_OS_MACOS

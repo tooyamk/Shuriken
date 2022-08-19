@@ -280,7 +280,7 @@ namespace srk::modules::inputs {
 			return;
 		}
 
-		GamepadKeyMapping keyMapping(NO_INIT);
+		GamepadKeyMapping keyMapping(nullptr);
 		{
 			std::shared_lock lock(_keyMappingMutex);
 

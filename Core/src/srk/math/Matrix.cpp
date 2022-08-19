@@ -9,7 +9,7 @@ namespace srk {
 			  {0.f, 0.f, 1.f, 0.f} } {
 	}
 
-	Matrix34::Matrix34(const NoInit&) {}
+	Matrix34::Matrix34(nullptr_t) {}
 
 	Matrix34::Matrix34(
 		float32_t m00, float32_t m01, float32_t m02, float32_t m03,
@@ -328,7 +328,7 @@ namespace srk {
 		 	  {0.f, 0.f, 0.f, 1.f} } {
 	}
 
-	Matrix44::Matrix44(const NoInit&) {}
+	Matrix44::Matrix44(nullptr_t) {}
 
 	Matrix44::Matrix44(
 		float32_t m00, float32_t m01, float32_t m02, float32_t m03,

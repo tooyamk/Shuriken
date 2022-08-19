@@ -2,7 +2,7 @@
 #include "Window.h"
 #include "CreateModule.h"
 
-namespace srk::modules::windows::windows_classic {
+namespace srk::modules::windows::win32api {
 	Manager::Manager(Ref* loader) :
 		_loader(loader) {
 	}

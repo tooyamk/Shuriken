@@ -2,7 +2,7 @@
 
 #include "srk/modules/windows/IWindowModule.h"
 
-namespace srk::modules::windows::windows_classic {
+namespace srk::modules::windows::win32api {
 	class SRK_MODULE_DLL Manager : public DefaultWindowModule {
 	public:
 		Manager(Ref* loader);

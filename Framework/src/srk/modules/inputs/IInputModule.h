@@ -397,7 +397,7 @@ namespace srk::modules::inputs {
 
 	class SRK_FW_DLL GamepadKeyMapping {
 	public:
-		GamepadKeyMapping(const NoInit&) {};
+		GamepadKeyMapping(nullptr_t) {};
 		GamepadKeyMapping();
 		GamepadKeyMapping(const GamepadKeyMapping& other);
 

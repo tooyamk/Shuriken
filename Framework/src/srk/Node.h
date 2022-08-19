@@ -191,7 +191,7 @@ namespace srk {
 		 */
 		static void SRK_CALL getLocalRotationFromWorld(const Node& node, const Quaternion& worldRot, Quaternion& dst);
 		inline static Quaternion SRK_CALL getLocalRotationFromWorld(const Node& node, const Quaternion& worldRot) {
-			Quaternion q(NO_INIT);
+			Quaternion q(nullptr);
 			getLocalRotationFromWorld(node, worldRot, q);
 			return q;
 		}
@@ -250,7 +250,7 @@ namespace srk {
 		}
 
 		inline void SRK_CALL _localDecomposition() {
-			Matrix34 rot(NO_INIT);
+			Matrix34 rot(nullptr);
 			_lm.decomposition(&rot, _ls);
 			rot.toQuaternion(_lr);
 		}

@@ -22,7 +22,7 @@ namespace srk {
 			memset(this, 0, sizeof(T) * N);
 		}
 
-		Vector(const NoInit&) {}
+		Vector(nullptr_t) {}
 
 		template<size_t L, std::convertible_to<T> K>
 		Vector(const Vector<L, K>& vec) {
@@ -189,7 +189,7 @@ namespace srk {
 		}
 
 		inline Vector<N, T> SRK_CALL operator-() const {
-			Vector<N, T> val(NO_INIT);
+			Vector<N, T> val(nullptr);
 			for (decltype(N) i = 0; i < N; ++i) val.data[i] = -data[i];
 			return val;
 		}
@@ -198,12 +198,12 @@ namespace srk {
 			return N;
 		}
 
-		template<bool ResetAll = true, size_t L, std::convertible_to<T> K >
+		template<bool ResetOthers = true, size_t L, std::convertible_to<T> K >
 		inline Vector& SRK_CALL set(const Vector<L, K>& vec) {
-			return set<ResetAll>(vec.data);
+			return set<ResetOthers>(vec.data);
 		}
 
-		template<bool ResetAll = true, size_t L, std::convertible_to<T> K>
+		template<bool ResetOthers = true, size_t L, std::convertible_to<T> K>
 		inline Vector& SRK_CALL set(const K(&values)[L]) {
 			if constexpr (std::same_as<T, K>) {
 				if constexpr (L >= N) {
@@ -219,18 +219,18 @@ namespace srk {
 				}
 			}
 
-			if constexpr (ResetAll && L < N) memset(data + L, 0, sizeof(T) * (N - L));
+			if constexpr (ResetOthers && L < N) memset(data + L, 0, sizeof(T) * (N - L));
 
 			return *this;
 		}
 
-		template<bool ResetAll = true, std::convertible_to<T> K>
+		template<bool ResetOthers = true, std::convertible_to<T> K>
 		inline Vector& SRK_CALL set(const K* values, size_t len) {
 			if (len >= N) {
 				for (decltype(N) i = 0; i < N; ++i) data[i] = values[i];
 			} else {
 				for (decltype(len) i = 0; i < len; ++i) data[i] = values[i];
-				if constexpr (ResetAll) {
+				if constexpr (ResetOthers) {
 					memset(data + len, 0, sizeof(T) * (N - len));
 				}
 			}
@@ -238,20 +238,21 @@ namespace srk {
 			return *this;
 		}
 
-		template<bool ResetAll = true, std::convertible_to<T> K>
+		template<bool ResetOthers = true, std::convertible_to<T> K>
 		inline Vector& SRK_CALL set(const std::initializer_list<const K>& list) {
-			return set<ResetAll>(list.begin(), list.size());
+			return set<ResetOthers>(list.begin(), list.size());
 		}
 
-		template<bool ResetAll = true, size_t Begin = 0, size_t Range = N, std::convertible_to<T>... Args>
+		template<bool ResetOthers = true, Math::DataDesc SrcDesc = nullptr, Math::DataDesc DstDesc = nullptr, std::convertible_to<T>... Args>
 		inline Vector& SRK_CALL set(Args&&... args) {
 			if constexpr (N > 0) {
-				Math::copy<Begin, Range>(data, std::forward<Args>(args)...);
-				if constexpr (ResetAll) {
-					if constexpr (Begin > 0) memset(data, 0, sizeof(T) * Begin);
+				Math::copy<Math::DataDesc(SrcDesc, Math::DataType::VECTOR), Math::DataDesc(DstDesc, Math::DataType::VECTOR)>(data, std::forward<Args>(args)...);
+				if constexpr (ResetOthers) {
+					constexpr auto ddesc = DstDesc.manual(Math::Range(0, 0, N)).clamp(N);
+					if constexpr (ddesc.range.realBeforeCount(N)) memset(data, 0, sizeof(T) * ddesc.range.realBeforeCount(N));
 
-					constexpr auto count = Begin + std::min(Range, sizeof...(Args));
-					if constexpr (count < N) memset(data + count, 0, sizeof(T) * (N - count));
+					constexpr auto afterCnt = ddesc.range.realAfterCount(N);
+					if constexpr (afterCnt) memset(data + (N - afterCnt), 0, sizeof(T) * afterCnt);
 				}
 			}
 
@@ -363,7 +364,7 @@ namespace srk {
 
 		template<std::integral... Indices>
 		inline const Vector<sizeof...(Indices), T> SRK_CALL components(Indices&&... indices) const {
-			Vector<sizeof...(Indices), T> v(NO_INIT);
+			Vector<sizeof...(Indices), T> v(nullptr);
 			decltype(N) i = 0;
 			((v.data[i++] = data[indices]), ...);
 			return std::move(v);

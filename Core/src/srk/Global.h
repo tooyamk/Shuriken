@@ -647,10 +647,6 @@ namespace srk {
 	}
 
 
-	struct SRK_CORE_DLL NoInit {};
-	inline constexpr NoInit NO_INIT = NoInit();
-
-
 	inline uint32_t SRK_CALL getCurrentProcessId() {
 #if SRK_OS == SRK_OS_WINDOWS
 		return ::GetCurrentProcessId();

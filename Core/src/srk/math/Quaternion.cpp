@@ -10,7 +10,7 @@ namespace srk {
 		w(1.f) {
 	}
 
-	Quaternion::Quaternion(const NoInit&) {}
+	Quaternion::Quaternion(nullptr_t) {}
 
 	Quaternion::Quaternion(const Quaternion& q) :
 		x(q.x),

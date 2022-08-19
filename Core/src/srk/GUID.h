@@ -8,7 +8,7 @@ namespace srk::modules::inputs {
 	public:
 		using Data = uint8_t[N];
 
-		GUID(const NoInit&) {}
+		GUID(nullptr_t) {}
 		GUID() {
 			memset(_data, 0, sizeof(Data));
 		}

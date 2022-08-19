@@ -3,7 +3,7 @@
 #include "srk/modules/windows/IWindowModule.h"
 #include "srk/math/Box.h"
 
-namespace srk::modules::windows::windows_classic {
+namespace srk::modules::windows::win32api {
 	class Manager;
 
 	class SRK_MODULE_DLL Window : public IWindow {

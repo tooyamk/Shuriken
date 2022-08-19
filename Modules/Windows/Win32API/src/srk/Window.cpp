@@ -4,7 +4,7 @@
 #include "srk/Debug.h"
 #include "srk/events/EventDispatcher.h"
 
-namespace srk::modules::windows::windows_classic {
+namespace srk::modules::windows::win32api {
 	Window::Window(Manager& manager) :
 		_manager(manager),
 		_eventDispatcher(new events::EventDispatcher<WindowEvent>()) {

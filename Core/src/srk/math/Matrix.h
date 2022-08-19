@@ -21,7 +21,7 @@ namespace srk {
 		using Data = float32_t[3][4];
 
 		Matrix34();
-		Matrix34(const NoInit&);
+		Matrix34(nullptr_t);
 		Matrix34(
 			float32_t m00,       float32_t m01 = 0.f, float32_t m02 = 0.f, float32_t m03 = 0.f,
 			float32_t m10 = 0.f, float32_t m11 = 1.f, float32_t m12 = 0.f, float32_t m13 = 0.f,
@@ -142,7 +142,7 @@ namespace srk {
 		using Data44 = float32_t[4][4];
 
 		Matrix44();
-		Matrix44(const NoInit&);
+		Matrix44(nullptr_t);
 		Matrix44(
 			float32_t m00,       float32_t m01 = 0.f, float32_t m02 = 0.f, float32_t m03 = 0.f,
 			float32_t m10 = 0.f, float32_t m11 = 1.f, float32_t m12 = 0.f, float32_t m13 = 0.f,
@@ -221,7 +221,7 @@ namespace srk {
 				0.f, 0.f, 1.f / (zFar - zNear), zNear / (zNear - zFar));
 		}
 		inline static Matrix44 SRK_CALL createOrthoLH(float32_t width, float32_t height, float32_t zNear, float32_t zFar) {
-			Matrix44 m(NO_INIT);
+			Matrix44 m(nullptr);
 			createOrthoLH(width, height, zNear, zFar, m);
 			return m;
 		}
@@ -232,7 +232,7 @@ namespace srk {
 				0.f, 0.f, 1.f / (zFar - zNear), zNear / (zNear - zFar));
 		}
 		inline static Matrix44 SRK_CALL createOrthoOffCenterLH(float32_t left, float32_t right, float32_t bottom, float32_t top, float32_t zNear, float32_t zFar) {
-			Matrix44 m(NO_INIT);
+			Matrix44 m(nullptr);
 			createOrthoOffCenterLH(left, right, bottom, top, zNear, zFar, m);
 			return m;
 		}
@@ -245,7 +245,7 @@ namespace srk {
 				0.f, 0.f, 1.f, 0.f);
 		}
 		inline static Matrix44 SRK_CALL createPerspectiveFovLH(float32_t fieldOfViewY, float32_t aspectRatio, float32_t zNear, float32_t zFar) {
-			Matrix44 m(NO_INIT);
+			Matrix44 m(nullptr);
 			createPerspectiveFovLH(fieldOfViewY, aspectRatio, zNear, zFar, m);
 			return m;
 		}
@@ -258,7 +258,7 @@ namespace srk {
 				0.f, 0.f, 1.f, 0.f);
 		}
 		inline static Matrix44 SRK_CALL createPerspectiveLH(float32_t width, float32_t height, float32_t zNear, float32_t zFar) {
-			Matrix44 m(NO_INIT);
+			Matrix44 m(nullptr);
 			createPerspectiveLH(width, height, zNear, zFar, m);
 			return m;
 		}
@@ -271,7 +271,7 @@ namespace srk {
 				0.f, 0.f, 1.f, 0.f);
 		}
 		inline static Matrix44 SRK_CALL createPerspectiveOffCenterLH(float32_t left, float32_t right, float32_t bottom, float32_t top, float32_t zNear, float32_t zFar) {
-			Matrix44 m(NO_INIT);
+			Matrix44 m(nullptr);
 			createPerspectiveOffCenterLH(left, right, bottom, top, zNear, zFar, m);
 			return m;
 		}
@@ -304,7 +304,7 @@ namespace srk {
 	};
 
 	inline void SRK_CALL Matrix34::transpose(Matrix44& dst) const {
-		Math::transpose<Math::Hint::MEM_OVERLAP>(data, dst.data);
+		Math::transpose<Math::DataType::MATRIX, Math::Data2DDesc(Math::DataType::MATRIX, Math::Hint::MEM_OVERLAP)>(data, dst.data);
 	}
 
 	inline bool SRK_CALL Matrix34::invert() {
@@ -320,11 +320,11 @@ namespace srk {
 	}
 
 	inline void SRK_CALL Matrix34::prepend(const Matrix34& rhs) {
-		prepend(rhs, *this);
+		Math::mul(data, rhs.data, data);
 	}
 
 	inline void SRK_CALL Matrix34::prepend(const Matrix44& rhs) {
-		prepend(rhs, *this);
+		Math::mul(data, rhs.data, data);
 	}
 
 	inline void SRK_CALL Matrix34::prepend(const Matrix34& rhs, Matrix34& dst) const {
@@ -343,6 +343,7 @@ namespace srk {
 		Math::mul(data, rhs.data, dst.data);
 	}
 
+	//p * m
 	inline void SRK_CALL Matrix34::appendTranslate(const float32_t(&t)[3]) {
 		auto x = t[0], y = t[1], z = t[2];
 		data[0][3] += x * data[0][0] + y * data[0][1] + z * data[0][2];
@@ -350,6 +351,7 @@ namespace srk {
 		data[2][3] += x * data[2][0] + y * data[2][1] + z * data[2][2];
 	}
 
+	//m * p
 	inline void SRK_CALL Matrix34::prependTranslate(const float32_t(&t)[3]) {
 		data[0][3] += t[0];
 		data[1][3] += t[1];
@@ -393,11 +395,11 @@ namespace srk {
 	}
 
 	inline void SRK_CALL Matrix44::transpose() {
-		Math::transpose<Math::Hint::MEM_OVERLAP>(data, data);
+		Math::transpose<Math::DataType::MATRIX, Math::Data2DDesc(Math::DataType::MATRIX, Math::Hint::MEM_OVERLAP)>(data, data);
 	}
 
 	inline void SRK_CALL Matrix44::transpose(Matrix44& dst) const {
-		Math::transpose<Math::Hint::MEM_OVERLAP>(data, dst.data);
+		Math::transpose<Math::DataType::MATRIX, Math::Data2DDesc(Math::DataType::MATRIX, Math::Hint::MEM_OVERLAP)>(data, dst.data);
 	}
 
 	inline bool SRK_CALL Matrix44::invert() {
