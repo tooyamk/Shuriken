@@ -10,13 +10,13 @@ public:
 
 		IntrusivePtr gml = new GraphicsModuleLoader();
 
-		//if (!gml->load(getDLLName("srk-graphics-gl"))) return 0;
-		if (!gml->load(getDllPath(u8"srk-graphics-d3d11"))) return 0;
+		//if (!gml->load(getDLLName("srk-module-graphics-gl"))) return 0;
+		if (!gml->load(getDllPath(u8"srk-module-graphics-d3d11"))) return 0;
 			
 		SerializableObject args;
 
 		IntrusivePtr stml = new ModuleLoader<IShaderTranspiler>();
-		stml->load("libs/" + getDllPath("srk-shader-transpiler"));
+		stml->load("libs/" + getDllPath("srk-module-graphics-shader-transpiler"));
 
 		args.insert("dxc", getDllPath("dxcompiler"));
 		auto st = stml->create(&args);

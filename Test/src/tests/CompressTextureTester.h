@@ -881,7 +881,7 @@ namespace srk {
 		inline void SRK_CALL scale(const ST(&s)[SN]) {
 			using namespace srk::enum_operators;
 
-			constexpr auto sdesc = Math::DataDesc(Math::DataType::VECTOR, ScaleDesc);
+			constexpr auto sdesc = Math::DataDesc(Math::DataType::MATRIX_SCALE, ScaleDesc);
 			constexpr auto ddesc = Math::Data2DDesc(Math::DataType::MATRIX, DstDesc.hints | Math::Hint::MEM_OVERLAP, DstDesc.range);
 
 			Math::scale<sdesc, ddesc>(s, data);

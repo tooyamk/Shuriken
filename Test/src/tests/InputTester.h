@@ -101,32 +101,32 @@ public:
 				args.insert("win", win.uintptr());
 				//args.insert("ignoreXInputDevices", true);
 				args.insert("filter", DeviceType::GAMEPAD);
-				//initInputModule(inputModules, "libs/" + getDLLName("srk-input-direct-input"), &args);
+				//initInputModule(inputModules, getDLLName("srk-module-input-direct-input"), &args);
 			}
 			if (1) {
 				SerializableObject args;
 				args.insert("win", win.uintptr());
 				args.insert("filter", DeviceType::KEYBOARD);
-				initInputModule(inputModules, getDllPath("srk-input-raw-input"), &args);
+				initInputModule(inputModules, getDllPath("srk-module-input-raw-input"), &args);
 			}
 			if (1) {
 				SerializableObject args;
 				args.insert("win", win.uintptr());
 				args.insert("filter", DeviceType::GAMEPAD);
-				//initInputModule(inputModules, "libs/" + getDLLName("srk-input-xinput"), &args);
+				//initInputModule(inputModules, getDLLName("srk-module-input-xinput"), &args);
 			}
 			if (1) {
 				SerializableObject args;
 				args.insert("win", win.uintptr());
 				args.insert("filter", DeviceType::GAMEPAD);
-				//initInputModule(inputModules, "libs/" + getDLLName("srk-input-hid-input"), &args);
+				//initInputModule(inputModules, getDLLName("srk-module-input-hid-input"), &args);
 			}
 		} else if constexpr (Environment::OPERATING_SYSTEM == Environment::OperatingSystem::LINUX) {
 			if (1) {
 				SerializableObject args;
 				args.insert("win", win.uintptr());
 				args.insert("filter", DeviceType::GAMEPAD);
-				initInputModule(inputModules, getDllPath("srk-input-hid-input"), &args);
+				initInputModule(inputModules, getDllPath("srk-module-input-hid-input"), &args);
 			}
 		}
 

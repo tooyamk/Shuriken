@@ -1,7 +1,7 @@
 {
     "cmake.buildDirectory": "${workspaceRoot}/build/${buildType}",
     "cmake.configureArgs" : [
-        "-DSRK_TESTS=ON",
+        "-DSRK_ENABLE_TESTS=ON",
         "-DCMAKE_INSTALL_PREFIX=install"
     ]
 }

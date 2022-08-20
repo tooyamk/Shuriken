@@ -1395,7 +1395,7 @@ namespace srk {
 						constexpr auto reallr = LDesc.range.row.realPosition(flr, LRs);
 						constexpr auto reallc = LDesc.range.column.realPosition(flc, LCs);
 
-						constexpr auto realri = RDesc.range.realPosition(rr, RRs);
+						constexpr auto realri = RDesc.range.realPosition(rr, RN);
 
 						constexpr auto hasL = reallr && reallc;
 
@@ -1498,7 +1498,7 @@ namespace srk {
 						constexpr auto realrr = RDesc.range.row.realPosition(frr, RRs);
 						constexpr auto realrc = RDesc.range.column.realPosition(frc, RCs);
 
-						constexpr auto realli = LDesc.range.realPosition(lr, LRs);
+						constexpr auto realli = LDesc.range.realPosition(lr, LN);
 
 						constexpr auto hasR = realrr && realrc;
 
@@ -1528,8 +1528,6 @@ namespace srk {
 									//rhs = 0
 								}
 							}
-						} else {
-							//lhs = 0
 						}
 					} else {
 						//lhs = 0
@@ -1770,7 +1768,7 @@ namespace srk {
 
 		template<DataDesc ScaleDesc, Data2DDesc DstDesc, size_t SN, std::floating_point ST, size_t DstR, size_t DstC, std::floating_point DstT>
 		static void SRK_CALL scale(const ST(&s)[SN], DstT(&dst)[DstR][DstC]) {
-			static_assert(ScaleDesc.type == DataType::VECTOR, "s type must be vector");
+			static_assert(ScaleDesc.type == DataType::MATRIX_SCALE, "s type must be matrix_scale");
 			static_assert(DstDesc.type == DataType::MATRIX, "dst type must be matrix");
 
 			copy<Data2DDesc(DataType::MATRIX), 3, 3, DstDesc>(dst,

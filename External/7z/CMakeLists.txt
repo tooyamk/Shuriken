@@ -1,13 +1,13 @@
-srkSetProject("")
+srkSetSubProject("")
 
 set(installDir ${PROJECT_BINARY_DIR}/install)
 
-set_property(GLOBAL PROPERTY SRKPROJ_7Z_NAME ${PROJECT_NAME})
+set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_7Z_NAME ${PROJECT_NAME})
 
 if (SRK_HOST_OS_WINDOWS)
-    set_property(GLOBAL PROPERTY SRKPROJ_HOST_7Z_EXE ${installDir}/7zz.exe)
+    set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_7Z_HOST_EXE ${installDir}/7zz.exe)
 elseif (SRK_HOST_OS_MACOS)
-    set_property(GLOBAL PROPERTY SRKPROJ_HOST_7Z_EXE ${installDir}/7zz)
+    set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_7Z_HOST_EXE ${installDir}/7zz)
 endif ()
 
 set(vcvarsall "nil")

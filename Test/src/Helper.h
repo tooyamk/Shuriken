@@ -89,7 +89,7 @@ inline std::string getWindowDllPath() {
 #else
 	auto name = ""sv;
 #endif
-	return getDllPath("srk-windows-" + name);
+	return getDllPath("srk-module-window-" + name);
 }
 
 template<typename T>

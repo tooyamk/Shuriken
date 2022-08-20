@@ -246,7 +246,7 @@ namespace srk {
 		template<bool ResetOthers = true, Math::DataDesc SrcDesc = nullptr, Math::DataDesc DstDesc = nullptr, std::convertible_to<T>... Args>
 		inline Vector& SRK_CALL set(Args&&... args) {
 			if constexpr (N > 0) {
-				Math::copy<Math::DataDesc(SrcDesc, Math::DataType::VECTOR), Math::DataDesc(DstDesc, Math::DataType::VECTOR)>(data, std::forward<Args>(args)...);
+				Math::copy<Math::DataDesc(Math::DataType::VECTOR, SrcDesc), Math::DataDesc(Math::DataType::VECTOR, DstDesc)>(data, std::forward<Args>(args)...);
 				if constexpr (ResetOthers) {
 					constexpr auto ddesc = DstDesc.manual(Math::Range(0, 0, N)).clamp(N);
 					if constexpr (ddesc.range.realBeforeCount(N)) memset(data, 0, sizeof(T) * ddesc.range.realBeforeCount(N));
