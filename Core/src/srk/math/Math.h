@@ -219,13 +219,17 @@ namespace srk {
 
 			constexpr DataDesc(DataType type, const Range& range) noexcept : DataDesc(type, Hint::NONE, range) {}
 
-			constexpr DataDesc(DataType type, Range::PosType offset, size_t begin, size_t length) noexcept : DataDesc(type, hints, offset, begin, length) {}
+			constexpr DataDesc(DataType type, Range::PosType offset, size_t begin, size_t length) noexcept : DataDesc(type, Hint::NONE, offset, begin, length) {}
 
 			constexpr DataDesc(DataType type, Hint hints, Range::PosType offset, size_t begin, size_t length) noexcept : DataDesc(type, hints, Range(offset, begin, length)) {}
 
 			constexpr DataDesc(DataType type, const DataDesc& desc) noexcept : DataDesc(type, desc.hints, desc.range) {}
 
 			constexpr DataDesc(Hint hints) noexcept : DataDesc(DataType::NONE, hints, Range()) {}
+
+			constexpr DataDesc(Hint hints, Range::PosType offset, size_t begin, size_t length) noexcept : DataDesc(DataType::NONE, hints, offset, begin, length) {}
+
+			constexpr DataDesc(Range::PosType offset, size_t begin, size_t length) noexcept : DataDesc(DataType::NONE, offset, begin, length) {}
 
 			constexpr DataDesc(const DataDesc& desc) noexcept : DataDesc(desc.type, desc.hints, desc.range) {}
 
@@ -270,6 +274,10 @@ namespace srk {
 
 			constexpr Data2DDesc(Hint hints) noexcept : Data2DDesc(DataType::NONE, hints, Range2D()) {}
 
+			constexpr Data2DDesc(Hint hints, Range::PosType offsetRow, Range::PosType offsetColumn, size_t beginRow, size_t beginColumn, size_t rows, size_t columns) noexcept : Data2DDesc(DataType::NONE, hints, offsetRow, offsetColumn, beginRow, beginRow, rows, columns) {}
+
+			constexpr Data2DDesc(Range::PosType offsetRow, Range::PosType offsetColumn, size_t beginRow, size_t beginColumn, size_t rows, size_t columns) noexcept : Data2DDesc(DataType::NONE, offsetRow, offsetColumn, beginRow, beginRow, rows, columns) {}
+
 			constexpr Data2DDesc(const Data2DDesc& desc) noexcept : Data2DDesc(desc.type, desc.hints, desc.range) {}
 
 			constexpr Data2DDesc(const Data2DDesc& desc, Hint hints) noexcept : Data2DDesc(desc.type, hints, desc.range) {}
@@ -289,6 +297,8 @@ namespace srk {
 		template<Arithmetic T> inline static constexpr T ZERO = 0;
 		template<Arithmetic T> inline static constexpr T ONE = 1;
 		template<Arithmetic T> inline static constexpr T TWO = 2;
+		template<Arithmetic T> inline static constexpr T THREE = 3;
+		template<Arithmetic T> inline static constexpr T FORE = 4;
 		template<Arithmetic T> inline static constexpr T NEGATIVE_ONE = -1;
 		template<std::floating_point T> inline static constexpr T ONE_HALF = T(.5);
 		template<std::floating_point T> inline static constexpr T TENTH = T(.1);
@@ -355,7 +365,7 @@ namespace srk {
 
 	private:
 		template<size_t I, DataDesc SrcDesc, DataDesc DstDesc, size_t DstN, typename DstT, typename... Args>
-		inline static void SRK_CALL _copy(DstT(&dst)[DstN], Args&&... args) {
+		inline static constexpr void SRK_CALL _copy(DstT(&dst)[DstN], Args&&... args) {
 			using namespace srk::enum_operators;
 
 			if constexpr (I < DstDesc.range.length) {
@@ -379,11 +389,11 @@ namespace srk {
 		}
 
 		template<size_t I, DataDesc SrcDesc, DataDesc DstDesc, size_t DstN, typename DstT>
-		inline static void SRK_CALL _copy(DstT(&dst)[DstN]) {}
+		inline static constexpr void SRK_CALL _copy(DstT(&dst)[DstN]) {}
 
 	public:
 		template<DataDesc SrcDesc, DataDesc DstDesc, size_t DstN, typename DstT, std::convertible_to<DstT>... Args>
-		inline static void SRK_CALL copy(DstT(&dst)[DstN], Args&&... args) {
+		inline static constexpr void SRK_CALL copy(DstT(&dst)[DstN], Args&&... args) {
 			static_assert(SrcDesc.type == DstDesc.type, "src and dst type must equal");
 			static_assert(DstDesc.type == DataType::VECTOR || DstDesc.type == DataType::QUATERNION, "dst type must be vector or quaternion");
 
@@ -442,7 +452,7 @@ namespace srk {
 
 	private:
 		template<size_t I, size_t R, size_t C, size_t TotalRs, size_t TotalCs, typename T, typename... Args>
-		inline static auto&& SRK_CALL _get(T&& val, Args&&... args) {
+		inline static constexpr auto&& SRK_CALL _get(T&& val, Args&&... args) {
 			if constexpr (I == R * TotalCs + C) {
 				return std::forward<T>(val);
 			} else {
@@ -451,12 +461,12 @@ namespace srk {
 		}
 
 		template<size_t R, size_t C, size_t TotalRs, size_t TotalCs, typename... Args>
-		inline static auto&& SRK_CALL _get(Args&&... args) {
+		inline static constexpr auto&& SRK_CALL _get(Args&&... args) {
 			return _get<0, R, C, TotalRs, TotalCs>(std::forward<Args>(args)...);
 		}
 
 		template<size_t CurR, size_t CurC, Data2DDesc SrcDesc, size_t SrcTotalRs, size_t SrcTotalCs, Data2DDesc DstDesc, size_t DstTotalCs, std::floating_point DstT, typename... Args>
-		inline static void SRK_CALL _copyLoopColumns(DstT(&dst)[DstTotalCs], Args&&... args) {
+		inline static constexpr void SRK_CALL _copyLoopColumns(DstT(&dst)[DstTotalCs], Args&&... args) {
 			using namespace srk::enum_operators;
 
 			if constexpr (CurC < DstDesc.range.column.length) {
@@ -488,7 +498,7 @@ namespace srk {
 		}
 
 		template<size_t CurR, Data2DDesc SrcDesc, size_t SrcTotalRs, size_t SrcTotalCs, Data2DDesc DstDesc, size_t DstTotalRs, size_t DstTotalCs, std::floating_point DstT, typename... Args>
-		inline static void SRK_CALL _copyLoopRows(DstT(&dst)[DstTotalRs][DstTotalCs], Args&&... args) {
+		inline static constexpr void SRK_CALL _copyLoopRows(DstT(&dst)[DstTotalRs][DstTotalCs], Args&&... args) {
 			if constexpr (CurR < DstDesc.range.row.length) {
 				constexpr auto dr = DstDesc.range.row.realPosition((Range::PosType)CurR + DstDesc.range.row.offsetBegin(), DstTotalRs);
 				if constexpr (dr) _copyLoopColumns<CurR, 0, SrcDesc, SrcTotalRs, SrcTotalCs, DstDesc>(dst[*dr], std::forward<Args>(args)...);
@@ -498,7 +508,7 @@ namespace srk {
 
 	public:
 		template<Data2DDesc SrcDesc, size_t SrcTotalRs, size_t SrcTotalCs, Data2DDesc DstDesc, size_t DstTotalRs, size_t DstTotalCs, std::floating_point DstT, std::convertible_to<DstT>... Args>
-		inline static void SRK_CALL copy(DstT(&dst)[DstTotalRs][DstTotalCs], Args&&... args) {
+		inline static constexpr void SRK_CALL copy(DstT(&dst)[DstTotalRs][DstTotalCs], Args&&... args) {
 			using namespace srk::enum_operators;
 
 			static_assert(SrcDesc.type == DstDesc.type, "src and dst type must equal");
@@ -786,7 +796,7 @@ namespace srk {
 
 	private:
 		template<size_t I, size_t II, typename T, typename... Args>
-		inline static auto&& SRK_CALL _get(T&& val, Args&&... args) {
+		inline static constexpr auto&& SRK_CALL _get(T&& val, Args&&... args) {
 			if constexpr (I == II) {
 				return std::forward<T>(val);
 			} else {
@@ -795,7 +805,7 @@ namespace srk {
 		}
 
 		template<size_t I, typename... Args>
-		inline static auto&& SRK_CALL _get(Args&&... args) {
+		inline static constexpr auto&& SRK_CALL _get(Args&&... args) {
 			return _get<0, I>(std::forward<Args>(args)...);
 		}
 
@@ -855,7 +865,7 @@ namespace srk {
 		}
 
 		template<Data2DDesc DstDesc, size_t DstTotalRs, size_t DstTotalCs, std::floating_point DstT>
-		inline static void SRK_CALL identity(DstT(&dst)[DstTotalRs][DstTotalCs]) {
+		inline static constexpr void SRK_CALL identity(DstT(&dst)[DstTotalRs][DstTotalCs]) {
 			using namespace srk::enum_operators;
 
 			copy<Data2DDesc(DataType::MATRIX), 0, 0, Data2DDesc(DstDesc, DstDesc.hints | Hint::IDENTITY_IF_NOT_EXIST)>(dst);
@@ -1696,6 +1706,64 @@ namespace srk {
 			}
 		}
 
+		template<Data2DDesc DstDesc, std::floating_point WT, std::floating_point HT, std::floating_point ZNT, std::floating_point ZFT, size_t DstR, size_t DstC, std::floating_point DstT>
+		static void SRK_CALL ortho(WT width, HT height, ZNT zNear, ZFT zFar, DstT(&dst)[DstR][DstC]) {
+			static_assert(DstDesc.type == DataType::MATRIX, "dst type must be matrix");
+
+			copy<Data2DDesc(DataType::MATRIX), 4, 4, DstDesc>(dst,
+				TWO<WT> / width, ZERO<DstT>,       ZERO<DstT>,                 ZERO<DstT>,
+				ZERO<DstT>,      TWO<HT> / height, ZERO<DstT>,                 ZERO<DstT>,
+				ZERO<DstT>,      ZERO<DstT>,       TWO<DstT> / (zFar - zNear), zNear / (zNear - zFar),
+				ZERO<DstT>,      ZERO<DstT>,       ZERO<DstT>,                 ONE<DstT>);
+		}
+
+		template<Data2DDesc DstDesc, std::floating_point LT, std::floating_point RT, std::floating_point BT, std::floating_point TT, std::floating_point ZNT, std::floating_point ZFT, size_t DstR, size_t DstC, std::floating_point DstT>
+		static void SRK_CALL orthoOffCenter(LT left, RT right, BT bottom, TT top, ZNT zNear, ZFT zFar, DstT(&dst)[DstR][DstC]) {
+			static_assert(DstDesc.type == DataType::MATRIX, "dst type must be matrix");
+
+			copy<Data2DDesc(DataType::MATRIX), 4, 4, DstDesc>(dst,
+				TWO<DstT> / (right - ONE<RT>), ZERO<DstT>,                 ZERO<DstT>,                 (ONE<RT> + right) / (ONE<RT> - right),
+				ZERO<DstT>,                    TWO<DstT> / (top - bottom), ZERO<DstT>,                 (top + bottom) / (bottom - top),
+				ZERO<DstT>,                    ZERO<DstT>,                 ONE<DstT> / (zFar - zNear), zNear / (zNear - zFar),
+				ZERO<DstT>,                    ZERO<DstT>,                 ZERO<DstT>,                 ONE<DstT>);
+		}
+
+		template<Data2DDesc DstDesc, std::floating_point WT, std::floating_point HT, std::floating_point ZNT, std::floating_point ZFT, size_t DstR, size_t DstC, std::floating_point DstT>
+		static void SRK_CALL perspective(WT width, HT height, ZNT zNear, ZFT zFar, DstT(&dst)[DstR][DstC]) {
+			static_assert(DstDesc.type == DataType::MATRIX, "dst type must be matrix");
+
+			auto zNear2 = zNear * TWO<ZNT>;
+			copy<Data2DDesc(DataType::MATRIX), 4, 4, DstDesc>(dst,
+				zNear2 / width,             ZERO<DstT>,      ZERO<DstT>,            ZERO<DstT>,
+				ZERO<DstT>,                 zNear2 / height, ZERO<DstT>,            ZERO<DstT>,
+				ZERO<DstT>,                 ZERO<DstT>,      zFar / (zFar - zNear), zNear * zFar / (zNear - zFar),
+				ZERO<DstT>,                 ZERO<DstT>,      ONE<DstT>,             ZERO<DstT>);
+		}
+
+		template<Data2DDesc DstDesc, std::floating_point FT, std::floating_point AT, std::floating_point ZNT, std::floating_point ZFT, size_t DstR, size_t DstC, std::floating_point DstT>
+		static void SRK_CALL perspectiveFov(FT fieldOfViewY, AT aspectRatio, ZNT zNear, ZFT zFar, DstT(&dst)[DstR][DstC]) {
+			static_assert(DstDesc.type == DataType::MATRIX, "dst type must be matrix");
+
+			auto yScale = ONE<FT> / std::tan(fieldOfViewY * ONE_HALF<FT>);
+			copy<Data2DDesc(DataType::MATRIX), 4, 4, DstDesc>(dst,
+				yScale / aspectRatio, ZERO<DstT>, ZERO<DstT>,            ZERO<DstT>,
+				ZERO<DstT>,           yScale,     ZERO<DstT>,            ZERO<DstT>,
+				ZERO<DstT>,           ZERO<DstT>, zFar / (zFar - zNear), zNear * zFar / (zNear - zFar),
+				ZERO<DstT>,           ZERO<DstT>, ONE<DstT>,             ZERO<DstT>);
+		}
+
+		template<Data2DDesc DstDesc, std::floating_point LT, std::floating_point RT, std::floating_point BT, std::floating_point TT, std::floating_point ZNT, std::floating_point ZFT, size_t DstR, size_t DstC, std::floating_point DstT>
+		static void SRK_CALL perspectiveOffCenter(LT left, RT right, BT bottom, TT top, ZNT zNear, ZFT zFar, DstT(&dst)[DstR][DstC]) {
+			static_assert(DstDesc.type == DataType::MATRIX, "dst type must be matrix");
+
+			auto zNear2 = zNear * TWO<ZNT>;
+			copy<Data2DDesc(DataType::MATRIX), 4, 4, DstDesc>(dst,
+				zNear2 / (right - left), ZERO<DstT>,              (left + right) / (left - right), ZERO<DstT>,
+				ZERO<DstT>,              zNear2 / (top - bottom), (top + bottom) / (bottom - top), ZERO<DstT>,
+				ZERO<DstT>,              ZERO<DstT>,              zFar / (zFar - zNear),           zNear * zFar / (zNear - zFar),
+				ZERO<DstT>,              ZERO<DstT>,              ONE<DstT>,                       ZERO<DstT>);
+		}
+
 		inline static constexpr uint32_t SRK_CALL potLog2(uint32_t pow) {
 			return ((pow >> 23) & 0xFF) - 127;
 		}
@@ -1926,6 +1994,54 @@ namespace srk {
 			}
 		}
 
+		template<Data2DDesc LDesc, DataDesc RDesc, DataDesc DDesc, size_t LRs, size_t LCs, std::floating_point LT, size_t RN, std::floating_point RT, size_t DN, std::floating_point DT>
+		static void SRK_CALL transform(const LT(&lhs)[LRs][LCs], const RT(&rhs)[RN], DT(&dst)[DN]) {
+			using namespace srk::enum_operators;
+
+			static_assert(LDesc.type == DataType::MATRIX, "lhs type must be matrix");
+			static_assert(RDesc.type == DataType::VECTOR, "rhs type must be vector");
+			static_assert(DDesc.type == DataType::VECTOR, "dst type must be vector");
+
+			constexpr auto ldesc = LDesc.manual(Range2D(0, 0, 0, 0, LRs, LCs)).clamp(LRs, LCs);
+			constexpr auto rdesc = RDesc.manual(Range(0, 0, RN)).clamp(RN);
+			constexpr auto ddesc = DDesc.manual(Range(0, 0, DN)).clamp(DN);
+
+			if constexpr (ddesc.range.length) {
+				constexpr auto lr = LDesc.range.row.isAuto() ? ldesc.range.row.offsetBeginLength() : LDesc.range.row.offsetBeginLength();
+				constexpr auto rr = RDesc.range.isAuto() ? rdesc.range.offsetBeginLength() : RDesc.range.offsetBeginLength();
+				constexpr auto dr = DDesc.range.isAuto() ? ddesc.range.offsetBeginLength() : DDesc.range.offsetBeginLength();
+
+				if constexpr (dr > 3) {
+					constexpr auto rlen = std::max(Math::ZERO<Math::Range::PosType>, Math::FORE<Math::Range::PosType> +rdesc.range.realPosition(0));
+					constexpr auto dlen = std::max(Math::ZERO<Math::Range::PosType>, Math::FORE<Math::Range::PosType> +ddesc.range.realPosition(0));
+					constexpr auto rd = Data2DDesc(DataType::MATRIX, rdesc.hints, Range2D(rdesc.range.offset, 3, rdesc.range.begin, 0, rlen, 1));
+					constexpr auto dd = Data2DDesc(DataType::MATRIX, ddesc.hints, Range2D(ddesc.range.offset, 3, ddesc.range.begin, 0, dlen, 1));
+					mul<ldesc, rd, dd>(lhs, (RT(&)[RN][1])rhs, (DT(&)[DN][1])dst);
+				} else if constexpr (lr > 3 || rr > 3) {
+					constexpr auto rd = Data2DDesc(DataType::MATRIX, rdesc.hints, Range2D(rdesc.range.offset, 3, rdesc.range.begin, 0, rdesc.range.length, 1));
+					constexpr auto dw = Data2DDesc(DataType::MATRIX, ddesc.hints, Range2D(3, 3, 0, 0, 1, 1));
+					DT w[1][1];
+					mul<ldesc, rd, dw>(lhs, (RT(&)[RN][1])rhs, w);
+
+					constexpr auto dd = Data2DDesc(DataType::MATRIX, ddesc.hints, Range2D(ddesc.range.offset, 3, ddesc.range.begin, 0, ddesc.range.length, 1));
+					mul<ldesc, rd, dd>(lhs, (RT(&)[RN][1])rhs, dst);
+
+					constexpr auto dx = ddesc.range.realPosition(0, DN);
+					if constexpr (*dx) dst[*dx] /= w[0][0];
+
+					constexpr auto dy = ddesc.range.realPosition(1, DN);
+					if constexpr (*dy) dst[*dy] /= w[0][0];
+
+					constexpr auto dz = ddesc.range.realPosition(2, DN);
+					if constexpr (*dz) dst[*dz] /= w[0][0];
+				} else {
+					constexpr auto rd = Data2DDesc(DataType::MATRIX, rdesc.hints, Range2D(rdesc.range.offset, 3, rdesc.range.begin, 0, rdesc.range.length, 1));
+					constexpr auto dd = Data2DDesc(DataType::MATRIX, ddesc.hints, Range2D(ddesc.range.offset, 3, ddesc.range.begin, 0, ddesc.range.length, 1));
+					mul<ldesc, rd, dd>(lhs, (RT(&)[RN][1])rhs, (DT(&)[DN][1])dst);
+				}
+			}
+		}
+
 		template<Data2DDesc DstDesc, std::floating_point TT, size_t DstR, size_t DstC, std::floating_point DstT>
 		static void SRK_CALL translation(const TT(&t)[3], DstT(&dst)[DstR][DstC]) {
 			copy<Data2DDesc(DataType::MATRIX), 3, 4, DstDesc>(dst,
@@ -1958,7 +2074,8 @@ namespace srk {
 
 				constexpr auto n = std::extent_v<std::remove_cvref_t<TT>, 0>;
 				constexpr auto desc = TDesc.manual(Range(0, 0, n)).clamp(n);
-				copy<Data2DDesc(DataType::MATRIX, desc.range.begin, 3, desc.range.begin, 0, desc.range.length, 1), 3, 1, mtdesc>((const std::remove_all_extents_t<std::remove_cvref_t<TT>>(&)[n][1])trans, m);
+				constexpr auto len = std::max(Math::ZERO<Math::Range::PosType>, Math::THREE<Math::Range::PosType> + desc.range.realPosition(0));
+				copy<Data2DDesc(DataType::MATRIX, desc.range.begin, 3, desc.range.begin, 0, len, 1), mtdesc>((const std::remove_all_extents_t<std::remove_cvref_t<TT>>(&)[n][1])trans, m);
 			}
 
 			constexpr auto mrdesc = Data2DDesc(DataType::MATRIX, Hint::IDENTITY_IF_NOT_EXIST, 0, 0, 0, 0, 3, 3);

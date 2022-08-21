@@ -80,15 +80,15 @@ namespace srk {
 		enum class Compiler : uint8_t {
 			UNKNOWN,
 			CLANG,
-			GNU,
+			GCC,
 			MSVC
 		};
 
 
 #if SRK_COMPILER == SRK_COMPILER_CLANG
 		static constexpr Compiler COMPILER = Compiler::CLANG;
-#elif SRK_COMPILER == SRK_COMPILER_GNU
-		static constexpr Compiler COMPILER = Compiler::GNU;
+#elif SRK_COMPILER == SRK_COMPILER_GCC
+		static constexpr Compiler COMPILER = Compiler::GCC;
 #elif SRK_COMPILER == SRK_COMPILER_MSVC
 		static constexpr Compiler COMPILER = Compiler::MSVC;
 #else
@@ -582,7 +582,7 @@ namespace srk {
 		} else if constexpr (Bytes == 2) {
 #if SRK_COMPILER == SRK_COMPILER_MSVC
 			return _byteswap_ushort(*((T*)data));
-#elif SRK_COMPILER == SRK_COMPILER_GNU || SRK_COMPILER == SRK_COMPILER_CLANG
+#elif SRK_COMPILER == SRK_COMPILER_GCC || SRK_COMPILER == SRK_COMPILER_CLANG
 			return __builtin_bswap16(*((T*)data));
 #else
 			return (T)data[0] << 8 | (T)data[1];
@@ -592,7 +592,7 @@ namespace srk {
 		} else if constexpr (Bytes == 4) {
 #if SRK_COMPILER == SRK_COMPILER_MSVC
 			return _byteswap_ulong(*((T*)data));
-#elif SRK_COMPILER == SRK_COMPILER_GNU || SRK_COMPILER == SRK_COMPILER_CLANG
+#elif SRK_COMPILER == SRK_COMPILER_GCC || SRK_COMPILER == SRK_COMPILER_CLANG
 			return __builtin_bswap32(*((T*)data));
 #else
 			return (T)data[0] << 32 | (T)data[1] << 16 | (T)data[2] << 8 | (T)data[3];
@@ -606,7 +606,7 @@ namespace srk {
 		} else {
 #if SRK_COMPILER == SRK_COMPILER_MSVC
 			return _byteswap_uint64(*((T*)data));
-#elif SRK_COMPILER == SRK_COMPILER_GNU || SRK_COMPILER == SRK_COMPILER_CLANG
+#elif SRK_COMPILER == SRK_COMPILER_GCC || SRK_COMPILER == SRK_COMPILER_CLANG
 			return __builtin_bswap64(*((T*)data));
 #else
 			return (T)data[0] << 56 | (T)data[1] << 48 | (T)data[2] << 40 | (T)data[3] << 32 | (T)data[4] << 24 | (T)data[5] << 16 | (T)data[6] << 8 | (T)data[7];

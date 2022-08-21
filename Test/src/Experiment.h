@@ -538,7 +538,7 @@ namespace srk {
 		} else {
 #if SRK_COMPILER == SRK_COMPILER_MSVC
 			return _byteswap_ushort(val);
-#elif SRK_COMPILER == SRK_COMPILER_GNU || SRK_COMPILER == SRK_COMPILER_CLANG
+#elif SRK_COMPILER == SRK_COMPILER_GCC || SRK_COMPILER == SRK_COMPILER_CLANG
 			return __builtin_bswap16(val);
 #else
 			return uint16_t(val << 8) | uint16_t(val >> 8);
@@ -552,7 +552,7 @@ namespace srk {
 		} else {
 #if SRK_COMPILER == SRK_COMPILER_MSVC
 			return _byteswap_ulong(val);
-#elif SRK_COMPILER == SRK_COMPILER_GNU || SRK_COMPILER == SRK_COMPILER_CLANG
+#elif SRK_COMPILER == SRK_COMPILER_GCC || SRK_COMPILER == SRK_COMPILER_CLANG
 			return __builtin_bswap32(val);
 #else
 			return (val & 0x000000FFU << 24) | (val & 0x0000FF00U << 8) | (val & 0x00FF0000U >> 8) | (val & 0xFF000000U >> 24);
@@ -567,7 +567,7 @@ namespace srk {
 		} else {
 #if SRK_COMPILER == SRK_COMPILER_MSVC
 			return _byteswap_uint64(val);
-#elif SRK_COMPILER == SRK_COMPILER_GNU || SRK_COMPILER == SRK_COMPILER_CLANG
+#elif SRK_COMPILER == SRK_COMPILER_GCC || SRK_COMPILER == SRK_COMPILER_CLANG
 			return __builtin_bswap64(val);
 #else
 			uint64_t Hi = byteswap1(uint32_t(val));
