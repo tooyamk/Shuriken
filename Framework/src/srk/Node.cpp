@@ -126,26 +126,26 @@ namespace srk {
 	}
 
 	void Node::setLocalPosition(const float32_t(&p)[3]) {
-		_lm.setPosition(p);
+		_lm.set<MatrixHint::NONE, Math::Data2DDesc(0, 3, 0, 0, 3, 1)>((float32_t(&)[3][1])p);
 
 		_checkNoticeUpdate(DirtyFlag::WM_IWM);
 	}
 
 	void Node::localTranslate(const float32_t(&p)[3]) {
 		updateLocalMatrix();
-		_lm.appendTranslate(p);
+		_lm.prependTranslation(p);
 
 		_checkNoticeUpdate(DirtyFlag::WM_IWM);
 	}
 
-	void Node::setLocalRotation(const Quaternion& q) {
+	void Node::setLocalRotation(const Quaternion<float32_t>& q) {
 		_lr.set(q);
 
 		_checkNoticeUpdate(DirtyFlag::LM_WM_IWM_WQ, DirtyFlag::WM_IWM_WQ);
 	}
 
-	void Node::localRotate(const Quaternion& q) {
-		q.append(_lr, _lr);
+	void Node::localRotate(const Quaternion<float32_t>& q) {
+		_lr.prepend(q);
 
 		_checkNoticeUpdate(DirtyFlag::LM_WM_IWM_WQ, DirtyFlag::WM_IWM_WQ);
 	}
@@ -156,17 +156,17 @@ namespace srk {
 		_checkNoticeUpdate(DirtyFlag::LM_WM_IWM, DirtyFlag::WM_IWM);
 	}
 
-	void Node::setLocalMatrix(const Matrix34& m) {
+	void Node::setLocalMatrix(const Matrix3x4f32& m) {
 		using namespace srk::enum_operators;
 
-		_lm.set34(m);
+		_lm.set(m);
 		_localDecomposition();
 
 		_checkNoticeUpdateNow((_dirty & DirtyFlag::NOT_LM) | DirtyFlag::WM_IWM_WQ, DirtyFlag::WM_IWM_WQ);
 	}
 
-	void Node::setLocalTRS(const float32_t(&pos)[3], const Quaternion& rot, const float32_t(&scale)[3]) {
-		_lm.setPosition(pos);
+	void Node::setLocalTRS(const float32_t(&pos)[3], const Quaternion<float32_t>& rot, const float32_t(&scale)[3]) {
+		_lm.set<MatrixHint::NONE, Math::Data2DDesc(0, 3, 0, 0, 3, 1)>((float32_t(&)[3][1])pos);
 		_lr.set(rot);
 		_ls.set(scale);
 
@@ -174,13 +174,12 @@ namespace srk {
 	}
 
 	void Node::parentTranslate(const float32_t(&p)[3]) {
-		auto& data = _lm.data;
-		for (size_t i = 0; i < 3; ++i) data[i][3] += p[i];
+		_lm.appendTranslation(p);
 
 		_checkNoticeUpdate(DirtyFlag::WM_IWM);
 	}
 
-	void Node::parentRotate(const Quaternion& q) {
+	void Node::parentRotate(const Quaternion<float32_t>& q) {
 		_lr.append(q);
 
 		_checkNoticeUpdate(DirtyFlag::LM_WM_IWM_WQ, DirtyFlag::WM_IWM_WQ);
@@ -189,7 +188,7 @@ namespace srk {
 	void Node::setWorldPosition(const float32_t(&p)[3]) {
 		auto old = _dirty;
 		updateWorldMatrix();
-		_wm.setPosition(p);
+		_wm.set<MatrixHint::NONE, Math::Data2DDesc(0, 3, 0, 0, 3, 1)>((float32_t(&)[3][1])p);
 
 		_worldPositionChanged(old);
 	}
@@ -197,39 +196,39 @@ namespace srk {
 	void Node::worldTranslate(const float32_t(&p)[3]) {
 		auto old = _dirty;
 		updateWorldMatrix();
-		_wm.appendTranslate(p);
+		_wm.prependTranslation(p);
 
 		_worldPositionChanged(old);
 	}
 
-	void Node::setWorldRotation(const Quaternion& q) {
+	void Node::setWorldRotation(const Quaternion<float32_t>& q) {
 		_wr.set(q);
 
 		_worldRotationChanged(_dirty);
 	}
 
-	void Node::worldRotate(const Quaternion& q) {
+	void Node::worldRotate(const Quaternion<float32_t>& q) {
 		auto old = _dirty;
 		updateWorldRotation();
-		q.append(_wr, _wr);
+		_wr.prepend(q);
 
 		_worldRotationChanged(old);
 	}
 
-	void Node::setWorldMatrix(const Matrix34& m) {
+	void Node::setWorldMatrix(const Matrix3x4f32& m) {
 		using namespace srk::enum_operators;
 
-		_wm.set34(m);
+		_wm.set(m);
 
 		auto now = _dirty & DirtyFlag::NOT_WM;
 
 		if (_parent) {
 			now &= DirtyFlag::NOT_IWM;
 			_wm.invert(_iwm);
-			_wm.prepend(_iwm, _lm);
+			_wm.append(_parent->getInverseWorldMatrix(), _lm);
 		} else {
 			now |= DirtyFlag::IWM;
-			_lm.set34(_wm);
+			_lm.set(_wm);
 		}
 
 		_localDecomposition();
@@ -239,7 +238,7 @@ namespace srk {
 
 	void Node::setIdentity() {
 		if (!_lr.isIdentity() || _ls != decltype(_ls)::ONE || _lm.data[0][3] != 0.f || _lm.data[1][3] != 0.f || _lm.data[2][3] != 0.f) {
-			_lm.set34();
+			_lm.identity();
 			_lr.set();
 			_ls.setAll(1.f);
 
@@ -253,8 +252,8 @@ namespace srk {
 		if ((_dirty & DirtyFlag::LM) != DirtyFlag::EMPTY) {
 			_dirty &= DirtyFlag::NOT_LM;
 
-			_lr.toMatrix(_lm);
-			_lm.appendScale(_ls);
+			_lm.fromQuaternion<MatrixHint::NONE>(_lr.data);
+			_lm.prependScale(_ls.data);
 		}
 	}
 
@@ -265,9 +264,8 @@ namespace srk {
 			_dirty &= DirtyFlag::NOT_WQ;
 
 			auto p = _parent;
-			if (p) {
-				p->updateWorldRotation();
-				_lr.append(_wr, _wr);
+			if (_parent) {
+				_lr.append(_parent->getWorldRotation(), _wr);
 			} else {
 				_wr.set(_lr);
 			}
@@ -283,10 +281,9 @@ namespace srk {
 			updateLocalMatrix();
 			
 			if (_parent) {
-				_parent->updateWorldMatrix();
-				_lm.prepend(_parent->_wm, _wm);
+				_lm.append(_parent->getWorldMatrix(), _wm);
 			} else {
-				_wm.set34(_lm);
+				_wm.set(_lm);
 			}
 		}
 	}
@@ -302,11 +299,11 @@ namespace srk {
 		}
 	}
 
-	void Node::getLocalRotationFromWorld(const Node& node, const Quaternion& worldRot, Quaternion& dst) {
+	void Node::getLocalRotationFromWorld(const Node& node, const Quaternion<float32_t>& worldRot, Quaternion<float32_t>& dst) {
 		if (node._parent) {
-			auto& q = node._parent->getWorldRotation();
-			q.invert(dst);
-			worldRot.append(dst, dst);
+			Quaternion<float32_t> i(nullptr);
+			node._parent->getWorldRotation().invert(i);
+			worldRot.append(i, dst);
 		} else {
 			dst.set(worldRot);
 		}
@@ -370,16 +367,9 @@ namespace srk {
 	void Node::_worldPositionChanged(DirtyFlag oldDirty) {
 		using namespace srk::enum_operators;
 
-		if (_parent) {
-			_parent->updateInverseWorldMatrix();
-
-			float32_t tmp[3] = { _wm.data[0][3], _wm.data[1][3], _wm.data[2][3] };
-			Math::mul(_parent->_iwm, tmp, tmp);
-
-			_lm.setPosition(tmp);
-		} else {
-			_lm.setPosition(_wm);
-		}
+		float32_t p[3] = { _wm.data[0][3], _wm.data[1][3], _wm.data[2][3] };
+		if (_parent) _parent->getInverseWorldMatrix().transformPoint<nullptr, nullptr, Math::Hint::IDENTITY_IF_NOT_EXIST | Math::Hint::MEM_OVERLAP>(p, p);
+		_lm.set<MatrixHint::NONE, Math::Data2DDesc(0, 3, 0, 0, 3, 1)>((float32_t(&)[3][1])p);
 
 		_dirty |= DirtyFlag::IWM;
 		if (oldDirty != _dirty) _noticeUpdate(DirtyFlag::WM_IWM);
@@ -389,9 +379,9 @@ namespace srk {
 		using namespace srk::enum_operators;
 
 		if (_parent) {
-			_parent->updateWorldRotation();
-			_parent->_wr.invert(_lr);
-			_wr.append(_lr, _lr);
+			Quaternion<float32_t> i(nullptr);
+			_parent->getWorldRotation().invert(i);
+			_wr.append(i, _lr);
 		} else {
 			_lr.set(_wr);
 		}

@@ -103,11 +103,11 @@ namespace srk {
 			_set(&value, sizeof(value), sizeof(value), ShaderParameterType::DATA, true, updateBehavior);
 			return *this;
 		}
-		inline ShaderParameter& SRK_CALL set(const Matrix34& value, ShaderParameterUpdateBehavior updateBehavior = ShaderParameterUpdateBehavior::CHECK) {
+		inline ShaderParameter& SRK_CALL set(const Matrix3x4f32& value, ShaderParameterUpdateBehavior updateBehavior = ShaderParameterUpdateBehavior::CHECK) {
 			_set(&value, sizeof(value), sizeof(value), ShaderParameterType::DATA, true, updateBehavior);
 			return *this;
 		}
-		inline ShaderParameter& SRK_CALL set(const Matrix44& value, ShaderParameterUpdateBehavior updateBehavior = ShaderParameterUpdateBehavior::CHECK) {
+		inline ShaderParameter& SRK_CALL set(const Matrix4x4f32& value, ShaderParameterUpdateBehavior updateBehavior = ShaderParameterUpdateBehavior::CHECK) {
 			_set(&value, sizeof(value), sizeof(value), ShaderParameterType::DATA, true, updateBehavior);
 			return *this;
 		}

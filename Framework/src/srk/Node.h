@@ -117,28 +117,28 @@ namespace srk {
 		void SRK_CALL setLocalPosition(const float32_t(&p)[3]);
 		void SRK_CALL localTranslate(const float32_t(&p)[3]);
 
-		inline const Quaternion& SRK_CALL getLocalRotation() const {
+		inline const Quaternion<float32_t>& SRK_CALL getLocalRotation() const {
 			return _lr;
 		}
-		void SRK_CALL setLocalRotation(const Quaternion& q);
-		void SRK_CALL localRotate(const Quaternion& q);
+		void SRK_CALL setLocalRotation(const Quaternion<float32_t>& q);
+		void SRK_CALL localRotate(const Quaternion<float32_t>& q);
 
 		inline const Vec3f32& SRK_CALL getLocalScale() const {
 			return _ls;
 		}
 		void SRK_CALL setLocalScale(const float32_t(&s)[3]);
 
-		inline const Matrix34& SRK_CALL getLocalMatrix() const {
+		inline const Matrix3x4f32& SRK_CALL getLocalMatrix() const {
 			updateLocalMatrix();
 
 			return _lm;
 		}
-		void SRK_CALL setLocalMatrix(const Matrix34& m);
-		void SRK_CALL setLocalTRS(const float32_t(&pos)[3], const Quaternion& rot, const float32_t(&scale)[3]);
+		void SRK_CALL setLocalMatrix(const Matrix3x4f32& m);
+		void SRK_CALL setLocalTRS(const float32_t(&pos)[3], const Quaternion<float32_t>& rot, const float32_t(&scale)[3]);
 
 		void SRK_CALL parentTranslate(const float32_t(&p)[3]);
 
-		void SRK_CALL parentRotate(const Quaternion& q);
+		void SRK_CALL parentRotate(const Quaternion<float32_t>& q);
 
 		inline void SRK_CALL getWorldPosition(float32_t(&dst)[3]) const {
 			updateWorldMatrix();
@@ -156,21 +156,21 @@ namespace srk {
 		void SRK_CALL setWorldPosition(const float32_t(&p)[3]);
 		void SRK_CALL worldTranslate(const float32_t(&p)[3]);
 
-		inline const Quaternion& SRK_CALL getWorldRotation() const {
+		inline const Quaternion<float32_t>& SRK_CALL getWorldRotation() const {
 			updateWorldRotation();
 			return _wr;
 		}
-		void SRK_CALL setWorldRotation(const Quaternion& q);
-		void SRK_CALL worldRotate(const Quaternion& q);
+		void SRK_CALL setWorldRotation(const Quaternion<float32_t>& q);
+		void SRK_CALL worldRotate(const Quaternion<float32_t>& q);
 
-		inline const Matrix34& SRK_CALL getWorldMatrix() const {
+		inline const Matrix3x4f32& SRK_CALL getWorldMatrix() const {
 			updateWorldMatrix();
 
 			return _wm;
 		}
-		void SRK_CALL setWorldMatrix(const Matrix34& m);
+		void SRK_CALL setWorldMatrix(const Matrix3x4f32& m);
 
-		inline const Matrix34& SRK_CALL getInverseWorldMatrix() const {
+		inline const Matrix3x4f32& SRK_CALL getInverseWorldMatrix() const {
 			updateInverseWorldMatrix();
 
 			return _iwm;
@@ -189,9 +189,9 @@ namespace srk {
 		 *
 		 * @param worldRot Target world rotation.
 		 */
-		static void SRK_CALL getLocalRotationFromWorld(const Node& node, const Quaternion& worldRot, Quaternion& dst);
-		inline static Quaternion SRK_CALL getLocalRotationFromWorld(const Node& node, const Quaternion& worldRot) {
-			Quaternion q(nullptr);
+		static void SRK_CALL getLocalRotationFromWorld(const Node& node, const Quaternion<float32_t>& worldRot, Quaternion<float32_t>& dst);
+		inline static Quaternion<float32_t> SRK_CALL getLocalRotationFromWorld(const Node& node, const Quaternion<float32_t>& worldRot) {
+			Quaternion<float32_t> q(nullptr);
 			getLocalRotationFromWorld(node, worldRot, q);
 			return q;
 		}
@@ -225,13 +225,13 @@ namespace srk {
 
 		mutable DirtyFlag _dirty;
 
-		mutable Quaternion _lr;
+		mutable Quaternion<float32_t> _lr;
 		mutable Vec3f32 _ls;
-		mutable Matrix34 _lm;
+		mutable Matrix3x4f32 _lm;
 
-		mutable Quaternion _wr;
-		mutable Matrix34 _wm;
-		mutable Matrix34 _iwm;
+		mutable Quaternion<float32_t> _wr;
+		mutable Matrix3x4f32 _wm;
+		mutable Matrix3x4f32 _iwm;
 
 		inline void SRK_CALL _addChild(Node* child) {
 			child->ref();
@@ -250,9 +250,9 @@ namespace srk {
 		}
 
 		inline void SRK_CALL _localDecomposition() {
-			Matrix34 rot(nullptr);
-			_lm.decomposition(&rot, _ls);
-			rot.toQuaternion(_lr);
+			Matrix3x3f32 rot(nullptr);
+			_lm.decompose(rot.data, _ls.data);
+			rot.toQuaternion(_lr.data);
 		}
 		void SRK_CALL _worldPositionChanged(DirtyFlag oldDirty);
 		void SRK_CALL _worldRotationChanged(DirtyFlag oldDirty);

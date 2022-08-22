@@ -68,7 +68,7 @@ namespace srk::render {
 
 			RenderDataCollector collector(*this);
 			collector.matrix.w2v = cam->getNode()->getInverseWorldMatrix();
-			collector.matrix.w2v.prepend(cam->getProjectionMatrix(), collector.matrix.w2p);
+			collector.matrix.w2v.append(cam->getProjectionMatrix(), collector.matrix.w2p);
 
 			for (auto& r : _renderables) {
 				if ((camLayer & r->layer) == 0) continue;
@@ -146,8 +146,8 @@ namespace srk::render {
 			_renderers.emplace(data->renderer);
 
 			data->matrix.l2w = data->renderable->getNode()->getWorldMatrix();
-			data->matrix.l2w.prepend(collector.matrix.w2v, data->matrix.l2v);
-			data->matrix.l2w.prepend(collector.matrix.w2p, data->matrix.l2p);
+			data->matrix.l2w.append(collector.matrix.w2v, data->matrix.l2v);
+			data->matrix.l2w.append(collector.matrix.w2p, data->matrix.l2p);
 		}
 	}
 

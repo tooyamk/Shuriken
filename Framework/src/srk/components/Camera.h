@@ -32,13 +32,13 @@ namespace srk::components {
 			return _zFar;
 		}
 
-		inline const Matrix44& SRK_CALL getProjectionMatrix() const {
+		inline const Matrix4x4f32& SRK_CALL getProjectionMatrix() const {
 			return _pm;
 		}
-		void SRK_CALL setProjectionMatrix(const Matrix44& pm);
+		void SRK_CALL setProjectionMatrix(const Matrix4x4f32& pm);
 
 	protected:
-		Matrix44 _pm;//projectionMatrix
+		Matrix4x4f32 _pm;//projectionMatrix
 
 		float32_t _aspectRatio;
 		float32_t _zNear;

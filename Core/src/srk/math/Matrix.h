@@ -1,39 +1,59 @@
 #pragma once
 
 #include "srk/math/Math.h"
-#include <initializer_list>
 
 namespace srk {
-	class Matrix44;
-	class Quaternion;
+	enum class MatrixHint : uint8_t {
+		NONE = 0,
+		IDENTITY_OTHERS = 1 << 0
+	};
 
 	/**
-	 * column major matrix.
+	 * row major matrix.
 	 *
-	 * m00 m10 m20 xaxis
-	 * m01 m11 m21 yaxis
-	 * m02 m12 m22 zaxis
-	 * m03 m13 m23
-	 * tx  ty  tz
+	 * m00(sx) m01     m02     m03(tx) ... m0[c]
+	 * m10     m11(sy) m12     m13(ty) ... m1[c]
+	 * m20     m21     m22(sz) m23(tz) ... m2[c]
+	 * m30     m31     m32     m33     ... m3[c]
+	 * ...
+	 * m[r]0   m[r]1   m[r]2   m[r]3   ... m[r][c]
+	 *
+	 * xaxis   yaxis   zaxis
 	 */
-	class SRK_CORE_DLL Matrix34 {
+	template<size_t Rows, size_t Columns, std::floating_point T>
+	class Matrix {
 	public:
-		using Data = float32_t[3][4];
+		static constexpr size_t ROWS = Rows;
+		static constexpr size_t COLUMNS = Columns;
+		using ElementType = T;
+		using Data = T[ROWS][COLUMNS];
 
-		Matrix34();
-		Matrix34(nullptr_t);
-		Matrix34(
-			float32_t m00,       float32_t m01 = 0.f, float32_t m02 = 0.f, float32_t m03 = 0.f,
-			float32_t m10 = 0.f, float32_t m11 = 1.f, float32_t m12 = 0.f, float32_t m13 = 0.f,
-			float32_t m20 = 0.f, float32_t m21 = 0.f, float32_t m22 = 1.f, float32_t m23 = 0.f);
-		Matrix34(const Matrix34& m);
-		Matrix34(const Matrix44& m);
-		Matrix34(const std::initializer_list<float32_t>& m);
-		Matrix34(const float32_t(&m)[3][4]);
-		Matrix34(const float32_t(&m)[4][4]);
-		~Matrix34();
+		constexpr Matrix() noexcept {
+			identity();
+		}
 
-		static const Matrix34 IDENTITY;
+		constexpr Matrix(nullptr_t) noexcept {}
+
+		constexpr Matrix(const Matrix& m) noexcept {
+			memcpy(data, m.data, sizeof(Data));
+		}
+
+		template<size_t R, size_t C, std::floating_point K>
+		constexpr Matrix(const Matrix<R, C, K>& m) : Matrix(m.data) {}
+
+		template<size_t R, size_t C, std::floating_point K>
+		constexpr Matrix(Matrix<R, C, K>&& m) : Matrix(m.data) {}
+
+		template<size_t R, size_t C, std::floating_point K>
+		constexpr Matrix(const K(&val)[R][C]) {
+			set(val);
+		}
+
+		template<std::convertible_to<T>... Args>
+		requires (sizeof...(Args) > 0)
+		constexpr Matrix(Args&&... args) {
+			set(std::forward<Args>(args)...);
+		}
 
 		inline SRK_CALL operator Data& () {
 			return data;
@@ -42,395 +62,513 @@ namespace srk {
 			return data;
 		}
 
-		template<std::integral I, std::integral J>
-		inline float32_t& SRK_CALL operator()(I i, J j) {
-			return data[i][j];
+		template<std::integral Row, std::integral Column>
+		inline T& SRK_CALL operator()(Row r, Column c) {
+			return data[r][c];
 		}
-		template<std::integral I, std::integral J>
-		inline const float32_t& SRK_CALL operator()(I i, J j) const {
-			return data[i][j];
+		template<std::integral Row, std::integral Column>
+		inline const T& SRK_CALL operator()(Row r, Column c) const {
+			return data[r][c];
 		}
 
-		void SRK_CALL set33(const Matrix34& m);
-		void SRK_CALL set33(const Matrix44& m);
-		void SRK_CALL set33(const float32_t(&m)[3][3]);
-		void SRK_CALL set33(
-			float32_t m00 = 1.f, float32_t m01 = 0.f, float32_t m02 = 0.f,
-			float32_t m10 = 0.f, float32_t m11 = 1.f, float32_t m12 = 0.f,
-			float32_t m20 = 0.f, float32_t m21 = 0.f, float32_t m22 = 1.f);
-		void SRK_CALL set34(const Matrix34& m);
-		void SRK_CALL set34(const Matrix44& m);
-		void SRK_CALL set34(
-			float32_t m00 = 1.f, float32_t m01 = 0.f, float32_t m02 = 0.f, float32_t m03 = 0.f,
-			float32_t m10 = 0.f, float32_t m11 = 1.f, float32_t m12 = 0.f, float32_t m13 = 0.f,
-			float32_t m20 = 0.f, float32_t m21 = 0.f, float32_t m22 = 1.f, float32_t m23 = 0.f);
+		template<size_t Rs, size_t Cs, std::floating_point K>
+		inline constexpr Matrix& SRK_CALL operator=(const K(&val)[Rs][Cs]) noexcept {
+			set(val);
+			return *this;
+		}
 
-		inline void SRK_CALL transpose(Matrix44& dst) const;
+		template<size_t Rs, size_t Cs, std::floating_point K>
+		inline constexpr Matrix& SRK_CALL operator=(const Matrix<Rs, Cs, K>& val) noexcept {
+			set(val.data);
+			return *this;
+		}
 
-		inline bool SRK_CALL invert();
-		inline bool SRK_CALL invert(Matrix34& dst) const;
-		inline bool SRK_CALL invert(Matrix44& dst) const;
+		template<size_t Rs, size_t Cs, std::floating_point K>
+		inline constexpr void SRK_CALL operator*=(const Matrix<Rs, Cs, K>& rhs) noexcept {
+			append(rhs);
+		}
 
-		void SRK_CALL decomposition(Matrix34* dstRot, float32_t(dstScale[3]) = nullptr) const;
+		inline constexpr size_t SRK_CALL getRows() const {
+			return ROWS;
+		}
 
-		void SRK_CALL toQuaternion(Quaternion& dst) const;
+		inline constexpr size_t SRK_CALL getColumns() const {
+			return COLUMNS;
+		}
 
-		/*inline void SRK_CALL append(const Matrix34& rhs);
-		inline void SRK_CALL append(const Matrix44& rhs);
-		inline void SRK_CALL append(const Matrix34& rhs, Matrix34& dst) const;
-		inline void SRK_CALL append(const Matrix34& rhs, Matrix44& dst) const;
-		inline void SRK_CALL append(const Matrix44& rhs, Matrix34& dst) const;
-		inline void SRK_CALL append(const Matrix44& rhs, Matrix44& dst) const;*/
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::Data2DDesc DstDesc = nullptr>
+		inline constexpr Matrix& SRK_CALL identity() {
+			constexpr auto ddesc = Math::Data2DDesc(Math::DataType::MATRIX, DstDesc);
 
-		inline void SRK_CALL prepend(const Matrix34& rhs);
-		inline void SRK_CALL prepend(const Matrix44& rhs);
-		inline void SRK_CALL prepend(const Matrix34& rhs, Matrix34& dst) const;
-		inline void SRK_CALL prepend(const Matrix34& rhs, Matrix44& dst) const;
-		inline void SRK_CALL prepend(const Matrix44& rhs, Matrix34& dst) const;
-		inline void SRK_CALL prepend(const Matrix44& rhs, Matrix44& dst) const;
+			Math::identity<ddesc>(data);
+			_autoIdentity<Hints, ddesc>(data);
+			return *this;
+		}
 
-		inline void SRK_CALL appendTranslate(const float32_t(&t)[3]);
-		inline void SRK_CALL prependTranslate(const float32_t(&t)[3]);
-		inline void SRK_CALL setPosition(const float32_t(&p)[3]);
-		inline void SRK_CALL setPosition(const Matrix34& m);
-		inline void SRK_CALL setPosition(const Matrix44& m);
-		inline void SRK_CALL setPosition(float32_t x, float32_t y, float32_t z);
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::Data2DDesc SrcDesc = nullptr, Math::Data2DDesc DstDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, size_t SrcRs, size_t SrcCs, std::floating_point SrcT>
+		inline constexpr Matrix& SRK_CALL set(const SrcT(&src)[SrcRs][SrcCs]) {
+			constexpr auto sdesc = Math::Data2DDesc(Math::DataType::MATRIX, SrcDesc);
+			constexpr auto ddesc = Math::Data2DDesc(Math::DataType::MATRIX, DstDesc);
 
-		inline void SRK_CALL appendScale(const float32_t(&s)[3]);
+			Math::copy<sdesc, ddesc>(src, data);
+			_autoIdentity<Hints, ddesc>(data);
+			return *this;
+		}
 
-		static void SRK_CALL createLookAt(const float32_t(&forward)[3], const float32_t(&upward)[3], Matrix34& dst);
-		static void SRK_CALL createRotationAxis(const float32_t(&axis)[3], float32_t radian, Matrix34& dst);
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::Data2DDesc SrcDesc = nullptr, Math::Data2DDesc DstDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, size_t SrcRs, size_t SrcCs, std::floating_point SrcT>
+		inline constexpr Matrix& SRK_CALL set(const Matrix<SrcRs, SrcCs, SrcT>& src) {
+			set<Hints, SrcDesc, DstDesc>(src.data);
+			return *this;
+		}
 
-		/**
-		 * direction(LH):(0, 1, 0) to (0, 0, 1)
-		 */
-		static void SRK_CALL createRotationX(float32_t radian, Matrix34& dst);
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::Data2DDesc SrcDesc = nullptr, size_t SrcTotalRs = ROWS, size_t SrcTotalCs = COLUMNS, Math::Data2DDesc DstDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, std::convertible_to<T>... Args>
+		inline constexpr Matrix& SRK_CALL set(Args&&... args) {
+			constexpr auto sdesc = Math::Data2DDesc(Math::DataType::MATRIX, SrcDesc);
+			constexpr auto ddesc = Math::Data2DDesc(Math::DataType::MATRIX, DstDesc);
 
-		/**
-		 * direction(LH):(1, 0, 0) to (0, 0, -1)
-		 */
-		static void SRK_CALL createRotationY(float32_t radian, Matrix34& dst);
+			Math::copy<sdesc, SrcTotalCs, SrcTotalRs, ddesc>(data, std::forward<Args>(args)...);
+			_autoIdentity<Hints, ddesc>(data);
+			return *this;
+		}
 
-		/**
-		 * direction(LH):(1, 0, 0) to (0, 1, 0)
-		 */
-		static void SRK_CALL createRotationZ(float32_t radian, Matrix34& dst);
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::Data2DDesc SrcDesc = nullptr, Math::Data2DDesc DstDesc = nullptr>
+		inline constexpr Matrix& SRK_CALL transpose() {
+			using namespace srk::enum_operators;
 
-		static void SRK_CALL createScale(const float32_t(&scale)[3], Matrix34& dst);
-		static void SRK_CALL createTranslation(const float32_t(&trans)[3], Matrix34& dst);
-		static void SRK_CALL createTRS(const float32_t(trans)[3], const Quaternion* rot, const float32_t(scale)[3], Matrix34& dst);
+			constexpr auto sdesc = Math::Data2DDesc(Math::DataType::MATRIX, SrcDesc);
+			constexpr auto ddesc = Math::Data2DDesc(Math::DataType::MATRIX, DstDesc.hints | Math::Hint::MEM_OVERLAP, DstDesc.range);
+
+			Math::transpose<sdesc, ddesc>(data, data);
+			_autoIdentity<Hints, ddesc>(data);
+			return *this;
+		}
+
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::Data2DDesc SrcDesc = nullptr, Math::Data2DDesc DstDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, size_t DstR, size_t DstC, std::floating_point DstT>
+		inline constexpr void SRK_CALL transpose(const DstT(&dst)[DstR][DstC]) const {
+			constexpr auto sdesc = Math::Data2DDesc(Math::DataType::MATRIX, SrcDesc);
+			constexpr auto ddesc = Math::Data2DDesc(Math::DataType::MATRIX, DstDesc);
+
+			Math::transpose<sdesc, ddesc>(data, dst);
+			_autoIdentity<Hints, ddesc>(dst);
+		}
+
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::Data2DDesc SrcDesc = nullptr, Math::Data2DDesc DstDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, size_t DstR, size_t DstC, std::floating_point DstT>
+		inline constexpr void SRK_CALL transpose(Matrix<DstR, DstC, DstT>& dst) const {
+			transpose<Hints, SrcDesc, DstDesc>(dst.data);
+		}
+
+		inline bool SRK_CALL invert() {
+			return Math::invert<Math::Hint::MEM_OVERLAP>(data, data);
+		}
+
+		template<MatrixHint Hints = MatrixHint::NONE, size_t DstR, size_t DstC, std::floating_point DstT>
+		inline bool SRK_CALL invert(DstT(&dst)[DstR][DstC]) const {
+			return Math::invert<(Math::Hint)Hints>(data, dst);
+		}
+
+		template<MatrixHint Hints = MatrixHint::NONE, size_t DstR, size_t DstC, std::floating_point DstT>
+		inline bool SRK_CALL invert(Matrix<DstR, DstC, DstT>& m) const {
+			return invert<Hints>(m.data);
+		}
+
+		template<Math::Data2DDesc SrcDesc = nullptr, Math::Data2DDesc DstRotDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, typename RT, typename ST>
+		requires ((std::same_as<RT, nullptr_t> || (std::is_bounded_array_v<std::remove_cvref_t<RT>> && !std::is_const_v<std::remove_reference_t<RT>> && std::floating_point<std::remove_all_extents_t<std::remove_cvref_t<RT>>> && std::rank_v<std::remove_cvref_t<RT>> == 2)) &&
+			(std::same_as<ST, nullptr_t> || (std::is_bounded_array_v<std::remove_cvref_t<ST>> && !std::is_const_v<std::remove_reference_t<ST>> && std::floating_point<std::remove_all_extents_t<std::remove_cvref_t<ST>>> && std::rank_v<std::remove_cvref_t<ST>> == 1)))
+		inline void SRK_CALL decompose(RT&& dstRot, ST&& dstScale) const {
+			constexpr auto sdesc = Math::Data2DDesc(Math::DataType::MATRIX, SrcDesc);
+			constexpr auto drdesc = Math::Data2DDesc(Math::DataType::MATRIX, DstRotDesc);
+
+			Math::decompose<sdesc, drdesc>(data, std::forward<RT>(dstRot), std::forward<ST>(dstScale));
+		}
+
+		template<Math::Data2DDesc SrcDesc = nullptr, Math::DataDesc DstDesc = nullptr, size_t DN, std::floating_point DT>
+		inline void SRK_CALL toQuaternion(DT(&dst)[DN]) const {
+			constexpr auto sdesc = Math::Data2DDesc(Math::DataType::MATRIX, SrcDesc);
+			constexpr auto ddesc = Math::DataDesc(Math::DataType::QUATERNION, DstDesc);
+
+			Math::transform<sdesc, ddesc>(data, dst);
+		}
+
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::DataDesc SrcDesc = nullptr, Math::Data2DDesc DstDesc = nullptr, size_t SrcN, std::floating_point SrcT>
+		inline Matrix& SRK_CALL fromQuaternion(SrcT(&src)[SrcN]) {
+			using namespace srk::enum_operators;
+
+			constexpr auto sdesc = Math::DataDesc(Math::DataType::QUATERNION, SrcDesc);
+			constexpr auto ddesc = Math::Data2DDesc(Math::DataType::MATRIX, DstDesc);
+
+			Math::transform<sdesc, ddesc>(src, data);
+			if constexpr ((Hints & MatrixHint::IDENTITY_OTHERS) == MatrixHint::IDENTITY_OTHERS) Math::identity<Math::Data2DDesc(Math::DataType::MATRIX, Math::Hint::OUTSIDE, 0, 0, 0, 0, 3, 3)>(data);
+			return *this;
+		}
+
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::Data2DDesc LDesc = nullptr, Math::Data2DDesc RDesc = nullptr, Math::Data2DDesc DDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, size_t LRs, size_t LCs, std::floating_point LT>
+		inline Matrix& SRK_CALL append(const LT(&lhs)[LRs][LCs]) {
+			using namespace srk::enum_operators;
+
+			constexpr auto ldesc = Math::Data2DDesc(Math::DataType::MATRIX, LDesc);
+			constexpr auto rdesc = Math::Data2DDesc(Math::DataType::MATRIX, RDesc);
+			constexpr auto ddesc = Math::Data2DDesc(Math::DataType::MATRIX, DDesc.hints | Math::Hint::MEM_OVERLAP, DDesc.range);
+
+			Math::mul<ldesc, rdesc, ddesc>(lhs, data, data);
+			_autoIdentity<Hints, ddesc>(data);
+			return *this;
+		}
+
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::Data2DDesc LDesc = nullptr, Math::Data2DDesc RDesc = nullptr, Math::Data2DDesc DDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, size_t LRs, size_t LCs, std::floating_point LT>
+		inline Matrix& SRK_CALL append(const Matrix<LRs, LCs, LT>& lhs) {
+			return append<Hints, LDesc, RDesc, DDesc>(lhs.data);
+		}
+
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::Data2DDesc LDesc = nullptr, Math::Data2DDesc RDesc = nullptr, Math::Data2DDesc DDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, size_t LRs, size_t LCs, std::floating_point LT, size_t DRs, size_t DCs, std::floating_point DT>
+		inline void SRK_CALL append(const LT(&lhs)[LRs][LCs], DT(&dst)[DRs][DCs]) const {
+			constexpr auto ldesc = Math::Data2DDesc(Math::DataType::MATRIX, LDesc);
+			constexpr auto rdesc = Math::Data2DDesc(Math::DataType::MATRIX, RDesc);
+			constexpr auto ddesc = Math::Data2DDesc(Math::DataType::MATRIX, DDesc);
+
+			Math::mul<ldesc, rdesc, ddesc>(lhs, data, dst);
+			_autoIdentity<Hints, ddesc>(dst);
+		}
+
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::Data2DDesc LDesc = nullptr, Math::Data2DDesc RDesc = nullptr, Math::Data2DDesc DDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, size_t LRs, size_t LCs, std::floating_point LT, size_t DRs, size_t DCs, std::floating_point DT>
+		inline void SRK_CALL append(const Matrix<LRs, LCs, LT>& lhs, DT(&dst)[DRs][DCs]) const {
+			append<Hints, LDesc, RDesc, DDesc>(lhs.data, dst);
+		}
+
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::Data2DDesc LDesc = nullptr, Math::Data2DDesc RDesc = nullptr, Math::Data2DDesc DDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, size_t LRs, size_t LCs, std::floating_point LT, size_t DRs, size_t DCs, std::floating_point DT>
+		inline void SRK_CALL append(const LT(&lhs)[LRs][LCs], Matrix<DRs, DCs, DT>& dst) const {
+			append<Hints, LDesc, RDesc, DDesc>(lhs, dst.data);
+		}
+
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::Data2DDesc LDesc = nullptr, Math::Data2DDesc RDesc = nullptr, Math::Data2DDesc DDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, size_t LRs, size_t LCs, std::floating_point LT, size_t DRs, size_t DCs, std::floating_point DT>
+		inline void SRK_CALL append(const Matrix<LRs, LCs, LT>& lhs, Matrix<DRs, DCs, DT>& dst) const {
+			append<Hints, LDesc, RDesc, DDesc>(lhs.data, dst.data);
+		}
+
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::DataDesc LDesc = nullptr, Math::Data2DDesc RDesc = nullptr, Math::Data2DDesc DDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, size_t LN, std::floating_point LT>
+		inline Matrix& SRK_CALL appendScale(const LT(&lhs)[LN]) {
+			using namespace srk::enum_operators;
+
+			constexpr auto ldesc = Math::DataDesc(Math::DataType::MATRIX_SCALE, LDesc);
+			constexpr auto rdesc = Math::Data2DDesc(Math::DataType::MATRIX, RDesc);
+			constexpr auto ddesc = Math::Data2DDesc(Math::DataType::MATRIX, DDesc.hints | Math::Hint::MEM_OVERLAP, DDesc.range);
+
+			Math::mul<ldesc, rdesc, ddesc>(lhs, data, data);
+			_autoIdentity<Hints, ddesc>(data);
+			return *this;
+		}
+
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::DataDesc LDesc = nullptr, Math::Data2DDesc RDesc = nullptr, Math::Data2DDesc DDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, size_t LN, std::floating_point LT, size_t DRs, size_t DCs, std::floating_point DT>
+		inline void SRK_CALL appendScale(const LT(&lhs)[LN], DT(&dst)[DRs][DCs]) const {
+			constexpr auto ldesc = Math::DataDesc(Math::DataType::MATRIX_SCALE, LDesc);
+			constexpr auto rdesc = Math::Data2DDesc(Math::DataType::MATRIX, RDesc);
+			constexpr auto ddesc = Math::Data2DDesc(Math::DataType::MATRIX, DDesc);
+
+			Math::mul<ldesc, rdesc, ddesc>(lhs, data, dst);
+			_autoIdentity<Hints, ddesc>(dst);
+		}
+
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::DataDesc LDesc = nullptr, Math::Data2DDesc RDesc = nullptr, Math::Data2DDesc DDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, size_t LN, std::floating_point LT, size_t DRs, size_t DCs, std::floating_point DT>
+		inline void SRK_CALL appendScale(const LT(&lhs)[LN], Matrix<DRs, DCs, DT>& dst) const {
+			appendScale<Hints, LDesc, RDesc, DDesc>(lhs, dst.data);
+		}
+
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::DataDesc LDesc = nullptr, Math::Data2DDesc RDesc = nullptr, Math::Data2DDesc DDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, size_t LN, std::floating_point LT>
+		inline Matrix& SRK_CALL appendTranslation(const LT(&lhs)[LN]) {
+			constexpr auto ldesc = Math::Data2DDesc(LDesc.hints, LDesc.range.offset, 3, LDesc.range.begin, 0, LDesc.range.length, 1).clamp(0, 3, std::min(ROWS, Math::FORE<size_t>), 1, LN, 1);
+			return append<Hints, ldesc, RDesc, DDesc>((LT(&)[LN][1])lhs);
+		}
+
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::DataDesc LDesc = nullptr, Math::Data2DDesc RDesc = nullptr, Math::Data2DDesc DDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, size_t LN, std::floating_point LT, size_t DRs, size_t DCs, std::floating_point DT>
+		inline void SRK_CALL appendTranslation(const LT(&lhs)[LN], DT(&dst)[DRs][DCs]) const {
+			constexpr auto ldesc = Math::Data2DDesc(LDesc.hints, LDesc.range.offset, 3, LDesc.range.begin, 0, LDesc.range.length, 1).clamp(0, 3, std::min(ROWS, Math::FORE<size_t>), 1, LN, 1);
+			append<Hints, ldesc, RDesc, DDesc>((LT(&)[LN][1])lhs, data);
+		}
+
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::DataDesc LDesc = nullptr, Math::Data2DDesc RDesc = nullptr, Math::Data2DDesc DDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, size_t LN, std::floating_point LT, size_t DRs, size_t DCs, std::floating_point DT>
+		inline void SRK_CALL appendTranslation(const LT(&lhs)[LN], Matrix<DRs, DCs, DT>& dst) const {
+			appendTranslation<Hints, LDesc, RDesc, DDesc>(lhs, dst.data);
+		}
+
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::Data2DDesc LDesc = nullptr, Math::Data2DDesc RDesc = nullptr, Math::Data2DDesc DDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, size_t RRs, size_t RCs, std::floating_point RT>
+		inline Matrix& SRK_CALL prepend(const RT(&rhs)[RRs][RCs]) {
+			using namespace srk::enum_operators;
+
+			constexpr auto ldesc = Math::Data2DDesc(Math::DataType::MATRIX, LDesc);
+			constexpr auto rdesc = Math::Data2DDesc(Math::DataType::MATRIX, RDesc);
+			constexpr auto ddesc = Math::Data2DDesc(Math::DataType::MATRIX, DDesc.hints | Math::Hint::MEM_OVERLAP, DDesc.range);
+
+			Math::mul<ldesc, rdesc, ddesc>(data, rhs, data);
+			_autoIdentity<Hints, ddesc>(data);
+			return *this;
+		}
+
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::Data2DDesc LDesc = nullptr, Math::Data2DDesc RDesc = nullptr, Math::Data2DDesc DDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, size_t RRs, size_t RCs, std::floating_point RT>
+		inline Matrix& SRK_CALL prepend(const Matrix<RRs, RCs, RT>& rhs) {
+			return prepend<Hints, LDesc, RDesc, DDesc>(rhs.data);
+		}
+
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::Data2DDesc LDesc = nullptr, Math::Data2DDesc RDesc = nullptr, Math::Data2DDesc DDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, size_t RRs, size_t RCs, std::floating_point RT, size_t DRs, size_t DCs, std::floating_point DT>
+		inline void SRK_CALL prepend(const RT(&rhs)[RRs][RCs], DT(&dst)[DRs][DCs]) const {
+			constexpr auto ldesc = Math::Data2DDesc(Math::DataType::MATRIX, LDesc);
+			constexpr auto rdesc = Math::Data2DDesc(Math::DataType::MATRIX, RDesc);
+			constexpr auto ddesc = Math::Data2DDesc(Math::DataType::MATRIX, DDesc);
+
+			Math::mul<ldesc, rdesc, ddesc>(data, rhs, dst);
+			_autoIdentity<Hints, ddesc>(dst);
+		}
+
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::Data2DDesc LDesc = nullptr, Math::Data2DDesc RDesc = nullptr, Math::Data2DDesc DDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, size_t RRs, size_t RCs, std::floating_point RT, size_t DRs, size_t DCs, std::floating_point DT>
+		inline void SRK_CALL prepend(const Matrix<RRs, RCs, RT>& rhs, DT(&dst)[DRs][DCs]) const {
+			prepend<Hints, LDesc, RDesc, DDesc>(rhs.data, dst);
+		}
+
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::Data2DDesc LDesc = nullptr, Math::Data2DDesc RDesc = nullptr, Math::Data2DDesc DDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, size_t RRs, size_t RCs, std::floating_point RT, size_t DRs, size_t DCs, std::floating_point DT>
+		inline void SRK_CALL prepend(const RT(&rhs)[RRs][RCs], Matrix<DRs, DCs, DT>& dst) const {
+			prepend<Hints, LDesc, RDesc, DDesc>(rhs, dst.data);
+		}
+
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::Data2DDesc LDesc = nullptr, Math::Data2DDesc RDesc = nullptr, Math::Data2DDesc DDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, size_t RRs, size_t RCs, std::floating_point RT, size_t DRs, size_t DCs, std::floating_point DT>
+		inline void SRK_CALL prepend(const Matrix<RRs, RCs, RT>& rhs, Matrix<DRs, DCs, DT>& dst) const {
+			prepend<Hints, LDesc, RDesc, DDesc>(rhs.data, dst.data);
+		}
+
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::Data2DDesc LDesc = nullptr, Math::DataDesc RDesc = nullptr, Math::Data2DDesc DDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, size_t RN, std::floating_point RT>
+		inline Matrix& SRK_CALL prependScale(const RT(&rhs)[RN]) {
+			using namespace srk::enum_operators;
+
+			constexpr auto ldesc = Math::Data2DDesc(Math::DataType::MATRIX, LDesc);
+			constexpr auto rdesc = Math::DataDesc(Math::DataType::MATRIX_SCALE, RDesc);
+			constexpr auto ddesc = Math::Data2DDesc(Math::DataType::MATRIX, DDesc.hints | Math::Hint::MEM_OVERLAP, DDesc.range);
+
+			Math::mul<ldesc, rdesc, ddesc>(data, rhs, data);
+			_autoIdentity<Hints, ddesc>(data);
+			return *this;
+		}
+
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::Data2DDesc LDesc = nullptr, Math::DataDesc RDesc = nullptr, Math::Data2DDesc DDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, size_t RN, std::floating_point RT, size_t DRs, size_t DCs, std::floating_point DT>
+		inline void SRK_CALL prependScale(const RT(&rhs)[RN], DT(&dst)[DRs][DCs]) const {
+			constexpr auto ldesc = Math::Data2DDesc(Math::DataType::MATRIX, LDesc);
+			constexpr auto rdesc = Math::DataDesc(Math::DataType::MATRIX_SCALE, RDesc);
+			constexpr auto ddesc = Math::Data2DDesc(Math::DataType::MATRIX, DDesc);
+
+			Math::mul<ldesc, rdesc, ddesc>(data, rhs, dst);
+			_autoIdentity<Hints, ddesc>(dst);
+		}
+
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::Data2DDesc LDesc = nullptr, Math::DataDesc RDesc = nullptr, Math::Data2DDesc DDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, size_t RN, std::floating_point RT, size_t DRs, size_t DCs, std::floating_point DT>
+		inline void SRK_CALL prependScale(const RT(&rhs)[RN], Matrix<DRs, DCs, DT>& dst) const {
+			prependScale<Hints, LDesc, RDesc, DDesc>(rhs, dst.data);
+		}
+
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::Data2DDesc LDesc = nullptr, Math::DataDesc RDesc = nullptr, Math::Data2DDesc DDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, size_t RN, std::floating_point RT>
+		inline Matrix& SRK_CALL prependTranslation(const RT(&rhs)[RN]) {
+			constexpr auto rdesc = Math::Data2DDesc(RDesc.hints, RDesc.range.offset, 3, RDesc.range.begin, 0, RDesc.range.length, 1).clamp(0, 3, std::min(ROWS, Math::FORE<size_t>), 1, RN, 1);
+			return prepend<Hints, LDesc, rdesc, DDesc>((RT(&)[RN][1])rhs);
+		}
+
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::Data2DDesc LDesc = nullptr, Math::DataDesc RDesc = nullptr, Math::Data2DDesc DDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, size_t RN, std::floating_point RT, size_t DRs, size_t DCs, std::floating_point DT>
+		inline void SRK_CALL prependTranslation(const RT(&rhs)[RN], DT(&dst)[DRs][DCs]) const {
+			constexpr auto rdesc = Math::Data2DDesc(RDesc.hints, RDesc.range.offset, 3, RDesc.range.begin, 0, RDesc.range.length, 1).clamp(0, 3, std::min(ROWS, Math::FORE<size_t>), 1, RN, 1);
+			prepend<Hints, LDesc, rdesc, DDesc>((RT(&)[RN][1])rhs, dst);
+		}
+
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::Data2DDesc LDesc = nullptr, Math::DataDesc RDesc = nullptr, Math::Data2DDesc DDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, size_t RN, std::floating_point RT, size_t DRs, size_t DCs, std::floating_point DT>
+		inline void SRK_CALL prependTranslation(const RT(&rhs)[RN], Matrix<DRs, DCs, DT>& dst) const {
+			prependTranslation<Hints, LDesc, RDesc, DDesc>(rhs, dst.data);
+		}
+
+		template<Math::Data2DDesc LDesc = nullptr, Math::DataDesc RDesc = nullptr, Math::DataDesc DDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, size_t RN, std::floating_point RT, size_t DN, std::floating_point DT>
+		inline void SRK_CALL transformPoint(const RT(&rhs)[RN], DT(&dst)[DN]) const {
+			constexpr auto ldesc = Math::Data2DDesc(Math::DataType::MATRIX, LDesc);
+			constexpr auto rdesc = Math::DataDesc(Math::DataType::VECTOR, RDesc);
+			constexpr auto ddesc = Math::DataDesc(Math::DataType::VECTOR, DDesc);
+
+			Math::transform<ldesc, rdesc, ddesc>(data, rhs, dst);
+		}
+
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::Data2DDesc DstDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, std::floating_point FwdT, std::floating_point UwdT>
+		inline Matrix& SRK_CALL lookAt(const FwdT(&forward)[3], const UwdT(&upward)[3]) {
+			using namespace srk::enum_operators;
+
+			constexpr auto ddesc = Math::Data2DDesc(Math::DataType::MATRIX, DstDesc.hints | Math::Hint::MEM_OVERLAP, DstDesc.range);
+
+			Math::lookAt<ddesc>(forward, upward, data);
+			if constexpr ((Hints & MatrixHint::IDENTITY_OTHERS) == MatrixHint::IDENTITY_OTHERS) Math::identity<Math::Data2DDesc(Math::DataType::MATRIX, Math::Hint::OUTSIDE, 0, 0, 0, 0, 3, 3)>(data);
+			return *this;
+		}
+
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::Data2DDesc DstDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, std::floating_point AxisT, std::floating_point RadT>
+		inline Matrix& SRK_CALL rotation(const AxisT(&axis)[3], RadT radian) {
+			using namespace srk::enum_operators;
+
+			constexpr auto ddesc = Math::Data2DDesc(Math::DataType::MATRIX, DstDesc.hints | Math::Hint::MEM_OVERLAP, DstDesc.range);
+
+			Math::rotation<ddesc>(axis, radian, data);
+			if constexpr ((Hints & MatrixHint::IDENTITY_OTHERS) == MatrixHint::IDENTITY_OTHERS) Math::identity<Math::Data2DDesc(Math::DataType::MATRIX, Math::Hint::OUTSIDE, 0, 0, 0, 0, 3, 3)>(data);
+			return *this;
+		}
+
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::Data2DDesc DstDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, std::floating_point RadT>
+		inline Matrix& SRK_CALL rotationX(RadT radian) {
+			using namespace srk::enum_operators;
+
+			constexpr auto ddesc = Math::Data2DDesc(Math::DataType::MATRIX, DstDesc.hints | Math::Hint::MEM_OVERLAP, DstDesc.range);
+
+			Math::rotationX<ddesc>(radian, data);
+			if constexpr ((Hints & MatrixHint::IDENTITY_OTHERS) == MatrixHint::IDENTITY_OTHERS) Math::identity<Math::Data2DDesc(Math::DataType::MATRIX, Math::Hint::OUTSIDE, 0, 0, 0, 0, 3, 3)>(data);
+			return *this;
+		}
+
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::Data2DDesc DstDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, std::floating_point RadT>
+		inline Matrix& SRK_CALL rotationY(RadT radian) {
+			using namespace srk::enum_operators;
+
+			constexpr auto ddesc = Math::Data2DDesc(Math::DataType::MATRIX, DstDesc.hints | Math::Hint::MEM_OVERLAP, DstDesc.range);
+
+			Math::rotationY<ddesc>(radian, data);
+			if constexpr ((Hints & MatrixHint::IDENTITY_OTHERS) == MatrixHint::IDENTITY_OTHERS) Math::identity<Math::Data2DDesc(Math::DataType::MATRIX, Math::Hint::OUTSIDE, 0, 0, 0, 0, 3, 3)>(data);
+			return *this;
+		}
+
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::Data2DDesc DstDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, std::floating_point RadT>
+		inline Matrix& SRK_CALL rotationZ(RadT radian) {
+			using namespace srk::enum_operators;
+
+			constexpr auto ddesc = Math::Data2DDesc(Math::DataType::MATRIX, DstDesc.hints | Math::Hint::MEM_OVERLAP, DstDesc.range);
+
+			Math::rotationZ<ddesc>(radian, data);
+			if constexpr ((Hints & MatrixHint::IDENTITY_OTHERS) == MatrixHint::IDENTITY_OTHERS) Math::identity<Math::Data2DDesc(Math::DataType::MATRIX, Math::Hint::OUTSIDE, 0, 0, 0, 0, 3, 3)>(data);
+			return *this;
+		}
+
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::DataDesc ScaleDesc = nullptr, Math::Data2DDesc DstDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, size_t SN, std::floating_point ST>
+		inline Matrix& SRK_CALL scale(const ST(&s)[SN]) {
+			using namespace srk::enum_operators;
+
+			constexpr auto sdesc = Math::DataDesc(Math::DataType::MATRIX_SCALE, ScaleDesc);
+			constexpr auto ddesc = Math::Data2DDesc(Math::DataType::MATRIX, DstDesc.hints | Math::Hint::MEM_OVERLAP, DstDesc.range);
+
+			Math::scale<sdesc, ddesc>(s, data);
+			if constexpr ((Hints & MatrixHint::IDENTITY_OTHERS) == MatrixHint::IDENTITY_OTHERS) Math::identity<Math::Data2DDesc(Math::DataType::MATRIX, Math::Hint::OUTSIDE, 0, 0, 0, 0, 3, 3)>(data);
+			return *this;
+		}
+
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::Data2DDesc DstDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, std::floating_point TT>
+		inline Matrix& SRK_CALL translation(const TT(&t)[3]) {
+			using namespace srk::enum_operators;
+
+			constexpr auto ddesc = Math::Data2DDesc(Math::DataType::MATRIX, DstDesc.hints | Math::Hint::MEM_OVERLAP, DstDesc.range);
+
+			Math::translation<ddesc>(t, data);
+			if constexpr ((Hints & MatrixHint::IDENTITY_OTHERS) == MatrixHint::IDENTITY_OTHERS) Math::identity<Math::Data2DDesc(Math::DataType::MATRIX, Math::Hint::OUTSIDE, 0, 0, 0, 3, 3, 1)>(data);
+			return *this;
+		}
+
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::DataDesc TDesc = nullptr, Math::DataDesc RDesc = nullptr, Math::DataDesc SDesc = nullptr, Math::Data2DDesc DstDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, typename TT, typename RT, typename ST, size_t DstR, size_t DstC, std::floating_point DstT>
+		requires ((std::same_as<TT, nullptr_t> || (std::is_bounded_array_v<std::remove_cvref_t<TT>> && std::floating_point<std::remove_all_extents_t<std::remove_cvref_t<TT>>> && std::rank_v<std::remove_cvref_t<TT>> == 1)) &&
+			(std::same_as<RT, nullptr_t> || (std::is_bounded_array_v<std::remove_cvref_t<RT>> && std::floating_point<std::remove_all_extents_t<std::remove_cvref_t<RT>>> && std::rank_v<std::remove_cvref_t<RT>> == 1)) &&
+			(std::same_as<ST, nullptr_t> || (std::is_bounded_array_v<std::remove_cvref_t<ST>> && std::floating_point<std::remove_all_extents_t<std::remove_cvref_t<ST>>> && std::rank_v<std::remove_cvref_t<ST>> == 1)))
+		inline Matrix& SRK_CALL trs(TT&& trans, RT&& rot, ST&& scale) {
+			using namespace srk::enum_operators;
+
+			constexpr auto tdesc = Math::DataDesc(Math::DataType::VECTOR, TDesc);
+			constexpr auto rdesc = Math::DataDesc(Math::DataType::QUATERNION, RDesc);
+			constexpr auto sdesc = Math::DataDesc(Math::DataType::MATRIX_SCALE, SDesc);
+			constexpr auto ddesc = Math::Data2DDesc(Math::DataType::MATRIX, DstDesc);
+
+			Math::trs<tdesc, rdesc, sdesc, ddesc>(std::forward<TT>(trans), std::forward<RT>(rot), std::forward<ST>(scale), data);
+			if constexpr ((Hints & MatrixHint::IDENTITY_OTHERS) == MatrixHint::IDENTITY_OTHERS) Math::identity<Math::Data2DDesc(Math::DataType::MATRIX, Math::Hint::OUTSIDE, 0, 0, 0, 0, 3, 4)>(data);
+			return *this;
+		}
+
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::Data2DDesc DstDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, std::floating_point WT, std::floating_point HT, std::floating_point ZNT, std::floating_point ZFT>
+		inline Matrix& SRK_CALL ortho(WT width, HT height, ZNT zNear, ZFT zFar) {
+			using namespace srk::enum_operators;
+
+			constexpr auto ddesc = Math::Data2DDesc(Math::DataType::MATRIX, DstDesc.hints | Math::Hint::MEM_OVERLAP, DstDesc.range);
+
+			Math::ortho<ddesc>(width, height, zNear, zFar, data);
+			if constexpr ((Hints & MatrixHint::IDENTITY_OTHERS) == MatrixHint::IDENTITY_OTHERS) Math::identity<Math::Data2DDesc(Math::DataType::MATRIX, Math::Hint::OUTSIDE, 0, 0, 0, 0, 4, 4)>(data);
+			return *this;
+		}
+
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::Data2DDesc DstDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, std::floating_point LT, std::floating_point RT, std::floating_point BT, std::floating_point TT, std::floating_point ZNT, std::floating_point ZFT>
+		inline Matrix& SRK_CALL orthoOffCenter(LT left, RT right, BT bottom, TT top, ZNT zNear, ZFT zFar) {
+			using namespace srk::enum_operators;
+
+			constexpr auto ddesc = Math::Data2DDesc(Math::DataType::MATRIX, DstDesc.hints | Math::Hint::MEM_OVERLAP, DstDesc.range);
+
+			Math::orthoOffCenter<ddesc>(left, right, bottom, top, zNear, zFar, data);
+			if constexpr ((Hints & MatrixHint::IDENTITY_OTHERS) == MatrixHint::IDENTITY_OTHERS) Math::identity<Math::Data2DDesc(Math::DataType::MATRIX, Math::Hint::OUTSIDE, 0, 0, 0, 0, 4, 4)>(data);
+			return *this;
+		}
+
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::Data2DDesc DstDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, std::floating_point WT, std::floating_point HT, std::floating_point ZNT, std::floating_point ZFT>
+		inline Matrix& SRK_CALL perspective(WT width, HT height, ZNT zNear, ZFT zFar) {
+			using namespace srk::enum_operators;
+
+			constexpr auto ddesc = Math::Data2DDesc(Math::DataType::MATRIX, DstDesc.hints | Math::Hint::MEM_OVERLAP, DstDesc.range);
+
+			Math::perspective<ddesc>(width, height, zNear, zFar, data);
+			if constexpr ((Hints & MatrixHint::IDENTITY_OTHERS) == MatrixHint::IDENTITY_OTHERS) Math::identity<Math::Data2DDesc(Math::DataType::MATRIX, Math::Hint::OUTSIDE, 0, 0, 0, 0, 4, 4)>(data);
+			return *this;
+		}
+
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::Data2DDesc DstDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, std::floating_point FT, std::floating_point AT, std::floating_point ZNT, std::floating_point ZFT>
+		inline Matrix& SRK_CALL perspectiveFov(FT fieldOfViewY, AT aspectRatio, ZNT zNear, ZFT zFar) {
+			using namespace srk::enum_operators;
+
+			constexpr auto ddesc = Math::Data2DDesc(Math::DataType::MATRIX, DstDesc.hints | Math::Hint::MEM_OVERLAP, DstDesc.range);
+
+			Math::perspectiveFov<ddesc>(fieldOfViewY, aspectRatio, zNear, zFar, data);
+			if constexpr ((Hints & MatrixHint::IDENTITY_OTHERS) == MatrixHint::IDENTITY_OTHERS) Math::identity<Math::Data2DDesc(Math::DataType::MATRIX, Math::Hint::OUTSIDE, 0, 0, 0, 0, 4, 4)>(data);
+			return *this;
+		}
+
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::Data2DDesc DstDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, std::floating_point LT, std::floating_point RT, std::floating_point BT, std::floating_point TT, std::floating_point ZNT, std::floating_point ZFT>
+		inline Matrix& SRK_CALL perspectiveOffCenter(LT left, RT right, BT bottom, TT top, ZNT zNear, ZFT zFar) {
+			using namespace srk::enum_operators;
+
+			constexpr auto ddesc = Math::Data2DDesc(Math::DataType::MATRIX, DstDesc.hints | Math::Hint::MEM_OVERLAP, DstDesc.range);
+
+			Math::perspectiveOffCenter<ddesc>(left, right, bottom, top, zNear, zFar, data);
+			if constexpr ((Hints & MatrixHint::IDENTITY_OTHERS) == MatrixHint::IDENTITY_OTHERS) Math::identity<Math::Data2DDesc(Math::DataType::MATRIX, Math::Hint::OUTSIDE, 0, 0, 0, 0, 4, 4)>(data);
+			return *this;
+		}
 
 		union {
 			//__m128 col[4];
 			Data data;
 		};
+
+	private:
+		template<MatrixHint Hints, Math::Data2DDesc Desc, size_t Rs, size_t Cs, std::floating_point T>
+		inline static constexpr void SRK_CALL _autoIdentity(T(&dst)[Rs][Cs]) {
+			using namespace srk::enum_operators;
+
+			if constexpr ((Hints & MatrixHint::IDENTITY_OTHERS) == MatrixHint::IDENTITY_OTHERS) {
+				if constexpr ((Desc.hints & Math::Hint::OUTSIDE) == Math::Hint::OUTSIDE) {
+					Math::identity<Math::Data2DDesc(Desc, Desc.hints& (~Math::Hint::OUTSIDE))>(dst);
+				} else {
+					Math::identity<Math::Data2DDesc(Desc, Desc.hints | Math::Hint::OUTSIDE)>(dst);
+				}
+			}
+		}
 	};
 
 
-	/**
-	 * column major matrix.
-	 *
-	 * m00 m10 m20 m30 xaxis
-	 * m01 m11 m21 m31 yaxis
-	 * m02 m12 m22 m32 zaxis
-	 * m03 m13 m23 m33
-	 * tx  ty  tz
-	 */
-	class SRK_CORE_DLL Matrix44 {
-	public:
-		using Data34 = float32_t[3][4];
-		using Data44 = float32_t[4][4];
-
-		Matrix44();
-		Matrix44(nullptr_t);
-		Matrix44(
-			float32_t m00,       float32_t m01 = 0.f, float32_t m02 = 0.f, float32_t m03 = 0.f,
-			float32_t m10 = 0.f, float32_t m11 = 1.f, float32_t m12 = 0.f, float32_t m13 = 0.f,
-			float32_t m20 = 0.f, float32_t m21 = 0.f, float32_t m22 = 1.f, float32_t m23 = 0.f,
-			float32_t m30 = 0.f, float32_t m31 = 0.f, float32_t m32 = 0.f, float32_t m33 = 1.f);
-		Matrix44(const Matrix34& m);
-		Matrix44(const Matrix44& m);
-		Matrix44(const std::initializer_list<float32_t>& m);
-		Matrix44(const float32_t(&m)[3][4]);
-		Matrix44(const float32_t(&m)[4][4]);
-		~Matrix44();
-
-		static const Matrix44 IDENTITY;
-
-		inline SRK_CALL operator Data44& () {
-			return data;
-		}
-		inline SRK_CALL operator const Data44& () const {
-			return data;
-		}
-
-		template<std::integral I, std::integral J>
-		inline float32_t& SRK_CALL operator()(I i, J j) {
-			return data[i][j];
-		}
-		template<std::integral I, std::integral J>
-		inline const float32_t& SRK_CALL operator()(I i, J j) const {
-			return data[i][j];
-		}
-
-		void SRK_CALL set33(const Matrix34& m);
-		void SRK_CALL set33(const Matrix44& m);
-		void SRK_CALL set33(const float32_t(&m)[3][3]);
-		void SRK_CALL set33(
-			float32_t m00 = 1.f, float32_t m01 = 0.f, float32_t m02 = 0.f,
-			float32_t m10 = 0.f, float32_t m11 = 1.f, float32_t m12 = 0.f,
-			float32_t m20 = 0.f, float32_t m21 = 0.f, float32_t m22 = 1.f);
-		void SRK_CALL set34(const Matrix34& m);
-		void SRK_CALL set34(const Matrix44& m);
-		void SRK_CALL set34(
-			float32_t m00 = 1.f, float32_t m01 = 0.f, float32_t m02 = 0.f, float32_t m03 = 0.f,
-			float32_t m10 = 0.f, float32_t m11 = 1.f, float32_t m12 = 0.f, float32_t m13 = 0.f,
-			float32_t m20 = 0.f, float32_t m21 = 0.f, float32_t m22 = 1.f, float32_t m23 = 0.f);
-		void SRK_CALL set44(const Matrix34& m);
-		void SRK_CALL set44(const Matrix44& m);
-		void SRK_CALL set44(
-			float32_t m00 = 1.f, float32_t m01 = 0.f, float32_t m02 = 0.f, float32_t m03 = 0.f,
-			float32_t m10 = 0.f, float32_t m11 = 1.f, float32_t m12 = 0.f, float32_t m13 = 0.f,
-			float32_t m20 = 0.f, float32_t m21 = 0.f, float32_t m22 = 1.f, float32_t m23 = 0.f,
-			float32_t m30 = 0.f, float32_t m31 = 0.f, float32_t m32 = 0.f, float32_t m33 = 1.f);
-
-		inline void SRK_CALL transpose();
-		inline void SRK_CALL transpose(Matrix44& dst) const;
-
-		inline bool SRK_CALL invert();
-		inline bool SRK_CALL invert(Matrix44& dst) const;
-
-		/*inline void SRK_CALL append(const Matrix34& rhs);
-		inline void SRK_CALL append(const Matrix44& rhs);
-		inline void SRK_CALL append(const Matrix34& rhs, Matrix34& dst) const;
-		inline void SRK_CALL append(const Matrix34& rhs, Matrix44& dst) const;
-		inline void SRK_CALL append(const Matrix44& rhs, Matrix34& dst) const;
-		inline void SRK_CALL append(const Matrix44& rhs, Matrix44& dst) const;*/
-
-		inline void SRK_CALL prepend(const Matrix34& rhs);
-		inline void SRK_CALL prepend(const Matrix44& rhs);
-		inline void SRK_CALL prepend(const Matrix34& rhs, Matrix34& dst) const;
-		inline void SRK_CALL prepend(const Matrix34& rhs, Matrix44& dst) const;
-		inline void SRK_CALL prepend(const Matrix44& rhs, Matrix34& dst) const;
-		inline void SRK_CALL prepend(const Matrix44& rhs, Matrix44& dst) const;
-
-		inline static void SRK_CALL createOrthoLH(float32_t width, float32_t height, float32_t zNear, float32_t zFar, Matrix44& dst) {
-			dst.set44(
-				2.f / width, 0.f, 0.f, 0.f,
-				0.f, 2.f / height, 0.f, 0.f,
-				0.f, 0.f, 1.f / (zFar - zNear), zNear / (zNear - zFar));
-		}
-		inline static Matrix44 SRK_CALL createOrthoLH(float32_t width, float32_t height, float32_t zNear, float32_t zFar) {
-			Matrix44 m(nullptr);
-			createOrthoLH(width, height, zNear, zFar, m);
-			return m;
-		}
-		inline static void SRK_CALL createOrthoOffCenterLH(float32_t left, float32_t right, float32_t bottom, float32_t top, float32_t zNear, float32_t zFar, Matrix44& dst) {
-			dst.set44(
-				2.f / (right - 1.f), 0.f, 0.f, (1.f + right) / (1.f - right),
-				0.f, 2.f / (top - bottom), 0.f, (top + bottom) / (bottom - top),
-				0.f, 0.f, 1.f / (zFar - zNear), zNear / (zNear - zFar));
-		}
-		inline static Matrix44 SRK_CALL createOrthoOffCenterLH(float32_t left, float32_t right, float32_t bottom, float32_t top, float32_t zNear, float32_t zFar) {
-			Matrix44 m(nullptr);
-			createOrthoOffCenterLH(left, right, bottom, top, zNear, zFar, m);
-			return m;
-		}
-		inline static void SRK_CALL createPerspectiveFovLH(float32_t fieldOfViewY, float32_t aspectRatio, float32_t zNear, float32_t zFar, Matrix44& dst) {
-			float32_t yScale = 1.f / std::tan(fieldOfViewY * .5f);
-			dst.set44(
-				yScale / aspectRatio, 0.f, 0.f, 0.f,
-				0.f, yScale, 0.f, 0.f,
-				0.f, 0.f, zFar / (zFar - zNear), zNear * zFar / (zNear - zFar),
-				0.f, 0.f, 1.f, 0.f);
-		}
-		inline static Matrix44 SRK_CALL createPerspectiveFovLH(float32_t fieldOfViewY, float32_t aspectRatio, float32_t zNear, float32_t zFar) {
-			Matrix44 m(nullptr);
-			createPerspectiveFovLH(fieldOfViewY, aspectRatio, zNear, zFar, m);
-			return m;
-		}
-		inline static void SRK_CALL createPerspectiveLH(float32_t width, float32_t height, float32_t zNear, float32_t zFar, Matrix44& dst) {
-			auto zNear2 = zNear * 2.f;
-			dst.set44(
-				zNear2 / width, 0.f, 0.f, 0.f,
-				0.f, zNear2 / height, 0.f, 0.f,
-				0.f, 0.f, zFar / (zFar - zNear), zNear * zFar / (zNear - zFar),
-				0.f, 0.f, 1.f, 0.f);
-		}
-		inline static Matrix44 SRK_CALL createPerspectiveLH(float32_t width, float32_t height, float32_t zNear, float32_t zFar) {
-			Matrix44 m(nullptr);
-			createPerspectiveLH(width, height, zNear, zFar, m);
-			return m;
-		}
-		inline static void SRK_CALL createPerspectiveOffCenterLH(float32_t left, float32_t right, float32_t bottom, float32_t top, float32_t zNear, float32_t zFar, Matrix44& dst) {
-			auto zNear2 = zNear * 2.f;
-			dst.set44(
-				zNear2 / (right - left), 0.f, (left + right) / (left - right), 0.f,
-				0.f, zNear2 / (top - bottom), (top + bottom) / (bottom - top), 0.f,
-				0.f, 0.f, zFar / (zFar - zNear), zNear * zFar / (zNear - zFar),
-				0.f, 0.f, 1.f, 0.f);
-		}
-		inline static Matrix44 SRK_CALL createPerspectiveOffCenterLH(float32_t left, float32_t right, float32_t bottom, float32_t top, float32_t zNear, float32_t zFar) {
-			Matrix44 m(nullptr);
-			createPerspectiveOffCenterLH(left, right, bottom, top, zNear, zFar, m);
-			return m;
-		}
-		//static void SRK_CALL createLookAt(const Vector3& forward, const Vector3& upward, Matrix44& dst);
-		//static void SRK_CALL createRotationAxis(const Vector3& axis, f32 radian, Matrix44& dst);
-
-		/**
-		 * direction(LH):(0, 1, 0) to (0, 0, 1)
-		 */
-		 //static void SRK_CALL createRotationX(f32 radian, Matrix44& dst);
-
-		 /**
-		  * direction(LH):(1, 0, 0) to (0, 0, -1)
-		  */
-		  //static void SRK_CALL createRotationY(f32 radian, Matrix44& dst);
-
-		  /**
-		   * direction(LH):(1, 0, 0) to (0, 1, 0)
-		   */
-		   //static void SRK_CALL createRotationZ(f32 radian, Matrix44& dst);
-
-		   //static void SRK_CALL createScale(const Vector3& scale, Matrix44& dst);
-		   //static void SRK_CALL createTranslation(const Vector3& trans, Matrix44& dst);
-		   //static void SRK_CALL createTRS(const Vector3* trans, const Quaternion* rot, const Vector3* scale, Matrix44& dst);
-
-		union {
-			//__m128 col[4];
-			Data44 data;
-		};
-	};
-
-	inline void SRK_CALL Matrix34::transpose(Matrix44& dst) const {
-		Math::transpose<Math::DataType::MATRIX, Math::Data2DDesc(Math::DataType::MATRIX, Math::Hint::MEM_OVERLAP)>(data, dst.data);
+	template<size_t LRs, size_t LCs, std::floating_point LT, size_t RRs, size_t RCs, std::floating_point RT>
+	inline Matrix<std::max(LRs, RRs), std::max(LCs, RCs), decltype((*(LT*)0) + (*(RT*)0))> SRK_CALL operator*(const Matrix<LRs, LCs, LT>& lhs, const Matrix<RRs, RCs, RT>& rhs) {
+		Matrix<std::max(LRs, RRs), std::max(LCs, RCs), decltype((*(LT*)0) + (*(RT*)0))> m(nullptr);
+		Math::mul<Math::Data2DDesc(Math::DataType::MATRIX), Math::Data2DDesc(Math::DataType::MATRIX), Math::Data2DDesc(Math::DataType::MATRIX, Math::Hint::IDENTITY_IF_NOT_EXIST)>(lhs.data, rhs.data, m.data);
+		return m;
 	}
 
-	inline bool SRK_CALL Matrix34::invert() {
-		return Math::invert<Math::Hint::MEM_OVERLAP>(data, data);
-	}
 
-	inline bool SRK_CALL Matrix34::invert(Matrix34& dst) const {
-		return Math::invert<Math::Hint::MEM_OVERLAP>(data, dst.data);
-	}
-
-	inline bool SRK_CALL Matrix34::invert(Matrix44& dst) const {
-		return Math::invert<Math::Hint::MEM_OVERLAP>(data, ((Matrix34&)dst).data);
-	}
-
-	inline void SRK_CALL Matrix34::prepend(const Matrix34& rhs) {
-		Math::mul(data, rhs.data, data);
-	}
-
-	inline void SRK_CALL Matrix34::prepend(const Matrix44& rhs) {
-		Math::mul(data, rhs.data, data);
-	}
-
-	inline void SRK_CALL Matrix34::prepend(const Matrix34& rhs, Matrix34& dst) const {
-		Math::mul(data, rhs.data, dst.data);
-	}
-
-	inline void SRK_CALL Matrix34::prepend(const Matrix34& rhs, Matrix44& dst) const {
-		Math::mul(data, rhs.data, dst.data);
-	}
-
-	inline void SRK_CALL Matrix34::prepend(const Matrix44& rhs, Matrix34& dst) const {
-		Math::mul(data, rhs.data, dst.data);
-	}
-
-	inline void SRK_CALL Matrix34::prepend(const Matrix44& rhs, Matrix44& dst) const {
-		Math::mul(data, rhs.data, dst.data);
-	}
-
-	//p * m
-	inline void SRK_CALL Matrix34::appendTranslate(const float32_t(&t)[3]) {
-		auto x = t[0], y = t[1], z = t[2];
-		data[0][3] += x * data[0][0] + y * data[0][1] + z * data[0][2];
-		data[1][3] += x * data[1][0] + y * data[1][1] + z * data[1][2];
-		data[2][3] += x * data[2][0] + y * data[2][1] + z * data[2][2];
-	}
-
-	//m * p
-	inline void SRK_CALL Matrix34::prependTranslate(const float32_t(&t)[3]) {
-		data[0][3] += t[0];
-		data[1][3] += t[1];
-		data[2][3] += t[2];
-	}
-
-	inline void SRK_CALL Matrix34::setPosition(const float32_t(&p)[3]) {
-		setPosition(p[0], p[1], p[2]);
-	}
-
-	inline void SRK_CALL Matrix34::setPosition(const Matrix34& m) {
-		auto mm = m.data;
-		setPosition(mm[0][3], mm[1][3], mm[2][3]);
-	}
-
-	inline void SRK_CALL Matrix34::setPosition(const Matrix44& m) {
-		auto mm = m.data;
-		setPosition(mm[0][3], mm[1][3], mm[2][3]);
-	}
-
-	inline void SRK_CALL Matrix34::setPosition(float32_t x, float32_t y, float32_t z) {
-		data[0][3] = x;
-		data[1][3] = y;
-		data[2][3] = z;
-	}
-
-	inline void SRK_CALL Matrix34::appendScale(const float32_t(&s)[3]) {
-		auto x = s[0], y = s[1], z = s[2];
-
-		data[0][0] *= x;
-		data[0][1] *= y;
-		data[0][2] *= z;
-
-		data[1][0] *= x;
-		data[1][1] *= y;
-		data[1][2] *= z;
-
-		data[2][0] *= x;
-		data[2][1] *= y;
-		data[2][2] *= z;
-	}
-
-	inline void SRK_CALL Matrix44::transpose() {
-		Math::transpose<Math::DataType::MATRIX, Math::Data2DDesc(Math::DataType::MATRIX, Math::Hint::MEM_OVERLAP)>(data, data);
-	}
-
-	inline void SRK_CALL Matrix44::transpose(Matrix44& dst) const {
-		Math::transpose<Math::DataType::MATRIX, Math::Data2DDesc(Math::DataType::MATRIX, Math::Hint::MEM_OVERLAP)>(data, dst.data);
-	}
-
-	inline bool SRK_CALL Matrix44::invert() {
-		return Math::invert<Math::Hint::MEM_OVERLAP>(data, data);
-	}
-
-	inline bool SRK_CALL Matrix44::invert(Matrix44& dst) const {
-		return Math::invert<Math::Hint::MEM_OVERLAP>(data, dst.data);
-	}
-
-	inline void SRK_CALL Matrix44::prepend(const Matrix34& rhs) {
-		prepend(rhs, *this);
-	}
-
-	inline void SRK_CALL Matrix44::prepend(const Matrix44& rhs) {
-		prepend(rhs, *this);
-	}
-
-	inline void SRK_CALL Matrix44::prepend(const Matrix34& rhs, Matrix34& dst) const {
-		Math::mul(data, rhs.data, dst.data);
-	}
-
-	inline void SRK_CALL Matrix44::prepend(const Matrix34& rhs, Matrix44& dst) const {
-		Math::mul(data, rhs.data, dst.data);
-	}
-
-	inline void SRK_CALL Matrix44::prepend(const Matrix44& rhs, Matrix34& dst) const {
-		Math::mul(data, rhs.data, dst.data);
-	}
-
-	inline void SRK_CALL Matrix44::prepend(const Matrix44& rhs, Matrix44& dst) const {
-		Math::mul(data, rhs.data, dst.data);
-	}
+	template<typename T> using Matrix3x3 = Matrix<3, 3, T>;
+	using Matrix3x3f32 = Matrix3x3<float32_t>;
+	template<typename T> using Matrix3x4 = Matrix<3, 4, T>;
+	using Matrix3x4f32 = Matrix3x4<float32_t>;
+	template<typename T> using Matrix4x4 = Matrix<4, 4, T>;
+	using Matrix4x4f32 = Matrix4x4<float32_t>;
 }

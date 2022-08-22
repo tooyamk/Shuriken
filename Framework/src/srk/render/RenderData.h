@@ -86,9 +86,9 @@ namespace srk::render {
 		std::vector<IntrusivePtr<RenderPass>>* subPasses;
 
 		struct {
-			Matrix34 l2w;
-			Matrix34 l2v;
-			Matrix44 l2p;
+			Matrix3x4f32 l2w;
+			Matrix3x4f32 l2v;
+			Matrix4x4f32 l2p;
 		} matrix;
 
 		inline void SRK_CALL set(const RenderData& data) {

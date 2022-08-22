@@ -129,34 +129,71 @@ namespace srk {
 			}
 
 			inline constexpr PosType SRK_CALL realPosition(PosType logicPos) const {
-				if (isAuto()) return logicPos;
-				return logicPos - offset;
+				return isAuto() ? logicPos : logicPos - offset;
 			}
 
 			inline constexpr std::optional<size_t> SRK_CALL realPosition(PosType logicPos, size_t realTotal) const {
-				auto readPos = realPosition(logicPos);
+				auto realPos = realPosition(logicPos);
 
 				if (isAuto()) {
-					if (readPos < 0 || readPos >= (PosType)realTotal) return std::nullopt;
-					return std::make_optional<size_t>(readPos);
+					if (realPos < 0 || realPos >= (PosType)realTotal) return std::nullopt;
+					return std::make_optional<size_t>(realPos);
 				}
 
-				if (readPos >= (PosType)begin && readPos - (PosType)begin < (PosType)length) return std::make_optional<size_t>(readPos);
+				if (realPos >= realTotal || !length) std::nullopt;
+				if (realPos >= (PosType)begin && realPos - (PosType)begin < (PosType)length) return std::make_optional<size_t>(realPos);
 
 				return std::nullopt;
 			}
 
 			inline constexpr Range SRK_CALL clamp(size_t realTotal) const {
-				if (isAuto()) Range(0, 0, realTotal);
+				if (isAuto()) return Range(0, 0, realTotal);
 
 				if (begin >= realTotal) return Range(offset, realTotal ? realTotal - 1 : 0, 0);
 				if (begin + length > realTotal) return Range(offset, begin, begin + length - realTotal);
 				return *this;
 			}
 
+			inline constexpr Range SRK_CALL clamp(size_t logicBegin, size_t logicLength, size_t realTotal) const {
+				auto r = clamp(realTotal);
+				if (!r.length) return r;
+
+				auto b = r.realPosition(logicBegin);
+				auto e = b + (PosType)logicLength;
+				if (b < (PosType)r.begin) {
+					if (e <= (PosType)r.begin) {
+						r.length = 0;
+					} else if (e < (PosType)r.beginLength()) {
+						r.length -= r.beginLength() - (size_t)e;
+					}
+
+				} else if (b > (PosType)r.begin) {
+					if (b < (PosType)r.beginLength()) {
+						auto len = (size_t)b - r.begin;
+						r.begin += len;
+						r.length -= len;
+						if (e < (PosType)r.beginLength()) r.length -= r.beginLength() - (size_t)e;
+					} else {
+						r.begin += r.length;
+						r.length = 0;
+					}
+				} else {
+					if (logicLength < r.length) r.length = logicLength;
+				}
+
+				return r;
+			}
+
 			inline constexpr Range SRK_CALL manual(const Range& range) const {
 				if (isAuto()) return range;
 				return *this;
+			}
+
+			inline constexpr size_t SRK_CALL maxLogicLength(size_t realTotal) const {
+				if (isAuto()) return realTotal;
+
+				auto e = offsetBeginLength();
+				return e < 0 ? 0 : e;
 			}
 
 			inline constexpr PosType SRK_CALL offsetBegin() const {
@@ -196,6 +233,10 @@ namespace srk {
 
 			inline constexpr Range2D SRK_CALL clamp(size_t realRows, size_t readColumns) const {
 				return Range2D(row.clamp(realRows), column.clamp(readColumns));
+			}
+
+			inline constexpr Range2D SRK_CALL clamp(size_t logicBeginRow, size_t logicBeginColumn, size_t logicRows, size_t logicColumns, size_t realRows, size_t readColumns) const {
+				return Range2D(row.clamp(logicBeginRow, logicRows, realRows), column.clamp(logicBeginColumn, logicColumns, readColumns));
 			}
 		};
 
@@ -239,6 +280,10 @@ namespace srk {
 
 			inline constexpr DataDesc SRK_CALL manual(const Range& range) const {
 				return DataDesc(type, hints, this->range.manual(range));
+			}
+
+			inline constexpr DataDesc SRK_CALL manual(Range::PosType offset, size_t begin, size_t length) const {
+				return DataDesc(type, hints, this->range.manual(Range(offset, begin, length)));
 			}
 
 			inline constexpr DataDesc SRK_CALL clamp(size_t realTotal) const {
@@ -288,8 +333,16 @@ namespace srk {
 				return Data2DDesc(type, hints, this->range.manual(range));
 			}
 
+			inline constexpr Data2DDesc SRK_CALL manual(Range::PosType offsetRow, Range::PosType offsetColumn, size_t beginRow, size_t beginColumn, size_t rows, size_t columns) const {
+				return manual(Range2D(offsetRow, offsetColumn, beginRow, beginColumn, rows, columns));
+			}
+
 			inline constexpr Data2DDesc SRK_CALL clamp(size_t realRows, size_t readColumns) const {
 				return Data2DDesc(type, hints, this->range.clamp(realRows, readColumns));
+			}
+
+			inline constexpr Data2DDesc SRK_CALL clamp(size_t logicBeginRow, size_t logicBeginColumn, size_t logicRows, size_t logicColumns, size_t realRows, size_t readColumns) const {
+				return Data2DDesc(type, hints, this->range.clamp(logicBeginRow, logicBeginColumn, logicRows, logicColumns, realRows, readColumns));
 			}
 		};
 
@@ -301,6 +354,7 @@ namespace srk {
 		template<Arithmetic T> inline static constexpr T FORE = 4;
 		template<Arithmetic T> inline static constexpr T NEGATIVE_ONE = -1;
 		template<std::floating_point T> inline static constexpr T ONE_HALF = T(.5);
+		template<std::floating_point T> inline static constexpr T QUARTER = T(.25);
 		template<std::floating_point T> inline static constexpr T TENTH = T(.1);
 		template<std::floating_point T> inline static constexpr T TWENTIETH = T(.05);
 		template<std::floating_point T> inline static constexpr T FORTIETH = T(.025);
@@ -326,6 +380,17 @@ namespace srk {
 			normalize(v1, n1);
 			normalize(v2, n2);
 			return std::acos(clamp(dot(n1, n2), -ONE<Out>, ONE<Out>));
+		}
+
+		template<DataDesc LDesc, DataDesc RDesc, size_t LN, std::floating_point LT, size_t RN, std::floating_point RT, std::floating_point Out = decltype((*(LT*)0) + (*(RT*)0))>
+		static Out SRK_CALL angle(const LT(&q1)[LN], const RT(&q2)[RN]) {
+			static_assert(LDesc.type == DataType::QUATERNION, "q1 type must be quaternion");
+			static_assert(RDesc.type == DataType::QUATERNION, "q2 type must be quaternion");
+
+			constexpr auto ldesc = LDesc.manual(0, 0, LN).clamp(LN);
+			constexpr auto rdesc = RDesc.manual(0, 0, RN).clamp(RN);
+
+			return std::acos(get<0, ldesc>(q1) * get<0, rdesc>(q2) + get<1, ldesc>(q1) * get<1, rdesc>(q2) + get<2, ldesc>(q1) * get<2, rdesc>(q2) + get<3, ldesc>(q1) * get<3, rdesc>(q2));
 		}
 
 		template<typename In1, typename In2, typename In3, typename Out = decltype((*(In1*)0) + (*(In2*)0))>
@@ -397,8 +462,8 @@ namespace srk {
 			static_assert(SrcDesc.type == DstDesc.type, "src and dst type must equal");
 			static_assert(DstDesc.type == DataType::VECTOR || DstDesc.type == DataType::QUATERNION, "dst type must be vector or quaternion");
 
-			constexpr auto sdesc = SrcDesc.manual(Range(0, 0, sizeof...(args))).clamp(sizeof...(args));
-			constexpr auto ddesc = DstDesc.manual(Range(0, 0, DstN)).clamp(DstN);
+			constexpr auto sdesc = SrcDesc.manual(0, 0, sizeof...(args)).clamp(sizeof...(args));
+			constexpr auto ddesc = DstDesc.manual(0, 0, DstN).clamp(DstN);
 
 			_copy<0, sdesc, ddesc>(dst, std::forward<Args>(args)...);
 		}
@@ -437,8 +502,8 @@ namespace srk {
 			static_assert(SrcDesc.type == DstDesc.type, "src and dst type must equal");
 			static_assert(DstDesc.type == DataType::VECTOR || DstDesc.type == DataType::QUATERNION, "dst type must be vector or quaternion");
 
-			constexpr auto sdesc = SrcDesc.manual(Range(0, 0, SrcN)).clamp(SrcN);
-			constexpr auto ddesc = DstDesc.manual(Range(0, 0, DstN)).clamp(DstN);
+			constexpr auto sdesc = SrcDesc.manual(0, 0, SrcN).clamp(SrcN);
+			constexpr auto ddesc = DstDesc.manual(0, 0, DstN).clamp(DstN);
 
 			if constexpr ((ddesc.hints & Hint::MEM_OVERLAP) == Hint::MEM_OVERLAP) {
 				DstT d[ddesc.range.length];
@@ -514,8 +579,8 @@ namespace srk {
 			static_assert(SrcDesc.type == DstDesc.type, "src and dst type must equal");
 			static_assert(DstDesc.type == DataType::MATRIX, "dst type must be matrix");
 
-			constexpr auto sdesc = SrcDesc.manual(Range2D(0, 0, 0, 0, SrcTotalRs, SrcTotalCs)).clamp(SrcTotalRs, SrcTotalCs);
-			constexpr auto ddesc = DstDesc.manual(Range2D(0, 0, 0, 0, DstTotalRs, DstTotalCs)).clamp(DstTotalRs, DstTotalCs);
+			constexpr auto sdesc = SrcDesc.manual(0, 0, 0, 0, SrcTotalRs, SrcTotalCs).clamp(SrcTotalRs, SrcTotalCs);
+			constexpr auto ddesc = DstDesc.manual(0, 0, 0, 0, DstTotalRs, DstTotalCs).clamp(DstTotalRs, DstTotalCs);
 
 			if constexpr ((ddesc.hints & Hint::OUTSIDE) == Hint::OUTSIDE) {
 				constexpr auto l = ddesc.range.column.realBeforeCount(DstTotalCs);
@@ -587,8 +652,8 @@ namespace srk {
 			static_assert(SrcDesc.type == DstDesc.type, "src and dst type must equal");
 			static_assert(DstDesc.type == DataType::MATRIX, "dst type must be matrix");
 
-			constexpr auto sdesc = SrcDesc.manual(Range2D(0, 0, 0, 0, SrcTotalRs, SrcTotalCs)).clamp(SrcTotalRs, SrcTotalCs);
-			constexpr auto ddesc = DstDesc.manual(Range2D(0, 0, 0, 0, DstTotalRs, DstTotalCs)).clamp(DstTotalRs, DstTotalCs);
+			constexpr auto sdesc = SrcDesc.manual(0, 0, 0, 0, SrcTotalRs, SrcTotalCs).clamp(SrcTotalRs, SrcTotalCs);
+			constexpr auto ddesc = DstDesc.manual(0, 0, 0, 0, DstTotalRs, DstTotalCs).clamp(DstTotalRs, DstTotalCs);
 
 			constexpr auto l = ddesc.range.column.realBeforeCount(DstTotalCs);
 			constexpr auto r = ddesc.range.column.realAfterCount(DstTotalCs);
@@ -643,17 +708,17 @@ namespace srk {
 			dst[2] = z;
 		}
 
-		template<Data2DDesc SrcDesc, Data2DDesc DstRotDesc, size_t SrcR, size_t SrcC, std::floating_point SrcT, typename RT, typename ST>
+		template<Data2DDesc SrcDesc, Data2DDesc DstRotDesc, size_t SrcRs, size_t SrcCs, std::floating_point SrcT, typename RT, typename ST>
 		requires ((std::same_as<RT, nullptr_t> || (std::is_bounded_array_v<std::remove_cvref_t<RT>> && !std::is_const_v<std::remove_reference_t<RT>> && std::floating_point<std::remove_all_extents_t<std::remove_cvref_t<RT>>> && std::rank_v<std::remove_cvref_t<RT>> == 2)) &&
 			(std::same_as<ST, nullptr_t> || (std::is_bounded_array_v<std::remove_cvref_t<ST>> && !std::is_const_v<std::remove_reference_t<ST>> && std::floating_point<std::remove_all_extents_t<std::remove_cvref_t<ST>>> && std::rank_v<std::remove_cvref_t<ST>> == 1)))
-		static void SRK_CALL decompose(const SrcT(&src)[SrcR][SrcC], RT&& dstRot, ST&& dstScale) {
+		static void SRK_CALL decompose(const SrcT(&src)[SrcRs][SrcCs], RT&& dstRot, ST&& dstScale) {
 			static_assert(SrcDesc.type == DataType::MATRIX, "src type must be matrix");
 
-			constexpr auto sdesc = SrcDesc.range.manual(Range2D(0, 0, 0, 0, SrcR, SrcC)).clamp(SrcR, SrcC);
+			constexpr auto sdesc = SrcDesc.manual(0, 0, 0, 0, SrcRs, SrcCs).clamp(SrcRs, SrcCs);
 
 			SrcT d[3][3];
 
-			SrcT xyz[3] = { get<0, 0, sdesc>(src), get<1, 0, sdesc>(src), get<2, 0, sdesc>(src) };
+			SrcT xyz[3] = { get<0, 0, sdesc, SrcRs>(src), get<1, 0, sdesc, SrcRs>(src), get<2, 0, sdesc, SrcRs>(src) };
 			for (auto i = 0; i < 3; ++i) d[i][0] = xyz[i];
 
 			auto dot = Math::dot(xyz, xyz);
@@ -664,9 +729,9 @@ namespace srk {
 				}
 			}
 
-			xyz[0] = get<0, 1, sdesc>(src);
-			xyz[1] = get<1, 1, sdesc>(src);
-			xyz[2] = get<2, 1, sdesc>(src);
+			xyz[0] = get<0, 1, sdesc, SrcRs>(src);
+			xyz[1] = get<1, 1, sdesc, SrcRs>(src);
+			xyz[2] = get<2, 1, sdesc, SrcRs>(src);
 			dot = d[0][0] * xyz[0] + d[1][0] * xyz[1] + d[2][0] * xyz[2];
 			for (auto i = 0; i < 3; ++i) {
 				xyz[i] -= d[i][0] * dot;
@@ -681,9 +746,9 @@ namespace srk {
 				}
 			}
 
-			xyz[0] = get<0, 2, sdesc>(src);
-			xyz[1] = get<1, 2, sdesc>(src);
-			xyz[2] = get<2, 2, sdesc>(src);
+			xyz[0] = get<0, 2, sdesc, SrcRs>(src);
+			xyz[1] = get<1, 2, sdesc, SrcRs>(src);
+			xyz[2] = get<2, 2, sdesc, SrcRs>(src);
 			dot = d[0][0] * xyz[0] + d[1][0] * xyz[1] + d[2][0] * xyz[2];
 			for (auto i = 0; i < 3; ++i) d[i][2] = xyz[i] - d[i][0] * dot;
 
@@ -715,17 +780,17 @@ namespace srk {
 
 			if constexpr (!std::same_as<ST, nullptr_t>) {
 				constexpr auto n = std::extent_v<std::remove_cvref_t<ST>, 0>;
-				if constexpr (n > 0) xyz[0] = d[0][0] * get<0, 0, sdesc>(src);
-				if constexpr (n > 1) xyz[1] = d[0][1] * get<0, 1, sdesc>(src);
-				if constexpr (n > 2) xyz[2] = d[0][2] * get<0, 2, sdesc>(src);
+				if constexpr (n > 0) xyz[0] = d[0][0] * get<0, 0, sdesc, SrcRs>(src);
+				if constexpr (n > 1) xyz[1] = d[0][1] * get<0, 1, sdesc, SrcRs>(src);
+				if constexpr (n > 2) xyz[2] = d[0][2] * get<0, 2, sdesc, SrcRs>(src);
 
-				if constexpr (n > 0) xyz[0] += d[1][0] * get<1, 0, sdesc>(src);
-				if constexpr (n > 1) xyz[1] += d[1][1] * get<1, 1, sdesc>(src);
-				if constexpr (n > 2) xyz[2] += d[1][2] * get<1, 2, sdesc>(src);
+				if constexpr (n > 0) xyz[0] += d[1][0] * get<1, 0, sdesc, SrcRs>(src);
+				if constexpr (n > 1) xyz[1] += d[1][1] * get<1, 1, sdesc, SrcRs>(src);
+				if constexpr (n > 2) xyz[2] += d[1][2] * get<1, 2, sdesc, SrcRs>(src);
 
-				if constexpr (n > 0) xyz[0] += d[2][0] * get<2, 0, sdesc>(src);
-				if constexpr (n > 1) xyz[1] += d[2][1] * get<2, 1, sdesc>(src);
-				if constexpr (n > 2) xyz[2] += d[2][2] * get<2, 2, sdesc>(src);
+				if constexpr (n > 0) xyz[0] += d[2][0] * get<2, 0, sdesc, SrcRs>(src);
+				if constexpr (n > 1) xyz[1] += d[2][1] * get<2, 1, sdesc, SrcRs>(src);
+				if constexpr (n > 2) xyz[2] += d[2][2] * get<2, 2, sdesc, SrcRs>(src);
 
 				if constexpr (n > 0) dstScale[0] = xyz[0];
 				if constexpr (n > 1) dstScale[1] = xyz[1];
@@ -1045,6 +1110,33 @@ namespace srk {
 			}
 		}
 
+		template<DataDesc SDesc, DataDesc DDesc, size_t SN, std::floating_point ST, size_t DN, std::floating_point DT>
+		inline static constexpr void SRK_CALL invert(const ST(&src)[SN], DT(&dst)[DN]) {
+			static_assert(SDesc.type == SDesc.type, "src and, dst type must equal");
+			static_assert(DDesc.type == DataType::QUATERNION, "dst type must be quaternion");
+
+			constexpr auto sdesc = SDesc.manual(0, 0, SN).clamp(SN);
+			constexpr auto ddesc = DDesc.manual(0, 0, DN).clamp(DN);
+
+			auto sx = get<0, sdesc, SN>(src);
+			auto sy = get<1, sdesc, SN>(src);
+			auto sz = get<2, sdesc, SN>(src);
+			auto sw = get<3, sdesc, SN>(src);
+			auto a = ONE<ST> / (sx * sx + sy * sy + sz * sz + sw * sw);
+
+			constexpr auto dx = ddesc.range.realPosition(0, DN);
+			if constexpr (dx) dst[*dx] = -sx * a;
+
+			constexpr auto dy = ddesc.range.realPosition(1, DN);
+			if constexpr (dy) dst[*dy] = -sy * a;
+
+			constexpr auto dz = ddesc.range.realPosition(2, DN);
+			if constexpr (dz) dst[*dz] = -sz * a;
+
+			constexpr auto dw = ddesc.range.realPosition(3, DN);
+			if constexpr (dw) dst[*dw] = sw * a;
+		}
+
 		template<size_t N, typename In1, typename In2, typename In3, typename Out>
 		inline static void SRK_CALL lerp(const In1(&from)[N], const In2(&to)[N], const In3 t, Out(&dst)[N]) {
 			Out tmp[N];
@@ -1054,6 +1146,8 @@ namespace srk {
 
 		template<Data2DDesc DstDesc, std::floating_point FwdT, std::floating_point UwdT, size_t DstR, size_t DstC, std::floating_point DstT>
 		static void SRK_CALL lookAt(const FwdT(&forward)[3], const UwdT(&upward)[3], DstT(&dst)[DstR][DstC]) {
+			static_assert(DstDesc.type == DataType::MATRIX, "dst type must be matrix");
+
 			auto& zaxis = forward;
 			DstT xaxis[3], yaxis[3];
 			cross(upward, zaxis, xaxis);
@@ -1066,6 +1160,22 @@ namespace srk {
 				xaxis[2], yaxis[2], zaxis[2]);
 		}
 
+		template<DataDesc DstDesc, std::floating_point FwdT, std::floating_point UwdT, size_t DstN, std::floating_point DstT>
+		static void SRK_CALL lookAt(const FwdT(&forward)[3], const UwdT(&upward)[3], DstT(&dst)[DstN]) {
+			static_assert(DstDesc.type == DataType::QUATERNION, "dst type must be quaternion");
+
+			auto& zaxis = forward;
+			DstT xaxis[3], yaxis[3];
+			cross(upward, zaxis, xaxis);
+			normalize(xaxis);
+			cross(zaxis, xaxis, yaxis);
+
+			auto w = std::sqrt(ONE<DstT> + xaxis[0] + yaxis[1] + zaxis[2]) * ONE_HALF<DstT>;
+			auto recip = QUARTER<DstT> / w;
+
+			copy<DataDesc(DataType::QUATERNION), DstDesc>(dst, (yaxis[2] - zaxis[1]) * recip, (zaxis[0] - xaxis[2]) * recip, (xaxis[1] - yaxis[0]) * recip, w);
+		}
+
 		template<Arithmetic T>
 		inline static T SRK_CALL max(const T& a, const T& b) {
 			return std::max(a, b);
@@ -1074,127 +1184,6 @@ namespace srk {
 		template<size_t N, typename In, typename Out = In>
 		inline static void SRK_CALL max(const In(&a)[N], const In(&b)[N], Out(&dst)[N]) {
 			for (decltype(N) i = 0; i < N; ++i) dst[i] = max(a[i], b[i]);
-		}
-
-		template<std::floating_point T>
-		[[deprecated]] static void SRK_CALL appendQuat(const T(&lhs)[4], const T(&rhs)[4], T(&dst)[4]) {
-			auto w = lhs[3] * rhs[3] - lhs[0] * rhs[0] - lhs[1] * rhs[1] - lhs[2] * rhs[2];
-			auto x = lhs[0] * rhs[3] + lhs[3] * rhs[0] + lhs[2] * rhs[1] - lhs[1] * rhs[2];
-			auto y = lhs[1] * rhs[3] + lhs[3] * rhs[1] + lhs[0] * rhs[2] - lhs[2] * rhs[0];
-			auto z = lhs[2] * rhs[3] + lhs[3] * rhs[2] + lhs[1] * rhs[0] - lhs[0] * rhs[1];
-
-			dst[0] = x;
-			dst[1] = y;
-			dst[2] = z;
-			dst[3] = w;
-		}
-
-		template<std::floating_point T>
-		[[deprecated]] static void SRK_CALL rotateQuat(const T(&q)[4], const T(&p)[3], float32_t(&dst)[3]) {
-			auto w = -p[0] * q[0] - p[1] * q[1] - p[2] * q[2];
-			auto x = q[3] * p[0] + q[1] * p[2] - q[2] * p[1];
-			auto y = q[3] * p[1] - q[0] * p[2] + q[2] * p[0];
-			auto z = q[3] * p[2] + q[0] * p[1] - q[1] * p[0];
-
-			auto dx = -w * q[0] + x * q[3] - y * q[2] + z * q[1];
-			auto dy = -w * q[1] + x * q[2] + y * q[3] - z * q[0];
-			dst[0] = dx;
-			dst[1] = dy;
-			dst[2] = -w * q[2] - x * q[1] + y * q[0] + z * q[3];
-		}
-
-		template<std::floating_point L, std::floating_point R, std::floating_point Out>
-		[[deprecated]] static void SRK_CALL mul(const L(&lhs)[3][4], const R(&rhs)[3][4], Out(&dst)[3][4]) {
-			Out m[3][4];
-
-			for (uint8_t c = 0; c < 3; ++c) {
-				auto& mc = m[c];
-				auto& rc = rhs[c];
-				mc[0] = lhs[0][0] * rc[0] + lhs[1][0] * rc[1] + lhs[2][0] * rc[2];
-				mc[1] = lhs[0][1] * rc[0] + lhs[1][1] * rc[1] + lhs[2][1] * rc[2];
-				mc[2] = lhs[0][2] * rc[0] + lhs[1][2] * rc[1] + lhs[2][2] * rc[2];
-				mc[3] = lhs[0][3] * rc[0] + lhs[1][3] * rc[1] + lhs[2][3] * rc[2] + rc[3];
-			}
-
-			memcpy(dst, m, sizeof(m));
-		}
-
-		template<std::floating_point L, std::floating_point R, std::floating_point Out>
-		[[deprecated]] static void SRK_CALL mul(const L(&lhs)[3][4], const R(&rhs)[3][4], Out(&dst)[4][4]) {
-			mul(lhs, rhs, (Out(&)[3][4])dst);
-
-			dst[3][0] = ZERO<Out>;
-			dst[3][1] = ZERO<Out>;
-			dst[3][2] = ZERO<Out>;
-			dst[3][3] = ONE<Out>;
-		}
-
-		template<std::floating_point L, std::floating_point R, std::floating_point Out>
-		[[deprecated]] inline static void SRK_CALL mul(const L(&lhs)[3][4], const R(&rhs)[4][4], Out(&dst)[3][4]) {
-			mul(lhs, (R(&)[3][4])rhs, (Out(&)[3][4])dst);
-		}
-
-		template<std::floating_point L, std::floating_point R, std::floating_point Out>
-		[[deprecated]] static void SRK_CALL mul(const L(&lhs)[3][4], const R(&rhs)[4][4], Out(&dst)[4][4]) {
-			Out m[4][4];
-
-			for (uint8_t c = 0; c < 4; ++c) {
-				auto& mc = m[c];
-				auto& rc = rhs[c];
-				mc[0] = lhs[0][0] * rc[0] + lhs[1][0] * rc[1] + lhs[2][0] * rc[2];
-				mc[1] = lhs[0][1] * rc[0] + lhs[1][1] * rc[1] + lhs[2][1] * rc[2];
-				mc[2] = lhs[0][2] * rc[0] + lhs[1][2] * rc[1] + lhs[2][2] * rc[2];
-				mc[3] = lhs[0][3] * rc[0] + lhs[1][3] * rc[1] + lhs[2][3] * rc[2] + rc[3];
-			}
-
-			memcpy(dst, m, sizeof(m));
-		}
-
-		template<std::floating_point L, std::floating_point R, std::floating_point Out>
-		[[deprecated]] static void SRK_CALL mul(const L(&lhs)[4][4], const R(&rhs)[3][4], Out(&dst)[3][4]) {
-			Out m[3][4];
-
-			for (uint8_t c = 0; c < 3; ++c) {
-				auto& mc = m[c];
-				auto& rc = rhs[c];
-				mc[0] = lhs[0][0] * rc[0] + lhs[1][0] * rc[1] + lhs[2][0] * rc[2] + lhs[3][0] * rc[3];
-				mc[1] = lhs[0][1] * rc[0] + lhs[1][1] * rc[1] + lhs[2][1] * rc[2] + lhs[3][1] * rc[3];
-				mc[2] = lhs[0][2] * rc[0] + lhs[1][2] * rc[1] + lhs[2][2] * rc[2] + lhs[3][2] * rc[3];
-				mc[3] = lhs[0][3] * rc[0] + lhs[1][3] * rc[1] + lhs[2][3] * rc[2] + lhs[3][3] * rc[3];
-			}
-
-			memcpy(dst, m, sizeof(m));
-		}
-
-		template<std::floating_point L, std::floating_point R, std::floating_point Out>
-		[[deprecated]] static void SRK_CALL mul(const L(&lhs)[4][4], const R(&rhs)[3][4], Out(&dst)[4][4]) {
-			mul(lhs, rhs, (Out(&)[3][4])dst);
-
-			dst[3][0] = lhs[3][0];
-			dst[3][1] = lhs[3][1];
-			dst[3][2] = lhs[3][2];
-			dst[3][3] = lhs[3][3];
-		}
-
-		template<std::floating_point L, std::floating_point R, std::floating_point Out>
-		[[deprecated]] inline static void SRK_CALL mul(const L(&lhs)[4][4], const R(&rhs)[4][4], Out(&dst)[3][4]) {
-			mul(lhs, (R(&)[3][4])rhs, dst);
-		}
-
-		template<std::floating_point L, std::floating_point R, std::floating_point Out>
-		[[deprecated]] static void SRK_CALL mul(const L(&lhs)[4][4], const R(&rhs)[4][4], Out(&dst)[4][4]) {
-			Out m[4][4];
-
-			for (uint8_t c = 0; c < 4; ++c) {
-				auto& mc = m[c];
-				auto& rc = rhs[c];
-				mc[0] = lhs[0][0] * rc[0] + lhs[1][0] * rc[1] + lhs[2][0] * rc[2] + lhs[3][0] * rc[3];
-				mc[1] = lhs[0][1] * rc[0] + lhs[1][1] * rc[1] + lhs[2][1] * rc[2] + lhs[3][1] * rc[3];
-				mc[2] = lhs[0][2] * rc[0] + lhs[1][2] * rc[1] + lhs[2][2] * rc[2] + lhs[3][2] * rc[3];
-				mc[3] = lhs[0][3] * rc[0] + lhs[1][3] * rc[1] + lhs[2][3] * rc[2] + lhs[3][3] * rc[3];
-			}
-
-			memcpy(dst, m, sizeof(dst));
 		}
 
 	private:
@@ -1235,7 +1224,7 @@ namespace srk {
 
 			if constexpr (ddesc.type == DataType::QUATERNION) {
 				if constexpr ((ddesc.hints & Hint::MEM_OVERLAP) == Hint::MEM_OVERLAP) {
-					constexpr auto desc = DataDesc(ddesc.type, ddesc.hints & (~Hint::MEM_OVERLAP), ddesc.range.realRange(0, std::min(4, ddesc.range.length), DN));
+					constexpr auto desc = DataDesc(ddesc.type, ddesc.hints & (~Hint::MEM_OVERLAP), ddesc.range.realRange(0, std::min(FORE<size_t>, ddesc.range.length), DN));
 					if constexpr (desc.range.length) {
 						DT d[desc.range.length];
 						mul<ldesc, rdesc, desc>(lhs, rhs, d);
@@ -1365,9 +1354,9 @@ namespace srk {
 			static_assert(LDesc.type == DDesc.type && RDesc.type == DDesc.type, "lhs, rhs, dst type must equal");
 			static_assert(DDesc.type == DataType::MATRIX, "dst type must be matrix");
 
-			constexpr auto ldesc = LDesc.manual(Range2D(0, 0, 0, 0, LRs, LCs)).clamp(LRs, LCs);
-			constexpr auto rdesc = RDesc.manual(Range2D(0, 0, 0, 0, RRs, RCs)).clamp(RRs, RCs);
-			constexpr auto ddesc = DDesc.manual(Range2D(0, 0, 0, 0, DRs, DCs)).clamp(DRs, DCs);
+			constexpr auto ldesc = LDesc.manual(0, 0, 0, 0, LRs, LCs).clamp(LRs, LCs);
+			constexpr auto rdesc = RDesc.manual(0, 0, 0, 0, RRs, RCs).clamp(RRs, RCs);
+			constexpr auto ddesc = DDesc.manual(0, 0, 0, 0, DRs, DCs).clamp(DRs, DCs);
 
 			if constexpr (ddesc.range.row.length && ddesc.range.column.length) {
 				if constexpr ((ddesc.hints & Hint::MEM_OVERLAP) == Hint::MEM_OVERLAP) {
@@ -1468,9 +1457,9 @@ namespace srk {
 			static_assert(RDesc.type == DataType::MATRIX_SCALE, "rhs type must be matrix_scale");
 			static_assert(DDesc.type == DataType::MATRIX, "dst type must be matrix");
 
-			constexpr auto ldesc = LDesc.manual(Range2D(0, 0, 0, 0, LRs, LCs)).clamp(LRs, LCs);
-			constexpr auto rdesc = RDesc.manual(Range(0, 0, RN)).clamp(RN);
-			constexpr auto ddesc = DDesc.manual(Range2D(0, 0, 0, 0, DRs, DCs)).clamp(DRs, DCs);
+			constexpr auto ldesc = LDesc.manual(0, 0, 0, 0, LRs, LCs).clamp(LRs, LCs);
+			constexpr auto rdesc = RDesc.manual(0, 0, RN).clamp(RN);
+			constexpr auto ddesc = DDesc.manual(0, 0, 0, 0, DRs, DCs).clamp(DRs, DCs);
 
 			if constexpr (ddesc.range.row.length && ddesc.range.column.length) {
 				if constexpr ((ddesc.hints & Hint::MEM_OVERLAP) == Hint::MEM_OVERLAP) {
@@ -1577,9 +1566,9 @@ namespace srk {
 			static_assert(RDesc.type == DDesc.type, "rhs and dst type must equal");
 			static_assert(DDesc.type == DataType::MATRIX, "dst type must be matrix");
 
-			constexpr auto ldesc = LDesc.manual(Range(0, 0, LN)).clamp(LN);
-			constexpr auto rdesc = RDesc.manual(Range2D(0, 0, 0, 0, RRs, RCs)).clamp(RRs, RCs);
-			constexpr auto ddesc = DDesc.manual(Range2D(0, 0, 0, 0, DRs, DCs)).clamp(DRs, DCs);
+			constexpr auto ldesc = LDesc.manual(0, 0, LN).clamp(LN);
+			constexpr auto rdesc = RDesc.manual(0, 0, 0, 0, RRs, RCs).clamp(RRs, RCs);
+			constexpr auto ddesc = DDesc.manual(0, 0, 0, 0, DRs, DCs).clamp(DRs, DCs);
 
 			if constexpr (ddesc.range.row.length && ddesc.range.column.length) {
 				if constexpr ((ddesc.hints & Hint::MEM_OVERLAP) == Hint::MEM_OVERLAP) {
@@ -1591,51 +1580,6 @@ namespace srk {
 					_mulLoopRows_LScale<0, ldesc, rdesc, ddesc>(lhs, rhs, dst);
 				}
 			}
-		}
-
-		[[deprecated]] inline static void SRK_CALL mul(const float32_t(&m)[3][4], const float32_t(&p)[3], float32_t(&dst)[3]) {
-			auto x = p[0] * m[0][0] + p[1] * m[0][1] + p[2] * m[0][2] + m[0][3];
-			auto y = p[0] * m[1][0] + p[1] * m[1][1] + p[2] * m[1][2] + m[1][3];
-			auto z = p[0] * m[2][0] + p[1] * m[2][1] + p[2] * m[2][2] + m[2][3];
-
-			dst[0] = x;
-			dst[1] = y;
-			dst[2] = z;
-		}
-
-		[[deprecated]] inline static void SRK_CALL mul(const float32_t(&m)[4][4], const float32_t(&p)[4], float32_t(&dst)[4]) {
-			auto x = p[0] * m[0][0] + p[1] * m[0][1] + p[2] * m[0][2] + p[3] * m[0][3];
-			auto y = p[0] * m[1][0] + p[1] * m[1][1] + p[2] * m[1][2] + p[3] * m[1][3];
-			auto z = p[0] * m[2][0] + p[1] * m[2][1] + p[2] * m[2][2] + p[3] * m[2][3];
-			auto w = p[0] * m[3][0] + p[1] * m[3][1] + p[2] * m[3][2] + p[3] * m[3][3];
-
-			dst[0] = x;
-			dst[1] = y;
-			dst[2] = z;
-			dst[3] = w;
-		}
-
-		[[deprecated]] inline static void SRK_CALL mul(const float32_t(&m)[4][4], const float32_t(&p)[3], float32_t(&dst)[4]) {
-			auto x = p[0] * m[0][0] + p[1] * m[0][1] + p[2] * m[0][2] + m[0][3];
-			auto y = p[0] * m[1][0] + p[1] * m[1][1] + p[2] * m[1][2] + m[1][3];
-			auto z = p[0] * m[2][0] + p[1] * m[2][1] + p[2] * m[2][2] + m[2][3];
-			auto w = p[0] * m[3][0] + p[1] * m[3][1] + p[2] * m[3][2] + m[3][3];
-
-			dst[0] = x;
-			dst[1] = y;
-			dst[2] = z;
-			dst[3] = w;
-		}
-
-		[[deprecated]] inline static void SRK_CALL mul(const float32_t(&m)[4][4], const float32_t(&p)[3], float32_t(&dst)[3]) {
-			auto x = p[0] * m[0][0] + p[1] * m[0][1] + p[2] * m[0][2] + m[0][3];
-			auto y = p[0] * m[1][0] + p[1] * m[1][1] + p[2] * m[1][2] + m[1][3];
-			auto z = p[0] * m[2][0] + p[1] * m[2][1] + p[2] * m[2][2] + m[2][3];
-			auto w = p[0] * m[3][0] + p[1] * m[3][1] + p[2] * m[3][2] + m[3][3];
-
-			dst[0] = x / w;
-			dst[1] = y / w;
-			dst[2] = z / w;
 		}
 
 		template<size_t N, typename In, typename Out = In>
@@ -1773,8 +1717,31 @@ namespace srk {
 			return deg * RAD<T>;
 		}
 
+		template<DataDesc DstDesc, std::floating_point RadT, size_t DstN, std::floating_point DstT>
+		static void SRK_CALL rotation(const RadT(&radians)[3], DstT(&dst)[DstN]) {
+			static_assert(DstDesc.type == DataType::QUATERNION, "dst type must be quaternion");
+
+			auto x = radians[0] * ONE_HALF<RadT>;
+			auto y = radians[1] * ONE_HALF<RadT>;
+			auto z = radians[2] * ONE_HALF<RadT>;
+
+			auto sx = std::sin(x);
+			auto cx = std::cos(x);
+			auto sy = std::sin(y);
+			auto cy = std::cos(y);
+			auto sz = std::sin(z);
+			auto cz = std::cos(z);
+
+			auto sxcy = sx * cy;
+			auto cxsy = cx * sy;
+			auto cxcy = cx * cy;
+			auto sxsy = sx * sy;
+
+			copy<DataDesc(DataType::QUATERNION), DstDesc>(dst, sxcy * cz - cxsy * sz, cxsy * cz + sxcy * sz, cxcy * sz - sxsy * cz, cxcy * cz + sxsy * sz);
+		}
+
 		template<Data2DDesc DstDesc, std::floating_point AxisT, std::floating_point RadT, size_t DstR, size_t DstC, std::floating_point DstT>
-		static void SRK_CALL rotationAxis(const AxisT(&axis)[3], RadT radian, DstT(&dst)[DstR][DstC]) {
+		static void SRK_CALL rotation(const AxisT(&axis)[3], RadT radian, DstT(&dst)[DstR][DstC]) {
 			static_assert(DstDesc.type == DataType::MATRIX, "dst type must be matrix");
 
 			auto sin = std::sin(radian);
@@ -1795,6 +1762,16 @@ namespace srk {
 				cos1xz + ysin,         cos1yz - xsin,         cos + cos1 * axis[2] * axis[2]);
 		}
 
+		template<DataDesc DstDesc, std::floating_point AxisT, std::floating_point RadT, size_t DstN, std::floating_point DstT>
+		static void SRK_CALL rotation(const AxisT(&axis)[3], RadT radian, DstT(&dst)[DstN]) {
+			static_assert(DstDesc.type == DataType::QUATERNION, "dst type must be quaternion");
+
+			radian *= ONE_HALF<RadT>;
+			auto s = std::sin(radian);
+
+			copy<DataDesc(DataType::QUATERNION), DstDesc>(dst, -axis[0] * s, -axis[1] * s, -axis[2] * s, std::cos(radian));
+		}
+
 		template<Data2DDesc DstDesc, std::floating_point RadT, size_t DstR, size_t DstC, std::floating_point DstT>
 		static void SRK_CALL rotationX(RadT radian, DstT(&dst)[DstR][DstC]) {
 			static_assert(DstDesc.type == DataType::MATRIX, "dst type must be matrix");
@@ -1806,6 +1783,17 @@ namespace srk {
 				ONE<DstT>,  ZERO<DstT>, ZERO<DstT>,
 				ZERO<DstT>, cos,        -sin,
 				ZERO<DstT>, sin,        cos);
+		}
+
+		template<DataDesc DstDesc, std::floating_point RadT, size_t DstN, std::floating_point DstT>
+		static void SRK_CALL rotationX(RadT radian, DstT(&dst)[DstN]) {
+			static_assert(DstDesc.type == DataType::QUATERNION, "dst type must be quaternion");
+
+			radian *= ONE_HALF<RadT>;
+			auto x = std::sin(radian);
+			auto w = std::cos(radian);
+
+			copy<DataDesc(DataType::QUATERNION), DstDesc>(dst, x, ZERO<DstT>, ZERO<DstT>, w);
 		}
 
 		template<Data2DDesc DstDesc, std::floating_point RadT, size_t DstR, size_t DstC, std::floating_point DstT>
@@ -1821,6 +1809,17 @@ namespace srk {
 				-sin,       ZERO<DstT>, cos);
 		}
 
+		template<DataDesc DstDesc, std::floating_point RadT, size_t DstN, std::floating_point DstT>
+		static void SRK_CALL rotationY(RadT radian, DstT(&dst)[DstN]) {
+			static_assert(DstDesc.type == DataType::QUATERNION, "dst type must be quaternion");
+
+			radian *= ONE_HALF<RadT>;
+			auto y = std::sin(radian);
+			auto w = std::cos(radian);
+
+			copy<DataDesc(DataType::QUATERNION), DstDesc>(dst, ZERO<DstT>, y, ZERO<DstT>, w);
+		}
+
 		template<Data2DDesc DstDesc, std::floating_point RadT, size_t DstR, size_t DstC, std::floating_point DstT>
 		static void SRK_CALL rotationZ(RadT radian, DstT(&dst)[DstR][DstC]) {
 			static_assert(DstDesc.type == DataType::MATRIX, "dst type must be matrix");
@@ -1832,6 +1831,17 @@ namespace srk {
 				cos,        -sin,       ZERO<DstT>,
 				sin,        cos,        ZERO<DstT>,
 				ZERO<DstT>, ZERO<DstT>, ONE<DstT>);
+		}
+
+		template<DataDesc DstDesc, std::floating_point RadT, size_t DstN, std::floating_point DstT>
+		static void SRK_CALL rotationZ(RadT radian, DstT(&dst)[DstN]) {
+			static_assert(DstDesc.type == DataType::QUATERNION, "dst type must be quaternion");
+
+			radian *= ONE_HALF<RadT>;
+			auto z = std::sin(radian);
+			auto w = std::cos(radian);
+
+			copy<DataDesc(DataType::QUATERNION), DstDesc>(dst, ZERO<DstT>, ZERO<DstT>, z, w);
 		}
 
 		template<DataDesc ScaleDesc, Data2DDesc DstDesc, size_t SN, std::floating_point ST, size_t DstR, size_t DstC, std::floating_point DstT>
@@ -1914,16 +1924,16 @@ namespace srk {
 		}
 
 		template<DataDesc SrcDesc, Data2DDesc DstDesc, size_t SrcN, std::floating_point SrcT, size_t DstRs, size_t DstCs, std::floating_point DstT>
-		static void SRK_CALL transform(SrcT(&src)[SrcN], const DstT(&dst)[DstRs][DstCs]) {
+		static void SRK_CALL transform(const SrcT(&src)[SrcN], DstT(&dst)[DstRs][DstCs]) {
 			static_assert(SrcDesc.type == DataType::QUATERNION, "src type must be quaternion");
 			static_assert(DstDesc.type == DataType::MATRIX, "dst type must be matrix");
 
-			constexpr auto sdesc = SrcDesc.manual(Range(0, 0, SrcN)).clamp(SrcN);
+			constexpr auto sdesc = SrcDesc.manual(0, 0, SrcN).clamp(SrcN);
 
-			auto&& qx = get<0, sdesc>(src);
-			auto&& qy = get<1, sdesc>(src);
-			auto&& qz = get<2, sdesc>(src);
-			auto&& qw = get<3, sdesc>(src);
+			auto&& qx = get<0, sdesc, SrcN>(src);
+			auto&& qy = get<1, sdesc, SrcN>(src);
+			auto&& qz = get<2, sdesc, SrcN>(src);
+			auto&& qw = get<3, sdesc, SrcN>(src);
 
 			auto x2 = qx * TWO<SrcT>, y2 = qy * TWO<SrcT>, z2 = qz * TWO<SrcT>;
 			auto xx = qx * x2;
@@ -1947,50 +1957,50 @@ namespace srk {
 			static_assert(SrcDesc.type == DataType::MATRIX, "src type must be matrix");
 			static_assert(DstDesc.type == DataType::QUATERNION, "dst type must be quaternion");
 
-			constexpr auto ddesc = DstDesc.manual(Range(0, 0, DstN)).clamp(DstN);
+			constexpr auto ddesc = DstDesc.manual(0, 0, DstN).clamp(DstN);
 
 			constexpr auto dx = ddesc.range.realPosition(0, DstN);
 			constexpr auto dy = ddesc.range.realPosition(1, DstN);
 			constexpr auto dz = ddesc.range.realPosition(2, DstN);
 			constexpr auto dw = ddesc.range.realPosition(3, DstN);
 
-			if (auto tr = get<0, 0, SrcDesc>(src) + get<1, 1, SrcDesc>(src) + get<2, 2, SrcDesc>(src); tr > ZERO<SrcT>) {
+			if (auto tr = get<0, 0, SrcDesc, SrcRs>(src) + get<1, 1, SrcDesc, SrcRs>(src) + get<2, 2, SrcDesc, SrcRs>(src); tr > ZERO<SrcT>) {
 				auto s = std::sqrt(tr + ONE<decltype(tr)>);
 				if constexpr (dw) dst[*dw] = s * ONE_HALF<SrcT>;
 				s = ONE_HALF<SrcT> / s;
-				if constexpr (dx) dst[*dx] = (get<2, 1, SrcDesc>(src) - get<1, 2, SrcDesc>(src)) * s;
-				if constexpr (dy) dst[*dy] = (get<0, 2, SrcDesc>(src) - get<2, 0, SrcDesc>(src)) * s;
-				if constexpr (dz) dst[*dz] = (get<1, 0, SrcDesc>(src) - get<0, 1, SrcDesc>(src)) * s;
-			} else if (get<1, 1, SrcDesc>(src) > get<0, 0, SrcDesc>(src)) {
-				if (get<2, 2, SrcDesc>(src) > get<1, 1, SrcDesc>(src)) {//2
-					auto s = std::sqrt(get<2, 2, SrcDesc>(src) - get<1, 1, SrcDesc>(src) - get<0, 0, SrcDesc>(src) + ONE<SrcT>);
+				if constexpr (dx) dst[*dx] = (get<2, 1, SrcDesc, SrcRs>(src) - get<1, 2, SrcDesc, SrcRs>(src)) * s;
+				if constexpr (dy) dst[*dy] = (get<0, 2, SrcDesc, SrcRs>(src) - get<2, 0, SrcDesc, SrcRs>(src)) * s;
+				if constexpr (dz) dst[*dz] = (get<1, 0, SrcDesc, SrcRs>(src) - get<0, 1, SrcDesc, SrcRs>(src)) * s;
+			} else if (get<1, 1, SrcDesc, SrcRs>(src) > get<0, 0, SrcDesc, SrcRs>(src)) {
+				if (get<2, 2, SrcDesc, SrcRs>(src) > get<1, 1, SrcDesc, SrcRs>(src)) {//2
+					auto s = std::sqrt(get<2, 2, SrcDesc, SrcRs>(src) - get<1, 1, SrcDesc, SrcRs>(src) - get<0, 0, SrcDesc, SrcRs>(src) + ONE<SrcT>);
 					if constexpr (dz) dst[*dz] = s * ONE_HALF<SrcT>;
 					s = ONE_HALF<SrcT> / s;
-					if constexpr (dx) dst[*dx] = (get<0, 2, SrcDesc>(src) + get<2, 0, SrcDesc>(src)) * s;
-					if constexpr (dy) dst[*dy] = (get<1, 2, SrcDesc>(src) + get<2, 1, SrcDesc>(src)) * s;
-					if constexpr (dw) dst[*dw] = (get<1, 0, SrcDesc>(src) - get<0, 1, SrcDesc>(src)) * s;
+					if constexpr (dx) dst[*dx] = (get<0, 2, SrcDesc, SrcRs>(src) + get<2, 0, SrcDesc, SrcRs>(src)) * s;
+					if constexpr (dy) dst[*dy] = (get<1, 2, SrcDesc, SrcRs>(src) + get<2, 1, SrcDesc, SrcRs>(src)) * s;
+					if constexpr (dw) dst[*dw] = (get<1, 0, SrcDesc, SrcRs>(src) - get<0, 1, SrcDesc, SrcRs>(src)) * s;
 				} else {//1
-					auto s = std::sqrt(get<1, 1, SrcDesc>(src) - get<2, 2, SrcDesc>(src) - get<0, 0, SrcDesc>(src) + ONE<SrcT>);
+					auto s = std::sqrt(get<1, 1, SrcDesc, SrcRs>(src) - get<2, 2, SrcDesc, SrcRs>(src) - get<0, 0, SrcDesc, SrcRs>(src) + ONE<SrcT>);
 					if constexpr (dy) dst[*dy] = s * ONE_HALF<SrcT>;
 					s = ONE_HALF<SrcT> / s;
-					if constexpr (dx) dst[*dx] = (get<0, 1, SrcDesc>(src) + get<1, 0, SrcDesc>(src)) * s;
-					if constexpr (dz) dst[*dz] = (get<1, 2, SrcDesc>(src) + get<2, 1, SrcDesc>(src)) * s;
-					if constexpr (dw) dst[*dw] = (get<0, 2, SrcDesc>(src) - get<2, 0, SrcDesc>(src)) * s;
+					if constexpr (dx) dst[*dx] = (get<0, 1, SrcDesc, SrcRs>(src) + get<1, 0, SrcDesc, SrcRs>(src)) * s;
+					if constexpr (dz) dst[*dz] = (get<1, 2, SrcDesc, SrcRs>(src) + get<2, 1, SrcDesc, SrcRs>(src)) * s;
+					if constexpr (dw) dst[*dw] = (get<0, 2, SrcDesc, SrcRs>(src) - get<2, 0, SrcDesc, SrcRs>(src)) * s;
 				}
-			} else if (get<2, 2, SrcDesc>(src) > get<0, 0, SrcDesc>(src)) {//2
-				auto s = std::sqrt(get<2, 2, SrcDesc>(src) - get<1, 1, SrcDesc>(src) - get<0, 0, SrcDesc>(src) + ONE<SrcT>);
+			} else if (get<2, 2, SrcDesc, SrcRs>(src) > get<0, 0, SrcDesc, SrcRs>(src)) {//2
+				auto s = std::sqrt(get<2, 2, SrcDesc, SrcRs>(src) - get<1, 1, SrcDesc, SrcRs>(src) - get<0, 0, SrcDesc, SrcRs>(src) + ONE<SrcT>);
 				if constexpr (dz) dst[*dz] = s * ONE_HALF<SrcT>;
 				s = ONE_HALF<SrcT> / s;
-				if constexpr (dx) dst[*dx] = (get<0, 2, SrcDesc>(src) + get<2, 0, SrcDesc>(src)) * s;
-				if constexpr (dy) dst[*dy] = (get<1, 2, SrcDesc>(src) + get<2, 1, SrcDesc>(src)) * s;
-				if constexpr (dw) dst[*dw] = (get<1, 0, SrcDesc>(src) - get<0, 1, SrcDesc>(src)) * s;
+				if constexpr (dx) dst[*dx] = (get<0, 2, SrcDesc, SrcRs>(src) + get<2, 0, SrcDesc, SrcRs>(src)) * s;
+				if constexpr (dy) dst[*dy] = (get<1, 2, SrcDesc, SrcRs>(src) + get<2, 1, SrcDesc, SrcRs>(src)) * s;
+				if constexpr (dw) dst[*dw] = (get<1, 0, SrcDesc, SrcRs>(src) - get<0, 1, SrcDesc, SrcRs>(src)) * s;
 			} else {//0
-				auto s = std::sqrt(get<0, 0, SrcDesc>(src) - get<1, 1, SrcDesc>(src) - get<2, 2, SrcDesc>(src) + ONE<SrcT>);
+				auto s = std::sqrt(get<0, 0, SrcDesc, SrcRs>(src) - get<1, 1, SrcDesc, SrcRs>(src) - get<2, 2, SrcDesc, SrcRs>(src) + ONE<SrcT>);
 				if constexpr (dx) dst[*dx] = s * ONE_HALF<SrcT>;
 				s = ONE_HALF<SrcT> / s;
-				if constexpr (dy) dst[*dy] = (get<0, 1, SrcDesc>(src) + get<1, 0, SrcDesc>(src)) * s;
-				if constexpr (dz) dst[*dz] = (get<0, 2, SrcDesc>(src) + get<2, 0, SrcDesc>(src)) * s;
-				if constexpr (dw) dst[*dw] = (get<2, 1, SrcDesc>(src) - get<1, 2, SrcDesc>(src)) * s;
+				if constexpr (dy) dst[*dy] = (get<0, 1, SrcDesc, SrcRs>(src) + get<1, 0, SrcDesc, SrcRs>(src)) * s;
+				if constexpr (dz) dst[*dz] = (get<0, 2, SrcDesc, SrcRs>(src) + get<2, 0, SrcDesc, SrcRs>(src)) * s;
+				if constexpr (dw) dst[*dw] = (get<2, 1, SrcDesc, SrcRs>(src) - get<1, 2, SrcDesc, SrcRs>(src)) * s;
 			}
 		}
 
@@ -2002,9 +2012,9 @@ namespace srk {
 			static_assert(RDesc.type == DataType::VECTOR, "rhs type must be vector");
 			static_assert(DDesc.type == DataType::VECTOR, "dst type must be vector");
 
-			constexpr auto ldesc = LDesc.manual(Range2D(0, 0, 0, 0, LRs, LCs)).clamp(LRs, LCs);
-			constexpr auto rdesc = RDesc.manual(Range(0, 0, RN)).clamp(RN);
-			constexpr auto ddesc = DDesc.manual(Range(0, 0, DN)).clamp(DN);
+			constexpr auto ldesc = LDesc.manual(0, 0, 0, 0, LRs, LCs).clamp(LRs, LCs);
+			constexpr auto rdesc = RDesc.manual(0, 0, RN).clamp(RN);
+			constexpr auto ddesc = DDesc.manual(0, 0, DN).clamp(DN);
 
 			if constexpr (ddesc.range.length) {
 				constexpr auto lr = LDesc.range.row.isAuto() ? ldesc.range.row.offsetBeginLength() : LDesc.range.row.offsetBeginLength();
@@ -2012,14 +2022,12 @@ namespace srk {
 				constexpr auto dr = DDesc.range.isAuto() ? ddesc.range.offsetBeginLength() : DDesc.range.offsetBeginLength();
 
 				if constexpr (dr > 3) {
-					constexpr auto rlen = std::max(Math::ZERO<Math::Range::PosType>, Math::FORE<Math::Range::PosType> +rdesc.range.realPosition(0));
-					constexpr auto dlen = std::max(Math::ZERO<Math::Range::PosType>, Math::FORE<Math::Range::PosType> +ddesc.range.realPosition(0));
-					constexpr auto rd = Data2DDesc(DataType::MATRIX, rdesc.hints, Range2D(rdesc.range.offset, 3, rdesc.range.begin, 0, rlen, 1));
-					constexpr auto dd = Data2DDesc(DataType::MATRIX, ddesc.hints, Range2D(ddesc.range.offset, 3, ddesc.range.begin, 0, dlen, 1));
+					constexpr auto rd = Data2DDesc(DataType::MATRIX, rdesc.hints, Range2D(rdesc.range.offset, 3, rdesc.range.begin, 0, rdesc.range.length, 1)).clamp(0, 3, 3, 1, RN, 1);
+					constexpr auto dd = Data2DDesc(DataType::MATRIX, ddesc.hints, Range2D(ddesc.range.offset, 3, ddesc.range.begin, 0, ddesc.range.length, 1)).clamp(0, 3, 3, 1, DN, 1);
 					mul<ldesc, rd, dd>(lhs, (RT(&)[RN][1])rhs, (DT(&)[DN][1])dst);
 				} else if constexpr (lr > 3 || rr > 3) {
 					constexpr auto rd = Data2DDesc(DataType::MATRIX, rdesc.hints, Range2D(rdesc.range.offset, 3, rdesc.range.begin, 0, rdesc.range.length, 1));
-					constexpr auto dw = Data2DDesc(DataType::MATRIX, ddesc.hints, Range2D(3, 3, 0, 0, 1, 1));
+					constexpr auto dw = Data2DDesc(DataType::MATRIX, ddesc.hints & (~Hint::MEM_OVERLAP), Range2D(3, 3, 0, 0, 1, 1));
 					DT w[1][1];
 					mul<ldesc, rd, dw>(lhs, (RT(&)[RN][1])rhs, w);
 
@@ -2042,12 +2050,55 @@ namespace srk {
 			}
 		}
 
-		template<Data2DDesc DstDesc, std::floating_point TT, size_t DstR, size_t DstC, std::floating_point DstT>
-		static void SRK_CALL translation(const TT(&t)[3], DstT(&dst)[DstR][DstC]) {
-			copy<Data2DDesc(DataType::MATRIX), 3, 4, DstDesc>(dst,
-				ONE<DstT>,  ZERO<DstT>, ZERO<DstT>, t[0],
-				ZERO<DstT>, ONE<DstT>,  ZERO<DstT>, t[1],
-				ZERO<DstT>, ZERO<DstT>, ONE<DstT>,  t[2]);
+		template<DataDesc LDesc, DataDesc RDesc, DataDesc DDesc, size_t LN, std::floating_point LT, size_t RN, std::floating_point RT, size_t DN, std::floating_point DT>
+		static void SRK_CALL transform(const LT(&lhs)[LN], const RT(&rhs)[RN], DT(&dst)[DN]) {
+			using namespace srk::enum_operators;
+
+			static_assert(LDesc.type == DataType::QUATERNION, "lhs type must be quaternion");
+			static_assert(RDesc.type == DataType::VECTOR, "rhs type must be vector");
+			static_assert(DDesc.type == DataType::VECTOR, "dst type must be vector");
+
+			constexpr auto ldesc = LDesc.manual(0, 0, LN).clamp(LN);
+			constexpr auto rdesc = RDesc.manual(0, 0, RN).clamp(RN);
+			constexpr auto ddesc = DDesc.manual(0, 0, DN).clamp(DN);
+
+			auto qx = get<0, ldesc>(lhs);
+			auto qy = get<1, ldesc>(lhs);
+			auto qz = get<2, ldesc>(lhs);
+			auto qw = get<3, ldesc>(lhs);
+
+			auto px = get<0, rdesc>(rhs);
+			auto py = get<1, rdesc>(rhs);
+			auto pz = get<2, rdesc>(rhs);
+
+			auto w = -px * qx - py * qy - pz * qz;
+			auto x = qw * px + qy * pz - qz * py;
+			auto y = qw * py - qx * pz + qz * px;
+			auto z = qw * pz + qx * py - qy * px;
+
+			auto dx = -w * qx + x * qw - y * qz + z * qy;
+			auto dy = -w * qy + x * qz + y * qw - z * qx;
+
+			constexpr auto dx = ddesc.range.realPosition(0, DN);
+			if constexpr (*dx) dst[*dx] = -w * qx + x * qw - y * qz + z * qy;
+
+			constexpr auto dy = ddesc.range.realPosition(1, DN);
+			if constexpr (*dy) dst[*dy] = -w * qy + x * qz + y * qw - z * qx;
+
+			constexpr auto dz = ddesc.range.realPosition(2, DN);
+			if constexpr (*dz) dst[*dz] = -w * qz - x * qy + y * qx + z * qw;
+		}
+
+		template<Data2DDesc DstDesc, std::floating_point TT, size_t DstRs, size_t DstCs, std::floating_point DstT>
+		static void SRK_CALL translation(const TT(&t)[3], DstT(&dst)[DstRs][DstCs]) {
+			static_assert(DstDesc.type == DataType::MATRIX, "dst type must be matrix");
+
+			constexpr auto ddesc = DstDesc.manual(0, 0, 0, 0, DstRs, DstCs).clamp(0, 3, 3, 1, DstRs, DstCs);
+
+			copy<Data2DDesc(DataType::MATRIX, 3, 0, 0, 0, 3, 1), 3, 1, ddesc>(dst,
+				t[0],
+				t[1],
+				t[2]);
 		}
 
 		template<Data2DDesc SrcDesc, Data2DDesc DstDesc, size_t SR, size_t SC, std::floating_point ST, size_t DR, size_t DC, std::floating_point DT>
@@ -2062,7 +2113,7 @@ namespace srk {
 			(std::same_as<RT, nullptr_t> || (std::is_bounded_array_v<std::remove_cvref_t<RT>> && std::floating_point<std::remove_all_extents_t<std::remove_cvref_t<RT>>> && std::rank_v<std::remove_cvref_t<RT>> == 1)) &&
 			(std::same_as<ST, nullptr_t> || (std::is_bounded_array_v<std::remove_cvref_t<ST>> && std::floating_point<std::remove_all_extents_t<std::remove_cvref_t<ST>>> && std::rank_v<std::remove_cvref_t<ST>> == 1)))
 		static void SRK_CALL trs(TT&& trans, RT&& rot, ST&& scale, DstT(&dst)[DstR][DstC]) {
-				static_assert(DstDesc.type == DataType::MATRIX, "dst type must be matrix");
+			static_assert(DstDesc.type == DataType::MATRIX, "dst type must be matrix");
 
 			constexpr auto mtdesc = Data2DDesc(DataType::MATRIX, Hint::IDENTITY_IF_NOT_EXIST, 0, 0, 0, 3, 3, 1);
 
@@ -2073,9 +2124,8 @@ namespace srk {
 				static_assert(TDesc.type == DataType::VECTOR, "trans type must be vector");
 
 				constexpr auto n = std::extent_v<std::remove_cvref_t<TT>, 0>;
-				constexpr auto desc = TDesc.manual(Range(0, 0, n)).clamp(n);
-				constexpr auto len = std::max(Math::ZERO<Math::Range::PosType>, Math::THREE<Math::Range::PosType> + desc.range.realPosition(0));
-				copy<Data2DDesc(DataType::MATRIX, desc.range.begin, 3, desc.range.begin, 0, len, 1), mtdesc>((const std::remove_all_extents_t<std::remove_cvref_t<TT>>(&)[n][1])trans, m);
+				constexpr auto desc = TDesc.manual(0, 0, n).clamp(0, 3, n);
+				copy<Data2DDesc(DataType::MATRIX, desc.range.begin, 3, desc.range.begin, 0, desc.range.length, 1), mtdesc>((const std::remove_all_extents_t<std::remove_cvref_t<TT>>(&)[n][1])trans, m);
 			}
 
 			constexpr auto mrdesc = Data2DDesc(DataType::MATRIX, Hint::IDENTITY_IF_NOT_EXIST, 0, 0, 0, 0, 3, 3);

@@ -96,7 +96,7 @@ public:
 				auto light = renderData.lights.emplace_back(new PointLight());
 				light->attachNode(lightNode);
 				//light->setRadius(200);
-				lightNode->localRotate(Quaternion::createEulerY(Math::PI_4<float32_t>));
+				lightNode->localRotate(Quaternion<float32_t>(nullptr).rotationY(Math::PI_4<float32_t>));
 				renderData.lights.emplace_back(light);
 			}
 			if (1) {
@@ -105,7 +105,7 @@ public:
 				auto light = renderData.lights.emplace_back(new PointLight());
 				light->attachNode(lightNode);
 				//light->setRadius(1000);
-				lightNode->localRotate(Quaternion::createEulerY(-Math::PI_4<float32_t>));
+				lightNode->localRotate(Quaternion<float32_t>(nullptr).rotationY(Math::PI_4<float32_t>));
 				renderData.lights.emplace_back(light);
 			}
 			IntrusivePtr cameraNode = worldNode->addChild<Node>();
@@ -265,7 +265,7 @@ public:
 
 			while (renderData.winModule->processEvent()) {};
 
-			renderData.model->localRotate(Quaternion::createEulerY(Math::PI<float32_t> *dt * 0.5f));
+			renderData.model->localRotate(Quaternion<float32_t>(nullptr).rotationY(Math::PI<float32_t>* dt * 0.5f));
 
 			renderData.g->setViewport(Box2i32ui32(Vec2i32::ZERO, renderData.win->getCurrentContentSize()));
 			renderData.renderPipeline->render(renderData.g, [renderData](render::IRenderCollector& collector) {
@@ -290,6 +290,6 @@ private:
 	void _resize(Camera& cam, const Vec2ui32& size) {
 		constexpr auto& zero = Math::ZERO<std::remove_cvref_t<decltype(size)>::ElementType>;
 		if (size[0] == zero || size[1] == zero) return;
-		cam.setProjectionMatrix(Matrix44::createPerspectiveFovLH(Math::PI<float32_t> / 6.f, (float32_t)size[0] / (float32_t)size[1], 10, 10000));
+		cam.setProjectionMatrix(Matrix4x4f32(nullptr).perspective(Math::PI<float32_t> / 6.f, (float32_t)size[0] / (float32_t)size[1], 10.f, 10000.f));
 	}
 };

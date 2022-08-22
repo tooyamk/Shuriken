@@ -3,21 +3,27 @@
 #include "srk/math/Math.h"
 
 namespace srk {
-	class Matrix34;
-	class Matrix44;
-
-	class SRK_CORE_DLL Quaternion {
+	template<std::floating_point T>
+	class Quaternion {
 	public:
-		using Data = float32_t[4];
+		using ElementType = T;
+		using Data = T[4];
 
-		Quaternion();
-		Quaternion(nullptr_t);
-		Quaternion(const Quaternion& v);
-		Quaternion(Quaternion&& v) noexcept;
-		Quaternion(float32_t x, float32_t y = 0.f, float32_t z = 0.f, float32_t w = 1.f);
-		~Quaternion();
+		constexpr Quaternion() noexcept : Quaternion(Math::ZERO<T>, Math::ZERO<T>, Math::ZERO<T>, Math::ONE<T>) {}
 
-		static const Quaternion IDENTITY;
+		constexpr Quaternion(nullptr_t) noexcept {}
+
+		constexpr Quaternion(const Quaternion& q) noexcept : Quaternion(q.x, q.y, q.z, q.w) {}
+
+		constexpr Quaternion(Quaternion&& q) noexcept : Quaternion(q.x, q.y, q.z, q.w) {}
+
+		constexpr Quaternion(T x, T y = Math::ZERO<T>, T z = Math::ZERO<T>, T w = Math::ONE<T>) noexcept :
+			x(x),
+			y(y),
+			z(z),
+			w(w) {}
+
+		~Quaternion() {}
 
 		inline SRK_CALL operator Data& () {
 			return data;
@@ -26,161 +32,258 @@ namespace srk {
 			return data;
 		}
 
-		inline Quaternion& SRK_CALL operator=(const Quaternion& q) noexcept {
-			for (auto i = 0; i < 4; ++i) data[i] = q.data[i];
+		template<std::floating_point K>
+		inline constexpr Quaternion& SRK_CALL operator=(const Quaternion<K>& q) noexcept {
+			set(q.data);
 			return *this;
 		}
 
-		inline Quaternion& SRK_CALL operator=(Quaternion&& q) noexcept {
-			for (auto i = 0; i < 4; ++i) data[i] = q.data[i];
+		template<std::floating_point K>
+		inline constexpr Quaternion& SRK_CALL operator=(Quaternion<K>&& q) noexcept {
+			set(q.data);
 			return *this;
 		}
 
-		inline void SRK_CALL operator*=(const Quaternion& q) {
-			append(q);
+		template<std::floating_point K>
+		inline constexpr Quaternion& SRK_CALL operator=(const K(&q)[4]) noexcept {
+			set(q);
+			return *this;
 		}
 
-		inline float32_t SRK_CALL getLength() const {
+		template<std::floating_point K>
+		inline constexpr void SRK_CALL operator*=(const Quaternion<K>& rhs) noexcept {
+			append(rhs);
+		}
+
+		inline T SRK_CALL getLength() const {
 			return std::sqrt(getLengthSq());
 		}
-		inline float32_t SRK_CALL getLengthSq() const {
-			return x * x + y * y + z * z + w * w;
+		inline T SRK_CALL getLengthSq() const {
+			return Math::dot(data, data);
 		}
 
-		inline void SRK_CALL set(const Quaternion& q) {
-			x = q.x;
-			y = q.y;
-			z = q.z;
-			w = q.w;
+		template<std::floating_point K>
+		inline constexpr Quaternion& SRK_CALL set(const Quaternion<K>& q) {
+			set(q.data);
+			return *this;
 		}
-		inline void SRK_CALL set(float32_t x = 0.f, float32_t y = 0.f, float32_t z = 0.f, float32_t w = 1.f) {
+
+		inline constexpr Quaternion& SRK_CALL set(T x = Math::ZERO<T>, T y = Math::ZERO<T>, T z = Math::ZERO<T>, T w = Math::ONE<T>) {
 			this->x = x;
 			this->y = y;
 			this->z = z;
 			this->w = w;
+			return *this;
 		}
-		inline void SRK_CALL set(const float32_t(&q)[4]) {
+
+		template<std::floating_point K>
+		inline constexpr Quaternion& SRK_CALL set(const K(&q)[4]) {
 			x = q[0];
 			y = q[1];
 			z = q[2];
 			w = q[3];
+			return *this;
 		}
 
-		void SRK_CALL normalize();
-		inline void SRK_CALL conjugate() {
+		Quaternion& SRK_CALL normalize() {
+			auto n = Math::dot(data, data);
+
+			if (n <= Math::TOLERANCE<T> || Math::equal(n, Math::ONE<T>, Math::TOLERANCE<T>)) return;
+			n = std::sqrt(n);
+
+			x *= n;
+			y *= n;
+			z *= n;
+			w *= n;
+			return *this;
+		}
+
+		inline constexpr Quaternion& SRK_CALL conjugate() {
 			x = -x;
 			y = -y;
 			z = -z;
+			return *this;
 		}
-		inline void SRK_CALL invert() {
-			x = -x;
-			y = -y;
-			z = -z;
+
+		inline constexpr Quaternion& SRK_CALL invert() {
+			Math::invert<Math::DataDesc(Math::DataType::QUATERNION), Math::DataDesc(Math::DataType::QUATERNION)>(data, data);
+			return *this;
 		}
-		inline void SRK_CALL invert(Quaternion& dst) const {
-			dst.x = -x;
-			dst.y = -y;
-			dst.z = -z;
-			dst.w = w;
+
+		template<size_t N, std::floating_point K>
+		inline constexpr void SRK_CALL invert(K(&dst)[N]) const {
+			Math::invert<Math::DataDesc(Math::DataType::QUATERNION), Math::DataDesc(Math::DataType::QUATERNION), N, K, 4, T>(data, dst);
 		}
-		void SRK_CALL toEuler(float32_t(&dst)[3]) const;
-		inline bool SRK_CALL isIdentity() const {
-			return !memcmp(this, &IDENTITY, sizeof(Quaternion));
+
+		template<std::floating_point K>
+		inline constexpr void SRK_CALL invert(Quaternion<K>& dst) const {
+			invert(dst.data);
 		}
-		inline float32_t SRK_CALL getRadian() const {
+
+		template<std::floating_point K>
+		void constexpr SRK_CALL toEuler(K(&dst)[3]) const {
+			auto y2 = y * y;
+			auto ex = std::atan2(Math::TWO<T> *(w * x + y * z), (Math::ONE<T> - Math::TWO<T> *(x * x + y2)));
+			auto ey = std::asin(Math::TWO<T> *(w * y - z * x));
+			auto ez = std::atan2(Math::TWO<T> *(w * z + x * y), (Math::ONE<T> - Math::TWO<T> *(y2 + z * z)));
+			dst[0] = ex;
+			dst[1] = ey;
+			dst[2] = ez;
+		}
+
+		inline constexpr bool SRK_CALL isIdentity() const {
+			return Math::equal(x, Math::ZERO<T>, Math::TOLERANCE<T>) && Math::equal(y, Math::ZERO<T>, Math::TOLERANCE<T>) && Math::equal(z, Math::ZERO<T>, Math::TOLERANCE<T>) && Math::equal(w, Math::ONE<T>, Math::TOLERANCE<T>);
+		}
+
+		inline constexpr T SRK_CALL getRadian() const {
 			return std::acos(w);
 		}
-		inline void SRK_CALL mul(float32_t s) {
-			x *= s;
-			y *= s;
-			z *= s;
-			w *= s;
-		}
-		inline void SRK_CALL append(const Quaternion& q) {
-			append(q, *this);
-		}
-		inline void SRK_CALL append(const Quaternion& q, Quaternion& dst) const {
-			Math::appendQuat(data, q.data, dst.data);
-		}
-		inline void SRK_CALL rotate(const float32_t(&p)[3], float32_t(&dst)[3]) const {
-			Math::rotateQuat<float32_t>(data, p, dst);
-		}
-		void SRK_CALL toMatrix(Matrix34& dst) const;
-		inline void SRK_CALL toMatrix(Matrix44& dst) const {
-			toMatrix((Matrix34&)dst);
+
+		template<Math::DataDesc LDesc = nullptr, Math::DataDesc RDesc = nullptr, Math::DataDesc DDesc = nullptr, std::floating_point LT>
+		inline Quaternion& SRK_CALL append(const LT(&lhs)[4]) {
+			using namespace srk::enum_operators;
+
+			constexpr auto ldesc = Math::DataDesc(Math::DataType::QUATERNION, LDesc);
+			constexpr auto rdesc = Math::DataDesc(Math::DataType::QUATERNION, RDesc);
+			constexpr auto ddesc = Math::DataDesc(Math::DataType::QUATERNION, DDesc.hints | Math::Hint::MEM_OVERLAP, DDesc.range);
+
+			Math::mul<ldesc, rdesc, ddesc>(lhs, data, data);
+			return *this;
 		}
 
-		static void SRK_CALL createEulerX(float32_t radian, Quaternion& dst) {
-			radian *= .5f;
-			auto x = std::sin(radian);
-			auto w = std::cos(radian);
+		template<Math::DataDesc LDesc = nullptr, Math::DataDesc RDesc = nullptr, Math::DataDesc DDesc = nullptr, std::floating_point LT>
+		inline Quaternion& SRK_CALL append(const Quaternion<LT>& lhs) {
+			return append<LDesc, RDesc, DDesc>(lhs.data);
+		}
 
-			dst.set(x, 0.f, 0.f, w);
-		}
-		inline static Quaternion createEulerX(float32_t radian) {
-			Quaternion q(nullptr);
-			createEulerX(radian, q);
-			return q;
-		}
-		inline static void SRK_CALL createEulerY(float32_t radian, Quaternion& dst) {
-			radian *= .5f;
-			auto y = std::sin(radian);
-			auto w = std::cos(radian);
+		template<Math::DataDesc LDesc = nullptr, Math::DataDesc RDesc = nullptr, Math::DataDesc DDesc = nullptr, std::floating_point LT, std::floating_point DT>
+		inline void SRK_CALL append(const LT(&lhs)[4], DT(&dst)[4]) const {
+			using namespace srk::enum_operators;
 
-			dst.set(0.f, y, 0.f, w);
-		}
-		inline static Quaternion SRK_CALL createEulerY(float32_t radian) {
-			Quaternion q(nullptr);
-			createEulerY(radian, q);
-			return q;
-		}
-		inline static void SRK_CALL createEulerZ(float32_t radian, Quaternion& dst) {
-			radian *= .5f;
-			auto z = std::sin(radian);
-			auto w = std::cos(radian);
+			constexpr auto ldesc = Math::DataDesc(Math::DataType::QUATERNION, LDesc);
+			constexpr auto rdesc = Math::DataDesc(Math::DataType::QUATERNION, RDesc);
+			constexpr auto ddesc = Math::DataDesc(Math::DataType::QUATERNION, DDesc.hints | Math::Hint::MEM_OVERLAP, DDesc.range);
 
-			dst.set(0.f, 0.f, z, w);
+			Math::mul<ldesc, rdesc, ddesc>(lhs, data, dst);
 		}
-		inline static Quaternion SRK_CALL createEulerZ(float32_t radian) {
-			Quaternion q(nullptr);
-			createEulerZ(radian, q);
-			return q;
+
+		template<Math::DataDesc LDesc = nullptr, Math::DataDesc RDesc = nullptr, Math::DataDesc DDesc = nullptr, std::floating_point LT, std::floating_point DT>
+		inline void SRK_CALL append(const Quaternion<LT>& lhs, DT(&dst)[4]) const {
+			append<LDesc, RDesc, DDesc>(lhs.data, dst);
 		}
-		static void SRK_CALL createEuler(const float32_t(&radians)[3], Quaternion& dst);
-		inline static Quaternion SRK_CALL createEuler(const float32_t(&radians)[3]) {
-			Quaternion q(nullptr);
-			createEuler(radians, q);
-			return q;
+
+		template<Math::DataDesc LDesc = nullptr, Math::DataDesc RDesc = nullptr, Math::DataDesc DDesc = nullptr, std::floating_point LT, std::floating_point DT>
+		inline void SRK_CALL append(const LT(&lhs)[4], Quaternion<DT>& dst) const {
+			append<LDesc, RDesc, DDesc>(lhs, dst.data);
 		}
-		static void SRK_CALL createAxis(const float32_t(&axis)[3], float32_t radian, Quaternion& dst);
-		inline static Quaternion SRK_CALL createAxis(const float32_t(&axis)[3], float32_t radian) {
-			Quaternion q(nullptr);
-			createAxis(axis, radian, q);
-			return q;
+
+		template<Math::DataDesc LDesc = nullptr, Math::DataDesc RDesc = nullptr, Math::DataDesc DDesc = nullptr, std::floating_point LT, std::floating_point DT>
+		inline void SRK_CALL append(const Quaternion<LT>& lhs, Quaternion<DT>& dst) const {
+			append<LDesc, RDesc, DDesc>(lhs.data, dst.data);
 		}
-		static void SRK_CALL createLookAt(const float32_t(&forward)[3], const float32_t(&upward)[3], Quaternion& dst);
-		inline static void SRK_CALL slerp(const Quaternion& from, const Quaternion& to, float32_t t, Quaternion& dst) {
-			Math::slerp(from.data, to.data, t, dst.data);
+
+		template<Math::DataDesc LDesc = nullptr, Math::DataDesc RDesc = nullptr, Math::DataDesc DDesc = nullptr, std::floating_point RT>
+		inline Quaternion& SRK_CALL prepend(const RT(&rhs)[4]) {
+			using namespace srk::enum_operators;
+
+			constexpr auto ldesc = Math::DataDesc(Math::DataType::QUATERNION, LDesc);
+			constexpr auto rdesc = Math::DataDesc(Math::DataType::QUATERNION, RDesc);
+			constexpr auto ddesc = Math::DataDesc(Math::DataType::QUATERNION, DDesc.hints | Math::Hint::MEM_OVERLAP, DDesc.range);
+
+			Math::mul<ldesc, rdesc, ddesc>(data, rhs, data);
+			return *this;
 		}
-		inline static float32_t SRK_CALL angleBetween(const Quaternion& q1, const Quaternion& q2) {
-			return std::acos(Math::dot(q1.data, q2.data));
+
+		template<Math::DataDesc LDesc = nullptr, Math::DataDesc RDesc = nullptr, Math::DataDesc DDesc = nullptr, std::floating_point RT>
+		inline Quaternion& SRK_CALL prepend(const Quaternion<RT>& rhs) {
+			return prepend<LDesc, RDesc, DDesc>(rhs.data);
+		}
+
+		template<Math::DataDesc LDesc = nullptr, Math::DataDesc RDesc = nullptr, Math::DataDesc DDesc = nullptr, std::floating_point RT, std::floating_point DT>
+		inline void SRK_CALL prepend(const RT(&rhs)[4], DT(&dst)[4]) const {
+			constexpr auto ldesc = Math::DataDesc(Math::DataType::QUATERNION, LDesc);
+			constexpr auto rdesc = Math::DataDesc(Math::DataType::QUATERNION, RDesc);
+			constexpr auto ddesc = Math::DataDesc(Math::DataType::QUATERNION, DDesc.hints | Math::Hint::MEM_OVERLAP, DDesc.range);
+
+			Math::mul<ldesc, rdesc, ddesc>(data, rhs, dst);
+		}
+
+		template<Math::DataDesc LDesc = nullptr, Math::DataDesc RDesc = nullptr, Math::DataDesc DDesc = nullptr, std::floating_point RT, std::floating_point DT>
+		inline void SRK_CALL prepend(const Quaternion<RT>& rhs, DT(&dst)[4]) const {
+			prepend<LDesc, RDesc, DDesc>(rhs.data, dst);
+		}
+
+		template<Math::DataDesc LDesc = nullptr, Math::DataDesc RDesc = nullptr, Math::DataDesc DDesc = nullptr, std::floating_point RT, std::floating_point DT>
+		inline void SRK_CALL prepend(const RT(&rhs)[4], Quaternion<DT>& dst) const {
+			prepend<LDesc, RDesc, DDesc>(rhs, dst.data);
+		}
+
+		template<Math::DataDesc LDesc = nullptr, Math::DataDesc RDesc = nullptr, Math::DataDesc DDesc = nullptr, std::floating_point RT, std::floating_point DT>
+		inline void SRK_CALL prepend(const Quaternion<RT>& rhs, Quaternion<DT>& dst) const {
+			prepend<LDesc, RDesc, DDesc>(rhs.data, dst.data);
+		}
+
+		template<Math::DataDesc LDesc = nullptr, Math::DataDesc RDesc = nullptr, Math::DataDesc DDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, size_t RN, std::floating_point RT, size_t DN, std::floating_point DT>
+		inline void SRK_CALL transformPoint(const RT(&rhs)[RN], DT(&dst)[DN]) const {
+			constexpr auto ldesc = Math::Data2DDesc(Math::DataType::QUATERNION, LDesc);
+			constexpr auto rdesc = Math::DataDesc(Math::DataType::VECTOR, RDesc);
+			constexpr auto ddesc = Math::DataDesc(Math::DataType::VECTOR, DDesc);
+
+			Math::transform<ldesc, rdesc, ddesc>(data, rhs, dst);
+		}
+
+		template<Math::DataDesc DstDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, std::floating_point RadT>
+		inline Quaternion& SRK_CALL rotationX(RadT radian) {
+			Math::rotationX<Math::DataDesc(Math::DataType::QUATERNION, DstDesc)>(radian, data);
+			return *this;
+		}
+
+		template<Math::DataDesc DstDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, std::floating_point RadT>
+		inline Quaternion& SRK_CALL rotationY(RadT radian) {
+			Math::rotationY<Math::DataDesc(Math::DataType::QUATERNION, DstDesc)>(radian, data);
+			return *this;
+		}
+
+		template<Math::DataDesc DstDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, std::floating_point RadT>
+		inline Quaternion& SRK_CALL rotationZ(RadT radian) {
+			Math::rotationZ<Math::DataDesc(Math::DataType::QUATERNION, DstDesc)>(radian, data);
+			return *this;
+		}
+
+		template<Math::DataDesc DstDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, std::floating_point RadT>
+		inline Quaternion& SRK_CALL rotation(const RadT(&radians)[3]) {
+			Math::rotation<Math::DataDesc(Math::DataType::QUATERNION, DstDesc)>(radians, data);
+			return *this;
+		}
+
+		template<Math::DataDesc DstDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, std::floating_point AxisT, std::floating_point RadT>
+		inline Quaternion& SRK_CALL rotation(const AxisT(&axis)[3], RadT radian) {
+			Math::rotation<Math::DataDesc(Math::DataType::QUATERNION, DstDesc)>(axis, radian, data);
+			return *this;
+		}
+
+		template<Math::DataDesc DstDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, std::floating_point FwdT, std::floating_point UwdT>
+		inline Quaternion& SRK_CALL lookAt(const FwdT(&forward)[3], const UwdT(&upward)[3]) {
+			Math::lookAt<Math::DataDesc(Math::DataType::QUATERNION, DstDesc)>(forward, upward, data);
+			return *this;
 		}
 
 		union {
 			Data data;
 
 			struct {
-				float32_t x;
-				float32_t y;
-				float32_t z;
-				float32_t w;
+				T x;
+				T y;
+				T z;
+				T w;
 			};
 		};
 	};
 
-	inline Quaternion SRK_CALL operator*(const Quaternion& lhs, const Quaternion& rhs) {
-		Quaternion q(nullptr);
-		Math::appendQuat(lhs.data, rhs.data, q.data);
+	template<std::floating_point LT, std::floating_point RT>
+	inline Quaternion<decltype((*(LT*)0) + (*(RT*)0))> SRK_CALL operator*(const Quaternion<LT>& lhs, const Quaternion<RT>& rhs) {
+		Quaternion<decltype((*(LT*)0) + (*(RT*)0))> q(nullptr);
+		Math::mul<Math::DataDesc(Math::DataType::QUATERNION), Math::DataDesc(Math::DataType::QUATERNION), Math::DataDesc(Math::DataType::QUATERNION)>(lhs.data, rhs.data, q.data);
 		return q;
 	}
 }

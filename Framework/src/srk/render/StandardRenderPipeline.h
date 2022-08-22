@@ -50,8 +50,8 @@ namespace srk::render {
 			virtual void SRK_CALL commit() override;
 
 			struct {
-				Matrix34 w2v;
-				Matrix44 w2p;
+				Matrix3x4f32 w2v;
+				Matrix4x4f32 w2p;
 			} matrix;
 
 		private:
