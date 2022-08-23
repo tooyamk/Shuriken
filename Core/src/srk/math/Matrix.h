@@ -62,6 +62,16 @@ namespace srk {
 			return data;
 		}
 
+		template<std::integral I>
+		inline T& SRK_CALL operator[](I i) {
+			return *((&data[0][0]) + i);
+		}
+
+		template<std::integral I>
+		inline const T& SRK_CALL operator[](I i) const {
+			return *((&data[0][0]) + i);
+		}
+
 		template<std::integral Row, std::integral Column>
 		inline T& SRK_CALL operator()(Row r, Column c) {
 			return data[r][c];
@@ -481,17 +491,6 @@ namespace srk {
 			return *this;
 		}
 
-		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::Data2DDesc DstDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, std::floating_point WT, std::floating_point HT, std::floating_point ZNT, std::floating_point ZFT>
-		inline Matrix& SRK_CALL ortho(WT width, HT height, ZNT zNear, ZFT zFar) {
-			using namespace srk::enum_operators;
-
-			constexpr auto ddesc = Math::Data2DDesc(Math::DataType::MATRIX, DstDesc.hints | Math::Hint::MEM_OVERLAP, DstDesc.range);
-
-			Math::ortho<ddesc>(width, height, zNear, zFar, data);
-			if constexpr ((Hints & MatrixHint::IDENTITY_OTHERS) == MatrixHint::IDENTITY_OTHERS) Math::identity<Math::Data2DDesc(Math::DataType::MATRIX, Math::Hint::OUTSIDE, 0, 0, 0, 0, 4, 4)>(data);
-			return *this;
-		}
-
 		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::Data2DDesc DstDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, std::floating_point LT, std::floating_point RT, std::floating_point BT, std::floating_point TT, std::floating_point ZNT, std::floating_point ZFT>
 		inline Matrix& SRK_CALL orthoOffCenter(LT left, RT right, BT bottom, TT top, ZNT zNear, ZFT zFar) {
 			using namespace srk::enum_operators;
@@ -504,12 +503,12 @@ namespace srk {
 		}
 
 		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::Data2DDesc DstDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, std::floating_point WT, std::floating_point HT, std::floating_point ZNT, std::floating_point ZFT>
-		inline Matrix& SRK_CALL perspective(WT width, HT height, ZNT zNear, ZFT zFar) {
+		inline Matrix& SRK_CALL orthoWH(WT width, HT height, ZNT zNear, ZFT zFar) {
 			using namespace srk::enum_operators;
 
 			constexpr auto ddesc = Math::Data2DDesc(Math::DataType::MATRIX, DstDesc.hints | Math::Hint::MEM_OVERLAP, DstDesc.range);
 
-			Math::perspective<ddesc>(width, height, zNear, zFar, data);
+			Math::orthoWH<ddesc>(width, height, zNear, zFar, data);
 			if constexpr ((Hints & MatrixHint::IDENTITY_OTHERS) == MatrixHint::IDENTITY_OTHERS) Math::identity<Math::Data2DDesc(Math::DataType::MATRIX, Math::Hint::OUTSIDE, 0, 0, 0, 0, 4, 4)>(data);
 			return *this;
 		}
@@ -532,6 +531,17 @@ namespace srk {
 			constexpr auto ddesc = Math::Data2DDesc(Math::DataType::MATRIX, DstDesc.hints | Math::Hint::MEM_OVERLAP, DstDesc.range);
 
 			Math::perspectiveOffCenter<ddesc>(left, right, bottom, top, zNear, zFar, data);
+			if constexpr ((Hints & MatrixHint::IDENTITY_OTHERS) == MatrixHint::IDENTITY_OTHERS) Math::identity<Math::Data2DDesc(Math::DataType::MATRIX, Math::Hint::OUTSIDE, 0, 0, 0, 0, 4, 4)>(data);
+			return *this;
+		}
+
+		template<MatrixHint Hints = MatrixHint::IDENTITY_OTHERS, Math::Data2DDesc DstDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, std::floating_point WT, std::floating_point HT, std::floating_point ZNT, std::floating_point ZFT>
+		inline Matrix& SRK_CALL perspectiveWH(WT width, HT height, ZNT zNear, ZFT zFar) {
+			using namespace srk::enum_operators;
+
+			constexpr auto ddesc = Math::Data2DDesc(Math::DataType::MATRIX, DstDesc.hints | Math::Hint::MEM_OVERLAP, DstDesc.range);
+
+			Math::perspectiveWH<ddesc>(width, height, zNear, zFar, data);
 			if constexpr ((Hints & MatrixHint::IDENTITY_OTHERS) == MatrixHint::IDENTITY_OTHERS) Math::identity<Math::Data2DDesc(Math::DataType::MATRIX, Math::Hint::OUTSIDE, 0, 0, 0, 0, 4, 4)>(data);
 			return *this;
 		}

@@ -290,6 +290,6 @@ private:
 	void _resize(Camera& cam, const Vec2ui32& size) {
 		constexpr auto& zero = Math::ZERO<std::remove_cvref_t<decltype(size)>::ElementType>;
 		if (size[0] == zero || size[1] == zero) return;
-		cam.setProjectionMatrix(Matrix4x4f32(nullptr).perspective(Math::PI<float32_t> / 6.f, (float32_t)size[0] / (float32_t)size[1], 10.f, 10000.f));
+		cam.setProjectionMatrix(Matrix4x4f32(nullptr).perspectiveFov(Math::PI<float32_t> / 6.f, (float32_t)size[0] / (float32_t)size[1], 10.f, 10000.f));
 	}
 };

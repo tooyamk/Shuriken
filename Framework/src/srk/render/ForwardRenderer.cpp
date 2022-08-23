@@ -88,7 +88,7 @@ namespace srk::render {
 
 				if (l->isKindOf<components::lights::DirectionLight>()) {
 					auto& wm = l->getNode()->getWorldMatrix();
-					Vec3f32 dir(wm[0][2], wm[1][2], wm[2][2]);
+					Vec3f32 dir(wm(0, 2), wm(1, 2), wm(2, 2));
 					dir.normalize();
 					data->dir->set(dir);
 
@@ -105,7 +105,7 @@ namespace srk::render {
 					auto radius = sl->getRadius();
 
 					auto& wm = l->getNode()->getWorldMatrix();
-					Vec3f32 dir(wm[0][2], wm[1][2], wm[2][2]);
+					Vec3f32 dir(wm(0, 2), wm(1, 2), wm(2, 2));
 					dir.normalize();
 					data->dir->set(dir);
 

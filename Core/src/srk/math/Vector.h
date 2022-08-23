@@ -4,6 +4,9 @@
 #include "srk/math/Math.h"
 
 namespace srk {
+	struct SRK_CORE_DLL VectorSetAll {};
+	inline static constexpr VectorSetAll VECTOR_SET_ALL = VectorSetAll();
+
 	template<size_t N, typename T>
 	class Vector {
 	public:
@@ -11,12 +14,6 @@ namespace srk {
 		using ElementType = T;
 		
 		using Data = T[N];
-
-		template<std::convertible_to<T> K>
-		struct All {
-			All(const K& v) : value(v) {}
-			T value;
-		};
 
 		Vector() {
 			memset(this, 0, sizeof(T) * N);
@@ -59,8 +56,8 @@ namespace srk {
 		}
 
 		template<std::convertible_to<T> K>
-		Vector(All<K>&& v) {
-			setAll(v.value);
+		Vector(VectorSetAll, K&& v) {
+			set(VECTOR_SET_ALL, std::forward<K>(v));
 		}
 
 		inline SRK_CALL operator Data&() {
@@ -93,7 +90,7 @@ namespace srk {
 
 		template<std::convertible_to<T> K>
 		inline Vector& SRK_CALL operator=(K&& v) noexcept {
-			return setAll(std::forward(v));
+			return set(VECTOR_SET_ALL, std::forward<K>(v));
 		}
 
 		template<std::convertible_to<T> K>
@@ -260,7 +257,7 @@ namespace srk {
 		}
 
 		template<std::convertible_to<T> K>
-		inline Vector& SRK_CALL setAll(K&& v) {
+		inline Vector& SRK_CALL set(VectorSetAll, K&& v) {
 			for (decltype(N) i = 0; i < N; ++i) data[i] = v;
 			return *this;
 		}
@@ -455,8 +452,8 @@ namespace srk {
 		Data data;
 	};
 
-	template<size_t N, typename T> const Vector<N, T> Vector<N, T>::ZERO = Vector<N, T>(Vector<N, T>::All<T>(Math::ZERO<T>));
-	template<size_t N, typename T> const Vector<N, T> Vector<N, T>::ONE = Vector<N, T>(Vector<N, T>::All<T>(Math::ONE<T>));
+	template<size_t N, typename T> const Vector<N, T> Vector<N, T>::ZERO = Vector<N, T>(VECTOR_SET_ALL, Math::ZERO<T>);
+	template<size_t N, typename T> const Vector<N, T> Vector<N, T>::ONE = Vector<N, T>(VECTOR_SET_ALL, Math::ONE<T>);
 
 	template<size_t N, typename T1, typename T2>
 	inline constexpr Vector<N, decltype((*(T1*)0) + (*(T2*)0))> SRK_CALL operator+(const Vector<N, T1>& v1, const Vector<N, T2>& v2) {

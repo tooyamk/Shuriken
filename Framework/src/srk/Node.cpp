@@ -237,10 +237,10 @@ namespace srk {
 	}
 
 	void Node::setIdentity() {
-		if (!_lr.isIdentity() || _ls != decltype(_ls)::ONE || _lm.data[0][3] != 0.f || _lm.data[1][3] != 0.f || _lm.data[2][3] != 0.f) {
+		if (!_lr.isIdentity() || _ls != decltype(_ls)::ONE || _lm(0, 3) != 0.f || _lm(1, 3) != 0.f || _lm(2, 3) != 0.f) {
 			_lm.identity();
 			_lr.set();
-			_ls.setAll(1.f);
+			_ls = 1.f;
 
 			_checkNoticeUpdate(DirtyFlag::LM_WM_IWM_WQ, DirtyFlag::WM_IWM_WQ);
 		}

@@ -1186,6 +1186,16 @@ namespace srk {
 			for (decltype(N) i = 0; i < N; ++i) dst[i] = max(a[i], b[i]);
 		}
 
+		template<Arithmetic T>
+		inline static T SRK_CALL min(const T& a, const T& b) {
+			return std::min(a, b);
+		}
+
+		template<size_t N, typename In, typename Out = In>
+		inline static void SRK_CALL min(const In(&a)[N], const In(&b)[N], Out(&dst)[N]) {
+			for (decltype(N) i = 0; i < N; ++i) dst[i] = min(a[i], b[i]);
+		}
+
 	private:
 		template<size_t I, DataDesc LDesc, DataDesc RDesc, DataDesc DDesc, size_t LN, std::floating_point LT, size_t RN, std::floating_point RT, size_t DN, std::floating_point DT>
 		static void SRK_CALL _mulLoop(const LT(&lhs)[LN], const RT(&rhs)[RN], DT(&dst)[DN]) {
@@ -1650,8 +1660,19 @@ namespace srk {
 			}
 		}
 
+		template<Data2DDesc DstDesc, std::floating_point LT, std::floating_point RT, std::floating_point BT, std::floating_point TT, std::floating_point ZNT, std::floating_point ZFT, size_t DstR, size_t DstC, std::floating_point DstT>
+		static void SRK_CALL orthoOffCenter(LT left, RT right, BT bottom, TT top, ZNT zNear, ZFT zFar, DstT(&dst)[DstR][DstC]) {
+			static_assert(DstDesc.type == DataType::MATRIX, "dst type must be matrix");
+
+			copy<Data2DDesc(DataType::MATRIX), 4, 4, DstDesc>(dst,
+				TWO<DstT> / (right - ONE<RT>), ZERO<DstT>, ZERO<DstT>, (ONE<RT> +right) / (ONE<RT> -right),
+				ZERO<DstT>, TWO<DstT> / (top - bottom), ZERO<DstT>, (top + bottom) / (bottom - top),
+				ZERO<DstT>, ZERO<DstT>, ONE<DstT> / (zFar - zNear), zNear / (zNear - zFar),
+				ZERO<DstT>, ZERO<DstT>, ZERO<DstT>, ONE<DstT>);
+		}
+
 		template<Data2DDesc DstDesc, std::floating_point WT, std::floating_point HT, std::floating_point ZNT, std::floating_point ZFT, size_t DstR, size_t DstC, std::floating_point DstT>
-		static void SRK_CALL ortho(WT width, HT height, ZNT zNear, ZFT zFar, DstT(&dst)[DstR][DstC]) {
+		static void SRK_CALL orthoWH(WT width, HT height, ZNT zNear, ZFT zFar, DstT(&dst)[DstR][DstC]) {
 			static_assert(DstDesc.type == DataType::MATRIX, "dst type must be matrix");
 
 			copy<Data2DDesc(DataType::MATRIX), 4, 4, DstDesc>(dst,
@@ -1661,39 +1682,17 @@ namespace srk {
 				ZERO<DstT>,      ZERO<DstT>,       ZERO<DstT>,                 ONE<DstT>);
 		}
 
-		template<Data2DDesc DstDesc, std::floating_point LT, std::floating_point RT, std::floating_point BT, std::floating_point TT, std::floating_point ZNT, std::floating_point ZFT, size_t DstR, size_t DstC, std::floating_point DstT>
-		static void SRK_CALL orthoOffCenter(LT left, RT right, BT bottom, TT top, ZNT zNear, ZFT zFar, DstT(&dst)[DstR][DstC]) {
-			static_assert(DstDesc.type == DataType::MATRIX, "dst type must be matrix");
-
-			copy<Data2DDesc(DataType::MATRIX), 4, 4, DstDesc>(dst,
-				TWO<DstT> / (right - ONE<RT>), ZERO<DstT>,                 ZERO<DstT>,                 (ONE<RT> + right) / (ONE<RT> - right),
-				ZERO<DstT>,                    TWO<DstT> / (top - bottom), ZERO<DstT>,                 (top + bottom) / (bottom - top),
-				ZERO<DstT>,                    ZERO<DstT>,                 ONE<DstT> / (zFar - zNear), zNear / (zNear - zFar),
-				ZERO<DstT>,                    ZERO<DstT>,                 ZERO<DstT>,                 ONE<DstT>);
-		}
-
-		template<Data2DDesc DstDesc, std::floating_point WT, std::floating_point HT, std::floating_point ZNT, std::floating_point ZFT, size_t DstR, size_t DstC, std::floating_point DstT>
-		static void SRK_CALL perspective(WT width, HT height, ZNT zNear, ZFT zFar, DstT(&dst)[DstR][DstC]) {
-			static_assert(DstDesc.type == DataType::MATRIX, "dst type must be matrix");
-
-			auto zNear2 = zNear * TWO<ZNT>;
-			copy<Data2DDesc(DataType::MATRIX), 4, 4, DstDesc>(dst,
-				zNear2 / width,             ZERO<DstT>,      ZERO<DstT>,            ZERO<DstT>,
-				ZERO<DstT>,                 zNear2 / height, ZERO<DstT>,            ZERO<DstT>,
-				ZERO<DstT>,                 ZERO<DstT>,      zFar / (zFar - zNear), zNear * zFar / (zNear - zFar),
-				ZERO<DstT>,                 ZERO<DstT>,      ONE<DstT>,             ZERO<DstT>);
-		}
-
 		template<Data2DDesc DstDesc, std::floating_point FT, std::floating_point AT, std::floating_point ZNT, std::floating_point ZFT, size_t DstR, size_t DstC, std::floating_point DstT>
 		static void SRK_CALL perspectiveFov(FT fieldOfViewY, AT aspectRatio, ZNT zNear, ZFT zFar, DstT(&dst)[DstR][DstC]) {
 			static_assert(DstDesc.type == DataType::MATRIX, "dst type must be matrix");
 
-			auto yScale = ONE<FT> / std::tan(fieldOfViewY * ONE_HALF<FT>);
+			auto m11 = ONE<FT> / std::tan(fieldOfViewY * ONE_HALF<FT>);
+			auto m22 = zFar / (zFar - zNear);
 			copy<Data2DDesc(DataType::MATRIX), 4, 4, DstDesc>(dst,
-				yScale / aspectRatio, ZERO<DstT>, ZERO<DstT>,            ZERO<DstT>,
-				ZERO<DstT>,           yScale,     ZERO<DstT>,            ZERO<DstT>,
-				ZERO<DstT>,           ZERO<DstT>, zFar / (zFar - zNear), zNear * zFar / (zNear - zFar),
-				ZERO<DstT>,           ZERO<DstT>, ONE<DstT>,             ZERO<DstT>);
+				m11 / aspectRatio, ZERO<DstT>, ZERO<DstT>, ZERO<DstT>,
+				ZERO<DstT>,        m11,        ZERO<DstT>, ZERO<DstT>,
+				ZERO<DstT>,        ZERO<DstT>, m22,        -zNear * m22,
+				ZERO<DstT>,        ZERO<DstT>, ONE<DstT>,  ZERO<DstT>);
 		}
 
 		template<Data2DDesc DstDesc, std::floating_point LT, std::floating_point RT, std::floating_point BT, std::floating_point TT, std::floating_point ZNT, std::floating_point ZFT, size_t DstR, size_t DstC, std::floating_point DstT>
@@ -1701,11 +1700,25 @@ namespace srk {
 			static_assert(DstDesc.type == DataType::MATRIX, "dst type must be matrix");
 
 			auto zNear2 = zNear * TWO<ZNT>;
+			auto m22 = zFar / (zFar - zNear);
 			copy<Data2DDesc(DataType::MATRIX), 4, 4, DstDesc>(dst,
 				zNear2 / (right - left), ZERO<DstT>,              (left + right) / (left - right), ZERO<DstT>,
 				ZERO<DstT>,              zNear2 / (top - bottom), (top + bottom) / (bottom - top), ZERO<DstT>,
-				ZERO<DstT>,              ZERO<DstT>,              zFar / (zFar - zNear),           zNear * zFar / (zNear - zFar),
+				ZERO<DstT>,              ZERO<DstT>,              m22,                             -zNear * m22,
 				ZERO<DstT>,              ZERO<DstT>,              ONE<DstT>,                       ZERO<DstT>);
+		}
+
+		template<Data2DDesc DstDesc, std::floating_point WT, std::floating_point HT, std::floating_point ZNT, std::floating_point ZFT, size_t DstR, size_t DstC, std::floating_point DstT>
+		static void SRK_CALL perspectiveWH(WT width, HT height, ZNT zNear, ZFT zFar, DstT(&dst)[DstR][DstC]) {
+			static_assert(DstDesc.type == DataType::MATRIX, "dst type must be matrix");
+
+			auto zNear2 = zNear * TWO<ZNT>;
+			auto m22 = zFar / (zFar - zNear);
+			copy<Data2DDesc(DataType::MATRIX), 4, 4, DstDesc>(dst,
+				zNear2 / width, ZERO<DstT>,      ZERO<DstT>, ZERO<DstT>,
+				ZERO<DstT>,     zNear2 / height, ZERO<DstT>, ZERO<DstT>,
+				ZERO<DstT>,     ZERO<DstT>,      m22,        -zNear * m22,
+				ZERO<DstT>,     ZERO<DstT>,      ONE<DstT>,  ZERO<DstT>);
 		}
 
 		inline static constexpr uint32_t SRK_CALL potLog2(uint32_t pow) {

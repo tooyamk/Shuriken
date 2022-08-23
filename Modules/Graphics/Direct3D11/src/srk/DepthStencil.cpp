@@ -87,7 +87,7 @@ namespace srk::modules::graphics::d3d11 {
 			_view = nullptr;
 		}
 
-		_size.setAll(0);
+		_size = 0;
 		_sampleCount = 0;
 	}
 

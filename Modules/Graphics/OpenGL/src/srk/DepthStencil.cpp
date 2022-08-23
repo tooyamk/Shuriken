@@ -55,7 +55,7 @@ namespace srk::modules::graphics::gl {
 			_handle = 0;
 		}
 
-		_size.setAll(0);
+		_size = 0;
 		_sampleCount = 0;
 		_attachmentType = GL_NONE;
 	}

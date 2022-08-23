@@ -88,9 +88,9 @@ namespace srk::render {
 						if (auto val = (Lv2_t)lhs->priority.level2 - (Lv2_t)rhs->priority.level2; val == 0) {
 							switch (lhs->priority.level2) {
 							case RenderPriority::Level2::FAR_TO_NEAR:
-								return lhs->matrix.l2v[2][3] > rhs->matrix.l2v[2][3];
+								return lhs->matrix.l2v(2, 3) > rhs->matrix.l2v(2, 3);
 							case RenderPriority::Level2::NEAR_TO_FAR:
-								return lhs->matrix.l2v[2][3] < rhs->matrix.l2v[2][3];
+								return lhs->matrix.l2v(2, 3) < rhs->matrix.l2v(2, 3);
 							default:
 								return false;
 							}
