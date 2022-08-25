@@ -15,24 +15,24 @@ namespace srk {
 		
 		using Data = T[N];
 
-		Vector() {
+		constexpr Vector() {
 			memset(this, 0, sizeof(T) * N);
 		}
 
-		Vector(nullptr_t) {}
+		constexpr Vector(nullptr_t) {}
 
 		template<size_t L, std::convertible_to<T> K>
-		Vector(const Vector<L, K>& vec) {
+		constexpr Vector(const Vector<L, K>& vec) {
 			set(vec.data);
 		}
 
 		template<size_t L, std::convertible_to<T> K>
-		Vector(Vector<L, K>&& vec) noexcept {
+		constexpr Vector(Vector<L, K>&& vec) noexcept {
 			set(vec.data);
 		}
 
 		template<size_t L, std::convertible_to<T> K>
-		Vector(const K(&values)[L]) {
+		constexpr Vector(const K(&values)[L]) {
 			set(values);
 		}
 
@@ -47,16 +47,15 @@ namespace srk {
 		}
 
 		template<std::convertible_to<T> K>
-		Vector(const std::initializer_list<const K>& list) : Vector(list.begin(), list.size()) {
-		}
+		constexpr Vector(const std::initializer_list<const K>& list) : Vector(list.begin(), list.size()) {}
 
 		template<std::convertible_to<T>... Args>
-		Vector(Args&&... args) {
+		constexpr Vector(Args&&... args) {
 			set(std::forward<Args>(args)...);
 		}
 
 		template<std::convertible_to<T> K>
-		Vector(VectorSetAll, K&& v) {
+		constexpr Vector(VectorSetAll, K&& v) {
 			set(VECTOR_SET_ALL, std::forward<K>(v));
 		}
 
@@ -195,25 +194,18 @@ namespace srk {
 			return N;
 		}
 
-		template<bool ResetOthers = true, size_t L, std::convertible_to<T> K >
-		inline Vector& SRK_CALL set(const Vector<L, K>& vec) {
+		template<bool ResetOthers = true, size_t L, std::convertible_to<T> K>
+		inline constexpr Vector& SRK_CALL set(const Vector<L, K>& vec) {
 			return set<ResetOthers>(vec.data);
 		}
 
 		template<bool ResetOthers = true, size_t L, std::convertible_to<T> K>
-		inline Vector& SRK_CALL set(const K(&values)[L]) {
-			if constexpr (std::same_as<T, K>) {
-				if constexpr (L >= N) {
-					memcpy(data, values, sizeof(T) * N);
-				} else {
-					memcpy(data, values, sizeof(T) * L);
-				}
+		inline constexpr Vector& SRK_CALL set(const K(&values)[L]) {
+			constexpr auto n = std::min(L, N);
+			if constexpr (std::same_as<std::remove_cvref_t<T>, std::remove_cvref_t<K>>) {
+				memcpy(data, values, sizeof(T) * n);
 			} else {
-				if constexpr (L >= N) {
-					for (decltype(N) i = 0; i < N; ++i) data[i] = values[i];
-				} else {
-					for (decltype(N) i = 0; i < L; ++i) data[i] = values[i];
-				}
+				Math::copy<Math::DataDesc(Math::DataType::VECTOR), Math::DataDesc(Math::DataType::VECTOR, 0, 0, n)>(values, data);
 			}
 
 			if constexpr (ResetOthers && L < N) memset(data + L, 0, sizeof(T) * (N - L));
@@ -222,7 +214,7 @@ namespace srk {
 		}
 
 		template<bool ResetOthers = true, std::convertible_to<T> K>
-		inline Vector& SRK_CALL set(const K* values, size_t len) {
+		inline constexpr Vector& SRK_CALL set(const K* values, size_t len) {
 			if (len >= N) {
 				for (decltype(N) i = 0; i < N; ++i) data[i] = values[i];
 			} else {
@@ -236,12 +228,12 @@ namespace srk {
 		}
 
 		template<bool ResetOthers = true, std::convertible_to<T> K>
-		inline Vector& SRK_CALL set(const std::initializer_list<const K>& list) {
+		inline constexpr Vector& SRK_CALL set(const std::initializer_list<const K>& list) {
 			return set<ResetOthers>(list.begin(), list.size());
 		}
 
 		template<bool ResetOthers = true, Math::DataDesc SrcDesc = nullptr, Math::DataDesc DstDesc = nullptr, std::convertible_to<T>... Args>
-		inline Vector& SRK_CALL set(Args&&... args) {
+		inline constexpr Vector& SRK_CALL set(Args&&... args) {
 			if constexpr (N > 0) {
 				Math::copy<Math::DataDesc(Math::DataType::VECTOR, SrcDesc), Math::DataDesc(Math::DataType::VECTOR, DstDesc)>(data, std::forward<Args>(args)...);
 				if constexpr (ResetOthers) {
@@ -257,18 +249,23 @@ namespace srk {
 		}
 
 		template<std::convertible_to<T> K>
-		inline Vector& SRK_CALL set(VectorSetAll, K&& v) {
+		inline constexpr Vector& SRK_CALL set(VectorSetAll, K&& v) {
 			for (decltype(N) i = 0; i < N; ++i) data[i] = v;
 			return *this;
 		}
 
-		template<std::convertible_to<T> K>
-		inline void SRK_CALL copyTo(K(&dst)[N]) const {
-			if constexpr (std::same_as<T, K>) {
-				memcpy(dst, data, sizeof(T) * N);
+		template<size_t SrcBegin = 0, size_t DN, std::convertible_to<T> K>
+		inline size_t SRK_CALL copyTo(K(&dst)[DN]) const {
+			if constexpr (SrcBegin >= N) return 0;
+
+			constexpr auto n = std::min(N - SrcBegin, DN);
+			if constexpr (std::same_as<std::remove_cvref_t<T>, std::remove_cvref_t<K>>) {
+				memcpy(dst, data + SrcBegin, sizeof(T) * n);
 			} else {
-				for (decltype(N) i = 0; i < N; ++i) dst[i] = data[i];
+				Math::copy<Math::DataDesc(Math::DataType::VECTOR), Math::DataDesc(Math::DataType::VECTOR, SrcBegin, 0, n)>(data, dst);
 			}
+
+			return n;
 		}
 
 		template<std::convertible_to<T> K>

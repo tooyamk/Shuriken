@@ -403,11 +403,17 @@ namespace srk {
 			return v < min ? min : (v > max ? max : v);
 		}
 
-		template<size_t N, typename In1, typename In2, typename In3, typename Out>
+		template<Hint Hints, size_t N, typename In1, typename In2, typename In3, typename Out>
 		inline static constexpr void SRK_CALL clamp(const In1(&v)[N], const In2& min, const In3& max, Out(&dst)[N]) {
-			Out tmp[N];
-			for (decltype(N) i = 0; i < N; ++i) tmp[i] = v[i] < min ? min : (v[i] > max ? max : v[i]);
-			for (decltype(N) i = 0; i < N; ++i) dst[i] = tmp[i];
+			using namespace srk::enum_operators;
+
+			if constexpr ((Hints & Hint::MEM_OVERLAP) == Hint::MEM_OVERLAP) {
+				Out tmp[N];
+				for (decltype(N) i = 0; i < N; ++i) tmp[i] = v[i] < min ? min : (v[i] > max ? max : v[i]);
+				for (decltype(N) i = 0; i < N; ++i) dst[i] = tmp[i];
+			} else {
+				for (decltype(N) i = 0; i < N; ++i) dst[i] = v[i] < min ? min : (v[i] > max ? max : v[i]);
+			}
 		}
 
 		template<size_t N, typename In1, typename In2, typename In3>
@@ -1137,11 +1143,17 @@ namespace srk {
 			if constexpr (dw) dst[*dw] = sw * a;
 		}
 
-		template<size_t N, typename In1, typename In2, typename In3, typename Out>
+		template<Hint Hints, size_t N, typename In1, typename In2, typename In3, typename Out>
 		inline static void SRK_CALL lerp(const In1(&from)[N], const In2(&to)[N], const In3 t, Out(&dst)[N]) {
-			Out tmp[N];
-			for (decltype(N) i = 0; i < N; ++i) tmp[i] = from[i] + (to[i] - from[i]) * t;
-			for (decltype(N) i = 0; i < N; ++i) dst[i] = tmp[i];
+			using namespace srk::enum_operators;
+
+			if constexpr ((Hints & Hint::MEM_OVERLAP) == Hint::MEM_OVERLAP) {
+				Out tmp[N];
+				for (decltype(N) i = 0; i < N; ++i) tmp[i] = from[i] + (to[i] - from[i]) * t;
+				for (decltype(N) i = 0; i < N; ++i) dst[i] = tmp[i];
+			} else {
+				for (decltype(N) i = 0; i < N; ++i) dst[i] = from[i] + (to[i] - from[i]) * t;
+			}
 		}
 
 		template<Data2DDesc DstDesc, std::floating_point FwdT, std::floating_point UwdT, size_t DstR, size_t DstC, std::floating_point DstT>

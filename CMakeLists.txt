@@ -289,7 +289,7 @@ endfunction()
 
 function(srkInstall name)
     if (SRK_ENABLE_INSTALL)
-        install(DIRECTORY "src/" DESTINATION ${name}/include FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp" PATTERN "*impl*.*" EXCLUDE)
+        install(DIRECTORY "src/" DESTINATION ${name}/include FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp" PATTERN "*impl*.*" EXCLUDE PATTERN "private" EXCLUDE)
         install(TARGETS ${PROJECT_NAME}
             RUNTIME DESTINATION ${name}/bin
             ARCHIVE DESTINATION ${name}/lib

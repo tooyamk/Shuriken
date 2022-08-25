@@ -90,23 +90,25 @@ namespace srk::extensions::astc_converter {
 				swizzle.a = ASTCENC_SWZ_G;
 			}
 
-			auto error = ASTCENC_SUCCESS;
+			std::atomic_int32_t error = ASTCENC_SUCCESS;
 			if (threadCount > 1) {
-				auto threads = new std::thread[threadCount];
-				for (decltype(threadCount) i = 0; i < threadCount; ++i) {
-					threads[i] = std::thread([context, &in, &swizzle, dataBuffer, dataBufferSize, i, &error]() {
+				auto threads = new std::thread[threadCount - 1];
+				for (decltype(threadCount) i = 1; i < threadCount; ++i) {
+					threads[i - 1] = std::thread([context, &in, &swizzle, dataBuffer, dataBufferSize, i, &error]() {
 						if (auto err = astcenc_compress_image(context, &in, &swizzle, dataBuffer, dataBufferSize, i); err != ASTCENC_SUCCESS) error = err;
 					});
 				}
 
-				for (decltype(threadCount) i = 0; i < threadCount; ++i) threads[i].join();
+				if (auto err = astcenc_compress_image(context, &in, &swizzle, dataBuffer, dataBufferSize, 0); err != ASTCENC_SUCCESS) error = err;
+
+				for (decltype(threadCount) i = 1; i < threadCount; ++i) threads[i - 1].join();
 				delete[] threads;
 			} else {
 				error = astcenc_compress_image(context, &in, &swizzle, dataBuffer, dataBufferSize, 0);
 			}
 
 			if (error != ASTCENC_SUCCESS) {
-				printf("ERROR: Codec compress failed: %s\n", astcenc_get_error_string(error));
+				printf("ERROR: Codec compress failed: %s\n", astcenc_get_error_string((astcenc_error)error.load()));
 				astcenc_context_free(context);
 				if (buffer != *outBuffer) delete[] buffer;
 				return false;
