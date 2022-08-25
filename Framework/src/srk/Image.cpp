@@ -9,6 +9,20 @@ namespace srk {
 		format(TextureFormat::UNKNOWN) {
 	}
 
+	Image::Image(Image&& other) noexcept :
+		format(other.format),
+		size(other.size),
+		source(std::move(other.source))  {
+	}
+
+	Image& Image::operator=(Image&& other) noexcept {
+		format = other.format;
+		size = other.size;
+		source = std::move(other.source);
+
+		return *this;
+	}
+
 	uint32_t Image::calcPerPixelByteSize(TextureFormat format) {
 		switch (format) {
 		case TextureFormat::R8G8B8:
@@ -265,6 +279,79 @@ namespace srk {
 
 			++top;
 			--bottom;
+		}
+
+		return true;
+	}
+
+	bool Image::scale(Image& dst) {
+		auto bytesPrePixel = 0u;
+		switch (format) {
+		case TextureFormat::R8G8B8:
+			bytesPrePixel = 3;
+			break;
+		case TextureFormat::R8G8B8A8:
+			bytesPrePixel = 4;
+			break;
+		default:
+			break;
+		}
+
+		if (bytesPrePixel == 0) return false;
+
+		auto dstBytes = dst.size.getMultiplies() * bytesPrePixel;
+		dst.format = format;
+		dst.source = std::move(ByteArray(dstBytes, dstBytes));
+
+		auto srcData = source.getSource();
+		auto dstData = dst.source.getSource();
+
+		auto sd = Vec2f32(size) / dst.size;
+		auto half = 0.5f * sd;
+
+		auto nx = dst.size[0], ny = dst.size[1];
+
+		for (auto y = 0u; y < ny; ++y) {
+			auto v = ((float32_t)y + .5f) * sd[1] - half[1];
+			auto iy = (uint32_t)v;
+			v -= iy;
+
+			auto edgeY = iy + 1 < size[1] ? 1u : 0u;
+			auto off1 = iy * size[0];
+			auto off2 = edgeY * size[0];
+
+			auto dstPosBeg = y * dst.size[0];
+
+			for (auto x = 0u; x < nx; ++x) {
+				auto u = ((float32_t)x + .5f) * sd[0] - half[0];
+				auto ix = (uint32_t)u;
+				u -= ix;
+
+				auto edgeX = ix + 1 < size[0] ? 1u : 0u;
+
+				auto lt = off1 + ix;
+				auto rt = lt + edgeX;
+				auto lb = lt + off2;
+				auto rb = lb + edgeX;
+
+				if (x == 1017 && y == 224) {
+					int a = 1;
+				}
+
+				lt *= bytesPrePixel;
+				rt *= bytesPrePixel;
+				lb *= bytesPrePixel;
+				rb *= bytesPrePixel;
+
+				auto dstPos = (dstPosBeg + x) * bytesPrePixel;
+
+				for (auto i = 0u; i < bytesPrePixel; ++i) {
+					auto tc = std::lerp((float32_t)srcData[lt + i], (float32_t)srcData[rt + i], u);
+					auto bc = std::lerp((float32_t)srcData[lb + i], (float32_t)srcData[rb + i], u);
+
+					dstData[dstPos + i] = std::lerp(tc, bc, v);
+				}
+			}
 		}
 
 		return true;

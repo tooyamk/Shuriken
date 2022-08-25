@@ -14,6 +14,9 @@ namespace srk {
 		SRK_REF_OBJECT(Image)
 	public:
 		Image();
+		Image(Image&& other) noexcept;
+
+		Image& SRK_CALL operator=(Image&& other) noexcept;
 
 		modules::graphics::TextureFormat format;
 		Vec2ui32 size;
@@ -79,6 +82,8 @@ namespace srk {
 		static void SRK_CALL generateMips_UInt8s(const Vec2ui32& size, modules::graphics::TextureFormat format, uint32_t mipLevels, uint8_t numChannels, uint8_t* dst, void** dataPtr);
 
 		bool SRK_CALL flipY();
+
+		bool SRK_CALL scale(Image& dst);
 
 	private:
 		static void SRK_CALL _convertFormat_R8G8B8_R8G8B8A8(const Vec2ui32& size, const uint8_t* src, uint8_t* dst);

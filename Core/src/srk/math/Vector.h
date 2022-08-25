@@ -466,8 +466,8 @@ namespace srk {
 	}
 	template<size_t N, typename T1, typename T2>
 	inline constexpr Vector<N, decltype((*(T1*)0) + (*(T2*)0))> SRK_CALL operator+(const T1& v1, const Vector<N, T2>& v2) {
-		Vector<N, decltype((*(T1*)0) + (*(T2*)0))> v(v1);
-		v += v2;
+		Vector<N, decltype((*(T1*)0) + (*(T2*)0))> v(v2);
+		v += v1;
 		return v;
 	}
 
@@ -485,8 +485,8 @@ namespace srk {
 	}
 	template<size_t N, typename T1, typename T2>
 	inline constexpr Vector<N, decltype((*(T1*)0) - (*(T2*)0))> SRK_CALL operator-(const T1& v1, const Vector<N, T2>& v2) {
-		Vector<N, decltype((*(T1*)0) - (*(T2*)0))> v(v1);
-		v -= v2;
+		Vector<N, decltype((*(T1*)0) - (*(T2*)0))> v(v2);
+		v -= v1;
 		return v;
 	}
 
@@ -504,8 +504,8 @@ namespace srk {
 	}
 	template<size_t N, typename T1, typename T2>
 	inline constexpr Vector<N, decltype((*(T1*)0) * (*(T2*)0))> SRK_CALL operator*(const T1& v1, const Vector<N, T2>& v2) {
-		Vector<N, decltype((*(T1*)0) * (*(T2*)0))> v(v1);
-		v *= v2;
+		Vector<N, decltype((*(T1*)0) * (*(T2*)0))> v(v2);
+		v *= v1;
 		return v;
 	}
 
@@ -523,8 +523,8 @@ namespace srk {
 	}
 	template<size_t N, typename T1, typename T2>
 	inline constexpr Vector<N, decltype((*(T1*)0) / (*(T2*)0))> SRK_CALL operator/(const T1& v1, const Vector<N, T2>& v2) {
-		Vector<N, decltype((*(T1*)0) / (*(T2*)0))> v(v1);
-		v /= v2;
+		Vector<N, decltype((*(T1*)0) / (*(T2*)0))> v(v2);
+		v /= v1;
 		return v;
 	}
 	template<size_t N, std::integral T1, std::integral T2>

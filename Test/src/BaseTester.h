@@ -3,6 +3,7 @@
 #include "Helper.h"
 
 #include "Extensions/ASTCConverter/src/srk/ASTCConverter.h"
+#include "Extensions/BC7Converter/src/srk/BC7Converter.h"
 #include "Extensions/PNGConverter/src/srk/PNGConverter.h"
 #include "Extensions/FBXConverter/src/srk/FBXConverter.h"
 #include "Extensions/ShaderScript/src/srk/ShaderScript.h"
