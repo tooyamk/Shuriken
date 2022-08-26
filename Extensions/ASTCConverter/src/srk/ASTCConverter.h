@@ -5,6 +5,9 @@
 namespace srk::extensions {
 	class SRK_EXTENSION_DLL ASTCConverter {
 	public:
+		static constexpr size_t HEADER_SIZE = 16;
+		static constexpr uint32_t HEADER_MAGIC_ID = 0x5CA1AB13;
+
 		/*enum class BlockSize : uint16_t {
 			BLOCK_4x4,
 			BLOCK_5x4,

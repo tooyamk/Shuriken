@@ -10,13 +10,8 @@
 namespace srk::extensions::astc_converter {
 	class Impl {
 	public:
-		static constexpr size_t HEADER_SIZE = 16;
-		static constexpr uint32_t HEADER_MAGIC_ID = 0x5CA1AB13;
-
 		static bool SRK_CALL encode(const Image& img, const Vec3<uint8_t>& blockSize, ASTCConverter::Profile profile, ASTCConverter::Quality quality, ASTCConverter::Flags flags, size_t threadCount, void** outBuffer, size_t& outBufferSize) {
 			using namespace enum_operators;
-
-			outBufferSize = 0;
 
 			if (img.format != modules::graphics::TextureFormat::R8G8B8A8) return false;
 
@@ -56,19 +51,21 @@ namespace srk::extensions::astc_converter {
 			Vec3<size_t> blocks((in.dim_x + config.block_x - 1) / config.block_x, (in.dim_y + config.block_y - 1) / config.block_y, (in.dim_z + config.block_z - 1) / config.block_z);
 			auto needBufferSize = blocks.getMultiplies() * 16;
 			auto isWriteHeader = (flags & ASTCConverter::Flags::WRITE_HEADER) == ASTCConverter::Flags::WRITE_HEADER;
-			if (isWriteHeader) needBufferSize += HEADER_SIZE;
+			if (isWriteHeader) needBufferSize += ASTCConverter::HEADER_SIZE;
 
 			if (outBuffer == nullptr) {
 				outBufferSize = needBufferSize;
 				return true;
 			}
-
+			
 			uint8_t* buffer = nullptr;
 			if (*outBuffer == nullptr) {
 				buffer = new uint8_t[needBufferSize];
 			} else if (needBufferSize > outBufferSize) {
+				outBufferSize = needBufferSize;
 				return false;
 			} else {
+				outBufferSize = needBufferSize;
 				buffer = (uint8_t*)*outBuffer;
 			}
 
@@ -78,8 +75,8 @@ namespace srk::extensions::astc_converter {
 			uint8_t* dataBuffer = buffer;
 			size_t dataBufferSize = needBufferSize;
 			if (isWriteHeader) {
-				dataBuffer += HEADER_SIZE;
-				dataBufferSize -= HEADER_SIZE;
+				dataBuffer += ASTCConverter::HEADER_SIZE;
+				dataBufferSize -= ASTCConverter::HEADER_SIZE;
 			}
 
 			astcenc_swizzle swizzle{ ASTCENC_SWZ_R, ASTCENC_SWZ_G, ASTCENC_SWZ_B, ASTCENC_SWZ_A };
@@ -117,10 +114,10 @@ namespace srk::extensions::astc_converter {
 			astcenc_context_free(context);
 
 			if (isWriteHeader) {
-				buffer[0] = HEADER_MAGIC_ID & 0xFF;
-				buffer[1] = (HEADER_MAGIC_ID >> 8) & 0xFF;
-				buffer[2] = (HEADER_MAGIC_ID >> 16) & 0xFF;
-				buffer[3] = (HEADER_MAGIC_ID >> 24) & 0xFF;
+				buffer[0] = ASTCConverter::HEADER_MAGIC_ID & 0xFF;
+				buffer[1] = (ASTCConverter::HEADER_MAGIC_ID >> 8) & 0xFF;
+				buffer[2] = (ASTCConverter::HEADER_MAGIC_ID >> 16) & 0xFF;
+				buffer[3] = (ASTCConverter::HEADER_MAGIC_ID >> 24) & 0xFF;
 
 				buffer[4] = config.block_x;
 				buffer[5] = config.block_y;

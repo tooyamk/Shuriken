@@ -10,13 +10,8 @@
 namespace srk::extensions::bc7_converter {
 	class Impl {
 	public:
-		static constexpr size_t DDS_HEADER_SIZE = 148;
-		static constexpr uint32_t DDS_HEADER_MAGIC_ID = 0x20534444;
-
 		static bool SRK_CALL encode(const Image& img, uint32_t uberLevel, uint32_t maxPartitionsToScan, BC7Converter::Flags flags, size_t threadCount, void** outBuffer, size_t& outBufferSize) {
 			using namespace enum_operators;
-
-			outBufferSize = 0;
 
 			if (img.format != modules::graphics::TextureFormat::R8G8B8A8) return false;
 			if (img.size[0] % 4 != 0 || img.size[1] % 4 != 0) return false;
@@ -30,7 +25,7 @@ namespace srk::extensions::bc7_converter {
 
 			auto needBufferSize = cfg.numBlocks * 16;
 			auto isWriteHeader = (flags & BC7Converter::Flags::WRITE_DDS_HEADER) == BC7Converter::Flags::WRITE_DDS_HEADER;
-			if (isWriteHeader) needBufferSize += DDS_HEADER_SIZE;
+			if (isWriteHeader) needBufferSize += BC7Converter::DDS_HEADER_SIZE;
 
 			if (outBuffer == nullptr) {
 				outBufferSize = needBufferSize;
@@ -44,16 +39,18 @@ namespace srk::extensions::bc7_converter {
 			if (*outBuffer == nullptr) {
 				buffer = new uint8_t[needBufferSize];
 			} else if (needBufferSize > outBufferSize) {
+				outBufferSize = needBufferSize;
 				return false;
 			} else {
+				outBufferSize = needBufferSize;
 				buffer = (uint8_t*)*outBuffer;
 			}
 
 			cfg.out = buffer;
 			size_t dataBufferSize = needBufferSize;
 			if (isWriteHeader) {
-				cfg.out += DDS_HEADER_SIZE;
-				dataBufferSize -= DDS_HEADER_SIZE;
+				cfg.out += BC7Converter::DDS_HEADER_SIZE;
+				dataBufferSize -= BC7Converter::DDS_HEADER_SIZE;
 			}
 
 			bc7enc_compress_block_params_init(&cfg.params);
@@ -126,8 +123,8 @@ namespace srk::extensions::bc7_converter {
 		}
 
 		static void SRK_CALL _writeDdsHeader(uint8_t* out, const Config& cfg) {
-			ByteArray ba(out, DDS_HEADER_SIZE);
-			ba.write<uint32_t>(DDS_HEADER_MAGIC_ID);
+			ByteArray ba(out, BC7Converter::DDS_HEADER_SIZE);
+			ba.write<uint32_t>(BC7Converter::DDS_HEADER_MAGIC_ID);
 
 			//DDS_HEADER
 			{
