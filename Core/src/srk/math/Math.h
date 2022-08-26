@@ -2,6 +2,7 @@
 
 #include "srk/Global.h"
 #include <cmath>
+#include <optional>
 
 namespace srk {
 	class SRK_CORE_DLL Math {
@@ -1214,7 +1215,7 @@ namespace srk {
 			using namespace srk::enum_operators;
 
 			if constexpr (I < DDesc.range.length) {
-				constexpr auto di = DDesc.range.realPosition((Range::PosType)I + DDesc.range.offsetBegin(), DT);
+				constexpr auto di = DDesc.range.realPosition((Range::PosType)I + DDesc.range.offsetBegin(), DN);
 				if constexpr (di) {
 					constexpr auto i = (Range::PosType)I + DDesc.range.offsetBegin();
 
@@ -2100,9 +2101,6 @@ namespace srk {
 			auto x = qw * px + qy * pz - qz * py;
 			auto y = qw * py - qx * pz + qz * px;
 			auto z = qw * pz + qx * py - qy * px;
-
-			auto dx = -w * qx + x * qw - y * qz + z * qy;
-			auto dy = -w * qy + x * qz + y * qw - z * qx;
 
 			constexpr auto dx = ddesc.range.realPosition(0, DN);
 			if constexpr (*dx) dst[*dx] = -w * qx + x * qw - y * qz + z * qy;

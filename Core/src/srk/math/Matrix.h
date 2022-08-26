@@ -552,8 +552,8 @@ namespace srk {
 		};
 
 	private:
-		template<MatrixHint Hints, Math::Data2DDesc Desc, size_t Rs, size_t Cs, std::floating_point T>
-		inline static constexpr void SRK_CALL _autoIdentity(T(&dst)[Rs][Cs]) {
+		template<MatrixHint Hints, Math::Data2DDesc Desc, size_t Rs, size_t Cs, std::floating_point K>
+		inline static constexpr void SRK_CALL _autoIdentity(K(&dst)[Rs][Cs]) {
 			using namespace srk::enum_operators;
 
 			if constexpr ((Hints & MatrixHint::IDENTITY_OTHERS) == MatrixHint::IDENTITY_OTHERS) {

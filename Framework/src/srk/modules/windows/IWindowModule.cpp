@@ -1,5 +1,3 @@
-#pragma once
-
 #include "IWindowModule.h"
 #include "srk/events/EventDispatcher.h"
 

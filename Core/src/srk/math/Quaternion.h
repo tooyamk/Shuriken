@@ -88,7 +88,7 @@ namespace srk {
 		Quaternion& SRK_CALL normalize() {
 			auto n = Math::dot(data, data);
 
-			if (n <= Math::TOLERANCE<T> || Math::equal(n, Math::ONE<T>, Math::TOLERANCE<T>)) return;
+			if (n <= Math::TOLERANCE<T> || Math::equal(n, Math::ONE<T>, Math::TOLERANCE<T>)) return *this;
 			n = std::sqrt(n);
 
 			x *= n;
@@ -201,6 +201,8 @@ namespace srk {
 
 		template<Math::DataDesc LDesc = nullptr, Math::DataDesc RDesc = nullptr, Math::DataDesc DDesc = nullptr, std::floating_point RT, std::floating_point DT>
 		inline void SRK_CALL prepend(const RT(&rhs)[4], DT(&dst)[4]) const {
+			using namespace srk::enum_operators;
+
 			constexpr auto ldesc = Math::DataDesc(Math::DataType::QUATERNION, LDesc);
 			constexpr auto rdesc = Math::DataDesc(Math::DataType::QUATERNION, RDesc);
 			constexpr auto ddesc = Math::DataDesc(Math::DataType::QUATERNION, DDesc.hints | Math::Hint::MEM_OVERLAP, DDesc.range);
