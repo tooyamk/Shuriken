@@ -3,7 +3,7 @@
 #include "srk/ByteArray.h"
 #include "srk/modules/graphics/IGraphicsModule.h"
 #include "BC7Converter.h"
-#include "../private/bc7enc.h"
+#include "bc7enc.h"
 
 #include <thread>
 
