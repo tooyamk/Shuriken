@@ -4,11 +4,10 @@
 #include "srk/math/Math.h"
 
 namespace srk::meta {
-	template<int64_t I, int64_t N, auto... NonTypeArgs, typename Fn, typename... Args>
+	/*template<int64_t I, int64_t N, auto... NonTypeArgs, typename Fn, typename... Args>
 	concept aabbf = requires(Fn&& fn, Args&&... args) {
 		fn.operator()<I, N, NonTypeArgs...>(std::forward<Args>(args)...);
 		//std::invoke(std::forward<F>(f), std::forward<Args>(args)...);
-		/* not required to be equality preserving */
 	};
 
 	template <typename Tuple, std::size_t... I>
@@ -24,7 +23,7 @@ namespace srk::meta {
 	template<auto... NonTypeArgs, typename Fn, typename... Args>
 	//requires (aabbf<I, N, NonTypeArgs..., Fn, Args...>)
 	inline void loop(Fn&& fn, Args&&... args) {
-		constexpr auto ret = fn.operator()<NonTypeArgs...>(std::forward<Args>(args)...);
+		//constexpr auto ret = fn.operator()<NonTypeArgs...>(std::forward<Args>(args)...);
 		//if constexpr (ret) {
 		//	loop<*ret>(std::forward<Fn>(fn), std::forward<Args>(args)...);
 		//}
@@ -33,7 +32,7 @@ namespace srk::meta {
 			//constexpr auto i = std::make_index_sequence<std::tuple_size_v<nextNonTypeArgs>>;
 			//loop<std::get<std::make_index_sequence<std::tuple_size<nextNonTypeArgs>::value>>(nextNonTypeArgs)...>(std::forward<Fn>(fn), std::forward<Args>(args)...);
 		//}
-	}
+	}*/
 
 	/*template<int64_t I, int64_t N, typename Fn, typename... Args>
 	inline void loopIf(Fn&& fn, Args&&... args) {
@@ -91,6 +90,8 @@ public:
 		auto bc7 = extensions::BC7Converter::encode(*src, 2, 64, extensions::BC7Converter::Flags::WRITE_DDS_HEADER, 12);
 		printaln(Time::now() - t0);
 		writeFile(srcDir + "/img.dds", bc7);
+
+		printaln("finish!!!");
 
 		return 0;
 	}
