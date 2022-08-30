@@ -582,7 +582,7 @@ if (SRK_RPATH)
 endif ()
 
 set(compilerFlags "-fms-extensions -fPIC -Wno-unused-command-line-argument -Wno-switch")
-if (SRK_RPATH)
+if (SRK_RPATH AND (NOT ${CMAKE_GENERATOR} STREQUAL Xcode))
         srkFormatRpath("${SRK_RPATH}" rpath)
         set(compilerFlags "${compilerFlags} -Wl,-rpath=${rpath}")
         unset(rpath)
