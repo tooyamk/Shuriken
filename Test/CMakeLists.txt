@@ -82,9 +82,6 @@ get_property(SRKPROJ_MODULE_WINDOW_WIN32API_DLL GLOBAL PROPERTY "SRKPROJ_MODULE_
 get_property(SRKPROJ_MODULE_WINDOW_X11_NAME GLOBAL PROPERTY "SRKPROJ_MODULE_WINDOW_X11_NAME")
 get_property(SRKPROJ_MODULE_WINDOW_X11_DLL GLOBAL PROPERTY "SRKPROJ_MODULE_WINDOW_X11_DLL")
 
-#set(CMAKE_SKIP_BUILD_RPATH False)
-#set(CMAKE_BUILD_RPATH ./libs)
-
 include_directories(
     ${SRKPROJ_CORE_INCLUDE}
     ${SRKPROJ_FRAMEWORK_INCLUDE}
@@ -93,12 +90,6 @@ include_directories(
 srkCollectSrcFiles(srcFiles)
 srkAddExecutableSourceGroup(${PROJECT_NAME} MACOSX_BUNDLE ${srcFiles})
 target_compile_definitions(${PROJECT_NAME} PRIVATE ${SRK_DEFINITIONS})
-
-if (SRK_OS_MACOS)
-    srkSetTargetRpath(${PROJECT_NAME} "./../../../libs")
-else ()
-    srkSetTargetRpath(${PROJECT_NAME} "./libs")
-endif ()
 
 set(linkLibs
     ${SRKPROJ_CORE_NAME}
