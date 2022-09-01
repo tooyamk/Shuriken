@@ -157,11 +157,13 @@ namespace srk {
 			setPosition(_position + size);
 		}
 
-		inline void SRK_CALL seekBegin() {
+		inline ByteArray& SRK_CALL seekBegin() {
 			_position = 0;
+			return *this;
 		}
-		inline void SRK_CALL seekEnd() {
+		inline ByteArray& SRK_CALL seekEnd() {
 			_position = _length;
+			return *this;
 		}
 
 		inline size_t SRK_CALL getBytesAvailable() const {

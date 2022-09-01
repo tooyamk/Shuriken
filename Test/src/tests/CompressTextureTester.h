@@ -57,7 +57,15 @@ public:
 
 	virtual int32_t SRK_CALL run() override {
 		auto srcDir = getAppPath().parent_path().u8string();
-		auto src = extensions::PNGConverter::decode(readFile(srcDir + "/Resources/tex1.png"));
+		IntrusivePtr<Image> src;
+		{
+			auto srcBin = readFile(srcDir + "/Resources/tex1.jpg");
+			if (srcBin.seekBegin().read<uint32_t>() == extensions::PNGConverter::HEADER_MAGIC) {
+				src = extensions::PNGConverter::decode(srcBin.seekBegin());
+			} else if (srcBin.seekBegin().read<ba_vt::UIX>(3) == extensions::JPEGConverter::HEADER_MAGIC) {
+				src = extensions::JPEGConverter::decode(srcBin.seekBegin());
+			}
+		}
 		if (!src) return 0;
 
 		if (src->format == modules::graphics::TextureFormat::R8G8B8) {
@@ -67,6 +75,10 @@ public:
 			src->format = modules::graphics::TextureFormat::R8G8B8A8;
 			src->source = std::move(dst);
 		}
+
+		writeFile("D:/Users/Sephiroth/Desktop/temp/aaa.png", extensions::PNGConverter::encode(*src));
+
+		return 0;
 
 		auto tiles = calcTiles(src->size);
 		auto dstSize = tiles * TileSize;

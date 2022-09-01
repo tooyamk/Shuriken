@@ -4,8 +4,9 @@
 
 #include "Extensions/ASTCConverter/src/srk/ASTCConverter.h"
 #include "Extensions/BC7Converter/src/srk/BC7Converter.h"
-#include "Extensions/PNGConverter/src/srk/PNGConverter.h"
 #include "Extensions/FBXConverter/src/srk/FBXConverter.h"
+#include "Extensions/PNGConverter/src/srk/PNGConverter.h"
+#include "Extensions/JPEGConverter/src/srk/JPEGConverter.h"
 #include "Extensions/ShaderScript/src/srk/ShaderScript.h"
 
 using namespace srk;
