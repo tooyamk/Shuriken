@@ -49,7 +49,8 @@ namespace srk::extensions::astc_converter {
 			if (astcenc_config_init((astcenc_profile)profile, blockSize[0], blockSize[1], blockSize[2], qlty, ((uint32_t)flags & 0x7F), &config) != ASTCENC_SUCCESS) return false;
 
 			Vec3<size_t> blocks((in.dim_x + config.block_x - 1) / config.block_x, (in.dim_y + config.block_y - 1) / config.block_y, (in.dim_z + config.block_z - 1) / config.block_z);
-			auto needBufferSize = blocks.getMultiplies() * 16;
+			auto numBlocks = blocks.getMultiplies();
+			auto needBufferSize = numBlocks * 16;
 			auto isWriteHeader = (flags & ASTCConverter::Flags::WRITE_HEADER) == ASTCConverter::Flags::WRITE_HEADER;
 			if (isWriteHeader) needBufferSize += ASTCConverter::HEADER_SIZE;
 
@@ -68,6 +69,8 @@ namespace srk::extensions::astc_converter {
 				outBufferSize = needBufferSize;
 				buffer = (uint8_t*)*outBuffer;
 			}
+
+			if (threadCount > numBlocks) threadCount = numBlocks;
 
 			astcenc_context* context = nullptr;
 			if (auto err = astcenc_context_alloc(&config, threadCount, &context); err != ASTCENC_SUCCESS) return false;

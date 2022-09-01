@@ -82,12 +82,17 @@ public:
 
 		src->flipY();
 
+		//src->size = 4;
+		//src->source = ByteArray(64);
+		//for (auto i = 0; i < 64; ++i) src->source.write<uint8_t>(255);
+
 		auto t0 = Time::now();
 		auto astc = extensions::ASTCConverter::encode(*src, Vec3ui32(4, 4, 1), extensions::ASTCConverter::Profile::LDR, extensions::ASTCConverter::Quality::MEDIUM, extensions::ASTCConverter::Flags::WRITE_HEADER, 12);
+		//for (auto i = 0; i < 16; ++i) printaln(i, " : ", astc.getSource()[i]);
 		//printaln(Time::now() - t0);
 		writeFile(srcDir + "/img.astc", astc);
 
-		auto bc7 = extensions::BC7Converter::encode(*src, 2, 64, extensions::BC7Converter::Flags::WRITE_DDS_HEADER, 12);
+		auto bc7 = extensions::BC7Converter::encode(*src, 2, 64, extensions::BC7Converter::Flags::NONE, 12);
 		printaln(Time::now() - t0);
 		writeFile(srcDir + "/img.dds", bc7);
 

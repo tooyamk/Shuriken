@@ -7,13 +7,12 @@ set_property(GLOBAL PROPERTY SRKPROJ_FRAMEWORK_DLL ${SRK_PROJECT_BUILD_DIR}/${CM
 get_property(SRKPROJ_CORE_NAME GLOBAL PROPERTY "SRKPROJ_CORE_NAME")
 get_property(SRKPROJ_CORE_INCLUDE GLOBAL PROPERTY "SRKPROJ_CORE_INCLUDE")
 
-include_directories(
+file(GLOB_RECURSE srcFiles "src/*.h" "src/*.cpp")
+srkAddLibrarySourceGroup(${PROJECT_NAME} SHARED ${srcFiles})
+target_include_directories(${PROJECT_NAME} PUBLIC
     src
     ${SRKPROJ_CORE_INCLUDE}
 )
-
-file(GLOB_RECURSE srcFiles "src/*.h" "src/*.cpp")
-srkAddLibrarySourceGroup(${PROJECT_NAME} SHARED ${srcFiles})
 target_compile_definitions(${PROJECT_NAME} PRIVATE ${SRK_DEFINITIONS} -DSRK_FW_EXPORTS)
 add_dependencies(${PROJECT_NAME} 
     ${SRKPROJ_CORE_NAME}

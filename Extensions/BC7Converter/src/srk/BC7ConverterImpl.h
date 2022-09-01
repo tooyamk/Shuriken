@@ -32,7 +32,10 @@ namespace srk::extensions::bc7_converter {
 				return true;
 			}
 
+			if (threadCount > cfg.numBlocks) threadCount = cfg.numBlocks;
+
 			cfg.numBlocksPerThread = (cfg.numBlocks + threadCount - 1) / threadCount;
+			if (cfg.numBlocksPerThread < 1) cfg.numBlocksPerThread = 1;
 			cfg.in = img.source.getSource();
 
 			uint8_t* buffer = nullptr;
@@ -59,8 +62,6 @@ namespace srk::extensions::bc7_converter {
 			cfg.params.m_uber_level = std::min(uberLevel, (uint32_t)BC7ENC_MAX_UBER_LEVEL);
 
 			bc7enc_compress_block_init();
-
-			auto numBlocksPerThread = (cfg.numBlocks + threadCount - 1) / threadCount;
 
 			if (threadCount > 1) {
 				auto threads = new std::thread[threadCount - 1];

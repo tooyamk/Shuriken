@@ -12,14 +12,14 @@ get_property(SRKPROJ_FRAMEWORK_INCLUDE GLOBAL PROPERTY "SRKPROJ_FRAMEWORK_INCLUD
 get_property(SRKPROJ_EXTENSION_HID_NAME GLOBAL PROPERTY "SRKPROJ_EXTENSION_HID_NAME")
 get_property(SRKPROJ_EXTENSION_HID_INCLUDE GLOBAL PROPERTY "SRKPROJ_EXTENSION_HID_INCLUDE")
 
-include_directories(
+file(GLOB_RECURSE srcFiles "src/*.h" "src/*.cpp")
+srkAddLibrarySourceGroup(${PROJECT_NAME} SHARED ${srcFiles})
+target_include_directories(${PROJECT_NAME} PUBLIC
     src/srk/
     ${SRKPROJ_CORE_INCLUDE}
     ${SRKPROJ_FRAMEWORK_INCLUDE}
     ${SRKPROJ_EXTENSION_HID_INCLUDE}
 )
-file(GLOB_RECURSE srcFiles "src/*.h" "src/*.cpp")
-srkAddLibrarySourceGroup(${PROJECT_NAME} SHARED ${srcFiles})
 target_compile_definitions(${PROJECT_NAME} PRIVATE ${SRK_MODULE_DEFINITIONS})
 add_dependencies(${PROJECT_NAME}
     ${SRKPROJ_FRAMEWORK_NAME}

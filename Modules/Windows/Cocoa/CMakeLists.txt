@@ -9,12 +9,12 @@ get_property(SRKPROJ_CORE_INCLUDE GLOBAL PROPERTY "SRKPROJ_CORE_INCLUDE")
 get_property(SRKPROJ_FRAMEWORK_NAME GLOBAL PROPERTY "SRKPROJ_FRAMEWORK_NAME")
 get_property(SRKPROJ_FRAMEWORK_INCLUDE GLOBAL PROPERTY "SRKPROJ_FRAMEWORK_INCLUDE")
 
-include_directories(
+srkCollectSrcFiles(srcFiles)
+srkAddLibrarySourceGroup(${PROJECT_NAME} SHARED ${srcFiles})
+target_include_directories(${PROJECT_NAME} PUBLIC
     ${SRKPROJ_CORE_INCLUDE}
     ${SRKPROJ_FRAMEWORK_INCLUDE}
 )
-srkCollectSrcFiles(srcFiles)
-srkAddLibrarySourceGroup(${PROJECT_NAME} SHARED ${srcFiles})
 target_compile_definitions(${PROJECT_NAME} PRIVATE ${SRK_MODULE_DEFINITIONS})
 add_dependencies(${PROJECT_NAME} ${SRKPROJ_FRAMEWORK_NAME})
 target_link_libraries(${PROJECT_NAME}

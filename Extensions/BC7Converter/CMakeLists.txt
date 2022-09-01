@@ -15,13 +15,13 @@ get_property(SRKPROJ_EXTERNAL_BC7ENC_NAME GLOBAL PROPERTY "SRKPROJ_EXTERNAL_BC7E
 get_property(SRKPROJ_EXTERNAL_BC7ENC_INCLUDE GLOBAL PROPERTY "SRKPROJ_EXTERNAL_BC7ENC_INCLUDE")
 get_property(SRKPROJ_EXTERNAL_BC7ENC_SLIB GLOBAL PROPERTY "SRKPROJ_EXTERNAL_BC7ENC_SLIB")
 
-include_directories(
+file(GLOB_RECURSE srcFiles "src/*.h" "src/*.cpp" "src/*.c")
+srkAddLibrarySourceGroup(${PROJECT_NAME} SHARED ${srcFiles})
+target_include_directories(${PROJECT_NAME} PUBLIC
     ${SRKPROJ_CORE_INCLUDE}
     ${SRKPROJ_FRAMEWORK_INCLUDE}
     ${SRKPROJ_EXTERNAL_BC7ENC_INCLUDE}
 )
-file(GLOB_RECURSE srcFiles "src/*.h" "src/*.cpp" "src/*.c")
-srkAddLibrarySourceGroup(${PROJECT_NAME} SHARED ${srcFiles})
 target_compile_definitions(${PROJECT_NAME} PRIVATE ${SRK_EXTENSION_DEFINITIONS})
 add_dependencies(${PROJECT_NAME} 
     ${SRKPROJ_FRAMEWORK_NAME}

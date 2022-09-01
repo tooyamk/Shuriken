@@ -13,13 +13,13 @@ get_property(SRKPROJ_EXTERNAL_GLEW_NAME GLOBAL PROPERTY "SRKPROJ_EXTERNAL_GLEW_N
 get_property(SRKPROJ_EXTERNAL_GLEW_INCLUDE GLOBAL PROPERTY "SRKPROJ_EXTERNAL_GLEW_INCLUDE")
 get_property(SRKPROJ_EXTERNAL_GLEW_LIB GLOBAL PROPERTY "SRKPROJ_EXTERNAL_GLEW_LIB")
 
-include_directories(
+file(GLOB_RECURSE srcFiles "src/*.h" "src/*.cpp")
+srkAddLibrarySourceGroup(${PROJECT_NAME} SHARED ${srcFiles})
+target_include_directories(${PROJECT_NAME} PUBLIC
     ${SRKPROJ_CORE_INCLUDE}
     ${SRKPROJ_FRAMEWORK_INCLUDE}
     ${SRKPROJ_EXTERNAL_GLEW_INCLUDE}
 )
-file(GLOB_RECURSE srcFiles "src/*.h" "src/*.cpp")
-srkAddLibrarySourceGroup(${PROJECT_NAME} SHARED ${srcFiles})
 target_compile_definitions(${PROJECT_NAME} PRIVATE ${SRK_MODULE_DEFINITIONS} -DGLEW_NO_GLU)
 add_dependencies(${PROJECT_NAME}
     ${SRKPROJ_FRAMEWORK_NAME}

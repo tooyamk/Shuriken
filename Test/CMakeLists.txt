@@ -82,13 +82,13 @@ get_property(SRKPROJ_MODULE_WINDOW_WIN32API_DLL GLOBAL PROPERTY "SRKPROJ_MODULE_
 get_property(SRKPROJ_MODULE_WINDOW_X11_NAME GLOBAL PROPERTY "SRKPROJ_MODULE_WINDOW_X11_NAME")
 get_property(SRKPROJ_MODULE_WINDOW_X11_DLL GLOBAL PROPERTY "SRKPROJ_MODULE_WINDOW_X11_DLL")
 
-include_directories(
+srkCollectSrcFiles(srcFiles)
+srkAddExecutableSourceGroup(${PROJECT_NAME} MACOSX_BUNDLE ${srcFiles})
+target_include_directories(${PROJECT_NAME} PUBLIC
     ${SRKPROJ_CORE_INCLUDE}
     ${SRKPROJ_FRAMEWORK_INCLUDE}
     ${SRK_SOURCE_DIR}
 )
-srkCollectSrcFiles(srcFiles)
-srkAddExecutableSourceGroup(${PROJECT_NAME} MACOSX_BUNDLE ${srcFiles})
 target_compile_definitions(${PROJECT_NAME} PRIVATE ${SRK_DEFINITIONS})
 
 set(linkLibs

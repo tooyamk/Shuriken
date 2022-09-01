@@ -7,12 +7,12 @@ set_property(GLOBAL PROPERTY SRKPROJ_EXTENSION_HID_DLL ${SRK_PROJECT_BUILD_DIR}/
 get_property(SRKPROJ_CORE_NAME GLOBAL PROPERTY "SRKPROJ_CORE_NAME")
 get_property(SRKPROJ_CORE_INCLUDE GLOBAL PROPERTY "SRKPROJ_CORE_INCLUDE")
 
-include_directories(
+file(GLOB_RECURSE srcFiles "src/*.h" "src/*.cpp")
+srkAddLibrarySourceGroup(${PROJECT_NAME} SHARED ${srcFiles})
+target_include_directories(${PROJECT_NAME} PUBLIC
     src/srk/
     ${SRKPROJ_CORE_INCLUDE}
 )
-file(GLOB_RECURSE srcFiles "src/*.h" "src/*.cpp")
-srkAddLibrarySourceGroup(${PROJECT_NAME} SHARED ${srcFiles})
 target_compile_definitions(${PROJECT_NAME} PRIVATE ${SRK_EXTENSION_DEFINITIONS})
 add_dependencies(${PROJECT_NAME}
     ${SRKPROJ_CORE_NAME}
