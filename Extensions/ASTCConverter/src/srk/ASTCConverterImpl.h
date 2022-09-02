@@ -10,7 +10,7 @@
 namespace srk::extensions::astc_converter {
 	class Impl {
 	public:
-		static bool SRK_CALL encode(const Image& img, const Vec3<uint8_t>& blockSize, ASTCConverter::Profile profile, ASTCConverter::Quality quality, ASTCConverter::Flags flags, size_t threadCount, void** outBuffer, size_t& outBufferSize) {
+		static bool SRK_CALL encode(const Image& img, const Vec3<uint8_t>& blockSize, ASTCConverter::Profile profile, ASTCConverter::Quality quality, ASTCConverter::Flags flags, size_t threadCount, void** outBuffer, size_t& outBufferSize, const ASTCConverter::Job& job) {
 			using namespace enum_operators;
 
 			if (img.format != modules::graphics::TextureFormat::R8G8B8A8) return false;
@@ -92,17 +92,33 @@ namespace srk::extensions::astc_converter {
 
 			std::atomic_int32_t error = ASTCENC_SUCCESS;
 			if (threadCount > 1) {
-				auto threads = new std::thread[threadCount - 1];
-				for (decltype(threadCount) i = 1; i < threadCount; ++i) {
-					threads[i - 1] = std::thread([context, &in, &swizzle, dataBuffer, dataBufferSize, i, &error]() {
-						if (auto err = astcenc_compress_image(context, &in, &swizzle, dataBuffer, dataBufferSize, i); err != ASTCENC_SUCCESS) error = err;
-					});
+				std::thread* threads = nullptr;
+				std::shared_future<void>* futures = nullptr;
+				if (job) {
+					futures = new std::shared_future<void>[threadCount - 1];
+					for (decltype(threadCount) i = 1; i < threadCount; ++i) {
+						futures[i - 1] = job([context, &in, &swizzle, dataBuffer, dataBufferSize, i, &error]() {
+							if (auto err = astcenc_compress_image(context, &in, &swizzle, dataBuffer, dataBufferSize, i); err != ASTCENC_SUCCESS) error = err;
+							});
+					}
+				} else {
+					threads = new std::thread[threadCount - 1];
+					for (decltype(threadCount) i = 1; i < threadCount; ++i) {
+						threads[i - 1] = std::thread([context, &in, &swizzle, dataBuffer, dataBufferSize, i, &error]() {
+							if (auto err = astcenc_compress_image(context, &in, &swizzle, dataBuffer, dataBufferSize, i); err != ASTCENC_SUCCESS) error = err;
+							});
+					}
 				}
 
 				if (auto err = astcenc_compress_image(context, &in, &swizzle, dataBuffer, dataBufferSize, 0); err != ASTCENC_SUCCESS) error = err;
 
-				for (decltype(threadCount) i = 1; i < threadCount; ++i) threads[i - 1].join();
-				delete[] threads;
+				if (job) {
+					for (decltype(threadCount) i = 1; i < threadCount; ++i) futures[i - 1].wait();
+					delete[] futures;
+				} else {
+					for (decltype(threadCount) i = 1; i < threadCount; ++i) threads[i - 1].join();
+					delete[] threads;
+				}
 			} else {
 				error = astcenc_compress_image(context, &in, &swizzle, dataBuffer, dataBufferSize, 0);
 			}

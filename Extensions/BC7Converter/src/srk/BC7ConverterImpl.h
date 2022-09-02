@@ -10,7 +10,7 @@
 namespace srk::extensions::bc7_converter {
 	class Impl {
 	public:
-		static bool SRK_CALL encode(const Image& img, uint32_t uberLevel, uint32_t maxPartitionsToScan, BC7Converter::Flags flags, size_t threadCount, void** outBuffer, size_t& outBufferSize) {
+		static bool SRK_CALL encode(const Image& img, uint32_t uberLevel, uint32_t maxPartitionsToScan, BC7Converter::Flags flags, size_t threadCount, void** outBuffer, size_t& outBufferSize, const BC7Converter::Job& job) {
 			using namespace enum_operators;
 
 			if (img.format != modules::graphics::TextureFormat::R8G8B8A8) return false;
@@ -65,17 +65,33 @@ namespace srk::extensions::bc7_converter {
 			bc7enc_compress_block_init();
 
 			if (threadCount > 1) {
-				auto threads = new std::thread[threadCount - 1];
-				for (decltype(threadCount) i = 1; i < threadCount; ++i) {
-					threads[i - 1] = std::thread([&cfg, i]() {
-						_encode(cfg, i);
-					});
+				std::thread* threads = nullptr;
+				std::shared_future<void>* futures = nullptr;
+				if (job) {
+					futures = new std::shared_future<void>[threadCount - 1];
+					for (decltype(threadCount) i = 1; i < threadCount; ++i) {
+						futures[i - 1] = job([&cfg, i]() {
+							_encode(cfg, i);
+							});
+					}
+				} else {
+					threads = new std::thread[threadCount - 1];
+					for (decltype(threadCount) i = 1; i < threadCount; ++i) {
+						threads[i - 1] = std::thread([&cfg, i]() {
+							_encode(cfg, i);
+							});
+					}
 				}
 
 				_encode(cfg, 0);
 
-				for (decltype(threadCount) i = 1; i < threadCount; ++i) threads[i - 1].join();
-				delete[] threads;
+				if (job) {
+					for (decltype(threadCount) i = 1; i < threadCount; ++i) futures[i - 1].wait();
+					delete[] futures;
+				} else {
+					for (decltype(threadCount) i = 1; i < threadCount; ++i) threads[i - 1].join();
+					delete[] threads;
+				}
 			} else {
 				_encode(cfg, 0);
 			}

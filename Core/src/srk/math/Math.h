@@ -1157,6 +1157,15 @@ namespace srk {
 			}
 		}
 
+		template<std::floating_point T>
+		inline static T SRK_CALL linear2sRGB(T l) {
+			return l <= T(0.0031308) ? l * T(12.92) : std::pow(l, T(1.0 / 2.4)) * T(1.055) - T(0.055);
+		}
+
+		inline static uint8_t SRK_CALL linear2sRGB(uint8_t l) {
+			return linear2sRGB(l / 255.0f) * 255.0f;
+		}
+
 		template<Data2DDesc DstDesc, std::floating_point FwdT, std::floating_point UwdT, size_t DstR, size_t DstC, std::floating_point DstT>
 		static void SRK_CALL lookAt(const FwdT(&forward)[3], const UwdT(&upward)[3], DstT(&dst)[DstR][DstC]) {
 			static_assert(DstDesc.type == DataType::MATRIX, "dst type must be matrix");
@@ -1947,6 +1956,15 @@ namespace srk {
 			auto s = std::sin(theta);
 			auto c = std::cos(theta);
 			for (uint32_t i = 0; i < 3; ++i) out[i] = nrmA[i] * c + tmp[i] * s;
+		}
+
+		template<std::floating_point T>
+		inline static T SRK_CALL sRGB2Linear(T s) {
+			return s <= T(0.04045) ? s / T(12.92) : std::pow((s + T(0.055)) / T(1.055), T(2.4));
+		}
+
+		inline static uint8_t SRK_CALL sRGB2Linear(uint8_t s) {
+			return sRGB2Linear(s / 255.0f) * 255.0f;
 		}
 
 		template<DataDesc SrcDesc, Data2DDesc DstDesc, size_t SrcN, std::floating_point SrcT, size_t DstRs, size_t DstCs, std::floating_point DstT>

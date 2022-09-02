@@ -76,9 +76,7 @@ public:
 			src->source = std::move(dst);
 		}
 
-		writeFile("D:/Users/Sephiroth/Desktop/temp/aaa.png", extensions::PNGConverter::encode(*src));
-
-		return 0;
+		ThreadPool tp(11);
 
 		auto tiles = calcTiles(src->size);
 		auto dstSize = tiles * TileSize;
@@ -99,12 +97,16 @@ public:
 		//for (auto i = 0; i < 64; ++i) src->source.write<uint8_t>(255);
 
 		auto t0 = Time::now();
-		auto astc = extensions::ASTCConverter::encode(*src, Vec3ui32(4, 4, 1), extensions::ASTCConverter::Profile::LDR, extensions::ASTCConverter::Quality::MEDIUM, extensions::ASTCConverter::Flags::WRITE_HEADER, 12);
+		auto astc = extensions::ASTCConverter::encode(*src, Vec3ui32(4, 4, 1), extensions::ASTCConverter::Profile::LDR, extensions::ASTCConverter::Quality::MEDIUM, extensions::ASTCConverter::Flags::WRITE_HEADER, 12, [&tp](const std::function<void()>& fn) {
+			return tp.enqueue(fn);
+			});
 		//for (auto i = 0; i < 16; ++i) printaln(i, " : ", astc.getSource()[i]);
 		//printaln(Time::now() - t0);
 		writeFile(srcDir + "/img.astc", astc);
 
-		auto bc7 = extensions::BC7Converter::encode(*src, 2, 64, extensions::BC7Converter::Flags::NONE, 12);
+		auto bc7 = extensions::BC7Converter::encode(*src, 2, 64, extensions::BC7Converter::Flags::NONE, 12, [&tp](const std::function<void()>& fn) {
+			return tp.enqueue(fn);
+			});
 		printaln(Time::now() - t0);
 		writeFile(srcDir + "/img.dds", bc7);
 
