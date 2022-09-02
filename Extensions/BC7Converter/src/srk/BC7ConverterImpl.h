@@ -35,8 +35,8 @@ namespace srk::extensions::bc7_converter {
 			if (threadCount > cfg.numBlocks) threadCount = cfg.numBlocks;
 
 			cfg.srgb = (flags & BC7Converter::Flags::SRGB) == BC7Converter::Flags::SRGB;
-			cfg.numBlocksPerThread = (cfg.numBlocks + threadCount - 1) / threadCount;
-			if (cfg.numBlocksPerThread < 1) cfg.numBlocksPerThread = 1;
+			cfg.numBlocksPerThread = cfg.numBlocks / threadCount;
+			cfg.blocksRemainder = cfg.numBlocks - cfg.numBlocksPerThread * threadCount;
 			cfg.in = img.source.getSource();
 
 			uint8_t* buffer = nullptr;
@@ -112,6 +112,7 @@ namespace srk::extensions::bc7_converter {
 			bool srgb;
 
 			size_t numBlocksPerThread;
+			size_t blocksRemainder;
 			const uint8_t* in;
 			uint8_t* out;
 
@@ -119,8 +120,17 @@ namespace srk::extensions::bc7_converter {
 		};
 
 		static void SRK_CALL _encode(const Config& cfg, uint32_t threadIndex) {
+			auto calcBlocks = cfg.numBlocksPerThread;
 			auto startBlock = cfg.numBlocksPerThread * threadIndex;
-			auto endBlock = startBlock + cfg.numBlocksPerThread;
+			if (cfg.blocksRemainder > 0) {
+				if (threadIndex < cfg.blocksRemainder) {
+					startBlock += threadIndex;
+					++calcBlocks;
+				} else {
+					startBlock += cfg.blocksRemainder;
+				}
+			}
+			auto endBlock = startBlock + calcBlocks;
 			if (endBlock > cfg.numBlocks) endBlock = cfg.numBlocks;
 
 			uint8_t in[16 << 2];

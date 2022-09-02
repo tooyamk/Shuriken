@@ -18,7 +18,7 @@ ExternalProject_Add(
     ${PROJECT_NAME}
     PREFIX ${PROJECT_BINARY_DIR}
     GIT_REPOSITORY https://github.com/richgel999/bc7enc.git
-    GIT_TAG master
+    GIT_TAG f66c2e4
     GIT_SHALLOW 1
     GIT_PROGRESS 1
     TMP_DIR tmp
