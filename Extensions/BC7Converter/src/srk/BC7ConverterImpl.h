@@ -34,6 +34,7 @@ namespace srk::extensions::bc7_converter {
 
 			if (threadCount > cfg.numBlocks) threadCount = cfg.numBlocks;
 
+			cfg.srgb = (flags & BC7Converter::Flags::SRGB) == BC7Converter::Flags::SRGB;
 			cfg.numBlocksPerThread = (cfg.numBlocks + threadCount - 1) / threadCount;
 			if (cfg.numBlocksPerThread < 1) cfg.numBlocksPerThread = 1;
 			cfg.in = img.source.getSource();
@@ -92,6 +93,7 @@ namespace srk::extensions::bc7_converter {
 			Vec2<size_t> size;
 			Vec2<size_t> blocks;
 			size_t numBlocks;
+			bool srgb;
 
 			size_t numBlocksPerThread;
 			const uint8_t* in;
@@ -162,7 +164,7 @@ namespace srk::extensions::bc7_converter {
 
 			//DDS_HEADER_DXT10
 			{
-				ba.write<uint32_t>((uint32_t)98);//dwCaps2 DXGI_FORMAT_BC7_UNORM
+				ba.write<uint32_t>((uint32_t)(98 + cfg.srgb));//dwCaps2 DXGI_FORMAT_BC7_UNORM
 				ba.write<uint32_t>(3);//D3D10_RESOURCE_DIMENSION D3D10_RESOURCE_DIMENSION_TEXTURE2D
 				ba.write<uint32_t>(0);//miscFlag
 				ba.write<uint32_t>(1);//arraySize

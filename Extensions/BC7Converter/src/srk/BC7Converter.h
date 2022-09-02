@@ -11,6 +11,7 @@ namespace srk::extensions {
 		enum class Flags : uint8_t {
 			NONE = 0,
 			PERCEPTUAL = 1 << 0,
+			SRGB = 1 << 1,
 
 			WRITE_DDS_HEADER = 1 << 7
 		};
