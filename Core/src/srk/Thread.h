@@ -5,13 +5,16 @@
 namespace srk {
 	class SRK_CORE_DLL Thread {
 	public:
+		Thread() = delete;
+
 		struct SRK_CORE_DLL JobRange {
 			size_t begin;
 			size_t count;
 
 			JobRange() :
 				begin(0),
-				count(0) {}
+				count(0) {
+			}
 
 			JobRange(size_t begin, size_t count) :
 				begin(begin),

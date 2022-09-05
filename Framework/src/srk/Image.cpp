@@ -274,7 +274,7 @@ namespace srk {
 		return true;
 	}
 
-	bool Image::scale(Image& dst) {
+	bool Image::scale(Image& dst) const {
 		auto bytesPrePixel = calcPerPixelByteSize(format);
 		if (bytesPrePixel == 0) return false;
 
@@ -332,7 +332,7 @@ namespace srk {
 		return true;
 	}
 
-	bool Image::scale(Image& dst, size_t jobCount, size_t threadCount, size_t threadIndex) {
+	bool Image::scale(Image& dst, size_t jobCount, size_t threadCount, size_t threadIndex) const {
 		if (format != dst.format) return false;
 
 		auto bytesPrePixel = calcPerPixelByteSize(format);

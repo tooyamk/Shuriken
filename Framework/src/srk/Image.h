@@ -83,8 +83,8 @@ namespace srk {
 
 		bool SRK_CALL flipY();
 
-		bool SRK_CALL scale(Image& dst);
-		bool SRK_CALL scale(Image& dst, size_t jobCount, size_t threadCount, size_t threadIndex);
+		bool SRK_CALL scale(Image& dst) const;
+		bool SRK_CALL scale(Image& dst, size_t jobCount, size_t threadCount, size_t threadIndex) const;
 
 	private:
 		static void SRK_CALL _convertFormat_R8G8B8_R8G8B8A8(const Vec2ui32& size, const uint8_t* src, uint8_t* dst);

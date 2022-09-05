@@ -20,7 +20,7 @@ namespace srk {
 		};
 
 		template<typename... Outputs>
-		requires std::conjunction_v<std::is_invocable_r<bool, Outputs, const std::wstring_view&>...>&& std::conjunction_v<std::is_default_constructible<Outputs>...>
+		requires std::conjunction_v<std::is_invocable_r<bool, Outputs, const std::wstring_view&>...> && std::conjunction_v<std::is_default_constructible<Outputs>...>
 		struct PriorityOutput {
 			inline bool SRK_CALL operator()(const std::wstring_view& data) const {
 				if constexpr (sizeof...(Outputs) == 0) {
