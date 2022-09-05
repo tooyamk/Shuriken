@@ -1,4 +1,5 @@
 #include "srk/Image.h"
+#include "srk/Thread.h"
 #include "srk/modules/graphics/IGraphicsModule.h"
 
 namespace srk {
@@ -249,18 +250,7 @@ namespace srk {
 	}
 
 	bool Image::flipY() {
-		size_t bytesPrePixel = 0;
-		switch (format) {
-		case TextureFormat::R8G8B8:
-			bytesPrePixel = 3;
-			break;
-		case TextureFormat::R8G8B8A8:
-			bytesPrePixel = 4;
-			break;
-		default:
-			break;
-		}
-
+		auto bytesPrePixel = calcPerPixelByteSize(format);
 		if (bytesPrePixel == 0) return false;
 
 		auto data = source.getSource();
@@ -285,18 +275,7 @@ namespace srk {
 	}
 
 	bool Image::scale(Image& dst) {
-		auto bytesPrePixel = 0u;
-		switch (format) {
-		case TextureFormat::R8G8B8:
-			bytesPrePixel = 3;
-			break;
-		case TextureFormat::R8G8B8A8:
-			bytesPrePixel = 4;
-			break;
-		default:
-			break;
-		}
-
+		auto bytesPrePixel = calcPerPixelByteSize(format);
 		if (bytesPrePixel == 0) return false;
 
 		auto dstBytes = dst.size.getMultiplies() * bytesPrePixel;
@@ -334,10 +313,6 @@ namespace srk {
 				auto lb = lt + off2;
 				auto rb = lb + edgeX;
 
-				if (x == 1017 && y == 224) {
-					int a = 1;
-				}
-
 				lt *= bytesPrePixel;
 				rt *= bytesPrePixel;
 				lb *= bytesPrePixel;
@@ -352,6 +327,71 @@ namespace srk {
 					dstData[dstPos + i] = std::lerp(tc, bc, v);
 				}
 			}
+		}
+
+		return true;
+	}
+
+	bool Image::scale(Image& dst, size_t jobCount, size_t threadCount, size_t threadIndex) {
+		if (format != dst.format) return false;
+
+		auto bytesPrePixel = calcPerPixelByteSize(format);
+		if (bytesPrePixel == 0 || dst.source.getLength() < bytesPrePixel * dst.size.getMultiplies()) return false;
+
+		auto range = Thread::calcJobRange(jobCount, threadCount, threadIndex);
+		auto i = range.begin;
+		auto n = i + range.count;
+
+		auto srcData = source.getSource();
+		auto dstData = dst.source.getSource();
+
+		auto sd = Vec2f32(size) / dst.size;
+		auto half = 0.5f * sd;
+
+		auto nx = dst.size[0], ny = dst.size[1];
+
+		while (i < n) {
+			auto div = std::div((std::make_signed_t<decltype(i)>)i, (std::make_signed_t<decltype(i)>)dst.size[0]);
+			auto y = div.quot;
+			auto x = div.rem;
+
+			auto v = ((float32_t)y + .5f) * sd[1] - half[1];
+			auto iy = (uint32_t)v;
+			v -= iy;
+
+			auto edgeY = iy + 1 < size[1] ? 1u : 0u;
+			auto off1 = iy * size[0];
+			auto off2 = edgeY * size[0];
+
+			auto dstPosBeg = y * dst.size[0];
+
+			//
+			auto u = ((float32_t)x + .5f) * sd[0] - half[0];
+			auto ix = (uint32_t)u;
+			u -= ix;
+
+			auto edgeX = ix + 1 < size[0] ? 1u : 0u;
+
+			auto lt = off1 + ix;
+			auto rt = lt + edgeX;
+			auto lb = lt + off2;
+			auto rb = lb + edgeX;
+
+			lt *= bytesPrePixel;
+			rt *= bytesPrePixel;
+			lb *= bytesPrePixel;
+			rb *= bytesPrePixel;
+
+			auto dstPos = (dstPosBeg + x) * bytesPrePixel;
+
+			for (auto i = 0u; i < bytesPrePixel; ++i) {
+				auto tc = std::lerp((float32_t)srcData[lt + i], (float32_t)srcData[rt + i], u);
+				auto bc = std::lerp((float32_t)srcData[lb + i], (float32_t)srcData[rb + i], u);
+
+				dstData[dstPos + i] = std::lerp(tc, bc, v);
+			}
+
+			++i;
 		}
 
 		return true;

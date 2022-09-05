@@ -9,6 +9,7 @@
 #include "srk/ScopePtr.h"
 #include "srk/SerializableObject.h"
 #include "srk/String.h"
+#include "srk/Thread.h"
 #include "srk/ThreadPool.h"
 #include "srk/Time.h"
 #include "srk/TimeWheel.h"

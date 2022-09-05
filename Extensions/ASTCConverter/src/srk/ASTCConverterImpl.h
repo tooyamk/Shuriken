@@ -1,6 +1,7 @@
 #pragma once
 
 #include "srk/ByteArray.h"
+#include "srk/Thread.h"
 #include "srk/modules/graphics/IGraphicsModule.h"
 #include "ASTCConverter.h"
 #include "astcenc.h"
@@ -58,6 +59,9 @@ namespace srk::extensions::astc_converter {
 				outBufferSize = needBufferSize;
 				return true;
 			}
+
+			threadCount = Thread::calcNeedCount(numBlocks, 1, threadCount);
+			if (!threadCount) return true;
 			
 			uint8_t* buffer = nullptr;
 			if (*outBuffer == nullptr) {
@@ -69,8 +73,6 @@ namespace srk::extensions::astc_converter {
 				outBufferSize = needBufferSize;
 				buffer = (uint8_t*)*outBuffer;
 			}
-
-			if (threadCount > numBlocks) threadCount = numBlocks;
 
 			astcenc_context* context = nullptr;
 			if (auto err = astcenc_context_alloc(&config, threadCount, &context); err != ASTCENC_SUCCESS) return false;

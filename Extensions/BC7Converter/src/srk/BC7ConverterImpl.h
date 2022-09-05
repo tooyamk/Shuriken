@@ -1,6 +1,7 @@
 #pragma once
 
 #include "srk/ByteArray.h"
+#include "srk/Thread.h"
 #include "srk/modules/graphics/IGraphicsModule.h"
 #include "BC7Converter.h"
 #include "bc7enc.h"
@@ -32,11 +33,11 @@ namespace srk::extensions::bc7_converter {
 				return true;
 			}
 
-			if (threadCount > cfg.numBlocks) threadCount = cfg.numBlocks;
+			threadCount = Thread::calcNeedCount(cfg.numBlocks, 1, threadCount);
+			if (!threadCount) return true;
 
 			cfg.srgb = (flags & BC7Converter::Flags::SRGB) == BC7Converter::Flags::SRGB;
-			cfg.numBlocksPerThread = cfg.numBlocks / threadCount;
-			cfg.blocksRemainder = cfg.numBlocks - cfg.numBlocksPerThread * threadCount;
+			cfg.threadCount = threadCount;
 			cfg.in = img.source.getSource();
 
 			uint8_t* buffer = nullptr;
@@ -111,8 +112,7 @@ namespace srk::extensions::bc7_converter {
 			size_t numBlocks;
 			bool srgb;
 
-			size_t numBlocksPerThread;
-			size_t blocksRemainder;
+			size_t threadCount;
 			const uint8_t* in;
 			uint8_t* out;
 
@@ -120,24 +120,16 @@ namespace srk::extensions::bc7_converter {
 		};
 
 		static void SRK_CALL _encode(const Config& cfg, uint32_t threadIndex) {
-			auto calcBlocks = cfg.numBlocksPerThread;
-			auto startBlock = cfg.numBlocksPerThread * threadIndex;
-			if (cfg.blocksRemainder > 0) {
-				if (threadIndex < cfg.blocksRemainder) {
-					startBlock += threadIndex;
-					++calcBlocks;
-				} else {
-					startBlock += cfg.blocksRemainder;
-				}
-			}
-			auto endBlock = startBlock + calcBlocks;
-			if (endBlock > cfg.numBlocks) endBlock = cfg.numBlocks;
+			auto range = Thread::calcJobRange(cfg.numBlocks, cfg.threadCount, threadIndex);
+			auto i = range.begin;
+			auto n = i + range.count;
 
 			uint8_t in[16 << 2];
 			auto in32 = (uint32_t*)in;
-			while (startBlock < endBlock) {
-				auto by = startBlock / cfg.blocks[0];
-				auto bx = startBlock - by * cfg.blocks[0];
+			while (i < n) {
+				auto div = std::div((std::make_signed_t<decltype(i)>)i, (std::make_signed_t<decltype(i)>)cfg.blocks[0]);
+				auto by = div.quot;
+				auto bx = div.rem;
 
 				auto px = bx << 4;
 				auto py = by << 2;
@@ -145,9 +137,9 @@ namespace srk::extensions::bc7_converter {
 
 				for (auto y = 0; y < 4; ++y) memcpy(in + (y << 4), cfg.in + (py + y) * bytesPerRow + px, 16);
 
-				bc7enc_compress_block(cfg.out + (startBlock << 4), in, &cfg.params);
+				bc7enc_compress_block(cfg.out + (i << 4), in, &cfg.params);
 
-				++startBlock;
+				++i;
 			}
 		}
 
