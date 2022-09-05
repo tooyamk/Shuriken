@@ -1,6 +1,0 @@
-execute_process(COMMAND git -C ${TARGET_DIR} rev-parse HEAD OUTPUT_VARIABLE hash)
-if (NOT (${hash} MATCHES ${TARGET_HASH}))
-    execute_process(COMMAND git -C ${TARGET_DIR} clean -xfd)
-    execute_process(COMMAND git -C ${TARGET_DIR} reset --hard)
-    execute_process(COMMAND git -C ${TARGET_DIR} pull ${TARGET_REPOSITORY} ${TARGET_BRANCH} --depth=1)
-endif ()
