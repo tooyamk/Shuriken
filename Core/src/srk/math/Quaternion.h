@@ -227,7 +227,7 @@ namespace srk {
 
 		template<Math::DataDesc LDesc = nullptr, Math::DataDesc RDesc = nullptr, Math::DataDesc DDesc = Math::Hint::IDENTITY_IF_NOT_EXIST, size_t RN, std::floating_point RT, size_t DN, std::floating_point DT>
 		inline void SRK_CALL transformPoint(const RT(&rhs)[RN], DT(&dst)[DN]) const {
-			constexpr auto ldesc = Math::Data2DDesc(Math::DataType::QUATERNION, LDesc);
+			constexpr auto ldesc = Math::DataDesc(Math::DataType::QUATERNION, LDesc);
 			constexpr auto rdesc = Math::DataDesc(Math::DataType::VECTOR, RDesc);
 			constexpr auto ddesc = Math::DataDesc(Math::DataType::VECTOR, DDesc);
 
