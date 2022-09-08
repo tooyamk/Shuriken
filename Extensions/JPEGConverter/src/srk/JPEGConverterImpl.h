@@ -67,4 +67,42 @@ namespace srk::extensions::jpeg_converter {
 
 		return img;
 	}
+
+	inline ByteArray SRK_CALL encode(const Image& img, uint32_t quality) {
+		ByteArray out;
+
+		if (img.format != modules::graphics::TextureFormat::R8G8B8) return out;
+
+		jpeg_compress_struct cinfo;
+		jpeg_error_mgr err;
+
+		cinfo.err = jpeg_std_error(&err);
+		jpeg_create_compress(&cinfo);
+
+		unsigned char* buf = nullptr;
+		unsigned long bufSize = 0;
+		jpeg_mem_dest(&cinfo, &buf, &bufSize);
+
+		cinfo.image_width = img.size[0];
+		cinfo.image_height = img.size[1];
+		cinfo.input_components = 3;
+		cinfo.in_color_space = JCS_RGB;
+
+		jpeg_set_defaults(&cinfo);
+		jpeg_set_quality(&cinfo, quality, true);
+		jpeg_start_compress(&cinfo, true);
+
+		auto stride = img.size[0] * 3;
+		while (cinfo.next_scanline < cinfo.image_height) {
+			auto rowPointer = (JSAMPROW*)(img.source.getSource() + cinfo.next_scanline * stride);
+			jpeg_write_scanlines(&cinfo, rowPointer, 1);
+		}
+
+		jpeg_finish_compress(&cinfo);
+		jpeg_destroy_compress(&cinfo);
+
+		out = ByteArray(buf, bufSize, bufSize, ByteArray::Usage::EXCLUSIVE);
+
+		return out;
+	}
 }

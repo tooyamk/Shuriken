@@ -8,6 +8,6 @@ namespace srk::extensions {
 		static constexpr uint32_t HEADER_MAGIC = 0xFFD8FF;
 
 		static IntrusivePtr<Image> SRK_CALL decode(const ByteArray& source);
-		//static ByteArray SRK_CALL encode(const Image& img);
+		static ByteArray SRK_CALL encode(const Image& img, uint32_t quality);
 	};
 }

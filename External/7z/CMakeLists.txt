@@ -1,13 +1,14 @@
 srkSetSubProject("")
 
 set(installDir ${PROJECT_BINARY_DIR}/install)
+set(installBinDir ${installDir}/bin)
 
 set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_7Z_NAME ${PROJECT_NAME})
 
 if (SRK_HOST_OS_WINDOWS)
-    set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_7Z_HOST_EXE ${installDir}/7zz.exe)
+    set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_7Z_HOST_EXE ${installBinDir}/7zz.exe)
 elseif (SRK_HOST_OS_MACOS)
-    set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_7Z_HOST_EXE ${installDir}/7zz)
+    set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_7Z_HOST_EXE ${installBinDir}/7zz)
 endif ()
 
 set(vcvarsall "nil")
@@ -25,8 +26,8 @@ include(ExternalProject)
 ExternalProject_Add(
     ${PROJECT_NAME}
     PREFIX ${PROJECT_BINARY_DIR}
-    URL https://www.7-zip.org/a/7z2200-src.7z
-    URL_HASH SHA256=aa875031817c65b8e1069c5bfa12fa0176ba01431f78489656b411cc2e7c572c
+    URL https://www.7-zip.org/a/7z2201-src.7z
+    URL_HASH SHA256=24cb2b9c6c0fb87d9c77a8d2afb572f5c75b45c950eff81a37ebac7fa73d1b4a
     TMP_DIR tmp
     STAMP_DIR stamp
     DOWNLOAD_DIR download

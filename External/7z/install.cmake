@@ -1,5 +1,6 @@
+set(installBinDir ${INSTALL_DIR}/bin)
 if (SRK_HOST_OS_WINDOWS)
-    execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${BUILD_DIR}/7zz.exe ${INSTALL_DIR}/7zz.exe)
+    execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${BUILD_DIR}/7zz.exe ${installBinDir}/7zz.exe)
 elseif (SRK_HOST_OS_MACOS)
-    execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${BUILD_DIR}/7zz ${INSTALL_DIR}/7zz)
+    execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${BUILD_DIR}/7zz ${installBinDir}/7zz)
 endif ()

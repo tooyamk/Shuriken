@@ -6,7 +6,7 @@ namespace srk::extensions {
 		return jpeg_converter::decode(source);
 	}
 
-	/*ByteArray JPEGConverter::encode(const Image& img) {
-		return png_converter::encode(img);
-	}*/
+	ByteArray JPEGConverter::encode(const Image& img, uint32_t quality) {
+		return jpeg_converter::encode(img, quality);
+	}
 }
