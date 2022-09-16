@@ -151,7 +151,7 @@ namespace srk::modules::windows::x11 {
 		_updateWindowPlacement();
 
 		_data.isCreated = true;
-		_data.sentContentSize = getCurrentContentSize();
+		_data.sentContentSize = getContentSize();
 		setTitle(desc.title);
 
 		_manager->add((void*)_data.wnd, this);
@@ -190,7 +190,7 @@ namespace srk::modules::windows::x11 {
 		return _data.frameExtends;
 	}
 
-	Vec2ui32 Window::getCurrentContentSize() const {
+	Vec2ui32 Window::getContentSize() const {
 		Vec2ui32 size;
 
 		if (_data.wnd) {
@@ -211,16 +211,12 @@ namespace srk::modules::windows::x11 {
 		return size;
 	}
 
-	Vec2ui32 Window::getContentSize() const {
-		return _data.contentSize;
-	}
-
 	void Window::setContentSize(const Vec2ui32& size) {
-		if (_data.wnd && _data.contentSize != size) {
-			_data.contentSize = size;
-			_updateWindowPlacement();
-			_sendResizedEvent();
-		}
+		if (!_data.wnd || _data.contentSize == size || _data.wndState != WindowState::NORMAL || _data.isFullScreen) return;
+			
+		_data.contentSize = size;
+		_updateWindowPlacement();
+		_sendResizedEvent();
 	}
 
 	std::string_view Window::getTitle() const {
@@ -235,10 +231,10 @@ namespace srk::modules::windows::x11 {
 	}
 
 	void Window::setPosition(const Vec2i32& pos) {
-		if (_data.wnd && _data.wndPos != pos) {
-			_data.wndPos = pos;
-			_updateWindowPlacement();
-		}
+		if (!_data.wnd || _data.wndPos == pos || _data.wndState != WindowState::NORMAL || _data.isFullScreen) return;
+
+		_data.wndPos = pos;
+		_updateWindowPlacement();
 	}
 
 	void Window::setCursorVisible(bool visible) {
@@ -260,25 +256,29 @@ namespace srk::modules::windows::x11 {
 	}
 
 	bool Window::isMaximized() const {
-		if (_data.wnd) return _data.wndState == WindowState::MAXIMUM;
-		return false;
+		return _data.wnd ? _data.wndState == WindowState::MAXIMUM : false;
 	}
 
 	void Window::setMaximized() {
-		if (_data.wnd && _setWndState(WindowState::MAXIMUM)) _updateWindowPlacement();
+		if (!_data.wnd || _data.isFullScreen) return;
+
+		if (_setWndState(WindowState::MAXIMUM)) _updateWindowPlacement();
 	}
 
 	bool Window::isMinimized() const {
-		if (_data.wnd) return _data.wndState == WindowState::MINIMUM;
-		return false;
+		return _data.wnd ? _data.wndState == WindowState::MINIMUM : false;
 	}
 
 	void Window::setMinimized() {
-		if (_data.wnd && _setWndState(WindowState::MINIMUM)) _updateWindowPlacement();
+		if (!_data.wnd || _data.isFullScreen) return;
+
+		if (_setWndState(WindowState::MINIMUM)) _updateWindowPlacement();
 	}
 
 	void Window::setRestore() {
-		if (_data.wnd && _setWndState(WindowState::NORMAL)) _updateWindowPlacement();
+		if (!_data.wnd || _data.isFullScreen) return;
+
+		if (_setWndState(WindowState::NORMAL)) _updateWindowPlacement();
 	}
 
 	bool Window::isVisible() const {
@@ -339,7 +339,7 @@ namespace srk::modules::windows::x11 {
 	}
 
 	void Window::_sendResizedEvent() {
-		if (auto size = getCurrentContentSize(); _data.sentContentSize != size) {
+		if (auto size = getContentSize(); _data.sentContentSize != size) {
 			_data.sentContentSize = size;
 			_eventDispatcher->dispatchEvent(this, WindowEvent::RESIZED);
 		}

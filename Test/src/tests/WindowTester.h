@@ -57,7 +57,7 @@ public:
 
 				win->getEventDispatcher()->addEventListener(WindowEvent::RESIZED, createEventListener<WindowEvent>([](Event<WindowEvent>& e) {
 					auto win = (IWindow*)e.getTarget();
-					auto size = win->getCurrentContentSize();
+					auto size = win->getContentSize();
 					printaln("wnd : ", win->getTitle(), " => resize  ", size[0], "   ", size[1]);
 					}));
 			}
@@ -110,7 +110,7 @@ public:
 					t = tt;
 					if (step == 0) {
 						step = 1;
-						//activedWindows[0]->toggleFullScreen();
+						activedWindows[0]->toggleFullScreen();
 						//printaln("is visible ", activedWindows[0]->isVisible());
 						//activedWindows[0]->toggleFullScreen();
 						//app->toggleFullscreen();
@@ -140,7 +140,7 @@ public:
 				//app->setWindowTitle(String::toString(GetKeyboardType(0)) + "  " + String::toString(GetKeyboardType(1)) + "  " + String::toString(GetKeyboardType(2)));
 				}));
 
-			for (auto& win : activedWindows) win->setVisible(true);
+			//for (auto& win : activedWindows) win->setVisible(true);
 			//for (auto& win : activedWindows) win->setVisible(false);
 			//app->setMaximum();
 			//app->setMaximum();

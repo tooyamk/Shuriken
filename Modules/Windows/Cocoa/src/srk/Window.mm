@@ -131,8 +131,8 @@ namespace srk::modules::windows::cocoa {
         [(NSWindow*)_data.wnd toggleFullScreen:nil];
 	}
 
-	Vec2ui32 Window::getCurrentContentSize() const {
-        Vec2ui32 size;
+	Vec2ui32 Window::getContentSize() const {
+		Vec2ui32 size;
         
         if (_data.wnd) {
             auto rect = [(NSWindow*)_data.wnd contentLayoutRect];
@@ -140,10 +140,6 @@ namespace srk::modules::windows::cocoa {
         }
         
         return size;
-	}
-
-	Vec2ui32 Window::getContentSize() const {
-		return Vec2ui32();
 	}
 
 	void Window::setContentSize(const Vec2ui32& size) {

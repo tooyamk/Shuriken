@@ -73,7 +73,7 @@ namespace srk::modules::windows::win32api {
 		SetWindowLongPtrW(_data.wnd, GWLP_USERDATA, (LONG_PTR)this);
 
 		_data.isCreated = true;
-		_data.sentContentSize = getCurrentContentSize();
+		_data.sentContentSize = getContentSize();
 
 		_manager->add(_data.wnd, this);
 
@@ -118,7 +118,7 @@ namespace srk::modules::windows::win32api {
 		return _data.frameExtends;
 	}
 
-	Vec2ui32 Window::getCurrentContentSize() const {
+	Vec2ui32 Window::getContentSize() const {
 		Vec2ui32 size;
 
 		if (_data.wnd) {
@@ -143,17 +143,13 @@ namespace srk::modules::windows::win32api {
 		return size;
 	}
 
-	Vec2ui32 Window::getContentSize() const {
-		return _data.contentRect.size;
-	}
-
 	void Window::setContentSize(const Vec2ui32& size) {
-		if (!_data.wnd || _data.contentRect.size == size) return;
+		if (!_data.wnd || _data.contentRect.size == size || _data.wndState != WindowState::NORMAL || _data.isFullScreen) return;
 
 		_data.contentRect.size = size;
 		_data.wndDirty = true;
 
-		if (!_data.isFullScreen && _data.isVisible && _data.wndState == WindowState::NORMAL) _updateWindowPlacement(SW_SHOWNA);
+		if (_data.isVisible) _updateWindowPlacement(SW_SHOWNA);
 		_sendResizedEvent();
 	}
 
@@ -169,13 +165,13 @@ namespace srk::modules::windows::win32api {
 	}
 
 	void Window::setPosition(const Vec2i32& pos) {
-		if (!_data.wnd) return;
+		if (!_data.wnd || _data.wndState != WindowState::NORMAL || _data.isFullScreen) return;
 		
 		if (auto p = pos + _data.frameExtends.components(0, 2); _data.contentRect.pos != p) {
 			_data.contentRect.pos = p;
 			_data.wndDirty = true;
 
-			if (!_data.isFullScreen && _data.isVisible && _data.wndState == WindowState::NORMAL) _updateWindowPlacement(SW_SHOWNA);
+			if (_data.isVisible) _updateWindowPlacement(SW_SHOWNA);
 		}
 	}
 
@@ -197,7 +193,9 @@ namespace srk::modules::windows::win32api {
 	}
 
 	void Window::setMaximized() {
-		if (_data.wnd && _setWndState(WindowState::MAXIMUM)) {
+		if (!_data.wnd || _data.isFullScreen) return;
+
+		if (_setWndState(WindowState::MAXIMUM)) {
 			_data.wndDirty = true;
 			if (!_data.isFullScreen && _data.isVisible) _updateWindowPlacement();
 			_sendResizedEvent();
@@ -209,17 +207,21 @@ namespace srk::modules::windows::win32api {
 	}
 
 	void Window::setMinimized() {
-		if (_data.wnd && _setWndState(WindowState::MINIMUM)) {
+		if (!_data.wnd || _data.isFullScreen) return;
+
+		if (_setWndState(WindowState::MINIMUM)) {
 			_data.wndDirty = true;
-			if (!_data.isFullScreen && _data.isVisible) _updateWindowPlacement();
+			if (_data.isVisible) _updateWindowPlacement();
 			_sendResizedEvent();
 		}
 	}
 
 	void Window::setRestore() {
-		if (_data.wnd && _setWndState(WindowState::NORMAL)) {
+		if (!_data.wnd || _data.isFullScreen) return;
+
+		if (_setWndState(WindowState::NORMAL)) {
 			_data.wndDirty = true;
-			if (!_data.isFullScreen && _data.isVisible) _updateWindowPlacement();
+			if (_data.isVisible) _updateWindowPlacement();
 			_sendResizedEvent();
 		}
 	}
@@ -257,7 +259,7 @@ namespace srk::modules::windows::win32api {
 	void Window::processEvent(void* data) {
 		if (!_data.isCreated) return;
 
-		auto& msg =*(MSG*)data;
+		auto& msg = *(MSG*)data;
 		if (msg.message == WM_QUIT) {
 			close();
 		} else {
@@ -285,7 +287,7 @@ namespace srk::modules::windows::win32api {
 	}
 
 	void Window::_sendResizedEvent() {
-		if (auto size = getCurrentContentSize(); _data.sentContentSize != size) {
+		if (auto size = getContentSize(); _data.sentContentSize != size) {
 			_data.sentContentSize = size;
 			_eventDispatcher->dispatchEvent(this, WindowEvent::RESIZED);
 		}
@@ -423,7 +425,7 @@ namespace srk::modules::windows::win32api {
 						break;
 					}
 
-					if (wParam == SIZE_RESTORED) win->_data.contentRect.size.set(LOWORD(lParam), HIWORD(lParam));
+					if (wParam != SIZE_MINIMIZED) win->_data.contentRect.size.set(LOWORD(lParam), HIWORD(lParam));
 				}
 
 				win->_sendResizedEvent();

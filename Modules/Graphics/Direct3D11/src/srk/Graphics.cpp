@@ -303,7 +303,7 @@ namespace srk::modules::graphics::d3d11 {
 			if (numQualityLevels) _deviceFeatures.maxSampleCount = i;
 		}
 
-		auto size = conf.offscreen ? Vec2ui32::ZERO : conf.win->getCurrentContentSize();
+		auto size = conf.offscreen ? Vec2ui32::ZERO : conf.win->getContentSize();
 
 		if (!conf.offscreen) {
 			_backBufferSampleCount = conf.sampleCount > _deviceFeatures.maxSampleCount ? _deviceFeatures.maxSampleCount : conf.sampleCount;

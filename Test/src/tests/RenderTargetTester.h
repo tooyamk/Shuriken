@@ -54,7 +54,7 @@ public:
 			}));
 
 		win->getEventDispatcher()->addEventListener(WindowEvent::RESIZED, createEventListener<WindowEvent>([graphics](Event<WindowEvent>& e) {
-			graphics->setBackBufferSize(((IWindow*)e.getTarget())->getCurrentContentSize());
+			graphics->setBackBufferSize(((IWindow*)e.getTarget())->getContentSize());
 			}));
 
 		struct {
@@ -353,7 +353,7 @@ public:
 
 			//===================================
 			renderData.g->setRenderTarget(nullptr);
-			renderData.g->setViewport(Box2i32ui32(Vec2i32::ZERO, renderData.win->getCurrentContentSize()));
+			renderData.g->setViewport(Box2i32ui32(Vec2i32::ZERO, renderData.win->getContentSize()));
 			renderData.g->beginRender();
 			renderData.g->clear(ClearFlag::COLOR | ClearFlag::DEPTH | ClearFlag::STENCIL, Vec4f32(0.0f, 0.0f, 0.0f, 1.0f), 1.f, 0);
 

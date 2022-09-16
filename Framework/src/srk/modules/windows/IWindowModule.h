@@ -55,7 +55,6 @@ namespace srk::modules::windows {
 		virtual bool SRK_CALL isFullScreen() const = 0;
 		virtual void SRK_CALL toggleFullScreen() = 0;
 		virtual Vec4ui32 SRK_CALL getFrameExtents() const = 0;
-		virtual Vec2ui32 SRK_CALL getCurrentContentSize() const = 0;
 		virtual Vec2ui32 SRK_CALL getContentSize() const = 0;
 		virtual void SRK_CALL setContentSize(const Vec2ui32& size) = 0;
 		virtual std::string_view SRK_CALL getTitle() const = 0;

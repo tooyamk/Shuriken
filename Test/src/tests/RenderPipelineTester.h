@@ -52,7 +52,7 @@ public:
 			}));
 
 		win->getEventDispatcher()->addEventListener(WindowEvent::RESIZED, createEventListener<WindowEvent>([graphics](Event<WindowEvent>& e) {
-			graphics->setBackBufferSize(((IWindow*)e.getTarget())->getCurrentContentSize());
+			graphics->setBackBufferSize(((IWindow*)e.getTarget())->getContentSize());
 			}));
 
 		//graphics->getEventDispatcher().addEventListener(GraphicsEvent::ERR, new EventListener([](Event<GraphicsEvent>& e) {
@@ -257,7 +257,7 @@ public:
 
 		win->getEventDispatcher()->addEventListener(WindowEvent::RESIZED, new EventListener(std::function([this, renderData](Event<WindowEvent>& e) {
 			auto win = (IWindow*)e.getTarget();
-			_resize(*renderData.camera, win->getCurrentContentSize());
+			_resize(*renderData.camera, win->getContentSize());
 			})));
 
 		renderData.looper->getEventDispatcher()->addEventListener(LooperEvent::TICKING, new EventListener(std::function([renderData](Event<LooperEvent>& e) {
@@ -267,7 +267,7 @@ public:
 
 			renderData.model->localRotate(Quaternion<float32_t>(nullptr).rotationY(Math::PI<float32_t>* dt * 0.5f));
 
-			renderData.g->setViewport(Box2i32ui32(Vec2i32::ZERO, renderData.win->getCurrentContentSize()));
+			renderData.g->setViewport(Box2i32ui32(Vec2i32::ZERO, renderData.win->getContentSize()));
 			renderData.renderPipeline->render(renderData.g, [renderData](render::IRenderCollector& collector) {
 				collector.addCamera(renderData.camera);
 				for (auto& r : renderData.renderables) collector.addRenderable(r);
@@ -277,7 +277,7 @@ public:
 			})));
 
 		(new Stats())->run(renderData.looper);
-		_resize(*renderData.camera, win->getCurrentContentSize());
+		_resize(*renderData.camera, win->getContentSize());
 		win->setVisible(true);
 		renderData.looper->run(true);
 

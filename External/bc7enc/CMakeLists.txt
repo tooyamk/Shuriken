@@ -18,7 +18,7 @@ ExternalProject_Add(
     ${PROJECT_NAME}
     PREFIX ${PROJECT_BINARY_DIR}
     GIT_REPOSITORY https://github.com/richgel999/bc7enc.git
-    GIT_TAG f66c2e489b07138f2673a2fb3d27c1aa1d565c48
+    #GIT_TAG f66c2e489b07138f2673a2fb3d27c1aa1d565c48
     GIT_SHALLOW 1
     GIT_PROGRESS 1
     TMP_DIR tmp
@@ -27,7 +27,7 @@ ExternalProject_Add(
     INSTALL_DIR install
     SOURCE_DIR src
     BINARY_DIR ${SRK_PROJECT_BUILD_ROOT_DIR}
-    #UPDATE_COMMAND ""
+    UPDATE_COMMAND ""
     PATCH_COMMAND
         ${CMAKE_COMMAND}
         -DSRC_DIR=${PROJECT_BINARY_DIR}/src

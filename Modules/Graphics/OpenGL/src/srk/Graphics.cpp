@@ -244,7 +244,7 @@ namespace srk::modules::graphics::gl {
 		_transpiler = conf.transpiler;
 
 		_setInitState();
-		_resize(_win->getCurrentContentSize());
+		_resize(_win->getContentSize());
 
 		return true;
 	}
@@ -834,7 +834,7 @@ namespace srk::modules::graphics::gl {
 	void Graphics::_setInitState() {
 		{
 			_glStatus.isBack = true;
-			_glStatus.backSize = _win->getCurrentContentSize();
+			_glStatus.backSize = _win->getContentSize();
 			_glStatus.canvasSize = _glStatus.backSize;
 
 			GLint vp[4];
