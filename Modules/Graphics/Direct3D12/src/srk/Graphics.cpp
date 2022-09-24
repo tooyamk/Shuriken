@@ -1,39 +1,25 @@
 #include "Graphics.h"
 #include "CreateModule.h"
-#include "BlendState.h"
-#include "DepthStencil.h"
-#include "DepthStencilState.h"
-#include "IndexBuffer.h"
-#include "Program.h"
-#include "RasterizerState.h"
-#include "RenderTarget.h"
-#include "RenderView.h"
-#include "Sampler.h"
-#include "Texture1DResource.h"
-#include "Texture2DResource.h"
-#include "Texture3DResource.h"
-#include "TextureView.h"
-#include "VertexBuffer.h"
 #include "srk/ProgramSource.h"
 #include "srk/modules/graphics/GraphicsAdapter.h"
 
-namespace srk::modules::graphics::d3d11 {
+namespace srk::modules::graphics::d3d12 {
 	Graphics::Graphics() :
 		_isDebug(false),
 		_curIsBackBuffer(true),
 		_backBufferSampleCount(1),
 		_refreshRate({0, 1}),
-		_featureLevel(D3D_FEATURE_LEVEL_9_1),
+		_featureLevel(D3D_FEATURE_LEVEL_12_0),
 		//_driverType(D3D_DRIVER_TYPE_NULL),
 		_device(nullptr),
-		_context(nullptr),
+		_commandQueue(nullptr),
 		_swapChain(nullptr),
-		_backBufferView(nullptr),
-		_backDepthStencil(nullptr),
+		//_backBufferView(nullptr),
+		//_backDepthStencil(nullptr),
 		_d3dStatus({ 0 }),
 		_numRTVs(0),
-		_RTVs({ 0 }),
-		_DSV(nullptr),
+		//_RTVs({ 0 }),
+		//_DSV(nullptr),
 		_eventDispatcher(new events::EventDispatcher<GraphicsEvent>()) {
 		_constantBufferManager.createShareConstantBufferCallback = std::bind(&Graphics::_createdShareConstantBuffer, this);
 		_constantBufferManager.createExclusiveConstantBufferCallback = std::bind(&Graphics::_createdExclusiveConstantBuffer, this, std::placeholders::_1);
@@ -98,6 +84,7 @@ namespace srk::modules::graphics::d3d11 {
 			for (UINT i = 0;; ++i) {
 				if (dxgFctory->EnumAdapters(i, &dxgAdapter) == DXGI_ERROR_NOT_FOUND) break;
 				objs.add(dxgAdapter);
+				break;
 
 				DXGI_ADAPTER_DESC desc;
 				if (FAILED(dxgAdapter->GetDesc(&desc)) || desc.DeviceId != conf.adapter->deviceId || desc.VendorId != conf.adapter->vendorId) {
@@ -114,7 +101,7 @@ namespace srk::modules::graphics::d3d11 {
 			return false;
 		}
 
-		auto fmt = DXGI_FORMAT_R8G8B8A8_UNORM;
+		/*auto fmt = DXGI_FORMAT_R8G8B8A8_UNORM;
 
 		if (dxgAdapter || !conf.offscreen) {
 			uint32_t maxResolutionArea = 0;
@@ -167,115 +154,76 @@ namespace srk::modules::graphics::d3d11 {
 				conf.createProcessInfo("not found suitable mode");
 				return false;
 			}
-		}
+		}*/
 
-		auto driverType = D3D_DRIVER_TYPE_UNKNOWN;
+		/*auto driverType = D3D_DRIVER_TYPE_UNKNOWN;
 		if (conf.driverType == "hardware") {
 			driverType = D3D_DRIVER_TYPE_HARDWARE;
 		} else if (conf.driverType == "software") {
 			driverType = D3D_DRIVER_TYPE_WARP;
-		}
-
-		/*
-		D3D_DRIVER_TYPE driverTypes[] =
-		{
-		   D3D_DRIVER_TYPE_HARDWARE, D3D_DRIVER_TYPE_WARP,
-		   D3D_DRIVER_TYPE_REFERENCE, D3D_DRIVER_TYPE_SOFTWARE
-		};
-		uint32_t totalDriverTypes = ARRAYSIZE(driverTypes);
-		*/
+		}*/
 
 		constexpr D3D_FEATURE_LEVEL featureLevels[] =
 		{
-			D3D_FEATURE_LEVEL_11_1,
-			D3D_FEATURE_LEVEL_11_0,
-			D3D_FEATURE_LEVEL_10_1,
-			D3D_FEATURE_LEVEL_10_0
+			D3D_FEATURE_LEVEL_12_2,
+			D3D_FEATURE_LEVEL_12_1,
+			D3D_FEATURE_LEVEL_12_0
 		};
-		constexpr UINT totalFeatureLevels = std::extent_v<decltype(featureLevels)>;
+		constexpr auto totalFeatureLevels = std::extent_v<decltype(featureLevels)>;
 
-		UINT creationFlags = 0;
-		if (conf.debug) creationFlags |= D3D11_CREATE_DEVICE_DEBUG;
-
-		/*
-		for (uint32_t i = 0; i < totalDriverTypes; ++i) {
-			auto hr = D3D11CreateDevice(dxgAdapter, D3D_DRIVER_TYPE_UNKNOWN, nullptr, creationFlags,
-				featureLevels, totalFeatureLevels,
-				D3D11_SDK_VERSION, (ID3D11Device**)&_device, &_featureLevel, (ID3D11DeviceContext**)&_context);
-
-			if (SUCCEEDED(hr)) {
-				_driverType = driverTypes[i];
+		_featureLevel = (D3D_FEATURE_LEVEL)0;
+		for (auto i = 0; i < totalFeatureLevels; ++i) {
+			if (SUCCEEDED(D3D12CreateDevice(dxgAdapter, featureLevels[i], __uuidof(ID3D12Device), nullptr))) {
+				_featureLevel = featureLevels[i];
 				break;
 			}
 		}
-		*/
-
-		if (FAILED(D3D11CreateDevice(driverType == D3D_DRIVER_TYPE_UNKNOWN ? dxgAdapter : nullptr, driverType, nullptr, creationFlags,
-			featureLevels, totalFeatureLevels,
-			D3D11_SDK_VERSION, (ID3D11Device**)&_device, nullptr, (ID3D11DeviceContext**)&_context))) {
+		if (_featureLevel == (D3D_FEATURE_LEVEL)0) {
 			conf.createProcessInfo("CreateDevice failed");
 			_release();
 			return false;
 		}
 
+		if (FAILED(D3D12CreateDevice(dxgAdapter, _featureLevel, IID_PPV_ARGS(&_device)))) {
+			_release();
+			return false;
+		}
 
 		//_driverType = D3D_DRIVER_TYPE_UNKNOWN;
 
 		_deviceVersion = "D3D ";
-		_featureLevel = _device->GetFeatureLevel();
 		switch (_featureLevel) {
-		case D3D_FEATURE_LEVEL_9_1:
+		case D3D_FEATURE_LEVEL_12_0:
 		{
-			_deviceVersion += "9.1";
-			_shaderModel = "4.0.level.9.1";
+			_deviceVersion += "12.0";
+			_shaderModel = "5.0";
 
 			break;
 		}
-		case D3D_FEATURE_LEVEL_9_2:
+		case D3D_FEATURE_LEVEL_12_1:
 		{
-			_deviceVersion += "9.2";
-			_shaderModel = "4.0.level.9.1";
-
-			break;
-		}
-		case D3D_FEATURE_LEVEL_9_3:
-		{
-			_deviceVersion += "9.3";
-			_shaderModel = "4.0.level.9.3";//??
-
-			break;
-		}
-		case D3D_FEATURE_LEVEL_10_0:
-		{
-			_deviceVersion += "10.0";
-			_shaderModel = "4.0";
-
-			break;
-		}
-		case D3D_FEATURE_LEVEL_10_1:
-		{
-			_deviceVersion += "10.1";
-			_shaderModel = "4.1";
-
-			break;
-		}
-		case D3D_FEATURE_LEVEL_11_0:
-		{
-			_deviceVersion += "11.0";
+			_deviceVersion += "12.0";
 			_shaderModel = "5.0";
 
 			break;
 		}
 		default:
 		{
-			_deviceVersion += "11.1";
-			_shaderModel = "5.0";
+			_deviceVersion += "12.2";
+			_shaderModel = "6.5";
 
 			break;
 		}
 		}
 
-		_device->CheckFeatureSupport(D3D11_FEATURE_D3D11_OPTIONS, &_internalFeatures, sizeof(_internalFeatures));
+		D3D12_COMMAND_QUEUE_DESC desc;
+		desc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+		if (FAILED(_device->CreateCommandQueue(&desc, IID_PPV_ARGS(&_commandQueue)))) {
+			_release();
+			return false;
+		}
+
+		/*_device->CheckFeatureSupport(D3D11_FEATURE_D3D11_OPTIONS, &_internalFeatures, sizeof(_internalFeatures));
 
 		_deviceFeatures.sampler = true;
 		_deviceFeatures.nativeTextureView = true;
@@ -318,7 +266,7 @@ namespace srk::modules::graphics::d3d11 {
 			swapChainDesc.SampleDesc.Quality = 0;
 			swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 			swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
-		
+
 			if (FAILED(dxgFctory->CreateSwapChain(_device, &swapChainDesc, (IDXGISwapChain**)&_swapChain))) {
 				conf.createProcessInfo("CreateSwapChain failed");
 				_release();
@@ -333,17 +281,17 @@ namespace srk::modules::graphics::d3d11 {
 
 			_d3dStatus.vp.pos.set(dvp.TopLeftX, dvp.TopLeftY);
 			_d3dStatus.vp.size.set(dvp.Width, dvp.Height);
-		}
+		}*/
 
-		_defaultBlendState = new BlendState(*this, true);
+		/*_defaultBlendState = new BlendState(*this, true);
 		_defaultDepthStencilState = new DepthStencilState(*this, true);
 		_defaultRasterizerState = new RasterizerState(*this, true);
-		_backDepthStencil = new DepthStencil(*this, true);
+		_backDepthStencil = new DepthStencil(*this, true);*/
 
 		_loader = conf.loader;
 		_win = conf.win;
 
-		_resize(size);
+		//_resize(size);
 
 		conf.createProcessInfo("create device succeeded");
 
@@ -367,63 +315,63 @@ namespace srk::modules::graphics::d3d11 {
 	}
 
 	IntrusivePtr<IBlendState> Graphics::createBlendState() {
-		return new BlendState(*this, false);
+		return nullptr;
 	}
 
 	IntrusivePtr<IConstantBuffer> Graphics::createConstantBuffer() {
-		return new ConstantBuffer(*this);
+		return nullptr;
 	}
 
 	IntrusivePtr<IDepthStencil> Graphics::createDepthStencil() {
-		return new DepthStencil(*this, false);
+		return nullptr;
 	}
 
 	IntrusivePtr<IDepthStencilState> Graphics::createDepthStencilState() {
-		return new DepthStencilState(*this, false);
+		return nullptr;
 	}
 
 	IntrusivePtr<IIndexBuffer> Graphics::createIndexBuffer() {
-		return new IndexBuffer(*this);
+		return nullptr;
 	}
 
 	IntrusivePtr<IProgram> Graphics::createProgram() {
-		return new Program(*this);
+		return nullptr;
 	}
 
 	IntrusivePtr<IRasterizerState> Graphics::createRasterizerState() {
-		return new RasterizerState(*this, false);
+		return nullptr;
 	}
 
 	IntrusivePtr<IRenderTarget> Graphics::createRenderTarget() {
-		return new RenderTarget(*this);
+		return nullptr;
 	}
 
 	IntrusivePtr<IRenderView> Graphics::createRenderView() {
-		return new RenderView(*this);
+		return nullptr;
 	}
 
 	IntrusivePtr<ISampler> Graphics::createSampler() {
-		return new Sampler(*this);
+		return nullptr;
 	}
 
 	IntrusivePtr<ITexture1DResource> Graphics::createTexture1DResource() {
-		return new Texture1DResource(*this);
+		return nullptr;
 	}
 
 	IntrusivePtr<ITexture2DResource> Graphics::createTexture2DResource() {
-		return new Texture2DResource(*this);
+		return nullptr;
 	}
 
 	IntrusivePtr<ITexture3DResource> Graphics::createTexture3DResource() {
-		return new Texture3DResource(*this);
+		return nullptr;
 	}
 
 	IntrusivePtr<ITextureView> Graphics::createTextureView() {
-		return new TextureView(*this);
+		return nullptr;
 	}
 
 	IntrusivePtr<IVertexBuffer> Graphics::createVertexBuffer() {
-		return new VertexBuffer(*this);
+		return nullptr;
 	}
 
 	IntrusivePtr<IPixelBuffer> Graphics::createPixelBuffer() {
@@ -443,7 +391,7 @@ namespace srk::modules::graphics::d3d11 {
 	}
 
 	void Graphics::setViewport(const Box2i32ui32& vp) {
-		if (_context && _d3dStatus.vp != vp) {
+		/*if (_context && _d3dStatus.vp != vp) {
 			_d3dStatus.vp = vp;
 
 			D3D11_VIEWPORT dvp;
@@ -455,11 +403,11 @@ namespace srk::modules::graphics::d3d11 {
 			dvp.TopLeftY = vp.pos[1];
 
 			_context->RSSetViewports(1, &dvp);
-		}
+		}*/
 	}
 
 	void Graphics::setBlendState(IBlendState* state, const Vec4f32& constantFactors, uint32_t sampleMask) {
-		if (state && state->getGraphics() == this) {
+		/*if (state && state->getGraphics() == this) {
 			if (auto native = state->getNative(); native) {
 				_setBlendState(*(BlendState*)native, constantFactors, sampleMask);
 			} else {
@@ -467,10 +415,10 @@ namespace srk::modules::graphics::d3d11 {
 			}
 		} else if (_defaultBlendState) {
 			_setBlendState(*(BlendState*)_defaultBlendState->getNative(), constantFactors, sampleMask);
-		}
+		}*/
 	}
 
-	void Graphics::_setBlendState(BlendState& state, const Vec4f32& constantFactors, uint32_t sampleMask) {
+	/*void Graphics::_setBlendState(BlendState& state, const Vec4f32& constantFactors, uint32_t sampleMask) {
 		state.update();
 		auto& blend = _d3dStatus.blend;
 		if (auto internalState = state.getInternalState(); internalState &&
@@ -481,10 +429,10 @@ namespace srk::modules::graphics::d3d11 {
 
 			_context->OMSetBlendState(internalState, constantFactors.data, sampleMask);
 		}
-	}
+	}*/
 
 	void Graphics::setDepthStencilState(IDepthStencilState* state, uint32_t stencilFrontRef, uint32_t stencilBackRef) {
-		if (state && state->getGraphics() == this) {
+		/*if (state && state->getGraphics() == this) {
 			if (auto native = state->getNative(); native) {
 				_setDepthStencilState(*(DepthStencilState*)native, stencilFrontRef);
 			} else {
@@ -492,10 +440,10 @@ namespace srk::modules::graphics::d3d11 {
 			}
 		} else if (_defaultBlendState) {
 			_setDepthStencilState(*(DepthStencilState*)_defaultDepthStencilState->getNative(), stencilFrontRef);
-		}
+		}*/
 	}
 
-	void Graphics::_setDepthStencilState(DepthStencilState& state, uint32_t stencilRef) {
+	/*void Graphics::_setDepthStencilState(DepthStencilState& state, uint32_t stencilRef) {
 		state.update();
 		auto& depthStencil = _d3dStatus.depthStencil;
 		if (auto internalState = state.getInternalState(); internalState &&
@@ -505,10 +453,10 @@ namespace srk::modules::graphics::d3d11 {
 
 			_context->OMSetDepthStencilState(internalState, stencilRef);
 		}
-	}
+	}*/
 
 	void Graphics::setRasterizerState(IRasterizerState* state) {
-		if (state && state->getGraphics() == this) {
+		/*if (state && state->getGraphics() == this) {
 			if (auto native = state->getNative(); native) {
 				_setRasterizerState(*(RasterizerState*)native);
 			} else {
@@ -516,10 +464,10 @@ namespace srk::modules::graphics::d3d11 {
 			}
 		} else if (_defaultRasterizerState) {
 			_setRasterizerState(*(RasterizerState*)_defaultRasterizerState->getNative());
-		}
+		}*/
 	}
 
-	void Graphics::_setRasterizerState(RasterizerState& state) {
+	/*void Graphics::_setRasterizerState(RasterizerState& state) {
 		state.update();
 		auto& rasterizer = _d3dStatus.rasterizer;
 		if (auto internalState = state.getInternalState(); internalState && rasterizer.featureValue != state.getFeatureValue()) {
@@ -527,14 +475,14 @@ namespace srk::modules::graphics::d3d11 {
 
 			_context->RSSetState(internalState);
 		}
-	}
+	}*/
 
 	void Graphics::beginRender() {
 	}
 
 	void Graphics::draw(const IVertexBufferGetter* vertexBufferGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
 		const IIndexBuffer* indexBuffer, uint32_t count, uint32_t offset) {
-		if (vertexBufferGetter && indexBuffer && program && program->getGraphics() == this && indexBuffer->getGraphics() == this && count > 0) {
+		/*if (vertexBufferGetter && indexBuffer && program && program->getGraphics() == this && indexBuffer->getGraphics() == this && count > 0) {
 			auto ib = (IndexBuffer*)indexBuffer->getNative();
 			if (!ib) return;
 			auto internalIndexBuffer = ib->getInternalBuffer();
@@ -579,12 +527,12 @@ namespace srk::modules::graphics::d3d11 {
 				clearSamplers<ProgramStage::PS>();
 				clearSamplers<ProgramStage::VS>();
 			}
-		}
+		}*/
 	}
 
 	void Graphics::drawInstanced(const IVertexBufferGetter* vertexBufferGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
 		const IIndexBuffer* indexBuffer, uint32_t instancedCount, uint32_t count, uint32_t offset) {
-		if (vertexBufferGetter && indexBuffer && program && program->getGraphics() == this && indexBuffer->getGraphics() == this && count > 0) {
+		/*if (vertexBufferGetter && indexBuffer && program && program->getGraphics() == this && indexBuffer->getGraphics() == this && count > 0) {
 			auto ib = (IndexBuffer*)indexBuffer->getNative();
 			if (!ib) return;
 			auto internalIndexBuffer = ib->getInternalBuffer();
@@ -629,14 +577,14 @@ namespace srk::modules::graphics::d3d11 {
 				clearSamplers<ProgramStage::PS>();
 				clearSamplers<ProgramStage::VS>();
 			}
-		}
+		}*/
 	}
 
 	void Graphics::endRender() {
 	}
 
 	void Graphics::flush() {
-		if (_context) _context->Flush();
+		//if (_context) _context->Flush();
 	}
 
 	void Graphics::present() {
@@ -644,7 +592,7 @@ namespace srk::modules::graphics::d3d11 {
 	}
 
 	void Graphics::setRenderTarget(IRenderTarget* rt) {
-		auto setToBack = true;
+		/*auto setToBack = true;
 
 		if (rt && rt->getGraphics() == this) {
 			if (auto rtt = (RenderTarget*)rt->getNative(); rtt) {
@@ -663,7 +611,7 @@ namespace srk::modules::graphics::d3d11 {
 						}
 					}
 				}
-				
+
 				_DSV = nullptr;
 				if (auto ds = rtt->getDepthStencil(); ds) {
 					if (auto native = (DepthStencil*)ds->getNative(); native) {
@@ -684,11 +632,11 @@ namespace srk::modules::graphics::d3d11 {
 					_context->OMSetRenderTargets(0, nullptr, nullptr);
 				}
 			}
-		}
+		}*/
 	}
 
 	void Graphics::clear(ClearFlag flags, const Vec4f32& color, float32_t depth, size_t stencil) {
-		using namespace srk::enum_operators;
+		/*using namespace srk::enum_operators;
 
 		if (_context) {
 			if ((flags & ClearFlag::COLOR) != ClearFlag::NONE) {
@@ -712,22 +660,23 @@ namespace srk::modules::graphics::d3d11 {
 					if (_DSV) _context->ClearDepthStencilView(_DSV, clearFlags, depth, stencil);
 				}
 			}
-		}
+		}*/
 	}
 
 	IConstantBuffer* Graphics::_createdShareConstantBuffer() {
-		return new ConstantBuffer(*this);
+		return nullptr;
 	}
 
 	IConstantBuffer* Graphics::_createdExclusiveConstantBuffer(uint32_t numParameters) {
-		auto cb = new ConstantBuffer(*this);
+		/*auto cb = new ConstantBuffer(*this);
 		cb->recordUpdateIds = new uint32_t[numParameters];
 		memset(cb->recordUpdateIds, 0, sizeof(uint32_t) * numParameters);
-		return cb;
+		return cb;*/
+		return nullptr;
 	}
 
 	void Graphics::_release() {
-		if (_backBufferView) {
+		/*if (_backBufferView) {
 			_backBufferView->Release();
 			_backBufferView = nullptr;
 		}
@@ -735,10 +684,10 @@ namespace srk::modules::graphics::d3d11 {
 		if (_swapChain) {
 			_swapChain->Release();
 			_swapChain = nullptr;
-		}
-		if (_context) {
-			_context->Release();
-			_context = nullptr;
+		}*/
+		if (_commandQueue) {
+			_commandQueue->Release();
+			_commandQueue = nullptr;
 		}
 		if (_device) {
 			_device->Release();
@@ -750,17 +699,17 @@ namespace srk::modules::graphics::d3d11 {
 		_refreshRate.Numerator = 0;
 		_refreshRate.Denominator = 1;
 
-		_featureLevel = D3D_FEATURE_LEVEL_9_1;
+		_featureLevel = D3D_FEATURE_LEVEL_12_0;
 		_shaderModel = "";
 
-		memset(&_internalFeatures, 0, sizeof(_internalFeatures));
+		//memset(&_internalFeatures, 0, sizeof(_internalFeatures));
 		_deviceFeatures.reset();
 
 		_deviceVersion = "D3D Unknown";
 	}
 
 	void Graphics::_resize(const Vec2ui32& size) {
-		if (!_swapChain || size == Vec2ui32::ZERO || _d3dStatus.backSize == size) return;
+		/*if (!_swapChain || size == Vec2ui32::ZERO || _d3dStatus.backSize == size) return;
 
 		_d3dStatus.backSize = size;
 
@@ -805,7 +754,7 @@ namespace srk::modules::graphics::d3d11 {
 			}
 
 			InvalidateRect(nullptr, nullptr, TRUE);
-		}
+		}*/
 	}
 
 	DXGI_FORMAT Graphics::convertInternalFormat(TextureFormat fmt) {
@@ -817,7 +766,7 @@ namespace srk::modules::graphics::d3d11 {
 		}
 	}
 
-	D3D11_COMPARISON_FUNC Graphics::convertComparisonFunc(ComparisonFunc func) {
+	/*D3D11_COMPARISON_FUNC Graphics::convertComparisonFunc(ComparisonFunc func) {
 		switch (func) {
 		case ComparisonFunc::NEVER:
 			return D3D11_COMPARISON_NEVER;
@@ -838,5 +787,5 @@ namespace srk::modules::graphics::d3d11 {
 		default:
 			return D3D11_COMPARISON_NEVER;
 		}
-	}
+	}*/
 }

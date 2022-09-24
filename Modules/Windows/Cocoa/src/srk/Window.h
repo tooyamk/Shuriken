@@ -10,7 +10,9 @@ namespace srk::modules::windows::cocoa {
         CLOSED,
         FOCUS_IN,
         FOCUS_OUT,
-        RESIZED
+        RESIZED,
+        ENTER_FULLSCREEN,
+        EXIT_FULLSCREEN
     };
 }
 
@@ -71,6 +73,7 @@ namespace srk::modules::windows::cocoa {
 		//platform
 		struct {
 			bool isCreated = false;
+            bool fullScreen = false;
 			std::string title;
             void* wnd = nullptr;
             void* delegate = nullptr;

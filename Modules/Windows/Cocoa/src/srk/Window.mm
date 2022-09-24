@@ -15,7 +15,7 @@
 
 - (void)dealloc {
     [super dealloc];
-    NSLog(@"!!!!!!!!!!!!");
+    //NSLog(@"!!!!!!!!!!!!");
 }
 
 - (void)setTarget:(void*)target {
@@ -23,12 +23,12 @@
 }
 
 - (void)windowDidBecomeMain:(NSNotification*)notification {
-    NSLog(@"windowDidBecomeMain");
+    //NSLog(@"windowDidBecomeMain");
     _proc(_target, srk::modules::windows::cocoa::Msg::FOCUS_IN, nullptr);
 }
 
 - (void)windowDidResignMain:(NSNotification*)notification {
-    NSLog(@"windowDidResignMain");
+    //NSLog(@"windowDidResignMain");
     _proc(_target, srk::modules::windows::cocoa::Msg::FOCUS_OUT, nullptr);
 }
 
@@ -55,6 +55,16 @@
 
 - (void)windowWillClose:(NSNotification*)notification {
     _proc(_target, srk::modules::windows::cocoa::Msg::CLOSED, nullptr);
+}
+
+- (void)windowDidEnterFullScreen:(NSNotification *)notification {
+    //NSLog(@"windowDidEnterFullScreen");
+    _proc(_target, srk::modules::windows::cocoa::Msg::ENTER_FULLSCREEN, nullptr);
+}
+
+- (void)windowDidExitFullScreen:(NSNotification *)notification {
+    //NSLog(@"windowDidExitFullScreen");
+    _proc(_target, srk::modules::windows::cocoa::Msg::EXIT_FULLSCREEN, nullptr);
 }
 
 @end
@@ -96,7 +106,7 @@ namespace srk::modules::windows::cocoa {
         _data.delegate = delegate;
 
 		_data.isCreated = true;
-		_data.sentContentSize = getCurrentContentSize();
+		_data.sentContentSize = getContentSize();
 		setTitle(desc.title);
 
 		_manager->add(_data.wnd, this);
@@ -118,11 +128,20 @@ namespace srk::modules::windows::cocoa {
 	}
 
 	bool Window::isFullScreen() const {
-		return false;
+		return _data.wnd ? _data.fullScreen : false;
 	}
 
 	Vec4ui32 Window::getFrameExtents() const {
-		return Vec4ui32();
+        Vec4ui32 extents;
+        
+        if (_data.wnd) {
+            auto rect = [NSWindow frameRectForContentRect:NSMakeRect(0, 0, 0, 0) styleMask:((NSWindow*)_data.wnd).styleMask];
+            extents[0] = -rect.origin.x;
+            extents[1] = rect.size.width + rect.origin.x;
+            extents[2] = rect.size.height + rect.origin.y;
+            extents[3] = -rect.origin.y;
+        }
+		return extents;
 	}
 
 	void Window::toggleFullScreen() {
@@ -163,12 +182,10 @@ namespace srk::modules::windows::cocoa {
 	}
 
 	void Window::setPosition(const Vec2i32& pos) {
-        if (!_data.isCreated) return;
+        if (!_data.isCreated || _data.fullScreen || isMinimized() || isMaximized()) return;
         
-        NSPoint p;
-        p.x = pos[0];
-        p.y = pos[1];
-        [(NSWindow*)_data.wnd setFrameOrigin:p];
+        auto wnd = (NSWindow*)_data.wnd;
+        [wnd setFrameOrigin:NSMakePoint(pos[0], wnd.screen.frame.size.height - (wnd.frame.size.height + pos[1]))];
 	}
 
 	void Window::setCursorVisible(bool visible) {
@@ -189,20 +206,36 @@ namespace srk::modules::windows::cocoa {
 	}
 
 	bool Window::isMaximized() const {
-		return false;
+        return _data.wnd ? ((NSWindow*)_data.wnd).zoomed : false;
 	}
 
 	void Window::setMaximized() {
+        if (!_data.wnd) return;
+        
+        auto wnd = (NSWindow*)_data.wnd;
+        [wnd performZoom:wnd];
 	}
 
 	bool Window::isMinimized() const {
-		return false;
+        return _data.wnd ? ((NSWindow*)_data.wnd).miniaturized : false;
 	}
 
 	void Window::setMinimized() {
+        if (!_data.wnd) return;
+        
+        auto wnd = (NSWindow*)_data.wnd;
+        [wnd performMiniaturize:wnd];
 	}
 
 	void Window::setRestore() {
+        if (!_data.wnd) return;
+        
+        auto wnd = (NSWindow*)_data.wnd;
+        if (wnd.miniaturized) {
+            [wnd deminiaturize:wnd];
+        } else if (wnd.zoomed) {
+            [wnd zoom:wnd];
+        }
 	}
 
 	bool Window::isVisible() const {
@@ -245,7 +278,11 @@ namespace srk::modules::windows::cocoa {
 
 		_data = decltype(_data)();
 
-		_eventDispatcher->dispatchEvent(this, WindowEvent::CLOSED);
+        if (this->getReferenceCount()) {
+            _eventDispatcher->dispatchEvent(this, WindowEvent::CLOSED);
+        } else {
+            _eventDispatcher->dispatchEvent((void*)this, WindowEvent::CLOSED);
+        }
 	}
 
     void Window::processEvent(void* data) {
@@ -256,7 +293,7 @@ namespace srk::modules::windows::cocoa {
 
     //platform
     void Window::_sendResizedEvent() {
-        if (auto size = getCurrentContentSize(); _data.sentContentSize != size) {
+        if (auto size = getContentSize(); _data.sentContentSize != size) {
             _data.sentContentSize = size;
             _eventDispatcher->dispatchEvent(this, WindowEvent::RESIZED);
         }
@@ -281,6 +318,12 @@ namespace srk::modules::windows::cocoa {
                 break;
             case Msg::RESIZED:
                 win->_sendResizedEvent();
+                break;
+            case Msg::ENTER_FULLSCREEN:
+                win->_data.fullScreen = true;
+                break;
+            case Msg::EXIT_FULLSCREEN:
+                win->_data.fullScreen = false;
                 break;
         }
     }
