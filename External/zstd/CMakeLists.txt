@@ -30,6 +30,10 @@ ExternalProject_Add(
     SOURCE_DIR src
     BINARY_DIR ${SRK_PROJECT_BUILD_ROOT_DIR}
     UPDATE_COMMAND ""
+    PATCH_COMMAND
+        ${CMAKE_COMMAND}
+        -DSRC_DIR=${PROJECT_BINARY_DIR}/src
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/patch.cmake
     BUILD_BYPRODUCTS 
         ${LIB_R}
         ${LIB_D}
