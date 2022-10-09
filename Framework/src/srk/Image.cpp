@@ -285,7 +285,7 @@ namespace srk {
 		auto srcData = source.getSource();
 		auto dstData = dst.source.getSource();
 
-		Vec2f32 max(dst.size - 1);
+		Vec2f32 max(size - 1);
 		auto sd = Vec2f32(size) / dst.size;
 		auto step = 0.5f * sd - 0.5f;
 
@@ -346,7 +346,7 @@ namespace srk {
 		auto srcData = source.getSource();
 		auto dstData = dst.source.getSource();
 
-		Vec2f32 max(dst.size - 1);
+		Vec2f32 max(size - 1);
 		auto sd = Vec2f32(size) / dst.size;
 		auto step = 0.5f * sd - 0.5f;
 
