@@ -285,13 +285,14 @@ namespace srk {
 		auto srcData = source.getSource();
 		auto dstData = dst.source.getSource();
 
+		Vec2f32 max(dst.size - 1);
 		auto sd = Vec2f32(size) / dst.size;
-		auto half = 0.5f * sd;
+		auto step = 0.5f * sd - 0.5f;
 
 		auto nx = dst.size[0], ny = dst.size[1];
 
 		for (auto y = 0u; y < ny; ++y) {
-			auto v = ((float32_t)y + .5f) * sd[1] - half[1];
+			auto v = std::clamp(y * sd[1] + step[1], 0.f, max[1]);
 			auto iy = (uint32_t)v;
 			v -= iy;
 
@@ -302,7 +303,7 @@ namespace srk {
 			auto dstPosBeg = y * dst.size[0];
 
 			for (auto x = 0u; x < nx; ++x) {
-				auto u = ((float32_t)x + .5f) * sd[0] - half[0];
+				auto u = std::clamp(x * sd[0] + step[0], 0.f, max[0]);
 				auto ix = (uint32_t)u;
 				u -= ix;
 
@@ -345,8 +346,9 @@ namespace srk {
 		auto srcData = source.getSource();
 		auto dstData = dst.source.getSource();
 
+		Vec2f32 max(dst.size - 1);
 		auto sd = Vec2f32(size) / dst.size;
-		auto half = 0.5f * sd;
+		auto step = 0.5f * sd - 0.5f;
 
 		auto nx = dst.size[0], ny = dst.size[1];
 
@@ -355,7 +357,7 @@ namespace srk {
 			auto y = div.quot;
 			auto x = div.rem;
 
-			auto v = ((float32_t)y + .5f) * sd[1] - half[1];
+			auto v = std::clamp(y * sd[1] + step[1], 0.f, max[1]);
 			auto iy = (uint32_t)v;
 			v -= iy;
 
@@ -366,7 +368,7 @@ namespace srk {
 			auto dstPosBeg = y * dst.size[0];
 
 			//
-			auto u = ((float32_t)x + .5f) * sd[0] - half[0];
+			auto u = std::clamp(x * sd[0] + step[0], 0.f, max[0]);
 			auto ix = (uint32_t)u;
 			u -= ix;
 
