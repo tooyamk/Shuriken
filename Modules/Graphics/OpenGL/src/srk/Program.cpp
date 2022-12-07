@@ -81,61 +81,29 @@ namespace srk::modules::graphics::gl {
 			glGetActiveAttrib(_handle, i, sizeof(charBuffer), &len, &size, &type, charBuffer);
 			switch (type) {
 			case GL_INT:
-			{
-				info.format.type = VertexType::I32;
-				info.format.size = VertexSize::ONE;
-
+				info.format.set(VertexDimension::ONE, VertexType::I32);
 				break;
-			}
 			case GL_INT_VEC2:
-			{
-				info.format.type = VertexType::I32;
-				info.format.size = VertexSize::TWO;
-
+				info.format.set(VertexDimension::TWO, VertexType::I32);
 				break;
-			}
 			case GL_INT_VEC3:
-			{
-				info.format.type = VertexType::I32;
-				info.format.size = VertexSize::THREE;
-
+				info.format.set(VertexDimension::THREE, VertexType::I32);
 				break;
-			}
 			case GL_INT_VEC4:
-			{
-				info.format.type = VertexType::I32;
-				info.format.size = VertexSize::FOUR;
-
+				info.format.set(VertexDimension::FOUR, VertexType::I32);
 				break;
-			}
 			case GL_FLOAT:
-			{
-				info.format.type = VertexType::F32;
-				info.format.size = VertexSize::ONE;
-
+				info.format.set(VertexDimension::ONE, VertexType::F32);
 				break;
-			}
 			case GL_FLOAT_VEC2:
-			{
-				info.format.type = VertexType::F32;
-				info.format.size = VertexSize::TWO;
-
+				info.format.set(VertexDimension::TWO, VertexType::F32);
 				break;
-			}
 			case GL_FLOAT_VEC3:
-			{
-				info.format.type = VertexType::F32;
-				info.format.size = VertexSize::THREE;
-
+				info.format.set(VertexDimension::THREE, VertexType::F32);
 				break;
-			}
 			case GL_FLOAT_VEC4:
-			{
-				info.format.type = VertexType::F32;
-				info.format.size = VertexSize::FOUR;
-
+				info.format.set(VertexDimension::FOUR, VertexType::F32);
 				break;
-			}
 			default:
 				break;
 			}

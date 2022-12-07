@@ -46,9 +46,6 @@ namespace srk::modules::graphics::d3d11 {
 		ID3D11BlendState1* _internalState;
 		uint64_t _featureValue;
 
-		static D3D11_BLEND SRK_CALL _convertBlendFactor(BlendFactor factor);
-		static D3D11_BLEND_OP SRK_CALL _convertBlendOp(BlendOp op);
-
 		void SRK_CALL _releaseRes();
 
 		void SRK_CALL _setRenderTargetState(uint8_t index, const RenderTargetBlendState& state);

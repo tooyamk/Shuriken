@@ -63,75 +63,17 @@ namespace srk::modules::graphics::d3d11 {
 	void BlendState::_setRenderTargetState(uint8_t index, const RenderTargetBlendState& state) {
 		auto& stateDesc = _desc.RenderTarget[index];
 		stateDesc.BlendEnable = state.enabled;
-		stateDesc.SrcBlend = _convertBlendFactor(state.func.srcColor);
-		stateDesc.SrcBlendAlpha = _convertBlendFactor(state.func.srcAlpha);
-		stateDesc.DestBlend = _convertBlendFactor(state.func.dstColor);
-		stateDesc.DestBlendAlpha = _convertBlendFactor(state.func.dstAlpha);
-		stateDesc.BlendOp = _convertBlendOp(state.equation.color);
-		stateDesc.BlendOpAlpha = _convertBlendOp(state.equation.alpha);
+		stateDesc.SrcBlend = Graphics::convertBlendFactor(state.func.srcColor);
+		stateDesc.SrcBlendAlpha = Graphics::convertBlendFactor(state.func.srcAlpha);
+		stateDesc.DestBlend = Graphics::convertBlendFactor(state.func.dstColor);
+		stateDesc.DestBlendAlpha = Graphics::convertBlendFactor(state.func.dstAlpha);
+		stateDesc.BlendOp = Graphics::convertBlendOp(state.equation.color);
+		stateDesc.BlendOpAlpha = Graphics::convertBlendOp(state.equation.alpha);
 		stateDesc.RenderTargetWriteMask =
 			(state.writeMask.data[0] ? D3D11_COLOR_WRITE_ENABLE_RED : 0) |
 			(state.writeMask.data[1] ? D3D11_COLOR_WRITE_ENABLE_GREEN : 0) |
 			(state.writeMask.data[2] ? D3D11_COLOR_WRITE_ENABLE_BLUE : 0) |
 			(state.writeMask.data[3] ? D3D11_COLOR_WRITE_ENABLE_ALPHA : 0);
-	}
-
-	D3D11_BLEND BlendState::_convertBlendFactor(BlendFactor factor) {
-		switch (factor) {
-		case BlendFactor::ZERO:
-			return D3D11_BLEND_ZERO;
-		case BlendFactor::ONE:
-			return D3D11_BLEND_ONE;
-		case BlendFactor::SRC_COLOR:
-			return D3D11_BLEND_SRC_COLOR;
-		case BlendFactor::ONE_MINUS_SRC_COLOR:
-			return D3D11_BLEND_INV_SRC_COLOR;
-		case BlendFactor::SRC_ALPHA:
-			return D3D11_BLEND_SRC_ALPHA;
-		case BlendFactor::ONE_MINUS_SRC_ALPHA:
-			return D3D11_BLEND_INV_SRC_ALPHA;
-		case BlendFactor::DST_COLOR:
-			return D3D11_BLEND_DEST_COLOR;
-		case BlendFactor::ONE_MINUS_DST_COLOR:
-			return D3D11_BLEND_INV_DEST_COLOR;
-		case BlendFactor::DST_ALPHA:
-			return D3D11_BLEND_DEST_ALPHA;
-		case BlendFactor::ONE_MINUS_DST_ALPHA:
-			return D3D11_BLEND_INV_DEST_ALPHA;
-		case BlendFactor::SRC_ALPHA_SATURATE:
-			return D3D11_BLEND_SRC_ALPHA_SAT;
-		case BlendFactor::CONSTANT_COLOR:
-			return D3D11_BLEND_BLEND_FACTOR;
-		case BlendFactor::ONE_MINUS_CONSTANT_COLOR:
-			return D3D11_BLEND_INV_BLEND_FACTOR;
-		case BlendFactor::SRC1_COLOR:
-			return D3D11_BLEND_SRC1_COLOR;
-		case BlendFactor::ONE_MINUS_SRC1_COLOR:
-			return D3D11_BLEND_INV_SRC1_COLOR;
-		case BlendFactor::SRC1_ALPHA:
-			return D3D11_BLEND_SRC1_ALPHA;
-		case BlendFactor::ONE_MINUS_SRC1_ALPHA:
-			return D3D11_BLEND_INV_SRC1_ALPHA;
-		default:
-			return D3D11_BLEND_ZERO;
-		}
-	}
-
-	D3D11_BLEND_OP BlendState::_convertBlendOp(BlendOp op) {
-		switch (op) {
-		case BlendOp::ADD:
-			return D3D11_BLEND_OP_ADD;
-		case BlendOp::SUBTRACT:
-			return D3D11_BLEND_OP_SUBTRACT;
-		case BlendOp::REV_SUBTRACT:
-			return D3D11_BLEND_OP_REV_SUBTRACT;
-		case BlendOp::MIN:
-			return D3D11_BLEND_OP_MIN;
-		case BlendOp::MAX:
-			return D3D11_BLEND_OP_MAX;
-		default:
-			return D3D11_BLEND_OP_ADD;
-		}
 	}
 
 	void BlendState::update() {

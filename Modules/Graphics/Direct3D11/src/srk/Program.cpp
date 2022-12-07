@@ -389,7 +389,7 @@ namespace srk::modules::graphics::d3d11 {
 				info.instanced = inputDesc.instanced;
 
 				if (pDesc.Mask == 1) {
-					info.format.size = VertexSize::ONE;
+					info.format.dimension = VertexDimension::ONE;
 					if (pDesc.ComponentType == D3D_REGISTER_COMPONENT_UINT32) {
 						ieDesc.Format = DXGI_FORMAT_R32_UINT;
 						info.format.type = VertexType::UI32;
@@ -402,7 +402,7 @@ namespace srk::modules::graphics::d3d11 {
 					}
 					offset += 4;
 				} else if (pDesc.Mask <= 3) {
-					info.format.size = VertexSize::TWO;
+					info.format.dimension = VertexDimension::TWO;
 					if (pDesc.ComponentType == D3D_REGISTER_COMPONENT_UINT32) {
 						ieDesc.Format = DXGI_FORMAT_R32G32_UINT;
 						info.format.type = VertexType::UI32;
@@ -415,7 +415,7 @@ namespace srk::modules::graphics::d3d11 {
 					}
 					offset += 8;
 				} else if (pDesc.Mask <= 7) {
-					info.format.size = VertexSize::THREE;
+					info.format.dimension = VertexDimension::THREE;
 					if (pDesc.ComponentType == D3D_REGISTER_COMPONENT_UINT32) {
 						ieDesc.Format = DXGI_FORMAT_R32G32B32_UINT;
 						info.format.type = VertexType::UI32;
@@ -428,7 +428,7 @@ namespace srk::modules::graphics::d3d11 {
 					}
 					offset += 12;
 				} else if (pDesc.Mask <= 15) {
-					info.format.size = VertexSize::FOUR;
+					info.format.dimension = VertexDimension::FOUR;
 					if (pDesc.ComponentType == D3D_REGISTER_COMPONENT_UINT32) {
 						ieDesc.Format = DXGI_FORMAT_R32G32B32A32_UINT;
 						info.format.type = VertexType::UI32;
@@ -449,7 +449,7 @@ namespace srk::modules::graphics::d3d11 {
 		using namespace srk::literals;
 
 		D3D11_SHADER_INPUT_BIND_DESC ibDesc;
-		for (uint32_t i = 0; i < desc.BoundResources; ++i) {
+		for (UINT i = 0; i < desc.BoundResources; ++i) {
 			ref.GetResourceBindingDesc(i, &ibDesc);
 
 			switch (ibDesc.Type) {
@@ -484,7 +484,7 @@ namespace srk::modules::graphics::d3d11 {
 
 		D3D11_SHADER_BUFFER_DESC bDesc;
 		D3D11_SHADER_VARIABLE_DESC vDesc;
-		for (uint32_t i = 0; i < desc.ConstantBuffers; ++i) {
+		for (UINT i = 0; i < desc.ConstantBuffers; ++i) {
 			auto cb = ref.GetConstantBufferByIndex(i);
 			cb->GetDesc(&bDesc);
 
@@ -500,7 +500,7 @@ namespace srk::modules::graphics::d3d11 {
 			}
 
 			if (buffer) {
-				for (uint32_t j = 0; j < bDesc.Variables; ++j) {
+				for (UINT j = 0; j < bDesc.Variables; ++j) {
 					auto var = cb->GetVariableByIndex(j);
 					var->GetDesc(&vDesc);
 

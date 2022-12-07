@@ -104,7 +104,7 @@ public:
 					1.f, 1.f,
 					1.f, 0.f };
 				auto hr = vertexBuffer->create(sizeof(vertices), Usage::MAP_WRITE | Usage::PERSISTENT_MAP, vertices, sizeof(vertices));
-				vertexBuffer->setFormat(VertexFormat(VertexSize::TWO, VertexType::F32));
+				vertexBuffer->setFormat(VertexFormat(VertexDimension::TWO, VertexType::F32));
 			}
 
 			auto uvBuffer = graphics->createVertexBuffer();
@@ -115,7 +115,7 @@ public:
 					1.f, 0.f,
 					1.f, 1.f };
 				uvBuffer->create(sizeof(uvs), Usage::NONE, uvs, sizeof(uvs));
-				uvBuffer->setFormat(VertexFormat(VertexSize::TWO, VertexType::F32));
+				uvBuffer->setFormat(VertexFormat(VertexDimension::TWO, VertexType::F32));
 			}
 
 			renderData.vbf->set("POSITION0", vertexBuffer);

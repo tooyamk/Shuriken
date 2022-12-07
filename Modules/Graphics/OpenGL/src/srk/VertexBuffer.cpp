@@ -72,17 +72,17 @@ namespace srk::modules::graphics::gl {
 		if (_format != format) {
 			_format = format;
 
-			switch (_format.size) {
-			case VertexSize::ONE:
+			switch (_format.dimension) {
+			case VertexDimension::ONE:
 				_vertexSize = 1;
 				break;
-			case VertexSize::TWO:
+			case VertexDimension::TWO:
 				_vertexSize = 2;
 				break;
-			case VertexSize::THREE:
+			case VertexDimension::THREE:
 				_vertexSize = 3;
 				break;
-			case VertexSize::FOUR:
+			case VertexDimension::FOUR:
 				_vertexSize = 4;
 				break;
 			default:

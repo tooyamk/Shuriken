@@ -488,7 +488,7 @@ namespace srk::extensions::fbx_converter {
 						if (_rightHanded) {
 							for (auto& itr : mesh->getVerteices()) {
 								auto& vr = itr.second;
-								if (vr->format.size == modules::graphics::VertexSize::THREE) {
+								if (vr->format.dimension == modules::graphics::VertexDimension::THREE) {
 									switch (vr->format.type) {
 									case modules::graphics::VertexType::I16:
 									case modules::graphics::VertexType::UI16:
@@ -662,7 +662,7 @@ namespace srk::extensions::fbx_converter {
 			if (node.numProperties() > 0) {
 				if (auto& p = node.getProperties()[0]; p.type == Node::Property::Type::F32_ARR || p.type == Node::Property::Type::F64_ARR) {
 					auto vs = new VertexResource();
-					vs->format.size = modules::graphics::VertexSize::THREE;
+					vs->format.dimension = modules::graphics::VertexDimension::THREE;
 					vs->format.type = modules::graphics::VertexType::F32;
 					if (p.type == Node::Property::Type::F32_ARR) {
 						vs->data = _buildPosition<float32_t, float32_t>(p, sourceIndices);
@@ -826,7 +826,7 @@ namespace srk::extensions::fbx_converter {
 					vs = _buildVertexSource<float64_t, uint32_t, float32_t>(*values, nullptr, rt, mt, sourceIndices, 3);
 				}
 				if (vs) {
-					vs->format.size = modules::graphics::VertexSize::THREE;
+					vs->format.dimension = modules::graphics::VertexDimension::THREE;
 					vs->format.type = modules::graphics::VertexType::F32;
 					mesh.setVertex(key, vs);
 				}
@@ -881,7 +881,7 @@ namespace srk::extensions::fbx_converter {
 					}
 				}
 				if (vs) {
-					vs->format.size = modules::graphics::VertexSize::TWO;
+					vs->format.dimension = modules::graphics::VertexDimension::TWO;
 					vs->format.type = modules::graphics::VertexType::F32;
 					mesh.setVertex(ShaderPredefine::UV0, vs);
 				}

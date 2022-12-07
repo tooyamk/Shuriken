@@ -27,9 +27,6 @@ namespace srk::modules::graphics::gl {
 		const uint8_t MAX_MRT_COUNT;
 		std::vector<InternalRenderTargetBlendState> _status;
 
-		static uint16_t SRK_CALL _convertBlendFactor(BlendFactor factor);
-		static uint16_t SRK_CALL _convertBlendOp(BlendOp op);
-
 		void SRK_CALL _updateInternalState(uint8_t index);
 	};
 }

@@ -37,9 +37,6 @@ namespace srk::modules::graphics::vulkan {
 		VkPipelineColorBlendStateCreateInfo _internalState;
 		uint64_t _featureValue;
 
-		static VkBlendFactor SRK_CALL _convertBlendFactor(BlendFactor factor);
-		static VkBlendOp SRK_CALL _convertBlendOp(BlendOp op);
-
 		void SRK_CALL _updateInternalState(uint8_t index);
 	};
 }

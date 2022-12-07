@@ -69,32 +69,31 @@ namespace srk::modules::graphics::d3d11 {
 
 	void VertexBuffer::setFormat(const VertexFormat& format) {
 		if (_format != format) {
-			_format.size = format.size;
-			_format.type = format.type;
+			_format = format;
 
 			switch (_format.type) {
 			case VertexType::I8:
 			{
-				switch (_format.size) {
-				case VertexSize::ONE:
+				switch (_format.dimension) {
+				case VertexDimension::ONE:
 				{
 					_internalFormat = DXGI_FORMAT_R8_SINT;
 					_stride = 1;
 					return;
 				}
-				case VertexSize::TWO:
+				case VertexDimension::TWO:
 				{
 					_internalFormat = DXGI_FORMAT_R8G8_SINT;
 					_stride = 2;
 					return;
 				}
-				case VertexSize::THREE:
+				case VertexDimension::THREE:
 				{
 					_internalFormat = DXGI_FORMAT_UNKNOWN;
 					_stride = 0;
 					return;
 				}
-				case VertexSize::FOUR:
+				case VertexDimension::FOUR:
 				{
 					_internalFormat = DXGI_FORMAT_R8G8B8A8_SINT;
 					_stride = 4;
@@ -110,26 +109,26 @@ namespace srk::modules::graphics::d3d11 {
 			}
 			case VertexType::UI8:
 			{
-				switch (_format.size) {
-				case VertexSize::ONE:
+				switch (_format.dimension) {
+				case VertexDimension::ONE:
 				{
 					_internalFormat = DXGI_FORMAT_R8_UINT;
 					_stride = 1;
 					return;
 				}
-				case VertexSize::TWO:
+				case VertexDimension::TWO:
 				{
 					_internalFormat = DXGI_FORMAT_R8G8_UINT;
 					_stride = 2;
 					return;
 				}
-				case VertexSize::THREE:
+				case VertexDimension::THREE:
 				{
 					_internalFormat = DXGI_FORMAT_UNKNOWN;
 					_stride = 0;
 					return;
 				}
-				case VertexSize::FOUR:
+				case VertexDimension::FOUR:
 				{
 					_internalFormat = DXGI_FORMAT_R8G8B8A8_UINT;
 					_stride = 4;
@@ -145,26 +144,26 @@ namespace srk::modules::graphics::d3d11 {
 			}
 			case VertexType::I16:
 			{
-				switch (_format.size) {
-				case VertexSize::ONE:
+				switch (_format.dimension) {
+				case VertexDimension::ONE:
 				{
 					_internalFormat = DXGI_FORMAT_R16_SINT;
 					_stride = 2;
 					return;
 				}
-				case VertexSize::TWO:
+				case VertexDimension::TWO:
 				{
 					_internalFormat = DXGI_FORMAT_R16G16_SINT;
 					_stride = 4;
 					return;
 				}
-				case VertexSize::THREE:
+				case VertexDimension::THREE:
 				{
 					_internalFormat = DXGI_FORMAT_UNKNOWN;
 					_stride = 0;
 					return;
 				}
-				case VertexSize::FOUR:
+				case VertexDimension::FOUR:
 				{
 					_internalFormat = DXGI_FORMAT_R16G16B16A16_SINT;
 					_stride = 8;
@@ -180,26 +179,26 @@ namespace srk::modules::graphics::d3d11 {
 			}
 			case VertexType::UI16:
 			{
-				switch (_format.size) {
-				case VertexSize::ONE:
+				switch (_format.dimension) {
+				case VertexDimension::ONE:
 				{
 					_internalFormat = DXGI_FORMAT_R16_UINT;
 					_stride = 2;
 					return;
 				}
-				case VertexSize::TWO:
+				case VertexDimension::TWO:
 				{
 					_internalFormat = DXGI_FORMAT_R16G16_UINT;
 					_stride = 4;
 					return;
 				}
-				case VertexSize::THREE:
+				case VertexDimension::THREE:
 				{
 					_internalFormat = DXGI_FORMAT_UNKNOWN;
 					_stride = 0;
 					return;
 				}
-				case VertexSize::FOUR:
+				case VertexDimension::FOUR:
 				{
 					_internalFormat = DXGI_FORMAT_R16G16B16A16_UINT;
 					_stride = 8;
@@ -215,26 +214,26 @@ namespace srk::modules::graphics::d3d11 {
 			}
 			case VertexType::I32:
 			{
-				switch (_format.size) {
-				case VertexSize::ONE:
+				switch (_format.dimension) {
+				case VertexDimension::ONE:
 				{
 					_internalFormat = DXGI_FORMAT_R32_SINT;
 					_stride = 4;
 					return;
 				}
-				case VertexSize::TWO:
+				case VertexDimension::TWO:
 				{
 					_internalFormat = DXGI_FORMAT_R32G32_SINT;
 					_stride = 8;
 					return;
 				}
-				case VertexSize::THREE:
+				case VertexDimension::THREE:
 				{
 					_internalFormat = DXGI_FORMAT_R32G32B32_SINT;
 					_stride = 12;
 					return;
 				}
-				case VertexSize::FOUR:
+				case VertexDimension::FOUR:
 				{
 					_internalFormat = DXGI_FORMAT_R32G32B32A32_SINT;
 					_stride = 16;
@@ -250,26 +249,26 @@ namespace srk::modules::graphics::d3d11 {
 			}
 			case VertexType::UI32:
 			{
-				switch (_format.size) {
-				case VertexSize::ONE:
+				switch (_format.dimension) {
+				case VertexDimension::ONE:
 				{
 					_internalFormat = DXGI_FORMAT_R32_UINT;
 					_stride = 4;
 					return;
 				}
-				case VertexSize::TWO:
+				case VertexDimension::TWO:
 				{
 					_internalFormat = DXGI_FORMAT_R32G32_UINT;
 					_stride = 8;
 					return;
 				}
-				case VertexSize::THREE:
+				case VertexDimension::THREE:
 				{
 					_internalFormat = DXGI_FORMAT_R32G32B32_UINT;
 					_stride = 12;
 					return;
 				}
-				case VertexSize::FOUR:
+				case VertexDimension::FOUR:
 				{
 					_internalFormat = DXGI_FORMAT_R32G32B32A32_UINT;
 					_stride = 16;
@@ -285,26 +284,26 @@ namespace srk::modules::graphics::d3d11 {
 			}
 			case VertexType::F32:
 			{
-				switch (_format.size) {
-				case VertexSize::ONE:
+				switch (_format.dimension) {
+				case VertexDimension::ONE:
 				{
 					_internalFormat = DXGI_FORMAT_R32_FLOAT;
 					_stride = 4;
 					return;
 				}
-				case VertexSize::TWO:
+				case VertexDimension::TWO:
 				{
 					_internalFormat = DXGI_FORMAT_R32G32_FLOAT;
 					_stride = 8;
 					return;
 				}
-				case VertexSize::THREE:
+				case VertexDimension::THREE:
 				{
 					_internalFormat = DXGI_FORMAT_R32G32B32_FLOAT;
 					_stride = 12;
 					return;
 				}
-				case VertexSize::FOUR:
+				case VertexDimension::FOUR:
 				{
 					_internalFormat = DXGI_FORMAT_R32G32B32A32_FLOAT;
 					_stride = 16;

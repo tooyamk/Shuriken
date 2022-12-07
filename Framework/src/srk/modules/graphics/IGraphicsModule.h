@@ -85,7 +85,7 @@ namespace srk::modules::graphics {
 	};
 
 
-	enum class VertexSize : uint8_t {
+	enum class VertexDimension : uint8_t {
 		UNKNOWN,
 		ONE,
 		TWO,
@@ -108,12 +108,12 @@ namespace srk::modules::graphics {
 
 	struct SRK_FW_DLL VertexFormat {
 		VertexFormat() :
-			size(VertexSize::UNKNOWN),
+			dimension(VertexDimension::UNKNOWN),
 			type(VertexType::UNKNOWN) {
 		}
 
-		VertexFormat(VertexSize size, VertexType type) :
-			size(size),
+		VertexFormat(VertexDimension dim, VertexType type) :
+			dimension(dim),
 			type(type) {
 		}
 
@@ -129,12 +129,12 @@ namespace srk::modules::graphics {
 			featureValue = val.featureValue;
 		}
 
-		template<uint32_t Size>
+		template<uint32_t Dim>
 		inline void SRK_CALL set() {
-			if constexpr (Size <= (decltype(Size))VertexSize::FOUR) {
-				size = (VertexSize)Size;
+			if constexpr (Dim <= (decltype(Dim))VertexDimension::FOUR) {
+				dimension = (VertexDimension)Dim;
 			} else {
-				size = VertexSize::UNKNOWN;
+				dimension = VertexDimension::UNKNOWN;
 			}
 		}
 
@@ -159,17 +159,22 @@ namespace srk::modules::graphics {
 			}
 		}
 
-		template<uint32_t Size, typename Type>
+		template<uint32_t Dim, typename Type>
 		inline void SRK_CALL set() {
-			set<Size>();
+			set<Dim>();
 			set<Type>();
+		}
+
+		inline void SRK_CALL set(VertexDimension dim, VertexType type) {
+			dimension = dim;
+			this->type = type;
 		}
 
 		union {
 			uint16_t featureValue;
 
 			struct {
-				VertexSize size;
+				VertexDimension dimension;
 				VertexType type;
 			};
 		};
@@ -641,17 +646,28 @@ namespace srk::modules::graphics {
 	public:
 		RenderTargetBlendState();
 
-		bool enabled;
-		BlendEquation equation;
-		Vec4<bool> writeMask;
-		BlendFunc func;
+		union {
+			uint64_t featureValue;
+
+			struct {
+				bool enabled;
+				BlendEquation equation;
+				BlendFunc func;
+				uint8_t reserved;
+				Vec4<bool> writeMask;
+			};
+		};
 
 		inline bool SRK_CALL operator==(const RenderTargetBlendState& val) const {
-			return enabled == val.enabled && func == val.func && equation == val.equation && writeMask == val.writeMask;
+			return featureValue == val.featureValue;
 		}
 
 		inline bool SRK_CALL operator!=(const RenderTargetBlendState& val) const {
-			return enabled != val.enabled || func != val.func || equation != val.equation || writeMask != val.writeMask;
+			return featureValue != val.featureValue;
+		}
+
+		inline void SRK_CALL operator=(const RenderTargetBlendState& val) {
+			featureValue = val.featureValue;
 		}
 	};
 
@@ -756,12 +772,7 @@ namespace srk::modules::graphics {
 
 
 	struct SRK_FW_DLL DepthState {
-		DepthState() :
-			enabled(true),
-			writeable(true),
-			func(ComparisonFunc::LESS),
-			reserved(0) {
-		}
+		DepthState();
 
 		inline bool SRK_CALL operator==(const DepthState& val) const {
 			return featureValue == val.featureValue;
@@ -801,14 +812,7 @@ namespace srk::modules::graphics {
 
 
 	struct SRK_FW_DLL StencilFaceState {
-		StencilFaceState() :
-			func(ComparisonFunc::ALWAYS),
-			op({ StencilOp::KEEP, StencilOp::KEEP, StencilOp::KEEP}),
-			ref(0),
-			reserved(0) {
-			mask.read = std::numeric_limits<decltype(mask.read)>::max();
-			mask.write = std::numeric_limits<decltype(mask.read)>::max();
-		}
+		StencilFaceState();
 
 		inline bool SRK_CALL operator==(const StencilFaceState& val) const {
 			return featureValue == val.featureValue;
@@ -943,6 +947,8 @@ namespace srk::modules::graphics {
 		bool independentBlend;
 		bool stencilIndependentRef;
 		bool stencilIndependentMask;
+		bool vertexDim3Bit8;
+		bool vertexDim3Bit16;
 		uint8_t maxSampleCount;
 		uint8_t simultaneousRenderTargetCount;
 		std::vector<IndexType> indexTypes;

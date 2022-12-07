@@ -7,6 +7,7 @@
 #endif
 
 #include "tests/CompressTextureTester.h"
+#include "tests/GraphicsTester.h"
 #include "tests/GraphicsAdapterTester.h"
 #include "tests/InputTester.h"
 #include "tests/LockfreeTester.h"
@@ -42,11 +43,12 @@ public:
 		//return CompressTextureTester().run();
 		//return DepthTestTester().run();
 		//return ExperimentTester().run();
+		return GraphicsTester().run();
 		//return GraphicsAdapterTester().run();
 		//return InputTester().run();
 		//return LockfreeTester().run();
 		//return OffscreenTester().run();
-		return RenderPipelineTester().run();
+		//return RenderPipelineTester().run();
 		//return RenderTargetTester().run();
 		//return VertexUpdateTester().run();
 		//return WindowTester().run();

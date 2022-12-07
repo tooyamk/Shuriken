@@ -57,7 +57,7 @@ namespace srk {
 
 	void MultipleVertexBuffer::setFormat(const modules::graphics::VertexFormat& format) {
 		if (_format != format) {
-			_format.size = format.size;
+			_format.dimension = format.dimension;
 			_format.type = format.type;
 
 			auto node = _base.getBegin();

@@ -96,6 +96,8 @@ namespace srk::modules::graphics::vulkan {
 
 		static VkCompareOp SRK_CALL convertCompareOp(ComparisonFunc func);
 		static VkStencilOp SRK_CALL convertStencilOp(StencilOp func);
+		static VkBlendFactor SRK_CALL convertBlendFactor(BlendFactor factor);
+		static VkBlendOp SRK_CALL convertBlendOp(BlendOp op);
 
 	private:
 		bool _isDebug;
@@ -108,35 +110,43 @@ namespace srk::modules::graphics::vulkan {
 		std::string _deviceVersion;
 
 		struct {
-			VkInstance instance;
-			VkPhysicalDevice physicalDevice;
-			VkSurfaceKHR surface;
-			VkDevice device;
+			VkInstance instance = nullptr;
+			VkPhysicalDevice physicalDevice = nullptr;
+			VkSurfaceKHR surface = nullptr;
+			VkDevice device = nullptr;
 
 			struct {
-				uint32_t count;
+				uint32_t count = 0;
 				const char* names[64];
 			} enabledDeviceExtensions;
 
 			struct {
-				PFN_vkDestroyDebugUtilsMessengerEXT destroyUtilsMessengerEXT;
-				VkDebugUtilsMessengerEXT messenger;
+				PFN_vkDestroyDebugUtilsMessengerEXT destroyUtilsMessengerEXT = nullptr;
+				VkDebugUtilsMessengerEXT messenger = nullptr;
 			} debug;
+
+			uint32_t graphicsQueueFamilyIndex = 0;
+			uint32_t presentQueueFamilyIndex = 0;
+			VkSwapchainKHR swapChain = nullptr;
+			std::vector<VkImage> swapChainImages;
+			std::vector<VkImageView> swapChainImageViews;
 
 			Vec2<uint32_t> backSize;
 			Box2i32ui32 vp;
-		} _vulkanStatus;
+		} _vkStatus;
 
 		ConstantBufferManager _constantBufferManager;
 
 		IntrusivePtr<events::IEventDispatcher<GraphicsEvent>> _eventDispatcher;
 
 		bool SRK_CALL _createDevice(const CreateConfig& conf);
-		bool SRK_CALL _vulkanInit(const CreateConfig& conf);
-		bool SRK_CALL _vulkanCreateSurface(windows::IWindow& win);
-		bool SRK_CALL _vulkanInitSwapchain();
-		bool SRK_CALL _vulkanCreateDevice(uint32_t graphicsQueueFamilyIndex, uint32_t presentQueueFamilyIndex);
+		bool SRK_CALL _getVkPhysicalDevice(const CreateConfig& conf);
+		bool SRK_CALL _createVkInstance(bool debug);
+		bool SRK_CALL _createVkSurface(windows::IWindow& win);
+		bool SRK_CALL _createVkDevice();
+		bool SRK_CALL _createVkSwapchain();
 		void SRK_CALL _release();
 		void SRK_CALL _resize(const Vec2ui32& size);
+		void SRK_CALL _cleanupSwapChain(VkSwapchainKHR* swapChain);
 	};
 }

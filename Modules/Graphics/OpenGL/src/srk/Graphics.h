@@ -128,6 +128,8 @@ namespace srk::modules::graphics::gl {
 		static ComparisonFunc SRK_CALL convertComparisonFunc(GLenum func);
 		static GLenum SRK_CALL convertStencilOp(StencilOp func);
 		static StencilOp SRK_CALL convertStencilOp(GLenum func);
+		static uint16_t SRK_CALL convertBlendFactor(BlendFactor factor);
+		static uint16_t SRK_CALL convertBlendOp(BlendOp op);
 		static uint32_t SRK_CALL getGLTypeSize(GLenum type);
 
 	private:

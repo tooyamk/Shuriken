@@ -258,6 +258,8 @@ namespace srk::modules::graphics::d3d11 {
 		static DXGI_FORMAT SRK_CALL convertInternalFormat(TextureFormat fmt);
 		static D3D11_COMPARISON_FUNC SRK_CALL convertComparisonFunc(ComparisonFunc func);
 		static D3D11_STENCIL_OP SRK_CALL convertStencilOp(StencilOp op);
+		static D3D11_BLEND SRK_CALL convertBlendFactor(BlendFactor factor);
+		static D3D11_BLEND_OP SRK_CALL convertBlendOp(BlendOp op);
 
 	private:
 		bool _isDebug;

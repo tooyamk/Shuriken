@@ -117,7 +117,7 @@ public:
 					1.0f, 1.0f, 0.5f,
 					1.0f, 0.0f, 0.5f };
 				vertexBuffer->create(sizeof(vertices), Usage::NONE, vertices, sizeof(vertices));
-				vertexBuffer->setFormat(VertexFormat(VertexSize::THREE, VertexType::F32));
+				vertexBuffer->setFormat(VertexFormat(VertexDimension::THREE, VertexType::F32));
 			}
 
 			auto uvBuffer = graphics->createVertexBuffer();
@@ -133,7 +133,7 @@ public:
 					1.f, 0.f,
 					1.f, 1.f };
 				uvBuffer->create(sizeof(uvs), Usage::NONE, uvs, sizeof(uvs));
-				uvBuffer->setFormat(VertexFormat(VertexSize::TWO, VertexType::F32));
+				uvBuffer->setFormat(VertexFormat(VertexDimension::TWO, VertexType::F32));
 			}
 
 			renderData.vbf->set("POSITION0", vertexBuffer);
@@ -262,14 +262,14 @@ public:
 			{
 				float32_t data[] = { -1.0f, 1.0f, 0.8f, 1.0f, 0.8f, -0.9f, -1.0f, -0.9f };
 				ppVertexBuffer->create(sizeof(data), Usage::NONE, data, sizeof(data));
-				ppVertexBuffer->setFormat(VertexFormat(VertexSize::TWO, VertexType::F32));
+				ppVertexBuffer->setFormat(VertexFormat(VertexDimension::TWO, VertexType::F32));
 			}
 
 			IntrusivePtr ppUVBuffer = graphics->createVertexBuffer();
 			{
 				float32_t data[] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f };
 				ppUVBuffer->create(sizeof(data), Usage::NONE, data, sizeof(data));
-				ppUVBuffer->setFormat(VertexFormat(VertexSize::TWO, VertexType::F32));
+				ppUVBuffer->setFormat(VertexFormat(VertexDimension::TWO, VertexType::F32));
 			}
 
 			renderData.pp.vbf->set("POSITION0", ppVertexBuffer);

@@ -287,6 +287,8 @@ namespace srk::modules::graphics::d3d11 {
 		_deviceFeatures.independentBlend = true;
 		_deviceFeatures.stencilIndependentRef = false;
 		_deviceFeatures.stencilIndependentMask = false;
+		_deviceFeatures.vertexDim3Bit8 = false;
+		_deviceFeatures.vertexDim3Bit16 = false;
 		_deviceFeatures.simultaneousRenderTargetCount = D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT;
 		_deviceFeatures.indexTypes.emplace_back(IndexType::UI16);
 		_deviceFeatures.indexTypes.emplace_back(IndexType::UI32);
@@ -856,6 +858,64 @@ namespace srk::modules::graphics::d3d11 {
 			return D3D11_STENCIL_OP_INVERT;
 		default:
 			return D3D11_STENCIL_OP_KEEP;
+		}
+	}
+
+	D3D11_BLEND Graphics::convertBlendFactor(BlendFactor factor) {
+		switch (factor) {
+		case BlendFactor::ZERO:
+			return D3D11_BLEND_ZERO;
+		case BlendFactor::ONE:
+			return D3D11_BLEND_ONE;
+		case BlendFactor::SRC_COLOR:
+			return D3D11_BLEND_SRC_COLOR;
+		case BlendFactor::ONE_MINUS_SRC_COLOR:
+			return D3D11_BLEND_INV_SRC_COLOR;
+		case BlendFactor::SRC_ALPHA:
+			return D3D11_BLEND_SRC_ALPHA;
+		case BlendFactor::ONE_MINUS_SRC_ALPHA:
+			return D3D11_BLEND_INV_SRC_ALPHA;
+		case BlendFactor::DST_COLOR:
+			return D3D11_BLEND_DEST_COLOR;
+		case BlendFactor::ONE_MINUS_DST_COLOR:
+			return D3D11_BLEND_INV_DEST_COLOR;
+		case BlendFactor::DST_ALPHA:
+			return D3D11_BLEND_DEST_ALPHA;
+		case BlendFactor::ONE_MINUS_DST_ALPHA:
+			return D3D11_BLEND_INV_DEST_ALPHA;
+		case BlendFactor::SRC_ALPHA_SATURATE:
+			return D3D11_BLEND_SRC_ALPHA_SAT;
+		case BlendFactor::CONSTANT_COLOR:
+			return D3D11_BLEND_BLEND_FACTOR;
+		case BlendFactor::ONE_MINUS_CONSTANT_COLOR:
+			return D3D11_BLEND_INV_BLEND_FACTOR;
+		case BlendFactor::SRC1_COLOR:
+			return D3D11_BLEND_SRC1_COLOR;
+		case BlendFactor::ONE_MINUS_SRC1_COLOR:
+			return D3D11_BLEND_INV_SRC1_COLOR;
+		case BlendFactor::SRC1_ALPHA:
+			return D3D11_BLEND_SRC1_ALPHA;
+		case BlendFactor::ONE_MINUS_SRC1_ALPHA:
+			return D3D11_BLEND_INV_SRC1_ALPHA;
+		default:
+			return D3D11_BLEND_ZERO;
+		}
+	}
+
+	D3D11_BLEND_OP Graphics::convertBlendOp(BlendOp op) {
+		switch (op) {
+		case BlendOp::ADD:
+			return D3D11_BLEND_OP_ADD;
+		case BlendOp::SUBTRACT:
+			return D3D11_BLEND_OP_SUBTRACT;
+		case BlendOp::REV_SUBTRACT:
+			return D3D11_BLEND_OP_REV_SUBTRACT;
+		case BlendOp::MIN:
+			return D3D11_BLEND_OP_MIN;
+		case BlendOp::MAX:
+			return D3D11_BLEND_OP_MAX;
+		default:
+			return D3D11_BLEND_OP_ADD;
 		}
 	}
 }

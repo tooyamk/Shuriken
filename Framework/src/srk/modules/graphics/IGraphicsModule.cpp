@@ -84,6 +84,7 @@ namespace srk::modules::graphics {
 
 		_low = val._low;
 		_high = val._high;
+		return true;
 	}
 
 	void DepthStencilFeature::_setValid() noexcept {
@@ -111,7 +112,28 @@ namespace srk::modules::graphics {
 
 	RenderTargetBlendState::RenderTargetBlendState() :
 		enabled(false),
+		equation(BlendOp::ADD),
+		func(BlendFactor::ONE, BlendFactor::ZERO),
+		reserved(0),
 		writeMask(VECTOR_SET_ALL, true) {
+	}
+
+
+	DepthState::DepthState() :
+		enabled(true),
+		writeable(true),
+		func(ComparisonFunc::LESS),
+		reserved(0) {
+	}
+
+
+	StencilFaceState::StencilFaceState() :
+		func(ComparisonFunc::ALWAYS),
+		op({ StencilOp::KEEP, StencilOp::KEEP, StencilOp::KEEP }),
+		ref(0),
+		reserved(0) {
+		mask.read = std::numeric_limits<decltype(mask.read)>::max();
+		mask.write = std::numeric_limits<decltype(mask.read)>::max();
 	}
 
 
@@ -130,6 +152,8 @@ namespace srk::modules::graphics {
 		independentBlend = false;
 		stencilIndependentRef = false;
 		stencilIndependentMask = false;
+		vertexDim3Bit8 = false;
+		vertexDim3Bit16 = false;
 		maxSampleCount = 0;
 		simultaneousRenderTargetCount = 0;
 		indexTypes.clear();
