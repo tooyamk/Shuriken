@@ -483,27 +483,23 @@ namespace srk::modules::graphics::d3d11 {
 		}
 	}
 
-	void Graphics::setDepthStencilState(IDepthStencilState* state, uint32_t stencilFrontRef, uint32_t stencilBackRef) {
+	void Graphics::setDepthStencilState(IDepthStencilState* state) {
 		if (state && state->getGraphics() == this) {
 			if (auto native = state->getNative(); native) {
-				_setDepthStencilState(*(DepthStencilState*)native, stencilFrontRef);
+				_setDepthStencilState(*(DepthStencilState*)native);
 			} else {
-				_setDepthStencilState(*(DepthStencilState*)_defaultDepthStencilState->getNative(), stencilFrontRef);
+				_setDepthStencilState(*(DepthStencilState*)_defaultDepthStencilState->getNative());
 			}
 		} else if (_defaultBlendState) {
-			_setDepthStencilState(*(DepthStencilState*)_defaultDepthStencilState->getNative(), stencilFrontRef);
+			_setDepthStencilState(*(DepthStencilState*)_defaultDepthStencilState->getNative());
 		}
 	}
 
-	void Graphics::_setDepthStencilState(DepthStencilState& state, uint32_t stencilRef) {
+	void Graphics::_setDepthStencilState(DepthStencilState& state) {
 		state.update();
 		auto& depthStencil = _d3dStatus.depthStencil;
-		if (auto internalState = state.getInternalState(); internalState &&
-			(depthStencil.featureValue != state.getFeatureValue() || depthStencil.stencilRef != stencilRef)) {
-			depthStencil.featureValue = state.getFeatureValue();
-			depthStencil.stencilRef = stencilRef;
-
-			_context->OMSetDepthStencilState(internalState, stencilRef);
+		if (auto internalState = state.getInternalState(); internalState && (depthStencil.featureValue.trySet(state.getFeatureValue()))) {
+			_context->OMSetDepthStencilState(internalState, state.getStencilRef());
 		}
 	}
 
@@ -837,6 +833,29 @@ namespace srk::modules::graphics::d3d11 {
 			return D3D11_COMPARISON_ALWAYS;
 		default:
 			return D3D11_COMPARISON_NEVER;
+		}
+	}
+
+	D3D11_STENCIL_OP Graphics::convertStencilOp(StencilOp op) {
+		switch (op) {
+		case StencilOp::KEEP:
+			return D3D11_STENCIL_OP_KEEP;
+		case StencilOp::ZERO:
+			return D3D11_STENCIL_OP_ZERO;
+		case StencilOp::REPLACE:
+			return D3D11_STENCIL_OP_REPLACE;
+		case StencilOp::INCR_CLAMP:
+			return D3D11_STENCIL_OP_INCR_SAT;
+		case StencilOp::DECR_CLAMP:
+			return D3D11_STENCIL_OP_DECR_SAT;
+		case StencilOp::INCR_WRAP:
+			return D3D11_STENCIL_OP_INCR;
+		case StencilOp::DECR_WRAP:
+			return D3D11_STENCIL_OP_DECR;
+		case StencilOp::INVERT:
+			return D3D11_STENCIL_OP_INVERT;
+		default:
+			return D3D11_STENCIL_OP_KEEP;
 		}
 	}
 }

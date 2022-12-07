@@ -29,7 +29,7 @@ namespace srk::lockfree {
 				item(item) {
 			}
 
-			explicit Node(T&& item) :
+			explicit Node(T&& item) noexcept :
 				next(nullptr),
 				item(std::move(item)) {
 			}
@@ -75,7 +75,7 @@ namespace srk::lockfree {
 		}
 
 		inline bool push(T&& item) {
-			return _push(item);
+			return _push(std::forward<T>(item));
 		}
 
 		bool pop(T& out) {
@@ -109,7 +109,7 @@ namespace srk::lockfree {
 				item(item) {
 			}
 
-			explicit Node(T&& item) :
+			explicit Node(T&& item) noexcept :
 				next(nullptr),
 				item(std::move(item)) {
 			}
@@ -153,7 +153,7 @@ namespace srk::lockfree {
 		}
 
 		inline bool push(T&& item) {
-			return _push(item);
+			return _push(std::forward<T>(item));
 		}
 
 		bool pop(T& out) {
@@ -187,7 +187,7 @@ namespace srk::lockfree {
 				item(item) {
 			}
 
-			explicit Node(T&& item) :
+			explicit Node(T&& item) noexcept :
 				next(nullptr),
 				item(std::move(item)) {
 			}
@@ -233,7 +233,7 @@ namespace srk::lockfree {
 		}
 
 		inline bool push(T&& item) {
-			return _push(item);
+			return _push(std::forward<T>(item));
 		}
 
 		bool pop(T& out) {
@@ -273,7 +273,7 @@ namespace srk::lockfree {
 				item(item) {
 			}
 
-			explicit Node(T&& item) :
+			explicit Node(T&& item) noexcept :
 				next(nullptr),
 				item(std::move(item)) {
 			}
@@ -328,7 +328,7 @@ namespace srk::lockfree {
 		}
 
 		inline bool push(T&& item) {
-			return _push(item);
+			return _push(std::forward<T>(item));
 		}
 
 		bool pop(T& out) {

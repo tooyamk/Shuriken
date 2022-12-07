@@ -59,7 +59,7 @@ public:
 		auto srcDir = getAppPath().parent_path().u8string();
 		IntrusivePtr<Image> src;
 		{
-			auto srcBin = readFile(srcDir + "/Resources/tex1.jpg");
+			auto srcBin = readFile(srcDir + "/Resources/tex1.png");
 			if (srcBin.seekBegin().read<uint32_t>() == extensions::PNGConverter::HEADER_MAGIC) {
 				src = extensions::PNGConverter::decode(srcBin.seekBegin());
 			} else if (srcBin.seekBegin().read<ba_vt::UIX>(3) == extensions::JPEGConverter::HEADER_MAGIC) {
@@ -75,6 +75,12 @@ public:
 			src->format = modules::graphics::TextureFormat::R8G8B8A8;
 			src->source = std::move(dst);
 		}
+
+		Image img2;
+		img2.size = src->size >> 2;
+		src->scale(img2);
+
+		writeFile(srcDir + "/Resources/tex11.png", extensions::PNGConverter::encode(img2));
 
 		ThreadPool tp(11);
 
@@ -92,24 +98,37 @@ public:
 
 		src->flipY();
 
-		src->size = 4;
+		/*src->size = 4;
 		src->source = ByteArray(64);
-		for (auto i = 0; i < 64; ++i) src->source.write<uint8_t>(255);
+		for (auto i = 0; i < 64; ++i) src->source.write<uint8_t>(255);*/
 
 		auto t0 = Time::now();
-		auto astc = extensions::ASTCConverter::encode(*src, Vec3ui32(4, 4, 1), extensions::ASTCConverter::Profile::LDR, extensions::ASTCConverter::Quality::MEDIUM, extensions::ASTCConverter::Flags::WRITE_HEADER, 12, [&tp](const std::function<void()>& fn) {
+		/*auto astc = extensions::ASTCConverter::encode(*src, Vec3ui32(4, 4, 1), extensions::ASTCConverter::Profile::LDR, extensions::ASTCConverter::Quality::MEDIUM, extensions::ASTCConverter::Flags::NONE, 12, [&tp](const std::function<void()>& fn) {
 			return tp.enqueue(fn);
-			});
+			});*/
+
+		IntrusivePtr<Image> srcMp1 = new Image();
+		srcMp1->size = src->size >> 1;
+		src->scale(*srcMp1);
+		/*auto astcMp1 = extensions::ASTCConverter::encode(*srcMp1, Vec3ui32(4, 4, 1), extensions::ASTCConverter::Profile::LDR, extensions::ASTCConverter::Quality::MEDIUM, extensions::ASTCConverter::Flags::NONE, 12, [&tp](const std::function<void()>& fn) {
+			return tp.enqueue(fn);
+			});*/
+
 		//for (auto i = 0; i < 16; ++i) printaln(i, " : ", astc.getSource()[i]);
 		//printaln(Time::now() - t0);
-		//writeFile(srcDir + "/img.astc", astc);
+		//writeFile(srcDir + "/img.txt", astc);
 
 		auto bc7 = extensions::BC7Converter::encode(*src, 2, 64, extensions::BC7Converter::Flags::NONE, 12, [&tp](const std::function<void()>& fn) {
 			return tp.enqueue(fn);
 			});
-		for (auto i = 0; i < 16; ++i) printaln(i, " : ", bc7.getSource()[i]);
-		printaln(Time::now() - t0);
-		writeFile(srcDir + "/img.dds", bc7);
+		auto bc7Mp1 = extensions::BC7Converter::encode(*srcMp1, 2, 64, extensions::BC7Converter::Flags::NONE, 12, [&tp](const std::function<void()>& fn) {
+			return tp.enqueue(fn);
+			});
+		//for (auto i = 0; i < 16; ++i) printaln(i, " : ", bc7.getSource()[i]);
+		//printaln(Time::now() - t0);
+		bc7.setPosition(bc7.getLength());
+		bc7.write<ba_vt::BYTE>(bc7Mp1);
+		writeFile(srcDir + "/img.txt", bc7);
 
 		printaln("finish!!!");
 

@@ -13,8 +13,6 @@ namespace srk::render {
 
 		struct {
 			IntrusivePtr<modules::graphics::IDepthStencilState> state;
-			uint32_t stencilFrontRef = 0;
-			uint32_t stencilBackRef = 0;
 		} depthStencil;
 
 		struct {

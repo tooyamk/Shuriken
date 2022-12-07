@@ -46,9 +46,9 @@ public:
 		//return InputTester().run();
 		//return LockfreeTester().run();
 		//return OffscreenTester().run();
-		//return RenderPipelineTester().run();
+		return RenderPipelineTester().run();
 		//return RenderTargetTester().run();
 		//return VertexUpdateTester().run();
-		return WindowTester().run();
+		//return WindowTester().run();
 	}
 };

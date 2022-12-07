@@ -65,7 +65,7 @@ namespace srk::modules::graphics::d3d11 {
 		virtual Box2i32ui32 SRK_CALL getViewport() const override;
 		virtual void SRK_CALL setViewport(const Box2i32ui32& vp) override;
 		virtual void SRK_CALL setBlendState(IBlendState* state, const Vec4f32& constantFactors, uint32_t sampleMask = (std::numeric_limits<uint32_t>::max)()) override;
-		virtual void SRK_CALL setDepthStencilState(IDepthStencilState* state, uint32_t stencilFrontRef, uint32_t stencilBackRef) override;
+		virtual void SRK_CALL setDepthStencilState(IDepthStencilState* state) override;
 		virtual void SRK_CALL setRasterizerState(IRasterizerState* state) override;
 		
 		virtual void SRK_CALL beginRender() override;
@@ -257,6 +257,7 @@ namespace srk::modules::graphics::d3d11 {
 
 		static DXGI_FORMAT SRK_CALL convertInternalFormat(TextureFormat fmt);
 		static D3D11_COMPARISON_FUNC SRK_CALL convertComparisonFunc(ComparisonFunc func);
+		static D3D11_STENCIL_OP SRK_CALL convertStencilOp(StencilOp op);
 
 	private:
 		bool _isDebug;
@@ -321,8 +322,7 @@ namespace srk::modules::graphics::d3d11 {
 			} blend;
 
 			struct {
-				uint64_t featureValue;
-				uint32_t stencilRef;
+				DepthStencilFeature featureValue;
 			} depthStencil;
 
 			Vec2<UINT> backSize;
@@ -337,7 +337,7 @@ namespace srk::modules::graphics::d3d11 {
 		bool SRK_CALL _createDevice(const CreateConfig& conf);
 
 		void SRK_CALL _setBlendState(BlendState& state, const Vec4f32& constantFactors, uint32_t sampleMask);
-		void SRK_CALL _setDepthStencilState(DepthStencilState& state, uint32_t stencilRef);
+		void SRK_CALL _setDepthStencilState(DepthStencilState& state);
 		void SRK_CALL _setRasterizerState(RasterizerState& state);
 
 		inline void SRK_CALL _checkProgramClearData(UINT num) {

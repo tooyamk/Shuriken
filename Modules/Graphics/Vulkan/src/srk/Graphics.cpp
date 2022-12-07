@@ -1,6 +1,7 @@
 #include "Graphics.h"
 #include "CreateModule.h"
 #include "BlendState.h"
+#include "DepthStencilState.h"
 #include "RasterizerState.h"
 #include "srk/ProgramSource.h"
 #include "srk/modules/graphics/GraphicsAdapter.h"
@@ -414,7 +415,7 @@ namespace srk::modules::graphics::vulkan {
 	}
 
 	IntrusivePtr<IDepthStencilState> Graphics::createDepthStencilState() {
-		return nullptr;
+		return new DepthStencilState(*this, false);
 	}
 
 	IntrusivePtr<IIndexBuffer> Graphics::createIndexBuffer() {
@@ -483,7 +484,7 @@ namespace srk::modules::graphics::vulkan {
 	void Graphics::setBlendState(IBlendState* state, const Vec4f32& constantFactors, uint32_t sampleMask) {
 	}
 
-	void Graphics::setDepthStencilState(IDepthStencilState* state, uint32_t stencilFrontRef, uint32_t stencilBackRef) {
+	void Graphics::setDepthStencilState(IDepthStencilState* state) {
 	}
 
 	void Graphics::setRasterizerState(IRasterizerState* state) {
@@ -547,5 +548,51 @@ namespace srk::modules::graphics::vulkan {
 	}
 
 	void Graphics::_resize(const Vec2ui32& size) {
+	}
+
+	VkCompareOp Graphics::convertCompareOp(ComparisonFunc func) {
+		switch (func) {
+		case ComparisonFunc::NEVER:
+			return VK_COMPARE_OP_NEVER;
+		case ComparisonFunc::LESS:
+			return VK_COMPARE_OP_LESS;
+		case ComparisonFunc::EQUAL:
+			return VK_COMPARE_OP_EQUAL;
+		case ComparisonFunc::LESS_EQUAL:
+			return VK_COMPARE_OP_LESS_OR_EQUAL;
+		case ComparisonFunc::GREATER:
+			return VK_COMPARE_OP_GREATER;
+		case ComparisonFunc::NOT_EQUAL:
+			return VK_COMPARE_OP_NOT_EQUAL;
+		case ComparisonFunc::GREATER_EQUAL:
+			return VK_COMPARE_OP_GREATER_OR_EQUAL;
+		case ComparisonFunc::ALWAYS:
+			return VK_COMPARE_OP_ALWAYS;
+		default:
+			return VK_COMPARE_OP_NEVER;
+		}
+	}
+
+	VkStencilOp Graphics::convertStencilOp(StencilOp op) {
+		switch (op) {
+		case StencilOp::KEEP:
+			return VK_STENCIL_OP_KEEP;
+		case StencilOp::ZERO:
+			return VK_STENCIL_OP_ZERO;
+		case StencilOp::REPLACE:
+			return VK_STENCIL_OP_REPLACE;
+		case StencilOp::INCR_CLAMP:
+			return VK_STENCIL_OP_INCREMENT_AND_CLAMP;
+		case StencilOp::DECR_CLAMP:
+			return VK_STENCIL_OP_DECREMENT_AND_CLAMP;
+		case StencilOp::INCR_WRAP:
+			return VK_STENCIL_OP_INCREMENT_AND_WRAP;
+		case StencilOp::DECR_WRAP:
+			return VK_STENCIL_OP_DECREMENT_AND_WRAP;
+		case StencilOp::INVERT:
+			return VK_STENCIL_OP_INVERT;
+		default:
+			return VK_STENCIL_OP_KEEP;
+		}
 	}
 }

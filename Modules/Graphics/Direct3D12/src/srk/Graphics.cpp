@@ -431,7 +431,7 @@ namespace srk::modules::graphics::d3d12 {
 		}
 	}*/
 
-	void Graphics::setDepthStencilState(IDepthStencilState* state, uint32_t stencilFrontRef, uint32_t stencilBackRef) {
+	void Graphics::setDepthStencilState(IDepthStencilState* state) {
 		/*if (state && state->getGraphics() == this) {
 			if (auto native = state->getNative(); native) {
 				_setDepthStencilState(*(DepthStencilState*)native, stencilFrontRef);

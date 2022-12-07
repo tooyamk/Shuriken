@@ -30,12 +30,7 @@ target_link_libraries(${PROJECT_NAME}
     ${SRKPROJ_CORE_NAME}
     ${SRKPROJ_FRAMEWORK_NAME}
 )
-string(TOLOWER ${CMAKE_SYSTEM_PROCESSOR} val)
-if (val MATCHES "(amd)|(86)")
-    srkTargetLinkLibraryExternalProject(${PROJECT_NAME} "SRKPROJ_EXTERNAL_ASTC_ENCODER_SSE2_SLIB")
-elseif (val MATCHES "aarch64")
-    srkTargetLinkLibraryExternalProject(${PROJECT_NAME} "SRKPROJ_EXTERNAL_ASTC_ENCODER_NEON_SLIB")
-endif ()
+srkTargetLinkLibraryExternalProject(${PROJECT_NAME} "SRKPROJ_EXTERNAL_ASTC_ENCODER_AUTO_SLIB")
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER ${SRK_EXTENSIONS_DIR_NAME})
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${OUTPUT_NAME})
 srkInstall(${SRK_EXTENSIONS_DIR_NAME}/${PROJECT_NAME})

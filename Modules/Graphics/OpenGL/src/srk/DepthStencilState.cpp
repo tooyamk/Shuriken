@@ -5,7 +5,6 @@ namespace srk::modules::graphics::gl {
 	DepthStencilState::DepthStencilState(Graphics& graphics, bool isInternal) : IDepthStencilState(graphics),
 		_isInternal(isInternal),
 		_dirty(DirtyFlag::EMPTY),
-		_stencilFeatureValue(0),
 		_internalDepthState() {
 		if (_isInternal) Ref::unref<false>(*_graphics);
 	}
@@ -57,35 +56,12 @@ namespace srk::modules::graphics::gl {
 	}
 
 	void DepthStencilState::_updateStecnilFace(InternalStencilFaceState& desc, const StencilFaceState& state) {
-		desc.op.depthFail = _convertStencilOp(state.op.depthFail);
-		desc.op.fail = _convertStencilOp(state.op.fail);
-		desc.op.pass = _convertStencilOp(state.op.pass);
+		desc.op.depthFail = Graphics::convertStencilOp(state.op.depthFail);
+		desc.op.fail = Graphics::convertStencilOp(state.op.fail);
+		desc.op.pass = Graphics::convertStencilOp(state.op.pass);
 		desc.mask.read = state.mask.read;
 		desc.mask.write = state.mask.write;
 		desc.func = Graphics::convertComparisonFunc(state.func);
-	}
-
-	GLenum DepthStencilState::_convertStencilOp(StencilOp op) {
-		switch (op) {
-		case StencilOp::KEEP:
-			return GL_KEEP;
-		case StencilOp::ZERO:
-			return GL_ZERO;
-		case StencilOp::REPLACE:
-			return GL_REPLACE;
-		case StencilOp::INCR_CLAMP:
-			return GL_INCR;
-		case StencilOp::DECR_CLAMP:
-			return GL_DECR;
-		case StencilOp::INCR_WRAP:
-			return GL_INCR_WRAP;
-		case StencilOp::DECR_WRAP:
-			return GL_DECR_WRAP;
-		case StencilOp::INVERT:
-			return GL_INVERT;
-		default:
-			return GL_KEEP;
-		}
 	}
 
 	void DepthStencilState::update() {
@@ -96,7 +72,7 @@ namespace srk::modules::graphics::gl {
 			if (_dirty & de) _updateDepth();
 			if (_dirty & se) {
 				_updateStencil();
-				_stencilFeatureValue = calcHash(_internalStencilState.face);
+				_stencilFeatureValue.set(_stencilState);
 			}
 			_dirty = 0;
 		}

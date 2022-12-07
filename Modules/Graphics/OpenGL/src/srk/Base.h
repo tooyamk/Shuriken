@@ -86,11 +86,13 @@ namespace srk::modules::graphics::gl {
 
 	struct InternalStencilFaceState {
 		InternalStencilFaceState() :
+			ref(0),
 			func(GL_NEVER) {
 			mask.featureValue = 0;
 			op.featureValue = 0;
 		}
 
+		uint8_t ref;
 		uint16_t func;
 
 		struct {

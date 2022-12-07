@@ -26,7 +26,7 @@ namespace srk::modules::graphics::gl {
 			return _internalStencilState;
 		}
 
-		inline const uint64_t& SRK_CALL getStencilFeatureValue() const {
+		inline const DepthStencilFeature& SRK_CALL getStencilFeatureValue() const {
 			return _stencilFeatureValue;
 		}
 
@@ -49,9 +49,7 @@ namespace srk::modules::graphics::gl {
 		StencilState _oldStencilState;
 		InternalDepthState _internalDepthState;
 		InternalStencilState _internalStencilState;
-		uint64_t _stencilFeatureValue;
-
-		static GLenum SRK_CALL _convertStencilOp(StencilOp op);
+		DepthStencilFeature _stencilFeatureValue;
 
 		void SRK_CALL _updateDepth();
 		void SRK_CALL _updateStencil();

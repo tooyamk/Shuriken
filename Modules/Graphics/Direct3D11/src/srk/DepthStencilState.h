@@ -22,8 +22,12 @@ namespace srk::modules::graphics::d3d11 {
 			return _internalState;
 		}
 
-		inline const uint64_t& SRK_CALL getFeatureValue() const {
+		inline const DepthStencilFeature& SRK_CALL getFeatureValue() const {
 			return _featureValue;
+		}
+
+		inline uint8_t SRK_CALL getStencilRef() const {
+			return _stencilState.face.front.ref;
 		}
 
 		void SRK_CALL update();
@@ -35,6 +39,7 @@ namespace srk::modules::graphics::d3d11 {
 			static const DirtyType EMPTY = 0b1;
 			static const DirtyType DEPTH = 0b1 << 1;
 			static const DirtyType STENCIL = 0b1 << 2;
+			static const DirtyType STENCIL_REF = 0b1 << 3;
 		};
 
 		bool _isInternal;
@@ -45,9 +50,9 @@ namespace srk::modules::graphics::d3d11 {
 		StencilState _oldStencilState;
 		D3D11_DEPTH_STENCIL_DESC _desc;
 		ID3D11DepthStencilState* _internalState;
-		uint64_t _featureValue;
+		DepthStencilFeature _featureValue;
 
-		static D3D11_STENCIL_OP SRK_CALL _convertStencilOp(StencilOp op);
+		static bool SRK_CALL _isStecnilBaseNotEqual(const StencilState& lhs, const StencilState& rhs);
 
 		void SRK_CALL _releaseRes();
 

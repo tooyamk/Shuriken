@@ -65,7 +65,7 @@ namespace srk::modules::graphics::vulkan {
 		virtual Box2i32ui32 SRK_CALL getViewport() const override;
 		virtual void SRK_CALL setViewport(const Box2i32ui32& vp) override;
 		virtual void SRK_CALL setBlendState(IBlendState* state, const Vec4f32& constantFactors, uint32_t sampleMask = (std::numeric_limits<uint32_t>::max)()) override;
-		virtual void SRK_CALL setDepthStencilState(IDepthStencilState* state, uint32_t stencilFrontRef, uint32_t stencilBackRef) override;
+		virtual void SRK_CALL setDepthStencilState(IDepthStencilState* state) override;
 		virtual void SRK_CALL setRasterizerState(IRasterizerState* state) override;
 		
 		virtual void SRK_CALL beginRender() override;
@@ -93,6 +93,9 @@ namespace srk::modules::graphics::vulkan {
 		inline ConstantBufferManager& SRK_CALL getConstantBufferManager() {
 			return _constantBufferManager;
 		}
+
+		static VkCompareOp SRK_CALL convertCompareOp(ComparisonFunc func);
+		static VkStencilOp SRK_CALL convertStencilOp(StencilOp func);
 
 	private:
 		bool _isDebug;

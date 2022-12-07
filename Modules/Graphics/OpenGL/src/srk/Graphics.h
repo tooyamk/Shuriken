@@ -63,7 +63,7 @@ namespace srk::modules::graphics::gl {
 		virtual Box2i32ui32 SRK_CALL getViewport() const override;
 		virtual void SRK_CALL setViewport(const Box2i32ui32& vp) override;
 		virtual void SRK_CALL setBlendState(IBlendState* state, const Vec4f32& constantFactors, uint32_t sampleMask = (std::numeric_limits<uint32_t>::max)()) override;
-		virtual void SRK_CALL setDepthStencilState(IDepthStencilState* state, uint32_t stencilFrontRef, uint32_t stencilBackRef) override;
+		virtual void SRK_CALL setDepthStencilState(IDepthStencilState* state) override;
 		virtual void SRK_CALL setRasterizerState(IRasterizerState* state) override;
 		
 		virtual void SRK_CALL beginRender() override;
@@ -125,6 +125,9 @@ namespace srk::modules::graphics::gl {
 
 		static std::optional<ConvertFormatResult> SRK_CALL convertFormat(TextureFormat fmt);
 		static GLenum SRK_CALL convertComparisonFunc(ComparisonFunc func);
+		static ComparisonFunc SRK_CALL convertComparisonFunc(GLenum func);
+		static GLenum SRK_CALL convertStencilOp(StencilOp func);
+		static StencilOp SRK_CALL convertStencilOp(GLenum func);
 		static uint32_t SRK_CALL getGLTypeSize(GLenum type);
 
 	private:
@@ -151,11 +154,7 @@ namespace srk::modules::graphics::gl {
 			InternalDepthState depth;
 
 			struct {
-				uint64_t featureValue;
-				struct {
-					uint32_t front;
-					uint32_t back;
-				} ref;
+				DepthStencilFeature stencilFeatureValue;
 				InternalStencilState state;
 			} stencil;
 
@@ -206,7 +205,7 @@ namespace srk::modules::graphics::gl {
 		void SRK_CALL _resize(const Vec2ui32& size);
 
 		void SRK_CALL _setBlendState(BlendState& state, const Vec4f32& constantFactors, uint32_t sampleMask);
-		void SRK_CALL _setDepthStencilState(DepthStencilState& state, uint32_t stencilFrontRef, uint32_t stencilBackRef);
+		void SRK_CALL _setDepthStencilState(DepthStencilState& state);
 		void SRK_CALL _setRasterizerState(RasterizerState& state);
 
 		IConstantBuffer* SRK_CALL _createdShareConstantBuffer();

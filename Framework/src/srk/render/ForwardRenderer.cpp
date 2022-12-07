@@ -170,7 +170,7 @@ namespace srk::render {
 
 			{
 				auto& ds = state->depthStencil;
-				_graphics->setDepthStencilState(ds.state ? &*ds.state : defaultDepthStencilState, ds.stencilFrontRef, ds.stencilBackRef);
+				_graphics->setDepthStencilState(ds.state ? &*ds.state : defaultDepthStencilState);
 			}
 
 			{
@@ -179,7 +179,7 @@ namespace srk::render {
 			}
 		} else {
 			_graphics->setBlendState(defaultBlendState, Vec4f32::ZERO);
-			_graphics->setDepthStencilState(defaultDepthStencilState, 0);
+			_graphics->setDepthStencilState(defaultDepthStencilState);
 			_graphics->setRasterizerState(_defaultRasterizerState);
 		}
 

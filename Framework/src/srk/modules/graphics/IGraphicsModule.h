@@ -804,8 +804,10 @@ namespace srk::modules::graphics {
 		StencilFaceState() :
 			func(ComparisonFunc::ALWAYS),
 			op({ StencilOp::KEEP, StencilOp::KEEP, StencilOp::KEEP}),
-			mask({ 0xFF, 0xFF }),
+			ref(0),
 			reserved(0) {
+			mask.read = std::numeric_limits<decltype(mask.read)>::max();
+			mask.write = std::numeric_limits<decltype(mask.read)>::max();
 		}
 
 		inline bool SRK_CALL operator==(const StencilFaceState& val) const {
@@ -824,18 +826,31 @@ namespace srk::modules::graphics {
 			uint64_t featureValue;
 
 			struct {
-				ComparisonFunc func;
-				struct {
-					StencilOp fail;
-					StencilOp depthFail;
-					StencilOp pass;
-				} op;
-				struct {
-					uint8_t read;
-					uint8_t write;
+				union {
+					uint32_t funcAndOpFeatureValue;
+
+					struct {
+						ComparisonFunc func;
+
+						struct {
+							StencilOp depthFail;
+							StencilOp fail;
+							StencilOp pass;
+						} op;
+					};
+				};
+
+				union {
+					uint16_t featureValue;
+
+					struct {
+						uint8_t read;
+						uint8_t write;
+					};
 				} mask;
 
-				uint16_t reserved;
+				uint8_t ref;
+				uint8_t reserved;
 			};
 		};
 	};
@@ -876,7 +891,42 @@ namespace srk::modules::graphics {
 
 		virtual const StencilState& SRK_CALL getStencilState() const = 0;
 		virtual void SRK_CALL setStencilState(const StencilState& stencilState) = 0;
+	};
 
+
+	class SRK_FW_DLL DepthStencilFeature {
+	public:
+		DepthStencilFeature() noexcept;
+		DepthStencilFeature(const DepthStencilFeature& other) noexcept;
+
+		void SRK_CALL set(const DepthState& depth, const StencilState& stencil);
+		void SRK_CALL set(const StencilState& stencil);
+		bool SRK_CALL trySet(const DepthStencilFeature& val) noexcept;
+
+		inline bool SRK_CALL operator==(const DepthStencilFeature& val) const noexcept {
+			return _low == val._low && _high == val._high;
+		}
+
+		inline bool SRK_CALL operator!=(const DepthStencilFeature& val) const noexcept {
+			return _low != val._low || _high != val._high;
+		}
+
+		inline constexpr void SRK_CALL operator=(const DepthStencilFeature& val) noexcept {
+			_low = val._low;
+			_high = val._high;
+		}
+
+		inline constexpr void SRK_CALL operator=(nullptr_t) noexcept {
+			_low = 0;
+			_high = 0;
+		}
+
+	private:
+		uint64_t _low;
+		uint64_t _high;
+
+		void SRK_CALL _setValid() noexcept;
+		void SRK_CALL _set(const StencilState& stencil);
 	};
 
 
@@ -942,10 +992,7 @@ namespace srk::modules::graphics {
 		virtual Box2i32ui32 SRK_CALL getViewport() const = 0;
 		virtual void SRK_CALL setViewport(const Box2i32ui32& vp) = 0;
 		virtual void SRK_CALL setBlendState(IBlendState* state, const Vec4f32& constantFactors, uint32_t sampleMask = (std::numeric_limits<uint32_t>::max)()) = 0;//unrealized all sampleMask
-		virtual void SRK_CALL setDepthStencilState(IDepthStencilState* state, uint32_t stencilFrontRef, uint32_t stencilBackRef) = 0;
-		inline void SRK_CALL setDepthStencilState(IDepthStencilState* state, uint32_t stencilRef) {
-			setDepthStencilState(state, stencilRef, stencilRef);
-		}
+		virtual void SRK_CALL setDepthStencilState(IDepthStencilState* state) = 0;
 		virtual void SRK_CALL setRasterizerState(IRasterizerState* state) = 0;
 
 		virtual void SRK_CALL beginRender() = 0;

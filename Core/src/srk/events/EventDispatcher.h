@@ -202,7 +202,7 @@ namespace srk::events {
 				listeners.emplace_back(rawListener);
 			}
 
-			TypeListeners(TypeListeners&& other) :
+			TypeListeners(TypeListeners&& other) noexcept :
 				dispatching(other.dispatching),
 				numValidListeners(other.numValidListeners),
 				numTotalListeners(other.numTotalListeners),

@@ -5,8 +5,7 @@ namespace srk::modules::graphics::d3d11 {
 	DepthStencilState::DepthStencilState(Graphics& graphics, bool isInternal) : IDepthStencilState(graphics),
 		_isInternal(isInternal),
 		_dirty(DirtyFlag::EMPTY),
-		_internalState(nullptr),
-		_featureValue(0) {
+		_internalState(nullptr) {
 		if (_isInternal) Ref::unref<false>(*_graphics);
 		_updateDepth();
 		_updateStencil();
@@ -45,11 +44,19 @@ namespace srk::modules::graphics::d3d11 {
 	}
 
 	void DepthStencilState::setStencilState(const StencilState& stencilState) {
-		if (_stencilState != stencilState) {
+		if (_stencilState.face.front.ref != stencilState.face.front.ref) {
+			_stencilState.face.front.ref = stencilState.face.front.ref;
+			_setDirty(_stencilState.face.front.ref != _oldStencilState.face.front.ref, DirtyFlag::STENCIL_REF);
+		}
+		if (_isStecnilBaseNotEqual(_stencilState, stencilState)) {
 			_stencilState = stencilState;
-			_updateStencil();
+			auto& back = _stencilState.face.back;
+			back.mask.read = std::numeric_limits<decltype(back.mask.read)>::max();
+			back.mask.write = std::numeric_limits<decltype(back.mask.write)>::max();
+			back.ref = 0;
 
-			_setDirty(_stencilState != _oldStencilState, DirtyFlag::STENCIL);
+			_updateStencil();
+			_setDirty(_isStecnilBaseNotEqual(_stencilState, _oldStencilState), DirtyFlag::STENCIL);
 		}
 	}
 
@@ -62,64 +69,36 @@ namespace srk::modules::graphics::d3d11 {
 	}
 
 	void DepthStencilState::_updateStecnilFace(D3D11_DEPTH_STENCILOP_DESC& desc, const StencilFaceState& state) {
-		desc.StencilDepthFailOp = _convertStencilOp(state.op.depthFail);
-		desc.StencilFailOp = _convertStencilOp(state.op.fail);
-		desc.StencilPassOp = _convertStencilOp(state.op.pass);
+		desc.StencilDepthFailOp = Graphics::convertStencilOp(state.op.depthFail);
+		desc.StencilFailOp = Graphics::convertStencilOp(state.op.fail);
+		desc.StencilPassOp = Graphics::convertStencilOp(state.op.pass);
 		desc.StencilFunc = Graphics::convertComparisonFunc(state.func);
 	}
 
-	D3D11_STENCIL_OP DepthStencilState::_convertStencilOp(StencilOp op) {
-		switch (op) {
-		case StencilOp::KEEP:
-			return D3D11_STENCIL_OP_KEEP;
-		case StencilOp::ZERO:
-			return D3D11_STENCIL_OP_ZERO;
-		case StencilOp::REPLACE:
-			return D3D11_STENCIL_OP_REPLACE;
-		case StencilOp::INCR_CLAMP:
-			return D3D11_STENCIL_OP_INCR_SAT;
-		case StencilOp::DECR_CLAMP:
-			return D3D11_STENCIL_OP_DECR_SAT;
-		case StencilOp::INCR_WRAP:
-			return D3D11_STENCIL_OP_INCR;
-		case StencilOp::DECR_WRAP:
-			return D3D11_STENCIL_OP_DECR;
-		case StencilOp::INVERT:
-			return D3D11_STENCIL_OP_INVERT;
-		default:
-			return D3D11_STENCIL_OP_KEEP;
+	void DepthStencilState::update() {
+		using namespace srk::literals;
+
+		if (_dirty) {
+			constexpr DirtyType recreateFlags = DirtyFlag::EMPTY | DirtyFlag::DEPTH | DirtyFlag::STENCIL;
+			if (_dirty & recreateFlags) {
+				_releaseRes();
+				_graphics.get<Graphics>()->getDevice()->CreateDepthStencilState(&_desc, &_internalState);
+			}
+
+			_oldDepthState = _depthState;
+			_oldStencilState = _stencilState;
+
+			_featureValue.set(_depthState, _stencilState);
+
+			_dirty = 0;
 		}
 	}
 
-	void DepthStencilState::update() {
-		if (_dirty) {
-			_releaseRes();
-			if (SUCCEEDED(_graphics.get<Graphics>()->getDevice()->CreateDepthStencilState(&_desc, &_internalState))) {
-				_oldDepthState = _depthState;
-				_oldStencilState = _stencilState;
-
-				_featureValue = 0x1ULL << 63;
-				if (_depthState.enabled) {
-					_featureValue |= 0x1ULL << 54;
-					if (_depthState.writeable) _featureValue |= 0x1ULL << 53;
-					_featureValue |= (uint64_t)_depthState.func << 49;
-				}
-				if (_stencilState.enabled) {
-					_featureValue |= 0x1ULL << 48;
-					_featureValue |= (uint64_t)(*((uint16_t*)&_stencilState.face.front.mask)) << 32;
-					_featureValue |= (uint64_t)_stencilState.face.front.op.fail << 28;
-					_featureValue |= (uint64_t)_stencilState.face.front.op.depthFail << 24;
-					_featureValue |= (uint64_t)_stencilState.face.front.op.pass << 20;
-					_featureValue |= (uint64_t)_stencilState.face.front.func << 16;
-					_featureValue |= (uint64_t)_stencilState.face.back.op.fail << 12;
-					_featureValue |= (uint64_t)_stencilState.face.back.op.depthFail << 8;
-					_featureValue |= (uint64_t)_stencilState.face.back.op.pass << 4;
-					_featureValue |= (uint64_t)_stencilState.face.back.func << 0;
-				}
-
-				_dirty = 0;
-			}
-		}
+	bool DepthStencilState::_isStecnilBaseNotEqual(const StencilState& lhs, const StencilState& rhs) {
+		return lhs.enabled != rhs.enabled ||
+			lhs.face.front.funcAndOpFeatureValue != rhs.face.front.funcAndOpFeatureValue ||
+			lhs.face.front.mask.featureValue != rhs.face.front.mask.featureValue ||
+			lhs.face.back.funcAndOpFeatureValue != rhs.face.back.funcAndOpFeatureValue;
 	}
 
 	void DepthStencilState::_releaseRes() {
@@ -128,6 +107,6 @@ namespace srk::modules::graphics::d3d11 {
 			_internalState = nullptr;
 		}
 		_dirty |= DirtyFlag::EMPTY;
-		_featureValue = 0;
+		_featureValue = nullptr;
 	}
 }

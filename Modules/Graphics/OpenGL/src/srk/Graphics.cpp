@@ -479,19 +479,19 @@ namespace srk::modules::graphics::gl {
 		glViewport(vp.pos[0], (int32_t)_glStatus.canvasSize[1] - (vp.pos[1] + (int32_t)vp.size[1]), vp.size[0], vp.size[1]);
 	}
 
-	void Graphics::setDepthStencilState(IDepthStencilState* state, uint32_t stencilFrontRef, uint32_t stencilBackRef) {
+	void Graphics::setDepthStencilState(IDepthStencilState* state) {
 		if (state && state->getGraphics() == this) {
 			if (auto native = state->getNative(); native) {
-				_setDepthStencilState(*(DepthStencilState*)native, stencilFrontRef, stencilBackRef);
+				_setDepthStencilState(*(DepthStencilState*)native);
 			} else {
-				_setDepthStencilState(*(DepthStencilState*)_defaultDepthStencilState->getNative(), stencilFrontRef, stencilBackRef);
+				_setDepthStencilState(*(DepthStencilState*)_defaultDepthStencilState->getNative());
 			}
 		} else if (_defaultBlendState) {
-			_setDepthStencilState(*(DepthStencilState*)_defaultDepthStencilState->getNative(), stencilFrontRef, stencilBackRef);
+			_setDepthStencilState(*(DepthStencilState*)_defaultDepthStencilState->getNative());
 		}
 	}
 
-	void Graphics::_setDepthStencilState(DepthStencilState& state, uint32_t stencilFrontRef, uint32_t stencilBackRef) {
+	void Graphics::_setDepthStencilState(DepthStencilState& state) {
 		state.update();
 
 		{
@@ -528,26 +528,13 @@ namespace srk::modules::graphics::gl {
 			auto& stencil = _glStatus.stencil;
 			auto& iss = state.getInternalStencilState();
 			auto changed = false;
-			auto frontRefChanged = false, backRefChanged = false;
 			if (stencil.state.enabled == iss.enabled) {
-				if (iss.enabled) {
-					if (stencil.featureValue == state.getStencilFeatureValue()) {
-						frontRefChanged = stencil.ref.front != stencilFrontRef;
-						backRefChanged = stencil.ref.back != stencilBackRef;
-					} else {
-						changed = true;
-					}
-				}
+				if (iss.enabled && stencil.stencilFeatureValue != state.getStencilFeatureValue()) changed = true;
 			} else {
 				if (iss.enabled) {
 					glEnable(GL_STENCIL_TEST);
 
-					if (stencil.featureValue == state.getStencilFeatureValue()) {
-						frontRefChanged = stencil.ref.front != stencilFrontRef;
-						backRefChanged = stencil.ref.back != stencilBackRef;
-					} else {
-						changed = true;
-					}
+					if (stencil.stencilFeatureValue != state.getStencilFeatureValue()) changed = true;
 				} else {
 					glDisable(GL_STENCIL_TEST);
 				}
@@ -555,36 +542,23 @@ namespace srk::modules::graphics::gl {
 			}
 
 			if (changed) {
-				if (stencil.state.face.front.func != iss.face.front.func || stencil.ref.front != stencilFrontRef || stencil.state.face.front.mask.read != iss.face.front.mask.read) {
-					glStencilFuncSeparate(GL_FRONT, iss.face.front.func, stencilFrontRef, iss.face.front.mask.read);
-					stencil.ref.front = stencilFrontRef;
-				}
-				if (stencil.state.face.back.func != iss.face.back.func || stencil.ref.back != stencilBackRef || stencil.state.face.back.mask.read != iss.face.back.mask.read) {
-					glStencilFuncSeparate(GL_BACK, iss.face.back.func, stencilBackRef, iss.face.back.mask.read);
-					stencil.ref.back = stencilBackRef;
-				}
+				auto& frontFace = stencil.state.face.front;
+				auto& issFrontFace = iss.face.front;
+				if (frontFace.func != issFrontFace.func || frontFace.ref != issFrontFace.ref || frontFace.mask.read != issFrontFace.mask.read) glStencilFuncSeparate(GL_FRONT, issFrontFace.func, issFrontFace.ref, issFrontFace.mask.read);
 
-				if (stencil.state.face.front.mask.write != iss.face.front.mask.write) glStencilMaskSeparate(GL_FRONT, iss.face.front.mask.write);
-				if (stencil.state.face.back.mask.write != iss.face.back.mask.write) glStencilMaskSeparate(GL_BACK, iss.face.back.mask.write);
+				auto& backFace = stencil.state.face.back;
+				auto& issBackFace = iss.face.back;
+				if (backFace.func != issBackFace.func || backFace.ref != issBackFace.ref || backFace.mask.read != issBackFace.mask.read) glStencilFuncSeparate(GL_BACK, issBackFace.func, issBackFace.ref, issBackFace.mask.read);
 
-				if (stencil.state.face.front.op.featureValue != iss.face.front.op.featureValue)
-					glStencilOpSeparate(GL_FRONT, iss.face.front.op.fail, iss.face.front.op.depthFail, iss.face.front.op.pass);
+				if (frontFace.mask.write != issFrontFace.mask.write) glStencilMaskSeparate(GL_FRONT, issFrontFace.mask.write);
+				if (backFace.mask.write != issBackFace.mask.write) glStencilMaskSeparate(GL_BACK, issBackFace.mask.write);
 
-				if (stencil.state.face.back.op.featureValue != iss.face.back.op.featureValue)
-					glStencilOpSeparate(GL_BACK, iss.face.back.op.fail, iss.face.back.op.depthFail, iss.face.back.op.pass);
+				if (frontFace.op.featureValue != issFrontFace.op.featureValue) glStencilOpSeparate(GL_FRONT, issFrontFace.op.fail, issFrontFace.op.depthFail, issFrontFace.op.pass);
+
+				if (backFace.op.featureValue != issBackFace.op.featureValue) glStencilOpSeparate(GL_BACK, issBackFace.op.fail, issBackFace.op.depthFail, issBackFace.op.pass);
 
 				stencil.state.face = iss.face;
-				stencil.featureValue = state.getStencilFeatureValue();
-			} else {
-				if (frontRefChanged) {
-					glStencilFuncSeparate(GL_FRONT, iss.face.front.func, stencilFrontRef, iss.face.front.mask.read);
-					stencil.ref.front = stencilFrontRef;
-				}
-
-				if (backRefChanged) {
-					glStencilFuncSeparate(GL_BACK, iss.face.back.func, stencilBackRef, iss.face.back.mask.read);
-					stencil.ref.back = stencilBackRef;
-				}
+				stencil.stencilFeatureValue = state.getStencilFeatureValue();
 			}
 		}
 	}
@@ -955,8 +929,8 @@ namespace srk::modules::graphics::gl {
 
 			glGetIntegerv(GL_STENCIL_REF, &val[0]);
 			glGetIntegerv(GL_STENCIL_BACK_REF, &val[1]);
-			stencil.ref.front = val[0];
-			stencil.ref.back = val[1];
+			stencil.state.face.front.ref = val[0];
+			stencil.state.face.back.ref = val[1];
 
 			glGetIntegerv(GL_STENCIL_WRITEMASK, &val[0]);
 			glGetIntegerv(GL_STENCIL_BACK_WRITEMASK, &val[1]);
@@ -983,7 +957,30 @@ namespace srk::modules::graphics::gl {
 			stencil.state.face.front.op.pass = val[0];
 			stencil.state.face.back.op.pass = val[1];
 
-			stencil.featureValue = calcHash(stencil.state.face);
+			StencilState ss;
+			ss.enabled = stencil.state.enabled;
+			if (ss.enabled) {
+				auto& dst = ss.face.front;
+				auto& src = stencil.state.face.front;
+				dst.func = convertComparisonFunc(src.func);
+				dst.mask.read = src.mask.read;
+				dst.mask.write = src.mask.write;
+				dst.op.depthFail = convertStencilOp(src.op.depthFail);
+				dst.op.fail = convertStencilOp(src.op.fail);
+				dst.op.pass = convertStencilOp(src.op.pass);
+				dst.ref = src.ref;
+
+				dst = ss.face.back;
+				src = stencil.state.face.back;
+				dst.func = convertComparisonFunc(src.func);
+				dst.mask.read = src.mask.read;
+				dst.mask.write = src.mask.write;
+				dst.op.depthFail = convertStencilOp(src.op.depthFail);
+				dst.op.fail = convertStencilOp(src.op.fail);
+				dst.op.pass = convertStencilOp(src.op.pass);
+				dst.ref = src.ref;
+			}
+			stencil.stencilFeatureValue.set(ss);
 		}
 
 		{
@@ -1071,6 +1068,75 @@ namespace srk::modules::graphics::gl {
 			return GL_ALWAYS;
 		default:
 			return GL_NEVER;
+		}
+	}
+
+	ComparisonFunc Graphics::convertComparisonFunc(GLenum func) {
+		switch (func) {
+		case GL_NEVER:
+			return ComparisonFunc::NEVER;
+		case GL_LESS:
+			return ComparisonFunc::LESS;
+		case GL_EQUAL:
+			return ComparisonFunc::EQUAL;
+		case GL_LEQUAL:
+			return ComparisonFunc::LESS_EQUAL;
+		case GL_GREATER:
+			return ComparisonFunc::GREATER;
+		case GL_NOTEQUAL:
+			return ComparisonFunc::NOT_EQUAL;
+		case GL_GEQUAL:
+			return ComparisonFunc::GREATER_EQUAL;
+		case GL_ALWAYS:
+			return ComparisonFunc::ALWAYS;
+		default:
+			return ComparisonFunc::NEVER;
+		}
+	}
+
+	GLenum Graphics::convertStencilOp(StencilOp op) {
+		switch (op) {
+		case StencilOp::KEEP:
+			return GL_KEEP;
+		case StencilOp::ZERO:
+			return GL_ZERO;
+		case StencilOp::REPLACE:
+			return GL_REPLACE;
+		case StencilOp::INCR_CLAMP:
+			return GL_INCR;
+		case StencilOp::DECR_CLAMP:
+			return GL_DECR;
+		case StencilOp::INCR_WRAP:
+			return GL_INCR_WRAP;
+		case StencilOp::DECR_WRAP:
+			return GL_DECR_WRAP;
+		case StencilOp::INVERT:
+			return GL_INVERT;
+		default:
+			return GL_KEEP;
+		}
+	}
+
+	StencilOp Graphics::convertStencilOp(GLenum op) {
+		switch (op) {
+		case GL_KEEP:
+			return StencilOp::KEEP;
+		case GL_ZERO:
+			return StencilOp::ZERO;
+		case GL_REPLACE:
+			return StencilOp::REPLACE;
+		case GL_INCR:
+			return StencilOp::INCR_CLAMP;
+		case GL_DECR:
+			return StencilOp::DECR_CLAMP;
+		case GL_INCR_WRAP:
+			return StencilOp::INCR_WRAP;
+		case GL_DECR_WRAP:
+			return StencilOp::DECR_WRAP;
+		case GL_INVERT:
+			return StencilOp::INVERT;
+		default:
+			return StencilOp::KEEP;
 		}
 	}
 

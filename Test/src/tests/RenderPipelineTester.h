@@ -24,8 +24,9 @@ public:
 		IntrusivePtr gml = new GraphicsModuleLoader();
 
 		//if (!gml->load(getDllPath("srk-module-graphics-d3d11"))) return 0;
-		if (!gml->load(getDllPath("srk-module-graphics-gl"))) return 0;
-		//if (!gml->load(getDllPath("srk-module-graphics-vulkan"))) return 0;
+		//if (!gml->load(getDllPath("srk-module-graphics-d3d12"))) return 0;
+		//if (!gml->load(getDllPath("srk-module-graphics-gl"))) return 0;
+		if (!gml->load(getDllPath("srk-module-graphics-vulkan"))) return 0;
 
 		SerializableObject args;
 
@@ -40,6 +41,15 @@ public:
 		args.insert("transpiler", st.uintptr());
 		//args.insert("driverType", "SOFTWARE");
 		args.insert("debug", Environment::IS_DEBUG);
+
+		/*std::vector<GraphicsAdapter> adapters;
+		GraphicsAdapter::query(adapters);
+		for (auto& ga : adapters) {
+			if (ga.vendorId == 32902) {
+				args.insert("adapter", (uintptr_t)&ga);
+				break;
+			}
+		}*/
 
 		auto graphics = gml->create(&args);
 		if (!graphics) return 0;

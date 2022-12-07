@@ -51,6 +51,10 @@ if (SRK_ARCH_X86)
         -DISA_SSE41=OFF
         -DISA_NEON=OFF
     )
+
+    set(SLIB_PREFIX_AUTO ${SLIB_PREFIX_SSE2})
+    set(SLIB_AUTO_R ${SLIB_SSE2_R})
+    set(SLIB_AUTO_D ${SLIB_SSE2_D})
 elseif (SRK_ARCH_ARM AND SRK_ARCH_WORD_BITS_64)
     set(args
         -DISA_SSE2=OFF
@@ -58,7 +62,26 @@ elseif (SRK_ARCH_ARM AND SRK_ARCH_WORD_BITS_64)
         -DISA_SSE41=OFF
         -DISA_NEON=ON
     )
+
+    set(SLIB_PREFIX_AUTO ${SLIB_PREFIX_NEON})
+    set(SLIB_AUTO_R ${SLIB_NEON_R})
+    set(SLIB_AUTO_D ${SLIB_NEON_D})
+else ()
+    set(args
+        -DISA_SSE2=OFF
+        -DISA_AVX2=OFF
+        -DISA_SSE41=OFF
+        -DISA_NEON=OFF
+    )
+
+    set(SLIB_PREFIX_AUTO ${SLIB_PREFIX_NONE})
+    set(SLIB_AUTO_R ${SLIB_NONE_R})
+    set(SLIB_AUTO_D ${SLIB_NONE_D})
 endif ()
+
+set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_ASTC_ENCODER_AUTO_SLIB ${SLIB_PREFIX_AUTO}${SRK_BUILD_TYPE_SUFFIX}${SRK_SLIB_SUFFIX})
+set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_ASTC_ENCODER_AUTO_SLIB_R ${SLIB_AUTO_R})
+set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_ASTC_ENCODER_AUTO_SLIB_D ${SLIB_AUTO_D})
 
 ExternalProject_Add(
     ${PROJECT_NAME}
@@ -79,12 +102,14 @@ ExternalProject_Add(
         -DSRC_DIR=${PROJECT_BINARY_DIR}/src
         -P ${CMAKE_CURRENT_SOURCE_DIR}/patch.cmake
     BUILD_BYPRODUCTS 
-        ${LIB_NONE_R}
-        ${LIB_NONE_D}
-        ${LIB_SSE2_R}
-        ${LIB_SSE2_D}
-        ${LIB_NEON_R}
-        ${LIB_NEON_D}
+        ${SLIB_NONE_R}
+        ${SLIB_NONE_D}
+        ${SLIB_SSE2_R}
+        ${SLIB_SSE2_D}
+        ${SLIB_NEON_R}
+        ${SLIB_NEON_D}
+        ${SLIB_AUTO_R}
+        ${SLIB_AUTO_D}
     CMAKE_ARGS
         -DISA_NONE=ON
         -DUNITTEST=OFF
