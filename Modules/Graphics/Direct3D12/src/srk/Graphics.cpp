@@ -387,7 +387,7 @@ namespace srk::modules::graphics::d3d12 {
 	}
 
 	Box2i32ui32 Graphics::getViewport() const {
-		return _d3dStatus.vp;
+		return _d3dStatus.viewport;
 	}
 
 	void Graphics::setViewport(const Box2i32ui32& vp) {
@@ -406,7 +406,27 @@ namespace srk::modules::graphics::d3d12 {
 		}*/
 	}
 
-	void Graphics::setBlendState(IBlendState* state, const Vec4f32& constantFactors, uint32_t sampleMask) {
+	Box2i32ui32 Graphics::getScissor() const {
+		return _d3dStatus.scissor;
+	}
+
+	void Graphics::setScissor(const Box2i32ui32& scissor) {
+		/*if (_context && _d3dStatus.vp != vp) {
+			_d3dStatus.vp = vp;
+
+			D3D11_VIEWPORT dvp;
+			dvp.Width = vp.size[0];
+			dvp.Height = vp.size[1];
+			dvp.MinDepth = 0.0f;
+			dvp.MaxDepth = 1.0f;
+			dvp.TopLeftX = vp.pos[0];
+			dvp.TopLeftY = vp.pos[1];
+
+			_context->RSSetViewports(1, &dvp);
+		}*/
+	}
+
+	void Graphics::setBlendState(IBlendState* state, uint32_t sampleMask) {
 		/*if (state && state->getGraphics() == this) {
 			if (auto native = state->getNative(); native) {
 				_setBlendState(*(BlendState*)native, constantFactors, sampleMask);

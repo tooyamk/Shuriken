@@ -24,6 +24,18 @@ namespace srk::modules::graphics::d3d11 {
 		return this;
 	}
 
+	const Vec4f32& BlendState::getConstants() const {
+		return _constants;
+	}
+
+	void BlendState::setConstants(const Vec4f32& val) {
+		if (_constants != val) {
+			_constants = val;
+
+			_setDirty(true, DirtyFlag::CONSTANTS);
+		}
+	}
+
 	uint8_t BlendState::getCount() const {
 		return _count;
 	}
@@ -77,14 +89,25 @@ namespace srk::modules::graphics::d3d11 {
 	}
 
 	void BlendState::update() {
+		using namespace srk::literals;
+
 		if (_dirty) {
-			_releaseRes();
-			if (SUCCEEDED(_graphics.get<Graphics>()->getDevice()->CreateBlendState1(&_desc, &_internalState))) {
-				_oldCount = _count;
-				memcpy(&_oldRtStatus, &_rtStatus, sizeof(_rtStatus));
-				_featureValue = hash::xxHash<sizeof(_featureValue) * 8>::calc<std::endian::native>(&_desc, sizeof(_desc) - sizeof(_desc.RenderTarget[0]) * (D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT - _count), 0);
-				_dirty = 0;
+			constexpr DirtyType recreateFlags = DirtyFlag::EMPTY | DirtyFlag::COUNT | DirtyFlag::RT_STATE;
+			if (_dirty & recreateFlags) {
+				_releaseRes();
+				_graphics.get<Graphics>()->getDevice()->CreateBlendState1(&_desc, &_internalState);
 			}
+			
+			_oldCount = _count;
+			memcpy(&_oldRtStatus, &_rtStatus, sizeof(_rtStatus));
+
+			hash::xxHash<64> hasher;
+			hasher.begin(0);
+			hasher.update(&_desc, sizeof(_desc) - sizeof(_desc.RenderTarget[0]) * (D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT - _count));
+			hasher.update(&_constants, sizeof(_constants));
+			_featureValue = hasher.digest();
+
+			_dirty = 0;
 		}
 	}
 

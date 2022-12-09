@@ -237,9 +237,9 @@ public:
 			renderData.g->beginRender();
 			renderData.g->clear(ClearFlag::COLOR | ClearFlag::DEPTH | ClearFlag::STENCIL, Vec4f32(0.0f, 0.0f, 0.25f, 1.0f), 1.0f, 0);
 
-			renderData.g->setBlendState(renderData.bs.get(), Vec4f32::ZERO);
-			renderData.g->setDepthStencilState(renderData.dss.get());
-			renderData.g->draw(renderData.vbf.get(), renderData.p.get(), renderData.spc.get(), renderData.ib.get());
+			renderData.g->setBlendState(renderData.bs);
+			renderData.g->setDepthStencilState(renderData.dss);
+			renderData.g->draw(renderData.vbf, renderData.p, renderData.spc, renderData.ib);
 
 			renderData.g->endRender();
 			renderData.g->present();

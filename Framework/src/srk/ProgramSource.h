@@ -37,21 +37,32 @@ namespace srk {
 		std::string entryPoint;
 		ByteArray data;
 
+		inline static const std::string defaultEntryPoint = std::string("main");
+
 		ProgramSource& SRK_CALL operator=(ProgramSource&& value) noexcept;
 
 		bool SRK_CALL isValid() const;
 
-		inline static std::string SRK_CALL toHLSLShaderModel(const ProgramSource& source) {
-			return toHLSLShaderModel(source.stage, source.version);
+		inline std::string_view toHLSLShaderStage() const {
+			return toHLSLShaderStage(stage);
+		}
+
+		static std::string_view toHLSLShaderStage(ProgramStage stage);
+
+		inline std::string SRK_CALL toHLSLShaderModel() const {
+			return toHLSLShaderModel(stage, version);
 		}
 
 		static std::string SRK_CALL toHLSLShaderModel(ProgramStage stage, const std::string_view& version);
 
-		inline static std::string SRK_CALL getEntryPoint(const ProgramSource& source) {
-			return getEntryPoint(source.entryPoint);
+		inline const std::string& SRK_CALL getEntryPoint() const {
+			return getEntryPoint(entryPoint);
 		}
-		inline static std::string SRK_CALL getEntryPoint(const std::string_view& entryPoint) {
-			return entryPoint.empty() ? "main" : std::move(std::string(entryPoint));
+		inline static std::string_view SRK_CALL getEntryPoint(const std::string_view& entryPoint) {
+			return entryPoint.empty() ? defaultEntryPoint : entryPoint;
+		}
+		inline static const std::string& SRK_CALL getEntryPoint(const std::string& entryPoint) {
+			return entryPoint.empty() ? defaultEntryPoint : entryPoint;
 		}
 	};
 }

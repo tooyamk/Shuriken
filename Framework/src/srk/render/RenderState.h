@@ -8,7 +8,6 @@ namespace srk::render {
 	public:
 		struct {
 			IntrusivePtr<modules::graphics::IBlendState> state;
-			Vec4f32 constantFactors;
 		} blend;
 
 		struct {

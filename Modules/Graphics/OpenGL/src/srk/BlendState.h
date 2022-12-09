@@ -11,6 +11,8 @@ namespace srk::modules::graphics::gl {
 		virtual ~BlendState();
 
 		virtual const void* SRK_CALL getNative() const override;
+		virtual const Vec4f32& SRK_CALL getConstants() const override;
+		virtual void SRK_CALL setConstants(const Vec4f32& val) override;
 		virtual uint8_t SRK_CALL getCount() const override;
 		virtual void SRK_CALL setCount(uint8_t count) override;
 
@@ -25,6 +27,7 @@ namespace srk::modules::graphics::gl {
 		bool _isInternal;
 		uint8_t _count;
 		const uint8_t MAX_MRT_COUNT;
+		Vec4f32 _constants;
 		std::vector<InternalRenderTargetBlendState> _status;
 
 		void SRK_CALL _updateInternalState(uint8_t index);

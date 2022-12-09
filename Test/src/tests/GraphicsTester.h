@@ -52,16 +52,29 @@ public:
 		{
 			auto bs = graphics->createBlendState();
 			printaln("BlendState : ", bs == nullptr ? "failed" : "succeed");
-		}
 
-		{
 			auto dss = graphics->createDepthStencilState();
 			printaln("DepthStencilState : ", dss == nullptr ? "failed" : "succeed");
-		}
 
-		{
 			auto rs = graphics->createRasterizerState();
 			printaln("RasterizerState : ", rs == nullptr ? "failed" : "succeed");
+
+			IntrusivePtr shader = new Shader();
+			auto shaderResourcesFolder = getAppPath().parent_path().u8string() + "/Resources/shaders/";
+			extensions::ShaderScript::set(shader, graphics, readFile(getAppPath().parent_path().u8string() + "/Resources/shaders/lighting.shader"),
+				[shaderResourcesFolder](const Shader& shader, ProgramStage stage, const std::string_view& name) {
+					return readFile(shaderResourcesFolder + name);
+				},
+				[](const Shader& shader, const std::string_view& name) {
+					return modules::graphics::IProgram::InputDescription();
+				});
+
+			auto program = shader->select(nullptr);
+			printaln("Program : ", program == nullptr ? "failed" : "succeed");
+			if (program) {
+				auto& info = program->getInfo();
+				graphics->draw(nullptr, program, nullptr, nullptr);
+			}
 		}
 
 		graphics->getEventDispatcher()->addEventListener(GraphicsEvent::ERR, createEventListener<GraphicsEvent>([](Event<GraphicsEvent>& e) {

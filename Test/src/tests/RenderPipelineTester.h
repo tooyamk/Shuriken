@@ -25,8 +25,8 @@ public:
 
 		//if (!gml->load(getDllPath("srk-module-graphics-d3d11"))) return 0;
 		//if (!gml->load(getDllPath("srk-module-graphics-d3d12"))) return 0;
-		//if (!gml->load(getDllPath("srk-module-graphics-gl"))) return 0;
-		if (!gml->load(getDllPath("srk-module-graphics-vulkan"))) return 0;
+		if (!gml->load(getDllPath("srk-module-graphics-gl"))) return 0;
+		//if (!gml->load(getDllPath("srk-module-graphics-vulkan"))) return 0;
 
 		SerializableObject args;
 
@@ -150,6 +150,7 @@ public:
 					rs->setFillMode(FillMode::SOLID);
 					rs->setFrontFace(FrontFace::CW);
 					rs->setCullMode(CullMode::BACK);
+					rs->setScissorEnabled(true);
 
 					auto renderableMesh = new RenderableMesh();
 					renderData.renderables.emplace_back(renderableMesh);
@@ -278,6 +279,7 @@ public:
 			renderData.model->localRotate(Quaternion<float32_t>(nullptr).rotationY(Math::PI<float32_t>* dt * 0.5f));
 
 			renderData.g->setViewport(Box2i32ui32(Vec2i32::ZERO, renderData.win->getContentSize()));
+			renderData.g->setScissor(Box2i32ui32(Vec2i32::ZERO, renderData.win->getContentSize() / 2));
 			renderData.renderPipeline->render(renderData.g, [renderData](render::IRenderCollector& collector) {
 				collector.addCamera(renderData.camera);
 				for (auto& r : renderData.renderables) collector.addRenderable(r);

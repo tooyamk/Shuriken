@@ -2,6 +2,7 @@
 #include "CreateModule.h"
 #include "BlendState.h"
 #include "DepthStencilState.h"
+#include "Program.h"
 #include "RasterizerState.h"
 #include "srk/ProgramSource.h"
 #include "srk/modules/graphics/GraphicsAdapter.h"
@@ -24,6 +25,7 @@ namespace srk::modules::graphics::vulkan {
 	}
 
 	bool Graphics::createDevice(const CreateConfig& conf) {
+		if (_vkStatus.device) return false;
 		if (conf.win) {
 			if (!conf.win->getNative(windows::WindowNative::WINDOW)) return false;
 #if SRK_OS == SRK_OS_WINDOWS
@@ -60,7 +62,7 @@ namespace srk::modules::graphics::vulkan {
 
 	bool Graphics::_createDevice(const CreateConfig& conf) {
 		auto success = false;
-
+		
 		do {
 			if (!_createVkInstance(conf.debug)) break;
 			if (!_createVkSurface(*conf.win)) break;
@@ -68,17 +70,47 @@ namespace srk::modules::graphics::vulkan {
 			if (!_createVkDevice()) break;
 			if (!_createVkSwapchain()) break;
 
-			VkPhysicalDeviceProperties physicalDeviceProperties;
-			vkGetPhysicalDeviceProperties(_vkStatus.physicalDevice, &physicalDeviceProperties);
+			{
+				VkPipelineCacheCreateInfo pipelineCacheCreateInfo;
+				memset(&pipelineCacheCreateInfo, 0, sizeof(pipelineCacheCreateInfo));
+				pipelineCacheCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
+				pipelineCacheCreateInfo.initialDataSize = 0;
+				pipelineCacheCreateInfo.pInitialData = nullptr;
+				vkCreatePipelineCache(_vkStatus.device, &pipelineCacheCreateInfo, nullptr, &_vkStatus.pipeline.cache);
+			}
 
-			_deviceFeatures.stencilIndependentMask = true;
-			_deviceFeatures.stencilIndependentRef = true;
-			_deviceFeatures.simultaneousRenderTargetCount = physicalDeviceProperties.limits.maxColorAttachments;
+			{
+				VkPhysicalDeviceProperties physicalDeviceProperties;
+				vkGetPhysicalDeviceProperties(_vkStatus.physicalDevice, &physicalDeviceProperties);
+
+				_deviceVersion = "Vulkan ";
+				_deviceVersion += String::toString(VK_API_VERSION_MAJOR(physicalDeviceProperties.apiVersion));
+				_deviceVersion += '.';
+				_deviceVersion += String::toString(VK_VERSION_MINOR(physicalDeviceProperties.apiVersion));
+				_deviceVersion += '.';
+				_deviceVersion += String::toString(VK_VERSION_PATCH(physicalDeviceProperties.apiVersion));
+				_deviceVersion += '.';
+				_deviceVersion += String::toString(VK_API_VERSION_VARIANT(physicalDeviceProperties.apiVersion));
+
+				_deviceFeatures.stencilIndependentMask = true;
+				_deviceFeatures.stencilIndependentRef = true;
+				_deviceFeatures.simultaneousRenderTargetCount = physicalDeviceProperties.limits.maxColorAttachments;
+			}
+
+			_defaultBlendState = new BlendState(*this, true);
+			_defaultDepthStencilState = new DepthStencilState(*this, true);
+			_defaultRasterizerState = new RasterizerState(*this, true);
+
+			setBlendState(nullptr);
+			setDepthStencilState(nullptr);
+			setRasterizerState(nullptr);
 
 			success = true;
 		} while (false);
 		
 		if (!success) _release();
+
+		_transpiler = conf.transpiler;
 
 		return success;
 	}
@@ -228,39 +260,36 @@ namespace srk::modules::graphics::vulkan {
 
 		if (!surfaceExtFound || !platformSurfaceExtFound) return false;
 
-		const VkApplicationInfo appInfo = {
-		.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
-		.pNext = nullptr,
-		.pApplicationName = "",
-		.applicationVersion = 0,
-		.pEngineName = "",
-		.engineVersion = 0,
-		.apiVersion = VK_API_VERSION_1_0,
-		};
+		VkApplicationInfo applicationInfo;
+		memset(&applicationInfo, 0, sizeof(applicationInfo));
+		applicationInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+		applicationInfo.pApplicationName = "";
+		applicationInfo.applicationVersion = 0;
+		applicationInfo.pEngineName = "";
+		applicationInfo.engineVersion = 0;
+		applicationInfo.apiVersion = VK_API_VERSION_1_0;
 
-		VkInstanceCreateInfo instanceInfo = {
-		.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
-		.pNext = nullptr,
-		.pApplicationInfo = &appInfo,
-		.enabledLayerCount = enabledLayerCount,
-		.ppEnabledLayerNames = enabledLayerNames,
-		.enabledExtensionCount = enabledInstanceExtensionCount,
-		.ppEnabledExtensionNames = enabledInstanceExtensionNames,
-		};
+		VkInstanceCreateInfo instanceCreateInfo;
+		memset(&instanceCreateInfo, 0, sizeof(instanceCreateInfo));
+		instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+		instanceCreateInfo.pApplicationInfo = &applicationInfo;
+		instanceCreateInfo.enabledLayerCount = enabledLayerCount;
+		instanceCreateInfo.ppEnabledLayerNames = enabledLayerNames;
+		instanceCreateInfo.enabledExtensionCount = enabledInstanceExtensionCount;
+		instanceCreateInfo.ppEnabledExtensionNames = enabledInstanceExtensionNames;
 
 		VkDebugUtilsMessengerCreateInfoEXT debugMessengerCreateInfo;
 		if (debug) {
+			memset(&debugMessengerCreateInfo, 0, sizeof(debugMessengerCreateInfo));
 			debugMessengerCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-			debugMessengerCreateInfo.pNext = nullptr;
-			debugMessengerCreateInfo.flags = 0;
 			debugMessengerCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
 			debugMessengerCreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
 			debugMessengerCreateInfo.pfnUserCallback = debugMessengerCallback;
 			debugMessengerCreateInfo.pUserData = this;
-			instanceInfo.pNext = &debugMessengerCreateInfo;
+			instanceCreateInfo.pNext = &debugMessengerCreateInfo;
 		}
 
-		if (vkCreateInstance(&instanceInfo, nullptr, &_vkStatus.instance) != VK_SUCCESS) return false;
+		if (vkCreateInstance(&instanceCreateInfo, nullptr, &_vkStatus.instance) != VK_SUCCESS) return false;
 
 		if (debug) {
 			auto createDebugUtilsMessengerEXT = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(_vkStatus.instance, "vkCreateDebugUtilsMessengerEXT");
@@ -286,14 +315,13 @@ namespace srk::modules::graphics::vulkan {
 		auto err = VK_ERROR_UNKNOWN;
 
 #if SRK_OS == SRK_OS_WINDOWS
-		VkWin32SurfaceCreateInfoKHR createInfo;
-		createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-		createInfo.pNext = nullptr;
-		createInfo.flags = 0;
-		createInfo.hinstance = GetModuleHandleW(nullptr);
-		createInfo.hwnd = (HWND)win.getNative(windows::WindowNative::WINDOW);
+		VkWin32SurfaceCreateInfoKHR surfaceCreateInfo;
+		memset(&surfaceCreateInfo, 0, sizeof(surfaceCreateInfo));
+		surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+		surfaceCreateInfo.hinstance = GetModuleHandleW(nullptr);
+		surfaceCreateInfo.hwnd = (HWND)win.getNative(windows::WindowNative::WINDOW);
 
-		err = vkCreateWin32SurfaceKHR(_vkStatus.instance, &createInfo, nullptr, &_vkStatus.surface);
+		err = vkCreateWin32SurfaceKHR(_vkStatus.instance, &surfaceCreateInfo, nullptr, &_vkStatus.surface);
 #endif
 
 		return err == VK_SUCCESS;
@@ -350,39 +378,36 @@ namespace srk::modules::graphics::vulkan {
 
 		float32_t queuePriorities[1] = { 0.0f };
 
-		VkDeviceQueueCreateInfo queues[2];
-		auto& queue = queues[0];
+		VkDeviceQueueCreateInfo deviceQueueCreateInfos[2];
+		auto& queue = deviceQueueCreateInfos[0];
+		memset(&queue, 0, sizeof(queue));
 		queue.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-		queue.pNext = nullptr;
 		queue.queueFamilyIndex = graphicsQueueFamilyIndex;
 		queue.queueCount = 1;
 		queue.pQueuePriorities = queuePriorities;
-		queue.flags = 0;
 
-		VkDeviceCreateInfo device = {
-			.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-			.pNext = nullptr,
-			.queueCreateInfoCount = 1,
-			.pQueueCreateInfos = queues,
-			.enabledLayerCount = 0,
-			.ppEnabledLayerNames = nullptr,
-			.enabledExtensionCount = _vkStatus.enabledDeviceExtensions.count,
-			.ppEnabledExtensionNames = (const char* const*)_vkStatus.enabledDeviceExtensions.names,
-			.pEnabledFeatures = nullptr,
-		};
+		VkDeviceCreateInfo deviceCreateInfo;
+		memset(&deviceCreateInfo, 0, sizeof(deviceCreateInfo));
+		deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+		deviceCreateInfo.queueCreateInfoCount = 1;
+		deviceCreateInfo.pQueueCreateInfos = deviceQueueCreateInfos;
+		deviceCreateInfo.enabledLayerCount = 0;
+		deviceCreateInfo.ppEnabledLayerNames = nullptr;
+		deviceCreateInfo.enabledExtensionCount = _vkStatus.enabledDeviceExtensions.count;
+		deviceCreateInfo.ppEnabledExtensionNames = (const char* const*)_vkStatus.enabledDeviceExtensions.names;
+		deviceCreateInfo.pEnabledFeatures = nullptr;
 
 		if (graphicsQueueFamilyIndex != presentQueueFamilyIndex) {
-			queue = queues[1];
+			queue = deviceQueueCreateInfos[1];
+			memset(&queue, 0, sizeof(queue));
 			queue.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-			queue.pNext = nullptr;
 			queue.queueFamilyIndex = presentQueueFamilyIndex;
 			queue.queueCount = 1;
 			queue.pQueuePriorities = queuePriorities;
-			queue.flags = 0;
-			device.queueCreateInfoCount = 2;
+			deviceCreateInfo.queueCreateInfoCount = 2;
 		}
 
-		return vkCreateDevice(_vkStatus.physicalDevice, &device, nullptr, &_vkStatus.device) == VK_SUCCESS;
+		return vkCreateDevice(_vkStatus.physicalDevice, &deviceCreateInfo, nullptr, &_vkStatus.device) == VK_SUCCESS;
 	}
 
 	bool Graphics::_createVkSwapchain() {
@@ -468,9 +493,8 @@ namespace srk::modules::graphics::vulkan {
 			auto oldSwapChain = _vkStatus.swapChain;
 
 			VkSwapchainCreateInfoKHR swapchainCreateInfo;
+			memset(&swapchainCreateInfo, 0, sizeof(swapchainCreateInfo));
 			swapchainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-			swapchainCreateInfo.pNext = nullptr;
-			swapchainCreateInfo.flags = 0;
 			swapchainCreateInfo.surface = _vkStatus.surface;
 			swapchainCreateInfo.minImageCount = imageCount;
 			swapchainCreateInfo.imageFormat = selectedSurfaceFormat.format;
@@ -509,9 +533,8 @@ namespace srk::modules::graphics::vulkan {
 
 			_vkStatus.swapChainImageViews.resize(_vkStatus.swapChainImages.size());
 			VkImageViewCreateInfo imageViewCreateInfo;
+			memset(&imageViewCreateInfo, 0, sizeof(imageViewCreateInfo));
 			imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-			imageViewCreateInfo.pNext = nullptr;
-			imageViewCreateInfo.flags = 0;
 			imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
 			imageViewCreateInfo.format = selectedSurfaceFormat.format;
 			imageViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -530,6 +553,113 @@ namespace srk::modules::graphics::vulkan {
 			}
 		}
 
+		return true;
+	}
+
+	bool Graphics::_checkAndUpdateVkPipeline(IProgram* program) {
+		if (!program || program->getGraphics() != this) return false;
+
+		auto needUpdate = false;
+		if (_vkStatus.pipeline.pipeline) {
+			if (_vkStatus.pipeline.rasterizerFeatureValue != _vkStatus.rasterizer.featureValue) {
+				needUpdate = true;
+			}
+		} else {
+			needUpdate = true;
+		}
+
+		if (!needUpdate) return true;
+
+		VkGraphicsPipelineCreateInfo graphicsPipelineCreateInfo;
+		memset(&graphicsPipelineCreateInfo, 0, sizeof(graphicsPipelineCreateInfo));
+		graphicsPipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+
+		{
+			auto p = (Program*)program->getNative();
+			auto& infos = p->getVkPipelineShaderStageCreateInfos();
+			graphicsPipelineCreateInfo.stageCount = infos.size();
+			graphicsPipelineCreateInfo.pStages = infos.data();
+		}
+
+		VkPipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo;
+		memset(&pipelineVertexInputStateCreateInfo, 0, sizeof(pipelineVertexInputStateCreateInfo));
+		pipelineVertexInputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+		pipelineVertexInputStateCreateInfo.vertexBindingDescriptionCount = 0;
+		pipelineVertexInputStateCreateInfo.pVertexBindingDescriptions = nullptr; // Optional
+		pipelineVertexInputStateCreateInfo.vertexAttributeDescriptionCount = 0;
+		pipelineVertexInputStateCreateInfo.pVertexAttributeDescriptions = nullptr; // Optional
+		graphicsPipelineCreateInfo.pVertexInputState = &pipelineVertexInputStateCreateInfo;
+
+		VkPipelineInputAssemblyStateCreateInfo pipelineInputAssemblyStateCreateInfo;
+		memset(&pipelineInputAssemblyStateCreateInfo, 0, sizeof(pipelineInputAssemblyStateCreateInfo));
+		pipelineInputAssemblyStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+		pipelineInputAssemblyStateCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+		pipelineInputAssemblyStateCreateInfo.primitiveRestartEnable = VK_TRUE;
+		graphicsPipelineCreateInfo.pInputAssemblyState = &pipelineInputAssemblyStateCreateInfo;
+
+		graphicsPipelineCreateInfo.pTessellationState = nullptr;
+
+		VkViewport viewport;
+		viewport.x = _vkStatus.viewport.pos[0];
+		viewport.y = _vkStatus.viewport.pos[1];
+		viewport.width = _vkStatus.viewport.size[0];
+		viewport.height = _vkStatus.viewport.size[1];
+		viewport.minDepth = 0.0f;
+		viewport.maxDepth = 1.0f;
+
+		VkRect2D scissor;
+		scissor.offset = { _vkStatus.scissor.pos[0], _vkStatus.scissor.pos[1] };
+		scissor.extent = { _vkStatus.scissor.size[0], _vkStatus.scissor.size[1] };
+
+		VkPipelineViewportStateCreateInfo pipelineViewportStateCreateInfo;
+		memset(&pipelineViewportStateCreateInfo, 0, sizeof(pipelineViewportStateCreateInfo));
+		pipelineViewportStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+		pipelineViewportStateCreateInfo.viewportCount = 1;
+		pipelineViewportStateCreateInfo.pViewports = &viewport;
+		pipelineViewportStateCreateInfo.scissorCount = 1;
+		pipelineViewportStateCreateInfo.pScissors = &scissor;
+		graphicsPipelineCreateInfo.pViewportState = &pipelineViewportStateCreateInfo;
+
+		graphicsPipelineCreateInfo.pRasterizationState = &_vkStatus.rasterizer.info;
+
+		VkPipelineMultisampleStateCreateInfo pipelineMultisampleStateCreateInfo;
+		memset(&pipelineMultisampleStateCreateInfo, 0, sizeof(pipelineMultisampleStateCreateInfo));
+		pipelineMultisampleStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+		pipelineMultisampleStateCreateInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+		pipelineMultisampleStateCreateInfo.sampleShadingEnable = VK_FALSE;
+		pipelineMultisampleStateCreateInfo.minSampleShading = 1.0f; // Optional
+		pipelineMultisampleStateCreateInfo.pSampleMask = nullptr; // Optional
+		pipelineMultisampleStateCreateInfo.alphaToCoverageEnable = VK_FALSE; // Optional
+		pipelineMultisampleStateCreateInfo.alphaToOneEnable = VK_FALSE; // Optional
+		graphicsPipelineCreateInfo.pMultisampleState = &pipelineMultisampleStateCreateInfo;
+
+		graphicsPipelineCreateInfo.pDepthStencilState = &_vkStatus.depthStencil.info;
+		graphicsPipelineCreateInfo.pColorBlendState = &_vkStatus.blend.info;
+
+		VkDynamicState dynamicStates[] = {
+			VK_DYNAMIC_STATE_VIEWPORT,
+			VK_DYNAMIC_STATE_SCISSOR,
+			VK_DYNAMIC_STATE_BLEND_CONSTANTS
+		};
+
+		VkPipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo;
+		memset(&pipelineDynamicStateCreateInfo, 0, sizeof(pipelineDynamicStateCreateInfo));
+		pipelineDynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+		pipelineDynamicStateCreateInfo.dynamicStateCount = sizeof(dynamicStates) / sizeof(VkDynamicState);
+		pipelineDynamicStateCreateInfo.pDynamicStates = dynamicStates;
+		graphicsPipelineCreateInfo.pDynamicState = &pipelineDynamicStateCreateInfo;
+
+		graphicsPipelineCreateInfo.layout = nullptr;
+		graphicsPipelineCreateInfo.renderPass = nullptr;
+		graphicsPipelineCreateInfo.subpass = 0;
+		graphicsPipelineCreateInfo.basePipelineHandle = nullptr;
+		graphicsPipelineCreateInfo.basePipelineIndex = -1;
+
+		if (vkCreateGraphicsPipelines(_vkStatus.device, _vkStatus.pipeline.cache, 1, &graphicsPipelineCreateInfo, nullptr, &_vkStatus.pipeline.pipeline) != VK_SUCCESS) {
+			_vkStatus.pipeline.pipeline = nullptr;
+			return false;
+		}
+		
 		return true;
 	}
 
@@ -570,7 +700,7 @@ namespace srk::modules::graphics::vulkan {
 	}
 
 	IntrusivePtr<IProgram> Graphics::createProgram() {
-		return nullptr;
+		return new Program(*this);
 	}
 
 	IntrusivePtr<IRasterizerState> Graphics::createRasterizerState() {
@@ -622,19 +752,74 @@ namespace srk::modules::graphics::vulkan {
 	}
 
 	Box2i32ui32 Graphics::getViewport() const {
-		return _vkStatus.vp;
+		return _vkStatus.viewport;
 	}
 
 	void Graphics::setViewport(const Box2i32ui32& vp) {
 	}
 
-	void Graphics::setBlendState(IBlendState* state, const Vec4f32& constantFactors, uint32_t sampleMask) {
+	Box2i32ui32 Graphics::getScissor() const {
+		return _vkStatus.scissor;
+	}
+
+	void Graphics::setScissor(const Box2i32ui32& scissor) {
+	}
+
+	void Graphics::setBlendState(IBlendState* state, uint32_t sampleMask) {
+		if (state && state->getGraphics() == this) {
+			if (auto native = state->getNative(); native) {
+				_setBlendState(*(BlendState*)native, sampleMask);
+			} else {
+				_setBlendState(*(BlendState*)_defaultBlendState->getNative(), sampleMask);
+			}
+		} else if (_defaultBlendState) {
+			_setBlendState(*(BlendState*)_defaultBlendState->getNative(), sampleMask);
+		}
+	}
+
+	void Graphics::_setBlendState(BlendState& state, uint32_t sampleMask) {
+		state.update();
+		auto& blend = _vkStatus.blend;
+		if (blend.featureValue != state.getFeatureValue()) {
+			blend.featureValue = state.getFeatureValue();
+			blend.info = state.getInternalState();
+		}
 	}
 
 	void Graphics::setDepthStencilState(IDepthStencilState* state) {
+		if (state && state->getGraphics() == this) {
+			if (auto native = state->getNative(); native) {
+				_setDepthStencilState(*(DepthStencilState*)native);
+			} else {
+				_setDepthStencilState(*(DepthStencilState*)_defaultDepthStencilState->getNative());
+			}
+		} else if (_defaultBlendState) {
+			_setDepthStencilState(*(DepthStencilState*)_defaultDepthStencilState->getNative());
+		}
+	}
+
+	void Graphics::_setDepthStencilState(DepthStencilState& state) {
+		state.update();
+		auto& depthStencil = _vkStatus.depthStencil;
+		if (depthStencil.featureValue.trySet(state.getFeatureValue())) depthStencil.info = state.getInternalState();
 	}
 
 	void Graphics::setRasterizerState(IRasterizerState* state) {
+		if (state && state->getGraphics() == this) {
+			if (auto native = state->getNative(); native) {
+				_setRasterizerState(*(RasterizerState*)native);
+			} else {
+				_setRasterizerState(*(RasterizerState*)_defaultRasterizerState->getNative());
+			}
+		} else if (_defaultRasterizerState) {
+			_setRasterizerState(*(RasterizerState*)_defaultRasterizerState->getNative());
+		}
+	}
+
+	void Graphics::_setRasterizerState(RasterizerState& state) {
+		state.update();
+		auto& rasterizer = _vkStatus.rasterizer;
+		if (rasterizer.featureValue.trySet(state.getFeatureValue())) rasterizer.info = state.getInternalState();
 	}
 
 	void Graphics::beginRender() {
@@ -642,10 +827,12 @@ namespace srk::modules::graphics::vulkan {
 
 	void Graphics::draw(const IVertexBufferGetter* vertexBufferGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
 		const IIndexBuffer* indexBuffer, uint32_t count, uint32_t offset) {
+		if (!_checkAndUpdateVkPipeline(program)) return;
 	}
 
 	void Graphics::drawInstanced(const IVertexBufferGetter* vertexBufferGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
 		const IIndexBuffer* indexBuffer, uint32_t instancedCount, uint32_t count, uint32_t offset) {
+		if (!_checkAndUpdateVkPipeline(program)) return;
 	}
 
 	void Graphics::endRender() {
@@ -664,6 +851,11 @@ namespace srk::modules::graphics::vulkan {
 	}
 
 	void Graphics::_release() {
+		if (_vkStatus.pipeline.cache) {
+			vkDestroyPipelineCache(_vkStatus.device, _vkStatus.pipeline.cache, nullptr);
+			_vkStatus.pipeline.cache = nullptr;
+		}
+
 		_cleanupSwapChain(nullptr);
 
 		if (_vkStatus.device) {
@@ -815,6 +1007,49 @@ namespace srk::modules::graphics::vulkan {
 			return VK_BLEND_OP_MAX;
 		default:
 			return VK_BLEND_OP_ADD;
+		}
+	}
+
+	VkPolygonMode Graphics::convertFillMode(FillMode mode) {
+		switch (mode) {
+		case FillMode::WIREFRAME:
+			return VK_POLYGON_MODE_LINE;
+		case FillMode::SOLID:
+			return VK_POLYGON_MODE_FILL;
+		default:
+			return VK_POLYGON_MODE_FILL;
+		}
+	}
+
+	VkCullModeFlagBits Graphics::convertCullMode(CullMode mode) {
+		switch (mode) {
+		case CullMode::NONE:
+			return VK_CULL_MODE_NONE;
+		case CullMode::FRONT:
+			return VK_CULL_MODE_FRONT_BIT;
+		case CullMode::BACK:
+			return VK_CULL_MODE_BACK_BIT;
+		default:
+			return VK_CULL_MODE_NONE;
+		}
+	}
+
+	VkFrontFace Graphics::convertFrontFace(FrontFace mode) {
+		return mode == FrontFace::CW ? VK_FRONT_FACE_CLOCKWISE : VK_FRONT_FACE_COUNTER_CLOCKWISE;
+	}
+
+	VkShaderStageFlagBits Graphics::convertProgramStage(ProgramStage stage) {
+		switch (stage) {
+		case ProgramStage::CS:
+			return VK_SHADER_STAGE_COMPUTE_BIT;
+		case ProgramStage::GS:
+			return VK_SHADER_STAGE_GEOMETRY_BIT;
+		case ProgramStage::PS:
+			return VK_SHADER_STAGE_FRAGMENT_BIT;
+		case ProgramStage::VS:
+			return VK_SHADER_STAGE_VERTEX_BIT;
+		default:
+			return (VkShaderStageFlagBits)0;
 		}
 	}
 }

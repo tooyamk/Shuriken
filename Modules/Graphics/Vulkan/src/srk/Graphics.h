@@ -16,6 +16,7 @@ namespace srk::modules::graphics::vulkan {
 		struct CreateConfig {
 			Ref* loader = nullptr;
 			windows::IWindow* win = nullptr;
+			IShaderTranspiler* transpiler = nullptr;
 			GraphicsAdapter* adapter = nullptr;
 			SampleCount sampleCount = 1;
 			std::string driverType;
@@ -64,7 +65,9 @@ namespace srk::modules::graphics::vulkan {
 		virtual void SRK_CALL setBackBufferSize(const Vec2ui32& size) override;
 		virtual Box2i32ui32 SRK_CALL getViewport() const override;
 		virtual void SRK_CALL setViewport(const Box2i32ui32& vp) override;
-		virtual void SRK_CALL setBlendState(IBlendState* state, const Vec4f32& constantFactors, uint32_t sampleMask = (std::numeric_limits<uint32_t>::max)()) override;
+		virtual Box2i32ui32 SRK_CALL getScissor() const override;
+		virtual void SRK_CALL setScissor(const Box2i32ui32& scissor) override;
+		virtual void SRK_CALL setBlendState(IBlendState* state, uint32_t sampleMask = (std::numeric_limits<uint32_t>::max)()) override;
 		virtual void SRK_CALL setDepthStencilState(IDepthStencilState* state) override;
 		virtual void SRK_CALL setRasterizerState(IRasterizerState* state) override;
 		
@@ -86,6 +89,14 @@ namespace srk::modules::graphics::vulkan {
 			_eventDispatcher->dispatchEvent(this, GraphicsEvent::ERR, (std::string_view*)&msg);
 		}
 
+		inline VkDevice SRK_CALL getDevice() const {
+			return _vkStatus.device;
+		}
+
+		inline IShaderTranspiler* SRK_CALL getShaderTranspiler() const {
+			return _transpiler.get();
+		}
+
 		inline bool SRK_CALL isDebug() const {
 			return _isDebug;
 		}
@@ -98,6 +109,10 @@ namespace srk::modules::graphics::vulkan {
 		static VkStencilOp SRK_CALL convertStencilOp(StencilOp func);
 		static VkBlendFactor SRK_CALL convertBlendFactor(BlendFactor factor);
 		static VkBlendOp SRK_CALL convertBlendOp(BlendOp op);
+		static VkPolygonMode SRK_CALL convertFillMode(FillMode mode);
+		static VkCullModeFlagBits SRK_CALL convertCullMode(CullMode mode);
+		static VkFrontFace SRK_CALL convertFrontFace(FrontFace mode);
+		static VkShaderStageFlagBits SRK_CALL convertProgramStage(ProgramStage stage);
 
 	private:
 		bool _isDebug;
@@ -105,9 +120,14 @@ namespace srk::modules::graphics::vulkan {
 		SampleCount _backBufferSampleCount;
 		IntrusivePtr<Ref> _loader;
 		IntrusivePtr<windows::IWindow> _win;
+		IntrusivePtr<IShaderTranspiler> _transpiler;
 
 		GraphicsDeviceFeatures _deviceFeatures;
 		std::string _deviceVersion;
+
+		IntrusivePtr<BlendState> _defaultBlendState;
+		IntrusivePtr<DepthStencilState> _defaultDepthStencilState;
+		IntrusivePtr<RasterizerState> _defaultRasterizerState;
 
 		struct {
 			VkInstance instance = nullptr;
@@ -125,6 +145,28 @@ namespace srk::modules::graphics::vulkan {
 				VkDebugUtilsMessengerEXT messenger = nullptr;
 			} debug;
 
+			struct {
+				uint64_t featureValue = 0;
+				VkPipelineColorBlendStateCreateInfo info;
+			} blend;
+
+			struct {
+				DepthStencilFeature featureValue;
+				VkPipelineDepthStencilStateCreateInfo info;
+			} depthStencil;
+
+			struct {
+				RasterizerFeature featureValue;
+				VkPipelineRasterizationStateCreateInfo info;
+			} rasterizer;
+
+			struct {
+				VkPipelineCache cache = nullptr;
+				VkPipeline pipeline = nullptr;
+				DepthStencilFeature depthStencilFeatureValue;
+				RasterizerFeature rasterizerFeatureValue;
+			} pipeline;
+
 			uint32_t graphicsQueueFamilyIndex = 0;
 			uint32_t presentQueueFamilyIndex = 0;
 			VkSwapchainKHR swapChain = nullptr;
@@ -132,8 +174,11 @@ namespace srk::modules::graphics::vulkan {
 			std::vector<VkImageView> swapChainImageViews;
 
 			Vec2<uint32_t> backSize;
-			Box2i32ui32 vp;
+			Box2i32ui32 viewport;
+			Box2i32ui32 scissor;
 		} _vkStatus;
+
+		//std::unordered_map<uint64_t, VkPipelineLayout>
 
 		ConstantBufferManager _constantBufferManager;
 
@@ -145,8 +190,16 @@ namespace srk::modules::graphics::vulkan {
 		bool SRK_CALL _createVkSurface(windows::IWindow& win);
 		bool SRK_CALL _createVkDevice();
 		bool SRK_CALL _createVkSwapchain();
+
+		void SRK_CALL _setBlendState(BlendState& state, uint32_t sampleMask);
+		void SRK_CALL _setDepthStencilState(DepthStencilState& state);
+		void SRK_CALL _setRasterizerState(RasterizerState& state);
+
+		bool SRK_CALL _checkAndUpdateVkPipeline(IProgram* program);
+
 		void SRK_CALL _release();
 		void SRK_CALL _resize(const Vec2ui32& size);
+
 		void SRK_CALL _cleanupSwapChain(VkSwapchainKHR* swapChain);
 	};
 }

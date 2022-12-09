@@ -257,8 +257,8 @@ public:
 				}
 			}
 
-			renderData.g->setBlendState(renderData.bs.get(), Vec4f32::ZERO);
-			renderData.g->draw(renderData.vbf.get(), renderData.p.get(), renderData.spc.get(), renderData.ib.get());
+			renderData.g->setBlendState(renderData.bs);
+			renderData.g->draw(renderData.vbf, renderData.p, renderData.spc, renderData.ib);
 
 			renderData.g->endRender();
 			renderData.g->present();

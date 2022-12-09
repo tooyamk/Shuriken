@@ -125,12 +125,20 @@ namespace srk {
 			return this == ptr;
 		}
 
+		inline bool SRK_CALL operator==(std::nullptr_t) const {
+			return !_target;
+		}
+
 		inline bool SRK_CALL operator!=(const T& target) const {
 			return _target != &target;
 		}
 
 		inline bool SRK_CALL operator!=(const IntrusivePtr<T>* ptr) const {
 			return this != ptr;
+		}
+
+		inline bool SRK_CALL operator!=(std::nullptr_t) const {
+			return _target;
 		}
 
 		inline SRK_CALL operator T*() const {

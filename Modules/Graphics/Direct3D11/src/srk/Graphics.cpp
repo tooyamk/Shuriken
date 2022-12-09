@@ -30,7 +30,6 @@ namespace srk::modules::graphics::d3d11 {
 		_swapChain(nullptr),
 		_backBufferView(nullptr),
 		_backDepthStencil(nullptr),
-		_d3dStatus({ 0 }),
 		_numRTVs(0),
 		_RTVs({ 0 }),
 		_DSV(nullptr),
@@ -333,8 +332,17 @@ namespace srk::modules::graphics::d3d11 {
 			D3D11_VIEWPORT dvp;
 			_context->RSGetViewports(&n, &dvp);
 
-			_d3dStatus.vp.pos.set(dvp.TopLeftX, dvp.TopLeftY);
-			_d3dStatus.vp.size.set(dvp.Width, dvp.Height);
+			_d3dStatus.viewport.pos.set(dvp.TopLeftX, dvp.TopLeftY);
+			_d3dStatus.viewport.size.set(dvp.Width, dvp.Height);
+		}
+
+		{
+			UINT n = 1;
+			D3D11_RECT rect;
+			_context->RSGetScissorRects(&n, &rect);
+
+			_d3dStatus.scissor.pos.set(rect.left, rect.top);
+			_d3dStatus.scissor.size.set(rect.right - rect.left, rect.bottom - rect.top);
 		}
 
 		_defaultBlendState = new BlendState(*this, true);
@@ -346,6 +354,10 @@ namespace srk::modules::graphics::d3d11 {
 		_win = conf.win;
 
 		_resize(size);
+
+		setBlendState(nullptr);
+		setDepthStencilState(nullptr);
+		setRasterizerState(nullptr);
 
 		conf.createProcessInfo("create device succeeded");
 
@@ -441,12 +453,12 @@ namespace srk::modules::graphics::d3d11 {
 	}
 
 	Box2i32ui32 Graphics::getViewport() const {
-		return _d3dStatus.vp;
+		return _d3dStatus.viewport;
 	}
 
 	void Graphics::setViewport(const Box2i32ui32& vp) {
-		if (_context && _d3dStatus.vp != vp) {
-			_d3dStatus.vp = vp;
+		if (_context && _d3dStatus.viewport != vp) {
+			_d3dStatus.viewport = vp;
 
 			D3D11_VIEWPORT dvp;
 			dvp.Width = vp.size[0];
@@ -460,28 +472,54 @@ namespace srk::modules::graphics::d3d11 {
 		}
 	}
 
-	void Graphics::setBlendState(IBlendState* state, const Vec4f32& constantFactors, uint32_t sampleMask) {
-		if (state && state->getGraphics() == this) {
-			if (auto native = state->getNative(); native) {
-				_setBlendState(*(BlendState*)native, constantFactors, sampleMask);
-			} else {
-				_setBlendState(*(BlendState*)_defaultBlendState->getNative(), constantFactors, sampleMask);
-			}
-		} else if (_defaultBlendState) {
-			_setBlendState(*(BlendState*)_defaultBlendState->getNative(), constantFactors, sampleMask);
+	Box2i32ui32 Graphics::getScissor() const {
+		return _d3dStatus.scissor;
+	}
+
+	void Graphics::setScissor(const Box2i32ui32& scissor) {
+		D3D11_RECT rect;
+		rect.left = scissor.pos[0];
+		rect.top = scissor.pos[1];
+		rect.right = scissor.pos[0] + scissor.size[0];
+		rect.bottom = scissor.pos[1] + scissor.size[1];
+
+		_context->RSSetScissorRects(1, &rect);
+		return;
+
+		if (_context && _d3dStatus.scissor != scissor) {
+			_d3dStatus.scissor = scissor;
+
+			D3D11_RECT rect;
+			rect.left = scissor.pos[0];
+			rect.top = scissor.pos[1];
+			rect.right = scissor.pos[0] + scissor.size[0];
+			rect.bottom = scissor.pos[1] + scissor.size[1];
+
+			_context->RSSetScissorRects(1, &rect);
 		}
 	}
 
-	void Graphics::_setBlendState(BlendState& state, const Vec4f32& constantFactors, uint32_t sampleMask) {
+	void Graphics::setBlendState(IBlendState* state, uint32_t sampleMask) {
+		if (state && state->getGraphics() == this) {
+			if (auto native = state->getNative(); native) {
+				_setBlendState(*(BlendState*)native, sampleMask);
+			} else {
+				_setBlendState(*(BlendState*)_defaultBlendState->getNative(), sampleMask);
+			}
+		} else if (_defaultBlendState) {
+			_setBlendState(*(BlendState*)_defaultBlendState->getNative(), sampleMask);
+		}
+	}
+
+	void Graphics::_setBlendState(BlendState& state, uint32_t sampleMask) {
 		state.update();
 		auto& blend = _d3dStatus.blend;
 		if (auto internalState = state.getInternalState(); internalState &&
-			(blend.featureValue != state.getFeatureValue() || blend.constantFactors != constantFactors || blend.sampleMask != sampleMask)) {
+			(blend.featureValue != state.getFeatureValue() || blend.sampleMask != sampleMask)) {
 			blend.featureValue = state.getFeatureValue();
-			blend.constantFactors.set(constantFactors);
 			blend.sampleMask = sampleMask;
 
-			_context->OMSetBlendState(internalState, constantFactors.data, sampleMask);
+			_context->OMSetBlendState(internalState, state.getConstants().data, sampleMask);
 		}
 	}
 
@@ -520,9 +558,7 @@ namespace srk::modules::graphics::d3d11 {
 	void Graphics::_setRasterizerState(RasterizerState& state) {
 		state.update();
 		auto& rasterizer = _d3dStatus.rasterizer;
-		if (auto internalState = state.getInternalState(); internalState && rasterizer.featureValue != state.getFeatureValue()) {
-			rasterizer.featureValue = state.getFeatureValue();
-
+		if (auto internalState = state.getInternalState(); internalState && rasterizer.featureValue.trySet(state.getFeatureValue())) {
 			_context->RSSetState(internalState);
 		}
 	}
@@ -916,6 +952,30 @@ namespace srk::modules::graphics::d3d11 {
 			return D3D11_BLEND_OP_MAX;
 		default:
 			return D3D11_BLEND_OP_ADD;
+		}
+	}
+
+	D3D11_FILL_MODE Graphics::convertFillMode(FillMode mode) {
+		switch (mode) {
+		case FillMode::WIREFRAME:
+			return D3D11_FILL_WIREFRAME;
+		case FillMode::SOLID:
+			return D3D11_FILL_SOLID;
+		default:
+			return D3D11_FILL_SOLID;
+		}
+	}
+
+	D3D11_CULL_MODE Graphics::convertCullMode(CullMode mode) {
+		switch (mode) {
+		case CullMode::NONE:
+			return D3D11_CULL_NONE;
+		case CullMode::FRONT:
+			return D3D11_CULL_FRONT;
+		case CullMode::BACK:
+			return D3D11_CULL_BACK;
+		default:
+			return D3D11_CULL_NONE;
 		}
 	}
 }

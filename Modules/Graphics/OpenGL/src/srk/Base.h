@@ -61,6 +61,7 @@ namespace srk::modules::graphics::gl {
 
 	struct InternalRasterizerState {
 		bool cullEnabled;
+		bool scissorEnabled;
 		uint16_t fillMode;
 		uint16_t cullMode;
 		uint16_t frontFace;

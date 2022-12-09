@@ -138,7 +138,7 @@ namespace srk::modules::graphics::shader_transpiler {
 			
 			CComPtr<IDxcIncludeHandler> includeHandler = new MyIncludeHandler(_dxcLib, handler);
 			CComPtr<IDxcOperationResult> compileResult;
-			IFT(_dxcompiler->Compile(sourceBlob, L"", String::Utf8ToUnicode(ProgramSource::getEntryPoint(source)).data(), profile.data(),
+			IFT(_dxcompiler->Compile(sourceBlob, L"", String::Utf8ToUnicode(source.getEntryPoint()).data(), profile.data(),
 				dxcArgs.data(), (UINT32)(dxcArgs.size()), dxcDefines.data(),
 				(UINT32)(dxcDefines.size()), includeHandler, &compileResult));
 
@@ -226,7 +226,7 @@ namespace srk::modules::graphics::shader_transpiler {
 
 		spirv_cross::CompilerGLSL compiler((uint32_t*)sourceData, sourceDataSize / sizeof(uint32_t));
 
-		compiler.set_entry_point(ProgramSource::getEntryPoint(source), model);
+		compiler.set_entry_point(source.getEntryPoint(), model);
 		//compiler.require_extension("GL_ARB_fragment_coord_conventions");
 		//compiler.set_execution_mode(spv::ExecutionModeOriginUpperLeft);
 		auto opts = compiler.get_common_options();
@@ -312,7 +312,7 @@ namespace srk::modules::graphics::shader_transpiler {
 
 		spirv_cross::CompilerMSL compiler((uint32_t*)sourceData, sourceDataSize / sizeof(uint32_t));
 
-		compiler.set_entry_point(ProgramSource::getEntryPoint(source), model);
+		compiler.set_entry_point(source.getEntryPoint(), model);
 
 		auto opts = compiler.get_common_options();
 		if (!targetVersion.empty()) opts.version = String::toNumber<decltype(opts.version)>(targetVersion);

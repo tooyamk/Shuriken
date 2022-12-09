@@ -17,6 +17,7 @@ namespace srk::modules::graphics {
 		}
 
 		conf.win = (decltype(conf.win))args->tryGet("win").toNumber<uintptr_t>();
+		conf.transpiler = (decltype(conf.transpiler))args->tryGet("transpiler").toNumber<uintptr_t>();
 		conf.adapter = (decltype(conf.adapter))args->tryGet("adapter").toNumber<uintptr_t>();
 		conf.sampleCount = args->tryGet("sampleCount").toNumber<decltype(conf.sampleCount)>(1);
 		conf.debug = args->tryGet("debug").toBool();

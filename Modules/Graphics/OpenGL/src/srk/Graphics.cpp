@@ -248,6 +248,10 @@ namespace srk::modules::graphics::gl {
 		_setInitState();
 		_resize(_win->getContentSize());
 
+		setBlendState(nullptr);
+		setDepthStencilState(nullptr);
+		setRasterizerState(nullptr);
+
 		return true;
 	}
 
@@ -344,32 +348,46 @@ namespace srk::modules::graphics::gl {
 	}
 
 	Box2i32ui32 Graphics::getViewport() const {
-		return _glStatus.vp;
+		return _glStatus.viewport;
 	}
 
 	void Graphics::setViewport(const Box2i32ui32& vp) {
 		if (_win) {
-			if (_glStatus.vp != vp) {
-				_glStatus.vp = vp;
+			if (_glStatus.viewport != vp) {
+				_glStatus.viewport = vp;
 
 				_updateViewport();
 			}
 		}
 	}
 
-	void Graphics::setBlendState(IBlendState* state, const Vec4f32& constantFactors, uint32_t sampleMask) {
-		if (state && state->getGraphics() == this) {
-			if (auto bs = state->getNative(); bs) {
-				_setBlendState(*(BlendState*)bs, constantFactors, sampleMask);
-			} else {
-				_setBlendState(*(BlendState*)_defaultBlendState->getNative(), constantFactors, sampleMask);
+	Box2i32ui32 Graphics::getScissor() const {
+		return _glStatus.scissor;
+	}
+
+	void Graphics::setScissor(const Box2i32ui32& scissor) {
+		if (_win) {
+			if (_glStatus.scissor != scissor) {
+				_glStatus.scissor = scissor;
+
+				_updateScissor();
 			}
-		} else if (_defaultBlendState) {
-			_setBlendState(*(BlendState*)_defaultBlendState->getNative(), constantFactors, sampleMask);
 		}
 	}
 
-	void Graphics::_setBlendState(BlendState& state, const Vec4f32& constantFactors, uint32_t sampleMask) {
+	void Graphics::setBlendState(IBlendState* state, uint32_t sampleMask) {
+		if (state && state->getGraphics() == this) {
+			if (auto bs = state->getNative(); bs) {
+				_setBlendState(*(BlendState*)bs, sampleMask);
+			} else {
+				_setBlendState(*(BlendState*)_defaultBlendState->getNative(), sampleMask);
+			}
+		} else if (_defaultBlendState) {
+			_setBlendState(*(BlendState*)_defaultBlendState->getNative(), sampleMask);
+		}
+	}
+
+	void Graphics::_setBlendState(BlendState& state, uint32_t sampleMask) {
 		auto& blend = _glStatus.blend;
 
 		if (_deviceFeatures.independentBlend) {
@@ -432,9 +450,12 @@ namespace srk::modules::graphics::gl {
 			}
 		}
 
-		if (blend.enabled && blend.constantFactors != constantFactors) {
-			glBlendColor(constantFactors.data[0], constantFactors.data[1], constantFactors.data[2], constantFactors.data[3]);
-			memcpy(&blend.constantFactors, &constantFactors, sizeof(Vec4f32));
+		if (blend.enabled) {
+			auto& constants = state.getConstants();
+			if (blend.constants != constants) {
+				glBlendColor(constants.data[0], constants.data[1], constants.data[2], constants.data[3]);
+				blend.constants = constants;
+			}
 		}
 	}
 
@@ -473,12 +494,18 @@ namespace srk::modules::graphics::gl {
 		if (_glStatus.canvasSize != size) {
 			_glStatus.canvasSize = size;
 			_updateViewport();
+			_updateScissor();
 		}
 	}
 
 	void Graphics::_updateViewport() {
-		auto& vp = _glStatus.vp;
+		auto& vp = _glStatus.viewport;
 		glViewport(vp.pos[0], (int32_t)_glStatus.canvasSize[1] - (vp.pos[1] + (int32_t)vp.size[1]), vp.size[0], vp.size[1]);
+	}
+
+	void Graphics::_updateScissor() {
+		auto& rect = _glStatus.scissor;
+		glScissor(rect.pos[0], (int32_t)_glStatus.canvasSize[1] - (rect.pos[1] + (int32_t)rect.size[1]), rect.size[0], rect.size[1]);
 	}
 
 	void Graphics::setDepthStencilState(IDepthStencilState* state) {
@@ -580,12 +607,21 @@ namespace srk::modules::graphics::gl {
 	void Graphics::_setRasterizerState(RasterizerState& state) {
 		state.update();
 		auto& rasterizer = _glStatus.rasterizer;
-		if (rasterizer.featureValue != state.getFeatureValue()) {
+		if (rasterizer.featureValue.trySet(state.getFeatureValue())) {
 			auto& internalState = state.getInternalState();
 
 			if (rasterizer.state.fillMode != internalState.fillMode) {
 				glPolygonMode(GL_FRONT_AND_BACK, internalState.fillMode);
 				rasterizer.state.fillMode = internalState.fillMode;
+			}
+
+			if (rasterizer.state.scissorEnabled != internalState.scissorEnabled) {
+				if (internalState.scissorEnabled) {
+					glEnable(GL_SCISSOR_TEST);
+				} else {
+					glDisable(GL_SCISSOR_TEST);
+				}
+				rasterizer.state.scissorEnabled = internalState.scissorEnabled;
 			}
 
 			if (internalState.cullEnabled) {
@@ -813,11 +849,15 @@ namespace srk::modules::graphics::gl {
 			_glStatus.backSize = _win->getContentSize();
 			_glStatus.canvasSize = _glStatus.backSize;
 
-			GLint vp[4];
-			glGetIntegerv(GL_VIEWPORT, vp);
+			GLint rect[4];
+			glGetIntegerv(GL_VIEWPORT, rect);
 
-			_glStatus.vp.pos.set(vp[0], (int32_t)_glStatus.canvasSize[1] - (vp[1] + vp[3]));
-			_glStatus.vp.size.set(vp[2], vp[3]);
+			_glStatus.viewport.pos.set(rect[0], (int32_t)_glStatus.canvasSize[1] - (rect[1] + rect[3]));
+			_glStatus.viewport.size.set(rect[2], rect[3]);
+
+			glGetIntegerv(GL_SCISSOR_BOX, rect);
+			_glStatus.scissor.pos.set(rect[0], (int32_t)_glStatus.canvasSize[1] - (rect[1] + rect[3]));
+			_glStatus.scissor.size.set(rect[2], rect[3]);
 		}
 		{
 			auto& clear = _glStatus.clear;
@@ -901,7 +941,7 @@ namespace srk::modules::graphics::gl {
 				}
 			}
 
-			glGetFloatv(GL_BLEND_COLOR, blend.constantFactors.data);
+			glGetFloatv(GL_BLEND_COLOR, blend.constants.data);
 		}
 
 		{
@@ -999,8 +1039,15 @@ namespace srk::modules::graphics::gl {
 			rasterizer.state.frontFace = val[0];
 
 			rasterizer.state.cullEnabled = glIsEnabled(GL_CULL_FACE);
+			rasterizer.state.scissorEnabled = glIsEnabled(GL_SCISSOR_TEST);
 
-			rasterizer.featureValue = calcHash(rasterizer.state);
+			RasterizerDescription desc;
+			desc.cullMode = convertCullMode(rasterizer.state.cullMode);
+			desc.fillMode = convertFillMode(rasterizer.state.fillMode);
+			desc.frontFace = convertFrontFace(rasterizer.state.frontFace);
+			desc.scissorEnabled = rasterizer.state.scissorEnabled;
+
+			rasterizer.featureValue.set(desc);
 		}
 	}
 
@@ -1197,6 +1244,85 @@ namespace srk::modules::graphics::gl {
 			return GL_MAX;
 		default:
 			return GL_FUNC_ADD;
+		}
+	}
+
+	GLenum Graphics::convertFillMode(FillMode mode) {
+		switch (mode) {
+		case FillMode::WIREFRAME:
+			return GL_LINE;
+		case FillMode::SOLID:
+			return GL_FILL;
+		default:
+			return GL_FILL;
+		}
+	}
+
+	FillMode Graphics::convertFillMode(GLenum mode) {
+		switch (mode) {
+		case GL_LINE:
+			return FillMode::WIREFRAME;
+		case GL_FILL:
+			return FillMode::SOLID;
+		default:
+			return FillMode::SOLID;
+		}
+	}
+
+	GLenum Graphics::convertCullMode(CullMode mode) {
+		switch (mode) {
+		case CullMode::FRONT:
+			return GL_FRONT;
+		case CullMode::BACK:
+			return GL_BACK;
+		default:
+			return GL_BACK;
+		}
+	}
+
+	CullMode Graphics::convertCullMode(GLenum mode) {
+		switch (mode) {
+		case GL_FRONT:
+			return CullMode::FRONT;
+		case GL_BACK:
+			return CullMode::BACK;
+		default:
+			return CullMode::BACK;
+		}
+	}
+
+	GLenum Graphics::convertFrontFace(FrontFace front) {
+		switch (front) {
+		case FrontFace::CW:
+			return GL_CW;
+		case FrontFace::CCW:
+			return GL_CCW;
+		default:
+			return GL_CW;
+		}
+	}
+
+	FrontFace Graphics::convertFrontFace(GLenum front) {
+		switch (front) {
+		case GL_CW:
+			return FrontFace::CW;
+		case GL_CCW:
+			return FrontFace::CCW;
+		default:
+			return FrontFace::CW;
+		}
+	}
+
+	GLenum Graphics::convertProgramStage(ProgramStage stage) {
+		switch (stage) {
+		case ProgramStage::GS:
+			return GL_GEOMETRY_SHADER;
+		case ProgramStage::PS:
+			return GL_FRAGMENT_SHADER;
+		case ProgramStage::VS:
+			return GL_VERTEX_SHADER;
+		default:
+			return 0;
 		}
 	}
 

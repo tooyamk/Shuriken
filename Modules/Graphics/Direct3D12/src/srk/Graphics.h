@@ -64,7 +64,9 @@ namespace srk::modules::graphics::d3d12 {
 		virtual void SRK_CALL setBackBufferSize(const Vec2ui32& size) override;
 		virtual Box2i32ui32 SRK_CALL getViewport() const override;
 		virtual void SRK_CALL setViewport(const Box2i32ui32& vp) override;
-		virtual void SRK_CALL setBlendState(IBlendState* state, const Vec4f32& constantFactors, uint32_t sampleMask = (std::numeric_limits<uint32_t>::max)()) override;
+		virtual Box2i32ui32 SRK_CALL getScissor() const override;
+		virtual void SRK_CALL setScissor(const Box2i32ui32& scissor) override;
+		virtual void SRK_CALL setBlendState(IBlendState* state, uint32_t sampleMask = (std::numeric_limits<uint32_t>::max)()) override;
 		virtual void SRK_CALL setDepthStencilState(IDepthStencilState* state) override;
 		virtual void SRK_CALL setRasterizerState(IRasterizerState* state) override;
 		
@@ -326,7 +328,8 @@ namespace srk::modules::graphics::d3d12 {
 			} depthStencil;
 
 			Vec2<UINT> backSize;
-			Box2i32ui32 vp;
+			Box2i32ui32 viewport;
+			Box2i32ui32 scissor;
 		} _d3dStatus;
 
 

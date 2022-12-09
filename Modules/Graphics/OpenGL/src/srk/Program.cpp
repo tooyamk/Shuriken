@@ -27,13 +27,13 @@ namespace srk::modules::graphics::gl {
 	bool Program::create(const ProgramSource& vert, const ProgramSource& frag, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& includeHandler, const InputHandler& inputHandler) {
 		destroy();
 
-		auto vertexShader = _compileShader(vert, GL_VERTEX_SHADER, ProgramStage::VS, defines, numDefines, includeHandler);
+		auto vertexShader = _compileShader(vert, ProgramStage::VS, defines, numDefines, includeHandler);
 		if (!vertexShader) {
 			destroy();
 			return false;
 		}
 
-		auto fragmentShader = _compileShader(frag, GL_FRAGMENT_SHADER, ProgramStage::PS, defines, numDefines, includeHandler);
+		auto fragmentShader = _compileShader(frag, ProgramStage::PS, defines, numDefines, includeHandler);
 		if (!fragmentShader) {
 			glDeleteShader(vertexShader);
 			destroy();
@@ -91,6 +91,18 @@ namespace srk::modules::graphics::gl {
 				break;
 			case GL_INT_VEC4:
 				info.format.set(VertexDimension::FOUR, VertexType::I32);
+				break;
+			case GL_UNSIGNED_INT:
+				info.format.set(VertexDimension::ONE, VertexType::UI32);
+				break;
+			case GL_UNSIGNED_INT_VEC2:
+				info.format.set(VertexDimension::TWO, VertexType::UI32);
+				break;
+			case GL_UNSIGNED_INT_VEC3:
+				info.format.set(VertexDimension::THREE, VertexType::UI32);
+				break;
+			case GL_UNSIGNED_INT_VEC4:
+				info.format.set(VertexDimension::FOUR, VertexType::UI32);
 				break;
 			case GL_FLOAT:
 				info.format.set(VertexDimension::ONE, VertexType::F32);
@@ -388,7 +400,7 @@ namespace srk::modules::graphics::gl {
 		_uniformBlockLayouts.clear();
 	}
 
-	GLuint Program::_compileShader(const ProgramSource& source, GLenum type, ProgramStage stage, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& handler) {
+	GLuint Program::_compileShader(const ProgramSource& source, ProgramStage stage, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& handler) {
 		using namespace std::literals;
 
 		if (!source.isValid()) {
@@ -396,22 +408,28 @@ namespace srk::modules::graphics::gl {
 			return 0;
 		}
 
+		auto shaderType = Graphics::convertProgramStage(stage);
+		if (shaderType == 0) {
+			_graphics.get<Graphics>()->error("glsl compile failed, program stage is invalid");
+			return 0;
+		}
+
 		if (source.language != ProgramLanguage::GLSL) {
 			auto g = _graphics.get<Graphics>();
 			if (auto transpiler = g->getShaderTranspiler(); transpiler) {
-				return _compileShader(transpiler->translate(source, ProgramLanguage::GLSL, g->getStringVersion(), defines, numDefines, [this, stage, handler](const std::string_view& name) {
+				return _compileShader(transpiler->translate(source, ProgramLanguage::GLSL, g->getStringVersion(), defines, numDefines, [this, stage, &handler](const std::string_view& name) {
 					if (handler) return handler(*this, stage, name);
 					return ByteArray();
-				}), type, stage, defines, numDefines, handler);
+				}), stage, defines, numDefines, handler);
 			} else {
 				return 0;
 			}
 		}
 
-		printaln(L"------ glsl shader code("sv, (type == GL_VERTEX_SHADER ? L"vert"sv : L"frag"sv), L") ------\n"sv,
+		printaln(L"------ glsl shader code("sv, ProgramSource::toHLSLShaderStage(stage), L") ------\n"sv,
 			std::string_view((char*)source.data.getSource(), source.data.getLength()), L"\n------------------------------------"sv);
 
-		GLuint shader = glCreateShader(type);
+		GLuint shader = glCreateShader(shaderType);
 		auto s = (const char*)source.data.getSource();
 		auto len = (GLint)source.data.getLength();
 		glShaderSource(shader, 1, &s, &len);
@@ -430,7 +448,7 @@ namespace srk::modules::graphics::gl {
 			GLchar log[1024];
 			glGetShaderInfoLog(shader, sizeof(log), &logLen, log);
 			std::string msg = "OpenGL compile shader error(";
-			msg += type == GL_VERTEX_SHADER ? "vert" : "frag";
+			msg += ProgramSource::toHLSLShaderStage(stage);
 			msg += ") : \n";
 			_graphics.get<Graphics>()->error(msg + info);
 

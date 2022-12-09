@@ -33,30 +33,30 @@ namespace srk {
 			data.isValid();
 	}
 
-	std::string ProgramSource::toHLSLShaderModel(ProgramStage stage, const std::string_view& version) {
-		std::string sm;
+	std::string_view ProgramSource::toHLSLShaderStage(ProgramStage stage) {
+		using namespace std::literals;
+
 		switch (stage) {
 		case ProgramStage::VS:
-			sm = "vs";
-			break;
+			return "vs"sv;
 		case ProgramStage::PS:
-			sm = "ps";
-			break;
+			return "ps"sv;
 		case ProgramStage::GS:
-			sm = "gs";
-			break;
+			return "gs"sv;
 		case ProgramStage::CS:
-			sm = "cs";
-			break;
+			return "cs"sv;
 		case ProgramStage::HS:
-			sm = "hs";
-			break;
+			return "hs"sv;
 		case ProgramStage::DS:
-			sm = "ds";
-			break;
+			return "ds"sv;
 		default:
-			return "";
+			return ""sv;
 		}
+	}
+
+	std::string ProgramSource::toHLSLShaderModel(ProgramStage stage, const std::string_view& version) {
+		std::string sm(toHLSLShaderStage(stage));
+
 		sm.push_back('_');
 
 		if (version.empty()) {

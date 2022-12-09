@@ -64,7 +64,9 @@ namespace srk::modules::graphics::d3d11 {
 		virtual void SRK_CALL setBackBufferSize(const Vec2ui32& size) override;
 		virtual Box2i32ui32 SRK_CALL getViewport() const override;
 		virtual void SRK_CALL setViewport(const Box2i32ui32& vp) override;
-		virtual void SRK_CALL setBlendState(IBlendState* state, const Vec4f32& constantFactors, uint32_t sampleMask = (std::numeric_limits<uint32_t>::max)()) override;
+		virtual Box2i32ui32 SRK_CALL getScissor() const override;
+		virtual void SRK_CALL setScissor(const Box2i32ui32& scissor) override;
+		virtual void SRK_CALL setBlendState(IBlendState* state, uint32_t sampleMask = (std::numeric_limits<uint32_t>::max)()) override;
 		virtual void SRK_CALL setDepthStencilState(IDepthStencilState* state) override;
 		virtual void SRK_CALL setRasterizerState(IRasterizerState* state) override;
 		
@@ -260,6 +262,8 @@ namespace srk::modules::graphics::d3d11 {
 		static D3D11_STENCIL_OP SRK_CALL convertStencilOp(StencilOp op);
 		static D3D11_BLEND SRK_CALL convertBlendFactor(BlendFactor factor);
 		static D3D11_BLEND_OP SRK_CALL convertBlendOp(BlendOp op);
+		static D3D11_FILL_MODE SRK_CALL convertFillMode(FillMode mode);
+		static D3D11_CULL_MODE SRK_CALL convertCullMode(CullMode mode);
 
 	private:
 		bool _isDebug;
@@ -314,13 +318,12 @@ namespace srk::modules::graphics::d3d11 {
 
 		struct {
 			struct {
-				uint32_t featureValue;
+				RasterizerFeature featureValue;
 			} rasterizer;
 
 			struct {
-				uint64_t featureValue;
-				Vec4f32 constantFactors;
-				uint32_t sampleMask;
+				uint64_t featureValue = 0;
+				uint32_t sampleMask = 0;
 			} blend;
 
 			struct {
@@ -328,7 +331,8 @@ namespace srk::modules::graphics::d3d11 {
 			} depthStencil;
 
 			Vec2<UINT> backSize;
-			Box2i32ui32 vp;
+			Box2i32ui32 viewport;
+			Box2i32ui32 scissor;
 		} _d3dStatus;
 
 
@@ -338,7 +342,7 @@ namespace srk::modules::graphics::d3d11 {
 
 		bool SRK_CALL _createDevice(const CreateConfig& conf);
 
-		void SRK_CALL _setBlendState(BlendState& state, const Vec4f32& constantFactors, uint32_t sampleMask);
+		void SRK_CALL _setBlendState(BlendState& state, uint32_t sampleMask);
 		void SRK_CALL _setDepthStencilState(DepthStencilState& state);
 		void SRK_CALL _setRasterizerState(RasterizerState& state);
 

@@ -11,6 +11,8 @@ namespace srk::modules::graphics::vulkan {
 		virtual ~BlendState();
 
 		virtual const void* SRK_CALL getNative() const override;
+		virtual const Vec4f32& SRK_CALL getConstants() const override;
+		virtual void SRK_CALL setConstants(const Vec4f32& val) override;
 		virtual uint8_t SRK_CALL getCount() const override;
 		virtual void SRK_CALL setCount(uint8_t count) override;
 

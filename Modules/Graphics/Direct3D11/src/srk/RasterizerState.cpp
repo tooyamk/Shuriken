@@ -5,20 +5,14 @@ namespace srk::modules::graphics::d3d11 {
 	RasterizerState::RasterizerState(Graphics& graphics, bool isInternal) : IRasterizerState(graphics),
 		_isInternal(isInternal),
 		_dirty(DirtyFlag::EMPTY),
-		_fillMode(FillMode::SOLID),
-		_oldFillMode(_fillMode),
-		_cullMode(CullMode::BACK),
-		_oldCullMode(_cullMode),
-		_frontFace(FrontFace::CW),
-		_oldFrontFace(_frontFace),
-		_internalState(nullptr),
-		_featureValue(0) {
+		_internalState(nullptr) {
 		if (_isInternal) Ref::unref<false>(*_graphics);
 		memset(&_desc, 0, sizeof(_desc));
-		_desc.FillMode = _convertFillMode(_fillMode);
-		_desc.CullMode = _convertCullMode(_cullMode);
-		_desc.FrontCounterClockwise = _frontFace == FrontFace::CCW;
+		_desc.FillMode = Graphics::convertFillMode(_cur.fillMode);
+		_desc.CullMode = Graphics::convertCullMode(_cur.cullMode);
+		_desc.FrontCounterClockwise = _cur.frontFace == FrontFace::CCW;
 		_desc.DepthClipEnable = true;
+		_desc.ScissorEnable = _cur.scissorEnabled ? TRUE : FALSE;
 	}
 
 	RasterizerState::~RasterizerState() {
@@ -31,65 +25,54 @@ namespace srk::modules::graphics::d3d11 {
 	}
 
 	FillMode RasterizerState::getFillMode() const {
-		return _fillMode;
+		return _cur.fillMode;
 	}
 
 	void RasterizerState::setFillMode(FillMode fill) {
-		if (_fillMode != fill) {
-			_fillMode = fill;
-			_desc.FillMode = _convertFillMode(fill);
+		if (_cur.fillMode != fill) {
+			_cur.fillMode = fill;
+			_desc.FillMode = Graphics::convertFillMode(fill);
 
-			_setDirty(_fillMode != _oldFillMode, DirtyFlag::FILL_MODE);
+			_setDirty(_cur.fillMode != _old.fillMode, DirtyFlag::FILL_MODE);
 		}
 	}
 
 	CullMode RasterizerState::getCullMode() const {
-		return _cullMode;
+		return _cur.cullMode;
 	}
 
 	void RasterizerState::setCullMode(CullMode cull) {
-		if (_cullMode != cull) {
-			_cullMode = cull;
-			_desc.CullMode = _convertCullMode(cull);
+		if (_cur.cullMode != cull) {
+			_cur.cullMode = cull;
+			_desc.CullMode = Graphics::convertCullMode(cull);
 
-			_setDirty(_cullMode != _oldCullMode, DirtyFlag::CULL_MODE);
+			_setDirty(_cur.cullMode != _old.cullMode, DirtyFlag::CULL_MODE);
 		}
 	}
 
 	FrontFace RasterizerState::getFrontFace() const {
-		return _frontFace;
+		return _cur.frontFace;
 	}
 
 	void RasterizerState::setFrontFace(FrontFace front) {
-		if (_frontFace != front) {
-			_frontFace = front;
+		if (_cur.frontFace != front) {
+			_cur.frontFace = front;
 			_desc.FrontCounterClockwise = front == FrontFace::CCW;
 
-			_setDirty(_frontFace != _oldFrontFace, DirtyFlag::FRONT_FACE);
+			_setDirty(_cur.frontFace != _old.frontFace, DirtyFlag::FRONT_FACE);
 		}
 	}
 
-	D3D11_FILL_MODE RasterizerState::_convertFillMode(FillMode mode) {
-		switch (mode) {
-		case FillMode::WIREFRAME:
-			return D3D11_FILL_WIREFRAME;
-		case FillMode::SOLID:
-			return D3D11_FILL_SOLID;
-		default:
-			return D3D11_FILL_SOLID;
-		}
+	bool RasterizerState::getScissorEnabled() const {
+		return _cur.scissorEnabled;
 	}
 
-	D3D11_CULL_MODE RasterizerState::_convertCullMode(CullMode mode) {
-		switch (mode) {
-		case CullMode::NONE:
-			return D3D11_CULL_NONE;
-		case CullMode::FRONT:
-			return D3D11_CULL_FRONT;
-		case CullMode::BACK:
-			return D3D11_CULL_BACK;
-		default:
-			return D3D11_CULL_NONE;
+	void RasterizerState::setScissorEnabled(bool enabled) {
+		if (_cur.scissorEnabled != enabled) {
+			_cur.scissorEnabled = enabled;
+			_desc.ScissorEnable = enabled ? TRUE : FALSE;
+
+			_setDirty(_cur.scissorEnabled != _old.scissorEnabled, DirtyFlag::SCISSOR);
 		}
 	}
 
@@ -97,10 +80,8 @@ namespace srk::modules::graphics::d3d11 {
 		if (_dirty) {
 			_releaseRes();
 			if (SUCCEEDED(_graphics.get<Graphics>()->getDevice()->CreateRasterizerState2(&_desc, &_internalState))) {
-				_oldFillMode = _fillMode;
-				_oldCullMode = _cullMode;
-				_oldFrontFace = _frontFace;
-				_featureValue = 1U << 31 | ((uint32_t)_fillMode << 3) | ((uint32_t)_cullMode << 1) | (uint32_t)_frontFace;
+				_old = _cur;
+				_featureValue.set(_cur);
 				_dirty = 0;
 			}
 		}

@@ -14,6 +14,8 @@ namespace srk::modules::graphics::vulkan {
 		if (_isInternal) Ref::unref<false>(*_graphics);
 		memset(&_internalState, 0, sizeof(_internalState));
 		_internalState.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+		_internalState.logicOpEnable = VK_FALSE;
+		_internalState.logicOp = VK_LOGIC_OP_COPY;
 		_internalState.pAttachments = _internalRtStatus.data();
 		for (uint8_t i = 0; i < MAX_MRT_COUNT; ++i) _updateInternalState(i);
 	}
@@ -24,6 +26,14 @@ namespace srk::modules::graphics::vulkan {
 
 	const void* BlendState::getNative() const {
 		return this;
+	}
+
+	const Vec4f32& BlendState::getConstants() const {
+		return *(const Vec4f32*)&_internalState.blendConstants;
+	}
+
+	void BlendState::setConstants(const Vec4f32& val) {
+		(Vec4f32&)_internalState.blendConstants = val;
 	}
 
 	uint8_t BlendState::getCount() const {
@@ -75,7 +85,13 @@ namespace srk::modules::graphics::vulkan {
 	void BlendState::update() {
 		if (_dirty) {
 			_internalState.attachmentCount = _count;
-			_featureValue = hash::xxHash<sizeof(_featureValue) * 8>::calc<std::endian::native>(_rtStatus.data(), sizeof(RenderTargetBlendState) * _count, 0);
+
+			hash::xxHash<64> hasher;
+			hasher.begin(0);
+			hasher.update(_rtStatus.data(), sizeof(RenderTargetBlendState) * _count);
+			hasher.update(_internalState.blendConstants, sizeof(_internalState.blendConstants));
+			_featureValue = hasher.digest();
+
 			_dirty = false;
 		}
 	}

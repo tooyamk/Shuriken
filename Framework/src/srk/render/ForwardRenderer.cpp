@@ -165,7 +165,7 @@ namespace srk::render {
 		if (state) {
 			{
 				auto& bs = state->blend;
-				_graphics->setBlendState(bs.state ? &*bs.state : defaultBlendState, bs.constantFactors);
+				_graphics->setBlendState(bs.state ? &*bs.state : defaultBlendState);
 			}
 
 			{
@@ -178,7 +178,7 @@ namespace srk::render {
 				_graphics->setRasterizerState(rs.state ? rs.state : _defaultRasterizerState);
 			}
 		} else {
-			_graphics->setBlendState(defaultBlendState, Vec4f32::ZERO);
+			_graphics->setBlendState(defaultBlendState);
 			_graphics->setDepthStencilState(defaultDepthStencilState);
 			_graphics->setRasterizerState(_defaultRasterizerState);
 		}

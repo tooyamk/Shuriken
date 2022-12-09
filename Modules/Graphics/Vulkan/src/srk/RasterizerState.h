@@ -21,11 +21,14 @@ namespace srk::modules::graphics::vulkan {
 		virtual FrontFace SRK_CALL getFrontFace() const override;
 		virtual void SRK_CALL setFrontFace(FrontFace front) override;
 
+		virtual bool SRK_CALL getScissorEnabled() const override;
+		virtual void SRK_CALL setScissorEnabled(bool enabled) override;
+
 		inline const VkPipelineRasterizationStateCreateInfo& SRK_CALL getInternalState() const {
 			return _internalState;
 		}
 
-		inline uint32_t SRK_CALL getFeatureValue() const {
+		inline const RasterizerFeature& SRK_CALL getFeatureValue() const {
 			return _featureValue;
 		}
 
@@ -35,14 +38,8 @@ namespace srk::modules::graphics::vulkan {
 		bool _isInternal;
 		bool _dirty;
 
-		FillMode _fillMode;
-		CullMode _cullMode;
-		FrontFace _frontFace;
+		RasterizerDescription _desc;
 		VkPipelineRasterizationStateCreateInfo _internalState;
-		uint32_t _featureValue;
-
-		static VkPolygonMode SRK_CALL _convertFillMode(FillMode mode);
-		static VkCullModeFlagBits SRK_CALL _convertCullMode(CullMode mode);
-		static VkFrontFace SRK_CALL _convertFrontFace(FrontFace mode);
+		RasterizerFeature _featureValue;
 	};
 }

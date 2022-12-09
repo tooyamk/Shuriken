@@ -11,6 +11,8 @@ namespace srk::modules::graphics::d3d11 {
 		virtual ~BlendState();
 
 		virtual const void* SRK_CALL getNative() const override;
+		virtual const Vec4f32& SRK_CALL getConstants() const override;
+		virtual void SRK_CALL setConstants(const Vec4f32& val) override;
 		virtual uint8_t SRK_CALL getCount() const override;
 		virtual void SRK_CALL setCount(uint8_t count) override;
 
@@ -33,13 +35,15 @@ namespace srk::modules::graphics::d3d11 {
 		struct DirtyFlag {
 			static const DirtyType EMPTY = 0b1;
 			static const DirtyType COUNT = 0b1 << 1;
-			static const DirtyType RT_STATE = 0b1 << 2;
+			static const DirtyType CONSTANTS = 0b1 << 2;
+			static const DirtyType RT_STATE = 0b1 << 3;
 		};
 
 		bool _isInternal;
 		DirtyType _dirty;
 		uint8_t _count;
 		uint8_t _oldCount;
+		Vec4f32 _constants;
 		D3D11_BLEND_DESC1 _desc;
 		RenderTargetBlendState _rtStatus[D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT];
 		RenderTargetBlendState _oldRtStatus[D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT];

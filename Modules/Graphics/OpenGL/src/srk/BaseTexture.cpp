@@ -352,7 +352,7 @@ namespace srk::modules::graphics::gl {
 	}
 
 	bool BaseTexture::copyFrom(Graphics& graphics, const Vec3ui32& dstPos, uint32_t dstArraySlice, uint32_t dstMipSlice, const ITextureResource* src, uint32_t srcArraySlice, uint32_t srcMipSlice, const Box3ui32& srcRange) {
-		if (dstArraySlice >= internalArraySize || dstMipSlice >= mipLevels || !src || src->getGraphics() != &graphics) return false;
+		if (dstArraySlice >= internalArraySize || dstMipSlice >= mipLevels || !src || src->getGraphics() != graphics) return false;
 
 		auto srcBase = (BaseTexture*)src->getNative();
 		if (srcArraySlice >= srcBase->internalArraySize || srcMipSlice >= srcBase->mipLevels) return false;
@@ -422,7 +422,7 @@ namespace srk::modules::graphics::gl {
 	}
 
 	bool BaseTexture::copyFrom(Graphics& graphics, uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const IPixelBuffer* pixelBuffer) {
-		if (pixelBuffer && &graphics == pixelBuffer->getGraphics()) {
+		if (pixelBuffer && graphics == pixelBuffer->getGraphics()) {
 			if (auto pb = (PixelBuffer*)pixelBuffer->getNative(); pb) {
 				if (auto buf = pb->getInternalBuffer(); buf) {
 					if (auto pbType = pb->getInternalType(); pbType == GL_PIXEL_UNPACK_BUFFER) {
@@ -443,7 +443,7 @@ namespace srk::modules::graphics::gl {
 	}
 
 	bool BaseTexture::copyTo(Graphics& graphics, uint32_t mipSlice, const IPixelBuffer* pixelBuffer) {
-		if (pixelBuffer && &graphics == pixelBuffer->getGraphics()) {
+		if (pixelBuffer && graphics == pixelBuffer->getGraphics()) {
 			if (auto pb = (PixelBuffer*)pixelBuffer->getNative(); pb) {
 				if (auto buf = pb->getInternalBuffer(); buf) {
 					if (auto pbType = pb->getInternalType(); pbType == GL_PIXEL_PACK_BUFFER) {

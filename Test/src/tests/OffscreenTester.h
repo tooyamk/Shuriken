@@ -153,7 +153,7 @@ float4 main(PS_INPUT input) : SV_TARGET {
 			graphics->setViewport(Box2i32ui32(Vec2i32::ZERO, tr->getSize().cast<2>()));
 			graphics->beginRender();
 			graphics->clear(ClearFlag::COLOR | ClearFlag::DEPTH | ClearFlag::STENCIL, Vec4f32(0.0f, 0.0f, 0.25f, 1.0f), 1.0f, 0);
-			graphics->setBlendState(nullptr, Vec4f32::ZERO);
+			graphics->setBlendState(nullptr);
 			graphics->setDepthStencilState(nullptr);
 			graphics->draw(vertexBuffers, program, shaderParameters, indices);
 			graphics->setRenderTarget(nullptr);

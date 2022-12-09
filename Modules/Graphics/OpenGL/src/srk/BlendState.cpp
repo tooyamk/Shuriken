@@ -19,6 +19,14 @@ namespace srk::modules::graphics::gl {
 		return this;
 	}
 
+	const Vec4f32& BlendState::getConstants() const {
+		return _constants;
+	}
+
+	void BlendState::setConstants(const Vec4f32& val) {
+		_constants = val;
+	}
+
 	uint8_t BlendState::getCount() const {
 		return _count;
 	}

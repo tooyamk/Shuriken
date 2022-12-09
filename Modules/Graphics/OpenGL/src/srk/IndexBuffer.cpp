@@ -111,7 +111,9 @@ namespace srk::modules::graphics::gl {
 			if (count > last) count = last;
 
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _baseBuffer.handle);
-			glDrawElementsInstanced(GL_TRIANGLES, count, _internalType, (const void*)(offset * Graphics::getGLTypeSize(_internalType)), instancedCount);
+
+			auto addr = (uintptr_t)(offset * Graphics::getGLTypeSize(_internalType));
+			glDrawElementsInstanced(GL_TRIANGLES, count, _internalType, (const void*)addr, instancedCount);
 		}
 	}
 

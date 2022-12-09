@@ -18,6 +18,10 @@ namespace srk::modules::graphics::vulkan {
 		virtual const StencilState& SRK_CALL getStencilState() const override;
 		virtual void SRK_CALL setStencilState(const StencilState& stencilState) override;
 
+		inline const VkPipelineDepthStencilStateCreateInfo& SRK_CALL getInternalState() const {
+			return _internalState;
+		}
+
 		inline const DepthStencilFeature& SRK_CALL getFeatureValue() const {
 			return _featureValue;
 		}

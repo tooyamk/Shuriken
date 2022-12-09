@@ -54,6 +54,38 @@ namespace srk::modules::graphics {
 	BlendEquation::BlendEquation(const BlendEquation& equation) : BlendEquation(equation.color, equation.alpha) {}
 
 
+	RasterizerDescription::RasterizerDescription() :
+		scissorEnabled(false),
+		fillMode(FillMode::SOLID),
+		cullMode(CullMode::BACK),
+		frontFace(FrontFace::CW) {
+	}
+
+
+	RasterizerFeature::RasterizerFeature() noexcept :
+		_value(0) {
+	}
+
+	RasterizerFeature::RasterizerFeature(const RasterizerFeature& other) noexcept :
+		_value(other._value) {
+	}
+
+	void RasterizerFeature::set(const IRasterizerState& state) {
+		_value = 1U << 31 | (state.getScissorEnabled() ? (1U << 5) : 0U) | ((uint32_t)state.getFillMode() << 3) | ((uint32_t)state.getCullMode() << 1) | (uint32_t)state.getFrontFace();
+	}
+
+	void RasterizerFeature::set(const RasterizerDescription& desc) noexcept {
+		_value = 1U << 31 | (desc.scissorEnabled ? (1U << 5) : 0U) | ((uint32_t)desc.fillMode << 3) | ((uint32_t)desc.cullMode << 1) | (uint32_t)desc.frontFace;
+	}
+
+	bool RasterizerFeature::trySet(const RasterizerFeature& val) noexcept {
+		if (_value == val._value) return false;
+
+		_value = val._value;
+		return true;
+	}
+
+
 	DepthStencilFeature::DepthStencilFeature() noexcept :
 		_low(0),
 		_high(0) {

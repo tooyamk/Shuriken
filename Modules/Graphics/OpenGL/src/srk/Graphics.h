@@ -62,7 +62,9 @@ namespace srk::modules::graphics::gl {
 		virtual void SRK_CALL setBackBufferSize(const Vec2ui32& size) override;
 		virtual Box2i32ui32 SRK_CALL getViewport() const override;
 		virtual void SRK_CALL setViewport(const Box2i32ui32& vp) override;
-		virtual void SRK_CALL setBlendState(IBlendState* state, const Vec4f32& constantFactors, uint32_t sampleMask = (std::numeric_limits<uint32_t>::max)()) override;
+		virtual Box2i32ui32 SRK_CALL getScissor() const override;
+		virtual void SRK_CALL setScissor(const Box2i32ui32& scissor) override;
+		virtual void SRK_CALL setBlendState(IBlendState* state, uint32_t sampleMask = (std::numeric_limits<uint32_t>::max)()) override;
 		virtual void SRK_CALL setDepthStencilState(IDepthStencilState* state) override;
 		virtual void SRK_CALL setRasterizerState(IRasterizerState* state) override;
 		
@@ -130,7 +132,14 @@ namespace srk::modules::graphics::gl {
 		static StencilOp SRK_CALL convertStencilOp(GLenum func);
 		static uint16_t SRK_CALL convertBlendFactor(BlendFactor factor);
 		static uint16_t SRK_CALL convertBlendOp(BlendOp op);
+		static GLenum SRK_CALL convertFillMode(FillMode mode);
+		static FillMode SRK_CALL convertFillMode(GLenum mode);
+		static GLenum SRK_CALL convertCullMode(CullMode mode);
+		static CullMode SRK_CALL convertCullMode(GLenum mode);
+		static GLenum SRK_CALL convertFrontFace(FrontFace front);
+		static FrontFace SRK_CALL convertFrontFace(GLenum front);
 		static uint32_t SRK_CALL getGLTypeSize(GLenum type);
+		static GLenum SRK_CALL convertProgramStage(ProgramStage stage);
 
 	private:
 		struct {
@@ -139,7 +148,7 @@ namespace srk::modules::graphics::gl {
 				std::vector<InternalBlendFunc> func;
 				std::vector<InternalBlendOp> op;
 				std::vector<InternalBlendWriteMask> writeMask;
-				Vec4f32 constantFactors;
+				Vec4f32 constants;
 			} blend;
 
 			struct {
@@ -149,7 +158,7 @@ namespace srk::modules::graphics::gl {
 			} clear;
 
 			struct {
-				uint64_t featureValue;
+				RasterizerFeature featureValue;
 				InternalRasterizerState state;
 			} rasterizer;
 
@@ -163,7 +172,8 @@ namespace srk::modules::graphics::gl {
 			bool isBack;
 			Vec2ui32 backSize;
 			Vec2ui32 canvasSize;
-			Box2i32ui32 vp;
+			Box2i32ui32 viewport;
+			Box2i32ui32 scissor;
 		} _glStatus;
 
 
@@ -193,7 +203,6 @@ namespace srk::modules::graphics::gl {
 		GLint _minorVer;
 		uint32_t _intVer;
 		std::string _strVer;
-		inline static const std::string _moduleVersion = "0.1.0";
 		std::string _deviceVersion;
 
 		ConstantBufferManager _constantBufferManager;
@@ -206,7 +215,7 @@ namespace srk::modules::graphics::gl {
 		void SRK_CALL _release(windows::IWindow* win = nullptr);
 		void SRK_CALL _resize(const Vec2ui32& size);
 
-		void SRK_CALL _setBlendState(BlendState& state, const Vec4f32& constantFactors, uint32_t sampleMask);
+		void SRK_CALL _setBlendState(BlendState& state, uint32_t sampleMask);
 		void SRK_CALL _setDepthStencilState(DepthStencilState& state);
 		void SRK_CALL _setRasterizerState(RasterizerState& state);
 
@@ -218,6 +227,7 @@ namespace srk::modules::graphics::gl {
 
 		void SRK_CALL _updateCanvasSize(const Vec2ui32& size);
 		void SRK_CALL _updateViewport();
+		void SRK_CALL _updateScissor();
 
 		static void GLAPIENTRY _debugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam);
 	};

@@ -318,7 +318,7 @@ namespace srk::modules::graphics::d3d11 {
 		ID3DBlob* buffer = nullptr, *errorBuffer = nullptr;
 		MyIncludeHandler include(*this, stage, handler);
 		HRESULT hr = D3DCompile(source.data.getSource(), source.data.getLength(), nullptr, defines, &include,
-			ProgramSource::getEntryPoint(source).data(), target.data(), shaderFlags, 0, &buffer, &errorBuffer);
+			source.getEntryPoint().data(), target.data(), shaderFlags, 0, &buffer, &errorBuffer);
 
 		if (FAILED(hr)) {
 			if (errorBuffer) {

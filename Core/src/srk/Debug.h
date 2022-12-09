@@ -156,7 +156,7 @@ namespace srk {
 			} else if constexpr (WStringData<Type>) {
 				out.write(value.data(), value.size());
 			} else if constexpr (std::convertible_to<Type, char const*>) {
-				_print(out, std::string_view(value));
+				if (value) _print(out, std::string_view(value));
 			} else if constexpr (StringData<Type>) {
 				out.write(value.data(), value.size());
 				//if (String::isUTF8(value.data(), value.size())) {

@@ -33,7 +33,7 @@ namespace srk::modules::graphics {
 			return _graphics;
 		}
 
-		inline IntrusivePtr<IGraphicsModule> SRK_CALL getGraphics() {
+		inline IntrusivePtr<IGraphicsModule>& SRK_CALL getGraphics() {
 			return _graphics;
 		}
 
@@ -678,6 +678,8 @@ namespace srk::modules::graphics {
 		virtual ~IBlendState() {}
 
 		virtual const void* SRK_CALL getNative() const = 0;
+		virtual const Vec4f32& SRK_CALL getConstants() const = 0;
+		virtual void SRK_CALL setConstants(const Vec4f32& val) = 0;
 		virtual uint8_t SRK_CALL getCount() const = 0;
 		virtual void SRK_CALL setCount(uint8_t count) = 0;
 
@@ -742,6 +744,16 @@ namespace srk::modules::graphics {
 	};
 
 
+	struct SRK_FW_DLL RasterizerDescription {
+		RasterizerDescription();
+
+		bool scissorEnabled;
+		FillMode fillMode;
+		CullMode cullMode;
+		FrontFace frontFace;
+	};
+
+
 	class SRK_FW_DLL IRasterizerState : public IObject {
 	public:
 		IRasterizerState(IGraphicsModule& graphics) : IObject(graphics) {}
@@ -757,6 +769,39 @@ namespace srk::modules::graphics {
 
 		virtual FrontFace SRK_CALL getFrontFace() const = 0;
 		virtual void SRK_CALL setFrontFace(FrontFace front) = 0;
+
+		virtual bool SRK_CALL getScissorEnabled() const = 0;
+		virtual void SRK_CALL setScissorEnabled(bool enabled) = 0;
+	};
+
+
+	class SRK_FW_DLL RasterizerFeature {
+	public:
+		RasterizerFeature() noexcept;
+		RasterizerFeature(const RasterizerFeature& other) noexcept;
+
+		void SRK_CALL set(const IRasterizerState& state);
+		void SRK_CALL set(const RasterizerDescription& desc) noexcept;
+		bool SRK_CALL trySet(const RasterizerFeature& val) noexcept;
+
+		inline bool SRK_CALL operator==(const RasterizerFeature& val) const noexcept {
+			return _value == val._value;
+		}
+
+		inline bool SRK_CALL operator!=(const RasterizerFeature& val) const noexcept {
+			return _value != val._value;
+		}
+
+		inline constexpr void SRK_CALL operator=(const RasterizerFeature& val) noexcept {
+			_value = val._value;
+		}
+
+		inline constexpr void SRK_CALL operator=(nullptr_t) noexcept {
+			_value = 0;
+		}
+
+	private:
+		uint32_t _value;
 	};
 
 
@@ -997,7 +1042,9 @@ namespace srk::modules::graphics {
 		virtual void SRK_CALL setBackBufferSize(const Vec2ui32& size) = 0;
 		virtual Box2i32ui32 SRK_CALL getViewport() const = 0;
 		virtual void SRK_CALL setViewport(const Box2i32ui32& vp) = 0;
-		virtual void SRK_CALL setBlendState(IBlendState* state, const Vec4f32& constantFactors, uint32_t sampleMask = (std::numeric_limits<uint32_t>::max)()) = 0;//unrealized all sampleMask
+		virtual Box2i32ui32 SRK_CALL getScissor() const = 0;
+		virtual void SRK_CALL setScissor(const Box2i32ui32& scissor) = 0;
+		virtual void SRK_CALL setBlendState(IBlendState* state, uint32_t sampleMask = (std::numeric_limits<uint32_t>::max)()) = 0;//unrealized all sampleMask
 		virtual void SRK_CALL setDepthStencilState(IDepthStencilState* state) = 0;
 		virtual void SRK_CALL setRasterizerState(IRasterizerState* state) = 0;
 
