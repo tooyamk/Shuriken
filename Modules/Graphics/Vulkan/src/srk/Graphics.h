@@ -72,9 +72,9 @@ namespace srk::modules::graphics::vulkan {
 		virtual void SRK_CALL setRasterizerState(IRasterizerState* state) override;
 		
 		virtual void SRK_CALL beginRender() override;
-		virtual void SRK_CALL draw(const IVertexBufferGetter* vertexBufferGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
+		virtual void SRK_CALL draw(const IVertexAttributeGetter* vertexAttributeGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
 			const IIndexBuffer* indexBuffer, uint32_t count = (std::numeric_limits<uint32_t>::max)(), uint32_t offset = 0) override;
-		virtual void SRK_CALL drawInstanced(const IVertexBufferGetter* vertexBufferGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
+		virtual void SRK_CALL drawInstanced(const IVertexAttributeGetter* vertexAttributeGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
 			const IIndexBuffer* indexBuffer, uint32_t instancedCount, uint32_t count = (std::numeric_limits<uint32_t>::max)(), uint32_t offset = 0) override;
 		virtual void SRK_CALL endRender() override;
 		virtual void SRK_CALL flush() override;
@@ -136,6 +136,11 @@ namespace srk::modules::graphics::vulkan {
 			VkDevice device = nullptr;
 
 			struct {
+				uint32_t graphics = 0;
+				uint32_t present = 0;
+			} queueFamilyIndices;
+
+			struct {
 				uint32_t count = 0;
 				const char* names[64];
 			} enabledDeviceExtensions;
@@ -167,11 +172,17 @@ namespace srk::modules::graphics::vulkan {
 				RasterizerFeature rasterizerFeatureValue;
 			} pipeline;
 
-			uint32_t graphicsQueueFamilyIndex = 0;
-			uint32_t presentQueueFamilyIndex = 0;
-			VkSwapchainKHR swapChain = nullptr;
-			std::vector<VkImage> swapChainImages;
-			std::vector<VkImageView> swapChainImageViews;
+			struct {
+				VkFormat format = VK_FORMAT_UNDEFINED;
+				
+				VkSwapchainKHR swapChain = nullptr;
+				std::vector<VkImage> images;
+				std::vector<VkImageView> imageViews;
+			} swapChain;
+
+			struct {
+				VkCommandPool pool = nullptr;
+			} cmd;
 
 			Vec2<uint32_t> backSize;
 			Box2i32ui32 viewport;
@@ -189,6 +200,7 @@ namespace srk::modules::graphics::vulkan {
 		bool SRK_CALL _createVkInstance(bool debug);
 		bool SRK_CALL _createVkSurface(windows::IWindow& win);
 		bool SRK_CALL _createVkDevice();
+		bool SRK_CALL _createVkCommandPool();
 		bool SRK_CALL _createVkSwapchain();
 
 		void SRK_CALL _setBlendState(BlendState& state, uint32_t sampleMask);

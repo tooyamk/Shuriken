@@ -88,6 +88,8 @@ namespace srk {
 								newBuf->create(buf->getSize(), buf->getUsage());
 
 								if constexpr (std::derived_from<T, modules::graphics::IVertexBuffer>) {
+									newBuf->setStride(buf->getStride());
+								} else if constexpr (std::derived_from<T, modules::graphics::IIndexBuffer>) {
 									newBuf->setFormat(buf->getFormat());
 								}
 
@@ -197,15 +199,15 @@ namespace srk {
 		virtual size_t SRK_CALL read(size_t offset, void* dst, size_t dstLen) override;
 		virtual size_t SRK_CALL write(size_t offset, const void* data, size_t length) override;
 		virtual size_t SRK_CALL update(size_t offset, const void* data, size_t length) override;
-		virtual const modules::graphics::VertexFormat& SRK_CALL getFormat() const override;
-		virtual void SRK_CALL setFormat(const modules::graphics::VertexFormat& format) override;
 		//virtual void SRK_CALL flush() override;
 		virtual bool SRK_CALL isSyncing() const override;
 		virtual void SRK_CALL destroy() override;
 
-	private:
-		modules::graphics::VertexFormat _format;
+		virtual uint32_t SRK_CALL getStride() const override;
+		virtual void SRK_CALL setStride(uint32_t stride) override;
 
+	private:
+		uint32_t _stride;
 		MultipleBuffer<modules::graphics::IVertexBuffer> _base;
 	};
 
@@ -262,34 +264,34 @@ namespace srk {
 	};
 
 
-	class SRK_FW_DLL IVertexBufferGetter : public Ref {
+	class SRK_FW_DLL IVertexAttributeGetter : public Ref {
 	public:
-		virtual ~IVertexBufferGetter() {}
+		virtual ~IVertexAttributeGetter() {}
 
-		virtual IntrusivePtr<modules::graphics::IVertexBuffer> SRK_CALL get(const QueryString& name) const = 0;
+		virtual std::optional<modules::graphics::VertexAttribute<modules::graphics::IVertexBuffer>> SRK_CALL get(const QueryString& name) const = 0;
 	};
 
 
-	class SRK_FW_DLL VertexBufferCollection : public IVertexBufferGetter {
+	class SRK_FW_DLL VertexAttributeCollection : public IVertexAttributeGetter {
 	public:
-		~VertexBufferCollection();
+		virtual ~VertexAttributeCollection();
 
-		virtual IntrusivePtr<modules::graphics::IVertexBuffer> SRK_CALL get(const QueryString& name) const override;
-		void SRK_CALL set(const QueryString& name, modules::graphics::IVertexBuffer* buffer);
+		virtual std::optional<modules::graphics::VertexAttribute<modules::graphics::IVertexBuffer>> SRK_CALL get(const QueryString& name) const override;
+		void SRK_CALL set(const QueryString& name, const modules::graphics::VertexAttribute<modules::graphics::IVertexBuffer>& attrib);
 
-		inline IntrusivePtr<modules::graphics::IVertexBuffer> SRK_CALL remove(const QueryString& name) {
+		inline std::optional<modules::graphics::VertexAttribute<modules::graphics::IVertexBuffer>> SRK_CALL remove(const QueryString& name) {
 			return _remove(name);
 		}
 		inline bool SRK_CALL isEmpty() const {
-			return _buffers.empty();
+			return _views.empty();
 		}
 		inline void SRK_CALL clear() {
-			_buffers.clear();
+			_views.clear();
 		}
 
 	private:
-		StringUnorderedMap<IntrusivePtr<modules::graphics::IVertexBuffer>> _buffers;
+		StringUnorderedMap<modules::graphics::VertexAttribute<modules::graphics::IVertexBuffer>> _views;
 
-		modules::graphics::IVertexBuffer* SRK_CALL _remove(const QueryString& name);
+		std::optional<modules::graphics::VertexAttribute<modules::graphics::IVertexBuffer>> SRK_CALL _remove(const QueryString& name);
 	};
 }

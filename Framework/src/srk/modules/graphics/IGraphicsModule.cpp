@@ -54,7 +54,7 @@ namespace srk::modules::graphics {
 	BlendEquation::BlendEquation(const BlendEquation& equation) : BlendEquation(equation.color, equation.alpha) {}
 
 
-	RasterizerDescription::RasterizerDescription() :
+	RasterizerDescriptor::RasterizerDescriptor() :
 		scissorEnabled(false),
 		fillMode(FillMode::SOLID),
 		cullMode(CullMode::BACK),
@@ -74,7 +74,7 @@ namespace srk::modules::graphics {
 		_value = 1U << 31 | (state.getScissorEnabled() ? (1U << 5) : 0U) | ((uint32_t)state.getFillMode() << 3) | ((uint32_t)state.getCullMode() << 1) | (uint32_t)state.getFrontFace();
 	}
 
-	void RasterizerFeature::set(const RasterizerDescription& desc) noexcept {
+	void RasterizerFeature::set(const RasterizerDescriptor& desc) noexcept {
 		_value = 1U << 31 | (desc.scissorEnabled ? (1U << 5) : 0U) | ((uint32_t)desc.fillMode << 3) | ((uint32_t)desc.cullMode << 1) | (uint32_t)desc.frontFace;
 	}
 

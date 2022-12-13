@@ -66,7 +66,7 @@ public:
 					return readFile(shaderResourcesFolder + name);
 				},
 				[](const Shader& shader, const std::string_view& name) {
-					return modules::graphics::IProgram::InputDescription();
+					return modules::graphics::IProgram::InputDescriptor();
 				});
 
 			auto program = shader->select(nullptr);

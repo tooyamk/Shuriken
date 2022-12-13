@@ -23,9 +23,9 @@ public:
 
 		IntrusivePtr gml = new GraphicsModuleLoader();
 
-		//if (!gml->load(getDllPath("srk-module-graphics-d3d11"))) return 0;
+		if (!gml->load(getDllPath("srk-module-graphics-d3d11"))) return 0;
 		//if (!gml->load(getDllPath("srk-module-graphics-d3d12"))) return 0;
-		if (!gml->load(getDllPath("srk-module-graphics-gl"))) return 0;
+		//if (!gml->load(getDllPath("srk-module-graphics-gl"))) return 0;
 		//if (!gml->load(getDllPath("srk-module-graphics-vulkan"))) return 0;
 
 		SerializableObject args;
@@ -176,11 +176,11 @@ public:
 					renderableMesh->setRenderer(renderer);
 
 					for (auto& itr : mr->getVerteices()) {
-						auto vs = itr.second;
+						auto& vs = itr.second;
 						auto vb = graphics->createVertexBuffer();
-						vb->create(vs->data.getLength(), Usage::NONE, vs->data.getSource(), vs->data.getLength());
-						vb->setFormat(vs->format);
-						mesh->getBuffer()->getVertices()->set(itr.first, vb);
+						vb->create(vs.resource->data.getLength(), Usage::NONE, vs.resource->data.getSource(), vs.resource->data.getLength());
+						vb->setStride(vs.resource->stride);
+						mesh->getBuffer()->getVertices()->set(itr.first, VertexAttribute<IVertexBuffer>(vb, vs.desc));
 					}
 
 					if (auto is = mr->index; is) {
@@ -204,7 +204,7 @@ public:
 						return readFile(shaderResourcesFolder + name);
 					},
 					[](const Shader& shader, const std::string_view& name) {
-						return modules::graphics::IProgram::InputDescription();
+						return modules::graphics::IProgram::InputDescriptor();
 					});
 
 				mat2->setShader(s);

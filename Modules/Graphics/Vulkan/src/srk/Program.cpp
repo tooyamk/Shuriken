@@ -24,15 +24,17 @@ namespace srk::modules::graphics::vulkan {
 	bool Program::create(const ProgramSource& vert, const ProgramSource& frag, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& includeHandler, const InputHandler& inputHandler) {
 		destroy();
 
-		if (!_compileShader(vert, ProgramStage::VS, defines, numDefines, includeHandler)) {
+		if (!_compileShader(vert, ProgramStage::VS, defines, numDefines, includeHandler, inputHandler)) {
 			destroy();
 			return false;
 		}
 
-		if (!_compileShader(frag, ProgramStage::PS, defines, numDefines, includeHandler)) {
+		if (!_compileShader(frag, ProgramStage::PS, defines, numDefines, includeHandler, inputHandler)) {
 			destroy();
 			return false;
 		}
+
+		for (size_t i = 0; i < _createInfos.size(); ++i) _createInfos[i].pName = _entryPoints[i].data();
 
 		return true;
 	}
@@ -49,7 +51,7 @@ namespace srk::modules::graphics::vulkan {
 		_info.clear();
 	}
 
-	bool Program::_compileShader(const ProgramSource& source, ProgramStage stage, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& handler) {
+	bool Program::_compileShader(const ProgramSource& source, ProgramStage stage, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& includeHandler, const InputHandler& inputHandler) {
 		if (!source.isValid()) {
 			_graphics.get<Graphics>()->error("spirv compile failed, source is invalid");
 			return false;
@@ -59,10 +61,10 @@ namespace srk::modules::graphics::vulkan {
 
 		if (source.language != ProgramLanguage::SPIRV) {
 			if (auto transpiler = g->getShaderTranspiler(); transpiler) {
-				return _compileShader(transpiler->translate(source, ProgramLanguage::SPIRV, "", defines, numDefines, [this, stage, &handler](const std::string_view& name) {
-					if (handler) return handler(*this, stage, name);
+				return _compileShader(transpiler->translate(source, ProgramLanguage::SPIRV, "", defines, numDefines, [this, stage, &includeHandler](const std::string_view& name) {
+					if (includeHandler) return includeHandler(*this, stage, name);
 					return ByteArray();
-					}), stage, defines, numDefines, handler);
+					}), stage, defines, numDefines, includeHandler, inputHandler);
 			} else {
 				return false;
 			}
@@ -91,25 +93,23 @@ namespace srk::modules::graphics::vulkan {
 
 			SpvReflectShaderModule reflectModule;
 			if (spvReflectCreateShaderModule2(SPV_REFLECT_MODULE_FLAG_NO_COPY, ba.getLength(), ba.getSource(), &reflectModule) != SPV_REFLECT_RESULT_SUCCESS) return false;
-			_reflect(&reflectModule);
+			_reflect(&reflectModule, inputHandler);
 			spvReflectDestroyShaderModule(&reflectModule);
 			int a = 1;
 		}
 
 		auto& entry = _entryPoints.emplace_back(source.getEntryPoint());
 		auto& info = _createInfos.emplace_back();
+		memset(&info, 0, sizeof(info));
 		info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-		info.pNext = nullptr;
-		info.flags = 0;
 		info.stage = Graphics::convertProgramStage(stage);
 		info.module = shaderModule;
-		info.pName = entry.data();
 		info.pSpecializationInfo = nullptr;
 
 		return true;
 	}
 
-	void Program::_reflect(const void* data) {
+	void Program::_reflect(const void* data, const InputHandler& inputHandler) {
 		auto reflectData = (const SpvReflectShaderModule*)data;
 		switch (reflectData->shader_stage) {
 		case SPV_REFLECT_SHADER_STAGE_VERTEX_BIT:
@@ -124,42 +124,45 @@ namespace srk::modules::graphics::vulkan {
 					
 					switch (iv.format) {
 					case SPV_REFLECT_FORMAT_R32_SINT:
-						vd.format.set(VertexDimension::ONE, VertexType::I32);
+						vd.format.set(1, VertexType::I32);
 						break;
 					case SPV_REFLECT_FORMAT_R32_UINT:
-						vd.format.set(VertexDimension::ONE, VertexType::UI32);
+						vd.format.set(1, VertexType::UI32);
 						break;
 					case SPV_REFLECT_FORMAT_R32_SFLOAT:
-						vd.format.set(VertexDimension::ONE, VertexType::F32);
+						vd.format.set(1, VertexType::F32);
 						break;
 					case SPV_REFLECT_FORMAT_R32G32_SINT:
-						vd.format.set(VertexDimension::TWO, VertexType::I32);
+						vd.format.set(2, VertexType::I32);
 						break;
 					case SPV_REFLECT_FORMAT_R32G32_UINT:
-						vd.format.set(VertexDimension::TWO, VertexType::UI32);
+						vd.format.set(2, VertexType::UI32);
 						break;
 					case SPV_REFLECT_FORMAT_R32G32_SFLOAT:
-						vd.format.set(VertexDimension::TWO, VertexType::F32);
+						vd.format.set(2, VertexType::F32);
 						break;
 					case SPV_REFLECT_FORMAT_R32G32B32_SINT:
-						vd.format.set(VertexDimension::THREE, VertexType::I32);
+						vd.format.set(3, VertexType::I32);
 						break;
 					case SPV_REFLECT_FORMAT_R32G32B32_UINT:
-						vd.format.set(VertexDimension::THREE, VertexType::UI32);
+						vd.format.set(3, VertexType::UI32);
 						break;
 					case SPV_REFLECT_FORMAT_R32G32B32_SFLOAT:
-						vd.format.set(VertexDimension::THREE, VertexType::F32);
+						vd.format.set(3, VertexType::F32);
 						break;
 					case SPV_REFLECT_FORMAT_R32G32B32A32_SINT:
-						vd.format.set(VertexDimension::FOUR, VertexType::I32);
+						vd.format.set(4, VertexType::I32);
 						break;
 					case SPV_REFLECT_FORMAT_R32G32B32A32_UINT:
-						vd.format.set(VertexDimension::FOUR, VertexType::UI32);
+						vd.format.set(4, VertexType::UI32);
 						break;
 					case SPV_REFLECT_FORMAT_R32G32B32A32_SFLOAT:
-						vd.format.set(VertexDimension::FOUR, VertexType::F32);
+						vd.format.set(4, VertexType::F32);
 						break;
 					}
+
+					auto inputDesc = inputHandler ? inputHandler(*this, vd.name) : InputDescriptor();
+					vd.instanced = inputDesc.instanced;
 				}
 			}
 

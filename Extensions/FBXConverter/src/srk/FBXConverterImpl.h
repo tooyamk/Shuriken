@@ -488,16 +488,16 @@ namespace srk::extensions::fbx_converter {
 						if (_rightHanded) {
 							for (auto& itr : mesh->getVerteices()) {
 								auto& vr = itr.second;
-								if (vr->format.dimension == modules::graphics::VertexDimension::THREE) {
-									switch (vr->format.type) {
+								if (vr.desc.format.dimension == 3) {
+									switch (vr.desc.format.type) {
 									case modules::graphics::VertexType::I16:
 									case modules::graphics::VertexType::UI16:
-										_transformXZY<2>(vr->data);
+										_transformXZY<2>(vr.resource->data);
 										break;
 									case modules::graphics::VertexType::I32:
 									case modules::graphics::VertexType::UI32:
 									case modules::graphics::VertexType::F32:
-										_transformXZY<4>(vr->data);
+										_transformXZY<4>(vr.resource->data);
 										break;
 									default:
 										break;
@@ -662,15 +662,15 @@ namespace srk::extensions::fbx_converter {
 			if (node.numProperties() > 0) {
 				if (auto& p = node.getProperties()[0]; p.type == Node::Property::Type::F32_ARR || p.type == Node::Property::Type::F64_ARR) {
 					auto vs = new VertexResource();
-					vs->format.dimension = modules::graphics::VertexDimension::THREE;
-					vs->format.type = modules::graphics::VertexType::F32;
+					size_t dim = 3;
+					vs->stride = dim * sizeof(float32_t);
 					if (p.type == Node::Property::Type::F32_ARR) {
 						vs->data = _buildPosition<float32_t, float32_t>(p, sourceIndices);
 					} else {
 						vs->data = _buildPosition<float64_t, float32_t>(p, sourceIndices);
 					}
 
-					mesh.setVertex(ShaderPredefine::POSITION0, vs);
+					mesh.setVertex(ShaderPredefine::POSITION0, modules::graphics::VertexAttribute<VertexResource>(vs, dim, modules::graphics::VertexType::F32, 0));
 
 					if (auto count = sourceIndices.size(); p.rawVal.size <= BitUInt<16>::MAX) {
 						_buildIndices<uint16_t>(mesh, faces, count, triangulate, numTriangulateIndices);
@@ -820,15 +820,14 @@ namespace srk::extensions::fbx_converter {
 				std::string_view rt((char*)refType->rawVal.data, refType->rawVal.size);
 				std::string_view mt((char*)mappingType->rawVal.data, mappingType->rawVal.size);
 				VertexResource* vs = nullptr;
+				size_t dim = 3;
 				if (values->type == Node::Property::Type::F32_ARR) {
-					vs = _buildVertexSource<float32_t, uint32_t, float32_t>(*values, nullptr, rt, mt, sourceIndices, 3);
+					vs = _buildVertexSource<float32_t, uint32_t, float32_t>(*values, nullptr, rt, mt, sourceIndices, dim);
 				} else {
-					vs = _buildVertexSource<float64_t, uint32_t, float32_t>(*values, nullptr, rt, mt, sourceIndices, 3);
+					vs = _buildVertexSource<float64_t, uint32_t, float32_t>(*values, nullptr, rt, mt, sourceIndices, dim);
 				}
 				if (vs) {
-					vs->format.dimension = modules::graphics::VertexDimension::THREE;
-					vs->format.type = modules::graphics::VertexType::F32;
-					mesh.setVertex(key, vs);
+					mesh.setVertex(key, modules::graphics::VertexAttribute<VertexResource>(vs, dim, modules::graphics::VertexType::F32, 0));
 				}
 			}
 		}
@@ -867,23 +866,22 @@ namespace srk::extensions::fbx_converter {
 				std::string_view rt((char*)refType->rawVal.data, refType->rawVal.size);
 				std::string_view mt((char*)mappingType->rawVal.data, mappingType->rawVal.size);
 				VertexResource* vs = nullptr;
+				size_t dim = 2;
 				if (values->type == Node::Property::Type::F32_ARR) {
 					if (indices->type == Node::Property::Type::I32_ARR) {
-						vs = _buildVertexSource<float32_t, uint32_t, float32_t>(*values, indices, rt, mt, sourceIndices, 2);
+						vs = _buildVertexSource<float32_t, uint32_t, float32_t>(*values, indices, rt, mt, sourceIndices, dim);
 					} else {
-						vs = _buildVertexSource<float32_t, uint64_t, float32_t>(*values, indices, rt, mt, sourceIndices, 2);
+						vs = _buildVertexSource<float32_t, uint64_t, float32_t>(*values, indices, rt, mt, sourceIndices, dim);
 					}
 				} else {
 					if (indices->type == Node::Property::Type::I32_ARR) {
-						vs = _buildVertexSource<float64_t, uint32_t, float32_t>(*values, indices, rt, mt, sourceIndices, 2);
+						vs = _buildVertexSource<float64_t, uint32_t, float32_t>(*values, indices, rt, mt, sourceIndices, dim);
 					} else {
-						vs = _buildVertexSource<float64_t, uint64_t, float32_t>(*values, indices, rt, mt, sourceIndices, 2);
+						vs = _buildVertexSource<float64_t, uint64_t, float32_t>(*values, indices, rt, mt, sourceIndices, dim);
 					}
 				}
 				if (vs) {
-					vs->format.dimension = modules::graphics::VertexDimension::TWO;
-					vs->format.type = modules::graphics::VertexType::F32;
-					mesh.setVertex(ShaderPredefine::UV0, vs);
+					mesh.setVertex(ShaderPredefine::UV0, modules::graphics::VertexAttribute<VertexResource>(vs, dim, modules::graphics::VertexType::F32, 0));
 				}
 			}
 		}
@@ -1008,6 +1006,7 @@ namespace srk::extensions::fbx_converter {
 
 			auto vs = new VertexResource();
 			vs->data = std::move(dst);
+			vs->stride = DST_VERTEX_SIZE;
 
 			return vs;
 		}

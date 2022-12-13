@@ -27,7 +27,7 @@ namespace srk::modules::graphics::vulkan {
 
 		ProgramInfo _info;
 
-		bool SRK_CALL _compileShader(const ProgramSource& source, ProgramStage stage, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& handler);
-		void SRK_CALL _reflect(const void* data);
+		bool SRK_CALL _compileShader(const ProgramSource& source, ProgramStage stage, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& includeHandler, const InputHandler& inputHandler);
+		void SRK_CALL _reflect(const void* data, const InputHandler& inputHandler);
 	};
 }

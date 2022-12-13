@@ -38,7 +38,7 @@ namespace srk::modules::graphics::vulkan {
 		bool _isInternal;
 		bool _dirty;
 
-		RasterizerDescription _desc;
+		RasterizerDescriptor _desc;
 		VkPipelineRasterizationStateCreateInfo _internalState;
 		RasterizerFeature _featureValue;
 	};

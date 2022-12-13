@@ -17,7 +17,7 @@ namespace srk::modules::graphics::d3d11 {
 		virtual const ProgramInfo& getInfo() const override;
 		virtual void SRK_CALL destroy() override;
 
-		bool SRK_CALL use(const IVertexBufferGetter* vertexBufferGetter, const IShaderParameterGetter* shaderParamGetter);
+		bool SRK_CALL use(const IVertexAttributeGetter* vertexAttributeGetter, const IShaderParameterGetter* shaderParamGetter);
 		void SRK_CALL useEnd();
 
 	protected:

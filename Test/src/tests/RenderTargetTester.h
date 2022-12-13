@@ -62,7 +62,7 @@ public:
 			IntrusivePtr<IWindow> win;
 			IntrusivePtr<Looper> looper;
 			IntrusivePtr<IGraphicsModule> g;
-			IntrusivePtr<VertexBufferCollection> vbf;
+			IntrusivePtr<VertexAttributeCollection> vbf;
 			IntrusivePtr<ShaderParameterCollection> spc;
 			IntrusivePtr<IProgram> p;
 			IntrusivePtr<IIndexBuffer> ib;
@@ -71,7 +71,7 @@ public:
 			IntrusivePtr<IRenderTarget> rt;
 
 			struct {
-				IntrusivePtr<VertexBufferCollection> vbf;
+				IntrusivePtr<VertexAttributeCollection> vbf;
 				IntrusivePtr<IProgram> p;
 				IntrusivePtr<IIndexBuffer> ib;
 			} pp;
@@ -90,7 +90,7 @@ public:
 		}
 
 		renderData.dss = graphics->createDepthStencilState();
-		renderData.vbf = new VertexBufferCollection();
+		renderData.vbf = new VertexAttributeCollection();
 		renderData.spc = new ShaderParameterCollection();
 
 		{
@@ -117,7 +117,7 @@ public:
 					1.0f, 1.0f, 0.5f,
 					1.0f, 0.0f, 0.5f };
 				vertexBuffer->create(sizeof(vertices), Usage::NONE, vertices, sizeof(vertices));
-				vertexBuffer->setFormat(VertexFormat(VertexDimension::THREE, VertexType::F32));
+				vertexBuffer->setStride(3 * sizeof(float32_t));
 			}
 
 			auto uvBuffer = graphics->createVertexBuffer();
@@ -133,11 +133,11 @@ public:
 					1.f, 0.f,
 					1.f, 1.f };
 				uvBuffer->create(sizeof(uvs), Usage::NONE, uvs, sizeof(uvs));
-				uvBuffer->setFormat(VertexFormat(VertexDimension::TWO, VertexType::F32));
+				uvBuffer->setStride(2 * sizeof(float32_t));
 			}
 
-			renderData.vbf->set("POSITION0", vertexBuffer);
-			renderData.vbf->set("TEXCOORD0", uvBuffer);
+			renderData.vbf->set("POSITION0", VertexAttribute<IVertexBuffer>(vertexBuffer, 3, VertexType::F32, 0));
+			renderData.vbf->set("TEXCOORD0", VertexAttribute<IVertexBuffer>(uvBuffer, 2, VertexType::F32, 0));
 		}
 
 		{
@@ -256,24 +256,24 @@ public:
 			renderData.pp.ib->setFormat(IndexType::UI16);
 		}
 
-		renderData.pp.vbf = new VertexBufferCollection();
+		renderData.pp.vbf = new VertexAttributeCollection();
 		{
 			IntrusivePtr ppVertexBuffer = graphics->createVertexBuffer();
 			{
 				float32_t data[] = { -1.0f, 1.0f, 0.8f, 1.0f, 0.8f, -0.9f, -1.0f, -0.9f };
 				ppVertexBuffer->create(sizeof(data), Usage::NONE, data, sizeof(data));
-				ppVertexBuffer->setFormat(VertexFormat(VertexDimension::TWO, VertexType::F32));
+				ppVertexBuffer->setStride(2 * sizeof(float32_t));
 			}
 
 			IntrusivePtr ppUVBuffer = graphics->createVertexBuffer();
 			{
 				float32_t data[] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f };
 				ppUVBuffer->create(sizeof(data), Usage::NONE, data, sizeof(data));
-				ppUVBuffer->setFormat(VertexFormat(VertexDimension::TWO, VertexType::F32));
+				ppUVBuffer->setStride(2 * sizeof(float32_t));
 			}
 
-			renderData.pp.vbf->set("POSITION0", ppVertexBuffer);
-			renderData.pp.vbf->set("TEXCOORD0", ppUVBuffer);
+			renderData.pp.vbf->set("POSITION0", VertexAttribute<IVertexBuffer>(ppVertexBuffer, 2, VertexType::F32, 0));
+			renderData.pp.vbf->set("TEXCOORD0", VertexAttribute<IVertexBuffer>(ppUVBuffer, 2, VertexType::F32, 0));
 		}
 		//
 

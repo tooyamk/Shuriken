@@ -90,7 +90,7 @@ namespace srk {
 							return _includeHhandler ? _includeHhandler(*this, stage, name) : ByteArray();
 						},
 							[this](const modules::graphics::IProgram&, const std::string_view& name) {
-							return _inputHandler ? _inputHandler(*this, name) : modules::graphics::IProgram::InputDescription();
+							return _inputHandler ? _inputHandler(*this, name) : modules::graphics::IProgram::InputDescriptor();
 						}); succeeded) {
 							rst.first->second = p;
 
@@ -107,7 +107,7 @@ namespace srk {
 							return _includeHhandler ? _includeHhandler(*this, stage, name) : ByteArray();
 						},
 							[this](const modules::graphics::IProgram&, const std::string_view& name) {
-							return _inputHandler ? _inputHandler(*this, name) : modules::graphics::IProgram::InputDescription();
+							return _inputHandler ? _inputHandler(*this, name) : modules::graphics::IProgram::InputDescriptor();
 						}); succeeded) {
 							rst.first->second = p;
 

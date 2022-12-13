@@ -18,20 +18,19 @@ namespace srk::modules::graphics::gl {
 		virtual size_t SRK_CALL read(size_t offset, void* dst, size_t dstLen) override;
 		virtual size_t SRK_CALL write(size_t offset, const void* data, size_t length) override;
 		virtual size_t SRK_CALL update(size_t offset, const void* data, size_t length) override;
-		virtual const VertexFormat& SRK_CALL getFormat() const override;
-		virtual void SRK_CALL setFormat(const VertexFormat& format) override;
 		//virtual void SRK_CALL flush() override;
 		virtual bool SRK_CALL isSyncing() const override;
 		virtual void SRK_CALL destroy() override;
 
-		bool SRK_CALL use(GLuint index, bool instanced);
+		virtual uint32_t SRK_CALL getStride() const override;
+		virtual void SRK_CALL setStride(uint32_t stride) override;
+
+		inline GLuint SRK_CALL getInternalHandle() const {
+			return _baseBuffer.handle;
+		}
 
 	protected:
-		VertexFormat _format;
-
-		GLint _vertexSize;
-		bool _validVertexFormat;
-		GLenum _vertexType;
+		uint32_t _stride;
 		BaseBuffer _baseBuffer;
 	};
 }

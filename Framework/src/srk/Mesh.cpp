@@ -2,29 +2,25 @@
 
 namespace srk {
 	MeshBuffer::MeshBuffer() :
-		_vertices(new VertexBufferCollection()) {
+		_vertices(new VertexAttributeCollection()) {
 	}
 
 
-	void SRK_CALL MeshResource::setVertex(const QueryString& name, VertexResource* res) {
-		if (res) {
-			if (auto itr = _vertices.find(name); itr == _vertices.end()) {
-				_vertices.emplace(name, res);
-			} else {
-				itr->second = res;
-			}
-		} else {
-			remove(name);
-		}
-	}
-
-	VertexResource* MeshResource::_remove(const QueryString& name) {
+	void SRK_CALL MeshResource::setVertex(const QueryString& name, const modules::graphics::VertexAttribute<VertexResource>& attrib) {
 		if (auto itr = _vertices.find(name); itr == _vertices.end()) {
-			auto val = itr->second;
+			_vertices.emplace(name, attrib);
+		} else {
+			itr->second = attrib;
+		}
+	}
+
+	std::optional<modules::graphics::VertexAttribute<VertexResource>> MeshResource::_remove(const QueryString& name) {
+		if (auto itr = _vertices.find(name); itr != _vertices.end()) {
+			auto opt = std::make_optional(std::move(itr->second));
 			_vertices.erase(itr);
-			return val;
+			return std::move(opt);
 		}
 
-		return nullptr;
+		return std::nullopt;
 	}
 }

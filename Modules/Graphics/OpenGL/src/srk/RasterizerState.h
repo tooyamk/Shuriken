@@ -38,7 +38,7 @@ namespace srk::modules::graphics::gl {
 		bool _isInternal;
 		bool _dirty;
 
-		RasterizerDescription _desc;
+		RasterizerDescriptor _desc;
 		InternalRasterizerState _internalState;
 		RasterizerFeature _featureValue;
 	};

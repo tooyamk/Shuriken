@@ -9,7 +9,7 @@
 namespace srk {
 	enum class ProgramStage : uint8_t;
 	class IShaderParameterGetter;
-	class IVertexBufferGetter;
+	class IVertexAttributeGetter;
 	class ProgramSource;
 	class ShaderDefine;
 }
@@ -30,10 +30,6 @@ namespace srk::modules::graphics {
 		virtual ~IObject() {}
 
 		inline const IntrusivePtr<IGraphicsModule>& SRK_CALL getGraphics() const {
-			return _graphics;
-		}
-
-		inline IntrusivePtr<IGraphicsModule>& SRK_CALL getGraphics() {
 			return _graphics;
 		}
 
@@ -85,15 +81,6 @@ namespace srk::modules::graphics {
 	};
 
 
-	enum class VertexDimension : uint8_t {
-		UNKNOWN,
-		ONE,
-		TWO,
-		THREE,
-		FOUR
-	};
-
-
 	enum class VertexType : uint8_t {
 		UNKNOWN,
 		I8,
@@ -108,11 +95,19 @@ namespace srk::modules::graphics {
 
 	struct SRK_FW_DLL VertexFormat {
 		VertexFormat() :
-			dimension(VertexDimension::UNKNOWN),
+			dimension(0),
 			type(VertexType::UNKNOWN) {
 		}
 
-		VertexFormat(VertexDimension dim, VertexType type) :
+		VertexFormat(const VertexFormat& other) :
+			featureValue(other.featureValue) {
+		}
+
+		VertexFormat(VertexFormat&& other) noexcept :
+			featureValue(other.featureValue) {
+		}
+
+		VertexFormat(uint8_t dim, VertexType type) :
 			dimension(dim),
 			type(type) {
 		}
@@ -129,13 +124,8 @@ namespace srk::modules::graphics {
 			featureValue = val.featureValue;
 		}
 
-		template<uint32_t Dim>
-		inline void SRK_CALL set() {
-			if constexpr (Dim <= (decltype(Dim))VertexDimension::FOUR) {
-				dimension = (VertexDimension)Dim;
-			} else {
-				dimension = VertexDimension::UNKNOWN;
-			}
+		inline void SRK_CALL operator=(VertexFormat&& val) noexcept {
+			featureValue = val.featureValue;
 		}
 
 		template<typename Type>
@@ -159,13 +149,13 @@ namespace srk::modules::graphics {
 			}
 		}
 
-		template<uint32_t Dim, typename Type>
-		inline void SRK_CALL set() {
-			set<Dim>();
+		template<typename Type>
+		inline void SRK_CALL set(uint8_t dim) {
+			dimension = dim;
 			set<Type>();
 		}
 
-		inline void SRK_CALL set(VertexDimension dim, VertexType type) {
+		inline void SRK_CALL set(uint8_t dim, VertexType type) {
 			dimension = dim;
 			this->type = type;
 		}
@@ -174,7 +164,7 @@ namespace srk::modules::graphics {
 			uint16_t featureValue;
 
 			struct {
-				VertexDimension dimension;
+				uint8_t dimension;
 				VertexType type;
 			};
 		};
@@ -186,8 +176,79 @@ namespace srk::modules::graphics {
 		IVertexBuffer(IGraphicsModule& graphics) : IBuffer(graphics) {}
 		virtual ~IVertexBuffer() {}
 
-		virtual const VertexFormat& SRK_CALL getFormat() const = 0;
-		virtual void SRK_CALL setFormat(const VertexFormat& format) = 0;
+		virtual uint32_t SRK_CALL getStride() const = 0;
+		virtual void SRK_CALL setStride(uint32_t stride) = 0;
+	};
+
+
+	struct SRK_FW_DLL VertexAttributeDescriptor {
+		VertexAttributeDescriptor() :
+			offset(0) {
+		}
+
+		VertexAttributeDescriptor(const VertexFormat& format, uint32_t offset) :
+			format(format),
+			offset(offset) {
+		}
+
+		VertexAttributeDescriptor(const VertexAttributeDescriptor& other) :
+			format(other.format),
+			offset(other.offset) {
+		}
+
+		VertexAttributeDescriptor(VertexAttributeDescriptor&& other) noexcept :
+			format(other.format),
+			offset(other.offset) {
+		}
+
+		inline void SRK_CALL operator=(const VertexAttributeDescriptor& other) {
+			format = other.format;
+			offset = other.offset;
+		}
+
+		inline void SRK_CALL operator=(VertexAttributeDescriptor&& other) noexcept {
+			format = other.format;
+			offset = other.offset;
+		}
+
+		VertexFormat format;
+		uint32_t offset;
+	};
+
+
+	template<IntrusivePtrOperableObject T>
+	struct VertexAttribute {
+		VertexAttribute() {}
+
+		VertexAttribute(T* resource, const VertexAttributeDescriptor& desc) :
+			resource(resource),
+			desc(desc) {
+		}
+
+		VertexAttribute(T* resource, uint8_t dim, VertexType type, uint32_t offset) : VertexAttribute(resource, VertexAttributeDescriptor(VertexFormat(dim, type), offset)) {}
+
+		VertexAttribute(const VertexAttribute& other) :
+			resource(other.resource),
+			desc(other.desc) {
+		}
+
+		VertexAttribute(VertexAttribute&& other) noexcept :
+			resource(std::move(other.resource)),
+			desc(other.desc) {
+		}
+
+		inline void SRK_CALL operator=(const VertexAttribute& other) {
+			resource = other.resource;
+			desc = other.desc;
+		}
+
+		inline void SRK_CALL operator=(VertexAttribute&& other) noexcept {
+			resource = std::move(other.resource);
+			desc = other.desc;
+		}
+
+		IntrusivePtr<T> resource;
+		VertexAttributeDescriptor desc;
 	};
 
 
@@ -708,12 +769,12 @@ namespace srk::modules::graphics {
 
 	class SRK_FW_DLL IProgram : public IObject {
 	public:
-		struct SRK_FW_DLL InputDescription {
+		struct SRK_FW_DLL InputDescriptor {
 			bool instanced = false;
 		};
 
 		using IncludeHandler = std::function<ByteArray(const IProgram&, ProgramStage, const std::string_view&)>;
-		using InputHandler = std::function<InputDescription(const IProgram&, const std::string_view&)>;
+		using InputHandler = std::function<InputDescriptor(const IProgram&, const std::string_view&)>;
 
 		IProgram(IGraphicsModule& graphics) : IObject(graphics) {}
 		virtual ~IProgram() {}
@@ -744,8 +805,8 @@ namespace srk::modules::graphics {
 	};
 
 
-	struct SRK_FW_DLL RasterizerDescription {
-		RasterizerDescription();
+	struct SRK_FW_DLL RasterizerDescriptor {
+		RasterizerDescriptor();
 
 		bool scissorEnabled;
 		FillMode fillMode;
@@ -781,7 +842,7 @@ namespace srk::modules::graphics {
 		RasterizerFeature(const RasterizerFeature& other) noexcept;
 
 		void SRK_CALL set(const IRasterizerState& state);
-		void SRK_CALL set(const RasterizerDescription& desc) noexcept;
+		void SRK_CALL set(const RasterizerDescriptor& desc) noexcept;
 		bool SRK_CALL trySet(const RasterizerFeature& val) noexcept;
 
 		inline bool SRK_CALL operator==(const RasterizerFeature& val) const noexcept {
@@ -1049,9 +1110,9 @@ namespace srk::modules::graphics {
 		virtual void SRK_CALL setRasterizerState(IRasterizerState* state) = 0;
 
 		virtual void SRK_CALL beginRender() = 0;
-		virtual void SRK_CALL draw(const IVertexBufferGetter* vertexBufferGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
+		virtual void SRK_CALL draw(const IVertexAttributeGetter* vertexAttributeGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
 			const IIndexBuffer* indexBuffer, uint32_t count = (std::numeric_limits<uint32_t>::max)(), uint32_t offset = 0) = 0;
-		virtual void SRK_CALL drawInstanced(const IVertexBufferGetter* vertexBufferGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
+		virtual void SRK_CALL drawInstanced(const IVertexAttributeGetter* vertexAttributeGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
 			const IIndexBuffer* indexBuffer, uint32_t instancedCount, uint32_t count = (std::numeric_limits<uint32_t>::max)(), uint32_t offset = 0) = 0;
 		virtual void SRK_CALL endRender() = 0;
 		virtual void SRK_CALL flush() = 0;

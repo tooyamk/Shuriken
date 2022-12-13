@@ -3,6 +3,7 @@
 
 namespace srk {
 	MultipleVertexBuffer::MultipleVertexBuffer(modules::graphics::IGraphicsModule& graphics, uint8_t max) : modules::graphics::IVertexBuffer(graphics),
+		_stride(0),
 		_base(graphics, max) {
 	}
 
@@ -19,7 +20,7 @@ namespace srk {
 
 	bool MultipleVertexBuffer::create(size_t size, modules::graphics::Usage bufferUsage, const void* data, size_t dataSize) {
 		auto rst = _base.create(size, bufferUsage, data, dataSize);
-		if (_base.getCurrent()) _base.getCurrent()->target->setFormat(_format);
+		if (_base.getCurrent()) _base.getCurrent()->target->setStride(_stride);
 		return rst;
 	}
 
@@ -51,24 +52,6 @@ namespace srk {
 		return _base.update(offset, data, length);
 	}
 
-	const modules::graphics::VertexFormat& MultipleVertexBuffer::getFormat() const {
-		return _format;
-	}
-
-	void MultipleVertexBuffer::setFormat(const modules::graphics::VertexFormat& format) {
-		if (_format != format) {
-			_format.dimension = format.dimension;
-			_format.type = format.type;
-
-			auto node = _base.getBegin();
-			auto n = _base.getCount();
-			while (n-- > 0) {
-				node->target->setFormat(_format);
-				node = node->next;
-			};
-		}
-	}
-
 	//void MultipleVertexBuffer::flush() {
 	//}
 
@@ -78,6 +61,24 @@ namespace srk {
 
 	void MultipleVertexBuffer::destroy() {
 		_base.destroy();
+	}
+
+	uint32_t MultipleVertexBuffer::getStride() const {
+		return _stride;
+	}
+
+	void MultipleVertexBuffer::setStride(uint32_t stride) {
+		_stride = stride;
+		if (_stride != stride) {
+			_stride = stride;
+
+			auto node = _base.getBegin();
+			auto n = _base.getCount();
+			while (n-- > 0) {
+				node->target->setStride(_stride);
+				node = node->next;
+			};
+		}
 	}
 
 
@@ -218,34 +219,30 @@ namespace srk {
 	}
 
 
-	VertexBufferCollection::~VertexBufferCollection() {
+	VertexAttributeCollection::~VertexAttributeCollection() {
 		clear();
 	}
 
-	IntrusivePtr<modules::graphics::IVertexBuffer> VertexBufferCollection::get(const QueryString& name) const {
-		auto itr = _buffers.find(name);
-		return itr == _buffers.end() ? nullptr : itr->second;
+	std::optional<modules::graphics::VertexAttribute<modules::graphics::IVertexBuffer>> VertexAttributeCollection::get(const QueryString& name) const {
+		auto itr = _views.find(name);
+		return itr == _views.end() ? std::nullopt : std::make_optional(itr->second);
 	}
 
-	void VertexBufferCollection::set(const QueryString& name, modules::graphics::IVertexBuffer* buffer) {
-		if (buffer) {
-			if (auto itr = _buffers.find(name); itr == _buffers.end()) {
-				_buffers.emplace(name, buffer);
-			} else {
-				itr->second = buffer;
-			}
+	void VertexAttributeCollection::set(const QueryString& name, const modules::graphics::VertexAttribute<modules::graphics::IVertexBuffer>& attrib) {
+		if (auto itr = _views.find(name); itr == _views.end()) {
+			_views.emplace(name, attrib);
 		} else {
-			remove(name);
+			itr->second = attrib;
 		}
 	}
 
-	modules::graphics::IVertexBuffer* VertexBufferCollection::_remove(const QueryString& name) {
-		if (auto itr = _buffers.find(name); itr == _buffers.end()) {
-			auto val = itr->second;
-			_buffers.erase(itr);
-			return val;
+	std::optional<modules::graphics::VertexAttribute<modules::graphics::IVertexBuffer>> VertexAttributeCollection::_remove(const QueryString& name) {
+		if (auto itr = _views.find(name); itr != _views.end()) {
+			auto opt = std::make_optional(std::move(itr->second));
+			_views.erase(itr);
+			return std::move(opt);
 		}
 
-		return nullptr;
+		return std::nullopt;
 	}
 }

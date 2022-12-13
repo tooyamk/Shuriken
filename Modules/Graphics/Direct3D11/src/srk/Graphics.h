@@ -71,9 +71,9 @@ namespace srk::modules::graphics::d3d11 {
 		virtual void SRK_CALL setRasterizerState(IRasterizerState* state) override;
 		
 		virtual void SRK_CALL beginRender() override;
-		virtual void SRK_CALL draw(const IVertexBufferGetter* vertexBufferGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
+		virtual void SRK_CALL draw(const IVertexAttributeGetter* vertexAttributeGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
 			const IIndexBuffer* indexBuffer, uint32_t count = (std::numeric_limits<uint32_t>::max)(), uint32_t offset = 0) override;
-		virtual void SRK_CALL drawInstanced(const IVertexBufferGetter* vertexBufferGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
+		virtual void SRK_CALL drawInstanced(const IVertexAttributeGetter* vertexAttributeGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
 			const IIndexBuffer* indexBuffer, uint32_t instancedCount, uint32_t count = (std::numeric_limits<uint32_t>::max)(), uint32_t offset = 0) override;
 		virtual void SRK_CALL endRender() override;
 		virtual void SRK_CALL flush() override;
@@ -264,6 +264,7 @@ namespace srk::modules::graphics::d3d11 {
 		static D3D11_BLEND_OP SRK_CALL convertBlendOp(BlendOp op);
 		static D3D11_FILL_MODE SRK_CALL convertFillMode(FillMode mode);
 		static D3D11_CULL_MODE SRK_CALL convertCullMode(CullMode mode);
+		static DXGI_FORMAT SRK_CALL convertVertexFormat(const VertexFormat& fmt);
 
 	private:
 		bool _isDebug;

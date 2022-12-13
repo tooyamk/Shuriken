@@ -61,7 +61,7 @@ public:
 			IntrusivePtr<IWindow> win;
 			IntrusivePtr<Looper> looper;
 			IntrusivePtr<IGraphicsModule> g;
-			IntrusivePtr<VertexBufferCollection> vbf;
+			IntrusivePtr<VertexAttributeCollection> vbf;
 			IntrusivePtr<ShaderParameterCollection> spc;
 			IntrusivePtr<IProgram> p;
 			IntrusivePtr<IIndexBuffer> ib;
@@ -82,7 +82,7 @@ public:
 		}
 
 		renderData.dss = graphics->createDepthStencilState();
-		renderData.vbf = new VertexBufferCollection();
+		renderData.vbf = new VertexAttributeCollection();
 		renderData.spc = new ShaderParameterCollection();
 
 		{
@@ -104,7 +104,7 @@ public:
 					1.f, 1.f,
 					1.f, 0.f };
 				auto hr = vertexBuffer->create(sizeof(vertices), Usage::MAP_WRITE | Usage::PERSISTENT_MAP, vertices, sizeof(vertices));
-				vertexBuffer->setFormat(VertexFormat(VertexDimension::TWO, VertexType::F32));
+				vertexBuffer->setStride(2 * sizeof(float32_t));
 			}
 
 			auto uvBuffer = graphics->createVertexBuffer();
@@ -115,11 +115,11 @@ public:
 					1.f, 0.f,
 					1.f, 1.f };
 				uvBuffer->create(sizeof(uvs), Usage::NONE, uvs, sizeof(uvs));
-				uvBuffer->setFormat(VertexFormat(VertexDimension::TWO, VertexType::F32));
+				uvBuffer->setStride(2 * sizeof(float32_t));
 			}
 
-			renderData.vbf->set("POSITION0", vertexBuffer);
-			renderData.vbf->set("TEXCOORD0", uvBuffer);
+			renderData.vbf->set("POSITION0", VertexAttribute<IVertexBuffer>(vertexBuffer, 2, VertexType::F32, 0));
+			renderData.vbf->set("TEXCOORD0", VertexAttribute<IVertexBuffer>(uvBuffer, 2, VertexType::F32, 0));
 		}
 
 		{
@@ -235,25 +235,26 @@ public:
 			if (true) {
 				renderData.spc->get("red")->set(Vec4f32((float32_t)rand() / (float32_t)RAND_MAX, (float32_t)rand() / (float32_t)RAND_MAX)).setUpdated();
 
-				auto vb = renderData.vbf->get("POSITION0");
-				if (vb) {
-					auto cycle = 20000;
-					auto halfCycyle = float32_t(cycle / 2);
-					auto t = srk::Time::now<std::chrono::milliseconds>() % cycle;
-					float32_t vertices[] = {
-						0.f, 0.f,
-						0.f, 1.f,
-						1.f, 1.f,
-						1.f, 0.f };
-					float32_t v = t <= halfCycyle ? 1.f - float32_t(t) / halfCycyle : (float32_t(t) - halfCycyle) / halfCycyle;
-					vertices[3] = v;
-					if ((vb->map(Usage::MAP_WRITE | Usage::MAP_SWAP) & Usage::DISCARD) == Usage::DISCARD) {
-						vb->write(0, vertices, sizeof(vertices));
-					} else {
-						vb->write(12, &v, 4);
+				if (auto va = renderData.vbf->get("POSITION0"); va) {
+					if (auto& vb = va->resource; vb) {
+						auto cycle = 20000;
+						auto halfCycyle = float32_t(cycle / 2);
+						auto t = srk::Time::now<std::chrono::milliseconds>() % cycle;
+						float32_t vertices[] = {
+							0.f, 0.f,
+							0.f, 1.f,
+							1.f, 1.f,
+							1.f, 0.f };
+						float32_t v = t <= halfCycyle ? 1.f - float32_t(t) / halfCycyle : (float32_t(t) - halfCycyle) / halfCycyle;
+						vertices[3] = v;
+						if ((vb->map(Usage::MAP_WRITE | Usage::MAP_SWAP) & Usage::DISCARD) == Usage::DISCARD) {
+							vb->write(0, vertices, sizeof(vertices));
+						} else {
+							vb->write(12, &v, 4);
+						}
+						//vb->update(12, &v, 4);
+						vb->unmap();
 					}
-					//vb->update(12, &v, 4);
-					vb->unmap();
 				}
 			}
 

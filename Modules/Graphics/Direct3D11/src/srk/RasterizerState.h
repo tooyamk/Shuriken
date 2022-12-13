@@ -47,8 +47,8 @@ namespace srk::modules::graphics::d3d11 {
 
 		bool _isInternal;
 		DirtyType _dirty;
-		RasterizerDescription _cur;
-		RasterizerDescription _old;
+		RasterizerDescriptor _cur;
+		RasterizerDescriptor _old;
 		D3D11_RASTERIZER_DESC2 _desc;
 		ID3D11RasterizerState2* _internalState;
 		RasterizerFeature _featureValue;

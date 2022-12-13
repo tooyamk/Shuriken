@@ -5,7 +5,7 @@
 namespace srk {
 	class SRK_FW_DLL VertexResource : public Ref {
 	public:
-		modules::graphics::VertexFormat format;
+		uint32_t stride = 0;
 		ByteArray data;
 	};
 
@@ -23,13 +23,14 @@ namespace srk {
 			return _vertices;
 		}
 
-		inline IntrusivePtr<VertexResource> SRK_CALL getVertex(const QueryString& name) const {
+		inline std::optional<modules::graphics::VertexAttribute<VertexResource>> SRK_CALL getVertex(const QueryString& name) const {
 			auto itr = _vertices.find(name);
-			return itr == _vertices.end() ? nullptr : itr->second;
+			return itr == _vertices.end() ? std::nullopt : std::make_optional(itr->second);
 		}
 
-		void SRK_CALL setVertex(const QueryString& name, VertexResource* res);
-		inline IntrusivePtr<VertexResource> SRK_CALL remove(const QueryString& name) {
+		void SRK_CALL setVertex(const QueryString& name, const modules::graphics::VertexAttribute<VertexResource>& attrib);
+
+		inline std::optional<modules::graphics::VertexAttribute<VertexResource>> SRK_CALL remove(const QueryString& name) {
 			return _remove(name);
 		}
 
@@ -37,9 +38,9 @@ namespace srk {
 		IntrusivePtr<IndexResource> index;
 
 	private:
-		StringUnorderedMap<IntrusivePtr<VertexResource>> _vertices;
+		StringUnorderedMap<modules::graphics::VertexAttribute<VertexResource>> _vertices;
 
-		VertexResource* SRK_CALL _remove(const QueryString& name);
+		std::optional<modules::graphics::VertexAttribute<VertexResource>> SRK_CALL _remove(const QueryString& name);
 	};
 
 
@@ -47,15 +48,15 @@ namespace srk {
 	public:
 		MeshBuffer();
 
-		inline IntrusivePtr<VertexBufferCollection> SRK_CALL getVertices() {
+		inline IntrusivePtr<VertexAttributeCollection> SRK_CALL getVertices() {
 			return _vertices;
 		}
 
-		inline const IntrusivePtr<VertexBufferCollection>& SRK_CALL getVertices() const {
+		inline const IntrusivePtr<VertexAttributeCollection>& SRK_CALL getVertices() const {
 			return _vertices;
 		}
 
-		inline void SRK_CALL setVertices(VertexBufferCollection* buffers) {
+		inline void SRK_CALL setVertices(VertexAttributeCollection* buffers) {
 			_vertices = buffers;
 		}
 
@@ -68,7 +69,7 @@ namespace srk {
 		}
 
 	private:
-		IntrusivePtr<VertexBufferCollection> _vertices;
+		IntrusivePtr<VertexAttributeCollection> _vertices;
 		IntrusivePtr<modules::graphics::IIndexBuffer> _index;
 	};
 

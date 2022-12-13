@@ -153,7 +153,7 @@ inline bool SRK_CALL createProgram(IProgram& program, const std::string_view& ve
 		return readFile(appPath + name);
 	},
 		[](const IProgram& program, const std::string_view& name) {
-		return modules::graphics::IProgram::InputDescription();
+		return modules::graphics::IProgram::InputDescriptor();
 	})) {
 		printaln(L"program create error");
 		return false;

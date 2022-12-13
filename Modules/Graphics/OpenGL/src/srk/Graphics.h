@@ -69,9 +69,9 @@ namespace srk::modules::graphics::gl {
 		virtual void SRK_CALL setRasterizerState(IRasterizerState* state) override;
 		
 		virtual void SRK_CALL beginRender() override;
-		virtual void SRK_CALL draw(const IVertexBufferGetter* vertexBufferGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
+		virtual void SRK_CALL draw(const IVertexAttributeGetter* vertexAttributeGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
 			const IIndexBuffer* indexBuffer, uint32_t count = (std::numeric_limits<uint32_t>::max)(), uint32_t offset = 0) override;
-		virtual void SRK_CALL drawInstanced(const IVertexBufferGetter* vertexBufferGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
+		virtual void SRK_CALL drawInstanced(const IVertexAttributeGetter* vertexAttributeGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
 			const IIndexBuffer* indexBuffer, uint32_t instancedCount, uint32_t count = (std::numeric_limits<uint32_t>::max)(), uint32_t offset = 0) override;
 		virtual void SRK_CALL endRender() override;
 		virtual void SRK_CALL flush() override;
@@ -140,6 +140,7 @@ namespace srk::modules::graphics::gl {
 		static FrontFace SRK_CALL convertFrontFace(GLenum front);
 		static uint32_t SRK_CALL getGLTypeSize(GLenum type);
 		static GLenum SRK_CALL convertProgramStage(ProgramStage stage);
+		static GLenum SRK_CALL convertVertexFormat(VertexType type);
 
 	private:
 		struct {

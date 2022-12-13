@@ -17,7 +17,7 @@ namespace srk {
 	class SRK_FW_DLL Shader : public Ref {
 	public:
 		using IncludeHandler = std::function<ByteArray(const Shader&, ProgramStage, const std::string_view&)>;
-		using InputHandler = std::function<modules::graphics::IProgram::InputDescription(const Shader&, const std::string_view&)>;
+		using InputHandler = std::function<modules::graphics::IProgram::InputDescriptor(const Shader&, const std::string_view&)>;
 
 		Shader();
 

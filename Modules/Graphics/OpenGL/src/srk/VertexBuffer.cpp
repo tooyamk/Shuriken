@@ -3,9 +3,7 @@
 
 namespace srk::modules::graphics::gl {
 	VertexBuffer::VertexBuffer(Graphics& graphics) : IVertexBuffer(graphics),
-		_validVertexFormat(false),
-		_vertexSize(0),
-		_vertexType(0),
+		_stride(0),
 		_baseBuffer(GL_ARRAY_BUFFER) {
 	}
 
@@ -64,70 +62,11 @@ namespace srk::modules::graphics::gl {
 		_baseBuffer.releaseBuffer();
 	}
 
-	const VertexFormat& VertexBuffer::getFormat() const {
-		return _format;
+	uint32_t VertexBuffer::getStride() const {
+		return _stride;
 	}
 
-	void VertexBuffer::setFormat(const VertexFormat& format) {
-		if (_format != format) {
-			_format = format;
-
-			switch (_format.dimension) {
-			case VertexDimension::ONE:
-				_vertexSize = 1;
-				break;
-			case VertexDimension::TWO:
-				_vertexSize = 2;
-				break;
-			case VertexDimension::THREE:
-				_vertexSize = 3;
-				break;
-			case VertexDimension::FOUR:
-				_vertexSize = 4;
-				break;
-			default:
-				_vertexSize = 0;
-				break;
-			}
-
-			switch (_format.type) {
-			case VertexType::I8:
-				_vertexType = GL_BYTE;
-				break;
-			case VertexType::UI8:
-				_vertexType = GL_UNSIGNED_BYTE;
-				break;
-			case VertexType::I16:
-				_vertexType = GL_SHORT;
-				break;
-			case VertexType::UI16:
-				_vertexType = GL_UNSIGNED_SHORT;
-				break;
-			case VertexType::I32:
-				_vertexType = GL_INT;
-				break;
-			case VertexType::UI32:
-				_vertexType = GL_UNSIGNED_INT;
-				break;
-			case VertexType::F32:
-				_vertexType = GL_FLOAT;
-				break;
-			default:
-				_vertexType = 0;
-				break;
-			}
-
-			_validVertexFormat = _vertexSize && _vertexType;
-		}
-	}
-
-	bool VertexBuffer::use(GLuint index, bool instanced) {
-		if (_baseBuffer.handle && _validVertexFormat) {
-			glEnableVertexAttribArray(index);
-			glBindBuffer(GL_ARRAY_BUFFER, _baseBuffer.handle);
-			glVertexAttribPointer(index, _vertexSize, _vertexType, GL_FALSE, 0, 0);
-			glVertexAttribDivisor(index, instanced ? 1 : 0);
-		}
-		return false;
+	void VertexBuffer::setStride(uint32_t stride) {
+		_stride = stride;
 	}
 }

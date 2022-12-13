@@ -157,7 +157,7 @@ namespace srk::modules::graphics::d3d11 {
 		return _info;
 	}
 
-	bool Program::use(const IVertexBufferGetter* vertexBufferGetter, const IShaderParameterGetter* shaderParamGetter) {
+	bool Program::use(const IVertexAttributeGetter* vertexAttributeGetter, const IShaderParameterGetter* shaderParamGetter) {
 		if (_vs) {
 			auto g = _graphics.get<Graphics>();
 			g->useShader<ProgramStage::VS>(_vs, nullptr, 0);
@@ -168,22 +168,32 @@ namespace srk::modules::graphics::d3d11 {
 			bool inElementsDirty = false;
 			for (size_t i = 0, n = _info.vertices.size(); i < n; ++i) {
 				auto& info = _info.vertices[i];
-				if (auto vb = vertexBufferGetter->get(info.name); vb && _graphics == vb->getGraphics()) {
-					if (auto native = (VertexBuffer*)vb->getNative(); native) {
-						if (auto buf = native->getInternalBuffer(); buf) {
-							if (auto fmt = native->getInternalFormat(); fmt != DXGI_FORMAT_UNKNOWN) {
-								auto stride = native->getStride();
-								UINT offset = 0;
-								g->useVertexBuffers(_inVerBufSlots[i], 1, &buf, &stride, &offset);
+				auto va = vertexAttributeGetter->get(info.name);
+				if (!va) continue;
 
-								auto& ie = _inputElements[i];
-								if (ie.Format != fmt) {
-									inElementsDirty = true;
-									ie.Format = fmt;
-								}
-							}
-						}
-					}
+				auto& vb = va->resource;
+				if (!vb || _graphics != vb->getGraphics()) continue;
+
+				auto native = (VertexBuffer*)vb->getNative();
+				if (!native) continue;
+
+				UINT stride = native->getStride();
+				if (!stride) continue;
+
+				auto buf = native->getInternalBuffer();
+				if (!buf) continue;
+
+				auto& desc = va->desc;
+				auto fmt = Graphics::convertVertexFormat(desc.format);
+				if (fmt == DXGI_FORMAT_UNKNOWN) continue;
+				
+				UINT offset = desc.offset;
+				g->useVertexBuffers(_inVerBufSlots[i], 1, &buf, &stride, &desc.offset);
+
+				auto& ie = _inputElements[i];
+				if (ie.Format != fmt) {
+					inElementsDirty = true;
+					ie.Format = fmt;
 				}
 			}
 
@@ -368,7 +378,7 @@ namespace srk::modules::graphics::d3d11 {
 				if (nameSize == std::string::npos) nameSize = 0;
 				nameSize += len;
 				nameBuf[nameSize] = 0;
-				auto inputDesc = handler ? handler(*this, std::string_view(nameBuf, nameSize)) : InputDescription();
+				auto inputDesc = handler ? handler(*this, std::string_view(nameBuf, nameSize)) : InputDescriptor();
 
 				//ieDesc.SemanticName = spDesc.SemanticName;
 				ieDesc.SemanticIndex = pDesc.SemanticIndex;
@@ -389,7 +399,7 @@ namespace srk::modules::graphics::d3d11 {
 				info.instanced = inputDesc.instanced;
 
 				if (pDesc.Mask == 1) {
-					info.format.dimension = VertexDimension::ONE;
+					info.format.dimension = 1;
 					if (pDesc.ComponentType == D3D_REGISTER_COMPONENT_UINT32) {
 						ieDesc.Format = DXGI_FORMAT_R32_UINT;
 						info.format.type = VertexType::UI32;
@@ -402,7 +412,7 @@ namespace srk::modules::graphics::d3d11 {
 					}
 					offset += 4;
 				} else if (pDesc.Mask <= 3) {
-					info.format.dimension = VertexDimension::TWO;
+					info.format.dimension = 2;
 					if (pDesc.ComponentType == D3D_REGISTER_COMPONENT_UINT32) {
 						ieDesc.Format = DXGI_FORMAT_R32G32_UINT;
 						info.format.type = VertexType::UI32;
@@ -415,7 +425,7 @@ namespace srk::modules::graphics::d3d11 {
 					}
 					offset += 8;
 				} else if (pDesc.Mask <= 7) {
-					info.format.dimension = VertexDimension::THREE;
+					info.format.dimension = 3;
 					if (pDesc.ComponentType == D3D_REGISTER_COMPONENT_UINT32) {
 						ieDesc.Format = DXGI_FORMAT_R32G32B32_UINT;
 						info.format.type = VertexType::UI32;
@@ -428,7 +438,7 @@ namespace srk::modules::graphics::d3d11 {
 					}
 					offset += 12;
 				} else if (pDesc.Mask <= 15) {
-					info.format.dimension = VertexDimension::FOUR;
+					info.format.dimension = 4;
 					if (pDesc.ComponentType == D3D_REGISTER_COMPONENT_UINT32) {
 						ieDesc.Format = DXGI_FORMAT_R32G32B32A32_UINT;
 						info.format.type = VertexType::UI32;

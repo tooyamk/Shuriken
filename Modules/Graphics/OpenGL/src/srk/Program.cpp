@@ -81,40 +81,40 @@ namespace srk::modules::graphics::gl {
 			glGetActiveAttrib(_handle, i, sizeof(charBuffer), &len, &size, &type, charBuffer);
 			switch (type) {
 			case GL_INT:
-				info.format.set(VertexDimension::ONE, VertexType::I32);
+				info.format.set(1, VertexType::I32);
 				break;
 			case GL_INT_VEC2:
-				info.format.set(VertexDimension::TWO, VertexType::I32);
+				info.format.set(2, VertexType::I32);
 				break;
 			case GL_INT_VEC3:
-				info.format.set(VertexDimension::THREE, VertexType::I32);
+				info.format.set(3, VertexType::I32);
 				break;
 			case GL_INT_VEC4:
-				info.format.set(VertexDimension::FOUR, VertexType::I32);
+				info.format.set(4, VertexType::I32);
 				break;
 			case GL_UNSIGNED_INT:
-				info.format.set(VertexDimension::ONE, VertexType::UI32);
+				info.format.set(1, VertexType::UI32);
 				break;
 			case GL_UNSIGNED_INT_VEC2:
-				info.format.set(VertexDimension::TWO, VertexType::UI32);
+				info.format.set(2, VertexType::UI32);
 				break;
 			case GL_UNSIGNED_INT_VEC3:
-				info.format.set(VertexDimension::THREE, VertexType::UI32);
+				info.format.set(3, VertexType::UI32);
 				break;
 			case GL_UNSIGNED_INT_VEC4:
-				info.format.set(VertexDimension::FOUR, VertexType::UI32);
+				info.format.set(4, VertexType::UI32);
 				break;
 			case GL_FLOAT:
-				info.format.set(VertexDimension::ONE, VertexType::F32);
+				info.format.set(1, VertexType::F32);
 				break;
 			case GL_FLOAT_VEC2:
-				info.format.set(VertexDimension::TWO, VertexType::F32);
+				info.format.set(2, VertexType::F32);
 				break;
 			case GL_FLOAT_VEC3:
-				info.format.set(VertexDimension::THREE, VertexType::F32);
+				info.format.set(3, VertexType::F32);
 				break;
 			case GL_FLOAT_VEC4:
-				info.format.set(VertexDimension::FOUR, VertexType::F32);
+				info.format.set(4, VertexType::F32);
 				break;
 			default:
 				break;
@@ -276,15 +276,37 @@ namespace srk::modules::graphics::gl {
 		return _info;
 	}
 
-	bool Program::use(const IVertexBufferGetter* vertexBufferGetter, const IShaderParameterGetter* shaderParamGetter) {
+	bool Program::use(const IVertexAttributeGetter* vertexAttributeGetter, const IShaderParameterGetter* shaderParamGetter) {
 		if (_handle) {
 			glUseProgram(_handle);
 
 			for (size_t i = 0, n = _info.vertices.size(); i < n; ++i) {
 				auto& info = _info.vertices[i];
-				if (auto vb = vertexBufferGetter->get(info.name); vb && _graphics == vb->getGraphics()) {
-					if (auto vb1 = (VertexBuffer*)vb->getNative(); vb1) vb1->use(_inputVertexBufferLocations[i], info.instanced);
-				}
+				auto va = vertexAttributeGetter->get(info.name);
+				if (!va) continue;
+
+				auto& vb = va->resource;
+				if (!vb || _graphics != vb->getGraphics()) continue;
+
+				auto native = (VertexBuffer*)vb->getNative();
+				if (!native) continue;
+
+				UINT stride = native->getStride();
+				if (!stride) continue;
+
+				auto handle = native->getInternalHandle();
+				if (!handle) continue;
+
+				auto& desc = va->desc;
+				if (desc.format.dimension < 1 || desc.format.dimension > 4) continue;
+				auto fmt = Graphics::convertVertexFormat(desc.format.type);
+				if (fmt == 0) continue;
+
+				auto index = _inputVertexBufferLocations[i];
+				glEnableVertexAttribArray(index);
+				glBindBuffer(GL_ARRAY_BUFFER, handle);
+				glVertexAttribPointer(index, desc.format.dimension, fmt, GL_FALSE, desc.offset, 0);
+				glVertexAttribDivisor(index, info.instanced ? 1 : 0);
 			}
 
 			uint8_t texIdx = 0;

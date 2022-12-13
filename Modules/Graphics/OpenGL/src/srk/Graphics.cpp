@@ -658,28 +658,30 @@ namespace srk::modules::graphics::gl {
 #endif
 	}
 
-	void Graphics::draw(const IVertexBufferGetter* vertexBufferGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter, const IIndexBuffer* indexBuffer, uint32_t count, uint32_t offset) {
-		if (vertexBufferGetter && indexBuffer && program && program->getGraphics() == this && indexBuffer->getGraphics() == this && count > 0) {
-			if (auto ib = (const IndexBuffer*)indexBuffer->getNative(); ib) {
-				if (auto p = (Program*)program->getNative(); p && p->use(vertexBufferGetter, shaderParamGetter)) {
-					ib->draw(count, offset);
+	void Graphics::draw(const IVertexAttributeGetter* vertexAttributeGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter, const IIndexBuffer* indexBuffer, uint32_t count, uint32_t offset) {
+		if (!vertexAttributeGetter || !indexBuffer || !program || program->getGraphics() != this || indexBuffer->getGraphics() != this || !count) return;
 
-					_constantBufferManager.resetUsedShareConstantBuffers();
-				}
-			}
-		}
+		auto ib = (const IndexBuffer*)indexBuffer->getNative();
+		if (!ib) return;
+
+		auto p = (Program*)program->getNative();
+		if (!p || !p->use(vertexAttributeGetter, shaderParamGetter)) return;
+
+		ib->draw(count, offset);
+
+		_constantBufferManager.resetUsedShareConstantBuffers();
 	}
 
-	void Graphics::drawInstanced(const IVertexBufferGetter* vertexBufferGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter, const IIndexBuffer* indexBuffer, uint32_t instancedCount, uint32_t count, uint32_t offset) {
-		if (vertexBufferGetter && indexBuffer && program && program->getGraphics() == this && indexBuffer->getGraphics() == this && count > 0) {
-			if (auto ib = (const IndexBuffer*)indexBuffer->getNative(); ib) {
-				if (auto p = (Program*)program->getNative(); p && p->use(vertexBufferGetter, shaderParamGetter)) {
-					ib->drawInstanced(instancedCount, count, offset);
+	void Graphics::drawInstanced(const IVertexAttributeGetter* vertexAttributeGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter, const IIndexBuffer* indexBuffer, uint32_t instancedCount, uint32_t count, uint32_t offset) {
+		if (!vertexAttributeGetter || !indexBuffer || !program || program->getGraphics() != this || indexBuffer->getGraphics() != this || !count) return;
 
-					_constantBufferManager.resetUsedShareConstantBuffers();
-				}
-			}
-		}
+		auto ib = (const IndexBuffer*)indexBuffer->getNative();
+		if (!ib) return;
+
+		auto p = (Program*)program->getNative();
+		if (!p || !p->use(vertexAttributeGetter, shaderParamGetter)) return;
+
+		ib->drawInstanced(instancedCount, count, offset);
 	}
 
 	void Graphics::endRender() {
@@ -1041,7 +1043,7 @@ namespace srk::modules::graphics::gl {
 			rasterizer.state.cullEnabled = glIsEnabled(GL_CULL_FACE);
 			rasterizer.state.scissorEnabled = glIsEnabled(GL_SCISSOR_TEST);
 
-			RasterizerDescription desc;
+			RasterizerDescriptor desc;
 			desc.cullMode = convertCullMode(rasterizer.state.cullMode);
 			desc.fillMode = convertFillMode(rasterizer.state.fillMode);
 			desc.frontFace = convertFrontFace(rasterizer.state.frontFace);
@@ -1321,6 +1323,27 @@ namespace srk::modules::graphics::gl {
 			return GL_FRAGMENT_SHADER;
 		case ProgramStage::VS:
 			return GL_VERTEX_SHADER;
+		default:
+			return 0;
+		}
+	}
+
+	GLenum Graphics::convertVertexFormat(VertexType type) {
+		switch (type) {
+		case VertexType::I8:
+			return GL_BYTE;
+		case VertexType::UI8:
+			return GL_UNSIGNED_BYTE;
+		case VertexType::I16:
+			return GL_SHORT;
+		case VertexType::UI16:
+			return GL_UNSIGNED_SHORT;
+		case VertexType::I32:
+			return GL_INT;
+		case VertexType::UI32:
+			return GL_UNSIGNED_INT;
+		case VertexType::F32:
+			return GL_FLOAT;
 		default:
 			return 0;
 		}

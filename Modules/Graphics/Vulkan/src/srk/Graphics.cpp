@@ -10,6 +10,7 @@
 namespace srk::modules::graphics::vulkan {
 	VKAPI_ATTR VkBool32 VKAPI_CALL debugMessengerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
 		auto g = (Graphics*)pUserData;
+		printaln("vk debug : ", pCallbackData->pMessage);
 		return VK_FALSE;
 	}
 
@@ -68,6 +69,7 @@ namespace srk::modules::graphics::vulkan {
 			if (!_createVkSurface(*conf.win)) break;
 			if (!_getVkPhysicalDevice(conf)) break;
 			if (!_createVkDevice()) break;
+			if (!_createVkCommandPool()) break;
 			if (!_createVkSwapchain()) break;
 
 			{
@@ -373,8 +375,8 @@ namespace srk::modules::graphics::vulkan {
 			if (graphicsQueueFamilyIndex == max || presentQueueFamilyIndex == max) return false;
 		}
 
-		_vkStatus.graphicsQueueFamilyIndex = graphicsQueueFamilyIndex;
-		_vkStatus.presentQueueFamilyIndex = presentQueueFamilyIndex;
+		_vkStatus.queueFamilyIndices.graphics = graphicsQueueFamilyIndex;
+		_vkStatus.queueFamilyIndices.present = presentQueueFamilyIndex;
 
 		float32_t queuePriorities[1] = { 0.0f };
 
@@ -408,6 +410,16 @@ namespace srk::modules::graphics::vulkan {
 		}
 
 		return vkCreateDevice(_vkStatus.physicalDevice, &deviceCreateInfo, nullptr, &_vkStatus.device) == VK_SUCCESS;
+	}
+
+	bool Graphics::_createVkCommandPool() {
+		VkCommandPoolCreateInfo commandPoolCreateInfo;
+		memset(&commandPoolCreateInfo, 0, sizeof(commandPoolCreateInfo));
+		commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+		commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+		commandPoolCreateInfo.queueFamilyIndex = _vkStatus.queueFamilyIndices.graphics;
+
+		return vkCreateCommandPool(_vkStatus.device, &commandPoolCreateInfo, nullptr, &_vkStatus.cmd.pool) == VK_SUCCESS;
 	}
 
 	bool Graphics::_createVkSwapchain() {
@@ -490,7 +502,7 @@ namespace srk::modules::graphics::vulkan {
 				preTransform = caps.currentTransform;
 			}
 
-			auto oldSwapChain = _vkStatus.swapChain;
+			auto oldSwapChain = _vkStatus.swapChain.swapChain;
 
 			VkSwapchainCreateInfoKHR swapchainCreateInfo;
 			memset(&swapchainCreateInfo, 0, sizeof(swapchainCreateInfo));
@@ -503,8 +515,8 @@ namespace srk::modules::graphics::vulkan {
 			swapchainCreateInfo.imageArrayLayers = 1;
 			swapchainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-			uint32_t queueFamilyIndices[] = { _vkStatus.graphicsQueueFamilyIndex, _vkStatus.presentQueueFamilyIndex };
-			if (_vkStatus.graphicsQueueFamilyIndex == _vkStatus.presentQueueFamilyIndex) {
+			uint32_t queueFamilyIndices[] = { _vkStatus.queueFamilyIndices.graphics, _vkStatus.queueFamilyIndices.present };
+			if (_vkStatus.queueFamilyIndices.graphics == _vkStatus.queueFamilyIndices.present) {
 				swapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
 				swapchainCreateInfo.queueFamilyIndexCount = 0;
 				swapchainCreateInfo.pQueueFamilyIndices = nullptr;
@@ -520,18 +532,19 @@ namespace srk::modules::graphics::vulkan {
 			swapchainCreateInfo.clipped = VK_TRUE;
 			swapchainCreateInfo.oldSwapchain = oldSwapChain;
 
-			if (vkCreateSwapchainKHR(_vkStatus.device, &swapchainCreateInfo, nullptr, &_vkStatus.swapChain) != VK_SUCCESS) return false;
+			if (vkCreateSwapchainKHR(_vkStatus.device, &swapchainCreateInfo, nullptr, &_vkStatus.swapChain.swapChain) != VK_SUCCESS) return false;
+			_vkStatus.swapChain.format = selectedSurfaceFormat.format;
 
 			_cleanupSwapChain(&oldSwapChain);
 		}
 
 		{
 			uint32_t swapChainImageCount;
-			if (vkGetSwapchainImagesKHR(_vkStatus.device, _vkStatus.swapChain, &swapChainImageCount, nullptr) != VK_SUCCESS) return false;
-			_vkStatus.swapChainImages.resize(swapChainImageCount);
-			if (vkGetSwapchainImagesKHR(_vkStatus.device, _vkStatus.swapChain, &swapChainImageCount, _vkStatus.swapChainImages.data()) != VK_SUCCESS) return false;
+			if (vkGetSwapchainImagesKHR(_vkStatus.device, _vkStatus.swapChain.swapChain, &swapChainImageCount, nullptr) != VK_SUCCESS) return false;
+			_vkStatus.swapChain.images.resize(swapChainImageCount);
+			if (vkGetSwapchainImagesKHR(_vkStatus.device, _vkStatus.swapChain.swapChain, &swapChainImageCount, _vkStatus.swapChain.images.data()) != VK_SUCCESS) return false;
 
-			_vkStatus.swapChainImageViews.resize(_vkStatus.swapChainImages.size());
+			_vkStatus.swapChain.imageViews.resize(_vkStatus.swapChain.images.size());
 			VkImageViewCreateInfo imageViewCreateInfo;
 			memset(&imageViewCreateInfo, 0, sizeof(imageViewCreateInfo));
 			imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -546,10 +559,10 @@ namespace srk::modules::graphics::vulkan {
 			imageViewCreateInfo.subresourceRange.levelCount = 1;
 			imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
 			imageViewCreateInfo.subresourceRange.layerCount = 1;
-			for (size_t i = 0; i < _vkStatus.swapChainImages.size(); ++i) {
-				imageViewCreateInfo.image = _vkStatus.swapChainImages[i];
+			for (size_t i = 0; i < _vkStatus.swapChain.images.size(); ++i) {
+				imageViewCreateInfo.image = _vkStatus.swapChain.images[i];
 				
-				if (vkCreateImageView(_vkStatus.device, &imageViewCreateInfo, nullptr, &_vkStatus.swapChainImageViews[i]) != VK_SUCCESS) _vkStatus.swapChainImageViews[i] = nullptr;
+				if (vkCreateImageView(_vkStatus.device, &imageViewCreateInfo, nullptr, &_vkStatus.swapChain.imageViews[i]) != VK_SUCCESS) _vkStatus.swapChain.imageViews[i] = nullptr;
 			}
 		}
 
@@ -649,8 +662,55 @@ namespace srk::modules::graphics::vulkan {
 		pipelineDynamicStateCreateInfo.pDynamicStates = dynamicStates;
 		graphicsPipelineCreateInfo.pDynamicState = &pipelineDynamicStateCreateInfo;
 
-		graphicsPipelineCreateInfo.layout = nullptr;
-		graphicsPipelineCreateInfo.renderPass = nullptr;
+		VkPipelineLayoutCreateInfo pipelineLayoutInfo;
+		memset(&pipelineLayoutInfo, 0, sizeof(pipelineLayoutInfo));
+		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+		pipelineLayoutInfo.setLayoutCount = 0; // Optional
+		pipelineLayoutInfo.pSetLayouts = nullptr; // Optional
+		pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
+		pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
+
+		VkPipelineLayout pipelineLayout;
+		if (vkCreatePipelineLayout(_vkStatus.device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
+			printaln("failed to create pipeline layout!");
+		}
+
+		VkAttachmentDescription attachmentDesc;
+		memset(&attachmentDesc, 0, sizeof(attachmentDesc));
+		attachmentDesc.format = _vkStatus.swapChain.format;
+		attachmentDesc.samples = VK_SAMPLE_COUNT_1_BIT;
+		attachmentDesc.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		attachmentDesc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		attachmentDesc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		attachmentDesc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		attachmentDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		attachmentDesc.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+		VkAttachmentReference attachmentRef;
+		attachmentRef.attachment = 0;
+		attachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+		VkSubpassDescription subpassDesc;
+		memset(&subpassDesc, 0, sizeof(subpassDesc));
+		subpassDesc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+		subpassDesc.colorAttachmentCount = 1;
+		subpassDesc.pColorAttachments = &attachmentRef;
+
+		VkRenderPassCreateInfo renderPassCreateInfo;
+		memset(&renderPassCreateInfo, 0, sizeof(renderPassCreateInfo));
+		renderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+		renderPassCreateInfo.attachmentCount = 1;
+		renderPassCreateInfo.pAttachments = &attachmentDesc;
+		renderPassCreateInfo.subpassCount = 1;
+		renderPassCreateInfo.pSubpasses = &subpassDesc;
+
+		VkRenderPass renderPass;
+		if (vkCreateRenderPass(_vkStatus.device, &renderPassCreateInfo, nullptr, &renderPass) != VK_SUCCESS) {
+			printaln("failed to create render pass!");
+		}
+
+		graphicsPipelineCreateInfo.layout = pipelineLayout;
+		graphicsPipelineCreateInfo.renderPass = renderPass;
 		graphicsPipelineCreateInfo.subpass = 0;
 		graphicsPipelineCreateInfo.basePipelineHandle = nullptr;
 		graphicsPipelineCreateInfo.basePipelineIndex = -1;
@@ -825,12 +885,12 @@ namespace srk::modules::graphics::vulkan {
 	void Graphics::beginRender() {
 	}
 
-	void Graphics::draw(const IVertexBufferGetter* vertexBufferGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
+	void Graphics::draw(const IVertexAttributeGetter* vertexAttributeGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
 		const IIndexBuffer* indexBuffer, uint32_t count, uint32_t offset) {
 		if (!_checkAndUpdateVkPipeline(program)) return;
 	}
 
-	void Graphics::drawInstanced(const IVertexBufferGetter* vertexBufferGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
+	void Graphics::drawInstanced(const IVertexAttributeGetter* vertexAttributeGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
 		const IIndexBuffer* indexBuffer, uint32_t instancedCount, uint32_t count, uint32_t offset) {
 		if (!_checkAndUpdateVkPipeline(program)) return;
 	}
@@ -851,6 +911,13 @@ namespace srk::modules::graphics::vulkan {
 	}
 
 	void Graphics::_release() {
+		if (_vkStatus.device) vkDeviceWaitIdle(_vkStatus.device);
+
+		if (_vkStatus.cmd.pool) {
+			vkDestroyCommandPool(_vkStatus.device, _vkStatus.cmd.pool, nullptr);
+			_vkStatus.cmd.pool = nullptr;
+		}
+
 		if (_vkStatus.pipeline.cache) {
 			vkDestroyPipelineCache(_vkStatus.device, _vkStatus.pipeline.cache, nullptr);
 			_vkStatus.pipeline.cache = nullptr;
@@ -859,7 +926,6 @@ namespace srk::modules::graphics::vulkan {
 		_cleanupSwapChain(nullptr);
 
 		if (_vkStatus.device) {
-			vkDeviceWaitIdle(_vkStatus.device);
 			vkDestroyDevice(_vkStatus.device, nullptr);
 			_vkStatus.device = nullptr;
 		}
@@ -892,17 +958,19 @@ namespace srk::modules::graphics::vulkan {
 	}
 
 	void Graphics::_cleanupSwapChain(VkSwapchainKHR* swapChain) {
-		for (auto& i : _vkStatus.swapChainImageViews) {
+		vkDeviceWaitIdle(_vkStatus.device);
+
+		for (auto& i : _vkStatus.swapChain.imageViews) {
 			if (i) vkDestroyImageView(_vkStatus.device, i, nullptr);
 		}
-		_vkStatus.swapChainImageViews.clear();
+		_vkStatus.swapChain.imageViews.clear();
 
-		_vkStatus.swapChainImages.clear();
+		_vkStatus.swapChain.images.clear();
 
-		if (!swapChain) swapChain = &_vkStatus.swapChain;
+		if (!swapChain) swapChain = &_vkStatus.swapChain.swapChain;
 		if (*swapChain) {
 			vkDestroySwapchainKHR(_vkStatus.device, *swapChain, nullptr);
-			if (*swapChain == _vkStatus.swapChain) _vkStatus.swapChain = nullptr;
+			if (*swapChain == _vkStatus.swapChain.swapChain) _vkStatus.swapChain.swapChain = nullptr;
 		}
 	}
 

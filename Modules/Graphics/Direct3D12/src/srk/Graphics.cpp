@@ -500,7 +500,7 @@ namespace srk::modules::graphics::d3d12 {
 	void Graphics::beginRender() {
 	}
 
-	void Graphics::draw(const IVertexBufferGetter* vertexBufferGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
+	void Graphics::draw(const IVertexAttributeGetter* vertexAttributeGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
 		const IIndexBuffer* indexBuffer, uint32_t count, uint32_t offset) {
 		/*if (vertexBufferGetter && indexBuffer && program && program->getGraphics() == this && indexBuffer->getGraphics() == this && count > 0) {
 			auto ib = (IndexBuffer*)indexBuffer->getNative();
@@ -550,7 +550,7 @@ namespace srk::modules::graphics::d3d12 {
 		}*/
 	}
 
-	void Graphics::drawInstanced(const IVertexBufferGetter* vertexBufferGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
+	void Graphics::drawInstanced(const IVertexAttributeGetter* vertexAttributeGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
 		const IIndexBuffer* indexBuffer, uint32_t instancedCount, uint32_t count, uint32_t offset) {
 		/*if (vertexBufferGetter && indexBuffer && program && program->getGraphics() == this && indexBuffer->getGraphics() == this && count > 0) {
 			auto ib = (IndexBuffer*)indexBuffer->getNative();

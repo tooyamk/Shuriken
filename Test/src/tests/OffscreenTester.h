@@ -100,7 +100,7 @@ float4 main(PS_INPUT input) : SV_TARGET {
 				program->create(vs, ps, nullptr, 0, nullptr, nullptr);
 			}
 
-			IntrusivePtr vertexBuffers = new VertexBufferCollection();
+			IntrusivePtr vertexBuffers = new VertexAttributeCollection();
 			{
 				float32_t vd[] = {
 						-1.f, 1.f,
@@ -111,13 +111,10 @@ float4 main(PS_INPUT input) : SV_TARGET {
 				using type = std::remove_cvref_t<decltype(vd[0])>;
 				constexpr auto size = std::extent_v<decltype(vd)> *sizeof(type);
 
-				modules::graphics::VertexFormat vf;
-				vf.set<2, type>();
-
 				auto vb = graphics->createVertexBuffer();
 				vb->create(size, modules::graphics::Usage::NONE, vd, size);
-				vb->setFormat(vf);
-				vertexBuffers->set("POSITION0", vb);
+				vb->setStride(2 * sizeof(type));
+				vertexBuffers->set("POSITION0", VertexAttribute<IVertexBuffer>(vb, 2, VertexType::F32, 0));
 
 				type uvd[] = {
 						0.f, 0.f,
@@ -126,8 +123,8 @@ float4 main(PS_INPUT input) : SV_TARGET {
 						0.f, 1.f };
 				auto uvb = graphics->createVertexBuffer();
 				uvb->create(size, modules::graphics::Usage::NONE, uvd, size);
-				uvb->setFormat(vf);
-				vertexBuffers->set("TEXCOORD0", uvb);
+				uvb->setStride(2 * sizeof(type));
+				vertexBuffers->set("TEXCOORD0", VertexAttribute<IVertexBuffer>(uvb, 2, VertexType::F32, 0));
 			}
 
 			IntrusivePtr shaderParameters = new ShaderParameterCollection();

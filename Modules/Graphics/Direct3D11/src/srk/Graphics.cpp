@@ -566,9 +566,9 @@ namespace srk::modules::graphics::d3d11 {
 	void Graphics::beginRender() {
 	}
 
-	void Graphics::draw(const IVertexBufferGetter* vertexBufferGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
+	void Graphics::draw(const IVertexAttributeGetter* vertexAttributeGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
 		const IIndexBuffer* indexBuffer, uint32_t count, uint32_t offset) {
-		if (vertexBufferGetter && indexBuffer && program && program->getGraphics() == this && indexBuffer->getGraphics() == this && count > 0) {
+		if (vertexAttributeGetter && indexBuffer && program && program->getGraphics() == this && indexBuffer->getGraphics() == this && count > 0) {
 			auto ib = (IndexBuffer*)indexBuffer->getNative();
 			if (!ib) return;
 			auto internalIndexBuffer = ib->getInternalBuffer();
@@ -579,7 +579,7 @@ namespace srk::modules::graphics::d3d11 {
 			
 			auto p = (Program*)program->getNative();
 			if (p) {
-				if (p->use(vertexBufferGetter, shaderParamGetter)) {
+				if (p->use(vertexAttributeGetter, shaderParamGetter)) {
 					uint32_t last = numIndexElements - offset;
 					if (count > numIndexElements) count = numIndexElements;
 					if (count > last) count = last;
@@ -616,9 +616,9 @@ namespace srk::modules::graphics::d3d11 {
 		}
 	}
 
-	void Graphics::drawInstanced(const IVertexBufferGetter* vertexBufferGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
+	void Graphics::drawInstanced(const IVertexAttributeGetter* vertexAttributeGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
 		const IIndexBuffer* indexBuffer, uint32_t instancedCount, uint32_t count, uint32_t offset) {
-		if (vertexBufferGetter && indexBuffer && program && program->getGraphics() == this && indexBuffer->getGraphics() == this && count > 0) {
+		if (vertexAttributeGetter && indexBuffer && program && program->getGraphics() == this && indexBuffer->getGraphics() == this && count > 0) {
 			auto ib = (IndexBuffer*)indexBuffer->getNative();
 			if (!ib) return;
 			auto internalIndexBuffer = ib->getInternalBuffer();
@@ -629,7 +629,7 @@ namespace srk::modules::graphics::d3d11 {
 
 			auto p = (Program*)program->getNative();
 			if (p) {
-				if (p->use(vertexBufferGetter, shaderParamGetter)) {
+				if (p->use(vertexAttributeGetter, shaderParamGetter)) {
 					uint32_t last = numIndexElements - offset;
 					if (count > numIndexElements) count = numIndexElements;
 					if (count > last) count = last;
@@ -976,6 +976,110 @@ namespace srk::modules::graphics::d3d11 {
 			return D3D11_CULL_BACK;
 		default:
 			return D3D11_CULL_NONE;
+		}
+	}
+
+	DXGI_FORMAT Graphics::convertVertexFormat(const VertexFormat& fmt) {
+		switch (fmt.type) {
+		case VertexType::I8:
+		{
+			switch (fmt.dimension) {
+			case 1:
+				return DXGI_FORMAT_R8_SINT;
+			case 2:
+				return DXGI_FORMAT_R8G8_SINT;
+			case 4:
+				return DXGI_FORMAT_R8G8B8A8_SINT;
+			default:
+				return DXGI_FORMAT_UNKNOWN;
+			}
+		}
+		case VertexType::UI8:
+		{
+			switch (fmt.dimension) {
+			case 1:
+				return DXGI_FORMAT_R8_UINT;
+			case 2:
+				return DXGI_FORMAT_R8G8_UINT;
+			case 4:
+				return DXGI_FORMAT_R8G8B8A8_UINT;
+			default:
+				return DXGI_FORMAT_UNKNOWN;
+			}
+		}
+		case VertexType::I16:
+		{
+			switch (fmt.dimension) {
+			case 1:
+				return DXGI_FORMAT_R16_SINT;
+			case 2:
+				return DXGI_FORMAT_R16G16_SINT;
+			case 4:
+				return DXGI_FORMAT_R16G16B16A16_SINT;
+			default:
+				return DXGI_FORMAT_UNKNOWN;
+			}
+		}
+		case VertexType::UI16:
+		{
+			switch (fmt.dimension) {
+			case 1:
+				return DXGI_FORMAT_R16_UINT;
+			case 2:
+				return DXGI_FORMAT_R16G16_UINT;
+			case 4:
+				return DXGI_FORMAT_R16G16B16A16_UINT;
+			default:
+				return DXGI_FORMAT_UNKNOWN;
+			}
+		}
+		case VertexType::I32:
+		{
+			switch (fmt.dimension) {
+			case 1:
+				return DXGI_FORMAT_R32_SINT;
+			case 2:
+				return DXGI_FORMAT_R32G32_SINT;
+			case 3:
+				return DXGI_FORMAT_R32G32B32_SINT;
+			case 4:
+				return DXGI_FORMAT_R32G32B32A32_SINT;
+			default:
+				return DXGI_FORMAT_UNKNOWN;
+			}
+		}
+		case VertexType::UI32:
+		{
+			switch (fmt.dimension) {
+			case 1:
+				return DXGI_FORMAT_R32_UINT;
+			case 2:
+				return DXGI_FORMAT_R32G32_UINT;
+			case 3:
+				return DXGI_FORMAT_R32G32B32_UINT;
+			case 4:
+				return DXGI_FORMAT_R32G32B32A32_UINT;
+			default:
+				return DXGI_FORMAT_UNKNOWN;
+			}
+		}
+		case VertexType::F32:
+		{
+			switch (fmt.dimension) {
+			case 1:
+				return DXGI_FORMAT_R32_FLOAT;
+			case 2:
+				return DXGI_FORMAT_R32G32_FLOAT;
+			case 3:
+				return DXGI_FORMAT_R32G32B32_FLOAT;
+			case 4:
+				return DXGI_FORMAT_R32G32B32A32_FLOAT;
+			default:
+				return DXGI_FORMAT_UNKNOWN;
+			}
+		}
+		default:
+			return DXGI_FORMAT_UNKNOWN;
 		}
 	}
 }
