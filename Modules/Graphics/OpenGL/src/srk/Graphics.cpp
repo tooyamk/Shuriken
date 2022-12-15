@@ -23,8 +23,6 @@
 
 namespace srk::modules::graphics::gl {
 	Graphics::Graphics() :
-		_bufferCreateUsageMask(Usage::NONE),
-		_texCreateUsageMask(Usage::NONE),
 #if SRK_OS == SRK_OS_WINDOWS
 		_dc(nullptr),
 		_rc(nullptr),
@@ -231,8 +229,10 @@ namespace srk::modules::graphics::gl {
 		_deviceFeatures.textureFormats.emplace_back(TextureFormat::R8G8B8);
 		_deviceFeatures.textureFormats.emplace_back(TextureFormat::R8G8B8A8);
 
-		_bufferCreateUsageMask = Usage::MAP_READ_WRITE | Usage::UPDATE | Usage::RENDERABLE | (_deviceFeatures.persistentMap ? Usage::PERSISTENT_MAP : Usage::NONE);
-		_texCreateUsageMask = Usage::UPDATE;
+		_glStatus.usage.bufferCreateUsageMask = Usage::MAP_READ_WRITE | Usage::UPDATE;
+		if (_deviceFeatures.persistentMap) _glStatus.usage.bufferCreateUsageMask |= Usage::PERSISTENT_MAP;
+
+		_glStatus.usage.texCreateUsageMask = Usage::UPDATE | Usage::RENDERABLE;
 
 		//glEnable(GL_MULTISAMPLE);
 		//glDisable(GL_MULTISAMPLE);
@@ -1080,7 +1080,8 @@ namespace srk::modules::graphics::gl {
 		memset(&_internalFeatures, 0, sizeof(_internalFeatures));
 		_deviceFeatures.reset();
 		_deviceVersion = "OpenGL Unknown";
-		_bufferCreateUsageMask = Usage::NONE;
+		_glStatus.usage.bufferCreateUsageMask = Usage::NONE;
+		_glStatus.usage.texCreateUsageMask = Usage::NONE;
 	}
 
 	void Graphics::_resize(const Vec2ui32& size) {

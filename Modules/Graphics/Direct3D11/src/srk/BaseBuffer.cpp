@@ -52,7 +52,7 @@ namespace srk::modules::graphics::d3d11 {
 		BaseResource::unmap(graphics, mapUsage, 0);
 	}
 
-	size_t BaseBuffer::read(size_t offset, void* dst, size_t dstLen) {
+	size_t BaseBuffer::read(void* dst, size_t dstLen, size_t offset) {
 		using namespace srk::enum_operators;
 
 		if ((mapUsage & Usage::MAP_READ) == Usage::MAP_READ) {
@@ -66,7 +66,7 @@ namespace srk::modules::graphics::d3d11 {
 		return -1;
 	}
 
-	size_t BaseBuffer::write(Graphics& graphics, size_t offset, const void* data, size_t length) {
+	size_t BaseBuffer::write(const void* data, size_t length, size_t offset) {
 		using namespace srk::enum_operators;
 
 		if ((mapUsage & Usage::MAP_WRITE) == Usage::MAP_WRITE) {
@@ -80,7 +80,7 @@ namespace srk::modules::graphics::d3d11 {
 		return -1;
 	}
 
-	size_t BaseBuffer::update(Graphics& graphics, size_t offset, const void* data, size_t length) {
+	size_t BaseBuffer::update(Graphics& graphics, const void* data, size_t length, size_t offset) {
 		using namespace srk::enum_operators;
 
 		if ((resUsage & Usage::UPDATE) == Usage::UPDATE) {

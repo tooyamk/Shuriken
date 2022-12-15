@@ -12,4 +12,5 @@
 #endif
 
 namespace srk::modules::graphics::vulkan {
+	class Graphics;
 }

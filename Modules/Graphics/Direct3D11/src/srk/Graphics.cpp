@@ -79,6 +79,8 @@ namespace srk::modules::graphics::d3d11 {
 	}
 
 	bool Graphics::_createDevice(const CreateConfig& conf) {
+		using namespace srk::enum_operators;
+
 		_isDebug = conf.debug;
 
 		DXObjGuard objs;
@@ -344,6 +346,10 @@ namespace srk::modules::graphics::d3d11 {
 			_d3dStatus.scissor.pos.set(rect.left, rect.top);
 			_d3dStatus.scissor.size.set(rect.right - rect.left, rect.bottom - rect.top);
 		}
+
+		_d3dStatus.usage.bufferCreateUsageMask = Usage::MAP_READ_WRITE | Usage::UPDATE;
+
+		_d3dStatus.usage.texCreateUsageMask = Usage::MAP_READ_WRITE | Usage::UPDATE | Usage::RENDERABLE;
 
 		_defaultBlendState = new BlendState(*this, true);
 		_defaultDepthStencilState = new DepthStencilState(*this, true);
@@ -791,6 +797,8 @@ namespace srk::modules::graphics::d3d11 {
 		_deviceFeatures.reset();
 
 		_deviceVersion = "D3D Unknown";
+		_d3dStatus.usage.bufferCreateUsageMask = Usage::NONE;
+		_d3dStatus.usage.texCreateUsageMask = Usage::NONE;
 	}
 
 	void Graphics::_resize(const Vec2ui32& size) {

@@ -41,16 +41,16 @@ namespace srk::modules::graphics::d3d11 {
 		_baseBuffer.unmap(*_graphics.get<Graphics>());
 	}
 
-	size_t IndexBuffer::read(size_t offset, void* dst, size_t dstLen) {
-		return _baseBuffer.read(offset, dst, dstLen);
+	size_t IndexBuffer::read(void* dst, size_t dstLen, size_t offset) {
+		return _baseBuffer.read(dst, dstLen, offset);
 	}
 
-	size_t IndexBuffer::write(size_t offset, const void* data, size_t length) {
-		return _baseBuffer.write(*_graphics.get<Graphics>(), offset, data, length);
+	size_t IndexBuffer::write(const void* data, size_t length, size_t offset) {
+		return _baseBuffer.write(data, length, offset);
 	}
 
-	size_t IndexBuffer::update(size_t offset, const void* data, size_t length) {
-		return _baseBuffer.update(*_graphics.get<Graphics>(), offset, data, length);
+	size_t IndexBuffer::update(const void* data, size_t length, size_t offset) {
+		return _baseBuffer.update(*_graphics.get<Graphics>(), data, length, offset);
 	}
 
 	//void IndexBuffer::flush() {

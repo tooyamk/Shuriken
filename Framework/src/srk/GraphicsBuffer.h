@@ -119,16 +119,16 @@ namespace srk {
 			if (_cur) _cur->target->unmap();
 		}
 
-		inline size_t SRK_CALL read(size_t offset, void* dst, size_t dstLen) {
-			return _cur ? _cur->target->read(offset, dst, dstLen) : -1;
+		inline size_t SRK_CALL read(void* dst, size_t dstLen, size_t offset) {
+			return _cur ? _cur->target->read(dst, dstLen, offset) : -1;
 		}
 
-		inline size_t SRK_CALL write(size_t offset, const void* data, size_t length) {
-			return _cur ? _cur->target->write(offset, data, length) : -1;
+		inline size_t SRK_CALL write(const void* data, size_t length, size_t offset) {
+			return _cur ? _cur->target->write(data, length, offset) : -1;
 		}
 
-		inline size_t SRK_CALL update(size_t offset, const void* data, size_t length) {
-			return _cur ? _cur->target->update(offset, data, length) : -1;
+		inline size_t SRK_CALL update(const void* data, size_t length, size_t offset) {
+			return _cur ? _cur->target->update(data, length, offset) : -1;
 		}
 
 		inline bool SRK_CALL isSyncing() const {
@@ -196,9 +196,9 @@ namespace srk {
 		virtual modules::graphics::Usage SRK_CALL getUsage() const override;
 		virtual modules::graphics::Usage SRK_CALL map(modules::graphics::Usage expectMapUsage) override;
 		virtual void SRK_CALL unmap() override;
-		virtual size_t SRK_CALL read(size_t offset, void* dst, size_t dstLen) override;
-		virtual size_t SRK_CALL write(size_t offset, const void* data, size_t length) override;
-		virtual size_t SRK_CALL update(size_t offset, const void* data, size_t length) override;
+		virtual size_t SRK_CALL read(void* dst, size_t dstLen, size_t offset) override;
+		virtual size_t SRK_CALL write(const void* data, size_t length, size_t offset) override;
+		virtual size_t SRK_CALL update(const void* data, size_t length, size_t offset) override;
 		//virtual void SRK_CALL flush() override;
 		virtual bool SRK_CALL isSyncing() const override;
 		virtual void SRK_CALL destroy() override;
@@ -224,9 +224,9 @@ namespace srk {
 		virtual modules::graphics::Usage SRK_CALL getUsage() const override;
 		virtual modules::graphics::Usage SRK_CALL map(modules::graphics::Usage expectMapUsage) override;
 		virtual void SRK_CALL unmap() override;
-		virtual size_t SRK_CALL read(size_t offset, void* dst, size_t dstLen) override;
-		virtual size_t SRK_CALL write(size_t offset, const void* data, size_t length) override;
-		virtual size_t SRK_CALL update(size_t offset, const void* data, size_t length) override;
+		virtual size_t SRK_CALL read(void* dst, size_t dstLen, size_t offset) override;
+		virtual size_t SRK_CALL write(const void* data, size_t length, size_t offset) override;
+		virtual size_t SRK_CALL update(const void* data, size_t length, size_t offset) override;
 		virtual modules::graphics::IndexType SRK_CALL getFormat() const override;
 		virtual void SRK_CALL setFormat(modules::graphics::IndexType type) override;
 		//virtual void SRK_CALL flush() override;
@@ -252,9 +252,9 @@ namespace srk {
 		virtual modules::graphics::Usage SRK_CALL getUsage() const override;
 		virtual modules::graphics::Usage SRK_CALL map(modules::graphics::Usage expectMapUsage) override;
 		virtual void SRK_CALL unmap() override;
-		virtual size_t SRK_CALL read(size_t offset, void* dst, size_t dstLen) override;
-		virtual size_t SRK_CALL write(size_t offset, const void* data, size_t length) override;
-		virtual size_t SRK_CALL update(size_t offset, const void* data, size_t length) override;
+		virtual size_t SRK_CALL read(void* dst, size_t dstLen, size_t offset) override;
+		virtual size_t SRK_CALL write(const void* data, size_t length, size_t offset) override;
+		virtual size_t SRK_CALL update(const void* data, size_t length, size_t offset) override;
 		//virtual void SRK_CALL flush() override;
 		virtual bool SRK_CALL isSyncing() const override;
 		virtual void SRK_CALL destroy() override;

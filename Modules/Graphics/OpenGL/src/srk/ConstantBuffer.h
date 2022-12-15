@@ -17,9 +17,9 @@ namespace srk::modules::graphics::gl {
 		virtual Usage SRK_CALL getUsage() const override;
 		virtual Usage SRK_CALL map(Usage expectMapUsage) override;
 		virtual void SRK_CALL unmap() override;
-		virtual size_t SRK_CALL read(size_t offset, void* dst, size_t dstLen) override;
-		virtual size_t SRK_CALL write(size_t offset, const void* data, size_t length) override;
-		virtual size_t SRK_CALL update(size_t offset, const void* data, size_t length) override;
+		virtual size_t SRK_CALL read(void* dst, size_t dstLen, size_t offset) override;
+		virtual size_t SRK_CALL write(const void* data, size_t length, size_t offset) override;
+		virtual size_t SRK_CALL update(const void* data, size_t length, size_t offset) override;
 		//virtual void SRK_CALL flush() override;
 		virtual bool SRK_CALL isSyncing() const override;
 		virtual void SRK_CALL destroy() override;

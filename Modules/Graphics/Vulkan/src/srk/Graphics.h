@@ -101,9 +101,19 @@ namespace srk::modules::graphics::vulkan {
 			return _isDebug;
 		}
 
+		inline const Usage SRK_CALL getBufferCreateUsageMask() const {
+			return _vkStatus.usage.bufferCreateUsageMask;
+		}
+
+		inline const Usage SRK_CALL getTexCreateUsageMask() const {
+			return _vkStatus.usage.texCreateUsageMask;
+		}
+
 		inline ConstantBufferManager& SRK_CALL getConstantBufferManager() {
 			return _constantBufferManager;
 		}
+
+		int32_t findProperties(uint32_t memoryTypeBits, VkMemoryPropertyFlags flags);
 
 		static VkCompareOp SRK_CALL convertCompareOp(ComparisonFunc func);
 		static VkStencilOp SRK_CALL convertStencilOp(StencilOp func);
@@ -113,6 +123,7 @@ namespace srk::modules::graphics::vulkan {
 		static VkCullModeFlagBits SRK_CALL convertCullMode(CullMode mode);
 		static VkFrontFace SRK_CALL convertFrontFace(FrontFace mode);
 		static VkShaderStageFlagBits SRK_CALL convertProgramStage(ProgramStage stage);
+		static VkFormat SRK_CALL convertVertexFormat(VertexFormat fmt);
 
 	private:
 		bool _isDebug;
@@ -134,6 +145,8 @@ namespace srk::modules::graphics::vulkan {
 			VkPhysicalDevice physicalDevice = nullptr;
 			VkSurfaceKHR surface = nullptr;
 			VkDevice device = nullptr;
+
+			VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
 
 			struct {
 				uint32_t graphics = 0;
@@ -184,6 +197,11 @@ namespace srk::modules::graphics::vulkan {
 				VkCommandPool pool = nullptr;
 			} cmd;
 
+			struct {
+				Usage bufferCreateUsageMask = Usage::NONE;
+				Usage texCreateUsageMask = Usage::NONE;
+			} usage;
+
 			Vec2<uint32_t> backSize;
 			Box2i32ui32 viewport;
 			Box2i32ui32 scissor;
@@ -207,7 +225,7 @@ namespace srk::modules::graphics::vulkan {
 		void SRK_CALL _setDepthStencilState(DepthStencilState& state);
 		void SRK_CALL _setRasterizerState(RasterizerState& state);
 
-		bool SRK_CALL _checkAndUpdateVkPipeline(IProgram* program);
+		bool SRK_CALL _checkAndUpdateVkPipeline(IProgram* program, const IVertexAttributeGetter* vertexAttributeGetter);
 
 		void SRK_CALL _release();
 		void SRK_CALL _resize(const Vec2ui32& size);

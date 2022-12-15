@@ -23,7 +23,15 @@ namespace srk::modules::graphics::gl {
 
 		releaseBuffer();
 
-		this->resUsage = resUsage & graphics.getBufferCreateUsageMask();
+		auto supportedUsages = graphics.getBufferCreateUsageMask();
+		if ((resUsage & Usage::IGNORE_UNSUPPORTED) == Usage::IGNORE_UNSUPPORTED) {
+			resUsage &= supportedUsages;
+		} else if (auto u = (resUsage & (~supportedUsages)); u != Usage::NONE) {
+			graphics.error(std::format("OpenGL BaseBuffer::create error : has not support Usage {}", (std::underlying_type_t<Usage>)u));
+			return false;
+		}
+
+		this->resUsage = resUsage;
 		this->size = size;
 
 		glGenBuffers(1, &handle);
@@ -40,9 +48,7 @@ namespace srk::modules::graphics::gl {
 			if ((this->resUsage & Usage::PERSISTENT_MAP) == Usage::NONE) {
 				glBufferData(bufferType, size, data, internalUsage ? internalUsage : GL_DYNAMIC_DRAW);
 			} else {
-				GLbitfield flags =
-					GL_MAP_PERSISTENT_BIT | //�ڱ�ӳ��״̬�²�ͬ��
-					GL_MAP_COHERENT_BIT;    //���ݶ�GPU�����ɼ�
+				GLbitfield flags = GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT;
 
 				if ((this->resUsage & Usage::MAP_READ) == Usage::MAP_READ) flags |= GL_MAP_READ_BIT;
 				if ((this->resUsage & Usage::MAP_WRITE) == Usage::MAP_WRITE) flags |= GL_MAP_WRITE_BIT;
@@ -60,7 +66,7 @@ namespace srk::modules::graphics::gl {
 	Usage BaseBuffer::map(Usage expectMapUsage, GLenum access) {
 		using namespace srk::enum_operators;
 
-		Usage ret = Usage::NONE;
+		auto ret = Usage::NONE;
 
 		if (handle) {
 			auto usage = expectMapUsage & resUsage & Usage::MAP_READ_WRITE;
@@ -115,7 +121,7 @@ namespace srk::modules::graphics::gl {
 		}
 	}
 
-	size_t BaseBuffer::read(size_t offset, void* dst, size_t dstLen) {
+	size_t BaseBuffer::read(void* dst, size_t dstLen, size_t offset) {
 		using namespace srk::enum_operators;
 
 		if ((mapUsage & Usage::MAP_READ)== Usage::MAP_READ) {
@@ -129,7 +135,7 @@ namespace srk::modules::graphics::gl {
 		return -1;
 	}
 
-	size_t BaseBuffer::write(size_t offset, const void* data, size_t length) {
+	size_t BaseBuffer::write(const void* data, size_t length, size_t offset) {
 		using namespace srk::enum_operators;
 
 		if ((mapUsage & Usage::MAP_WRITE) == Usage::MAP_WRITE) {
@@ -144,7 +150,7 @@ namespace srk::modules::graphics::gl {
 		return -1;
 	}
 
-	size_t BaseBuffer::update(size_t offset, const void* data, size_t length) {
+	size_t BaseBuffer::update(const void* data, size_t length, size_t offset) {
 		using namespace srk::enum_operators;
 
 		if ((resUsage & Usage::UPDATE) == Usage::UPDATE) {

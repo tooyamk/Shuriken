@@ -10,7 +10,8 @@
 #include "srk/Debug.h"
 
 namespace srk::modules::graphics::vulkan {
-	Program::Program(Graphics& graphics) : IProgram(graphics) {
+	Program::Program(Graphics& graphics) : IProgram(graphics),
+		_valid(false) {
 	}
 
 	Program::~Program() {
@@ -36,6 +37,8 @@ namespace srk::modules::graphics::vulkan {
 
 		for (size_t i = 0; i < _createInfos.size(); ++i) _createInfos[i].pName = _entryPoints[i].data();
 
+		_valid = true;
+
 		return true;
 	}
 
@@ -49,6 +52,41 @@ namespace srk::modules::graphics::vulkan {
 		_entryPoints.clear();
 
 		_info.clear();
+		_vertexLayouts.clear();
+
+		_valid = false;
+	}
+
+	bool Program::use(const IVertexAttributeGetter* vertexAttributeGetter, VkVertexInputAttributeDescription* vertexInputAttribDescs, uint32_t& vertexInputAttribDescCount) {
+		if (!_valid) return false;
+
+		auto n = _info.vertices.size();
+		if (n && (!vertexAttributeGetter || vertexInputAttribDescCount < n)) return false;
+
+		vertexInputAttribDescCount = n;
+		for (size_t i = 0; i < n; ++i) {
+			auto& v = _info.vertices[i];
+
+			auto opt = vertexAttributeGetter->get(v.name);
+			if (!opt) return false;
+
+			auto& va = *opt;
+			if (!va.resource || va.resource->getGraphics() != _graphics)  return false;
+
+			auto stride = va.resource->getStride();
+			if (!stride) return false;
+
+			auto& desc = va.desc;
+			auto fmt = Graphics::convertVertexFormat(desc.format);
+			if (fmt == VK_FORMAT_UNDEFINED) return false;
+
+			auto& vad = vertexInputAttribDescs[i];
+			vad.location = _vertexLayouts[i].location;
+			vad.format = fmt;
+			vad.offset = desc.offset;
+		}
+
+		return true;
 	}
 
 	bool Program::_compileShader(const ProgramSource& source, ProgramStage stage, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& includeHandler, const InputHandler& inputHandler) {
@@ -115,12 +153,16 @@ namespace srk::modules::graphics::vulkan {
 		case SPV_REFLECT_SHADER_STAGE_VERTEX_BIT:
 		{
 			_info.clear();
+			_vertexLayouts.clear();
 
 			for (decltype(reflectData->interface_variable_count) i = 0; i < reflectData->interface_variable_count; ++i) {
 				auto& iv = reflectData->interface_variables[i];
 				if (iv.storage_class == SpvStorageClassInput) {
 					auto& vd = _info.vertices.emplace_back();
-					vd.name = std::string_view(iv.name + InputNameSkipLength);
+					vd.name = std::string_view(iv.name + inputNamePrefix.size());
+
+					auto& vl = _vertexLayouts.emplace_back();
+					vl.location = iv.location;
 					
 					switch (iv.format) {
 					case SPV_REFLECT_FORMAT_R32_SINT:

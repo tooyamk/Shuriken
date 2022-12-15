@@ -51,13 +51,42 @@ public:
 
 		{
 			auto bs = graphics->createBlendState();
-			printaln("BlendState : ", bs == nullptr ? "failed" : "succeed");
+			printaln("createBlendState : ", bs ? "succeed" : "failed");
 
 			auto dss = graphics->createDepthStencilState();
-			printaln("DepthStencilState : ", dss == nullptr ? "failed" : "succeed");
+			printaln("createDepthStencilState : ", dss ? "succeed" : "failed");
 
 			auto rs = graphics->createRasterizerState();
-			printaln("RasterizerState : ", rs == nullptr ? "failed" : "succeed");
+			printaln("createRasterizerState : ", rs ? "succeed" : "failed");
+
+			auto vb = graphics->createVertexBuffer();
+			printaln("createVertexBuffer : ", vb ? "succeed" : "failed");
+			if (vb) {
+				auto rst = vb->create(12, Usage::MAP_READ_WRITE | Usage::UPDATE);
+				printaln("VertexBuffer::create : ", rst ? "succeed" : "failed");
+				if (rst) {
+					auto usage = vb->map(Usage::MAP_READ_WRITE | Usage::UPDATE);
+					printaln("VertexBuffer::map : ", usage != Usage::NONE ? "succeed" : "failed");
+					float32_t wbuf[] = { 1.0f, 2.0f, 3.0f };
+					constexpr auto n = std::extent_v<decltype(wbuf)>;
+					auto wsize = vb->write(wbuf, sizeof(wbuf), 0);
+					printaln("VertexBuffer::write : ", wsize != -1 ? "succeed" : "failed");
+					vb->unmap();
+
+					float32_t rbuf[n];
+					vb->map(Usage::MAP_READ_WRITE | Usage::UPDATE);
+					auto rsize = vb->read(rbuf, sizeof(rbuf), 0);
+					vb->unmap();
+					auto isSame = wsize != -1 && wsize == rsize;
+					for (size_t i = 0; i < n; ++i) {
+						if (wbuf[i] != rbuf[i]) {
+							isSame = false;
+							break;
+						}
+					}
+					printaln("VertexBuffer::read : ", isSame ? "succeed" : "failed");
+				}
+			}
 
 			IntrusivePtr shader = new Shader();
 			auto shaderResourcesFolder = getAppPath().parent_path().u8string() + "/Resources/shaders/";
@@ -70,7 +99,7 @@ public:
 				});
 
 			auto program = shader->select(nullptr);
-			printaln("Program : ", program == nullptr ? "failed" : "succeed");
+			printaln("Program : ", program ? "succeed" : "failed");
 			if (program) {
 				auto& info = program->getInfo();
 				graphics->draw(nullptr, program, nullptr, nullptr);

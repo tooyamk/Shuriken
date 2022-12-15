@@ -111,11 +111,11 @@ namespace srk::modules::graphics::gl {
 		}
 
 		inline const Usage SRK_CALL getBufferCreateUsageMask() const {
-			return _bufferCreateUsageMask;
+			return _glStatus.usage.bufferCreateUsageMask;
 		}
 
 		inline const Usage SRK_CALL getTexCreateUsageMask() const {
-			return _texCreateUsageMask;
+			return _glStatus.usage.texCreateUsageMask;
 		}
 
 		struct ConvertFormatResult {
@@ -170,6 +170,11 @@ namespace srk::modules::graphics::gl {
 				InternalStencilState state;
 			} stencil;
 
+			struct {
+				Usage bufferCreateUsageMask = Usage::NONE;
+				Usage texCreateUsageMask = Usage::NONE;
+			} usage;
+
 			bool isBack;
 			Vec2ui32 backSize;
 			Vec2ui32 canvasSize;
@@ -177,9 +182,6 @@ namespace srk::modules::graphics::gl {
 			Box2i32ui32 scissor;
 		} _glStatus;
 
-
-		Usage _bufferCreateUsageMask;
-		Usage _texCreateUsageMask;
 
 		IntrusivePtr<Ref> _loader;
 		IntrusivePtr<windows::IWindow> _win;

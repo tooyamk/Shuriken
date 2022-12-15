@@ -4,6 +4,7 @@
 #include "DepthStencilState.h"
 #include "Program.h"
 #include "RasterizerState.h"
+#include "VertexBuffer.h"
 #include "srk/ProgramSource.h"
 #include "srk/modules/graphics/GraphicsAdapter.h"
 
@@ -62,6 +63,8 @@ namespace srk::modules::graphics::vulkan {
 	}
 
 	bool Graphics::_createDevice(const CreateConfig& conf) {
+		using namespace srk::enum_operators;
+
 		auto success = false;
 		
 		do {
@@ -97,6 +100,9 @@ namespace srk::modules::graphics::vulkan {
 				_deviceFeatures.stencilIndependentMask = true;
 				_deviceFeatures.stencilIndependentRef = true;
 				_deviceFeatures.simultaneousRenderTargetCount = physicalDeviceProperties.limits.maxColorAttachments;
+
+				_vkStatus.usage.bufferCreateUsageMask = Usage::MAP_READ_WRITE | Usage::UPDATE;
+				_vkStatus.usage.texCreateUsageMask = Usage::RENDERABLE;
 			}
 
 			_defaultBlendState = new BlendState(*this, true);
@@ -195,6 +201,7 @@ namespace srk::modules::graphics::vulkan {
 		if (!swapchainExtFound) return false;
 
 		_vkStatus.physicalDevice = physicalDevice;
+		vkGetPhysicalDeviceMemoryProperties(physicalDevice, &_vkStatus.physicalDeviceMemoryProperties);
 
 		return true;
 	}
@@ -569,8 +576,10 @@ namespace srk::modules::graphics::vulkan {
 		return true;
 	}
 
-	bool Graphics::_checkAndUpdateVkPipeline(IProgram* program) {
+	bool Graphics::_checkAndUpdateVkPipeline(IProgram* program, const IVertexAttributeGetter* vertexAttributeGetter) {
 		if (!program || program->getGraphics() != this) return false;
+		auto p = (Program*)program->getNative();;
+		if (!p) return false;
 
 		auto needUpdate = false;
 		if (_vkStatus.pipeline.pipeline) {
@@ -583,24 +592,26 @@ namespace srk::modules::graphics::vulkan {
 
 		if (!needUpdate) return true;
 
+		std::array<VkVertexInputAttributeDescription, 16> vertexInputAttributeDescriptions;
+		uint32_t vertexInputAttributeDescriptionCount = vertexInputAttributeDescriptions.size();
+		auto rst = p->use(vertexAttributeGetter, vertexInputAttributeDescriptions.data(), vertexInputAttributeDescriptionCount);
+		if (!rst) return false;
+
 		VkGraphicsPipelineCreateInfo graphicsPipelineCreateInfo;
 		memset(&graphicsPipelineCreateInfo, 0, sizeof(graphicsPipelineCreateInfo));
 		graphicsPipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 
-		{
-			auto p = (Program*)program->getNative();
-			auto& infos = p->getVkPipelineShaderStageCreateInfos();
-			graphicsPipelineCreateInfo.stageCount = infos.size();
-			graphicsPipelineCreateInfo.pStages = infos.data();
-		}
+		auto& pipelineShaderStageCreateInfos = p->getVkPipelineShaderStageCreateInfos();
+		graphicsPipelineCreateInfo.stageCount = pipelineShaderStageCreateInfos.size();
+		graphicsPipelineCreateInfo.pStages = pipelineShaderStageCreateInfos.data();
 
 		VkPipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo;
 		memset(&pipelineVertexInputStateCreateInfo, 0, sizeof(pipelineVertexInputStateCreateInfo));
 		pipelineVertexInputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 		pipelineVertexInputStateCreateInfo.vertexBindingDescriptionCount = 0;
 		pipelineVertexInputStateCreateInfo.pVertexBindingDescriptions = nullptr; // Optional
-		pipelineVertexInputStateCreateInfo.vertexAttributeDescriptionCount = 0;
-		pipelineVertexInputStateCreateInfo.pVertexAttributeDescriptions = nullptr; // Optional
+		pipelineVertexInputStateCreateInfo.vertexAttributeDescriptionCount = vertexInputAttributeDescriptionCount;
+		pipelineVertexInputStateCreateInfo.pVertexAttributeDescriptions = vertexInputAttributeDescriptions.data();
 		graphicsPipelineCreateInfo.pVertexInputState = &pipelineVertexInputStateCreateInfo;
 
 		VkPipelineInputAssemblyStateCreateInfo pipelineInputAssemblyStateCreateInfo;
@@ -796,7 +807,7 @@ namespace srk::modules::graphics::vulkan {
 	}
 
 	IntrusivePtr<IVertexBuffer> Graphics::createVertexBuffer() {
-		return nullptr;
+		return new VertexBuffer(*this);
 	}
 
 	IntrusivePtr<IPixelBuffer> Graphics::createPixelBuffer() {
@@ -887,12 +898,12 @@ namespace srk::modules::graphics::vulkan {
 
 	void Graphics::draw(const IVertexAttributeGetter* vertexAttributeGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
 		const IIndexBuffer* indexBuffer, uint32_t count, uint32_t offset) {
-		if (!_checkAndUpdateVkPipeline(program)) return;
+		if (!_checkAndUpdateVkPipeline(program, vertexAttributeGetter)) return;
 	}
 
 	void Graphics::drawInstanced(const IVertexAttributeGetter* vertexAttributeGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
 		const IIndexBuffer* indexBuffer, uint32_t instancedCount, uint32_t count, uint32_t offset) {
-		if (!_checkAndUpdateVkPipeline(program)) return;
+		if (!_checkAndUpdateVkPipeline(program, vertexAttributeGetter)) return;
 	}
 
 	void Graphics::endRender() {
@@ -908,6 +919,14 @@ namespace srk::modules::graphics::vulkan {
 	}
 
 	void Graphics::clear(ClearFlag flags, const Vec4f32& color, float32_t depth, size_t stencil) {
+	}
+
+	int32_t Graphics::findProperties(uint32_t memoryTypeBits, VkMemoryPropertyFlags flags) {
+		for (uint32_t i = 0; i < _vkStatus.physicalDeviceMemoryProperties.memoryTypeCount; ++i) {
+			if ((memoryTypeBits & (1 << i)) && (_vkStatus.physicalDeviceMemoryProperties.memoryTypes[i].propertyFlags & flags) == flags) return i;
+		}
+
+		return -1;
 	}
 
 	void Graphics::_release() {
@@ -952,6 +971,8 @@ namespace srk::modules::graphics::vulkan {
 		_deviceFeatures.reset();
 
 		_deviceVersion = "Vulkan Unknown";
+		_vkStatus.usage.bufferCreateUsageMask = Usage::NONE;
+		_vkStatus.usage.texCreateUsageMask = Usage::NONE;
 	}
 
 	void Graphics::_resize(const Vec2ui32& size) {
@@ -1118,6 +1139,58 @@ namespace srk::modules::graphics::vulkan {
 			return VK_SHADER_STAGE_VERTEX_BIT;
 		default:
 			return (VkShaderStageFlagBits)0;
+		}
+	}
+
+	VkFormat Graphics::convertVertexFormat(VertexFormat fmt) {
+		switch (fmt.type) {
+		case VertexType::I32:
+		{
+			switch (fmt.dimension) {
+			case 1:
+				return VK_FORMAT_R32_SINT;
+			case 2:
+				return VK_FORMAT_R32G32_SINT;
+			case 3:
+				return VK_FORMAT_R32G32B32_SINT;
+			case 4:
+				return VK_FORMAT_R32G32B32A32_SINT;
+			default:
+				return VK_FORMAT_UNDEFINED;
+			}
+		}
+		case VertexType::UI32:
+		{
+			switch (fmt.dimension) {
+			case 1:
+				return VK_FORMAT_R32_UINT;
+			case 2:
+				return VK_FORMAT_R32G32_UINT;
+			case 3:
+				return VK_FORMAT_R32G32B32_UINT;
+			case 4:
+				return VK_FORMAT_R32G32B32A32_UINT;
+			default:
+				return VK_FORMAT_UNDEFINED;
+			}
+		}
+		case VertexType::F32:
+		{
+			switch (fmt.dimension) {
+			case 1:
+				return VK_FORMAT_R32_SFLOAT;
+			case 2:
+				return VK_FORMAT_R32G32_SFLOAT;
+			case 3:
+				return VK_FORMAT_R32G32B32_SFLOAT;
+			case 4:
+				return VK_FORMAT_R32G32B32A32_SFLOAT;
+			default:
+				return VK_FORMAT_UNDEFINED;
+			}
+		}
+		default:
+			return VK_FORMAT_UNDEFINED;
 		}
 	}
 }

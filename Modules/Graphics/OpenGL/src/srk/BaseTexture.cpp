@@ -39,10 +39,11 @@ namespace srk::modules::graphics::gl {
 
 		if (!sampleCount) sampleCount = 1;
 
-		if ((resUsage & Usage::IGNORE_UNSUPPORTED) == Usage::IGNORE_UNSUPPORTED) resUsage &= graphics.getTexCreateUsageMask();
-
-		if ((resUsage & Usage::MAP_READ_WRITE) != Usage::NONE) {
-			graphics.error("OpenGL Texture::create error : not support Usage::READ or Usage::WRITE");
+		auto supportedUsages = graphics.getTexCreateUsageMask();
+		if ((resUsage & Usage::IGNORE_UNSUPPORTED) == Usage::IGNORE_UNSUPPORTED) {
+			resUsage &= supportedUsages;
+		} else if (auto u = (resUsage & (~supportedUsages)); u != Usage::NONE) {
+			graphics.error(std::format("OpenGL Texture::create error : has not support Usage {}", (std::underlying_type_t<Usage>)u));
 			return _createDone(graphics, false);
 		}
 

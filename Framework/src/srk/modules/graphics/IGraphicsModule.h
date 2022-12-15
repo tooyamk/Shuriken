@@ -72,9 +72,9 @@ namespace srk::modules::graphics {
 		virtual Usage SRK_CALL getUsage() const = 0;
 		virtual Usage SRK_CALL map(Usage expectMapUsage) = 0;
 		virtual void SRK_CALL unmap() = 0;
-		virtual size_t SRK_CALL read(size_t offset, void* dst, size_t dstLen) = 0;
-		virtual size_t SRK_CALL write(size_t offset, const void* data, size_t length) = 0;
-		virtual size_t SRK_CALL update(size_t offset, const void* data, size_t length) = 0;
+		virtual size_t SRK_CALL read(void* dst, size_t dstLen, size_t offset) = 0;
+		virtual size_t SRK_CALL write(const void* data, size_t length, size_t offset) = 0;
+		virtual size_t SRK_CALL update(const void* data, size_t length, size_t offset) = 0;
 		//virtual void SRK_CALL flush() = 0;
 		virtual bool SRK_CALL isSyncing() const = 0;
 		virtual void SRK_CALL destroy() = 0;

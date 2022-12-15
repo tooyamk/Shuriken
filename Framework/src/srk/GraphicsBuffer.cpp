@@ -40,16 +40,16 @@ namespace srk {
 		_base.unmap();
 	}
 
-	size_t MultipleVertexBuffer::read(size_t offset, void* dst, size_t dstLen) {
-		return _base.read(offset, dst, dstLen);
+	size_t MultipleVertexBuffer::read(void* dst, size_t dstLen, size_t offset) {
+		return _base.read(dst, dstLen, offset);
 	}
 
-	size_t MultipleVertexBuffer::write(size_t offset, const void* data, size_t length) {
-		return _base.write(offset, data, length);
+	size_t MultipleVertexBuffer::write(const void* data, size_t length, size_t offset) {
+		return _base.write(data, length, offset);
 	}
 
-	size_t MultipleVertexBuffer::update(size_t offset, const void* data, size_t length) {
-		return _base.update(offset, data, length);
+	size_t MultipleVertexBuffer::update(const void* data, size_t length, size_t offset) {
+		return _base.update(data, length, offset);
 	}
 
 	//void MultipleVertexBuffer::flush() {
@@ -120,16 +120,16 @@ namespace srk {
 		_base.unmap();
 	}
 
-	size_t MultipleIndexBuffer::read(size_t offset, void* dst, size_t dstLen) {
-		return _base.read(offset, dst, dstLen);
+	size_t MultipleIndexBuffer::read(void* dst, size_t dstLen, size_t offset) {
+		return _base.read(dst, dstLen, offset);
 	}
 
-	size_t MultipleIndexBuffer::write(size_t offset, const void* data, size_t length) {
-		return _base.write(offset, data, length);
+	size_t MultipleIndexBuffer::write(const void* data, size_t length, size_t offset) {
+		return _base.write(data, length, offset);
 	}
 
-	size_t MultipleIndexBuffer::update(size_t offset, const void* data, size_t length) {
-		return _base.update(offset, data, length);
+	size_t MultipleIndexBuffer::update(const void* data, size_t length, size_t offset) {
+		return _base.update(data, length, offset);
 	}
 
 	modules::graphics::IndexType MultipleIndexBuffer::getFormat() const {
@@ -195,16 +195,16 @@ namespace srk {
 		_base.unmap();
 	}
 
-	size_t MultipleConstantBuffer::read(size_t offset, void* dst, size_t dstLen) {
-		return _base.read(offset, dst, dstLen);
+	size_t MultipleConstantBuffer::read(void* dst, size_t dstLen, size_t offset) {
+		return _base.read(dst, dstLen, offset);
 	}
 
-	size_t MultipleConstantBuffer::write(size_t offset, const void* data, size_t length) {
-		return _base.write(offset, data, length);
+	size_t MultipleConstantBuffer::write(const void* data, size_t length, size_t offset) {
+		return _base.write(data, length, offset);
 	}
 
-	size_t MultipleConstantBuffer::update(size_t offset, const void* data, size_t length) {
-		return _base.update(offset, data, length);
+	size_t MultipleConstantBuffer::update(const void* data, size_t length, size_t offset) {
+		return _base.update(data, length, offset);
 	}
 
 	//void MultipleConstantBuffer::flush() {

@@ -248,9 +248,9 @@ public:
 						float32_t v = t <= halfCycyle ? 1.f - float32_t(t) / halfCycyle : (float32_t(t) - halfCycyle) / halfCycyle;
 						vertices[3] = v;
 						if ((vb->map(Usage::MAP_WRITE | Usage::MAP_SWAP) & Usage::DISCARD) == Usage::DISCARD) {
-							vb->write(0, vertices, sizeof(vertices));
+							vb->write(vertices, sizeof(vertices), 0);
 						} else {
-							vb->write(12, &v, 4);
+							vb->write(&v, 4, 12);
 						}
 						//vb->update(12, &v, 4);
 						vb->unmap();

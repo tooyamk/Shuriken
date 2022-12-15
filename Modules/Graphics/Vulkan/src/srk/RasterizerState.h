@@ -3,8 +3,6 @@
 #include "Base.h"
 
 namespace srk::modules::graphics::vulkan {
-	class Graphics;
-
 	class SRK_MODULE_DLL RasterizerState : public IRasterizerState {
 	public:
 		RasterizerState(Graphics& graphics, bool isInternal);

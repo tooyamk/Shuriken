@@ -65,11 +65,6 @@ namespace srk::modules::graphics::gl {
 				return _createDone(false, res);
 			}
 
-			if ((native->resUsage & Usage::RENDERABLE) != Usage::RENDERABLE) {
-				_graphics.get<Graphics>()->error("OpenGL RenderView(Simulative)::create error : res must has Usage::RENDERABLE");
-				return _createDone(false, res);
-			}
-
 			if (arraySize < native->arraySize) {
 				_graphics.get<Graphics>()->error("OpenGL RenderView(Simulative)::create error : arraySize must >= res.arraySize");
 				return _createDone(false, res);

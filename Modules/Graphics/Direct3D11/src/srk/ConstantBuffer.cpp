@@ -40,16 +40,16 @@ namespace srk::modules::graphics::d3d11 {
 		_baseBuffer.unmap(*_graphics.get<Graphics>());
 	}
 
-	size_t ConstantBuffer::read(size_t offset, void* dst, size_t dstLen) {
-		return _baseBuffer.read(offset, dst, dstLen);
+	size_t ConstantBuffer::read(void* dst, size_t dstLen, size_t offset) {
+		return _baseBuffer.read(dst, dstLen, offset);
 	}
 
-	size_t ConstantBuffer::write(size_t offset, const void* data, size_t length) {
-		return _baseBuffer.write(*_graphics.get<Graphics>(), offset, data, length);
+	size_t ConstantBuffer::write(const void* data, size_t length, size_t offset) {
+		return _baseBuffer.write(data, length, offset);
 	}
 
-	size_t ConstantBuffer::update(size_t offset, const void* data, size_t length) {
-		return _baseBuffer.update(*_graphics.get<Graphics>(), offset, data, length);
+	size_t ConstantBuffer::update(const void* data, size_t length, size_t offset) {
+		return _baseBuffer.update(*_graphics.get<Graphics>(), data, length, offset);
 	}
 
 	//void ConstantBuffer::flush() {

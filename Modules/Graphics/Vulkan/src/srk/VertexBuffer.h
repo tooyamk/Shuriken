@@ -2,11 +2,11 @@
 
 #include "BaseBuffer.h"
 
-namespace srk::modules::graphics::gl {
-	class SRK_MODULE_DLL PixelBuffer : public IPixelBuffer {
+namespace srk::modules::graphics::vulkan {
+	class SRK_MODULE_DLL VertexBuffer : public IVertexBuffer {
 	public:
-		PixelBuffer(Graphics& graphics);
-		virtual ~PixelBuffer();
+		VertexBuffer(Graphics& graphics);
+		virtual ~VertexBuffer();
 
 		virtual bool SRK_CALL isCreated() const override;
 		virtual const void* SRK_CALL getNative() const override;
@@ -18,23 +18,15 @@ namespace srk::modules::graphics::gl {
 		virtual size_t SRK_CALL read(void* dst, size_t dstLen, size_t offset) override;
 		virtual size_t SRK_CALL write(const void* data, size_t length, size_t offset) override;
 		virtual size_t SRK_CALL update(const void* data, size_t length, size_t offset) override;
-		//virtual void SRK_CALL flush() override;
 		virtual bool SRK_CALL isSyncing() const override;
 		virtual void SRK_CALL destroy() override;
 
-		inline GLenum SRK_CALL getInternalType() const {
-			return _baseBuffer.bufferType;
-		}
-
-		inline GLuint SRK_CALL getInternalBuffer() const {
-			return _baseBuffer.handle;
-		}
-
-		inline BaseBuffer* SRK_CALL getBaseBuffer() {
-			return &_baseBuffer;
-		}
+		virtual uint32_t SRK_CALL getStride() const override;
+		virtual void SRK_CALL setStride(uint32_t stride) override;
 
 	protected:
+		uint32_t _stride;
+
 		BaseBuffer _baseBuffer;
 	};
 }

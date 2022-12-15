@@ -13,15 +13,18 @@ namespace srk::modules::graphics::d3d11 {
 		bool SRK_CALL createInit(Graphics& graphics, Usage resUsage, uint32_t resSize, uint32_t dataSize, UINT mipLevels, UINT& cpuUsage, D3D11_USAGE& d3dUsage) {
 			using namespace srk::enum_operators;
 
-			if constexpr (!Tex) {
-				if ((resUsage & Usage::RENDERABLE) == Usage::RENDERABLE) {
-					if ((resUsage & Usage::IGNORE_UNSUPPORTED) == Usage::NONE) {
-						graphics.error("D3D Resource::create error : not support Usage::RENDERABLE");
-						return false;
-					} else {
-						resUsage &= ~Usage::RENDERABLE;
-					}
-				}
+			Usage supportedUsages;
+			if constexpr (Tex) {
+				supportedUsages = graphics.getTexCreateUsageMask();
+			} else {
+				supportedUsages = graphics.getBufferCreateUsageMask();
+			}
+
+			if ((resUsage & Usage::IGNORE_UNSUPPORTED) == Usage::IGNORE_UNSUPPORTED) {
+				resUsage &= supportedUsages;
+			} else if (auto u = (resUsage & (~supportedUsages)); u != Usage::NONE) {
+				graphics.error(std::format("D3D Resource::create error : has not support Usage {}", (std::underlying_type_t<Usage>)u));
+				return false;
 			}
 
 			cpuUsage = 0;

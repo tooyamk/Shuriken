@@ -271,15 +271,15 @@ namespace srk::modules::graphics {
 				uint32_t cur = 0, fillSize = 0;
 				auto data = (const uint8_t*)param.getData();
 				do {
-					cb->write(var.offset + fillSize, data + cur, pes);
+					cb->write(data + cur, pes, var.offset + fillSize);
 					cur += pes;
 					fillSize += offset;
 				} while (cur < max && fillSize < var.size);
 			} else {
-				cb->write(var.offset, param.getData(), std::min<uint32_t>(size, var.size));
+				cb->write(param.getData(), std::min<uint32_t>(size, var.size), var.offset);
 			}
 		} else {
-			cb->write(var.offset, param.getData(), std::min<uint32_t>(size, var.size));
+			cb->write(param.getData(), std::min<uint32_t>(size, var.size), var.offset);
 		}
 	}
 }

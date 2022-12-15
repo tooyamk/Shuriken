@@ -13,9 +13,9 @@ namespace srk::modules::graphics::gl {
 		bool SRK_CALL create(Graphics& graphics, size_t size, Usage resUsage, const void* data = nullptr, GLenum internalUsage = 0);
 		Usage SRK_CALL map(Usage expectMapUsage, GLenum access = 0);
 		void SRK_CALL unmap();
-		size_t SRK_CALL read(size_t offset, void* dst, size_t dstLen);
-		size_t SRK_CALL write(size_t offset, const void* data, size_t length);
-		size_t SRK_CALL update(size_t offset, const void* data, size_t length);
+		size_t SRK_CALL read(void* dst, size_t dstLen, size_t offset);
+		size_t SRK_CALL write(const void* data, size_t length, size_t offset);
+		size_t SRK_CALL update(const void* data, size_t length, size_t offset);
 		void SRK_CALL releaseBuffer();
 
 		template<bool Force>

@@ -3,8 +3,6 @@
 #include "Base.h"
 
 namespace srk::modules::graphics::vulkan {
-	class Graphics;
-
 	class SRK_MODULE_DLL BlendState : public IBlendState {
 	public:
 		BlendState(Graphics& graphics, bool isInternal);

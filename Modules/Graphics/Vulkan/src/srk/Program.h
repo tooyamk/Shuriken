@@ -3,8 +3,6 @@
 #include "Base.h"
 
 namespace srk::modules::graphics::vulkan {
-	class Graphics;
-
 	class SRK_MODULE_DLL Program : public IProgram {
 	public:
 		Program(Graphics& graphics);
@@ -19,12 +17,21 @@ namespace srk::modules::graphics::vulkan {
 			return _createInfos;
 		}
 
+		bool SRK_CALL use(const IVertexAttributeGetter* vertexAttributeGetter, VkVertexInputAttributeDescription* vertexInputAttribDescs, uint32_t& vertexInputAttribDescCount);
+
 	protected:
-		inline static constexpr uint32_t InputNameSkipLength = 7;
+		inline static constexpr std::string_view inputNamePrefix = std::string_view("in.var.");
+
+		struct VertexLayout {
+			uint32_t location;
+		};
 
 		std::vector<std::string> _entryPoints;
 		std::vector<VkPipelineShaderStageCreateInfo> _createInfos;
 
+		std::vector<VertexLayout> _vertexLayouts;
+
+		bool _valid;
 		ProgramInfo _info;
 
 		bool SRK_CALL _compileShader(const ProgramSource& source, ProgramStage stage, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& includeHandler, const InputHandler& inputHandler);

@@ -112,6 +112,14 @@ namespace srk::modules::graphics::d3d11 {
 			return _internalFeatures;
 		}
 
+		inline const Usage SRK_CALL getBufferCreateUsageMask() const {
+			return _d3dStatus.usage.bufferCreateUsageMask;
+		}
+
+		inline const Usage SRK_CALL getTexCreateUsageMask() const {
+			return _d3dStatus.usage.texCreateUsageMask;
+		}
+
 		inline ConstantBufferManager& SRK_CALL getConstantBufferManager() {
 			return _constantBufferManager;
 		}
@@ -331,11 +339,18 @@ namespace srk::modules::graphics::d3d11 {
 				DepthStencilFeature featureValue;
 			} depthStencil;
 
+			struct {
+				Usage bufferCreateUsageMask = Usage::NONE;
+				Usage texCreateUsageMask = Usage::NONE;
+			} usage;
+
 			Vec2<UINT> backSize;
 			Box2i32ui32 viewport;
 			Box2i32ui32 scissor;
 		} _d3dStatus;
 
+
+		Usage _bufferCreateUsageMask;
 
 		ConstantBufferManager _constantBufferManager;
 
