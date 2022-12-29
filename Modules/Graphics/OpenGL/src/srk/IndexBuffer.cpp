@@ -1,5 +1,4 @@
 #include "IndexBuffer.h"
-#include "Graphics.h"
 
 namespace srk::modules::graphics::gl {
 	IndexBuffer::IndexBuffer(Graphics& graphics) : IIndexBuffer(graphics),
@@ -17,7 +16,7 @@ namespace srk::modules::graphics::gl {
 	}
 
 	const void* IndexBuffer::getNative() const {
-		return this;
+		return &_baseBuffer;
 	}
 
 	bool IndexBuffer::create(size_t size, Usage bufferUsage, const void* data, size_t dataSize) {
@@ -54,9 +53,9 @@ namespace srk::modules::graphics::gl {
 		return _baseBuffer.update(data, length, offset);
 	}
 
-	//void IndexBuffer::flush() {
-	//	_baseBuffer.flush();
-	//}
+	size_t IndexBuffer::copyFrom(size_t dstPos, const IBuffer* src, const Box1uz& srcRange) {
+		return _baseBuffer.copyFrom(*_graphics.get<Graphics>(), dstPos, src, srcRange);
+	}
 
 	bool IndexBuffer::isSyncing() const {
 		return _baseBuffer.isSyncing();

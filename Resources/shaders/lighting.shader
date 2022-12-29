@@ -84,8 +84,23 @@ shader {
             float3 _diffuseColor;
             float3 _specularColor;
 
-            Texture2D _diffuseTex;
-            SamplerState _diffuseTexSampler;
+            //Texture2D _diffuseTex;
+            //SamplerState _diffuseTexSampler;
+
+            struct aabbcc {
+                float val1;
+                float val2[3];
+                float val3;
+                //Texture2D _diffuseTex;
+                //SamplerState _diffuseTexSampler;
+            };
+
+            cbuffer buf1 {
+                float red;
+                aabbcc blue;
+                Texture2D _diffuseTex;
+                SamplerState _diffuseTexSampler;
+            }
 
             float BlinnPhoneFactor(float3 normal, float3 lightingDir, float3 viewDir, float shininess) {
 	            float3 h = normalize(lightingDir + viewDir);
@@ -94,6 +109,7 @@ shader {
 
             float4 main(PS_INPUT input) : SV_TARGET {
                 float4 c = _diffuseTex.Sample(_diffuseTexSampler, input.uv);
+                c.r *= blue.val1;
 
                 #if _LIGHT_TYPE >= 1 && _LIGHT_TYPE <= 3
                     #if _LIGHT_TYPE == 1

@@ -131,6 +131,10 @@ namespace srk {
 			return _cur ? _cur->target->update(data, length, offset) : -1;
 		}
 
+		inline size_t SRK_CALL copyFrom(size_t dstPos, const modules::graphics::IBuffer* src, const Box1uz& srcRange) {
+			return _cur ? _cur->target->copyFrom(dstPos, src, srcRange) : -1;
+		}
+
 		inline bool SRK_CALL isSyncing() const {
 			return _cur ? _cur->target->isSyncing() : false;
 		}
@@ -199,7 +203,7 @@ namespace srk {
 		virtual size_t SRK_CALL read(void* dst, size_t dstLen, size_t offset) override;
 		virtual size_t SRK_CALL write(const void* data, size_t length, size_t offset) override;
 		virtual size_t SRK_CALL update(const void* data, size_t length, size_t offset) override;
-		//virtual void SRK_CALL flush() override;
+		virtual size_t SRK_CALL copyFrom(size_t dstPos, const modules::graphics::IBuffer* src, const Box1uz& srcRange) override;
 		virtual bool SRK_CALL isSyncing() const override;
 		virtual void SRK_CALL destroy() override;
 
@@ -227,9 +231,9 @@ namespace srk {
 		virtual size_t SRK_CALL read(void* dst, size_t dstLen, size_t offset) override;
 		virtual size_t SRK_CALL write(const void* data, size_t length, size_t offset) override;
 		virtual size_t SRK_CALL update(const void* data, size_t length, size_t offset) override;
+		virtual size_t SRK_CALL copyFrom(size_t dstPos, const modules::graphics::IBuffer* src, const Box1uz& srcRange) override;
 		virtual modules::graphics::IndexType SRK_CALL getFormat() const override;
 		virtual void SRK_CALL setFormat(modules::graphics::IndexType type) override;
-		//virtual void SRK_CALL flush() override;
 		virtual bool SRK_CALL isSyncing() const override;
 		virtual void SRK_CALL destroy() override;
 
@@ -255,7 +259,7 @@ namespace srk {
 		virtual size_t SRK_CALL read(void* dst, size_t dstLen, size_t offset) override;
 		virtual size_t SRK_CALL write(const void* data, size_t length, size_t offset) override;
 		virtual size_t SRK_CALL update(const void* data, size_t length, size_t offset) override;
-		//virtual void SRK_CALL flush() override;
+		virtual size_t SRK_CALL copyFrom(size_t dstPos, const modules::graphics::IBuffer* src, const Box1uz& srcRange) override;
 		virtual bool SRK_CALL isSyncing() const override;
 		virtual void SRK_CALL destroy() override;
 

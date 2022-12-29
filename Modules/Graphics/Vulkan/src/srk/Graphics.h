@@ -109,6 +109,20 @@ namespace srk::modules::graphics::vulkan {
 			return _vkStatus.usage.texCreateUsageMask;
 		}
 
+		inline VmaAllocator SRK_CALL getMemAllocator() const {
+			return _vkStatus.memAllocator;
+		}
+
+		const VkAllocationCallbacks* SRK_CALL getVkAllocationCallbacks() const;
+
+		inline VkCommandPool SRK_CALL getCommandPool() const {
+			return _vkStatus.cmd.pool;
+		}
+
+		inline VkQueue SRK_CALL getGraphicsQueue() const {
+			return _vkStatus.cmd.graphicsQueue;
+		}
+
 		inline ConstantBufferManager& SRK_CALL getConstantBufferManager() {
 			return _constantBufferManager;
 		}
@@ -141,10 +155,13 @@ namespace srk::modules::graphics::vulkan {
 		IntrusivePtr<RasterizerState> _defaultRasterizerState;
 
 		struct {
+			uint32_t apiVersion = 0;
+
 			VkInstance instance = nullptr;
 			VkPhysicalDevice physicalDevice = nullptr;
 			VkSurfaceKHR surface = nullptr;
 			VkDevice device = nullptr;
+			VmaAllocator memAllocator = nullptr;
 
 			VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
 
@@ -195,6 +212,7 @@ namespace srk::modules::graphics::vulkan {
 
 			struct {
 				VkCommandPool pool = nullptr;
+				VkQueue graphicsQueue = nullptr;
 			} cmd;
 
 			struct {
@@ -218,6 +236,7 @@ namespace srk::modules::graphics::vulkan {
 		bool SRK_CALL _createVkInstance(bool debug);
 		bool SRK_CALL _createVkSurface(windows::IWindow& win);
 		bool SRK_CALL _createVkDevice();
+		bool SRK_CALL _createMemAllocator();
 		bool SRK_CALL _createVkCommandPool();
 		bool SRK_CALL _createVkSwapchain();
 
@@ -231,5 +250,8 @@ namespace srk::modules::graphics::vulkan {
 		void SRK_CALL _resize(const Vec2ui32& size);
 
 		void SRK_CALL _cleanupSwapChain(VkSwapchainKHR* swapChain);
+
+		IConstantBuffer* SRK_CALL _createdShareConstantBuffer();
+		IConstantBuffer* SRK_CALL _createdExclusiveConstantBuffer(uint32_t numParameters);
 	};
 }

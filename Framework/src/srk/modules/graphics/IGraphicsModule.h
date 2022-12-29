@@ -21,6 +21,7 @@ namespace srk::events {
 
 namespace srk::modules::graphics {
 	class IGraphicsModule;
+	class ITextureResource;
 	class GraphicsAdapter;
 
 	using SampleCount = uint8_t;
@@ -42,21 +43,25 @@ namespace srk::modules::graphics {
 
 	enum class Usage : uint16_t {
 		NONE = 0,//create and map
-		MAP_READ = 1,//create and map
-		MAP_WRITE = 1 << 1,//create and map
-		UPDATE = 1 << 2,//create
+		COPY_SRC = 1 << 0,//create
+		COPY_DST = 1 << 1,//create
+		MAP_READ = 1 << 2,//create and map
+		MAP_WRITE = 1 << 3,//create and map
+		UPDATE = 1 << 4,//create
 
-		PERSISTENT_MAP = 1 << 3,//create
-		IGNORE_UNSUPPORTED = 1 << 4,//create
-		RENDERABLE = 1 << 5,//create
+		PERSISTENT_MAP = 1 << 5,//create
+		IGNORE_UNSUPPORTED = 1 << 6,//create
+		RENDERABLE = 1 << 7,//create
 
-		MAP_SWAP = 1 << 6,//map
-		MAP_FORCE_SWAP = (1 << 7) | MAP_SWAP,//map
+		MAP_SWAP = 1 << 8,//map
+		MAP_FORCE_SWAP = (1 << 9) | MAP_SWAP,//map
 
-		DISCARD = 1 << 8,//map return
+		DISCARD = 1 << 10,//map return
 
+		COPY_SRC_DST = COPY_SRC | COPY_DST,
 		MAP_READ_WRITE = MAP_READ | MAP_WRITE,
-		MAP_WRITE_UPDATE = MAP_WRITE | UPDATE
+		MAP_WRITE_UPDATE = MAP_WRITE | UPDATE,
+		CREATE_ALL = COPY_SRC_DST | MAP_READ_WRITE | UPDATE | PERSISTENT_MAP | IGNORE_UNSUPPORTED | RENDERABLE
 	};
 
 
@@ -75,6 +80,7 @@ namespace srk::modules::graphics {
 		virtual size_t SRK_CALL read(void* dst, size_t dstLen, size_t offset) = 0;
 		virtual size_t SRK_CALL write(const void* data, size_t length, size_t offset) = 0;
 		virtual size_t SRK_CALL update(const void* data, size_t length, size_t offset) = 0;
+		virtual size_t SRK_CALL copyFrom(size_t dstPos, const IBuffer* src, const Box1uz& srcRange) = 0;
 		//virtual void SRK_CALL flush() = 0;
 		virtual bool SRK_CALL isSyncing() const = 0;
 		virtual void SRK_CALL destroy() = 0;
@@ -296,6 +302,8 @@ namespace srk::modules::graphics {
 	public:
 		virtual ~IPixelBuffer() {}
 
+		virtual bool SRK_CALL copyFrom(uint32_t mipSlice, const ITextureResource* src) = 0;
+
 	protected:
 		IPixelBuffer(IGraphicsModule& graphics) : IBuffer(graphics) {}
 	};
@@ -451,7 +459,6 @@ namespace srk::modules::graphics {
 		virtual uint32_t SRK_CALL write(uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, const void* data, uint32_t length) = 0;
 		virtual bool SRK_CALL copyFrom(const Vec3ui32& dstPos, uint32_t dstArraySlice, uint32_t dstMipSlice, const ITextureResource* src, uint32_t srcArraySlice, uint32_t srcMipSlice, const Box3ui32& srcRange) = 0;
 		virtual bool SRK_CALL copyFrom(uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const IPixelBuffer* pixelBuffer) = 0;
-		virtual bool SRK_CALL copyTo(uint32_t mipSlice, const IPixelBuffer* pixelBuffer) = 0;
 		virtual void SRK_CALL destroy() = 0;
 	};
 

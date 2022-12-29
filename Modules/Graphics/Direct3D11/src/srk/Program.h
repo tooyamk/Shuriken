@@ -114,8 +114,8 @@ namespace srk::modules::graphics::d3d11 {
 			for (auto& info : layout.constantBuffers) {
 				auto cb = _getConstantBuffer(info, paramGetter);
 				if (cb && g == cb->getGraphics()) {
-					if (auto native = (ConstantBuffer*)cb->getNative(); native) {
-						if (auto buffer = native->getInternalBuffer(); buffer) g->useConstantBuffers<Stage>(info.bindPoint, 1, &buffer);
+					if (auto native = (BaseBuffer*)cb->getNative(); native) {
+						if (auto buffer = (ID3D11Buffer*)native->handle; buffer) g->useConstantBuffers<Stage>(info.bindPoint, 1, &buffer);
 					}
 				}
 			}

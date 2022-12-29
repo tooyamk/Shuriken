@@ -551,6 +551,7 @@ namespace srk {
 	using Vec1ui32 = Vec1<uint32_t>;
 	using Vec1i64 = Vec1<int64_t>;
 	using Vec1ui64 = Vec1<uint64_t>;
+	using Vec1uz = Vec1<size_t>;
 	template<typename T> using Vec2 = Vector<2, T>;
 	using Vec2f32 = Vec2<float32_t>;
 	using Vec2f64 = Vec2<float64_t>;
@@ -562,6 +563,7 @@ namespace srk {
 	using Vec2ui32 = Vec2<uint32_t>;
 	using Vec2i64 = Vec2<int64_t>;
 	using Vec2ui64 = Vec2<uint64_t>;
+	using Vec2uz = Vec2<size_t>;
 	template<typename T> using Vec3 = Vector<3, T>;
 	using Vec3f32 = Vec3<float32_t>;
 	using Vec3f64 = Vec3<float64_t>;
@@ -573,6 +575,7 @@ namespace srk {
 	using Vec3ui32 = Vec3<uint32_t>;
 	using Vec3i64 = Vec3<int64_t>;
 	using Vec3ui64 = Vec3<uint64_t>;
+	using Vec3uz = Vec3<size_t>;
 	template<typename T> using Vec4 = Vector<4, T>;
 	using Vec4f32 = Vec4<float32_t>;
 	using Vec4f64 = Vec4<float64_t>;
@@ -584,4 +587,5 @@ namespace srk {
 	using Vec4ui32 = Vec4<uint32_t>;
 	using Vec4i64 = Vec4<int64_t>;
 	using Vec4ui64 = Vec4<uint64_t>;
+	using Vec4uz = Vec4<size_t>;
 }

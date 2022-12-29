@@ -17,11 +17,15 @@ namespace srk::modules::graphics::d3d11 {
 	}
 
 	const void* ConstantBuffer::getNative() const {
-		return this;
+		return &_baseBuffer;
 	}
 
 	bool ConstantBuffer::create(size_t size, Usage bufferUsage, const void* data, size_t dataSize) {
-		return _baseBuffer.create(*_graphics.get<Graphics>(), size, bufferUsage, data, dataSize);
+		using namespace srk::literals;
+
+		auto quot = size >> 4;
+		if (size & 0xF_uz) ++quot;
+		return _baseBuffer.create(*_graphics.get<Graphics>(), quot << 4, bufferUsage, data, dataSize);
 	}
 
 	size_t ConstantBuffer::getSize() const {
@@ -52,8 +56,9 @@ namespace srk::modules::graphics::d3d11 {
 		return _baseBuffer.update(*_graphics.get<Graphics>(), data, length, offset);
 	}
 
-	//void ConstantBuffer::flush() {
-	//}
+	size_t ConstantBuffer::copyFrom(size_t dstPos, const IBuffer* src, const Box1uz& srcRange) {
+		return _baseBuffer.copyFrom(*_graphics.get<Graphics>(), dstPos, src, srcRange);
+	}
 
 	bool ConstantBuffer::isSyncing() const {
 		return false;

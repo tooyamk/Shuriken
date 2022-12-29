@@ -6,7 +6,7 @@
 namespace srk::modules::graphics::d3d11 {
 	class BaseTextureResource : public BaseResource {
 	public:
-		BaseTextureResource(UINT resType);
+		BaseTextureResource(D3D11_BIND_FLAG resType);
 		virtual ~BaseTextureResource();
 
 		bool SRK_CALL create(Graphics& graphics, TextureType texType, const Vec3ui32& size, uint32_t arraySize, uint32_t mipLevels, SampleCount sampleCount,

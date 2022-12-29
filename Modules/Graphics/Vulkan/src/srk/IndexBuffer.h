@@ -2,11 +2,11 @@
 
 #include "BaseBuffer.h"
 
-namespace srk::modules::graphics::d3d11 {
-	class SRK_MODULE_DLL VertexBuffer : public IVertexBuffer {
+namespace srk::modules::graphics::vulkan {
+	class SRK_MODULE_DLL IndexBuffer : public IIndexBuffer {
 	public:
-		VertexBuffer(Graphics& graphics);
-		virtual ~VertexBuffer();
+		IndexBuffer(Graphics& graphics);
+		virtual ~IndexBuffer();
 
 		virtual bool SRK_CALL isCreated() const override;
 		virtual const void* SRK_CALL getNative() const override;
@@ -22,11 +22,12 @@ namespace srk::modules::graphics::d3d11 {
 		virtual bool SRK_CALL isSyncing() const override;
 		virtual void SRK_CALL destroy() override;
 
-		virtual uint32_t SRK_CALL getStride() const override;
-		virtual void SRK_CALL setStride(uint32_t stride) override;
+		virtual IndexType SRK_CALL getFormat() const override;
+		virtual void SRK_CALL setFormat(IndexType type) override;
 
 	protected:
-		uint32_t _stride;
+		IndexType _type;
+
 		BaseBuffer _baseBuffer;
 	};
 }

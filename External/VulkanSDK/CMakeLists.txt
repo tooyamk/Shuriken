@@ -18,7 +18,7 @@ if (SRK_OS_WINDOWS)
     set(urlHash 0b21c602ef0d62ee49c39e03b35207d136130bf110682d7cad2c620265031dcc)
     set(src ${PROJECT_BINARY_DIR}/src)
 
-    set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_VULKAN_SDK_LIB ${installDir}/lib/vulkan-1.lib ${installDir}/lib/VkLayer_utils.lib)
+    set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_VULKAN_SDK_LIB ${installDir}/lib/vulkan-1.lib)
 elseif (SRK_OS_LINUX)
     set(dlName vulkansdk-linux-x86_64-${ver}.tar.gz)
     set(url ${urlBase}linux/${dlName})

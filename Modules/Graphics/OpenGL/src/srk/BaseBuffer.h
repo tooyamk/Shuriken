@@ -1,10 +1,9 @@
 #pragma once
 
 #include "Base.h"
+#include "Graphics.h"
 
 namespace srk::modules::graphics::gl {
-	class Graphics;
-
 	class SRK_MODULE_DLL BaseBuffer {
 	public:
 		BaseBuffer(GLenum bufferType);
@@ -18,25 +17,17 @@ namespace srk::modules::graphics::gl {
 		size_t SRK_CALL update(const void* data, size_t length, size_t offset);
 		void SRK_CALL releaseBuffer();
 
+		size_t SRK_CALL copyFrom(Graphics& graphics, size_t dstPos, const BaseBuffer& src, const Box1uz& srcRange);
+		size_t SRK_CALL copyFrom(Graphics& graphics, size_t dstPos, const IBuffer* src, const Box1uz& srcRange);
+
 		template<bool Force>
-		void SRK_CALL doSync() {
+		inline void SRK_CALL doSync() {
 			using namespace srk::enum_operators;
 
 			if constexpr (Force) {
-				releaseSync();
-
-				if ((resUsage & Usage::PERSISTENT_MAP) == Usage::PERSISTENT_MAP) {
-					sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
-				}
-				dirty = false;
+				_doSync();
 			} else {
-				if (dirty) {
-					if ((resUsage & Usage::PERSISTENT_MAP) == Usage::PERSISTENT_MAP) {
-						releaseSync();
-						sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
-					}
-					dirty = false;
-				}
+				if (mapDirty) _doSync();
 			}
 		}
 
@@ -48,7 +39,7 @@ namespace srk::modules::graphics::gl {
 			if (sync) _releaseSync();
 		}
 
-		bool dirty;
+		bool mapDirty;
 		Usage resUsage;
 		Usage mapUsage;
 		GLenum bufferType;
@@ -72,10 +63,20 @@ namespace srk::modules::graphics::gl {
 			return true;
 		}
 
-		inline void SRK_CALL _waitServerSync() {
+		inline void SRK_CALL _waitServerSync() const {
 			if (sync) {
-				do {} while (_isSyncing());
+				while (_isSyncing()) {};
 			}
+		}
+
+		void SRK_CALL _doSync() {
+			using namespace srk::enum_operators;
+
+			if ((resUsage & Usage::PERSISTENT_MAP) == Usage::PERSISTENT_MAP) {
+				releaseSync();
+				sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+			}
+			mapDirty = false;
 		}
 	};
 }

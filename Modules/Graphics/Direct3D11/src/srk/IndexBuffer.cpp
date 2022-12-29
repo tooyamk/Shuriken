@@ -18,7 +18,7 @@ namespace srk::modules::graphics::d3d11 {
 	}
 
 	const void* IndexBuffer::getNative() const {
-		return this;
+		return &_baseBuffer;
 	}
 
 	bool IndexBuffer::create(size_t size, Usage bufferUsage, const void* data, size_t dataSize) {
@@ -53,8 +53,9 @@ namespace srk::modules::graphics::d3d11 {
 		return _baseBuffer.update(*_graphics.get<Graphics>(), data, length, offset);
 	}
 
-	//void IndexBuffer::flush() {
-	//}
+	size_t IndexBuffer::copyFrom(size_t dstPos, const IBuffer* src, const Box1uz& srcRange) {
+		return _baseBuffer.copyFrom(*_graphics.get<Graphics>(), dstPos, src, srcRange);
+	}
 
 	bool IndexBuffer::isSyncing() const {
 		return false;

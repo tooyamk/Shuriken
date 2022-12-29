@@ -18,15 +18,12 @@ namespace srk::modules::graphics::d3d11 {
 		virtual size_t SRK_CALL read(void* dst, size_t dstLen, size_t offset) override;
 		virtual size_t SRK_CALL write(const void* data, size_t length, size_t offset) override;
 		virtual size_t SRK_CALL update(const void* data, size_t length, size_t offset) override;
-		virtual IndexType SRK_CALL getFormat() const override;
-		virtual void SRK_CALL setFormat(IndexType type) override;
-		//virtual void SRK_CALL flush() override;
+		virtual size_t SRK_CALL copyFrom(size_t dstPos, const IBuffer* src, const Box1uz& srcRange) override;
 		virtual bool SRK_CALL isSyncing() const override;
 		virtual void SRK_CALL destroy() override;
 
-		inline ID3D11Buffer* SRK_CALL getInternalBuffer() const {
-			return (ID3D11Buffer*)_baseBuffer.handle;
-		}
+		virtual IndexType SRK_CALL getFormat() const override;
+		virtual void SRK_CALL setFormat(IndexType type) override;
 
 		inline DXGI_FORMAT SRK_CALL getInternalFormat() const {
 			return _internalFormat;
@@ -36,7 +33,7 @@ namespace srk::modules::graphics::d3d11 {
 			return _numElements;
 		}
 
-		void SRK_CALL draw (uint32_t count = (std::numeric_limits<uint32_t>::max)(), uint32_t offset = 0);
+		void SRK_CALL draw(uint32_t count = (std::numeric_limits<uint32_t>::max)(), uint32_t offset = 0);
 
 	protected:
 		IndexType _idxType;

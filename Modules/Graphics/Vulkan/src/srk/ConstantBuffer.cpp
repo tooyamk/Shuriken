@@ -1,8 +1,8 @@
 #include "ConstantBuffer.h"
 
-namespace srk::modules::graphics::gl {
+namespace srk::modules::graphics::vulkan {
 	ConstantBuffer::ConstantBuffer(Graphics& graphics) : IConstantBuffer(graphics),
-		_baseBuffer(GL_UNIFORM_BUFFER),
+		_baseBuffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT),
 		recordUpdateIds(nullptr) {
 	}
 
@@ -11,7 +11,7 @@ namespace srk::modules::graphics::gl {
 	}
 
 	bool ConstantBuffer::isCreated() const {
-		return _baseBuffer.handle;
+		return _baseBuffer.getBuffer();
 	}
 
 	const void* ConstantBuffer::getNative() const {
@@ -19,15 +19,15 @@ namespace srk::modules::graphics::gl {
 	}
 
 	bool ConstantBuffer::create(size_t size, Usage bufferUsage, const void* data, size_t dataSize) {
-		return _baseBuffer.create(*_graphics.get<Graphics>(), size, bufferUsage, data);
+		return _baseBuffer.create(*_graphics.get<Graphics>(), size, bufferUsage, data, dataSize);
 	}
 
 	size_t ConstantBuffer::getSize() const {
-		return _baseBuffer.size;
+		return _baseBuffer.getSize();
 	}
 
 	Usage ConstantBuffer::getUsage() const {
-		return _baseBuffer.resUsage;
+		return _baseBuffer.getUsage();
 	}
 
 	Usage ConstantBuffer::map(Usage expectMapUsage) {
@@ -55,10 +55,10 @@ namespace srk::modules::graphics::gl {
 	}
 
 	bool ConstantBuffer::isSyncing() const {
-		return _baseBuffer.isSyncing();
+		return false;
 	}
 
 	void ConstantBuffer::destroy() {
-		_baseBuffer.releaseBuffer();
+		_baseBuffer.destroy();
 	}
 }

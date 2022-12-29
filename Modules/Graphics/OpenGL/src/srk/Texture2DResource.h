@@ -25,7 +25,6 @@ namespace srk::modules::graphics::gl {
 		virtual bool SRK_CALL update(uint32_t arraySlice, uint32_t mipSlice, const Box2ui32& range, const void* data) override;
 		virtual bool SRK_CALL copyFrom(const Vec3ui32& dstPos, uint32_t dstArraySlice, uint32_t dstMipSlice, const ITextureResource* src, uint32_t srcArraySlice, uint32_t srcMipSlice, const Box3ui32& srcRange) override;
 		virtual bool SRK_CALL copyFrom(uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const IPixelBuffer* pixelBuffer) override;
-		virtual bool SRK_CALL copyTo(uint32_t mipSlice, const IPixelBuffer* pixelBuffer) override;
 
 	protected:
 		BaseTexture _baseTex;

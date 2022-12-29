@@ -174,13 +174,13 @@ namespace srk::modules::graphics::d3d11 {
 				auto& vb = va->resource;
 				if (!vb || _graphics != vb->getGraphics()) continue;
 
-				auto native = (VertexBuffer*)vb->getNative();
-				if (!native) continue;
-
-				UINT stride = native->getStride();
+				UINT stride = vb->getStride();
 				if (!stride) continue;
 
-				auto buf = native->getInternalBuffer();
+				auto native = (BaseBuffer*)vb->getNative();
+				if (!native) continue;
+
+				auto buf = (ID3D11Buffer*)native->handle;
 				if (!buf) continue;
 
 				auto& desc = va->desc;
@@ -232,7 +232,7 @@ namespace srk::modules::graphics::d3d11 {
 			if (statistics.exclusiveCount && !statistics.shareCount) {
 				if (cb = (ConstantBuffer*)g->getConstantBufferManager().getExclusiveConstantBuffer(_tempParams, cbLayout); cb) {
 					if (g->getInternalFeatures().MapNoOverwriteOnDynamicConstantBuffer) {
-						bool isMaping = false;
+						auto isMaping = false;
 						for (uint32_t i = 0; i < numVars; ++i) {
 							if (auto param = _tempParams[i]; param && param->getUpdateId() != cb->recordUpdateIds[i]) {
 								if (!isMaping) {
@@ -246,7 +246,7 @@ namespace srk::modules::graphics::d3d11 {
 
 						if (isMaping) cb->unmap();
 					} else {
-						bool needUpdate = false;
+						auto needUpdate = false;
 						for (uint32_t i = 0; i < numVars; ++i) {
 							if (auto param = _tempParams[i]; param && param->getUpdateId() != cb->recordUpdateIds[i]) {
 								needUpdate = true;
@@ -539,9 +539,9 @@ namespace srk::modules::graphics::d3d11 {
 		type->GetDesc(&desc);
 		var.offset += desc.Offset;
 		if (desc.Class == D3D_SVC_STRUCT) {
-			var.structMembers.resize(desc.Members);
+			var.members.resize(desc.Members);
 			for (uint32_t i = 0; i < desc.Members; ++i) {
-				auto& memberVar = var.structMembers[i];
+				auto& memberVar = var.members[i];
 				memberVar.name = type->GetMemberTypeName(i);
 				memberVar.offset = var.offset;
 				memberVar.size = 0;

@@ -18,11 +18,12 @@ namespace srk::modules::graphics::gl {
 		virtual size_t SRK_CALL read(void* dst, size_t dstLen, size_t offset) override;
 		virtual size_t SRK_CALL write(const void* data, size_t length, size_t offset) override;
 		virtual size_t SRK_CALL update(const void* data, size_t length, size_t offset) override;
-		virtual IndexType SRK_CALL getFormat() const override;
-		virtual void SRK_CALL setFormat(IndexType type) override;
-		//virtual void SRK_CALL flush() override;
+		virtual size_t SRK_CALL copyFrom(size_t dstPos, const IBuffer* src, const Box1uz& srcRange) override;
 		virtual bool SRK_CALL isSyncing() const override;
 		virtual void SRK_CALL destroy() override;
+
+		virtual IndexType SRK_CALL getFormat() const override;
+		virtual void SRK_CALL setFormat(IndexType type) override;
 
 		void SRK_CALL draw(uint32_t count = (std::numeric_limits<uint32_t>::max)(), uint32_t offset = 0) const;
 		void SRK_CALL drawInstanced(uint32_t instancedCount, uint32_t count = (std::numeric_limits<uint32_t>::max)(), uint32_t offset = 0) const;

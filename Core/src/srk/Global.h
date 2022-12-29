@@ -300,6 +300,9 @@ namespace srk {
 		inline constexpr uint64_t operator"" _ui64(unsigned long long n) noexcept {
 			return (uint64_t)n;
 		}
+		inline constexpr size_t operator"" _uz(unsigned long long n) noexcept {
+			return (size_t)n;
+		}
 	}
 
 

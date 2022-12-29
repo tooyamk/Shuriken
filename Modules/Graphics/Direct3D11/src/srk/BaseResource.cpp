@@ -3,7 +3,7 @@
 #include <algorithm>
 
 namespace srk::modules::graphics::d3d11 {
-	BaseResource::BaseResource(UINT resType) :
+	BaseResource::BaseResource(D3D11_BIND_FLAG resType) :
 		size(0),
 		resType(resType),
 		bindType(0),
@@ -26,24 +26,30 @@ namespace srk::modules::graphics::d3d11 {
 				unmap(graphics, mapUsage, subresource);
 			} else {
 				UINT mapType = 0;
-				if ((expectMapUsage & Usage::MAP_READ) == Usage::MAP_READ) {
-					mapType |= D3D11_MAP_READ;
+				auto readable = (expectMapUsage & Usage::MAP_READ) == Usage::MAP_READ;
+				if (readable) {
+					mapType = D3D11_MAP_READ;
 					ret |= Usage::MAP_READ;
 				}
 
 				if ((expectMapUsage & Usage::MAP_WRITE) == Usage::MAP_WRITE) {
 					ret |= Usage::MAP_WRITE;
-					if (bindType == D3D11_BIND_CONSTANT_BUFFER) {
-						if (graphics.getInternalFeatures().MapNoOverwriteOnDynamicConstantBuffer) {
-							mapType |= D3D11_MAP_WRITE_NO_OVERWRITE;
+
+					if (resType == D3D11_BIND_CONSTANT_BUFFER) {
+						if (bindType) {
+							if (graphics.getInternalFeatures().MapNoOverwriteOnDynamicConstantBuffer) {
+								mapType = readable ? D3D11_MAP_READ_WRITE : D3D11_MAP_WRITE_NO_OVERWRITE;
+							} else {
+								mapType = readable ? D3D11_MAP_READ_WRITE : D3D11_MAP_WRITE_DISCARD;
+								ret |= Usage::DISCARD;
+							}
 						} else {
-							mapType |= D3D11_MAP_WRITE_DISCARD;
-							ret |= Usage::DISCARD;
+							mapType = readable ? D3D11_MAP_READ_WRITE : D3D11_MAP_WRITE;
 						}
-					} else if (bindType & (D3D11_BIND_VERTEX_BUFFER | D3D11_BIND_INDEX_BUFFER)) {
-						mapType |= D3D11_MAP_WRITE_NO_OVERWRITE;
+					} else if (resType & (D3D11_BIND_VERTEX_BUFFER | D3D11_BIND_INDEX_BUFFER)) {
+						mapType = readable ? D3D11_MAP_READ_WRITE : (bindType ? D3D11_MAP_WRITE_NO_OVERWRITE : D3D11_MAP_WRITE);
 					} else {
-						mapType |= D3D11_MAP_WRITE_DISCARD;
+						mapType = readable ? D3D11_MAP_READ_WRITE : D3D11_MAP_WRITE_DISCARD;
 						ret |= Usage::DISCARD;
 					}
 				}

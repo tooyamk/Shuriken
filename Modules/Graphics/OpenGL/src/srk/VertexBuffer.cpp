@@ -1,5 +1,4 @@
 #include "VertexBuffer.h"
-#include "Graphics.h"
 
 namespace srk::modules::graphics::gl {
 	VertexBuffer::VertexBuffer(Graphics& graphics) : IVertexBuffer(graphics),
@@ -15,7 +14,7 @@ namespace srk::modules::graphics::gl {
 	}
 
 	const void* VertexBuffer::getNative() const {
-		return this;
+		return &_baseBuffer;
 	}
 
 	bool VertexBuffer::create(size_t size, Usage bufferUsage, const void* data, size_t dataSize) {
@@ -50,9 +49,9 @@ namespace srk::modules::graphics::gl {
 		return _baseBuffer.update(data, length, offset);
 	}
 
-	//void VertexBuffer::flush() {
-	//	_baseBuffer.flush();
-	//}
+	size_t VertexBuffer::copyFrom(size_t dstPos, const IBuffer* src, const Box1uz& srcRange) {
+		return _baseBuffer.copyFrom(*_graphics.get<Graphics>(), dstPos, src, srcRange);
+	}
 
 	bool VertexBuffer::isSyncing() const {
 		return _baseBuffer.isSyncing();

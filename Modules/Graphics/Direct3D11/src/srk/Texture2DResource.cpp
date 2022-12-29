@@ -85,8 +85,4 @@ namespace srk::modules::graphics::d3d11 {
 	bool Texture2DResource::copyFrom(uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const IPixelBuffer* pixelBuffer) {
 		return false;
 	}
-
-	bool Texture2DResource::copyTo(uint32_t mipSlice, const IPixelBuffer* pixelBuffer) {
-		return false;
-	}
 }

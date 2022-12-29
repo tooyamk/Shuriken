@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Base.h"
+#include "srk/modules/graphics/ConstantBufferManager.h"
 
 namespace srk::modules::graphics::vulkan {
 	class SRK_MODULE_DLL Program : public IProgram {
@@ -13,28 +14,66 @@ namespace srk::modules::graphics::vulkan {
 		virtual const ProgramInfo& getInfo() const override;
 		virtual void SRK_CALL destroy() override;
 
-		const std::vector<VkPipelineShaderStageCreateInfo>& getVkPipelineShaderStageCreateInfos() const {
+		inline const std::vector<VkPipelineShaderStageCreateInfo>& getVkPipelineShaderStageCreateInfos() const {
 			return _createInfos;
 		}
 
-		bool SRK_CALL use(const IVertexAttributeGetter* vertexAttributeGetter, VkVertexInputAttributeDescription* vertexInputAttribDescs, uint32_t& vertexInputAttribDescCount);
+		inline VkPipelineLayout getVkPipelineLayout() const {
+			return _pipelineLayout;
+		}
+
+		bool SRK_CALL use(const IVertexAttributeGetter* vertexAttributeGetter, 
+			VkVertexInputBindingDescription* vertexInputBindingDescs, uint32_t& vertexInputBindingDescsCount,
+			VkVertexInputAttributeDescription* vertexInputAttribDescs, uint32_t& vertexInputAttribDescCount);
 
 	protected:
 		inline static constexpr std::string_view inputNamePrefix = std::string_view("in.var.");
+
 
 		struct VertexLayout {
 			uint32_t location;
 		};
 
+
+		struct TextureLayout {
+			std::string name;
+			uint32_t bindPoint = 0;
+		};
+
+
+		struct SamplerLayout {
+			std::string name;
+			uint32_t bindPoint = 0;
+		};
+
+
+		struct ParameterLayout {
+			std::vector<ConstantBufferLayout> constantBuffers;
+			std::vector<TextureLayout> textures;
+			std::vector<SamplerLayout> samplers;
+
+			void clear(Graphics& g);
+		};
+
+
 		std::vector<std::string> _entryPoints;
 		std::vector<VkPipelineShaderStageCreateInfo> _createInfos;
+		VkDescriptorSetLayout _descriptorSetLayout;
+		VkDescriptorPool _descriptorPool;
+		VkDescriptorSet _descriptorSet;
+		VkPipelineLayout _pipelineLayout;
 
 		std::vector<VertexLayout> _vertexLayouts;
 
 		bool _valid;
 		ProgramInfo _info;
 
-		bool SRK_CALL _compileShader(const ProgramSource& source, ProgramStage stage, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& includeHandler, const InputHandler& inputHandler);
-		void SRK_CALL _reflect(const void* data, const InputHandler& inputHandler);
+		ParameterLayout _vsParamLayout;
+		ParameterLayout _psParamLayout;
+
+		bool SRK_CALL _compileShader(const ProgramSource& source, ProgramStage stage, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& includeHandler, const InputHandler& inputHandler, std::vector<VkDescriptorSetLayoutBinding>& descriptorSetLayoutBindings);
+		void SRK_CALL _reflect(const void* data, const InputHandler& inputHandler, std::vector<VkDescriptorSetLayoutBinding>& descriptorSetLayoutBindings);
+		void SRK_CALL _parseParamLayout(const void* data, ParameterLayout& layout, VkShaderStageFlags stageFlags, std::vector<VkDescriptorSetLayoutBinding>& descriptorSetLayoutBindings);
+		void SRK_CALL _parseParamLayout(const void* data, std::vector<ConstantBufferLayout::Variables>& vars);
 	};
 }

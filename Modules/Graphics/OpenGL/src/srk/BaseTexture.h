@@ -20,7 +20,6 @@ namespace srk::modules::graphics::gl {
 		bool SRK_CALL update(uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const void* data);
 		bool SRK_CALL copyFrom(Graphics& graphics, const Vec3ui32& dstPos, uint32_t dstArraySlice, uint32_t dstMipSlice, const ITextureResource* src, uint32_t srcArraySlice, uint32_t srcMipSlice, const Box3ui32& srcRange);
 		bool SRK_CALL copyFrom(Graphics& graphics, uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const IPixelBuffer* pixelBuffer);
-		bool SRK_CALL copyTo(Graphics& graphics, uint32_t mipSlice, const IPixelBuffer* pixelBuffer);
 		void SRK_CALL flush();
 		void SRK_CALL releaseTex();
 		void SRK_CALL waitServerSync();

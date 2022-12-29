@@ -6,7 +6,7 @@
 namespace srk::modules::graphics::d3d11 {
 	class BaseResource {
 	public:
-		BaseResource(UINT resType);
+		BaseResource(D3D11_BIND_FLAG resType);
 		virtual ~BaseResource();
 
 		template<bool Tex>
@@ -29,8 +29,9 @@ namespace srk::modules::graphics::d3d11 {
 
 			cpuUsage = 0;
 
-			bool resCpuRead = (resUsage & Usage::MAP_READ) == Usage::MAP_READ;
-			bool resCpuWrite = (resUsage & Usage::MAP_WRITE) == Usage::MAP_WRITE;
+			auto resCpuRead = (resUsage & Usage::MAP_READ) == Usage::MAP_READ;
+			auto resCpuWrite = (resUsage & Usage::MAP_WRITE) == Usage::MAP_WRITE;
+			auto resGpuWrite = (resUsage & Usage::COPY_DST) == Usage::COPY_DST;
 
 			if (resCpuRead) {
 				if ((resUsage & Usage::UPDATE) == Usage::UPDATE) {
@@ -45,19 +46,26 @@ namespace srk::modules::graphics::d3d11 {
 					this->resUsage |= Usage::MAP_WRITE;
 					cpuUsage |= D3D11_CPU_ACCESS_WRITE;
 				}
+				if (resGpuWrite) this->resUsage |= Usage::COPY_DST;
 			} else if (resCpuWrite && mipLevels <= 1) {
 				if ((resUsage & Usage::UPDATE) == Usage::UPDATE) {
 					graphics.error("D3D Resource::create error : could not enable Usage::UPDATE and Usage::MAP_WRITE at same time");
 					return false;
 				}
 
-				d3dUsage = D3D11_USAGE_DYNAMIC;
 				this->resUsage = Usage::MAP_WRITE;
 				cpuUsage = D3D11_CPU_ACCESS_WRITE;
-			} else if (((resUsage & Usage::UPDATE) == Usage::UPDATE) || dataSize < resSize) {
+
+				if ((resUsage & Usage::COPY_DST) == Usage::COPY_DST) {
+					d3dUsage = D3D11_USAGE_STAGING;
+					this->resUsage |= Usage::COPY_DST;
+				} else {
+					d3dUsage = D3D11_USAGE_DYNAMIC;
+				}
+			} else if ((resUsage & (Usage::UPDATE | Usage::COPY_DST)) != Usage::NONE) {
 				d3dUsage = D3D11_USAGE_DEFAULT;
-				this->resUsage = Usage::UPDATE;
-			} else if (dataSize >= resSize && (resUsage & Usage::RENDERABLE) == Usage::NONE) {
+				this->resUsage = resUsage & (Usage::UPDATE | Usage::COPY_DST);
+			} else if ((resUsage & Usage::RENDERABLE) == Usage::NONE) {
 				d3dUsage = D3D11_USAGE_IMMUTABLE;
 			} else {
 				//this->resUsage = Usage::NONE;
@@ -65,6 +73,8 @@ namespace srk::modules::graphics::d3d11 {
 				d3dUsage = D3D11_USAGE_DEFAULT;
 				//this->resUsage = Usage::UPDATE;
 			}
+
+			if ((resUsage & Usage::COPY_SRC) == Usage::COPY_SRC) this->resUsage |= Usage::COPY_SRC;
 
 			bindType = 0;
 
@@ -94,11 +104,12 @@ namespace srk::modules::graphics::d3d11 {
 
 			return true;
 		}
+
 		Usage SRK_CALL map(Graphics& graphics, Usage expectMapUsage, Usage& mapUsage, UINT subresource, D3D11_MAPPED_SUBRESOURCE& mappedRes);
 		void SRK_CALL unmap(Graphics& graphics, Usage& mapUsage, UINT subresource);
 		void SRK_CALL releaseRes();
 
-		UINT resType;
+		D3D11_BIND_FLAG resType;
 		UINT bindType;
 		Usage resUsage;
 		size_t size;

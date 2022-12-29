@@ -18,16 +18,12 @@ namespace srk::modules::graphics::gl {
 		virtual size_t SRK_CALL read(void* dst, size_t dstLen, size_t offset) override;
 		virtual size_t SRK_CALL write(const void* data, size_t length, size_t offset) override;
 		virtual size_t SRK_CALL update(const void* data, size_t length, size_t offset) override;
-		//virtual void SRK_CALL flush() override;
+		virtual size_t SRK_CALL copyFrom(size_t dstPos, const IBuffer* src, const Box1uz& srcRange) override;
 		virtual bool SRK_CALL isSyncing() const override;
 		virtual void SRK_CALL destroy() override;
 
 		virtual uint32_t SRK_CALL getStride() const override;
 		virtual void SRK_CALL setStride(uint32_t stride) override;
-
-		inline GLuint SRK_CALL getInternalHandle() const {
-			return _baseBuffer.handle;
-		}
 
 	protected:
 		uint32_t _stride;

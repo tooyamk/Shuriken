@@ -1,5 +1,4 @@
 #include "VertexBuffer.h"
-#include "Graphics.h"
 
 namespace srk::modules::graphics::vulkan {
 	VertexBuffer::VertexBuffer(Graphics& graphics) : IVertexBuffer(graphics),
@@ -8,7 +7,6 @@ namespace srk::modules::graphics::vulkan {
 	}
 
 	VertexBuffer::~VertexBuffer() {
-		destroy();
 	}
 
 	bool VertexBuffer::isCreated() const {
@@ -16,7 +14,7 @@ namespace srk::modules::graphics::vulkan {
 	}
 
 	const void* VertexBuffer::getNative() const {
-		return this;
+		return &_baseBuffer;
 	}
 
 	bool VertexBuffer::create(size_t size, Usage bufferUsage, const void* data, size_t dataSize) {
@@ -48,7 +46,11 @@ namespace srk::modules::graphics::vulkan {
 	}
 
 	size_t VertexBuffer::update(const void* data, size_t length, size_t offset) {
-		return -1;
+		return _baseBuffer.update(data, length, offset);
+	}
+
+	size_t VertexBuffer::copyFrom(size_t dstPos, const IBuffer* src, const Box1uz& srcRange) {
+		return _baseBuffer.copyFrom(*_graphics.get<Graphics>(), dstPos, src, srcRange);
 	}
 
 	bool VertexBuffer::isSyncing() const {

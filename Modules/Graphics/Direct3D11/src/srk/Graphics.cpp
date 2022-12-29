@@ -347,7 +347,7 @@ namespace srk::modules::graphics::d3d11 {
 			_d3dStatus.scissor.size.set(rect.right - rect.left, rect.bottom - rect.top);
 		}
 
-		_d3dStatus.usage.bufferCreateUsageMask = Usage::MAP_READ_WRITE | Usage::UPDATE;
+		_d3dStatus.usage.bufferCreateUsageMask = Usage::MAP_READ_WRITE | Usage::UPDATE | Usage::COPY_SRC_DST;
 
 		_d3dStatus.usage.texCreateUsageMask = Usage::MAP_READ_WRITE | Usage::UPDATE | Usage::RENDERABLE;
 
@@ -575,9 +575,10 @@ namespace srk::modules::graphics::d3d11 {
 	void Graphics::draw(const IVertexAttributeGetter* vertexAttributeGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
 		const IIndexBuffer* indexBuffer, uint32_t count, uint32_t offset) {
 		if (vertexAttributeGetter && indexBuffer && program && program->getGraphics() == this && indexBuffer->getGraphics() == this && count > 0) {
-			auto ib = (IndexBuffer*)indexBuffer->getNative();
-			if (!ib) return;
-			auto internalIndexBuffer = ib->getInternalBuffer();
+			auto native = (BaseBuffer*)indexBuffer->getNative();
+			if (!native) return;
+			auto ib = (IndexBuffer*)indexBuffer;
+			auto internalIndexBuffer = (ID3D11Buffer*)native->handle;
 			auto fmt = ib->getInternalFormat();
 			if (!internalIndexBuffer || fmt == DXGI_FORMAT_UNKNOWN) return;
 			auto numIndexElements = ib->getNumElements();
@@ -625,9 +626,10 @@ namespace srk::modules::graphics::d3d11 {
 	void Graphics::drawInstanced(const IVertexAttributeGetter* vertexAttributeGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
 		const IIndexBuffer* indexBuffer, uint32_t instancedCount, uint32_t count, uint32_t offset) {
 		if (vertexAttributeGetter && indexBuffer && program && program->getGraphics() == this && indexBuffer->getGraphics() == this && count > 0) {
-			auto ib = (IndexBuffer*)indexBuffer->getNative();
-			if (!ib) return;
-			auto internalIndexBuffer = ib->getInternalBuffer();
+			auto native = (BaseBuffer*)indexBuffer->getNative();
+			if (!native) return;
+			auto ib = (IndexBuffer*)indexBuffer;
+			auto internalIndexBuffer = (ID3D11Buffer*)native->handle;
 			auto fmt = ib->getInternalFormat();
 			if (!internalIndexBuffer || fmt == DXGI_FORMAT_UNKNOWN) return;
 			auto numIndexElements = ib->getNumElements();

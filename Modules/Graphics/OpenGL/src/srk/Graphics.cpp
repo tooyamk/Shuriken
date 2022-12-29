@@ -229,7 +229,7 @@ namespace srk::modules::graphics::gl {
 		_deviceFeatures.textureFormats.emplace_back(TextureFormat::R8G8B8);
 		_deviceFeatures.textureFormats.emplace_back(TextureFormat::R8G8B8A8);
 
-		_glStatus.usage.bufferCreateUsageMask = Usage::MAP_READ_WRITE | Usage::UPDATE;
+		_glStatus.usage.bufferCreateUsageMask = Usage::MAP_READ_WRITE | Usage::UPDATE | Usage::COPY_SRC_DST;
 		if (_deviceFeatures.persistentMap) _glStatus.usage.bufferCreateUsageMask |= Usage::PERSISTENT_MAP;
 
 		_glStatus.usage.texCreateUsageMask = Usage::UPDATE | Usage::RENDERABLE;
@@ -661,7 +661,7 @@ namespace srk::modules::graphics::gl {
 	void Graphics::draw(const IVertexAttributeGetter* vertexAttributeGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter, const IIndexBuffer* indexBuffer, uint32_t count, uint32_t offset) {
 		if (!vertexAttributeGetter || !indexBuffer || !program || program->getGraphics() != this || indexBuffer->getGraphics() != this || !count) return;
 
-		auto ib = (const IndexBuffer*)indexBuffer->getNative();
+		auto ib = (const IndexBuffer*)indexBuffer;
 		if (!ib) return;
 
 		auto p = (Program*)program->getNative();
@@ -675,7 +675,7 @@ namespace srk::modules::graphics::gl {
 	void Graphics::drawInstanced(const IVertexAttributeGetter* vertexAttributeGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter, const IIndexBuffer* indexBuffer, uint32_t instancedCount, uint32_t count, uint32_t offset) {
 		if (!vertexAttributeGetter || !indexBuffer || !program || program->getGraphics() != this || indexBuffer->getGraphics() != this || !count) return;
 
-		auto ib = (const IndexBuffer*)indexBuffer->getNative();
+		auto ib = (const IndexBuffer*)indexBuffer;
 		if (!ib) return;
 
 		auto p = (Program*)program->getNative();

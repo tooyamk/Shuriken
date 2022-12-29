@@ -18,6 +18,7 @@ namespace srk::modules::graphics::vulkan {
 		virtual size_t SRK_CALL read(void* dst, size_t dstLen, size_t offset) override;
 		virtual size_t SRK_CALL write(const void* data, size_t length, size_t offset) override;
 		virtual size_t SRK_CALL update(const void* data, size_t length, size_t offset) override;
+		virtual size_t SRK_CALL copyFrom(size_t dstPos, const IBuffer* src, const Box1uz& srcRange) override;
 		virtual bool SRK_CALL isSyncing() const override;
 		virtual void SRK_CALL destroy() override;
 

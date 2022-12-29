@@ -423,48 +423,19 @@ namespace srk::modules::graphics::gl {
 	}
 
 	bool BaseTexture::copyFrom(Graphics& graphics, uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const IPixelBuffer* pixelBuffer) {
-		if (pixelBuffer && graphics == pixelBuffer->getGraphics()) {
-			if (auto pb = (PixelBuffer*)pixelBuffer->getNative(); pb) {
-				if (auto buf = pb->getInternalBuffer(); buf) {
-					if (auto pbType = pb->getInternalType(); pbType == GL_PIXEL_UNPACK_BUFFER) {
-						glBindBuffer(pbType, buf);
-						auto rst = _update(arraySlice, mipSlice, range, nullptr);
-						glBindBuffer(pbType, 0);
-						pb->getBaseBuffer()->doSync<true>();
+		if (!pixelBuffer || graphics != pixelBuffer->getGraphics()) return false;
 
-						return rst;
-					} else {
-						graphics.error("OpenGL Texture::copyFrom error : need Usage::MAP_WRITE or Usage::UPDATE of PixelBuffer");
-					}
-				}
-			}
-		}
+		auto native = (BaseBuffer*)pixelBuffer->getNative();
+		if (!native) return false;
 
-		return false;
-	}
+		if (!native->handle || native->bufferType != GL_PIXEL_UNPACK_BUFFER) return false;
 
-	bool BaseTexture::copyTo(Graphics& graphics, uint32_t mipSlice, const IPixelBuffer* pixelBuffer) {
-		if (pixelBuffer && graphics == pixelBuffer->getGraphics()) {
-			if (auto pb = (PixelBuffer*)pixelBuffer->getNative(); pb) {
-				if (auto buf = pb->getInternalBuffer(); buf) {
-					if (auto pbType = pb->getInternalType(); pbType == GL_PIXEL_PACK_BUFFER) {
-						glBindBuffer(pbType, buf);
+		glBindBuffer(native->bufferType, native->handle);
+		auto rst = _update(arraySlice, mipSlice, range, nullptr);
+		glBindBuffer(native->bufferType, 0);
+		native->doSync<true>();
 
-						glBindTexture(glTexInfo.target, handle);
-						glGetTexImage(glTexInfo.target, mipSlice, glTexInfo.format, glTexInfo.type, nullptr);
-						
-						glBindBuffer(pbType, 0);
-						pb->getBaseBuffer()->doSync<true>();
-
-						return true;
-					} else {
-						graphics.error("OpenGL Texture::copyTo error : need Usage::MAP_READ of PixelBuffer");
-					}
-				}
-			}
-		}
-
-		return false;
+		return rst;
 	}
 
 	void BaseTexture::flush() {

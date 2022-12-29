@@ -31,17 +31,17 @@ namespace srk::modules::graphics {
 			uint32_t offset = 0;
 			uint32_t size = 0;
 			uint32_t stride = 0;
-			std::vector<Variables> structMembers;
+			std::vector<Variables> members;
 		};
 
 
 		ConstantBufferLayout();
 
 		std::string name;
-		uint32_t bindPoint;
+		uint32_t bindPoint = 0;
+		uint32_t size = 0;
 		std::vector<Variables> variables;
-		uint32_t size;
-		uint64_t featureValue;
+		uint64_t featureValue = 0;
 
 		void SRK_CALL calcFeatureValue();
 

@@ -80,8 +80,4 @@ namespace srk::modules::graphics::gl {
 	bool Texture2DResource::copyFrom(uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const IPixelBuffer* pixelBuffer) {
 		return _baseTex.copyFrom(*_graphics.get<Graphics>(), arraySlice, mipSlice, range, pixelBuffer);
 	}
-
-	bool Texture2DResource::copyTo(uint32_t mipSlice, const IPixelBuffer* pixelBuffer) {
-		return _baseTex.copyTo(*_graphics.get<Graphics>(), mipSlice, pixelBuffer);
-	}
 }

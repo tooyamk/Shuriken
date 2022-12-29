@@ -22,7 +22,7 @@ namespace srk::modules::graphics {
 	}
 
 	void ConstantBufferLayout::_calcFeatureValue(const Variables& var, uint16_t& numValidVars, hash::xxHash<64>& hasher) {
-		if (var.structMembers.empty()) {
+		if (var.members.empty()) {
 			auto nameLen = var.name.size();
 			hasher.update(&nameLen, sizeof(nameLen));
 			hasher.update(var.name.data(), var.name.size());
@@ -31,7 +31,7 @@ namespace srk::modules::graphics {
 
 			++numValidVars;
 		} else {
-			for (auto& mvar : var.structMembers) _calcFeatureValue(mvar, numValidVars, hasher);
+			for (auto& mvar : var.members) _calcFeatureValue(mvar, numValidVars, hasher);
 		}
 	}
 
@@ -42,10 +42,10 @@ namespace srk::modules::graphics {
 
 	void ConstantBufferLayout::_collectUsingInfo(const ConstantBufferLayout::Variables& var, const IShaderParameterGetter& getter,
 		ShaderParameterUsageStatistics& statistics, std::vector<const ShaderParameter*>& usingParams, std::vector<const ConstantBufferLayout::Variables*>& usingVars) const {
-		if (auto p = getter.get(var.name); var.structMembers.size()) {
+		if (auto p = getter.get(var.name); var.members.size()) {
 			if (p && p->getType() == ShaderParameterType::GETTER) {
 				if (auto data = p->getData(); data) {
-					for (auto& memVar : var.structMembers) _collectUsingInfo(memVar, *(const IShaderParameterGetter*)data, statistics, usingParams, usingVars);
+					for (auto& memVar : var.members) _collectUsingInfo(memVar, *(const IShaderParameterGetter*)data, statistics, usingParams, usingVars);
 				}
 			}
 		} else {

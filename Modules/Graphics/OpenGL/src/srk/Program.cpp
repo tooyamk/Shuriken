@@ -235,7 +235,7 @@ namespace srk::modules::graphics::gl {
 
 						if (foundMemVar) {
 							foundVar = foundMemVar;
-							parentVars = &foundMemVar->structMembers;
+							parentVars = &foundMemVar->members;
 						} else {
 							auto& var = parentVars->emplace_back();
 							if (auto svLen = sv.size(); svLen > 3 && sv[svLen - 3] == '[' && sv[svLen - 2] == '0' && sv[svLen - 1] == ']') {
@@ -243,7 +243,7 @@ namespace srk::modules::graphics::gl {
 							} else {
 								var.name = sv;
 							}
-							parentVars = &var.structMembers;
+							parentVars = &var.members;
 							foundVar = &var;
 						}
 					}
@@ -286,15 +286,12 @@ namespace srk::modules::graphics::gl {
 				if (!va) continue;
 
 				auto& vb = va->resource;
-				if (!vb || _graphics != vb->getGraphics()) continue;
+				if (!vb || _graphics != vb->getGraphics() || !vb->getStride()) continue;
 
-				auto native = (VertexBuffer*)vb->getNative();
+				auto native = (BaseBuffer*)vb->getNative();
 				if (!native) continue;
 
-				UINT stride = native->getStride();
-				if (!stride) continue;
-
-				auto handle = native->getInternalHandle();
+				auto handle = native->handle;
 				if (!handle) continue;
 
 				auto& desc = va->desc;
@@ -388,7 +385,7 @@ namespace srk::modules::graphics::gl {
 					_tempVars.clear();
 
 					if (cb) {
-						if (auto native = (ConstantBuffer*)cb->getNative(); native) glBindBufferBase(GL_UNIFORM_BUFFER, layout.bindPoint, native->getInternalBuffer());
+						if (auto native = (BaseBuffer*)cb->getNative(); native && native->handle) glBindBufferBase(GL_UNIFORM_BUFFER, layout.bindPoint, native->handle);
 					}
 				}
 			}

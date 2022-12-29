@@ -23,9 +23,9 @@ public:
 
 		IntrusivePtr gml = new GraphicsModuleLoader();
 
-		if (!gml->load(getDllPath("srk-module-graphics-d3d11"))) return 0;
+		//if (!gml->load(getDllPath("srk-module-graphics-d3d11"))) return 0;
 		//if (!gml->load(getDllPath("srk-module-graphics-d3d12"))) return 0;
-		//if (!gml->load(getDllPath("srk-module-graphics-gl"))) return 0;
+		if (!gml->load(getDllPath("srk-module-graphics-gl"))) return 0;
 		//if (!gml->load(getDllPath("srk-module-graphics-vulkan"))) return 0;
 
 		SerializableObject args;
@@ -221,6 +221,14 @@ public:
 			renderData.renderPipeline->getShaderParameters().set(ShaderPredefine::AMBIENT_COLOR, new ShaderParameter())->set(Vec3f32());
 			renderData.renderPipeline->getShaderParameters().set(ShaderPredefine::DIFFUSE_COLOR, new ShaderParameter())->set(Vec3f32::ONE);
 			renderData.renderPipeline->getShaderParameters().set(ShaderPredefine::SPECULAR_COLOR, new ShaderParameter())->set(Vec3f32::ONE);
+
+			auto aabbccStruct = new ShaderParameterCollection();
+			aabbccStruct->set("val1", new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set<float32_t>(0.8f).setUpdated();
+			float32_t val2[] = { 1.0f, 1.0f };
+			aabbccStruct->set("val2", new ShaderParameter(ShaderParameterUsage::EXCLUSIVE))->set<float32_t>(val2, sizeof(val2), sizeof(float32_t), true).setUpdated();
+			aabbccStruct->set("val3", new ShaderParameter())->set(Vec4f32::ONE).setUpdated();
+
+			renderData.renderPipeline->getShaderParameters().set("blue", new ShaderParameter())->set(aabbccStruct);
 		}
 
 		{

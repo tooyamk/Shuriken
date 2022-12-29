@@ -2,11 +2,13 @@
 
 #include "BaseBuffer.h"
 
-namespace srk::modules::graphics::d3d11 {
-	class SRK_MODULE_DLL VertexBuffer : public IVertexBuffer {
+namespace srk::modules::graphics::vulkan {
+	class SRK_MODULE_DLL ConstantBuffer : public IConstantBuffer {
 	public:
-		VertexBuffer(Graphics& graphics);
-		virtual ~VertexBuffer();
+		ConstantBuffer(Graphics& graphics);
+		virtual ~ConstantBuffer();
+
+		uint32_t* recordUpdateIds;
 
 		virtual bool SRK_CALL isCreated() const override;
 		virtual const void* SRK_CALL getNative() const override;
@@ -22,11 +24,7 @@ namespace srk::modules::graphics::d3d11 {
 		virtual bool SRK_CALL isSyncing() const override;
 		virtual void SRK_CALL destroy() override;
 
-		virtual uint32_t SRK_CALL getStride() const override;
-		virtual void SRK_CALL setStride(uint32_t stride) override;
-
 	protected:
-		uint32_t _stride;
 		BaseBuffer _baseBuffer;
 	};
 }

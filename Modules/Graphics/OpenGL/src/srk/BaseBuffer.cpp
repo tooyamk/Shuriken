@@ -4,7 +4,7 @@
 
 namespace srk::modules::graphics::gl {
 	BaseBuffer::BaseBuffer(GLenum bufferType) :
-		dirty(false),
+		mapDirty(false),
 		resUsage(Usage::NONE),
 		mapUsage(Usage::NONE),
 		bufferType(bufferType),
@@ -23,6 +23,7 @@ namespace srk::modules::graphics::gl {
 
 		releaseBuffer();
 
+		resUsage &= Usage::CREATE_ALL;
 		auto supportedUsages = graphics.getBufferCreateUsageMask();
 		if ((resUsage & Usage::IGNORE_UNSUPPORTED) == Usage::IGNORE_UNSUPPORTED) {
 			resUsage &= supportedUsages;
@@ -140,7 +141,7 @@ namespace srk::modules::graphics::gl {
 
 		if ((mapUsage & Usage::MAP_WRITE) == Usage::MAP_WRITE) {
 			if (data && length && offset < size) {
-				dirty = true;
+				mapDirty = true;
 				length = std::min<size_t>(length, size - offset);
 				memcpy((uint8_t*)mapData + offset, data, length);
 				return length;
@@ -180,12 +181,37 @@ namespace srk::modules::graphics::gl {
 
 			glDeleteBuffers(1, &handle);
 
-			dirty = false;
+			mapDirty = false;
 			handle = 0;
 		}
 
 		size = 0;
 		resUsage = Usage::NONE;
 		mapUsage = Usage::NONE;
+	}
+
+	size_t BaseBuffer::copyFrom(Graphics& graphics, size_t dstPos, const BaseBuffer& src, const Box1uz& srcRange) {
+		if (dstPos >= size || srcRange.pos[0] >= src.size) return 0;
+
+		auto copySize = std::min(std::min(src.size - srcRange.pos[0], srcRange.size[0]), size - dstPos);
+
+		glBindBuffer(GL_COPY_READ_BUFFER, src.handle);
+		glBindBuffer(GL_COPY_WRITE_BUFFER, handle);
+		glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, srcRange.pos[0], dstPos, copySize);
+		glBindBuffer(GL_COPY_READ_BUFFER, 0);
+		glBindBuffer(GL_COPY_WRITE_BUFFER, 0);
+
+		return copySize;
+	}
+
+	size_t BaseBuffer::copyFrom(Graphics& graphics, size_t dstPos, const IBuffer* src, const Box1uz& srcRange) {
+		using namespace srk::enum_operators;
+
+		if (!handle || (resUsage & Usage::COPY_DST) != Usage::COPY_DST || !src || (src->getUsage() & Usage::COPY_SRC) != Usage::COPY_SRC || src->getGraphics() != graphics) return -1;
+
+		auto srcNative = (const BaseBuffer*)src->getNative();
+		if (!srcNative || !srcNative->handle) return -1;
+
+		return copyFrom(graphics, dstPos, *srcNative, srcRange);
 	}
 }

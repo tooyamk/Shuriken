@@ -1,5 +1,5 @@
 #include "PixelBuffer.h"
-#include "Graphics.h"
+#include "BaseTexture.h"
 
 namespace srk::modules::graphics::gl {
 	PixelBuffer::PixelBuffer(Graphics& graphics) : IPixelBuffer(graphics),
@@ -14,7 +14,7 @@ namespace srk::modules::graphics::gl {
 	}
 
 	const void* PixelBuffer::getNative() const {
-		return this;
+		return &_baseBuffer;
 	}
 
 	bool PixelBuffer::create(size_t size, Usage bufferUsage, const void* data, size_t dataSize) {
@@ -69,9 +69,28 @@ namespace srk::modules::graphics::gl {
 		return _baseBuffer.update(data, length, offset);
 	}
 
-	//void PixelBuffer::flush() {
-	//	_baseBuffer.flush();
-	//}
+	size_t PixelBuffer::copyFrom(size_t dstPos, const IBuffer* src, const Box1uz& srcRange) {
+		return _baseBuffer.copyFrom(*_graphics.get<Graphics>(), dstPos, src, srcRange);
+	}
+
+	bool PixelBuffer::copyFrom(uint32_t mipSlice, const ITextureResource* src) {
+		if (!src || _graphics != src->getGraphics()) return false;
+
+		auto native = (BaseTexture*)src->getNative();
+		if (!native) return false;
+
+		if (!_baseBuffer.handle || _baseBuffer.bufferType != GL_PIXEL_PACK_BUFFER) return false;
+
+		glBindBuffer(_baseBuffer.bufferType, _baseBuffer.handle);
+
+		glBindTexture(native->glTexInfo.target, native->handle);
+		glGetTexImage(native->glTexInfo.target, mipSlice, native->glTexInfo.format, native->glTexInfo.type, nullptr);
+
+		glBindBuffer(_baseBuffer.bufferType, 0);
+		_baseBuffer.doSync<true>();
+
+		return true;
+	}
 
 	bool PixelBuffer::isSyncing() const {
 		return _baseBuffer.isSyncing();

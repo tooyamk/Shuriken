@@ -52,8 +52,9 @@ namespace srk {
 		return _base.update(data, length, offset);
 	}
 
-	//void MultipleVertexBuffer::flush() {
-	//}
+	size_t MultipleVertexBuffer::copyFrom(size_t dstPos, const modules::graphics::IBuffer* src, const Box1uz& srcRange) {
+		return _base.copyFrom(dstPos, src, srcRange);
+	}
 
 	bool MultipleVertexBuffer::isSyncing() const {
 		return _base.isSyncing();
@@ -132,6 +133,10 @@ namespace srk {
 		return _base.update(data, length, offset);
 	}
 
+	size_t MultipleIndexBuffer::copyFrom(size_t dstPos, const modules::graphics::IBuffer* src, const Box1uz& srcRange) {
+		return _base.copyFrom(dstPos, src, srcRange);
+	}
+
 	modules::graphics::IndexType MultipleIndexBuffer::getFormat() const {
 		return _idxType;
 	}
@@ -147,9 +152,6 @@ namespace srk {
 			};
 		}
 	}
-
-	//void MultipleIndexBuffer::flush() {
-	//}
 
 	bool MultipleIndexBuffer::isSyncing() const {
 		return _base.isSyncing();
@@ -207,8 +209,9 @@ namespace srk {
 		return _base.update(data, length, offset);
 	}
 
-	//void MultipleConstantBuffer::flush() {
-	//}
+	size_t MultipleConstantBuffer::copyFrom(size_t dstPos, const modules::graphics::IBuffer* src, const Box1uz& srcRange) {
+		return _base.copyFrom(dstPos, src, srcRange);
+	}
 
 	bool MultipleConstantBuffer::isSyncing() const {
 		return _base.isSyncing();

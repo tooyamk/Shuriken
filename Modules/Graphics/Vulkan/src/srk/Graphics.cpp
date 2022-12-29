@@ -1,7 +1,11 @@
+#define VMA_IMPLEMENTATION
+
 #include "Graphics.h"
 #include "CreateModule.h"
 #include "BlendState.h"
+#include "ConstantBuffer.h"
 #include "DepthStencilState.h"
+#include "IndexBuffer.h"
 #include "Program.h"
 #include "RasterizerState.h"
 #include "VertexBuffer.h"
@@ -11,7 +15,7 @@
 namespace srk::modules::graphics::vulkan {
 	VKAPI_ATTR VkBool32 VKAPI_CALL debugMessengerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
 		auto g = (Graphics*)pUserData;
-		printaln("vk debug : ", pCallbackData->pMessage);
+		printaln(L"vk-debug : ", pCallbackData->pMessage);
 		return VK_FALSE;
 	}
 
@@ -20,6 +24,8 @@ namespace srk::modules::graphics::vulkan {
 		_curIsBackBuffer(true),
 		_backBufferSampleCount(1),
 		_eventDispatcher(new events::EventDispatcher<GraphicsEvent>()) {
+		_constantBufferManager.createShareConstantBufferCallback = std::bind(&Graphics::_createdShareConstantBuffer, this);
+		_constantBufferManager.createExclusiveConstantBufferCallback = std::bind(&Graphics::_createdExclusiveConstantBuffer, this, std::placeholders::_1);
 	}
 
 	Graphics::~Graphics() {
@@ -72,6 +78,7 @@ namespace srk::modules::graphics::vulkan {
 			if (!_createVkSurface(*conf.win)) break;
 			if (!_getVkPhysicalDevice(conf)) break;
 			if (!_createVkDevice()) break;
+			if (!_createMemAllocator()) break;
 			if (!_createVkCommandPool()) break;
 			if (!_createVkSwapchain()) break;
 
@@ -81,27 +88,27 @@ namespace srk::modules::graphics::vulkan {
 				pipelineCacheCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
 				pipelineCacheCreateInfo.initialDataSize = 0;
 				pipelineCacheCreateInfo.pInitialData = nullptr;
-				vkCreatePipelineCache(_vkStatus.device, &pipelineCacheCreateInfo, nullptr, &_vkStatus.pipeline.cache);
+				vkCreatePipelineCache(_vkStatus.device, &pipelineCacheCreateInfo, getVkAllocationCallbacks(), &_vkStatus.pipeline.cache);
 			}
 
 			{
 				VkPhysicalDeviceProperties physicalDeviceProperties;
 				vkGetPhysicalDeviceProperties(_vkStatus.physicalDevice, &physicalDeviceProperties);
 
-				_deviceVersion = "Vulkan ";
+				/*_deviceVersion = "Vulkan ";
 				_deviceVersion += String::toString(VK_API_VERSION_MAJOR(physicalDeviceProperties.apiVersion));
 				_deviceVersion += '.';
 				_deviceVersion += String::toString(VK_VERSION_MINOR(physicalDeviceProperties.apiVersion));
 				_deviceVersion += '.';
 				_deviceVersion += String::toString(VK_VERSION_PATCH(physicalDeviceProperties.apiVersion));
 				_deviceVersion += '.';
-				_deviceVersion += String::toString(VK_API_VERSION_VARIANT(physicalDeviceProperties.apiVersion));
+				_deviceVersion += String::toString(VK_API_VERSION_VARIANT(physicalDeviceProperties.apiVersion));*/
 
 				_deviceFeatures.stencilIndependentMask = true;
 				_deviceFeatures.stencilIndependentRef = true;
 				_deviceFeatures.simultaneousRenderTargetCount = physicalDeviceProperties.limits.maxColorAttachments;
 
-				_vkStatus.usage.bufferCreateUsageMask = Usage::MAP_READ_WRITE | Usage::UPDATE;
+				_vkStatus.usage.bufferCreateUsageMask = Usage::MAP_READ_WRITE | Usage::UPDATE | Usage::COPY_SRC_DST;
 				_vkStatus.usage.texCreateUsageMask = Usage::RENDERABLE;
 			}
 
@@ -317,6 +324,19 @@ namespace srk::modules::graphics::vulkan {
 			}
 		}
 
+		_vkStatus.apiVersion = VK_API_VERSION_1_0;
+		auto enumerateInstanceVersion = PFN_vkEnumerateInstanceVersion(vkGetInstanceProcAddr(_vkStatus.instance, "vkEnumerateInstanceVersion"));
+		if (enumerateInstanceVersion) enumerateInstanceVersion(&_vkStatus.apiVersion);
+
+		_deviceVersion = "Vulkan ";
+		_deviceVersion += String::toString(VK_API_VERSION_MAJOR(_vkStatus.apiVersion));
+		_deviceVersion += '.';
+		_deviceVersion += String::toString(VK_VERSION_MINOR(_vkStatus.apiVersion));
+		_deviceVersion += '.';
+		_deviceVersion += String::toString(VK_VERSION_PATCH(_vkStatus.apiVersion));
+		_deviceVersion += '.';
+		_deviceVersion += String::toString(VK_API_VERSION_VARIANT(_vkStatus.apiVersion));
+
 		return true;
 	}
 
@@ -419,6 +439,18 @@ namespace srk::modules::graphics::vulkan {
 		return vkCreateDevice(_vkStatus.physicalDevice, &deviceCreateInfo, nullptr, &_vkStatus.device) == VK_SUCCESS;
 	}
 
+	bool Graphics::_createMemAllocator() {
+		VmaAllocatorCreateInfo allocatorCreateInfo;
+		memset(&allocatorCreateInfo, 0, sizeof(allocatorCreateInfo));
+		allocatorCreateInfo.vulkanApiVersion = VK_MAKE_VERSION(1, 1, 0);//_vkStatus.apiVersion;
+
+		allocatorCreateInfo.physicalDevice = _vkStatus.physicalDevice;
+		allocatorCreateInfo.device = _vkStatus.device;
+		allocatorCreateInfo.instance = _vkStatus.instance;
+
+		return vmaCreateAllocator(&allocatorCreateInfo, &_vkStatus.memAllocator) == VK_SUCCESS;
+	}
+
 	bool Graphics::_createVkCommandPool() {
 		VkCommandPoolCreateInfo commandPoolCreateInfo;
 		memset(&commandPoolCreateInfo, 0, sizeof(commandPoolCreateInfo));
@@ -426,7 +458,11 @@ namespace srk::modules::graphics::vulkan {
 		commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 		commandPoolCreateInfo.queueFamilyIndex = _vkStatus.queueFamilyIndices.graphics;
 
-		return vkCreateCommandPool(_vkStatus.device, &commandPoolCreateInfo, nullptr, &_vkStatus.cmd.pool) == VK_SUCCESS;
+		if (vkCreateCommandPool(_vkStatus.device, &commandPoolCreateInfo, getVkAllocationCallbacks(), &_vkStatus.cmd.pool) != VK_SUCCESS) return false;
+
+		vkGetDeviceQueue(_vkStatus.device, _vkStatus.queueFamilyIndices.graphics, 0, &_vkStatus.cmd.graphicsQueue);
+
+		return true;
 	}
 
 	bool Graphics::_createVkSwapchain() {
@@ -539,7 +575,7 @@ namespace srk::modules::graphics::vulkan {
 			swapchainCreateInfo.clipped = VK_TRUE;
 			swapchainCreateInfo.oldSwapchain = oldSwapChain;
 
-			if (vkCreateSwapchainKHR(_vkStatus.device, &swapchainCreateInfo, nullptr, &_vkStatus.swapChain.swapChain) != VK_SUCCESS) return false;
+			if (vkCreateSwapchainKHR(_vkStatus.device, &swapchainCreateInfo, getVkAllocationCallbacks(), &_vkStatus.swapChain.swapChain) != VK_SUCCESS) return false;
 			_vkStatus.swapChain.format = selectedSurfaceFormat.format;
 
 			_cleanupSwapChain(&oldSwapChain);
@@ -569,7 +605,7 @@ namespace srk::modules::graphics::vulkan {
 			for (size_t i = 0; i < _vkStatus.swapChain.images.size(); ++i) {
 				imageViewCreateInfo.image = _vkStatus.swapChain.images[i];
 				
-				if (vkCreateImageView(_vkStatus.device, &imageViewCreateInfo, nullptr, &_vkStatus.swapChain.imageViews[i]) != VK_SUCCESS) _vkStatus.swapChain.imageViews[i] = nullptr;
+				if (vkCreateImageView(_vkStatus.device, &imageViewCreateInfo, getVkAllocationCallbacks(), &_vkStatus.swapChain.imageViews[i]) != VK_SUCCESS) _vkStatus.swapChain.imageViews[i] = nullptr;
 			}
 		}
 
@@ -592,9 +628,15 @@ namespace srk::modules::graphics::vulkan {
 
 		if (!needUpdate) return true;
 
-		std::array<VkVertexInputAttributeDescription, 16> vertexInputAttributeDescriptions;
-		uint32_t vertexInputAttributeDescriptionCount = vertexInputAttributeDescriptions.size();
-		auto rst = p->use(vertexAttributeGetter, vertexInputAttributeDescriptions.data(), vertexInputAttributeDescriptionCount);
+		uint32_t vertexInputAttributeDescriptionCount = p->getInfo().vertices.size();
+		std::vector<VkVertexInputAttributeDescription> vertexInputAttributeDescriptions(vertexInputAttributeDescriptionCount);
+		
+		uint32_t vertexInputBindingDescriptionCount = vertexInputAttributeDescriptionCount;
+		std::vector<VkVertexInputBindingDescription> vertexInputBindingDescription(vertexInputBindingDescriptionCount);
+		
+		auto rst = p->use(vertexAttributeGetter, 
+			vertexInputBindingDescription.data(), vertexInputBindingDescriptionCount,
+			vertexInputAttributeDescriptions.data(), vertexInputAttributeDescriptionCount);
 		if (!rst) return false;
 
 		VkGraphicsPipelineCreateInfo graphicsPipelineCreateInfo;
@@ -608,8 +650,8 @@ namespace srk::modules::graphics::vulkan {
 		VkPipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo;
 		memset(&pipelineVertexInputStateCreateInfo, 0, sizeof(pipelineVertexInputStateCreateInfo));
 		pipelineVertexInputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-		pipelineVertexInputStateCreateInfo.vertexBindingDescriptionCount = 0;
-		pipelineVertexInputStateCreateInfo.pVertexBindingDescriptions = nullptr; // Optional
+		pipelineVertexInputStateCreateInfo.vertexBindingDescriptionCount = vertexInputBindingDescriptionCount;
+		pipelineVertexInputStateCreateInfo.pVertexBindingDescriptions = vertexInputBindingDescription.data();
 		pipelineVertexInputStateCreateInfo.vertexAttributeDescriptionCount = vertexInputAttributeDescriptionCount;
 		pipelineVertexInputStateCreateInfo.pVertexAttributeDescriptions = vertexInputAttributeDescriptions.data();
 		graphicsPipelineCreateInfo.pVertexInputState = &pipelineVertexInputStateCreateInfo;
@@ -673,19 +715,6 @@ namespace srk::modules::graphics::vulkan {
 		pipelineDynamicStateCreateInfo.pDynamicStates = dynamicStates;
 		graphicsPipelineCreateInfo.pDynamicState = &pipelineDynamicStateCreateInfo;
 
-		VkPipelineLayoutCreateInfo pipelineLayoutInfo;
-		memset(&pipelineLayoutInfo, 0, sizeof(pipelineLayoutInfo));
-		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		pipelineLayoutInfo.setLayoutCount = 0; // Optional
-		pipelineLayoutInfo.pSetLayouts = nullptr; // Optional
-		pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
-		pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
-
-		VkPipelineLayout pipelineLayout;
-		if (vkCreatePipelineLayout(_vkStatus.device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
-			printaln("failed to create pipeline layout!");
-		}
-
 		VkAttachmentDescription attachmentDesc;
 		memset(&attachmentDesc, 0, sizeof(attachmentDesc));
 		attachmentDesc.format = _vkStatus.swapChain.format;
@@ -720,13 +749,13 @@ namespace srk::modules::graphics::vulkan {
 			printaln("failed to create render pass!");
 		}
 
-		graphicsPipelineCreateInfo.layout = pipelineLayout;
+		graphicsPipelineCreateInfo.layout = p->getVkPipelineLayout();
 		graphicsPipelineCreateInfo.renderPass = renderPass;
 		graphicsPipelineCreateInfo.subpass = 0;
 		graphicsPipelineCreateInfo.basePipelineHandle = nullptr;
 		graphicsPipelineCreateInfo.basePipelineIndex = -1;
 
-		if (vkCreateGraphicsPipelines(_vkStatus.device, _vkStatus.pipeline.cache, 1, &graphicsPipelineCreateInfo, nullptr, &_vkStatus.pipeline.pipeline) != VK_SUCCESS) {
+		if (vkCreateGraphicsPipelines(_vkStatus.device, _vkStatus.pipeline.cache, 1, &graphicsPipelineCreateInfo, getVkAllocationCallbacks(), &_vkStatus.pipeline.pipeline) != VK_SUCCESS) {
 			_vkStatus.pipeline.pipeline = nullptr;
 			return false;
 		}
@@ -755,7 +784,7 @@ namespace srk::modules::graphics::vulkan {
 	}
 
 	IntrusivePtr<IConstantBuffer> Graphics::createConstantBuffer() {
-		return nullptr;
+		return new ConstantBuffer(*this);
 	}
 
 	IntrusivePtr<IDepthStencil> Graphics::createDepthStencil() {
@@ -767,7 +796,7 @@ namespace srk::modules::graphics::vulkan {
 	}
 
 	IntrusivePtr<IIndexBuffer> Graphics::createIndexBuffer() {
-		return nullptr;
+		return new IndexBuffer(*this);
 	}
 
 	IntrusivePtr<IProgram> Graphics::createProgram() {
@@ -933,16 +962,21 @@ namespace srk::modules::graphics::vulkan {
 		if (_vkStatus.device) vkDeviceWaitIdle(_vkStatus.device);
 
 		if (_vkStatus.cmd.pool) {
-			vkDestroyCommandPool(_vkStatus.device, _vkStatus.cmd.pool, nullptr);
+			vkDestroyCommandPool(_vkStatus.device, _vkStatus.cmd.pool, getVkAllocationCallbacks());
 			_vkStatus.cmd.pool = nullptr;
 		}
 
 		if (_vkStatus.pipeline.cache) {
-			vkDestroyPipelineCache(_vkStatus.device, _vkStatus.pipeline.cache, nullptr);
+			vkDestroyPipelineCache(_vkStatus.device, _vkStatus.pipeline.cache, getVkAllocationCallbacks());
 			_vkStatus.pipeline.cache = nullptr;
 		}
 
 		_cleanupSwapChain(nullptr);
+
+		if (_vkStatus.memAllocator) {
+			vmaDestroyAllocator(_vkStatus.memAllocator);
+			_vkStatus.memAllocator = nullptr;
+		}
 
 		if (_vkStatus.device) {
 			vkDestroyDevice(_vkStatus.device, nullptr);
@@ -967,9 +1001,11 @@ namespace srk::modules::graphics::vulkan {
 
 		_vkStatus.enabledDeviceExtensions.count = 0;
 		_vkStatus.physicalDevice = nullptr;
+		_vkStatus.cmd.graphicsQueue = nullptr;
 
 		_deviceFeatures.reset();
 
+		_vkStatus.apiVersion = 0;
 		_deviceVersion = "Vulkan Unknown";
 		_vkStatus.usage.bufferCreateUsageMask = Usage::NONE;
 		_vkStatus.usage.texCreateUsageMask = Usage::NONE;
@@ -982,7 +1018,7 @@ namespace srk::modules::graphics::vulkan {
 		vkDeviceWaitIdle(_vkStatus.device);
 
 		for (auto& i : _vkStatus.swapChain.imageViews) {
-			if (i) vkDestroyImageView(_vkStatus.device, i, nullptr);
+			if (i) vkDestroyImageView(_vkStatus.device, i, getVkAllocationCallbacks());
 		}
 		_vkStatus.swapChain.imageViews.clear();
 
@@ -990,7 +1026,7 @@ namespace srk::modules::graphics::vulkan {
 
 		if (!swapChain) swapChain = &_vkStatus.swapChain.swapChain;
 		if (*swapChain) {
-			vkDestroySwapchainKHR(_vkStatus.device, *swapChain, nullptr);
+			vkDestroySwapchainKHR(_vkStatus.device, *swapChain, getVkAllocationCallbacks());
 			if (*swapChain == _vkStatus.swapChain.swapChain) _vkStatus.swapChain.swapChain = nullptr;
 		}
 	}
@@ -1192,5 +1228,20 @@ namespace srk::modules::graphics::vulkan {
 		default:
 			return VK_FORMAT_UNDEFINED;
 		}
+	}
+
+	const VkAllocationCallbacks* Graphics::getVkAllocationCallbacks() const {
+		return _vkStatus.memAllocator->GetAllocationCallbacks();
+	}
+
+	IConstantBuffer* Graphics::_createdShareConstantBuffer() {
+		return new ConstantBuffer(*this);
+	}
+
+	IConstantBuffer* Graphics::_createdExclusiveConstantBuffer(uint32_t numParameters) {
+		auto cb = new ConstantBuffer(*this);
+		cb->recordUpdateIds = new uint32_t[numParameters];
+		memset(cb->recordUpdateIds, 0, sizeof(uint32_t) * numParameters);
+		return cb;
 	}
 }

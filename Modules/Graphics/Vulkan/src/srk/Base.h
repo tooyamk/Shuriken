@@ -11,6 +11,8 @@
 #	include "vulkan/vulkan_xlib.h"
 #endif
 
+#include "vk_mem_alloc.h"
+
 namespace srk::modules::graphics::vulkan {
 	class Graphics;
 }

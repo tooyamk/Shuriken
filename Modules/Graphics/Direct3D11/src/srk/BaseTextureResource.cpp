@@ -4,7 +4,7 @@
 #include "srk/Image.h"
 
 namespace srk::modules::graphics::d3d11 {
-	BaseTextureResource::BaseTextureResource(UINT resType) : BaseResource(resType),
+	BaseTextureResource::BaseTextureResource(D3D11_BIND_FLAG resType) : BaseResource(resType),
 		format(TextureFormat::UNKNOWN),
 		internalFormat(DXGI_FORMAT_UNKNOWN),
 		sampleCount(0),

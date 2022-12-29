@@ -20,13 +20,9 @@ namespace srk::modules::graphics::d3d11 {
 		virtual size_t SRK_CALL read(void* dst, size_t dstLen, size_t offset) override;
 		virtual size_t SRK_CALL write(const void* data, size_t length, size_t offset) override;
 		virtual size_t SRK_CALL update(const void* data, size_t length, size_t offset) override;
-		//virtual void SRK_CALL flush() override;
+		virtual size_t SRK_CALL copyFrom(size_t dstPos, const IBuffer* src, const Box1uz& srcRange) override;
 		virtual bool SRK_CALL isSyncing() const override;
 		virtual void SRK_CALL destroy() override;
-
-		inline ID3D11Buffer* SRK_CALL getInternalBuffer() const {
-			return (ID3D11Buffer*)_baseBuffer.handle;
-		}
 
 	protected:
 		BaseBuffer _baseBuffer;
