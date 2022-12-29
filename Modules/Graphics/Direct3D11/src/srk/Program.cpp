@@ -214,7 +214,7 @@ namespace srk::modules::graphics::d3d11 {
 	}
 
 	void Program::useEnd() {
-		for (uint32_t i = 0, n = _usingSameConstBuffers.size(); i < n; ++i) _usingSameConstBuffers[i] = nullptr;
+		for (size_t i = 0, n = _usingSameConstBuffers.size(); i < n; ++i) _usingSameConstBuffers[i] = nullptr;
 	}
 
 	ConstantBuffer* Program::_getConstantBuffer(const MyConstantBufferLayout& cbLayout, const IShaderParameterGetter& paramGetter) {
@@ -226,14 +226,14 @@ namespace srk::modules::graphics::d3d11 {
 		cbLayout.collectUsingInfo(paramGetter, statistics, (std::vector<const ShaderParameter*>&)_tempParams, _tempVars);
 
 		ConstantBuffer* cb = nullptr;
-		if (uint32_t numVars = _tempVars.size(); statistics.unknownCount < numVars) {
+		if (decltype(statistics.unknownCount) numVars = _tempVars.size(); statistics.unknownCount < numVars) {
 			auto g = _graphics.get<Graphics>();
 
 			if (statistics.exclusiveCount && !statistics.shareCount) {
 				if (cb = (ConstantBuffer*)g->getConstantBufferManager().getExclusiveConstantBuffer(_tempParams, cbLayout); cb) {
 					if (g->getInternalFeatures().MapNoOverwriteOnDynamicConstantBuffer) {
 						auto isMaping = false;
-						for (uint32_t i = 0; i < numVars; ++i) {
+						for (decltype(numVars) i = 0; i < numVars; ++i) {
 							if (auto param = _tempParams[i]; param && param->getUpdateId() != cb->recordUpdateIds[i]) {
 								if (!isMaping) {
 									if (cb->map(Usage::MAP_WRITE) == Usage::NONE) break;
@@ -247,7 +247,7 @@ namespace srk::modules::graphics::d3d11 {
 						if (isMaping) cb->unmap();
 					} else {
 						auto needUpdate = false;
-						for (uint32_t i = 0; i < numVars; ++i) {
+						for (decltype(numVars) i = 0; i < numVars; ++i) {
 							if (auto param = _tempParams[i]; param && param->getUpdateId() != cb->recordUpdateIds[i]) {
 								needUpdate = true;
 								cb->recordUpdateIds[i] = param->getUpdateId();
@@ -270,7 +270,7 @@ namespace srk::modules::graphics::d3d11 {
 
 	void Program::_constantBufferUpdateAll(ConstantBuffer* cb, const std::vector<ConstantBufferLayout::Variables>& vars) {
 		if (cb->map(Usage::MAP_WRITE) != Usage::NONE) {
-			for (uint32_t i = 0, n = _tempVars.size(); i < n; ++i) {
+			for (size_t i = 0, n = _tempVars.size(); i < n; ++i) {
 				if (auto param = _tempParams[i]; param) ConstantBufferManager::updateConstantBuffer(cb, *param, *_tempVars[i]);
 			}
 
@@ -285,7 +285,7 @@ namespace srk::modules::graphics::d3d11 {
 		_info.clear();
 
 		if (_numInElements > 0) {
-			for (uint32_t i = 0; i < _numInElements; ++i) delete[] _inputElements[i].SemanticName;
+			for (decltype(_numInElements) i = 0; i < _numInElements; ++i) delete[] _inputElements[i].SemanticName;
 			delete[] _inputElements;
 			_numInElements = 0;
 		}
@@ -347,7 +347,7 @@ namespace srk::modules::graphics::d3d11 {
 	}
 
 	ID3D11InputLayout* Program::_getOrCreateInputLayout() {
-		for (uint32_t i = 0, n = _inLayouts.size(); i < n; ++i) {
+		for (size_t i = 0, n = _inLayouts.size(); i < n; ++i) {
 			if (auto& il = _inLayouts[i]; il.equal(_inputElements, _numInElements)) return il.layout;
 		}
 

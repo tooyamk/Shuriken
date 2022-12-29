@@ -74,7 +74,7 @@ namespace srk {
 		}
 
 		inline ShaderParameter& SRK_CALL setUpdated() {
-			++_updateId;
+			_updateId = _updateIdGenerator.fetch_add(1, std::memory_order_relaxed);
 			return *this;
 		}
 
@@ -164,6 +164,8 @@ namespace srk {
 			EXTERNAL
 		};
 
+		
+		inline static std::atomic_uint32_t _updateIdGenerator = 1;
 
 		ShaderParameterUsage _usage;
 		ShaderParameterType _type;

@@ -398,7 +398,7 @@ namespace srk::modules::graphics::d3d11 {
 			(_context->*fn)(slot.start, slot.num, (T*const*)_programClearData.data());
 		}
 
-		IConstantBuffer* SRK_CALL _createdShareConstantBuffer();
-		IConstantBuffer* SRK_CALL _createdExclusiveConstantBuffer(uint32_t numParameters);
+		IConstantBuffer* SRK_CALL _createShareConstantBuffer();
+		IConstantBuffer* SRK_CALL _createExclusiveConstantBuffer(uint32_t numParameters);
 	};
 }

@@ -6,7 +6,6 @@
 #include "srk/ShaderDefine.h"
 #include "srk/ShaderParameter.h"
 #include "srk/String.h"
-#include "spirv_reflect.h"
 #include <vector>
 #include "srk/Debug.h"
 
@@ -275,17 +274,16 @@ namespace srk::modules::graphics::vulkan {
 		return true;
 	}
 
-	void Program::_reflect(const void* data, const InputHandler& inputHandler, std::vector<VkDescriptorSetLayoutBinding>& descriptorSetLayoutBindings) {
-		auto reflectData = (const SpvReflectShaderModule*)data;
-		switch (reflectData->shader_stage) {
+	void Program::_reflect(const SpvReflectShaderModule* data, const InputHandler& inputHandler, std::vector<VkDescriptorSetLayoutBinding>& descriptorSetLayoutBindings) {
+		switch (data->shader_stage) {
 		case SPV_REFLECT_SHADER_STAGE_VERTEX_BIT:
 		{
 			_info.clear();
-			_vertexLayouts.resize(reflectData->input_variable_count);
-			_info.vertices.resize(reflectData->input_variable_count);
+			_vertexLayouts.resize(data->input_variable_count);
+			_info.vertices.resize(data->input_variable_count);
 
-			for (decltype(reflectData->input_variable_count) i = 0; i < reflectData->input_variable_count; ++i) {
-				auto iv = reflectData->input_variables[i];
+			for (decltype(data->input_variable_count) i = 0; i < data->input_variable_count; ++i) {
+				auto iv = data->input_variables[i];
 				auto& vd = _info.vertices[i];
 				vd.name = std::string_view(iv->name + inputNamePrefix.size());
 
@@ -347,10 +345,9 @@ namespace srk::modules::graphics::vulkan {
 		}
 	}
 
-	void Program::_parseParamLayout(const void* data, ParameterLayout& layout, VkShaderStageFlags stageFlags, std::vector<VkDescriptorSetLayoutBinding>& descriptorSetLayoutBindings) {
-		auto reflectData = (const SpvReflectShaderModule*)data;
-		for (decltype(reflectData->descriptor_set_count) i = 0; i < reflectData->descriptor_set_count; ++i) {
-			auto& descSet = reflectData->descriptor_sets[i];
+	void Program::_parseParamLayout(const SpvReflectShaderModule* data, ParameterLayout& layout, VkShaderStageFlags stageFlags, std::vector<VkDescriptorSetLayoutBinding>& descriptorSetLayoutBindings) {
+		for (decltype(data->descriptor_set_count) i = 0; i < data->descriptor_set_count; ++i) {
+			auto& descSet = data->descriptor_sets[i];
 
 			for (decltype(descSet.binding_count) j = 0; j < descSet.binding_count; ++j) {
 				auto descBinding = descSet.bindings[j];
@@ -391,7 +388,7 @@ namespace srk::modules::graphics::vulkan {
 
 					descriptorSetLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 
-					_parseParamLayout(descBinding->type_description, cb.variables);
+					_parseParamLayout(descBinding->type_description, descBinding->block.members, cb.variables);
 
 					break;
 				}
@@ -413,17 +410,23 @@ namespace srk::modules::graphics::vulkan {
 		}
 	}
 
-	void Program::_parseParamLayout(const void* data, std::vector<ConstantBufferLayout::Variables>& vars) {
+	void Program::_parseParamLayout(const SpvReflectTypeDescription* data, struct SpvReflectBlockVariable* members, std::vector<ConstantBufferLayout::Variables>& vars) {
+		using namespace srk::literals;
+
 		if (!data) return;
 
-		auto typeDesc = (const SpvReflectTypeDescription*)data;
-		for (decltype(typeDesc->member_count) i = 0; i < typeDesc->member_count; ++i) {
-			auto& memDesc = typeDesc->members[i];
-			auto& mem = vars.emplace_back();
+		for (decltype(data->member_count) i = 0; i < data->member_count; ++i) {
+			auto& memDesc = data->members[i];
+			auto& blockVar = members[i];
+			auto& v = vars.emplace_back();
 			if (memDesc.storage_class == SpvStorageClassUniformConstant) {
-				mem.name = memDesc.struct_member_name;
+				v.name = memDesc.struct_member_name;
 			}
-			_parseParamLayout(&memDesc, mem.members);
+			v.offset = blockVar.offset;
+			v.size = blockVar.size;
+			v.stride = (1_ui32 << 31) | 16;
+
+			_parseParamLayout(&memDesc, blockVar.members, v.members);
 		}
 	}
 }

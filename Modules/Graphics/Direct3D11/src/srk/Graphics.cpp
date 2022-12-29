@@ -34,8 +34,8 @@ namespace srk::modules::graphics::d3d11 {
 		_RTVs({ 0 }),
 		_DSV(nullptr),
 		_eventDispatcher(new events::EventDispatcher<GraphicsEvent>()) {
-		_constantBufferManager.createShareConstantBufferCallback = std::bind(&Graphics::_createdShareConstantBuffer, this);
-		_constantBufferManager.createExclusiveConstantBufferCallback = std::bind(&Graphics::_createdExclusiveConstantBuffer, this, std::placeholders::_1);
+		_constantBufferManager.createShareConstantBufferCallback = std::bind(&Graphics::_createShareConstantBuffer, this);
+		_constantBufferManager.createExclusiveConstantBufferCallback = std::bind(&Graphics::_createExclusiveConstantBuffer, this, std::placeholders::_1);
 	}
 
 	Graphics::~Graphics() {
@@ -757,11 +757,11 @@ namespace srk::modules::graphics::d3d11 {
 		}
 	}
 
-	IConstantBuffer* Graphics::_createdShareConstantBuffer() {
+	IConstantBuffer* Graphics::_createShareConstantBuffer() {
 		return new ConstantBuffer(*this);
 	}
 
-	IConstantBuffer* Graphics::_createdExclusiveConstantBuffer(uint32_t numParameters) {
+	IConstantBuffer* Graphics::_createExclusiveConstantBuffer(uint32_t numParameters) {
 		auto cb = new ConstantBuffer(*this);
 		cb->recordUpdateIds = new uint32_t[numParameters];
 		memset(cb->recordUpdateIds, 0, sizeof(uint32_t) * numParameters);

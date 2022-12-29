@@ -2,6 +2,7 @@
 
 #include "Base.h"
 #include "srk/modules/graphics/ConstantBufferManager.h"
+#include "spirv_reflect.h"
 
 namespace srk::modules::graphics::vulkan {
 	class SRK_MODULE_DLL Program : public IProgram {
@@ -72,8 +73,8 @@ namespace srk::modules::graphics::vulkan {
 		ParameterLayout _psParamLayout;
 
 		bool SRK_CALL _compileShader(const ProgramSource& source, ProgramStage stage, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& includeHandler, const InputHandler& inputHandler, std::vector<VkDescriptorSetLayoutBinding>& descriptorSetLayoutBindings);
-		void SRK_CALL _reflect(const void* data, const InputHandler& inputHandler, std::vector<VkDescriptorSetLayoutBinding>& descriptorSetLayoutBindings);
-		void SRK_CALL _parseParamLayout(const void* data, ParameterLayout& layout, VkShaderStageFlags stageFlags, std::vector<VkDescriptorSetLayoutBinding>& descriptorSetLayoutBindings);
-		void SRK_CALL _parseParamLayout(const void* data, std::vector<ConstantBufferLayout::Variables>& vars);
+		void SRK_CALL _reflect(const SpvReflectShaderModule* data, const InputHandler& inputHandler, std::vector<VkDescriptorSetLayoutBinding>& descriptorSetLayoutBindings);
+		void SRK_CALL _parseParamLayout(const SpvReflectShaderModule* data, ParameterLayout& layout, VkShaderStageFlags stageFlags, std::vector<VkDescriptorSetLayoutBinding>& descriptorSetLayoutBindings);
+		void SRK_CALL _parseParamLayout(const SpvReflectTypeDescription* data, struct SpvReflectBlockVariable* members, std::vector<ConstantBufferLayout::Variables>& vars);
 	};
 }
