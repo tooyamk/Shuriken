@@ -259,7 +259,7 @@ public:
 			}
 
 			renderData.g->setBlendState(renderData.bs);
-			renderData.g->draw(renderData.vbf, renderData.p, renderData.spc, renderData.ib);
+			renderData.g->draw(renderData.p, renderData.vbf, renderData.spc, renderData.ib);
 
 			renderData.g->endRender();
 			renderData.g->present();

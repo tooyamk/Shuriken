@@ -72,9 +72,9 @@ namespace srk::modules::graphics::vulkan {
 		virtual void SRK_CALL setRasterizerState(IRasterizerState* state) override;
 		
 		virtual void SRK_CALL beginRender() override;
-		virtual void SRK_CALL draw(const IVertexAttributeGetter* vertexAttributeGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
+		virtual void SRK_CALL draw(IProgram* program, const IVertexAttributeGetter* vertexAttributeGetter, const IShaderParameterGetter* shaderParamGetter,
 			const IIndexBuffer* indexBuffer, uint32_t count = (std::numeric_limits<uint32_t>::max)(), uint32_t offset = 0) override;
-		virtual void SRK_CALL drawInstanced(const IVertexAttributeGetter* vertexAttributeGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
+		virtual void SRK_CALL drawInstanced(IProgram* program, const IVertexAttributeGetter* vertexAttributeGetter, const IShaderParameterGetter* shaderParamGetter,
 			const IIndexBuffer* indexBuffer, uint32_t instancedCount, uint32_t count = (std::numeric_limits<uint32_t>::max)(), uint32_t offset = 0) override;
 		virtual void SRK_CALL endRender() override;
 		virtual void SRK_CALL flush() override;
@@ -244,7 +244,7 @@ namespace srk::modules::graphics::vulkan {
 		void SRK_CALL _setDepthStencilState(DepthStencilState& state);
 		void SRK_CALL _setRasterizerState(RasterizerState& state);
 
-		bool SRK_CALL _checkAndUpdateVkPipeline(IProgram* program, const IVertexAttributeGetter* vertexAttributeGetter);
+		bool SRK_CALL _checkAndUpdateVkPipeline(IProgram* program, const IVertexAttributeGetter* vertexAttributeGetter, const IShaderParameterGetter* shaderParamGetter);
 
 		void SRK_CALL _release();
 		void SRK_CALL _resize(const Vec2ui32& size);

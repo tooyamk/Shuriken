@@ -116,6 +116,9 @@ namespace srk::modules::graphics::vulkan {
 
 		for (size_t i = 0; i < _createInfos.size(); ++i) _createInfos[i].pName = _entryPoints[i].data();
 
+		std::vector<std::vector<MyConstantBufferLayout>*> layouts = { &_vsParamLayout.constantBuffers, &_psParamLayout.constantBuffers };
+		_calcConstantLayoutSameBuffers(layouts);
+
 		_valid = true;
 
 		return true;
@@ -158,7 +161,8 @@ namespace srk::modules::graphics::vulkan {
 
 	bool Program::use(const IVertexAttributeGetter* vertexAttributeGetter, 
 		VkVertexInputBindingDescription* vertexInputBindingDescs, uint32_t& vertexInputBindingDescsCount,
-		VkVertexInputAttributeDescription* vertexInputAttribDescs, uint32_t& vertexInputAttribDescCount) {
+		VkVertexInputAttributeDescription* vertexInputAttribDescs, uint32_t& vertexInputAttribDescCount,
+		const IShaderParameterGetter* shaderParamGetter) {
 		if (!_valid) return false;
 
 		auto n = _info.vertices.size();
@@ -214,7 +218,16 @@ namespace srk::modules::graphics::vulkan {
 
 		vertexInputBindingDescsCount = vertexInputBindingDescsCnt;
 
+		if (shaderParamGetter) {
+			_useParameters(_vsParamLayout, *shaderParamGetter);
+			_useParameters(_psParamLayout, *shaderParamGetter);
+		}
+
 		return true;
+	}
+
+	void Program::useEnd() {
+		for (auto& i : _usingSameConstBuffers) i = nullptr;
 	}
 
 	bool Program::_compileShader(const ProgramSource& source, ProgramStage stage, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& includeHandler, const InputHandler& inputHandler, std::vector<VkDescriptorSetLayoutBinding>& descriptorSetLayoutBindings) {
@@ -390,6 +403,10 @@ namespace srk::modules::graphics::vulkan {
 
 					_parseParamLayout(descBinding->type_description, descBinding->block.members, cb.variables);
 
+					cb.calcFeatureValue();
+
+					_graphics.get<Graphics>()->getConstantBufferManager().registerConstantLayout(cb);
+
 					break;
 				}
 				default:
@@ -427,6 +444,114 @@ namespace srk::modules::graphics::vulkan {
 			v.stride = (1_ui32 << 31) | 16;
 
 			_parseParamLayout(&memDesc, blockVar.members, v.members);
+		}
+	}
+
+	void Program::_calcConstantLayoutSameBuffers(std::vector<std::vector<MyConstantBufferLayout>*>& constBufferLayouts) {
+		uint32_t sameId = 0;
+		auto n = constBufferLayouts.size();
+		for (size_t i = 0; i < n; ++i) {
+			auto buffers0 = constBufferLayouts[i];
+			for (size_t j = 0; j < n; ++j) {
+				if (i == j) continue;
+
+				auto buffers1 = constBufferLayouts[j];
+
+				for (auto& buffer0 : *buffers0) {
+					for (auto& buffer1 : *buffers1) {
+						if (buffer0.featureValue == buffer1.featureValue) {
+							if (buffer0.sameId == 0) {
+								buffer0.sameId = ++sameId;
+								_usingSameConstBuffers.emplace_back(nullptr);
+							}
+							buffer1.sameId = buffer0.sameId;
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	ConstantBuffer* Program::_getConstantBuffer(const MyConstantBufferLayout& cbLayout, const IShaderParameterGetter& paramGetter) {
+		if (cbLayout.sameId) {
+			if (auto cb = _usingSameConstBuffers[cbLayout.sameId - 1]; cb) return cb;
+		}
+
+		ShaderParameterUsageStatistics statistics;
+		cbLayout.collectUsingInfo(paramGetter, statistics, (std::vector<const ShaderParameter*>&)_tempParams, _tempVars);
+
+		ConstantBuffer* cb = nullptr;
+		if (decltype(statistics.unknownCount) numVars = _tempVars.size(); statistics.unknownCount < numVars) {
+			auto g = _graphics.get<Graphics>();
+
+			if (statistics.exclusiveCount && !statistics.shareCount) {
+				if (cb = (ConstantBuffer*)g->getConstantBufferManager().getExclusiveConstantBuffer(_tempParams, cbLayout); cb) {
+					auto isMaping = false;
+					for (decltype(numVars) i = 0; i < numVars; ++i) {
+						if (auto param = _tempParams[i]; param && param->getUpdateId() != cb->recordUpdateIds[i]) {
+							if (!isMaping) {
+								if (cb->map(Usage::MAP_WRITE) == Usage::NONE) break;
+								isMaping = true;
+							}
+							cb->recordUpdateIds[i] = param->getUpdateId();
+							ConstantBufferManager::updateConstantBuffer(cb, *param, *_tempVars[i]);
+						}
+					}
+
+					if (isMaping) cb->unmap();
+				}
+			} else {
+				if (cb = (ConstantBuffer*)g->getConstantBufferManager().popShareConstantBuffer(cbLayout.size); cb) _constantBufferUpdateAll(cb, cbLayout.variables);
+			}
+		}
+
+		_tempParams.clear();
+		_tempVars.clear();
+		if (cb && cbLayout.sameId) _usingSameConstBuffers[cbLayout.sameId - 1] = cb;
+
+		return cb;
+	}
+
+	void Program::_constantBufferUpdateAll(ConstantBuffer* cb, const std::vector<ConstantBufferLayout::Variables>& vars) {
+		if (cb->map(Usage::MAP_WRITE) != Usage::NONE) {
+			for (size_t i = 0, n = _tempVars.size(); i < n; ++i) {
+				if (auto param = _tempParams[i]; param) ConstantBufferManager::updateConstantBuffer(cb, *param, *_tempVars[i]);
+			}
+
+			cb->unmap();
+		}
+	}
+
+	void Program::_useParameters(const ParameterLayout& layout, const IShaderParameterGetter& paramGetter) {
+		auto g = _graphics.get<Graphics>();
+
+		for (auto& info : layout.constantBuffers) {
+			auto cb = _getConstantBuffer(info, paramGetter);
+			if (cb && g == cb->getGraphics()) {
+				if (auto native = (BaseBuffer*)cb->getNative(); native) {
+					if (auto buffer = native->getBuffer(); buffer) {
+						VkDescriptorBufferInfo descriptorBufferInfo;
+						descriptorBufferInfo.buffer = buffer;
+						descriptorBufferInfo.offset = 0;
+						descriptorBufferInfo.range = info.size;
+
+						VkWriteDescriptorSet writeDescriptorSet;
+						memset(&writeDescriptorSet, 0, sizeof(writeDescriptorSet));
+						writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+						writeDescriptorSet.dstSet = _descriptorSet;
+						writeDescriptorSet.dstBinding = info.bindPoint;
+						writeDescriptorSet.dstArrayElement = 0;
+						writeDescriptorSet.descriptorCount = 1;
+						writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+						writeDescriptorSet.pImageInfo = nullptr;
+						writeDescriptorSet.pBufferInfo = &descriptorBufferInfo;
+						writeDescriptorSet.pTexelBufferView = nullptr;
+
+						vkUpdateDescriptorSets(g->getDevice(), 1, &writeDescriptorSet, 0, nullptr);
+					}
+				}
+			}
 		}
 	}
 }

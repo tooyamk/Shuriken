@@ -214,7 +214,7 @@ namespace srk::modules::graphics::d3d11 {
 	}
 
 	void Program::useEnd() {
-		for (size_t i = 0, n = _usingSameConstBuffers.size(); i < n; ++i) _usingSameConstBuffers[i] = nullptr;
+		for (auto& i : _usingSameConstBuffers) i = nullptr;
 	}
 
 	ConstantBuffer* Program::_getConstantBuffer(const MyConstantBufferLayout& cbLayout, const IShaderParameterGetter& paramGetter) {
@@ -569,14 +569,14 @@ namespace srk::modules::graphics::d3d11 {
 
 	void Program::_calcConstantLayoutSameBuffers(std::vector<std::vector<MyConstantBufferLayout>*>& constBufferLayouts) {
 		uint32_t sameId = 0;
-		auto n = (int32_t)constBufferLayouts.size();
-		for (int32_t i = 0; i < n; ++i) {
+		auto n = constBufferLayouts.size();
+		for (size_t i = 0; i < n; ++i) {
 			auto buffers0 = constBufferLayouts[i];
-			for (int32_t j = 0; j < n; ++j) {
+			for (size_t j = 0; j < n; ++j) {
 				if (i == j) continue;
 
 				auto buffers1 = constBufferLayouts[j];
-				
+
 				for (auto& buffer0 : *buffers0) {
 					for (auto& buffer1 : *buffers1) {
 						if (buffer0.featureValue == buffer1.featureValue) {

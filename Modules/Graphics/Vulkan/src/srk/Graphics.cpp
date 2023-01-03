@@ -612,7 +612,7 @@ namespace srk::modules::graphics::vulkan {
 		return true;
 	}
 
-	bool Graphics::_checkAndUpdateVkPipeline(IProgram* program, const IVertexAttributeGetter* vertexAttributeGetter) {
+	bool Graphics::_checkAndUpdateVkPipeline(IProgram* program, const IVertexAttributeGetter* vertexAttributeGetter, const IShaderParameterGetter* shaderParamGetter) {
 		if (!program || program->getGraphics() != this) return false;
 		auto p = (Program*)program->getNative();;
 		if (!p) return false;
@@ -636,7 +636,8 @@ namespace srk::modules::graphics::vulkan {
 		
 		auto rst = p->use(vertexAttributeGetter, 
 			vertexInputBindingDescription.data(), vertexInputBindingDescriptionCount,
-			vertexInputAttributeDescriptions.data(), vertexInputAttributeDescriptionCount);
+			vertexInputAttributeDescriptions.data(), vertexInputAttributeDescriptionCount,
+			shaderParamGetter);
 		if (!rst) return false;
 
 		VkGraphicsPipelineCreateInfo graphicsPipelineCreateInfo;
@@ -925,14 +926,14 @@ namespace srk::modules::graphics::vulkan {
 	void Graphics::beginRender() {
 	}
 
-	void Graphics::draw(const IVertexAttributeGetter* vertexAttributeGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
+	void Graphics::draw(IProgram* program, const IVertexAttributeGetter* vertexAttributeGetter, const IShaderParameterGetter* shaderParamGetter,
 		const IIndexBuffer* indexBuffer, uint32_t count, uint32_t offset) {
-		if (!_checkAndUpdateVkPipeline(program, vertexAttributeGetter)) return;
+		if (!_checkAndUpdateVkPipeline(program, vertexAttributeGetter, shaderParamGetter)) return;
 	}
 
-	void Graphics::drawInstanced(const IVertexAttributeGetter* vertexAttributeGetter, IProgram* program, const IShaderParameterGetter* shaderParamGetter,
+	void Graphics::drawInstanced(IProgram* program, const IVertexAttributeGetter* vertexAttributeGetter, const IShaderParameterGetter* shaderParamGetter,
 		const IIndexBuffer* indexBuffer, uint32_t instancedCount, uint32_t count, uint32_t offset) {
-		if (!_checkAndUpdateVkPipeline(program, vertexAttributeGetter)) return;
+		if (!_checkAndUpdateVkPipeline(program, vertexAttributeGetter, shaderParamGetter)) return;
 	}
 
 	void Graphics::endRender() {

@@ -140,7 +140,14 @@ public:
 				vac->set(ShaderPredefine::NORMAL0, VertexAttribute<IVertexBuffer>(pos, 3, VertexType::F32, 12));
 				vac->set(ShaderPredefine::UV0, VertexAttribute<IVertexBuffer>(pos, 2, VertexType::F32, 24));
 
-				graphics->draw(vac, program, nullptr, nullptr);
+				IntrusivePtr spc = new ShaderParameterCollection();
+				spc->set(ShaderPredefine::MATRIX_LW, new ShaderParameter())->set(Matrix3x4f32());
+				spc->set(ShaderPredefine::MATRIX_LP, new ShaderParameter())->set(Matrix4x4f32());
+				spc->set(ShaderPredefine::AMBIENT_COLOR, new ShaderParameter())->set(Vec3f32());
+				spc->set(ShaderPredefine::DIFFUSE_COLOR, new ShaderParameter())->set(Vec3f32::ONE);
+				spc->set(ShaderPredefine::SPECULAR_COLOR, new ShaderParameter())->set(Vec3f32::ONE);
+
+				graphics->draw(program, vac, spc, nullptr);
 			}
 		}
 

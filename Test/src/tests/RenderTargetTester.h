@@ -303,7 +303,7 @@ public:
 
 			renderData.g->setBlendState(renderData.bs);
 			renderData.g->setDepthStencilState(renderData.dss);
-			renderData.g->draw(renderData.vbf, renderData.p, renderData.spc, renderData.ib);
+			renderData.g->draw(renderData.p, renderData.vbf, renderData.spc, renderData.ib);
 
 			renderData.g->endRender();
 
@@ -359,7 +359,7 @@ public:
 
 			renderData.g->setBlendState(renderData.bs);
 			renderData.g->setDepthStencilState(renderData.dss);
-			renderData.g->draw(renderData.pp.vbf, renderData.pp.p, renderData.spc, renderData.pp.ib);
+			renderData.g->draw(renderData.pp.p, renderData.pp.vbf, renderData.spc, renderData.pp.ib);
 
 			renderData.g->endRender();
 

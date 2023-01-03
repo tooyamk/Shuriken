@@ -185,7 +185,7 @@ namespace srk::render {
 
 		StackPopper<ShaderParameterGetterStack, StackPopperFlag::MULTI_POP> popper(shaderParameterStack, shaderParameterStack.push(&*_shaderParameters, material->getParameters()));
 
-		_graphics->draw(meshBuffer->getVertices(), program, &shaderParameterStack, meshBuffer->getIndex());
+		_graphics->draw(program, meshBuffer->getVertices(), &shaderParameterStack, meshBuffer->getIndex());
 	}
 
 	void ForwardRenderer::postRender() {

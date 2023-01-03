@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Base.h"
+#include "ConstantBuffer.h"
 #include "srk/modules/graphics/ConstantBufferManager.h"
 #include "spirv_reflect.h"
 
@@ -25,7 +25,9 @@ namespace srk::modules::graphics::vulkan {
 
 		bool SRK_CALL use(const IVertexAttributeGetter* vertexAttributeGetter, 
 			VkVertexInputBindingDescription* vertexInputBindingDescs, uint32_t& vertexInputBindingDescsCount,
-			VkVertexInputAttributeDescription* vertexInputAttribDescs, uint32_t& vertexInputAttribDescCount);
+			VkVertexInputAttributeDescription* vertexInputAttribDescs, uint32_t& vertexInputAttribDescCount,
+			const IShaderParameterGetter* shaderParamGetter);
+		void SRK_CALL useEnd();
 
 	protected:
 		inline static constexpr std::string_view inputNamePrefix = std::string_view("in.var.");
@@ -33,6 +35,14 @@ namespace srk::modules::graphics::vulkan {
 
 		struct VertexLayout {
 			uint32_t location;
+		};
+
+
+		class MyConstantBufferLayout : public ConstantBufferLayout {
+		public:
+			MyConstantBufferLayout() : sameId(0) {}
+
+			uint32_t sameId;
 		};
 
 
@@ -49,7 +59,7 @@ namespace srk::modules::graphics::vulkan {
 
 
 		struct ParameterLayout {
-			std::vector<ConstantBufferLayout> constantBuffers;
+			std::vector<MyConstantBufferLayout> constantBuffers;
 			std::vector<TextureLayout> textures;
 			std::vector<SamplerLayout> samplers;
 
@@ -72,9 +82,17 @@ namespace srk::modules::graphics::vulkan {
 		ParameterLayout _vsParamLayout;
 		ParameterLayout _psParamLayout;
 
+		std::vector<ConstantBuffer*> _usingSameConstBuffers;
+		std::vector<ShaderParameter*> _tempParams;
+		std::vector<const ConstantBufferLayout::Variables*> _tempVars;
+
 		bool SRK_CALL _compileShader(const ProgramSource& source, ProgramStage stage, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& includeHandler, const InputHandler& inputHandler, std::vector<VkDescriptorSetLayoutBinding>& descriptorSetLayoutBindings);
 		void SRK_CALL _reflect(const SpvReflectShaderModule* data, const InputHandler& inputHandler, std::vector<VkDescriptorSetLayoutBinding>& descriptorSetLayoutBindings);
 		void SRK_CALL _parseParamLayout(const SpvReflectShaderModule* data, ParameterLayout& layout, VkShaderStageFlags stageFlags, std::vector<VkDescriptorSetLayoutBinding>& descriptorSetLayoutBindings);
 		void SRK_CALL _parseParamLayout(const SpvReflectTypeDescription* data, struct SpvReflectBlockVariable* members, std::vector<ConstantBufferLayout::Variables>& vars);
+		void SRK_CALL _calcConstantLayoutSameBuffers(std::vector<std::vector<MyConstantBufferLayout>*>& constBufferLayouts);
+		ConstantBuffer* _getConstantBuffer(const MyConstantBufferLayout& cbLayout, const IShaderParameterGetter& paramGetter);
+		void _constantBufferUpdateAll(ConstantBuffer* cb, const std::vector<ConstantBufferLayout::Variables>& vars);
+		void SRK_CALL _useParameters(const ParameterLayout& layout, const IShaderParameterGetter& paramGetter);
 	};
 }
