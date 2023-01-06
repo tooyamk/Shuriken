@@ -40,9 +40,7 @@ namespace srk::modules::graphics::vulkan {
 
 		class MyConstantBufferLayout : public ConstantBufferLayout {
 		public:
-			MyConstantBufferLayout() : sameId(0) {}
-
-			uint32_t sameId;
+			uint32_t sameId = 0;
 		};
 
 
@@ -58,10 +56,30 @@ namespace srk::modules::graphics::vulkan {
 		};
 
 
+		struct BindingLayout {
+			VkDescriptorType type;
+			uint32_t bindPoint;
+			MyConstantBufferLayout data;
+
+			inline void setName(const std::string_view& name) {
+				data.name = name;
+			}
+
+			inline const std::string& getName() const {
+				return data.name;
+			}
+		};
+
+
+		struct SetLayout {
+			uint32_t index;
+			uint32_t constantBufferCount;
+			std::vector<BindingLayout> bindings;
+		};
+
+
 		struct ParameterLayout {
-			std::vector<MyConstantBufferLayout> constantBuffers;
-			std::vector<TextureLayout> textures;
-			std::vector<SamplerLayout> samplers;
+			std::vector<SetLayout> sets;
 
 			void clear(Graphics& g);
 		};
@@ -69,9 +87,9 @@ namespace srk::modules::graphics::vulkan {
 
 		std::vector<std::string> _entryPoints;
 		std::vector<VkPipelineShaderStageCreateInfo> _createInfos;
-		VkDescriptorSetLayout _descriptorSetLayout;
+		std::vector<VkDescriptorSetLayout> _descriptorSetLayouts;
 		VkDescriptorPool _descriptorPool;
-		VkDescriptorSet _descriptorSet;
+		std::vector<VkDescriptorSet> _descriptorSets;
 		VkPipelineLayout _pipelineLayout;
 
 		std::vector<VertexLayout> _vertexLayouts;
@@ -86,11 +104,11 @@ namespace srk::modules::graphics::vulkan {
 		std::vector<ShaderParameter*> _tempParams;
 		std::vector<const ConstantBufferLayout::Variables*> _tempVars;
 
-		bool SRK_CALL _compileShader(const ProgramSource& source, ProgramStage stage, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& includeHandler, const InputHandler& inputHandler, std::vector<VkDescriptorSetLayoutBinding>& descriptorSetLayoutBindings);
-		void SRK_CALL _reflect(const SpvReflectShaderModule* data, const InputHandler& inputHandler, std::vector<VkDescriptorSetLayoutBinding>& descriptorSetLayoutBindings);
-		void SRK_CALL _parseParamLayout(const SpvReflectShaderModule* data, ParameterLayout& layout, VkShaderStageFlags stageFlags, std::vector<VkDescriptorSetLayoutBinding>& descriptorSetLayoutBindings);
-		void SRK_CALL _parseParamLayout(const SpvReflectTypeDescription* data, struct SpvReflectBlockVariable* members, std::vector<ConstantBufferLayout::Variables>& vars);
-		void SRK_CALL _calcConstantLayoutSameBuffers(std::vector<std::vector<MyConstantBufferLayout>*>& constBufferLayouts);
+		bool SRK_CALL _compileShader(const ProgramSource& source, ProgramStage stage, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& includeHandler, const InputHandler& inputHandler, std::vector<std::vector<VkDescriptorSetLayoutBinding>>& descriptorSetLayoutBindings);
+		void SRK_CALL _parse(const SpvReflectShaderModule* data, const InputHandler& inputHandler, std::vector<std::vector<VkDescriptorSetLayoutBinding>>& descriptorSetLayoutBindings);
+		void SRK_CALL _parseParamLayout(const SpvReflectShaderModule* data, ParameterLayout& layout, VkShaderStageFlags stageFlags, std::vector<std::vector<VkDescriptorSetLayoutBinding>>& descriptorSetLayoutBindings);
+		void SRK_CALL _parseParamLayout(const SpvReflectTypeDescription* data, struct SpvReflectBlockVariable* members, std::vector<ConstantBufferLayout::Variables>& vars, VkDescriptorSetLayoutBinding& descriptorSetLayoutBinding);
+		void SRK_CALL _calcConstantLayoutSameBuffers(std::vector<std::vector<SetLayout>*>& setLayouts);
 		ConstantBuffer* _getConstantBuffer(const MyConstantBufferLayout& cbLayout, const IShaderParameterGetter& paramGetter);
 		void _constantBufferUpdateAll(ConstantBuffer* cb, const std::vector<ConstantBufferLayout::Variables>& vars);
 		void SRK_CALL _useParameters(const ParameterLayout& layout, const IShaderParameterGetter& paramGetter);

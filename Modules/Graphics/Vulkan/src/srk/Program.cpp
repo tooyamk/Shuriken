@@ -11,15 +11,18 @@
 
 namespace srk::modules::graphics::vulkan {
 	void Program::ParameterLayout::clear(Graphics& g) {
-		for (auto& buffer : constantBuffers) g.getConstantBufferManager().unregisterConstantLayout(buffer);
-		constantBuffers.clear();
+		for (auto& set : sets) {
+			for (auto& binding : set.bindings) {
+				if (binding.type != VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER) continue;
+				g.getConstantBufferManager().unregisterConstantLayout(binding.data);
+			}
+		}
+		sets.clear();
 	}
 
 
 	Program::Program(Graphics& graphics) : IProgram(graphics),
-		_descriptorSetLayout(nullptr),
 		_descriptorPool(nullptr),
-		_descriptorSet(nullptr),
 		_pipelineLayout(nullptr),
 		_valid(false) {
 	}
@@ -35,7 +38,7 @@ namespace srk::modules::graphics::vulkan {
 	bool Program::create(const ProgramSource& vert, const ProgramSource& frag, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& includeHandler, const InputHandler& inputHandler) {
 		destroy();
 
-		std::vector<VkDescriptorSetLayoutBinding> descriptorSetLayoutBindings;
+		std::vector<std::vector<VkDescriptorSetLayoutBinding>> descriptorSetLayoutBindings;
 
 		if (!_compileShader(vert, ProgramStage::VS, defines, numDefines, includeHandler, inputHandler, descriptorSetLayoutBindings)) {
 			destroy();
@@ -53,49 +56,55 @@ namespace srk::modules::graphics::vulkan {
 		VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo;
 		memset(&descriptorSetLayoutCreateInfo, 0, sizeof(descriptorSetLayoutCreateInfo));
 		descriptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		descriptorSetLayoutCreateInfo.bindingCount = descriptorSetLayoutBindings.size();
-		descriptorSetLayoutCreateInfo.pBindings = descriptorSetLayoutBindings.data();
-		if (vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, g->getVkAllocationCallbacks(), &_descriptorSetLayout) != VK_SUCCESS) {
-			destroy();
-			return false;
+		for (size_t i = 0; i < descriptorSetLayoutBindings.size(); ++i) {
+			descriptorSetLayoutCreateInfo.bindingCount = descriptorSetLayoutBindings[i].size();
+			descriptorSetLayoutCreateInfo.pBindings = descriptorSetLayoutBindings[i].data();
+			VkDescriptorSetLayout layout;
+			if (vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, g->getVkAllocationCallbacks(), &layout) != VK_SUCCESS) {
+				destroy();
+				return false;
+			}
+
+			_descriptorSetLayouts.emplace_back(layout);
 		}
+		
 
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo;
 		memset(&pipelineLayoutInfo, 0, sizeof(pipelineLayoutInfo));
 		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		pipelineLayoutInfo.setLayoutCount = 1;
-		pipelineLayoutInfo.pSetLayouts = &_descriptorSetLayout;
-		pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
-		pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
+		pipelineLayoutInfo.setLayoutCount = _descriptorSetLayouts.size();
+		pipelineLayoutInfo.pSetLayouts = _descriptorSetLayouts.data();
+		pipelineLayoutInfo.pushConstantRangeCount = 0;
+		pipelineLayoutInfo.pPushConstantRanges = nullptr;
 		if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, g->getVkAllocationCallbacks(), &_pipelineLayout) != VK_SUCCESS) {
 			destroy();
 			return false;
 		}
 
 		std::vector<VkDescriptorPoolSize> descriptorPoolSizes;
-		for (const auto& itr : descriptorSetLayoutBindings) {
-			auto found = false;
-			for (auto& itr2 : descriptorPoolSizes) {
-				if (itr.descriptorType == itr2.type) {
-					itr2.descriptorCount += itr.descriptorCount;
-					found = true;
-					break;
+		for (const auto& i : descriptorSetLayoutBindings) {
+			for (const auto& j : i) {
+				auto found = false;
+				for (auto& k : descriptorPoolSizes) {
+					if (j.descriptorType == k.type) {
+						k.descriptorCount += j.descriptorCount;
+						found = true;
+						break;
+					}
+				}
+
+				if (!found) {
+					auto& dps = descriptorPoolSizes.emplace_back();
+					dps.type = j.descriptorType;
+					dps.descriptorCount = j.descriptorCount;
 				}
 			}
-
-			if (!found) {
-				auto& dps = descriptorPoolSizes.emplace_back();
-				dps.type = itr.descriptorType;
-				dps.descriptorCount = 1;
-			}
 		}
-		uint32_t maxSets = 0;
-		for (auto& itr : descriptorPoolSizes) maxSets += itr.descriptorCount;
 
 		VkDescriptorPoolCreateInfo descriptorPoolCreateInfo;
 		memset(&descriptorPoolCreateInfo, 0, sizeof(descriptorPoolCreateInfo));
 		descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-		descriptorPoolCreateInfo.maxSets = maxSets;
+		descriptorPoolCreateInfo.maxSets = _descriptorSetLayouts.size();
 		descriptorPoolCreateInfo.poolSizeCount = descriptorPoolSizes.size();
 		descriptorPoolCreateInfo.pPoolSizes = descriptorPoolSizes.data();
 		if (vkCreateDescriptorPool(device, &descriptorPoolCreateInfo, g->getVkAllocationCallbacks(), &_descriptorPool) != VK_SUCCESS) {
@@ -107,16 +116,17 @@ namespace srk::modules::graphics::vulkan {
 		memset(&descriptorSetAllocateInfo, 0, sizeof(descriptorSetAllocateInfo));
 		descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 		descriptorSetAllocateInfo.descriptorPool = _descriptorPool;
-		descriptorSetAllocateInfo.descriptorSetCount = 1;
-		descriptorSetAllocateInfo.pSetLayouts = &_descriptorSetLayout;
-		if (vkAllocateDescriptorSets(device, &descriptorSetAllocateInfo, &_descriptorSet) != VK_SUCCESS) {
+		descriptorSetAllocateInfo.descriptorSetCount = _descriptorSetLayouts.size();
+		descriptorSetAllocateInfo.pSetLayouts = _descriptorSetLayouts.data();
+		_descriptorSets.resize(_descriptorSetLayouts.size());
+		if (vkAllocateDescriptorSets(device, &descriptorSetAllocateInfo, _descriptorSets.data()) != VK_SUCCESS) {
 			destroy();
 			return false;
 		}
 
 		for (size_t i = 0; i < _createInfos.size(); ++i) _createInfos[i].pName = _entryPoints[i].data();
 
-		std::vector<std::vector<MyConstantBufferLayout>*> layouts = { &_vsParamLayout.constantBuffers, &_psParamLayout.constantBuffers };
+		std::vector<std::vector<SetLayout>*> layouts = { &_vsParamLayout.sets, &_psParamLayout.sets };
 		_calcConstantLayoutSameBuffers(layouts);
 
 		_valid = true;
@@ -135,18 +145,16 @@ namespace srk::modules::graphics::vulkan {
 		if (_descriptorPool) {
 			vkDestroyDescriptorPool(device, _descriptorPool, g.getVkAllocationCallbacks());
 			_descriptorPool = nullptr;
-			_descriptorSet = nullptr;
 		}
 		if (_pipelineLayout) {
 			vkDestroyPipelineLayout(device, _pipelineLayout, g.getVkAllocationCallbacks());
 			_pipelineLayout = nullptr;
 		}
-		if (_descriptorSetLayout) {
-			vkDestroyDescriptorSetLayout(device, _descriptorSetLayout, g.getVkAllocationCallbacks());
-			_descriptorSetLayout = nullptr;
-		}
+		for (auto& i : _descriptorSetLayouts) vkDestroyDescriptorSetLayout(device, i, g.getVkAllocationCallbacks());
 		for (auto& i : _createInfos) vkDestroyShaderModule(device, i.module, g.getVkAllocationCallbacks());
 
+		_descriptorSetLayouts.clear();
+		_descriptorSets.clear();
 		_createInfos.clear();
 		_entryPoints.clear();
 
@@ -230,7 +238,7 @@ namespace srk::modules::graphics::vulkan {
 		for (auto& i : _usingSameConstBuffers) i = nullptr;
 	}
 
-	bool Program::_compileShader(const ProgramSource& source, ProgramStage stage, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& includeHandler, const InputHandler& inputHandler, std::vector<VkDescriptorSetLayoutBinding>& descriptorSetLayoutBindings) {
+	bool Program::_compileShader(const ProgramSource& source, ProgramStage stage, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& includeHandler, const InputHandler& inputHandler, std::vector<std::vector<VkDescriptorSetLayoutBinding>>& descriptorSetLayoutBindings) {
 		if (!source.isValid()) {
 			_graphics.get<Graphics>()->error("spirv compile failed, source is invalid");
 			return false;
@@ -271,9 +279,8 @@ namespace srk::modules::graphics::vulkan {
 
 			SpvReflectShaderModule reflectModule;
 			if (spvReflectCreateShaderModule2(SPV_REFLECT_MODULE_FLAG_NO_COPY, ba.getLength(), ba.getSource(), &reflectModule) != SPV_REFLECT_RESULT_SUCCESS) return false;
-			_reflect(&reflectModule, inputHandler, descriptorSetLayoutBindings);
+			_parse(&reflectModule, inputHandler, descriptorSetLayoutBindings);
 			spvReflectDestroyShaderModule(&reflectModule);
-			int a = 1;
 		}
 
 		auto& entry = _entryPoints.emplace_back(source.getEntryPoint());
@@ -287,7 +294,7 @@ namespace srk::modules::graphics::vulkan {
 		return true;
 	}
 
-	void Program::_reflect(const SpvReflectShaderModule* data, const InputHandler& inputHandler, std::vector<VkDescriptorSetLayoutBinding>& descriptorSetLayoutBindings) {
+	void Program::_parse(const SpvReflectShaderModule* data, const InputHandler& inputHandler, std::vector<std::vector<VkDescriptorSetLayoutBinding>>& descriptorSetLayoutBindings) {
 		switch (data->shader_stage) {
 		case SPV_REFLECT_SHADER_STAGE_VERTEX_BIT:
 		{
@@ -358,54 +365,63 @@ namespace srk::modules::graphics::vulkan {
 		}
 	}
 
-	void Program::_parseParamLayout(const SpvReflectShaderModule* data, ParameterLayout& layout, VkShaderStageFlags stageFlags, std::vector<VkDescriptorSetLayoutBinding>& descriptorSetLayoutBindings) {
-		for (decltype(data->descriptor_set_count) i = 0; i < data->descriptor_set_count; ++i) {
-			auto& descSet = data->descriptor_sets[i];
+	void Program::_parseParamLayout(const SpvReflectShaderModule* data, ParameterLayout& layout, VkShaderStageFlags stageFlags, std::vector<std::vector<VkDescriptorSetLayoutBinding>>& descriptorSetLayoutBindings) {
+		layout.sets.resize(data->descriptor_set_count);
 
-			for (decltype(descSet.binding_count) j = 0; j < descSet.binding_count; ++j) {
-				auto descBinding = descSet.bindings[j];
+		for (decltype(data->descriptor_set_count) i = 0; i < data->descriptor_set_count; ++i) {
+			auto& refSet = data->descriptor_sets[i];
+			auto& set = layout.sets[i];
+			set.index = refSet.set;
+			set.constantBufferCount = 0;
+			auto& descSetLayoutBindings = descriptorSetLayoutBindings.emplace_back();
+			
+			for (decltype(refSet.binding_count) j = 0; j < refSet.binding_count; ++j) {
+				auto refBinding = refSet.bindings[j];
+				auto& binding = set.bindings.emplace_back();
+
+				binding.setName(refBinding->name);
+				binding.bindPoint = refBinding->binding;
 
 				VkDescriptorSetLayoutBinding descriptorSetLayoutBinding;
-				descriptorSetLayoutBinding.binding = descBinding->binding;
-				descriptorSetLayoutBinding.descriptorCount = 1;
+				descriptorSetLayoutBinding.binding = refBinding->binding;
+				descriptorSetLayoutBinding.descriptorCount = 0;
 				descriptorSetLayoutBinding.stageFlags = stageFlags;
 				descriptorSetLayoutBinding.pImmutableSamplers = nullptr;
 
-				switch (descBinding->descriptor_type) {
+				switch (refBinding->descriptor_type) {
 				case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLER:
 				{
-					auto& sampler = layout.samplers.emplace_back();
-					sampler.name = descBinding->name;
-					sampler.bindPoint = descBinding->binding;
+					binding.type = VK_DESCRIPTOR_TYPE_SAMPLER;
 
 					descriptorSetLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+					descriptorSetLayoutBinding.descriptorCount = 1;
 
 					break;
 				}
 				case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
 				{
-					auto& texture = layout.textures.emplace_back();
-					texture.name = descBinding->name;
-					texture.bindPoint = descBinding->binding;
+					binding.type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
 
 					descriptorSetLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+					descriptorSetLayoutBinding.descriptorCount = 1;
 
 					break;
 				}
 				case SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
 				{
-					auto& cb = layout.constantBuffers.emplace_back();
-					cb.name = descBinding->name;
-					cb.bindPoint = descBinding->binding;
-					cb.size = descBinding->block.size;
+					binding.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+					binding.data.size = refBinding->block.size;
 
 					descriptorSetLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 
-					_parseParamLayout(descBinding->type_description, descBinding->block.members, cb.variables);
+					_parseParamLayout(refBinding->type_description, refBinding->block.members, binding.data.variables, descriptorSetLayoutBinding);
 
-					cb.calcFeatureValue();
+					if (descriptorSetLayoutBinding.descriptorCount) {
+						binding.data.calcFeatureValue();
+						++set.constantBufferCount;
 
-					_graphics.get<Graphics>()->getConstantBufferManager().registerConstantLayout(cb);
+						_graphics.get<Graphics>()->getConstantBufferManager().registerConstantLayout(binding.data);
+					}
 
 					break;
 				}
@@ -413,21 +429,16 @@ namespace srk::modules::graphics::vulkan {
 					break;
 				}
 
-				auto found = false;
-				for (auto& itr : descriptorSetLayoutBindings) {
-					if (itr.binding == descriptorSetLayoutBinding.binding && itr.descriptorType == descriptorSetLayoutBinding.descriptorType) {
-						itr.stageFlags |= stageFlags;
-						found = true;
-						break;
-					}
+				if (descriptorSetLayoutBinding.descriptorCount) {
+					descSetLayoutBindings.emplace_back(descriptorSetLayoutBinding);
+				} else {
+					set.bindings.pop_back();
 				}
-
-				if (!found) descriptorSetLayoutBindings.emplace_back(descriptorSetLayoutBinding);
 			}
 		}
 	}
 
-	void Program::_parseParamLayout(const SpvReflectTypeDescription* data, struct SpvReflectBlockVariable* members, std::vector<ConstantBufferLayout::Variables>& vars) {
+	void Program::_parseParamLayout(const SpvReflectTypeDescription* data, struct SpvReflectBlockVariable* members, std::vector<ConstantBufferLayout::Variables>& vars, VkDescriptorSetLayoutBinding& descriptorSetLayoutBinding) {
 		using namespace srk::literals;
 
 		if (!data) return;
@@ -438,34 +449,47 @@ namespace srk::modules::graphics::vulkan {
 			auto& v = vars.emplace_back();
 			if (memDesc.storage_class == SpvStorageClassUniformConstant) {
 				v.name = memDesc.struct_member_name;
+				++descriptorSetLayoutBinding.descriptorCount;
 			}
 			v.offset = blockVar.offset;
 			v.size = blockVar.size;
 			v.stride = (1_ui32 << 31) | 16;
 
-			_parseParamLayout(&memDesc, blockVar.members, v.members);
+			_parseParamLayout(&memDesc, blockVar.members, v.members, descriptorSetLayoutBinding);
 		}
 	}
 
-	void Program::_calcConstantLayoutSameBuffers(std::vector<std::vector<MyConstantBufferLayout>*>& constBufferLayouts) {
+	void Program::_calcConstantLayoutSameBuffers(std::vector<std::vector<SetLayout>*>& setLayouts) {
 		uint32_t sameId = 0;
-		auto n = constBufferLayouts.size();
+		auto n = setLayouts.size();
 		for (size_t i = 0; i < n; ++i) {
-			auto buffers0 = constBufferLayouts[i];
+			auto& sets0 = *setLayouts[i];
 			for (size_t j = 0; j < n; ++j) {
 				if (i == j) continue;
 
-				auto buffers1 = constBufferLayouts[j];
+				auto& sets1 = *setLayouts[j];
 
-				for (auto& buffer0 : *buffers0) {
-					for (auto& buffer1 : *buffers1) {
-						if (buffer0.featureValue == buffer1.featureValue) {
-							if (buffer0.sameId == 0) {
-								buffer0.sameId = ++sameId;
-								_usingSameConstBuffers.emplace_back(nullptr);
+				for (auto& set0 : sets0) {
+					if (!set0.constantBufferCount) continue;
+
+					for (auto& binding0 : set0.bindings) {
+						if (binding0.type != VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER) continue;
+
+						for (auto& set1 : sets1) {
+							if (!set1.constantBufferCount) continue;
+
+							for (auto& binding1 : set1.bindings) {
+								if (binding1.type != VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER) continue;
+
+								if (binding0.data.featureValue == binding1.data.featureValue) {
+									if (binding0.data.sameId == 0) {
+										binding0.data.sameId = ++sameId;
+										_usingSameConstBuffers.emplace_back(nullptr);
+									}
+									binding1.data.sameId = binding0.data.sameId;
+									break;
+								}
 							}
-							buffer1.sameId = buffer0.sameId;
-							break;
 						}
 					}
 				}
@@ -524,7 +548,7 @@ namespace srk::modules::graphics::vulkan {
 	}
 
 	void Program::_useParameters(const ParameterLayout& layout, const IShaderParameterGetter& paramGetter) {
-		auto g = _graphics.get<Graphics>();
+		/*auto g = _graphics.get<Graphics>();
 
 		for (auto& info : layout.constantBuffers) {
 			auto cb = _getConstantBuffer(info, paramGetter);
@@ -552,6 +576,6 @@ namespace srk::modules::graphics::vulkan {
 					}
 				}
 			}
-		}
+		}*/
 	}
 }

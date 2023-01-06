@@ -5,7 +5,6 @@
 
 namespace srk::modules::graphics {
 	ConstantBufferLayout::ConstantBufferLayout() :
-		bindPoint(0),
 		size(0),
 		featureValue(0) {
 	}

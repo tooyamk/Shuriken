@@ -38,7 +38,6 @@ namespace srk::modules::graphics {
 		ConstantBufferLayout();
 
 		std::string name;
-		uint32_t bindPoint = 0;
 		uint32_t size = 0;
 		std::vector<Variables> variables;
 		uint64_t featureValue = 0;

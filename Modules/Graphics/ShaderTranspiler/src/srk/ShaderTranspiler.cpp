@@ -130,6 +130,16 @@ namespace srk::modules::graphics::shader_transpiler {
 			std::vector<std::wstring> dxcArgStrings;
 			dxcArgStrings.emplace_back(L"-O3");
 			dxcArgStrings.emplace_back(L"-fvk-use-gl-layout");
+			dxcArgStrings.emplace_back(L"-fvk-bind-globals");
+			dxcArgStrings.emplace_back(String::Utf8ToUnicode(String::toString((std::underlying_type_t<ProgramStage>)source.stage)));
+			dxcArgStrings.emplace_back(L"0");
+			dxcArgStrings.emplace_back(L"-fvk-b-shift");
+			dxcArgStrings.emplace_back(L"12");
+			dxcArgStrings.emplace_back(L"0");
+			//dxcArgStrings.emplace_back(L"-auto-binding-space 0")
+			//dxcArgStrings.emplace_back(L"-auto-binding-space " + String::Utf8ToUnicode(String::toString((std::underlying_type_t<ProgramStage>)source.stage)));
+			//dxcArgStrings.emplace_back(L"-fspv-target-env=vulkan1.0");
+			//dxcArgStrings.emplace_back(L"-fspv-reflect");
 			if (targetLanguage != ProgramLanguage::DXIL) dxcArgStrings.emplace_back(L"-spirv");
 
 			std::vector<const wchar_t*> dxcArgs;
@@ -139,8 +149,7 @@ namespace srk::modules::graphics::shader_transpiler {
 			CComPtr<IDxcIncludeHandler> includeHandler = new MyIncludeHandler(_dxcLib, handler);
 			CComPtr<IDxcOperationResult> compileResult;
 			IFT(_dxcompiler->Compile(sourceBlob, L"", String::Utf8ToUnicode(source.getEntryPoint()).data(), profile.data(),
-				dxcArgs.data(), (UINT32)(dxcArgs.size()), dxcDefines.data(),
-				(UINT32)(dxcDefines.size()), includeHandler, &compileResult));
+				dxcArgs.data(), dxcArgs.size(), dxcDefines.data(), dxcDefines.size(), includeHandler, &compileResult));
 
 			HRESULT status;
 			IFT(compileResult->GetStatus(&status));

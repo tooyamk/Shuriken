@@ -36,10 +36,16 @@ namespace srk::modules::graphics::gl {
 		};
 
 
+		class MyConstantBufferLayout : public ConstantBufferLayout {
+		public:
+			uint32_t bindPoint = 0;
+		};
+
+
 		GLuint _handle;
 		std::vector<GLuint> _inputVertexBufferLocations;
 		std::vector<UniformInfo> _uniformLayouts;
-		std::vector<ConstantBufferLayout> _uniformBlockLayouts;
+		std::vector<MyConstantBufferLayout> _uniformBlockLayouts;
 
 		ProgramInfo _info;
 

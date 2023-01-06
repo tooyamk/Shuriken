@@ -38,9 +38,8 @@ namespace srk::modules::graphics::d3d11 {
 
 		class MyConstantBufferLayout : public ConstantBufferLayout {
 		public:
-			MyConstantBufferLayout() : sameId(0) {}
-
-			uint32_t sameId;
+			uint32_t bindPoint = 0;
+			uint32_t sameId = 0;
 		};
 
 

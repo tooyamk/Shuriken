@@ -95,7 +95,7 @@ shader {
                 //SamplerState _diffuseTexSampler;
             };
 
-            cbuffer buf1 {
+            cbuffer buf1 : register(b1,  space0) {
                 float red;
                 aabbcc blue;
                 Texture2D _diffuseTex;
