@@ -436,7 +436,7 @@ namespace srk::modules::graphics::gl {
 		if (source.language != ProgramLanguage::GLSL) {
 			auto g = _graphics.get<Graphics>();
 			if (auto transpiler = g->getShaderTranspiler(); transpiler) {
-				return _compileShader(transpiler->translate(source, ProgramLanguage::GLSL, g->getStringVersion(), defines, numDefines, [this, stage, &handler](const std::string_view& name) {
+				return _compileShader(transpiler->translate(source, IShaderTranspiler::Options(), ProgramLanguage::GLSL, g->getStringVersion(), defines, numDefines, [this, stage, &handler](const std::string_view& name) {
 					if (handler) return handler(*this, stage, name);
 					return ByteArray();
 				}), stage, defines, numDefines, handler);

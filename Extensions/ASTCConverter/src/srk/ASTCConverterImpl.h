@@ -21,8 +21,8 @@ namespace srk::extensions::astc_converter {
 			auto data = (void*)img.source.getSource();
 
 			astcenc_image in;
-			in.dim_x = img.size[0];
-			in.dim_y = img.size[1];
+			in.dim_x = img.dimensions[0];
+			in.dim_y = img.dimensions[1];
 			in.dim_z = 1;
 			in.data_type = ASTCENC_TYPE_U8;
 			in.data = &data;

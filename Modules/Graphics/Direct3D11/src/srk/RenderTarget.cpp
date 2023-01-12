@@ -14,19 +14,19 @@ namespace srk::modules::graphics::d3d11 {
 		return this;
 	}
 
-	Vec2ui32 RenderTarget::getSize() const {
-		Vec2ui32 size;
+	Vec2uz RenderTarget::getDimensions() const {
+		Vec2uz dim;
 
 		for (size_t i = 0; i < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i) {
 			if (_views[i]) {
 				if (auto res = _views[i]->getResource(); res && res->isCreated()) {
-					size = res->getSize();
+					dim = res->getDimensions();
 					break;
 				}
 			}
 		}
 
-		return size;
+		return dim;
 	}
 
 	IntrusivePtr<IRenderView> RenderTarget::getRenderView(uint8_t index) const {
@@ -49,9 +49,9 @@ namespace srk::modules::graphics::d3d11 {
 		return false;
 	}
 
-	void RenderTarget::eraseRenderViews(uint8_t begin, uint8_t size) {
-		if (size) {
-			uint8_t n = begin + size;
+	void RenderTarget::eraseRenderViews(uint8_t begin, uint8_t count) {
+		if (count) {
+			uint8_t n = begin + count;
 			if (n > D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT) n = D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT;
 			for (uint8_t i = 0; i < n; ++i) _views[i].reset();
 			if (!_numViewsDirty && _numViews >= begin + 1) _numViewsDirty = true;

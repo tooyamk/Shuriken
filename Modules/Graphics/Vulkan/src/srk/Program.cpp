@@ -11,13 +11,10 @@
 
 namespace srk::modules::graphics::vulkan {
 	void Program::ParameterLayout::clear(Graphics& g) {
-		for (auto& set : sets) {
-			for (auto& binding : set.bindings) {
-				if (binding.type != VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER) continue;
-				g.getConstantBufferManager().unregisterConstantLayout(binding.data);
-			}
-		}
-		sets.clear();
+		for (auto& buffer : constantBuffers) g.getConstantBufferManager().unregisterConstantLayout(buffer);
+		constantBuffers.clear();
+		textures.clear();
+		samplers.clear();
 	}
 
 
@@ -40,12 +37,12 @@ namespace srk::modules::graphics::vulkan {
 
 		std::vector<std::vector<VkDescriptorSetLayoutBinding>> descriptorSetLayoutBindings;
 
-		if (!_compileShader(vert, ProgramStage::VS, defines, numDefines, includeHandler, inputHandler, descriptorSetLayoutBindings)) {
+		if (!_compileShader(vert, ProgramStage::VS, 0, defines, numDefines, includeHandler, inputHandler, descriptorSetLayoutBindings)) {
 			destroy();
 			return false;
 		}
 
-		if (!_compileShader(frag, ProgramStage::PS, defines, numDefines, includeHandler, inputHandler, descriptorSetLayoutBindings)) {
+		if (!_compileShader(frag, ProgramStage::PS, _calcSet0BingingOffset(descriptorSetLayoutBindings), defines, numDefines, includeHandler, inputHandler, descriptorSetLayoutBindings)) {
 			destroy();
 			return false;
 		}
@@ -126,9 +123,6 @@ namespace srk::modules::graphics::vulkan {
 
 		for (size_t i = 0; i < _createInfos.size(); ++i) _createInfos[i].pName = _entryPoints[i].data();
 
-		std::vector<std::vector<SetLayout>*> layouts = { &_vsParamLayout.sets, &_psParamLayout.sets };
-		_calcConstantLayoutSameBuffers(layouts);
-
 		_valid = true;
 
 		return true;
@@ -161,8 +155,7 @@ namespace srk::modules::graphics::vulkan {
 		_info.clear();
 		_vertexLayouts.clear();
 
-		_vsParamLayout.clear(g);
-		_psParamLayout.clear(g);
+		_paramLayout.clear(g);
 
 		_valid = false;
 	}
@@ -227,18 +220,55 @@ namespace srk::modules::graphics::vulkan {
 		vertexInputBindingDescsCount = vertexInputBindingDescsCnt;
 
 		if (shaderParamGetter) {
-			_useParameters(_vsParamLayout, *shaderParamGetter);
-			_useParameters(_psParamLayout, *shaderParamGetter);
+			std::vector<VkDescriptorBufferInfo> descriptorBufferInfos;
+			std::vector<VkWriteDescriptorSet> writeDescriptorSets;
+			for (auto& b : _paramLayout.constantBuffers) {
+				auto cb = _getConstantBuffer(b, *shaderParamGetter);
+				if (cb && _graphics == cb->getGraphics()) {
+					if (auto native = (BaseBuffer*)cb->getNative(); native) {
+						if (auto buffer = native->getBuffer(); buffer) {
+							auto& writeDescriptorSet = writeDescriptorSets.emplace_back();
+							writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+							writeDescriptorSet.pNext = nullptr;
+							writeDescriptorSet.dstSet = _descriptorSets[b.bindingInfo.set];
+							writeDescriptorSet.dstBinding = b.bindingInfo.binding;
+							writeDescriptorSet.dstArrayElement = 0;
+							writeDescriptorSet.descriptorCount = 1;
+							writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+							writeDescriptorSet.pImageInfo = nullptr;
+							writeDescriptorSet.pBufferInfo = (VkDescriptorBufferInfo*)descriptorBufferInfos.size();
+							writeDescriptorSet.pTexelBufferView = nullptr;
+
+							auto& descriptorBufferInfo = descriptorBufferInfos.emplace_back();
+							descriptorBufferInfo.buffer = buffer;
+							descriptorBufferInfo.offset = 0;
+							descriptorBufferInfo.range = b.size;
+						}
+					}
+				}
+			}
+
+			for (auto& i : writeDescriptorSets) {
+				if (i.descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER) i.pBufferInfo = &descriptorBufferInfos[(size_t)i.pBufferInfo];
+			}
+
+			if (writeDescriptorSets.size()) vkUpdateDescriptorSets(_graphics.get<Graphics>()->getDevice(), writeDescriptorSets.size(), writeDescriptorSets.data(), 0, nullptr);
 		}
 
 		return true;
 	}
 
-	void Program::useEnd() {
-		for (auto& i : _usingSameConstBuffers) i = nullptr;
+	uint32_t Program::_calcSet0BingingOffset(const std::vector<std::vector<VkDescriptorSetLayoutBinding>>& descriptorSetLayoutBindings) {
+		if (descriptorSetLayoutBindings.empty()) return 0;
+
+		uint32_t offset = 0;
+		for (auto& i : descriptorSetLayoutBindings[0]) {
+			if (offset <= i.binding) offset = i.binding + 1;
+		}
+		return offset;
 	}
 
-	bool Program::_compileShader(const ProgramSource& source, ProgramStage stage, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& includeHandler, const InputHandler& inputHandler, std::vector<std::vector<VkDescriptorSetLayoutBinding>>& descriptorSetLayoutBindings) {
+	bool Program::_compileShader(const ProgramSource& source, ProgramStage stage, uint32_t set0BindingOffset, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& includeHandler, const InputHandler& inputHandler, std::vector<std::vector<VkDescriptorSetLayoutBinding>>& descriptorSetLayoutBindings) {
 		if (!source.isValid()) {
 			_graphics.get<Graphics>()->error("spirv compile failed, source is invalid");
 			return false;
@@ -248,10 +278,12 @@ namespace srk::modules::graphics::vulkan {
 
 		if (source.language != ProgramLanguage::SPIRV) {
 			if (auto transpiler = g->getShaderTranspiler(); transpiler) {
-				return _compileShader(transpiler->translate(source, ProgramLanguage::SPIRV, "", defines, numDefines, [this, stage, &includeHandler](const std::string_view& name) {
+				IShaderTranspiler::Options options;
+				options.spirv.descriptorSet0BindingOffset = set0BindingOffset;
+				return _compileShader(transpiler->translate(source, options, ProgramLanguage::SPIRV, "", defines, numDefines, [this, stage, &includeHandler](const std::string_view& name) {
 					if (includeHandler) return includeHandler(*this, stage, name);
 					return ByteArray();
-					}), stage, defines, numDefines, includeHandler, inputHandler, descriptorSetLayoutBindings);
+					}), stage, set0BindingOffset, defines, numDefines, includeHandler, inputHandler, descriptorSetLayoutBindings);
 			} else {
 				return false;
 			}
@@ -353,92 +385,88 @@ namespace srk::modules::graphics::vulkan {
 				vd.instanced = inputDesc.instanced;
 			}
 
-			_parseParamLayout(data, _vsParamLayout, VK_SHADER_STAGE_VERTEX_BIT, descriptorSetLayoutBindings);
+			_parseParamLayout(data, VK_SHADER_STAGE_VERTEX_BIT, descriptorSetLayoutBindings);
 
 			break;
 		}
 		case SPV_REFLECT_SHADER_STAGE_FRAGMENT_BIT:
 		{
-			_parseParamLayout(data, _psParamLayout, VK_SHADER_STAGE_FRAGMENT_BIT, descriptorSetLayoutBindings);
+			_parseParamLayout(data, VK_SHADER_STAGE_FRAGMENT_BIT, descriptorSetLayoutBindings);
 			break;
 		}
 		}
 	}
 
-	void Program::_parseParamLayout(const SpvReflectShaderModule* data, ParameterLayout& layout, VkShaderStageFlags stageFlags, std::vector<std::vector<VkDescriptorSetLayoutBinding>>& descriptorSetLayoutBindings) {
-		layout.sets.resize(data->descriptor_set_count);
-
+	void Program::_parseParamLayout(const SpvReflectShaderModule* data, VkShaderStageFlags stageFlags, std::vector<std::vector<VkDescriptorSetLayoutBinding>>& descriptorSetLayoutBindings) {
 		for (decltype(data->descriptor_set_count) i = 0; i < data->descriptor_set_count; ++i) {
 			auto& refSet = data->descriptor_sets[i];
-			auto& set = layout.sets[i];
-			set.index = refSet.set;
-			set.constantBufferCount = 0;
-			auto& descSetLayoutBindings = descriptorSetLayoutBindings.emplace_back();
+
+			if (descriptorSetLayoutBindings.size() < refSet.set + 1) {
+				for (size_t i = 0, n = refSet.set + 1 - descriptorSetLayoutBindings.size(); i < n; ++i) descriptorSetLayoutBindings.emplace_back();
+			}
+			auto& descSetLayoutBindings = descriptorSetLayoutBindings[refSet.set];
 			
 			for (decltype(refSet.binding_count) j = 0; j < refSet.binding_count; ++j) {
 				auto refBinding = refSet.bindings[j];
-				auto& binding = set.bindings.emplace_back();
 
-				binding.setName(refBinding->name);
-				binding.bindPoint = refBinding->binding;
+				BindingInfo bi;
+				bi.set = refSet.set;
+				bi.binding = refBinding->binding;
 
 				VkDescriptorSetLayoutBinding descriptorSetLayoutBinding;
 				descriptorSetLayoutBinding.binding = refBinding->binding;
-				descriptorSetLayoutBinding.descriptorCount = 0;
+				descriptorSetLayoutBinding.descriptorCount = 1;
 				descriptorSetLayoutBinding.stageFlags = stageFlags;
 				descriptorSetLayoutBinding.pImmutableSamplers = nullptr;
 
 				switch (refBinding->descriptor_type) {
 				case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLER:
 				{
-					binding.type = VK_DESCRIPTOR_TYPE_SAMPLER;
+					auto& s = _paramLayout.samplers.emplace_back();
+					s.name = refBinding->name;
+					s.bindingInfo = bi;
 
 					descriptorSetLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-					descriptorSetLayoutBinding.descriptorCount = 1;
 
 					break;
 				}
 				case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
 				{
-					binding.type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+					auto& t = _paramLayout.textures.emplace_back();
+					t.name = refBinding->name;
+					t.bindingInfo = bi;
 
 					descriptorSetLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-					descriptorSetLayoutBinding.descriptorCount = 1;
 
 					break;
 				}
 				case SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
 				{
-					binding.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-					binding.data.size = refBinding->block.size;
+					auto& b = _paramLayout.constantBuffers.emplace_back();
+					b.name = refBinding->name;
+					b.size = refBinding->block.size;
+					b.bindingInfo = bi;
 
 					descriptorSetLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+					_parseParamLayout(refBinding->type_description, refBinding->block.members, b.variables);
 
-					_parseParamLayout(refBinding->type_description, refBinding->block.members, binding.data.variables, descriptorSetLayoutBinding);
+					b.calcFeatureValue();
 
-					if (descriptorSetLayoutBinding.descriptorCount) {
-						binding.data.calcFeatureValue();
-						++set.constantBufferCount;
-
-						_graphics.get<Graphics>()->getConstantBufferManager().registerConstantLayout(binding.data);
-					}
+					_graphics.get<Graphics>()->getConstantBufferManager().registerConstantLayout(b);
 
 					break;
 				}
 				default:
+					descriptorSetLayoutBinding.descriptorCount = 0;
 					break;
 				}
 
-				if (descriptorSetLayoutBinding.descriptorCount) {
-					descSetLayoutBindings.emplace_back(descriptorSetLayoutBinding);
-				} else {
-					set.bindings.pop_back();
-				}
+				if (descriptorSetLayoutBinding.descriptorCount) descSetLayoutBindings.emplace_back(descriptorSetLayoutBinding);
 			}
 		}
 	}
 
-	void Program::_parseParamLayout(const SpvReflectTypeDescription* data, struct SpvReflectBlockVariable* members, std::vector<ConstantBufferLayout::Variables>& vars, VkDescriptorSetLayoutBinding& descriptorSetLayoutBinding) {
+	void Program::_parseParamLayout(const SpvReflectTypeDescription* data, struct SpvReflectBlockVariable* members, std::vector<ConstantBufferLayout::Variables>& vars) {
 		using namespace srk::literals;
 
 		if (!data) return;
@@ -449,59 +477,16 @@ namespace srk::modules::graphics::vulkan {
 			auto& v = vars.emplace_back();
 			if (memDesc.storage_class == SpvStorageClassUniformConstant) {
 				v.name = memDesc.struct_member_name;
-				++descriptorSetLayoutBinding.descriptorCount;
 			}
 			v.offset = blockVar.offset;
 			v.size = blockVar.size;
 			v.stride = (1_ui32 << 31) | 16;
 
-			_parseParamLayout(&memDesc, blockVar.members, v.members, descriptorSetLayoutBinding);
-		}
-	}
-
-	void Program::_calcConstantLayoutSameBuffers(std::vector<std::vector<SetLayout>*>& setLayouts) {
-		uint32_t sameId = 0;
-		auto n = setLayouts.size();
-		for (size_t i = 0; i < n; ++i) {
-			auto& sets0 = *setLayouts[i];
-			for (size_t j = 0; j < n; ++j) {
-				if (i == j) continue;
-
-				auto& sets1 = *setLayouts[j];
-
-				for (auto& set0 : sets0) {
-					if (!set0.constantBufferCount) continue;
-
-					for (auto& binding0 : set0.bindings) {
-						if (binding0.type != VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER) continue;
-
-						for (auto& set1 : sets1) {
-							if (!set1.constantBufferCount) continue;
-
-							for (auto& binding1 : set1.bindings) {
-								if (binding1.type != VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER) continue;
-
-								if (binding0.data.featureValue == binding1.data.featureValue) {
-									if (binding0.data.sameId == 0) {
-										binding0.data.sameId = ++sameId;
-										_usingSameConstBuffers.emplace_back(nullptr);
-									}
-									binding1.data.sameId = binding0.data.sameId;
-									break;
-								}
-							}
-						}
-					}
-				}
-			}
+			_parseParamLayout(&memDesc, blockVar.members, v.members);
 		}
 	}
 
 	ConstantBuffer* Program::_getConstantBuffer(const MyConstantBufferLayout& cbLayout, const IShaderParameterGetter& paramGetter) {
-		if (cbLayout.sameId) {
-			if (auto cb = _usingSameConstBuffers[cbLayout.sameId - 1]; cb) return cb;
-		}
-
 		ShaderParameterUsageStatistics statistics;
 		cbLayout.collectUsingInfo(paramGetter, statistics, (std::vector<const ShaderParameter*>&)_tempParams, _tempVars);
 
@@ -532,7 +517,6 @@ namespace srk::modules::graphics::vulkan {
 
 		_tempParams.clear();
 		_tempVars.clear();
-		if (cb && cbLayout.sameId) _usingSameConstBuffers[cbLayout.sameId - 1] = cb;
 
 		return cb;
 	}
@@ -545,37 +529,5 @@ namespace srk::modules::graphics::vulkan {
 
 			cb->unmap();
 		}
-	}
-
-	void Program::_useParameters(const ParameterLayout& layout, const IShaderParameterGetter& paramGetter) {
-		/*auto g = _graphics.get<Graphics>();
-
-		for (auto& info : layout.constantBuffers) {
-			auto cb = _getConstantBuffer(info, paramGetter);
-			if (cb && g == cb->getGraphics()) {
-				if (auto native = (BaseBuffer*)cb->getNative(); native) {
-					if (auto buffer = native->getBuffer(); buffer) {
-						VkDescriptorBufferInfo descriptorBufferInfo;
-						descriptorBufferInfo.buffer = buffer;
-						descriptorBufferInfo.offset = 0;
-						descriptorBufferInfo.range = info.size;
-
-						VkWriteDescriptorSet writeDescriptorSet;
-						memset(&writeDescriptorSet, 0, sizeof(writeDescriptorSet));
-						writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-						writeDescriptorSet.dstSet = _descriptorSet;
-						writeDescriptorSet.dstBinding = info.bindPoint;
-						writeDescriptorSet.dstArrayElement = 0;
-						writeDescriptorSet.descriptorCount = 1;
-						writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-						writeDescriptorSet.pImageInfo = nullptr;
-						writeDescriptorSet.pBufferInfo = &descriptorBufferInfo;
-						writeDescriptorSet.pTexelBufferView = nullptr;
-
-						vkUpdateDescriptorSets(g->getDevice(), 1, &writeDescriptorSet, 0, nullptr);
-					}
-				}
-			}
-		}*/
 	}
 }

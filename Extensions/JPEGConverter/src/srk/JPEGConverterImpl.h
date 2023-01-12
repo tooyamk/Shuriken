@@ -58,7 +58,7 @@ namespace srk::extensions::jpeg_converter {
 		jpeg_finish_decompress(&cinfo);
 		jpeg_destroy_decompress(&cinfo);
 
-		img->size.set(w, h);
+		img->dimensions.set(w, h);
 		switch (c) {
 		case 3:
 			img->format = modules::graphics::TextureFormat::R8G8B8;
@@ -83,8 +83,8 @@ namespace srk::extensions::jpeg_converter {
 		unsigned long bufSize = 0;
 		jpeg_mem_dest(&cinfo, &buf, &bufSize);
 
-		cinfo.image_width = img.size[0];
-		cinfo.image_height = img.size[1];
+		cinfo.image_width = img.dimensions[0];
+		cinfo.image_height = img.dimensions[1];
 		cinfo.input_components = 3;
 		cinfo.in_color_space = JCS_RGB;
 
@@ -92,7 +92,7 @@ namespace srk::extensions::jpeg_converter {
 		jpeg_set_quality(&cinfo, quality, true);
 		jpeg_start_compress(&cinfo, true);
 
-		auto stride = img.size[0] * 3;
+		auto stride = img.dimensions[0] * 3;
 		while (cinfo.next_scanline < cinfo.image_height) {
 			auto rowPointer = (JSAMPROW*)(img.source.getSource() + cinfo.next_scanline * stride);
 			jpeg_write_scanlines(&cinfo, rowPointer, 1);

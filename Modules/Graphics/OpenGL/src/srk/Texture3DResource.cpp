@@ -29,35 +29,31 @@ namespace srk::modules::graphics::gl {
 		return _baseTex.format;
 	}
 
-	uint16_t Texture3DResource::getPerPixelByteSize() const {
-		return _baseTex.perPixelSize;
+	const Vec3uz& Texture3DResource::getDimensions() const {
+		return _baseTex.dim;
 	}
 
-	const Vec3ui32& Texture3DResource::getSize() const {
-		return _baseTex.texSize;
-	}
-
-	bool Texture3DResource::create(const Vec3ui32& size, uint32_t arraySize, uint32_t mipLevels, TextureFormat format, Usage resUsage, const void* const* data) {
-		return _baseTex.create(*_graphics.get<Graphics>(), Vec3ui32(size[0], size[1], 1), arraySize, mipLevels, 1, format, resUsage, data);
+	bool Texture3DResource::create(const Vec3uz& dim, size_t arraySize, size_t mipLevels, TextureFormat format, Usage requiredUsage, Usage preferredUsage, const void* const* data) {
+		return _baseTex.create(*_graphics.get<Graphics>(), dim, arraySize, mipLevels, 1, format, requiredUsage, preferredUsage, data);
 	}
 
 	Usage Texture3DResource::getUsage() const {
 		return _baseTex.resUsage;
 	}
 
-	Usage Texture3DResource::map(uint32_t arraySlice, uint32_t mipSlice, Usage expectMapUsage) {
+	Usage Texture3DResource::map(size_t arraySlice, size_t mipSlice, Usage expectMapUsage) {
 		return _baseTex.map(arraySlice, mipSlice, expectMapUsage);
 	}
 
-	void Texture3DResource::unmap(uint32_t arraySlice, uint32_t mipSlice) {
+	void Texture3DResource::unmap(size_t arraySlice, size_t mipSlice) {
 		_baseTex.unmap(arraySlice, mipSlice);
 	}
 
-	uint32_t Texture3DResource::read(uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, void* dst, uint32_t dstLen) {
+	size_t Texture3DResource::read(size_t arraySlice, size_t mipSlice, size_t offset, void* dst, size_t dstLen) {
 		return _baseTex.read(arraySlice, mipSlice, offset, dst, dstLen);
 	}
 
-	uint32_t Texture3DResource::write(uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, const void* data, uint32_t length) {
+	size_t Texture3DResource::write(size_t arraySlice, size_t mipSlice, size_t offset, const void* data, size_t length) {
 		return _baseTex.write(arraySlice, mipSlice, offset, data, length);
 	}
 
@@ -65,15 +61,15 @@ namespace srk::modules::graphics::gl {
 		_baseTex.releaseTex();
 	}
 
-	bool Texture3DResource::update(uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const void* data) {
+	bool Texture3DResource::update(size_t arraySlice, size_t mipSlice, const Box3uz& range, const void* data) {
 		return _baseTex.update(arraySlice, mipSlice, range, data);
 	}
 
-	bool Texture3DResource::copyFrom(const Vec3ui32& dstPos, uint32_t dstArraySlice, uint32_t dstMipSlice, const ITextureResource* src, uint32_t srcArraySlice, uint32_t srcMipSlice, const Box3ui32& srcRange) {
+	bool Texture3DResource::copyFrom(const Vec3uz& dstPos, size_t dstArraySlice, size_t dstMipSlice, const ITextureResource* src, size_t srcArraySlice, size_t srcMipSlice, const Box3uz& srcRange) {
 		return _baseTex.copyFrom(*_graphics.get<Graphics>(), dstPos, dstArraySlice, dstMipSlice, src, srcArraySlice, srcMipSlice, srcRange);
 	}
 
-	bool Texture3DResource::copyFrom(uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const IPixelBuffer* pixelBuffer) {
+	bool Texture3DResource::copyFrom(size_t arraySlice, size_t mipSlice, const Box3uz& range, const IPixelBuffer* pixelBuffer) {
 		return _baseTex.copyFrom(*_graphics.get<Graphics>(), arraySlice, mipSlice, range, pixelBuffer);
 	}
 }

@@ -32,20 +32,20 @@ namespace srk {
 			return _cur ? _cur->target->getNative() : nullptr;
 		}
 
-		bool SRK_CALL create(size_t size, modules::graphics::Usage bufferUsage, const void* data, size_t dataSize) {
+		bool SRK_CALL create(size_t size, modules::graphics::Usage requiredUsage, modules::graphics::Usage preferredUsage, const void* data, size_t dataSize) {
 			destroy();
 
 			if (auto buf = _createBuffer(); buf) {
-				_head = new Node();
-				_head->target = buf;
-				_head->next = _head;
-				_count = 1;
+				if (buf->create(size, requiredUsage, preferredUsage, data, dataSize)) {
+					_head = new Node();
+					_head->target = buf;
+					_head->next = _head;
+					_count = 1;
 
-				_cur = _head;
-
-				buf->create(size, bufferUsage, data, dataSize);
-
-				return true;
+					_cur = _head;
+				} else {
+					return false;
+				}
 			}
 
 			return false;
@@ -85,7 +85,7 @@ namespace srk {
 								_cur = node;
 								++_count;
 
-								newBuf->create(buf->getSize(), buf->getUsage());
+								newBuf->create(buf->getSize(), buf->getUsage(), modules::graphics::Usage::NONE);
 
 								if constexpr (std::derived_from<T, modules::graphics::IVertexBuffer>) {
 									newBuf->setStride(buf->getStride());
@@ -195,7 +195,7 @@ namespace srk {
 
 		virtual bool SRK_CALL isCreated() const override;
 		virtual const void* SRK_CALL getNative() const override;
-		virtual bool SRK_CALL create(size_t size, modules::graphics::Usage bufferUsage, const void* data = nullptr, size_t dataSize = 0) override;
+		virtual bool SRK_CALL create(size_t size, modules::graphics::Usage requiredUsage, modules::graphics::Usage preferredUsage, const void* data = nullptr, size_t dataSize = 0) override;
 		virtual size_t SRK_CALL getSize() const override;
 		virtual modules::graphics::Usage SRK_CALL getUsage() const override;
 		virtual modules::graphics::Usage SRK_CALL map(modules::graphics::Usage expectMapUsage) override;
@@ -207,11 +207,11 @@ namespace srk {
 		virtual bool SRK_CALL isSyncing() const override;
 		virtual void SRK_CALL destroy() override;
 
-		virtual uint32_t SRK_CALL getStride() const override;
-		virtual void SRK_CALL setStride(uint32_t stride) override;
+		virtual size_t SRK_CALL getStride() const override;
+		virtual void SRK_CALL setStride(size_t stride) override;
 
 	private:
-		uint32_t _stride;
+		size_t _stride;
 		MultipleBuffer<modules::graphics::IVertexBuffer> _base;
 	};
 
@@ -223,7 +223,7 @@ namespace srk {
 
 		virtual bool SRK_CALL isCreated() const override;
 		virtual const void* SRK_CALL getNative() const override;
-		virtual bool SRK_CALL create(size_t size, modules::graphics::Usage bufferUsage, const void* data = nullptr, size_t dataSize = 0) override;
+		virtual bool SRK_CALL create(size_t size, modules::graphics::Usage requiredUsage, modules::graphics::Usage preferredUsage, const void* data = nullptr, size_t dataSize = 0) override;
 		virtual size_t SRK_CALL getSize() const override;
 		virtual modules::graphics::Usage SRK_CALL getUsage() const override;
 		virtual modules::graphics::Usage SRK_CALL map(modules::graphics::Usage expectMapUsage) override;
@@ -251,7 +251,7 @@ namespace srk {
 
 		virtual bool SRK_CALL isCreated() const override;
 		virtual const void* SRK_CALL getNative() const override;
-		virtual bool SRK_CALL create(size_t size, modules::graphics::Usage bufferUsage, const void* data = nullptr, size_t dataSize = 0) override;
+		virtual bool SRK_CALL create(size_t size, modules::graphics::Usage requiredUsage, modules::graphics::Usage preferredUsage, const void* data = nullptr, size_t dataSize = 0) override;
 		virtual size_t SRK_CALL getSize() const override;
 		virtual modules::graphics::Usage SRK_CALL getUsage() const override;
 		virtual modules::graphics::Usage SRK_CALL map(modules::graphics::Usage expectMapUsage) override;

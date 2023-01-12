@@ -18,8 +18,8 @@ namespace srk {
 		return _base.getNative();
 	}
 
-	bool MultipleVertexBuffer::create(size_t size, modules::graphics::Usage bufferUsage, const void* data, size_t dataSize) {
-		auto rst = _base.create(size, bufferUsage, data, dataSize);
+	bool MultipleVertexBuffer::create(size_t size, modules::graphics::Usage requiredUsage, modules::graphics::Usage preferredUsage, const void* data, size_t dataSize) {
+		auto rst = _base.create(size, requiredUsage, preferredUsage, data, dataSize);
 		if (_base.getCurrent()) _base.getCurrent()->target->setStride(_stride);
 		return rst;
 	}
@@ -64,11 +64,11 @@ namespace srk {
 		_base.destroy();
 	}
 
-	uint32_t MultipleVertexBuffer::getStride() const {
+	size_t MultipleVertexBuffer::getStride() const {
 		return _stride;
 	}
 
-	void MultipleVertexBuffer::setStride(uint32_t stride) {
+	void MultipleVertexBuffer::setStride(size_t stride) {
 		_stride = stride;
 		if (_stride != stride) {
 			_stride = stride;
@@ -99,8 +99,8 @@ namespace srk {
 		return _base.getNative();
 	}
 
-	bool MultipleIndexBuffer::create(size_t size, modules::graphics::Usage bufferUsage, const void* data, size_t dataSize) {
-		auto rst = _base.create(size, bufferUsage, data, dataSize);
+	bool MultipleIndexBuffer::create(size_t size, modules::graphics::Usage requiredUsage, modules::graphics::Usage preferredUsage, const void* data, size_t dataSize) {
+		auto rst = _base.create(size, requiredUsage, preferredUsage, data, dataSize);
 		if (_base.getCurrent()) _base.getCurrent()->target->setFormat(_idxType);
 		return rst;
 	}
@@ -177,8 +177,8 @@ namespace srk {
 		return _base.getNative();
 	}
 
-	bool MultipleConstantBuffer::create(size_t size, modules::graphics::Usage bufferUsage, const void* data, size_t dataSize) {
-		return _base.create(size, bufferUsage, data, dataSize);
+	bool MultipleConstantBuffer::create(size_t size, modules::graphics::Usage requiredUsage, modules::graphics::Usage preferredUsage, const void* data, size_t dataSize) {
+		return _base.create(size, requiredUsage, preferredUsage, data, dataSize);
 	}
 
 	size_t MultipleConstantBuffer::getSize() const {

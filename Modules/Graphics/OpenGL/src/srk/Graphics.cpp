@@ -232,7 +232,7 @@ namespace srk::modules::graphics::gl {
 		_glStatus.usage.bufferCreateUsageMask = Usage::MAP_READ_WRITE | Usage::UPDATE | Usage::COPY_SRC_DST;
 		if (_deviceFeatures.persistentMap) _glStatus.usage.bufferCreateUsageMask |= Usage::PERSISTENT_MAP;
 
-		_glStatus.usage.texCreateUsageMask = Usage::UPDATE | Usage::RENDERABLE;
+		_glStatus.usage.texCreateUsageMask = Usage::UPDATE | Usage::COPY_SRC_DST | Usage::RENDERABLE;
 
 		//glEnable(GL_MULTISAMPLE);
 		//glDisable(GL_MULTISAMPLE);
@@ -710,7 +710,7 @@ namespace srk::modules::graphics::gl {
 				native->update();
 				glBindFramebuffer(GL_FRAMEBUFFER, native->getInternalBuffer());
 				_glStatus.isBack = false;
-				_updateCanvasSize(rt->getSize());
+				_updateCanvasSize(rt->getDimensions());
 			} else {
 				glBindFramebuffer(GL_FRAMEBUFFER, 0);
 				_glStatus.isBack = true;

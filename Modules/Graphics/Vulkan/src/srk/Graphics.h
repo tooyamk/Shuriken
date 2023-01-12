@@ -138,6 +138,9 @@ namespace srk::modules::graphics::vulkan {
 		static VkFrontFace SRK_CALL convertFrontFace(FrontFace mode);
 		static VkShaderStageFlagBits SRK_CALL convertProgramStage(ProgramStage stage);
 		static VkFormat SRK_CALL convertVertexFormat(VertexFormat fmt);
+		static VkImageType SRK_CALL convertTextureType(TextureType type);
+		static VkFormat SRK_CALL convertTextureFormat(TextureFormat fmt);
+		static VkSampleCountFlagBits SRK_CALL convertSampleCount(SampleCount sc);
 
 	private:
 		bool _isDebug;

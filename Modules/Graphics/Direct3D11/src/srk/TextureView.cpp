@@ -30,15 +30,15 @@ namespace srk::modules::graphics::d3d11 {
 		return this;
 	}
 
-	uint32_t TextureView::getArraySize() const {
+	size_t TextureView::getArraySize() const {
 		return _createdArraySize;
 	}
 
-	uint32_t TextureView::getMipLevels() const {
+	size_t TextureView::getMipLevels() const {
 		return _createdMipLevels;
 	}
 
-	bool TextureView::create(ITextureResource* res, uint32_t mipBegin, uint32_t mipLevels, uint32_t arrayBegin, uint32_t arraySize) {
+	bool TextureView::create(ITextureResource* res, size_t mipBegin, size_t mipLevels, size_t arrayBegin, size_t arraySize) {
 		IntrusivePtr guard(res);
 
 		destroy();

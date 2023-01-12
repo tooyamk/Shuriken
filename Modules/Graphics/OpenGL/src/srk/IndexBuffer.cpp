@@ -19,8 +19,8 @@ namespace srk::modules::graphics::gl {
 		return &_baseBuffer;
 	}
 
-	bool IndexBuffer::create(size_t size, Usage bufferUsage, const void* data, size_t dataSize) {
-		auto rst = _baseBuffer.create(*_graphics.get<Graphics>(), size, bufferUsage, data);
+	bool IndexBuffer::create(size_t size, Usage requiredUsage, Usage preferredUsage, const void* data, size_t dataSize) {
+		auto rst = _baseBuffer.create(*_graphics.get<Graphics>(), size, requiredUsage, preferredUsage, data);
 		_calcNumElements();
 		return rst;
 	}

@@ -116,7 +116,7 @@ public:
 					0.0f, 1.0f, 0.5f,
 					1.0f, 1.0f, 0.5f,
 					1.0f, 0.0f, 0.5f };
-				vertexBuffer->create(sizeof(vertices), Usage::NONE, vertices, sizeof(vertices));
+				vertexBuffer->create(sizeof(vertices), Usage::NONE, Usage::NONE, vertices, sizeof(vertices));
 				vertexBuffer->setStride(3 * sizeof(float32_t));
 			}
 
@@ -132,7 +132,7 @@ public:
 					0.f, 0.f,
 					1.f, 0.f,
 					1.f, 1.f };
-				uvBuffer->create(sizeof(uvs), Usage::NONE, uvs, sizeof(uvs));
+				uvBuffer->create(sizeof(uvs), Usage::NONE, Usage::NONE, uvs, sizeof(uvs));
 				uvBuffer->setStride(2 * sizeof(float32_t));
 			}
 
@@ -165,14 +165,14 @@ public:
 
 		{
 			auto rts = graphics->createTexture2DResource();
-			rts->create(Vec2ui32(800 * 2, 600 * 2), 0, 1, 1, TextureFormat::R8G8B8A8, Usage::RENDERABLE);
+			rts->create(Vec2uz(800 * 2, 600 * 2), 0, 1, 1, TextureFormat::R8G8B8A8, Usage::RENDERABLE, Usage::NONE);
 
 			{
 				auto rv = graphics->createRenderView();
 				rv->create(rts, 0, 0, 0);
 
 				auto ds = graphics->createDepthStencil();
-				ds->create(rts->getSize(), DepthStencilFormat::D24S8, rts->getSampleCount());
+				ds->create(rts->getDimensions(), DepthStencilFormat::D24S8, rts->getSampleCount());
 
 				renderData.rt = graphics->createRenderTarget();
 				renderData.rt->setRenderView(0, rv);
@@ -194,20 +194,20 @@ public:
 			IntrusivePtr texRes = graphics->createTexture2DResource();
 			if (texRes) {
 				auto img0 = extensions::PNGConverter::decode(readFile(getAppPath().parent_path().u8string() + "/Resources/c4.png"));
-				auto mipLevels = Image::calcMipLevels(img0->size);
+				auto mipLevels = Image::calcMipLevels(img0->dimensions);
 				ByteArray mipsData0;
 				std::vector<void*> mipsData0Ptr;
-				img0->generateMips(img0->format, mipLevels, mipsData0, mipsData0Ptr);
+				img0->generateMips(img0->format, mipLevels, mipsData0, 0, mipsData0Ptr);
 
 				auto img1 = extensions::PNGConverter::decode(readFile(getAppPath().parent_path().u8string() + "/Resources/red.png"));
 				ByteArray mipsData1;
 				std::vector<void*> mipsData1Ptr;
-				img1->generateMips(img1->format, mipLevels, mipsData1, mipsData1Ptr);
+				img1->generateMips(img1->format, mipLevels, mipsData1, 0, mipsData1Ptr);
 
 				mipsData0Ptr.insert(mipsData0Ptr.end(), mipsData1Ptr.begin(), mipsData1Ptr.end());
 
-				auto hr = texRes->create(img0->size, 0, 1, 1, img0->format, Usage::IGNORE_UNSUPPORTED | Usage::UPDATE);
-				auto bbb = texRes->update(0, 0, Box2ui32(Vec2ui32::ZERO, img0->size), mipsData0Ptr.data()[0]);
+				auto hr = texRes->create(img0->dimensions, 0, 1, 1, img0->format, Usage::NONE, Usage::UPDATE);
+				auto bbb = texRes->update(0, 0, Box2uz(Vec2uz::ZERO, img0->dimensions), mipsData0Ptr.data()[0]);
 
 				auto texView = graphics->createTextureView();
 				texView->create(texRes, 0, -1, 0, -1);
@@ -244,7 +244,7 @@ public:
 
 					4, 5, 7,
 					7, 5, 6 };
-			renderData.ib->create(sizeof(indices), Usage::NONE, indices, sizeof(indices));
+			renderData.ib->create(sizeof(indices), Usage::NONE, Usage::NONE, indices, sizeof(indices));
 			renderData.ib->setFormat(IndexType::UI16);
 		}
 
@@ -252,7 +252,7 @@ public:
 		renderData.pp.ib = graphics->createIndexBuffer();
 		{
 			uint16_t data[] = { 0, 1, 2, 0, 2, 3 };
-			renderData.pp.ib->create(sizeof(data), Usage::NONE, data, sizeof(data));
+			renderData.pp.ib->create(sizeof(data), Usage::NONE, Usage::NONE, data, sizeof(data));
 			renderData.pp.ib->setFormat(IndexType::UI16);
 		}
 
@@ -261,14 +261,14 @@ public:
 			IntrusivePtr ppVertexBuffer = graphics->createVertexBuffer();
 			{
 				float32_t data[] = { -1.0f, 1.0f, 0.8f, 1.0f, 0.8f, -0.9f, -1.0f, -0.9f };
-				ppVertexBuffer->create(sizeof(data), Usage::NONE, data, sizeof(data));
+				ppVertexBuffer->create(sizeof(data), Usage::NONE, Usage::NONE, data, sizeof(data));
 				ppVertexBuffer->setStride(2 * sizeof(float32_t));
 			}
 
 			IntrusivePtr ppUVBuffer = graphics->createVertexBuffer();
 			{
 				float32_t data[] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f };
-				ppUVBuffer->create(sizeof(data), Usage::NONE, data, sizeof(data));
+				ppUVBuffer->create(sizeof(data), Usage::NONE, Usage::NONE, data, sizeof(data));
 				ppUVBuffer->setStride(2 * sizeof(float32_t));
 			}
 
@@ -297,7 +297,7 @@ public:
 			while (renderData.winModule->processEvent()) {};
 
 			renderData.g->setRenderTarget(renderData.rt);
-			renderData.g->setViewport(Box2i32ui32(Vec2i32::ZERO, renderData.rt->getSize()));
+			renderData.g->setViewport(Box2i32ui32(Vec2i32::ZERO, renderData.rt->getDimensions()));
 			renderData.g->beginRender();
 			renderData.g->clear(ClearFlag::COLOR | ClearFlag::DEPTH | ClearFlag::STENCIL, Vec4f32(0.0f, 0.0f, 0.25f, 1.0f), 1.f, 0);
 

@@ -12,19 +12,53 @@ namespace srk {
 
 	Image::Image(Image&& other) noexcept :
 		format(other.format),
-		size(other.size),
+		dimensions(other.dimensions),
 		source(std::move(other.source))  {
 	}
 
 	Image& Image::operator=(Image&& other) noexcept {
 		format = other.format;
-		size = other.size;
+		dimensions = other.dimensions;
 		source = std::move(other.source);
 
 		return *this;
 	}
 
-	uint32_t Image::calcPerPixelByteSize(TextureFormat format) {
+	bool Image::isCompressedFormat(TextureFormat format) {
+		return false;
+	}
+
+	size_t Image::calcBlocks(TextureFormat format, size_t pixels) {
+		switch (format) {
+		case TextureFormat::R8G8B8:
+		case TextureFormat::R8G8B8A8:
+			return pixels;
+		default:
+			return 0;
+		}
+	}
+
+	Vec2uz Image::calcBlocks(TextureFormat format, const Vec2uz& pixels) {
+		switch (format) {
+		case TextureFormat::R8G8B8:
+		case TextureFormat::R8G8B8A8:
+			return pixels;
+		default:
+			return Vec2uz();
+		}
+	}
+
+	Vec3uz Image::calcBlocks(TextureFormat format, const Vec3uz& pixels) {
+		switch (format) {
+		case TextureFormat::R8G8B8:
+		case TextureFormat::R8G8B8A8:
+			return pixels;
+		default:
+			return Vec3uz();
+		}
+	}
+
+	size_t Image::calcPerBlockBytes(TextureFormat format) {
 		switch (format) {
 		case TextureFormat::R8G8B8:
 			return 3;
@@ -35,58 +69,91 @@ namespace srk {
 		}
 	}
 
-	std::vector<uint32_t> Image::calcMipsPixelSize(uint32_t n, uint32_t mipLevels) {
-		if (!n) return std::move(std::vector<uint32_t>(0));
+	Vec2uz Image::calcPerBlockPixels(TextureFormat format) {
+		switch (format) {
+		case TextureFormat::R8G8B8:
+		case TextureFormat::R8G8B8A8:
+			return Vec2uz(1, 1);
+		default:
+			return Vec2uz();
+		}
+	}
+
+	/*uint32_t Image::calcPerPixelByteSize(TextureFormat format) {
+		switch (format) {
+		case TextureFormat::R8G8B8:
+			return 3;
+		case TextureFormat::R8G8B8A8:
+			return 4;
+		default:
+			return 0;
+		}
+	}*/
+
+	std::vector<size_t> Image::calcMipsPixels(size_t n, size_t mipLevels) {
+		if (!n) return std::move(std::vector<size_t>(0));
 		if (!mipLevels) mipLevels = calcMipLevels(n);
 
-		std::vector<uint32_t> levels(mipLevels);
+		std::vector<size_t> levels(mipLevels);
 		levels[0] = n;
 
-		for (uint32_t i = 1; i < mipLevels; ++i) {
-			n = calcNextMipPixelSize(n);
+		for (size_t i = 1; i < mipLevels; ++i) {
+			n = calcNextMipPixels(n);
 			levels[i] = n;
 		}
 
 		return std::move(levels);
 	}
 
-	uint32_t Image::calcMipsByteSize(const Vec2ui32& size, uint32_t mipLevels, uint32_t perPixelByteSize) {
-		auto w = size[0], h = size[1];
-		auto pixels = w * h;
+	size_t Image::calcMipsBytes(modules::graphics::TextureFormat format, const Vec2uz& pixels, size_t mipLevels, size_t* mipBytes) {
+		auto w = pixels[0], h = pixels[1];
+		auto blocks = calcBlocks(format, pixels);
+		if (mipBytes) mipBytes[0] = calcBytes(format, blocks);
 
-		for (uint32_t i = 1; i < mipLevels; ++i) {
-			w = calcNextMipPixelSize(w);
-			h = calcNextMipPixelSize(h);
-			pixels += w * h;
+		for (size_t i = 1; i < mipLevels; ++i) {
+			w = calcNextMipPixels(w);
+			h = calcNextMipPixels(h);
+			auto n = calcBlocks(format, Vec2uz(w, h));
+			if (mipBytes) mipBytes[i] = calcBytes(format, n);
+			blocks += n;
 		}
 
-		return calcPixelsByteSize(pixels, perPixelByteSize);
+		return calcBytes(format, blocks);
 	}
 
-	uint32_t Image::calcMipsByteSize(const Vec3ui32& size, uint32_t mipLevels, uint32_t perPixelByteSize) {
-		auto w = size[0], h = size[1], d = size[2];
-		auto pixels = w * h * d;
+	size_t Image::calcMipsBytes(modules::graphics::TextureFormat format, const Vec3uz& pixels, size_t mipLevels, size_t* mipBytes) {
+		auto w = pixels[0], h = pixels[1], d = pixels[2];
+		auto blocks = calcBlocks(format, pixels);
+		if (mipBytes) mipBytes[0] = calcBytes(format, blocks);
 
-		for (uint32_t i = 1; i < mipLevels; ++i) {
-			w = calcNextMipPixelSize(w);
-			h = calcNextMipPixelSize(h);
-			d = calcNextMipPixelSize(d);
-			pixels += w * h * d;
+		for (size_t i = 1; i < mipLevels; ++i) {
+			w = calcNextMipPixels(w);
+			h = calcNextMipPixels(h);
+			d = calcNextMipPixels(d);
+			auto n = calcBlocks(format, Vec3uz(w, h, d));
+			if (mipBytes) mipBytes[i] = calcBytes(format, n);
+			blocks += n;
 		}
 
-		return calcPixelsByteSize(pixels, perPixelByteSize);
+		return calcBytes(format, blocks);
 	}
 
-	bool Image::convertFormat(const Vec2ui32& size, TextureFormat srcFormat, const uint8_t* src, TextureFormat dstFormat, uint8_t* dst) {
+	bool Image::convertFormat(const Vec2uz& pixels, TextureFormat srcFormat, const void* src, TextureFormat dstFormat, void* dst, size_t* srcReadedBytes, size_t* dstWritedBytes) {
 		switch (dstFormat) {
 		case TextureFormat::R8G8B8:
 		{
 			switch (srcFormat) {
 			case TextureFormat::R8G8B8:
-				memcpy(dst, src, calcPixelsByteSize(size, dstFormat));
+			{
+				auto n = calcBytes(srcFormat, pixels);
+				memcpy(dst, src, n);
+				if (srcReadedBytes) *srcReadedBytes = n;
+				if (dstWritedBytes) *dstWritedBytes = n;
+
 				return true;
+			}
 			case TextureFormat::R8G8B8A8:
-				_convertFormat_R8G8B8A8_R8G8B8(size, src, dst);
+				_convertFormat_R8G8B8A8_R8G8B8(pixels, src, dst, srcReadedBytes, dstWritedBytes);
 				return true;
 			default:
 				break;
@@ -98,11 +165,17 @@ namespace srk {
 		{
 			switch (srcFormat) {
 			case TextureFormat::R8G8B8:
-				_convertFormat_R8G8B8_R8G8B8A8(size, src, dst);
+				_convertFormat_R8G8B8_R8G8B8A8(pixels, src, dst, srcReadedBytes, dstWritedBytes);
 				return true;
 			case TextureFormat::R8G8B8A8:
-				memcpy(dst, src, calcPixelsByteSize(size, dstFormat));
+			{
+				auto n = calcBytes(srcFormat, pixels);
+				memcpy(dst, src, n);
+				if (srcReadedBytes) *srcReadedBytes = n;
+				if (dstWritedBytes) *dstWritedBytes = n;
+
 				return true;
+			}
 			default:
 				break;
 			}
@@ -116,51 +189,71 @@ namespace srk {
 		return false;
 	}
 
-	bool Image::convertFormat(const Vec2ui32& size, TextureFormat srcFormat, const uint8_t* src, uint32_t mipLevels, TextureFormat dstFormat, uint8_t* dst) {
-		auto srcPerPixelSize = calcPerPixelByteSize(srcFormat);
-		auto dstPerPixelSize = calcPerPixelByteSize(dstFormat);
+	bool Image::convertFormat(const Vec2uz& pixels, TextureFormat srcFormat, const void* src, size_t mipLevels, TextureFormat dstFormat, void* dst) {
+		auto s = (const uint8_t*)src;
+		auto d = (uint8_t*)dst;
 
-		if (!convertFormat(size, srcFormat, src, dstFormat, dst)) return false;
+		size_t srcOffsetBytes, dstOffsetBytes;
+		if (!convertFormat(pixels, srcFormat, src, dstFormat, dst, &srcOffsetBytes, &dstOffsetBytes)) return false;
+		s += srcOffsetBytes;
+		d += dstOffsetBytes;
 
-		auto s = size;
-
-		for (uint32_t lv = 1; lv < mipLevels; ++lv) {
-			src += calcPixelsByteSize(s, srcPerPixelSize);
-			dst += calcPixelsByteSize(s, dstPerPixelSize);
-			s.set(calcNextMipPixelSize(s[0]), calcNextMipPixelSize(s[1]));
-
-			if (!convertFormat(s, srcFormat, src, dstFormat, dst)) return false;
+		for (size_t lv = 1; lv < mipLevels; ++lv) {
+			if (!convertFormat(calcNextMipPixels(pixels), srcFormat, s, dstFormat, d, &srcOffsetBytes, &dstOffsetBytes)) return false;
+			s += srcOffsetBytes;
+			d += dstOffsetBytes;
 		}
 		return true;
 	}
 
-	void Image::_convertFormat_R8G8B8_R8G8B8A8(const Vec2ui32& size, const uint8_t* src, uint8_t* dst) {
-		auto numPixels = size.getMultiplies();
-		uint32_t srcIdx = 0, dstIdx = 0;
-		for (uint32_t i = 0; i < numPixels; ++i) {
-			memcpy(dst + dstIdx, src + srcIdx, 3);
+	void Image::_convertFormat_R8G8B8_R8G8B8A8(const Vec2uz& pixels, const void* src, void* dst, size_t* srcReadedBytes, size_t* dstWritedBytes) {
+		auto s = (const uint8_t*)src;
+		auto d = (uint8_t*)dst;
+		auto numPixels = pixels.getMultiplies();
+		size_t srcIdx = 0, dstIdx = 0;
+		for (size_t i = 0; i < numPixels; ++i) {
+			memcpy(d + dstIdx, s + srcIdx, 3);
 			srcIdx += 3;
 			dstIdx += 3;
-			dst[dstIdx++] = 255;
+			d[dstIdx++] = 255;
 		}
+
+		if (srcReadedBytes) *srcReadedBytes = numPixels * 3;
+		if (dstWritedBytes) *dstWritedBytes = numPixels << 2;
 	}
 
-	void Image::_convertFormat_R8G8B8A8_R8G8B8(const Vec2ui32& size, const uint8_t* src, uint8_t* dst) {
-		auto numPixels = size.getMultiplies();
-		uint32_t srcIdx = 0, dstIdx = 0;
-		for (uint32_t i = 0; i < numPixels; ++i) {
-			memcpy(dst + dstIdx, src + srcIdx, 3);
+	void Image::_convertFormat_R8G8B8A8_R8G8B8(const Vec2uz& pixels, const void* src, void* dst, size_t* srcReadedBytes, size_t* dstWritedBytes) {
+		auto s = (const uint8_t*)src;
+		auto d = (uint8_t*)dst;
+		auto numPixels = pixels.getMultiplies();
+		size_t srcIdx = 0, dstIdx = 0;
+		for (size_t i = 0; i < numPixels; ++i) {
+			memcpy(d + dstIdx, s + srcIdx, 3);
 			srcIdx += 4;
 			dstIdx += 3;
 		}
+
+		if (srcReadedBytes) *srcReadedBytes = numPixels << 2;
+		if (dstWritedBytes) *dstWritedBytes = numPixels * 3;
 	}
 
-	bool Image::generateMips(TextureFormat format, uint32_t mipLevels, uint8_t* dst, void** dstDataPtr) const {
+	bool Image::generateMips(modules::graphics::TextureFormat format, size_t mipLevels, ByteArray& dst, size_t dstOffset, std::vector<void*>& dstMipData) const {
+		auto bytes = calcMipsBytes(format, dimensions, mipLevels);
+		auto n = bytes + dstOffset;
+
+		if (dst.getCapacity() < n) dst.setCapacity(n);
+		dst.setLength(n);
+
+		dstMipData.resize(mipLevels);
+		return generateMips(format, mipLevels, dst.getSource() + dstOffset, dstMipData.data());
+	}
+
+	bool Image::generateMips(TextureFormat format, size_t mipLevels, void* dst, void** dstMipData) const {
 		switch (format) {
 		case TextureFormat::R8G8B8:
 		{
-			if (convertFormat(size, this->format, (const uint8_t*)source.getSource(), format, dst)) {
-				generateMips_UInt8s(size, format, mipLevels, 3, dst, dstDataPtr);
+			if (convertFormat(dimensions, this->format, (const uint8_t*)source.getSource(), format, dst)) {
+				generateMips_UInt8s(dimensions, format, mipLevels, 3, dst, dstMipData);
 				return true;
 			}
 
@@ -168,8 +261,8 @@ namespace srk {
 		}
 		case TextureFormat::R8G8B8A8:
 		{
-			if (convertFormat(size, this->format, (const uint8_t*)source.getSource(), format, dst)) {
-				generateMips_UInt8s(size, format, mipLevels, 4, dst, dstDataPtr);
+			if (convertFormat(dimensions, this->format, (const uint8_t*)source.getSource(), format, dst)) {
+				generateMips_UInt8s(dimensions, format, mipLevels, 4, dst, dstMipData);
 				return true;
 			}
 
@@ -182,62 +275,62 @@ namespace srk {
 		return false;
 	}
 
-	void Image::generateMips_UInt8s(const Vec2ui32& size, modules::graphics::TextureFormat format, uint32_t mipLevels, uint8_t numChannels, uint8_t* data, void** dataPtr) {
+	void Image::generateMips_UInt8s(const Vec2uz& pixels, modules::graphics::TextureFormat format, size_t mipLevels, size_t numChannels, void* data, void** dstMipData) {
 		uint32_t numChannels2 = numChannels << 1;
-		auto perPixelByteSize = calcPerPixelByteSize(format);
-		auto src = data;
-		auto dst = data;
-		auto s = size;
+		auto perPixelBytes = calcPerBlockBytes(format);
+		auto src = (const uint8_t*)data;
+		auto dst = (uint8_t*)data;
+		auto s = pixels;
 
-		if (dataPtr) dataPtr[0] = dst;
+		if (dstMipData) dstMipData[0] = dst;
 
 		uint8_t c[16];
-		for (uint32_t lv = 1; lv < mipLevels; ++lv) {
-			dst += calcPixelsByteSize(s, perPixelByteSize);
-			if (dataPtr) dataPtr[lv] = dst;
-			auto w = calcNextMipPixelSize(s[0]);
-			auto h = calcNextMipPixelSize(s[1]);
-			uint32_t srcRowByteSize = calcPixelsByteSize(s[0], perPixelByteSize);
-			uint32_t dstRowByteSize = calcPixelsByteSize(w, perPixelByteSize);
+		for (size_t lv = 1; lv < mipLevels; ++lv) {
+			dst += calcBytes(perPixelBytes, s.getMultiplies());
+			if (dstMipData) dstMipData[lv] = dst;
+			auto w = calcNextMipPixels(s[0]);
+			auto h = calcNextMipPixels(s[1]);
+			auto srcRowBytes = calcBytes(perPixelBytes, s[0]);
+			auto dstRowBytes = calcBytes(perPixelBytes, w);
 
 			if (w == s[0]) {
 				if (h == s[1]) {
-					memcpy(dst, src, w * h * perPixelByteSize);
+					memcpy(dst, src, w * h * perPixelBytes);
 				} else {
-					for (uint32_t y = 0; y < h; ++y) {
-						auto dstBegin = y * dstRowByteSize;
+					for (size_t y = 0; y < h; ++y) {
+						auto dstBegin = y * dstRowBytes;
 						auto srcRow = src + (dstBegin << 1);
 						auto dstRow = dst + dstBegin;
-						for (uint32_t x = 0; x < w; ++x) {
-							auto dstOffset = x * perPixelByteSize;
+						for (size_t x = 0; x < w; ++x) {
+							auto dstOffset = x * perPixelBytes;
 							auto data = srcRow + dstOffset;
 							memcpy(c, data, numChannels);
-							memcpy(c + numChannels, data + dstRowByteSize, numChannels);
+							memcpy(c + numChannels, data + dstRowBytes, numChannels);
 							_mipPixelsBlend(c, numChannels, 2);
 							memcpy(dstRow + dstOffset, c, numChannels);
 						}
 					}
 				}
 			} else if (h == s[1]) {
-				for (uint32_t y = 0; y < h; ++y) {
-					auto srcRow = src + y * srcRowByteSize;
-					auto dstRow = dst + y * dstRowByteSize;
-					for (uint32_t x = 0; x < w; ++x) {
-						auto dstOffset = x * perPixelByteSize;
+				for (size_t y = 0; y < h; ++y) {
+					auto srcRow = src + y * srcRowBytes;
+					auto dstRow = dst + y * dstRowBytes;
+					for (size_t x = 0; x < w; ++x) {
+						auto dstOffset = x * perPixelBytes;
 						memcpy(c, srcRow + (dstOffset << 1), numChannels2);
 						_mipPixelsBlend(c, numChannels, 2);
 						memcpy(dstRow + dstOffset, c, numChannels);
 					}
 				}
 			} else {
-				for (uint32_t y = 0; y < h; ++y) {
-					auto srcRow = src + (y << 1) * srcRowByteSize;
-					auto dstRow = dst + y * dstRowByteSize;
-					for (uint32_t x = 0; x < w; ++x) {
-						auto dstOffset = x * perPixelByteSize;
+				for (size_t y = 0; y < h; ++y) {
+					auto srcRow = src + (y << 1) * srcRowBytes;
+					auto dstRow = dst + y * dstRowBytes;
+					for (size_t x = 0; x < w; ++x) {
+						auto dstOffset = x * perPixelBytes;
 						auto data = srcRow + (dstOffset << 1);
 						memcpy(c, data, numChannels2);
-						memcpy(c + numChannels2, data + srcRowByteSize, numChannels2);
+						memcpy(c + numChannels2, data + srcRowBytes, numChannels2);
 						_mipPixelsBlend(c, numChannels, 4);
 						memcpy(dstRow + dstOffset, c, numChannels);
 					}
@@ -250,13 +343,15 @@ namespace srk {
 	}
 
 	bool Image::flipY() {
-		auto bytesPrePixel = calcPerPixelByteSize(format);
-		if (bytesPrePixel == 0) return false;
+		if (format == TextureFormat::UNKNOWN || isCompressedFormat(format)) return false;
+
+		auto perPixelBytes = calcPerBlockBytes(format);
+		if (!perPixelBytes) return false;
 
 		auto data = source.getSource();
-		size_t bytesPreRow = bytesPrePixel * size[0];
-		auto n = size[1] >> 1;
-		decltype(n) top = 0, bottom = size[1] - 1;
+		size_t bytesPreRow = perPixelBytes * dimensions[0];
+		auto n = dimensions[1] >> 1;
+		decltype(n) top = 0, bottom = dimensions[1] - 1;
 		for (decltype(n) i = 0; i < n; ++i) {
 			auto topBegin = top * bytesPreRow;
 			auto bottomBegin = bottom * bytesPreRow;
@@ -275,53 +370,55 @@ namespace srk {
 	}
 
 	bool Image::scale(Image& dst) const {
-		auto bytesPrePixel = calcPerPixelByteSize(format);
-		if (bytesPrePixel == 0) return false;
+		if (format == TextureFormat::UNKNOWN || isCompressedFormat(format)) return false;
 
-		auto dstBytes = dst.size.getMultiplies() * bytesPrePixel;
+		auto perPixelBytes = calcPerBlockBytes(format);
+		if (!perPixelBytes) return false;
+
+		auto dstBytes = dst.dimensions.getMultiplies() * perPixelBytes;
 		dst.format = format;
 		dst.source = std::move(ByteArray(dstBytes, dstBytes));
 
 		auto srcData = source.getSource();
 		auto dstData = dst.source.getSource();
 
-		Vec2f32 max(size - 1);
-		auto sd = Vec2f32(size) / dst.size;
+		Vec2f32 max(dimensions - 1);
+		auto sd = Vec2f32(dimensions) / dst.dimensions;
 		auto step = 0.5f * sd - 0.5f;
 
-		auto nx = dst.size[0], ny = dst.size[1];
+		auto nx = dst.dimensions[0], ny = dst.dimensions[1];
 
 		for (auto y = 0u; y < ny; ++y) {
 			auto v = std::clamp(y * sd[1] + step[1], 0.f, max[1]);
 			auto iy = (uint32_t)v;
 			v -= iy;
 
-			auto edgeY = iy + 1 < size[1] ? 1u : 0u;
-			auto off1 = iy * size[0];
-			auto off2 = edgeY * size[0];
+			auto edgeY = iy + 1 < dimensions[1] ? 1u : 0u;
+			auto off1 = iy * dimensions[0];
+			auto off2 = edgeY * dimensions[0];
 
-			auto dstPosBeg = y * dst.size[0];
+			auto dstPosBeg = y * dst.dimensions[0];
 
 			for (auto x = 0u; x < nx; ++x) {
 				auto u = std::clamp(x * sd[0] + step[0], 0.f, max[0]);
 				auto ix = (uint32_t)u;
 				u -= ix;
 
-				auto edgeX = ix + 1 < size[0] ? 1u : 0u;
+				auto edgeX = ix + 1 < dimensions[0] ? 1u : 0u;
 
 				auto lt = off1 + ix;
 				auto rt = lt + edgeX;
 				auto lb = lt + off2;
 				auto rb = lb + edgeX;
 
-				lt *= bytesPrePixel;
-				rt *= bytesPrePixel;
-				lb *= bytesPrePixel;
-				rb *= bytesPrePixel;
+				lt *= perPixelBytes;
+				rt *= perPixelBytes;
+				lb *= perPixelBytes;
+				rb *= perPixelBytes;
 
-				auto dstPos = (dstPosBeg + x) * bytesPrePixel;
+				auto dstPos = (dstPosBeg + x) * perPixelBytes;
 
-				for (auto i = 0u; i < bytesPrePixel; ++i) {
+				for (auto i = 0u; i < perPixelBytes; ++i) {
 					auto tc = std::lerp((float32_t)srcData[lt + i], (float32_t)srcData[rt + i], u);
 					auto bc = std::lerp((float32_t)srcData[lb + i], (float32_t)srcData[rb + i], u);
 
@@ -334,10 +431,10 @@ namespace srk {
 	}
 
 	bool Image::scale(Image& dst, size_t jobCount, size_t threadCount, size_t threadIndex) const {
-		if (format != dst.format) return false;
+		if (format != dst.format || format == TextureFormat::UNKNOWN || isCompressedFormat(format)) return false;
 
-		auto bytesPrePixel = calcPerPixelByteSize(format);
-		if (bytesPrePixel == 0 || dst.source.getLength() < bytesPrePixel * dst.size.getMultiplies()) return false;
+		auto perPixelBytes = calcPerBlockBytes(format);
+		if (!perPixelBytes || dst.source.getLength() < perPixelBytes * dst.dimensions.getMultiplies()) return false;
 
 		auto range = Thread::calcJobRange(jobCount, threadCount, threadIndex);
 		auto i = range.begin;
@@ -346,14 +443,14 @@ namespace srk {
 		auto srcData = source.getSource();
 		auto dstData = dst.source.getSource();
 
-		Vec2f32 max(size - 1);
-		auto sd = Vec2f32(size) / dst.size;
+		Vec2f32 max(dimensions - 1);
+		auto sd = Vec2f32(dimensions) / dst.dimensions;
 		auto step = 0.5f * sd - 0.5f;
 
-		auto nx = dst.size[0], ny = dst.size[1];
+		auto nx = dst.dimensions[0], ny = dst.dimensions[1];
 
 		while (i < n) {
-			auto div = std::div((std::make_signed_t<decltype(i)>)i, (std::make_signed_t<decltype(i)>)dst.size[0]);
+			auto div = std::div((std::make_signed_t<decltype(i)>)i, (std::make_signed_t<decltype(i)>)dst.dimensions[0]);
 			auto y = div.quot;
 			auto x = div.rem;
 
@@ -361,32 +458,32 @@ namespace srk {
 			auto iy = (uint32_t)v;
 			v -= iy;
 
-			auto edgeY = iy + 1 < size[1] ? 1u : 0u;
-			auto off1 = iy * size[0];
-			auto off2 = edgeY * size[0];
+			auto edgeY = iy + 1 < dimensions[1] ? 1u : 0u;
+			auto off1 = iy * dimensions[0];
+			auto off2 = edgeY * dimensions[0];
 
-			auto dstPosBeg = y * dst.size[0];
+			auto dstPosBeg = y * dst.dimensions[0];
 
 			//
 			auto u = std::clamp(x * sd[0] + step[0], 0.f, max[0]);
 			auto ix = (uint32_t)u;
 			u -= ix;
 
-			auto edgeX = ix + 1 < size[0] ? 1u : 0u;
+			auto edgeX = ix + 1 < dimensions[0] ? 1u : 0u;
 
 			auto lt = off1 + ix;
 			auto rt = lt + edgeX;
 			auto lb = lt + off2;
 			auto rb = lb + edgeX;
 
-			lt *= bytesPrePixel;
-			rt *= bytesPrePixel;
-			lb *= bytesPrePixel;
-			rb *= bytesPrePixel;
+			lt *= perPixelBytes;
+			rt *= perPixelBytes;
+			lb *= perPixelBytes;
+			rb *= perPixelBytes;
 
-			auto dstPos = (dstPosBeg + x) * bytesPrePixel;
+			auto dstPos = (dstPosBeg + x) * perPixelBytes;
 
-			for (auto i = 0u; i < bytesPrePixel; ++i) {
+			for (auto i = 0u; i < perPixelBytes; ++i) {
 				auto tc = std::lerp((float32_t)srcData[lt + i], (float32_t)srcData[rt + i], u);
 				auto bc = std::lerp((float32_t)srcData[lb + i], (float32_t)srcData[rb + i], u);
 

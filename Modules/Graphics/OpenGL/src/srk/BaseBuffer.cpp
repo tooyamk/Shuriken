@@ -18,48 +18,64 @@ namespace srk::modules::graphics::gl {
 		releaseBuffer();
 	}
 
-	bool BaseBuffer::create(Graphics& graphics, size_t size, Usage resUsage, const void* data, GLenum internalUsage) {
+	bool BaseBuffer::create(Graphics& graphics, size_t size, Usage requiredUsage, Usage preferredUsage, const void* data, GLenum internalUsage) {
 		using namespace srk::enum_operators;
 
 		releaseBuffer();
 
-		resUsage &= Usage::CREATE_ALL;
-		auto supportedUsages = graphics.getBufferCreateUsageMask();
-		if ((resUsage & Usage::IGNORE_UNSUPPORTED) == Usage::IGNORE_UNSUPPORTED) {
-			resUsage &= supportedUsages;
-		} else if (auto u = (resUsage & (~supportedUsages)); u != Usage::NONE) {
+		requiredUsage &= Usage::BUFFER_CREATE_ALL;
+		preferredUsage &= Usage::BUFFER_CREATE_ALL;
+		if (auto u = (requiredUsage & (~graphics.getBufferCreateUsageMask())); u != Usage::NONE) {
 			graphics.error(std::format("OpenGL BaseBuffer::create error : has not support Usage {}", (std::underlying_type_t<Usage>)u));
 			return false;
 		}
 
-		this->resUsage = resUsage;
+		auto allUsage = requiredUsage | preferredUsage;
+
+		auto persistentMap = (allUsage & Usage::PERSISTENT_MAP) != Usage::NONE;
+		if (persistentMap && !graphics.getDeviceFeatures().persistentMap) {
+			if ((requiredUsage & Usage::PERSISTENT_MAP) == Usage::NONE) {
+				persistentMap = false;
+				allUsage &= ~Usage::PERSISTENT_MAP;
+			} else {
+				graphics.error("OpenGL BaseBuffer::create error : not support Usage::PERSISTENT_MAP");
+				return false;
+			}
+		}
+
+		resUsage = Usage::NONE;
 		this->size = size;
 
 		glGenBuffers(1, &handle);
 		glBindBuffer(bufferType, handle);
 
-		if ((this->resUsage & Usage::MAP_READ_WRITE) == Usage::NONE) {
-			if (data) {
-				glBufferData(bufferType, size, data, GL_STATIC_DRAW);
-			} else {
-				this->resUsage = Usage::UPDATE;
-				glBufferData(bufferType, size, nullptr, GL_DYNAMIC_DRAW);
+		if (persistentMap) {
+			resUsage |= Usage::PERSISTENT_MAP;
+			GLbitfield flags = GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT;
+
+			if ((allUsage & Usage::MAP_READ) == Usage::MAP_READ) {
+				resUsage |= Usage::MAP_READ;
+				flags |= GL_MAP_READ_BIT;
 			}
+			if ((allUsage & Usage::MAP_WRITE) == Usage::MAP_WRITE) {
+				resUsage |= Usage::MAP_WRITE;
+				flags |= GL_MAP_WRITE_BIT;
+			}
+
+			glBufferStorage(bufferType, size, data, flags);
+			mapData = glMapBufferRange(bufferType, 0, size, flags);
 		} else {
-			if ((this->resUsage & Usage::PERSISTENT_MAP) == Usage::NONE) {
-				glBufferData(bufferType, size, data, internalUsage ? internalUsage : GL_DYNAMIC_DRAW);
-			} else {
-				GLbitfield flags = GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT;
-
-				if ((this->resUsage & Usage::MAP_READ) == Usage::MAP_READ) flags |= GL_MAP_READ_BIT;
-				if ((this->resUsage & Usage::MAP_WRITE) == Usage::MAP_WRITE) flags |= GL_MAP_WRITE_BIT;
-
-				glBufferStorage(bufferType, size, data, flags);
-				mapData = glMapBufferRange(bufferType, 0, size, flags);
-			}
+			glBufferData(bufferType, size, data, internalUsage ? internalUsage : ((allUsage & Usage::MAP_WRITE_UPDATE) == Usage::NONE ? GL_STATIC_DRAW : GL_DYNAMIC_DRAW));
 		}
 
 		glBindBuffer(bufferType, 0);
+
+		resUsage |= allUsage & (Usage::UPDATE | Usage::COPY_SRC_DST);
+		if ((resUsage & requiredUsage) != requiredUsage) {
+			graphics.error(std::format("OpenGL Resource::create error : has not support preferredUsage {}", (std::underlying_type_t<Usage>)(requiredUsage & (~(resUsage & requiredUsage)))));
+			releaseBuffer();
+			return false;
+		}
 
 		return true;
 	}

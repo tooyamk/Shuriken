@@ -15,12 +15,12 @@ namespace srk::extensions::bc7_converter {
 			using namespace enum_operators;
 
 			if (img.format != modules::graphics::TextureFormat::R8G8B8A8) return false;
-			if (img.size[0] % 4 != 0 || img.size[1] % 4 != 0) return false;
+			if (img.dimensions[0] % 4 != 0 || img.dimensions[1] % 4 != 0) return false;
 
 			if (threadCount == 0) threadCount = 1;
 
 			Config cfg;
-			cfg.size = img.size;
+			cfg.size = img.dimensions;
 			cfg.blocks = cfg.size >> 2;
 			cfg.numBlocks = cfg.blocks.getMultiplies();
 

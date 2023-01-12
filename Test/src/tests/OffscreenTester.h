@@ -54,7 +54,7 @@ public:
 			auto tr = graphics->createTexture2DResource();
 			auto rv = graphics->createRenderView();
 			auto rt = graphics->createRenderTarget();
-			tr->create(Vec2ui32(800, 600), 0, 1, 1, modules::graphics::TextureFormat::R8G8B8A8, modules::graphics::Usage::RENDERABLE);
+			tr->create(Vec2uz(800, 600), 0, 1, 1, TextureFormat::R8G8B8A8, Usage::RENDERABLE, Usage::NONE);
 			rv->create(tr, 0, 0, 0);
 			rt->setRenderView(0, rv);
 
@@ -112,7 +112,7 @@ float4 main(PS_INPUT input) : SV_TARGET {
 				constexpr auto size = std::extent_v<decltype(vd)> *sizeof(type);
 
 				auto vb = graphics->createVertexBuffer();
-				vb->create(size, modules::graphics::Usage::NONE, vd, size);
+				vb->create(size, Usage::NONE, Usage::NONE, vd, size);
 				vb->setStride(2 * sizeof(type));
 				vertexBuffers->set("POSITION0", VertexAttribute<IVertexBuffer>(vb, 2, VertexType::F32, 0));
 
@@ -122,7 +122,7 @@ float4 main(PS_INPUT input) : SV_TARGET {
 						1.f, 1.f,
 						0.f, 1.f };
 				auto uvb = graphics->createVertexBuffer();
-				uvb->create(size, modules::graphics::Usage::NONE, uvd, size);
+				uvb->create(size, Usage::NONE, Usage::NONE, uvd, size);
 				uvb->setStride(2 * sizeof(type));
 				vertexBuffers->set("TEXCOORD0", VertexAttribute<IVertexBuffer>(uvb, 2, VertexType::F32, 0));
 			}
@@ -142,12 +142,12 @@ float4 main(PS_INPUT input) : SV_TARGET {
 				using type = std::remove_cvref_t<decltype(id[0])>;
 				constexpr auto size = std::extent_v<decltype(id)> *sizeof(type);
 
-				indices->create(size, modules::graphics::Usage::NONE, id, size);
+				indices->create(size, Usage::NONE, Usage::NONE, id, size);
 				indices->setFormat<type>();
 			}
 
 			graphics->setRenderTarget(rt);
-			graphics->setViewport(Box2i32ui32(Vec2i32::ZERO, tr->getSize().cast<2>()));
+			graphics->setViewport(Box2i32ui32(Vec2i32::ZERO, tr->getDimensions().cast<2>()));
 			graphics->beginRender();
 			graphics->clear(ClearFlag::COLOR | ClearFlag::DEPTH | ClearFlag::STENCIL, Vec4f32(0.0f, 0.0f, 0.25f, 1.0f), 1.0f, 0);
 			graphics->setBlendState(nullptr);
@@ -157,25 +157,25 @@ float4 main(PS_INPUT input) : SV_TARGET {
 
 			{
 				auto tex = graphics->createTexture2DResource();
-				if (tex->create(tr->getSize(), 0, 1, 1, tr->getFormat(), modules::graphics::Usage::MAP_READ)) {
-					if (tex->copyFrom(Vec3ui32::ZERO, 0, 0, tr, 0, 0, Box3ui32(Vec3ui32::ZERO, tr->getSize()))) {
-						if (tex->map(0, 0, modules::graphics::Usage::MAP_READ) != modules::graphics::Usage::NONE) {
-							auto pixelsSize = tr->getSize().getMultiplies() * 4;
+				if (tex->create(tr->getDimensions(), 0, 1, 1, tr->getFormat(), Usage::MAP_READ, Usage::NONE)) {
+					if (tex->copyFrom(Vec3ui32::ZERO, 0, 0, tr, 0, 0, Box3ui32(Vec3ui32::ZERO, tr->getDimensions()))) {
+						if (tex->map(0, 0, Usage::MAP_READ) != modules::graphics::Usage::NONE) {
+							auto pixelsSize = tr->getDimensions().getMultiplies() * 4;
 							ByteArray pixels(pixelsSize, pixelsSize);
 							tex->read(0, 0, 0, pixels.getSource(), pixels.getLength());
 							tex->unmap(0, 0);
 
 							Image img;
 							img.format = modules::graphics::TextureFormat::R8G8B8A8;
-							img.size = tr->getSize().cast<2>();
+							img.dimensions = tr->getDimensions().cast<2>();
 							img.source = std::move(pixels);
 
 							///*
 							auto aaa = extensions::PNGConverter::decode(readFile("D:/Users/Sephiroth/Desktop/wall.png"));
 							if (aaa && aaa->format == modules::graphics::TextureFormat::R8G8B8) {
-								ByteArray dst(aaa->size.getMultiplies() * 4);
+								ByteArray dst(aaa->dimensions.getMultiplies() * 4);
 								dst.setLength(dst.getCapacity());
-								Image::convertFormat(aaa->size, aaa->format, aaa->source.getSource(), modules::graphics::TextureFormat::R8G8B8A8, dst.getSource());
+								Image::convertFormat(aaa->dimensions, aaa->format, aaa->source.getSource(), modules::graphics::TextureFormat::R8G8B8A8, dst.getSource());
 								aaa->format = modules::graphics::TextureFormat::R8G8B8A8;
 								aaa->source = std::move(dst);
 							}

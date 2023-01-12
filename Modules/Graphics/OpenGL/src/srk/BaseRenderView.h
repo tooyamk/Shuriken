@@ -9,10 +9,10 @@ namespace srk::modules::graphics::gl {
 		~BaseRenderView();
 
 		bool simulative;
-		uint32_t mipSlice;
-		uint32_t arrayBegin;
-		uint32_t arraySize;
-		uint32_t createdArraySize;
+		size_t mipSlice;
+		size_t arrayBegin;
+		size_t arraySize;
+		size_t createdArraySize;
 		GLenum internalFormat;
 
 		IntrusivePtr<ITextureResource> res;

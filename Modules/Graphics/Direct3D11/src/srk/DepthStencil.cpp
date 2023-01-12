@@ -21,11 +21,11 @@ namespace srk::modules::graphics::d3d11 {
 		return _sampleCount;
 	}
 
-	const Vec2ui32& DepthStencil::getSize() const {
+	const Vec2uz& DepthStencil::getSize() const {
 		return _size;
 	}
 
-	bool DepthStencil::create(const Vec2ui32& size, DepthStencilFormat format, SampleCount sampleCount) {
+	bool DepthStencil::create(const Vec2uz& size, DepthStencilFormat format, SampleCount sampleCount) {
 		destroy();
 
 		if (!sampleCount) sampleCount = 1;

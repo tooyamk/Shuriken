@@ -6,10 +6,11 @@
 namespace srk::modules::graphics::vulkan {
 	class BaseBuffer {
 	public:
+		BaseBuffer();
 		BaseBuffer(VkBufferUsageFlags vkUsage);
 		~BaseBuffer();
 
-		bool SRK_CALL create(Graphics& graphics, size_t size, Usage usage, const void* data, size_t dataSize);
+		bool SRK_CALL create(Graphics& graphics, size_t size, Usage requiredUsage, Usage preferredUsage, const void* data, size_t dataSize);
 
 		Usage SRK_CALL map(Usage expectMapUsage);
 		void SRK_CALL unmap();

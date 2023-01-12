@@ -8,6 +8,7 @@
 #include "IndexBuffer.h"
 #include "Program.h"
 #include "RasterizerState.h"
+#include "Texture2DResource.h"
 #include "VertexBuffer.h"
 #include "srk/ProgramSource.h"
 #include "srk/modules/graphics/GraphicsAdapter.h"
@@ -109,7 +110,7 @@ namespace srk::modules::graphics::vulkan {
 				_deviceFeatures.simultaneousRenderTargetCount = physicalDeviceProperties.limits.maxColorAttachments;
 
 				_vkStatus.usage.bufferCreateUsageMask = Usage::MAP_READ_WRITE | Usage::UPDATE | Usage::COPY_SRC_DST;
-				_vkStatus.usage.texCreateUsageMask = Usage::RENDERABLE;
+				_vkStatus.usage.texCreateUsageMask = Usage::MAP_READ_WRITE | Usage::COPY_SRC_DST | Usage::RENDERABLE;
 			}
 
 			_defaultBlendState = new BlendState(*this, true);
@@ -726,7 +727,7 @@ namespace srk::modules::graphics::vulkan {
 		attachmentDesc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		attachmentDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		attachmentDesc.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
+		
 		VkAttachmentReference attachmentRef;
 		attachmentRef.attachment = 0;
 		attachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
@@ -825,7 +826,7 @@ namespace srk::modules::graphics::vulkan {
 	}
 
 	IntrusivePtr<ITexture2DResource> Graphics::createTexture2DResource() {
-		return nullptr;
+		return new Texture2DResource(*this);
 	}
 
 	IntrusivePtr<ITexture3DResource> Graphics::createTexture3DResource() {
@@ -1228,6 +1229,51 @@ namespace srk::modules::graphics::vulkan {
 		}
 		default:
 			return VK_FORMAT_UNDEFINED;
+		}
+	}
+
+	VkImageType Graphics::convertTextureType(TextureType type) {
+		switch (type) {
+		case TextureType::TEX1D:
+			return VK_IMAGE_TYPE_1D;
+		case TextureType::TEX2D:
+			return VK_IMAGE_TYPE_2D;
+		case TextureType::TEX3D:
+			return VK_IMAGE_TYPE_3D;
+		default:
+			return VK_IMAGE_TYPE_2D;
+		}
+	}
+
+	VkFormat Graphics::convertTextureFormat(TextureFormat fmt) {
+		switch (fmt) {
+		case TextureFormat::R8G8B8:
+			return VK_FORMAT_R8G8B8_UNORM;
+		case TextureFormat::R8G8B8A8:
+			return VK_FORMAT_R8G8B8A8_UNORM;
+		default:
+			return VK_FORMAT_UNDEFINED;
+		}
+	}
+
+	VkSampleCountFlagBits Graphics::convertSampleCount(SampleCount sc) {
+		switch (sc) {
+		case 1:
+			return VK_SAMPLE_COUNT_1_BIT;
+		case 2:
+			return VK_SAMPLE_COUNT_2_BIT;
+		case 4:
+			return VK_SAMPLE_COUNT_4_BIT;
+		case 8:
+			return VK_SAMPLE_COUNT_8_BIT;
+		case 16:
+			return VK_SAMPLE_COUNT_16_BIT;
+		case 32:
+			return VK_SAMPLE_COUNT_32_BIT;
+		case 64:
+			return VK_SAMPLE_COUNT_64_BIT;
+		default:
+			return (VkSampleCountFlagBits)0;
 		}
 	}
 

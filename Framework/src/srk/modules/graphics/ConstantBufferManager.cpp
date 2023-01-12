@@ -110,10 +110,17 @@ namespace srk::modules::graphics {
 			auto& pool = itr->second;
 			IConstantBuffer* cb;
 			if (auto& buffers = pool.buffers; pool.idleIndex == buffers.size()) {
-				cb = createShareConstantBufferCallback();
-				cb->ref();
-				cb->create(size, Usage::MAP_WRITE);
-				buffers.emplace_back(cb);
+				if (cb = createShareConstantBufferCallback(); cb) {
+					if (cb->create(size, Usage::MAP_WRITE, Usage::NONE)) {
+						cb->ref();
+						buffers.emplace_back(cb);
+					} else {
+						delete cb;
+						return nullptr;
+					}
+				} else {
+					return nullptr;
+				}
 			} else {
 				cb = buffers[pool.idleIndex];
 			}
@@ -188,18 +195,22 @@ namespace srk::modules::graphics {
 			IConstantBuffer* cb = nullptr;
 			if (auto rst = node->buffers.emplace(layout.featureValue, nullptr); rst.second) {
 				cb = createExclusiveConstantBufferCallback(cur + 1);
-				rst.first->second = cb;
 				if (cb) {
-					cb->ref();
-					cb->create(layout.size, Usage::MAP_WRITE);
+					if (cb->create(layout.size, Usage::MAP_WRITE, Usage::NONE)) {
+						cb->ref();
 
-					_exclusiveConstPool.find(layout.featureValue)->second.nodes.emplace(node);
+						_exclusiveConstPool.find(layout.featureValue)->second.nodes.emplace(node);
 
-					do {
-						++node->numAssociativeBuffers;
-						node = node->parent;
-					} while (node);
+						do {
+							++node->numAssociativeBuffers;
+							node = node->parent;
+						} while (node);
+					} else {
+						delete cb;
+						cb = nullptr;
+					}
 				}
+				rst.first->second = cb;
 			} else {
 				cb = rst.first->second;
 			}

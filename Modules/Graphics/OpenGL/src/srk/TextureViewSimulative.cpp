@@ -23,15 +23,15 @@ namespace srk::modules::graphics::gl {
 		return &_base;
 	}
 
-	uint32_t TextureViewSimulative::getArraySize() const {
+	size_t TextureViewSimulative::getArraySize() const {
 		return _base.createdArraySize;
 	}
 
-	uint32_t TextureViewSimulative::getMipLevels() const {
+	size_t TextureViewSimulative::getMipLevels() const {
 		return _base.createdMipLevels;
 	}
 
-	bool TextureViewSimulative::create(ITextureResource* res, uint32_t mipBegin, uint32_t mipLevels, uint32_t arrayBegin, uint32_t arraySize) {
+	bool TextureViewSimulative::create(ITextureResource* res, size_t mipBegin, size_t mipLevels, size_t arrayBegin, size_t arraySize) {
 		IntrusivePtr guard(res);
 
 		destroy();

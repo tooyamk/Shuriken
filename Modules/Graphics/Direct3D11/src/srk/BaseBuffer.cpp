@@ -11,7 +11,7 @@ namespace srk::modules::graphics::d3d11 {
 	BaseBuffer::~BaseBuffer() {
 	}
 
-	bool BaseBuffer::create(Graphics& graphics, size_t size, Usage resUsage, const void* data, size_t dataSize) {
+	bool BaseBuffer::create(Graphics& graphics, size_t size, Usage requiredUsage, Usage preferredUsage, const void* data, size_t dataSize) {
 		using namespace srk::enum_operators;
 
 		releaseBuffer(graphics);
@@ -20,7 +20,7 @@ namespace srk::modules::graphics::d3d11 {
 
 		D3D11_USAGE d3dUsage;
 		UINT cpuUsage;
-		if (!createInit<false>(graphics, resUsage & Usage::CREATE_ALL, size, dataSize, 0, cpuUsage, d3dUsage)) return false;
+		if (!createInit<false>(graphics, requiredUsage & Usage::BUFFER_CREATE_ALL, preferredUsage & Usage::BUFFER_CREATE_ALL, 0, cpuUsage, d3dUsage)) return false;
 
 		D3D11_BUFFER_DESC desc;
 		memset(&desc, 0, sizeof(desc));

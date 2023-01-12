@@ -69,27 +69,27 @@ public:
 		if (!src) return 0;
 
 		if (src->format == modules::graphics::TextureFormat::R8G8B8) {
-			ByteArray dst(src->size.getMultiplies() * 4);
+			ByteArray dst(src->dimensions.getMultiplies() * 4);
 			dst.setLength(dst.getCapacity());
-			Image::convertFormat(src->size, src->format, src->source.getSource(), modules::graphics::TextureFormat::R8G8B8A8, dst.getSource());
+			Image::convertFormat(src->dimensions, src->format, src->source.getSource(), modules::graphics::TextureFormat::R8G8B8A8, dst.getSource());
 			src->format = modules::graphics::TextureFormat::R8G8B8A8;
 			src->source = std::move(dst);
 		}
 
 		Image img2;
-		img2.size = src->size >> 2;
+		img2.dimensions = src->dimensions >> 2;
 		src->scale(img2);
 
 		writeFile(srcDir + "/Resources/tex11.png", extensions::PNGConverter::encode(img2));
 
 		ThreadPool tp(11);
 
-		auto tiles = calcTiles(src->size);
+		auto tiles = calcTiles(src->dimensions);
 		auto dstSize = tiles * TileSize;
 
-		if (dstSize != src->size) {
+		if (dstSize != src->dimensions) {
 			Image img;
-			img.size = dstSize;
+			img.dimensions = dstSize;
 			src->scale(img);
 			*src = std::move(img);
 		}
@@ -108,7 +108,7 @@ public:
 			});*/
 
 		IntrusivePtr<Image> srcMp1 = new Image();
-		srcMp1->size = src->size >> 1;
+		srcMp1->dimensions = src->dimensions >> 1;
 		src->scale(*srcMp1);
 		/*auto astcMp1 = extensions::ASTCConverter::encode(*srcMp1, Vec3ui32(4, 4, 1), extensions::ASTCConverter::Profile::LDR, extensions::ASTCConverter::Quality::MEDIUM, extensions::ASTCConverter::Flags::NONE, 12, [&tp](const std::function<void()>& fn) {
 			return tp.enqueue(fn);

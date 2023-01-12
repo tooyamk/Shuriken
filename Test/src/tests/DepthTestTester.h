@@ -111,7 +111,7 @@ public:
 					0.0f, 1.0f, 0.5f,
 					1.0f, 1.0f, 0.5f,
 					1.0f, 0.0f, 0.5f };
-				vertexBuffer->create(sizeof(vertices), Usage::NONE, vertices, sizeof(vertices));
+				vertexBuffer->create(sizeof(vertices), Usage::NONE, Usage::NONE, vertices, sizeof(vertices));
 				vertexBuffer->setStride(3 * sizeof(float32_t));
 			}
 
@@ -127,7 +127,7 @@ public:
 					0.f, 0.f,
 					1.f, 0.f,
 					1.f, 1.f };
-				uvBuffer->create(sizeof(uvs), Usage::NONE, uvs, sizeof(uvs));
+				uvBuffer->create(sizeof(uvs), Usage::NONE, Usage::NONE, uvs, sizeof(uvs));
 				uvBuffer->setStride(2 * sizeof(float32_t));
 			}
 
@@ -162,19 +162,19 @@ public:
 			auto texRes = graphics->createTexture2DResource();
 			if (texRes) {
 				auto img0 = extensions::PNGConverter::decode(readFile(getAppPath().parent_path().u8string() + "/Resources/c4.png"));
-				auto mipLevels = Image::calcMipLevels(img0->size);
+				auto mipLevels = Image::calcMipLevels(img0->dimensions);
 				ByteArray mipsData0;
 				std::vector<void*> mipsData0Ptr;
-				img0->generateMips(img0->format, mipLevels, mipsData0, mipsData0Ptr);
+				img0->generateMips(img0->format, mipLevels, mipsData0, 0, mipsData0Ptr);
 
 				auto img1 = extensions::PNGConverter::decode(readFile(getAppPath().parent_path().u8string() + "/Resources/red.png"));
 				ByteArray mipsData1;
 				std::vector<void*> mipsData1Ptr;
-				img1->generateMips(img1->format, mipLevels, mipsData1, mipsData1Ptr);
+				img1->generateMips(img1->format, mipLevels, mipsData1, 0, mipsData1Ptr);
 
 				mipsData0Ptr.insert(mipsData0Ptr.end(), mipsData1Ptr.begin(), mipsData1Ptr.end());
 
-				auto hr = texRes->create(img0->size, 0, 1, 1, img0->format, Usage::IGNORE_UNSUPPORTED | Usage::MAP_WRITE, mipsData0Ptr.data());
+				auto hr = texRes->create(img0->dimensions, 0, 1, 1, img0->format, Usage::NONE, Usage::MAP_WRITE, mipsData0Ptr.data());
 
 				auto texView = graphics->createTextureView();
 				texView->create(texRes, 0, -1, 0, -1);
@@ -211,7 +211,7 @@ public:
 
 					4, 5, 7,
 					7, 5, 6 };
-			renderData.ib->create(sizeof(indices), Usage::NONE, indices, sizeof(indices));
+			renderData.ib->create(sizeof(indices), Usage::NONE, Usage::NONE, indices, sizeof(indices));
 			renderData.ib->setFormat(IndexType::UI16);
 		}
 

@@ -26,52 +26,52 @@ namespace srk::modules::graphics::gl {
 		releaseTex();
 	}
 
-	bool BaseTexture::create(Graphics& graphics, const Vec3ui32& size, uint32_t arraySize, uint32_t mipLevels, SampleCount sampleCount,
-		TextureFormat format, Usage resUsage, const void*const* data) {
+	bool BaseTexture::create(Graphics& graphics, const Vec3uz& dim, size_t arraySize, size_t mipLevels, SampleCount sampleCount,
+		TextureFormat format, Usage requiredUsage, Usage preferredUsage, const void*const* data) {
 		using namespace srk::enum_operators;
 
 		releaseTex();
 
 		if (sampleCount > 1 && texType != TextureType::TEX2D) {
-			graphics.error("OpenGL Texture::create error : only support extureType::TEX2D when sampleCount > 1");
+			graphics.error("OpenGL Texture::create error : only support TextureType::TEX2D when sampleCount > 1");
+			return _createDone(graphics, false);
+		}
+
+		requiredUsage &= Usage::TEXTURE_RESOURCE_CREATE_ALL;
+		preferredUsage &= Usage::TEXTURE_RESOURCE_CREATE_ALL;
+		if (auto u = (requiredUsage & (~graphics.getTexCreateUsageMask())); u != Usage::NONE) {
+			graphics.error(std::format("OpenGL Texture::create error : has not support Usage {}", (std::underlying_type_t<Usage>)u));
 			return _createDone(graphics, false);
 		}
 
 		if (!sampleCount) sampleCount = 1;
 
-		auto supportedUsages = graphics.getTexCreateUsageMask();
-		if ((resUsage & Usage::IGNORE_UNSUPPORTED) == Usage::IGNORE_UNSUPPORTED) {
-			resUsage &= supportedUsages;
-		} else if (auto u = (resUsage & (~supportedUsages)); u != Usage::NONE) {
-			graphics.error(std::format("OpenGL Texture::create error : has not support Usage {}", (std::underlying_type_t<Usage>)u));
-			return _createDone(graphics, false);
-		}
-
-		if (mipLevels == 0) {
-			if (sampleCount > 1) {
-				mipLevels = 1;
-			} else {
-				mipLevels = Image::calcMipLevels(size.getMax());
-			}
-		} else if (mipLevels > 1) {
+		if (mipLevels) {
 			if (sampleCount > 1) {
 				graphics.error("OpenGL Texture::create error : could not enable multisampling and mipmap at same time");
 				return _createDone(graphics, false);
 			}
 
-			auto maxLevels = Image::calcMipLevels(size.getMax());
+			auto maxLevels = Image::calcMipLevels(dim.getMax());
 			if (mipLevels > maxLevels) mipLevels = maxLevels;
+		} else {
+			if (sampleCount > 1) {
+				mipLevels = 1;
+			} else {
+				mipLevels = Image::calcMipLevels(dim.getMax());
+			}
 		}
 
 		auto isArray = arraySize && texType != TextureType::TEX3D;
 		if (arraySize < 1 || texType == TextureType::TEX3D) arraySize = 1;
 
-		texSize.set(size);
+		auto allUsage = requiredUsage | preferredUsage;
+		this->dim.set(dim);
 
 		glGenTextures(1, &handle);
 
 		if (handle) {
-			this->resUsage = resUsage & graphics.getBufferCreateUsageMask();
+			resUsage = requiredUsage | (preferredUsage & graphics.getTexCreateUsageMask());
 
 			if (auto rst = Graphics::convertFormat(format); rst) {
 				glTexInfo.internalFormat = rst->internalFormat;
@@ -80,33 +80,33 @@ namespace srk::modules::graphics::gl {
 
 				bool supportTexStorage = graphics.getInternalFeatures().supportTexStorage;
 
-				auto perPixelSize = Image::calcPerPixelByteSize(format);
-				auto mipsByteSize = Image::calcMipsByteSize(size, mipLevels, perPixelSize);
+				auto perBlockBytes = Image::calcPerBlockBytes(format);
+				auto mipsBytes = Image::calcMipsBytes(format, dim, mipLevels);
 
-				this->size = mipsByteSize * arraySize;
+				this->size = mipsBytes * arraySize;
 
 				switch (texType) {
 				case TextureType::TEX1D:
 				{
-					auto w = size[0];
+					auto w = dim[0];
 					if (isArray) {
 						glTexInfo.target = GL_TEXTURE_1D_ARRAY;
 						glBindTexture(glTexInfo.target, handle);
 
 						if (supportTexStorage) {
-							glTexStorage2D(glTexInfo.target, mipLevels, glTexInfo.internalFormat, size[0], arraySize);
+							glTexStorage2D(glTexInfo.target, mipLevels, glTexInfo.internalFormat, dim[0], arraySize);
 							if (data) {
-								for (uint32_t i = 0; i < mipLevels; ++i) {
-									for (uint32_t j = 0; j < arraySize; ++j) {
+								for (size_t i = 0; i < mipLevels; ++i) {
+									for (size_t j = 0; j < arraySize; ++j) {
 										if (auto subData = data[i + j * mipLevels]; subData) glTexSubImage2D(glTexInfo.target, i, 0, 0, w, j, glTexInfo.format, glTexInfo.type, subData);
 									}
-									w = Image::calcNextMipPixelSize(w);
+									w = Image::calcNextMipPixels(w);
 								}
 							}
 						} else {
-							for (uint32_t i = 0; i < mipLevels; ++i) {
-								for (uint32_t j = 0; j < arraySize; ++j) glTexImage2D(glTexInfo.target, i, glTexInfo.internalFormat, w, j, 0, glTexInfo.format, glTexInfo.type, data ? data[i + j * mipLevels] : nullptr);
-								w = Image::calcNextMipPixelSize(w);
+							for (size_t i = 0; i < mipLevels; ++i) {
+								for (size_t j = 0; j < arraySize; ++j) glTexImage2D(glTexInfo.target, i, glTexInfo.internalFormat, w, j, 0, glTexInfo.format, glTexInfo.type, data ? data[i + j * mipLevels] : nullptr);
+								w = Image::calcNextMipPixels(w);
 							}
 						}
 					} else {
@@ -114,17 +114,17 @@ namespace srk::modules::graphics::gl {
 						glBindTexture(glTexInfo.target, handle);
 
 						if (supportTexStorage) {
-							glTexStorage1D(glTexInfo.target, mipLevels, glTexInfo.internalFormat, size[0]);
+							glTexStorage1D(glTexInfo.target, mipLevels, glTexInfo.internalFormat, dim[0]);
 							if (data) {
-								for (uint32_t i = 0; i < mipLevels; ++i) {
+								for (size_t i = 0; i < mipLevels; ++i) {
 									if (data[i]) glTexSubImage1D(glTexInfo.target, i, 0, w, glTexInfo.format, glTexInfo.type, data[i]);
-									w = Image::calcNextMipPixelSize(w);
+									w = Image::calcNextMipPixels(w);
 								}
 							}
 						} else {
-							for (uint32_t i = 0; i < mipLevels; ++i) {
+							for (size_t i = 0; i < mipLevels; ++i) {
 								glTexImage1D(glTexInfo.target, i, glTexInfo.internalFormat, w, 0, glTexInfo.format, glTexInfo.type, data ? data[i] : nullptr);
-								w = Image::calcNextMipPixelSize(w);
+								w = Image::calcNextMipPixels(w);
 							}
 						}
 					}
@@ -133,32 +133,32 @@ namespace srk::modules::graphics::gl {
 				}
 				case TextureType::TEX2D:
 				{
-					Vec2ui32 size2(size.cast<2>());
+					Vec2uz size2(dim.cast<2>());
 					if (isArray) {
 						glTexInfo.target = sampleCount > 1 ? GL_TEXTURE_2D_MULTISAMPLE_ARRAY : GL_TEXTURE_2D_ARRAY;
 						glBindTexture(glTexInfo.target, handle);
 
 						if (supportTexStorage) {
 							if (sampleCount > 1) {
-								glTexStorage3DMultisample(glTexInfo.target, sampleCount, glTexInfo.internalFormat, size[0], size[1], arraySize, true);
+								glTexStorage3DMultisample(glTexInfo.target, sampleCount, glTexInfo.internalFormat, dim[0], dim[1], arraySize, true);
 							} else {
-								glTexStorage3D(glTexInfo.target, mipLevels, glTexInfo.internalFormat, size[0], size[1], arraySize);
+								glTexStorage3D(glTexInfo.target, mipLevels, glTexInfo.internalFormat, dim[0], dim[1], arraySize);
 								if (data) {
-									for (uint32_t i = 0; i < mipLevels; ++i) {
-										for (uint32_t j = 0; j < arraySize; ++j) {
+									for (size_t i = 0; i < mipLevels; ++i) {
+										for (size_t j = 0; j < arraySize; ++j) {
 											if (auto subData = data[i + j * mipLevels]; subData) glTexSubImage3D(glTexInfo.target, i, 0, 0, 0, size2[0], size2[1], j, glTexInfo.format, glTexInfo.type, subData);
 										}
-										Image::calcNextMipPixelSize(size2);
+										size2 = Image::calcNextMipPixels(size2);
 									}
 								}
 							}
 						} else {
 							if (sampleCount > 1) {
-								glTexImage3DMultisample(glTexInfo.target, sampleCount, glTexInfo.internalFormat, size[0], size[1], arraySize, true);
+								glTexImage3DMultisample(glTexInfo.target, sampleCount, glTexInfo.internalFormat, dim[0], dim[1], arraySize, true);
 							} else {
-								for (uint32_t i = 0; i < mipLevels; ++i) {
-									for (uint32_t j = 0; j < arraySize; ++j) glTexImage3D(glTexInfo.target, i, glTexInfo.internalFormat, size2[0], size2[1], j, 0, glTexInfo.format, glTexInfo.type, data ? data[i + j * mipLevels] : nullptr);
-									Image::calcNextMipPixelSize(size2);
+								for (size_t i = 0; i < mipLevels; ++i) {
+									for (size_t j = 0; j < arraySize; ++j) glTexImage3D(glTexInfo.target, i, glTexInfo.internalFormat, size2[0], size2[1], j, 0, glTexInfo.format, glTexInfo.type, data ? data[i + j * mipLevels] : nullptr);
+									size2 = Image::calcNextMipPixels(size2);
 								}
 							}
 						}
@@ -168,23 +168,23 @@ namespace srk::modules::graphics::gl {
 
 						if (supportTexStorage) {
 							if (sampleCount > 1) {
-								glTexStorage2DMultisample(glTexInfo.target, sampleCount, glTexInfo.internalFormat, size[0], size[1], true);
+								glTexStorage2DMultisample(glTexInfo.target, sampleCount, glTexInfo.internalFormat, dim[0], dim[1], true);
 							} else {
-								glTexStorage2D(glTexInfo.target, mipLevels, glTexInfo.internalFormat, size[0], size[1]);
+								glTexStorage2D(glTexInfo.target, mipLevels, glTexInfo.internalFormat, dim[0], dim[1]);
 								if (data) {
-									for (uint32_t i = 0; i < mipLevels; ++i) {
+									for (size_t i = 0; i < mipLevels; ++i) {
 										if (data[i]) glTexSubImage2D(glTexInfo.target, i, 0, 0, size2[0], size2[1], glTexInfo.format, glTexInfo.type, data[i]);
-										Image::calcNextMipPixelSize(size2);
+										size2 = Image::calcNextMipPixels(size2);
 									}
 								}
 							}
 						} else {
 							if (sampleCount > 1) {
-								glTexImage2DMultisample(glTexInfo.target, sampleCount, glTexInfo.internalFormat, size[0], size[1], true);
+								glTexImage2DMultisample(glTexInfo.target, sampleCount, glTexInfo.internalFormat, dim[0], dim[1], true);
 							} else {
-								for (uint32_t i = 0; i < mipLevels; ++i) {
+								for (size_t i = 0; i < mipLevels; ++i) {
 									glTexImage2D(glTexInfo.target, i, glTexInfo.internalFormat, size2[0], size2[1], 0, glTexInfo.format, glTexInfo.type, data ? data[i] : nullptr);
-									Image::calcNextMipPixelSize(size2);
+									size2 = Image::calcNextMipPixels(size2);
 
 									/*
 									GLuint bufID = 0;
@@ -243,23 +243,23 @@ namespace srk::modules::graphics::gl {
 				}
 				case TextureType::TEX3D:
 				{
-					auto size3 = size;
+					auto size3 = dim;
 					arraySize = 0;
 					glTexInfo.target = GL_TEXTURE_3D;
 					glBindTexture(glTexInfo.target, handle);
 
 					if (supportTexStorage) {
-						glTexStorage3D(glTexInfo.target, mipLevels, glTexInfo.internalFormat, size[0], size[1], size[2]);
+						glTexStorage3D(glTexInfo.target, mipLevels, glTexInfo.internalFormat, dim[0], dim[1], dim[2]);
 						if (data) {
 							for (uint32_t i = 0; i < mipLevels; ++i) {
 								if (data[i]) glTexSubImage3D(glTexInfo.target, i, 0, 0, 0, size3[0], size3[1], size3[2], glTexInfo.format, glTexInfo.type, data[i]);
-								Image::calcNextMipPixelSize(size3);
+								size3 = Image::calcNextMipPixels(size3);
 							}
 						}
 					} else {
 						for (uint32_t i = 0; i < mipLevels; ++i) {
 							glTexImage3D(glTexInfo.target, i, glTexInfo.internalFormat, size3[0], size3[1], size3[2], 0, glTexInfo.format, glTexInfo.type, data ? data[i] : nullptr);
-							Image::calcNextMipPixelSize(size3);
+							size3 = Image::calcNextMipPixels(size3);
 						}
 					}
 
@@ -294,7 +294,7 @@ namespace srk::modules::graphics::gl {
 		}
 	}
 
-	Usage BaseTexture::map(uint32_t arraySlice, uint32_t mipSlice, Usage expectMapUsage) {
+	Usage BaseTexture::map(size_t arraySlice, size_t mipSlice, Usage expectMapUsage) {
 		return Usage::NONE;
 		/*
 		Usage ret = Usage::NONE;
@@ -321,15 +321,15 @@ namespace srk::modules::graphics::gl {
 		*/
 	}
 
-	void BaseTexture::unmap(uint32_t arraySlice, uint32_t mipSlice) {
+	void BaseTexture::unmap(size_t arraySlice, size_t mipSlice) {
 		//mapUsage = Usage::NONE;
 	}
 
-	uint32_t BaseTexture::read(uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, void* dst, uint32_t dstLen) {
+	size_t BaseTexture::read(size_t arraySlice, size_t mipSlice, size_t offset, void* dst, size_t dstLen) {
 		return -1;
 	}
 
-	uint32_t BaseTexture::write(uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, const void* data, uint32_t length) {
+	size_t BaseTexture::write(size_t arraySlice, size_t mipSlice, size_t offset, const void* data, size_t length) {
 		/*
 		if ((mapUsage & Usage::CPU_WRITE) == Usage::CPU_WRITE) {
 			if (data && length && offset < size) {
@@ -343,7 +343,7 @@ namespace srk::modules::graphics::gl {
 		return -1;
 	}
 
-	bool BaseTexture::update(uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const void* data) {
+	bool BaseTexture::update(size_t arraySlice, size_t mipSlice, const Box3uz& range, const void* data) {
 		using namespace srk::enum_operators;
 
 		if (handle && (resUsage & Usage::UPDATE) == Usage::UPDATE && (arraySize ? arraySlice < arraySize : arraySlice == 0) && mipSlice < mipLevels) {
@@ -352,7 +352,7 @@ namespace srk::modules::graphics::gl {
 		return false;
 	}
 
-	bool BaseTexture::copyFrom(Graphics& graphics, const Vec3ui32& dstPos, uint32_t dstArraySlice, uint32_t dstMipSlice, const ITextureResource* src, uint32_t srcArraySlice, uint32_t srcMipSlice, const Box3ui32& srcRange) {
+	bool BaseTexture::copyFrom(Graphics& graphics, const Vec3uz& dstPos, size_t dstArraySlice, size_t dstMipSlice, const ITextureResource* src, size_t srcArraySlice, size_t srcMipSlice, const Box3uz& srcRange) {
 		if (dstArraySlice >= internalArraySize || dstMipSlice >= mipLevels || !src || src->getGraphics() != graphics) return false;
 
 		auto srcBase = (BaseTexture*)src->getNative();
@@ -422,7 +422,7 @@ namespace srk::modules::graphics::gl {
 		return true;
 	}
 
-	bool BaseTexture::copyFrom(Graphics& graphics, uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const IPixelBuffer* pixelBuffer) {
+	bool BaseTexture::copyFrom(Graphics& graphics, size_t arraySlice, size_t mipSlice, const Box3uz& range, const IPixelBuffer* pixelBuffer) {
 		if (!pixelBuffer || graphics != pixelBuffer->getGraphics()) return false;
 
 		auto native = (BaseBuffer*)pixelBuffer->getNative();
@@ -464,7 +464,7 @@ namespace srk::modules::graphics::gl {
 			arraySize = 0;
 			internalArraySize = 0;
 			mipLevels = 0;
-			texSize = 0;
+			dim = 0;
 		}
 
 		format = TextureFormat::UNKNOWN;
@@ -499,7 +499,7 @@ namespace srk::modules::graphics::gl {
 		return succeeded;
 	}
 
-	bool BaseTexture::_update(uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const void* data) {
+	bool BaseTexture::_update(size_t arraySlice, size_t mipSlice, const Box3uz& range, const void* data) {
 		glBindTexture(glTexInfo.target, handle);
 		switch (glTexInfo.target) {
 		case GL_TEXTURE_1D:

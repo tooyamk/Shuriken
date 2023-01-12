@@ -10,7 +10,7 @@ namespace srk::modules::graphics::vulkan {
 
 		virtual bool SRK_CALL isCreated() const override;
 		virtual const void* SRK_CALL getNative() const override;
-		virtual bool SRK_CALL create(size_t size, Usage bufferUsage, const void* data = nullptr, size_t dataSize = 0) override;
+		virtual bool SRK_CALL create(size_t size, Usage requiredUsage, Usage preferredUsage, const void* data = nullptr, size_t dataSize = 0) override;
 		virtual size_t SRK_CALL getSize() const override;
 		virtual Usage SRK_CALL getUsage() const override;
 		virtual Usage SRK_CALL map(Usage expectMapUsage) override;
@@ -22,11 +22,11 @@ namespace srk::modules::graphics::vulkan {
 		virtual bool SRK_CALL isSyncing() const override;
 		virtual void SRK_CALL destroy() override;
 
-		virtual uint32_t SRK_CALL getStride() const override;
-		virtual void SRK_CALL setStride(uint32_t stride) override;
+		virtual size_t SRK_CALL getStride() const override;
+		virtual void SRK_CALL setStride(size_t stride) override;
 
 	protected:
-		uint32_t _stride;
+		size_t _stride;
 
 		BaseBuffer _baseBuffer;
 	};

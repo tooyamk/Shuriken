@@ -50,18 +50,18 @@ namespace srk::modules::graphics {
 		UPDATE = 1 << 4,//create
 
 		PERSISTENT_MAP = 1 << 5,//create
-		IGNORE_UNSUPPORTED = 1 << 6,//create
-		RENDERABLE = 1 << 7,//create
+		RENDERABLE = 1 << 6,//create
 
-		MAP_SWAP = 1 << 8,//map
-		MAP_FORCE_SWAP = (1 << 9) | MAP_SWAP,//map
+		MAP_SWAP = 1 << 7,//map
+		MAP_FORCE_SWAP = (1 << 8) | MAP_SWAP,//map
 
-		DISCARD = 1 << 10,//map return
+		DISCARD = 1 << 9,//map return
 
 		COPY_SRC_DST = COPY_SRC | COPY_DST,
 		MAP_READ_WRITE = MAP_READ | MAP_WRITE,
 		MAP_WRITE_UPDATE = MAP_WRITE | UPDATE,
-		CREATE_ALL = COPY_SRC_DST | MAP_READ_WRITE | UPDATE | PERSISTENT_MAP | IGNORE_UNSUPPORTED | RENDERABLE
+		BUFFER_CREATE_ALL = COPY_SRC_DST | MAP_READ_WRITE | UPDATE | PERSISTENT_MAP,
+		TEXTURE_RESOURCE_CREATE_ALL = COPY_SRC_DST | MAP_READ_WRITE | UPDATE | PERSISTENT_MAP | RENDERABLE
 	};
 
 
@@ -72,7 +72,7 @@ namespace srk::modules::graphics {
 
 		virtual bool SRK_CALL isCreated() const = 0;
 		virtual const void* SRK_CALL getNative() const = 0;
-		virtual bool SRK_CALL create(size_t size, Usage bufferUsage, const void* data = nullptr, size_t dataSize = 0) = 0;
+		virtual bool SRK_CALL create(size_t size, Usage requiredUsage, Usage preferredUsage, const void* data = nullptr, size_t dataSize = 0) = 0;
 		virtual size_t SRK_CALL getSize() const = 0;
 		virtual Usage SRK_CALL getUsage() const = 0;
 		virtual Usage SRK_CALL map(Usage expectMapUsage) = 0;
@@ -182,8 +182,8 @@ namespace srk::modules::graphics {
 		IVertexBuffer(IGraphicsModule& graphics) : IBuffer(graphics) {}
 		virtual ~IVertexBuffer() {}
 
-		virtual uint32_t SRK_CALL getStride() const = 0;
-		virtual void SRK_CALL setStride(uint32_t stride) = 0;
+		virtual size_t SRK_CALL getStride() const = 0;
+		virtual void SRK_CALL setStride(size_t stride) = 0;
 	};
 
 
@@ -192,7 +192,7 @@ namespace srk::modules::graphics {
 			offset(0) {
 		}
 
-		VertexAttributeDescriptor(const VertexFormat& format, uint32_t offset) :
+		VertexAttributeDescriptor(const VertexFormat& format, size_t offset) :
 			format(format),
 			offset(offset) {
 		}
@@ -218,7 +218,7 @@ namespace srk::modules::graphics {
 		}
 
 		VertexFormat format;
-		uint32_t offset;
+		size_t offset;
 	};
 
 
@@ -448,17 +448,16 @@ namespace srk::modules::graphics {
 		virtual bool SRK_CALL isCreated() const = 0;
 		virtual const void* SRK_CALL getNative() const = 0;
 		virtual SampleCount SRK_CALL getSampleCount() const = 0;
-		virtual uint16_t SRK_CALL getPerPixelByteSize() const = 0;
 		virtual TextureFormat SRK_CALL getFormat() const = 0;
 		virtual Usage SRK_CALL getUsage() const = 0;
-		virtual const Vec3ui32& SRK_CALL getSize() const = 0;
-		virtual bool SRK_CALL create(const Vec3ui32& size, uint32_t arraySize, uint32_t mipLevels, SampleCount sampleCount, TextureFormat format, Usage resUsage, const void* const* data = nullptr) = 0;
-		virtual Usage SRK_CALL map(uint32_t arraySlice, uint32_t mipSlice, Usage expectMapUsage) = 0;
-		virtual void SRK_CALL unmap(uint32_t arraySlice, uint32_t mipSlice) = 0;
-		virtual uint32_t SRK_CALL read(uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, void* dst, uint32_t dstLen) = 0;
-		virtual uint32_t SRK_CALL write(uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, const void* data, uint32_t length) = 0;
-		virtual bool SRK_CALL copyFrom(const Vec3ui32& dstPos, uint32_t dstArraySlice, uint32_t dstMipSlice, const ITextureResource* src, uint32_t srcArraySlice, uint32_t srcMipSlice, const Box3ui32& srcRange) = 0;
-		virtual bool SRK_CALL copyFrom(uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const IPixelBuffer* pixelBuffer) = 0;
+		virtual const Vec3uz& SRK_CALL getDimensions() const = 0;
+		virtual bool SRK_CALL create(const Vec3uz& dim, size_t arraySize, size_t mipLevels, SampleCount sampleCount, TextureFormat format, Usage requiredUsage, Usage preferredUsage, const void* const* data = nullptr) = 0;
+		virtual Usage SRK_CALL map(size_t arraySlice, size_t mipSlice, Usage expectMapUsage) = 0;
+		virtual void SRK_CALL unmap(size_t arraySlice, size_t mipSlice) = 0;
+		virtual size_t SRK_CALL read(size_t arraySlice, size_t mipSlice, size_t offset, void* dst, size_t dstLen) = 0;
+		virtual size_t SRK_CALL write(size_t arraySlice, size_t mipSlice, size_t offset, const void* data, size_t length) = 0;
+		virtual bool SRK_CALL copyFrom(const Vec3uz& dstPos, size_t dstArraySlice, size_t dstMipSlice, const ITextureResource* src, size_t srcArraySlice, size_t srcMipSlice, const Box3uz& srcRange) = 0;
+		virtual bool SRK_CALL copyFrom(size_t arraySlice, size_t mipSlice, const Box3uz& range, const IPixelBuffer* pixelBuffer) = 0;
 		virtual void SRK_CALL destroy() = 0;
 	};
 
@@ -468,11 +467,11 @@ namespace srk::modules::graphics {
 		ITexture1DResource(IGraphicsModule& graphics) : ITextureResource(graphics) {}
 		virtual ~ITexture1DResource() {}
 
-		virtual bool SRK_CALL create(uint32_t width, uint32_t arraySize, uint32_t mipLevels, TextureFormat format, Usage resUsage, const void*const* data = nullptr) = 0;
-		virtual bool SRK_CALL update(uint32_t arraySlice, uint32_t mipSlice, const Box1ui32& range, const void* data) = 0;
+		virtual bool SRK_CALL create(size_t width, size_t arraySize, size_t mipLevels, TextureFormat format, Usage requiredUsage, Usage preferredUsage, const void*const* data = nullptr) = 0;
+		virtual bool SRK_CALL update(size_t arraySlice, size_t mipSlice, const Box1uz& range, const void* data) = 0;
 
-		virtual bool SRK_CALL create(const Vec3ui32& size, uint32_t arraySize, uint32_t mipLevels, SampleCount sampleCount, TextureFormat format, Usage resUsage, const void* const* data = nullptr) override {
-			return create(size[0], arraySize, mipLevels, format, resUsage, data);
+		virtual bool SRK_CALL create(const Vec3uz& dim, size_t arraySize, size_t mipLevels, SampleCount sampleCount, TextureFormat format, Usage requiredUsage, Usage preferredUsage, const void* const* data = nullptr) override {
+			return create(dim[0], arraySize, mipLevels, format, requiredUsage, preferredUsage, data);
 		}
 	};
 
@@ -482,11 +481,11 @@ namespace srk::modules::graphics {
 		ITexture2DResource(IGraphicsModule& graphics) : ITextureResource(graphics) {}
 		virtual ~ITexture2DResource() {}
 
-		virtual bool SRK_CALL create(const Vec2ui32& size, uint32_t arraySize, uint32_t mipLevels, SampleCount sampleCount, TextureFormat format, Usage resUsage, const void*const* data = nullptr) = 0;
-		virtual bool SRK_CALL update(uint32_t arraySlice, uint32_t mipSlice, const Box2ui32& range, const void* data) = 0;
+		virtual bool SRK_CALL create(const Vec2uz& dim, size_t arraySize, size_t mipLevels, SampleCount sampleCount, TextureFormat format, Usage requiredUsage, Usage preferredUsage, const void*const* data = nullptr) = 0;
+		virtual bool SRK_CALL update(size_t arraySlice, size_t mipSlice, const Box2uz& range, const void* data) = 0;
 
-		virtual bool SRK_CALL create(const Vec3ui32& size, uint32_t arraySize, uint32_t mipLevels, SampleCount sampleCount, TextureFormat format, Usage resUsage, const void* const* data = nullptr) override {
-			return create((const Vec2ui32&)size, arraySize, mipLevels, sampleCount, format, resUsage, data);
+		virtual bool SRK_CALL create(const Vec3uz& dim, size_t arraySize, size_t mipLevels, SampleCount sampleCount, TextureFormat format, Usage requiredUsage, Usage preferredUsage, const void* const* data = nullptr) override {
+			return create((const Vec2uz&)dim, arraySize, mipLevels, sampleCount, format, requiredUsage, preferredUsage, data);
 		}
 	};
 
@@ -496,11 +495,11 @@ namespace srk::modules::graphics {
 		ITexture3DResource(IGraphicsModule& graphics) : ITextureResource(graphics) {}
 		virtual ~ITexture3DResource() {}
 
-		virtual bool SRK_CALL create(const Vec3ui32& size, uint32_t arraySize, uint32_t mipLevels, TextureFormat format, Usage resUsage, const void*const* data = nullptr) = 0;
-		virtual bool SRK_CALL update(uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const void* data) = 0;
+		virtual bool SRK_CALL create(const Vec3uz& dim, size_t arraySize, size_t mipLevels, TextureFormat format, Usage requiredUsage, Usage preferredUsage, const void*const* data = nullptr) = 0;
+		virtual bool SRK_CALL update(size_t arraySlice, size_t mipSlice, const Box3uz& range, const void* data) = 0;
 
-		virtual bool SRK_CALL create(const Vec3ui32& size, uint32_t arraySize, uint32_t mipLevels, SampleCount sampleCount, TextureFormat format, Usage resUsage, const void* const* data = nullptr) override {
-			return create(size, arraySize, mipLevels, format, resUsage, data);
+		virtual bool SRK_CALL create(const Vec3uz& dim, size_t arraySize, size_t mipLevels, SampleCount sampleCount, TextureFormat format, Usage requiredUsage, Usage preferredUsage, const void* const* data = nullptr) override {
+			return create(dim, arraySize, mipLevels, format, requiredUsage, preferredUsage, data);
 		}
 	};
 
@@ -514,9 +513,9 @@ namespace srk::modules::graphics {
 		virtual bool SRK_CALL isCreated() const = 0;
 		virtual IntrusivePtr<ITextureResource> SRK_CALL getResource() const = 0;
 		virtual const void* SRK_CALL getNative() const = 0;
-		virtual uint32_t SRK_CALL getArraySize() const = 0;
-		virtual uint32_t SRK_CALL getMipLevels() const = 0;
-		virtual bool SRK_CALL create(ITextureResource* res, uint32_t mipBegin, uint32_t mipLevels, uint32_t arrayBegin, uint32_t arraySize) = 0;
+		virtual size_t SRK_CALL getArraySize() const = 0;
+		virtual size_t SRK_CALL getMipLevels() const = 0;
+		virtual bool SRK_CALL create(ITextureResource* res, size_t mipBegin, size_t mipLevels, size_t arrayBegin, size_t arraySize) = 0;
 		virtual void SRK_CALL destroy() = 0;
 	};
 
@@ -529,9 +528,9 @@ namespace srk::modules::graphics {
 		virtual bool SRK_CALL isCreated() const = 0;
 		virtual IntrusivePtr<ITextureResource> SRK_CALL getResource() const = 0;
 		virtual const void* SRK_CALL getNative() const = 0;
-		virtual uint32_t SRK_CALL getArraySize() const = 0;
-		virtual uint32_t SRK_CALL getMipSlice() const = 0;
-		virtual bool SRK_CALL create(ITextureResource* res, uint32_t mipSlice, uint32_t arrayBegin, uint32_t arraySize) = 0;
+		virtual size_t SRK_CALL getArraySize() const = 0;
+		virtual size_t SRK_CALL getMipSlice() const = 0;
+		virtual bool SRK_CALL create(ITextureResource* res, size_t mipSlice, size_t arrayBegin, size_t arraySize) = 0;
 		virtual void SRK_CALL destroy() = 0;
 	};
 
@@ -553,8 +552,8 @@ namespace srk::modules::graphics {
 
 		virtual const void* SRK_CALL getNative() const = 0;
 		virtual SampleCount SRK_CALL getSampleCount() const = 0;
-		virtual const Vec2ui32& SRK_CALL getSize() const = 0;
-		virtual bool SRK_CALL create(const Vec2ui32& size, DepthStencilFormat format, SampleCount sampleCount) = 0;
+		virtual const Vec2uz& SRK_CALL getSize() const = 0;
+		virtual bool SRK_CALL create(const Vec2uz& size, DepthStencilFormat format, SampleCount sampleCount) = 0;
 		virtual void SRK_CALL destroy() = 0;
 	};
 
@@ -566,10 +565,10 @@ namespace srk::modules::graphics {
 
 		virtual const void* SRK_CALL getNative() const = 0;
 
-		virtual Vec2ui32 SRK_CALL getSize() const = 0;
+		virtual Vec2uz SRK_CALL getDimensions() const = 0;
 		virtual IntrusivePtr<IRenderView> SRK_CALL getRenderView(uint8_t index) const = 0;
 		virtual bool SRK_CALL setRenderView(uint8_t index, IRenderView* view) = 0;
-		virtual void SRK_CALL eraseRenderViews(uint8_t begin, uint8_t size) = 0;
+		virtual void SRK_CALL eraseRenderViews(uint8_t begin, uint8_t count) = 0;
 
 		virtual IntrusivePtr<IDepthStencil> SRK_CALL getDepthStencil() const = 0;
 		virtual void SRK_CALL setDepthStencil(IDepthStencil* ds) = 0;

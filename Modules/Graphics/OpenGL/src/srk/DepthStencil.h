@@ -12,8 +12,8 @@ namespace srk::modules::graphics::gl {
 
 		virtual const void* SRK_CALL getNative() const override;
 		virtual SampleCount SRK_CALL getSampleCount() const override;
-		virtual const Vec2ui32& SRK_CALL getSize() const override;
-		virtual bool SRK_CALL create(const Vec2ui32& size, DepthStencilFormat format, SampleCount sampleCount) override;
+		virtual const Vec2uz& SRK_CALL getSize() const override;
+		virtual bool SRK_CALL create(const Vec2uz& size, DepthStencilFormat format, SampleCount sampleCount) override;
 		virtual void SRK_CALL destroy() override;
 
 		inline GLuint SRK_CALL getInternalBuffer() const {
@@ -26,7 +26,7 @@ namespace srk::modules::graphics::gl {
 
 	private:
 		SampleCount _sampleCount;
-		Vec2ui32 _size;
+		Vec2uz _size;
 
 		GLuint _handle;
 		GLenum _attachmentType;

@@ -80,7 +80,7 @@ namespace srk::modules::graphics::shader_transpiler {
 		return false;
 	}
 
-	ProgramSource ShaderTranspiler::translate(const ProgramSource& source, ProgramLanguage targetLanguage, const std::string_view& targetVersion, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& handler) {
+	ProgramSource ShaderTranspiler::translate(const ProgramSource& source, const Options& options, ProgramLanguage targetLanguage, const std::string_view& targetVersion, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& handler) {
 		using namespace std::literals;
 
 		ProgramSource dst;
@@ -130,17 +130,32 @@ namespace srk::modules::graphics::shader_transpiler {
 			std::vector<std::wstring> dxcArgStrings;
 			dxcArgStrings.emplace_back(L"-O3");
 			dxcArgStrings.emplace_back(L"-fvk-use-gl-layout");
-			dxcArgStrings.emplace_back(L"-fvk-bind-globals");
-			dxcArgStrings.emplace_back(String::Utf8ToUnicode(String::toString((std::underlying_type_t<ProgramStage>)source.stage)));
-			dxcArgStrings.emplace_back(L"0");
-			dxcArgStrings.emplace_back(L"-fvk-b-shift");
-			dxcArgStrings.emplace_back(L"12");
-			dxcArgStrings.emplace_back(L"0");
 			//dxcArgStrings.emplace_back(L"-auto-binding-space 0")
 			//dxcArgStrings.emplace_back(L"-auto-binding-space " + String::Utf8ToUnicode(String::toString((std::underlying_type_t<ProgramStage>)source.stage)));
 			//dxcArgStrings.emplace_back(L"-fspv-target-env=vulkan1.0");
 			//dxcArgStrings.emplace_back(L"-fspv-reflect");
-			if (targetLanguage != ProgramLanguage::DXIL) dxcArgStrings.emplace_back(L"-spirv");
+			if (targetLanguage != ProgramLanguage::DXIL) {
+				dxcArgStrings.emplace_back(L"-spirv");
+				if (options.spirv.descriptorSet0BindingOffset) {
+					auto offset = String::Utf8ToUnicode(String::toString(options.spirv.descriptorSet0BindingOffset));
+					//dxcArgStrings.emplace_back(L"-fvk-bind-globals");
+					//dxcArgStrings.emplace_back(offset);
+					//dxcArgStrings.emplace_back(L"0");
+					dxcArgStrings.emplace_back(L"-fvk-b-shift");
+					dxcArgStrings.emplace_back(offset);
+					dxcArgStrings.emplace_back(L"0");
+					dxcArgStrings.emplace_back(L"-fvk-t-shift");
+					dxcArgStrings.emplace_back(offset);
+					dxcArgStrings.emplace_back(L"0");
+					dxcArgStrings.emplace_back(L"-fvk-s-shift");
+					dxcArgStrings.emplace_back(offset);
+					dxcArgStrings.emplace_back(L"0");
+					dxcArgStrings.emplace_back(L"-fvk-u-shift");
+					dxcArgStrings.emplace_back(offset);
+					dxcArgStrings.emplace_back(L"0");
+					dxcArgStrings.emplace_back(L"-fvk-auto-shift-bindings");
+				}
+			}
 
 			std::vector<const wchar_t*> dxcArgs;
 			dxcArgs.reserve(dxcArgStrings.size());

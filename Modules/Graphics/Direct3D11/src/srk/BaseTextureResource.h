@@ -9,14 +9,14 @@ namespace srk::modules::graphics::d3d11 {
 		BaseTextureResource(D3D11_BIND_FLAG resType);
 		virtual ~BaseTextureResource();
 
-		bool SRK_CALL create(Graphics& graphics, TextureType texType, const Vec3ui32& size, uint32_t arraySize, uint32_t mipLevels, SampleCount sampleCount,
-			TextureFormat format, Usage resUsage, const void*const* data = nullptr);
-		Usage SRK_CALL map(Graphics& graphics, uint32_t arraySlice, uint32_t mipSlice, Usage expectMapUsage);
-		void SRK_CALL unmap(Graphics& graphics, uint32_t arraySlice, uint32_t mipSlice);
-		uint32_t SRK_CALL read(uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, void* dst, uint32_t dstLen);
-		uint32_t SRK_CALL write(uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, const void* data, uint32_t length);
-		bool SRK_CALL update(Graphics& graphics, uint32_t arraySlice, uint32_t mipSlice, const D3D11_BOX& range, const void* data);
-		bool SRK_CALL copyFrom(Graphics& graphics, const Vec3ui32& dstPos, uint32_t dstArraySlice, uint32_t dstMipSlice, const ITextureResource* src, uint32_t srcArraySlice, uint32_t srcMipSlice, const Box3ui32& srcRange);
+		bool SRK_CALL create(Graphics& graphics, TextureType texType, const Vec3uz& dim, size_t arraySize, size_t mipLevels, SampleCount sampleCount,
+			TextureFormat format, Usage requiredUsage, Usage preferredUsage, const void*const* data = nullptr);
+		Usage SRK_CALL map(Graphics& graphics, size_t arraySlice, size_t mipSlice, Usage expectMapUsage);
+		void SRK_CALL unmap(Graphics& graphics, size_t arraySlice, size_t mipSlice);
+		size_t SRK_CALL read(size_t arraySlice, size_t mipSlice, size_t offset, void* dst, size_t dstLen);
+		size_t SRK_CALL write(size_t arraySlice, size_t mipSlice, size_t offset, const void* data, size_t length);
+		bool SRK_CALL update(Graphics& graphics, size_t arraySlice, size_t mipSlice, const D3D11_BOX& range, const void* data);
+		bool SRK_CALL copyFrom(Graphics& graphics, const Vec3uz& dstPos, size_t dstArraySlice, size_t dstMipSlice, const ITextureResource* src, size_t srcArraySlice, size_t srcMipSlice, const Box3uz& srcRange);
 		void SRK_CALL releaseTex(Graphics& graphics);
 
 		inline static constexpr UINT SRK_CALL calcSubresource(UINT mipSlice, UINT arraySlice, UINT mipLevels) {
@@ -26,16 +26,16 @@ namespace srk::modules::graphics::d3d11 {
 		TextureFormat format;
 		DXGI_FORMAT internalFormat;
 		SampleCount sampleCount;
-		uint16_t perPixelSize;
-		uint32_t perRowPixelSize;
-		Vec3ui32 texSize;
-		uint32_t arraySize;
-		uint32_t internalArraySize;
-		uint32_t mipLevels;
+		size_t perBlockBytes;
+		size_t perRowPixels;
+		Vec3uz dim;
+		size_t arraySize;
+		size_t internalArraySize;
+		size_t mipLevels;
 
 		struct MappedRes {
 			Usage usage;
-			uint32_t size;
+			size_t size;
 			D3D11_MAPPED_SUBRESOURCE res;
 		};
 

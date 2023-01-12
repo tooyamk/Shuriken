@@ -23,15 +23,15 @@ namespace srk::modules::graphics::gl {
 		return &_base;
 	}
 
-	uint32_t RenderViewSimulative::getArraySize() const {
+	size_t RenderViewSimulative::getArraySize() const {
 		return _base.createdArraySize;
 	}
 
-	uint32_t RenderViewSimulative::getMipSlice() const {
+	size_t RenderViewSimulative::getMipSlice() const {
 		return _base.mipSlice;
 	}
 
-	bool RenderViewSimulative::create(ITextureResource* res, uint32_t mipSlice, uint32_t arrayBegin, uint32_t arraySize) {
+	bool RenderViewSimulative::create(ITextureResource* res, size_t mipSlice, size_t arrayBegin, size_t arraySize) {
 		using namespace srk::enum_operators;
 
 		IntrusivePtr guard(res);

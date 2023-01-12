@@ -19,67 +19,74 @@ namespace srk {
 		Image& SRK_CALL operator=(Image&& other) noexcept;
 
 		modules::graphics::TextureFormat format;
-		Vec2ui32 size;
+		Vec2uz dimensions;
 		ByteArray source;
 
-		static bool SRK_CALL convertFormat(const Vec2ui32& size, modules::graphics::TextureFormat srcFormat, const uint8_t* src, modules::graphics::TextureFormat dstFormat, uint8_t* dst);
-		static bool SRK_CALL convertFormat(const Vec2ui32& size, modules::graphics::TextureFormat srcFormat, const uint8_t* src, uint32_t mipLevels, modules::graphics::TextureFormat dstFormat, uint8_t* dst);
+		static bool SRK_CALL convertFormat(const Vec2uz& pixels, modules::graphics::TextureFormat srcFormat, const void* src, modules::graphics::TextureFormat dstFormat, void* dst, size_t* srcReadedBytes = nullptr, size_t* dstWritedBytes = nullptr);
+		static bool SRK_CALL convertFormat(const Vec2uz& pixels, modules::graphics::TextureFormat srcFormat, const void* src, size_t mipLevels, modules::graphics::TextureFormat dstFormat, void* dst);
 
-		inline bool SRK_CALL generateMips(modules::graphics::TextureFormat format, uint32_t mipLevels, ByteArray& dst, std::vector<void*>& dstDataPtr) const {
-			dst = ByteArray(calcMipsByteSize(size, mipLevels, calcPerPixelByteSize(format)));
-			dstDataPtr.resize(mipLevels);
-			return generateMips(format, mipLevels, (uint8_t*)dst.getSource(), dstDataPtr.data());
-		}
-		bool SRK_CALL generateMips(modules::graphics::TextureFormat format, uint32_t mipLevels, uint8_t* dst, void** dstDataPtr) const;
+		bool SRK_CALL generateMips(modules::graphics::TextureFormat format, size_t mipLevels, ByteArray& dst, size_t dstOffset, std::vector<void*>& dstMipData) const;
+		bool SRK_CALL generateMips(modules::graphics::TextureFormat format, size_t mipLevels, void* dst, void** dstMipData) const;
 
-		static uint32_t SRK_CALL calcPerPixelByteSize(modules::graphics::TextureFormat format);
+		static bool SRK_CALL isCompressedFormat(modules::graphics::TextureFormat format);
 
-		inline static uint32_t SRK_CALL calcMipLevels(const Vec2ui32& size) {
-			return calcMipLevels(size.getMax());
-		}
-		inline static uint32_t SRK_CALL calcMipLevels(uint32_t n) {
-			return (uint32_t)std::floor(std::log2(n) + 1);
-		}
+		static size_t SRK_CALL calcBlocks(modules::graphics::TextureFormat format, size_t pixels);
+		static Vec2uz SRK_CALL calcBlocks(modules::graphics::TextureFormat format, const Vec2uz& pixels);
+		static Vec3uz SRK_CALL calcBlocks(modules::graphics::TextureFormat format, const Vec3uz& pixels);
+		static size_t SRK_CALL calcPerBlockBytes(modules::graphics::TextureFormat format);
+		static Vec2uz SRK_CALL calcPerBlockPixels(modules::graphics::TextureFormat format);
 
-		inline static void SRK_CALL calcSpecificMipPixelSize(uint32_t& size, uint32_t mipLevel) {
-			for (uint32_t i = 0; i < mipLevel; ++i) size = calcNextMipPixelSize(size);
+		//static uint32_t SRK_CALL calcPerPixelByteSize(modules::graphics::TextureFormat format);
+
+		inline static size_t SRK_CALL calcMipLevels(const Vec2uz& pixels) {
+			return calcMipLevels(pixels.getMax());
 		}
-		inline static void SRK_CALL calcSpecificMipPixelSize(Vec2ui32& size, uint32_t mipLevel) {
-			for (uint32_t i = 0; i < mipLevel; ++i) calcNextMipPixelSize(size);
-		}
-		inline static void SRK_CALL calcSpecificMipPixelSize(Vec3ui32& size, uint32_t mipLevel) {
-			for (uint32_t i = 0; i < mipLevel; ++i) calcNextMipPixelSize(size);
+		inline static size_t SRK_CALL calcMipLevels(size_t n) {
+			return (size_t)std::floor(std::log2(n) + 1);
 		}
 
-		static std::vector<uint32_t> SRK_CALL calcMipsPixelSize(uint32_t n, uint32_t mipLevels);
+		inline static size_t SRK_CALL calcSpecificMipPixels(size_t mip0Pixels, size_t mipLevel) {
+			size_t pixels = mip0Pixels;
+			for (size_t i = 0; i < mipLevel; ++i) pixels = calcNextMipPixels(pixels);
+			return pixels;
+		}
+		inline static Vec2uz SRK_CALL calcSpecificMipPixels(const Vec2uz& mip0Pixels, size_t mipLevel) {
+			Vec2uz pixels = mip0Pixels;
+			for (size_t i = 0; i < mipLevel; ++i) pixels = calcNextMipPixels(pixels);
+			return pixels;
+		}
+		inline static Vec3uz SRK_CALL calcSpecificMipPixels(const Vec3uz& mip0Pixels, size_t mipLevel) {
+			Vec3uz pixels = mip0Pixels;
+			for (size_t i = 0; i < mipLevel; ++i) pixels = calcNextMipPixels(pixels);
+			return pixels;
+		}
 
-		inline static uint32_t SRK_CALL calcNextMipPixelSize(uint32_t n) {
+		static std::vector<size_t> SRK_CALL calcMipsPixels(size_t n, size_t mipLevels);
+
+		inline static size_t SRK_CALL calcNextMipPixels(size_t n) {
 			return n > 1 ? n >> 1 : 1;
 		}
-		inline static void SRK_CALL calcNextMipPixelSize(Vec2ui32& size) {
-			size.set(calcNextMipPixelSize(size[0]), calcNextMipPixelSize(size[1]));
+		inline static Vec2uz SRK_CALL calcNextMipPixels(const Vec2uz& pixels) {
+			return Vec2uz(calcNextMipPixels(pixels[0]), calcNextMipPixels(pixels[1]));
 		}
-		inline static void SRK_CALL calcNextMipPixelSize(Vec3ui32& size) {
-			size.set(calcNextMipPixelSize(size[0]), calcNextMipPixelSize(size[1]), calcNextMipPixelSize(size[2]));
-		}
-
-		inline static uint32_t SRK_CALL calcPixelsByteSize(const Vec2ui32& size, modules::graphics::TextureFormat format) {
-			return calcPixelsByteSize(size.getMultiplies(), format);
-		}
-		inline constexpr static uint32_t SRK_CALL calcPixelsByteSize(const Vec2ui32& size, uint32_t perPixelByteSize) {
-			return calcPixelsByteSize(size.getMultiplies(), perPixelByteSize);
-		}
-		inline static uint32_t SRK_CALL calcPixelsByteSize(uint32_t numPixels, modules::graphics::TextureFormat format) {
-			return calcPixelsByteSize(numPixels, calcPerPixelByteSize(format));
-		}
-		inline constexpr static uint32_t SRK_CALL calcPixelsByteSize(uint32_t numPixels, uint32_t perPixelByteSize) {
-			return numPixels * perPixelByteSize;
+		inline static Vec3uz SRK_CALL calcNextMipPixels(const Vec3uz& pixels) {
+			return Vec3uz(calcNextMipPixels(pixels[0]), calcNextMipPixels(pixels[1]), calcNextMipPixels(pixels[2]));
 		}
 
-		static uint32_t SRK_CALL calcMipsByteSize(const Vec2ui32& size, uint32_t mipLevels, uint32_t perPixelByteSize);
-		static uint32_t SRK_CALL calcMipsByteSize(const Vec3ui32& size, uint32_t mipLevels, uint32_t perPixelByteSize);
+		inline static size_t SRK_CALL calcBytes(modules::graphics::TextureFormat format, const Vec2uz& pixels) {
+			return calcBytes(calcPerBlockBytes(format), calcBlocks(format, pixels).getMultiplies());
+		}
+		inline static size_t SRK_CALL calcBytes(modules::graphics::TextureFormat format, size_t blocks) {
+			return calcBytes(calcPerBlockBytes(format), blocks);
+		}
+		inline constexpr static size_t SRK_CALL calcBytes(size_t perBlockBytes, size_t blocks) {
+			return blocks * perBlockBytes;
+		}
 
-		static void SRK_CALL generateMips_UInt8s(const Vec2ui32& size, modules::graphics::TextureFormat format, uint32_t mipLevels, uint8_t numChannels, uint8_t* dst, void** dataPtr);
+		static size_t SRK_CALL calcMipsBytes(modules::graphics::TextureFormat format, const Vec2uz& pixels, size_t mipLevels, size_t* mipBytes = nullptr);
+		static size_t SRK_CALL calcMipsBytes(modules::graphics::TextureFormat format, const Vec3uz& pixels, size_t mipLevels, size_t* mipBytes = nullptr);
+
+		static void SRK_CALL generateMips_UInt8s(const Vec2uz& pixels, modules::graphics::TextureFormat format, size_t mipLevels, size_t numChannels, void* dst, void** dstMipData);
 
 		bool SRK_CALL flipY();
 
@@ -87,8 +94,8 @@ namespace srk {
 		bool SRK_CALL scale(Image& dst, size_t jobCount, size_t threadCount, size_t threadIndex) const;
 
 	private:
-		static void SRK_CALL _convertFormat_R8G8B8_R8G8B8A8(const Vec2ui32& size, const uint8_t* src, uint8_t* dst);
-		static void SRK_CALL _convertFormat_R8G8B8A8_R8G8B8(const Vec2ui32& size, const uint8_t* src, uint8_t* dst);
+		static void SRK_CALL _convertFormat_R8G8B8_R8G8B8A8(const Vec2uz& pixels, const void* src, void* dst, size_t* srcReadedBytes, size_t* dstWritedBytes);
+		static void SRK_CALL _convertFormat_R8G8B8A8_R8G8B8(const Vec2uz& pixels, const void* src, void* dst, size_t* srcReadedBytes, size_t* dstWritedBytes);
 
 		static void SRK_CALL _mipPixelsBlend(uint8_t* c, uint8_t numChannels, uint8_t numPixels);
 	};

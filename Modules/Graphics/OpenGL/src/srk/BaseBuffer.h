@@ -9,7 +9,7 @@ namespace srk::modules::graphics::gl {
 		BaseBuffer(GLenum bufferType);
 		virtual ~BaseBuffer();
 
-		bool SRK_CALL create(Graphics& graphics, size_t size, Usage resUsage, const void* data = nullptr, GLenum internalUsage = 0);
+		bool SRK_CALL create(Graphics& graphics, size_t size, Usage requiredUsage, Usage preferredUsage, const void* data = nullptr, GLenum internalUsage = 0);
 		Usage SRK_CALL map(Usage expectMapUsage, GLenum access = 0);
 		void SRK_CALL unmap();
 		size_t SRK_CALL read(void* dst, size_t dstLen, size_t offset);

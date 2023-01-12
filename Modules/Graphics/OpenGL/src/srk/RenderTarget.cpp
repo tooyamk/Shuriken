@@ -26,13 +26,13 @@ namespace srk::modules::graphics::gl {
 		return this;
 	}
 
-	Vec2ui32 RenderTarget::getSize() const {
-		Vec2ui32 size;
+	Vec2uz RenderTarget::getDimensions() const {
+		Vec2uz size;
 
 		for (auto& v : _views) {
 			if (v) {
 				if (auto res = v->getResource(); res && res->isCreated()) {
-					size = res->getSize();
+					size = res->getDimensions();
 					break;
 				}
 			}
@@ -61,8 +61,8 @@ namespace srk::modules::graphics::gl {
 		return false;
 	}
 
-	void RenderTarget::eraseRenderViews(uint8_t begin, uint8_t size) {
-		uint8_t n = begin + size;
+	void RenderTarget::eraseRenderViews(uint8_t begin, uint8_t count) {
+		uint8_t n = begin + count;
 		if (n > _views.size()) n = _views.size();
 		for (uint8_t i = 0; i < n; ++i) _views[i].reset();
 		if (!_numViewsDirty && _numViews >= begin + 1) _numViewsDirty = true;

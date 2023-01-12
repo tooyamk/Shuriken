@@ -8,7 +8,7 @@ namespace srk::modules::graphics::d3d11 {
 		BaseBuffer(D3D11_BIND_FLAG bufferType);
 		virtual ~BaseBuffer();
 
-		bool SRK_CALL create(Graphics& graphics, size_t size, Usage resUsage, const void* data = nullptr, size_t dataSize = 0);
+		bool SRK_CALL create(Graphics& graphics, size_t size, Usage requiredUsage, Usage preferredUsage, const void* data = nullptr, size_t dataSize = 0);
 		Usage SRK_CALL map(Graphics& graphics, Usage expectMapUsage);
 		void SRK_CALL unmap(Graphics& graphics);
 		size_t SRK_CALL read(void* dst, size_t dstLen, size_t offset);

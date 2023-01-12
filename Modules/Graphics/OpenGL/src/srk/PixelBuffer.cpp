@@ -17,28 +17,44 @@ namespace srk::modules::graphics::gl {
 		return &_baseBuffer;
 	}
 
-	bool PixelBuffer::create(size_t size, Usage bufferUsage, const void* data, size_t dataSize) {
+	bool PixelBuffer::create(size_t size, Usage requiredUsage, Usage preferredUsage, const void* data, size_t dataSize) {
 		using namespace srk::enum_operators;
 
 		destroy();
 
-		bool read = (bufferUsage & Usage::MAP_READ) == Usage::MAP_READ;
-		bool write = ((bufferUsage & Usage::MAP_WRITE) == Usage::MAP_WRITE) || ((bufferUsage & Usage::UPDATE) == Usage::UPDATE);
+		auto allUsage = requiredUsage | preferredUsage;
+		auto read = (allUsage & Usage::MAP_READ) == Usage::MAP_READ;
+		auto write = (allUsage & Usage::MAP_WRITE_UPDATE) != Usage::NONE;
 
 		if (read && write) {
-			_graphics.get<Graphics>()->error("OpenGL PixelBuffer::create error, could not enable Usage::MAP_READ and (Usage::MAP_WRITE or Usage::UPDATE) at same time");
-			return false;
-		} else {
-			if (read) {
-				_baseBuffer.bufferType = GL_PIXEL_PACK_BUFFER;
-			} else if (write) {
-				_baseBuffer.bufferType = GL_PIXEL_UNPACK_BUFFER;
+			auto requiredRead = (allUsage & Usage::MAP_READ) == Usage::MAP_READ;
+			auto requiredWrite = (allUsage & Usage::MAP_WRITE_UPDATE) != Usage::NONE;
+			if (requiredRead) {
+				if (requiredWrite) {
+					_graphics.get<Graphics>()->error("OpenGL PixelBuffer::create error, could not enable Usage::MAP_READ and (Usage::MAP_WRITE or Usage::UPDATE) at same time");
+					return false;
+				} else {
+					write = false;
+					preferredUsage &= ~Usage::MAP_WRITE_UPDATE;
+				}
+			} else if (requiredWrite) {
+				read = false;
+				preferredUsage &= ~Usage::MAP_READ;
 			} else {
-				return true;
+				write = false;
+				preferredUsage &= ~Usage::MAP_WRITE_UPDATE;
 			}
-
-			return _baseBuffer.create(*_graphics.get<Graphics>(), size, bufferUsage, data, GL_DYNAMIC_READ);
 		}
+
+		if (read) {
+			_baseBuffer.bufferType = GL_PIXEL_PACK_BUFFER;
+		} else if (write) {
+			_baseBuffer.bufferType = GL_PIXEL_UNPACK_BUFFER;
+		} else {
+			return true;
+		}
+
+		return _baseBuffer.create(*_graphics.get<Graphics>(), size, requiredUsage, preferredUsage, data, GL_DYNAMIC_READ);
 	}
 
 	size_t PixelBuffer::getSize() const {

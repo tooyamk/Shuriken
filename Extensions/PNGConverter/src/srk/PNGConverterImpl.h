@@ -75,7 +75,7 @@ namespace srk::extensions::png_converter {
 		png_destroy_read_struct(&png, &info, 0);
 
 		auto img = new Image();
-		img->size.set(width, height);
+		img->dimensions.set(width, height);
 		img->source = ByteArray(data, dataLen, ByteArray::Usage::EXCLUSIVE);
 
 		switch (colorType) {
@@ -127,7 +127,7 @@ namespace srk::extensions::png_converter {
 
 		png_set_write_fn(png_ptr, &out, writeDataCallback, nullptr);
 
-		auto w = img.size[0], h = img.size[1];
+		auto w = img.dimensions[0], h = img.dimensions[1];
 
 		png_set_IHDR(png_ptr, info_ptr, w, h, 8, PNG_COLOR_TYPE_RGBA, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
 

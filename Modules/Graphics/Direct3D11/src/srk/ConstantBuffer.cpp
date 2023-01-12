@@ -20,12 +20,12 @@ namespace srk::modules::graphics::d3d11 {
 		return &_baseBuffer;
 	}
 
-	bool ConstantBuffer::create(size_t size, Usage bufferUsage, const void* data, size_t dataSize) {
+	bool ConstantBuffer::create(size_t size, Usage requiredUsage, Usage preferredUsage, const void* data, size_t dataSize) {
 		using namespace srk::literals;
 
 		auto quot = size >> 4;
 		if (size & 0xF_uz) ++quot;
-		return _baseBuffer.create(*_graphics.get<Graphics>(), quot << 4, bufferUsage, data, dataSize);
+		return _baseBuffer.create(*_graphics.get<Graphics>(), quot << 4, requiredUsage, preferredUsage, data, dataSize);
 	}
 
 	size_t ConstantBuffer::getSize() const {

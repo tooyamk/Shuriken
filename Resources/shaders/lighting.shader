@@ -84,8 +84,8 @@ shader {
             float3 _diffuseColor;
             float3 _specularColor;
 
-            //Texture2D _diffuseTex;
-            //SamplerState _diffuseTexSampler;
+            Texture2D _diffuseTex;
+            SamplerState _diffuseTexSampler;
 
             struct aabbcc {
                 float val1;
@@ -95,11 +95,11 @@ shader {
                 //SamplerState _diffuseTexSampler;
             };
 
-            cbuffer buf1 : register(b1,  space0) {
+            cbuffer buf1 {// : register(b1,  space0) {
                 float red;
                 aabbcc blue;
-                Texture2D _diffuseTex;
-                SamplerState _diffuseTexSampler;
+                //Texture2D _diffuseTex;
+                //SamplerState _diffuseTexSampler;
             }
 
             float BlinnPhoneFactor(float3 normal, float3 lightingDir, float3 viewDir, float shininess) {

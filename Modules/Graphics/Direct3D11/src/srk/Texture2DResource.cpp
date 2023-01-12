@@ -30,35 +30,31 @@ namespace srk::modules::graphics::d3d11 {
 		return _baseTexRes.format;
 	}
 
-	uint16_t Texture2DResource::getPerPixelByteSize() const {
-		return _baseTexRes.perPixelSize;
+	const Vec3uz& Texture2DResource::getDimensions() const {
+		return _baseTexRes.dim;
 	}
 
-	const Vec3ui32& Texture2DResource::getSize() const {
-		return _baseTexRes.texSize;
-	}
-
-	bool Texture2DResource::create(const Vec2ui32& size, uint32_t arraySize, uint32_t mipLevels, SampleCount sampleCount, TextureFormat format, Usage resUsage, const void*const* data) {
-		return _baseTexRes.create(*_graphics.get<Graphics>(), TextureType::TEX2D, Vec3ui32(size[0], size[1], 1), arraySize, mipLevels, sampleCount, format, resUsage, data);
+	bool Texture2DResource::create(const Vec2uz& dim, size_t arraySize, size_t mipLevels, SampleCount sampleCount, TextureFormat format, Usage requiredUsage, Usage preferredUsage, const void*const* data) {
+		return _baseTexRes.create(*_graphics.get<Graphics>(), TextureType::TEX2D, Vec3uz(dim[0], dim[1], 1), arraySize, mipLevels, sampleCount, format, requiredUsage, preferredUsage, data);
 	}
 
 	Usage Texture2DResource::getUsage() const {
 		return _baseTexRes.resUsage;
 	}
 
-	Usage Texture2DResource::map(uint32_t arraySlice, uint32_t mipSlice, Usage expectMapUsage) {
+	Usage Texture2DResource::map(size_t arraySlice, size_t mipSlice, Usage expectMapUsage) {
 		return _baseTexRes.map(*_graphics.get<Graphics>(), arraySlice, mipSlice, expectMapUsage);
 	}
 
-	void Texture2DResource::unmap(uint32_t arraySlice, uint32_t mipSlice) {
+	void Texture2DResource::unmap(size_t arraySlice, size_t mipSlice) {
 		_baseTexRes.unmap(*_graphics.get<Graphics>(), arraySlice, mipSlice);
 	}
 
-	uint32_t Texture2DResource::read(uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, void* dst, uint32_t dstLen) {
+	size_t Texture2DResource::read(size_t arraySlice, size_t mipSlice, size_t offset, void* dst, size_t dstLen) {
 		return _baseTexRes.read(arraySlice, mipSlice, offset, dst, dstLen);
 	}
 
-	uint32_t Texture2DResource::write(uint32_t arraySlice, uint32_t mipSlice, uint32_t offset, const void* data, uint32_t length) {
+	size_t Texture2DResource::write(size_t arraySlice, size_t mipSlice, size_t offset, const void* data, size_t length) {
 		return _baseTexRes.write(arraySlice, mipSlice, offset, data, length);
 	}
 
@@ -66,7 +62,7 @@ namespace srk::modules::graphics::d3d11 {
 		_baseTexRes.releaseTex(*_graphics.get<Graphics>());
 	}
 
-	bool Texture2DResource::update(uint32_t arraySlice, uint32_t mipSlice, const Box2ui32& range, const void* data) {
+	bool Texture2DResource::update(size_t arraySlice, size_t mipSlice, const Box2uz& range, const void* data) {
 		D3D11_BOX box;
 		box.left = range.pos[0];
 		box.right = range.pos[0] + range.size[0];
@@ -78,11 +74,11 @@ namespace srk::modules::graphics::d3d11 {
 		return _baseTexRes.update(*_graphics.get<Graphics>(), arraySlice, mipSlice, box, data);
 	}
 
-	bool Texture2DResource::copyFrom(const Vec3ui32& dstPos, uint32_t dstArraySlice, uint32_t dstMipSlice, const ITextureResource* src, uint32_t srcArraySlice, uint32_t srcMipSlice, const Box3ui32& srcRange) {
+	bool Texture2DResource::copyFrom(const Vec3uz& dstPos, size_t dstArraySlice, size_t dstMipSlice, const ITextureResource* src, size_t srcArraySlice, size_t srcMipSlice, const Box3uz& srcRange) {
 		return _baseTexRes.copyFrom(*_graphics.get<Graphics>(), dstPos, dstArraySlice, dstMipSlice, src, srcArraySlice, srcMipSlice, srcRange);
 	}
 
-	bool Texture2DResource::copyFrom(uint32_t arraySlice, uint32_t mipSlice, const Box3ui32& range, const IPixelBuffer* pixelBuffer) {
+	bool Texture2DResource::copyFrom(size_t arraySlice, size_t mipSlice, const Box3uz& range, const IPixelBuffer* pixelBuffer) {
 		return false;
 	}
 }

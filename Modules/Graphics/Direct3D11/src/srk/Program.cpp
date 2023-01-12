@@ -30,6 +30,8 @@ namespace srk::modules::graphics::d3d11 {
 	void Program::ParameterLayout::clear(Graphics& g) {
 		for (auto& buffer : constantBuffers) g.getConstantBufferManager().unregisterConstantLayout(buffer);
 		constantBuffers.clear();
+		textures.clear();
+		samplers.clear();
 	}
 
 
@@ -188,7 +190,7 @@ namespace srk::modules::graphics::d3d11 {
 				if (fmt == DXGI_FORMAT_UNKNOWN) continue;
 				
 				UINT offset = desc.offset;
-				g->useVertexBuffers(_inVerBufSlots[i], 1, &buf, &stride, &desc.offset);
+				g->useVertexBuffers(_inVerBufSlots[i], 1, &buf, &stride, &offset);
 
 				auto& ie = _inputElements[i];
 				if (ie.Format != fmt) {

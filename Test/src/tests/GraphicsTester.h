@@ -67,7 +67,7 @@ public:
 			auto vb = graphics->createVertexBuffer();
 			printaln("createVertexBuffer : ", vb ? "succeed" : "failed");
 			if (vb) {
-				auto rst = vb->create(12, Usage::MAP_READ_WRITE);
+				auto rst = vb->create(12, Usage::MAP_READ_WRITE, Usage::NONE);
 				printaln("VertexBuffer::create : ", rst ? "succeed" : "failed");
 				if (rst) {
 					auto usage = vb->map(Usage::MAP_WRITE);
@@ -91,14 +91,14 @@ public:
 					}
 					printaln("VertexBuffer::read : ", isSame ? "succeed" : "failed");
 
-					vb->create(12, Usage::UPDATE);
+					vb->create(12, Usage::UPDATE, Usage::NONE);
 					auto upsize = vb->update(wbuf, sizeof(wbuf), 0);
 					printaln("VertexBuffer::update : ", upsize != -1 && upsize == sizeof(wbuf) ? "succeed" : "failed");
 
-					vb->create(12, Usage::COPY_SRC, wbuf, sizeof(wbuf));
+					vb->create(12, Usage::COPY_SRC, Usage::NONE, wbuf, sizeof(wbuf));
 
 					auto vb2 = graphics->createVertexBuffer();
-					vb2->create(12, Usage::COPY_DST | Usage::MAP_READ);
+					vb2->create(12, Usage::COPY_DST | Usage::MAP_READ, Usage::NONE);
 					auto cpysize = vb2->copyFrom(0, vb, Box1uz(Vec1uz(0), Vec1uz(vb->getSize())));
 					vb2->map(Usage::MAP_READ);
 					rsize = vb2->read(rbuf, sizeof(rbuf), 0);
@@ -112,6 +112,15 @@ public:
 					}
 					printaln("VertexBuffer::copyFrom : ", isSame ? "succeed" : "failed");
 				}
+			}
+
+			auto tr = graphics->createTexture2DResource();
+			printaln("createTexture2DResource : ", tr ? "succeed" : "failed");
+			if (tr) {
+				uint8_t pixels[] = { 255, 255, 255, 255 };
+				void* ptr = pixels;
+				auto rst = tr->create(Vec2uz(1, 1), 0, 1, 1, TextureFormat::R8G8B8A8, Usage::MAP_READ | Usage::MAP_WRITE, Usage::NONE, &ptr);
+				printaln("Texture2DResource::create : ", rst ? "succeed" : "failed");
 			}
 
 			IntrusivePtr shader = new Shader();
@@ -134,7 +143,7 @@ public:
 				float32_t posData[] = { 1.0f, 2.0f, 3.0f, 1.0f, 2.0f, 3.0f, 1.0f, 2.0f,
 					1.0f, 2.0f, 3.0f, 1.0f, 2.0f, 3.0f, 1.0f, 2.0f,
 					1.0f, 2.0f, 3.0f, 1.0f, 2.0f, 3.0f, 1.0f, 2.0f };
-				pos->create(96, Usage::NONE, posData, 96);
+				pos->create(96, Usage::NONE, Usage::NONE, posData, 96);
 				pos->setStride(32);
 				vac->set(ShaderPredefine::POSITION0, VertexAttribute<IVertexBuffer>(pos, 3, VertexType::F32, 0));
 				vac->set(ShaderPredefine::NORMAL0, VertexAttribute<IVertexBuffer>(pos, 3, VertexType::F32, 12));

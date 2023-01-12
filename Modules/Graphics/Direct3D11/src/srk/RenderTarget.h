@@ -12,10 +12,10 @@ namespace srk::modules::graphics::d3d11 {
 
 		virtual const void* SRK_CALL getNative() const override;
 		
-		virtual Vec2ui32 SRK_CALL getSize() const override;
+		virtual Vec2uz SRK_CALL getDimensions() const override;
 		virtual IntrusivePtr<IRenderView> SRK_CALL getRenderView(uint8_t index) const override;
 		virtual bool SRK_CALL setRenderView(uint8_t index, IRenderView* view) override;
-		virtual void SRK_CALL eraseRenderViews(uint8_t begin, uint8_t size) override;
+		virtual void SRK_CALL eraseRenderViews(uint8_t begin, uint8_t count) override;
 
 		virtual IntrusivePtr<IDepthStencil> SRK_CALL getDepthStencil() const override;
 		virtual void SRK_CALL setDepthStencil(IDepthStencil* ds) override;

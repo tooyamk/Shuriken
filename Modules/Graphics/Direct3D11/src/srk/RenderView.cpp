@@ -28,15 +28,15 @@ namespace srk::modules::graphics::d3d11 {
 		return this;
 	}
 
-	uint32_t RenderView::getArraySize() const {
+	size_t RenderView::getArraySize() const {
 		return _createdArraySize;
 	}
 
-	uint32_t RenderView::getMipSlice() const {
+	size_t RenderView::getMipSlice() const {
 		return _mipSlice;
 	}
 
-	bool RenderView::create(ITextureResource* res, uint32_t mipSlice, uint32_t arrayBegin, uint32_t arraySize) {
+	bool RenderView::create(ITextureResource* res, size_t mipSlice, size_t arrayBegin, size_t arraySize) {
 		using namespace srk::enum_operators;
 
 		IntrusivePtr guard(res);

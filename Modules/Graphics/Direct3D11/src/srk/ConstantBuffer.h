@@ -12,7 +12,7 @@ namespace srk::modules::graphics::d3d11 {
 
 		virtual bool SRK_CALL isCreated() const override;
 		virtual const void* SRK_CALL getNative() const override;
-		virtual bool SRK_CALL create(size_t size, Usage bufferUsage, const void* data = nullptr, size_t dataSize = 0) override;
+		virtual bool SRK_CALL create(size_t size, Usage requiredUsage, Usage preferredUsage, const void* data = nullptr, size_t dataSize = 0) override;
 		virtual size_t SRK_CALL getSize() const override;
 		virtual Usage SRK_CALL getUsage() const override;
 		virtual Usage SRK_CALL map(Usage expectMapUsage) override;

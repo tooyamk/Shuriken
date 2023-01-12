@@ -21,8 +21,8 @@ namespace srk::modules::graphics::d3d11 {
 		return &_baseBuffer;
 	}
 
-	bool IndexBuffer::create(size_t size, Usage bufferUsage, const void* data, size_t dataSize) {
-		return _baseBuffer.create(*_graphics.get<Graphics>(), size, bufferUsage, data, dataSize);
+	bool IndexBuffer::create(size_t size, Usage requiredUsage, Usage preferredUsage, const void* data, size_t dataSize) {
+		return _baseBuffer.create(*_graphics.get<Graphics>(), size, requiredUsage, preferredUsage, data, dataSize);
 	}
 
 	size_t IndexBuffer::getSize() const {

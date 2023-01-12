@@ -178,14 +178,14 @@ public:
 					for (auto& itr : mr->getVerteices()) {
 						auto& vs = itr.second;
 						auto vb = graphics->createVertexBuffer();
-						vb->create(vs.resource->data.getLength(), Usage::NONE, vs.resource->data.getSource(), vs.resource->data.getLength());
+						vb->create(vs.resource->data.getLength(), Usage::NONE, Usage::NONE, vs.resource->data.getSource(), vs.resource->data.getLength());
 						vb->setStride(vs.resource->stride);
 						mesh->getBuffer()->getVertices()->set(itr.first, VertexAttribute<IVertexBuffer>(vb, vs.desc));
 					}
 
 					if (auto is = mr->index; is) {
 						auto ib = graphics->createIndexBuffer();
-						ib->create(is->data.getLength(), Usage::NONE, is->data.getSource(), is->data.getLength());
+						ib->create(is->data.getLength(), Usage::NONE, Usage::NONE, is->data.getSource(), is->data.getLength());
 						ib->setFormat(is->type);
 						mesh->getBuffer()->setIndex(ib);
 					}
@@ -235,19 +235,19 @@ public:
 			auto texRes = graphics->createTexture2DResource();
 			if (texRes) {
 				auto img0 = extensions::PNGConverter::decode(readFile(getAppPath().parent_path().u8string() + "/Resources/white.png"));
-				auto mipLevels = Image::calcMipLevels(img0->size);
+				auto mipLevels = Image::calcMipLevels(img0->dimensions);
 				ByteArray mipsData0;
 				std::vector<void*> mipsData0Ptr;
-				img0->generateMips(img0->format, mipLevels, mipsData0, mipsData0Ptr);
+				img0->generateMips(img0->format, mipLevels, mipsData0, 0, mipsData0Ptr);
 
 				auto img1 = extensions::PNGConverter::decode(readFile(getAppPath().parent_path().u8string() + "/Resources/red.png"));
 				ByteArray mipsData1;
 				std::vector<void*> mipsData1Ptr;
-				img1->generateMips(img1->format, mipLevels, mipsData1, mipsData1Ptr);
+				img1->generateMips(img1->format, mipLevels, mipsData1, 0, mipsData1Ptr);
 
 				mipsData0Ptr.insert(mipsData0Ptr.end(), mipsData1Ptr.begin(), mipsData1Ptr.end());
 
-				auto hr = texRes->create(img0->size, 0, 1, 1, img0->format, Usage::IGNORE_UNSUPPORTED | Usage::MAP_WRITE, mipsData0Ptr.data());
+				auto hr = texRes->create(img0->dimensions, 0, 1, 1, img0->format, Usage::NONE, Usage::MAP_WRITE, mipsData0Ptr.data());
 
 				auto texView = graphics->createTextureView();
 				texView->create(texRes, 0, -1, 0, -1);

@@ -17,8 +17,8 @@ namespace srk::modules::graphics::gl {
 		return &_baseBuffer;
 	}
 
-	bool VertexBuffer::create(size_t size, Usage bufferUsage, const void* data, size_t dataSize) {
-		return _baseBuffer.create(*_graphics.get<Graphics>(), size, bufferUsage, data);
+	bool VertexBuffer::create(size_t size, Usage requiredUsage, Usage preferredUsage, const void* data, size_t dataSize) {
+		return _baseBuffer.create(*_graphics.get<Graphics>(), size, requiredUsage, preferredUsage, data);
 	}
 
 	size_t VertexBuffer::getSize() const {
@@ -61,11 +61,11 @@ namespace srk::modules::graphics::gl {
 		_baseBuffer.releaseBuffer();
 	}
 
-	uint32_t VertexBuffer::getStride() const {
+	size_t VertexBuffer::getStride() const {
 		return _stride;
 	}
 
-	void VertexBuffer::setStride(uint32_t stride) {
+	void VertexBuffer::setStride(size_t stride) {
 		_stride = stride;
 	}
 }

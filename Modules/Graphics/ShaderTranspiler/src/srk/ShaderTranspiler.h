@@ -25,7 +25,7 @@ namespace srk::modules::graphics::shader_transpiler {
 		}
 
 		bool SRK_CALL init(Ref* loader, const std::string_view& dxc);
-		virtual ProgramSource SRK_CALL translate(const ProgramSource& source, ProgramLanguage targetLanguage, const std::string_view& targetVersion, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& handler) override;
+		virtual ProgramSource SRK_CALL translate(const ProgramSource& source, const Options& options, ProgramLanguage targetLanguage, const std::string_view& targetVersion, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& handler) override;
 
 	private:
 		class MyIncludeHandler : public IDxcIncludeHandler {
