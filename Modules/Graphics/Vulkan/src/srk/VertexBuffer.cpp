@@ -10,7 +10,7 @@ namespace srk::modules::graphics::vulkan {
 	}
 
 	bool VertexBuffer::isCreated() const {
-		return _baseBuffer.getBuffer();
+		return _baseBuffer.getVkBuffer();
 	}
 
 	const void* VertexBuffer::getNative() const {

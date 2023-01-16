@@ -130,12 +130,20 @@ namespace srk::modules::graphics::gl {
 	};
 
 
-	inline uint64_t calcHash(const void* data, size_t size) {
+	inline uint64_t SRK_CALL calcHash(const void* data, size_t size) {
 		return hash::xxHash<64>::calc<std::endian::native>(data, size, 0);
 	}
 
 	template<typename T>
-	inline uint64_t calcHash(const T& val) {
+	inline uint64_t SRK_CALL calcHash(const T& val) {
 		return calcHash(&val, sizeof(T));
+	}
+
+	inline bool SRK_CALL glInit() {
+		return glewInit() == GLEW_OK;
+	}
+
+	inline bool SRK_CALL glIsSupported(const char* name) {
+		return glewIsSupported(name);
 	}
 }

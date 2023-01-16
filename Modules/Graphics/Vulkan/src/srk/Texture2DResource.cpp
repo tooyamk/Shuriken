@@ -14,7 +14,7 @@ namespace srk::modules::graphics::vulkan {
 	}
 
 	bool Texture2DResource::isCreated() const {
-		return _baseTex.getImage();
+		return _baseTex.getVkImage();
 	}
 
 	const void* Texture2DResource::getNative() const {

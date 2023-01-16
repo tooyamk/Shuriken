@@ -96,12 +96,12 @@ namespace srk::modules::graphics::vulkan {
 		_internalUsage |= _usage;
 		if ((_internalUsage & Usage::UPDATE) == Usage::UPDATE) _internalUsage |= Usage::MAP_WRITE;
 
-		if (vkCreateBuffer(graphics.getDevice(), &bufferCreateInfo, nullptr, &_buffer) != VK_SUCCESS) {
+		/*if (vkCreateBuffer(graphics.getDevice(), &bufferCreateInfo, graphics.getVkAllocationCallbacks(), &_buffer) != VK_SUCCESS) {
 			destroy();
 			return false;
 		}
-
-		/*VkMemoryRequirements memRequirements;
+		
+		VkMemoryRequirements memRequirements;
 		vkGetBufferMemoryRequirements(graphics.getDevice(), _buffer, &memRequirements);*/
 
 		/*VkBufferMemoryRequirementsInfo2 memReqInfo = { VK_STRUCTURE_TYPE_BUFFER_MEMORY_REQUIREMENTS_INFO_2 };
@@ -251,45 +251,16 @@ namespace srk::modules::graphics::vulkan {
 
 		auto copySize = std::min(std::min(src._size - srcRange.pos[0], srcRange.size[0]), _size - dstPos);
 
-		auto device = graphics.getDevice();
-		auto commandPool = graphics.getCommandPool();
-
-		VkCommandBufferAllocateInfo commandBufferAllocateInfo;
-		memset(&commandBufferAllocateInfo, 0, sizeof(commandBufferAllocateInfo));
-		commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		commandBufferAllocateInfo.commandPool = commandPool;
-		commandBufferAllocateInfo.commandBufferCount = 1;
-
-		VkCommandBuffer commandBuffer;
-		if (vkAllocateCommandBuffers(device, &commandBufferAllocateInfo, &commandBuffer) != VK_SUCCESS) return -1;
-
-		VkCommandBufferBeginInfo commandBufferBeginInfo = {};
-		memset(&commandBufferBeginInfo, 0, sizeof(commandBufferBeginInfo));
-		commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-		vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo);
+		auto cmd = graphics.beginOneTimeCommands();
+		if (!cmd) return -1;
 
 		VkBufferCopy bufferCopy;
 		bufferCopy.srcOffset = srcRange.pos[0];
 		bufferCopy.dstOffset = dstPos;
 		bufferCopy.size = copySize;
-		vkCmdCopyBuffer(commandBuffer, src._buffer, _buffer, 1, &bufferCopy);
+		vkCmdCopyBuffer(cmd.getVkCommandBuffer(), src._buffer, _buffer, 1, &bufferCopy);
 
-		vkEndCommandBuffer(commandBuffer);
-
-		VkSubmitInfo submitInfo;
-		memset(&submitInfo, 0, sizeof(submitInfo));
-		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		submitInfo.commandBufferCount = 1;
-		submitInfo.pCommandBuffers = &commandBuffer;
-
-		auto queue = graphics.getGraphicsQueue();
-
-		vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE);
-		vkQueueWaitIdle(queue);
-
-		vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
+		if (!graphics.endOneTimeCommands(cmd)) return -1;
 
 		return copySize;
 	}

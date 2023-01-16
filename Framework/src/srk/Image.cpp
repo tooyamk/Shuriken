@@ -105,37 +105,39 @@ namespace srk {
 		return std::move(levels);
 	}
 
-	size_t Image::calcMipsBytes(modules::graphics::TextureFormat format, const Vec2uz& pixels, size_t mipLevels, size_t* mipBytes) {
+	void Image::calcMipsInfo(modules::graphics::TextureFormat format, const Vec2uz& pixels, size_t mipLevels, size_t* totalBytes, size_t* mipBytes, Vec2uz* mipDimensions) {
 		auto w = pixels[0], h = pixels[1];
-		auto blocks = calcBlocks(format, pixels);
-		if (mipBytes) mipBytes[0] = calcBytes(format, blocks);
+		auto bytes = calcBytes(format, pixels);
+		if (totalBytes) *totalBytes = bytes;
+		if (mipBytes) mipBytes[0] = bytes;
+		if (mipDimensions) mipDimensions[0].set(w, h);
 
 		for (size_t i = 1; i < mipLevels; ++i) {
 			w = calcNextMipPixels(w);
 			h = calcNextMipPixels(h);
-			auto n = calcBlocks(format, Vec2uz(w, h));
-			if (mipBytes) mipBytes[i] = calcBytes(format, n);
-			blocks += n;
+			bytes = calcBytes(format, Vec2uz(w, h));
+			if (totalBytes) *totalBytes += bytes;
+			if (mipBytes) mipBytes[i] = bytes;
+			if (mipDimensions) mipDimensions[i].set(w, h);
 		}
-
-		return calcBytes(format, blocks);
 	}
 
-	size_t Image::calcMipsBytes(modules::graphics::TextureFormat format, const Vec3uz& pixels, size_t mipLevels, size_t* mipBytes) {
+	void Image::calcMipsInfo(modules::graphics::TextureFormat format, const Vec3uz& pixels, size_t mipLevels, size_t* totalBytes, size_t* mipBytes, Vec3uz* mipDimensions) {
 		auto w = pixels[0], h = pixels[1], d = pixels[2];
-		auto blocks = calcBlocks(format, pixels);
-		if (mipBytes) mipBytes[0] = calcBytes(format, blocks);
+		auto bytes = calcBytes(format, pixels);
+		if (totalBytes) *totalBytes = bytes;
+		if (mipBytes) mipBytes[0] = bytes;
+		if (mipDimensions) mipDimensions[0].set(w, h, d);
 
 		for (size_t i = 1; i < mipLevels; ++i) {
 			w = calcNextMipPixels(w);
 			h = calcNextMipPixels(h);
 			d = calcNextMipPixels(d);
-			auto n = calcBlocks(format, Vec3uz(w, h, d));
-			if (mipBytes) mipBytes[i] = calcBytes(format, n);
-			blocks += n;
+			bytes = calcBytes(format, Vec3uz(w, h, d));
+			if (totalBytes) *totalBytes += bytes;
+			if (mipBytes) mipBytes[i] = bytes;
+			if (mipDimensions) mipDimensions[i].set(w, h, d);
 		}
-
-		return calcBytes(format, blocks);
 	}
 
 	bool Image::convertFormat(const Vec2uz& pixels, TextureFormat srcFormat, const void* src, TextureFormat dstFormat, void* dst, size_t* srcReadedBytes, size_t* dstWritedBytes) {
@@ -238,7 +240,8 @@ namespace srk {
 	}
 
 	bool Image::generateMips(modules::graphics::TextureFormat format, size_t mipLevels, ByteArray& dst, size_t dstOffset, std::vector<void*>& dstMipData) const {
-		auto bytes = calcMipsBytes(format, dimensions, mipLevels);
+		size_t bytes;
+		calcMipsInfo(format, dimensions, mipLevels, &bytes);
 		auto n = bytes + dstOffset;
 
 		if (dst.getCapacity() < n) dst.setCapacity(n);

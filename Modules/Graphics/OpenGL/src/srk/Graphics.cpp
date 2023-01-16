@@ -90,6 +90,10 @@ namespace srk::modules::graphics::gl {
 			return false;
 		}
 
+		GLint ival;
+		glGetIntegerv(GL_MAX_SAMPLES, &ival);
+		_deviceFeatures.maxSampleCount = ival;
+
 		auto sampleCount = conf.sampleCount;
 		if (sampleCount > _deviceFeatures.maxSampleCount) sampleCount = _deviceFeatures.maxSampleCount;
 
@@ -191,7 +195,7 @@ namespace srk::modules::graphics::gl {
 		_deviceVersion = "OpenGL " + String::toString(_majorVer) + "." + String::toString(_minorVer);
 
 		if (conf.debug) {
-			if (isGreatThanOrEqualVersion(4, 3) || glewIsSupported("GL_KHR_debug") || glewIsSupported("GL_ARB_debug_output")) {
+			if (isGreatThanOrEqualVersion(4, 3) || glIsSupported("GL_KHR_debug") || glIsSupported("GL_ARB_debug_output")) {
 				glEnable(GL_DEBUG_OUTPUT);
 				glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 				glDebugMessageCallback(&Graphics::_debugCallback, this);
@@ -199,35 +203,40 @@ namespace srk::modules::graphics::gl {
 			}
 		}
 
-		_internalFeatures.maxAnisotropy = 1.f;
-		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &_internalFeatures.maxAnisotropy);
-
 		_deviceFeatures.pixelBuffer = true;
-		_deviceFeatures.constantBuffer = isGreatThanOrEqualVersion(3, 1) || glewIsSupported("GL_ARB_uniform_buffer_object");
-		_deviceFeatures.sampler = isGreatThanOrEqualVersion(3, 3) || glewIsSupported("GL_ARB_sampler_objects");
+		_deviceFeatures.constantBuffer = isGreatThanOrEqualVersion(3, 1) || glIsSupported("GL_ARB_uniform_buffer_object");
+		_deviceFeatures.sampler = isGreatThanOrEqualVersion(3, 3) || glIsSupported("GL_ARB_sampler_objects");
 		_deviceFeatures.independentBlend = isGreatThanOrEqualVersion(4, 0) ||
-			(isGreatThanOrEqualVersion(3, 0) &&
-				glewIsSupported("GL_EXT_blend_func_separate") &&
-				glewIsSupported("GL_EXT_blend_equation_separate"));
-		_internalFeatures.supportTexStorage = isGreatThanOrEqualVersion(4, 2) || glewIsSupported("GL_ARB_texture_storage");
-		_deviceFeatures.nativeTextureView = isGreatThanOrEqualVersion(4, 3) || glewIsSupported("ARB_texture_view");
+			(isGreatThanOrEqualVersion(3, 0) && glIsSupported("GL_EXT_blend_func_separate") && glIsSupported("GL_EXT_blend_equation_separate"));
+		_internalFeatures.supportTexStorage = isGreatThanOrEqualVersion(4, 2) || glIsSupported("GL_ARB_texture_storage");
+		_deviceFeatures.nativeTextureView = isGreatThanOrEqualVersion(4, 3) || glIsSupported("ARB_texture_view");
 		_deviceFeatures.nativeRenderView = _deviceFeatures.nativeTextureView;
 		_deviceFeatures.textureMap = false;
-		_deviceFeatures.persistentMap = isGreatThanOrEqualVersion(4, 4) || glewIsSupported("GL_ARB_buffer_storage");
+		_deviceFeatures.persistentMap = isGreatThanOrEqualVersion(4, 4) || glIsSupported("GL_ARB_buffer_storage");
 		_deviceFeatures.stencilIndependentRef = true;
 		_deviceFeatures.stencilIndependentMask = true;
 		_deviceFeatures.vertexDim3Bit8 = false;
 		_deviceFeatures.vertexDim3Bit16 = false;
 
-		GLint val = 0;
-		glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &val);
-		_deviceFeatures.simultaneousRenderTargetCount = val;
+		//auto b = glIsSupported("GL_EXT_texture_filter_anisotropic");
+
+		glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &ival);
+		_deviceFeatures.simultaneousRenderTargetCount = ival;
+
+		GLfloat fval;
+		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &fval);
+		_deviceFeatures.maxSamplerAnisotropy = fval;
 
 		_deviceFeatures.indexTypes.emplace_back(IndexType::UI8);
 		_deviceFeatures.indexTypes.emplace_back(IndexType::UI16);
 		_deviceFeatures.indexTypes.emplace_back(IndexType::UI32);
 		_deviceFeatures.textureFormats.emplace_back(TextureFormat::R8G8B8);
 		_deviceFeatures.textureFormats.emplace_back(TextureFormat::R8G8B8A8);
+		_deviceFeatures.samplerAddressModes.emplace_back(SamplerAddressMode::REPEAT);
+		_deviceFeatures.samplerAddressModes.emplace_back(SamplerAddressMode::CLAMP_EDGE);
+		_deviceFeatures.samplerAddressModes.emplace_back(SamplerAddressMode::CLAMP_BORDER);
+		_deviceFeatures.samplerAddressModes.emplace_back(SamplerAddressMode::MIRROR_REPEAT);
+		if (isGreatThanOrEqualVersion(4, 4) || glIsSupported("GL_ARB_texture_mirror_clamp_to_edge")) _deviceFeatures.samplerAddressModes.emplace_back(SamplerAddressMode::MIRROR_CLAMP_EDGE);//es3.1+
 
 		_glStatus.usage.bufferCreateUsageMask = Usage::MAP_READ_WRITE | Usage::UPDATE | Usage::COPY_SRC_DST;
 		if (_deviceFeatures.persistentMap) _glStatus.usage.bufferCreateUsageMask |= Usage::PERSISTENT_MAP;
@@ -789,7 +798,7 @@ namespace srk::modules::graphics::gl {
 					if (auto rc = wglCreateContext(dc); rc) {
 						wglMakeCurrent(dc, rc);
 
-						initOk = _glewInit();
+						initOk = glInit();
 
 						wglMakeCurrent(nullptr, nullptr);
 						wglDeleteContext(rc);
@@ -819,7 +828,7 @@ namespace srk::modules::graphics::gl {
 
 				glXMakeCurrent(dis, wnd, context);
 
-				initOk = _glewInit();
+				initOk = glInit();
 
 				glXMakeCurrent(dis, None, nullptr);
 				glXDestroyContext(dis, context);
@@ -831,18 +840,6 @@ namespace srk::modules::graphics::gl {
 #endif
 
 		return initOk;
-	}
-
-	bool Graphics::_glewInit() {
-		if (glewInit() == GLEW_OK) {
-			GLint val;
-			glGetIntegerv(GL_MAX_SAMPLES, &val);
-			_deviceFeatures.maxSampleCount = val;
-
-			return true;
-		}
-
-		return false;
 	}
 
 	void Graphics::_setInitState() {
@@ -1347,6 +1344,23 @@ namespace srk::modules::graphics::gl {
 			return GL_FLOAT;
 		default:
 			return 0;
+		}
+	}
+
+	GLenum Graphics::convertSamplerAddressMode(SamplerAddressMode mode) {
+		switch (mode) {
+		case SamplerAddressMode::REPEAT:
+			return GL_REPEAT;
+		case SamplerAddressMode::CLAMP_EDGE:
+			return GL_CLAMP_TO_EDGE;
+		case SamplerAddressMode::CLAMP_BORDER:
+			return GL_CLAMP_TO_BORDER;
+		case SamplerAddressMode::MIRROR_REPEAT:
+			return GL_MIRRORED_REPEAT;
+		case SamplerAddressMode::MIRROR_CLAMP_EDGE:
+			return GL_MIRROR_CLAMP_TO_EDGE;
+		default:
+			return GL_REPEAT;
 		}
 	}
 

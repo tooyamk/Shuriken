@@ -46,6 +46,10 @@ namespace srk::modules::inputs {
 		virtual void SRK_CALL poll(bool dispatchEvent) override;
 
 	protected:
+		using OUTPUT_FLAG_TYPE = uint8_t;
+		static constexpr OUTPUT_FLAG_TYPE OUTPUT_DIRTY = 0b1;
+		static constexpr OUTPUT_FLAG_TYPE OUTPUT_WRITING = 0b10;
+
 		IntrusivePtr<events::IEventDispatcher<DeviceEvent>> _eventDispatcher;
 		DeviceInfo _info;
 
@@ -53,7 +57,7 @@ namespace srk::modules::inputs {
 
 		std::atomic_bool _polling;
 		uint8_t* _oldInputState;
-		uint8_t* _newInputState;
+		uint8_t* _inputBuffer;
 
 		mutable std::shared_mutex _keyMappingMutex;
 		GamepadKeyMapping _keyMapping;
@@ -62,33 +66,25 @@ namespace srk::modules::inputs {
 		std::unordered_map<GamepadVirtualKeyCode, Vec2<DeviceStateValue>> _deadZone;
 
 		mutable std::shared_mutex _inputMutex;
-		size_t _inputLength;
 		uint8_t* _inputState;
 
 		mutable std::shared_mutex _outputMutex;
 		size_t _outputLength;
 		uint8_t* _outputState;
 		uint8_t* _outputBuffer;
-		std::atomic_bool _outputDirty;
+		std::atomic<OUTPUT_FLAG_TYPE> _outputFlags;
 		bool _needOutput;
 
 		void SRK_CALL _doInput(bool dispatchEvent);
 		void SRK_CALL _doOutput();
 
-		inline Vec2<DeviceStateValue> SRK_CALL _getDeadZone(GamepadVirtualKeyCode key) const {
-			std::shared_lock lock(_deadZoneMutex);
-
-			if (auto itr = _deadZone.find(key); itr == _deadZone.end()) {
-				return Vec2<DeviceStateValue>::ZERO;
-			} else {
-				return itr->second;
-			}
-		}
-
+		Vec2<DeviceStateValue> SRK_CALL _getDeadZone(GamepadVirtualKeyCode key) const;
 		void SRK_CALL _setDeadZone(GamepadVirtualKeyCode keyCode, Vec2<DeviceStateValue>* deadZone);
 
 		inline static DeviceStateValue SRK_CALL _normalizeStick(float32_t value) {
 			return value * 2.0f - 1.0f;
 		}
+
+		void SRK_CALL _switchInputData();
 	};
 }

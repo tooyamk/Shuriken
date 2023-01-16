@@ -13,6 +13,10 @@ namespace srk::modules::graphics::vulkan {
 
 	class SRK_MODULE_DLL Graphics : public IGraphicsModule {
 	public:
+		struct InternalFeatures {
+			bool customBorderColor;
+		};
+
 		struct CreateConfig {
 			Ref* loader = nullptr;
 			windows::IWindow* win = nullptr;
@@ -89,7 +93,11 @@ namespace srk::modules::graphics::vulkan {
 			_eventDispatcher->dispatchEvent(this, GraphicsEvent::ERR, (std::string_view*)&msg);
 		}
 
-		inline VkDevice SRK_CALL getDevice() const {
+		inline VkPhysicalDevice SRK_CALL getVkPhysicalDevice() const {
+			return _vkStatus.physicalDevice;
+		}
+
+		inline VkDevice SRK_CALL getVkDevice() const {
 			return _vkStatus.device;
 		}
 
@@ -99,6 +107,10 @@ namespace srk::modules::graphics::vulkan {
 
 		inline bool SRK_CALL isDebug() const {
 			return _isDebug;
+		}
+
+		inline const InternalFeatures& SRK_CALL getInternalFeatures() const {
+			return _internalFeatures;
 		}
 
 		inline const Usage SRK_CALL getBufferCreateUsageMask() const {
@@ -115,13 +127,16 @@ namespace srk::modules::graphics::vulkan {
 
 		const VkAllocationCallbacks* SRK_CALL getVkAllocationCallbacks() const;
 
-		inline VkCommandPool SRK_CALL getCommandPool() const {
+		inline VkCommandPool SRK_CALL getVkCommandPool() const {
 			return _vkStatus.cmd.pool;
 		}
 
-		inline VkQueue SRK_CALL getGraphicsQueue() const {
+		inline VkQueue SRK_CALL getVkGraphicsQueue() const {
 			return _vkStatus.cmd.graphicsQueue;
 		}
+
+		InternalCommandBuffer beginOneTimeCommands();
+		bool endOneTimeCommands(InternalCommandBuffer& buffer);
 
 		inline ConstantBufferManager& SRK_CALL getConstantBufferManager() {
 			return _constantBufferManager;
@@ -141,6 +156,7 @@ namespace srk::modules::graphics::vulkan {
 		static VkImageType SRK_CALL convertTextureType(TextureType type);
 		static VkFormat SRK_CALL convertTextureFormat(TextureFormat fmt);
 		static VkSampleCountFlagBits SRK_CALL convertSampleCount(SampleCount sc);
+		static VkSamplerAddressMode SRK_CALL convertSamplerAddressMode(SamplerAddressMode mode);
 
 	private:
 		bool _isDebug;
@@ -150,6 +166,7 @@ namespace srk::modules::graphics::vulkan {
 		IntrusivePtr<windows::IWindow> _win;
 		IntrusivePtr<IShaderTranspiler> _transpiler;
 
+		InternalFeatures _internalFeatures;
 		GraphicsDeviceFeatures _deviceFeatures;
 		std::string _deviceVersion;
 

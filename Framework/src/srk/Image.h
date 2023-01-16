@@ -83,8 +83,8 @@ namespace srk {
 			return blocks * perBlockBytes;
 		}
 
-		static size_t SRK_CALL calcMipsBytes(modules::graphics::TextureFormat format, const Vec2uz& pixels, size_t mipLevels, size_t* mipBytes = nullptr);
-		static size_t SRK_CALL calcMipsBytes(modules::graphics::TextureFormat format, const Vec3uz& pixels, size_t mipLevels, size_t* mipBytes = nullptr);
+		static void SRK_CALL calcMipsInfo(modules::graphics::TextureFormat format, const Vec2uz& pixels, size_t mipLevels, size_t* totalBytes = nullptr, size_t* mipBytes = nullptr, Vec2uz* mipDimensions = nullptr);
+		static void SRK_CALL calcMipsInfo(modules::graphics::TextureFormat format, const Vec3uz& pixels, size_t mipLevels, size_t* totalBytes = nullptr, size_t* mipBytes = nullptr, Vec3uz* mipDimensions = nullptr);
 
 		static void SRK_CALL generateMips_UInt8s(const Vec2uz& pixels, modules::graphics::TextureFormat format, size_t mipLevels, size_t numChannels, void* dst, void** dstMipData);
 

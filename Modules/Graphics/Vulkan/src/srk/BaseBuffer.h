@@ -31,7 +31,7 @@ namespace srk::modules::graphics::vulkan {
 			return _size;
 		}
 
-		inline VkBuffer SRK_CALL getBuffer() const {
+		inline VkBuffer SRK_CALL getVkBuffer() const {
 			return _buffer;
 		}
 

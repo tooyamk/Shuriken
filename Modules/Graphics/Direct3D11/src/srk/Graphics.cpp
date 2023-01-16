@@ -291,9 +291,15 @@ namespace srk::modules::graphics::d3d11 {
 		_deviceFeatures.vertexDim3Bit8 = false;
 		_deviceFeatures.vertexDim3Bit16 = false;
 		_deviceFeatures.simultaneousRenderTargetCount = D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT;
+		_deviceFeatures.maxSamplerAnisotropy = 16;
 		_deviceFeatures.indexTypes.emplace_back(IndexType::UI16);
 		_deviceFeatures.indexTypes.emplace_back(IndexType::UI32);
 		_deviceFeatures.textureFormats.emplace_back(TextureFormat::R8G8B8A8);
+		_deviceFeatures.samplerAddressModes.emplace_back(SamplerAddressMode::REPEAT);
+		_deviceFeatures.samplerAddressModes.emplace_back(SamplerAddressMode::CLAMP_EDGE);
+		_deviceFeatures.samplerAddressModes.emplace_back(SamplerAddressMode::CLAMP_BORDER);
+		_deviceFeatures.samplerAddressModes.emplace_back(SamplerAddressMode::MIRROR_REPEAT);
+		_deviceFeatures.samplerAddressModes.emplace_back(SamplerAddressMode::MIRROR_CLAMP_EDGE);
 
 		for (UINT i = 1; i <= D3D11_MAX_MULTISAMPLE_SAMPLE_COUNT; i <<= 1) {
 			UINT numQualityLevels = 0;
@@ -1090,6 +1096,23 @@ namespace srk::modules::graphics::d3d11 {
 		}
 		default:
 			return DXGI_FORMAT_UNKNOWN;
+		}
+	}
+
+	D3D11_TEXTURE_ADDRESS_MODE Graphics::convertSamplerAddressMode(SamplerAddressMode mode) {
+		switch (mode) {
+		case SamplerAddressMode::REPEAT:
+			return D3D11_TEXTURE_ADDRESS_WRAP;
+		case SamplerAddressMode::CLAMP_EDGE:
+			return D3D11_TEXTURE_ADDRESS_CLAMP;
+		case SamplerAddressMode::CLAMP_BORDER:
+			return D3D11_TEXTURE_ADDRESS_BORDER;
+		case SamplerAddressMode::MIRROR_REPEAT:
+			return D3D11_TEXTURE_ADDRESS_MIRROR;
+		case SamplerAddressMode::MIRROR_CLAMP_EDGE:
+			return D3D11_TEXTURE_ADDRESS_MIRROR_ONCE;
+		default:
+			return D3D11_TEXTURE_ADDRESS_WRAP;
 		}
 	}
 }

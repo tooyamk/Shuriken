@@ -2,9 +2,7 @@
 
 #include "Base.h"
 
-namespace srk::modules::graphics::gl {
-	class Graphics;
-
+namespace srk::modules::graphics::vulkan {
 	class SRK_MODULE_DLL Sampler : public ISampler {
 	public:
 		Sampler(Graphics& graphics);
@@ -19,8 +17,8 @@ namespace srk::modules::graphics::gl {
 		virtual void SRK_CALL setMaxAnisotropy(uint32_t max) override;
 		virtual void SRK_CALL setBorderColor(const Vec4f32& color) override;
 
-		inline GLuint SRK_CALL getInternalSampler() const {
-			return _handle;
+		inline VkSampler SRK_CALL getVkSampler() const {
+			return _sampler;
 		}
 
 		void SRK_CALL update();
@@ -31,7 +29,7 @@ namespace srk::modules::graphics::gl {
 		struct DirtyFlag {
 			static const DirtyType EMPTY = 0b1;
 			static const DirtyType FILTER = 0b1 << 1;
-			static const DirtyType COMPARE_FUNC = 0b1 << 2;
+			static const DirtyType COMPARISON_FUNC = 0b1 << 2;
 			static const DirtyType ADDRESS = 0b1 << 3;
 			static const DirtyType LOD = 0b1 << 4;
 			static const DirtyType LOD_BIAS = 0b1 << 5;
@@ -39,39 +37,19 @@ namespace srk::modules::graphics::gl {
 			static const DirtyType BORDER_COLOR = 0b1 << 7;
 		};
 
-
-		struct Desc {
-			struct {
-				GLenum compareMode;
-				GLenum min;
-				GLenum mag;
-			} filter;
-
-			struct {
-				GLenum s;
-				GLenum t;
-				GLenum r;
-			} address;
-
-			GLenum compareFunc;
-			Vec2<GLfloat> LOD;
-			GLfloat LODBias;
-			GLfloat maxAnisotropy;
-			Vec4<GLfloat> borderColor;
-		};
-
-
 		DirtyType _dirty;
-		GLuint _handle;
 		SamplerFilter _filter;
 		SamplerAddress _address;
 
-		Desc _desc;
-		Desc _oldDesc;
+		VkSampler _sampler;
+		VkSamplerCreateInfo _samplerCreateInfo;
+		VkSamplerCustomBorderColorCreateInfoEXT _smplerCustomBorderColorCreateInfo;
+		VkSamplerCreateInfo _oldSamplerCreateInfo;
+		Vec4f32 _oldBorderColor;
 
 		void SRK_CALL _updateFilter();
 		void SRK_CALL _updateAddress();
-		void SRK_CALL _releaseRes();
+		void SRK_CALL _release();
 
 		inline void SRK_CALL _setDirty(bool dirty, DirtyType val) {
 			if (dirty) {

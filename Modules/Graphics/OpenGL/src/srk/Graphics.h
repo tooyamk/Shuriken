@@ -14,7 +14,6 @@ namespace srk::modules::graphics::gl {
 	public:
 		struct InternalFeatures {
 			bool supportTexStorage;
-			GLfloat maxAnisotropy;
 		};
 
 
@@ -141,6 +140,7 @@ namespace srk::modules::graphics::gl {
 		static uint32_t SRK_CALL getGLTypeSize(GLenum type);
 		static GLenum SRK_CALL convertProgramStage(ProgramStage stage);
 		static GLenum SRK_CALL convertVertexFormat(VertexType type);
+		static GLenum SRK_CALL convertSamplerAddressMode(SamplerAddressMode mode);
 
 	private:
 		struct {
@@ -213,7 +213,6 @@ namespace srk::modules::graphics::gl {
 		IntrusivePtr<events::IEventDispatcher<GraphicsEvent>> _eventDispatcher;
 
 		bool SRK_CALL _glInit(windows::IWindow* win);
-		bool SRK_CALL _glewInit();
 		void SRK_CALL _setInitState();
 		void SRK_CALL _release(windows::IWindow* win = nullptr);
 		void SRK_CALL _resize(const Vec2ui32& size);

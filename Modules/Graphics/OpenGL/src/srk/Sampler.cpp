@@ -71,8 +71,7 @@ namespace srk::modules::graphics::gl {
 	}
 
 	void Sampler::setMaxAnisotropy(uint32_t max) {
-		if (auto& features = _graphics.get<Graphics>()->getInternalFeatures(); max > features.maxAnisotropy) max = features.maxAnisotropy;
-		if (_desc.maxAnisotropy != max) {
+		if ((decltype(max))_desc.maxAnisotropy != max) {
 			_desc.maxAnisotropy = max;
 
 			_setDirty(_oldDesc.maxAnisotropy != _desc.maxAnisotropy, DirtyFlag::MAX_ANISOTROPY);
@@ -105,27 +104,10 @@ namespace srk::modules::graphics::gl {
 		_desc.filter.compareMode = _filter.operation == SamplerFilterOperation::COMPARISON ? GL_COMPARE_REF_TO_TEXTURE : GL_NONE;
 	}
 
-	GLenum Sampler::_convertAddressMode(SamplerAddressMode mode) {
-		switch (mode) {
-		case SamplerAddressMode::WRAP:
-			return GL_REPEAT;
-		case SamplerAddressMode::MIRROR:
-			return GL_MIRRORED_REPEAT;
-		case SamplerAddressMode::CLAMP:
-			return GL_CLAMP_TO_EDGE;
-		case SamplerAddressMode::BORDER:
-			return GL_CLAMP_TO_BORDER;
-		case SamplerAddressMode::MIRROR_ONCE:
-			return GL_MIRROR_CLAMP_TO_EDGE;
-		default:
-			return GL_REPEAT;
-		}
-	}
-
 	void Sampler::_updateAddress() {
-		_desc.address.s = _convertAddressMode(_address.u);
-		_desc.address.t = _convertAddressMode(_address.v);
-		_desc.address.r = _convertAddressMode(_address.w);
+		_desc.address.s = Graphics::convertSamplerAddressMode(_address.u);
+		_desc.address.t = Graphics::convertSamplerAddressMode(_address.v);
+		_desc.address.r = Graphics::convertSamplerAddressMode(_address.w);
 	}
 
 	void Sampler::update() {

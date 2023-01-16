@@ -12,6 +12,7 @@ namespace srk::modules::graphics::d3d11 {
 
 		_desc.ComparisonFunc = D3D11_COMPARISON_NEVER;
 		_desc.MaxLOD = D3D11_FLOAT32_MAX;
+		_desc.MaxAnisotropy = 1;
 		_oldDesc = _desc;
 	}
 
@@ -94,27 +95,10 @@ namespace srk::modules::graphics::d3d11 {
 		_desc.Filter = (D3D11_FILTER)filter;
 	}
 
-	D3D11_TEXTURE_ADDRESS_MODE Sampler::_convertAddressMode(SamplerAddressMode mode) {
-		switch (mode) {
-		case SamplerAddressMode::WRAP:
-			return D3D11_TEXTURE_ADDRESS_WRAP;
-		case SamplerAddressMode::MIRROR:
-			return D3D11_TEXTURE_ADDRESS_MIRROR;
-		case SamplerAddressMode::CLAMP:
-			return D3D11_TEXTURE_ADDRESS_CLAMP;
-		case SamplerAddressMode::BORDER:
-			return D3D11_TEXTURE_ADDRESS_BORDER;
-		case SamplerAddressMode::MIRROR_ONCE:
-			return D3D11_TEXTURE_ADDRESS_MIRROR_ONCE;
-		default:
-			return D3D11_TEXTURE_ADDRESS_WRAP;
-		}
-	}
-
 	void Sampler::_updateAddress() {
-		_desc.AddressU = _convertAddressMode(_address.u);
-		_desc.AddressV = _convertAddressMode(_address.v);
-		_desc.AddressW = _convertAddressMode(_address.w);
+		_desc.AddressU = Graphics::convertSamplerAddressMode(_address.u);
+		_desc.AddressV = Graphics::convertSamplerAddressMode(_address.v);
+		_desc.AddressW = Graphics::convertSamplerAddressMode(_address.w);
 	}
 
 	void Sampler::update() {

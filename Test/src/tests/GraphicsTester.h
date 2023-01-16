@@ -8,6 +8,8 @@ public:
 	virtual int32_t SRK_CALL run() override {
 		auto monitors = Monitor::getMonitors();
 		auto vms = monitors[0].getVideoModes();
+
+		auto aaaa = sizeof(SamplerAddress);
 		
 		IntrusivePtr wml = new WindowModuleLoader();
 		if (!wml->load(getWindowDllPath())) return 0;
@@ -25,8 +27,8 @@ public:
 
 		//if (!gml->load(getDllPath("srk-module-graphics-d3d11"))) return 0;
 		//if (!gml->load(getDllPath("srk-module-graphics-d3d12"))) return 0;
-		//if (!gml->load(getDllPath("srk-module-graphics-gl"))) return 0;
-		if (!gml->load(getDllPath("srk-module-graphics-vulkan"))) return 0;
+		if (!gml->load(getDllPath("srk-module-graphics-gl"))) return 0;
+		//if (!gml->load(getDllPath("srk-module-graphics-vulkan"))) return 0;
 
 		SerializableObject args;
 
@@ -68,10 +70,10 @@ public:
 			printaln("createVertexBuffer : ", vb ? "succeed" : "failed");
 			if (vb) {
 				auto rst = vb->create(12, Usage::MAP_READ_WRITE, Usage::NONE);
-				printaln("VertexBuffer::create : ", rst ? "succeed" : "failed");
+				printaln("VertexBuffer::create(rw) : ", rst ? "succeed" : "failed");
 				if (rst) {
 					auto usage = vb->map(Usage::MAP_WRITE);
-					printaln("VertexBuffer::map : ", usage != Usage::NONE ? "succeed" : "failed");
+					printaln("VertexBuffer::map(rw-w) : ", usage != Usage::NONE ? "succeed" : "failed");
 					float32_t wbuf[] = { 1.0f, 2.0f, 3.0f };
 					constexpr auto n = std::extent_v<decltype(wbuf)>;
 					auto wsize = vb->write(wbuf, sizeof(wbuf), 0);
@@ -79,7 +81,8 @@ public:
 					vb->unmap();
 
 					float32_t rbuf[n];
-					vb->map(Usage::MAP_READ);
+					usage = vb->map(Usage::MAP_READ);
+					printaln("VertexBuffer::map(rw-r) : ", usage != Usage::NONE ? "succeed" : "failed");
 					auto rsize = vb->read(rbuf, sizeof(rbuf), 0);
 					vb->unmap();
 					auto isSame = rsize != -1 && wsize == rsize;
@@ -93,34 +96,56 @@ public:
 
 					vb->create(12, Usage::UPDATE, Usage::NONE);
 					auto upsize = vb->update(wbuf, sizeof(wbuf), 0);
-					printaln("VertexBuffer::update : ", upsize != -1 && upsize == sizeof(wbuf) ? "succeed" : "failed");
+					printaln("VertexBuffer::update(rw) : ", upsize != -1 && upsize == sizeof(wbuf) ? "succeed" : "failed");
 
 					vb->create(12, Usage::COPY_SRC, Usage::NONE, wbuf, sizeof(wbuf));
 
 					auto vb2 = graphics->createVertexBuffer();
-					vb2->create(12, Usage::COPY_DST | Usage::MAP_READ, Usage::NONE);
-					auto cpysize = vb2->copyFrom(0, vb, Box1uz(Vec1uz(0), Vec1uz(vb->getSize())));
-					vb2->map(Usage::MAP_READ);
-					rsize = vb2->read(rbuf, sizeof(rbuf), 0);
-					vb2->unmap();
-					isSame = cpysize != -1 && rsize != -1 && wsize == cpysize && wsize == rsize;
-					for (size_t i = 0; i < n; ++i) {
-						if (wbuf[i] != rbuf[i]) {
-							isSame = false;
-							break;
+					printaln("createVertexBuffer : ", vb2 ? "succeed" : "failed");
+					if (vb2) {
+						rst = vb2->create(12, Usage::COPY_DST | Usage::MAP_READ, Usage::NONE);
+						printaln("VertexBuffer::create(dr) : ", rst ? "succeed" : "failed");
+						if (rst) {
+							auto cpysize = vb2->copyFrom(0, vb, Box1uz(Vec1uz(0), Vec1uz(vb->getSize())));
+							printaln("VertexBuffer::copyFrom : ", cpysize != -1 ? "succeed" : "failed");
+							usage = vb2->map(Usage::MAP_READ);
+							printaln("VertexBuffer::map(dr-r) : ", usage != Usage::NONE ? "succeed" : "failed");
+							rsize = vb2->read(rbuf, sizeof(rbuf), 0);
+							vb2->unmap();
+							isSame = cpysize != -1 && rsize != -1 && wsize == cpysize && wsize == rsize;
+							for (size_t i = 0; i < n; ++i) {
+								if (wbuf[i] != rbuf[i]) {
+									isSame = false;
+									break;
+								}
+							}
+							printaln("VertexBuffer::copyFrom data check : ", isSame ? "succeed" : "failed");
 						}
 					}
-					printaln("VertexBuffer::copyFrom : ", isSame ? "succeed" : "failed");
 				}
 			}
 
 			auto tr = graphics->createTexture2DResource();
 			printaln("createTexture2DResource : ", tr ? "succeed" : "failed");
 			if (tr) {
-				uint8_t pixels[] = { 255, 255, 255, 255 };
-				void* ptr = pixels;
-				auto rst = tr->create(Vec2uz(1, 1), 0, 1, 1, TextureFormat::R8G8B8A8, Usage::MAP_READ | Usage::MAP_WRITE, Usage::NONE, &ptr);
+				uint8_t pixels[20];
+				memset(pixels, 255, 16);
+				memset(pixels + 16, 200, 4);
+				std::array<void*, 2> mipData;
+				mipData[0] = pixels;
+				mipData[1] = pixels + 16;
+				auto rst = tr->create(Vec2uz(2, 2), 0, 2, 1, TextureFormat::R8G8B8A8, Usage::NONE, Usage::NONE, mipData.data());
 				printaln("Texture2DResource::create : ", rst ? "succeed" : "failed");
+			}
+
+			auto sampler = graphics->createSampler();
+			printaln("createSampler : ", sampler ? "succeed" : "failed");
+			if (sampler) {
+				sampler->setAddress(SamplerAddressMode::REPEAT, SamplerAddressMode::REPEAT, SamplerAddressMode::REPEAT);
+				sampler->setBorderColor(Vec4f32(0.1f, 0.2f, 0.4f, 0.5f));
+				sampler->setComparisonFunc(ComparisonFunc::NEVER);
+				sampler->setFilter(SamplerFilterOperation::COMPARISON, SamplerFilterMode::ANISOTROPIC, SamplerFilterMode::ANISOTROPIC, SamplerFilterMode::ANISOTROPIC);
+				sampler->setMaxAnisotropy(2);
 			}
 
 			IntrusivePtr shader = new Shader();
@@ -155,6 +180,7 @@ public:
 				spc->set(ShaderPredefine::AMBIENT_COLOR, new ShaderParameter())->set(Vec3f32());
 				spc->set(ShaderPredefine::DIFFUSE_COLOR, new ShaderParameter())->set(Vec3f32::ONE);
 				spc->set(ShaderPredefine::SPECULAR_COLOR, new ShaderParameter())->set(Vec3f32::ONE);
+				spc->set("_diffuseTexSampler", new ShaderParameter())->set(sampler);
 
 				graphics->draw(program, vac, spc, nullptr);
 			}

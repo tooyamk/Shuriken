@@ -18,13 +18,28 @@ namespace srk::modules::graphics {
 		mipmap(mipmap) {
 	}
 
-	SamplerFilter::SamplerFilter(const SamplerFilter& filter) : SamplerFilter(filter.operation, filter.minification, filter.magnification, filter.mipmap) {}
+	SamplerFilter::SamplerFilter(const SamplerFilter& filter) :
+		featureValue(filter.featureValue) {
+	}
+
+	SamplerFilter::SamplerFilter(SamplerFilter&& filter) noexcept :
+		featureValue(filter.featureValue) {
+	}
 
 
 	SamplerAddress::SamplerAddress(SamplerAddressMode u, SamplerAddressMode v, SamplerAddressMode w) :
 		u(u),
 		v(v),
-		w(w) {
+		w(w),
+		reserved(0) {
+	}
+
+	SamplerAddress::SamplerAddress(const SamplerAddress& address) :
+		featureValue(address.featureValue) {
+	}
+
+	SamplerAddress::SamplerAddress(SamplerAddress&& address) noexcept :
+		featureValue(address.featureValue) {
 	}
 
 
@@ -42,16 +57,24 @@ namespace srk::modules::graphics {
 	BlendFunc::BlendFunc(const BlendFunc& func) : BlendFunc(func.srcColor, func.dstColor, func.srcAlpha, func.dstAlpha) {}
 
 
-	BlendEquation::BlendEquation() : BlendEquation(BlendOp::ADD) {}
+	BlendEquation::BlendEquation() : BlendEquation(BlendOp::ADD) {
+	}
 
-	BlendEquation::BlendEquation(BlendOp op) : BlendEquation(op, op) {}
+	BlendEquation::BlendEquation(BlendOp op) : BlendEquation(op, op) {
+	}
 
 	BlendEquation::BlendEquation(BlendOp color, BlendOp alpha) :
 		color(color),
 		alpha(alpha) {
 	}
 
-	BlendEquation::BlendEquation(const BlendEquation& equation) : BlendEquation(equation.color, equation.alpha) {}
+	BlendEquation::BlendEquation(const BlendEquation& equation) :
+		featureValue(equation.featureValue) {
+	}
+
+	BlendEquation::BlendEquation(BlendEquation&& equation) noexcept :
+		featureValue(equation.featureValue) {
+	}
 
 
 	RasterizerDescriptor::RasterizerDescriptor() :
@@ -146,8 +169,15 @@ namespace srk::modules::graphics {
 		enabled(false),
 		equation(BlendOp::ADD),
 		func(BlendFactor::ONE, BlendFactor::ZERO),
-		reserved(0),
 		writeMask(VECTOR_SET_ALL, true) {
+	}
+
+	RenderTargetBlendState::RenderTargetBlendState(const RenderTargetBlendState& other) :
+		featureValue(other.featureValue) {
+	}
+
+	RenderTargetBlendState::RenderTargetBlendState(RenderTargetBlendState&& other) noexcept :
+		featureValue(other.featureValue) {
 	}
 
 
@@ -188,6 +218,7 @@ namespace srk::modules::graphics {
 		vertexDim3Bit16 = false;
 		maxSampleCount = 0;
 		simultaneousRenderTargetCount = 0;
+		maxSamplerAnisotropy = 0;
 		indexTypes.clear();
 		textureFormats.clear();
 	}

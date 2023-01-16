@@ -47,11 +47,7 @@ namespace srk::modules::graphics::d3d11 {
 		ID3D11SamplerState* _samplerState;
 
 		void SRK_CALL _updateFilter();
-
-		
-		static D3D11_TEXTURE_ADDRESS_MODE SRK_CALL _convertAddressMode(SamplerAddressMode mode);
 		void SRK_CALL _updateAddress();
-
 		void SRK_CALL _releaseRes();
 
 		inline void SRK_CALL _setDirty(bool dirty, DirtyType val) {

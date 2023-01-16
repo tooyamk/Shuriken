@@ -8,6 +8,7 @@
 #include "IndexBuffer.h"
 #include "Program.h"
 #include "RasterizerState.h"
+#include "Sampler.h"
 #include "Texture2DResource.h"
 #include "VertexBuffer.h"
 #include "srk/ProgramSource.h"
@@ -27,6 +28,7 @@ namespace srk::modules::graphics::vulkan {
 		_eventDispatcher(new events::EventDispatcher<GraphicsEvent>()) {
 		_constantBufferManager.createShareConstantBufferCallback = std::bind(&Graphics::_createdShareConstantBuffer, this);
 		_constantBufferManager.createExclusiveConstantBufferCallback = std::bind(&Graphics::_createdExclusiveConstantBuffer, this, std::placeholders::_1);
+		memset(&_internalFeatures, 0, sizeof(InternalFeatures));
 	}
 
 	Graphics::~Graphics() {
@@ -108,6 +110,12 @@ namespace srk::modules::graphics::vulkan {
 				_deviceFeatures.stencilIndependentMask = true;
 				_deviceFeatures.stencilIndependentRef = true;
 				_deviceFeatures.simultaneousRenderTargetCount = physicalDeviceProperties.limits.maxColorAttachments;
+				_deviceFeatures.maxSamplerAnisotropy = physicalDeviceProperties.limits.maxSamplerAnisotropy;
+				_deviceFeatures.samplerAddressModes.emplace_back(SamplerAddressMode::REPEAT);
+				_deviceFeatures.samplerAddressModes.emplace_back(SamplerAddressMode::CLAMP_EDGE);
+				_deviceFeatures.samplerAddressModes.emplace_back(SamplerAddressMode::CLAMP_BORDER);
+				_deviceFeatures.samplerAddressModes.emplace_back(SamplerAddressMode::MIRROR_REPEAT);
+				_deviceFeatures.samplerAddressModes.emplace_back(SamplerAddressMode::MIRROR_CLAMP_EDGE);
 
 				_vkStatus.usage.bufferCreateUsageMask = Usage::MAP_READ_WRITE | Usage::UPDATE | Usage::COPY_SRC_DST;
 				_vkStatus.usage.texCreateUsageMask = Usage::MAP_READ_WRITE | Usage::COPY_SRC_DST | Usage::RENDERABLE;
@@ -201,8 +209,17 @@ namespace srk::modules::graphics::vulkan {
 				if (!strcmp(VK_KHR_SWAPCHAIN_EXTENSION_NAME, extension.extensionName)) {
 					swapchainExtFound = true;
 					data.names[data.count++] = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
+					continue;
 				}
-				if (!strcmp("VK_KHR_portability_subset", extension.extensionName)) data.names[data.count++] = "VK_KHR_portability_subset";
+				if (!strcmp("VK_KHR_portability_subset", extension.extensionName)) {
+					data.names[data.count++] = "VK_KHR_portability_subset";
+					continue;
+				}
+				if (!strcmp("VK_EXT_custom_border_color", extension.extensionName)) {
+					data.names[data.count++] = "VK_EXT_custom_border_color";
+					_internalFeatures.customBorderColor = true;
+					continue;
+				}
 			}
 		} while (false);
 
@@ -416,6 +433,10 @@ namespace srk::modules::graphics::vulkan {
 		queue.queueCount = 1;
 		queue.pQueuePriorities = queuePriorities;
 
+		VkPhysicalDeviceFeatures physicalDeviceFeatures;
+		memset(&physicalDeviceFeatures, 0, sizeof(physicalDeviceFeatures));
+		physicalDeviceFeatures.samplerAnisotropy = VK_TRUE;
+
 		VkDeviceCreateInfo deviceCreateInfo;
 		memset(&deviceCreateInfo, 0, sizeof(deviceCreateInfo));
 		deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -425,7 +446,7 @@ namespace srk::modules::graphics::vulkan {
 		deviceCreateInfo.ppEnabledLayerNames = nullptr;
 		deviceCreateInfo.enabledExtensionCount = _vkStatus.enabledDeviceExtensions.count;
 		deviceCreateInfo.ppEnabledExtensionNames = (const char* const*)_vkStatus.enabledDeviceExtensions.names;
-		deviceCreateInfo.pEnabledFeatures = nullptr;
+		deviceCreateInfo.pEnabledFeatures = &physicalDeviceFeatures;
 
 		if (graphicsQueueFamilyIndex != presentQueueFamilyIndex) {
 			queue = deviceQueueCreateInfos[1];
@@ -818,7 +839,7 @@ namespace srk::modules::graphics::vulkan {
 	}
 
 	IntrusivePtr<ISampler> Graphics::createSampler() {
-		return nullptr;
+		return new Sampler(*this);
 	}
 
 	IntrusivePtr<ITexture1DResource> Graphics::createTexture1DResource() {
@@ -952,6 +973,44 @@ namespace srk::modules::graphics::vulkan {
 	void Graphics::clear(ClearFlag flags, const Vec4f32& color, float32_t depth, size_t stencil) {
 	}
 
+	InternalCommandBuffer Graphics::beginOneTimeCommands() {
+		VkCommandBufferAllocateInfo commandBufferAllocateInfo;
+		memset(&commandBufferAllocateInfo, 0, sizeof(commandBufferAllocateInfo));
+		commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+		commandBufferAllocateInfo.commandPool = _vkStatus.cmd.pool;
+		commandBufferAllocateInfo.commandBufferCount = 1;
+
+		InternalCommandBuffer buffer;
+		if (!buffer.create(_vkStatus.device, _vkStatus.cmd.pool, commandBufferAllocateInfo)) return InternalCommandBuffer();
+
+		VkCommandBufferBeginInfo commandBufferBeginInfo;
+		memset(&commandBufferBeginInfo, 0, sizeof(commandBufferBeginInfo));
+		commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+		if (vkBeginCommandBuffer(buffer.getVkCommandBuffer(), &commandBufferBeginInfo) != VK_SUCCESS) return InternalCommandBuffer();
+
+		return buffer;
+	}
+
+	bool Graphics::endOneTimeCommands(InternalCommandBuffer& buffer) {
+		auto cb = buffer.getVkCommandBuffer();
+		if (vkEndCommandBuffer(cb) != VK_SUCCESS) return false;
+
+		VkSubmitInfo submitInfo;
+		memset(&submitInfo, 0, sizeof(submitInfo));
+		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submitInfo.commandBufferCount = 1;
+		submitInfo.pCommandBuffers = &cb;
+
+		auto queue = _vkStatus.cmd.graphicsQueue;
+
+		if (vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS) return false;
+		if (vkQueueWaitIdle(queue) != VK_SUCCESS) return false;
+
+		return true;
+	}
+
 	int32_t Graphics::findProperties(uint32_t memoryTypeBits, VkMemoryPropertyFlags flags) {
 		for (uint32_t i = 0; i < _vkStatus.physicalDeviceMemoryProperties.memoryTypeCount; ++i) {
 			if ((memoryTypeBits & (1 << i)) && (_vkStatus.physicalDeviceMemoryProperties.memoryTypes[i].propertyFlags & flags) == flags) return i;
@@ -1005,6 +1064,7 @@ namespace srk::modules::graphics::vulkan {
 		_vkStatus.physicalDevice = nullptr;
 		_vkStatus.cmd.graphicsQueue = nullptr;
 
+		memset(&_internalFeatures, 0, sizeof(_internalFeatures));
 		_deviceFeatures.reset();
 
 		_vkStatus.apiVersion = 0;
@@ -1274,6 +1334,23 @@ namespace srk::modules::graphics::vulkan {
 			return VK_SAMPLE_COUNT_64_BIT;
 		default:
 			return (VkSampleCountFlagBits)0;
+		}
+	}
+
+	VkSamplerAddressMode Graphics::convertSamplerAddressMode(SamplerAddressMode mode) {
+		switch (mode) {
+		case SamplerAddressMode::REPEAT:
+			return VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		case SamplerAddressMode::CLAMP_EDGE:
+			return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		case SamplerAddressMode::CLAMP_BORDER:
+			return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+		case SamplerAddressMode::MIRROR_REPEAT:
+			return VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+		case SamplerAddressMode::MIRROR_CLAMP_EDGE:
+			return VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE;
+		default:
+			return VK_SAMPLER_ADDRESS_MODE_REPEAT;
 		}
 	}
 

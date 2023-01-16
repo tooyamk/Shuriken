@@ -57,7 +57,8 @@ namespace srk::modules::graphics::d3d11 {
 		}
 
 		auto perBlockBytes = Image::calcPerBlockBytes(format);
-		auto mipsBytes = Image::calcMipsBytes(format, dim, mipLevels);
+		size_t mipsBytes;
+		Image::calcMipsInfo(format, dim, mipLevels, &mipsBytes);
 
 		this->size = mipsBytes * arraySize;
 

@@ -11,7 +11,7 @@ namespace srk::modules::graphics::vulkan {
 	}
 
 	bool ConstantBuffer::isCreated() const {
-		return _baseBuffer.getBuffer();
+		return _baseBuffer.getVkBuffer();
 	}
 
 	const void* ConstantBuffer::getNative() const {

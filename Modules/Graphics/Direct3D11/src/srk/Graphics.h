@@ -273,6 +273,7 @@ namespace srk::modules::graphics::d3d11 {
 		static D3D11_FILL_MODE SRK_CALL convertFillMode(FillMode mode);
 		static D3D11_CULL_MODE SRK_CALL convertCullMode(CullMode mode);
 		static DXGI_FORMAT SRK_CALL convertVertexFormat(const VertexFormat& fmt);
+		static D3D11_TEXTURE_ADDRESS_MODE SRK_CALL convertSamplerAddressMode(SamplerAddressMode mode);
 
 	private:
 		bool _isDebug;

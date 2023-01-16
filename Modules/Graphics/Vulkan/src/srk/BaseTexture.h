@@ -47,7 +47,7 @@ namespace srk::modules::graphics::vulkan {
 			return _size;
 		}
 
-		inline VkImage SRK_CALL getImage() const {
+		inline VkImage SRK_CALL getVkImage() const {
 			return _image;
 		}
 

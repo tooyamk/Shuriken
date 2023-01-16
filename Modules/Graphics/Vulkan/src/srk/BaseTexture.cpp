@@ -1,4 +1,5 @@
 #include "BaseTexture.h"
+#include "BaseBuffer.h"
 #include "srk/Image.h"
 
 namespace srk::modules::graphics::vulkan {
@@ -60,6 +61,10 @@ namespace srk::modules::graphics::vulkan {
 		auto isArray = arraySize && _texType != TextureType::TEX3D;
 		if (arraySize < 1 || _texType == TextureType::TEX3D) arraySize = 1;
 
+		auto cpuRead = (allUsage & Usage::MAP_READ) == Usage::MAP_READ;
+		auto cpuWriteUsage = allUsage & Usage::MAP_WRITE_UPDATE;
+		auto cpuWrite = cpuWriteUsage != Usage::NONE;
+
 		VkImageCreateInfo imageCreateInfo;
 		memset(&imageCreateInfo, 0, sizeof(imageCreateInfo));
 		imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -79,7 +84,7 @@ namespace srk::modules::graphics::vulkan {
 			destroy();
 			return false;
 		}
-		imageCreateInfo.tiling = VK_IMAGE_TILING_LINEAR;
+		imageCreateInfo.tiling = cpuRead || cpuWrite ?  VK_IMAGE_TILING_LINEAR : VK_IMAGE_TILING_OPTIMAL;
 		if ((allUsage & Usage::RENDERABLE) == Usage::RENDERABLE) {
 			_usage |= Usage::RENDERABLE;
 			imageCreateInfo.usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
@@ -98,11 +103,7 @@ namespace srk::modules::graphics::vulkan {
 		imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
 		auto initData = data != nullptr;
-
-		auto cpuRead = (allUsage & Usage::MAP_READ) == Usage::MAP_READ;
-		auto cpuWriteUsage = allUsage & Usage::MAP_WRITE_UPDATE;
-		auto cpuWrite = cpuWriteUsage != Usage::NONE;
-
+		
 		_internalUsage = Usage::NONE;
 		if (initData && !cpuWrite) {
 			_internalUsage |= Usage::COPY_DST;
@@ -137,6 +138,18 @@ namespace srk::modules::graphics::vulkan {
 			imageCreateInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT;
 		}
 
+		VkImageFormatProperties imageFormatProperties;
+		if (vkGetPhysicalDeviceImageFormatProperties(graphics.getVkPhysicalDevice(), imageCreateInfo.format, imageCreateInfo.imageType, imageCreateInfo.tiling, imageCreateInfo.usage, imageCreateInfo.flags, &imageFormatProperties) != VK_SUCCESS) {
+			destroy();
+			return false;
+		}
+
+		if (imageCreateInfo.extent.width > imageFormatProperties.maxExtent.width || imageCreateInfo.extent.height > imageFormatProperties.maxExtent.height || imageCreateInfo.extent.depth > imageFormatProperties.maxExtent.depth || 
+			imageCreateInfo.mipLevels > imageFormatProperties.maxMipLevels || imageCreateInfo.arrayLayers > imageFormatProperties.maxArrayLayers || imageCreateInfo.samples > imageFormatProperties.sampleCounts) {
+			destroy();
+			return false;
+		}
+
 		VmaAllocationCreateInfo allocationCreateInfo;
 		memset(&allocationCreateInfo, 0, sizeof(allocationCreateInfo));
 		allocationCreateInfo.usage = vmaUsage;
@@ -145,11 +158,6 @@ namespace srk::modules::graphics::vulkan {
 		_internalUsage |= _usage;
 		if ((_internalUsage & Usage::UPDATE) == Usage::UPDATE) _internalUsage |= Usage::MAP_WRITE;
 
-		if (vkCreateImage(graphics.getDevice(), &imageCreateInfo, nullptr, &_image) != VK_SUCCESS) {
-			destroy();
-			return false;
-		}
-
 		if (vmaCreateImage(_memAllocator, &imageCreateInfo, &allocationCreateInfo, &_image, &_allocation, nullptr) != VK_SUCCESS) {
 			destroy();
 			return false;
@@ -157,34 +165,85 @@ namespace srk::modules::graphics::vulkan {
 
 		vmaGetAllocationMemoryProperties(_memAllocator, _allocation, &_vkFlags);
 
-		auto fillData = initData && (_vkFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
-		std::vector<size_t> mipBytes(fillData ? mipLevels : 0);
-		_size = Image::calcMipsBytes(format, dim, mipLevels, fillData ? mipBytes.data() : nullptr);
+		size_t mipsBytes;
+		std::vector<size_t> mipBytesArr(initData ? mipLevels : 0);
+		std::vector<Vec3uz> mipDimArr(initData ? mipLevels : 0);
+		Image::calcMipsInfo(format, dim, mipLevels, &mipsBytes, initData ? mipBytesArr.data() : nullptr, initData ? mipDimArr.data() : nullptr);
+		_size = mipsBytes * arraySize;
 
 		if (initData) {
-			if (fillData) {
+			if (_vkFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) {
 				void* dst;
 				if (_map(dst)) {
 					size_t offset = 0;
 					for (size_t i = 0; i < mipLevels; ++i) {
-						memcpy((uint8_t*)dst + offset, data[i], mipBytes[i]);
-						offset += mipBytes[i];
+						memcpy((uint8_t*)dst + offset, data[i], mipBytesArr[i]);
+						offset += mipBytesArr[i];
 					}
 					_unmap();
 				} else {
 					destroy();
 					return false;
 				}
+				
 			} else {
-				BaseTexture src(_texType);
-				if (!src.create(graphics, dim, arraySize, mipLevels, sampleCount, format, Usage::MAP_WRITE | Usage::COPY_SRC, Usage::NONE, data)) {
+				BaseBuffer src;
+				if (!src.create(graphics, _size, Usage::MAP_WRITE | Usage::COPY_SRC, Usage::NONE, data, _size)) {
 					destroy();
 					return false;
 				}
-				/*if (copyFrom(graphics, 0, src, Box1uz(Vec1uz(0), Vec1uz(_size))) == -1) {
+
+				auto cmd = graphics.beginOneTimeCommands();
+				if (!cmd) {
 					destroy();
 					return false;
-				}*/
+				}
+
+				VkImageMemoryBarrier imageMemoryBarrier;
+				memset(&imageMemoryBarrier, 0, sizeof(imageMemoryBarrier));
+				imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+				imageMemoryBarrier.srcAccessMask = 0;
+				imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+				imageMemoryBarrier.oldLayout = imageCreateInfo.initialLayout;
+				imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+				imageMemoryBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+				imageMemoryBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+				imageMemoryBarrier.image = _image;
+				imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+				imageMemoryBarrier.subresourceRange.baseMipLevel = 0;
+				imageMemoryBarrier.subresourceRange.levelCount = mipLevels;
+				imageMemoryBarrier.subresourceRange.baseArrayLayer = 0;
+				imageMemoryBarrier.subresourceRange.layerCount = arraySize;
+
+				vkCmdPipelineBarrier(cmd.getVkCommandBuffer(), VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
+
+				std::vector<VkBufferImageCopy> bufferImageCopies(mipLevels * arraySize);
+				size_t idx = 0;
+				for (size_t i = 0; i < arraySize; ++i) {
+					auto bufferOffset = mipsBytes * i;
+					for (size_t j = 0; j < mipLevels; ++j) {
+						auto& bufferImageCopy = bufferImageCopies[idx++];
+						bufferImageCopy.bufferOffset = bufferOffset;
+						bufferImageCopy.bufferRowLength = 0;
+						bufferImageCopy.bufferImageHeight = 0;
+						bufferImageCopy.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+						bufferImageCopy.imageSubresource.mipLevel = j;
+						bufferImageCopy.imageSubresource.baseArrayLayer = i;
+						bufferImageCopy.imageSubresource.layerCount = 1;
+						bufferImageCopy.imageOffset = { 0, 0, 0 };
+						const auto& dim = mipDimArr[j];
+						bufferImageCopy.imageExtent = { (uint32_t)dim[0], (uint32_t)dim[1], (uint32_t)dim[2] };
+
+						bufferOffset += mipBytesArr[j];
+					}
+				}
+
+				vkCmdCopyBufferToImage(cmd.getVkCommandBuffer(), src.getVkBuffer(), _image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, bufferImageCopies.size(), bufferImageCopies.data());
+
+				if (!graphics.endOneTimeCommands(cmd)) {
+					destroy();
+					return false;
+				}
 			}
 		}
 

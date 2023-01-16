@@ -49,15 +49,18 @@ namespace srk::modules::graphics::gl {
 		glGenBuffers(1, &handle);
 		glBindBuffer(bufferType, handle);
 
+		auto cpuRead = (allUsage & Usage::MAP_READ) == Usage::MAP_READ;
+		auto cpuWrite = (allUsage & Usage::MAP_WRITE_UPDATE) != Usage::NONE;
+
 		if (persistentMap) {
 			resUsage |= Usage::PERSISTENT_MAP;
 			GLbitfield flags = GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT;
 
-			if ((allUsage & Usage::MAP_READ) == Usage::MAP_READ) {
+			if (cpuRead) {
 				resUsage |= Usage::MAP_READ;
 				flags |= GL_MAP_READ_BIT;
 			}
-			if ((allUsage & Usage::MAP_WRITE) == Usage::MAP_WRITE) {
+			if (cpuWrite) {
 				resUsage |= Usage::MAP_WRITE;
 				flags |= GL_MAP_WRITE_BIT;
 			}
@@ -65,14 +68,27 @@ namespace srk::modules::graphics::gl {
 			glBufferStorage(bufferType, size, data, flags);
 			mapData = glMapBufferRange(bufferType, 0, size, flags);
 		} else {
-			glBufferData(bufferType, size, data, internalUsage ? internalUsage : ((allUsage & Usage::MAP_WRITE_UPDATE) == Usage::NONE ? GL_STATIC_DRAW : GL_DYNAMIC_DRAW));
+			if (cpuRead) resUsage |= Usage::MAP_READ;
+			if (cpuWrite) resUsage |= Usage::MAP_WRITE;
+
+			GLint glUsage;
+			if (internalUsage) {
+				glUsage = internalUsage;
+			} else {
+				if (cpuWrite || ((allUsage & Usage::COPY_DST) == Usage::COPY_DST)) {
+					glUsage = cpuRead ? GL_DYNAMIC_READ : GL_DYNAMIC_DRAW;
+				} else {
+					glUsage = cpuRead ? GL_STATIC_READ : GL_STATIC_DRAW;
+				}
+			}
+			glBufferData(bufferType, size, data, glUsage);
 		}
 
 		glBindBuffer(bufferType, 0);
 
 		resUsage |= allUsage & (Usage::UPDATE | Usage::COPY_SRC_DST);
 		if ((resUsage & requiredUsage) != requiredUsage) {
-			graphics.error(std::format("OpenGL Resource::create error : has not support preferredUsage {}", (std::underlying_type_t<Usage>)(requiredUsage & (~(resUsage & requiredUsage)))));
+			graphics.error(std::format("OpenGL BaseBuffer::create error : has not support preferredUsage {}", (std::underlying_type_t<Usage>)(requiredUsage & (~(resUsage & requiredUsage)))));
 			releaseBuffer();
 			return false;
 		}
@@ -97,17 +113,23 @@ namespace srk::modules::graphics::gl {
 					unmap();
 
 					mapUsage = usage;
-					if ((this->resUsage & Usage::PERSISTENT_MAP) == Usage::PERSISTENT_MAP) {
+					if ((resUsage & Usage::PERSISTENT_MAP) == Usage::PERSISTENT_MAP) {
 						_waitServerSync();
 					} else {
 						if (!access) {
-							if (usage == Usage::MAP_READ_WRITE) {
+							if ((resUsage & Usage::MAP_READ) == Usage::MAP_READ) {
+								access = (resUsage & Usage::MAP_WRITE) != Usage::NONE ? GL_READ_WRITE : GL_READ_ONLY;
+							} else {
+								access = GL_WRITE_ONLY;
+							}
+
+							/*if (usage == Usage::MAP_READ_WRITE) {
 								access = GL_READ_WRITE;
 							} else if ((usage & Usage::MAP_READ) != Usage::NONE) {
 								access = GL_READ_ONLY;
 							} else {
 								access = GL_WRITE_ONLY;
-							}
+							}*/
 						}
 
 						glBindBuffer(bufferType, handle);

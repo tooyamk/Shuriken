@@ -81,7 +81,8 @@ namespace srk::modules::graphics::gl {
 				bool supportTexStorage = graphics.getInternalFeatures().supportTexStorage;
 
 				auto perBlockBytes = Image::calcPerBlockBytes(format);
-				auto mipsBytes = Image::calcMipsBytes(format, dim, mipLevels);
+				size_t mipsBytes;
+				Image::calcMipsInfo(format, dim, mipLevels, &mipsBytes);
 
 				this->size = mipsBytes * arraySize;
 

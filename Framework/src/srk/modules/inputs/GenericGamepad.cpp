@@ -38,19 +38,18 @@ namespace srk::modules::inputs {
 		_polling(false),
 		_inputState(nullptr),
 		_oldInputState(nullptr),
-		_newInputState(nullptr),
+		_inputBuffer(nullptr),
 		_outputState(nullptr),
 		_outputBuffer(nullptr),
-		_outputDirty(false),
+		_outputFlags(0),
 		_needOutput(false) {
-		_inputLength = _driver->getInputLength();
-		if (_inputLength) {
-			_inputState = new uint8_t[_inputLength];
-			_oldInputState = new uint8_t[_inputLength];
-			_newInputState = new uint8_t[_inputLength];
-			memset(_inputState, 0, _inputLength);
-			memset(_oldInputState, 0, _inputLength);
-			memset(_newInputState, 0, _inputLength);
+		if (auto inputLength = _driver->getInputLength(); inputLength) {
+			_inputState = new uint8_t[inputLength];
+			_oldInputState = new uint8_t[inputLength];
+			_inputBuffer = new uint8_t[inputLength];
+			memset(_inputState, 0, inputLength);
+			memset(_oldInputState, 0, inputLength);
+			memset(_inputBuffer, 0, inputLength);
 		}
 
 		_outputLength = _driver->getOutputLength();
@@ -65,7 +64,7 @@ namespace srk::modules::inputs {
 
 	GenericGamepad::~GenericGamepad() {
 		if (_inputState) {
-			delete[] _newInputState;
+			delete[] _inputBuffer;
 			delete[] _oldInputState;
 			delete[] _inputState;
 		}
@@ -249,7 +248,7 @@ namespace srk::modules::inputs {
 				[](void* custom) {
 				auto self = (GenericGamepad*)((void**)custom)[1];
 
-				self->_outputDirty = true;
+				self->_outputFlags.fetch_or(OUTPUT_DIRTY);
 
 				auto lock = (std::unique_lock<std::shared_mutex>*)((void**)custom)[0];
 				lock->unlock();
@@ -270,12 +269,10 @@ namespace srk::modules::inputs {
 	void GenericGamepad::_doInput(bool dispatchEvent) {
 		using namespace srk::enum_operators;
 
-		if (!_driver->readStateFromDevice(_newInputState)) return;
+		if (!_driver->readStateFromDevice(_inputBuffer)) return;
 
 		if (!dispatchEvent) {
-			std::scoped_lock lock(_inputMutex);
-
-			memcpy(_inputState, _newInputState, _inputLength);
+			_switchInputData();
 
 			return;
 		}
@@ -286,12 +283,8 @@ namespace srk::modules::inputs {
 
 			keyMapping = _keyMapping;
 		}
-		{
-			std::scoped_lock lock(_inputMutex);
 
-			memcpy(_oldInputState, _inputState, _inputLength);
-			memcpy(_inputState, _newInputState, _inputLength);
-		}
+		_switchInputData();
 
 		if (!_driver->isStateReady(_oldInputState)) return;
 
@@ -306,8 +299,8 @@ namespace srk::modules::inputs {
 			DeviceStateValue oldVals[2], newVals[2];
 			translate(_normalizeStick(_driver->readDataFromInputState(_oldInputState, mappingVals[idx], Math::ONE_HALF<float32_t>)), 
 				_normalizeStick(_driver->readDataFromInputState(_oldInputState, mappingVals[idx + 1], Math::ONE_HALF<float32_t>)), dz, oldVals, 2);
-			translate(_normalizeStick(_driver->readDataFromInputState(_newInputState, mappingVals[idx], Math::ONE_HALF<float32_t>)), 
-				_normalizeStick(_driver->readDataFromInputState(_newInputState, mappingVals[idx + 1], Math::ONE_HALF<float32_t>)), dz, newVals, 2);
+			translate(_normalizeStick(_driver->readDataFromInputState(_inputState, mappingVals[idx], Math::ONE_HALF<float32_t>)),
+				_normalizeStick(_driver->readDataFromInputState(_inputState, mappingVals[idx + 1], Math::ONE_HALF<float32_t>)), dz, newVals, 2);
 
 			if (oldVals[0] != newVals[0] || oldVals[1] != newVals[1]) {
 				DeviceState ds = { (DeviceState::CodeType)vk, 2, newVals };
@@ -318,14 +311,14 @@ namespace srk::modules::inputs {
 		keyMapping.forEach([&](GamepadVirtualKeyCode vk, GamepadKeyCodeAndFlags cf) {
 			if (vk >= GamepadVirtualKeyCode::L_TRIGGER && vk <= GamepadVirtualKeyCode::AXIS_END) {
 				auto dz = _getDeadZone(vk);
-				if (auto newVal = translate(_driver->readDataFromInputState(_newInputState, cf, Math::ZERO<float32_t>), dz); newVal != translate(_driver->readDataFromInputState(_oldInputState, cf, Math::ZERO<float32_t>), dz)) {
+				if (auto newVal = translate(_driver->readDataFromInputState(_inputState, cf, Math::ZERO<float32_t>), dz); newVal != translate(_driver->readDataFromInputState(_oldInputState, cf, Math::ZERO<float32_t>), dz)) {
 					DeviceStateValue val = newVal;
 					DeviceState ds = { (DeviceState::CodeType)vk, 1, &val };
 					_eventDispatcher->dispatchEvent(this, DeviceEvent::MOVE, &ds);
 				}
 			} else if (vk >= GamepadVirtualKeyCode::BUTTON_START && vk <= GamepadVirtualKeyCode::BUTTON_END) {
 				auto dz = _getDeadZone(vk);
-				if (auto newVal = _driver->readDataFromInputState(_newInputState, cf, Math::ZERO<float32_t>); newVal != _driver->readDataFromInputState(_oldInputState, cf, Math::ZERO<float32_t>)) {
+				if (auto newVal = _driver->readDataFromInputState(_inputState, cf, Math::ZERO<float32_t>); newVal != _driver->readDataFromInputState(_oldInputState, cf, Math::ZERO<float32_t>)) {
 					DeviceStateValue val = newVal;
 					DeviceState ds = { (DeviceState::CodeType)vk, 1, &val };
 					_eventDispatcher->dispatchEvent(this, val > Math::ZERO<DeviceStateValue> ? DeviceEvent::DOWN : DeviceEvent::UP, &ds);
@@ -333,20 +326,21 @@ namespace srk::modules::inputs {
 			}
 		});
 
-		if (auto newVal = _driver->readDpadDataFromInputState(_newInputState); newVal != _driver->readDpadDataFromInputState(_oldInputState)) {
+		if (auto newVal = _driver->readDpadDataFromInputState(_inputState); newVal != _driver->readDpadDataFromInputState(_oldInputState)) {
 			DeviceStateValue val = newVal;
 			DeviceState ds = { (DeviceState::CodeType)GamepadVirtualKeyCode::DPAD, 1, &val };
 			_eventDispatcher->dispatchEvent(this, val >= Math::ZERO<DeviceStateValue> ? DeviceEvent::DOWN : DeviceEvent::UP, &ds);
 		}
 
-		_driver->customDispatch(_oldInputState, _newInputState, this, [](DeviceEvent evt, void* data, void* custom) {
+		_driver->customDispatch(_oldInputState, _inputState, this, [](DeviceEvent evt, void* data, void* custom) {
 			auto self = (GenericGamepad*)custom;
 			self->_eventDispatcher->dispatchEvent(self, evt, data);
 		});
 	}
 
 	void GenericGamepad::_doOutput() {
-		if (_outputDirty.exchange(false, std::memory_order::acquire)) {
+		auto expected = OUTPUT_DIRTY;
+		if (_outputFlags.compare_exchange_strong(expected, OUTPUT_WRITING, std::memory_order::release, std::memory_order::relaxed)) {
 			_needOutput = true;
 
 			std::shared_lock lock(_outputMutex);
@@ -355,6 +349,16 @@ namespace srk::modules::inputs {
 		}
 
 		if (_needOutput && _driver->writeStateToDevice(_outputBuffer)) _needOutput = false;
+	}
+
+	Vec2<DeviceStateValue> GenericGamepad::_getDeadZone(GamepadVirtualKeyCode key) const {
+		std::shared_lock lock(_deadZoneMutex);
+
+		if (auto itr = _deadZone.find(key); itr == _deadZone.end()) {
+			return Vec2<DeviceStateValue>::ZERO;
+		} else {
+			return itr->second;
+		}
 	}
 
 	void GenericGamepad::_setDeadZone(GamepadVirtualKeyCode keyCode, Vec2<DeviceStateValue>* deadZone) {
@@ -377,5 +381,14 @@ namespace srk::modules::inputs {
 
 			if (auto itr = _deadZone.find(keyCode); itr != _deadZone.end()) _deadZone.erase(itr);
 		}
+	}
+
+	void GenericGamepad::_switchInputData() {
+		std::scoped_lock lock(_inputMutex);
+
+		auto tmp = _oldInputState;
+		_oldInputState = _inputState;
+		_inputState = _inputBuffer;
+		_inputBuffer = tmp;
 	}
 }

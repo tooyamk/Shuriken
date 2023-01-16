@@ -337,17 +337,18 @@ namespace srk::modules::graphics {
 
 
 	enum class SamplerAddressMode : uint8_t {
-		WRAP,
-		MIRROR,
-		CLAMP,
-		BORDER,
-		MIRROR_ONCE
+		REPEAT,
+		CLAMP_EDGE,
+		CLAMP_BORDER,
+		MIRROR_REPEAT,
+		MIRROR_CLAMP_EDGE
 	};
 
 
 	struct SRK_FW_DLL SamplerFilter {
 		SamplerFilter(SamplerFilterOperation op = SamplerFilterOperation::NORMAL, SamplerFilterMode min = SamplerFilterMode::LINEAR, SamplerFilterMode mag = SamplerFilterMode::LINEAR, SamplerFilterMode mipmap = SamplerFilterMode::LINEAR);
 		SamplerFilter(const SamplerFilter& filter);
+		SamplerFilter(SamplerFilter&& filter) noexcept;
 
 		inline bool SRK_CALL operator==(const SamplerFilter& val) const {
 			return featureValue == val.featureValue;
@@ -361,6 +362,11 @@ namespace srk::modules::graphics {
 			featureValue = val.featureValue;
 		}
 
+		inline SamplerFilter& SRK_CALL operator=(SamplerFilter&& val) noexcept {
+			featureValue = val.featureValue;
+			return *this;
+		}
+
 		union {
 			uint32_t featureValue;
 
@@ -371,30 +377,41 @@ namespace srk::modules::graphics {
 				SamplerFilterMode mipmap;
 			};
 		};
-
-		
 	};
 
 
 	struct SRK_FW_DLL SamplerAddress {
-		SamplerAddress(SamplerAddressMode u = SamplerAddressMode::WRAP, SamplerAddressMode v = SamplerAddressMode::WRAP, SamplerAddressMode w = SamplerAddressMode::WRAP);
-
+		SamplerAddress(SamplerAddressMode u = SamplerAddressMode::REPEAT, SamplerAddressMode v = SamplerAddressMode::REPEAT, SamplerAddressMode w = SamplerAddressMode::REPEAT);
+		SamplerAddress(const SamplerAddress& address);
+		SamplerAddress(SamplerAddress&& address) noexcept;
 
 		inline bool SRK_CALL operator==(const SamplerAddress& val) const {
-			return !memcmp(this, &val, sizeof(SamplerAddress));
+			return featureValue == val.featureValue;
 		}
 
 		inline bool SRK_CALL operator!=(const SamplerAddress& val) const {
-			return memcmp(this, &val, sizeof(SamplerAddress));
+			return featureValue != val.featureValue;
 		}
 
 		inline void SRK_CALL operator=(const SamplerAddress& val) {
-			memcpy(this, &val, sizeof(SamplerAddress));
+			featureValue = val.featureValue;
 		}
 
-		SamplerAddressMode u;
-		SamplerAddressMode v;
-		SamplerAddressMode w;
+		inline SamplerAddress& SRK_CALL operator=(SamplerAddress&& val) noexcept {
+			featureValue = val.featureValue;
+			return *this;
+		}
+
+		union {
+			uint32_t featureValue;
+
+			struct {
+				SamplerAddressMode u;
+				SamplerAddressMode v;
+				SamplerAddressMode w;
+				uint8_t reserved;
+			};
+		};
 	};
 
 
@@ -414,6 +431,9 @@ namespace srk::modules::graphics {
 
 		inline void SRK_CALL setAddress(SamplerAddressMode u, SamplerAddressMode v, SamplerAddressMode w) {
 			setAddress(SamplerAddress(u, v, w));
+		}
+		inline void SRK_CALL setAddress(SamplerAddressMode mode) {
+			setAddress(SamplerAddress(mode, mode, mode));
 		}
 		virtual void SRK_CALL setAddress(const SamplerAddress& address) = 0;
 
@@ -674,6 +694,7 @@ namespace srk::modules::graphics {
 		BlendEquation(BlendOp op);
 		BlendEquation(BlendOp color, BlendOp alpha);
 		BlendEquation(const BlendEquation& op);
+		BlendEquation(BlendEquation&& op) noexcept;
 
 		inline bool SRK_CALL operator==(const BlendEquation& val) const {
 			return featureValue == val.featureValue;
@@ -685,6 +706,15 @@ namespace srk::modules::graphics {
 
 		inline void SRK_CALL operator=(const BlendEquation& val) {
 			featureValue = val.featureValue;
+		}
+
+		inline BlendEquation& SRK_CALL operator=(BlendEquation&& val) noexcept {
+			featureValue = val.featureValue;
+			return *this;
+		}
+
+		inline void SRK_CALL operator=(BlendOp op) {
+			set(op);
 		}
 
 		inline BlendEquation& SRK_CALL set(BlendOp op) {
@@ -712,18 +742,8 @@ namespace srk::modules::graphics {
 	class SRK_FW_DLL RenderTargetBlendState {
 	public:
 		RenderTargetBlendState();
-
-		union {
-			uint64_t featureValue;
-
-			struct {
-				bool enabled;
-				BlendEquation equation;
-				BlendFunc func;
-				uint8_t reserved;
-				Vec4<bool> writeMask;
-			};
-		};
+		RenderTargetBlendState(const RenderTargetBlendState& other);
+		RenderTargetBlendState(RenderTargetBlendState&& other) noexcept;
 
 		inline bool SRK_CALL operator==(const RenderTargetBlendState& val) const {
 			return featureValue == val.featureValue;
@@ -736,6 +756,22 @@ namespace srk::modules::graphics {
 		inline void SRK_CALL operator=(const RenderTargetBlendState& val) {
 			featureValue = val.featureValue;
 		}
+
+		inline RenderTargetBlendState& SRK_CALL operator=(RenderTargetBlendState&& val) noexcept {
+			featureValue = val.featureValue;
+			return *this;
+		}
+
+		union {
+			uint64_t featureValue;
+
+			struct {
+				bool enabled;
+				BlendEquation equation;
+				BlendFunc func;
+				Vec4<bool> writeMask;
+			};
+		};
 	};
 
 
@@ -1063,8 +1099,10 @@ namespace srk::modules::graphics {
 		bool vertexDim3Bit16;
 		uint8_t maxSampleCount;
 		uint8_t simultaneousRenderTargetCount;
+		uint8_t maxSamplerAnisotropy;
 		std::vector<IndexType> indexTypes;
 		std::vector<TextureFormat> textureFormats;
+		std::vector<SamplerAddressMode> samplerAddressModes;
 
 		void SRK_CALL reset();
 	};
