@@ -4,14 +4,14 @@ set(installDir ${PROJECT_BINARY_DIR}/install)
 
 set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_VULKAN_RT_NAME ${PROJECT_NAME})
 
-set(ver 1.3.236.0)
+set(ver 1.3.239.0)
 set(urlBase https://sdk.lunarg.com/sdk/download/${ver}/)
 set(src nil)
 
 if (SRK_OS_WINDOWS AND SRK_ARCH_X86)
     set(dlName VulkanRT-${ver}-Components.zip)
     set(url ${urlBase}windows/${dlName})
-    set(urlHash 32f6f857f075c2c385eb7721dae9eb88f7e9a3080bb295c09a9c3fb885e039d1)
+    set(urlHash c04d9ee88d8a71c5b910ff6db8a0681857484809097e9c512138799591805921)
     set(src ${PROJECT_BINARY_DIR}/src)
 
     if (SRK_ARCH_WORD_BITS_32)

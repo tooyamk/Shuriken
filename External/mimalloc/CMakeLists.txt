@@ -19,7 +19,7 @@ ExternalProject_Add(
     ${PROJECT_NAME}
     PREFIX ${PROJECT_BINARY_DIR}
     GIT_REPOSITORY https://github.com/microsoft/mimalloc.git
-    GIT_TAG v2.0.6
+    GIT_TAG v2.0.9
     GIT_SHALLOW 1
     GIT_PROGRESS 1
     TMP_DIR tmp

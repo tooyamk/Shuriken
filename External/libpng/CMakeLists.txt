@@ -22,7 +22,7 @@ ExternalProject_Add(
     ${PROJECT_NAME}
     PREFIX ${PROJECT_BINARY_DIR}
     GIT_REPOSITORY https://github.com/glennrp/libpng.git
-    GIT_TAG v1.6.37
+    GIT_TAG v1.6.39
     GIT_SHALLOW 1
     GIT_PROGRESS 1
     GIT_CONFIG core.autocrlf=false
@@ -44,8 +44,9 @@ ExternalProject_Add(
         -DPNG_BUILD_ZLIB=ON
         -DPNG_STATIC=OFF
         -DPNG_TESTS=OFF
-        -DZLIB_INCLUDE_DIR=${SRKPROJ_EXTERNAL_ZLIB_INCLUDE}
-        -DZLIB_LIBRARY=${SRKPROJ_EXTERNAL_ZLIB_LIB}
+        -DPNG_EXECUTABLES=OFF
+        -DZLIB_INCLUDE_DIRS=${SRKPROJ_EXTERNAL_ZLIB_INCLUDE}
+        -DZLIB_LIBRARIES=${SRKPROJ_EXTERNAL_ZLIB_LIB}
         ${cmakeArgs}
 )
 

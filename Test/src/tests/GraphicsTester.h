@@ -27,8 +27,8 @@ public:
 
 		//if (!gml->load(getDllPath("srk-module-graphics-d3d11"))) return 0;
 		//if (!gml->load(getDllPath("srk-module-graphics-d3d12"))) return 0;
-		if (!gml->load(getDllPath("srk-module-graphics-gl"))) return 0;
-		//if (!gml->load(getDllPath("srk-module-graphics-vulkan"))) return 0;
+		//if (!gml->load(getDllPath("srk-module-graphics-gl"))) return 0;
+		if (!gml->load(getDllPath("srk-module-graphics-vulkan"))) return 0;
 
 		SerializableObject args;
 

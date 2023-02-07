@@ -20,7 +20,7 @@ ExternalProject_Add(
     ${PROJECT_NAME}
     PREFIX ${PROJECT_BINARY_DIR}
     GIT_REPOSITORY https://github.com/libjpeg-turbo/libjpeg-turbo.git
-    GIT_TAG 2.1.4
+    GIT_TAG 2.1.90
     GIT_SHALLOW 1
     GIT_PROGRESS 1
     TMP_DIR tmp
