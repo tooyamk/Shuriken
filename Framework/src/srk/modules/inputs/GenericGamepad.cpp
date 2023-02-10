@@ -96,11 +96,7 @@ namespace srk::modules::inputs {
 				{
 					GamepadKeyCodeAndFlags mappingVals[2];
 					auto vk = code == GamepadVirtualKeyCode::L_STICK ? GamepadVirtualKeyCode::L_STICK_X : GamepadVirtualKeyCode::R_STICK_X;
-					{
-						std::shared_lock lock(_keyMappingMutex);
-
-						_keyMapping.get(vk, 2, mappingVals);
-					}
+					_keyMapping.get(vk, 2, mappingVals);
 
 					float32_t x, y;
 					{
@@ -111,7 +107,7 @@ namespace srk::modules::inputs {
 						y = _driver->readDataFromInputState(_inputState, mappingVals[1], Math::ONE_HALF<float32_t>);
 					}
 
-					return translate(_normalizeStick(x), _normalizeStick(y), _getDeadZone((GamepadVirtualKeyCode)code), (DeviceStateValue*)values, count);
+					return translate(_normalizeStick(x), _normalizeStick(y), _deadZone.get((GamepadVirtualKeyCode)code), (DeviceStateValue*)values, count);
 				}
 				case GamepadVirtualKeyCode::DPAD:
 				{
@@ -127,13 +123,7 @@ namespace srk::modules::inputs {
 					if ((code >= GamepadVirtualKeyCode::SEPARATE_AXIS_START && code <= GamepadVirtualKeyCode::UNDEFINED_AXIS_END) ||
 						(code >= GamepadVirtualKeyCode::BUTTON_START && code <= GamepadVirtualKeyCode::BUTTON_END)) {
 						auto vk = (GamepadVirtualKeyCode)code;
-
-						GamepadKeyCodeAndFlags cf;
-						{
-							std::shared_lock lock(_keyMappingMutex);
-
-							cf = _keyMapping.get(vk);
-						}
+						auto cf = _keyMapping.get(vk);
 
 						float32_t val;
 						{
@@ -143,7 +133,7 @@ namespace srk::modules::inputs {
 							val = _driver->readDataFromInputState(_inputState, cf, Math::ZERO<float32_t>);
 						}
 
-						((DeviceStateValue*)values)[0] = translate(val, _getDeadZone(vk));
+						((DeviceStateValue*)values)[0] = translate(val, _deadZone.get(vk));
 
 						return 1;
 					}
@@ -158,8 +148,6 @@ namespace srk::modules::inputs {
 		case DeviceStateType::KEY_MAPPING:
 		{
 			if (values && count) {
-				std::shared_lock lock(_keyMappingMutex);
-
 				*((GamepadKeyMapping*)values) = _keyMapping;
 
 				return 1;
@@ -172,7 +160,7 @@ namespace srk::modules::inputs {
 			if (values && count) {
 				DeviceState::CountType c = 1;
 
-				auto dz = _getDeadZone((GamepadVirtualKeyCode)code);
+				auto dz = _deadZone.get((GamepadVirtualKeyCode)code);
 				((DeviceStateValue*)values)[0] = dz[0];
 				if (count > 1) ((DeviceStateValue*)values)[c++] = dz[1];
 
@@ -204,11 +192,7 @@ namespace srk::modules::inputs {
 		{
 			if (!count) values = nullptr;
 
-			{
-				std::scoped_lock lock(_keyMappingMutex);
-
-				_driver->setKeyMapping(_keyMapping, (const GamepadKeyMapping*)values);
-			}
+			_driver->setKeyMapping(_keyMapping, (const GamepadKeyMapping*)values);
 
 			return 1;
 		}
@@ -277,12 +261,7 @@ namespace srk::modules::inputs {
 			return;
 		}
 
-		GamepadKeyMapping keyMapping(nullptr);
-		{
-			std::shared_lock lock(_keyMappingMutex);
-
-			keyMapping = _keyMapping;
-		}
+		GamepadKeyMapping keyMapping(_keyMapping);
 
 		_switchInputData();
 
@@ -294,7 +273,7 @@ namespace srk::modules::inputs {
 			auto idx = i << 1;
 			auto vk = GamepadVirtualKeyCode::L_STICK + i;
 
-			auto dz = _getDeadZone(vk);
+			auto dz = _deadZone.get(vk);
 
 			DeviceStateValue oldVals[2], newVals[2];
 			translate(_normalizeStick(_driver->readDataFromInputState(_oldInputState, mappingVals[idx], Math::ONE_HALF<float32_t>)), 
@@ -310,14 +289,14 @@ namespace srk::modules::inputs {
 
 		keyMapping.forEach([&](GamepadVirtualKeyCode vk, GamepadKeyCodeAndFlags cf) {
 			if (vk >= GamepadVirtualKeyCode::L_TRIGGER && vk <= GamepadVirtualKeyCode::AXIS_END) {
-				auto dz = _getDeadZone(vk);
+				auto dz = _deadZone.get(vk);
 				if (auto newVal = translate(_driver->readDataFromInputState(_inputState, cf, Math::ZERO<float32_t>), dz); newVal != translate(_driver->readDataFromInputState(_oldInputState, cf, Math::ZERO<float32_t>), dz)) {
 					DeviceStateValue val = newVal;
 					DeviceState ds = { (DeviceState::CodeType)vk, 1, &val };
 					_eventDispatcher->dispatchEvent(this, DeviceEvent::MOVE, &ds);
 				}
 			} else if (vk >= GamepadVirtualKeyCode::BUTTON_START && vk <= GamepadVirtualKeyCode::BUTTON_END) {
-				auto dz = _getDeadZone(vk);
+				auto dz = _deadZone.get(vk);
 				if (auto newVal = _driver->readDataFromInputState(_inputState, cf, Math::ZERO<float32_t>); newVal != _driver->readDataFromInputState(_oldInputState, cf, Math::ZERO<float32_t>)) {
 					DeviceStateValue val = newVal;
 					DeviceState ds = { (DeviceState::CodeType)vk, 1, &val };
@@ -351,16 +330,6 @@ namespace srk::modules::inputs {
 		if (_needOutput && _driver->writeStateToDevice(_outputBuffer)) _needOutput = false;
 	}
 
-	Vec2<DeviceStateValue> GenericGamepad::_getDeadZone(GamepadVirtualKeyCode key) const {
-		std::shared_lock lock(_deadZoneMutex);
-
-		if (auto itr = _deadZone.find(key); itr == _deadZone.end()) {
-			return Vec2<DeviceStateValue>::ZERO;
-		} else {
-			return itr->second;
-		}
-	}
-
 	void GenericGamepad::_setDeadZone(GamepadVirtualKeyCode keyCode, Vec2<DeviceStateValue>* deadZone) {
 		if (deadZone) {
 			auto& dzVal = *deadZone;
@@ -373,13 +342,9 @@ namespace srk::modules::inputs {
 				dzVal[1] = tmp;
 			}
 
-			std::scoped_lock lock(_deadZoneMutex);
-
-			_deadZone.insert_or_assign(keyCode, dzVal);
+			_deadZone.set(keyCode, dzVal);
 		} else {
-			std::scoped_lock lock(_deadZoneMutex);
-
-			if (auto itr = _deadZone.find(keyCode); itr != _deadZone.end()) _deadZone.erase(itr);
+			_deadZone.remove(keyCode);
 		}
 	}
 

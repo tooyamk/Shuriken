@@ -59,11 +59,8 @@ namespace srk::modules::inputs {
 		uint8_t* _oldInputState;
 		uint8_t* _inputBuffer;
 
-		mutable std::shared_mutex _keyMappingMutex;
 		GamepadKeyMapping _keyMapping;
-
-		mutable std::shared_mutex _deadZoneMutex;
-		std::unordered_map<GamepadVirtualKeyCode, Vec2<DeviceStateValue>> _deadZone;
+		GamepadKeyDeadZone _deadZone;
 
 		mutable std::shared_mutex _inputMutex;
 		uint8_t* _inputState;
@@ -78,7 +75,6 @@ namespace srk::modules::inputs {
 		void SRK_CALL _doInput(bool dispatchEvent);
 		void SRK_CALL _doOutput();
 
-		Vec2<DeviceStateValue> SRK_CALL _getDeadZone(GamepadVirtualKeyCode key) const;
 		void SRK_CALL _setDeadZone(GamepadVirtualKeyCode keyCode, Vec2<DeviceStateValue>* deadZone);
 
 		inline static DeviceStateValue SRK_CALL _normalizeStick(float32_t value) {

@@ -118,7 +118,7 @@ namespace srk::modules::graphics::vulkan {
 				_deviceFeatures.samplerAddressModes.emplace_back(SamplerAddressMode::MIRROR_CLAMP_EDGE);
 
 				_vkStatus.usage.bufferCreateUsageMask = Usage::MAP_READ_WRITE | Usage::UPDATE | Usage::COPY_SRC_DST;
-				_vkStatus.usage.texCreateUsageMask = Usage::MAP_READ_WRITE | Usage::COPY_SRC_DST | Usage::RENDERABLE;
+				_vkStatus.usage.texCreateUsageMask = Usage::MAP_READ_WRITE | Usage::UPDATE | Usage::COPY_SRC_DST | Usage::RENDERABLE;
 			}
 
 			_defaultBlendState = new BlendState(*this, true);
@@ -1307,10 +1307,26 @@ namespace srk::modules::graphics::vulkan {
 
 	VkFormat Graphics::convertTextureFormat(TextureFormat fmt) {
 		switch (fmt) {
-		case TextureFormat::R8G8B8:
+		case TextureFormat::R8G8B8_UNORM:
 			return VK_FORMAT_R8G8B8_UNORM;
-		case TextureFormat::R8G8B8A8:
+		case TextureFormat::R8G8B8_UNORM_SRGB:
+			return VK_FORMAT_R8G8B8_SRGB;
+		case TextureFormat::R8G8B8_UINT:
+			return VK_FORMAT_R8G8B8_UINT;
+		case TextureFormat::R8G8B8_SNORM:
+			return VK_FORMAT_R8G8B8_SNORM;
+		case TextureFormat::R8G8B8_SINT:
+			return VK_FORMAT_R8G8B8_SINT;
+		case TextureFormat::R8G8B8A8_UNORM:
 			return VK_FORMAT_R8G8B8A8_UNORM;
+		case TextureFormat::R8G8B8A8_UNORM_SRGB:
+			return VK_FORMAT_R8G8B8A8_SRGB;
+		case TextureFormat::R8G8B8A8_UINT:
+			return VK_FORMAT_R8G8B8A8_UINT;
+		case TextureFormat::R8G8B8A8_SNORM:
+			return VK_FORMAT_R8G8B8A8_SNORM;
+		case TextureFormat::R8G8B8A8_SINT:
+			return VK_FORMAT_R8G8B8A8_SINT;
 		default:
 			return VK_FORMAT_UNDEFINED;
 		}

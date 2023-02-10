@@ -24,154 +24,323 @@ namespace srk {
 		return *this;
 	}
 
-	bool Image::isCompressedFormat(TextureFormat format) {
-		return false;
-	}
-
-	size_t Image::calcBlocks(TextureFormat format, size_t pixels) {
-		switch (format) {
-		case TextureFormat::R8G8B8:
-		case TextureFormat::R8G8B8A8:
-			return pixels;
-		default:
-			return 0;
-		}
-	}
-
-	Vec2uz Image::calcBlocks(TextureFormat format, const Vec2uz& pixels) {
-		switch (format) {
-		case TextureFormat::R8G8B8:
-		case TextureFormat::R8G8B8A8:
-			return pixels;
-		default:
-			return Vec2uz();
-		}
-	}
-
-	Vec3uz Image::calcBlocks(TextureFormat format, const Vec3uz& pixels) {
-		switch (format) {
-		case TextureFormat::R8G8B8:
-		case TextureFormat::R8G8B8A8:
-			return pixels;
-		default:
-			return Vec3uz();
-		}
-	}
-
-	size_t Image::calcPerBlockBytes(TextureFormat format) {
-		switch (format) {
-		case TextureFormat::R8G8B8:
-			return 3;
-		case TextureFormat::R8G8B8A8:
-			return 4;
-		default:
-			return 0;
-		}
-	}
-
-	Vec2uz Image::calcPerBlockPixels(TextureFormat format) {
-		switch (format) {
-		case TextureFormat::R8G8B8:
-		case TextureFormat::R8G8B8A8:
-			return Vec2uz(1, 1);
-		default:
-			return Vec2uz();
-		}
-	}
-
-	/*uint32_t Image::calcPerPixelByteSize(TextureFormat format) {
-		switch (format) {
-		case TextureFormat::R8G8B8:
-			return 3;
-		case TextureFormat::R8G8B8A8:
-			return 4;
-		default:
-			return 0;
-		}
-	}*/
-
 	std::vector<size_t> Image::calcMipsPixels(size_t n, size_t mipLevels) {
 		if (!n) return std::move(std::vector<size_t>(0));
-		if (!mipLevels) mipLevels = calcMipLevels(n);
+		if (!mipLevels) mipLevels = TextureUtils::getMipLevels(n);
 
 		std::vector<size_t> levels(mipLevels);
 		levels[0] = n;
 
 		for (size_t i = 1; i < mipLevels; ++i) {
-			n = calcNextMipPixels(n);
+			n = TextureUtils::getNextMipPixels(n);
 			levels[i] = n;
 		}
 
 		return std::move(levels);
 	}
 
-	void Image::calcMipsInfo(modules::graphics::TextureFormat format, const Vec2uz& pixels, size_t mipLevels, size_t* totalBytes, size_t* mipBytes, Vec2uz* mipDimensions) {
-		auto w = pixels[0], h = pixels[1];
-		auto bytes = calcBytes(format, pixels);
-		if (totalBytes) *totalBytes = bytes;
-		if (mipBytes) mipBytes[0] = bytes;
-		if (mipDimensions) mipDimensions[0].set(w, h);
-
-		for (size_t i = 1; i < mipLevels; ++i) {
-			w = calcNextMipPixels(w);
-			h = calcNextMipPixels(h);
-			bytes = calcBytes(format, Vec2uz(w, h));
-			if (totalBytes) *totalBytes += bytes;
-			if (mipBytes) mipBytes[i] = bytes;
-			if (mipDimensions) mipDimensions[i].set(w, h);
-		}
-	}
-
-	void Image::calcMipsInfo(modules::graphics::TextureFormat format, const Vec3uz& pixels, size_t mipLevels, size_t* totalBytes, size_t* mipBytes, Vec3uz* mipDimensions) {
-		auto w = pixels[0], h = pixels[1], d = pixels[2];
-		auto bytes = calcBytes(format, pixels);
-		if (totalBytes) *totalBytes = bytes;
-		if (mipBytes) mipBytes[0] = bytes;
-		if (mipDimensions) mipDimensions[0].set(w, h, d);
-
-		for (size_t i = 1; i < mipLevels; ++i) {
-			w = calcNextMipPixels(w);
-			h = calcNextMipPixels(h);
-			d = calcNextMipPixels(d);
-			bytes = calcBytes(format, Vec3uz(w, h, d));
-			if (totalBytes) *totalBytes += bytes;
-			if (mipBytes) mipBytes[i] = bytes;
-			if (mipDimensions) mipDimensions[i].set(w, h, d);
-		}
-	}
-
 	bool Image::convertFormat(const Vec2uz& pixels, TextureFormat srcFormat, const void* src, TextureFormat dstFormat, void* dst, size_t* srcReadedBytes, size_t* dstWritedBytes) {
 		switch (dstFormat) {
-		case TextureFormat::R8G8B8:
+		case TextureFormat::R8G8B8_UNORM:
 		{
 			switch (srcFormat) {
-			case TextureFormat::R8G8B8:
+			case TextureFormat::R8G8B8_UNORM:
 			{
-				auto n = calcBytes(srcFormat, pixels);
+				auto n = TextureUtils::getBytes(srcFormat, pixels);
 				memcpy(dst, src, n);
 				if (srcReadedBytes) *srcReadedBytes = n;
 				if (dstWritedBytes) *dstWritedBytes = n;
 
 				return true;
 			}
-			case TextureFormat::R8G8B8A8:
-				_convertFormat_R8G8B8A8_R8G8B8(pixels, src, dst, srcReadedBytes, dstWritedBytes);
+			case TextureFormat::R8G8B8_UNORM_SRGB:
+			{
+				auto s = (const uint8_t*)src;
+				auto d = (uint8_t*)dst;
+
+				auto n = pixels.getMultiplies();
+				size_t pos = 0;
+				for (size_t i = 0; i < n; ++i) {
+					d[pos] = Math::sRGB2Linear(s[pos]);
+					++pos;
+					d[pos] = Math::sRGB2Linear(s[pos]);
+					++pos;
+					d[pos] = Math::sRGB2Linear(s[pos]);
+					++pos;
+				}
+
+				if (srcReadedBytes) *srcReadedBytes = pos;
+				if (dstWritedBytes) *dstWritedBytes = pos;
+
 				return true;
+			}
+			case TextureFormat::R8G8B8A8_UNORM:
+			{
+				auto s = (const uint8_t*)src;
+				auto d = (uint8_t*)dst;
+
+				auto n = pixels.getMultiplies();
+				size_t dp = 0, sp = 0;
+				for (size_t i = 0; i < n; ++i) {
+					d[dp++] = s[sp++];
+					d[dp++] = s[sp++];
+					d[dp++] = s[sp++];
+					d[dp++] = 255;
+				}
+
+				if (srcReadedBytes) *srcReadedBytes = sp;
+				if (dstWritedBytes) *dstWritedBytes = dp;
+
+				return true;
+			}
+			case TextureFormat::R8G8B8A8_UNORM_SRGB:
+			{
+				auto s = (const uint8_t*)src;
+				auto d = (uint8_t*)dst;
+
+				auto n = pixels.getMultiplies();
+				size_t dp = 0, sp = 0;
+				for (size_t i = 0; i < n; ++i) {
+					d[dp++] = Math::sRGB2Linear(s[sp++]);
+					d[dp++] = Math::sRGB2Linear(s[sp++]);
+					d[dp++] = Math::sRGB2Linear(s[sp++]);
+					d[dp++] = 255;
+				}
+
+				if (srcReadedBytes) *srcReadedBytes = sp;
+				if (dstWritedBytes) *dstWritedBytes = dp;
+
+				return true;
+			}
 			default:
 				break;
 			}
 
 			break;
 		}
-		case TextureFormat::R8G8B8A8:
+		case TextureFormat::R8G8B8_UNORM_SRGB:
 		{
 			switch (srcFormat) {
-			case TextureFormat::R8G8B8:
-				_convertFormat_R8G8B8_R8G8B8A8(pixels, src, dst, srcReadedBytes, dstWritedBytes);
-				return true;
-			case TextureFormat::R8G8B8A8:
+			case TextureFormat::R8G8B8_UNORM:
 			{
-				auto n = calcBytes(srcFormat, pixels);
+				auto s = (const uint8_t*)src;
+				auto d = (uint8_t*)dst;
+
+				auto n = pixels.getMultiplies();
+				size_t pos = 0;
+				for (size_t i = 0; i < n; ++i) {
+					d[pos] = Math::linear2sRGB(s[pos]);
+					++pos;
+					d[pos] = Math::linear2sRGB(s[pos]);
+					++pos;
+					d[pos] = Math::linear2sRGB(s[pos]);
+					++pos;
+				}
+
+				if (srcReadedBytes) *srcReadedBytes = pos;
+				if (dstWritedBytes) *dstWritedBytes = pos;
+			}
+			case TextureFormat::R8G8B8_UNORM_SRGB:
+			{
+				auto n = TextureUtils::getBytes(srcFormat, pixels);
+				memcpy(dst, src, n);
+				if (srcReadedBytes) *srcReadedBytes = n;
+				if (dstWritedBytes) *dstWritedBytes = n;
+
+				return true;
+			}
+			case TextureFormat::R8G8B8A8_UNORM:
+			{
+				auto s = (const uint8_t*)src;
+				auto d = (uint8_t*)dst;
+
+				auto n = pixels.getMultiplies();
+				size_t dp = 0, sp = 0;
+				for (size_t i = 0; i < n; ++i) {
+					d[dp++] = Math::linear2sRGB(s[sp++]);
+					d[dp++] = Math::linear2sRGB(s[sp++]);
+					d[dp++] = Math::linear2sRGB(s[sp++]);
+					d[dp++] = 255;
+				}
+
+				if (srcReadedBytes) *srcReadedBytes = sp;
+				if (dstWritedBytes) *dstWritedBytes = dp;
+
+				return true;
+
+				return true;
+			}
+			case TextureFormat::R8G8B8A8_UNORM_SRGB:
+			{
+				auto s = (const uint8_t*)src;
+				auto d = (uint8_t*)dst;
+
+				auto n = pixels.getMultiplies();
+				size_t dp = 0, sp = 0;
+				for (size_t i = 0; i < n; ++i) {
+					d[dp++] = s[sp++];
+					d[dp++] = s[sp++];
+					d[dp++] = s[sp++];
+					d[dp++] = 255;
+				}
+
+				if (srcReadedBytes) *srcReadedBytes = sp;
+				if (dstWritedBytes) *dstWritedBytes = dp;
+
+				return true;
+			}
+			default:
+				break;
+			}
+
+			break;
+		}
+		case TextureFormat::R8G8B8A8_UNORM:
+		{
+			switch (srcFormat) {
+			case TextureFormat::R8G8B8_UNORM:
+			{
+				auto s = (const uint8_t*)src;
+				auto d = (uint8_t*)dst;
+
+				auto n = pixels.getMultiplies();
+				size_t dp = 0, sp = 0;
+				for (size_t i = 0; i < n; ++i) {
+					d[dp++] = s[sp++];
+					d[dp++] = s[sp++];
+					d[dp++] = s[sp++];
+					++sp;
+				}
+
+				if (srcReadedBytes) *srcReadedBytes = sp;
+				if (dstWritedBytes) *dstWritedBytes = dp;
+
+				return true;
+			}
+			case TextureFormat::R8G8B8_UNORM_SRGB:
+			{
+				auto s = (const uint8_t*)src;
+				auto d = (uint8_t*)dst;
+
+				auto n = pixels.getMultiplies();
+				size_t dp = 0, sp = 0;
+				for (size_t i = 0; i < n; ++i) {
+					d[dp++] = Math::sRGB2Linear(s[sp++]);
+					d[dp++] = Math::sRGB2Linear(s[sp++]);
+					d[dp++] = Math::sRGB2Linear(s[sp++]);
+					++sp;
+				}
+
+				if (srcReadedBytes) *srcReadedBytes = sp;
+				if (dstWritedBytes) *dstWritedBytes = dp;
+
+				return true;
+			}
+			case TextureFormat::R8G8B8A8_UNORM:
+			{
+				auto n = TextureUtils::getBytes(srcFormat, pixels);
+				memcpy(dst, src, n);
+				if (srcReadedBytes) *srcReadedBytes = n;
+				if (dstWritedBytes) *dstWritedBytes = n;
+
+				return true;
+			}
+			case TextureFormat::R8G8B8A8_UNORM_SRGB:
+			{
+				auto s = (const uint8_t*)src;
+				auto d = (uint8_t*)dst;
+
+				auto n = pixels.getMultiplies();
+				size_t pos = 0;
+				for (size_t i = 0; i < n; ++i) {
+					d[pos] = Math::sRGB2Linear(s[pos]);
+					++pos;
+					d[pos] = Math::sRGB2Linear(s[pos]);
+					++pos;
+					d[pos] = Math::sRGB2Linear(s[pos]);
+					++pos;
+					d[pos] = s[pos];
+					++pos;
+				}
+
+				if (srcReadedBytes) *srcReadedBytes = pos;
+				if (dstWritedBytes) *dstWritedBytes = pos;
+
+				return true;
+			}
+			default:
+				break;
+			}
+
+			break;
+		}
+		case TextureFormat::R8G8B8A8_UNORM_SRGB:
+		{
+			switch (srcFormat) {
+			case TextureFormat::R8G8B8_UNORM:
+			{
+				auto s = (const uint8_t*)src;
+				auto d = (uint8_t*)dst;
+
+				auto n = pixels.getMultiplies();
+				size_t dp = 0, sp = 0;
+				for (size_t i = 0; i < n; ++i) {
+					d[dp++] = Math::linear2sRGB(s[sp++]);
+					d[dp++] = Math::linear2sRGB(s[sp++]);
+					d[dp++] = Math::linear2sRGB(s[sp++]);
+					++sp;
+				}
+
+				if (srcReadedBytes) *srcReadedBytes = sp;
+				if (dstWritedBytes) *dstWritedBytes = dp;
+
+				return true;
+			}
+			case TextureFormat::R8G8B8_UNORM_SRGB:
+			{
+				auto s = (const uint8_t*)src;
+				auto d = (uint8_t*)dst;
+
+				auto n = pixels.getMultiplies();
+				size_t dp = 0, sp = 0;
+				for (size_t i = 0; i < n; ++i) {
+					d[dp++] = s[sp++];
+					d[dp++] = s[sp++];
+					d[dp++] = s[sp++];
+					++sp;
+				}
+
+				if (srcReadedBytes) *srcReadedBytes = sp;
+				if (dstWritedBytes) *dstWritedBytes = dp;
+
+				return true;
+			}
+			case TextureFormat::R8G8B8A8_UNORM:
+			{
+				auto s = (const uint8_t*)src;
+				auto d = (uint8_t*)dst;
+
+				auto n = pixels.getMultiplies();
+				size_t pos = 0;
+				for (size_t i = 0; i < n; ++i) {
+					d[pos] = Math::linear2sRGB(s[pos]);
+					++pos;
+					d[pos] = Math::linear2sRGB(s[pos]);
+					++pos;
+					d[pos] = Math::linear2sRGB(s[pos]);
+					++pos;
+					d[pos] = s[pos];
+					++pos;
+				}
+
+				if (srcReadedBytes) *srcReadedBytes = pos;
+				if (dstWritedBytes) *dstWritedBytes = pos;
+
+				return true;
+			}
+			case TextureFormat::R8G8B8A8_UNORM_SRGB:
+			{
+				auto n = TextureUtils::getBytes(srcFormat, pixels);
 				memcpy(dst, src, n);
 				if (srcReadedBytes) *srcReadedBytes = n;
 				if (dstWritedBytes) *dstWritedBytes = n;
@@ -201,47 +370,16 @@ namespace srk {
 		d += dstOffsetBytes;
 
 		for (size_t lv = 1; lv < mipLevels; ++lv) {
-			if (!convertFormat(calcNextMipPixels(pixels), srcFormat, s, dstFormat, d, &srcOffsetBytes, &dstOffsetBytes)) return false;
+			if (!convertFormat(TextureUtils::getNextMipPixels(pixels), srcFormat, s, dstFormat, d, &srcOffsetBytes, &dstOffsetBytes)) return false;
 			s += srcOffsetBytes;
 			d += dstOffsetBytes;
 		}
 		return true;
 	}
 
-	void Image::_convertFormat_R8G8B8_R8G8B8A8(const Vec2uz& pixels, const void* src, void* dst, size_t* srcReadedBytes, size_t* dstWritedBytes) {
-		auto s = (const uint8_t*)src;
-		auto d = (uint8_t*)dst;
-		auto numPixels = pixels.getMultiplies();
-		size_t srcIdx = 0, dstIdx = 0;
-		for (size_t i = 0; i < numPixels; ++i) {
-			memcpy(d + dstIdx, s + srcIdx, 3);
-			srcIdx += 3;
-			dstIdx += 3;
-			d[dstIdx++] = 255;
-		}
-
-		if (srcReadedBytes) *srcReadedBytes = numPixels * 3;
-		if (dstWritedBytes) *dstWritedBytes = numPixels << 2;
-	}
-
-	void Image::_convertFormat_R8G8B8A8_R8G8B8(const Vec2uz& pixels, const void* src, void* dst, size_t* srcReadedBytes, size_t* dstWritedBytes) {
-		auto s = (const uint8_t*)src;
-		auto d = (uint8_t*)dst;
-		auto numPixels = pixels.getMultiplies();
-		size_t srcIdx = 0, dstIdx = 0;
-		for (size_t i = 0; i < numPixels; ++i) {
-			memcpy(d + dstIdx, s + srcIdx, 3);
-			srcIdx += 4;
-			dstIdx += 3;
-		}
-
-		if (srcReadedBytes) *srcReadedBytes = numPixels << 2;
-		if (dstWritedBytes) *dstWritedBytes = numPixels * 3;
-	}
-
 	bool Image::generateMips(modules::graphics::TextureFormat format, size_t mipLevels, ByteArray& dst, size_t dstOffset, std::vector<void*>& dstMipData) const {
 		size_t bytes;
-		calcMipsInfo(format, dimensions, mipLevels, &bytes);
+		TextureUtils::getMipsInfo(format, dimensions, mipLevels, &bytes);
 		auto n = bytes + dstOffset;
 
 		if (dst.getCapacity() < n) dst.setCapacity(n);
@@ -253,7 +391,8 @@ namespace srk {
 
 	bool Image::generateMips(TextureFormat format, size_t mipLevels, void* dst, void** dstMipData) const {
 		switch (format) {
-		case TextureFormat::R8G8B8:
+		case TextureFormat::R8G8B8_UNORM:
+		case TextureFormat::R8G8B8_UNORM_SRGB:
 		{
 			if (convertFormat(dimensions, this->format, (const uint8_t*)source.getSource(), format, dst)) {
 				generateMips_UInt8s(dimensions, format, mipLevels, 3, dst, dstMipData);
@@ -262,7 +401,8 @@ namespace srk {
 
 			break;
 		}
-		case TextureFormat::R8G8B8A8:
+		case TextureFormat::R8G8B8A8_UNORM:
+		case TextureFormat::R8G8B8A8_UNORM_SRGB:
 		{
 			if (convertFormat(dimensions, this->format, (const uint8_t*)source.getSource(), format, dst)) {
 				generateMips_UInt8s(dimensions, format, mipLevels, 4, dst, dstMipData);
@@ -280,7 +420,7 @@ namespace srk {
 
 	void Image::generateMips_UInt8s(const Vec2uz& pixels, modules::graphics::TextureFormat format, size_t mipLevels, size_t numChannels, void* data, void** dstMipData) {
 		uint32_t numChannels2 = numChannels << 1;
-		auto perPixelBytes = calcPerBlockBytes(format);
+		auto perPixelBytes = TextureUtils::getPerBlockBytes(format);
 		auto src = (const uint8_t*)data;
 		auto dst = (uint8_t*)data;
 		auto s = pixels;
@@ -289,12 +429,12 @@ namespace srk {
 
 		uint8_t c[16];
 		for (size_t lv = 1; lv < mipLevels; ++lv) {
-			dst += calcBytes(perPixelBytes, s.getMultiplies());
+			dst += TextureUtils::getBytes(perPixelBytes, s.getMultiplies());
 			if (dstMipData) dstMipData[lv] = dst;
-			auto w = calcNextMipPixels(s[0]);
-			auto h = calcNextMipPixels(s[1]);
-			auto srcRowBytes = calcBytes(perPixelBytes, s[0]);
-			auto dstRowBytes = calcBytes(perPixelBytes, w);
+			auto w = TextureUtils::getNextMipPixels(s[0]);
+			auto h = TextureUtils::getNextMipPixels(s[1]);
+			auto srcRowBytes = TextureUtils::getBytes(perPixelBytes, s[0]);
+			auto dstRowBytes = TextureUtils::getBytes(perPixelBytes, w);
 
 			if (w == s[0]) {
 				if (h == s[1]) {
@@ -346,9 +486,9 @@ namespace srk {
 	}
 
 	bool Image::flipY() {
-		if (format == TextureFormat::UNKNOWN || isCompressedFormat(format)) return false;
+		if (format == TextureFormat::UNKNOWN || TextureUtils::isCompressedFormat(format)) return false;
 
-		auto perPixelBytes = calcPerBlockBytes(format);
+		auto perPixelBytes = TextureUtils::getPerBlockBytes(format);
 		if (!perPixelBytes) return false;
 
 		auto data = source.getSource();
@@ -373,9 +513,9 @@ namespace srk {
 	}
 
 	bool Image::scale(Image& dst) const {
-		if (format == TextureFormat::UNKNOWN || isCompressedFormat(format)) return false;
+		if (format == TextureFormat::UNKNOWN || TextureUtils::isCompressedFormat(format)) return false;
 
-		auto perPixelBytes = calcPerBlockBytes(format);
+		auto perPixelBytes = TextureUtils::getPerBlockBytes(format);
 		if (!perPixelBytes) return false;
 
 		auto dstBytes = dst.dimensions.getMultiplies() * perPixelBytes;
@@ -434,9 +574,9 @@ namespace srk {
 	}
 
 	bool Image::scale(Image& dst, size_t jobCount, size_t threadCount, size_t threadIndex) const {
-		if (format != dst.format || format == TextureFormat::UNKNOWN || isCompressedFormat(format)) return false;
+		if (format != dst.format || format == TextureFormat::UNKNOWN || TextureUtils::isCompressedFormat(format)) return false;
 
-		auto perPixelBytes = calcPerBlockBytes(format);
+		auto perPixelBytes = TextureUtils::getPerBlockBytes(format);
 		if (!perPixelBytes || dst.source.getLength() < perPixelBytes * dst.dimensions.getMultiplies()) return false;
 
 		auto range = Thread::calcJobRange(jobCount, threadCount, threadIndex);

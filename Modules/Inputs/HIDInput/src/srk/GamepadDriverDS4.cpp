@@ -71,6 +71,7 @@ namespace srk::modules::inputs::hid_input {
 		using namespace srk::enum_operators;
 
 		auto data = (const uint8_t*)inputState;
+
 		float32_t val;
 		if (auto offset = data[0]; offset) {
 			if (cf.code >= GamepadKeyCode::AXIS_1 && cf.code <= MAX_AXIS_KEY) {

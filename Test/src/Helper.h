@@ -160,3 +160,53 @@ inline bool SRK_CALL createProgram(IProgram& program, const std::string_view& ve
 	}
 	return true;
 }
+
+inline bool SRK_CALL isSupportTextureFormat(IGraphicsModule* g, TextureFormat fmt) {
+	for (auto& i : g->getDeviceFeatures().textureFormats) {
+		if (i == fmt) return true;
+	}
+	return false;
+}
+
+inline TextureFormat SRK_CALL textureFormatTypeSwitch(TextureFormat fmt, bool srgb) {
+	switch (fmt) {
+	case TextureFormat::R8G8B8_TYPELESS:
+	case TextureFormat::R8G8B8_UNORM:
+	case TextureFormat::R8G8B8_UNORM_SRGB:
+	case TextureFormat::R8G8B8_UINT:
+	case TextureFormat::R8G8B8_SNORM:
+	case TextureFormat::R8G8B8_SINT:
+		return srgb ? TextureFormat::R8G8B8_UNORM_SRGB : TextureFormat::R8G8B8_UNORM;
+	case TextureFormat::R8G8B8A8_TYPELESS:
+	case TextureFormat::R8G8B8A8_UNORM:
+	case TextureFormat::R8G8B8A8_UNORM_SRGB:
+	case TextureFormat::R8G8B8A8_UINT:
+	case TextureFormat::R8G8B8A8_SNORM:
+	case TextureFormat::R8G8B8A8_SINT:
+		return srgb ? TextureFormat::R8G8B8A8_UNORM_SRGB : TextureFormat::R8G8B8A8_UNORM;
+	case TextureFormat::BC1_TYPELESS:
+	case TextureFormat::BC1_UNORM:
+	case TextureFormat::BC1_UNORM_SRGB:
+		return srgb ? TextureFormat::BC1_UNORM_SRGB : TextureFormat::BC1_UNORM;
+	case TextureFormat::BC2_TYPELESS:
+	case TextureFormat::BC2_UNORM:
+	case TextureFormat::BC2_UNORM_SRGB:
+		return srgb ? TextureFormat::BC2_UNORM_SRGB : TextureFormat::BC2_UNORM;
+	case TextureFormat::BC3_TYPELESS:
+	case TextureFormat::BC3_UNORM:
+	case TextureFormat::BC3_UNORM_SRGB:
+		return srgb ? TextureFormat::BC3_UNORM_SRGB : TextureFormat::BC3_UNORM;
+	case TextureFormat::BC4_TYPELESS:
+		return TextureFormat::BC4_UNORM;
+	case TextureFormat::BC5_TYPELESS:
+		return TextureFormat::BC5_UNORM;
+	case TextureFormat::BC6_TYPELESS:
+		return TextureFormat::BC6H_UF16;
+	case TextureFormat::BC7_TYPELESS:
+	case TextureFormat::BC7_UNORM:
+	case TextureFormat::BC7_UNORM_SRGB:
+		return srgb ? TextureFormat::BC7_UNORM_SRGB : TextureFormat::BC7_UNORM;
+	default:
+		return fmt;
+	}
+}

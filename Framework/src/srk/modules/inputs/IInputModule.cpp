@@ -8,29 +8,35 @@ namespace srk::modules::inputs {
 	}
 
 	GamepadKeyMapping::GamepadKeyMapping(const GamepadKeyMapping& other) {
-		memcpy(_mapping, other._mapping, sizeof(_mapping));
+		*this = other;
+	}
+
+	GamepadKeyMapping& GamepadKeyMapping::operator=(const GamepadKeyMapping& other) {
+		for (size_t i = 0; i < _mapping.size(); ++i) _mapping[i] = other._mapping[i];
+		return *this;
 	}
 
 	bool GamepadKeyMapping::remove(GamepadVirtualKeyCode vk) {
-		if (vk >= VK_MIN && vk <= VK_MAX) {
-			_mapping[_getIndex(vk)].clear();
+		if (vk < VK_MIN || vk > VK_MAX) return false;
 
-			return true;
-		}
-
-		return false;
+		_mapping[_getIndex(vk)].clear();
+		return true;
 	}
 
 	void GamepadKeyMapping::removeUndefined() {
 		using namespace srk::enum_operators;
 
-		for (size_t i = 0; i < COUNT; ++i) {
+		for (size_t i = 0; i < _mapping.size(); ++i) {
 			if (auto vk = VK_MIN + i;
 				(vk >= GamepadVirtualKeyCode::UNDEFINED_AXIS_1 && vk <= GamepadVirtualKeyCode::UNDEFINED_AXIS_END) ||
 				(vk >= GamepadVirtualKeyCode::UNDEFINED_BUTTON_1 && vk <= GamepadVirtualKeyCode::UNDEFINED_BUTTON_END)) {
 				_mapping[i].clear();
 			}
 		}
+	}
+
+	void GamepadKeyMapping::clear() {
+		for (auto& cf : _mapping) cf.clear();
 	}
 
 	void GamepadKeyMapping::undefinedCompletion(size_t maxAxes, size_t maxButtons) {
@@ -49,8 +55,8 @@ namespace srk::modules::inputs {
 		std::bitset<maxUndefinedButtons> vkButtons;
 		std::bitset<64> kAxes, kButtons;
 
-		for (size_t i = 0; i < COUNT; ++i) {
-			auto& cf = _mapping[i];
+		for (size_t i = 0; i < _mapping.size(); ++i) {
+			auto cf = _mapping[i].get();
 			if (cf.code == GamepadKeyCode::UNDEFINED) continue;
 
 			auto vk = VK_MIN + i;
@@ -91,6 +97,31 @@ namespace srk::modules::inputs {
 				}
 			}
 		}
+	}
+
+
+	GamepadKeyDeadZone::GamepadKeyDeadZone() {
+		clear();
+	}
+
+	GamepadKeyDeadZone::GamepadKeyDeadZone(const GamepadKeyDeadZone& other) {
+		*this = other;
+	}
+
+	GamepadKeyDeadZone& GamepadKeyDeadZone::operator=(const GamepadKeyDeadZone& other) {
+		for (size_t i = 0; i < _values.size(); ++i) _values[i] = other._values[i];
+		return *this;
+	}
+
+	bool GamepadKeyDeadZone::remove(GamepadVirtualKeyCode vk) {
+		if (vk < VK_MIN || vk > VK_MAX) return false;
+
+		_values[_getIndex(vk)].clear();
+		return true;
+	}
+
+	void GamepadKeyDeadZone::clear() {
+		for (auto& i : _values) i.clear();
 	}
 
 

@@ -1,6 +1,5 @@
 #include "BaseTexture.h"
 #include "BaseBuffer.h"
-#include "srk/Image.h"
 
 namespace srk::modules::graphics::vulkan {
 	BaseTexture::BaseTexture(TextureType texType) :
@@ -11,10 +10,11 @@ namespace srk::modules::graphics::vulkan {
 		_memAllocator(nullptr),
 		_image(nullptr),
 		_allocation(nullptr),
+		_mapCount(0),
 		_size(0),
+		_mipLevels(0),
 		_usage(Usage::NONE),
 		_internalUsage(Usage::NONE),
-		_mapUsage(Usage::NONE),
 		_mappedData(nullptr) {
 	}
 
@@ -45,13 +45,13 @@ namespace srk::modules::graphics::vulkan {
 				return false;
 			}
 
-			auto maxLevels = Image::calcMipLevels(dim.getMax());
+			auto maxLevels = TextureUtils::getMipLevels(dim);
 			if (mipLevels > maxLevels) mipLevels = maxLevels;
 		} else {
 			if (sampleCount > 1) {
 				mipLevels = 1;
 			} else {
-				mipLevels = Image::calcMipLevels(dim.getMax());
+				mipLevels = TextureUtils::getMipLevels(dim);
 			}
 		}
 
@@ -144,11 +144,47 @@ namespace srk::modules::graphics::vulkan {
 			return false;
 		}
 
-		if (imageCreateInfo.extent.width > imageFormatProperties.maxExtent.width || imageCreateInfo.extent.height > imageFormatProperties.maxExtent.height || imageCreateInfo.extent.depth > imageFormatProperties.maxExtent.depth || 
-			imageCreateInfo.mipLevels > imageFormatProperties.maxMipLevels || imageCreateInfo.arrayLayers > imageFormatProperties.maxArrayLayers || imageCreateInfo.samples > imageFormatProperties.sampleCounts) {
+		if (imageCreateInfo.extent.width > imageFormatProperties.maxExtent.width) {
+			graphics.error(std::format("Vulkan BaseTexture::create error : width({}) > maxWidth({})", imageCreateInfo.extent.width, imageFormatProperties.maxExtent.width));
 			destroy();
 			return false;
 		}
+
+		if (imageCreateInfo.extent.height > imageFormatProperties.maxExtent.height) {
+			graphics.error(std::format("Vulkan BaseTexture::create error : height({}) > maxHeight({})", imageCreateInfo.extent.height, imageFormatProperties.maxExtent.height));
+			destroy();
+			return false;
+		}
+
+		if (imageCreateInfo.extent.depth > imageFormatProperties.maxExtent.depth) {
+			graphics.error(std::format("Vulkan BaseTexture::create error : depth({}) > maxDepth({})", imageCreateInfo.extent.depth, imageFormatProperties.maxExtent.depth));
+			destroy();
+			return false;
+		}
+
+		if (imageCreateInfo.mipLevels > imageFormatProperties.maxMipLevels) {
+			graphics.error(std::format("Vulkan BaseTexture::create error : mipLevels({}) > maxMipLevels({})", imageCreateInfo.mipLevels, imageFormatProperties.maxMipLevels));
+			destroy();
+			return false;
+		}
+
+		if (imageCreateInfo.arrayLayers > imageFormatProperties.maxArrayLayers) {
+			graphics.error(std::format("Vulkan BaseTexture::create error : arrayLayers({}) > maxArrayLayers({})", imageCreateInfo.arrayLayers, imageFormatProperties.maxArrayLayers));
+			destroy();
+			return false;
+		}
+
+		if (imageCreateInfo.samples > imageFormatProperties.sampleCounts) {
+			graphics.error(std::format("Vulkan BaseTexture::create error : samples({}) > sampleCounts({})", (size_t)imageCreateInfo.samples, (size_t)imageFormatProperties.sampleCounts));
+			destroy();
+			return false;
+		}
+
+		/*if (imageCreateInfo.extent.width > imageFormatProperties.maxExtent.width || imageCreateInfo.extent.height > imageFormatProperties.maxExtent.height || imageCreateInfo.extent.depth > imageFormatProperties.maxExtent.depth || 
+			imageCreateInfo.mipLevels > imageFormatProperties.maxMipLevels || imageCreateInfo.arrayLayers > imageFormatProperties.maxArrayLayers || imageCreateInfo.samples > imageFormatProperties.sampleCounts) {
+			destroy();
+			return false;
+		}*/
 
 		VmaAllocationCreateInfo allocationCreateInfo;
 		memset(&allocationCreateInfo, 0, sizeof(allocationCreateInfo));
@@ -168,7 +204,7 @@ namespace srk::modules::graphics::vulkan {
 		size_t mipsBytes;
 		std::vector<size_t> mipBytesArr(initData ? mipLevels : 0);
 		std::vector<Vec3uz> mipDimArr(initData ? mipLevels : 0);
-		Image::calcMipsInfo(format, dim, mipLevels, &mipsBytes, initData ? mipBytesArr.data() : nullptr, initData ? mipDimArr.data() : nullptr);
+		TextureUtils::getMipsInfo(format, dim, mipLevels, &mipsBytes, initData ? mipBytesArr.data() : nullptr, initData ? mipDimArr.data() : nullptr);
 		_size = mipsBytes * arraySize;
 
 		if (initData) {
@@ -247,30 +283,62 @@ namespace srk::modules::graphics::vulkan {
 			}
 		}
 
+		if ((_internalUsage & Usage::MAP_READ_WRITE) != Usage::NONE) {
+			_mapData.resize(mipLevels * arraySize);
+			auto perBlockBytes = TextureUtils::getPerBlockBytes(format);
+			Vec3uz size3(dim);
+			for (decltype(mipLevels) i = 0; i < mipLevels; ++i) {
+				auto& md = _mapData[i];
+				md.size = TextureUtils::getBlocks(format, size3).getMultiplies() * perBlockBytes;
+				md.usage = Usage::NONE;
+
+				size3 = TextureUtils::getNextMipPixels(size3);
+
+				for (decltype(arraySize) j = 1; j < arraySize; ++j) {
+					auto& md1 = _mapData[calcSubresource(i, j, mipLevels)];
+					md1.size = md.size;
+					md1.usage = Usage::NONE;
+				}
+			}
+
+			size_t offset = 0;
+			for (auto& md : _mapData) {
+				md.offset = offset;
+				offset += md.size;
+			}
+		}
+
 		_dim = dim;
+		_mipLevels = mipLevels;
 
 		return true;
 	}
 
-	Usage BaseTexture::map(Usage expectMapUsage) {
+	Usage BaseTexture::map(size_t arraySlice, size_t mipSlice, Usage expectMapUsage) {
 		using namespace srk::enum_operators;
 
 		auto ret = Usage::NONE;
+		if (auto subresource = calcSubresource(mipSlice, arraySlice, _mipLevels); subresource < _mapData.size()) {
+			auto usage = expectMapUsage & _internalUsage & Usage::MAP_READ_WRITE;
 
-		auto usage = expectMapUsage & _usage & Usage::MAP_READ_WRITE;
+			if (usage == Usage::NONE) {
+				unmap(arraySlice, mipSlice);
+			} else {
+				auto& md = _mapData[subresource];
+				ret = usage;
 
-		if (usage == Usage::NONE) {
-			unmap();
-		} else {
-			ret = usage;
-
-			if (_mapUsage != usage) {
-				unmap();
-
-				if (usage != Usage::NONE) {
-					if (_map(_mappedData)) _mapUsage = usage;
-				} else {
-					ret = Usage::NONE;
+				if (md.usage != usage) {
+					if (_mappedData) {
+						md.usage = usage;
+					} else {
+						if (_map(_mappedData)) {
+							md.usage = usage;
+							++_mapCount;
+						} else {
+							unmap(arraySlice, mipSlice);
+							ret = Usage::NONE;
+						}
+					}
 				}
 			}
 		}
@@ -284,12 +352,16 @@ namespace srk::modules::graphics::vulkan {
 		return true;
 	}
 
-	void BaseTexture::unmap() {
-		if (_mapUsage != Usage::NONE) {
-			_mapUsage = Usage::NONE;
-
-			_unmap();
-			_mappedData = nullptr;
+	void BaseTexture::unmap(size_t arraySlice, size_t mipSlice) {
+		if (auto subresource = calcSubresource(mipSlice, arraySlice, _mipLevels); subresource < _mapData.size()) {
+			auto& md = _mapData[subresource];
+			if (md.usage != Usage::NONE) {
+				md.usage = Usage::NONE;
+				if (--_mapCount == 0) {
+					_unmap();
+					_mappedData = nullptr;
+				}
+			}
 		}
 	}
 
@@ -298,53 +370,60 @@ namespace srk::modules::graphics::vulkan {
 		vmaUnmapMemory(_memAllocator, _allocation);
 	}
 
-	size_t BaseTexture::read(void* dst, size_t dstLen, size_t offset) {
+	size_t BaseTexture::read(size_t arraySlice, size_t mipSlice, size_t offset, void* dst, size_t dstLen) {
 		using namespace srk::enum_operators;
 
-		if ((_mapUsage & Usage::MAP_READ) == Usage::MAP_READ) {
-			if (!dstLen || offset >= _size) return 0;
-			if (dst) {
-				auto readLen = std::min<size_t>(_size - offset, dstLen);
-				memcpy(dst, (uint8_t*)_mappedData + offset, readLen);
+		if (auto subresource = calcSubresource(mipSlice, arraySlice, _mipLevels); subresource < _mapData.size()) {
+			auto& md = _mapData[subresource];
+			if ((md.usage & Usage::MAP_READ) == Usage::MAP_READ) {
+				if (!dst || !dstLen || offset >= md.size) return 0;
+
+				auto readLen = std::min<size_t>(md.size - offset, dstLen);
+				memcpy(dst, (uint8_t*)_mappedData + md.offset + offset, readLen);
 				return readLen;
 			}
 		}
 		return -1;
 	}
 
-	size_t BaseTexture::write(const void* data, size_t length, size_t offset) {
+	size_t BaseTexture::write(size_t arraySlice, size_t mipSlice, size_t offset, const void* data, size_t length) {
 		using namespace srk::enum_operators;
 
-		if ((_mapUsage & Usage::MAP_WRITE) == Usage::MAP_WRITE) {
-			if (data && length && offset < _size) {
-				length = std::min<size_t>(length, _size - offset);
-				memcpy((uint8_t*)_mappedData + offset, data, length);
+		if (auto subresource = calcSubresource(mipSlice, arraySlice, _mipLevels); subresource < _mapData.size()) {
+			auto& md = _mapData[subresource];
+			if ((md.usage & Usage::MAP_WRITE) == Usage::MAP_WRITE) {
+				if (!data || !length || offset >= md.size) return 0;
+				
+				length = std::min<size_t>(length, md.size - offset);
+				memcpy((uint8_t*)_mappedData + md.offset + offset, data, length);
 				return length;
 			}
-			return 0;
 		}
 		return -1;
 	}
 
-	size_t BaseTexture::update(const void* data, size_t length, size_t offset) {
+	bool BaseTexture::update(size_t arraySlice, size_t mipSlice, const Box3uz& range, const void* data) {
 		using namespace srk::enum_operators;
 
-		if ((_internalUsage & Usage::UPDATE) == Usage::UPDATE) {
-			if (data && length && offset < _size) {
-				length = std::min<size_t>(length, _size - offset);
-
-				if ((_mapUsage & Usage::MAP_WRITE) == Usage::MAP_WRITE) {
-					memcpy((uint8_t*)_mappedData + offset, data, length);
+		if (data && (_internalUsage & Usage::UPDATE) == Usage::UPDATE) {
+			if (auto subresource = calcSubresource(mipSlice, arraySlice, _mipLevels); subresource < _mapData.size()) {
+				auto& md = _mapData[subresource];
+				if ((md.usage & Usage::MAP_WRITE) == Usage::MAP_WRITE) {
+					memcpy((uint8_t*)_mappedData + md.offset, data, md.size);
 				} else {
-					auto old = _mapUsage;
-					if (map(Usage::MAP_WRITE) != Usage::NONE) memcpy((uint8_t*)_mappedData + offset, data, length);
-					map(old);
+					auto old = md.usage;
+					if (map(arraySlice, mipSlice, Usage::MAP_WRITE) == Usage::NONE) {
+						map(arraySlice, mipSlice, old);
+						return false;
+					}
+					
+					memcpy((uint8_t*)_mappedData + md.offset, data, md.size);
+					map(arraySlice, mipSlice, old);
 				}
-				return length;
+				return true;
 			}
-			return 0;
 		}
-		return -1;
+		return false;
 	}
 
 	/*size_t BaseTexture::copyFrom(Graphics& graphics, size_t dstPos, const BaseBuffer& src, const Box1uz& srcRange) {
@@ -407,7 +486,10 @@ namespace srk::modules::graphics::vulkan {
 	}*/
 
 	void BaseTexture::destroy() {
-		unmap();
+		if (_mappedData) {
+			_unmap();
+			_mapCount = 0;
+		}
 
 		if (_image) {
 			vmaDestroyImage(_memAllocator, _image, _allocation);
@@ -420,10 +502,11 @@ namespace srk::modules::graphics::vulkan {
 		_memAllocator = nullptr;
 		_allocation = nullptr;
 		_size = 0;
+		_mipLevels = 0;
 		_usage = Usage::NONE;
 		_internalUsage = Usage::NONE;
-		_mapUsage = Usage::NONE;
 		_mappedData = nullptr;
 		_vkFlags = 0;
+		_mapData.clear();
 	}
 }

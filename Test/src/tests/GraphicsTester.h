@@ -54,6 +54,8 @@ public:
 
 		IntrusivePtr looper = new Looper(1000.0 / 60.0);
 
+		printaln("================================");
+
 		printaln("Graphics Version : ", graphics->getVersion());
 
 		{
@@ -128,14 +130,78 @@ public:
 			auto tr = graphics->createTexture2DResource();
 			printaln("createTexture2DResource : ", tr ? "succeed" : "failed");
 			if (tr) {
-				uint8_t pixels[20];
-				memset(pixels, 255, 16);
-				memset(pixels + 16, 200, 4);
-				std::array<void*, 2> mipData;
-				mipData[0] = pixels;
-				mipData[1] = pixels + 16;
-				auto rst = tr->create(Vec2uz(2, 2), 0, 2, 1, TextureFormat::R8G8B8A8, Usage::NONE, Usage::NONE, mipData.data());
-				printaln("Texture2DResource::create : ", rst ? "succeed" : "failed");
+				constexpr TextureFormat texFmt = TextureFormat::R8G8B8A8_UNORM;
+				constexpr Vec2uz texDim(2, 2);
+
+				auto mipLevels = TextureUtils::getMipLevels(texDim);
+				size_t totalBytes;
+				std::vector<size_t> mipBytes(mipLevels);
+				TextureUtils::getMipsInfo(texFmt, texDim, mipLevels, &totalBytes, mipBytes.data());
+				std::vector<uint8_t> texData(totalBytes);
+				std::vector<void*> mipData(mipLevels);
+				size_t offset = 0;
+				for (size_t i = 0; i < mipLevels; ++i) {
+					mipData[i] = texData.data() + offset;
+					
+					for (size_t j = 0; j < mipBytes[i]; ++j) {
+						texData.data()[offset + j] = 255 / (i + 1);
+					}
+
+					offset += mipBytes[i];
+				}
+				auto rst = tr->create(texDim, 0, mipLevels, 1, texFmt, Usage::UPDATE, Usage::NONE, mipData.data());
+				printaln("Texture2DResource::create(u) : ", rst ? "succeed" : "failed");
+				if (!rst) {
+					rst = tr->create(texDim, 0, 1, 1, texFmt, Usage::UPDATE, Usage::NONE, mipData.data());
+					printaln("Texture2DResource::create(u) : ", rst ? "succeed" : "failed");
+				}
+				if (rst) {
+					std::vector<uint8_t> updateData(TextureUtils::getPerBlockBytes(texFmt));
+					for (size_t i = 0; i < updateData.size(); ++i) updateData.data()[i] = i;
+					if ((tr->getUsage() & Usage::UPDATE) == Usage::UPDATE) {
+						rst = tr->update(0, 0, Box2uz(Vec2uz(0, 0), Vec2uz(1, 1)), updateData.data());
+						printaln("Texture2DResource::update : ", rst ? "succeed" : "failed");
+					}
+
+					auto tr2 = graphics->createTexture2DResource();
+					auto rst2 = tr2->create(texDim, 0, 1, 1, texFmt, Usage::MAP_READ, Usage::NONE);
+					printaln("Texture2DResource::create(r) : ", rst2 ? "succeed" : "failed");
+					if (rst2) {
+						rst = tr2->copyFrom(Vec3uz(), 0, 0, tr, 0, 0, Box3uz(Vec3uz(), Vec3uz(texDim[0], texDim[1], 1)));
+						printaln("Texture2DResource::copyFrom : ", rst ? "succeed" : "failed");
+
+						if (rst) {
+							std::vector<uint8_t> mappedData(mipBytes[0]);
+							rst = tr2->map(0, 0, Usage::MAP_READ) == Usage::MAP_READ;
+							printaln("Texture2DResource::map(r) : ", rst ? "succeed" : "failed");
+							if (rst) {
+								auto readLen = tr2->read(0, 0, 0, mappedData.data(), mappedData.size());
+								rst = readLen == mappedData.size();
+								printaln("Texture2DResource::read : ", rst ? "succeed" : "failed");
+								tr2->unmap(0, 0);
+							}
+
+							auto isSame = true;
+							for (size_t i = 0; i < updateData.size(); ++i) {
+								if (updateData[i] != mappedData[i]) {
+									isSame = false;
+									break;
+								}
+							}
+
+							if (isSame) {
+								for (size_t i = updateData.size(); i < mipBytes[0]; ++i) {
+									if (texData[i] != mappedData[i]) {
+										isSame = false;
+										break;
+									}
+								}
+							}
+
+							printaln("Texture2DResource texData check : ", isSame ? "succeed" : "failed");
+						}
+					}
+				}
 			}
 
 			auto sampler = graphics->createSampler();
@@ -185,6 +251,8 @@ public:
 				graphics->draw(program, vac, spc, nullptr);
 			}
 		}
+
+		printaln("================================");
 
 		win->getEventDispatcher()->addEventListener(WindowEvent::RESIZED, createEventListener<WindowEvent>([graphics](Event<WindowEvent>& e) {
 			graphics->setBackBufferSize(((IWindow*)e.getTarget())->getContentSize());

@@ -61,7 +61,9 @@ namespace srk::extensions::jpeg_converter {
 		img->dimensions.set(w, h);
 		switch (c) {
 		case 3:
-			img->format = modules::graphics::TextureFormat::R8G8B8;
+			img->format = modules::graphics::TextureFormat::R8G8B8_TYPELESS;
+		default:
+			img->format = modules::graphics::TextureFormat::UNKNOWN;
 		}
 		img->source = std::move(buf);
 
@@ -71,7 +73,7 @@ namespace srk::extensions::jpeg_converter {
 	inline ByteArray SRK_CALL encode(const Image& img, uint32_t quality) {
 		ByteArray out;
 
-		if (img.format != modules::graphics::TextureFormat::R8G8B8) return out;
+		if (img.format != modules::graphics::TextureFormat::R8G8B8_UNORM && img.format != modules::graphics::TextureFormat::R8G8B8_UNORM_SRGB) return out;
 
 		jpeg_compress_struct cinfo;
 		jpeg_error_mgr err;

@@ -294,7 +294,31 @@ namespace srk::modules::graphics::d3d11 {
 		_deviceFeatures.maxSamplerAnisotropy = 16;
 		_deviceFeatures.indexTypes.emplace_back(IndexType::UI16);
 		_deviceFeatures.indexTypes.emplace_back(IndexType::UI32);
-		_deviceFeatures.textureFormats.emplace_back(TextureFormat::R8G8B8A8);
+		_deviceFeatures.textureFormats.emplace_back(TextureFormat::R8G8B8A8_UNORM);
+		_deviceFeatures.textureFormats.emplace_back(TextureFormat::R8G8B8A8_UNORM_SRGB);
+		_deviceFeatures.textureFormats.emplace_back(TextureFormat::R8G8B8A8_UINT);
+		_deviceFeatures.textureFormats.emplace_back(TextureFormat::R8G8B8A8_SNORM);
+		_deviceFeatures.textureFormats.emplace_back(TextureFormat::R8G8B8A8_SINT);
+		if (_featureLevel >= D3D_FEATURE_LEVEL_9_1) {
+			_deviceFeatures.textureFormats.emplace_back(TextureFormat::BC1_UNORM);
+			_deviceFeatures.textureFormats.emplace_back(TextureFormat::BC1_UNORM_SRGB);
+			_deviceFeatures.textureFormats.emplace_back(TextureFormat::BC2_UNORM);
+			_deviceFeatures.textureFormats.emplace_back(TextureFormat::BC2_UNORM_SRGB);
+			_deviceFeatures.textureFormats.emplace_back(TextureFormat::BC3_UNORM);
+			_deviceFeatures.textureFormats.emplace_back(TextureFormat::BC3_UNORM_SRGB);
+		}
+		if (_featureLevel >= D3D_FEATURE_LEVEL_10_0) {
+			_deviceFeatures.textureFormats.emplace_back(TextureFormat::BC4_UNORM);
+			_deviceFeatures.textureFormats.emplace_back(TextureFormat::BC4_SNORM);
+			_deviceFeatures.textureFormats.emplace_back(TextureFormat::BC5_UNORM);
+			_deviceFeatures.textureFormats.emplace_back(TextureFormat::BC5_SNORM);
+		}
+		if (_featureLevel >= D3D_FEATURE_LEVEL_11_0) {
+			_deviceFeatures.textureFormats.emplace_back(TextureFormat::BC6H_UF16);
+			_deviceFeatures.textureFormats.emplace_back(TextureFormat::BC6H_SF16);
+			_deviceFeatures.textureFormats.emplace_back(TextureFormat::BC7_UNORM);
+			_deviceFeatures.textureFormats.emplace_back(TextureFormat::BC7_UNORM_SRGB);
+		}
 		_deviceFeatures.samplerAddressModes.emplace_back(SamplerAddressMode::REPEAT);
 		_deviceFeatures.samplerAddressModes.emplace_back(SamplerAddressMode::CLAMP_EDGE);
 		_deviceFeatures.samplerAddressModes.emplace_back(SamplerAddressMode::CLAMP_BORDER);
@@ -860,8 +884,44 @@ namespace srk::modules::graphics::d3d11 {
 
 	DXGI_FORMAT Graphics::convertInternalFormat(TextureFormat fmt) {
 		switch (fmt) {
-		case TextureFormat::R8G8B8A8:
+		case TextureFormat::R8G8B8A8_UNORM:
 			return DXGI_FORMAT_R8G8B8A8_UNORM;
+		case TextureFormat::R8G8B8A8_UNORM_SRGB:
+			return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+		case TextureFormat::R8G8B8A8_UINT:
+			return DXGI_FORMAT_R8G8B8A8_UINT;
+		case TextureFormat::R8G8B8A8_SNORM:
+			return DXGI_FORMAT_R8G8B8A8_SNORM;
+		case TextureFormat::R8G8B8A8_SINT:
+			return DXGI_FORMAT_R8G8B8A8_SINT;
+		case TextureFormat::BC1_UNORM:
+			return DXGI_FORMAT_BC1_UNORM;
+		case TextureFormat::BC1_UNORM_SRGB:
+			return DXGI_FORMAT_BC1_UNORM_SRGB;
+		case TextureFormat::BC2_UNORM:
+			return DXGI_FORMAT_BC2_UNORM;
+		case TextureFormat::BC2_UNORM_SRGB:
+			return DXGI_FORMAT_BC2_UNORM_SRGB;
+		case TextureFormat::BC3_UNORM:
+			return DXGI_FORMAT_BC3_UNORM;
+		case TextureFormat::BC3_UNORM_SRGB:
+			return DXGI_FORMAT_BC3_UNORM_SRGB;
+		case TextureFormat::BC4_UNORM:
+			return DXGI_FORMAT_BC4_UNORM;
+		case TextureFormat::BC4_SNORM:
+			return DXGI_FORMAT_BC4_SNORM;
+		case TextureFormat::BC5_UNORM:
+			return DXGI_FORMAT_BC5_UNORM;
+		case TextureFormat::BC5_SNORM:
+			return DXGI_FORMAT_BC5_SNORM;
+		case TextureFormat::BC6H_UF16:
+			return DXGI_FORMAT_BC6H_UF16;
+		case TextureFormat::BC6H_SF16:
+			return DXGI_FORMAT_BC6H_SF16;
+		case TextureFormat::BC7_UNORM:
+			return DXGI_FORMAT_BC7_UNORM;
+		case TextureFormat::BC7_UNORM_SRGB:
+			return DXGI_FORMAT_BC7_UNORM_SRGB;
 		default:
 			return DXGI_FORMAT_UNKNOWN;
 		}

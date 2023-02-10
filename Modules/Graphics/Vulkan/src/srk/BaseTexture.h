@@ -12,16 +12,20 @@ namespace srk::modules::graphics::vulkan {
 		bool SRK_CALL create(Graphics& graphics, const Vec3uz& size, size_t arraySize, size_t mipLevels, SampleCount sampleCount,
 			TextureFormat format, Usage requiredUsage, Usage preferredUsage, const void* const* data = nullptr);
 
-		Usage SRK_CALL map(Usage expectMapUsage);
-		void SRK_CALL unmap();
-		size_t SRK_CALL read(void* dst, size_t dstLen, size_t offset);
-		size_t SRK_CALL write(const void* data, size_t length, size_t offset);
-		size_t SRK_CALL update(const void* data, size_t length, size_t offset);
+		Usage SRK_CALL map(size_t arraySlice, size_t mipSlice, Usage expectMapUsage);
+		void SRK_CALL unmap(size_t arraySlice, size_t mipSlice);
+		size_t SRK_CALL read(size_t arraySlice, size_t mipSlice, size_t offset, void* dst, size_t dstLen);
+		size_t SRK_CALL write(size_t arraySlice, size_t mipSlice, size_t offset, const void* data, size_t length);
+		bool SRK_CALL update(size_t arraySlice, size_t mipSlice, const Box3uz& range, const void* data);
 
 		//size_t SRK_CALL copyFrom(Graphics& graphics, size_t dstPos, const BaseBuffer& src, const Box1uz& srcRange);
 		//size_t SRK_CALL copyFrom(Graphics& graphics, size_t dstPos, const IBuffer* src, const Box1uz& srcRange);
 
 		void SRK_CALL destroy();
+
+		inline static constexpr size_t SRK_CALL calcSubresource(size_t mipSlice, size_t arraySlice, size_t mipLevels) {
+			return mipSlice + arraySlice * mipLevels;
+		}
 
 		inline TextureType SRK_CALL getTexType() const {
 			return _texType;
@@ -66,12 +70,21 @@ namespace srk::modules::graphics::vulkan {
 
 		Usage _usage;
 		Usage _internalUsage;
-		Usage _mapUsage;
+		size_t _mapCount;
 		size_t _size;
+		size_t _mipLevels;
 
 		void* _mappedData;
 		size_t _mappedDataOffset;
 		size_t _mappedDataSize;
+
+		struct MapData {
+			Usage usage;
+			size_t size;
+			size_t offset;
+		};
+
+		std::vector<MapData> _mapData;
 
 		bool _map(void*& mappedData);
 		void _unmap();

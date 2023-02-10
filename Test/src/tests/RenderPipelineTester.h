@@ -235,12 +235,14 @@ public:
 			auto texRes = graphics->createTexture2DResource();
 			if (texRes) {
 				auto img0 = extensions::PNGConverter::decode(readFile(getAppPath().parent_path().u8string() + "/Resources/white.png"));
-				auto mipLevels = Image::calcMipLevels(img0->dimensions);
+				img0->format = textureFormatTypeSwitch(img0->format, false);
+				auto mipLevels = TextureUtils::getMipLevels(img0->dimensions);
 				ByteArray mipsData0;
 				std::vector<void*> mipsData0Ptr;
 				img0->generateMips(img0->format, mipLevels, mipsData0, 0, mipsData0Ptr);
 
 				auto img1 = extensions::PNGConverter::decode(readFile(getAppPath().parent_path().u8string() + "/Resources/red.png"));
+				img1->format = textureFormatTypeSwitch(img1->format, false);
 				ByteArray mipsData1;
 				std::vector<void*> mipsData1Ptr;
 				img1->generateMips(img1->format, mipLevels, mipsData1, 0, mipsData1Ptr);

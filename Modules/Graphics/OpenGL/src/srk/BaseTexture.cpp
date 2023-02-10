@@ -2,7 +2,6 @@
 #include "Graphics.h"
 #include "PixelBuffer.h"
 #include "TextureView.h"
-#include "srk/Image.h"
 #include <algorithm>
 
 namespace srk::modules::graphics::gl {
@@ -52,13 +51,13 @@ namespace srk::modules::graphics::gl {
 				return _createDone(graphics, false);
 			}
 
-			auto maxLevels = Image::calcMipLevels(dim.getMax());
+			auto maxLevels = TextureUtils::getMipLevels(dim.getMax());
 			if (mipLevels > maxLevels) mipLevels = maxLevels;
 		} else {
 			if (sampleCount > 1) {
 				mipLevels = 1;
 			} else {
-				mipLevels = Image::calcMipLevels(dim.getMax());
+				mipLevels = TextureUtils::getMipLevels(dim.getMax());
 			}
 		}
 
@@ -80,9 +79,9 @@ namespace srk::modules::graphics::gl {
 
 				bool supportTexStorage = graphics.getInternalFeatures().supportTexStorage;
 
-				auto perBlockBytes = Image::calcPerBlockBytes(format);
+				auto perBlockBytes = TextureUtils::getPerBlockBytes(format);
 				size_t mipsBytes;
-				Image::calcMipsInfo(format, dim, mipLevels, &mipsBytes);
+				TextureUtils::getMipsInfo(format, dim, mipLevels, &mipsBytes);
 
 				this->size = mipsBytes * arraySize;
 
@@ -97,17 +96,27 @@ namespace srk::modules::graphics::gl {
 						if (supportTexStorage) {
 							glTexStorage2D(glTexInfo.target, mipLevels, glTexInfo.internalFormat, dim[0], arraySize);
 							if (data) {
-								for (size_t i = 0; i < mipLevels; ++i) {
-									for (size_t j = 0; j < arraySize; ++j) {
-										if (auto subData = data[i + j * mipLevels]; subData) glTexSubImage2D(glTexInfo.target, i, 0, 0, w, j, glTexInfo.format, glTexInfo.type, subData);
+								if (TextureUtils::isCompressedFormat(format)) {
+									for (size_t i = 0; i < mipLevels; ++i) {
+										auto size = TextureUtils::getBytes(format, w);
+										for (size_t j = 0; j < arraySize; ++j) {
+											if (auto subData = data[i + j * mipLevels]; subData) glCompressedTexSubImage2D(glTexInfo.target, i, 0, 0, w, j, glTexInfo.internalFormat, size, subData);
+										}
+										w = TextureUtils::getNextMipPixels(w);
 									}
-									w = Image::calcNextMipPixels(w);
+								} else {
+									for (size_t i = 0; i < mipLevels; ++i) {
+										for (size_t j = 0; j < arraySize; ++j) {
+											if (auto subData = data[i + j * mipLevels]; subData) glTexSubImage2D(glTexInfo.target, i, 0, 0, w, j, glTexInfo.format, glTexInfo.type, subData);
+										}
+										w = TextureUtils::getNextMipPixels(w);
+									}
 								}
 							}
 						} else {
 							for (size_t i = 0; i < mipLevels; ++i) {
 								for (size_t j = 0; j < arraySize; ++j) glTexImage2D(glTexInfo.target, i, glTexInfo.internalFormat, w, j, 0, glTexInfo.format, glTexInfo.type, data ? data[i + j * mipLevels] : nullptr);
-								w = Image::calcNextMipPixels(w);
+								w = TextureUtils::getNextMipPixels(w);
 							}
 						}
 					} else {
@@ -117,15 +126,22 @@ namespace srk::modules::graphics::gl {
 						if (supportTexStorage) {
 							glTexStorage1D(glTexInfo.target, mipLevels, glTexInfo.internalFormat, dim[0]);
 							if (data) {
-								for (size_t i = 0; i < mipLevels; ++i) {
-									if (data[i]) glTexSubImage1D(glTexInfo.target, i, 0, w, glTexInfo.format, glTexInfo.type, data[i]);
-									w = Image::calcNextMipPixels(w);
+								if (TextureUtils::isCompressedFormat(format)) {
+									for (size_t i = 0; i < mipLevels; ++i) {
+										if (data[i]) glCompressedTexSubImage1D(glTexInfo.target, i, 0, w, glTexInfo.internalFormat, TextureUtils::getBytes(format, w), data[i]);
+										w = TextureUtils::getNextMipPixels(w);
+									}
+								} else {
+									for (size_t i = 0; i < mipLevels; ++i) {
+										if (data[i]) glTexSubImage1D(glTexInfo.target, i, 0, w, glTexInfo.format, glTexInfo.type, data[i]);
+										w = TextureUtils::getNextMipPixels(w);
+									}
 								}
 							}
 						} else {
 							for (size_t i = 0; i < mipLevels; ++i) {
 								glTexImage1D(glTexInfo.target, i, glTexInfo.internalFormat, w, 0, glTexInfo.format, glTexInfo.type, data ? data[i] : nullptr);
-								w = Image::calcNextMipPixels(w);
+								w = TextureUtils::getNextMipPixels(w);
 							}
 						}
 					}
@@ -145,11 +161,21 @@ namespace srk::modules::graphics::gl {
 							} else {
 								glTexStorage3D(glTexInfo.target, mipLevels, glTexInfo.internalFormat, dim[0], dim[1], arraySize);
 								if (data) {
-									for (size_t i = 0; i < mipLevels; ++i) {
-										for (size_t j = 0; j < arraySize; ++j) {
-											if (auto subData = data[i + j * mipLevels]; subData) glTexSubImage3D(glTexInfo.target, i, 0, 0, 0, size2[0], size2[1], j, glTexInfo.format, glTexInfo.type, subData);
+									if (TextureUtils::isCompressedFormat(format)) {
+										for (size_t i = 0; i < mipLevels; ++i) {
+											auto size = TextureUtils::getBytes(format, size2);
+											for (size_t j = 0; j < arraySize; ++j) {
+												if (auto subData = data[i + j * mipLevels]; subData) glCompressedTexSubImage3D(glTexInfo.target, i, 0, 0, 0, size2[0], size2[1], j, glTexInfo.internalFormat, size, subData);
+											}
+											size2 = TextureUtils::getNextMipPixels(size2);
 										}
-										size2 = Image::calcNextMipPixels(size2);
+									} else {
+										for (size_t i = 0; i < mipLevels; ++i) {
+											for (size_t j = 0; j < arraySize; ++j) {
+												if (auto subData = data[i + j * mipLevels]; subData) glTexSubImage3D(glTexInfo.target, i, 0, 0, 0, size2[0], size2[1], j, glTexInfo.format, glTexInfo.type, subData);
+											}
+											size2 = TextureUtils::getNextMipPixels(size2);
+										}
 									}
 								}
 							}
@@ -159,7 +185,7 @@ namespace srk::modules::graphics::gl {
 							} else {
 								for (size_t i = 0; i < mipLevels; ++i) {
 									for (size_t j = 0; j < arraySize; ++j) glTexImage3D(glTexInfo.target, i, glTexInfo.internalFormat, size2[0], size2[1], j, 0, glTexInfo.format, glTexInfo.type, data ? data[i + j * mipLevels] : nullptr);
-									size2 = Image::calcNextMipPixels(size2);
+									size2 = TextureUtils::getNextMipPixels(size2);
 								}
 							}
 						}
@@ -173,9 +199,16 @@ namespace srk::modules::graphics::gl {
 							} else {
 								glTexStorage2D(glTexInfo.target, mipLevels, glTexInfo.internalFormat, dim[0], dim[1]);
 								if (data) {
-									for (size_t i = 0; i < mipLevels; ++i) {
-										if (data[i]) glTexSubImage2D(glTexInfo.target, i, 0, 0, size2[0], size2[1], glTexInfo.format, glTexInfo.type, data[i]);
-										size2 = Image::calcNextMipPixels(size2);
+									if (TextureUtils::isCompressedFormat(format)) {
+										for (size_t i = 0; i < mipLevels; ++i) {
+											if (data[i]) glCompressedTexSubImage2D(glTexInfo.target, i, 0, 0, size2[0], size2[1], glTexInfo.internalFormat, TextureUtils::getBytes(format, size2), data[i]);
+											size2 = TextureUtils::getNextMipPixels(size2);
+										}
+									} else {
+										for (size_t i = 0; i < mipLevels; ++i) {
+											if (data[i]) glTexSubImage2D(glTexInfo.target, i, 0, 0, size2[0], size2[1], glTexInfo.format, glTexInfo.type, data[i]);
+											size2 = TextureUtils::getNextMipPixels(size2);
+										}
 									}
 								}
 							}
@@ -185,7 +218,7 @@ namespace srk::modules::graphics::gl {
 							} else {
 								for (size_t i = 0; i < mipLevels; ++i) {
 									glTexImage2D(glTexInfo.target, i, glTexInfo.internalFormat, size2[0], size2[1], 0, glTexInfo.format, glTexInfo.type, data ? data[i] : nullptr);
-									size2 = Image::calcNextMipPixels(size2);
+									size2 = TextureUtils::getNextMipPixels(size2);
 
 									/*
 									GLuint bufID = 0;
@@ -252,15 +285,22 @@ namespace srk::modules::graphics::gl {
 					if (supportTexStorage) {
 						glTexStorage3D(glTexInfo.target, mipLevels, glTexInfo.internalFormat, dim[0], dim[1], dim[2]);
 						if (data) {
-							for (uint32_t i = 0; i < mipLevels; ++i) {
-								if (data[i]) glTexSubImage3D(glTexInfo.target, i, 0, 0, 0, size3[0], size3[1], size3[2], glTexInfo.format, glTexInfo.type, data[i]);
-								size3 = Image::calcNextMipPixels(size3);
+							if (TextureUtils::isCompressedFormat(format)) {
+								for (uint32_t i = 0; i < mipLevels; ++i) {
+									if (data[i]) glCompressedTexSubImage3D(glTexInfo.target, i, 0, 0, 0, size3[0], size3[1], size3[2], glTexInfo.internalFormat, TextureUtils::getBytes(format, size3.cast<2>()) * size3[2], data[i]);
+									size3 = TextureUtils::getNextMipPixels(size3);
+								}
+							} else {
+								for (uint32_t i = 0; i < mipLevels; ++i) {
+									if (data[i]) glTexSubImage3D(glTexInfo.target, i, 0, 0, 0, size3[0], size3[1], size3[2], glTexInfo.format, glTexInfo.type, data[i]);
+									size3 = TextureUtils::getNextMipPixels(size3);
+								}
 							}
 						}
 					} else {
 						for (uint32_t i = 0; i < mipLevels; ++i) {
 							glTexImage3D(glTexInfo.target, i, glTexInfo.internalFormat, size3[0], size3[1], size3[2], 0, glTexInfo.format, glTexInfo.type, data ? data[i] : nullptr);
-							size3 = Image::calcNextMipPixels(size3);
+							size3 = TextureUtils::getNextMipPixels(size3);
 						}
 					}
 
@@ -504,20 +544,55 @@ namespace srk::modules::graphics::gl {
 		glBindTexture(glTexInfo.target, handle);
 		switch (glTexInfo.target) {
 		case GL_TEXTURE_1D:
-			glTexSubImage1D(glTexInfo.target, mipSlice, range.pos[0], range.size[0], glTexInfo.format, glTexInfo.type, data);
+		{
+			if (TextureUtils::isCompressedFormat(format)) {
+				glCompressedTexSubImage1D(glTexInfo.target, mipSlice, range.pos[0], range.size[0], glTexInfo.internalFormat, TextureUtils::getBytes(format, range.size[0]), data);
+			} else {
+				glTexSubImage1D(glTexInfo.target, mipSlice, range.pos[0], range.size[0], glTexInfo.format, glTexInfo.type, data);
+			}
+
 			break;
+		}
 		case GL_TEXTURE_1D_ARRAY:
-			glTexSubImage2D(glTexInfo.target, mipSlice, range.pos[0], 0, range.size[0], arraySlice, glTexInfo.format, glTexInfo.type, data);
+		{
+			if (TextureUtils::isCompressedFormat(format)) {
+				glCompressedTexSubImage2D(glTexInfo.target, mipSlice, range.pos[0], 0, range.size[0], arraySlice, glTexInfo.internalFormat, TextureUtils::getBytes(format, range.size[0]), data);
+			} else {
+				glTexSubImage2D(glTexInfo.target, mipSlice, range.pos[0], 0, range.size[0], arraySlice, glTexInfo.format, glTexInfo.type, data);
+			}
+
 			break;
+		}
 		case GL_TEXTURE_2D:
-			glTexSubImage2D(glTexInfo.target, mipSlice, range.pos[0], range.pos[1], range.size[0], range.size[1], glTexInfo.format, glTexInfo.type, data);
+		{
+			if (TextureUtils::isCompressedFormat(format)) {
+				glCompressedTexSubImage2D(glTexInfo.target, mipSlice, range.pos[0], range.pos[1], range.size[0], range.size[1], glTexInfo.internalFormat, TextureUtils::getBytes(format, range.size.cast<2>()), data);
+			} else {
+				glTexSubImage2D(glTexInfo.target, mipSlice, range.pos[0], range.pos[1], range.size[0], range.size[1], glTexInfo.format, glTexInfo.type, data);
+			}
+
 			break;
+		}
 		case GL_TEXTURE_2D_ARRAY:
-			glTexSubImage3D(glTexInfo.target, mipSlice, range.pos[0], range.pos[1], 0, range.size[0], range.size[1], arraySlice, glTexInfo.format, glTexInfo.type, data);
+		{
+			if (TextureUtils::isCompressedFormat(format)) {
+				glCompressedTexSubImage3D(glTexInfo.target, mipSlice, range.pos[0], range.pos[1], 0, range.size[0], range.size[1], arraySlice, glTexInfo.internalFormat, TextureUtils::getBytes(format, range.size.cast<2>()), data);
+			} else {
+				glTexSubImage3D(glTexInfo.target, mipSlice, range.pos[0], range.pos[1], 0, range.size[0], range.size[1], arraySlice, glTexInfo.format, glTexInfo.type, data);
+			}
+
 			break;
+		}
 		case GL_TEXTURE_3D:
-			glTexSubImage3D(glTexInfo.target, mipSlice, range.pos[0], range.pos[1], range.pos[2], range.size[0], range.size[1], range.size[2], glTexInfo.format, glTexInfo.type, data);
+		{
+			if (TextureUtils::isCompressedFormat(format)) {
+				glCompressedTexSubImage3D(glTexInfo.target, mipSlice, range.pos[0], range.pos[1], range.pos[2], range.size[0], range.size[1], range.size[2], glTexInfo.internalFormat, TextureUtils::getBytes(format, range.size.cast<2>()) * range.size[2], data);
+			} else {
+				glTexSubImage3D(glTexInfo.target, mipSlice, range.pos[0], range.pos[1], range.pos[2], range.size[0], range.size[1], range.size[2], glTexInfo.format, glTexInfo.type, data);
+			}
+
 			break;
+		}
 		default:
 			glBindTexture(glTexInfo.target, 0);
 			return false;

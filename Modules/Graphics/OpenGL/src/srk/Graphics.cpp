@@ -192,7 +192,7 @@ namespace srk::modules::graphics::gl {
 
 		_intVer = _majorVer * 100 + _minorVer * 10;
 		_strVer = String::toString(_intVer);
-		_deviceVersion = "OpenGL " + String::toString(_majorVer) + "." + String::toString(_minorVer);
+		_deviceVersion = std::format("OpenGL {}.{}", _majorVer, _minorVer);;
 
 		if (conf.debug) {
 			if (isGreatThanOrEqualVersion(4, 3) || glIsSupported("GL_KHR_debug") || glIsSupported("GL_ARB_debug_output")) {
@@ -227,11 +227,35 @@ namespace srk::modules::graphics::gl {
 		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &fval);
 		_deviceFeatures.maxSamplerAnisotropy = fval;
 
+		auto sRGBSupported = glIsSupported("GL_EXT_texture_sRGB");
+
 		_deviceFeatures.indexTypes.emplace_back(IndexType::UI8);
 		_deviceFeatures.indexTypes.emplace_back(IndexType::UI16);
 		_deviceFeatures.indexTypes.emplace_back(IndexType::UI32);
-		_deviceFeatures.textureFormats.emplace_back(TextureFormat::R8G8B8);
-		_deviceFeatures.textureFormats.emplace_back(TextureFormat::R8G8B8A8);
+		_deviceFeatures.textureFormats.emplace_back(TextureFormat::R8G8B8_UNORM);
+		if (sRGBSupported) _deviceFeatures.textureFormats.emplace_back(TextureFormat::R8G8B8_UNORM_SRGB);
+		_deviceFeatures.textureFormats.emplace_back(TextureFormat::R8G8B8A8_UNORM);
+		if (sRGBSupported) _deviceFeatures.textureFormats.emplace_back(TextureFormat::R8G8B8A8_UNORM_SRGB);
+		if (glIsSupported("GL_EXT_texture_compression_s3tc")) {
+			_deviceFeatures.textureFormats.emplace_back(TextureFormat::BC1_UNORM);
+			if (sRGBSupported) _deviceFeatures.textureFormats.emplace_back(TextureFormat::BC1_UNORM_SRGB);
+			_deviceFeatures.textureFormats.emplace_back(TextureFormat::BC2_UNORM);
+			if (sRGBSupported) _deviceFeatures.textureFormats.emplace_back(TextureFormat::BC2_UNORM_SRGB);
+			_deviceFeatures.textureFormats.emplace_back(TextureFormat::BC3_UNORM);
+			if (sRGBSupported) _deviceFeatures.textureFormats.emplace_back(TextureFormat::BC3_UNORM_SRGB);
+		}
+		if (glIsSupported("GL_ARB_texture_compression_rgtc")) {
+			_deviceFeatures.textureFormats.emplace_back(TextureFormat::BC4_UNORM);
+			_deviceFeatures.textureFormats.emplace_back(TextureFormat::BC4_SNORM);
+			_deviceFeatures.textureFormats.emplace_back(TextureFormat::BC5_UNORM);
+			_deviceFeatures.textureFormats.emplace_back(TextureFormat::BC5_SNORM);
+		}
+		if (glIsSupported("GL_ARB_texture_compression_bptc")) {
+			_deviceFeatures.textureFormats.emplace_back(TextureFormat::BC6H_UF16);
+			_deviceFeatures.textureFormats.emplace_back(TextureFormat::BC6H_SF16);
+			_deviceFeatures.textureFormats.emplace_back(TextureFormat::BC7_UNORM);
+			if (sRGBSupported) _deviceFeatures.textureFormats.emplace_back(TextureFormat::BC7_UNORM_SRGB);
+		}
 		_deviceFeatures.samplerAddressModes.emplace_back(SamplerAddressMode::REPEAT);
 		_deviceFeatures.samplerAddressModes.emplace_back(SamplerAddressMode::CLAMP_EDGE);
 		_deviceFeatures.samplerAddressModes.emplace_back(SamplerAddressMode::CLAMP_BORDER);
@@ -1088,10 +1112,42 @@ namespace srk::modules::graphics::gl {
 
 	std::optional<Graphics::ConvertFormatResult> Graphics::convertFormat(TextureFormat fmt) {
 		switch (fmt) {
-		case TextureFormat::R8G8B8:
+		case TextureFormat::R8G8B8_UNORM:
 			return std::make_optional<ConvertFormatResult>(GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE);
-		case TextureFormat::R8G8B8A8:
+		case TextureFormat::R8G8B8_UNORM_SRGB:
+			return std::make_optional<ConvertFormatResult>(GL_SRGB8, GL_RGB, GL_UNSIGNED_BYTE);
+		case TextureFormat::R8G8B8A8_UNORM:
 			return std::make_optional<ConvertFormatResult>(GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
+		case TextureFormat::R8G8B8A8_UNORM_SRGB:
+			return std::make_optional<ConvertFormatResult>(GL_SRGB8_ALPHA8, GL_RGBA, GL_UNSIGNED_BYTE);
+		case TextureFormat::BC1_UNORM:
+			return std::make_optional<ConvertFormatResult>(GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, GL_RGBA, GL_UNSIGNED_BYTE);
+		case TextureFormat::BC1_UNORM_SRGB:
+			return std::make_optional<ConvertFormatResult>(GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT, GL_RGBA, GL_UNSIGNED_BYTE);
+		case TextureFormat::BC2_UNORM:
+			return std::make_optional<ConvertFormatResult>(GL_COMPRESSED_RGBA_S3TC_DXT3_EXT, GL_RGBA, GL_UNSIGNED_BYTE);
+		case TextureFormat::BC2_UNORM_SRGB:
+			return std::make_optional<ConvertFormatResult>(GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT, GL_RGBA, GL_UNSIGNED_BYTE);
+		case TextureFormat::BC3_UNORM:
+			return std::make_optional<ConvertFormatResult>(GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, GL_RGBA, GL_UNSIGNED_BYTE);
+		case TextureFormat::BC3_UNORM_SRGB:
+			return std::make_optional<ConvertFormatResult>(GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT, GL_RGBA, GL_UNSIGNED_BYTE);
+		case TextureFormat::BC4_UNORM:
+			return std::make_optional<ConvertFormatResult>(GL_COMPRESSED_RED_RGTC1, GL_RED, GL_UNSIGNED_BYTE);
+		case TextureFormat::BC4_SNORM:
+			return std::make_optional<ConvertFormatResult>(GL_COMPRESSED_SIGNED_RED_RGTC1, GL_RED, GL_UNSIGNED_BYTE);
+		case TextureFormat::BC5_UNORM:
+			return std::make_optional<ConvertFormatResult>(GL_COMPRESSED_RG_RGTC2, GL_RG, GL_UNSIGNED_BYTE);
+		case TextureFormat::BC5_SNORM:
+			return std::make_optional<ConvertFormatResult>(GL_COMPRESSED_SIGNED_RG_RGTC2, GL_RG, GL_UNSIGNED_BYTE);
+		case TextureFormat::BC6H_UF16:
+			return std::make_optional<ConvertFormatResult>(GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT, GL_RGB, GL_UNSIGNED_BYTE);
+		case TextureFormat::BC6H_SF16:
+			return std::make_optional<ConvertFormatResult>(GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT, GL_RGB, GL_UNSIGNED_BYTE);
+		case TextureFormat::BC7_UNORM:
+			return std::make_optional<ConvertFormatResult>(GL_COMPRESSED_RGBA_BPTC_UNORM, GL_RGBA, GL_UNSIGNED_BYTE);
+		case TextureFormat::BC7_UNORM_SRGB:
+			return std::make_optional<ConvertFormatResult>(GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM, GL_RGBA, GL_UNSIGNED_BYTE);
 		default:
 			return std::nullopt;
 		}

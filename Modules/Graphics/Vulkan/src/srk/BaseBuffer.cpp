@@ -160,12 +160,15 @@ namespace srk::modules::graphics::vulkan {
 			ret = usage;
 
 			if (_mapUsage != usage) {
-				unmap();
-
-				if (usage != Usage::NONE) {
-					if (_map(_mappedData)) _mapUsage = usage;
+				if (_mappedData) {
+					_mapUsage = usage;
 				} else {
-					ret = Usage::NONE;
+					if (_map(_mappedData)) {
+						_mapUsage = usage;
+					} else {
+						unmap();
+						ret = Usage::NONE;
+					}
 				}
 			}
 		}
@@ -197,12 +200,11 @@ namespace srk::modules::graphics::vulkan {
 		using namespace srk::enum_operators;
 
 		if ((_mapUsage & Usage::MAP_READ) == Usage::MAP_READ) {
-			if (!dstLen || offset >= _size) return 0;
-			if (dst) {
-				auto readLen = std::min<size_t>(_size - offset, dstLen);
-				memcpy(dst, (uint8_t*)_mappedData + offset, readLen);
-				return readLen;
-			}
+			if (!dst || !dstLen || offset >= _size) return 0;
+			
+			auto readLen = std::min<size_t>(_size - offset, dstLen);
+			memcpy(dst, (uint8_t*)_mappedData + offset, readLen);
+			return readLen;
 		}
 		return -1;
 	}
@@ -211,12 +213,11 @@ namespace srk::modules::graphics::vulkan {
 		using namespace srk::enum_operators;
 
 		if ((_mapUsage & Usage::MAP_WRITE) == Usage::MAP_WRITE) {
-			if (data && length && offset < _size) {
-				length = std::min<size_t>(length, _size - offset);
-				memcpy((uint8_t*)_mappedData + offset, data, length);
-				return length;
-			}
-			return 0;
+			if (!data || !length || offset >= _size) return 0;
+			
+			length = std::min<size_t>(length, _size - offset);
+			memcpy((uint8_t*)_mappedData + offset, data, length);
+			return length;
 		}
 		return -1;
 	}
@@ -225,23 +226,21 @@ namespace srk::modules::graphics::vulkan {
 		using namespace srk::enum_operators;
 
 		if ((_internalUsage & Usage::UPDATE) == Usage::UPDATE) {
-			if (data && length && offset < _size) {
-				length = std::min<size_t>(length, _size - offset);
+			if (!data && !length && offset >= _size) return 0;
 
-				if ((_mapUsage & Usage::MAP_WRITE) == Usage::MAP_WRITE) {
-					memcpy((uint8_t*)_mappedData + offset, data, length);
+			length = std::min<size_t>(length, _size - offset);
+			if ((_mapUsage & Usage::MAP_WRITE) == Usage::MAP_WRITE) {
+				memcpy((uint8_t*)_mappedData + offset, data, length);
+			} else {
+				auto old = _mapUsage;
+				if (map(Usage::MAP_WRITE) == Usage::NONE) {
+					length = -1;
 				} else {
-					auto old = _mapUsage;
-					if (map(Usage::MAP_WRITE) == Usage::NONE) {
-						length = -1;
-					} else {
-						memcpy((uint8_t*)_mappedData + offset, data, length);
-					}
-					map(old);
+					memcpy((uint8_t*)_mappedData + offset, data, length);
 				}
-				return length;
+				map(old);
 			}
-			return 0;
+			return length;
 		}
 		return -1;
 	}

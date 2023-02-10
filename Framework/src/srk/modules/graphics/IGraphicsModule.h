@@ -454,8 +454,99 @@ namespace srk::modules::graphics {
 
 	enum class TextureFormat : uint8_t {
 		UNKNOWN,
-		R8G8B8,
-		R8G8B8A8
+		R8G8B8_TYPELESS,
+		R8G8B8_UNORM,
+		R8G8B8_UNORM_SRGB,
+		R8G8B8_UINT,
+		R8G8B8_SNORM,
+		R8G8B8_SINT,
+		R8G8B8A8_TYPELESS,
+		R8G8B8A8_UNORM,
+		R8G8B8A8_UNORM_SRGB,
+		R8G8B8A8_UINT,
+		R8G8B8A8_SNORM,
+		R8G8B8A8_SINT,
+		BC1_TYPELESS,
+		BC1_UNORM,
+		BC1_UNORM_SRGB,
+		BC2_TYPELESS,
+		BC2_UNORM,
+		BC2_UNORM_SRGB,
+		BC3_TYPELESS,
+		BC3_UNORM,
+		BC3_UNORM_SRGB,
+		BC4_TYPELESS,
+		BC4_UNORM,
+		BC4_SNORM,
+		BC5_TYPELESS,
+		BC5_UNORM,
+		BC5_SNORM,
+		BC6_TYPELESS,
+		BC6H_UF16,
+		BC6H_SF16,
+		BC7_TYPELESS,
+		BC7_UNORM,
+		BC7_UNORM_SRGB
+	};
+
+
+	class SRK_FW_DLL TextureUtils {
+	public:
+		static bool SRK_CALL isCompressedFormat(TextureFormat format);
+
+		static size_t SRK_CALL getBlocks(TextureFormat format, size_t pixels);
+		static Vec2uz SRK_CALL getBlocks(TextureFormat format, const Vec2uz& pixels);
+		static size_t SRK_CALL getPerBlockBytes(TextureFormat format);
+		static Vec2uz SRK_CALL getPerBlockPixels(TextureFormat format);
+
+		inline static size_t SRK_CALL getMipLevels(size_t n) {
+			return (size_t)std::floor(std::log2(n) + 1);
+		}
+		inline static size_t SRK_CALL getMipLevels(const Vec2uz& pixels) {
+			return getMipLevels(pixels.getMax());
+		}
+		inline static size_t SRK_CALL getMipLevels(const Vec3uz& pixels) {
+			return getMipLevels(pixels.getMax());
+		}
+
+		inline static size_t SRK_CALL getBytes(TextureFormat format, const Vec2uz& pixels) {
+			return getBytes(getPerBlockBytes(format), getBlocks(format, pixels).getMultiplies());
+		}
+		inline static size_t SRK_CALL getBytes(TextureFormat format, size_t blocks) {
+			return getBytes(getPerBlockBytes(format), blocks);
+		}
+		inline constexpr static size_t SRK_CALL getBytes(size_t perBlockBytes, size_t blocks) {
+			return blocks * perBlockBytes;
+		}
+
+		inline static size_t SRK_CALL getNextMipPixels(size_t n) {
+			return n > 1 ? n >> 1 : 1;
+		}
+		inline static Vec2uz SRK_CALL getNextMipPixels(const Vec2uz& pixels) {
+			return Vec2uz(getNextMipPixels(pixels[0]), getNextMipPixels(pixels[1]));
+		}
+		inline static Vec3uz SRK_CALL getNextMipPixels(const Vec3uz& pixels) {
+			return Vec3uz(getNextMipPixels(pixels[0]), getNextMipPixels(pixels[1]), getNextMipPixels(pixels[2]));
+		}
+
+		template<SameAnyOf<Vec2uz, Vec3uz> T>
+		static void SRK_CALL getMipsInfo(TextureFormat format, const T& pixels, size_t mipLevels, size_t* totalBytes = nullptr, size_t* mipBytes = nullptr, T* mipDimensions = nullptr) {
+			auto size = pixels;
+			auto bytes = getBytes(format, pixels);
+			if (totalBytes) *totalBytes = bytes;
+			if (mipBytes) mipBytes[0] = bytes;
+			if (mipDimensions) mipDimensions[0] = size;
+
+			for (size_t i = 1; i < mipLevels; ++i) {
+				size = getNextMipPixels(size);
+				bytes = getBytes(format, size);
+				if (totalBytes) *totalBytes += bytes;
+				if (mipBytes) mipBytes[i] = bytes;
+				if (mipDimensions) mipDimensions[i] = size;
+			}
+		}
+	private:
+		TextureUtils() = delete;
 	};
 
 

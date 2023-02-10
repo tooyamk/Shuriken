@@ -33,7 +33,7 @@ namespace srk::modules::graphics::d3d11 {
 		size_t internalArraySize;
 		size_t mipLevels;
 
-		struct MappedRes {
+		struct MapData {
 			Usage usage;
 			size_t size;
 			D3D11_MAPPED_SUBRESOURCE res;
@@ -45,7 +45,7 @@ namespace srk::modules::graphics::d3d11 {
 			D3D11_TEXTURE3D_DESC dsec3D;
 		};
 
-		std::vector<MappedRes> mappedRes;
+		std::vector<MapData> mapData;
 
 	private:
 		HRESULT SRK_CALL _createInternalTexture(Graphics& graphics, TextureType texType, const TexDesc& desc, const D3D11_SUBRESOURCE_DATA* pInitialData);

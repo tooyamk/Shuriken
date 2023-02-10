@@ -14,7 +14,7 @@ namespace srk::extensions::bc7_converter {
 		static bool SRK_CALL encode(const Image& img, uint32_t uberLevel, uint32_t maxPartitionsToScan, BC7Converter::Flags flags, size_t threadCount, void** outBuffer, size_t& outBufferSize, const BC7Converter::Job& job) {
 			using namespace enum_operators;
 
-			if (img.format != modules::graphics::TextureFormat::R8G8B8A8) return false;
+			if (img.format != modules::graphics::TextureFormat::R8G8B8A8_UNORM && img.format != modules::graphics::TextureFormat::R8G8B8A8_UNORM_SRGB) return false;
 			if (img.dimensions[0] % 4 != 0 || img.dimensions[1] % 4 != 0) return false;
 
 			if (threadCount == 0) threadCount = 1;
@@ -36,7 +36,7 @@ namespace srk::extensions::bc7_converter {
 			threadCount = Thread::calcNeedCount(cfg.numBlocks, 1, threadCount);
 			if (!threadCount) return true;
 
-			cfg.srgb = (flags & BC7Converter::Flags::SRGB) == BC7Converter::Flags::SRGB;
+			cfg.srgb = img.format == modules::graphics::TextureFormat::R8G8B8A8_UNORM_SRGB;
 			cfg.threadCount = threadCount;
 			cfg.in = img.source.getSource();
 

@@ -14,7 +14,7 @@ namespace srk::extensions::astc_converter {
 		static bool SRK_CALL encode(const Image& img, const Vec3<uint8_t>& blockSize, ASTCConverter::Profile profile, ASTCConverter::Quality quality, ASTCConverter::Flags flags, size_t threadCount, void** outBuffer, size_t& outBufferSize, const ASTCConverter::Job& job) {
 			using namespace enum_operators;
 
-			if (img.format != modules::graphics::TextureFormat::R8G8B8A8) return false;
+			if (img.format != modules::graphics::TextureFormat::R8G8B8A8_UNORM) return false;
 
 			if (threadCount == 0) threadCount = 1;
 

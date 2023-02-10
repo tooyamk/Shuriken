@@ -88,10 +88,10 @@ namespace srk::extensions::png_converter {
 			break;
 			*/
 		case PNG_COLOR_TYPE_RGB:
-			img->format = modules::graphics::TextureFormat::R8G8B8;
+			img->format = modules::graphics::TextureFormat::R8G8B8_TYPELESS;
 			break;
 		case PNG_COLOR_TYPE_RGBA:
-			img->format = modules::graphics::TextureFormat::R8G8B8A8;
+			img->format = modules::graphics::TextureFormat::R8G8B8A8_TYPELESS;
 			break;
 		default:
 			img->format = modules::graphics::TextureFormat::UNKNOWN;
@@ -109,7 +109,7 @@ namespace srk::extensions::png_converter {
 	inline ByteArray SRK_CALL encode(const Image& img) {
 		ByteArray out;
 
-		if (img.format != modules::graphics::TextureFormat::R8G8B8A8) return out;
+		if (img.format != modules::graphics::TextureFormat::R8G8B8A8_UNORM && img.format != modules::graphics::TextureFormat::R8G8B8A8_UNORM_SRGB) return out;
 
 		auto png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
 		if (!png_ptr) return out;

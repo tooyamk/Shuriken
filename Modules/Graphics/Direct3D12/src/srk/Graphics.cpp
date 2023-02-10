@@ -779,7 +779,7 @@ namespace srk::modules::graphics::d3d12 {
 
 	DXGI_FORMAT Graphics::convertInternalFormat(TextureFormat fmt) {
 		switch (fmt) {
-		case TextureFormat::R8G8B8A8:
+		case TextureFormat::R8G8B8A8_UNORM:
 			return DXGI_FORMAT_R8G8B8A8_UNORM;
 		default:
 			return DXGI_FORMAT_UNKNOWN;

@@ -54,7 +54,7 @@ public:
 			auto tr = graphics->createTexture2DResource();
 			auto rv = graphics->createRenderView();
 			auto rt = graphics->createRenderTarget();
-			tr->create(Vec2uz(800, 600), 0, 1, 1, TextureFormat::R8G8B8A8, Usage::RENDERABLE, Usage::NONE);
+			tr->create(Vec2uz(800, 600), 0, 1, 1, TextureFormat::R8G8B8A8_UNORM, Usage::RENDERABLE, Usage::NONE);
 			rv->create(tr, 0, 0, 0);
 			rt->setRenderView(0, rv);
 
@@ -166,17 +166,17 @@ float4 main(PS_INPUT input) : SV_TARGET {
 							tex->unmap(0, 0);
 
 							Image img;
-							img.format = modules::graphics::TextureFormat::R8G8B8A8;
+							img.format = modules::graphics::TextureFormat::R8G8B8A8_UNORM;
 							img.dimensions = tr->getDimensions().cast<2>();
 							img.source = std::move(pixels);
 
 							///*
 							auto aaa = extensions::PNGConverter::decode(readFile("D:/Users/Sephiroth/Desktop/wall.png"));
-							if (aaa && aaa->format == modules::graphics::TextureFormat::R8G8B8) {
+							if (aaa && aaa->format == modules::graphics::TextureFormat::R8G8B8_UNORM) {
 								ByteArray dst(aaa->dimensions.getMultiplies() * 4);
 								dst.setLength(dst.getCapacity());
-								Image::convertFormat(aaa->dimensions, aaa->format, aaa->source.getSource(), modules::graphics::TextureFormat::R8G8B8A8, dst.getSource());
-								aaa->format = modules::graphics::TextureFormat::R8G8B8A8;
+								Image::convertFormat(aaa->dimensions, aaa->format, aaa->source.getSource(), modules::graphics::TextureFormat::R8G8B8A8_UNORM, dst.getSource());
+								aaa->format = modules::graphics::TextureFormat::R8G8B8A8_UNORM;
 								aaa->source = std::move(dst);
 							}
 							if (aaa) aaa->flipY();

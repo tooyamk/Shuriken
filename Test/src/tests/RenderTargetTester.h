@@ -165,7 +165,7 @@ public:
 
 		{
 			auto rts = graphics->createTexture2DResource();
-			rts->create(Vec2uz(800 * 2, 600 * 2), 0, 1, 1, TextureFormat::R8G8B8A8, Usage::RENDERABLE, Usage::NONE);
+			rts->create(Vec2uz(800 * 2, 600 * 2), 0, 1, 1, TextureFormat::R8G8B8A8_UNORM, Usage::RENDERABLE, Usage::NONE);
 
 			{
 				auto rv = graphics->createRenderView();
@@ -193,20 +193,35 @@ public:
 		{
 			IntrusivePtr texRes = graphics->createTexture2DResource();
 			if (texRes) {
+				TextureFormat fmt;
+
 				auto img0 = extensions::PNGConverter::decode(readFile(getAppPath().parent_path().u8string() + "/Resources/c4.png"));
-				auto mipLevels = Image::calcMipLevels(img0->dimensions);
+				img0->format = textureFormatTypeSwitch(img0->format, false);
+				fmt = img0->format;
+				auto mipLevels = TextureUtils::getMipLevels(img0->dimensions);
 				ByteArray mipsData0;
 				std::vector<void*> mipsData0Ptr;
 				img0->generateMips(img0->format, mipLevels, mipsData0, 0, mipsData0Ptr);
 
 				auto img1 = extensions::PNGConverter::decode(readFile(getAppPath().parent_path().u8string() + "/Resources/red.png"));
+				img1->format = textureFormatTypeSwitch(img1->format, false);
 				ByteArray mipsData1;
 				std::vector<void*> mipsData1Ptr;
 				img1->generateMips(img1->format, mipLevels, mipsData1, 0, mipsData1Ptr);
 
 				mipsData0Ptr.insert(mipsData0Ptr.end(), mipsData1Ptr.begin(), mipsData1Ptr.end());
 
-				auto hr = texRes->create(img0->dimensions, 0, 1, 1, img0->format, Usage::NONE, Usage::UPDATE);
+				if (isSupportTextureFormat(graphics, TextureFormat::BC7_UNORM)) {
+					auto bc7 = extensions::BC7Converter::encode(*img0, 2, 64, extensions::BC7Converter::Flags::NONE, 12);
+					if (bc7) {
+						img0->format = TextureFormat::BC7_UNORM;
+						img0->source = std::move(bc7);
+						fmt = TextureFormat::BC7_UNORM;
+						mipsData0Ptr[0] = img0->source.getSource();
+					}
+				}
+
+				auto hr = texRes->create(img0->dimensions, 0, 1, 1, fmt, Usage::NONE, Usage::UPDATE);//, mipsData0Ptr.data());
 				auto bbb = texRes->update(0, 0, Box2uz(Vec2uz::ZERO, img0->dimensions), mipsData0Ptr.data()[0]);
 
 				auto texView = graphics->createTextureView();

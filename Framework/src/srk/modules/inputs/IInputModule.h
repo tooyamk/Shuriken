@@ -306,8 +306,23 @@ namespace srk::modules::inputs {
 
 
 	struct SRK_FW_DLL GamepadKeyCodeAndFlags {
-		GamepadKeyCode code = GamepadKeyCode::UNDEFINED;
-		GamepadKeyFlag flags = GamepadKeyFlag::NONE;
+		GamepadKeyCode code;
+		GamepadKeyFlag flags;
+
+		GamepadKeyCodeAndFlags() :
+			code(GamepadKeyCode::UNDEFINED),
+			flags(GamepadKeyFlag::NONE) {
+		}
+
+		GamepadKeyCodeAndFlags(const GamepadKeyCodeAndFlags& other) :
+			code(other.code),
+			flags(other.flags) {
+		}
+
+		GamepadKeyCodeAndFlags(GamepadKeyCode code, GamepadKeyFlag flags) :
+			code(code),
+			flags(flags) {
+		}
 
 		inline void SRK_CALL clear() {
 			code = GamepadKeyCode::UNDEFINED;
@@ -396,24 +411,55 @@ namespace srk::modules::inputs {
 
 
 	class SRK_FW_DLL GamepadKeyMapping {
+	private:
+		class Value {
+		public:
+			Value() :
+				_val(0) {
+			}
+
+			Value(const Value& other) :
+				_val(other._val.load()) {}
+
+			inline Value& SRK_CALL operator=(const Value& other) {
+				_val = other._val.load();
+				return *this;
+			}
+
+			inline void SRK_CALL clear() {
+				_val = 0;
+			}
+
+			inline void SRK_CALL set(GamepadKeyCode code, GamepadKeyFlag flags = GamepadKeyFlag::NONE) {
+				_val = ((uint8_t)code << 8) | (uint8_t)flags;
+			}
+
+			inline GamepadKeyCodeAndFlags SRK_CALL get() const {
+				auto v = _val.load();
+				return GamepadKeyCodeAndFlags((GamepadKeyCode)(v >> 8 &0xFF), (GamepadKeyFlag)(v & 0xFF));
+			}
+
+		private:
+			std::atomic_uint16_t _val;
+		};
+
 	public:
 		GamepadKeyMapping(nullptr_t) {};
 		GamepadKeyMapping();
 		GamepadKeyMapping(const GamepadKeyMapping& other);
 
+		GamepadKeyMapping& SRK_CALL operator=(const GamepadKeyMapping& other);
+
 		void SRK_CALL set(GamepadVirtualKeyCode vk, GamepadKeyCode k, GamepadKeyFlag flags = GamepadKeyFlag::NONE) {
-			_mapping[_getIndex(vk)].set(k, flags);
+			if (vk >= VK_MIN && vk <= VK_MAX) _mapping[_getIndex(vk)].set(k, flags);
 		}
 
 		bool SRK_CALL remove(GamepadVirtualKeyCode vk);
 		void SRK_CALL removeUndefined();
-
-		inline void SRK_CALL clear() {
-			memset(_mapping, 0, sizeof(_mapping));
-		}
+		void SRK_CALL clear();
 
 		inline GamepadKeyCodeAndFlags SRK_CALL get(GamepadVirtualKeyCode vk) const {
-			return vk >= VK_MIN && vk <= VK_MAX ? _mapping[_getIndex(vk)] : GamepadKeyCodeAndFlags();
+			return vk >= VK_MIN && vk <= VK_MAX ? _mapping[_getIndex(vk)].get() : GamepadKeyCodeAndFlags();
 		}
 
 		inline void SRK_CALL get(GamepadVirtualKeyCode vkBegin, size_t n, GamepadKeyCodeAndFlags* out) const {
@@ -424,8 +470,9 @@ namespace srk::modules::inputs {
 
 		template<std::invocable<GamepadVirtualKeyCode, GamepadKeyCodeAndFlags> Fn>
 		void SRK_CALL forEach(Fn&& fn) const {
-			for (size_t i = 0; i < COUNT; ++i) {
-				if (_mapping[i].code != GamepadKeyCode::UNDEFINED) fn((GamepadVirtualKeyCode)((std::underlying_type_t<GamepadVirtualKeyCode>)VK_MIN + i), _mapping[i]);
+			for (size_t i = 0; i < _mapping.size(); ++i) {
+				auto cf = _mapping[i].get();
+				if (cf.code != GamepadKeyCode::UNDEFINED) fn((GamepadVirtualKeyCode)((std::underlying_type_t<GamepadVirtualKeyCode>)VK_MIN + i), cf);
 			}
 		}
 
@@ -436,7 +483,87 @@ namespace srk::modules::inputs {
 		static constexpr GamepadVirtualKeyCode VK_MAX = GamepadVirtualKeyCode::BUTTON_END;
 		static constexpr size_t COUNT = (std::underlying_type_t<GamepadVirtualKeyCode>)VK_MAX - (std::underlying_type_t<GamepadVirtualKeyCode>)VK_MIN + 1;
 
-		GamepadKeyCodeAndFlags _mapping[COUNT];
+		std::array<Value, COUNT> _mapping;
+
+		inline static size_t SRK_CALL _getIndex(GamepadVirtualKeyCode vk) {
+			return (std::underlying_type_t<GamepadVirtualKeyCode>)vk - (std::underlying_type_t<GamepadVirtualKeyCode>)VK_MIN;
+		}
+	};
+
+
+	class SRK_FW_DLL GamepadKeyDeadZone {
+	private:
+		class Value {
+		public:
+			Value() :
+				_val(0) {
+			}
+
+			Value(const Value& other) :
+				_val(other._val.load()) {
+			}
+
+			Value& SRK_CALL operator=(const Value& other) {
+				_val = other._val.load();
+				return *this;
+			}
+
+			Value& SRK_CALL operator=(const Vec2<DeviceStateValue>& val) {
+				set(val);
+				return *this;
+			}
+
+			inline void SRK_CALL clear() {
+				_val = 0;
+			}
+
+			inline void SRK_CALL set(const Vec2<DeviceStateValue>& val) {
+				float32_t x = val[0];
+				float32_t y = val[1];
+				_val = ((uint64_t)(*(uint32_t*)(&x)) << 32) | (uint64_t)(*(uint32_t*)(&y));
+			}
+
+			inline Vec2<DeviceStateValue> SRK_CALL get() const {
+				auto v = _val.load();
+				uint32_t x = v >> 32 & 0xFFFFFFFF;
+				uint32_t y = v & 0xFFFFFFFF;
+				return Vec2<DeviceStateValue>(*(float32_t*)(&x), *(float32_t*)(&y));
+			}
+
+		private:
+			std::atomic_uint64_t _val;
+		};
+
+	public:
+		GamepadKeyDeadZone(nullptr_t) {};
+		GamepadKeyDeadZone();
+		GamepadKeyDeadZone(const GamepadKeyDeadZone& other);
+
+		GamepadKeyDeadZone& SRK_CALL operator=(const GamepadKeyDeadZone& other);
+
+		void SRK_CALL set(GamepadVirtualKeyCode vk, const Vec2<DeviceStateValue>& val) {
+			if (vk >= VK_MIN && vk <= VK_MAX) _values[_getIndex(vk)] = val;
+		}
+
+		bool SRK_CALL remove(GamepadVirtualKeyCode vk);
+		void SRK_CALL clear();
+
+		inline Vec2<DeviceStateValue> SRK_CALL get(GamepadVirtualKeyCode vk) const {
+			return vk >= VK_MIN && vk <= VK_MAX ? _values[_getIndex(vk)].get() : Vec2<DeviceStateValue>();
+		}
+
+		inline void SRK_CALL get(GamepadVirtualKeyCode vkBegin, size_t n, Vec2<DeviceStateValue>* out) const {
+			using namespace srk::enum_operators;
+
+			for (size_t i = 0; i < n; ++i) out[i] = get(vkBegin + i);
+		}
+
+	private:
+		static constexpr GamepadVirtualKeyCode VK_MIN = GamepadVirtualKeyCode::AXIS_START;
+		static constexpr GamepadVirtualKeyCode VK_MAX = GamepadVirtualKeyCode::BUTTON_END;
+		static constexpr size_t COUNT = (std::underlying_type_t<GamepadVirtualKeyCode>)VK_MAX - (std::underlying_type_t<GamepadVirtualKeyCode>)VK_MIN + 1;
+
+		std::array<Value, COUNT> _values;
 
 		inline static size_t SRK_CALL _getIndex(GamepadVirtualKeyCode vk) {
 			return (std::underlying_type_t<GamepadVirtualKeyCode>)vk - (std::underlying_type_t<GamepadVirtualKeyCode>)VK_MIN;

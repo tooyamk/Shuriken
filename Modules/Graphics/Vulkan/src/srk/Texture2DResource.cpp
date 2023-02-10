@@ -65,12 +65,7 @@ namespace srk::modules::graphics::vulkan {
 	}
 
 	bool Texture2DResource::update(size_t arraySlice, size_t mipSlice, const Box2uz& range, const void* data) {
-		/*Box3uz box;
-		((Vec2uz&)box.pos).set(range.pos.cast<2>());
-		((Vec2uz&)box.size).set(range.size.cast<2>());
-
-		return _baseTex.update(arraySlice, mipSlice, box, data);*/
-		return false;
+		return _baseTex.update(arraySlice, mipSlice, Box3uz(Vec3uz(range.pos[0], range.pos[1], 0), Vec3uz(range.size[0], range.size[1], 1)), data);
 	}
 
 	bool Texture2DResource::copyFrom(const Vec3uz& dstPos, size_t dstArraySlice, size_t dstMipSlice, const ITextureResource* src, size_t srcArraySlice, size_t srcMipSlice, const Box3uz& srcRange) {

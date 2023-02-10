@@ -59,7 +59,7 @@ public:
 		auto srcDir = getAppPath().parent_path().u8string();
 		IntrusivePtr<Image> src;
 		{
-			auto srcBin = readFile(srcDir + "/Resources/tex1.png");
+			auto srcBin = readFile(srcDir + "/Resources/tex1.jpg");
 			if (srcBin.seekBegin().read<uint32_t>() == extensions::PNGConverter::HEADER_MAGIC) {
 				src = extensions::PNGConverter::decode(srcBin.seekBegin());
 			} else if (srcBin.seekBegin().read<ba_vt::UIX>(3) == extensions::JPEGConverter::HEADER_MAGIC) {
@@ -68,11 +68,12 @@ public:
 		}
 		if (!src) return 0;
 
-		if (src->format == modules::graphics::TextureFormat::R8G8B8) {
+		src->format = textureFormatTypeSwitch(src->format, false);
+		if (src->format == modules::graphics::TextureFormat::R8G8B8_UNORM || src->format == modules::graphics::TextureFormat::R8G8B8_UNORM_SRGB) {
 			ByteArray dst(src->dimensions.getMultiplies() * 4);
 			dst.setLength(dst.getCapacity());
-			Image::convertFormat(src->dimensions, src->format, src->source.getSource(), modules::graphics::TextureFormat::R8G8B8A8, dst.getSource());
-			src->format = modules::graphics::TextureFormat::R8G8B8A8;
+			Image::convertFormat(src->dimensions, src->format, src->source.getSource(), src->format == modules::graphics::TextureFormat::R8G8B8_UNORM ? modules::graphics::TextureFormat::R8G8B8A8_UNORM : modules::graphics::TextureFormat::R8G8B8A8_UNORM_SRGB, dst.getSource());
+			src->format = modules::graphics::TextureFormat::R8G8B8A8_UNORM;
 			src->source = std::move(dst);
 		}
 

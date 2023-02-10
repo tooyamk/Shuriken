@@ -77,6 +77,181 @@ namespace srk::modules::graphics {
 	}
 
 
+	bool TextureUtils::isCompressedFormat(TextureFormat format) {
+		return format >= TextureFormat::BC1_TYPELESS && format <= TextureFormat::BC7_UNORM_SRGB;
+	}
+
+	size_t TextureUtils::getBlocks(TextureFormat format, size_t pixels) {
+		switch (format) {
+		case TextureFormat::R8G8B8_TYPELESS:
+		case TextureFormat::R8G8B8_UNORM:
+		case TextureFormat::R8G8B8_UNORM_SRGB:
+		case TextureFormat::R8G8B8_UINT:
+		case TextureFormat::R8G8B8_SNORM:
+		case TextureFormat::R8G8B8_SINT:
+		case TextureFormat::R8G8B8A8_TYPELESS:
+		case TextureFormat::R8G8B8A8_UNORM:
+		case TextureFormat::R8G8B8A8_UNORM_SRGB:
+		case TextureFormat::R8G8B8A8_UINT:
+		case TextureFormat::R8G8B8A8_SNORM:
+		case TextureFormat::R8G8B8A8_SINT:
+			return pixels;
+		case TextureFormat::BC1_TYPELESS:
+		case TextureFormat::BC1_UNORM:
+		case TextureFormat::BC1_UNORM_SRGB:
+		case TextureFormat::BC2_TYPELESS:
+		case TextureFormat::BC2_UNORM:
+		case TextureFormat::BC2_UNORM_SRGB:
+		case TextureFormat::BC3_TYPELESS:
+		case TextureFormat::BC3_UNORM:
+		case TextureFormat::BC3_UNORM_SRGB:
+		case TextureFormat::BC4_TYPELESS:
+		case TextureFormat::BC4_UNORM:
+		case TextureFormat::BC4_SNORM:
+		case TextureFormat::BC5_TYPELESS:
+		case TextureFormat::BC5_UNORM:
+		case TextureFormat::BC5_SNORM:
+		case TextureFormat::BC6_TYPELESS:
+		case TextureFormat::BC6H_UF16:
+		case TextureFormat::BC6H_SF16:
+		case TextureFormat::BC7_TYPELESS:
+		case TextureFormat::BC7_UNORM:
+		case TextureFormat::BC7_UNORM_SRGB:
+			return (pixels + 3) >> 2;
+		default:
+			return 0;
+		}
+	}
+
+	Vec2uz TextureUtils::getBlocks(TextureFormat format, const Vec2uz& pixels) {
+		switch (format) {
+		case TextureFormat::R8G8B8_TYPELESS:
+		case TextureFormat::R8G8B8_UNORM:
+		case TextureFormat::R8G8B8_UNORM_SRGB:
+		case TextureFormat::R8G8B8_UINT:
+		case TextureFormat::R8G8B8_SNORM:
+		case TextureFormat::R8G8B8_SINT:
+		case TextureFormat::R8G8B8A8_TYPELESS:
+		case TextureFormat::R8G8B8A8_UNORM:
+		case TextureFormat::R8G8B8A8_UNORM_SRGB:
+		case TextureFormat::R8G8B8A8_UINT:
+		case TextureFormat::R8G8B8A8_SNORM:
+		case TextureFormat::R8G8B8A8_SINT:
+			return pixels;
+		case TextureFormat::BC1_TYPELESS:
+		case TextureFormat::BC1_UNORM:
+		case TextureFormat::BC1_UNORM_SRGB:
+		case TextureFormat::BC2_TYPELESS:
+		case TextureFormat::BC2_UNORM:
+		case TextureFormat::BC2_UNORM_SRGB:
+		case TextureFormat::BC3_TYPELESS:
+		case TextureFormat::BC3_UNORM:
+		case TextureFormat::BC3_UNORM_SRGB:
+		case TextureFormat::BC4_TYPELESS:
+		case TextureFormat::BC4_UNORM:
+		case TextureFormat::BC4_SNORM:
+		case TextureFormat::BC5_TYPELESS:
+		case TextureFormat::BC5_UNORM:
+		case TextureFormat::BC5_SNORM:
+		case TextureFormat::BC6_TYPELESS:
+		case TextureFormat::BC6H_UF16:
+		case TextureFormat::BC6H_SF16:
+		case TextureFormat::BC7_TYPELESS:
+		case TextureFormat::BC7_UNORM:
+		case TextureFormat::BC7_UNORM_SRGB:
+			return (pixels + 3) >> 2;
+		default:
+			return Vec2uz();
+		}
+	}
+
+	size_t TextureUtils::getPerBlockBytes(TextureFormat format) {
+		switch (format) {
+		case TextureFormat::R8G8B8_TYPELESS:
+		case TextureFormat::R8G8B8_UNORM:
+		case TextureFormat::R8G8B8_UNORM_SRGB:
+		case TextureFormat::R8G8B8_UINT:
+		case TextureFormat::R8G8B8_SNORM:
+		case TextureFormat::R8G8B8_SINT:
+			return 3;
+		case TextureFormat::R8G8B8A8_TYPELESS:
+		case TextureFormat::R8G8B8A8_UNORM:
+		case TextureFormat::R8G8B8A8_UNORM_SRGB:
+		case TextureFormat::R8G8B8A8_UINT:
+		case TextureFormat::R8G8B8A8_SNORM:
+		case TextureFormat::R8G8B8A8_SINT:
+			return 4;
+		case TextureFormat::BC1_TYPELESS:
+		case TextureFormat::BC1_UNORM:
+		case TextureFormat::BC1_UNORM_SRGB:
+		case TextureFormat::BC4_TYPELESS:
+		case TextureFormat::BC4_UNORM:
+		case TextureFormat::BC4_SNORM:
+			return 8;
+		case TextureFormat::BC2_TYPELESS:
+		case TextureFormat::BC2_UNORM:
+		case TextureFormat::BC2_UNORM_SRGB:
+		case TextureFormat::BC3_TYPELESS:
+		case TextureFormat::BC3_UNORM:
+		case TextureFormat::BC3_UNORM_SRGB:
+		case TextureFormat::BC5_TYPELESS:
+		case TextureFormat::BC5_UNORM:
+		case TextureFormat::BC5_SNORM:
+		case TextureFormat::BC6_TYPELESS:
+		case TextureFormat::BC6H_UF16:
+		case TextureFormat::BC6H_SF16:
+		case TextureFormat::BC7_TYPELESS:
+		case TextureFormat::BC7_UNORM:
+		case TextureFormat::BC7_UNORM_SRGB:
+			return 16;
+		default:
+			return 0;
+		}
+	}
+
+	Vec2uz TextureUtils::getPerBlockPixels(TextureFormat format) {
+		switch (format) {
+		case TextureFormat::R8G8B8_TYPELESS:
+		case TextureFormat::R8G8B8_UNORM:
+		case TextureFormat::R8G8B8_UNORM_SRGB:
+		case TextureFormat::R8G8B8_UINT:
+		case TextureFormat::R8G8B8_SNORM:
+		case TextureFormat::R8G8B8_SINT:
+		case TextureFormat::R8G8B8A8_TYPELESS:
+		case TextureFormat::R8G8B8A8_UNORM:
+		case TextureFormat::R8G8B8A8_UNORM_SRGB:
+		case TextureFormat::R8G8B8A8_UINT:
+		case TextureFormat::R8G8B8A8_SNORM:
+		case TextureFormat::R8G8B8A8_SINT:
+			return Vec2uz(1, 1);
+		case TextureFormat::BC1_TYPELESS:
+		case TextureFormat::BC1_UNORM:
+		case TextureFormat::BC1_UNORM_SRGB:
+		case TextureFormat::BC2_TYPELESS:
+		case TextureFormat::BC2_UNORM:
+		case TextureFormat::BC2_UNORM_SRGB:
+		case TextureFormat::BC3_TYPELESS:
+		case TextureFormat::BC3_UNORM:
+		case TextureFormat::BC3_UNORM_SRGB:
+		case TextureFormat::BC4_TYPELESS:
+		case TextureFormat::BC4_UNORM:
+		case TextureFormat::BC4_SNORM:
+		case TextureFormat::BC5_TYPELESS:
+		case TextureFormat::BC5_UNORM:
+		case TextureFormat::BC5_SNORM:
+		case TextureFormat::BC6_TYPELESS:
+		case TextureFormat::BC6H_UF16:
+		case TextureFormat::BC6H_SF16:
+		case TextureFormat::BC7_TYPELESS:
+		case TextureFormat::BC7_UNORM:
+		case TextureFormat::BC7_UNORM_SRGB:
+			return Vec2uz(4, 4);
+		default:
+			return Vec2uz();
+		}
+	}
+
+
 	RasterizerDescriptor::RasterizerDescriptor() :
 		scissorEnabled(false),
 		fillMode(FillMode::SOLID),
