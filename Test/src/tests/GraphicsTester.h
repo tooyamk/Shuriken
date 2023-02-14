@@ -27,8 +27,8 @@ public:
 
 		//if (!gml->load(getDllPath("srk-module-graphics-d3d11"))) return 0;
 		//if (!gml->load(getDllPath("srk-module-graphics-d3d12"))) return 0;
-		//if (!gml->load(getDllPath("srk-module-graphics-gl"))) return 0;
-		if (!gml->load(getDllPath("srk-module-graphics-vulkan"))) return 0;
+		if (!gml->load(getDllPath("srk-module-graphics-gl"))) return 0;
+		//if (!gml->load(getDllPath("srk-module-graphics-vulkan"))) return 0;
 
 		SerializableObject args;
 
@@ -149,10 +149,11 @@ public:
 
 					offset += mipBytes[i];
 				}
-				auto rst = tr->create(texDim, 0, mipLevels, 1, texFmt, Usage::UPDATE, Usage::NONE, mipData.data());
+
+				auto rst = tr->create(texDim, 0, mipLevels, 1, texFmt, Usage::UPDATE | Usage::COPY_SRC, Usage::NONE, mipData.data());
 				printaln("Texture2DResource::create(u) : ", rst ? "succeed" : "failed");
 				if (!rst) {
-					rst = tr->create(texDim, 0, 1, 1, texFmt, Usage::UPDATE, Usage::NONE, mipData.data());
+					rst = tr->create(texDim, 0, 1, 1, texFmt, Usage::UPDATE | Usage::COPY_SRC, Usage::NONE, mipData.data());
 					printaln("Texture2DResource::create(u) : ", rst ? "succeed" : "failed");
 				}
 				if (rst) {
@@ -164,7 +165,7 @@ public:
 					}
 
 					auto tr2 = graphics->createTexture2DResource();
-					auto rst2 = tr2->create(texDim, 0, 1, 1, texFmt, Usage::MAP_READ, Usage::NONE);
+					auto rst2 = tr2->create(texDim, 0, 1, 1, texFmt, Usage::MAP_READ | Usage::COPY_DST, Usage::NONE);
 					printaln("Texture2DResource::create(r) : ", rst2 ? "succeed" : "failed");
 					if (rst2) {
 						rst = tr2->copyFrom(Vec3uz(), 0, 0, tr, 0, 0, Box3uz(Vec3uz(), Vec3uz(texDim[0], texDim[1], 1)));

@@ -42,22 +42,19 @@ namespace srk::modules::graphics::vulkan {
 	}
 
 	Usage Texture2DResource::map(size_t arraySlice, size_t mipSlice, Usage expectMapUsage) {
-		//return _baseTex.map(arraySlice, mipSlice, expectMapUsage);
-		return Usage::NONE;
+		return _baseTex.map(arraySlice, mipSlice, expectMapUsage);
 	}
 
 	void Texture2DResource::unmap(size_t arraySlice, size_t mipSlice) {
-		//_baseTex.unmap(arraySlice, mipSlice);
+		_baseTex.unmap(arraySlice, mipSlice);
 	}
 
 	size_t Texture2DResource::read(size_t arraySlice, size_t mipSlice, size_t offset, void* dst, size_t dstLen) {
-		//return _baseTex.read(arraySlice, mipSlice, offset, dst, dstLen);
-		return -1;
+		return _baseTex.read(arraySlice, mipSlice, offset, dst, dstLen);
 	}
 
 	size_t Texture2DResource::write(size_t arraySlice, size_t mipSlice, size_t offset, const void* data, size_t length) {
-		//return _baseTex.write(arraySlice, mipSlice, offset, data, length);
-		return -1;
+		return _baseTex.write(arraySlice, mipSlice, offset, data, length);
 	}
 
 	void Texture2DResource::destroy() {
@@ -69,8 +66,7 @@ namespace srk::modules::graphics::vulkan {
 	}
 
 	bool Texture2DResource::copyFrom(const Vec3uz& dstPos, size_t dstArraySlice, size_t dstMipSlice, const ITextureResource* src, size_t srcArraySlice, size_t srcMipSlice, const Box3uz& srcRange) {
-		//return _baseTex.copyFrom(*_graphics.get<Graphics>(), dstPos, dstArraySlice, dstMipSlice, src, srcArraySlice, srcMipSlice, srcRange);
-		return false;
+		return _baseTex.copyFrom(*_graphics.get<Graphics>(), dstPos, dstArraySlice, dstMipSlice, src, srcArraySlice, srcMipSlice, srcRange);
 	}
 
 	bool Texture2DResource::copyFrom(size_t arraySlice, size_t mipSlice, const Box3uz& range, const IPixelBuffer* pixelBuffer) {

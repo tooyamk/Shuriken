@@ -8,7 +8,7 @@ namespace srk::modules::graphics::d3d11 {
 		internalFormat(DXGI_FORMAT_UNKNOWN),
 		sampleCount(0),
 		perBlockBytes(0),
-		perRowPixels(0),
+		perRowBytes(0),
 		arraySize(0),
 		internalArraySize(0),
 		mipLevels(0) {
@@ -141,7 +141,7 @@ namespace srk::modules::graphics::d3d11 {
 					size2 = TextureUtils::getNextMipPixels(size2);
 
 					for (size_t j = 1; j < arraySize; ++j) {
-						auto idx = i + j * mipLevels;
+						auto idx = calcSubresource(i, j, mipLevels);
 						auto& res1 = resArr[idx];
 						res1.pSysMem = data[idx];
 						res1.SysMemPitch = res.SysMemPitch;
@@ -183,7 +183,7 @@ namespace srk::modules::graphics::d3d11 {
 		this->internalFormat = internalFormat;
 		this->sampleCount = sampleCount;
 		this->perBlockBytes = perBlockBytes;
-		this->perRowPixels = perBlockBytes * dim[0];
+		this->perRowBytes = perBlockBytes * dim[0];
 		this->dim.set(dim);
 		internalArraySize = arraySize;
 		this->arraySize = isArray ? arraySize : 0;
@@ -230,22 +230,22 @@ namespace srk::modules::graphics::d3d11 {
 			if (auto& md = mapData[subresource]; (md.usage & Usage::MAP_READ) == Usage::MAP_READ) {
 				if (dst && dstLen && offset < md.size) {
 					auto length = std::min(md.size - offset, dstLen);
-					if (offset + length <= perRowPixels || perRowPixels == md.res.RowPitch) {
-						memcpy(dst, (uint8_t*)md.res.pData + offset, length);
+					if (offset + length <= perRowBytes || perRowBytes == md.res.RowPitch) {
+						memcpy(dst, (const uint8_t*)md.res.pData + offset, length);
 					} else {
 						auto out = (uint8_t*)dst;
-						auto pData = (uint8_t*)md.res.pData;
+						auto pData = (const uint8_t*)md.res.pData;
 						auto len = length;
 
 						size_t fillLen;
 						if (offset) {
-							auto skipRows = offset / perRowPixels;
+							auto skipRows = offset / perRowBytes;
 							pData += skipRows * md.res.RowPitch;
-							offset -= skipRows * perRowPixels;
-							fillLen = perRowPixels - offset;
+							offset -= skipRows * perRowBytes;
+							fillLen = perRowBytes - offset;
 							if (fillLen > len) fillLen = len;
 						} else {
-							fillLen = perRowPixels;
+							fillLen = perRowBytes;
 						}
 
 						memcpy(dst, pData + offset, fillLen);
@@ -253,7 +253,7 @@ namespace srk::modules::graphics::d3d11 {
 							len -= fillLen;
 							out += fillLen;
 							pData += md.res.RowPitch;
-							fillLen = len < perRowPixels ? len : perRowPixels;
+							fillLen = len < perRowBytes ? len : perRowBytes;
 							memcpy(out, pData, fillLen);
 						}
 					}
@@ -272,7 +272,7 @@ namespace srk::modules::graphics::d3d11 {
 			if (auto& md = mapData[subresource]; (md.usage & Usage::MAP_WRITE) == Usage::MAP_WRITE) {
 				if (data && length && offset < md.size) {
 					length = std::min(length, md.size - offset);
-					if (offset + length <= perRowPixels || perRowPixels == md.res.RowPitch) {
+					if (offset + length <= perRowBytes || perRowBytes == md.res.RowPitch) {
 						memcpy((uint8_t*)md.res.pData + offset, data, length);
 					} else {
 						auto src = (uint8_t*)data;
@@ -281,13 +281,13 @@ namespace srk::modules::graphics::d3d11 {
 
 						size_t fillLen;
 						if (offset) {
-							auto skipRows = offset / perRowPixels;
+							auto skipRows = offset / perRowBytes;
 							pData += skipRows * md.res.RowPitch;
-							offset -= skipRows * perRowPixels;
-							fillLen = perRowPixels - offset;
+							offset -= skipRows * perRowBytes;
+							fillLen = perRowBytes - offset;
 							if (fillLen > len) fillLen = len;
 						} else {
-							fillLen = perRowPixels;
+							fillLen = perRowBytes;
 						}
 
 						memcpy(pData + offset, src, fillLen);
@@ -295,7 +295,7 @@ namespace srk::modules::graphics::d3d11 {
 							len -= fillLen;
 							src += fillLen;
 							pData += md.res.RowPitch;
-							fillLen = len < perRowPixels ? len : perRowPixels;
+							fillLen = len < perRowBytes ? len : perRowBytes;
 							memcpy(pData, src, fillLen);
 						}
 					}
@@ -321,10 +321,22 @@ namespace srk::modules::graphics::d3d11 {
 	}
 
 	bool BaseTextureResource::copyFrom(Graphics& graphics, const Vec3uz& dstPos, size_t dstArraySlice, size_t dstMipSlice, const ITextureResource* src, size_t srcArraySlice, size_t srcMipSlice, const Box3uz& srcRange) {
+		using namespace srk::enum_operators;
+		
 		if (dstArraySlice >= internalArraySize || dstMipSlice >= mipLevels || !src || src->getGraphics() != graphics) return false;
 		
 		auto srcBase = (BaseTextureResource*)src->getNative();
 		if (srcArraySlice >= srcBase->internalArraySize || srcMipSlice >= srcBase->mipLevels) return false;
+
+		if ((srcBase->resUsage & Usage::COPY_SRC) == Usage::NONE) {
+			graphics.error("D3D Texture::copyFrom error : no Usage::COPY_SRC");
+			return false;
+		}
+
+		if ((resUsage & Usage::COPY_DST) == Usage::NONE) {
+			graphics.error("D3D Texture::copyFrom error : no Usage::COPY_DST");
+			return false;
+		}
 
 		D3D11_BOX box;
 		box.left = srcRange.pos[0];

@@ -137,6 +137,7 @@ namespace srk::modules::graphics::vulkan {
 
 		InternalCommandBuffer beginOneTimeCommands();
 		bool endOneTimeCommands(InternalCommandBuffer& buffer);
+		static void transitionImageLayout(VkCommandBuffer cmd, VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout, const VkImageSubresourceRange& range);
 
 		inline ConstantBufferManager& SRK_CALL getConstantBufferManager() {
 			return _constantBufferManager;

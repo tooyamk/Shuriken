@@ -17,9 +17,7 @@ namespace srk::modules::graphics::vulkan {
 		size_t SRK_CALL read(size_t arraySlice, size_t mipSlice, size_t offset, void* dst, size_t dstLen);
 		size_t SRK_CALL write(size_t arraySlice, size_t mipSlice, size_t offset, const void* data, size_t length);
 		bool SRK_CALL update(size_t arraySlice, size_t mipSlice, const Box3uz& range, const void* data);
-
-		//size_t SRK_CALL copyFrom(Graphics& graphics, size_t dstPos, const BaseBuffer& src, const Box1uz& srcRange);
-		//size_t SRK_CALL copyFrom(Graphics& graphics, size_t dstPos, const IBuffer* src, const Box1uz& srcRange);
+		bool SRK_CALL copyFrom(Graphics& graphics, const Vec3uz& dstPos, size_t dstArraySlice, size_t dstMipSlice, const ITextureResource* src, size_t srcArraySlice, size_t srcMipSlice, const Box3uz& srcRange);
 
 		void SRK_CALL destroy();
 
@@ -66,13 +64,16 @@ namespace srk::modules::graphics::vulkan {
 
 		VmaAllocator _memAllocator;
 		VkImage _image;
+		VkImageLayout _imageLayout;
 		VmaAllocation _allocation;
 
 		Usage _usage;
 		Usage _internalUsage;
 		size_t _mapCount;
 		size_t _size;
+		size_t _memAlignment;
 		size_t _mipLevels;
+		size_t _arraySize;
 
 		void* _mappedData;
 		size_t _mappedDataOffset;
@@ -80,13 +81,19 @@ namespace srk::modules::graphics::vulkan {
 
 		struct MapData {
 			Usage usage;
+			bool completelyAlign;
 			size_t size;
-			size_t offset;
+			size_t sliceAlignSize;
+			size_t begin;
+			size_t rowBytes;
+			size_t rowAlignSize;
 		};
 
 		std::vector<MapData> _mapData;
 
 		bool _map(void*& mappedData);
 		void _unmap();
+		void _write(const MapData& md, const Box3uz& range, const void* data);
+		void _tryRestoreImageLayout(VkCommandBuffer cmd, VkImageLayout cur, const VkImageSubresourceRange& range);
 	};
 }

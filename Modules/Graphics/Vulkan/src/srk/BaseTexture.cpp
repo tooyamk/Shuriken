@@ -9,10 +9,13 @@ namespace srk::modules::graphics::vulkan {
 		_vkFlags(0),
 		_memAllocator(nullptr),
 		_image(nullptr),
+		_imageLayout(VK_IMAGE_LAYOUT_UNDEFINED),
 		_allocation(nullptr),
 		_mapCount(0),
 		_size(0),
+		_memAlignment(0),
 		_mipLevels(0),
+		_arraySize(0),
 		_usage(Usage::NONE),
 		_internalUsage(Usage::NONE),
 		_mappedData(nullptr) {
@@ -105,7 +108,7 @@ namespace srk::modules::graphics::vulkan {
 		auto initData = data != nullptr;
 		
 		_internalUsage = Usage::NONE;
-		if (initData && !cpuWrite) {
+		if (initData) {// && !cpuWrite) {
 			_internalUsage |= Usage::COPY_DST;
 			imageCreateInfo.usage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 		}
@@ -201,20 +204,47 @@ namespace srk::modules::graphics::vulkan {
 
 		vmaGetAllocationMemoryProperties(_memAllocator, _allocation, &_vkFlags);
 
+		VkMemoryRequirements memReq;
+		vkGetImageMemoryRequirements(graphics.getVkDevice(), _image, &memReq);
+		_memAlignment = memReq.alignment;
+
 		size_t mipsBytes;
 		std::vector<size_t> mipBytesArr(initData ? mipLevels : 0);
-		std::vector<Vec3uz> mipDimArr(initData ? mipLevels : 0);
-		TextureUtils::getMipsInfo(format, dim, mipLevels, &mipsBytes, initData ? mipBytesArr.data() : nullptr, initData ? mipDimArr.data() : nullptr);
+		auto hasMipDimArr = initData || (_internalUsage & Usage::MAP_READ_WRITE) != Usage::NONE;
+		std::vector<Vec3uz> mipDimArr(hasMipDimArr ? mipLevels : 0);
+		TextureUtils::getMipsInfo(format, dim, mipLevels, &mipsBytes, initData ? mipBytesArr.data() : nullptr, hasMipDimArr ? mipDimArr.data() : nullptr);
 		_size = mipsBytes * arraySize;
 
 		if (initData) {
-			if (_vkFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) {
+			auto perBlockBytes = TextureUtils::getPerBlockBytes(format);
+
+			if (false) {//_vkFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) {
 				void* dst;
 				if (_map(dst)) {
 					size_t offset = 0;
-					for (size_t i = 0; i < mipLevels; ++i) {
-						memcpy((uint8_t*)dst + offset, data[i], mipBytesArr[i]);
-						offset += mipBytesArr[i];
+					for (size_t i = 0; i < arraySize; ++i) {
+						for (size_t j = 0; j < mipLevels; ++j) {
+							auto src = (const uint8_t*)data[calcSubresource(j, i, mipLevels)];
+							auto rowBytes = TextureUtils::getBlocks(format, mipDimArr[j][0]) * perBlockBytes;
+
+							if (rowBytes % _memAlignment){
+								auto remainMipBytes = mipBytesArr[j];
+								auto div = std::div((std::make_signed_t<decltype(offset)>)rowBytes, (std::make_signed_t<decltype(_memAlignment)>)_memAlignment);
+								auto alignBytes = div.quot * _memAlignment;
+								if (div.rem) alignBytes += _memAlignment;
+
+								do {
+									memcpy((uint8_t*)dst + offset, src, rowBytes);
+
+									src += rowBytes;
+									offset += alignBytes;
+									remainMipBytes -= rowBytes;
+								} while (remainMipBytes);
+							} else {
+								memcpy((uint8_t*)dst + offset, src, mipBytesArr[j]);
+								offset += mipBytesArr[j];
+							}
+						}
 					}
 					_unmap();
 				} else {
@@ -224,9 +254,32 @@ namespace srk::modules::graphics::vulkan {
 				
 			} else {
 				BaseBuffer src;
-				if (!src.create(graphics, _size, Usage::MAP_WRITE | Usage::COPY_SRC, Usage::NONE, data, _size)) {
-					destroy();
-					return false;
+				if (mipLevels == 1 && arraySize == 1) {
+					if (!src.create(graphics, _size, Usage::COPY_SRC, Usage::NONE, data[0], _size)) {
+						destroy();
+						return false;
+					}
+				} else {
+					if (!src.create(graphics, _size, Usage::MAP_WRITE | Usage::COPY_SRC, Usage::NONE, nullptr, 0)) {
+						destroy();
+						return false;
+					}
+
+					if (src.map(Usage::MAP_WRITE) != Usage::MAP_WRITE) {
+						destroy();
+						return false;
+					}
+					for (size_t i = 0; i < arraySize; ++i) {
+						auto bufferOffset = mipsBytes * i;
+						for (size_t j = 0; j < mipLevels; ++j) {
+							if (src.write(data[calcSubresource(j, i, mipLevels)], mipBytesArr[j], bufferOffset) != mipBytesArr[j]) {
+								destroy();
+								return false;
+							}
+							bufferOffset += mipBytesArr[j];
+						}
+					}
+					src.unmap();
 				}
 
 				auto cmd = graphics.beginOneTimeCommands();
@@ -235,23 +288,13 @@ namespace srk::modules::graphics::vulkan {
 					return false;
 				}
 
-				VkImageMemoryBarrier imageMemoryBarrier;
-				memset(&imageMemoryBarrier, 0, sizeof(imageMemoryBarrier));
-				imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-				imageMemoryBarrier.srcAccessMask = 0;
-				imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-				imageMemoryBarrier.oldLayout = imageCreateInfo.initialLayout;
-				imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-				imageMemoryBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-				imageMemoryBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-				imageMemoryBarrier.image = _image;
-				imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-				imageMemoryBarrier.subresourceRange.baseMipLevel = 0;
-				imageMemoryBarrier.subresourceRange.levelCount = mipLevels;
-				imageMemoryBarrier.subresourceRange.baseArrayLayer = 0;
-				imageMemoryBarrier.subresourceRange.layerCount = arraySize;
-
-				vkCmdPipelineBarrier(cmd.getVkCommandBuffer(), VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
+				VkImageSubresourceRange range;
+				range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+				range.baseMipLevel = 0;
+				range.levelCount = mipLevels;
+				range.baseArrayLayer = 0;
+				range.layerCount = arraySize;
+				Graphics::transitionImageLayout(cmd.getVkCommandBuffer(), _image, _imageLayout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, range);
 
 				std::vector<VkBufferImageCopy> bufferImageCopies(mipLevels * arraySize);
 				size_t idx = 0;
@@ -275,6 +318,7 @@ namespace srk::modules::graphics::vulkan {
 				}
 
 				vkCmdCopyBufferToImage(cmd.getVkCommandBuffer(), src.getVkBuffer(), _image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, bufferImageCopies.size(), bufferImageCopies.data());
+				_tryRestoreImageLayout(cmd.getVkCommandBuffer(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, range);
 
 				if (!graphics.endOneTimeCommands(cmd)) {
 					destroy();
@@ -286,30 +330,30 @@ namespace srk::modules::graphics::vulkan {
 		if ((_internalUsage & Usage::MAP_READ_WRITE) != Usage::NONE) {
 			_mapData.resize(mipLevels * arraySize);
 			auto perBlockBytes = TextureUtils::getPerBlockBytes(format);
-			Vec3uz size3(dim);
-			for (decltype(mipLevels) i = 0; i < mipLevels; ++i) {
-				auto& md = _mapData[i];
-				md.size = TextureUtils::getBlocks(format, size3).getMultiplies() * perBlockBytes;
-				md.usage = Usage::NONE;
-
-				size3 = TextureUtils::getNextMipPixels(size3);
-
-				for (decltype(arraySize) j = 1; j < arraySize; ++j) {
-					auto& md1 = _mapData[calcSubresource(i, j, mipLevels)];
-					md1.size = md.size;
-					md1.usage = Usage::NONE;
-				}
-			}
 
 			size_t offset = 0;
-			for (auto& md : _mapData) {
-				md.offset = offset;
-				offset += md.size;
+			for (size_t i = 0; i < arraySize; ++i) {
+				for (size_t j = 0; j < mipLevels; ++j) {
+					auto blocks = TextureUtils::getBlocks(format, mipDimArr[j]);
+
+					auto& md = _mapData[calcSubresource(i, j, mipLevels)];
+					md.size = TextureUtils::getBlocks(format, mipDimArr[j]).getMultiplies() * perBlockBytes * dim[2];
+					md.usage = Usage::NONE;
+					md.begin = offset;
+					md.rowBytes = blocks[0] * perBlockBytes;
+					md.rowAlignSize = ((md.rowBytes + _memAlignment - 1) / _memAlignment) * _memAlignment;
+					md.sliceAlignSize = md.rowAlignSize * blocks[1];
+					md.completelyAlign = (md.rowBytes % _memAlignment) == 0;
+
+					offset += md.sliceAlignSize * mipDimArr[j][2];
+				}
 			}
 		}
 
 		_dim = dim;
+		_format = format;
 		_mipLevels = mipLevels;
+		_arraySize = arraySize;
 
 		return true;
 	}
@@ -379,7 +423,36 @@ namespace srk::modules::graphics::vulkan {
 				if (!dst || !dstLen || offset >= md.size) return 0;
 
 				auto readLen = std::min<size_t>(md.size - offset, dstLen);
-				memcpy(dst, (uint8_t*)_mappedData + md.offset + offset, readLen);
+
+				if (md.completelyAlign) {
+					memcpy(dst, (const uint8_t*)_mappedData + md.begin + offset, readLen);
+				} else {
+					auto remainBytes = readLen;
+					size_t srcOffset = md.begin;
+					size_t dstOffset = 0;
+					if (offset) {
+						auto skipRows = offset / md.rowBytes;
+						srcOffset += md.rowAlignSize * skipRows;
+						offset -= skipRows * md.rowBytes;
+
+						if (offset) {
+							auto remainRowBytes = std::min(md.rowBytes - offset, remainBytes);
+							memcpy(dst, (const uint8_t*)_mappedData + srcOffset + offset, remainRowBytes);
+							dstOffset += remainRowBytes;
+							remainBytes -= remainRowBytes;
+							srcOffset += md.rowAlignSize;
+						}
+					}
+
+					while (remainBytes) {
+						auto remainRowBytes = std::min(md.rowBytes, remainBytes);
+						memcpy((uint8_t*)dst + dstOffset, (const uint8_t*)_mappedData + srcOffset, remainRowBytes);
+						dstOffset += remainRowBytes;
+						remainBytes -= remainRowBytes;
+						srcOffset += md.rowAlignSize;
+					}
+				}
+
 				return readLen;
 			}
 		}
@@ -395,7 +468,36 @@ namespace srk::modules::graphics::vulkan {
 				if (!data || !length || offset >= md.size) return 0;
 				
 				length = std::min<size_t>(length, md.size - offset);
-				memcpy((uint8_t*)_mappedData + md.offset + offset, data, length);
+				
+				if (md.completelyAlign) {
+					memcpy((uint8_t*)_mappedData + md.begin + offset, data, length);
+				} else {
+					auto remainBytes = length;
+					size_t srcOffset = 0;
+					size_t dstOffset = md.begin;
+					if (offset) {
+						auto skipRows = offset / md.rowBytes;
+						dstOffset += md.rowAlignSize * skipRows;
+						offset -= skipRows * md.rowBytes;
+
+						if (offset) {
+							auto remainRowBytes = std::min(md.rowBytes - offset, remainBytes);
+							memcpy((uint8_t*)_mappedData + dstOffset + offset, data, remainRowBytes);
+							srcOffset += remainRowBytes;
+							remainBytes -= remainRowBytes;
+							dstOffset += md.rowAlignSize;
+						}
+					}
+
+					while (remainBytes) {
+						auto remainRowBytes = std::min(md.rowBytes, remainBytes);
+						memcpy((uint8_t*)_mappedData + dstOffset, (const uint8_t*)data + srcOffset, remainRowBytes);
+						srcOffset += remainRowBytes;
+						remainBytes -= remainRowBytes;
+						dstOffset += md.rowAlignSize;
+					}
+				}
+
 				return length;
 			}
 		}
@@ -408,8 +510,9 @@ namespace srk::modules::graphics::vulkan {
 		if (data && (_internalUsage & Usage::UPDATE) == Usage::UPDATE) {
 			if (auto subresource = calcSubresource(mipSlice, arraySlice, _mipLevels); subresource < _mapData.size()) {
 				auto& md = _mapData[subresource];
+
 				if ((md.usage & Usage::MAP_WRITE) == Usage::MAP_WRITE) {
-					memcpy((uint8_t*)_mappedData + md.offset, data, md.size);
+					_write(md, range, data);
 				} else {
 					auto old = md.usage;
 					if (map(arraySlice, mipSlice, Usage::MAP_WRITE) == Usage::NONE) {
@@ -417,7 +520,7 @@ namespace srk::modules::graphics::vulkan {
 						return false;
 					}
 					
-					memcpy((uint8_t*)_mappedData + md.offset, data, md.size);
+					_write(md, range, data);
 					map(arraySlice, mipSlice, old);
 				}
 				return true;
@@ -426,64 +529,91 @@ namespace srk::modules::graphics::vulkan {
 		return false;
 	}
 
-	/*size_t BaseTexture::copyFrom(Graphics& graphics, size_t dstPos, const BaseBuffer& src, const Box1uz& srcRange) {
-		if (dstPos >= _size || srcRange.pos[0] >= src._size) return 0;
+	void BaseTexture::_write(const MapData& md, const Box3uz& range, const void* data) {
+		auto skipBlocks = TextureUtils::getBlocks(_format, range.pos.cast<2>());
+		auto sliceWriteBlocks = TextureUtils::getBlocks(_format, range.size.cast<2>());
+		auto sliceWriteBytes = TextureUtils::getBytes(_format, sliceWriteBlocks.getMultiplies());
 
-		auto copySize = std::min(std::min(src._size - srcRange.pos[0], srcRange.size[0]), _size - dstPos);
+		size_t dstOffset = md.begin + md.sliceAlignSize * range.pos[2] + skipBlocks[1] * md.rowBytes;
+		if (md.completelyAlign && skipBlocks[0]) {
+			for (size_t i = 0; i < range.size[2]; ++i) {
+				memcpy((uint8_t*)_mappedData + dstOffset, (const uint8_t*)data + i * sliceWriteBytes, sliceWriteBytes);
+				dstOffset += md.sliceAlignSize;
+			}
+		} else {
+			dstOffset += TextureUtils::getBytes(_format, skipBlocks[0]);
+			const auto rowBytes = TextureUtils::getBytes(_format, sliceWriteBlocks[0]);
+			for (size_t i = 0; i < range.size[2]; ++i) {
+				auto srcOffset = 0;
+				for (size_t j = 0; j < sliceWriteBlocks[1]; ++j) memcpy((uint8_t*)_mappedData + dstOffset + j * md.rowBytes, (const uint8_t*)data + srcOffset + j * rowBytes, rowBytes);
 
-		auto device = graphics.getDevice();
-		auto commandPool = graphics.getCommandPool();
-
-		VkCommandBufferAllocateInfo commandBufferAllocateInfo;
-		memset(&commandBufferAllocateInfo, 0, sizeof(commandBufferAllocateInfo));
-		commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		commandBufferAllocateInfo.commandPool = commandPool;
-		commandBufferAllocateInfo.commandBufferCount = 1;
-
-		VkCommandBuffer commandBuffer;
-		if (vkAllocateCommandBuffers(device, &commandBufferAllocateInfo, &commandBuffer) != VK_SUCCESS) return -1;
-
-		VkCommandBufferBeginInfo commandBufferBeginInfo = {};
-		memset(&commandBufferBeginInfo, 0, sizeof(commandBufferBeginInfo));
-		commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-		vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo);
-
-		VkBufferCopy bufferCopy;
-		bufferCopy.srcOffset = srcRange.pos[0];
-		bufferCopy.dstOffset = dstPos;
-		bufferCopy.size = copySize;
-		vkCmdCopyBuffer(commandBuffer, src._buffer, _buffer, 1, &bufferCopy);
-
-		vkEndCommandBuffer(commandBuffer);
-
-		VkSubmitInfo submitInfo;
-		memset(&submitInfo, 0, sizeof(submitInfo));
-		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		submitInfo.commandBufferCount = 1;
-		submitInfo.pCommandBuffers = &commandBuffer;
-
-		auto queue = graphics.getGraphicsQueue();
-
-		vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE);
-		vkQueueWaitIdle(queue);
-
-		vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
-
-		return copySize;
+				dstOffset += md.sliceAlignSize;
+				srcOffset += sliceWriteBytes;
+			}
+		}
 	}
 
-	size_t BaseTexture::copyFrom(Graphics& graphics, size_t dstPos, const IBuffer* src, const Box1uz& srcRange) {
+	bool BaseTexture::copyFrom(Graphics& graphics, const Vec3uz& dstPos, size_t dstArraySlice, size_t dstMipSlice, const ITextureResource* src, size_t srcArraySlice, size_t srcMipSlice, const Box3uz& srcRange) {
 		using namespace srk::enum_operators;
 
-		if (!_buffer || (_usage & Usage::COPY_DST) != Usage::COPY_DST || !src || (src->getUsage() & Usage::COPY_SRC) != Usage::COPY_SRC || src->getGraphics() != graphics) return -1;
+		if (dstArraySlice >= _arraySize || dstMipSlice >= _mipLevels || !src || src->getGraphics() != graphics) return false;
 
-		auto srcNative = (const BaseBuffer*)src->getNative();
-		if (!srcNative || !srcNative->_buffer) return -1;
+		auto srcBase = (BaseTexture*)src->getNative();
+		if (srcArraySlice >= srcBase->_arraySize || srcMipSlice >= srcBase->_mipLevels) return false;
 
-		return copyFrom(graphics, dstPos, *srcNative, srcRange);
-	}*/
+		if ((srcBase->_usage & Usage::COPY_SRC) == Usage::NONE) {
+			graphics.error("OpenGL Texture::copyFrom error : no Usage::COPY_SRC");
+			return false;
+		}
+
+		if ((_usage & Usage::COPY_DST) == Usage::NONE) {
+			graphics.error("OpenGL Texture::copyFrom error : no Usage::COPY_DST");
+			return false;
+		}
+
+		auto cmd = graphics.beginOneTimeCommands();
+		if (!cmd) return false;
+
+		VkImageSubresourceRange vkSrcRange;
+		vkSrcRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		vkSrcRange.baseMipLevel = srcMipSlice;
+		vkSrcRange.levelCount = 1;
+		vkSrcRange.baseArrayLayer = srcArraySlice;
+		vkSrcRange.layerCount = 1;
+		
+		VkImageSubresourceRange vkDstRange;
+		vkDstRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		vkDstRange.baseMipLevel = dstMipSlice;
+		vkDstRange.levelCount = 1;
+		vkDstRange.baseArrayLayer = dstArraySlice;
+		vkDstRange.layerCount = 1;
+
+		VkImageCopy imageCopy;
+		imageCopy.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		imageCopy.srcSubresource.mipLevel = srcMipSlice;
+		imageCopy.srcSubresource.baseArrayLayer = srcArraySlice;
+		imageCopy.srcSubresource.layerCount = 1;
+		imageCopy.srcOffset.x = srcRange.pos[0];
+		imageCopy.srcOffset.y = srcRange.pos[1];
+		imageCopy.srcOffset.z = srcRange.pos[2];
+		imageCopy.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		imageCopy.dstSubresource.mipLevel = dstMipSlice;
+		imageCopy.dstSubresource.baseArrayLayer = dstArraySlice;
+		imageCopy.dstSubresource.layerCount = 1;
+		imageCopy.dstOffset.x = dstPos[0];
+		imageCopy.dstOffset.y = dstPos[1];
+		imageCopy.dstOffset.z = dstPos[2];
+		imageCopy.extent.width = srcRange.size[0];
+		imageCopy.extent.height = srcRange.size[1];
+		imageCopy.extent.depth = srcRange.size[2];
+		Graphics::transitionImageLayout(cmd.getVkCommandBuffer(), srcBase->_image, srcBase->_imageLayout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, vkSrcRange);
+		Graphics::transitionImageLayout(cmd.getVkCommandBuffer(), _image, _imageLayout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, vkDstRange);
+		vkCmdCopyImage(cmd.getVkCommandBuffer(), srcBase->_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, _image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &imageCopy);
+		srcBase->_tryRestoreImageLayout(cmd.getVkCommandBuffer(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, vkSrcRange);
+		_tryRestoreImageLayout(cmd.getVkCommandBuffer(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, vkDstRange);
+		
+		return graphics.endOneTimeCommands(cmd);
+	}
 
 	void BaseTexture::destroy() {
 		if (_mappedData) {
@@ -501,12 +631,23 @@ namespace srk::modules::graphics::vulkan {
 
 		_memAllocator = nullptr;
 		_allocation = nullptr;
+		_imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		_size = 0;
+		_memAlignment = 0;
 		_mipLevels = 0;
+		_arraySize = 0;
 		_usage = Usage::NONE;
 		_internalUsage = Usage::NONE;
 		_mappedData = nullptr;
 		_vkFlags = 0;
 		_mapData.clear();
+	}
+
+	void BaseTexture::_tryRestoreImageLayout(VkCommandBuffer cmd, VkImageLayout cur, const VkImageSubresourceRange& range) {
+		if (_imageLayout == VK_IMAGE_LAYOUT_UNDEFINED || _imageLayout == VK_IMAGE_LAYOUT_PREINITIALIZED) {
+			_imageLayout = cur;
+		} else {
+			Graphics::transitionImageLayout(cmd, _image, cur, _imageLayout, range);
+		}
 	}
 }

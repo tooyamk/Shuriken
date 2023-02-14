@@ -27,7 +27,7 @@ namespace srk::modules::graphics::d3d11 {
 		DXGI_FORMAT internalFormat;
 		SampleCount sampleCount;
 		size_t perBlockBytes;
-		size_t perRowPixels;
+		size_t perRowBytes;
 		Vec3uz dim;
 		size_t arraySize;
 		size_t internalArraySize;

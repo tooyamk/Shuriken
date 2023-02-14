@@ -394,10 +394,22 @@ namespace srk::modules::graphics::gl {
 	}
 
 	bool BaseTexture::copyFrom(Graphics& graphics, const Vec3uz& dstPos, size_t dstArraySlice, size_t dstMipSlice, const ITextureResource* src, size_t srcArraySlice, size_t srcMipSlice, const Box3uz& srcRange) {
+		using namespace srk::enum_operators;
+
 		if (dstArraySlice >= internalArraySize || dstMipSlice >= mipLevels || !src || src->getGraphics() != graphics) return false;
 
 		auto srcBase = (BaseTexture*)src->getNative();
 		if (srcArraySlice >= srcBase->internalArraySize || srcMipSlice >= srcBase->mipLevels) return false;
+
+		if ((srcBase->resUsage & Usage::COPY_SRC) == Usage::NONE) {
+			graphics.error("OpenGL Texture::copyFrom error : no Usage::COPY_SRC");
+			return false;
+		}
+
+		if ((resUsage & Usage::COPY_DST) == Usage::NONE) {
+			graphics.error("OpenGL Texture::copyFrom error : no Usage::COPY_DST");
+			return false;
+		}
 
 		GLuint fbo;
 		glGenFramebuffers(1, &fbo);
