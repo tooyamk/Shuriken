@@ -45,6 +45,7 @@
 #           else
 #               define SRK_ARCH_WORD_BITS SRK_ARCH_WORD_BITS_64
 #           endif
+#           undef SRK_ARCH
 #           define SRK_ARCH SRK_ARCH_ARM
 #       endif
 #   elif defined(__x86_64) || defined(__x86_64__) || \

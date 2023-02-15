@@ -23,7 +23,6 @@ namespace srk::modules::graphics::vulkan {
 		virtual void SRK_CALL destroy() override;
 		virtual bool SRK_CALL update(size_t arraySlice, size_t mipSlice, const Box2uz& range, const void* data) override;
 		virtual bool SRK_CALL copyFrom(const Vec3uz& dstPos, size_t dstArraySlice, size_t dstMipSlice, const ITextureResource* src, size_t srcArraySlice, size_t srcMipSlice, const Box3uz& srcRange) override;
-		virtual bool SRK_CALL copyFrom(size_t arraySlice, size_t mipSlice, const Box3uz& range, const IPixelBuffer* pixelBuffer) override;
 
 	protected:
 		BaseTexture _baseTex;

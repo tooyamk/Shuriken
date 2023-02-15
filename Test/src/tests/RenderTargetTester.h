@@ -227,12 +227,6 @@ public:
 				auto texView = graphics->createTextureView();
 				texView->create(texRes, 0, -1, 0, -1);
 
-				auto pb = graphics->createPixelBuffer();
-				if (pb) {
-					//pb->create(img0->size.getMultiplies() * 4, Usage::MAP_WRITE | Usage::PERSISTENT_MAP, mipsData0Ptr.data()[0], img0->size.getMultiplies() * 4);
-					//texRes->copyFrom(0, 0, Box2ui32(Vec2ui32(0, 0), Vec2ui32(4, 4)), pb);
-				}
-
 				uint8_t texData[] = { 255, 0, 0, 255, 0, 255, 0, 255, 0, 0, 255, 255, 0, 0, 0, 255 };
 				//auto mapped = texRes->map(0, 0, Usage::MAP_WRITE);
 				//texRes->write(0, 0, 4, texData, sizeof(texData));

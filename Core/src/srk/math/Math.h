@@ -141,7 +141,7 @@ namespace srk {
 					return std::make_optional<size_t>(realPos);
 				}
 
-				if (realPos >= realTotal || !length) std::nullopt;
+				if (realPos >= realTotal || !length) return std::nullopt;
 				if (realPos >= (PosType)begin && realPos - (PosType)begin < (PosType)length) return std::make_optional<size_t>(realPos);
 
 				return std::nullopt;

@@ -71,10 +71,11 @@
 
 namespace srk {
 	struct Environment {
+		static constexpr bool IS_DEBUG =
 #ifdef SRK_DEBUG
-		static constexpr bool IS_DEBUG = true;
+		true;
 #else
-		static constexpr bool IS_DEBUG = false;
+		false;
 #endif
 
 		enum class Compiler : uint8_t {
@@ -84,17 +85,16 @@ namespace srk {
 			MSVC
 		};
 
-
+		static constexpr Compiler COMPILER = 
 #if SRK_COMPILER == SRK_COMPILER_CLANG
-		static constexpr Compiler COMPILER = Compiler::CLANG;
+		Compiler::CLANG;
 #elif SRK_COMPILER == SRK_COMPILER_GCC
-		static constexpr Compiler COMPILER = Compiler::GCC;
+		Compiler::GCC;
 #elif SRK_COMPILER == SRK_COMPILER_MSVC
-		static constexpr Compiler COMPILER = Compiler::MSVC;
+		Compiler::MSVC;
 #else
-		static constexpr Compiler COMPILER = Compiler::UNKNOWN;
+		Compiler::UNKNOWN;
 #endif
-
 
 		enum class OperatingSystem : uint8_t {
 			UNKNOWN,
@@ -105,19 +105,19 @@ namespace srk {
 			WINDOWS
 		};
 
-
+		static constexpr OperatingSystem OPERATING_SYSTEM = 
 #if SRK_OS == SRK_OS_ANDROID
-		static constexpr OperatingSystem OPERATING_SYSTEM = OperatingSystem::ANDROID;
+		OperatingSystem::ANDROID;
 #elif SRK_OS == SRK_OS_IOS
-		static constexpr OperatingSystem OPERATING_SYSTEM = OperatingSystem::IOS;
+		OperatingSystem::IOS;
 #elif SRK_OS == SRK_OS_LINUX
-		static constexpr OperatingSystem OPERATING_SYSTEM = OperatingSystem::LINUX;
+		OperatingSystem::LINUX;
 #elif SRK_OS == SRK_OS_MACOS
-		static constexpr OperatingSystem OPERATING_SYSTEM = OperatingSystem::MACOS;
+		OperatingSystem::MACOS;
 #elif SRK_OS == SRK_OS_WINDOWS
-		static constexpr OperatingSystem OPERATING_SYSTEM = OperatingSystem::WINDOWS;
+		OperatingSystem::WINDOWS;
 #else
-		static constexpr OperatingSystem OPERATING_SYSTEM = OperatingSystem::UNKNOWN;
+		OperatingSystem::UNKNOWN;
 #endif
 	};
 

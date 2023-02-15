@@ -76,8 +76,6 @@ namespace srk::modules::graphics::vulkan {
 		size_t _arraySize;
 
 		void* _mappedData;
-		size_t _mappedDataOffset;
-		size_t _mappedDataSize;
 
 		struct MapData {
 			Usage usage;
@@ -93,6 +91,10 @@ namespace srk::modules::graphics::vulkan {
 
 		bool _map(void*& mappedData);
 		void _unmap();
+		inline void _unmap(size_t subresource) {
+			_unmap(_mapData[subresource]);
+		}
+		void _unmap(MapData& md);
 		void _write(const MapData& md, const Box3uz& range, const void* data);
 		void _tryRestoreImageLayout(VkCommandBuffer cmd, VkImageLayout cur, const VkImageSubresourceRange& range);
 	};

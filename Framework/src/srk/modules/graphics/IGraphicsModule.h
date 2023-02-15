@@ -298,17 +298,6 @@ namespace srk::modules::graphics {
 	};
 
 
-	class SRK_FW_DLL IPixelBuffer : public IBuffer {
-	public:
-		virtual ~IPixelBuffer() {}
-
-		virtual bool SRK_CALL copyFrom(uint32_t mipSlice, const ITextureResource* src) = 0;
-
-	protected:
-		IPixelBuffer(IGraphicsModule& graphics) : IBuffer(graphics) {}
-	};
-
-
 	enum class SamplerFilterMode : uint8_t {
 		POINT,
 		LINEAR,
@@ -568,7 +557,6 @@ namespace srk::modules::graphics {
 		virtual size_t SRK_CALL read(size_t arraySlice, size_t mipSlice, size_t offset, void* dst, size_t dstLen) = 0;
 		virtual size_t SRK_CALL write(size_t arraySlice, size_t mipSlice, size_t offset, const void* data, size_t length) = 0;
 		virtual bool SRK_CALL copyFrom(const Vec3uz& dstPos, size_t dstArraySlice, size_t dstMipSlice, const ITextureResource* src, size_t srcArraySlice, size_t srcMipSlice, const Box3uz& srcRange) = 0;
-		virtual bool SRK_CALL copyFrom(size_t arraySlice, size_t mipSlice, const Box3uz& range, const IPixelBuffer* pixelBuffer) = 0;
 		virtual void SRK_CALL destroy() = 0;
 	};
 
@@ -1179,7 +1167,6 @@ namespace srk::modules::graphics {
 		bool sampler;
 		bool nativeTextureView;
 		bool nativeRenderView;
-		bool pixelBuffer;
 		bool constantBuffer;
 		bool textureMap;
 		bool persistentMap;
@@ -1222,7 +1209,6 @@ namespace srk::modules::graphics {
 		virtual IntrusivePtr<IDepthStencil> SRK_CALL createDepthStencil() = 0;
 		virtual IntrusivePtr<IDepthStencilState> SRK_CALL createDepthStencilState() = 0;
 		virtual IntrusivePtr<IIndexBuffer> SRK_CALL createIndexBuffer() = 0;
-		virtual IntrusivePtr<IPixelBuffer> SRK_CALL createPixelBuffer() = 0;
 		virtual IntrusivePtr<IProgram> SRK_CALL createProgram() = 0;
 		virtual IntrusivePtr<IRasterizerState> SRK_CALL createRasterizerState() = 0;
 		virtual IntrusivePtr<IRenderTarget> SRK_CALL createRenderTarget() = 0;

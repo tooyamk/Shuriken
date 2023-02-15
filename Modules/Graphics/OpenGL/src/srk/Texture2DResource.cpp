@@ -50,11 +50,11 @@ namespace srk::modules::graphics::gl {
 	}
 
 	size_t Texture2DResource::read(size_t arraySlice, size_t mipSlice, size_t offset, void* dst, size_t dstLen) {
-		return _baseTex.read(arraySlice, mipSlice, offset, dst, dstLen);
+		return _baseTex.read(*_graphics.get<Graphics>(), arraySlice, mipSlice, offset, dst, dstLen);
 	}
 
 	size_t Texture2DResource::write(size_t arraySlice, size_t mipSlice, size_t offset, const void* data, size_t length) {
-		return _baseTex.write(arraySlice, mipSlice, offset, data, length);
+		return _baseTex.write(*_graphics.get<Graphics>(), arraySlice, mipSlice, offset, data, length);
 	}
 
 	void Texture2DResource::destroy() {
@@ -71,9 +71,5 @@ namespace srk::modules::graphics::gl {
 
 	bool Texture2DResource::copyFrom(const Vec3uz& dstPos, size_t dstArraySlice, size_t dstMipSlice, const ITextureResource* src, size_t srcArraySlice, size_t srcMipSlice, const Box3uz& srcRange) {
 		return _baseTex.copyFrom(*_graphics.get<Graphics>(), dstPos, dstArraySlice, dstMipSlice, src, srcArraySlice, srcMipSlice, srcRange);
-	}
-
-	bool Texture2DResource::copyFrom(size_t arraySlice, size_t mipSlice, const Box3uz& range, const IPixelBuffer* pixelBuffer) {
-		return _baseTex.copyFrom(*_graphics.get<Graphics>(), arraySlice, mipSlice, range, pixelBuffer);
 	}
 }

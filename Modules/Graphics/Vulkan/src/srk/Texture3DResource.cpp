@@ -1,20 +1,20 @@
 #include "Texture3DResource.h"
 #include "Graphics.h"
 
-namespace srk::modules::graphics::gl {
+namespace srk::modules::graphics::vulkan {
 	Texture3DResource::Texture3DResource(Graphics& graphics) : ITexture3DResource(graphics),
-		_baseTex(TextureType::TEX3D) {
+		_baseTex(TextureType::TEX2D) {
 	}
 
 	Texture3DResource::~Texture3DResource() {
 	}
 
 	TextureType Texture3DResource::getType() const {
-		return _baseTex.texType;
+		return _baseTex.getTexType();
 	}
 
 	bool Texture3DResource::isCreated() const {
-		return _baseTex.handle;
+		return _baseTex.getVkImage();
 	}
 
 	const void* Texture3DResource::getNative() const {
@@ -22,23 +22,23 @@ namespace srk::modules::graphics::gl {
 	}
 
 	SampleCount Texture3DResource::getSampleCount() const {
-		return _baseTex.sampleCount;
+		return _baseTex.getSampleCount();
 	}
 
 	TextureFormat Texture3DResource::getFormat() const {
-		return _baseTex.format;
+		return _baseTex.getFormat();
 	}
 
 	const Vec3uz& Texture3DResource::getDimensions() const {
-		return _baseTex.dim;
+		return _baseTex.getDimensions();
 	}
 
-	bool Texture3DResource::create(const Vec3uz& dim, size_t arraySize, size_t mipLevels, TextureFormat format, Usage requiredUsage, Usage preferredUsage, const void* const* data) {
+	bool Texture3DResource::create(const Vec3uz& dim, size_t arraySize, size_t mipLevels, TextureFormat format, Usage requiredUsage, Usage preferredUsage, const void*const* data) {
 		return _baseTex.create(*_graphics.get<Graphics>(), dim, arraySize, mipLevels, 1, format, requiredUsage, preferredUsage, data);
 	}
 
 	Usage Texture3DResource::getUsage() const {
-		return _baseTex.resUsage;
+		return _baseTex.getUsage();
 	}
 
 	Usage Texture3DResource::map(size_t arraySlice, size_t mipSlice, Usage expectMapUsage) {
@@ -50,15 +50,15 @@ namespace srk::modules::graphics::gl {
 	}
 
 	size_t Texture3DResource::read(size_t arraySlice, size_t mipSlice, size_t offset, void* dst, size_t dstLen) {
-		return _baseTex.read(*_graphics.get<Graphics>(), arraySlice, mipSlice, offset, dst, dstLen);
+		return _baseTex.read(arraySlice, mipSlice, offset, dst, dstLen);
 	}
 
 	size_t Texture3DResource::write(size_t arraySlice, size_t mipSlice, size_t offset, const void* data, size_t length) {
-		return _baseTex.write(*_graphics.get<Graphics>(), arraySlice, mipSlice, offset, data, length);
+		return _baseTex.write(arraySlice, mipSlice, offset, data, length);
 	}
 
 	void Texture3DResource::destroy() {
-		_baseTex.releaseTex();
+		_baseTex.destroy();
 	}
 
 	bool Texture3DResource::update(size_t arraySlice, size_t mipSlice, const Box3uz& range, const void* data) {

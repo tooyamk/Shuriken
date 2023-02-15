@@ -38,6 +38,14 @@ namespace srk {
 			return *_target;
 		}
 
+		inline void SRK_CALL operator=(T* target) {
+			set(target);
+		}
+
+		inline void SRK_CALL operator=(std::nullptr_t) {
+			reset();
+		}
+
 		inline SRK_CALL operator T* () const {
 			return _target;
 		}

@@ -70,7 +70,7 @@ namespace srk::modules::inputs {
 		uint8_t* _outputState;
 		uint8_t* _outputBuffer;
 		std::atomic<OUTPUT_FLAG_TYPE> _outputFlags;
-		bool _needOutput;
+		std::atomic_bool _needOutput;
 
 		void SRK_CALL _doInput(bool dispatchEvent);
 		void SRK_CALL _doOutput();

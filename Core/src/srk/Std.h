@@ -6,7 +6,47 @@
 #include <bit>
 #include <concepts>
 
+#ifdef SRK_std_convertible_to
+#	include <utility>
+#endif
+
+#ifdef SRK_std_invocable
+#	include <functional>
+#endif
+
 namespace std {
+#ifdef SRK_std_convertible_to
+	template<typename From, typename To> concept convertible_to = std::is_convertible_v<From, To> && requires { static_cast<To>(std::declval<From>()); };
+#endif
+
+#ifdef SRK_std_default_initializable
+	template<typename T> concept default_initializable = std::is_nothrow_destructible_v<T> && std::is_constructible_v<T> && requires { T{}; };
+#endif
+
+#ifdef SRK_std_derived_from
+	template<typename Derived, typename Base> concept derived_from = std::is_base_of_v<Base, Derived> && std::is_convertible_v<const volatile Derived*, const volatile Base*>;
+#endif
+
+#ifdef SRK_std_floating_point
+	template<typename T> concept floating_point = std::is_floating_point_v<T>;
+#endif
+
+#ifdef SRK_std_integral
+	template<typename T> concept integral = std::is_integral_v<T>;
+#endif
+
+#ifdef SRK_std_invocable
+	template<typename F, typename... Args> concept invocable = requires(F&& f, Args&&... args) { std::invoke(std::forward<F>(f), std::forward<Args>(args)...); };
+#endif
+
+#ifdef SRK_std_signed_integral
+	template<typename T> concept signed_integral = std::is_integral_v<T> && std::is_signed_v<T>;
+#endif
+
+#ifdef SRK_std_unsigned_integral
+	template<typename T> concept unsigned_integral = std::is_integral_v<T> && !std::is_signed_v<T>;
+#endif
+
 #ifndef __cpp_lib_endian
 	enum class endian {
 		little = 0,

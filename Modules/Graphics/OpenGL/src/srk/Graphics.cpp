@@ -5,7 +5,6 @@
 #include "DepthStencil.h"
 #include "DepthStencilState.h"
 #include "IndexBuffer.h"
-#include "PixelBuffer.h"
 #include "Program.h"
 #include "RasterizerState.h"
 #include "RenderTarget.h"
@@ -203,7 +202,6 @@ namespace srk::modules::graphics::gl {
 			}
 		}
 
-		_deviceFeatures.pixelBuffer = true;
 		_deviceFeatures.constantBuffer = isGreatThanOrEqualVersion(3, 1) || glIsSupported("GL_ARB_uniform_buffer_object");
 		_deviceFeatures.sampler = isGreatThanOrEqualVersion(3, 3) || glIsSupported("GL_ARB_sampler_objects");
 		_deviceFeatures.independentBlend = isGreatThanOrEqualVersion(4, 0) ||
@@ -265,7 +263,7 @@ namespace srk::modules::graphics::gl {
 		_glStatus.usage.bufferCreateUsageMask = Usage::MAP_READ_WRITE | Usage::UPDATE | Usage::COPY_SRC_DST;
 		if (_deviceFeatures.persistentMap) _glStatus.usage.bufferCreateUsageMask |= Usage::PERSISTENT_MAP;
 
-		_glStatus.usage.texCreateUsageMask = Usage::UPDATE | Usage::COPY_SRC_DST | Usage::RENDERABLE;
+		_glStatus.usage.texCreateUsageMask = Usage::MAP_READ_WRITE | Usage::UPDATE | Usage::COPY_SRC_DST | Usage::RENDERABLE;
 
 		//glEnable(GL_MULTISAMPLE);
 		//glDisable(GL_MULTISAMPLE);
@@ -366,10 +364,6 @@ namespace srk::modules::graphics::gl {
 
 	IntrusivePtr<IVertexBuffer> Graphics::createVertexBuffer() {
 		return new VertexBuffer(*this);
-	}
-
-	IntrusivePtr<IPixelBuffer> Graphics::createPixelBuffer() {
-		return new PixelBuffer(*this);
 	}
 
 	const Vec2ui32& Graphics::getBackBufferSize() const {

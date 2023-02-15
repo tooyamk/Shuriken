@@ -108,7 +108,7 @@ namespace srk::modules::graphics::vulkan {
 		auto initData = data != nullptr;
 		
 		_internalUsage = Usage::NONE;
-		if (initData) {// && !cpuWrite) {
+		if (initData && !cpuWrite) {
 			_internalUsage |= Usage::COPY_DST;
 			imageCreateInfo.usage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 		}
@@ -218,7 +218,7 @@ namespace srk::modules::graphics::vulkan {
 		if (initData) {
 			auto perBlockBytes = TextureUtils::getPerBlockBytes(format);
 
-			if (false) {//_vkFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) {
+			if (_vkFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) {
 				void* dst;
 				if (_map(dst)) {
 					size_t offset = 0;
@@ -366,7 +366,7 @@ namespace srk::modules::graphics::vulkan {
 			auto usage = expectMapUsage & _internalUsage & Usage::MAP_READ_WRITE;
 
 			if (usage == Usage::NONE) {
-				unmap(arraySlice, mipSlice);
+				_unmap(subresource);
 			} else {
 				auto& md = _mapData[subresource];
 				ret = usage;
@@ -379,7 +379,7 @@ namespace srk::modules::graphics::vulkan {
 							md.usage = usage;
 							++_mapCount;
 						} else {
-							unmap(arraySlice, mipSlice);
+							_unmap(md);
 							ret = Usage::NONE;
 						}
 					}
@@ -397,21 +397,22 @@ namespace srk::modules::graphics::vulkan {
 	}
 
 	void BaseTexture::unmap(size_t arraySlice, size_t mipSlice) {
-		if (auto subresource = calcSubresource(mipSlice, arraySlice, _mipLevels); subresource < _mapData.size()) {
-			auto& md = _mapData[subresource];
-			if (md.usage != Usage::NONE) {
-				md.usage = Usage::NONE;
-				if (--_mapCount == 0) {
-					_unmap();
-					_mappedData = nullptr;
-				}
-			}
-		}
+		if (auto subresource = calcSubresource(mipSlice, arraySlice, _mipLevels); subresource < _mapData.size()) _unmap(subresource);
 	}
 
 	void BaseTexture::_unmap() {
 		if (!(_vkFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)) vmaFlushAllocation(_memAllocator, _allocation, 0, _size);
 		vmaUnmapMemory(_memAllocator, _allocation);
+	}
+
+	void BaseTexture::_unmap(MapData& md) {
+		if (md.usage != Usage::NONE) {
+			md.usage = Usage::NONE;
+			if (--_mapCount == 0) {
+				_unmap();
+				_mappedData = nullptr;
+			}
+		}
 	}
 
 	size_t BaseTexture::read(size_t arraySlice, size_t mipSlice, size_t offset, void* dst, size_t dstLen) {

@@ -374,10 +374,6 @@ namespace srk::modules::graphics::d3d12 {
 		return nullptr;
 	}
 
-	IntrusivePtr<IPixelBuffer> Graphics::createPixelBuffer() {
-		return nullptr;
-	}
-
 	const Vec2ui32& Graphics::getBackBufferSize() const {
 		return _d3dStatus.backSize;
 	}

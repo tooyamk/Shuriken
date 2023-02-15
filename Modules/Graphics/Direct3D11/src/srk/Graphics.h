@@ -58,7 +58,6 @@ namespace srk::modules::graphics::d3d11 {
 		virtual IntrusivePtr<ITexture3DResource> SRK_CALL createTexture3DResource() override;
 		virtual IntrusivePtr<ITextureView> SRK_CALL createTextureView() override;
 		virtual IntrusivePtr<IVertexBuffer> SRK_CALL createVertexBuffer() override;
-		virtual IntrusivePtr<IPixelBuffer> SRK_CALL createPixelBuffer() override;
 
 		virtual const Vec2ui32& SRK_CALL getBackBufferSize() const override;
 		virtual void SRK_CALL setBackBufferSize(const Vec2ui32& size) override;

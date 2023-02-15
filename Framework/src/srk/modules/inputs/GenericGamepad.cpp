@@ -219,10 +219,12 @@ namespace srk::modules::inputs {
 		}
 		default:
 		{
-			std::unique_lock lock(_outputMutex, std::defer_lock);
 			void* custom[2];
-			custom[0] = &lock;
 			custom[1] = this;
+
+			std::unique_lock lock(_outputMutex, std::defer_lock);
+
+			custom[0] = &lock;
 
 			return _driver->customSetState(type, code, values, count, _outputState, custom,
 				[](void* custom) {
@@ -327,7 +329,10 @@ namespace srk::modules::inputs {
 			memcpy(_outputBuffer, _outputState, _outputLength);
 		}
 
-		if (_needOutput && _driver->writeStateToDevice(_outputBuffer)) _needOutput = false;
+		if (_needOutput && _driver->writeStateToDevice(_outputBuffer)) {
+			_needOutput = false;
+			_outputFlags.fetch_and(~OUTPUT_WRITING);
+		}
 	}
 
 	void GenericGamepad::_setDeadZone(GamepadVirtualKeyCode keyCode, Vec2<DeviceStateValue>* deadZone) {

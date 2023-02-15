@@ -9,7 +9,9 @@
 #include "Program.h"
 #include "RasterizerState.h"
 #include "Sampler.h"
+#include "Texture1DResource.h"
 #include "Texture2DResource.h"
+#include "Texture3DResource.h"
 #include "VertexBuffer.h"
 #include "srk/ProgramSource.h"
 #include "srk/modules/graphics/GraphicsAdapter.h"
@@ -843,7 +845,7 @@ namespace srk::modules::graphics::vulkan {
 	}
 
 	IntrusivePtr<ITexture1DResource> Graphics::createTexture1DResource() {
-		return nullptr;
+		return new Texture1DResource(*this);
 	}
 
 	IntrusivePtr<ITexture2DResource> Graphics::createTexture2DResource() {
@@ -851,7 +853,7 @@ namespace srk::modules::graphics::vulkan {
 	}
 
 	IntrusivePtr<ITexture3DResource> Graphics::createTexture3DResource() {
-		return nullptr;
+		return new Texture3DResource(*this);
 	}
 
 	IntrusivePtr<ITextureView> Graphics::createTextureView() {
@@ -860,10 +862,6 @@ namespace srk::modules::graphics::vulkan {
 
 	IntrusivePtr<IVertexBuffer> Graphics::createVertexBuffer() {
 		return new VertexBuffer(*this);
-	}
-
-	IntrusivePtr<IPixelBuffer> Graphics::createPixelBuffer() {
-		return nullptr;
 	}
 
 	const Vec2ui32& Graphics::getBackBufferSize() const {

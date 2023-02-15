@@ -1,10 +1,90 @@
 #include "BaseTexture.h"
 #include "Graphics.h"
-#include "PixelBuffer.h"
 #include "TextureView.h"
+#include "srk/ScopePtr.h"
 #include <algorithm>
 
 namespace srk::modules::graphics::gl {
+	BaseTexture::PixelBuffer::PixelBuffer() :
+		_baseBuffer(0) {
+	}
+
+	bool BaseTexture::PixelBuffer::create(Graphics& graphics, size_t size, Usage requiredUsage, Usage preferredUsage, const void* data, size_t dataSize) {
+		using namespace srk::enum_operators;
+
+		auto allUsage = requiredUsage | preferredUsage;
+		auto read = (allUsage & Usage::MAP_READ) == Usage::MAP_READ;
+		auto write = (allUsage & Usage::MAP_WRITE) != Usage::NONE;
+
+		if (read && write) {
+			auto requiredRead = (allUsage & Usage::MAP_READ) == Usage::MAP_READ;
+			auto requiredWrite = (allUsage & Usage::MAP_WRITE) == Usage::MAP_WRITE;
+			if (requiredRead) {
+				if (requiredWrite) {
+					return false;
+				} else {
+					write = false;
+					preferredUsage &= ~Usage::MAP_WRITE;
+				}
+			} else if (requiredWrite) {
+				read = false;
+				preferredUsage &= ~Usage::MAP_READ;
+			} else {
+				write = false;
+				preferredUsage &= ~Usage::MAP_WRITE;
+			}
+		}
+
+		if (read) {
+			_baseBuffer.bufferType = GL_PIXEL_PACK_BUFFER;
+		} else if (write) {
+			_baseBuffer.bufferType = GL_PIXEL_UNPACK_BUFFER;
+		} else {
+			return true;
+		}
+
+		return _baseBuffer.create(graphics, size, requiredUsage, preferredUsage, data, GL_DYNAMIC_READ);
+	}
+
+	Usage BaseTexture::PixelBuffer::map(Usage expectMapUsage) {
+		return _baseBuffer.map(expectMapUsage, GL_READ_WRITE);
+	}
+
+	void BaseTexture::PixelBuffer::unmap() {
+		_baseBuffer.unmap();
+	}
+
+	size_t BaseTexture::PixelBuffer::read(void* dst, size_t dstLen, size_t offset) {
+		return _baseBuffer.read(dst, dstLen, offset);
+	}
+
+	size_t BaseTexture::PixelBuffer::write(const void* data, size_t length, size_t offset) {
+		return _baseBuffer.write(data, length, offset);
+	}
+
+	bool BaseTexture::PixelBuffer::copyFrom(uint32_t mipSlice, const BaseTexture* src) {
+		if (!_baseBuffer.handle || _baseBuffer.bufferType != GL_PIXEL_PACK_BUFFER) return false;
+
+		glBindBuffer(_baseBuffer.bufferType, _baseBuffer.handle);
+		glBindTexture(src->glTexInfo.target, src->handle);
+
+		glGetTexImage(src->glTexInfo.target, mipSlice, src->glTexInfo.format, src->glTexInfo.type, nullptr);
+
+		glBindTexture(src->glTexInfo.target, 0);
+		glBindBuffer(_baseBuffer.bufferType, 0);
+
+		return true;
+	}
+
+	void BaseTexture::PixelBuffer::copyFrom(Graphics& graphics, const PixelBuffer* src) {
+		glBindBuffer(GL_COPY_READ_BUFFER, src->_baseBuffer.handle);
+		glBindBuffer(GL_COPY_WRITE_BUFFER, _baseBuffer.handle);
+		glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, _baseBuffer.size);
+		glBindBuffer(GL_COPY_READ_BUFFER, 0);
+		glBindBuffer(GL_COPY_WRITE_BUFFER, 0);
+	}
+
+
 	BaseTexture::BaseTexture(TextureType texType) :
 		dirty(false),
 		sampleCount(0),
@@ -14,7 +94,6 @@ namespace srk::modules::graphics::gl {
 		mapUsage(Usage::NONE),
 		size(0),
 		handle(0),
-		mapData(nullptr),
 		sync(nullptr),
 		arraySize(0),
 		mipLevels(0) {
@@ -23,6 +102,25 @@ namespace srk::modules::graphics::gl {
 
 	BaseTexture::~BaseTexture() {
 		releaseTex();
+	}
+
+	bool BaseTexture::_usageConflicted(Usage requiredUsage, Usage& preferredUsage, Usage conflictedUsage1, Usage conflictedUsage2) {
+		using namespace srk::enum_operators;
+
+		if ((requiredUsage & conflictedUsage1) != Usage::NONE) {
+			if ((requiredUsage & conflictedUsage2) != Usage::NONE) {
+				return false;
+			} else {
+				preferredUsage &= ~conflictedUsage2;
+				return true;
+			}
+		} else if ((requiredUsage & conflictedUsage2) != Usage::NONE) {
+			preferredUsage &= ~conflictedUsage1;
+			return true;
+		} else {
+			preferredUsage &= ~conflictedUsage2;
+			return true;
+		}
 	}
 
 	bool BaseTexture::create(Graphics& graphics, const Vec3uz& dim, size_t arraySize, size_t mipLevels, SampleCount sampleCount,
@@ -42,6 +140,49 @@ namespace srk::modules::graphics::gl {
 			graphics.error(std::format("OpenGL Texture::create error : has not support Usage {}", (std::underlying_type_t<Usage>)u));
 			return _createDone(graphics, false);
 		}
+
+		Usage allUsage;
+		do {
+			allUsage = requiredUsage | preferredUsage;
+
+			auto cpuRead = (allUsage & Usage::MAP_READ) == Usage::MAP_READ;
+			auto cpuWrite = (allUsage & Usage::MAP_WRITE) == Usage::MAP_WRITE;
+
+			if (cpuRead) {
+				if (cpuWrite) {
+					if (_usageConflicted(requiredUsage, preferredUsage, Usage::MAP_READ, Usage::MAP_WRITE)) {
+						continue;
+					} else {
+						graphics.error("OpenGL Texture::create error : could not enable Usage::MAP_READ and Usage::MAP_WRITE at same time");
+						return _createDone(graphics, false);
+					}
+				}
+
+				if ((allUsage & Usage::UPDATE) == Usage::UPDATE) {
+					if (_usageConflicted(requiredUsage, preferredUsage, Usage::MAP_READ, Usage::UPDATE)) {
+						continue;
+					} else {
+						graphics.error("OpenGL Texture::create error : could not enable Usage::MAP_READ and Usage::UPDATE at same time");
+						return _createDone(graphics, false);
+					}
+				}
+
+				break;
+			} else if (cpuWrite) {
+				if ((allUsage & Usage::UPDATE) == Usage::UPDATE) {
+					if (_usageConflicted(requiredUsage, preferredUsage, Usage::MAP_WRITE, Usage::UPDATE)) {
+						continue;
+					} else {
+						graphics.error("OpenGL Texture::create error : could not enable Usage::MAP_WRITE and Usage::UPDATE at same time");
+						return _createDone(graphics, false);
+					}
+				}
+
+				break;
+			} else {
+				break;
+			}
+		} while (true);
 
 		if (!sampleCount) sampleCount = 1;
 
@@ -64,7 +205,6 @@ namespace srk::modules::graphics::gl {
 		auto isArray = arraySize && texType != TextureType::TEX3D;
 		if (arraySize < 1 || texType == TextureType::TEX3D) arraySize = 1;
 
-		auto allUsage = requiredUsage | preferredUsage;
 		this->dim.set(dim);
 
 		glGenTextures(1, &handle);
@@ -313,6 +453,34 @@ namespace srk::modules::graphics::gl {
 				if (sampleCount == 1) glTexParameteri(glTexInfo.target, GL_TEXTURE_MAX_LEVEL, mipLevels - 1);
 				glBindTexture(glTexInfo.target, 0);
 
+				if ((resUsage & Usage::MAP_READ_WRITE) != Usage::NONE) {
+					mapData.resize(mipLevels* arraySize);
+					Vec3uz size3(dim);
+					for (decltype(mipLevels) i = 0; i < mipLevels; ++i) {
+						auto& md = mapData[i];
+						md.size = TextureUtils::getBlocks(format, size3).getMultiplies() * perBlockBytes;
+						md.usage = Usage::NONE;
+						md.inited = false;
+						md.buffer = nullptr;
+						md.arraySlice = 0;
+						md.mipSlice = i;
+						md.range.size = size3;
+
+						for (decltype(arraySize) j = 1; j < arraySize; ++j) {
+							auto& md1 = mapData[calcSubresource(i, j, mipLevels)];
+							md1.size = md.size;
+							md1.usage = Usage::NONE;
+							md.inited = false;
+							md1.buffer = nullptr;
+							md1.arraySlice = j;
+							md1.mipSlice = i;
+							md1.range.size = size3;
+						}
+
+						size3 = TextureUtils::getNextMipPixels(size3);
+					}
+				}
+
 				this->format = format;
 				internalArraySize = arraySize;
 				this->arraySize = isArray ? arraySize : 0;
@@ -336,51 +504,113 @@ namespace srk::modules::graphics::gl {
 	}
 
 	Usage BaseTexture::map(size_t arraySlice, size_t mipSlice, Usage expectMapUsage) {
-		return Usage::NONE;
-		/*
-		Usage ret = Usage::NONE;
+		using namespace srk::enum_operators;
 
-		expectMapUsage &= Usage::CPU_READ_WRITE;
-		if (handle && expectMapUsage != Usage::NONE) {
-			if (((expectMapUsage & Usage::CPU_READ) == Usage::CPU_READ) && ((resUsage & Usage::CPU_READ) == Usage::CPU_READ)) {
-				ret |= Usage::CPU_READ;
+		auto ret = Usage::NONE;
+		if (auto subresource = calcSubresource(mipSlice, arraySlice, mipLevels); subresource < mapData.size()) {
+			auto usage = expectMapUsage & resUsage & Usage::MAP_READ_WRITE;
+
+			if (usage == Usage::NONE) {
+				_unmap(subresource, false);
 			} else {
-				expectMapUsage &= ~Usage::CPU_READ;
-			}
-			if ((expectMapUsage & Usage::CPU_WRITE) == Usage::CPU_WRITE) {
-				if ((resUsage & Usage::CPU_WRITE) == Usage::CPU_WRITE) {
-					ret |= Usage::CPU_WRITE | Usage::CPU_WRITE_NO_OVERWRITE;
+				auto& md = mapData[subresource];
+				ret = usage;
+
+				if (md.usage != usage) {
+					_unmap(md, false);
+					md.usage = usage;
 				}
-			} else {
-				expectMapUsage &= ~Usage::CPU_WRITE;
 			}
-
-			mapUsage = expectMapUsage;
 		}
 
 		return ret;
-		*/
 	}
 
 	void BaseTexture::unmap(size_t arraySlice, size_t mipSlice) {
-		//mapUsage = Usage::NONE;
+		if (auto subresource = calcSubresource(mipSlice, arraySlice, mipLevels); subresource < mapData.size()) _unmap(mapData[subresource], false);
 	}
 
-	size_t BaseTexture::read(size_t arraySlice, size_t mipSlice, size_t offset, void* dst, size_t dstLen) {
+	void BaseTexture::_unmap(MapData& md, bool discard) {
+		using namespace srk::enum_operators;
+
+		if (md.usage != Usage::NONE) {
+			if (md.buffer) {
+				md.buffer->unmap();
+				if (md.inited && (md.usage & Usage::MAP_WRITE) == Usage::MAP_WRITE) {
+					glBindBuffer(md.buffer->getBufferType(), md.buffer->getHandle());
+					auto rst = _update(md.arraySlice, md.mipSlice, md.range, nullptr);
+					glBindBuffer(md.buffer->getBufferType(), 0);
+				}
+				delete md.buffer;
+				md.buffer = nullptr;
+			}
+			
+			md.usage = Usage::NONE;
+			md.inited = false;
+		}
+	}
+
+	size_t BaseTexture::read(Graphics& graphics, size_t arraySlice, size_t mipSlice, size_t offset, void* dst, size_t dstLen) {
+		using namespace srk::enum_operators;
+
+		if (auto subresource = calcSubresource(mipSlice, arraySlice, mipLevels); subresource < mapData.size()) {
+			auto& md = mapData[subresource];
+			if ((md.usage & Usage::MAP_READ) == Usage::MAP_READ) {
+				if (!dst || !dstLen || offset >= md.size) return 0;
+
+				if (!md.inited) {
+					if (!md.buffer) {
+						ScopePtr buffer = new PixelBuffer();
+						if (!buffer->create(graphics, md.size, Usage::MAP_READ, Usage::NONE)) return -1;
+						md.buffer = buffer;
+						buffer.reset<false>();
+					}
+					if (!md.buffer->copyFrom(mipSlice, this)) return -1;
+
+					md.buffer->map(Usage::MAP_READ);
+					md.inited = true;
+				}
+
+				auto readLen = std::min<size_t>(md.size - offset, dstLen);
+				return md.buffer->read(dst, readLen, offset);
+			}
+		}
 		return -1;
 	}
 
-	size_t BaseTexture::write(size_t arraySlice, size_t mipSlice, size_t offset, const void* data, size_t length) {
-		/*
-		if ((mapUsage & Usage::CPU_WRITE) == Usage::CPU_WRITE) {
-			if (data && length && offset < size) {
-				length = std::min<uint32_t>(length, size - offset);
-				memcpy((i8*)mapData + offset, data, length);
-				return length;
+	size_t BaseTexture::write(Graphics& graphics, size_t arraySlice, size_t mipSlice, size_t offset, const void* data, size_t length) {
+		using namespace srk::enum_operators;
+
+		if (auto subresource = calcSubresource(mipSlice, arraySlice, mipLevels); subresource < mapData.size()) {
+			auto& md = mapData[subresource];
+			if ((md.usage & Usage::MAP_WRITE) == Usage::MAP_WRITE) {
+				if (!data || !length || offset >= md.size) return 0;
+
+				if (!md.inited) {
+					if (!md.buffer) {
+						ScopePtr<PixelBuffer> readBuffer;
+						if (offset || length < md.size) {
+							readBuffer = new PixelBuffer();
+							if (!readBuffer->create(graphics, md.size, Usage::MAP_READ, Usage::NONE)) return -1;
+							if (!readBuffer->copyFrom(mipSlice, this)) return -1;
+						}
+
+						ScopePtr buffer = new PixelBuffer();
+						if (!buffer->create(graphics, md.size, Usage::MAP_WRITE, Usage::NONE)) return -1;
+						if (readBuffer) buffer->copyFrom(graphics, readBuffer);
+
+						md.buffer = buffer;
+						buffer.reset<false>();
+					}
+
+					md.buffer->map(Usage::MAP_WRITE);
+					md.inited = true;
+				}
+
+				length = std::min<size_t>(length, md.size - offset);
+				return md.buffer->write(data, length, offset);
 			}
-			return 0;
 		}
-		*/
 		return -1;
 	}
 
@@ -417,10 +647,13 @@ namespace srk::modules::graphics::gl {
 		switch (srcBase->texType) {
 		case TextureType::TEX1D:
 			glFramebufferTexture1D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, srcBase->glTexInfo.target, srcBase->handle, srcMipSlice);
+			break;
 		case TextureType::TEX2D:
 			glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, srcBase->glTexInfo.target, srcBase->handle, srcMipSlice);
+			break;
 		case TextureType::TEX3D:
 			glFramebufferTexture3D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, srcBase->glTexInfo.target, srcBase->handle, srcMipSlice, srcRange.pos[2]);
+			break;
 		default:
 			break;
 		}
@@ -451,7 +684,7 @@ namespace srk::modules::graphics::gl {
 			} else {
 				bindTarget = GL_TEXTURE_2D;
 				glBindTexture(bindTarget, handle);
-				glCopyTexSubImage2D(GL_TEXTURE_1D, dstMipSlice, dstPos[0], dstPos[1], srcRange.pos[0], srcRange.pos[1], srcRange.size[0], srcRange.size[1]);
+				glCopyTexSubImage2D(GL_TEXTURE_2D, dstMipSlice, dstPos[0], dstPos[1], srcRange.pos[0], srcRange.pos[1], srcRange.size[0], srcRange.size[1]);
 			}
 
 			break;
@@ -475,7 +708,7 @@ namespace srk::modules::graphics::gl {
 		return true;
 	}
 
-	bool BaseTexture::copyFrom(Graphics& graphics, size_t arraySlice, size_t mipSlice, const Box3uz& range, const IPixelBuffer* pixelBuffer) {
+	/*bool BaseTexture::copyFrom(Graphics& graphics, size_t arraySlice, size_t mipSlice, const Box3uz& range, const IPixelBuffer* pixelBuffer) {
 		if (!pixelBuffer || graphics != pixelBuffer->getGraphics()) return false;
 
 		auto native = (BaseBuffer*)pixelBuffer->getNative();
@@ -489,7 +722,7 @@ namespace srk::modules::graphics::gl {
 		native->doSync<true>();
 
 		return rst;
-	}
+	}*/
 
 	void BaseTexture::flush() {
 		if (dirty) {
@@ -501,13 +734,12 @@ namespace srk::modules::graphics::gl {
 
 	void BaseTexture::releaseTex() {
 		if (handle) {
-			releaseSync();
-
-			if (mapData) {
-				//glBindBuffer(texType, handle);
-				//glUnmapBuffer(texType);
-				mapData = nullptr;
+			if (!mapData.empty()) {
+				for (auto& md : mapData) _unmap(md, true);
+				mapData.clear();
 			}
+
+			releaseSync();
 
 			glDeleteTextures(1, &handle);
 			handle = 0;

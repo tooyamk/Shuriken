@@ -71,7 +71,7 @@ namespace srk::render {
 							if (program) {
 								auto& info = program->getInfo();
 								for (auto& v : info.vertices) {
-									v.format;
+									//v.format;
 								}
 								//todo
 							} else {

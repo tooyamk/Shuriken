@@ -281,7 +281,6 @@ namespace srk::modules::graphics::d3d11 {
 		_deviceFeatures.sampler = true;
 		_deviceFeatures.nativeTextureView = true;
 		_deviceFeatures.nativeRenderView = true;
-		_deviceFeatures.pixelBuffer = false;
 		_deviceFeatures.constantBuffer = true;
 		_deviceFeatures.textureMap = true;
 		_deviceFeatures.persistentMap = false;
@@ -474,10 +473,6 @@ namespace srk::modules::graphics::d3d11 {
 
 	IntrusivePtr<IVertexBuffer> Graphics::createVertexBuffer() {
 		return new VertexBuffer(*this);
-	}
-
-	IntrusivePtr<IPixelBuffer> Graphics::createPixelBuffer() {
-		return nullptr;
 	}
 
 	const Vec2ui32& Graphics::getBackBufferSize() const {

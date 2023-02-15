@@ -382,7 +382,6 @@ namespace srk::modules::graphics {
 		sampler = false;
 		nativeTextureView = false;
 		nativeRenderView = false;
-		pixelBuffer = false;
 		constantBuffer = false;
 		textureMap = false;
 		persistentMap = false;

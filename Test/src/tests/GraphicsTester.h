@@ -150,18 +150,33 @@ public:
 					offset += mipBytes[i];
 				}
 
-				auto rst = tr->create(texDim, 0, mipLevels, 1, texFmt, Usage::UPDATE | Usage::COPY_SRC, Usage::NONE, mipData.data());
+				auto rst = tr->create(texDim, 0, mipLevels, 1, texFmt, Usage::MAP_WRITE | Usage::COPY_SRC, Usage::NONE, mipData.data());
 				printaln("Texture2DResource::create(u) : ", rst ? "succeed" : "failed");
 				if (!rst) {
-					rst = tr->create(texDim, 0, 1, 1, texFmt, Usage::UPDATE | Usage::COPY_SRC, Usage::NONE, mipData.data());
+					rst = tr->create(texDim, 0, 1, 1, texFmt, Usage::MAP_WRITE | Usage::COPY_SRC, Usage::NONE, mipData.data());
 					printaln("Texture2DResource::create(u) : ", rst ? "succeed" : "failed");
 				}
 				if (rst) {
+					std::vector<uint8_t>* updateOrWriteData = nullptr;
 					std::vector<uint8_t> updateData(TextureUtils::getPerBlockBytes(texFmt));
 					for (size_t i = 0; i < updateData.size(); ++i) updateData.data()[i] = i;
 					if ((tr->getUsage() & Usage::UPDATE) == Usage::UPDATE) {
+						updateOrWriteData = &updateData;
 						rst = tr->update(0, 0, Box2uz(Vec2uz(0, 0), Vec2uz(1, 1)), updateData.data());
 						printaln("Texture2DResource::update : ", rst ? "succeed" : "failed");
+					}
+
+					std::vector<uint8_t> writeData(TextureUtils::getPerBlockBytes(texFmt));
+					for (size_t i = 0; i < writeData.size(); ++i) writeData.data()[i] = i;
+					if ((tr->getUsage() & Usage::MAP_WRITE) == Usage::MAP_WRITE) {
+						updateOrWriteData = &writeData;
+						rst = tr->map(0, 0, Usage::MAP_WRITE) == Usage::MAP_WRITE;
+						printaln("Texture2DResource::map(w) : ", rst ? "succeed" : "failed");
+						if (rst) {
+							rst = tr->write(0, 0, 0, writeData.data(), writeData.size()) == writeData.size();
+							printaln("Texture2DResource::write : ", rst ? "succeed" : "failed");
+							tr->unmap(0, 0);
+						}
 					}
 
 					auto tr2 = graphics->createTexture2DResource();
@@ -183,15 +198,17 @@ public:
 							}
 
 							auto isSame = true;
-							for (size_t i = 0; i < updateData.size(); ++i) {
-								if (updateData[i] != mappedData[i]) {
-									isSame = false;
-									break;
+							if (updateOrWriteData) {
+								for (size_t i = 0; i < updateOrWriteData->size(); ++i) {
+									if ((*updateOrWriteData)[i] != mappedData[i]) {
+										isSame = false;
+										break;
+									}
 								}
 							}
 
 							if (isSame) {
-								for (size_t i = updateData.size(); i < mipBytes[0]; ++i) {
+								for (size_t i = updateOrWriteData ? updateOrWriteData->size() : 0; i < mipBytes[0]; ++i) {
 									if (texData[i] != mappedData[i]) {
 										isSame = false;
 										break;

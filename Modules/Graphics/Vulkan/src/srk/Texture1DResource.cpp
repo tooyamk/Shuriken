@@ -1,7 +1,7 @@
 #include "Texture1DResource.h"
 #include "Graphics.h"
 
-namespace srk::modules::graphics::gl {
+namespace srk::modules::graphics::vulkan {
 	Texture1DResource::Texture1DResource(Graphics& graphics) : ITexture1DResource(graphics),
 		_baseTex(TextureType::TEX2D) {
 	}
@@ -10,11 +10,11 @@ namespace srk::modules::graphics::gl {
 	}
 
 	TextureType Texture1DResource::getType() const {
-		return _baseTex.texType;
+		return _baseTex.getTexType();
 	}
 
 	bool Texture1DResource::isCreated() const {
-		return _baseTex.handle;
+		return _baseTex.getVkImage();
 	}
 
 	const void* Texture1DResource::getNative() const {
@@ -22,15 +22,15 @@ namespace srk::modules::graphics::gl {
 	}
 
 	SampleCount Texture1DResource::getSampleCount() const {
-		return _baseTex.sampleCount;
+		return _baseTex.getSampleCount();
 	}
 
 	TextureFormat Texture1DResource::getFormat() const {
-		return _baseTex.format;
+		return _baseTex.getFormat();
 	}
 
 	const Vec3uz& Texture1DResource::getDimensions() const {
-		return _baseTex.dim;
+		return _baseTex.getDimensions();
 	}
 
 	bool Texture1DResource::create(size_t width, size_t arraySize, size_t mipLevels, TextureFormat format, Usage requiredUsage, Usage preferredUsage, const void* const* data) {
@@ -38,7 +38,7 @@ namespace srk::modules::graphics::gl {
 	}
 
 	Usage Texture1DResource::getUsage() const {
-		return _baseTex.resUsage;
+		return _baseTex.getUsage();
 	}
 
 	Usage Texture1DResource::map(size_t arraySlice, size_t mipSlice, Usage expectMapUsage) {
@@ -50,23 +50,19 @@ namespace srk::modules::graphics::gl {
 	}
 
 	size_t Texture1DResource::read(size_t arraySlice, size_t mipSlice, size_t offset, void* dst, size_t dstLen) {
-		return _baseTex.read(*_graphics.get<Graphics>(), arraySlice, mipSlice, offset, dst, dstLen);
+		return _baseTex.read(arraySlice, mipSlice, offset, dst, dstLen);
 	}
 
 	size_t Texture1DResource::write(size_t arraySlice, size_t mipSlice, size_t offset, const void* data, size_t length) {
-		return _baseTex.write(*_graphics.get<Graphics>(), arraySlice, mipSlice, offset, data, length);
+		return _baseTex.write(arraySlice, mipSlice, offset, data, length);
 	}
 
 	void Texture1DResource::destroy() {
-		_baseTex.releaseTex();
+		_baseTex.destroy();
 	}
 
 	bool Texture1DResource::update(size_t arraySlice, size_t mipSlice, const Box1uz& range, const void* data) {
-		Box3uz box;
-		((Vec1uz&)box.pos).set(range.pos.cast<1>());
-		((Vec1uz&)box.size).set(range.size.cast<1>());
-
-		return _baseTex.update(arraySlice, mipSlice, box, data);
+		return _baseTex.update(arraySlice, mipSlice, Box3uz(Vec3uz(range.pos[0], 0, 0), Vec3uz(range.size[0], 1, 1)), data);
 	}
 
 	bool Texture1DResource::copyFrom(const Vec3uz& dstPos, size_t dstArraySlice, size_t dstMipSlice, const ITextureResource* src, size_t srcArraySlice, size_t srcMipSlice, const Box3uz& srcRange) {
