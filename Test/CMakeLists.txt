@@ -89,7 +89,11 @@ get_property(SRKPROJ_MODULE_WINDOW_X11_NAME GLOBAL PROPERTY "SRKPROJ_MODULE_WIND
 get_property(SRKPROJ_MODULE_WINDOW_X11_DLL GLOBAL PROPERTY "SRKPROJ_MODULE_WINDOW_X11_DLL")
 
 srkCollectSrcFiles(srcFiles)
-srkAddExecutableSourceGroup(${PROJECT_NAME} MACOSX_BUNDLE ${srcFiles})
+if (SRK_OS_ANDROID)
+    srkAddLibrarySourceGroup(${PROJECT_NAME} SHARED ${srcFiles})
+else ()
+    srkAddExecutableSourceGroup(${PROJECT_NAME} MACOSX_BUNDLE ${srcFiles})
+endif ()
 target_include_directories(${PROJECT_NAME} PUBLIC
     ${SRKPROJ_CORE_INCLUDE}
     ${SRKPROJ_FRAMEWORK_INCLUDE}
@@ -117,6 +121,13 @@ set(linkLibs
 set(USE_MIMALLOC ON)
 set(USE_TCMALLOC OFF)
 
+if (NOT SRK_ENABLE_EXTERNAL_MIMALLOC)
+    set(USE_MIMALLOC OFF)
+endif ()
+if (NOT SRK_ENABLE_EXTERNAL_TCMALLOC)
+    set(USE_TCMALLOC OFF)
+endif ()
+
 if (SRK_OS_LINUX)
     list(APPEND linkLibs dl pthread)
     srkAppendIf(X11_FOUND linkLibs X11)
@@ -135,14 +146,15 @@ if (SRK_CXX_COMPILER_MSVC)
     set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS /SUBSYSTEM:WINDOWS)
 endif ()
 
-set(OUTPUT_LIBS_DIR ${SRK_PROJECT_BUILD_DIR}/libs)
+set(OUTPUT_LIBS_DIR ${SRK_PROJECT_BUILD_DIR})
+
 if (SRK_OS_WINDOWS)
     set(OUTPUT_ROOT_OR_LIBS_DIR ${SRK_PROJECT_BUILD_DIR})
 else ()
     set(OUTPUT_ROOT_OR_LIBS_DIR ${OUTPUT_LIBS_DIR})
 endif ()
 
-if (SRK_OS_WINDOWS)
+if (SRK_HOST_OS_WINDOWS)
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E remove_directory ${SRK_PROJECT_BUILD_DIR}/Resources
         COMMAND mklink /J \"${SRK_PROJECT_BUILD_DIR}/Resources\" \"${SRK_SOURCE_DIR}/Resources\"
@@ -235,3 +247,6 @@ add_dependencies(${PROJECT_NAME} ${prebuildProj})
 target_link_libraries(${PROJECT_NAME} ${linkLibs})
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER Tests)
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${OUTPUT_NAME}${SRK_BUILD_TYPE_SUFFIX})
+if (SRK_OS_ANDROID)
+    set_target_properties(${PROJECT_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${OUTPUT_LIBS_DIR})
+endif ()

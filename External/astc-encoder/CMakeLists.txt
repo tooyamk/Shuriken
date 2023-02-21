@@ -108,8 +108,6 @@ ExternalProject_Add(
         ${SLIB_SSE2_D}
         ${SLIB_NEON_R}
         ${SLIB_NEON_D}
-        ${SLIB_AUTO_R}
-        ${SLIB_AUTO_D}
     CMAKE_ARGS
         -DISA_NONE=ON
         -DUNITTEST=OFF

@@ -8,6 +8,8 @@ if not "%~1" == "" (
         set NINJA=%~2
     ) else if "%~1" == "ANDROID_NDK" (
         set ANDROID_NDK=%~2
+    ) else if "%~1" == "ANDROID_PLATFORM" (
+        set ANDROID_PLATFORM=%~2
     ) else if "%~1" == "ANDROID_ABI" (
         set ANDROID_ABI=%~2
     ) else if "%~1" == "SRK_ROOT" (
@@ -19,45 +21,54 @@ if not "%~1" == "" (
     goto:initParamsWhile
 )
 
+:checkParams
 if "%BUILD_DIR%" == "" (
-    echo BUILD_DIR is not set
-    exit /b 1
+    set /p BUILD_DIR=BUILD_DIR=
+    goto:checkParams
 )
 
 if "%NINJA%" == "" (
-    echo NINJA is not set
-    exit /b 1
+    set /p NINJA=NINJA=
+    goto:checkParams
 )
 
 if not exist "%NINJA%" (
     echo Ninja executable file is not exist
-    exit /b 1
+    set /p NINJA=NINJA=
+    goto:checkParams
 )
 
 if "%ANDROID_NDK%" == "" (
-    echo ANDROID_NDK is not set
-    exit /b 1
+    set /p ANDROID_NDK=ANDROID_NDK=
+    goto:checkParams
 )
 
 if not exist "%ANDROID_NDK%" (
     echo ANDROID_NDK dir is not exist
-    exit /b 1
+    set /p ANDROID_NDK=ANDROID_NDK=
+    goto:checkParams
+)
+
+if "%ANDROID_PLATFORM%" == "" (
+    set /p ANDROID_PLATFORM=ANDROID_PLATFORM=
+    goto:checkParams
 )
 
 if "%ANDROID_ABI%" == "" (
-    echo ANDROID_ABI is not set
-    exit /b 1
+    set /p ANDROID_ABI=ANDROID_ABI=
+    goto:checkParams
 )
 
 if "%SRK_ROOT%" == "" (
-    echo SRK_ROOT is not set
-    exit /b 1
+    set /p SRK_ROOT=SRK_ROOT=
+    goto:checkParams
 )
 
 set CMAKE_LISTS_FILE=%SRK_ROOT%/CMakeLists.txt
 if not exist "%CMAKE_LISTS_FILE%" (
     echo %CMAKE_LISTS_FILE% is not exist
-    exit /b 1
+    set /p SRK_ROOT=SRK_ROOT=
+    goto:checkParams
 )
 
 call:configure %BUILD_DIR% Debug
@@ -69,7 +80,7 @@ set buildType=%~2
 set buildDir=%~1/%buildType%
 del /f /q "%buildDir%\CMakeCache.txt"
 echo on
-cmake -DSRK_ENABLE_TESTS=OFF -DSRK_ENABLE_EXTERNAL_ZSTD=ON -DSRK_ENABLE_EXTERNAL_DX_SHADER_COMPILER=ON -DCMAKE_INSTALL_PREFIX=install -DCMAKE_CXX_FLAGS="-D__cpp_lib_remove_cvref -D__cpp_lib_bitops -DSRK_std_convertible_to -DSRK_std_default_initializable -DSRK_std_derived_from -DSRK_std_floating_point -DSRK_std_integral -DSRK_std_invocable -DSRK_std_signed_integral -DSRK_std_unsigned_integral -UANDROID -llog" -DCMAKE_TOOLCHAIN_FILE="%ANDROID_NDK%/build/cmake/android.toolchain.cmake" -DANDROID_ABI=%ANDROID_ABI% -DANDROID_NDK="%ANDROID_NDK%" -DANDROID_PLATFORM=android-22 -DCMAKE_BUILD_TYPE=%buildType% -DCMAKE_MAKE_PROGRAM="%NINJA%" -B "%buildDir%" "%SRK_ROOT%" -G Ninja
+cmake -DSRK_ENABLE_TESTS=ON -DCMAKE_INSTALL_PREFIX=install -DCMAKE_CXX_FLAGS="-D__cpp_lib_remove_cvref -D__cpp_lib_bitops -DSRK_std_convertible_to -DSRK_std_default_initializable -DSRK_std_derived_from -DSRK_std_floating_point -DSRK_std_integral -DSRK_std_invocable -DSRK_std_signed_integral -DSRK_std_unsigned_integral -UANDROID" -DCMAKE_TOOLCHAIN_FILE="%ANDROID_NDK%/build/cmake/android.toolchain.cmake" -DANDROID_ABI=%ANDROID_ABI% -DANDROID_NDK="%ANDROID_NDK%" -DANDROID_PLATFORM=%ANDROID_PLATFORM% -DCMAKE_BUILD_TYPE=%buildType% -DCMAKE_MAKE_PROGRAM="%NINJA%" -B "%buildDir%" "%SRK_ROOT%" -G Ninja
 echo off
 goto:eof
 

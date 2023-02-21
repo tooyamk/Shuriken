@@ -13,20 +13,22 @@ if not "%~1" == "" (
     goto:initParamsWhile
 )
 
+:checkParams
 if "%BUILD_DIR%" == "" (
-    echo BUILD_DIR is not set
-    exit /b 1
+    set /p BUILD_DIR=BUILD_DIR=
+    goto:checkParams
 )
 
 if "%SRK_ROOT%" == "" (
-    echo SRK_ROOT is not set
-    exit /b 1
+    set /p SRK_ROOT=SRK_ROOT=
+    goto:checkParams
 )
 
 set CMAKE_LISTS_FILE=%SRK_ROOT%/CMakeLists.txt
 if not exist "%CMAKE_LISTS_FILE%" (
     echo %CMAKE_LISTS_FILE% is not exist
-    exit /b 1
+    set /p SRK_ROOT=SRK_ROOT=
+    goto:checkParams
 )
 
 del /f /q "%BUILD_DIR%\CMakeCache.txt"
