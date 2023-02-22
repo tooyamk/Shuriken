@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">ShurikenTest</string>
-    <string name="lib_name">srk-test</string>
+    <string name="app_name">app_name</string>
+    <string name="lib_name">lib_name</string>
 </resources>

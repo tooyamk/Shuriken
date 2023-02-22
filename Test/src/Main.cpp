@@ -11,6 +11,7 @@ int32_t WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstanc
 }
 #	elif SRK_OS == SRK_OS_ANDROID
 #include <android/native_activity.h>
+#	include <dlfcn.h>
 
 void onStart(ANativeActivity* activity) {
 	printaln("onStart");
@@ -41,11 +42,11 @@ void onWindowFocusChanged(ANativeActivity* activity, int hasFocus) {
 }
 
 void onNativeWindowCreated(ANativeActivity* activity, ANativeWindow* window) {
-
+    printaln("onNativeWindowCreated");
 }
 
 void onNativeWindowDestroyed(ANativeActivity* activity, ANativeWindow* window) {
-
+    printaln("onNativeWindowCreated");
 }
 
 void onInputQueueCreated(ANativeActivity* activity, AInputQueue* queue) {
@@ -83,7 +84,14 @@ void bindLifeCycle(ANativeActivity* activity) {
 }
 
 void ANativeActivity_onCreate(ANativeActivity* activity, void* savedState, size_t savedStateSize) {
-	printaln("ANativeActivity_onCreate");
+	printaln("ANativeActivity_onCreate 2");
+    printaln(activity->internalDataPath);
+    printaln(activity->externalDataPath);
+    DynamicLibraryLoader loader;
+    auto path = "./" + getDllPath("zstd");
+    auto b = loader.load(path);
+    printaln("load zstd : ", path, "   ", b);
+
     bindLifeCycle(activity);
 }
 #	else

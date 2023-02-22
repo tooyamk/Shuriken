@@ -50,9 +50,9 @@ inline std::conditional_t<ConvertibleU8StringData<std::remove_cvref_t<T>>, std::
 	if constexpr (Environment::OPERATING_SYSTEM == Environment::OperatingSystem::WINDOWS) {
 		size += 4;
 	} else if (Environment::OPERATING_SYSTEM == Environment::OperatingSystem::MACOS) {
-		size += 6;
-	} else {
 		size += 9;
+	} else {
+		size += 6;
 	}
 
 	std::conditional_t<ConvertibleU8StringData<std::remove_cvref_t<T>>, std::u8string, std::string> s;
