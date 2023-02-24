@@ -1,7 +1,6 @@
 #include "BaseBuffer.h"
 #include "Graphics.h"
 #include <algorithm>
-#include <format>
 
 namespace srk::modules::graphics::gl {
 	BaseBuffer::BaseBuffer(GLenum bufferType) :
@@ -27,7 +26,7 @@ namespace srk::modules::graphics::gl {
 		requiredUsage &= Usage::BUFFER_CREATE_ALL;
 		preferredUsage &= Usage::BUFFER_CREATE_ALL;
 		if (auto u = (requiredUsage & (~graphics.getBufferCreateUsageMask())); u != Usage::NONE) {
-			graphics.error(std::format("OpenGL BaseBuffer::create error : has not support Usage {}", (std::underlying_type_t<Usage>)u));
+			graphics.error("OpenGL BaseBuffer::create error : has not support requiredUsage " + String::toString((std::underlying_type_t<Usage>)u));
 			return false;
 		}
 
@@ -89,7 +88,7 @@ namespace srk::modules::graphics::gl {
 
 		resUsage |= allUsage & (Usage::UPDATE | Usage::COPY_SRC_DST);
 		if ((resUsage & requiredUsage) != requiredUsage) {
-			graphics.error(std::format("OpenGL BaseBuffer::create error : has not support preferredUsage {}", (std::underlying_type_t<Usage>)(requiredUsage & (~(resUsage & requiredUsage)))));
+			graphics.error("OpenGL BaseBuffer::create error : has not support requiredUsage " + String::toString((std::underlying_type_t<Usage>)(requiredUsage & (~(resUsage & requiredUsage)))));
 			releaseBuffer();
 			return false;
 		}

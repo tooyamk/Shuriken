@@ -1,6 +1,5 @@
 #include "BaseTexture.h"
 #include "BaseBuffer.h"
-#include <format>
 
 namespace srk::modules::graphics::vulkan {
 	BaseTexture::BaseTexture(TextureType texType) :
@@ -36,7 +35,7 @@ namespace srk::modules::graphics::vulkan {
 		preferredUsage &= Usage::TEXTURE_RESOURCE_CREATE_ALL;
 		auto supportedUsages = graphics.getTexCreateUsageMask();
 		if (auto u = (requiredUsage & (~graphics.getTexCreateUsageMask())); u != Usage::NONE) {
-			graphics.error(std::format("Vulkan BaseTexture::create error : has not support Usage {}", (std::underlying_type_t<Usage>)u));
+			graphics.error("Vulkan BaseTexture::create error : has not support requiredUsage " + String::toString((std::underlying_type_t<Usage>)u));
 			return false;
 		}
 
@@ -132,7 +131,7 @@ namespace srk::modules::graphics::vulkan {
 		}
 
 		if ((_usage & requiredUsage) != requiredUsage) {
-			graphics.error(std::format("Vulkan BaseTexture::create error : has not support preferredUsage {}", (std::underlying_type_t<Usage>)(requiredUsage & (~(_usage & requiredUsage)))));
+			graphics.error("Vulkan BaseTexture::create error : has not support requiredUsage " + String::toString((std::underlying_type_t<Usage>)(requiredUsage & (~(_usage & requiredUsage)))));
 			destroy();
 			return false;
 		}
@@ -149,37 +148,37 @@ namespace srk::modules::graphics::vulkan {
 		}
 
 		if (imageCreateInfo.extent.width > imageFormatProperties.maxExtent.width) {
-			graphics.error(std::format("Vulkan BaseTexture::create error : width({}) > maxWidth({})", imageCreateInfo.extent.width, imageFormatProperties.maxExtent.width));
+			graphics.error("Vulkan BaseTexture::create error : width(" + String::toString(imageCreateInfo.extent.width) + ") > maxWidth(" + String::toString(imageFormatProperties.maxExtent.width) + ")");
 			destroy();
 			return false;
 		}
 
 		if (imageCreateInfo.extent.height > imageFormatProperties.maxExtent.height) {
-			graphics.error(std::format("Vulkan BaseTexture::create error : height({}) > maxHeight({})", imageCreateInfo.extent.height, imageFormatProperties.maxExtent.height));
+			graphics.error("Vulkan BaseTexture::create error : height(" + String::toString(imageCreateInfo.extent.height) + ") > maxHeight(" + String::toString(imageFormatProperties.maxExtent.height) + ")");
 			destroy();
 			return false;
 		}
 
 		if (imageCreateInfo.extent.depth > imageFormatProperties.maxExtent.depth) {
-			graphics.error(std::format("Vulkan BaseTexture::create error : depth({}) > maxDepth({})", imageCreateInfo.extent.depth, imageFormatProperties.maxExtent.depth));
+			graphics.error("Vulkan BaseTexture::create error : depth(" + String::toString(imageCreateInfo.extent.depth) + ") > maxDepth(" + String::toString(imageFormatProperties.maxExtent.depth) + ")");
 			destroy();
 			return false;
 		}
 
 		if (imageCreateInfo.mipLevels > imageFormatProperties.maxMipLevels) {
-			graphics.error(std::format("Vulkan BaseTexture::create error : mipLevels({}) > maxMipLevels({})", imageCreateInfo.mipLevels, imageFormatProperties.maxMipLevels));
+			graphics.error("Vulkan BaseTexture::create error : mipLevels(" + String::toString(imageCreateInfo.mipLevels) + ") > maxMipLevels(" + String::toString(imageFormatProperties.maxMipLevels) + ")");
 			destroy();
 			return false;
 		}
 
 		if (imageCreateInfo.arrayLayers > imageFormatProperties.maxArrayLayers) {
-			graphics.error(std::format("Vulkan BaseTexture::create error : arrayLayers({}) > maxArrayLayers({})", imageCreateInfo.arrayLayers, imageFormatProperties.maxArrayLayers));
+			graphics.error("Vulkan BaseTexture::create error : arrayLayers(" + String::toString(imageCreateInfo.arrayLayers) + ") > maxArrayLayers(" + String::toString(imageFormatProperties.maxArrayLayers) + ")");
 			destroy();
 			return false;
 		}
 
 		if (imageCreateInfo.samples > imageFormatProperties.sampleCounts) {
-			graphics.error(std::format("Vulkan BaseTexture::create error : samples({}) > sampleCounts({})", (size_t)imageCreateInfo.samples, (size_t)imageFormatProperties.sampleCounts));
+			graphics.error("Vulkan BaseTexture::create error : samples(" + String::toString((size_t)imageCreateInfo.samples) + ") > sampleCounts(" + String::toString((size_t)imageFormatProperties.sampleCounts) + ")");
 			destroy();
 			return false;
 		}

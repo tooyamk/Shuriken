@@ -1,4 +1,7 @@
 #include "Debug.h"
+#if SRK_OS == SRK_OS_MACOS
+#	include "srk/Application.h"
+#endif
 
 #if __has_include(<android/log.h>)
 #	define SRK_HAS_ANDROID_LOG_H
@@ -25,7 +28,7 @@ namespace srk {
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_PROC;
 		mib[2] = KERN_PROC_PID;
-		mib[3] = getCurrentProcessId();
+		mib[3] = Application::getCurrentProcessId();
 
 		kinfo_proc info;
 		info.kp_proc.p_flag = 0;

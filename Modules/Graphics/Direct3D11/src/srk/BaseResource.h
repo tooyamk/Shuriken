@@ -2,7 +2,6 @@
 
 #include "Base.h"
 #include "Graphics.h"
-#include <format>
 
 namespace srk::modules::graphics::d3d11 {
 	class BaseResource {
@@ -22,7 +21,7 @@ namespace srk::modules::graphics::d3d11 {
 			}
 
 			if (auto u = (requiredUsage & (~supportedUsages)); u != Usage::NONE) {
-				graphics.error(std::format("D3D Resource::create error : has not support preferredUsage {}", (std::underlying_type_t<Usage>)u));
+				graphics.error("D3D Resource::create error : has not support requiredUsage " + String::toString((std::underlying_type_t<Usage>)u));
 				return false;
 			}
 
@@ -119,7 +118,7 @@ namespace srk::modules::graphics::d3d11 {
 			}
 
 			if ((resUsage & requiredUsage) != requiredUsage) {
-				graphics.error(std::format("D3D Resource::create error : has not support preferredUsage {}", (std::underlying_type_t<Usage>)(requiredUsage & (~(resUsage & requiredUsage)))));
+				graphics.error("D3D Resource::create error : has not support requiredUsage " + String::toString((std::underlying_type_t<Usage>)(requiredUsage & (~(resUsage & requiredUsage)))));
 				return false;
 			}
 

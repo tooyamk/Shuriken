@@ -3,7 +3,6 @@
 #include "TextureView.h"
 #include "srk/ScopePtr.h"
 #include <algorithm>
-#include <format>
 
 namespace srk::modules::graphics::gl {
 	BaseTexture::PixelBuffer::PixelBuffer() :
@@ -138,7 +137,7 @@ namespace srk::modules::graphics::gl {
 		requiredUsage &= Usage::TEXTURE_RESOURCE_CREATE_ALL;
 		preferredUsage &= Usage::TEXTURE_RESOURCE_CREATE_ALL;
 		if (auto u = (requiredUsage & (~graphics.getTexCreateUsageMask())); u != Usage::NONE) {
-			graphics.error(std::format("OpenGL Texture::create error : has not support Usage {}", (std::underlying_type_t<Usage>)u));
+			graphics.error("OpenGL Texture::create error : has not support requiredUsage " + String::toString((std::underlying_type_t<Usage>)u));
 			return _createDone(graphics, false);
 		}
 

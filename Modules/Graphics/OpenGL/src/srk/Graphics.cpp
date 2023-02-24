@@ -191,7 +191,7 @@ namespace srk::modules::graphics::gl {
 
 		_intVer = _majorVer * 100 + _minorVer * 10;
 		_strVer = String::toString(_intVer);
-		_deviceVersion = std::format("OpenGL {}.{}", _majorVer, _minorVer);;
+		_deviceVersion = "OpenGL " + String::toString(_majorVer) + "." + String::toString(_minorVer);
 
 		if (conf.debug) {
 			if (isGreatThanOrEqualVersion(4, 3) || glIsSupported("GL_KHR_debug") || glIsSupported("GL_ARB_debug_output")) {

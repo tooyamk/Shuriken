@@ -1,5 +1,4 @@
 #include "BaseBuffer.h"
-#include <format>
 
 namespace srk::modules::graphics::vulkan {
 	BaseBuffer::BaseBuffer() : BaseBuffer((VkBufferUsageFlags)0) {
@@ -31,7 +30,7 @@ namespace srk::modules::graphics::vulkan {
 		preferredUsage &= Usage::BUFFER_CREATE_ALL;
 		auto supportedUsages = graphics.getBufferCreateUsageMask();
 		if (auto u = (requiredUsage & (~graphics.getBufferCreateUsageMask())); u != Usage::NONE) {
-			graphics.error(std::format("Vulkan BaseBuffer::create error : has not support Usage {}", (std::underlying_type_t<Usage>)u));
+			graphics.error("Vulkan BaseBuffer::create error : has not support requiredUsage " + String::toString((std::underlying_type_t<Usage>)u));
 			return false;
 		}
 
@@ -83,7 +82,7 @@ namespace srk::modules::graphics::vulkan {
 		}
 
 		if ((_usage & requiredUsage) != requiredUsage) {
-			graphics.error(std::format("Vulkan BaseBuffer::create error : has not support preferredUsage {}", (std::underlying_type_t<Usage>)(requiredUsage & (~(_usage & requiredUsage)))));
+			graphics.error("Vulkan BaseBuffer::create error : has not support requiredUsage " + String::toString((std::underlying_type_t<Usage>)(requiredUsage & (~(_usage & requiredUsage)))));
 			destroy();
 			return false;
 		}
