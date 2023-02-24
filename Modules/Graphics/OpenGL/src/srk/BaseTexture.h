@@ -49,7 +49,7 @@ namespace srk::modules::graphics::gl {
 		void SRK_CALL waitServerSync();
 		void SRK_CALL releaseSync();
 
-		inline static constexpr UINT SRK_CALL calcSubresource(UINT mipSlice, UINT arraySlice, UINT mipLevels) {
+		inline static constexpr size_t SRK_CALL calcSubresource(size_t mipSlice, size_t arraySlice, size_t mipLevels) {
 			return mipSlice + arraySlice * mipLevels;
 		}
 

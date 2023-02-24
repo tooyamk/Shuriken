@@ -107,86 +107,91 @@ namespace std {
 	template<typename T>
 	requires (sizeof(T) == 16)
 	class atomic<T> {
-		public:
-			atomic() {
-			}
+	public:
+		atomic() {}
 
-			atomic(const T& value) :
-				_value(value) {
-			}
+		atomic(const T& value) :
+			_value(value) {}
 
-			atomic(T&& value) :
-				_value(std::move(value)) {
-			}
+		atomic(T&& value) :
+			_value(std::move(value)) {}
 
-			inline T load(std::memory_order order = std::memory_order::seq_cst) const {
-				T val;
-				_compareExchange((volatile T&)_value, val, val);
-				return std::move(val);
-			}
+		inline T load(std::memory_order order = std::memory_order::seq_cst) const {
+			T val;
+			_compareExchange((volatile T&)_value, val, val);
+			return std::move(val);
+		}
 
-			inline void store(T desired, std::memory_order order = std::memory_order_seq_cst) {
-				T val = _value;
-				while (!_compareExchange(_value, val, desired)) {}
-			}
+		inline void store(T desired, std::memory_order order = std::memory_order_seq_cst) {
+			T val = _value;
+			while (!_compareExchange(_value, val, desired)) {}
+		}
 
-			inline T exchange(T desired, std::memory_order order = std::memory_order_seq_cst) {
-				T old = _value;
-				while (!compare_exchange_strong(old, desired, order)) {}
-				return std::move(old);
-			}
+		inline T exchange(T desired, std::memory_order order = std::memory_order_seq_cst) {
+			T old = _value;
+			while (!compare_exchange_strong(old, desired, order)) {}
+			return std::move(old);
+		}
 
-			inline bool compare_exchange_strong(T& expected, T desired, std::memory_order order = std::memory_order_seq_cst) {
-				return _compareExchange(_value, expected, desired);
-			}
+		inline bool compare_exchange_strong(T& expected, T desired, std::memory_order order = std::memory_order_seq_cst) {
+			return _compareExchange(_value, expected, desired);
+		}
 
-			inline bool compare_exchange_strong(T& expected, T desired, std::memory_order success, std::memory_order failure) {
-				return compare_exchange_strong(expected, desired, success);
-			}
+		inline bool compare_exchange_strong(T& expected, T desired, std::memory_order success, std::memory_order failure) {
+			return compare_exchange_strong(expected, desired, success);
+		}
 
-			inline bool compare_exchange_weak(T& expected, T desired, std::memory_order order = std::memory_order_seq_cst) {
-				return compare_exchange_strong(expected, desired, order);
-			}
+		inline bool compare_exchange_weak(T& expected, T desired, std::memory_order order = std::memory_order_seq_cst) {
+			return compare_exchange_strong(expected, desired, order);
+		}
 
-			inline bool compare_exchange_weak(T& expected, T desired, std::memory_order success, std::memory_order failure) {
-				return compare_exchange_strong(expected, desired, success, failure);
-			}
+		inline bool compare_exchange_weak(T& expected, T desired, std::memory_order success, std::memory_order failure) {
+			return compare_exchange_strong(expected, desired, success, failure);
+		}
 
-		private:
-			T _value;
+		inline bool is_lock_free() const noexcept {
+#	if SRK_ARCH_WORD_BITS == SRK_ARCH_WORD_BITS_64 && (SRK_COMPILER == SRK_COMPILER_MSVC || SRK_COMPILER == SRK_COMPILER_CLANG || SRK_COMPILER == SRK_COMPILER_GCC)
+			return true;
+#	else
+			return false;
+#	endif
+		}
 
-			inline static bool _compareExchange(volatile T& dst, T& expected, const T& desired) {
+	private:
+		T _value;
+
+		inline static bool _compareExchange(volatile T& dst, T& expected, const T& desired) {
 #	if SRK_ARCH_WORD_BITS == SRK_ARCH_WORD_BITS_64
 #		if SRK_COMPILER == SRK_COMPILER_MSVC
-				return _InterlockedCompareExchange128((volatile int64_t*)&dst, ((int64_t*)(&desired))[1], ((int64_t*)(&desired))[0], (int64_t*)(&expected));
+			return _InterlockedCompareExchange128((volatile int64_t*)&dst, ((int64_t*)(&desired))[1], ((int64_t*)(&desired))[0], (int64_t*)(&expected));
 #		elif SRK_COMPILER == SRK_COMPILER_CLANG || SRK_COMPILER == SRK_COMPILER_GCC
-				return __sync_bool_compare_and_swap((volatile __uint128_t*)&dst, (__uint128_t&)expected, (const __uint128_t&)desired);
+			return __sync_bool_compare_and_swap((volatile __uint128_t*)&dst, (__uint128_t&)expected, (const __uint128_t&)desired);
 #		endif
 #	else
-				static std::atomic_flag lock = ATOMIC_FLAG_INIT;
+			static std::atomic_flag lock = ATOMIC_FLAG_INIT;
 
-				auto pdst = (volatile uint64_t*)&dst;
-				auto pexpected = (uint64_t*)&expected;
-				auto pdesired = (const uint64_t*)&desired;
-				bool rst;
+			auto pdst = (volatile uint64_t*)&dst;
+			auto pexpected = (uint64_t*)&expected;
+			auto pdesired = (const uint64_t*)&desired;
+			bool rst;
 
-				while (lock.test_and_set(std::memory_order::acquire)) {}
+			while (lock.test_and_set(std::memory_order::acquire)) {}
 
-				if (pdst[0] == pexpected[0] && pdst[1] == pexpected[1]) {
-					pdst[0] = pdesired[0];
-					pdst[1] = pdesired[1];
-					rst = true;
-				} else {
-					pexpected[0] = pdst[0];
-					pexpected[1] = pdst[1];
-					rst = false;
-				}
-
-				lock.clear(std::memory_order::release);
-
-				return rst;
-#	endif
+			if (pdst[0] == pexpected[0] && pdst[1] == pexpected[1]) {
+				pdst[0] = pdesired[0];
+				pdst[1] = pdesired[1];
+				rst = true;
+			} else {
+				pexpected[0] = pdst[0];
+				pexpected[1] = pdst[1];
+				rst = false;
 			}
+
+			lock.clear(std::memory_order::release);
+
+			return rst;
+#	endif
+		}
 	};
 #endif
 }

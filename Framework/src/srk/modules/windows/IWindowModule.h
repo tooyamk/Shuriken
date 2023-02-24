@@ -38,8 +38,8 @@ namespace srk::modules::windows {
 
 
 	enum class WindowNative : uint8_t {
-		X_DISPLAY,
-		WINDOW
+		WINDOW,
+		X_DISPLAY
 	};
 
 
