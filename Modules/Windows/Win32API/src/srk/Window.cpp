@@ -1,5 +1,6 @@
 #include "Window.h"
 #include "Manager.h"
+#include "srk/Application.h"
 #include "srk/String.h"
 #include "srk/Debug.h"
 #include "srk/events/EventDispatcher.h"
@@ -29,7 +30,7 @@ namespace srk::modules::windows::win32api {
 		_data.module = GetModuleHandleW(nullptr);
 		_data.style = desc.style;
 		_data.bkBrush = CreateSolidBrush(RGB(desc.style.backgroundColor[0], desc.style.backgroundColor[1], desc.style.backgroundColor[2]));
-		_data.className = String::Utf8ToUnicode(String::toString(getCurrentProcessId()));
+		_data.className = String::Utf8ToUnicode(String::toString(Application::getCurrentProcessId()));
 		_data.className += L'-';
 		_data.className += String::Utf8ToUnicode(String::toString(_counter.fetch_add(1)));
 

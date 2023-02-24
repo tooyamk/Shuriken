@@ -192,7 +192,7 @@ float4 main(PS_INPUT input) : SV_TARGET {
 							}
 							//*/
 
-							//writeFile(getAppPath().parent_path().string() + "/offscreen.png", extensions::PNGConverter::encode(img));
+							//writeFile(Application::getAppPath().parent_path().string() + "/offscreen.png", extensions::PNGConverter::encode(img));
 						}
 					}
 				}

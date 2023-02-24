@@ -1,6 +1,7 @@
 #include "BaseBuffer.h"
 #include "Graphics.h"
 #include <algorithm>
+#include <format>
 
 namespace srk::modules::graphics::gl {
 	BaseBuffer::BaseBuffer(GLenum bufferType) :

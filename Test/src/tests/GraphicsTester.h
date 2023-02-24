@@ -233,8 +233,8 @@ public:
 			}
 
 			IntrusivePtr shader = new Shader();
-			auto shaderResourcesFolder = getAppPath().parent_path().u8string() + "/Resources/shaders/";
-			extensions::ShaderScript::set(shader, graphics, readFile(getAppPath().parent_path().u8string() + "/Resources/shaders/lighting.shader"),
+			auto shaderResourcesFolder = Application::getAppPath().parent_path().u8string() + "/Resources/shaders/";
+			extensions::ShaderScript::set(shader, graphics, readFile(Application::getAppPath().parent_path().u8string() + "/Resources/shaders/lighting.shader"),
 				[shaderResourcesFolder](const Shader& shader, ProgramStage stage, const std::string_view& name) {
 					return readFile(shaderResourcesFolder + name);
 				},

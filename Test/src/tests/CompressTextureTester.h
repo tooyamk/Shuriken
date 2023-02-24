@@ -56,7 +56,7 @@ public:
 	static constexpr uint32_t TileSize = 128;
 
 	virtual int32_t SRK_CALL run() override {
-		auto srcDir = getAppPath().parent_path().u8string();
+		auto srcDir = Application::getAppPath().parent_path().u8string();
 		IntrusivePtr<Image> src;
 		{
 			auto srcBin = readFile(srcDir + "/Resources/tex1.jpg");

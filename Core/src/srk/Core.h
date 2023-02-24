@@ -1,5 +1,6 @@
 #pragma once
 
+#include "srk/Application.h"
 #include "srk/ByteArray.h"
 #include "srk/DynamicLibraryLoader.h"
 #include "srk/Debug.h"

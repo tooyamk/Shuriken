@@ -23,7 +23,6 @@
 #if __has_include(<bit>)
 #	include <bit>
 #endif
-#include <filesystem>
 #include <iostream>
 #include <cstring>
 #include <string>
@@ -70,7 +69,10 @@
 #endif
 
 namespace srk {
-	struct Environment {
+	class SRK_CORE_DLL Environment {
+	public:
+		Environment() = delete;
+
 		static constexpr bool IS_DEBUG =
 #ifdef SRK_DEBUG
 		true;
@@ -647,27 +649,5 @@ namespace srk {
 		} else {
 			return data;
 		}
-	}
-
-
-	inline uint32_t SRK_CALL getCurrentProcessId() {
-#if SRK_OS == SRK_OS_WINDOWS
-		return ::GetCurrentProcessId();
-#else
-		return ::getpid();
-#endif
-	}
-
-
-	inline std::filesystem::path SRK_CALL getAppPath() {
-#if SRK_OS == SRK_OS_WINDOWS
-		wchar_t path[FILENAME_MAX] = { 0 };
-		auto count = GetModuleFileNameW(nullptr, path, FILENAME_MAX);
-		return std::filesystem::path(std::wstring_view(path, count > 0 ? count : 0));
-#else
-		char path[FILENAME_MAX];
-		auto count = readlink("/proc/self/exe", path, FILENAME_MAX);
-		return std::filesystem::path(std::string_view(path, count > 0 ? count : 0));
-#endif
 	}
 }

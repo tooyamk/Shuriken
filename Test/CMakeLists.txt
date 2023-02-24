@@ -103,7 +103,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE ${SRK_DEFINITIONS})
 
 if (SRK_OS_MACOS)
     srkSetTargetRpath(${PROJECT_NAME} "./../../../libs")
-else ()
+elseif (SRK_OS_LINUX)
     srkSetTargetRpath(${PROJECT_NAME} "./libs")
 endif ()
 
@@ -155,6 +155,7 @@ if (SRK_OS_WINDOWS)
 elseif (SRK_OS_ANDROID)
     set(OUTPUT_AUTO_IMMEDIATE_LOAD_LIBS_DIR ${SRK_PROJECT_BUILD_DIR})
     set(OUTPUT_AUTO_DELAY_LOAD_LIBS_DIR ${SRK_PROJECT_BUILD_DIR})
+    set(OUTPUT_MANUAL_LOAD_LIBS_DIR ${SRK_PROJECT_BUILD_DIR})
 endif ()
 
 if (SRK_HOST_OS_WINDOWS)

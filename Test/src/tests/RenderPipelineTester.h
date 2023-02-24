@@ -143,7 +143,7 @@ public:
 			IntrusivePtr tag2 = new RenderTagCollection();
 			tag2->add(forwardAddTag);
 
-			auto parsed = extensions::FBXConverter::decode(readFile(getAppPath().parent_path().u8string() + "/Resources/teapot.fbx"));
+			auto parsed = extensions::FBXConverter::decode(readFile(Application::getAppPath().parent_path().u8string() + "/Resources/teapot.fbx"));
 			for (auto& mr : parsed.meshes) {
 				if (mr) {
 					auto rs = graphics->createRasterizerState();
@@ -197,9 +197,9 @@ public:
 
 				mat->setShader(s);
 				mat->setParameters(new ShaderParameterCollection());
-				auto shaderResourcesFolder = getAppPath().parent_path().u8string() + "/Resources/shaders/";
+				auto shaderResourcesFolder = Application::getAppPath().parent_path().u8string() + "/Resources/shaders/";
 				//s->upload(std::filesystem::path(app->getAppPath().parent_path().u8string() + "/Resources/shaders/test.shader"));
-				extensions::ShaderScript::set(s, graphics, readFile(getAppPath().parent_path().u8string() + "/Resources/shaders/lighting.shader"),
+				extensions::ShaderScript::set(s, graphics, readFile(Application::getAppPath().parent_path().u8string() + "/Resources/shaders/lighting.shader"),
 					[shaderResourcesFolder](const Shader& shader, ProgramStage stage, const std::string_view& name) {
 						return readFile(shaderResourcesFolder + name);
 					},
@@ -234,14 +234,14 @@ public:
 		{
 			auto texRes = graphics->createTexture2DResource();
 			if (texRes) {
-				auto img0 = extensions::PNGConverter::decode(readFile(getAppPath().parent_path().u8string() + "/Resources/white.png"));
+				auto img0 = extensions::PNGConverter::decode(readFile(Application::getAppPath().parent_path().u8string() + "/Resources/white.png"));
 				img0->format = textureFormatTypeSwitch(img0->format, false);
 				auto mipLevels = TextureUtils::getMipLevels(img0->dimensions);
 				ByteArray mipsData0;
 				std::vector<void*> mipsData0Ptr;
 				img0->generateMips(img0->format, mipLevels, mipsData0, 0, mipsData0Ptr);
 
-				auto img1 = extensions::PNGConverter::decode(readFile(getAppPath().parent_path().u8string() + "/Resources/red.png"));
+				auto img1 = extensions::PNGConverter::decode(readFile(Application::getAppPath().parent_path().u8string() + "/Resources/red.png"));
 				img1->format = textureFormatTypeSwitch(img1->format, false);
 				ByteArray mipsData1;
 				std::vector<void*> mipsData1Ptr;

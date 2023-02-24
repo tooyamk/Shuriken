@@ -2,6 +2,7 @@
 
 #include "Base.h"
 #include "Graphics.h"
+#include <format>
 
 namespace srk::modules::graphics::d3d11 {
 	class BaseResource {

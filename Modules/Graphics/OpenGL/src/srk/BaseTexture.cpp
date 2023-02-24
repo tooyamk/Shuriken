@@ -3,6 +3,7 @@
 #include "TextureView.h"
 #include "srk/ScopePtr.h"
 #include <algorithm>
+#include <format>
 
 namespace srk::modules::graphics::gl {
 	BaseTexture::PixelBuffer::PixelBuffer() :

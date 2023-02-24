@@ -76,7 +76,12 @@ inline std::conditional_t<ConvertibleU8StringData<std::remove_cvref_t<T>>, std::
 template<typename T>
 requires ConvertibleString8Data<std::remove_cvref_t<T>>
 inline std::conditional_t<ConvertibleU8StringData<std::remove_cvref_t<T>>, std::u8string, std::string> getDllPath(T&& name) {
+	auto dll = getDllName(std::forward<T>(name));
+#if SRK_OS == SRK_OS_ANDROID
+	return dll;
+#else
 	return "libs/" + getDllName(std::forward<T>(name));
+#endif
 }
 
 inline std::string getWindowDllPath() {
@@ -147,7 +152,7 @@ inline bool SRK_CALL createProgram(IProgram& program, const std::string_view& ve
 	using SSS = Str::value_type;
 	using SSS2 = Str::traits_type;
 
-	auto appPath = getAppPath().parent_path().u8string() + "/Resources/shaders/";
+	auto appPath = Application::getAppPath().parent_path().u8string() + "/Resources/shaders/";
 	if (!program.create(readProgramSource(appPath + vert, ProgramStage::VS), readProgramSource(appPath + frag, ProgramStage::PS), nullptr, 0,
 		[&appPath](const IProgram& program, ProgramStage stage, const std::string_view& name) {
 		return readFile(appPath + name);

@@ -9,7 +9,6 @@
 #[LIB_NAME]=
 #[KEYSTORE]=
 #[KEY_ALIAS]=
-#[KEY_PASS]=
 #[STORE_PASS]=
 
 if (NOT SRK_ROOT)
@@ -78,7 +77,7 @@ get_filename_component(dir ${OUTPUT} DIRECTORY)
 set(break OFF)
 while (NOT break)
     string(RANDOM rnd)
-    set(tmp "${dir}/.tmp _ ${rnd}")
+    set(tmp "${dir}/.tmp_${rnd}")
     if (NOT EXISTS ${tmp})
         set(break ON)
     endif ()
@@ -168,19 +167,16 @@ if (NOT KEYSTORE)
     if (NOT KEY_ALIAS)
         set(KEY_ALIAS shuriken)
     endif ()
-    if (NOT KEY_PASS)
-        set(KEY_PASS 111111)
-    endif ()
     if (NOT STORE_PASS)
         set(STORE_PASS 111111)
     endif ()
-    execute_process(COMMAND ${keytool} -genkeypair -alias ${KEY_ALIAS} -keypass ${KEY_PASS} -storepass ${STORE_PASS} -dname "C=unknown,ST=unknown,L=unknown,O=unknown,OU=unknown,CN=unknown" -keyalg RSA -keystore ${KEYSTORE})
+    execute_process(COMMAND ${keytool} -genkey -alias ${KEY_ALIAS} -storepass ${STORE_PASS} -dname "C=unknown,ST=unknown,L=unknown,O=unknown,OU=unknown,CN=unknown" -keyalg RSA -keystore ${KEYSTORE} --storetype PKCS12)
 endif ()
 
 #=================================
 set(cmd COMMAND ${jarsigner} -keystore ${KEYSTORE} -signedjar ${OUTPUT} ${tmp}/build/app.apk ${KEY_ALIAS})
-if (KEY_PASS AND STORE_PASS)
-    list(APPEND cmd -keypass ${KEY_PASS} -storepass ${STORE_PASS})
+if (STORE_PASS)
+    list(APPEND cmd -storepass ${STORE_PASS})
 endif ()
 execute_process(${cmd})
 

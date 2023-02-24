@@ -195,7 +195,7 @@ public:
 			if (texRes) {
 				TextureFormat fmt;
 
-				auto img0 = extensions::PNGConverter::decode(readFile(getAppPath().parent_path().u8string() + "/Resources/c4.png"));
+				auto img0 = extensions::PNGConverter::decode(readFile(Application::getAppPath().parent_path().u8string() + "/Resources/c4.png"));
 				img0->format = textureFormatTypeSwitch(img0->format, false);
 				fmt = img0->format;
 				auto mipLevels = TextureUtils::getMipLevels(img0->dimensions);
@@ -203,7 +203,7 @@ public:
 				std::vector<void*> mipsData0Ptr;
 				img0->generateMips(img0->format, mipLevels, mipsData0, 0, mipsData0Ptr);
 
-				auto img1 = extensions::PNGConverter::decode(readFile(getAppPath().parent_path().u8string() + "/Resources/red.png"));
+				auto img1 = extensions::PNGConverter::decode(readFile(Application::getAppPath().parent_path().u8string() + "/Resources/red.png"));
 				img1->format = textureFormatTypeSwitch(img1->format, false);
 				ByteArray mipsData1;
 				std::vector<void*> mipsData1Ptr;
