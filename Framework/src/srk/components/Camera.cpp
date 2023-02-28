@@ -1,5 +1,5 @@
 #include "Camera.h"
-#include "srk/modules/graphics/IGraphicsModule.h"
+#include "srk/modules/graphics/GraphicsModule.h"
 
 namespace srk::components {
 	Camera::Camera() :

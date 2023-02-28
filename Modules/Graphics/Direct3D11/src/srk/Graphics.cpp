@@ -14,7 +14,6 @@
 #include "Texture3DResource.h"
 #include "TextureView.h"
 #include "VertexBuffer.h"
-#include "srk/ProgramSource.h"
 #include "srk/modules/graphics/GraphicsAdapter.h"
 
 namespace srk::modules::graphics::d3d11 {

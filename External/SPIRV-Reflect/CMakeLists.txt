@@ -8,6 +8,9 @@ set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_SPIRV_REFLECT_NAME ${PROJECT_NAME}
 set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_SPIRV_REFLECT_INCLUDE ${PROJECT_BINARY_DIR}/install/include)
 set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_SPIRV_REFLECT_SLIB ${SLIB_PREFIX}${SRK_BUILD_TYPE_SUFFIX}${SRK_SLIB_SUFFIX})
 
+set(gitTag sdk-1.3.239.0)
+srkCheckExternalProjectVersion_GitTag(${PROJECT_BINARY_DIR} ${PROJECT_BINARY_DIR}/src ${gitTag})
+
 include(ExternalProject)
 
 srkCreateExternalProjectCmakeArgs(cmakeArgs)
@@ -16,7 +19,7 @@ ExternalProject_Add(
     ${PROJECT_NAME}
     PREFIX ${PROJECT_BINARY_DIR}
     GIT_REPOSITORY https://github.com/KhronosGroup/SPIRV-Reflect.git
-    GIT_TAG sdk-1.3.239.0
+    GIT_TAG ${gitTag}
     GIT_SHALLOW 1
     GIT_PROGRESS 1
     TMP_DIR tmp

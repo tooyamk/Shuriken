@@ -9,15 +9,12 @@
 #include "srk/Mesh.h"
 #include "srk/Monitor.h"
 #include "srk/Node.h"
-#include "srk/ProgramSource.h"
 #include "srk/Shader.h"
-#include "srk/ShaderDefine.h"
 #include "srk/ShaderParameter.h"
 #include "srk/ShaderPredefine.h"
 
 #include "srk/modules/ModuleLoader.h"
 #include "srk/modules/graphics/GraphicsAdapter.h"
-#include "srk/modules/graphics/IShaderTranspiler.h"
 
 #include "srk/components/Camera.h"
 #include "srk/components/renderables/RenderableMesh.h"

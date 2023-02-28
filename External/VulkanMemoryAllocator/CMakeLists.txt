@@ -3,6 +3,9 @@ srkSetSubProject("")
 set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_VULKAN_MEMORY_ALLOCATOR_NAME ${PROJECT_NAME})
 set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_VULKAN_MEMORY_ALLOCATOR_INCLUDE ${PROJECT_BINARY_DIR}/install/include)
 
+set(gitTag v3.0.1)
+srkCheckExternalProjectVersion_GitTag(${PROJECT_BINARY_DIR} ${PROJECT_BINARY_DIR}/src ${gitTag})
+
 include(ExternalProject)
 
 srkCreateExternalProjectCmakeArgs(cmakeArgs)
@@ -11,7 +14,7 @@ ExternalProject_Add(
     ${PROJECT_NAME}
     PREFIX ${PROJECT_BINARY_DIR}
     GIT_REPOSITORY https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git
-    GIT_TAG v3.0.1
+    GIT_TAG ${gitTag}
     GIT_SHALLOW 1
     GIT_PROGRESS 1
     TMP_DIR tmp

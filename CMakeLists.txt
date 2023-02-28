@@ -350,6 +350,34 @@ function(srkAddSubdirectoryIf cond dir)
     endif ()
 endfunction()
 
+function(srkCheckExternalProjectVersion_GitTag projDir srcDir tag)
+    if (EXISTS ${srcDir}/.git)
+        execute_process(COMMAND git branch WORKING_DIRECTORY ${srcDir} OUTPUT_VARIABLE rst)
+        string(REGEX REPLACE "[()]" "" rst "${rst}")
+        string(REGEX REPLACE "[\r\n]" " " rst "${rst}")
+        string(REPLACE " " ";" arr ${rst})
+        set(isSameTag OFF)
+        foreach (i ${arr})
+            if (${i} STREQUAL ${tag})
+                set(isSameTag ON)
+                break()
+            endif ()
+        endforeach ()
+
+        if (NOT isSameTag)
+            file(REMOVE_RECURSE ${projDir}/)
+        endif ()
+    else ()
+        file(REMOVE_RECURSE ${projDir}/)
+    endif ()
+endfunction()
+
+function(srkCheckExternalProjectVersion_DownloadFile projDir downloadFile)
+    if (NOT EXISTS ${downloadFile})
+        file(REMOVE_RECURSE ${projDir}/)
+    endif ()
+endfunction()
+
 option(SRK_ENABLE_EXTERNAL_7Z "" OFF)
 option(SRK_ENABLE_EXTERNAL_ASTC_ENCODER "" OFF)
 option(SRK_ENABLE_EXTERNAL_AUTOCONF "" OFF)
@@ -375,7 +403,6 @@ option(SRK_ENABLE_FRAMEWORK "" ON)
 
 option(SRK_ENABLE_ALL_MODULES "" OFF)
 
-option(SRK_ENABLE_MODULE_SHADER_TRANSPILER "" OFF)
 option(SRK_ENABLE_MODULE_GRAPHICS_D3D11 "" OFF)
 option(SRK_ENABLE_MODULE_GRAPHICS_D3D12 "" OFF)
 option(SRK_ENABLE_MODULE_GRAPHICS_GL "" OFF)
@@ -399,6 +426,7 @@ option(SRK_ENABLE_EXTENSION_HID "" OFF)
 option(SRK_ENABLE_EXTENSION_JPEG_CONVERTER "" OFF)
 option(SRK_ENABLE_EXTENSION_PNG_CONVERTER "" OFF)
 option(SRK_ENABLE_EXTENSION_SHADER_SCRIPT "" OFF)
+option(SRK_ENABLE_EXTENSION_SHADER_TRANSPILER "" OFF)
 
 option(SRK_ENABLE_TESTS "" OFF)
 
@@ -412,7 +440,6 @@ if (SRK_ENABLE_TESTS)
 endif ()
 
 if (SRK_ENABLE_ALL_MODULES)
-    set(SRK_ENABLE_MODULE_SHADER_TRANSPILER ON)
     set(SRK_ENABLE_MODULE_GRAPHICS_D3D11 ON)
     set(SRK_ENABLE_MODULE_GRAPHICS_D3D12 ON)
     set(SRK_ENABLE_MODULE_GRAPHICS_GL ON)
@@ -436,6 +463,7 @@ if (SRK_ENABLE_ALL_EXTENSIONS)
     set(SRK_ENABLE_EXTENSION_JPEG_CONVERTER ON)
     set(SRK_ENABLE_EXTENSION_PNG_CONVERTER ON)
     set(SRK_ENABLE_EXTENSION_SHADER_SCRIPT ON)
+    set(SRK_ENABLE_EXTENSION_SHADER_TRANSPILER ON)
 endif ()
 
 #validity check
@@ -549,7 +577,7 @@ if (SRK_ENABLE_MODULE_GRAPHICS_VULKAN)
     endif ()
 endif ()
 
-if (SRK_ENABLE_MODULE_SHADER_TRANSPILER)
+if (SRK_ENABLE_EXTENSION_SHADER_TRANSPILER)
     set(SRK_ENABLE_EXTERNAL_DX_SHADER_COMPILER ON)
     set(SRK_ENABLE_EXTERNAL_SPIRV_CROSS ON)
 endif ()
@@ -728,8 +756,6 @@ srkAddSubdirectoryIf(SRK_ENABLE_EXTERNAL_ZSTD ${SRK_EXTERNAL_DIR_NAME}/zstd)
 srkAddSubdirectoryIf(SRK_ENABLE_CORE Core)
 srkAddSubdirectoryIf(SRK_ENABLE_FRAMEWORK Framework)
 
-srkAddSubdirectoryIf(SRK_ENABLE_MODULE_SHADER_TRANSPILER ${SRK_MODULES_GRAPHICS_DIR}/ShaderTranspiler)#??only x64
-
 srkAddSubdirectoryIf(SRK_ENABLE_MODULE_GRAPHICS_D3D11 ${SRK_MODULES_GRAPHICS_DIR}/Direct3D11)
 srkAddSubdirectoryIf(SRK_ENABLE_MODULE_GRAPHICS_D3D12 ${SRK_MODULES_GRAPHICS_DIR}/Direct3D12)
 srkAddSubdirectoryIf(SRK_ENABLE_MODULE_GRAPHICS_GL ${SRK_MODULES_GRAPHICS_DIR}/OpenGL)
@@ -752,6 +778,7 @@ srkAddSubdirectoryIf(SRK_ENABLE_EXTENSION_FBX_CONVERTER ${SRK_EXTENSIONS_DIR_NAM
 srkAddSubdirectoryIf(SRK_ENABLE_EXTENSION_JPEG_CONVERTER ${SRK_EXTENSIONS_DIR_NAME}/JPEGConverter)
 srkAddSubdirectoryIf(SRK_ENABLE_EXTENSION_PNG_CONVERTER ${SRK_EXTENSIONS_DIR_NAME}/PNGConverter)
 srkAddSubdirectoryIf(SRK_ENABLE_EXTENSION_SHADER_SCRIPT ${SRK_EXTENSIONS_DIR_NAME}/ShaderScript)
+srkAddSubdirectoryIf(SRK_ENABLE_EXTENSION_SHADER_TRANSPILER ${SRK_EXTENSIONS_DIR_NAME}/ShaderTranspiler)#??only x64
 
 srkAddSubdirectoryIf(SRK_ENABLE_TESTS Test)
 

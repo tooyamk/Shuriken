@@ -1,19 +1,36 @@
 #include "Shader.h"
 
 namespace srk {
+	const std::string* ShaderDefineCollection::get(const QueryString& name) const {
+		auto itr = _values.find(name);
+		return itr == _values.end() ? nullptr : &itr->second;
+	}
+
+	const std::string* ShaderDefineGetterStack::get(const QueryString& name) const {
+		auto i = _stack.size();
+		while (i--) {
+			if (_stack[i]) {
+				if (auto rst = _stack[i]->get(name); rst) return rst;
+			}
+		}
+		return nullptr;
+	}
+
+
 	Shader::Shader() {
 	}
 
-	void Shader::set(modules::graphics::IGraphicsModule* graphics, ProgramSource* vs, ProgramSource* ps,
-		const ShaderDefine* staticDefines, size_t numStaticDefines, const std::string_view* dynamicDefines, size_t numDynamicDefines,
-		const IncludeHandler& includeHhandler, const InputHandler& inputHandler) {
+	void Shader::set(modules::graphics::IGraphicsModule* graphics, modules::graphics::ProgramSource* vs, modules::graphics::ProgramSource* ps,
+		const modules::graphics::ProgramDefine* staticDefines, size_t numStaticDefines, const std::string_view* dynamicDefines, size_t numDynamicDefines,
+		const modules::graphics::ProgramIncludeHandler& includeHandler, const modules::graphics::ProgramInputHandler& inputHandler, const modules::graphics::ProgramTranspileHandler& transpileHandler) {
 		unset();
 
 		_graphics = graphics;
 		_vs = vs;
 		_ps = ps;
-		_includeHhandler = includeHhandler;
+		_includeHhandler = includeHandler;
 		_inputHandler = inputHandler;
+		_transpileHandler = transpileHandler;
 
 		_defines.resize(numStaticDefines + numDynamicDefines);
 
@@ -42,7 +59,7 @@ namespace srk {
 		_variants.clear();
 	}
 
-	IntrusivePtr<modules::graphics::IProgram> Shader::select(const IShaderDefineGetter* getter) {
+	IntrusivePtr<modules::graphics::IProgram> Shader::select(const IShaderefineGetter* getter) {
 		if (!_graphics) return nullptr;
 
 		constexpr uint8_t NULL_VALUE = 0;
@@ -85,13 +102,7 @@ namespace srk {
 			if (auto p = _graphics->createProgram(); p) {
 				if (auto itr2 = _variants.find(haslVal); itr2 == _variants.end()) {
 					if (_vs && _ps) {
-						if (auto succeeded = p->create(*_vs, *_ps, _defines.data(), count,
-							[this](const modules::graphics::IProgram&, ProgramStage stage, const std::string_view& name) {
-							return _includeHhandler ? _includeHhandler(*this, stage, name) : ByteArray();
-						},
-							[this](const modules::graphics::IProgram&, const std::string_view& name) {
-							return _inputHandler ? _inputHandler(*this, name) : modules::graphics::IProgram::InputDescriptor();
-						}); succeeded) {
+						if (auto succeeded = p->create(*_vs, *_ps, _defines.data(), count, _includeHhandler, _inputHandler, _transpileHandler); succeeded) {
 							rst.first->second = p;
 
 							return p;
@@ -102,13 +113,7 @@ namespace srk {
 				} else {
 					auto& variant = itr2->second;
 					if (variant.vs && variant.ps) {
-						if (auto succeeded = p->create(*variant.vs, *variant.ps, _defines.data(), count,
-							[this](const modules::graphics::IProgram&, ProgramStage stage, const std::string_view& name) {
-							return _includeHhandler ? _includeHhandler(*this, stage, name) : ByteArray();
-						},
-							[this](const modules::graphics::IProgram&, const std::string_view& name) {
-							return _inputHandler ? _inputHandler(*this, name) : modules::graphics::IProgram::InputDescriptor();
-						}); succeeded) {
+						if (auto succeeded = p->create(*variant.vs, *variant.ps, _defines.data(), count, _includeHhandler, _inputHandler, _transpileHandler); succeeded) {
 							rst.first->second = p;
 
 							return p;
@@ -127,7 +132,7 @@ namespace srk {
 		return nullptr;
 	}
 
-	void Shader::setVariant(ProgramSource* vs, ProgramSource* ps, const IShaderDefineGetter* getter) {
+	void Shader::setVariant(modules::graphics::ProgramSource* vs, modules::graphics::ProgramSource* ps, const IShaderefineGetter* getter) {
 		if (_graphics) {
 			constexpr uint8_t NULL_VALUE = 0;
 			constexpr uint16_t NO_VALUE = 0;

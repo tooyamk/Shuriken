@@ -28,7 +28,7 @@ namespace srk::render {
 		template<typename T>
 		class Getter {
 		public:
-			using Fn = const T*(*)(void*);
+			using Fn = const T*(SRK_CALL*)(void*);
 
 			Getter(Fn fn = nullptr, void* target = nullptr) :
 				_fn(fn),

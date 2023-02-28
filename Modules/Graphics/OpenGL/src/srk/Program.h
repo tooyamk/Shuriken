@@ -13,7 +13,7 @@ namespace srk::modules::graphics::gl {
 		virtual ~Program();
 
 		virtual const void* SRK_CALL getNative() const override;
-		virtual bool SRK_CALL create(const ProgramSource& vert, const ProgramSource& frag, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& includeHandler, const InputHandler& inputHandler) override;
+		virtual bool SRK_CALL create(const ProgramSource& vert, const ProgramSource& frag, const ProgramDefine* defines, size_t numDefines, const ProgramIncludeHandler& includeHandler, const ProgramInputHandler& inputHandler, const ProgramTranspileHandler& transpileHandler) override;
 		virtual const ProgramInfo& getInfo() const override;
 		virtual void SRK_CALL destroy() override;
 
@@ -56,6 +56,7 @@ namespace srk::modules::graphics::gl {
 
 		void _constantBufferUpdateAll(ConstantBuffer* cb, const std::vector<ConstantBufferLayout::Variables>& vars);
 
-		GLuint SRK_CALL _compileShader(const ProgramSource& source, ProgramStage stage, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& handler);
+		GLuint SRK_CALL _compileShader(const ProgramSource& source, ProgramStage stage, const ProgramDefine* defines, size_t numDefines, const ProgramIncludeHandler& includeHandler, const ProgramTranspileHandler& transpileHandler);
+		GLuint SRK_CALL _compileShader(const ProgramSource& source, ProgramStage stage, GLenum shaderType);
 	};
 }

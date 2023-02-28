@@ -1,7 +1,7 @@
 #pragma once
 
 #include "srk/Image.h"
-#include "srk/modules/graphics/IGraphicsModule.h"
+#include "srk/modules/graphics/GraphicsModule.h"
 #include "jpeglib.h"
 
 namespace srk::extensions::jpeg_converter {

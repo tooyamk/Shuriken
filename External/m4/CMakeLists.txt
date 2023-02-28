@@ -5,12 +5,15 @@ set(installDir ${PROJECT_BINARY_DIR}/install)
 set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_M4_NAME ${PROJECT_NAME})
 set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_M4_EXE ${installDir}/bin/m4)
 
+set(fileName m4-1.4.19.tar.xz)
+srkCheckExternalProjectVersion_DownloadFile(${PROJECT_BINARY_DIR} ${PROJECT_BINARY_DIR}/download/${fileName})
+
 include(ExternalProject)
 
 ExternalProject_Add(
     ${PROJECT_NAME}
     PREFIX ${PROJECT_BINARY_DIR}
-    URL https://ftp.gnu.org/gnu/m4/m4-1.4.19.tar.xz
+    URL https://ftp.gnu.org/gnu/m4/${fileName}
     TMP_DIR tmp
     STAMP_DIR stamp
     DOWNLOAD_DIR download

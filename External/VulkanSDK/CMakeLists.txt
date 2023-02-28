@@ -39,6 +39,8 @@ elseif (SRK_OS_MACOS)
 endif ()
 
 if (NOT (src STREQUAL nil))
+    srkCheckExternalProjectVersion_DownloadFile(${PROJECT_BINARY_DIR} ${PROJECT_BINARY_DIR}/download/${dlName})
+
     include(ExternalProject)
 
     ExternalProject_Add(

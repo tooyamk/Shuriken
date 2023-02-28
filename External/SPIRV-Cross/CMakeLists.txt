@@ -1,4 +1,5 @@
 srkSetSubProject("")
+
 #set(OUTPUT_NAME_BASE ${CMAKE_SHARED_LIBRARY_PREFIX}spirv-cross-)
 #set(LIB_PREFIX ${PROJECT_BINARY_DIR}/install/lib/${OUTPUT_NAME_BASE}c-shared)
 #set(LIB_R ${LIB_PREFIX}${CMAKE_RELEASE_POSTFIX}${SRK_LIB_SUFFIX})
@@ -31,6 +32,9 @@ set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_SPIRV_CROSS_MSL_SLIB ${MSL_SLIB_PR
 set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_SPIRV_CROSS_MSL_SLIB_R ${MSL_SLIB_R})
 set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_SPIRV_CROSS_MSL_SLIB_D ${MSL_SLIB_D})
 
+set(gitTag sdk-1.3.239.0)
+srkCheckExternalProjectVersion_GitTag(${PROJECT_BINARY_DIR} ${PROJECT_BINARY_DIR}/src ${gitTag})
+
 include(ExternalProject)
 
 srkCreateExternalProjectCmakeArgs(cmakeArgs)
@@ -39,7 +43,7 @@ ExternalProject_Add(
     ${PROJECT_NAME}
     PREFIX ${PROJECT_BINARY_DIR}
     GIT_REPOSITORY https://github.com/KhronosGroup/SPIRV-Cross.git
-    GIT_TAG sdk-1.3.239.0
+    GIT_TAG ${gitTag}
     GIT_SHALLOW 1
     GIT_PROGRESS 1
     TMP_DIR tmp

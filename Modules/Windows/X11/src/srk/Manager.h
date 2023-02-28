@@ -1,6 +1,6 @@
 #pragma once
 
-#include "srk/modules/windows/IWindowModule.h"
+#include "srk/modules/windows/WindowModule.h"
 
 namespace srk::modules::windows::x11 {
 	class SRK_MODULE_DLL Manager : public DefaultWindowModule {

@@ -12,6 +12,9 @@ set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_GLEW_LIB_R ${LIB_R})
 set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_GLEW_LIB_D ${LIB_D})
 set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_GLEW_DLL ${PROJECT_BINARY_DIR}/install/${SRK_INSTALL_DLL_DIR_NAME}/${OUTPUT_NAME}${SRK_BUILD_TYPE_SUFFIX}${SRK_DLL_SUFFIX})
 
+set(gitTag glew-2.2.0)
+srkCheckExternalProjectVersion_GitTag(${PROJECT_BINARY_DIR} ${PROJECT_BINARY_DIR}/src ${gitTag})
+
 include(ExternalProject)
 
 #if (SRK_CXX_COMPILER_MSVC)
@@ -27,7 +30,7 @@ ExternalProject_Add(
     PREFIX ${PROJECT_BINARY_DIR}
     #URL https://nchc.dl.sourceforge.net/project/glew/glew/2.1.0/glew-2.1.0.zip
     GIT_REPOSITORY https://github.com/nigels-com/glew.git
-    GIT_TAG glew-2.2.0
+    GIT_TAG ${gitTag}
     GIT_SHALLOW 1
     GIT_PROGRESS 1
     TMP_DIR tmp

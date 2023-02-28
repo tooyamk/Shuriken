@@ -1,6 +1,6 @@
 #pragma once
 
-#include "srk/modules/graphics/IGraphicsModule.h"
+#include "srk/modules/graphics/GraphicsModule.h"
 #include <unordered_map>
 
 namespace srk {
@@ -268,15 +268,7 @@ namespace srk {
 	};
 
 
-	class SRK_FW_DLL IVertexAttributeGetter : public Ref {
-	public:
-		virtual ~IVertexAttributeGetter() {}
-
-		virtual std::optional<modules::graphics::VertexAttribute<modules::graphics::IVertexBuffer>> SRK_CALL get(const QueryString& name) const = 0;
-	};
-
-
-	class SRK_FW_DLL VertexAttributeCollection : public IVertexAttributeGetter {
+	class SRK_FW_DLL VertexAttributeCollection : public modules::graphics::IVertexAttributeGetter {
 	public:
 		virtual ~VertexAttributeCollection();
 

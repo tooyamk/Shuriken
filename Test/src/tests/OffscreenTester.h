@@ -15,18 +15,11 @@ public:
 			
 		SerializableObject args;
 
-		IntrusivePtr stml = new ModuleLoader<IShaderTranspiler>();
-		stml->load("libs/" + getDllPath("srk-module-graphics-shader-transpiler"));
-
-		args.insert("dxc", getDllPath("dxcompiler"));
-		auto st = stml->create(&args);
-
 		std::function<void(const std::string_view&)> createProcessInfoHandler = [](const std::string_view& msg) {
 			printaln(msg);
 		};
 
 		args.insert("sampleCount", 1);
-		args.insert("transpiler", st.uintptr());
 		args.insert("offscreen", true);
 		args.insert("driverType", "software");
 		args.insert("createProcessInfoHandler", (uintptr_t)&createProcessInfoHandler);
@@ -97,7 +90,7 @@ float4 main(PS_INPUT input) : SV_TARGET {
 				ps.language = ProgramLanguage::HLSL;
 				ps.stage = ProgramStage::VS;
 				ps.data = ByteArray((void*)_ps.data(), _ps.size(), ByteArray::Usage::SHARED);
-				program->create(vs, ps, nullptr, 0, nullptr, nullptr);
+				program->create(vs, ps, nullptr, 0, nullptr, nullptr, programTranspileHandler);
 			}
 
 			IntrusivePtr vertexBuffers = new VertexAttributeCollection();

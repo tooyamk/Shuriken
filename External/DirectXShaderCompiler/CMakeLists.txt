@@ -63,6 +63,9 @@ set(predefined_config_params_file ${CMAKE_CURRENT_SOURCE_DIR}/predefined-config-
 include(${predefined_config_params_file})
 __get_predefined_config_params(predefined_params)
 
+set(gitTag release-1.7.2212)
+srkCheckExternalProjectVersion_GitTag(${PROJECT_BINARY_DIR} ${PROJECT_BINARY_DIR}/src ${gitTag})
+
 include(ExternalProject)
 
 ExternalProject_Add(
@@ -70,7 +73,7 @@ ExternalProject_Add(
     PREFIX ${PROJECT_BINARY_DIR}
     GIT_REPOSITORY https://github.com/microsoft/DirectXShaderCompiler.git
     #GIT_TAG d0e9147ab86c8cb29a5fd81bd758e44d440c332c#release-1.5.1911
-    GIT_TAG release-1.7.2212
+    GIT_TAG ${gitTag}
     GIT_SHALLOW 1
     GIT_PROGRESS 1
     #GIT_CONFIG core.autocrlf=false core.eol=lf

@@ -3,8 +3,6 @@
 #include "Sampler.h"
 #include "VertexBuffer.h"
 #include "srk/GraphicsBuffer.h"
-#include "srk/ProgramSource.h"
-#include "srk/ShaderDefine.h"
 #include "srk/ShaderParameter.h"
 #include "srk/String.h"
 #include <vector>
@@ -33,17 +31,17 @@ namespace srk::modules::graphics::vulkan {
 		return this;
 	}
 
-	bool Program::create(const ProgramSource& vert, const ProgramSource& frag, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& includeHandler, const InputHandler& inputHandler) {
+	bool Program::create(const ProgramSource& vert, const ProgramSource& frag, const ProgramDefine* defines, size_t numDefines, const ProgramIncludeHandler& includeHandler, const ProgramInputHandler& inputHandler, const ProgramTranspileHandler& transpileHandler) {
 		destroy();
 
 		std::vector<std::vector<VkDescriptorSetLayoutBinding>> descriptorSetLayoutBindings;
 
-		if (!_compileShader(vert, ProgramStage::VS, 0, defines, numDefines, includeHandler, inputHandler, descriptorSetLayoutBindings)) {
+		if (!_compileShader(vert, ProgramStage::VS, 0, defines, numDefines, includeHandler, inputHandler, transpileHandler, descriptorSetLayoutBindings)) {
 			destroy();
 			return false;
 		}
 
-		if (!_compileShader(frag, ProgramStage::PS, _calcSet0BingingOffset(descriptorSetLayoutBindings), defines, numDefines, includeHandler, inputHandler, descriptorSetLayoutBindings)) {
+		if (!_compileShader(frag, ProgramStage::PS, _calcSet0BingingOffset(descriptorSetLayoutBindings), defines, numDefines, includeHandler, inputHandler, transpileHandler, descriptorSetLayoutBindings)) {
 			destroy();
 			return false;
 		}
@@ -283,7 +281,7 @@ namespace srk::modules::graphics::vulkan {
 		return offset;
 	}
 
-	bool Program::_compileShader(const ProgramSource& source, ProgramStage stage, uint32_t set0BindingOffset, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& includeHandler, const InputHandler& inputHandler, std::vector<std::vector<VkDescriptorSetLayoutBinding>>& descriptorSetLayoutBindings) {
+	bool Program::_compileShader(const ProgramSource& source, ProgramStage stage, uint32_t set0BindingOffset, const ProgramDefine* defines, size_t numDefines, const ProgramIncludeHandler& includeHandler, const ProgramInputHandler& inputHandler, const ProgramTranspileHandler& transpileHandler, std::vector<std::vector<VkDescriptorSetLayoutBinding>>& descriptorSetLayoutBindings) {
 		if (!source.isValid()) {
 			_graphics.get<Graphics>()->error("spirv compile failed, source is invalid");
 			return false;
@@ -292,18 +290,35 @@ namespace srk::modules::graphics::vulkan {
 		auto g = _graphics.get<Graphics>();
 
 		if (source.language != ProgramLanguage::SPIRV) {
-			if (auto transpiler = g->getShaderTranspiler(); transpiler) {
-				IShaderTranspiler::Options options;
-				options.spirv.descriptorSet0BindingOffset = set0BindingOffset;
-				return _compileShader(transpiler->translate(source, options, ProgramLanguage::SPIRV, "", defines, numDefines, [this, stage, &includeHandler](const std::string_view& name) {
-					if (includeHandler) return includeHandler(*this, stage, name);
-					return ByteArray();
-					}), stage, set0BindingOffset, defines, numDefines, includeHandler, inputHandler, descriptorSetLayoutBindings);
+			if (transpileHandler) {
+				ProgramTranspileInfo pti;
+				pti.source = &source;
+				pti.targetLanguage = ProgramLanguage::SPIRV;
+				pti.defines = defines;
+				pti.numDefines = numDefines;
+				pti.includeHandler = includeHandler;
+
+				auto newSource = transpileHandler(pti);
+				if (!newSource.isValid()) {
+					_graphics.get<Graphics>()->error("to spirv transpile failed");
+					return 0;
+				}
+
+				if (newSource.language != ProgramLanguage::SPIRV) {
+					_graphics.get<Graphics>()->error("transpiled language isnot spirv");
+					return 0;
+				}
+
+				return _compileShader(newSource, stage, inputHandler, descriptorSetLayoutBindings);
 			} else {
-				return false;
+				return 0;
 			}
 		}
 
+		return _compileShader(source, stage, inputHandler, descriptorSetLayoutBindings);
+	}
+
+	bool Program::_compileShader(const ProgramSource& source, ProgramStage stage, const ProgramInputHandler& inputHandler, std::vector<std::vector<VkDescriptorSetLayoutBinding>>& descriptorSetLayoutBindings) {
 		VkShaderModule shaderModule;
 		{
 			ByteArray ba;
@@ -322,6 +337,7 @@ namespace srk::modules::graphics::vulkan {
 			shaderModuleCreateInfo.codeSize = ba.getLength();
 			shaderModuleCreateInfo.pCode = (const uint32_t*)ba.getSource();
 
+			auto g = _graphics.get<Graphics>();
 			if (vkCreateShaderModule(g->getVkDevice(), &shaderModuleCreateInfo, g->getVkAllocationCallbacks(), &shaderModule) != VK_SUCCESS) return false;
 
 			SpvReflectShaderModule reflectModule;
@@ -341,7 +357,7 @@ namespace srk::modules::graphics::vulkan {
 		return true;
 	}
 
-	void Program::_parse(const SpvReflectShaderModule* data, const InputHandler& inputHandler, std::vector<std::vector<VkDescriptorSetLayoutBinding>>& descriptorSetLayoutBindings) {
+	void Program::_parse(const SpvReflectShaderModule* data, const ProgramInputHandler& inputHandler, std::vector<std::vector<VkDescriptorSetLayoutBinding>>& descriptorSetLayoutBindings) {
 		switch (data->shader_stage) {
 		case SPV_REFLECT_SHADER_STAGE_VERTEX_BIT:
 		{
@@ -396,7 +412,12 @@ namespace srk::modules::graphics::vulkan {
 					break;
 				}
 
-				auto inputDesc = inputHandler ? inputHandler(*this, vd.name) : InputDescriptor();
+				ProgramInputDescriptor inputDesc;
+				if (inputHandler) {
+					ProgramInputInfo pii;
+					pii.name = vd.name;
+					inputDesc = inputHandler(pii);
+				}
 				vd.instanced = inputDesc.instanced;
 			}
 

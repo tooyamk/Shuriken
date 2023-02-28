@@ -3,8 +3,6 @@
 #include "IndexBuffer.h"
 #include "VertexBuffer.h"
 #include "srk/GraphicsBuffer.h"
-#include "srk/ProgramSource.h"
-#include "srk/ShaderDefine.h"
 #include "srk/ShaderParameter.h"
 #include "srk/String.h"
 #include <vector>
@@ -35,15 +33,15 @@ namespace srk::modules::graphics::d3d11 {
 	}
 
 
-	Program::MyIncludeHandler::MyIncludeHandler(const IProgram& program, ProgramStage stage, const IncludeHandler& handler) :
-		_stage(stage),
-		_program(program),
+	Program::MyIncludeHandler::MyIncludeHandler(const ProgramIncludeHandler& handler) :
 		_handler(handler) {
 	}
 
 	HRESULT Program::MyIncludeHandler::Open(D3D_INCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID pParentData, LPCVOID* ppData, UINT* pBytes) {
 		if (_handler) {
-			_data = _handler(_program, _stage, pFileName);
+			ProgramIncludeInfo pii;
+			pii.file = pFileName;
+			_data = _handler(pii);
 			*ppData = _data.getSource();
 			*pBytes = _data.getLength();
 
@@ -76,7 +74,7 @@ namespace srk::modules::graphics::d3d11 {
 		return this;
 	}
 
-	bool Program::create(const ProgramSource& vert, const ProgramSource& frag, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& includeHandler, const InputHandler& inputHandler) {
+	bool Program::create(const ProgramSource& vert, const ProgramSource& frag, const ProgramDefine* defines, size_t numDefines, const ProgramIncludeHandler& includeHandler, const ProgramInputHandler& inputHandler, const ProgramTranspileHandler& transpileHandler) {
 		destroy();
 
 		DXObjGuard objs;
@@ -99,10 +97,10 @@ namespace srk::modules::graphics::d3d11 {
 			def.Definition = nullptr;
 		}
 
-		_vertBlob = _compileShader(vert, ProgramStage::VS, ProgramSource::toHLSLShaderModel(ProgramStage::VS, vert.version.empty() ? sm : vert.version), d3dDefines.data(), includeHandler);
+		_vertBlob = _compileShader(vert, ProgramStage::VS, ProgramSource::toHLSLShaderModel(ProgramStage::VS, vert.version.empty() ? sm : vert.version), d3dDefines.data(), defines, numDefines, includeHandler, transpileHandler);
 		if (!_vertBlob) return false;
 
-		auto pixelBlob = _compileShader(frag, ProgramStage::PS, ProgramSource::toHLSLShaderModel(ProgramStage::PS, frag.version.empty() ? sm : frag.version), d3dDefines.data(), includeHandler);
+		auto pixelBlob = _compileShader(frag, ProgramStage::PS, ProgramSource::toHLSLShaderModel(ProgramStage::PS, frag.version.empty() ? sm : frag.version), d3dDefines.data(), defines, numDefines, includeHandler, transpileHandler);
 		if (!pixelBlob) {
 			destroy();
 			return false;
@@ -318,7 +316,43 @@ namespace srk::modules::graphics::d3d11 {
 		_usingSameConstBuffers.clear();
 	}
 
-	ID3DBlob* Program::_compileShader(const ProgramSource& source, ProgramStage stage, const std::string_view& target, const D3D_SHADER_MACRO* defines, const IncludeHandler& handler) {
+	ID3DBlob* Program::_compileShader(const ProgramSource& source, ProgramStage stage, const std::string_view& target, const D3D_SHADER_MACRO* d3dDefines, const ProgramDefine* defines, size_t numDefines, const ProgramIncludeHandler& includeHandler, const ProgramTranspileHandler& transpileHandler) {
+		if (!source.isValid()) {
+			_graphics.get<Graphics>()->error("d3d compile failed, source is invalid");
+			return nullptr;
+		}
+
+		if (source.language != ProgramLanguage::HLSL) {
+			if (transpileHandler) {
+				ProgramTranspileInfo pti;
+				pti.source = &source;
+				pti.targetLanguage = ProgramLanguage::HLSL;
+				pti.targetVersion = target;
+				pti.defines = defines;
+				pti.numDefines = numDefines;
+				pti.includeHandler = includeHandler;
+
+				auto newSource = transpileHandler(pti);
+				if (!newSource.isValid()) {
+					_graphics.get<Graphics>()->error("to hlsl transpile failed");
+					return nullptr;
+				}
+
+				if (newSource.language != ProgramLanguage::HLSL) {
+					_graphics.get<Graphics>()->error("transpiled language isnot hlsl");
+					return nullptr;
+				}
+
+				return _compileShader(newSource, target, d3dDefines, includeHandler);
+			} else {
+				return 0;
+			}
+		}
+
+		return _compileShader(source, target, d3dDefines, includeHandler);
+	}
+
+	ID3DBlob* Program::_compileShader(const ProgramSource& source, const std::string_view& target, const D3D_SHADER_MACRO* d3dDefines, const ProgramIncludeHandler& includeHandler) {
 		DWORD shaderFlags = D3DCOMPILE_ENABLE_STRICTNESS;
 
 		if (_graphics.get<Graphics>()->isDebug()) {
@@ -328,8 +362,8 @@ namespace srk::modules::graphics::d3d11 {
 		}
 
 		ID3DBlob* buffer = nullptr, *errorBuffer = nullptr;
-		MyIncludeHandler include(*this, stage, handler);
-		HRESULT hr = D3DCompile(source.data.getSource(), source.data.getLength(), nullptr, defines, &include,
+		MyIncludeHandler include(includeHandler);
+		HRESULT hr = D3DCompile(source.data.getSource(), source.data.getLength(), nullptr, d3dDefines, &include,
 			source.getEntryPoint().data(), target.data(), shaderFlags, 0, &buffer, &errorBuffer);
 
 		if (FAILED(hr)) {
@@ -359,7 +393,7 @@ namespace srk::modules::graphics::d3d11 {
 		return il.layout;
 	}
 
-	void Program::_parseInputLayout(const D3D11_SHADER_DESC& desc, ID3D11ShaderReflection& ref, const InputHandler& handler) {
+	void Program::_parseInputLayout(const D3D11_SHADER_DESC& desc, ID3D11ShaderReflection& ref, const ProgramInputHandler& handler) {
 		if (_numInElements = desc.InputParameters; _numInElements > 0) {
 			uint32_t offset = 0;
 			_inputElements = new D3D11_INPUT_ELEMENT_DESC[desc.InputParameters];
@@ -380,7 +414,12 @@ namespace srk::modules::graphics::d3d11 {
 				if (nameSize == std::string::npos) nameSize = 0;
 				nameSize += len;
 				nameBuf[nameSize] = 0;
-				auto inputDesc = handler ? handler(*this, std::string_view(nameBuf, nameSize)) : InputDescriptor();
+				ProgramInputDescriptor inputDesc;
+				if (handler) {
+					ProgramInputInfo pii;
+					pii.name = std::string_view(nameBuf, nameSize);
+					inputDesc = handler(pii);
+				}
 
 				//ieDesc.SemanticName = spDesc.SemanticName;
 				ieDesc.SemanticIndex = pDesc.SemanticIndex;

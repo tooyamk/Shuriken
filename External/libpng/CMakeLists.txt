@@ -14,6 +14,9 @@ get_property(SRKPROJ_EXTERNAL_ZLIB_NAME GLOBAL PROPERTY "SRKPROJ_EXTERNAL_ZLIB_N
 get_property(SRKPROJ_EXTERNAL_ZLIB_INCLUDE GLOBAL PROPERTY "SRKPROJ_EXTERNAL_ZLIB_INCLUDE")
 get_property(SRKPROJ_EXTERNAL_ZLIB_LIB GLOBAL PROPERTY "SRKPROJ_EXTERNAL_ZLIB_LIB")
 
+set(gitTag v1.6.39)
+srkCheckExternalProjectVersion_GitTag(${PROJECT_BINARY_DIR} ${PROJECT_BINARY_DIR}/src ${gitTag})
+
 include(ExternalProject)
 
 srkCreateExternalProjectCmakeArgs(cmakeArgs)
@@ -22,7 +25,7 @@ ExternalProject_Add(
     ${PROJECT_NAME}
     PREFIX ${PROJECT_BINARY_DIR}
     GIT_REPOSITORY https://github.com/glennrp/libpng.git
-    GIT_TAG v1.6.39
+    GIT_TAG ${gitTag}
     GIT_SHALLOW 1
     GIT_PROGRESS 1
     GIT_CONFIG core.autocrlf=false

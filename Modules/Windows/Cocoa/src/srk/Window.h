@@ -1,6 +1,6 @@
 #pragma once
 
-#include "srk/modules/windows/IWindowModule.h"
+#include "srk/modules/windows/WindowModule.h"
 #include "srk/math/Box.h"
 #import <Cocoa/Cocoa.h>
 

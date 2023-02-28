@@ -274,7 +274,6 @@ namespace srk::modules::graphics::gl {
 
 		_loader = conf.loader;
 		_win = conf.win;
-		_transpiler = conf.transpiler;
 
 		_setInitState();
 		_resize(_win->getContentSize());

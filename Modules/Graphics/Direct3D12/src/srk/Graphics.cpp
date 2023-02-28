@@ -1,6 +1,5 @@
 #include "Graphics.h"
 #include "CreateModule.h"
-#include "srk/ProgramSource.h"
 #include "srk/modules/graphics/GraphicsAdapter.h"
 
 namespace srk::modules::graphics::d3d12 {

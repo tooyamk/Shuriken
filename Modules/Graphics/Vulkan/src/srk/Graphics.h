@@ -3,7 +3,7 @@
 #include "Base.h"
 #include "srk/events/EventDispatcher.h"
 #include "srk/modules/graphics/ConstantBufferManager.h"
-#include "srk/modules/windows/IWindowModule.h"
+#include "srk/modules/windows/WindowModule.h"
 
 namespace srk::modules::graphics::vulkan {
 	class BlendState;
@@ -20,7 +20,6 @@ namespace srk::modules::graphics::vulkan {
 		struct CreateConfig {
 			Ref* loader = nullptr;
 			windows::IWindow* win = nullptr;
-			IShaderTranspiler* transpiler = nullptr;
 			GraphicsAdapter* adapter = nullptr;
 			SampleCount sampleCount = 1;
 			std::string driverType;
@@ -100,10 +99,6 @@ namespace srk::modules::graphics::vulkan {
 			return _vkStatus.device;
 		}
 
-		inline IShaderTranspiler* SRK_CALL getShaderTranspiler() const {
-			return _transpiler.get();
-		}
-
 		inline bool SRK_CALL isDebug() const {
 			return _isDebug;
 		}
@@ -164,7 +159,6 @@ namespace srk::modules::graphics::vulkan {
 		SampleCount _backBufferSampleCount;
 		IntrusivePtr<Ref> _loader;
 		IntrusivePtr<windows::IWindow> _win;
-		IntrusivePtr<IShaderTranspiler> _transpiler;
 
 		InternalFeatures _internalFeatures;
 		GraphicsDeviceFeatures _deviceFeatures;

@@ -40,10 +40,6 @@ set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_ASTC_ENCODER_SSE2_SLIB_D ${SLIB_SS
 set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_ASTC_ENCODER_NEON_SLIB_R ${SLIB_NEON_R})
 set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_ASTC_ENCODER_NEON_SLIB_D ${SLIB_NEON_D})
 
-include(ExternalProject)
-
-srkCreateExternalProjectCmakeArgs(cmakeArgs)
-
 if (SRK_ARCH_X86)
     set(args
         -DISA_SSE2=ON
@@ -83,11 +79,18 @@ set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_ASTC_ENCODER_AUTO_SLIB ${SLIB_PREF
 set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_ASTC_ENCODER_AUTO_SLIB_R ${SLIB_AUTO_R})
 set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_ASTC_ENCODER_AUTO_SLIB_D ${SLIB_AUTO_D})
 
+set(gitTag 4.3.1)
+srkCheckExternalProjectVersion_GitTag(${PROJECT_BINARY_DIR} ${PROJECT_BINARY_DIR}/src ${gitTag})
+
+include(ExternalProject)
+
+srkCreateExternalProjectCmakeArgs(cmakeArgs)
+
 ExternalProject_Add(
     ${PROJECT_NAME}
     PREFIX ${PROJECT_BINARY_DIR}
     GIT_REPOSITORY https://github.com/ARM-software/astc-encoder.git
-    GIT_TAG 4.3.1
+    GIT_TAG ${gitTag}
     GIT_SHALLOW 1
     GIT_PROGRESS 1
     TMP_DIR tmp

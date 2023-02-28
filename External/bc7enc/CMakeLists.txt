@@ -10,6 +10,9 @@ set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_BC7ENC_SLIB ${SLIB_PREFIX}${SRK_BU
 set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_BC7ENC_SLIB_R ${SLIB_R})
 set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_BC7ENC_SLIB_D ${SLIB_D})
 
+set(gitTag f66c2e4)
+srkCheckExternalProjectVersion_GitTag(${PROJECT_BINARY_DIR} ${PROJECT_BINARY_DIR}/src ${gitTag})
+
 include(ExternalProject)
 
 srkCreateExternalProjectCmakeArgs(cmakeArgs)
@@ -18,7 +21,7 @@ ExternalProject_Add(
     ${PROJECT_NAME}
     PREFIX ${PROJECT_BINARY_DIR}
     GIT_REPOSITORY https://github.com/richgel999/bc7enc.git
-    #GIT_TAG f66c2e489b07138f2673a2fb3d27c1aa1d565c48
+    GIT_TAG ${gitTag}
     GIT_SHALLOW 1
     GIT_PROGRESS 1
     TMP_DIR tmp

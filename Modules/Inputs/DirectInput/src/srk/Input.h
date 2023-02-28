@@ -2,7 +2,7 @@
 
 #include "Base.h"
 #include "srk/events/EventDispatcher.h"
-#include "srk/modules/windows/IWindowModule.h"
+#include "srk/modules/windows/WindowModule.h"
 
 namespace srk::modules::inputs::direct_input {
 	class SRK_MODULE_DLL Input : public IInputModule {

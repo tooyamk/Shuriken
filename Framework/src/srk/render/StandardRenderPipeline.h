@@ -1,7 +1,7 @@
 #pragma once
 
 #include "srk/render/IRenderPipeline.h"
-#include "srk/ShaderDefine.h"
+#include "srk/Shader.h"
 #include "srk/ShaderParameter.h"
 #include "srk/math/Matrix.h"
 #include "srk/render/IRenderCollector.h"

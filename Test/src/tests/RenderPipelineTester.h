@@ -30,15 +30,8 @@ public:
 
 		SerializableObject args;
 
-		IntrusivePtr stml = new ModuleLoader<IShaderTranspiler>();
-		stml->load(getDllPath("srk-module-graphics-shader-transpiler"));
-
-		args.insert("dxc", getDllPath("dxcompiler"));
-		auto st = stml->create(&args);
-
 		args.insert("win", win.uintptr());
 		args.insert("sampleCount", 4);
-		args.insert("transpiler", st.uintptr());
 		//args.insert("driverType", "SOFTWARE");
 		args.insert("debug", Environment::IS_DEBUG);
 
@@ -200,12 +193,12 @@ public:
 				auto shaderResourcesFolder = Application::getAppPath().parent_path().u8string() + "/Resources/shaders/";
 				//s->upload(std::filesystem::path(app->getAppPath().parent_path().u8string() + "/Resources/shaders/test.shader"));
 				extensions::ShaderScript::set(s, graphics, readFile(Application::getAppPath().parent_path().u8string() + "/Resources/shaders/lighting.shader"),
-					[shaderResourcesFolder](const Shader& shader, ProgramStage stage, const std::string_view& name) {
-						return readFile(shaderResourcesFolder + name);
+					[shaderResourcesFolder](const ProgramIncludeInfo& info) {
+						return readFile(shaderResourcesFolder + info.file);
 					},
-					[](const Shader& shader, const std::string_view& name) {
-						return modules::graphics::IProgram::InputDescriptor();
-					});
+					[](const ProgramInputInfo& info) {
+						return ProgramInputDescriptor();
+					}, programTranspileHandler);
 
 				mat2->setShader(s);
 				mat2->setParameters(new ShaderParameterCollection());

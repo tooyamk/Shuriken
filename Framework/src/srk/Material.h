@@ -1,7 +1,6 @@
 #pragma once
 
 #include "srk/Shader.h"
-#include "srk/ShaderDefine.h"
 #include "srk/ShaderParameter.h"
 
 namespace srk {

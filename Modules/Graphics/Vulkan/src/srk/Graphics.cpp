@@ -13,7 +13,6 @@
 #include "Texture2DResource.h"
 #include "Texture3DResource.h"
 #include "VertexBuffer.h"
-#include "srk/ProgramSource.h"
 #include "srk/modules/graphics/GraphicsAdapter.h"
 
 namespace srk::modules::graphics::vulkan {
@@ -135,8 +134,6 @@ namespace srk::modules::graphics::vulkan {
 		} while (false);
 		
 		if (!success) _release();
-
-		_transpiler = conf.transpiler;
 
 		return success;
 	}

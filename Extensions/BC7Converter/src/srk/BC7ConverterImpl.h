@@ -2,7 +2,7 @@
 
 #include "srk/ByteArray.h"
 #include "srk/Thread.h"
-#include "srk/modules/graphics/IGraphicsModule.h"
+#include "srk/modules/graphics/GraphicsModule.h"
 #include "BC7Converter.h"
 #include "bc7enc.h"
 

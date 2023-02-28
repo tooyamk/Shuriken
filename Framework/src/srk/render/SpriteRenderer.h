@@ -1,7 +1,7 @@
 #pragma once
 
 #include "srk/render/IRenderer.h"
-#include "srk/modules/graphics/IGraphicsModule.h"
+#include "srk/modules/graphics/GraphicsModule.h"
 
 namespace srk {
 	class Material;

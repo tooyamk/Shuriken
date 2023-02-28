@@ -1,6 +1,6 @@
 #pragma once
 
-#include "srk/modules/windows/IWindowModule.h"
+#include "srk/modules/windows/WindowModule.h"
 #include "srk/math/Box.h"
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>

@@ -1,5 +1,5 @@
 #include "DeviceInfo.h"
-#include "srk/modules/inputs/IInputModule.h"
+#include "srk/modules/inputs/InputModule.h"
 
 namespace srk::modules::inputs {
 	DeviceInfo::DeviceInfo() :

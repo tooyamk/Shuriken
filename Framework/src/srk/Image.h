@@ -3,7 +3,7 @@
 #include "srk/ByteArray.h"
 #include "srk/Intrusive.h"
 #include "srk/math/Vector.h"
-#include "srk/modules/graphics/IGraphicsModule.h"
+#include "srk/modules/graphics/GraphicsModule.h"
 #include <vector>
 
 namespace srk {

@@ -1,7 +1,6 @@
 #pragma once
 
-#include "srk/modules/graphics/IGraphicsModule.h"
-#include "srk/modules/graphics/IShaderTranspiler.h"
+#include "srk/modules/graphics/GraphicsModule.h"
 #include "srk/hash/xxHash.h"
 
 #include "GL/glew.h"

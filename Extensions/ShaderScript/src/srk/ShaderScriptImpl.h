@@ -17,8 +17,8 @@ namespace srk::extensions::shader_script {
 
 
 	struct ProgramData {
-		IntrusivePtr<ProgramSource> vs;
-		IntrusivePtr<ProgramSource> ps;
+		IntrusivePtr<modules::graphics::ProgramSource> vs;
+		IntrusivePtr<modules::graphics::ProgramSource> ps;
 	};
 
 
@@ -35,7 +35,7 @@ namespace srk::extensions::shader_script {
 
 
 	struct ParsedData {
-		std::vector<ShaderDefine> staticDefines;
+		std::vector<modules::graphics::ProgramDefine> staticDefines;
 		std::vector<std::string_view> dynamicDefines;
 		ProgramData mainProgram;
 		std::vector<VariantShader> variantShaders;
@@ -57,9 +57,9 @@ namespace srk::extensions::shader_script {
 
 			auto pos = String::find(fmtDef, String::CharFlag::WHITE_SPACE);
 
-			if constexpr (std::same_as<T, std::vector<ShaderDefine>> || std::same_as<T, ShaderDefineCollection>) {
+			if constexpr (std::same_as<T, std::vector<modules::graphics::ProgramDefine>> || std::same_as<T, ShaderDefineCollection>) {
 				if (pos == std::string_view::npos) {
-					if constexpr (std::same_as<T, std::vector<ShaderDefine>>) {
+					if constexpr (std::same_as<T, std::vector<modules::graphics::ProgramDefine>>) {
 						out.emplace_back(fmtDef, nullptr);
 					} else {
 						out.set(std::string(fmtDef), "");
@@ -67,7 +67,7 @@ namespace srk::extensions::shader_script {
 				} else {
 					std::string_view k(fmtDef.data(), pos);
 					auto v = String::trim(std::string_view(fmtDef.data() + pos + 1, fmtDef.size() - pos - 1), String::CharFlag::WHITE_SPACE);
-					if constexpr (std::same_as<T, std::vector<ShaderDefine>>) {
+					if constexpr (std::same_as<T, std::vector<modules::graphics::ProgramDefine>>) {
 						out.emplace_back(k, v);
 					} else {
 						out.set(std::string(k), std::string(v));
@@ -86,8 +86,10 @@ namespace srk::extensions::shader_script {
 		return true;
 	}
 
-	template<ProgramStage Stage>
-	inline bool SRK_CALL parseProgram(IntrusivePtr<ProgramSource>& out, const std::string_view& content) {
+	template<modules::graphics::ProgramStage Stage>
+	inline bool SRK_CALL parseProgram(IntrusivePtr<modules::graphics::ProgramSource>& out, const std::string_view& content) {
+		using namespace srk::modules::graphics;
+
 		out = new ProgramSource();
 		out->stage = Stage;
 		out->language = ProgramLanguage::HLSL;
@@ -115,9 +117,9 @@ namespace srk::extensions::shader_script {
 		for (auto& c : block.chindren) {
 			auto name = String::trim(c->name, String::CharFlag::WHITE_SPACE);
 			if (name == "vs") {
-				if (!parseProgram<ProgramStage::VS>(out.vs, c->content)) return false;
+				if (!parseProgram<modules::graphics::ProgramStage::VS>(out.vs, c->content)) return false;
 			} else if (name == "ps") {
-				if (!parseProgram<ProgramStage::PS>(out.ps, c->content)) return false;
+				if (!parseProgram<modules::graphics::ProgramStage::PS>(out.ps, c->content)) return false;
 			}
 		}
 
@@ -212,7 +214,7 @@ namespace srk::extensions::shader_script {
 		return std::move(blocks);
 	}
 
-	inline bool SRK_CALL set(Shader* shader, modules::graphics::IGraphicsModule* graphics, const ByteArray& source, const Shader::IncludeHandler& includeHandler, const Shader::InputHandler& inputHandler) {
+	inline bool SRK_CALL set(Shader* shader, modules::graphics::IGraphicsModule* graphics, const ByteArray& source, const modules::graphics::ProgramIncludeHandler& includeHandler, const modules::graphics::ProgramInputHandler& inputHandler, const modules::graphics::ProgramTranspileHandler& transpileHandler) {
 		if (shader) {
 			shader->unset();
 
@@ -232,7 +234,7 @@ namespace srk::extensions::shader_script {
 				--size;
 				do {
 					if (parseShaderBlock(data, *blocks[size])) {
-						shader->set(graphics, data.mainProgram.vs, data.mainProgram.ps, data.staticDefines.data(), data.staticDefines.size(), data.dynamicDefines.data(), data.dynamicDefines.size(), includeHandler, inputHandler);
+						shader->set(graphics, data.mainProgram.vs, data.mainProgram.ps, data.staticDefines.data(), data.staticDefines.size(), data.dynamicDefines.data(), data.dynamicDefines.size(), includeHandler, inputHandler, transpileHandler);
 						for (auto& v : data.variantShaders) shader->setVariant(v.program.vs, v.program.ps, &v.defines);
 
 						return true;

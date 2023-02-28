@@ -2,7 +2,7 @@
 
 #include "Base.h"
 #include "srk/events/EventDispatcher.h"
-#include "srk/modules/windows/IWindowModule.h"
+#include "srk/modules/windows/WindowModule.h"
 #include <shared_mutex>
 
 namespace srk::modules::inputs::hid_input {

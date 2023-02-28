@@ -13,7 +13,7 @@ namespace srk::modules::graphics::d3d11 {
 		virtual ~Program();
 
 		virtual const void* SRK_CALL getNative() const override;
-		virtual bool SRK_CALL create(const ProgramSource& vert, const ProgramSource& frag, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& includeHandler, const InputHandler& inputHandler) override;
+		virtual bool SRK_CALL create(const ProgramSource& vert, const ProgramSource& frag, const ProgramDefine* defines, size_t numDefines, const ProgramIncludeHandler& includeHandler, const ProgramInputHandler& inputHandler, const ProgramTranspileHandler& transpileHandler) override;
 		virtual const ProgramInfo& getInfo() const override;
 		virtual void SRK_CALL destroy() override;
 
@@ -23,16 +23,14 @@ namespace srk::modules::graphics::d3d11 {
 	protected:
 		class MyIncludeHandler : public ID3DInclude {
 		public:
-			MyIncludeHandler(const IProgram& program, ProgramStage stage, const IncludeHandler& handler);
+			MyIncludeHandler(const ProgramIncludeHandler& handler);
 
 			HRESULT Open(D3D_INCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID pParentData, LPCVOID* ppData, UINT* pBytes);
 			HRESULT Close(LPCVOID pData);
 
 		private:
-			ProgramStage _stage;
 			ByteArray _data;
-			const IProgram& _program;
-			const IncludeHandler& _handler;
+			const ProgramIncludeHandler& _handler;
 		};
 
 
@@ -96,9 +94,10 @@ namespace srk::modules::graphics::d3d11 {
 		std::vector<ShaderParameter*> _tempParams;
 		std::vector<const ConstantBufferLayout::Variables*> _tempVars;
 
-		ID3DBlob* SRK_CALL _compileShader(const ProgramSource& source, ProgramStage stage, const std::string_view& target, const D3D_SHADER_MACRO* defines, const IncludeHandler& handler);
+		ID3DBlob* SRK_CALL _compileShader(const ProgramSource& source, ProgramStage stage, const std::string_view& target, const D3D_SHADER_MACRO* d3dDefines, const ProgramDefine* defines, size_t numDefines, const ProgramIncludeHandler& includeHandler, const ProgramTranspileHandler& transpileHandler);
+		ID3DBlob* SRK_CALL _compileShader(const ProgramSource& source, const std::string_view& target, const D3D_SHADER_MACRO* d3dDefines, const ProgramIncludeHandler& includeHandler);
 		ID3D11InputLayout* _getOrCreateInputLayout();
-		void SRK_CALL _parseInputLayout(const D3D11_SHADER_DESC& desc, ID3D11ShaderReflection& ref, const InputHandler& handler);
+		void SRK_CALL _parseInputLayout(const D3D11_SHADER_DESC& desc, ID3D11ShaderReflection& ref, const ProgramInputHandler& handler);
 		void SRK_CALL _parseParameterLayout(const D3D11_SHADER_DESC& desc, ID3D11ShaderReflection& ref, ParameterLayout& dst);
 		void SRK_CALL _parseConstantVar(ConstantBufferLayout::Variables& var, ID3D11ShaderReflectionType* type);
 		void SRK_CALL _calcConstantLayoutSameBuffers(std::vector<std::vector<MyConstantBufferLayout>*>& constBufferLayouts);

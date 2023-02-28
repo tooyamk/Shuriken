@@ -1,6 +1,6 @@
 #pragma once
 
-#include "srk/modules/graphics/IGraphicsModule.h"
+#include "srk/modules/graphics/GraphicsModule.h"
 
 namespace srk::render {
 	class SRK_FW_DLL RenderState {

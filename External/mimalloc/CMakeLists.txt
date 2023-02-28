@@ -11,6 +11,9 @@ set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_MIMALLOC_LIB_R ${LIB_R})
 set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_MIMALLOC_LIB_D ${LIB_D})
 set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_MIMALLOC_DLL ${PROJECT_BINARY_DIR}/install/lib/${OUTPUT_NAME}${SRK_BUILD_TYPE_SUFFIX}${SRK_DLL_SUFFIX})
 
+set(gitTag v2.0.9)
+srkCheckExternalProjectVersion_GitTag(${PROJECT_BINARY_DIR} ${PROJECT_BINARY_DIR}/src ${gitTag})
+
 include(ExternalProject)
 
 srkCreateExternalProjectCmakeArgs(cmakeArgs)
@@ -19,7 +22,7 @@ ExternalProject_Add(
     ${PROJECT_NAME}
     PREFIX ${PROJECT_BINARY_DIR}
     GIT_REPOSITORY https://github.com/microsoft/mimalloc.git
-    GIT_TAG v2.0.9
+    GIT_TAG ${gitTag}
     GIT_SHALLOW 1
     GIT_PROGRESS 1
     TMP_DIR tmp

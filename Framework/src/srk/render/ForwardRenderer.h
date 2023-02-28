@@ -2,9 +2,9 @@
 
 #include "srk/render/IRenderer.h"
 #include "srk/Mesh.h"
-#include "srk/ShaderDefine.h"
+#include "srk/Shader.h"
 #include "srk/ShaderParameter.h"
-#include "srk/modules/graphics/IGraphicsModule.h"
+#include "srk/modules/graphics/GraphicsModule.h"
 #include "srk/render/RenderData.h"
 #include "srk/render/RenderTag.h"
 

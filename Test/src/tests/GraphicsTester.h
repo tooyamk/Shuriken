@@ -32,15 +32,8 @@ public:
 
 		SerializableObject args;
 
-		IntrusivePtr stml = new ModuleLoader<IShaderTranspiler>();
-		stml->load(getDllPath("srk-module-graphics-shader-transpiler"));
-
-		args.insert("dxc", getDllPath("dxcompiler"));
-		auto st = stml->create(&args);
-
 		args.insert("win", win.uintptr());
 		args.insert("sampleCount", 4);
-		args.insert("transpiler", st.uintptr());
 		//args.insert("driverType", "SOFTWARE");
 		args.insert("debug", Environment::IS_DEBUG);
 
@@ -235,12 +228,12 @@ public:
 			IntrusivePtr shader = new Shader();
 			auto shaderResourcesFolder = Application::getAppPath().parent_path().u8string() + "/Resources/shaders/";
 			extensions::ShaderScript::set(shader, graphics, readFile(Application::getAppPath().parent_path().u8string() + "/Resources/shaders/lighting.shader"),
-				[shaderResourcesFolder](const Shader& shader, ProgramStage stage, const std::string_view& name) {
-					return readFile(shaderResourcesFolder + name);
+				[shaderResourcesFolder](const ProgramIncludeInfo& info) {
+					return readFile(shaderResourcesFolder + info.file);
 				},
-				[](const Shader& shader, const std::string_view& name) {
-					return modules::graphics::IProgram::InputDescriptor();
-				});
+				[](const ProgramInputInfo& info) {
+					return ProgramInputDescriptor();
+				}, programTranspileHandler);
 
 			auto program = shader->select(nullptr);
 			printaln("Program : ", program ? "succeed" : "failed");

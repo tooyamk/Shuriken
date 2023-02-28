@@ -3,7 +3,7 @@
 #include "Base.h"
 #include "srk/events/EventDispatcher.h"
 #include "srk/modules/graphics/ConstantBufferManager.h"
-#include "srk/modules/windows/IWindowModule.h"
+#include "srk/modules/windows/WindowModule.h"
 
 namespace srk::modules::graphics::gl {
 	class BlendState;
@@ -20,7 +20,6 @@ namespace srk::modules::graphics::gl {
 		struct CreateConfig {
 			Ref* loader = nullptr;
 			windows::IWindow* win = nullptr;
-			IShaderTranspiler* transpiler = nullptr;
 			GraphicsAdapter* adapter = nullptr;
 			SampleCount sampleCount = 1;
 			bool debug = false;
@@ -82,10 +81,6 @@ namespace srk::modules::graphics::gl {
 
 		inline void SRK_CALL error(const std::string_view& msg) {
 			_eventDispatcher->dispatchEvent(this, GraphicsEvent::ERR, (std::string_view*)&msg);
-		}
-
-		inline IShaderTranspiler* SRK_CALL getShaderTranspiler() const {
-			return _transpiler.get();
 		}
 
 		inline ConstantBufferManager& SRK_CALL getConstantBufferManager() {
@@ -184,7 +179,6 @@ namespace srk::modules::graphics::gl {
 
 		IntrusivePtr<Ref> _loader;
 		IntrusivePtr<windows::IWindow> _win;
-		IntrusivePtr<IShaderTranspiler> _transpiler;
 
 		IntrusivePtr<BlendState> _defaultBlendState;
 		IntrusivePtr<DepthStencilState> _defaultDepthStencilState;

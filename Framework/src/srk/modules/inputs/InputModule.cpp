@@ -1,4 +1,4 @@
-#include "IInputModule.h"
+#include "InputModule.h"
 #include "srk/events/IEventDispatcher.h"
 #include <bitset>
 

@@ -1,9 +1,9 @@
 #pragma once
 
 #include "srk/DynamicLibraryLoader.h"
-#include "srk/modules/graphics/IGraphicsModule.h"
-#include "srk/modules/inputs/IInputModule.h"
-#include "srk/modules/windows/IWindowModule.h"
+#include "srk/modules/graphics/GraphicsModule.h"
+#include "srk/modules/inputs/InputModule.h"
+#include "srk/modules/windows/WindowModule.h"
 
 namespace srk::modules {
 	template<IntrusivePtrOperableObject RetType>

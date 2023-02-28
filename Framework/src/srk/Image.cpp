@@ -1,6 +1,5 @@
 #include "srk/Image.h"
 #include "srk/Thread.h"
-#include "srk/modules/graphics/IGraphicsModule.h"
 
 namespace srk {
 	//using namespace modules;

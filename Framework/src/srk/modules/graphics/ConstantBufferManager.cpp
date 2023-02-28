@@ -1,6 +1,6 @@
 #include "ConstantBufferManager.h"
 #include "srk/ShaderParameter.h"
-#include "srk/modules/graphics/IGraphicsModule.h"
+#include "srk/modules/graphics/GraphicsModule.h"
 #include <algorithm>
 
 namespace srk::modules::graphics {

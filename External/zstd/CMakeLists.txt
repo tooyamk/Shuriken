@@ -12,6 +12,9 @@ set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_ZSTD_LIB_R ${LIB_R})
 set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_ZSTD_LIB_D ${LIB_D})
 set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_ZSTD_DLL ${PROJECT_BINARY_DIR}/install/${SRK_INSTALL_DLL_DIR_NAME}/${OUTPUT_NAME}${SRK_BUILD_TYPE_SUFFIX}${SRK_DLL_SUFFIX})
 
+set(gitTag v1.5.2)
+srkCheckExternalProjectVersion_GitTag(${PROJECT_BINARY_DIR} ${PROJECT_BINARY_DIR}/src ${gitTag})
+
 include(ExternalProject)
 
 srkCreateExternalProjectCmakeArgs(cmakeArgs)
@@ -20,7 +23,7 @@ ExternalProject_Add(
     ${PROJECT_NAME}
     PREFIX ${PROJECT_BINARY_DIR}
     GIT_REPOSITORY https://github.com/facebook/zstd.git
-    GIT_TAG v1.5.2
+    GIT_TAG ${gitTag}
     GIT_SHALLOW 1
     GIT_PROGRESS 1
     TMP_DIR tmp

@@ -2,6 +2,7 @@
 
 #include "srk/Framework.h"
 #include "srk/Debug.h"
+#include "Extensions/ShaderTranspiler/src/srk/ShaderTranspiler.h"
 #include <fstream>
 
 using namespace srk;
@@ -147,6 +148,23 @@ inline ProgramSource SRK_CALL readProgramSource(T&& path, ProgramStage type) {
 	return std::move(s);
 }
 
+inline IntrusivePtr<extensions::ShaderTranspiler> shaderTranspiler;
+inline ProgramTranspileHandler programTranspileHandler = [](const ProgramTranspileInfo& info) {
+	if (!shaderTranspiler) {
+		shaderTranspiler = extensions::ShaderTranspiler::create(getDllPath("dxcompiler"));
+		if (!shaderTranspiler) return ProgramSource();
+	}
+
+	extensions::ShaderTranspiler::Options opt;
+	opt.spirv.descriptorSet0BindingOffset = 0;
+	auto src = shaderTranspiler->translate(*info.source, opt, info.targetLanguage, info.targetVersion, info.defines, info.numDefines, info.includeHandler);
+	if (src.isValid()) {
+		printaln(L"------ translate shader code("sv, ProgramSource::toHLSLShaderStage(src.stage), L") ------\n"sv,
+			std::string_view((char*)src.data.getSource(), src.data.getLength()), L"\n------------------------------------"sv);
+	}
+	return src;
+};
+
 inline bool SRK_CALL createProgram(IProgram& program, const std::string_view& vert, const std::string_view& frag) {
 	using Str = std::remove_cvref_t<std::u8string>;
 	using SSS = Str::value_type;
@@ -154,12 +172,12 @@ inline bool SRK_CALL createProgram(IProgram& program, const std::string_view& ve
 
 	auto appPath = Application::getAppPath().parent_path().u8string() + "/Resources/shaders/";
 	if (!program.create(readProgramSource(appPath + vert, ProgramStage::VS), readProgramSource(appPath + frag, ProgramStage::PS), nullptr, 0,
-		[&appPath](const IProgram& program, ProgramStage stage, const std::string_view& name) {
-		return readFile(appPath + name);
+		[&appPath](const ProgramIncludeInfo& info) {
+		return readFile(appPath + info.file);
 	},
-		[](const IProgram& program, const std::string_view& name) {
-		return modules::graphics::IProgram::InputDescriptor();
-	})) {
+		[](const ProgramInputInfo& info) {
+		return modules::graphics::ProgramInputDescriptor();
+	}, programTranspileHandler)) {
 		printaln(L"program create error");
 		return false;
 	}

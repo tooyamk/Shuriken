@@ -12,6 +12,9 @@ set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_TCMALLOC_LIB_D ${LIB_D})
 set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_TCMALLOC_DLL ${PROJECT_BINARY_DIR}/install/${SRK_INSTALL_DLL_DIR_NAME}/${OUTPUT_NAME}${SRK_BUILD_TYPE_SUFFIX}${SRK_DLL_SUFFIX})
 set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_TCMALLOC_MSVC_LINKER_FLAGS "/include:__tcmalloc")
 
+set(gitTag gperftools-2.10)
+srkCheckExternalProjectVersion_GitTag(${PROJECT_BINARY_DIR} ${PROJECT_BINARY_DIR}/src ${gitTag})
+
 include(ExternalProject)
 
 srkCreateExternalProjectCmakeArgs(cmakeArgs)
@@ -20,7 +23,7 @@ ExternalProject_Add(
     ${PROJECT_NAME}
     PREFIX ${PROJECT_BINARY_DIR}
     GIT_REPOSITORY https://github.com/gperftools/gperftools.git
-    GIT_TAG gperftools-2.10
+    GIT_TAG ${gitTag}
     GIT_SHALLOW 1
     GIT_PROGRESS 1
     TMP_DIR tmp

@@ -1,53 +1,137 @@
 #pragma once
 
-#include "srk/ProgramSource.h"
-#include "srk/ShaderDefine.h"
-#include "srk/modules/graphics/IGraphicsModule.h"
-
-namespace srk::modules::graphics {
-	class IGraphicsModule;
-	class IProgram;
-}
+#include "srk/modules/graphics/GraphicsModule.h"
+#include <unordered_map>
 
 namespace srk {
-	class ShaderDefine;
-	class IShaderDefineGetter;
+	class SRK_FW_DLL IShaderefineGetter : public Ref {
+	public:
+		virtual ~IShaderefineGetter() {}
+
+		virtual const std::string* SRK_CALL get(const QueryString& name) const = 0;
+	};
+
+
+	class SRK_FW_DLL ShaderDefineCollection : public IShaderefineGetter {
+	public:
+		ShaderDefineCollection() {}
+		ShaderDefineCollection(const ShaderDefineCollection& other) : _values(other._values) {}
+		virtual ~ShaderDefineCollection() {}
+
+		inline void SRK_CALL operator=(const ShaderDefineCollection& other) {
+			_values = other._values;
+		}
+
+		virtual const std::string* SRK_CALL get(const QueryString& name) const override;
+
+		inline void SRK_CALL set(const QueryString& name, const std::string_view& value) {
+			if (auto itr = _values.find(name); itr == _values.end()) {
+				_values.emplace(name, value);
+			} else {
+				itr->second = value;
+			}
+		}
+		inline bool SRK_CALL remove(const QueryString& name) {
+			if (auto itr = _values.find(name); itr != _values.end()) {
+				_values.erase(itr);
+				return true;
+			}
+
+			return false;
+		}
+		inline void SRK_CALL clear() {
+			_values.clear();
+		}
+
+	protected:
+		StringUnorderedMap<std::string> _values;
+	};
+
+
+	class SRK_FW_DLL ShaderDefineGetterStack : public IShaderefineGetter {
+	public:
+		virtual ~ShaderDefineGetterStack() {}
+
+		virtual const std::string* SRK_CALL get(const QueryString& name) const override;
+
+		inline bool SRK_CALL push(IShaderefineGetter* getter) {
+			if (getter) {
+				_stack.emplace_back(getter);
+				return true;
+			}
+			return false;
+		}
+		template<std::derived_from<IShaderefineGetter>... Args>
+		inline size_t SRK_CALL push(Args*... args) {
+			size_t n = 0;
+			((_push(n, args)), ...);
+			return n;
+		}
+		inline bool SRK_CALL push(IShaderefineGetter& getter) {
+			_stack.emplace_back(&getter);
+			return true;
+		}
+		template<std::derived_from<IShaderefineGetter>... Args>
+		inline size_t SRK_CALL push(Args&&... args) {
+			((_stack.emplace_back(args)), ...);
+			return sizeof...(args);
+		}
+
+		inline void SRK_CALL pop() {
+			_stack.pop_back();
+		}
+		inline void SRK_CALL pop(size_t count) {
+			_stack.erase(_stack.end() - count, _stack.end());
+		}
+
+		inline void SRK_CALL clear() {
+			_stack.clear();
+		}
+
+	protected:
+		std::vector<IntrusivePtr<IShaderefineGetter>> _stack;
+
+		inline void SRK_CALL _push(size_t& n, IShaderefineGetter* getter) {
+			if (getter) {
+				_stack.emplace_back(getter);
+				++n;
+			}
+		}
+	};
 
 
 	class SRK_FW_DLL Shader : public Ref {
 	public:
-		using IncludeHandler = std::function<ByteArray(const Shader&, ProgramStage, const std::string_view&)>;
-		using InputHandler = std::function<modules::graphics::IProgram::InputDescriptor(const Shader&, const std::string_view&)>;
-
 		Shader();
 
-		void SRK_CALL set(modules::graphics::IGraphicsModule* graphics, ProgramSource* vs, ProgramSource* ps, 
-			const ShaderDefine* staticDefines, size_t numStaticDefines, const std::string_view* dynamicDefines, size_t numDynamicDefines,
-			const IncludeHandler& includeHandler, const InputHandler& inputHandler);
-		IntrusivePtr<modules::graphics::IProgram> SRK_CALL select(const IShaderDefineGetter* getter);
+		void SRK_CALL set(modules::graphics::IGraphicsModule* graphics, modules::graphics::ProgramSource* vs, modules::graphics::ProgramSource* ps,
+			const modules::graphics::ProgramDefine* staticDefines, size_t numStaticDefines, const std::string_view* dynamicDefines, size_t numDynamicDefines,
+			const modules::graphics::ProgramIncludeHandler& includeHandler, const modules::graphics::ProgramInputHandler& inputHandler, const modules::graphics::ProgramTranspileHandler& transpileHandler);
+		IntrusivePtr<modules::graphics::IProgram> SRK_CALL select(const IShaderefineGetter* getter);
 
 		void SRK_CALL unset();
 
-		void SRK_CALL setVariant(ProgramSource* vs, ProgramSource* ps, const IShaderDefineGetter* getter);
+		void SRK_CALL setVariant(modules::graphics::ProgramSource* vs, modules::graphics::ProgramSource* ps, const IShaderefineGetter* getter);
 
 	protected:
 		struct Variant {
-			IntrusivePtr<ProgramSource> vs;
-			IntrusivePtr<ProgramSource> ps;
+			IntrusivePtr<modules::graphics::ProgramSource> vs;
+			IntrusivePtr<modules::graphics::ProgramSource> ps;
 		};
 
 
 		IntrusivePtr<modules::graphics::IGraphicsModule> _graphics;
-		IntrusivePtr<ProgramSource> _vs;
-		IntrusivePtr<ProgramSource> _ps;
-		IncludeHandler _includeHhandler;
-		InputHandler _inputHandler;
+		IntrusivePtr<modules::graphics::ProgramSource> _vs;
+		IntrusivePtr<modules::graphics::ProgramSource> _ps;
+		modules::graphics::ProgramIncludeHandler _includeHhandler;
+		modules::graphics::ProgramInputHandler _inputHandler;
+		modules::graphics::ProgramTranspileHandler _transpileHandler;
 
 		std::unordered_map<uint64_t, Variant> _variants;
 
 		std::vector<std::string> _staticDefines;
 		std::vector<std::string> _dynamicDefines;
-		std::vector<ShaderDefine> _defines;
+		std::vector<modules::graphics::ProgramDefine> _defines;
 
 		std::unordered_map<uint64_t, IntrusivePtr<modules::graphics::IProgram>> _programs;
 	};

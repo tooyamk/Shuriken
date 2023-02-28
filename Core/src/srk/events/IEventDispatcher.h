@@ -41,10 +41,10 @@ namespace srk::events {
 
 
 	template<typename EvtType>
-	using EvtFn = void(*)(Event<EvtType>&);
+	using EvtFn = void(SRK_CALL*)(Event<EvtType>&);
 
 	template<typename EvtType, typename Class>
-	using EvtMethod = void(Class::*)(Event<EvtType>&);
+	using EvtMethod = void(SRK_CALL Class::*)(Event<EvtType>&);
 
 	template<typename EvtType>
 	using EvtFunc = std::function<void(Event<EvtType>&)>;

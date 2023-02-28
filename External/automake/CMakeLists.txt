@@ -10,12 +10,15 @@ set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_AUTOMAKE_AUTOMAKE ${binDir}/automa
 get_property(SRKPROJ_EXTERNAL_AUTOCONF_NAME GLOBAL PROPERTY "SRKPROJ_EXTERNAL_AUTOCONF_NAME")
 get_property(SRKPROJ_EXTERNAL_AUTOCONF_DIR GLOBAL PROPERTY "SRKPROJ_EXTERNAL_AUTOCONF_DIR")
 
+set(fileName automake-1.16.tar.xz)
+srkCheckExternalProjectVersion_DownloadFile(${PROJECT_BINARY_DIR} ${PROJECT_BINARY_DIR}/download/${fileName})
+
 include(ExternalProject)
 
 ExternalProject_Add(
     ${PROJECT_NAME}
     PREFIX ${PROJECT_BINARY_DIR}
-    URL https://ftp.gnu.org/gnu/automake/automake-1.16.tar.xz
+    URL https://ftp.gnu.org/gnu/automake/${fileName}
     TMP_DIR tmp
     STAMP_DIR stamp
     DOWNLOAD_DIR download

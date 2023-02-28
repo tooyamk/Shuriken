@@ -21,12 +21,15 @@ endif ()
 
 set(projDir ${PROJECT_BINARY_DIR}/src/CPP/7zip/Bundles/Alone2)
 
+set(fileName 7z2201-src.7z)
+srkCheckExternalProjectVersion_DownloadFile(${PROJECT_BINARY_DIR} ${PROJECT_BINARY_DIR}/download/${fileName})
+
 include(ExternalProject)
 
 ExternalProject_Add(
     ${PROJECT_NAME}
     PREFIX ${PROJECT_BINARY_DIR}
-    URL https://www.7-zip.org/a/7z2201-src.7z
+    URL https://www.7-zip.org/a/${fileName}
     URL_HASH SHA256=24cb2b9c6c0fb87d9c77a8d2afb572f5c75b45c950eff81a37ebac7fa73d1b4a
     TMP_DIR tmp
     STAMP_DIR stamp

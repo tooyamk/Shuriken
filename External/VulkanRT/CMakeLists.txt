@@ -22,6 +22,8 @@ if (SRK_OS_WINDOWS AND SRK_ARCH_X86)
 endif ()
 
 if (NOT (src STREQUAL nil))
+    srkCheckExternalProjectVersion_DownloadFile(${PROJECT_BINARY_DIR} ${PROJECT_BINARY_DIR}/download/${dlName})
+
     include(ExternalProject)
 
     ExternalProject_Add(

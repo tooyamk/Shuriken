@@ -7,11 +7,7 @@
 #include <vector>
 
 namespace srk {
-	enum class ProgramStage : uint8_t;
 	class IShaderParameterGetter;
-	class IVertexAttributeGetter;
-	class ProgramSource;
-	class ShaderDefine;
 }
 
 namespace srk::events {
@@ -25,6 +21,8 @@ namespace srk::modules::graphics {
 	class GraphicsAdapter;
 
 	using SampleCount = uint8_t;
+
+	inline constexpr static char COMBINED_TEXTURE_SAMPLER_HEADER[14] = { "_combined_ts_" };
 
 	class SRK_FW_DLL IObject : public Ref {
 	public:
@@ -255,6 +253,14 @@ namespace srk::modules::graphics {
 
 		IntrusivePtr<T> resource;
 		VertexAttributeDescriptor desc;
+	};
+
+
+	class SRK_FW_DLL IVertexAttributeGetter : public Ref {
+	public:
+		virtual ~IVertexAttributeGetter() {}
+
+		virtual std::optional<VertexAttribute<IVertexBuffer>> SRK_CALL get(const QueryString& name) const = 0;
 	};
 
 
@@ -870,6 +876,69 @@ namespace srk::modules::graphics {
 	};
 
 
+	enum class ProgramStage : uint8_t {
+		UNKNOWN,
+		CS,//ComputeShader
+		DS, //DomainShader
+		GS,//GeomtryShader
+		HS,//HullShader
+		PS,//PixelShader
+		VS,//VertexShader
+	};
+
+
+	enum class ProgramLanguage : uint8_t {
+		UNKNOWN,
+		HLSL,
+		DXIL,
+		SPIRV,
+		GLSL,
+		GSSL,
+		MSL
+	};
+
+
+	class SRK_FW_DLL ProgramSource : public Ref {
+	public:
+		ProgramSource();
+		ProgramSource(ProgramSource&& value);
+
+		ProgramLanguage language;
+		ProgramStage stage;
+		std::string version;
+		std::string entryPoint;
+		ByteArray data;
+
+		inline static const std::string defaultEntryPoint = std::string("main");
+
+		ProgramSource& SRK_CALL operator=(ProgramSource&& value) noexcept;
+
+		bool SRK_CALL isValid() const;
+
+		inline std::string_view toHLSLShaderStage() const {
+			return toHLSLShaderStage(stage);
+		}
+
+		static std::string_view toHLSLShaderStage(ProgramStage stage);
+
+		inline std::string SRK_CALL toHLSLShaderModel() const {
+			return toHLSLShaderModel(stage, version);
+		}
+
+		static std::string SRK_CALL toHLSLShaderModel(ProgramStage stage, const std::string_view& version);
+
+		inline const std::string& SRK_CALL getEntryPoint() const {
+			return getEntryPoint(entryPoint);
+		}
+		inline static std::string_view SRK_CALL getEntryPoint(const std::string_view& entryPoint) {
+			return entryPoint.empty() ? defaultEntryPoint : entryPoint;
+		}
+		inline static const std::string& SRK_CALL getEntryPoint(const std::string& entryPoint) {
+			return entryPoint.empty() ? defaultEntryPoint : entryPoint;
+		}
+	};
+
+
 	class SRK_FW_DLL ProgramInfo {
 	public:
 		class SRK_FW_DLL Vertex {
@@ -888,20 +957,60 @@ namespace srk::modules::graphics {
 	};
 
 
+	struct SRK_FW_DLL ProgramInputInfo {
+		std::string_view name;
+	};
+
+
+	struct SRK_FW_DLL ProgramInputDescriptor {
+		bool instanced = false;
+	};
+
+
+	using ProgramInputHandler = std::function<ProgramInputDescriptor(const ProgramInputInfo&)>;
+
+
+	struct SRK_FW_DLL ProgramIncludeInfo {
+		std::string_view file;
+	};
+
+
+	using ProgramIncludeHandler = std::function<ByteArray(const ProgramIncludeInfo&)>;
+
+
+	class SRK_FW_DLL ProgramDefine {
+	public:
+		ProgramDefine() {}
+
+		ProgramDefine(const std::string_view& name, const std::string_view& value) :
+			name(name),
+			value(value) {}
+
+		std::string_view name;
+		std::string_view value;
+	};
+
+
+	struct SRK_FW_DLL ProgramTranspileInfo {
+		const ProgramSource* source;
+		ProgramLanguage targetLanguage;
+		std::string_view targetVersion;
+		const ProgramDefine* defines;
+		size_t numDefines;
+		ProgramIncludeHandler includeHandler;
+	};
+
+
+	using ProgramTranspileHandler = std::function<ProgramSource(const ProgramTranspileInfo&)>;
+
+
 	class SRK_FW_DLL IProgram : public IObject {
 	public:
-		struct SRK_FW_DLL InputDescriptor {
-			bool instanced = false;
-		};
-
-		using IncludeHandler = std::function<ByteArray(const IProgram&, ProgramStage, const std::string_view&)>;
-		using InputHandler = std::function<InputDescriptor(const IProgram&, const std::string_view&)>;
-
 		IProgram(IGraphicsModule& graphics) : IObject(graphics) {}
 		virtual ~IProgram() {}
 
 		virtual const void* SRK_CALL getNative() const = 0;
-		virtual bool SRK_CALL create(const ProgramSource& vert, const ProgramSource& frag, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& includeHandler, const InputHandler& inputHandler) = 0;
+		virtual bool SRK_CALL create(const ProgramSource& vert, const ProgramSource& frag, const ProgramDefine* defines, size_t numDefines, const ProgramIncludeHandler& includeHandler, const ProgramInputHandler& inputHandler, const ProgramTranspileHandler& transpileHandler) = 0;
 		virtual const ProgramInfo& getInfo() const = 0;
 		virtual void SRK_CALL destroy() = 0;
 	};

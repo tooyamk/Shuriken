@@ -71,6 +71,12 @@ namespace srk {
 			}
 		}
 
+		inline T* SRK_CALL detach() {
+			auto p = _target;
+			_target = nullptr;
+			return p;
+		}
+
 		inline bool SRK_CALL isEmpty() const {
 			return !_target;
 		}

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "srk/Image.h"
-#include "srk/modules/graphics/IGraphicsModule.h"
+#include "srk/modules/graphics/GraphicsModule.h"
 #include "png.h"
 
 namespace srk::extensions::png_converter {
@@ -11,7 +11,7 @@ namespace srk::extensions::png_converter {
 		int32_t offset;
 	};
 
-	inline void SRK_CALL readDataCallback(png_structp png_ptr, png_bytep data, png_size_t length) {
+	inline void readDataCallback(png_structp png_ptr, png_bytep data, png_size_t length) {
 		auto isource = (ImageSource*)png_get_io_ptr(png_ptr);
 
 		if ((int)(isource->offset + length) <= isource->size) {
@@ -101,7 +101,7 @@ namespace srk::extensions::png_converter {
 		return img;
 	}
 
-	inline void SRK_CALL writeDataCallback(png_structp png_ptr, png_bytep data, png_size_t length) {
+	inline void writeDataCallback(png_structp png_ptr, png_bytep data, png_size_t length) {
 		auto isource = (ByteArray*)png_get_io_ptr(png_ptr);
 		isource->write<ba_vt::BYTE>(data, length);
 	}

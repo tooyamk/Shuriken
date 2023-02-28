@@ -27,15 +27,8 @@ public:
 			
 		SerializableObject args;
 
-		IntrusivePtr stml = new ModuleLoader<IShaderTranspiler>();
-		stml->load(getDllPath("srk-module-graphics-shader-transpiler"));
-
-		args.insert("dxc", getDllPath("dxcompiler"));
-		auto st = stml->create(&args);
-
 		args.insert("win", win.uintptr());
 		args.insert("sampleCount", 4);
-		args.insert("transpiler", st.uintptr());
 		args.insert("debug", Environment::IS_DEBUG);
 
 		auto graphics = gml->create(&args);

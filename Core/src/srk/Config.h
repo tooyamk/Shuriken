@@ -70,7 +70,7 @@
 
 
 #if SRK_COMPILER == SRK_COMPILER_MSVC
-#	define SRK_CALL __fastcall
+#	define SRK_CALL __vectorcall
 
 #	define SRK_DLL_EXPORT __declspec(dllexport)
 #	define SRK_DLL_IMPORT __declspec(dllimport)

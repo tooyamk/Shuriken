@@ -2,7 +2,6 @@
 
 #include "Base.h"
 #include "srk/events/EventDispatcher.h"
-#include "srk/modules/windows/IWindowModule.h"
 
 namespace srk::modules::inputs::raw_input {
 	class Input;

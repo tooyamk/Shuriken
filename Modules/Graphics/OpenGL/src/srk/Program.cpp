@@ -8,7 +8,6 @@
 #include "VertexBuffer.h"
 #include "srk/Debug.h"
 #include "srk/GraphicsBuffer.h"
-#include "srk/ShaderDefine.h"
 #include "srk/ShaderParameter.h"
 
 namespace srk::modules::graphics::gl {
@@ -24,16 +23,16 @@ namespace srk::modules::graphics::gl {
 		return this;
 	}
 
-	bool Program::create(const ProgramSource& vert, const ProgramSource& frag, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& includeHandler, const InputHandler& inputHandler) {
+	bool Program::create(const ProgramSource& vert, const ProgramSource& frag, const ProgramDefine* defines, size_t numDefines, const ProgramIncludeHandler& includeHandler, const ProgramInputHandler& inputHandler, const ProgramTranspileHandler& transpileHandler) {
 		destroy();
 
-		auto vertexShader = _compileShader(vert, ProgramStage::VS, defines, numDefines, includeHandler);
+		auto vertexShader = _compileShader(vert, ProgramStage::VS, defines, numDefines, includeHandler, transpileHandler);
 		if (!vertexShader) {
 			destroy();
 			return false;
 		}
 
-		auto fragmentShader = _compileShader(frag, ProgramStage::PS, defines, numDefines, includeHandler);
+		auto fragmentShader = _compileShader(frag, ProgramStage::PS, defines, numDefines, includeHandler, transpileHandler);
 		if (!fragmentShader) {
 			glDeleteShader(vertexShader);
 			destroy();
@@ -121,7 +120,13 @@ namespace srk::modules::graphics::gl {
 			}
 			
 			info.name = charBuffer;// +7;//in_var_
-			info.instanced = inputHandler ? inputHandler(*this, std::string_view(info.name)).instanced : false;
+			if (inputHandler) {
+				ProgramInputInfo pii;
+				pii.name = info.name;
+				info.instanced = inputHandler(pii).instanced;
+			} else {
+				info.instanced = false;
+			}
 			_inputVertexBufferLocations[i] = glGetAttribLocation(_handle, charBuffer);
 		}
 
@@ -145,8 +150,8 @@ namespace srk::modules::graphics::gl {
 			if (len > sizeof(TYPE) - 1) {
 				if (std::string_view(charBuffer, sizeof(TYPE) - 1) == TYPE) {
 					info.names.emplace_back(charBuffer + sizeof(TYPE) - 1);
-				} else if (len > sizeof(IShaderTranspiler::COMBINED_TEXTURE_SAMPLER) - 1 && std::string_view(charBuffer, sizeof(IShaderTranspiler::COMBINED_TEXTURE_SAMPLER) - 1) == IShaderTranspiler::COMBINED_TEXTURE_SAMPLER) {
-					auto offset = sizeof(IShaderTranspiler::COMBINED_TEXTURE_SAMPLER) - 1;
+				} else if (len > sizeof(COMBINED_TEXTURE_SAMPLER_HEADER) - 1 && std::string_view(charBuffer, sizeof(COMBINED_TEXTURE_SAMPLER_HEADER) - 1) == COMBINED_TEXTURE_SAMPLER_HEADER) {
+					auto offset = sizeof(COMBINED_TEXTURE_SAMPLER_HEADER) - 1;
 					if (auto pos = String::find(std::string_view(charBuffer + offset, len - offset), 's'); pos == std::string::npos || !pos) {
 						info.names.emplace_back(charBuffer);
 					} else {
@@ -419,7 +424,7 @@ namespace srk::modules::graphics::gl {
 		_uniformBlockLayouts.clear();
 	}
 
-	GLuint Program::_compileShader(const ProgramSource& source, ProgramStage stage, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& handler) {
+	GLuint Program::_compileShader(const ProgramSource& source, ProgramStage stage, const ProgramDefine* defines, size_t numDefines, const ProgramIncludeHandler& includeHandler, const ProgramTranspileHandler& transpileHandler) {
 		using namespace std::literals;
 
 		if (!source.isValid()) {
@@ -434,20 +439,38 @@ namespace srk::modules::graphics::gl {
 		}
 
 		if (source.language != ProgramLanguage::GLSL) {
-			auto g = _graphics.get<Graphics>();
-			if (auto transpiler = g->getShaderTranspiler(); transpiler) {
-				return _compileShader(transpiler->translate(source, IShaderTranspiler::Options(), ProgramLanguage::GLSL, g->getStringVersion(), defines, numDefines, [this, stage, &handler](const std::string_view& name) {
-					if (handler) return handler(*this, stage, name);
-					return ByteArray();
-				}), stage, defines, numDefines, handler);
+			if (transpileHandler) {
+				auto g = _graphics.get<Graphics>();
+
+				ProgramTranspileInfo pti;
+				pti.source = &source;
+				pti.targetLanguage = ProgramLanguage::GLSL;
+				pti.targetVersion = g->getStringVersion();
+				pti.defines = defines;
+				pti.numDefines = numDefines;
+				pti.includeHandler = includeHandler;
+
+				auto newSource = transpileHandler(pti);
+				if (!newSource.isValid()) {
+					g->error("to glsl transpile failed");
+					return 0;
+				}
+
+				if (newSource.language != ProgramLanguage::GLSL) {
+					g->error("transpiled language isnot glsl");
+					return 0;
+				}
+
+				return _compileShader(newSource, stage, shaderType);
 			} else {
 				return 0;
 			}
 		}
 
-		printaln(L"------ glsl shader code("sv, ProgramSource::toHLSLShaderStage(stage), L") ------\n"sv,
-			std::string_view((char*)source.data.getSource(), source.data.getLength()), L"\n------------------------------------"sv);
+		return _compileShader(source, stage, shaderType);
+	}
 
+	GLuint Program::_compileShader(const ProgramSource& source, ProgramStage stage, GLenum shaderType) {
 		GLuint shader = glCreateShader(shaderType);
 		auto s = (const char*)source.data.getSource();
 		auto len = (GLint)source.data.getLength();
@@ -462,7 +485,7 @@ namespace srk::modules::graphics::gl {
 			glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &len);
 			std::string info(len, 0);
 			glGetShaderInfoLog(shader, len, &len, info.data());
-			
+
 			GLsizei logLen = 0;
 			GLchar log[1024];
 			glGetShaderInfoLog(shader, sizeof(log), &logLen, log);

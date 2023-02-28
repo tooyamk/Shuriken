@@ -1,4 +1,4 @@
-#include "IWindowModule.h"
+#include "WindowModule.h"
 #include "srk/events/EventDispatcher.h"
 
 namespace srk::modules::windows {

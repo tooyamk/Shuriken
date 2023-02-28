@@ -3,7 +3,7 @@
 #include "Base.h"
 #include "srk/events/EventDispatcher.h"
 #include "srk/modules/graphics/ConstantBufferManager.h"
-#include "srk/modules/windows/IWindowModule.h"
+#include "srk/modules/windows/WindowModule.h"
 
 namespace srk::modules::graphics::d3d12 {
 	/*class BlendState;

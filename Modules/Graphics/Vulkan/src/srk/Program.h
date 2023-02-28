@@ -11,7 +11,7 @@ namespace srk::modules::graphics::vulkan {
 		virtual ~Program();
 
 		virtual const void* SRK_CALL getNative() const override;
-		virtual bool SRK_CALL create(const ProgramSource& vert, const ProgramSource& frag, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& includeHandler, const InputHandler& inputHandler) override;
+		virtual bool SRK_CALL create(const ProgramSource& vert, const ProgramSource& frag, const ProgramDefine* defines, size_t numDefines, const ProgramIncludeHandler& includeHandler, const ProgramInputHandler& inputHandler, const ProgramTranspileHandler& transpileHandler) override;
 		virtual const ProgramInfo& getInfo() const override;
 		virtual void SRK_CALL destroy() override;
 
@@ -92,8 +92,9 @@ namespace srk::modules::graphics::vulkan {
 		std::vector<const ConstantBufferLayout::Variables*> _tempVars;
 
 		static uint32_t SRK_CALL _calcSet0BingingOffset(const std::vector<std::vector<VkDescriptorSetLayoutBinding>>& descriptorSetLayoutBindings);
-		bool SRK_CALL _compileShader(const ProgramSource& source, ProgramStage stage, uint32_t set0BindingOffset, const ShaderDefine* defines, size_t numDefines, const IncludeHandler& includeHandler, const InputHandler& inputHandler, std::vector<std::vector<VkDescriptorSetLayoutBinding>>& descriptorSetLayoutBindings);
-		void SRK_CALL _parse(const SpvReflectShaderModule* data, const InputHandler& inputHandler, std::vector<std::vector<VkDescriptorSetLayoutBinding>>& descriptorSetLayoutBindings);
+		bool SRK_CALL _compileShader(const ProgramSource& source, ProgramStage stage, uint32_t set0BindingOffset, const ProgramDefine* defines, size_t numDefines, const ProgramIncludeHandler& includeHandler, const ProgramInputHandler& inputHandler, const ProgramTranspileHandler& transpileHandler, std::vector<std::vector<VkDescriptorSetLayoutBinding>>& descriptorSetLayoutBindings);
+		bool SRK_CALL _compileShader(const ProgramSource& source, ProgramStage stage, const ProgramInputHandler& inputHandler, std::vector<std::vector<VkDescriptorSetLayoutBinding>>& descriptorSetLayoutBindings);
+		void SRK_CALL _parse(const SpvReflectShaderModule* data, const ProgramInputHandler& inputHandler, std::vector<std::vector<VkDescriptorSetLayoutBinding>>& descriptorSetLayoutBindings);
 		void SRK_CALL _parseParamLayout(const SpvReflectShaderModule* data, VkShaderStageFlags stageFlags, std::vector<std::vector<VkDescriptorSetLayoutBinding>>& descriptorSetLayoutBindings);
 		void SRK_CALL _parseParamLayout(const SpvReflectTypeDescription* data, struct SpvReflectBlockVariable* members, std::vector<ConstantBufferLayout::Variables>& vars);
 		ConstantBuffer* _getConstantBuffer(const MyConstantBufferLayout& cbLayout, const IShaderParameterGetter& paramGetter);

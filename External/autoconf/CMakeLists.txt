@@ -14,12 +14,15 @@ set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_AUTOCONF_AUTOUPDATE ${binDir}/auto
 get_property(SRKPROJ_EXTERNAL_M4_NAME GLOBAL PROPERTY "SRKPROJ_EXTERNAL_M4_NAME")
 get_property(SRKPROJ_EXTERNAL_M4_EXE GLOBAL PROPERTY "SRKPROJ_EXTERNAL_M4_EXE")
 
+set(fileName autoconf-2.71.tar.xz)
+srkCheckExternalProjectVersion_DownloadFile(${PROJECT_BINARY_DIR} ${PROJECT_BINARY_DIR}/download/${fileName})
+
 include(ExternalProject)
 
 ExternalProject_Add(
     ${PROJECT_NAME}
     PREFIX ${PROJECT_BINARY_DIR}
-    URL https://ftp.gnu.org/gnu/autoconf/autoconf-2.71.tar.xz
+    URL https://ftp.gnu.org/gnu/autoconf/${fileName}
     TMP_DIR tmp
     STAMP_DIR stamp
     DOWNLOAD_DIR download
