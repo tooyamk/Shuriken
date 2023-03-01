@@ -4,6 +4,8 @@
 #if SRK_OS == SRK_OS_WINDOWS
 #	include <dxgi.h>
 #elif SRK_OS == SRK_OS_LINUX
+#	include <array>
+#	include <filesystem>
 #	include <fstream>
 #endif
 

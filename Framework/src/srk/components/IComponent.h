@@ -4,7 +4,7 @@
 #include "srk/RTTI.h"
 
 namespace srk {
-	class Node;
+	class SceneNode;
 }
 
 namespace srk::components {
@@ -32,22 +32,22 @@ namespace srk::components {
 			}
 		}
 
-		inline Node* SRK_CALL getNode() const {
+		inline SceneNode* SRK_CALL getSceneNode() const {
 			return _node;
 		}
-		inline void SRK_CALL attachNode(Node* node) {
+		inline void SRK_CALL attachSceneNode(SceneNode* node) {
 			auto old = _node;
 			_node = node;
-			_nodeChanged(old);
+			_sceneNodeChanged(old);
 		}
 
 	protected:
 		bool _enabled;
-		Node* _node;
+		SceneNode* _node;
 
 		IComponent();
 
-		virtual void SRK_CALL _nodeChanged(Node* old) {};
+		virtual void SRK_CALL _sceneNodeChanged(SceneNode* old) {};
 		virtual void SRK_CALL _enabledChanged() {};
 	};
 }

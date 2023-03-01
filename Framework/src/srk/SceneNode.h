@@ -13,11 +13,11 @@ namespace srk::components {
 }
 
 namespace srk {
-	class SRK_FW_DLL Node : public Ref {
+	class SRK_FW_DLL SceneNode : public Ref {
 	public:
 		class SRK_FW_DLL iterator {
 		public:
-			iterator(Node* node = nullptr) :
+			iterator(SceneNode* node = nullptr) :
 				_node(node) {
 			}
 
@@ -43,14 +43,14 @@ namespace srk {
 				return iterator(_node ? _node->_next : nullptr);
 			}
 
-			inline Node*& SRK_CALL operator*() {
+			inline SceneNode*& SRK_CALL operator*() {
 				return _node;
 			}
 
 		private:
-			Node* _node;
+			SceneNode* _node;
 
-			friend Node;
+			friend SceneNode;
 		};
 
 
@@ -70,8 +70,8 @@ namespace srk {
 		};
 
 
-		Node();
-		virtual ~Node();
+		SceneNode();
+		virtual ~SceneNode();
 
 		std::string name;
 
@@ -82,25 +82,25 @@ namespace srk {
 			return iterator();
 		}
 
-		inline Node* SRK_CALL getRoot() const {
+		inline SceneNode* SRK_CALL getRoot() const {
 			return _root;
 		}
-		inline Node* SRK_CALL getParent() const {
+		inline SceneNode* SRK_CALL getParent() const {
 			return _parent;
 		}
 		inline uint32_t SRK_CALL getNumChildren() const {
 			return _numChildren;
 		}
 
-		template<std::derived_from<Node> T, typename... Args>
+		template<std::derived_from<SceneNode> T, typename... Args>
 		inline T* SRK_CALL addChild(Args&&... args) {
 			auto child = new T(std::forward<Args>(args)...);
 			_addChild(child);
 			return child;
 		}
-		Result SRK_CALL addChild(Node* child);
-		Result SRK_CALL insertChild(Node* child, Node* before);
-		Result SRK_CALL removeChild(Node* child);
+		Result SRK_CALL addChild(SceneNode* child);
+		Result SRK_CALL insertChild(SceneNode* child, SceneNode* before);
+		Result SRK_CALL removeChild(SceneNode* child);
 		iterator SRK_CALL removeChild(const iterator& itr);
 		bool SRK_CALL removeFromParent();
 		size_t SRK_CALL removeAllChildren();
@@ -189,8 +189,8 @@ namespace srk {
 		 *
 		 * @param worldRot Target world rotation.
 		 */
-		static void SRK_CALL getLocalRotationFromWorld(const Node& node, const Quaternion<float32_t>& worldRot, Quaternion<float32_t>& dst);
-		inline static Quaternion<float32_t> SRK_CALL getLocalRotationFromWorld(const Node& node, const Quaternion<float32_t>& worldRot) {
+		static void SRK_CALL getLocalRotationFromWorld(const SceneNode& node, const Quaternion<float32_t>& worldRot, Quaternion<float32_t>& dst);
+		inline static Quaternion<float32_t> SRK_CALL getLocalRotationFromWorld(const SceneNode& node, const Quaternion<float32_t>& worldRot) {
 			Quaternion<float32_t> q(nullptr);
 			getLocalRotationFromWorld(node, worldRot, q);
 			return q;
@@ -214,13 +214,13 @@ namespace srk {
 		};
 
 
-		Node* _parent;
-		Node* _root;
+		SceneNode* _parent;
+		SceneNode* _root;
 
-		Node* _prev;
-		Node* _next;
+		SceneNode* _prev;
+		SceneNode* _next;
 
-		Node* _childHead;
+		SceneNode* _childHead;
 		uint32_t _numChildren;
 
 		mutable DirtyFlag _dirty;
@@ -233,17 +233,17 @@ namespace srk {
 		mutable Matrix3x4f32 _wm;
 		mutable Matrix3x4f32 _iwm;
 
-		inline void SRK_CALL _addChild(Node* child) {
+		inline void SRK_CALL _addChild(SceneNode* child) {
 			child->ref();
 			_addNode(child);
 			child->_parentChanged(_root);
 		}
 
-		void SRK_CALL _addNode(Node* child);
-		void SRK_CALL _insertNode(Node* child, Node* before);
-		void SRK_CALL _removeNode(Node* child);
+		void SRK_CALL _addNode(SceneNode* child);
+		void SRK_CALL _insertNode(SceneNode* child, SceneNode* before);
+		void SRK_CALL _removeNode(SceneNode* child);
 
-		inline void SRK_CALL _parentChanged(Node* root) {
+		inline void SRK_CALL _parentChanged(SceneNode* root) {
 			_root = root;
 
 			_checkNoticeUpdate(DirtyFlag::WM_IWM_WQ);

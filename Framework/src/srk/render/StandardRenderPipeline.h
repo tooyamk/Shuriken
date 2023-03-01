@@ -64,7 +64,7 @@ namespace srk::render {
 		void SRK_CALL _addLight(components::lights::ILight* light);
 
 		inline bool SRK_CALL _isValidComponent(components::IComponent* com) const {
-			return com && com->isEnalbed() && com->layer && com->getNode();
+			return com && com->isEnalbed() && com->layer && com->getSceneNode();
 		}
 
 		void SRK_CALL _appendRenderData(RenderDataCollector& collector);

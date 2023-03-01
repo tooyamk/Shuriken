@@ -1,5 +1,6 @@
 #include "Looper.h"
 #include "srk/Time.h"
+#include <thread>
 
 namespace srk {
 	Looper::Looper(float64_t interval) :

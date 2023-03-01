@@ -1,6 +1,6 @@
 #pragma once
 
-#include "srk/Node.h"
+#include "srk/SceneNode.h"
 
 namespace srk::components {
 	class Camera;

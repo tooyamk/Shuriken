@@ -8,7 +8,7 @@
 #include "srk/Material.h"
 #include "srk/Mesh.h"
 #include "srk/Monitor.h"
-#include "srk/Node.h"
+#include "srk/SceneNode.h"
 #include "srk/Shader.h"
 #include "srk/ShaderParameter.h"
 #include "srk/ShaderPredefine.h"

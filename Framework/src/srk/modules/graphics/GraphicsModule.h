@@ -340,73 +340,75 @@ namespace srk::modules::graphics {
 	};
 
 
-	struct SRK_FW_DLL SamplerFilter {
+	class SRK_FW_DLL SamplerFilter {
+	public:
+		using FeatureValueType = uint32_t;
+
 		SamplerFilter(SamplerFilterOperation op = SamplerFilterOperation::NORMAL, SamplerFilterMode min = SamplerFilterMode::LINEAR, SamplerFilterMode mag = SamplerFilterMode::LINEAR, SamplerFilterMode mipmap = SamplerFilterMode::LINEAR);
 		SamplerFilter(const SamplerFilter& filter);
 		SamplerFilter(SamplerFilter&& filter) noexcept;
 
 		inline bool SRK_CALL operator==(const SamplerFilter& val) const {
-			return featureValue == val.featureValue;
+			return getFeatureValue() == val.getFeatureValue();
 		}
 
 		inline bool SRK_CALL operator!=(const SamplerFilter& val) const {
-			return featureValue != val.featureValue;
+			return getFeatureValue() != val.getFeatureValue();
 		}
 
 		inline void SRK_CALL operator=(const SamplerFilter& val) {
-			featureValue = val.featureValue;
+			*(FeatureValueType*)this = val.getFeatureValue();
 		}
 
 		inline SamplerFilter& SRK_CALL operator=(SamplerFilter&& val) noexcept {
-			featureValue = val.featureValue;
+			*(FeatureValueType*)this = val.getFeatureValue();
 			return *this;
 		}
 
-		union {
-			uint32_t featureValue;
+		inline FeatureValueType SRK_CALL getFeatureValue() const {
+			return *(FeatureValueType*)this;
+		}
 
-			struct {
-				SamplerFilterOperation operation;
-				SamplerFilterMode minification;
-				SamplerFilterMode magnification;
-				SamplerFilterMode mipmap;
-			};
-		};
+		SamplerFilterOperation operation;
+		SamplerFilterMode minification;
+		SamplerFilterMode magnification;
+		SamplerFilterMode mipmap;
 	};
 
 
-	struct SRK_FW_DLL SamplerAddress {
+	class SRK_FW_DLL SamplerAddress {
+	public:
+		using FeatureValueType = uint32_t;
+
 		SamplerAddress(SamplerAddressMode u = SamplerAddressMode::REPEAT, SamplerAddressMode v = SamplerAddressMode::REPEAT, SamplerAddressMode w = SamplerAddressMode::REPEAT);
 		SamplerAddress(const SamplerAddress& address);
 		SamplerAddress(SamplerAddress&& address) noexcept;
 
 		inline bool SRK_CALL operator==(const SamplerAddress& val) const {
-			return featureValue == val.featureValue;
+			return getFeatureValue() == val.getFeatureValue();
 		}
 
 		inline bool SRK_CALL operator!=(const SamplerAddress& val) const {
-			return featureValue != val.featureValue;
+			return getFeatureValue() != val.getFeatureValue();
 		}
 
 		inline void SRK_CALL operator=(const SamplerAddress& val) {
-			featureValue = val.featureValue;
+			*(FeatureValueType*)this = val.getFeatureValue();
 		}
 
 		inline SamplerAddress& SRK_CALL operator=(SamplerAddress&& val) noexcept {
-			featureValue = val.featureValue;
+			*(FeatureValueType*)this = val.getFeatureValue();
 			return *this;
 		}
 
-		union {
-			uint32_t featureValue;
+		inline FeatureValueType SRK_CALL getFeatureValue() const {
+			return *(FeatureValueType*)this;
+		}
 
-			struct {
-				SamplerAddressMode u;
-				SamplerAddressMode v;
-				SamplerAddressMode w;
-				uint8_t reserved;
-			};
-		};
+		SamplerAddressMode u;
+		SamplerAddressMode v;
+		SamplerAddressMode w;
+		uint8_t reserved;
 	};
 
 
@@ -730,22 +732,31 @@ namespace srk::modules::graphics {
 	};
 
 
-	struct SRK_FW_DLL BlendFunc {
+	class SRK_FW_DLL BlendFunc {
+	public:
+		using FeatureValueType = uint32_t;
+
 		BlendFunc();
+		BlendFunc(nullptr_t);
 		BlendFunc(BlendFactor src, BlendFactor dst);
 		BlendFunc(BlendFactor srcColor, BlendFactor dstColor, BlendFactor srcAlpha, BlendFactor dstAlpha);
 		BlendFunc(const BlendFunc& func);
 
 		inline bool SRK_CALL operator==(const BlendFunc& val) const {
-			return featureValue == val.featureValue;
+			return getFeatureValue() == val.getFeatureValue();
 		}
 
 		inline bool SRK_CALL operator!=(const BlendFunc& val) const {
-			return featureValue != val.featureValue;
+			return getFeatureValue() != val.getFeatureValue();
 		}
 
 		inline void SRK_CALL operator=(const BlendFunc& val) {
-			featureValue = val.featureValue;
+			*(FeatureValueType*)this = val.getFeatureValue();
+		}
+
+		inline BlendFunc& SRK_CALL operator=(BlendFunc&& val) noexcept {
+			*(FeatureValueType*)this = val.getFeatureValue();
+			return *this;
 		}
 		
 		inline BlendFunc& SRK_CALL set(BlendFactor src, BlendFactor dst) {
@@ -761,40 +772,42 @@ namespace srk::modules::graphics {
 			return *this;
 		}
 
-		union {
-			uint32_t featureValue;
+		inline FeatureValueType SRK_CALL getFeatureValue() const {
+			return *(FeatureValueType*)this;
+		}
 
-			struct {
-				BlendFactor srcColor;
-				BlendFactor dstColor;
-				BlendFactor srcAlpha;
-				BlendFactor dstAlpha;
-			};
-		};
+		BlendFactor srcColor;
+		BlendFactor dstColor;
+		BlendFactor srcAlpha;
+		BlendFactor dstAlpha;
 	};
 
 
-	struct SRK_FW_DLL BlendEquation {
+	class SRK_FW_DLL BlendEquation {
+	public:
+		using FeatureValueType = uint16_t;
+
 		BlendEquation();
+		BlendEquation(nullptr_t);
 		BlendEquation(BlendOp op);
 		BlendEquation(BlendOp color, BlendOp alpha);
 		BlendEquation(const BlendEquation& op);
 		BlendEquation(BlendEquation&& op) noexcept;
 
 		inline bool SRK_CALL operator==(const BlendEquation& val) const {
-			return featureValue == val.featureValue;
+			return getFeatureValue() == val.getFeatureValue();
 		}
 
 		inline bool SRK_CALL operator!=(const BlendEquation& val) const {
-			return featureValue != val.featureValue;
+			return getFeatureValue() != val.getFeatureValue();
 		}
 
 		inline void SRK_CALL operator=(const BlendEquation& val) {
-			featureValue = val.featureValue;
+			*(FeatureValueType*)this = val.getFeatureValue();
 		}
 
 		inline BlendEquation& SRK_CALL operator=(BlendEquation&& val) noexcept {
-			featureValue = val.featureValue;
+			*(FeatureValueType*)this = val.getFeatureValue();
 			return *this;
 		}
 
@@ -813,50 +826,48 @@ namespace srk::modules::graphics {
 			return *this;
 		}
 
-		union {
-			uint16_t featureValue;
+		inline FeatureValueType SRK_CALL getFeatureValue() const {
+			return *(FeatureValueType*)this;
+		}
 
-			struct {
-				BlendOp color;
-				BlendOp alpha;
-			};
-		};
+		BlendOp color;
+		BlendOp alpha;
 	};
 
 
 	class SRK_FW_DLL RenderTargetBlendState {
 	public:
+		using FeatureValueType = uint64_t;
+
 		RenderTargetBlendState();
 		RenderTargetBlendState(const RenderTargetBlendState& other);
 		RenderTargetBlendState(RenderTargetBlendState&& other) noexcept;
 
 		inline bool SRK_CALL operator==(const RenderTargetBlendState& val) const {
-			return featureValue == val.featureValue;
+			return getFeatureValue() == val.getFeatureValue();
 		}
 
 		inline bool SRK_CALL operator!=(const RenderTargetBlendState& val) const {
-			return featureValue != val.featureValue;
+			return getFeatureValue() != val.getFeatureValue();
 		}
 
 		inline void SRK_CALL operator=(const RenderTargetBlendState& val) {
-			featureValue = val.featureValue;
+			*(FeatureValueType*)this = val.getFeatureValue();
 		}
 
 		inline RenderTargetBlendState& SRK_CALL operator=(RenderTargetBlendState&& val) noexcept {
-			featureValue = val.featureValue;
+			*(FeatureValueType*)this = val.getFeatureValue();
 			return *this;
 		}
 
-		union {
-			uint64_t featureValue;
+		inline FeatureValueType SRK_CALL getFeatureValue() const {
+			return *(FeatureValueType*)this;
+		}
 
-			struct {
-				bool enabled;
-				BlendEquation equation;
-				BlendFunc func;
-				Vec4<bool> writeMask;
-			};
-		};
+		bool enabled;
+		BlendEquation equation;
+		BlendFunc func;
+		Vec4<bool> writeMask;
 	};
 
 

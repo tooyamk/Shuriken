@@ -68,8 +68,8 @@ public:
 			IntrusivePtr<IWindow> win;
 			IntrusivePtr<Looper> looper;
 			IntrusivePtr<IGraphicsModule> g;
-			IntrusivePtr<Node> wrold;
-			IntrusivePtr<Node> model;
+			IntrusivePtr<SceneNode> wrold;
+			IntrusivePtr<SceneNode> model;
 			IntrusivePtr<Camera> camera;
 			IntrusivePtr<Material> material;
 			IntrusivePtr<Material> material2;
@@ -83,8 +83,8 @@ public:
 		renderData.g = graphics;
 
 		{
-			IntrusivePtr worldNode = new Node();
-			IntrusivePtr modelNode = worldNode->addChild<Node>();
+			IntrusivePtr worldNode = new SceneNode();
+			IntrusivePtr modelNode = worldNode->addChild<SceneNode>();
 			//modelNode = new Node();
 			//modelNode->setLocalScale(Vec3f32(4));
 			//modelNode->parentTranslate(Vec3f32(0, 3000.f, 0));
@@ -94,28 +94,28 @@ public:
 			//auto wm = modelNode->getWorldMatrix();
 			renderData.model = modelNode;
 			if (1) {
-				IntrusivePtr lightNode = worldNode->addChild<Node>();
+				IntrusivePtr lightNode = worldNode->addChild<SceneNode>();
 				lightNode->setLocalPosition(Vec3f32(-100, 0, -100));
 				auto light = renderData.lights.emplace_back(new PointLight());
-				light->attachNode(lightNode);
+				light->attachSceneNode(lightNode);
 				//light->setRadius(200);
 				lightNode->localRotate(Quaternion<float32_t>(nullptr).rotationY(Math::PI_4<float32_t>));
 				renderData.lights.emplace_back(light);
 			}
 			if (1) {
-				IntrusivePtr lightNode = worldNode->addChild<Node>();
+				IntrusivePtr lightNode = worldNode->addChild<SceneNode>();
 				lightNode->setLocalPosition(Vec3f32(100, 0, -100));
 				auto light = renderData.lights.emplace_back(new PointLight());
-				light->attachNode(lightNode);
+				light->attachSceneNode(lightNode);
 				//light->setRadius(1000);
 				lightNode->localRotate(Quaternion<float32_t>(nullptr).rotationY(Math::PI_4<float32_t>));
 				renderData.lights.emplace_back(light);
 			}
-			IntrusivePtr cameraNode = worldNode->addChild<Node>();
+			IntrusivePtr cameraNode = worldNode->addChild<SceneNode>();
 			//auto camera = new Camera();
 			//cameraNode->addComponent(camera);
 			renderData.camera = new Camera();
-			renderData.camera->attachNode(cameraNode);
+			renderData.camera->attachSceneNode(cameraNode);
 			//renderData.camera->clearColor.set(1.0f, 0, 0, 1.0f);
 			auto mat = new Material();
 			renderData.material = mat;
@@ -124,7 +124,7 @@ public:
 			IntrusivePtr renderer = new ForwardRenderer(*graphics);
 
 			{
-				renderData.camera->getNode()->localTranslate(Vec3f32(0.f, 0.f, -200.f));
+				renderData.camera->getSceneNode()->localTranslate(Vec3f32(0.f, 0.f, -200.f));
 			}
 
 			RenderTag forwardBaseTag("forward_base");
@@ -147,7 +147,7 @@ public:
 
 					auto renderableMesh = new RenderableMesh();
 					renderData.renderables.emplace_back(renderableMesh);
-					renderableMesh->attachNode(modelNode);
+					renderableMesh->attachSceneNode(modelNode);
 					auto pass = new RenderPass();
 					pass->state = new RenderState();
 					pass->state->rasterizer.state = rs;
@@ -300,7 +300,7 @@ public:
 	}
 
 private:
-	IntrusivePtr<Node> _worldRoot;
+	IntrusivePtr<SceneNode> _worldRoot;
 
 	void _resize(Camera& cam, const Vec2ui32& size) {
 		constexpr auto& zero = Math::ZERO<std::remove_cvref_t<decltype(size)>::ElementType>;

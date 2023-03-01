@@ -92,12 +92,12 @@ namespace srk::modules::graphics {
 		mipmap(mipmap) {
 	}
 
-	SamplerFilter::SamplerFilter(const SamplerFilter& filter) :
-		featureValue(filter.featureValue) {
+	SamplerFilter::SamplerFilter(const SamplerFilter& filter) {
+		*(FeatureValueType*)this = filter.getFeatureValue();
 	}
 
-	SamplerFilter::SamplerFilter(SamplerFilter&& filter) noexcept :
-		featureValue(filter.featureValue) {
+	SamplerFilter::SamplerFilter(SamplerFilter&& filter) noexcept {
+		*(FeatureValueType*)this = filter.getFeatureValue();
 	}
 
 
@@ -108,18 +108,23 @@ namespace srk::modules::graphics {
 		reserved(0) {
 	}
 
-	SamplerAddress::SamplerAddress(const SamplerAddress& address) :
-		featureValue(address.featureValue) {
+	SamplerAddress::SamplerAddress(const SamplerAddress& address) {
+		*(FeatureValueType*)this = address.getFeatureValue();
 	}
 
-	SamplerAddress::SamplerAddress(SamplerAddress&& address) noexcept :
-		featureValue(address.featureValue) {
+	SamplerAddress::SamplerAddress(SamplerAddress&& address) noexcept {
+		*(FeatureValueType*)this = address.getFeatureValue();
 	}
 
 
-	BlendFunc::BlendFunc() : BlendFunc(BlendFactor::ONE, BlendFactor::ZERO) {}
+	BlendFunc::BlendFunc() : BlendFunc(BlendFactor::ONE, BlendFactor::ZERO) {
+	}
 
-	BlendFunc::BlendFunc(BlendFactor src, BlendFactor dst) : BlendFunc(src, dst, src, dst) {}
+	BlendFunc::BlendFunc(nullptr_t) {
+	}
+
+	BlendFunc::BlendFunc(BlendFactor src, BlendFactor dst) : BlendFunc(src, dst, src, dst) {
+	}
 
 	BlendFunc::BlendFunc(BlendFactor srcColor, BlendFactor dstColor, BlendFactor srcAlpha, BlendFactor dstAlpha) :
 		srcColor(srcColor),
@@ -134,6 +139,9 @@ namespace srk::modules::graphics {
 	BlendEquation::BlendEquation() : BlendEquation(BlendOp::ADD) {
 	}
 
+	BlendEquation::BlendEquation(nullptr_t) {
+	}
+
 	BlendEquation::BlendEquation(BlendOp op) : BlendEquation(op, op) {
 	}
 
@@ -142,12 +150,12 @@ namespace srk::modules::graphics {
 		alpha(alpha) {
 	}
 
-	BlendEquation::BlendEquation(const BlendEquation& equation) :
-		featureValue(equation.featureValue) {
+	BlendEquation::BlendEquation(const BlendEquation& equation) {
+		*(FeatureValueType*)this = equation.getFeatureValue();
 	}
 
-	BlendEquation::BlendEquation(BlendEquation&& equation) noexcept :
-		featureValue(equation.featureValue) {
+	BlendEquation::BlendEquation(BlendEquation&& equation) noexcept {
+		*(FeatureValueType*)this = equation.getFeatureValue();
 	}
 
 
@@ -422,11 +430,17 @@ namespace srk::modules::graphics {
 	}
 
 	RenderTargetBlendState::RenderTargetBlendState(const RenderTargetBlendState& other) :
-		featureValue(other.featureValue) {
+		equation(nullptr),
+		func(nullptr),
+		writeMask(nullptr) {
+		*(FeatureValueType*)this = other.getFeatureValue();
 	}
 
 	RenderTargetBlendState::RenderTargetBlendState(RenderTargetBlendState&& other) noexcept :
-		featureValue(other.featureValue) {
+		equation(nullptr),
+		func(nullptr),
+		writeMask(nullptr) {
+		*(FeatureValueType*)this = other.getFeatureValue();
 	}
 
 

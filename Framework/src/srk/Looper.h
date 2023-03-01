@@ -1,7 +1,7 @@
 #pragma once
 
 #include "srk/events/EventDispatcher.h"
-#include <thread>
+#include <memory>
 
 #if SRK_OS == SRK_OS_WINDOWS
 #	include "mmsystem.h"

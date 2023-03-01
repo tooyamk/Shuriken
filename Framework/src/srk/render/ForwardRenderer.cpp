@@ -1,6 +1,6 @@
 #include "ForwardRenderer.h"
 #include "srk/Mesh.h"
-#include "srk/Node.h"
+#include "srk/SceneNode.h"
 #include "srk/ShaderPredefine.h"
 #include "srk/StackPopper.h"
 #include "srk/components/lights/DirectionLight.h"
@@ -87,7 +87,7 @@ namespace srk::render {
 				data->color->set(l->getColor() * l->getIntensity());
 
 				if (l->isKindOf<components::lights::DirectionLight>()) {
-					auto& wm = l->getNode()->getWorldMatrix();
+					auto& wm = l->getSceneNode()->getWorldMatrix();
 					Vec3f32 dir(wm(0, 2), wm(1, 2), wm(2, 2));
 					dir.normalize();
 					data->dir->set(dir);
@@ -96,7 +96,7 @@ namespace srk::render {
 				} else if (l->isKindOf<components::lights::PointLight>()) {
 					auto radius = ((const components::lights::PointLight*)l)->getRadius();
 
-					data->pos->set(l->getNode()->getWorldPosition());
+					data->pos->set(l->getSceneNode()->getWorldPosition());
 					data->attenuation->set(Vec3f32(1.f, 4.5f / radius, 75.f / (radius * radius)));
 
 					data->lightType = LIGHT_TYPE_POINT;
@@ -104,12 +104,12 @@ namespace srk::render {
 					auto sl = (const components::lights::SpotLight*)l;
 					auto radius = sl->getRadius();
 
-					auto& wm = l->getNode()->getWorldMatrix();
+					auto& wm = l->getSceneNode()->getWorldMatrix();
 					Vec3f32 dir(wm(0, 2), wm(1, 2), wm(2, 2));
 					dir.normalize();
 					data->dir->set(dir);
 
-					data->pos->set(l->getNode()->getWorldPosition());
+					data->pos->set(l->getSceneNode()->getWorldPosition());
 					data->attenuation->set(Vec4f32(1.f, 4.5f / radius, 75.f / (radius * radius), std::cos(sl->getSpotAngle() * 0.5f)));
 
 					data->lightType = LIGHT_TYPE_SPOT;

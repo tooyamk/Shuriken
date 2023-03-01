@@ -1,8 +1,8 @@
-#include "Node.h"
+#include "SceneNode.h"
 #include "srk/components/IComponent.h"
 
 namespace srk {
-	Node::Node() :
+	SceneNode::SceneNode() :
 		name(),
 		_parent(nullptr),
 		_root(this),
@@ -19,11 +19,11 @@ namespace srk {
 		_dirty(DirtyFlag::EMPTY) {
 	}
 
-	Node::~Node() {
+	SceneNode::~SceneNode() {
 		removeAllChildren();
 	}
 
-	Node::Result Node::addChild(Node* child) {
+	SceneNode::Result SceneNode::addChild(SceneNode* child) {
 		if (!child) return Result::NOT_NULL;
 		if (child->_parent) return Result::CANNOT_HAS_PARENT;
 		if (child == _root) return Result::CANNOT_IS_ROOT_OF_SELF;
@@ -33,7 +33,7 @@ namespace srk {
 		return Result::SUCCESS;
 	}
 
-	Node::Result Node::insertChild(Node* child, Node* before) {
+	SceneNode::Result SceneNode::insertChild(SceneNode* child, SceneNode* before) {
 		if (!child) return Result::NOT_NULL;
 
 		if (before) {
@@ -72,7 +72,7 @@ namespace srk {
 		}
 	}
 
-	Node::Result Node::removeChild(Node* child) {
+	SceneNode::Result SceneNode::removeChild(SceneNode* child) {
 		if (!child) return Result::NOT_NULL;
 		if (child->_parent != this) return Result::ISNOT_CHILD_OF_SELF;
 
@@ -83,7 +83,7 @@ namespace srk {
 		return Result::SUCCESS;
 	}
 
-	Node::iterator Node::removeChild(const iterator& itr) {
+	SceneNode::iterator SceneNode::removeChild(const iterator& itr) {
 		if (auto child = itr._node; child && child->_parent == this) {
 			auto next = child->_next;
 
@@ -97,11 +97,11 @@ namespace srk {
 		return iterator();
 	}
 
-	bool Node::removeFromParent() {
+	bool SceneNode::removeFromParent() {
 		return _parent ? _parent->removeChild(this) == Result::SUCCESS : false;
 	}
 
-	size_t Node::removeAllChildren() {
+	size_t SceneNode::removeAllChildren() {
 		if (_childHead) {
 			auto child = _childHead;
 			do {
@@ -125,38 +125,38 @@ namespace srk {
 		return 0;
 	}
 
-	void Node::setLocalPosition(const float32_t(&p)[3]) {
+	void SceneNode::setLocalPosition(const float32_t(&p)[3]) {
 		_lm.set<MatrixHint::NONE, Math::Data2DDesc(0, 3, 0, 0, 3, 1)>((float32_t(&)[3][1])p);
 
 		_checkNoticeUpdate(DirtyFlag::WM_IWM);
 	}
 
-	void Node::localTranslate(const float32_t(&p)[3]) {
+	void SceneNode::localTranslate(const float32_t(&p)[3]) {
 		updateLocalMatrix();
 		_lm.prependTranslation(p);
 
 		_checkNoticeUpdate(DirtyFlag::WM_IWM);
 	}
 
-	void Node::setLocalRotation(const Quaternion<float32_t>& q) {
+	void SceneNode::setLocalRotation(const Quaternion<float32_t>& q) {
 		_lr.set(q);
 
 		_checkNoticeUpdate(DirtyFlag::LM_WM_IWM_WQ, DirtyFlag::WM_IWM_WQ);
 	}
 
-	void Node::localRotate(const Quaternion<float32_t>& q) {
+	void SceneNode::localRotate(const Quaternion<float32_t>& q) {
 		_lr.prepend(q);
 
 		_checkNoticeUpdate(DirtyFlag::LM_WM_IWM_WQ, DirtyFlag::WM_IWM_WQ);
 	}
 
-	void Node::setLocalScale(const float32_t(&s)[3]) {
+	void SceneNode::setLocalScale(const float32_t(&s)[3]) {
 		_ls.set(s);
 
 		_checkNoticeUpdate(DirtyFlag::LM_WM_IWM, DirtyFlag::WM_IWM);
 	}
 
-	void Node::setLocalMatrix(const Matrix3x4f32& m) {
+	void SceneNode::setLocalMatrix(const Matrix3x4f32& m) {
 		using namespace srk::enum_operators;
 
 		_lm.set(m);
@@ -165,7 +165,7 @@ namespace srk {
 		_checkNoticeUpdateNow((_dirty & DirtyFlag::NOT_LM) | DirtyFlag::WM_IWM_WQ, DirtyFlag::WM_IWM_WQ);
 	}
 
-	void Node::setLocalTRS(const float32_t(&pos)[3], const Quaternion<float32_t>& rot, const float32_t(&scale)[3]) {
+	void SceneNode::setLocalTRS(const float32_t(&pos)[3], const Quaternion<float32_t>& rot, const float32_t(&scale)[3]) {
 		_lm.set<MatrixHint::NONE, Math::Data2DDesc(0, 3, 0, 0, 3, 1)>((float32_t(&)[3][1])pos);
 		_lr.set(rot);
 		_ls.set(scale);
@@ -173,19 +173,19 @@ namespace srk {
 		_checkNoticeUpdate(DirtyFlag::LM_WM_IWM_WQ, DirtyFlag::WM_IWM_WQ);
 	}
 
-	void Node::parentTranslate(const float32_t(&p)[3]) {
+	void SceneNode::parentTranslate(const float32_t(&p)[3]) {
 		_lm.appendTranslation(p);
 
 		_checkNoticeUpdate(DirtyFlag::WM_IWM);
 	}
 
-	void Node::parentRotate(const Quaternion<float32_t>& q) {
+	void SceneNode::parentRotate(const Quaternion<float32_t>& q) {
 		_lr.append(q);
 
 		_checkNoticeUpdate(DirtyFlag::LM_WM_IWM_WQ, DirtyFlag::WM_IWM_WQ);
 	}
 
-	void Node::setWorldPosition(const float32_t(&p)[3]) {
+	void SceneNode::setWorldPosition(const float32_t(&p)[3]) {
 		auto old = _dirty;
 		updateWorldMatrix();
 		_wm.set<MatrixHint::NONE, Math::Data2DDesc(0, 3, 0, 0, 3, 1)>((float32_t(&)[3][1])p);
@@ -193,7 +193,7 @@ namespace srk {
 		_worldPositionChanged(old);
 	}
 
-	void Node::worldTranslate(const float32_t(&p)[3]) {
+	void SceneNode::worldTranslate(const float32_t(&p)[3]) {
 		auto old = _dirty;
 		updateWorldMatrix();
 		_wm.prependTranslation(p);
@@ -201,13 +201,13 @@ namespace srk {
 		_worldPositionChanged(old);
 	}
 
-	void Node::setWorldRotation(const Quaternion<float32_t>& q) {
+	void SceneNode::setWorldRotation(const Quaternion<float32_t>& q) {
 		_wr.set(q);
 
 		_worldRotationChanged(_dirty);
 	}
 
-	void Node::worldRotate(const Quaternion<float32_t>& q) {
+	void SceneNode::worldRotate(const Quaternion<float32_t>& q) {
 		auto old = _dirty;
 		updateWorldRotation();
 		_wr.prepend(q);
@@ -215,7 +215,7 @@ namespace srk {
 		_worldRotationChanged(old);
 	}
 
-	void Node::setWorldMatrix(const Matrix3x4f32& m) {
+	void SceneNode::setWorldMatrix(const Matrix3x4f32& m) {
 		using namespace srk::enum_operators;
 
 		_wm.set(m);
@@ -236,7 +236,7 @@ namespace srk {
 		_checkNoticeUpdateNow((now & DirtyFlag::NOT_LM) | DirtyFlag::WQ, DirtyFlag::WM_IWM_WQ);
 	}
 
-	void Node::setIdentity() {
+	void SceneNode::setIdentity() {
 		if (!_lr.isIdentity() || _ls != decltype(_ls)::ONE || _lm(0, 3) != 0.f || _lm(1, 3) != 0.f || _lm(2, 3) != 0.f) {
 			_lm.identity();
 			_lr.set();
@@ -246,7 +246,7 @@ namespace srk {
 		}
 	}
 
-	void Node::updateLocalMatrix() const {
+	void SceneNode::updateLocalMatrix() const {
 		using namespace srk::enum_operators;
 
 		if ((_dirty & DirtyFlag::LM) != DirtyFlag::EMPTY) {
@@ -257,7 +257,7 @@ namespace srk {
 		}
 	}
 
-	void Node::updateWorldRotation() const {
+	void SceneNode::updateWorldRotation() const {
 		using namespace srk::enum_operators;
 
 		if ((_dirty & DirtyFlag::WQ) != DirtyFlag::EMPTY) {
@@ -272,7 +272,7 @@ namespace srk {
 		}
 	}
 
-	void Node::updateWorldMatrix() const {
+	void SceneNode::updateWorldMatrix() const {
 		using namespace srk::enum_operators;
 
 		if ((_dirty & DirtyFlag::WM) != DirtyFlag::EMPTY) {
@@ -288,7 +288,7 @@ namespace srk {
 		}
 	}
 
-	void Node::updateInverseWorldMatrix() const {
+	void SceneNode::updateInverseWorldMatrix() const {
 		using namespace srk::enum_operators;
 
 		if ((_dirty & DirtyFlag::IWM) != DirtyFlag::EMPTY) {
@@ -299,7 +299,7 @@ namespace srk {
 		}
 	}
 
-	void Node::getLocalRotationFromWorld(const Node& node, const Quaternion<float32_t>& worldRot, Quaternion<float32_t>& dst) {
+	void SceneNode::getLocalRotationFromWorld(const SceneNode& node, const Quaternion<float32_t>& worldRot, Quaternion<float32_t>& dst) {
 		if (node._parent) {
 			Quaternion<float32_t> i(nullptr);
 			node._parent->getWorldRotation().invert(i);
@@ -309,7 +309,7 @@ namespace srk {
 		}
 	}
 
-	void Node::_addNode(Node* child) {
+	void SceneNode::_addNode(SceneNode* child) {
 		if (_childHead) {
 			auto tail = _childHead->_prev;
 
@@ -325,7 +325,7 @@ namespace srk {
 		++_numChildren;
 	}
 
-	void Node::_insertNode(Node* child, Node* before) {
+	void SceneNode::_insertNode(SceneNode* child, SceneNode* before) {
 		child->_next = before;
 		child->_prev = before->_prev;
 		if (before == _childHead) {
@@ -339,7 +339,7 @@ namespace srk {
 		++_numChildren;
 	}
 
-	void Node::_removeNode(Node* child) {
+	void SceneNode::_removeNode(SceneNode* child) {
 		auto next = child->_next;
 
 		if (_childHead == child) {
@@ -364,7 +364,7 @@ namespace srk {
 		--_numChildren;
 	}
 
-	void Node::_worldPositionChanged(DirtyFlag oldDirty) {
+	void SceneNode::_worldPositionChanged(DirtyFlag oldDirty) {
 		using namespace srk::enum_operators;
 
 		float32_t p[3] = { _wm.data[0][3], _wm.data[1][3], _wm.data[2][3] };
@@ -375,7 +375,7 @@ namespace srk {
 		if (oldDirty != _dirty) _noticeUpdate(DirtyFlag::WM_IWM);
 	}
 
-	void Node::_worldRotationChanged(DirtyFlag oldDirty) {
+	void SceneNode::_worldRotationChanged(DirtyFlag oldDirty) {
 		using namespace srk::enum_operators;
 
 		if (_parent) {
@@ -391,7 +391,7 @@ namespace srk {
 		if (oldDirty != _dirty) _noticeUpdate(DirtyFlag::WM_IWM_WQ);
 	}
 
-	void Node::_noticeUpdate(DirtyFlag dirty) {
+	void SceneNode::_noticeUpdate(DirtyFlag dirty) {
 		auto node = _childHead;
 		while (node) {
 			node->_checkNoticeUpdate(dirty);

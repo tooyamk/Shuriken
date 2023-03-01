@@ -1,5 +1,5 @@
 #include "StandardRenderPipeline.h"
-#include "srk/Node.h"
+#include "srk/SceneNode.h"
 #include "srk/ShaderPredefine.h"
 #include "srk/components/Camera.h"
 #include "srk/components/lights/ILight.h"
@@ -67,7 +67,7 @@ namespace srk::render {
 			auto camLayer = cam->layer;
 
 			RenderDataCollector collector(*this);
-			collector.matrix.w2v = cam->getNode()->getInverseWorldMatrix();
+			collector.matrix.w2v = cam->getSceneNode()->getInverseWorldMatrix();
 			collector.matrix.w2v.append(cam->getProjectionMatrix(), collector.matrix.w2p);
 
 			for (auto& r : _renderables) {
@@ -80,7 +80,7 @@ namespace srk::render {
 			if (!_renderQueue.empty()) {
 				_builtinShaderParameters.m34_w2v->set(collector.matrix.w2v);
 				_builtinShaderParameters.m44_w2p->set(collector.matrix.w2p);
-				_builtinShaderParameters.v3_camPos->set(cam->getNode()->getWorldPosition());
+				_builtinShaderParameters.v3_camPos->set(cam->getSceneNode()->getWorldPosition());
 
 				std::stable_sort(_renderQueue.begin(), _renderQueue.end(), [](const RenderData* lhs, const RenderData* rhs) {
 					if (lhs->priority.level1 == rhs->priority.level1) {
@@ -145,7 +145,7 @@ namespace srk::render {
 
 			_renderers.emplace(data->renderer);
 
-			data->matrix.l2w = data->renderable->getNode()->getWorldMatrix();
+			data->matrix.l2w = data->renderable->getSceneNode()->getWorldMatrix();
 			data->matrix.l2w.append(collector.matrix.w2v, data->matrix.l2v);
 			data->matrix.l2w.append(collector.matrix.w2p, data->matrix.l2p);
 		}
