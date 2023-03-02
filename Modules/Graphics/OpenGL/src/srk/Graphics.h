@@ -17,15 +17,6 @@ namespace srk::modules::graphics::gl {
 		};
 
 
-		struct CreateConfig {
-			Ref* loader = nullptr;
-			windows::IWindow* win = nullptr;
-			GraphicsAdapter* adapter = nullptr;
-			SampleCount sampleCount = 1;
-			bool debug = false;
-		};
-
-
 		Graphics();
 		virtual ~Graphics();
 
@@ -77,7 +68,7 @@ namespace srk::modules::graphics::gl {
 		virtual void SRK_CALL setRenderTarget(IRenderTarget* rt) override;
 		virtual void SRK_CALL clear(ClearFlag flags, const Vec4f32& color, float32_t depth, size_t stencil) override;
 
-		bool SRK_CALL createDevice(const CreateConfig& conf);
+		bool SRK_CALL createDevice(Ref* loader, const CreateGrahpicsModuleDesc& desc);
 
 		inline void SRK_CALL error(const std::string_view& msg) {
 			_eventDispatcher->dispatchEvent(this, GraphicsEvent::ERR, (std::string_view*)&msg);

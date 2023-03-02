@@ -28,57 +28,54 @@ namespace srk::modules::graphics::d3d12 {
 		_release();
 	}
 
-	bool Graphics::createDevice(const CreateConfig& conf) {
+	bool Graphics::createDevice(Ref* loader, const CreateGrahpicsModuleDesc& desc) {
 		if (_device) return false;
-		if (conf.win) {
-			if (!conf.win->getNative(windows::WindowNative::WINDOW)) return false;
+		if (desc.window) {
+			if (!desc.window->getNative(windows::WindowNative::WINDOW)) return false;
 		} else {
-			if (!conf.offscreen) return false;
+			if (!desc.offscreen) return false;
 		}
 
-		if (conf.adapter) {
-			conf.createProcessInfo("specific adapter create device...");
-			return _createDevice(conf);
-		} else if (conf.offscreen) {
-			conf.createProcessInfo("null adapter create offscreen device...");
-			return _createDevice(conf);
+		if (desc.adapter) {
+			if (desc.createProcessInfoHandler) desc.createProcessInfoHandler("specific adapter create device...");
+			return _createDevice(loader, desc, desc.adapter);
+		} else if (desc.offscreen) {
+			if (desc.createProcessInfoHandler) desc.createProcessInfoHandler("null adapter create offscreen device...");
+			return _createDevice(loader, desc, nullptr);
 		} else {
-			conf.createProcessInfo("search adapter create device...");
+			if (desc.createProcessInfoHandler) desc.createProcessInfoHandler("search adapter create device...");
 
 			std::vector<GraphicsAdapter> adapters;
 			GraphicsAdapter::query(adapters);
 			std::vector<uint32_t> indices;
 			GraphicsAdapter::autoSort(adapters, indices);
 
-			auto conf2 = conf;
-
 			for (auto& idx : indices) {
-				conf2.adapter = &adapters[idx];
-				conf.createProcessInfo("found adapter create device...");
-				if (_createDevice(conf2)) return true;
+				if (desc.createProcessInfoHandler) desc.createProcessInfoHandler("found adapter create device...");
+				if (_createDevice(loader, desc, &adapters[idx])) return true;
 			}
 
-			conf.createProcessInfo("search adapter create device failed");
+			if (desc.createProcessInfoHandler) desc.createProcessInfoHandler("search adapter create device failed");
 
 			return false;
 		}
 	}
 
-	bool Graphics::_createDevice(const CreateConfig& conf) {
-		_isDebug = conf.debug;
+	bool Graphics::_createDevice(Ref* loader, const CreateGrahpicsModuleDesc& desc, const GraphicsAdapter* adapter) {
+		_isDebug = desc.debug;
 
 		DXObjGuard objs;
 
 		IDXGIFactory* dxgFctory = nullptr;
 		IDXGIAdapter* dxgAdapter = nullptr;
 
-		if (conf.adapter && (conf.win || !conf.offscreen)) {
+		if (adapter && (desc.window || !desc.offscreen)) {
 			if (FAILED(CreateDXGIFactory(IID_PPV_ARGS(&dxgFctory)))) {
-				conf.createProcessInfo("CreateDXGIFactory failed");
+				if (desc.createProcessInfoHandler) desc.createProcessInfoHandler("CreateDXGIFactory failed");
 				return false;
 			}
 			objs.add(dxgFctory);
-			dxgFctory->MakeWindowAssociation((HWND)conf.win->getNative(windows::WindowNative::WINDOW), DXGI_MWA_NO_WINDOW_CHANGES | DXGI_MWA_NO_ALT_ENTER);
+			dxgFctory->MakeWindowAssociation((HWND)desc.window->getNative(windows::WindowNative::WINDOW), DXGI_MWA_NO_WINDOW_CHANGES | DXGI_MWA_NO_ALT_ENTER);
 
 			for (UINT i = 0;; ++i) {
 				if (dxgFctory->EnumAdapters(i, &dxgAdapter) == DXGI_ERROR_NOT_FOUND) break;
@@ -86,7 +83,7 @@ namespace srk::modules::graphics::d3d12 {
 				break;
 
 				DXGI_ADAPTER_DESC desc;
-				if (FAILED(dxgAdapter->GetDesc(&desc)) || desc.DeviceId != conf.adapter->deviceId || desc.VendorId != conf.adapter->vendorId) {
+				if (FAILED(dxgAdapter->GetDesc(&desc)) || desc.DeviceId != adapter->deviceId || desc.VendorId != adapter->vendorId) {
 					dxgAdapter = nullptr;
 					continue;
 				} else {
@@ -95,8 +92,8 @@ namespace srk::modules::graphics::d3d12 {
 			}
 		}
 
-		if (!dxgAdapter && !conf.offscreen) {
-			conf.createProcessInfo("not found dxgAdapter");
+		if (!dxgAdapter && !desc.offscreen) {
+			if (desc.createProcessInfoHandler) desc.createProcessInfoHandler("not found dxgAdapter");
 			return false;
 		}
 
@@ -178,7 +175,7 @@ namespace srk::modules::graphics::d3d12 {
 			}
 		}
 		if (_featureLevel == (D3D_FEATURE_LEVEL)0) {
-			conf.createProcessInfo("CreateDevice failed");
+			if (desc.createProcessInfoHandler) desc.createProcessInfoHandler("CreateDevice failed");
 			_release();
 			return false;
 		}
@@ -215,9 +212,9 @@ namespace srk::modules::graphics::d3d12 {
 		}
 		}
 
-		D3D12_COMMAND_QUEUE_DESC desc;
-		desc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-		if (FAILED(_device->CreateCommandQueue(&desc, IID_PPV_ARGS(&_commandQueue)))) {
+		D3D12_COMMAND_QUEUE_DESC d3dCmdQueueDesc;
+		d3dCmdQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+		if (FAILED(_device->CreateCommandQueue(&d3dCmdQueueDesc, IID_PPV_ARGS(&_commandQueue)))) {
 			_release();
 			return false;
 		}
@@ -287,12 +284,12 @@ namespace srk::modules::graphics::d3d12 {
 		_defaultRasterizerState = new RasterizerState(*this, true);
 		_backDepthStencil = new DepthStencil(*this, true);*/
 
-		_loader = conf.loader;
-		_win = conf.win;
+		_loader = loader;
+		_win = desc.window;
 
 		//_resize(size);
 
-		conf.createProcessInfo("create device succeeded");
+		if (desc.createProcessInfoHandler) desc.createProcessInfoHandler("create device succeeded");
 
 		return true;
 	}

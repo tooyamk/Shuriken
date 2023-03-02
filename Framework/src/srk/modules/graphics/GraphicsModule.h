@@ -15,6 +15,10 @@ namespace srk::events {
 	class IEventDispatcher;
 }
 
+namespace srk::modules::windows {
+	class IWindow;
+}
+
 namespace srk::modules::graphics {
 	class IGraphicsModule;
 	class ITextureResource;
@@ -1361,5 +1365,24 @@ namespace srk::modules::graphics {
 
 		virtual void SRK_CALL setRenderTarget(IRenderTarget* rt) = 0;
 		virtual void SRK_CALL clear(ClearFlag flags, const Vec4f32& color, float32_t depth, size_t stencil) = 0;
+	};
+
+
+	enum class DriverType : uint8_t {
+		UNKNOWN,
+		HARDWARE,
+		SOFTWARE
+	};
+
+
+	class SRK_FW_DLL CreateGrahpicsModuleDesc {
+	public:
+		bool debug = false;
+		bool offscreen = false;
+		DriverType driverType = DriverType::UNKNOWN;
+		windows::IWindow* window = nullptr;
+		GraphicsAdapter* adapter = nullptr;
+		SampleCount sampleCount = 1;
+		std::function<void(const std::string_view&)> createProcessInfoHandler = nullptr;
 	};
 }

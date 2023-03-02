@@ -5,29 +5,16 @@
 
 #ifdef SRK_MODULE_EXPORTS
 namespace srk::modules::graphics {
-	extern "C" SRK_MODULE_DLL_EXPORT void* SRK_CREATE_MODULE_FN_NAME(Ref* loader, const SerializableObject* args) {
+	extern "C" SRK_MODULE_DLL_EXPORT void* SRK_CREATE_MODULE_FN_NAME(Ref* loader, const CreateGrahpicsModuleDesc& desc) {
 		using namespace std::literals;
 
-		gl::Graphics::CreateConfig conf;
-		conf.loader = loader;
-
-		if (!args) {
-			printaln(L"GlewGraphicsModule create error : no args"sv);
-			return nullptr;
-		}
-
-		conf.win = (decltype(conf.win))args->tryGet("win").toNumber<uintptr_t>();
-		if (!conf.win) {
+		if (!desc.window) {
 			printaln(L"GlewGraphicsModule create error : no window"sv);
 			return nullptr;
 		}
 
-		conf.adapter = (decltype(conf.adapter))args->tryGet("adapter").toNumber<uintptr_t>();
-		conf.sampleCount = args->tryGet("sampleCount").toNumber<decltype(conf.sampleCount)>(1);
-		conf.debug = args->tryGet("debug").toBool();
-
 		auto g = new gl::Graphics();
-		if (!g->createDevice(conf)) {
+		if (!g->createDevice(loader, desc)) {
 			Ref::unref(*g);
 			g = nullptr;
 		}

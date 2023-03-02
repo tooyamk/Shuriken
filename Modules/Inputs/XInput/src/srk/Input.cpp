@@ -3,9 +3,9 @@
 #include "CreateModule.h"
 
 namespace srk::modules::inputs::xinput {
-	Input::Input(Ref* loader, DeviceType filter) :
+	Input::Input(Ref* loader, const CreateInputModuleDesc& desc) :
 		_loader(loader),
-		_filter(filter),
+		_filters(desc.filters),
 		_eventDispatcher(new events::EventDispatcher<ModuleEvent>()) {
 	}
 
@@ -19,7 +19,7 @@ namespace srk::modules::inputs::xinput {
 	void Input::poll() {
 		using namespace srk::enum_operators;
 
-		if ((DeviceType::GAMEPAD & _filter) == DeviceType::UNKNOWN) return;
+		if ((DeviceType::GAMEPAD & _filters) == DeviceType::UNKNOWN) return;
 
 		std::vector<DeviceInfo> newDevices;
 

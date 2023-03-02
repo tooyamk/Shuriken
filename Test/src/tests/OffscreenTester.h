@@ -12,20 +12,17 @@ public:
 
 		//if (!gml->load(getDLLName("srk-module-graphics-gl"))) return 0;
 		if (!gml->load(getDllPath(u8"srk-module-graphics-d3d11"))) return 0;
-			
-		SerializableObject args;
 
-		std::function<void(const std::string_view&)> createProcessInfoHandler = [](const std::string_view& msg) {
+		CreateGrahpicsModuleDesc createGrahpicsModuleDesc;
+		createGrahpicsModuleDesc.sampleCount = 1;
+		createGrahpicsModuleDesc.offscreen = true;
+		createGrahpicsModuleDesc.driverType = DriverType::SOFTWARE;
+		createGrahpicsModuleDesc.debug = Environment::IS_DEBUG;
+		createGrahpicsModuleDesc.createProcessInfoHandler = [](const std::string_view& msg) {
 			printaln(msg);
 		};
 
-		args.insert("sampleCount", 1);
-		args.insert("offscreen", true);
-		args.insert("driverType", "software");
-		args.insert("createProcessInfoHandler", (uintptr_t)&createProcessInfoHandler);
-		args.insert("debug", Environment::IS_DEBUG);
-
-		auto graphics = gml->create(&args);
+		auto graphics = gml->create(createGrahpicsModuleDesc);
 		if (!graphics) return 0;
 
 		printaln("Graphics Version : ", graphics->getVersion());

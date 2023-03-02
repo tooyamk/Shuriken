@@ -6,10 +6,10 @@
 #include "srk/hash/xxHash.h"
 
 namespace srk::modules::inputs::hid_input {
-	Input::Input(Ref* loader, windows::IWindow* win, DeviceType filter) :
+	Input::Input(Ref* loader, const CreateInputModuleDesc& desc) :
 		_loader(loader),
-		_win(win),
-		_filter(filter),
+		_win(desc.window),
+		_filters(desc.filters),
 		_eventDispatcher(new events::EventDispatcher<ModuleEvent>()) {
 	}
 
@@ -24,7 +24,7 @@ namespace srk::modules::inputs::hid_input {
 		using namespace srk::extensions;
 		using namespace srk::enum_operators;
 
-		if ((DeviceType::GAMEPAD & _filter) == DeviceType::UNKNOWN) return;
+		if ((DeviceType::GAMEPAD & _filters) == DeviceType::UNKNOWN) return;
 
 		std::vector<InternalDeviceInfo> newDevices;
 		HID::enumDevices(&newDevices, [](const HIDDeviceInfo& info, void* custom) {

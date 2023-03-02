@@ -41,10 +41,10 @@ namespace srk::modules::graphics::gl {
 		_release();
 	}
 
-	bool Graphics::createDevice(const CreateConfig& conf) {
+	bool Graphics::createDevice(Ref* loader, const CreateGrahpicsModuleDesc& desc) {
 		using namespace srk::enum_operators;
 
-		if (!conf.win || !conf.win->getNative(windows::WindowNative::WINDOW)) return false;
+		if (!desc.window || !desc.window->getNative(windows::WindowNative::WINDOW)) return false;
 
 #if SRK_OS == SRK_OS_WINDOWS
 		if (_dc) return false;
@@ -84,8 +84,8 @@ namespace srk::modules::graphics::gl {
 		pfd.dwDamageMask = 0;
 		*/
 
-		if (!_glInit(conf.win)) {
-			_release(conf.win);
+		if (!_glInit(desc.window)) {
+			_release(desc.window);
 			return false;
 		}
 
@@ -93,13 +93,13 @@ namespace srk::modules::graphics::gl {
 		glGetIntegerv(GL_MAX_SAMPLES, &ival);
 		_deviceFeatures.maxSampleCount = ival;
 
-		auto sampleCount = conf.sampleCount;
+		auto sampleCount = desc.sampleCount;
 		if (sampleCount > _deviceFeatures.maxSampleCount) sampleCount = _deviceFeatures.maxSampleCount;
 
 #if SRK_OS == SRK_OS_WINDOWS
-		_dc = GetDC((HWND)conf.win->getNative(windows::WindowNative::WINDOW));
+		_dc = GetDC((HWND)desc.window->getNative(windows::WindowNative::WINDOW));
 		if (!_dc) {
-			_release(conf.win);
+			_release(desc.window);
 			return false;
 		}
 
@@ -124,13 +124,13 @@ namespace srk::modules::graphics::gl {
 
 		wglChoosePixelFormatARB(_dc, attrList, nullptr, 1, &nPixelFormat, &nPixCount);
 		if (nPixelFormat == -1) {
-			_release(conf.win);
+			_release(desc.window);
 			return false;
 		}
 
 		PIXELFORMATDESCRIPTOR pfd = { 0 };
 		if (!SetPixelFormat(_dc, nPixelFormat, &pfd)) {
-			_release(conf.win);
+			_release(desc.window);
 			return false;
 		}
 		
@@ -138,14 +138,14 @@ namespace srk::modules::graphics::gl {
 		attribs[0] = WGL_CONTEXT_PROFILE_MASK_ARB;
 		attribs[1] = WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB;
 
-		if (conf.debug) {
+		if (desc.debug) {
 			attribs[2] = WGL_CONTEXT_FLAGS_ARB;
 			attribs[3] = WGL_CONTEXT_DEBUG_BIT_ARB;
 		}
 
 		_rc = wglCreateContextAttribsARB(_dc, nullptr, attribs);
 		if (!_rc) {
-			_release(conf.win);
+			_release(desc.window);
 			return false;
 		}
 
@@ -160,7 +160,7 @@ namespace srk::modules::graphics::gl {
 			None
 		};
 
-		auto dis = (Display*)conf.win->getNative(windows::WindowNative::X_DISPLAY);
+		auto dis = (Display*)desc.window->getNative(windows::WindowNative::X_DISPLAY);
 		auto vi = glXChooseVisual(dis, DefaultScreen(dis), attrListDouble);//XVisualInfo*
 		if (vi) {
 			int32_t attrListSingle[] = {
@@ -172,7 +172,7 @@ namespace srk::modules::graphics::gl {
 			};
 			vi = glXChooseVisual(dis, DefaultScreen(dis), attrListSingle);
 			if (!vi) {
-				_release(conf.win);
+				_release(desc.window);
 				return false;
 			}
 		}
@@ -180,9 +180,9 @@ namespace srk::modules::graphics::gl {
 		_context = glXCreateContext(dis, vi, nullptr, True);
 		XFree(vi);
 
-		glXMakeCurrent(dis, (Window)conf.win->getNative(windows::WindowNative::WINDOW), _context);
+		glXMakeCurrent(dis, (Window)desc.window->getNative(windows::WindowNative::WINDOW), _context);
 #else
-		_release(conf.win);
+		_release(desc.window);
 		return false;
 #endif
 
@@ -193,7 +193,7 @@ namespace srk::modules::graphics::gl {
 		_strVer = String::toString(_intVer);
 		_deviceVersion = "OpenGL " + String::toString(_majorVer) + "." + String::toString(_minorVer);
 
-		if (conf.debug) {
+		if (desc.debug) {
 			if (isGreatThanOrEqualVersion(4, 3) || glIsSupported("GL_KHR_debug") || glIsSupported("GL_ARB_debug_output")) {
 				glEnable(GL_DEBUG_OUTPUT);
 				glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
@@ -272,8 +272,8 @@ namespace srk::modules::graphics::gl {
 		_defaultDepthStencilState = new DepthStencilState(*this, true);
 		_defaultRasterizerState = new RasterizerState(*this, true);
 
-		_loader = conf.loader;
-		_win = conf.win;
+		_loader = loader;
+		_win = desc.window;
 
 		_setInitState();
 		_resize(_win->getContentSize());

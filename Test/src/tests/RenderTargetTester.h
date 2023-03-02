@@ -12,7 +12,7 @@ public:
 		IntrusivePtr wml = new WindowModuleLoader();
 		if (!wml->load(getWindowDllPath())) return 0;
 
-		auto wm = wml->create(nullptr);
+		auto wm = wml->create();
 		if (!wm) return 0;
 
 		CreateWindowDesc desc;
@@ -26,13 +26,12 @@ public:
 		if (!gml->load(getDllPath("srk-module-graphics-gl"))) return 0;
 		//if (!gml->load(getDllPath("srk-module-graphics-d3d11"))) return 0;
 			
-		SerializableObject args;
+		CreateGrahpicsModuleDesc createGrahpicsModuleDesc;
+		createGrahpicsModuleDesc.window = win;
+		createGrahpicsModuleDesc.sampleCount = 4;
+		createGrahpicsModuleDesc.debug = Environment::IS_DEBUG;
 
-		args.insert("win", win.uintptr());
-		args.insert("sampleCount", 4);
-		args.insert("debug", Environment::IS_DEBUG);
-
-		auto graphics = gml->create(&args);
+		auto graphics = gml->create(createGrahpicsModuleDesc);
 		if (!graphics) return 0;
 
 		printaln("Graphics Version : ", graphics->getVersion());

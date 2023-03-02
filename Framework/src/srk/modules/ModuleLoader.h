@@ -6,10 +6,10 @@
 #include "srk/modules/windows/WindowModule.h"
 
 namespace srk::modules {
-	template<IntrusivePtrOperableObject RetType>
+	template<IntrusivePtrOperableObject RetType, typename... Args>
 	class ModuleLoader : public Ref {
 	public:
-		using CreateModuleFn = RetType*(*)(Ref* loader, const SerializableObject*);
+		using CreateModuleFn = RetType*(*)(Ref* loader, Args...);
 
 		ModuleLoader() : _createFn(nullptr) {}
 		virtual ~ModuleLoader() {}
@@ -36,9 +36,9 @@ namespace srk::modules {
 			_createFn = nullptr;
 		}
 
-		IntrusivePtr<RetType> SRK_CALL create(const SerializableObject* args) {
+		IntrusivePtr<RetType> SRK_CALL create(Args... args) {
 			if (!_createFn) return nullptr;
-			return (RetType*)_createFn(this, args);
+			return (RetType*)_createFn(this, args...);
 		}
 
 	protected:
@@ -46,7 +46,7 @@ namespace srk::modules {
 		CreateModuleFn _createFn;
 	};
 
-	using GraphicsModuleLoader = ModuleLoader<graphics::IGraphicsModule>;
-	using InputModuleLoader = ModuleLoader<inputs::IInputModule>;
+	using GraphicsModuleLoader = ModuleLoader<graphics::IGraphicsModule, const graphics::CreateGrahpicsModuleDesc&>;
+	using InputModuleLoader = ModuleLoader<inputs::IInputModule, const inputs::CreateInputModuleDesc&>;
 	using WindowModuleLoader = ModuleLoader<windows::IWindowModule>;
 }

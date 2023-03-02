@@ -69,10 +69,10 @@ public:
 		}
 	}
 
-	void SRK_CALL initInputModule(std::vector<IntrusivePtr<IInputModule>>& modules, const std::string_view& dll, const SerializableObject* args) {
+	void SRK_CALL initInputModule(std::vector<IntrusivePtr<IInputModule>>& modules, const std::string_view& dll, const CreateInputModuleDesc& desc) {
 		IntrusivePtr loader = new InputModuleLoader();
 		if (loader->load(dll)) {
-			if (auto im = loader->create(args); im) modules.emplace_back(im);
+			if (auto im = loader->create(desc); im) modules.emplace_back(im);
 		}
 	}
 
@@ -80,7 +80,7 @@ public:
 		IntrusivePtr wml = new WindowModuleLoader();
 		if (!wml->load(getWindowDllPath())) return 0;
 
-		auto wm = wml->create(nullptr);
+		auto wm = wml->create();
 		if (!wm) return 0;
 
 		CreateWindowDesc desc;
@@ -95,38 +95,35 @@ public:
 
 		std::vector<IntrusivePtr<IInputModule>> inputModules;
 
+		CreateInputModuleDesc createInputModuleDesc;
+		createInputModuleDesc.window = win;
+
 		if constexpr (Environment::OPERATING_SYSTEM == Environment::OperatingSystem::WINDOWS) {
 			if (1) {
-				SerializableObject args;
-				args.insert("win", win.uintptr());
-				//args.insert("ignoreXInputDevices", true);
-				args.insert("filter", DeviceType::GAMEPAD);
-				//initInputModule(inputModules, getDLLName("srk-module-input-direct-input"), &args);
+				createInputModuleDesc.filters = DeviceType::GAMEPAD;
+				auto ignoreXInputDevices = false;
+				void* argv[1];
+				argv[0] = &ignoreXInputDevices;
+				createInputModuleDesc.argc = 0;
+				createInputModuleDesc.argv = argv;
+				//initInputModule(inputModules, getDLLName("srk-module-input-direct-input"), inputModuleDesc);
 			}
 			if (1) {
-				SerializableObject args;
-				args.insert("win", win.uintptr());
-				args.insert("filter", DeviceType::KEYBOARD);
-				initInputModule(inputModules, getDllPath("srk-module-input-raw-input"), &args);
+				createInputModuleDesc.filters = DeviceType::KEYBOARD;
+				initInputModule(inputModules, getDllPath("srk-module-input-raw-input"), createInputModuleDesc);
 			}
 			if (1) {
-				SerializableObject args;
-				args.insert("win", win.uintptr());
-				args.insert("filter", DeviceType::GAMEPAD);
-				//initInputModule(inputModules, getDLLName("srk-module-input-xinput"), &args);
+				createInputModuleDesc.filters = DeviceType::GAMEPAD;
+				//initInputModule(inputModules, getDLLName("srk-module-input-xinput"), inputModuleDesc);
 			}
 			if (1) {
-				SerializableObject args;
-				args.insert("win", win.uintptr());
-				args.insert("filter", DeviceType::GAMEPAD);
-				//initInputModule(inputModules, getDLLName("srk-module-input-hid-input"), &args);
+				createInputModuleDesc.filters = DeviceType::GAMEPAD;
+				//initInputModule(inputModules, getDLLName("srk-module-input-hid-input"), inputModuleDesc);
 			}
 		} else if constexpr (Environment::OPERATING_SYSTEM == Environment::OperatingSystem::LINUX) {
 			if (1) {
-				SerializableObject args;
-				args.insert("win", win.uintptr());
-				args.insert("filter", DeviceType::GAMEPAD);
-				initInputModule(inputModules, getDllPath("srk-module-input-hid-input"), &args);
+				createInputModuleDesc.filters = DeviceType::GAMEPAD;
+				initInputModule(inputModules, getDllPath("srk-module-input-hid-input"), createInputModuleDesc);
 			}
 		}
 

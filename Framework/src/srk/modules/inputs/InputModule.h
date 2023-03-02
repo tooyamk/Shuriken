@@ -8,6 +8,10 @@ namespace srk::events {
 	template<typename EvtType> class IEventDispatcher;
 }
 
+namespace srk::modules::windows {
+	class IWindow;
+}
+
 namespace srk::modules::inputs {
 	/*++
 	DeviceStateType and DeviceEvent:
@@ -625,5 +629,14 @@ namespace srk::modules::inputs {
 		virtual IntrusivePtr<events::IEventDispatcher<ModuleEvent>> SRK_CALL getEventDispatcher() = 0;
 		virtual void SRK_CALL poll() = 0;
 		virtual IntrusivePtr<IInputDevice> SRK_CALL createDevice(const DeviceGUID& guid) = 0;
+	};
+
+
+	class SRK_FW_DLL CreateInputModuleDesc {
+	public:
+		DeviceType filters = DeviceType::UNKNOWN;
+		windows::IWindow* window = nullptr;
+		size_t argc = 0;
+		void** argv = nullptr;
 	};
 }

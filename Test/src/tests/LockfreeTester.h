@@ -58,7 +58,7 @@ public:
 		IntrusivePtr wml = new WindowModuleLoader();
 		if (!wml->load(getWindowDllPath())) return 0;
 
-		auto wm = wml->create(nullptr);
+		auto wm = wml->create();
 		if (!wm) return 0;
 
 		printFloat(0.0f);

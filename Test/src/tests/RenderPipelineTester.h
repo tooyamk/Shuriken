@@ -12,7 +12,7 @@ public:
 		IntrusivePtr wml = new WindowModuleLoader();
 		if (!wml->load(getWindowDllPath())) return 0;
 
-		auto wm = wml->create(nullptr);
+		auto wm = wml->create();
 		if (!wm) return 0;
 
 		CreateWindowDesc desc;
@@ -28,12 +28,10 @@ public:
 		//if (!gml->load(getDllPath("srk-module-graphics-gl"))) return 0;
 		//if (!gml->load(getDllPath("srk-module-graphics-vulkan"))) return 0;
 
-		SerializableObject args;
-
-		args.insert("win", win.uintptr());
-		args.insert("sampleCount", 4);
-		//args.insert("driverType", "SOFTWARE");
-		args.insert("debug", Environment::IS_DEBUG);
+		CreateGrahpicsModuleDesc createGrahpicsModuleDesc;
+		createGrahpicsModuleDesc.window = win;
+		createGrahpicsModuleDesc.sampleCount = 4;
+		createGrahpicsModuleDesc.debug = Environment::IS_DEBUG;
 
 		/*std::vector<GraphicsAdapter> adapters;
 		GraphicsAdapter::query(adapters);
@@ -44,7 +42,7 @@ public:
 			}
 		}*/
 
-		auto graphics = gml->create(&args);
+		auto graphics = gml->create(createGrahpicsModuleDesc);
 		if (!graphics) return 0;
 
 		printaln("Graphics Version : ", graphics->getVersion());

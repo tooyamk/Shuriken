@@ -8,12 +8,12 @@
 #include <oleauto.h>
 
 namespace srk::modules::inputs::direct_input {
-	Input::Input(Ref* loader, windows::IWindow* win, DeviceType filter, bool ignoreXInputDevices) :
+	Input::Input(Ref* loader, const CreateInputModuleDesc& desc) :
 		_loader(loader),
-		_win(win),
-		_filter(filter),
+		_win(desc.window),
+		_filters(desc.filters),
 		_eventDispatcher(new events::EventDispatcher<ModuleEvent>()),
-		_ignoreXInputDevices(ignoreXInputDevices),
+		_ignoreXInputDevices(desc.argc > 0 ? *(bool*)(desc.argv[0]) : false),
 		_di(nullptr) {
 	}
 
@@ -33,7 +33,7 @@ namespace srk::modules::inputs::direct_input {
 		std::vector<InternalDeviceInfo> newDevices;
 
 		EnumDevicesData data;
-		data.filter = _filter;
+		data.filter = _filters;
 		data.ignoreXInputDevices = _ignoreXInputDevices;
 		data.devices = &newDevices;
 

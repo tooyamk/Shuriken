@@ -36,51 +36,48 @@ namespace srk::modules::graphics::vulkan {
 		_release();
 	}
 
-	bool Graphics::createDevice(const CreateConfig& conf) {
+	bool Graphics::createDevice(Ref* loader, const CreateGrahpicsModuleDesc& desc) {
 		if (_vkStatus.device) return false;
-		if (conf.win) {
-			if (!conf.win->getNative(windows::WindowNative::WINDOW)) return false;
+		if (desc.window) {
+			if (!desc.window->getNative(windows::WindowNative::WINDOW)) return false;
 #if SRK_OS == SRK_OS_WINDOWS
 			//if (!conf.win->getNative(windows::WindowNative::MODULE)) return false;
 #endif
 		} else {
-			if (!conf.offscreen) return false;
+			if (!desc.offscreen) return false;
 		}
 
-		if (conf.adapter) {
-			conf.createProcessInfo("specific adapter create device...");
-			return _createDevice(conf);
+		if (desc.adapter) {
+			if (desc.createProcessInfoHandler) desc.createProcessInfoHandler("specific adapter create device...");
+			return _createDevice(loader, desc, desc.adapter);
 		} else {
-			conf.createProcessInfo("search adapter create device...");
+			if (desc.createProcessInfoHandler) desc.createProcessInfoHandler("search adapter create device...");
 
 			std::vector<GraphicsAdapter> adapters;
 			GraphicsAdapter::query(adapters);
 			std::vector<uint32_t> indices;
 			GraphicsAdapter::autoSort(adapters, indices);
 
-			auto conf2 = conf;
-
 			for (auto& idx : indices) {
-				conf2.adapter = &adapters[idx];
-				conf.createProcessInfo("found adapter create device...");
-				if (_createDevice(conf2)) return true;
+				if (desc.createProcessInfoHandler) desc.createProcessInfoHandler("found adapter create device...");
+				if (_createDevice(loader, desc, &adapters[idx])) return true;
 			}
 
-			conf.createProcessInfo("search adapter create device failed");
+			if (desc.createProcessInfoHandler) desc.createProcessInfoHandler("search adapter create device failed");
 
 			return false;
 		}
 	}
 
-	bool Graphics::_createDevice(const CreateConfig& conf) {
+	bool Graphics::_createDevice(Ref* loader, const CreateGrahpicsModuleDesc& desc, const GraphicsAdapter* adapter) {
 		using namespace srk::enum_operators;
 
 		auto success = false;
 		
 		do {
-			if (!_createVkInstance(conf.debug)) break;
-			if (!_createVkSurface(*conf.win)) break;
-			if (!_getVkPhysicalDevice(conf)) break;
+			if (!_createVkInstance(desc.debug)) break;
+			if (!_createVkSurface(*desc.window)) break;
+			if (!_getVkPhysicalDevice(adapter)) break;
 			if (!_createVkDevice()) break;
 			if (!_createMemAllocator()) break;
 			if (!_createVkCommandPool()) break;
@@ -138,7 +135,7 @@ namespace srk::modules::graphics::vulkan {
 		return success;
 	}
 
-	bool Graphics::_getVkPhysicalDevice(const CreateConfig& conf) {
+	bool Graphics::_getVkPhysicalDevice(const GraphicsAdapter* adapter) {
 		VkPhysicalDevice physicalDevice = nullptr;
 		do {
 			uint32_t physicalDeviceCount = 0;
@@ -148,10 +145,10 @@ namespace srk::modules::graphics::vulkan {
 			if (vkEnumeratePhysicalDevices(_vkStatus.instance, &physicalDeviceCount, physicalDevices.data()) != VK_SUCCESS) break;
 
 			VkPhysicalDeviceProperties physicalDeviceProperties;
-			if (conf.adapter) {
+			if (adapter) {
 				for (auto& device : physicalDevices) {
 					vkGetPhysicalDeviceProperties(device, &physicalDeviceProperties);
-					if (physicalDeviceProperties.vendorID == conf.adapter->vendorId && physicalDeviceProperties.deviceID == conf.adapter->deviceId) {
+					if (physicalDeviceProperties.vendorID == adapter->vendorId && physicalDeviceProperties.deviceID == adapter->deviceId) {
 						physicalDevice = device;
 						break;
 					}

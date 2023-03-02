@@ -5,10 +5,10 @@
 #include "srk/hash/xxHash.h"
 
 namespace srk::modules::inputs::raw_input {
-	Input::Input(Ref* loader, windows::IWindow* win, DeviceType filter) :
+	Input::Input(Ref* loader, const CreateInputModuleDesc& desc) :
 		_loader(loader),
-		_win(win),
-		_filter(filter),
+		_win(desc.window),
+		_filters(desc.filters),
 		_eventDispatcher(new events::EventDispatcher<ModuleEvent>()),
 		_numKeyboards(0),
 		_numMouses(0) {
@@ -50,7 +50,7 @@ namespace srk::modules::inputs::raw_input {
 				break;
 			}
 
-			if ((dt & _filter) == DeviceType::UNKNOWN) continue;
+			if ((dt & _filters) == DeviceType::UNKNOWN) continue;
 
 			auto& di = newDevices.emplace_back();
 			di.hDevice = dev.hDevice;

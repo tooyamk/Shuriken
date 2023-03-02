@@ -13,22 +13,6 @@ namespace srk::modules::graphics::d3d12 {
 
 	class SRK_MODULE_DLL Graphics : public IGraphicsModule {
 	public:
-		struct CreateConfig {
-			Ref* loader = nullptr;
-			windows::IWindow* win = nullptr;
-			GraphicsAdapter* adapter = nullptr;
-			SampleCount sampleCount = 1;
-			std::string driverType;
-			std::function<void(const std::string_view&)>* createProcessInfoHandler = nullptr;
-			bool debug = false;
-			bool offscreen = false;
-
-			inline void SRK_CALL createProcessInfo(const std::string_view& msg) const {
-				if (createProcessInfoHandler && *createProcessInfoHandler) (*createProcessInfoHandler)(msg);
-			}
-		};
-
-
 		Graphics();
 		virtual ~Graphics();
 
@@ -81,7 +65,7 @@ namespace srk::modules::graphics::d3d12 {
 		virtual void SRK_CALL setRenderTarget(IRenderTarget* rt) override;
 		virtual void SRK_CALL clear(ClearFlag flags, const Vec4f32& color, float32_t depth, size_t stencil) override;
 
-		bool SRK_CALL createDevice(const CreateConfig& conf);
+		bool SRK_CALL createDevice(Ref* loader, const CreateGrahpicsModuleDesc& desc);
 
 		inline void SRK_CALL error(const std::string_view& msg) {
 			_eventDispatcher->dispatchEvent(this, GraphicsEvent::ERR, (std::string_view*)&msg);
@@ -336,7 +320,7 @@ namespace srk::modules::graphics::d3d12 {
 
 		IntrusivePtr<events::IEventDispatcher<GraphicsEvent>> _eventDispatcher;
 
-		bool SRK_CALL _createDevice(const CreateConfig& conf);
+		bool SRK_CALL _createDevice(Ref* loader, const CreateGrahpicsModuleDesc& desc, const GraphicsAdapter* adapter);
 
 		/*void SRK_CALL _setBlendState(BlendState& state, const Vec4f32& constantFactors, uint32_t sampleMask);
 		void SRK_CALL _setDepthStencilState(DepthStencilState& state, uint32_t stencilRef);

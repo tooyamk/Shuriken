@@ -5,24 +5,15 @@
 
 #ifdef SRK_MODULE_EXPORTS
 namespace srk::modules::inputs {
-	extern "C" SRK_MODULE_DLL_EXPORT void* SRK_CREATE_MODULE_FN_NAME(Ref* loader, const SerializableObject* args) {
+	extern "C" SRK_MODULE_DLL_EXPORT void* SRK_CREATE_MODULE_FN_NAME(Ref* loader, const CreateInputModuleDesc& desc) {
 		using namespace std::literals;
-		using namespace srk::enum_operators;
 
-		if (!args) {
-			printaln(L"RawInputModule create error : no args"sv);
+		if (!desc.window) {
+			printaln(L"RawInputModule create error : no window"sv);
 			return nullptr;
 		}
 
-		auto win = (windows::IWindow*)args->tryGet("win").toNumber<uintptr_t>();
-		if (!win) {
-			printaln(L"RawInputModule create error : no win"sv);
-			return nullptr;
-		}
-
-		auto filter = args->tryGet("filter").toEnum<DeviceType>(DeviceType::KEYBOARD | DeviceType::MOUSE);
-
-		return new raw_input::Input(loader, win, filter);
+		return new raw_input::Input(loader, desc);
 	}
 }
 #endif

@@ -17,21 +17,6 @@ namespace srk::modules::graphics::vulkan {
 			bool customBorderColor;
 		};
 
-		struct CreateConfig {
-			Ref* loader = nullptr;
-			windows::IWindow* win = nullptr;
-			GraphicsAdapter* adapter = nullptr;
-			SampleCount sampleCount = 1;
-			std::string driverType;
-			std::function<void(const std::string_view&)>* createProcessInfoHandler = nullptr;
-			bool debug = false;
-			bool offscreen = false;
-
-			inline void SRK_CALL createProcessInfo(const std::string_view& msg) const {
-				if (createProcessInfoHandler && *createProcessInfoHandler) (*createProcessInfoHandler)(msg);
-			}
-		};
-
 
 		Graphics();
 		virtual ~Graphics();
@@ -85,7 +70,7 @@ namespace srk::modules::graphics::vulkan {
 		virtual void SRK_CALL setRenderTarget(IRenderTarget* rt) override;
 		virtual void SRK_CALL clear(ClearFlag flags, const Vec4f32& color, float32_t depth, size_t stencil) override;
 
-		bool SRK_CALL createDevice(const CreateConfig& conf);
+		bool SRK_CALL createDevice(Ref* loader, const CreateGrahpicsModuleDesc& desc);
 
 		inline void SRK_CALL error(const std::string_view& msg) {
 			_eventDispatcher->dispatchEvent(this, GraphicsEvent::ERR, (std::string_view*)&msg);
@@ -245,8 +230,8 @@ namespace srk::modules::graphics::vulkan {
 
 		IntrusivePtr<events::IEventDispatcher<GraphicsEvent>> _eventDispatcher;
 
-		bool SRK_CALL _createDevice(const CreateConfig& conf);
-		bool SRK_CALL _getVkPhysicalDevice(const CreateConfig& conf);
+		bool SRK_CALL _createDevice(Ref* loader, const CreateGrahpicsModuleDesc& desc, const GraphicsAdapter* adapter);
+		bool SRK_CALL _getVkPhysicalDevice(const GraphicsAdapter* adapter);
 		bool SRK_CALL _createVkInstance(bool debug);
 		bool SRK_CALL _createVkSurface(windows::IWindow& win);
 		bool SRK_CALL _createVkDevice();

@@ -5,23 +5,15 @@
 
 #ifdef SRK_MODULE_EXPORTS
 namespace srk::modules::inputs {
-	extern "C" SRK_MODULE_DLL_EXPORT void* SRK_CREATE_MODULE_FN_NAME(Ref* loader, const SerializableObject* args) {
+	extern "C" SRK_MODULE_DLL_EXPORT void* SRK_CREATE_MODULE_FN_NAME(Ref* loader, const CreateInputModuleDesc& desc) {
 		using namespace std::literals;
 
-		if (!args) {
-			printaln(L"HIDInputModule create error : no args"sv);
+		if (!desc.window) {
+			printaln(L"HIDInputModule create error : no window"sv);
 			return nullptr;
 		}
 
-		auto win = (windows::IWindow*)args->tryGet("win").toNumber<uintptr_t>();
-		if (!win) {
-			printaln(L"HIDInputModule create error : no win"sv);
-			return nullptr;
-		}
-
-		auto filter = args ? args->tryGet("filter").toEnum<DeviceType>(DeviceType::GAMEPAD) : DeviceType::GAMEPAD;
-
-		return new hid_input::Input(loader, win, filter);
+		return new hid_input::Input(loader, desc);
 	}
 }
 #endif

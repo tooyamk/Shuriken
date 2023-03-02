@@ -41,66 +41,63 @@ namespace srk::modules::graphics::d3d11 {
 		_release();
 	}
 
-	bool Graphics::createDevice(const CreateConfig& conf) {
+	bool Graphics::createDevice(Ref* loader, const CreateGrahpicsModuleDesc& desc) {
 		if (_device) return false;
-		if (conf.win) {
-			if (!conf.win->getNative(windows::WindowNative::WINDOW)) return false;
+		if (desc.window) {
+			if (!desc.window->getNative(windows::WindowNative::WINDOW)) return false;
 		} else {
-			if (!conf.offscreen) return false;
+			if (!desc.offscreen) return false;
 		}
 
-		if (conf.adapter) {
-			conf.createProcessInfo("specific adapter create device...");
-			return _createDevice(conf);
-		} else if (conf.offscreen) {
-			conf.createProcessInfo("null adapter create offscreen device...");
-			return _createDevice(conf);
+		if (desc.adapter) {
+			if (desc.createProcessInfoHandler) desc.createProcessInfoHandler("specific adapter create device...");
+			return _createDevice(loader, desc, desc.adapter);
+		} else if (desc.offscreen) {
+			if (desc.createProcessInfoHandler) desc.createProcessInfoHandler("null adapter create offscreen device...");
+			return _createDevice(loader, desc, nullptr);
 		} else {
-			conf.createProcessInfo("search adapter create device...");
+			if (desc.createProcessInfoHandler) desc.createProcessInfoHandler("search adapter create device...");
 
 			std::vector<GraphicsAdapter> adapters;
 			GraphicsAdapter::query(adapters);
 			std::vector<uint32_t> indices;
 			GraphicsAdapter::autoSort(adapters, indices);
 
-			auto conf2 = conf;
-
 			for (auto& idx : indices) {
-				conf2.adapter = &adapters[idx];
-				conf.createProcessInfo("found adapter create device...");
-				if (_createDevice(conf2)) return true;
+				if (desc.createProcessInfoHandler) desc.createProcessInfoHandler("found adapter create device...");
+				if (_createDevice(loader, desc, &adapters[idx])) return true;
 			}
 
-			conf.createProcessInfo("search adapter create device failed");
+			if (desc.createProcessInfoHandler) desc.createProcessInfoHandler("search adapter create device failed");
 
 			return false;
 		}
 	}
 
-	bool Graphics::_createDevice(const CreateConfig& conf) {
+	bool Graphics::_createDevice(Ref* loader, const CreateGrahpicsModuleDesc& desc, const GraphicsAdapter* adapter) {
 		using namespace srk::enum_operators;
 
-		_isDebug = conf.debug;
+		_isDebug = desc.debug;
 
 		DXObjGuard objs;
 
 		IDXGIFactory* dxgFctory = nullptr;
 		IDXGIAdapter* dxgAdapter = nullptr;
 
-		if (conf.adapter && (conf.win || !conf.offscreen)) {
+		if (adapter && (desc.window || !desc.offscreen)) {
 			if (FAILED(CreateDXGIFactory(IID_PPV_ARGS(&dxgFctory)))) {
-				conf.createProcessInfo("CreateDXGIFactory failed");
+				if (desc.createProcessInfoHandler) desc.createProcessInfoHandler("CreateDXGIFactory failed");
 				return false;
 			}
 			objs.add(dxgFctory);
-			dxgFctory->MakeWindowAssociation((HWND)conf.win->getNative(windows::WindowNative::WINDOW), DXGI_MWA_NO_WINDOW_CHANGES | DXGI_MWA_NO_ALT_ENTER);
+			dxgFctory->MakeWindowAssociation((HWND)desc.window->getNative(windows::WindowNative::WINDOW), DXGI_MWA_NO_WINDOW_CHANGES | DXGI_MWA_NO_ALT_ENTER);
 
 			for (UINT i = 0;; ++i) {
 				if (dxgFctory->EnumAdapters(i, &dxgAdapter) == DXGI_ERROR_NOT_FOUND) break;
 				objs.add(dxgAdapter);
 
 				DXGI_ADAPTER_DESC desc;
-				if (FAILED(dxgAdapter->GetDesc(&desc)) || desc.DeviceId != conf.adapter->deviceId || desc.VendorId != conf.adapter->vendorId) {
+				if (FAILED(dxgAdapter->GetDesc(&desc)) || desc.DeviceId != adapter->deviceId || desc.VendorId != adapter->vendorId) {
 					dxgAdapter = nullptr;
 					continue;
 				} else {
@@ -109,29 +106,29 @@ namespace srk::modules::graphics::d3d11 {
 			}
 		}
 
-		if (!dxgAdapter && !conf.offscreen) {
-			conf.createProcessInfo("not found dxgAdapter");
+		if (!dxgAdapter && !desc.offscreen) {
+			if (desc.createProcessInfoHandler) desc.createProcessInfoHandler("not found dxgAdapter");
 			return false;
 		}
 
 		auto fmt = DXGI_FORMAT_R8G8B8A8_UNORM;
 
-		if (dxgAdapter || !conf.offscreen) {
+		if (dxgAdapter || !desc.offscreen) {
 			uint32_t maxResolutionArea = 0;
 			float32_t maxRefreshRate = 0.f;
 			for (UINT i = 0;; ++i) {
 				IDXGIOutput* output = nullptr;
 				if (dxgAdapter->EnumOutputs(i, &output) == DXGI_ERROR_NOT_FOUND) {
-					conf.createProcessInfo("adapter enum outputs end");
+					if (desc.createProcessInfoHandler) desc.createProcessInfoHandler("adapter enum outputs end");
 					break;
 				}
 				objs.add(output);
 
-				conf.createProcessInfo("adapter output check mode...");
+				if (desc.createProcessInfoHandler) desc.createProcessInfoHandler("adapter output check mode...");
 
 				UINT numSupportedModes = 0;
 				if (FAILED(output->GetDisplayModeList(fmt, 0, &numSupportedModes, nullptr))) {
-					conf.createProcessInfo("adapter output GetDisplayModeList failed, skip");
+					if (desc.createProcessInfoHandler) desc.createProcessInfoHandler("adapter output GetDisplayModeList failed, skip");
 					continue;
 				}
 
@@ -139,7 +136,7 @@ namespace srk::modules::graphics::d3d11 {
 				memset(supportedModes, 0, sizeof(DXGI_MODE_DESC) * numSupportedModes);
 				if (FAILED(output->GetDisplayModeList(fmt, 0, &numSupportedModes, supportedModes))) {
 					delete[] supportedModes;
-					conf.createProcessInfo("adapter output GetDisplayModeList whit supportedModes failed, skip");
+					if (desc.createProcessInfoHandler) desc.createProcessInfoHandler("adapter output GetDisplayModeList whit supportedModes failed, skip");
 					continue;
 				}
 
@@ -163,16 +160,16 @@ namespace srk::modules::graphics::d3d11 {
 				delete[] supportedModes;
 			}
 
-			if (maxResolutionArea == 0 && !conf.offscreen) {
-				conf.createProcessInfo("not found suitable mode");
+			if (maxResolutionArea == 0 && !desc.offscreen) {
+				if (desc.createProcessInfoHandler) desc.createProcessInfoHandler("not found suitable mode");
 				return false;
 			}
 		}
 
 		auto driverType = D3D_DRIVER_TYPE_UNKNOWN;
-		if (conf.driverType == "hardware") {
+		if (desc.driverType == DriverType::HARDWARE) {
 			driverType = D3D_DRIVER_TYPE_HARDWARE;
-		} else if (conf.driverType == "software") {
+		} else if (desc.driverType == DriverType::SOFTWARE) {
 			driverType = D3D_DRIVER_TYPE_WARP;
 		}
 
@@ -195,7 +192,7 @@ namespace srk::modules::graphics::d3d11 {
 		constexpr UINT totalFeatureLevels = std::extent_v<decltype(featureLevels)>;
 
 		UINT creationFlags = 0;
-		if (conf.debug) creationFlags |= D3D11_CREATE_DEVICE_DEBUG;
+		if (desc.debug) creationFlags |= D3D11_CREATE_DEVICE_DEBUG;
 
 		/*
 		for (uint32_t i = 0; i < totalDriverTypes; ++i) {
@@ -213,7 +210,7 @@ namespace srk::modules::graphics::d3d11 {
 		if (FAILED(D3D11CreateDevice(driverType == D3D_DRIVER_TYPE_UNKNOWN ? dxgAdapter : nullptr, driverType, nullptr, creationFlags,
 			featureLevels, totalFeatureLevels,
 			D3D11_SDK_VERSION, (ID3D11Device**)&_device, nullptr, (ID3D11DeviceContext**)&_context))) {
-			conf.createProcessInfo("CreateDevice failed");
+			if (desc.createProcessInfoHandler) desc.createProcessInfoHandler("CreateDevice failed");
 			_release();
 			return false;
 		}
@@ -329,10 +326,10 @@ namespace srk::modules::graphics::d3d11 {
 			if (numQualityLevels) _deviceFeatures.maxSampleCount = i;
 		}
 
-		auto size = conf.offscreen ? Vec2ui32::ZERO : conf.win->getContentSize();
+		auto size = desc.offscreen ? Vec2ui32::ZERO : desc.window->getContentSize();
 
-		if (!conf.offscreen) {
-			_backBufferSampleCount = conf.sampleCount > _deviceFeatures.maxSampleCount ? _deviceFeatures.maxSampleCount : conf.sampleCount;
+		if (!desc.offscreen) {
+			_backBufferSampleCount = desc.sampleCount > _deviceFeatures.maxSampleCount ? _deviceFeatures.maxSampleCount : desc.sampleCount;
 			DXGI_SWAP_CHAIN_DESC swapChainDesc = { 0 };
 			swapChainDesc.BufferCount = 1;
 			swapChainDesc.BufferDesc.Width = size[0];
@@ -343,7 +340,7 @@ namespace srk::modules::graphics::d3d11 {
 			swapChainDesc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
 			swapChainDesc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
 			swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-			swapChainDesc.OutputWindow = (HWND)conf.win->getNative(windows::WindowNative::WINDOW);
+			swapChainDesc.OutputWindow = (HWND)desc.window->getNative(windows::WindowNative::WINDOW);
 			swapChainDesc.Windowed = true;
 			swapChainDesc.SampleDesc.Count = _backBufferSampleCount;
 			swapChainDesc.SampleDesc.Quality = 0;
@@ -351,7 +348,7 @@ namespace srk::modules::graphics::d3d11 {
 			swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 		
 			if (FAILED(dxgFctory->CreateSwapChain(_device, &swapChainDesc, (IDXGISwapChain**)&_swapChain))) {
-				conf.createProcessInfo("CreateSwapChain failed");
+				if (desc.createProcessInfoHandler) desc.createProcessInfoHandler("CreateSwapChain failed");
 				_release();
 				return false;
 			}
@@ -384,8 +381,8 @@ namespace srk::modules::graphics::d3d11 {
 		_defaultRasterizerState = new RasterizerState(*this, true);
 		_backDepthStencil = new DepthStencil(*this, true);
 
-		_loader = conf.loader;
-		_win = conf.win;
+		_loader = loader;
+		_win = desc.window;
 
 		_resize(size);
 
@@ -393,7 +390,7 @@ namespace srk::modules::graphics::d3d11 {
 		setDepthStencilState(nullptr);
 		setRasterizerState(nullptr);
 
-		conf.createProcessInfo("create device succeeded");
+		if (desc.createProcessInfoHandler) desc.createProcessInfoHandler("create device succeeded");
 
 		return true;
 	}

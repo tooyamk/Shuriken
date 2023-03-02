@@ -8,7 +8,7 @@
 namespace srk::modules::inputs::hid_input {
 	class SRK_MODULE_DLL Input : public IInputModule {
 	public:
-		Input(Ref* loader, windows::IWindow* win, DeviceType filter);
+		Input(Ref* loader, const CreateInputModuleDesc& desc);
 		virtual ~Input();
 
 		void operator delete(Input* p, std::destroying_delete_t) {
@@ -24,7 +24,7 @@ namespace srk::modules::inputs::hid_input {
 	private:
 		IntrusivePtr<Ref> _loader;
 		IntrusivePtr<windows::IWindow> _win;
-		DeviceType _filter;
+		DeviceType _filters;
 		IntrusivePtr<events::IEventDispatcher<ModuleEvent>> _eventDispatcher;
 
 		std::shared_mutex _mutex;

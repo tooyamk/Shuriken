@@ -6,7 +6,7 @@
 namespace srk::modules::inputs::xinput {
 	class SRK_MODULE_DLL Input : public IInputModule {
 	public:
-		Input(Ref* loader, DeviceType filter);
+		Input(Ref* loader, const CreateInputModuleDesc& desc);
 		virtual ~Input();
 
 		void operator delete(Input* p, std::destroying_delete_t) {
@@ -21,7 +21,7 @@ namespace srk::modules::inputs::xinput {
 
 	private:
 		IntrusivePtr<Ref> _loader;
-		DeviceType _filter;
+		DeviceType _filters;
 		IntrusivePtr<events::IEventDispatcher<ModuleEvent>> _eventDispatcher;
 
 		std::shared_mutex _mutex;
