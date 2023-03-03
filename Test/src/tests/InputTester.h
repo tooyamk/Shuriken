@@ -89,6 +89,8 @@ public:
 		auto win = wm->crerateWindow(desc);
 		if (!win) return 0;
 
+		printaln("UNDEFINED_AXIS_1 : ",  (size_t)GamepadVirtualKeyCode::UNDEFINED_AXIS_1, "UNDEFINED_BUTTON_1 : ", (size_t)GamepadVirtualKeyCode::UNDEFINED_BUTTON_1);
+
 		win->getEventDispatcher()->addEventListener(WindowEvent::CLOSED, createEventListener<WindowEvent>([](Event<WindowEvent>& e) {
 			std::exit(0);
 			}));
@@ -99,26 +101,33 @@ public:
 		createInputModuleDesc.window = win;
 
 		if constexpr (Environment::OPERATING_SYSTEM == Environment::OperatingSystem::WINDOWS) {
-			if (1) {
+			if (0) {
 				createInputModuleDesc.filters = DeviceType::GAMEPAD;
 				auto ignoreXInputDevices = false;
-				void* argv[1];
-				argv[0] = &ignoreXInputDevices;
-				createInputModuleDesc.argc = 0;
+				const void* argv[2];
+				argv[0] = "ignore-xinput-devices";
+				argv[1] = &ignoreXInputDevices;
+				createInputModuleDesc.argc = std::extent_v<decltype(argv)>;
 				createInputModuleDesc.argv = argv;
-				//initInputModule(inputModules, getDLLName("srk-module-input-direct-input"), inputModuleDesc);
+				initInputModule(inputModules, getDllPath("srk-module-input-direct-input"), createInputModuleDesc);
 			}
-			if (1) {
+			if (0) {
 				createInputModuleDesc.filters = DeviceType::KEYBOARD;
 				initInputModule(inputModules, getDllPath("srk-module-input-raw-input"), createInputModuleDesc);
 			}
 			if (1) {
 				createInputModuleDesc.filters = DeviceType::GAMEPAD;
-				//initInputModule(inputModules, getDLLName("srk-module-input-xinput"), inputModuleDesc);
+				auto useHiddenAPI1_4 = true;
+				const void* argv[2];
+				argv[0] = "use-hidden-api-1-4";
+				argv[1] = &useHiddenAPI1_4;
+				createInputModuleDesc.argc = std::extent_v<decltype(argv)>;
+				createInputModuleDesc.argv = argv;
+				initInputModule(inputModules, getDllPath("srk-module-input-xinput"), createInputModuleDesc);
 			}
 			if (1) {
 				createInputModuleDesc.filters = DeviceType::GAMEPAD;
-				//initInputModule(inputModules, getDLLName("srk-module-input-hid-input"), inputModuleDesc);
+				initInputModule(inputModules, getDllPath("srk-module-input-hid-input"), createInputModuleDesc);
 			}
 		} else if constexpr (Environment::OPERATING_SYSTEM == Environment::OperatingSystem::LINUX) {
 			if (1) {
@@ -146,11 +155,11 @@ public:
 				auto info = e.getData<DeviceInfo>();
 				printaln("input device connected : ", getDeviceTypeString(info->type), " vid = ", info->vendorID, " pid = ", info->productID, " guid = ", String::toString(info->guid.getData(), info->guid.getSize()));
 
-				if ((info->type & (DeviceType::KEYBOARD)) != DeviceType::UNKNOWN) {
-					//if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN) {
-					//if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN && info->vendorID == 0x54C) {
-					//if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN && info->vendorID == 0xF0D) {
-					//if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN && info->vendorID == 0x45E) {
+				//if ((info->type & (DeviceType::KEYBOARD)) != DeviceType::UNKNOWN) {
+				if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN) {
+				//if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN && info->vendorID == 0x54C) {
+				//if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN && info->vendorID == 0xF0D) {
+				//if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN && info->vendorID == 0x45E) {
 					auto im = e.getTarget<IInputModule>();
 					//if (getNumInputeDevice(DeviceType::GAMEPAD) > 0) return;
 					printaln("createing device : ", getDeviceTypeString(info->type), " vid = ", info->vendorID, " pid = ", info->productID, " guid = ", String::toString(info->guid.getData(), info->guid.getSize()));
@@ -280,7 +289,7 @@ public:
 							{
 								auto state = e.getData<DeviceState>();
 								//if (key->code != GamepadKeyCode::R_STICK) break;
-								printa("gamepad move : ", info.vendorID, " pid = ", info.productID, " ", getGamepadKeyString((GamepadVirtualKeyCode)state->code), " ", ((DeviceStateValue*)state->values)[0]);
+								printa("gamepad move : vid = ", info.vendorID, " pid = ", info.productID, " ", getGamepadKeyString((GamepadVirtualKeyCode)state->code), " ", ((DeviceStateValue*)state->values)[0]);
 								if (state->count > 1) printa("  ", ((DeviceStateValue*)state->values)[1]);
 								printaln();
 
@@ -304,7 +313,7 @@ public:
 								auto touches = (DeviceTouchStateValue*)state->values;
 								for (size_t i = 0; i < state->count; ++i) {
 									auto& touch = touches[i];
-									printaln("gamepad touch : ", info.vendorID, " pid = ", info.productID, " id = ", touch.fingerID, " isTouched = ", touch.isTouched, " x = ", touch.position[0], " y = ", touch.position[1]);
+									printaln("gamepad touch : vid = ", info.vendorID, " pid = ", info.productID, " id = ", touch.fingerID, " isTouched = ", touch.isTouched, " x = ", touch.position[0], " y = ", touch.position[1]);
 								}
 
 								break;

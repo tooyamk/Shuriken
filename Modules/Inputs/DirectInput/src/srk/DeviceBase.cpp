@@ -2,7 +2,7 @@
 #include "Input.h"
 
 namespace srk::modules::inputs::direct_input {
-	DeviceBase::DeviceBase(Input& input, LPDIRECTINPUTDEVICE8 dev, const InternalDeviceInfo& info) :
+	DeviceBase::DeviceBase(Input& input, LPDIRECTINPUTDEVICE8 dev, const DeviceInfo& info) :
 		_input(input),
 		_eventDispatcher(new events::EventDispatcher<DeviceEvent>()),
 		_info(info),

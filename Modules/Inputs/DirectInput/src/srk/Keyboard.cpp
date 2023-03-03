@@ -2,7 +2,7 @@
 #include "Input.h"
 
 namespace srk::modules::inputs::direct_input {
-	Keyboard::Keyboard(Input& input, LPDIRECTINPUTDEVICE8 dev, const InternalDeviceInfo& info) : DeviceBase(input, dev, info) {
+	Keyboard::Keyboard(Input& input, LPDIRECTINPUTDEVICE8 dev, const DeviceInfo& info) : DeviceBase(input, dev, info) {
 		_dev->SetDataFormat(&c_dfDIKeyboard);
 		_dev->SetCooperativeLevel(_input->getHWND(), DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
 		memset(_state, 0, sizeof(StateBuffer));

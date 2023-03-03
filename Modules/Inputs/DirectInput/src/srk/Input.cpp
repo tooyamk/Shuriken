@@ -13,8 +13,14 @@ namespace srk::modules::inputs::direct_input {
 		_win(desc.window),
 		_filters(desc.filters),
 		_eventDispatcher(new events::EventDispatcher<ModuleEvent>()),
-		_ignoreXInputDevices(desc.argc > 0 ? *(bool*)(desc.argv[0]) : false),
+		_ignoreXInputDevices(false),
 		_di(nullptr) {
+		for (size_t i = 1; i < desc.argc; i += 2) {
+			std::string_view key = (const char*)desc.argv[i - 1];
+			if (key == "ignore-xinput-devices") {
+				_ignoreXInputDevices = *(bool*)desc.argv[i];
+			}
+		}
 	}
 
 	Input::~Input() {
@@ -26,11 +32,10 @@ namespace srk::modules::inputs::direct_input {
 	}
 
 	void Input::poll() {
-		if (!_di) return;
 		auto m = GetModuleHandleW(nullptr);
-		if (FAILED(DirectInput8Create(m, DIRECTINPUT_VERSION, IID_IDirectInput8, (LPVOID*)&_di, nullptr))) return;
+		if (!_di && FAILED(DirectInput8Create(m, DIRECTINPUT_VERSION, IID_IDirectInput8, (LPVOID*)&_di, nullptr))) return;
 
-		std::vector<InternalDeviceInfo> newDevices;
+		std::vector<DeviceInfo> newDevices;
 
 		EnumDevicesData data;
 		data.filter = _filters;
@@ -200,10 +205,8 @@ namespace srk::modules::inputs::direct_input {
 
 			if ((dt & data->filter) == DeviceType::UNKNOWN) return DIENUM_CONTINUE;
 
-			bool isXInput = false;
-			if (type == DI8DEVTYPE_GAMEPAD) {
-				isXInput = isXInputDevice(pdidInstance->guidProduct);
-				if (isXInput && data->ignoreXInputDevices) return DIENUM_CONTINUE;
+			if (type == DI8DEVTYPE_GAMEPAD && data->ignoreXInputDevices) {
+				if (isXInputDevice(pdidInstance->guidProduct)) return DIENUM_CONTINUE;
 			}
 
 			auto& info = data->devices->emplace_back();
@@ -211,7 +214,6 @@ namespace srk::modules::inputs::direct_input {
 			info.type = dt;
 			info.vendorID = pdidInstance->guidProduct.Data1 & 0xFFFF;
 			info.productID = pdidInstance->guidProduct.Data1 >> 16 & 0xFFFF;
-			info.isXInput = isXInput;
 		}
 
 		return DIENUM_CONTINUE;

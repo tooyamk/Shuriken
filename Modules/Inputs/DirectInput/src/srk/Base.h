@@ -12,10 +12,3 @@
 #ifndef SAFE_RELEASE
 #	define SAFE_RELEASE(p) { if (p) { (p)->Release();  (p) = nullptr; } }
 #endif
-
-namespace srk::modules::inputs::direct_input {
-	class SRK_MODULE_DLL InternalDeviceInfo : public DeviceInfo {
-	public:
-		bool isXInput;
-	};
-}

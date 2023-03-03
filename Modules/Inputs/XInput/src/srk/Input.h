@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Base.h"
+#include "srk/DynamicLibraryLoader.h"
 #include "srk/events/EventDispatcher.h"
 
 namespace srk::modules::inputs::xinput {
@@ -20,9 +21,24 @@ namespace srk::modules::inputs::xinput {
 		virtual IntrusivePtr<IInputDevice> SRK_CALL createDevice(const DeviceGUID& guid) override;
 
 	private:
+		struct XINPUT_CAPABILITIES_EX {
+			XINPUT_CAPABILITIES Capabilities;
+			WORD vendorId;
+			WORD productId;
+			WORD versionNumber;
+			WORD unknown1;
+			DWORD unknown2;
+		};
+
+
+		using XInputGetCapabilitiesEx = DWORD(_stdcall*)(DWORD a1, DWORD dwUserIndex, DWORD dwFlags, XINPUT_CAPABILITIES_EX* pCapabilities);
+
 		IntrusivePtr<Ref> _loader;
 		DeviceType _filters;
 		IntrusivePtr<events::IEventDispatcher<ModuleEvent>> _eventDispatcher;
+
+		DynamicLibraryLoader _xinputDll;
+		XInputGetCapabilitiesEx _XInputGetCapabilitiesEx;
 
 		std::shared_mutex _mutex;
 		std::vector<DeviceInfo> _devices;
