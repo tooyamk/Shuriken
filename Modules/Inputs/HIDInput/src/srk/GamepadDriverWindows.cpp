@@ -70,7 +70,9 @@ namespace srk::modules::inputs::hid_input {
 			}
 		}
 
-		((uint8_t*)inputState)[0] = false;
+		_dpadUnit = Math::PI2<DeviceStateValue> / (_dpadCap.max - _dpadCap.min + 1);
+
+		((uint8_t*)inputState)[0] = 0;
 
 		return true;
 	}
@@ -119,11 +121,7 @@ namespace srk::modules::inputs::hid_input {
 		if (auto raw = (const uint8_t*)inputState; raw[0]) {
 			auto data = (const InputState*)(raw + 1);
 
-			if (_dpadCap.valid && data->dpad >= _dpadCap.min && data->dpad <= _dpadCap.max) {
-				if (_dpadCap.max - _dpadCap.min + 1 == 8) {
-					return (data->dpad - _dpadCap.min) * Math::PI_8<DeviceStateValue>;
-				}
-			}
+			if (_dpadCap.valid && data->dpad >= _dpadCap.min && data->dpad <= _dpadCap.max) return (data->dpad - _dpadCap.min) * _dpadUnit;
 		}
 
 		return Math::NEGATIVE_ONE<DeviceStateValue>;

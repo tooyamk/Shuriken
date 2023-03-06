@@ -64,6 +64,7 @@ namespace srk::modules::inputs::hid_input {
 		size_t _maxValidAxes;
 		AxisCap _axisCaps[MAX_AXES];
 		DPadCap _dpadCap;
+		DeviceStateValue _dpadUnit;
 
 		static uint32_t SRK_CALL _translateRangeVal(LONG rawVal, size_t numBits);
 

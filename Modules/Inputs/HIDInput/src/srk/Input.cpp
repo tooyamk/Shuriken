@@ -95,7 +95,7 @@ namespace srk::modules::inputs::hid_input {
 		GamepadKeyMapping keyMapping;
 		auto definedKeyMapping = false;
 		switch (di->vendorID) {
-		case 0x54C:
+		case 0x54CA:
 		{
 			if (di->productID == 0x5C4 || di->productID == 0x9CC) device = new GenericGamepad(*di, *new GamepadDriverDS4(*this, *hid));
 

@@ -20,9 +20,7 @@ namespace srk::modules::inputs::hid_input {
 	bool GamepadDriverDS4::init(void* inputState, void* outputState) {
 		using namespace srk::extensions;
 
-		auto data = (uint8_t*)inputState;
-		data[0] = 0;
-
+		((uint8_t*)inputState)[0] = 0;
 		memset(outputState, 0, OUTPUT_BUFFER_LENGTH);
 
 		_state = 0;
