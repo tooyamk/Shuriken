@@ -20,7 +20,6 @@ namespace srk::modules::inputs {
 
 		virtual bool SRK_CALL readStateFromDevice(void* inputState) const = 0;
 		virtual float32_t SRK_CALL readDataFromInputState(const void* inputState, GamepadKeyCodeAndFlags cf, float32_t defaultVal) const = 0;
-		virtual float32_t SRK_CALL readDpadDataFromInputState(const void* inputState) const = 0;
 		virtual DeviceState::CountType SRK_CALL customGetState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count, 
 			const void* inputState, void* custom, ReadWriteStateStartCallback readStateStartCallback, ReadWriteStateStartCallback readStateEndCallback) const = 0;
 		virtual void SRK_CALL customDispatch(const void* oldInputState, const void* newInputState, void* custom, DispatchCallback dispatchCallback) const = 0;
@@ -29,14 +28,14 @@ namespace srk::modules::inputs {
 		virtual DeviceState::CountType SRK_CALL customSetState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count, void* outputState, void* custom,
 			ReadWriteStateStartCallback writeStateStartCallback, ReadWriteStateStartCallback writeStateEndCallback) const = 0;
 
-		virtual void SRK_CALL setKeyMapping(GamepadKeyMapping& dst, const GamepadKeyMapping* src) const = 0;
+		virtual void SRK_CALL setKeyMapper(GamepadKeyMapper& dst, const GamepadKeyMapper* src) const = 0;
 
 		static float32_t SRK_CALL translate(float32_t state, GamepadKeyFlag flags);
 	};
 
 	class SRK_FW_DLL GenericGamepad : public IInputDevice {
 	public:
-		GenericGamepad(const DeviceInfo& info, IGenericGamepadDriver& driver, const GamepadKeyMapping* keyMapping = nullptr);
+		GenericGamepad(const DeviceInfo& info, IGenericGamepadDriver& driver, const GamepadKeyMapper* keyMapper = nullptr);
 		virtual ~GenericGamepad();
 
 		virtual IntrusivePtr<events::IEventDispatcher<DeviceEvent>> SRK_CALL getEventDispatcher() override;
@@ -59,7 +58,7 @@ namespace srk::modules::inputs {
 		uint8_t* _oldInputState;
 		uint8_t* _inputBuffer;
 
-		GamepadKeyMapping _keyMapping;
+		GamepadKeyMapper _keyMapper;
 		GamepadKeyDeadZone _deadZone;
 
 		mutable std::shared_mutex _inputMutex;
@@ -77,8 +76,8 @@ namespace srk::modules::inputs {
 
 		void SRK_CALL _setDeadZone(GamepadVirtualKeyCode keyCode, Vec2<DeviceStateValue>* deadZone);
 
-		inline static DeviceStateValue SRK_CALL _normalizeStick(float32_t value) {
-			return value * 2.0f - 1.0f;
+		inline static DeviceStateValue SRK_CALL _normalizeStick(float32_t smallVal, float32_t bigVal) {
+			return bigVal - smallVal;
 		}
 
 		void SRK_CALL _switchInputData();

@@ -55,7 +55,7 @@ namespace srk::modules::inputs::hid_input {
 		return 0;
 	}
 
-	void GamepadDriver::setKeyMapping(GamepadKeyMapping& dst, const GamepadKeyMapping* src) const {
+	void GamepadDriver::setKeyMapper(GamepadKeyMapper& dst, const GamepadKeyMapper* src) const {
 		if (src) {
 			dst = *src;
 		} else {

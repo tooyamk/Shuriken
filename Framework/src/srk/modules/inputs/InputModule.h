@@ -76,7 +76,7 @@ namespace srk::modules::inputs {
 
 	enum class DeviceStateType : uint8_t {
 		UNKNOWN,
-		KEY_MAPPING,
+		KEY_MAPPER,
 		KEY,
 		TOUCH,
 		TOUCH_RESOLUTION,
@@ -288,7 +288,6 @@ namespace srk::modules::inputs {
 
 	enum class GamepadKeyCode : uint8_t {
 		UNDEFINED,
-		IGNORED,
 
 		AXIS_START,
 		AXIS_1 = AXIS_START,
@@ -348,11 +347,22 @@ namespace srk::modules::inputs {
 		L_STICK = AXIS_START,
 		R_STICK,
 
+		DPAD,
+
 		SEPARATE_AXIS_START,
-		L_STICK_X = SEPARATE_AXIS_START,
-		L_STICK_Y,
-		R_STICK_X,
-		R_STICK_Y,
+		L_STICK_X_LEFT = SEPARATE_AXIS_START,
+		L_STICK_X_RIGHT,
+		L_STICK_Y_DOWN,
+		L_STICK_Y_UP,
+		R_STICK_X_LEFT,
+		R_STICK_X_RIGHT,
+		R_STICK_Y_DOWN,
+		R_STICK_Y_UP,
+
+		DPAD_LEFT,
+		DPAD_RIGHT,
+		DPAD_DOWN,
+		DPAD_UP,
 
 		L_TRIGGER,
 		L2 = L_TRIGGER,//DualShock
@@ -364,7 +374,6 @@ namespace srk::modules::inputs {
 		SEPARATE_AXIS_END = UNDEFINED_AXIS_END,
 		AXIS_END = UNDEFINED_AXIS_END,
 
-		DPAD,
 		//DPAD_CENTER,
 
 		BUTTON_START,
@@ -414,7 +423,7 @@ namespace srk::modules::inputs {
 	};
 
 
-	class SRK_FW_DLL GamepadKeyMapping {
+	class SRK_FW_DLL GamepadKeyMapper {
 	private:
 		class Value {
 		public:
@@ -448,11 +457,11 @@ namespace srk::modules::inputs {
 		};
 
 	public:
-		GamepadKeyMapping(nullptr_t) {};
-		GamepadKeyMapping();
-		GamepadKeyMapping(const GamepadKeyMapping& other);
+		GamepadKeyMapper(nullptr_t) {};
+		GamepadKeyMapper();
+		GamepadKeyMapper(const GamepadKeyMapper& other);
 
-		GamepadKeyMapping& SRK_CALL operator=(const GamepadKeyMapping& other);
+		GamepadKeyMapper& SRK_CALL operator=(const GamepadKeyMapper& other);
 
 		void SRK_CALL set(GamepadVirtualKeyCode vk, GamepadKeyCode k, GamepadKeyFlag flags = GamepadKeyFlag::NONE) {
 			if (vk >= VK_MIN && vk <= VK_MAX) _mapping[_getIndex(vk)].set(k, flags);
@@ -611,7 +620,7 @@ namespace srk::modules::inputs {
 		static DeviceStateValue SRK_CALL translate(DeviceStateValue value, const Vec2<DeviceStateValue>& deadZone);
 
 		/*++
-		x and y is normalized,[-1, 1], left up is (-1, -1).
+		x and y is normalized,[-1, 1], left down is (-1, -1).
 		--*/
 		static DeviceState::CountType SRK_CALL translate(DeviceStateValue x, DeviceStateValue y, const Vec2<DeviceStateValue>& deadZone, DeviceStateValue* out, DeviceState::CountType outCount);
 	};

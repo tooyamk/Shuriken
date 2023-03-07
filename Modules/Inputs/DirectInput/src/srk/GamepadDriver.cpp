@@ -60,7 +60,32 @@ namespace srk::modules::inputs::direct_input {
 			auto data = (const DIJOYSTATE*)(raw + 1);
 
 			if (cf.code >= GamepadKeyCode::AXIS_1 && cf.code <= MAX_AXIS_KEY) {
-				val = DeviceStateValue((&data->lX)[(uint32_t)(cf.code - GamepadKeyCode::AXIS_1)]) / 65535.0f;
+				switch (cf.code) {
+				case GamepadKeyCode::AXIS_1:
+				case GamepadKeyCode::AXIS_1 + 1:
+				case GamepadKeyCode::AXIS_1 + 2:
+				case GamepadKeyCode::AXIS_1 + 3:
+				case GamepadKeyCode::AXIS_1 + 4:
+				case GamepadKeyCode::AXIS_1 + 5:
+					val = DeviceStateValue((&data->lX)[(uint32_t)(cf.code - GamepadKeyCode::AXIS_1)]) / 65535.0f;
+					break;
+				case GamepadKeyCode::AXIS_1 + 6:
+				case GamepadKeyCode::AXIS_1 + 7:
+				{
+					if (auto i = data->rgdwPOV[0]; i == std::numeric_limits<DWORD>::max()) {
+						val = 0.5f;
+					} else {
+						auto a = Math::rad(DeviceStateValue(i) * Math::HUNDREDTH<DeviceStateValue>);
+						val = 0.5f + (cf.code == GamepadKeyCode::AXIS_1 + 6 ? std::sin(a) : std::cos(a)) * 0.5f;
+					}
+
+					break;
+				}
+				default:
+					val = defaultVal;
+					break;
+				}
+				
 			} else if (cf.code >= GamepadKeyCode::BUTTON_1 && cf.code <= MAX_BUTTON_KEY) {
 				val = data->rgbButtons[(uint32_t)(cf.code - GamepadKeyCode::BUTTON_1)] & 0x80 ? Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;
 			} else {
@@ -71,16 +96,6 @@ namespace srk::modules::inputs::direct_input {
 		}
 
 		return translate(val, cf.flags);
-	}
-
-	float32_t GamepadDriver::readDpadDataFromInputState(const void* inputState) const {
-		if (auto raw = (const uint8_t*)inputState; raw[0]) {
-			auto data = (const DIJOYSTATE*)(raw + 1);
-
-			if (auto val = data->rgdwPOV[0]; val != (std::numeric_limits<DWORD>::max)()) return Math::rad(DeviceStateValue(val) * Math::HUNDREDTH<DeviceStateValue>);
-		}
-
-		return Math::NEGATIVE_ONE<DeviceStateValue>;
 	}
 
 	DeviceState::CountType GamepadDriver::customGetState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count,
@@ -100,7 +115,7 @@ namespace srk::modules::inputs::direct_input {
 		return 0;
 	}
 
-	void GamepadDriver::setKeyMapping(GamepadKeyMapping& dst, const GamepadKeyMapping* src) const {
+	void GamepadDriver::setKeyMapper(GamepadKeyMapper& dst, const GamepadKeyMapper* src) const {
 		using namespace srk::enum_operators;
 
 		if (src) {
@@ -108,12 +123,23 @@ namespace srk::modules::inputs::direct_input {
 		} else {
 			dst.clear();
 
-			dst.set(GamepadVirtualKeyCode::L_STICK_X, GamepadKeyCode::AXIS_1);
-			dst.set(GamepadVirtualKeyCode::L_STICK_Y, GamepadKeyCode::AXIS_1 + 1);
-			dst.set(GamepadVirtualKeyCode::R_STICK_X, GamepadKeyCode::AXIS_1 + 3);
-			dst.set(GamepadVirtualKeyCode::R_STICK_Y, GamepadKeyCode::AXIS_1 + 4);
-			dst.set(GamepadVirtualKeyCode::L_TRIGGER, GamepadKeyCode::AXIS_1 + 2);
-			dst.set(GamepadVirtualKeyCode::R_TRIGGER, GamepadKeyCode::AXIS_1 + 2);
+			dst.set(GamepadVirtualKeyCode::L_STICK_X_LEFT, GamepadKeyCode::AXIS_1, GamepadKeyFlag::HALF_SMALL | GamepadKeyFlag::FLIP);
+			dst.set(GamepadVirtualKeyCode::L_STICK_X_RIGHT, GamepadKeyCode::AXIS_1, GamepadKeyFlag::HALF_BIG);
+			dst.set(GamepadVirtualKeyCode::L_STICK_Y_DOWN, GamepadKeyCode::AXIS_1 + 1, GamepadKeyFlag::HALF_BIG);
+			dst.set(GamepadVirtualKeyCode::L_STICK_Y_UP, GamepadKeyCode::AXIS_1 + 1, GamepadKeyFlag::HALF_SMALL | GamepadKeyFlag::FLIP);
+
+			dst.set(GamepadVirtualKeyCode::R_STICK_X_LEFT, GamepadKeyCode::AXIS_1 + 3, GamepadKeyFlag::HALF_SMALL | GamepadKeyFlag::FLIP);
+			dst.set(GamepadVirtualKeyCode::R_STICK_X_RIGHT, GamepadKeyCode::AXIS_1 + 3, GamepadKeyFlag::HALF_BIG);
+			dst.set(GamepadVirtualKeyCode::R_STICK_Y_DOWN, GamepadKeyCode::AXIS_1 + 4, GamepadKeyFlag::HALF_BIG);
+			dst.set(GamepadVirtualKeyCode::R_STICK_Y_UP, GamepadKeyCode::AXIS_1 + 4, GamepadKeyFlag::HALF_SMALL | GamepadKeyFlag::FLIP);
+
+			dst.set(GamepadVirtualKeyCode::DPAD_LEFT, GamepadKeyCode::AXIS_1 + 6, GamepadKeyFlag::HALF_SMALL | GamepadKeyFlag::FLIP);
+			dst.set(GamepadVirtualKeyCode::DPAD_RIGHT, GamepadKeyCode::AXIS_1 + 6, GamepadKeyFlag::HALF_BIG);
+			dst.set(GamepadVirtualKeyCode::DPAD_DOWN, GamepadKeyCode::AXIS_1 + 7, GamepadKeyFlag::HALF_SMALL | GamepadKeyFlag::FLIP);
+			dst.set(GamepadVirtualKeyCode::DPAD_UP, GamepadKeyCode::AXIS_1 + 7, GamepadKeyFlag::HALF_BIG);
+
+			dst.set(GamepadVirtualKeyCode::L_TRIGGER, GamepadKeyCode::AXIS_1 + 2, GamepadKeyFlag::HALF_BIG);
+			dst.set(GamepadVirtualKeyCode::R_TRIGGER, GamepadKeyCode::AXIS_1 + 2, GamepadKeyFlag::HALF_SMALL | GamepadKeyFlag::FLIP);
 
 			dst.set(GamepadVirtualKeyCode::A, GamepadKeyCode::BUTTON_1);
 			dst.set(GamepadVirtualKeyCode::B, GamepadKeyCode::BUTTON_1 + 1);

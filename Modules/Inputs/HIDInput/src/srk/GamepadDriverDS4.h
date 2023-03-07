@@ -17,7 +17,6 @@ namespace srk::modules::inputs::hid_input {
 
 		virtual bool SRK_CALL readStateFromDevice(void* inputState) const override;
 		virtual float32_t SRK_CALL readDataFromInputState(const void* inputState, GamepadKeyCodeAndFlags cf, float32_t defaultVal) const override;
-		virtual float32_t SRK_CALL readDpadDataFromInputState(const void* inputState) const override;
 		virtual DeviceState::CountType SRK_CALL customGetState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count,
 			const void* inputState, void* custom, ReadWriteStateStartCallback readStateStartCallback, ReadWriteStateStartCallback readStateEndCallback) const override;
 		virtual void SRK_CALL customDispatch(const void* oldInputState, const void* newInputState, void* custom, DispatchCallback dispatchCallback) const override;
@@ -26,7 +25,7 @@ namespace srk::modules::inputs::hid_input {
 		virtual DeviceState::CountType SRK_CALL customSetState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count, void* outputState, void* custom,
 			ReadWriteStateStartCallback writeStateStartCallback, ReadWriteStateStartCallback writeStateEndCallback) const override;
 
-		virtual void SRK_CALL setKeyMapping(GamepadKeyMapping& dst, const GamepadKeyMapping* src) const override;
+		virtual void SRK_CALL setKeyMapper(GamepadKeyMapper& dst, const GamepadKeyMapper* src) const override;
 
 	private:
 		enum class InputOffset : uint8_t {
@@ -163,7 +162,7 @@ namespace srk::modules::inputs::hid_input {
 
 		static constexpr size_t INPUT_BUFFER_LENGTH = 42;
 		static constexpr size_t OUTPUT_BUFFER_LENGTH = 11;
-		static constexpr size_t MAX_AXES = 6;
+		static constexpr size_t MAX_AXES = 6 + 2;
 		static constexpr size_t MAX_BUTTONS = 14;
 		static constexpr auto MAX_AXIS_KEY = (GamepadKeyCode)((std::underlying_type_t<GamepadKeyCode>)GamepadKeyCode::AXIS_1 + (MAX_AXES - 1));
 		static constexpr auto MAX_BUTTON_KEY = (GamepadKeyCode)((std::underlying_type_t<GamepadKeyCode>)GamepadKeyCode::BUTTON_1 + (MAX_BUTTONS - 1));

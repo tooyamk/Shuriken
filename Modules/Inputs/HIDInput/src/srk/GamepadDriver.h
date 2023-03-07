@@ -27,7 +27,7 @@ namespace srk::modules::inputs::hid_input {
 		virtual DeviceState::CountType SRK_CALL customSetState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count, void* outputState, void* custom,
 			ReadWriteStateStartCallback writeStateStartCallback, ReadWriteStateStartCallback writeStateEndCallback) const override;
 
-		virtual void SRK_CALL setKeyMapping(GamepadKeyMapping& dst, const GamepadKeyMapping* src) const override;
+		virtual void SRK_CALL setKeyMapper(GamepadKeyMapper& dst, const GamepadKeyMapper* src) const override;
 	};
 }
 #endif

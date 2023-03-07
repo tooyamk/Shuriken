@@ -3,27 +3,27 @@
 #include <bitset>
 
 namespace srk::modules::inputs {
-	GamepadKeyMapping::GamepadKeyMapping() {
+	GamepadKeyMapper::GamepadKeyMapper() {
 		clear();
 	}
 
-	GamepadKeyMapping::GamepadKeyMapping(const GamepadKeyMapping& other) {
+	GamepadKeyMapper::GamepadKeyMapper(const GamepadKeyMapper& other) {
 		*this = other;
 	}
 
-	GamepadKeyMapping& GamepadKeyMapping::operator=(const GamepadKeyMapping& other) {
+	GamepadKeyMapper& GamepadKeyMapper::operator=(const GamepadKeyMapper& other) {
 		for (size_t i = 0; i < _mapping.size(); ++i) _mapping[i] = other._mapping[i];
 		return *this;
 	}
 
-	bool GamepadKeyMapping::remove(GamepadVirtualKeyCode vk) {
+	bool GamepadKeyMapper::remove(GamepadVirtualKeyCode vk) {
 		if (vk < VK_MIN || vk > VK_MAX) return false;
 
 		_mapping[_getIndex(vk)].clear();
 		return true;
 	}
 
-	void GamepadKeyMapping::removeUndefined() {
+	void GamepadKeyMapper::removeUndefined() {
 		using namespace srk::enum_operators;
 
 		for (size_t i = 0; i < _mapping.size(); ++i) {
@@ -35,11 +35,11 @@ namespace srk::modules::inputs {
 		}
 	}
 
-	void GamepadKeyMapping::clear() {
+	void GamepadKeyMapper::clear() {
 		for (auto& cf : _mapping) cf.clear();
 	}
 
-	void GamepadKeyMapping::undefinedCompletion(size_t maxAxes, size_t maxButtons) {
+	void GamepadKeyMapper::undefinedCompletion(size_t maxAxes, size_t maxButtons) {
 		using namespace srk::enum_operators;
 
 		if (maxAxes > 64) maxAxes = 64;
@@ -173,7 +173,7 @@ namespace srk::modules::inputs {
 			return 1;
 		}
 
-		auto validLen = deadZone[0] + Math::ONE<DeviceStateValue> -deadZone[1];
+		auto validLen = deadZone[0] + Math::ONE<DeviceStateValue> - deadZone[1];
 		if (validLen == Math::ZERO<DeviceStateValue>) {
 			out[0] = Math::NEGATIVE_ONE<DeviceStateValue>;
 			if (outCount > 1) out[1] = Math::ZERO<DeviceStateValue>;
@@ -191,7 +191,7 @@ namespace srk::modules::inputs {
 			return 1;
 		}
 
-		out[0] = std::atan2(y, x) + Math::PI_2<DeviceStateValue>;
+		out[0] = std::atan2(-y, x) + Math::PI_2<DeviceStateValue>;
 		if (out[0] < Math::ZERO<DeviceStateValue>) out[0] += Math::PI2<DeviceStateValue>;
 		if (outCount > 1) out[1] = translate(len2 < Math::ONE<DeviceStateValue> ? std::sqrt(len2) : Math::ONE<DeviceStateValue>, deadZone);
 

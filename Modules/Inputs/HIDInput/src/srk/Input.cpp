@@ -92,8 +92,8 @@ namespace srk::modules::inputs::hid_input {
 		if (!hid) return nullptr;
 
 		IInputDevice* device = nullptr;
-		GamepadKeyMapping keyMapping;
-		auto definedKeyMapping = false;
+		GamepadKeyMapper keyMapper;
+		auto definedKeyMapper = false;
 		switch (di->vendorID) {
 		case 0x54CA:
 		{
@@ -105,7 +105,7 @@ namespace srk::modules::inputs::hid_input {
 			break;
 		}
 
-		if (!device) device = new GenericGamepad(*di, *new GamepadDriver(*this, *hid), definedKeyMapping ? &keyMapping : nullptr);
+		if (!device) device = new GenericGamepad(*di, *new GamepadDriver(*this, *hid), definedKeyMapper ? &keyMapper : nullptr);
 
 		return device;
 	}

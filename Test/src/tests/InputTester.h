@@ -11,6 +11,30 @@ public:
 			return "left stick";
 		case GamepadVirtualKeyCode::R_STICK:
 			return "right stick";
+		case GamepadVirtualKeyCode::L_STICK_X_LEFT:
+			return "left stick -x";
+		case GamepadVirtualKeyCode::L_STICK_X_RIGHT:
+			return "left stick +x";
+		case GamepadVirtualKeyCode::L_STICK_Y_DOWN:
+			return "left stick -y";
+		case GamepadVirtualKeyCode::L_STICK_Y_UP:
+			return "left stick +y";
+		case GamepadVirtualKeyCode::R_STICK_X_LEFT:
+			return "right stick -x";
+		case GamepadVirtualKeyCode::R_STICK_X_RIGHT:
+			return "right stick +x";
+		case GamepadVirtualKeyCode::R_STICK_Y_DOWN:
+			return "right stick -y";
+		case GamepadVirtualKeyCode::R_STICK_Y_UP:
+			return "right stick +y";
+		case GamepadVirtualKeyCode::DPAD_LEFT:
+			return "dpad -x";
+		case GamepadVirtualKeyCode::DPAD_RIGHT:
+			return "dpad +x";
+		case GamepadVirtualKeyCode::DPAD_DOWN:
+			return "dpad -y";
+		case GamepadVirtualKeyCode::DPAD_UP:
+			return "dpad +y";
 		case GamepadVirtualKeyCode::L_THUMB:
 			return "left thumb";
 		case GamepadVirtualKeyCode::R_THUMB:
@@ -51,7 +75,7 @@ public:
 				return "undefined button " + String::toString((uint32_t)(code - GamepadVirtualKeyCode::UNDEFINED_BUTTON_1) + 1);
 			}
 
-			return "unknown";
+			return "unknown " + String::toString((size_t)code);
 		}
 		}
 	}
@@ -89,7 +113,7 @@ public:
 		auto win = wm->crerateWindow(desc);
 		if (!win) return 0;
 
-		printaln("UNDEFINED_AXIS_1 : ",  (size_t)GamepadVirtualKeyCode::UNDEFINED_AXIS_1, "UNDEFINED_BUTTON_1 : ", (size_t)GamepadVirtualKeyCode::UNDEFINED_BUTTON_1);
+		printaln("UNDEFINED_AXIS_1 : ",  (size_t)GamepadVirtualKeyCode::UNDEFINED_AXIS_1, " UNDEFINED_BUTTON_1 : ", (size_t)GamepadVirtualKeyCode::UNDEFINED_BUTTON_1);
 
 		win->getEventDispatcher()->addEventListener(WindowEvent::CLOSED, createEventListener<WindowEvent>([](Event<WindowEvent>& e) {
 			std::exit(0);
@@ -101,7 +125,7 @@ public:
 		createInputModuleDesc.window = win;
 
 		if constexpr (Environment::OPERATING_SYSTEM == Environment::OperatingSystem::WINDOWS) {
-			if (0) {
+			if (1) {
 				createInputModuleDesc.filters = DeviceType::GAMEPAD;
 				auto ignoreXInputDevices = false;
 				const void* argv[2];
@@ -115,7 +139,7 @@ public:
 				createInputModuleDesc.filters = DeviceType::KEYBOARD;
 				initInputModule(inputModules, getDllPath("srk-module-input-raw-input"), createInputModuleDesc);
 			}
-			if (1) {
+			if (0) {
 				createInputModuleDesc.filters = DeviceType::GAMEPAD;
 				auto useHiddenAPI1_4 = true;
 				const void* argv[2];
@@ -125,7 +149,7 @@ public:
 				createInputModuleDesc.argv = argv;
 				initInputModule(inputModules, getDllPath("srk-module-input-xinput"), createInputModuleDesc);
 			}
-			if (1) {
+			if (0) {
 				createInputModuleDesc.filters = DeviceType::GAMEPAD;
 				initInputModule(inputModules, getDllPath("srk-module-input-hid-input"), createInputModuleDesc);
 			}
@@ -166,10 +190,28 @@ public:
 					if (auto device = im->createDevice(info->guid); device) {
 						printaln("created device : ", getDeviceTypeString(info->type), " vid = ", info->vendorID, " pid = ", info->productID, " guid = ", String::toString(info->guid.getData(), info->guid.getSize()));
 						{
-							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::L_STICK, &Math::TWENTIETH<DeviceStateValue>, 1);
-							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::R_STICK, &Math::TWENTIETH<DeviceStateValue>, 1);
-							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::L_TRIGGER, &Math::TWENTIETH<DeviceStateValue>, 1);
-							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::R_TRIGGER, &Math::TWENTIETH<DeviceStateValue>, 1);
+							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::L_STICK, &Math::TENTH<DeviceStateValue>, 1);
+							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::R_STICK, &Math::TENTH<DeviceStateValue>, 1);
+							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::L_STICK_X_LEFT, &Math::TENTH<DeviceStateValue>, 1);
+							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::L_STICK_X_RIGHT, &Math::TENTH<DeviceStateValue>, 1);
+							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::L_STICK_Y_DOWN, &Math::TENTH<DeviceStateValue>, 1);
+							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::L_STICK_Y_UP, &Math::TENTH<DeviceStateValue>, 1);
+							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::R_STICK_X_LEFT, &Math::TENTH<DeviceStateValue>, 1);
+							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::R_STICK_X_RIGHT, &Math::TENTH<DeviceStateValue>, 1);
+							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::R_STICK_Y_DOWN, &Math::TENTH<DeviceStateValue>, 1);
+							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::R_STICK_Y_UP, &Math::TENTH<DeviceStateValue>, 1);
+							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::R_STICK, &Math::TENTH<DeviceStateValue>, 1);
+							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::L_TRIGGER, &Math::TENTH<DeviceStateValue>, 1);
+							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::R_TRIGGER, &Math::TENTH<DeviceStateValue>, 1);
+
+							/*GamepadKeyMapping km;
+							km.set(GamepadVirtualKeyCode::L_STICK_X, GamepadKeyCode::AXIS_1);
+							km.set(GamepadVirtualKeyCode::L_STICK_Y, GamepadKeyCode::AXIS_1 + 1);
+							km.set(GamepadVirtualKeyCode::R_STICK_X, GamepadKeyCode::AXIS_1 + 2);
+							km.set(GamepadVirtualKeyCode::L_TRIGGER, GamepadKeyCode::AXIS_1 + 3);
+							km.set(GamepadVirtualKeyCode::R_TRIGGER, GamepadKeyCode::AXIS_1 + 4);
+							km.set(GamepadVirtualKeyCode::R_STICK_Y, GamepadKeyCode::AXIS_1 + 5);
+							device->setState(DeviceStateType::KEY_MAPPER, GamepadVirtualKeyCode::UNKNOWN, &km, 1);*/
 						}
 
 						/*
@@ -288,6 +330,13 @@ public:
 							case DeviceType::GAMEPAD:
 							{
 								auto state = e.getData<DeviceState>();
+								auto vk = (GamepadVirtualKeyCode)state->code;
+								if (vk >= GamepadVirtualKeyCode::L_STICK_X_LEFT && vk <= GamepadVirtualKeyCode::L_STICK_Y_UP) break;
+								if (vk >= GamepadVirtualKeyCode::R_STICK_X_LEFT && vk <= GamepadVirtualKeyCode::R_STICK_Y_UP) break;
+								//if (vk >= GamepadVirtualKeyCode::L_STICK && vk <= GamepadVirtualKeyCode::R_STICK) break;
+								if (vk >= GamepadVirtualKeyCode::DPAD_LEFT && vk <= GamepadVirtualKeyCode::DPAD_UP) break;
+								//if (vk >= GamepadVirtualKeyCode::L_TRIGGER && vk <= GamepadVirtualKeyCode::R_TRIGGER) break;
+								
 								//if (key->code != GamepadKeyCode::R_STICK) break;
 								printa("gamepad move : vid = ", info.vendorID, " pid = ", info.productID, " ", getGamepadKeyString((GamepadVirtualKeyCode)state->code), " ", ((DeviceStateValue*)state->values)[0]);
 								if (state->count > 1) printa("  ", ((DeviceStateValue*)state->values)[1]);
@@ -379,7 +428,7 @@ public:
 								DeviceStateValue vibration[2];
 								vibration[0] = vals[0];
 								vibration[1] = vals[0];
-								dev->setState(DeviceStateType::VIBRATION, 0, vibration, 2);
+								//dev->setState(DeviceStateType::VIBRATION, 0, vibration, 2);
 							}
 						}
 					}
