@@ -6,7 +6,7 @@
 namespace srk::modules::inputs::direct_input {
 	class SRK_MODULE_DLL GamepadDriver : public IGenericGamepadDriver {
 	public:
-		GamepadDriver(Input& input, LPDIRECTINPUTDEVICE8 dev);
+		GamepadDriver(Input& input, srk_IDirectInputDevice* dev);
 		virtual ~GamepadDriver();
 
 		virtual size_t SRK_CALL getInputLength() const override;
@@ -36,6 +36,6 @@ namespace srk::modules::inputs::direct_input {
 
 
 		IntrusivePtr<Input> _input;
-		LPDIRECTINPUTDEVICE8 _dev;
+		srk_IDirectInputDevice* _dev;
 	};
 }

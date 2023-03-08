@@ -8,7 +8,7 @@ namespace srk::modules::inputs::direct_input {
 
 	class SRK_MODULE_DLL DeviceBase : public IInputDevice {
 	public:
-		DeviceBase(Input& input, LPDIRECTINPUTDEVICE8 dev, const DeviceInfo& info);
+		DeviceBase(Input& input, srk_IDirectInputDevice* dev, const DeviceInfo& info);
 		virtual ~DeviceBase();
 
 		virtual IntrusivePtr<events::IEventDispatcher<DeviceEvent>> SRK_CALL getEventDispatcher() override;
@@ -19,6 +19,6 @@ namespace srk::modules::inputs::direct_input {
 		IntrusivePtr<events::IEventDispatcher<DeviceEvent>> _eventDispatcher;
 		DeviceInfo _info;
 
-		LPDIRECTINPUTDEVICE8 _dev;
+		srk_IDirectInputDevice* _dev;
 	};
 }

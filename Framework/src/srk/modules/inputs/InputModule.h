@@ -66,6 +66,12 @@ namespace srk::modules::inputs {
 	};
 
 
+	enum class DeviceFlag : uint8_t {
+		NONE = 0,
+		SPECIFIC = 0b1
+	};
+
+
 	enum class DeviceType : uint8_t {
 		UNKNOWN,
 		KEYBOARD = 0b1,

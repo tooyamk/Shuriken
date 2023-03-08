@@ -6,7 +6,7 @@
 #include <dinput.h>
 
 namespace srk::modules::inputs::direct_input {
-	GamepadDriver::GamepadDriver(Input& input, LPDIRECTINPUTDEVICE8 dev) :
+	GamepadDriver::GamepadDriver(Input& input, srk_IDirectInputDevice* dev) :
 		_input(input),
 		_dev(dev) {
 		_dev->SetDataFormat(&c_dfDIJoystick);

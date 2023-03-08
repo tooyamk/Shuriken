@@ -69,7 +69,7 @@ namespace srk::modules::inputs::direct_input {
 
 		for (auto& info : _devices) {
 			if (info.guid == guid) {
-				LPDIRECTINPUTDEVICE8 dev = nullptr;
+				srk_IDirectInputDevice* dev = nullptr;
 				if (FAILED(_di->CreateDevice(*(const ::GUID*)guid.getData(), &dev, nullptr))) return nullptr;
 
 				switch (info.type) {
@@ -181,7 +181,7 @@ namespace srk::modules::inputs::direct_input {
 		return bIsXinputDevice;
 	}
 
-	BOOL Input::_enumDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, LPVOID pContext) {
+	BOOL Input::_enumDevicesCallback(const srk_DIDEVICEINSTANCE* pdidInstance, LPVOID pContext) {
 		using namespace srk::enum_operators;
 
 		uint32_t type = pdidInstance->dwDevType & 0xFF;
@@ -214,6 +214,11 @@ namespace srk::modules::inputs::direct_input {
 			info.type = dt;
 			info.vendorID = pdidInstance->guidProduct.Data1 & 0xFFFF;
 			info.productID = pdidInstance->guidProduct.Data1 >> 16 & 0xFFFF;
+			if constexpr (sizeof(pdidInstance->tszProductName[0]) == 1) {
+				info.name = (const CHAR*)pdidInstance->tszProductName;
+			} else {
+				info.name = String::UnicodeToUtf8<const WCHAR*, std::string>((const WCHAR*)pdidInstance->tszProductName);
+			}
 		}
 
 		return DIENUM_CONTINUE;

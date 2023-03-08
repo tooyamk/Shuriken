@@ -57,15 +57,15 @@ namespace srk::modules::inputs::raw_input {
 			di.type = dt;
 
 			if (auto size = GetRawInputDeviceInfoA(dev.hDevice, RIDI_DEVICENAME, buffer, &pcbSize); size > 0) {
-				std::string_view name(buffer, size - 1);
+				std::string_view info(buffer, size - 1);
 
-				if (auto p = String::find(name, "VID_"sv); p != std::string_view::npos) di.vendorID = String::toNumber<uint16_t>(name.substr(p + 4, 4), 16);
-				if (auto p = String::find(name, "PID_"sv); p != std::string_view::npos) di.productID = String::toNumber<uint16_t>(name.substr(p + 4, 4), 16);
+				if (auto p = String::find(info, "VID_"sv); p != std::string_view::npos) di.vendorID = String::toNumber<uint16_t>(info.substr(p + 4, 4), 16);
+				if (auto p = String::find(info, "PID_"sv); p != std::string_view::npos) di.productID = String::toNumber<uint16_t>(info.substr(p + 4, 4), 16);
 
 				auto hd = (uintptr_t)dev.hDevice;
 				di.guid.set<false, false>(&hd, sizeof(hd));
 				
-				auto hash = hash::xxHash<64>::calc<std::endian::native>(name.data(), name.size(), 0);
+				auto hash = hash::xxHash<64>::calc<std::endian::native>(info.data(), info.size(), 0);
 				di.guid.set<false, true>(&hash, sizeof(hash), sizeof(hd));
 			}
 		}
@@ -88,8 +88,6 @@ namespace srk::modules::inputs::raw_input {
 
 		for (auto& info : remove) _eventDispatcher->dispatchEvent(this, ModuleEvent::DISCONNECTED, &info);
 		for (auto& info : add) _eventDispatcher->dispatchEvent(this, ModuleEvent::CONNECTED, &info);
-
-		int a = 1;
 	}
 
 	IntrusivePtr<IInputDevice> Input::createDevice(const DeviceGUID& guid) {

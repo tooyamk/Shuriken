@@ -125,7 +125,7 @@ public:
 		createInputModuleDesc.window = win;
 
 		if constexpr (Environment::OPERATING_SYSTEM == Environment::OperatingSystem::WINDOWS) {
-			if (1) {
+			if (0) {
 				createInputModuleDesc.filters = DeviceType::GAMEPAD;
 				auto ignoreXInputDevices = false;
 				const void* argv[2];
@@ -149,7 +149,7 @@ public:
 				createInputModuleDesc.argv = argv;
 				initInputModule(inputModules, getDllPath("srk-module-input-xinput"), createInputModuleDesc);
 			}
-			if (0) {
+			if (1) {
 				createInputModuleDesc.filters = DeviceType::GAMEPAD;
 				initInputModule(inputModules, getDllPath("srk-module-input-hid-input"), createInputModuleDesc);
 			}
@@ -177,7 +177,7 @@ public:
 				};
 
 				auto info = e.getData<DeviceInfo>();
-				printaln("input device connected : ", getDeviceTypeString(info->type), " vid = ", info->vendorID, " pid = ", info->productID, " guid = ", String::toString(info->guid.getData(), info->guid.getSize()));
+				printaln("input device connected : ", getDeviceTypeString(info->type), " vid = ", info->vendorID, " pid = ", info->productID, " name = ", info->name, " guid = ", String::toString(info->guid.getData(), info->guid.getSize()));
 
 				//if ((info->type & (DeviceType::KEYBOARD)) != DeviceType::UNKNOWN) {
 				if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN) {
@@ -186,9 +186,9 @@ public:
 				//if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN && info->vendorID == 0x45E) {
 					auto im = e.getTarget<IInputModule>();
 					//if (getNumInputeDevice(DeviceType::GAMEPAD) > 0) return;
-					printaln("createing device : ", getDeviceTypeString(info->type), " vid = ", info->vendorID, " pid = ", info->productID, " guid = ", String::toString(info->guid.getData(), info->guid.getSize()));
+					printaln("createing device : ", getDeviceTypeString(info->type), " vid = ", info->vendorID, " pid = ", info->productID, " name = ", info->name, " guid = ", String::toString(info->guid.getData(), info->guid.getSize()));
 					if (auto device = im->createDevice(info->guid); device) {
-						printaln("created device : ", getDeviceTypeString(info->type), " vid = ", info->vendorID, " pid = ", info->productID, " guid = ", String::toString(info->guid.getData(), info->guid.getSize()));
+						printaln("created device : ", getDeviceTypeString(info->type), " vid = ", info->vendorID, " pid = ", info->productID, " name = ", info->name, " guid = ", String::toString(info->guid.getData(), info->guid.getSize()));
 						{
 							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::L_STICK, &Math::TENTH<DeviceStateValue>, 1);
 							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::R_STICK, &Math::TENTH<DeviceStateValue>, 1);
@@ -269,7 +269,7 @@ public:
 							case DeviceType::GAMEPAD:
 							{
 								auto state = e.getData<DeviceState>();
-								printaln("gamepad down : ", " vid = ", info.vendorID, " pid = ", info.productID, " ", getGamepadKeyString((GamepadVirtualKeyCode)state->code), "  ", ((DeviceStateValue*)state->values)[0]);
+								printaln("gamepad down : ", " vid = ", info.vendorID, " pid = ", info.productID, " name = ", info.name, " ", getGamepadKeyString((GamepadVirtualKeyCode)state->code), "  ", ((DeviceStateValue*)state->values)[0]);
 								if (state->code == GamepadVirtualKeyCode::CROSS) {
 									//DeviceStateValue vals[] = { 1.f, 1.f };
 									//device->setState(DeviceStateType::VIBRATION, 0, vals, 2);
@@ -299,7 +299,7 @@ public:
 							case DeviceType::GAMEPAD:
 							{
 								auto state = e.getData<DeviceState>();
-								printaln("gamepad up : ", info.vendorID, " pid = ", info.productID, " ", getGamepadKeyString((GamepadVirtualKeyCode)state->code), "  ", ((DeviceStateValue*)state->values)[0]);
+								printaln("gamepad up : ", info.vendorID, " pid = ", info.productID, " name = ", info.name, " ", getGamepadKeyString((GamepadVirtualKeyCode)state->code), "  ", ((DeviceStateValue*)state->values)[0]);
 								if (state->code == GamepadVirtualKeyCode::CROSS) {
 									//DeviceStateValue vals[] = { 0.f, 0.f };
 									//device->setState(DeviceStateType::VIBRATION, 0, vals, 2);
@@ -338,7 +338,7 @@ public:
 								//if (vk >= GamepadVirtualKeyCode::L_TRIGGER && vk <= GamepadVirtualKeyCode::R_TRIGGER) break;
 								
 								//if (key->code != GamepadKeyCode::R_STICK) break;
-								printa("gamepad move : vid = ", info.vendorID, " pid = ", info.productID, " ", getGamepadKeyString((GamepadVirtualKeyCode)state->code), " ", ((DeviceStateValue*)state->values)[0]);
+								printa("gamepad move : vid = ", info.vendorID, " pid = ", info.productID, " name = ", info.name, " ", getGamepadKeyString((GamepadVirtualKeyCode)state->code), " ", ((DeviceStateValue*)state->values)[0]);
 								if (state->count > 1) printa("  ", ((DeviceStateValue*)state->values)[1]);
 								printaln();
 
@@ -362,7 +362,7 @@ public:
 								auto touches = (DeviceTouchStateValue*)state->values;
 								for (size_t i = 0; i < state->count; ++i) {
 									auto& touch = touches[i];
-									printaln("gamepad touch : vid = ", info.vendorID, " pid = ", info.productID, " id = ", touch.fingerID, " isTouched = ", touch.isTouched, " x = ", touch.position[0], " y = ", touch.position[1]);
+									printaln("gamepad touch : vid = ", info.vendorID, " pid = ", info.productID, " name = ", info.name, " id = ", touch.fingerID, " isTouched = ", touch.isTouched, " x = ", touch.position[0], " y = ", touch.position[1]);
 								}
 
 								break;
@@ -374,7 +374,7 @@ public:
 
 						inputDevices.emplace_back(device);
 					} else {
-						printaln("create device failed : ", getDeviceTypeString(info->type), " vid = ", info->vendorID, " pid = ", info->productID, " guid = ", String::toString(info->guid.getData(), info->guid.getSize()));
+						printaln("create device failed : ", getDeviceTypeString(info->type), " vid = ", info->vendorID, " pid = ", info->productID, " name = ", info->name, " guid = ", String::toString(info->guid.getData(), info->guid.getSize()));
 					}
 				}
 				}));

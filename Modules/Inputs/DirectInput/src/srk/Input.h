@@ -41,9 +41,9 @@ namespace srk::modules::inputs::direct_input {
 		std::vector<DeviceInfo> _devices;
 
 		bool _ignoreXInputDevices;
-		LPDIRECTINPUT8 _di;
+		srk_IDirectInput* _di;
 
-		static BOOL CALLBACK _enumDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, LPVOID pContext);
+		static BOOL CALLBACK _enumDevicesCallback(const srk_DIDEVICEINSTANCE* pdidInstance, LPVOID pContext);
 
 		inline bool SRK_CALL _hasDevice(const DeviceInfo& info, const std::vector<DeviceInfo>& devices) const {
 			for (auto& di : devices) {
