@@ -34,10 +34,6 @@ namespace srk::modules::inputs::hid_input {
 		return translate(defaultVal, cf.flags);
 	}
 
-	float32_t GamepadDriver::readDpadDataFromInputState(const void* inputState) const {
-		return Math::NEGATIVE_ONE<DeviceStateValue>;
-	}
-
 	DeviceState::CountType GamepadDriver::customGetState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count,
 		const void* inputState, void* custom, ReadWriteStateStartCallback readStateStartCallback, ReadWriteStateStartCallback readStateEndCallback) const {
 		return 0;

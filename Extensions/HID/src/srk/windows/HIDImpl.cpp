@@ -554,24 +554,24 @@ namespace srk::extensions {
 		return info.handle ? info.getProductID() : 0;
 	}
 
-	std::wstring_view HID::getManufacturerString(const HIDDeviceInfo& info) {
+	std::string_view HID::getManufacturerString(const HIDDeviceInfo& info) {
 		if (info.manufacturer.empty()) {
-			if (!info.handle) return std::wstring_view();
+			if (!info.handle) return std::string_view();
 
 			WCHAR buf[256];
-			if (!HidD_GetManufacturerString(info.handle, buf, sizeof(buf))) return std::wstring_view();
-			info.manufacturer = buf;
+			if (!HidD_GetManufacturerString(info.handle, buf, sizeof(buf))) return std::string_view();
+			info.manufacturer = String::UnicodeToUtf8<const WCHAR*, std::string>(buf);
 		}
 		return info.manufacturer;
 	}
 
-	std::wstring_view HID::getProductString(const HIDDeviceInfo& info) {
+	std::string_view HID::getProductString(const HIDDeviceInfo& info) {
 		if (info.product.empty()) {
-			if (!info.handle) return std::wstring_view();
+			if (!info.handle) return std::string_view();
 
 			WCHAR buf[256];
-			if (!HidD_GetProductString(info.handle, buf, sizeof(buf))) return std::wstring_view();
-			info.product = buf;
+			if (!HidD_GetProductString(info.handle, buf, sizeof(buf))) return std::string_view();
+			info.product = String::UnicodeToUtf8<const WCHAR*, std::string>(buf);
 		}
 
 		return info.product;

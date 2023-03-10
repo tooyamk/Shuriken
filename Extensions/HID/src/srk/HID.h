@@ -379,7 +379,7 @@ namespace srk::extensions {
 		static constexpr size_t OUT_ERROR = (std::numeric_limits<size_t>::max)();
 		static constexpr size_t OUT_WAITTING = OUT_ERROR - 1;
 
-		using EnumDevicesCallback = void(*)(const HIDDeviceInfo& info, void* custom);
+		using EnumDevicesCallback = void(SRK_CALL*)(const HIDDeviceInfo& info, void* custom);
 
 		static void SRK_CALL enumDevices(void* custom, EnumDevicesCallback);
 
@@ -388,8 +388,8 @@ namespace srk::extensions {
 
 		static uint16_t SRK_CALL getVendorID(const HIDDeviceInfo& info);
 		static uint16_t SRK_CALL getProductID(const HIDDeviceInfo& info);
-		static std::wstring_view SRK_CALL getManufacturerString(const HIDDeviceInfo& info);
-		static std::wstring_view SRK_CALL getProductString(const HIDDeviceInfo& info);
+		static std::string_view SRK_CALL getManufacturerString(const HIDDeviceInfo& info);
+		static std::string_view SRK_CALL getProductString(const HIDDeviceInfo& info);
 		static std::string_view SRK_CALL getPath(const HIDDeviceInfo& info);
 		static HIDUsagePage SRK_CALL getUsagePage(const HIDDeviceInfo& info);
 		static HIDUsage SRK_CALL getUsage(const HIDDeviceInfo& info);

@@ -178,8 +178,8 @@ namespace srk::extensions {
 		~HIDDeviceInfo();
 
 		std::string_view pathView;
-		mutable std::wstring manufacturer;
-		mutable std::wstring product;
+		mutable std::string manufacturer;
+		mutable std::string product;
 		HANDLE handle;
 
 		uint16_t SRK_CALL getVendorID() const;

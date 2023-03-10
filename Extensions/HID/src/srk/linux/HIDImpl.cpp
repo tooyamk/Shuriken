@@ -60,12 +60,6 @@ namespace srk::extensions {
 		auto handle = ::open(rptPath, O_RDONLY);
 		if (handle < 0) return -1;
 
-		/*
-		* Read in the Report Descriptor
-		* The sysfs file has a maximum size of 4096 (which is the same as HID_MAX_DESCRIPTOR_SIZE) so we should always
-		* be ok when reading the descriptor.
-		* In practice if the HID descriptor is any larger I suspect many other things will break.
-		*/
 		memset(desc, 0x0, sizeof(*desc));
 		auto res = read(handle, desc->value, HID_MAX_DESCRIPTOR_SIZE);
 		desc->size = res;
@@ -75,7 +69,6 @@ namespace srk::extensions {
 	}
 
 	int32_t HIDUtils::getHidReportDescriptorFromSysfs(const char* sysfsPath, hidraw_report_descriptor* desc) {
-		/* Construct <sysfs_path>/device/report_descriptor */
 		auto rptPathLen = strlen(sysfsPath) + 25 + 1;
 		auto rptPath = (char*)calloc(1, rptPathLen);
 		snprintf(rptPath, rptPathLen, "%s/device/report_descriptor", sysfsPath);
@@ -99,19 +92,19 @@ namespace srk::extensions {
 			int32_t cmd = key & 0xfc;
 
 			/* Determine data_len and key_size */
-			if (!getHidItemSize(reportDesc, *pos, size, &dataLen, &keySize))
-				return -1; /* malformed report */
+			if (!getHidItemSize(reportDesc, *pos, size, &dataLen, &keySize)) return -1; /* malformed report */
 
 			switch (cmd) {
 			case 0x4: /* Usage Page 6.2.2.7 (Global) */
 				usagePage = HIDUtils::getHidReportBytes(reportDesc, size, dataLen, *pos);
 				break;
-
 			case 0x8: /* Usage 6.2.2.8 (Local) */
+			{
 				usage = HIDUtils::getHidReportBytes(reportDesc, size, dataLen, *pos);
 				usageFound = true;
-				break;
 
+				break;
+			}
 			case 0xa0: /* Collection 6.2.2.4 (Main) */
 			{
 				/* A Usage Item (Local) must be found for the pair to be valid */
@@ -256,24 +249,24 @@ namespace srk::extensions {
 				{
 					auto usbDev = udev_device_get_parent_with_subsystem_devtype(rawDev, "usb", "usb_device");
 					if (usbDev) {
-						info.manufacturer = String::Utf8ToUnicode(udev_device_get_sysattr_value(usbDev, "manufacturer"));
-						info.product = String::Utf8ToUnicode(udev_device_get_sysattr_value(usbDev, "product"));
+						info.manufacturer = udev_device_get_sysattr_value(usbDev, "manufacturer");
+						info.product = udev_device_get_sysattr_value(usbDev, "product");
 					} else {
-						info.product = String::Utf8ToUnicode(productName);
+						info.product = productName;
 					}
 
 					break;
 				}
 				case BUS_BLUETOOTH:
 				case BUS_I2C:
-					info.product = String::Utf8ToUnicode(productName);
+					info.product = productName;
 					break;
 				default:
 					break;
 			}
 
 			if (HIDUtils::getHidReportDescriptorFromSysfs(sysfsPath, &reportDesc) >= 0) {
-				unsigned int pos = 0;
+				uint32_t pos = 0;
 
 				if (!HIDUtils::getNextHidUsage(reportDesc.value, reportDesc.size, &pos, info.usagePage, info.usage)) {
 					info.valid = true;

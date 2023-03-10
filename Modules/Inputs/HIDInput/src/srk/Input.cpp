@@ -42,7 +42,7 @@ namespace srk::modules::inputs::hid_input {
 					dev.productID = HID::getProductID(info);
 					dev.type = DeviceType::GAMEPAD;
 					dev.path = path;
-					dev.name = String::UnicodeToUtf8<const std::wstring_view&, std::string>(HID::getProductString(info));
+					dev.name = HID::getProductString(info);
 
 					switch (dev.vendorID << 16 | dev.productID) {
 					case 0x54C << 16 | 0x5C4:
