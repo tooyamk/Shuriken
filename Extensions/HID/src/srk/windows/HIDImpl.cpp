@@ -317,8 +317,7 @@ namespace srk::extensions {
 		_usagePage(0),
 		_usage(0),
 		handle(nullptr),
-		_preparsedData(nullptr) {
-	}
+		_preparsedData(nullptr) {}
 
 	HIDDeviceInfo::~HIDDeviceInfo() {
 		if (_preparsedData) HidD_FreePreparsedData(_preparsedData);
@@ -613,7 +612,7 @@ namespace srk::extensions {
 		PHIDP_PREPARSED_DATA preparsedData = nullptr;
 		ScopeGuard preparsedDataGuard([&preparsedData]() {
 			if (preparsedData) HidD_FreePreparsedData(preparsedData);
-		});
+			});
 		if (!HidD_GetPreparsedData(handle, &preparsedData)) return nullptr;
 
 		HIDP_CAPS caps;
@@ -632,7 +631,15 @@ namespace srk::extensions {
 
 	void HID::close(HIDDevice& device) {
 		if (device.handle) CloseHandle(device.handle);
-		delete &device;
+		delete& device;
+	}
+
+	ByteArray HID::getRawReportDescriptor(const HIDDevice& device) {
+		return ByteArray();
+	}
+
+	void* HID::getPreparsedData(const HIDDevice& device) {
+		return device.preparsedData;
 	}
 
 	size_t HID::read(HIDDevice& device, void* data, size_t dataLength, size_t timeout) {
@@ -750,10 +757,6 @@ namespace srk::extensions {
 		}
 
 		return device.writePending ? HID::OUT_WAITTING : bytesWriten;
-	}
-
-	void* HID::getPreparsedData(const HIDDevice& device) {
-		return device.preparsedData;
 	}
 
 	/*

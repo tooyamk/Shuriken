@@ -222,6 +222,8 @@
 			SRK_EXTENSION_HID_ENUM_ELEMENT(NAMED_ARRAY, 0x4) \
 			SRK_EXTENSION_HID_ENUM_ELEMENT(USAGE_MODIFIER, 0x5) \
 			SRK_EXTENSION_HID_ENUM_ELEMENT(USAGE_SWITCH, 0x6) \
+			SRK_EXTENSION_HID_ENUM_ELEMENT(RESERVED_BEGIN, 0x07) \
+			SRK_EXTENSION_HID_ENUM_ELEMENT(RESERVED_END, 0x7F) \
 			SRK_EXTENSION_HID_ENUM_ELEMENT(VENDOR_DEFINED_BEGIN, 0x80) \
 			SRK_EXTENSION_HID_ENUM_ELEMENT(VENDOR_DEFINED_END, 0xFF) \
 
@@ -301,7 +303,7 @@ namespace srk::extensions {
 		OUTPUT,
 		FEATURE
 	};
- 
+
 
 	template<typename T> concept HIDReportItemTag = SameAnyOf<T, HIDReportMainItemTag, HIDReportGlobalItemTag, HIDReportLocalItemTag>;
 
@@ -373,6 +375,36 @@ namespace srk::extensions {
 	using HIDUsage = uint16_t;
 
 
+	struct SRK_EXTENSION_DLL HIDReportDescriptorItem {
+		HIDReportItemType type;
+		uint8_t size;
+		uint16_t tag;
+
+		static size_t SRK_CALL parse(const void* data, size_t length, HIDReportDescriptorItem& item) {
+			if (!length) return 0;
+
+			auto u8 = (const uint8_t*)data;
+			auto val = u8[0];
+			if (val == 0xFE) {
+				if (length < 4) return 0;
+
+				item.type = (HIDReportItemType)val;
+				item.size = u8[1];
+				item.tag = u8[3] << 8 | u8[2];
+
+				return 3;
+			} else {
+				item.size = val & 0b11;
+				if (item.size == 3) item.size = 4;
+				item.type = (HIDReportItemType)(val >> 2 & 0b11);
+				item.tag = val >> 4 & 0b1111;
+
+				return 1;
+			}
+		}
+	};
+
+
 	class SRK_EXTENSION_DLL HID {
 	public:
 		static constexpr size_t IN_TIMEOUT_BLOCKING = (std::numeric_limits<size_t>::max)();
@@ -400,14 +432,15 @@ namespace srk::extensions {
 		static HIDDevice* SRK_CALL open(const std::string_view& path);
 		static void SRK_CALL close(HIDDevice& device);
 
+		static ByteArray SRK_CALL getRawReportDescriptor(const HIDDevice& device);
+		static void* SRK_CALL getPreparsedData(const HIDDevice& device);
+
 		static size_t SRK_CALL read(HIDDevice& device, void* data, size_t dataLength, size_t timeout);
 		static size_t SRK_CALL write(HIDDevice& device, const void* data, size_t dataLength, size_t timeout);
 
 		inline static bool SRK_CALL isSuccess(size_t rst) {
 			return rst < OUT_WAITTING;
 		}
-
-		static void* SRK_CALL getPreparsedData(const HIDDevice& device);
 
 		/*
 		static size_t SRK_CALL parsePressedButtons(const HIDDevice& device, HIDReportType type, HIDUsagePage usagePage, const void* reportData, size_t reportDataLength, HIDUsage* outUsages, size_t usageLength);
@@ -423,7 +456,7 @@ namespace srk::extensions {
 				type = HIDReportItemType::GLOBAL;
 			} else {
 				type = HIDReportItemType::LOCAL;
-				
+
 			}
 
 			return generateReportShortItemHeader((uint8_t)type, (uint8_t)tag, len);

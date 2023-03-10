@@ -15,16 +15,14 @@ namespace srk::extensions {
 		vendorID(0),
 		productID(0),
 		usagePage(0),
-		usage(0) {
-	}
+		usage(0) {}
 
 
 	HIDDevice::HIDDevice(int32_t handle) :
-		handle(handle) {
-	}
+		handle(handle) {}
 
 
-	int32_t HIDUtils::parseUeventInfo(const char *uevent, uint32_t* busType, uint16_t* vid, uint16_t* pid, char** serialNumber, char** productName) {
+	int32_t HIDUtils::parseUeventInfo(const char* uevent, uint32_t* busType, uint16_t* vid, uint16_t* pid, char** serialNumber, char** productName) {
 		auto tmp = strdup(uevent);
 		char* savePtr = nullptr;
 		bool foundId = false, foundSerial = false, foundName = false;
@@ -47,7 +45,7 @@ namespace srk::extensions {
 				foundName = true;
 			}
 
-	next_line:
+		next_line:
 			line = strtok_r(nullptr, "\n", &savePtr);
 		}
 
@@ -203,7 +201,7 @@ namespace srk::extensions {
 				reportDesc[cur + 3] * 0x00010000 +
 				reportDesc[cur + 2] * 0x00000100 +
 				reportDesc[cur + 1] * 0x00000001
-			);
+				);
 		else
 			return 0;
 	}
@@ -220,7 +218,7 @@ namespace srk::extensions {
 
 		for (auto device = udev_enumerate_get_list_entry(enumerate); device; device = udev_list_entry_get_next(device)) {
 			uint32_t busType;
-			char *serialNumber = nullptr, *productName = nullptr;
+			char* serialNumber = nullptr, * productName = nullptr;
 			//const char* devPath = nullptr;
 			hidraw_report_descriptor reportDesc;
 
@@ -234,35 +232,35 @@ namespace srk::extensions {
 			if (!HIDUtils::parseUeventInfo(udev_device_get_sysattr_value(hidDev, "uevent"), &busType, &info.vendorID, &info.productID, &serialNumber, &productName)) goto next;
 
 			switch (busType) {
-				case BUS_BLUETOOTH:
-				case BUS_I2C:
-				case BUS_USB:
-					break;
-				default:
-					goto next;
+			case BUS_BLUETOOTH:
+			case BUS_I2C:
+			case BUS_USB:
+				break;
+			default:
+				goto next;
 			}
 
 			if (auto devPath = udev_device_get_devnode(rawDev); devPath) info.pathView = devPath;
 
 			switch (busType) {
-				case BUS_USB:
-				{
-					auto usbDev = udev_device_get_parent_with_subsystem_devtype(rawDev, "usb", "usb_device");
-					if (usbDev) {
-						info.manufacturer = udev_device_get_sysattr_value(usbDev, "manufacturer");
-						info.product = udev_device_get_sysattr_value(usbDev, "product");
-					} else {
-						info.product = productName;
-					}
-
-					break;
-				}
-				case BUS_BLUETOOTH:
-				case BUS_I2C:
+			case BUS_USB:
+			{
+				auto usbDev = udev_device_get_parent_with_subsystem_devtype(rawDev, "usb", "usb_device");
+				if (usbDev) {
+					info.manufacturer = udev_device_get_sysattr_value(usbDev, "manufacturer");
+					info.product = udev_device_get_sysattr_value(usbDev, "product");
+				} else {
 					info.product = productName;
-					break;
-				default:
-					break;
+				}
+
+				break;
+			}
+			case BUS_BLUETOOTH:
+			case BUS_I2C:
+				info.product = productName;
+				break;
+			default:
+				break;
 			}
 
 			if (HIDUtils::getHidReportDescriptorFromSysfs(sysfsPath, &reportDesc) >= 0) {
@@ -305,12 +303,12 @@ namespace srk::extensions {
 		return info.valid ? info.productID : 0;
 	}
 
-	std::wstring_view HID::getManufacturerString(const HIDDeviceInfo& info) {
-		return info.valid ? info.manufacturer : std::wstring_view();
+	std::string_view HID::getManufacturerString(const HIDDeviceInfo& info) {
+		return info.valid ? info.manufacturer : std::string_view();
 	}
 
-	std::wstring_view HID::getProductString(const HIDDeviceInfo& info) {
-		return info.valid ? info.product : std::wstring_view();
+	std::string_view HID::getProductString(const HIDDeviceInfo& info) {
+		return info.valid ? info.product : std::string_view();
 	}
 
 	std::string_view HID::getPath(const HIDDeviceInfo& info) {
@@ -336,7 +334,25 @@ namespace srk::extensions {
 
 	void HID::close(HIDDevice& device) {
 		if (device.handle >= 0) ::close(device.handle);
-		delete &device;
+		delete& device;
+	}
+
+	ByteArray HID::getRawReportDescriptor(const HIDDevice& device) {
+		if (device.handle < 0) return ByteArray();
+
+		hidraw_report_descriptor rptDesc;
+		if (ioctl(device.handle, HIDIOCGRDESCSIZE, &rptDesc.size) < 0) return ByteArray();
+		if (ioctl(device.handle, HIDIOCGRDESC, &rptDesc) < 0) return ByteArray();
+
+		ByteArray ba(rptDesc.size);
+		ba.write<ba_vt::BYTE>(rptDesc.value, rptDesc.size);
+		ba.seekBegin();
+
+		return ba;
+	}
+
+	void* HID::getPreparsedData(const HIDDevice& device) {
+		return nullptr;
 	}
 
 	size_t HID::read(HIDDevice& device, void* data, size_t dataLength, size_t timeout) {
@@ -415,10 +431,6 @@ namespace srk::extensions {
 		} while (true);
 
 		return HID::OUT_ERROR;
-	}
-
-	void* HID::getPreparsedData(const HIDDevice& device) {
-		return nullptr;
 	}
 }
 #endif

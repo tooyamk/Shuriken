@@ -16,21 +16,21 @@ namespace srk::extensions {
 		HIDUsagePage usagePage;
 		HIDUsage usage;
 		std::string_view pathView;
-		std::wstring manufacturer;
-		std::wstring product;
+		std::string manufacturer;
+		std::string product;
 	};
 
 
 	class HIDDevice {
 	public:
 		HIDDevice(int32_t handle);
-		
+
 		int32_t handle;
 	};
 
 	class HIDUtils {
 	public:
-		static int32_t SRK_CALL parseUeventInfo(const char *uevent, uint32_t* busType, uint16_t* vid, uint16_t* pid, char** serialNumber, char** productName);
+		static int32_t SRK_CALL parseUeventInfo(const char* uevent, uint32_t* busType, uint16_t* vid, uint16_t* pid, char** serialNumber, char** productName);
 
 		static int32_t SRK_CALL getHidReportDescriptor(const char* rptPath, hidraw_report_descriptor* desc);
 		static int32_t SRK_CALL getHidReportDescriptorFromSysfs(const char* sysfsPath, hidraw_report_descriptor* desc);
