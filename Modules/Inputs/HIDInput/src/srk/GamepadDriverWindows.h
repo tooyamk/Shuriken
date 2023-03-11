@@ -8,8 +8,9 @@
 namespace srk::modules::inputs::hid_input {
 	class SRK_MODULE_DLL GamepadDriver : public GamepadDriverBase {
 	public:
-		GamepadDriver(Input& input, extensions::HIDDevice& hid);
 		virtual ~GamepadDriver();
+
+		static GamepadDriver* SRK_CALL create(Input& input, extensions::HIDDevice& hid);
 
 		virtual size_t SRK_CALL getInputLength() const override;
 		virtual size_t SRK_CALL getOutputLength() const override;
@@ -31,44 +32,60 @@ namespace srk::modules::inputs::hid_input {
 		virtual void SRK_CALL setKeyMapper(GamepadKeyMapper& dst, const GamepadKeyMapper* src) const override;
 
 	private:
-		static constexpr size_t MAX_AXES = 6;
-		static constexpr size_t MAX_BUTTONS = 32;
-		static constexpr extensions::HIDReportButtonPageType MAX_HID_BUTTON_PAGE = (extensions::HIDReportButtonPageType)((size_t)extensions::HIDReportButtonPageType::BUTTON_1 + MAX_BUTTONS - 1);
-		static constexpr auto MAX_AXIS_KEY = (GamepadKeyCode)((std::underlying_type_t<GamepadKeyCode>)GamepadKeyCode::AXIS_1 + (MAX_AXES - 1));
-		static constexpr auto MAX_BUTTON_KEY = (GamepadKeyCode)((std::underlying_type_t<GamepadKeyCode>)GamepadKeyCode::BUTTON_1 + (MAX_BUTTONS - 1));
+		static constexpr size_t HEADER_LENGTH = 1;
 
 
-		struct AxisCap {
-			bool valid;
-			uint32_t min;
-			float32_t lengthReciprocal;
-		};
+		struct DeviceDesc {
+			struct Axis {
+				uint32_t min;
+				float32_t lengthReciprocal;
+				extensions::HIDReportUsagePageType usagePage;
+				extensions::HIDReportGenericDesktopPageType usage;
+			};
 
+			struct {
+				bool valid;
+				uint32_t min, max;
+				float32_t unitAngle;
+			} dpad;
 
-		struct DPadCap {
-			bool valid;
-			uint32_t min, max;
-		};
+			uint16_t inputReportByteLength;
+			uint16_t outputReportByteLength;
 
+			std::vector<Axis> axes;
+			std::vector<extensions::HIDReportButtonPageType> buttons;
 
-		struct InputState {
-			float32_t axes[MAX_AXES];
-			uint32_t dpad;
-			uint_t<MAX_BUTTONS> buttons;
+			std::unordered_map<extensions::HIDReportButtonPageType, uint32_t> buttonMapper;
+
+			DeviceDesc() {}
+			DeviceDesc(const DeviceDesc&) = delete;
+			DeviceDesc(DeviceDesc&& other) noexcept :
+				dpad(other.dpad),
+				inputReportByteLength(other.inputReportByteLength),
+				outputReportByteLength(other.outputReportByteLength),
+				axes(std::move(other.axes)),
+				buttons(std::move(other.buttons)),
+				buttonMapper(std::move(other.buttonMapper)) {
+			}
 		};
 
 
 		PHIDP_PREPARSED_DATA _preparsedData;
-		std::vector<HIDP_VALUE_CAPS> _inputValueCaps;
-		size_t _maxValidAxes;
-		GamepadKeyCode _maxAxisKey;
-		AxisCap _axisCaps[MAX_AXES];
-		DPadCap _dpadCap;
-		DeviceStateValue _dpadUnitAngle;
+
+		DeviceDesc _desc;
+
+		struct {
+			uint32_t axis;
+			uint32_t dpad;
+			uint32_t button;
+		} _offset;
+
+		GamepadKeyCode _maxAxisKeyCode;
+		GamepadKeyCode _maxButtonKeyCode;
+
+		GamepadDriver(Input& input, extensions::HIDDevice& hid, PHIDP_PREPARSED_DATA preparsedData, DeviceDesc&& desc);
 
 		static uint32_t SRK_CALL _translateRangeVal(LONG rawVal, size_t numBits);
-
-		void SRK_CALL _parseInputState(InputState& state, const void* inputBuffer, size_t inputBufferSize) const;
 	};
 }
 #endif

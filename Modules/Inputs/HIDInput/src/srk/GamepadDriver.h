@@ -6,8 +6,9 @@
 namespace srk::modules::inputs::hid_input {
 	class SRK_MODULE_DLL GamepadDriver : public GamepadDriverBase {
 	public:
-		GamepadDriver(Input& input, extensions::HIDDevice& hid);
 		virtual ~GamepadDriver();
+
+		static GamepadDriver* SRK_CALL create(Input& input, extensions::HIDDevice& hid);
 
 		virtual size_t SRK_CALL getInputLength() const override;
 		virtual size_t SRK_CALL getOutputLength() const override;
@@ -27,6 +28,9 @@ namespace srk::modules::inputs::hid_input {
 			ReadWriteStateStartCallback writeStateStartCallback, ReadWriteStateStartCallback writeStateEndCallback) const override;
 
 		virtual void SRK_CALL setKeyMapper(GamepadKeyMapper& dst, const GamepadKeyMapper* src) const override;
+
+	private:
+		GamepadDriver(Input& input, extensions::HIDDevice& hid);
 	};
 }
 #endif

@@ -101,20 +101,19 @@ namespace srk::modules::inputs::hid_input {
 
 		if (!hid) return nullptr;
 
-		IInputDevice* device = nullptr;
-		GamepadKeyMapper keyMapper;
-		auto definedKeyMapper = false;
+		IGenericGamepadDriver* driver = nullptr;
 		switch (di->vendorID << 16 | di->productID) {
 		case 0x54C << 16 | 0x5C4:
 		case 0x54C << 16 | 0x9CC:
-			device = new GenericGamepad(*di, *new GamepadDriverDS4(*this, *hid));
+			driver = new GamepadDriverDS4(*this, *hid);
 			break;
 		default:
 			break;
 		}
 
-		if (!device) device = new GenericGamepad(*di, *new GamepadDriver(*this, *hid), definedKeyMapper ? &keyMapper : nullptr);
+		if (!driver) driver = GamepadDriver::create(*this, *hid);
+		if (!driver) return nullptr;
 
-		return device;
+		return new GenericGamepad(*di, *driver, nullptr);
 	}
 }

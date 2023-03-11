@@ -10,15 +10,7 @@ namespace srk::modules::inputs::hid_input {
 
 	GamepadDriver::~GamepadDriver() {}
 
-	size_t GamepadDriver::getInputLength() const {
-		return 0;
-	}
-
-	size_t GamepadDriver::getOutputLength() const {
-		return 0;
-	}
-
-	bool GamepadDriver::init(void* inputState, void* outputState) {
+	GamepadDriver* GamepadDriver::create(Input& input, extensions::HIDDevice& hid) {
 		using namespace srk::enum_operators;
 		using namespace srk::extensions;
 
@@ -26,7 +18,7 @@ namespace srk::modules::inputs::hid_input {
 		std::string GREEN_BEGIN = "\33[32m";
 		std::string COL_END = "\33[0m";
 
-		auto ba = HID::getRawReportDescriptor(*_hid);
+		auto ba = HID::getRawReportDescriptor(hid);
 		printaln(ba.getLength());
 
 		std::string info;
@@ -618,6 +610,18 @@ namespace srk::modules::inputs::hid_input {
 
 		printaln(info);
 
+		return nullptr;
+	}
+
+	size_t GamepadDriver::getInputLength() const {
+		return 0;
+	}
+
+	size_t GamepadDriver::getOutputLength() const {
+		return 0;
+	}
+
+	bool GamepadDriver::init(void* inputState, void* outputState) {
 		return false;
 	}
 

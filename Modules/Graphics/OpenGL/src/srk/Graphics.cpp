@@ -49,7 +49,7 @@ namespace srk::modules::graphics::gl {
 #if SRK_OS == SRK_OS_WINDOWS
 		if (_dc) return false;
 #elif SRK_OS == SRK_OS_LINUX
-		if (_context || !conf.win->getNative(windows::WindowNative::X_DISPLAY)) return false;
+		if (_context || !desc.window->getNative(windows::WindowNative::X_DISPLAY)) return false;
 #endif
 
 		/*
