@@ -6,9 +6,16 @@
 #include <dinput.h>
 
 namespace srk::modules::inputs::direct_input {
-	GamepadDriver::GamepadDriver(Input& input, srk_IDirectInputDevice* dev) :
+	GamepadDriver::GamepadDriver(Input& input, srk_IDirectInputDevice* dev, const DIDEVCAPS& caps) :
 		_input(input),
-		_dev(dev) {
+		_dev(dev),
+		_cpas(caps) {
+		using namespace srk::enum_operators;
+		_maxAxisKeyCode = GamepadKeyCode::AXIS_1 + _cpas.dwAxes - 1;
+		_minDpadKeyCode = _maxAxisKeyCode + 1;
+		_maxDpadKeyCode = _minDpadKeyCode + (_cpas.dwPOVs << 1) - 1;
+		_maxButtonKeyCode = GamepadKeyCode::BUTTON_1 + _cpas.dwButtons - 1;
+
 		_dev->SetDataFormat(&c_dfDIJoystick);
 		_dev->SetCooperativeLevel(input.getHWND(), DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
 	}
@@ -18,8 +25,16 @@ namespace srk::modules::inputs::direct_input {
 		_dev->Release();
 	}
 
+	GamepadDriver* GamepadDriver::create(Input& input, srk_IDirectInputDevice* dev) {
+		DIDEVCAPS caps;
+		caps.dwSize = sizeof(caps);
+		if (FAILED(dev->GetCapabilities(&caps))) return nullptr;
+
+		return new GamepadDriver(input, dev, caps);
+	}
+
 	size_t GamepadDriver::getInputLength() const {
-		return sizeof(DIJOYSTATE) + 1;
+		return sizeof(DIJOYSTATE) + HEADER_LENGTH;
 	}
 
 	size_t GamepadDriver::getOutputLength() const {
@@ -43,7 +58,7 @@ namespace srk::modules::inputs::direct_input {
 		}
 
 		auto raw = (uint8_t*)inputState;
-		if (SUCCEEDED(_dev->GetDeviceState(sizeof(DIJOYSTATE), (DIJOYSTATE*)(raw + 1)))) {
+		if (SUCCEEDED(_dev->GetDeviceState(sizeof(DIJOYSTATE), (DIJOYSTATE*)(raw + HEADER_LENGTH)))) {
 			raw[0] = 1;
 
 			return true;
@@ -57,36 +72,19 @@ namespace srk::modules::inputs::direct_input {
 
 		float32_t val;
 		if (auto raw = (const uint8_t*)inputState; raw[0]) {
-			auto data = (const DIJOYSTATE*)(raw + 1);
+			auto data = (const DIJOYSTATE*)(raw + HEADER_LENGTH);
 
-			if (cf.code >= GamepadKeyCode::AXIS_1 && cf.code <= MAX_AXIS_KEY) {
-				switch (cf.code) {
-				case GamepadKeyCode::AXIS_1:
-				case GamepadKeyCode::AXIS_1 + 1:
-				case GamepadKeyCode::AXIS_1 + 2:
-				case GamepadKeyCode::AXIS_1 + 3:
-				case GamepadKeyCode::AXIS_1 + 4:
-				case GamepadKeyCode::AXIS_1 + 5:
-					val = DeviceStateValue((&data->lX)[(uint32_t)(cf.code - GamepadKeyCode::AXIS_1)]) / 65535.0f;
-					break;
-				case GamepadKeyCode::AXIS_1 + 6:
-				case GamepadKeyCode::AXIS_1 + 7:
-				{
-					if (auto i = data->rgdwPOV[0]; i == std::numeric_limits<DWORD>::max()) {
-						val = 0.5f;
-					} else {
-						auto a = Math::rad(DeviceStateValue(i) * Math::HUNDREDTH<DeviceStateValue>);
-						val = 0.5f + (cf.code == GamepadKeyCode::AXIS_1 + 6 ? std::sin(a) : std::cos(a)) * 0.5f;
-					}
-
-					break;
+			if (cf.code >= GamepadKeyCode::AXIS_1 && cf.code <= _maxAxisKeyCode) {
+				val = DeviceStateValue((&data->lX)[(uint32_t)(cf.code - GamepadKeyCode::AXIS_1)]) / 65535.0f;
+			} else if (cf.code >= _minDpadKeyCode && cf.code <= _maxDpadKeyCode) {
+				auto idx = (size_t)(cf.code - _minDpadKeyCode);
+				if (auto i = data->rgdwPOV[idx >> 1]; i == std::numeric_limits<DWORD>::max()) {
+					val = 0.5f;
+				} else {
+					auto a = Math::rad(DeviceStateValue(i) * Math::HUNDREDTH<DeviceStateValue>);
+					val = 0.5f + ((idx & 0b1) == 0 ? std::sin(a) : std::cos(a)) * 0.5f;
 				}
-				default:
-					val = defaultVal;
-					break;
-				}
-				
-			} else if (cf.code >= GamepadKeyCode::BUTTON_1 && cf.code <= MAX_BUTTON_KEY) {
+			} else if (cf.code >= GamepadKeyCode::BUTTON_1 && cf.code <= _maxButtonKeyCode) {
 				val = data->rgbButtons[(uint32_t)(cf.code - GamepadKeyCode::BUTTON_1)] & 0x80 ? Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;
 			} else {
 				val = defaultVal;
@@ -121,39 +119,10 @@ namespace srk::modules::inputs::direct_input {
 		if (src) {
 			dst = *src;
 		} else {
-			dst.clear();
-
-			dst.set(GamepadVirtualKeyCode::L_STICK_X_LEFT, GamepadKeyCode::AXIS_1, GamepadKeyFlag::HALF_SMALL | GamepadKeyFlag::FLIP);
-			dst.set(GamepadVirtualKeyCode::L_STICK_X_RIGHT, GamepadKeyCode::AXIS_1, GamepadKeyFlag::HALF_BIG);
-			dst.set(GamepadVirtualKeyCode::L_STICK_Y_DOWN, GamepadKeyCode::AXIS_1 + 1, GamepadKeyFlag::HALF_BIG);
-			dst.set(GamepadVirtualKeyCode::L_STICK_Y_UP, GamepadKeyCode::AXIS_1 + 1, GamepadKeyFlag::HALF_SMALL | GamepadKeyFlag::FLIP);
-
-			dst.set(GamepadVirtualKeyCode::R_STICK_X_LEFT, GamepadKeyCode::AXIS_1 + 3, GamepadKeyFlag::HALF_SMALL | GamepadKeyFlag::FLIP);
-			dst.set(GamepadVirtualKeyCode::R_STICK_X_RIGHT, GamepadKeyCode::AXIS_1 + 3, GamepadKeyFlag::HALF_BIG);
-			dst.set(GamepadVirtualKeyCode::R_STICK_Y_DOWN, GamepadKeyCode::AXIS_1 + 4, GamepadKeyFlag::HALF_BIG);
-			dst.set(GamepadVirtualKeyCode::R_STICK_Y_UP, GamepadKeyCode::AXIS_1 + 4, GamepadKeyFlag::HALF_SMALL | GamepadKeyFlag::FLIP);
-
-			dst.set(GamepadVirtualKeyCode::DPAD_LEFT, GamepadKeyCode::AXIS_1 + 6, GamepadKeyFlag::HALF_SMALL | GamepadKeyFlag::FLIP);
-			dst.set(GamepadVirtualKeyCode::DPAD_RIGHT, GamepadKeyCode::AXIS_1 + 6, GamepadKeyFlag::HALF_BIG);
-			dst.set(GamepadVirtualKeyCode::DPAD_DOWN, GamepadKeyCode::AXIS_1 + 7, GamepadKeyFlag::HALF_SMALL | GamepadKeyFlag::FLIP);
-			dst.set(GamepadVirtualKeyCode::DPAD_UP, GamepadKeyCode::AXIS_1 + 7, GamepadKeyFlag::HALF_BIG);
-
-			dst.set(GamepadVirtualKeyCode::L_TRIGGER, GamepadKeyCode::AXIS_1 + 2, GamepadKeyFlag::HALF_BIG);
-			dst.set(GamepadVirtualKeyCode::R_TRIGGER, GamepadKeyCode::AXIS_1 + 2, GamepadKeyFlag::HALF_SMALL | GamepadKeyFlag::FLIP);
-
-			dst.set(GamepadVirtualKeyCode::A, GamepadKeyCode::BUTTON_1);
-			dst.set(GamepadVirtualKeyCode::B, GamepadKeyCode::BUTTON_1 + 1);
-			dst.set(GamepadVirtualKeyCode::X, GamepadKeyCode::BUTTON_1 + 2);
-			dst.set(GamepadVirtualKeyCode::Y, GamepadKeyCode::BUTTON_1 + 3);
-			dst.set(GamepadVirtualKeyCode::L_SHOULDER, GamepadKeyCode::BUTTON_1 + 4);
-			dst.set(GamepadVirtualKeyCode::R_SHOULDER, GamepadKeyCode::BUTTON_1 + 5);
-			dst.set(GamepadVirtualKeyCode::SELECT, GamepadKeyCode::BUTTON_1 + 6);
-			dst.set(GamepadVirtualKeyCode::START, GamepadKeyCode::BUTTON_1 + 7);
-			dst.set(GamepadVirtualKeyCode::L_THUMB, GamepadKeyCode::BUTTON_1 + 8);
-			dst.set(GamepadVirtualKeyCode::R_THUMB, GamepadKeyCode::BUTTON_1 + 9);
+			dst.setDefault(_cpas.dwAxes, _cpas.dwPOVs, _cpas.dwButtons, false);
 		}
 
-		dst.undefinedCompletion(MAX_AXES, MAX_BUTTONS);
+		dst.undefinedCompletion(_cpas.dwAxes + (_cpas.dwPOVs << 1), _cpas.dwButtons);
 	}
 
 	/*

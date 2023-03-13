@@ -31,6 +31,7 @@ namespace srk::modules::inputs::xinput {
 		virtual void SRK_CALL setKeyMapper(GamepadKeyMapper& dst, const GamepadKeyMapper* src) const override;
 
 	private:
+		static constexpr size_t HEADER_LENGTH = 1;
 		static constexpr size_t MAX_AXES = 6 + 2;
 		static constexpr size_t MAX_BUTTONS = 10;
 		static constexpr uint16_t BUTTON_MASK[] = {
@@ -39,8 +40,8 @@ namespace srk::modules::inputs::xinput {
 			XINPUT_GAMEPAD_BACK, XINPUT_GAMEPAD_START,
 			XINPUT_GAMEPAD_LEFT_THUMB, XINPUT_GAMEPAD_RIGHT_THUMB
 		};
-		static constexpr auto MAX_AXIS_KEY = (GamepadKeyCode)((std::underlying_type_t<GamepadKeyCode>)GamepadKeyCode::AXIS_1 + (MAX_AXES - 1));
-		static constexpr auto MAX_BUTTON_KEY = (GamepadKeyCode)((std::underlying_type_t<GamepadKeyCode>)GamepadKeyCode::BUTTON_1 + (MAX_BUTTONS - 1));
+		static constexpr auto MAX_AXIS_KEY_CODE = (GamepadKeyCode)((std::underlying_type_t<GamepadKeyCode>)GamepadKeyCode::AXIS_1 + (MAX_AXES - 1));
+		static constexpr auto MAX_BUTTON_KEY_CODE = (GamepadKeyCode)((std::underlying_type_t<GamepadKeyCode>)GamepadKeyCode::BUTTON_1 + (MAX_BUTTONS - 1));
 
 
 		IntrusivePtr<Input> _input;

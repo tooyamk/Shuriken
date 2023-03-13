@@ -10,18 +10,18 @@ namespace srk::modules::inputs::hid_input {
 	}
 
 	size_t GamepadDriverDS4::getInputLength() const {
-		return INPUT_BUFFER_LENGTH + 1;
+		return INPUT_BUFFER_LENGTH + HEADER_LENGTH;
 	}
 
 	size_t GamepadDriverDS4::getOutputLength() const {
-		return OUTPUT_BUFFER_LENGTH + 1;
+		return OUTPUT_BUFFER_LENGTH + HEADER_LENGTH;
 	}
 
 	bool GamepadDriverDS4::init(void* inputState, void* outputState) {
 		using namespace srk::extensions;
 
 		((uint8_t*)inputState)[0] = 0;
-		memset(outputState, 0, OUTPUT_BUFFER_LENGTH);
+		memset(outputState, 0, getOutputLength());
 
 		_state = 0;
 
@@ -37,7 +37,7 @@ namespace srk::modules::inputs::hid_input {
 
 		auto data = (uint8_t*)inputState;
 		if (auto s = _state.load(); s) {
-			if (HID::isSuccess(HID::read(*_hid, data + 1, INPUT_BUFFER_LENGTH, 0))) {
+			if (HID::isSuccess(HID::read(*_hid, data + HEADER_LENGTH, INPUT_BUFFER_LENGTH, 0))) {
 				data[0] = s & 0b1111;
 				return true;
 			}
@@ -46,15 +46,15 @@ namespace srk::modules::inputs::hid_input {
 			if (auto rst = HID::read(*_hid, buf, sizeof(buf), 0); HID::isSuccess(rst)) {
 				uint8_t inputOffset, outputOffset;
 				if (rst > 64) {
-					inputOffset = 1 + 3;
-					outputOffset = 1 + 6;
+					inputOffset = 3;
+					outputOffset = 6;
 				} else {
-					inputOffset = 1 + 1;
-					outputOffset = 1 + 4;
+					inputOffset = 1;
+					outputOffset = 4;
 				}
 
 				data[0] = inputOffset;
-				memcpy(data + 1, buf, INPUT_BUFFER_LENGTH);
+				memcpy(data + HEADER_LENGTH, buf, INPUT_BUFFER_LENGTH);
 
 				_state = outputOffset << 4 | inputOffset;
 
@@ -74,9 +74,9 @@ namespace srk::modules::inputs::hid_input {
 
 		float32_t val;
 		if (auto offset = data[0]; offset) {
-			data += offset;
+			data += HEADER_LENGTH + offset;
 
-			if (cf.code >= GamepadKeyCode::AXIS_1 && cf.code <= MAX_AXIS_KEY) {
+			if (cf.code >= GamepadKeyCode::AXIS_1 && cf.code <= MAX_AXIS_KEY_CODE) {
 				switch (cf.code) {
 				case GamepadKeyCode::AXIS_1:
 				case GamepadKeyCode::AXIS_1 + 1:
@@ -142,7 +142,7 @@ namespace srk::modules::inputs::hid_input {
 					val = defaultVal;
 					break;
 				}
-			} else if (cf.code >= GamepadKeyCode::BUTTON_1 && cf.code <= MAX_BUTTON_KEY) {
+			} else if (cf.code >= GamepadKeyCode::BUTTON_1 && cf.code <= MAX_BUTTON_KEY_CODE) {
 				auto i = (size_t)(cf.code - GamepadKeyCode::BUTTON_1);
 				val = data[BUTTON_OFFSET[i]] & BUTTON_MASK[i] ? Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;
 			} else {
@@ -209,8 +209,8 @@ namespace srk::modules::inputs::hid_input {
 		if (!oldOffset || !newOffset) return;
 
 		DeviceTouchStateValue rawTouches[4];
-		_parseTouches(oldData + oldOffset + (size_t)InputOffset::FINGER1, rawTouches);
-		_parseTouches(oldData + newOffset + (size_t)InputOffset::FINGER1, rawTouches + 2);
+		_parseTouches(oldData + HEADER_LENGTH + oldOffset + (size_t)InputOffset::FINGER1, rawTouches);
+		_parseTouches(newData + HEADER_LENGTH + newOffset + (size_t)InputOffset::FINGER1, rawTouches + 2);
 
 		DeviceTouchStateValue touches[4];
 		size_t count = 0;
@@ -268,7 +268,7 @@ namespace srk::modules::inputs::hid_input {
 	bool GamepadDriverDS4::writeStateToDevice(const void* outputState) const {
 		using namespace srk::extensions;
 
-		return HID::isSuccess(HID::write(*_hid, ((const uint8_t*)outputState) + 1, OUTPUT_BUFFER_LENGTH, 0));
+		return HID::isSuccess(HID::write(*_hid, ((const uint8_t*)outputState) + HEADER_LENGTH, OUTPUT_BUFFER_LENGTH, 0));
 	}
 
 	DeviceState::CountType GamepadDriverDS4::customSetState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count, void* outputState, void* custom,
@@ -301,7 +301,7 @@ namespace srk::modules::inputs::hid_input {
 					writeStateStartCallback(custom);
 
 					_writeOutputStateInit(outputState, offset);
-					memcpy((uint8_t*)outputState + offset, data, sizeof(data));
+					memcpy((uint8_t*)outputState + HEADER_LENGTH + offset, data, sizeof(data));
 
 					writeStateEndCallback(custom);
 
@@ -331,7 +331,7 @@ namespace srk::modules::inputs::hid_input {
 					writeStateStartCallback(custom);
 
 					_writeOutputStateInit(outputState, offset);
-					memcpy((uint8_t*)outputState + offset + 2, data, sizeof(data));
+					memcpy((uint8_t*)outputState + HEADER_LENGTH + offset + 2, data, sizeof(data));
 
 					writeStateEndCallback(custom);
 
@@ -392,12 +392,14 @@ namespace srk::modules::inputs::hid_input {
 		auto data = (uint8_t*)outputState;
 
 		if (!data[0]) {
-			if (offset == 7) {
-				uint8_t data[] = { offset, 0x11, 0x80, 0, 0xFF };
-				memcpy(outputState, data, sizeof(data));
+			data[0] = offset;
+
+			if (offset == 6) {
+				uint8_t data[] = { 0x11, 0x80, 0, 0xFF };
+				memcpy(data + HEADER_LENGTH, data, sizeof(data));
 			} else {
-				uint8_t data[] = { offset, 0x05, 0xFF };
-				memcpy(outputState, data, sizeof(data));
+				uint8_t data[] = { 0x05, 0xFF };
+				memcpy(data + HEADER_LENGTH, data, sizeof(data));
 			}
 		}
 	}

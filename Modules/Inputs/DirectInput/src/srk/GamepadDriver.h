@@ -6,8 +6,9 @@
 namespace srk::modules::inputs::direct_input {
 	class SRK_MODULE_DLL GamepadDriver : public IGenericGamepadDriver {
 	public:
-		GamepadDriver(Input& input, srk_IDirectInputDevice* dev);
 		virtual ~GamepadDriver();
+
+		static GamepadDriver* SRK_CALL create(Input& input, srk_IDirectInputDevice* dev);
 
 		virtual size_t SRK_CALL getInputLength() const override;
 		virtual size_t SRK_CALL getOutputLength() const override;
@@ -29,13 +30,15 @@ namespace srk::modules::inputs::direct_input {
 		virtual void SRK_CALL setKeyMapper(GamepadKeyMapper& dst, const GamepadKeyMapper* src) const override;
 
 	private:
-		static constexpr size_t MAX_AXES = 6 + 2;
-		static constexpr size_t MAX_BUTTONS = 32;
-		static constexpr auto MAX_AXIS_KEY = (GamepadKeyCode)((std::underlying_type_t<GamepadKeyCode>)GamepadKeyCode::AXIS_1 + (MAX_AXES - 1));
-		static constexpr auto MAX_BUTTON_KEY = (GamepadKeyCode)((std::underlying_type_t<GamepadKeyCode>)GamepadKeyCode::BUTTON_1 + (MAX_BUTTONS - 1));
+		GamepadDriver(Input& input, srk_IDirectInputDevice* dev, const DIDEVCAPS& caps);
 
+		static constexpr size_t HEADER_LENGTH = 1;
 
 		IntrusivePtr<Input> _input;
 		srk_IDirectInputDevice* _dev;
+		DIDEVCAPS _cpas;
+		GamepadKeyCode _maxAxisKeyCode;
+		GamepadKeyCode _minDpadKeyCode, _maxDpadKeyCode;
+		GamepadKeyCode _maxButtonKeyCode;
 	};
 }

@@ -112,8 +112,9 @@ namespace srk::modules::inputs::hid_input {
 		}
 
 		if (!driver) driver = GamepadDriver::create(*this, *hid);
-		if (!driver) return nullptr;
+		if (driver) new GenericGamepad(*di, *driver, nullptr);
 
-		return new GenericGamepad(*di, *driver, nullptr);
+		HID::close(*hid);
+		return nullptr;
 	}
 }

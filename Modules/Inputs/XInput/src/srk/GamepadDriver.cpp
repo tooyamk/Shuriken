@@ -11,7 +11,7 @@ namespace srk::modules::inputs::xinput {
 	}
 
 	size_t GamepadDriver::getInputLength() const {
-		return sizeof(XINPUT_STATE) + 1;
+		return sizeof(XINPUT_STATE) + HEADER_LENGTH;
 	}
 
 	size_t GamepadDriver::getOutputLength() const {
@@ -30,7 +30,7 @@ namespace srk::modules::inputs::xinput {
 
 	bool GamepadDriver::readStateFromDevice(void* inputState) const {
 		auto raw = (uint8_t*)inputState;
-		if (XInputGetState(_index, (XINPUT_STATE*)(raw + 1)) == ERROR_SUCCESS) {
+		if (XInputGetState(_index, (XINPUT_STATE*)(raw + HEADER_LENGTH)) == ERROR_SUCCESS) {
 			raw[0] = 1;
 			
 			return true;
@@ -46,9 +46,9 @@ namespace srk::modules::inputs::xinput {
 
 		float32_t val;
 		if (auto raw = (const uint8_t*)inputState; raw[0]) {
-			auto data = (const XINPUT_STATE*)(raw + 1);
+			auto data = (const XINPUT_STATE*)(raw + HEADER_LENGTH);
 
-			if (cf.code >= GamepadKeyCode::AXIS_1 && cf.code <= MAX_AXIS_KEY) {
+			if (cf.code >= GamepadKeyCode::AXIS_1 && cf.code <= MAX_AXIS_KEY_CODE) {
 				switch (cf.code) {
 				case GamepadKeyCode::AXIS_1:
 					val = _normalizeThumb(data->Gamepad.sThumbLX);
@@ -120,7 +120,7 @@ namespace srk::modules::inputs::xinput {
 					val = defaultVal;
 					break;
 				}
-			} else if (cf.code >= GamepadKeyCode::BUTTON_1 && cf.code <= MAX_BUTTON_KEY) {
+			} else if (cf.code >= GamepadKeyCode::BUTTON_1 && cf.code <= MAX_BUTTON_KEY_CODE) {
 				val = data->Gamepad.wButtons & BUTTON_MASK[(size_t)(cf.code - GamepadKeyCode::BUTTON_1)] ? Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;
 			} else {
 				val = defaultVal;

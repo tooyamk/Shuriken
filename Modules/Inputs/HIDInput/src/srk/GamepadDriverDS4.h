@@ -160,12 +160,13 @@ namespace srk::modules::inputs::hid_input {
 		};
 
 
+		static constexpr size_t HEADER_LENGTH = 1;
 		static constexpr size_t INPUT_BUFFER_LENGTH = 42;
 		static constexpr size_t OUTPUT_BUFFER_LENGTH = 11;
 		static constexpr size_t MAX_AXES = 6 + 2;
 		static constexpr size_t MAX_BUTTONS = 14;
-		static constexpr auto MAX_AXIS_KEY = (GamepadKeyCode)((std::underlying_type_t<GamepadKeyCode>)GamepadKeyCode::AXIS_1 + (MAX_AXES - 1));
-		static constexpr auto MAX_BUTTON_KEY = (GamepadKeyCode)((std::underlying_type_t<GamepadKeyCode>)GamepadKeyCode::BUTTON_1 + (MAX_BUTTONS - 1));
+		static constexpr auto MAX_AXIS_KEY_CODE = (GamepadKeyCode)((std::underlying_type_t<GamepadKeyCode>)GamepadKeyCode::AXIS_1 + (MAX_AXES - 1));
+		static constexpr auto MAX_BUTTON_KEY_CODE = (GamepadKeyCode)((std::underlying_type_t<GamepadKeyCode>)GamepadKeyCode::BUTTON_1 + (MAX_BUTTONS - 1));
 		static constexpr uint8_t BUTTON_OFFSET[] = {
 			(uint8_t)InputOffset::SQUARE, (uint8_t)InputOffset::CROSS, (uint8_t)InputOffset::CIRCLE, (uint8_t)InputOffset::TRIANGLE,
 			(uint8_t)InputOffset::L1, (uint8_t)InputOffset::R1,

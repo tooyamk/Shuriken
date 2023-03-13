@@ -376,7 +376,7 @@ namespace srk::modules::inputs {
 		R2 = R_TRIGGER,//DualShock
 
 		UNDEFINED_AXIS_1,
-		UNDEFINED_AXIS_END = UNDEFINED_AXIS_1 + 15,
+		UNDEFINED_AXIS_END = UNDEFINED_AXIS_1 + ((std::underlying_type_t<GamepadKeyCode>)GamepadKeyCode::AXIS_END - (std::underlying_type_t<GamepadKeyCode>)GamepadKeyCode::AXIS_1),
 		SEPARATE_AXIS_END = UNDEFINED_AXIS_END,
 		AXIS_END = UNDEFINED_AXIS_END,
 
@@ -424,7 +424,7 @@ namespace srk::modules::inputs {
 		TOUCH_PAD,//DualShock4
 
 		UNDEFINED_BUTTON_1,
-		UNDEFINED_BUTTON_END = UNDEFINED_BUTTON_1 + 31,
+		UNDEFINED_BUTTON_END = UNDEFINED_BUTTON_1 + ((std::underlying_type_t<GamepadKeyCode>)GamepadKeyCode::BUTTON_END - (std::underlying_type_t<GamepadKeyCode>)GamepadKeyCode::BUTTON_1),
 		BUTTON_END = UNDEFINED_BUTTON_END
 	};
 
@@ -469,9 +469,11 @@ namespace srk::modules::inputs {
 
 		GamepadKeyMapper& SRK_CALL operator=(const GamepadKeyMapper& other);
 
-		void SRK_CALL set(GamepadVirtualKeyCode vk, GamepadKeyCode k, GamepadKeyFlag flags = GamepadKeyFlag::NONE) {
+		inline void SRK_CALL set(GamepadVirtualKeyCode vk, GamepadKeyCode k, GamepadKeyFlag flags = GamepadKeyFlag::NONE) {
 			if (vk >= VK_MIN && vk <= VK_MAX) _mapping[_getIndex(vk)].set(k, flags);
 		}
+
+		void SRK_CALL setDefault(uint8_t numAxes, uint8_t numDPads, uint8_t numButtons, bool axisUpIsBigValue);
 
 		bool SRK_CALL remove(GamepadVirtualKeyCode vk);
 		void SRK_CALL removeUndefined();

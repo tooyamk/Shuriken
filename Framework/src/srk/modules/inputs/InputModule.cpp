@@ -16,6 +16,106 @@ namespace srk::modules::inputs {
 		return *this;
 	}
 
+	void GamepadKeyMapper::setDefault(uint8_t numAxes, uint8_t numDPads, uint8_t numButtons, bool axisUpIsBigValue) {
+		using namespace srk::enum_operators;
+		
+		clear();
+
+		std::vector<uint8_t> usedAxes(numAxes);
+		memset(usedAxes.data(), 0, usedAxes.size());
+
+		auto getAndSetAxis = [&]() {
+			for (decltype(numAxes) i = 0; i < numAxes; ++i) {
+				if (!usedAxes[i]) {
+					usedAxes[i] = 1;
+					return i;
+				}
+			}
+			return Math::ZERO<decltype(numAxes)>;
+		};
+
+		auto setAxis = [&](auto& n, GamepadVirtualKeyCode vkBegin, size_t x, size_t y) {
+			set(vkBegin, GamepadKeyCode::AXIS_1 + x, GamepadKeyFlag::HALF_SMALL | GamepadKeyFlag::FLIP);
+			set(vkBegin + 1, GamepadKeyCode::AXIS_1 + x, GamepadKeyFlag::HALF_BIG);
+			if (axisUpIsBigValue) {
+				set(vkBegin + 2, GamepadKeyCode::AXIS_1 + y, GamepadKeyFlag::HALF_SMALL | GamepadKeyFlag::FLIP);
+				set(vkBegin + 3, GamepadKeyCode::AXIS_1 + y, GamepadKeyFlag::HALF_BIG);
+			} else {
+				set(vkBegin + 2, GamepadKeyCode::AXIS_1 + y, GamepadKeyFlag::HALF_BIG);
+				set(vkBegin + 3, GamepadKeyCode::AXIS_1 + y, GamepadKeyFlag::HALF_SMALL | GamepadKeyFlag::FLIP);
+			}
+
+			usedAxes[x] = 1;
+			usedAxes[y] = 1;
+			n -= 2;
+		};
+
+		auto setBtn = [&](auto& n, GamepadVirtualKeyCode vk, GamepadKeyCode k) {
+			if (n) {
+				set(vk, k);
+				--n;
+			}
+		};
+
+		auto axes = numAxes;
+		for (auto i = 0; i < 2; ++i) {
+			if (axes >= 2) {
+				auto sx = GamepadVirtualKeyCode::L_STICK_X_LEFT + (i << 2);
+
+				if (!usedAxes[0] && !usedAxes[1]) {
+					setAxis(axes, sx, 0, 1);
+					continue;
+				}
+				if (!usedAxes[3] && !usedAxes[4]) {
+					setAxis(axes, sx, 3, 4);
+					continue;
+				}
+				if (!usedAxes[2] && !usedAxes[5]) {
+					setAxis(axes, sx, 2, 5);
+					continue;
+				}
+
+				{
+					auto x = getAndSetAxis();
+					auto y = getAndSetAxis();
+					setAxis(axes, sx, x, y);
+				}
+			}
+		}
+
+		if (axes >= 1) {
+			if (axes == 1) {
+				auto i = getAndSetAxis();
+				set(GamepadVirtualKeyCode::L_TRIGGER, GamepadKeyCode::AXIS_1 + i, GamepadKeyFlag::HALF_BIG);
+				set(GamepadVirtualKeyCode::R_TRIGGER, GamepadKeyCode::AXIS_1 + i, GamepadKeyFlag::FLIP | GamepadKeyFlag::HALF_SMALL);
+			} else {
+				set(GamepadVirtualKeyCode::L_TRIGGER, GamepadKeyCode::AXIS_1 + getAndSetAxis());
+				set(GamepadVirtualKeyCode::R_TRIGGER, GamepadKeyCode::AXIS_1 + getAndSetAxis());
+			}
+		}
+
+		if (numDPads) {
+			auto x = numAxes;
+			auto y = numAxes + 1;
+			set(GamepadVirtualKeyCode::DPAD_LEFT, GamepadKeyCode::AXIS_1 + x, GamepadKeyFlag::HALF_SMALL | GamepadKeyFlag::FLIP);
+			set(GamepadVirtualKeyCode::DPAD_RIGHT, GamepadKeyCode::AXIS_1 + x, GamepadKeyFlag::HALF_BIG);
+			set(GamepadVirtualKeyCode::DPAD_DOWN, GamepadKeyCode::AXIS_1 + y, GamepadKeyFlag::HALF_SMALL | GamepadKeyFlag::FLIP);
+			set(GamepadVirtualKeyCode::DPAD_UP, GamepadKeyCode::AXIS_1 + y, GamepadKeyFlag::HALF_BIG);
+		}
+
+		auto btns = numButtons;
+		setBtn(btns, GamepadVirtualKeyCode::A, GamepadKeyCode::BUTTON_1);
+		setBtn(btns, GamepadVirtualKeyCode::B, GamepadKeyCode::BUTTON_1 + 1);
+		setBtn(btns, GamepadVirtualKeyCode::X, GamepadKeyCode::BUTTON_1 + 2);
+		setBtn(btns, GamepadVirtualKeyCode::Y, GamepadKeyCode::BUTTON_1 + 3);
+		setBtn(btns, GamepadVirtualKeyCode::L_SHOULDER, GamepadKeyCode::BUTTON_1 + 4);
+		setBtn(btns, GamepadVirtualKeyCode::R_SHOULDER, GamepadKeyCode::BUTTON_1 + 5);
+		setBtn(btns, GamepadVirtualKeyCode::BACK, GamepadKeyCode::BUTTON_1 + 6);
+		setBtn(btns, GamepadVirtualKeyCode::START, GamepadKeyCode::BUTTON_1 + 7);
+		setBtn(btns, GamepadVirtualKeyCode::L_THUMB, GamepadKeyCode::BUTTON_1 + 8);
+		setBtn(btns, GamepadVirtualKeyCode::R_THUMB, GamepadKeyCode::BUTTON_1 + 9);
+	}
+
 	bool GamepadKeyMapper::remove(GamepadVirtualKeyCode vk) {
 		if (vk < VK_MIN || vk > VK_MAX) return false;
 

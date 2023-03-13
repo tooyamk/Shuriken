@@ -74,7 +74,13 @@ namespace srk::modules::inputs::direct_input {
 
 				switch (info.type) {
 				case DeviceType::GAMEPAD:
-					return new GenericGamepad(info, *new GamepadDriver(*this, dev));
+				{
+					auto driver = GamepadDriver::create(*this, dev);
+					if (driver) return new GenericGamepad(info, *driver);
+
+					dev->Release();
+					return nullptr;
+				}
 				case DeviceType::KEYBOARD:
 					return new Keyboard(*this, dev, info);
 				case DeviceType::MOUSE:
