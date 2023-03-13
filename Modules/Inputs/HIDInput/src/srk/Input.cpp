@@ -38,14 +38,14 @@ namespace srk::modules::inputs::hid_input {
 				auto path = HID::getPath(info);
 
 				auto hash = hash::xxHash<64>::calc<std::endian::native>(path.data(), path.size(), 0);
-				dev.guid.set<false, true>(&hash, sizeof(hash), 0);
+				dev.index = HID::getIndex(info);
+				dev.guid.set<false, false>(&hash, sizeof(hash), 0);
+				dev.guid.set<false, true>(&dev.index, sizeof(dev.index), 8);
 				dev.vendorID = HID::getVendorID(info);
 				dev.productID = HID::getProductID(info);
 				dev.type = DeviceType::GAMEPAD;
 				dev.path = path;
 				dev.name = HID::getProductString(info);
-				dev.usagePage = usagePage;
-				dev.usage = usage;
 
 				switch (dev.vendorID << 16 | dev.productID) {
 				case 0x54C << 16 | 0x5C4:
@@ -105,15 +105,15 @@ namespace srk::modules::inputs::hid_input {
 
 		IGenericGamepadDriver* driver = nullptr;
 		switch (di->vendorID << 16 | di->productID) {
-		case 0x54C << 16 | 0x5C4:
-		case 0x54C << 16 | 0x9CC:
+		case 0x54CA << 16 | 0x5C4:
+		case 0x54CA << 16 | 0x9CC:
 			driver = new GamepadDriverDS4(*this, *hid);
 			break;
 		default:
 			break;
 		}
 
-		if (!driver) driver = GamepadDriver::create(*this, *hid, di->usagePage, di->usage);
+		if (!driver) driver = GamepadDriver::create(*this, *hid, di->index);
 		if (driver) return new GenericGamepad(*di, *driver, nullptr);
 
 		HID::close(*hid);

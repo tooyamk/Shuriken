@@ -10,7 +10,7 @@ namespace srk::extensions {
 	public:
 		HIDDeviceInfo();
 
-		bool valid;
+		int32_t index;
 		uint16_t vendorID;
 		uint16_t productID;
 		HIDUsagePage usagePage;

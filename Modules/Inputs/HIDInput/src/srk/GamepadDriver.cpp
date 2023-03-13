@@ -10,11 +10,257 @@ namespace srk::modules::inputs::hid_input {
 
 	GamepadDriver::~GamepadDriver() {}
 
-	GamepadDriver* GamepadDriver::create(Input& input, extensions::HIDDevice& hid, uint16_t usagePage, uint16_t usage) {
+	GamepadDriver* GamepadDriver::create(Input& input, extensions::HIDDevice& hid, int32_t index) {
 		using namespace srk::enum_operators;
 		using namespace srk::extensions;
 
-		/*std::string RED_BEGIN = "\33[31m";
+		auto ba = HID::getReportDescriptor(hid);
+		printaln(ba.getLength());
+
+		auto curIndex = -1;
+		auto usagePage = (uint16_t)HIDReportUsagePageType::UNDEFINED;
+		size_t reportSize = 0, reportID = 0, reportCount = 0, logicalMinimum = 0, logicalMaximum = 0;
+		size_t usageMinimum = 0, usageMaximum = 0;
+		std::vector<uint16_t> usages;
+
+		uint32_t collection = 0;
+		uint32_t inputBits = 0;
+		HIDReportDescriptorItem item;
+
+		DeviceDesc desc;
+		desc.inputReportID = 0;
+
+		while (ba.getBytesAvailable()) {
+			if (auto n = HIDReportDescriptorItem::parse(ba.getCurrentSource(), ba.getBytesAvailable(), item); n) {
+				auto p = ba.getPosition();
+				ba.setPosition(p + n);
+
+				switch (item.type) {
+				case HIDReportItemType::MAIN:
+				{
+					switch ((HIDReportMainItemTag)item.tag) {
+					case HIDReportMainItemTag::INPUT:
+					{
+						if (curIndex == index) {
+							if (desc.inputReportID != reportID) {
+								desc.inputReportID = reportID;
+								inputBits += 8;
+							}
+
+							auto val = ba.read<ba_vt::UIX>(item.size);
+							if ((val & 0b1) == 0) {
+								switch ((HIDReportUsagePageType)usagePage) {
+								case HIDReportUsagePageType::GENERIC_DESKTOP:
+								{
+									for (size_t i = 0, n = usages.size(); i < n; ++i) {
+										switch ((HIDReportGenericDesktopPageType)usages[i]) {
+										case HIDReportGenericDesktopPageType::X:
+										case HIDReportGenericDesktopPageType::Y:
+										case HIDReportGenericDesktopPageType::Z:
+										case HIDReportGenericDesktopPageType::RX:
+										case HIDReportGenericDesktopPageType::RY:
+										case HIDReportGenericDesktopPageType::RZ:
+										{
+											auto& cap = desc.inputAxes.emplace_back();
+
+											cap.offset = inputBits + i * reportSize;
+											cap.size = reportSize;
+											cap.min = logicalMinimum;
+											cap.max = logicalMaximum;
+
+											break;
+										}
+										case HIDReportGenericDesktopPageType::HAT_SWITCH:
+										{
+											auto& cap = desc.inputDPads.emplace_back();
+
+											cap.offset = inputBits + i * reportSize;
+											cap.size = reportSize;
+											cap.min = logicalMinimum;
+											cap.max = logicalMaximum;
+
+											break;
+										}
+										default:
+											break;
+										}
+									}
+
+									break;
+								}
+								case HIDReportUsagePageType::BUTTON:
+								{
+									for (auto i = usageMinimum; i <= usageMaximum; ++i) {
+										auto& cap = desc.inputButtons.emplace_back();
+
+										cap.offset = inputBits + i * reportSize;
+										cap.size = reportSize;
+										cap.min = logicalMinimum;
+										cap.max = logicalMaximum;
+									}
+
+									break;
+								}
+								default:
+									break;
+								}
+							}
+						}
+
+						inputBits += reportCount * reportSize;
+
+						break;
+					}
+					case HIDReportMainItemTag::OUTPUT:
+						break;
+					case HIDReportMainItemTag::COLLECTION:
+						++collection;
+						break;
+					case HIDReportMainItemTag::END_COLLECTION:
+						--collection;
+						break;
+					default:
+						break;
+					}
+
+					usages.clear();
+					usageMinimum = 0;
+					usageMaximum = 0;
+
+					break;
+				}
+				case HIDReportItemType::GLOBAL:
+				{
+					switch ((HIDReportGlobalItemTag)item.tag) {
+					case HIDReportGlobalItemTag::USAGE_PAGE:
+						usagePage = ba.read<ba_vt::UIX>(item.size);
+						break;
+					case HIDReportGlobalItemTag::LOGICAL_MINIMUM:
+						logicalMinimum = ba.read<ba_vt::UIX>(item.size);
+						break;
+					case HIDReportGlobalItemTag::LOGICAL_MAXIMUM:
+						logicalMaximum = ba.read<ba_vt::UIX>(item.size);
+						break;
+					case HIDReportGlobalItemTag::REPORT_SIZE:
+						reportSize = ba.read<ba_vt::UIX>(item.size);
+						break;
+					case HIDReportGlobalItemTag::REPORT_ID:
+						reportID = ba.read<ba_vt::UIX>(item.size);
+						break;
+					case HIDReportGlobalItemTag::REPORT_COUNT:
+						reportCount = ba.read<ba_vt::UIX>(item.size);
+						break;
+					default:
+						break;
+					}
+
+					break;
+				}
+				case HIDReportItemType::LOCAL:
+				{
+					switch ((HIDReportLocalItemTag)item.tag) {
+					case HIDReportLocalItemTag::USAGE:
+					{
+						if (collection == 0) {
+							++curIndex;
+						} else {
+							usages.emplace_back(ba.read<ba_vt::UIX>(item.size));
+						}
+
+						break;
+					}
+					case HIDReportLocalItemTag::USAGE_MINIMUM:
+						usageMinimum = ba.read<ba_vt::UIX>(item.size);
+						break;
+					case HIDReportLocalItemTag::USAGE_MAXIMUM:
+						usageMaximum = ba.read<ba_vt::UIX>(item.size);
+						break;
+					default:
+						break;
+					}
+
+					break;
+				}
+				default:
+					break;
+				}
+
+				ba.setPosition(p + n + item.size);
+			} else {
+				printaln("err ==============");
+				break;
+			}
+		}
+
+		if (curIndex < index) return nullptr;
+
+		desc.inputReportLength = (inputBits + 7) >> 3;
+
+		_toString(hid);
+
+		return new GamepadDriver(input, hid);
+	}
+
+	size_t GamepadDriver::getInputLength() const {
+		return 1;
+	}
+
+	size_t GamepadDriver::getOutputLength() const {
+		return 0;
+	}
+
+	bool GamepadDriver::init(void* inputState, void* outputState) {
+		return false;
+	}
+
+	bool GamepadDriver::isStateReady(const void* state) const {
+		return false;
+	}
+
+	bool GamepadDriver::readStateFromDevice(void* inputState) const {
+		using namespace srk::extensions;
+
+		uint8_t buf[10];
+		if (HID::isSuccess(HID::read(*_hid, buf, 10, 0))) {
+			printaln(111);
+		}
+
+		return false;
+	}
+
+	float32_t GamepadDriver::readDataFromInputState(const void* inputState, GamepadKeyCodeAndFlags cf, float32_t defaultVal) const {
+		return translate(defaultVal, cf.flags);
+	}
+
+	DeviceState::CountType GamepadDriver::customGetState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count,
+		const void* inputState, void* custom, ReadWriteStateStartCallback readStateStartCallback, ReadWriteStateStartCallback readStateEndCallback) const {
+		return 0;
+	}
+
+	void GamepadDriver::customDispatch(const void* oldInputState, const void* newInputState, void* custom, DispatchCallback dispatchCallback) const {}
+
+	bool GamepadDriver::writeStateToDevice(const void* outputState) const {
+		return false;
+	}
+
+	DeviceState::CountType GamepadDriver::customSetState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count, void* outputState, void* custom,
+		ReadWriteStateStartCallback writeStateStartCallback, ReadWriteStateStartCallback writeStateEndCallback) const {
+		return 0;
+	}
+
+	void GamepadDriver::setKeyMapper(GamepadKeyMapper& dst, const GamepadKeyMapper* src) const {
+		if (src) {
+			dst = *src;
+		} else {
+			dst.clear();
+		}
+	}
+
+	void GamepadDriver::_toString(extensions::HIDDevice& hid) {
+		using namespace srk::enum_operators;
+		using namespace srk::extensions;
+
+		std::string RED_BEGIN = "\33[31m";
 		std::string GREEN_BEGIN = "\33[32m";
 		std::string COL_END = "\33[0m";
 		std::string INDENT = "    ";
@@ -965,137 +1211,7 @@ namespace srk::modules::inputs::hid_input {
 			}
 		}
 
-		printaln(info);*/
-
-		auto ba = HID::getReportDescriptor(hid);
-		printaln(ba.getLength());
-
-		auto isGamepad = false;
-		auto lastUsagePage = HIDReportUsagePageType::UNDEFINED;
-		size_t lastReportSize = 0, lastReportCount = 0, lastLogicalMinimum = 0, lastLogicalMaximum = 0;
-
-		uint32_t collection = 0;
-		HIDReportDescriptorItem item;
-		while (ba.getBytesAvailable()) {
-			if (auto n = HIDReportDescriptorItem::parse(ba.getCurrentSource(), ba.getBytesAvailable(), item); n) {
-				auto p = ba.getPosition();
-				ba.setPosition(p + n);
-
-				switch (item.type) {
-				case HIDReportItemType::MAIN:
-				{
-					switch ((HIDReportMainItemTag)item.tag) {
-					case HIDReportMainItemTag::COLLECTION:
-						++collection;
-						break;
-					case HIDReportMainItemTag::END_COLLECTION:
-						--collection;
-						break;
-					default:
-						break;
-					}
-				}
-				case HIDReportItemType::GLOBAL:
-				{
-					switch ((HIDReportGlobalItemTag)item.tag) {
-					case HIDReportGlobalItemTag::USAGE_PAGE:
-						lastUsagePage = (HIDReportUsagePageType)ba.read<ba_vt::UIX>(item.size);
-						break;
-					case HIDReportGlobalItemTag::LOGICAL_MINIMUM:
-						lastLogicalMinimum = ba.read<ba_vt::UIX>(item.size);
-						break;
-					case HIDReportGlobalItemTag::LOGICAL_MAXIMUM:
-						lastLogicalMaximum = ba.read<ba_vt::UIX>(item.size);
-						break;
-					default:
-						break;
-					}
-
-					break;
-				}
-				case HIDReportItemType::LOCAL:
-				{
-					switch ((HIDReportLocalItemTag)item.tag) {
-					case HIDReportLocalItemTag::USAGE:
-					{
-						if (usagePage == HIDReportUsagePageType::GENERIC_DESKTOP) {
-							switch ((HIDReportGenericDesktopPageType)ba.read<ba_vt::UIX>(item.size)) {
-							case HIDReportGenericDesktopPageType::GAMEPAD:
-								isGamepad = true;
-								break;
-							default:
-								break;
-							}
-						}
-
-						break;
-					}
-					default:
-						break;
-					}
-
-					break;
-				}
-				default:
-					break;
-				}
-
-				ba.setPosition(p + n + item.size);
-			} else {
-				printaln("err ==============");
-				break;
-			}
-		}
-
-		return nullptr;
-	}
-
-	size_t GamepadDriver::getInputLength() const {
-		return 0;
-	}
-
-	size_t GamepadDriver::getOutputLength() const {
-		return 0;
-	}
-
-	bool GamepadDriver::init(void* inputState, void* outputState) {
-		return false;
-	}
-
-	bool GamepadDriver::isStateReady(const void* state) const {
-		return false;
-	}
-
-	bool GamepadDriver::readStateFromDevice(void* inputState) const {
-		return false;
-	}
-
-	float32_t GamepadDriver::readDataFromInputState(const void* inputState, GamepadKeyCodeAndFlags cf, float32_t defaultVal) const {
-		return translate(defaultVal, cf.flags);
-	}
-
-	DeviceState::CountType GamepadDriver::customGetState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count,
-		const void* inputState, void* custom, ReadWriteStateStartCallback readStateStartCallback, ReadWriteStateStartCallback readStateEndCallback) const {
-		return 0;
-	}
-
-	void GamepadDriver::customDispatch(const void* oldInputState, const void* newInputState, void* custom, DispatchCallback dispatchCallback) const {}
-
-	bool GamepadDriver::writeStateToDevice(const void* outputState) const {
-		return false;
-	}
-
-	DeviceState::CountType GamepadDriver::customSetState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count, void* outputState, void* custom,
-		ReadWriteStateStartCallback writeStateStartCallback, ReadWriteStateStartCallback writeStateEndCallback) const {
-		return 0;
-	}
-
-	void GamepadDriver::setKeyMapper(GamepadKeyMapper& dst, const GamepadKeyMapper* src) const {
-		if (src) {
-			dst = *src;
-		} else {
-			dst.clear();
-		}
+		printaln(info);
 	}
 }
 #endif

@@ -11,7 +11,7 @@
 
 namespace srk::extensions {
 	HIDDeviceInfo::HIDDeviceInfo() :
-		valid(false),
+		index(-1),
 		vendorID(0),
 		productID(0),
 		usagePage(0),
@@ -113,6 +113,7 @@ namespace srk::extensions {
 				ByteArray ba(reportDesc, reportDescSize, ByteArray::Usage::SHARED);
 				HIDReportDescriptorItem item;
 				uint32_t collection = 0;
+				int32_t index = 0;
 				while (ba.getBytesAvailable()) {
 					if (auto n = HIDReportDescriptorItem::parse(ba.getCurrentSource(), ba.getBytesAvailable(), item); n) {
 						auto p = ba.getPosition();
@@ -149,9 +150,18 @@ namespace srk::extensions {
 						case HIDReportItemType::LOCAL:
 						{
 							if (collection == 0) {
-								info.usage = ba.read<ba_vt::UIX>(item.size);
-								info.valid = true;
-								callback(info, custom);
+								switch ((HIDReportLocalItemTag)item.tag) {
+								case HIDReportLocalItemTag::USAGE:
+								{
+									info.usage = ba.read<ba_vt::UIX>(item.size);
+									info.index = index++;
+									callback(info, custom);
+									
+									break;
+								}
+								default:
+									break;
+								}
 							}
 
 							break;
@@ -175,7 +185,7 @@ namespace srk::extensions {
 	}
 
 	bool HID::isValid(const HIDDeviceInfo& info) {
-		return info.valid;
+		return info.index >= 0 ;
 	}
 
 	bool HID::isValid(const HIDDevice& device) {
@@ -183,31 +193,35 @@ namespace srk::extensions {
 	}
 
 	uint16_t HID::getVendorID(const HIDDeviceInfo& info) {
-		return info.valid ? info.vendorID : 0;
+		return info.index >= 0  ? info.vendorID : 0;
 	}
 
 	uint16_t HID::getProductID(const HIDDeviceInfo& info) {
-		return info.valid ? info.productID : 0;
+		return info.index >= 0  ? info.productID : 0;
 	}
 
 	std::string_view HID::getManufacturerString(const HIDDeviceInfo& info) {
-		return info.valid ? info.manufacturer : std::string_view();
+		return info.index >= 0  ? info.manufacturer : std::string_view();
 	}
 
 	std::string_view HID::getProductString(const HIDDeviceInfo& info) {
-		return info.valid ? info.product : std::string_view();
+		return info.index >= 0  ? info.product : std::string_view();
 	}
 
 	std::string_view HID::getPath(const HIDDeviceInfo& info) {
-		return info.valid ? info.pathView : std::string_view();
+		return info.index >= 0  ? info.pathView : std::string_view();
 	}
 
 	uint16_t HID::getUsagePage(const HIDDeviceInfo& info) {
-		return info.valid ? info.usagePage : 0;
+		return info.index >= 0  ? info.usagePage : 0;
 	}
 
 	uint16_t HID::getUsage(const HIDDeviceInfo& info) {
-		return info.valid ? info.usage : 0;
+		return info.index >= 0 ? info.usage : 0;
+	}
+
+	int32_t HID::getIndex(const HIDDeviceInfo& info) {
+		return info.index;
 	}
 
 	HIDDevice* HID::open(const std::string_view& path) {

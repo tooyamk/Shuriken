@@ -27,7 +27,7 @@ namespace srk::modules::inputs::hid_input {
 	GamepadDriver::~GamepadDriver() {
 	}
 
-	GamepadDriver* GamepadDriver::create(Input& input, extensions::HIDDevice& hid, uint16_t usagePage, uint16_t usage) {
+	GamepadDriver* GamepadDriver::create(Input& input, extensions::HIDDevice& hid, int32_t index) {
 		using namespace srk::extensions;
 		using namespace srk::enum_operators;
 

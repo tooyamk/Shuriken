@@ -8,7 +8,7 @@ namespace srk::modules::inputs::hid_input {
 	public:
 		virtual ~GamepadDriver();
 
-		static GamepadDriver* SRK_CALL create(Input& input, extensions::HIDDevice& hid, uint16_t usagePage, uint16_t usage);
+		static GamepadDriver* SRK_CALL create(Input& input, extensions::HIDDevice& hid, int32_t index);
 
 		virtual size_t SRK_CALL getInputLength() const override;
 		virtual size_t SRK_CALL getOutputLength() const override;
@@ -31,6 +31,23 @@ namespace srk::modules::inputs::hid_input {
 
 	private:
 		GamepadDriver(Input& input, extensions::HIDDevice& hid);
+
+		struct InputCap {
+			uint16_t offset;
+			uint8_t size;
+			uint32_t min;
+			uint32_t max;
+		};
+
+		struct DeviceDesc {
+			uint8_t inputReportID;
+			uint32_t inputReportLength;
+			std::vector<InputCap> inputAxes;
+			std::vector<InputCap> inputDPads;
+			std::vector<InputCap> inputButtons;
+		};
+
+		static void SRK_CALL _toString(extensions::HIDDevice& hid);
 	};
 }
 #endif

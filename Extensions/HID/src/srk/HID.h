@@ -425,6 +425,7 @@ namespace srk::extensions {
 		static std::string_view SRK_CALL getPath(const HIDDeviceInfo& info);
 		static HIDUsagePage SRK_CALL getUsagePage(const HIDDeviceInfo& info);
 		static HIDUsage SRK_CALL getUsage(const HIDDeviceInfo& info);
+		static int32_t SRK_CALL getIndex(const HIDDeviceInfo& info);
 
 		//static ByteArray SRK_CALL getRawReportDescriptor(const HIDDeviceInfo& info);
 		//static ByteArray SRK_CALL getRawReportDescriptor(const HIDDevice& device);

@@ -40,11 +40,24 @@ namespace srk::extensions {
 		return 0;
 	}
 
+	int32_t HID::getIndex(const HIDDeviceInfo& info) {
+		return -1;
+	}
+
 	HIDDevice* HID::open(const std::string_view& path) {
 		return nullptr;
 	}
 
-	void HID::close(HIDDevice& device) {}
+	void HID::close(HIDDevice& device) {
+	}
+
+	ByteArray HID::getReportDescriptor(const HIDDevice& device) {
+		return ByteArray();
+	}
+
+	void* HID::getPreparsedData(const HIDDevice& device) {
+		return nullptr;
+	}
 
 	size_t HID::read(HIDDevice& device, void* data, size_t dataLength, size_t timeout) {
 		return HID::OUT_ERROR;
@@ -52,10 +65,6 @@ namespace srk::extensions {
 
 	size_t HID::write(HIDDevice& device, const void* data, size_t dataLength, size_t timeout) {
 		return HID::OUT_ERROR;
-	}
-
-	void* HID::getPreparsedData(const HIDDevice& device) {
-		return nullptr;
 	}
 }
 #endif

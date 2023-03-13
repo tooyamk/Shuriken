@@ -588,6 +588,10 @@ namespace srk::extensions {
 		return info.getUsage();
 	}
 
+	int32_t HID::getIndex(const HIDDeviceInfo& info) {
+		return info.handle ? 0 : -1;
+	}
+
 	/*
 	ByteArray HID::getRawReportDescriptor(const HIDDeviceInfo& info) {
 		return info.getRawReportDescriptor();

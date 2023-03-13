@@ -8,8 +8,7 @@ namespace srk::modules::inputs::hid_input {
 	class SRK_MODULE_DLL InternalDeviceInfo : public DeviceInfo {
 	public:
 		std::string path;
-		uint16_t usagePage;
-		uint16_t usage;
+		int32_t index;
 	};
 }
 
