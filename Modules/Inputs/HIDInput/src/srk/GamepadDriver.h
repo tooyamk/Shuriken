@@ -8,7 +8,7 @@ namespace srk::modules::inputs::hid_input {
 	public:
 		virtual ~GamepadDriver();
 
-		static GamepadDriver* SRK_CALL create(Input& input, extensions::HIDDevice& hid);
+		static GamepadDriver* SRK_CALL create(Input& input, extensions::HIDDevice& hid, uint16_t usagePage, uint16_t usage);
 
 		virtual size_t SRK_CALL getInputLength() const override;
 		virtual size_t SRK_CALL getOutputLength() const override;

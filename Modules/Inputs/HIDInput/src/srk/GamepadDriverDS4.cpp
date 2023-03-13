@@ -389,17 +389,17 @@ namespace srk::modules::inputs::hid_input {
 	}
 
 	void GamepadDriverDS4::_writeOutputStateInit(void* outputState, uint8_t offset) const {
-		auto data = (uint8_t*)outputState;
+		auto raw = (uint8_t*)outputState;
 
-		if (!data[0]) {
-			data[0] = offset;
+		if (!raw[0]) {
+			raw[0] = offset;
 
 			if (offset == 6) {
 				uint8_t data[] = { 0x11, 0x80, 0, 0xFF };
-				memcpy(data + HEADER_LENGTH, data, sizeof(data));
+				memcpy(raw + HEADER_LENGTH, data, sizeof(data));
 			} else {
 				uint8_t data[] = { 0x05, 0xFF };
-				memcpy(data + HEADER_LENGTH, data, sizeof(data));
+				memcpy(raw + HEADER_LENGTH, data, sizeof(data));
 			}
 		}
 	}

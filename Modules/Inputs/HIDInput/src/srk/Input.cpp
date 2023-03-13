@@ -30,28 +30,30 @@ namespace srk::modules::inputs::hid_input {
 		HID::enumDevices(&newDevices, [](const HIDDeviceInfo& info, void* custom) {
 			auto newDevices = (std::vector<InternalDeviceInfo>*)custom;
 
-			if (HID::getUsagePage(info) == HIDReportUsagePageType::GENERIC_DESKTOP) {
-				if (auto usage = HID::getUsage(info); usage == HIDReportGenericDesktopPageType::JOYSTICK || usage == HIDReportGenericDesktopPageType::GAMEPAD) {
-					auto& dev = newDevices->emplace_back();
+			auto usagePage = HID::getUsagePage(info);
+			auto usage = HID::getUsage(info);
+			if (usagePage == HIDReportUsagePageType::GENERIC_DESKTOP && (usage == HIDReportGenericDesktopPageType::JOYSTICK || usage == HIDReportGenericDesktopPageType::GAMEPAD)) {
+				auto& dev = newDevices->emplace_back();
 
-					auto path = HID::getPath(info);
+				auto path = HID::getPath(info);
 
-					auto hash = hash::xxHash<64>::calc<std::endian::native>(path.data(), path.size(), 0);
-					dev.guid.set<false, true>(&hash, sizeof(hash), 0);
-					dev.vendorID = HID::getVendorID(info);
-					dev.productID = HID::getProductID(info);
-					dev.type = DeviceType::GAMEPAD;
-					dev.path = path;
-					dev.name = HID::getProductString(info);
+				auto hash = hash::xxHash<64>::calc<std::endian::native>(path.data(), path.size(), 0);
+				dev.guid.set<false, true>(&hash, sizeof(hash), 0);
+				dev.vendorID = HID::getVendorID(info);
+				dev.productID = HID::getProductID(info);
+				dev.type = DeviceType::GAMEPAD;
+				dev.path = path;
+				dev.name = HID::getProductString(info);
+				dev.usagePage = usagePage;
+				dev.usage = usage;
 
-					switch (dev.vendorID << 16 | dev.productID) {
-					case 0x54C << 16 | 0x5C4:
-					case 0x54C << 16 | 0x9CC:
-						dev.flags |= DeviceFlag::SPECIFIC;
-						break;
-					default:
-						break;
-					}
+				switch (dev.vendorID << 16 | dev.productID) {
+				case 0x54C << 16 | 0x5C4:
+				case 0x54C << 16 | 0x9CC:
+					dev.flags |= DeviceFlag::SPECIFIC;
+					break;
+				default:
+					break;
 				}
 			}
 		});
@@ -111,8 +113,8 @@ namespace srk::modules::inputs::hid_input {
 			break;
 		}
 
-		if (!driver) driver = GamepadDriver::create(*this, *hid);
-		if (driver) new GenericGamepad(*di, *driver, nullptr);
+		if (!driver) driver = GamepadDriver::create(*this, *hid, di->usagePage, di->usage);
+		if (driver) return new GenericGamepad(*di, *driver, nullptr);
 
 		HID::close(*hid);
 		return nullptr;

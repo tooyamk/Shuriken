@@ -634,7 +634,7 @@ namespace srk::extensions {
 		delete& device;
 	}
 
-	ByteArray HID::getRawReportDescriptor(const HIDDevice& device) {
+	ByteArray HID::getReportDescriptor(const HIDDevice& device) {
 		return ByteArray();
 	}
 
@@ -647,7 +647,7 @@ namespace srk::extensions {
 		if (device.inputReportLength == 0) return 0;
 
 		DWORD bytesReaded = 0;
-		bool overlapped = false;
+		auto overlapped = false;
 
 		if (device.readPending) {
 			overlapped = true;
@@ -708,7 +708,7 @@ namespace srk::extensions {
 		if (device.outputReportLength == 0) return 0;
 
 		DWORD bytesWriten = 0;
-		bool overlapped = false;
+		auto overlapped = false;
 
 		if (device.writePending) {
 			overlapped = true;
