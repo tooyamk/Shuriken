@@ -6,9 +6,18 @@
 #include "srk/HID.h"
 
 namespace srk::modules::inputs::hid_input {
-	GamepadDriver::GamepadDriver(Input& input, extensions::HIDDevice& hid) : GamepadDriverBase(input, hid) {}
+	GamepadDriver::GamepadDriver(Input& input, extensions::HIDDevice& hid, DeviceDesc&& desc) : GamepadDriverBase(input, hid),
+		_desc(std::move(desc)) {
+		using namespace srk::enum_operators;
 
-	GamepadDriver::~GamepadDriver() {}
+		_maxAxisKeyCode = GamepadKeyCode::AXIS_1 + _desc.inputAxes.size() - 1;
+		_minDPadKeyCode = _maxAxisKeyCode + 1;
+		_maxAxisKeyCode = _maxAxisKeyCode + (_desc.inputDPads.size() << 1);
+		_maxButtonKeyCode = GamepadKeyCode::BUTTON_1 + _desc.inputButtons.size() - 1;
+	}
+
+	GamepadDriver::~GamepadDriver() {
+	}
 
 	GamepadDriver* GamepadDriver::create(Input& input, extensions::HIDDevice& hid, int32_t index) {
 		using namespace srk::enum_operators;
@@ -90,7 +99,7 @@ namespace srk::modules::inputs::hid_input {
 								}
 								case HIDReportUsagePageType::BUTTON:
 								{
-									for (auto i = usageMinimum; i <= usageMaximum; ++i) {
+									for (size_t i = 0, n = usageMaximum - usageMinimum; i <= n; ++i) {
 										auto& cap = desc.inputButtons.emplace_back();
 
 										cap.offset = inputBits + i * reportSize;
@@ -187,8 +196,7 @@ namespace srk::modules::inputs::hid_input {
 
 				ba.setPosition(p + n + item.size);
 			} else {
-				printaln("err ==============");
-				break;
+				return nullptr;
 			}
 		}
 
@@ -196,13 +204,13 @@ namespace srk::modules::inputs::hid_input {
 
 		desc.inputReportLength = (inputBits + 7) >> 3;
 
-		_toString(hid);
+		//_toString(hid);
 
-		return new GamepadDriver(input, hid);
+		return new GamepadDriver(input, hid, std::move(desc));
 	}
 
 	size_t GamepadDriver::getInputLength() const {
-		return 1;
+		return HEADER_LENGTH + _desc.inputReportLength;
 	}
 
 	size_t GamepadDriver::getOutputLength() const {
@@ -210,26 +218,65 @@ namespace srk::modules::inputs::hid_input {
 	}
 
 	bool GamepadDriver::init(void* inputState, void* outputState) {
-		return false;
+		if (inputState) ((uint8_t*)inputState)[0] = 0;
+
+		return true;
 	}
 
 	bool GamepadDriver::isStateReady(const void* state) const {
-		return false;
+		return ((const uint8_t*)state)[0];
 	}
 
 	bool GamepadDriver::readStateFromDevice(void* inputState) const {
 		using namespace srk::extensions;
 
-		uint8_t buf[10];
-		if (HID::isSuccess(HID::read(*_hid, buf, 10, 0))) {
-			printaln(111);
+		auto buffer = (uint8_t*)inputState;
+		auto inputReportData = buffer + HEADER_LENGTH;
+		if (auto rst = HID::read(*_hid, inputReportData, _desc.inputReportLength, 0); HID::isSuccess(rst)) {
+			buffer[0] = 1;
+			return true;
 		}
 
 		return false;
 	}
 
 	float32_t GamepadDriver::readDataFromInputState(const void* inputState, GamepadKeyCodeAndFlags cf, float32_t defaultVal) const {
-		return translate(defaultVal, cf.flags);
+		using namespace srk::enum_operators;
+
+		auto data = (const uint8_t*)inputState;
+
+		float32_t val;
+		if (data[0]) {
+			data += HEADER_LENGTH;
+
+			if (cf.code >= GamepadKeyCode::AXIS_1 && cf.code <= _maxAxisKeyCode) {
+				if (!_desc.inputDPads.empty() && cf.code >= _minDPadKeyCode) {
+					auto idx = (size_t)(cf.code - _minDPadKeyCode);
+					const auto& cap =_desc.inputDPads[idx >> 1];
+					if (auto v = _read(cap, data); v >= cap.min && v <= cap.max) {
+						auto a = v * Math::PI2<float32_t> / (float32_t)(cap.max - cap.min + 1);
+						val = 0.5f + ((idx & 0b1) == 0 ? std::sin(a) : std::cos(a)) * 0.5f;
+					} else {
+						val = 0.5f;
+					}
+				} else {
+					const auto& cap =_desc.inputAxes[(size_t)(cf.code - GamepadKeyCode::AXIS_1)];
+					val = (float32_t)std::clamp(_read(cap, data), cap.min, cap.max) / (float32_t)(cap.max - cap.min);
+				}
+			} else if (cf.code >= GamepadKeyCode::BUTTON_1 && cf.code <= _maxButtonKeyCode) {
+				const auto& cap =_desc.inputButtons[(size_t)(cf.code - GamepadKeyCode::BUTTON_1)];
+				val = (float32_t)std::clamp(_read(cap, data), cap.min, cap.max) / (float32_t)(cap.max - cap.min);
+				if (val == 1.0f) {
+					val = (float32_t)std::clamp(_read(cap, data), cap.min, cap.max) / (float32_t)(cap.max - cap.min);
+				}
+			} else {
+				val = defaultVal;
+			}
+		} else {
+			val = defaultVal;
+		}
+
+		return translate(val, cf.flags);
 	}
 
 	DeviceState::CountType GamepadDriver::customGetState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count,
@@ -237,7 +284,8 @@ namespace srk::modules::inputs::hid_input {
 		return 0;
 	}
 
-	void GamepadDriver::customDispatch(const void* oldInputState, const void* newInputState, void* custom, DispatchCallback dispatchCallback) const {}
+	void GamepadDriver::customDispatch(const void* oldInputState, const void* newInputState, void* custom, DispatchCallback dispatchCallback) const {
+	}
 
 	bool GamepadDriver::writeStateToDevice(const void* outputState) const {
 		return false;
@@ -252,8 +300,35 @@ namespace srk::modules::inputs::hid_input {
 		if (src) {
 			dst = *src;
 		} else {
-			dst.clear();
+			dst.setDefault(_desc.inputAxes.size(), _desc.inputDPads.size(), _desc.inputButtons.size(), false);
 		}
+
+		dst.undefinedCompletion(_desc.inputAxes.size() + _desc.inputDPads.size(), _desc.inputButtons.size());
+	}
+
+	uint32_t GamepadDriver::_read(const InputCap& cap, const uint8_t* data) {
+		int32_t needReadBits = cap.size;
+		int32_t inputBytePos = cap.offset >> 3;
+		int32_t inputByteReadedBits = cap.offset - (inputBytePos << 3);
+
+		uint32_t val = 0;
+		int32_t valReadedBits = 0;
+
+		do {
+			auto inputVal = data[inputBytePos] >> inputByteReadedBits;
+			auto validBits = std::min(std::min(needReadBits, 8 - inputByteReadedBits), 32 - valReadedBits);
+			val |= (inputVal << valReadedBits) & ((1 << (validBits + valReadedBits)) - 1);//1 << 32 ??
+
+			needReadBits -= validBits;
+			if (needReadBits == 0) break;
+			
+			if (inputByteReadedBits += validBits; inputByteReadedBits == 8) {
+				++inputBytePos;
+				inputByteReadedBits = 0;
+			}
+		} while (true);
+		
+		return val;
 	}
 
 	void GamepadDriver::_toString(extensions::HIDDevice& hid) {

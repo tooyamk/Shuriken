@@ -30,7 +30,8 @@ namespace srk::modules::inputs::hid_input {
 		virtual void SRK_CALL setKeyMapper(GamepadKeyMapper& dst, const GamepadKeyMapper* src) const override;
 
 	private:
-		GamepadDriver(Input& input, extensions::HIDDevice& hid);
+		static constexpr size_t HEADER_LENGTH = 1;
+
 
 		struct InputCap {
 			uint16_t offset;
@@ -39,13 +40,35 @@ namespace srk::modules::inputs::hid_input {
 			uint32_t max;
 		};
 
+
 		struct DeviceDesc {
 			uint8_t inputReportID;
 			uint32_t inputReportLength;
 			std::vector<InputCap> inputAxes;
 			std::vector<InputCap> inputDPads;
 			std::vector<InputCap> inputButtons;
+
+			DeviceDesc() {}
+			DeviceDesc(const DeviceDesc&) = delete;
+			DeviceDesc(DeviceDesc&& other) noexcept :
+				inputReportID(other.inputReportID),
+				inputReportLength(other.inputReportLength),
+				inputAxes(std::move(other.inputAxes)),
+				inputDPads(std::move(other.inputDPads)),
+				inputButtons(std::move(other.inputButtons)) {
+			}
 		};
+
+
+		GamepadDriver(Input& input, extensions::HIDDevice& hid, DeviceDesc&& desc);
+		
+		DeviceDesc _desc;
+
+		GamepadKeyCode _maxAxisKeyCode;
+		GamepadKeyCode _minDPadKeyCode;
+		GamepadKeyCode _maxButtonKeyCode;
+
+		static uint32_t SRK_CALL _read(const InputCap& cap, const uint8_t* data);
 
 		static void SRK_CALL _toString(extensions::HIDDevice& hid);
 	};

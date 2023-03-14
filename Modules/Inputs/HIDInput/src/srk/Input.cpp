@@ -105,8 +105,8 @@ namespace srk::modules::inputs::hid_input {
 
 		IGenericGamepadDriver* driver = nullptr;
 		switch (di->vendorID << 16 | di->productID) {
-		case 0x54CA << 16 | 0x5C4:
-		case 0x54CA << 16 | 0x9CC:
+		case 0x54C << 16 | 0x5C4:
+		case 0x54C << 16 | 0x9CC:
 			driver = new GamepadDriverDS4(*this, *hid);
 			break;
 		default:
@@ -114,7 +114,7 @@ namespace srk::modules::inputs::hid_input {
 		}
 
 		if (!driver) driver = GamepadDriver::create(*this, *hid, di->index);
-		if (driver) return new GenericGamepad(*di, *driver, nullptr);
+		if (driver) return new GenericGamepad(*di, *driver);
 
 		HID::close(*hid);
 		return nullptr;

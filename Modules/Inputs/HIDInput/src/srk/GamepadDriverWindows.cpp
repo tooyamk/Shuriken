@@ -19,9 +19,9 @@ namespace srk::modules::inputs::hid_input {
 		if (axisLength + dpadLength < buttonUsagesLength) paddingLength = buttonUsagesLength - axisLength - dpadLength;
 		_offset.button = _offset.dpad + dpadLength + paddingLength;
 
-		_maxAxisKeyCode = GamepadKeyCode::AXIS_1 + _desc.axes.size();
+		_maxAxisKeyCode = GamepadKeyCode::AXIS_1 + _desc.axes.size() - 1;
 		if (_desc.dpad.valid) _maxAxisKeyCode = _maxAxisKeyCode + 2;
-		_maxButtonKeyCode = GamepadKeyCode::BUTTON_1 + _desc.buttons.size();
+		_maxButtonKeyCode = GamepadKeyCode::BUTTON_1 + _desc.buttons.size() - 1;
 	}
 
 	GamepadDriver::~GamepadDriver() {
@@ -85,12 +85,12 @@ namespace srk::modules::inputs::hid_input {
 			}
 		}
 
-		std::sort(desc.axes.begin(), desc.axes.end(), [](const DeviceDesc::Axis& l, const DeviceDesc::Axis& r) {
+		/*std::sort(desc.axes.begin(), desc.axes.end(), [](const DeviceDesc::Axis& l, const DeviceDesc::Axis& r) {
 			return l.usage < r.usage;
 		});
 		std::sort(desc.buttons.begin(), desc.buttons.end(), [](HIDReportButtonPageType l, HIDReportButtonPageType r) {
 			return l < r;
-		});
+		});*/
 
 		for (size_t i = 0, n = desc.buttons.size(); i < n; ++i) desc.buttonMapper.emplace(desc.buttons[i], i);
 
@@ -167,7 +167,7 @@ namespace srk::modules::inputs::hid_input {
 			return true;
 		}
 
-		return true;
+		return false;
 	}
 
 	float32_t GamepadDriver::readDataFromInputState(const void* inputState, GamepadKeyCodeAndFlags cf, float32_t defaultVal) const {
