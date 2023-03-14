@@ -252,10 +252,6 @@ namespace srk::extensions {
 		return ba;
 	}
 
-	void* HID::getPreparsedData(const HIDDevice& device) {
-		return nullptr;
-	}
-
 	size_t HID::read(HIDDevice& device, void* data, size_t dataLength, size_t timeout) {
 		do {
 			if (timeout) {

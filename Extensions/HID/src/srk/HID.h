@@ -380,28 +380,15 @@ namespace srk::extensions {
 		uint8_t size;
 		uint16_t tag;
 
-		static size_t SRK_CALL parse(const void* data, size_t length, HIDReportDescriptorItem& item) {
-			if (!length) return 0;
+		static size_t SRK_CALL read(const void* data, size_t length, HIDReportDescriptorItem& item);
+		static bool SRK_CALL write(ByteArray& dst, const HIDReportDescriptorItem& item, const void* data);
+		static void SRK_CALL write(ByteArray& dst, HIDReportItemType type, uint8_t tag, uint32_t data);
+		static void SRK_CALL write(ByteArray& dst, HIDReportItemType type, uint8_t tag);
+	};
 
-			auto u8 = (const uint8_t*)data;
-			auto val = u8[0];
-			if (val == 0xFE) {
-				if (length < 4) return 0;
 
-				item.type = (HIDReportItemType)val;
-				item.size = u8[1];
-				item.tag = u8[3] << 8 | u8[2];
-
-				return 3;
-			} else {
-				item.size = val & 0b11;
-				if (item.size == 3) item.size = 4;
-				item.type = (HIDReportItemType)(val >> 2 & 0b11);
-				item.tag = val >> 4 & 0b1111;
-
-				return 1;
-			}
-		}
+	struct SRK_EXTENSION_DLL HIDReportDescriptor {
+		static std::string SRK_CALL toString(const void* data, size_t length);
 	};
 
 
@@ -434,7 +421,6 @@ namespace srk::extensions {
 		static void SRK_CALL close(HIDDevice& device);
 
 		static ByteArray SRK_CALL getReportDescriptor(const HIDDevice& device);
-		static void* SRK_CALL getPreparsedData(const HIDDevice& device);
 
 		static size_t SRK_CALL read(HIDDevice& device, void* data, size_t dataLength, size_t timeout);
 		static size_t SRK_CALL write(HIDDevice& device, const void* data, size_t dataLength, size_t timeout);

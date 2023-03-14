@@ -6,310 +6,7 @@
 
 #include <SetupAPI.h>
 
-//#include <winusb.h>
-//#include <winioctl.h>
-//#include <hidport.h>
-//#include <hidclass.h>
-//#include <winioctl.h>
-//#define HID_OUT_CTL_CODE(id)  \
-//		CTL_CODE(FILE_DEVICE_KEYBOARD, (id), METHOD_OUT_DIRECT,, FILE_ANY_ACCESS)
-//#define IOCTL_HID_GET_FEATURE                   HID_OUT_CTL_CODE(100)
-//#define IOCTL_HID_GET_INPUT_REPORT              HID_OUT_CTL_CODE(104)
-
-#define SRK_EXTENSION_HID_PRINT_ENABLED
-
 namespace srk::extensions {
-	/*
-	namespace hid {
-		inline std::string SRK_CALL getUsagePageString(USHORT usagePage) {
-			auto val = (HIDReportUsagePageType)usagePage;
-			if (val >= HIDReportUsagePageType::POWER_PAGES_BEGIN && val <= HIDReportUsagePageType::POWER_PAGES_END) {
-				return "POWER_PAGES";
-			} else if (val >= HIDReportUsagePageType::VENDOR_DEFINED_BEGIN && val <= HIDReportUsagePageType::VENDOR_DEFINED_END) {
-				return "VENDOR_DEFINED";
-			} else {
-				if (auto itr = HID_REPORT_USAGE_PAGE_TYPE_MAP.find(val); itr != HID_REPORT_USAGE_PAGE_TYPE_MAP.end()) {
-					return std::string(itr->second);
-				} else {
-					return "RESERVED";
-				}
-			}
-		}
-
-		inline std::string SRK_CALL getUsageString(USHORT usagePage, USHORT usage) {
-			switch ((HIDReportUsagePageType)usagePage) {
-			case HIDReportUsagePageType::GENERIC_DESKTOP:
-			{
-				auto val = (HIDReportGenericDesktopPageType)usage;
-				if (auto itr = HID_REPORT_GENERIC_DISKTOP_PAGE_TYPE_MAP.find(val); itr != HID_REPORT_GENERIC_DISKTOP_PAGE_TYPE_MAP.end()) {
-					return std::string(itr->second);
-				} else {
-					return "RESERVED";
-				}
-
-				break;
-			}
-			case HIDReportUsagePageType::CONSUMER_DEVICES:
-			{
-				auto val = (HIDReportConsumerPageType)usage;
-				if (auto itr = HID_REPORT_CONSUMER_PAGE_TYPE_MAP.find(val); itr != HID_REPORT_CONSUMER_PAGE_TYPE_MAP.end()) {
-					return std::string(itr->second);
-				} else {
-					return "RESERVED";
-				}
-
-				break;
-			}
-			case HIDReportUsagePageType::BUTTON:
-			{
-				if (usage == 0) {
-					return "NO_BUTTON_PRESED";
-				} else {
-					return "BUTTON_" + String::toString(usage);
-				}
-
-				break;
-			}
-			default:
-			{
-				return String::toString(usage);
-
-				break;
-			}
-			}
-		}
-
-		template<typename T>
-		inline size_t SRK_CALL findDataCaps(const T* caps, size_t n, size_t begin, USHORT collection) {
-			for (; begin < n; ++begin) {
-				if (caps[begin].LinkCollection == collection) return begin;
-			}
-
-			return n + 1;
-		};
-
-		template<SameAnyOf<HIDP_BUTTON_CAPS, HIDP_VALUE_CAPS> T>
-		inline void SRK_CALL _HIDReportDataCaps(std::string& str, ReportInfo& info, T& caps, const std::string& indent) {
-			info.setRawItem(HIDReportGlobalItemTag::REPORT_ID, caps.ReportID);
-			info.setRawItem(HIDReportGlobalItemTag::USAGE_PAGE, caps.UsagePage);
-
-#ifdef SRK_EXTENSION_HID_PRINT_ENABLED
-			str += indent + "UsagePage (" + getUsagePageString(caps.UsagePage) + ")(" + String::toString(caps.UsagePage) + ")\n";
-#endif
-			if (caps.IsRange) {
-				info.setRawItem(HIDReportLocalItemTag::USAGE_MINIMUM, caps.Range.UsageMin);
-				info.setRawItem(HIDReportLocalItemTag::USAGE_MAXIMUM, caps.Range.UsageMax);
-#ifdef SRK_EXTENSION_HID_PRINT_ENABLED
-				str += indent + "UsageMinimum (" + getUsageString(caps.UsagePage, caps.Range.UsageMin) + ")(" + String::toString(caps.Range.UsageMin) + ")\n";
-				str += indent + "UsageMaximum (" + getUsageString(caps.UsagePage, caps.Range.UsageMax) + ")(" + String::toString(caps.Range.UsageMax) + ")\n";
-#endif
-			} else {
-				info.setRawItem(HIDReportLocalItemTag::USAGE, caps.NotRange.Usage);
-#ifdef SRK_EXTENSION_HID_PRINT_ENABLED
-				str += indent + "Usage (" + getUsageString(caps.UsagePage, caps.NotRange.Usage) + ")(" + String::toString(caps.NotRange.Usage) + ")\n";
-#endif
-			}
-
-#ifdef SRK_EXTENSION_HID_PRINT_ENABLED
-			str += indent + "ReportID (" + String::toString(caps.ReportID) + ")\n";
-#endif
-
-			if constexpr (std::same_as<T, HIDP_BUTTON_CAPS>) {
-				info.setRawItem(HIDReportGlobalItemTag::LOGICAL_MINIMUM, 0);
-				info.setRawItem(HIDReportGlobalItemTag::LOGICAL_MAXIMUM, 1);
-				info.setRawItem(HIDReportGlobalItemTag::REPORT_SIZE, 1);
-				info.setRawItem(HIDReportGlobalItemTag::REPORT_COUNT, caps.Range.UsageMax - caps.Range.UsageMin + 1);
-
-#ifdef SRK_EXTENSION_HID_PRINT_ENABLED
-				str += indent + "LogicalMinimum (" + String::toString(0) + ")\n";
-				str += indent + "LogicalMaximum (" + String::toString(1) + ")\n";
-				str += indent + "ReportSize (" + String::toString(1) + ")\n";
-				str += indent + "ReportCount (" + String::toString(caps.Range.UsageMax - caps.Range.UsageMin + 1) + ")\n";
-#endif
-			} else {
-				info.setRawItem(HIDReportGlobalItemTag::LOGICAL_MINIMUM, caps.LogicalMin);
-				info.setRawItem(HIDReportGlobalItemTag::LOGICAL_MAXIMUM, caps.LogicalMax);
-				info.setRawItem(HIDReportGlobalItemTag::PHYSICAL_MINIMUM, caps.PhysicalMin);
-				info.setRawItem(HIDReportGlobalItemTag::PHYSICAL_MAXIMUM, caps.PhysicalMax);
-				info.setRawItem(HIDReportGlobalItemTag::REPORT_SIZE, caps.BitSize);
-				info.setRawItem(HIDReportGlobalItemTag::REPORT_COUNT, caps.ReportCount);
-
-#ifdef SRK_EXTENSION_HID_PRINT_ENABLED
-				str += indent + "LogicalMinimum (" + String::toString(caps.LogicalMin) + ")\n";
-				str += indent + "LogicalMaximum (" + String::toString(caps.LogicalMax) + ")\n";
-				str += indent + "PhysicalMinimum (" + String::toString(caps.PhysicalMin) + ")\n";
-				str += indent + "PhysicalMaximum (" + String::toString(caps.PhysicalMax) + ")\n";
-				str += indent + "ReportSize (" + String::toString(caps.BitSize) + ")\n";
-				str += indent + "ReportCount (" + String::toString(caps.ReportCount) + ")\n";
-#endif
-			}
-		}
-
-		template<typename T>
-		inline void SRK_CALL _HIDReportCollectData(std::vector<ReportDataInfo>& vec, std::vector<T>& caps, size_t collectionIndex) {
-			auto max = caps.size();
-			size_t i = 0;
-			do {
-				i = findDataCaps(caps.data(), max, i, collectionIndex);
-				if (i >= max) {
-					break;
-				} else {
-					auto& info = vec.emplace_back();
-
-					auto& data = caps[i];
-					if (data.IsRange) {
-						info.index = data.Range.DataIndexMin;
-						info.length = data.Range.DataIndexMax - data.Range.DataIndexMin + 1;
-					} else {
-						info.index = data.NotRange.DataIndex;
-						info.length = 1;
-					}
-
-					info.isButton = std::same_as<std::remove_cvref_t<T>, HIDP_BUTTON_CAPS>;
-					info.data = &data;
-
-					++i;
-				}
-			} while (true);
-		}
-
-		inline void SRK_CALL _HIDReportCollectData(std::string& str, ReportInfo& info, ReportData& data, size_t collectionIndex, const std::string& indent) {
-			std::vector<ReportDataInfo> vec;
-
-			_HIDReportCollectData(vec, data.buttonCaps, collectionIndex);
-			_HIDReportCollectData(vec, data.valueCaps, collectionIndex);
-
-			std::sort(vec.begin(), vec.end(), [](const ReportDataInfo& left, const ReportDataInfo& right) {
-				return left.index < right.index;
-			});
-
-			for (auto& e : vec) {
-				if (e.isButton) {
-					_HIDReportDataCaps(str, info, *(HIDP_BUTTON_CAPS*)e.data, indent);
-				} else {
-					_HIDReportDataCaps(str, info, *(HIDP_VALUE_CAPS*)e.data, indent);
-				}
-
-				info.setRawItem(data.tag, 0b10);
-
-#ifdef SRK_EXTENSION_HID_PRINT_ENABLED
-				switch (data.tag) {
-				case HIDReportMainItemTag::INPUT:
-					str += indent + "Input ()\n";
-					break;
-				case HIDReportMainItemTag::OUTPUT:
-					str += indent + "Output ()\n";
-					break;
-				case HIDReportMainItemTag::FEATURE:
-					str += indent + "Feature ()\n";
-					break;
-				}
-
-				str += "\n";
-#endif
-			}
-		}
-
-		inline void SRK_CALL _HIDReportCollection(std::string& str, ReportInfo& info, size_t collectionIndex, const std::string& indent) {
-			auto& collection = info.linkCollectionNodes[collectionIndex];
-
-			info.setRawItem(HIDReportMainItemTag::COLLECTION, collection.CollectionType);
-
-			auto indent1 = indent + "  ";
-#ifdef SRK_EXTENSION_HID_PRINT_ENABLED
-			str += indent + "Collection (";
-
-			auto val = (HIDReportCollectionData)collection.CollectionType;
-			if (val >= HIDReportCollectionData::VENDOR_DEFINED_BEGIN && val <= HIDReportCollectionData::VENDOR_DEFINED_END) {
-				str += "VENDOR_DEFINED";
-			} else {
-				if (auto itr = HID_REPORT_COLLECTION_DATA_MAP.find(val); itr != HID_REPORT_COLLECTION_DATA_MAP.end()) {
-					str += itr->second;
-				} else {
-					str += "RESERVED";
-				}
-			}
-
-			str += ")\n";
-#endif
-
-			_HIDReportCollectData(str, info, info.inputData, collectionIndex, indent1);
-			_HIDReportCollectData(str, info, info.outputData, collectionIndex, indent1);
-			_HIDReportCollectData(str, info, info.featureData, collectionIndex, indent1);
-
-			auto c = collection.FirstChild;
-			while (c) {
-				_HIDReportCollection(str, info, c, indent1);
-				c = info.linkCollectionNodes[c].NextSibling;
-			}
-
-			info.setRawItem(HIDReportMainItemTag::END_COLLECTION);
-
-#ifdef SRK_EXTENSION_HID_PRINT_ENABLED
-			str += indent + "EndCollection ()\n";
-#endif
-		}
-
-		inline void SRK_CALL _HIDReportReadDataCaps(ReportData& data, HIDP_REPORT_TYPE reportType, ReportInfo& info) {
-			if (data.numberButtonCaps) {
-				data.buttonCaps.resize(data.numberButtonCaps);
-				if (HidP_GetButtonCaps(reportType, data.buttonCaps.data(), &data.numberButtonCaps, info.preparsedData) != HIDP_STATUS_SUCCESS) {
-					int a = 1;
-				}
-
-				for (size_t i = 0; i < data.numberButtonCaps; ++i) {
-					auto& caps = data.buttonCaps[i];
-					int a = 1;
-				}
-			}
-
-			if (data.numberValueCaps) {
-				data.valueCaps.resize(data.numberValueCaps);
-				if (HidP_GetValueCaps(reportType, data.valueCaps.data(), &data.numberValueCaps, info.preparsedData) != HIDP_STATUS_SUCCESS) {
-					int a = 1;
-				}
-
-				for (size_t i = 0; i < data.numberValueCaps; ++i) {
-					auto& caps = data.valueCaps[i];
-					int a = 1;
-				}
-			}
-
-			int a = 1;
-		}
-
-		inline void SRK_CALL _HIDReportDescriptor(ReportInfo& info) {
-			std::string indent = "";
-
-			std::string str;
-
-			info.setRawItem(HIDReportGlobalItemTag::USAGE_PAGE, info.usagePage);
-			info.setRawItem(HIDReportLocalItemTag::USAGE, info.usage);
-
-#ifdef SRK_EXTENSION_HID_PRINT_ENABLED
-			str += indent + "UsagePage (" + getUsagePageString(info.usagePage) + ")(" + String::toString(info.usagePage) + ")\n";
-			str += indent + "Usage (" + getUsageString(info.usagePage, info.usage) + ")(" + String::toString(info.usage) + ")\n";
-#endif
-
-			{
-				if (info.numberLinkCollectionNodes) {
-					info.linkCollectionNodes = new HIDP_LINK_COLLECTION_NODE[info.numberLinkCollectionNodes];
-					HidP_GetLinkCollectionNodes(info.linkCollectionNodes, &info.numberLinkCollectionNodes, info.preparsedData);
-
-					_HIDReportReadDataCaps(info.inputData, HidP_Input, info);
-					_HIDReportReadDataCaps(info.outputData, HidP_Output, info);
-					_HIDReportReadDataCaps(info.featureData, HidP_Feature, info);
-
-					if (info.numberLinkCollectionNodes) _HIDReportCollection(str, info, 0, indent);
-				}
-			}
-
-#ifdef SRK_EXTENSION_HID_PRINT_ENABLED
-			printaln(str);
-#endif
-		}
-	}
-	*/
 
 	HIDDeviceInfo::HIDDeviceInfo() :
 		_vendorID(0),
@@ -317,7 +14,8 @@ namespace srk::extensions {
 		_usagePage(0),
 		_usage(0),
 		handle(nullptr),
-		_preparsedData(nullptr) {}
+		_preparsedData(nullptr) {
+	}
 
 	HIDDeviceInfo::~HIDDeviceInfo() {
 		if (_preparsedData) HidD_FreePreparsedData(_preparsedData);
@@ -342,40 +40,6 @@ namespace srk::extensions {
 		if (!_usage) _readCaps();
 		return _usage;
 	}
-
-	/*
-	ByteArray HIDDeviceInfo::getRawReportDescriptor() const {
-		do {
-			if (!_rawReportDescriptor.isValid()) {
-				_readPreparsedData();
-				if (!_preparsedData) break;
-
-				HIDP_CAPS caps;
-				if (HidP_GetCaps(_preparsedData, &caps) != HIDP_STATUS_SUCCESS) break;
-
-				hid::ReportInfo info;
-				info.preparsedData = _preparsedData;
-				info.usagePage = caps.UsagePage;
-				info.usage = caps.Usage;
-				info.numberLinkCollectionNodes = caps.NumberLinkCollectionNodes;
-				info.inputData.tag = HIDReportMainItemTag::INPUT;
-				info.inputData.numberButtonCaps = caps.NumberInputButtonCaps;
-				info.inputData.numberValueCaps = caps.NumberInputValueCaps;
-				info.outputData.tag = HIDReportMainItemTag::OUTPUT;
-				info.outputData.numberButtonCaps = caps.NumberOutputButtonCaps;
-				info.outputData.numberValueCaps = caps.NumberOutputValueCaps;
-				info.featureData.tag = HIDReportMainItemTag::FEATURE;
-				info.featureData.numberButtonCaps = caps.NumberFeatureButtonCaps;
-				info.featureData.numberValueCaps = caps.NumberFeatureValueCaps;
-				hid::_HIDReportDescriptor(info);
-
-				_rawReportDescriptor = std::move(info.raw);
-			}
-		} while (false);
-
-		return _rawReportDescriptor.slice(0, _rawReportDescriptor.getLength(), ByteArray::Usage::SHARED);
-	}
-	*/
 
 	void* HIDDeviceInfo::getPreparsedData() const {
 		if (!handle) return nullptr;
@@ -446,26 +110,6 @@ namespace srk::extensions {
 			oWrite.hEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 		}
 	}
-
-	/*
-	ULONG HIDDevice::parsePressedButtons(HIDP_REPORT_TYPE reportType, USAGE usagePage, const void* reportData, ULONG reportDataLength, USAGE* outUsages, ULONG usageLength) const {
-		_readPreparsedData();
-		if (!_preparsedData) return 0;
-
-		return HidP_GetUsages(reportType, usagePage, 0, outUsages, &usageLength, _preparsedData, (PCHAR)reportData, reportDataLength) == HIDP_STATUS_SUCCESS ? usageLength : 0;
-	}
-
-	std::optional<ULONG> HIDDevice::parseValue(HIDP_REPORT_TYPE reportType, USAGE usagePage, USAGE usage, const void* report, ULONG reportLength) const {
-		using namespace srk::enum_operators;
-
-		_readPreparsedData();
-		if (!_preparsedData) return std::nullopt;
-
-		ULONG val;
-		auto rst = HidP_GetUsageValue(reportType, usagePage, 0, usage, &val, _preparsedData, (PCHAR)report, reportLength);
-		return HidP_GetUsageValue(reportType, usagePage, 0, usage, &val, _preparsedData, (PCHAR)report, reportLength) == HIDP_STATUS_SUCCESS ? std::make_optional(val) : std::nullopt;
-	}
-	*/
 
 
 	void HID::enumDevices(void* custom, HID::EnumDevicesCallback callback) {
@@ -592,16 +236,6 @@ namespace srk::extensions {
 		return info.handle ? 0 : -1;
 	}
 
-	/*
-	ByteArray HID::getRawReportDescriptor(const HIDDeviceInfo& info) {
-		return info.getRawReportDescriptor();
-	}
-
-	ByteArray HID::getRawReportDescriptor(const HIDDevice& device) {
-		return HID::getRawReportDescriptor((const HIDDeviceInfo&)device);
-	}
-	*/
-
 	HIDDevice* HID::open(const std::string_view& path) {
 		auto handle = CreateFileA(path.data(),
 			//0,
@@ -639,11 +273,171 @@ namespace srk::extensions {
 	}
 
 	ByteArray HID::getReportDescriptor(const HIDDevice& device) {
-		return ByteArray();
-	}
+		using namespace srk::enum_operators;
 
-	void* HID::getPreparsedData(const HIDDevice& device) {
-		return device.preparsedData;
+		auto pd = device.preparsedData;
+		if (!pd) return ByteArray();
+
+		auto& header = *(PreparsedDataHeader*)pd;
+		auto items = (PreparsedDataItem*)((const uint8_t*)pd + sizeof(PreparsedDataHeader));
+
+		ByteArray ba;
+
+		uint16_t usagePage = header.usagePage;
+		uint16_t reportSize = 0, reportID = 0, reportCount = 0;
+		uint32_t logicalMinimum = std::numeric_limits<uint32_t>::max(), logicalMaximum = std::numeric_limits<uint32_t>::max();
+		uint32_t physicalMinimum = std::numeric_limits<uint32_t>::max(), physicalMaximum = std::numeric_limits<uint32_t>::max();
+		uint32_t unit = 0, unitExponent = 0;
+
+		HIDReportDescriptorItem::write(ba, HIDReportItemType::GLOBAL, (uint8_t)HIDReportGlobalItemTag::USAGE_PAGE, usagePage);
+		HIDReportDescriptorItem::write(ba, HIDReportItemType::LOCAL, (uint8_t)HIDReportLocalItemTag::USAGE, header.usage);
+		HIDReportDescriptorItem::write(ba, HIDReportItemType::MAIN, (uint8_t)HIDReportMainItemTag::COLLECTION, (uint8_t)HIDReportCollectionData::APPLICATION);
+
+		auto writeItem = [&](const PreparsedDataItem& item, HIDReportMainItemTag tag) {
+			if (reportID != item.reportID) {
+				reportID = item.reportID;
+
+				HIDReportDescriptorItem::write(ba, HIDReportItemType::GLOBAL, (uint8_t)HIDReportGlobalItemTag::REPORT_ID, reportID);
+			}
+
+			if (usagePage != item.usagePage) {
+				usagePage = item.usagePage;
+
+				HIDReportDescriptorItem::write(ba, HIDReportItemType::GLOBAL, (uint8_t)HIDReportGlobalItemTag::USAGE_PAGE, usagePage);
+			}
+
+			auto itemLogicalMinimum = item.logicalMinimum;
+			auto itemLogicalMaximum = item.logicalMaximum;
+			if (itemLogicalMinimum == itemLogicalMaximum && itemLogicalMinimum == 0 && item.usagePage == HIDReportUsagePageType::BUTTON) {
+				itemLogicalMaximum = itemLogicalMinimum + (1 << item.bitSize) - 1;
+			}
+
+			if (logicalMinimum != itemLogicalMinimum) {
+				logicalMinimum = itemLogicalMinimum;
+
+				HIDReportDescriptorItem::write(ba, HIDReportItemType::GLOBAL, (uint8_t)HIDReportGlobalItemTag::LOGICAL_MINIMUM, logicalMinimum);
+			}
+
+			if (logicalMaximum != itemLogicalMaximum) {
+				logicalMaximum = itemLogicalMaximum;
+
+				HIDReportDescriptorItem::write(ba, HIDReportItemType::GLOBAL, (uint8_t)HIDReportGlobalItemTag::LOGICAL_MAXIMUM, logicalMaximum);
+			}
+
+			if (item.physicalMinimum != 0 || item.physicalMaximum != 0 || item.physicalMinimum != item.physicalMaximum) {
+				if (physicalMinimum != item.physicalMinimum) {
+					physicalMinimum = item.physicalMinimum;
+
+					HIDReportDescriptorItem::write(ba, HIDReportItemType::GLOBAL, (uint8_t)HIDReportGlobalItemTag::PHYSICAL_MINIMUM, physicalMinimum);
+				}
+
+				if (physicalMaximum != item.physicalMaximum) {
+					physicalMaximum = item.physicalMaximum;
+
+					HIDReportDescriptorItem::write(ba, HIDReportItemType::GLOBAL, (uint8_t)HIDReportGlobalItemTag::PHYSICAL_MAXIMUM, physicalMaximum);
+				}
+			}
+
+			if (unitExponent != item.unitExponent) {
+				unitExponent = item.unitExponent;
+
+				HIDReportDescriptorItem::write(ba, HIDReportItemType::GLOBAL, (uint8_t)HIDReportGlobalItemTag::UNIT_EXPONENT, unitExponent);
+			}
+
+			if (unit != item.unit) {
+				unit = item.unit;
+
+				HIDReportDescriptorItem::write(ba, HIDReportItemType::GLOBAL, (uint8_t)HIDReportGlobalItemTag::UNIT, unit);
+			}
+
+			if (reportSize != item.bitSize) {
+				reportSize = item.bitSize;
+
+				HIDReportDescriptorItem::write(ba, HIDReportItemType::GLOBAL, (uint8_t)HIDReportGlobalItemTag::REPORT_SIZE, reportSize);
+			}
+
+			if (reportCount != item.reportCount) {
+				reportCount = item.reportCount;
+
+				HIDReportDescriptorItem::write(ba, HIDReportItemType::GLOBAL, (uint8_t)HIDReportGlobalItemTag::REPORT_COUNT, reportCount);
+			}
+
+			if (item.usageMinimum == item.usageMaximum) {
+				HIDReportDescriptorItem::write(ba, HIDReportItemType::LOCAL, (uint8_t)HIDReportLocalItemTag::USAGE, item.usageMinimum);
+			} else {
+				HIDReportDescriptorItem::write(ba, HIDReportItemType::LOCAL, (uint8_t)HIDReportLocalItemTag::USAGE_MINIMUM, item.usageMinimum);
+				HIDReportDescriptorItem::write(ba, HIDReportItemType::LOCAL, (uint8_t)HIDReportLocalItemTag::USAGE_MAXIMUM, item.usageMaximum);
+			}
+
+			if (item.designatorMinimum != 0 || item.designatorMaximum != 0 || item.designatorMinimum != item.designatorMaximum) {
+				HIDReportDescriptorItem::write(ba, HIDReportItemType::LOCAL, (uint8_t)HIDReportLocalItemTag::DESIGNATOR_MINIMUM, item.designatorMinimum);
+				HIDReportDescriptorItem::write(ba, HIDReportItemType::LOCAL, (uint8_t)HIDReportLocalItemTag::DESIGNATOR_MAXIMUM, item.designatorMaximum);
+			}
+
+			if (item.stringMinimum != 0 || item.stringMaximum != 0 || item.stringMinimum != item.stringMaximum) {
+				HIDReportDescriptorItem::write(ba, HIDReportItemType::LOCAL, (uint8_t)HIDReportLocalItemTag::STRING_MINIMUM, item.stringMinimum);
+				HIDReportDescriptorItem::write(ba, HIDReportItemType::LOCAL, (uint8_t)HIDReportLocalItemTag::STRING_MAXIMUM, item.stringMaximum);
+			}
+
+			switch (tag) {
+			case HIDReportMainItemTag::INPUT:
+			{
+				HIDReportDescriptorItem::write(ba, HIDReportItemType::MAIN, (uint8_t)HIDReportMainItemTag::INPUT, item.bitField);
+				break;
+			}
+			case HIDReportMainItemTag::OUTPUT:
+			{
+				HIDReportDescriptorItem::write(ba, HIDReportItemType::MAIN, (uint8_t)HIDReportMainItemTag::OUTPUT, item.bitField);
+				break;
+			}
+			case HIDReportMainItemTag::FEATURE:
+			{
+				HIDReportDescriptorItem::write(ba, HIDReportItemType::MAIN, (uint8_t)HIDReportMainItemTag::FEATURE, item.bitField);
+				break;
+			}
+			default:
+				break;//error
+			}
+		};
+
+		std::vector<size_t> indices(std::max(std::max(header.inputItemCount, header.outputItemCount), header.featureItemCount));
+
+		auto sortFn = [&](size_t l, size_t r, size_t offset) {
+			const auto& li = items[l + offset];
+			const auto& ri = items[r + offset];
+			if (li.byteIndex < ri.byteIndex) {
+				return true;
+			} else if (li.byteIndex > ri.byteIndex) {
+				return false;
+			} else {
+				return li.bitIndex < ri.bitIndex;
+			}
+		};
+
+		for (decltype(header.inputItemCount) i = 0; i < header.inputItemCount; ++i) indices[i] = i;
+		std::sort(indices.begin(), indices.begin() + header.inputItemCount, [&](size_t l, size_t r) {
+			return sortFn(l, r, 0);
+		});
+		for (decltype(header.inputItemCount) i = 0; i < header.inputItemCount; ++i) writeItem(items[indices[i]], HIDReportMainItemTag::INPUT);
+
+		for (decltype(header.outputItemCount) i = 0; i < header.outputItemCount; ++i) indices[i] = i;
+		std::sort(indices.begin(), indices.begin() + header.outputItemCount, [&](size_t l, size_t r) {
+			return sortFn(l, r, header.inputItemCount);
+		});
+		for (decltype(header.outputItemCount) i = 0; i < header.outputItemCount; ++i) writeItem(items[indices[i] + header.inputItemCount], HIDReportMainItemTag::OUTPUT);
+
+		for (decltype(header.featureItemCount) i = 0; i < header.featureItemCount; ++i) indices[i] = i;
+		std::sort(indices.begin(), indices.begin() + header.featureItemCount, [&](size_t l, size_t r) {
+			return sortFn(l, r, header.inputItemCount + header.outputItemCount);
+		});
+		for (decltype(header.featureItemCount) i = 0; i < header.featureItemCount; ++i) writeItem(items[indices[i] + header.inputItemCount + header.outputItemCount], HIDReportMainItemTag::FEATURE);
+
+		HIDReportDescriptorItem::write(ba, HIDReportItemType::MAIN, (uint8_t)HIDReportMainItemTag::END_COLLECTION);
+		ba.seekBegin();
+
+		//printaln(HIDReportDescriptor::toString(ba.getSource(), ba.getLength()));
+
+		return std::move(ba);
 	}
 
 	size_t HID::read(HIDDevice& device, void* data, size_t dataLength, size_t timeout) {

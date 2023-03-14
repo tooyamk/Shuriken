@@ -31,9 +31,6 @@ set(linkLibs
     ${SRKPROJ_FRAMEWORK_NAME}
     ${SRKPROJ_EXTENSION_HID_NAME}
 )
-if (SRK_OS_WINDOWS)
-    list(APPEND linkLibs "hid.lib" "SetupAPI.lib")
-endif ()
 target_link_libraries(${PROJECT_NAME} ${linkLibs})
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER ${SRK_MODULES_INPUTS_DIR})

@@ -1,6 +1,5 @@
 #include "CreateModule.h"
 #include "GamepadDriver.h"
-#include "GamepadDriverWindows.h"
 #include "GamepadDriverDS4.h"
 #include "srk/HID.h"
 #include "srk/hash/xxHash.h"
@@ -40,7 +39,7 @@ namespace srk::modules::inputs::hid_input {
 				auto hash = hash::xxHash<64>::calc<std::endian::native>(path.data(), path.size(), 0);
 				dev.index = HID::getIndex(info);
 				dev.guid.set<false, false>(&hash, sizeof(hash), 0);
-				dev.guid.set<false, true>(&dev.index, sizeof(dev.index), 8);
+				dev.guid.set<false, true>(&dev.index, sizeof(dev.index), sizeof(hash));
 				dev.vendorID = HID::getVendorID(info);
 				dev.productID = HID::getProductID(info);
 				dev.type = DeviceType::GAMEPAD;

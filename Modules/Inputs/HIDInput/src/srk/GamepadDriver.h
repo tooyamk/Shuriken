@@ -2,7 +2,6 @@
 
 #include "GamepadDriverBase.h"
 
-#if SRK_OS != SRK_OS_WINDOWS
 namespace srk::modules::inputs::hid_input {
 	class SRK_MODULE_DLL GamepadDriver : public GamepadDriverBase {
 	public:
@@ -69,8 +68,5 @@ namespace srk::modules::inputs::hid_input {
 		GamepadKeyCode _maxButtonKeyCode;
 
 		static uint32_t SRK_CALL _read(const InputCap& cap, const uint8_t* data);
-
-		static void SRK_CALL _toString(extensions::HIDDevice& hid);
 	};
 }
-#endif

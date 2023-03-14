@@ -412,6 +412,11 @@ namespace srk {
 			return length;
 		}
 
+		template<std::same_as<std::byte> T>
+		inline void SRK_CALL read(void* bytes, size_t length = (std::numeric_limits<size_t>::max)()) {
+			read<ValueType::BYTE>(bytes, length);
+		}
+
 		template<ValueType T>
 		requires (T == ValueType::BYTE)
 		size_t SRK_CALL read(ByteArray& ba, size_t offset = 0, size_t length = (std::numeric_limits<size_t>::max)()) {
@@ -425,6 +430,11 @@ namespace srk {
 			_position += length;
 
 			return length;
+		}
+
+		template<std::same_as<std::byte> T>
+		inline void SRK_CALL read(ByteArray& ba, size_t offset = 0, size_t length = (std::numeric_limits<size_t>::max)()) {
+			read<ValueType::BYTE>(ba, offset, length);
 		}
 
 		template<Arithmetic T>
@@ -627,7 +637,7 @@ namespace srk {
 
 		template<ValueType T, bool Reverse = false>
 		requires (T == ValueType::BYTE)
-		inline void SRK_CALL write(const void* bytes, size_t length) {
+		void SRK_CALL write(const void* bytes, size_t length) {
 			if (length > 0) {
 				_checkLength(length);
 
@@ -647,6 +657,11 @@ namespace srk {
 			}
 		}
 
+		template<std::same_as<std::byte> T>
+		inline void SRK_CALL write(const void* bytes, size_t length) {
+			write<ValueType::BYTE>(bytes, length);
+		}
+
 		template<ValueType T>
 		requires (T == ValueType::BYTE)
 		size_t SRK_CALL write(const ByteArray& ba, size_t offset = 0, size_t length = (std::numeric_limits<size_t>::max)()) {
@@ -663,6 +678,11 @@ namespace srk {
 			memmove(_data + _position, baBytes + offset, length);
 			_position += length;
 			return length;
+		}
+
+		template<std::same_as<std::byte> T>
+		inline void SRK_CALL write(const ByteArray& ba, size_t offset = 0, size_t length = (std::numeric_limits<size_t>::max)()) {
+			write<ValueType::BYTE>(ba, offset, length);
 		}
 
 		inline static bool SRK_CALL equal(const ByteArray& data1, const ByteArray& data2) {
