@@ -65,7 +65,7 @@ namespace srk::modules::inputs::raw_input {
 				auto hd = (uintptr_t)dev.hDevice;
 				di.guid.set<false, false>(&hd, sizeof(hd));
 				
-				auto hash = hash::xxHash<64>::calc<std::endian::native>(info.data(), info.size(), 0);
+				auto hash = hash::xxHash<64>::calc<std::endian::native, false>(info.data(), info.size(), 0);
 				di.guid.set<false, true>(&hash, sizeof(hash), sizeof(hd));
 			}
 		}

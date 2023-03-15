@@ -33,8 +33,9 @@ namespace srk::modules::inputs::hid_input {
 
 
 		struct InputCap {
-			uint16_t offset;
 			uint8_t size;
+			uint16_t offset;
+			uint16_t usage;
 			uint32_t min;
 			uint32_t max;
 		};

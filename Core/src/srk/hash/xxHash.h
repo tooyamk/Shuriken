@@ -38,10 +38,10 @@ namespace srk::hash {
 
 				if (_bufferCount == HALF_BITS) {
 					auto dst = (const uint8_t*)_buffer;
-					_hash[0] = _round(_hash[0], _readUInt<Bits, DataEndian>(dst)); dst += OFFSET;
-					_hash[1] = _round(_hash[1], _readUInt<Bits, DataEndian>(dst)); dst += OFFSET;
-					_hash[2] = _round(_hash[2], _readUInt<Bits, DataEndian>(dst)); dst += OFFSET;
-					_hash[3] = _round(_hash[3], _readUInt<Bits, DataEndian>(dst)); dst += OFFSET;
+					_hash[0] = _round(_hash[0], _readUInt<Bits, DataEndian, false>(dst)); dst += OFFSET;
+					_hash[1] = _round(_hash[1], _readUInt<Bits, DataEndian, false>(dst)); dst += OFFSET;
+					_hash[2] = _round(_hash[2], _readUInt<Bits, DataEndian, false>(dst)); dst += OFFSET;
+					_hash[3] = _round(_hash[3], _readUInt<Bits, DataEndian, false>(dst)); dst += OFFSET;
 
 					_bufferCount = 0;
 				}
@@ -58,10 +58,10 @@ namespace srk::hash {
 				ret = _seed + PRIME_VALUE[4];
 			}
 
-			return _subEnding<DataEndian>(ret + (hash_t)_length, _buffer, _buffer + _bufferCount);
+			return _subEnding<DataEndian, false>(ret + (hash_t)_length, _buffer, _buffer + _bufferCount);
 		}
 
-		template<std::endian DataEndian = std::endian::native>
+		template<std::endian DataEndian = std::endian::native, bool AlignedAccess = false>
 		static uint_t<Bits> SRK_CALL calc(const void* data, size_t len, uint_t<Bits> seed) {
 			auto& prime = PRIME_VALUE;
 
@@ -76,10 +76,10 @@ namespace srk::hash {
 				hash_t v4 = seed - prime[0];
 
 				do {
-					v1 = _round(v1, _readUInt<Bits, DataEndian>(src)); src += OFFSET;
-					v2 = _round(v2, _readUInt<Bits, DataEndian>(src)); src += OFFSET;
-					v3 = _round(v3, _readUInt<Bits, DataEndian>(src)); src += OFFSET;
-					v4 = _round(v4, _readUInt<Bits, DataEndian>(src)); src += OFFSET;
+					v1 = _round(v1, _readUInt<Bits, DataEndian, AlignedAccess>(src)); src += OFFSET;
+					v2 = _round(v2, _readUInt<Bits, DataEndian, AlignedAccess>(src)); src += OFFSET;
+					v3 = _round(v3, _readUInt<Bits, DataEndian, AlignedAccess>(src)); src += OFFSET;
+					v4 = _round(v4, _readUInt<Bits, DataEndian, AlignedAccess>(src)); src += OFFSET;
 				} while (src <= (dataEnd - HALF_BITS));
 
 				ret = std::rotl(v1, 1) + std::rotl(v2, 7) + std::rotl(v3, 12) + std::rotl(v4, 18);
@@ -88,7 +88,7 @@ namespace srk::hash {
 				ret = seed + prime[4];
 			}
 
-			return _subEnding<DataEndian>(ret + (hash_t)len, src, dataEnd);
+			return _subEnding<DataEndian, AlignedAccess>(ret + (hash_t)len, src, dataEnd);
 		}
 
 	private:
@@ -114,12 +114,18 @@ namespace srk::hash {
 		hash_t _hash[4];
 		size_t _length;
 
-		template<size_t nBits, std::endian DataEndian>
+		template<size_t nBits, std::endian DataEndian, bool AlignedAccess>
 		inline static uint_t<nBits> SRK_CALL _readUInt(const uint8_t* data) {
 			if constexpr (DataEndian == std::endian::native) {
-				return *(uint_t<nBits>*)data;
+				if constexpr (AlignedAccess) {
+					uint_t<nBits> val;
+					memcpy(&val, data, sizeof(val));
+					return val;
+				} else {
+					return *(uint_t<nBits>*)data;
+				}
 			} else {
-				return byteswap<nBits / 8>(data);
+				return byteswap<nBits / 8, AlignedAccess>(data);
 			}
 		}
 
@@ -150,11 +156,11 @@ namespace srk::hash {
 			return acc;
 		}
 
-		template<std::endian DataEndian>
+		template<std::endian DataEndian, bool AlignedAccess>
 		static uint_t<Bits> SRK_CALL _subEnding(uint_t<Bits> ret, const uint8_t* data, const uint8_t* dataEnd) {
 			if constexpr (Bits == 32) {
 				while ((data + 4) <= dataEnd) {
-					ret += _readUInt<Bits, DataEndian>(data) * PRIME_VALUE[2];
+					ret += _readUInt<Bits, DataEndian, AlignedAccess>(data) * PRIME_VALUE[2];
 					ret = std::rotl(ret, 17) * PRIME_VALUE[3];
 					data += 4;
 				}
@@ -174,13 +180,13 @@ namespace srk::hash {
 				return ret;
 			} else if constexpr (Bits == 64) {
 				while (data + 8 <= dataEnd) {
-					ret ^= _round(0, _readUInt<Bits, DataEndian>(data));
+					ret ^= _round(0, _readUInt<Bits, DataEndian, AlignedAccess>(data));
 					ret = std::rotl(ret, 27) * PRIME_VALUE[0] + PRIME_VALUE[3];
 					data += 8;
 				}
 
 				if (data + 4 <= dataEnd) {
-					ret ^= (uint_t<Bits>)_readUInt<Bits / 2, DataEndian>(data) * PRIME_VALUE[0];
+					ret ^= (uint_t<Bits>)_readUInt<Bits / 2, DataEndian, AlignedAccess>(data) * PRIME_VALUE[0];
 					ret = std::rotl(ret, 23) * PRIME_VALUE[1] + PRIME_VALUE[2];
 					data += 4;
 				}

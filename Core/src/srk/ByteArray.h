@@ -174,9 +174,9 @@ namespace srk {
 		void SRK_CALL popBack(size_t len);
 		void SRK_CALL insert(size_t len);
 
-		template<Arithmetic T>
+		template<Arithmetic T, bool AlignedAccess = false>
 		inline T SRK_CALL read() {
-			return _read<T>();
+			return _read<T, AlignedAccess>();
 		}
 
 		template<ValueType T>
@@ -188,51 +188,55 @@ namespace srk {
 		template<ValueType T>
 		requires (T == ValueType::I8)
 		inline int8_t SRK_CALL read() {
-			return _read<int8_t>();
+			return _read<int8_t, false>();
 		}
 
-		template<ValueType T>
+		template<ValueType T, bool AlignedAccess = false>
 		requires (T == ValueType::I16)
 		inline int16_t SRK_CALL read() {
-			return _read<int16_t>();
+			return _read<int16_t, AlignedAccess>();
 		}
 
-		template<ValueType T>
+		template<ValueType T, bool AlignedAccess = false>
 		requires (T == ValueType::I32)
 		inline int32_t SRK_CALL read() {
-			return _read<int32_t>();
+			return _read<int32_t, AlignedAccess>();
 		}
 
-		template<ValueType T>
+		template<ValueType T, bool AlignedAccess = false>
 		requires (T == ValueType::I64)
 		inline int64_t SRK_CALL read() {
-			return _read<int64_t>();
+			return _read<int64_t, AlignedAccess>();
 		}
 
 		template<ValueType T>
 		requires (T == ValueType::UI8)
 		inline uint8_t SRK_CALL read() {
-			return _read<uint8_t>();
+			return _read<uint8_t, false>();
 		}
 
-		template<ValueType T>
+		template<ValueType T, bool AlignedAccess = false>
 		requires (T == ValueType::UI16)
 		inline uint16_t SRK_CALL read() {
-			return _read<uint16_t>();
+			return _read<uint16_t, AlignedAccess>();
 		}
 
-		template<ValueType T>
+		template<ValueType T, bool AlignedAccess = false>
 		requires (T == ValueType::UI32)
 		inline uint32_t SRK_CALL read() {
-			return _read<uint32_t>();
+			return _read<uint32_t, AlignedAccess>();
+		}
+
+		template<ValueType T, bool AlignedAccess = false>
+		requires (T == ValueType::UI64)
+		inline uint64_t SRK_CALL read() {
+			return _read<uint64_t, AlignedAccess>();
 		}
 
 		template<ValueType T>
-		requires EqualAnyOf<T, ValueType::UI64, ValueType::D_UI64, ValueType::RD_UI64>
+		requires EqualAnyOf<T, ValueType::D_UI64, ValueType::RD_UI64>
 		inline uint64_t SRK_CALL read() {
-			if constexpr (T == ValueType::UI64) {
-				return _read<uint64_t>();
-			} else if constexpr (T == ValueType::D_UI64) {
+			if constexpr (T == ValueType::D_UI64) {
 				uint64_t rst = 0;
 				uint32_t bits = 0;
 				while (_position < _length) {
@@ -271,51 +275,51 @@ namespace srk {
 			}
 		}
 
-		template<ValueType T>
+		template<ValueType T, bool AlignedAccess = false>
 		requires (T == ValueType::IX)
 		int64_t SRK_CALL read(uint8_t numBytes) {
 			switch (numBytes) {
 			case 1:
 				return read<ba_vt::I8>();
 			case 2:
-				return read<ba_vt::UI16>();
+				return read<ba_vt::UI16, AlignedAccess>();
 			case 4:
-				return read<ba_vt::I32>();
+				return read<ba_vt::I32, AlignedAccess>();
 			case 8:
-				return read<ba_vt::I64>();
+				return read<ba_vt::I64, AlignedAccess>();
 			case 3:
-				return _readIX<3>();
+				return _readIX<3, AlignedAccess>();
 			case 5:
-				return _readIX<5>();
+				return _readIX<5, AlignedAccess>();
 			case 6:
-				return _readIX<6>();
+				return _readIX<6, AlignedAccess>();
 			case 7:
-				return _readIX<7>();
+				return _readIX<7, AlignedAccess>();
 			default:
 				return 0;
 			}
 		}
 
-		template<ValueType T>
+		template<ValueType T, bool AlignedAccess = false>
 		requires (T == ValueType::UIX)
 		uint64_t SRK_CALL read(uint8_t numBytes) {
 			switch (numBytes) {
 			case 1:
 				return read<ba_vt::UI8>();
 			case 2:
-				return read<ba_vt::UI16>();
+				return read<ba_vt::UI16, AlignedAccess>();
 			case 4:
-				return read<ba_vt::UI32>();
+				return read<ba_vt::UI32, AlignedAccess>();
 			case 8:
-				return read<ba_vt::UI64>();
+				return read<ba_vt::UI64, AlignedAccess>();
 			case 3:
-				return _readUIX<3>();
+				return _readUIX<3, AlignedAccess>();
 			case 5:
-				return _readUIX<5>();
+				return _readUIX<5, AlignedAccess>();
 			case 6:
-				return _readUIX<6>();
+				return _readUIX<6, AlignedAccess>();
 			case 7:
-				return _readUIX<7>();
+				return _readUIX<7, AlignedAccess>();
 			default:
 				return 0;
 			}
@@ -338,16 +342,16 @@ namespace srk {
 			return std::make_tuple<uint16_t, uint16_t>((v1 << 4) | ((v2 >> 4) & 0xF), ((v2 & 0xF) << 8) | v3);
 		}
 
-		template<ValueType T>
+		template<ValueType T, bool AlignedAccess = false>
 		requires (T == ValueType::F32)
 		inline float32_t SRK_CALL read() {
-			return _read<float32_t>();
+			return _read<float32_t, AlignedAccess>();
 		}
 
-		template<ValueType T>
+		template<ValueType T, bool AlignedAccess = false>
 		requires (T == ValueType::F64)
 		inline float64_t SRK_CALL read() {
-			return _read<float64_t>();
+			return _read<float64_t, AlignedAccess>();
 		}
 
 		template<StringData T, bool CheckEndMark = true, bool CheckBOM = false>
@@ -714,14 +718,14 @@ namespace srk {
 			return v > BitInt<Bytes * 8>::MAX ? v - BitUInt<Bytes * 8>::MAX - 1 : v;
 		}
 
-		template<size_t Bytes>
+		template<size_t Bytes, bool AlignedAccess>
 		uint_t<Bytes * 8> SRK_CALL _readUIX() {
 			if (_position + Bytes > _length) {
 				_position = _length;
 				return 0;
 			} else {
 				if (_needReverse) {
-					auto v = byteswap<Bytes>(&_data[_position]);
+					auto v = byteswap<Bytes, AlignedAccess>(&_data[_position]);
 					_position += 3;
 					return v;
 				} else {
@@ -733,7 +737,7 @@ namespace srk {
 			}
 		}
 
-		template<Arithmetic T>
+		template<Arithmetic T, bool AlignedAccess>
 		T SRK_CALL _read() {
 			if constexpr (sizeof(T) == 1) {
 				if (_position < _length) {
@@ -750,7 +754,7 @@ namespace srk {
 				}
 
 				if (_needReverse) {
-					auto v = byteswap<TYPE_BYTES>(&_data[_position]);
+					auto v = byteswap<TYPE_BYTES, AlignedAccess>(&_data[_position]);
 					_position += TYPE_BYTES;
 					if constexpr (std::integral<T>) {
 						return v;
@@ -758,7 +762,13 @@ namespace srk {
 						return *(T*)&v;
 					}
 				} else {
-					T v = *(T*)&_data[_position];
+					T v;
+					if constexpr (AlignedAccess) {
+						memcpy(&v, &_data[_position], sizeof(T));
+					} else {
+						v = *(T*)&_data[_position];
+					}
+
 					_position += TYPE_BYTES;
 					return v;
 				}

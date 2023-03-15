@@ -36,7 +36,7 @@ namespace srk::modules::inputs::hid_input {
 
 				auto path = HID::getPath(info);
 
-				auto hash = hash::xxHash<64>::calc<std::endian::native>(path.data(), path.size(), 0);
+				auto hash = hash::xxHash<64>::calc<std::endian::native, false>(path.data(), path.size(), 0);
 				dev.index = HID::getIndex(info);
 				dev.guid.set<false, false>(&hash, sizeof(hash), 0);
 				dev.guid.set<false, true>(&dev.index, sizeof(dev.index), sizeof(hash));

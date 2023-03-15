@@ -32,7 +32,7 @@ namespace srk::modules::inputs::direct_input {
 	private:
 		GamepadDriver(Input& input, srk_IDirectInputDevice* dev, const DIDEVCAPS& caps);
 
-		static constexpr size_t HEADER_LENGTH = 1;
+		static constexpr size_t HEADER_LENGTH = alignof(DIJOYSTATE);
 
 		IntrusivePtr<Input> _input;
 		srk_IDirectInputDevice* _dev;

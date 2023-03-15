@@ -61,7 +61,8 @@ namespace srk::modules::inputs::hid_input {
 								case HIDReportUsagePageType::GENERIC_DESKTOP:
 								{
 									for (size_t i = 0, n = usages.size(); i < n; ++i) {
-										switch ((HIDReportGenericDesktopPageType)usages[i]) {
+										auto usage = usages[i];
+										switch ((HIDReportGenericDesktopPageType)usage) {
 										case HIDReportGenericDesktopPageType::X:
 										case HIDReportGenericDesktopPageType::Y:
 										case HIDReportGenericDesktopPageType::Z:
@@ -75,6 +76,7 @@ namespace srk::modules::inputs::hid_input {
 											cap.size = reportSize;
 											cap.min = logicalMinimum;
 											cap.max = logicalMaximum;
+											cap.usage = usage;
 
 											break;
 										}
@@ -86,6 +88,7 @@ namespace srk::modules::inputs::hid_input {
 											cap.size = reportSize;
 											cap.min = logicalMinimum;
 											cap.max = logicalMaximum;
+											cap.usage = usage;
 
 											break;
 										}
@@ -105,6 +108,7 @@ namespace srk::modules::inputs::hid_input {
 										cap.size = reportSize;
 										cap.min = logicalMinimum;
 										cap.max = logicalMaximum;
+										cap.usage = usageMinimum + i;
 									}
 
 									break;
@@ -201,6 +205,15 @@ namespace srk::modules::inputs::hid_input {
 
 		if (curIndex < index) return nullptr;
 
+		std::sort(desc.inputAxes.begin(), desc.inputAxes.end(), [](const InputCap& lhs, const InputCap& rhs) {
+			return lhs.usage < rhs.usage;
+		});
+		std::sort(desc.inputDPads.begin(), desc.inputDPads.end(), [](const InputCap& lhs, const InputCap& rhs) {
+			return lhs.usage < rhs.usage;
+		});
+		std::sort(desc.inputButtons.begin(), desc.inputButtons.end(), [](const InputCap& lhs, const InputCap& rhs) {
+			return lhs.usage < rhs.usage;
+		});
 		desc.inputReportLength = (inputBits + 7) >> 3;
 
 		//_toString(hid);

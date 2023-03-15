@@ -576,15 +576,15 @@ namespace srk {
 
 		static constexpr uint8_t VALUE_SIZE = 16;
 
+		uint8_t _value[VALUE_SIZE];
 		Type _type;
 		Flag _flag;
-		uint8_t _value[VALUE_SIZE];
 
 
 		struct SerializableObjectWrapper {
+			uint8_t _value[VALUE_SIZE];
 			Type _type;
 			Flag _flag;
-			uint8_t _value[VALUE_SIZE];
 
 			SerializableObjectWrapper() :
 				_type(Type::INVALID),

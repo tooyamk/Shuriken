@@ -575,7 +575,7 @@ namespace srk {
 	};
 
 
-	template<size_t Bytes>
+	template<size_t Bytes, bool AlignedAccess>
 	requires (Bytes <= 8)
 	inline uint_t<Bytes * 8> SRK_CALL byteswap(const void* val) {
 		using T = uint_t<Bytes * 8>;
@@ -587,9 +587,21 @@ namespace srk {
 			return data[0];
 		} else if constexpr (Bytes == 2) {
 #if SRK_COMPILER == SRK_COMPILER_MSVC
-			return _byteswap_ushort(*((T*)data));
+			if constexpr (AlignedAccess) {
+				uint16_t v;
+				memcpy(&v, val, sizeof(v));
+				return _byteswap_ushort(v);
+			} else {
+				return _byteswap_ushort(*((T*)val));
+			}
 #elif SRK_COMPILER == SRK_COMPILER_GCC || SRK_COMPILER == SRK_COMPILER_CLANG
-			return __builtin_bswap16(*((T*)data));
+			if constexpr (AlignedAccess) {
+				uint16_t v;
+				memcpy(&v, val, sizeof(v));
+				return __builtin_bswap16(v);
+			} else {
+				return __builtin_bswap16(*((T*)val));
+			}
 #else
 			return (T)data[0] << 8 | (T)data[1];
 #endif
@@ -597,11 +609,23 @@ namespace srk {
 			return (T)data[0] << 16 | (T)data[1] << 8 | (T)data[2];
 		} else if constexpr (Bytes == 4) {
 #if SRK_COMPILER == SRK_COMPILER_MSVC
-			return _byteswap_ulong(*((T*)data));
+			if constexpr (AlignedAccess) {
+				uint32_t v;
+				memcpy(&v, val, sizeof(v));
+				return _byteswap_ulong(v);
+			} else {
+				return _byteswap_ulong(*((T*)val));
+			}
 #elif SRK_COMPILER == SRK_COMPILER_GCC || SRK_COMPILER == SRK_COMPILER_CLANG
-			return __builtin_bswap32(*((T*)data));
+			if constexpr (AlignedAccess) {
+				uint32_t v;
+				memcpy(&v, val, sizeof(v));
+				return __builtin_bswap32(v);
+			} else {
+				return __builtin_bswap32(*((T*)val));
+			}
 #else
-			return (T)data[0] << 32 | (T)data[1] << 16 | (T)data[2] << 8 | (T)data[3];
+			return (T)data[0] << 24 | (T)data[1] << 16 | (T)data[2] << 8 | (T)data[3];
 #endif
 		} else if constexpr (Bytes == 5) {
 			return (T)data[0] << 32 | (T)data[1] << 24 | (T)data[2] << 16 | (T)data[3] << 8 | (T)data[4];
@@ -609,14 +633,28 @@ namespace srk {
 			return (T)data[0] << 40 | (T)data[1] << 32 | (T)data[2] << 24 | (T)data[3] << 16 | (T)data[4] << 8 | (T)data[5];
 		} else if constexpr (Bytes == 7) {
 			return (T)data[0] << 48 | (T)data[1] << 40 | (T)data[2] << 32 | (T)data[3] << 24 | (T)data[4] << 16 | (T)data[5] << 8 | (T)data[6];
-		} else {
+		} else if constexpr (Bytes == 8) {
 #if SRK_COMPILER == SRK_COMPILER_MSVC
-			return _byteswap_uint64(*((T*)data));
+			if constexpr (AlignedAccess) {
+				uint64_t v;
+				memcpy(&v, val, sizeof(v));
+				return _byteswap_uint64(v);
+			} else {
+				return _byteswap_uint64(*((T*)val));
+			}
 #elif SRK_COMPILER == SRK_COMPILER_GCC || SRK_COMPILER == SRK_COMPILER_CLANG
-			return __builtin_bswap64(*((T*)data));
+			if constexpr (AlignedAccess) {
+				uint64_t v;
+				memcpy(&v, val, sizeof(v));
+				return __builtin_bswap64(v);
+			} else {
+				return __builtin_bswap64(*((T*)val));
+			}
 #else
 			return (T)data[0] << 56 | (T)data[1] << 48 | (T)data[2] << 40 | (T)data[3] << 32 | (T)data[4] << 24 | (T)data[5] << 16 | (T)data[6] << 8 | (T)data[7];
 #endif
+		} else {
+			static_assert(Bytes <= 8, "Unexpected integer size");
 		}
 	}
 

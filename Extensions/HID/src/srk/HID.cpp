@@ -67,15 +67,15 @@ namespace srk::extensions {
 		using namespace srk::enum_operators;
 		using namespace srk::extensions;
 
-#if SRK_OS == SRK_OS_LINUX
-		std::string RED_BEGIN = "\33[31m";
-		std::string GREEN_BEGIN = "\33[32m";
-		std::string COL_END = "\33[0m";
-#else
+//#if SRK_OS == SRK_OS_LINUX
+		//std::string RED_BEGIN = "\33[31m";
+		//std::string GREEN_BEGIN = "\33[32m";
+		//std::string COL_END = "\33[0m";
+//#else
 		std::string RED_BEGIN = "";
 		std::string GREEN_BEGIN = "";
 		std::string COL_END = "";
-#endif
+//#endif
 		std::string INDENT = "    ";
 
 		ByteArray ba((void*)data, length, ByteArray::Usage::SHARED);

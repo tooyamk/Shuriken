@@ -31,7 +31,7 @@ namespace srk::modules::inputs::xinput {
 		virtual void SRK_CALL setKeyMapper(GamepadKeyMapper& dst, const GamepadKeyMapper* src) const override;
 
 	private:
-		static constexpr size_t HEADER_LENGTH = 1;
+		static constexpr size_t HEADER_LENGTH = alignof(XINPUT_STATE);
 		static constexpr size_t MAX_AXES = 6 + 2;
 		static constexpr size_t MAX_BUTTONS = 10;
 		static constexpr uint16_t BUTTON_MASK[] = {

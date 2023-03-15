@@ -297,80 +297,6 @@ namespace srk::extensions {
 	};
 
 
-	/*
-	enum class HIDReportType : uint8_t {
-		INPUT,
-		OUTPUT,
-		FEATURE
-	};
-
-
-	template<typename T> concept HIDReportItemTag = SameAnyOf<T, HIDReportMainItemTag, HIDReportGlobalItemTag, HIDReportLocalItemTag>;
-
-
-	class SRK_EXTENSION_DLL HIDReportScopeValues {
-	public:
-		using KeyType = uint32_t;
-		using ValueType = uint32_t;
-
-		inline bool SRK_CALL set(HIDReportGlobalItemTag tag, ValueType val) {
-			return _set(_genKey(tag), val);
-		}
-
-		inline bool SRK_CALL set(HIDReportLocalItemTag tag, ValueType val) {
-			return _set(_genKey(tag), val);
-		}
-
-		inline std::optional<ValueType> SRK_CALL get(HIDReportGlobalItemTag tag) const {
-			return _get(_genKey(tag));
-		}
-
-		inline std::optional<ValueType> SRK_CALL get(HIDReportLocalItemTag tag) const {
-			return _get(_genKey(tag));
-		}
-
-		void SRK_CALL clearLocal() {
-			for (auto itr = _values.begin(); itr != _values.end();) {
-				if (itr->first <= 255) {
-					itr = _values.erase(itr);
-				} else {
-					++itr;
-				}
-			}
-		}
-
-	private:
-		std::unordered_map<KeyType, ValueType> _values;
-
-		inline static KeyType SRK_CALL _genKey(HIDReportGlobalItemTag tag) {
-			return (KeyType)tag << 16 | 0xFF00;
-		}
-
-		inline static KeyType SRK_CALL _genKey(HIDReportLocalItemTag tag) {
-			return (KeyType)tag;
-		}
-
-		inline std::optional<ValueType> SRK_CALL _get(KeyType key) const {
-			auto itr = _values.find(key);
-			return itr == _values.end() ? std::nullopt : std::optional(itr->second);
-		}
-
-		bool SRK_CALL _set(KeyType key, ValueType val) {
-			auto itr = _values.find(key);
-			if (itr == _values.end()) {
-				_values.emplace(key, val);
-				return true;
-			} else if (itr->second != val) {
-				itr->second = val;
-				return true;
-			}
-
-			return false;
-		}
-	};
-	*/
-
-
 	using HIDUsagePage = uint16_t;
 	using HIDUsage = uint16_t;
 
@@ -414,9 +340,6 @@ namespace srk::extensions {
 		static HIDUsage SRK_CALL getUsage(const HIDDeviceInfo& info);
 		static int32_t SRK_CALL getIndex(const HIDDeviceInfo& info);
 
-		//static ByteArray SRK_CALL getRawReportDescriptor(const HIDDeviceInfo& info);
-		//static ByteArray SRK_CALL getRawReportDescriptor(const HIDDevice& device);
-
 		static HIDDevice* SRK_CALL open(const std::string_view& path);
 		static void SRK_CALL close(HIDDevice& device);
 
@@ -428,34 +351,5 @@ namespace srk::extensions {
 		inline static bool SRK_CALL isSuccess(size_t rst) {
 			return rst < OUT_WAITTING;
 		}
-
-		/*
-		static size_t SRK_CALL parsePressedButtons(const HIDDevice& device, HIDReportType type, HIDUsagePage usagePage, const void* reportData, size_t reportDataLength, HIDUsage* outUsages, size_t usageLength);
-		static std::optional<uint32_t> SRK_CALL parseValue(const HIDDevice& device, HIDReportType type, HIDUsagePage usagePage, HIDUsage usage, const void* reportData, size_t reportDataLength);
-
-		template<HIDReportItemTag T>
-		inline static uint8_t SRK_CALL generateReportShortItemHeader(T tag, uint8_t size) {
-			HIDReportItemType type;
-			uint8_t len = size > 2 ? 3 : size;
-			if constexpr (std::same_as<T, HIDReportMainItemTag>) {
-				type = HIDReportItemType::MAIN;
-			} else if constexpr (std::same_as<T, HIDReportGlobalItemTag>) {
-				type = HIDReportItemType::GLOBAL;
-			} else {
-				type = HIDReportItemType::LOCAL;
-
-			}
-
-			return generateReportShortItemHeader((uint8_t)type, (uint8_t)tag, len);
-		}
-
-		inline static uint8_t SRK_CALL generateReportShortItemHeader(HIDReportItemType type, uint8_t tag, uint8_t size) {
-			return generateReportShortItemHeader((uint8_t)type, tag, size);
-		}
-
-		inline static uint8_t SRK_CALL generateReportShortItemHeader(uint8_t type, uint8_t tag, uint8_t size) {
-			return tag << 4 | type << 2 | (size > 2 ? 3 : size);
-		}
-		*/
 	};
 }

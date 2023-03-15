@@ -1,7 +1,6 @@
 #pragma once
 
 #include "srk/modules/graphics/GraphicsModule.h"
-#include "srk/hash/xxHash.h"
 
 #include "GL/glew.h"
 
@@ -127,16 +126,6 @@ namespace srk::modules::graphics::gl {
 			InternalStencilFaceState back;
 		} face;
 	};
-
-
-	inline uint64_t SRK_CALL calcHash(const void* data, size_t size) {
-		return hash::xxHash<64>::calc<std::endian::native>(data, size, 0);
-	}
-
-	template<typename T>
-	inline uint64_t SRK_CALL calcHash(const T& val) {
-		return calcHash(&val, sizeof(T));
-	}
 
 	inline bool SRK_CALL glInit() {
 		return glewInit() == GLEW_OK;

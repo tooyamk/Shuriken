@@ -103,6 +103,44 @@ namespace std {
 	}
 #endif
 
+/*#ifndef __cpp_lib_byteswap
+	template<integral T>
+	inline T SRK_CALL byteswap(const T val) {
+		if constexpr (sizeof(T) == 1) {
+			return val;
+		} else if constexpr (sizeof(T) == 2) {
+#	if SRK_COMPILER == SRK_COMPILER_MSVC
+			return _Byteswap_ushort(val);
+#	elif SRK_COMPILER == SRK_COMPILER_GCC || SRK_COMPILER == SRK_COMPILER_CLANG
+			return __builtin_bswap16(val);
+#	else
+			auto data = (const uint8_t*)val;
+			return (T)data[0] << 8 | (T)data[1];
+#	endif
+		} else if constexpr (sizeof(T) == 4) {
+#	if SRK_COMPILER == SRK_COMPILER_MSVC
+			return _Byteswap_ulong(val);
+#	elif SRK_COMPILER == SRK_COMPILER_GCC || SRK_COMPILER == SRK_COMPILER_CLANG
+			return __builtin_bswap32(val);
+#	else
+			auto data = (const uint8_t*)val;
+			return (T)data[0] << 24 | (T)data[1] << 16 | (T)data[2] << 8 | (T)data[3];
+#	endif
+		} else if constexpr (sizeof(T) == 8) {
+#	if SRK_COMPILER == SRK_COMPILER_MSVC
+			return _Byteswap_uint64(val);
+#	elif SRK_COMPILER == SRK_COMPILER_GCC || SRK_COMPILER == SRK_COMPILER_CLANG
+			return __builtin_bswap64(val);
+#	else
+			auto data = (const uint8_t*)val;
+			return (T)data[0] << 56 | (T)data[1] << 48 | (T)data[2] << 40 | (T)data[3] << 32 | (T)data[4] << 24 | (T)data[5] << 16 | (T)data[6] << 8 | (T)data[7];
+#	endif
+		} else {
+			static_assert(sizeof(T) == 0, "Unexpected integer size");
+		}
+	}
+#endif*/
+
 #if SRK_ARCH_WORD_BITS == SRK_ARCH_WORD_BITS_64 && (SRK_COMPILER == SRK_COMPILER_MSVC || SRK_COMPILER == SRK_COMPILER_CLANG || SRK_COMPILER == SRK_COMPILER_GCC)
 	template<typename T>
 	requires (sizeof(T) == 16)

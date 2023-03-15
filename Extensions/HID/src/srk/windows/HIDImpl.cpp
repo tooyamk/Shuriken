@@ -13,12 +13,10 @@ namespace srk::extensions {
 		_productID(0),
 		_usagePage(0),
 		_usage(0),
-		handle(nullptr),
-		_preparsedData(nullptr) {
+		handle(nullptr) {
 	}
 
 	HIDDeviceInfo::~HIDDeviceInfo() {
-		if (_preparsedData) HidD_FreePreparsedData(_preparsedData);
 	}
 
 	uint16_t HIDDeviceInfo::getVendorID() const {
@@ -41,12 +39,6 @@ namespace srk::extensions {
 		return _usage;
 	}
 
-	void* HIDDeviceInfo::getPreparsedData() const {
-		if (!handle) return nullptr;
-		if (!_preparsedData) HidD_GetPreparsedData(handle, &_preparsedData);
-		return _preparsedData;
-	}
-
 	void HIDDeviceInfo::_readAttrubutes() const {
 		if (!handle) return;
 
@@ -60,14 +52,20 @@ namespace srk::extensions {
 	}
 
 	void HIDDeviceInfo::_readCaps() const {
-		getPreparsedData();
-		if (!_preparsedData) return;
+		if (!handle) return;
 
-		HIDP_CAPS caps;
-		if (HidP_GetCaps(_preparsedData, &caps) != HIDP_STATUS_SUCCESS) return;
+		PHIDP_PREPARSED_DATA preparsedData = nullptr;
+		do {
+			if (!HidD_GetPreparsedData(handle, &preparsedData)) break;;
 
-		_usagePage = caps.UsagePage;
-		_usage = caps.Usage;
+			HIDP_CAPS caps;
+			if (HidP_GetCaps(preparsedData, &caps) != HIDP_STATUS_SUCCESS) break;
+
+			_usagePage = caps.UsagePage;
+			_usage = caps.Usage;
+		} while (false);
+
+		if (preparsedData) HidD_FreePreparsedData(preparsedData);
 	}
 
 
@@ -78,10 +76,9 @@ namespace srk::extensions {
 		inputBuffer(nullptr),
 		outputBuffer(nullptr),
 		readPending(false),
-		writePending(false) {
-		this->handle = handle;
-		this->preparsedData = preparsedData;
-
+		writePending(false),
+		handle(handle),
+		preparsedData(preparsedData) {
 		memset(&oRead, 0, sizeof(oRead));
 		memset(&oWrite, 0, sizeof(oWrite));
 	}
@@ -278,8 +275,8 @@ namespace srk::extensions {
 		auto pd = device.preparsedData;
 		if (!pd) return ByteArray();
 
-		auto& header = *(PreparsedDataHeader*)pd;
-		auto items = (PreparsedDataItem*)((const uint8_t*)pd + sizeof(PreparsedDataHeader));
+		auto& header = *(const PreparsedDataHeader*)pd;
+		auto items = (const PreparsedDataItem*)((const uint8_t*)pd + sizeof(PreparsedDataHeader));
 
 		ByteArray ba;
 
@@ -400,7 +397,7 @@ namespace srk::extensions {
 			}
 		};
 
-		std::vector<size_t> indices(std::max(std::max(header.inputItemCount, header.outputItemCount), header.featureItemCount));
+		std::vector<uint32_t> indices(std::max(std::max(header.inputItemCount, header.outputItemCount), header.featureItemCount));
 
 		auto sortFn = [&](size_t l, size_t r, size_t offset) {
 			const auto& li = items[l + offset];
@@ -556,15 +553,5 @@ namespace srk::extensions {
 
 		return device.writePending ? HID::OUT_WAITTING : bytesWriten;
 	}
-
-	/*
-	size_t HID::parsePressedButtons(const HIDDevice& device, HIDReportType type, HIDUsagePage usagePage, const void* reportData, size_t reportDataLength, HIDUsage* outUsages, size_t usageLength) {
-		return device.parsePressedButtons((HIDP_REPORT_TYPE)type, usagePage, reportData, reportDataLength, outUsages, usageLength);
-	}
-
-	std::optional<uint32_t> HID::parseValue(const HIDDevice& device, HIDReportType type, HIDUsagePage usagePage, HIDUsage usage, const void* reportData, size_t reportDataLength) {
-		return device.parseValue((HIDP_REPORT_TYPE)type, usagePage, usage, reportData, reportDataLength);
-	}
-	*/
 }
 #endif

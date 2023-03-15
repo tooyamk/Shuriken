@@ -20,15 +20,12 @@ namespace srk::extensions {
 		uint16_t SRK_CALL getProductID() const;
 		HIDUsagePage SRK_CALL getUsagePage() const;
 		HIDUsage SRK_CALL getUsage() const;
-		void* SRK_CALL getPreparsedData() const;
 
 	protected:
 		mutable uint16_t _vendorID;
 		mutable uint16_t _productID;
 		mutable HIDUsagePage _usagePage;
 		mutable HIDUsage _usage;
-
-		mutable PHIDP_PREPARSED_DATA _preparsedData;
 
 		void SRK_CALL _readAttrubutes() const;
 		void SRK_CALL _readCaps() const;
@@ -79,6 +76,7 @@ namespace srk::extensions {
 		uint16_t sizeBytes;
 		uint16_t unknown6;
 	};
+
 
 	struct PreparsedDataItem {
 		uint16_t usagePage;

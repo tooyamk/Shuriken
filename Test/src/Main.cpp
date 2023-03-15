@@ -186,6 +186,19 @@ void ANativeActivity_onCreate(ANativeActivity* activity, void* savedState, size_
         printaln("load zstd : ", path, "   ", b);
     }
 
+    {
+        uint8_t buffer[10];
+        uint8_t* buf = buffer;
+        ++buf;
+        ++buf;
+        printaln("try write float32_t");
+        *((float32_t*)buf) = 0.1f;
+        printaln("writed float32_t");
+        printaln("try read float32_t");
+        auto f = ((float32_t*)buf)[0];
+        printaln("readed float32_t  ", f, "   ", &f);
+    }
+
     bindLifeCycle(activity);
 }
 #	else
