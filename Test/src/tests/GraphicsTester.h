@@ -45,37 +45,37 @@ public:
 
 		IntrusivePtr looper = new Looper(1000.0 / 60.0);
 
-		printaln("================================");
+		printaln(L"================================"sv);
 
-		printaln("Graphics Version : ", graphics->getVersion());
+		printaln(L"Graphics Version : "sv, graphics->getVersion());
 
 		{
 			auto bs = graphics->createBlendState();
-			printaln("createBlendState : ", bs ? "succeed" : "failed");
+			printaln(L"createBlendState : "sv, bs ? L"succeed"sv : L"failed"sv);
 
 			auto dss = graphics->createDepthStencilState();
-			printaln("createDepthStencilState : ", dss ? "succeed" : "failed");
+			printaln(L"createDepthStencilState : "sv, dss ? L"succeed"sv : L"failed"sv);
 
 			auto rs = graphics->createRasterizerState();
-			printaln("createRasterizerState : ", rs ? "succeed" : "failed");
+			printaln(L"createRasterizerState : "sv, rs ? L"succeed"sv : L"failed"sv);
 
 			auto vb = graphics->createVertexBuffer();
-			printaln("createVertexBuffer : ", vb ? "succeed" : "failed");
+			printaln(L"createVertexBuffer : "sv, vb ? L"succeed"sv : L"failed"sv);
 			if (vb) {
 				auto rst = vb->create(12, Usage::MAP_READ_WRITE, Usage::NONE);
-				printaln("VertexBuffer::create(rw) : ", rst ? "succeed" : "failed");
+				printaln(L"VertexBuffer::create(rw) : "sv, rst ? L"succeed"sv : L"failed"sv);
 				if (rst) {
 					auto usage = vb->map(Usage::MAP_WRITE);
-					printaln("VertexBuffer::map(rw-w) : ", usage != Usage::NONE ? "succeed" : "failed");
+					printaln(L"VertexBuffer::map(rw-w) : "sv, usage != Usage::NONE ? L"succeed"sv : L"failed"sv);
 					float32_t wbuf[] = { 1.0f, 2.0f, 3.0f };
 					constexpr auto n = std::extent_v<decltype(wbuf)>;
 					auto wsize = vb->write(wbuf, sizeof(wbuf), 0);
-					printaln("VertexBuffer::write : ", wsize != -1 ? "succeed" : "failed");
+					printaln(L"VertexBuffer::write : "sv, wsize != -1 ? L"succeed"sv : L"failed"sv);
 					vb->unmap();
 
 					float32_t rbuf[n];
 					usage = vb->map(Usage::MAP_READ);
-					printaln("VertexBuffer::map(rw-r) : ", usage != Usage::NONE ? "succeed" : "failed");
+					printaln(L"VertexBuffer::map(rw-r) : "sv, usage != Usage::NONE ? L"succeed"sv : L"failed"sv);
 					auto rsize = vb->read(rbuf, sizeof(rbuf), 0);
 					vb->unmap();
 					auto isSame = rsize != -1 && wsize == rsize;
@@ -85,24 +85,24 @@ public:
 							break;
 						}
 					}
-					printaln("VertexBuffer::read : ", isSame ? "succeed" : "failed");
+					printaln(L"VertexBuffer::read : "sv, isSame ? L"succeed"sv : L"failed"sv);
 
 					vb->create(12, Usage::UPDATE, Usage::NONE);
 					auto upsize = vb->update(wbuf, sizeof(wbuf), 0);
-					printaln("VertexBuffer::update(rw) : ", upsize != -1 && upsize == sizeof(wbuf) ? "succeed" : "failed");
+					printaln(L"VertexBuffer::update(rw) : "sv, upsize != -1 && upsize == sizeof(wbuf) ? L"succeed"sv : L"failed"sv);
 
 					vb->create(12, Usage::COPY_SRC, Usage::NONE, wbuf, sizeof(wbuf));
 
 					auto vb2 = graphics->createVertexBuffer();
-					printaln("createVertexBuffer : ", vb2 ? "succeed" : "failed");
+					printaln(L"createVertexBuffer : "sv, vb2 ? L"succeed"sv : L"failed"sv);
 					if (vb2) {
 						rst = vb2->create(12, Usage::COPY_DST | Usage::MAP_READ, Usage::NONE);
-						printaln("VertexBuffer::create(dr) : ", rst ? "succeed" : "failed");
+						printaln(L"VertexBuffer::create(dr) : "sv, rst ? L"succeed"sv : L"failed"sv);
 						if (rst) {
 							auto cpysize = vb2->copyFrom(0, vb, Box1uz(Vec1uz(0), Vec1uz(vb->getSize())));
-							printaln("VertexBuffer::copyFrom : ", cpysize != -1 ? "succeed" : "failed");
+							printaln(L"VertexBuffer::copyFrom : "sv, cpysize != -1 ? L"succeed"sv : L"failed"sv);
 							usage = vb2->map(Usage::MAP_READ);
-							printaln("VertexBuffer::map(dr-r) : ", usage != Usage::NONE ? "succeed" : "failed");
+							printaln(L"VertexBuffer::map(dr-r) : "sv, usage != Usage::NONE ? L"succeed"sv : L"failed"sv);
 							rsize = vb2->read(rbuf, sizeof(rbuf), 0);
 							vb2->unmap();
 							isSame = cpysize != -1 && rsize != -1 && wsize == cpysize && wsize == rsize;
@@ -112,14 +112,14 @@ public:
 									break;
 								}
 							}
-							printaln("VertexBuffer::copyFrom data check : ", isSame ? "succeed" : "failed");
+							printaln(L"VertexBuffer::copyFrom data check : "sv, isSame ? L"succeed"sv : L"failed"sv);
 						}
 					}
 				}
 			}
 
 			auto tr = graphics->createTexture2DResource();
-			printaln("createTexture2DResource : ", tr ? "succeed" : "failed");
+			printaln(L"createTexture2DResource : "sv, tr ? L"succeed"sv : L"failed"sv);
 			if (tr) {
 				constexpr TextureFormat texFmt = TextureFormat::R8G8B8A8_UNORM;
 				constexpr Vec2uz texDim(2, 2);
@@ -142,10 +142,10 @@ public:
 				}
 
 				auto rst = tr->create(texDim, 0, mipLevels, 1, texFmt, Usage::MAP_WRITE | Usage::COPY_SRC, Usage::NONE, mipData.data());
-				printaln("Texture2DResource::create(u) : ", rst ? "succeed" : "failed");
+				printaln(L"Texture2DResource::create(u) : "sv, rst ? L"succeed"sv : L"failed"sv);
 				if (!rst) {
 					rst = tr->create(texDim, 0, 1, 1, texFmt, Usage::MAP_WRITE | Usage::COPY_SRC, Usage::NONE, mipData.data());
-					printaln("Texture2DResource::create(u) : ", rst ? "succeed" : "failed");
+					printaln(L"Texture2DResource::create(u) : "sv, rst ? L"succeed"sv : L"failed"sv);
 				}
 				if (rst) {
 					std::vector<uint8_t>* updateOrWriteData = nullptr;
@@ -154,7 +154,7 @@ public:
 					if ((tr->getUsage() & Usage::UPDATE) == Usage::UPDATE) {
 						updateOrWriteData = &updateData;
 						rst = tr->update(0, 0, Box2uz(Vec2uz(0, 0), Vec2uz(1, 1)), updateData.data());
-						printaln("Texture2DResource::update : ", rst ? "succeed" : "failed");
+						printaln(L"Texture2DResource::update : "sv, rst ? L"succeed"sv : L"failed"sv);
 					}
 
 					std::vector<uint8_t> writeData(TextureUtils::getPerBlockBytes(texFmt));
@@ -162,29 +162,29 @@ public:
 					if ((tr->getUsage() & Usage::MAP_WRITE) == Usage::MAP_WRITE) {
 						updateOrWriteData = &writeData;
 						rst = tr->map(0, 0, Usage::MAP_WRITE) == Usage::MAP_WRITE;
-						printaln("Texture2DResource::map(w) : ", rst ? "succeed" : "failed");
+						printaln(L"Texture2DResource::map(w) : "sv, rst ? L"succeed"sv : L"failed"sv);
 						if (rst) {
 							rst = tr->write(0, 0, 0, writeData.data(), writeData.size()) == writeData.size();
-							printaln("Texture2DResource::write : ", rst ? "succeed" : "failed");
+							printaln(L"Texture2DResource::write : "sv, rst ? L"succeed"sv : L"failed"sv);
 							tr->unmap(0, 0);
 						}
 					}
 
 					auto tr2 = graphics->createTexture2DResource();
 					auto rst2 = tr2->create(texDim, 0, 1, 1, texFmt, Usage::MAP_READ | Usage::COPY_DST, Usage::NONE);
-					printaln("Texture2DResource::create(r) : ", rst2 ? "succeed" : "failed");
+					printaln(L"Texture2DResource::create(r) : "sv, rst2 ? L"succeed"sv : L"failed"sv);
 					if (rst2) {
 						rst = tr2->copyFrom(Vec3uz(), 0, 0, tr, 0, 0, Box3uz(Vec3uz(), Vec3uz(texDim[0], texDim[1], 1)));
-						printaln("Texture2DResource::copyFrom : ", rst ? "succeed" : "failed");
+						printaln(L"Texture2DResource::copyFrom : "sv, rst ? L"succeed"sv : L"failed"sv);
 
 						if (rst) {
 							std::vector<uint8_t> mappedData(mipBytes[0]);
 							rst = tr2->map(0, 0, Usage::MAP_READ) == Usage::MAP_READ;
-							printaln("Texture2DResource::map(r) : ", rst ? "succeed" : "failed");
+							printaln(L"Texture2DResource::map(r) : "sv, rst ? L"succeed"sv : L"failed"sv);
 							if (rst) {
 								auto readLen = tr2->read(0, 0, 0, mappedData.data(), mappedData.size());
 								rst = readLen == mappedData.size();
-								printaln("Texture2DResource::read : ", rst ? "succeed" : "failed");
+								printaln(L"Texture2DResource::read : "sv, rst ? L"succeed"sv : L"failed"sv);
 								tr2->unmap(0, 0);
 							}
 
@@ -207,14 +207,14 @@ public:
 								}
 							}
 
-							printaln("Texture2DResource texData check : ", isSame ? "succeed" : "failed");
+							printaln(L"Texture2DResource texData check : "sv, isSame ? L"succeed"sv : L"failed"sv);
 						}
 					}
 				}
 			}
 
 			auto sampler = graphics->createSampler();
-			printaln("createSampler : ", sampler ? "succeed" : "failed");
+			printaln(L"createSampler : "sv, sampler ? L"succeed"sv : L"failed"sv);
 			if (sampler) {
 				sampler->setAddress(SamplerAddressMode::REPEAT, SamplerAddressMode::REPEAT, SamplerAddressMode::REPEAT);
 				sampler->setBorderColor(Vec4f32(0.1f, 0.2f, 0.4f, 0.5f));
@@ -234,7 +234,7 @@ public:
 				}, programTranspileHandler);
 
 			auto program = shader->select(nullptr);
-			printaln("Program : ", program ? "succeed" : "failed");
+			printaln(L"Program : "sv, program ? L"succeed"sv : L"failed"sv);
 			if (program) {
 				auto& info = program->getInfo();
 				IntrusivePtr vac = new VertexAttributeCollection();
@@ -261,7 +261,7 @@ public:
 			}
 		}
 
-		printaln("================================");
+		printaln(L"================================"sv);
 
 		win->getEventDispatcher()->addEventListener(WindowEvent::RESIZED, createEventListener<WindowEvent>([graphics](Event<WindowEvent>& e) {
 			graphics->setBackBufferSize(((IWindow*)e.getTarget())->getContentSize());

@@ -118,7 +118,7 @@ public:
 			s += String::toString(iv >> (22 - i) & 0b1);
 		}
 
-		printaln(f, "   ", s);
+		printaln(f, L"   "sv, s);
 	}
 
 private:
@@ -141,7 +141,7 @@ private:
 					}
 				} while (true);
 
-				printaln("exit push");
+				printaln(L"exit push"sv);
 			}).detach();
 		}
 
@@ -164,7 +164,7 @@ private:
 					std::this_thread::sleep_for(1ms);
 				} while (true);
 
-				printaln("exit pop");
+				printaln(L"exit pop"sv);
 			}).detach();
 		}
 
@@ -196,7 +196,7 @@ private:
 				auto forcePrint = t1 - t0 >= 2000;
 
 				if ((old != *accumulative) || forcePrint) {
-					printaln("_accumulative : ", *accumulative);
+					printaln(L"_accumulative : "sv, *accumulative);
 				}
 
 				if (forcePrint) t0 = t1;
@@ -204,7 +204,7 @@ private:
 				std::this_thread::sleep_for(1ms);
 			} while (true);
 
-			printaln("exit print");
+			printaln(L"exit print"sv);
 		}).detach();
 	}
 };

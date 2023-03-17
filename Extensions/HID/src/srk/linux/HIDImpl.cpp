@@ -115,7 +115,7 @@ namespace srk::extensions {
 				uint32_t collection = 0;
 				int32_t index = 0;
 				while (ba.getBytesAvailable()) {
-					if (auto n = HIDReportDescriptorItem::parse(ba.getCurrentSource(), ba.getBytesAvailable(), item); n) {
+					if (auto n = HIDReportDescriptorItem::read(ba.getCurrentSource(), ba.getBytesAvailable(), item); n) {
 						auto p = ba.getPosition();
 						ba.setPosition(p + n);
 

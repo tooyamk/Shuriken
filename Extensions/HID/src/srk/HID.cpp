@@ -1,5 +1,3 @@
-#pragma once
-
 #include "HID.h"
 #include "srk/String.h"
 

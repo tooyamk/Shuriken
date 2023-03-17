@@ -341,7 +341,7 @@ namespace srk::extensions::shader_transpiler {
 				dst.data.setCapacity(str.size());
 				dst.data.write<ba_vt::BYTE>((uint8_t*)str.data(), str.size());
 			} catch (spirv_cross::CompilerError& error) {
-				printaln(L"ProgramSourceTranslator::translate spirv to glsl/gssl error : "sv, error.what());
+				printaln(L"ProgramSourceTranslator::translate spirv to glsl/gssl error : "sv, std::string_view(error.what()));
 			}
 		}
 
@@ -380,7 +380,7 @@ namespace srk::extensions::shader_transpiler {
 				dst.data.setCapacity(str.size());
 				dst.data.write<ba_vt::BYTE>((uint8_t*)str.data(), str.size());
 			} catch (spirv_cross::CompilerError& error) {
-				printaln(L"ProgramSourceTranslator::translate spirv to msl error : "sv, error.what());
+				printaln(L"ProgramSourceTranslator::translate spirv to msl error : "sv, std::string_view(error.what()));
 			}
 		}
 	};

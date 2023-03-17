@@ -166,6 +166,8 @@ inline ProgramTranspileHandler programTranspileHandler = [](const ProgramTranspi
 };
 
 inline bool SRK_CALL createProgram(IProgram& program, const std::string_view& vert, const std::string_view& frag) {
+	using namespace std::literals;
+
 	using Str = std::remove_cvref_t<std::u8string>;
 	using SSS = Str::value_type;
 	using SSS2 = Str::traits_type;
@@ -178,7 +180,7 @@ inline bool SRK_CALL createProgram(IProgram& program, const std::string_view& ve
 		[](const ProgramInputInfo& info) {
 		return modules::graphics::ProgramInputDescriptor();
 	}, programTranspileHandler)) {
-		printaln(L"program create error");
+		printaln(L"program create error"sv);
 		return false;
 	}
 	return true;

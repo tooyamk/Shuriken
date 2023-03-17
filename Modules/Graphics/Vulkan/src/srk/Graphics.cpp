@@ -17,8 +17,10 @@
 
 namespace srk::modules::graphics::vulkan {
 	VKAPI_ATTR VkBool32 VKAPI_CALL debugMessengerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
+		using namespace std::literals;
+
 		auto g = (Graphics*)pUserData;
-		printaln(L"vk-debug : ", pCallbackData->pMessage);
+		printaln(L"vk-debug : "sv, std::string_view(pCallbackData->pMessage));
 		return VK_FALSE;
 	}
 
@@ -631,6 +633,8 @@ namespace srk::modules::graphics::vulkan {
 	}
 
 	bool Graphics::_checkAndUpdateVkPipeline(IProgram* program, const IVertexAttributeGetter* vertexAttributeGetter, const IShaderParameterGetter* shaderParamGetter) {
+		using namespace std::literals;
+
 		if (!program || program->getGraphics() != this) return false;
 		auto p = (Program*)program->getNative();;
 		if (!p) return false;
@@ -765,7 +769,7 @@ namespace srk::modules::graphics::vulkan {
 
 		VkRenderPass renderPass;
 		if (vkCreateRenderPass(_vkStatus.device, &renderPassCreateInfo, nullptr, &renderPass) != VK_SUCCESS) {
-			printaln("failed to create render pass!");
+			printaln(L"failed to create render pass!"sv);
 		}
 
 		graphicsPipelineCreateInfo.layout = p->getVkPipelineLayout();

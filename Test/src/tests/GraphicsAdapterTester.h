@@ -10,11 +10,11 @@ public:
 
 		for (auto& ga : gas) {
 			printaln(ga.description);
-			printaln("	vid = ", ga.vendorId);
-			printaln("	did = ", ga.deviceId);
-			printaln("	dedicatedVideoMemory = ", ga.dedicatedVideoMemory);
-			printaln("	dedicatedSystemMemory = ", ga.dedicatedSystemMemory);
-			printaln("	sharedSystemMemory = ", ga.sharedSystemMemory);
+			printaln(L"	vid = "sv, ga.vendorId);
+			printaln(L"	did = "sv, ga.deviceId);
+			printaln(L"	dedicatedVideoMemory = "sv, ga.dedicatedVideoMemory);
+			printaln(L"	dedicatedSystemMemory = "sv, ga.dedicatedSystemMemory);
+			printaln(L"	sharedSystemMemory = "sv, ga.sharedSystemMemory);
 		}
 
 		IntrusivePtr wml = new WindowModuleLoader();

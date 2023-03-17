@@ -22,7 +22,9 @@ int32_t WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstanc
 #include <stdbool.h>
 
 void onStart(ANativeActivity* activity) {
-	printaln("onStart");
+    using namespace std::literals;
+
+	printaln(L"onStart"sv);
 }
 
 void onResume(ANativeActivity* activity) {
@@ -50,11 +52,15 @@ void onWindowFocusChanged(ANativeActivity* activity, int hasFocus) {
 }
 
 void onNativeWindowCreated(ANativeActivity* activity, ANativeWindow* window) {
-    printaln("onNativeWindowCreated");
+    using namespace std::literals;
+
+    printaln(L"onNativeWindowCreated"sv);
 }
 
 void onNativeWindowDestroyed(ANativeActivity* activity, ANativeWindow* window) {
-    printaln("onNativeWindowCreated");
+    using namespace std::literals;
+
+    printaln(L"onNativeWindowCreated"sv);
 }
 
 void onInputQueueCreated(ANativeActivity* activity, AInputQueue* queue) {
@@ -92,18 +98,20 @@ void bindLifeCycle(ANativeActivity* activity) {
 }
 
 void ANativeActivity_onCreate(ANativeActivity* activity, void* savedState, size_t savedStateSize) {
-	printaln("ANativeActivity_onCreate 2");
-    printaln("internalDataPath : ", activity->internalDataPath);
-    printaln("externalDataPath : ", activity->externalDataPath);
+    using namespace std::literals;
+
+	printaln(L"ANativeActivity_onCreate 2"sv);
+    printaln(L"internalDataPath : "sv, std::string_view(activity->internalDataPath));
+    printaln(L"externalDataPath : "sv, std::string_view(activity->externalDataPath));
     //mac _NSGetExecutablePath() (man 3 dyld)
 
-    printaln("std::filesystem:current_path : ", std::filesystem::current_path().wstring());
+    printaln(L"std::filesystem:current_path : "sv, std::filesystem::current_path().wstring());
 
     {
         /*std::filesystem::path dir(activity->externalDataPath);
-        printaln("for");
+        printaln(L"for"sv);
         for (auto& itr : std::filesystem::directory_iterator(dir)) {
-            printaln("sub : ", itr.path().wstring());
+            printaln(L"sub : "sv, itr.path().wstring());
         }*/
     }
 
@@ -116,11 +124,11 @@ void ANativeActivity_onCreate(ANativeActivity* activity, void* savedState, size_
     std::filesystem::path dir(std::string_view(m_pStrBuf, m_nStrLen));
     auto appDir = dir.parent_path().u8string();
 
-    printaln("jni : ", appDir);
+    printaln(L"jni : "sv, appDir);
 
-    printaln("for");
+    printaln(L"for"sv);
     for (auto& itr : std::filesystem::directory_iterator(std::filesystem::path("/data/data/com.shuriken.test"))) {
-        printaln("sub : ", itr.path().wstring());
+        printaln(L"sub : "sv, itr.path().wstring());
     }
 
     activity->env->ReleaseStringUTFChars((jstring)result, m_pStrBuf);
@@ -130,25 +138,25 @@ void ANativeActivity_onCreate(ANativeActivity* activity, void* savedState, size_
         auto cmd = "/proc/" + String::toString(getpid()) + "/cmdline";
         //auto cmd = "/proc/self/cmdline";
         if (realpath(cmd.data(), path1)) {
-            printaln(cmd, " : ", true, "   =",  std::string_view(path1));
+            printaln(cmd, L" : "sv, true, L"   ="sv,  std::string_view(path1));
 
             auto f = fopen(cmd.data(), "r");
-            printaln("fopen : ", f != nullptr);
+            printaln(L"fopen : "sv, f != nullptr);
             if (f) {
                 char buffer[PATH_MAX];
                 memset(buffer, 0, PATH_MAX);
                 fgets(buffer, sizeof(buffer), f);
-                printaln("fopen buf : ", buffer);
+                printaln(L"fopen buf : "sv, std::string_view(buffer));
                 fclose(f);
             }
 
             f = fopen("/proc/self/maps", "r");
-            printaln("fopen : ", f != nullptr);
+            printaln(L"fopen : "sv, f != nullptr);
             if (f) {
                 char buffer[PATH_MAX];
                 memset(buffer, 0, PATH_MAX);
                 fgets(buffer, sizeof(buffer), f);
-                printaln("fopen buf : ", buffer);
+                printaln(L"fopen buf : "sv, std::string_view(buffer));
                 fclose(f);
 
                 uint64_t low, high;
@@ -158,32 +166,32 @@ void ANativeActivity_onCreate(ANativeActivity* activity, void* savedState, size_
                 char path[PATH_MAX] = { 0 };
                 uint32_t inode;
                 auto rst = sscanf(buffer, "%" PRIx64 "-%" PRIx64 " %s %" PRIx64 " %x:%x %u [%s\n", &low, &high, perms, &offset, &major, &minor, &inode, path);
-                printaln("sscanf low=", low, " high=", high, " perms=", perms, " offset=", offset, " major=", major, " minor=", minor, " inode=", inode, " path=", path, " rst=", rst);
+                printaln(L"sscanf low="sv, low, L" high="sv, high, L" perms="sv, perms, L" offset="sv, offset, L" major="sv, major, L" minor="sv, minor, L" inode="sv, inode, L" path="sv, path, L" rst="sv, rst);
                 if (realpath(path, buffer)) {
-                    printaln("realpath : ", buffer);
+                    printaln(L"realpath : "sv, std::string_view(buffer));
                 }
             }
         } else {
-            printaln(cmd, " : ", false, "   =");
+            printaln(cmd, L" : "sv, false, L"   ="sv);
         }
     }
     
     {
         char path2[PATH_MAX];
         if (realpath("/proc/self/exe", path2)) {
-            printaln("exe : ", true, "   =",  std::string_view(path2));
+            printaln(L"exe : "sv, true, L"   ="sv,  std::string_view(path2));
         } else {
-            printaln("exe : ", false, "   =");
+            printaln(L"exe : "sv, false, L"   ="sv);
         }
 
-        printaln("getAppPath : ", Application::getAppPath().wstring());
+        printaln(L"getAppPath : "sv, Application::getAppPath().wstring());
     }
 
     {
         DynamicLibraryLoader loader;
         auto path = getDllPath("zstd");
         auto b = loader.load(path);
-        printaln("load zstd : ", path, "   ", b);
+        printaln(L"load zstd : "sv, path, "   ", b);
     }
 
     {
@@ -191,12 +199,12 @@ void ANativeActivity_onCreate(ANativeActivity* activity, void* savedState, size_
         uint8_t* buf = buffer;
         ++buf;
         ++buf;
-        printaln("try write float32_t");
+        printaln(L"try write float32_t"sv);
         *((float32_t*)buf) = 0.1f;
-        printaln("writed float32_t");
-        printaln("try read float32_t");
+        printaln(L"writed float32_t"sv);
+        printaln(L"try read float32_t"sv);
         auto f = ((float32_t*)buf)[0];
-        printaln("readed float32_t  ", f, "   ", &f);
+        printaln(L"readed float32_t  "sv, f, L"   "sv, &f);
     }
 
     bindLifeCycle(activity);

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "srk/Global.h"
+#include <filesystem>
 #include <mutex>
 
 namespace srk {
@@ -96,6 +97,8 @@ namespace srk {
 					buf.write(L">("sv);
 					buf.write(std::to_wstring((std::underlying_type_t<Type>)value));
 					buf.write(L')');
+				}  else if constexpr (std::is_same_v<Type, std::filesystem::path>) {
+					buf.write(value.wstring());
 				} else if constexpr (std::is_bounded_array_v<Type>) {
 					constexpr auto n = std::extent_v<Type, 0>;
 					buf.write(L"array<"sv);
@@ -110,12 +113,6 @@ namespace srk {
 					}
 
 					buf.write(L']');
-				} else if constexpr (std::convertible_to<Type, wchar_t const*>) {
-					buf.write(value);
-				} else if constexpr (std::convertible_to<Type, char const*>) {
-					buf.write(value);
-				} else if constexpr (std::convertible_to<Type, char8_t const*>) {
-					buf.write(value);
 				} else if constexpr (std::is_pointer_v<Type>) {
 					static constexpr uint32_t COUNT = sizeof(uintptr_t) << 1;
 					static constexpr wchar_t MAP[] = { L'0', L'1', L'2', L'3', L'4', L'5', L'6', L'7', L'8', L'9', L'A', L'B', L'C', L'D', L'E', L'F' };
@@ -149,10 +146,10 @@ namespace srk {
 		};
 
 
-		template<typename Formater, typename... Formaters>
+		template<typename... Formaters>
 		requires std::conjunction_v<std::is_default_constructible<Formaters>...>
 		struct PriorityFormater {
-			template<typename T>
+			template<typename Formater, typename T>
 			inline bool SRK_CALL operator()(OutputBuffer& buf, Formater&& formater, T&& value) const {
 				if constexpr (sizeof...(Formaters) == 0) {
 					return false;
@@ -162,17 +159,17 @@ namespace srk {
 			}
 
 		private:
-			template<typename Formater, typename T, typename Cur, typename... Others>
+			template<typename Formater, typename T, typename CurFormater, typename... OtherFormaters>
 			inline bool SRK_CALL _execute(OutputBuffer& buf, Formater&& formater, T&& value) const {
-				if constexpr (std::is_invocable_r_v<bool, Cur, OutputBuffer&, Formater&&, decltype(std::forward<T>(value))>) {
-					Cur c;
-					if (c(buf, std::forward<Formater>(formater), std::forward<T>(value))) return true;
+				if constexpr (std::is_invocable_r_v<bool, CurFormater, OutputBuffer&, Formater&&, decltype(std::forward<T>(value))>) {
+					CurFormater f;
+					if (f(buf, std::forward<Formater>(formater), std::forward<T>(value))) return true;
 				}
 				
-				if constexpr (sizeof...(Others) == 0) {
+				if constexpr (sizeof...(OtherFormaters) == 0) {
 					return false;
 				} else {
-					return _execute<Formater, T, Others...>(buf, std::forward<Formater>(formater), std::forward<T>(value));
+					return _execute<Formater, T, OtherFormaters...>(buf, std::forward<Formater>(formater), std::forward<T>(value));
 				}
 			}
 		};

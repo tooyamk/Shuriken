@@ -182,7 +182,7 @@ namespace srk {
 		template<ValueType T>
 		requires (T == ValueType::BOOL)
 		inline bool SRK_CALL read() {
-			return _read<bool>();
+			return _read<bool, false>();
 		}
 
 		template<ValueType T>

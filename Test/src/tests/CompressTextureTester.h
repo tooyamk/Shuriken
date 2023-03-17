@@ -131,7 +131,7 @@ public:
 		bc7.write<ba_vt::BYTE>(bc7Mp1);
 		writeFile(srcDir + "/img.txt", bc7);
 
-		printaln("finish!!!");
+		printaln(L"finish!!!"sv);
 
 		return 0;
 	}

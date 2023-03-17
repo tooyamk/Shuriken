@@ -1,7 +1,6 @@
 #include "Window.h"
 #include "Manager.h"
 #include "srk/String.h"
-#include "srk/Debug.h"
 #include "srk/events/EventDispatcher.h"
 
 @implementation SrkWindowDelegate

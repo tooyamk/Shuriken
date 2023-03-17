@@ -20,7 +20,7 @@ public:
 		auto tryCreateWndFn = [wm, &activedWindows](const CreateWindowDesc& desc) {
 			if (auto win = wm->crerateWindow(desc); win) {
 				auto border = win->getFrameExtents();
-				printaln("border ", border[0], " ", border[1], " ", border[2], " ", border[3]);
+				printaln(L"border "sv, border[0], " ", border[1], " ", border[2], " ", border[3]);
 				activedWindows.emplace_back(win);
 
 				win->getEventDispatcher()->addEventListener(WindowEvent::CLOSING, createEventListener<WindowEvent>([](Event<WindowEvent>& e) {
@@ -29,7 +29,7 @@ public:
 					}));
 
 				win->getEventDispatcher()->addEventListener(WindowEvent::CLOSED, createEventListener<WindowEvent>([&activedWindows](Event<WindowEvent>& e) {
-					/*printaln("closed start");
+					/*printaln(L"closed start"sv);
 					auto win = (IWindow*)e.getTarget();
 					for (size_t i = 0, n = activedWindows.size(); i < n; ++i)
 					{
@@ -38,7 +38,7 @@ public:
 							break;
 						}
 					}
-					printaln("closed end");
+					printaln(L"closed end"sv);
 
 					if (activedWindows.empty()) {
 						app->terminate();
@@ -47,18 +47,18 @@ public:
 
 				win->getEventDispatcher()->addEventListener(WindowEvent::FOCUS_IN, createEventListener<WindowEvent>([](Event<WindowEvent>& e) {
 					auto win = (IWindow*)e.getTarget();
-					printaln("wnd : ", win->getTitle(), " => focus in");
+					printaln(L"wnd : "sv, win->getTitle(), L" => focus in"sv);
 					}));
 
 				win->getEventDispatcher()->addEventListener(WindowEvent::FOCUS_OUT, createEventListener<WindowEvent>([](Event<WindowEvent>& e) {
 					auto win = (IWindow*)e.getTarget();
-					printaln("wnd : ", win->getTitle(), " => focus out");
+					printaln(L"wnd : "sv, win->getTitle(), L" => focus out"sv);
 					}));
 
 				win->getEventDispatcher()->addEventListener(WindowEvent::RESIZED, createEventListener<WindowEvent>([](Event<WindowEvent>& e) {
 					auto win = (IWindow*)e.getTarget();
 					auto size = win->getContentSize();
-					printaln("wnd : ", win->getTitle(), " => resize  ", size[0], "   ", size[1]);
+					printaln(L"wnd : "sv, win->getTitle(), L" => resize  "sv, size[0], L"   "sv, size[1]);
 					}));
 			}
 		};
@@ -111,7 +111,7 @@ public:
 					if (step == 0) {
 						step = 1;
 						activedWindows[0]->toggleFullScreen();
-						//printaln("is visible ", activedWindows[0]->isVisible());
+						//printaln(L"is visible "sv, activedWindows[0]->isVisible());
 						//activedWindows[0]->toggleFullScreen();
 						//app->toggleFullscreen();
 						//app->setRestore();
@@ -123,14 +123,14 @@ public:
 						//app->shutdown();
 					} else if (step == 1) {
 						//activedWindows[0]->setMinimum();
-						//printaln("is min ", activedWindows[0]->isMinimzed());
-						//printaln("is visible ", activedWindows[0]->isVisible());
+						//printaln(L"is min "sv, activedWindows[0]->isMinimzed());
+						//printaln(L"is visible "sv, activedWindows[0]->isVisible());
 						step = 2;
 						//activedWindows[0]->setMaximum();
 						//app->toggleFullscreen();
 						//app->setVisible(true);
 					} else if (step == 2) {
-						//printaln("is visible ", activedWindows[0]->isVisible());
+						//printaln(L"is visible "sv, activedWindows[0]->isVisible());
 						step = 3;
 						//app->toggleFullscreen();
 						//app->setVisible(true);

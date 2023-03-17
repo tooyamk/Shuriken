@@ -45,7 +45,7 @@ public:
 		auto graphics = gml->create(createGrahpicsModuleDesc);
 		if (!graphics) return 0;
 
-		printaln("Graphics Version : ", graphics->getVersion());
+		printaln(L"Graphics Version : "sv, graphics->getVersion());
 
 		graphics->getEventDispatcher()->addEventListener(GraphicsEvent::ERR, createEventListener<GraphicsEvent>([](Event<GraphicsEvent>& e) {
 			printaln(*(std::string_view*)e.getData());
