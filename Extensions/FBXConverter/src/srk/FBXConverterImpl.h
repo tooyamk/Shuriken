@@ -2,7 +2,7 @@
 
 #include "FBXConverter.h"
 #include "srk/ByteArray.h"
-#include "srk/Debug.h"
+#include "srk/Printer.h"
 #include "srk/Mesh.h"
 #include "srk/ShaderPredefine.h"
 #include "zlib.h"

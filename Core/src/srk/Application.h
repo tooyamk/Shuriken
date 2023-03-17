@@ -16,6 +16,8 @@ namespace srk {
 #endif
 	    }
 
+        static bool SRK_CALL isDebuggerAttached();
+
         static std::filesystem::path SRK_CALL getAppPath();
     };
 }

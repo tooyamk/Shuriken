@@ -1,6 +1,6 @@
 #include "DeviceBase.h"
 #include "Input.h"
-#include "srk/Debug.h"
+#include "srk/Printer.h"
 
 namespace srk::modules::inputs::raw_input {
 	DeviceBase::DeviceBase(Input& input, windows::IWindow& win, const InternalDeviceInfo& info) :

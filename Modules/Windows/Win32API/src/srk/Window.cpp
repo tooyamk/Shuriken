@@ -2,7 +2,7 @@
 #include "Manager.h"
 #include "srk/Application.h"
 #include "srk/String.h"
-#include "srk/Debug.h"
+#include "srk/Printer.h"
 #include "srk/events/EventDispatcher.h"
 
 namespace srk::modules::windows::win32api {

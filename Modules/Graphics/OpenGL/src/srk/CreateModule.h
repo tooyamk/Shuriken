@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Graphics.h"
-#include "srk/Debug.h"
+#include "srk/Printer.h"
 
 #ifdef SRK_MODULE_EXPORTS
 namespace srk::modules::graphics {

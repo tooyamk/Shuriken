@@ -1,6 +1,6 @@
 #pragma once
 
-#include "srk/Debug.h"
+#include "srk/Printer.h"
 #include "srk/Shader.h"
 #include "srk/String.h"
 #include <regex>

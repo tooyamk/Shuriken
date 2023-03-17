@@ -6,7 +6,7 @@
 #include "srk/ShaderParameter.h"
 #include "srk/String.h"
 #include <vector>
-#include "srk/Debug.h"
+#include "srk/Printer.h"
 
 namespace srk::modules::graphics::vulkan {
 	void Program::ParameterLayout::clear(Graphics& g) {

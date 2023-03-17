@@ -1,7 +1,7 @@
 #include "linux/HIDImpl.h"
 
 #if SRK_OS == SRK_OS_LINUX
-#include "srk/Debug.h"
+#include "srk/Printer.h"
 
 #include <fcntl.h>
 #include <poll.h>

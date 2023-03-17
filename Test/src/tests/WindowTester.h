@@ -63,7 +63,7 @@ public:
 			}
 		};
 
-		auto deb = Debug::isDebuggerAttached() ? "debugger attached"sv : ""sv;
+		auto deb = Application::isDebuggerAttached() ? "debugger attached"sv : ""sv;
 		auto title = "Fucker1 " + deb;;
 		CreateWindowDesc desc;
 		desc.style.resizable = true;

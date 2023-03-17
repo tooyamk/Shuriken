@@ -3,7 +3,7 @@
 #include "srk/Application.h"
 #include "srk/ByteArray.h"
 #include "srk/DynamicLibraryLoader.h"
-#include "srk/Debug.h"
+#include "srk/Printer.h"
 #include "srk/Lock.h"
 #include "srk/RTTI.h"
 #include "srk/ScopeGuard.h"

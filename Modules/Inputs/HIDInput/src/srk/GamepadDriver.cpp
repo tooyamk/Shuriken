@@ -1,7 +1,7 @@
 #include "GamepadDriver.h"
 
 #include "Input.h"
-#include "srk/Debug.h"
+#include "srk/Printer.h"
 #include "srk/HID.h"
 
 namespace srk::modules::inputs::hid_input {

@@ -2,7 +2,8 @@
 
 #if SRK_OS == SRK_OS_WINDOWS
 #include "srk/ScopeGuard.h"
-#include "srk/Debug.h"
+#include "srk/Printer.h"
+#include "srk/String.h"
 
 #include <SetupAPI.h>
 

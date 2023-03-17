@@ -1,7 +1,7 @@
 #pragma once
 
 #include "srk/Framework.h"
-#include "srk/Debug.h"
+#include "srk/Printer.h"
 #include "Extensions/ShaderTranspiler/src/srk/ShaderTranspiler.h"
 #include <fstream>
 
