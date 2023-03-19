@@ -450,7 +450,7 @@ namespace srk::extensions {
 		HIDReportDescriptorItem::write(ba, HIDReportItemType::MAIN, (uint8_t)HIDReportMainItemTag::END_COLLECTION);
 		ba.seekBegin();
 
-		printaln(HIDReportDescriptor::toString(ba.getSource(), ba.getLength()));
+		//printaln(HIDReportDescriptor::toString(ba.getSource(), ba.getLength()));
 
 		return std::move(ba);
 	}

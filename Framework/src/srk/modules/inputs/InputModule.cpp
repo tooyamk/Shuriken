@@ -65,11 +65,11 @@ namespace srk::modules::inputs {
 					setAxis(axes, sx, 0, 1);
 					continue;
 				}
-				if (!usedAxes[3] && !usedAxes[4]) {
+				if (numAxes >= 5 && !usedAxes[3] && !usedAxes[4]) {
 					setAxis(axes, sx, 3, 4);
 					continue;
 				}
-				if (!usedAxes[2] && !usedAxes[5]) {
+				if (numAxes >= 6 && !usedAxes[2] && !usedAxes[5]) {
 					setAxis(axes, sx, 2, 5);
 					continue;
 				}
