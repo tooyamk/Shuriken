@@ -25,24 +25,77 @@ namespace srk::modules::inputs::evdev {
 
 		std::vector<InternalDeviceInfo> newDevices;
 
-		static const std::filesystem::path dir("/dev/input/");
-		if (std::filesystem::exists(dir) && std::filesystem::is_directory(dir)) {
-			for (auto& itr : std::filesystem::directory_iterator(dir)) {
-				if (auto& path = itr.path(); path.has_filename() && std::string_view(path.filename().string()).substr(0, 5) == "event") {
-					int32_t fd = -1;
-					do {
-						auto fd = ::open(path.string().c_str(), O_RDONLY|O_NONBLOCK);
-						if (fd < 0) break;
+		if (auto devs = fopen("/proc/bus/input/devices", "r"); devs) {
+			char devsBuf[512];
+			
+			while (fgets(devsBuf, sizeof(devsBuf), devs)) {
+				std::string_view line(devsBuf);
 
-						input_id ids;
-						if (auto rc = ioctl(fd, EVIOCGID, &ids); rc < 0) break;
+				auto p = line.find("Handlers="); 
+				if (p == decltype(line)::npos) continue;
 
-						printaln(L"bustype : "sv, ids.bustype, L"  vendor : "sv, ids.vendor, L"  product : "sv, ids.product, L"  version : "sv, ids.version);
-					} while(false);
+				DeviceType type = DeviceType::UNKNOWN;
+				std::string_view evt;
+				String::split(line.substr(p + 9), String::CharFlag::WHITE_SPACE, [&evt, &type](const std::string_view& val){
+					if (val.find("kbd"sv) != std::string_view::npos) {
+						type |= DeviceType::KEYBOARD;
+					} else if (val.find("mouse"sv) != std::string_view::npos) {
+						type |= DeviceType::MOUSE;
+					} else if (val.find("js"sv) != std::string_view::npos) {
+						type |= DeviceType::GAMEPAD;
+					} else if (val.find("event"sv) != std::string_view::npos) {
+						evt = val;
+					}
+				});
 
-					if (fd >= 0) ::close(fd);
-				}
+				if (evt.empty() || (type & _filters) == DeviceType::UNKNOWN) continue;
+
+				int32_t fd = -1;
+				uint8_t state = 0;
+				static char path[] = {"/dev/input/eventxxx" };
+				do {
+					constexpr auto dstBegin = sizeof(path) - 4;
+					auto n = evt.size() - 5;
+					memcpy(path + dstBegin, evt.data() + 5, n);
+					path[dstBegin + n] = 0;
+
+					fd = ::open(path, O_RDONLY|O_NONBLOCK);
+					if (fd < 0) break;
+
+					input_id ids;
+					if (auto rc = ioctl(fd, EVIOCGID, &ids); rc < 0) break;
+
+					state = 1;
+					auto& info = newDevices.emplace_back();
+					info.vendorID = ids.vendor;
+					info.productID = ids.product;
+					info.type = type & _filters;
+
+					hash::xxHash<64> hasher;
+					hasher.begin(0);
+					hasher.update(evt.data() + 5, n);
+					hasher.update(&ids, sizeof(ids));
+
+					char buf[256];
+
+					if (auto rc = ioctl(fd, EVIOCGNAME(sizeof(buf) - 1), buf); rc >= 0) {
+						info.name = buf;
+						hasher.update(info.name.data(), info.name.size());
+					}
+					
+					if (auto rc = ioctl(fd, EVIOCGUNIQ(sizeof(buf) - 1), buf); rc < 0) hasher.update(buf, strlen(buf));
+
+					auto hash = hasher.digest();
+					info.guid.set<false, true>(&hash, sizeof(hash), 0);
+
+					state = 2;
+				} while(false);
+
+				if (fd >= 0) ::close(fd);
+				if (state == 1) newDevices.pop_back();
 			}
+
+			fclose(devs);
 		}
 
 		std::vector<DeviceInfo> add;
