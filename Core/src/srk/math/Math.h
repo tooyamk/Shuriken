@@ -355,13 +355,13 @@ namespace srk {
 		template<Arithmetic T> inline static constexpr T FORE = 4;
 		template<Arithmetic T> inline static constexpr T NEGATIVE_ONE = -1;
 		template<std::floating_point T> inline static constexpr T ONE_HALF = T(.5);
-		template<std::floating_point T> inline static constexpr T QUARTER = T(.25);
-		template<std::floating_point T> inline static constexpr T TENTH = T(.1);
-		template<std::floating_point T> inline static constexpr T TWENTIETH = T(.05);
-		template<std::floating_point T> inline static constexpr T FORTIETH = T(.025);
-		template<std::floating_point T> inline static constexpr T HUNDREDTH = T(.01);
-
-		template<std::floating_point T> inline static constexpr T TOLERANCE = T(2e-37);
+		template<std::floating_point T> inline static constexpr T ONE_QUARTER = T(.25);
+		template<std::floating_point T> inline static constexpr T ONE_TENTH = T(.1);
+		template<std::floating_point T> inline static constexpr T ONE_TWENTIETH = T(.05);
+		template<std::floating_point T> inline static constexpr T ONE_FORTIETH = T(.025);
+		template<std::floating_point T> inline static constexpr T ONE_EIGHTH = T(1. / 8.);
+		template<std::floating_point T> inline static constexpr T ONE_HUNDREDTH = T(.01);
+template<std::floating_point T> inline static constexpr T TOLERANCE = T(2e-37);
 		template<std::floating_point T> inline static constexpr T E = T(2.718281828459045);
 		template<std::floating_point T> inline static constexpr T PI = T(3.14159265358979323846);
 		template<std::floating_point T> inline static constexpr T PI_2 = PI<T> * T(.5);
@@ -1193,7 +1193,7 @@ namespace srk {
 			cross(zaxis, xaxis, yaxis);
 
 			auto w = std::sqrt(ONE<DstT> + xaxis[0] + yaxis[1] + zaxis[2]) * ONE_HALF<DstT>;
-			auto recip = QUARTER<DstT> / w;
+			auto recip = ONE_QUARTER<DstT> / w;
 
 			copy<DataDesc(DataType::QUATERNION), DstDesc>(dst, (yaxis[2] - zaxis[1]) * recip, (zaxis[0] - xaxis[2]) * recip, (xaxis[1] - yaxis[0]) * recip, w);
 		}

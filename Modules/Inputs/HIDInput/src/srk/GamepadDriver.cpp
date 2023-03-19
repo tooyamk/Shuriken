@@ -10,8 +10,7 @@ namespace srk::modules::inputs::hid_input {
 		using namespace srk::enum_operators;
 
 		_maxAxisKeyCode = GamepadKeyCode::AXIS_1 + _desc.inputAxes.size() - 1;
-		_minDPadKeyCode = _maxAxisKeyCode + 1;
-		_maxAxisKeyCode = _maxAxisKeyCode + (_desc.inputDPads.size() << 1);
+		_maxHatKeyCode = GamepadKeyCode::HAT_1 + _desc.inputDPads.size() - 1;
 		_maxButtonKeyCode = GamepadKeyCode::BUTTON_1 + _desc.inputButtons.size() - 1;
 	}
 
@@ -262,18 +261,14 @@ namespace srk::modules::inputs::hid_input {
 			data += HEADER_LENGTH;
 
 			if (cf.code >= GamepadKeyCode::AXIS_1 && cf.code <= _maxAxisKeyCode) {
-				if (!_desc.inputDPads.empty() && cf.code >= _minDPadKeyCode) {
-					auto idx = (size_t)(cf.code - _minDPadKeyCode);
-					const auto& cap =_desc.inputDPads[idx >> 1];
-					if (auto v = _read(cap, data); v >= cap.min && v <= cap.max) {
-						auto a = v * Math::PI2<float32_t> / (float32_t)(cap.max - cap.min + 1);
-						val = 0.5f + ((idx & 0b1) == 0 ? std::sin(a) : std::cos(a)) * 0.5f;
-					} else {
-						val = 0.5f;
-					}
+				const auto& cap = _desc.inputAxes[(size_t)(cf.code - GamepadKeyCode::AXIS_1)];
+				val = (float32_t)std::clamp(_read(cap, data), cap.min, cap.max) / (float32_t)(cap.max - cap.min);
+			} else if (cf.code >= GamepadKeyCode::HAT_1 && cf.code <= _maxHatKeyCode) {
+				const auto& cap = _desc.inputDPads[(size_t)(cf.code - GamepadKeyCode::HAT_1)];
+				if (auto v = _read(cap, data); v >= cap.min && v <= cap.max) {
+					val = v * Math::PI2<float32_t> / (float32_t)(cap.max - cap.min + 1);
 				} else {
-					const auto& cap =_desc.inputAxes[(size_t)(cf.code - GamepadKeyCode::AXIS_1)];
-					val = (float32_t)std::clamp(_read(cap, data), cap.min, cap.max) / (float32_t)(cap.max - cap.min);
+					val = -1.0f;
 				}
 			} else if (cf.code >= GamepadKeyCode::BUTTON_1 && cf.code <= _maxButtonKeyCode) {
 				const auto& cap =_desc.inputButtons[(size_t)(cf.code - GamepadKeyCode::BUTTON_1)];
@@ -315,7 +310,9 @@ namespace srk::modules::inputs::hid_input {
 			dst.setDefault(_desc.inputAxes.size(), _desc.inputDPads.size(), _desc.inputButtons.size(), false);
 		}
 
-		dst.undefinedCompletion(_desc.inputAxes.size() + _desc.inputDPads.size(), _desc.inputButtons.size());
+		dst.undefinedCompletion<GamepadKeyCode::AXIS_1, GamepadKeyCode::AXIS_END, GamepadVirtualKeyCode::UNDEFINED_AXIS_1>(_desc.inputAxes.size());
+		dst.undefinedCompletion<GamepadKeyCode::HAT_1, GamepadKeyCode::HAT_END, GamepadVirtualKeyCode::UNDEFINED_HAT_1>(_desc.inputDPads.size());
+		dst.undefinedCompletion<GamepadKeyCode::BUTTON_1, GamepadKeyCode::BUTTON_END, GamepadVirtualKeyCode::UNDEFINED_BUTTON_1>(_desc.inputButtons.size());
 	}
 
 	uint32_t GamepadDriver::_read(const InputCap& cap, const uint8_t* data) {

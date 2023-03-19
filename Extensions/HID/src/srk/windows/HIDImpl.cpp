@@ -283,8 +283,8 @@ namespace srk::extensions {
 
 		uint16_t usagePage = header.usagePage;
 		uint16_t reportSize = 0, reportID = 0, reportCount = 0;
-		uint32_t logicalMinimum = std::numeric_limits<uint32_t>::max(), logicalMaximum = std::numeric_limits<uint32_t>::max();
-		uint32_t physicalMinimum = std::numeric_limits<uint32_t>::max(), physicalMaximum = std::numeric_limits<uint32_t>::max();
+		uint32_t logicalMinimum = 0, logicalMaximum = 0;
+		uint32_t physicalMinimum = 0, physicalMaximum = 0;
 		uint32_t unit = 0, unitExponent = 0;
 
 		HIDReportDescriptorItem::write(ba, HIDReportItemType::GLOBAL, (uint8_t)HIDReportGlobalItemTag::USAGE_PAGE, usagePage);
@@ -309,6 +309,13 @@ namespace srk::extensions {
 			if (itemLogicalMinimum == itemLogicalMaximum && itemLogicalMinimum == 0 && item.usagePage == HIDReportUsagePageType::BUTTON) {
 				itemLogicalMaximum = itemLogicalMinimum + (1 << item.bitSize) - 1;
 			}
+			if (itemLogicalMaximum < itemLogicalMinimum) {
+				if (item.bitSize <= 8) {
+					itemLogicalMaximum = (uint8_t)itemLogicalMaximum;
+				} else if (item.bitSize <= 16) {
+					itemLogicalMaximum = (uint16_t)itemLogicalMaximum;
+				}
+			}
 
 			if (logicalMinimum != itemLogicalMinimum) {
 				logicalMinimum = itemLogicalMinimum;
@@ -322,15 +329,25 @@ namespace srk::extensions {
 				HIDReportDescriptorItem::write(ba, HIDReportItemType::GLOBAL, (uint8_t)HIDReportGlobalItemTag::LOGICAL_MAXIMUM, logicalMaximum);
 			}
 
-			if (item.physicalMinimum != 0 || item.physicalMaximum != 0 || item.physicalMinimum != item.physicalMaximum) {
-				if (physicalMinimum != item.physicalMinimum) {
-					physicalMinimum = item.physicalMinimum;
+			auto itemPhysicalMinimum = item.physicalMinimum;
+			auto itemPhysicalMaximum = item.physicalMaximum;
+			if (itemPhysicalMaximum < itemPhysicalMinimum) {
+				if (item.bitSize <= 8) {
+					itemPhysicalMaximum = (uint8_t)itemPhysicalMaximum;
+				} else if (item.bitSize <= 16) {
+					itemPhysicalMaximum = (uint16_t)itemPhysicalMaximum;
+				}
+			}
+
+			if (itemPhysicalMinimum != 0 || itemPhysicalMaximum != 0 || itemPhysicalMinimum != itemPhysicalMaximum) {
+				if (physicalMinimum != itemPhysicalMinimum) {
+					physicalMinimum = itemPhysicalMinimum;
 
 					HIDReportDescriptorItem::write(ba, HIDReportItemType::GLOBAL, (uint8_t)HIDReportGlobalItemTag::PHYSICAL_MINIMUM, physicalMinimum);
 				}
 
-				if (physicalMaximum != item.physicalMaximum) {
-					physicalMaximum = item.physicalMaximum;
+				if (physicalMaximum != itemPhysicalMaximum) {
+					physicalMaximum = itemPhysicalMaximum;
 
 					HIDReportDescriptorItem::write(ba, HIDReportItemType::GLOBAL, (uint8_t)HIDReportGlobalItemTag::PHYSICAL_MAXIMUM, physicalMaximum);
 				}
@@ -433,7 +450,7 @@ namespace srk::extensions {
 		HIDReportDescriptorItem::write(ba, HIDReportItemType::MAIN, (uint8_t)HIDReportMainItemTag::END_COLLECTION);
 		ba.seekBegin();
 
-		//printaln(HIDReportDescriptor::toString(ba.getSource(), ba.getLength()));
+		printaln(HIDReportDescriptor::toString(ba.getSource(), ba.getLength()));
 
 		return std::move(ba);
 	}

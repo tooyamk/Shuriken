@@ -32,7 +32,8 @@ namespace srk::modules::inputs::xinput {
 
 	private:
 		static constexpr size_t HEADER_LENGTH = alignof(XINPUT_STATE);
-		static constexpr size_t MAX_AXES = 6 + 2;
+		static constexpr size_t MAX_AXES = 6;
+		static constexpr size_t MAX_HATS = 1;
 		static constexpr size_t MAX_BUTTONS = 10;
 		static constexpr uint16_t BUTTON_MASK[] = {
 			XINPUT_GAMEPAD_A, XINPUT_GAMEPAD_B, XINPUT_GAMEPAD_X, XINPUT_GAMEPAD_Y,

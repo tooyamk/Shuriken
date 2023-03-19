@@ -65,7 +65,7 @@ namespace srk::modules::inputs::hid_input {
 		DeviceDesc _desc;
 
 		GamepadKeyCode _maxAxisKeyCode;
-		GamepadKeyCode _minDPadKeyCode;
+		GamepadKeyCode _maxHatKeyCode;
 		GamepadKeyCode _maxButtonKeyCode;
 
 		static uint32_t SRK_CALL _read(const InputCap& cap, const uint8_t* data);

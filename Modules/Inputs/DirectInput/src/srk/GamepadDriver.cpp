@@ -81,7 +81,7 @@ namespace srk::modules::inputs::direct_input {
 				if (auto i = data->rgdwPOV[idx >> 1]; i == std::numeric_limits<DWORD>::max()) {
 					val = 0.5f;
 				} else {
-					auto a = Math::rad(DeviceStateValue(i) * Math::HUNDREDTH<DeviceStateValue>);
+					auto a = Math::rad(DeviceStateValue(i) * Math::ONE_HUNDREDTH<DeviceStateValue>);
 					val = 0.5f + ((idx & 0b1) == 0 ? std::sin(a) : std::cos(a)) * 0.5f;
 				}
 			} else if (cf.code >= GamepadKeyCode::BUTTON_1 && cf.code <= _maxButtonKeyCode) {
@@ -122,7 +122,9 @@ namespace srk::modules::inputs::direct_input {
 			dst.setDefault(_cpas.dwAxes, _cpas.dwPOVs, _cpas.dwButtons, false);
 		}
 
-		dst.undefinedCompletion(_cpas.dwAxes + (_cpas.dwPOVs << 1), _cpas.dwButtons);
+		dst.undefinedCompletion<GamepadKeyCode::AXIS_1, GamepadKeyCode::AXIS_END, GamepadVirtualKeyCode::UNDEFINED_AXIS_1>(_cpas.dwAxes);
+		dst.undefinedCompletion<GamepadKeyCode::HAT_1, GamepadKeyCode::HAT_END, GamepadVirtualKeyCode::UNDEFINED_HAT_1>(_cpas.dwPOVs);
+		dst.undefinedCompletion<GamepadKeyCode::BUTTON_1, GamepadKeyCode::BUTTON_END, GamepadVirtualKeyCode::UNDEFINED_BUTTON_1>(_cpas.dwButtons);
 	}
 
 	/*

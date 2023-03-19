@@ -194,7 +194,7 @@ public:
 #endif
 
 	virtual int32_t SRK_CALL run() override {
-#if SRK_OS != SRK_OS_LINUX
+#if SRK_OS == SRK_OS_LINUX
 		std::thread aaa([]() {
 			std::filesystem::path dir("/dev/input/");
 			//printaln(std::filesystem::exists(dir));
@@ -528,19 +528,19 @@ public:
 					if (auto device = im->createDevice(info->guid); device) {
 						printaln(L"created device : "sv, getDeviceTypeString(info->type), L" vid = "sv, info->vendorID, L" pid = "sv, info->productID, L" name = "sv, info->name, L" guid = "sv, String::toString(info->guid.getData(), info->guid.getSize()));
 						{
-							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::L_STICK, &Math::TENTH<DeviceStateValue>, 1);
-							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::R_STICK, &Math::TENTH<DeviceStateValue>, 1);
-							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::L_STICK_X_LEFT, &Math::TENTH<DeviceStateValue>, 1);
-							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::L_STICK_X_RIGHT, &Math::TENTH<DeviceStateValue>, 1);
-							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::L_STICK_Y_DOWN, &Math::TENTH<DeviceStateValue>, 1);
-							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::L_STICK_Y_UP, &Math::TENTH<DeviceStateValue>, 1);
-							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::R_STICK_X_LEFT, &Math::TENTH<DeviceStateValue>, 1);
-							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::R_STICK_X_RIGHT, &Math::TENTH<DeviceStateValue>, 1);
-							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::R_STICK_Y_DOWN, &Math::TENTH<DeviceStateValue>, 1);
-							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::R_STICK_Y_UP, &Math::TENTH<DeviceStateValue>, 1);
-							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::R_STICK, &Math::TENTH<DeviceStateValue>, 1);
-							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::L_TRIGGER, &Math::TENTH<DeviceStateValue>, 1);
-							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::R_TRIGGER, &Math::TENTH<DeviceStateValue>, 1);
+							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::L_STICK, &Math::ONE_TENTH<DeviceStateValue>, 1);
+							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::R_STICK, &Math::ONE_TENTH<DeviceStateValue>, 1);
+							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::L_STICK_X_LEFT, &Math::ONE_TENTH<DeviceStateValue>, 1);
+							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::L_STICK_X_RIGHT, &Math::ONE_TENTH<DeviceStateValue>, 1);
+							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::L_STICK_Y_DOWN, &Math::ONE_TENTH<DeviceStateValue>, 1);
+							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::L_STICK_Y_UP, &Math::ONE_TENTH<DeviceStateValue>, 1);
+							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::R_STICK_X_LEFT, &Math::ONE_TENTH<DeviceStateValue>, 1);
+							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::R_STICK_X_RIGHT, &Math::ONE_TENTH<DeviceStateValue>, 1);
+							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::R_STICK_Y_DOWN, &Math::ONE_TENTH<DeviceStateValue>, 1);
+							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::R_STICK_Y_UP, &Math::ONE_TENTH<DeviceStateValue>, 1);
+							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::R_STICK, &Math::ONE_TENTH<DeviceStateValue>, 1);
+							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::L_TRIGGER, &Math::ONE_TENTH<DeviceStateValue>, 1);
+							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::R_TRIGGER, &Math::ONE_TENTH<DeviceStateValue>, 1);
 
 							/*GamepadKeyMapper km;
 							km.set(GamepadVirtualKeyCode::L_STICK_X_LEFT, GamepadKeyCode::AXIS_1, GamepadKeyFlag::HALF_SMALL | GamepadKeyFlag::FLIP);
@@ -597,7 +597,7 @@ public:
 						*/
 
 						{
-							float32_t dz[] = { Math::ONE_HALF<DeviceStateValue> -Math::FORTIETH<DeviceStateValue>, Math::ONE_HALF<DeviceStateValue> +Math::FORTIETH<DeviceStateValue> };
+							float32_t dz[] = { Math::ONE_HALF<DeviceStateValue> - Math::ONE_FORTIETH<DeviceStateValue>, Math::ONE_HALF<DeviceStateValue> + Math::ONE_FORTIETH<DeviceStateValue> };
 							for (size_t i = 0; i < 10; ++i) device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::UNDEFINED_AXIS_1 + i, dz, 2);
 						}
 

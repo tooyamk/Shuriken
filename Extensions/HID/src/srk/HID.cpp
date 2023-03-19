@@ -50,7 +50,7 @@ namespace srk::extensions {
 		} else if (data <= 65535) {
 			size = 2;
 		} else {
-			size = 4;
+			size = 3;
 		}
 		dst.write<uint8_t>(((tag & 0b1111) << 4) | (((uint8_t)type & 0b11) << 2) | (size & 0b11));
 		dst.write<std::byte>(&data, size);

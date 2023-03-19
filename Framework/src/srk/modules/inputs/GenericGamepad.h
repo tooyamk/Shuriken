@@ -72,6 +72,7 @@ namespace srk::modules::inputs {
 		std::atomic_bool _needOutput;
 
 		void SRK_CALL _doInput(bool dispatchEvent);
+		void SRK_CALL _doInputMove(const GamepadKeyMapper& mapper, GamepadVirtualKeyCode combined, GamepadVirtualKeyCode separatedBegin);
 		void SRK_CALL _doOutput();
 
 		void SRK_CALL _setDeadZone(GamepadVirtualKeyCode keyCode, Vec2<DeviceStateValue>* deadZone);

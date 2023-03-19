@@ -3,6 +3,7 @@
 #include "srk/modules/IModule.h"
 #include "srk/modules/inputs/DeviceInfo.h"
 #include "srk/math/Vector.h"
+#include <bitset>
 
 namespace srk::events {
 	template<typename EvtType> class IEventDispatcher;
@@ -297,7 +298,11 @@ namespace srk::modules::inputs {
 
 		AXIS_START,
 		AXIS_1 = AXIS_START,
-		AXIS_END = AXIS_1 + 15,
+		AXIS_END = AXIS_1 + 12,
+
+		HAT_START,
+		HAT_1 = HAT_START,
+		HAT_END = HAT_1 + 4,
 
 		BUTTON_START,
 		BUTTON_1 = BUTTON_START,
@@ -308,9 +313,11 @@ namespace srk::modules::inputs {
 	enum class GamepadKeyFlag : uint8_t {
 		NONE,
 
-		HALF_SMALL = 0b1,
-		HALF_BIG = 0b10,
-		FLIP = 0b100
+		AXIS_X = 0b1,
+		AXIS_Y = 0b10,
+		HALF_SMALL = 0b100,
+		HALF_BIG = 0b1000,
+		FLIP = 0b10000
 	};
 
 
@@ -348,15 +355,28 @@ namespace srk::modules::inputs {
 	enum class GamepadVirtualKeyCode : uint8_t {
 		UNKNOWN,
 
-		AXIS_START,
+		COMBINED_START,
 
-		L_STICK = AXIS_START,
+		COMBINED_AXIS_START = COMBINED_START,
+
+		L_STICK = COMBINED_AXIS_START,
 		R_STICK,
 
-		DPAD,
+		COMBINED_AXIS_END = R_STICK,
 
-		SEPARATE_AXIS_START,
-		L_STICK_X_LEFT = SEPARATE_AXIS_START,
+		COMBINED_HAT_START,
+
+		DPAD = COMBINED_HAT_START,
+
+		COMBINED_HAT_END = DPAD,
+
+		COMBINED_END = COMBINED_HAT_END,
+
+		SEPARATED_START,
+
+		SEPARATED_AXIS_START = SEPARATED_START,
+
+		L_STICK_X_LEFT = SEPARATED_AXIS_START,
 		L_STICK_X_RIGHT,
 		L_STICK_Y_DOWN,
 		L_STICK_Y_UP,
@@ -365,11 +385,6 @@ namespace srk::modules::inputs {
 		R_STICK_Y_DOWN,
 		R_STICK_Y_UP,
 
-		DPAD_LEFT,
-		DPAD_RIGHT,
-		DPAD_DOWN,
-		DPAD_UP,
-
 		L_TRIGGER,
 		L2 = L_TRIGGER,//DualShock
 		R_TRIGGER,
@@ -377,8 +392,18 @@ namespace srk::modules::inputs {
 
 		UNDEFINED_AXIS_1,
 		UNDEFINED_AXIS_END = UNDEFINED_AXIS_1 + ((std::underlying_type_t<GamepadKeyCode>)GamepadKeyCode::AXIS_END - (std::underlying_type_t<GamepadKeyCode>)GamepadKeyCode::AXIS_1),
-		SEPARATE_AXIS_END = UNDEFINED_AXIS_END,
-		AXIS_END = UNDEFINED_AXIS_END,
+		SEPARATED_AXIS_END = UNDEFINED_AXIS_END,
+
+		SEPARATE_HAT_START,
+
+		DPAD_LEFT = SEPARATE_HAT_START,
+		DPAD_RIGHT,
+		DPAD_DOWN,
+		DPAD_UP,
+
+		UNDEFINED_HAT_1,
+		UNDEFINED_HAT_END = UNDEFINED_HAT_1 + ((std::underlying_type_t<GamepadKeyCode>)GamepadKeyCode::HAT_END - (std::underlying_type_t<GamepadKeyCode>)GamepadKeyCode::HAT_1),
+		SEPARATE_HAT_END = UNDEFINED_HAT_END,
 
 		//DPAD_CENTER,
 
@@ -425,7 +450,9 @@ namespace srk::modules::inputs {
 
 		UNDEFINED_BUTTON_1,
 		UNDEFINED_BUTTON_END = UNDEFINED_BUTTON_1 + ((std::underlying_type_t<GamepadKeyCode>)GamepadKeyCode::BUTTON_END - (std::underlying_type_t<GamepadKeyCode>)GamepadKeyCode::BUTTON_1),
-		BUTTON_END = UNDEFINED_BUTTON_END
+		BUTTON_END = UNDEFINED_BUTTON_END,
+
+		SEPARATED_END = BUTTON_END
 	};
 
 
@@ -497,11 +524,46 @@ namespace srk::modules::inputs {
 			}
 		}
 
-		void SRK_CALL undefinedCompletion(size_t maxAxes, size_t maxButtons);
+		template<GamepadKeyCode kBegin, GamepadKeyCode kEnd, GamepadVirtualKeyCode vkUndefinedBegin>
+		void SRK_CALL undefinedCompletion(size_t num) {
+			using namespace srk::enum_operators;
+
+			if (!num) return;
+			if (num > 64) num = 64;
+
+			auto maxKey = Math::clamp(kBegin + (num - 1), kBegin, kEnd);
+			constexpr auto maxUndefined = std::min<size_t>((size_t)(kEnd - kBegin) + 1, 64);
+			constexpr auto vkEnd = vkUndefinedBegin + (size_t)(kEnd - kBegin);
+
+			std::bitset<maxUndefined> vkeys;
+			std::bitset<64> keys;
+
+			for (size_t i = 0; i < _mapping.size(); ++i) {
+				auto cf = _mapping[i].get();
+				if (cf.code == GamepadKeyCode::UNDEFINED) continue;
+
+				auto vk = (GamepadVirtualKeyCode)((size_t)VK_MIN + i);
+
+				if (vk >= vkUndefinedBegin && vk <= vkEnd) vkeys[(size_t)(vk - vkUndefinedBegin)] = true;
+				if (cf.code >= kBegin && cf.code <= maxKey) keys[(size_t)(cf.code - kBegin)] = true;
+			}
+
+			for (size_t i = 0; i < num; ++i) {
+				if (!keys[i]) {
+					for (size_t j = 0; j < vkeys.size(); ++j) {
+						if (!vkeys[j]) {
+							vkeys[j] = true;
+							_mapping[_getIndex((GamepadVirtualKeyCode)((size_t)vkUndefinedBegin + j))].set((GamepadKeyCode)((size_t)kBegin + i));
+							break;
+						}
+					}
+				}
+			}
+		}
 
 	private:
-		static constexpr GamepadVirtualKeyCode VK_MIN = GamepadVirtualKeyCode::SEPARATE_AXIS_START;
-		static constexpr GamepadVirtualKeyCode VK_MAX = GamepadVirtualKeyCode::BUTTON_END;
+		static constexpr GamepadVirtualKeyCode VK_MIN = GamepadVirtualKeyCode::SEPARATED_START;
+		static constexpr GamepadVirtualKeyCode VK_MAX = GamepadVirtualKeyCode::SEPARATED_END;
 		static constexpr size_t COUNT = (std::underlying_type_t<GamepadVirtualKeyCode>)VK_MAX - (std::underlying_type_t<GamepadVirtualKeyCode>)VK_MIN + 1;
 
 		std::array<Value, COUNT> _mapping;
@@ -580,8 +642,8 @@ namespace srk::modules::inputs {
 		}
 
 	private:
-		static constexpr GamepadVirtualKeyCode VK_MIN = GamepadVirtualKeyCode::AXIS_START;
-		static constexpr GamepadVirtualKeyCode VK_MAX = GamepadVirtualKeyCode::BUTTON_END;
+		static constexpr GamepadVirtualKeyCode VK_MIN = GamepadVirtualKeyCode::COMBINED_START;
+		static constexpr GamepadVirtualKeyCode VK_MAX = GamepadVirtualKeyCode::SEPARATED_END;
 		static constexpr size_t COUNT = (std::underlying_type_t<GamepadVirtualKeyCode>)VK_MAX - (std::underlying_type_t<GamepadVirtualKeyCode>)VK_MIN + 1;
 
 		std::array<Value, COUNT> _values;
