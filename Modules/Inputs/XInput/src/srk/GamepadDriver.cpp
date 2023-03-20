@@ -2,9 +2,9 @@
 #include "Input.h"
 
 namespace srk::modules::inputs::xinput {
-	GamepadDriver::GamepadDriver(Input& input, const DeviceInfo& info) :
+	GamepadDriver::GamepadDriver(Input& input, DWORD index) :
 		_input(input),
-		_index(((InternalGUID&)*info.guid.getData()).index - 1) {
+		_index(index) {
 	}
 
 	GamepadDriver::~GamepadDriver() {

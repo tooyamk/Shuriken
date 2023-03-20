@@ -86,15 +86,17 @@ namespace srk::modules::inputs::xinput {
 
 		for (auto& info : _devices) {
 			if (info.guid == guid) {
+				auto& data = (const InternalGUID&)*info.guid.getData();
+
 				XINPUT_CAPABILITIES_EX capsEx;
 				uint16_t vendorID = 0, productID = 0;
-				if (_XInputGetCapabilitiesEx && _XInputGetCapabilitiesEx(1, ((InternalGUID&)*info.guid.getData()).index - 1, 0, &capsEx) == ERROR_SUCCESS) {
+				if (_XInputGetCapabilitiesEx && _XInputGetCapabilitiesEx(1, data.index - 1, 0, &capsEx) == ERROR_SUCCESS) {
 					vendorID = capsEx.vendorId;
 					productID = capsEx.productId;
 				}
 				if (info.vendorID != vendorID || info.productID != productID) return nullptr;
 
-				return new GenericGamepad(info, *new GamepadDriver(*this, info));
+				return new GenericGamepad(info, *new GamepadDriver(*this, data.index - 1));
 			}
 		}
 

@@ -66,27 +66,18 @@ namespace srk::modules::inputs {
 
 		template<bool LowFill, bool HighFill>
 		void SRK_CALL set(const void* data, uint32_t len, uint32_t offset = 0, uint8_t lowFillVal = 0, uint8_t highFillVal = 0) {
-			auto data8 = (const uint8_t*)data;
-
 			if constexpr (LowFill) {
-				if (offset) {
-					uint32_t end = offset > N ? N : offset;
-					for (uint32_t i = 0; i < end; ++i) _data[i] = lowFillVal;
-				}
+				if (offset) memset(_data, lowFillVal, offset > N ? N : offset);
 			}
 
 			if (offset + 1 < N) {
 				uint32_t end = offset + len;
 				if (end > N) end = N;
 
-				if (data8) {
-					for (uint32_t i = offset; i < end; ++i) _data[i] = data8[i - offset];
-				}
+				memcpy(_data + offset, data, end - offset);
 
 				if constexpr (HighFill) {
-					if (end < N) {
-						for (uint32_t i = end; i < N; ++i) _data[i] = highFillVal;
-					}
+					if (end < N) memset(_data + end, highFillVal, N - end);
 				}
 			}
 		}
@@ -95,7 +86,7 @@ namespace srk::modules::inputs {
 			if (offset + 1 < N) {
 				uint32_t end = offset + len;
 				if (end > N) end = N;
-				for (uint32_t i = offset; i < end; ++i) _data[i] = val;
+				memset(_data + offset, val, end - offset);
 			}
 		}
 

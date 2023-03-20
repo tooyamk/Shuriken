@@ -8,7 +8,7 @@ namespace srk::modules::inputs::xinput {
 
 	class SRK_MODULE_DLL GamepadDriver : public IGenericGamepadDriver {
 	public:
-		GamepadDriver(Input& input, const DeviceInfo& info);
+		GamepadDriver(Input& input, DWORD index);
 		virtual ~GamepadDriver();
 
 		virtual size_t SRK_CALL getInputLength() const override;
