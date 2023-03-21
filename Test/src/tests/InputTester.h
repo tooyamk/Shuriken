@@ -194,7 +194,7 @@ public:
 #endif
 
 	virtual int32_t SRK_CALL run() override {
-#if SRK_OS == SRK_OS_LINUX
+#if SRK_OS == SRK_OS_UNKNOWN
 		std::thread aaa([]() {
 			std::filesystem::path dir("/dev/input/");
 			//printaln(std::filesystem::exists(dir));
@@ -290,7 +290,7 @@ public:
 								printaln(L"ledBits : "sv, ledBits);
 							}
 
-							uint64_t keyBits[KEY_CNT];
+							uint8_t keyBits[(KEY_CNT + 7) >> 3];
 							if (auto rc = ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(keyBits)), keyBits); rc < 0) {
 								printaln(L"EVIOCGBIT EV_KEY error"sv);
 								continue;
@@ -553,13 +553,13 @@ public:
 							km.set(GamepadVirtualKeyCode::R_STICK_Y_DOWN, GamepadKeyCode::AXIS_1 + 5, GamepadKeyFlag::HALF_BIG);
 							km.set(GamepadVirtualKeyCode::R_STICK_Y_UP, GamepadKeyCode::AXIS_1 + 5, GamepadKeyFlag::HALF_SMALL | GamepadKeyFlag::FLIP);
 
-							km.set(GamepadVirtualKeyCode::DPAD_LEFT, GamepadKeyCode::AXIS_1 + 6, GamepadKeyFlag::HALF_SMALL | GamepadKeyFlag::FLIP);
-							km.set(GamepadVirtualKeyCode::DPAD_RIGHT, GamepadKeyCode::AXIS_1 + 6, GamepadKeyFlag::HALF_BIG);
-							km.set(GamepadVirtualKeyCode::DPAD_DOWN, GamepadKeyCode::AXIS_1 + 7, GamepadKeyFlag::HALF_SMALL | GamepadKeyFlag::FLIP);
-							km.set(GamepadVirtualKeyCode::DPAD_UP, GamepadKeyCode::AXIS_1 + 7, GamepadKeyFlag::HALF_BIG);
-
 							km.set(GamepadVirtualKeyCode::L_TRIGGER, GamepadKeyCode::AXIS_1 + 3);
 							km.set(GamepadVirtualKeyCode::R_TRIGGER, GamepadKeyCode::AXIS_1 + 4);
+
+							km.set(GamepadVirtualKeyCode::DPAD_LEFT, GamepadKeyCode::HAT_1, GamepadKeyFlag::AXIS_X | GamepadKeyFlag::HALF_SMALL | GamepadKeyFlag::FLIP);
+							km.set(GamepadVirtualKeyCode::DPAD_RIGHT, GamepadKeyCode::HAT_1, GamepadKeyFlag::AXIS_X | GamepadKeyFlag::HALF_BIG);
+							km.set(GamepadVirtualKeyCode::DPAD_DOWN, GamepadKeyCode::HAT_1, GamepadKeyFlag::AXIS_Y | GamepadKeyFlag::HALF_SMALL | GamepadKeyFlag::FLIP);
+							km.set(GamepadVirtualKeyCode::DPAD_UP, GamepadKeyCode::HAT_1, GamepadKeyFlag::AXIS_Y | GamepadKeyFlag::HALF_BIG);
 
 							km.set(GamepadVirtualKeyCode::SQUARE, GamepadKeyCode::BUTTON_1);
 							km.set(GamepadVirtualKeyCode::CROSS, GamepadKeyCode::BUTTON_1 + 1);

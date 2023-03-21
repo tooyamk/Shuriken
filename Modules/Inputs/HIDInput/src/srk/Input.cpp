@@ -80,30 +80,29 @@ namespace srk::modules::inputs::hid_input {
 	IntrusivePtr<IInputDevice> Input::createDevice(const DeviceGUID& guid) {
 		using namespace srk::extensions;
 
-		std::shared_lock lock(_mutex);
+		InternalDeviceInfo info;
+		auto found = false;
 
-		InternalDeviceInfo* di;
-		HIDDevice* hid = nullptr;
-		for (auto& info : _devices) {
-			if (info.guid == guid) {
-				di = &info;
+		{
+			std::shared_lock lock(_mutex);
 
-				switch (info.type) {
-				case DeviceType::GAMEPAD:
-					hid = HID::open(info.path);
-					break;
-				default:
+			for (auto& i : _devices) {
+				if (i.guid == guid) {
+					info = i;
+					found = true;
+
 					break;
 				}
-
-				break;
 			}
 		}
 
+		if (!found) return nullptr;
+
+		auto hid = HID::open(info.path);
 		if (!hid) return nullptr;
 
 		IGenericGamepadDriver* driver = nullptr;
-		switch (di->vendorID << 16 | di->productID) {
+		switch (info.vendorID << 16 | info.productID) {
 		case 0x54C << 16 | 0x5C4:
 		case 0x54C << 16 | 0x9CC:
 			driver = new GamepadDriverDS4(*this, *hid);
@@ -112,8 +111,8 @@ namespace srk::modules::inputs::hid_input {
 			break;
 		}
 
-		if (!driver) driver = GamepadDriver::create(*this, *hid, di->index);
-		if (driver) return new GenericGamepad(*di, *driver);
+		if (!driver) driver = GamepadDriver::create(*this, *hid, info.index);
+		if (driver) return new GenericGamepad(info, *driver);
 
 		HID::close(*hid);
 		return nullptr;

@@ -91,21 +91,31 @@ namespace srk::modules::inputs::raw_input {
 	}
 
 	IntrusivePtr<IInputDevice> Input::createDevice(const DeviceGUID& guid) {
-		std::shared_lock lock(_mutex);
+		InternalDeviceInfo info;
+		auto found = false;
 
-		for (auto& info : _devices) {
-			if (info.guid == guid && (info.type == DeviceType::KEYBOARD || info.type == DeviceType::MOUSE)) {
-				registerRawInputDevices(info.type);
+		{
+			std::shared_lock lock(_mutex);
 
-				if (info.type == DeviceType::KEYBOARD) {
-					return new Keyboard(*this, *_win, info);
-				} else {
-					return new Mouse(*this, *_win, info);
+			for (auto& i : _devices) {
+				if (i.guid == guid) {
+					info = i;
+					found = true;
+
+					break;
 				}
 			}
 		}
 
-		return nullptr;
+		if (!found) return nullptr;
+
+		registerRawInputDevices(info.type);
+
+		if (info.type == DeviceType::KEYBOARD) {
+			return new Keyboard(*this, *_win, info);
+		} else {
+			return new Mouse(*this, *_win, info);
+		}
 	}
 
 	HWND Input::getHWND() const {

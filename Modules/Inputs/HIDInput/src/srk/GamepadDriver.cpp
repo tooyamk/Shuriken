@@ -26,8 +26,9 @@ namespace srk::modules::inputs::hid_input {
 
 		auto curIndex = -1;
 		auto usagePage = (uint16_t)HIDReportUsagePageType::UNDEFINED;
-		size_t reportSize = 0, reportID = 0, reportCount = 0, logicalMinimum = 0, logicalMaximum = 0;
-		size_t usageMinimum = 0, usageMaximum = 0;
+		uint32_t reportSize = 0, reportID = 0, reportCount = 0;
+		int32_t logicalMinimum = 0, logicalMaximum = 0, logicalMaximumSize = 0;
+		uint32_t usageMinimum = 0, usageMaximum = 0;
 		std::vector<uint16_t> usages;
 
 		uint32_t collection = 0;
@@ -73,9 +74,8 @@ namespace srk::modules::inputs::hid_input {
 
 											cap.offset = inputBits + i * reportSize;
 											cap.size = reportSize;
-											cap.min = logicalMinimum;
-											cap.max = logicalMaximum;
 											cap.usage = usage;
+											cap.setMinMax(logicalMinimum, logicalMaximum, logicalMaximumSize);
 
 											break;
 										}
@@ -85,9 +85,8 @@ namespace srk::modules::inputs::hid_input {
 
 											cap.offset = inputBits + i * reportSize;
 											cap.size = reportSize;
-											cap.min = logicalMinimum;
-											cap.max = logicalMaximum;
 											cap.usage = usage;
+											cap.setMinMax(logicalMinimum, logicalMaximum, logicalMaximumSize);
 
 											break;
 										}
@@ -105,9 +104,8 @@ namespace srk::modules::inputs::hid_input {
 
 										cap.offset = inputBits + i * reportSize;
 										cap.size = reportSize;
-										cap.min = logicalMinimum;
-										cap.max = logicalMaximum;
 										cap.usage = usageMinimum + i;
+										cap.setMinMax(logicalMinimum, logicalMaximum, logicalMaximumSize);
 									}
 
 									break;
@@ -147,11 +145,14 @@ namespace srk::modules::inputs::hid_input {
 						usagePage = ba.read<ba_vt::UIX>(item.size);
 						break;
 					case HIDReportGlobalItemTag::LOGICAL_MINIMUM:
-						logicalMinimum = ba.read<ba_vt::UIX>(item.size);
+						logicalMinimum = ba.read<ba_vt::IX>(item.size);
 						break;
 					case HIDReportGlobalItemTag::LOGICAL_MAXIMUM:
-						logicalMaximum = ba.read<ba_vt::UIX>(item.size);
+					{
+						logicalMaximumSize = item.size;
+						logicalMaximum = ba.read<ba_vt::IX>(item.size);
 						break;
+					}
 					case HIDReportGlobalItemTag::REPORT_SIZE:
 						reportSize = ba.read<ba_vt::UIX>(item.size);
 						break;
@@ -315,12 +316,12 @@ namespace srk::modules::inputs::hid_input {
 		dst.undefinedCompletion<GamepadKeyCode::BUTTON_1, GamepadKeyCode::BUTTON_END, GamepadVirtualKeyCode::UNDEFINED_BUTTON_1>(_desc.inputButtons.size());
 	}
 
-	uint32_t GamepadDriver::_read(const InputCap& cap, const uint8_t* data) {
+	int32_t GamepadDriver::_read(const InputCap& cap, const uint8_t* data) {
 		int32_t needReadBits = cap.size;
 		int32_t inputBytePos = cap.offset >> 3;
 		int32_t inputByteReadedBits = cap.offset - (inputBytePos << 3);
 
-		uint32_t val = 0;
+		int32_t val = 0;
 		int32_t valReadedBits = 0;
 
 		do {

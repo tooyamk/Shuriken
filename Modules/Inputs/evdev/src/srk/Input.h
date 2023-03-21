@@ -3,6 +3,8 @@
 #include "Base.h"
 #include "srk/events/EventDispatcher.h"
 
+#define SRK_MODULE_INPUT_EVDEV_PATH_BUFFER {"/dev/input/eventxxx" }
+
 namespace srk::modules::inputs::evdev {
 	class SRK_MODULE_DLL Input : public IInputModule {
 	public:
@@ -20,6 +22,9 @@ namespace srk::modules::inputs::evdev {
 		virtual IntrusivePtr<IInputDevice> SRK_CALL createDevice(const DeviceGUID& guid) override;
 
 	private:
+		static constexpr size_t EVENT_STR_LEN = 5;
+		static constexpr size_t EVENT_NUMBER_BUFFER_LEN = 3;
+
 		IntrusivePtr<Ref> _loader;
 		IntrusivePtr<windows::IWindow> _win;
 		DeviceType _filters;

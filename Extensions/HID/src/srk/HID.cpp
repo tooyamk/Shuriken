@@ -44,16 +44,36 @@ namespace srk::extensions {
 	}
 
 	void HIDReportDescriptorItem::write(ByteArray& dst, HIDReportItemType type, uint8_t tag, uint32_t data) {
-		uint8_t size;
-		if (data <= 255) {
-			size = 1;
-		} else if (data <= 65535) {
-			size = 2;
+		uint8_t tagAndType = ((tag & 0b1111) << 4) | (((uint8_t)type & 0b11) << 2);
+		if (data <= std::numeric_limits<uint8_t>::max()) {
+			dst.write<uint8_t>(tagAndType | 0b1);
+			dst.write<uint8_t>(data);
+		} else if (data <= std::numeric_limits<uint16_t>::max()) {
+			dst.write<uint8_t>(tagAndType | 0b10);
+			dst.write<uint16_t>(data);
 		} else {
-			size = 3;
+			dst.write<uint8_t>(tagAndType | 0b11);
+			dst.write<uint32_t>(data);
 		}
-		dst.write<uint8_t>(((tag & 0b1111) << 4) | (((uint8_t)type & 0b11) << 2) | (size & 0b11));
-		dst.write<std::byte>(&data, size);
+	}
+
+	void HIDReportDescriptorItem::write(ByteArray& dst, HIDReportItemType type, uint8_t tag, int32_t data) {
+		if (data < 0) {
+			uint8_t tagAndType = ((tag & 0b1111) << 4) | (((uint8_t)type & 0b11) << 2);
+
+			if (data >= std::numeric_limits<int8_t>::min()) {
+				dst.write<uint8_t>(tagAndType | 0b1);
+				dst.write<int8_t>(data);
+			} else if (data >= std::numeric_limits<int16_t>::min()) {
+				dst.write<uint8_t>(tagAndType | 0b10);
+				dst.write<int16_t>(data);
+			} else {
+				dst.write<uint8_t>(tagAndType | 0b11);
+				dst.write<int32_t>(data);
+			}
+		} else {
+			write(dst, type, tag, (uint32_t)data);
+		}
 	}
 
 	void HIDReportDescriptorItem::write(ByteArray& dst, HIDReportItemType type, uint8_t tag) {

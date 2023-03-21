@@ -65,34 +65,44 @@ namespace srk::modules::inputs::direct_input {
 	}
 
 	IntrusivePtr<IInputDevice> Input::createDevice(const DeviceGUID& guid) {
-		std::shared_lock lock(_mutex);
+		DeviceInfo info;
+		auto found = false;
 
-		for (auto& info : _devices) {
-			if (info.guid == guid) {
-				srk_IDirectInputDevice* dev = nullptr;
-				if (FAILED(_di->CreateDevice(*(const ::GUID*)guid.getData(), &dev, nullptr))) return nullptr;
+		{
+			std::shared_lock lock(_mutex);
 
-				switch (info.type) {
-				case DeviceType::GAMEPAD:
-				{
-					auto driver = GamepadDriver::create(*this, dev);
-					if (driver) return new GenericGamepad(info, *driver);
+			for (auto& i : _devices) {
+				if (i.guid == guid) {
+					info = i;
+					found = true;
 
-					dev->Release();
-					return nullptr;
-				}
-				case DeviceType::KEYBOARD:
-					return new Keyboard(*this, dev, info);
-				case DeviceType::MOUSE:
-					return new Mouse(*this, dev, info);
-				default:
-					dev->Release();
-					return nullptr;
+					break;
 				}
 			}
 		}
 
-		return nullptr;
+		if (!found) return nullptr;
+
+		srk_IDirectInputDevice* dev = nullptr;
+		if (FAILED(_di->CreateDevice(*(const ::GUID*)guid.getData(), &dev, nullptr))) return nullptr;
+
+		switch (info.type) {
+		case DeviceType::GAMEPAD:
+		{
+			auto driver = GamepadDriver::create(*this, dev);
+			if (driver) return new GenericGamepad(info, *driver);
+
+			dev->Release();
+			return nullptr;
+		}
+		case DeviceType::KEYBOARD:
+			return new Keyboard(*this, dev, info);
+		case DeviceType::MOUSE:
+			return new Mouse(*this, dev, info);
+		default:
+			dev->Release();
+			return nullptr;
+		}
 	}
 
 	HWND Input::getHWND() const {

@@ -283,8 +283,8 @@ namespace srk::extensions {
 
 		uint16_t usagePage = header.usagePage;
 		uint16_t reportSize = 0, reportID = 0, reportCount = 0;
-		uint32_t logicalMinimum = 0, logicalMaximum = 0;
-		uint32_t physicalMinimum = 0, physicalMaximum = 0;
+		int32_t logicalMinimum = 0, logicalMaximum = 0;
+		int32_t physicalMinimum = 0, physicalMaximum = 0;
 		uint32_t unit = 0, unitExponent = 0;
 
 		HIDReportDescriptorItem::write(ba, HIDReportItemType::GLOBAL, (uint8_t)HIDReportGlobalItemTag::USAGE_PAGE, usagePage);

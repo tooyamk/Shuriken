@@ -64,7 +64,7 @@ namespace srk::modules::inputs::direct_input {
 			return true;
 		}
 
-		return true;
+		return false;
 	}
 
 	float32_t GamepadDriver::readDataFromInputState(const void* inputState, GamepadKeyCodeAndFlags cf, float32_t defaultVal) const {
@@ -126,20 +126,4 @@ namespace srk::modules::inputs::direct_input {
 		dst.undefinedCompletion<GamepadKeyCode::HAT_1, GamepadKeyCode::HAT_END, GamepadVirtualKeyCode::UNDEFINED_HAT_1>(_cpas.dwPOVs);
 		dst.undefinedCompletion<GamepadKeyCode::BUTTON_1, GamepadKeyCode::BUTTON_END, GamepadVirtualKeyCode::UNDEFINED_BUTTON_1>(_cpas.dwButtons);
 	}
-
-	/*
-	bool Gamepad::_checkInvalidData(const DIJOYSTATE& state) {
-		auto axis = &state.lX;
-		for (uint32_t i = 0; i < 6; ++i) {
-			if (axis[i] != 32767) return false;
-		}
-
-		constexpr auto numButtons = sizeof(state.rgbButtons) / sizeof(state.rgbButtons[0]);
-		for (std::remove_cvref_t<decltype(numButtons)> i = 0; i < numButtons; ++i) {
-			if (state.rgbButtons[i] != 0) return false;
-		}
-
-		return true;
-	}
-	*/
 }

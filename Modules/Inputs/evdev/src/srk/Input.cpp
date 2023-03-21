@@ -1,5 +1,6 @@
 #include "Input.h"
 #include "CreateModule.h"
+#include "GamepadDriver.h"
 #include "srk/hash/xxHash.h"
 #include <fcntl.h>
 #include <linux/input.h>
@@ -27,6 +28,7 @@ namespace srk::modules::inputs::evdev {
 
 		if (auto devs = fopen("/proc/bus/input/devices", "r"); devs) {
 			char devsBuf[512];
+			char path[] = SRK_MODULE_INPUT_EVDEV_PATH_BUFFER;
 			
 			while (fgets(devsBuf, sizeof(devsBuf), devs)) {
 				std::string_view line(devsBuf);
@@ -52,14 +54,14 @@ namespace srk::modules::inputs::evdev {
 
 				int32_t fd = -1;
 				uint8_t state = 0;
-				static char path[] = {"/dev/input/eventxxx" };
 				do {
-					constexpr auto dstBegin = sizeof(path) - 4;
-					auto n = evt.size() - 5;
-					memcpy(path + dstBegin, evt.data() + 5, n);
+					constexpr auto dstBegin = sizeof(path) - EVENT_NUMBER_BUFFER_LEN - 1;
+					auto n = evt.size() - EVENT_STR_LEN;
+					if (n > EVENT_NUMBER_BUFFER_LEN) break;
+					memcpy(path + dstBegin, evt.data() + EVENT_STR_LEN, n);
 					path[dstBegin + n] = 0;
 
-					fd = ::open(path, O_RDONLY|O_NONBLOCK);
+					fd = ::open(path, O_RDONLY | O_NONBLOCK);
 					if (fd < 0) break;
 
 					input_id ids;
@@ -70,20 +72,18 @@ namespace srk::modules::inputs::evdev {
 					info.vendorID = ids.vendor;
 					info.productID = ids.product;
 					info.type = type & _filters;
+					memcpy(info.eventNumber, evt.data() + EVENT_STR_LEN, n);
+					info.eventNumber[n] = 0;
 
 					hash::xxHash<64> hasher;
 					hasher.begin(0);
-					hasher.update(evt.data() + 5, n);
+					hasher.update(evt.data() + EVENT_STR_LEN, n);
 					hasher.update(&ids, sizeof(ids));
 
 					char buf[256];
 
-					if (auto rc = ioctl(fd, EVIOCGNAME(sizeof(buf) - 1), buf); rc >= 0) {
-						info.name = buf;
-						hasher.update(info.name.data(), info.name.size());
-					}
-					
-					if (auto rc = ioctl(fd, EVIOCGUNIQ(sizeof(buf) - 1), buf); rc < 0) hasher.update(buf, strlen(buf));
+					if (ioctl(fd, EVIOCGNAME(sizeof(buf) - 1), buf) >= 0) info.name = buf;
+					if (ioctl(fd, EVIOCGUNIQ(sizeof(buf) - 1), buf) >= 0) hasher.update(buf, strlen(buf));
 
 					auto hash = hasher.digest();
 					info.guid.set<false, true>(&hash, sizeof(hash), 0);
@@ -119,6 +119,47 @@ namespace srk::modules::inputs::evdev {
 	}
 
 	IntrusivePtr<IInputDevice> Input::createDevice(const DeviceGUID& guid) {
+		InternalDeviceInfo info;
+		auto found = false;
+
+		{
+			std::shared_lock lock(_mutex);
+
+			for (auto& i : _devices) {
+				if (i.guid == guid) {
+					info = i;
+					found = true;
+
+					break;
+				}
+			}
+		}
+
+		if (!found) return nullptr;
+
+		char path[] = SRK_MODULE_INPUT_EVDEV_PATH_BUFFER;
+		for (size_t i = 0; ; ++i) {
+			path[sizeof(path) - EVENT_NUMBER_BUFFER_LEN - 1 + i] = info.eventNumber[i];
+			if (info.eventNumber[i] == 0) break;
+		}
+
+		auto fd = ::open(path, O_RDONLY | O_NONBLOCK);
+		if (fd < 0) return nullptr;
+		
+		do {
+			//if (ioctl(fd, EVIOCGRAB, 1) < 0) break;
+
+			switch (info.type) {
+			case DeviceType::GAMEPAD:
+				if (auto driver = GamepadDriver::create(*this, fd); driver) return new GenericGamepad(info, *driver);
+				break;
+			default:
+				break;
+			}
+		} while (false);
+
+		ioctl(fd, EVIOCGRAB, 0);
+		::close(fd);
 		return nullptr;
 	}
 }

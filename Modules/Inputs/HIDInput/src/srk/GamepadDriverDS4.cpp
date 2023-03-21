@@ -216,7 +216,7 @@ namespace srk::modules::inputs::hid_input {
 		});
 
 		if (count) {
-			DeviceState ds = { (DeviceState::CodeType)0, count, touches };
+			DeviceState ds = { (DeviceState::CodeType)0, (DeviceState::CountType)count, touches };
 			dispatchCallback(DeviceEvent::TOUCH, &ds, custom);
 		}
 	}

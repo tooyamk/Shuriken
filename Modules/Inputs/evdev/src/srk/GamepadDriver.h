@@ -1,13 +1,15 @@
 #pragma once
 
-#include "GamepadDriverBase.h"
+#include "DeviceBase.h"
+#include "srk/modules/inputs/GenericGamepad.h"
+#include <linux/input-event-codes.h>
 
-namespace srk::modules::inputs::hid_input {
-	class SRK_MODULE_DLL GamepadDriver : public GamepadDriverBase {
+namespace srk::modules::inputs::evdev {
+	class SRK_MODULE_DLL GamepadDriver : public IGenericGamepadDriver {
 	public:
 		virtual ~GamepadDriver();
 
-		static GamepadDriver* SRK_CALL create(Input& input, extensions::HIDDevice& hid, int32_t index);
+		static GamepadDriver* SRK_CALL create(Input& input, int32_t fd);
 
 		virtual size_t SRK_CALL getInputLength() const override;
 		virtual size_t SRK_CALL getOutputLength() const override;
@@ -29,63 +31,37 @@ namespace srk::modules::inputs::hid_input {
 		virtual void SRK_CALL setKeyMapper(GamepadKeyMapper& dst, const GamepadKeyMapper* src) const override;
 
 	private:
-		static constexpr size_t HEADER_LENGTH = 1;
-
-
-		struct InputCap {
-			uint8_t size;
-			uint16_t offset;
-			uint16_t usage;
-			int32_t min;
-			int32_t max;
-
-			void SRK_CALL setMinMax(int32_t min, int32_t max, uint32_t maxSize) {
-				if (max < min) {
-					switch (maxSize) {
-					case 1:
-						max = (uint8_t)(int8_t)max;
-						break;
-					case 2:
-						max = (uint16_t)(int16_t)max;
-						break;
-					default:
-						break;
-					}
-				}
-
-				this->min = min;
-				this->max = max;
+		struct DeviceCap {
+			DeviceCap() {}
+			DeviceCap(DeviceCap&& other) : 
+				fd(other.fd),
+				axes(std::move(other.axes)),
+				buttons(std::move(other.buttons)) {
 			}
+
+			int32_t fd;
+			std::unordered_map<uint32_t, uint32_t> axes;
+			std::unordered_map<uint32_t, uint32_t> buttons;
 		};
 
 
-		struct DeviceDesc {
-			uint8_t inputReportID;
-			uint32_t inputReportLength;
-			std::vector<InputCap> inputAxes;
-			std::vector<InputCap> inputDPads;
-			std::vector<InputCap> inputButtons;
+		GamepadDriver(Input& input, DeviceCap&& cap);
 
-			DeviceDesc() {}
-			DeviceDesc(const DeviceDesc&) = delete;
-			DeviceDesc(DeviceDesc&& other) noexcept :
-				inputReportID(other.inputReportID),
-				inputReportLength(other.inputReportLength),
-				inputAxes(std::move(other.inputAxes)),
-				inputDPads(std::move(other.inputDPads)),
-				inputButtons(std::move(other.inputButtons)) {
-			}
+		static constexpr auto MIN_AXIS_KEY_CODE = ABS_X;
+		static constexpr auto MAX_AXIS_KEY_CODE = ABS_RZ;
+		static constexpr auto MIN_BUTTON_KEY_CODE = BTN_GAMEPAD;
+		static constexpr auto MAX_BUTTON_KEY_CODE = BTN_THUMBR;
+
+		struct InputState {
+			float32_t axis[MAX_AXIS_KEY_CODE - MIN_AXIS_KEY_CODE + 1];
+			bool buttons[MAX_BUTTON_KEY_CODE - MIN_BUTTON_KEY_CODE + 1];
 		};
 
+		static constexpr size_t HEADER_LENGTH = alignof(InputState);
 
-		GamepadDriver(Input& input, extensions::HIDDevice& hid, DeviceDesc&& desc);
-		
-		DeviceDesc _desc;
+		IntrusivePtr<Input> _input;
+		DeviceCap _cap;
 
-		GamepadKeyCode _maxAxisKeyCode;
-		GamepadKeyCode _maxHatKeyCode;
-		GamepadKeyCode _maxButtonKeyCode;
-
-		static int32_t SRK_CALL _read(const InputCap& cap, const uint8_t* data);
+		static void SRK_CALL _recordInput(std::unordered_map<uint32_t, uint32_t>& map, uint8_t* bits, size_t len);
 	};
 }

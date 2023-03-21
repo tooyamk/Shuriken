@@ -712,9 +712,9 @@ namespace srk {
 			}
 		}
 
-		template<size_t Bytes>
+		template<size_t Bytes, bool AlignedAccess>
 		inline int_t<Bytes * 8> SRK_CALL _readIX() {
-			int_t<Bytes * 8> v = _readUIX<Bytes>();
+			int_t<Bytes * 8> v = _readUIX<Bytes, AlignedAccess>();
 			return v > BitInt<Bytes * 8>::MAX ? v - BitUInt<Bytes * 8>::MAX - 1 : v;
 		}
 

@@ -82,24 +82,34 @@ namespace srk::modules::inputs::xinput {
 	}
 
 	IntrusivePtr<IInputDevice> Input::createDevice(const DeviceGUID& guid) {
-		std::shared_lock lock(_mutex);
+		DeviceInfo info;
+		auto found = false;
 
-		for (auto& info : _devices) {
-			if (info.guid == guid) {
-				auto& data = (const InternalGUID&)*info.guid.getData();
+		{
+			std::shared_lock lock(_mutex);
 
-				XINPUT_CAPABILITIES_EX capsEx;
-				uint16_t vendorID = 0, productID = 0;
-				if (_XInputGetCapabilitiesEx && _XInputGetCapabilitiesEx(1, data.index - 1, 0, &capsEx) == ERROR_SUCCESS) {
-					vendorID = capsEx.vendorId;
-					productID = capsEx.productId;
+			for (auto& i : _devices) {
+				if (i.guid == guid) {
+					info = i;
+					found = true;
+
+					break;
 				}
-				if (info.vendorID != vendorID || info.productID != productID) return nullptr;
-
-				return new GenericGamepad(info, *new GamepadDriver(*this, data.index - 1));
 			}
 		}
 
-		return nullptr;
+		if (!found) return nullptr;
+
+		auto& data = (const InternalGUID&)*info.guid.getData();
+
+		XINPUT_CAPABILITIES_EX capsEx;
+		uint16_t vendorID = 0, productID = 0;
+		if (_XInputGetCapabilitiesEx && _XInputGetCapabilitiesEx(1, data.index - 1, 0, &capsEx) == ERROR_SUCCESS) {
+			vendorID = capsEx.vendorId;
+			productID = capsEx.productId;
+		}
+		if (info.vendorID != vendorID || info.productID != productID) return nullptr;
+
+		return new GenericGamepad(info, *new GamepadDriver(*this, data.index - 1));
 	}
 }

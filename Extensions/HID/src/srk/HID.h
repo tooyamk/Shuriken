@@ -309,6 +309,7 @@ namespace srk::extensions {
 		static size_t SRK_CALL read(const void* data, size_t length, HIDReportDescriptorItem& item);
 		static bool SRK_CALL write(ByteArray& dst, const HIDReportDescriptorItem& item, const void* data);
 		static void SRK_CALL write(ByteArray& dst, HIDReportItemType type, uint8_t tag, uint32_t data);
+		static void SRK_CALL write(ByteArray& dst, HIDReportItemType type, uint8_t tag, int32_t data);
 		static void SRK_CALL write(ByteArray& dst, HIDReportItemType type, uint8_t tag);
 	};
 

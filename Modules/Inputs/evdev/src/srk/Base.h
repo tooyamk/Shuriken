@@ -6,5 +6,6 @@
 
 namespace srk::modules::inputs::evdev {
 	struct InternalDeviceInfo : public DeviceInfo {
+		char eventNumber[4];
 	};
 }
