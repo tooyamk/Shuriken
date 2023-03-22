@@ -27,12 +27,12 @@ namespace srk::modules::inputs {
 		name(value.name) {
 	}
 
-	DeviceInfo::DeviceInfo(DeviceInfo&& value) :
+	DeviceInfo::DeviceInfo(DeviceInfo&& value) noexcept :
 		vendorID(value.vendorID),
 		productID(value.productID),
 		guid(std::move(value.guid)),
 		type(value.type),
 		flags(value.flags),
-		name (value.name) {
+		name (std::move(value.name)) {
 	}
 }

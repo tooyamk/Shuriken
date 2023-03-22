@@ -205,13 +205,13 @@ namespace srk::modules::inputs::hid_input {
 
 		if (curIndex < index) return nullptr;
 
-		std::sort(desc.inputAxes.begin(), desc.inputAxes.end(), [](const InputCap& lhs, const InputCap& rhs) {
+		std::sort(desc.inputAxes.begin(), desc.inputAxes.end(), [](const InputDesc& lhs, const InputDesc& rhs) {
 			return lhs.usage < rhs.usage;
 		});
-		std::sort(desc.inputDPads.begin(), desc.inputDPads.end(), [](const InputCap& lhs, const InputCap& rhs) {
+		std::sort(desc.inputDPads.begin(), desc.inputDPads.end(), [](const InputDesc& lhs, const InputDesc& rhs) {
 			return lhs.usage < rhs.usage;
 		});
-		std::sort(desc.inputButtons.begin(), desc.inputButtons.end(), [](const InputCap& lhs, const InputCap& rhs) {
+		std::sort(desc.inputButtons.begin(), desc.inputButtons.end(), [](const InputDesc& lhs, const InputDesc& rhs) {
 			return lhs.usage < rhs.usage;
 		});
 		desc.inputReportLength = (inputBits + 7) >> 3;
@@ -258,25 +258,22 @@ namespace srk::modules::inputs::hid_input {
 		auto data = (const uint8_t*)inputState;
 
 		float32_t val;
-		if (data[0]) {
+		if (isStateReady(inputState)) {
 			data += HEADER_LENGTH;
 
 			if (cf.code >= GamepadKeyCode::AXIS_1 && cf.code <= _maxAxisKeyCode) {
-				const auto& cap = _desc.inputAxes[(size_t)(cf.code - GamepadKeyCode::AXIS_1)];
-				val = (float32_t)std::clamp(_read(cap, data), cap.min, cap.max) / (float32_t)(cap.max - cap.min);
+				const auto& desc = _desc.inputAxes[(size_t)(cf.code - GamepadKeyCode::AXIS_1)];
+				val = (float32_t)(std::clamp(_read(desc, data), desc.min, desc.max) - desc.min) / (float32_t)(desc.max - desc.min);
 			} else if (cf.code >= GamepadKeyCode::HAT_1 && cf.code <= _maxHatKeyCode) {
-				const auto& cap = _desc.inputDPads[(size_t)(cf.code - GamepadKeyCode::HAT_1)];
-				if (auto v = _read(cap, data); v >= cap.min && v <= cap.max) {
-					val = v * Math::PI2<float32_t> / (float32_t)(cap.max - cap.min + 1);
+				const auto& desc = _desc.inputDPads[(size_t)(cf.code - GamepadKeyCode::HAT_1)];
+				if (auto v = _read(desc, data); v >= desc.min && v <= desc.max) {
+					val = (v - desc.min) * Math::PI2<float32_t> / (float32_t)(desc.max - desc.min + 1);
 				} else {
 					val = -1.0f;
 				}
 			} else if (cf.code >= GamepadKeyCode::BUTTON_1 && cf.code <= _maxButtonKeyCode) {
-				const auto& cap =_desc.inputButtons[(size_t)(cf.code - GamepadKeyCode::BUTTON_1)];
-				val = (float32_t)std::clamp(_read(cap, data), cap.min, cap.max) / (float32_t)(cap.max - cap.min);
-				if (val == 1.0f) {
-					val = (float32_t)std::clamp(_read(cap, data), cap.min, cap.max) / (float32_t)(cap.max - cap.min);
-				}
+				const auto& desc =_desc.inputButtons[(size_t)(cf.code - GamepadKeyCode::BUTTON_1)];
+				val = (float32_t)(std::clamp(_read(desc, data), desc.min, desc.max) - desc.min) / (float32_t)(desc.max - desc.min);
 			} else {
 				val = defaultVal;
 			}
@@ -316,10 +313,10 @@ namespace srk::modules::inputs::hid_input {
 		dst.undefinedCompletion<GamepadKeyCode::BUTTON_1, GamepadKeyCode::BUTTON_END, GamepadVirtualKeyCode::UNDEFINED_BUTTON_1>(_desc.inputButtons.size());
 	}
 
-	int32_t GamepadDriver::_read(const InputCap& cap, const uint8_t* data) {
-		int32_t needReadBits = cap.size;
-		int32_t inputBytePos = cap.offset >> 3;
-		int32_t inputByteReadedBits = cap.offset - (inputBytePos << 3);
+	int32_t GamepadDriver::_read(const InputDesc& desc, const uint8_t* data) {
+		int32_t needReadBits = desc.size;
+		int32_t inputBytePos = desc.offset >> 3;
+		int32_t inputByteReadedBits = desc.offset - (inputBytePos << 3);
 
 		int32_t val = 0;
 		int32_t valReadedBits = 0;

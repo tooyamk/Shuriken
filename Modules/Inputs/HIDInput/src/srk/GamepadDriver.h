@@ -32,7 +32,7 @@ namespace srk::modules::inputs::hid_input {
 		static constexpr size_t HEADER_LENGTH = 1;
 
 
-		struct InputCap {
+		struct InputDesc {
 			uint8_t size;
 			uint16_t offset;
 			uint16_t usage;
@@ -62,9 +62,9 @@ namespace srk::modules::inputs::hid_input {
 		struct DeviceDesc {
 			uint8_t inputReportID;
 			uint32_t inputReportLength;
-			std::vector<InputCap> inputAxes;
-			std::vector<InputCap> inputDPads;
-			std::vector<InputCap> inputButtons;
+			std::vector<InputDesc> inputAxes;
+			std::vector<InputDesc> inputDPads;
+			std::vector<InputDesc> inputButtons;
 
 			DeviceDesc() {}
 			DeviceDesc(const DeviceDesc&) = delete;
@@ -86,6 +86,6 @@ namespace srk::modules::inputs::hid_input {
 		GamepadKeyCode _maxHatKeyCode;
 		GamepadKeyCode _maxButtonKeyCode;
 
-		static int32_t SRK_CALL _read(const InputCap& cap, const uint8_t* data);
+		static int32_t SRK_CALL _read(const InputDesc& desc, const uint8_t* data);
 	};
 }

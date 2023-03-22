@@ -4,21 +4,33 @@
 #include <linux/input.h>
 
 namespace srk::modules::inputs::evdev {
-	GamepadDriver::GamepadDriver(Input& input, DeviceCap&& cap) :
+	GamepadDriver::GamepadDriver(Input& input, DeviceDesc&& desc) :
 		_input(input),
-		_cap(std::move(cap)) {
+		_desc(std::move(desc)) {
+		using namespace srk::enum_operators;
+
+		_axisBufferPos = HEADER_LENGTH;
+		_buttonBufferPos = _axisBufferPos + sizeof(int32_t) * _desc.inputAxes.size();
+
+		_maxAxisKeyCode = GamepadKeyCode::AXIS_1 + _desc.inputAxes.size() - 1;
+		_maxHatKeyCode = GamepadKeyCode::HAT_1 + 0 - 1;
+		_maxButtonKeyCode = GamepadKeyCode::BUTTON_1 + _desc.inputButtons.size() - 1;
+
+		_inputLength = HEADER_LENGTH + sizeof(float32_t) * _desc.inputAxes.size() + ((_desc.inputButtons.size() + 7) >> 3);
+		_inputBuffer = new uint8_t[_inputLength];
 	}
 
 	GamepadDriver::~GamepadDriver() {
-		//ioctl(_fd, EVIOCGRAB, 0);
-		::close(_cap.fd);
+		//ioctl(_desc.fd, EVIOCGRAB, 0);
+		::close(_desc.fd);
+		delete[] _inputBuffer;
 	}
 
 	GamepadDriver* GamepadDriver::create(Input& input, int32_t fd) {
 		using namespace std::literals;
 
-		DeviceCap cap;
-		cap.fd = fd;
+		DeviceDesc desc;
+		desc.fd = fd;
 
 		uint8_t bits[(std::max(ABS_CNT, KEY_CNT) + 7) >> 3];
 
@@ -27,38 +39,50 @@ namespace srk::modules::inputs::evdev {
 			printaln(L"EVIOCGBIT EV_ABS error"sv);
 			return nullptr;
 		}
-		_recordInput(cap.axes, bits, len);
+		_recordInput(bits, len, [&desc](auto&& code, auto&& index) {
+			auto& axis = desc.inputAxes.emplace(std::piecewise_construct, std::forward_as_tuple(code), std::forward_as_tuple()).first->second;
+			axis.index = index;
+		});
+
+		for (auto& itr : desc.inputAxes) {
+			if (ioctl(fd, EVIOCGABS(itr.first), bits) < 0) {
+				printaln(L"EVIOCGABS error"sv);
+				return nullptr;
+			}
+
+			auto info = (input_absinfo*)bits;
+			itr.second.min = info->minimum;
+			itr.second.max = info->maximum;
+			itr.second.value = _foramtAxisValue(info->value, itr.second);
+		}
 
 		len = ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(bits)), bits); 
 		if (len < 0) {
 			printaln(L"EVIOCGBIT EV_KEY error"sv);
 			return nullptr;
 		}
-		_recordInput(cap.buttons, bits, len);
+		_recordInput(bits, len, [&desc](auto&& code, auto&& index) {
+			auto& btn = desc.inputButtons.emplace(std::piecewise_construct, std::forward_as_tuple(code), std::forward_as_tuple()).first->second;
+			btn.index = index;
+		});
 
-		return new GamepadDriver(input, std::move(cap));
-	}
-
-	void GamepadDriver::_recordInput(std::unordered_map<uint32_t, uint32_t>& map, uint8_t* bits, size_t len) {
-		uint32_t index = 0; 
-		uint32_t code = 0;
-		for (decltype(len) i = 0; i < len; ++i) {
-			auto val = bits[i];
-
-			uint32_t n = 0;
-			while (val) {
-				if (val & 0b1) map.emplace(code + n, index++);
-
-				val >>= 1;
-				++n;
-			}
-
-			code += 8;
+		len = ioctl(fd, EVIOCGKEY(sizeof(bits)), bits);
+		if (len < 0) {
+			printaln(L"EVIOCGKEY error"sv);
+			return nullptr;
 		}
+
+		for (auto& itr : desc.inputButtons) {
+			auto nBytes = itr.first >> 3;
+			auto nBits = itr.first & 0b111;
+			itr.second.value = (bits[nBytes] & (1 << (nBits))) == 0 ? 0 : 1;
+		}		
+
+		return new GamepadDriver(input, std::move(desc));
 	}
 
 	size_t GamepadDriver::getInputLength() const {
-		return HEADER_LENGTH + sizeof(InputState);
+		return _inputLength;
 	}
 
 	size_t GamepadDriver::getOutputLength() const {
@@ -66,7 +90,13 @@ namespace srk::modules::inputs::evdev {
 	}
 
 	bool GamepadDriver::init(void* inputState, void* outputState) {
-		((uint8_t*)inputState)[0] = 0;
+		((uint8_t*)_inputBuffer)[0] = 1;
+		for (auto& itr : _desc.inputAxes) _getAxisValue(_inputBuffer, itr.second.index) = itr.second.value;
+		for (auto& itr : _desc.inputButtons) _setButtonValue(_inputBuffer, itr.second.index, itr.second.value);
+
+		memcpy(inputState, _inputBuffer, _inputLength);
+
+		//ioctl(_desc.fd, EVIOCGRAB, 1);
 
 		return true;
 	}
@@ -77,12 +107,11 @@ namespace srk::modules::inputs::evdev {
 
 	bool GamepadDriver::readStateFromDevice(void* inputState) const {
 		using namespace std::literals;
-
-		auto& state = *(InputState*)((uint8_t*)inputState + HEADER_LENGTH);
-
+		
 		input_event evts[8];
+		auto changed = false;
 		do {
-			auto len = read(_cap.fd, evts, sizeof(evts));
+			auto len = read(_desc.fd, evts, sizeof(evts));
 			if (len < 0) break;
 
 			if (len && (len % sizeof(input_event)) != 0) break;
@@ -96,8 +125,12 @@ namespace srk::modules::inputs::evdev {
 					break;
 				case EV_KEY:
 				{
-					if (evt.code >= MIN_BUTTON_KEY_CODE && evt.code <= MAX_BUTTON_KEY_CODE) {
-						state.buttons[evt.code - MIN_BUTTON_KEY_CODE] = evt.value != 0;
+					if (auto itr = _desc.inputButtons.find(evt.code); itr != _desc.inputButtons.end()) {
+						changed = true;
+						auto val = evt.value == 0 ? 0 : 1;
+
+						std::scoped_lock lock(_lock);
+						_setButtonValue(_inputBuffer, itr->second.index, val);
 					} else {
 						printaln(L"key  code:"sv, String::toString(evt.code, 16), L"  value:"sv, evt.value);
 					}
@@ -105,7 +138,19 @@ namespace srk::modules::inputs::evdev {
 					break;
 				}
 				case EV_ABS:
+				{
+					if (auto itr = _desc.inputAxes.find(evt.code); itr != _desc.inputAxes.end()) {
+						changed = true;
+						auto val = _foramtAxisValue(evt.value, itr->second);
+
+						std::scoped_lock lock(_lock);
+						_getAxisValue(_inputBuffer, itr->second.index) = val;
+					} else {
+						printaln(L"abs  code:"sv, String::toString(evt.code, 16), L"  value:"sv, evt.value);
+					}
+
 					break;
+				}
 				default:
 					printaln(L"type:"sv, evt.type, L"  code:"sv, evt.code, L"  value:"sv, evt.value);
 					break;
@@ -113,11 +158,44 @@ namespace srk::modules::inputs::evdev {
 			}
 		} while (true);
 
-		return false;
+		if (!changed) return false;
+
+		{
+			std::scoped_lock lock(_lock);
+			memcpy(inputState, _inputBuffer, _inputLength);
+		}
+
+		return true;
 	}
 
 	float32_t GamepadDriver::readDataFromInputState(const void* inputState, GamepadKeyCodeAndFlags cf, float32_t defaultVal) const {
-		return translate(defaultVal, cf.flags);
+		using namespace srk::enum_operators;
+		using namespace std::literals;
+
+		auto data = (const uint8_t*)inputState;
+
+		float32_t val;
+		if (isStateReady(inputState)) {
+			if (cf.code >= GamepadKeyCode::AXIS_1 && cf.code <= _maxAxisKeyCode) {
+				val = _getAxisValue(inputState, (size_t)(cf.code - GamepadKeyCode::AXIS_1));
+			} else if (cf.code >= GamepadKeyCode::HAT_1 && cf.code <= _maxHatKeyCode) {
+				/*const auto& cap = _desc.inputDPads[(size_t)(cf.code - GamepadKeyCode::HAT_1)];
+				if (auto v = _read(cap, data); v >= cap.min && v <= cap.max) {
+					val = v * Math::PI2<float32_t> / (float32_t)(cap.max - cap.min + 1);
+				} else {
+					val = -1.0f;
+				}*/
+				val = defaultVal;
+			} else if (cf.code >= GamepadKeyCode::BUTTON_1 && cf.code <= _maxButtonKeyCode) {
+				val = _getButtonValue(inputState, (size_t)(cf.code - GamepadKeyCode::BUTTON_1)) ? 1.0f : 0.0f;
+			} else {
+				val = defaultVal;
+			}
+		} else {
+			val = defaultVal;
+		}
+
+		return translate(val, cf.flags);
 	}
 
 	DeviceState::CountType GamepadDriver::customGetState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count,
@@ -140,14 +218,31 @@ namespace srk::modules::inputs::evdev {
 	void GamepadDriver::setKeyMapper(GamepadKeyMapper& dst, const GamepadKeyMapper* src) const {
 		using namespace srk::enum_operators;
 
+		auto trySetBtn = [](GamepadKeyMapper& dst, const DeviceDesc& desc, GamepadVirtualKeyCode vk, uint32_t evk) {
+			if (auto itr = desc.inputButtons.find(evk); itr != desc.inputButtons.end()) dst.set(vk, GamepadKeyCode::BUTTON_1 + itr->second.index);
+		};
+
 		if (src) {
 			dst = *src;
 		} else {
-			//dst.setDefault(_cpas.dwAxes, _cpas.dwPOVs, _cpas.dwButtons, false);
+			dst.clear();
+
+			trySetBtn(dst, _desc, GamepadVirtualKeyCode::A, BTN_A);
+			trySetBtn(dst, _desc, GamepadVirtualKeyCode::B, BTN_B);
+			trySetBtn(dst, _desc, GamepadVirtualKeyCode::X, BTN_X);
+			trySetBtn(dst, _desc, GamepadVirtualKeyCode::Y, BTN_Y);
+			trySetBtn(dst, _desc, GamepadVirtualKeyCode::L_SHOULDER, BTN_TL);
+			trySetBtn(dst, _desc, GamepadVirtualKeyCode::R_SHOULDER, BTN_TR);
+			trySetBtn(dst, _desc, GamepadVirtualKeyCode::L_TRIGGER_BUTTON, BTN_TL2);
+			trySetBtn(dst, _desc, GamepadVirtualKeyCode::R_TRIGGER_BUTTON, BTN_TR2);
+			trySetBtn(dst, _desc, GamepadVirtualKeyCode::SELECT, BTN_SELECT);
+			trySetBtn(dst, _desc, GamepadVirtualKeyCode::START, BTN_START);
+			trySetBtn(dst, _desc, GamepadVirtualKeyCode::L_THUMB, BTN_THUMBL);
+			trySetBtn(dst, _desc, GamepadVirtualKeyCode::R_THUMB, BTN_THUMBR);
 		}
 
-		/*dst.undefinedCompletion<GamepadKeyCode::AXIS_1, GamepadKeyCode::AXIS_END, GamepadVirtualKeyCode::UNDEFINED_AXIS_1>(_cpas.dwAxes);
-		dst.undefinedCompletion<GamepadKeyCode::HAT_1, GamepadKeyCode::HAT_END, GamepadVirtualKeyCode::UNDEFINED_HAT_1>(_cpas.dwPOVs);
-		dst.undefinedCompletion<GamepadKeyCode::BUTTON_1, GamepadKeyCode::BUTTON_END, GamepadVirtualKeyCode::UNDEFINED_BUTTON_1>(_cpas.dwButtons);*/
+		dst.undefinedCompletion<GamepadKeyCode::AXIS_1, GamepadKeyCode::AXIS_END, GamepadVirtualKeyCode::UNDEFINED_AXIS_1>(_desc.inputAxes.size());
+		//dst.undefinedCompletion<GamepadKeyCode::HAT_1, GamepadKeyCode::HAT_END, GamepadVirtualKeyCode::UNDEFINED_HAT_1>(_cpas.dwPOVs);
+		dst.undefinedCompletion<GamepadKeyCode::BUTTON_1, GamepadKeyCode::BUTTON_END, GamepadVirtualKeyCode::UNDEFINED_BUTTON_1>(_desc.inputButtons.size());
 	}
 }

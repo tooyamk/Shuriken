@@ -1,6 +1,7 @@
 #pragma once
 
 #include "DeviceBase.h"
+#include "srk/Lock.h"
 #include "srk/modules/inputs/GenericGamepad.h"
 #include <linux/input-event-codes.h>
 
@@ -31,37 +32,91 @@ namespace srk::modules::inputs::evdev {
 		virtual void SRK_CALL setKeyMapper(GamepadKeyMapper& dst, const GamepadKeyMapper* src) const override;
 
 	private:
-		struct DeviceCap {
-			DeviceCap() {}
-			DeviceCap(DeviceCap&& other) : 
+		struct AxisDesc {
+			uint32_t index;
+			int32_t min;
+			int32_t max;
+			float32_t value;
+		};
+
+
+		struct ButtonDesc {
+			uint16_t index;
+			uint8_t value;
+		};
+
+
+		struct DeviceDesc {
+			DeviceDesc() {}
+			DeviceDesc(DeviceDesc&& other) : 
 				fd(other.fd),
-				axes(std::move(other.axes)),
-				buttons(std::move(other.buttons)) {
+				inputAxes(std::move(other.inputAxes)),
+				inputButtons(std::move(other.inputButtons)) {
 			}
 
 			int32_t fd;
-			std::unordered_map<uint32_t, uint32_t> axes;
-			std::unordered_map<uint32_t, uint32_t> buttons;
+			std::unordered_map<uint32_t, AxisDesc> inputAxes;
+			std::unordered_map<uint32_t, ButtonDesc> inputButtons;
 		};
 
 
-		GamepadDriver(Input& input, DeviceCap&& cap);
+		GamepadDriver(Input& input, DeviceDesc&& desc);
 
-		static constexpr auto MIN_AXIS_KEY_CODE = ABS_X;
-		static constexpr auto MAX_AXIS_KEY_CODE = ABS_RZ;
-		static constexpr auto MIN_BUTTON_KEY_CODE = BTN_GAMEPAD;
-		static constexpr auto MAX_BUTTON_KEY_CODE = BTN_THUMBR;
-
-		struct InputState {
-			float32_t axis[MAX_AXIS_KEY_CODE - MIN_AXIS_KEY_CODE + 1];
-			bool buttons[MAX_BUTTON_KEY_CODE - MIN_BUTTON_KEY_CODE + 1];
-		};
-
-		static constexpr size_t HEADER_LENGTH = alignof(InputState);
+		static constexpr size_t HEADER_LENGTH = 4;
 
 		IntrusivePtr<Input> _input;
-		DeviceCap _cap;
+		DeviceDesc _desc;
 
-		static void SRK_CALL _recordInput(std::unordered_map<uint32_t, uint32_t>& map, uint8_t* bits, size_t len);
+		size_t _inputLength;
+		size_t _axisBufferPos;
+		size_t _buttonBufferPos;
+
+		GamepadKeyCode _maxAxisKeyCode;
+		GamepadKeyCode _maxHatKeyCode;
+		GamepadKeyCode _maxButtonKeyCode;
+
+		mutable AtomicLock<true, false> _lock;
+		mutable uint8_t* _inputBuffer;
+
+		inline static float32_t SRK_CALL _foramtAxisValue(int32_t value, const AxisDesc& desc) {
+			return (float32_t)(std::clamp(value, desc.min, desc.max) - desc.min) / (float32_t)(desc.max - desc.min);
+		}
+
+		inline float32_t& SRK_CALL _getAxisValue(void* state, size_t index) const {
+			return ((float32_t*)((uint8_t*)state + _axisBufferPos))[index];
+		}
+
+		inline float32_t SRK_CALL _getAxisValue(const void* state, size_t index) const {
+			return ((const float32_t*)((const uint8_t*)state + _axisBufferPos))[index];
+		}
+
+		inline void SRK_CALL _setButtonValue(void* state, uint32_t index, uint8_t val) const {
+			auto& dst = ((uint8_t*)state + _buttonBufferPos)[index >> 3];
+			auto shift = index & 0b111;
+			dst = (dst & (~(1 << shift))) | (val << shift);
+		}
+
+		inline bool SRK_CALL _getButtonValue(const void* state, uint32_t index) const {
+			return (((const uint8_t*)state + _buttonBufferPos)[index >> 3] & (1 << (index & 0b111))) != 0;
+		}
+
+		template<typename Fn>
+		static void SRK_CALL _recordInput(uint8_t* bits, size_t len, Fn&& fn) {
+			uint32_t index = 0; 
+			uint32_t code = 0;
+			for (decltype(len) i = 0; i < len; ++i) {
+				auto val = bits[i];
+
+				uint32_t n = 0;
+				while (val) {
+					if (val & 0b1) fn(code + n, index++);
+
+					val >>= 1;
+					++n;
+				}
+
+				code += 8;
+			}
+		}
 	};
 }
