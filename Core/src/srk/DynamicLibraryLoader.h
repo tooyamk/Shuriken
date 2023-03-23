@@ -6,7 +6,18 @@ namespace srk {
 	class SRK_CORE_DLL DynamicLibraryLoader {
 	public:
 		DynamicLibraryLoader();
+		DynamicLibraryLoader(const DynamicLibraryLoader& other) = delete;
+		DynamicLibraryLoader(DynamicLibraryLoader&& other) noexcept;
 		virtual ~DynamicLibraryLoader();
+
+		DynamicLibraryLoader& SRK_CALL operator=(const DynamicLibraryLoader&) = delete;
+
+		inline DynamicLibraryLoader& SRK_CALL operator=(DynamicLibraryLoader&& other) noexcept {
+			release();
+			_lib = other._lib;
+			other._lib = nullptr;
+			return *this;
+		}
 
 		inline bool SRK_CALL isLoaded() const { return _lib; }
 

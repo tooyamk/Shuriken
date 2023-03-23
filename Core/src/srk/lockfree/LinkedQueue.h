@@ -3,18 +3,18 @@
 #include "srk/TaggedPtr.h"
 
 namespace srk::lockfree {
-	enum class QueueMode : uint8_t {
+	enum class LinkedQueueMode : uint8_t {
 		SPSC = 0b00,
 		MPSC = 0b10,
 		SPMC = 0b01,
 		MPMC = 0b11
 	};
 
-	template<typename T, QueueMode Mode>
+	template<typename T, LinkedQueueMode Mode>
 	class LinkedQueue;
 
 	template<typename T>
-	class LinkedQueue<T, QueueMode::SPSC> {
+	class LinkedQueue<T, LinkedQueueMode::SPSC> {
 	private:
 		struct Node {
 			volatile Node* next;
@@ -24,14 +24,9 @@ namespace srk::lockfree {
 				next(nullptr) {
 			}
 
-			explicit Node(const T& item) :
-				next(nullptr),
-				item(item) {
-			}
-
 			explicit Node(T&& item) noexcept :
 				next(nullptr),
-				item(std::move(item)) {
+				item(std::forward<T>(item)) {
 			}
 		};
 
@@ -53,7 +48,7 @@ namespace srk::lockfree {
 
 	public:
 		using ValueType = T;
-		static constexpr QueueMode MODE = QueueMode::SPSC;
+		static constexpr LinkedQueueMode MODE = LinkedQueueMode::SPSC;
 
 		LinkedQueue() :
 			_head(new Node()),
@@ -82,7 +77,11 @@ namespace srk::lockfree {
 			auto poped = _head->next;
 			if (!poped) return false;
 
-			out = std::move(poped->item);
+			if constexpr (std::is_move_assignable_v<T>) {
+				out = std::move(poped->item);
+			} else {
+				out = poped->item;
+			}
 
 			auto oldHead = _head;
 			_head = poped;
@@ -94,7 +93,7 @@ namespace srk::lockfree {
 	};
 
 	template<typename T>
-	class LinkedQueue<T, QueueMode::MPSC> {
+	class LinkedQueue<T, LinkedQueueMode::MPSC> {
 	private:
 		struct Node {
 			volatile std::atomic<Node*> next;
@@ -104,14 +103,9 @@ namespace srk::lockfree {
 				next(nullptr) {
 			}
 
-			explicit Node(const T& item) :
-				next(nullptr),
-				item(item) {
-			}
-
 			explicit Node(T&& item) noexcept :
 				next(nullptr),
-				item(std::move(item)) {
+				item(std::forward<T>(item)) {
 			}
 		};
 
@@ -131,7 +125,7 @@ namespace srk::lockfree {
 
 	public:
 		using ValueType = T;
-		static constexpr QueueMode MODE = QueueMode::MPSC;
+		static constexpr LinkedQueueMode MODE = LinkedQueueMode::MPSC;
 
 		LinkedQueue() :
 			_head(new Node()),
@@ -160,7 +154,11 @@ namespace srk::lockfree {
 			auto poped = _head->next.load(std::memory_order::acquire);
 			if (!poped) return false;
 
-			out = std::move(poped->item);
+			if constexpr (std::is_move_assignable_v<T>) {
+				out = std::move(poped->item);
+			} else {
+				out = poped->item;
+			}
 
 			auto oldHead = _head;
 			_head = poped;
@@ -172,7 +170,8 @@ namespace srk::lockfree {
 	};
 
 	template<typename T>
-	class LinkedQueue<T, QueueMode::SPMC> {
+	requires std::is_copy_assignable_v<T>
+	class LinkedQueue<T, LinkedQueueMode::SPMC> {
 	private:
 		struct Node {
 			volatile std::atomic<Node*> next;
@@ -182,14 +181,9 @@ namespace srk::lockfree {
 				next(nullptr) {
 			}
 
-			explicit Node(const T& item) :
-				next(nullptr),
-				item(item) {
-			}
-
 			explicit Node(T&& item) noexcept :
 				next(nullptr),
-				item(std::move(item)) {
+				item(std::forward<T>(item)) {
 			}
 		};
 
@@ -210,7 +204,7 @@ namespace srk::lockfree {
 
 	public:
 		using ValueType = T;
-		static constexpr QueueMode MODE = QueueMode::SPMC;
+		static constexpr LinkedQueueMode MODE = LinkedQueueMode::SPMC;
 
 		LinkedQueue() {
 			auto n = new Node();
@@ -257,35 +251,20 @@ namespace srk::lockfree {
 	};
 
 	template<typename T>
-	class LinkedQueue<T, QueueMode::MPMC> {
+	requires std::is_copy_assignable_v<T>
+	class LinkedQueue<T, LinkedQueueMode::MPMC> {
 	private:
 		struct Node {
 			volatile std::atomic<Node*> next;
 			T item;
-			std::atomic_size_t count = 2;
 
 			Node() :
 				next(nullptr) {
 			}
 
-			explicit Node(const T& item) :
-				next(nullptr),
-				item(item) {
-			}
-
 			explicit Node(T&& item) noexcept :
 				next(nullptr),
-				item(std::move(item)) {
-			}
-
-			~Node() {
-				int a = 1;
-			}
-
-			void release() {
-				if (count.fetch_sub(1) <= 1) {
-					delete this;
-				}
+				item(std::forward<T>(item)) {
 			}
 		};
 
@@ -305,7 +284,7 @@ namespace srk::lockfree {
 
 	public:
 		using ValueType = T;
-		static constexpr QueueMode MODE = QueueMode::MPMC;
+		static constexpr LinkedQueueMode MODE = LinkedQueueMode::MPMC;
 
 		LinkedQueue() {
 			auto n = new Node();

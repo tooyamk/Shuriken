@@ -1,14 +1,14 @@
 #pragma once
 
-#include "ShaderTranspiler.h"
-#include "srk/Printer.h"
-#include "srk/DynamicLibraryLoader.h"
-
 #include "dxc/Support/Global.h"
 #include "dxc/Support/Unicode.h"
 #include "dxc/Support/WinIncludes.h"
 
 #include "dxc/dxcapi.h"
+
+#include "ShaderTranspiler.h"
+#include "srk/Printer.h"
+#include "srk/DynamicLibraryLoader.h"
 
 #include "spirv_cross/spirv.hpp"
 #include "spirv_cross/spirv_msl.hpp"
@@ -16,8 +16,8 @@
 namespace srk::extensions::shader_transpiler {
 	class Impl {
 	public:
-		Impl(DynamicLibraryLoader* dxcLloader, const CComPtr<IDxcLibrary>& dxcLib, const CComPtr<IDxcCompiler>& dxcInstance) :
-			_dxcLoader(dxcLloader),
+		Impl(DynamicLibraryLoader&& dxcLloader, const CComPtr<IDxcLibrary>& dxcLib, const CComPtr<IDxcCompiler>& dxcInstance) :
+			_dxcLoader(std::move(dxcLloader)),
 			_dxcLib(dxcLib),
 			_dxcInstance(dxcInstance) {
 
@@ -26,8 +26,6 @@ namespace srk::extensions::shader_transpiler {
 		~Impl() {
 			_dxcInstance = nullptr;
 			_dxcLib = nullptr;
-
-			delete _dxcLoader;
 		}
 
 		modules::graphics::ProgramSource SRK_CALL translate(const modules::graphics::ProgramSource& source, const ShaderTranspiler::Options& options, modules::graphics::ProgramLanguage targetLanguage, const std::string_view& targetVersion, const modules::graphics::ProgramDefine* defines, size_t numDefines, const modules::graphics::ProgramIncludeHandler& handler) {
@@ -144,7 +142,7 @@ namespace srk::extensions::shader_transpiler {
 		}
 
 	private:
-		DynamicLibraryLoader* _dxcLoader;
+		DynamicLibraryLoader _dxcLoader;
 
 		CComPtr<IDxcLibrary> _dxcLib;
 		CComPtr<IDxcCompiler> _dxcInstance;

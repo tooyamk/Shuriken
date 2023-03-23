@@ -123,7 +123,7 @@ public:
 
 private:
 	void SRK_CALL _testQueue() {
-		using Class = lockfree::LinkedQueue<uint32_t, lockfree::QueueMode::MPMC>;
+		using Class = lockfree::LinkedQueue<uint32_t, lockfree::LinkedQueueMode::MPMC>;
 		auto queue = std::make_shared<Class>();
 		auto tmpSet = std::make_shared<std::unordered_set<uint32_t>>();
 		auto tmpVecMtx = std::make_shared<std::mutex>();

@@ -10,6 +10,11 @@ namespace srk {
 		_lib(nullptr) {
 	}
 
+	DynamicLibraryLoader::DynamicLibraryLoader(DynamicLibraryLoader&& other) noexcept :
+		_lib(other._lib) {
+		other._lib = nullptr;
+	}
+
 	DynamicLibraryLoader::~DynamicLibraryLoader() {
 		release();
 	}

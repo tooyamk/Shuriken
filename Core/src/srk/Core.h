@@ -22,6 +22,7 @@
 #include "srk/hash/xxHash.h"
 
 #include "srk/lockfree/LinkedQueue.h"
+#include "srk/lockfree/RingQueue.h"
 
 #include "srk/math/Box.h"
 #include "srk/math/Matrix.h"
