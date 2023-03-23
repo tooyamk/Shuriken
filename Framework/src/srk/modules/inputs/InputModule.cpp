@@ -200,6 +200,42 @@ namespace srk::modules::inputs {
 		return value / validLen;
 	}
 
+	DeviceStateValue IInputDevice::translate(DeviceStateValue state, GamepadKeyFlag flags, DeviceStateValue defaultValue) {
+		using namespace srk::enum_operators;
+
+		if (state < Math::ZERO<DeviceStateValue>) return defaultValue;
+
+		std::underlying_type_t<GamepadKeyFlag> i = 0;
+		while (flags != GamepadKeyFlag::NONE) {
+			auto flag = (GamepadKeyFlag)(1 << (i++));
+			if ((flags & flag) != GamepadKeyFlag::NONE) {
+				flags &= ~flag;
+
+				switch (flag) {
+				case GamepadKeyFlag::AXIS_X:
+					state = Math::ONE_HALF<DeviceStateValue> + std::sin(state * Math::PI2<DeviceStateValue>) * Math::ONE_HALF<DeviceStateValue>;
+					break;
+				case GamepadKeyFlag::AXIS_Y:
+					state = Math::ONE_HALF<DeviceStateValue> + std::cos(state * Math::PI2<DeviceStateValue>) * Math::ONE_HALF<DeviceStateValue>;
+					break;
+				case GamepadKeyFlag::HALF_SMALL:
+					state = state < Math::ONE_HALF<DeviceStateValue> ? state * Math::TWO<DeviceStateValue> : Math::ONE<DeviceStateValue>;
+					break;
+				case GamepadKeyFlag::HALF_BIG:
+					state = state > Math::ONE_HALF<DeviceStateValue> ? state * Math::TWO<DeviceStateValue> - Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;
+					break;
+				case GamepadKeyFlag::FLIP:
+					state = Math::ONE<DeviceStateValue> - state;
+					break;
+				default:
+					break;
+				}
+			}
+		}
+
+		return state;
+	}
+
 	DeviceState::CountType IInputDevice::translate(DeviceStateValue x, DeviceStateValue y, const Vec2<DeviceStateValue>& deadZone, DeviceStateValue* out, DeviceState::CountType outCount) {
 		if (!outCount) return 0;
 

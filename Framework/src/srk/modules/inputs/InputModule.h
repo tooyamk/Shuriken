@@ -689,6 +689,8 @@ namespace srk::modules::inputs {
 		--*/
 		static DeviceStateValue SRK_CALL translate(DeviceStateValue value, const Vec2<DeviceStateValue>& deadZone);
 
+		static DeviceStateValue SRK_CALL translate(DeviceStateValue state, GamepadKeyFlag flags, DeviceStateValue defaultValue);
+
 		/*++
 		x and y is normalized,[-1, 1], left down is (-1, -1).
 		--*/

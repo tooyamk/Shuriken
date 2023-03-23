@@ -13,7 +13,6 @@ namespace srk::modules::inputs::evdev {
 		_buttonBufferPos = _axisBufferPos + sizeof(int32_t) * _desc.inputAxes.size();
 
 		_maxAxisKeyCode = GamepadKeyCode::AXIS_1 + _desc.inputAxes.size() - 1;
-		_maxHatKeyCode = GamepadKeyCode::HAT_1 + 0 - 1;
 		_maxButtonKeyCode = GamepadKeyCode::BUTTON_1 + _desc.inputButtons.size() - 1;
 
 		_inputLength = HEADER_LENGTH + sizeof(float32_t) * _desc.inputAxes.size() + ((_desc.inputButtons.size() + 7) >> 3);
@@ -118,7 +117,7 @@ namespace srk::modules::inputs::evdev {
 
 			for (size_t i = 0, n = len / sizeof(input_event); i < n; ++i) {
 				auto& evt = evts[i];
-				if (evt.type == 0 || evt.type == 3) continue;
+				//if (evt.type == EV_SYN || evt.type == EV_ABS) continue;
 				switch (evt.type) {
 				case EV_SYN:
 				case EV_MSC:
@@ -132,7 +131,7 @@ namespace srk::modules::inputs::evdev {
 						std::scoped_lock lock(_lock);
 						_setButtonValue(_inputBuffer, itr->second.index, val);
 					} else {
-						printaln(L"key  code:"sv, String::toString(evt.code, 16), L"  value:"sv, evt.value);
+						//printaln(L"key  code:"sv, String::toString(evt.code, 16), L"  value:"sv, evt.value);
 					}
 
 					break;
@@ -146,13 +145,13 @@ namespace srk::modules::inputs::evdev {
 						std::scoped_lock lock(_lock);
 						_getAxisValue(_inputBuffer, itr->second.index) = val;
 					} else {
-						printaln(L"abs  code:"sv, String::toString(evt.code, 16), L"  value:"sv, evt.value);
+						//printaln(L"abs  code:"sv, String::toString(evt.code, 16), L"  value:"sv, evt.value);
 					}
 
 					break;
 				}
 				default:
-					printaln(L"type:"sv, evt.type, L"  code:"sv, evt.code, L"  value:"sv, evt.value);
+					//printaln(L"type:"sv, evt.type, L"  code:"sv, evt.code, L"  value:"sv, evt.value);
 					break;
 				}
 			}
@@ -168,34 +167,18 @@ namespace srk::modules::inputs::evdev {
 		return true;
 	}
 
-	float32_t GamepadDriver::readDataFromInputState(const void* inputState, GamepadKeyCodeAndFlags cf, float32_t defaultVal) const {
+	float32_t GamepadDriver::readDataFromInputState(const void* inputState, GamepadKeyCode keyCode) const {
 		using namespace srk::enum_operators;
-		using namespace std::literals;
 
-		auto data = (const uint8_t*)inputState;
+		if (!isStateReady(inputState)) return -1.0f;
 
-		float32_t val;
-		if (isStateReady(inputState)) {
-			if (cf.code >= GamepadKeyCode::AXIS_1 && cf.code <= _maxAxisKeyCode) {
-				val = _getAxisValue(inputState, (size_t)(cf.code - GamepadKeyCode::AXIS_1));
-			} else if (cf.code >= GamepadKeyCode::HAT_1 && cf.code <= _maxHatKeyCode) {
-				/*const auto& cap = _desc.inputDPads[(size_t)(cf.code - GamepadKeyCode::HAT_1)];
-				if (auto v = _read(cap, data); v >= cap.min && v <= cap.max) {
-					val = v * Math::PI2<float32_t> / (float32_t)(cap.max - cap.min + 1);
-				} else {
-					val = -1.0f;
-				}*/
-				val = defaultVal;
-			} else if (cf.code >= GamepadKeyCode::BUTTON_1 && cf.code <= _maxButtonKeyCode) {
-				val = _getButtonValue(inputState, (size_t)(cf.code - GamepadKeyCode::BUTTON_1)) ? 1.0f : 0.0f;
-			} else {
-				val = defaultVal;
-			}
+		if (keyCode >= GamepadKeyCode::AXIS_1 && keyCode <= _maxAxisKeyCode) {
+			return _getAxisValue(inputState, (size_t)(keyCode - GamepadKeyCode::AXIS_1));
+		} else if (keyCode >= GamepadKeyCode::BUTTON_1 && keyCode <= _maxButtonKeyCode) {
+			return _getButtonValue(inputState, (size_t)(keyCode - GamepadKeyCode::BUTTON_1)) ? 1.0f : 0.0f;
 		} else {
-			val = defaultVal;
+			return -1.0f;
 		}
-
-		return translate(val, cf.flags);
 	}
 
 	DeviceState::CountType GamepadDriver::customGetState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count,
@@ -218,6 +201,10 @@ namespace srk::modules::inputs::evdev {
 	void GamepadDriver::setKeyMapper(GamepadKeyMapper& dst, const GamepadKeyMapper* src) const {
 		using namespace srk::enum_operators;
 
+		auto trySetAxis = [](GamepadKeyMapper& dst, const DeviceDesc& desc, GamepadVirtualKeyCode vk, uint32_t evk, GamepadKeyFlag flags) {
+			if (auto itr = desc.inputAxes.find(evk); itr != desc.inputAxes.end()) dst.set(vk, GamepadKeyCode::AXIS_1 + itr->second.index, flags);
+		};
+
 		auto trySetBtn = [](GamepadKeyMapper& dst, const DeviceDesc& desc, GamepadVirtualKeyCode vk, uint32_t evk) {
 			if (auto itr = desc.inputButtons.find(evk); itr != desc.inputButtons.end()) dst.set(vk, GamepadKeyCode::BUTTON_1 + itr->second.index);
 		};
@@ -226,6 +213,24 @@ namespace srk::modules::inputs::evdev {
 			dst = *src;
 		} else {
 			dst.clear();
+
+			trySetAxis(dst, _desc, GamepadVirtualKeyCode::L_STICK_X_LEFT, ABS_X, GamepadKeyFlag::HALF_SMALL | GamepadKeyFlag::FLIP);
+			trySetAxis(dst, _desc, GamepadVirtualKeyCode::L_STICK_X_RIGHT, ABS_X, GamepadKeyFlag::HALF_BIG);
+			trySetAxis(dst, _desc, GamepadVirtualKeyCode::L_STICK_Y_DOWN, ABS_Y, GamepadKeyFlag::HALF_BIG);
+			trySetAxis(dst, _desc, GamepadVirtualKeyCode::L_STICK_Y_UP, ABS_Y, GamepadKeyFlag::HALF_SMALL | GamepadKeyFlag::FLIP);
+
+			trySetAxis(dst, _desc, GamepadVirtualKeyCode::R_STICK_X_LEFT, ABS_RX, GamepadKeyFlag::HALF_SMALL | GamepadKeyFlag::FLIP);
+			trySetAxis(dst, _desc, GamepadVirtualKeyCode::R_STICK_X_RIGHT, ABS_RX, GamepadKeyFlag::HALF_BIG);
+			trySetAxis(dst, _desc, GamepadVirtualKeyCode::R_STICK_Y_DOWN, ABS_RY, GamepadKeyFlag::HALF_BIG);
+			trySetAxis(dst, _desc, GamepadVirtualKeyCode::R_STICK_Y_UP, ABS_RY, GamepadKeyFlag::HALF_SMALL | GamepadKeyFlag::FLIP);
+
+			trySetAxis(dst, _desc, GamepadVirtualKeyCode::L_TRIGGER, ABS_Z, GamepadKeyFlag::NONE);
+			trySetAxis(dst, _desc, GamepadVirtualKeyCode::R_TRIGGER, ABS_RZ, GamepadKeyFlag::NONE);
+
+			trySetAxis(dst, _desc, GamepadVirtualKeyCode::DPAD_LEFT, ABS_HAT0X, GamepadKeyFlag::HALF_SMALL | GamepadKeyFlag::FLIP);
+			trySetAxis(dst, _desc, GamepadVirtualKeyCode::DPAD_RIGHT, ABS_HAT0X, GamepadKeyFlag::HALF_BIG);
+			trySetAxis(dst, _desc, GamepadVirtualKeyCode::DPAD_DOWN, ABS_HAT0Y, GamepadKeyFlag::HALF_BIG);
+			trySetAxis(dst, _desc, GamepadVirtualKeyCode::DPAD_UP, ABS_HAT0Y, GamepadKeyFlag::HALF_SMALL | GamepadKeyFlag::FLIP);
 
 			trySetBtn(dst, _desc, GamepadVirtualKeyCode::A, BTN_A);
 			trySetBtn(dst, _desc, GamepadVirtualKeyCode::B, BTN_B);
@@ -242,7 +247,6 @@ namespace srk::modules::inputs::evdev {
 		}
 
 		dst.undefinedCompletion<GamepadKeyCode::AXIS_1, GamepadKeyCode::AXIS_END, GamepadVirtualKeyCode::UNDEFINED_AXIS_1>(_desc.inputAxes.size());
-		//dst.undefinedCompletion<GamepadKeyCode::HAT_1, GamepadKeyCode::HAT_END, GamepadVirtualKeyCode::UNDEFINED_HAT_1>(_cpas.dwPOVs);
 		dst.undefinedCompletion<GamepadKeyCode::BUTTON_1, GamepadKeyCode::BUTTON_END, GamepadVirtualKeyCode::UNDEFINED_BUTTON_1>(_desc.inputButtons.size());
 	}
 }

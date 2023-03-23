@@ -663,7 +663,7 @@ public:
 							case DeviceType::GAMEPAD:
 							{
 								auto state = e.getData<DeviceState>();
-								printaln(L"gamepad up : "sv, info.vendorID, L" pid = "sv, info.productID, L" name = "sv, info.name, L" "sv, getGamepadKeyString((GamepadVirtualKeyCode)state->code), L"  "sv, ((DeviceStateValue*)state->values)[0]);
+								printaln(L"gamepad up : "sv, L" vid = "sv, info.vendorID, L" pid = "sv, info.productID, L" name = "sv, info.name, L" "sv, getGamepadKeyString((GamepadVirtualKeyCode)state->code), L"  "sv, ((DeviceStateValue*)state->values)[0]);
 								if (state->code == GamepadVirtualKeyCode::CROSS) {
 									//DeviceStateValue vals[] = { 0.f, 0.f };
 									//device->setState(DeviceStateType::VIBRATION, 0, vals, 2);

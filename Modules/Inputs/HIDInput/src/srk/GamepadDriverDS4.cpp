@@ -65,50 +65,40 @@ namespace srk::modules::inputs::hid_input {
 		return false;
 	}
 
-	float32_t GamepadDriverDS4::readDataFromInputState(const void* inputState, GamepadKeyCodeAndFlags cf, float32_t defaultVal) const {
+	float32_t GamepadDriverDS4::readDataFromInputState(const void* inputState, GamepadKeyCode keyCode) const {
 		using namespace srk::enum_operators;
 
+		if (!isStateReady(inputState)) return -1.0f;
+
 		auto data = (const uint8_t*)inputState;
+		data += HEADER_LENGTH + data[0];
 
-		float32_t val;
-		if (auto offset = data[0]; offset) {
-			data += HEADER_LENGTH + offset;
-
-			if (cf.code >= GamepadKeyCode::AXIS_1 && cf.code <= MAX_AXIS_KEY_CODE) {
-				switch (cf.code) {
-				case GamepadKeyCode::AXIS_1:
-				case GamepadKeyCode::AXIS_1 + 1:
-				case GamepadKeyCode::AXIS_1 + 2:
-					val = data[(size_t)(cf.code - GamepadKeyCode::AXIS_1)] / 255.0f;
-					break;
-				case GamepadKeyCode::AXIS_1 + 3:
-				case GamepadKeyCode::AXIS_1 + 4:
-					val = data[(size_t)InputOffset::L_TRIGGER + (size_t)(cf.code - GamepadKeyCode::AXIS_1 - 3)] / 255.0f;
-					break;
-				case GamepadKeyCode::AXIS_1 + 5:
-					val = data[(size_t)InputOffset::RY] / 255.0f;
-					break;
-				default:
-					val = defaultVal;
-					break;
-				}
-			} else if (cf.code >= GamepadKeyCode::HAT_1 && cf.code <= MAX_HAT_KEY_CODE) {
-				if (auto i = data[(size_t)InputOffset::D_PAD] & 0xF; i < 8) {
-					val = i * Math::ONE_EIGHTH<float32_t>;
-				} else {
-					val = -1.0f;
-				}
-			} else if (cf.code >= GamepadKeyCode::BUTTON_1 && cf.code <= MAX_BUTTON_KEY_CODE) {
-				auto i = (size_t)(cf.code - GamepadKeyCode::BUTTON_1);
-				val = data[BUTTON_OFFSET[i]] & BUTTON_MASK[i] ? Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;
-			} else {
-				val = defaultVal;
+		if (keyCode >= GamepadKeyCode::AXIS_1 && keyCode <= MAX_AXIS_KEY_CODE) {
+			switch (keyCode) {
+			case GamepadKeyCode::AXIS_1:
+			case GamepadKeyCode::AXIS_1 + 1:
+			case GamepadKeyCode::AXIS_1 + 2:
+				return data[(size_t)(keyCode - GamepadKeyCode::AXIS_1)] / 255.0f;
+			case GamepadKeyCode::AXIS_1 + 3:
+			case GamepadKeyCode::AXIS_1 + 4:
+				return data[(size_t)InputOffset::L_TRIGGER + (size_t)(keyCode - GamepadKeyCode::AXIS_1 - 3)] / 255.0f;
+			case GamepadKeyCode::AXIS_1 + 5:
+				return data[(size_t)InputOffset::RY] / 255.0f;
+			default:
+				return -1.0f;
 			}
+		} else if (keyCode >= GamepadKeyCode::HAT_1 && keyCode <= MAX_HAT_KEY_CODE) {
+			if (auto i = data[(size_t)InputOffset::D_PAD] & 0xF; i < 8) {
+				return i * Math::ONE_EIGHTH<float32_t>;
+			} else {
+				return -1.0f;
+			}
+		} else if (keyCode >= GamepadKeyCode::BUTTON_1 && keyCode <= MAX_BUTTON_KEY_CODE) {
+			auto i = (size_t)(keyCode- GamepadKeyCode::BUTTON_1);
+			return data[BUTTON_OFFSET[i]] & BUTTON_MASK[i] ? Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;
 		} else {
-			val = defaultVal;
+			return -1.0f;
 		}
-
-		return translate(val, cf.flags);
 	}
 
 	DeviceState::CountType GamepadDriverDS4::customGetState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count,

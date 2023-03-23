@@ -2,41 +2,6 @@
 #include "srk/events/EventDispatcher.h"
 
 namespace srk::modules::inputs {
-	float32_t IGenericGamepadDriver::translate(float32_t state, GamepadKeyFlag flags) {
-		using namespace srk::enum_operators;
-
-		std::underlying_type_t<GamepadKeyFlag> i = 0;
-		while (flags != GamepadKeyFlag::NONE) {
-			auto flag = (GamepadKeyFlag)(1 << (i++));
-			if ((flags & flag) != GamepadKeyFlag::NONE) {
-				flags &= ~flag;
-
-				switch (flag) {
-				case GamepadKeyFlag::AXIS_X:
-					state = state < Math::ZERO<float32_t> || state > Math::ONE<float32_t> ? Math::ONE_HALF<float32_t> : Math::ONE_HALF<float32_t> + std::sin(state * Math::PI2<float32_t>) * Math::ONE_HALF<float32_t>;
-					break;
-				case GamepadKeyFlag::AXIS_Y:
-					state = state < Math::ZERO<float32_t> || state > Math::ONE<float32_t> ? Math::ONE_HALF<float32_t> : Math::ONE_HALF<float32_t> +std::cos(state * Math::PI2<float32_t>) * Math::ONE_HALF<float32_t>;
-					break;
-				case GamepadKeyFlag::HALF_SMALL:
-					state = state < Math::ONE_HALF<float32_t> ? state * Math::TWO<float32_t> : Math::ONE<float32_t>;
-					break;
-				case GamepadKeyFlag::HALF_BIG:
-					state = state > Math::ONE_HALF<float32_t> ? state * Math::TWO<float32_t> -Math::ONE<float32_t> : Math::ZERO<float32_t>;
-					break;
-				case GamepadKeyFlag::FLIP:
-					state = Math::ONE<float32_t> - state;
-					break;
-				default:
-					break;
-				}
-			}
-		}
-
-		return state;
-	}
-
-
 	GenericGamepad::GenericGamepad(const DeviceInfo& info, IGenericGamepadDriver& driver, const GamepadKeyMapper* keyMapper) :
 		_eventDispatcher(new events::EventDispatcher<DeviceEvent>()),
 		_info(info),
@@ -110,10 +75,11 @@ namespace srk::modules::inputs {
 						std::shared_lock lock(_inputMutex);
 
 						if (!_driver->isStateReady(_inputState)) return 0;
-						xl = _driver->readDataFromInputState(_inputState, mappingVals[0], Math::ZERO<float32_t>);
-						xr = _driver->readDataFromInputState(_inputState, mappingVals[1], Math::ZERO<float32_t>);
-						yd = _driver->readDataFromInputState(_inputState, mappingVals[2], Math::ZERO<float32_t>);
-						yu = _driver->readDataFromInputState(_inputState, mappingVals[3], Math::ZERO<float32_t>);
+						
+						xl = _readDataFromInputState(_inputState, mappingVals[0], Math::ONE_HALF<DeviceStateValue>);
+						xr = _readDataFromInputState(_inputState, mappingVals[1], Math::ONE_HALF<DeviceStateValue>);
+						yd = _readDataFromInputState(_inputState, mappingVals[2], Math::ONE_HALF<DeviceStateValue>);
+						yu = _readDataFromInputState(_inputState, mappingVals[3], Math::ONE_HALF<DeviceStateValue>);
 					}
 
 					return translate(_normalizeStick(xl, xr), _normalizeStick(yd, yu), _deadZone.get((GamepadVirtualKeyCode)code), (DeviceStateValue*)values, count);
@@ -129,7 +95,7 @@ namespace srk::modules::inputs {
 							std::shared_lock lock(_inputMutex);
 
 							if (!_driver->isStateReady(_inputState)) return 0;
-							val = _driver->readDataFromInputState(_inputState, cf, Math::ZERO<float32_t>);
+							val = _readDataFromInputState(_inputState, cf, Math::NEGATIVE_ONE<DeviceStateValue>);
 						}
 
 						((DeviceStateValue*)values)[0] = translate(val, _deadZone.get(vk));
@@ -273,23 +239,23 @@ namespace srk::modules::inputs {
 		_doInputMove(keyMapper, GamepadVirtualKeyCode::DPAD, GamepadVirtualKeyCode::DPAD_LEFT);
 
 		keyMapper.forEach([&](GamepadVirtualKeyCode vk, GamepadKeyCodeAndFlags cf) {
-			if (vk >= GamepadVirtualKeyCode::SEPARATED_AXIS_START && vk <= GamepadVirtualKeyCode::SEPARATED_AXIS_END) {
+			if (vk >= GamepadVirtualKeyCode::UNDEFINED_AXIS_1 && vk <= GamepadVirtualKeyCode::UNDEFINED_AXIS_END) {
 				auto dz = _deadZone.get(vk);
-				if (auto newVal = translate(_driver->readDataFromInputState(_inputState, cf, Math::ZERO<float32_t>), dz); newVal != translate(_driver->readDataFromInputState(_oldInputState, cf, Math::ZERO<float32_t>), dz)) {
+				if (auto newVal = translate(_readDataFromInputState(_inputState, cf, Math::ZERO<DeviceStateValue>), dz); newVal != translate(_readDataFromInputState(_oldInputState, cf, Math::ZERO<DeviceStateValue>), dz)) {
 					DeviceStateValue val = newVal;
 					DeviceState ds = { (DeviceState::CodeType)vk, 1, &val };
 					_eventDispatcher->dispatchEvent(this, DeviceEvent::MOVE, &ds);
 				}
-			}if (vk >= GamepadVirtualKeyCode::SEPARATE_HAT_START && vk <= GamepadVirtualKeyCode::SEPARATE_HAT_END) {
+			} else if (vk >= GamepadVirtualKeyCode::UNDEFINED_HAT_1 && vk <= GamepadVirtualKeyCode::UNDEFINED_HAT_END) {
 				auto dz = _deadZone.get(vk);
-				if (auto newVal = translate(_driver->readDataFromInputState(_inputState, cf, Math::NEGATIVE_ONE<float32_t>), dz); newVal != translate(_driver->readDataFromInputState(_oldInputState, cf, Math::NEGATIVE_ONE<float32_t>), dz)) {
+				if (auto newVal = translate(_readDataFromInputState(_inputState, cf, Math::NEGATIVE_ONE<DeviceStateValue>), dz); newVal != translate(_readDataFromInputState(_oldInputState, cf, Math::NEGATIVE_ONE<DeviceStateValue>), dz)) {
 					DeviceStateValue val = newVal;
 					DeviceState ds = { (DeviceState::CodeType)vk, 1, &val };
 					_eventDispatcher->dispatchEvent(this, DeviceEvent::MOVE, &ds);
 				}
 			} else if (vk >= GamepadVirtualKeyCode::BUTTON_START && vk <= GamepadVirtualKeyCode::BUTTON_END) {
 				auto dz = _deadZone.get(vk);
-				if (auto newVal = _driver->readDataFromInputState(_inputState, cf, Math::ZERO<float32_t>); newVal != _driver->readDataFromInputState(_oldInputState, cf, Math::ZERO<float32_t>)) {
+				if (auto newVal = _readDataFromInputState(_inputState, cf, Math::ZERO<DeviceStateValue>); newVal != _readDataFromInputState(_oldInputState, cf, Math::ZERO<DeviceStateValue>)) {
 					DeviceStateValue val = newVal;
 					DeviceState ds = { (DeviceState::CodeType)vk, 1, &val };
 					_eventDispatcher->dispatchEvent(this, val > Math::ZERO<DeviceStateValue> ? DeviceEvent::DOWN : DeviceEvent::UP, &ds);
@@ -311,10 +277,10 @@ namespace srk::modules::inputs {
 
 		auto dz = _deadZone.get(combined);
 
-		translate(_normalizeStick(_driver->readDataFromInputState(_oldInputState, mappingVals[0], Math::ZERO<float32_t>), _driver->readDataFromInputState(_oldInputState, mappingVals[1], Math::ZERO<float32_t>)),
-			_normalizeStick(_driver->readDataFromInputState(_oldInputState, mappingVals[2], Math::ZERO<float32_t>), _driver->readDataFromInputState(_oldInputState, mappingVals[3], Math::ZERO<float32_t>)), dz, oldVals, 2);
-		translate(_normalizeStick(_driver->readDataFromInputState(_inputState, mappingVals[0], Math::ZERO<float32_t>), _driver->readDataFromInputState(_inputState, mappingVals[1], Math::ZERO<float32_t>)),
-			_normalizeStick(_driver->readDataFromInputState(_inputState, mappingVals[2], Math::ZERO<float32_t>), _driver->readDataFromInputState(_inputState, mappingVals[3], Math::ZERO<float32_t>)), dz, newVals, 2);
+		translate(_normalizeStick(_readDataFromInputState(_oldInputState, mappingVals[0], Math::ONE_HALF<DeviceStateValue>), _readDataFromInputState(_oldInputState, mappingVals[1], Math::ONE_HALF<DeviceStateValue>)),
+			_normalizeStick(_readDataFromInputState(_oldInputState, mappingVals[2], Math::ONE_HALF<DeviceStateValue>), _readDataFromInputState(_oldInputState, mappingVals[3], Math::ONE_HALF<DeviceStateValue>)), dz, oldVals, 2);
+		translate(_normalizeStick(_readDataFromInputState(_inputState, mappingVals[0], Math::ONE_HALF<DeviceStateValue>), _readDataFromInputState(_inputState, mappingVals[1], Math::ONE_HALF<DeviceStateValue>)),
+			_normalizeStick(_readDataFromInputState(_inputState, mappingVals[2], Math::ONE_HALF<DeviceStateValue>), _readDataFromInputState(_inputState, mappingVals[3], Math::ONE_HALF<DeviceStateValue>)), dz, newVals, 2);
 
 		if (oldVals[0] != newVals[0] || oldVals[1] != newVals[1]) {
 			DeviceState ds = { (DeviceState::CodeType)combined, 2, newVals };

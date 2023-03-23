@@ -17,7 +17,7 @@ namespace srk::modules::inputs::hid_input {
 		virtual bool SRK_CALL isStateReady(const void* state) const override;
 
 		virtual bool SRK_CALL readStateFromDevice(void* inputState) const override;
-		virtual float32_t SRK_CALL readDataFromInputState(const void* inputState, GamepadKeyCodeAndFlags cf, float32_t defaultVal) const override;
+		virtual float32_t SRK_CALL readDataFromInputState(const void* inputState, GamepadKeyCode keyCode) const override;
 		virtual DeviceState::CountType SRK_CALL customGetState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count,
 			const void* inputState, void* custom, ReadWriteStateStartCallback readStateStartCallback, ReadWriteStateStartCallback readStateEndCallback) const override;
 		virtual void SRK_CALL customDispatch(const void* oldInputState, const void* newInputState, void* custom, DispatchCallback dispatchCallback) const override;

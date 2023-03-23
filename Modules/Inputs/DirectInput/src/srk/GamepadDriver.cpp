@@ -67,33 +67,28 @@ namespace srk::modules::inputs::direct_input {
 		return false;
 	}
 
-	float32_t GamepadDriver::readDataFromInputState(const void* inputState, GamepadKeyCodeAndFlags cf, float32_t defaultVal) const {
+	float32_t GamepadDriver::readDataFromInputState(const void* inputState, GamepadKeyCode keyCode) const {
 		using namespace srk::enum_operators;
 
-		float32_t val;
-		if (auto raw = (const uint8_t*)inputState; raw[0]) {
-			auto data = (const DIJOYSTATE*)(raw + HEADER_LENGTH);
+		if (!isStateReady(inputState)) return -1.0f;
 
-			if (cf.code >= GamepadKeyCode::AXIS_1 && cf.code <= _maxAxisKeyCode) {
-				val = DeviceStateValue((&data->lX)[(uint32_t)(cf.code - GamepadKeyCode::AXIS_1)]) / 65535.0f;
-			} else if (cf.code >= _minDpadKeyCode && cf.code <= _maxDpadKeyCode) {
-				auto idx = (size_t)(cf.code - _minDpadKeyCode);
-				if (auto i = data->rgdwPOV[idx >> 1]; i == std::numeric_limits<DWORD>::max()) {
-					val = 0.5f;
-				} else {
-					auto a = Math::rad(DeviceStateValue(i) * Math::ONE_HUNDREDTH<DeviceStateValue>);
-					val = 0.5f + ((idx & 0b1) == 0 ? std::sin(a) : std::cos(a)) * 0.5f;
-				}
-			} else if (cf.code >= GamepadKeyCode::BUTTON_1 && cf.code <= _maxButtonKeyCode) {
-				val = data->rgbButtons[(uint32_t)(cf.code - GamepadKeyCode::BUTTON_1)] & 0x80 ? Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;
+		auto data = (const DIJOYSTATE*)((const uint8_t*)inputState + HEADER_LENGTH);
+
+		if (keyCode >= GamepadKeyCode::AXIS_1 && keyCode <= _maxAxisKeyCode) {
+			return DeviceStateValue((&data->lX)[(uint32_t)(keyCode- GamepadKeyCode::AXIS_1)]) / 65535.0f;
+		} else if (keyCode >= _minDpadKeyCode && keyCode <= _maxDpadKeyCode) {
+			auto idx = (size_t)(keyCode - _minDpadKeyCode);
+			if (auto i = data->rgdwPOV[idx >> 1]; i == std::numeric_limits<DWORD>::max()) {
+				return -1.0f;
 			} else {
-				val = defaultVal;
+				auto a = Math::rad(DeviceStateValue(i) * Math::ONE_HUNDREDTH<DeviceStateValue>);
+				return 0.5f + ((idx & 0b1) == 0 ? std::sin(a) : std::cos(a)) * 0.5f;
 			}
+		} else if (keyCode >= GamepadKeyCode::BUTTON_1 && keyCode <= _maxButtonKeyCode) {
+			return data->rgbButtons[(uint32_t)(keyCode - GamepadKeyCode::BUTTON_1)] & 0x80 ? Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;
 		} else {
-			val = defaultVal;
+			return -1.0f;
 		}
-
-		return translate(val, cf.flags);
 	}
 
 	DeviceState::CountType GamepadDriver::customGetState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count,

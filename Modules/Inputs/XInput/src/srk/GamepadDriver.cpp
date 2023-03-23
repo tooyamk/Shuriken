@@ -39,83 +39,58 @@ namespace srk::modules::inputs::xinput {
 		return false;
 	}
 
-	float32_t GamepadDriver::readDataFromInputState(const void* inputState, GamepadKeyCodeAndFlags cf, float32_t defaultVal) const {
+	float32_t GamepadDriver::readDataFromInputState(const void* inputState, GamepadKeyCode keyCode) const {
 		using namespace srk::enum_operators;
 
-		constexpr auto diagonal = 0.5f / Math::SQRT2<float32_t>;
+		if (!isStateReady(inputState)) return -1.0f;
 
-		float32_t val;
-		if (auto raw = (const uint8_t*)inputState; raw[0]) {
-			auto data = (const XINPUT_STATE*)(raw + HEADER_LENGTH);
+		auto data = (const XINPUT_STATE*)((const uint8_t*)inputState + HEADER_LENGTH);
 
-			if (cf.code >= GamepadKeyCode::AXIS_1 && cf.code <= MAX_AXIS_KEY_CODE) {
-				switch (cf.code) {
-				case GamepadKeyCode::AXIS_1:
-					val = _normalizeThumb(data->Gamepad.sThumbLX);
-					break;
-				case GamepadKeyCode::AXIS_1 + 1:
-					val = _normalizeThumb(data->Gamepad.sThumbLY);
-					break;
-				case GamepadKeyCode::AXIS_1 + 2:
-					val = _normalizeTrigger(data->Gamepad.bLeftTrigger);
-					break;
-				case GamepadKeyCode::AXIS_1 + 3:
-					val = _normalizeThumb(data->Gamepad.sThumbRX);
-					break;
-				case GamepadKeyCode::AXIS_1 + 4:
-					val = _normalizeThumb(data->Gamepad.sThumbRY);
-					break;
-				case GamepadKeyCode::AXIS_1 + 5:
-					val = _normalizeTrigger(data->Gamepad.bRightTrigger);
-					break;
-				case GamepadKeyCode::HAT_1:
-				{
-					switch (data->Gamepad.wButtons & (XINPUT_GAMEPAD_DPAD_UP | XINPUT_GAMEPAD_DPAD_RIGHT | XINPUT_GAMEPAD_DPAD_DOWN | XINPUT_GAMEPAD_DPAD_LEFT)) {
-					case XINPUT_GAMEPAD_DPAD_UP:
-						val = 0.0f;
-						break;
-					case XINPUT_GAMEPAD_DPAD_UP | XINPUT_GAMEPAD_DPAD_RIGHT:
-						val = Math::ONE_EIGHTH<float32_t>;
-						break;
-					case XINPUT_GAMEPAD_DPAD_RIGHT:
-						val = Math::ONE_QUARTER<float32_t>;
-						break;
-					case XINPUT_GAMEPAD_DPAD_DOWN | XINPUT_GAMEPAD_DPAD_RIGHT:
-						val = 3.0f * Math::ONE_EIGHTH<float32_t>;
-						break;
-					case XINPUT_GAMEPAD_DPAD_DOWN:
-						val = Math::ONE_HALF<float32_t>;
-						break;
-					case XINPUT_GAMEPAD_DPAD_DOWN | XINPUT_GAMEPAD_DPAD_LEFT:
-						val = 5.0f * Math::ONE_EIGHTH<float32_t>;
-						break;
-					case XINPUT_GAMEPAD_DPAD_LEFT:
-						val = 3.0f * Math::ONE_QUARTER<float32_t>;
-						break;
-					case XINPUT_GAMEPAD_DPAD_UP | XINPUT_GAMEPAD_DPAD_LEFT:
-						val = 7.0f * Math::ONE_EIGHTH<float32_t>;
-						break;
-					default:
-						val = -1.0f;
-						break;
-					}
-
-					break;
-				}
+		if (keyCode >= GamepadKeyCode::AXIS_1 && keyCode <= MAX_AXIS_KEY_CODE) {
+			switch (keyCode) {
+			case GamepadKeyCode::AXIS_1:
+				return _normalizeThumb(data->Gamepad.sThumbLX);
+			case GamepadKeyCode::AXIS_1 + 1:
+				return _normalizeThumb(data->Gamepad.sThumbLY);
+			case GamepadKeyCode::AXIS_1 + 2:
+				return _normalizeTrigger(data->Gamepad.bLeftTrigger);
+			case GamepadKeyCode::AXIS_1 + 3:
+				return _normalizeThumb(data->Gamepad.sThumbRX);
+			case GamepadKeyCode::AXIS_1 + 4:
+				return _normalizeThumb(data->Gamepad.sThumbRY);
+			case GamepadKeyCode::AXIS_1 + 5:
+				return _normalizeTrigger(data->Gamepad.bRightTrigger);
+			case GamepadKeyCode::HAT_1:
+			{
+				switch (data->Gamepad.wButtons & (XINPUT_GAMEPAD_DPAD_UP | XINPUT_GAMEPAD_DPAD_RIGHT | XINPUT_GAMEPAD_DPAD_DOWN | XINPUT_GAMEPAD_DPAD_LEFT)) {
+				case XINPUT_GAMEPAD_DPAD_UP:
+					return 0.0f;
+				case XINPUT_GAMEPAD_DPAD_UP | XINPUT_GAMEPAD_DPAD_RIGHT:
+					return Math::ONE_EIGHTH<float32_t>;
+				case XINPUT_GAMEPAD_DPAD_RIGHT:
+					return Math::ONE_QUARTER<float32_t>;
+				case XINPUT_GAMEPAD_DPAD_DOWN | XINPUT_GAMEPAD_DPAD_RIGHT:
+					return 3.0f * Math::ONE_EIGHTH<float32_t>;
+				case XINPUT_GAMEPAD_DPAD_DOWN:
+					return Math::ONE_HALF<float32_t>;
+				case XINPUT_GAMEPAD_DPAD_DOWN | XINPUT_GAMEPAD_DPAD_LEFT:
+					return 5.0f * Math::ONE_EIGHTH<float32_t>;
+				case XINPUT_GAMEPAD_DPAD_LEFT:
+					return 3.0f * Math::ONE_QUARTER<float32_t>;
+				case XINPUT_GAMEPAD_DPAD_UP | XINPUT_GAMEPAD_DPAD_LEFT:
+					return 7.0f * Math::ONE_EIGHTH<float32_t>;
 				default:
-					val = defaultVal;
-					break;
+					return -1.0f;
 				}
-			} else if (cf.code >= GamepadKeyCode::BUTTON_1 && cf.code <= MAX_BUTTON_KEY_CODE) {
-				val = data->Gamepad.wButtons & BUTTON_MASK[(size_t)(cf.code - GamepadKeyCode::BUTTON_1)] ? Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;
-			} else {
-				val = defaultVal;
 			}
+			default:
+				return -1.0f;
+			}
+		} else if (keyCode >= GamepadKeyCode::BUTTON_1 && keyCode <= MAX_BUTTON_KEY_CODE) {
+			return data->Gamepad.wButtons & BUTTON_MASK[(size_t)(keyCode - GamepadKeyCode::BUTTON_1)] ? Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;
 		} else {
-			val = defaultVal;
+			return -1.0f;
 		}
-
-		return translate(val, cf.flags);
 	}
 
 	DeviceState::CountType GamepadDriver::customGetState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count,

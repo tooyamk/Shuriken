@@ -252,36 +252,29 @@ namespace srk::modules::inputs::hid_input {
 		return false;
 	}
 
-	float32_t GamepadDriver::readDataFromInputState(const void* inputState, GamepadKeyCodeAndFlags cf, float32_t defaultVal) const {
+	float32_t GamepadDriver::readDataFromInputState(const void* inputState, GamepadKeyCode keyCode) const {
 		using namespace srk::enum_operators;
 
-		auto data = (const uint8_t*)inputState;
+		if (!isStateReady(inputState)) return -1.0f;
 
-		float32_t val;
-		if (isStateReady(inputState)) {
-			data += HEADER_LENGTH;
+		auto data = (const uint8_t*)inputState + HEADER_LENGTH;
 
-			if (cf.code >= GamepadKeyCode::AXIS_1 && cf.code <= _maxAxisKeyCode) {
-				const auto& desc = _desc.inputAxes[(size_t)(cf.code - GamepadKeyCode::AXIS_1)];
-				val = (float32_t)(std::clamp(_read(desc, data), desc.min, desc.max) - desc.min) / (float32_t)(desc.max - desc.min);
-			} else if (cf.code >= GamepadKeyCode::HAT_1 && cf.code <= _maxHatKeyCode) {
-				const auto& desc = _desc.inputDPads[(size_t)(cf.code - GamepadKeyCode::HAT_1)];
-				if (auto v = _read(desc, data); v >= desc.min && v <= desc.max) {
-					val = (v - desc.min) * Math::PI2<float32_t> / (float32_t)(desc.max - desc.min + 1);
-				} else {
-					val = -1.0f;
-				}
-			} else if (cf.code >= GamepadKeyCode::BUTTON_1 && cf.code <= _maxButtonKeyCode) {
-				const auto& desc =_desc.inputButtons[(size_t)(cf.code - GamepadKeyCode::BUTTON_1)];
-				val = (float32_t)(std::clamp(_read(desc, data), desc.min, desc.max) - desc.min) / (float32_t)(desc.max - desc.min);
+		if (keyCode >= GamepadKeyCode::AXIS_1 && keyCode <= _maxAxisKeyCode) {
+			const auto& desc = _desc.inputAxes[(size_t)(keyCode- GamepadKeyCode::AXIS_1)];
+			return (float32_t)(std::clamp(_read(desc, data), desc.min, desc.max) - desc.min) / (float32_t)(desc.max - desc.min);
+		} else if (keyCode >= GamepadKeyCode::HAT_1 && keyCode <= _maxHatKeyCode) {
+			const auto& desc = _desc.inputDPads[(size_t)(keyCode - GamepadKeyCode::HAT_1)];
+			if (auto v = _read(desc, data); v >= desc.min && v <= desc.max) {
+				return (v - desc.min) / (float32_t)(desc.max - desc.min + 1);
 			} else {
-				val = defaultVal;
+				return -1.0f;
 			}
+		} else if (keyCode >= GamepadKeyCode::BUTTON_1 && keyCode <= _maxButtonKeyCode) {
+			const auto& desc =_desc.inputButtons[(size_t)(keyCode - GamepadKeyCode::BUTTON_1)];
+			return (float32_t)(std::clamp(_read(desc, data), desc.min, desc.max) - desc.min) / (float32_t)(desc.max - desc.min);
 		} else {
-			val = defaultVal;
+			return -1.0f;
 		}
-
-		return translate(val, cf.flags);
 	}
 
 	DeviceState::CountType GamepadDriver::customGetState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count,
