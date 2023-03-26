@@ -57,7 +57,7 @@ namespace srk::modules::inputs::raw_input {
 			RegisterRawInputDevices(&dev, 1, sizeof(RAWINPUTDEVICE));
 		}
 
-		inline bool SRK_CALL _hasDevice(const InternalDeviceInfo& info, const std::vector<InternalDeviceInfo>& devices) const {
+		inline static bool SRK_CALL _hasDevice(const InternalDeviceInfo& info, const std::vector<InternalDeviceInfo>& devices) {
 			for (auto& di : devices) {
 				if (info.guid == di.guid) return true;
 			}

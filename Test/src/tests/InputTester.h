@@ -11,6 +11,8 @@
 
 #include <fcntl.h>
 #include <linux/input.h>
+
+#include <linux/kd.h>
 #undef KEY_ENTER
 #endif
 
@@ -488,7 +490,7 @@ public:
 			}
 		} else if constexpr (Environment::OPERATING_SYSTEM == Environment::OperatingSystem::LINUX) {
 			if (1) {
-				createInputModuleDesc.filters = DeviceType::GAMEPAD;
+				createInputModuleDesc.filters = DeviceType::GAMEPAD | DeviceType::KEYBOARD;
 				initInputModule(inputModules, getDllPath("srk-module-input-evdev"), createInputModuleDesc);
 			}
 

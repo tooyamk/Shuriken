@@ -30,7 +30,7 @@ namespace srk::modules::inputs::hid_input {
 		std::shared_mutex _mutex;
 		std::vector<InternalDeviceInfo> _devices;
 
-		inline bool SRK_CALL _hasDevice(const DeviceInfo& info, const std::vector<InternalDeviceInfo>& devices) const {
+		inline static bool SRK_CALL _hasDevice(const DeviceInfo& info, const std::vector<InternalDeviceInfo>& devices) {
 			for (auto& di : devices) {
 				if (info.guid == di.guid) return true;
 			}

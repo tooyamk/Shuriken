@@ -38,10 +38,15 @@ namespace srk::modules::inputs::evdev {
 			printaln(L"EVIOCGBIT EV_ABS error"sv);
 			return nullptr;
 		}
-		_recordInput(bits, len, [&desc](auto&& code, auto&& index) {
-			auto& axis = desc.inputAxes.emplace(std::piecewise_construct, std::forward_as_tuple(code), std::forward_as_tuple()).first->second;
-			axis.index = index;
-		});
+		size_t index = 0;
+		Input::traverseBits(bits, len, 0, [](size_t code, DeviceDesc& desc, auto& index) {
+			if ((code >= ABS_X && code <= ABS_RZ) || (code >= ABS_HAT0X && code <= ABS_HAT3Y)) {
+				auto& axis = desc.inputAxes.emplace(std::piecewise_construct, std::forward_as_tuple(code), std::forward_as_tuple()).first->second;
+				axis.index = index++;
+			}
+			
+			return 0;
+		}, desc, index);
 
 		for (auto& itr : desc.inputAxes) {
 			if (ioctl(fd, EVIOCGABS(itr.first), bits) < 0) {
@@ -60,10 +65,15 @@ namespace srk::modules::inputs::evdev {
 			printaln(L"EVIOCGBIT EV_KEY error"sv);
 			return nullptr;
 		}
-		_recordInput(bits, len, [&desc](auto&& code, auto&& index) {
-			auto& btn = desc.inputButtons.emplace(std::piecewise_construct, std::forward_as_tuple(code), std::forward_as_tuple()).first->second;
-			btn.index = index;
-		});
+		index = 0;
+		Input::traverseBits(bits, len, 0, [](size_t code, DeviceDesc& desc, auto& index) {
+			if (code >= BTN_GAMEPAD && code <= BTN_THUMBR) {
+				auto& btn = desc.inputButtons.emplace(std::piecewise_construct, std::forward_as_tuple(code), std::forward_as_tuple()).first->second;
+				btn.index = index++;
+			}
+
+			return 0;
+		}, desc, index);
 
 		len = ioctl(fd, EVIOCGKEY(sizeof(bits)), bits);
 		if (len < 0) {

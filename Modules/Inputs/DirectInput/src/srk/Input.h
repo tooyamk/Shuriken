@@ -45,7 +45,7 @@ namespace srk::modules::inputs::direct_input {
 
 		static BOOL CALLBACK _enumDevicesCallback(const srk_DIDEVICEINSTANCE* pdidInstance, LPVOID pContext);
 
-		inline bool SRK_CALL _hasDevice(const DeviceInfo& info, const std::vector<DeviceInfo>& devices) const {
+		inline static bool SRK_CALL _hasDevice(const DeviceInfo& info, const std::vector<DeviceInfo>& devices) {
 			for (auto& di : devices) {
 				if (info.guid == di.guid) return true;
 			}

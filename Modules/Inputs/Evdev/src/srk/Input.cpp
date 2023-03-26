@@ -36,24 +36,14 @@ namespace srk::modules::inputs::evdev {
 				auto p = line.find("Handlers="); 
 				if (p == decltype(line)::npos) continue;
 
-				DeviceType type = DeviceType::UNKNOWN;
 				std::string_view evt;
-				String::split(line.substr(p + 9), String::CharFlag::WHITE_SPACE, [&evt, &type](const std::string_view& val){
-					if (val.find("kbd"sv) != std::string_view::npos) {
-						type |= DeviceType::KEYBOARD;
-					} else if (val.find("mouse"sv) != std::string_view::npos) {
-						type |= DeviceType::MOUSE;
-					} else if (val.find("js"sv) != std::string_view::npos) {
-						type |= DeviceType::GAMEPAD;
-					} else if (val.find("event"sv) != std::string_view::npos) {
-						evt = val;
-					}
+				String::split(line.substr(p + 9), String::CharFlag::WHITE_SPACE, [&evt](const std::string_view& val){
+					if (val.find("event"sv) != std::string_view::npos) evt = val;
 				});
 
-				if (evt.empty() || (type & _filters) == DeviceType::UNKNOWN) continue;
+				if (evt.empty()) continue;
 
 				int32_t fd = -1;
-				uint8_t state = 0;
 				do {
 					constexpr auto dstBegin = sizeof(path) - EVENT_NUMBER_BUFFER_LEN - 1;
 					auto n = evt.size() - EVENT_STR_LEN;
@@ -67,32 +57,98 @@ namespace srk::modules::inputs::evdev {
 					input_id ids;
 					if (auto rc = ioctl(fd, EVIOCGID, &ids); rc < 0) break;
 
-					state = 1;
-					auto& info = newDevices.emplace_back();
-					info.vendorID = ids.vendor;
-					info.productID = ids.product;
-					info.type = type & _filters;
-					memcpy(info.eventNumber, evt.data() + EVENT_STR_LEN, n);
-					info.eventNumber[n] = 0;
+					DeviceType types = DeviceType::UNKNOWN;
+					{
+						uint8_t bits[(std::max(ABS_CNT, KEY_CNT) + 7) >> 3];
 
-					hash::xxHash<64> hasher;
-					hasher.begin(0);
-					hasher.update(evt.data() + EVENT_STR_LEN, n);
-					hasher.update(&ids, sizeof(ids));
+						auto len = ioctl(fd, EVIOCGBIT(EV_ABS, sizeof(bits)), bits); 
+						if (len < 0) break;
 
-					char buf[256];
+						struct {
+							bool hasAbsXY = false;
+						} caps;
+						
+						traverseBits(bits, len, 0, [](size_t bit, DeviceType& types, decltype(caps)& caps) {
+							if (bit >= ABS_X && bit <= ABS_Y) {
+								caps.hasAbsXY = true;
+								return ABS_Y + 1;
+							}
 
-					if (ioctl(fd, EVIOCGNAME(sizeof(buf) - 1), buf) >= 0) info.name = buf;
-					if (ioctl(fd, EVIOCGUNIQ(sizeof(buf) - 1), buf) >= 0) hasher.update(buf, strlen(buf));
+							if (bit >= ABS_Z && bit <= ABS_RZ) {
+								types |= DeviceType::GAMEPAD;
+								return ABS_RZ + 1;
+							}
 
-					auto hash = hasher.digest();
-					info.guid.set<false, true>(&hash, sizeof(hash), 0);
+							if (bit >= ABS_THROTTLE && bit <= ABS_BRAKE) return ABS_BRAKE + 1;
 
-					state = 2;
+							if (bit >= ABS_HAT0X && bit <= ABS_HAT3Y) {
+								types |= DeviceType::GAMEPAD;
+								return ABS_HAT3Y + 1;
+							}
+
+							if (bit >= ABS_PRESSURE && bit <= ABS_MAX) return ABS_MAX + 1;
+
+							return 0;
+						}, types, caps);
+
+						len = ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(bits)), bits); 
+						if (len < 0) break;
+
+						traverseBits(bits, len, 0, [](size_t bit, DeviceType& types) {
+							if (bit >= KEY_ESC && bit <= KEY_MICMUTE) {
+								types |= DeviceType::KEYBOARD;
+								return KEY_MICMUTE + 1;
+							}
+
+							if (bit >= BTN_MISC && bit <= BTN_DEAD) return BTN_DEAD + 1;
+
+							if (bit >= BTN_GAMEPAD && bit <= BTN_THUMBR) {
+								types |= DeviceType::GAMEPAD;
+								return BTN_THUMBR + 1;
+							}
+
+							if (bit >= BTN_DIGI && bit <= KEY_MAX) return KEY_MAX + 1;
+
+							return 0;
+						}, types);
+					}
+
+					types &= _filters;
+
+					auto type = (DeviceType)1;
+					while (types != DeviceType::UNKNOWN) {
+						if ((types & type) == DeviceType::UNKNOWN) {
+							type <<= 1;
+
+							continue;
+						}
+
+						types &= ~type;
+
+						auto& info = newDevices.emplace_back();
+						info.vendorID = ids.vendor;
+						info.productID = ids.product;
+						info.type = type;
+						memcpy(info.eventNumber, evt.data() + EVENT_STR_LEN, n);
+						info.eventNumber[n] = 0;
+
+						hash::xxHash<64> hasher;
+						hasher.begin(0);
+						hasher.update(evt.data() + EVENT_STR_LEN, n);
+						hasher.update(&ids, sizeof(ids));
+						hasher.update(&type, sizeof(type));
+
+						char buf[256];
+
+						if (ioctl(fd, EVIOCGNAME(sizeof(buf) - 1), buf) >= 0) info.name = buf;
+						if (ioctl(fd, EVIOCGUNIQ(sizeof(buf) - 1), buf) >= 0) hasher.update(buf, strlen(buf));
+
+						auto hash = hasher.digest();
+						info.guid.set<false, true>(&hash, sizeof(hash), 0);
+					}
 				} while(false);
 
 				if (fd >= 0) ::close(fd);
-				if (state == 1) newDevices.pop_back();
 			}
 
 			fclose(devs);
@@ -158,7 +214,7 @@ namespace srk::modules::inputs::evdev {
 			}
 		} while (false);
 
-		ioctl(fd, EVIOCGRAB, 0);
+		//ioctl(fd, EVIOCGRAB, 0);
 		::close(fd);
 		return nullptr;
 	}

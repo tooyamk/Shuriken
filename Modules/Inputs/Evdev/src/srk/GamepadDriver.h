@@ -1,11 +1,13 @@
 #pragma once
 
-#include "DeviceBase.h"
+#include "Base.h"
 #include "srk/Lock.h"
 #include "srk/modules/inputs/GenericGamepad.h"
 #include <linux/input-event-codes.h>
 
 namespace srk::modules::inputs::evdev {
+	class Input;
+
 	class SRK_MODULE_DLL GamepadDriver : public IGenericGamepadDriver {
 	public:
 		virtual ~GamepadDriver();
@@ -97,25 +99,6 @@ namespace srk::modules::inputs::evdev {
 
 		inline bool SRK_CALL _getButtonValue(const void* state, uint32_t index) const {
 			return (((const uint8_t*)state + _buttonBufferPos)[index >> 3] & (1 << (index & 0b111))) != 0;
-		}
-
-		template<typename Fn>
-		static void SRK_CALL _recordInput(uint8_t* bits, size_t len, Fn&& fn) {
-			uint32_t index = 0; 
-			uint32_t code = 0;
-			for (decltype(len) i = 0; i < len; ++i) {
-				auto val = bits[i];
-
-				uint32_t n = 0;
-				while (val) {
-					if (val & 0b1) fn(code + n, index++);
-
-					val >>= 1;
-					++n;
-				}
-
-				code += 8;
-			}
 		}
 	};
 }

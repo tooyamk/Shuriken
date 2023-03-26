@@ -21,6 +21,35 @@ namespace srk::modules::inputs::evdev {
 		virtual void SRK_CALL poll() override;
 		virtual IntrusivePtr<IInputDevice> SRK_CALL createDevice(const DeviceGUID& guid) override;
 
+		template<typename Fn, typename... Args>
+		static void SRK_CALL traverseBits(const uint8_t* bits, size_t len, size_t begin, Fn&& fn, Args&&... args) {
+			size_t i = begin >> 3;
+			size_t n = begin & 0b111;
+
+			begin = 0;
+			while (i < len) {
+				auto val = bits[i] >> n;
+
+				while (val) {
+					if (val & 0b1) {
+						if (begin = fn((i << 3) + n, std::forward<Args>(args)...); begin > 0) break;
+					}
+
+					val >>= 1;
+					++n;
+				}
+
+				if (begin > 0) {
+					i = begin >> 3;
+					n = begin & 0b111;
+					begin = 0;
+				} else {
+					n = 0;
+					++i;
+				}
+			}
+		}
+
 	private:
 		static constexpr size_t EVENT_STR_LEN = 5;
 		static constexpr size_t EVENT_NUMBER_BUFFER_LEN = 3;
@@ -33,7 +62,7 @@ namespace srk::modules::inputs::evdev {
 		std::shared_mutex _mutex;
 		std::vector<InternalDeviceInfo> _devices;
 
-		inline bool SRK_CALL _hasDevice(const InternalDeviceInfo& info, const std::vector<InternalDeviceInfo>& devices) const {
+		inline static bool SRK_CALL _hasDevice(const InternalDeviceInfo& info, const std::vector<InternalDeviceInfo>& devices) {
 			for (auto& di : devices) {
 				if (info.guid == di.guid) return true;
 			}

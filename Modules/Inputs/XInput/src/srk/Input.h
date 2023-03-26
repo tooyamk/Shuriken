@@ -43,7 +43,7 @@ namespace srk::modules::inputs::xinput {
 		std::shared_mutex _mutex;
 		std::vector<DeviceInfo> _devices;
 
-		inline bool SRK_CALL _hasDevice(const DeviceInfo& info, const std::vector<DeviceInfo>& devices) const {
+		inline static bool SRK_CALL _hasDevice(const DeviceInfo& info, const std::vector<DeviceInfo>& devices) {
 			for (auto& di : devices) {
 				if (info.guid == di.guid) return true;
 			}

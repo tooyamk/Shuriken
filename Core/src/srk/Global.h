@@ -350,6 +350,14 @@ namespace srk {
 		inline constexpr T SRK_CALL operator-(T e1, T e2) noexcept {
 			return (T)((std::underlying_type_t<T>)e1 - (std::underlying_type_t<T>)e2);
 		}
+		template<ScopedEnum T>
+		inline constexpr T SRK_CALL operator*(T e1, T e2) noexcept {
+			return (T)((std::underlying_type_t<T>)e1 * (std::underlying_type_t<T>)e2);
+		}
+		template<ScopedEnum T>
+		inline constexpr T SRK_CALL operator/(T e1, T e2) noexcept {
+			return (T)((std::underlying_type_t<T>)e1 / (std::underlying_type_t<T>)e2);
+		}
 
 		template<ScopedEnum E, std::integral I>
 		inline constexpr E SRK_CALL operator+(E e, I i) noexcept {
@@ -366,6 +374,22 @@ namespace srk {
 		template<ScopedEnum E, std::integral I>
 		inline constexpr E SRK_CALL operator-(I i, E e) noexcept {
 			return (E)(i - (std::underlying_type_t<E>)e);
+		}
+		template<ScopedEnum E, std::integral I>
+		inline constexpr E SRK_CALL operator*(E e, I i) noexcept {
+			return (E)((std::underlying_type_t<E>)e * i);
+		}
+		template<ScopedEnum E, std::integral I>
+		inline constexpr E SRK_CALL operator*(I i, E e) noexcept {
+			return (E)(i * (std::underlying_type_t<E>)e);
+		}
+		template<ScopedEnum E, std::integral I>
+		inline constexpr E SRK_CALL operator/(E e, I i) noexcept {
+			return (E)((std::underlying_type_t<E>)e / i);
+		}
+		template<ScopedEnum E, std::integral I>
+		inline constexpr E SRK_CALL operator/(I i, E e) noexcept {
+			return (E)(i / (std::underlying_type_t<E>)e);
 		}
 
 		/*template<ScopedEnum E, std::integral I>
@@ -419,6 +443,60 @@ namespace srk {
 		template<ScopedEnum E, std::integral I>
 		inline constexpr auto SRK_CALL operator<=(I i, E e) noexcept {
 			return i <= (std::underlying_type_t<E>)e;
+		}
+		template<ScopedEnum E, std::integral I>
+		inline constexpr E SRK_CALL operator>>(E e, I i) noexcept {
+			return (E)((std::underlying_type_t<E>)e >> i);
+		}
+		template<ScopedEnum E, std::integral I>
+		inline constexpr E SRK_CALL operator<<(E e, I i) noexcept {
+			return (E)((std::underlying_type_t<E>)e << i);
+		}
+
+		template<ScopedEnum E, std::integral I>
+		inline constexpr E& SRK_CALL operator+=(E& e, I i) noexcept {
+			(std::underlying_type_t<E>&)e += i;
+			return e;
+		}
+		template<ScopedEnum E, std::integral I>
+		inline constexpr E& SRK_CALL operator-=(E& e, I i) noexcept {
+			(std::underlying_type_t<E>&)e -= i;
+			return e;
+		}
+		template<ScopedEnum E, std::integral I>
+		inline constexpr E& SRK_CALL operator*=(E& e, I i) noexcept {
+			(std::underlying_type_t<E>&)e *= i;
+			return e;
+		}
+		template<ScopedEnum E, std::integral I>
+		inline constexpr E& SRK_CALL operator/=(E& e, I i) noexcept {
+			(std::underlying_type_t<E>&)e /= i;
+			return e;
+		}
+		template<ScopedEnum E, std::integral I>
+		inline constexpr E& SRK_CALL operator>>=(E& e, I i) noexcept {
+			(std::underlying_type_t<E>&)e >>= i;
+			return e;
+		}
+		template<ScopedEnum E, std::integral I>
+		inline constexpr E& SRK_CALL operator<<=(E& e, I i) noexcept {
+			(std::underlying_type_t<E>&)e <<= i;
+			return e;
+		}
+		template<ScopedEnum E, std::integral I>
+		inline constexpr E& SRK_CALL operator&=(E& e, I i) noexcept {
+			(std::underlying_type_t<E>&)e &= i;
+			return e;
+		}
+		template<ScopedEnum E, std::integral I>
+		inline constexpr E& SRK_CALL operator|=(E& e, I i) noexcept {
+			(std::underlying_type_t<E>&)e |= i;
+			return e;
+		}
+		template<ScopedEnum E, std::integral I>
+		inline constexpr E& SRK_CALL operator^=(E& e, I i) noexcept {
+			(std::underlying_type_t<E>&)e ^= i;
+			return e;
 		}
 	}
 
