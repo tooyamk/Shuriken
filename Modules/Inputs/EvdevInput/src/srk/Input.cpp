@@ -5,7 +5,7 @@
 #include <fcntl.h>
 #include <linux/input.h>
 
-namespace srk::modules::inputs::evdev {
+namespace srk::modules::inputs::evdev_input {
 	Input::Input(Ref* loader, const CreateInputModuleDesc& desc) :
 		_loader(loader),
 		_win(desc.window),
@@ -28,7 +28,7 @@ namespace srk::modules::inputs::evdev {
 
 		if (auto devs = fopen("/proc/bus/input/devices", "r"); devs) {
 			char devsBuf[512];
-			char path[] = SRK_MODULE_INPUT_EVDEV_PATH_BUFFER;
+			char path[] = SRK_MODULE_INPUT_EVDEV_INPUT_PATH_BUFFER;
 			
 			while (fgets(devsBuf, sizeof(devsBuf), devs)) {
 				std::string_view line(devsBuf);
@@ -193,7 +193,7 @@ namespace srk::modules::inputs::evdev {
 
 		if (!found) return nullptr;
 
-		char path[] = SRK_MODULE_INPUT_EVDEV_PATH_BUFFER;
+		char path[] = SRK_MODULE_INPUT_EVDEV_INPUT_PATH_BUFFER;
 		for (size_t i = 0; ; ++i) {
 			path[sizeof(path) - EVENT_NUMBER_BUFFER_LEN - 1 + i] = info.eventNumber[i];
 			if (info.eventNumber[i] == 0) break;

@@ -13,7 +13,7 @@ namespace srk::modules::inputs {
 			return nullptr;
 		}
 
-		return new evdev::Input(loader, desc);
+		return new evdev_input::Input(loader, desc);
 	}
 }
 #endif

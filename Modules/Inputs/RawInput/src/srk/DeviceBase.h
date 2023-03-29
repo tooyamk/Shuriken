@@ -1,7 +1,6 @@
 #pragma once
 
-#include "Base.h"
-#include "srk/events/EventDispatcher.h"
+#include "InputListener.h"
 
 namespace srk::modules::inputs::raw_input {
 	class Input;
@@ -15,14 +14,12 @@ namespace srk::modules::inputs::raw_input {
 		virtual const DeviceInfo& SRK_CALL getInfo() const override;
 
 	protected:
-		IntrusivePtr<Input> _input;
-		IntrusivePtr<windows::IWindow> _win;
+		InputListener _listener;
+
 		IntrusivePtr<events::IEventDispatcher<DeviceEvent>> _eventDispatcher;
 		InternalDeviceInfo _info;
 
-		IntrusivePtr<events::IEventListener<windows::WindowEvent>> _rawIputHandler;
-
-		void SRK_CALL _rawInputCallback(events::Event<windows::WindowEvent>& e);
+		static void SRK_CALL _rawInputCallback(const RAWINPUT& rawInput, void* target);
 
 		virtual void SRK_CALL _rawInput(const RAWINPUT& rawInput) = 0;
 	};

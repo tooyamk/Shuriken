@@ -461,7 +461,7 @@ public:
 
 		if constexpr (Environment::OPERATING_SYSTEM == Environment::OperatingSystem::WINDOWS) {
 			if (0) {
-				createInputModuleDesc.filters = DeviceType::GAMEPAD;
+				createInputModuleDesc.filters = DeviceType::KEYBOARD;
 				auto ignoreXInputDevices = false;
 				const void* argv[2];
 				argv[0] = "ignore-xinput-devices";
@@ -470,7 +470,7 @@ public:
 				createInputModuleDesc.argv = argv;
 				initInputModule(inputModules, getDllPath("srk-module-input-direct-input"), createInputModuleDesc);
 			}
-			if (0) {
+			if (1) {
 				createInputModuleDesc.filters = DeviceType::KEYBOARD;
 				initInputModule(inputModules, getDllPath("srk-module-input-raw-input"), createInputModuleDesc);
 			}
@@ -484,14 +484,14 @@ public:
 				createInputModuleDesc.argv = argv;
 				initInputModule(inputModules, getDllPath("srk-module-input-xinput"), createInputModuleDesc);
 			}
-			if (1) {
+			if (0) {
 				createInputModuleDesc.filters = DeviceType::GAMEPAD;
 				initInputModule(inputModules, getDllPath("srk-module-input-hid-input"), createInputModuleDesc);
 			}
 		} else if constexpr (Environment::OPERATING_SYSTEM == Environment::OperatingSystem::LINUX) {
 			if (1) {
 				createInputModuleDesc.filters = DeviceType::GAMEPAD | DeviceType::KEYBOARD;
-				initInputModule(inputModules, getDllPath("srk-module-input-evdev"), createInputModuleDesc);
+				initInputModule(inputModules, getDllPath("srk-module-input-evdev-input"), createInputModuleDesc);
 			}
 
 			if (0) {
@@ -519,8 +519,8 @@ public:
 				auto info = e.getData<DeviceInfo>();
 				printaln(L"input device connected : "sv, getDeviceTypeString(info->type), L" vid = "sv, info->vendorID, L" pid = "sv, info->productID, L" name = "sv, info->name, L" guid = "sv, String::toString(info->guid.getData(), info->guid.getSize()));
 
-				//if ((info->type & (DeviceType::KEYBOARD)) != DeviceType::UNKNOWN) {
-				if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN) {
+				if ((info->type & (DeviceType::KEYBOARD)) != DeviceType::UNKNOWN) {
+				//if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN) {
 				//if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN && info->vendorID == 0x54C) {
 				//if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN && info->vendorID == 0xF0D) {
 				//if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN && info->vendorID == 0x45E) {
@@ -612,19 +612,19 @@ public:
 							case DeviceType::KEYBOARD:
 							{
 								auto state = e.getData<DeviceState>();
-								if (state->code == KeyboardVirtualKeyCode::KEY_ENTER) {
+								if (state->code == KeyboardVirtualKeyCode::ENTER) {
 									float32_t state = 0.0f;
-									if (device->getState(DeviceStateType::KEY, KeyboardVirtualKeyCode::KEY_RCTRL, &state, 1) && state != 0.f) {
+									if (device->getState(DeviceStateType::KEY, KeyboardVirtualKeyCode::R_CTRL, &state, 1) && state != 0.f) {
 										win->toggleFullScreen();
 									}
 								}
 
 								printaln(L"keyboard down -> key : "sv, state->code, L"    value : "sv, ((DeviceStateValue*)state->values)[0]);
 
-								if (state->code == KeyboardVirtualKeyCode::KEY_ENTER) {
+								if (state->code == KeyboardVirtualKeyCode::ENTER) {
 									float val[2];
-									device->getState(DeviceStateType::KEY, KeyboardVirtualKeyCode::KEY_CTRL, &val[0], 1);
-									device->getState(DeviceStateType::KEY, KeyboardVirtualKeyCode::KEY_ALT, &val[1], 1);
+									device->getState(DeviceStateType::KEY, KeyboardVirtualKeyCode::CTRL, &val[0], 1);
+									device->getState(DeviceStateType::KEY, KeyboardVirtualKeyCode::ALT, &val[1], 1);
 									if (val[0] == 1.0f && val[1] == 1.0f) {
 										win->toggleFullScreen();
 									}

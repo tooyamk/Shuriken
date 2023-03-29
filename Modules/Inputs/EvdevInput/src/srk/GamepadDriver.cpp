@@ -3,7 +3,7 @@
 #include "srk/Printer.h"
 #include <linux/input.h>
 
-namespace srk::modules::inputs::evdev {
+namespace srk::modules::inputs::evdev_input {
 	GamepadDriver::GamepadDriver(Input& input, DeviceDesc&& desc) :
 		_input(input),
 		_desc(std::move(desc)) {

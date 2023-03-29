@@ -10,6 +10,8 @@ namespace srk::modules::inputs::raw_input {
 
 		auto p = _getCursorPos();
 		_pos = p.combined;
+
+		_listener.start();
 	}
 
 	DeviceState::CountType Mouse::getState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count) const {
@@ -23,7 +25,7 @@ namespace srk::modules::inputs::raw_input {
 			{
 				POINT p;
 				GetCursorPos(&p);
-				ScreenToClient(_input->getHWND(), &p);
+				ScreenToClient(_listener.getHWND(), &p);
 
 				((DeviceStateValue*)values)[0] = DeviceStateValue(p.x);
 				DeviceState::CountType c = 1;

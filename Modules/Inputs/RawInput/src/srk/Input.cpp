@@ -1,5 +1,5 @@
 #include "Input.h"
-#include "Keyboard.h"
+#include "KeyboardDriver.h"
 #include "Mouse.h"
 #include "CreateModule.h"
 #include "srk/hash/xxHash.h"
@@ -109,10 +109,10 @@ namespace srk::modules::inputs::raw_input {
 
 		if (!found) return nullptr;
 
-		registerRawInputDevices(info.type);
-
 		if (info.type == DeviceType::KEYBOARD) {
-			return new Keyboard(*this, *_win, info);
+			auto driver = KeyboardDriver::create(*this, *_win, info.hDevice);
+			if (!driver) return nullptr;
+			return new GenericKeyboard(info, *driver);
 		} else {
 			return new Mouse(*this, *_win, info);
 		}

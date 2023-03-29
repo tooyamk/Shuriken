@@ -1,6 +1,6 @@
 #include "Input.h"
 #include "GamepadDriver.h"
-#include "Keyboard.h"
+#include "KeyboardDriver.h"
 #include "Mouse.h"
 #include "CreateModule.h"
 
@@ -92,17 +92,23 @@ namespace srk::modules::inputs::direct_input {
 			auto driver = GamepadDriver::create(*this, dev);
 			if (driver) return new GenericGamepad(info, *driver);
 
-			dev->Release();
-			return nullptr;
+			break;
 		}
 		case DeviceType::KEYBOARD:
-			return new Keyboard(*this, dev, info);
+		{
+			auto driver = KeyboardDriver::create(*this, dev);
+			if (driver) return new GenericKeyboard(info, *driver);
+
+			break;
+		}
 		case DeviceType::MOUSE:
 			return new Mouse(*this, dev, info);
 		default:
-			dev->Release();
-			return nullptr;
+			break;
 		}
+
+		dev->Release();
+		return nullptr;
 	}
 
 	HWND Input::getHWND() const {
