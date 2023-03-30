@@ -325,7 +325,7 @@ namespace srk::extensions {
 		static constexpr size_t OUT_ERROR = (std::numeric_limits<size_t>::max)();
 		static constexpr size_t OUT_WAITTING = OUT_ERROR - 1;
 
-		using EnumDevicesCallback = void(SRK_CALL*)(const HIDDeviceInfo& info, void* custom);
+		using EnumDevicesCallback = bool(SRK_CALL*)(const HIDDeviceInfo& info, void* custom);
 
 		static void SRK_CALL enumDevices(void* custom, EnumDevicesCallback);
 

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Base.h"
-#include "srk/DynamicLibraryLoader.h"
 #include "srk/events/EventDispatcher.h"
 
 namespace srk::modules::inputs::xinput {
@@ -37,7 +36,6 @@ namespace srk::modules::inputs::xinput {
 		DeviceType _filters;
 		IntrusivePtr<events::IEventDispatcher<ModuleEvent>> _eventDispatcher;
 
-		DynamicLibraryLoader _xinputDll;
 		XInputGetCapabilitiesEx _XInputGetCapabilitiesEx;
 
 		std::shared_mutex _mutex;

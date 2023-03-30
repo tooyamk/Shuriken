@@ -43,6 +43,7 @@ namespace srk::extensions {
 			auto sysfsPath = udev_list_entry_get_name(device);
 			auto rawDev = udev_device_new_from_syspath(udev, sysfsPath);
 			auto hidDev = udev_device_get_parent_with_subsystem_devtype(rawDev, "hid", nullptr);
+			auto isContinue = true;
 			do {
 				if (!hidDev) break;
 
@@ -155,7 +156,7 @@ namespace srk::extensions {
 								{
 									info.usage = ba.read<ba_vt::UIX>(item.size);
 									info.index = index++;
-									callback(info, custom);
+									isContinue = callback(info, custom);
 									
 									break;
 								}
@@ -168,6 +169,8 @@ namespace srk::extensions {
 						}
 						}
 
+						if (!isContinue) break;
+
 						ba.setPosition(p + n + item.size);
 					} else {
 						break;
@@ -178,6 +181,8 @@ namespace srk::extensions {
 			free(serialNumber);
 			free(productName);
 			udev_device_unref(rawDev);
+
+			if (!isContinue) break;
 		}
 
 		udev_enumerate_unref(enumerate);

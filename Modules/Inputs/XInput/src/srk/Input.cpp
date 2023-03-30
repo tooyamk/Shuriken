@@ -1,22 +1,17 @@
 #include "Input.h"
 #include "GamepadDriver.h"
 #include "CreateModule.h"
-#include "srk/DynamicLibraryLoader.h"
+
+#include <hidsdi.h>
+#include <SetupAPI.h>
 
 namespace srk::modules::inputs::xinput {
 	Input::Input(Ref* loader, const CreateInputModuleDesc& desc) :
 		_loader(loader),
 		_filters(desc.filters),
 		_eventDispatcher(new events::EventDispatcher<ModuleEvent>()),
-		_XInputGetCapabilitiesEx(nullptr) {
-		auto useHiddenAPI1_4 = false;
-		for (size_t i = 1; i < desc.argc; i += 2) {
-			std::string_view key = (const char*)desc.argv[i - 1];
-			if (key == "use-hidden-api-1-4") {
-				useHiddenAPI1_4 = *(bool*)desc.argv[i];
-			}
-		}
-		if (useHiddenAPI1_4 && _xinputDll.load("XInput1_4.dll")) _XInputGetCapabilitiesEx = (XInputGetCapabilitiesEx)_xinputDll.getSymbolAddress(std::string_view((char*)108, 1));
+		//_XInputGetCapabilitiesEx(nullptr) {
+		_XInputGetCapabilitiesEx(((XInputGetCapabilitiesEx)GetProcAddress(GetModuleHandleW(L"XInput1_4.dll"), (LPCSTR)108))) {
 	}
 
 	Input::~Input() {
@@ -37,11 +32,12 @@ namespace srk::modules::inputs::xinput {
 
 		XINPUT_STATE state;
 		XINPUT_CAPABILITIES_EX capsEx;
-		for (uint32_t i = 0; i < XUSER_MAX_COUNT; ++i) {
+		size_t hasIdCount = 0;
+		for (decltype(XUSER_MAX_COUNT) i = 0; i < XUSER_MAX_COUNT; ++i) {
 			guid.index = i + 1;
 
 			if (XInputGetState(i, &state) == ERROR_SUCCESS) {
-				bool found = false;
+				auto found = false;
 
 				auto& info = newDevices.emplace_back();
 				info.type = DeviceType::GAMEPAD;
@@ -52,12 +48,77 @@ namespace srk::modules::inputs::xinput {
 
 					guid.vendorID = info.vendorID;
 					guid.productID = info.productID;
+
+					++hasIdCount;
 				} else {
 					guid.vendorID = 0;
 					guid.productID = 0;
 				}
 
 				info.guid.set<false, true>(&guid, sizeof(guid));
+			}
+		}
+
+		if (hasIdCount) {
+			size_t foundCount = 0;
+
+			::GUID guid;
+			HidD_GetHidGuid(&guid);
+
+			if (auto hDevInfo = SetupDiGetClassDevsW(&guid, nullptr, nullptr, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE); hDevInfo) {
+				SP_DEVICE_INTERFACE_DATA deviceInterfaceData;
+				deviceInterfaceData.cbSize = sizeof(SP_DEVICE_INTERFACE_DATA);
+
+				PSP_DEVICE_INTERFACE_DETAIL_DATA_A detail = nullptr;
+				size_t mallocDetailSize = 0;
+
+				HIDD_ATTRIBUTES attrib;
+				attrib.Size = sizeof(HIDD_ATTRIBUTES);
+
+				WCHAR devNameBuf[256];
+				std::string devName;
+
+				for (DWORD i = 0; SetupDiEnumDeviceInterfaces(hDevInfo, nullptr, &guid, i, &deviceInterfaceData) != 0; ++i) {
+					DWORD requiredSize = 0;
+
+					if (SetupDiGetDeviceInterfaceDetailA(hDevInfo, &deviceInterfaceData, nullptr, 0, &requiredSize, nullptr); requiredSize == 0) continue;
+
+					if (mallocDetailSize < requiredSize) {
+						if (detail) free(detail);
+
+						mallocDetailSize = requiredSize;
+						if (detail = (PSP_INTERFACE_DEVICE_DETAIL_DATA_A)malloc(requiredSize); !detail) break;
+
+						detail->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_A);
+					}
+
+					if (!SetupDiGetDeviceInterfaceDetailA(hDevInfo, &deviceInterfaceData, detail, requiredSize, nullptr, nullptr)) continue;
+
+					auto hidHandle = CreateFileA(detail->DevicePath, 0, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr);
+					if (hidHandle == INVALID_HANDLE_VALUE) continue;
+
+					if (HidD_GetAttributes(hidHandle, &attrib)) {
+						for (auto& info : newDevices) {
+							if (info.vendorID == attrib.VendorID && info.productID == attrib.ProductID) {
+								if (devName.empty()) {
+									if (!HidD_GetProductString(hidHandle, devNameBuf, sizeof(devNameBuf))) break;
+
+									devName = String::UnicodeToUtf8<const WCHAR*, std::string>(devNameBuf);
+								}
+								info.name = devName;
+
+								if (++foundCount == hasIdCount) break;
+							}
+						}
+					}
+
+					CloseHandle(hidHandle);
+
+					if (foundCount >= hasIdCount) break;
+				}
+
+				if (detail) free(detail);
+				SetupDiDestroyDeviceInfoList(hDevInfo);
 			}
 		}
 

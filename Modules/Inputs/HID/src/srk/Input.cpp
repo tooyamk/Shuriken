@@ -1,7 +1,6 @@
 #include "CreateModule.h"
 #include "GamepadDriver.h"
 #include "GamepadDriverDS4.h"
-#include "srk/HID.h"
 #include "srk/hash/xxHash.h"
 
 namespace srk::modules::inputs::hid_input {
@@ -55,6 +54,8 @@ namespace srk::modules::inputs::hid_input {
 					break;
 				}
 			}
+
+			return true;
 		});
 
 		std::vector<DeviceInfo> add;

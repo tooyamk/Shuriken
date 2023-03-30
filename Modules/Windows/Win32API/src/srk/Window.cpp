@@ -24,10 +24,12 @@ namespace srk::modules::windows::win32api {
 	bool Window::create(const CreateWindowDesc& desc) {
 		if (_data.isCreated) return false;
 
+		auto handle = GetModuleHandleW(nullptr);
+
 		_data.contentRect.size = desc.contentSize;
 		_data.isFullScreen = desc.fullScreen;
 		_data.title = desc.title;
-		_data.module = GetModuleHandleW(nullptr);
+		_data.module = handle;
 		_data.style = desc.style;
 		_data.bkBrush = CreateSolidBrush(RGB(desc.style.backgroundColor[0], desc.style.backgroundColor[1], desc.style.backgroundColor[2]));
 		_data.className = String::Utf8ToUnicode(String::toString(Application::getCurrentProcessId()));
@@ -42,7 +44,7 @@ namespace srk::modules::windows::win32api {
 		wnd.lpfnWndProc = Window::_wndProc;
 		wnd.cbClsExtra = 0;
 		wnd.cbWndExtra = 0;
-		wnd.hInstance = GetModuleHandleW(nullptr);
+		wnd.hInstance = handle;
 		wnd.hIcon = nullptr;//LoadIcon(NULL, IDI_APPLICATION);
 		wnd.hCursor = LoadCursor(nullptr, IDC_ARROW);
 		wnd.hbrBackground = _data.bkBrush;

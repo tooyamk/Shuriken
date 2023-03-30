@@ -735,6 +735,6 @@ namespace srk::modules::inputs {
 		DeviceType filters = DeviceType::UNKNOWN;
 		windows::IWindow* window = nullptr;
 		size_t argc = 0;
-		const void** argv = nullptr;
+		const std::string_view* argv = nullptr;
 	};
 }

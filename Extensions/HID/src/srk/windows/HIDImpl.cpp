@@ -134,20 +134,18 @@ namespace srk::extensions {
 		PSP_DEVICE_INTERFACE_DETAIL_DATA_A detail = nullptr;
 		size_t mallocDetailSize = 0;
 
-		for (int32_t i = 0; SetupDiEnumDeviceInterfaces(hDevInfo, nullptr, &guid, i, &deviceInterfaceData) != 0; ++i) {
+		for (DWORD i = 0; SetupDiEnumDeviceInterfaces(hDevInfo, nullptr, &guid, i, &deviceInterfaceData) != 0; ++i) {
 			DWORD requiredSize = 0;
 
-			SetupDiGetDeviceInterfaceDetailA(hDevInfo, &deviceInterfaceData, nullptr, 0, &requiredSize, nullptr);
-			if (requiredSize == 0) continue;
+			if (SetupDiGetDeviceInterfaceDetailA(hDevInfo, &deviceInterfaceData, nullptr, 0, &requiredSize, nullptr); requiredSize == 0) continue;
 
 			if (mallocDetailSize < requiredSize) {
 				if (detail) free(detail);
 
 				mallocDetailSize = requiredSize;
-				detail = (PSP_INTERFACE_DEVICE_DETAIL_DATA_A)malloc(requiredSize);
-				if (!detail) continue;
+				if (detail = (PSP_INTERFACE_DEVICE_DETAIL_DATA_A)malloc(requiredSize); !detail) break;
 
-				detail->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA);
+				detail->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_A);
 			}
 
 			if (!SetupDiGetDeviceInterfaceDetailA(hDevInfo, &deviceInterfaceData, detail, requiredSize, nullptr, nullptr)) continue;
@@ -169,9 +167,11 @@ namespace srk::extensions {
 			HIDDeviceInfo info;
 			info.handle = handle;
 			info.pathView = detail->DevicePath;
-			callback(info, custom);
+			auto isContinue = callback(info, custom);
 
 			CloseHandle(handle);
+
+			if (!isContinue) break;
 		}
 
 		if (detail) free(detail);

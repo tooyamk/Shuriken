@@ -463,40 +463,34 @@ public:
 			if (0) {
 				createInputModuleDesc.filters = DeviceType::KEYBOARD;
 				auto ignoreXInputDevices = false;
-				const void* argv[2];
-				argv[0] = "ignore-xinput-devices";
-				argv[1] = &ignoreXInputDevices;
+				std::string_view argv[2];
+				argv[0] = "ignore-xinput-devices"sv;
+				argv[1] = ignoreXInputDevices ? "true"sv : "false"sv;
 				createInputModuleDesc.argc = std::extent_v<decltype(argv)>;
 				createInputModuleDesc.argv = argv;
 				initInputModule(inputModules, getDllPath("srk-module-input-direct-input"), createInputModuleDesc);
 			}
-			if (1) {
+			if (0) {
 				createInputModuleDesc.filters = DeviceType::KEYBOARD;
 				initInputModule(inputModules, getDllPath("srk-module-input-raw-input"), createInputModuleDesc);
 			}
-			if (0) {
+			if (1) {
 				createInputModuleDesc.filters = DeviceType::GAMEPAD;
-				auto useHiddenAPI1_4 = true;
-				const void* argv[2];
-				argv[0] = "use-hidden-api-1-4";
-				argv[1] = &useHiddenAPI1_4;
-				createInputModuleDesc.argc = std::extent_v<decltype(argv)>;
-				createInputModuleDesc.argv = argv;
 				initInputModule(inputModules, getDllPath("srk-module-input-xinput"), createInputModuleDesc);
 			}
 			if (0) {
 				createInputModuleDesc.filters = DeviceType::GAMEPAD;
-				initInputModule(inputModules, getDllPath("srk-module-input-hid-input"), createInputModuleDesc);
+				initInputModule(inputModules, getDllPath("srk-module-input-hid"), createInputModuleDesc);
 			}
 		} else if constexpr (Environment::OPERATING_SYSTEM == Environment::OperatingSystem::LINUX) {
 			if (1) {
 				createInputModuleDesc.filters = DeviceType::GAMEPAD | DeviceType::KEYBOARD;
-				initInputModule(inputModules, getDllPath("srk-module-input-evdev-input"), createInputModuleDesc);
+				initInputModule(inputModules, getDllPath("srk-module-input-evdev"), createInputModuleDesc);
 			}
 
 			if (0) {
 				createInputModuleDesc.filters = DeviceType::GAMEPAD;
-				initInputModule(inputModules, getDllPath("srk-module-input-hid-input"), createInputModuleDesc);
+				initInputModule(inputModules, getDllPath("srk-module-input-hid"), createInputModuleDesc);
 			}
 		}
 

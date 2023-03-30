@@ -15,10 +15,12 @@ namespace srk::modules::inputs::direct_input {
 		_eventDispatcher(new events::EventDispatcher<ModuleEvent>()),
 		_ignoreXInputDevices(false),
 		_di(nullptr) {
+		using namespace std::string_view_literals;
+
 		for (size_t i = 1; i < desc.argc; i += 2) {
-			std::string_view key = (const char*)desc.argv[i - 1];
-			if (key == "ignore-xinput-devices") {
-				_ignoreXInputDevices = *(bool*)desc.argv[i];
+			auto key = desc.argv[i - 1];
+			if (key == "ignore-xinput-devices"sv) {
+				_ignoreXInputDevices = desc.argv[i] == "true"sv;
 			}
 		}
 	}

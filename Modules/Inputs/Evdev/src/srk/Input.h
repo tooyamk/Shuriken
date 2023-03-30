@@ -3,7 +3,7 @@
 #include "Base.h"
 #include "srk/events/EventDispatcher.h"
 
-#define SRK_MODULE_INPUT_EVDEV_INPUT_PATH_BUFFER {"/dev/input/eventxxx" }
+#define SRK_MODULE_INPUT_EVDEV_PATH_BUFFER {"/dev/input/eventxxx" }
 
 namespace srk::modules::inputs::evdev_input {
 	class SRK_MODULE_DLL Input : public IInputModule {

@@ -3,6 +3,7 @@
 #include "Mouse.h"
 #include "CreateModule.h"
 #include "srk/hash/xxHash.h"
+#include <hidsdi.h>
 
 namespace srk::modules::inputs::raw_input {
 	Input::Input(Ref* loader, const CreateInputModuleDesc& desc) :
@@ -22,7 +23,7 @@ namespace srk::modules::inputs::raw_input {
 	}
 
 	void Input::poll() {
-		using namespace std::literals;
+		using namespace std::string_view_literals;
 		using namespace srk::enum_operators;
 
 		std::vector<InternalDeviceInfo> newDevices;
@@ -34,6 +35,8 @@ namespace srk::modules::inputs::raw_input {
 
 		char buffer[256];
 		UINT pcbSize = sizeof(buffer);
+
+		wchar_t deviceName[256];
 
 		for (decltype(deviceCount) i = 0; i < deviceCount; ++i) {
 			auto dev = devices[i];
@@ -52,21 +55,26 @@ namespace srk::modules::inputs::raw_input {
 
 			if ((dt & _filters) == DeviceType::UNKNOWN) continue;
 
-			auto& di = newDevices.emplace_back();
-			di.hDevice = dev.hDevice;
-			di.type = dt;
+			auto& info = newDevices.emplace_back();
+			info.hDevice = dev.hDevice;
+			info.type = dt;
 
 			if (auto size = GetRawInputDeviceInfoA(dev.hDevice, RIDI_DEVICENAME, buffer, &pcbSize); size > 0) {
-				std::string_view info(buffer, size - 1);
+				std::string_view path(buffer, size - 1);
 
-				if (auto p = String::find(info, "VID_"sv); p != std::string_view::npos) di.vendorID = String::toNumber<uint16_t>(info.substr(p + 4, 4), 16);
-				if (auto p = String::find(info, "PID_"sv); p != std::string_view::npos) di.productID = String::toNumber<uint16_t>(info.substr(p + 4, 4), 16);
+				if (auto p = path.find("VID_"sv); p != std::string_view::npos) info.vendorID = String::toNumber<uint16_t>(path.substr(p + 4, 4), 16);
+				if (auto p = path.find("PID_"sv); p != std::string_view::npos) info.productID = String::toNumber<uint16_t>(path.substr(p + 4, 4), 16);
 
 				auto hd = (uintptr_t)dev.hDevice;
-				di.guid.set<false, false>(&hd, sizeof(hd));
+				info.guid.set<false, false>(&hd, sizeof(hd));
 				
-				auto hash = hash::xxHash<64>::calc(info.data(), info.size(), 0);
-				di.guid.set<false, true>(&hash, sizeof(hash), sizeof(hd));
+				auto hash = hash::xxHash<64>::calc(path.data(), path.size(), 0);
+				info.guid.set<false, true>(&hash, sizeof(hash), sizeof(hd));
+
+				if (auto hidHandle = CreateFileA(path.data(), 0, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr); hidHandle != INVALID_HANDLE_VALUE) {
+					if (HidD_GetProductString(hidHandle, deviceName, sizeof(deviceName))) info.name = String::UnicodeToUtf8<const WCHAR*, std::string>(deviceName);
+					CloseHandle(hidHandle);
+				}
 			}
 		}
 
