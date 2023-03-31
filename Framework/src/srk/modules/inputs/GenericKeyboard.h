@@ -1,7 +1,6 @@
 #pragma once
 
 #include "srk/modules/inputs/InputModule.h"
-#include <optional>
 #include <shared_mutex>
 
 namespace srk::modules::inputs {
@@ -11,16 +10,26 @@ namespace srk::modules::inputs {
 	public:
 		class SRK_FW_DLL Buffer {
 		public:
-			using Data = uint8_t[((size_t)KeyboardVirtualKeyCode::VIRTUAL_KEY_MAX + 7) >> 3];
+			static constexpr size_t COUNT = (size_t)KeyboardVirtualKeyCode::DEFINED_END - (size_t)KeyboardVirtualKeyCode::DEFINED_START + 1;
+			using Data = uint8_t[(COUNT + 7) >> 3];
+
+			Buffer();
+			Buffer(nullptr_t);
 
 			Data data;
+
+			inline static bool SRK_CALL isValid(KeyboardVirtualKeyCode vk) {
+				using namespace srk::enum_operators;
+
+				return (size_t)(vk - KeyboardVirtualKeyCode::DEFINED_START) < COUNT;
+			}
 
 			inline void SRK_CALL set(KeyboardVirtualKeyCode vk, bool pressed) {
 				using namespace srk::enum_operators;
 
-				if (vk > KeyboardVirtualKeyCode::VIRTUAL_KEY_MAX) return;
+				auto i = (size_t)(vk - KeyboardVirtualKeyCode::DEFINED_START);
+				if (i >= COUNT) return;
 
-				auto i = (size_t)vk;
 				auto pos = i >> 3;
 				auto mask = 1 << (i & 0b111);
 				data[pos] &= ~mask;
@@ -30,9 +39,9 @@ namespace srk::modules::inputs {
 			inline bool SRK_CALL get(KeyboardVirtualKeyCode vk) const {
 				using namespace srk::enum_operators;
 
-				if (vk > KeyboardVirtualKeyCode::VIRTUAL_KEY_MAX) return false;
+				auto i = (size_t)(vk - KeyboardVirtualKeyCode::DEFINED_START);
+				if (i >= COUNT) return false;
 
-				auto i = (size_t)vk;
 				return data[i >> 3] & (1 << (i & 0b111));
 			}
 		};

@@ -1,11 +1,11 @@
 #include "KeyboardDriver.h"
 #include "Input.h"
+//#include "srk/Printer.h"
 
 namespace srk::modules::inputs::raw_input {
 	KeyboardDriver::KeyboardDriver(Input& input, windows::IWindow& win, HANDLE handle) :
 		_listener(input, win, handle, DeviceType::KEYBOARD, &KeyboardDriver::_callback, this),
 		_changed(false) {
-		memset(&_inputBuffer, 0, sizeof(_inputBuffer));
 		_listener.start();
 	}
 
@@ -26,16 +26,22 @@ namespace srk::modules::inputs::raw_input {
 	}
 
 	void KeyboardDriver::_callback(const RAWINPUT& rawInput, void* target) {
+		using namespace std::string_view_literals;
+
 		auto driver = (KeyboardDriver*)target;
 
 		auto& kb = rawInput.data.keyboard;
+		auto vk = _getVirtualKey(kb);
+		//printaln(kb.VKey, "    "sv, kb.MakeCode, "    "sv, kb.Flags);
+		if (!GenericKeyboard::Buffer::isValid(vk)) return;
+
 		switch (kb.Message) {
 		case WM_KEYDOWN:
 		case WM_SYSKEYDOWN:
 		{
 			{
 				std::scoped_lock lock(driver->_lock);
-				driver->_inputBuffer.set(_getVirtualKey(kb), true);
+				driver->_inputBuffer.set(vk, true);
 			}
 			driver->_changed.store(true);
 
@@ -46,7 +52,7 @@ namespace srk::modules::inputs::raw_input {
 		{
 			{
 				std::scoped_lock lock(driver->_lock);
-				driver->_inputBuffer.set(_getVirtualKey(kb), false);
+				driver->_inputBuffer.set(vk, false);
 			}
 			driver->_changed.store(true);
 
@@ -58,15 +64,17 @@ namespace srk::modules::inputs::raw_input {
 	}
 
 	KeyboardVirtualKeyCode KeyboardDriver::_getVirtualKey(const RAWKEYBOARD& raw) {
-		switch ((KeyboardVirtualKeyCode)raw.VKey) {
-		case KeyboardVirtualKeyCode::SHIFT:
+		switch (raw.VKey) {
+		case VK_SHIFT:
 			return raw.MakeCode == 0x2A ? KeyboardVirtualKeyCode::L_SHIFT : KeyboardVirtualKeyCode::R_SHIFT;
-		case KeyboardVirtualKeyCode::CTRL:
-			return raw.Flags & RI_KEY_E0 ? KeyboardVirtualKeyCode::R_CTRL : KeyboardVirtualKeyCode::L_CTRL;
-		case KeyboardVirtualKeyCode::ALT:
+		case VK_CONTROL:
+			return raw.Flags & RI_KEY_E0 ? KeyboardVirtualKeyCode::R_CONTROL : KeyboardVirtualKeyCode::L_CONTROL;
+		case VK_MENU:
 			return raw.Flags & RI_KEY_E0 ? KeyboardVirtualKeyCode::R_ALT : KeyboardVirtualKeyCode::L_ALT;
+		case VK_RETURN:
+			return raw.Flags & RI_KEY_E0 ? KeyboardVirtualKeyCode::NUMPAD_ENTER : KeyboardVirtualKeyCode::ENTER;
 		default:
-			return (KeyboardVirtualKeyCode)raw.VKey;
+			return VK_MAPPER[raw.VKey];
 		}
 	}
 }

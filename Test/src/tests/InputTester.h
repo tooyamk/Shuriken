@@ -18,54 +18,187 @@
 
 class InputTester : public BaseTester {
 public:
+	static std::string SRK_CALL getKeyboardKeyString(KeyboardVirtualKeyCode code) {
+		using namespace srk::enum_operators;
+
+		if (code >= KeyboardVirtualKeyCode::A && code <= KeyboardVirtualKeyCode::Z) {
+			static constexpr char MAP[] = { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z' };
+			std::string s;
+			s += MAP[(size_t)(code - KeyboardVirtualKeyCode::A)];
+			return std::move(s);
+		} else if (code >= KeyboardVirtualKeyCode::_0 && code <= KeyboardVirtualKeyCode::_9) {
+			return String::toString((size_t)(code - KeyboardVirtualKeyCode::_0));
+		} else if (code >= KeyboardVirtualKeyCode::NUM_LOCK && code <= KeyboardVirtualKeyCode::NUMPAD_ENTER) {
+			std::string s("num_");
+
+			if (code >= KeyboardVirtualKeyCode::NUMPAD_0 && code <= KeyboardVirtualKeyCode::NUMPAD_9) {
+				s += String::toString((size_t)(code - KeyboardVirtualKeyCode::NUMPAD_0));
+			} else {
+				switch (code) {
+				case KeyboardVirtualKeyCode::NUM_LOCK:
+					s += "lock";
+					break;
+				case KeyboardVirtualKeyCode::NUMPAD_ADD:
+					s += "+";
+					break;
+				case KeyboardVirtualKeyCode::NUMPAD_SUBTRACT:
+					s += "-";
+					break;
+				case KeyboardVirtualKeyCode::NUMPAD_MULTIPLY:
+					s += "*";
+					break;
+				case KeyboardVirtualKeyCode::NUMPAD_DIVIDE:
+					s += "/";
+					break;
+				case KeyboardVirtualKeyCode::NUMPAD_DOT:
+					s += ".";
+					break;
+				case KeyboardVirtualKeyCode::NUMPAD_ENTER:
+					s += "enter";
+					break;
+					default:
+					s += "undnown";
+					break;
+				}
+			}
+
+			return std::move(s);
+		} else if (code >= KeyboardVirtualKeyCode::F1 && code <= KeyboardVirtualKeyCode::F24) {
+			return "f" + String::toString((size_t)(code - KeyboardVirtualKeyCode::F1 + 1));
+		} else {
+			switch (code) {
+			case KeyboardVirtualKeyCode::L_SHIFT:
+				return "l_shift";
+			case KeyboardVirtualKeyCode::R_SHIFT:
+				return "r_shift";
+			case KeyboardVirtualKeyCode::L_CONTROL:
+				return "l_ctrl";
+			case KeyboardVirtualKeyCode::R_CONTROL:
+				return "r_ctrl";
+			case KeyboardVirtualKeyCode::L_ALT:
+				return "l_alt";
+			case KeyboardVirtualKeyCode::R_ALT:
+				return "r_alt";
+			case KeyboardVirtualKeyCode::L_WIN:
+				return "l_win";
+			case KeyboardVirtualKeyCode::R_WIN:
+				return "r_win";
+			case KeyboardVirtualKeyCode::LEFT_BRACKET:
+				return "[";
+			case KeyboardVirtualKeyCode::RIGHT_BRACKET:
+				return "]";
+			case KeyboardVirtualKeyCode::SLASH:
+				return "/";
+			case KeyboardVirtualKeyCode::BACK_SLASH:
+				return "\\";
+			case KeyboardVirtualKeyCode::MINUS:
+				return "-";
+			case KeyboardVirtualKeyCode::EQUAL:
+				return "=";
+			case KeyboardVirtualKeyCode::SEMICOLON:
+				return ";";
+			case KeyboardVirtualKeyCode::APOSTROPHE:
+				return "'";
+			case KeyboardVirtualKeyCode::COMMA:
+				return ",";
+			case KeyboardVirtualKeyCode::DOT:
+				return ".";
+			case KeyboardVirtualKeyCode::GRAVE:
+				return "`";
+			case KeyboardVirtualKeyCode::PRINT_SCREEN:
+				return "print_screen";
+			case KeyboardVirtualKeyCode::SCORLL_LOCK:
+				return "scroll_lock";
+			case KeyboardVirtualKeyCode::PAUSE:
+				return "pause";
+			case KeyboardVirtualKeyCode::INSERT:
+				return "insert";
+			case KeyboardVirtualKeyCode::DEL:
+				return "delete";
+			case KeyboardVirtualKeyCode::HONE:
+				return "hone";
+			case KeyboardVirtualKeyCode::END:
+				return "end";
+			case KeyboardVirtualKeyCode::PAGE_UP:
+				return "page_up";
+			case KeyboardVirtualKeyCode::PAGE_DOWN:
+				return "page_down";
+			case KeyboardVirtualKeyCode::LEFT:
+				return "left";
+			case KeyboardVirtualKeyCode::RIGHT:
+				return "right";
+			case KeyboardVirtualKeyCode::DOWN:
+				return "down";
+			case KeyboardVirtualKeyCode::UP:
+				return "up";
+			case KeyboardVirtualKeyCode::ESCAPE:
+				return "esc";
+			case KeyboardVirtualKeyCode::BACKSPACE:
+				return "backspace";
+			case KeyboardVirtualKeyCode::TAB:
+				return "tab";
+			case KeyboardVirtualKeyCode::CAPS_LOCK:
+				return "caps_lock";
+			case KeyboardVirtualKeyCode::ENTER:
+				return "enter";
+			case KeyboardVirtualKeyCode::SPACE:
+				return "space";
+			case KeyboardVirtualKeyCode::APPS:
+				return "apps";
+			default:
+				return "undnown";
+			}
+		}
+	}
+
 	static std::string SRK_CALL getGamepadKeyString(GamepadVirtualKeyCode code) {
 		switch (code) {
 		case GamepadVirtualKeyCode::L_STICK:
-			return "left stick";
+			return "left_stick";
 		case GamepadVirtualKeyCode::R_STICK:
-			return "right stick";
+			return "right_stick";
 		case GamepadVirtualKeyCode::L_STICK_X_LEFT:
-			return "left stick -x";
+			return "left_stick(-x)";
 		case GamepadVirtualKeyCode::L_STICK_X_RIGHT:
-			return "left stick +x";
+			return "left_stick(+x)";
 		case GamepadVirtualKeyCode::L_STICK_Y_DOWN:
-			return "left stick -y";
+			return "left_stick(-y)";
 		case GamepadVirtualKeyCode::L_STICK_Y_UP:
-			return "left stick +y";
+			return "left_stick(+y)";
 		case GamepadVirtualKeyCode::R_STICK_X_LEFT:
-			return "right stick -x";
+			return "right_stick(-x)";
 		case GamepadVirtualKeyCode::R_STICK_X_RIGHT:
-			return "right stick +x";
+			return "right_stick(+x)";
 		case GamepadVirtualKeyCode::R_STICK_Y_DOWN:
-			return "right stick -y";
+			return "right_stick(-y)";
 		case GamepadVirtualKeyCode::R_STICK_Y_UP:
-			return "right stick +y";
+			return "right_stick(+y)";
 		case GamepadVirtualKeyCode::DPAD_LEFT:
-			return "dpad -x";
+			return "dpad(-x)";
 		case GamepadVirtualKeyCode::DPAD_RIGHT:
-			return "dpad +x";
+			return "dpad(+x)";
 		case GamepadVirtualKeyCode::DPAD_DOWN:
-			return "dpad -y";
+			return "dpad(-y)";
 		case GamepadVirtualKeyCode::DPAD_UP:
-			return "dpad +y";
+			return "dpad(+y)";
 		case GamepadVirtualKeyCode::L_THUMB:
-			return "left thumb";
+			return "left_thumb";
 		case GamepadVirtualKeyCode::R_THUMB:
-			return "right thumb";
+			return "right_thumb";
 		case GamepadVirtualKeyCode::DPAD:
 			return "dpad";
 		case GamepadVirtualKeyCode::L_SHOULDER:
-			return "left shoulder";
+			return "left_shoulder";
 		case GamepadVirtualKeyCode::R_SHOULDER:
-			return "right shoulder";
+			return "right_shoulder";
 		case GamepadVirtualKeyCode::L_TRIGGER:
-			return "left trigger";
+			return "left_trigger";
 		case GamepadVirtualKeyCode::R_TRIGGER:
-			return "right trigger";
+			return "right_trigger";
 		case GamepadVirtualKeyCode::L_TRIGGER_BUTTON:
-			return "left trigger button";
+			return "left_trigger_button";
 		case GamepadVirtualKeyCode::R_TRIGGER_BUTTON:
-			return "right trigger button";
+			return "right_trigger_button";
 		case GamepadVirtualKeyCode::SELECT:
 			return "select";
 		case GamepadVirtualKeyCode::START:
@@ -79,16 +212,16 @@ public:
 		case GamepadVirtualKeyCode::Y:
 			return "y";
 		case GamepadVirtualKeyCode::TOUCH_PAD:
-			return "touch pad";
+			return "touch_pad";
 		default:
 		{
 			if (code >= GamepadVirtualKeyCode::UNDEFINED_AXIS_1 && code <= GamepadVirtualKeyCode::UNDEFINED_AXIS_END) {
-				return "undefined axis " + String::toString((uint32_t)(code - GamepadVirtualKeyCode::UNDEFINED_AXIS_1) + 1);
+				return "undefined_axis_" + String::toString((uint32_t)(code - GamepadVirtualKeyCode::UNDEFINED_AXIS_1) + 1);
 			} else if (code >= GamepadVirtualKeyCode::UNDEFINED_BUTTON_1 && code <= GamepadVirtualKeyCode::UNDEFINED_BUTTON_END) {
-				return "undefined button " + String::toString((uint32_t)(code - GamepadVirtualKeyCode::UNDEFINED_BUTTON_1) + 1);
+				return "undefined_button_" + String::toString((uint32_t)(code - GamepadVirtualKeyCode::UNDEFINED_BUTTON_1) + 1);
 			}
 
-			return "unknown " + String::toString((size_t)code);
+			return "unknown_" + String::toString((size_t)code);
 		}
 		}
 	}
@@ -460,7 +593,7 @@ public:
 		createInputModuleDesc.window = win;
 
 		if constexpr (Environment::OPERATING_SYSTEM == Environment::OperatingSystem::WINDOWS) {
-			if (0) {
+			if (1) {
 				createInputModuleDesc.filters = DeviceType::KEYBOARD;
 				auto ignoreXInputDevices = false;
 				std::string_view argv[2];
@@ -474,7 +607,7 @@ public:
 				createInputModuleDesc.filters = DeviceType::KEYBOARD;
 				initInputModule(inputModules, getDllPath("srk-module-input-raw-input"), createInputModuleDesc);
 			}
-			if (1) {
+			if (0) {
 				createInputModuleDesc.filters = DeviceType::GAMEPAD;
 				initInputModule(inputModules, getDllPath("srk-module-input-xinput"), createInputModuleDesc);
 			}
@@ -608,20 +741,26 @@ public:
 								auto state = e.getData<DeviceState>();
 								if (state->code == KeyboardVirtualKeyCode::ENTER) {
 									float32_t state = 0.0f;
-									if (device->getState(DeviceStateType::KEY, KeyboardVirtualKeyCode::R_CTRL, &state, 1) && state != 0.f) {
+									if (device->getState(DeviceStateType::KEY, KeyboardVirtualKeyCode::R_CONTROL, &state, 1) && state != 0.f) {
 										win->toggleFullScreen();
 									}
 								}
 
-								printaln(L"keyboard down -> key : "sv, state->code, L"    value : "sv, ((DeviceStateValue*)state->values)[0]);
+								printaln(L"keyboard down -> key : "sv, getKeyboardKeyString((KeyboardVirtualKeyCode)state->code), L"    value : "sv, ((DeviceStateValue*)state->values)[0]);
 
 								if (state->code == KeyboardVirtualKeyCode::ENTER) {
-									float val[2];
-									device->getState(DeviceStateType::KEY, KeyboardVirtualKeyCode::CTRL, &val[0], 1);
-									device->getState(DeviceStateType::KEY, KeyboardVirtualKeyCode::ALT, &val[1], 1);
-									if (val[0] == 1.0f && val[1] == 1.0f) {
+									do {
+										float val;
+										if (!device->getState(DeviceStateType::KEY, KeyboardVirtualKeyCode::L_CONTROL, &val, 1) || val == 0.f) {
+											if (!device->getState(DeviceStateType::KEY, KeyboardVirtualKeyCode::R_CONTROL, &val, 1) || val == 0.f) break;
+										}
+
+										if (!device->getState(DeviceStateType::KEY, KeyboardVirtualKeyCode::L_ALT, &val, 1) || val == 0.f) {
+											if (!device->getState(DeviceStateType::KEY, KeyboardVirtualKeyCode::R_ALT, &val, 1) || val == 0.f) break;
+										}
+										
 										win->toggleFullScreen();
-									}
+									} while (false);
 								}
 
 								break;
@@ -654,6 +793,10 @@ public:
 							switch (info.type) {
 							case DeviceType::KEYBOARD:
 							{
+								auto state = e.getData<DeviceState>();
+
+								printaln(L"keyboard up -> key : "sv, getKeyboardKeyString((KeyboardVirtualKeyCode)state->code), L"    value : "sv, ((DeviceStateValue*)state->values)[0]);
+
 								break;
 							}
 							case DeviceType::GAMEPAD:

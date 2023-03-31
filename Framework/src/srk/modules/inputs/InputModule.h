@@ -95,62 +95,14 @@ namespace srk::modules::inputs {
 
 	enum class KeyboardVirtualKeyCode : uint8_t {
 		UNKNOWN,
-		//1...
-		BACKSPACE = 8,
-		TAB,
-		//10...
-		CLEAR = 12,
-		ENTER,
-		//14...
-		SHIFT = 16,
-		CTRL,
-		ALT,
-		PAUSE,
-		CAPS_LOCK,//20
-		KANA,
-		//22...
-		JUNJA = 23,
-		FINAL,
-		HANJA,
-		//26...
-		ESCAPE = 27,
-		CONVERT,
-		NOCONVERT,
-		ACCEPT,//30
-		MODECHANGE,
-		SPACE,
-		PAGE_UP,
-		PAGE_DOWN,
-		END,
-		HONE,
-		LEFT,
-		UP,
-		RIGHT,
-		DOWN,//40
-		SELECT,
-		PRINT,
-		EXE,
-		SNAPSHOT,
-		INSERT,
-		DEL,
-		HELP,
-		_0,
-		_1,
-		_2,//50
-		_3,
-		_4,
-		_5,
-		_6,
-		_7,
-		_8,
-		_9,
-		//58...
-		A = 65,
+
+		DEFINED_START,
+		A = DEFINED_START,
 		B,
 		C,
 		D,
 		E,
-		F,//70
+		F,
 		G,
 		H,
 		I,
@@ -160,7 +112,7 @@ namespace srk::modules::inputs {
 		M,
 		N,
 		O,
-		P,//80
+		P,
 		Q,
 		R,
 		S,
@@ -170,28 +122,37 @@ namespace srk::modules::inputs {
 		W,
 		X,
 		Y,
-		Z,//90
-		L_WIN,
-		R_WIN,
-		APPS,
-		//94...
-		SLEEP = 95,
+		Z,
+
+		_0,
+		_1,
+		_2,
+		_3,
+		_4,
+		_5,
+		_6,
+		_7,
+		_8,
+		_9,
+
+		NUM_LOCK,
 		NUMPAD_0,
 		NUMPAD_1,
 		NUMPAD_2,
 		NUMPAD_3,
-		NUMPAD_4,//100
+		NUMPAD_4,
 		NUMPAD_5,
 		NUMPAD_6,
 		NUMPAD_7,
 		NUMPAD_8,
 		NUMPAD_9,
-		MULTIPLY,
-		ADD,
+		NUMPAD_ADD,
+		NUMPAD_SUBTRACT,
+		NUMPAD_DIVIDE,
+		NUMPAD_MULTIPLY,
+		NUMPAD_DOT,//DECIMAL
 		NUMPAD_ENTER,
-		SUBTRACT,
-		DECIMAL,//110
-		DIVIDE,
+
 		F1,
 		F2,
 		F3,
@@ -200,7 +161,7 @@ namespace srk::modules::inputs {
 		F6,
 		F7,
 		F8,
-		F9,//120
+		F9,
 		F10,
 		F11,
 		F12,
@@ -210,93 +171,69 @@ namespace srk::modules::inputs {
 		F16,
 		F17,
 		F18,
-		F19,//130
+		F19,
 		F20,
 		F21,
 		F22,
 		F23,
 		F24,
-		//136...
-		NUM_LOCK = 144,
-		SCORLL,
-		OEM_NEC_EQUAL,
-		OEM_FJ_MASSHOU,
-		OEM_FJ_TOUROKU,
-		OEM_FJ_LOYA,
-		OEM_FJ_ROYA,//150
-		//151...
-		L_SHIFT = 160,
+
+		L_SHIFT,
 		R_SHIFT,
-		L_CTRL,
-		R_CTRL,
+		L_CONTROL,
+		R_CONTROL,
 		L_ALT,
 		R_ALT,
-		WEB_BACK,
-		WEB_FORWARD,
-		WEB_REFRESH,
-		WEB_STOP,
-		WEB_SEARCH,//170
-		WEB_FAVORITES,
-		WEB_HOME,
-		VOLUME_MUTE,
-		VOLUME_DOWN,
-		VOLUME_UP,
-		MEDIA_NEXT_TRACK,
-		MEDIA_PREV_TRACK,
-		MEDIA_STOP,
-		MEDIA_PLAY_PAUSE,
-		LAUNCH_MAIL,//180
-		LAUNCH_MEDIA_SELECT,
-		LAUNCH_APP1,
-		LAUNCH_APP2,
-		//184...
-		SEMICOLON = 186,//;
-		EQUALS,//=
-		COMMA,//,
-		MINUS,//-
-		PERIOD,//. 190
-		SLASH,///
-		GRAVE,//`
-		//193...
-		LBRACKET = 219,//[
-		BACK_SLASH,//|
-		RBRACKET,//]
-		APOSTROPHE,//'
-		OEM_8,
-		//224...
-		AX = 225,
-		OEM_102,
-		ICO_HELP,
-		ICO_00,
-		PROCESSKEY,
-		ICO_CLEAR,//230
-		PACKET,
-		//232...
-		OEM_RESET = 233,
-		OEM_JUMP,
-		OEM_PA1,
-		OEM_PA2,
-		OEM_PA3,
-		OEM_WSCTRL,
-		OEM_CUSEL,
-		OEM_ATTN,//240
-		OEM_FINISH,
-		OEM_COPY,
-		OEM_AUTO,
-		OEM_ENLW,
-		OEM_BACKTAB,
-		ATTN,
-		CRSEL,
-		EXSEL,
-		EREOF,
-		PLAY,//250
-		ZOOM,
-		NONAME,
-		PA1,
-		OEM_CLEAR,
-		//255...
+		L_WIN,
+		R_WIN,
 
-		VIRTUAL_KEY_MAX = 255
+		LEFT_BRACKET,//[
+		RIGHT_BRACKET,//]
+
+		SLASH,///
+		BACK_SLASH,//|
+
+		MINUS,//-
+		EQUAL,//=
+
+		SEMICOLON,//;
+		APOSTROPHE,//'
+
+		COMMA,//,
+		DOT,//. PERIOD
+
+		GRAVE,//`
+
+		PRINT_SCREEN,
+		SCORLL_LOCK,
+		PAUSE,
+
+		INSERT,
+		DEL,
+
+		HONE,
+		END,
+
+		PAGE_UP,
+		PAGE_DOWN,
+
+		LEFT,
+		RIGHT,
+		DOWN,
+		UP,
+		
+		ESCAPE,
+		BACKSPACE,
+		TAB,
+		CAPS_LOCK,
+		ENTER,
+		SPACE,
+
+		APPS,
+
+		DEFINED_END = APPS,
+
+		UNDEFINED
 	};
 
 

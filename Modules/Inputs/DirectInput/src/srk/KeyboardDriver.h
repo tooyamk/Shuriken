@@ -18,8 +18,8 @@ namespace srk::modules::inputs::direct_input {
 		IntrusivePtr<Input> _input;
 		srk_IDirectInputDevice* _dev;
 
-		inline static constexpr KeyboardVirtualKeyCode SK_VK[] = {
-			KeyboardVirtualKeyCode::UNKNOWN,
+		inline static constexpr KeyboardVirtualKeyCode VK_MAPPER[] = {
+			KeyboardVirtualKeyCode::UNDEFINED,
 			KeyboardVirtualKeyCode::ESCAPE,
 			KeyboardVirtualKeyCode::_1,
 			KeyboardVirtualKeyCode::_2,
@@ -32,7 +32,7 @@ namespace srk::modules::inputs::direct_input {
 			KeyboardVirtualKeyCode::_9,
 			KeyboardVirtualKeyCode::_0,
 			KeyboardVirtualKeyCode::MINUS,
-			KeyboardVirtualKeyCode::EQUALS,
+			KeyboardVirtualKeyCode::EQUAL,
 			KeyboardVirtualKeyCode::BACKSPACE,
 			KeyboardVirtualKeyCode::TAB,
 			KeyboardVirtualKeyCode::Q,
@@ -45,10 +45,10 @@ namespace srk::modules::inputs::direct_input {
 			KeyboardVirtualKeyCode::I,
 			KeyboardVirtualKeyCode::O,
 			KeyboardVirtualKeyCode::P,
-			KeyboardVirtualKeyCode::LBRACKET,
-			KeyboardVirtualKeyCode::RBRACKET,
+			KeyboardVirtualKeyCode::LEFT_BRACKET,
+			KeyboardVirtualKeyCode::RIGHT_BRACKET,
 			KeyboardVirtualKeyCode::ENTER,
-			KeyboardVirtualKeyCode::L_CTRL,///30/0x1D
+			KeyboardVirtualKeyCode::L_CONTROL,///30/0x1D
 			KeyboardVirtualKeyCode::A,
 			KeyboardVirtualKeyCode::S,
 			KeyboardVirtualKeyCode::D,
@@ -71,10 +71,10 @@ namespace srk::modules::inputs::direct_input {
 			KeyboardVirtualKeyCode::N,///50/0x31
 			KeyboardVirtualKeyCode::M,
 			KeyboardVirtualKeyCode::COMMA,
-			KeyboardVirtualKeyCode::PERIOD,
+			KeyboardVirtualKeyCode::DOT,
 			KeyboardVirtualKeyCode::SLASH,
 			KeyboardVirtualKeyCode::R_SHIFT,
-			KeyboardVirtualKeyCode::MULTIPLY,
+			KeyboardVirtualKeyCode::NUMPAD_MULTIPLY,
 			KeyboardVirtualKeyCode::L_ALT,
 			KeyboardVirtualKeyCode::SPACE,
 			KeyboardVirtualKeyCode::CAPS_LOCK,
@@ -89,192 +89,192 @@ namespace srk::modules::inputs::direct_input {
 			KeyboardVirtualKeyCode::F9,
 			KeyboardVirtualKeyCode::F10,
 			KeyboardVirtualKeyCode::NUM_LOCK,///70/0x45
-			KeyboardVirtualKeyCode::SCORLL,
+			KeyboardVirtualKeyCode::SCORLL_LOCK,
 			KeyboardVirtualKeyCode::NUMPAD_7,
 			KeyboardVirtualKeyCode::NUMPAD_8,
 			KeyboardVirtualKeyCode::NUMPAD_9,
-			KeyboardVirtualKeyCode::SUBTRACT,
+			KeyboardVirtualKeyCode::NUMPAD_SUBTRACT,
 			KeyboardVirtualKeyCode::NUMPAD_4,
 			KeyboardVirtualKeyCode::NUMPAD_5,
 			KeyboardVirtualKeyCode::NUMPAD_6,
-			KeyboardVirtualKeyCode::ADD,
+			KeyboardVirtualKeyCode::NUMPAD_ADD,
 			KeyboardVirtualKeyCode::NUMPAD_1,///80/0x4F
 			KeyboardVirtualKeyCode::NUMPAD_2,
 			KeyboardVirtualKeyCode::NUMPAD_3,
 			KeyboardVirtualKeyCode::NUMPAD_0,
-			KeyboardVirtualKeyCode::DECIMAL,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::OEM_102,
+			KeyboardVirtualKeyCode::NUMPAD_DOT,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,//OEM_102
 			KeyboardVirtualKeyCode::F11,
 			KeyboardVirtualKeyCode::F12,
-			KeyboardVirtualKeyCode::UNKNOWN,///90/0x59
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,///100/0x63
+			KeyboardVirtualKeyCode::UNDEFINED,///90/0x59
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,///100/0x63
 			KeyboardVirtualKeyCode::F13,
 			KeyboardVirtualKeyCode::F14,
 			KeyboardVirtualKeyCode::F15,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,///110/0x6D
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::KANA,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,//DIK_ABNT_C1
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,///120/0x77
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::CONVERT,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::NOCONVERT,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,//DIK_YEN
-			KeyboardVirtualKeyCode::UNKNOWN,//DIK_ABNT_C2
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,///130/0x81
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,///140/0x8B
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,//DIK_NUMPADEQUALS
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::MEDIA_PREV_TRACK,
-			KeyboardVirtualKeyCode::UNKNOWN,//DIK_AT
-			KeyboardVirtualKeyCode::UNKNOWN,//DIK_COLON
-			KeyboardVirtualKeyCode::UNKNOWN,//DIK_UNDERLINE
-			KeyboardVirtualKeyCode::UNKNOWN,//DIK_KANJI
-			KeyboardVirtualKeyCode::UNKNOWN,//DIK_STOP ///150/0x95
-			KeyboardVirtualKeyCode::AX,
-			KeyboardVirtualKeyCode::UNKNOWN,//DIK_UNLABELED
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::MEDIA_NEXT_TRACK,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,///110/0x6D
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,//KANA
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,//DIK_ABNT_C1
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,///120/0x77
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,//CONVERT
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,//NOCONVERT
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,//DIK_YEN
+			KeyboardVirtualKeyCode::UNDEFINED,//DIK_ABNT_C2
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,///130/0x81
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,///140/0x8B
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,//DIK_NUMPADEQUALS
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,//MEDIA_PREV_TRACK
+			KeyboardVirtualKeyCode::UNDEFINED,//DIK_AT
+			KeyboardVirtualKeyCode::UNDEFINED,//DIK_COLON
+			KeyboardVirtualKeyCode::UNDEFINED,//DIK_UNDERLINE
+			KeyboardVirtualKeyCode::UNDEFINED,//DIK_KANJI
+			KeyboardVirtualKeyCode::UNDEFINED,//DIK_STOP ///150/0x95
+			KeyboardVirtualKeyCode::UNDEFINED,//AX
+			KeyboardVirtualKeyCode::UNDEFINED,//DIK_UNLABELED
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,//MEDIA_NEXT_TRACK
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
 			KeyboardVirtualKeyCode::NUMPAD_ENTER,
-			KeyboardVirtualKeyCode::R_CTRL,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,///160/0x9F
-			KeyboardVirtualKeyCode::VOLUME_MUTE,
-			KeyboardVirtualKeyCode::UNKNOWN,//DIK_CALCULATOR
-			KeyboardVirtualKeyCode::MEDIA_PLAY_PAUSE,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::MEDIA_STOP,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,///170/0xA9
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::VOLUME_DOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::VOLUME_UP,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::WEB_HOME,
-			KeyboardVirtualKeyCode::UNKNOWN,//DIK_NUMPADCOMMA ///180/0xB3
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::DIVIDE,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,//DIK_SYSRQ
+			KeyboardVirtualKeyCode::R_CONTROL,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,///160/0x9F
+			KeyboardVirtualKeyCode::UNDEFINED,//VOLUME_MUTE
+			KeyboardVirtualKeyCode::UNDEFINED,//DIK_CALCULATOR
+			KeyboardVirtualKeyCode::UNDEFINED,//MEDIA_PLAY_PAUSE
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,//MEDIA_STOP
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,///170/0xA9
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,//VOLUME_DOWN
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,//VOLUME_UP
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,//WEB_HOME
+			KeyboardVirtualKeyCode::UNDEFINED,//DIK_NUMPADCOMMA ///180/0xB3
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::NUMPAD_DIVIDE,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::PRINT_SCREEN,//DIK_SYSRQ
 			KeyboardVirtualKeyCode::R_ALT,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,///190/0xBD
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,///190/0xBD
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
 			KeyboardVirtualKeyCode::PAUSE,
-			KeyboardVirtualKeyCode::UNKNOWN,
+			KeyboardVirtualKeyCode::UNDEFINED,
 			KeyboardVirtualKeyCode::HONE,///200/0xC7
 			KeyboardVirtualKeyCode::UP,
 			KeyboardVirtualKeyCode::PAGE_UP,
-			KeyboardVirtualKeyCode::UNKNOWN,
+			KeyboardVirtualKeyCode::UNDEFINED,
 			KeyboardVirtualKeyCode::LEFT,
-			KeyboardVirtualKeyCode::UNKNOWN,
+			KeyboardVirtualKeyCode::UNDEFINED,
 			KeyboardVirtualKeyCode::RIGHT,
-			KeyboardVirtualKeyCode::UNKNOWN,
+			KeyboardVirtualKeyCode::UNDEFINED,
 			KeyboardVirtualKeyCode::END,
 			KeyboardVirtualKeyCode::DOWN,
 			KeyboardVirtualKeyCode::PAGE_DOWN,///210/0xD1
 			KeyboardVirtualKeyCode::INSERT,
 			KeyboardVirtualKeyCode::DEL,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
 			KeyboardVirtualKeyCode::L_WIN,///220/0xDB
 			KeyboardVirtualKeyCode::R_WIN,
 			KeyboardVirtualKeyCode::APPS,
-			KeyboardVirtualKeyCode::UNKNOWN,//DIK_POWER
-			KeyboardVirtualKeyCode::SLEEP,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,//WAKE
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::WEB_SEARCH,///230/0xE5
-			KeyboardVirtualKeyCode::WEB_FAVORITES,
-			KeyboardVirtualKeyCode::WEB_REFRESH,
-			KeyboardVirtualKeyCode::WEB_STOP,
-			KeyboardVirtualKeyCode::WEB_FORWARD,
-			KeyboardVirtualKeyCode::WEB_BACK,
-			KeyboardVirtualKeyCode::UNKNOWN,//DIK_MYCOMPUTER
-			KeyboardVirtualKeyCode::LAUNCH_MAIL,
-			KeyboardVirtualKeyCode::LAUNCH_MEDIA_SELECT,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,///240/0xE9
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,///250/0xF9
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN,
-			KeyboardVirtualKeyCode::UNKNOWN
+			KeyboardVirtualKeyCode::UNDEFINED,//DIK_POWER
+			KeyboardVirtualKeyCode::UNDEFINED,//SLEEP
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,//WAKE
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,//WEB_SEARCH,///230/0xE5
+			KeyboardVirtualKeyCode::UNDEFINED,//WEB_FAVORITES
+			KeyboardVirtualKeyCode::UNDEFINED,//WEB_REFRESH
+			KeyboardVirtualKeyCode::UNDEFINED,//WEB_STOP
+			KeyboardVirtualKeyCode::UNDEFINED,//WEB_FORWARD
+			KeyboardVirtualKeyCode::UNDEFINED,//WEB_BACK
+			KeyboardVirtualKeyCode::UNDEFINED,//DIK_MYCOMPUTER
+			KeyboardVirtualKeyCode::UNDEFINED,//LAUNCH_MAIL
+			KeyboardVirtualKeyCode::UNDEFINED,//LAUNCH_MEDIA_SELECT
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,///240/0xE9
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,///250/0xF9
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED,
+			KeyboardVirtualKeyCode::UNDEFINED
 		};
 	};
 }

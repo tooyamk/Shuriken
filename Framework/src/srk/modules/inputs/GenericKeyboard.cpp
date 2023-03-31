@@ -2,12 +2,19 @@
 #include "srk/events/EventDispatcher.h"
 
 namespace srk::modules::inputs {
+	GenericKeyboard::Buffer::Buffer() {
+		memset(data, 0, sizeof(data));
+	}
+
+	GenericKeyboard::Buffer::Buffer(nullptr_t) {
+	}
+
+
 	GenericKeyboard::GenericKeyboard(const DeviceInfo& info, IGenericKeyboardDriver& driver) :
 		_eventDispatcher(new events::EventDispatcher<DeviceEvent>()),
 		_info(info),
 		_driver(driver),
 		_polling(false) {
-		memset(_inputBuffers, 0, sizeof(_inputBuffers));
 		_inputBuffer = &_inputBuffers[0];
 		_oldInputBuffer = &_inputBuffers[1];
 		_readInputBuffer = &_inputBuffers[2];
@@ -28,23 +35,11 @@ namespace srk::modules::inputs {
 		switch (type) {
 		case DeviceStateType::KEY:
 		{
-			if (values && count && code < (sizeof(Buffer) << 3)) {
+			if (values && count) {
 				std::shared_lock lock(_inputMutex);
 
-				switch ((KeyboardVirtualKeyCode)code) {
-				case KeyboardVirtualKeyCode::SHIFT:
-					((DeviceStateValue*)values)[0] = _inputBuffer->get(KeyboardVirtualKeyCode::L_SHIFT) || _inputBuffer->get(KeyboardVirtualKeyCode::R_SHIFT) ? Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;
-					return 1;
-				case KeyboardVirtualKeyCode::CTRL:
-					((DeviceStateValue*)values)[0] = _inputBuffer->get(KeyboardVirtualKeyCode::L_CTRL) || _inputBuffer->get(KeyboardVirtualKeyCode::R_CTRL) ? Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;
-					return 1;
-				case KeyboardVirtualKeyCode::ALT:
-					((DeviceStateValue*)values)[0] = _inputBuffer->get(KeyboardVirtualKeyCode::L_ALT) || _inputBuffer->get(KeyboardVirtualKeyCode::R_ALT) ? Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;
-					return 1;
-				default:
-					((DeviceStateValue*)values)[0] = _inputBuffer->get((KeyboardVirtualKeyCode)code) ? Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;
-					return 1;
-				}
+				((DeviceStateValue*)values)[0] = _inputBuffer->get((KeyboardVirtualKeyCode)code) ? Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;
+				return 1;
 			}
 
 			return 0;
@@ -88,7 +83,7 @@ namespace srk::modules::inputs {
 					if (curVal != oldVal) {
 						DeviceStateValue value = curVal ? Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;
 
-						DeviceState k = { (i << 3) + j, 1, &value };
+						DeviceState k = { (i << 3) + j + (DeviceState::CodeType)KeyboardVirtualKeyCode::DEFINED_START, 1, &value };
 						_eventDispatcher->dispatchEvent(this, value > Math::ZERO<DeviceStateValue> ? DeviceEvent::DOWN : DeviceEvent::UP, &k);
 					}
 				}
