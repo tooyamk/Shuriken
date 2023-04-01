@@ -147,7 +147,7 @@ namespace srk::modules::inputs {
 		NUMPAD_8,
 		NUMPAD_9,
 		NUMPAD_ADD,
-		NUMPAD_SUBTRACT,
+		NUMPAD_MINUS,
 		NUMPAD_DIVIDE,
 		NUMPAD_MULTIPLY,
 		NUMPAD_DOT,//DECIMAL
@@ -231,7 +231,14 @@ namespace srk::modules::inputs {
 
 		APPS,
 
-		DEFINED_END = APPS,
+		VOLUME_DOWN,
+		VOLUME_UP,
+
+		NEXT_SONG,
+		PLAY_PAUSE,
+		PREV_SONG,
+
+		DEFINED_END = PREV_SONG,
 
 		UNDEFINED
 	};

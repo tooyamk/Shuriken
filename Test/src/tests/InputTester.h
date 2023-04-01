@@ -41,7 +41,7 @@ public:
 				case KeyboardVirtualKeyCode::NUMPAD_ADD:
 					s += "+";
 					break;
-				case KeyboardVirtualKeyCode::NUMPAD_SUBTRACT:
+				case KeyboardVirtualKeyCode::NUMPAD_MINUS:
 					s += "-";
 					break;
 				case KeyboardVirtualKeyCode::NUMPAD_MULTIPLY:
@@ -116,7 +116,7 @@ public:
 			case KeyboardVirtualKeyCode::DEL:
 				return "delete";
 			case KeyboardVirtualKeyCode::HONE:
-				return "hone";
+				return "home";
 			case KeyboardVirtualKeyCode::END:
 				return "end";
 			case KeyboardVirtualKeyCode::PAGE_UP:
@@ -145,6 +145,16 @@ public:
 				return "space";
 			case KeyboardVirtualKeyCode::APPS:
 				return "apps";
+			case KeyboardVirtualKeyCode::VOLUME_DOWN:
+				return "volume_down";
+			case KeyboardVirtualKeyCode::VOLUME_UP:
+				return "volume_up";
+			case KeyboardVirtualKeyCode::NEXT_SONG:
+				return "next_song";
+			case KeyboardVirtualKeyCode::PLAY_PAUSE:
+				return "play_pause";
+			case KeyboardVirtualKeyCode::PREV_SONG:
+				return "prev_song";
 			default:
 				return "undnown";
 			}

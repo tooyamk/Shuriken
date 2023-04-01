@@ -93,7 +93,7 @@ namespace srk::modules::inputs::direct_input {
 			KeyboardVirtualKeyCode::NUMPAD_7,
 			KeyboardVirtualKeyCode::NUMPAD_8,
 			KeyboardVirtualKeyCode::NUMPAD_9,
-			KeyboardVirtualKeyCode::NUMPAD_SUBTRACT,
+			KeyboardVirtualKeyCode::NUMPAD_MINUS,
 			KeyboardVirtualKeyCode::NUMPAD_4,
 			KeyboardVirtualKeyCode::NUMPAD_5,
 			KeyboardVirtualKeyCode::NUMPAD_6,

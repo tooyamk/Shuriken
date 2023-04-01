@@ -1,6 +1,7 @@
 #include "Input.h"
 #include "CreateModule.h"
 #include "GamepadDriver.h"
+#include "KeyboardDriver.h"
 #include "srk/hash/xxHash.h"
 #include <fcntl.h>
 #include <linux/input.h>
@@ -67,7 +68,7 @@ namespace srk::modules::inputs::evdev_input {
 						struct {
 							bool hasAbsXY = false;
 						} caps;
-						
+
 						traverseBits(bits, len, 0, [](size_t bit, DeviceType& types, decltype(caps)& caps) {
 							if (bit >= ABS_X && bit <= ABS_Y) {
 								caps.hasAbsXY = true;
@@ -206,6 +207,9 @@ namespace srk::modules::inputs::evdev_input {
 			//if (ioctl(fd, EVIOCGRAB, 1) < 0) break;
 
 			switch (info.type) {
+			case DeviceType::KEYBOARD:
+				if (auto driver = KeyboardDriver::create(*this, fd); driver) return new GenericKeyboard(info, *driver);
+				break;
 			case DeviceType::GAMEPAD:
 				if (auto driver = GamepadDriver::create(*this, fd); driver) return new GenericGamepad(info, *driver);
 				break;

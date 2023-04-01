@@ -3,7 +3,6 @@
 #include "Base.h"
 #include "srk/Lock.h"
 #include "srk/modules/inputs/GenericGamepad.h"
-#include <linux/input-event-codes.h>
 
 namespace srk::modules::inputs::evdev_input {
 	class Input;

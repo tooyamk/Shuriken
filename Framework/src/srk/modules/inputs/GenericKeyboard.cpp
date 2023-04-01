@@ -74,16 +74,18 @@ namespace srk::modules::inputs {
 
 		auto& cur = _inputBuffer->data;
 		auto& old = _oldInputBuffer->data;
+		auto changed = false;
 		for (size_t i = 0; i < sizeof(Buffer::Data); ++i) {
 			if (cur[i] != old[i]) {
 				for (size_t j = 0; j < 8; ++j) {
+					changed = true;
 					auto mask = 1 << j;
 					auto curVal = cur[i] & mask;
 					auto oldVal = old[i] & mask;
 					if (curVal != oldVal) {
 						DeviceStateValue value = curVal ? Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;
 
-						DeviceState k = { (i << 3) + j + (DeviceState::CodeType)KeyboardVirtualKeyCode::DEFINED_START, 1, &value };
+						DeviceState k = { (DeviceState::CodeType)((i << 3) + j) + (DeviceState::CodeType)KeyboardVirtualKeyCode::DEFINED_START, 1, &value };
 						_eventDispatcher->dispatchEvent(this, value > Math::ZERO<DeviceStateValue> ? DeviceEvent::DOWN : DeviceEvent::UP, &k);
 					}
 				}

@@ -135,7 +135,7 @@ namespace srk::modules::inputs::raw_input {
 			KeyboardVirtualKeyCode::NUMPAD_MULTIPLY,
 			KeyboardVirtualKeyCode::NUMPAD_ADD,
 			KeyboardVirtualKeyCode::NUMPAD_ENTER,
-			KeyboardVirtualKeyCode::NUMPAD_SUBTRACT,
+			KeyboardVirtualKeyCode::NUMPAD_MINUS,
 			KeyboardVirtualKeyCode::NUMPAD_DOT,//110
 			KeyboardVirtualKeyCode::NUMPAD_DIVIDE,
 			KeyboardVirtualKeyCode::F1,

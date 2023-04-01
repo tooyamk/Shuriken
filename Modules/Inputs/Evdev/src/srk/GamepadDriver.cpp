@@ -26,7 +26,7 @@ namespace srk::modules::inputs::evdev_input {
 	}
 
 	GamepadDriver* GamepadDriver::create(Input& input, int32_t fd) {
-		using namespace std::literals;
+		using namespace std::string_view_literals;
 
 		DeviceDesc desc;
 		desc.fd = fd;
@@ -44,7 +44,7 @@ namespace srk::modules::inputs::evdev_input {
 				auto& axis = desc.inputAxes.emplace(std::piecewise_construct, std::forward_as_tuple(code), std::forward_as_tuple()).first->second;
 				axis.index = index++;
 			}
-			
+
 			return 0;
 		}, desc, index);
 
@@ -127,11 +127,8 @@ namespace srk::modules::inputs::evdev_input {
 
 			for (size_t i = 0, n = len / sizeof(input_event); i < n; ++i) {
 				auto& evt = evts[i];
-				//if (evt.type == EV_SYN || evt.type == EV_ABS) continue;
+				//if (evt.type == EV_SYN || evt.type == EV_MSC) continue;
 				switch (evt.type) {
-				case EV_SYN:
-				case EV_MSC:
-					break;
 				case EV_KEY:
 				{
 					if (auto itr = _desc.inputButtons.find(evt.code); itr != _desc.inputButtons.end()) {
