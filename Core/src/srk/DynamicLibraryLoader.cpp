@@ -22,7 +22,7 @@ namespace srk {
 	bool DynamicLibraryLoader::_load(const std::string_view& path) {
 		release();
 #if SRK_OS == SRK_OS_WINDOWS
-		auto wpath = String::Utf8ToUnicode(path);
+		auto wpath = String::utf8ToWide<std::wstring>(path);
 		if (wpath.empty()) return false;
 		_lib = LoadLibraryW(wpath.data());
 #else

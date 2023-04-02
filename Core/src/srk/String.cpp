@@ -1,7 +1,7 @@
 #include "String.h"
 
 namespace srk {
-	bool String::isUTF8(const char* data, size_t len) {
+	bool String::isUtf8(const char* data, size_t len) {
 		const auto buf = (uint8_t*)data;
 		size_t i = 0;
 		while (i < len) {

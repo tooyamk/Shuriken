@@ -46,130 +46,160 @@ namespace srk {
 			0, 0, 0, 0, 0, 0			   //250-255
 		};
 
-		static bool SRK_CALL isUTF8(const char* data, size_t len);
+		static bool SRK_CALL isUtf8(const char* data, size_t len);
 
-		//unicodeLen, utf8Len
+		//u8chars, u8bytes
 		template<typename In>
-		requires ConvertibleWStringData<std::remove_cvref_t<In>>
-		static std::tuple<std::wstring::size_type, std::string::size_type> SRK_CALL calcUnicodeToUtf8Length(In&& in) {
-			if constexpr (WStringData<std::remove_cvref_t<In>>) {
-				std::wstring::size_type s = 0;
-				std::u8string::size_type d = 0;
+		requires IsConvertibleString8Data<std::remove_cvref_t<In>>::value || ConvertibleAnyWideStringData<std::remove_cvref_t<In>>
+		static std::tuple<size_t, size_t> SRK_CALL calcUtf8(In&& in) {
+			if constexpr (IsConvertibleString8Data<std::remove_cvref_t<In>>::value) {
+				if constexpr (ConvertibleAnyOf<std::remove_cvref_t<In>, char const*, char8_t const*>) {
+					return calcUtf8(ConvertToAnyStringViewType<std::remove_cvref_t<In>>(std::forward<In>(in)));
+				} else {
+					size_t chars = 0;
+					size_t bytes = 0;
 
-				auto inSize = in.size();
-				while (s < inSize) {
-					if (uint_t<sizeof(wchar_t) * 8> c = in[s++]; c == 0) {
-						break;
-					} else if (c < 0x80) {  //
-						//length = 1;
-						++d;
-					} else if (c < 0x800) {
-						//length = 2;
-						d += 2;
-					} else if (c < 0x10000) {
-						//length = 3;
-						d += 3;
-					} else if (c < 0x200000) {
-						//length = 4;
-						d += 4;
+					auto inSize = in.size();
+					while (bytes < inSize) {
+						uint8_t c = in[bytes];
+						if (c == 0)  break;
+
+						if ((c & 0x80) == 0) {
+							++bytes;
+						} else if ((c & 0xE0) == 0xC0) {// 110x-xxxx 10xx-xxxx
+							bytes += 2;
+						} else if ((c & 0xF0) == 0xE0) {// 1110-xxxx 10xx-xxxx 10xx-xxxx
+							bytes += 3;
+						} else if ((c & 0xF8) == 0xF0) {// 1111-0xxx 10xx-xxxx 10xx-xxxx 10xx-xxxx 
+							bytes += 4;
+						} else {// 1111-10xx 10xx-xxxx 10xx-xxxx 10xx-xxxx 10xx-xxxx 
+							bytes += 5;
+						}
+						++chars;
 					}
-				}
 
-				return std::make_tuple(s, d);
+					return std::make_tuple(chars, bytes);
+				}
 			} else {
-				return calcUnicodeToUtf8Length(std::wstring_view(std::forward<In>(in)));
+				if constexpr (ConvertibleAnyOf<std::remove_cvref_t<In>, wchar_t const*, char16_t const*, char32_t const*>) {
+					return calcUtf8(ConvertToAnyStringViewType<std::remove_cvref_t<In>>(std::forward<In>(in)));
+				} else {
+					size_t chars = 0;
+					size_t bytes = 0;
+
+					auto inSize = in.size();
+					while (chars < inSize) {
+						auto c = in[chars];
+						if (c == 0) break;
+						++chars;
+
+						if (c < 0x80) {
+							//length = 1;
+							++bytes;
+						} else if (c < 0x800) {
+							//length = 2;
+							bytes += 2;
+						} else if (c < 0x10000) {
+							//length = 3;
+							bytes += 3;
+						} else if (c < 0x200000) {
+							//length = 4;
+							bytes += 4;
+						}
+					}
+
+					return std::make_tuple(chars, bytes);
+				}
 			}
 		}
 
-		template<typename In, SameAnyOf<char, char8_t> Out>
-		requires ConvertibleWStringData<std::remove_cvref_t<In>>
-		static std::u8string::size_type SRK_CALL UnicodeToUtf8(In&& in, Out* outBuffer, std::u8string::size_type outBufferSize) {
-			if constexpr (WStringData<std::remove_cvref_t<In>>) {
-				if (!outBuffer || !outBufferSize) return std::u8string::npos;
+		template<SameAnyOf<char, char8_t> Out, typename In>
+		requires ConvertibleAnyWideStringData<std::remove_cvref_t<In>>
+		static size_t SRK_CALL wideToUtf8(In&& in, Out* outBuffer, size_t outBufferSize) {
+			if constexpr (ConvertibleAnyOf<std::remove_cvref_t<In>, wchar_t const*, char16_t const*, char32_t const*>) {
+				return wideToUtf8(ConvertToAnyStringViewType<std::remove_cvref_t<In>>(std::forward<In>(in)), outBuffer, outBufferSize);
+			} else {
+				if (!outBuffer || !outBufferSize) return -1;
 				if (in.empty()) {
 					outBuffer[0] = 0;
 					return 0;
 				}
 
-				auto [unicodeLen, utf8Len] = calcUnicodeToUtf8Length(in);
-				if (outBufferSize < unicodeLen) return std::u8string::npos;
+				auto [chars, bytes] = calcUtf8(in);
+				if (outBufferSize < bytes) return -1;
 
-				return UnicodeToUtf8(in.data(), unicodeLen, outBuffer);
-			} else {
-				return UnicodeToUtf8(std::wstring_view(std::forward<In>(in)), outBuffer, outBufferSize);
+				return wideToUtf8(in.data(), chars, outBuffer);
 			}
 		}
 
-		template<typename In, String8 Out = std::u8string>
-		requires ConvertibleWStringData<std::remove_cvref_t<In>>
-		static auto SRK_CALL UnicodeToUtf8(In&& in) {
-			if constexpr (WStringData<std::remove_cvref_t<In>>) {
-				auto [unicodeLen, utf8Len] = calcUnicodeToUtf8Length(in);
+		template<String8 Out, typename In>
+		requires ConvertibleAnyWideStringData<std::remove_cvref_t<In>>
+		static auto SRK_CALL wideToUtf8(In&& in) {
+			if constexpr (ConvertibleAnyOf<std::remove_cvref_t<In>, wchar_t const*, char16_t const*, char32_t const*>) {
+				return wideToUtf8<Out>(ConvertToAnyStringViewType<std::remove_cvref_t<In>>(std::forward<In>(in)));
+			} else {
+				auto [chars, bytes] = calcUtf8(in);
 				Out s;
-				s.resize(utf8Len);
-				UnicodeToUtf8(in.data(), unicodeLen, s.data());
+				s.resize(bytes);
+				wideToUtf8(in.data(), chars, s.data());
 
 				return std::move(s);
-			} else {
-				return UnicodeToUtf8<std::wstring_view, Out>(std::wstring_view(std::forward<In>(in)));
 			}
 		}
 
-		//utf8Len, unicodeLen
-		template<typename In>
-		requires IsConvertibleString8Data<std::remove_cvref_t<In>>::value
-		static std::tuple<std::u8string::size_type, std::wstring::size_type> SRK_CALL calcUtf8ToUnicodeLength(In&& in) {
-			if constexpr (String8Data<std::remove_cvref_t<In>>) {
-				std::u8string::size_type s = 0;
-				std::wstring::size_type d = 0;
+		template<SameAnyOf<char, char8_t> Out, SameAnyOf<wchar_t, char16_t, char32_t> In>
+		static size_t SRK_CALL wideToUtf8(const In* const in, size_t inChars, Out* out) {
+			size_t s = 0;
+			size_t d = 0;
 
-				auto inSize = in.size();
-				while (s < inSize) {
-					if (uint8_t c = in[s]; c == 0) {
-						break;
-					} else if ((c & 0x80) == 0) {
-						++s;
-					} else if ((c & 0xE0) == 0xC0) {// 110x-xxxx 10xx-xxxx
-						s += 2;
-					} else if ((c & 0xF0) == 0xE0) {// 1110-xxxx 10xx-xxxx 10xx-xxxx
-						s += 3;
-					} else if ((c & 0xF8) == 0xF0) {// 1111-0xxx 10xx-xxxx 10xx-xxxx 10xx-xxxx 
-						s += 4;
-					} else {// 1111-10xx 10xx-xxxx 10xx-xxxx 10xx-xxxx 10xx-xxxx 
-						s += 5;
-					}
-					++d;
+			while (s < inChars) {
+				if (auto c = in[s++]; c < 0x80) {
+					//length = 1;
+					out[d++] = (Out)c;
+				} else if (c < 0x800) {
+					//length = 2;
+					out[d++] = 0xC0 | (c >> 6);
+					out[d++] = 0x80 | (c & 0x3F);
+				} else if (c < 0x10000) {
+					//length = 3;
+					out[d++] = 0xE0 | (c >> 12);
+					out[d++] = 0x80 | ((c >> 6) & 0x3F);
+					out[d++] = 0x80 | (c & 0x3F);
+				} else if (c < 0x200000) {
+					//length = 4;
+					out[d++] = 0xF0 | ((int32_t)c >> 18);
+					out[d++] = 0x80 | ((c >> 12) & 0x3F);
+					out[d++] = 0x80 | ((c >> 6) & 0x3F);
+					out[d++] = 0x80 | (c & 0x3F);
 				}
-
-				return std::make_tuple(s, d);
-			} else {
-				return calcUtf8ToUnicodeLength(ConvertToString8ViewType<std::remove_cvref_t<In>>(std::forward<In>(in)));
 			}
+
+			return d;
 		}
 
-		template<typename In>
+		template<SameAnyOf<wchar_t, char16_t, char32_t> Out, typename In>
 		requires ConvertibleString8Data<std::remove_cvref_t<In>>
-		static std::wstring::size_type SRK_CALL Utf8ToUnicode(In&& in, wchar_t* outBuffer, std::wstring::size_type outBufferSize) {
-			if constexpr (String8Data<std::remove_cvref_t<In>>) {
-				if (!outBuffer || !outBufferSize) return std::wstring::npos;
+		static size_t SRK_CALL utf8ToWide(In&& in, Out* outBuffer, size_t outBufferSize) {
+			if constexpr (ConvertibleAnyOf<std::remove_cvref_t<In>, char const*, char8_t const*>) {
+				return utf8ToWide(ConvertToAnyStringViewType<std::remove_cvref_t<In>>(std::forward<In>(in)));
+			} else {
+				if (!outBuffer || !outBufferSize) return -1;
 				if (in.empty()) {
 					outBuffer[0] = 0;
 					return 0;
 				}
 
-				auto [utf8Len, unicodeLen] = calcUtf8ToUnicodeLength(in);
-				if (outBufferSize < unicodeLen) return std::wstring::npos;
+				auto [chars, bytes] = calcUtf8(in);
+				if (outBufferSize < chars) return -1;
 
-				return Utf8ToUnicode(in, utf8Len, outBuffer);
-			} else {
-				return Utf8ToUnicode(ConvertToString8ViewType<std::remove_cvref_t<In>>(std::forward<In>(in)), outBuffer, outBufferSize);
+				return utf8ToWide(in, bytes, outBuffer);
 			}
 		}
 
-		template<SameAnyOf<char, char8_t> In>
-		static std::wstring::size_type SRK_CALL Utf8ToUnicode(const In* in, std::u8string::size_type inLen, wchar_t* out) {
-			std::u8string::size_type s = 0;
-			std::wstring::size_type d = 0;
+		template<SameAnyOf<wchar_t, char16_t, char32_t> Out, SameAnyOf<char, char8_t> In>
+		static size_t SRK_CALL utf8ToWide(const In* in, size_t inLen, Out* out) {
+			size_t s = 0;
+			size_t d = 0;
 
 			while (s < inLen) {
 				if (uint8_t c = in[s]; (c & 0x80) == 0) {
@@ -205,24 +235,24 @@ namespace srk {
 			return d;
 		}
 
-		template<typename In>
+		template<SameAnyOf<std::wstring, std::u16string, std::u32string> Out, typename In>
 		requires ConvertibleString8Data<std::remove_cvref_t<In>>
-		static std::wstring SRK_CALL Utf8ToUnicode(In&& in) {
+		static Out SRK_CALL utf8ToWide(In&& in) {
 			if constexpr (String8Data<std::remove_cvref_t<In>>) {
-				auto [utf8Len, unicodeLen] = calcUtf8ToUnicodeLength(in);
-				std::wstring s;
-				s.resize(unicodeLen);
-				Utf8ToUnicode(in.data(), utf8Len, s.data());
+				auto [chars, bytes] = calcUtf8(in);
+				Out s;
+				s.resize(chars);
+				utf8ToWide(in.data(), bytes, s.data());
 
 				return std::move(s);
 			} else {
-				return Utf8ToUnicode(ConvertToString8ViewType<std::remove_cvref_t<In>>(std::forward<In>(in)));
+				return utf8ToWide<Out>(ConvertToString8ViewType<std::remove_cvref_t<In>>(std::forward<In>(in)));
 			}
 		}
 
-		template<typename In>
+		template<SameAnyOf<wchar_t, char16_t, char32_t> Out, typename In>
 		requires ConvertibleString8Data<std::remove_cvref_t<In>>
-		static std::wstring::size_type SRK_CALL Utf8ToUnicode(In&& in, wchar_t*& out) {
+		static size_t SRK_CALL utf8ToWide(In&& in, Out*& out) {
 			if constexpr (String8Data<std::remove_cvref_t<In>>) {
 				if (in.empty()) {
 					out = new wchar_t[1];
@@ -230,46 +260,15 @@ namespace srk {
 					return 0;
 				}
 
-				auto [utf8Len, unicodeLen] = calcUtf8ToUnicodeLength(in);
-				++unicodeLen;
-				out = new wchar_t[unicodeLen];
-				auto len = Utf8ToUnicode(in.data(), utf8Len, out);
+				auto [chars, bytes] = calcUtf8(in);
+				out = new Out[chars + 1];
+				auto len = utf8ToWide(in.data(), bytes, out);
 				out[len] = 0;
 
 				return len;
 			} else {
-				return Utf8ToUnicode(ConvertToString8ViewType<std::remove_cvref_t<In>>(std::forward<In>(in)), out);
+				return utf8ToWide(ConvertToString8ViewType<std::remove_cvref_t<In>>(std::forward<In>(in)), out);
 			}
-		}
-
-		template<SameAnyOf<char, char8_t> Out>
-		static std::u8string::size_type SRK_CALL UnicodeToUtf8(const wchar_t* const in, std::wstring::size_type inLen, Out* out) {
-			std::wstring::size_type s = 0;
-			std::u8string::size_type d = 0;
-
-			while (s < inLen) {
-				if (wchar_t c = in[s++]; c < 0x80) {  //
-					//length = 1;
-					out[d++] = (char)c;
-				} else if (c < 0x800) {
-					//length = 2;
-					out[d++] = 0xC0 | (c >> 6);
-					out[d++] = 0x80 | (c & 0x3F);
-				} else if (c < 0x10000) {
-					//length = 3;
-					out[d++] = 0xE0 | (c >> 12);
-					out[d++] = 0x80 | ((c >> 6) & 0x3F);
-					out[d++] = 0x80 | (c & 0x3F);
-				} else if (c < 0x200000) {
-					//length = 4;
-					out[d++] = 0xF0 | ((int)c >> 18);
-					out[d++] = 0x80 | ((c >> 12) & 0x3F);
-					out[d++] = 0x80 | ((c >> 6) & 0x3F);
-					out[d++] = 0x80 | (c & 0x3F);
-				}
-			}
-
-			return d;
 		}
 
 		template<typename In, typename Separator, InvocableAnyOfResult<std::tuple<void, bool>, const std::string_view&> Fn>

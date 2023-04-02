@@ -61,7 +61,7 @@ namespace srk::modules::graphics {
 			ga.dedicatedSystemMemory = desc.DedicatedSystemMemory;
 			ga.dedicatedVideoMemory = desc.DedicatedVideoMemory;
 			ga.sharedSystemMemory = desc.SharedSystemMemory;
-			ga.description = String::UnicodeToUtf8<std::wstring_view, std::string>(std::wstring_view(desc.Description));
+			ga.description = String::wideToUtf8<std::string>(std::wstring_view(desc.Description));
 
 			adapter->Release();
 		}

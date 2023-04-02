@@ -103,7 +103,7 @@ namespace srk::modules::inputs::xinput {
 								if (devName.empty()) {
 									if (!HidD_GetProductString(hidHandle, devNameBuf, sizeof(devNameBuf))) break;
 
-									devName = String::UnicodeToUtf8<const WCHAR*, std::string>(devNameBuf);
+									devName = String::wideToUtf8<std::string>(devNameBuf);
 								}
 								info.name = devName;
 

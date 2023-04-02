@@ -34,10 +34,10 @@ namespace srk {
 	}
 
 	void Printer::OutputBuffer::write(const char* buf, size_t size) {
-		auto [utf8Len, unicodeLen] = String::calcUtf8ToUnicodeLength(std::string_view(buf, size));
-		if (unicodeLen != std::wstring::npos) {
-			dilatation(unicodeLen);
-			_pos += String::Utf8ToUnicode(buf, utf8Len, _data + _pos);
+		auto [chars, bytes] = String::calcUtf8(std::string_view(buf, size));
+		if (chars) {
+			dilatation(chars);
+			_pos += String::utf8ToWide(buf, bytes, _data + _pos);
 		}
 	}
 
@@ -45,6 +45,28 @@ namespace srk {
 		dilatation(size);
 		memcpy(_data + _pos, buf, sizeof(wchar_t) * size);
 		_pos += size;
+	}
+
+	void Printer::OutputBuffer::write(const char16_t* buf, size_t size) {
+		dilatation(size);
+
+		if constexpr (sizeof(wchar_t) == sizeof(char16_t)) {
+			memcpy(_data + _pos, buf, sizeof(wchar_t) * size);
+			_pos += size;
+		} else {
+			for (size_t i = 0; i < size; ++i) _data[_pos++] = buf[i];
+		}
+	}
+
+	void Printer::OutputBuffer::write(const char32_t* buf, size_t size) {
+		dilatation(size);
+
+		if constexpr (sizeof(wchar_t) == sizeof(char32_t)) {
+			memcpy(_data + _pos, buf, sizeof(wchar_t) * size);
+			_pos += size;
+		} else {
+			for (size_t i = 0; i < size; ++i) _data[_pos++] = buf[i];
+		}
 	}
 
 	void Printer::OutputBuffer::dilatation(size_t size) {

@@ -17,8 +17,7 @@ namespace srk {
 #if SRK_OS == SRK_OS_WINDOWS
 		DEVMODEW dm;
 
-		wchar_t* wadpName = nullptr;
-		String::Utf8ToUnicode(_adapterName, wadpName);
+		auto wadpName = String::utf8ToWide<std::wstring>(_adapterName);
 
 		uint32_t modeIdx = 0;
 
@@ -26,7 +25,7 @@ namespace srk {
 			memset(&dm, 0, sizeof(DEVMODEW));
 			dm.dmSize = sizeof(DEVMODEW);
 
-			if (!EnumDisplaySettingsW(wadpName, modeIdx, &dm)) break;
+			if (!EnumDisplaySettingsW(wadpName.data(), modeIdx, &dm)) break;
 
 			++modeIdx;
 
@@ -53,15 +52,13 @@ namespace srk {
 
 			if (_modesPruned) {
 				// Skip modes not supported by the connected displays
-				mode._supported = ChangeDisplaySettingsExW(wadpName, &dm, nullptr, CDS_TEST, nullptr) == DISP_CHANGE_SUCCESSFUL;
+				mode._supported = ChangeDisplaySettingsExW(wadpName.data(), &dm, nullptr, CDS_TEST, nullptr) == DISP_CHANGE_SUCCESSFUL;
 			} else {
 				mode._supported = true;
 			}
 
 			//add mode
 		} while (true);
-
-		delete[] wadpName;
 #endif
 		return std::move(videoModes);
 	}
@@ -96,21 +93,21 @@ namespace srk {
 					monitor._primary = isPrimary;
 					monitor._modesPruned = isModesPruned;
 
-					auto strLen = String::UnicodeToUtf8(std::wstring_view(adapter.DeviceName, sizeof(adapter.DeviceName)), strBuf, strBufLen);
-					strBuf[strLen] = 0;
+					auto strBytes = String::wideToUtf8(std::wstring_view(adapter.DeviceName, sizeof(adapter.DeviceName)), strBuf, strBufLen);
+					strBuf[strBytes] = 0;
 					monitor._adapterName = (char*)strBuf;
 
-					strLen = String::UnicodeToUtf8(std::wstring_view(adapter.DeviceString, sizeof(adapter.DeviceString)), strBuf, strBufLen);
-					strBuf[strLen] = 0;
+					strBytes = String::wideToUtf8(std::wstring_view(adapter.DeviceString, sizeof(adapter.DeviceString)), strBuf, strBufLen);
+					strBuf[strBytes] = 0;
 					monitor._adapterDesc = (char*)strBuf;
 
 					if (hasDisplay) {
-						strLen = String::UnicodeToUtf8(std::wstring_view(display.DeviceName, sizeof(display.DeviceName)), strBuf, strBufLen);
-						strBuf[strLen] = 0;
+						strBytes = String::wideToUtf8(std::wstring_view(display.DeviceName, sizeof(display.DeviceName)), strBuf, strBufLen);
+						strBuf[strBytes] = 0;
 						monitor._deviceName = (char*)strBuf;
 
-						strLen = String::UnicodeToUtf8(std::wstring_view(display.DeviceString, sizeof(display.DeviceString)), strBuf, strBufLen);
-						strBuf[strLen] = 0;
+						strBytes = String::wideToUtf8(std::wstring_view(display.DeviceString, sizeof(display.DeviceString)), strBuf, strBufLen);
+						strBuf[strBytes] = 0;
 						monitor._deviceDesc = (char*)strBuf;
 					}
 

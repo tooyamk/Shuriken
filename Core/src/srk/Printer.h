@@ -31,6 +31,10 @@ namespace srk {
 				write(str.data(), str.size());
 			}
 
+			inline void SRK_CALL write(const std::u8string& str) {
+				write((const char*)str.data(), str.size());
+			}
+
 			inline void SRK_CALL write(const std::u8string_view& str) {
 				write((const char*)str.data(), str.size());
 			}
@@ -58,6 +62,34 @@ namespace srk {
 				_data[_pos++] = c;
 			}
 
+			inline void SRK_CALL write(const char16_t* buf) {
+				write(std::u16string_view(buf));
+			}
+
+			inline void SRK_CALL write(const std::u16string& str) {
+				write(str.data(), str.size());
+			}
+
+			inline void SRK_CALL write(const std::u16string_view& str) {
+				write(str.data(), str.size());
+			}
+
+			void SRK_CALL write(const char16_t* buf, size_t size);
+
+			inline void SRK_CALL write(const char32_t* buf) {
+				write(std::u32string_view(buf));
+			}
+
+			inline void SRK_CALL write(const std::u32string& str) {
+				write(str.data(), str.size());
+			}
+
+			inline void SRK_CALL write(const std::u32string_view& str) {
+				write(str.data(), str.size());
+			}
+
+			void SRK_CALL write(const char32_t* buf, size_t size);
+
 			void SRK_CALL dilatation(size_t size);
 
 			inline std::wstring_view SRK_CALL toWString() {
@@ -81,12 +113,8 @@ namespace srk {
 
 				if constexpr (NullPointer<Type>) {
 					buf.write(L"nullptr"sv);
-				} else if constexpr (StringData<Type>) {
-					buf.write(value.data(), value.size());
-				} else if constexpr (U8StringData<Type>) {
+				} else if constexpr (String8Data<Type> || WStringData<Type> || String16Data<Type> || String32Data<Type>) {
 					buf.write(value);
-				} else if constexpr (WStringData<Type>) {
-					buf.write(value.data(), value.size());
 				} else if constexpr (std::same_as<Type, bool>) {
 					buf.write(value ? L"true"sv : L"false"sv);
 				} else if constexpr (Arithmetic<Type>) {

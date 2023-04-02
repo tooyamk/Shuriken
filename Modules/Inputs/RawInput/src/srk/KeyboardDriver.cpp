@@ -1,6 +1,6 @@
 #include "KeyboardDriver.h"
 #include "Input.h"
-//#include "srk/Printer.h"
+#include "srk/Printer.h"
 
 namespace srk::modules::inputs::raw_input {
 	KeyboardDriver::KeyboardDriver(Input& input, windows::IWindow& win, HANDLE handle) :
@@ -32,8 +32,10 @@ namespace srk::modules::inputs::raw_input {
 
 		auto& kb = rawInput.data.keyboard;
 		auto vk = _getVirtualKey(kb);
-		//printaln(kb.VKey, "    "sv, kb.MakeCode, "    "sv, kb.Flags);
-		if (!GenericKeyboard::Buffer::isValid(vk)) return;
+		if (!GenericKeyboard::Buffer::isValid(vk)) {
+			printaln(kb.VKey, "    "sv, kb.MakeCode, "    "sv, kb.Flags);
+			return;
+		}
 
 		switch (kb.Message) {
 		case WM_KEYDOWN:

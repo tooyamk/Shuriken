@@ -239,9 +239,13 @@ namespace srk::modules::inputs::direct_input {
 			info.vendorID = pdidInstance->guidProduct.Data1 & 0xFFFF;
 			info.productID = pdidInstance->guidProduct.Data1 >> 16 & 0xFFFF;
 			if constexpr (sizeof(pdidInstance->tszProductName[0]) == 1) {
-				info.name = (const CHAR*)pdidInstance->tszProductName;
+				auto chars = MultiByteToWideChar(CP_ACP, 0, (const CHAR*)pdidInstance->tszProductName, -1, nullptr, 0);
+				std::wstring wstr;
+				wstr.resize(chars);
+				MultiByteToWideChar(CP_ACP, 0, (const CHAR*)pdidInstance->tszProductName, -1, wstr.data(), chars);
+				info.name = String::wideToUtf8<std::string>(wstr);
 			} else {
-				info.name = String::UnicodeToUtf8<const WCHAR*, std::string>((const WCHAR*)pdidInstance->tszProductName);
+				info.name = String::wideToUtf8<std::string>((const WCHAR*)pdidInstance->tszProductName);
 			}
 		}
 

@@ -1,6 +1,6 @@
 #include "KeyboardDriver.h"
 #include "Input.h"
-//#include "srk/Printer.h"
+#include "srk/Printer.h"
 #include <linux/input.h>
 
 namespace srk::modules::inputs::evdev_input {
@@ -35,8 +35,10 @@ namespace srk::modules::inputs::evdev_input {
 				{
 					if (evt.code >= KEY_ESC && evt.code <= KEY_MICMUTE) {
 						auto vk = VK_MAPPER[evt.code];
-						//printaln(evt.code, L"     "sv, evt.value, L"     "sv);
-						if (!GenericKeyboard::Buffer::isValid(vk)) break;
+						if (!GenericKeyboard::Buffer::isValid(vk)) {
+							printaln(evt.code, L"     "sv, evt.value);
+							break;
+						}
 
 						changed = true;
 						auto val = evt.value != 0;

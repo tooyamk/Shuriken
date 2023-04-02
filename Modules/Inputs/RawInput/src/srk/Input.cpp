@@ -72,7 +72,7 @@ namespace srk::modules::inputs::raw_input {
 				info.guid.set<false, true>(&hash, sizeof(hash), sizeof(hd));
 
 				if (auto hidHandle = CreateFileA(path.data(), 0, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr); hidHandle != INVALID_HANDLE_VALUE) {
-					if (HidD_GetProductString(hidHandle, deviceName, sizeof(deviceName))) info.name = String::UnicodeToUtf8<const WCHAR*, std::string>(deviceName);
+					if (HidD_GetProductString(hidHandle, deviceName, sizeof(deviceName))) info.name = String::wideToUtf8<std::string>(deviceName);
 					CloseHandle(hidHandle);
 				}
 			}

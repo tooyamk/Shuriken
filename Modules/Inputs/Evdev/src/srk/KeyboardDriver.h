@@ -137,7 +137,7 @@ namespace srk::modules::inputs::evdev_input {
 			KeyboardVirtualKeyCode::INSERT,//110
 			KeyboardVirtualKeyCode::DEL,
 			KeyboardVirtualKeyCode::UNDEFINED,//KEY_MACRO
-			KeyboardVirtualKeyCode::UNDEFINED,//KEY_MUTE
+			KeyboardVirtualKeyCode::VOLUME_MUTE,
 			KeyboardVirtualKeyCode::VOLUME_DOWN,
 			KeyboardVirtualKeyCode::VOLUME_UP,
 			KeyboardVirtualKeyCode::UNDEFINED,//KEY_POWER

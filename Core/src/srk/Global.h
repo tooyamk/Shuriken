@@ -277,6 +277,38 @@ namespace srk {
 	template<typename T> struct IsConvertibleWStringData : std::bool_constant<ConvertibleWStringData<T>> {};
 	template<typename T> using ConvertibleWStringDataType = std::enable_if_t<ConvertibleWStringData<T>, T>;
 
+	template<typename T> concept String16Data = SameAnyOf<T, std::u16string, std::u16string_view>;
+	template<typename T> struct IsString16Data : std::bool_constant<String16Data<T>> {};
+	template<typename T> using String16DataType = std::enable_if_t<String16Data<T>, T>;
+
+	template<typename T> concept ConvertibleString16Data = String16Data<T> || std::convertible_to<T, char16_t const*>;
+	template<typename T> struct IsConvertibleString16Data : std::bool_constant<ConvertibleString16Data<T>> {};
+	template<typename T> using ConvertibleString16DataType = std::enable_if_t<ConvertibleString16Data<T>, T>;
+
+	template<typename T> concept String32Data = SameAnyOf<T, std::u32string, std::u32string_view>;
+	template<typename T> struct IsString32Data : std::bool_constant<String32Data<T>> {};
+	template<typename T> using String32DataType = std::enable_if_t<String32Data<T>, T>;
+
+	template<typename T> concept ConvertibleString32Data = String32Data<T> || std::convertible_to<T, char32_t const*>;
+	template<typename T> struct IsConvertibleString32Data : std::bool_constant<ConvertibleString32Data<T>> {};
+	template<typename T> using ConvertibleString32DataType = std::enable_if_t<ConvertibleString32Data<T>, T>;
+
+	template<typename T> concept ConvertibleAnyWideStringData = ConvertibleWStringData<T> || ConvertibleString16Data<T> || ConvertibleString32Data<T>;
+
+	template<typename T> using ConvertToAnyStringType = std::conditional_t<ConvertibleStringData<T>, std::string, 
+		std::conditional_t<ConvertibleU8StringData<T>, std::u8string, 
+		std::conditional_t<ConvertibleWStringData<T>, std::wstring, 
+		std::conditional_t<ConvertibleString16Data<T>, std::u16string, 
+		std::conditional_t<ConvertibleString32Data<T>, std::u32string, void>
+		>>>>;
+
+	template<typename T> using ConvertToAnyStringViewType = std::conditional_t<ConvertibleStringData<T>, std::string_view, 
+		std::conditional_t<ConvertibleU8StringData<T>, std::u8string_view, 
+		std::conditional_t<ConvertibleWStringData<T>, std::wstring_view, 
+		std::conditional_t<ConvertibleString16Data<T>, std::u16string_view, 
+		std::conditional_t<ConvertibleString32Data<T>, std::u32string_view, void>
+		>>>>;
+
 
 	namespace literals {
 		inline constexpr int8_t operator"" _i8(unsigned long long n) noexcept {

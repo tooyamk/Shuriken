@@ -46,7 +46,7 @@ namespace srk::extensions::shader_transpiler {
 			}
 
 			if (source.language == ProgramLanguage::HLSL) {
-				auto profile = String::Utf8ToUnicode(ProgramSource::toHLSLShaderModel(source.stage, source.version));
+				auto profile = String::utf8ToWide<std::wstring>(ProgramSource::toHLSLShaderModel(source.stage, source.version));
 
 				std::vector<std::wstring> defineStrs(numDefines << 1);
 				std::vector<DxcDefine> dxcDefines(numDefines);
@@ -55,11 +55,11 @@ namespace srk::extensions::shader_transpiler {
 
 					auto j = i << 1;
 					auto def = defines + j;
-					defineStrs[j] = String::Utf8ToUnicode(def->name);
+					defineStrs[j] = String::utf8ToWide<std::wstring>(def->name);
 					dxcDef.Name = defineStrs[j].data();
 
 					++j;
-					defineStrs[j] = String::Utf8ToUnicode(def->value);
+					defineStrs[j] = String::utf8ToWide<std::wstring>(def->value);
 					dxcDef.Value = defineStrs[j].data();
 				}
 
@@ -86,7 +86,7 @@ namespace srk::extensions::shader_transpiler {
 				if (targetLanguage != ProgramLanguage::DXIL) {
 					dxcArgStrings.emplace_back(L"-spirv");
 					if (options.spirv.descriptorSet0BindingOffset) {
-						auto offset = String::Utf8ToUnicode(String::toString(options.spirv.descriptorSet0BindingOffset));
+						auto offset = String::utf8ToWide<std::wstring>(String::toString(options.spirv.descriptorSet0BindingOffset));
 						//dxcArgStrings.emplace_back(L"-fvk-bind-globals");
 						//dxcArgStrings.emplace_back(offset);
 						//dxcArgStrings.emplace_back(L"0");
@@ -112,7 +112,7 @@ namespace srk::extensions::shader_transpiler {
 
 				CComPtr<IDxcIncludeHandler> includeHandler = new MyIncludeHandler(_dxcLib, handler);
 				CComPtr<IDxcOperationResult> compileResult;
-				IFT(_dxcInstance->Compile(sourceBlob, L"", String::Utf8ToUnicode(source.getEntryPoint()).data(), profile.data(),
+				IFT(_dxcInstance->Compile(sourceBlob, L"", String::utf8ToWide<std::wstring>(source.getEntryPoint()).data(), profile.data(),
 					dxcArgs.data(), dxcArgs.size(), dxcDefines.data(), dxcDefines.size(), includeHandler, &compileResult));
 
 				HRESULT status;
@@ -162,7 +162,7 @@ namespace srk::extensions::shader_transpiler {
 
 				if (_handler) {
 					ProgramIncludeInfo pii;
-					pii.file = String::UnicodeToUtf8<std::wstring_view, std::string>(std::wstring_view(pFilename));
+					pii.file = String::wideToUtf8<std::string>(std::wstring_view(pFilename));
 					ByteArray data = _handler(pii);
 					return _lib->CreateBlobWithEncodingOnHeapCopy(data.getSource(), data.getLength(), CP_UTF8, reinterpret_cast<IDxcBlobEncoding**>(ppIncludeSource));
 				} else {

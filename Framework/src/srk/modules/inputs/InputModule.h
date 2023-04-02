@@ -205,8 +205,10 @@ namespace srk::modules::inputs {
 		GRAVE,//`
 
 		PRINT_SCREEN,
+		SYS_RQ = PRINT_SCREEN,
 		SCORLL_LOCK,
 		PAUSE,
+		BREAK = PAUSE,
 
 		INSERT,
 		DEL,
@@ -231,6 +233,7 @@ namespace srk::modules::inputs {
 
 		APPS,
 
+		VOLUME_MUTE,
 		VOLUME_DOWN,
 		VOLUME_UP,
 

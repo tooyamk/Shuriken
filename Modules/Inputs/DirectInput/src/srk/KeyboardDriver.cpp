@@ -1,5 +1,6 @@
 #include "KeyboardDriver.h"
 #include "Input.h"
+//#include "srk/Printer.h"
 
 namespace srk::modules::inputs::direct_input {
 	KeyboardDriver::KeyboardDriver(Input& input, srk_IDirectInputDevice* dev) :
@@ -26,6 +27,12 @@ namespace srk::modules::inputs::direct_input {
 
 		uint8_t buf[256];
 		if (SUCCEEDED(_dev->GetDeviceState(sizeof(buf), buf))) {
+			/*for (size_t i = 0; i < sizeof(buf); ++i) {
+				if (buf[i] & 0x80) {
+					printaln(i);
+				}
+			}*/
+
 			for (size_t i = 0; i < sizeof(buf); ++i) buffer.set(VK_MAPPER[i], buf[i] & 0x80);
 
 			return true;

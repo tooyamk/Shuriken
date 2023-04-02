@@ -604,7 +604,7 @@ public:
 
 		if constexpr (Environment::OPERATING_SYSTEM == Environment::OperatingSystem::WINDOWS) {
 			if (1) {
-				createInputModuleDesc.filters = DeviceType::KEYBOARD;
+				createInputModuleDesc.filters = DeviceType::MOUSE;
 				auto ignoreXInputDevices = false;
 				std::string_view argv[2];
 				argv[0] = "ignore-xinput-devices"sv;

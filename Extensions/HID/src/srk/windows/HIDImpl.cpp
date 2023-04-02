@@ -201,7 +201,7 @@ namespace srk::extensions {
 
 			WCHAR buf[256];
 			if (!HidD_GetManufacturerString(info.handle, buf, sizeof(buf))) return std::string_view();
-			info.manufacturer = String::UnicodeToUtf8<const WCHAR*, std::string>(buf);
+			info.manufacturer = String::wideToUtf8<std::string>(buf);
 		}
 		return info.manufacturer;
 	}
@@ -212,7 +212,7 @@ namespace srk::extensions {
 
 			WCHAR buf[256];
 			if (!HidD_GetProductString(info.handle, buf, sizeof(buf))) return std::string_view();
-			info.product = String::UnicodeToUtf8<const WCHAR*, std::string>(buf);
+			info.product = String::wideToUtf8<std::string>(buf);
 		}
 
 		return info.product;
