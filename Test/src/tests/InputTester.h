@@ -143,18 +143,20 @@ public:
 				return "enter";
 			case KeyboardVirtualKeyCode::SPACE:
 				return "space";
-			case KeyboardVirtualKeyCode::APPS:
-				return "apps";
+			case KeyboardVirtualKeyCode::MENU:
+				return "menu";
+			case KeyboardVirtualKeyCode::CALC:
+				return "calculator";
 			case KeyboardVirtualKeyCode::VOLUME_DOWN:
 				return "volume_down";
 			case KeyboardVirtualKeyCode::VOLUME_UP:
 				return "volume_up";
-			case KeyboardVirtualKeyCode::NEXT_SONG:
-				return "next_song";
+			case KeyboardVirtualKeyCode::NEXT_TRACK:
+				return "next_track";
 			case KeyboardVirtualKeyCode::PLAY_PAUSE:
 				return "play_pause";
-			case KeyboardVirtualKeyCode::PREV_SONG:
-				return "prev_song";
+			case KeyboardVirtualKeyCode::PREV_TRACK:
+				return "prev_track";
 			default:
 				return "undnown";
 			}

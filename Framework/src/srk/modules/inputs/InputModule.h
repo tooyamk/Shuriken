@@ -231,17 +231,18 @@ namespace srk::modules::inputs {
 		ENTER,
 		SPACE,
 
-		APPS,
+		MENU,
+		CALC,
 
 		VOLUME_MUTE,
 		VOLUME_DOWN,
 		VOLUME_UP,
 
-		NEXT_SONG,
+		NEXT_TRACK,
 		PLAY_PAUSE,
-		PREV_SONG,
+		PREV_TRACK,
 
-		DEFINED_END = PREV_SONG,
+		DEFINED_END = PREV_TRACK,
 
 		UNDEFINED
 	};

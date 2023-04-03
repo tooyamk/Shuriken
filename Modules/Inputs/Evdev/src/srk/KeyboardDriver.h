@@ -151,7 +151,7 @@ namespace srk::modules::inputs::evdev_input {
 			KeyboardVirtualKeyCode::UNDEFINED,//KEY_YEN
 			KeyboardVirtualKeyCode::UNDEFINED,//KEY_LEFTMETA
 			KeyboardVirtualKeyCode::UNDEFINED,//KEY_RIGHTMETA
-			KeyboardVirtualKeyCode::UNDEFINED,//KEY_COMPOSE
+			KeyboardVirtualKeyCode::MENU,
 			KeyboardVirtualKeyCode::UNDEFINED,//KEY_STOP
 			KeyboardVirtualKeyCode::UNDEFINED,//KEY_AGAIN
 			KeyboardVirtualKeyCode::UNDEFINED,//130, KEY_PROPS
@@ -164,7 +164,7 @@ namespace srk::modules::inputs::evdev_input {
 			KeyboardVirtualKeyCode::UNDEFINED,//KEY_CUT
 			KeyboardVirtualKeyCode::UNDEFINED,//KEY_HELP
 			KeyboardVirtualKeyCode::UNDEFINED,//KEY_MENU
-			KeyboardVirtualKeyCode::UNDEFINED,//KEY_CALC
+			KeyboardVirtualKeyCode::CALC,//140
 			KeyboardVirtualKeyCode::UNDEFINED,//KEY_SETUP
 			KeyboardVirtualKeyCode::UNDEFINED,//KEY_SLEEP
 			KeyboardVirtualKeyCode::UNDEFINED,//KEY_WAKEUP
@@ -187,9 +187,9 @@ namespace srk::modules::inputs::evdev_input {
 			KeyboardVirtualKeyCode::UNDEFINED,//160, KEY_CLOSECD
 			KeyboardVirtualKeyCode::UNDEFINED,//KEY_EJECTCD
 			KeyboardVirtualKeyCode::UNDEFINED,//KEY_EJECTCLOSECD
-			KeyboardVirtualKeyCode::NEXT_SONG,
+			KeyboardVirtualKeyCode::NEXT_TRACK,
 			KeyboardVirtualKeyCode::PLAY_PAUSE,
-			KeyboardVirtualKeyCode::PREV_SONG,
+			KeyboardVirtualKeyCode::PREV_TRACK,
 			KeyboardVirtualKeyCode::UNDEFINED,//KEY_STOPCD
 			KeyboardVirtualKeyCode::UNDEFINED,//KEY_RECORD
 			KeyboardVirtualKeyCode::UNDEFINED,//KEY_REWIND

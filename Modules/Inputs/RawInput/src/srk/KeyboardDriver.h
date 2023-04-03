@@ -119,7 +119,7 @@ namespace srk::modules::inputs::raw_input {
 			KeyboardVirtualKeyCode::Z,//90
 			KeyboardVirtualKeyCode::L_WIN,
 			KeyboardVirtualKeyCode::R_WIN,
-			KeyboardVirtualKeyCode::APPS,//APPS
+			KeyboardVirtualKeyCode::MENU,
 			KeyboardVirtualKeyCode::UNDEFINED,
 			KeyboardVirtualKeyCode::UNDEFINED,//VK_SLEEP
 			KeyboardVirtualKeyCode::NUMPAD_0,

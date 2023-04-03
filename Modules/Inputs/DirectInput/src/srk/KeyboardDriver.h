@@ -240,7 +240,7 @@ namespace srk::modules::inputs::direct_input {
 			KeyboardVirtualKeyCode::UNDEFINED,
 			KeyboardVirtualKeyCode::L_WIN,
 			KeyboardVirtualKeyCode::R_WIN,//220
-			KeyboardVirtualKeyCode::APPS,
+			KeyboardVirtualKeyCode::MENU,
 			KeyboardVirtualKeyCode::UNDEFINED,//DIK_POWER
 			KeyboardVirtualKeyCode::UNDEFINED,//DIK_SLEEP
 			KeyboardVirtualKeyCode::UNDEFINED,
