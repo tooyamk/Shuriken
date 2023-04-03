@@ -33,7 +33,7 @@ namespace srk::modules::inputs::raw_input {
 		auto& kb = rawInput.data.keyboard;
 		auto vk = _getVirtualKey(kb);
 		if (!GenericKeyboard::Buffer::isValid(vk)) {
-			printaln(kb.VKey, "    "sv, kb.MakeCode, "    "sv, kb.Flags);
+			printaln(kb.VKey, L"    "sv, kb.MakeCode, L"    "sv, kb.Flags, L"    "sv,  String::toString(kb.Message, 16));
 			return;
 		}
 

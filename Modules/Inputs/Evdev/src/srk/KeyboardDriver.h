@@ -187,9 +187,9 @@ namespace srk::modules::inputs::evdev_input {
 			KeyboardVirtualKeyCode::UNDEFINED,//160, KEY_CLOSECD
 			KeyboardVirtualKeyCode::UNDEFINED,//KEY_EJECTCD
 			KeyboardVirtualKeyCode::UNDEFINED,//KEY_EJECTCLOSECD
-			KeyboardVirtualKeyCode::NEXT_TRACK,
-			KeyboardVirtualKeyCode::PLAY_PAUSE,
-			KeyboardVirtualKeyCode::PREV_TRACK,
+			KeyboardVirtualKeyCode::MEDIA_NEXT_TRACK,
+			KeyboardVirtualKeyCode::MEDIA_PLAY_PAUSE,
+			KeyboardVirtualKeyCode::MEDIA_PREV_TRACK,
 			KeyboardVirtualKeyCode::UNDEFINED,//KEY_STOPCD
 			KeyboardVirtualKeyCode::UNDEFINED,//KEY_RECORD
 			KeyboardVirtualKeyCode::UNDEFINED,//KEY_REWIND

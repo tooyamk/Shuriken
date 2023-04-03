@@ -82,9 +82,7 @@ namespace srk::modules::windows::cocoa {
 		return _eventDispatcher;
 	}
 
-	bool Window::create(const CreateWindowDesc& desc) {
-		if (_data.isCreated) return false;
-        
+	bool Window::create(const CreateWindowDescriptor& desc) {
         NSUInteger styleMask = NSWindowStyleMaskTitled;
         if (desc.style.minimizable) styleMask |= NSWindowStyleMaskMiniaturizable;
         if (desc.style.closable) styleMask |=NSWindowStyleMaskClosable;
@@ -113,7 +111,7 @@ namespace srk::modules::windows::cocoa {
 		return true;
 	}
 
-	bool Window::isValid() const {
+    bool Window::isValid() const {
 		return _data.isCreated;
 	}
 
@@ -162,7 +160,7 @@ namespace srk::modules::windows::cocoa {
 
 	void Window::setContentSize(const Vec2ui32& size) {
         if (!_data.isCreated) return;
-        
+
         NSSize s;
         s.width = size[0];
         s.height = size[1];
@@ -175,7 +173,7 @@ namespace srk::modules::windows::cocoa {
 
 	void Window::setTitle(const std::string_view& title) {
         if (!_data.isCreated) return;
-        
+
         _data.title = title;
         ((NSWindow*)_data.wnd).title = [NSString stringWithCString:_data.title.c_str() encoding:[NSString defaultCStringEncoding]];
 	}
@@ -196,7 +194,7 @@ namespace srk::modules::windows::cocoa {
 
 	void Window::setFocus() {
         if (!_data.isCreated) return;
-        
+
         auto wnd = (NSWindow*)_data.wnd;
         if (![wnd canBecomeMainWindow]) return;
         

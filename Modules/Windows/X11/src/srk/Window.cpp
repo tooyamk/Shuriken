@@ -20,9 +20,7 @@ namespace srk::modules::windows::x11 {
 		return _eventDispatcher;
 	}
 
-	bool Window::create(const CreateWindowDesc& desc) {
-		if (_data.isCreated) return false;
-
+	bool Window::create(const CreateWindowDescriptor& desc) {
 		_data.contentSize = desc.contentSize;
 		_data.isFullScreen = desc.fullScreen;
 		_data.style = desc.style;
@@ -314,7 +312,6 @@ namespace srk::modules::windows::x11 {
 
 	void Window::processEvent(void* data) {
 		if (!_data.isCreated) return;
-
 		_doEvent((XEvent*)data);
 	}
 

@@ -10,7 +10,7 @@ namespace srk::modules::windows::win32api {
 	Manager::~Manager() {
 	}
 
-	IntrusivePtr<IWindow> Manager::crerateWindow(const CreateWindowDesc& desc) {
+	IntrusivePtr<IWindow> Manager::crerate(const CreateWindowDescriptor& desc) {
 		auto win = new Window(*this);
 		if (!win->create(desc)) {
 			delete win;

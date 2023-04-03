@@ -145,18 +145,18 @@ public:
 				return "space";
 			case KeyboardVirtualKeyCode::MENU:
 				return "menu";
-			case KeyboardVirtualKeyCode::CALC:
-				return "calculator";
+			case KeyboardVirtualKeyCode::LAUNCH_CALC:
+				return "launch_calculator";
 			case KeyboardVirtualKeyCode::VOLUME_DOWN:
 				return "volume_down";
 			case KeyboardVirtualKeyCode::VOLUME_UP:
 				return "volume_up";
-			case KeyboardVirtualKeyCode::NEXT_TRACK:
-				return "next_track";
-			case KeyboardVirtualKeyCode::PLAY_PAUSE:
-				return "play_pause";
-			case KeyboardVirtualKeyCode::PREV_TRACK:
-				return "prev_track";
+			case KeyboardVirtualKeyCode::MEDIA_NEXT_TRACK:
+				return "media_next_track";
+			case KeyboardVirtualKeyCode::MEDIA_PLAY_PAUSE:
+				return "media_play_pause";
+			case KeyboardVirtualKeyCode::MEDIA_PREV_TRACK:
+				return "media_prev_track";
 			default:
 				return "undnown";
 			}
@@ -587,10 +587,10 @@ public:
 		auto wm = wml->create();
 		if (!wm) return 0;
 
-		CreateWindowDesc desc;
+		CreateWindowDescriptor desc;
 		desc.style.resizable = true;
 		desc.contentSize.set(800, 600);
-		auto win = wm->crerateWindow(desc);
+		auto win = wm->crerate(desc);
 		if (!win) return 0;
 
 		printaln(L"UNDEFINED_AXIS_1 : "sv,  GamepadVirtualKeyCode::UNDEFINED_AXIS_1, L" UNDEFINED_BUTTON_1 : "sv, GamepadVirtualKeyCode::UNDEFINED_BUTTON_1);
@@ -605,7 +605,7 @@ public:
 		createInputModuleDesc.window = win;
 
 		if constexpr (Environment::OPERATING_SYSTEM == Environment::OperatingSystem::WINDOWS) {
-			if (1) {
+			if (0) {
 				createInputModuleDesc.filters = DeviceType::MOUSE;
 				auto ignoreXInputDevices = false;
 				std::string_view argv[2];
@@ -615,8 +615,8 @@ public:
 				createInputModuleDesc.argv = argv;
 				initInputModule(inputModules, getDllPath("srk-module-input-direct-input"), createInputModuleDesc);
 			}
-			if (0) {
-				createInputModuleDesc.filters = DeviceType::KEYBOARD;
+			if (1) {
+				createInputModuleDesc.filters = DeviceType::MOUSE;
 				initInputModule(inputModules, getDllPath("srk-module-input-raw-input"), createInputModuleDesc);
 			}
 			if (0) {
@@ -658,7 +658,7 @@ public:
 				auto info = e.getData<DeviceInfo>();
 				printaln(L"input device connected : "sv, getDeviceTypeString(info->type), L" vid = "sv, info->vendorID, L" pid = "sv, info->productID, L" name = "sv, info->name, L" guid = "sv, String::toString(info->guid.getData(), info->guid.getSize()));
 
-				if ((info->type & (DeviceType::KEYBOARD)) != DeviceType::UNKNOWN) {
+				if ((info->type & (DeviceType::MOUSE)) != DeviceType::UNKNOWN) {
 				//if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN) {
 				//if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN && info->vendorID == 0x54C) {
 				//if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN && info->vendorID == 0xF0D) {
@@ -822,6 +822,14 @@ public:
 
 								break;
 							}
+							case DeviceType::MOUSE:
+							{
+								auto state = e.getData<DeviceState>();
+
+								printaln(L"mouse up -> key : "sv, state->code, L"    value : "sv, ((DeviceStateValue*)state->values)[0]);
+
+								break;
+							}
 							}
 							}));
 
@@ -833,11 +841,9 @@ public:
 							{
 								auto state = e.getData<DeviceState>();
 								if (state->code == MouseKeyCode::POSITION) {
-									//f32 curPos[2];
-									//(e.getTarget<InputDevice>())->getKeyState(key->code, curPos, 2);
-									//printaln(L"input device move : "sv, key->value[0], L" "sv, key->value[1]);
+									printaln(L"mouse move : "sv, ((DeviceStateValue*)state->values)[0], L" "sv, ((DeviceStateValue*)state->values)[1]);
 								} else if (state->code == MouseKeyCode::WHEEL) {
-									printaln(L"input device wheel : "sv, ((DeviceStateValue*)state->values)[0]);
+									printaln(L"mouse wheel : "sv, ((DeviceStateValue*)state->values)[0]);
 								}
 
 								break;

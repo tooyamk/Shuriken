@@ -199,26 +199,26 @@ namespace srk::modules::inputs::raw_input {
 			KeyboardVirtualKeyCode::UNDEFINED,//170, VK_BROWSER_SEARCH
 			KeyboardVirtualKeyCode::UNDEFINED,//VK_BROWSER_FAVORITES
 			KeyboardVirtualKeyCode::UNDEFINED,//VK_BROWSER_HOME
-			KeyboardVirtualKeyCode::UNDEFINED,//VK_VOLUME_MUTE
-			KeyboardVirtualKeyCode::UNDEFINED,//VK_VOLUME_DOWN
-			KeyboardVirtualKeyCode::UNDEFINED,//VK_VOLUME_UP
-			KeyboardVirtualKeyCode::UNDEFINED,//VK_MEDIA_NEXT_TRACK
-			KeyboardVirtualKeyCode::UNDEFINED,//VK_MEDIA_PREV_TRACK
+			KeyboardVirtualKeyCode::VOLUME_MUTE,
+			KeyboardVirtualKeyCode::VOLUME_DOWN,
+			KeyboardVirtualKeyCode::VOLUME_UP,
+			KeyboardVirtualKeyCode::MEDIA_NEXT_TRACK,//VK_MEDIA_NEXT_TRACK
+			KeyboardVirtualKeyCode::MEDIA_PREV_TRACK,//VK_MEDIA_PREV_TRACK
 			KeyboardVirtualKeyCode::UNDEFINED,//VK_MEDIA_STOP
-			KeyboardVirtualKeyCode::UNDEFINED,//VK_MEDIA_PLAY_PAUSE
+			KeyboardVirtualKeyCode::MEDIA_PLAY_PAUSE,//VK_MEDIA_PLAY_PAUSE
 			KeyboardVirtualKeyCode::UNDEFINED,//180, VK_LAUNCH_MAIL
 			KeyboardVirtualKeyCode::UNDEFINED,//VK_LAUNCH_MEDIA_SELECT
 			KeyboardVirtualKeyCode::UNDEFINED,//VK_LAUNCH_APP1
-			KeyboardVirtualKeyCode::UNDEFINED,//VK_LAUNCH_APP2
+			KeyboardVirtualKeyCode::LAUNCH_CALC,
 			KeyboardVirtualKeyCode::UNDEFINED,
 			KeyboardVirtualKeyCode::UNDEFINED,
-			KeyboardVirtualKeyCode::SEMICOLON,//;
-			KeyboardVirtualKeyCode::EQUAL,//=
-			KeyboardVirtualKeyCode::COMMA,//,
-			KeyboardVirtualKeyCode::MINUS,//-
-			KeyboardVirtualKeyCode::DOT,//. 190
-			KeyboardVirtualKeyCode::SLASH,///
-			KeyboardVirtualKeyCode::GRAVE,//`
+			KeyboardVirtualKeyCode::SEMICOLON,
+			KeyboardVirtualKeyCode::EQUAL,
+			KeyboardVirtualKeyCode::COMMA,
+			KeyboardVirtualKeyCode::MINUS,
+			KeyboardVirtualKeyCode::DOT,//190
+			KeyboardVirtualKeyCode::SLASH,
+			KeyboardVirtualKeyCode::GRAVE,
 			KeyboardVirtualKeyCode::UNDEFINED,
 			KeyboardVirtualKeyCode::UNDEFINED,
 			KeyboardVirtualKeyCode::UNDEFINED,//VK_GAMEPAD_A
@@ -245,10 +245,10 @@ namespace srk::modules::inputs::raw_input {
 			KeyboardVirtualKeyCode::UNDEFINED,//VK_GAMEPAD_RIGHT_THUMBSTICK_DOWN
 			KeyboardVirtualKeyCode::UNDEFINED,//VK_GAMEPAD_RIGHT_THUMBSTICK_RIGHT
 			KeyboardVirtualKeyCode::UNDEFINED,//VK_GAMEPAD_RIGHT_THUMBSTICK_LEFT
-			KeyboardVirtualKeyCode::LEFT_BRACKET,//[
-			KeyboardVirtualKeyCode::BACK_SLASH,//220, |
-			KeyboardVirtualKeyCode::RIGHT_BRACKET,//]
-			KeyboardVirtualKeyCode::APOSTROPHE,//'
+			KeyboardVirtualKeyCode::LEFT_BRACKET,
+			KeyboardVirtualKeyCode::BACK_SLASH,//220
+			KeyboardVirtualKeyCode::RIGHT_BRACKET,
+			KeyboardVirtualKeyCode::APOSTROPHE,
 			KeyboardVirtualKeyCode::UNDEFINED,//VK_OEM_8
 			KeyboardVirtualKeyCode::UNDEFINED,
 			KeyboardVirtualKeyCode::UNDEFINED,//VK_OEM_AX

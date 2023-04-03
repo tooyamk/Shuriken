@@ -17,8 +17,8 @@ public:
 
 		std::vector<IntrusivePtr<IWindow>> activedWindows;
 
-		auto tryCreateWndFn = [wm, &activedWindows](const CreateWindowDesc& desc) {
-			if (auto win = wm->crerateWindow(desc); win) {
+		auto tryCreateWndFn = [wm, &activedWindows](const CreateWindowDescriptor& desc) {
+			if (auto win = wm->crerate(desc); win) {
 				auto border = win->getFrameExtents();
 				printaln(L"border "sv, border[0], " ", border[1], " ", border[2], " ", border[3]);
 				activedWindows.emplace_back(win);
@@ -65,7 +65,7 @@ public:
 
 		auto deb = Application::isDebuggerAttached() ? "debugger attached"sv : ""sv;
 		auto title = "Fucker1 " + deb;;
-		CreateWindowDesc desc;
+		CreateWindowDescriptor desc;
 		desc.style.resizable = true;
 		desc.style.maximizable = true;
 		desc.style.backgroundColor.set(255, 255, 0);

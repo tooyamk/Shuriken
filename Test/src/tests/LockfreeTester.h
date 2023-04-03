@@ -76,10 +76,10 @@ public:
 		printFloat(0.125f);
 		printFloat(0.111111111f);
 
-		CreateWindowDesc desc;
+		CreateWindowDescriptor desc;
 		desc.style.resizable = true;
 		desc.contentSize.set(800, 600);
-		auto win = wm->crerateWindow(desc);
+		auto win = wm->crerate(desc);
 		if (!win) return 0;
 
 		IntrusivePtr looper = new Looper(1.0 / 60.0);

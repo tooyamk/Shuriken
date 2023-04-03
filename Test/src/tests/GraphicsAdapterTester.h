@@ -23,10 +23,10 @@ public:
 		auto wm = wml->create();
 		if (!wm) return 0;
 
-		CreateWindowDesc desc;
+		CreateWindowDescriptor desc;
 		desc.style.resizable = true;
 		desc.contentSize.set(800, 600);
-		auto win = wm->crerateWindow(desc);
+		auto win = wm->crerate(desc);
 		if (!win) return 0;
 
 		IntrusivePtr looper = new Looper(1.0 / 60.0);

@@ -14,7 +14,7 @@ namespace srk::modules::windows::cocoa {
 			::operator delete(p);
 		}
 
-		virtual IntrusivePtr<IWindow> SRK_CALL crerateWindow(const CreateWindowDesc& desc) override;
+		virtual IntrusivePtr<IWindow> SRK_CALL crerate(const CreateWindowDescriptor& desc) override;
 		virtual bool SRK_CALL processEvent(const IWindowModule::EventFn& fn) const override;
 
 		inline void SRK_CALL add(void* nativeWindow, IWindow* window) {

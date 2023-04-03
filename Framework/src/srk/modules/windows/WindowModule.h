@@ -29,7 +29,7 @@ namespace srk::modules::windows {
 	};
 
 
-	struct SRK_FW_DLL CreateWindowDesc {
+	struct SRK_FW_DLL CreateWindowDescriptor {
 		WindowStyle style;
 		std::string_view title;
 		Vec2ui32 contentSize;
@@ -86,7 +86,7 @@ namespace srk::modules::windows {
 			return ModuleType::WINDOW;
 		}
 
-		virtual IntrusivePtr<IWindow> SRK_CALL crerateWindow(const CreateWindowDesc& desc) = 0;
+		virtual IntrusivePtr<IWindow> SRK_CALL crerate(const CreateWindowDescriptor& desc) = 0;
 
 		virtual bool SRK_CALL processEvent() const = 0;
 		virtual bool SRK_CALL processEvent(const EventFn& fn) const = 0;

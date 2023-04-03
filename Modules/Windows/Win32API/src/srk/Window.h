@@ -19,7 +19,7 @@ namespace srk::modules::windows::win32api {
 
 		virtual IntrusivePtr<events::IEventDispatcher<WindowEvent>> SRK_CALL getEventDispatcher() const override;
 
-		bool SRK_CALL create(const CreateWindowDesc& desc);
+		bool SRK_CALL create(const CreateWindowDescriptor& desc);
 
 		virtual bool SRK_CALL isValid() const override;
 		virtual void* SRK_CALL getNative(WindowNative native) const override;

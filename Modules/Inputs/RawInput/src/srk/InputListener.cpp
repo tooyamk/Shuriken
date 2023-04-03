@@ -33,7 +33,7 @@ namespace srk::modules::inputs::raw_input {
 		RAWINPUT rawInput;
 		UINT dwSize = sizeof(rawInput);
 		if (auto size = GetRawInputData((HRAWINPUT)(*(LPARAM*)e.getData()), RID_INPUT, &rawInput, &dwSize, sizeof(RAWINPUTHEADER)); size != -1) {
-			if (rawInput.header.hDevice == _handle) _callback(rawInput, _callbackTarget);
+			if (!rawInput.header.hDevice || rawInput.header.hDevice == _handle) _callback(rawInput, _callbackTarget);
 		}
 	}
 }

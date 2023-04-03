@@ -21,9 +21,7 @@ namespace srk::modules::windows::win32api {
 		return _eventDispatcher;
 	}
 
-	bool Window::create(const CreateWindowDesc& desc) {
-		if (_data.isCreated) return false;
-
+	bool Window::create(const CreateWindowDescriptor& desc) {
 		auto handle = GetModuleHandleW(nullptr);
 
 		_data.contentRect.size = desc.contentSize;
@@ -86,7 +84,6 @@ namespace srk::modules::windows::win32api {
 	bool Window::isValid() const {
 		return _data.isCreated;
 	}
-
 	void* Window::getNative(WindowNative native) const {
 		switch (native) {
 		case WindowNative::WINDOW:
@@ -261,7 +258,6 @@ namespace srk::modules::windows::win32api {
 
 	void Window::processEvent(void* data) {
 		if (!_data.isCreated) return;
-
 		auto& msg = *(MSG*)data;
 		if (msg.message == WM_QUIT) {
 			close();
