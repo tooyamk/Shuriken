@@ -37,12 +37,6 @@ namespace srk::modules::windows {
 	};
 
 
-	enum class WindowNative : uint8_t {
-		WINDOW,
-		X_DISPLAY
-	};
-
-
 	class SRK_FW_DLL IWindow : public Ref {
 	public:
 		virtual ~IWindow() {};
@@ -50,8 +44,7 @@ namespace srk::modules::windows {
 		virtual IntrusivePtr<events::IEventDispatcher<WindowEvent>> SRK_CALL getEventDispatcher() const = 0;
 
 		virtual bool SRK_CALL isValid() const = 0;
-		virtual void* SRK_CALL getNative(WindowNative native) const = 0;
-		//virtual void* SRK_CALL getNativeWindow() const = 0;
+		virtual void* SRK_CALL getNative(const std::string_view& native) const = 0;
 		virtual bool SRK_CALL isFullScreen() const = 0;
 		virtual void SRK_CALL toggleFullScreen() = 0;
 		virtual Vec4ui32 SRK_CALL getFrameExtents() const = 0;

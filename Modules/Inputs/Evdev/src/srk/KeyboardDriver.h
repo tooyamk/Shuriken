@@ -13,7 +13,7 @@ namespace srk::modules::inputs::evdev_input {
 
 		static KeyboardDriver* SRK_CALL create(Input& input, int32_t fd);
 
-		virtual bool SRK_CALL readStateFromDevice(GenericKeyboard::Buffer& buffer) const override;
+		virtual std::option<bool> SRK_CALL readStateFromDevice(GenericKeyboard::Buffer& buffer) const override;
 
 	private:
 		KeyboardDriver(Input& input, int32_t fd);

@@ -19,10 +19,10 @@ namespace srk::modules::inputs::direct_input {
 		return new KeyboardDriver(input, dev);
 	}
 
-	bool KeyboardDriver::readStateFromDevice(GenericKeyboard::Buffer& buffer) const {
+	std::optional<bool> KeyboardDriver::readStateFromDevice(GenericKeyboard::Buffer& buffer) const {
 		if (auto hr = _dev->Poll(); hr == DIERR_NOTACQUIRED || hr == DIERR_INPUTLOST) {
-			if (FAILED(_dev->Acquire())) return false;
-			if (FAILED(_dev->Poll())) return false;
+			if (FAILED(_dev->Acquire())) return std::nullopt;
+			if (FAILED(_dev->Poll())) return std::nullopt;
 		}
 
 		uint8_t buf[256];
@@ -35,9 +35,9 @@ namespace srk::modules::inputs::direct_input {
 
 			for (size_t i = 0; i < sizeof(buf); ++i) buffer.set(VK_MAPPER[i], buf[i] & 0x80);
 
-			return true;
+			return std::make_optional(true);
 		}
 
-		return false;
+		return std::nullopt;
 	}
 }

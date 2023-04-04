@@ -160,14 +160,11 @@ namespace srk::modules::windows::x11 {
 		return _data.isCreated;
 	}
 
-	void* Window::getNative(WindowNative native) const {
-		switch (native) {
-		case WindowNative::X_DISPLAY:
-			return _display;
-		case WindowNative::WINDOW:
-			return (void*)_data.wnd;
-		}
+	void* Window::getNative(const std::string_view& native) const {
+		using namespace std::string_view_literals;
 
+		if (native == "XDisplay"sv) return _display;
+		if (native == "XWindiw"sv) return (void*)_data.wnd;
 		return nullptr;
 	}
 

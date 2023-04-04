@@ -8,7 +8,7 @@
 namespace srk::modules::inputs::hid_input {
 	class SRK_MODULE_DLL Input : public IInputModule {
 	public:
-		Input(Ref* loader, const CreateInputModuleDesc& desc);
+		Input(Ref* loader, const CreateInputModuleDescriptor& desc);
 		virtual ~Input();
 
 		void operator delete(Input* p, std::destroying_delete_t) {

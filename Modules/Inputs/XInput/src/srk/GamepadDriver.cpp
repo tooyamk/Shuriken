@@ -28,15 +28,15 @@ namespace srk::modules::inputs::xinput {
 		return ((const uint8_t*)state)[0];
 	}
 
-	bool GamepadDriver::readStateFromDevice(void* inputState) const {
+	std::optional<bool> GamepadDriver::readStateFromDevice(void* inputState) const {
 		auto raw = (uint8_t*)inputState;
 		if (XInputGetState(_index, (XINPUT_STATE*)(raw + HEADER_LENGTH)) == ERROR_SUCCESS) {
 			raw[0] = 1;
 			
-			return true;
+			return std::make_optional(true);
 		}
 
-		return false;
+		return std::nullopt;
 	}
 
 	float32_t GamepadDriver::readDataFromInputState(const void* inputState, GamepadKeyCode keyCode) const {

@@ -8,7 +8,7 @@
 #include <oleauto.h>
 
 namespace srk::modules::inputs::direct_input {
-	Input::Input(Ref* loader, const CreateInputModuleDesc& desc) :
+	Input::Input(Ref* loader, const CreateInputModuleDescriptor& desc) :
 		_loader(loader),
 		_win(desc.window),
 		_filters(desc.filters),
@@ -23,6 +23,8 @@ namespace srk::modules::inputs::direct_input {
 				_ignoreXInputDevices = desc.argv[i] == "true"sv;
 			}
 		}
+
+		_hwnd = (HWND)_win->getNative("HWND"sv);
 	}
 
 	Input::~Input() {
@@ -111,10 +113,6 @@ namespace srk::modules::inputs::direct_input {
 
 		dev->Release();
 		return nullptr;
-	}
-
-	HWND Input::getHWND() const {
-		return (HWND)_win->getNative(windows::WindowNative::WINDOW);
 	}
 
 	bool Input::isXInputDevice(const ::GUID& guidProduct) {

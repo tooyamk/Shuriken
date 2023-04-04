@@ -38,12 +38,15 @@ namespace srk::modules::graphics::vulkan {
 		_release();
 	}
 
-	bool Graphics::createDevice(Ref* loader, const CreateGrahpicsModuleDesc& desc) {
+	bool Graphics::createDevice(Ref* loader, const CreateGrahpicsModuleDescriptor& desc) {
+		using namespace std::string_view_literals;
+
 		if (_vkStatus.device) return false;
+
 		if (desc.window) {
-			if (!desc.window->getNative(windows::WindowNative::WINDOW)) return false;
 #if SRK_OS == SRK_OS_WINDOWS
-			//if (!conf.win->getNative(windows::WindowNative::MODULE)) return false;
+			_hwnd = (HWND)desc.window->getNative("HWND"sv);
+			if (!_hwnd) return false;
 #endif
 		} else {
 			if (!desc.offscreen) return false;
@@ -71,7 +74,7 @@ namespace srk::modules::graphics::vulkan {
 		}
 	}
 
-	bool Graphics::_createDevice(Ref* loader, const CreateGrahpicsModuleDesc& desc, const GraphicsAdapter* adapter) {
+	bool Graphics::_createDevice(Ref* loader, const CreateGrahpicsModuleDescriptor& desc, const GraphicsAdapter* adapter) {
 		using namespace srk::enum_operators;
 
 		auto success = false;
@@ -230,8 +233,6 @@ namespace srk::modules::graphics::vulkan {
 	}
 
 	bool Graphics::_createVkInstance(bool debug) {
-		using namespace std::literals;
-
 		uint32_t enabledLayerCount = 0;
 		const char* enabledLayerNames[1];
 
@@ -364,7 +365,7 @@ namespace srk::modules::graphics::vulkan {
 		memset(&surfaceCreateInfo, 0, sizeof(surfaceCreateInfo));
 		surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
 		surfaceCreateInfo.hinstance = GetModuleHandleW(nullptr);
-		surfaceCreateInfo.hwnd = (HWND)win.getNative(windows::WindowNative::WINDOW);
+		surfaceCreateInfo.hwnd = _hwnd;
 
 		err = vkCreateWin32SurfaceKHR(_vkStatus.instance, &surfaceCreateInfo, nullptr, &_vkStatus.surface);
 #endif
@@ -794,7 +795,7 @@ namespace srk::modules::graphics::vulkan {
 	//	return _eventDispatcher;
 	//}
 
-	const std::string& Graphics::getVersion() const {
+	std::string_view Graphics::getVersion() const {
 		return _deviceVersion;
 	}
 

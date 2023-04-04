@@ -4,7 +4,7 @@
 #include "srk/hash/xxHash.h"
 
 namespace srk::modules::inputs::hid_input {
-	Input::Input(Ref* loader, const CreateInputModuleDesc& desc) :
+	Input::Input(Ref* loader, const CreateInputModuleDescriptor& desc) :
 		_loader(loader),
 		_win(desc.window),
 		_filters(desc.filters),

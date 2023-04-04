@@ -13,9 +13,7 @@ namespace srk::modules::inputs::raw_input {
 		InputListener(Input& input, windows::IWindow& win, HANDLE handle, DeviceType type, Callback callback, void* callbackTarget);
 		~InputListener();
 
-		inline HWND SRK_CALL getHWND() const {
-			return (HWND)_win->getNative(windows::WindowNative::WINDOW);
-		}
+		HWND SRK_CALL getHWND() const;
 
 		void SRK_CALL start();
 

@@ -25,7 +25,7 @@ public:
 		//if (!gml->load(getDLLName("srk-module-graphics-gl"))) return 0;
 		if (!gml->load(getDllPath("srk-module-graphics-d3d11"))) return 0;
 
-		CreateGrahpicsModuleDesc createGrahpicsModuleDesc;
+		CreateGrahpicsModuleDescriptor createGrahpicsModuleDesc;
 		createGrahpicsModuleDesc.window = win;
 		createGrahpicsModuleDesc.sampleCount = 4;
 		createGrahpicsModuleDesc.debug = Environment::IS_DEBUG;

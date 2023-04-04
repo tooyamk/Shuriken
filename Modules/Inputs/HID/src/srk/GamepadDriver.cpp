@@ -239,17 +239,17 @@ namespace srk::modules::inputs::hid_input {
 		return ((const uint8_t*)state)[0];
 	}
 
-	bool GamepadDriver::readStateFromDevice(void* inputState) const {
+	std::optional<bool> GamepadDriver::readStateFromDevice(void* inputState) const {
 		using namespace srk::extensions;
 
 		auto buffer = (uint8_t*)inputState;
 		auto inputReportData = buffer + HEADER_LENGTH;
 		if (auto rst = HID::read(*_hid, inputReportData, _desc.inputReportLength, 0); HID::isSuccess(rst)) {
 			buffer[0] = 1;
-			return true;
+			return std::make_optional(true);
 		}
 
-		return false;
+		return std::nullopt;
 	}
 
 	float32_t GamepadDriver::readDataFromInputState(const void* inputState, GamepadKeyCode keyCode) const {

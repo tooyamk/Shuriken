@@ -114,8 +114,8 @@ namespace srk::modules::inputs::evdev_input {
 		return ((const uint8_t*)state)[0];
 	}
 
-	bool GamepadDriver::readStateFromDevice(void* inputState) const {
-		using namespace std::literals;
+	std::option<bool> GamepadDriver::readStateFromDevice(void* inputState) const {
+		using namespace std::string_view_literals;
 		
 		input_event evts[8];
 		auto changed = false;
@@ -164,14 +164,14 @@ namespace srk::modules::inputs::evdev_input {
 			}
 		} while (true);
 
-		if (!changed) return false;
+		if (!changed) return std::make_option(false);
 
 		{
 			std::scoped_lock lock(_lock);
 			memcpy(inputState, _inputBuffer, _inputLength);
 		}
 
-		return true;
+		return std::make_option(true);
 	}
 
 	float32_t GamepadDriver::readDataFromInputState(const void* inputState, GamepadKeyCode keyCode) const {

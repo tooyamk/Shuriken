@@ -13,6 +13,7 @@ namespace srk::modules::inputs::direct_input {
 
 		virtual IntrusivePtr<events::IEventDispatcher<DeviceEvent>> SRK_CALL getEventDispatcher() override;
 		virtual const DeviceInfo& SRK_CALL getInfo() const override;
+		virtual void SRK_CALL close() override;
 
 	protected:
 		IntrusivePtr<Input> _input;
@@ -20,5 +21,8 @@ namespace srk::modules::inputs::direct_input {
 		DeviceInfo _info;
 
 		srk_IDirectInputDevice* _dev;
+
+		std::atomic_bool _closed;
+		std::atomic_bool _polling;
 	};
 }

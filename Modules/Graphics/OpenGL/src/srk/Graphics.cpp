@@ -41,15 +41,21 @@ namespace srk::modules::graphics::gl {
 		_release();
 	}
 
-	bool Graphics::createDevice(Ref* loader, const CreateGrahpicsModuleDesc& desc) {
+	bool Graphics::createDevice(Ref* loader, const CreateGrahpicsModuleDescriptor& desc) {
+		using namespace std::string_view_literals;
 		using namespace srk::enum_operators;
 
-		if (!desc.window || !desc.window->getNative(windows::WindowNative::WINDOW)) return false;
+		if (!desc.window) return false;
 
 #if SRK_OS == SRK_OS_WINDOWS
-		if (_dc) return false;
+		_hwnd = (HWND)desc.window->getNative("HWND"sv);
+		if (!_hwnd) return false;
 #elif SRK_OS == SRK_OS_LINUX
-		if (_context || !desc.window->getNative(windows::WindowNative::X_DISPLAY)) return false;
+		_xdisplay = (::Display*)desc.window->getNative("XDisplay"sv);
+		if (!_xdisplay) return false;
+
+		_xwindow = (::Window)desc.window->getNative("XWindow"sv);
+		if (!_xwindow) return false;
 #endif
 
 		/*
@@ -97,7 +103,7 @@ namespace srk::modules::graphics::gl {
 		if (sampleCount > _deviceFeatures.maxSampleCount) sampleCount = _deviceFeatures.maxSampleCount;
 
 #if SRK_OS == SRK_OS_WINDOWS
-		_dc = GetDC((HWND)desc.window->getNative(windows::WindowNative::WINDOW));
+		_dc = GetDC(_hwnd);
 		if (!_dc) {
 			_release(desc.window);
 			return false;
@@ -160,8 +166,7 @@ namespace srk::modules::graphics::gl {
 			None
 		};
 
-		auto dis = (Display*)desc.window->getNative(windows::WindowNative::X_DISPLAY);
-		auto vi = glXChooseVisual(dis, DefaultScreen(dis), attrListDouble);//XVisualInfo*
+		auto vi = glXChooseVisual(_xdisplay, DefaultScreen(_xdisplay), attrListDouble);//XVisualInfo*
 		if (vi) {
 			int32_t attrListSingle[] = {
 				GLX_RED_SIZE,   4,
@@ -170,17 +175,17 @@ namespace srk::modules::graphics::gl {
 				GLX_DEPTH_SIZE, 16,
 				None
 			};
-			vi = glXChooseVisual(dis, DefaultScreen(dis), attrListSingle);
+			vi = glXChooseVisual(_xdisplay, DefaultScreen(_xdisplay), attrListSingle);
 			if (!vi) {
 				_release(desc.window);
 				return false;
 			}
 		}
 
-		_context = glXCreateContext(dis, vi, nullptr, True);
+		_context = glXCreateContext(_xdisplay, vi, nullptr, True);
 		XFree(vi);
 
-		glXMakeCurrent(dis, (Window)desc.window->getNative(windows::WindowNative::WINDOW), _context);
+		glXMakeCurrent(_xdisplay, _xwindow, _context);
 #else
 		_release(desc.window);
 		return false;
@@ -289,7 +294,7 @@ namespace srk::modules::graphics::gl {
 		return _eventDispatcher;
 	}
 
-	const std::string& Graphics::getVersion() const {
+	std::string_view Graphics::getVersion() const {
 		return _deviceVersion;
 	}
 
@@ -680,7 +685,7 @@ namespace srk::modules::graphics::gl {
 #if SRK_OS == SRK_OS_WINDOWS
 		wglMakeCurrent(_dc, _rc);
 #elif SRK_OS == SRK_OS_LINUX
-		glXMakeCurrent((Display*)_win->getNative(windows::WindowNative::X_DISPLAY), (Window)_win->getNative(windows::WindowNative::WINDOW), _context);
+		glXMakeCurrent(_xdisplay, _xwindow, _context);
 #endif
 	}
 
@@ -725,9 +730,8 @@ namespace srk::modules::graphics::gl {
 #if SRK_OS == SRK_OS_WINDOWS
 		SwapBuffers(_dc);
 #elif SRK_OS == SRK_OS_LINUX
-		glXSwapBuffers((Display*)_win->getNative(windows::WindowNative::X_DISPLAY), (Window)_win->getNative(windows::WindowNative::WINDOW));
+		glXSwapBuffers(_xdisplay, _xwindow);
 #endif
-		
 	}
 
 	void Graphics::setRenderTarget(IRenderTarget* rt) {
@@ -1079,7 +1083,7 @@ namespace srk::modules::graphics::gl {
 		}
 
 		if (_dc) {
-			ReleaseDC((HWND)win->getNative(windows::WindowNative::WINDOW), _dc);
+			ReleaseDC(_hwnd, _dc);
 			_dc = nullptr;
 		}
 #elif SRK_OS == SRK_OS_LINUX

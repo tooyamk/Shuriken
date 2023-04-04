@@ -6,7 +6,9 @@ namespace srk::modules::inputs::direct_input {
 		_input(input),
 		_eventDispatcher(new events::EventDispatcher<DeviceEvent>()),
 		_info(info),
-		_dev(dev) {
+		_dev(dev),
+		_closed(false),
+		_polling(false) {
 	}
 
 	DeviceBase::~DeviceBase() {
@@ -20,5 +22,9 @@ namespace srk::modules::inputs::direct_input {
 
 	const DeviceInfo& DeviceBase::getInfo() const {
 		return _info;
+	}
+
+	void DeviceBase::close() {
+		_closed = true;
 	}
 }

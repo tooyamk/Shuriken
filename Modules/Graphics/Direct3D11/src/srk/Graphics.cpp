@@ -41,20 +41,25 @@ namespace srk::modules::graphics::d3d11 {
 		_release();
 	}
 
-	bool Graphics::createDevice(Ref* loader, const CreateGrahpicsModuleDesc& desc) {
+	bool Graphics::createDevice(Ref* loader, const CreateGrahpicsModuleDescriptor& desc) {
+		using namespace std::string_view_literals;
+
 		if (_device) return false;
+
+		HWND hwnd = nullptr;
 		if (desc.window) {
-			if (!desc.window->getNative(windows::WindowNative::WINDOW)) return false;
+			hwnd = (HWND)desc.window->getNative("HWND"sv);
+			if (!hwnd && !desc.offscreen) return false;
 		} else {
 			if (!desc.offscreen) return false;
 		}
 
 		if (desc.adapter) {
 			if (desc.createProcessInfoHandler) desc.createProcessInfoHandler("specific adapter create device...");
-			return _createDevice(loader, desc, desc.adapter);
+			return _createDevice(loader, desc, desc.adapter, hwnd);
 		} else if (desc.offscreen) {
 			if (desc.createProcessInfoHandler) desc.createProcessInfoHandler("null adapter create offscreen device...");
-			return _createDevice(loader, desc, nullptr);
+			return _createDevice(loader, desc, nullptr, hwnd);
 		} else {
 			if (desc.createProcessInfoHandler) desc.createProcessInfoHandler("search adapter create device...");
 
@@ -65,7 +70,7 @@ namespace srk::modules::graphics::d3d11 {
 
 			for (auto& idx : indices) {
 				if (desc.createProcessInfoHandler) desc.createProcessInfoHandler("found adapter create device...");
-				if (_createDevice(loader, desc, &adapters[idx])) return true;
+				if (_createDevice(loader, desc, &adapters[idx], hwnd)) return true;
 			}
 
 			if (desc.createProcessInfoHandler) desc.createProcessInfoHandler("search adapter create device failed");
@@ -74,7 +79,7 @@ namespace srk::modules::graphics::d3d11 {
 		}
 	}
 
-	bool Graphics::_createDevice(Ref* loader, const CreateGrahpicsModuleDesc& desc, const GraphicsAdapter* adapter) {
+	bool Graphics::_createDevice(Ref* loader, const CreateGrahpicsModuleDescriptor& desc, const GraphicsAdapter* adapter, HWND hwnd) {
 		using namespace srk::enum_operators;
 
 		_isDebug = desc.debug;
@@ -84,13 +89,13 @@ namespace srk::modules::graphics::d3d11 {
 		IDXGIFactory* dxgFctory = nullptr;
 		IDXGIAdapter* dxgAdapter = nullptr;
 
-		if (adapter && (desc.window || !desc.offscreen)) {
+		if (adapter && (hwnd || !desc.offscreen)) {
 			if (FAILED(CreateDXGIFactory(IID_PPV_ARGS(&dxgFctory)))) {
 				if (desc.createProcessInfoHandler) desc.createProcessInfoHandler("CreateDXGIFactory failed");
 				return false;
 			}
 			objs.add(dxgFctory);
-			dxgFctory->MakeWindowAssociation((HWND)desc.window->getNative(windows::WindowNative::WINDOW), DXGI_MWA_NO_WINDOW_CHANGES | DXGI_MWA_NO_ALT_ENTER);
+			dxgFctory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_WINDOW_CHANGES | DXGI_MWA_NO_ALT_ENTER);
 
 			for (UINT i = 0;; ++i) {
 				if (dxgFctory->EnumAdapters(i, &dxgAdapter) == DXGI_ERROR_NOT_FOUND) break;
@@ -340,7 +345,7 @@ namespace srk::modules::graphics::d3d11 {
 			swapChainDesc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
 			swapChainDesc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
 			swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-			swapChainDesc.OutputWindow = (HWND)desc.window->getNative(windows::WindowNative::WINDOW);
+			swapChainDesc.OutputWindow = hwnd;
 			swapChainDesc.Windowed = true;
 			swapChainDesc.SampleDesc.Count = _backBufferSampleCount;
 			swapChainDesc.SampleDesc.Quality = 0;
@@ -403,7 +408,7 @@ namespace srk::modules::graphics::d3d11 {
 	//	return _eventDispatcher;
 	//}
 
-	const std::string& Graphics::getVersion() const {
+	std::string_view Graphics::getVersion() const {
 		return _deviceVersion;
 	}
 

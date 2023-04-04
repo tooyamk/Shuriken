@@ -14,7 +14,8 @@ namespace srk::modules::inputs {
 		_eventDispatcher(new events::EventDispatcher<DeviceEvent>()),
 		_info(info),
 		_driver(driver),
-		_polling(false) {
+		_polling(false),
+		_closed(false) {
 		_inputBuffer = &_inputBuffers[0];
 		_oldInputBuffer = &_inputBuffers[1];
 		_readInputBuffer = &_inputBuffers[2];
@@ -53,21 +54,35 @@ namespace srk::modules::inputs {
 		return 0;
 	}
 
-	void GenericKeyboard::poll(bool dispatchEvent) {
-		if (_polling.exchange(true, std::memory_order::acquire)) return;
+	DevicePollResult GenericKeyboard::poll(bool dispatchEvent) {
+		using namespace srk::enum_operators;
 
-		_doInput(dispatchEvent);
+		if (_closed) return DevicePollResult::CLOSED;
+		if (_polling.exchange(true, std::memory_order::acquire)) return DevicePollResult::EMPTY;
+
+		auto rst = DevicePollResult::ACQUIRED;
+
+		if (_doInput(dispatchEvent)) rst |= DevicePollResult::INPUT_COMPLETE;
+		rst |= DevicePollResult::OUTPUT__COMPLETE;
 
 		_polling.store(false, std::memory_order::release);
+
+		return rst;
 	}
 
-	void GenericKeyboard::_doInput(bool dispatchEvent) {
-		if (!_driver->readStateFromDevice(*_readInputBuffer)) return;
+	void GenericKeyboard::close() {
+		_closed = true;
+	}
+
+	bool GenericKeyboard::_doInput(bool dispatchEvent) {
+		auto opt = _driver->readStateFromDevice(*_readInputBuffer);
+		if (!opt) return false;
+		if (!(*opt)) return true;
 
 		if (!dispatchEvent) {
 			_switchInputData();
 
-			return;
+			return true;
 		}
 
 		_switchInputData();
@@ -89,6 +104,8 @@ namespace srk::modules::inputs {
 				}
 			}
 		}
+
+		return true;
 	}
 
 	void GenericKeyboard::_switchInputData() {

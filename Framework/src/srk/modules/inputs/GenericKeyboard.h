@@ -53,13 +53,16 @@ namespace srk::modules::inputs {
 		virtual const DeviceInfo& SRK_CALL getInfo() const override;
 		virtual DeviceState::CountType SRK_CALL getState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count) const override;
 		virtual DeviceState::CountType SRK_CALL setState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count) override;
-		virtual void SRK_CALL poll(bool dispatchEvent) override;
+		virtual DevicePollResult SRK_CALL poll(bool dispatchEvent) override;
+		virtual void SRK_CALL close() override;
 
 	protected:
 		IntrusivePtr<events::IEventDispatcher<DeviceEvent>> _eventDispatcher;
 		DeviceInfo _info;
 
 		IntrusivePtr<IGenericKeyboardDriver> _driver;
+
+		std::atomic_bool _closed;
 
 		std::atomic_bool _polling;
 		Buffer _inputBuffers[3];
@@ -69,7 +72,7 @@ namespace srk::modules::inputs {
 		Buffer* _oldInputBuffer;
 		Buffer* _readInputBuffer;
 
-		void SRK_CALL _doInput(bool dispatchEvent);
+		bool SRK_CALL _doInput(bool dispatchEvent);
 
 		void SRK_CALL _switchInputData();
 	};
@@ -77,6 +80,6 @@ namespace srk::modules::inputs {
 
 	class SRK_FW_DLL IGenericKeyboardDriver : public Ref {
 	public:
-		virtual bool SRK_CALL readStateFromDevice(GenericKeyboard::Buffer& buffer) const = 0;
+		virtual std::optional<bool> SRK_CALL readStateFromDevice(GenericKeyboard::Buffer& buffer) const = 0;
 	};
 }

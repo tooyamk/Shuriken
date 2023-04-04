@@ -28,7 +28,7 @@ public:
 		//if (!gml->load(getDllPath("srk-module-graphics-gl"))) return 0;
 		//if (!gml->load(getDllPath("srk-module-graphics-vulkan"))) return 0;
 
-		CreateGrahpicsModuleDesc createGrahpicsModuleDesc;
+		CreateGrahpicsModuleDescriptor createGrahpicsModuleDesc;
 		createGrahpicsModuleDesc.window = win;
 		createGrahpicsModuleDesc.sampleCount = 4;
 		createGrahpicsModuleDesc.debug = Environment::IS_DEBUG;

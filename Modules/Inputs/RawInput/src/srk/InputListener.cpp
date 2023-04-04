@@ -29,6 +29,10 @@ namespace srk::modules::inputs::raw_input {
 		_listening = true;
 	}
 
+	HWND InputListener::getHWND() const {
+		return _input->getHWND();
+	}
+
 	void InputListener::_rawInputCallback(events::Event<windows::WindowEvent>& e) {
 		RAWINPUT rawInput;
 		UINT dwSize = sizeof(rawInput);

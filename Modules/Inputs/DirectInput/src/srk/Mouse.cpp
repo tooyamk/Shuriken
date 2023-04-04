@@ -59,16 +59,33 @@ namespace srk::modules::inputs::direct_input {
 		return 0;
 	}
 
-	void Mouse::poll(bool dispatchEvent) {
+	DevicePollResult Mouse::poll(bool dispatchEvent) {
+		using namespace srk::enum_operators;
+
+		if (_closed) return DevicePollResult::CLOSED;
+
+		if (_polling.exchange(true, std::memory_order::acquire)) return DevicePollResult::EMPTY;
+
+		auto rst = DevicePollResult::ACQUIRED;
+
+		if (_doInput(dispatchEvent)) rst |= DevicePollResult::INPUT_COMPLETE;
+		rst |= DevicePollResult::OUTPUT__COMPLETE;
+
+		_polling.store(false, std::memory_order::release);
+
+		return rst;
+	}
+
+	bool Mouse::_doInput(bool dispatchEvent) {
 		HRESULT hr = _dev->Poll();
 		if (hr == DIERR_NOTACQUIRED || hr == DIERR_INPUTLOST) {
-			if (FAILED(_dev->Acquire())) return;
-			if (FAILED(_dev->Poll())) return;
+			if (FAILED(_dev->Acquire())) return false;
+			if (FAILED(_dev->Poll())) return false;
 		}
 
 		DIMOUSESTATE2 state;
 		hr = _dev->GetDeviceState(sizeof(DIMOUSESTATE2), &state);
-		if (!SUCCEEDED(hr)) return;
+		if (!SUCCEEDED(hr)) return false;
 
 		auto p = _getCursorPos();
 
@@ -78,10 +95,10 @@ namespace srk::modules::inputs::direct_input {
 
 				memcpy(&_state, &state, sizeof(DIMOUSESTATE2));
 			}
-			
+
 			_pos = p.combined;
 
-			return;
+			return true;
 		}
 
 		uint8_t changeBtns[sizeof(DIMOUSESTATE2::rgbButtons)];
@@ -125,6 +142,8 @@ namespace srk::modules::inputs::direct_input {
 			DeviceState k = { key + (DeviceState::CodeType)MouseKeyCode::L_BUTTON, 1, &value };
 			_eventDispatcher->dispatchEvent(this, value > Math::ZERO<DeviceStateValue> ? DeviceEvent::DOWN : DeviceEvent::UP, &k);
 		}
+
+		return true;
 	}
 
 	void Mouse::_amendmentRelativePos(int32_t& target, LONG absolutePos, LONG referenceRelativePos, int32_t nIndex) {

@@ -11,7 +11,7 @@ namespace srk::modules::inputs::raw_input {
 
 		static KeyboardDriver* SRK_CALL create(Input& input, windows::IWindow& win, HANDLE handle);
 
-		virtual bool SRK_CALL readStateFromDevice(GenericKeyboard::Buffer& buffer) const override;
+		virtual std::optional<bool> SRK_CALL readStateFromDevice(GenericKeyboard::Buffer& buffer) const override;
 
 	private:
 		KeyboardDriver(Input& input, windows::IWindow& win, HANDLE handle);

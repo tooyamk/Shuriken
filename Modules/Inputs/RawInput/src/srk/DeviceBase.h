@@ -12,12 +12,16 @@ namespace srk::modules::inputs::raw_input {
 
 		virtual IntrusivePtr<events::IEventDispatcher<DeviceEvent>> SRK_CALL getEventDispatcher() override;
 		virtual const DeviceInfo& SRK_CALL getInfo() const override;
+		virtual void SRK_CALL close() override;
 
 	protected:
 		InputListener _listener;
 
 		IntrusivePtr<events::IEventDispatcher<DeviceEvent>> _eventDispatcher;
 		InternalDeviceInfo _info;
+
+		std::atomic_bool _closed;
+		std::atomic_bool _polling;
 
 		static void SRK_CALL _rawInputCallback(const RAWINPUT& rawInput, void* target);
 

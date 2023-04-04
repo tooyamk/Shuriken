@@ -93,6 +93,15 @@ namespace srk::modules::inputs {
 	};
 
 
+	enum class DevicePollResult : uint8_t {
+		EMPTY,
+		ACQUIRED = 0b1,
+		INPUT_COMPLETE = 0b10,
+		OUTPUT__COMPLETE = 0b100,
+		CLOSED = 0b1000
+	};
+
+
 	enum class KeyboardVirtualKeyCode : uint8_t {
 		UNKNOWN,
 
@@ -647,7 +656,8 @@ namespace srk::modules::inputs {
 
 		void SRK_CALL setStates(DeviceStateType type, DeviceState* states, size_t count);
 
-		virtual void SRK_CALL poll(bool dispatchEvent) = 0;
+		virtual DevicePollResult SRK_CALL poll(bool dispatchEvent) = 0;
+		virtual void SRK_CALL close() = 0;
 
 		/*++
 		value is normalized,[0, 1].
@@ -678,7 +688,7 @@ namespace srk::modules::inputs {
 	};
 
 
-	class SRK_FW_DLL CreateInputModuleDesc {
+	class SRK_FW_DLL CreateInputModuleDescriptor {
 	public:
 		DeviceType filters = DeviceType::UNKNOWN;
 		windows::IWindow* window = nullptr;

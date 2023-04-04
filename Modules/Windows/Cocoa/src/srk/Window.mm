@@ -115,12 +115,10 @@ namespace srk::modules::windows::cocoa {
 		return _data.isCreated;
 	}
 
-	void* Window::getNative(WindowNative native) const {
-        switch (native) {
-            case WindowNative::WINDOW:
-                return _data.wnd;
-        }
-        
+	void* Window::getNative(const std::string_view& native) const {
+        using namespace std::string_view_literals;
+
+		if (native == "NSWindow"sv) return _data.wnd;
 		return nullptr;
 	}
 

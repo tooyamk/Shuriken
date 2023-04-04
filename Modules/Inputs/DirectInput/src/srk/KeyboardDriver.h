@@ -10,7 +10,7 @@ namespace srk::modules::inputs::direct_input {
 
 		static KeyboardDriver* SRK_CALL create(Input& input, srk_IDirectInputDevice* dev);
 
-		virtual bool SRK_CALL readStateFromDevice(GenericKeyboard::Buffer& buffer) const override;
+		virtual std::optional<bool> SRK_CALL readStateFromDevice(GenericKeyboard::Buffer& buffer) const override;
 
 	private:
 		KeyboardDriver(Input& input, srk_IDirectInputDevice* dev);

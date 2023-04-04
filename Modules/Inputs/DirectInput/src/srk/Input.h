@@ -7,7 +7,7 @@
 namespace srk::modules::inputs::direct_input {
 	class SRK_MODULE_DLL Input : public IInputModule {
 	public:
-		Input(Ref* loader, const CreateInputModuleDesc& desc);
+		Input(Ref* loader, const CreateInputModuleDescriptor& desc);
 		virtual ~Input();
 
 		void operator delete(Input* p, std::destroying_delete_t) {
@@ -20,7 +20,9 @@ namespace srk::modules::inputs::direct_input {
 		virtual void SRK_CALL poll() override;
 		virtual IntrusivePtr<IInputDevice> SRK_CALL createDevice(const DeviceGUID& guid) override;
 
-		HWND SRK_CALL getHWND() const;
+		inline HWND SRK_CALL getHWND() const {
+			return _hwnd;
+		}
 
 		static bool SRK_CALL isXInputDevice(const ::GUID& guidProduct);
 
@@ -36,6 +38,8 @@ namespace srk::modules::inputs::direct_input {
 		IntrusivePtr<windows::IWindow> _win;
 		DeviceType _filters;
 		IntrusivePtr<events::IEventDispatcher<ModuleEvent>> _eventDispatcher;
+
+		HWND _hwnd;
 
 		std::shared_mutex _mutex;
 		std::vector<DeviceInfo> _devices;

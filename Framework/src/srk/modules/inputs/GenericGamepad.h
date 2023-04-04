@@ -18,7 +18,7 @@ namespace srk::modules::inputs {
 
 		virtual bool SRK_CALL isStateReady(const void* state) const = 0;
 
-		virtual bool SRK_CALL readStateFromDevice(void* inputState) const = 0;
+		virtual std::optional<bool> SRK_CALL readStateFromDevice(void* inputState) const = 0;
 		virtual float32_t SRK_CALL readDataFromInputState(const void* inputState, GamepadKeyCode keyCode) const = 0;
 		virtual DeviceState::CountType SRK_CALL customGetState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count, 
 			const void* inputState, void* custom, ReadWriteStateStartCallback readStateStartCallback, ReadWriteStateStartCallback readStateEndCallback) const = 0;
@@ -40,7 +40,8 @@ namespace srk::modules::inputs {
 		virtual const DeviceInfo& SRK_CALL getInfo() const override;
 		virtual DeviceState::CountType SRK_CALL getState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count) const override;
 		virtual DeviceState::CountType SRK_CALL setState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count) override;
-		virtual void SRK_CALL poll(bool dispatchEvent) override;
+		virtual DevicePollResult SRK_CALL poll(bool dispatchEvent) override;
+		virtual void SRK_CALL close() override;
 
 	protected:
 		using OUTPUT_FLAG_TYPE = uint8_t;
@@ -51,6 +52,8 @@ namespace srk::modules::inputs {
 		DeviceInfo _info;
 
 		IntrusivePtr<IGenericGamepadDriver> _driver;
+
+		std::atomic_bool _closed;
 
 		std::atomic_bool _polling;
 		uint8_t* _oldInputState;
@@ -69,9 +72,9 @@ namespace srk::modules::inputs {
 		std::atomic<OUTPUT_FLAG_TYPE> _outputFlags;
 		std::atomic_bool _needOutput;
 
-		void SRK_CALL _doInput(bool dispatchEvent);
+		bool SRK_CALL _doInput(bool dispatchEvent);
 		void SRK_CALL _doInputMove(const GamepadKeyMapper& mapper, GamepadVirtualKeyCode combined, GamepadVirtualKeyCode separatedBegin);
-		void SRK_CALL _doOutput();
+		bool SRK_CALL _doOutput();
 
 		void SRK_CALL _setDeadZone(GamepadVirtualKeyCode keyCode, Vec2<DeviceStateValue>* deadZone);
 

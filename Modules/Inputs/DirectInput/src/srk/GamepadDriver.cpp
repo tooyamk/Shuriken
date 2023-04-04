@@ -51,20 +51,20 @@ namespace srk::modules::inputs::direct_input {
 		return ((const uint8_t*)state)[0];
 	}
 
-	bool GamepadDriver::readStateFromDevice(void* inputState) const {
+	std::optional<bool> GamepadDriver::readStateFromDevice(void* inputState) const {
 		if (auto hr = _dev->Poll(); hr == DIERR_NOTACQUIRED || hr == DIERR_INPUTLOST) {
-			if (FAILED(_dev->Acquire())) return false;
-			if (FAILED(_dev->Poll())) return false;
+			if (FAILED(_dev->Acquire())) return std::nullopt;
+			if (FAILED(_dev->Poll())) return std::nullopt;
 		}
 
 		auto raw = (uint8_t*)inputState;
 		if (SUCCEEDED(_dev->GetDeviceState(sizeof(DIJOYSTATE), (DIJOYSTATE*)(raw + HEADER_LENGTH)))) {
 			raw[0] = 1;
 
-			return true;
+			return std::make_optional(true);
 		}
 
-		return false;
+		return std::nullopt;
 	}
 
 	float32_t GamepadDriver::readDataFromInputState(const void* inputState, GamepadKeyCode keyCode) const {

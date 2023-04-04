@@ -46,7 +46,7 @@ namespace srk::modules {
 		CreateModuleFn _createFn;
 	};
 
-	using GraphicsModuleLoader = ModuleLoader<graphics::IGraphicsModule, const graphics::CreateGrahpicsModuleDesc&>;
-	using InputModuleLoader = ModuleLoader<inputs::IInputModule, const inputs::CreateInputModuleDesc&>;
+	using GraphicsModuleLoader = ModuleLoader<graphics::IGraphicsModule, const graphics::CreateGrahpicsModuleDescriptor&>;
+	using InputModuleLoader = ModuleLoader<inputs::IInputModule, const inputs::CreateInputModuleDescriptor&>;
 	using WindowModuleLoader = ModuleLoader<windows::IWindowModule>;
 }

@@ -30,7 +30,7 @@ namespace srk::modules::graphics::vulkan {
 		virtual IntrusivePtr<events::IEventDispatcher<GraphicsEvent>> SRK_CALL getEventDispatcher() override;
 		//virtual const events::IEventDispatcher<GraphicsEvent>& SRK_CALL getEventDispatcher() const override;
 
-		virtual const std::string& SRK_CALL getVersion() const override;
+		virtual std::string_view SRK_CALL getVersion() const override;
 		virtual const GraphicsDeviceFeatures& SRK_CALL getDeviceFeatures() const override;
 		virtual IntrusivePtr<IBlendState> SRK_CALL createBlendState() override;
 		virtual IntrusivePtr<IConstantBuffer> SRK_CALL createConstantBuffer() override;
@@ -70,7 +70,7 @@ namespace srk::modules::graphics::vulkan {
 		virtual void SRK_CALL setRenderTarget(IRenderTarget* rt) override;
 		virtual void SRK_CALL clear(ClearFlag flags, const Vec4f32& color, float32_t depth, size_t stencil) override;
 
-		bool SRK_CALL createDevice(Ref* loader, const CreateGrahpicsModuleDesc& desc);
+		bool SRK_CALL createDevice(Ref* loader, const CreateGrahpicsModuleDescriptor& desc);
 
 		inline void SRK_CALL error(const std::string_view& msg) {
 			_eventDispatcher->dispatchEvent(this, GraphicsEvent::ERR, (std::string_view*)&msg);
@@ -224,13 +224,15 @@ namespace srk::modules::graphics::vulkan {
 			Box2i32ui32 scissor;
 		} _vkStatus;
 
-		//std::unordered_map<uint64_t, VkPipelineLayout>
+#if SRK_OS == SRK_OS_WINDOWS
+		HWND _hwnd;
+#endif
 
 		ConstantBufferManager _constantBufferManager;
 
 		IntrusivePtr<events::IEventDispatcher<GraphicsEvent>> _eventDispatcher;
 
-		bool SRK_CALL _createDevice(Ref* loader, const CreateGrahpicsModuleDesc& desc, const GraphicsAdapter* adapter);
+		bool SRK_CALL _createDevice(Ref* loader, const CreateGrahpicsModuleDescriptor& desc, const GraphicsAdapter* adapter);
 		bool SRK_CALL _getVkPhysicalDevice(const GraphicsAdapter* adapter);
 		bool SRK_CALL _createVkInstance(bool debug);
 		bool SRK_CALL _createVkSurface(windows::IWindow& win);

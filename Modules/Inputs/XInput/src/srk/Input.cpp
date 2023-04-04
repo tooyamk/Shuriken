@@ -6,7 +6,7 @@
 #include <SetupAPI.h>
 
 namespace srk::modules::inputs::xinput {
-	Input::Input(Ref* loader, const CreateInputModuleDesc& desc) :
+	Input::Input(Ref* loader, const CreateInputModuleDescriptor& desc) :
 		_loader(loader),
 		_filters(desc.filters),
 		_eventDispatcher(new events::EventDispatcher<ModuleEvent>()),

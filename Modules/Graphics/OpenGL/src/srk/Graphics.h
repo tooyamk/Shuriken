@@ -28,7 +28,7 @@ namespace srk::modules::graphics::gl {
 
 		virtual IntrusivePtr<events::IEventDispatcher<GraphicsEvent>> SRK_CALL getEventDispatcher() override;
 
-		virtual const std::string& SRK_CALL getVersion() const override;
+		virtual std::string_view SRK_CALL getVersion() const override;
 		virtual const GraphicsDeviceFeatures& SRK_CALL getDeviceFeatures() const override;
 		virtual IntrusivePtr<IBlendState> SRK_CALL createBlendState() override;
 		virtual IntrusivePtr<IConstantBuffer> SRK_CALL createConstantBuffer() override;
@@ -68,7 +68,7 @@ namespace srk::modules::graphics::gl {
 		virtual void SRK_CALL setRenderTarget(IRenderTarget* rt) override;
 		virtual void SRK_CALL clear(ClearFlag flags, const Vec4f32& color, float32_t depth, size_t stencil) override;
 
-		bool SRK_CALL createDevice(Ref* loader, const CreateGrahpicsModuleDesc& desc);
+		bool SRK_CALL createDevice(Ref* loader, const CreateGrahpicsModuleDescriptor& desc);
 
 		inline void SRK_CALL error(const std::string_view& msg) {
 			_eventDispatcher->dispatchEvent(this, GraphicsEvent::ERR, (std::string_view*)&msg);
@@ -182,8 +182,11 @@ namespace srk::modules::graphics::gl {
 #if SRK_OS == SRK_OS_WINDOWS
 		HDC _dc;
 		HGLRC _rc;
+		HWND _hwnd;
 #elif SRK_OS == SRK_OS_LINUX
 		GLXContext _context;
+		::Display* _xdisplay;
+		::Window _xwindow;
 #endif
 
 		GLint _majorVer;

@@ -32,14 +32,14 @@ namespace srk::modules::inputs::hid_input {
 		return ((const uint8_t*)state)[0];
 	}
 
-	bool GamepadDriverDS4::readStateFromDevice(void* inputState) const {
+	std::optional<bool> GamepadDriverDS4::readStateFromDevice(void* inputState) const {
 		using namespace srk::extensions;
 
 		auto data = (uint8_t*)inputState;
 		if (auto s = _state.load(); s) {
 			if (HID::isSuccess(HID::read(*_hid, data + HEADER_LENGTH, INPUT_BUFFER_LENGTH, 0))) {
 				data[0] = s & 0b1111;
-				return true;
+				return std::make_optional(true);
 			}
 		} else {
 			uint8_t buf[65];
@@ -58,11 +58,11 @@ namespace srk::modules::inputs::hid_input {
 
 				_state = outputOffset << 4 | inputOffset;
 
-				return true;
+				return std::make_optional(true);
 			}
 		}
 
-		return false;
+		return std::nullopt;
 	}
 
 	float32_t GamepadDriverDS4::readDataFromInputState(const void* inputState, GamepadKeyCode keyCode) const {

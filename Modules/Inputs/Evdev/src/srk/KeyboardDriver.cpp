@@ -16,7 +16,7 @@ namespace srk::modules::inputs::evdev_input {
 		return new KeyboardDriver(input, fd);
 	}
 
-	bool KeyboardDriver::readStateFromDevice(GenericKeyboard::Buffer& buffer) const {
+	std::option<bool> KeyboardDriver::readStateFromDevice(GenericKeyboard::Buffer& buffer) const {
 		using namespace std::string_view_literals;
 		
 		input_event evts[8];
@@ -58,13 +58,13 @@ namespace srk::modules::inputs::evdev_input {
 			}
 		} while (true);
 
-		if (!changed) return false;
+		if (!changed) return std::make_option(false);
 
 		{
 			std::scoped_lock lock(_lock);
 			memcpy(buffer.data, _inputBuffer.data, sizeof(_inputBuffer.data));
 		}
 
-		return true;
+		return std::make_option(true);
 	}
 }

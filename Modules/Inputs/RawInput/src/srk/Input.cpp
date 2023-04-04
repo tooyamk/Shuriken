@@ -6,7 +6,7 @@
 #include <hidsdi.h>
 
 namespace srk::modules::inputs::raw_input {
-	Input::Input(Ref* loader, const CreateInputModuleDesc& desc) :
+	Input::Input(Ref* loader, const CreateInputModuleDescriptor& desc) :
 		_loader(loader),
 		_win(desc.window),
 		_filters(desc.filters),
@@ -124,10 +124,6 @@ namespace srk::modules::inputs::raw_input {
 		} else {
 			return new Mouse(*this, *_win, info);
 		}
-	}
-
-	HWND Input::getHWND() const {
-		return (HWND)_win->getNative(windows::WindowNative::WINDOW);
 	}
 
 	void Input::registerRawInputDevices(DeviceType type) {

@@ -16,13 +16,13 @@ namespace srk::modules::inputs::raw_input {
 		return new KeyboardDriver(input, win, handle);
 	}
 
-	bool KeyboardDriver::readStateFromDevice(GenericKeyboard::Buffer& buffer) const {
-		if (!_changed.load()) return false;
+	std::optional<bool> KeyboardDriver::readStateFromDevice(GenericKeyboard::Buffer& buffer) const {
+		if (!_changed.load()) return std::make_optional(false);
 
 		std::scoped_lock lock(_lock);
 		memcpy(buffer.data, _inputBuffer.data, sizeof(_inputBuffer.data));
 
-		return true;
+		return std::make_optional(true);
 	}
 
 	void KeyboardDriver::_callback(const RAWINPUT& rawInput, void* target) {

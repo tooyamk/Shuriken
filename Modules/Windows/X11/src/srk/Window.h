@@ -25,7 +25,7 @@ namespace srk::modules::windows::x11 {
 		bool SRK_CALL create(const CreateWindowDescriptor& desc);
 
 		virtual bool SRK_CALL isValid() const override;
-		virtual void* SRK_CALL getNative(WindowNative native) const override;
+		virtual void* SRK_CALL getNative(const std::string_view& native) const override;
 		virtual bool SRK_CALL isFullScreen() const override;
 		virtual void SRK_CALL toggleFullScreen() override;
 		virtual Vec4ui32 SRK_CALL getFrameExtents() const override;

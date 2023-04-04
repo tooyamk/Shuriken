@@ -60,7 +60,24 @@ namespace srk::modules::inputs::raw_input {
 		return 0;
 	}
 
-	void Mouse::poll(bool dispatchEvent) {
+	DevicePollResult Mouse::poll(bool dispatchEvent) {
+		using namespace srk::enum_operators;
+
+		if (_closed) return DevicePollResult::CLOSED;
+
+		if (_polling.exchange(true, std::memory_order::acquire)) return DevicePollResult::EMPTY;
+
+		auto rst = DevicePollResult::ACQUIRED;
+
+		if (_doInput(dispatchEvent)) rst |= DevicePollResult::INPUT_COMPLETE;
+		rst |= DevicePollResult::OUTPUT__COMPLETE;
+
+		_polling.store(false, std::memory_order::release);
+
+		return rst;
+	}
+
+	bool Mouse::_doInput(bool dispatchEvent) {
 		auto p = _getCursorPos();
 
 		StateBuffer state;
@@ -79,12 +96,12 @@ namespace srk::modules::inputs::raw_input {
 
 			_pos = p.combined;
 
-			return;
+			return true;
 		}
 
 		StateBuffer changeBtns;
 		uint8_t len = 0;
-		
+
 		int32_t wheel = _lastWheel.exchange(0);
 		Point pos, lastPos;
 		pos.combined = _pos.exchange(p.combined);
@@ -125,6 +142,8 @@ namespace srk::modules::inputs::raw_input {
 			DeviceState k = { key + (DeviceState::CodeType)MouseKeyCode::L_BUTTON, 1, &value };
 			_eventDispatcher->dispatchEvent(this, value > 0 ? DeviceEvent::DOWN : DeviceEvent::UP, &k);
 		}
+
+		return true;
 	}
 
 	void Mouse::_rawInput(const RAWINPUT& rawInput) {

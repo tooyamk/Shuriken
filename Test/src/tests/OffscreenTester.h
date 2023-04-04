@@ -13,7 +13,7 @@ public:
 		//if (!gml->load(getDLLName("srk-module-graphics-gl"))) return 0;
 		if (!gml->load(getDllPath(u8"srk-module-graphics-d3d11"))) return 0;
 
-		CreateGrahpicsModuleDesc createGrahpicsModuleDesc;
+		CreateGrahpicsModuleDescriptor createGrahpicsModuleDesc;
 		createGrahpicsModuleDesc.sampleCount = 1;
 		createGrahpicsModuleDesc.offscreen = true;
 		createGrahpicsModuleDesc.driverType = DriverType::SOFTWARE;

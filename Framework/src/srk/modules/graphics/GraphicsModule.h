@@ -1326,7 +1326,7 @@ namespace srk::modules::graphics {
 		virtual IntrusivePtr<events::IEventDispatcher<GraphicsEvent>> SRK_CALL getEventDispatcher() = 0;
 		//virtual const events::IEventDispatcher<GraphicsEvent>& SRK_CALL getEventDispatcher() const = 0;
 
-		virtual const std::string& SRK_CALL getVersion() const = 0;
+		virtual std::string_view SRK_CALL getVersion() const = 0;
 		virtual const GraphicsDeviceFeatures& SRK_CALL getDeviceFeatures() const = 0;
 		virtual IntrusivePtr<IBlendState> SRK_CALL createBlendState() = 0;
 		virtual IntrusivePtr<IConstantBuffer> SRK_CALL createConstantBuffer() = 0;
@@ -1375,7 +1375,7 @@ namespace srk::modules::graphics {
 	};
 
 
-	class SRK_FW_DLL CreateGrahpicsModuleDesc {
+	class SRK_FW_DLL CreateGrahpicsModuleDescriptor {
 	public:
 		bool debug = false;
 		bool offscreen = false;

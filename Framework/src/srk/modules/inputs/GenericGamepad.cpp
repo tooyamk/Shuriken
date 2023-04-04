@@ -7,6 +7,7 @@ namespace srk::modules::inputs {
 		_info(info),
 		_driver(driver),
 		_polling(false),
+		_closed(false),
 		_inputState(nullptr),
 		_oldInputState(nullptr),
 		_inputBuffer(nullptr),
@@ -208,31 +209,44 @@ namespace srk::modules::inputs {
 		}
 	}
 
-	void GenericGamepad::poll(bool dispatchEvent) {
-		if (_polling.exchange(true, std::memory_order::acquire)) return;
-
-		_doInput(dispatchEvent);
-		_doOutput();
-
-		_polling.store(false, std::memory_order::release);
-	}
-
-	void GenericGamepad::_doInput(bool dispatchEvent) {
+	DevicePollResult GenericGamepad::poll(bool dispatchEvent) {
 		using namespace srk::enum_operators;
 
-		if (!_driver->readStateFromDevice(_inputBuffer)) return;
+		if (_closed) return DevicePollResult::CLOSED;
+		if (_polling.exchange(true, std::memory_order::acquire)) return DevicePollResult::EMPTY;
+
+		auto rst = DevicePollResult::ACQUIRED;
+
+		if (_doInput(dispatchEvent)) rst |= DevicePollResult::INPUT_COMPLETE;
+		if (_doOutput()) rst |= DevicePollResult::OUTPUT__COMPLETE;
+
+		_polling.store(false, std::memory_order::release);
+
+		return rst;
+	}
+
+	void GenericGamepad::close() {
+		_closed = true;
+	}
+
+	bool GenericGamepad::_doInput(bool dispatchEvent) {
+		using namespace srk::enum_operators;
+
+		auto opt = _driver->readStateFromDevice(_inputBuffer);
+		if (!opt) return false;
+		if (!(*opt)) return true;
 
 		if (!dispatchEvent) {
 			_switchInputData();
 
-			return;
+			return true;
 		}
 
 		GamepadKeyMapper keyMapper(_keyMapper);
 
 		_switchInputData();
 
-		if (!_driver->isStateReady(_oldInputState)) return;
+		if (!_driver->isStateReady(_oldInputState)) return true;
 
 		_doInputMove(keyMapper, GamepadVirtualKeyCode::L_STICK, GamepadVirtualKeyCode::L_STICK_X_LEFT);
 		_doInputMove(keyMapper, GamepadVirtualKeyCode::R_STICK, GamepadVirtualKeyCode::R_STICK_X_LEFT);
@@ -267,6 +281,8 @@ namespace srk::modules::inputs {
 			auto self = (GenericGamepad*)custom;
 			self->_eventDispatcher->dispatchEvent(self, evt, data);
 		});
+
+		return true;
 	}
 
 	void GenericGamepad::_doInputMove(const GamepadKeyMapper& mapper, GamepadVirtualKeyCode combined, GamepadVirtualKeyCode separatedBegin) {
@@ -288,7 +304,7 @@ namespace srk::modules::inputs {
 		}
 	}
 
-	void GenericGamepad::_doOutput() {
+	bool GenericGamepad::_doOutput() {
 		auto expected = OUTPUT_DIRTY;
 		if (_outputFlags.compare_exchange_strong(expected, OUTPUT_WRITING, std::memory_order::release, std::memory_order::relaxed)) {
 			_needOutput = true;
@@ -298,9 +314,17 @@ namespace srk::modules::inputs {
 			memcpy(_outputBuffer, _outputState, _outputLength);
 		}
 
-		if (_needOutput && _driver->writeStateToDevice(_outputBuffer)) {
-			_needOutput = false;
-			_outputFlags.fetch_and(~OUTPUT_WRITING);
+		if (_needOutput) {
+			if (_driver->writeStateToDevice(_outputBuffer)) {
+				_needOutput = false;
+				_outputFlags.fetch_and(~OUTPUT_WRITING);
+
+				return true;
+			} else {
+				return false;
+			}
+		} else {
+			return true;
 		}
 	}
 

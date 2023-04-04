@@ -251,7 +251,7 @@ public:
 		}
 	}
 
-	void SRK_CALL initInputModule(std::vector<IntrusivePtr<IInputModule>>& modules, const std::string_view& dll, const CreateInputModuleDesc& desc) {
+	void SRK_CALL initInputModule(std::vector<IntrusivePtr<IInputModule>>& modules, const std::string_view& dll, const CreateInputModuleDescriptor& desc) {
 		IntrusivePtr loader = new InputModuleLoader();
 		if (loader->load(dll)) {
 			if (auto im = loader->create(desc); im) modules.emplace_back(im);
@@ -601,7 +601,7 @@ public:
 
 		std::vector<IntrusivePtr<IInputModule>> inputModules;
 
-		CreateInputModuleDesc createInputModuleDesc;
+		CreateInputModuleDescriptor createInputModuleDesc;
 		createInputModuleDesc.window = win;
 
 		if constexpr (Environment::OPERATING_SYSTEM == Environment::OperatingSystem::WINDOWS) {

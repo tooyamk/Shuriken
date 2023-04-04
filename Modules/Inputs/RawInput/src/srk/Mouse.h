@@ -9,7 +9,7 @@ namespace srk::modules::inputs::raw_input {
 
 		virtual DeviceState::CountType SRK_CALL getState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count) const override;
 		virtual DeviceState::CountType SRK_CALL setState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count) override;
-		virtual void SRK_CALL poll(bool dispatchEvent) override;
+		virtual DevicePollResult SRK_CALL poll(bool dispatchEvent) override;
 
 	protected:
 		using StateBuffer = uint8_t[16];
@@ -34,5 +34,7 @@ namespace srk::modules::inputs::raw_input {
 
 		static void SRK_CALL _amendmentRelativePos(int32_t& target, LONG absolutePos, LONG referenceRelativePos, int32_t nIndex);
 		static Point SRK_CALL _getCursorPos();
+
+		bool SRK_CALL _doInput(bool dispatchEvent);
 	};
 }
