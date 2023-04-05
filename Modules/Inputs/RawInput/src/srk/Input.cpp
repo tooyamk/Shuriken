@@ -1,6 +1,6 @@
 #include "Input.h"
 #include "KeyboardDriver.h"
-#include "Mouse.h"
+#include "MouseDriver.h"
 #include "CreateModule.h"
 #include "srk/hash/xxHash.h"
 #include <hidsdi.h>
@@ -13,6 +13,9 @@ namespace srk::modules::inputs::raw_input {
 		_eventDispatcher(new events::EventDispatcher<ModuleEvent>()),
 		_numKeyboards(0),
 		_numMouses(0) {
+		using namespace std::string_view_literals;
+
+		_hwnd = (HWND)_win->getNative("HWND"sv);
 	}
 
 	Input::~Input() {
@@ -119,11 +122,13 @@ namespace srk::modules::inputs::raw_input {
 
 		if (info.type == DeviceType::KEYBOARD) {
 			auto driver = KeyboardDriver::create(*this, *_win, info.hDevice);
-			if (!driver) return nullptr;
-			return new GenericKeyboard(info, *driver);
+			if (driver) return new GenericKeyboard(info, *driver);
 		} else {
-			return new Mouse(*this, *_win, info);
+			auto driver = MouseDriver::create(*this, *_win, info.hDevice);
+			if (driver) return new GenericMouse(info, *driver);
 		}
+
+		return nullptr;
 	}
 
 	void Input::registerRawInputDevices(DeviceType type) {

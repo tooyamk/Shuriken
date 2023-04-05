@@ -16,6 +16,7 @@ namespace srk::modules::inputs::raw_input {
 		HWND SRK_CALL getHWND() const;
 
 		void SRK_CALL start();
+		void SRK_CALL close();
 
 	private:
 		IntrusivePtr<Input> _input;

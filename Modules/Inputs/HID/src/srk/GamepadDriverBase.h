@@ -11,6 +11,8 @@ namespace srk::modules::inputs::hid_input {
 		GamepadDriverBase(Input& input, extensions::HIDDevice& hid);
 		virtual ~GamepadDriverBase();
 
+		virtual void SRK_CALL close() override;
+
 	protected:
 		IntrusivePtr<Input> _input;
 		extensions::HIDDevice* _hid;

@@ -9,14 +9,14 @@ namespace srk::modules::inputs::evdev_input {
 	}
 
 	KeyboardDriver::~KeyboardDriver() {
-		::close(_fd);
+		close();
 	}
 
 	KeyboardDriver* KeyboardDriver::create(Input& input, int32_t fd) {
 		return new KeyboardDriver(input, fd);
 	}
 
-	std::option<bool> KeyboardDriver::readStateFromDevice(GenericKeyboard::Buffer& buffer) const {
+	std::optional<bool> KeyboardDriver::readFromDevice(GenericKeyboardBuffer& buffer) const {
 		using namespace std::string_view_literals;
 		
 		input_event evts[8];
@@ -58,13 +58,20 @@ namespace srk::modules::inputs::evdev_input {
 			}
 		} while (true);
 
-		if (!changed) return std::make_option(false);
+		if (!changed) return std::make_optional(false);
 
 		{
 			std::scoped_lock lock(_lock);
 			memcpy(buffer.data, _inputBuffer.data, sizeof(_inputBuffer.data));
 		}
 
-		return std::make_option(true);
+		return std::make_optional(true);
+	}
+
+	void KeyboardDriver::close() {
+		if (_fd < 0) return;
+
+		//ioctl(_desc.fd, EVIOCGRAB, 0);
+		::close(_fd);
 	}
 }

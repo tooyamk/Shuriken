@@ -425,16 +425,16 @@ namespace srk::modules::graphics::gl {
 	}
 
 	GLuint Program::_compileShader(const ProgramSource& source, ProgramStage stage, const ProgramDefine* defines, size_t numDefines, const ProgramIncludeHandler& includeHandler, const ProgramTranspileHandler& transpileHandler) {
-		using namespace std::literals;
+		using namespace std::string_view_literals;
 
 		if (!source.isValid()) {
-			_graphics.get<Graphics>()->error("glsl compile failed, source is invalid");
+			_graphics.get<Graphics>()->error("glsl compile failed, source is invalid"sv);
 			return 0;
 		}
 
 		auto shaderType = Graphics::convertProgramStage(stage);
 		if (shaderType == 0) {
-			_graphics.get<Graphics>()->error("glsl compile failed, program stage is invalid");
+			_graphics.get<Graphics>()->error("glsl compile failed, program stage is invalid"sv);
 			return 0;
 		}
 
@@ -452,12 +452,12 @@ namespace srk::modules::graphics::gl {
 
 				auto newSource = transpileHandler(pti);
 				if (!newSource.isValid()) {
-					g->error("to glsl transpile failed");
+					g->error("to glsl transpile failed"sv);
 					return 0;
 				}
 
 				if (newSource.language != ProgramLanguage::GLSL) {
-					g->error("transpiled language isnot glsl");
+					g->error("transpiled language isnot glsl"sv);
 					return 0;
 				}
 

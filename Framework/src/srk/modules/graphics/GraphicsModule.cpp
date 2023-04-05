@@ -42,7 +42,7 @@ namespace srk::modules::graphics {
 	}
 
 	std::string_view ProgramSource::toHLSLShaderStage(ProgramStage stage) {
-		using namespace std::literals;
+		using namespace std::string_view_literals;
 
 		switch (stage) {
 		case ProgramStage::VS:

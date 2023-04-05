@@ -1,7 +1,7 @@
 #include "Input.h"
 #include "GamepadDriver.h"
 #include "KeyboardDriver.h"
-#include "Mouse.h"
+#include "MouseDriver.h"
 #include "CreateModule.h"
 
 #include <wbemidl.h>
@@ -91,13 +91,6 @@ namespace srk::modules::inputs::direct_input {
 		if (FAILED(_di->CreateDevice(*(const ::GUID*)guid.getData(), &dev, nullptr))) return nullptr;
 
 		switch (info.type) {
-		case DeviceType::GAMEPAD:
-		{
-			auto driver = GamepadDriver::create(*this, dev);
-			if (driver) return new GenericGamepad(info, *driver);
-
-			break;
-		}
 		case DeviceType::KEYBOARD:
 		{
 			auto driver = KeyboardDriver::create(*this, dev);
@@ -106,7 +99,19 @@ namespace srk::modules::inputs::direct_input {
 			break;
 		}
 		case DeviceType::MOUSE:
-			return new Mouse(*this, dev, info);
+		{
+			auto driver = MouseDriver::create(*this, dev);
+			if (driver) return new GenericMouse(info, *driver);
+
+			break;
+		}
+		case DeviceType::GAMEPAD:
+		{
+			auto driver = GamepadDriver::create(*this, dev);
+			if (driver) return new GenericGamepad(info, *driver);
+
+			break;
+		}
 		default:
 			break;
 		}

@@ -221,28 +221,28 @@ namespace srk::modules::inputs::hid_input {
 		return new GamepadDriver(input, hid, std::move(desc));
 	}
 
-	size_t GamepadDriver::getInputLength() const {
+	size_t GamepadDriver::getInputBufferLength() const {
 		return HEADER_LENGTH + _desc.inputReportLength;
 	}
 
-	size_t GamepadDriver::getOutputLength() const {
+	size_t GamepadDriver::getOutputBufferLength() const {
 		return 0;
 	}
 
-	bool GamepadDriver::init(void* inputState, void* outputState) {
-		if (inputState) ((uint8_t*)inputState)[0] = 0;
+	bool GamepadDriver::init(void* inputBuffer, void* outputBuffer) {
+		if (inputBuffer) ((uint8_t*)inputBuffer)[0] = 0;
 
 		return true;
 	}
 
-	bool GamepadDriver::isStateReady(const void* state) const {
-		return ((const uint8_t*)state)[0];
+	bool GamepadDriver::isBufferReady(const void* buffer) const {
+		return ((const uint8_t*)buffer)[0];
 	}
 
-	std::optional<bool> GamepadDriver::readStateFromDevice(void* inputState) const {
+	std::optional<bool> GamepadDriver::readFromDevice(void* inputBuffer) const {
 		using namespace srk::extensions;
 
-		auto buffer = (uint8_t*)inputState;
+		auto buffer = (uint8_t*)inputBuffer;
 		auto inputReportData = buffer + HEADER_LENGTH;
 		if (auto rst = HID::read(*_hid, inputReportData, _desc.inputReportLength, 0); HID::isSuccess(rst)) {
 			buffer[0] = 1;
@@ -252,12 +252,12 @@ namespace srk::modules::inputs::hid_input {
 		return std::nullopt;
 	}
 
-	float32_t GamepadDriver::readDataFromInputState(const void* inputState, GamepadKeyCode keyCode) const {
+	float32_t GamepadDriver::readFromInputBuffer(const void* inputBuffer, GamepadKeyCode keyCode) const {
 		using namespace srk::enum_operators;
 
-		if (!isStateReady(inputState)) return -1.0f;
+		if (!isBufferReady(inputBuffer)) return -1.0f;
 
-		auto data = (const uint8_t*)inputState + HEADER_LENGTH;
+		auto data = (const uint8_t*)inputBuffer + HEADER_LENGTH;
 
 		if (keyCode >= GamepadKeyCode::AXIS_1 && keyCode <= _maxAxisKeyCode) {
 			const auto& desc = _desc.inputAxes[(size_t)(keyCode- GamepadKeyCode::AXIS_1)];
@@ -278,19 +278,19 @@ namespace srk::modules::inputs::hid_input {
 	}
 
 	DeviceState::CountType GamepadDriver::customGetState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count,
-		const void* inputState, void* custom, ReadWriteStateStartCallback readStateStartCallback, ReadWriteStateStartCallback readStateEndCallback) const {
+		const void* inputBuffer, void* custom, ReadWriteStateStartCallback readStateStartCallback, ReadWriteStateEndCallback readStateEndCallback) const {
 		return 0;
 	}
 
-	void GamepadDriver::customDispatch(const void* oldInputState, const void* newInputState, void* custom, DispatchCallback dispatchCallback) const {
+	void GamepadDriver::customDispatch(const void* oldInputBuffer, const void* newInputBuffer, void* custom, DispatchCallback dispatchCallback) const {
 	}
 
-	bool GamepadDriver::writeStateToDevice(const void* outputState) const {
-		return false;
+	bool GamepadDriver::writeToDevice(const void* outputBuffer) const {
+		return true;
 	}
 
-	DeviceState::CountType GamepadDriver::customSetState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count, void* outputState, void* custom,
-		ReadWriteStateStartCallback writeStateStartCallback, ReadWriteStateStartCallback writeStateEndCallback) const {
+	DeviceState::CountType GamepadDriver::customSetState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count, void* outputBuffer, void* custom,
+		ReadWriteStateStartCallback writeStateStartCallback, ReadWriteStateEndCallback writeStateEndCallback) const {
 		return 0;
 	}
 

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "srk/modules/inputs/InputModule.h"
-#include <shared_mutex>
 
 #ifndef DIRECTINPUT_VERSION
 #	define DIRECTINPUT_VERSION 0x800
@@ -17,4 +16,6 @@ namespace srk::modules::inputs::direct_input {
 	using srk_IDirectInput = IDirectInput8A;
 	using srk_IDirectInputDevice = IDirectInputDevice8A;
 	using srk_DIDEVICEINSTANCE = DIDEVICEINSTANCEA;
+
+	class Input;
 }

@@ -17,7 +17,7 @@
 
 namespace srk::modules::graphics::vulkan {
 	VKAPI_ATTR VkBool32 VKAPI_CALL debugMessengerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
-		using namespace std::literals;
+		using namespace std::string_view_literals;
 
 		auto g = (Graphics*)pUserData;
 		printaln(L"vk-debug : "sv, std::string_view(pCallbackData->pMessage));
@@ -634,7 +634,7 @@ namespace srk::modules::graphics::vulkan {
 	}
 
 	bool Graphics::_checkAndUpdateVkPipeline(IProgram* program, const IVertexAttributeGetter* vertexAttributeGetter, const IShaderParameterGetter* shaderParamGetter) {
-		using namespace std::literals;
+		using namespace std::string_view_literals;
 
 		if (!program || program->getGraphics() != this) return false;
 		auto p = (Program*)program->getNative();;

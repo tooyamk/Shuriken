@@ -15,14 +15,12 @@ namespace srk::modules::inputs::evdev_input {
 		_maxAxisKeyCode = GamepadKeyCode::AXIS_1 + _desc.inputAxes.size() - 1;
 		_maxButtonKeyCode = GamepadKeyCode::BUTTON_1 + _desc.inputButtons.size() - 1;
 
-		_inputLength = HEADER_LENGTH + sizeof(float32_t) * _desc.inputAxes.size() + ((_desc.inputButtons.size() + 7) >> 3);
-		_inputBuffer = new uint8_t[_inputLength];
+		_inputBufferLength = HEADER_LENGTH + sizeof(float32_t) * _desc.inputAxes.size() + ((_desc.inputButtons.size() + 7) >> 3);
+		_inputBuffer = new uint8_t[_inputBufferLength];
 	}
 
 	GamepadDriver::~GamepadDriver() {
-		//ioctl(_desc.fd, EVIOCGRAB, 0);
-		::close(_desc.fd);
-		delete[] _inputBuffer;
+		close();
 	}
 
 	GamepadDriver* GamepadDriver::create(Input& input, int32_t fd) {
@@ -90,31 +88,31 @@ namespace srk::modules::inputs::evdev_input {
 		return new GamepadDriver(input, std::move(desc));
 	}
 
-	size_t GamepadDriver::getInputLength() const {
-		return _inputLength;
+	size_t GamepadDriver::getInputBufferLength() const {
+		return _inputBufferLength;
 	}
 
-	size_t GamepadDriver::getOutputLength() const {
+	size_t GamepadDriver::getOutputBufferLength() const {
 		return 0;
 	}
 
-	bool GamepadDriver::init(void* inputState, void* outputState) {
+	bool GamepadDriver::init(void* inputBuffer, void* outputBuffer) {
 		((uint8_t*)_inputBuffer)[0] = 1;
 		for (auto& itr : _desc.inputAxes) _getAxisValue(_inputBuffer, itr.second.index) = itr.second.value;
 		for (auto& itr : _desc.inputButtons) _setButtonValue(_inputBuffer, itr.second.index, itr.second.value);
 
-		memcpy(inputState, _inputBuffer, _inputLength);
+		memcpy(inputBuffer, _inputBuffer, _inputBufferLength);
 
 		//ioctl(_desc.fd, EVIOCGRAB, 1);
 
 		return true;
 	}
 
-	bool GamepadDriver::isStateReady(const void* state) const {
-		return ((const uint8_t*)state)[0];
+	bool GamepadDriver::isBufferReady(const void* buffer) const {
+		return ((const uint8_t*)buffer)[0];
 	}
 
-	std::option<bool> GamepadDriver::readStateFromDevice(void* inputState) const {
+	std::optional<bool> GamepadDriver::readFromDevice(void* inputBuffer) const {
 		using namespace std::string_view_literals;
 		
 		input_event evts[8];
@@ -164,43 +162,43 @@ namespace srk::modules::inputs::evdev_input {
 			}
 		} while (true);
 
-		if (!changed) return std::make_option(false);
+		if (!changed) return std::make_optional(false);
 
 		{
 			std::scoped_lock lock(_lock);
-			memcpy(inputState, _inputBuffer, _inputLength);
+			memcpy(inputBuffer, _inputBuffer, _inputBufferLength);
 		}
 
-		return std::make_option(true);
+		return std::make_optional(true);
 	}
 
-	float32_t GamepadDriver::readDataFromInputState(const void* inputState, GamepadKeyCode keyCode) const {
+	float32_t GamepadDriver::readFromInputBuffer(const void* inputBuffer, GamepadKeyCode keyCode) const {
 		using namespace srk::enum_operators;
 
-		if (!isStateReady(inputState)) return -1.0f;
+		if (!isBufferReady(inputBuffer)) return -1.0f;
 
 		if (keyCode >= GamepadKeyCode::AXIS_1 && keyCode <= _maxAxisKeyCode) {
-			return _getAxisValue(inputState, (size_t)(keyCode - GamepadKeyCode::AXIS_1));
+			return _getAxisValue(inputBuffer, (size_t)(keyCode - GamepadKeyCode::AXIS_1));
 		} else if (keyCode >= GamepadKeyCode::BUTTON_1 && keyCode <= _maxButtonKeyCode) {
-			return _getButtonValue(inputState, (size_t)(keyCode - GamepadKeyCode::BUTTON_1)) ? 1.0f : 0.0f;
+			return _getButtonValue(inputBuffer, (size_t)(keyCode - GamepadKeyCode::BUTTON_1)) ? 1.0f : 0.0f;
 		} else {
 			return -1.0f;
 		}
 	}
 
 	DeviceState::CountType GamepadDriver::customGetState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count,
-		const void* inputState, void* custom, ReadWriteStateStartCallback readStateStartCallback, ReadWriteStateStartCallback readStateEndCallback) const {
+		const void* inputBuffer, void* custom, ReadWriteStateStartCallback readStateStartCallback, ReadWriteStateStartCallback readStateEndCallback) const {
 		return 0;
 	}
 
-	void GamepadDriver::customDispatch(const void* oldInputState, const void* newInputState, void* custom, DispatchCallback dispatchCallback) const {
+	void GamepadDriver::customDispatch(const void* oldInputBuffer, const void* newInputBuffer, void* custom, DispatchCallback dispatchCallback) const {
 	}
 
-	bool GamepadDriver::writeStateToDevice(const void* outputState) const {
-		return false;
+	bool GamepadDriver::writeToDevice(const void* outputBuffer) const {
+		return true;
 	}
 
-	DeviceState::CountType GamepadDriver::customSetState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count, void* outputState, void* custom,
+	DeviceState::CountType GamepadDriver::customSetState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count, void* outputBuffer, void* custom,
 		ReadWriteStateStartCallback writeStateStartCallback, ReadWriteStateStartCallback writeStateEndCallback) const {
 		return 0;
 	}
@@ -255,5 +253,14 @@ namespace srk::modules::inputs::evdev_input {
 
 		dst.undefinedCompletion<GamepadKeyCode::AXIS_1, GamepadKeyCode::AXIS_END, GamepadVirtualKeyCode::UNDEFINED_AXIS_1>(_desc.inputAxes.size());
 		dst.undefinedCompletion<GamepadKeyCode::BUTTON_1, GamepadKeyCode::BUTTON_END, GamepadVirtualKeyCode::UNDEFINED_BUTTON_1>(_desc.inputButtons.size());
+	}
+
+	void GamepadDriver::close() {
+		if (_desc.fd < 0) return;
+
+		//ioctl(_desc.fd, EVIOCGRAB, 0);
+		::close(_desc.fd);
+		delete[] _inputBuffer;
+		_desc.fd = -1;
 	}
 }

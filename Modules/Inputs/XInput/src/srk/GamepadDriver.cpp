@@ -8,28 +8,29 @@ namespace srk::modules::inputs::xinput {
 	}
 
 	GamepadDriver::~GamepadDriver() {
+		close();
 	}
 
-	size_t GamepadDriver::getInputLength() const {
+	size_t GamepadDriver::getInputBufferLength() const {
 		return sizeof(XINPUT_STATE) + HEADER_LENGTH;
 	}
 
-	size_t GamepadDriver::getOutputLength() const {
+	size_t GamepadDriver::getOutputBufferLength() const {
 		return 0;
 	}
 
-	bool GamepadDriver::init(void* inputState, void* outputState) {
-		((uint8_t*)inputState)[0] = 0;
+	bool GamepadDriver::init(void* inputBuffer, void* outputBuffer) {
+		((uint8_t*)inputBuffer)[0] = 0;
 
 		return true;
 	}
 
-	bool GamepadDriver::isStateReady(const void* state) const {
-		return ((const uint8_t*)state)[0];
+	bool GamepadDriver::isBufferReady(const void* buffer) const {
+		return ((const uint8_t*)buffer)[0];
 	}
 
-	std::optional<bool> GamepadDriver::readStateFromDevice(void* inputState) const {
-		auto raw = (uint8_t*)inputState;
+	std::optional<bool> GamepadDriver::readFromDevice(void* inputBuffer) const {
+		auto raw = (uint8_t*)inputBuffer;
 		if (XInputGetState(_index, (XINPUT_STATE*)(raw + HEADER_LENGTH)) == ERROR_SUCCESS) {
 			raw[0] = 1;
 			
@@ -39,12 +40,12 @@ namespace srk::modules::inputs::xinput {
 		return std::nullopt;
 	}
 
-	float32_t GamepadDriver::readDataFromInputState(const void* inputState, GamepadKeyCode keyCode) const {
+	float32_t GamepadDriver::readFromInputBuffer(const void* inputBuffer, GamepadKeyCode keyCode) const {
 		using namespace srk::enum_operators;
 
-		if (!isStateReady(inputState)) return -1.0f;
+		if (!isBufferReady(inputBuffer)) return -1.0f;
 
-		auto data = (const XINPUT_STATE*)((const uint8_t*)inputState + HEADER_LENGTH);
+		auto data = (const XINPUT_STATE*)((const uint8_t*)inputBuffer + HEADER_LENGTH);
 
 		if (keyCode >= GamepadKeyCode::AXIS_1 && keyCode <= MAX_AXIS_KEY_CODE) {
 			switch (keyCode) {
@@ -94,19 +95,19 @@ namespace srk::modules::inputs::xinput {
 	}
 
 	DeviceState::CountType GamepadDriver::customGetState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count,
-		const void* inputState, void* custom, ReadWriteStateStartCallback readStateStartCallback, ReadWriteStateStartCallback readStateEndCallback) const {
+		const void* inputBuffer, void* custom, ReadWriteStateStartCallback readStateStartCallback, ReadWriteStateEndCallback readStateEndCallback) const {
 		return 0;
 	}
 
-	void GamepadDriver::customDispatch(const void* oldInputState, const void* newInputState, void* custom, DispatchCallback dispatchCallback) const {
+	void GamepadDriver::customDispatch(const void* oldInputBuffer, const void* newInputBuffer, void* custom, DispatchCallback dispatchCallback) const {
 	}
 
-	bool GamepadDriver::writeStateToDevice(const void* outputState) const {
-		return false;
+	bool GamepadDriver::writeToDevice(const void* outputBuffer) const {
+		return true;
 	}
 
-	DeviceState::CountType GamepadDriver::customSetState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count, void* outputState, void* custom,
-		ReadWriteStateStartCallback writeStateStartCallback, ReadWriteStateStartCallback writeStateEndCallback) const {
+	DeviceState::CountType GamepadDriver::customSetState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count, void* outputBuffer, void* custom,
+		ReadWriteStateStartCallback writeStateStartCallback, ReadWriteStateEndCallback writeStateEndCallback) const {
 		if (type == DeviceStateType::VIBRATION) {
 			if (values && count) {
 				if (count < 2) {
@@ -165,6 +166,9 @@ namespace srk::modules::inputs::xinput {
 		dst.undefinedCompletion<GamepadKeyCode::AXIS_1, GamepadKeyCode::AXIS_END, GamepadVirtualKeyCode::UNDEFINED_AXIS_1>(MAX_AXES);
 		dst.undefinedCompletion<GamepadKeyCode::HAT_1, GamepadKeyCode::HAT_END, GamepadVirtualKeyCode::UNDEFINED_HAT_1>(MAX_HATS);
 		dst.undefinedCompletion<GamepadKeyCode::BUTTON_1, GamepadKeyCode::BUTTON_END, GamepadVirtualKeyCode::UNDEFINED_BUTTON_1>(MAX_BUTTONS);
+	}
+
+	void GamepadDriver::close() {
 	}
 
 	void GamepadDriver::_setVibration(DeviceStateValue left, DeviceStateValue right) const {

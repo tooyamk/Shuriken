@@ -10,7 +10,7 @@
 #include <unordered_map>
 
 namespace srk::extensions::fbx_converter {
-	using namespace std::literals;
+	using namespace std::string_view_literals;
 
 #ifndef SRK_FBX_ENUM
 #	define SRK_FBX_ENUM
@@ -1017,8 +1017,6 @@ namespace srk::extensions::fbx_converter {
 	};
 
 	inline bool SRK_CALL decodeNodeProperty(FBX& fbx, ByteArray& source, Node::Property& p) {
-		using namespace std::literals;
-
 		auto type = (Node::Property::Type)source.read<uint8_t>();
 		p.type = type;
 		switch (type) {
@@ -1155,8 +1153,6 @@ namespace srk::extensions::fbx_converter {
 	}
 
 	inline FBXConverter::Result SRK_CALL decode(const ByteArray& source) {
-		using namespace std::literals;
-
 		ByteArray src = source.slice();
 		src.setEndian(std::endian::little);
 

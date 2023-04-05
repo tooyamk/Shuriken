@@ -1,6 +1,6 @@
 #pragma once
 
-#include "DeviceBase.h"
+#include "Base.h"
 #include "srk/modules/inputs/GenericKeyboard.h"
 
 namespace srk::modules::inputs::direct_input {
@@ -10,7 +10,8 @@ namespace srk::modules::inputs::direct_input {
 
 		static KeyboardDriver* SRK_CALL create(Input& input, srk_IDirectInputDevice* dev);
 
-		virtual std::optional<bool> SRK_CALL readStateFromDevice(GenericKeyboard::Buffer& buffer) const override;
+		virtual std::optional<bool> SRK_CALL readFromDevice(GenericKeyboardBuffer& buffer) const override;
+		virtual void SRK_CALL close() override;
 
 	private:
 		KeyboardDriver(Input& input, srk_IDirectInputDevice* dev);

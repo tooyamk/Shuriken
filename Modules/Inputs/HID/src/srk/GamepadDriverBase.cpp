@@ -8,8 +8,14 @@ namespace srk::modules::inputs::hid_input {
 	}
 
 	GamepadDriverBase::~GamepadDriverBase() {
+		close();
+	}
+
+	void GamepadDriverBase::close() {
 		using namespace srk::extensions;
 
+		if (!_hid) return;
 		HID::close(*_hid);
+		_hid = nullptr;
 	}
 }

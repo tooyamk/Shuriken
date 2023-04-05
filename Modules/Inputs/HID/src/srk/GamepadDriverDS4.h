@@ -8,22 +8,22 @@ namespace srk::modules::inputs::hid_input {
 		GamepadDriverDS4(Input& input, extensions::HIDDevice& hid);
 		virtual ~GamepadDriverDS4();
 
-		virtual size_t SRK_CALL getInputLength() const override;
-		virtual size_t SRK_CALL getOutputLength() const override;
+		virtual size_t SRK_CALL getInputBufferLength() const override;
+		virtual size_t SRK_CALL getOutputBufferLength() const override;
 
-		virtual bool SRK_CALL init(void* inputState, void* outputState) override;
+		virtual bool SRK_CALL init(void* inputBuffer, void* outputBuffer) override;
 
-		virtual bool SRK_CALL isStateReady(const void* state) const override;
+		virtual bool SRK_CALL isBufferReady(const void* buffer) const override;
 
-		virtual std::optional<bool> SRK_CALL readStateFromDevice(void* inputState) const override;
-		virtual float32_t SRK_CALL readDataFromInputState(const void* inputState, GamepadKeyCode keyCode) const override;
+		virtual std::optional<bool> SRK_CALL readFromDevice(void* inputBuffer) const override;
+		virtual float32_t SRK_CALL readFromInputBuffer(const void* inputBuffer, GamepadKeyCode keyCode) const override;
 		virtual DeviceState::CountType SRK_CALL customGetState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count,
-			const void* inputState, void* custom, ReadWriteStateStartCallback readStateStartCallback, ReadWriteStateStartCallback readStateEndCallback) const override;
-		virtual void SRK_CALL customDispatch(const void* oldInputState, const void* newInputState, void* custom, DispatchCallback dispatchCallback) const override;
+			const void* inputBuffer, void* custom, ReadWriteStateStartCallback readStateStartCallback, ReadWriteStateEndCallback readStateEndCallback) const override;
+		virtual void SRK_CALL customDispatch(const void* oldInputBuffer, const void* newInputBuffer, void* custom, DispatchCallback dispatchCallback) const override;
 
-		virtual bool SRK_CALL writeStateToDevice(const void* outputState) const override;
-		virtual DeviceState::CountType SRK_CALL customSetState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count, void* outputState, void* custom,
-			ReadWriteStateStartCallback writeStateStartCallback, ReadWriteStateStartCallback writeStateEndCallback) const override;
+		virtual bool SRK_CALL writeToDevice(const void* outputBuffer) const override;
+		virtual DeviceState::CountType SRK_CALL customSetState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count, void* outputBuffer, void* custom,
+			ReadWriteStateStartCallback writeStateStartCallback, ReadWriteStateEndCallback writeStateEndCallback) const override;
 
 		virtual void SRK_CALL setKeyMapper(GamepadKeyMapper& dst, const GamepadKeyMapper* src) const override;
 

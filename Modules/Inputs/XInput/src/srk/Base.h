@@ -1,9 +1,7 @@
 #pragma once
 
 #include "srk/modules/inputs/InputModule.h"
-
 #include <Xinput.h>
-#include <shared_mutex>
 
 namespace srk::modules::inputs::xinput {
 	struct InternalGUID {

@@ -21,8 +21,7 @@ namespace srk::modules::inputs::direct_input {
 	}
 
 	GamepadDriver::~GamepadDriver() {
-		_dev->Unacquire();
-		_dev->Release();
+		close();
 	}
 
 	GamepadDriver* GamepadDriver::create(Input& input, srk_IDirectInputDevice* dev) {
@@ -33,31 +32,31 @@ namespace srk::modules::inputs::direct_input {
 		return new GamepadDriver(input, dev, caps);
 	}
 
-	size_t GamepadDriver::getInputLength() const {
+	size_t GamepadDriver::getInputBufferLength() const {
 		return sizeof(DIJOYSTATE) + HEADER_LENGTH;
 	}
 
-	size_t GamepadDriver::getOutputLength() const {
+	size_t GamepadDriver::getOutputBufferLength() const {
 		return 0;
 	}
 
-	bool GamepadDriver::init(void* inputState, void* outputState) {
-		((uint8_t*)inputState)[0] = 0;
+	bool GamepadDriver::init(void* inputBuffer, void* outputBuffer) {
+		((uint8_t*)inputBuffer)[0] = 0;
 
 		return true;
 	}
 
-	bool GamepadDriver::isStateReady(const void* state) const {
-		return ((const uint8_t*)state)[0];
+	bool GamepadDriver::isBufferReady(const void* buffer) const {
+		return ((const uint8_t*)buffer)[0];
 	}
 
-	std::optional<bool> GamepadDriver::readStateFromDevice(void* inputState) const {
+	std::optional<bool> GamepadDriver::readFromDevice(void* inputBuffer) const {
 		if (auto hr = _dev->Poll(); hr == DIERR_NOTACQUIRED || hr == DIERR_INPUTLOST) {
 			if (FAILED(_dev->Acquire())) return std::nullopt;
 			if (FAILED(_dev->Poll())) return std::nullopt;
 		}
 
-		auto raw = (uint8_t*)inputState;
+		auto raw = (uint8_t*)inputBuffer;
 		if (SUCCEEDED(_dev->GetDeviceState(sizeof(DIJOYSTATE), (DIJOYSTATE*)(raw + HEADER_LENGTH)))) {
 			raw[0] = 1;
 
@@ -67,12 +66,12 @@ namespace srk::modules::inputs::direct_input {
 		return std::nullopt;
 	}
 
-	float32_t GamepadDriver::readDataFromInputState(const void* inputState, GamepadKeyCode keyCode) const {
+	float32_t GamepadDriver::readFromInputBuffer(const void* inputBuffer, GamepadKeyCode keyCode) const {
 		using namespace srk::enum_operators;
 
-		if (!isStateReady(inputState)) return -1.0f;
+		if (!isBufferReady(inputBuffer)) return -1.0f;
 
-		auto data = (const DIJOYSTATE*)((const uint8_t*)inputState + HEADER_LENGTH);
+		auto data = (const DIJOYSTATE*)((const uint8_t*)inputBuffer + HEADER_LENGTH);
 
 		if (keyCode >= GamepadKeyCode::AXIS_1 && keyCode <= _maxAxisKeyCode) {
 			return DeviceStateValue((&data->lX)[(uint32_t)(keyCode- GamepadKeyCode::AXIS_1)]) / 65535.0f;
@@ -92,19 +91,19 @@ namespace srk::modules::inputs::direct_input {
 	}
 
 	DeviceState::CountType GamepadDriver::customGetState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count,
-		const void* inputState, void* custom, ReadWriteStateStartCallback readStateStartCallback, ReadWriteStateStartCallback readStateEndCallback) const {
+		const void* inputBuffer, void* custom, ReadWriteStateStartCallback readStateStartCallback, ReadWriteStateEndCallback readStateEndCallback) const {
 		return 0;
 	}
 
-	void GamepadDriver::customDispatch(const void* oldInputState, const void* newInputState, void* custom, DispatchCallback dispatchCallback) const {
+	void GamepadDriver::customDispatch(const void* oldInputBuffer, const void* newInputBuffer, void* custom, DispatchCallback dispatchCallback) const {
 	}
 
-	bool GamepadDriver::writeStateToDevice(const void* outputState) const {
-		return false;
+	bool GamepadDriver::writeToDevice(const void* outputBuffer) const {
+		return true;
 	}
 
-	DeviceState::CountType GamepadDriver::customSetState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count, void* outputState, void* custom,
-		ReadWriteStateStartCallback writeStateStartCallback, ReadWriteStateStartCallback writeStateEndCallback) const {
+	DeviceState::CountType GamepadDriver::customSetState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count, void* outputBuffer, void* custom,
+		ReadWriteStateStartCallback writeStateStartCallback, ReadWriteStateEndCallback writeStateEndCallback) const {
 		return 0;
 	}
 
@@ -120,5 +119,13 @@ namespace srk::modules::inputs::direct_input {
 		dst.undefinedCompletion<GamepadKeyCode::AXIS_1, GamepadKeyCode::AXIS_END, GamepadVirtualKeyCode::UNDEFINED_AXIS_1>(_cpas.dwAxes);
 		dst.undefinedCompletion<GamepadKeyCode::HAT_1, GamepadKeyCode::HAT_END, GamepadVirtualKeyCode::UNDEFINED_HAT_1>(_cpas.dwPOVs);
 		dst.undefinedCompletion<GamepadKeyCode::BUTTON_1, GamepadKeyCode::BUTTON_END, GamepadVirtualKeyCode::UNDEFINED_BUTTON_1>(_cpas.dwButtons);
+	}
+
+	void GamepadDriver::close() {
+		if (!_dev) return;
+
+		_dev->Unacquire();
+		_dev->Release();
+		_dev = nullptr;
 	}
 }

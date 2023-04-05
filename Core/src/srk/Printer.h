@@ -107,7 +107,7 @@ namespace srk {
 		struct SRK_CORE_DLL DefaultFormater {
 			template<typename Formater, typename T>
 			bool SRK_CALL operator()(OutputBuffer& buf, Formater&& formater, T&& value) const {
-				using namespace std::literals;
+				using namespace std::string_view_literals;
 
 				using Type = std::remove_cvref_t<T>;
 
@@ -284,7 +284,7 @@ namespace srk {
 	template<typename Formater, typename Outputer, typename... Args>
 	requires std::default_initializable<std::remove_cvref_t<Formater>> && std::invocable<Outputer, const std::wstring_view&> && std::default_initializable<std::remove_cvref_t<Outputer>>
 	inline void SRK_CALL println(Args&&... args) {
-		using namespace std::literals;
+		using namespace std::string_view_literals;
 		print<Formater, Outputer>(std::forward<Args>(args)..., L"\n"sv);
 	}
 
@@ -297,7 +297,7 @@ namespace srk {
 	template<typename Formater = Printer::DefaultFormater, typename... Args>
 	requires std::default_initializable<std::remove_cvref_t<Formater>>
 	inline void SRK_CALL printdln(Args&&... args) {
-		using namespace std::literals;
+		using namespace std::string_view_literals;
 		printd<Formater>(std::forward<Args>(args)..., L"\n"sv);
 	}
 
@@ -310,7 +310,7 @@ namespace srk {
 	template<typename Formater = Printer::DefaultFormater, typename... Args>
 	requires std::default_initializable<std::remove_cvref_t<Formater>>
 	inline void SRK_CALL printcln(Args&&... args) {
-		using namespace std::literals;
+		using namespace std::string_view_literals;
 		printc<Formater>(std::forward<Args>(args)..., L"\n"sv);
 	}
 
@@ -323,7 +323,7 @@ namespace srk {
 	template<typename Formater = Printer::DefaultFormater, typename... Args>
 	requires std::default_initializable<std::remove_cvref_t<Formater>>
 	inline void SRK_CALL printaln(Args&&... args) {
-		using namespace std::literals;
+		using namespace std::string_view_literals;
 		printa<Formater>(std::forward<Args>(args)..., L"\n"sv);
 	}
 }

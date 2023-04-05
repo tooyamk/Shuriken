@@ -1,8 +1,8 @@
 #pragma once
 
 #include "Base.h"
-#include "srk/events/EventDispatcher.h"
 #include "srk/modules/windows/WindowModule.h"
+#include <shared_mutex>
 
 namespace srk::modules::inputs::direct_input {
 	class SRK_MODULE_DLL Input : public IInputModule {

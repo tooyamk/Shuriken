@@ -44,7 +44,7 @@ namespace srk::extensions::shader_script {
 
 	template<typename T>
 	inline bool SRK_CALL parseDefineBlock(T& out, const std::string_view& content) {
-		using namespace std::literals;
+		using namespace std::string_view_literals;
 
 		auto fmtContent = String::trim(content, String::CharFlag::WHITE_SPACE);
 		std::vector<std::string_view> defs;

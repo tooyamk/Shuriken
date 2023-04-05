@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Base.h"
-#include "srk/events/EventDispatcher.h"
 #include "srk/modules/windows/WindowModule.h"
 #include <shared_mutex>
 
@@ -17,7 +16,7 @@ namespace srk::modules::inputs::hid_input {
 			::operator delete(p);
 		}
 
-		virtual IntrusivePtr<events::IEventDispatcher<ModuleEvent>>SRK_CALL getEventDispatcher() override;
+		virtual IntrusivePtr<events::IEventDispatcher<ModuleEvent>> SRK_CALL getEventDispatcher() override;
 		virtual void SRK_CALL poll() override;
 		virtual IntrusivePtr<IInputDevice> SRK_CALL createDevice(const DeviceGUID& guid) override;
 

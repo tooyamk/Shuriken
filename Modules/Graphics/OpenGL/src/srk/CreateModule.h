@@ -6,7 +6,7 @@
 #ifdef SRK_MODULE_EXPORTS
 namespace srk::modules::graphics {
 	extern "C" SRK_MODULE_DLL_EXPORT void* SRK_CREATE_MODULE_FN_NAME(Ref* loader, const CreateGrahpicsModuleDescriptor& desc) {
-		using namespace std::literals;
+		using namespace std::string_view_literals;
 
 		if (!desc.window) {
 			printaln(L"GlewGraphicsModule create error : no window"sv);

@@ -29,7 +29,7 @@ namespace srk::extensions::shader_transpiler {
 		}
 
 		modules::graphics::ProgramSource SRK_CALL translate(const modules::graphics::ProgramSource& source, const ShaderTranspiler::Options& options, modules::graphics::ProgramLanguage targetLanguage, const std::string_view& targetVersion, const modules::graphics::ProgramDefine* defines, size_t numDefines, const modules::graphics::ProgramIncludeHandler& handler) {
-			using namespace std::literals;
+			using namespace std::string_view_literals;
 			using namespace srk::modules::graphics;
 
 			ProgramSource dst;
@@ -206,7 +206,7 @@ namespace srk::extensions::shader_transpiler {
 
 
 		void SRK_CALL _spirvTo(const modules::graphics::ProgramSource& source, const uint8_t* sourceData, uint32_t sourceDataSize, modules::graphics::ProgramLanguage targetLanguage, const std::string_view& targetVersion, modules::graphics::ProgramSource& dst) {
-			using namespace std::literals;
+			using namespace std::string_view_literals;
 			using namespace srk::modules::graphics;
 
 			spv::ExecutionModel model;
@@ -258,7 +258,7 @@ namespace srk::extensions::shader_transpiler {
 		}
 
 		void SRK_CALL _spirvToGLSL(const modules::graphics::ProgramSource& source, const uint8_t* sourceData, uint32_t sourceDataSize, modules::graphics::ProgramLanguage targetLanguage, const std::string_view& targetVersion, modules::graphics::ProgramSource& dst, spv::ExecutionModel model) {
-			using namespace std::literals;
+			using namespace std::string_view_literals;
 			using namespace srk::modules::graphics;
 
 			spirv_cross::CompilerGLSL compiler((uint32_t*)sourceData, sourceDataSize / sizeof(uint32_t));
@@ -344,7 +344,7 @@ namespace srk::extensions::shader_transpiler {
 		}
 
 		void SRK_CALL _spirvToMSL(const modules::graphics::ProgramSource& source, const uint8_t* sourceData, uint32_t sourceDataSize, modules::graphics::ProgramLanguage targetLanguage, const std::string_view& targetVersion, modules::graphics::ProgramSource& dst, spv::ExecutionModel model) {
-			using namespace std::literals;
+			using namespace std::string_view_literals;
 			using namespace srk::modules::graphics;
 
 			spirv_cross::CompilerMSL compiler((uint32_t*)sourceData, sourceDataSize / sizeof(uint32_t));

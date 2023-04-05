@@ -22,7 +22,7 @@ int32_t WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstanc
 #include <stdbool.h>
 
 void onStart(ANativeActivity* activity) {
-    using namespace std::literals;
+    using namespace std::string_view_literals;
 
 	printaln(L"onStart"sv);
 }
@@ -52,13 +52,13 @@ void onWindowFocusChanged(ANativeActivity* activity, int hasFocus) {
 }
 
 void onNativeWindowCreated(ANativeActivity* activity, ANativeWindow* window) {
-    using namespace std::literals;
+    using namespace std::string_view_literals;
 
     printaln(L"onNativeWindowCreated"sv);
 }
 
 void onNativeWindowDestroyed(ANativeActivity* activity, ANativeWindow* window) {
-    using namespace std::literals;
+    using namespace std::string_view_literals;
 
     printaln(L"onNativeWindowCreated"sv);
 }
@@ -98,7 +98,7 @@ void bindLifeCycle(ANativeActivity* activity) {
 }
 
 void ANativeActivity_onCreate(ANativeActivity* activity, void* savedState, size_t savedStateSize) {
-    using namespace std::literals;
+    using namespace std::string_view_literals;
 
 	printaln(L"ANativeActivity_onCreate 2"sv);
     printaln(L"internalDataPath : "sv, std::string_view(activity->internalDataPath));

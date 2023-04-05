@@ -10,29 +10,39 @@ namespace srk::modules::inputs::raw_input {
 	}
 
 	KeyboardDriver::~KeyboardDriver() {
+		close();
 	}
 
 	KeyboardDriver* KeyboardDriver::create(Input& input, windows::IWindow& win, HANDLE handle) {
 		return new KeyboardDriver(input, win, handle);
 	}
 
-	std::optional<bool> KeyboardDriver::readStateFromDevice(GenericKeyboard::Buffer& buffer) const {
-		if (!_changed.load()) return std::make_optional(false);
+	std::optional<bool> KeyboardDriver::readFromDevice(GenericKeyboardBuffer& buffer) const {
+		auto expected = true;
+		if (_changed.compare_exchange_strong(expected, false, std::memory_order::release, std::memory_order::relaxed)) {
+			{
+				std::scoped_lock lock(_lock);
+				memcpy(buffer.data, _inputBuffer.data, sizeof(_inputBuffer.data));
+			}
 
-		std::scoped_lock lock(_lock);
-		memcpy(buffer.data, _inputBuffer.data, sizeof(_inputBuffer.data));
+			return std::make_optional(true);
+		}
 
-		return std::make_optional(true);
+		return std::make_optional(false);
+	}
+
+	void KeyboardDriver::close() {
+		_listener.close();
 	}
 
 	void KeyboardDriver::_callback(const RAWINPUT& rawInput, void* target) {
 		using namespace std::string_view_literals;
 
 		auto driver = (KeyboardDriver*)target;
-
 		auto& kb = rawInput.data.keyboard;
+
 		auto vk = _getVirtualKey(kb);
-		if (!GenericKeyboard::Buffer::isValid(vk)) {
+		if (!GenericKeyboardBuffer::isValid(vk)) {
 			printaln(kb.VKey, L"    "sv, kb.MakeCode, L"    "sv, kb.Flags, L"    "sv,  String::toString(kb.Message, 16));
 			return;
 		}

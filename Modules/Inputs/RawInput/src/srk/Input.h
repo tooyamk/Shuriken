@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Base.h"
-#include "srk/events/EventDispatcher.h"
+#include <shared_mutex>
 
 namespace srk::modules::inputs::raw_input {
 	class SRK_MODULE_DLL Input : public IInputModule {

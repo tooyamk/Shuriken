@@ -1,85 +1,63 @@
 #pragma once
 
-#include "srk/modules/inputs/InputModule.h"
-#include <optional>
-#include <shared_mutex>
+#include "srk/modules/inputs/GenericDevice.h"
 
 namespace srk::modules::inputs {
 	class SRK_FW_DLL IGenericGamepadDriver : public Ref {
 	public:
-		using ReadWriteStateStartCallback = void(*)(void* custom);
-		using ReadWriteStateEndCallback = void(*)(void* custom);
-		using DispatchCallback = void(*)(DeviceEvent evt, void* data, void* custom);
+		using ReadWriteStateStartCallback = void(SRK_CALL*)(void* custom);
+		using ReadWriteStateEndCallback = void(SRK_CALL*)(void* custom);
+		using DispatchCallback = void(SRK_CALL*)(DeviceEvent evt, void* data, void* custom);
 
-		virtual size_t SRK_CALL getInputLength() const = 0;
-		virtual size_t SRK_CALL getOutputLength() const = 0;
+		virtual size_t SRK_CALL getInputBufferLength() const = 0;
+		virtual size_t SRK_CALL getOutputBufferLength() const = 0;
 
-		virtual bool SRK_CALL init(void* inputState, void* outputState) = 0;
+		virtual bool SRK_CALL init(void* inputBuffer, void* outputBuffer) = 0;
 
-		virtual bool SRK_CALL isStateReady(const void* state) const = 0;
+		virtual bool SRK_CALL isBufferReady(const void* buffer) const = 0;
 
-		virtual std::optional<bool> SRK_CALL readStateFromDevice(void* inputState) const = 0;
-		virtual float32_t SRK_CALL readDataFromInputState(const void* inputState, GamepadKeyCode keyCode) const = 0;
+		virtual std::optional<bool> SRK_CALL readFromDevice(void* inputBuffer) const = 0;
+		virtual float32_t SRK_CALL readFromInputBuffer(const void* inputBuffer, GamepadKeyCode keyCode) const = 0;
 		virtual DeviceState::CountType SRK_CALL customGetState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count, 
-			const void* inputState, void* custom, ReadWriteStateStartCallback readStateStartCallback, ReadWriteStateStartCallback readStateEndCallback) const = 0;
-		virtual void SRK_CALL customDispatch(const void* oldInputState, const void* newInputState, void* custom, DispatchCallback dispatchCallback) const = 0;
+			const void* inputBuffer, void* custom, ReadWriteStateStartCallback readStateStartCallback, ReadWriteStateEndCallback readStateEndCallback) const = 0;
+		virtual void SRK_CALL customDispatch(const void* oldInputBuffer, const void* newInputBuffer, void* custom, DispatchCallback dispatchCallback) const = 0;
 
-		virtual bool SRK_CALL writeStateToDevice(const void* outputState) const = 0;
-		virtual DeviceState::CountType SRK_CALL customSetState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count, void* outputState, void* custom,
-			ReadWriteStateStartCallback writeStateStartCallback, ReadWriteStateStartCallback writeStateEndCallback) const = 0;
+		virtual bool SRK_CALL writeToDevice(const void* outputBuffer) const = 0;
+		virtual DeviceState::CountType SRK_CALL customSetState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count, void* outputBuffer, void* custom,
+			ReadWriteStateStartCallback writeStateStartCallback, ReadWriteStateEndCallback writeStateEndCallback) const = 0;
 
 		virtual void SRK_CALL setKeyMapper(GamepadKeyMapper& dst, const GamepadKeyMapper* src) const = 0;
+
+		virtual void SRK_CALL close() = 0;
 	};
 
-	class SRK_FW_DLL GenericGamepad : public IInputDevice {
+
+	using GenericGamepadBase = GenericDevice<IGenericGamepadDriver, uint8_t, uint8_t>;
+	class SRK_FW_DLL GenericGamepad : public GenericGamepadBase {
 	public:
 		GenericGamepad(const DeviceInfo& info, IGenericGamepadDriver& driver, const GamepadKeyMapper* keyMapper = nullptr);
 		virtual ~GenericGamepad();
 
-		virtual IntrusivePtr<events::IEventDispatcher<DeviceEvent>> SRK_CALL getEventDispatcher() override;
-		virtual const DeviceInfo& SRK_CALL getInfo() const override;
 		virtual DeviceState::CountType SRK_CALL getState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count) const override;
 		virtual DeviceState::CountType SRK_CALL setState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count) override;
-		virtual DevicePollResult SRK_CALL poll(bool dispatchEvent) override;
-		virtual void SRK_CALL close() override;
 
 	protected:
-		using OUTPUT_FLAG_TYPE = uint8_t;
-		static constexpr OUTPUT_FLAG_TYPE OUTPUT_DIRTY = 0b1;
-		static constexpr OUTPUT_FLAG_TYPE OUTPUT_WRITING = 0b10;
-
-		IntrusivePtr<events::IEventDispatcher<DeviceEvent>> _eventDispatcher;
-		DeviceInfo _info;
-
-		IntrusivePtr<IGenericGamepadDriver> _driver;
-
-		std::atomic_bool _closed;
-
-		std::atomic_bool _polling;
-		uint8_t* _oldInputState;
-		uint8_t* _inputBuffer;
-
 		GamepadKeyMapper _keyMapper;
 		GamepadKeyDeadZone _deadZone;
 
-		mutable std::shared_mutex _inputMutex;
-		uint8_t* _inputState;
+		uint8_t* _buffers;
 
-		mutable std::shared_mutex _outputMutex;
-		size_t _outputLength;
-		uint8_t* _outputState;
-		uint8_t* _outputBuffer;
-		std::atomic<OUTPUT_FLAG_TYPE> _outputFlags;
-		std::atomic_bool _needOutput;
+		virtual std::optional<bool> _readFromDevice() override;
+		virtual bool _writeToDevice() override;
+		virtual bool SRK_CALL _doInput() override;
+		virtual void SRK_CALL _closeDevice() override;
 
-		bool SRK_CALL _doInput(bool dispatchEvent);
 		void SRK_CALL _doInputMove(const GamepadKeyMapper& mapper, GamepadVirtualKeyCode combined, GamepadVirtualKeyCode separatedBegin);
-		bool SRK_CALL _doOutput();
 
 		void SRK_CALL _setDeadZone(GamepadVirtualKeyCode keyCode, Vec2<DeviceStateValue>* deadZone);
 
-		inline DeviceStateValue _readDataFromInputState(const void* inputState, const GamepadKeyCodeAndFlags& cf, DeviceStateValue defaultValue) const {
-			return translate(_driver->readDataFromInputState(inputState, cf.code), cf.flags, defaultValue);
+		inline DeviceStateValue _readFromInputBuffer(const void* inputBuffer, const GamepadKeyCodeAndFlags& cf, DeviceStateValue defaultValue) const {
+			return translate(_driver->readFromInputBuffer(inputBuffer, cf.code), cf.flags, defaultValue);
 		}
 
 		inline static DeviceStateValue SRK_CALL _normalizeStick(float32_t smallVal, float32_t bigVal) {

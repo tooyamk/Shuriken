@@ -257,13 +257,19 @@ namespace srk::modules::inputs {
 	};
 
 
-	enum class MouseKeyCode : uint8_t {
+	enum class MouseVirtualKeyCode : uint8_t {
+		UNKNOWN,
+
 		POSITION,
 		WHEEL,
-		L_BUTTON,
+		BUTTON_START,
+		L_BUTTON = BUTTON_START,
 		R_BUTTON,
 		M_BUTTON,
-		FN_BUTTON_0
+		FN_BUTTON_START,
+		FN_BUTTON_1 = FN_BUTTON_START,
+		FN_BUTTON_END = BUTTON_START + 31,
+		BUTTON_END = FN_BUTTON_END
 	};
 
 
@@ -628,7 +634,7 @@ namespace srk::modules::inputs {
 	};
 
 
-	template<typename T> concept DeviceCode = SameAnyOf<T, KeyboardVirtualKeyCode, MouseKeyCode, GamepadVirtualKeyCode>;
+	template<typename T> concept DeviceCode = SameAnyOf<T, KeyboardVirtualKeyCode, MouseVirtualKeyCode, GamepadVirtualKeyCode>;
 
 
 	class SRK_FW_DLL IInputDevice : public Ref {
