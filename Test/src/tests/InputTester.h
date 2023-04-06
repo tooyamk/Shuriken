@@ -283,7 +283,7 @@ public:
 		auto win = wm->crerate(desc);
 		if (!win) return 0;
 
-		printaln(L"UNDEFINED_AXIS_1 : "sv,  GamepadVirtualKeyCode::UNDEFINED_AXIS_1, L" UNDEFINED_BUTTON_1 : "sv, GamepadVirtualKeyCode::UNDEFINED_BUTTON_1);
+		//printaln(L"UNDEFINED_AXIS_1 : "sv,  GamepadVirtualKeyCode::UNDEFINED_AXIS_1, L" UNDEFINED_BUTTON_1 : "sv, GamepadVirtualKeyCode::UNDEFINED_BUTTON_1);
 
 		win->getEventDispatcher()->addEventListener(WindowEvent::CLOSED, createEventListener<WindowEvent>([](Event<WindowEvent>& e) {
 			std::exit(0);
@@ -319,7 +319,7 @@ public:
 			}
 		} else if constexpr (Environment::OPERATING_SYSTEM == Environment::OperatingSystem::LINUX) {
 			if (1) {
-				createInputModuleDesc.filters = DeviceType::GAMEPAD | DeviceType::KEYBOARD;
+				createInputModuleDesc.filters = DeviceType::GAMEPAD | DeviceType::MOUSE;
 				initInputModule(inputModules, getDllPath("srk-module-input-evdev"), createInputModuleDesc);
 			}
 

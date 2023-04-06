@@ -21,6 +21,7 @@ namespace srk::modules::inputs::evdev_input {
 		
 		input_event evts[8];
 		auto changed = false;
+		
 		do {
 			auto len = read(_fd, evts, sizeof(evts));
 			if (len < 0) break;
@@ -35,16 +36,15 @@ namespace srk::modules::inputs::evdev_input {
 				{
 					if (evt.code >= KEY_ESC && evt.code <= KEY_MICMUTE) {
 						auto vk = VK_MAPPER[evt.code];
-						if (!GenericKeyboard::Buffer::isValid(vk)) {
-							printaln(evt.code, L"     "sv, evt.value);
-							break;
+						if constexpr (Environment::IS_DEBUG) {
+							if (!GenericKeyboardBuffer::isValid(vk)) {
+								printaln(evt.code, L"     "sv, evt.value);
+								break;
+							}
 						}
 
-						changed = true;
 						auto val = evt.value != 0;
-
-						std::scoped_lock lock(_lock);
-						_inputBuffer.set(vk, val);
+						if (_inputBuffer.set(vk, val, _lock)) changed = true;
 					} else {
 						//printaln(L"key  code:"sv, String::toString(evt.code, 16), L"  value:"sv, evt.value);
 					}
@@ -73,5 +73,6 @@ namespace srk::modules::inputs::evdev_input {
 
 		//ioctl(_desc.fd, EVIOCGRAB, 0);
 		::close(_fd);
+		_fd = -1;
 	}
 }

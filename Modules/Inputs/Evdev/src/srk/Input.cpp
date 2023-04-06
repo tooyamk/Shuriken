@@ -2,6 +2,7 @@
 #include "CreateModule.h"
 #include "GamepadDriver.h"
 #include "KeyboardDriver.h"
+#include "MouseDriver.h"
 #include "srk/hash/xxHash.h"
 #include <fcntl.h>
 #include <linux/input.h>
@@ -101,7 +102,14 @@ namespace srk::modules::inputs::evdev_input {
 								return KEY_MICMUTE + 1;
 							}
 
-							if (bit >= BTN_MISC && bit <= BTN_DEAD) return BTN_DEAD + 1;
+							if (bit >= BTN_MISC && bit <= BTN_9) return BTN_9 + 1;
+
+							if (bit >= BTN_MOUSE && bit <= BTN_TASK) {
+								types |= DeviceType::MOUSE;
+								return BTN_TASK + 1;
+							}
+
+							if (bit >= BTN_JOYSTICK && bit <= BTN_DEAD) return BTN_DEAD + 1;
 
 							if (bit >= BTN_GAMEPAD && bit <= BTN_THUMBR) {
 								types |= DeviceType::GAMEPAD;
@@ -209,6 +217,9 @@ namespace srk::modules::inputs::evdev_input {
 			switch (info.type) {
 			case DeviceType::KEYBOARD:
 				if (auto driver = KeyboardDriver::create(*this, fd); driver) return new GenericKeyboard(info, *driver);
+				break;
+			case DeviceType::MOUSE:
+				if (auto driver = MouseDriver::create(*this, fd); driver) return new GenericMouse(info, *driver);
 				break;
 			case DeviceType::GAMEPAD:
 				if (auto driver = GamepadDriver::create(*this, fd); driver) return new GenericGamepad(info, *driver);

@@ -4,6 +4,7 @@
 #include "srk/events/EventDispatcher.h"
 #include <optional>
 #include <shared_mutex>
+#include <thread>
 
 namespace srk::modules::inputs {
 	template<typename Driver, typename InputBuffer, typename OutputBuffer>
@@ -126,20 +127,30 @@ namespace srk::modules::inputs {
 		bool SRK_CALL _doOutput() {
 			auto expected = OUTPUT_FLAG_DIRTY;
 			if (_outputFlag.compare_exchange_strong(expected, OUTPUT_FLAG_WRITING, std::memory_order::release, std::memory_order::relaxed)) {
+				{
+					std::shared_lock lock(_outputMutex);
+
+					memcpy(_writingOutputBuffer, _outputBuffer, _outputBufferLength);
+				}
+
 				_needOutput.store(true);
-
-				std::shared_lock lock(_outputMutex);
-
-				memcpy(_writingOutputBuffer, _outputBuffer, _outputBufferLength);
 			}
 
 			if (_needOutput.load()) {
+				auto expected = CLOSE_FLAG_OPENING;
+				auto lock = _closeFlag.compare_exchange_strong(expected, CLOSE_FLAG_LOCKING, std::memory_order::release, std::memory_order::relaxed);
+				if (!lock) return false;
+
 				if (_writeToDevice()) {
+					_closeFlag.store(CLOSE_FLAG_OPENING);
+
 					_needOutput.store(false);
 					_outputFlag.fetch_and(~OUTPUT_FLAG_WRITING);
 
 					return true;
 				} else {
+					_closeFlag.store(CLOSE_FLAG_OPENING);
+
 					return false;
 				}
 			} else {

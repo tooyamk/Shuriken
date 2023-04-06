@@ -14,6 +14,7 @@ namespace srk::modules::inputs::evdev_input {
 		static KeyboardDriver* SRK_CALL create(Input& input, int32_t fd);
 
 		virtual std::optional<bool> SRK_CALL readFromDevice(GenericKeyboardBuffer& buffer) const override;
+		virtual void SRK_CALL close() override;
 
 	private:
 		KeyboardDriver(Input& input, int32_t fd);
@@ -21,7 +22,7 @@ namespace srk::modules::inputs::evdev_input {
 		int32_t _fd;
 
 		mutable AtomicLock<true, false> _lock;
-		mutable GenericKeyboard::Buffer _inputBuffer;
+		mutable GenericKeyboardBuffer _inputBuffer;
 
 		inline static constexpr KeyboardVirtualKeyCode VK_MAPPER[] = {
 			KeyboardVirtualKeyCode::UNDEFINED,//KEY_RESERVED
@@ -164,7 +165,7 @@ namespace srk::modules::inputs::evdev_input {
 			KeyboardVirtualKeyCode::UNDEFINED,//KEY_CUT
 			KeyboardVirtualKeyCode::UNDEFINED,//KEY_HELP
 			KeyboardVirtualKeyCode::UNDEFINED,//KEY_MENU
-			KeyboardVirtualKeyCode::CALC,//140
+			KeyboardVirtualKeyCode::LAUNCH_CALC,//140
 			KeyboardVirtualKeyCode::UNDEFINED,//KEY_SETUP
 			KeyboardVirtualKeyCode::UNDEFINED,//KEY_SLEEP
 			KeyboardVirtualKeyCode::UNDEFINED,//KEY_WAKEUP
