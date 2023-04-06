@@ -37,14 +37,7 @@ namespace srk::modules::inputs::raw_input {
 	}
 
 	void MouseDriver::_setButton(MouseVirtualKeyCode vk, bool pressed) {
-		if (!GenericMouseBuffer::isValidButton(vk)) return;
-
-		{
-			std::scoped_lock lock(_lock);
-			_inputBuffer.setButton(vk, pressed);
-		}
-
-		_changed.store(true);
+		if (_inputBuffer.setButton(vk, pressed, _lock)) _changed.store(true);
 	}
 
 	void MouseDriver::_callback(const RAWINPUT& rawInput, void* target) {
@@ -106,7 +99,8 @@ namespace srk::modules::inputs::raw_input {
 				break;
 			case RI_MOUSE_WHEEL:
 			{
-				auto wheel = (SHORT)m.usButtonData / (float32_t)WHEEL_DELTA;
+				constexpr float32_t wheelDelta = WHEEL_DELTA;
+				auto wheel = (SHORT)m.usButtonData / wheelDelta;
 
 				{
 					std::scoped_lock lock(driver->_lock);

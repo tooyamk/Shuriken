@@ -24,9 +24,7 @@ namespace srk::modules::inputs {
 		case DeviceStateType::KEY:
 		{
 			if (values && count) {
-				std::shared_lock lock(_inputMutex);
-
-				((DeviceStateValue*)values)[0] = _curInputBuffer->get((KeyboardVirtualKeyCode)code) ? Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;
+				((DeviceStateValue*)values)[0] = _curInputBuffer->get((KeyboardVirtualKeyCode)code, _inputMutex) ? Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;
 				return 1;
 			}
 

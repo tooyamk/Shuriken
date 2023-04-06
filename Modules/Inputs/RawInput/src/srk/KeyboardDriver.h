@@ -23,6 +23,7 @@ namespace srk::modules::inputs::raw_input {
 		GenericKeyboardBuffer _inputBuffer;
 		mutable std::atomic_bool _changed;
 
+		void SRK_CALL _setKey(KeyboardVirtualKeyCode vk, bool pressed);
 		static void SRK_CALL _callback(const RAWINPUT& rawInput, void* target);
 		static KeyboardVirtualKeyCode SRK_CALL _getVirtualKey(const RAWKEYBOARD& raw);
 

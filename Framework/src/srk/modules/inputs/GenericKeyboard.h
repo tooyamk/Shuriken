@@ -1,6 +1,7 @@
 #pragma once
 
 #include "srk/modules/inputs/GenericDevice.h"
+#include <mutex>
 
 namespace srk::modules::inputs {
 	class SRK_FW_DLL GenericKeyboardBuffer {
@@ -19,25 +20,57 @@ namespace srk::modules::inputs {
 			return (size_t)(vk - KeyboardVirtualKeyCode::DEFINED_START) < COUNT;
 		}
 
-		inline void SRK_CALL set(KeyboardVirtualKeyCode vk, bool pressed) {
-			using namespace srk::enum_operators;
-
-			auto i = (size_t)(vk - KeyboardVirtualKeyCode::DEFINED_START);
-			if (i >= COUNT) return;
+		template<typename Locker>
+		requires std::same_as<std::remove_cvref_t<Locker>, nullptr_t> || requires(Locker&& locker) {
+			locker.lock();
+			locker.unlock();
+		}
+		bool SRK_CALL set(KeyboardVirtualKeyCode vk, bool pressed, Locker&& locker) {
+			auto i = (size_t)vk - (size_t)KeyboardVirtualKeyCode::DEFINED_START;
+			if (i >= COUNT) return false;
 
 			auto pos = i >> 3;
 			auto mask = 1 << (i & 0b111);
-			data[pos] &= ~mask;
-			if (pressed) data[pos] |= mask;
+
+			if (pressed) {
+				if constexpr (std::same_as<std::remove_cvref_t<Locker>, nullptr_t>) {
+					data[pos] &= ~mask;
+					data[pos] |= mask;
+				} else {
+					std::scoped_lock lock(locker);
+
+					data[pos] &= ~mask;
+					data[pos] |= mask;
+				}
+			} else {
+				if constexpr (std::same_as<std::remove_cvref_t<Locker>, nullptr_t>) {
+					data[pos] &= ~mask;
+				} else {
+					std::scoped_lock lock(locker);
+
+					data[pos] &= ~mask;
+				}
+			}
+
+			return true;
 		}
 
-		inline bool SRK_CALL get(KeyboardVirtualKeyCode vk) const {
-			using namespace srk::enum_operators;
-
-			auto i = (size_t)(vk - KeyboardVirtualKeyCode::DEFINED_START);
+		template<typename Locker>
+		requires std::same_as<std::remove_cvref_t<Locker>, nullptr_t> || requires(Locker&& locker) {
+			locker.lock();
+			locker.unlock();
+		}
+		inline bool SRK_CALL get(KeyboardVirtualKeyCode vk, Locker&& locker) const {
+			auto i = (size_t)vk - (size_t)KeyboardVirtualKeyCode::DEFINED_START;
 			if (i >= COUNT) return false;
 
-			return data[i >> 3] & (1 << (i & 0b111));
+			if constexpr (std::same_as<std::remove_cvref_t<Locker>, nullptr_t>) {
+				return data[i >> 3] & (1 << (i & 0b111));
+			} else {
+				std::scoped_lock lock(locker);
+
+				return data[i >> 3] & (1 << (i & 0b111));
+			}
 		}
 	};
 

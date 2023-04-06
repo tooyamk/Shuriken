@@ -19,6 +19,8 @@ namespace srk::modules::inputs::raw_input {
 	}
 
 	void InputListener::start() {
+		std::scoped_lock lock(_lock);
+
 		if (_listening) return;
 
 		_win->getEventDispatcher()->addEventListener(windows::WindowEvent::RAW_INPUT, _rawIputHandler);
@@ -27,11 +29,12 @@ namespace srk::modules::inputs::raw_input {
 	}
 
 	void InputListener::close() {
-		if (_listening) {
-			_listening = false;
-			_win->getEventDispatcher()->removeEventListener(windows::WindowEvent::RAW_INPUT, _rawIputHandler);
-			_input->unregisterRawInputDevices(_type);
-		}
+		std::scoped_lock lock(_lock);
+
+		if (!_listening) return;
+		
+		_win->getEventDispatcher()->removeEventListener(windows::WindowEvent::RAW_INPUT, _rawIputHandler);
+		_input->unregisterRawInputDevices(_type);
 	}
 
 	HWND InputListener::getHWND() const {

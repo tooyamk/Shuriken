@@ -50,9 +50,7 @@ namespace srk::modules::inputs {
 				default:
 				{
 					if (code >= MouseVirtualKeyCode::BUTTON_START && code <= MouseVirtualKeyCode::BUTTON_END) {
-						std::shared_lock lock(_inputMutex);
-
-						((DeviceStateValue*)values)[0] = _curInputBuffer->getButton((MouseVirtualKeyCode)code) ? Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;
+						((DeviceStateValue*)values)[0] = _curInputBuffer->getButton((MouseVirtualKeyCode)code, _inputMutex) ? Math::ONE<DeviceStateValue> : Math::ZERO<DeviceStateValue>;
 
 						return 1;
 					}

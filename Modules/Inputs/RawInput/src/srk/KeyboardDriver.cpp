@@ -35,6 +35,10 @@ namespace srk::modules::inputs::raw_input {
 		_listener.close();
 	}
 
+	void KeyboardDriver::_setKey(KeyboardVirtualKeyCode vk, bool pressed) {
+		if (_inputBuffer.set(vk, pressed, _lock)) _changed.store(true);
+	}
+
 	void KeyboardDriver::_callback(const RAWINPUT& rawInput, void* target) {
 		using namespace std::string_view_literals;
 
@@ -42,34 +46,22 @@ namespace srk::modules::inputs::raw_input {
 		auto& kb = rawInput.data.keyboard;
 
 		auto vk = _getVirtualKey(kb);
-		if (!GenericKeyboardBuffer::isValid(vk)) {
-			printaln(kb.VKey, L"    "sv, kb.MakeCode, L"    "sv, kb.Flags, L"    "sv,  String::toString(kb.Message, 16));
-			return;
+		if constexpr (Environment::IS_DEBUG) {
+			if (!GenericKeyboardBuffer::isValid(vk)) {
+				printaln(kb.VKey, L"    "sv, kb.MakeCode, L"    "sv, kb.Flags, L"    "sv, String::toString(kb.Message, 16));
+				return;
+			}
 		}
 
 		switch (kb.Message) {
 		case WM_KEYDOWN:
 		case WM_SYSKEYDOWN:
-		{
-			{
-				std::scoped_lock lock(driver->_lock);
-				driver->_inputBuffer.set(vk, true);
-			}
-			driver->_changed.store(true);
-
+			driver->_setKey(vk, true);
 			break;
-		}
 		case WM_KEYUP:
 		case WM_SYSKEYUP:
-		{
-			{
-				std::scoped_lock lock(driver->_lock);
-				driver->_inputBuffer.set(vk, false);
-			}
-			driver->_changed.store(true);
-
+			driver->_setKey(vk, false);
 			break;
-		}
 		default:
 			break;
 		}

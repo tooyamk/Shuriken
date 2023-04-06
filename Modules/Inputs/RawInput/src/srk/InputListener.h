@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Base.h"
+#include "srk/Lock.h"
 #include "srk/events/EventDispatcher.h"
 
 namespace srk::modules::inputs::raw_input {
@@ -23,6 +24,7 @@ namespace srk::modules::inputs::raw_input {
 		IntrusivePtr<windows::IWindow> _win;
 		HANDLE _handle;
 		DeviceType _type;
+		mutable AtomicLock<true, false> _lock;
 		bool _listening;
 		Callback _callback;
 		void* _callbackTarget;

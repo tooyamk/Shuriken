@@ -32,7 +32,7 @@ namespace srk::modules::inputs::direct_input {
 				}
 			}*/
 
-			for (size_t i = 0; i < sizeof(buf); ++i) buffer.set(VK_MAPPER[i], buf[i] & 0x80);
+			for (size_t i = 0; i < sizeof(buf); ++i) buffer.set(VK_MAPPER[i], buf[i] & 0x80, nullptr);
 
 			return std::make_optional(true);
 		}

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "srk/modules/inputs/GenericDevice.h"
+#include <mutex>
 
 namespace srk::modules::inputs {
 	class SRK_FW_DLL GenericMouseBuffer {
@@ -21,25 +22,57 @@ namespace srk::modules::inputs {
 			return (size_t)(vk - MouseVirtualKeyCode::BUTTON_START) < BUTTON_COUNT;
 		}
 
-		inline void SRK_CALL setButton(MouseVirtualKeyCode vk, bool pressed) {
-			using namespace srk::enum_operators;
-
-			auto i = (size_t)(vk - MouseVirtualKeyCode::BUTTON_START);
-			if (i >= BUTTON_COUNT) return;
+		template<typename Locker>
+		requires std::same_as<std::remove_cvref_t<Locker>, nullptr_t> || requires(Locker&& locker) {
+			locker.lock();
+			locker.unlock();
+		}
+		bool SRK_CALL setButton(MouseVirtualKeyCode vk, bool pressed, Locker&& locker) {
+			auto i = (size_t)vk - (size_t)MouseVirtualKeyCode::BUTTON_START;
+			if (i >= BUTTON_COUNT) return false;
 
 			auto pos = i >> 3;
 			auto mask = 1 << (i & 0b111);
-			buttons[pos] &= ~mask;
-			if (pressed) buttons[pos] |= mask;
+
+			if (pressed) {
+				if constexpr (std::same_as<std::remove_cvref_t<Locker>, nullptr_t>) {
+					buttons[pos] &= ~mask;
+					buttons[pos] |= mask;
+				} else {
+					std::scoped_lock lock(locker);
+
+					buttons[pos] &= ~mask;
+					buttons[pos] |= mask;
+				}
+			} else {
+				if constexpr (std::same_as<std::remove_cvref_t<Locker>, nullptr_t>) {
+					buttons[pos] &= ~mask;
+				} else {
+					std::scoped_lock lock(locker);
+
+					buttons[pos] &= ~mask;
+				}
+			}
+
+			return true;
 		}
 
-		inline bool SRK_CALL getButton(MouseVirtualKeyCode vk) const {
-			using namespace srk::enum_operators;
-
-			auto i = (size_t)(vk - MouseVirtualKeyCode::BUTTON_START);
+		template<typename Locker>
+		requires std::same_as<std::remove_cvref_t<Locker>, nullptr_t> || requires(Locker&& locker) {
+			locker.lock();
+			locker.unlock();
+		}
+		inline bool SRK_CALL getButton(MouseVirtualKeyCode vk, Locker&& locker) const {
+			auto i = (size_t)vk - (size_t)MouseVirtualKeyCode::BUTTON_START;
 			if (i >= BUTTON_COUNT) return false;
 
-			return buttons[i >> 3] & (1 << (i & 0b111));
+			if constexpr (std::same_as<std::remove_cvref_t<Locker>, nullptr_t>) {
+				return buttons[i >> 3] & (1 << (i & 0b111));
+			} else {
+				std::scoped_lock lock(locker);
+
+				return buttons[i >> 3] & (1 << (i & 0b111));
+			}
 		}
 	};
 

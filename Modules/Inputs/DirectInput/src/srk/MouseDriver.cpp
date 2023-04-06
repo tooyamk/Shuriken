@@ -32,9 +32,10 @@ namespace srk::modules::inputs::direct_input {
 			GetCursorPos(&p);
 			buffer.pos.set(p.x, p.y);
 
-			buffer.wheel = state.lZ / (float32_t)WHEEL_DELTA;
+			constexpr float32_t wheelDelta = WHEEL_DELTA;
+			buffer.wheel = state.lZ / wheelDelta;
 
-			for (size_t i = 0; i < sizeof(DIMOUSESTATE2::rgbButtons); ++i) buffer.setButton(i + MouseVirtualKeyCode::BUTTON_START, state.rgbButtons[i] & 0x80);
+			for (size_t i = 0; i < sizeof(DIMOUSESTATE2::rgbButtons); ++i) buffer.setButton(i + MouseVirtualKeyCode::BUTTON_START, state.rgbButtons[i] & 0x80, nullptr);
 
 			return std::make_optional(true);
 		}
