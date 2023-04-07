@@ -21,22 +21,6 @@ namespace srk::modules::inputs::evdev_input {
 	MouseDriver::XDisplay* MouseDriver::_xdisplay = nullptr;
 
 	MouseDriver* MouseDriver::create(Input& input, int32_t fd) {
-		using namespace std::string_view_literals;
-
-		uint8_t bits[(std::max(ABS_CNT, 0) + 7) >> 3];
-
-		auto len = ioctl(fd, EVIOCGBIT(EV_ABS, sizeof(bits)), bits); 
-		size_t index = 0;
-		Input::traverseBits(bits, len, 0, [](size_t code, int32_t fd) {
-			input_absinfo info;
-			if (ioctl(fd, EVIOCGABS(code), &info) < 0) {
-			}
-
-			printaln(L"absinfo  val:"sv, info.value, L"  min:"sv, info.minimum, L"  max:"sv, info.maximum, L"  fuzz:"sv, info.fuzz, L"  flat:"sv, info.flat, L"  res:"sv, info.resolution);
-
-			return 0;
-		}, fd);
-
 		{
 			std::scoped_lock lock(_libMutex);
 

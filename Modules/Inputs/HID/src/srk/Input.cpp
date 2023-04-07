@@ -44,15 +44,6 @@ namespace srk::modules::inputs::hid_input {
 				dev.type = DeviceType::GAMEPAD;
 				dev.path = path;
 				dev.name = HID::getProductString(info);
-
-				switch (dev.vendorID << 16 | dev.productID) {
-				case 0x54C << 16 | 0x5C4:
-				case 0x54C << 16 | 0x9CC:
-					dev.flags |= DeviceFlag::SPECIFIC;
-					break;
-				default:
-					break;
-				}
 			}
 
 			return true;

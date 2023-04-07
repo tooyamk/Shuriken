@@ -5,16 +5,14 @@ namespace srk::modules::inputs {
 	DeviceInfo::DeviceInfo() :
 		vendorID(0),
 		productID(0),
-		type(DeviceType::UNKNOWN),
-		flags(DeviceFlag::NONE) {
+		type(DeviceType::UNKNOWN) {
 	}
 
-	DeviceInfo::DeviceInfo(uint16_t vendorID, uint16_t productID, const DeviceGUID& guid, DeviceType type, DeviceFlag flags, const std::string_view& name) :
+	DeviceInfo::DeviceInfo(uint16_t vendorID, uint16_t productID, const DeviceGUID& guid, DeviceType type, const std::string_view& name) :
 		vendorID(vendorID),
 		productID(productID),
 		guid(guid),
 		type(type),
-		flags(flags),
 		name(name) {
 	}
 
@@ -23,7 +21,6 @@ namespace srk::modules::inputs {
 		productID(value.productID),
 		guid(value.guid),
 		type(value.type),
-		flags(value.flags),
 		name(value.name) {
 	}
 
@@ -32,7 +29,6 @@ namespace srk::modules::inputs {
 		productID(value.productID),
 		guid(std::move(value.guid)),
 		type(value.type),
-		flags(value.flags),
 		name (std::move(value.name)) {
 	}
 }

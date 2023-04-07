@@ -67,12 +67,6 @@ namespace srk::modules::inputs {
 	};
 
 
-	enum class DeviceFlag : uint8_t {
-		NONE = 0,
-		SPECIFIC = 0b1
-	};
-
-
 	enum class DeviceType : uint8_t {
 		UNKNOWN,
 		KEYBOARD = 0b1,
@@ -301,37 +295,6 @@ namespace srk::modules::inputs {
 	};
 
 
-	struct SRK_FW_DLL GamepadKeyCodeAndFlags {
-		GamepadKeyCode code;
-		GamepadKeyFlag flags;
-
-		GamepadKeyCodeAndFlags() :
-			code(GamepadKeyCode::UNDEFINED),
-			flags(GamepadKeyFlag::NONE) {
-		}
-
-		GamepadKeyCodeAndFlags(const GamepadKeyCodeAndFlags& other) :
-			code(other.code),
-			flags(other.flags) {
-		}
-
-		GamepadKeyCodeAndFlags(GamepadKeyCode code, GamepadKeyFlag flags) :
-			code(code),
-			flags(flags) {
-		}
-
-		inline void SRK_CALL clear() {
-			code = GamepadKeyCode::UNDEFINED;
-			flags = GamepadKeyFlag::NONE;
-		}
-
-		inline void SRK_CALL set(GamepadKeyCode code, GamepadKeyFlag flags = GamepadKeyFlag::NONE) {
-			this->code = code;
-			this->flags = flags;
-		}
-	};
-
-
 	enum class GamepadVirtualKeyCode : uint8_t {
 		UNKNOWN,
 
@@ -433,6 +396,37 @@ namespace srk::modules::inputs {
 		BUTTON_END = UNDEFINED_BUTTON_END,
 
 		SEPARATED_END = BUTTON_END
+	};
+
+
+	struct SRK_FW_DLL GamepadKeyCodeAndFlags {
+		GamepadKeyCode code;
+		GamepadKeyFlag flags;
+
+		GamepadKeyCodeAndFlags() :
+			code(GamepadKeyCode::UNDEFINED),
+			flags(GamepadKeyFlag::NONE) {
+		}
+
+		GamepadKeyCodeAndFlags(const GamepadKeyCodeAndFlags& other) :
+			code(other.code),
+			flags(other.flags) {
+		}
+
+		GamepadKeyCodeAndFlags(GamepadKeyCode code, GamepadKeyFlag flags) :
+			code(code),
+			flags(flags) {
+		}
+
+		inline void SRK_CALL clear() {
+			code = GamepadKeyCode::UNDEFINED;
+			flags = GamepadKeyFlag::NONE;
+		}
+
+		inline void SRK_CALL set(GamepadKeyCode code, GamepadKeyFlag flags = GamepadKeyFlag::NONE) {
+			this->code = code;
+			this->flags = flags;
+		}
 	};
 
 

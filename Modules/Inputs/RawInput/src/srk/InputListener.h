@@ -32,5 +32,6 @@ namespace srk::modules::inputs::raw_input {
 		events::EventListener<windows::WindowEvent, events::EvtMethod<windows::WindowEvent, InputListener>> _rawIputHandler;
 
 		void SRK_CALL _rawInputCallback(events::Event<windows::WindowEvent>& e);
+		void SRK_CALL _doRawInput(HRAWINPUT ri, void* mem, UINT memSize);
 	};
 }

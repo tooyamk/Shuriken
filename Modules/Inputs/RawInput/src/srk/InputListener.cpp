@@ -42,10 +42,27 @@ namespace srk::modules::inputs::raw_input {
 	}
 
 	void InputListener::_rawInputCallback(events::Event<windows::WindowEvent>& e) {
-		RAWINPUT rawInput;
-		UINT dwSize = sizeof(rawInput);
-		if (auto size = GetRawInputData((HRAWINPUT)(*(LPARAM*)e.getData()), RID_INPUT, &rawInput, &dwSize, sizeof(RAWINPUTHEADER)); size != -1) {
-			if (!rawInput.header.hDevice || rawInput.header.hDevice == _handle) _callback(rawInput, _callbackTarget);
+		auto hRawInput = (HRAWINPUT)(*(LPARAM*)e.getData());
+
+		UINT bufferSize;
+		if (GetRawInputData(hRawInput, RID_INPUT, nullptr, &bufferSize, sizeof(RAWINPUTHEADER)) == (UINT)-1) return;
+
+		constexpr size_t stackMemSize = 128;
+		if (bufferSize <= stackMemSize) {
+			uint8_t stackMem[stackMemSize];
+			_doRawInput(hRawInput, stackMem, stackMemSize);
+		} else {
+			if (auto mem = malloc(bufferSize); mem) {
+				_doRawInput(hRawInput, mem, bufferSize);
+				free(mem);
+			}
+		}
+	}
+
+	void InputListener::_doRawInput(HRAWINPUT ri, void* mem, UINT memSize) {
+		auto rawInput = (PRAWINPUT)mem;
+		if (auto size = GetRawInputData(ri, RID_INPUT, rawInput, &memSize, sizeof(RAWINPUTHEADER)); size != (UINT)-1) {
+			if (!rawInput->header.hDevice || rawInput->header.hDevice == _handle) _callback(*rawInput, _callbackTarget);
 		}
 	}
 }

@@ -38,28 +38,11 @@ namespace srk::modules::inputs::raw_input {
 		std::vector<InternalDeviceInfo> _devices;
 
 		std::mutex _numMutex;
-		std::uint32_t _numKeyboards, _numMouses;
+		uint32_t _numKeyboards, _numMouses;
 
-		inline std::uint32_t* SRK_CALL _getNumVal(DeviceType type) {
-			if (type == DeviceType::KEYBOARD) return &_numKeyboards;
-			if (type == DeviceType::MOUSE) return &_numKeyboards;
-			return nullptr;
-		}
+		uint32_t* SRK_CALL _getNumVal(DeviceType type);
 
-		template<bool Remove>
-		void SRK_CALL _registerDevices(DeviceType type) {
-			RAWINPUTDEVICE dev;
-			dev.usUsagePage = 0x1;
-			dev.usUsage = type == DeviceType::KEYBOARD ? 0x6 : 0x2;
-			if constexpr (Remove) {
-				dev.dwFlags = RIDEV_REMOVE;
-			} else {
-				dev.dwFlags = RIDEV_INPUTSINK;
-			}
-			dev.hwndTarget = getHWND();
-
-			RegisterRawInputDevices(&dev, 1, sizeof(RAWINPUTDEVICE));
-		}
+		void SRK_CALL _registerDevices(DeviceType type, bool remove);
 
 		inline static bool SRK_CALL _hasDevice(const InternalDeviceInfo& info, const std::vector<InternalDeviceInfo>& devices) {
 			for (auto& di : devices) {

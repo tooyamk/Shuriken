@@ -36,8 +36,8 @@ namespace srk::modules::inputs::raw_input {
 		auto deviceCount = ALLOC_DEV_COUNT;
 		deviceCount = GetRawInputDeviceList(devices, &deviceCount, sizeof(RAWINPUTDEVICELIST));
 
-		char buffer[256];
-		UINT pcbSize = sizeof(buffer);
+		char devNameBuffer[MAX_PATH];
+		UINT devNameBufferSize = sizeof(devNameBuffer);
 
 		wchar_t deviceName[256];
 
@@ -62,19 +62,19 @@ namespace srk::modules::inputs::raw_input {
 			info.hDevice = dev.hDevice;
 			info.type = dt;
 
-			if (auto size = GetRawInputDeviceInfoA(dev.hDevice, RIDI_DEVICENAME, buffer, &pcbSize); size > 0) {
-				std::string_view path(buffer, size - 1);
+			if (auto size = GetRawInputDeviceInfoA(dev.hDevice, RIDI_DEVICENAME, devNameBuffer, &devNameBufferSize); size != (UINT)-1) {
+				std::string_view devName(devNameBuffer, size - 1);
 
-				if (auto p = path.find("VID_"sv); p != std::string_view::npos) info.vendorID = String::toNumber<uint16_t>(path.substr(p + 4, 4), 16);
-				if (auto p = path.find("PID_"sv); p != std::string_view::npos) info.productID = String::toNumber<uint16_t>(path.substr(p + 4, 4), 16);
+				if (auto p = devName.find("VID_"sv); p != std::string_view::npos) info.vendorID = String::toNumber<uint16_t>(devName.substr(p + 4, 4), 16);
+				if (auto p = devName.find("PID_"sv); p != std::string_view::npos) info.productID = String::toNumber<uint16_t>(devName.substr(p + 4, 4), 16);
 
 				auto hd = (uintptr_t)dev.hDevice;
 				info.guid.set<false, false>(&hd, sizeof(hd));
 				
-				auto hash = hash::xxHash<64>::calc(path.data(), path.size(), 0);
+				auto hash = hash::xxHash<64>::calc(devName.data(), devName.size(), 0);
 				info.guid.set<false, true>(&hash, sizeof(hash), sizeof(hd));
 
-				if (auto hidHandle = CreateFileA(path.data(), 0, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr); hidHandle != INVALID_HANDLE_VALUE) {
+				if (auto hidHandle = CreateFileA(devName.data(), 0, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr); hidHandle != INVALID_HANDLE_VALUE) {
 					if (HidD_GetProductString(hidHandle, deviceName, sizeof(deviceName))) info.name = String::wideToUtf8<std::string>(deviceName);
 					CloseHandle(hidHandle);
 				}
@@ -120,12 +120,21 @@ namespace srk::modules::inputs::raw_input {
 
 		if (!found) return nullptr;
 
-		if (info.type == DeviceType::KEYBOARD) {
+		switch (info.type) {
+		case DeviceType::KEYBOARD:
+		{
 			auto driver = KeyboardDriver::create(*this, *_win, info.hDevice);
 			if (driver) return new GenericKeyboard(info, *driver);
-		} else {
+
+			break;
+		}
+		case DeviceType::MOUSE:
+		{
 			auto driver = MouseDriver::create(*this, *_win, info.hDevice);
 			if (driver) return new GenericMouse(info, *driver);
+
+			break;
+		}
 		}
 
 		return nullptr;
@@ -135,7 +144,7 @@ namespace srk::modules::inputs::raw_input {
 		if (auto n = _getNumVal(type); n) {
 			std::scoped_lock lock(_numMutex);
 
-			if (++(*n) == 1) _registerDevices<false>(type);
+			if (++(*n) == 1) _registerDevices(type, false);
 		}
 	}
 
@@ -143,7 +152,40 @@ namespace srk::modules::inputs::raw_input {
 		if (auto n = _getNumVal(type); n) {
 			std::scoped_lock lock(_numMutex);
 
-			if (--(*n) == 0)  _registerDevices<true>(type);
+			if (--(*n) == 0)  _registerDevices(type, true);
 		}
+	}
+
+	uint32_t* Input::_getNumVal(DeviceType type) {
+		switch (type) {
+		case DeviceType::KEYBOARD:
+			return &_numKeyboards;
+		case DeviceType::MOUSE:
+			return &_numMouses;
+		default:
+			return nullptr;
+		}
+	}
+
+	void Input::_registerDevices(DeviceType type, bool remove) {
+		RAWINPUTDEVICE dev;
+		dev.usUsagePage = 0x1;
+		switch (type) {
+		case DeviceType::KEYBOARD:
+			dev.usUsage = 0x6;
+			break;
+		case DeviceType::MOUSE:
+			dev.usUsage = 0x2;
+			break;
+		case DeviceType::GAMEPAD:
+			dev.usUsage = 0x5;
+			break;
+		default:
+			return;
+		}
+		dev.dwFlags = remove ? RIDEV_REMOVE : RIDEV_INPUTSINK;
+		dev.hwndTarget = getHWND();
+
+		RegisterRawInputDevices(&dev, 1, sizeof(RAWINPUTDEVICE));
 	}
 }

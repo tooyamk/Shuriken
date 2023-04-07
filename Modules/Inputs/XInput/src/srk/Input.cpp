@@ -69,8 +69,12 @@ namespace srk::modules::inputs::xinput {
 				SP_DEVICE_INTERFACE_DATA deviceInterfaceData;
 				deviceInterfaceData.cbSize = sizeof(SP_DEVICE_INTERFACE_DATA);
 
-				PSP_DEVICE_INTERFACE_DETAIL_DATA_A detail = nullptr;
-				size_t mallocDetailSize = 0;
+				constexpr size_t stackDetailMemSize = 256;
+				uint8_t stackDetailMem[stackDetailMemSize];
+				auto detail = (PSP_DEVICE_INTERFACE_DETAIL_DATA_A)stackDetailMem;
+				detail->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_A);
+				size_t mallocDetailSize = stackDetailMemSize;
+				void* heapDetailMem = nullptr;
 
 				HIDD_ATTRIBUTES attrib;
 				attrib.Size = sizeof(HIDD_ATTRIBUTES);
@@ -84,11 +88,12 @@ namespace srk::modules::inputs::xinput {
 					if (SetupDiGetDeviceInterfaceDetailA(hDevInfo, &deviceInterfaceData, nullptr, 0, &requiredSize, nullptr); requiredSize == 0) continue;
 
 					if (mallocDetailSize < requiredSize) {
-						if (detail) free(detail);
+						if (heapDetailMem) free(heapDetailMem);
 
 						mallocDetailSize = requiredSize;
-						if (detail = (PSP_INTERFACE_DEVICE_DETAIL_DATA_A)malloc(requiredSize); !detail) break;
+						if (heapDetailMem = malloc(requiredSize); !heapDetailMem) break;
 
+						detail = (PSP_INTERFACE_DEVICE_DETAIL_DATA_A)heapDetailMem;
 						detail->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_A);
 					}
 
@@ -117,7 +122,7 @@ namespace srk::modules::inputs::xinput {
 					if (foundCount >= hasIdCount) break;
 				}
 
-				if (detail) free(detail);
+				if (heapDetailMem) free(heapDetailMem);
 				SetupDiDestroyDeviceInfoList(hDevInfo);
 			}
 		}

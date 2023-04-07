@@ -263,6 +263,32 @@ public:
 		}
 	}
 
+	static std::string SRK_CALL getDeviceInfo(const DeviceInfo& info, const std::string_view& evt = "") {
+		std::string str(getDeviceTypeString(info.type));
+
+		if (!evt.empty()) {
+			str += ' ';
+			str += evt;
+			for (size_t i = evt.size(); i < 5; ++i) str += ' ';
+			str += " :"sv;
+		}
+
+		str += " "sv;
+		str += String::toString(info.vendorID);
+
+		str += " "sv;
+		str += String::toString(info.productID);
+
+		str += " \""sv;
+		str += info.name;
+		str += '\"';
+
+		str += " "sv;
+		str += String::toString(info.guid.getData(), info.guid.getSize());
+
+		return std::move(str);
+	}
+
 	void SRK_CALL initInputModule(std::vector<IntrusivePtr<IInputModule>>& modules, const std::string_view& dll, const CreateInputModuleDescriptor& desc) {
 		IntrusivePtr loader = new InputModuleLoader();
 		if (loader->load(dll)) {
@@ -306,7 +332,7 @@ public:
 				initInputModule(inputModules, getDllPath("srk-module-input-direct-input"), createInputModuleDesc);
 			}
 			if (1) {
-				createInputModuleDesc.filters = DeviceType::MOUSE;
+				createInputModuleDesc.filters = DeviceType::KEYBOARD;
 				initInputModule(inputModules, getDllPath("srk-module-input-raw-input"), createInputModuleDesc);
 			}
 			if (0) {
@@ -319,7 +345,7 @@ public:
 			}
 		} else if constexpr (Environment::OPERATING_SYSTEM == Environment::OperatingSystem::LINUX) {
 			if (1) {
-				createInputModuleDesc.filters = DeviceType::GAMEPAD | DeviceType::MOUSE;
+				createInputModuleDesc.filters = DeviceType::GAMEPAD | DeviceType::KEYBOARD;
 				initInputModule(inputModules, getDllPath("srk-module-input-evdev"), createInputModuleDesc);
 			}
 
@@ -346,18 +372,19 @@ public:
 				};
 
 				auto info = e.getData<DeviceInfo>();
-				printaln(L"input device connected : "sv, getDeviceTypeString(info->type), L" vid = "sv, info->vendorID, L" pid = "sv, info->productID, L" name = "sv, info->name, L" guid = "sv, String::toString(info->guid.getData(), info->guid.getSize()));
+				printaln(L"input device connected : "sv, getDeviceInfo(*info));
 
-				if ((info->type & (DeviceType::MOUSE)) != DeviceType::UNKNOWN) {
+				{
+				//if ((info->type & (DeviceType::MOUSE)) != DeviceType::UNKNOWN) {
 				//if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN) {
 				//if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN && info->vendorID == 0x54C) {
 				//if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN && info->vendorID == 0xF0D) {
 				//if ((info->type & (DeviceType::GAMEPAD)) != DeviceType::UNKNOWN && info->vendorID == 0x45E) {
 					auto im = e.getTarget<IInputModule>();
 					//if (getNumInputeDevice(DeviceType::GAMEPAD) > 0) return;
-					printaln(L"createing device : "sv, getDeviceTypeString(info->type), L" vid = "sv, info->vendorID, L" pid = "sv, info->productID, L" name = "sv, info->name, L" guid = "sv, String::toString(info->guid.getData(), info->guid.getSize()));
+					printaln(L"createing device : "sv, getDeviceInfo(*info));
 					if (auto device = im->createDevice(info->guid); device) {
-						printaln(L"created device : "sv, getDeviceTypeString(info->type), L" vid = "sv, info->vendorID, L" pid = "sv, info->productID, L" name = "sv, info->name, L" guid = "sv, String::toString(info->guid.getData(), info->guid.getSize()));
+						printaln(L"created device : "sv, getDeviceInfo(*info));
 						{
 							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::L_STICK, &Math::ONE_TENTH<DeviceStateValue>, 1);
 							device->setState(DeviceStateType::DEAD_ZONE, GamepadVirtualKeyCode::R_STICK, &Math::ONE_TENTH<DeviceStateValue>, 1);
@@ -448,7 +475,7 @@ public:
 									}
 								}
 
-								printaln(L"keyboard down -> key : "sv, getKeyboardKeyString((KeyboardVirtualKeyCode)state->code), L"    value : "sv, ((DeviceStateValue*)state->values)[0]);
+								printaln(getDeviceInfo(info, "down"), L"    "sv, getKeyboardKeyString((KeyboardVirtualKeyCode)state->code), L"="sv, ((DeviceStateValue*)state->values)[0]);
 
 								if (state->code == KeyboardVirtualKeyCode::ENTER) {
 									do {
@@ -470,7 +497,7 @@ public:
 							case DeviceType::GAMEPAD:
 							{
 								auto state = e.getData<DeviceState>();
-								printaln(L"gamepad down : "sv, L" vid = "sv, info.vendorID, L" pid = "sv, info.productID, L" name = "sv, info.name, L" "sv, getGamepadKeyString((GamepadVirtualKeyCode)state->code), L"  "sv, ((DeviceStateValue*)state->values)[0]);
+								printaln(getDeviceInfo(info, "down"), L"    "sv, getGamepadKeyString((GamepadVirtualKeyCode)state->code), L"="sv, ((DeviceStateValue*)state->values)[0]);
 								if (state->code == GamepadVirtualKeyCode::CROSS) {
 									//DeviceStateValue vals[] = { 1.f, 1.f };
 									//device->setState(DeviceStateType::VIBRATION, 0, vals, 2);
@@ -482,7 +509,7 @@ public:
 							{
 								auto state = e.getData<DeviceState>();
 
-								printaln(L"mouse down : "sv, L" vid = "sv, info.vendorID, L" pid = "sv, info.productID, L" name = "sv, info.name, L" "sv, getMouseKeyString((MouseVirtualKeyCode)state->code), L"  "sv, ((DeviceStateValue*)state->values)[0]);
+								printaln(getDeviceInfo(info, "down"), L"    "sv, getMouseKeyString((MouseVirtualKeyCode)state->code), L"="sv, ((DeviceStateValue*)state->values)[0]);
 
 								break;
 							}
@@ -497,14 +524,14 @@ public:
 							{
 								auto state = e.getData<DeviceState>();
 
-								printaln(L"keyboard up -> key : "sv, getKeyboardKeyString((KeyboardVirtualKeyCode)state->code), L"    value : "sv, ((DeviceStateValue*)state->values)[0]);
+								printaln(getDeviceInfo(info, "up"), L"    "sv, getKeyboardKeyString((KeyboardVirtualKeyCode)state->code), L"="sv, ((DeviceStateValue*)state->values)[0]);
 
 								break;
 							}
 							case DeviceType::GAMEPAD:
 							{
 								auto state = e.getData<DeviceState>();
-								printaln(L"gamepad up : "sv, L" vid = "sv, info.vendorID, L" pid = "sv, info.productID, L" name = "sv, info.name, L" "sv, getGamepadKeyString((GamepadVirtualKeyCode)state->code), L"  "sv, ((DeviceStateValue*)state->values)[0]);
+								printaln(getDeviceInfo(info, "up"), L"    "sv, getGamepadKeyString((GamepadVirtualKeyCode)state->code), L"="sv, ((DeviceStateValue*)state->values)[0]);
 								if (state->code == GamepadVirtualKeyCode::CROSS) {
 									//DeviceStateValue vals[] = { 0.f, 0.f };
 									//device->setState(DeviceStateType::VIBRATION, 0, vals, 2);
@@ -516,7 +543,7 @@ public:
 							{
 								auto state = e.getData<DeviceState>();
 
-								printaln(L"mouse up : "sv, L" vid = "sv, info.vendorID, L" pid = "sv, info.productID, L" name = "sv, info.name, L" "sv, getMouseKeyString((MouseVirtualKeyCode)state->code), L"  "sv, ((DeviceStateValue*)state->values)[0]);
+								printaln(getDeviceInfo(info, "up"), L"    "sv, getMouseKeyString((MouseVirtualKeyCode)state->code), L"="sv, ((DeviceStateValue*)state->values)[0]);
 
 								break;
 							}
@@ -531,9 +558,9 @@ public:
 							{
 								auto state = e.getData<DeviceState>();
 								if (state->code == MouseVirtualKeyCode::POSITION) {
-									printaln(L"mouse move : "sv, ((DeviceStateValue*)state->values)[0], L" "sv, ((DeviceStateValue*)state->values)[1]);
+									printaln(getDeviceInfo(info, "move"),  L"    position="sv, ((DeviceStateValue*)state->values)[0], L","sv, ((DeviceStateValue*)state->values)[1]);
 								} else if (state->code == MouseVirtualKeyCode::WHEEL) {
-									printaln(L"mouse wheel : "sv, ((DeviceStateValue*)state->values)[0]);
+									printaln(getDeviceInfo(info, "move"),  L"    wheel="sv, ((DeviceStateValue*)state->values)[0]);
 								}
 
 								break;
@@ -549,8 +576,8 @@ public:
 								//if (vk >= GamepadVirtualKeyCode::L_TRIGGER && vk <= GamepadVirtualKeyCode::R_TRIGGER) break;
 								
 								//if (key->code != GamepadKeyCode::R_STICK) break;
-								printa(L"gamepad move : vid = "sv, info.vendorID, L" pid = "sv, info.productID, L" name = "sv, info.name, L" "sv, getGamepadKeyString((GamepadVirtualKeyCode)state->code), L" "sv, ((DeviceStateValue*)state->values)[0]);
-								if (state->count > 1) printa(L"  "sv, ((DeviceStateValue*)state->values)[1]);
+								printa(getDeviceInfo(info, "move"), L"    "sv, getGamepadKeyString((GamepadVirtualKeyCode)state->code), L"="sv, ((DeviceStateValue*)state->values)[0]);
+								if (state->count > 1) printa(L","sv, ((DeviceStateValue*)state->values)[1]);
 								printaln();
 
 								break;
@@ -573,7 +600,7 @@ public:
 								auto touches = (DeviceTouchStateValue*)state->values;
 								for (size_t i = 0; i < state->count; ++i) {
 									auto& touch = touches[i];
-									printaln(L"gamepad touch : vid = "sv, info.vendorID, L" pid = "sv, info.productID, L" name = "sv, info.name, L" id = "sv, touch.fingerID, L" isTouched = "sv, touch.isTouched, L" x = "sv, touch.position[0], L" y = "sv, touch.position[1]);
+									printaln(getDeviceInfo(info, "touch"), L"    "sv, L"id="sv, touch.fingerID, L" isTouched="sv, touch.isTouched, L" x="sv, touch.position[0], L" y="sv, touch.position[1]);
 								}
 
 								break;
@@ -585,14 +612,14 @@ public:
 
 						inputDevices.emplace_back(device);
 					} else {
-						printaln(L"create device failed : "sv, getDeviceTypeString(info->type), L" vid = "sv, info->vendorID, L" pid = "sv, info->productID, L" name = "sv, info->name, L" guid = "sv, String::toString(info->guid.getData(), info->guid.getSize()));
+						printaln(L"create device failed : "sv, getDeviceInfo(*info));
 					}
 				}
 				}));
 
 			im->getEventDispatcher()->addEventListener(ModuleEvent::DISCONNECTED, createEventListener<ModuleEvent>([&inputDevices, &inputDevicesMutex](Event<ModuleEvent>& e) {
 				auto info = e.getData<DeviceInfo>();
-				printaln(L"input device disconnected : "sv, getDeviceTypeString(info->type));
+				printaln(L"input device disconnected : "sv, getDeviceInfo(*info));
 
 				std::scoped_lock lock(inputDevicesMutex);
 
