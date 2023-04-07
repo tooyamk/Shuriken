@@ -7,7 +7,8 @@
 #include <poll.h>
 #include <linux/hidraw.h>
 #include <linux/input.h>
-#include <libudev.h>
+#include "udev.h"
+//#include <libudev.h>
 
 namespace srk::extensions {
 	HIDDeviceInfo::HIDDeviceInfo() :

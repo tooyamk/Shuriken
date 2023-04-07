@@ -344,12 +344,12 @@ public:
 				initInputModule(inputModules, getDllPath("srk-module-input-hid"), createInputModuleDesc);
 			}
 		} else if constexpr (Environment::OPERATING_SYSTEM == Environment::OperatingSystem::LINUX) {
-			if (1) {
-				createInputModuleDesc.filters = DeviceType::GAMEPAD | DeviceType::KEYBOARD;
+			if (0) {
+				createInputModuleDesc.filters = DeviceType::GAMEPAD | DeviceType::MOUSE;
 				initInputModule(inputModules, getDllPath("srk-module-input-evdev"), createInputModuleDesc);
 			}
 
-			if (0) {
+			if (1) {
 				createInputModuleDesc.filters = DeviceType::GAMEPAD;
 				initInputModule(inputModules, getDllPath("srk-module-input-hid"), createInputModuleDesc);
 			}

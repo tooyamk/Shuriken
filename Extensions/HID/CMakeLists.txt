@@ -7,24 +7,42 @@ set_property(GLOBAL PROPERTY SRKPROJ_EXTENSION_HID_DLL ${SRK_PROJECT_BUILD_DIR}/
 get_property(SRKPROJ_CORE_NAME GLOBAL PROPERTY "SRKPROJ_CORE_NAME")
 get_property(SRKPROJ_CORE_INCLUDE GLOBAL PROPERTY "SRKPROJ_CORE_INCLUDE")
 
+set(NEED_LIBUDEV_ZERO OFF)
+if (SRK_OS_LINUX)
+    set(NEED_LIBUDEV_ZERO ON)
+endif ()
+
+if (NEED_LIBUDEV_ZERO)
+    get_property(SRKPROJ_EXTERNAL_LIBUDEV_ZERO_NAME GLOBAL PROPERTY "SRKPROJ_EXTERNAL_LIBUDEV_ZERO_NAME")
+    get_property(SRKPROJ_EXTERNAL_LIBUDEV_ZERO_INCLUDE GLOBAL PROPERTY "SRKPROJ_EXTERNAL_LIBUDEV_ZERO_INCLUDE")
+    get_property(SRKPROJ_EXTERNAL_LIBUDEV_ZERO_SLIB GLOBAL PROPERTY "SRKPROJ_EXTERNAL_LIBUDEV_ZERO_SLIB")
+endif ()
+
 file(GLOB_RECURSE srcFiles "src/*.h" "src/*.cpp")
 srkAddLibrarySourceGroup(${PROJECT_NAME} SHARED ${srcFiles})
-target_include_directories(${PROJECT_NAME} PUBLIC
-    src/srk/
-    ${SRKPROJ_CORE_INCLUDE}
-)
+
+set(includeDir src/srk/ ${SRKPROJ_CORE_INCLUDE})
+if (NEED_LIBUDEV_ZERO)
+    list(APPEND includeDir ${SRKPROJ_EXTERNAL_LIBUDEV_ZERO_INCLUDE})
+endif ()
+target_include_directories(${PROJECT_NAME} PUBLIC ${includeDir})
+
 target_compile_definitions(${PROJECT_NAME} PRIVATE ${SRK_EXTENSION_DEFINITIONS})
-add_dependencies(${PROJECT_NAME}
-    ${SRKPROJ_CORE_NAME}
-)
+
+set(depends ${SRKPROJ_CORE_NAME})
+if (NEED_LIBUDEV_ZERO)
+    list(APPEND depends ${SRKPROJ_EXTERNAL_LIBUDEV_ZERO_NAME})
+endif ()
+add_dependencies(${PROJECT_NAME} ${depends})
 
 set(linkLibs
     ${SRKPROJ_CORE_NAME}
 )
 if (SRK_OS_WINDOWS)
     list(APPEND linkLibs hid.lib SetupAPI.lib)
-elseif (SRK_OS_LINUX)
-    list(APPEND linkLibs udev)
+endif ()
+if (NEED_LIBUDEV_ZERO)
+    list(APPEND linkLibs ${SRKPROJ_EXTERNAL_LIBUDEV_ZERO_SLIB})
 endif ()
 target_link_libraries(${PROJECT_NAME} ${linkLibs})
 

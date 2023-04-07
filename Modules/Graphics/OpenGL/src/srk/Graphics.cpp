@@ -1087,10 +1087,10 @@ namespace srk::modules::graphics::gl {
 			_dc = nullptr;
 		}
 #elif SRK_OS == SRK_OS_LINUX
-		if (glXGetCurrentContext() == _context) glXMakeCurrent((Display*)win->getNative(windows::WindowNative::X_DISPLAY), None, nullptr);
+		if (glXGetCurrentContext() == _context) glXMakeCurrent(_xdisplay, None, nullptr);
 
 		if (_context) {
-			glXDestroyContext((Display*)win->getNative(windows::WindowNative::X_DISPLAY), _context);
+			glXDestroyContext(_xdisplay, _context);
 			_context = nullptr;
 		}
 #endif
