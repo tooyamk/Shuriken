@@ -16,6 +16,25 @@ namespace srk::modules::inputs {
 		float32_t wheel;
 		ButtonData buttons;
 
+		template<typename Locker>
+		requires std::same_as<std::remove_cvref_t<Locker>, nullptr_t> || requires(Locker&& locker) {
+			locker.lock();
+			locker.unlock();
+		}
+		bool SRK_CALL setPos(const Vec2f32& pos, Locker&& locker) {
+			if constexpr (std::same_as<std::remove_cvref_t<Locker>, nullptr_t>) {
+				if (this->pos == pos) return false;
+				this->pos = pos;
+			} else {
+				std::scoped_lock lock(locker);
+
+				if (this->pos == pos) return false;
+				this->pos = pos;
+			}
+
+			return true;
+		}
+
 		inline static bool SRK_CALL isValidButton(MouseVirtualKeyCode vk) {
 			using namespace srk::enum_operators;
 

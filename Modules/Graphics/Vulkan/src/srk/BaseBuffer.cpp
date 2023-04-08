@@ -1,4 +1,5 @@
 #include "BaseBuffer.h"
+#include "srk/String.h"
 
 namespace srk::modules::graphics::vulkan {
 	BaseBuffer::BaseBuffer() : BaseBuffer((VkBufferUsageFlags)0) {

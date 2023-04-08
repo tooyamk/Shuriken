@@ -3,6 +3,7 @@
 #include "GamepadDriver.h"
 #include "KeyboardDriver.h"
 #include "MouseDriver.h"
+#include "srk/String.h"
 #include "srk/hash/xxHash.h"
 #include <fcntl.h>
 #include <linux/input.h>

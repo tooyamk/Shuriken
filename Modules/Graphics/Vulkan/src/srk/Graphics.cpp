@@ -13,6 +13,7 @@
 #include "Texture2DResource.h"
 #include "Texture3DResource.h"
 #include "VertexBuffer.h"
+#include "srk/String.h"
 #include "srk/modules/graphics/GraphicsAdapter.h"
 
 namespace srk::modules::graphics::vulkan {

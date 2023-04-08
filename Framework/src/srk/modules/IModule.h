@@ -1,6 +1,5 @@
 #pragma once
 
-#include "srk/SerializableObject.h"
 #include "srk/Intrusive.h"
 
 namespace srk::modules {

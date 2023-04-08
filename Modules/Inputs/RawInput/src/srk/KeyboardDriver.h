@@ -1,7 +1,6 @@
 #pragma once
 
 #include "InputListener.h"
-#include "srk/Lock.h"
 #include "srk/modules/inputs/GenericKeyboard.h"
 
 namespace srk::modules::inputs::raw_input {
@@ -64,7 +63,7 @@ namespace srk::modules::inputs::raw_input {
 			KeyboardVirtualKeyCode::PAGE_UP,
 			KeyboardVirtualKeyCode::PAGE_DOWN,
 			KeyboardVirtualKeyCode::END,
-			KeyboardVirtualKeyCode::HONE,
+			KeyboardVirtualKeyCode::HOME,
 			KeyboardVirtualKeyCode::LEFT,
 			KeyboardVirtualKeyCode::UP,
 			KeyboardVirtualKeyCode::RIGHT,
@@ -168,7 +167,7 @@ namespace srk::modules::inputs::raw_input {
 			KeyboardVirtualKeyCode::UNDEFINED,//VK_NAVIGATION_MENU
 			KeyboardVirtualKeyCode::UNDEFINED,//VK_NAVIGATION_UP
 			KeyboardVirtualKeyCode::UNDEFINED,//VK_NAVIGATION_DOWN
-			KeyboardVirtualKeyCode::UNDEFINED,//VK_NAVIGATION_LEFT
+			KeyboardVirtualKeyCode::UNDEFINED,//140,VK_NAVIGATION_LEFT
 			KeyboardVirtualKeyCode::UNDEFINED,//VK_NAVIGATION_RIGHT
 			KeyboardVirtualKeyCode::UNDEFINED,//VK_NAVIGATION_ACCEPT
 			KeyboardVirtualKeyCode::UNDEFINED,//VK_NAVIGATION_CANCEL
@@ -188,7 +187,7 @@ namespace srk::modules::inputs::raw_input {
 			KeyboardVirtualKeyCode::UNDEFINED,
 			KeyboardVirtualKeyCode::UNDEFINED,
 			KeyboardVirtualKeyCode::UNDEFINED,
-			KeyboardVirtualKeyCode::L_SHIFT,
+			KeyboardVirtualKeyCode::L_SHIFT,//160
 			KeyboardVirtualKeyCode::R_SHIFT,
 			KeyboardVirtualKeyCode::L_CONTROL,
 			KeyboardVirtualKeyCode::R_CONTROL,

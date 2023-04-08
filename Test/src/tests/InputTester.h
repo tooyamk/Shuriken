@@ -102,7 +102,7 @@ public:
 				return "insert";
 			case KeyboardVirtualKeyCode::DEL:
 				return "delete";
-			case KeyboardVirtualKeyCode::HONE:
+			case KeyboardVirtualKeyCode::HOME:
 				return "home";
 			case KeyboardVirtualKeyCode::END:
 				return "end";
@@ -331,6 +331,10 @@ public:
 				createInputModuleDesc.argv = argv;
 				initInputModule(inputModules, getDllPath("srk-module-input-direct-input"), createInputModuleDesc);
 			}
+			if (0) {
+				createInputModuleDesc.filters = DeviceType::GAMEPAD;
+				initInputModule(inputModules, getDllPath("srk-module-input-hid"), createInputModuleDesc);
+			}
 			if (1) {
 				createInputModuleDesc.filters = DeviceType::KEYBOARD;
 				initInputModule(inputModules, getDllPath("srk-module-input-raw-input"), createInputModuleDesc);
@@ -339,19 +343,18 @@ public:
 				createInputModuleDesc.filters = DeviceType::GAMEPAD;
 				initInputModule(inputModules, getDllPath("srk-module-input-xinput"), createInputModuleDesc);
 			}
-			if (0) {
-				createInputModuleDesc.filters = DeviceType::GAMEPAD;
-				initInputModule(inputModules, getDllPath("srk-module-input-hid"), createInputModuleDesc);
-			}
 		} else if constexpr (Environment::OPERATING_SYSTEM == Environment::OperatingSystem::LINUX) {
 			if (0) {
-				createInputModuleDesc.filters = DeviceType::GAMEPAD | DeviceType::MOUSE;
+				createInputModuleDesc.filters = DeviceType::GAMEPAD | DeviceType::KEYBOARD;
 				initInputModule(inputModules, getDllPath("srk-module-input-evdev"), createInputModuleDesc);
 			}
-
-			if (1) {
+			if (0) {
 				createInputModuleDesc.filters = DeviceType::GAMEPAD;
 				initInputModule(inputModules, getDllPath("srk-module-input-hid"), createInputModuleDesc);
+			}
+			if (1) {
+				createInputModuleDesc.filters = DeviceType::MOUSE;
+				initInputModule(inputModules, getDllPath("srk-module-input-x11"), createInputModuleDesc);
 			}
 		}
 

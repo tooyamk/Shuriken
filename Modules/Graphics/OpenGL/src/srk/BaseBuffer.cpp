@@ -1,5 +1,6 @@
 #include "BaseBuffer.h"
 #include "Graphics.h"
+#include "srk/String.h"
 #include <algorithm>
 
 namespace srk::modules::graphics::gl {

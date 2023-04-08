@@ -454,7 +454,7 @@ namespace srk::modules::windows::win32api {
 			if (win && !win->_data.isFullScreen && !IsZoomed(win->_data.wnd) && !IsIconic(win->_data.wnd)) win->_data.contentRect.pos.set(LOWORD(lParam), HIWORD(lParam));
 			break;
 		case WM_INPUT:
-			if (win) win->_eventDispatcher->dispatchEvent(win, WindowEvent::RAW_INPUT, &lParam);
+			if (win) win->_eventDispatcher->dispatchEvent(win, WindowEvent::INPUT, &lParam);
 			break;
 		default:
 			break;

@@ -22,6 +22,7 @@ namespace srk::modules::inputs::raw_input {
 		if (_changed.compare_exchange_strong(expected, false, std::memory_order::release, std::memory_order::relaxed)) {
 			{
 				std::scoped_lock lock(_lock);
+				
 				memcpy(&buffer, &_inputBuffer, sizeof(_inputBuffer));
 				_inputBuffer.wheel = 0.f;
 			}

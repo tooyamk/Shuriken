@@ -2,6 +2,7 @@
 #include "Graphics.h"
 #include "TextureView.h"
 #include "srk/ScopePtr.h"
+#include "srk/String.h"
 #include <algorithm>
 
 namespace srk::modules::graphics::gl {

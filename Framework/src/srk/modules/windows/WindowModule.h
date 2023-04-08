@@ -2,6 +2,7 @@
 
 #include "srk/modules/IModule.h"
 #include "srk/math/Vector.h"
+#include <functional>
 
 namespace srk::events {
 	template<typename EvtType> class IEventDispatcher;
@@ -14,9 +15,7 @@ namespace srk::modules::windows {
 		FOCUS_OUT,
 		CLOSING,
 		CLOSED,
-#if SRK_OS == SRK_OS_WINDOWS
-		RAW_INPUT
-#endif
+		INPUT
 	};
 
 

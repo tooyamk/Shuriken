@@ -1,5 +1,6 @@
 #include "BaseTexture.h"
 #include "BaseBuffer.h"
+#include "srk/String.h"
 
 namespace srk::modules::graphics::vulkan {
 	BaseTexture::BaseTexture(TextureType texType) :

@@ -3,6 +3,7 @@
 #include "srk/modules/IModule.h"
 #include "srk/modules/inputs/DeviceInfo.h"
 #include "srk/math/Vector.h"
+#include <array>
 #include <bitset>
 
 namespace srk::events {
@@ -216,7 +217,7 @@ namespace srk::modules::inputs {
 		INSERT,
 		DEL,
 
-		HONE,
+		HOME,
 		END,
 
 		PAGE_UP,

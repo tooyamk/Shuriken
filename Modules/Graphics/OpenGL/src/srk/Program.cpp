@@ -7,6 +7,7 @@
 #include "Sampler.h"
 #include "VertexBuffer.h"
 #include "srk/Printer.h"
+#include "srk/String.h"
 #include "srk/GraphicsBuffer.h"
 #include "srk/ShaderParameter.h"
 

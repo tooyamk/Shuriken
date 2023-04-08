@@ -1,4 +1,5 @@
 #include "Shader.h"
+#include "srk/hash/xxHash.h"
 
 namespace srk {
 	const std::string* ShaderDefineCollection::get(const QueryString& name) const {

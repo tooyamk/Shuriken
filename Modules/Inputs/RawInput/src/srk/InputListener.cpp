@@ -10,8 +10,8 @@ namespace srk::modules::inputs::raw_input {
 		_listening(false),
 		_callback(callback),
 		_callbackTarget(callbackTarget),
-		_rawIputHandler(&InputListener::_rawInputCallback, this) {
-		_rawIputHandler.ref();
+		_iputHandler(&InputListener::_inputCallback, this) {
+		_iputHandler.ref();
 	}
 
 	InputListener::~InputListener() {
@@ -23,7 +23,7 @@ namespace srk::modules::inputs::raw_input {
 
 		if (_listening) return;
 
-		_win->getEventDispatcher()->addEventListener(windows::WindowEvent::RAW_INPUT, _rawIputHandler);
+		_win->getEventDispatcher()->addEventListener(windows::WindowEvent::INPUT, _iputHandler);
 		_input->registerRawInputDevices(_type);
 		_listening = true;
 	}
@@ -33,7 +33,7 @@ namespace srk::modules::inputs::raw_input {
 
 		if (!_listening) return;
 		
-		_win->getEventDispatcher()->removeEventListener(windows::WindowEvent::RAW_INPUT, _rawIputHandler);
+		_win->getEventDispatcher()->removeEventListener(windows::WindowEvent::INPUT, _iputHandler);
 		_input->unregisterRawInputDevices(_type);
 	}
 
@@ -41,7 +41,7 @@ namespace srk::modules::inputs::raw_input {
 		return _input->getHWND();
 	}
 
-	void InputListener::_rawInputCallback(events::Event<windows::WindowEvent>& e) {
+	void InputListener::_inputCallback(events::Event<windows::WindowEvent>& e) {
 		auto hRawInput = (HRAWINPUT)(*(LPARAM*)e.getData());
 
 		UINT bufferSize;

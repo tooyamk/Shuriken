@@ -7,8 +7,9 @@
 #include "dxc/dxcapi.h"
 
 #include "ShaderTranspiler.h"
-#include "srk/Printer.h"
 #include "srk/DynamicLibraryLoader.h"
+#include "srk/Printer.h"
+#include "srk/String.h"
 
 #include "spirv_cross/spirv.hpp"
 #include "spirv_cross/spirv_msl.hpp"

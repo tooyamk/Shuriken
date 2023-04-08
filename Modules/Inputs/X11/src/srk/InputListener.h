@@ -3,18 +3,21 @@
 #include "Base.h"
 #include "srk/Lock.h"
 #include "srk/events/EventDispatcher.h"
+#include <X11/Xlib.h>
 
-namespace srk::modules::inputs::raw_input {
+namespace srk::modules::inputs::x11 {
 	class Input;
 
 	class SRK_MODULE_DLL InputListener {
 	public:
-		using Callback = void(SRK_CALL*)(const RAWINPUT&, void*);
+		using Callback = void(SRK_CALL*)(const XEvent&, void*);
 
-		InputListener(Input& input, windows::IWindow& win, HANDLE handle, DeviceType type, Callback callback, void* callbackTarget);
+		InputListener(Input& input, windows::IWindow& win, DeviceType type, Callback callback, void* callbackTarget);
 		~InputListener();
 
-		HWND SRK_CALL getHWND() const;
+		inline windows::IWindow* getWindow() const {
+			return _win;
+		}
 
 		void SRK_CALL start();
 		void SRK_CALL close();
@@ -22,7 +25,6 @@ namespace srk::modules::inputs::raw_input {
 	private:
 		IntrusivePtr<Input> _input;
 		IntrusivePtr<windows::IWindow> _win;
-		HANDLE _handle;
 		DeviceType _type;
 		mutable AtomicLock<true, false> _lock;
 		bool _listening;
@@ -32,6 +34,5 @@ namespace srk::modules::inputs::raw_input {
 		events::EventListener<windows::WindowEvent, events::EvtMethod<windows::WindowEvent, InputListener>> _iputHandler;
 
 		void SRK_CALL _inputCallback(events::Event<windows::WindowEvent>& e);
-		void SRK_CALL _doRawInput(HRAWINPUT ri, void* mem, UINT memSize);
 	};
 }

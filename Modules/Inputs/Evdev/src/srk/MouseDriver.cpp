@@ -1,6 +1,7 @@
 #include "MouseDriver.h"
 #include "Input.h"
 #include "srk/Printer.h"
+#include "srk/String.h"
 #include <linux/input.h>
 
 namespace srk::modules::inputs::evdev_input {

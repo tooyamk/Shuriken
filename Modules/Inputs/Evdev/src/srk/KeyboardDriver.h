@@ -127,7 +127,7 @@ namespace srk::modules::inputs::evdev_input {
 			KeyboardVirtualKeyCode::PRINT_SCREEN,//KEY_SYSRQ
 			KeyboardVirtualKeyCode::R_ALT,//100
 			KeyboardVirtualKeyCode::UNDEFINED,//KEY_LINEFEED
-			KeyboardVirtualKeyCode::HONE,
+			KeyboardVirtualKeyCode::HOME,
 			KeyboardVirtualKeyCode::UP,
 			KeyboardVirtualKeyCode::PAGE_UP,
 			KeyboardVirtualKeyCode::LEFT,

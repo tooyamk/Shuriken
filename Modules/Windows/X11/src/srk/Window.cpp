@@ -21,6 +21,8 @@ namespace srk::modules::windows::x11 {
 	}
 
 	bool Window::create(const CreateWindowDescriptor& desc) {
+		XInitThreads();
+
 		_data.contentSize = desc.contentSize;
 		_data.isFullScreen = desc.fullScreen;
 		_data.style = desc.style;
@@ -164,7 +166,7 @@ namespace srk::modules::windows::x11 {
 		using namespace std::string_view_literals;
 
 		if (native == "XDisplay"sv) return _display;
-		if (native == "XWindiw"sv) return (void*)_data.wnd;
+		if (native == "XWindow"sv) return (void*)_data.wnd;
 		return nullptr;
 	}
 
@@ -581,6 +583,13 @@ namespace srk::modules::windows::x11 {
 
 			break;
 		}
+		case KeyPress:
+		case KeyRelease:
+		case ButtonPress:
+		case ButtonRelease:
+		case MotionNotify:
+			_eventDispatcher->dispatchEvent(this, WindowEvent::INPUT, evt);
+			break;
 		case PropertyNotify:
 		{
 			auto& prop = e.xproperty;
