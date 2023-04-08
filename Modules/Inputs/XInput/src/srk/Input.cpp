@@ -1,6 +1,7 @@
 #include "Input.h"
 #include "GamepadDriver.h"
 #include "CreateModule.h"
+#include "srk/String.h"
 
 #include <hidsdi.h>
 #include <SetupAPI.h>

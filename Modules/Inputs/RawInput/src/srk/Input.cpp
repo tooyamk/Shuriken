@@ -2,6 +2,7 @@
 #include "KeyboardDriver.h"
 #include "MouseDriver.h"
 #include "CreateModule.h"
+#include "srk/String.h"
 #include "srk/hash/xxHash.h"
 #include <hidsdi.h>
 

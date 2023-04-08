@@ -1,6 +1,7 @@
 #include "KeyboardDriver.h"
 #include "Input.h"
 #include "srk/Printer.h"
+#include "srk/String.h"
 
 namespace srk::modules::inputs::raw_input {
 	KeyboardDriver::KeyboardDriver(Input& input, windows::IWindow& win, HANDLE handle) :

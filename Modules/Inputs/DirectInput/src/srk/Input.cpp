@@ -3,6 +3,7 @@
 #include "KeyboardDriver.h"
 #include "MouseDriver.h"
 #include "CreateModule.h"
+#include "srk/String.h"
 
 #include <wbemidl.h>
 #include <oleauto.h>
