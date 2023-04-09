@@ -21,7 +21,7 @@ bld/
 [Rr]elease.win32/
 [Rr]elease*.win32/
 .vs/
-Deprecated/
+[Dd]eprecated/
 .vscode/
 
 # Roslyn cache directories

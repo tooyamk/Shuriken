@@ -139,9 +139,11 @@ else ()
     set(SRK_ARCH_WORD_BITS_UNKNOWN True)
 endif ()
 
-if (CMAKE_CL_64)
+cmake_host_system_information(RESULT SRK_HOST_ARCH_WORD_BITS_64 QUERY IS_64BIT)
+if (${SRK_HOST_ARCH_WORD_BITS_64} MATCHES "1")
     set(SRK_HOST_ARCH_WORD_BITS_64 True)
 else ()
+    set(SRK_HOST_ARCH_WORD_BITS_64 False)
     set(SRK_HOST_ARCH_WORD_BITS_32 True)
 endif ()
 
