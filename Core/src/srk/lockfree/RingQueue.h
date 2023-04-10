@@ -16,7 +16,7 @@ namespace srk::lockfree {
 		static constexpr RingQueueMode MODE = RingQueueMode::SPSC;
 
 		RingQueue(size_t capacity) :
-			_capacity(std::bit_ceil(capacity)),
+			_capacity(capacity),
 			_mem((std::remove_cvref_t<T>)malloc(_capacity * sizeof(T))),
 			_pushIndex(0),
 			_popIndex(0),

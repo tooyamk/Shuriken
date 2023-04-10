@@ -8,21 +8,21 @@ set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_VULKAN_SDK_INCLUDE ${installDir}/i
 get_property(SRKPROJ_EXTERNAL_7Z_NAME GLOBAL PROPERTY "SRKPROJ_EXTERNAL_7Z_NAME")
 get_property(SRKPROJ_EXTERNAL_7Z_HOST_EXE GLOBAL PROPERTY "SRKPROJ_EXTERNAL_7Z_HOST_EXE")
 
-set(ver 1.3.239.0)
+set(ver 1.3.243.0)
 set(urlBase https://sdk.lunarg.com/sdk/download/${ver}/)
 set(src nil)
 
 if (SRK_OS_WINDOWS)
     set(dlName VulkanSDK-${ver}-Installer.exe)
     set(url ${urlBase}windows/${dlName})
-    set(urlHash 312c6a7611ca8ae0796ee32cdc2e19c0cd18e5fd0efa0b64324c256e6647dff2)
+    set(urlHash a45954b5f0ae682d43268df6e548168de58809240efb021f52531a631760caaf)
     set(src ${PROJECT_BINARY_DIR}/src)
 
     set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_VULKAN_SDK_LIB ${installDir}/lib/vulkan-1.lib)
 elseif (SRK_OS_LINUX)
     set(dlName vulkansdk-linux-x86_64-${ver}.tar.gz)
     set(url ${urlBase}linux/${dlName})
-    set(urlHash 1ac4e3b23f27570535026506fd9fcaf5ed56f8562c87cdd60afe7adf58b037e8)
+    set(urlHash 3bc06935f3363307daf68eb744e11e46d31f6b0a9e9f1d0d59271471ea27ad7c)
     set(src ${PROJECT_BINARY_DIR}/src/${ver}/x86_64)
 
     set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_VULKAN_SDK_SLIB ${installDir}/lib/libvku.a)
@@ -31,7 +31,7 @@ elseif (SRK_OS_LINUX)
 elseif (SRK_OS_MACOS)
     set(dlName vulkansdk-macos-${ver}.dmg)
     set(url ${urlBase}mac/${dlName})
-    set(urlHash 60c5410e7daf5660e47b599b7a3b8870fc6441ed42b101329b1e28692c6d25da)
+    set(urlHash fd92f1cddcb33e4b9faf8a36ee392fe92a1a7f95ac66992fd978a64161765230)
     set(src ${PROJECT_BINARY_DIR}/src/InstallVulkan.app/Contents/Resources/installer/macOS)
 
     set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_VULKAN_SDK_LIB ${installDir}/lib/libvulkan.dylib)

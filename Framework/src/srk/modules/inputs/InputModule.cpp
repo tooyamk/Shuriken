@@ -1,5 +1,6 @@
 #include "InputModule.h"
 #include "srk/events/IEventDispatcher.h"
+#include <vector>
 
 namespace srk::modules::inputs {
 	GamepadKeyMapper::GamepadKeyMapper() {

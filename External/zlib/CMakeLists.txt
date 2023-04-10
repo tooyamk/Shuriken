@@ -1,4 +1,5 @@
 srkSetSubProject("")
+
 if (SRK_OS_WINDOWS)
     set(OUTPUT_NAME zlib)
 else ()

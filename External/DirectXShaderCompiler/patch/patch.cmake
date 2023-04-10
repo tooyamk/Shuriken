@@ -5,6 +5,11 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PATCH_DIR}/GetHo
 execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PATCH_DIR}/CrossCompile.cmake ${SRC_DIR}/cmake/modules)
 execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PATCH_DIR}/TableGen.cmake ${SRC_DIR}/cmake/modules)
 
+set(file ${SRC_DIR}/CMakeLists.txt)
+file(READ ${file} content)
+string(REGEX REPLACE "add_subdirectory\\(cmake/modules\\).+include\\(CoverageReport\\)" "add_subdirectory(cmake/modules)\r\ninstall(DIRECTORY include/dxc DESTINATION include FILES_MATCHING PATTERN \"*.h\")\r\ninclude(CoverageReport)" content "${content}")
+file(WRITE ${file} "${content}")
+
 set(file ${SRC_DIR}/cmake/modules/AddLLVM.cmake)
 file(READ ${file} content)
 string(REGEX REPLACE "set_target_properties\\(\\$\\{name}[^\r\n]*[\r\n]+[^\r\n]*PROPERTIES[^\r\n]*[\r\n]+[^\r\n]*SOVERSION[^\r\n]+[\r\n]+[^\r\n]*VERSION \\$\\{LLVM_VERSION_MAJOR}\\.\\$\\{LLVM_VERSION_MINOR}\\.\\$\\{LLVM_VERSION_PATCH}\\$\\{LLVM_VERSION_SUFFIX}\\)" "" content "${content}")

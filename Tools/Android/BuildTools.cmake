@@ -91,6 +91,10 @@ while (NOT break)
     endif ()
 endwhile()
 
+function(clean)
+    file(REMOVE_RECURSE ${tmp}/)
+endfunction()
+
 file(MAKE_DIRECTORY ${tmp})
 
 function(downloadAndExtract url dest stripComponents rmIfExist)
@@ -99,6 +103,7 @@ function(downloadAndExtract url dest stripComponents rmIfExist)
     message("download ${url}")
     file(DOWNLOAD ${url} ${tmpFile} STATUS err SHOW_PROGRESS)
     if (NOT err EQUAL 0)
+        clean()
         message(FATAL_ERROR "download file error ${url}")
     endif ()
 
@@ -121,7 +126,7 @@ file(MAKE_DIRECTORY ${tmp})
 downloadAndExtract(${OpenJDKUrl} ${DESTINATION}/OpenJDK True True)
 downloadAndExtract(${AndroidBuildToolsUrl} ${DESTINATION}/SDK/build-tools True True)
 downloadAndExtract(${AndroidNDKUrl} ${DESTINATION}/SDK/ndk True True)
-downloadAndExtract(${AndroidPlatformToolsUrl} ${DESTINATION}/SDK/platform-tools False True)
+downloadAndExtract(${AndroidPlatformToolsUrl} ${DESTINATION}/SDK/platform-tools True True)
 
 list(LENGTH AndroidPlatforms platformCount)
 if (NOT platformCount EQUAL 0)
@@ -137,4 +142,4 @@ endif ()
 
 downloadAndExtract(${ninjaUrl} ${DESTINATION} False False)
 
-file(REMOVE_RECURSE ${tmp}/)
+clean()

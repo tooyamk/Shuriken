@@ -5,7 +5,3 @@ set(file ${SRC_DIR}/Source/cmake_core.cmake)
 file(READ ${file} content)
 string(REPLACE "if\(\${CLI}\)" "install\(TARGETS \${ASTC_TARGET}-static DESTINATION \${PACKAGE_ROOT}\)\n\nif\(\${CLI}\)" content "${content}")
 file(WRITE ${file} "${content}")
-
-set(file ${SRC_DIR}/Source/astcenc_find_best_partitioning.cpp)
-file(READ ${file} content)
-file(WRITE ${file} "#include <limits>\r\n${content}")
