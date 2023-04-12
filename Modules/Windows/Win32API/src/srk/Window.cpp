@@ -239,6 +239,12 @@ namespace srk::modules::windows::win32api {
 	void Window::close() {
 		if (!_data.isCreated) return;
 
+		if (this->getReferenceCount()) {
+            _eventDispatcher->dispatchEvent(this, WindowEvent::CLOSING);
+        } else {
+            _eventDispatcher->dispatchEvent((void*)this, WindowEvent::CLOSED);
+        }
+
 		_manager->remove(_data.wnd);
 
 		if (_data.wnd) DestroyWindow(_data.wnd);

@@ -292,6 +292,12 @@ namespace srk::modules::windows::x11 {
 	void Window::close() {
 		if (!_data.isCreated) return;
 
+		if (this->getReferenceCount()) {
+            _eventDispatcher->dispatchEvent(this, WindowEvent::CLOSING);
+        } else {
+            _eventDispatcher->dispatchEvent((void*)this, WindowEvent::CLOSED);
+        }
+
 		_manager->remove((void*)_data.wnd);
 
 		if (_data.wnd) XDestroyWindow(_display, _data.wnd);
