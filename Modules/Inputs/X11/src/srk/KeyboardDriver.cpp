@@ -4,7 +4,7 @@
 
 namespace srk::modules::inputs::x11 {
 	KeyboardDriver::KeyboardDriver(Input& input, windows::IWindow& win) :
-		_listener(input, win, DeviceType::KEYBOARD, &KeyboardDriver::_callback, this),
+		_listener(input, win, DeviceType::KEYBOARD, _callback, this),
 		_changed(false) {
 		_listener.start();
 	}

@@ -4,7 +4,7 @@
 
 namespace srk::modules::inputs::raw_input {
 	MouseDriver::MouseDriver(Input& input, windows::IWindow& win, HANDLE handle) :
-		_listener(input, win, handle, DeviceType::MOUSE, &MouseDriver::_callback, this),
+		_listener(input, win, handle, DeviceType::MOUSE, _callback, this),
 		_changed(false) {
 		_listener.start();
 	}

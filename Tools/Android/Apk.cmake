@@ -8,6 +8,7 @@
 #ANDROID_SDK_PLATFORM=
 
 #[SRK_ANDROID_BUILD_TOOLS]=
+#[EXCLUDE_LIBS]=libname1|libname2|...
 #[APP_NAME]=
 #[LIB_NAME]=
 #[KEYSTORE]=
@@ -34,7 +35,7 @@ if (NOT JDK)
 endif ()
 
 if ((NOT ANDROID_SDK_BUILD_TOOLS) AND SRK_ANDROID_BUILD_TOOLS)
-    set(ANDROID_SDK_BUILD_TOOLS ${SRK_ANDROID_BUILD_TOOLS}/build-tools)
+    set(ANDROID_SDK_BUILD_TOOLS ${SRK_ANDROID_BUILD_TOOLS}/SDK/build-tools)
 endif ()
 if (NOT ANDROID_SDK_BUILD_TOOLS)
     message(FATAL_ERROR "ANDROID_SDK_BUILD_TOOLS is not set")
@@ -61,6 +62,12 @@ if ((NOT ANDROID_SDK_PLATFORM) AND SRK_ANDROID_BUILD_TOOLS)
 endif ()
 if (NOT ANDROID_SDK_PLATFORM)
     message(FATAL_ERROR "ANDROID_SDK_PLATFORM is not set")
+endif ()
+
+if (EXCLUDE_LIBS)
+    string(REPLACE "|" ";" EXCLUDE_LIBS ${EXCLUDE_LIBS})
+else ()
+    set(EXCLUDE_LIBS "")
 endif ()
 
 set(java ${JDK}/bin/java)
@@ -92,8 +99,19 @@ function(copyFiles from to matchExt)
             endif ()
         else ()
             get_filename_component(e ${f} LAST_EXT)
-            if("${e}" STREQUAL ${matchExt})
-                file(COPY ${f} DESTINATION ${to})
+            if ("${e}" STREQUAL ${matchExt})
+                get_filename_component(n ${f} NAME)
+                set(exclude False)
+                foreach(excludeLib ${EXCLUDE_LIBS})
+                    if ("${n}" STREQUAL "${excludeLib}")
+                        set(exclude True)
+                        break()
+                    endif ()
+                endforeach()
+                
+                if (NOT exclude)
+                    file(COPY ${f} DESTINATION ${to})
+                endif ()
             endif ()
         endif ()
     endforeach ()

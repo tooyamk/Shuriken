@@ -131,8 +131,6 @@ namespace srk::modules::inputs {
 					lock->lock();
 				},
 				[](void* custom) {
-					auto lock = (std::shared_lock<std::shared_mutex>*)custom;
-					lock->unlock();
 				});
 		}
 		}

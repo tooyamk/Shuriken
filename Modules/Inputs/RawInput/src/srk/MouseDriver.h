@@ -18,7 +18,7 @@ namespace srk::modules::inputs::raw_input {
 
 		InputListener _listener;
 
-		mutable AtomicLock<true, false> _lock;
+		mutable AtomicLock _lock;
 		mutable GenericMouseBuffer _inputBuffer;
 		mutable std::atomic_bool _changed;
 

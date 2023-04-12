@@ -64,7 +64,6 @@ namespace srk {
 		private:
 			bool _isStrict;
 			mutable std::recursive_mutex _mutex;
-			//AtomicLock<true, true> _lock;
 			std::weak_ptr<TimeWheel> _wheel;
 			size_t _count;
 			uint64_t _delay;

@@ -5,7 +5,7 @@
 
 namespace srk::modules::inputs::raw_input {
 	KeyboardDriver::KeyboardDriver(Input& input, windows::IWindow& win, HANDLE handle) :
-		_listener(input, win, handle, DeviceType::KEYBOARD, &KeyboardDriver::_callback, this),
+		_listener(input, win, handle, DeviceType::KEYBOARD, _callback, this),
 		_changed(false) {
 		_listener.start();
 	}
