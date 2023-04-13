@@ -37,20 +37,26 @@ namespace srk::extensions {
     }
 
     void AndroidNativeAccessor::setState(State state) {
+        using namespace std::string_view_literals;
+
         std::scoped_lock lock(_mutex);
 
         if (_state != state) {
             _state = state;
+            printaln(L"state changed "sv, (uint8_t)_state);
             _eventDispatcher->dispatchEvent(this, Event::STATE_CHANGED, &_state);
         }
     }
 
     void AndroidNativeAccessor::setWindow(ANativeWindow* window) {
+        using namespace std::string_view_literals;
+
         std::scoped_lock lock(_mutex);
 
         if (_window != window) {
             _eventDispatcher->dispatchEvent(this, Event::WINDOW_CHANGING, _window);
             _window = window;
+            printaln(L"window changed "sv, _window);
             _eventDispatcher->dispatchEvent(this, Event::WINDOW_CHANGED, _window);
         }
     }
@@ -74,10 +80,13 @@ namespace srk::extensions {
     }
 
     void AndroidNativeAccessor::setFocus(bool hasFocus) {
+        using namespace std::string_view_literals;
+
         std::scoped_lock lock(_mutex);
 
         if (_hasFocus != hasFocus) {
             _hasFocus = hasFocus;
+            printaln(L"focus changed "sv, _hasFocus);
             _eventDispatcher->dispatchEvent(this, Event::FOCUS_CHANGED, &_hasFocus);
         }
     }
@@ -98,7 +107,7 @@ namespace srk::extensions {
 
     }
 
-    void AndroidNativeAccessor::onLowMemory() {
+    void AndroidNativeAccessor::lowMemory() {
         std::scoped_lock lock(_mutex);
 
         _eventDispatcher->dispatchEvent(this, Event::LOW_MEMORY);

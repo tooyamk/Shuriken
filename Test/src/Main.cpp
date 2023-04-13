@@ -13,7 +13,7 @@ int32_t WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstanc
 #include "AndroidApp.h"
 
 void ANativeActivity_onCreate(ANativeActivity* activity, void* savedState, size_t savedStateSize) {
-    new AndroidApp(activity);
+    new extensions::AndroidNativeAccessor(activity, false);
 }
 #	else
 int32_t main() {

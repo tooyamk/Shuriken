@@ -87,7 +87,7 @@ ExternalProject_Add(
         ${CMAKE_COMMAND}
         -DSRC_DIR=${CMAKE_CURRENT_BINARY_DIR}/src
         -DPATCH_DIR=${CMAKE_CURRENT_SOURCE_DIR}/patch
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/patch/patch.cmake
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/patch.cmake
     BUILD_BYPRODUCTS 
         ${LLVMDxcSupport_SLIB_R}
         ${LLVMDxcSupport_SLIB_D}
