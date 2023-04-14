@@ -141,6 +141,8 @@ if (SRK_OS_LINUX)
     srkAppendIf(X11_FOUND linkLibs X11)
 elseif (SRK_OS_MACOS)
     list(APPEND linkLibs "-framework Cocoa")
+elseif (SRK_OS_ANDROID)
+    list(APPEND linkLibs android)
 endif ()
 
 srkDelayLoadImport(${SRKPROJ_EXTENSION_ASTC_CONVERTER_OUTPUT_NAME})

@@ -25,8 +25,8 @@ namespace srk::modules::inputs::hid_input {
 		if ((DeviceType::GAMEPAD & _filters) == DeviceType::UNKNOWN) return;
 
 		std::vector<InternalDeviceInfo> newDevices;
-		HID::enumDevices(&newDevices, [](const HIDDeviceInfo& info, void* custom) {
-			auto newDevices = (std::vector<InternalDeviceInfo>*)custom;
+		HID::enumDevices(&newDevices, [](const HIDDeviceInfo& info, void* userData) {
+			auto newDevices = (std::vector<InternalDeviceInfo>*)userData;
 
 			auto usagePage = HID::getUsagePage(info);
 			auto usage = HID::getUsage(info);

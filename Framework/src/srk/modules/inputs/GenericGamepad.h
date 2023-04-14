@@ -5,9 +5,9 @@
 namespace srk::modules::inputs {
 	class SRK_FW_DLL IGenericGamepadDriver : public Ref {
 	public:
-		using ReadWriteStateStartCallback = void(SRK_CALL*)(void* custom);
-		using ReadWriteStateEndCallback = void(SRK_CALL*)(void* custom);
-		using DispatchCallback = void(SRK_CALL*)(DeviceEvent evt, void* data, void* custom);
+		using ReadWriteStateStartCallback = void(SRK_CALL*)(void* userData);
+		using ReadWriteStateEndCallback = void(SRK_CALL*)(void* userData);
+		using DispatchCallback = void(SRK_CALL*)(DeviceEvent evt, void* data, void* userData);
 
 		virtual size_t SRK_CALL getInputBufferLength() const = 0;
 		virtual size_t SRK_CALL getOutputBufferLength() const = 0;
@@ -19,11 +19,11 @@ namespace srk::modules::inputs {
 		virtual std::optional<bool> SRK_CALL readFromDevice(void* inputBuffer) const = 0;
 		virtual float32_t SRK_CALL readFromInputBuffer(const void* inputBuffer, GamepadKeyCode keyCode) const = 0;
 		virtual DeviceState::CountType SRK_CALL customGetState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count, 
-			const void* inputBuffer, void* custom, ReadWriteStateStartCallback readStateStartCallback, ReadWriteStateEndCallback readStateEndCallback) const = 0;
-		virtual void SRK_CALL customDispatch(const void* oldInputBuffer, const void* newInputBuffer, void* custom, DispatchCallback dispatchCallback) const = 0;
+			const void* inputBuffer, void* userData, ReadWriteStateStartCallback readStateStartCallback, ReadWriteStateEndCallback readStateEndCallback) const = 0;
+		virtual void SRK_CALL customDispatch(const void* oldInputBuffer, const void* newInputBuffer, void* userData, DispatchCallback dispatchCallback) const = 0;
 
 		virtual bool SRK_CALL writeToDevice(const void* outputBuffer) const = 0;
-		virtual DeviceState::CountType SRK_CALL customSetState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count, void* outputBuffer, void* custom,
+		virtual DeviceState::CountType SRK_CALL customSetState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count, void* outputBuffer, void* userData,
 			ReadWriteStateStartCallback writeStateStartCallback, ReadWriteStateEndCallback writeStateEndCallback) const = 0;
 
 		virtual void SRK_CALL setKeyMapper(GamepadKeyMapper& dst, const GamepadKeyMapper* src) const = 0;

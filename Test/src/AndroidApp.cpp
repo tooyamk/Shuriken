@@ -6,13 +6,17 @@
 #include "srk/modules/windows/WindowModule.h"
 
 namespace srk::extensions {
-    AndroidNativeAccessor::AndroidNativeAccessor(ANativeActivity* activity, bool shared) :
+    AndroidNativeApplication::AndroidNativeApplication(ANativeActivity* activity, ALooper* looper, bool shared) :
         _activity(activity),
         _window(nullptr),
         _inputQueue(nullptr),
+        _looper(looper),
         _hasFocus(false),
         _state(State::UNKNOWN),
         _eventDispatcher(new events::EventDispatcher<Event>()) {
+
+        if (!_looper) _looper = ALooper_prepare(ALOOPER_PREPARE_ALLOW_NON_CALLBACKS);
+
         if (!shared) {
             auto callbacks = _activity->callbacks;
             callbacks->onStart = _onStart;
@@ -36,7 +40,20 @@ namespace srk::extensions {
         }
     }
 
-    void AndroidNativeAccessor::setState(State state) {
+    AndroidNativeApplication::~AndroidNativeApplication() {
+
+    }
+
+    AndroidNativeApplication* AndroidNativeApplication::_ins = nullptr;
+
+    void AndroidNativeApplication::init(ANativeActivity* activity, ALooper* looper, bool shared) {
+        using namespace std::string_view_literals;
+
+        printaln(L"init"sv);
+        _ins = new AndroidNativeApplication(activity, looper, shared);
+    }
+
+    void AndroidNativeApplication::setState(State state) {
         using namespace std::string_view_literals;
 
         std::scoped_lock lock(_mutex);
@@ -48,7 +65,7 @@ namespace srk::extensions {
         }
     }
 
-    void AndroidNativeAccessor::setWindow(ANativeWindow* window) {
+    void AndroidNativeApplication::setWindow(ANativeWindow* window) {
         using namespace std::string_view_literals;
 
         std::scoped_lock lock(_mutex);
@@ -61,7 +78,7 @@ namespace srk::extensions {
         }
     }
 
-    void AndroidNativeAccessor::setInputQueue(AInputQueue* queue) {
+    void AndroidNativeApplication::setInputQueue(AInputQueue* queue) {
         std::scoped_lock lock(_mutex);
 
         if (_inputQueue != queue) {
@@ -71,15 +88,15 @@ namespace srk::extensions {
         }
     }
 
-    void* AndroidNativeAccessor::onSaveInstanceState(size_t* outSize) {
+    void* AndroidNativeApplication::onSaveInstanceState(size_t* outSize) {
         return nullptr;
     }
 
-    void AndroidNativeAccessor::onDestroy() {
+    void AndroidNativeApplication::onDestroy() {
 
     }
 
-    void AndroidNativeAccessor::setFocus(bool hasFocus) {
+    void AndroidNativeApplication::setFocus(bool hasFocus) {
         using namespace std::string_view_literals;
 
         std::scoped_lock lock(_mutex);
@@ -91,219 +108,254 @@ namespace srk::extensions {
         }
     }
 
-    void AndroidNativeAccessor::onWindowResized(ANativeWindow* window) {
+    void AndroidNativeApplication::onWindowResized(ANativeWindow* window) {
 
     }
 
-    void AndroidNativeAccessor::onWindowRedrawNeeded(ANativeWindow* window) {
+    void AndroidNativeApplication::onWindowRedrawNeeded(ANativeWindow* window) {
 
     }
 
-    void AndroidNativeAccessor::onContentRectChanged(const ARect* rect) {
+    void AndroidNativeApplication::onContentRectChanged(const ARect* rect) {
 
     }
 
-    void AndroidNativeAccessor::onConfigurationChanged() {
+    void AndroidNativeApplication::onConfigurationChanged() {
 
     }
 
-    void AndroidNativeAccessor::lowMemory() {
+    void AndroidNativeApplication::lowMemory() {
         std::scoped_lock lock(_mutex);
 
         _eventDispatcher->dispatchEvent(this, Event::LOW_MEMORY);
     }
 
-    void AndroidNativeAccessor::_onStart(ANativeActivity* activity) {
-        ((AndroidNativeAccessor*)activity->instance)->setState(AndroidNativeAccessor::State::STARTED);
+    std::filesystem::path AndroidNativeApplication::getAppPath() {
+        auto env = _activity->env;
+
+        auto clazz = env->GetObjectClass(_activity->clazz);
+        auto methodID = env->GetMethodID(clazz, "getPackageCodePath", "()Ljava/lang/String;");
+        auto result = env->CallObjectMethod(_activity->clazz, methodID);
+        jboolean isCopy;
+        auto strBuf = env->GetStringUTFChars((jstring)result, &isCopy);
+        auto strLen = env->GetStringLength((jstring)result);
+        std::filesystem::path path(std::string_view(strBuf, strLen));
+        env->ReleaseStringUTFChars((jstring)result, strBuf);
+        
+        return std::move(path);
     }
 
-    void AndroidNativeAccessor::_onResume(ANativeActivity* activity) {
-        ((AndroidNativeAccessor*)activity->instance)->setState(AndroidNativeAccessor::State::RESUMED);
+    void AndroidNativeApplication::_onStart(ANativeActivity* activity) {
+        _getApp(activity)->setState(State::STARTED);
     }
 
-    void* AndroidNativeAccessor::_onSaveInstanceState(ANativeActivity* activity, size_t* outSize) {
-        return ((AndroidNativeAccessor*)activity->instance)->onSaveInstanceState(outSize);
+    void AndroidNativeApplication::_onResume(ANativeActivity* activity) {
+        _getApp(activity)->setState(State::RESUMED);
     }
 
-    void AndroidNativeAccessor::_onPause(ANativeActivity* activity) {
-        ((AndroidNativeAccessor*)activity->instance)->setState(AndroidNativeAccessor::State::PAUSED);
+    void* AndroidNativeApplication::_onSaveInstanceState(ANativeActivity* activity, size_t* outSize) {
+        return _getApp(activity)->onSaveInstanceState(outSize);
     }
 
-    void AndroidNativeAccessor::_onStop(ANativeActivity* activity) {
-        ((AndroidNativeAccessor*)activity->instance)->setState(AndroidNativeAccessor::State::STOPPED);
+    void AndroidNativeApplication::_onPause(ANativeActivity* activity) {
+        _getApp(activity)->setState(State::PAUSED);
     }
 
-    void AndroidNativeAccessor::_onDestroy(ANativeActivity* activity) {
-        ((AndroidNativeAccessor*)activity->instance)->onDestroy();
+    void AndroidNativeApplication::_onStop(ANativeActivity* activity) {
+        _getApp(activity)->setState(State::STOPPED);
     }
 
-    void AndroidNativeAccessor::_onWindowFocusChanged(ANativeActivity* activity, int hasFocus) {
-        ((AndroidNativeAccessor*)activity->instance)->setFocus(hasFocus != 0);
+    void AndroidNativeApplication::_onDestroy(ANativeActivity* activity) {
+        _getApp(activity)->onDestroy();
     }
 
-    void AndroidNativeAccessor::_onNativeWindowCreated(ANativeActivity* activity, ANativeWindow* window) {
-        ((AndroidNativeAccessor*)activity->instance)->setWindow(window);
+    void AndroidNativeApplication::_onWindowFocusChanged(ANativeActivity* activity, int hasFocus) {
+        _getApp(activity)->setFocus(hasFocus != 0);
     }
 
-    void AndroidNativeAccessor::_onNativeWindowResized(ANativeActivity* activity, ANativeWindow* window) {
-        ((AndroidNativeAccessor*)activity->instance)->onWindowResized(window);
+    void AndroidNativeApplication::_onNativeWindowCreated(ANativeActivity* activity, ANativeWindow* window) {
+        _getApp(activity)->setWindow(window);
     }
 
-    void AndroidNativeAccessor::_onNativeWindowRedrawNeeded(ANativeActivity* activity, ANativeWindow* window) {
-        ((AndroidNativeAccessor*)activity->instance)->onWindowRedrawNeeded(window);
+    void AndroidNativeApplication::_onNativeWindowResized(ANativeActivity* activity, ANativeWindow* window) {
+        _getApp(activity)->onWindowResized(window);
     }
 
-    void AndroidNativeAccessor::_onNativeWindowDestroyed(ANativeActivity* activity, ANativeWindow* window) {
-        ((AndroidNativeAccessor*)activity->instance)->setWindow(nullptr);
+    void AndroidNativeApplication::_onNativeWindowRedrawNeeded(ANativeActivity* activity, ANativeWindow* window) {
+        _getApp(activity)->onWindowRedrawNeeded(window);
     }
 
-    void AndroidNativeAccessor::_onInputQueueCreated(ANativeActivity* activity, AInputQueue* queue) {
-        ((AndroidNativeAccessor*)activity->instance)->setInputQueue(queue);
+    void AndroidNativeApplication::_onNativeWindowDestroyed(ANativeActivity* activity, ANativeWindow* window) {
+        _getApp(activity)->setWindow(nullptr);
     }
 
-    void AndroidNativeAccessor::_onInputQueueDestroyed(ANativeActivity* activity, AInputQueue* queue) {
-        ((AndroidNativeAccessor*)activity->instance)->setInputQueue(nullptr);
+    void AndroidNativeApplication::_onInputQueueCreated(ANativeActivity* activity, AInputQueue* queue) {
+        _getApp(activity)->setInputQueue(queue);
     }
 
-    void AndroidNativeAccessor::_onContentRectChanged(ANativeActivity* activity, const ARect* rect) {
-        ((AndroidNativeAccessor*)activity->instance)->onContentRectChanged(rect);
+    void AndroidNativeApplication::_onInputQueueDestroyed(ANativeActivity* activity, AInputQueue* queue) {
+        _getApp(activity)->setInputQueue(nullptr);
     }
 
-    void AndroidNativeAccessor::_onConfigurationChanged(ANativeActivity* activity) {
-        ((AndroidNativeAccessor*)activity->instance)->onConfigurationChanged();
+    void AndroidNativeApplication::_onContentRectChanged(ANativeActivity* activity, const ARect* rect) {
+        _getApp(activity)->onContentRectChanged(rect);
     }
 
-    void AndroidNativeAccessor::_onLowMemory(ANativeActivity* activity) {
-        ((AndroidNativeAccessor*)activity->instance)->lowMemory();
+    void AndroidNativeApplication::_onConfigurationChanged(ANativeActivity* activity) {
+        _getApp(activity)->onConfigurationChanged();
     }
-}
 
-AndroidApp::AndroidApp(ANativeActivity* activity) :
-    _activity(activity),
-    _window(nullptr),
-    _eventDispatcher(new events::EventDispatcher<srk::modules::windows::WindowEvent>()) {
-    auto callbacks = _activity->callbacks;
-    callbacks->onStart = _onStart;
-    callbacks->onResume = _onResume;
-    callbacks->onSaveInstanceState = _onSaveInstanceState;
-    callbacks->onPause = _onPause;
-    callbacks->onStop = _onStop;
-    callbacks->onDestroy = _onDestroy;
-    callbacks->onWindowFocusChanged = _onWindowFocusChanged;
-    callbacks->onNativeWindowCreated = _onNativeWindowCreated;
-    callbacks->onNativeWindowResized = _onNativeWindowResized;
-    callbacks->onNativeWindowRedrawNeeded = _onNativeWindowRedrawNeeded;
-    callbacks->onNativeWindowDestroyed = _onNativeWindowDestroyed;
-    callbacks->onInputQueueCreated = _onInputQueueCreated;
-    callbacks->onInputQueueDestroyed = _onInputQueueDestroyed;
-    callbacks->onContentRectChanged = _onContentRectChanged;
-    callbacks->onConfigurationChanged = _onConfigurationChanged;
-    callbacks->onLowMemory = _onLowMemory;
-
-    _activity->instance = this;
-
-    using namespace std::string_view_literals;
-
-    printaln(L"================================="sv);
-    printaln(L"ANativeActivity_onCreate"sv);
-    printaln(L"internalDataPath : "sv, std::string_view(_activity->internalDataPath));
-    printaln(L"externalDataPath : "sv, std::string_view(_activity->externalDataPath));
-    printaln(L"appPath"sv, getAppPath());
-
-    printaln(L"for"sv);
-    for (auto& itr : std::filesystem::directory_iterator(std::filesystem::path("/data/data/com.shuriken.test"))) {
-        printaln(L"sub : "sv, itr.path().wstring());
+    void AndroidNativeApplication::_onLowMemory(ANativeActivity* activity) {
+        _getApp(activity)->lowMemory();
     }
 }
 
-std::filesystem::path AndroidApp::getAppPath() {
-    auto env = _activity->env;
+namespace srk::modules::windows::android_native {
+    Manager::Manager() :
+        _window(nullptr) {
+	}
 
-    auto clazz = env->GetObjectClass(_activity->clazz);
-    auto methodID = env->GetMethodID(clazz, "getPackageCodePath", "()Ljava/lang/String;");
-    auto result = env->CallObjectMethod(_activity->clazz, methodID);
-    jboolean isCopy;
-    auto strBuf = env->GetStringUTFChars((jstring)result, &isCopy);
-    auto strLen = env->GetStringLength((jstring)result);
-    std::filesystem::path path(std::string_view(strBuf, strLen));
-    env->ReleaseStringUTFChars((jstring)result, strBuf);
-    
-    return std::move(path);
-}
+	Manager::~Manager() {
+	}
 
-void AndroidApp::setWindow(ANativeWindow* window) {
-    _window = window;
-}
+	IntrusivePtr<IWindow> Manager::crerate(const CreateWindowDescriptor& desc) {
+        if (_window) return false;
 
-void AndroidApp::focusChanged(bool hasFocus) {
-    _eventDispatcher->dispatchEvent(_activity, hasFocus ? srk::modules::windows::WindowEvent::FOCUS_IN : srk::modules::windows::WindowEvent::FOCUS_OUT);
-}
+		auto win = new Window(*this);
+		if (!win->create(desc)) {
+			delete win;
+			win = nullptr;
+		}
+        _window = win;
+        
+		return win;
+	}
 
-void AndroidApp::_onStart(ANativeActivity* activity) {
+	bool Manager::processEvent(const IWindowModule::EventFn& fn) const {
+		return true;
+	}
 
-}
+    //=============================
 
-void AndroidApp::_onResume(ANativeActivity* activity) {
+    Window::Window(Manager& manager) :
+        _manager(manager),
+		_eventDispatcher(new events::EventDispatcher<WindowEvent>()) {
+	}
 
-}
+	Window::~Window() {
+		close();
+	}
 
-void* AndroidApp::_onSaveInstanceState(ANativeActivity* activity, size_t* outSize) {
-    return nullptr;
-}
+	IntrusivePtr<events::IEventDispatcher<WindowEvent>> Window::getEventDispatcher() const {
+		return _eventDispatcher;
+	}
 
-void AndroidApp::_onPause(ANativeActivity* activity) {
+	bool Window::create(const CreateWindowDescriptor& desc) {
+		_data.isCreated = true;
+		_data.sentContentSize = getContentSize();
+		setTitle(desc.title);
 
-}
+		_manager->add(_data.wnd, this);
 
-void AndroidApp::_onStop(ANativeActivity* activity) {
+		return true;
+	}
 
-}
+    bool Window::isClosed() const {
+		return false;
+	}
 
-void AndroidApp::_onDestroy(ANativeActivity* activity) {
+	void* Window::getNative(const std::string_view& native) const {
+		return nullptr;
+	}
 
-}
+	bool Window::isFullScreen() const {
+		return true;
+	}
 
-void AndroidApp::_onWindowFocusChanged(ANativeActivity* activity, int hasFocus) {
-    _getApp(activity)->focusChanged(hasFocus);
-}
+	Vec4ui32 Window::getFrameExtents() const {
+        Vec4ui32 extents;
+		return extents;
+	}
 
-void AndroidApp::_onNativeWindowCreated(ANativeActivity* activity, ANativeWindow* window) {
-    using namespace std::string_view_literals;
+	void Window::toggleFullScreen() {
+	}
 
-    printaln(L"onNativeWindowCreated"sv);
-}
+	Vec2ui32 Window::getContentSize() const {
+		Vec2ui32 size;
+        
+        return size;
+	}
 
-void AndroidApp::_onNativeWindowResized(ANativeActivity* activity, ANativeWindow* window) {
+	void Window::setContentSize(const Vec2ui32& size) {
+	}
 
-}
+	std::string_view Window::getTitle() const {
+		return _data.title;
+	}
 
-void AndroidApp::_onNativeWindowRedrawNeeded(ANativeActivity* activity, ANativeWindow* window) {
+	void Window::setTitle(const std::string_view& title) {
+	}
 
-}
+	void Window::setPosition(const Vec2i32& pos) {
+	}
 
-void AndroidApp::_onNativeWindowDestroyed(ANativeActivity* activity, ANativeWindow* window) {
-    using namespace std::string_view_literals;
+	void Window::setCursorVisible(bool visible) {
+	}
 
-    printaln(L"onNativeWindowDestroyed"sv);
-}
+	bool Window::hasFocus() const {
+        return false;
+	}
 
-void AndroidApp::_onInputQueueCreated(ANativeActivity* activity, AInputQueue* queue) {
+	void Window::setFocus() {
+	}
 
-}
+	bool Window::isMaximized() const {
+        return false;
+	}
 
-void AndroidApp::_onInputQueueDestroyed(ANativeActivity* activity, AInputQueue* queue) {
+	void Window::setMaximized() {
+	}
 
-}
+	bool Window::isMinimized() const {
+        return false;
+	}
 
-void AndroidApp::_onContentRectChanged(ANativeActivity* activity, const ARect* rect) {
+	void Window::setMinimized() {
+	}
 
-}
+	void Window::setRestore() {
+	}
 
-void AndroidApp::_onConfigurationChanged(ANativeActivity* activity) {
+	bool Window::isVisible() const {
+        return false;
+	}
 
-}
+	void Window::setVisible(bool b) {
+	}
 
-void AndroidApp::_onLowMemory(ANativeActivity* activity) {
+	void Window::close() {
+		if (!_data.isCreated) return;
 
+        if (this->getReferenceCount()) {
+            _eventDispatcher->dispatchEvent(this, WindowEvent::CLOSING);
+        } else {
+            _eventDispatcher->dispatchEvent((void*)this, WindowEvent::CLOSED);
+        }
+
+		_manager->remove(_data.wnd);
+        
+        //todo
+
+		_data = decltype(_data)();
+
+        if (this->getReferenceCount()) {
+            _eventDispatcher->dispatchEvent(this, WindowEvent::CLOSED);
+        } else {
+            _eventDispatcher->dispatchEvent((void*)this, WindowEvent::CLOSED);
+        }
+	}
+
+    void Window::processEvent(void* data) {
+    }
 }
 #endif

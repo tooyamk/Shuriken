@@ -21,7 +21,7 @@ namespace srk::modules::windows::win32api {
 
 		bool SRK_CALL create(const CreateWindowDescriptor& desc);
 
-		virtual bool SRK_CALL isValid() const override;
+		virtual bool SRK_CALL isClosed() const override;
 		virtual void* SRK_CALL getNative(const std::string_view& native) const override;
 		virtual bool SRK_CALL isFullScreen() const override;
 		virtual void SRK_CALL toggleFullScreen() override;

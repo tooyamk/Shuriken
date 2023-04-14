@@ -23,7 +23,7 @@ namespace srk::extensions {
 	}
 
 
-	void HID::enumDevices(void* custom, HID::EnumDevicesCallback callback) {
+	void HID::enumDevices(void* userData, HID::EnumDevicesCallback callback) {
 		if (!callback) return;
 
 		auto udev = udev_new();
@@ -156,7 +156,7 @@ namespace srk::extensions {
 								{
 									info.usage = ba.read<ba_vt::UIX>(item.size);
 									info.index = index++;
-									isContinue = callback(info, custom);
+									isContinue = callback(info, userData);
 									
 									break;
 								}

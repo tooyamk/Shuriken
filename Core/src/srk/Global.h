@@ -208,6 +208,10 @@ namespace srk {
 	template<typename T, typename... Types> concept ConvertibleAllOf = std::conjunction_v<std::is_convertible<Types, T>...>;
 
 
+	template<typename T> concept Iterable = requires(T& t) { t.begin(); t.end(); };
+	template<typename T> struct IsIterable : std::bool_constant<Iterable<T>> {};
+
+
 	template<typename T> concept ScopedEnum = std::is_scoped_enum_v<T>;
 	template<typename T> concept Boolean = std::same_as<T, bool>;
 	template<typename T> concept NullPointer = std::is_null_pointer_v<T>;

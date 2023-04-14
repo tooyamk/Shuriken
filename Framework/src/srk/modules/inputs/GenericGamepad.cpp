@@ -126,11 +126,13 @@ namespace srk::modules::inputs {
 			std::shared_lock lock(_inputMutex, std::defer_lock);
 
 			return _driver->customGetState(type, code, values, count, _curInputBuffer, &lock,
-				[](void* custom) {
-					auto lock = (std::shared_lock<std::shared_mutex>*)custom;
+				[](void* userData) {
+					auto lock = (std::shared_lock<std::shared_mutex>*)userData;
 					lock->lock();
 				},
-				[](void* custom) {
+				[](void* userData) {
+					auto lock = (std::shared_lock<std::shared_mutex>*)userData;
+					lock->unlock();
 				});
 		}
 		}
@@ -169,24 +171,24 @@ namespace srk::modules::inputs {
 		}
 		default:
 		{
-			void* custom[2];
-			custom[1] = this;
+			void* userData[2];
+			userData[1] = this;
 
 			std::unique_lock lock(_outputMutex, std::defer_lock);
 
-			custom[0] = &lock;
+			userData[0] = &lock;
 
-			return _driver->customSetState(type, code, values, count, _outputBuffer, custom,
-				[](void* custom) {
-				auto lock = (std::unique_lock<std::shared_mutex>*)((void**)custom)[0];
+			return _driver->customSetState(type, code, values, count, _outputBuffer, userData,
+				[](void* userData) {
+				auto lock = (std::unique_lock<std::shared_mutex>*)((void**)userData)[0];
 				lock->lock();
 			},
-				[](void* custom) {
-				auto self = (GenericGamepad*)((void**)custom)[1];
+				[](void* userData) {
+				auto self = (GenericGamepad*)((void**)userData)[1];
 
 				self->_outputFlag.fetch_or(OUTPUT_FLAG_DIRTY);
 
-				auto lock = (std::unique_lock<std::shared_mutex>*)((void**)custom)[0];
+				auto lock = (std::unique_lock<std::shared_mutex>*)((void**)userData)[0];
 				lock->unlock();
 			});
 		}
@@ -237,8 +239,8 @@ namespace srk::modules::inputs {
 			}
 		});
 
-		_driver->customDispatch(_prevInputBuffer, _curInputBuffer, this, [](DeviceEvent evt, void* data, void* custom) {
-			auto self = (GenericGamepad*)custom;
+		_driver->customDispatch(_prevInputBuffer, _curInputBuffer, this, [](DeviceEvent evt, void* data, void* userData) {
+			auto self = (GenericGamepad*)userData;
 			self->_eventDispatcher->dispatchEvent(self, evt, data);
 		});
 

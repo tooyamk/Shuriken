@@ -158,8 +158,8 @@ namespace srk::modules::windows::x11 {
 		return true;
 	}
 
-	bool Window::isValid() const {
-		return _data.isCreated;
+	bool Window::isClosed() const {
+		return !_data.isCreated;
 	}
 
 	void* Window::getNative(const std::string_view& native) const {

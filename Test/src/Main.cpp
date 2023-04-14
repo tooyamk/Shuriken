@@ -11,9 +11,14 @@ int32_t WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstanc
 }
 #	elif SRK_OS == SRK_OS_ANDROID
 #include "AndroidApp.h"
+#include <thread>
 
 void ANativeActivity_onCreate(ANativeActivity* activity, void* savedState, size_t savedStateSize) {
-    new extensions::AndroidNativeAccessor(activity, false);
+    extensions::AndroidNativeApplication::init(activity, nullptr, false);
+	/*std::thread([](){
+		Enttry e;
+		e.run();
+	}).detach();*/
 }
 #	else
 int32_t main() {

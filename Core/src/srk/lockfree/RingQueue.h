@@ -1,6 +1,6 @@
 #pragma once
 
-#include "srk/TaggedPtr.h"
+#include "srk/Global.h"
 
 namespace srk::lockfree {
 	enum class RingQueueMode : uint8_t {
@@ -17,7 +17,7 @@ namespace srk::lockfree {
 
 		RingQueue(size_t capacity) :
 			_capacity(capacity),
-			_mem((std::remove_cvref_t<T>)malloc(_capacity * sizeof(T))),
+			_mem((std::remove_cvref_t<T>*)malloc(_capacity * sizeof(T))),
 			_pushIndex(0),
 			_popIndex(0),
 			_count(0) {

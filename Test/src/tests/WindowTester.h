@@ -86,20 +86,20 @@ public:
 			auto t = srk::Time::now();
 			int step = 0;
 
-			looper->getEventDispatcher()->addEventListener(LooperEvent::TICKING, createEventListener<LooperEvent>([wm, &activedWindows, &t, &step, looper](Event<LooperEvent>& e) {
+			looper->getEventDispatcher()->addEventListener(LooperEvent::TICKING, createEventListener<LooperEvent>([wm, &activedWindows, &t, &step](Event<LooperEvent>& e) {
 				while (wm->processEvent()) {};
 
 				for (auto itr = activedWindows.begin(); itr != activedWindows.end();) {
 					auto win = *itr;
-					if (win->isValid()) {
-						++itr;
-					} else {
+					if (win->isClosed()) {
 						itr = activedWindows.erase(itr);
+					} else {
+						++itr;
 					}
 				}
 
 				if (activedWindows.empty()) {
-					looper->stop();
+					e.getTarget<Looper>()->stop();
 					return;
 				}
 

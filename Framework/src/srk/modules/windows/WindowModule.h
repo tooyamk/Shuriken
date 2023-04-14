@@ -42,7 +42,7 @@ namespace srk::modules::windows {
 
 		virtual IntrusivePtr<events::IEventDispatcher<WindowEvent>> SRK_CALL getEventDispatcher() const = 0;
 
-		virtual bool SRK_CALL isValid() const = 0;
+		virtual bool SRK_CALL isClosed() const = 0;
 		virtual void* SRK_CALL getNative(const std::string_view& native) const = 0;
 		virtual bool SRK_CALL isFullScreen() const = 0;
 		virtual void SRK_CALL toggleFullScreen() = 0;

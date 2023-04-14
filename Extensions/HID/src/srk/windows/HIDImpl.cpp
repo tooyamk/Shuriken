@@ -110,7 +110,7 @@ namespace srk::extensions {
 	}
 
 
-	void HID::enumDevices(void* custom, HID::EnumDevicesCallback callback) {
+	void HID::enumDevices(void* userData, HID::EnumDevicesCallback callback) {
 		if (!callback) return;
 
 		::GUID guid;
@@ -172,7 +172,7 @@ namespace srk::extensions {
 			HIDDeviceInfo info;
 			info.handle = handle;
 			info.pathView = detail->DevicePath;
-			auto isContinue = callback(info, custom);
+			auto isContinue = callback(info, userData);
 
 			CloseHandle(handle);
 

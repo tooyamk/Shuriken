@@ -102,7 +102,7 @@ namespace srk::modules::inputs::hid_input {
 	}
 
 	DeviceState::CountType GamepadDriverDS4::customGetState(DeviceStateType type, DeviceState::CodeType code, void* values, DeviceState::CountType count,
-		const void* inputBuffer, void* custom, ReadWriteStateStartCallback readStateStartCallback, ReadWriteStateEndCallback readStateEndCallback) const {
+		const void* inputBuffer, void* userData, ReadWriteStateStartCallback readStateStartCallback, ReadWriteStateEndCallback readStateEndCallback) const {
 		if (type == DeviceStateType::TOUCH_RESOLUTION) {
 			if (values && count) {
 				DeviceState::CountType c = 1;
@@ -124,11 +124,11 @@ namespace srk::modules::inputs::hid_input {
 					data += offset + (size_t)InputOffset::FINGER1;
 					DeviceTouchStateValue rawTouches[2], touches[2];
 
-					readStateStartCallback(custom);
+					readStateStartCallback(userData);
 
 					_parseTouches(data, rawTouches);
 
-					readStateEndCallback(custom);
+					readStateEndCallback(userData);
 
 					DeviceState::CountType c = 0;
 					for (size_t i = 0; i < 2; ++i) {
@@ -146,7 +146,7 @@ namespace srk::modules::inputs::hid_input {
 		return 0;
 	}
 
-	void GamepadDriverDS4::customDispatch(const void* oldInputBuffer, const void* newInputBuffer, void* custom, DispatchCallback dispatchCallback) const {
+	void GamepadDriverDS4::customDispatch(const void* oldInputBuffer, const void* newInputBuffer, void* userData, DispatchCallback dispatchCallback) const {
 		auto oldData = (const uint8_t*)oldInputBuffer;
 		auto newData = (const uint8_t*)newInputBuffer;
 
@@ -207,7 +207,7 @@ namespace srk::modules::inputs::hid_input {
 
 		if (count) {
 			DeviceState ds = { (DeviceState::CodeType)0, (DeviceState::CountType)count, touches };
-			dispatchCallback(DeviceEvent::TOUCH, &ds, custom);
+			dispatchCallback(DeviceEvent::TOUCH, &ds, userData);
 		}
 	}
 
@@ -217,7 +217,7 @@ namespace srk::modules::inputs::hid_input {
 		return HID::isSuccess(HID::write(*_hid, ((const uint8_t*)outputBuffer) + HEADER_LENGTH, OUTPUT_BUFFER_LENGTH, 0));
 	}
 
-	DeviceState::CountType GamepadDriverDS4::customSetState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count, void* outputBuffer, void* custom,
+	DeviceState::CountType GamepadDriverDS4::customSetState(DeviceStateType type, DeviceState::CodeType code, const void* values, DeviceState::CountType count, void* outputBuffer, void* userData,
 		ReadWriteStateStartCallback writeStateStartCallback, ReadWriteStateEndCallback writeStateEndCallback) const {
 
 		auto data = (uint8_t*)outputBuffer;
@@ -244,12 +244,12 @@ namespace srk::modules::inputs::hid_input {
 
 					uint8_t expect = 1;
 
-					writeStateStartCallback(custom);
+					writeStateStartCallback(userData);
 
 					_writeOutputStateInit(outputBuffer, offset);
 					memcpy((uint8_t*)outputBuffer + HEADER_LENGTH + offset, data, sizeof(data));
 
-					writeStateEndCallback(custom);
+					writeStateEndCallback(userData);
 
 					return c;
 				}
@@ -274,12 +274,12 @@ namespace srk::modules::inputs::hid_input {
 					uint8_t data[3];
 					for (size_t i = 0; i < 3; ++i) data[i] = Math::clamp(rgb[i], Math::ZERO<DeviceStateValue>, Math::ONE<DeviceStateValue>) * MAX;
 
-					writeStateStartCallback(custom);
+					writeStateStartCallback(userData);
 
 					_writeOutputStateInit(outputBuffer, offset);
 					memcpy((uint8_t*)outputBuffer + HEADER_LENGTH + offset + 2, data, sizeof(data));
 
-					writeStateEndCallback(custom);
+					writeStateEndCallback(userData);
 
 					return c;
 				}

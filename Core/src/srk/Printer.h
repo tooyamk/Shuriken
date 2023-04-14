@@ -1,8 +1,15 @@
 #pragma once
 
 #include "srk/Global.h"
+#include <array>
 #include <filesystem>
+#include <list>
+#include <map>
 #include <mutex>
+#include <set>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 namespace srk {
 	class SRK_CORE_DLL Printer {
@@ -105,6 +112,93 @@ namespace srk {
 
 
 		struct SRK_CORE_DLL DefaultFormater {
+		private:
+			template<typename> struct IsStdArray : std::false_type {};
+			template<typename T, size_t S> struct IsStdArray<std::array<T, S>> : std::true_type {};
+
+			template<typename> struct IsStdVector : std::false_type {};
+			template<typename T, typename A> struct IsStdVector<std::vector<T, A>> : std::true_type {};
+
+			template<typename> struct IsStdList : std::false_type {};
+			template<typename T, typename A> struct IsStdList<std::list<T, A>> : std::true_type {};
+
+			template<typename Formater, typename T>
+			void SRK_CALL _printArray(OutputBuffer& buf, Formater&& formater, T&& value, std::wstring_view typeStr, size_t n, const std::type_info& elementTypeInfo) const {
+				using namespace std::string_view_literals;
+
+				buf.write(typeStr);
+				buf.write(L'<');
+				buf.write(elementTypeInfo.name());
+				buf.write(L',');
+				buf.write(std::to_wstring(n));
+				buf.write(L">["sv);
+
+				size_t i = 0;
+				for (const auto& itr : value) {
+					Printer::print(buf, std::forward<Formater>(formater), itr);
+					if (++i < n) buf.write(L',');
+				}
+
+				buf.write(L']');
+			}
+
+			template<typename> struct IsStdSet : std::false_type {};
+			template<typename K, typename P, typename A> struct IsStdSet<std::set<K, P, A>> : std::true_type {};
+
+			template<typename> struct IsStdUnorderedSet : std::false_type {};
+			template<typename K, typename H, typename E> struct IsStdUnorderedSet<std::unordered_set<K, H, E>> : std::true_type {};
+
+			template<typename Formater, typename T>
+			void SRK_CALL _printSet(OutputBuffer& buf, Formater&& formater, T&& value, std::wstring_view typeStr, size_t n, const std::type_info& keyTypeInfo) const {
+				using namespace std::string_view_literals;
+
+				buf.write(typeStr);
+				buf.write(L'<');
+				buf.write(keyTypeInfo.name());;
+				buf.write(L',');
+				buf.write(std::to_wstring(n));
+				buf.write(L">{"sv);
+
+				size_t i = 0;
+				for (const auto& itr : value) {
+					Printer::print(buf, std::forward<Formater>(formater), itr);
+					if (++i < n) buf.write(L',');
+				}
+
+				buf.write(L'}');
+			}
+
+			template<typename> struct IsStdMap : std::false_type {};
+			template<typename K, typename V, typename P, typename A> struct IsStdMap<std::map<K, V, P, A>> : std::true_type {};
+
+			template<typename> struct IsStdUnorderedMap : std::false_type {};
+			template<typename K, typename V, typename H, typename E> struct IsStdUnorderedMap<std::unordered_map<K, V, H, E>> : std::true_type {};
+
+			template<typename Formater, typename T>
+			void SRK_CALL _printMap(OutputBuffer& buf, Formater&& formater, T&& value, std::wstring_view typeStr, size_t n, const std::type_info& keyTypeInfo, const std::type_info& valTypeInfo) const {
+				using namespace std::string_view_literals;
+
+				buf.write(typeStr);
+				buf.write(L'<');
+				buf.write(keyTypeInfo.name());
+				buf.write(L':');
+				buf.write(valTypeInfo.name());
+				buf.write(L',');
+				buf.write(std::to_wstring(n));
+				buf.write(L">{"sv);
+
+				size_t i = 0;
+				for (const auto& itr : value) {
+					Printer::print(buf, std::forward<Formater>(formater), itr.first);
+					buf.write(L':');
+					Printer::print(buf, std::forward<Formater>(formater), itr.second);
+					if (++i < n) buf.write(L',');
+				}
+
+				buf.write(L'}');
+			}
+
+		public:
 			template<typename Formater, typename T>
 			bool SRK_CALL operator()(OutputBuffer& buf, Formater&& formater, T&& value) const {
 				using namespace std::string_view_literals;
@@ -128,19 +222,21 @@ namespace srk {
 				}  else if constexpr (std::is_same_v<Type, std::filesystem::path>) {
 					buf.write(value.wstring());
 				} else if constexpr (std::is_bounded_array_v<Type>) {
-					constexpr auto n = std::extent_v<Type, 0>;
-					buf.write(L"array<"sv);
-					buf.write(typeid(value[0]).name());
-					buf.write(L',');
-					buf.write(std::to_wstring(n));
-					buf.write(L">["sv);
-
-					for (size_t i = 0; i < n; ++i) {
-						Printer::print(buf, std::forward<Formater>(formater), value[i]);
-						if (i + 1 < n) buf.write(L',');
-					}
-
-					buf.write(L']');
+					_printArray(buf, std::forward<Formater>(formater), std::forward<T>(value), L"array"sv, std::extent_v<Type, 0>, typeid(value[0]));
+				} else if constexpr (IsStdArray<Type>::value) {
+					_printArray(buf, std::forward<Formater>(formater), std::forward<T>(value), L"std_array"sv, value.size(), typeid(Type::value_type));
+				} else if constexpr (IsStdVector<Type>::value) {
+					_printArray(buf, std::forward<Formater>(formater), std::forward<T>(value), L"std_vector"sv, value.size(), typeid(Type::value_type));
+				} else if constexpr (IsStdList<Type>::value) {
+					_printArray(buf, std::forward<Formater>(formater), std::forward<T>(value), L"std_list"sv, value.size(), typeid(Type::value_type));
+				} else if constexpr (IsStdSet<Type>::value) {
+					_printSet(buf, std::forward<Formater>(formater), std::forward<T>(value), L"std_set"sv, value.size(), typeid(Type::key_type));
+				} else if constexpr (IsStdUnorderedSet<Type>::value) {
+					_printSet(buf, std::forward<Formater>(formater), std::forward<T>(value), L"std_unordered_set"sv, value.size(), typeid(Type::key_type));
+				} else if constexpr (IsStdMap<Type>::value) {
+					_printMap(buf, std::forward<Formater>(formater), std::forward<T>(value), L"std_map"sv, value.size(), typeid(Type::key_type), typeid(Type::value_type::second_type));
+				} else if constexpr (IsStdUnorderedMap<Type>::value) {
+					_printMap(buf, std::forward<Formater>(formater), std::forward<T>(value), L"std_unordered_map"sv, value.size(), typeid(Type::key_type), typeid(Type::value_type::second_type));
 				} else if constexpr (std::is_pointer_v<Type>) {
 					static constexpr uint32_t COUNT = sizeof(uintptr_t) << 1;
 					static constexpr wchar_t MAP[] = { L'0', L'1', L'2', L'3', L'4', L'5', L'6', L'7', L'8', L'9', L'A', L'B', L'C', L'D', L'E', L'F' };

@@ -61,21 +61,6 @@ public:
 		auto wm = wml->create();
 		if (!wm) return 0;
 
-		printFloat(0.0f);
-		printFloat(0.1f);
-		printFloat(0.2f);
-		printFloat(0.3f);
-		printFloat(0.4f);
-		printFloat(0.5f);
-		printFloat(0.6f);
-		printFloat(0.7f);
-		printFloat(0.8f);
-		printFloat(0.9f);
-		printFloat(1.0f);
-		printFloat(0.123f);
-		printFloat(0.125f);
-		printFloat(0.111111111f);
-
 		CreateWindowDescriptor desc;
 		desc.style.resizable = true;
 		desc.contentSize.set(800, 600);
@@ -94,37 +79,20 @@ public:
 
 		win->setVisible(true);
 
-		//_testQueue();
+		_testQueue();
 
 		looper->run(true);
 
 		return 0;
 	}
 
-	void printFloat(float32_t f) {
-		auto iv = *(uint32_t*)&f;
-
-		std::string s = String::toString(iv >> 31) + " ";
-		{
-			uint8_t val = iv >> 23 & 0xFF;
-			val -= 127;
-			//s += String::toString(val, 2);
-			for (auto i = 0; i < 8; ++i) {
-				s += String::toString(val >> (7 - i) & 0b1);
-			}
-		}
-		s += " ";
-		for (auto i = 0; i < 23; ++i) {
-			s += String::toString(iv >> (22 - i) & 0b1);
-		}
-
-		printaln(f, L"   "sv, s);
-	}
-
 private:
 	void SRK_CALL _testQueue() {
-		using Class = lockfree::LinkedQueue<uint32_t, lockfree::LinkedQueueMode::MPMC>;
-		auto queue = std::make_shared<Class>();
+		constexpr size_t max = 1000000;
+
+		//using Class = lockfree::LinkedQueue<uint32_t, lockfree::LinkedQueueMode::MPMC>;
+		using Class = lockfree::RingQueue<uint32_t, lockfree::RingQueueMode::SPSC>;
+		auto queue = std::make_shared<Class>(max);
 		auto tmpSet = std::make_shared<std::unordered_set<uint32_t>>();
 		auto tmpVecMtx = std::make_shared<std::mutex>();
 		auto idGenerator = std::make_shared<std::atomic_uint32_t>(0);
@@ -134,7 +102,7 @@ private:
 			std::thread([queue, idGenerator]() {
 				do {
 					auto id = idGenerator->fetch_add(1);
-					if (id <= 999999) {
+					if (id <= (max - 1)) {
 						queue->push(id + 1);
 					} else {
 						break;
@@ -152,14 +120,14 @@ private:
 					while (queue->pop(val)) {
 						std::scoped_lock lock(*tmpVecMtx);
 						tmpSet->emplace(val);
-						if (val > 1000000) {
+						if (val > max) {
 							int a = 1;
 						}
 					}
 
 					{
 						std::scoped_lock lock(*tmpVecMtx);
-						if (*accumulative + tmpSet->size() == 1000000) break;
+						if (*accumulative + tmpSet->size() == max) break;
 					}
 					std::this_thread::sleep_for(1ms);
 				} while (true);
