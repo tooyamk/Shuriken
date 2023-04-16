@@ -1,12 +1,8 @@
-#include "AndroidApp.h"
-
-#if SRK_OS == SRK_OS_ANDROID
-#include "srk/Printer.h"
+#include "AndroidNativeApplication.h"
 #include "srk/events/EventDispatcher.h"
-#include "srk/modules/windows/WindowModule.h"
 
 namespace srk::extensions {
-    AndroidNativeApplication::AndroidNativeApplication(ANativeActivity* activity, ALooper* looper, bool shared) :
+	AndroidNativeApplication::AndroidNativeApplication(ANativeActivity* activity, ALooper* looper, bool shared) :
         _activity(activity),
         _window(nullptr),
         _inputQueue(nullptr),
@@ -47,33 +43,23 @@ namespace srk::extensions {
     AndroidNativeApplication* AndroidNativeApplication::_ins = nullptr;
 
     void AndroidNativeApplication::init(ANativeActivity* activity, ALooper* looper, bool shared) {
-        using namespace std::string_view_literals;
-
-        printaln(L"init"sv);
         _ins = new AndroidNativeApplication(activity, looper, shared);
     }
 
     void AndroidNativeApplication::setState(State state) {
-        using namespace std::string_view_literals;
-
         std::scoped_lock lock(_mutex);
 
         if (_state != state) {
             _state = state;
-            printaln(L"state changed "sv, (uint8_t)_state);
             _eventDispatcher->dispatchEvent(this, Event::STATE_CHANGED, &_state);
         }
     }
 
     void AndroidNativeApplication::setWindow(ANativeWindow* window) {
-        using namespace std::string_view_literals;
-
         std::scoped_lock lock(_mutex);
 
         if (_window != window) {
-            _eventDispatcher->dispatchEvent(this, Event::WINDOW_CHANGING, _window);
             _window = window;
-            printaln(L"window changed "sv, _window);
             _eventDispatcher->dispatchEvent(this, Event::WINDOW_CHANGED, _window);
         }
     }
@@ -82,7 +68,6 @@ namespace srk::extensions {
         std::scoped_lock lock(_mutex);
 
         if (_inputQueue != queue) {
-            _eventDispatcher->dispatchEvent(this, Event::INPUT_QUEUE_CHANGING, _inputQueue);
             _inputQueue = queue;
             _eventDispatcher->dispatchEvent(this, Event::INPUT_QUEUE_CHANGED, _inputQueue);
         }
@@ -97,13 +82,10 @@ namespace srk::extensions {
     }
 
     void AndroidNativeApplication::setFocus(bool hasFocus) {
-        using namespace std::string_view_literals;
-
         std::scoped_lock lock(_mutex);
 
         if (_hasFocus != hasFocus) {
             _hasFocus = hasFocus;
-            printaln(L"focus changed "sv, _hasFocus);
             _eventDispatcher->dispatchEvent(this, Event::FOCUS_CHANGED, &_hasFocus);
         }
     }
@@ -209,153 +191,3 @@ namespace srk::extensions {
         _getApp(activity)->lowMemory();
     }
 }
-
-namespace srk::modules::windows::android_native {
-    Manager::Manager() :
-        _window(nullptr) {
-	}
-
-	Manager::~Manager() {
-	}
-
-	IntrusivePtr<IWindow> Manager::crerate(const CreateWindowDescriptor& desc) {
-        if (_window) return false;
-
-		auto win = new Window(*this);
-		if (!win->create(desc)) {
-			delete win;
-			win = nullptr;
-		}
-        _window = win;
-        
-		return win;
-	}
-
-	bool Manager::processEvent(const IWindowModule::EventFn& fn) const {
-		return true;
-	}
-
-    //=============================
-
-    Window::Window(Manager& manager) :
-        _manager(manager),
-		_eventDispatcher(new events::EventDispatcher<WindowEvent>()) {
-	}
-
-	Window::~Window() {
-		close();
-	}
-
-	IntrusivePtr<events::IEventDispatcher<WindowEvent>> Window::getEventDispatcher() const {
-		return _eventDispatcher;
-	}
-
-	bool Window::create(const CreateWindowDescriptor& desc) {
-		_data.isCreated = true;
-		_data.sentContentSize = getContentSize();
-		setTitle(desc.title);
-
-		_manager->add(_data.wnd, this);
-
-		return true;
-	}
-
-    bool Window::isClosed() const {
-		return false;
-	}
-
-	void* Window::getNative(const std::string_view& native) const {
-		return nullptr;
-	}
-
-	bool Window::isFullScreen() const {
-		return true;
-	}
-
-	Vec4ui32 Window::getFrameExtents() const {
-        Vec4ui32 extents;
-		return extents;
-	}
-
-	void Window::toggleFullScreen() {
-	}
-
-	Vec2ui32 Window::getContentSize() const {
-		Vec2ui32 size;
-        
-        return size;
-	}
-
-	void Window::setContentSize(const Vec2ui32& size) {
-	}
-
-	std::string_view Window::getTitle() const {
-		return _data.title;
-	}
-
-	void Window::setTitle(const std::string_view& title) {
-	}
-
-	void Window::setPosition(const Vec2i32& pos) {
-	}
-
-	void Window::setCursorVisible(bool visible) {
-	}
-
-	bool Window::hasFocus() const {
-        return false;
-	}
-
-	void Window::setFocus() {
-	}
-
-	bool Window::isMaximized() const {
-        return false;
-	}
-
-	void Window::setMaximized() {
-	}
-
-	bool Window::isMinimized() const {
-        return false;
-	}
-
-	void Window::setMinimized() {
-	}
-
-	void Window::setRestore() {
-	}
-
-	bool Window::isVisible() const {
-        return false;
-	}
-
-	void Window::setVisible(bool b) {
-	}
-
-	void Window::close() {
-		if (!_data.isCreated) return;
-
-        if (this->getReferenceCount()) {
-            _eventDispatcher->dispatchEvent(this, WindowEvent::CLOSING);
-        } else {
-            _eventDispatcher->dispatchEvent((void*)this, WindowEvent::CLOSED);
-        }
-
-		_manager->remove(_data.wnd);
-        
-        //todo
-
-		_data = decltype(_data)();
-
-        if (this->getReferenceCount()) {
-            _eventDispatcher->dispatchEvent(this, WindowEvent::CLOSED);
-        } else {
-            _eventDispatcher->dispatchEvent((void*)this, WindowEvent::CLOSED);
-        }
-	}
-
-    void Window::processEvent(void* data) {
-    }
-}
-#endif

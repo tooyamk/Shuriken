@@ -15,7 +15,6 @@ int32_t main() {
     [NSApp setDelegate:[AppDelegate new]];
     [NSApp finishLaunching];
     
-	Enttry e;
-	return e.run();
+	return Enttry().run();
 }
 #endif

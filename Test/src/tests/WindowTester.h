@@ -20,7 +20,7 @@ public:
 		auto tryCreateWndFn = [wm, &activedWindows](const CreateWindowDescriptor& desc) {
 			if (auto win = wm->crerate(desc); win) {
 				auto border = win->getFrameExtents();
-				printaln(L"border "sv, border[0], " ", border[1], " ", border[2], " ", border[3]);
+				printaln(L"border "sv, border[0], L" "sv, border[1], L" "sv, border[2], L" "sv, border[3]);
 				activedWindows.emplace_back(win);
 
 				win->getEventDispatcher()->addEventListener(WindowEvent::CLOSING, createEventListener<WindowEvent>([](Event<WindowEvent>& e) {
@@ -60,6 +60,8 @@ public:
 					auto size = win->getContentSize();
 					printaln(L"wnd : "sv, win->getTitle(), L" => resize  "sv, size[0], L"   "sv, size[1]);
 					}));
+
+				win->setVisible(true);
 			}
 		};
 
@@ -110,7 +112,7 @@ public:
 					t = tt;
 					if (step == 0) {
 						step = 1;
-						activedWindows[0]->toggleFullScreen();
+						//activedWindows[0]->toggleFullScreen();
 						//printaln(L"is visible "sv, activedWindows[0]->isVisible());
 						//activedWindows[0]->toggleFullScreen();
 						//app->toggleFullscreen();

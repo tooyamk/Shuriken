@@ -2,7 +2,10 @@
 
 #include "srk/Framework.h"
 #include "srk/Printer.h"
-#include "Extensions/ShaderTranspiler/src/srk/ShaderTranspiler.h"
+#if __has_include("srk/ShaderTranspiler.h")
+#	define SRK_HAS_SHADER_TRANSPILER_H
+#	include "srk/ShaderTranspiler.h"
+#endif
 #include <fstream>
 
 using namespace srk;
@@ -92,6 +95,8 @@ inline std::string getWindowDllPath() {
 	auto name = "x11"sv;
 #elif SRK_OS == SRK_OS_MACOS
 	auto name = "cocoa"sv;
+#elif SRK_OS == SRK_OS_ANDROID
+	auto name = "android_native"sv;
 #else
 	auto name = ""sv;
 #endif
@@ -148,6 +153,7 @@ inline ProgramSource SRK_CALL readProgramSource(T&& path, ProgramStage type) {
 	return std::move(s);
 }
 
+#ifdef SRK_HAS_SHADER_TRANSPILER_H
 inline IntrusivePtr<extensions::ShaderTranspiler> shaderTranspiler;
 inline ProgramTranspileHandler programTranspileHandler = [](const ProgramTranspileInfo& info) {
 	if (!shaderTranspiler) {
@@ -164,6 +170,11 @@ inline ProgramTranspileHandler programTranspileHandler = [](const ProgramTranspi
 	}
 	return src;
 };
+#else
+inline ProgramTranspileHandler programTranspileHandler = [](const ProgramTranspileInfo& info) {
+	return ProgramSource();
+};
+#endif
 
 inline bool SRK_CALL createProgram(IProgram& program, const std::string_view& vert, const std::string_view& frag) {
 	using namespace std::string_view_literals;

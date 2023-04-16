@@ -2,12 +2,34 @@
 
 #include "Helper.h"
 
-#include "Extensions/ASTCConverter/src/srk/ASTCConverter.h"
-#include "Extensions/BC7Converter/src/srk/BC7Converter.h"
-#include "Extensions/FBXConverter/src/srk/FBXConverter.h"
-#include "Extensions/PNGConverter/src/srk/PNGConverter.h"
-#include "Extensions/JPEGConverter/src/srk/JPEGConverter.h"
-#include "Extensions/ShaderScript/src/srk/ShaderScript.h"
+#if __has_include("srk/AndroidNativeApplication.h")
+#	define SRK_HAS_ANDROID_NATIVE_APPLICATION_H
+#	include "srk/AndroidNativeApplication.h"
+#endif
+#if __has_include("srk/ASTCConverter.h")
+#	define SRK_HAS_ASTC_CONVERTER_H
+#	include "srk/ASTCConverter.h"
+#endif
+#if __has_include("srk/BC7Converter.h")
+#	define SRK_HAS_BC7_CONVERTER_H
+#	include "srk/BC7Converter.h"
+#endif
+#if __has_include("srk/FBXConverter.h")
+#	define SRK_HAS_FBX_CONVERTER_H
+#	include "srk/FBXConverter.h"
+#endif
+#if __has_include("srk/PNGConverter.h")
+#	define SRK_HAS_PNG_CONVERTER_H
+#	include "srk/PNGConverter.h"
+#endif
+#if __has_include("srk/JPEGConverter.h")
+#	define SRK_HAS_JPEG_CONVERTER_H
+#	include "srk/JPEGConverter.h"
+#endif
+#if __has_include("srk/ShaderScript.h")
+#	define SRK_HAS_SHADER_SCRIPT_H
+#	include "srk/ShaderScript.h"
+#endif
 
 using namespace srk;
 using namespace srk::components;
