@@ -6,10 +6,12 @@ file(READ ${file} content)
 string(REGEX REPLACE "add_subdirectory\\(cmake/modules\\).+include\\(CoverageReport\\)" "add_subdirectory(cmake/modules)\r\ninstall(DIRECTORY include/dxc DESTINATION include FILES_MATCHING PATTERN \"*.h\")\r\ninclude(CoverageReport)" content "${content}")
 file(WRITE ${file} "${content}")
 
-#set(file ${SRC_DIR}/cmake/modules/AddLLVM.cmake)
-#file(READ ${file} content)
+set(file ${SRC_DIR}/cmake/modules/AddLLVM.cmake)
+file(READ ${file} content)
 #string(REGEX REPLACE "set_target_properties\\(\\$\\{name}[^\r\n]*[\r\n]+[^\r\n]*PROPERTIES[^\r\n]*[\r\n]+[^\r\n]*SOVERSION[^\r\n]+[\r\n]+[^\r\n]*VERSION \\$\\{LLVM_VERSION_MAJOR}\\.\\$\\{LLVM_VERSION_MINOR}\\.\\$\\{LLVM_VERSION_PATCH}\\$\\{LLVM_VERSION_SUFFIX}\\)" "" content "${content}")
-#file(WRITE ${file} "${content}")
+string(REGEX REPLACE "install\\(TARGETS \\$\\{name\\}[\r\n]+[^\r\n]+EXPORT LLVMExports[\r\n]+[^\r\n]+\\$\\{install_type\\} DESTINATION lib\\$\\{LLVM_LIBDIR_SUFFIX\\}[\r\n]+[^\r\n]+COMPONENT \\$\\{name\\}\\)" 
+"if(\${name} STREQUAL \"LLVMDxcSupport\")\r\ninstall(TARGETS \${name} EXPORT LLVMExports \${install_type} DESTINATION lib\${LLVM_LIBDIR_SUFFIX} COMPONENT \${name})\r\nendif()" content "${content}")
+file(WRITE ${file} "${content}")
 
 set(file ${SRC_DIR}/cmake/modules/CrossCompile.cmake)
 file(READ ${file} content)
