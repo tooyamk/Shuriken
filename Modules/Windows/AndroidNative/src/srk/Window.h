@@ -57,8 +57,8 @@ namespace srk::modules::windows::android_native {
 
 			Vec2ui32 sentContentSize;
 		} _data;
+
         
-		//void SRK_CALL _sendResizedEvent();
-        //static void SRK_CALL _proc(void* target, Msg msg, void* param);
+		void SRK_CALL _sendResizedEvent(const Vec2ui32& size);
 	};
 }

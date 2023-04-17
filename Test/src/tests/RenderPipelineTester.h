@@ -134,6 +134,7 @@ public:
 			IntrusivePtr tag2 = new RenderTagCollection();
 			tag2->add(forwardAddTag);
 
+#ifdef SRK_HAS_FBX_CONVERTER_H
 			auto parsed = extensions::FBXConverter::decode(readFile(Application::getAppPath().parent_path().u8string() + "/Resources/teapot.fbx"));
 			for (auto& mr : parsed.meshes) {
 				if (mr) {
@@ -182,6 +183,7 @@ public:
 					}
 				}
 			}
+#endif
 
 			{
 				IntrusivePtr s = new Shader();
@@ -223,6 +225,7 @@ public:
 		}
 
 		{
+#ifdef SRK_HAS_PNG_CONVERTER_H
 			auto texRes = graphics->createTexture2DResource();
 			if (texRes) {
 				auto img0 = extensions::PNGConverter::decode(readFile(Application::getAppPath().parent_path().u8string() + "/Resources/white.png"));
@@ -247,6 +250,7 @@ public:
 
 				renderData.material->getParameters()->set(ShaderPredefine::DIFFUSE_TEXTURE, new ShaderParameter(ShaderParameterUsage::AUTO))->set(texView);
 				renderData.material2->getParameters()->set(ShaderPredefine::DIFFUSE_TEXTURE, new ShaderParameter(ShaderParameterUsage::AUTO))->set(texView);
+#endif
 			}
 
 			auto sam = graphics->createSampler();

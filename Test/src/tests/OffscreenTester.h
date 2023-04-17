@@ -161,6 +161,7 @@ float4 main(PS_INPUT input) : SV_TARGET {
 							img.source = std::move(pixels);
 
 							///*
+#ifdef SRK_HAS_PNG_CONVERTER_H
 							auto aaa = extensions::PNGConverter::decode(readFile("D:/Users/Sephiroth/Desktop/wall.png"));
 							if (aaa && aaa->format == modules::graphics::TextureFormat::R8G8B8_UNORM) {
 								ByteArray dst(aaa->dimensions.getMultiplies() * 4);
@@ -173,6 +174,7 @@ float4 main(PS_INPUT input) : SV_TARGET {
 							//*/
 
 							///*
+#	ifdef SRK_HAS_ASTC_CONVERTER_H
 							auto t0 = srk::Time::now();
 							auto out = extensions::ASTCConverter::encode(*aaa, Vec3ui32(4, 4, 1), extensions::ASTCConverter::Profile::LDR, extensions::ASTCConverter::Quality::FASTEST, extensions::ASTCConverter::Flags::NONE, 10);
 							if (out.isValid()) {
@@ -180,6 +182,8 @@ float4 main(PS_INPUT input) : SV_TARGET {
 								writeFile("D:/Users/Sephiroth/Desktop/6x6.astc", out);
 								printaln(L"doneeeeeeeeeeeeeeeeee"sv);
 							}
+#	endif
+#endif
 							//*/
 
 							//writeFile(Application::getAppPath().parent_path().string() + "/offscreen.png", extensions::PNGConverter::encode(img));

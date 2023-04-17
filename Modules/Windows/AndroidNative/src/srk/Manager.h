@@ -17,6 +17,10 @@ namespace srk::modules::windows::android_native {
                 extensions::AndroidNativeApplication::State state;
 				bool hasFocus;
 				ANativeWindow* window;
+				struct {
+					int32_t width;
+					int32_t height;
+				} size;
 			} data;
 		};
 
@@ -43,6 +47,10 @@ namespace srk::modules::windows::android_native {
             return _hasFocus;
         }
 
+		inline const Vec2ui32& SRK_CALL getNativeWindowSize() const {
+			return _nativeWindowSize;
+		}
+
     private:
 		IntrusivePtr<Ref> _loader;
 
@@ -52,6 +60,7 @@ namespace srk::modules::windows::android_native {
         mutable ANativeWindow* _processedNativeWindow;
 
         mutable bool _hasFocus;
+		mutable Vec2ui32 _nativeWindowSize;
 
         events::EventListener<extensions::AndroidNativeApplication::Event, events::EvtMethod<extensions::AndroidNativeApplication::Event, Manager>> _evtHandler;
         mutable lockfree::RingQueue<Message, lockfree::RingQueueMode::SPSC> _evtQueue;

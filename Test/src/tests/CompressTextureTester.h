@@ -60,11 +60,12 @@ public:
 		IntrusivePtr<Image> src;
 		{
 			auto srcBin = readFile(srcDir + "/Resources/tex1.jpg");
-			if (srcBin.seekBegin().read<uint32_t>() == extensions::PNGConverter::HEADER_MAGIC) {
-				src = extensions::PNGConverter::decode(srcBin.seekBegin());
-			} else if (srcBin.seekBegin().read<ba_vt::UIX>(3) == extensions::JPEGConverter::HEADER_MAGIC) {
-				src = extensions::JPEGConverter::decode(srcBin.seekBegin());
-			}
+#ifdef SRK_HAS_PNG_CONVERTER_H
+			if (srcBin.seekBegin().read<uint32_t>() == extensions::PNGConverter::HEADER_MAGIC) src = extensions::PNGConverter::decode(srcBin.seekBegin());
+#endif
+#ifdef SRK_HAS_JPEG_CONVERTER_H
+			if (!src && srcBin.seekBegin().read<ba_vt::UIX>(3) == extensions::JPEGConverter::HEADER_MAGIC) src = extensions::JPEGConverter::decode(srcBin.seekBegin());
+#endif
 		}
 		if (!src) return 0;
 
@@ -104,9 +105,11 @@ public:
 		for (auto i = 0; i < 64; ++i) src->source.write<uint8_t>(255);*/
 
 		auto t0 = Time::now();
+#ifdef SRK_HAS_ASTC_CONVERTER_H
 		/*auto astc = extensions::ASTCConverter::encode(*src, Vec3ui32(4, 4, 1), extensions::ASTCConverter::Profile::LDR, extensions::ASTCConverter::Quality::MEDIUM, extensions::ASTCConverter::Flags::NONE, 12, [&tp](const std::function<void()>& fn) {
 			return tp.enqueue(fn);
 			});*/
+#endif
 
 		IntrusivePtr<Image> srcMp1 = new Image();
 		srcMp1->dimensions = src->dimensions >> 1;
@@ -119,6 +122,7 @@ public:
 		//printaln(Time::now() - t0);
 		//writeFile(srcDir + "/img.txt", astc);
 
+#ifdef SRK_HAS_BC7_CONVERTER_H
 		auto bc7 = extensions::BC7Converter::encode(*src, 2, 64, extensions::BC7Converter::Flags::NONE, 12, [&tp](const std::function<void()>& fn) {
 			return tp.enqueue(fn);
 			});
@@ -130,6 +134,7 @@ public:
 		bc7.setPosition(bc7.getLength());
 		bc7.write<ba_vt::BYTE>(bc7Mp1);
 		writeFile(srcDir + "/img.txt", bc7);
+#endif
 
 		printaln(L"finish!!!"sv);
 

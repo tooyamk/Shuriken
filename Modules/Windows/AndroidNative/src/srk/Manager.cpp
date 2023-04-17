@@ -1,6 +1,7 @@
 #include "Manager.h"
 #include "Window.h"
 #include "CreateModule.h"
+#include "srk/Printer.h"
 
 namespace srk::modules::windows::android_native {
 	Manager::Manager(Ref* loader) :
@@ -13,9 +14,11 @@ namespace srk::modules::windows::android_native {
             auto evtDispr = app.getEventDispatcher();
             evtDispr->addEventListener(extensions::AndroidNativeApplication::Event::STATE_CHANGED, mgr->_evtHandler);
             evtDispr->addEventListener(extensions::AndroidNativeApplication::Event::WINDOW_CHANGED, mgr->_evtHandler);
+            evtDispr->addEventListener(extensions::AndroidNativeApplication::Event::WINDOW_RESIZE, mgr->_evtHandler);
             evtDispr->addEventListener(extensions::AndroidNativeApplication::Event::FOCUS_CHANGED, mgr->_evtHandler);
 
             mgr->_nativeWindow = app.getWindow();
+            mgr->_nativeWindowSize = app.getWindowSize();
             mgr->_hasFocus = app.hasFocus();
         });
 	}
@@ -25,6 +28,7 @@ namespace srk::modules::windows::android_native {
             auto evtDispr = app.getEventDispatcher();
             evtDispr->removeEventListener(extensions::AndroidNativeApplication::Event::STATE_CHANGED, mgr->_evtHandler);
             evtDispr->removeEventListener(extensions::AndroidNativeApplication::Event::WINDOW_CHANGED, mgr->_evtHandler);
+            evtDispr->removeEventListener(extensions::AndroidNativeApplication::Event::WINDOW_RESIZE, mgr->_evtHandler);
             evtDispr->removeEventListener(extensions::AndroidNativeApplication::Event::FOCUS_CHANGED, mgr->_evtHandler);
         });
 	}
@@ -48,6 +52,9 @@ namespace srk::modules::windows::android_native {
         switch (msg.type) {
 		case extensions::AndroidNativeApplication::Event::WINDOW_CHANGED:
 			_nativeWindow = msg.data.window;
+			break;
+        case extensions::AndroidNativeApplication::Event::WINDOW_RESIZE:
+			_nativeWindowSize.set(msg.data.size.width, msg.data.size.height);
 			break;
         case extensions::AndroidNativeApplication::Event::FOCUS_CHANGED:
             _hasFocus = msg.data.hasFocus;
@@ -99,6 +106,17 @@ namespace srk::modules::windows::android_native {
                 while (_processedNativeWindow != window) _cond.wait(lock);
             }
             
+            break;
+        }
+        case extensions::AndroidNativeApplication::Event::WINDOW_RESIZE:
+        {
+            Message msg;
+            msg.type = extensions::AndroidNativeApplication::Event::WINDOW_RESIZE;
+            auto size = e.getData<uint32_t>();
+            msg.data.size.width = size[0];
+            msg.data.size.height = size[1];
+            _evtQueue.push(msg);
+
             break;
         }
         case extensions::AndroidNativeApplication::Event::FOCUS_CHANGED:

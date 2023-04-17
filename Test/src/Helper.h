@@ -96,7 +96,7 @@ inline std::string getWindowDllPath() {
 #elif SRK_OS == SRK_OS_MACOS
 	auto name = "cocoa"sv;
 #elif SRK_OS == SRK_OS_ANDROID
-	auto name = "android_native"sv;
+	auto name = "android-native"sv;
 #else
 	auto name = ""sv;
 #endif

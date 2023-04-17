@@ -37,7 +37,6 @@ namespace srk::extensions {
     }
 
     AndroidNativeApplication::~AndroidNativeApplication() {
-
     }
 
     AndroidNativeApplication* AndroidNativeApplication::_ins = nullptr;
@@ -64,6 +63,13 @@ namespace srk::extensions {
         }
     }
 
+    void AndroidNativeApplication::setWindowSize(Vec2ui32 size) {
+        if (_windowSize != size) {
+            _windowSize = size;
+            _eventDispatcher->dispatchEvent(this, Event::WINDOW_RESIZE, &_windowSize);
+        }
+    }
+
     void AndroidNativeApplication::setInputQueue(AInputQueue* queue) {
         std::scoped_lock lock(_mutex);
 
@@ -78,7 +84,6 @@ namespace srk::extensions {
     }
 
     void AndroidNativeApplication::onDestroy() {
-
     }
 
     void AndroidNativeApplication::setFocus(bool hasFocus) {
@@ -90,21 +95,9 @@ namespace srk::extensions {
         }
     }
 
-    void AndroidNativeApplication::onWindowResized(ANativeWindow* window) {
-
-    }
-
-    void AndroidNativeApplication::onWindowRedrawNeeded(ANativeWindow* window) {
-
-    }
-
-    void AndroidNativeApplication::onContentRectChanged(const ARect* rect) {
-
-    }
-
-    void AndroidNativeApplication::onConfigurationChanged() {
-
-    }
+    //void AndroidNativeApplication::onWindowRedrawNeeded(ANativeWindow* window) { }
+    //void AndroidNativeApplication::onContentRectChanged(const ARect* rect) { }
+    //void AndroidNativeApplication::onConfigurationChanged() { }
 
     void AndroidNativeApplication::lowMemory() {
         std::scoped_lock lock(_mutex);
@@ -160,11 +153,11 @@ namespace srk::extensions {
     }
 
     void AndroidNativeApplication::_onNativeWindowResized(ANativeActivity* activity, ANativeWindow* window) {
-        _getApp(activity)->onWindowResized(window);
+        _getApp(activity)->setWindowSize(Vec2ui32(ANativeWindow_getWidth(window), ANativeWindow_getHeight(window)));
     }
 
     void AndroidNativeApplication::_onNativeWindowRedrawNeeded(ANativeActivity* activity, ANativeWindow* window) {
-        _getApp(activity)->onWindowRedrawNeeded(window);
+        //_getApp(activity)->onWindowRedrawNeeded(window);
     }
 
     void AndroidNativeApplication::_onNativeWindowDestroyed(ANativeActivity* activity, ANativeWindow* window) {
@@ -180,11 +173,11 @@ namespace srk::extensions {
     }
 
     void AndroidNativeApplication::_onContentRectChanged(ANativeActivity* activity, const ARect* rect) {
-        _getApp(activity)->onContentRectChanged(rect);
+        //_getApp(activity)->onContentRectChanged(rect);
     }
 
     void AndroidNativeApplication::_onConfigurationChanged(ANativeActivity* activity) {
-        _getApp(activity)->onConfigurationChanged();
+        //_getApp(activity)->onConfigurationChanged();
     }
 
     void AndroidNativeApplication::_onLowMemory(ANativeActivity* activity) {

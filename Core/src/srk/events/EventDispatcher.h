@@ -15,7 +15,9 @@ namespace srk::events {
 		EventDispatcher& operator=(const EventDispatcher&) = delete;
 		EventDispatcher& operator=(EventDispatcher&&) = delete;
 
-		virtual ~EventDispatcher() {}
+		virtual ~EventDispatcher() {
+			removeEventListeners();
+		}
 
 		virtual bool SRK_CALL addEventListener(const EvtType& type, IEventListener<EvtType>& listener) override {
 			bool rst = true;
@@ -26,34 +28,9 @@ namespace srk::events {
 				listener.ref();
 			} else {
 				auto& tl = pair.first->second;
-				auto& list = tl.listeners;
-				if (tl.numValidListeners) {
-					if (tl.dispatching) {
-						for (auto& f : list) {
-							if (f.rawListener == &listener) {
-								if (f.valid) {
-									f.valid = false;
-									rst = false;
-									--tl.numValidListeners;
-								}
-								break;
-							}
-						}
-					} else {
-						for (auto itr = list.begin(); itr != list.end(); ++itr) {
-							if (&listener == (*itr).rawListener) {
-								rst = false;
-								--tl.numValidListeners;
+				if (tl.template remove<false>(listener)) rst = false;
 
-								list.erase(itr);
-								--tl.numTotalListeners;
-								break;
-							}
-						}
-					}
-				}
-
-				list.emplace_back(&listener);
+				tl.listeners.emplace_back(&listener);
 				++tl.numValidListeners;
 				++tl.numTotalListeners;
 			}
@@ -100,37 +77,7 @@ namespace srk::events {
 		virtual bool SRK_CALL removeEventListener(const EvtType& type, const IEventListener<EvtType>& listener) override {
 			std::scoped_lock lock(_mutex);
 
-			if (auto itr = _listeners.find(type); itr != _listeners.end()) {
-				if (auto& tl = itr->second; tl.numValidListeners) {
-					if (auto& list = tl.listeners; tl.dispatching) {
-						for (auto& f : list) {
-							if (f.rawListener == &listener) {
-								if (f.valid) {
-									f.valid = false;
-									Ref::unref(*f.rawListener);
-									--tl.numValidListeners;
-
-									return true;
-								}
-
-								return false;
-							}
-						}
-					} else {
-						for (auto itr = list.begin(); itr != list.end(); ++itr) {
-							if (&listener == (*itr).rawListener) {
-								Ref::unref(*(*itr).rawListener);
-
-								list.erase(itr);
-								--tl.numValidListeners;
-								--tl.numTotalListeners;
-
-								return true;
-							}
-						}
-					}
-				}
-			}
+			if (auto itr = _listeners.find(type); itr != _listeners.end()) return itr->second.template remove<true>(listener);
 
 			return false;
 		}
@@ -139,7 +86,7 @@ namespace srk::events {
 			std::scoped_lock lock(_mutex);
 
 			auto itr = _listeners.find(type);
-			return itr == _listeners.end() ? 0 : _removeEventListeners(itr->second);
+			return itr == _listeners.end() ? 0 : itr->second.removeAll();
 		}
 
 		virtual uint32_t SRK_CALL removeEventListeners() override {
@@ -147,7 +94,7 @@ namespace srk::events {
 
 			std::scoped_lock lock(_mutex);
 
-			for (auto& itr : _listeners)  n += _removeEventListeners(itr.second);
+			for (auto& itr : _listeners)  n += itr.second.removeAll();
 			return n;
 		}
 
@@ -213,32 +160,64 @@ namespace srk::events {
 			uint32_t numValidListeners;
 			uint32_t numTotalListeners;
 			std::vector<Listener> listeners;
+
+			template<bool Unref>
+			bool SRK_CALL remove(const IEventListener<EvtType>& listener) {
+				if (!numValidListeners) return false;
+
+				if (dispatching) {
+					for (auto& f : listeners) {
+						if (f.rawListener == &listener) {
+							if (f.valid) {
+								f.valid = false;
+								if constexpr (Unref) Ref::unref(*f.rawListener);
+								--numValidListeners;
+								
+								return true;
+							}
+						}
+					}
+				} else {
+					for (auto itr = listeners.begin(); itr != listeners.end(); ++itr) {
+						if (&listener == (*itr).rawListener) {
+							if constexpr (Unref) Ref::unref(*(*itr).rawListener);
+							listeners.erase(itr);
+							--numValidListeners;
+							--numTotalListeners;
+
+							return true;
+						}
+					}
+				}
+
+				return false;
+			}
+
+			uint32_t SRK_CALL removeAll() {
+				auto n = numValidListeners;
+				if (n) {
+					if (dispatching) {
+						for (auto& f : listeners) {
+							if (f.valid) {
+								f.valid = false;
+								Ref::unref(*f.rawListener);
+							}
+						}
+					} else {
+						for (auto& f : listeners) Ref::unref(*f.rawListener);
+						listeners.clear();
+						numTotalListeners = 0;
+					}
+
+					numValidListeners = 0;
+				}
+
+				return n;
+			}
 		};
 
 
 		mutable std::recursive_mutex _mutex;
 		mutable std::unordered_map<EvtType, TypeListeners> _listeners;
-
-		uint32_t SRK_CALL _removeEventListeners(TypeListeners& typeListeners) {
-			auto n = typeListeners.numValidListeners;
-			if (n) {
-				if (auto& list = typeListeners.listeners; typeListeners.dispatching) {
-					for (auto& f : list) {
-						if (f.valid) {
-							f.valid = false;
-							Ref::unref(*f.rawListener);
-							--typeListeners.numValidListeners;
-						}
-					}
-				} else {
-					for (auto& f : list) Ref::unref(*f.rawListener);
-					list.clear();
-					typeListeners.numValidListeners = 0;
-					typeListeners.numTotalListeners = 0;
-				}
-			}
-
-			return n;
-		}
 	};
 }

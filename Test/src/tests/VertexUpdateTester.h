@@ -138,6 +138,7 @@ public:
 		}
 
 		{
+#ifdef SRK_HAS_PNG_CONVERTER_H
 			auto texRes = graphics->createTexture2DResource();
 			if (texRes) {
 				auto img0 = extensions::PNGConverter::decode(readFile(Application::getAppPath().parent_path().u8string() + "/Resources/c4.png"));
@@ -168,6 +169,7 @@ public:
 				//texRes->update(0, 0, Box2ui32(Vec2ui32(0, 0), Vec2ui32(2, 2)), texData);
 
 				renderData.spc->set("texDiffuse", new ShaderParameter(ShaderParameterUsage::AUTO))->set(texView).setUpdated();
+#endif
 			}
 
 			auto sam = graphics->createSampler();

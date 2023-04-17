@@ -20,10 +20,10 @@ namespace srk::modules::windows::android_native {
 
 	bool Window::create(const CreateWindowDescriptor& desc) {
         _data.wnd = _manager->getNativeWindow();
+		_data.sentContentSize = _manager->getNativeWindowSize();
         _data.hasFocus = _manager->hasFocus();
 
 		_data.isCreated = true;
-		_data.sentContentSize = getContentSize();
 		setTitle(desc.title);
 
 		_manager->add(extensions::AndroidNativeApplication::getInstance()->getActivity(), this);
@@ -58,9 +58,7 @@ namespace srk::modules::windows::android_native {
 	}
 
 	Vec2ui32 Window::getContentSize() const {
-		Vec2ui32 size;
-        
-        return size;
+        return _data.sentContentSize;
 	}
 
 	void Window::setContentSize(const Vec2ui32& size) {
@@ -106,7 +104,7 @@ namespace srk::modules::windows::android_native {
 	}
 
 	bool Window::isVisible() const {
-        return false;
+        return true;
 	}
 
 	void Window::setVisible(bool b) {
@@ -142,6 +140,9 @@ namespace srk::modules::windows::android_native {
             _data.wnd = msg.data.window;
             break;
         }
+		case extensions::AndroidNativeApplication::Event::WINDOW_RESIZE:
+			_sendResizedEvent(Vec2ui32(msg.data.size.width, msg.data.size.height));
+            break;
 		case extensions::AndroidNativeApplication::Event::FOCUS_CHANGED:
 		{
 			_data.hasFocus = msg.data.hasFocus;
@@ -151,4 +152,12 @@ namespace srk::modules::windows::android_native {
 		}
         }
     }
+
+	//platform
+	void Window::_sendResizedEvent(const Vec2ui32& size) {
+		if (_data.sentContentSize != size) {
+			_data.sentContentSize = size;
+			_eventDispatcher->dispatchEvent(this, WindowEvent::RESIZED);
+		}
+	}
 }

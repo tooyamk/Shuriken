@@ -2,6 +2,7 @@
 
 #include "srk/Intrusive.h"
 #include "srk/events/IEventDispatcher.h"
+#include "srk/math/Vector.h"
 #include <android/looper.h>
 #include <android/native_activity.h>
 #include <filesystem>
@@ -22,6 +23,7 @@ namespace srk::extensions {
         enum class Event : uint8_t {
             STATE_CHANGED,
             WINDOW_CHANGED,
+            WINDOW_RESIZE,
             INPUT_QUEUE_CHANGED,
             FOCUS_CHANGED,
             LOW_MEMORY
@@ -49,6 +51,11 @@ namespace srk::extensions {
         }
         void SRK_CALL setWindow(ANativeWindow* window);
 
+        inline const Vec2ui32& SRK_CALL getWindowSize() const {
+            return _windowSize;
+        }
+        void SRK_CALL setWindowSize(Vec2ui32 size);
+
         void SRK_CALL setInputQueue(AInputQueue* queue);
         void* SRK_CALL onSaveInstanceState(size_t* outSize);
         void SRK_CALL onDestroy();
@@ -58,10 +65,9 @@ namespace srk::extensions {
         }
         void SRK_CALL setFocus(bool hasFocus);
 
-        void SRK_CALL onWindowResized(ANativeWindow* window);
-        void SRK_CALL onWindowRedrawNeeded(ANativeWindow* window);
-        void SRK_CALL onContentRectChanged(const ARect* rect);
-        void SRK_CALL onConfigurationChanged();
+        //void SRK_CALL onWindowRedrawNeeded(ANativeWindow* window);
+        //void SRK_CALL onContentRectChanged(const ARect* rect);
+        //void SRK_CALL onConfigurationChanged();
         void SRK_CALL lowMemory();
 
         std::filesystem::path SRK_CALL getAppPath();
@@ -93,6 +99,7 @@ namespace srk::extensions {
 
         bool _hasFocus;
         State _state;
+        Vec2ui32 _windowSize;
 
         static void _onStart(ANativeActivity* activity);
         static void _onResume(ANativeActivity* activity);

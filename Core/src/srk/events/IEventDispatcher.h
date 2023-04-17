@@ -66,7 +66,7 @@ namespace srk::events {
 	class EventListener<EvtType, EvtMethod<EvtType, Class>> : public IEventListener<EvtType> {
 	public:
 		EventListener(EvtMethod<EvtType, Class> method, Class* target) :
-			_method(target ? method : nullptr),
+			_method(method),
 			_target(target) {
 		}
 
@@ -116,10 +116,11 @@ namespace srk::events {
 
 
 	template<typename EvtType, typename Fn>
+	requires std::invocable<Fn, Event<EvtType>&>
 	class EventListener<EvtType, Fn> : public IEventListener<EvtType> {
 	public:
 		EventListener(Fn&& fn) :
-			_fn(fn) {
+			_fn(std::forward<Fn>(fn)) {
 		}
 
 		virtual void SRK_CALL operator()(Event<EvtType>& e) const override {

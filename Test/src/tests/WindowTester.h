@@ -10,10 +10,16 @@ public:
 		TerminateProcess(ppp, 0);*/
 
 		IntrusivePtr wml = new WindowModuleLoader();
-		if (!wml->load(getWindowDllPath())) return 0;
+		if (!wml->load(getWindowDllPath())) {
+			printaln(L"load window module failed"sv);
+			return 0;
+		}
 
 		auto wm = wml->create();
-		if (!wm) return 0;
+		if (!wm) {
+			printaln(L"create window module failed"sv);
+			return 0;
+		}
 
 		std::vector<IntrusivePtr<IWindow>> activedWindows;
 
@@ -62,6 +68,9 @@ public:
 					}));
 
 				win->setVisible(true);
+
+				auto size = win->getContentSize();
+				printaln(L"wnd created title("sv, win->getTitle(), L") size("sv, size[0], L","sv, size[1], L") focus("sv, win->hasFocus(), L")"sv);
 			}
 		};
 

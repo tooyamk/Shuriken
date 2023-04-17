@@ -225,6 +225,7 @@ public:
 
 			IntrusivePtr shader = new Shader();
 			auto shaderResourcesFolder = Application::getAppPath().parent_path().u8string() + "/Resources/shaders/";
+#ifdef SRK_HAS_SHADER_SCRIPT_H
 			extensions::ShaderScript::set(shader, graphics, readFile(Application::getAppPath().parent_path().u8string() + "/Resources/shaders/lighting.shader"),
 				[shaderResourcesFolder](const ProgramIncludeInfo& info) {
 					return readFile(shaderResourcesFolder + info.file);
@@ -232,6 +233,7 @@ public:
 				[](const ProgramInputInfo& info) {
 					return ProgramInputDescriptor();
 				}, programTranspileHandler);
+#endif
 
 			auto program = shader->select(nullptr);
 			printaln(L"Program : "sv, program ? L"succeed"sv : L"failed"sv);
@@ -273,9 +275,6 @@ public:
 
 		win->getEventDispatcher()->addEventListener(WindowEvent::CLOSED, createEventListener<WindowEvent>([looper](Event<WindowEvent>& e) {
 			looper->stop();
-			}));
-
-		win->getEventDispatcher()->addEventListener(WindowEvent::RESIZED, createEventListener<WindowEvent>([graphics](Event<WindowEvent>& e) {
 			}));
 
 		looper->getEventDispatcher()->addEventListener(LooperEvent::TICKING, createEventListener<LooperEvent>([graphics](Event<LooperEvent>& e) {

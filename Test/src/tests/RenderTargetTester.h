@@ -183,6 +183,7 @@ public:
 		}
 
 		{
+#ifdef SRK_HAS_PNG_CONVERTER_H
 			IntrusivePtr texRes = graphics->createTexture2DResource();
 			if (texRes) {
 				TextureFormat fmt;
@@ -203,6 +204,7 @@ public:
 
 				mipsData0Ptr.insert(mipsData0Ptr.end(), mipsData1Ptr.begin(), mipsData1Ptr.end());
 
+#	ifdef SRK_HAS_BC7_CONVERTER_H
 				if (isSupportTextureFormat(graphics, TextureFormat::BC7_UNORM)) {
 					auto bc7 = extensions::BC7Converter::encode(*img0, 2, 64, extensions::BC7Converter::Flags::NONE, 12);
 					if (bc7) {
@@ -212,6 +214,7 @@ public:
 						mipsData0Ptr[0] = img0->source.getSource();
 					}
 				}
+#	endif
 
 				auto hr = texRes->create(img0->dimensions, 0, 1, 1, fmt, Usage::NONE, Usage::UPDATE);//, mipsData0Ptr.data());
 				auto bbb = texRes->update(0, 0, Box2uz(Vec2uz::ZERO, img0->dimensions), mipsData0Ptr.data()[0]);
@@ -226,6 +229,7 @@ public:
 				//texRes->update(0, 0, Box2ui32(Vec2ui32(1, 1), Vec2ui32(2, 2)), texData);
 
 				renderData.spc->set("texDiffuse", new ShaderParameter(ShaderParameterUsage::AUTO))->set(texView).setUpdated();
+#endif
 			}
 
 			auto sam = graphics->createSampler();
