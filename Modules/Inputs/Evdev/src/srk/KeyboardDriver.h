@@ -21,7 +21,7 @@ namespace srk::modules::inputs::evdev_input {
 
 		int32_t _fd;
 
-		mutable AtomicLock<true, false> _lock;
+		mutable AtomicLock _lock;
 		mutable GenericKeyboardBuffer _inputBuffer;
 
 		inline static constexpr KeyboardVirtualKeyCode VK_MAPPER[] = {

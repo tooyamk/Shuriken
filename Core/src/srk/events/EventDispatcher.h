@@ -19,8 +19,9 @@ namespace srk::events {
 			removeEventListeners();
 		}
 
+		using IEventDispatcher<EvtType>::addEventListener;
 		virtual bool SRK_CALL addEventListener(const EvtType& type, IEventListener<EvtType>& listener) override {
-			bool rst = true;
+			bool newAdd = true;
 
 			std::scoped_lock lock(_mutex);
 
@@ -28,14 +29,18 @@ namespace srk::events {
 				listener.ref();
 			} else {
 				auto& tl = pair.first->second;
-				if (tl.template remove<false>(listener)) rst = false;
+				if (tl.template remove<false>(listener)) {
+					newAdd = false;
+				} else {
+					listener.ref();
+					++tl.numValidListeners;
+				}
 
 				tl.listeners.emplace_back(&listener);
-				++tl.numValidListeners;
 				++tl.numTotalListeners;
 			}
 
-			return rst;
+			return newAdd;
 		}
 
 		virtual uint32_t SRK_CALL getNumEventListeners() const override {
@@ -74,6 +79,7 @@ namespace srk::events {
 			return false;
 		}
 
+		using IEventDispatcher<EvtType>::removeEventListener;
 		virtual bool SRK_CALL removeEventListener(const EvtType& type, const IEventListener<EvtType>& listener) override {
 			std::scoped_lock lock(_mutex);
 
@@ -98,6 +104,7 @@ namespace srk::events {
 			return n;
 		}
 
+		using IEventDispatcher<EvtType>::dispatchEvent;
 		virtual void SRK_CALL dispatchEvent(void* target, const EvtType& type, void* data = nullptr) const override {
 			std::scoped_lock lock(_mutex);
 
@@ -122,9 +129,9 @@ namespace srk::events {
 							++itr;
 						} else {
 							itr = list.erase(itr);
+							--tl.numTotalListeners;
 						}
 					}
-					tl.numValidListeners = tl.numTotalListeners;
 				}
 			}
 		}
@@ -161,7 +168,7 @@ namespace srk::events {
 			uint32_t numTotalListeners;
 			std::vector<Listener> listeners;
 
-			template<bool Unref>
+			template<bool Clean>
 			bool SRK_CALL remove(const IEventListener<EvtType>& listener) {
 				if (!numValidListeners) return false;
 
@@ -170,8 +177,10 @@ namespace srk::events {
 						if (f.rawListener == &listener) {
 							if (f.valid) {
 								f.valid = false;
-								if constexpr (Unref) Ref::unref(*f.rawListener);
-								--numValidListeners;
+								if constexpr (Clean) {
+									Ref::unref(*f.rawListener);
+									--numValidListeners;
+								}
 								
 								return true;
 							}
@@ -180,9 +189,11 @@ namespace srk::events {
 				} else {
 					for (auto itr = listeners.begin(); itr != listeners.end(); ++itr) {
 						if (&listener == (*itr).rawListener) {
-							if constexpr (Unref) Ref::unref(*(*itr).rawListener);
+							if constexpr (Clean) {
+								Ref::unref(*(*itr).rawListener);
+								--numValidListeners;
+							}
 							listeners.erase(itr);
-							--numValidListeners;
 							--numTotalListeners;
 
 							return true;

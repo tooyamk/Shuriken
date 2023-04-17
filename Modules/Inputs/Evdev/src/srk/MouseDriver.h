@@ -23,7 +23,7 @@ namespace srk::modules::inputs::evdev_input {
 
 		int32_t _fd;
 
-		mutable AtomicLock<true, false> _lock;
+		mutable AtomicLock _lock;
 		mutable GenericMouseBuffer _inputBuffer;
 
 		static uint32_t _instanceCount;

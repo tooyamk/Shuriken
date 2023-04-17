@@ -18,7 +18,7 @@ namespace srk::modules::inputs::x11 {
 
 		InputListener _listener;
 
-		mutable AtomicLock<true, false> _lock;
+		mutable AtomicLock _lock;
 		GenericKeyboardBuffer _inputBuffer;
 		mutable std::atomic_bool _changed;
 

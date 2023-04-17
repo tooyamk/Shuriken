@@ -77,7 +77,7 @@ namespace srk::modules::inputs::evdev_input {
 		GamepadKeyCode _maxAxisKeyCode;
 		GamepadKeyCode _maxButtonKeyCode;
 
-		mutable AtomicLock<true, false> _lock;
+		mutable AtomicLock _lock;
 		mutable uint8_t* _inputBuffer;
 
 		inline static float32_t SRK_CALL _foramtAxisValue(int32_t value, const AxisDesc& desc) {

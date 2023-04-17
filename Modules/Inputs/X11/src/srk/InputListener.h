@@ -26,7 +26,7 @@ namespace srk::modules::inputs::x11 {
 		IntrusivePtr<Input> _input;
 		IntrusivePtr<windows::IWindow> _win;
 		DeviceType _type;
-		mutable AtomicLock<true, false> _lock;
+		mutable AtomicLock _lock;
 		bool _listening;
 		Callback _callback;
 		void* _callbackTarget;

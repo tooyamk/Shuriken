@@ -1,10 +1,6 @@
 execute_process(COMMAND git -C ${SRC_DIR} clean -xfd)
 execute_process(COMMAND git -C ${SRC_DIR} reset --hard)
 
-execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PATCH_DIR}/GetHostTriple.cmake ${SRC_DIR}/cmake/modules)
-execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PATCH_DIR}/CrossCompile.cmake ${SRC_DIR}/cmake/modules)
-execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PATCH_DIR}/TableGen.cmake ${SRC_DIR}/cmake/modules)
-
 set(file ${SRC_DIR}/CMakeLists.txt)
 file(READ ${file} content)
 string(REGEX REPLACE "add_subdirectory\\(cmake/modules\\).+include\\(CoverageReport\\)" "add_subdirectory(cmake/modules)\r\ninstall(DIRECTORY include/dxc DESTINATION include FILES_MATCHING PATTERN \"*.h\")\r\ninclude(CoverageReport)" content "${content}")
@@ -32,6 +28,14 @@ file(WRITE ${file} "${content}")
 set(file ${SRC_DIR}/cmake/modules/TableGen.cmake)
 file(READ ${file} content)
 string(REPLACE "if (NOT CMAKE_CONFIGURATION_TYPES)" "if ((NOT EXISTS \"\${LLVM_NATIVE_BUILD}/LLVM.sln\") AND (NOT CMAKE_CONFIGURATION_TYPES))" content "${content}")
+string(REPLACE "if (\${project} STREQUAL LLVM AND NOT LLVM_INSTALL_TOOLCHAIN_ONLY)" "if (False)" content "${content}")
+file(WRITE ${file} "${content}")
+
+set(file ${SRC_DIR}/tools/clang/CMakeLists.txt)
+file(READ ${file} content)
+string(REPLACE "if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY OR \${name} STREQUAL \"libclang\")" "if (\${name} STREQUAL \"dxcompiler\")" content "${content}")
+string(REPLACE "if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY)" "if (False)" content "${content}")
+string(REGEX REPLACE "install\\(DIRECTORY include/clang-c.+add_definitions\\( -D_GNU_SOURCE \\)" "add_definitions( -D_GNU_SOURCE )" content "${content}")
 file(WRITE ${file} "${content}")
 
 set(file ${SRC_DIR}/tools/clang/tools/dxcompiler/CMakeLists.txt)
