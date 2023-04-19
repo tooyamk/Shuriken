@@ -1,13 +1,13 @@
 srkSetSubProject("")
 
-set(installHostBinDir ${PROJECT_BINARY_DIR}/install/host/bin)
+set(installHostDir ${PROJECT_BINARY_DIR}/install/host)
 
 set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_CPYTHON_NAME ${PROJECT_NAME})
 
 if (SRK_HOST_OS_WINDOWS)
-    set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_CPYTHON_HOST_EXE ${installHostBinDir}/python.exe)
+    set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_CPYTHON_HOST_EXE ${installHostDir}/bin/python.exe)
 else ()
-    set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_CPYTHON_HOST_EXE ${installHostBinDir}/python)
+    set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_CPYTHON_HOST_EXE ${installHostDir}/bin/python3)
 endif ()
 
 set(major 3)
@@ -31,11 +31,20 @@ ExternalProject_Add(
     SOURCE_DIR src
     BINARY_DIR ${SRK_PROJECT_BUILD_ROOT_DIR}
     UPDATE_COMMAND ""
-    CONFIGURE_COMMAND ""
+    CONFIGURE_COMMAND
+        ${CMAKE_COMMAND}
+        -DSRK_HOST_OS_LINUX=${SRK_HOST_OS_LINUX}
+        -DSRK_HOST_OS_MACOS=${SRK_HOST_OS_MACOS}
+        -DSRC_DIR=${CMAKE_CURRENT_BINARY_DIR}/src
+        -DBUILD_DIR=${SRK_PROJECT_BUILD_ROOT_DIR}
+        -DINSTALL_DIR=${installHostDir}
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/configure.cmake
     PATCH_COMMAND ""
     BUILD_COMMAND ""
         ${CMAKE_COMMAND}
         -DSRK_HOST_OS_WINDOWS=${SRK_HOST_OS_WINDOWS}
+        -DSRK_HOST_OS_LINUX=${SRK_HOST_OS_LINUX}
+        -DSRK_HOST_OS_MACOS=${SRK_HOST_OS_MACOS}
         -DSRK_HOST_ARCH_X86=${SRK_HOST_ARCH_X86}
         -DSRK_HOST_ARCH_ARM=${SRK_HOST_ARCH_ARM}
         -DSRK_HOST_ARCH_WORD_BITS_32=${SRK_HOST_ARCH_WORD_BITS_32}
@@ -43,9 +52,18 @@ ExternalProject_Add(
         -DMAJOR=${major}
         -DMINOR=${minor}
         -DSRC_DIR=${CMAKE_CURRENT_BINARY_DIR}/src
-        -DINSTALL_DIR=${installHostBinDir}
+        -DBUILD_DIR=${SRK_PROJECT_BUILD_ROOT_DIR}
+        -DINSTALL_DIR=${installHostDir}
         -P ${CMAKE_CURRENT_SOURCE_DIR}/build.cmake
-    INSTALL_COMMAND ""
+    INSTALL_COMMAND
+        ${CMAKE_COMMAND}
+        -DSRK_HOST_OS_LINUX=${SRK_HOST_OS_LINUX}
+        -DSRK_HOST_OS_MACOS=${SRK_HOST_OS_MACOS}
+        -DMAJOR=${major}
+        -DMINOR=${minor}
+        -DBUILD_DIR=${SRK_PROJECT_BUILD_ROOT_DIR}
+        -DINSTALL_DIR=${installHostDir}
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/install.cmake
 )
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER ${SRK_EXTERNAL_DIR_NAME})
