@@ -1,14 +1,13 @@
 srkSetSubProject("")
 
-set(installDir ${PROJECT_BINARY_DIR}/install)
-set(installBinDir ${installDir}/bin)
+set(installHostBinDir ${PROJECT_BINARY_DIR}/install/host/bin)
 
 set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_7Z_NAME ${PROJECT_NAME})
 
 if (SRK_HOST_OS_WINDOWS)
-    set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_7Z_HOST_EXE ${installBinDir}/7zz.exe)
+    set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_7Z_HOST_EXE ${installHostBinDir}/7zz.exe)
 elseif (SRK_HOST_OS_MACOS)
-    set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_7Z_HOST_EXE ${installBinDir}/7zz)
+    set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_7Z_HOST_EXE ${installHostBinDir}/7zz)
 endif ()
 
 set(vcvarsall "nil")
@@ -50,7 +49,7 @@ ExternalProject_Add(
         -DSRK_HOST_OS_MACOS=${SRK_HOST_OS_MACOS}
         -DCMAKE_CUR_SRC_DIR=${CMAKE_CURRENT_SOURCE_DIR}
         -DPROJ_DIR=${projDir}
-        -DBUILD_DIR=${SRK_PROJECT_BUILD_ROOT_DIR}
+        -DINSTALL_DIR=${installHostBinDir}
         -DVCVARSALL=${vcvarsall}
         -DSRK_CXX_COMPILER_MSVC=${SRK_CXX_COMPILER_MSVC}
         -DSRK_HOST_ARCH_X86=${SRK_HOST_ARCH_X86}
@@ -58,13 +57,7 @@ ExternalProject_Add(
         -DSRK_HOST_ARCH_WORD_BITS_32=${SRK_HOST_ARCH_WORD_BITS_32}
         -DSRK_HOST_ARCH_WORD_BITS_64=${SRK_HOST_ARCH_WORD_BITS_64}
         -P ${CMAKE_CURRENT_SOURCE_DIR}/build.cmake
-    INSTALL_COMMAND
-        ${CMAKE_COMMAND}
-        -DBUILD_DIR=${SRK_PROJECT_BUILD_ROOT_DIR}
-        -DINSTALL_DIR=${installDir}
-        -DSRK_HOST_OS_WINDOWS=${SRK_HOST_OS_WINDOWS}
-        -DSRK_HOST_OS_MACOS=${SRK_HOST_OS_MACOS}
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/install.cmake
+    INSTALL_COMMAND ""
 )
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER ${SRK_EXTERNAL_DIR_NAME})
