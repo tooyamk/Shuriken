@@ -1,3 +1,6 @@
+file(REMOVE_RECURSE ${INSTALL_DIR})
+file(MAKE_DIRECTORY ${INSTALL_DIR})
+
 if (SRK_CXX_COMPILER_MSVC)
     if (NOT (${VCVARSALL} STREQUAL "nil"))
         set(arch "nil")

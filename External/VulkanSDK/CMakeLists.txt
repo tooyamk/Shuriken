@@ -5,8 +5,8 @@ set(installDir ${PROJECT_BINARY_DIR}/install)
 set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_VULKAN_SDK_NAME ${PROJECT_NAME})
 set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_VULKAN_SDK_INCLUDE ${installDir}/include)
 
-get_property(SRKPROJ_EXTERNAL_7Z_NAME GLOBAL PROPERTY "SRKPROJ_EXTERNAL_7Z_NAME")
-get_property(SRKPROJ_EXTERNAL_7Z_HOST_EXE GLOBAL PROPERTY "SRKPROJ_EXTERNAL_7Z_HOST_EXE")
+get_property(SRKPROJ_TOOL_7Z_NAME GLOBAL PROPERTY "SRKPROJ_TOOL_7Z_NAME")
+get_property(SRKPROJ_TOOL_7Z_EXE GLOBAL PROPERTY "SRKPROJ_TOOL_7Z_EXE")
 
 set(ver 1.3.243.0)
 set(urlBase https://sdk.lunarg.com/sdk/download/${ver}/)
@@ -63,7 +63,7 @@ if (NOT (src STREQUAL nil))
             -DSRK_OS_WINDOWS=${SRK_OS_WINDOWS}
             -DSRK_OS_LINUX=${SRK_OS_LINUX}
             -DSRK_OS_MACOS=${SRK_OS_MACOS}
-            -D7Z_EXE=${SRKPROJ_EXTERNAL_7Z_HOST_EXE}
+            -D7Z_EXE=${SRKPROJ_TOOL_7Z_EXE}
             -P ${CMAKE_CURRENT_SOURCE_DIR}/configure.cmake
         BUILD_COMMAND ""
         INSTALL_COMMAND
@@ -74,7 +74,7 @@ if (NOT (src STREQUAL nil))
     )
 
     if (SRK_OS_WINDOWS OR SRK_OS_MACOS)
-        add_dependencies(${PROJECT_NAME} ${SRKPROJ_EXTERNAL_7Z_NAME})
+        add_dependencies(${PROJECT_NAME} ${SRKPROJ_TOOL_7Z_NAME})
     endif ()
 endif ()
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER ${SRK_EXTERNAL_DIR_NAME})

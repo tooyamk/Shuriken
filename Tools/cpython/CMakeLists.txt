@@ -1,14 +1,14 @@
-srkSetSubProject("")
+srkSetSubProject(${SRK_TOOL_PROJ_PREFIX})
 
-set(installHostDir ${PROJECT_BINARY_DIR}/install/host)
-
-set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_CPYTHON_NAME ${PROJECT_NAME})
-
+set(exe python)
 if (SRK_HOST_OS_WINDOWS)
-    set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_CPYTHON_HOST_EXE ${installHostDir}/bin/python.exe)
+    set(exe ${exe}.exe)
 else ()
-    set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_CPYTHON_HOST_EXE ${installHostDir}/bin/python3)
+    set(exe ${exe}3)
 endif ()
+
+set_property(GLOBAL PROPERTY SRKPROJ_TOOL_CPYTHON_NAME ${PROJECT_NAME})
+set_property(GLOBAL PROPERTY SRKPROJ_TOOL_CPYTHON_EXE ${PROJECT_BINARY_DIR}/install/bin/${exe})
 
 set(major 3)
 set(minor 11)
@@ -37,7 +37,7 @@ ExternalProject_Add(
         -DSRK_HOST_OS_MACOS=${SRK_HOST_OS_MACOS}
         -DSRC_DIR=${CMAKE_CURRENT_BINARY_DIR}/src
         -DBUILD_DIR=${SRK_PROJECT_BUILD_ROOT_DIR}
-        -DINSTALL_DIR=${installHostDir}
+        -DINSTALL_DIR=${PROJECT_BINARY_DIR}/install
         -P ${CMAKE_CURRENT_SOURCE_DIR}/configure.cmake
     PATCH_COMMAND ""
     BUILD_COMMAND ""
@@ -53,17 +53,18 @@ ExternalProject_Add(
         -DMINOR=${minor}
         -DSRC_DIR=${CMAKE_CURRENT_BINARY_DIR}/src
         -DBUILD_DIR=${SRK_PROJECT_BUILD_ROOT_DIR}
-        -DINSTALL_DIR=${installHostDir}
+        -DINSTALL_DIR=${PROJECT_BINARY_DIR}/install
         -P ${CMAKE_CURRENT_SOURCE_DIR}/build.cmake
     INSTALL_COMMAND
         ${CMAKE_COMMAND}
+        -DSRK_HOST_OS_WINDOWS=${SRK_HOST_OS_WINDOWS}
         -DSRK_HOST_OS_LINUX=${SRK_HOST_OS_LINUX}
         -DSRK_HOST_OS_MACOS=${SRK_HOST_OS_MACOS}
         -DMAJOR=${major}
         -DMINOR=${minor}
         -DBUILD_DIR=${SRK_PROJECT_BUILD_ROOT_DIR}
-        -DINSTALL_DIR=${installHostDir}
+        -DINSTALL_DIR=${PROJECT_BINARY_DIR}/install
         -P ${CMAKE_CURRENT_SOURCE_DIR}/install.cmake
 )
 
-set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER ${SRK_EXTERNAL_DIR_NAME})
+set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER ${SRK_TOOLS_DIR_NAME})

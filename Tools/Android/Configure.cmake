@@ -75,6 +75,7 @@ foreach(buildType ${BUILD_TYPES})
         set(buildDir ${BUILD_DIR}/${ANDROID_ABI}/${buildType})
         file(REMOVE ${buildDir}/CMakeCache.txt)
         execute_process(COMMAND ${CMAKE_COMMAND} -DSRK_ENABLE_TESTS=ON -DSRK_ENABLE_EXTERNAL_ZSTD=ON -DCMAKE_INSTALL_PREFIX=install -DCMAKE_CXX_FLAGS=${cxxFlags} 
-        -DCMAKE_TOOLCHAIN_FILE=${ANDROID_NDK}/build/cmake/android.toolchain.cmake -DANDROID_ABI=${ANDROID_ABI} -DANDROID_NDK=${ANDROID_NDK} -DANDROID_PLATFORM=${ANDROID_PLATFORM} -DCMAKE_BUILD_TYPE=${buildType} -DCMAKE_MAKE_PROGRAM=${NINJA} -B ${buildDir} ${SRK_ROOT} -G Ninja)
+            -DCMAKE_TOOLCHAIN_FILE=${ANDROID_NDK}/build/cmake/android.toolchain.cmake -DANDROID_ABI=${ANDROID_ABI} -DANDROID_NDK=${ANDROID_NDK} -DANDROID_PLATFORM=${ANDROID_PLATFORM}
+            -DCMAKE_BUILD_TYPE=${buildType} -DCMAKE_MAKE_PROGRAM=${NINJA} -G Ninja -B ${buildDir} ${SRK_ROOT})
     endif ()
 endforeach()
