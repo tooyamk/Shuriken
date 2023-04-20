@@ -821,8 +821,8 @@ macro(srkCreateExternalProjectCmakeArgs target)
 endmacro()
 
 srkAddSubdirectoryIf(SRK_ENABLE_TOOL_7Z ${SRK_TOOLS_DIR_NAME}/7z)
-srkAddSubdirectoryIf(SRK_ENABLE_TOOL_CPYTHON ${SRK_TOOLS_DIR_NAME}/cpython)
 add_subdirectory(${SRK_TOOLS_DIR_NAME}/zlib)
+srkAddSubdirectoryIf(SRK_ENABLE_TOOL_CPYTHON ${SRK_TOOLS_DIR_NAME}/cpython)
 
 srkAddSubdirectoryIf(SRK_ENABLE_EXTERNAL_ASTC_ENCODER ${SRK_EXTERNAL_DIR_NAME}/astc-encoder)
 srkAddSubdirectoryIf(SRK_ENABLE_EXTERNAL_M4 ${SRK_EXTERNAL_DIR_NAME}/m4)
