@@ -1,9 +1,9 @@
-srkSetSubProject("")
+srkSetSubProject(${SRK_TOOL_PROJ_PREFIX})
 
 set(installDir ${PROJECT_BINARY_DIR}/install)
 
-set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_M4_NAME ${PROJECT_NAME})
-set_property(GLOBAL PROPERTY SRKPROJ_EXTERNAL_M4_EXE ${installDir}/bin/m4)
+set_property(GLOBAL PROPERTY SRKPROJ_TOOL_M4_NAME ${PROJECT_NAME})
+set_property(GLOBAL PROPERTY SRKPROJ_TOOL_M4_EXE ${installDir}/bin/m4)
 
 set(fileName m4-1.4.19.tar.xz)
 srkCheckExternalProjectVersion_DownloadFile(${PROJECT_BINARY_DIR} ${PROJECT_BINARY_DIR}/download/${fileName})
@@ -33,4 +33,4 @@ ExternalProject_Add(
         make install
 )
 
-set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER ${SRK_EXTERNAL_DIR_NAME})
+set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER ${SRK_TOOL_DIR_NAME})

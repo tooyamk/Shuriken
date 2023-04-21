@@ -74,6 +74,6 @@ ExternalProject_Add(
 )
 
 if (SRK_HOST_OS_LINUX OR SRK_HOST_OS_MACOS)
-    add_dependencies(${PROJECT_NAME} ${SRKPROJ_TOOL_ZLIB_NAME})
+    #add_dependencies(${PROJECT_NAME} ${SRKPROJ_TOOL_ZLIB_NAME})
 endif ()
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER ${SRK_TOOLS_DIR_NAME})
