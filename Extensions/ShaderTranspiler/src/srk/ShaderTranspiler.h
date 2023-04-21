@@ -18,6 +18,7 @@ namespace srk::extensions {
 		virtual ~ShaderTranspiler();
 
 		modules::graphics::ProgramSource SRK_CALL translate(const modules::graphics::ProgramSource& source, const Options& options, modules::graphics::ProgramLanguage targetLanguage, const std::string_view& targetVersion, const modules::graphics::ProgramDefine* defines, size_t numDefines, const modules::graphics::ProgramIncludeHandler& handler);
+		static IntrusivePtr<ShaderTranspiler> SRK_CALL create();
 		static IntrusivePtr<ShaderTranspiler> SRK_CALL create(const std::string_view& dxcompiler);
 
 	private:

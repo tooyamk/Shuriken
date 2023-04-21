@@ -164,7 +164,7 @@ endif ()
 
 if (SRK_OS_LINUX)
     list(APPEND linkLibs dl pthread)
-    srkAppendIf(X11_FOUND linkLibs X11)
+    srkAppendIf(X11_FOUND linkLibs X11 dl)
 elseif (SRK_OS_MACOS)
     list(APPEND linkLibs "-framework Cocoa")
 #elseif (SRK_OS_ANDROID)
