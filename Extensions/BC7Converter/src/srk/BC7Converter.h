@@ -4,8 +4,14 @@
 #include <functional>
 #include <future>
 
+#ifdef SRK_EXT_BC7_CONV_EXPORTS
+#	define SRK_EXT_BC7_CONV_DLL SRK_DLL_EXPORT
+#else
+#	define SRK_EXT_BC7_CONV_DLL SRK_DLL_IMPORT
+#endif
+
 namespace srk::extensions {
-	class SRK_EXTENSION_DLL BC7Converter {
+	class SRK_EXT_BC7_CONV_DLL BC7Converter {
 	public:
 		static constexpr size_t DDS_HEADER_SIZE = 148;
 		static constexpr uint32_t DDS_HEADER_MAGIC_ID = 0x20534444;

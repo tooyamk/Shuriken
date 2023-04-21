@@ -1,6 +1,6 @@
 #pragma once
 
-#include "srk/Global.h"
+#include "srk/Framework.h"
 
 namespace srk::components {
 	class Camera;

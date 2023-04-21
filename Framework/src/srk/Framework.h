@@ -2,26 +2,14 @@
 
 #include "srk/Core.h"
 
-#include "srk/GraphicsBuffer.h"
-#include "srk/Image.h"
-#include "srk/Looper.h"
-#include "srk/Material.h"
-#include "srk/Mesh.h"
-#include "srk/Monitor.h"
-#include "srk/SceneNode.h"
-#include "srk/Shader.h"
-#include "srk/ShaderParameter.h"
-#include "srk/ShaderPredefine.h"
+#ifdef SRK_FW_EXPORTS
+#	define SRK_FW_DLL SRK_DLL_EXPORT
+#else
+#	define SRK_FW_DLL SRK_DLL_IMPORT
+#endif
 
-#include "srk/modules/ModuleLoader.h"
-#include "srk/modules/graphics/GraphicsAdapter.h"
-
-#include "srk/components/Camera.h"
-#include "srk/components/renderables/RenderableMesh.h"
-#include "srk/components/lights/DirectionLight.h"
-#include "srk/components/lights/PointLight.h"
-#include "srk/components/lights/SpotLight.h"
-
-#include "srk/render/ForwardRenderer.h"
-#include "srk/render/SpriteRenderer.h"
-#include "srk/render/StandardRenderPipeline.h"
+#ifdef SRK_MODULE_EXPORTS
+#	define SRK_MODULE_DLL SRK_DLL_EXPORT
+#else
+#	define SRK_MODULE_DLL SRK_DLL_IMPORT
+#endif

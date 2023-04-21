@@ -1,5 +1,6 @@
 #pragma once
 
+#include "srk/components/IComponent.h"
 #include "srk/render/IRenderPipeline.h"
 #include "srk/Shader.h"
 #include "srk/ShaderParameter.h"

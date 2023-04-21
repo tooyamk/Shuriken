@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../BaseTester.h"
-#include "srk/SerializableObject.h"
 
 class GraphicsTester : public BaseTester {
 public:

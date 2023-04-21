@@ -1,6 +1,6 @@
 #pragma once
 
-#include "srk/Global.h"
+#include "srk/Core.h"
 
 #if __has_include(<charconv>)
 #	include <charconv>

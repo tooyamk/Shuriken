@@ -4,8 +4,14 @@
 #include <functional>
 #include <future>
 
+#ifdef SRK_EXT_ASTC_CONV_EXPORTS
+#	define SRK_EXT_ASTC_CONV_DLL SRK_DLL_EXPORT
+#else
+#	define SRK_EXT_ASTC_CONV_DLL SRK_DLL_IMPORT
+#endif
+
 namespace srk::extensions {
-	class SRK_EXTENSION_DLL ASTCConverter {
+	class SRK_EXT_ASTC_CONV_DLL ASTCConverter {
 	public:
 		static constexpr size_t HEADER_SIZE = 16;
 		static constexpr uint32_t HEADER_MAGIC_ID = 0x5CA1AB13;

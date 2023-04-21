@@ -1,5 +1,6 @@
 #pragma once
 
+#include "srk/Framework.h"
 #include "srk/Intrusive.h"
 #include "srk/math/Matrix.h"
 #include "srk/math/Vector.h"

@@ -2,6 +2,7 @@
 
 #include "../BaseTester.h"
 #include "srk/math/Math.h"
+#include "srk/ThreadPool.h"
 
 namespace srk::meta {
 	/*template<int64_t I, int64_t N, auto... NonTypeArgs, typename Fn, typename... Args>
@@ -70,11 +71,11 @@ public:
 		if (!src) return 0;
 
 		src->format = textureFormatTypeSwitch(src->format, false);
-		if (src->format == modules::graphics::TextureFormat::R8G8B8_UNORM || src->format == modules::graphics::TextureFormat::R8G8B8_UNORM_SRGB) {
+		if (src->format == TextureFormat::R8G8B8_UNORM || src->format == TextureFormat::R8G8B8_UNORM_SRGB) {
 			ByteArray dst(src->dimensions.getMultiplies() * 4);
 			dst.setLength(dst.getCapacity());
-			Image::convertFormat(src->dimensions, src->format, src->source.getSource(), src->format == modules::graphics::TextureFormat::R8G8B8_UNORM ? modules::graphics::TextureFormat::R8G8B8A8_UNORM : modules::graphics::TextureFormat::R8G8B8A8_UNORM_SRGB, dst.getSource());
-			src->format = modules::graphics::TextureFormat::R8G8B8A8_UNORM;
+			Image::convertFormat(src->dimensions, src->format, src->source.getSource(), src->format == TextureFormat::R8G8B8_UNORM ? TextureFormat::R8G8B8A8_UNORM : TextureFormat::R8G8B8A8_UNORM_SRGB, dst.getSource());
+			src->format = TextureFormat::R8G8B8A8_UNORM;
 			src->source = std::move(dst);
 		}
 

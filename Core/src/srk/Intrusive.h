@@ -1,6 +1,6 @@
 #pragma once
 
-#include "srk/Global.h"
+#include "srk/Core.h"
 #include <atomic>
 
 #define SRK_REF_OBJECT(__CLASS__) \

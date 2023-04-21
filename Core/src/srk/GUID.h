@@ -1,6 +1,6 @@
 #pragma once
 
-#include "srk/Global.h"
+#include "srk/Core.h"
 
 namespace srk::modules::inputs {
 	template<uint32_t N>

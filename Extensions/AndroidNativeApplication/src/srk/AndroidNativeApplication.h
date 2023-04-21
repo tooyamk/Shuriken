@@ -8,8 +8,14 @@
 #include <filesystem>
 #include <mutex>
 
+#ifdef SRK_EXT_AN_NTV_APP_EXPORTS
+#	define SRK_EXT_AN_NTV_APP_DLL SRK_DLL_EXPORT
+#else
+#	define SRK_EXT_AN_NTV_APP_DLL SRK_DLL_IMPORT
+#endif
+
 namespace srk::extensions {
-	class AndroidNativeApplication {
+	class SRK_EXT_AN_NTV_APP_DLL AndroidNativeApplication {
     public:
         enum class State : uint8_t {
             UNKNOWN,

@@ -31,16 +31,6 @@
 #	include "srk/ShaderScript.h"
 #endif
 
-using namespace srk;
-using namespace srk::components;
-using namespace srk::components::renderables;
-using namespace srk::components::lights;
-using namespace srk::events;
-using namespace srk::modules;
-using namespace srk::modules::graphics;
-using namespace srk::modules::inputs;
-using namespace srk::render;
-
 class Stats {
 public:
 	void SRK_CALL run(Looper* looper);

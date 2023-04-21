@@ -13,24 +13,6 @@ namespace srk::extensions {
 		return _impl->translate(source, options, targetLanguage, targetVersion, defines, numDefines, handler);
 	}
 
-	IntrusivePtr<ShaderTranspiler> ShaderTranspiler::create() {
-		using namespace std::string_view_literals;
-
-#if SRK_OS == SRK_OS_WINDOWS
-#	ifdef SRK_DEBUG
-		return create("dxcompilerd"sv);
-#	else
-		return create("dxcompiler"sv);
-#	endif
-#else
-#	ifdef SRK_DEBUG
-		return create("libdxcompilerd"sv);
-#	else
-		return create("libdxcompiler"sv);
-#	endif
-#endif
-	}
-
 	IntrusivePtr<ShaderTranspiler> ShaderTranspiler::create(const std::string_view& dxcompiler) {
 		using namespace std::string_view_literals;
 

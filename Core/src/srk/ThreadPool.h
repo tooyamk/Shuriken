@@ -1,6 +1,6 @@
 #pragma once
 
-#include "srk/Global.h"
+#include "srk/Core.h"
 #include <condition_variable>
 #include <functional>
 #include <future>

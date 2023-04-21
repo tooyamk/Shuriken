@@ -4,7 +4,7 @@
 
 #ifdef SRK_MODULE_EXPORTS
 namespace srk::modules::inputs {
-	extern "C" SRK_MODULE_DLL_EXPORT void* SRK_CREATE_MODULE_FN_NAME(Ref* loader, const CreateInputModuleDescriptor& desc) {
+	extern "C" SRK_DLL_EXPORT void* SRK_CREATE_MODULE_FN_NAME(Ref* loader, const CreateInputModuleDescriptor& desc) {
 		return new xinput::Input(loader, desc);
 	}
 }

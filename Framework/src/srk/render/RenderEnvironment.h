@@ -1,6 +1,6 @@
 #pragma once
 
-#include "srk/Global.h"
+#include "srk/Framework.h"
 #include <vector>
 
 namespace srk::components::lights {

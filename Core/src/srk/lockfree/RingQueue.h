@@ -1,6 +1,6 @@
 #pragma once
 
-#include "srk/Global.h"
+#include "srk/Core.h"
 
 namespace srk::lockfree {
 	enum class RingQueueMode : uint8_t {

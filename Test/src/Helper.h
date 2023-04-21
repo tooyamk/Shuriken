@@ -1,7 +1,27 @@
 #pragma once
 
-#include "srk/Framework.h"
+#include "srk/Application.h"
 #include "srk/Printer.h"
+#include "srk/SerializableObject.h"
+#include "srk/events/EventDispatcher.h"
+#include "srk/lockfree/LinkedQueue.h"
+#include "srk/lockfree/RingQueue.h"
+
+#include "srk/Looper.h"
+#include "srk/Time.h"
+#include "srk/Material.h"
+#include "srk/Monitor.h"
+#include "srk/SceneNode.h"
+#include "srk/ShaderPredefine.h"
+#include "srk/ShaderParameter.h"
+#include "srk/components/Camera.h"
+#include "srk/components/lights/PointLight.h"
+#include "srk/components/renderables/RenderableMesh.h"
+#include "srk/modules/ModuleLoader.h"
+#include "srk/modules/graphics/GraphicsAdapter.h"
+#include "srk/render/ForwardRenderer.h"
+#include "srk/render/StandardRenderPipeline.h"
+
 #if __has_include("srk/ShaderTranspiler.h")
 #	define SRK_HAS_SHADER_TRANSPILER_H
 #	include "srk/ShaderTranspiler.h"
@@ -10,11 +30,14 @@
 
 using namespace srk;
 using namespace srk::components;
+using namespace srk::components::lights;
+using namespace srk::components::renderables;
 using namespace srk::events;
 using namespace srk::modules;
 using namespace srk::modules::graphics;
 using namespace srk::modules::inputs;
 using namespace srk::modules::windows;
+using namespace srk::render;
 
 using namespace std::literals;
 using namespace srk::literals;
@@ -177,8 +200,6 @@ inline ProgramTranspileHandler programTranspileHandler = [](const ProgramTranspi
 #endif
 
 inline bool SRK_CALL createProgram(IProgram& program, const std::string_view& vert, const std::string_view& frag) {
-	using namespace std::string_view_literals;
-
 	using Str = std::remove_cvref_t<std::u8string>;
 	using SSS = Str::value_type;
 	using SSS2 = Str::traits_type;
@@ -189,7 +210,7 @@ inline bool SRK_CALL createProgram(IProgram& program, const std::string_view& ve
 		return readFile(appPath + info.file);
 	},
 		[](const ProgramInputInfo& info) {
-		return modules::graphics::ProgramInputDescriptor();
+		return ProgramInputDescriptor();
 	}, programTranspileHandler)) {
 		printaln(L"program create error"sv);
 		return false;

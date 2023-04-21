@@ -1,6 +1,7 @@
 #pragma once
 
 #include "srk/GUID.h"
+#include "srk/Framework.h"
 
 namespace srk::modules::inputs {
 	enum class DeviceType : uint8_t;

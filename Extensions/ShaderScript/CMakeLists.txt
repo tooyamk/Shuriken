@@ -18,7 +18,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
     ${SRKPROJ_CORE_INCLUDE}
     ${SRKPROJ_FRAMEWORK_INCLUDE}
 )
-target_compile_definitions(${PROJECT_NAME} PRIVATE ${SRK_EXTENSION_DEFINITIONS})
+target_compile_definitions(${PROJECT_NAME} PRIVATE SRK_EXT_SHD_SPT_EXPORTS)
 add_dependencies(${PROJECT_NAME} 
     ${SRKPROJ_FRAMEWORK_NAME}
 )

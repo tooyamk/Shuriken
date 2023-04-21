@@ -1,16 +1,12 @@
 #pragma once
 
+#include "srk/Framework.h"
 #include "srk/Intrusive.h"
 #include "srk/math/Matrix.h"
 #include "srk/math/Quaternion.h"
 #include "srk/math/Vector.h"
-#include "srk/components/IComponent.h"
 #include <functional>
 #include <vector>
-
-namespace srk::components {
-	class IComponent;
-}
 
 namespace srk {
 	class SRK_FW_DLL SceneNode : public Ref {

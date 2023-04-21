@@ -1,5 +1,6 @@
 #pragma once
 
+#include "srk/Framework.h"
 #include "srk/Intrusive.h"
 
 namespace srk::modules {

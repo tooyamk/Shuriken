@@ -1,6 +1,6 @@
 #pragma once
 
-#include "srk/Global.h"
+#include "srk/Framework.h"
 
 namespace srk::render {
 	struct SRK_FW_DLL RenderPriority {

@@ -28,7 +28,7 @@ if (NEED_LIBUDEV_ZERO)
 endif ()
 target_include_directories(${PROJECT_NAME} PUBLIC ${includeDir})
 
-target_compile_definitions(${PROJECT_NAME} PRIVATE ${SRK_EXTENSION_DEFINITIONS})
+target_compile_definitions(${PROJECT_NAME} PRIVATE SRK_EXT_HID_EXPORTS)
 
 set(depends ${SRKPROJ_CORE_NAME})
 if (NEED_LIBUDEV_ZERO)

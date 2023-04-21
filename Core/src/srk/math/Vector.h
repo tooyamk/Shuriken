@@ -1,6 +1,5 @@
 #pragma once
 
-#include "srk/Global.h"
 #include "srk/math/Math.h"
 
 namespace srk {
