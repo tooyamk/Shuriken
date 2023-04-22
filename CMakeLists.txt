@@ -734,7 +734,7 @@ if (SRK_RPATH)
     unset(rpath)
 endif ()
 
-set(compilerFlags "-fms-extensions -fPIC -Wno-unused-command-line-argument -Wno-switch -fvisibility=hidden")
+set(compilerFlags "-fms-extensions -fPIC -Wno-unused-command-line-argument -Wno-switch -fvisibility=hidden -fno-strict-aliasing")
 if (SRK_RPATH AND (NOT ${CMAKE_GENERATOR} STREQUAL Xcode))
     srkFormatRpath("${SRK_RPATH}" rpath)
     set(compilerFlags "${compilerFlags} -Wl,-rpath=${rpath}")
@@ -754,6 +754,9 @@ endif ()
 if (SRK_CXX_COMPILER_MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${compilerFlags}")
 endif ()
+
+string(REPLACE "-fvisibility=hidden" "" SRK_EXTERNAL_PROJ_C_FLAGS ${CMAKE_C_FLAGS})
+string(REPLACE "-fvisibility=hidden" "" SRK_EXTERNAL_PROJ_CXX_FLAGS ${CMAKE_CXX_FLAGS})
 
 unset(compilerFlags)
 
@@ -800,8 +803,8 @@ macro(srkCreateExternalProjectCmakeArgs target)
         -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
         -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
         #-DCMAKE_CONFIGURATION_TYPES=${CMAKE_CONFIGURATION_TYPES}
-        -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
-        -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
+        -DCMAKE_C_FLAGS=${SRK_EXTERNAL_PROJ_C_FLAGS}
+        -DCMAKE_CXX_FLAGS=${SRK_EXTERNAL_PROJ_CXX_FLAGS}
         -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
         -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
         -DCMAKE_SKIP_RPATH=${CMAKE_SKIP_RPATH}

@@ -33,7 +33,7 @@ namespace srk::modules::windows::cocoa {
 		Window(Manager& manager);
 		virtual ~Window();
 
-		void operator delete(Window* p, std::destroying_delete_t) {
+		void SRK_CALL operator delete(Window* p, std::destroying_delete_t) {
 			auto m = p->_manager;
 			p->~Window();
 			::operator delete(p);

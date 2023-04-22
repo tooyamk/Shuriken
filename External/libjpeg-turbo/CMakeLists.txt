@@ -17,9 +17,6 @@ srkCheckExternalProjectVersion_GitTag(${PROJECT_BINARY_DIR} ${PROJECT_BINARY_DIR
 
 include(ExternalProject)
 
-string(REPLACE "-fvisibility=hidden" "" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
-string(REPLACE "-fvisibility=hidden" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
-
 srkCreateExternalProjectCmakeArgs(cmakeArgs)
 
 ExternalProject_Add(

@@ -10,7 +10,7 @@ set_property(GLOBAL PROPERTY SRKPROJ_TOOL_AUTOMAKE_AUTOMAKE ${binDir}/automake)
 get_property(SRKPROJ_TOOL_AUTOCONF_NAME GLOBAL PROPERTY "SRKPROJ_TOOL_AUTOCONF_NAME")
 get_property(SRKPROJ_TOOL_AUTOCONF_DIR GLOBAL PROPERTY "SRKPROJ_TOOL_AUTOCONF_DIR")
 
-set(fileName automake-1.16.tar.xz)
+set(fileName automake-1.16.5.tar.xz)
 srkCheckExternalProjectVersion_DownloadFile(${PROJECT_BINARY_DIR} ${PROJECT_BINARY_DIR}/download/${fileName})
 
 include(ExternalProject)

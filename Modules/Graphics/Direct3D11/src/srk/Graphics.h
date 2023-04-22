@@ -16,7 +16,7 @@ namespace srk::modules::graphics::d3d11 {
 		Graphics();
 		virtual ~Graphics();
 
-		void operator delete(Graphics* p, std::destroying_delete_t) {
+		void SRK_CALL operator delete(Graphics* p, std::destroying_delete_t) {
 			auto l = p->_loader;
 			p->~Graphics();
 			::operator delete(p);

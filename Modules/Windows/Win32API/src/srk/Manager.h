@@ -8,7 +8,7 @@ namespace srk::modules::windows::win32api {
 		Manager(Ref* loader);
 		virtual ~Manager();
 
-		void operator delete(Manager* p, std::destroying_delete_t) {
+		void SRK_CALL operator delete(Manager* p, std::destroying_delete_t) {
 			auto l = p->_loader;
 			p->~Manager();
 			::operator delete(p);

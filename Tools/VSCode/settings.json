@@ -1,5 +1,8 @@
 {
     "cmake.buildDirectory": "${workspaceRoot}/build/${buildType}",
+    "cmake.configureOnOpen": false,
+    "cmake.configureOnEdit": false,
+    "cmake.buildBeforeRun": true,
     "cmake.configureArgs" : [
         "-DSRK_ENABLE_TESTS=ON",
         "-DSRK_RPATH=.;./libs",

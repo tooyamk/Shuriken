@@ -19,7 +19,9 @@ namespace srk {
 
 		template<typename F, typename... Args>
 		std::shared_future<void> SRK_CALL enqueue(F&& f, Args&&... args) {
-			PackagedTask task(std::bind(std::forward<F>(f), std::forward<Args>(args)...));
+			PackagedTask task([f = std::forward<F>(f), ...args = std::forward<Args>(args)]() mutable {
+				f(std::forward<Args>(args)...);
+				});
 
 			std::future<void> future = task.get_future();
 			{

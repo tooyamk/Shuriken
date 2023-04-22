@@ -9,7 +9,7 @@ namespace srk::modules::inputs::raw_input {
 		Input(Ref* loader, const CreateInputModuleDescriptor& desc);
 		virtual ~Input();
 
-		void operator delete(Input* p, std::destroying_delete_t) {
+		void SRK_CALL operator delete(Input* p, std::destroying_delete_t) {
 			auto l = p->_loader;
 			p->~Input();
 			::operator delete(p);
