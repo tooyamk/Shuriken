@@ -1,11 +1,11 @@
 {
-    "cmake.buildDirectory": "${workspaceRoot}/build/${buildType}",
+    "cmake.installPrefix": "install",
     "cmake.configureOnOpen": false,
     "cmake.configureOnEdit": false,
-    "cmake.buildBeforeRun": true,
     "cmake.configureArgs" : [
         "-DSRK_ENABLE_TESTS=ON",
-        "-DSRK_RPATH=.;./libs",
-        "-DCMAKE_INSTALL_PREFIX=install"
-    ]
+        "-DSRK_RPATH=.;./libs"
+    ],
+    "cmake.buildDirectory": "${workspaceFolder}/build_${buildKitTargetOs}/${buildKitTargetArch}/${buildType}",
+    "cmake.buildBeforeRun": true
 }

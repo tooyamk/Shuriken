@@ -27,18 +27,10 @@ ExternalProject_Add(
     BINARY_DIR ${SRK_PROJECT_BUILD_ROOT_DIR}
     UPDATE_COMMAND ""
     CONFIGURE_COMMAND
-        ${COMMAND}
-        sh
-        ${CMAKE_CURRENT_SOURCE_DIR}/configure.sh
-        ${SRKPROJ_TOOL_AUTOCONF_DIR}
-        ${PROJECT_BINARY_DIR}/src
-        ${installDir}
-    BUILD_COMMAND
-        ${COMMAND}
-        make
-    INSTALL_COMMAND
-        ${COMMAND}
-        make install
+        tar -xf ${PROJECT_BINARY_DIR}/download/${fileName} -C ${PROJECT_BINARY_DIR}/src --strip-components 1
+        COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/configure.sh ${SRKPROJ_TOOL_AUTOCONF_DIR} ${PROJECT_BINARY_DIR}/src ${installDir}
+    BUILD_COMMAND make
+    INSTALL_COMMAND make install
 )
 
 add_dependencies(${PROJECT_NAME} ${SRKPROJ_TOOL_AUTOCONF_NAME})

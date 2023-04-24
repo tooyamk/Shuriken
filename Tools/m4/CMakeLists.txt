@@ -22,15 +22,10 @@ ExternalProject_Add(
     BINARY_DIR ${SRK_PROJECT_BUILD_ROOT_DIR}
     UPDATE_COMMAND ""
     CONFIGURE_COMMAND
-        ${COMMAND}
-        ${PROJECT_BINARY_DIR}/src/configure
-        --prefix=${installDir}
-    BUILD_COMMAND
-        ${COMMAND}
-        make
-    INSTALL_COMMAND
-        ${COMMAND}
-        make install
+        tar -xf ${PROJECT_BINARY_DIR}/download/${fileName} -C ${PROJECT_BINARY_DIR}/src --strip-components 1
+        COMMAND ${PROJECT_BINARY_DIR}/src/configure --prefix=${installDir}
+    BUILD_COMMAND make
+    INSTALL_COMMAND make install
 )
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER ${SRK_TOOL_DIR_NAME})
