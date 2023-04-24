@@ -15,6 +15,10 @@ namespace srk::modules::graphics::vulkan {
 		virtual const ProgramInfo& getInfo() const override;
 		virtual void SRK_CALL destroy() override;
 
+		inline uint32_t getInstanceId() const {
+			return _instanceId;
+		}
+
 		inline const std::vector<VkPipelineShaderStageCreateInfo>& getVkPipelineShaderStageCreateInfos() const {
 			return _createInfos;
 		}
@@ -33,6 +37,7 @@ namespace srk::modules::graphics::vulkan {
 			const IShaderParameterGetter* shaderParamGetter);
 
 	protected:
+		static std::atomic_uint32_t _instanceIdGenerator;
 		inline static constexpr std::string_view inputNamePrefix = std::string_view("in.var.");
 
 
@@ -84,6 +89,7 @@ namespace srk::modules::graphics::vulkan {
 		std::vector<VertexLayout> _vertexLayouts;
 
 		bool _valid;
+		uint32_t _instanceId;
 		ProgramInfo _info;
 
 		ParameterLayout _paramLayout;

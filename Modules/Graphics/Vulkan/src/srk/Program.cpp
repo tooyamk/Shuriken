@@ -18,6 +18,7 @@ namespace srk::modules::graphics::vulkan {
 
 
 	Program::Program(Graphics& graphics) : IProgram(graphics),
+		_instanceId(0),
 		_descriptorPool(nullptr),
 		_pipelineLayout(nullptr),
 		_valid(false) {
@@ -26,6 +27,8 @@ namespace srk::modules::graphics::vulkan {
 	Program::~Program() {
 		destroy();
 	}
+
+	std::atomic_uint32_t Program::_instanceIdGenerator = 1;
 
 	const void* Program::getNative() const {
 		return this;
@@ -123,6 +126,7 @@ namespace srk::modules::graphics::vulkan {
 		for (size_t i = 0; i < _createInfos.size(); ++i) _createInfos[i].pName = _entryPoints[i].data();
 
 		_valid = true;
+		_instanceId = _instanceIdGenerator.fetch_add(1);
 
 		return true;
 	}
@@ -157,6 +161,7 @@ namespace srk::modules::graphics::vulkan {
 		_paramLayout.clear(g);
 
 		_valid = false;
+		_instanceId = 0;
 	}
 
 	bool Program::use(const IVertexAttributeGetter* vertexAttributeGetter, 

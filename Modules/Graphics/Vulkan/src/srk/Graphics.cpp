@@ -33,6 +33,9 @@ namespace srk::modules::graphics::vulkan {
 		_constantBufferManager.createShareConstantBufferCallback = std::bind(&Graphics::_createdShareConstantBuffer, this);
 		_constantBufferManager.createExclusiveConstantBufferCallback = std::bind(&Graphics::_createdExclusiveConstantBuffer, this, std::placeholders::_1);
 		memset(&_internalFeatures, 0, sizeof(InternalFeatures));
+
+		memset(&_pipelineDynamicStateCreateInfo, 0, sizeof(_pipelineDynamicStateCreateInfo));
+		_pipelineDynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
 	}
 
 	Graphics::~Graphics() {
@@ -88,6 +91,16 @@ namespace srk::modules::graphics::vulkan {
 			if (!_createMemAllocator()) break;
 			if (!_createVkCommandPool()) break;
 			if (!_createVkSwapchain()) break;
+
+			{
+				_dynamicStates.clear();
+				_dynamicStates.emplace_back(VK_DYNAMIC_STATE_VIEWPORT);
+				_dynamicStates.emplace_back(VK_DYNAMIC_STATE_SCISSOR);
+				_dynamicStates.emplace_back(VK_DYNAMIC_STATE_BLEND_CONSTANTS);
+
+				_pipelineDynamicStateCreateInfo.dynamicStateCount = _dynamicStates.size();
+				_pipelineDynamicStateCreateInfo.pDynamicStates = _dynamicStates.data();
+			}
 
 			{
 				VkPipelineCacheCreateInfo pipelineCacheCreateInfo;
@@ -206,6 +219,7 @@ namespace srk::modules::graphics::vulkan {
 			std::vector<VkExtensionProperties> deviceExtensions(deviceExtensionCount);
 			if (vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &deviceExtensionCount, deviceExtensions.data()) != VK_SUCCESS) break;
 
+			//see https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkDynamicState.html
 			auto& data = _vkStatus.enabledDeviceExtensions;
 			for (auto& extension : deviceExtensions) {
 				if (!strcmp(VK_KHR_SWAPCHAIN_EXTENSION_NAME, extension.extensionName)) {
@@ -220,6 +234,31 @@ namespace srk::modules::graphics::vulkan {
 				if (!strcmp("VK_EXT_custom_border_color", extension.extensionName)) {
 					data.names[data.count++] = "VK_EXT_custom_border_color";
 					_internalFeatures.customBorderColor = true;
+					continue;
+				}
+				if (!strcmp("VK_EXT_extended_dynamic_state", extension.extensionName)) {
+					data.names[data.count++] = "VK_EXT_extended_dynamic_state";
+					_internalFeatures.extendedDynamicState = true;
+					continue;
+				}
+				if (!strcmp("VK_EXT_extended_dynamic_state2", extension.extensionName)) {
+					data.names[data.count++] = "VK_EXT_extended_dynamic_state2";
+					_internalFeatures.extendedDynamicState2 = true;
+					continue;
+				}
+				if (!strcmp("VK_EXT_extended_dynamic_state3", extension.extensionName)) {
+					data.names[data.count++] = "VK_EXT_extended_dynamic_state3";
+					_internalFeatures.extendedDynamicState3 = true;
+					continue;
+				}
+				if (!strcmp("VK_EXT_vertex_input_dynamic_state", extension.extensionName)) {
+					data.names[data.count++] = "VK_EXT_vertex_input_dynamic_state";
+					_internalFeatures.vertexInputDynamicState = true;
+					continue;
+				}
+				if (!strcmp("VK_EXT_color_write_enable", extension.extensionName)) {
+					data.names[data.count++] = "VK_EXT_color_write_enable";
+					_internalFeatures.colorWriteEnable = true;
 					continue;
 				}
 			}
@@ -690,7 +729,7 @@ namespace srk::modules::graphics::vulkan {
 
 		graphicsPipelineCreateInfo.pTessellationState = nullptr;
 
-		VkViewport viewport;
+		/*VkViewport viewport;
 		viewport.x = _vkStatus.viewport.pos[0];
 		viewport.y = _vkStatus.viewport.pos[1];
 		viewport.width = _vkStatus.viewport.size[0];
@@ -709,7 +748,8 @@ namespace srk::modules::graphics::vulkan {
 		pipelineViewportStateCreateInfo.pViewports = &viewport;
 		pipelineViewportStateCreateInfo.scissorCount = 1;
 		pipelineViewportStateCreateInfo.pScissors = &scissor;
-		graphicsPipelineCreateInfo.pViewportState = &pipelineViewportStateCreateInfo;
+		graphicsPipelineCreateInfo.pViewportState = &pipelineViewportStateCreateInfo;*/
+		graphicsPipelineCreateInfo.pViewportState = nullptr;
 
 		graphicsPipelineCreateInfo.pRasterizationState = &_vkStatus.rasterizer.info;
 
@@ -726,19 +766,7 @@ namespace srk::modules::graphics::vulkan {
 
 		graphicsPipelineCreateInfo.pDepthStencilState = &_vkStatus.depthStencil.info;
 		graphicsPipelineCreateInfo.pColorBlendState = &_vkStatus.blend.info;
-
-		VkDynamicState dynamicStates[] = {
-			VK_DYNAMIC_STATE_VIEWPORT,
-			VK_DYNAMIC_STATE_SCISSOR,
-			VK_DYNAMIC_STATE_BLEND_CONSTANTS
-		};
-
-		VkPipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo;
-		memset(&pipelineDynamicStateCreateInfo, 0, sizeof(pipelineDynamicStateCreateInfo));
-		pipelineDynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-		pipelineDynamicStateCreateInfo.dynamicStateCount = sizeof(dynamicStates) / sizeof(VkDynamicState);
-		pipelineDynamicStateCreateInfo.pDynamicStates = dynamicStates;
-		graphicsPipelineCreateInfo.pDynamicState = &pipelineDynamicStateCreateInfo;
+		graphicsPipelineCreateInfo.pDynamicState = &_pipelineDynamicStateCreateInfo;
 
 		VkAttachmentDescription attachmentDesc;
 		memset(&attachmentDesc, 0, sizeof(attachmentDesc));

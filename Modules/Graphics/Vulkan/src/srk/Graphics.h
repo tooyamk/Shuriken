@@ -15,6 +15,12 @@ namespace srk::modules::graphics::vulkan {
 	public:
 		struct InternalFeatures {
 			bool customBorderColor;
+
+			bool extendedDynamicState;
+			bool extendedDynamicState2;
+			bool extendedDynamicState3;
+			bool vertexInputDynamicState;
+			bool colorWriteEnable;
 		};
 
 
@@ -148,6 +154,9 @@ namespace srk::modules::graphics::vulkan {
 		InternalFeatures _internalFeatures;
 		GraphicsDeviceFeatures _deviceFeatures;
 		std::string _deviceVersion;
+
+		std::vector<VkDynamicState> _dynamicStates;
+		VkPipelineDynamicStateCreateInfo _pipelineDynamicStateCreateInfo;
 
 		IntrusivePtr<BlendState> _defaultBlendState;
 		IntrusivePtr<DepthStencilState> _defaultDepthStencilState;

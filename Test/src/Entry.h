@@ -43,7 +43,7 @@ public:
 		//return CompressTextureTester().run();
 		//return DepthTestTester().run();
 		//return ExperimentTester().run();
-		//return GraphicsTester().run();
+		return GraphicsTester().run();
 		//return GraphicsAdapterTester().run();
 		//return InputTester().run();
 		//return LockfreeTester().run();
@@ -51,6 +51,6 @@ public:
 		//return RenderPipelineTester().run();
 		//return RenderTargetTester().run();
 		//return VertexUpdateTester().run();
-		return WindowTester().run();
+		//return WindowTester().run();
 	}
 };
