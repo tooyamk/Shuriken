@@ -1,10 +1,17 @@
 if (SRK_HOST_OS_WINDOWS)
     file(WRITE ${INSTALL_DIR}/bin/python${MAJOR}${MINOR}._pth "python${MAJOR}${MINOR}.zip\r\n.\r\nimport site")
     file(WRITE ${INSTALL_DIR}/bin/Lib/site-packages/start_path.pth "import sys;import os;sys.path.insert(0,os.path.dirname(sys.argv[0]));")
+    
+    set(pip ${INSTALL_DIR}/bin/get-pip.py)#md5=6f33e0cffbbd2093f2406f8d0839b01f
+    if (NOT EXISTS ${pip})
+        message("downloading get-pip.py")
+        file(DOWNLOAD https://bootstrap.pypa.io/get-pip.py ${pip})
+        message("installing pip")
+        execute_process(COMMAND python.exe ${pip} WORKING_DIRECTORY ${INSTALL_DIR}/bin RESULT_VARIABLE err)
+    endif ()
 elseif (SRK_HOST_OS_LINUX OR SRK_HOST_OS_MACOS)
     execute_process(COMMAND make install WORKING_DIRECTORY ${BUILD_DIR} RESULT_VARIABLE err)
-    if( NOT "${err}" STREQUAL "0" )
+    if (NOT "${err}" STREQUAL "0")
         message(FATAL_ERROR "cpython make install error : ${err}")
     endif ()
 endif ()
-

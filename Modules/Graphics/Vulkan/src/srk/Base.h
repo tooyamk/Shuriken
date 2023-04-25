@@ -40,6 +40,8 @@ namespace srk::modules::graphics::vulkan {
 			return _buffer;
 		}
 
+		InternalCommandBuffer& SRK_CALL operator=(const InternalCommandBuffer& value) = delete;
+
 		inline InternalCommandBuffer& SRK_CALL operator=(InternalCommandBuffer&& value) noexcept {
 			_buffer = value._buffer;
 			_device = value._device;

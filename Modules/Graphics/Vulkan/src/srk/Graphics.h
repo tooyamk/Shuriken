@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Base.h"
+#include "srk/Lock.h"
 #include "srk/events/EventDispatcher.h"
 #include "srk/modules/graphics/ConstantBufferManager.h"
 #include "srk/modules/windows/WindowModule.h"
@@ -120,6 +121,16 @@ namespace srk::modules::graphics::vulkan {
 			return _vkStatus.cmd.graphicsQueue;
 		}
 
+		VkFence SRK_CALL getFenceFromPool();
+
+		inline void SRK_CALL putFenceToPool(VkFence fence) {
+			if (!fence) return;
+
+			std::scoped_lock lck(_fencesLock);
+
+			_fencesPool.emplace_back(fence);
+		}
+
 		InternalCommandBuffer beginOneTimeCommands();
 		bool endOneTimeCommands(InternalCommandBuffer& buffer);
 		static void transitionImageLayout(VkCommandBuffer cmd, VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout, const VkImageSubresourceRange& range);
@@ -145,6 +156,20 @@ namespace srk::modules::graphics::vulkan {
 		static VkSamplerAddressMode SRK_CALL convertSamplerAddressMode(SamplerAddressMode mode);
 
 	private:
+		struct FenceDeleter {
+			FenceDeleter(Graphics* g) : _g(g) {}
+			FenceDeleter(const FenceDeleter& other) : _g(other._g) {}
+			FenceDeleter(FenceDeleter&& other) : _g(other._g) {}
+
+			inline void SRK_CALL operator()(VkFence f) const {
+				_g->putFenceToPool(f);
+			};
+
+		private:
+			Graphics* _g;
+		};
+
+
 		bool _isDebug;
 		bool _curIsBackBuffer;
 		SampleCount _backBufferSampleCount;
@@ -157,6 +182,9 @@ namespace srk::modules::graphics::vulkan {
 
 		std::vector<VkDynamicState> _dynamicStates;
 		VkPipelineDynamicStateCreateInfo _pipelineDynamicStateCreateInfo;
+
+		AtomicLock _fencesLock;
+		std::vector<VkFence> _fencesPool;
 
 		IntrusivePtr<BlendState> _defaultBlendState;
 		IntrusivePtr<DepthStencilState> _defaultDepthStencilState;

@@ -3,11 +3,10 @@ srkSetSubProject(${SRK_TOOL_PROJ_PREFIX})
 set(installDir ${PROJECT_BINARY_DIR}/install)
 set(binDir ${installDir}/bin)
 
-set_property(GLOBAL PROPERTY SRKPROJ_TOOL_M4_NAME ${PROJECT_NAME})
-set_property(GLOBAL PROPERTY SRKPROJ_TOOL_M4_BIN_DIR ${binDir})
-set_property(GLOBAL PROPERTY SRKPROJ_TOOL_M4_EXE ${binDir}/m4)
+set_property(GLOBAL PROPERTY SRKPROJ_TOOL_GETTEXT_NAME ${PROJECT_NAME})
+set_property(GLOBAL PROPERTY SRKPROJ_TOOL_GETTEXT_BIN_DIR ${binDir})
 
-set(fileName m4-1.4.19.tar.xz)
+set(fileName gettext-0.21.tar.xz)
 srkCheckExternalProjectVersion_DownloadFile(${PROJECT_BINARY_DIR} ${PROJECT_BINARY_DIR}/download/${fileName})
 
 include(ExternalProject)
@@ -15,7 +14,7 @@ include(ExternalProject)
 ExternalProject_Add(
     ${PROJECT_NAME}
     PREFIX ${PROJECT_BINARY_DIR}
-    URL https://ftp.gnu.org/gnu/m4/${fileName}
+    URL https://ftp.gnu.org/gnu/gettext/${fileName}
     DOWNLOAD_NO_EXTRACT ON
     TMP_DIR tmp
     STAMP_DIR stamp

@@ -999,6 +999,30 @@ namespace srk::modules::graphics::vulkan {
 	void Graphics::clear(ClearFlag flags, const Vec4f32& color, float32_t depth, size_t stencil) {
 	}
 
+	VkFence Graphics::getFenceFromPool() {
+		VkFence fence = nullptr;
+
+		_fencesLock.lock();
+
+		if (_fencesPool.empty()) {
+			_fencesLock.unlock();
+
+			VkFenceCreateInfo info;
+			memset(&info, 0, sizeof(info));
+			info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+			if (vkCreateFence(_vkStatus.device, &info, getVkAllocationCallbacks(), &fence) != VK_SUCCESS) return nullptr;
+		} else {
+			fence = _fencesPool[_fencesPool.size() - 1];
+			_fencesPool.pop_back();
+
+			_fencesLock.unlock();
+
+			vkResetFences(_vkStatus.device, 1, &fence);
+		}
+
+		return fence;
+	}
+
 	InternalCommandBuffer Graphics::beginOneTimeCommands() {
 		VkCommandBufferAllocateInfo commandBufferAllocateInfo;
 		memset(&commandBufferAllocateInfo, 0, sizeof(commandBufferAllocateInfo));
@@ -1016,12 +1040,17 @@ namespace srk::modules::graphics::vulkan {
 		commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 		if (vkBeginCommandBuffer(buffer.getVkCommandBuffer(), &commandBufferBeginInfo) != VK_SUCCESS) return InternalCommandBuffer();
 
-		return buffer;
+		return std::move(buffer);
 	}
 
 	bool Graphics::endOneTimeCommands(InternalCommandBuffer& buffer) {
 		auto cb = buffer.getVkCommandBuffer();
 		if (vkEndCommandBuffer(cb) != VK_SUCCESS) return false;
+
+		auto fence = getFenceFromPool();
+		if (!fence) return false;
+
+		std::unique_ptr<VkFence_T, FenceDeleter> pf(fence, FenceDeleter(this));
 
 		VkSubmitInfo submitInfo;
 		memset(&submitInfo, 0, sizeof(submitInfo));
@@ -1031,10 +1060,19 @@ namespace srk::modules::graphics::vulkan {
 
 		auto queue = _vkStatus.cmd.graphicsQueue;
 
-		if (vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS) return false;
-		if (vkQueueWaitIdle(queue) != VK_SUCCESS) return false;
+		//if (vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS) return false;
+		if (vkQueueSubmit(queue, 1, &submitInfo, fence) != VK_SUCCESS) return false;
 
-		return true;
+		do {
+			auto rst = vkGetFenceStatus(_vkStatus.device, fence);
+			if (rst == VK_NOT_READY) {
+				std::this_thread::yield();
+				continue;
+			}
+
+			return rst == VK_SUCCESS;
+		} while (true);
+		//if (vkQueueWaitIdle(queue) != VK_SUCCESS) return false;
 	}
 
 	void Graphics::transitionImageLayout(VkCommandBuffer cmd, VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout, const VkImageSubresourceRange& range) {
@@ -1093,13 +1131,20 @@ namespace srk::modules::graphics::vulkan {
 	void Graphics::_release() {
 		if (_vkStatus.device) vkDeviceWaitIdle(_vkStatus.device);
 
+		auto allocator = getVkAllocationCallbacks();
+
+		for (auto f : _fencesPool) {
+			vkDestroyFence(_vkStatus.device, f, allocator);
+		}
+		_fencesPool.clear();
+
 		if (_vkStatus.cmd.pool) {
-			vkDestroyCommandPool(_vkStatus.device, _vkStatus.cmd.pool, getVkAllocationCallbacks());
+			vkDestroyCommandPool(_vkStatus.device, _vkStatus.cmd.pool, allocator);
 			_vkStatus.cmd.pool = nullptr;
 		}
 
 		if (_vkStatus.pipeline.cache) {
-			vkDestroyPipelineCache(_vkStatus.device, _vkStatus.pipeline.cache, getVkAllocationCallbacks());
+			vkDestroyPipelineCache(_vkStatus.device, _vkStatus.pipeline.cache, allocator);
 			_vkStatus.pipeline.cache = nullptr;
 		}
 

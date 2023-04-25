@@ -574,7 +574,7 @@ namespace srk {
 		static constexpr uint8_t VAL5_BITS8 = VAL5_MAX - 8;
 		static constexpr uint8_t VAL5_BITS64 = VAL5_MAX;
 
-		static constexpr uint8_t VALUE_SIZE = 16;
+		static constexpr uint8_t VALUE_SIZE = sizeof(uintptr_t) * 3 - sizeof(Type) - sizeof(Flag);
 
 		uint8_t _value[VALUE_SIZE];
 		Type _type;

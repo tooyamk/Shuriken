@@ -4,11 +4,12 @@ set(installDir ${PROJECT_BINARY_DIR}/install)
 set(binDir ${installDir}/bin)
 
 set_property(GLOBAL PROPERTY SRKPROJ_TOOL_AUTOMAKE_NAME ${PROJECT_NAME})
+set_property(GLOBAL PROPERTY SRKPROJ_TOOL_AUTOMAKE_BIN_DIR ${binDir})
 set_property(GLOBAL PROPERTY SRKPROJ_TOOL_AUTOMAKE_ACLOCAL ${binDir}/aclocal)
 set_property(GLOBAL PROPERTY SRKPROJ_TOOL_AUTOMAKE_AUTOMAKE ${binDir}/automake)
 
 get_property(SRKPROJ_TOOL_AUTOCONF_NAME GLOBAL PROPERTY "SRKPROJ_TOOL_AUTOCONF_NAME")
-get_property(SRKPROJ_TOOL_AUTOCONF_DIR GLOBAL PROPERTY "SRKPROJ_TOOL_AUTOCONF_DIR")
+get_property(SRKPROJ_TOOL_AUTOCONF_BIN_DIR GLOBAL PROPERTY "SRKPROJ_TOOL_AUTOCONF_BIN_DIR")
 
 set(fileName automake-1.16.5.tar.xz)
 srkCheckExternalProjectVersion_DownloadFile(${PROJECT_BINARY_DIR} ${PROJECT_BINARY_DIR}/download/${fileName})
@@ -19,6 +20,7 @@ ExternalProject_Add(
     ${PROJECT_NAME}
     PREFIX ${PROJECT_BINARY_DIR}
     URL https://ftp.gnu.org/gnu/automake/${fileName}
+    DOWNLOAD_NO_EXTRACT ON
     TMP_DIR tmp
     STAMP_DIR stamp
     DOWNLOAD_DIR download
@@ -28,7 +30,7 @@ ExternalProject_Add(
     UPDATE_COMMAND ""
     CONFIGURE_COMMAND
         tar -xf ${PROJECT_BINARY_DIR}/download/${fileName} -C ${PROJECT_BINARY_DIR}/src --strip-components 1
-        COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/configure.sh ${SRKPROJ_TOOL_AUTOCONF_DIR} ${PROJECT_BINARY_DIR}/src ${installDir}
+        COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/configure.sh ${SRKPROJ_TOOL_AUTOCONF_BIN_DIR} ${PROJECT_BINARY_DIR}/src ${installDir}
     BUILD_COMMAND make
     INSTALL_COMMAND make install
 )

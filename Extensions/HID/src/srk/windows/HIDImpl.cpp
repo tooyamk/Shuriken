@@ -1,7 +1,6 @@
 #include "windows/HIDImpl.h"
 
 #if SRK_OS == SRK_OS_WINDOWS
-#include "srk/ScopeGuard.h"
 #include "srk/Printer.h"
 #include "srk/String.h"
 
@@ -250,15 +249,20 @@ namespace srk::extensions {
 		if (handle == INVALID_HANDLE_VALUE) return nullptr;
 
 		PHIDP_PREPARSED_DATA preparsedData = nullptr;
-		ScopeGuard preparsedDataGuard([&preparsedData]() {
-			if (preparsedData) HidD_FreePreparsedData(preparsedData);
-			});
+
+		struct Del {
+			inline void SRK_CALL operator()(PHIDP_PREPARSED_DATA* p) const {
+				if (*p) HidD_FreePreparsedData(*p);
+			};
+		};
+		std::unique_ptr<PHIDP_PREPARSED_DATA, Del> preparsedDataGuard(&preparsedData, Del());
+
 		if (!HidD_GetPreparsedData(handle, &preparsedData)) return nullptr;
 
 		HIDP_CAPS caps;
 		if (HidP_GetCaps(preparsedData, &caps) != HIDP_STATUS_SUCCESS) return nullptr;
 
-		preparsedDataGuard.dismiss();
+		preparsedDataGuard.release();
 
 		auto dev = new HIDDevice(handle, preparsedData);
 		dev->inputReportLength = caps.InputReportByteLength;

@@ -1,7 +1,6 @@
 #include "BaseTexture.h"
 #include "Graphics.h"
 #include "TextureView.h"
-#include "srk/ScopePtr.h"
 #include "srk/String.h"
 #include <algorithm>
 
@@ -561,10 +560,9 @@ namespace srk::modules::graphics::gl {
 
 				if (!md.inited) {
 					if (!md.buffer) {
-						ScopePtr buffer = new PixelBuffer();
+						std::unique_ptr<PixelBuffer> buffer(new PixelBuffer());
 						if (!buffer->create(graphics, md.size, Usage::MAP_READ, Usage::NONE)) return -1;
-						md.buffer = buffer;
-						buffer.reset<false>();
+						md.buffer = buffer.release();
 					}
 					if (!md.buffer->copyFrom(mipSlice, this)) return -1;
 
@@ -589,19 +587,18 @@ namespace srk::modules::graphics::gl {
 
 				if (!md.inited) {
 					if (!md.buffer) {
-						ScopePtr<PixelBuffer> readBuffer;
+						std::unique_ptr<PixelBuffer> readBuffer;
 						if (offset || length < md.size) {
-							readBuffer = new PixelBuffer();
+							readBuffer.reset(new PixelBuffer());
 							if (!readBuffer->create(graphics, md.size, Usage::MAP_READ, Usage::NONE)) return -1;
 							if (!readBuffer->copyFrom(mipSlice, this)) return -1;
 						}
 
-						ScopePtr buffer = new PixelBuffer();
+						std::unique_ptr<PixelBuffer> buffer(new PixelBuffer());
 						if (!buffer->create(graphics, md.size, Usage::MAP_WRITE, Usage::NONE)) return -1;
-						if (readBuffer) buffer->copyFrom(graphics, readBuffer);
+						if (readBuffer) buffer->copyFrom(graphics, readBuffer.get());
 
-						md.buffer = buffer;
-						buffer.reset<false>();
+						md.buffer = buffer.release();
 					}
 
 					md.buffer->map(Usage::MAP_WRITE);
