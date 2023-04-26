@@ -30,7 +30,7 @@ ExternalProject_Add(
     UPDATE_COMMAND ""
     CONFIGURE_COMMAND
         tar -xf ${PROJECT_BINARY_DIR}/download/${fileName} -C ${PROJECT_BINARY_DIR}/src --strip-components 1
-        COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/configure.sh ${SRKPROJ_TOOL_AUTOCONF_BIN_DIR} ${PROJECT_BINARY_DIR}/src ${installDir}
+        COMMAND ${CMAKE_COMMAND} -E env "PATH=${SRKPROJ_TOOL_AUTOCONF_BIN_DIR}:$ENV{PATH}" ${PROJECT_BINARY_DIR}/src/configure --prefix=${installDir}
     BUILD_COMMAND make
     INSTALL_COMMAND make install
 )

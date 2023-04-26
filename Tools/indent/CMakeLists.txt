@@ -30,7 +30,7 @@ ExternalProject_Add(
         tar -xf ${PROJECT_BINARY_DIR}/download/${fileName} -C ${PROJECT_BINARY_DIR}/src --strip-components 1
         COMMAND ${PROJECT_BINARY_DIR}/src/configure --prefix=${installDir}
         COMMAND cp -r ${PROJECT_BINARY_DIR}/src/regression ${PROJECT_BINARY_DIR}/build
-    BUILD_COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/build.sh ${SRKPROJ_TOOL_TEXINFO_BIN_DIR}
+    BUILD_COMMAND ${CMAKE_COMMAND} -E env "PATH=${SRKPROJ_TOOL_TEXINFO_BIN_DIR}:$ENV{PATH}" make
     INSTALL_COMMAND make install
 )
 
