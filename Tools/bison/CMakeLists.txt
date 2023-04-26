@@ -1,9 +1,10 @@
 srkSetSubProject(${SRK_TOOL_PROJ_PREFIX})
 
 set(installDir ${PROJECT_BINARY_DIR}/install)
+set(binDir ${installDir}/bin)
 
 set_property(GLOBAL PROPERTY SRKPROJ_TOOL_BISON_NAME ${PROJECT_NAME})
-set_property(GLOBAL PROPERTY SRKPROJ_TOOL_BISON_EXE ${installDir}/bin/bison)
+set_property(GLOBAL PROPERTY SRKPROJ_TOOL_BISON_DIR ${binDir})
 
 get_property(SRKPROJ_TOOL_M4_NAME GLOBAL PROPERTY "SRKPROJ_TOOL_M4_NAME")
 get_property(SRKPROJ_TOOL_M4_EXE GLOBAL PROPERTY "SRKPROJ_TOOL_M4_EXE")

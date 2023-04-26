@@ -3,12 +3,10 @@ srkSetSubProject(${SRK_TOOL_PROJ_PREFIX})
 set(installDir ${PROJECT_BINARY_DIR}/install)
 set(binDir ${installDir}/bin)
 
-set_property(GLOBAL PROPERTY SRKPROJ_TOOL_LIBTOOL_NAME ${PROJECT_NAME})
-set_property(GLOBAL PROPERTY SRKPROJ_TOOL_LIBTOOL_BIN_DIR ${binDir})
-#set_property(GLOBAL PROPERTY SRKPROJ_TOOL_LIBTOOL_LIBTOOL ${binDir}/libtool)
-#set_property(GLOBAL PROPERTY SRKPROJ_TOOL_LIBTOOL_LIBTOOLIZE ${binDir}/libtoolize)
+set_property(GLOBAL PROPERTY SRKPROJ_TOOL_HELP2MAN_NAME ${PROJECT_NAME})
+set_property(GLOBAL PROPERTY SRKPROJ_TOOL_HELP2MAN_BIN_DIR ${binDir})
 
-set(fileName libtool-2.4.tar.xz)
+set(fileName help2man-1.49.3.tar.xz)
 srkCheckExternalProjectVersion_DownloadFile(${PROJECT_BINARY_DIR} ${PROJECT_BINARY_DIR}/download/${fileName})
 
 include(ExternalProject)
@@ -16,7 +14,7 @@ include(ExternalProject)
 ExternalProject_Add(
     ${PROJECT_NAME}
     PREFIX ${PROJECT_BINARY_DIR}
-    URL https://ftp.gnu.org/gnu/libtool/${fileName}
+    URL https://ftp.gnu.org/gnu/help2man/${fileName}
     DOWNLOAD_NO_EXTRACT ON
     TMP_DIR tmp
     STAMP_DIR stamp
