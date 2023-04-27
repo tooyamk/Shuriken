@@ -431,6 +431,7 @@ option(SRK_ENABLE_TOOL_HELP2MAN "" OFF)
 option(SRK_ENABLE_TOOL_INDENT "" OFF)
 option(SRK_ENABLE_TOOL_LIBTOOL "" OFF)
 option(SRK_ENABLE_TOOL_M4 "" OFF)
+option(SRK_ENABLE_TOOL_OPENSSL "" OFF)
 option(SRK_ENABLE_TOOL_TEXINFO "" OFF)
 option(SRK_ENABLE_TOOL_ZLIB "" OFF)
 
@@ -449,7 +450,6 @@ option(SRK_ENABLE_EXTERNAL_TCMALLOC "" OFF)
 option(SRK_ENABLE_EXTERNAL_VULKAN_MEMORY_ALLOCATOR "" OFF)
 option(SRK_ENABLE_EXTERNAL_VULKAN_RT "" OFF)
 option(SRK_ENABLE_EXTERNAL_VULKAN_SDK "" OFF)
-option(SRK_ENABLE_EXTERNAL_ZLIB_HOST "" OFF)
 option(SRK_ENABLE_EXTERNAL_ZLIB "" OFF)
 option(SRK_ENABLE_EXTERNAL_ZSTD "" OFF)
 
@@ -663,7 +663,10 @@ if (SRK_ENABLE_EXTERNAL_DX_SHADER_COMPILER)
 endif ()
 
 if (SRK_ENABLE_TOOL_CPYTHON)
-    set(SRK_ENABLE_TOOL_ZLIB ON)
+    if (SRK_HOST_OS_LINUX OR SRK_HOST_OS_MACOS)
+        set(SRK_ENABLE_TOOL_OPENSSL ON)
+        set(SRK_ENABLE_TOOL_ZLIB ON)
+    endif ()
 endif ()
 
 if (SRK_ENABLE_MODULE_INPUT_HID)
@@ -859,12 +862,13 @@ srkAddSubdirectoryIf(SRK_ENABLE_TOOL_M4 ${SRK_TOOLS_DIR_NAME}/m4)
 srkAddSubdirectoryIf(SRK_ENABLE_TOOL_AUTOCONF ${SRK_TOOLS_DIR_NAME}/autoconf)#depends m4
 srkAddSubdirectoryIf(SRK_ENABLE_TOOL_AUTOMAKE ${SRK_TOOLS_DIR_NAME}/automake)#depends autoconf
 srkAddSubdirectoryIf(SRK_ENABLE_TOOL_BISON ${SRK_TOOLS_DIR_NAME}/bison)
+srkAddSubdirectoryIf(SRK_ENABLE_TOOL_OPENSSL ${SRK_TOOLS_DIR_NAME}/openssl)
+srkAddSubdirectoryIf(SRK_ENABLE_TOOL_ZLIB ${SRK_TOOLS_DIR_NAME}/zlib)
+srkAddSubdirectoryIf(SRK_ENABLE_TOOL_CPYTHON ${SRK_TOOLS_DIR_NAME}/cpython)#depends zlib openssl
 srkAddSubdirectoryIf(SRK_ENABLE_TOOL_GETTEXT ${SRK_TOOLS_DIR_NAME}/gettext)
 srkAddSubdirectoryIf(SRK_ENABLE_TOOL_HELP2MAN ${SRK_TOOLS_DIR_NAME}/help2man)
 srkAddSubdirectoryIf(SRK_ENABLE_TOOL_TEXINFO ${SRK_TOOLS_DIR_NAME}/texinfo)
 srkAddSubdirectoryIf(SRK_ENABLE_TOOL_INDENT ${SRK_TOOLS_DIR_NAME}/indent)#depends texinfo
-srkAddSubdirectoryIf(SRK_ENABLE_TOOL_ZLIB ${SRK_TOOLS_DIR_NAME}/zlib)
-srkAddSubdirectoryIf(SRK_ENABLE_TOOL_CPYTHON ${SRK_TOOLS_DIR_NAME}/cpython)#depends zlib
 srkAddSubdirectoryIf(SRK_ENABLE_TOOL_LIBTOOL ${SRK_TOOLS_DIR_NAME}/libtool)
 srkAddSubdirectoryIf(SRK_ENABLE_TOOL_FLEX ${SRK_TOOLS_DIR_NAME}/flex)#depends m4 autoconf automake bison gettext help2man texinfo indent libtool
 

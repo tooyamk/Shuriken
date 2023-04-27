@@ -6,10 +6,12 @@ else ()
     set(OUTPUT_NAME libz.a)
 endif ()
 
+set(installDir ${PROJECT_BINARY_DIR}/install)
+
 set_property(GLOBAL PROPERTY SRKPROJ_TOOL_ZLIB_NAME ${PROJECT_NAME})
-set_property(GLOBAL PROPERTY SRKPROJ_TOOL_ZLIB_INCLUDE ${PROJECT_BINARY_DIR}/install/include)
-set_property(GLOBAL PROPERTY SRKPROJ_TOOL_ZLIB_LIB_DIR ${PROJECT_BINARY_DIR}/install/lib)
-set_property(GLOBAL PROPERTY SRKPROJ_TOOL_ZLIB_SLIB ${PROJECT_BINARY_DIR}/install/lib/${OUTPUT_NAME})
+set_property(GLOBAL PROPERTY SRKPROJ_TOOL_ZLIB_INCLUDE ${installDir}/include)
+set_property(GLOBAL PROPERTY SRKPROJ_TOOL_ZLIB_LIB_DIR ${installDir}/lib)
+set_property(GLOBAL PROPERTY SRKPROJ_TOOL_ZLIB_SLIB ${installDir}/lib/${OUTPUT_NAME})
 
 set(gitTag v1.2.13)
 srkCheckExternalProjectVersion_GitTag(${PROJECT_BINARY_DIR} ${PROJECT_BINARY_DIR}/src ${gitTag})

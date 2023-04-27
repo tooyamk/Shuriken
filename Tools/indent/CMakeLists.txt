@@ -26,10 +26,11 @@ ExternalProject_Add(
     SOURCE_DIR src
     BINARY_DIR ${SRK_PROJECT_BUILD_ROOT_DIR}
     UPDATE_COMMAND ""
+    PATCH_COMMAND tar -xf ${PROJECT_BINARY_DIR}/download/${fileName} -C ${PROJECT_BINARY_DIR}/src --strip-components 1
     CONFIGURE_COMMAND
-        tar -xf ${PROJECT_BINARY_DIR}/download/${fileName} -C ${PROJECT_BINARY_DIR}/src --strip-components 1
-        COMMAND ${PROJECT_BINARY_DIR}/src/configure --prefix=${installDir}
-        COMMAND cp -r ${PROJECT_BINARY_DIR}/src/regression ${PROJECT_BINARY_DIR}/build
+        rm -rf ${SRK_PROJECT_BUILD_ROOT_DIR} && mkdir ${SRK_PROJECT_BUILD_ROOT_DIR}
+        COMMAND ${PROJECT_BINARY_DIR}/src/configure --prefix=${installDir} &&
+        cp -r ${PROJECT_BINARY_DIR}/src/regression ${SRK_PROJECT_BUILD_ROOT_DIR}
     BUILD_COMMAND ${CMAKE_COMMAND} -E env "PATH=${SRKPROJ_TOOL_TEXINFO_BIN_DIR}:$ENV{PATH}" make
     INSTALL_COMMAND make install
 )
