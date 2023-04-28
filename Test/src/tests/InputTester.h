@@ -14,12 +14,12 @@ public:
 			s += MAP[(size_t)(code - KeyboardVirtualKeyCode::A)];
 			return std::move(s);
 		} else if (code >= KeyboardVirtualKeyCode::_0 && code <= KeyboardVirtualKeyCode::_9) {
-			return String::toString((size_t)(code - KeyboardVirtualKeyCode::_0));
+			return StringUtility::toString((size_t)(code - KeyboardVirtualKeyCode::_0));
 		} else if (code >= KeyboardVirtualKeyCode::NUM_LOCK && code <= KeyboardVirtualKeyCode::NUMPAD_ENTER) {
 			std::string s("num_");
 
 			if (code >= KeyboardVirtualKeyCode::NUMPAD_0 && code <= KeyboardVirtualKeyCode::NUMPAD_9) {
-				s += String::toString((size_t)(code - KeyboardVirtualKeyCode::NUMPAD_0));
+				s += StringUtility::toString((size_t)(code - KeyboardVirtualKeyCode::NUMPAD_0));
 			} else {
 				switch (code) {
 				case KeyboardVirtualKeyCode::NUM_LOCK:
@@ -51,7 +51,7 @@ public:
 
 			return std::move(s);
 		} else if (code >= KeyboardVirtualKeyCode::F1 && code <= KeyboardVirtualKeyCode::F24) {
-			return "f" + String::toString((size_t)(code - KeyboardVirtualKeyCode::F1 + 1));
+			return "f" + StringUtility::toString((size_t)(code - KeyboardVirtualKeyCode::F1 + 1));
 		} else {
 			switch (code) {
 			case KeyboardVirtualKeyCode::L_SHIFT:
@@ -167,10 +167,10 @@ public:
 		default:
 		{
 			if (code >= MouseVirtualKeyCode::FN_BUTTON_START && code <= MouseVirtualKeyCode::FN_BUTTON_END) {
-				return "fn_button_" + String::toString((uint32_t)(code - MouseVirtualKeyCode::FN_BUTTON_START) + 1);
+				return "fn_button_" + StringUtility::toString((uint32_t)(code - MouseVirtualKeyCode::FN_BUTTON_START) + 1);
 			}
 
-			return "unknown_" + String::toString((size_t)code);
+			return "unknown_" + StringUtility::toString((size_t)code);
 		}
 		}
 	}
@@ -240,12 +240,12 @@ public:
 		default:
 		{
 			if (code >= GamepadVirtualKeyCode::UNDEFINED_AXIS_1 && code <= GamepadVirtualKeyCode::UNDEFINED_AXIS_END) {
-				return "undefined_axis_" + String::toString((uint32_t)(code - GamepadVirtualKeyCode::UNDEFINED_AXIS_1) + 1);
+				return "undefined_axis_" + StringUtility::toString((uint32_t)(code - GamepadVirtualKeyCode::UNDEFINED_AXIS_1) + 1);
 			} else if (code >= GamepadVirtualKeyCode::UNDEFINED_BUTTON_1 && code <= GamepadVirtualKeyCode::UNDEFINED_BUTTON_END) {
-				return "undefined_button_" + String::toString((uint32_t)(code - GamepadVirtualKeyCode::UNDEFINED_BUTTON_1) + 1);
+				return "undefined_button_" + StringUtility::toString((uint32_t)(code - GamepadVirtualKeyCode::UNDEFINED_BUTTON_1) + 1);
 			}
 
-			return "unknown_" + String::toString((size_t)code);
+			return "unknown_" + StringUtility::toString((size_t)code);
 		}
 		}
 	}
@@ -274,17 +274,17 @@ public:
 		}
 
 		str += " "sv;
-		str += String::toString(info.vendorID);
+		str += StringUtility::toString(info.vendorID);
 
 		str += " "sv;
-		str += String::toString(info.productID);
+		str += StringUtility::toString(info.productID);
 
 		str += " \""sv;
 		str += info.name;
 		str += '\"';
 
 		str += " "sv;
-		str += String::toString(info.guid.getData(), info.guid.getSize());
+		str += StringUtility::toString(info.guid.getData(), info.guid.getSize());
 
 		return std::move(str);
 	}
@@ -647,7 +647,7 @@ public:
 			for (auto& im : inputModules) im->poll();
 			//for (auto& dev : inputDevices) dev->poll(true);
 
-			//app->setWindowTitle(String::toString(GetKeyboardType(0)) + "  " + String::toString(GetKeyboardType(1)) + "  " + String::toString(GetKeyboardType(2)));
+			//app->setWindowTitle(StringUtility::toString(GetKeyboardType(0)) + "  " + StringUtility::toString(GetKeyboardType(1)) + "  " + StringUtility::toString(GetKeyboardType(2)));
 			}));
 
 		//evtDispatcher.addEventListener(ApplicationEvent::CLOSING, *appClosingListener);

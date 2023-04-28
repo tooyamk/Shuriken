@@ -1,6 +1,6 @@
 #pragma once
 
-#include "srk/Core.h"
+#include "srk/Bit.h"
 #include <algorithm>
 #include <string_view>
 
@@ -329,7 +329,7 @@ namespace srk {
 		requires (T == ValueType::TWO_I12)
 		inline std::tuple<int16_t, int16_t> SRK_CALL read() {
 			auto [v1, v2] = read<ValueType::TWO_UI12>();
-			return std::make_tuple<int16_t, int16_t>(v1 > BitInt<12>::MAX ? v1 - BitUInt<12>::MAX - 1 : v1, v2 > BitInt<12>::MAX ? v2 - BitUInt<12>::MAX - 1 : v2);
+			return std::make_tuple<int16_t, int16_t>(v1 > Bit::intMax<12>() ? v1 - Bit::uintMax<12>() - 1 : v1, v2 > Bit::intMax<12>() ? v2 - Bit::uintMax<12>() - 1 : v2);
 		}
 
 		template<ValueType T>
@@ -534,7 +534,7 @@ namespace srk {
 				break;
 			case 3:
 			{
-				if (value < 0) value = BitUInt<24>::MAX + 1 + value;
+				if (value < 0) value = Bit::uintMax<24>() + 1 + value;
 				_write(&value, 3);
 
 				break;
@@ -544,21 +544,21 @@ namespace srk {
 				break;
 			case 5:
 			{
-				if (value < 0) value = BitUInt<40>::MAX + 1 + value;
+				if (value < 0) value = Bit::uintMax<40>() + 1 + value;
 				_write(&value, 5);
 
 				break;
 			}
 			case 6:
 			{
-				if (value < 0) value = BitUInt<48>::MAX + 1 + value;
+				if (value < 0) value = Bit::uintMax<48>() + 1 + value;
 				_write(&value, 6);
 
 				break;
 			}
 			case 7:
 			{
-				if (value < 0) value = BitUInt<56>::MAX + 1 + value;
+				if (value < 0) value = Bit::uintMax<56>() + 1 + value;
 				_write(&value, 7);
 
 				break;
@@ -580,7 +580,7 @@ namespace srk {
 		template<ValueType T>
 		requires (T == ValueType::TWO_I12)
 		inline void SRK_CALL write(int16_t value1, int16_t value2) {
-			write<ValueType::TWO_UI12>(value1 < 0 ? BitUInt<12>::MAX + 1 + value1 : value1, value2 < 0 ? BitUInt<12>::MAX + 1 + value2 : value2);
+			write<ValueType::TWO_UI12>(value1 < 0 ? Bit::uintMax<12>() + 1 + value1 : value1, value2 < 0 ? Bit::uintMax<12>() + 1 + value2 : value2);
 		}
 
 		template<ValueType T>
@@ -715,7 +715,7 @@ namespace srk {
 		template<size_t Bytes, bool AlignedAccess>
 		inline int_t<Bytes * 8> SRK_CALL _readIX() {
 			int_t<Bytes * 8> v = _readUIX<Bytes, AlignedAccess>();
-			return v > BitInt<Bytes * 8>::MAX ? v - BitUInt<Bytes * 8>::MAX - 1 : v;
+			return v > Bit::intMax<Bytes * 8>() ? v - Bit::uintMax<Bytes * 8>() - 1 : v;
 		}
 
 		template<size_t Bytes, bool AlignedAccess>
@@ -725,7 +725,7 @@ namespace srk {
 				return 0;
 			} else {
 				if (_needReverse) {
-					auto v = byteswap<Bytes, AlignedAccess>(&_data[_position]);
+					auto v = Bit::byteswap<Bytes, AlignedAccess>(&_data[_position]);
 					_position += 3;
 					return v;
 				} else {
@@ -754,7 +754,7 @@ namespace srk {
 				}
 
 				if (_needReverse) {
-					auto v = byteswap<TYPE_BYTES, AlignedAccess>(&_data[_position]);
+					auto v = Bit::byteswap<TYPE_BYTES, AlignedAccess>(&_data[_position]);
 					_position += TYPE_BYTES;
 					if constexpr (std::integral<T>) {
 						return v;

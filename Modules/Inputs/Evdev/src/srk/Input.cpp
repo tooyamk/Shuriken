@@ -3,7 +3,7 @@
 #include "GamepadDriver.h"
 #include "KeyboardDriver.h"
 #include "MouseDriver.h"
-#include "srk/String.h"
+#include "srk/StringUtility.h"
 #include "srk/hash/xxHash.h"
 #include <fcntl.h>
 #include <linux/input.h>
@@ -40,7 +40,7 @@ namespace srk::modules::inputs::evdev_input {
 				if (p == decltype(line)::npos) continue;
 
 				std::string_view evt;
-				String::split(line.substr(p + 9), String::CharFlag::WHITE_SPACE, [&evt](const std::string_view& val){
+				StringUtility::split(line.substr(p + 9), StringUtility::CharFlag::WHITE_SPACE, [&evt](const std::string_view& val){
 					if (val.find("event"sv) != std::string_view::npos) evt = val;
 				});
 

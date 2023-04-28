@@ -68,7 +68,7 @@ else ()
     set(BUILD_TYPES Debug Release)
 endif ()
 
-set(cxxFlags "-D__cpp_lib_remove_cvref -D__cpp_lib_bitops -DSRK_std_convertible_to -DSRK_std_default_initializable -DSRK_std_derived_from -DSRK_std_floating_point -DSRK_std_integral -DSRK_std_invocable -DSRK_std_signed_integral -DSRK_std_unsigned_integral -UANDROID")
+set(cxxFlags "-D__cpp_lib_remove_cvref -D__cpp_lib_bitops -UANDROID")
 
 foreach(buildType ${BUILD_TYPES})
     if ((${buildType} STREQUAL "Debug") OR (${buildType} STREQUAL "Release"))

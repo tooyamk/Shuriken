@@ -123,10 +123,10 @@ public:
 				constexpr TextureFormat texFmt = TextureFormat::R8G8B8A8_UNORM;
 				constexpr Vec2uz texDim(2, 2);
 
-				auto mipLevels = TextureUtils::getMipLevels(texDim);
+				auto mipLevels = TextureUtility::getMipLevels(texDim);
 				size_t totalBytes;
 				std::vector<size_t> mipBytes(mipLevels);
-				TextureUtils::getMipsInfo(texFmt, texDim, mipLevels, &totalBytes, mipBytes.data());
+				TextureUtility::getMipsInfo(texFmt, texDim, mipLevels, &totalBytes, mipBytes.data());
 				std::vector<uint8_t> texData(totalBytes);
 				std::vector<void*> mipData(mipLevels);
 				size_t offset = 0;
@@ -148,7 +148,7 @@ public:
 				}
 				if (rst) {
 					std::vector<uint8_t>* updateOrWriteData = nullptr;
-					std::vector<uint8_t> updateData(TextureUtils::getPerBlockBytes(texFmt));
+					std::vector<uint8_t> updateData(TextureUtility::getPerBlockBytes(texFmt));
 					for (size_t i = 0; i < updateData.size(); ++i) updateData.data()[i] = i;
 					if ((tr->getUsage() & Usage::UPDATE) == Usage::UPDATE) {
 						updateOrWriteData = &updateData;
@@ -156,7 +156,7 @@ public:
 						printaln(L"Texture2DResource::update : "sv, rst ? L"succeed"sv : L"failed"sv);
 					}
 
-					std::vector<uint8_t> writeData(TextureUtils::getPerBlockBytes(texFmt));
+					std::vector<uint8_t> writeData(TextureUtility::getPerBlockBytes(texFmt));
 					for (size_t i = 0; i < writeData.size(); ++i) writeData.data()[i] = i;
 					if ((tr->getUsage() & Usage::MAP_WRITE) == Usage::MAP_WRITE) {
 						updateOrWriteData = &writeData;

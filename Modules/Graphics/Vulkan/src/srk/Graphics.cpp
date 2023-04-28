@@ -13,7 +13,7 @@
 #include "Texture2DResource.h"
 #include "Texture3DResource.h"
 #include "VertexBuffer.h"
-#include "srk/String.h"
+#include "srk/StringUtility.h"
 #include "srk/modules/graphics/GraphicsAdapter.h"
 
 namespace srk::modules::graphics::vulkan {
@@ -116,13 +116,13 @@ namespace srk::modules::graphics::vulkan {
 				vkGetPhysicalDeviceProperties(_vkStatus.physicalDevice, &physicalDeviceProperties);
 
 				/*_deviceVersion = "Vulkan ";
-				_deviceVersion += String::toString(VK_API_VERSION_MAJOR(physicalDeviceProperties.apiVersion));
+				_deviceVersion += StringUtility::toString(VK_API_VERSION_MAJOR(physicalDeviceProperties.apiVersion));
 				_deviceVersion += '.';
-				_deviceVersion += String::toString(VK_VERSION_MINOR(physicalDeviceProperties.apiVersion));
+				_deviceVersion += StringUtility::toString(VK_VERSION_MINOR(physicalDeviceProperties.apiVersion));
 				_deviceVersion += '.';
-				_deviceVersion += String::toString(VK_VERSION_PATCH(physicalDeviceProperties.apiVersion));
+				_deviceVersion += StringUtility::toString(VK_VERSION_PATCH(physicalDeviceProperties.apiVersion));
 				_deviceVersion += '.';
-				_deviceVersion += String::toString(VK_API_VERSION_VARIANT(physicalDeviceProperties.apiVersion));*/
+				_deviceVersion += StringUtility::toString(VK_API_VERSION_VARIANT(physicalDeviceProperties.apiVersion));*/
 
 				_deviceFeatures.stencilIndependentMask = true;
 				_deviceFeatures.stencilIndependentRef = true;
@@ -386,13 +386,13 @@ namespace srk::modules::graphics::vulkan {
 		if (enumerateInstanceVersion) enumerateInstanceVersion(&_vkStatus.apiVersion);
 
 		_deviceVersion = "Vulkan ";
-		_deviceVersion += String::toString(VK_API_VERSION_MAJOR(_vkStatus.apiVersion));
+		_deviceVersion += StringUtility::toString(VK_API_VERSION_MAJOR(_vkStatus.apiVersion));
 		_deviceVersion += '.';
-		_deviceVersion += String::toString(VK_VERSION_MINOR(_vkStatus.apiVersion));
+		_deviceVersion += StringUtility::toString(VK_VERSION_MINOR(_vkStatus.apiVersion));
 		_deviceVersion += '.';
-		_deviceVersion += String::toString(VK_VERSION_PATCH(_vkStatus.apiVersion));
+		_deviceVersion += StringUtility::toString(VK_VERSION_PATCH(_vkStatus.apiVersion));
 		_deviceVersion += '.';
-		_deviceVersion += String::toString(VK_API_VERSION_VARIANT(_vkStatus.apiVersion));
+		_deviceVersion += StringUtility::toString(VK_API_VERSION_VARIANT(_vkStatus.apiVersion));
 
 		return true;
 	}

@@ -9,7 +9,7 @@
 #include "ShaderTranspiler.h"
 #include "srk/DynamicLibraryLoader.h"
 #include "srk/Printer.h"
-#include "srk/String.h"
+#include "srk/StringUtility.h"
 
 #include "spirv_cross/spirv.hpp"
 #include "spirv_cross/spirv_msl.hpp"
@@ -47,7 +47,7 @@ namespace srk::extensions::shader_transpiler {
 			}
 
 			if (source.language == ProgramLanguage::HLSL) {
-				auto profile = String::utf8ToWide<std::wstring>(ProgramSource::toHLSLShaderModel(source.stage, source.version));
+				auto profile = StringUtility::utf8ToWide<std::wstring>(ProgramSource::toHLSLShaderModel(source.stage, source.version));
 
 				std::vector<std::wstring> defineStrs(numDefines << 1);
 				std::vector<DxcDefine> dxcDefines(numDefines);
@@ -56,11 +56,11 @@ namespace srk::extensions::shader_transpiler {
 
 					auto j = i << 1;
 					auto def = defines + j;
-					defineStrs[j] = String::utf8ToWide<std::wstring>(def->name);
+					defineStrs[j] = StringUtility::utf8ToWide<std::wstring>(def->name);
 					dxcDef.Name = defineStrs[j].data();
 
 					++j;
-					defineStrs[j] = String::utf8ToWide<std::wstring>(def->value);
+					defineStrs[j] = StringUtility::utf8ToWide<std::wstring>(def->value);
 					dxcDef.Value = defineStrs[j].data();
 				}
 
@@ -81,13 +81,13 @@ namespace srk::extensions::shader_transpiler {
 				dxcArgStrings.emplace_back(L"-O3");
 				dxcArgStrings.emplace_back(L"-fvk-use-gl-layout");
 				//dxcArgStrings.emplace_back(L"-auto-binding-space 0")
-				//dxcArgStrings.emplace_back(L"-auto-binding-space " + String::Utf8ToUnicode(String::toString((std::underlying_type_t<ProgramStage>)source.stage)));
+				//dxcArgStrings.emplace_back(L"-auto-binding-space " + StringUtility::Utf8ToUnicode(StringUtility::toString(std::to_underlying(source.stage))));
 				//dxcArgStrings.emplace_back(L"-fspv-target-env=vulkan1.0");
 				//dxcArgStrings.emplace_back(L"-fspv-reflect");
 				if (targetLanguage != ProgramLanguage::DXIL) {
 					dxcArgStrings.emplace_back(L"-spirv");
 					if (options.spirv.descriptorSet0BindingOffset) {
-						auto offset = String::utf8ToWide<std::wstring>(String::toString(options.spirv.descriptorSet0BindingOffset));
+						auto offset = StringUtility::utf8ToWide<std::wstring>(StringUtility::toString(options.spirv.descriptorSet0BindingOffset));
 						//dxcArgStrings.emplace_back(L"-fvk-bind-globals");
 						//dxcArgStrings.emplace_back(offset);
 						//dxcArgStrings.emplace_back(L"0");
@@ -113,7 +113,7 @@ namespace srk::extensions::shader_transpiler {
 
 				CComPtr<IDxcIncludeHandler> includeHandler = new MyIncludeHandler(_dxcLib, handler);
 				CComPtr<IDxcOperationResult> compileResult;
-				IFT(_dxcInstance->Compile(sourceBlob, L"", String::utf8ToWide<std::wstring>(source.getEntryPoint()).data(), profile.data(),
+				IFT(_dxcInstance->Compile(sourceBlob, L"", StringUtility::utf8ToWide<std::wstring>(source.getEntryPoint()).data(), profile.data(),
 					dxcArgs.data(), dxcArgs.size(), dxcDefines.data(), dxcDefines.size(), includeHandler, &compileResult));
 
 				HRESULT status;
@@ -163,7 +163,7 @@ namespace srk::extensions::shader_transpiler {
 
 				if (_handler) {
 					ProgramIncludeInfo pii;
-					pii.file = String::wideToUtf8<std::string>(std::wstring_view(pFilename));
+					pii.file = StringUtility::wideToUtf8<std::string>(std::wstring_view(pFilename));
 					ByteArray data = _handler(pii);
 					return _lib->CreateBlobWithEncodingOnHeapCopy(data.getSource(), data.getLength(), CP_UTF8, reinterpret_cast<IDxcBlobEncoding**>(ppIncludeSource));
 				} else {
@@ -268,7 +268,7 @@ namespace srk::extensions::shader_transpiler {
 			//compiler.require_extension("GL_ARB_fragment_coord_conventions");
 			//compiler.set_execution_mode(spv::ExecutionModeOriginUpperLeft);
 			auto opts = compiler.get_common_options();
-			if (!targetVersion.empty()) opts.version = String::toNumber<decltype(opts.version)>(targetVersion);
+			if (!targetVersion.empty()) opts.version = StringUtility::toNumber<decltype(opts.version)>(targetVersion);
 			opts.es = targetLanguage == ProgramLanguage::GSSL;
 			opts.force_temporary = false;
 			opts.separate_shader_objects = true;
@@ -286,7 +286,7 @@ namespace srk::extensions::shader_transpiler {
 			for (auto& val : resources.uniform_buffers) {
 				compiler.unset_decoration(val.id, spv::DecorationBinding);
 				if (val.name == "type.$Globals"sv) {
-					compiler.set_name(val.base_type_id, val.name + String::toString((std::underlying_type_t<ProgramStage>)source.stage));
+					compiler.set_name(val.base_type_id, val.name + StringUtility::toString(std::to_underlying(source.stage)));
 				}
 			}
 			/*
@@ -325,7 +325,7 @@ namespace srk::extensions::shader_transpiler {
 				auto& samplerName = compiler.get_name(remap.sampler_id);
 
 				if (samplerName.rfind("DummySampler") == std::string::npos) {
-					compiler.set_name(remap.combined_id, COMBINED_TEXTURE_SAMPLER_HEADER + String::toString(texName.size()) + "s" + texName + "s" + samplerName);
+					compiler.set_name(remap.combined_id, COMBINED_TEXTURE_SAMPLER_HEADER + StringUtility::toString(texName.size()) + "s" + texName + "s" + samplerName);
 				} else {
 					compiler.set_name(remap.combined_id, texName);
 				}
@@ -336,7 +336,7 @@ namespace srk::extensions::shader_transpiler {
 
 				dst.language = targetLanguage;
 				dst.stage = source.stage;
-				dst.version = String::toString(opts.version);
+				dst.version = StringUtility::toString(opts.version);
 				dst.data.setCapacity(str.size());
 				dst.data.write<ba_vt::BYTE>((uint8_t*)str.data(), str.size());
 			} catch (spirv_cross::CompilerError& error) {
@@ -353,7 +353,7 @@ namespace srk::extensions::shader_transpiler {
 			compiler.set_entry_point(source.getEntryPoint(), model);
 
 			auto opts = compiler.get_common_options();
-			if (!targetVersion.empty()) opts.version = String::toNumber<decltype(opts.version)>(targetVersion);
+			if (!targetVersion.empty()) opts.version = StringUtility::toNumber<decltype(opts.version)>(targetVersion);
 			opts.es = false;
 			opts.force_temporary = false;
 			opts.separate_shader_objects = true;
@@ -366,7 +366,7 @@ namespace srk::extensions::shader_transpiler {
 			compiler.set_common_options(opts);
 
 			auto mslOpts = compiler.get_msl_options();
-			if (!targetVersion.empty()) mslOpts.msl_version = String::toNumber<decltype(mslOpts.msl_version)>(targetVersion);
+			if (!targetVersion.empty()) mslOpts.msl_version = StringUtility::toNumber<decltype(mslOpts.msl_version)>(targetVersion);
 			mslOpts.swizzle_texture_samples = false;
 			compiler.set_msl_options(mslOpts);
 
@@ -375,7 +375,7 @@ namespace srk::extensions::shader_transpiler {
 
 				dst.language = targetLanguage;
 				dst.stage = source.stage;
-				dst.version = String::toString(mslOpts.msl_version);
+				dst.version = StringUtility::toString(mslOpts.msl_version);
 				dst.data.setCapacity(str.size());
 				dst.data.write<ba_vt::BYTE>((uint8_t*)str.data(), str.size());
 			} catch (spirv_cross::CompilerError& error) {

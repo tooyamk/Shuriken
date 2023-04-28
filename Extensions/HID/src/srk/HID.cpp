@@ -1,5 +1,6 @@
 #include "HID.h"
-#include "srk/String.h"
+#include "srk/EnumOperators.h"
+#include "srk/StringUtility.h"
 
 namespace srk::extensions {
 	size_t HIDReportDescriptorItem::read(const void* data, size_t length, HIDReportDescriptorItem& item) {
@@ -177,11 +178,11 @@ namespace srk::extensions {
 
 							if (cd >= HIDReportCollectionData::RESERVED_BEGIN && cd <= HIDReportCollectionData::RESERVED_END) {
 								info += "reserved(";
-								info += String::toString((size_t)cd);
+								info += StringUtility::toString((size_t)cd);
 								info += ")";
 							} else {
 								info += "vendor_defined(";
-								info += String::toString((size_t)cd);
+								info += StringUtility::toString((size_t)cd);
 								info += ")";
 							}
 
@@ -215,7 +216,7 @@ namespace srk::extensions {
 				if (item.size) {
 					info += "  ";
 					info += "size : ";
-					info += String::toString(item.size);
+					info += StringUtility::toString(item.size);
 				}
 
 				break;
@@ -224,12 +225,12 @@ namespace srk::extensions {
 			{
 				info += RED_BEGIN;
 				info += "unknown(";
-				info += String::toString(item.tag);
+				info += StringUtility::toString(item.tag);
 				info += ")";
 
 				info += "  ";
 				info += "size : ";
-				info += String::toString(item.size);
+				info += StringUtility::toString(item.size);
 				info += COL_END;
 
 				break;
@@ -370,12 +371,12 @@ namespace srk::extensions {
 					{
 						if (lastUsagePage >= HIDReportUsagePageType::VENDOR_DEFINED_BEGIN && lastUsagePage <= HIDReportUsagePageType::VENDOR_DEFINED_END) {
 							info += "vendor_defined(";
-							info += String::toString((size_t)lastUsagePage);
+							info += StringUtility::toString((size_t)lastUsagePage);
 							info += ")";
 						} else {
 							info += RED_BEGIN;
 							info += "unknown(";
-							info += String::toString((size_t)lastUsagePage);
+							info += StringUtility::toString((size_t)lastUsagePage);
 							info += ")";
 							info += COL_END;
 						}
@@ -390,7 +391,7 @@ namespace srk::extensions {
 				info += "logical_minimum";
 
 				info += "  ";
-				info += String::toString(ba.read<ba_vt::UIX>(item.size));
+				info += StringUtility::toString(ba.read<ba_vt::UIX>(item.size));
 
 				break;
 			}
@@ -399,7 +400,7 @@ namespace srk::extensions {
 				info += "logical_maximum";
 
 				info += "  ";
-				info += String::toString(ba.read<ba_vt::UIX>(item.size));
+				info += StringUtility::toString(ba.read<ba_vt::UIX>(item.size));
 
 				break;
 			}
@@ -408,7 +409,7 @@ namespace srk::extensions {
 				info += "physical_miunimum";
 
 				info += "  ";
-				info += String::toString(ba.read<ba_vt::UIX>(item.size));
+				info += StringUtility::toString(ba.read<ba_vt::UIX>(item.size));
 
 				break;
 			}
@@ -417,7 +418,7 @@ namespace srk::extensions {
 				info += "physical_maximum";
 
 				info += "  ";
-				info += String::toString(ba.read<ba_vt::UIX>(item.size));
+				info += StringUtility::toString(ba.read<ba_vt::UIX>(item.size));
 
 				break;
 			}
@@ -426,7 +427,7 @@ namespace srk::extensions {
 				info += "unit_exponent";
 
 				info += "  ";
-				info += String::toString(ba.read<ba_vt::UIX>(item.size));
+				info += StringUtility::toString(ba.read<ba_vt::UIX>(item.size));
 
 				break;
 			}
@@ -435,7 +436,7 @@ namespace srk::extensions {
 				info += "unit";
 
 				info += "  ";
-				info += String::toString(ba.read<ba_vt::UIX>(item.size));
+				info += StringUtility::toString(ba.read<ba_vt::UIX>(item.size));
 
 				break;
 			}
@@ -444,7 +445,7 @@ namespace srk::extensions {
 				info += "report_size";
 
 				info += "  ";
-				info += String::toString(ba.read<ba_vt::UIX>(item.size));
+				info += StringUtility::toString(ba.read<ba_vt::UIX>(item.size));
 
 				break;
 			}
@@ -453,7 +454,7 @@ namespace srk::extensions {
 				info += "report_id";
 
 				info += "  ";
-				info += String::toString(ba.read<ba_vt::UIX>(item.size));
+				info += StringUtility::toString(ba.read<ba_vt::UIX>(item.size));
 
 				break;
 			}
@@ -462,7 +463,7 @@ namespace srk::extensions {
 				info += "report_count";
 
 				info += "  ";
-				info += String::toString(ba.read<ba_vt::UIX>(item.size));
+				info += StringUtility::toString(ba.read<ba_vt::UIX>(item.size));
 
 				break;
 			}
@@ -483,11 +484,11 @@ namespace srk::extensions {
 				info += RED_BEGIN;
 
 				info += "reserved(";
-				info += String::toString(item.tag);
+				info += StringUtility::toString(item.tag);
 				info += ")";
 
 				info += "size : ";
-				info += String::toString(item.size);
+				info += StringUtility::toString(item.size);
 
 				info += COL_END;
 
@@ -845,7 +846,7 @@ namespace srk::extensions {
 					{
 						info += RED_BEGIN;
 						info += "unknown(";
-						info += String::toString(val);
+						info += StringUtility::toString(val);
 						info += ")";
 						info += COL_END;
 
@@ -855,7 +856,7 @@ namespace srk::extensions {
 				} else {
 					info += RED_BEGIN;
 					info += "unknown(";
-					info += String::toString(val);
+					info += StringUtility::toString(val);
 					info += ")";
 					info += COL_END;
 				}
@@ -867,7 +868,7 @@ namespace srk::extensions {
 				info += "usage_minimum";
 
 				info += "  ";
-				info += String::toString(ba.read<ba_vt::UIX>(item.size));
+				info += StringUtility::toString(ba.read<ba_vt::UIX>(item.size));
 
 				break;
 			}
@@ -876,7 +877,7 @@ namespace srk::extensions {
 				info += "usage_maximum";
 
 				info += "  ";
-				info += String::toString(ba.read<ba_vt::UIX>(item.size));
+				info += StringUtility::toString(ba.read<ba_vt::UIX>(item.size));
 
 				break;
 			}
@@ -885,7 +886,7 @@ namespace srk::extensions {
 				info += "designator_index";
 
 				info += "  ";
-				info += String::toString(ba.read<ba_vt::UIX>(item.size));
+				info += StringUtility::toString(ba.read<ba_vt::UIX>(item.size));
 
 				break;
 			}
@@ -894,7 +895,7 @@ namespace srk::extensions {
 				info += "designator_minimum";
 
 				info += "  ";
-				info += String::toString(ba.read<ba_vt::UIX>(item.size));
+				info += StringUtility::toString(ba.read<ba_vt::UIX>(item.size));
 
 				break;
 			}
@@ -903,7 +904,7 @@ namespace srk::extensions {
 				info += "designator_maximum";
 
 				info += "  ";
-				info += String::toString(ba.read<ba_vt::UIX>(item.size));
+				info += StringUtility::toString(ba.read<ba_vt::UIX>(item.size));
 
 				break;
 			}
@@ -912,7 +913,7 @@ namespace srk::extensions {
 				info += "string_index";
 
 				info += "  ";
-				info += String::toString(ba.read<ba_vt::UIX>(item.size));
+				info += StringUtility::toString(ba.read<ba_vt::UIX>(item.size));
 
 				break;
 			}
@@ -921,7 +922,7 @@ namespace srk::extensions {
 				info += "string_minimum";
 
 				info += "  ";
-				info += String::toString(ba.read<ba_vt::UIX>(item.size));
+				info += StringUtility::toString(ba.read<ba_vt::UIX>(item.size));
 
 				break;
 			}
@@ -930,7 +931,7 @@ namespace srk::extensions {
 				info += "string_maximum";
 
 				info += "  ";
-				info += String::toString(ba.read<ba_vt::UIX>(item.size));
+				info += StringUtility::toString(ba.read<ba_vt::UIX>(item.size));
 
 				break;
 			}
@@ -950,7 +951,7 @@ namespace srk::extensions {
 				{
 					info += GREEN_BEGIN;
 					info += "unknown_set(";
-					info += String::toString(val);
+					info += StringUtility::toString(val);
 					info += ")";
 					info += COL_END;
 
@@ -964,7 +965,7 @@ namespace srk::extensions {
 			{
 				info += RED_BEGIN;
 				info += "reserved(";
-				info += String::toString(item.tag);
+				info += StringUtility::toString(item.tag);
 				info += ")";
 				info += COL_END;
 
@@ -980,11 +981,11 @@ namespace srk::extensions {
 			info += "reserved ";
 
 			info += "tag : ";
-			info += String::toString(item.tag);
+			info += StringUtility::toString(item.tag);
 			info += "  ";
 
 			info += "size : ";
-			info += String::toString(item.size);
+			info += StringUtility::toString(item.size);
 
 			info += COL_END;
 			info += "\n";
@@ -993,15 +994,15 @@ namespace srk::extensions {
 		auto itemUnknownFn = [&](const HIDReportDescriptorItem& item) {
 			info += RED_BEGIN;
 			info += "unknown(";
-			info += String::toString((size_t)item.type);
+			info += StringUtility::toString((size_t)item.type);
 			info += ")  ";
 
 			info += "tag : ";
-			info += String::toString(item.tag);
+			info += StringUtility::toString(item.tag);
 			info += "  ";
 
 			info += "size : ";
-			info += String::toString(item.size);
+			info += StringUtility::toString(item.size);
 
 			info += COL_END;
 			info += "\n";

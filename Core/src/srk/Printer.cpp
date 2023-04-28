@@ -1,6 +1,6 @@
 #include "Printer.h"
 #include "srk/Application.h"
-#include "srk/String.h"
+#include "srk/StringUtility.h"
 
 #include <functional>
 #include <any>
@@ -34,10 +34,10 @@ namespace srk {
 	}
 
 	void Printer::OutputBuffer::write(const char* buf, size_t size) {
-		auto [chars, bytes] = String::calcUtf8(std::string_view(buf, size));
+		auto [chars, bytes] = StringUtility::calcUtf8(std::string_view(buf, size));
 		if (chars) {
 			dilatation(chars);
-			_pos += String::utf8ToWide(buf, bytes, _data + _pos);
+			_pos += StringUtility::utf8ToWide(buf, bytes, _data + _pos);
 		}
 	}
 

@@ -1,7 +1,7 @@
 #include "Input.h"
 #include "GamepadDriver.h"
 #include "CreateModule.h"
-#include "srk/String.h"
+#include "srk/StringUtility.h"
 
 #include <hidsdi.h>
 #include <SetupAPI.h>
@@ -109,7 +109,7 @@ namespace srk::modules::inputs::xinput {
 								if (devName.empty()) {
 									if (!HidD_GetProductString(hidHandle, devNameBuf, sizeof(devNameBuf))) break;
 
-									devName = String::wideToUtf8<std::string>(devNameBuf);
+									devName = StringUtility::wideToUtf8<std::string>(devNameBuf);
 								}
 								info.name = devName;
 

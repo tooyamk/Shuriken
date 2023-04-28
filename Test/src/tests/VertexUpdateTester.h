@@ -143,7 +143,7 @@ public:
 			if (texRes) {
 				auto img0 = extensions::PNGConverter::decode(readFile(Application::getAppPath().parent_path().u8string() + "/Resources/c4.png"));
 				img0->format = textureFormatTypeSwitch(img0->format, false);
-				auto mipLevels = TextureUtils::getMipLevels(img0->dimensions);
+				auto mipLevels = TextureUtility::getMipLevels(img0->dimensions);
 				ByteArray mipsData0;
 				std::vector<void*> mipsData0Ptr;
 				img0->generateMips(img0->format, mipLevels, mipsData0, 0, mipsData0Ptr);
@@ -213,10 +213,10 @@ public:
 			//for (auto& im : inputModules) im->poll();
 			//for (auto& dev : inputDevices) dev->poll(true);
 
-			//app->setWindowTitle(String::toString(GetKeyboardType(0)) + "  " + String::toString(GetKeyboardType(1)) + "  " + String::toString(GetKeyboardType(2)));
+			//app->setWindowTitle(StringUtility::toString(GetKeyboardType(0)) + "  " + StringUtility::toString(GetKeyboardType(1)) + "  " + StringUtility::toString(GetKeyboardType(2)));
 
 			//println("%lf", dt);
-			//app->setWindowTitle(String::toString(dt));
+			//app->setWindowTitle(StringUtility::toString(dt));
 
 			renderData.g->setViewport(Box2i32ui32(Vec2i32::ZERO, renderData.win->getContentSize()));
 			renderData.g->beginRender();

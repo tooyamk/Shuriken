@@ -136,7 +136,7 @@ namespace srk::modules::inputs::evdev_input {
 						std::scoped_lock lock(_lock);
 						_setButtonValue(_inputBuffer, itr->second.index, val);
 					} else {
-						//printaln(L"key  code:"sv, String::toString(evt.code, 16), L"  value:"sv, evt.value);
+						//printaln(L"key  code:"sv, StringUtility::toString(evt.code, 16), L"  value:"sv, evt.value);
 					}
 
 					break;
@@ -150,7 +150,7 @@ namespace srk::modules::inputs::evdev_input {
 						std::scoped_lock lock(_lock);
 						_getAxisValue(_inputBuffer, itr->second.index) = val;
 					} else {
-						//printaln(L"abs  code:"sv, String::toString(evt.code, 16), L"  value:"sv, evt.value);
+						//printaln(L"abs  code:"sv, StringUtility::toString(evt.code, 16), L"  value:"sv, evt.value);
 					}
 
 					break;

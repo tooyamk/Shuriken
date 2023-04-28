@@ -17,7 +17,7 @@
 #include "TextureView.h"
 #include "TextureViewSimulative.h"
 #include "VertexBuffer.h"
-#include "srk/String.h"
+#include "srk/StringUtility.h"
 #include "srk/Time.h"
 
 namespace srk::modules::graphics::gl {
@@ -195,8 +195,8 @@ namespace srk::modules::graphics::gl {
 		glGetIntegerv(GL_MINOR_VERSION, &_minorVer);
 
 		_intVer = _majorVer * 100 + _minorVer * 10;
-		_strVer = String::toString(_intVer);
-		_deviceVersion = "OpenGL " + String::toString(_majorVer) + "." + String::toString(_minorVer);
+		_strVer = StringUtility::toString(_intVer);
+		_deviceVersion = "OpenGL " + StringUtility::toString(_majorVer) + "." + StringUtility::toString(_minorVer);
 
 		if (desc.debug) {
 			if (isGreatThanOrEqualVersion(4, 3) || glIsSupported("GL_KHR_debug") || glIsSupported("GL_ARB_debug_output")) {
@@ -1495,9 +1495,9 @@ namespace srk::modules::graphics::gl {
 	void Graphics::_debugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam) {
 		std::string_view mv(message);
 
-		if (String::find(mv, "error") != std::string::npos ||
-			String::find(mv, "warning") != std::string::npos ||
-			String::find(mv, "failed") != std::string::npos) {
+		if (StringUtility::find(mv, "error") != std::string::npos ||
+			StringUtility::find(mv, "warning") != std::string::npos ||
+			StringUtility::find(mv, "failed") != std::string::npos) {
 			((Graphics*)userParam)->error(std::string("OpenGL sys message : ") + message);
 		}
 	}

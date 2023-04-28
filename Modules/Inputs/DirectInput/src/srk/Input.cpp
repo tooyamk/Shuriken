@@ -3,7 +3,7 @@
 #include "KeyboardDriver.h"
 #include "MouseDriver.h"
 #include "CreateModule.h"
-#include "srk/String.h"
+#include "srk/StringUtility.h"
 
 #include <wbemidl.h>
 #include <oleauto.h>
@@ -247,9 +247,9 @@ namespace srk::modules::inputs::direct_input {
 				std::wstring wstr;
 				wstr.resize(chars);
 				MultiByteToWideChar(CP_ACP, 0, (const CHAR*)pdidInstance->tszProductName, -1, wstr.data(), chars);
-				info.name = String::wideToUtf8<std::string>(wstr);
+				info.name = StringUtility::wideToUtf8<std::string>(wstr);
 			} else {
-				info.name = String::wideToUtf8<std::string>((const WCHAR*)pdidInstance->tszProductName);
+				info.name = StringUtility::wideToUtf8<std::string>((const WCHAR*)pdidInstance->tszProductName);
 			}
 		}
 

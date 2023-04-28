@@ -672,7 +672,7 @@ namespace srk::extensions::fbx_converter {
 
 					mesh.setVertex(ShaderPredefine::POSITION0, modules::graphics::VertexAttribute<VertexResource>(vs, dim, modules::graphics::VertexType::F32, 0));
 
-					if (auto count = sourceIndices.size(); p.rawVal.size <= BitUInt<16>::MAX) {
+					if (auto count = sourceIndices.size(); p.rawVal.size <= Bit::uintMax<16>()) {
 						_buildIndices<uint16_t>(mesh, faces, count, triangulate, numTriangulateIndices);
 					} else {
 						_buildIndices<uint32_t>(mesh, faces, count, triangulate, numTriangulateIndices);
@@ -909,7 +909,7 @@ namespace srk::extensions::fbx_converter {
 							for (size_t j = 0; j < numDataPerVertex; ++j) {
 								auto v = val[j];
 								if constexpr (std::endian::native != std::endian::little) {
-									v = byteswap(v);
+									v = Bit::byteswap(v);
 								}
 								dst.write<DstType>(v);
 							}
@@ -924,7 +924,7 @@ namespace srk::extensions::fbx_converter {
 						for (size_t i = 0; i < size; ++i) {
 							auto idx = *(indices + sourceIndices[i]);
 							if constexpr (std::endian::native != std::endian::little) {
-								idx = byteswap(idx);
+								idx = Bit::byteswap(idx);
 							}
 							memcpy(dst.getSource() + dstOffset, values + idx * numDataPerVertex, DST_VERTEX_SIZE);
 							dstOffset += DST_VERTEX_SIZE;
@@ -934,13 +934,13 @@ namespace srk::extensions::fbx_converter {
 						for (size_t i = 0; i < size; ++i) {
 							auto idx = *(indices + sourceIndices[i]);
 							if constexpr (std::endian::native != std::endian::little) {
-								idx = byteswap(idx);
+								idx = Bit::byteswap(idx);
 							}
 							auto val = values + idx * numDataPerVertex;
 							for (size_t j = 0; j < numDataPerVertex; ++j) {
 								auto v = val[j];
 								if constexpr (std::endian::native != std::endian::little) {
-									v = byteswap(v);
+									v = Bit::byteswap(v);
 								}
 								dst.write<DstType>(v);
 							}
@@ -960,7 +960,7 @@ namespace srk::extensions::fbx_converter {
 						for (size_t i = 0, n = size * numDataPerVertex; i < n; ++i) {
 							auto v = values[i];
 							if constexpr (std::endian::native != std::endian::little) {
-								v = byteswap(v);
+								v = Bit::byteswap(v);
 							}
 							dst.write<DstType>(v);
 						}
@@ -974,7 +974,7 @@ namespace srk::extensions::fbx_converter {
 						for (size_t i = 0; i < size; ++i) {
 							auto idx = *(indices + i);
 							if constexpr (std::endian::native != std::endian::little) {
-								idx = byteswap(idx);
+								idx = Bit::byteswap(idx);
 							}
 							memcpy(dst.getSource() + dstOffset, values + idx * numDataPerVertex, DST_VERTEX_SIZE);
 							dstOffset += DST_VERTEX_SIZE;
@@ -984,13 +984,13 @@ namespace srk::extensions::fbx_converter {
 						for (size_t i = 0; i < size; ++i) {
 							auto idx = *(indices + i);
 							if constexpr (std::endian::native != std::endian::little) {
-								idx = byteswap(idx);
+								idx = Bit::byteswap(idx);
 							}
 							auto val = values + idx * numDataPerVertex;
 							for (size_t j = 0; j < numDataPerVertex; ++j) {
 								auto v = val[j];
 								if constexpr (std::endian::native != std::endian::little) {
-									v = byteswap(v);
+									v = Bit::byteswap(v);
 								}
 								dst.write<DstType>(v);
 							}

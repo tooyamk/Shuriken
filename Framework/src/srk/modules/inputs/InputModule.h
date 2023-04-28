@@ -335,7 +335,7 @@ namespace srk::modules::inputs {
 		R2 = R_TRIGGER,//DualShock
 
 		UNDEFINED_AXIS_1,
-		UNDEFINED_AXIS_END = UNDEFINED_AXIS_1 + ((std::underlying_type_t<GamepadKeyCode>)GamepadKeyCode::AXIS_END - (std::underlying_type_t<GamepadKeyCode>)GamepadKeyCode::AXIS_1),
+		UNDEFINED_AXIS_END = UNDEFINED_AXIS_1 + (std::to_underlying(GamepadKeyCode::AXIS_END) - std::to_underlying(GamepadKeyCode::AXIS_1)),
 		SEPARATED_AXIS_END = UNDEFINED_AXIS_END,
 
 		SEPARATE_HAT_START,
@@ -346,7 +346,7 @@ namespace srk::modules::inputs {
 		DPAD_UP,
 
 		UNDEFINED_HAT_1,
-		UNDEFINED_HAT_END = UNDEFINED_HAT_1 + ((std::underlying_type_t<GamepadKeyCode>)GamepadKeyCode::HAT_END - (std::underlying_type_t<GamepadKeyCode>)GamepadKeyCode::HAT_1),
+		UNDEFINED_HAT_END = UNDEFINED_HAT_1 + (std::to_underlying(GamepadKeyCode::HAT_END) - std::to_underlying(GamepadKeyCode::HAT_1)),
 		SEPARATE_HAT_END = UNDEFINED_HAT_END,
 
 		//DPAD_CENTER,
@@ -393,7 +393,7 @@ namespace srk::modules::inputs {
 		TOUCH_PAD,//DualShock4
 
 		UNDEFINED_BUTTON_1,
-		UNDEFINED_BUTTON_END = UNDEFINED_BUTTON_1 + ((std::underlying_type_t<GamepadKeyCode>)GamepadKeyCode::BUTTON_END - (std::underlying_type_t<GamepadKeyCode>)GamepadKeyCode::BUTTON_1),
+		UNDEFINED_BUTTON_END = UNDEFINED_BUTTON_1 + (std::to_underlying(GamepadKeyCode::BUTTON_END) - std::to_underlying(GamepadKeyCode::BUTTON_1)),
 		BUTTON_END = UNDEFINED_BUTTON_END,
 
 		SEPARATED_END = BUTTON_END
@@ -495,7 +495,7 @@ namespace srk::modules::inputs {
 		void SRK_CALL forEach(Fn&& fn) const {
 			for (size_t i = 0; i < _mapping.size(); ++i) {
 				auto cf = _mapping[i].get();
-				if (cf.code != GamepadKeyCode::UNDEFINED) fn((GamepadVirtualKeyCode)((std::underlying_type_t<GamepadVirtualKeyCode>)VK_MIN + i), cf);
+				if (cf.code != GamepadKeyCode::UNDEFINED) fn((GamepadVirtualKeyCode)(std::to_underlying(VK_MIN) + i), cf);
 			}
 		}
 
@@ -539,12 +539,12 @@ namespace srk::modules::inputs {
 	private:
 		static constexpr GamepadVirtualKeyCode VK_MIN = GamepadVirtualKeyCode::SEPARATED_START;
 		static constexpr GamepadVirtualKeyCode VK_MAX = GamepadVirtualKeyCode::SEPARATED_END;
-		static constexpr size_t COUNT = (std::underlying_type_t<GamepadVirtualKeyCode>)VK_MAX - (std::underlying_type_t<GamepadVirtualKeyCode>)VK_MIN + 1;
+		static constexpr size_t COUNT = std::to_underlying(VK_MAX) - std::to_underlying(VK_MIN) + 1;
 
 		std::array<Value, COUNT> _mapping;
 
 		inline static size_t SRK_CALL _getIndex(GamepadVirtualKeyCode vk) {
-			return (std::underlying_type_t<GamepadVirtualKeyCode>)vk - (std::underlying_type_t<GamepadVirtualKeyCode>)VK_MIN;
+			return std::to_underlying(vk) - std::to_underlying(VK_MIN);
 		}
 	};
 
@@ -619,12 +619,12 @@ namespace srk::modules::inputs {
 	private:
 		static constexpr GamepadVirtualKeyCode VK_MIN = GamepadVirtualKeyCode::COMBINED_START;
 		static constexpr GamepadVirtualKeyCode VK_MAX = GamepadVirtualKeyCode::SEPARATED_END;
-		static constexpr size_t COUNT = (std::underlying_type_t<GamepadVirtualKeyCode>)VK_MAX - (std::underlying_type_t<GamepadVirtualKeyCode>)VK_MIN + 1;
+		static constexpr size_t COUNT = std::to_underlying(VK_MAX) - std::to_underlying(VK_MIN) + 1;
 
 		std::array<Value, COUNT> _values;
 
 		inline static size_t SRK_CALL _getIndex(GamepadVirtualKeyCode vk) {
-			return (std::underlying_type_t<GamepadVirtualKeyCode>)vk - (std::underlying_type_t<GamepadVirtualKeyCode>)VK_MIN;
+			return std::to_underlying(vk) - std::to_underlying(VK_MIN);
 		}
 	};
 

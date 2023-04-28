@@ -1,6 +1,6 @@
 #include "BaseBuffer.h"
 #include "Graphics.h"
-#include "srk/String.h"
+#include "srk/StringUtility.h"
 #include <algorithm>
 
 namespace srk::modules::graphics::gl {
@@ -27,7 +27,7 @@ namespace srk::modules::graphics::gl {
 		requiredUsage &= Usage::BUFFER_CREATE_ALL;
 		preferredUsage &= Usage::BUFFER_CREATE_ALL;
 		if (auto u = (requiredUsage & (~graphics.getBufferCreateUsageMask())); u != Usage::NONE) {
-			graphics.error("OpenGL BaseBuffer::create error : has not support requiredUsage " + String::toString((std::underlying_type_t<Usage>)u));
+			graphics.error("OpenGL BaseBuffer::create error : has not support requiredUsage " + StringUtility::toString(std::to_underlying(u)));
 			return false;
 		}
 
@@ -89,7 +89,7 @@ namespace srk::modules::graphics::gl {
 
 		resUsage |= allUsage & (Usage::UPDATE | Usage::COPY_SRC_DST);
 		if ((resUsage & requiredUsage) != requiredUsage) {
-			graphics.error("OpenGL BaseBuffer::create error : has not support requiredUsage " + String::toString((std::underlying_type_t<Usage>)(requiredUsage & (~(resUsage & requiredUsage)))));
+			graphics.error("OpenGL BaseBuffer::create error : has not support requiredUsage " + StringUtility::toString(std::to_underlying(requiredUsage & (~(resUsage & requiredUsage)))));
 			releaseBuffer();
 			return false;
 		}

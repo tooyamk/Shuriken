@@ -1,7 +1,7 @@
 #pragma once
 
 #include "srk/ByteArray.h"
-#include "srk/Thread.h"
+#include "srk/ThreadUtility.h"
 #include "srk/modules/graphics/GraphicsModule.h"
 #include "ASTCConverter.h"
 #include "astcenc.h"
@@ -60,7 +60,7 @@ namespace srk::extensions::astc_converter {
 				return true;
 			}
 
-			threadCount = Thread::calcNeedCount(numBlocks, 1, threadCount);
+			threadCount = ThreadUtility::calcNeedCount(numBlocks, 1, threadCount);
 			if (!threadCount) return true;
 			
 			uint8_t* buffer = nullptr;

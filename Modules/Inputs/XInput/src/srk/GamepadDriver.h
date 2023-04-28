@@ -43,8 +43,8 @@ namespace srk::modules::inputs::xinput {
 			XINPUT_GAMEPAD_BACK, XINPUT_GAMEPAD_START,
 			XINPUT_GAMEPAD_LEFT_THUMB, XINPUT_GAMEPAD_RIGHT_THUMB
 		};
-		static constexpr auto MAX_AXIS_KEY_CODE = (GamepadKeyCode)((std::underlying_type_t<GamepadKeyCode>)GamepadKeyCode::AXIS_1 + (MAX_AXES - 1));
-		static constexpr auto MAX_BUTTON_KEY_CODE = (GamepadKeyCode)((std::underlying_type_t<GamepadKeyCode>)GamepadKeyCode::BUTTON_1 + (MAX_BUTTONS - 1));
+		static constexpr auto MAX_AXIS_KEY_CODE = (GamepadKeyCode)(std::to_underlying(GamepadKeyCode::AXIS_1) + (MAX_AXES - 1));
+		static constexpr auto MAX_BUTTON_KEY_CODE = (GamepadKeyCode)(std::to_underlying(GamepadKeyCode::BUTTON_1) + (MAX_BUTTONS - 1));
 
 
 		IntrusivePtr<Input> _input;

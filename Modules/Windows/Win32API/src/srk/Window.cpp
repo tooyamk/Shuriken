@@ -1,7 +1,7 @@
 #include "Window.h"
 #include "Manager.h"
 #include "srk/Application.h"
-#include "srk/String.h"
+#include "srk/StringUtility.h"
 #include "srk/Printer.h"
 #include "srk/events/EventDispatcher.h"
 
@@ -30,9 +30,9 @@ namespace srk::modules::windows::win32api {
 		_data.module = handle;
 		_data.style = desc.style;
 		_data.bkBrush = CreateSolidBrush(RGB(desc.style.backgroundColor[0], desc.style.backgroundColor[1], desc.style.backgroundColor[2]));
-		_data.className = String::utf8ToWide<std::wstring>(String::toString(Application::getCurrentProcessId()));
+		_data.className = StringUtility::utf8ToWide<std::wstring>(StringUtility::toString(Application::getCurrentProcessId()));
 		_data.className += L'-';
-		_data.className += String::utf8ToWide<std::wstring>(String::toString(_counter.fetch_add(1)));
+		_data.className += StringUtility::utf8ToWide<std::wstring>(StringUtility::toString(_counter.fetch_add(1)));
 
 		WNDCLASSEXW wnd;
 		memset(&wnd, 0, sizeof(wnd));
@@ -68,7 +68,7 @@ namespace srk::modules::windows::win32api {
 			rect.pos.set(_data.contentRect.pos[0], _data.contentRect.pos[1]);
 		}
 
-		_data.wnd = CreateWindowExW(_getNativeExStyle(_data.isFullScreen), wnd.lpszClassName, String::utf8ToWide<std::wstring>(desc.title).data(), _getNativeStyle(_data.style, _data.isFullScreen),
+		_data.wnd = CreateWindowExW(_getNativeExStyle(_data.isFullScreen), wnd.lpszClassName, StringUtility::utf8ToWide<std::wstring>(desc.title).data(), _getNativeStyle(_data.style, _data.isFullScreen),
 			rect.pos[0], rect.pos[1], rect.size[0], rect.size[1],
 			GetDesktopWindow(), nullptr, _data.module, nullptr);
 		SetWindowLongPtrW(_data.wnd, GWLP_USERDATA, (LONG_PTR)this);
@@ -159,7 +159,7 @@ namespace srk::modules::windows::win32api {
 		if (!_data.wnd) return;
 
 		_data.title = title;
-		SetWindowTextW(_data.wnd, String::utf8ToWide<std::wstring>(title).data());
+		SetWindowTextW(_data.wnd, StringUtility::utf8ToWide<std::wstring>(title).data());
 	}
 
 	void Window::setPosition(const Vec2i32& pos) {

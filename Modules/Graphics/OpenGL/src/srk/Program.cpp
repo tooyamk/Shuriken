@@ -7,7 +7,7 @@
 #include "Sampler.h"
 #include "VertexBuffer.h"
 #include "srk/Printer.h"
-#include "srk/String.h"
+#include "srk/StringUtility.h"
 #include "srk/GraphicsBuffer.h"
 #include "srk/ShaderParameter.h"
 
@@ -153,7 +153,7 @@ namespace srk::modules::graphics::gl {
 					info.names.emplace_back(charBuffer + sizeof(TYPE) - 1);
 				} else if (len > sizeof(COMBINED_TEXTURE_SAMPLER_HEADER) - 1 && std::string_view(charBuffer, sizeof(COMBINED_TEXTURE_SAMPLER_HEADER) - 1) == COMBINED_TEXTURE_SAMPLER_HEADER) {
 					auto offset = sizeof(COMBINED_TEXTURE_SAMPLER_HEADER) - 1;
-					if (auto pos = String::find(std::string_view(charBuffer + offset, len - offset), 's'); pos == std::string::npos || !pos) {
+					if (auto pos = StringUtility::find(std::string_view(charBuffer + offset, len - offset), 's'); pos == std::string::npos || !pos) {
 						info.names.emplace_back(charBuffer);
 					} else {
 						uint32_t texNameLen = 0;
@@ -220,16 +220,16 @@ namespace srk::modules::graphics::gl {
 				for (GLint j = 0; j < numUniforms; ++j) {
 					glGetActiveUniformName(_handle, indices[j], sizeof(charBuffer), &nameLen, charBuffer);
 					
-					auto rootOffset = String::find(std::string_view(charBuffer, nameLen), '.') + 1;
+					auto rootOffset = StringUtility::find(std::string_view(charBuffer, nameLen), '.') + 1;
 					std::string_view child(charBuffer + rootOffset, nameLen - rootOffset);
 
 					ConstantBufferLayout::Variables* foundVar = nullptr;
 
 					auto parentVars = &layout.variables;
 					varNames.clear();
-					String::split(child, std::string_view("."), [&varNames](const std::string_view& data) {
+					StringUtility::split(child, std::string_view("."), [](const std::string_view& data, std::vector<std::string_view>& varNames) {
 						varNames.emplace_back(data);
-					});
+					}, varNames);
 					for (auto& sv : varNames) {
 						ConstantBufferLayout::Variables* foundMemVar = nullptr;
 						for (auto& memVar : *parentVars) {

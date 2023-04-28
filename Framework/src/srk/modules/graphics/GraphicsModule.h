@@ -26,7 +26,7 @@ namespace srk::modules::graphics {
 
 	using SampleCount = uint8_t;
 
-	inline constexpr static char COMBINED_TEXTURE_SAMPLER_HEADER[14] = { "_combined_ts_" };
+	inline static constexpr char COMBINED_TEXTURE_SAMPLER_HEADER[14] = { "_combined_ts_" };
 
 	class SRK_FW_DLL IObject : public Ref {
 	public:
@@ -491,8 +491,10 @@ namespace srk::modules::graphics {
 	};
 
 
-	class SRK_FW_DLL TextureUtils {
+	class SRK_FW_DLL TextureUtility {
 	public:
+		TextureUtility() = delete;
+
 		static bool SRK_CALL isCompressedFormat(TextureFormat format);
 
 		static size_t SRK_CALL getBlocks(TextureFormat format, size_t pixels);
@@ -516,7 +518,7 @@ namespace srk::modules::graphics {
 		inline static size_t SRK_CALL getBytes(TextureFormat format, size_t blocks) {
 			return getBytes(getPerBlockBytes(format), blocks);
 		}
-		inline constexpr static size_t SRK_CALL getBytes(size_t perBlockBytes, size_t blocks) {
+		inline static constexpr size_t SRK_CALL getBytes(size_t perBlockBytes, size_t blocks) {
 			return blocks * perBlockBytes;
 		}
 
@@ -546,8 +548,6 @@ namespace srk::modules::graphics {
 				if (mipDimensions) mipDimensions[i] = size;
 			}
 		}
-	private:
-		TextureUtils() = delete;
 	};
 
 

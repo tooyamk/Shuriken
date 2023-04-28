@@ -217,7 +217,7 @@ namespace srk {
 					buf.write(L"enum<"sv);
 					buf.write(typeid(T).name());
 					buf.write(L">("sv);
-					buf.write(std::to_wstring((std::underlying_type_t<Type>)value));
+					buf.write(std::to_wstring(std::to_underlying(value)));
 					buf.write(L')');
 				}  else if constexpr (std::is_same_v<Type, std::filesystem::path>) {
 					buf.write(value.wstring());

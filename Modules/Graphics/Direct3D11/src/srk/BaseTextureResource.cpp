@@ -36,13 +36,13 @@ namespace srk::modules::graphics::d3d11 {
 				return _createDone(graphics, false);
 			}
 
-			auto maxLevels = TextureUtils::getMipLevels(dim.getMax());
+			auto maxLevels = TextureUtility::getMipLevels(dim.getMax());
 			if (mipLevels > maxLevels) mipLevels = maxLevels;
 		} else {
 			if (sampleCount > 1) {
 				mipLevels = 1;
 			} else {
-				mipLevels = TextureUtils::getMipLevels(dim.getMax());
+				mipLevels = TextureUtility::getMipLevels(dim.getMax());
 			}
 		}
 
@@ -55,9 +55,9 @@ namespace srk::modules::graphics::d3d11 {
 			return _createDone(graphics, false);
 		}
 
-		auto perBlockBytes = TextureUtils::getPerBlockBytes(format);
+		auto perBlockBytes = TextureUtility::getPerBlockBytes(format);
 		size_t mipsBytes;
-		TextureUtils::getMipsInfo(format, dim, mipLevels, &mipsBytes);
+		TextureUtility::getMipsInfo(format, dim, mipLevels, &mipsBytes);
 
 		this->size = mipsBytes * arraySize;
 
@@ -138,7 +138,7 @@ namespace srk::modules::graphics::d3d11 {
 					res.SysMemPitch = size2[0] * perBlockBytes;
 					res.SysMemSlicePitch = res.SysMemPitch * size2[1];
 
-					size2 = TextureUtils::getNextMipPixels(size2);
+					size2 = TextureUtility::getNextMipPixels(size2);
 
 					for (size_t j = 1; j < arraySize; ++j) {
 						auto idx = calcSubresource(i, j, mipLevels);
@@ -166,10 +166,10 @@ namespace srk::modules::graphics::d3d11 {
 			Vec3uz size3(dim);
 			for (decltype(mipLevels) i = 0; i < mipLevels; ++i) {
 				auto& md = mapData[i];
-				md.size = TextureUtils::getBlocks(format, size3).getMultiplies() * perBlockBytes;
+				md.size = TextureUtility::getBlocks(format, size3).getMultiplies() * perBlockBytes;
 				md.usage = Usage::NONE;
 
-				size3 = TextureUtils::getNextMipPixels(size3);
+				size3 = TextureUtility::getNextMipPixels(size3);
 
 				for (decltype(arraySize) j = 1; j < arraySize; ++j) {
 					auto& md1 = mapData[calcSubresource(i, j, mipLevels)];

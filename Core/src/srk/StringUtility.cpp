@@ -1,7 +1,7 @@
-#include "String.h"
+#include "StringUtility.h"
 
 namespace srk {
-	bool String::isUtf8(const char* data, size_t len) {
+	bool StringUtility::isUtf8(const char* data, size_t len) {
 		const auto buf = (uint8_t*)data;
 		size_t i = 0;
 		while (i < len) {
@@ -24,7 +24,7 @@ namespace srk {
 		return true;
 	}
 
-	std::string String::toString(const uint8_t* value, size_t size) {
+	std::string StringUtility::toString(const uint8_t* value, size_t size) {
 		std::string str(size << 1, 0);
 
 		for (size_t i = 0; i < size; ++i) {
@@ -40,7 +40,7 @@ namespace srk {
 		return std::move(str);
 	}
 
-	bool String::equal(const char* str1, const char* str2) {
+	bool StringUtility::equal(const char* str1, const char* str2) {
 		if (str1 == str2) return true;
 		
 		size_t i = 0;

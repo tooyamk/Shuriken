@@ -2,7 +2,7 @@
 
 #include "srk/Printer.h"
 #include "srk/Shader.h"
-#include "srk/String.h"
+#include "srk/StringUtility.h"
 #include <regex>
 
 namespace srk::extensions::shader_script {
@@ -46,16 +46,16 @@ namespace srk::extensions::shader_script {
 	inline bool SRK_CALL parseDefineBlock(T& out, const std::string_view& content) {
 		using namespace std::string_view_literals;
 
-		auto fmtContent = String::trim(content, String::CharFlag::WHITE_SPACE);
+		auto fmtContent = StringUtility::trim(content, StringUtility::CharFlag::WHITE_SPACE);
 		std::vector<std::string_view> defs;
-		String::split(content, String::CharFlag::NEW_LINE, [&defs](const std::string_view& sv) {
+		StringUtility::split(content, StringUtility::CharFlag::NEW_LINE, [](const std::string_view& sv, std::vector<std::string_view>& defs) {
 			if (!sv.empty()) defs.emplace_back(sv);
-		});
+		}, defs);
 		for (auto& def : defs) {
-			auto fmtDef = String::trim(def, String::CharFlag::WHITE_SPACE);
+			auto fmtDef = StringUtility::trim(def, StringUtility::CharFlag::WHITE_SPACE);
 			if (fmtDef.empty()) continue;
 
-			auto pos = String::find(fmtDef, String::CharFlag::WHITE_SPACE);
+			auto pos = StringUtility::find(fmtDef, StringUtility::CharFlag::WHITE_SPACE);
 
 			if constexpr (std::same_as<T, std::vector<modules::graphics::ProgramDefine>> || std::same_as<T, ShaderDefineCollection>) {
 				if (pos == std::string_view::npos) {
@@ -66,7 +66,7 @@ namespace srk::extensions::shader_script {
 					}
 				} else {
 					std::string_view k(fmtDef.data(), pos);
-					auto v = String::trim(std::string_view(fmtDef.data() + pos + 1, fmtDef.size() - pos - 1), String::CharFlag::WHITE_SPACE);
+					auto v = StringUtility::trim(std::string_view(fmtDef.data() + pos + 1, fmtDef.size() - pos - 1), StringUtility::CharFlag::WHITE_SPACE);
 					if constexpr (std::same_as<T, std::vector<modules::graphics::ProgramDefine>>) {
 						out.emplace_back(k, v);
 					} else {
@@ -94,7 +94,7 @@ namespace srk::extensions::shader_script {
 		out->stage = Stage;
 		out->language = ProgramLanguage::HLSL;
 
-		auto fmtContent = String::trim(content, String::CharFlag::WHITE_SPACE);
+		auto fmtContent = StringUtility::trim(content, StringUtility::CharFlag::WHITE_SPACE);
 		out->data = ByteArray((uint8_t*)fmtContent.data(), fmtContent.size(), ByteArray::Usage::COPY);
 
 		return true;
@@ -102,7 +102,7 @@ namespace srk::extensions::shader_script {
 
 	inline bool SRK_CALL parseMainDefineBlock(ParsedData& rst, const Block& block) {
 		for (auto& c : block.chindren) {
-			auto name = String::trim(c->name, String::CharFlag::WHITE_SPACE);
+			auto name = StringUtility::trim(c->name, StringUtility::CharFlag::WHITE_SPACE);
 			if (name == "static") {
 				if (!parseDefineBlock(rst.staticDefines, c->content)) return false;
 			} else if (name == "dynamic") {
@@ -115,7 +115,7 @@ namespace srk::extensions::shader_script {
 
 	inline bool SRK_CALL parseProgramBlock(ProgramData& out, const Block& block) {
 		for (auto& c : block.chindren) {
-			auto name = String::trim(c->name, String::CharFlag::WHITE_SPACE);
+			auto name = StringUtility::trim(c->name, StringUtility::CharFlag::WHITE_SPACE);
 			if (name == "vs") {
 				if (!parseProgram<modules::graphics::ProgramStage::VS>(out.vs, c->content)) return false;
 			} else if (name == "ps") {
@@ -128,7 +128,7 @@ namespace srk::extensions::shader_script {
 
 	inline bool SRK_CALL parseVariantBlock(VariantShader& out, const Block& block) {
 		for (auto& c : block.chindren) {
-			auto name = String::trim(c->name, String::CharFlag::WHITE_SPACE);
+			auto name = StringUtility::trim(c->name, StringUtility::CharFlag::WHITE_SPACE);
 			if (name == "define") {
 				if (!parseDefineBlock(out.defines, c->content)) return false;
 			} else if (name == "program") {
@@ -140,10 +140,10 @@ namespace srk::extensions::shader_script {
 	}
 
 	inline bool SRK_CALL parseShaderBlock(ParsedData& rst, const Block& block) {
-		auto name = String::trim(block.name, String::CharFlag::WHITE_SPACE);
+		auto name = StringUtility::trim(block.name, StringUtility::CharFlag::WHITE_SPACE);
 		if (name == "shader") {
 			for (auto& c : block.chindren) {
-				name = String::trim(c->name, String::CharFlag::WHITE_SPACE);
+				name = StringUtility::trim(c->name, StringUtility::CharFlag::WHITE_SPACE);
 				if (name == "define") {
 					if (!parseMainDefineBlock(rst, *c)) return false;
 				} else if (name == "program") {

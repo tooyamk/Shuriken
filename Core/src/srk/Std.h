@@ -6,48 +6,25 @@
 #include <bit>
 #include <concepts>
 
-#ifdef SRK_std_convertible_to
+#ifndef __cpp_lib_concepts
 #	include <utility>
-#endif
-
-#ifdef SRK_std_invocable
 #	include <functional>
 #endif
 
 namespace std {
-#ifdef SRK_std_convertible_to
-	template<typename From, typename To> concept convertible_to = std::is_convertible_v<From, To> && requires { static_cast<To>(std::declval<From>()); };
-#endif
-
-#ifdef SRK_std_default_initializable
+#ifndef __cpp_lib_concepts
+	template<typename From, typename To> concept convertible_to = std::is_convertible_v<From, To>&& requires { static_cast<To>(std::declval<From>()); };
 	template<typename T> concept default_initializable = std::is_nothrow_destructible_v<T> && std::is_constructible_v<T> && requires { T{}; };
-#endif
-
-#ifdef SRK_std_derived_from
-	template<typename Derived, typename Base> concept derived_from = std::is_base_of_v<Base, Derived> && std::is_convertible_v<const volatile Derived*, const volatile Base*>;
-#endif
-
-#ifdef SRK_std_floating_point
+	template<typename Derived, typename Base> concept derived_from = std::is_base_of_v<Base, Derived>&& std::is_convertible_v<const volatile Derived*, const volatile Base*>;
 	template<typename T> concept floating_point = std::is_floating_point_v<T>;
-#endif
-
-#ifdef SRK_std_integral
 	template<typename T> concept integral = std::is_integral_v<T>;
-#endif
-
-#ifdef SRK_std_invocable
-	template<typename F, typename... Args> concept invocable = requires(F&& f, Args&&... args) { std::invoke(std::forward<F>(f), std::forward<Args>(args)...); };
-#endif
-
-#ifdef SRK_std_signed_integral
+	template<typename F, typename... Args> concept invocable = requires(F && f, Args&&... args) { std::invoke(std::forward<F>(f), std::forward<Args>(args)...); };
 	template<typename T> concept signed_integral = std::is_integral_v<T> && std::is_signed_v<T>;
-#endif
-
-#ifdef SRK_std_unsigned_integral
 	template<typename T> concept unsigned_integral = std::is_integral_v<T> && !std::is_signed_v<T>;
 #endif
 
 #ifndef __cpp_lib_endian
+#	define __cpp_lib_endian 201907L
 	enum class endian {
 		little = 0,
 		big = 1,
@@ -60,11 +37,13 @@ namespace std {
 #endif
 
 #ifndef __cpp_lib_remove_cvref
+#	define __cpp_lib_remove_cvref 201711L
 	template<typename T> using remove_cvref_t = std::remove_cv_t<std::remove_reference_t<T>>;
 	template<typename T> struct remove_cvref { using type = remove_cvref_t<T>; };
 #endif
 
 #ifndef __cpp_lib_is_scoped_enum
+#	define __cpp_lib_is_scoped_enum 202011L
 	template<typename>
 	struct is_scoped_enum : std::false_type {};
 
@@ -76,6 +55,7 @@ namespace std {
 #endif
 
 #ifndef __cpp_lib_to_underlying
+#	define __cpp_lib_to_underlying 202102L
 	template <typename T>
 	inline constexpr std::underlying_type_t<T> to_underlying(T e) noexcept {
 		return (std::underlying_type_t<T>)e;

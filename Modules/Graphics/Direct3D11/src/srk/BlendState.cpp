@@ -89,8 +89,6 @@ namespace srk::modules::graphics::d3d11 {
 	}
 
 	void BlendState::update() {
-		using namespace srk::literals;
-
 		if (_dirty) {
 			constexpr DirtyType recreateFlags = DirtyFlag::EMPTY | DirtyFlag::COUNT | DirtyFlag::RT_STATE;
 			if (_dirty & recreateFlags) {

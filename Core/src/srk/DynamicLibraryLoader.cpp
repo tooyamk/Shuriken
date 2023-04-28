@@ -1,5 +1,5 @@
 #include "DynamicLibraryLoader.h"
-#include "srk/String.h"
+#include "srk/StringUtility.h"
 
 #if SRK_OS != SRK_OS_WINDOWS
 #	include <dlfcn.h>
@@ -22,7 +22,7 @@ namespace srk {
 	bool DynamicLibraryLoader::_load(const std::string_view& path) {
 		release();
 #if SRK_OS == SRK_OS_WINDOWS
-		auto wpath = String::utf8ToWide<std::wstring>(path);
+		auto wpath = StringUtility::utf8ToWide<std::wstring>(path);
 		if (wpath.empty()) return false;
 		_lib = LoadLibraryW(wpath.data());
 #else

@@ -1,8 +1,9 @@
 #pragma once
 
-#include "srk/Intrusive.h"
 #include "srk/ByteArray.h"
-#include "srk/String.h"
+#include "srk/EnumOperators.h"
+#include "srk/Intrusive.h"
+#include "srk/StringUtility.h"
 #include "srk/hash/xxHash.h"
 #include <unordered_map>
 #include <functional>
@@ -169,7 +170,7 @@ namespace srk {
 		*/
 		
 		template<ScopedEnum T>
-		SerializableObject(T value) : SerializableObject((std::underlying_type_t<T>)value) {}
+		SerializableObject(T value) : SerializableObject(std::to_underlying(value)) {}
 
 		~SerializableObject();
 
@@ -277,10 +278,10 @@ namespace srk {
 			case Type::STRING:
 			{
 				auto s = _getValue<Str*>();
-				return String::toNumber<T>(std::string_view(s->data, s->size));
+				return StringUtility::toNumber<T>(std::string_view(s->data, s->size));
 			}
 			case Type::SHORT_STRING:
-				return String::toNumber<T>(std::string_view((char*)_value, strlen((char*)_value)));
+				return StringUtility::toNumber<T>(std::string_view((char*)_value, strlen((char*)_value)));
 			default:
 				return defaultValue;
 			}

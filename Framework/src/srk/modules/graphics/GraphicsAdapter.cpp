@@ -1,5 +1,5 @@
 #include "GraphicsAdapter.h"
-#include "srk/String.h"
+#include "srk/StringUtility.h"
 
 #if SRK_OS == SRK_OS_WINDOWS
 #	include <dxgi.h>
@@ -61,7 +61,7 @@ namespace srk::modules::graphics {
 			ga.dedicatedSystemMemory = desc.DedicatedSystemMemory;
 			ga.dedicatedVideoMemory = desc.DedicatedVideoMemory;
 			ga.sharedSystemMemory = desc.SharedSystemMemory;
-			ga.description = String::wideToUtf8<std::string>(std::wstring_view(desc.Description));
+			ga.description = StringUtility::wideToUtf8<std::string>(std::wstring_view(desc.Description));
 
 			adapter->Release();
 		}
@@ -108,65 +108,63 @@ namespace srk::modules::graphics {
 
 					if (readFileToBuffer(dirPath, className)) {
 						std::string_view val;
-						String::split(std::string_view(buf.data(), buf.size()), String::CharFlag::NEW_LINE, [&val](const std::string_view data) {
+						StringUtility::split(std::string_view(buf.data(), buf.size()), StringUtility::CharFlag::NEW_LINE, [](const std::string_view data, std::string_view& val) {
 							val = data;
 							return false;
-						});
+						}, val);
 
-						if ((String::toNumber<uint32_t>(val.substr(2), 16) >> 16) != 3) continue;
+						if ((StringUtility::toNumber<uint32_t>(val.substr(2), 16) >> 16) != 3) continue;
 					} else {
 						continue;
 					}
 
 					if (readFileToBuffer(dirPath, vendorName)) {
 						std::string_view val;
-						String::split(std::string_view(buf.data(), buf.size()), String::CharFlag::NEW_LINE, [&val](const std::string_view data) {
+						StringUtility::split(std::string_view(buf.data(), buf.size()), StringUtility::CharFlag::NEW_LINE, [](const std::string_view data, std::string_view& val) {
 							val = data;
 							return false;
-						});
+						}, val);
 
-						info.vid = String::toNumber<uint32_t>(val.substr(2), 16);
+						info.vid = StringUtility::toNumber<uint32_t>(val.substr(2), 16);
 					} else {
 						continue;
 					}
 
 					if (readFileToBuffer(dirPath, deviceName)) {
-						std::string_view val;
-						String::split(std::string_view(buf.data(), buf.size()), String::CharFlag::NEW_LINE, [&val](const std::string_view data) {
+						StringUtility::split(std::string_view(buf.data(), buf.size()), StringUtility::CharFlag::NEW_LINE, [](const std::string_view data, std::string_view& val) {
 							val = data;
 							return false;
-						});
+						}, val);
 
-						info.did = String::toNumber<uint32_t>(val.substr(2), 16);
+						info.did = StringUtility::toNumber<uint32_t>(val.substr(2), 16);
 					} else {
 						continue;
 					}
 
 					if (readFileToBuffer(dirPath, resourceName)) {
-						auto sssss = buf.size();
-						String::split(std::string_view(buf.data(), buf.size()), String::CharFlag::NEW_LINE, [&info](const std::string_view data) {
+						StringUtility::split(std::string_view(buf.data(), buf.size()), StringUtility::CharFlag::NEW_LINE, [&info](const std::string_view data, auto&& info) {
 							std::string_view arr[3];
 							size_t count = 0;
-							String::split(data, String::CharFlag::WHITE_SPACE, [&arr, &count](const std::string_view data) {
+							StringUtility::split(data, StringUtility::CharFlag::WHITE_SPACE, [&arr, &count](const std::string_view data, auto&& arr, auto&& count) {
 								arr[count++] = data;
 								return count < 3;
-							});
+							}, arr, count);
 
 							if (count == 3) {
-								auto flags = String::toNumber<size_t>(arr[2].substr(2), 16);
+								auto flags = StringUtility::toNumber<size_t>(arr[2].substr(2), 16);
 								if (flags & 0x200) {//IORESOURCE_MEM
 									auto prefetch = (flags & 0x2000) != 0;//IORESOURCE_PREFETCH
 									auto sizealign = (flags & 0x40000) != 0;//IORESOURCE_SIZEALIGN
 
 									if (prefetch) {
-										info.dedicatedVideoMemory = String::toNumber<uint64_t>(arr[1].substr(2), 16) - String::toNumber<uint64_t>(arr[0].substr(2), 16);
+										info.dedicatedVideoMemory = StringUtility::toNumber<uint64_t>(arr[1].substr(2), 16) - StringUtility::toNumber<uint64_t>(arr[0].substr(2), 16);
 										return false;
 									}
 								}
 							}
 
 							return true;
-						});
+						}, info);
 					} else {
 						continue;
 					}
@@ -210,12 +208,12 @@ namespace srk::modules::graphics {
 						std::string findStr;
 						for (size_t i = beginCount, n = dst.size(); i < n; ++i) {
 							auto& ga = dst[i];
-							auto vidStr = String::toString(ga.vendorId, 16);
+							auto vidStr = StringUtility::toString(ga.vendorId, 16);
 							if (auto n = vidStr.size(); n < 4) {
 								n = 4 - n;
 								for (size_t j = 0; j < n; ++j) vidStr = "0" + vidStr;
 							}
-							auto didStr = String::toString(ga.deviceId, 16);
+							auto didStr = StringUtility::toString(ga.deviceId, 16);
 							if (auto n = didStr.size(); n < 4) {
 								n = 4 - n;
 								for (size_t j = 0; j < n; ++j) didStr = "0" + didStr;
@@ -248,7 +246,7 @@ namespace srk::modules::graphics {
 								findStr += ' ';
 								if (auto p = sub.find(findStr); p != std::string_view::npos) {
 									p += findStr.size();
-									ga.description = String::trim(sub.substr(p, sub.find('\n', p) - p), String::CharFlag::WHITE_SPACE);
+									ga.description = StringUtility::trim(sub.substr(p, sub.find('\n', p) - p), StringUtility::CharFlag::WHITE_SPACE);
 								}
 							}
 
@@ -261,7 +259,7 @@ namespace srk::modules::graphics {
 								findStr += ' ';
 								if (auto pos = bufsv.find(findStr); pos != std::string_view::npos) {
 									pos += findStr.size();
-									ga.description = String::trim(bufsv.substr(pos, bufsv.find('\n', pos) - pos), String::CharFlag::WHITE_SPACE);
+									ga.description = StringUtility::trim(bufsv.substr(pos, bufsv.find('\n', pos) - pos), StringUtility::CharFlag::WHITE_SPACE);
 								}
 							}
 						}

@@ -76,8 +76,6 @@ namespace srk::modules::graphics::d3d11 {
 	}
 
 	void DepthStencilState::update() {
-		using namespace srk::literals;
-
 		if (_dirty) {
 			constexpr DirtyType recreateFlags = DirtyFlag::EMPTY | DirtyFlag::DEPTH | DirtyFlag::STENCIL;
 			if (_dirty & recreateFlags) {

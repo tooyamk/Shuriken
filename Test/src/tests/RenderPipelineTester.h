@@ -229,7 +229,7 @@ public:
 			if (texRes) {
 				auto img0 = extensions::PNGConverter::decode(readFile(Application::getAppPath().parent_path().u8string() + "/Resources/white.png"));
 				img0->format = textureFormatTypeSwitch(img0->format, false);
-				auto mipLevels = TextureUtils::getMipLevels(img0->dimensions);
+				auto mipLevels = TextureUtility::getMipLevels(img0->dimensions);
 				ByteArray mipsData0;
 				std::vector<void*> mipsData0Ptr;
 				img0->generateMips(img0->format, mipLevels, mipsData0, 0, mipsData0Ptr);

@@ -3,8 +3,9 @@
 #include "IndexBuffer.h"
 #include "VertexBuffer.h"
 #include "srk/GraphicsBuffer.h"
+#include "srk/Literals.h"
 #include "srk/ShaderParameter.h"
-#include "srk/String.h"
+#include "srk/StringUtility.h"
 #include <vector>
 
 namespace srk::modules::graphics::d3d11 {
@@ -410,7 +411,7 @@ namespace srk::modules::graphics::d3d11 {
 				memcpy(name, pDesc.SemanticName, len);
 
 				memcpy(nameBuf, pDesc.SemanticName, len);
-				auto nameSize = String::toString(nameBuf + len, sizeof(nameBuf) - len - 1, pDesc.SemanticIndex);
+				auto nameSize = StringUtility::toString(nameBuf + len, sizeof(nameBuf) - len - 1, pDesc.SemanticIndex);
 				if (nameSize == std::string::npos) nameSize = 0;
 				nameSize += len;
 				nameBuf[nameSize] = 0;
@@ -542,7 +543,7 @@ namespace srk::modules::graphics::d3d11 {
 			MyConstantBufferLayout* buffer = nullptr;
 			int16_t idx = -1;
 			for (int16_t j = 0, n = dst.constantBuffers.size(); j < n;  ++j) {
-				if (String::equal(dst.constantBuffers[j].name.data(), bDesc.Name)) {
+				if (StringUtility::equal(dst.constantBuffers[j].name.data(), bDesc.Name)) {
 					idx = j;
 					buffer = &dst.constantBuffers[j];
 					buffer->size = bDesc.Size;

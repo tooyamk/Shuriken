@@ -1,6 +1,6 @@
 #pragma once
 
-#include "srk/Core.h"
+#include "srk/EnumOperators.h"
 #include <cmath>
 #include <optional>
 

@@ -1,5 +1,5 @@
 #include "srk/Image.h"
-#include "srk/Thread.h"
+#include "srk/ThreadUtility.h"
 
 namespace srk {
 	//using namespace modules;
@@ -25,13 +25,13 @@ namespace srk {
 
 	std::vector<size_t> Image::calcMipsPixels(size_t n, size_t mipLevels) {
 		if (!n) return std::move(std::vector<size_t>(0));
-		if (!mipLevels) mipLevels = TextureUtils::getMipLevels(n);
+		if (!mipLevels) mipLevels = TextureUtility::getMipLevels(n);
 
 		std::vector<size_t> levels(mipLevels);
 		levels[0] = n;
 
 		for (size_t i = 1; i < mipLevels; ++i) {
-			n = TextureUtils::getNextMipPixels(n);
+			n = TextureUtility::getNextMipPixels(n);
 			levels[i] = n;
 		}
 
@@ -45,7 +45,7 @@ namespace srk {
 			switch (srcFormat) {
 			case TextureFormat::R8G8B8_UNORM:
 			{
-				auto n = TextureUtils::getBytes(srcFormat, pixels);
+				auto n = TextureUtility::getBytes(srcFormat, pixels);
 				memcpy(dst, src, n);
 				if (srcReadedBytes) *srcReadedBytes = n;
 				if (dstWritedBytes) *dstWritedBytes = n;
@@ -141,7 +141,7 @@ namespace srk {
 			}
 			case TextureFormat::R8G8B8_UNORM_SRGB:
 			{
-				auto n = TextureUtils::getBytes(srcFormat, pixels);
+				auto n = TextureUtility::getBytes(srcFormat, pixels);
 				memcpy(dst, src, n);
 				if (srcReadedBytes) *srcReadedBytes = n;
 				if (dstWritedBytes) *dstWritedBytes = n;
@@ -237,7 +237,7 @@ namespace srk {
 			}
 			case TextureFormat::R8G8B8A8_UNORM:
 			{
-				auto n = TextureUtils::getBytes(srcFormat, pixels);
+				auto n = TextureUtility::getBytes(srcFormat, pixels);
 				memcpy(dst, src, n);
 				if (srcReadedBytes) *srcReadedBytes = n;
 				if (dstWritedBytes) *dstWritedBytes = n;
@@ -339,7 +339,7 @@ namespace srk {
 			}
 			case TextureFormat::R8G8B8A8_UNORM_SRGB:
 			{
-				auto n = TextureUtils::getBytes(srcFormat, pixels);
+				auto n = TextureUtility::getBytes(srcFormat, pixels);
 				memcpy(dst, src, n);
 				if (srcReadedBytes) *srcReadedBytes = n;
 				if (dstWritedBytes) *dstWritedBytes = n;
@@ -369,7 +369,7 @@ namespace srk {
 		d += dstOffsetBytes;
 
 		for (size_t lv = 1; lv < mipLevels; ++lv) {
-			if (!convertFormat(TextureUtils::getNextMipPixels(pixels), srcFormat, s, dstFormat, d, &srcOffsetBytes, &dstOffsetBytes)) return false;
+			if (!convertFormat(TextureUtility::getNextMipPixels(pixels), srcFormat, s, dstFormat, d, &srcOffsetBytes, &dstOffsetBytes)) return false;
 			s += srcOffsetBytes;
 			d += dstOffsetBytes;
 		}
@@ -378,7 +378,7 @@ namespace srk {
 
 	bool Image::generateMips(modules::graphics::TextureFormat format, size_t mipLevels, ByteArray& dst, size_t dstOffset, std::vector<void*>& dstMipData) const {
 		size_t bytes;
-		TextureUtils::getMipsInfo(format, dimensions, mipLevels, &bytes);
+		TextureUtility::getMipsInfo(format, dimensions, mipLevels, &bytes);
 		auto n = bytes + dstOffset;
 
 		if (dst.getCapacity() < n) dst.setCapacity(n);
@@ -419,7 +419,7 @@ namespace srk {
 
 	void Image::generateMips_UInt8s(const Vec2uz& pixels, modules::graphics::TextureFormat format, size_t mipLevels, size_t numChannels, void* data, void** dstMipData) {
 		uint32_t numChannels2 = numChannels << 1;
-		auto perPixelBytes = TextureUtils::getPerBlockBytes(format);
+		auto perPixelBytes = TextureUtility::getPerBlockBytes(format);
 		auto src = (const uint8_t*)data;
 		auto dst = (uint8_t*)data;
 		auto s = pixels;
@@ -428,12 +428,12 @@ namespace srk {
 
 		uint8_t c[16];
 		for (size_t lv = 1; lv < mipLevels; ++lv) {
-			dst += TextureUtils::getBytes(perPixelBytes, s.getMultiplies());
+			dst += TextureUtility::getBytes(perPixelBytes, s.getMultiplies());
 			if (dstMipData) dstMipData[lv] = dst;
-			auto w = TextureUtils::getNextMipPixels(s[0]);
-			auto h = TextureUtils::getNextMipPixels(s[1]);
-			auto srcRowBytes = TextureUtils::getBytes(perPixelBytes, s[0]);
-			auto dstRowBytes = TextureUtils::getBytes(perPixelBytes, w);
+			auto w = TextureUtility::getNextMipPixels(s[0]);
+			auto h = TextureUtility::getNextMipPixels(s[1]);
+			auto srcRowBytes = TextureUtility::getBytes(perPixelBytes, s[0]);
+			auto dstRowBytes = TextureUtility::getBytes(perPixelBytes, w);
 
 			if (w == s[0]) {
 				if (h == s[1]) {
@@ -485,9 +485,9 @@ namespace srk {
 	}
 
 	bool Image::flipY() {
-		if (format == TextureFormat::UNKNOWN || TextureUtils::isCompressedFormat(format)) return false;
+		if (format == TextureFormat::UNKNOWN || TextureUtility::isCompressedFormat(format)) return false;
 
-		auto perPixelBytes = TextureUtils::getPerBlockBytes(format);
+		auto perPixelBytes = TextureUtility::getPerBlockBytes(format);
 		if (!perPixelBytes) return false;
 
 		auto data = source.getSource();
@@ -512,9 +512,9 @@ namespace srk {
 	}
 
 	bool Image::scale(Image& dst) const {
-		if (format == TextureFormat::UNKNOWN || TextureUtils::isCompressedFormat(format)) return false;
+		if (format == TextureFormat::UNKNOWN || TextureUtility::isCompressedFormat(format)) return false;
 
-		auto perPixelBytes = TextureUtils::getPerBlockBytes(format);
+		auto perPixelBytes = TextureUtility::getPerBlockBytes(format);
 		if (!perPixelBytes) return false;
 
 		auto dstBytes = dst.dimensions.getMultiplies() * perPixelBytes;
@@ -573,12 +573,12 @@ namespace srk {
 	}
 
 	bool Image::scale(Image& dst, size_t jobCount, size_t threadCount, size_t threadIndex) const {
-		if (format != dst.format || format == TextureFormat::UNKNOWN || TextureUtils::isCompressedFormat(format)) return false;
+		if (format != dst.format || format == TextureFormat::UNKNOWN || TextureUtility::isCompressedFormat(format)) return false;
 
-		auto perPixelBytes = TextureUtils::getPerBlockBytes(format);
+		auto perPixelBytes = TextureUtility::getPerBlockBytes(format);
 		if (!perPixelBytes || dst.source.getLength() < perPixelBytes * dst.dimensions.getMultiplies()) return false;
 
-		auto range = Thread::calcJobRange(jobCount, threadCount, threadIndex);
+		auto range = ThreadUtility::calcJobRange(jobCount, threadCount, threadIndex);
 		auto i = range.begin;
 		auto n = i + range.count;
 

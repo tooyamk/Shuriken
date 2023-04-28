@@ -771,13 +771,13 @@ namespace srk {
 		case Type::BOOL:
 			return _getValue<bool>() ? "true" : "false";
 		case Type::INT:
-			return String::toString<int64_t>(_getValue<int64_t>());
+			return StringUtility::toString<int64_t>(_getValue<int64_t>());
 		case Type::UINT:
-			return String::toString<uint64_t>(_getValue<uint64_t>());
+			return StringUtility::toString<uint64_t>(_getValue<uint64_t>());
 		case Type::FLOAT32:
-			return String::toString<float32_t>(_getValue<float32_t>());
+			return StringUtility::toString<float32_t>(_getValue<float32_t>());
 		case Type::FLOAT64:
-			return String::toString<float64_t>(_getValue<float64_t>());
+			return StringUtility::toString<float64_t>(_getValue<float64_t>());
 		case Type::STRING:
 		{
 			auto s = _getValue<Str*>();
@@ -895,14 +895,14 @@ namespace srk {
 		case Type::BYTES:
 		{
 			auto bin = _getValue<Bytes*>();
-			json += "\"$binary_" + String::toString(bin->getValue(), bin->getSize()) + "\"";
+			json += "\"$binary_" + StringUtility::toString(bin->getValue(), bin->getSize()) + "\"";
 
 			break;
 		}
 		case Type::EXT_BYTES:
 		{
 			auto& bin = _getValue<BytesView>();
-			json += "\"$binary_" + String::toString(bin.data, bin.size) + "\"";
+			json += "\"$binary_" + StringUtility::toString(bin.data, bin.size) + "\"";
 
 			break;
 		}
@@ -1217,25 +1217,25 @@ namespace srk {
 	}
 
 	void SerializableObject::_packUInt(ByteArray& ba, uint64_t val, uint8_t typeBegin, uint8_t typeEnd) const {
-		if (val <= BitUInt<8>::MAX) {
+		if (val <= Bit::uintMax<8>()) {
 			ba.write<ba_vt::UI8>(typeBegin | typeEnd);
 			ba.write<ba_vt::UI8>(val);
-		} else if (val <= BitUInt<16>::MAX) {
+		} else if (val <= Bit::uintMax<16>()) {
 			ba.write<ba_vt::UI8>(typeBegin | (typeEnd + 1));
 			ba.write<ba_vt::UI16>(val);
-		} else if (val <= BitUInt<24>::MAX) {
+		} else if (val <= Bit::uintMax<24>()) {
 			ba.write<ba_vt::UI8>(typeBegin | (typeEnd + 2));
 			ba.write<ba_vt::UIX>(val, 3);
-		} else if (val <= BitUInt<32>::MAX) {
+		} else if (val <= Bit::uintMax<32>()) {
 			ba.write<ba_vt::UI8>(typeBegin | (typeEnd + 3));
 			ba.write<ba_vt::UI32>(val);
-		} else if (val <= BitUInt<40>::MAX) {
+		} else if (val <= Bit::uintMax<40>()) {
 			ba.write<ba_vt::UI8>(typeBegin | (typeEnd + 4));
 			ba.write<ba_vt::UIX>(val, 5);
-		} else if (val <= BitUInt<48>::MAX) {
+		} else if (val <= Bit::uintMax<48>()) {
 			ba.write<ba_vt::UI8>(typeBegin | (typeEnd + 5));
 			ba.write<ba_vt::UIX>(val, 6);
-		} else if (val <= BitUInt<56>::MAX) {
+		} else if (val <= Bit::uintMax<56>()) {
 			ba.write<ba_vt::UI8>(typeBegin | (typeEnd + 6));
 			ba.write<ba_vt::UIX>(val, 7);
 		} else {

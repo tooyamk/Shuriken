@@ -1,5 +1,5 @@
 #include "GraphicsModule.h"
-#include "srk/String.h"
+#include "srk/StringUtility.h"
 
 namespace srk::modules::graphics {
 	IGraphicsModule::~IGraphicsModule() {
@@ -71,9 +71,9 @@ namespace srk::modules::graphics {
 			sm += "5_0";
 		} else {
 			std::vector<std::string_view> vers;
-			String::split(version, ".", [&vers](const std::string_view& data) {
+			StringUtility::split(version, ".", [](const std::string_view& data, std::vector<std::string_view>& vers) {
 				vers.emplace_back(data);
-				});
+				}, vers);
 			uint32_t n = vers.size();
 			for (uint32_t i = 0; i < n; ++i) {
 				if (i != 0) sm.push_back('_');
@@ -159,11 +159,11 @@ namespace srk::modules::graphics {
 	}
 
 
-	bool TextureUtils::isCompressedFormat(TextureFormat format) {
+	bool TextureUtility::isCompressedFormat(TextureFormat format) {
 		return format >= TextureFormat::BC1_TYPELESS && format <= TextureFormat::BC7_UNORM_SRGB;
 	}
 
-	size_t TextureUtils::getBlocks(TextureFormat format, size_t pixels) {
+	size_t TextureUtility::getBlocks(TextureFormat format, size_t pixels) {
 		switch (format) {
 		case TextureFormat::R8G8B8_TYPELESS:
 		case TextureFormat::R8G8B8_UNORM:
@@ -205,7 +205,7 @@ namespace srk::modules::graphics {
 		}
 	}
 
-	Vec2uz TextureUtils::getBlocks(TextureFormat format, const Vec2uz& pixels) {
+	Vec2uz TextureUtility::getBlocks(TextureFormat format, const Vec2uz& pixels) {
 		switch (format) {
 		case TextureFormat::R8G8B8_TYPELESS:
 		case TextureFormat::R8G8B8_UNORM:
@@ -247,7 +247,7 @@ namespace srk::modules::graphics {
 		}
 	}
 
-	size_t TextureUtils::getPerBlockBytes(TextureFormat format) {
+	size_t TextureUtility::getPerBlockBytes(TextureFormat format) {
 		switch (format) {
 		case TextureFormat::R8G8B8_TYPELESS:
 		case TextureFormat::R8G8B8_UNORM:
@@ -291,7 +291,7 @@ namespace srk::modules::graphics {
 		}
 	}
 
-	Vec2uz TextureUtils::getPerBlockPixels(TextureFormat format) {
+	Vec2uz TextureUtility::getPerBlockPixels(TextureFormat format) {
 		switch (format) {
 		case TextureFormat::R8G8B8_TYPELESS:
 		case TextureFormat::R8G8B8_UNORM:

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "srk/Core.h"
+#include "srk/EnumOperators.h"
 
 namespace srk {
 	enum class StackPopperFlag : uint8_t {
@@ -62,7 +62,7 @@ namespace srk {
 
 
 	template<typename T>
-	class StackPopper<T, (StackPopperFlag)((std::underlying_type_t<StackPopperFlag>)StackPopperFlag::CHECK_POP | (std::underlying_type_t<StackPopperFlag>)StackPopperFlag::MULTI_POP)> {
+	class StackPopper<T, enum_operators::operator|(StackPopperFlag::CHECK_POP, StackPopperFlag::MULTI_POP)> {
 	public:
 		StackPopper(T& stack, size_t count, bool doPop) :
 			_doPop(doPop),

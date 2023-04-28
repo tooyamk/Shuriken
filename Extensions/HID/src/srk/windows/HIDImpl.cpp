@@ -1,8 +1,9 @@
 #include "windows/HIDImpl.h"
 
 #if SRK_OS == SRK_OS_WINDOWS
+#include "srk/EnumOperators.h"
 #include "srk/Printer.h"
-#include "srk/String.h"
+#include "srk/StringUtility.h"
 
 #include <SetupAPI.h>
 
@@ -204,7 +205,7 @@ namespace srk::extensions {
 
 			WCHAR buf[256];
 			if (!HidD_GetManufacturerString(info.handle, buf, sizeof(buf))) return std::string_view();
-			info.manufacturer = String::wideToUtf8<std::string>(buf);
+			info.manufacturer = StringUtility::wideToUtf8<std::string>(buf);
 		}
 		return info.manufacturer;
 	}
@@ -215,7 +216,7 @@ namespace srk::extensions {
 
 			WCHAR buf[256];
 			if (!HidD_GetProductString(info.handle, buf, sizeof(buf))) return std::string_view();
-			info.product = String::wideToUtf8<std::string>(buf);
+			info.product = StringUtility::wideToUtf8<std::string>(buf);
 		}
 
 		return info.product;

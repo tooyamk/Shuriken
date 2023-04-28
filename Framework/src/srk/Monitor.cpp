@@ -1,5 +1,5 @@
 #include "Monitor.h"
-#include "srk/String.h"
+#include "srk/StringUtility.h"
 
 namespace srk {
 	Monitor::Monitor() :
@@ -17,7 +17,7 @@ namespace srk {
 #if SRK_OS == SRK_OS_WINDOWS
 		DEVMODEW dm;
 
-		auto wadpName = String::utf8ToWide<std::wstring>(_adapterName);
+		auto wadpName = StringUtility::utf8ToWide<std::wstring>(_adapterName);
 
 		uint32_t modeIdx = 0;
 
@@ -93,20 +93,20 @@ namespace srk {
 					monitor._primary = isPrimary;
 					monitor._modesPruned = isModesPruned;
 
-					auto strBytes = String::wideToUtf8(std::wstring_view(adapter.DeviceName, sizeof(adapter.DeviceName)), strBuf, strBufLen);
+					auto strBytes = StringUtility::wideToUtf8(std::wstring_view(adapter.DeviceName, sizeof(adapter.DeviceName)), strBuf, strBufLen);
 					strBuf[strBytes] = 0;
 					monitor._adapterName = (char*)strBuf;
 
-					strBytes = String::wideToUtf8(std::wstring_view(adapter.DeviceString, sizeof(adapter.DeviceString)), strBuf, strBufLen);
+					strBytes = StringUtility::wideToUtf8(std::wstring_view(adapter.DeviceString, sizeof(adapter.DeviceString)), strBuf, strBufLen);
 					strBuf[strBytes] = 0;
 					monitor._adapterDesc = (char*)strBuf;
 
 					if (hasDisplay) {
-						strBytes = String::wideToUtf8(std::wstring_view(display.DeviceName, sizeof(display.DeviceName)), strBuf, strBufLen);
+						strBytes = StringUtility::wideToUtf8(std::wstring_view(display.DeviceName, sizeof(display.DeviceName)), strBuf, strBufLen);
 						strBuf[strBytes] = 0;
 						monitor._deviceName = (char*)strBuf;
 
-						strBytes = String::wideToUtf8(std::wstring_view(display.DeviceString, sizeof(display.DeviceString)), strBuf, strBufLen);
+						strBytes = StringUtility::wideToUtf8(std::wstring_view(display.DeviceString, sizeof(display.DeviceString)), strBuf, strBufLen);
 						strBuf[strBytes] = 0;
 						monitor._deviceDesc = (char*)strBuf;
 					}

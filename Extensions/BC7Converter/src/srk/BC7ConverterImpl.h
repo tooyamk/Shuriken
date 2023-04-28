@@ -1,7 +1,7 @@
 #pragma once
 
 #include "srk/ByteArray.h"
-#include "srk/Thread.h"
+#include "srk/ThreadUtility.h"
 #include "srk/modules/graphics/GraphicsModule.h"
 #include "BC7Converter.h"
 #include "bc7enc.h"
@@ -33,7 +33,7 @@ namespace srk::extensions::bc7_converter {
 				return true;
 			}
 
-			threadCount = Thread::calcNeedCount(cfg.numBlocks, 1, threadCount);
+			threadCount = ThreadUtility::calcNeedCount(cfg.numBlocks, 1, threadCount);
 			if (!threadCount) return true;
 
 			cfg.srgb = img.format == modules::graphics::TextureFormat::R8G8B8A8_UNORM_SRGB;
@@ -120,7 +120,7 @@ namespace srk::extensions::bc7_converter {
 		};
 
 		static void SRK_CALL _encode(const Config& cfg, uint32_t threadIndex) {
-			auto range = Thread::calcJobRange(cfg.numBlocks, cfg.threadCount, threadIndex);
+			auto range = ThreadUtility::calcJobRange(cfg.numBlocks, cfg.threadCount, threadIndex);
 			auto i = range.begin;
 			auto n = i + range.count;
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "srk/Core.h"
+#include "srk/Bit.h"
 #include <array>
 
 namespace srk::hash {
@@ -92,8 +92,8 @@ namespace srk::hash {
 		}
 
 	private:
-		constexpr static size_t OFFSET = Bits >> 3;
-		constexpr static size_t HALF_BITS = Bits >> 1;
+		static constexpr size_t OFFSET = Bits >> 3;
+		static constexpr size_t HALF_BITS = Bits >> 1;
 
 		inline static constexpr auto SRK_CALL _createPrimeValue() {
 			using T = std::array<uint_t<Bits>, 5>;
@@ -125,7 +125,7 @@ namespace srk::hash {
 					return *(uint_t<nBits>*)data;
 				}
 			} else {
-				return byteswap<nBits / 8, AlignedAccess>(data);
+				return Bit::byteswap<nBits / 8, AlignedAccess>(data);
 			}
 		}
 

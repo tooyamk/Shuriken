@@ -148,7 +148,7 @@ public:
 					}
 				}
 
-				//app->setWindowTitle(String::toString(GetKeyboardType(0)) + "  " + String::toString(GetKeyboardType(1)) + "  " + String::toString(GetKeyboardType(2)));
+				//app->setWindowTitle(StringUtility::toString(GetKeyboardType(0)) + "  " + StringUtility::toString(GetKeyboardType(1)) + "  " + StringUtility::toString(GetKeyboardType(2)));
 				}));
 
 			//for (auto& win : activedWindows) win->setVisible(true);

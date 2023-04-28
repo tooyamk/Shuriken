@@ -1,6 +1,7 @@
 #pragma once
 
 #include "srk/Application.h"
+#include "srk/Literals.h"
 #include "srk/Printer.h"
 #include "srk/SerializableObject.h"
 #include "srk/events/EventDispatcher.h"

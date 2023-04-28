@@ -3,9 +3,9 @@
 #include "srk/Core.h"
 
 namespace srk {
-	class SRK_CORE_DLL Thread {
+	class SRK_CORE_DLL ThreadUtility {
 	public:
-		Thread() = delete;
+		ThreadUtility() = delete;
 
 		struct SRK_CORE_DLL JobRange {
 			size_t begin;

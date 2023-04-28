@@ -1,5 +1,6 @@
 #include "ConstantBuffer.h"
 #include "Graphics.h"
+#include "srk/Literals.h"
 
 namespace srk::modules::graphics::d3d11 {
 	ConstantBuffer::ConstantBuffer(Graphics& graphics) : IConstantBuffer(graphics),

@@ -29,7 +29,7 @@ namespace srk {
 		static size_t SRK_CALL getSpecificMipPixels(const T& curPixels, size_t curMipLevel, size_t dstMipLevel) {
 			if (curMipLevel < dstMipLevel) {
 				auto pixels = curPixels;
-				for (size_t i = curMipLevel; i < dstMipLevel; ++i) pixels = modules::graphics::TextureUtils::getNextMipPixels(pixels);
+				for (size_t i = curMipLevel; i < dstMipLevel; ++i) pixels = modules::graphics::TextureUtility::getNextMipPixels(pixels);
 				return pixels;
 			} else {
 				return curPixels << (curMipLevel - dstMipLevel);

@@ -1,7 +1,7 @@
 #include "MouseDriver.h"
 #include "Input.h"
 #include "srk/Printer.h"
-#include "srk/String.h"
+#include "srk/StringUtility.h"
 #include <linux/input.h>
 
 namespace srk::modules::inputs::evdev_input {
@@ -91,7 +91,7 @@ namespace srk::modules::inputs::evdev_input {
 						auto val = evt.value != 0;
 						if (_inputBuffer.setButton(vk, val, _lock)) changed = true;
 					} else {
-						//printaln(L"key  code:"sv, String::toString(evt.code, 16), L"  value:"sv, evt.value);
+						//printaln(L"key  code:"sv, StringUtility::toString(evt.code, 16), L"  value:"sv, evt.value);
 					}
 
 					break;
@@ -115,7 +115,7 @@ namespace srk::modules::inputs::evdev_input {
 						default:
 						{
 							if constexpr (Environment::IS_DEBUG) {
-								printaln(L"rel  code:"sv, String::toString(evt.code, 16), L"  value:"sv, evt.value);
+								printaln(L"rel  code:"sv, StringUtility::toString(evt.code, 16), L"  value:"sv, evt.value);
 							}
 
 							break;

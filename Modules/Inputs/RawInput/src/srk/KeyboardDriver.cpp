@@ -1,7 +1,7 @@
 #include "KeyboardDriver.h"
 #include "Input.h"
 #include "srk/Printer.h"
-#include "srk/String.h"
+#include "srk/StringUtility.h"
 
 namespace srk::modules::inputs::raw_input {
 	KeyboardDriver::KeyboardDriver(Input& input, windows::IWindow& win, HANDLE handle) :
@@ -49,7 +49,7 @@ namespace srk::modules::inputs::raw_input {
 		auto vk = _getVirtualKey(kb);
 		if constexpr (Environment::IS_DEBUG) {
 			if (!GenericKeyboardBuffer::isValid(vk)) {
-				printaln(kb.VKey, L"    "sv, kb.MakeCode, L"    "sv, kb.Flags, L"    "sv, String::toString(kb.Message, 16));
+				printaln(kb.VKey, L"    "sv, kb.MakeCode, L"    "sv, kb.Flags, L"    "sv, StringUtility::toString(kb.Message, 16));
 				return;
 			}
 		}

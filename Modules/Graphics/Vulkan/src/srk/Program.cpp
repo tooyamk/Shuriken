@@ -3,8 +3,9 @@
 #include "Sampler.h"
 #include "VertexBuffer.h"
 #include "srk/GraphicsBuffer.h"
+#include "srk/Literals.h"
 #include "srk/ShaderParameter.h"
-#include "srk/String.h"
+#include "srk/StringUtility.h"
 #include <vector>
 #include "srk/Printer.h"
 

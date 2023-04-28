@@ -1,6 +1,6 @@
 #pragma once
 
-#include "srk/Core.h"
+#include "srk/Memory.h"
 
 #if __has_include(<charconv>)
 #	include <charconv>
@@ -9,8 +9,10 @@
 #include <regex>
 
 namespace srk {
-	class SRK_CORE_DLL String {
+	class SRK_CORE_DLL StringUtility {
 	public:
+		StringUtility() = delete;
+
 		struct SRK_CORE_DLL CharFlag {
 			inline static constexpr uint8_t WHITE_SPACE = 0b1;
 			inline static constexpr uint8_t NEW_LINE = 0b10;
@@ -271,23 +273,23 @@ namespace srk {
 			}
 		}
 
-		template<typename In, typename Separator, InvocableAnyOfResult<std::tuple<void, bool>, const std::string_view&> Fn>
-		requires ConvertibleStringData<std::remove_cvref_t<In>> && (std::derived_from<std::remove_cvref_t<Separator>, std::regex> || ConvertibleStringData<std::remove_cvref_t<Separator>>)
-		static void SRK_CALL split(In&& in, Separator&& separator, Fn&& fn) {
+		template<typename In, typename Separator, typename Fn, typename... Args>
+		requires ConvertibleStringData<std::remove_cvref_t<In>> && InvocableAnyOfResult<std::remove_cvref_t<Fn>, std::tuple<void, bool>, const std::string_view&, Args...> && (std::derived_from<std::remove_cvref_t<Separator>, std::regex> || ConvertibleStringData<std::remove_cvref_t<Separator>>)
+		static void SRK_CALL split(In&& in, Separator&& separator, Fn&& fn, Args&&... args) {
 			if constexpr (std::derived_from<std::remove_cvref_t<Separator>, std::regex>) {
 				if constexpr (StringData<std::remove_cvref_t<In>>) {
 					std::regex_token_iterator itr(in.begin(), in.end(), separator, -1);
 					std::regex_token_iterator<typename In::const_iterator> end;
 					while (itr != end) {
-						if constexpr (std::same_as<std::invoke_result_t<Fn, const std::string_view&>, void>) {
-							fn(std::string_view(&*itr->first, itr->length()));
+						if constexpr (std::same_as<std::invoke_result_t<Fn, const std::string_view&, Args...>, void>) {
+							fn(std::string_view(&*itr->first, itr->length()), std::forward<Args>(args)...);
 						} else {
-							if (!fn(std::string_view(&*itr->first, itr->length()))) return;
+							if (!fn(std::string_view(&*itr->first, itr->length()), std::forward<Args>(args)...)) return;
 						}
 						++itr;
 					}
 				} else {
-					split(std::string_view(std::forward<In>(in)), std::forward<Separator>(separator), std::forward<Fn>(fn));
+					split(std::string_view(std::forward<In>(in)), std::forward<Separator>(separator), std::forward<Fn>(fn), std::forward<Args>(args)...);
 				}
 			} else if constexpr (StringData<std::remove_cvref_t<In>> && StringData<std::remove_cvref_t<Separator>>) {
 				if (auto step = separator.size(); step) {
@@ -303,10 +305,10 @@ namespace srk {
 							}
 
 							if (found) {
-								if constexpr (std::same_as<std::invoke_result_t<Fn, const std::string_view&>, void>) {
-									fn(std::string_view(in.data() + begin, i - begin));
+								if constexpr (std::same_as<std::invoke_result_t<Fn, const std::string_view&, Args...>, void>) {
+									fn(std::string_view(in.data() + begin, i - begin), std::forward<Args>(args)...);
 								} else {
-									if (!fn(std::string_view(in.data() + begin, i - begin))) return;
+									if (!fn(std::string_view(in.data() + begin, i - begin), std::forward<Args>(args)...)) return;
 								}
 								i += step;
 								begin = i;
@@ -318,26 +320,26 @@ namespace srk {
 						}
 					}
 
-					fn(std::string_view(in.data() + begin, i - begin));
+					fn(std::string_view(in.data() + begin, i - begin), std::forward<Args>(args)...);
 				} else {
-					fn(in);
+					fn(in, std::forward<Args>(args)...);
 				}
 			} else {
-				split(std::string_view(std::forward<In>(in)), std::string_view(std::forward<Separator>(separator)), std::forward<Fn>(fn));
+				split(std::string_view(std::forward<In>(in)), std::string_view(std::forward<Separator>(separator)), std::forward<Fn>(fn), std::forward<Args>(args)...);
 			}
 		}
 
-		template<typename In, InvocableAnyOfResult<std::tuple<void, bool>, const std::string_view&> Fn>
-		requires ConvertibleStringData<std::remove_cvref_t<In>>
-		static void SRK_CALL split(In&& in, uint8_t flags, Fn&& fn) {
+		template<typename In, typename Fn, typename... Args>
+		requires ConvertibleStringData<std::remove_cvref_t<In>> && InvocableAnyOfResult<std::remove_cvref_t<Fn>, std::tuple<void, bool>, const std::string_view&, Args...>
+		static void SRK_CALL split(In&& in, uint8_t flags, Fn&& fn, Args&&... args) {
 			if constexpr (StringData<std::remove_cvref_t<In>>) {
 				size_t begin = 0, i = 0, size = in.size();
 				while (i < size) {
 					if (CHARS[in[i]] & flags) {
-						if constexpr (std::same_as<std::invoke_result_t<Fn, const std::string_view&>, void>) {
-							fn(std::string_view(in.data() + begin, i - begin));
+						if constexpr (std::same_as<std::invoke_result_t<Fn, const std::string_view&, Args...>, void>) {
+							fn(std::string_view(in.data() + begin, i - begin), std::forward<Args>(args)...);
 						} else {
-							if (!fn(std::string_view(in.data() + begin, i - begin))) return;
+							if (!fn(std::string_view(in.data() + begin, i - begin), std::forward<Args>(args)...)) return;
 						}
 						++i;
 						begin = i;
@@ -346,9 +348,9 @@ namespace srk {
 					}
 				}
 
-				fn(std::string_view(in.data() + begin, i - begin));
+				fn(std::string_view(in.data() + begin, i - begin), std::forward<Args>(args)...);
 			} else {
-				split(std::string_view(std::forward<In>(in)), flags, std::forward<Fn>(fn));
+				split(std::string_view(std::forward<In>(in)), flags, std::forward<Fn>(fn), std::forward<Args>(args)...);
 			}
 		}
 
@@ -576,7 +578,7 @@ namespace srk {
 		inline static std::string::size_type SRK_CALL find(In&& in, Compare&& compare) {
 			if constexpr (StringData<std::remove_cvref_t<In>> && StringData<std::remove_cvref_t<Compare>>) {
 				using T = typename std::remove_cvref_t<In>::value_type;
-				auto p = (const T*)memFind(in.data(), in.size(), compare.data(), compare.size());
+				auto p = (const T*)Memory::find(in.data(), in.size(), compare.data(), compare.size());
 				return p ? p - in.data() : std::remove_cvref_t<In>::npos;
 			} else {
 				return find(std::string_view(std::forward<In>(in)), std::string_view(std::forward<Compare>(compare)));
