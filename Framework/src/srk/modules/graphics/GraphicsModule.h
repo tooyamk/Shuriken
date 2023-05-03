@@ -264,7 +264,7 @@ namespace srk::modules::graphics {
 	public:
 		virtual ~IVertexAttributeGetter() {}
 
-		virtual std::optional<VertexAttribute<IVertexBuffer>> SRK_CALL get(const QueryString& name) const = 0;
+		virtual std::optional<VertexAttribute<IVertexBuffer>> SRK_CALL get(const std::string_view& name) const = 0;
 	};
 
 

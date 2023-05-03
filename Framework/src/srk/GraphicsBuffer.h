@@ -1,7 +1,11 @@
 #pragma once
 
 #include "srk/modules/graphics/GraphicsModule.h"
-#include <unordered_map>
+#ifdef __cpp_lib_generic_unordered_lookup
+#	include <unordered_map>
+#else
+#	include <map>
+#endif
 
 namespace srk {
 	template<typename T>
@@ -272,10 +276,10 @@ namespace srk {
 	public:
 		virtual ~VertexAttributeCollection();
 
-		virtual std::optional<modules::graphics::VertexAttribute<modules::graphics::IVertexBuffer>> SRK_CALL get(const QueryString& name) const override;
-		void SRK_CALL set(const QueryString& name, const modules::graphics::VertexAttribute<modules::graphics::IVertexBuffer>& attrib);
+		virtual std::optional<modules::graphics::VertexAttribute<modules::graphics::IVertexBuffer>> SRK_CALL get(const std::string_view& name) const override;
+		void SRK_CALL set(const std::string_view& name, const modules::graphics::VertexAttribute<modules::graphics::IVertexBuffer>& attrib);
 
-		inline std::optional<modules::graphics::VertexAttribute<modules::graphics::IVertexBuffer>> SRK_CALL remove(const QueryString& name) {
+		inline std::optional<modules::graphics::VertexAttribute<modules::graphics::IVertexBuffer>> SRK_CALL remove(const std::string_view& name) {
 			return _remove(name);
 		}
 		inline bool SRK_CALL isEmpty() const {
@@ -286,8 +290,17 @@ namespace srk {
 		}
 
 	private:
-		StringUnorderedMap<modules::graphics::VertexAttribute<modules::graphics::IVertexBuffer>> _views;
+#ifdef __cpp_lib_generic_unordered_lookup
+		struct MapHasher {
+			using is_transparent = void;
+			template<typename K> inline size_t SRK_CALL operator()(K&& key) const { return std::hash<std::string_view>{}(key); }
+		};
+		std::unordered_map<std::string, modules::graphics::VertexAttribute<modules::graphics::IVertexBuffer>, MapHasher, std::equal_to<>>
+#else
+		std::map<std::string, modules::graphics::VertexAttribute<modules::graphics::IVertexBuffer>, std::less<>>
+#endif
+		_views;
 
-		std::optional<modules::graphics::VertexAttribute<modules::graphics::IVertexBuffer>> SRK_CALL _remove(const QueryString& name);
+		std::optional<modules::graphics::VertexAttribute<modules::graphics::IVertexBuffer>> SRK_CALL _remove(const std::string_view& name);
 	};
 }

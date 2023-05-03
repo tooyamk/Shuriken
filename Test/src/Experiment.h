@@ -681,4 +681,75 @@ namespace srk {
 
 
 	//template<typename T, typename Condition, typename... TypeModifiers, typename = std::enable_if_t<is_packaged_template<Condition>::value>> concept packaged_concept1 = Condition<typename multi_modification<T, Modifiers...>::type>::value<T>;
+
+	class uint128_t {
+	public:
+		uint128_t() {}
+		constexpr uint128_t(uint64_t low, uint64_t high) :
+			_low(low),
+			_high(high) {}
+		constexpr uint128_t(const uint128_t& v) : uint128_t(v._low, v._high) {}
+		constexpr uint128_t(uint128_t&& v) : uint128_t(v._low, v._high) {}
+		constexpr uint128_t(int8_t v) :
+			_low(v),
+			_high(v < 0 ? (std::numeric_limits<uint64_t>::max)() : 0) {}
+		constexpr uint128_t(uint8_t v) :
+			_low(v),
+			_high(0) {}
+		constexpr uint128_t(int16_t v) :
+			_low(v),
+			_high(v < 0 ? (std::numeric_limits<uint64_t>::max)() : 0) {}
+		constexpr uint128_t(uint16_t v) :
+			_low(v),
+			_high(0) {}
+		constexpr uint128_t(int32_t v) :
+			_low(v),
+			_high(v < 0 ? (std::numeric_limits<uint64_t>::max)() : 0) {}
+		constexpr uint128_t(uint32_t v) :
+			_low(v),
+			_high(0) {}
+		constexpr uint128_t(int64_t v) :
+			_low(v),
+			_high(v < 0 ? (std::numeric_limits<uint64_t>::max)() : 0) {}
+		constexpr uint128_t(uint64_t v) :
+			_low(v),
+			_high(0) {}
+		uint128_t(float32_t v) : uint128_t(_makeUint128(v)) {}
+		uint128_t(float64_t v) : uint128_t(_makeUint128(v)) {}
+
+		inline uint128_t& SRK_CALL operator=(const uint128_t& v) {
+			_low = v._low;
+			_high = v._high;
+			return *this;
+		}
+
+		inline uint128_t& SRK_CALL operator=(uint128_t&& v) {
+			_low = v._low;
+			_high = v._high;
+			return *this;
+		}
+
+		template<Arithmetic T>
+		inline uint128_t& SRK_CALL operator=(T&& v) { return *this = uint128_t(v); }
+
+	private:
+#if SRK_ENDIAN == SRK_ENDIAN_LITTLE
+		uint64_t _low;
+		uint64_t _high;
+#else
+		uint64_t _high;
+		uint64_t _low;
+#endif
+
+		template <std::floating_point T>
+		static uint128_t SRK_CALL _makeUint128(T v) {
+			if (v >= std::ldexp((T)1, 64)) {
+				auto hi = (uint64_t)(std::ldexp(v, -64));
+				auto lo = (uint64_t)(v - std::ldexp((T)hi, 64));
+				return uint128_t(lo, hi);
+			}
+
+			return uint128_t((uint64_t)v);
+		}
+	};
 }

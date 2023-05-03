@@ -2,6 +2,7 @@
 
 #include "Base.h"
 #include <shared_mutex>
+#include <vector>
 
 namespace srk::modules::inputs::xinput {
 	class SRK_MODULE_DLL Input : public IInputModule {

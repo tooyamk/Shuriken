@@ -1,6 +1,6 @@
 #pragma once
 
-#include "srk/Core.h"
+#include "srk/Concepts.h"
 
 namespace srk::enum_operators {
 	template<ScopedEnum T>

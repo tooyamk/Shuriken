@@ -3,6 +3,8 @@
 #include "srk/modules/IModule.h"
 #include "srk/math/Vector.h"
 #include <functional>
+#include <string_view>
+#include <unordered_map>
 
 namespace srk::events {
 	template<typename EvtType> class IEventDispatcher;

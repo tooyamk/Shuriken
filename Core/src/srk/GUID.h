@@ -1,6 +1,7 @@
 #pragma once
 
 #include "srk/Core.h"
+#include <cstring>
 
 namespace srk::modules::inputs {
 	template<uint32_t N>

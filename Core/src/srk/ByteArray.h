@@ -1,8 +1,8 @@
 #pragma once
 
 #include "srk/Bit.h"
+#include "srk/StringUtility.h"
 #include <algorithm>
-#include <string_view>
 
 namespace srk {
 	class SRK_CORE_DLL ByteArray {

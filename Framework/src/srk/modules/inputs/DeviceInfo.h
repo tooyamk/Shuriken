@@ -2,6 +2,7 @@
 
 #include "srk/GUID.h"
 #include "srk/Framework.h"
+#include <string>
 
 namespace srk::modules::inputs {
 	enum class DeviceType : uint8_t;

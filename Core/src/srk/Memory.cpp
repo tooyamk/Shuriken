@@ -1,4 +1,5 @@
 #include "Memory.h"
+#include <cstring>
 
 namespace srk {
 	void* Memory::find(void* data, size_t dataLength, const void* compare, size_t compareLength, size_t stepLength) {

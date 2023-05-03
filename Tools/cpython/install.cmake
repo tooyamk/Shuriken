@@ -4,7 +4,7 @@ file(WRITE ${INSTALL_DIR}/bin/Lib/site-packages/start_path.pth "import sys;impor
 set(pip ${INSTALL_DIR}/bin/get-pip.py)
 if (NOT EXISTS ${pip})
     message("downloading get-pip.py")
-    file(DOWNLOAD https://bootstrap.pypa.io/get-pip.py ${pip})
+    file(DOWNLOAD https://bootstrap.pypa.io/get-pip.py ${pip} SHOW_PROGRESS)
     message("installing pip")
     execute_process(COMMAND ${PYTHON_EXE} ${pip} --no-warn-script-location RESULT_VARIABLE err)
     if (NOT "${err}" STREQUAL "0" )

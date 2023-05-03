@@ -1,6 +1,6 @@
 #include "Window.h"
 #include "Manager.h"
-#include "srk/String.h"
+#include "srk/StringUtility.h"
 #include "srk/events/EventDispatcher.h"
 
 namespace srk::modules::windows::x11 {

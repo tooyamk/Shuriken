@@ -1,6 +1,6 @@
 #pragma once
 
-#include "srk/Core.h"
+#include "srk/StringUtility.h"
 
 namespace srk {
 	class SRK_CORE_DLL DynamicLibraryLoader {

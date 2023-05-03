@@ -226,12 +226,12 @@ namespace srk {
 		clear();
 	}
 
-	std::optional<modules::graphics::VertexAttribute<modules::graphics::IVertexBuffer>> VertexAttributeCollection::get(const QueryString& name) const {
+	std::optional<modules::graphics::VertexAttribute<modules::graphics::IVertexBuffer>> VertexAttributeCollection::get(const std::string_view& name) const {
 		auto itr = _views.find(name);
 		return itr == _views.end() ? std::nullopt : std::make_optional(itr->second);
 	}
 
-	void VertexAttributeCollection::set(const QueryString& name, const modules::graphics::VertexAttribute<modules::graphics::IVertexBuffer>& attrib) {
+	void VertexAttributeCollection::set(const std::string_view& name, const modules::graphics::VertexAttribute<modules::graphics::IVertexBuffer>& attrib) {
 		if (auto itr = _views.find(name); itr == _views.end()) {
 			_views.emplace(name, attrib);
 		} else {
@@ -239,7 +239,7 @@ namespace srk {
 		}
 	}
 
-	std::optional<modules::graphics::VertexAttribute<modules::graphics::IVertexBuffer>> VertexAttributeCollection::_remove(const QueryString& name) {
+	std::optional<modules::graphics::VertexAttribute<modules::graphics::IVertexBuffer>> VertexAttributeCollection::_remove(const std::string_view& name) {
 		if (auto itr = _views.find(name); itr != _views.end()) {
 			auto opt = std::make_optional(std::move(itr->second));
 			_views.erase(itr);

@@ -2,6 +2,7 @@
 
 #include "srk/modules/windows/WindowModule.h"
 #include <android/native_activity.h>
+#include <string>
 
 namespace srk::modules::windows::android_native {
 	class Manager;

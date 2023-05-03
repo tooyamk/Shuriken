@@ -1,5 +1,4 @@
 #include "DynamicLibraryLoader.h"
-#include "srk/StringUtility.h"
 
 #if SRK_OS != SRK_OS_WINDOWS
 #	include <dlfcn.h>

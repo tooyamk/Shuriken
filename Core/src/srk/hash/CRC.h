@@ -1,7 +1,8 @@
 #pragma once
 
-#include "srk/Core.h"
+#include "srk/Bit.h"
 #include <array>
+#include <numeric>
 
 namespace srk::hash {
 	/**
@@ -77,6 +78,8 @@ namespace srk::hash {
 
 
 	public:
+		CRC() = delete;
+
 		template<size_t Bits>
 		using TableType = std::array<uint_t<Bits>, 256>;
 

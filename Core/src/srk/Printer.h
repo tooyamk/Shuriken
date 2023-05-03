@@ -1,8 +1,10 @@
 #pragma once
 
-#include "srk/Core.h"
+#include "srk/StringUtility.h"
 #include <array>
+#include <cstring>
 #include <filesystem>
+#include <iostream>
 #include <list>
 #include <map>
 #include <mutex>

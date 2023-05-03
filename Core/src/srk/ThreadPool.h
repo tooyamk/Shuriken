@@ -4,7 +4,6 @@
 #include <condition_variable>
 #include <functional>
 #include <future>
-#include <list>
 #include <mutex>
 #include <thread>
 #include <vector>
@@ -14,22 +13,37 @@ namespace srk {
 	public:
 		using PackagedTask = std::packaged_task<void()>;
 
-		ThreadPool(size_t threadCount);
-		~ThreadPool();
+	private:
+		struct TaskNode {
+			TaskNode(PackagedTask&& task) : task(std::move(task)), next(nullptr) {}
+
+			PackagedTask task;
+			TaskNode* next;
+		};
+
+	public:
+
+		ThreadPool(size_t threadCount);~ThreadPool();
 
 		template<typename F, typename... Args>
 		std::shared_future<void> SRK_CALL enqueue(F&& f, Args&&... args) {
-			PackagedTask task([f = std::forward<F>(f), ...args = std::forward<Args>(args)]() mutable {
-				f(std::forward<Args>(args)...);
-				});
+			auto node = new TaskNode(PackagedTask([f = std::forward<F>(f), args...]() mutable { f(std::forward<Args>(args)...); }));
 
-			std::future<void> future = task.get_future();
+			std::future<void> future = node->task.get_future();
 			{
 				std::unique_lock<std::mutex> lock(_queueMutex);
 
-				if (_stop) return std::future<void>().share();
+				if (_stop) {
+					delete node;
+					return std::future<void>().share();
+				}
 
-				_tasks.emplace_back(std::move(task));
+				if (_taskTail) {
+					_taskTail->next = node;
+					_taskTail = node;
+				} else {
+					_taskHead = _taskTail = node;
+				}
 			}
 			_queueCond.notify_one();
 			return future.share();
@@ -44,13 +58,14 @@ namespace srk {
 		bool _stop;
 		size_t _activeThreads;
 		std::vector<std::thread> _workers;
-		std::list<PackagedTask> _tasks;
+		TaskNode* _taskHead;
+		TaskNode* _taskTail;
 		std::mutex _queueMutex;
 		std::condition_variable _queueCond;
 		std::condition_variable _completionCond;
 
-		inline bool SRK_CALL _workCompletedUnlocked() {
-			return !_activeThreads && _tasks.empty();
+		inline bool SRK_CALL _workCompletedUnlocked() const {
+			return !_activeThreads && !_taskHead;
 		}
 	};
 }

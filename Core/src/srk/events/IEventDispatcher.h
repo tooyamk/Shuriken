@@ -1,5 +1,6 @@
 #pragma once
 
+#include "srk/Concepts.h"
 #include "srk/Intrusive.h"
 #include <functional>
 

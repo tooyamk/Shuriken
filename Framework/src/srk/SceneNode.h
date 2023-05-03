@@ -6,6 +6,7 @@
 #include "srk/math/Quaternion.h"
 #include "srk/math/Vector.h"
 #include <functional>
+#include <string>
 #include <vector>
 
 namespace srk {

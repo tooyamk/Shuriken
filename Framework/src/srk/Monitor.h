@@ -1,6 +1,7 @@
 #pragma once
 
 #include "srk/Framework.h"
+#include <string>
 #include <vector>
 
 namespace srk {

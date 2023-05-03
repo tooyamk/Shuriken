@@ -1,6 +1,7 @@
 #pragma once
 
 #include "srk/Memory.h"
+#include "srk/Concepts.h"
 
 #if __has_include(<charconv>)
 #	include <charconv>
@@ -9,6 +10,126 @@
 #include <regex>
 
 namespace srk {
+	template<typename T> concept String8 = SameAnyOf<T, std::string, std::u8string>;
+	template<typename T> struct IsString8 : std::bool_constant<String8<T>> {};
+	template<typename T> using String8Type = std::enable_if_t<String8<T>, T>;
+
+	template<typename T> concept StringData = SameAnyOf<T, std::string, std::string_view>;
+	template<typename T> struct IsStringData : std::bool_constant<StringData<T>> {};
+	template<typename T> using StringDataType = std::enable_if_t<StringData<T>, T>;
+
+	template<typename T> concept U8StringData = SameAnyOf<T, std::u8string, std::u8string_view>;
+	template<typename T> struct IsU8StringData : std::bool_constant<U8StringData<T>> {};
+	template<typename T> using U8StringDataType = std::enable_if_t<U8StringData<T>, T>;
+
+	template<typename T> concept ConvertibleStringData = StringData<T> || std::convertible_to<T, char const*>;
+	template<typename T> struct IsConvertibleStringData : std::bool_constant<ConvertibleStringData<T>> {};
+	template<typename T> using ConvertibleStringDataType = std::enable_if_t<ConvertibleStringData<T>, T>;
+
+	template<typename T> concept ConvertibleU8StringData = U8StringData<T> || std::convertible_to<T, char8_t const*>;
+	template<typename T> struct IsConvertibleU8StringData : std::bool_constant<ConvertibleU8StringData<T>> {};
+	template<typename T> using ConvertibleU8StringDataType = std::enable_if_t<ConvertibleU8StringData<T>, T>;
+
+	template<typename T> concept ConvertibleString8Data = ConvertibleStringData<T> || ConvertibleU8StringData<T>;
+	template<typename T> struct IsConvertibleString8Data : std::bool_constant<ConvertibleString8Data<T>> {};
+	template<typename T> using ConvertibleString8DataType = std::enable_if_t<ConvertibleString8Data<T>, T>;
+
+	template<typename T> concept String8Data = StringData<T> || U8StringData<T>;
+	template<typename T> struct IsString8Data : std::bool_constant<String8Data<T>> {};
+	template<typename T> using String8DataType = std::enable_if_t<String8Data<T>, T>;
+
+	template<typename T> concept String8View = SameAnyOf<T, std::string_view, std::u8string_view>;
+	template<typename T> struct IsString8View : std::bool_constant<String8View<T>> {};
+	template<typename T> using String8ViewType = std::enable_if_t<String8View<T>, T>;
+
+	template<typename T> using ConvertToString8ViewType = std::enable_if_t<ConvertibleString8Data<T>, std::conditional_t<ConvertibleU8StringData<T>, std::u8string_view, std::string_view>>;
+	template<typename T> struct ConvertToString8View { using type = ConvertToString8ViewType<T>; };
+
+	template<typename T> concept ConvertibleString8View = ConvertibleAnyOf<T, std::string_view, std::u8string_view>;
+	template<typename T> struct IsConvertibleString8View : std::bool_constant<ConvertibleString8View<T>> {};
+	template<typename T> using ConvertibleString8ViewType = std::enable_if_t<ConvertibleString8View<T>, T>;
+
+	template<typename T> concept WStringData = SameAnyOf<T, std::wstring, std::wstring_view>;
+	template<typename T> struct IsWStringData : std::bool_constant<WStringData<T>> {};
+	template<typename T> using WStringDataType = std::enable_if_t<WStringData<T>, T>;
+
+	template<typename T> concept ConvertibleWStringData = WStringData<T> || std::convertible_to<T, wchar_t const*>;
+	template<typename T> struct IsConvertibleWStringData : std::bool_constant<ConvertibleWStringData<T>> {};
+	template<typename T> using ConvertibleWStringDataType = std::enable_if_t<ConvertibleWStringData<T>, T>;
+
+	template<typename T> concept String16Data = SameAnyOf<T, std::u16string, std::u16string_view>;
+	template<typename T> struct IsString16Data : std::bool_constant<String16Data<T>> {};
+	template<typename T> using String16DataType = std::enable_if_t<String16Data<T>, T>;
+
+	template<typename T> concept ConvertibleString16Data = String16Data<T> || std::convertible_to<T, char16_t const*>;
+	template<typename T> struct IsConvertibleString16Data : std::bool_constant<ConvertibleString16Data<T>> {};
+	template<typename T> using ConvertibleString16DataType = std::enable_if_t<ConvertibleString16Data<T>, T>;
+
+	template<typename T> concept String32Data = SameAnyOf<T, std::u32string, std::u32string_view>;
+	template<typename T> struct IsString32Data : std::bool_constant<String32Data<T>> {};
+	template<typename T> using String32DataType = std::enable_if_t<String32Data<T>, T>;
+
+	template<typename T> concept ConvertibleString32Data = String32Data<T> || std::convertible_to<T, char32_t const*>;
+	template<typename T> struct IsConvertibleString32Data : std::bool_constant<ConvertibleString32Data<T>> {};
+	template<typename T> using ConvertibleString32DataType = std::enable_if_t<ConvertibleString32Data<T>, T>;
+
+	template<typename T> concept ConvertibleAnyWideStringData = ConvertibleWStringData<T> || ConvertibleString16Data<T> || ConvertibleString32Data<T>;
+
+	template<typename T> using ConvertToAnyStringType = std::conditional_t<ConvertibleStringData<T>, std::string,
+		std::conditional_t<ConvertibleU8StringData<T>, std::u8string,
+		std::conditional_t<ConvertibleWStringData<T>, std::wstring,
+		std::conditional_t<ConvertibleString16Data<T>, std::u16string,
+		std::conditional_t<ConvertibleString32Data<T>, std::u32string, void>
+		>>>>;
+
+	template<typename T> using ConvertToAnyStringViewType = std::conditional_t<ConvertibleStringData<T>, std::string_view,
+		std::conditional_t<ConvertibleU8StringData<T>, std::u8string_view,
+		std::conditional_t<ConvertibleWStringData<T>, std::wstring_view,
+		std::conditional_t<ConvertibleString16Data<T>, std::u16string_view,
+		std::conditional_t<ConvertibleString32Data<T>, std::u32string_view, void>
+		>>>>;
+
+
+	template<typename L, typename R>
+		requires (std::same_as<L, std::string> && (ConvertibleU8StringData<std::remove_cvref_t<R>> || std::same_as<std::remove_cvref_t<R>, char8_t>)) ||
+	(std::same_as<L, std::u8string> && (ConvertibleStringData<std::remove_cvref_t<R>> || std::same_as<std::remove_cvref_t<R>, char>))
+		inline auto & SRK_CALL operator+=(L & left, R && right) {
+		if constexpr (std::same_as<L, std::string>) {
+			if constexpr (ConvertibleU8StringData<std::remove_cvref_t<R>>) {
+				left += (const std::string_view&)(const ConvertToString8ViewType<std::remove_cvref_t<R>>&)(std::forward<R>(right));
+			} else if constexpr (std::same_as<std::remove_cvref_t<R>, char8_t>) {
+				left += (char)right;
+			}
+		} else {
+			if constexpr (ConvertibleStringData<std::remove_cvref_t<R>>) {
+				left += (const std::u8string_view&)(const ConvertToString8ViewType<std::remove_cvref_t<R>>&)(std::forward<R>(right));
+			} else if constexpr (std::same_as<std::remove_cvref_t<R>, char>) {
+				left += (char8_t)right;
+			}
+		}
+
+		return left;
+	}
+
+
+	template<typename L, typename R>
+		requires (ConvertibleString8Data<std::remove_cvref_t<L>>&& ConvertibleString8Data<std::remove_cvref_t<R>>) &&
+	(((ConvertibleU8StringData<std::remove_cvref_t<L>> || ConvertibleU8StringData<std::remove_cvref_t<R>>) && (ConvertibleStringData<std::remove_cvref_t<L>> || ConvertibleStringData<std::remove_cvref_t<R>>)) ||
+		(String8View<std::remove_cvref_t<L>> || String8View<std::remove_cvref_t<R>>))
+		inline std::conditional_t<ConvertibleU8StringData<std::remove_cvref_t<L>> || ConvertibleU8StringData<std::remove_cvref_t<R>>, std::u8string, std::string> SRK_CALL operator+(L&& left, R&& right) {
+		if constexpr (SameAllOf<std::u8string_view, std::remove_cvref_t<L>, std::remove_cvref_t<R>> || SameAllOf<std::string_view, std::remove_cvref_t<L>, std::remove_cvref_t<R>>) {
+			std::conditional_t<SameAllOf<std::u8string_view, std::remove_cvref_t<L>, std::remove_cvref_t<R>>, std::u8string, std::string> s;
+			s.reserve(left.size() + right.size());
+			s += left;
+			s += right;
+			return std::move(s);
+		} else {
+			using ConvertTo = std::conditional_t<ConvertibleU8StringData<std::remove_cvref_t<L>> || ConvertibleU8StringData<std::remove_cvref_t<R>>, std::u8string_view, std::string_view>;
+			return (const ConvertTo&)(const ConvertToString8ViewType<std::remove_cvref_t<L>>&)(std::forward<L>(left)) + (const ConvertTo&)(const ConvertToString8ViewType<std::remove_cvref_t<R>>&)(std::forward<R>(right));
+		}
+	}
+
+
 	class SRK_CORE_DLL StringUtility {
 	public:
 		StringUtility() = delete;

@@ -2,6 +2,7 @@
 
 #include "srk/modules/windows/WindowModule.h"
 #include "srk/math/Box.h"
+#include <string>
 #import <Cocoa/Cocoa.h>
 
 namespace srk::modules::windows::cocoa {

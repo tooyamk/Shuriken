@@ -4,7 +4,13 @@
 #include "srk/Intrusive.h"
 #include "srk/math/Matrix.h"
 #include "srk/math/Vector.h"
-#include <unordered_map>
+#include <string>
+#include <string_view>
+#ifdef __cpp_lib_generic_unordered_lookup
+#	include <unordered_map>
+#else
+#	include <map>
+#endif
 #include <vector>
 
 namespace srk::modules::graphics {
@@ -199,8 +205,8 @@ namespace srk {
 	public:
 		virtual ~IShaderParameterGetter() {}
 
-		virtual IntrusivePtr<ShaderParameter> SRK_CALL get(const QueryString& name) const = 0;
-		virtual IntrusivePtr<ShaderParameter> SRK_CALL get(const QueryString& name, ShaderParameterType type) const = 0;
+		virtual IntrusivePtr<ShaderParameter> SRK_CALL get(const std::string_view& name) const = 0;
+		virtual IntrusivePtr<ShaderParameter> SRK_CALL get(const std::string_view& name, ShaderParameterType type) const = 0;
 	};
 
 
@@ -208,11 +214,11 @@ namespace srk {
 	public:
 		virtual ~ShaderParameterCollection() {}
 
-		virtual IntrusivePtr<ShaderParameter> SRK_CALL get(const QueryString& name) const override;
-		virtual IntrusivePtr<ShaderParameter> SRK_CALL get(const QueryString& name, ShaderParameterType type) const override;
+		virtual IntrusivePtr<ShaderParameter> SRK_CALL get(const std::string_view& name) const override;
+		virtual IntrusivePtr<ShaderParameter> SRK_CALL get(const std::string_view& name, ShaderParameterType type) const override;
 
-		ShaderParameter* SRK_CALL set(const QueryString& name, ShaderParameter* parameter);
-		inline IntrusivePtr<ShaderParameter> SRK_CALL remove(const QueryString& name) {
+		ShaderParameter* SRK_CALL set(const std::string_view& name, ShaderParameter* parameter);
+		inline IntrusivePtr<ShaderParameter> SRK_CALL remove(const std::string_view& name) {
 			return _remove(name);
 		}
 		inline bool SRK_CALL isEmpty() const {
@@ -223,9 +229,18 @@ namespace srk {
 		}
 
 	protected:
-		StringUnorderedMap<IntrusivePtr<ShaderParameter>> _parameters;
+#ifdef __cpp_lib_generic_unordered_lookup
+		struct MapHasher {
+			using is_transparent = void;
+			template<typename K> inline size_t SRK_CALL operator()(K&& key) const { return std::hash<std::string_view>{}(key); }
+		};
+		std::unordered_map<std::string, IntrusivePtr<ShaderParameter>, MapHasher, std::equal_to<>>
+#else
+		std::map<std::string, IntrusivePtr<ShaderParameter>, std::less<>>
+#endif
+		_parameters;
 
-		ShaderParameter* SRK_CALL _remove(const QueryString& name);
+		ShaderParameter* SRK_CALL _remove(const std::string_view& name);
 	};
 
 
@@ -233,8 +248,8 @@ namespace srk {
 	public:
 		virtual ~ShaderParameterGetterStack() {}
 
-		virtual IntrusivePtr<ShaderParameter> SRK_CALL get(const QueryString& name) const override;
-		virtual IntrusivePtr<ShaderParameter> SRK_CALL get(const QueryString& name, ShaderParameterType type) const override;
+		virtual IntrusivePtr<ShaderParameter> SRK_CALL get(const std::string_view& name) const override;
+		virtual IntrusivePtr<ShaderParameter> SRK_CALL get(const std::string_view& name, ShaderParameterType type) const override;
 
 		inline bool SRK_CALL push(IShaderParameterGetter* getter) {
 			if (getter) {

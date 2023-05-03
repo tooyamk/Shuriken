@@ -131,6 +131,7 @@ namespace srk::modules::graphics {
 					}
 
 					if (readFileToBuffer(dirPath, deviceName)) {
+						std::string_view val;
 						StringUtility::split(std::string_view(buf.data(), buf.size()), StringUtility::CharFlag::NEW_LINE, [](const std::string_view data, std::string_view& val) {
 							val = data;
 							return false;
@@ -142,10 +143,10 @@ namespace srk::modules::graphics {
 					}
 
 					if (readFileToBuffer(dirPath, resourceName)) {
-						StringUtility::split(std::string_view(buf.data(), buf.size()), StringUtility::CharFlag::NEW_LINE, [&info](const std::string_view data, auto&& info) {
+						StringUtility::split(std::string_view(buf.data(), buf.size()), StringUtility::CharFlag::NEW_LINE, [](const std::string_view data, auto&& info) {
 							std::string_view arr[3];
 							size_t count = 0;
-							StringUtility::split(data, StringUtility::CharFlag::WHITE_SPACE, [&arr, &count](const std::string_view data, auto&& arr, auto&& count) {
+							StringUtility::split(data, StringUtility::CharFlag::WHITE_SPACE, [](const std::string_view data, auto&& arr, auto&& count) {
 								arr[count++] = data;
 								return count < 3;
 							}, arr, count);

@@ -1,4 +1,5 @@
 #include "MD5.h"
+#include <cstring>
 
 namespace srk::hash {
 	MD5::MD5() {

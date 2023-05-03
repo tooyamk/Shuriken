@@ -6,7 +6,7 @@ namespace srk {
 	}
 
 
-	void SRK_CALL MeshResource::setVertex(const QueryString& name, const modules::graphics::VertexAttribute<VertexResource>& attrib) {
+	void SRK_CALL MeshResource::setVertex(const std::string_view& name, const modules::graphics::VertexAttribute<VertexResource>& attrib) {
 		if (auto itr = _vertices.find(name); itr == _vertices.end()) {
 			_vertices.emplace(name, attrib);
 		} else {
@@ -14,7 +14,7 @@ namespace srk {
 		}
 	}
 
-	std::optional<modules::graphics::VertexAttribute<VertexResource>> MeshResource::_remove(const QueryString& name) {
+	std::optional<modules::graphics::VertexAttribute<VertexResource>> MeshResource::_remove(const std::string_view& name) {
 		if (auto itr = _vertices.find(name); itr != _vertices.end()) {
 			auto opt = std::make_optional(std::move(itr->second));
 			_vertices.erase(itr);

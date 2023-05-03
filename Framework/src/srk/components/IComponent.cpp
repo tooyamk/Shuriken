@@ -1,4 +1,5 @@
 #include "IComponent.h"
+#include <numeric>
 
 namespace srk::components {
 	IComponent::~IComponent() {

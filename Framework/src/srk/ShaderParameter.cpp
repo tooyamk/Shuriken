@@ -236,17 +236,17 @@ namespace srk {
 	}
 
 
-	IntrusivePtr<ShaderParameter> ShaderParameterCollection::get(const QueryString& name) const {
+	IntrusivePtr<ShaderParameter> ShaderParameterCollection::get(const std::string_view& name) const {
 		auto itr = _parameters.find(name);
 		return itr == _parameters.end() ? nullptr : itr->second;
 	}
 
-	IntrusivePtr<ShaderParameter> ShaderParameterCollection::get(const QueryString& name, ShaderParameterType type) const {
+	IntrusivePtr<ShaderParameter> ShaderParameterCollection::get(const std::string_view& name, ShaderParameterType type) const {
 		auto itr = _parameters.find(name);
 		return itr == _parameters.end() ? nullptr : (itr->second->getType() == type ? itr->second : nullptr);
 	}
 
-	ShaderParameter* SRK_CALL ShaderParameterCollection::set(const QueryString& name, ShaderParameter* parameter) {
+	ShaderParameter* SRK_CALL ShaderParameterCollection::set(const std::string_view& name, ShaderParameter* parameter) {
 		if (parameter) {
 			if (auto itr = _parameters.find(name); itr == _parameters.end()) {
 				_parameters.emplace(name, parameter);
@@ -260,7 +260,7 @@ namespace srk {
 		return parameter;
 	}
 
-	ShaderParameter* ShaderParameterCollection::_remove(const QueryString& name) {
+	ShaderParameter* ShaderParameterCollection::_remove(const std::string_view& name) {
 		if (auto itr = _parameters.find(name); itr == _parameters.end()) {
 			auto val = itr->second;
 			_parameters.erase(itr);
@@ -271,7 +271,7 @@ namespace srk {
 	}
 
 
-	IntrusivePtr<ShaderParameter> ShaderParameterGetterStack::get(const QueryString& name) const {
+	IntrusivePtr<ShaderParameter> ShaderParameterGetterStack::get(const std::string_view& name) const {
 		auto i = _stack.size();
 		while (i--) {
 			if (_stack[i]) {
@@ -281,7 +281,7 @@ namespace srk {
 		return nullptr;
 	}
 
-	IntrusivePtr<ShaderParameter> ShaderParameterGetterStack::get(const QueryString& name, ShaderParameterType type) const {
+	IntrusivePtr<ShaderParameter> ShaderParameterGetterStack::get(const std::string_view& name, ShaderParameterType type) const {
 		auto i = _stack.size();
 		while (i--) {
 			if (_stack[i]) {

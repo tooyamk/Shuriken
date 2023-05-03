@@ -1,6 +1,7 @@
 #pragma once
 
 #include "srk/Core.h"
+#include <string>
 
 namespace srk::hash {
 	class SRK_CORE_DLL MD5 {

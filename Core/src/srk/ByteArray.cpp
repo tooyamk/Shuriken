@@ -1,6 +1,4 @@
 #include "ByteArray.h"
-#include "srk/events/EventDispatcher.h"
-#include "srk/math/Vector.h"
 
 namespace srk {
 	ByteArray::ByteArray() :

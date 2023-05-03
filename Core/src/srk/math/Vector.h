@@ -1,6 +1,7 @@
 #pragma once
 
 #include "srk/math/Math.h"
+#include <cstring>
 
 namespace srk {
 	struct SRK_CORE_DLL VectorSetAll {};

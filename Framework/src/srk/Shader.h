@@ -1,6 +1,9 @@
 #pragma once
 
 #include "srk/modules/graphics/GraphicsModule.h"
+#ifndef __cpp_lib_generic_unordered_lookup
+#	include <map>
+#endif
 #include <unordered_map>
 
 namespace srk {
@@ -8,7 +11,7 @@ namespace srk {
 	public:
 		virtual ~IShaderefineGetter() {}
 
-		virtual const std::string* SRK_CALL get(const QueryString& name) const = 0;
+		virtual const std::string* SRK_CALL get(const std::string_view& name) const = 0;
 	};
 
 
@@ -22,16 +25,16 @@ namespace srk {
 			_values = other._values;
 		}
 
-		virtual const std::string* SRK_CALL get(const QueryString& name) const override;
+		virtual const std::string* SRK_CALL get(const std::string_view& name) const override;
 
-		inline void SRK_CALL set(const QueryString& name, const std::string_view& value) {
+		inline void SRK_CALL set(const std::string_view& name, const std::string_view& value) {
 			if (auto itr = _values.find(name); itr == _values.end()) {
 				_values.emplace(name, value);
 			} else {
 				itr->second = value;
 			}
 		}
-		inline bool SRK_CALL remove(const QueryString& name) {
+		inline bool SRK_CALL remove(const std::string_view& name) {
 			if (auto itr = _values.find(name); itr != _values.end()) {
 				_values.erase(itr);
 				return true;
@@ -44,7 +47,16 @@ namespace srk {
 		}
 
 	protected:
-		StringUnorderedMap<std::string> _values;
+#ifdef __cpp_lib_generic_unordered_lookup
+		struct MapHasher {
+			using is_transparent = void;
+			template<typename K> inline size_t SRK_CALL operator()(K&& key) const { return std::hash<std::string_view>{}(key); }
+		};
+		std::unordered_map<std::string, std::string, MapHasher, std::equal_to<>>
+#else
+		std::map<std::string, std::string, std::less<>>
+#endif
+		_values;
 	};
 
 
@@ -52,7 +64,7 @@ namespace srk {
 	public:
 		virtual ~ShaderDefineGetterStack() {}
 
-		virtual const std::string* SRK_CALL get(const QueryString& name) const override;
+		virtual const std::string* SRK_CALL get(const std::string_view& name) const override;
 
 		inline bool SRK_CALL push(IShaderefineGetter* getter) {
 			if (getter) {

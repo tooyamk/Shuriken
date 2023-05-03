@@ -2,6 +2,7 @@
 
 #include "srk/modules/windows/WindowModule.h"
 #include "srk/math/Box.h"
+#include <string>
 
 namespace srk::modules::windows::win32api {
 	class Manager;

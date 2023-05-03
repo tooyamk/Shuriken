@@ -3,26 +3,35 @@
 namespace srk {
 	ThreadPool::ThreadPool(size_t threadCount) :
 		_stop(false),
+		_taskHead(nullptr),
+		_taskTail(nullptr),
 		_activeThreads(0) {
 
+		_workers.reserve(threadCount);
 		for (size_t i = 0; i < threadCount; ++i) {
 			_workers.emplace_back([this] {
 				do {
-					PackagedTask task;
+					TaskNode* node;
 
 					{
 						std::unique_lock<std::mutex> lock(_queueMutex);
 
-						_queueCond.wait(lock, [this] { return _stop || !_tasks.empty(); });
+						_queueCond.wait(lock, [this] { return _stop || _taskHead; });
 
-						if (_stop && _tasks.empty()) return;
+						if (_stop && !_taskHead) return;
 
 						++_activeThreads;
-						task = std::move(_tasks.front());
-						_tasks.pop_front();
+
+						node = _taskHead;
+						if (_taskHead->next) {
+							_taskHead = _taskHead->next;
+						} else {
+							_taskHead = _taskTail = nullptr;
+						}
 					}
 
-					task();
+					node->task();
+					delete node;
 
 					bool notify;
 					{
