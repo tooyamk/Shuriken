@@ -2,50 +2,9 @@
 
 #include "../BaseTester.h"
 
-inline int _aaaid = 0;
-
-class AAA {
-public:
-	AAA() {
-		_id = ++_aaaid;
-		_val = 123;
-	}
-
-	AAA(const AAA& v) {
-		_id = ++_aaaid;
-		_val = v._val;
-	}
-
-	AAA(AAA&& v) {
-		_id = ++_aaaid;
-		_val = v._val;
-	}
-
-	~AAA() {
-		_val = -1;
-	}
-
-	int _val = 0;
-	int _id;
-};
-
 class GraphicsTester : public BaseTester {
 public:
 	virtual int32_t SRK_CALL run() override {
-		AAA aaab;
-		auto tp = new ThreadPool(10);
-		{
-			//AAA aaa;
-			tp->enqueue([](AAA& a) {
-				int z = 1;
-				a._val++;
-				}, std::ref(aaab));
-		}
-
-		do {
-			std::this_thread::yield();
-		} while (true);
-
 		auto monitors = Monitor::getMonitors();
 		auto vms = monitors[0].getVideoModes();
 

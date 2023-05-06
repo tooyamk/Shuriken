@@ -14,6 +14,7 @@
 #include "Texture3DResource.h"
 #include "VertexBuffer.h"
 #include "srk/StringUtility.h"
+#include "srk/hash/xxHash.h"
 #include "srk/modules/graphics/GraphicsAdapter.h"
 
 namespace srk::modules::graphics::vulkan {
@@ -115,15 +116,6 @@ namespace srk::modules::graphics::vulkan {
 				VkPhysicalDeviceProperties physicalDeviceProperties;
 				vkGetPhysicalDeviceProperties(_vkStatus.physicalDevice, &physicalDeviceProperties);
 
-				/*_deviceVersion = "Vulkan ";
-				_deviceVersion += StringUtility::toString(VK_API_VERSION_MAJOR(physicalDeviceProperties.apiVersion));
-				_deviceVersion += '.';
-				_deviceVersion += StringUtility::toString(VK_VERSION_MINOR(physicalDeviceProperties.apiVersion));
-				_deviceVersion += '.';
-				_deviceVersion += StringUtility::toString(VK_VERSION_PATCH(physicalDeviceProperties.apiVersion));
-				_deviceVersion += '.';
-				_deviceVersion += StringUtility::toString(VK_API_VERSION_VARIANT(physicalDeviceProperties.apiVersion));*/
-
 				_deviceFeatures.stencilIndependentMask = true;
 				_deviceFeatures.stencilIndependentRef = true;
 				_deviceFeatures.simultaneousRenderTargetCount = physicalDeviceProperties.limits.maxColorAttachments;
@@ -185,17 +177,13 @@ namespace srk::modules::graphics::vulkan {
 				auto searchForDeviceType = VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
 				if (countDeviceType[VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU]) {
 					searchForDeviceType = VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
-				}
-				else if (countDeviceType[VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU]) {
+				} else if (countDeviceType[VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU]) {
 					searchForDeviceType = VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU;
-				}
-				else if (countDeviceType[VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU]) {
+				} else if (countDeviceType[VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU]) {
 					searchForDeviceType = VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU;
-				}
-				else if (countDeviceType[VK_PHYSICAL_DEVICE_TYPE_CPU]) {
+				} else if (countDeviceType[VK_PHYSICAL_DEVICE_TYPE_CPU]) {
 					searchForDeviceType = VK_PHYSICAL_DEVICE_TYPE_CPU;
-				}
-				else if (countDeviceType[VK_PHYSICAL_DEVICE_TYPE_OTHER]) {
+				} else if (countDeviceType[VK_PHYSICAL_DEVICE_TYPE_OTHER]) {
 					searchForDeviceType = VK_PHYSICAL_DEVICE_TYPE_OTHER;
 				}
 
@@ -365,20 +353,32 @@ namespace srk::modules::graphics::vulkan {
 		if (vkCreateInstance(&instanceCreateInfo, nullptr, &_vkStatus.instance) != VK_SUCCESS) return false;
 
 		if (debug) {
-			auto createDebugUtilsMessengerEXT = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(_vkStatus.instance, "vkCreateDebugUtilsMessengerEXT");
-			auto destroyDebugUtilsMessengerEXT = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(_vkStatus.instance, "vkDestroyDebugUtilsMessengerEXT");
-			auto submitDebugUtilsMessageEXT = vkGetInstanceProcAddr(_vkStatus.instance, "vkSubmitDebugUtilsMessageEXT");
-			auto cmdBeginDebugUtilsLabelEXT = vkGetInstanceProcAddr(_vkStatus.instance, "vkCmdBeginDebugUtilsLabelEXT");
-			auto cmdEndDebugUtilsLabelEXT = vkGetInstanceProcAddr(_vkStatus.instance, "vkCmdEndDebugUtilsLabelEXT");
-			auto cmdInsertDebugUtilsLabelEXT = vkGetInstanceProcAddr(_vkStatus.instance, "vkCmdInsertDebugUtilsLabelEXT");
-			auto setDebugUtilsObjectNameEXT = vkGetInstanceProcAddr(_vkStatus.instance, "vkSetDebugUtilsObjectNameEXT");
+			do {
+				auto createDebugUtilsMessengerEXT = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(_vkStatus.instance, "vkCreateDebugUtilsMessengerEXT");
+				if (!createDebugUtilsMessengerEXT) break;
 
-			if (createDebugUtilsMessengerEXT && destroyDebugUtilsMessengerEXT && submitDebugUtilsMessageEXT &&
-				cmdBeginDebugUtilsLabelEXT && cmdEndDebugUtilsLabelEXT && cmdInsertDebugUtilsLabelEXT && setDebugUtilsObjectNameEXT) {
-				if (createDebugUtilsMessengerEXT(_vkStatus.instance, &debugMessengerCreateInfo, nullptr, &_vkStatus.debug.messenger) == VK_SUCCESS) {
-					_vkStatus.debug.destroyUtilsMessengerEXT = destroyDebugUtilsMessengerEXT;
-				}
-			}
+				auto destroyDebugUtilsMessengerEXT = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(_vkStatus.instance, "vkDestroyDebugUtilsMessengerEXT");
+				if (!destroyDebugUtilsMessengerEXT) break;
+
+				/*auto submitDebugUtilsMessageEXT = vkGetInstanceProcAddr(_vkStatus.instance, "vkSubmitDebugUtilsMessageEXT");
+				if (!submitDebugUtilsMessageEXT) break;
+
+				auto cmdBeginDebugUtilsLabelEXT = vkGetInstanceProcAddr(_vkStatus.instance, "vkCmdBeginDebugUtilsLabelEXT");
+				if (!cmdBeginDebugUtilsLabelEXT) break;
+
+				auto cmdEndDebugUtilsLabelEXT = vkGetInstanceProcAddr(_vkStatus.instance, "vkCmdEndDebugUtilsLabelEXT");
+				if (!cmdEndDebugUtilsLabelEXT) break;
+
+				auto cmdInsertDebugUtilsLabelEXT = vkGetInstanceProcAddr(_vkStatus.instance, "vkCmdInsertDebugUtilsLabelEXT");
+				if (!cmdInsertDebugUtilsLabelEXT) break;
+
+				auto setDebugUtilsObjectNameEXT = vkGetInstanceProcAddr(_vkStatus.instance, "vkSetDebugUtilsObjectNameEXT");
+				if (!setDebugUtilsObjectNameEXT) break;*/
+
+				if (createDebugUtilsMessengerEXT(_vkStatus.instance, &debugMessengerCreateInfo, nullptr, &_vkStatus.debug.messenger) != VK_SUCCESS) break;
+
+				_vkStatus.debug.destroyUtilsMessengerEXT = destroyDebugUtilsMessengerEXT;
+			} while (false);
 		}
 
 		_vkStatus.apiVersion = VK_API_VERSION_1_0;
@@ -388,9 +388,9 @@ namespace srk::modules::graphics::vulkan {
 		_deviceVersion = "Vulkan ";
 		_deviceVersion += StringUtility::toString(VK_API_VERSION_MAJOR(_vkStatus.apiVersion));
 		_deviceVersion += '.';
-		_deviceVersion += StringUtility::toString(VK_VERSION_MINOR(_vkStatus.apiVersion));
+		_deviceVersion += StringUtility::toString(VK_API_VERSION_MINOR(_vkStatus.apiVersion));
 		_deviceVersion += '.';
-		_deviceVersion += StringUtility::toString(VK_VERSION_PATCH(_vkStatus.apiVersion));
+		_deviceVersion += StringUtility::toString(VK_API_VERSION_PATCH(_vkStatus.apiVersion));
 		_deviceVersion += '.';
 		_deviceVersion += StringUtility::toString(VK_API_VERSION_VARIANT(_vkStatus.apiVersion));
 
@@ -503,7 +503,7 @@ namespace srk::modules::graphics::vulkan {
 	bool Graphics::_createMemAllocator() {
 		VmaAllocatorCreateInfo allocatorCreateInfo;
 		memset(&allocatorCreateInfo, 0, sizeof(allocatorCreateInfo));
-		allocatorCreateInfo.vulkanApiVersion = VK_MAKE_VERSION(1, 1, 0);//_vkStatus.apiVersion;
+		allocatorCreateInfo.vulkanApiVersion = _vkStatus.apiVersion;
 
 		allocatorCreateInfo.physicalDevice = _vkStatus.physicalDevice;
 		allocatorCreateInfo.device = _vkStatus.device;
@@ -673,14 +673,17 @@ namespace srk::modules::graphics::vulkan {
 		return true;
 	}
 
-	bool Graphics::_checkAndUpdateVkPipeline(IProgram* program, const IVertexAttributeGetter* vertexAttributeGetter, const IShaderParameterGetter* shaderParamGetter) {
+	VkPipeline Graphics::_checkAndUpdateVkPipeline(IProgram* program, const IVertexAttributeGetter* vertexAttributeGetter, const IShaderParameterGetter* shaderParamGetter) {
 		using namespace std::string_view_literals;
 
-		if (!program || program->getGraphics() != this) return false;
-		auto p = (Program*)program->getNative();;
-		if (!p) return false;
+		if (!program || program->getGraphics() != this) return nullptr;
+		auto p = (Program*)program->getNative();
+		if (!p) return nullptr;
 
-		auto needUpdate = false;
+		hash::xxHash<64> hasher;
+		hasher.begin(0);
+
+		/*auto needUpdate = false;
 		if (_vkStatus.pipeline.pipeline) {
 			if (_vkStatus.pipeline.rasterizerFeatureValue != _vkStatus.rasterizer.featureValue) {
 				needUpdate = true;
@@ -689,9 +692,9 @@ namespace srk::modules::graphics::vulkan {
 			needUpdate = true;
 		}
 
-		if (!needUpdate) return true;
+		if (!needUpdate) return true;*/
 
-		uint32_t vertexInputAttributeDescriptionCount = p->getInfo().vertices.size();
+		uint32_t vertexInputAttributeDescriptionCount = p->getInfo().vertices.size(); 
 		std::vector<VkVertexInputAttributeDescription> vertexInputAttributeDescriptions(vertexInputAttributeDescriptionCount);
 		
 		uint32_t vertexInputBindingDescriptionCount = vertexInputAttributeDescriptionCount;
@@ -701,7 +704,7 @@ namespace srk::modules::graphics::vulkan {
 			vertexInputBindingDescription.data(), vertexInputBindingDescriptionCount,
 			vertexInputAttributeDescriptions.data(), vertexInputAttributeDescriptionCount,
 			shaderParamGetter);
-		if (!rst) return false;
+		if (!rst) return nullptr;
 
 		VkGraphicsPipelineCreateInfo graphicsPipelineCreateInfo;
 		memset(&graphicsPipelineCreateInfo, 0, sizeof(graphicsPipelineCreateInfo));
@@ -729,27 +732,31 @@ namespace srk::modules::graphics::vulkan {
 
 		graphicsPipelineCreateInfo.pTessellationState = nullptr;
 
-		/*VkViewport viewport;
-		viewport.x = _vkStatus.viewport.pos[0];
-		viewport.y = _vkStatus.viewport.pos[1];
-		viewport.width = _vkStatus.viewport.size[0];
-		viewport.height = _vkStatus.viewport.size[1];
-		viewport.minDepth = 0.0f;
-		viewport.maxDepth = 1.0f;
-
+		VkViewport viewport;
 		VkRect2D scissor;
-		scissor.offset = { _vkStatus.scissor.pos[0], _vkStatus.scissor.pos[1] };
-		scissor.extent = { _vkStatus.scissor.size[0], _vkStatus.scissor.size[1] };
-
 		VkPipelineViewportStateCreateInfo pipelineViewportStateCreateInfo;
-		memset(&pipelineViewportStateCreateInfo, 0, sizeof(pipelineViewportStateCreateInfo));
-		pipelineViewportStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-		pipelineViewportStateCreateInfo.viewportCount = 1;
-		pipelineViewportStateCreateInfo.pViewports = &viewport;
-		pipelineViewportStateCreateInfo.scissorCount = 1;
-		pipelineViewportStateCreateInfo.pScissors = &scissor;
-		graphicsPipelineCreateInfo.pViewportState = &pipelineViewportStateCreateInfo;*/
-		graphicsPipelineCreateInfo.pViewportState = nullptr;
+		if (!_internalFeatures.extendedDynamicState) {
+			viewport.x = _vkStatus.viewport.pos[0];
+			viewport.y = _vkStatus.viewport.pos[1];
+			viewport.width = _vkStatus.viewport.size[0];
+			viewport.height = _vkStatus.viewport.size[1];
+			viewport.minDepth = 0.0f;
+			viewport.maxDepth = 1.0f;
+
+			scissor.offset = { _vkStatus.scissor.pos[0], _vkStatus.scissor.pos[1] };
+			scissor.extent = { _vkStatus.scissor.size[0], _vkStatus.scissor.size[1] };
+
+			memset(&pipelineViewportStateCreateInfo, 0, sizeof(pipelineViewportStateCreateInfo));
+			pipelineViewportStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+			pipelineViewportStateCreateInfo.viewportCount = 1;
+			pipelineViewportStateCreateInfo.pViewports = &viewport;
+			pipelineViewportStateCreateInfo.scissorCount = 1;
+			pipelineViewportStateCreateInfo.pScissors = &scissor;
+			graphicsPipelineCreateInfo.pViewportState = &pipelineViewportStateCreateInfo;
+
+			hasher.update(&viewport, sizeof(viewport));
+			hasher.update(&scissor, sizeof(scissor));
+		}
 
 		graphicsPipelineCreateInfo.pRasterizationState = &_vkStatus.rasterizer.info;
 
@@ -805,15 +812,38 @@ namespace srk::modules::graphics::vulkan {
 		graphicsPipelineCreateInfo.layout = p->getVkPipelineLayout();
 		graphicsPipelineCreateInfo.renderPass = renderPass;
 		graphicsPipelineCreateInfo.subpass = 0;
-		graphicsPipelineCreateInfo.basePipelineHandle = nullptr;
 		graphicsPipelineCreateInfo.basePipelineIndex = -1;
 
-		if (vkCreateGraphicsPipelines(_vkStatus.device, _vkStatus.pipeline.cache, 1, &graphicsPipelineCreateInfo, getVkAllocationCallbacks(), &_vkStatus.pipeline.pipeline) != VK_SUCCESS) {
-			_vkStatus.pipeline.pipeline = nullptr;
-			return false;
+		auto hash = hasher.digest();
+
+		auto itr = _vkStatus.pipeline.pipelines.find(p->getInstanceId());
+		if (itr == _vkStatus.pipeline.pipelines.end()) {
+			graphicsPipelineCreateInfo.flags |= VK_PIPELINE_CREATE_ALLOW_DERIVATIVES_BIT;
+			graphicsPipelineCreateInfo.basePipelineHandle = nullptr;
+
+			VkPipeline pipeline;
+			if (vkCreateGraphicsPipelines(_vkStatus.device, _vkStatus.pipeline.cache, 1, &graphicsPipelineCreateInfo, getVkAllocationCallbacks(), &pipeline) != VK_SUCCESS) return nullptr;
+
+			auto& cluster = _vkStatus.pipeline.pipelines.emplace(std::piecewise_construct, std::forward_as_tuple(p->getInstanceId()), std::forward_as_tuple()).first->second;
+			cluster.basePipeline = pipeline;
+			cluster.pipelines.emplace(hash, pipeline);
+
+			return pipeline;
+		} else {
+			auto& cluster = itr->second;
+			auto itr2 = cluster.pipelines.find(hash);
+			if (itr2 == cluster.pipelines.end()) {
+				graphicsPipelineCreateInfo.basePipelineHandle = cluster.basePipeline;
+
+				VkPipeline pipeline;
+				if (vkCreateGraphicsPipelines(_vkStatus.device, _vkStatus.pipeline.cache, 1, &graphicsPipelineCreateInfo, getVkAllocationCallbacks(), &pipeline) != VK_SUCCESS) return nullptr;
+				cluster.pipelines.emplace(hash, pipeline);
+
+				return pipeline;
+			} else {
+				return itr2->second;
+			}
 		}
-		
-		return true;
 	}
 
 	IntrusivePtr<events::IEventDispatcher<GraphicsEvent>> Graphics::getEventDispatcher() {
@@ -905,6 +935,9 @@ namespace srk::modules::graphics::vulkan {
 	}
 
 	void Graphics::setViewport(const Box2i32ui32& vp) {
+		if (_vkStatus.viewport == vp) return;
+
+		_vkStatus.viewport = vp;
 	}
 
 	Box2i32ui32 Graphics::getScissor() const {

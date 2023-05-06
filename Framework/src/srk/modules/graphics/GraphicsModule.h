@@ -1285,6 +1285,12 @@ namespace srk::modules::graphics {
 	};
 
 
+	class SRK_FW_DLL ICommandBuffer : public Ref {
+	public:
+		virtual void SRK_CALL setViewport(const Box2i32ui32& vp) = 0;
+	};
+
+
 	struct SRK_FW_DLL GraphicsDeviceFeatures {
 		GraphicsDeviceFeatures();
 

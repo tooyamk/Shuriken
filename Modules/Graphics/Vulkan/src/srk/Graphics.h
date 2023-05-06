@@ -170,6 +170,12 @@ namespace srk::modules::graphics::vulkan {
 		};
 
 
+		struct PipelineCluster {
+			VkPipeline basePipeline;
+			std::unordered_map<uint64_t, VkPipeline> pipelines;
+		};
+
+
 		bool _isDebug;
 		bool _curIsBackBuffer;
 		SampleCount _backBufferSampleCount;
@@ -233,9 +239,10 @@ namespace srk::modules::graphics::vulkan {
 
 			struct {
 				VkPipelineCache cache = nullptr;
-				VkPipeline pipeline = nullptr;
+				/*VkPipeline pipeline = nullptr;
 				DepthStencilFeature depthStencilFeatureValue;
-				RasterizerFeature rasterizerFeatureValue;
+				RasterizerFeature rasterizerFeatureValue;*/
+				std::unordered_map<uint32_t, PipelineCluster> pipelines;
 			} pipeline;
 
 			struct {
@@ -282,7 +289,7 @@ namespace srk::modules::graphics::vulkan {
 		void SRK_CALL _setDepthStencilState(DepthStencilState& state);
 		void SRK_CALL _setRasterizerState(RasterizerState& state);
 
-		bool SRK_CALL _checkAndUpdateVkPipeline(IProgram* program, const IVertexAttributeGetter* vertexAttributeGetter, const IShaderParameterGetter* shaderParamGetter);
+		VkPipeline SRK_CALL _checkAndUpdateVkPipeline(IProgram* program, const IVertexAttributeGetter* vertexAttributeGetter, const IShaderParameterGetter* shaderParamGetter);
 
 		void SRK_CALL _release();
 		void SRK_CALL _resize(const Vec2ui32& size);
