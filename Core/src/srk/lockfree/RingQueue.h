@@ -24,7 +24,7 @@ namespace srk::lockfree {
 		}
 
 		~RingQueue() {
-			while (auto cnt = _count.load()) {
+			while (_count.fetch_sub(1)) {
 				(_mem + _popIndex)->~T();
 				if (++_popIndex == _capacity) _popIndex = 0;
 			}

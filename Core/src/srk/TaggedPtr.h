@@ -5,7 +5,7 @@
 namespace srk {
 	template<typename T>
 	class
-#if (SRK_ARCH == SRK_ARCH_X86 && SRK_ARCH_WORD_BITS == SRK_ARCH_WORD_BITS_64) || defined (__aarch64__)
+#if ((SRK_ARCH == SRK_ARCH_X86 || SRK_ARCH == SRK_ARCH_ARM) && SRK_ARCH_WORD_BITS == SRK_ARCH_WORD_BITS_64)
 		alignas(8) TaggedPtr {
 	public:
 		using CompressedPtr = uint64_t;
