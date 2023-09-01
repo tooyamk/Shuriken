@@ -6,7 +6,7 @@ namespace srk {
 	}
 
 	SerializableObject::Array* SerializableObject::Array::copy(Flag flag) const {
-		Array* arr = new Array();
+		auto arr = new Array();
 		arr->value.resize(this->value.size());
 		uint32_t idx = 0;
 		for (auto& e : this->value) arr->value[idx++].wrap().set(e, flag);

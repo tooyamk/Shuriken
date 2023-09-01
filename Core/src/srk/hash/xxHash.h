@@ -130,7 +130,7 @@ namespace srk::hash {
 		}
 
 		inline static uint_t<Bits> SRK_CALL _round(uint_t<Bits> seed, uint_t<Bits> x) {
-			constexpr size_t SHIFT = Bits == 32 ? 13 : 31;
+			constexpr int32_t SHIFT = Bits == 32 ? 13 : 31;
 
 			seed += x * PRIME_VALUE[1];
 			seed = std::rotl(seed, SHIFT);

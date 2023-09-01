@@ -955,11 +955,11 @@ namespace srk {
 					}
 				} else {
 					size_t d = depth + 1;
-					std::vector<SerializableObject*> data;
+					std::vector<const SerializableObject*> data;
 					for (auto& i : map->value) {
 						if (filter.packable(parent, depth, i.first, i.second)) {
-							data.emplace_back(&i.first);
-							data.emplace_back(&i.second);
+							data.emplace_back(&i.first.wrap());
+							data.emplace_back(&i.second.wrap());
 						}
 					}
 
