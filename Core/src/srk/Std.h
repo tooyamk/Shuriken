@@ -76,11 +76,13 @@ namespace std {
 		s &= bits - 1;
 		return T(x >> s) | T(x << (bits - s));
 	}
+#endif
 
-	template<std::unsigned_integral T>
-	inline constexpr bool has_single_bit(T val) noexcept {
-		return val != 0 && (val & (val - 1)) == 0;
-	}
+#ifndef __cpp_lib_int_pow2
+    template<std::unsigned_integral T>
+    inline constexpr bool has_single_bit(T val) noexcept {
+        return val != 0 && (val & (val - 1)) == 0;
+    }
 #endif
 
 /*#ifndef __cpp_lib_byteswap
