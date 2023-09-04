@@ -60,7 +60,7 @@ namespace srk {
 			//add mode
 		} while (true);
 #endif
-		return std::move(videoModes);
+		return videoModes;
 	}
 
 	std::vector<Monitor> Monitor::getMonitors() {
@@ -125,6 +125,6 @@ namespace srk {
 			}
 		}
 #endif
-		return std::move(monitors);
+		return monitors;
 	}
 }

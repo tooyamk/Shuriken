@@ -1043,6 +1043,6 @@ namespace srk::extensions {
 			}
 		}
 
-		return std::move(info);
+		return info;
 	}
 }

@@ -35,7 +35,7 @@ namespace srk::extensions::shader_transpiler {
 
 			ProgramSource dst;
 
-			if (!source.isValid() || targetLanguage == ProgramLanguage::UNKNOWN) return std::move(dst);
+			if (!source.isValid() || targetLanguage == ProgramLanguage::UNKNOWN) return dst;
 
 			if (source.language == targetLanguage) {
 				dst.language = targetLanguage;
@@ -43,7 +43,7 @@ namespace srk::extensions::shader_transpiler {
 				dst.version = targetVersion.empty() ? source.version : targetVersion;
 				dst.data.setCapacity(source.data.getLength());
 				dst.data.write<ba_vt::BYTE>(source.data.getSource(), source.data.getLength());
-				return std::move(dst);
+				return dst;
 			}
 
 			if (source.language == ProgramLanguage::HLSL) {
@@ -67,7 +67,7 @@ namespace srk::extensions::shader_transpiler {
 				CComPtr<IDxcBlobEncoding> sourceBlob;
 				if (auto hr = _dxcLib->CreateBlobWithEncodingOnHeapCopy(source.data.getSource(), source.data.getLength(), CP_UTF8, &sourceBlob); hr < 0) {
 					printaln(L"ProgramSourceTranslator::translate dxc failed"sv);
-					return std::move(dst);
+					return dst;
 				}
 				IFTARG(sourceBlob->GetBufferSize() >= 4);
 
@@ -139,7 +139,7 @@ namespace srk::extensions::shader_transpiler {
 				_spirvTo(source, source.data.getSource(), source.data.getLength(), targetLanguage, targetVersion, dst);
 			}
 
-			return std::move(dst);
+			return dst;
 		}
 
 	private:

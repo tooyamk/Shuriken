@@ -1107,9 +1107,9 @@ namespace srk {
 	SerializableObject SerializableObject::tryAt(size_t index) const {
 		if (_type == Type::ARRAY) {
 			Array* arr = _getValue<Array*>();
-			return index < arr->value.size() ? arr->value[index].wrap() : std::move(SerializableObject());
+			return index < arr->value.size() ? arr->value[index].wrap() : SerializableObject();
 		} else {
-			return std::move(SerializableObject());
+			return SerializableObject();
 		}
 	}
 
@@ -1137,12 +1137,12 @@ namespace srk {
 			if (index < arr->value.size()) {
 				SerializableObject v = arr->value[index];
 				arr->value.erase(arr->value.begin() + index);
-				return std::move(v);
+				return v;
 			} else {
-				return std::move(SerializableObject());
+				return SerializableObject();
 			}
 		} else {
-			return std::move(SerializableObject());
+			return SerializableObject();
 		}
 	}
 
@@ -1166,9 +1166,9 @@ namespace srk {
 			Map* map = _getValue<Map*>();
 
 			auto itr = map->value.find((const SerializableObjectWrapper&)key);
-			return itr == map->value.end() ? std::move(SerializableObject()) : itr->second.wrap();
+			return itr == map->value.end() ? SerializableObject() : itr->second.wrap();
 		} else {
-			return std::move(SerializableObject());
+			return SerializableObject();
 		}
 	}
 
@@ -1205,14 +1205,14 @@ namespace srk {
 
 			auto itr = map->value.find((const SerializableObjectWrapper&)key);
 			if (itr == map->value.end()) {
-				return std::move(SerializableObject());
+				return SerializableObject();
 			} else {
 				SerializableObject v = itr->second.wrap();
 				map->value.erase(itr);
-				return std::move(v);
+				return v;
 			}
 		} else {
-			return std::move(SerializableObject());
+			return SerializableObject();
 		}
 	}
 

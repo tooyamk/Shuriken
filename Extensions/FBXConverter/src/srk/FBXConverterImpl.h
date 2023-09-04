@@ -698,7 +698,7 @@ namespace srk::extensions::fbx_converter {
 					dstOffset += VERTEX_SIZE;
 				}
 
-				return std::move(dst);
+				return dst;
 			} else {
 				ByteArray src(p.rawVal.data, p.rawVal.size * sizeof(SrcType), ByteArray::Usage::SHARED);
 				ByteArray dst(count * sizeof(DstType) * 3);
@@ -715,7 +715,7 @@ namespace srk::extensions::fbx_converter {
 				}
 				dst.seekBegin();
 
-				return std::move(dst);
+				return dst;
 			}
 		}
 
@@ -1181,7 +1181,7 @@ namespace srk::extensions::fbx_converter {
 				if (parseOk) {
 					FBXConverter::Result rst;
 					fbx.build(rst);
-					return std::move(rst);
+					return rst;
 				}
 			} else {
 				printaln(L"FBX decode error : only support binary format"sv);

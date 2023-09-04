@@ -298,7 +298,7 @@ namespace srk {
 		inline std::string SRK_CALL toJson() const {
 			std::string json;
 			_toJson(json);
-			return std::move(json);
+			return json;
 		}
 
 		template<typename T>

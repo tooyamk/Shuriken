@@ -1073,7 +1073,7 @@ namespace srk::modules::graphics::vulkan {
 		commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 		if (vkBeginCommandBuffer(buffer.getVkCommandBuffer(), &commandBufferBeginInfo) != VK_SUCCESS) return InternalCommandBuffer();
 
-		return std::move(buffer);
+		return buffer;
 	}
 
 	bool Graphics::endOneTimeCommands(InternalCommandBuffer& buffer) {

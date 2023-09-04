@@ -45,7 +45,7 @@ namespace srk {
 		IntrusivePtr timer = new Timer();
 		timer->onTick = fn;
 		startTimer(*timer, delay, count, strict);
-		return std::move(timer);
+		return timer;
 	}
 
 	void TimeWheel::_repeatTimer(TimeWheel::Timer& timer, uint64_t elapsed) {

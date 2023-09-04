@@ -24,7 +24,7 @@ namespace srk {
 	}
 
 	std::vector<size_t> Image::calcMipsPixels(size_t n, size_t mipLevels) {
-		if (!n) return std::move(std::vector<size_t>(0));
+		if (!n) return std::vector<size_t>(0);
 		if (!mipLevels) mipLevels = TextureUtility::getMipLevels(n);
 
 		std::vector<size_t> levels(mipLevels);
@@ -35,7 +35,7 @@ namespace srk {
 			levels[i] = n;
 		}
 
-		return std::move(levels);
+		return levels;
 	}
 
 	bool Image::convertFormat(const Vec2uz& pixels, TextureFormat srcFormat, const void* src, TextureFormat dstFormat, void* dst, size_t* srcReadedBytes, size_t* dstWritedBytes) {

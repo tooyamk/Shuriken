@@ -105,22 +105,22 @@ namespace srk {
 			if (start >= _length) {
 				ByteArray ba(nullptr, 0, usage);
 				ba.setEndian(_endian);
-				return std::move(ba);
+				return ba;
 			} else {
 				ByteArray ba(_data + start, std::min<size_t>(length, _length - start), usage);
 				ba.setEndian(_endian);
-				return std::move(ba);
+				return ba;
 			}
 		}
 		inline ByteArray SRK_CALL slice(size_t length, Usage usage = Usage::SHARED) const {
 			ByteArray ba(_data + _position, std::min<size_t>(length, _length - _position), usage);
 			ba.setEndian(_endian);
-			return std::move(ba);
+			return ba;
 		}
 		inline ByteArray SRK_CALL slice(Usage usage = Usage::SHARED) const {
 			ByteArray ba(_data + _position, _length - _position, usage);
 			ba.setEndian(_endian);
-			return std::move(ba);
+			return ba;
 		}
 
 		inline size_t SRK_CALL getCapacity() const {
@@ -779,7 +779,7 @@ namespace srk {
 		inline T SRK_CALL _read(size_t size) {
 			auto [begin, num, pos] = read<ValueType::STR, CheckEndMark, CheckBOM>(_position, size);
 			_position = pos;
-			return std::move(T((char*)_data + begin, num));
+			return T((char*)_data + begin, num);
 		}
 
 		inline void SRK_CALL _write(const void* data, size_t len) {

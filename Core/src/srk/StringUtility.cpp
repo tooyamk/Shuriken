@@ -37,7 +37,7 @@ namespace srk {
 			++idx;
 			str[idx] = (r < 10 ? '0' : '7') + r;
 		}
-		return std::move(str);
+		return str;
 	}
 
 	bool StringUtility::equal(const char* str1, const char* str2) {

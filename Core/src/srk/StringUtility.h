@@ -122,7 +122,7 @@ namespace srk {
 			s.reserve(left.size() + right.size());
 			s += left;
 			s += right;
-			return std::move(s);
+			return s;
 		} else {
 			using ConvertTo = std::conditional_t<ConvertibleU8StringData<std::remove_cvref_t<L>> || ConvertibleU8StringData<std::remove_cvref_t<R>>, std::u8string_view, std::string_view>;
 			return (const ConvertTo&)(const ConvertToString8ViewType<std::remove_cvref_t<L>>&)(std::forward<L>(left)) + (const ConvertTo&)(const ConvertToString8ViewType<std::remove_cvref_t<R>>&)(std::forward<R>(right));
@@ -266,7 +266,7 @@ namespace srk {
 				s.resize(bytes);
 				wideToUtf8(in.data(), chars, s.data());
 
-				return std::move(s);
+				return s;
 			}
 		}
 
@@ -367,7 +367,7 @@ namespace srk {
 				s.resize(chars);
 				utf8ToWide(in.data(), bytes, s.data());
 
-				return std::move(s);
+				return s;
 			} else {
 				return utf8ToWide<Out>(ConvertToString8ViewType<std::remove_cvref_t<In>>(std::forward<In>(in)));
 			}
@@ -536,7 +536,7 @@ namespace srk {
 		inline static std::string SRK_CALL toString(T value, uint8_t base = 10) {
 			char buf[sizeof(T) * 8 + 1];
 			auto n = toString(buf, sizeof(buf), value, base);
-			return std::move(n == std::string::npos ? std::string() : std::string(buf, n));
+			return n == std::string::npos ? std::string() : std::string(buf, n);
 		}
 
 		template<std::integral T>
@@ -620,7 +620,7 @@ namespace srk {
 			char buf[33];
 #ifdef __cpp_lib_to_chars
 			auto rst = std::to_chars(buf, buf + sizeof(buf), value);
-			return std::move(std::string(buf, rst.ec == std::errc() ? rst.ptr - buf : 0));
+			return std::string(buf, rst.ec == std::errc() ? rst.ptr - buf : 0);
 #else
 			if constexpr (std::same_as<T, float32_t>) {
 				snprintf(buf, sizeof(buf), "%f", value);
@@ -628,7 +628,7 @@ namespace srk {
 				snprintf(buf, sizeof(buf), "%lf", value);
 			}
 
-			return std::move(std::string(buf));
+			return std::string(buf);
 #endif
 		}
 

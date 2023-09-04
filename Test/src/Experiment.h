@@ -523,7 +523,7 @@ namespace srk {
 		if constexpr (String8View<std::remove_cvref_t<T>>) {
 			return val;
 		} else {
-			return std::move(ConvertToString8ViewType<std::remove_cvref_t<T>>(std::forward<T>(val)));
+			return ConvertToString8ViewType<std::remove_cvref_t<T>>(std::forward<T>(val));
 		}
 	}
 

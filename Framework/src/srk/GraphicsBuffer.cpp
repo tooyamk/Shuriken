@@ -243,7 +243,7 @@ namespace srk {
 		if (auto itr = _views.find(name); itr != _views.end()) {
 			auto opt = std::make_optional(std::move(itr->second));
 			_views.erase(itr);
-			return std::move(opt);
+			return opt;
 		}
 
 		return std::nullopt;

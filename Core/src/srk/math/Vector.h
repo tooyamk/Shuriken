@@ -361,7 +361,7 @@ namespace srk {
 			Vector<sizeof...(Indices), T> v(nullptr);
 			decltype(N) i = 0;
 			((v.data[i++] = data[indices]), ...);
-			return std::move(v);
+			return v;
 		}
 
 		inline Vector& SRK_CALL normalize() {

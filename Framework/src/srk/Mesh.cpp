@@ -18,7 +18,7 @@ namespace srk {
 		if (auto itr = _vertices.find(name); itr != _vertices.end()) {
 			auto opt = std::make_optional(std::move(itr->second));
 			_vertices.erase(itr);
-			return std::move(opt);
+			return opt;
 		}
 
 		return std::nullopt;

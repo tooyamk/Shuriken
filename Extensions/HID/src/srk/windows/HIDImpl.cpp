@@ -461,7 +461,7 @@ namespace srk::extensions {
 
 		//printaln(HIDReportDescriptor::toString(ba.getSource(), ba.getLength()));
 
-		return std::move(ba);
+		return ba;
 	}
 
 	size_t HID::read(HIDDevice& device, void* data, size_t dataLength, size_t timeout) {

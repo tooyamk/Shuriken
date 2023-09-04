@@ -81,7 +81,7 @@ namespace srk::modules::graphics {
 			}
 		}
 
-		return std::move(sm);
+		return sm;
 	}
 
 

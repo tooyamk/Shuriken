@@ -310,7 +310,7 @@ namespace srk::modules::windows::win32api {
 			}
 		}
 
-		return std::move(area);
+		return area;
 	}
 
 	bool Window::_setWndState(WindowState state) {

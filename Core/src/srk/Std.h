@@ -139,7 +139,7 @@ namespace std {
 		inline T load(std::memory_order order = std::memory_order::seq_cst) const {
 			T val;
 			_compareExchange((volatile T&)_value, val, val);
-			return std::move(val);
+			return val;
 		}
 
 		inline void store(T desired, std::memory_order order = std::memory_order_seq_cst) {
@@ -150,7 +150,7 @@ namespace std {
 		inline T exchange(T desired, std::memory_order order = std::memory_order_seq_cst) {
 			T old = _value;
 			while (!compare_exchange_strong(old, desired, order)) {}
-			return std::move(old);
+			return old;
 		}
 
 		inline bool compare_exchange_strong(T& expected, T desired, std::memory_order order = std::memory_order_seq_cst) {

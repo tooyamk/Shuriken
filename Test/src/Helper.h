@@ -98,7 +98,7 @@ inline std::conditional_t<ConvertibleU8StringData<std::remove_cvref_t<T>>, std::
 		s += "so";
 	}
 
-	return std::move(s);
+	return s;
 }
 
 template<typename T>
@@ -144,7 +144,7 @@ inline ByteArray SRK_CALL readFile(T&& path) {
 		dst = ByteArray(data, size, ByteArray::Usage::EXCLUSIVE);
 	}
 	stream.close();
-	return std::move(dst);
+	return dst;
 }
 
 template<typename T>
@@ -174,7 +174,7 @@ inline ProgramSource SRK_CALL readProgramSource(T&& path, ProgramStage type) {
 	s.language = ProgramLanguage::HLSL;
 	s.stage = type;
 	s.data = readFile(std::forward<T>(path));
-	return std::move(s);
+	return s;
 }
 
 #ifdef SRK_HAS_SHADER_TRANSPILER_H
