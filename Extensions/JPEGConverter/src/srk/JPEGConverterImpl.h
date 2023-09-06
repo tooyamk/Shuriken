@@ -62,8 +62,10 @@ namespace srk::extensions::jpeg_converter {
 		switch (c) {
 		case 3:
 			img->format = modules::graphics::TextureFormat::R8G8B8_TYPELESS;
+			break;
 		default:
 			img->format = modules::graphics::TextureFormat::UNKNOWN;
+			break;
 		}
 		img->source = std::move(buf);
 

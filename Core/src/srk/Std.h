@@ -78,12 +78,12 @@ namespace std {
 	}
 #endif
 
-#ifndef __cpp_lib_int_pow2
+/*#ifndef __cpp_lib_int_pow2
     template<std::unsigned_integral T>
     inline constexpr bool has_single_bit(T val) noexcept {
         return val != 0 && (val & (val - 1)) == 0;
     }
-#endif
+#endif*/
 
 /*#ifndef __cpp_lib_byteswap
 	template<integral T>
