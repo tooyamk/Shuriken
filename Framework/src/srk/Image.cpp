@@ -84,7 +84,7 @@ namespace srk {
 					d[dp++] = s[sp++];
 					d[dp++] = s[sp++];
 					d[dp++] = s[sp++];
-					d[dp++] = 255;
+					++sp;
 				}
 
 				if (srcReadedBytes) *srcReadedBytes = sp;
@@ -103,7 +103,7 @@ namespace srk {
 					d[dp++] = Math::sRGB2Linear(s[sp++]);
 					d[dp++] = Math::sRGB2Linear(s[sp++]);
 					d[dp++] = Math::sRGB2Linear(s[sp++]);
-					d[dp++] = 255;
+					++sp;
 				}
 
 				if (srcReadedBytes) *srcReadedBytes = sp;
@@ -159,7 +159,7 @@ namespace srk {
 					d[dp++] = Math::linear2sRGB(s[sp++]);
 					d[dp++] = Math::linear2sRGB(s[sp++]);
 					d[dp++] = Math::linear2sRGB(s[sp++]);
-					d[dp++] = 255;
+					++sp;
 				}
 
 				if (srcReadedBytes) *srcReadedBytes = sp;
@@ -180,7 +180,7 @@ namespace srk {
 					d[dp++] = s[sp++];
 					d[dp++] = s[sp++];
 					d[dp++] = s[sp++];
-					d[dp++] = 255;
+					++sp;
 				}
 
 				if (srcReadedBytes) *srcReadedBytes = sp;
@@ -208,7 +208,7 @@ namespace srk {
 					d[dp++] = s[sp++];
 					d[dp++] = s[sp++];
 					d[dp++] = s[sp++];
-					++sp;
+					d[dp++] = 255;
 				}
 
 				if (srcReadedBytes) *srcReadedBytes = sp;
@@ -227,7 +227,7 @@ namespace srk {
 					d[dp++] = Math::sRGB2Linear(s[sp++]);
 					d[dp++] = Math::sRGB2Linear(s[sp++]);
 					d[dp++] = Math::sRGB2Linear(s[sp++]);
-					++sp;
+					d[dp++] = 255;
 				}
 
 				if (srcReadedBytes) *srcReadedBytes = sp;
@@ -287,7 +287,7 @@ namespace srk {
 					d[dp++] = Math::linear2sRGB(s[sp++]);
 					d[dp++] = Math::linear2sRGB(s[sp++]);
 					d[dp++] = Math::linear2sRGB(s[sp++]);
-					++sp;
+					d[dp++] = 255;
 				}
 
 				if (srcReadedBytes) *srcReadedBytes = sp;
@@ -306,7 +306,7 @@ namespace srk {
 					d[dp++] = s[sp++];
 					d[dp++] = s[sp++];
 					d[dp++] = s[sp++];
-					++sp;
+					d[dp++] = 255;
 				}
 
 				if (srcReadedBytes) *srcReadedBytes = sp;
