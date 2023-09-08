@@ -48,7 +48,8 @@ namespace srk::extensions::jpeg_converter {
 		auto h = cinfo.output_height;
 		auto c = cinfo.output_components;
 		auto stride = w * c;
-		ByteArray buf(stride * h);
+		auto bufLen = stride * h;
+		ByteArray buf(bufLen, bufLen);
 		auto outBuf = buf.getSource();
 		while (cinfo.output_scanline < cinfo.output_height) {
 			jpeg_read_scanlines(&cinfo, &outBuf, 1);

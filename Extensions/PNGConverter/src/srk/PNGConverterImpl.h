@@ -141,6 +141,7 @@ namespace srk::extensions::png_converter {
 		auto row_pointers = (png_bytep*)malloc(h * sizeof(png_bytep));
 		if (!row_pointers) {
 			png_destroy_write_struct(&png_ptr, &info_ptr);
+			out.setPosition(0);
 			return out;
 		}
 
@@ -157,6 +158,7 @@ namespace srk::extensions::png_converter {
 
 		png_destroy_write_struct(&png_ptr, &info_ptr);
 
+		out.setPosition(0);
 		return out;
 	}
 }
