@@ -66,7 +66,7 @@ set(predefined_config_params_file ${CMAKE_CURRENT_SOURCE_DIR}/predefined-config-
 include(${predefined_config_params_file})
 __get_predefined_config_params(predefined_params)
 
-set(gitTag v1.7.2212.1)
+set(gitTag v1.7.2308)
 srkCheckExternalProjectVersion_GitTag(${PROJECT_BINARY_DIR} ${PROJECT_BINARY_DIR}/src ${gitTag})
 
 include(ExternalProject)
@@ -111,6 +111,7 @@ ExternalProject_Add(
         -DLLVM_BUILD_RUNTIME=OFF
         -DLLVM_INCLUDE_EXAMPLES=OFF
         -DLLVM_INCLUDE_TESTS=OFF
+        -DHLSL_INCLUDE_TESTS=OFF
         -DLLVM_INCLUDE_DOCS=OFF
         #-DCMAKE_SHARED_LIBRARY_PREFIX=${CMAKE_SHARED_LIBRARY_PREFIX}
         #-DCMAKE_STATIC_LIBRARY_PREFIX=${CMAKE_STATIC_LIBRARY_PREFIX}

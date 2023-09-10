@@ -5,6 +5,7 @@ set(file ${SRC_DIR}/CMakeLists.txt)
 file(READ ${file} content)
 string(REGEX REPLACE "add_subdirectory\\(cmake/modules\\).+include\\(CoverageReport\\)" "add_subdirectory(cmake/modules)\r\ninstall(DIRECTORY include/dxc DESTINATION include FILES_MATCHING PATTERN \"*.h\")\r\ninclude(CoverageReport)" content "${content}")
 string(REPLACE "find_package(PythonInterp 3 REQUIRED)" "" content "${content}")
+string(REPLACE "dxc;" "" content "${content}")
 file(WRITE ${file} "${content}")
 
 set(file ${SRC_DIR}/cmake/modules/AddLLVM.cmake)
@@ -35,6 +36,27 @@ string(REPLACE "if (NOT CMAKE_CONFIGURATION_TYPES)" "if ((NOT EXISTS \"\${LLVM_N
 string(REPLACE "if (\${project} STREQUAL LLVM AND NOT LLVM_INSTALL_TOOLCHAIN_ONLY)" "if (False)" content "${content}")
 file(WRITE ${file} "${content}")
 
+set(file ${SRC_DIR}/external/SPIRV-Tools/CMakeLists.txt)
+file(READ ${file} content)
+string(REPLACE "find_host_package(Python3 REQUIRED)" "" content "${content}")
+file(WRITE ${file} "${content}")
+
+set(file ${SRC_DIR}/external/SPIRV-Tools/source/CMakeLists.txt)
+file(READ ${file} content)
+string(REPLACE "Python3::Interpreter" "\${PYTHON_EXECUTABLE}" content "${content}")
+file(WRITE ${file} "${content}")
+
+set(file ${SRC_DIR}/lib/DxcSupport/CMakeLists.txt)
+file(READ ${file} content)
+string(REPLACE "target_link_libraries(LLVMDxcSupport PUBLIC LLVMSupport)" "target_link_libraries(LLVMDxcSupport PRIVATE \$<BUILD_LOCAL_INTERFACE:LLVMSupport>)" content "${content}")
+file(WRITE ${file} "${content}")
+
+set(file ${SRC_DIR}/lib/DxcSupport/WinFunctions.cpp)
+file(READ ${file} content)
+string(REPLACE "unsigned char _BitScanForward" "#ifndef __ANDROID__\r\nunsigned char _BitScanForward" content "${content}")
+string(REPLACE "HANDLE CreateFile2" "#endif\r\nHANDLE CreateFile2" content "${content}")
+file(WRITE ${file} "#include <ios>\n${content}")
+
 set(file ${SRC_DIR}/tools/clang/CMakeLists.txt)
 file(READ ${file} content)
 string(REPLACE "if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY OR \${name} STREQUAL \"libclang\")" "if (\${name} STREQUAL \"dxcompiler\")" content "${content}")
@@ -46,12 +68,6 @@ set(file ${SRC_DIR}/tools/clang/tools/dxcompiler/CMakeLists.txt)
 file(READ ${file} content)
 string(REPLACE "VERSION \${LIBCLANG_LIBRARY_VERSION}" "" content "${content}")
 file(WRITE ${file} "${content}")
-
-set(file ${SRC_DIR}/lib/DxcSupport/WinFunctions.cpp)
-file(READ ${file} content)
-string(REPLACE "unsigned char _BitScanForward" "#ifndef __ANDROID__\r\nunsigned char _BitScanForward" content "${content}")
-string(REPLACE "struct CoMalloc" "#endif\r\nstruct CoMalloc" content "${content}")
-file(WRITE ${file} "#include <ios>\n${content}")
 
 #set(file ${SRC_DIR}/utils/hct/hctgen.py)
 #file(READ ${file} content)
