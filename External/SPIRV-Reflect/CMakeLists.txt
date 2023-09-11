@@ -41,7 +41,6 @@ ExternalProject_Add(
         -DSPIRV_REFLECT_EXECUTABLE=OFF
         -DSPIRV_REFLECT_EXAMPLES=OFF
         -DSPIRV_REFLECT_STATIC_LIB=ON
-        -DSPIRV_CROSS_ENABLE_TESTS=OFF
         ${cmakeArgs}
 )
 

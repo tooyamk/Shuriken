@@ -1,3 +1,6 @@
+#if !defined(SRK_DEBUG) && __has_include("mimalloc-new-delete.h")
+#	include "mimalloc-new-delete.h"
+#endif
 #include "Entry.h"
 
 #if SRK_OS != SRK_OS_MACOS
