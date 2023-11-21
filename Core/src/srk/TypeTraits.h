@@ -1,7 +1,7 @@
 #pragma once
 
 #include "srk/Core.h"
-#include <numeric>
+#include <limits>
 #include <tuple>
 
 namespace srk {
