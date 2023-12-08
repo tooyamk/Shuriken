@@ -2,7 +2,7 @@
 
 #include "srk/Bit.h"
 #include <array>
-#include <numeric>
+#include <limits>
 
 namespace srk::hash {
 	/**

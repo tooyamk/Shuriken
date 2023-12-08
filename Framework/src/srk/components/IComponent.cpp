@@ -1,5 +1,5 @@
 #include "IComponent.h"
-#include <numeric>
+#include <limits>
 
 namespace srk::components {
 	IComponent::~IComponent() {
