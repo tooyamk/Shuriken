@@ -25,6 +25,12 @@ namespace srk::modules::graphics::vulkan {
 		virtual IndexType SRK_CALL getFormat() const override;
 		virtual void SRK_CALL setFormat(IndexType type) override;
 
+		inline const BaseBuffer& getBaseBuffer() const {
+			return _baseBuffer;
+		}
+
+		uint32_t SRK_CALL getNumElements() const;
+
 	protected:
 		IndexType _type;
 

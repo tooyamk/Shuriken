@@ -91,12 +91,37 @@ namespace srk::modules::graphics::vulkan {
 			if (!_createVkDevice()) break;
 			if (!_createMemAllocator()) break;
 			if (!_createVkCommandPool()) break;
-			if (!_createVkSwapchain()) break;
+			if (!_createVkSwapchain(desc.window->getContentSize())) break;
+
+			VkPhysicalDeviceProperties physicalDeviceProperties;
+			vkGetPhysicalDeviceProperties(_vkStatus.physicalDevice, &physicalDeviceProperties);
+			_vkStatus.apiVersion = physicalDeviceProperties.apiVersion;
+
+			auto major = VK_API_VERSION_MAJOR(_vkStatus.apiVersion);
+			auto minor = VK_API_VERSION_MINOR(_vkStatus.apiVersion);
+			auto patch = VK_API_VERSION_PATCH(_vkStatus.apiVersion);
+			auto variant = VK_API_VERSION_VARIANT(_vkStatus.apiVersion);
 
 			{
 				_dynamicStates.clear();
 				_dynamicStates.emplace_back(VK_DYNAMIC_STATE_VIEWPORT);
 				_dynamicStates.emplace_back(VK_DYNAMIC_STATE_SCISSOR);
+				if (_internalFeatures.extendedDynamicState || (major >= 1 && minor >= 3)) {
+					_dynamicStates.emplace_back(VK_DYNAMIC_STATE_CULL_MODE);
+					_dynamicStates.emplace_back(VK_DYNAMIC_STATE_FRONT_FACE);
+					_dynamicStates.emplace_back(VK_DYNAMIC_STATE_PRIMITIVE_TOPOLOGY);
+					_internalFeatures.dymanicRasterizerState = true;
+
+					_dynamicStates.emplace_back(VK_DYNAMIC_STATE_DEPTH_TEST_ENABLE);
+					_dynamicStates.emplace_back(VK_DYNAMIC_STATE_DEPTH_WRITE_ENABLE);
+					_dynamicStates.emplace_back(VK_DYNAMIC_STATE_DEPTH_COMPARE_OP);
+					_dynamicStates.emplace_back(VK_DYNAMIC_STATE_STENCIL_TEST_ENABLE);
+					_dynamicStates.emplace_back(VK_DYNAMIC_STATE_STENCIL_OP);
+					_dynamicStates.emplace_back(VK_DYNAMIC_STATE_STENCIL_COMPARE_MASK);
+					_dynamicStates.emplace_back(VK_DYNAMIC_STATE_STENCIL_WRITE_MASK);
+					_dynamicStates.emplace_back(VK_DYNAMIC_STATE_STENCIL_REFERENCE);
+					_internalFeatures.dynamicDepthStencilState = true;
+				}
 				_dynamicStates.emplace_back(VK_DYNAMIC_STATE_BLEND_CONSTANTS);
 
 				_pipelineDynamicStateCreateInfo.dynamicStateCount = _dynamicStates.size();
@@ -113,8 +138,14 @@ namespace srk::modules::graphics::vulkan {
 			}
 
 			{
-				VkPhysicalDeviceProperties physicalDeviceProperties;
-				vkGetPhysicalDeviceProperties(_vkStatus.physicalDevice, &physicalDeviceProperties);
+				_deviceVersion = "Vulkan ";
+				_deviceVersion += StringUtility::toString(major);
+				_deviceVersion += '.';
+				_deviceVersion += StringUtility::toString(minor);
+				_deviceVersion += '.';
+				_deviceVersion += StringUtility::toString(patch);
+				_deviceVersion += '.';
+				_deviceVersion += StringUtility::toString(variant);
 
 				_deviceFeatures.stencilIndependentMask = true;
 				_deviceFeatures.stencilIndependentRef = true;
@@ -219,6 +250,23 @@ namespace srk::modules::graphics::vulkan {
 					data.names[data.count++] = "VK_KHR_portability_subset";
 					continue;
 				}
+				if (!strcmp("VK_KHR_ray_tracing_pipeline", extension.extensionName)) {
+					//data.names[data.count++] = "VK_KHR_ray_tracing_pipeline";
+					continue;
+				}
+				if (!strcmp("VK_KHR_fragment_shading_rate", extension.extensionName)) {
+					//data.names[data.count++] = "VK_KHR_fragment_shading_rate";
+					continue;
+				}
+				if (!strcmp("VK_KHR_maintenance2", extension.extensionName)) {
+					//data.names[data.count++] = "VK_KHR_maintenance2";
+					continue;
+				}
+				if (!strcmp("VK_KHR_line_rasterization", extension.extensionName)) {
+					//data.names[data.count++] = "VK_KHR_line_rasterization";
+					continue;
+				}
+
 				if (!strcmp("VK_EXT_custom_border_color", extension.extensionName)) {
 					data.names[data.count++] = "VK_EXT_custom_border_color";
 					_internalFeatures.customBorderColor = true;
@@ -249,6 +297,87 @@ namespace srk::modules::graphics::vulkan {
 					_internalFeatures.colorWriteEnable = true;
 					continue;
 				}
+				if (!strcmp("VK_EXT_sample_locations", extension.extensionName)) {
+					//data.names[data.count++] = "VK_EXT_sample_locations";
+					continue;
+				}
+				if (!strcmp("VK_EXT_discard_rectangles", extension.extensionName)) {
+					//data.names[data.count++] = "VK_EXT_discard_rectangles";
+					continue;
+				}
+				if (!strcmp("VK_EXT_transform_feedback", extension.extensionName)) {
+					//data.names[data.count++] = "VK_EXT_transform_feedback";
+					continue;
+				}
+				if (!strcmp("VK_EXT_conservative_rasterization", extension.extensionName)) {
+					//data.names[data.count++] = "VK_EXT_conservative_rasterization";
+					continue;
+				}
+				if (!strcmp("VK_EXT_depth_clip_enable", extension.extensionName)) {
+					//data.names[data.count++] = "VK_EXT_depth_clip_enable";
+					continue;
+				}
+				if (!strcmp("VK_EXT_sample_locations", extension.extensionName)) {
+					//data.names[data.count++] = "VK_EXT_sample_locations";
+					continue;
+				}
+				if (!strcmp("VK_EXT_blend_operation_advanced", extension.extensionName)) {
+					//data.names[data.count++] = "VK_EXT_blend_operation_advanced";
+					continue;
+				}
+				if (!strcmp("VK_EXT_provoking_vertex", extension.extensionName)) {
+					//data.names[data.count++] = "VK_EXT_provoking_vertex";
+					continue;
+				}
+				if (!strcmp("VK_EXT_line_rasterization", extension.extensionName)) {
+					//data.names[data.count++] = "VK_EXT_line_rasterization";
+					continue;
+				}
+				if (!strcmp("VK_EXT_depth_clip_control", extension.extensionName)) {
+					//data.names[data.count++] = "VK_EXT_depth_clip_control";
+					continue;
+				}
+				if (!strcmp("VK_EXT_attachment_feedback_loop_dynamic_state", extension.extensionName)) {
+					//data.names[data.count++] = "VK_EXT_attachment_feedback_loop_dynamic_state";
+					continue;
+				}
+				
+				if (!strcmp("VK_NV_clip_space_w_scaling", extension.extensionName)) {
+					//data.names[data.count++] = "VK_NV_clip_space_w_scaling";
+					continue;
+				}
+				if (!strcmp("VK_NV_shading_rate_image", extension.extensionName)) {
+					//data.names[data.count++] = "VK_NV_shading_rate_image";
+					continue;
+				}
+				if (!strcmp("VK_NV_scissor_exclusive", extension.extensionName)) {
+					//data.names[data.count++] = "VK_NV_scissor_exclusive";
+					continue;
+				}
+				if (!strcmp("VK_NV_clip_space_w_scaling", extension.extensionName)) {
+					//data.names[data.count++] = "VK_NV_clip_space_w_scaling";
+					continue;
+				}
+				if (!strcmp("VK_NV_viewport_swizzle", extension.extensionName)) {
+					//data.names[data.count++] = "VK_NV_viewport_swizzle";
+					continue;
+				}
+				if (!strcmp("VK_NV_fragment_coverage_to_color", extension.extensionName)) {
+					//data.names[data.count++] = "VK_NV_fragment_coverage_to_color";
+					continue;
+				}
+				if (!strcmp("VK_NV_framebuffer_mixed_samples", extension.extensionName)) {
+					//data.names[data.count++] = "VK_NV_framebuffer_mixed_samples";
+					continue;
+				}
+				if (!strcmp("VK_NV_representative_fragment_test", extension.extensionName)) {
+					//data.names[data.count++] = "VK_NV_representative_fragment_test";
+					continue;
+				}
+				if (!strcmp("VK_NV_coverage_reduction_mode", extension.extensionName)) {
+					//data.names[data.count++] = "VK_NV_coverage_reduction_mode";
+					continue;
+				}
 			}
 		} while (false);
 
@@ -256,6 +385,7 @@ namespace srk::modules::graphics::vulkan {
 
 		_vkStatus.physicalDevice = physicalDevice;
 		vkGetPhysicalDeviceMemoryProperties(physicalDevice, &_vkStatus.physicalDeviceMemoryProperties);
+		vkGetPhysicalDeviceFeatures(physicalDevice, &_vkStatus.physicalDeviceFeatures);
 
 		return true;
 	}
@@ -381,18 +511,9 @@ namespace srk::modules::graphics::vulkan {
 			} while (false);
 		}
 
-		_vkStatus.apiVersion = VK_API_VERSION_1_0;
-		auto enumerateInstanceVersion = PFN_vkEnumerateInstanceVersion(vkGetInstanceProcAddr(_vkStatus.instance, "vkEnumerateInstanceVersion"));
-		if (enumerateInstanceVersion) enumerateInstanceVersion(&_vkStatus.apiVersion);
-
-		_deviceVersion = "Vulkan ";
-		_deviceVersion += StringUtility::toString(VK_API_VERSION_MAJOR(_vkStatus.apiVersion));
-		_deviceVersion += '.';
-		_deviceVersion += StringUtility::toString(VK_API_VERSION_MINOR(_vkStatus.apiVersion));
-		_deviceVersion += '.';
-		_deviceVersion += StringUtility::toString(VK_API_VERSION_PATCH(_vkStatus.apiVersion));
-		_deviceVersion += '.';
-		_deviceVersion += StringUtility::toString(VK_API_VERSION_VARIANT(_vkStatus.apiVersion));
+		//_vkStatus.apiVersion = VK_API_VERSION_1_0;
+		//auto enumerateInstanceVersion = PFN_vkEnumerateInstanceVersion(vkGetInstanceProcAddr(_vkStatus.instance, "vkEnumerateInstanceVersion"));
+		//if (enumerateInstanceVersion) enumerateInstanceVersion(&_vkStatus.apiVersion);
 
 		return true;
 	}
@@ -472,10 +593,6 @@ namespace srk::modules::graphics::vulkan {
 		queue.queueCount = 1;
 		queue.pQueuePriorities = queuePriorities;
 
-		VkPhysicalDeviceFeatures physicalDeviceFeatures;
-		memset(&physicalDeviceFeatures, 0, sizeof(physicalDeviceFeatures));
-		physicalDeviceFeatures.samplerAnisotropy = VK_TRUE;
-
 		VkDeviceCreateInfo deviceCreateInfo;
 		memset(&deviceCreateInfo, 0, sizeof(deviceCreateInfo));
 		deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -485,7 +602,7 @@ namespace srk::modules::graphics::vulkan {
 		deviceCreateInfo.ppEnabledLayerNames = nullptr;
 		deviceCreateInfo.enabledExtensionCount = _vkStatus.enabledDeviceExtensions.count;
 		deviceCreateInfo.ppEnabledExtensionNames = (const char* const*)_vkStatus.enabledDeviceExtensions.names;
-		deviceCreateInfo.pEnabledFeatures = &physicalDeviceFeatures;
+		deviceCreateInfo.pEnabledFeatures = &_vkStatus.physicalDeviceFeatures;
 
 		if (graphicsQueueFamilyIndex != presentQueueFamilyIndex) {
 			queue = deviceQueueCreateInfos[1];
@@ -526,7 +643,7 @@ namespace srk::modules::graphics::vulkan {
 		return true;
 	}
 
-	bool Graphics::_createVkSwapchain() {
+	bool Graphics::_createVkSwapchain(const Vec2ui32& size) {
 		VkSurfaceFormatKHR selectedSurfaceFormat;
 		{
 			uint32_t formatCount;
@@ -536,18 +653,17 @@ namespace srk::modules::graphics::vulkan {
 			if (vkGetPhysicalDeviceSurfaceFormatsKHR(_vkStatus.physicalDevice, _vkStatus.surface, &formatCount, surfaceFormats.data()) != VK_SUCCESS) return false;
 
 			selectedSurfaceFormat.format = VK_FORMAT_UNDEFINED;
-			if (formatCount == 1 && surfaceFormats[0].format == VK_FORMAT_UNDEFINED) {
-				selectedSurfaceFormat.format = VK_FORMAT_R8G8B8A8_UNORM;
-				selectedSurfaceFormat.colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
-			} else {
-				for (const auto& fmt : surfaceFormats) {
-					if (fmt.format == VK_FORMAT_R8G8B8A8_UNORM && fmt.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
-						selectedSurfaceFormat = fmt;
-						break;
-					}
+			for (const auto& fmt : surfaceFormats) {
+				if (fmt.format == VK_FORMAT_B8G8R8A8_SRGB && fmt.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+					selectedSurfaceFormat = fmt;
+					break;
 				}
+			}
 
-				if (selectedSurfaceFormat.format == VK_FORMAT_UNDEFINED) selectedSurfaceFormat = surfaceFormats[0];
+			if (selectedSurfaceFormat.format == VK_FORMAT_UNDEFINED) selectedSurfaceFormat = surfaceFormats[0];
+			if (selectedSurfaceFormat.format == VK_FORMAT_UNDEFINED) {
+				selectedSurfaceFormat.format = VK_FORMAT_B8G8R8A8_SRGB;
+				selectedSurfaceFormat.colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
 			}
 		}
 
@@ -594,11 +710,13 @@ namespace srk::modules::graphics::vulkan {
 			{
 				VkSurfaceCapabilitiesKHR caps;
 				if (vkGetPhysicalDeviceSurfaceCapabilitiesKHR(_vkStatus.physicalDevice, _vkStatus.surface, &caps) != VK_SUCCESS) return false;
-				if (caps.currentExtent.width == std::numeric_limits<uint32_t>::max()) {
+				imageExtent.width = std::clamp(size[0], caps.minImageExtent.width, caps.maxImageExtent.width);
+				imageExtent.height = std::clamp(size[1], caps.minImageExtent.height, caps.maxImageExtent.height);
+				/*if (caps.currentExtent.width == std::numeric_limits<uint32_t>::max()) {
 					imageExtent = caps.maxImageExtent;
 				} else {
 					imageExtent = caps.currentExtent;
-				}
+				}*/
 
 				imageCount = caps.minImageCount + 1;
 				if (caps.maxImageCount > 0 && imageCount > caps.maxImageCount) imageCount = caps.maxImageCount;
@@ -726,13 +844,20 @@ namespace srk::modules::graphics::vulkan {
 		VkPipelineInputAssemblyStateCreateInfo pipelineInputAssemblyStateCreateInfo;
 		memset(&pipelineInputAssemblyStateCreateInfo, 0, sizeof(pipelineInputAssemblyStateCreateInfo));
 		pipelineInputAssemblyStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-		pipelineInputAssemblyStateCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
-		pipelineInputAssemblyStateCreateInfo.primitiveRestartEnable = VK_TRUE;
+		pipelineInputAssemblyStateCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+		pipelineInputAssemblyStateCreateInfo.primitiveRestartEnable = VK_FALSE;
 		graphicsPipelineCreateInfo.pInputAssemblyState = &pipelineInputAssemblyStateCreateInfo;
 
 		graphicsPipelineCreateInfo.pTessellationState = nullptr;
 
-		VkViewport viewport;
+		VkPipelineViewportStateCreateInfo pipelineViewportStateCreateInfo;//dynamic
+		memset(&pipelineViewportStateCreateInfo, 0, sizeof(pipelineViewportStateCreateInfo));
+		pipelineViewportStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+		pipelineViewportStateCreateInfo.viewportCount = 1;
+		pipelineViewportStateCreateInfo.scissorCount = 1;
+		graphicsPipelineCreateInfo.pViewportState = &pipelineViewportStateCreateInfo;
+
+		/*VkViewport viewport;
 		VkRect2D scissor;
 		VkPipelineViewportStateCreateInfo pipelineViewportStateCreateInfo;
 		if (!_internalFeatures.extendedDynamicState) {
@@ -756,9 +881,11 @@ namespace srk::modules::graphics::vulkan {
 
 			hasher.update(&viewport, sizeof(viewport));
 			hasher.update(&scissor, sizeof(scissor));
-		}
+		}*/
 
-		graphicsPipelineCreateInfo.pRasterizationState = &_vkStatus.rasterizer.info;
+		const auto& pipelineRasterizationStateCreateInfo = _vkStatus.rasterizer.info;
+		graphicsPipelineCreateInfo.pRasterizationState = &pipelineRasterizationStateCreateInfo;
+		if (!_internalFeatures.dymanicRasterizerState) hasher.update(pipelineRasterizationStateCreateInfo);
 
 		VkPipelineMultisampleStateCreateInfo pipelineMultisampleStateCreateInfo;
 		memset(&pipelineMultisampleStateCreateInfo, 0, sizeof(pipelineMultisampleStateCreateInfo));
@@ -771,7 +898,10 @@ namespace srk::modules::graphics::vulkan {
 		pipelineMultisampleStateCreateInfo.alphaToOneEnable = VK_FALSE; // Optional
 		graphicsPipelineCreateInfo.pMultisampleState = &pipelineMultisampleStateCreateInfo;
 
-		graphicsPipelineCreateInfo.pDepthStencilState = &_vkStatus.depthStencil.info;
+		const auto& pipelineDepthStencilStateCreateInfo = _vkStatus.depthStencil.info;
+		graphicsPipelineCreateInfo.pDepthStencilState = &pipelineDepthStencilStateCreateInfo;
+		if (!_internalFeatures.dynamicDepthStencilState) hasher.update(pipelineDepthStencilStateCreateInfo);
+
 		graphicsPipelineCreateInfo.pColorBlendState = &_vkStatus.blend.info;
 		graphicsPipelineCreateInfo.pDynamicState = &_pipelineDynamicStateCreateInfo;
 
@@ -785,16 +915,20 @@ namespace srk::modules::graphics::vulkan {
 		attachmentDesc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		attachmentDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		attachmentDesc.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+		hasher.update(attachmentDesc);
 		
 		VkAttachmentReference attachmentRef;
 		attachmentRef.attachment = 0;
 		attachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		hasher.update(attachmentRef);
 
 		VkSubpassDescription subpassDesc;
 		memset(&subpassDesc, 0, sizeof(subpassDesc));
 		subpassDesc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 		subpassDesc.colorAttachmentCount = 1;
 		subpassDesc.pColorAttachments = &attachmentRef;
+		hasher.update(subpassDesc.pipelineBindPoint);
+		hasher.update(subpassDesc.colorAttachmentCount);
 
 		VkRenderPassCreateInfo renderPassCreateInfo;
 		memset(&renderPassCreateInfo, 0, sizeof(renderPassCreateInfo));
@@ -803,6 +937,8 @@ namespace srk::modules::graphics::vulkan {
 		renderPassCreateInfo.pAttachments = &attachmentDesc;
 		renderPassCreateInfo.subpassCount = 1;
 		renderPassCreateInfo.pSubpasses = &subpassDesc;
+		hasher.update(renderPassCreateInfo.attachmentCount);
+		hasher.update(renderPassCreateInfo.subpassCount);
 
 		VkRenderPass renderPass;
 		if (vkCreateRenderPass(_vkStatus.device, &renderPassCreateInfo, nullptr, &renderPass) != VK_SUCCESS) {
@@ -815,6 +951,10 @@ namespace srk::modules::graphics::vulkan {
 		graphicsPipelineCreateInfo.basePipelineIndex = -1;
 
 		auto hash = hasher.digest();
+
+		/*VkPipeline pipeline;
+		if (vkCreateGraphicsPipelines(_vkStatus.device, _vkStatus.pipeline.cache, 1, &graphicsPipelineCreateInfo, getVkAllocationCallbacks(), &pipeline) != VK_SUCCESS) return nullptr;
+		return pipeline;*/
 
 		auto itr = _vkStatus.pipeline.pipelines.find(p->getInstanceId());
 		if (itr == _vkStatus.pipeline.pipelines.end()) {
@@ -1009,7 +1149,24 @@ namespace srk::modules::graphics::vulkan {
 
 	void Graphics::draw(IProgram* program, const IVertexAttributeGetter* vertexAttributeGetter, const IShaderParameterGetter* shaderParamGetter,
 		const IIndexBuffer* indexBuffer, uint32_t count, uint32_t offset) {
-		if (!_checkAndUpdateVkPipeline(program, vertexAttributeGetter, shaderParamGetter)) return;
+		if (vertexAttributeGetter && indexBuffer && program && program->getGraphics() == this && indexBuffer->getGraphics() == this && count > 0) {
+			/*if (!indexBuffer->isCreated()) return;
+			auto ib = (IndexBuffer*)indexBuffer;
+			auto numIndexElements = ib->getNumElements();
+			if (!numIndexElements || offset >= numIndexElements) return;
+
+			auto pipeline = _checkAndUpdateVkPipeline(program, vertexAttributeGetter, shaderParamGetter);
+			if (!pipeline) return;
+
+			auto cmd = beginOneTimeCommands();
+			if (!cmd) return;
+
+			auto cb = cmd.getVkCommandBuffer();
+			vkCmdBindPipeline(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+			vkCmdDraw(cb, 1, 1, 0, 0);
+
+			endOneTimeCommands(cmd);*/
+		}
 	}
 
 	void Graphics::drawInstanced(IProgram* program, const IVertexAttributeGetter* vertexAttributeGetter, const IShaderParameterGetter* shaderParamGetter,
@@ -1223,6 +1380,8 @@ namespace srk::modules::graphics::vulkan {
 	}
 
 	void Graphics::_resize(const Vec2ui32& size) {
+		if (!_vkStatus.swapChain.swapChain || size == Vec2ui32::ZERO || _vkStatus.backSize == size) return;
+		_createVkSwapchain(size);
 	}
 
 	void Graphics::_cleanupSwapChain(VkSwapchainKHR* swapChain) {

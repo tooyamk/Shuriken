@@ -68,4 +68,17 @@ namespace srk::modules::graphics::vulkan {
 	void IndexBuffer::setFormat(IndexType type) {
 		_type = type;
 	}
+
+	uint32_t IndexBuffer::getNumElements() const {
+		switch (_type) {
+		case IndexType::UI8:
+			return _baseBuffer.getSize();
+		case IndexType::UI16:
+			return _baseBuffer.getSize() >> 1;
+		case IndexType::UI32:
+			return _baseBuffer.getSize() >> 2;
+		default:
+			return 0;
+		}
+	}
 }

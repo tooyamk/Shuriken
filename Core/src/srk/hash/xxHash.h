@@ -48,6 +48,11 @@ namespace srk::hash {
 			};
 		}
 
+		template<typename T, std::endian DataEndian = std::endian::native>
+		void update(T&& data) {
+			update<DataEndian>(&data, sizeof(data));
+		}
+
 		template<std::endian DataEndian = std::endian::native>
 		uint_t<Bits> digest() {
 			hash_t ret;

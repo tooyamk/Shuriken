@@ -258,7 +258,12 @@ public:
 				spc->set(ShaderPredefine::SPECULAR_COLOR, new ShaderParameter())->set(Vec3f32::ONE);
 				spc->set("_diffuseTexSampler", new ShaderParameter())->set(sampler);
 
-				graphics->draw(program, vac, spc, nullptr);
+				uint32_t idxData[] = { 0, 1, 2 };
+				auto idx = graphics->createIndexBuffer();
+				idx->create(12, Usage::NONE, Usage::NONE, idxData, 12);
+				idx->setFormat(IndexType::UI32);
+
+				graphics->draw(program, vac, spc, idx);
 			}
 		}
 

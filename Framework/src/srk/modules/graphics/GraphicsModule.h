@@ -2,6 +2,7 @@
 
 #include "srk/modules/IModule.h"
 #include "srk/ByteArray.h"
+#include "srk/hash/HashCombiner.h"
 #include "srk/math/Box.h"
 #include <functional>
 #include <vector>
@@ -1390,5 +1391,16 @@ namespace srk::modules::graphics {
 		GraphicsAdapter* adapter = nullptr;
 		SampleCount sampleCount = 1;
 		std::function<void(const std::string_view&)> createProcessInfoHandler = nullptr;
+	};
+}
+
+namespace std {
+	template<>
+	struct hash<srk::modules::graphics::DepthStencilFeature> {
+		std::size_t operator()(const srk::modules::graphics::DepthStencilFeature& feature) const noexcept {
+			auto values = (const uint64_t*)&feature;
+			std::size_t h = 0;
+			return srk::hash::HashCombiner::combine(h, values[0], values[1]);
+		}
 	};
 }

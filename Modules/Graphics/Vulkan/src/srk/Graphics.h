@@ -15,6 +15,8 @@ namespace srk::modules::graphics::vulkan {
 	class SRK_MODULE_DLL Graphics : public IGraphicsModule {
 	public:
 		struct InternalFeatures {
+			bool dymanicRasterizerState;
+			bool dynamicDepthStencilState;
 			bool customBorderColor;
 
 			bool extendedDynamicState;
@@ -206,6 +208,7 @@ namespace srk::modules::graphics::vulkan {
 			VmaAllocator memAllocator = nullptr;
 
 			VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
+			VkPhysicalDeviceFeatures physicalDeviceFeatures;
 
 			struct {
 				uint32_t graphics = 0;
@@ -283,7 +286,7 @@ namespace srk::modules::graphics::vulkan {
 		bool SRK_CALL _createVkDevice();
 		bool SRK_CALL _createMemAllocator();
 		bool SRK_CALL _createVkCommandPool();
-		bool SRK_CALL _createVkSwapchain();
+		bool SRK_CALL _createVkSwapchain(const Vec2ui32& size);
 
 		void SRK_CALL _setBlendState(BlendState& state, uint32_t sampleMask);
 		void SRK_CALL _setDepthStencilState(DepthStencilState& state);

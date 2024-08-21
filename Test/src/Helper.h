@@ -131,9 +131,8 @@ template<typename T>
 requires ConvertibleString8Data<std::remove_cvref_t<T>>
 inline ByteArray SRK_CALL readFile(T&& path) {
 	ByteArray dst;
-	std::ifstream stream(std::filesystem::path(path), std::ios::in | std::ios::binary);
-	if (stream.good()) {
-		stream.seekg(0, std::ios::end);
+	std::ifstream stream(std::filesystem::path(path), std::ios::in | std::ios::ate | std::ios::binary);
+	if (stream.is_open()) {
 		auto size = stream.tellg();
 
 		auto data = new uint8_t[size];

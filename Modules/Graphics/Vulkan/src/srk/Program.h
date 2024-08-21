@@ -23,7 +23,7 @@ namespace srk::modules::graphics::vulkan {
 			return _createInfos;
 		}
 
-		inline VkPipelineLayout getVkPipelineLayout() const {
+		inline const VkPipelineLayout getVkPipelineLayout() const {
 			return _pipelineLayout;
 		}
 

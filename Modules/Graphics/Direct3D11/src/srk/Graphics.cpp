@@ -601,22 +601,18 @@ namespace srk::modules::graphics::d3d11 {
 	void Graphics::draw(IProgram* program, const IVertexAttributeGetter* vertexAttributeGetter, const IShaderParameterGetter* shaderParamGetter,
 		const IIndexBuffer* indexBuffer, uint32_t count, uint32_t offset) {
 		if (vertexAttributeGetter && indexBuffer && program && program->getGraphics() == this && indexBuffer->getGraphics() == this && count > 0) {
-			auto native = (BaseBuffer*)indexBuffer->getNative();
-			if (!native) return;
-			auto ib = (IndexBuffer*)indexBuffer;
-			auto internalIndexBuffer = (ID3D11Buffer*)native->handle;
-			auto fmt = ib->getInternalFormat();
-			if (!internalIndexBuffer || fmt == DXGI_FORMAT_UNKNOWN) return;
+			if (!indexBuffer->isCreated()) return;
+			auto ib = (const IndexBuffer*)indexBuffer;
 			auto numIndexElements = ib->getNumElements();
 			if (!numIndexElements || offset >= numIndexElements) return;
-			
+
 			auto p = (Program*)program->getNative();
 			if (p) {
 				if (p->use(vertexAttributeGetter, shaderParamGetter)) {
 					uint32_t last = numIndexElements - offset;
 					if (count > numIndexElements) count = numIndexElements;
 					if (count > last) count = last;
-					_context->IASetIndexBuffer((ID3D11Buffer*)internalIndexBuffer, fmt, 0);
+					_context->IASetIndexBuffer((ID3D11Buffer*)ib->getBaseBuffer().handle, ib->getInternalFormat(), 0);
 					_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 					_context->DrawIndexed(count, offset, 0);
 
@@ -652,12 +648,8 @@ namespace srk::modules::graphics::d3d11 {
 	void Graphics::drawInstanced(IProgram* program, const IVertexAttributeGetter* vertexAttributeGetter, const IShaderParameterGetter* shaderParamGetter,
 		const IIndexBuffer* indexBuffer, uint32_t instancedCount, uint32_t count, uint32_t offset) {
 		if (vertexAttributeGetter && indexBuffer && program && program->getGraphics() == this && indexBuffer->getGraphics() == this && count > 0) {
-			auto native = (BaseBuffer*)indexBuffer->getNative();
-			if (!native) return;
-			auto ib = (IndexBuffer*)indexBuffer;
-			auto internalIndexBuffer = (ID3D11Buffer*)native->handle;
-			auto fmt = ib->getInternalFormat();
-			if (!internalIndexBuffer || fmt == DXGI_FORMAT_UNKNOWN) return;
+			if (!indexBuffer->isCreated()) return;
+			auto ib = (const IndexBuffer*)indexBuffer;
 			auto numIndexElements = ib->getNumElements();
 			if (!numIndexElements || offset >= numIndexElements) return;
 
@@ -667,7 +659,7 @@ namespace srk::modules::graphics::d3d11 {
 					uint32_t last = numIndexElements - offset;
 					if (count > numIndexElements) count = numIndexElements;
 					if (count > last) count = last;
-					_context->IASetIndexBuffer((ID3D11Buffer*)internalIndexBuffer, fmt, 0);
+					_context->IASetIndexBuffer((ID3D11Buffer*)ib->getBaseBuffer().handle, ib->getInternalFormat(), 0);
 					_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 					_context->DrawIndexedInstanced(count, instancedCount, offset, 0, 0);
 

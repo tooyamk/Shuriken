@@ -36,12 +36,10 @@ namespace srk::lockfree {
 		template<typename I>
 		bool _push(I&& item) {
 			auto n = new Node(std::forward<I>(item));
-			if (!n) return false;
 
 			auto oldTail = _tail;
 			_tail = n;
-			std::atomic_thread_fence(std::memory_order::release);
-			oldTail->next = n;
+			oldTail->next.store(n, std::memory_order::release);
 
 			return true;
 		}
@@ -74,7 +72,7 @@ namespace srk::lockfree {
 		}
 
 		bool pop(T& out) {
-			auto poped = _head->next;
+			auto poped = _head->next.load(std::memory_order::acquire);
 			if (!poped) return false;
 
 			if constexpr (std::is_move_assignable_v<T>) {
@@ -115,7 +113,6 @@ namespace srk::lockfree {
 		template<typename I>
 		bool _push(I&& item) {
 			auto n = new Node(std::forward<I>(item));
-			if (!n) return false;
 
 			auto oldTail = _tail.exchange(n, std::memory_order::acquire);
 			oldTail->next.store(n, std::memory_order::release);
@@ -193,7 +190,6 @@ namespace srk::lockfree {
 		template<typename I>
 		bool _push(I&& item) {
 			auto n = new Node(std::forward<I>(item));
-			if (!n) return false;
 
 			auto oldTail = _tail;
 			_tail = n;
@@ -274,7 +270,6 @@ namespace srk::lockfree {
 		template<typename I>
 		bool _push(I&& item) {
 			auto n = new Node(std::forward<I>(item));
-			if (!n) return false;
 
 			auto oldTail = _tail.exchange(n, std::memory_order::acquire);
 			oldTail->next.store(n, std::memory_order::release);

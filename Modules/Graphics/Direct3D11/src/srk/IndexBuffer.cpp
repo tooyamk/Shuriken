@@ -91,26 +91,17 @@ namespace srk::modules::graphics::d3d11 {
 				_internalFormat = DXGI_FORMAT_UNKNOWN;
 				break;
 			}
-
-			_calcNumElements();
 		}
 	}
 
-	void IndexBuffer::_calcNumElements() {
-		if (_baseBuffer.size && _internalFormat != DXGI_FORMAT_UNKNOWN) {
-			switch (_internalFormat) {
-			case DXGI_FORMAT_R16_UINT:
-				_numElements = _baseBuffer.size >> 1;
-				break;
-			case DXGI_FORMAT_R32_UINT:
-				_numElements = _baseBuffer.size >> 2;
-				break;
-			default:
-				_numElements = 0;
-				break;
-			}
-		} else {
-			_numElements = 0;
+	uint32_t IndexBuffer::getNumElements() const {
+		switch (_internalFormat) {
+		case DXGI_FORMAT_R16_UINT:
+			return _baseBuffer.size >> 1;
+		case DXGI_FORMAT_R32_UINT:
+			return _baseBuffer.size >> 2;
+		default:
+			return 0;
 		}
 	}
 }

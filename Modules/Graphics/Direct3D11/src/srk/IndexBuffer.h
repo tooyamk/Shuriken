@@ -29,18 +29,16 @@ namespace srk::modules::graphics::d3d11 {
 			return _internalFormat;
 		}
 
-		inline uint32_t SRK_CALL getNumElements() const {
-			return _numElements;
+		inline const BaseBuffer& getBaseBuffer() const {
+			return _baseBuffer;
 		}
 
-		void SRK_CALL draw(uint32_t count = (std::numeric_limits<uint32_t>::max)(), uint32_t offset = 0);
+		uint32_t SRK_CALL getNumElements() const;
 
 	protected:
 		IndexType _idxType;
 		DXGI_FORMAT _internalFormat;
 		uint32_t _numElements;
 		BaseBuffer _baseBuffer;
-
-		void _calcNumElements();
 	};
 }

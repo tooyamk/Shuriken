@@ -64,10 +64,10 @@ namespace srk::modules::graphics::vulkan {
 		}
 
 		void release() {
-			if (_buffer) {
-				vkFreeCommandBuffers(_device, _pool, 1, &_buffer);
-				_buffer = nullptr;
-			}
+			if (!_buffer) return;
+			
+			vkFreeCommandBuffers(_device, _pool, 1, &_buffer);
+			_buffer = nullptr;
 		}
 
 		inline VkCommandBuffer SRK_CALL getVkCommandBuffer() const {
