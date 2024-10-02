@@ -53,13 +53,13 @@ namespace srk {
 		}
 	}
 
-	void SerializableObject::Map::unpack(ByteArray& ba, size_t size, Flag flag) {
+	void SerializableObject::Map::unpack(ByteArray& ba, size_t size, int32_t version, Flag flag) {
 		value.clear();
 
 		SerializableObject k, v;
 		for (size_t i = 0; i < size; ++i) {
-			k.unpack(ba, flag);
-			v.unpack(ba, flag);
+			k._unpack(ba, version, flag);
+			v._unpack(ba, version, flag);
 			value.emplace((SerializableObjectWrapper&&)std::move(k), (SerializableObjectWrapper&&)std::move(v));
 		}
 	}
@@ -1245,26 +1245,48 @@ namespace srk {
 	}
 
 	void SerializableObject::_packString(ByteArray& ba, const char* data, size_t size) const {
-		if (size < VAL5_MAX) {
+		if (size < BIT5_MAX) {
 			ba.write<uint8_t>(((uint8_t)Type::STRING << 5) | size);
 			ba.write<ba_vt::BYTE>(data, size);
 		} else {
-			ba.write<uint8_t>(((uint8_t)Type::STRING << 5) | VAL5_MAX);
+			ba.write<uint8_t>(((uint8_t)Type::STRING << 5) | BIT5_MAX);
 			ba.write<ba_vt::STR>(data, size);
 		}
 	}
 
 	void SerializableObject::_packBytes(ByteArray& ba, const uint8_t* data, size_t size) const {
-		if (size < VAL5_BITS8) {
+		if (size < BIT5_PACK_UINT_MIN_VALUE) {
 			ba.write<uint8_t>(((uint8_t)Type::BYTES << 5) | size);
 		} else {
-			_packUInt(ba, size, (uint8_t)Type::BYTES << 5, VAL5_BITS8);
+			_packUInt(ba, size - BIT5_PACK_UINT_MIN_VALUE, (uint8_t)Type::BYTES << 5, BIT5_PACK_UINT_MIN_VALUE);
 		}
 
 		ba.write<ba_vt::BYTE>(data, size);
 	}
 
-	void SerializableObject::unpack(ByteArray& ba, Flag flag) {
+	bool SerializableObject::unpack(ByteArray& ba, Flag flag) {
+		auto version = VERSION;
+
+		auto pos = ba.getPosition();
+		auto header = ba.read<uint8_t>();
+		if ((header & HEADER_MAGIC_NUMBER_MASK) == HEADER_MAGIC_NUMBER) {
+			version = header & HEADER_VERSION_MASK;
+			if (version == HEADER_VERSION_MASK) version += ba.read<uint8_t>();
+		} else {
+			ba.setPosition(pos);
+			return false;
+		}
+
+		if (version > VERSION) {
+			ba.setPosition(pos);
+			return false;
+		}
+
+		_unpack(ba, version, flag);
+		return true;
+	}
+
+	void SerializableObject::_unpack(ByteArray& ba, int32_t version, Flag flag) {
 		if (ba.getBytesAvailable() > 0) {
 			auto tval = ba.read<uint8_t>();
 			auto type = (Type)(tval >> 5 & 0b111);
@@ -1290,17 +1312,14 @@ namespace srk {
 			{
 				auto sign = (val & 0b10000) != 0;
 				val &= 0b1111;
-				if (val >= VAL4_BITS8) {
-					if (sign) {
-						set(-(int64_t)ba.read<ba_vt::UIX>(val - VAL4_BITS8 + 1));
-					} else {
-						set(ba.read<ba_vt::UIX>(val - VAL4_BITS8 + 1));
-					}
+				if (val < BIT4_PACK_UINT_MIN_VALUE) {
+					set(sign ? -val : val);
 				} else {
+					auto v = ba.read<ba_vt::UIX>(val - BIT4_PACK_UINT_MIN_VALUE + 1);
 					if (sign) {
-						set(-val);
+						set(-(int64_t)v - BIT4_PACK_UINT_MIN_VALUE);
 					} else {
-						set(val);
+						set(v + BIT4_PACK_UINT_MIN_VALUE);
 					}
 				}
 
@@ -1343,7 +1362,7 @@ namespace srk {
 			}
 			case Type::STRING:
 			{
-				if (val == VAL5_MAX) {
+				if (val == BIT5_MAX) {
 					set(ba.read<std::string_view>(), flag);
 				} else {
 					set(std::string_view((const char*)ba.getCurrentSource(), val), flag);
@@ -1356,26 +1375,26 @@ namespace srk {
 			{
 				auto& arr = _getArray()->value;
 
-				if (val == VAL5_MAX) {
+				if (val == BIT5_MAX) {
 					arr.clear();
 					while (ba.getBytesAvailable()) {
 						if (*ba.getCurrentSource() == END) {
 							ba.skip(1);
 							break;
 						} else {
-							arr.emplace_back().wrap().unpack(ba, flag);
+							arr.emplace_back().wrap()._unpack(ba, version, flag);
 						}
 					}
 				} else {
 					arr.resize(val);
-					for (size_t i = 0; i < val; ++i) arr[i].wrap().unpack(ba, flag);
+					for (size_t i = 0; i < val; ++i) arr[i].wrap()._unpack(ba, version, flag);
 				}
 
 				break;
 			}
 			case Type::MAP:
 			{
-				if (val == VAL5_MAX) {
+				if (val == BIT5_MAX) {
 					auto& map = _getMap()->value;
 					map.clear();
 					SerializableObject k, v;
@@ -1384,23 +1403,23 @@ namespace srk {
 							ba.skip(1);
 							break;
 						} else {
-							k.unpack(ba, flag);
-							v.unpack(ba, flag);
+							k._unpack(ba, version, flag);
+							v._unpack(ba, version, flag);
 							map.emplace((SerializableObjectWrapper&&)std::move(k), (SerializableObjectWrapper&&)std::move(v));
 						}
 					}
 				} else {
-					_getMap()->unpack(ba, val, flag);
+					_getMap()->unpack(ba, val, version, flag);
 				}
 
 				break;
 			}
 			case Type::BYTES:
 			{
-				if (val >= VAL5_BITS8) {
-					_unpackBytes(ba, ba.read<ba_vt::UIX>(val - VAL5_BITS8 + 1), flag);
-				} else {
+				if (val < BIT5_PACK_UINT_MIN_VALUE) {
 					_unpackBytes(ba, val, flag);
+				} else {
+					_unpackBytes(ba, ba.read<ba_vt::UIX>(val - BIT5_PACK_UINT_MIN_VALUE + 1) + BIT5_PACK_UINT_MIN_VALUE, flag);
 				}
 
 				break;

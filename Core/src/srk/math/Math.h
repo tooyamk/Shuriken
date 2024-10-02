@@ -1688,7 +1688,7 @@ namespace srk {
 			static_assert(DstDesc.type == DataType::MATRIX, "dst type must be matrix");
 
 			copy<Data2DDesc(DataType::MATRIX), 4, 4, DstDesc>(dst,
-				TWO<DstT> / (right - ONE<RT>), ZERO<DstT>, ZERO<DstT>, (ONE<RT> +right) / (ONE<RT> -right),
+				TWO<DstT> / (right - ONE<RT>), ZERO<DstT>, ZERO<DstT>, (ONE<RT> + right) / (ONE<RT> - right),
 				ZERO<DstT>, TWO<DstT> / (top - bottom), ZERO<DstT>, (top + bottom) / (bottom - top),
 				ZERO<DstT>, ZERO<DstT>, ONE<DstT> / (zFar - zNear), zNear / (zNear - zFar),
 				ZERO<DstT>, ZERO<DstT>, ZERO<DstT>, ONE<DstT>);

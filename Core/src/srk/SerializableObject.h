@@ -549,9 +549,10 @@ namespace srk {
 
 		template<NullPointerOrDerivedFrom<IPackFilter> T = std::nullptr_t>
 		inline void SRK_CALL pack(ByteArray& ba, const T& filter = nullptr) const {
+			ba.write<uint8_t>(HEADER_MAGIC_NUMBER | VERSION);
 			_pack(nullptr, 0, ba, filter);
 		}
-		void SRK_CALL unpack(ByteArray& ba, Flag flag = Flag::COPY);
+		bool SRK_CALL unpack(ByteArray& ba, Flag flag = Flag::COPY);
 
 		bool SRK_CALL equal(const SerializableObject& target) const;
 		bool SRK_CALL isContentEqual(const SerializableObject& target) const;
@@ -565,15 +566,18 @@ namespace srk {
 		}
 
 	private:
+		static constexpr uint8_t HEADER_MAGIC_NUMBER = 0b00110000;
+		static constexpr uint8_t HEADER_MAGIC_NUMBER_MASK = 0b11110000;
+		static constexpr uint8_t HEADER_VERSION_MASK = 0b00001111;
+		static constexpr int32_t VERSION = 0;
 		static constexpr uint8_t BOOL_FALSE = ((uint8_t)Type::INVALID << 5) | 1;
 		static constexpr uint8_t BOOL_TRUE = ((uint8_t)Type::INVALID << 5) | 2;
 		static constexpr uint8_t END = ((uint8_t)Type::INVALID << 5) | 3;
-		static constexpr uint8_t VAL4_MAX = 0b1111;
-		static constexpr uint8_t VAL4_BITS8 = VAL4_MAX - 8;
-		static constexpr uint8_t VAL4_BITS64 = VAL4_MAX;
-		static constexpr uint8_t VAL5_MAX = 0b11111;
-		static constexpr uint8_t VAL5_BITS8 = VAL5_MAX - 8;
-		static constexpr uint8_t VAL5_BITS64 = VAL5_MAX;
+		static constexpr uint8_t BIT4_MAX = 0b1111;
+		static constexpr uint8_t BIT4_PACK_UINT_MIN_VALUE = BIT4_MAX - 7;
+		static constexpr int64_t NEG_BIT4_PACK_UINT_MIN_VALUE = -BIT4_PACK_UINT_MIN_VALUE;
+		static constexpr uint8_t BIT5_MAX = 0b11111;
+		static constexpr uint8_t BIT5_PACK_UINT_MIN_VALUE = BIT5_MAX - 7;
 
 		static constexpr uint8_t VALUE_SIZE = sizeof(uintptr_t) * 3 - sizeof(Type) - sizeof(Flag);
 
@@ -666,7 +670,7 @@ namespace srk {
 			Map();
 			Map* SRK_CALL copy(Flag flag) const;
 			bool SRK_CALL isContentEqual(Map* data) const;
-			void SRK_CALL unpack(ByteArray& ba, size_t size, Flag flag);
+			void SRK_CALL unpack(ByteArray& ba, size_t size, int32_t version, Flag flag);
 
 			std::unordered_map<SerializableObjectWrapper, SerializableObjectWrapper, StdUnorderedHasher, StdUnorderedComparer> value;
 		};
@@ -812,16 +816,16 @@ namespace srk {
 			{
 				auto v = _getValue<int64_t>();
 				if (v < 0) {
-					if (-v >= VAL4_BITS8) {
-						_packUInt(ba, -v, ((uint8_t)Type::INT << 5) | 0b10000, VAL4_BITS8);
-					} else {
+					if (v > NEG_BIT4_PACK_UINT_MIN_VALUE) {
 						ba.write<uint8_t>(((uint8_t)Type::INT << 5) | 0b10000 | -v);
+					} else {
+						_packUInt(ba, -(v + BIT4_PACK_UINT_MIN_VALUE), ((uint8_t)Type::INT << 5) | 0b10000, BIT4_PACK_UINT_MIN_VALUE);
 					}
 				} else {
-					if (v >= VAL4_BITS8) {
-						_packUInt(ba, v, (uint8_t)Type::INT << 5, VAL4_BITS8);
-					} else {
+					if (v < BIT4_PACK_UINT_MIN_VALUE) {
 						ba.write<uint8_t>(((uint8_t)Type::INT << 5) | v);
+					} else {
+						_packUInt(ba, v - BIT4_PACK_UINT_MIN_VALUE, (uint8_t)Type::INT << 5, BIT4_PACK_UINT_MIN_VALUE);
 					}
 				}
 
@@ -830,10 +834,10 @@ namespace srk {
 			case Type::UINT:
 			{
 				auto v = _getValue<uint64_t>();
-				if (v >= VAL4_BITS8) {
-					_packUInt(ba, v, (uint8_t)Type::INT << 5, VAL4_BITS8);
-				} else {
+				if (v < BIT4_PACK_UINT_MIN_VALUE) {
 					ba.write<uint8_t>(((uint8_t)Type::INT << 5) | v);
+				} else {
+					_packUInt(ba, v - BIT4_PACK_UINT_MIN_VALUE, (uint8_t)Type::INT << 5, BIT4_PACK_UINT_MIN_VALUE);
 				}
 
 				break;
@@ -906,27 +910,36 @@ namespace srk {
 				auto size = arr->value.size();
 
 				if constexpr (NullPointer<T>) {
-					if (size < VAL5_MAX) {
+					if (size < BIT5_MAX) {
 						ba.write<uint8_t>(((uint8_t)Type::ARRAY << 5) | size);
-						for (auto& i : arr->value) i.wrap().pack(ba);
+						for (auto& i : arr->value) i.wrap()._pack(this, 0, ba, nullptr);
 					} else {
-						ba.write<uint8_t>(((uint8_t)Type::ARRAY << 5) | VAL5_MAX);
-						for (auto& i : arr->value) i.wrap().pack(ba);
+						ba.write<uint8_t>(((uint8_t)Type::ARRAY << 5) | BIT5_MAX);
+						for (auto& i : arr->value) i.wrap()._pack(this, 0, ba, nullptr);
 						ba.write<uint8_t>(END);
 					}
 				} else {
 					size_t d = depth + 1;
-					std::vector<size_t> indices;
-					for (size_t i = 0, n = arr->value.size(); i < n;  ++i) {
-						if (filter.packable(parent, depth, i, arr->value[i])) indices.emplace_back(i);
+					size_t n = 0;
+
+					ba.write<ba_vt::PADDING>(1);
+					auto pos = ba.getPosition();
+
+					for (size_t i = 0, n = arr->value.size(); i < n; ++i) {
+						auto& val = arr->value[i];
+						if (!filter.packable(parent, depth, i, val)) continue;
+
+						++n;
+						val.wrap()._pack(this, d, ba, filter);
 					}
 
-					if (indices.size() < VAL5_MAX) {
-						ba.write<uint8_t>(((uint8_t)Type::ARRAY << 5) | size);
-						for (auto& i : indices) arr->value[i].wrap()._pack(this, d, ba, filter);
+					ba.setPosition(pos);
+					if (n < BIT5_MAX) {
+						ba.write<uint8_t>(((uint8_t)Type::ARRAY << 5) | n);
+						ba.seekEnd();
 					} else {
-						ba.write<uint8_t>(((uint8_t)Type::ARRAY << 5) | VAL5_MAX);
-						for (auto& i : arr->value) i.wrap()._pack(this, d, ba, filter);
+						ba.write<uint8_t>(((uint8_t)Type::ARRAY << 5) | BIT5_MAX);
+						ba.seekEnd();
 						ba.write<uint8_t>(END);
 					}
 				}
@@ -939,37 +952,44 @@ namespace srk {
 				auto size = map->value.size();
 
 				if constexpr (NullPointer<T>) {
-					if (size < VAL5_MAX) {
+					if (size < BIT5_MAX) {
 						ba.write<uint8_t>(((uint8_t)Type::MAP << 5) | size);
 						for (auto& i : map->value) {
-							i.first.wrap().pack(ba);
-							i.second.wrap().pack(ba);
+							i.first.wrap()._pack(this, 0, ba, nullptr);
+							i.second.wrap()._pack(this, 0, ba, nullptr);
 						}
 					} else {
-						ba.write<uint8_t>(((uint8_t)Type::MAP << 5) | VAL5_MAX);
+						ba.write<uint8_t>(((uint8_t)Type::MAP << 5) | BIT5_MAX);
 						for (auto& i : map->value) {
-							i.first.wrap().pack(ba);
-							i.second.wrap().pack(ba);
+							i.first.wrap()._pack(this, 0, ba, nullptr);
+							i.second.wrap()._pack(this, 0, ba, nullptr);
 						}
 						ba.write<uint8_t>(END);
 					}
 				} else {
 					size_t d = depth + 1;
-					std::vector<const SerializableObject*> data;
+					size_t n = 0;
+
+					ba.write<ba_vt::PADDING>(1);
+					auto pos = ba.getPosition();
+
 					for (auto& i : map->value) {
-						if (filter.packable(parent, depth, i.first, i.second)) {
-							data.emplace_back(&i.first.wrap());
-							data.emplace_back(&i.second.wrap());
-						}
+						auto& key = i.first;
+						auto& val = i.second;
+						if (!filter.packable(parent, depth, key, val)) continue;
+
+						++n;
+						key.wrap()._pack(this, d, ba, filter);
+						val.wrap()._pack(this, d, ba, filter);
 					}
 
-					size_t size = data.size() >> 1;
-					if (size < VAL5_MAX) {
-						ba.write<uint8_t>(((uint8_t)Type::ARRAY << 5) | size);
-						for (auto& i : data) i->_pack(this, d, ba, filter);
+					ba.setPosition(pos);
+					if (n < BIT5_MAX) {
+						ba.write<uint8_t>(((uint8_t)Type::MAP << 5) | n);
+						ba.seekEnd();
 					} else {
-						ba.write<uint8_t>(((uint8_t)Type::ARRAY << 5) | VAL5_MAX);
-						for (auto& i : data) i->_pack(this, d, ba, filter);
+						ba.write<uint8_t>(((uint8_t)Type::MAP << 5) | BIT5_MAX);
+						ba.seekEnd();
 						ba.write<uint8_t>(END);
 					}
 				}
@@ -1000,6 +1020,8 @@ namespace srk {
 				break;
 			}
 		}
+
+		void SRK_CALL _unpack(ByteArray& ba, int32_t version, Flag flag = Flag::COPY);
 
 		template<typename K, typename V, typename... Args>
 		inline void SRK_CALL _insert(K&& k, V&& v, Args&&... args) {
